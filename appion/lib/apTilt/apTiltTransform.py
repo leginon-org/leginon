@@ -81,6 +81,14 @@ def blackEdges(img, rad=None, black=None):
 	#img2[0:shape[0], 0:int(rad/2.0)] = black
 	#bottom edge
 	#img2[0:shape[0], int(shape[1]-rad/2.0):shape[1]] = black
+	#top-left corner
+	img2[0:int(rad/2.0), 0:int(rad/2.0)] = black
+	#bottom-left corner
+	img2[int(shape[0]-rad/2.0):shape[0], 0:int(rad/2.0)] = black
+	#top-right corner
+	img2[0:int(rad/2.0), int(shape[1]-rad/2.0):shape[1]] = black
+	#bottom-right corner
+	img2[int(shape[0]-rad/2.0):shape[0], int(shape[1]-rad/2.0):shape[1]] = black
 	#vertical bar
 	img2[int(shape[0]/2.0-rad):int(shape[0]/2.0+rad),0:shape[1]] = black
 	#horizontal bar
@@ -289,6 +297,7 @@ def maskOverlapRegion(image1, image2, data):
 
 	#CONVERT NUMPY TO POLYGON LIST
 	####################################
+	#maskimg2 = polygon.filledPolygon(img.shape, vert2)
 	a1masklist = []
 	a2masklist = []
 	for j in range(4):
@@ -313,7 +322,7 @@ def maskOverlapRegion(image1, image2, data):
 	####################################
 	mean2 = ndimage.mean(image2)
 	std2 = ndimage.standard_deviation(image2)
-	immin2 = mean2 - 3.0 * std2
+	immin2 = mean2 - 0.0 * std2
 	#immin2 = ndimage.minimum(image2)+1.0
 	image2 = (image2+immin2)*mask2
 	immax2 = ndimage.maximum(image2)
@@ -335,7 +344,7 @@ def maskOverlapRegion(image1, image2, data):
 	####################################
 	mean1 = ndimage.mean(image1)
 	std1 = ndimage.standard_deviation(image1)
-	immin1 = mean1 - 3.0 * std1
+	immin1 = mean1 - 0.0 * std1
 	#immin1 = ndimage.minimum(image1)+1.0
 	image1 = (image1+immin1)*mask1
 	immax1 = ndimage.maximum(image1)
@@ -403,7 +412,7 @@ def mergePicks(picks1, picks2, limit=25.0):
 	newarray = numpy.vstack((picks1, goodarray))
 	return newarray
 
-def alignPicks(picks1, picks2, data, limit=15.0):
+def alignPicks(picks1, picks2, data, limit=10.0):
 	list1 = []
 	alignlist2 = []
 	#transform picks2
