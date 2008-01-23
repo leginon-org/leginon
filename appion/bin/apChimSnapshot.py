@@ -14,28 +14,25 @@ import chimera
 
 chimlog=None
 
-def openVolumeData(path, file_type="mrc", contour_level=1.5, color=None):
+def openVolumeData(vpath, file_type="mrc", contour_level=1.5, color=None):
 
-	from VolumeData import open_file_type
-	g = open_file_type(path, file_type)
-
-	from VolumeViewer import full_region, Rendering_Options, Data_Region
-	region = full_region(g.size)
+	# set step size to 1
+	from VolumeViewer.volume import default_settings
+	default_settings.set('limit_voxel_count', False)
 	
-	region_name = 'none'
-	ro = Rendering_Options()
-	ro.show_outline_box = False
-	ro.surface_smoothing = True
+        from VolumeViewer import open_volume_file
+        v = open_volume_file(vpath, file_type)[0]
 
-	dr = Data_Region(g, region, region_name, ro, message)
-
-	if contour_level != None:
-		dr.set_parameters(surface_levels = [contour_level])
+        v.set_parameters(show_outline_box = False,
+                         surface_smoothing = True)
+        if contour_level != None:
+                v.set_parameters(surface_levels = [contour_level])
 	if color != None:
-		dr.set_parameters(surface_colors = [color])
+                v.set_parameters(surface_colors = [color])
 
-	dr.show('surface', dr.rendering_options, True, message)
-	return dr
+	v.show('surface')
+
+        return v
 
 # -----------------------------------------------------------------------------
 # Print status message.
@@ -48,17 +45,18 @@ def message(m):
 
 # -----------------------------------------------------------------------------
 #
-def color_surface_radially(surf, center):
+def color_surface_radially(surf):
 
 	from SurfaceColor import color_surface, Radial_Color, Color_Map
 	rc = Radial_Color()
-#	rc.origin = center
 	rc.origin = [0,0,0]
 	vertices, triangles = surf.surface_groups()[0].geometry()
 	rmin, rmax = rc.value_range(vertices, vertex_xform = None)
 	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
-	colors = [(0.933,0.067,0.067,1), (0.933,0.933,0.067,1), (0.067,0.933,0.067,1), (0.067,0.933,0.933,1), (0.067,0.067,0.933,1)]  
+
 	# Red,green,blue,opacity
+	colors = [(0.933,0.067,0.067,1), (0.933,0.933,0.067,1), (0.067,0.933,0.067,1), (0.067,0.933,0.933,1), (0.067,0.067,0.933,1)]  
+
 	rc.colormap = Color_Map(data_values, colors)
 	color_surface(surf, rc, caps_only = False, auto_update = False)
 
@@ -75,15 +73,15 @@ def save_image(path, format):
 
 # -----------------------------------------------------------------------------
 #
-def radial_color_volume(tmp_path, vol_path, contour=1.5, vol_file_type="mrc", 
+def render_volume(tmp_path, vol_path, contour=1.5, 
 	zoom_factor=1.0, image_size=(512, 512), imgFormat="PNG", sym="C"):
 
 	chimera.viewer.windowSize = image_size
 
-	dr = openVolumeData(tmp_path, vol_file_type, contour)
+	file_type='mrc'
+	v = openVolumeData(tmp_path, file_type, contour)
 
-	center = map(lambda s: .5*(s-1), dr.data.size) # Center for radial coloring
-	m = dr.surface_model()
+	m = v.surface_model()
 
 	#from chimera import runCommand
 	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
@@ -93,7 +91,7 @@ def radial_color_volume(tmp_path, vol_path, contour=1.5, vol_file_type="mrc",
 	image3 = vol_path+'.3.png'
 
 	if sym=='Icosahedral':
-		color_surface_radially(m, center)
+		color_surface_radially(m)
 
 		# move clipping planes to obscure back half
 #		xsize,ysize,zsize=dr.data.size
@@ -167,7 +165,6 @@ if True:
 		sys.exit(1)
 	params = env.split(',')
 
-
 	tmpfile_path = params[0] #sys.argv[2]
 	volume_path = params[1] #sys.argv[3]
 	rundir = os.path.dirname(volume_path)
@@ -180,7 +177,7 @@ if True:
 
 	writeMessageToLog("Environmental data: "+str(params))
 
-	radial_color_volume(tmpfile_path, volume_path, contour, zoom_factor=zoom_factor, sym=sym)
+	render_volume(tmpfile_path, volume_path, contour, zoom_factor=zoom_factor, sym=sym)
 
 	chimera.ChimeraExit()
 	chimera.ChimeraSystemExit()
