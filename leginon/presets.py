@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.256 $
+# $Revision: 1.257 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-22 22:02:05 $
-# $Author: acheng $
+# $Date: 2008-01-23 01:01:35 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -636,6 +636,7 @@ class PresetsManager(node.Node):
 				newparams['image shift']['x'] -= (oldiswithoffset['x']-oldimageshift['x'])
 				newparams['image shift']['y'] -= (oldiswithoffset['y']-oldimageshift['y'])
 			newpreset = self.updatePreset(name, newparams)
+			self.currentpreset = newpreset
 		elif parameters is not None:
 			raise ValueError
 		else:
