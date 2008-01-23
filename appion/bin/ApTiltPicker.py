@@ -15,14 +15,17 @@ import numpy
 from scipy import ndimage, optimize
 ## PIL
 import Image
-## local install
+## appion
 import apSpider
 import apXml
 import apImage
 import apDisplay
 import apParam
-import gui.wx.TargetPanel
 from apTilt import tiltDialog, apTiltTransform
+## leginon
+import polygon
+import gui.wx.TargetPanel
+
 
 class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
@@ -103,36 +106,54 @@ class PickerApp(wx.App):
 		self.panel1 = TiltTargetPanel(splitter, -1, name="untilt")
 		self.panel1.parent = self.frame
 		self.panel1.app = self
+
 		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), 
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel1.setTargets('Picked', [])
 		self.panel1.selectiontool.setTargeting('Picked', True)
+
 		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), 
 			shape=self.ashape, size=self.ashapesize)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
+
 		self.panel1.addTargetTool('Worst', color=wx.Color(215, 215, 32), 
 			shape=self.eshape, size=self.eshapesize)
 		self.panel1.setTargets('Worst', [])
 		self.panel1.selectiontool.setDisplayed('Worst', True)
+
+		self.panel1.addTargetTool('Polygon', color=wx.Color(32, 215, 32), 
+			shape='polygon', target=True)
+		self.panel1.setTargets('Polygon', [])
+		self.panel1.selectiontool.setDisplayed('Polygon', True)
+
 		#self.panel1.SetMinSize((256,256))
 		#self.panel1.SetBackgroundColour("sky blue")
 
 		self.panel2 = TiltTargetPanel(splitter, -1, name="tilt")
 		self.panel2.parent = self.frame
 		self.panel2.app = self
+
 		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), 
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
 		self.panel2.selectiontool.setTargeting('Picked', True)
+
 		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), 
 			shape=self.ashape, size=self.ashapesize)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
+
 		self.panel2.addTargetTool('Worst', color=wx.Color(215, 215, 32), 
 			shape=self.eshape, size=self.eshapesize)
 		self.panel2.setTargets('Worst', [])
 		self.panel2.selectiontool.setDisplayed('Worst', True)
+
+		self.panel2.addTargetTool('Polygon', color=wx.Color(32, 215, 32), 
+			shape='polygon', target=True)
+		self.panel2.setTargets('Polygon', [])
+		self.panel2.selectiontool.setDisplayed('Polygon', True)
+
 		#self.panel2.SetMinSize((256,256))
 		#self.panel2.SetBackgroundColour("pink")
 
@@ -158,6 +179,10 @@ class PickerApp(wx.App):
 		self.maskregion = wx.Button(self.frame, -1, '&Mask Region')
 		self.frame.Bind(wx.EVT_BUTTON, self.onMaskRegion, self.maskregion)
 		self.buttonrow.Add(self.maskregion, 0, wx.ALL, 1)
+
+		self.clearPolygon = wx.Button(self.frame, wx.ID_REMOVE, 'Clear &Polygon')
+		self.Bind(wx.EVT_BUTTON, self.onClearPolygon, self.clearPolygon)
+		self.buttonrow.Add(self.clearPolygon, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
 		if self.mode == 'default':
 			self.createMenuButtons()
@@ -400,6 +425,64 @@ class PickerApp(wx.App):
 		print dir(evt)
 
 	#---------------------------------------
+	def onClearPolygon(self, evt):
+		targets1 = self.getArray1()
+		targets2 = self.getArray2()
+		if len(targets1) == 0 or len(targets2) == 0:
+			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
+			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
+		vert1 = self.panel1.getTargetPositions('Polygon')
+		vert2 = self.panel2.getTargetPositions('Polygon')
+		if len(vert1) < 3 and len(vert2) < 3:
+			self.statbar.PushStatusText("ERROR: Could not create a closed polygon. Select more vertices.", 0)
+			dialog = wx.MessageDialog(self.frame, "Could not create a closed polygon.\nSelect more vertices.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		elif len(vert1) > len(vert2):
+			v1 = numpy.asarray(vert1, dtype=numpy.float32)
+			v2 = apTiltTransform.a1Toa2Data(v1, self.data)
+			self.panel2.setTargets('Polygon', v2)
+			vert2 = [ tuple((v[0],v[1])) for v in v2 ]
+		elif len(vert2) > len(vert1):
+			v2 = numpy.asarray(vert2, dtype=numpy.float32)
+			v1 = apTiltTransform.a2Toa1Data(v2, self.data)
+			self.panel1.setTargets('Polygon', v1)
+			vert1 = [ tuple((v[0],v[1])) for v in v1 ]
+
+		maskimg1 = polygon.filledPolygon(self.panel1.imagedata.shape, vert1)
+		eliminated = 0
+		newpart1 = []
+		for target in targets1:
+			coord = tuple((target[0], target[1]))
+			if maskimg1[coord] != 0:
+				eliminated += 1
+			else:
+				newpart1.append(target)
+		self.statbar.PushStatusText(str(eliminated)+" particle(s) eliminated inside polygon", 0)
+		self.panel1.setTargets('Picked',newpart1)
+
+		newpart2 = []
+		maskimg2 = polygon.filledPolygon(self.panel2.imagedata.shape, vert2)
+		for target in targets2:
+			coord = tuple((int(target[0]), int(target[1])))
+			if maskimg2[coord] != 0:
+				eliminated += 1
+			else:
+				newpart2.append(target)
+		self.statbar.PushStatusText(str(eliminated)+" particle(s) eliminated inside polygon", 0)
+		self.panel2.setTargets('Picked',newpart2)
+
+		self.panel1.setTargets('Polygon', [])
+		self.panel2.setTargets('Polygon', [])
+
+	#---------------------------------------
 	def onMaskRegion(self, evt):
 		#GET THE ARRAYS
 		targets1 = self.panel1.getTargets('Picked')
@@ -553,6 +636,8 @@ class PickerApp(wx.App):
 	def getBadPicks(self):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
+		if len(a1) < 2 or len(a2) < 2:
+			return ([], [])
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
 		a1c = []
@@ -746,13 +831,15 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onClearPicks(self, evt):
-		print "clear is not working?"
+		#print "clear is not working?"
 		self.panel1.setTargets('Picked', [])
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.setTargets('Worst', [] )
+		self.panel1.setTargets('Polygon', [] )
 		self.panel2.setTargets('Picked', [])
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.setTargets('Worst', [] )
+		self.panel2.setTargets('Polygon', [] )
 
 	#---------------------------------------
 	def onClearBadPicks(self, evt):
@@ -843,6 +930,7 @@ class PickerApp(wx.App):
 			self.panel2.UpdateDrawing()
 		except:
 			pass
+		self.onClearPicks(None)
 
 
 	#---------------------------------------
