@@ -83,6 +83,7 @@ class AppionLoop(object):
 		### start the loop
 		notdone=True
 		while notdone:
+			apDisplay.printColor("Beginning Main Loop", "green")
 			for imgdata in self.imgtree:
 
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
@@ -653,8 +654,11 @@ class AppionLoop(object):
 
 		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
-			print "\nStarting new image", self.stats['count'], "( skip:",self.stats['skipcount'],\
-				", remain:", self.stats['imagesleft'],")", apDisplay.short(imgdata['filename'])
+			if self.params['background'] is False:
+				apDisplay.printColor("\nStarting image "+str(self.stats['count'])+" ( skip:"+str(self.stats['skipcount'])\
+					+", remain:"+str(self.stats['imagesleft'])+")"+apDisplay.short(imgdata['filename']), "green")
+			elif self.stats['count'] % 80 == 0:
+				sys.stderr.write("\n")
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
 
@@ -678,10 +682,18 @@ class AppionLoop(object):
 
 		self.stats['startloop'] = time.time()
 		self.stats['waittime'] = 0
+
 		if self.reprocessImage(imgdata) is True:
-			apDisplay.printMsg("reprocessing "+apDisplay.shortenImageName(imgdata['filename']))
+			if self.params['background'] is True:
+				sys.stderr.write(",")
+			else:
+				apDisplay.printMsg("reprocessing "+apDisplay.shortenImageName(imgdata['filename']))
 		else:
-			apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))
+			if self.params['background'] is True:
+				sys.stderr.write(".")
+			else:
+				apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))
+
 		return True
 
 	def _printSummary(self):
