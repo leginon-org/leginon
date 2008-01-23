@@ -22,6 +22,7 @@ import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
 import gui.wx.MosaicClickTargetFinder
 import os
+import shortpath
 import math
 import polygon
 import raster
@@ -122,10 +123,28 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.publish(targetdata, database=True)
 			number += 1
 
+	#--------------------
+	def sortTargets(self, targetlist):
+		"""
+		input: list of (x,y) tuples
+		output: sorted list of  (x,y) tuples
+		"""
+		print "targets=",targetlist
+		bestorder, bestscore = tsp.sortPoints(targetlist, numiter=3, maxeval=70000)
+		print "bestorder=",bestorder
+		sortedtargetlist = []
+		for i in bestorder:
+			sortedtargetlist.append(targetlist[i])
+		print "sortedtargets=",sortedtargets
+		return sortedtargetlist
+		
+	#--------------------
 	def publishTargets(self, imagedata, typename, targetlist):
 		imagetargets = self.panel.getTargetPositions(typename)
+
 		if not imagetargets:
 			return
+		#imagetargets = self.sortTargets(imagetargets)
 		imagearray = imagedata['image']
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
