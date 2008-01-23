@@ -30,25 +30,41 @@ class rejectUnpairedTilts(appionLoop.AppionLoop):
 		time.sleep(0.1)
 		return
 
+	def preLoopFunctions(self):
+		"""
+		do something before starting the loop
+		"""
+		self.reject = 0
+		return
+
+	def postLoopFunctions(self):
+		"""
+		do something after finishing the loop
+		"""
+		apDisplay.printColor("rejected "+str(self.reject)+" images","cyan")
+		return
+
 	def commitToDatabase(self, imgdata):
 		"""
 		Uses the appionLoop commit
 		"""
-		imgassess = apDatabase.getImgAssessmentStatus(imgdata)
+		imgassess = apDatabase.getImgCompleteStatus(imgdata)
 		tiltdata = apTiltPair.getTiltPair(imgdata)
+
 		if tiltdata is None:
 			if imgassess is not False:
-				apDisplay.printColor("rejecting unpaired image: "+apDisplay.short(imgdata['filename']), "magenta")
+				apDisplay.printColor("rejecting unpaired image: "+apDisplay.short(imgdata['filename']), "red")
 				apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False)
+				self.reject+=1
 			return
-
-		tiltassess = apDatabase.getImgAssessmentStatus(tiltdata)
-		if imgassess is False and tiltassess is not False:
-			apDisplay.printColor("rejecting bad tilt image: "+apDisplay.short(tiltdata['filename']), "magenta")
-			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], False)
-		if tiltassess is False and imgassess is not False:
-			apDisplay.printColor("rejecting bad tilt image: "+apDisplay.short(imgdata['filename']), "magenta")
+		apDisplay.printMsg("tiltpair: "+apDisplay.short(tiltdata['filename']))
+		tiltassess = apDatabase.getImgCompleteStatus(tiltdata)
+		if imgassess is False or tiltassess is False:
+			apDisplay.printColor("rejecting bad tilt images: "+apDisplay.short(tiltdata['filename']), "magenta")
 			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False)
+			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], False)
+			self.reject+=2
+		print "Assessment:", imgassess, tiltassess
 		return
 
 	##########################################
