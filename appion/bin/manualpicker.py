@@ -66,16 +66,15 @@ class PickerApp(wx.App):
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
 
-		self.panel.addTypeTool('Select Particles', toolclass=TargetPanelTools.TargetTypeTool,
-			display=wx.Color(220,20,20), target=True, shape=self.shape, size=self.size)
-
+		self.panel.addTargetTool('Select Particles', display=wx.Color(220,20,20), 
+			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
 
-		self.panel.addTypeTool('Region to Remove', toolclass=TargetPanelTools.TargetTypeTool,
-			display=wx.GREEN, target=True, shape='polygon')
+		self.panel.addTargetTool('Region to Remove', display=wx.Color(20,220,20),
+			target=True, shape='polygon')
 		self.panel.setTargets('Region to Remove', [])
-		self.panel.selectiontool.setTargeting('Region to Remove', True)
+		self.panel.selectiontool.setDisplayed('Region to Remove', True)
 
 		#make 'Select Particles' the initial targeting selection
 		self.panel.selectiontool.setTargeting('Select Particles', True)
