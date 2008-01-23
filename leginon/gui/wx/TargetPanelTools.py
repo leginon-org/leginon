@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelTools.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-29 00:25:42 $
-# $Author: acheng $
+# $Date: 2008-01-23 19:03:14 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 #
@@ -23,6 +23,7 @@ import wx
 import sys
 import gui.wx.ImagePanelTools
 import gui.wx.TargetPanelBitmaps
+import shortpath
 
 TargetingEventType = wx.NewEventType()
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
@@ -96,17 +97,30 @@ class TargetTypeTool(gui.wx.ImagePanelTools.TypeTool):
 		self.togglebuttons['target'].GetEventHandler().AddPendingEvent(evt)
 
 	#--------------------
+	def sortTargets(self, targets):
+		"""
+		input: list of targets where target.position is a tuple
+		output: sorted list of targets where target.position is a tuple
+		"""
+		print "targets=",targets
+		#convert to list of (x,y) tuples
+		targetlist = [t.position for t in targets]
+		bestorder, bestscore = shortpath.sortPoints(list(targetlist), numiter=3, maxeval=70000)
+		print "bestorder=",bestorder
+		sortedtargets = []
+		for i in bestorder:
+			sortedtargets.append(targets[i])
+		print "sortedtargets=",sortedtargets
+		return sortedtargets
+
+	#--------------------
 	def onToggleNumbers(self, evt):
 		if not self.togglebuttons['numbers'].IsEnabled():
 			self.togglebuttons['numbers'].SetValue(False)
 			return
 		#if self.togglebuttons['numbers'].GetValue() is True:
-		#	self.togglebuttons['numbers'].SetBackgroundColour(wx.Color(160,160,160))
-		#else:
-		#	self.togglebuttons['numbers'].SetBackgroundColour(wx.WHITE)
-		sys.stderr.write(str(len(self.targettype.getTargets()))+"   ")
+		#	self.targettype.setTargets(self.sortTargets(self.targettype.getTargets()))
 		self.numberstype.setTargets(self.targettype.getTargets())
-		sys.stderr.write(str(len(self.numberstype.getTargets()))+"\n")
 		evt = ShowNumbersEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
 		self.togglebuttons['numbers'].GetEventHandler().AddPendingEvent(evt)
 
