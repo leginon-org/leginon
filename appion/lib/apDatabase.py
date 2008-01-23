@@ -237,8 +237,20 @@ def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
 
 	appiondb.insert(assessquery)
 
-	return None
+	return True
 
+
+def getImgCompleteStatus(imgdata):
+	assess = getImgAssessmentStatus(imgdata)
+	hidden = getImageViewerStatus(imgdata)
+	if hidden is None:
+		return assess
+	elif assess is None:
+		return hidden
+	#False overrides True
+	elif assess is False or hidden is False:
+		return False
+	return True
 
 def getImgAssessmentStatus(imgdata):
 	"""
