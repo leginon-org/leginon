@@ -36,7 +36,10 @@ $q="select "
 def getTiltPair(imgdata):
 	imageq  = leginondata.AcquisitionImageData()
 	imageq['tilt series'] = imgdata['tilt series']
-	imageq['preset'] = imgdata['preset']
+	presetq = leginondata.PresetData()
+	presetq['name'] = imgdata['preset']['name']
+	imageq['preset'] = presetq
+	#if beam changed between tilting, presets would be different
 	origid=imgdata.dbid
 	alltilts = leginondb.query(imageq, readimages=False)
 	tiltpair = None
