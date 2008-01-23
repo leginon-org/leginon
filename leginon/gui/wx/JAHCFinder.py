@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/JAHCFinder.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-20 00:55:40 $
-# $Author: laupw $
+# $Date: 2008-01-23 18:55:41 $
+# $Author: vossman $
 # $State: Exp $
 # $Locker:  $
 
@@ -36,7 +36,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
 		self.imagepanel.addTargetTool('Blobs', wx.Color(0, 255, 255), settings=True, shape='o')
 		self.imagepanel.addTargetTool('Lattice', wx.Color(255, 0, 255), settings=True)
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
