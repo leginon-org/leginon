@@ -119,25 +119,20 @@ def center_mask(a, mask_radius):
 	circ = filled_circle(cs_shape,mask_radius)
 	center_square[:] = center_square * circ.astype(center_square.dtype)
 
-def swap(a):
-	rows,cols = a.shape
-	b = numpy.zeros(a.shape, a.dtype)
-	b[:rows/2] = a[rows/2:]
-	b[rows/2:] = a[:rows/2]
-	return b
-
 def swap_row_halves(a):
 	rows,cols = a.shape
 	b = numpy.zeros(a.shape, a.dtype)
-	b[:rows/2] = a[rows/2:]
-	b[rows/2:] = a[:rows/2]
+	b[:rows/2] = a[-(rows/2):]
+	b[rows/2:] = a[:-(rows/2)]
 	return b
+
+swap = swap_row_halves
 
 def swap_col_halves(a):
 	rows,cols = a.shape
 	b = numpy.zeros(a.shape, a.dtype)
-	b[:,:cols/2] = a[:,cols/2:]
-	b[:,cols/2:] = a[:,:cols/2]
+	b[:,:cols/2] = a[:,-(cols/2):]
+	b[:,cols/2:] = a[:,:-(cols/2)]
 	return b
 
 def swap_quadrants(a):
