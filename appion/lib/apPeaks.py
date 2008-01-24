@@ -305,15 +305,13 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 		f.write(str(out)+"\n")
 	f.close()
 
-def createPeakJpeg(imgdata, peaktree, params):
+def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 	if 'templatelist' in params:
 		count =   len(params['templatelist'])
 	else: count = 1
 	bin =     int(params["bin"])
 	diam =    float(params["diam"])
 	apix =    float(params["apix"])
-	#bin /= 2
-	#if bin < 1: bin = 1
 	binpixrad  = diam/apix/2.0/float(bin)
 	imgname = imgdata['filename']
 
@@ -325,7 +323,12 @@ def createPeakJpeg(imgdata, peaktree, params):
 	else:
 		imgarray = imgdata['image']
 
-	imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
+	if procimgarray is not None:
+		#instead of re-processing image use one that is already processed...
+		procimgarray = imgarray
+	else:
+		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
+
 	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
 	image2 = image.copy()
