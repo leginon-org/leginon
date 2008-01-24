@@ -7,8 +7,7 @@ x96=55    ; last ring for rotational alignment
 x95=6     ; translational search range (in pixels)
 x93=1     ; c-symmetry (rotational symmetry to be applied, 1 if none)
 x92=4     ; iteration number
-x91=x92-1
-
+x37=0
 ; last ring + translational search range MUST be < (box size/2)-1
 
 VM
@@ -19,8 +18,11 @@ FR G ; stack file
 FR G
 [aligned]aligned
 FR G
+[alistack]aligned
+FR G
+[prevaliparams]apmq
+FR G
 [ref]reference
-
 ; create the selection document file.
 ; The image series is consecutive
 
@@ -29,21 +31,36 @@ select
 1
 1-x99
 
-DOC CREATE
-selref
-1
-1-x98
-
-;copy templates into spider stack
-
-IF (x92.eq.1) THEN
-  DO LB34, x11=1,x98
+IF (x92.ne.1) GOTO LB27		;for the first iteration
+  DOC CREATE			;create ref selection file for all templates	
+  selref
+  1
+  1-x98
+  FR G				
+  [refstack]refstack
+  DO LB34, x11=1,x98		;copy references into a stack
     CP
     [ref]{***x11}
-    [ref]@{***x11}
+    [refstack]@{***x11}
   LB34
-ENDIF
+GOTO LB25
+
+LB27				;for iterations after 1st:
+
+  FR G
+  [refstack][ref]
+  DO LB39,x11=1,x98		
+    IQ FI x39
+    [refstack]@{***x11}
+    IF (x39.eq.1) THEN
+      x37=x37+1	      
+      SD x37,x11		;write ref selection file for only valid templates
+      selref
+    ENDIF
+  LB39
 	
+LB25
+
 VM
 mkdir -p rff/
 
@@ -59,11 +76,11 @@ echo "  ** may crash if no particles align to a template"
 
 ; do the alignment
 AP MQ
-[ref]@***    		; template for reference image
+[refstack]@***    		; template for reference image
 selref            ; file containing list of reference files
 (x95,1)           ; translational search range, step size
 x97,x96           ; first & last ring
-[stack]@******    ; stack containing images to be aligned
+[alistack]@******    ; stack containing images to be aligned
 select            ; list of particles for alignment
 apmq			      ; output angles
 
@@ -72,14 +89,15 @@ echo "  creating new aligned stack"
 ;rotate and shift images according to the parameters from AP MQ alignment
 
 ;if it is the first iteration proceed to RT SQ function
-if(x92.eq.1) GOTO LB27
+if(x92.eq.1) GOTO LB23
 
 ;if it is the 2nd iteration, get paramaters from previous iteration
 if(x92.eq.2) GOTO LB24
 
-GOTO LB25
+GOTO LB29
 
-LB27
+LB23
+
 DO LB19, x11=1,x99
   UD IC,x11,x41,x42,x43,x44,x45,x46
    apmq
@@ -115,7 +133,7 @@ DO LB11 x11=1,x99
 
   do lb26,x12=1,x99     
      UD IC x12,x61,x62,x63,x64,x65,x66
-      ../refine{*x91}/apmq
+      [prevaliparams]
       IF(x66.ne.x46)goto lb26
      SA P x73,x74,x75
      x63,x64,x65
@@ -145,13 +163,13 @@ DO LB11 x11=1,x99
 LB11
 GOTO LB88
 
-LB25
+LB29
 DO LB18, x11=1,x99
   UD IC,x11,x41,x42,x43,x44,x45,x46
   apmq
   do lb28, x12=1,x99
       UD IC x12,x63,x64,x65,x66
-      ../refine{*x91}/apmqSUM
+      [prevaliparams]
       IF (x66.ne.x46)goto lb28
       SA P x73,x74,x75
       x63,x64,x65
@@ -199,11 +217,8 @@ LB12
 UD ICE
 apmq
 UD ICE
-../refine{*x91}/apmq
+[prevaliparams]
 UD ICE
-apmqSUM
-UD ICE
-../refine{*x91}/apmqSUM
 
 
 
@@ -213,12 +228,18 @@ echo "  creating resulting template(s)"
 
 
 do lb35, x33=1,x98
+
+IQ FI x34				   ;check to see if selection file exists	
+refselect/refselect{***x33}
+
+IF (x34.eq.0) GOTO LB35			   ;if no selection file, cycle	
+
 AS R
-[aligned]@******        ; input file name
+[aligned]@******        		    ; input file name
 refselect/refselect{***x33}                 ; list of particles to use
-A                       ; all images will be added
-refali@{***x33}    ; new refined reference
-varali@{***x33}    ; new refined variance
+A                       		    ; all images will be added
+refali@{***x33}    			    ; new refined reference
+varali@{***x33}    			    ; new refined variance
 
 
 

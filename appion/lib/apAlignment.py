@@ -202,16 +202,16 @@ def getStackInfo(params):
 	#set the parameters	
 	params['session']   = imgdata['session']
 	if stackparamdata['bin'] is not None:
-		params['bin']    = stackparamdata['bin']
+		params['bin']     = stackparamdata['bin']
 	params['apix']      = apDatabase.getPixelSize(imgdata)*params['bin']
 	params['stackpath'] = os.path.abspath(stackdata['path']['path'])
 	if params['outdir'] is None:
-		params['outdir'] = params['stackpath']
+		params['outdir']  = params['stackpath']
 	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
 	params['stacktype'] = stackparamdata['fileType']
 	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
 	params['classfile'] = "classes_avg%03d" % params['numclasses']
-	params['varfile'] = "classes_var%03d" % params['numclasses']
+	params['varfile']   = "classes_var%03d" % params['numclasses']
 
 	if 'diam' in selectdata and not params['classonly']:
 		if params['diam'] is None:
@@ -300,7 +300,7 @@ def createSpiderRefFile(params):
 
 		if len(params['refids']) == 1:
 			#don't break for single template case
-			oldreffile = os.path.join(params['rundir'], "reference.spi")
+			oldreffile = os.path.join(params['rundir'], "oldreference.spi")
 			shutil.copyfile(outfile, oldreffile)
 	return
 
@@ -419,13 +419,34 @@ def createRefSpiderBatchFile(params,iteration):
 			elif re.search("^\[stack\]",line):
 				outf.write(spiderline("stack",os.path.join(params['rundir'],'start')))
 			elif re.search("^\[aligned\]",line):
-				outf.write(spiderline("aligned",os.path.join(params['rundir'],'aligned')))
+				outf.write(spiderline("aligned",os.path.join(params['iterdir'],'aligned')))
+			elif re.search("^\[alistack\]",line):
+				# get aligned stack from previous iteration
+				if iteration == 1:
+					outf.write(spiderline("alistack",os.path.join(params['rundir'],'start')))
+				else:
+					previter = iteration - 1
+					previtername = 'refine%d' %previter
+					previterdir = os.path.join(params['rundir'],previtername)
+					outf.write(spiderline("alistack",os.path.join(previterdir,'aligned')))
+			elif re.search("^\[prevaliparams\]",line): 
+				# get alignment parameters from previous iteration
+				previter = iteration - 1
+				previtername = 'refine%d' %previter
+				previterdir = os.path.join(params['rundir'],previtername)
+				if iteration == 1:
+					outf.write(spiderline("prevaliparams",os.path.join(params['iterdir'],'apmq')))
+				elif iteration == 2:
+					outf.write(spiderline("prevaliparams",os.path.join(previterdir,'apmq')))
+				else:
+					outf.write(spiderline("prevaliparams",os.path.join(previterdir,'apmqSUM')))
 			elif re.search("^\[ref\]",line):
 				# get reference template - if first iteration, get original, else get from previous iteration
 				if iteration == 1:
 					outf.write(spiderline("ref",os.path.join(params['rundir'],'reference')))
 				elif params['staticref'] is True:
-					outf.write(spiderline("ref",os.path.join(params['rundir'],'reference')))
+					staticrefdir = os.path.join(params['rundir'],'refine1')
+					outf.write(spiderline("ref",os.path.join(staticrefdir,'refstack')))
 				else:
 					previter = iteration - 1
 					previtername = 'refine%d' % previter
@@ -434,6 +455,7 @@ def createRefSpiderBatchFile(params,iteration):
 				notdone = False
 			else:
 				outf.write(line)
+
 
 def spiderline(var, value, comment=None):
 	# check if var is a numeric type
