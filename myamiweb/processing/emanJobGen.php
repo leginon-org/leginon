@@ -697,7 +697,6 @@ function writeJobFile ($extra=False) {
     $line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
     if ($msgp=='on') {
 	$line .= "goodavgs.* ";
-	$line .= "msgPassing_subClassification.log ";
 	$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
     }
     $line .= "\n";

@@ -21,8 +21,36 @@ $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
 $refinement=$_GET['refinement'];
 $subprtls=False;
+$iter1=$_GET['itr1'];
+$iter2=$_GET['itr2'];
+$reconId=$_GET['recon'];
 
 $updateheader=($_GET['uh']==1) ? 1 : 0;
+
+if ($reconId) {
+  $particle = new particledata();
+  $stackId=$particle->getStackIdFromReconId($reconId);
+	$stack = $particle->getStackParams($stackId);
+	$refine = array();
+  $filename=$stack['path'].'/'.$stack['name'];
+	$arrayall=array(array());
+	for ($i=$iter1;$i<=$iter2;$i++) {
+		$refine[$i] = $particle->getRefinementData($reconId,$i);
+		$refineId = $refine[$i][DEF_id];
+		if ($substack=='msgpbad') {
+			// get all message passing bad particles in stack
+			$subprtlsarray[$i]=$particle->getMsgPRejectParticlesInStack($refineId);
+		} else {
+			// get all bad particles in stack
+			$subprtlsarray[$i]=$particle->getSubsetParticlesInStack($refineId,$substack);
+		}
+		foreach ($subprtlsarray[$i] as $s) $arrays[$i][]=$s['p'];
+		if ($i == $iter1) $arrayall = $arrays[$i];
+		$arrayall=array_intersect($arrayall,$arrays[$i]);
+	}
+	foreach ($arrayall as $s) $subprtls[]=array('p' => $s);
+	$numbad = count($subprtls);
+}
 
 if ($refinement) {
   $particle = new particledata();

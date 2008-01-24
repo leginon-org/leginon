@@ -206,7 +206,7 @@ foreach ($iterations as $iteration){
 		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad'>[$badprtls bad]</A>"
 		."</TD></TR>\n";
   if ($refinerun['package']=='EMAN/MsgP') 
-    $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack='msgpbad''>[$msgpbadprtls bad]</A></TD></TR>\n";
+    $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=msgpbad'>[$msgpbadprtls bad]</A></TD></TR>\n";
   $html .= "</table></TD>";
   
   $html .= "</TD>\n";
@@ -249,6 +249,46 @@ echo "download: <input type='checkbox' name='dwd' >\n";
 echo "<input type='submit' name='compare' value='compare'>\n";
 echo "<input type='hidden' name='reconId' value='$reconId'>\n";
 echo "</FORM>\n";
+
+$formaction =  $_SERVER['PHP_SELF']."?expId=$expId&reconId=$reconId";
+$comm_param = ($_POST[comm_param]) ? $_POST[comm_param] : 'bad';
+$iter1 = ($_POST[iter1]) ? $_POST[iter1] : $iterations[0];
+$iter2 = ($_POST[iter2]) ? $_POST[iter2] : $iterations[0];
+echo "<P><FORM NAME='commonparticles' METHOD='POST' ACTION=$formaction>
+Show Common Particles Between Iterations:";
+echo "
+	<select name='comm_param'>\n";
+$comm_params = array('bad'=>'Bad by EMAN refine',
+	'good'=>'Good by EMAN refine');
+if ($refinerun['package']=='EMAN/MsgP') { 
+		$comm_params_msgp = array('msgpbad'=>'Bad by Msg Passing');
+		$comm_params = array_merge($comm_params,$comm_params_msgp);
+}
+foreach (array_keys($comm_params) as $key) {
+	$s = ($comm_param==$key) ? 'selected' : '';
+	echo "<option value=$key $s>$comm_params[$key]</option>\n";
+}
+echo "</select>\n";
+echo "Start from Iteration: <select name='iter1'>\n";
+foreach ($iterations as $iteration){
+	$s = ($iter1==$iteration[iteration]) ? 'selected' : '';
+	echo "<option $s>$iteration[iteration]</option>\n";
+}
+echo "</select>\n";
+echo "To Iteration: <select name='iter2'>\n";
+foreach ($iterations as $iteration){
+	$s = ($iter2==$iteration[iteration]) ? 'selected' : '';
+	echo "<option $s>$iteration[iteration]</option>\n";
+}
+echo "</select>\n";
+echo "<input type='submit' name='set values' value='Set' >\n";
+echo "<br />";
+if ($_POST[comm_param]) {
+	echo "<input type='button' name='set values' value='Show common particles' onclick=\"parent.location=('viewstack.php?recon=$reconId&substack=$comm_param&itr1=$iter1&itr2=$iter2')\">\n";
+	$_POST = array();
+}	
+echo "</FORM>\n";
+
 
 echo $html;
 

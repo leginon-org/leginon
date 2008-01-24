@@ -97,6 +97,7 @@ function checkJobs($showjobs=False,$extra=False) {
     $dlbuttons = '';
     if ($jobinfo['status']=='Q') $status='Queued';
     elseif ($jobinfo['status']=='R') $status='Running';
+		elseif ($jobinfo['status']=='A') $status='Aborted';
     elseif ($jobinfo['status']=='D') {
       $dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
       $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
