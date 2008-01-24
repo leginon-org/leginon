@@ -85,7 +85,7 @@ class Correlator(object):
         self.shift['x'] += self.raw_shift['x']*self.correlation_binning
         self.shift['y'] -= self.raw_shift['y']*self.correlation_binning
 
-        self.swapQuadrants(pc)
+        pc = self.swapQuadrants(pc)
 
         return pc
 
