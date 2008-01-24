@@ -1,5 +1,5 @@
 import math
-from pyami import correlator, peakfinder
+from pyami import correlator, peakfinder, imagefun
 import numpy
 import scipy.ndimage
 
@@ -52,13 +52,7 @@ class Correlator(object):
         return tuple(shift)
 
     def swapQuadrants(self, image):
-        rows, columns = image.shape
-        swap = image[:rows/2, :columns/2].copy()
-        image[:rows/2, :columns/2] = image[rows/2:, columns/2:]
-        image[rows/2:, columns/2:] = swap
-        swap = image[rows/2:, :columns/2].copy()
-        image[rows/2:, :columns/2] = image[:rows/2, columns/2:]
-        image[:rows/2, columns/2:] = swap
+	return imagefun.swap_quadrants(image)
 
     def correlate(self, image, tilt, channel=None):
         if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
