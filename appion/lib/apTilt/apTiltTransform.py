@@ -43,9 +43,13 @@ def getTiltedShift(img1, img2, tiltdiff):
 	binned2 = apImage.binImg(untilt2, bin)
 	#apImage.arrayToJpeg(binned1, "binned1.jpg")
 	#apImage.arrayToJpeg(binned2, "binned2.jpg")
+	filt1 = apImage.highPassFilter(binned1, apix=1.0, radius=20.0, localbin=2)
+	filt2 = apImage.highPassFilter(binned2, apix=1.0, radius=20.0, localbin=2)
+	apImage.arrayToJpeg(filt1, "filt1.jpg")
+	apImage.arrayToJpeg(filt2, "filt2.jpg")
 
 	### cross-correlate
-	cc = correlator.cross_correlate(binned1, binned2, pad=True)
+	cc = correlator.cross_correlate(filt1, filt2, pad=True)
 	rad = min(cc.shape)/10.0
 	cc = apImage.highPassFilter(cc, radius=rad)
 	cc = apImage.normRange(cc)
@@ -412,7 +416,7 @@ def mergePicks(picks1, picks2, limit=25.0):
 	newarray = numpy.vstack((picks1, goodarray))
 	return newarray
 
-def alignPicks(picks1, picks2, data, limit=10.0):
+def alignPicks(picks1, picks2, data, limit=20.0):
 	list1 = []
 	alignlist2 = []
 	#transform picks2
