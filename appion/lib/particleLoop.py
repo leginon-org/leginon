@@ -107,15 +107,22 @@ class ParticleLoop(appionLoop.AppionLoop):
 
 	def processImage(self, imgdata):
 		#creates self.peaktree
+		self.procimgarray = None
 		self.peaktree = self.particleProcessImage(imgdata)
 		apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = len(self.peaktree)
 
+		#instead of re-processing image use one that is already processed...
+		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
+		if self.procimgarray is None and os.path.isfile(procimgpath):
+			apDisplay.printMsg("reading processing mrc")
+			self.procimgarray = apImage.mrcToArray(procimgpath, msg=False)
+
 		if self.params['nojpegs'] is False:
 			if self.threadJpeg is True:
-				threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params)).start()
+				threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params, self.procimgarray)).start()
 			else:
-				apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params)
+				apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params, self.procimgarray)
 		else:
 			apDisplay.printWarning("Skipping JPEG creation")
 		if self.params['defocpair'] is True:
