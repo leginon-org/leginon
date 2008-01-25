@@ -86,11 +86,11 @@ function createClassifierSummary() {
 			echo "
 			<tr><td bgcolor='#ffcccc' colspan=2>
 				Averaged into $totimg classes: &nbsp;&nbsp;&nbsp;
-				<a href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
+				<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
 			if ($classid[varFile]) {
 				echo "
 				<font size=-1>&nbsp;
-					<a href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>
+					<a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>
 				</font>";
 			}
 			echo"</td></tr>";

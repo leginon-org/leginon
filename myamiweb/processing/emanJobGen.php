@@ -658,7 +658,7 @@ function writeJobFile ($extra=False) {
     $line.="getProjEulers.py proj.img proj.$i.txt\n";
     # if ref-free correllation analysis
     if ($coran=='on') {
-      $line .="coran_for_cls2.py mask=$mask proc=$procs iter=$i";
+      $line .="coran_for_cls.py mask=$mask proc=$procs iter=$i";
       if ($sym) $line .= " sym=$sym";
       if ($hard) $line .= " hard=$hard";
       if ($eotest=='on') $line .= " eotest";
