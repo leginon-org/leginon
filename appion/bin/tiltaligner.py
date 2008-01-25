@@ -14,6 +14,7 @@ import apDatabase
 import apDisplay
 import apParticle
 import apPeaks
+import apImage
 import ApTiltPicker
 from apTilt import apTiltTransform
 from apTilt import apTiltPair
@@ -115,14 +116,26 @@ class tiltAligner(particleLoop.ParticleLoop):
 		#RUN THE ALIGNER GUI
 		self.runTiltAligner(imgdata, tiltdata)
 		numpeaks = len(self.peaktree1)
-		apDisplay.printMsg("Found "+str(numpeaks)+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
+		#apDisplay.printMsg("Found "+str(numpeaks)+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = numpeaks
+
+		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
+		if os.path.isfile(procimgpath):
+			apDisplay.printMsg("reading processing mrc for reg")
+			procimg1 = apImage.mrcToArray(procimgpath, msg=False)
+		procimgpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
+		if os.path.isfile(procimgpath):
+			apDisplay.printMsg("reading processing mrc for tilt")
+			procimg2 = apImage.mrcToArray(procimgpath, msg=False)
+		procimg1, procimg2 = apTiltTransform.maskOverlapRegion(procimg1, procimg2, self.appdata)
 
 		#CREATE PEAK JPEG
 		if self.threadJpeg is True:
-			threading.Thread(target=apPeaks.createTiltedPeakJpeg, args=(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params)).start()
+			threading.Thread(target=apPeaks.createTiltedPeakJpeg, args=(imgdata, tiltdata, self.peaktree1,
+				self.peaktree2, self.params, procimg1, procimg2)).start()
 		else:
-			apPeaks.createTiltedPeakJpeg(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params)
+			apPeaks.createTiltedPeakJpeg(imgdata, tiltdata, self.peaktree1, self.peaktree2, self.params,
+				procimg1, procimg2)
 
 		#EXTRA DONE DICT CALL
 	 	self._writeDoneDict(tiltdata['filename'])
@@ -131,8 +144,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		Over-writes the particleLoop commit and uses the appionLoop commit
 		"""
-		if len(self.peaktree1) == 0:
-			apDisplay.printWarning("No particle picks; not commiting data")
+		if len(self.peaktree1) < 3:
+			apDisplay.printWarning("Not enough particle picks; not commiting data")
 			return False
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is None:
@@ -167,7 +180,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 			#particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
 		particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
 		targets = self.particlesToTargets(particles)
-		apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
+		#apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
 		return targets
 
 	def particlesToTargets(self, particles):
@@ -278,6 +291,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
 		# 3. particle errors are copied to self.peakerrors by app
 		# 4. assessment status is  copied to self.assess
+		self.appdata = self.app.data
 		self.peaktree1 = apPeaks.convertListToPeaks(self.peaks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.peaks2, self.params)
 
