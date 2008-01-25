@@ -223,7 +223,7 @@ function stackModelForm($extra=False) {
       echo "<OPTION VALUE='$opvals'";
       // select previously set stack on resubmit
       if ($stackid['stackid']==$stackidval) echo " SELECTED";
-      echo">$stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+      echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
     }
     echo "</SELECT>\n";
   }

@@ -144,7 +144,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       echo "<OPTION VALUE='$stackid[stackid]'";
       // select previously set stack on resubmit
       if ($stackid['stackid']==$_POST['stack']) echo " SELECTED";
-      echo">$stackid[stackid] ($s[stackRunName]: $nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+      echo">$stackid[stackid] ($s[shownstackname]: $nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
     }
     echo "</SELECT>\n";
   }

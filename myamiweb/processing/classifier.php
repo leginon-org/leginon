@@ -121,7 +121,9 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 		foreach ($stackIds as $stack) {
 			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
-			$runname=$stackparams['stackRunName'];
+
+			//handle multiple runs in stack
+			$runname=$stackparams[shownstackname];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			echo "<OPTION VALUE='$stack[stackid]'";
 			// select previously set prtl on resubmit

@@ -342,20 +342,71 @@ class particledata {
 	}
 
 	function getStackParams ($stackId) {
-		// We should probably not use * here
-		$q = "SELECT * "
-			."FROM ApRunsInStackData as r "
-			."LEFT JOIN ApStackRunData as s "
-			."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-			."LEFT JOIN ApStackData as sd "
-			."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+		$q = "SELECT sd.*, pd.`path` "
+			."FROM ApStackData as sd "
 			."LEFT JOIN ApPathData AS pd ON "
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
-			."LEFT JOIN `ApStackParamsData` p "
-			."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+			."WHERE sd.`DEF_id` = '$stackId'";
+		list($stack_primary_array) = $this->mysql->getSQLResult($q);
+		// Get runs in stack
+		$q = "SELECT r.`REF|ApStackRunData|stackRun` as runid "
+			."FROM ApRunsInStackData as r "
 			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
-		list($r) = $this->mysql->getSQLResult($q);
+		$stackrunIds = $this->mysql->getSQLResult($q);
+		// Parameters of original stack of the runs in stack
+		foreach ($stackrunIds as $runid) {
+			$stackrunId = $runid[runid];	
+			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
+			$childstackId = $rstack['stackId'];
+			//Get Parameters
+			$q = "SELECT sd.`DEF_id` as stackId, s.`DEF_id` as runid, s.*, p.*"
+				."FROM ApRunsInStackData as r "
+				."LEFT JOIN ApStackRunData as s "
+				."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+				."LEFT JOIN ApStackData as sd "
+				."ON (r.`REF|ApStackData|stack`=sd.`DEF_id`) "
+				."LEFT JOIN ApPathData AS pd ON "
+				."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
+				."LEFT JOIN `ApStackParamsData` p "
+				."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
+				."WHERE r.`REF|ApStackData|stack` = '$childstackId'";
+			list($r) = $this->mysql->getSQLResult($q);
+			$params[]=$r;
+		}
+		//handle multiple runs in stack
+		if (count($stackrunIds) > 1) {
+			$patharray = explode('/',$stack_primary_array[path]);
+			$runname = $patharray[count($patharray)-1];
+		} else {
+			$runname=$params[0]['stackRunName'];
+		}
+
+		$runarray = array();
+		$runarray['shownstackname'] = $runname;
+		$runarray['count'] = count($stackrunIds);
+		//use first run parameters for basic stack info
+		$runarray['boxSize']=$params[0]['boxSize'];
+		$runarray['bin']=$params[0]['bin'];
+		$runarray = array_merge($runarray,$stack_primary_array);	
+		$r = array_merge($params,$runarray);
 		return $r;
+	}
+
+	function getOriginalStackFromStackRun($stackrunId) {
+	//get the original stack when a stackrun is also used in combined stacks
+		$q = "SELECT rs.`REF|ApStackData|stack` as stackId from `ApRunsInStackData` rs"
+			. " WHERE"
+			. " rs.`REF|ApStackRunData|stackRun`=".$stackrunId." "
+			. " AND"
+			. " rs.`REF|ApStackData|stack` NOT IN"
+			. " (SELECT `REF|ApStackData|stack` as stack FROM "
+			. " (SELECT count(*) as count ,`REF|ApStackData|stack`"
+			. " FROM `ApRunsInStackData`"
+			. " WHERE 1"
+			. " GROUP BY `REF|ApStackData|stack`) runs"
+			. " where runs.`count` > 1)";
+		list($rstack) = $this->mysql->getSQLResult($q);
+		return $rstack;
 	}
 
 	function getStackSelectionRun ($stackId) {

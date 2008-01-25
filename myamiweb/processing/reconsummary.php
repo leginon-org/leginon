@@ -50,8 +50,6 @@ if ($reconRuns) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
-	//$stackparam=$particle->getStackParams($stackid['stackid']);
-
 	foreach ($reconRuns as $reconrun) {
 		// GET INFO
 		$stackcount=$particle->getNumStackParticles($reconrun['REF|ApStackData|stack']);

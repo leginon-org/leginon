@@ -69,7 +69,7 @@ foreach ($refaliIds as $refid) {
   $display_keys['mask diams']=$r['imask_diam']." <I>(in)</I> / ".$r['mask_diam']." <I>(out)</I>";
   $display_keys['xy search range']=$r['xysearch'];
   $display_keys['c-symmetry']=$r['csym'];
-  $display_keys['stack run name']=$s['stackRunName'];
+  $display_keys['stack run name']=$s['shownstackname'];
 
   foreach($display_keys as $k=>$v) {
     echo formatHtmlRow($k,$v);

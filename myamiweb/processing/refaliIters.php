@@ -35,8 +35,7 @@ function displayIterations($refaliId) {
 	$r = $particle->getRefInfoFromId($refaliId);
 	$p = $particle->getRefAliParams($refaliId);
 	$ts = $particle->getRefTemplatesFromId($refaliId);
-	//echo print_r($ts);
-	$s = $particle->getStackParams($p['REF|ApStackData|stack']);
+//	$s = $particle->getStackParams($p['REF|ApStackData|stack']);
 	//$t = $particle->getTemplatesFromId($refaliId['REF|ApTemplateImageData|refTemplate']);
 	if ($p['csym']>1) $csym=$p['csym'];
 

@@ -46,7 +46,7 @@ foreach ($stackIds as $stackid) {
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
 	if ($nump == 0) continue;
-	echo divtitle("STACK: <font class='aptitle'>".$s['stackRunName']
+	echo divtitle("STACK: <font class='aptitle'>".$s['shownstackname']
 		."</font> (ID: <font>"
 		."<a class='aptitle' href='stackreport.php?sId="
 		.$stackid[stackid]."'>".$stackid[stackid]."</a>"
@@ -54,7 +54,6 @@ foreach ($stackIds as $stackid) {
 
 
 	echo "<table border='0'>\n";
-
 	$stackavg = $s['path']."/average.mrc";
 	if (file_exists($stackavg)) {
 		echo "<tr><td rowspan='15' align='center'>";
@@ -70,9 +69,7 @@ foreach ($stackIds as $stackid) {
 	# get box size
 	$boxsz=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
 	$boxsz.=" pixels";
-
-	$pflip = ($s['phaseFlipped']==1) ? "Yes" : "No";
-	if ($s['aceCutoff']) $pflip.=" (ACE > $s[aceCutoff])";
+	
 	$display_keys['description']=$s['description'];
 	$display_keys['# prtls']=$nump;
 	$stackfile = $s['path']."/".$s['name'];
@@ -80,6 +77,12 @@ foreach ($stackIds as $stackid) {
 	$display_keys['name']="<A TARGET='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid[stackid]'>".$s['name']."</A>";
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
+
+	# use values from first of the combined run, if any for now	
+	$s = $s[0];
+	$pflip = ($s['phaseFlipped']==1) ? "Yes" : "No";
+	if ($s['aceCutoff']) $pflip.=" (ACE > $s[aceCutoff])";
+	
 	$display_keys['phase flipped']=$pflip;
 	if ($s['correlationMin']) $display_keys['correlation min']=$s['correlationMin'];
 	if ($s['correlationMax']) $display_keys['correlation max']=$s['correlationMax'];

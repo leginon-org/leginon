@@ -244,7 +244,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		foreach ($stackIds as $stack) {
 			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
-			$runname=$stackparams['stackRunName'];
+			$runname=$stackparams['shownstackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			echo "<OPTION VALUE='$stack[stackid]'";
 			// select previously set prtl on resubmit

@@ -69,7 +69,7 @@ function createClassifierSummary() {
 		$display_keys['# particles']=$r['num_particles'];
 		$display_keys['lp filt']=$r['lp_filt'];
 		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
-		$display_keys['stack run name']=$s['stackRunName'];
+		$display_keys['stack run name']=$s['shownstackname'];
 
 		foreach($display_keys as $k=>$v) {
 			echo formatHtmlRow($k,$v);
