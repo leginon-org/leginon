@@ -342,15 +342,13 @@ def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 
 	return
 
-def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params):
+def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params, procimg1=None, procimg2=None):
 	if 'templatelist' in params:
 		count =   len(params['templatelist'])
 	else: count = 1
 	bin =     int(params["bin"])
 	diam =    float(params["diam"])
 	apix =    float(params["apix"])
-	#bin /= 2
-	#if bin < 1: bin = 1
 	binpixrad  = diam/apix/2.0/float(bin)
 	imgname1 = imgdata1['filename']
 	imgname2 = imgdata2['filename']
@@ -358,8 +356,14 @@ def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params):
 	jpegdir = os.path.join(params['rundir'],"jpgs")
 	apParam.createDirectory(jpegdir, warning=False)
 
-	imgarray1 = apImage.preProcessImage(imgdata1['image'], bin=bin, planeReg=False, params=params)
-	imgarray2 = apImage.preProcessImage(imgdata2['image'], bin=bin, planeReg=False, params=params)
+	if procimg1 is not None:
+		imgarray1 = procimg1
+	else:
+		imgarray1 = apImage.preProcessImage(imgdata1['image'], bin=bin, planeReg=False, params=params)
+	if procimg2 is not None:
+		imgarray2 = procimg2
+	else:
+		imgarray2 = apImage.preProcessImage(imgdata2['image'], bin=bin, planeReg=False, params=params)
 	imgarray = numpy.hstack((imgarray1,imgarray2))
 
 	image = apImage.arrayToImage(imgarray)
