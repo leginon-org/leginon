@@ -325,7 +325,7 @@ def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 
 	if procimgarray is not None:
 		#instead of re-processing image use one that is already processed...
-		procimgarray = imgarray
+		imgarray = procimgarray
 	else:
 		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
 
