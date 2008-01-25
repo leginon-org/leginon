@@ -83,7 +83,7 @@ class AppionLoop(object):
 		### start the loop
 		notdone=True
 		while notdone:
-			apDisplay.printColor("Beginning Main Loop", "green")
+			apDisplay.printColor("\nBeginning Main Loop", "green")
 			for imgdata in self.imgtree:
 
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
@@ -687,12 +687,12 @@ class AppionLoop(object):
 			if self.params['background'] is True:
 				sys.stderr.write(",")
 			else:
-				apDisplay.printMsg("reprocessing "+apDisplay.shortenImageName(imgdata['filename']))
+				"""apDisplay.printMsg("reprocessing "+apDisplay.shortenImageName(imgdata['filename']))"""
 		else:
 			if self.params['background'] is True:
 				sys.stderr.write(".")
 			else:
-				apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))
+				"""apDisplay.printMsg("processing "+apDisplay.shortenImageName(imgdata['filename']))"""
 
 		return True
 

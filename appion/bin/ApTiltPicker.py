@@ -58,11 +58,11 @@ class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 		if filename is None:
 			self.setImage(None)
 		elif filename[-4:] == '.mrc':
-			image = apImage.mrcToArray(filename)
+			image = apImage.mrcToArray(filename, msg=False)
 			self.setImage(image.astype(numpy.float32))
 		else:
 			image = Image.open(filename)
-			array = apImage.imageToArray(image)
+			array = apImage.imageToArray(image, msg=False)
 			array = array.astype(numpy.float32)
 			self.setImage(array)
 
@@ -1247,7 +1247,7 @@ class PickerApp(wx.App):
 			elif 'point' in i:
 				self.appionloop.tiltparams[i] = v
 			else:
-				print "skipping key: "+str(i)+" of type "+str(type(v))
+				"""print "skipping key: "+str(i)+" of type "+str(type(v))"""
 		self.appionloop.tiltparams['x1'] = self.data['point1'][0]
 		self.appionloop.tiltparams['y1'] = self.data['point1'][1]
 		self.appionloop.tiltparams['x2'] = self.data['point2'][0]

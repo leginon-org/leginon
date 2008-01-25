@@ -45,8 +45,8 @@ def getTiltedShift(img1, img2, tiltdiff):
 	#apImage.arrayToJpeg(binned2, "binned2.jpg")
 	filt1 = apImage.highPassFilter(binned1, apix=1.0, radius=20.0, localbin=2)
 	filt2 = apImage.highPassFilter(binned2, apix=1.0, radius=20.0, localbin=2)
-	apImage.arrayToJpeg(filt1, "filt1.jpg")
-	apImage.arrayToJpeg(filt2, "filt2.jpg")
+	#apImage.arrayToJpeg(filt1, "filt1.jpg")
+	#apImage.arrayToJpeg(filt2, "filt2.jpg")
 
 	### cross-correlate
 	cc = correlator.cross_correlate(filt1, filt2, pad=True)
@@ -61,8 +61,9 @@ def getTiltedShift(img1, img2, tiltdiff):
 
 	#find peak
 	peak = peakfinder.findSubpixelPeak(cc, lpf=0)
-	import pprint
-	pprint.pprint(peak)
+	#import pprint
+	#pprint.pprint(peak)
+	apDisplay.printMsg("Guessed xy-shift btw two images; SNR = "+str(peak['snr']))
 	pixpeak = peak['subpixel peak']
 	shift = correlator.wrap_coord(pixpeak, cc.shape)
 	shift = numpy.array([shift[1]*bin, shift[0]*bin])
@@ -409,7 +410,7 @@ def mergePicks(picks1, picks2, limit=25.0):
 		p1, dist = findClosestPick(p2,picks1)
 		if dist > limit:
 			good.append(p2)
-	apDisplay.printMsg("Kept "+str(len(good))+" of "+str(len(picks2))+" overlapping peaks")
+	#apDisplay.printMsg("Kept "+str(len(good))+" of "+str(len(picks2))+" overlapping peaks")
 	if len(good) == 0:
 		return picks1
 	goodarray = numpy.asarray(good)
