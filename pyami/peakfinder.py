@@ -168,8 +168,18 @@ class PeakFinder(object):
 		## fit a quadratic to it and find the subpixel peak
 		roipeak = self.quadFitPeak(roi)
 		#roipeak = self.gaussFitPeak(roi)
-		srow = peakrow + roipeak['row'] - npix/2
-		scol = peakcol + roipeak['col'] - npix/2
+		subfailed = False
+		if roipeak['row'] < 0 or roipeak['row'] > npix:
+			srow = float(peakrow)
+			subfailed = True
+		else:
+			srow = peakrow + roipeak['row'] - npix/2
+		if roipeak['col'] < 0 or roipeak['col'] > npix:
+			scol = float(peakcol)
+			subfailed = True
+		else:
+			scol = peakcol + roipeak['col'] - npix/2
+
 		peakvalue = roipeak['value']
 		peakminsum = roipeak['minsum']
 
@@ -178,6 +188,7 @@ class PeakFinder(object):
 		self.results['subpixel peak value'] = peakvalue
 		self.results['minsum'] = peakminsum
 		self.results['coeffs'] = roipeak['coeffs']
+		self.results['subfailed'] = subfailed
 
 		#NEIL's SNR calculation
 		self.results['noise']  = nd_image.standard_deviation(self.image)
