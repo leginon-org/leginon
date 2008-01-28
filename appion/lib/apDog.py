@@ -1,16 +1,12 @@
 #Part of the new pyappion
 
 import sys
-import apDatabase
+#import apDatabase
 import apDisplay
-import apDB
-import appionData
 import math
 import numpy
 import apImage
 from scipy import ndimage
-
-appiondb = apDB.apdb
 
 def runDogDetector(imagename, params):
 	"""
@@ -18,7 +14,7 @@ def runDogDetector(imagename, params):
 	"""
 	#imgpath = img['session']['image path'] + '/' + imagename + '.mrc'
 	#image = mrc.read(imgpath)
-	image = apDatabase.getImageData(imagename)['image']
+	#image = apDatabase.getImageData(imagename)['image']
 	scale          = params['apix']
 	if(params['binpixdiam'] != None):
 		binpixrad      = params['binpixdiam']/2
