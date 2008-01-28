@@ -121,11 +121,11 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 		if os.path.isfile(procimgpath):
-			apDisplay.printMsg("reading processing mrc for reg")
+			#apDisplay.printMsg("reading processing mrc for reg")
 			procimg1 = apImage.mrcToArray(procimgpath, msg=False)
 		procimgpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
 		if os.path.isfile(procimgpath):
-			apDisplay.printMsg("reading processing mrc for tilt")
+			#apDisplay.printMsg("reading processing mrc for tilt")
 			procimg2 = apImage.mrcToArray(procimgpath, msg=False)
 		procimg1, procimg2 = apTiltTransform.maskOverlapRegion(procimg1, procimg2, self.appdata)
 
