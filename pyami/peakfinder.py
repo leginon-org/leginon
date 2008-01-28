@@ -169,12 +169,12 @@ class PeakFinder(object):
 		roipeak = self.quadFitPeak(roi)
 		#roipeak = self.gaussFitPeak(roi)
 		subfailed = False
-		if roipeak['row'] < 0 or roipeak['row'] > npix:
+		if roipeak['row'] < 0 or roipeak['row'] > npix or roipeak['row'] == numpy.nan:
 			srow = float(peakrow)
 			subfailed = True
 		else:
 			srow = peakrow + roipeak['row'] - npix/2
-		if roipeak['col'] < 0 or roipeak['col'] > npix:
+		if roipeak['col'] < 0 or roipeak['col'] > npix or roipeak['col'] == numpy.nan:
 			scol = float(peakcol)
 			subfailed = True
 		else:
