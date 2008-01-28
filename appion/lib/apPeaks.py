@@ -12,7 +12,7 @@ import apImage
 import apDisplay
 import apParam
 #leginon
-from pyami import imagefun
+from pyami.imagefun import threshold, find_blobs
 
 
 def findPeaks(imgdict, ccmaplist, params, maptype="ccmaxmap"):
@@ -21,14 +21,14 @@ def findPeaks(imgdict, ccmaplist, params, maptype="ccmaxmap"):
 	count = 0
 	for ccmap in ccmaplist:
 		count += 1
-		peaktree = findPeaksInMap(ccmap, imgdict, count, params, maptype)
+		peaktree = findPeaksInMap(ccmap, imgdict['filename'], count, params, maptype)
 		peaktreelist.append(peaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params)
 
 	return peaktree
 
-def findPeaksInMap(ccmap, imgdict, count, params, maptype):
+def findPeaksInMap(ccmap, imgname, count, params, maptype):
 	threshold = float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
@@ -36,7 +36,6 @@ def findPeaksInMap(ccmap, imgdict, count, params, maptype):
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
 	maxsizemult = float(params["maxsize"])
-	imgname =   imgdict['filename']
 	pixrad =    diam/apix/2.0
 	binpixrad = diam/apix/2.0/float(bin)
 	tmpldbid = None
@@ -69,21 +68,25 @@ def findPeaksInMap(ccmap, imgdict, count, params, maptype):
 	if params["maxthresh"] is not None:
 		peaktree = maxThreshPeaks(peaktree, float(params["maxthresh"]))
 
-	
 	if maptype=='dogmap':
 		#remove peaks from areas near the border of the image
 		#only do this for dogmaps because findem already eliminates border pix from cccmaxmaps
-		peaktree=removeBorderPeaks(peaktree,diam,imgdict['camera']['dimension']['x'],imgdict['camera']['dimension']['y'])
-		
+		peaktree=removeBorderPeaks(peaktree, diam, ccmap.shape[0], ccmap.shape[1])
+
+	peaktree.sort(_peakCompare)
 	if(len(peaktree) > maxpeaks):
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
-		peaktree.sort(_peakCompare)
 		peaktree = peaktree[0:maxpeaks]
-	else:
-		peaktree.sort(_peakCompare)
 
 	apParam.createDirectory(mapdir, warning=False)
+	outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
+	createPeakMapImage(peaktree, ccmap, imgname=outfile, pixrad=pixrad, bin=bin)
 
+	peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
+
+	return peaktree
+
+def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0):
 	image = apImage.arrayToImage(ccmap)
 	image = image.convert("RGB")
 
@@ -98,17 +101,12 @@ def findPeaksInMap(ccmap, imgdict, count, params, maptype):
 	### color peaks in map
 	image2 = image.copy()
 	draw = ImageDraw.Draw(image2)
+	binpixrad = pixrad / float(bin)
 	drawPeaks(peaktree, draw, bin, binpixrad, fill=True)
 	image = Image.blend(image, image2, 0.3) 
 
-	outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
-	print " ... writing JPEG: ",outfile
-	image.save(outfile, "JPEG", quality=90)
-
-	peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
-
-	return peaktree
-
+	apDisplay.printMsg("writing summary JPEG: "+imgname)
+	image.save(imgname, "JPEG", quality=80)
 
 def maxThreshPeaks(peaktree, maxthresh):
 	newpeaktree = []
@@ -233,8 +231,8 @@ def convertListToPeaks(peaks, params):
 
 def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None):
 	peaktree = []
-	if tmpldbid is not None:
-		print "TEMPLATE DBID:",tmpldbid
+	#if tmpldbid is not None:
+	#	print "TEMPLATE DBID:",tmpldbid
 	for blobclass in blobtree:
 		peakdict = {}
 		peakdict['ycoord']      = float(blobclass.stats['center'][0]*float(bin))
@@ -255,17 +253,17 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 	calls leginon's find_blobs
 	"""
 	totalarea = (ccmap.shape)[0]**2
-	ccthreshmap = imagefun.threshold(ccmap, thresh)
+	ccthreshmap = threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
 	if percentcov > 15:
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
 	try:
-		blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
+		blobtree = find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
 		  maxsize, minsize, maxmoment, elim, summary)
 	except:
-		blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
+		blobtree = find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
 		  maxsize, minsize, maxmoment, elim)
 	return blobtree, percentcov
 
