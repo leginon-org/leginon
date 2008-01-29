@@ -22,9 +22,9 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	standard processing for an image
 	"""
 	simgarray = imgarray.copy()
-	simgarray = binImg(simgarray,bin)
 	if median > 0:
 		simgarray = ndimage.median_filter(simgarray, size=median)
+	simgarray = binImg(simgarray,bin)
 	simgarray = highPassFilter(simgarray,apix,bin,highpass)
 	simgarray = pixelLimitFilter(simgarray, pixlimit)
 	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
