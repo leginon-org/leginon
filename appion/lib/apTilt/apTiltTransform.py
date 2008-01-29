@@ -278,8 +278,8 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	return a2b
 
 def maskOverlapRegion(image1, image2, data):
-	image1 = ndimage.median_filter(image1, size=2)
-	image2 = ndimage.median_filter(image2, size=2)
+	#image1 = ndimage.median_filter(image1, size=2)
+	#image2 = ndimage.median_filter(image2, size=2)
 
 	#SET IMAGE LIMITS
 	####################################
