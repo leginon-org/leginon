@@ -55,7 +55,7 @@ $particle = new particledata();
 	echo "<table><tr><td>";
 	for ($i=0; $i < $s[count]; $i++) {
 		$selectionruninfo=$particle->getStackSelectionRun($s[$i][stackId]);
-		$s[$i]['particleSelection']=$selectionruninfo['name']."(id ".$selectionruninfo['selectionid'].")";
+		$s[$i]['particleSelection']=array('display'=>$selectionruninfo['name'], 'link'=>$selectionruninfo['selectionid']);
 		$exclude_fields = array('DEF_id','DEF_timestamp','REF|ApPathData|path');
 		$title = "run parameters";
 		$particle->displayParameters($title,$s[$i],$exclude_fields);

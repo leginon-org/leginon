@@ -30,6 +30,13 @@ class particledata {
 
 	function displayParameters ($title,$params,$exclude_fields) {
 		//standard parameter table display
+
+		//Array of $params keys that are shown as a link to another report
+		$links=array(
+			'stackId'=>'stackreport.php?sId='
+			,'particleSelection'=>'particlerunreport.php?rId='
+		);
+
 		echo "<h4>".$title."</h4>";
 		echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 		$selection_fields = array_keys($params);
@@ -41,16 +48,47 @@ class particledata {
 					break;
 				}
 			}
+			//Display only non-excluded fields
 			if (!$exclude) {
+				// Clean up referenced key for display
 				$displaykeyarray = explode('Data|',$key);
-				$displaykey = array_pop($displaykeyarray);
-				$displaykeyarray = explode('DEF_',$displaykey);
-				$displaykey = array_pop($displaykeyarray);
+				if (count($displaykeyarray)>1) {
+					$displaykey = array_pop($displaykeyarray);
+					$refkey = array_pop($displaykeyarray);
+				} else {
+					$displaykeyarray = explode('DEF_',$key);
+					$displaykey = array_pop($displaykeyarray);
+					$refkey = $displaykey;
+				}
+				// Display only non-null params
 				if (gettype($params[$key])!='NULL') {
 					echo "<tr>\n";
+					echo "</td>";
 					echo "<td><span class='datafield0'>$displaykey</span></td>";
-					echo "<td>$params[$key]</td>";
-					echo "</tr>\n";
+					echo "<td>";
+					$type='text';
+					foreach(array_keys($links) as $linkkey) {
+						if ($linkkey ==$refkey) {
+							$type='link';
+							$link = $links[$linkkey];
+						}
+					}
+					if ($type!='link') {
+						//plain display
+						echo $params[$key];
+					} else {
+						//Specify different values for the displayed data and link if available
+						if (!is_array($params[$key])) {
+							$datadisplay = $params[$key];
+							$datalink = $datadisplay;
+						} else {
+							$datadisplay = $params[$key]['display'];
+							$datalink = $params[$key]['link'];
+						}
+						$link = $link.$datalink;
+						echo "<a target='params' href='".$link."'>".$datadisplay."</a>";
+					}
+					echo "</td></tr>\n";
 				}
 			}
 
