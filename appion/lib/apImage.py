@@ -364,7 +364,7 @@ def msd(x,y,mask=None):
 # PIL to numpy conversions
 #########################################################
 
-def imageToArray(im, convertType='uint8', dtype=None):
+def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	"""
 	Convert PIL image to numpy array
 	copied and modified from http://mail.python.org/pipermail/image-sig/2005-September/003554.html
