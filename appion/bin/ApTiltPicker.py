@@ -1258,14 +1258,16 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onQuit(self, evt):
-		"""
-		self.data['theta'] = 0.0
-		self.data['gamma'] = 0.0
-		self.data['phi'] = 0.0
-		self.data['shiftx'] = 0.0
-		self.data['shifty'] = 0.0
-		self.data['scale'] = 1.0
-		"""
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		if len(a1) != len(a2):
+			self.statbar.PushStatusText("ERROR: One image has more picks than the other.\n Quit cancelled.", 0)
+			dialog = wx.MessageDialog(self.frame, "One image has more picks than the other. Quit cancelled",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
 		if self.appionloop:
 			self.copyDataToAppionLoop()
 			self.data['filetypeindex'] = self.appionloop.params['outtypeindex']
