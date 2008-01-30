@@ -574,7 +574,7 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 		#SORT PARTICLES
-		self.sortParticles(None)
+		#self.sortParticles(None)
 		#GET ARRAYS
 		a1b = self.getAlignedArray1()
 		a2b = self.getAlignedArray2()
