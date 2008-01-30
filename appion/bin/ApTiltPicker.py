@@ -83,6 +83,7 @@ class PickerApp(wx.App):
 
 	def OnInit(self):
 		self.data = {}
+		self.appionloop = None
 		self.onInitParams(None)
 		self.data['outfile'] = ""
 		self.data['dirname'] = ""
@@ -113,7 +114,7 @@ class PickerApp(wx.App):
 		self.panel1.selectiontool.setTargeting('Picked', True)
 
 		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), 
-			shape=self.ashape, size=self.ashapesize)
+			shape=self.ashape, size=self.ashapesize, numbers=True)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
 
@@ -140,7 +141,7 @@ class PickerApp(wx.App):
 		self.panel2.selectiontool.setTargeting('Picked', True)
 
 		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), 
-			shape=self.ashape, size=self.ashapesize)
+			shape=self.ashape, size=self.ashapesize, numbers=True)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
 
@@ -561,18 +562,20 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onUpdate(self, evt):
-		targets1 = self.panel1.getTargets('Picked')
-		targets2 = self.panel2.getTargets('Picked')
-		if len(targets1) == 0 or len(targets2) == 0:
+		#GET ARRAYS
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		#CHECK TO SEE IF IT OKAY TO PROCEED
+		if len(a1) == 0 or len(a2) == 0:
 			self.statbar.PushStatusText("ERROR: Cannot transfer picks. There are no picks.", 0)
 			dialog = wx.MessageDialog(self.frame, "Cannot transfer picks.\nThere are no picks.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
+		#SORT PARTICLES
+		self.sortParticles(None)
 		#GET ARRAYS
-		a1 = self.getArray1()
-		a2 = self.getArray2()
 		a1b = self.getAlignedArray1()
 		a2b = self.getAlignedArray2()
 		#SET THE ALIGNED ARRAYS
@@ -580,13 +583,54 @@ class PickerApp(wx.App):
 		self.panel1.setTargets('Aligned', a2b )
 		#FIND PARTICLES WITH LARGE ERROR
 		(a1c, a2c) = self.getBadPicks()
-		self.panel1.setTargets('Worst', a1c )
-		self.panel2.setTargets('Worst', a2c )
+		if len(a1c) > 0:
+			self.panel1.setTargets('Worst', a1c )
+		if len(a2c) > 0:
+			self.panel2.setTargets('Worst', a2c )
 		#for target in targets1:
 		#	target['stats']['RMSD'] = rmsd
 
 	#---------------------------------------
+	def sortParticles(self, evt):
+		#GET ARRAYS
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		if len(a1) != len(a2):
+			return False
+		#MERGE INTO ONE
+		#a3 = numpy.hstack((a1, a2))
+		a3 = []
+		for i in range(len(a1)):
+			a3.append([a1[i,0], a1[i,1], a2[i,0], a2[i,1],])
+		#SORT PARTICLES
+		def _distSortFunc(a, b):
+			if 5*a[0]+a[1] > 5*b[0]+b[1]:
+				return 1
+			return -1
+		a3.sort(_distSortFunc)
+		a3b = numpy.asarray(a3)
+		#SPLIT BACK UP
+		a1b = a3b[:,0:2]
+		a2b = a3b[:,2:4]
+		#fix first particle???
+		#a1c = numpy.vstack(([[a1[0,0], a1[0,1]],a1b)
+		#a2c = numpy.vstack(([[a2[0,0], a2[0,1]],a2b)
+		#SET SORTED TARGETS
+		self.panel1.setTargets('Picked', a1b )
+		self.panel2.setTargets('Picked', a2b )
+
+	#---------------------------------------
 	def onGuessShift(self, evt):
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		if len(targets1) > 2 or len(targets2) > 2:
+			self.statbar.PushStatusText("ERROR: Will not guess shift when you have more than 2 particles", 0)
+			dialog = wx.MessageDialog(self.frame, "Will not guess shift when you have more than 2 particles.",\
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+
 		#cross-corrlate to get shift
 		img1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
 		tiltdiff = self.data['theta']
@@ -597,10 +641,16 @@ class PickerApp(wx.App):
 		if min(abs(shift)) < min(img1.shape)/16.0:
 			self.statbar.PushStatusText("Warning: Overlap was close to edge and possibly wrong.", 0)
 
+		origin = numpy.asarray(img1.shape)/2.0
+		halfsh = origin + shift/2.0
 		if len(self.picks1) > 1:
-			origin = self.picks1[0]
-		else:
-			origin = numpy.asarray(img1.shape)/2.0
+			#get center most pick
+			dmin = origin[0]
+			for pick in self.picks1:
+				da = numpy.hypot(pick[0]-halfsh[0], pick[1]-halfsh[1])
+				if da < dmin:
+					dmin = da
+					origin = pick		
 		newpart = origin - shift
 		#print "origin=",origin
 		#print "newpart=",newpart
@@ -809,11 +859,11 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onFitAll(self, evt):
+		self.onUpdate(None)
 		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame, "You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, "You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-			return
 		if False and (len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5):
 			dialog = wx.MessageDialog(self.frame, "You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -880,7 +930,10 @@ class PickerApp(wx.App):
 		self.data['thetarun'] = False
 		self.data['optimrun'] = False
 		self.data['arealim'] = 50000.0
-		self.data['theta'] = 0.0
+		if self.appionloop is None:
+			self.data['theta'] = 0.0
+		else:
+			self.data['theta'] = self.appionloop.theta
 		self.data['gamma'] = 0.0
 		self.data['phi'] = 0.0
 		self.data['shiftx'] = 0.0
