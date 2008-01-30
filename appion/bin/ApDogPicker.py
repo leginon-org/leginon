@@ -1,0 +1,135 @@
+#!/usr/bin/python -O
+
+from optparse import OptionParser
+import sys
+#PIL
+import Image
+import ImageDraw
+#appion
+import apImage
+import apDog
+import apPeaks
+import apDisplay
+import apParam
+import math
+
+class DogPicker(object):
+	def __init__(self):
+		#set the name of the function; needed for param setup
+		self.functionname = apParam.getFunctionName(sys.argv[0])
+
+		### setup default parser: output directory, etc.
+		self.parser = OptionParser()
+		self.setupParserOptions()
+		self.params = apParam.convertParserToParams(self.parser)
+
+		### check if user wants to print help message
+		self.checkConflicts()
+
+		### write function log
+		apParam.writeFunctionLog(sys.argv)
+
+	def setupParserOptions(self):
+		"""
+		set the input parameters
+		"""
+		self.parser.set_usage("Usage: %prog --image=FILE --thresh=FLOAT [options]")
+		self.parser.add_option("-i", "--image", dest="image",
+			help="Image to run dog picker on", metavar="FILE")
+		self.parser.add_option("-t", "--thresh", dest="thresh", type="float",
+			help="Threshold in standard deviations above the mean, e.g. --thresh=0.7", metavar="FLOAT")
+		self.parser.add_option("-o", "--outfile", dest="outfile", default="picks.txt",
+			help="Text file to write particle picks to", metavar="FILE")
+		self.parser.add_option("-d", "--pixdiam", dest="pixdiam", type="float",
+			help="Diameter of particle in pixels", metavar="FLOAT")
+
+	def checkConflicts(self):
+		"""
+		make sure the necessary parameters are set correctly
+		"""
+		if self.params['image'] is None:
+			apDisplay.printError("enter a image file ID, e.g. --image=bestimage.mrc")
+		if self.params['thresh'] is None:
+			apDisplay.printError("enter a threshold, e.g. --thresh=0.7")
+		if self.params['outfile'] is None:
+			apDisplay.printError("enter a output txt file, e.g. --outfile=picks.txt")
+		if self.params['pixdiam'] is None:
+			apDisplay.printError("enter the diameter of particle in pixels, e.g. --pixdiam=140")
+		self.params["overlapmult"] = 1.5
+		self.params["maxpeaks"] = 500
+		self.params["maxsizemult"] = 1.0
+		self.params["maxthresh"] = 2.0
+
+	def findPeaksInMap(self, dogmap):
+		thresh = float(self.params["thresh"])
+		pixrad = self.params['pixdiam']/2.0
+
+		olapmult =  float(self.params["overlapmult"])
+		maxpeaks =  int(self.params["maxpeaks"])
+		maxsizemult = float(self.params["maxsizemult"])
+		maxthresh = float(self.params["maxthresh"])
+
+		#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
+		partarea = 4*math.pi*(pixrad**2)
+		maxsize = int(round(maxsizemult*partarea,0))+1
+
+		#VARY PEAKS FROM STATS
+		apPeaks.varyThreshold(dogmap, thresh, maxsize)
+
+		#GET FINAL PEAKS
+		blobtree, percentcov = apPeaks.findBlobs(dogmap, thresh, maxsize=maxsize, maxpeaks=maxpeaks, summary=True)
+		peaktree = apPeaks.convertBlobsToPeaks(blobtree, 1, 1, 1, pixrad)
+		apDisplay.printMsg("Found "+str(len(peaktree))+" peaks ("+str(percentcov)+"% coverage)")
+		if(percentcov > 25):
+			apDisplay.printWarning("thresholding covers more than 25% of image; you should increase the threshold")
+
+		cutoff = olapmult*pixrad #1.5x particle radius in pixels
+		apPeaks.removeOverlappingPeaks(peaktree, cutoff)
+		if self.params["maxthresh"] is not None:
+			peaktree = apPeaks.maxThreshPeaks(peaktree, maxthresh)
+
+		#remove peaks from areas near the border of the image
+		peaktree = apPeaks.removeBorderPeaks(peaktree, pixrad*2.0, dogmap.shape[0], dogmap.shape[1])
+
+		peaktree.sort(apPeaks._peakCompare)
+		if(len(peaktree) > maxpeaks):
+			apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
+			peaktree = peaktree[0:maxpeaks]
+
+		dogimg = self.params['image'][:-4]+"-dogmap.jpg"
+		apPeaks.createPeakMapImage(peaktree, dogmap, imgname=dogimg, pixrad=pixrad)
+
+		#apPeaks.peakTreeToPikFile(peaktree, self.params['image'], 1, "..")
+
+		return peaktree
+
+	def _peakCompare(self, a, b):
+		if float(a['xcoord']+a['ycoord']) > float(b['xcoord']+b['ycoord']):
+			return 1
+		else:
+			return -1
+
+	def writeTextFile(self, peaktree):
+		peaktree.sort(self._peakCompare)
+		f = open(self.params['outfile'], "w")
+		for peak in peaktree:
+			#print peak
+			f.write(str(round(peak['xcoord'],2))+"\t"+str(round(peak['ycoord'],2))+"\n")
+		f.close()
+
+	def start(self):
+		"""
+		this is the main component of the script
+		where all the processing is done
+		"""
+		imgarray = apImage.mrcToArray(self.params['image'])
+		pixrad = self.params['pixdiam']/2.0
+		dogmap = apDog.diffOfGauss(imgarray, pixrad, k=1.2)
+		dogmap = apImage.normStdev(dogmap)/4.0
+		#apImage.arrayToJpeg(dogmap, "dogmap.jpg")
+		peaktree = self.findPeaksInMap(dogmap)
+		self.writeTextFile(peaktree)
+
+if __name__ == '__main__':
+	dogpicker = DogPicker()
+	dogpicker.start()
