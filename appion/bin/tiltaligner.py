@@ -36,6 +36,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 			self.processAndSaveAllImages()
 		self.app = ApTiltPicker.PickerApp(mode='loop')
 		self.app.appionloop = self
+		self.theta = 0.0
 
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
@@ -159,7 +160,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		### insert the particles
 		self.insertParticlePeakPairs(imgdata, tiltdata, transdata)
 		### insert image assessment
-		if self.assess != self.assessold and self.assess is not None:
+		if self.assess is not None:
 			#note runid is overrided to be 'run1'
 			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
 			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
@@ -248,7 +249,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 		#set tilt
 		tilt1 = apDatabase.getTiltAngleDeg(imgdata)
 		tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
-		self.app.data['theta'] = abs(tilt2) - abs(tilt1) 
+		self.theta = abs(tilt2) - abs(tilt1)
+		self.app.data['theta'] = self.theta
 		self.app.data['filetypeindex'] = self.params['outtypeindex']
 		self.app.data['outfile'] = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.app.getExtension()
 		self.app.data['dirname'] = self.params['pickdatadir']
