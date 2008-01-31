@@ -6,7 +6,7 @@ import numpy
 #PIL
 import Image
 import ImageDraw
-import ImageOps
+#import ImageOps
 #appion
 import apImage
 import apDisplay
