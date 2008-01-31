@@ -63,7 +63,7 @@ def getTiltedShift(img1, img2, tiltdiff):
 	peak = peakfinder.findSubpixelPeak(cc, lpf=0)
 	#import pprint
 	#pprint.pprint(peak)
-	apDisplay.printMsg("Guessed xy-shift btw two images; SNR = "+str(peak['snr']))
+	apDisplay.printMsg("Guessed xy-shift btw two images; SNR = "+str(round(peak['snr'],2)))
 	pixpeak = peak['subpixel peak']
 	shift = correlator.wrap_coord(pixpeak, cc.shape)
 	shift = numpy.array([shift[1]*bin, shift[0]*bin])
@@ -417,25 +417,35 @@ def mergePicks(picks1, picks2, limit=25.0):
 	newarray = numpy.vstack((picks1, goodarray))
 	return newarray
 
-def betterMergePicks(picks1a, picks1b, picks2a, picks2b, limit=25.0):
-	good = []
-	#newa1 = numpy.vstack((a1, list1))
+def betterMergePicks(picks1a, picks1b, picks2a, picks2b, limit=25.0, msg=True):
+	elim = 0
+	#elimate overlapping peaks
 	for i,p1b in enumerate(picks1b):
 		p1a, dist = findClosestPick(p1b, picks1a)
 		if dist < limit:
+			elim += 1
 			picks1b = numpyPop2d(picks1b, i)
 			picks2b = numpyPop2d(picks2b, i)
 	for i,p2b in enumerate(picks2b):
 		p2a, dist = findClosestPick(p2b, picks2a)
 		if dist < limit:
+			elim += 1
 			picks1b = numpyPop2d(picks1b, i)
 			picks2b = numpyPop2d(picks2b, i)
-	apDisplay.printMsg("Kept "+str(len(picks1b))+" of "+str(len(picks1a))+" overlapping peaks")
+	#merge pick sets
 	if picks1b.shape[0] > 0 and picks2b.shape[0] > 0:
 		newa1 = numpy.vstack((picks1a, picks1b))
 		newa2 = numpy.vstack((picks2a, picks2b))
-		return newa1,newa2
-	return picks1a, picks2a
+	else:
+		newa1 = picks1a
+		newa2 = picks2a
+	if msg is True:
+		newpart = len(newa1) - len(picks1a)
+		newpart1 = len(picks1b) - elim
+		apDisplay.printMsg("Merged "+str(newpart1)+","+str(newpart)+" of "+str(len(picks1b))
+			+" into " +str(len(picks1a))+" giving "+str(len(newa1))+" particles")
+
+	return newa1,newa2
 
 def numpyPop2d(a, i):
 	return numpy.vstack((a[0:i,:],a[i+1:len(a),:]))

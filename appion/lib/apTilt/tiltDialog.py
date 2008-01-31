@@ -351,11 +351,33 @@ class DogPickerDialog(wx.Dialog):
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.thresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
-		label = wx.StaticText(self, -1, "Please wait after running",
+		label = wx.StaticText(self, -1, "Particle contrast:",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
+		self.whitePart = wx.RadioButton(self, -1, 'Light on Dark (stain)', (10, 10), style=wx.RB_GROUP)
+		self.blackPart = wx.RadioButton(self, -1, 'Dark on Light (ice)', (10, 30))
+		self.Bind(wx.EVT_RADIOBUTTON, self.partContrast, id=self.whitePart.GetId())
+		self.Bind(wx.EVT_RADIOBUTTON, self.partContrast, id=self.blackPart.GetId())
+		self.partContrast(True)
+		inforow.Add(self.whitePart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.blackPart, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		"""
+		self.whitePart = wx.RadioButton(self, -1, "light", style=wx.RB_GROUP)
+		self.whitePart.SetValue(True)
+		self.whitePart.Bind(wx.EVT_RADIOBUTTON, self.onWhitePart)
+		self.blackPart = wx.RadioButton(self, -1, "dark", style=wx.RB_GROUP)
+		self.blackPart.SetValue(False)
+		self.blackPart.Bind(wx.EVT_RADIOBUTTON, self.onBlackPart)
+
+		"""
+
+		label = wx.StaticText(self, -1, "Please wait after running",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
 		self.canceldog = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.rundog = wx.Button(self, wx.ID_OK, '&Run')
@@ -369,12 +391,23 @@ class DogPickerDialog(wx.Dialog):
 		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
 		self.SetSizerAndFit(self.sizer)
 
+	def partContrast(self, evt):
+		if self.whitePart.GetValue() is True:
+			return True
+		return False
+
 	def onRunDogPicker(self, evt):
+		apDisplay.printColor("===============\nRunning experimental DoGPicker","cyan")
 		#apix  = self.apix.GetValue()
 		pixdiam  = self.diam.GetValue()
 		#srange  = self.srange.GetValue()
 		thresh  = self.thresh.GetValue()
-		invert = True
+		invert = self.partContrast(None)
+
+		if invert is True:	
+			apDisplay.printMsg("Picking light particles on dark backgound, i.e. stain")
+		else:
+			apDisplay.printMsg("Picking dark particles on light backgound, i.e. ice")
 
 		"""
 		self.parent.statbar.PushStatusText("ERROR: Dog Picker has not been implemented yet", 0)
@@ -417,9 +450,7 @@ class DogPickerDialog(wx.Dialog):
 		self.parent.picks2 = self.peaktreeToPicks(peaktree2)
 
 		self.parent.onImportPicks(None)
-		self.parent.onUpdate(None)
-
-
+		apDisplay.printColor("Finished DoGPicker\n===================","cyan")
 
 	def peaktreeToPicks(self, peaktree):
 		picks = []

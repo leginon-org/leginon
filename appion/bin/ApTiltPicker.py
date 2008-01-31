@@ -447,45 +447,58 @@ class PickerApp(wx.App):
 
 		vert1 = self.panel1.getTargetPositions('Polygon')
 		vert2 = self.panel2.getTargetPositions('Polygon')
-		if len(vert1) < 3 and len(vert2) < 3:
+		newpart1 = []
+		newpart2 = []
+		eliminated = 0
+
+		if len(vert1) == len(vert2):
+			self.panel1.setTargets('Polygon', [])
+			self.panel2.setTargets('Polygon', [])
+
+		elif len(vert1) < 3 and len(vert2) < 3:
 			self.statbar.PushStatusText("ERROR: Could not create a closed polygon. Select more vertices.", 0)
-			dialog = wx.MessageDialog(self.frame, "Could not create a closed polygon.\nSelect more vertices.",\
+			dialog = wx.MessageDialog(self.frame, 
+				"Could not create a closed polygon.\nSelect more vertices.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
+
 		elif len(vert1) > len(vert2):
+			#draw transformed polygon
 			v1 = numpy.asarray(vert1, dtype=numpy.float32)
 			v2 = apTiltTransform.a1Toa2Data(v1, self.data)
 			self.panel2.setTargets('Polygon', v2)
 			vert2 = [ tuple((v[0],v[1])) for v in v2 ]
+			#elim particles
+			maskimg1 = polygon.filledPolygon(self.panel1.imagedata.shape, vert1)
+			for i in range(targets1.shape[0]):
+				coord = tuple((targets1[i,0], targets1[i,1]))
+				if maskimg1[coord] != 0:
+					eliminated += 1
+				else:
+					newpart1.append(targets1[i])
+					newpart2.append(targets2[i])
+
 		elif len(vert2) > len(vert1):
+			#draw transformed polygon
 			v2 = numpy.asarray(vert2, dtype=numpy.float32)
 			v1 = apTiltTransform.a2Toa1Data(v2, self.data)
 			self.panel1.setTargets('Polygon', v1)
 			vert1 = [ tuple((v[0],v[1])) for v in v1 ]
+			#elim particles
+			maskimg2 = polygon.filledPolygon(self.panel2.imagedata.shape, vert2)
+			for i in range(targets2.shape[0]):
+				coord = tuple((targets2[i,0], targets2[i,1]))
+				if maskimg2[coord] != 0:
+					eliminated += 1
+				else:
+					newpart1.append(targets1[i])
+					newpart2.append(targets2[i])
 
-		maskimg1 = polygon.filledPolygon(self.panel1.imagedata.shape, vert1)
-		eliminated = 0
-		newpart1 = []
-		for target in targets1:
-			coord = tuple((target[0], target[1]))
-			if maskimg1[coord] != 0:
-				eliminated += 1
-			else:
-				newpart1.append(target)
 		self.statbar.PushStatusText(str(eliminated)+" particle(s) eliminated inside polygon", 0)
+
 		self.panel1.setTargets('Picked',newpart1)
-
-		newpart2 = []
-		maskimg2 = polygon.filledPolygon(self.panel2.imagedata.shape, vert2)
-		for target in targets2:
-			coord = tuple((int(target[0]), int(target[1])))
-			if maskimg2[coord] != 0:
-				eliminated += 1
-			else:
-				newpart2.append(target)
-		self.statbar.PushStatusText(str(eliminated)+" particle(s) eliminated inside polygon", 0)
 		self.panel2.setTargets('Picked',newpart2)
 
 		self.panel1.setTargets('Polygon', [])
@@ -632,13 +645,15 @@ class PickerApp(wx.App):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		if len(targets1) > 2 or len(targets2) > 2:
-			self.statbar.PushStatusText("ERROR: Will not guess shift when you have more than 2 particles", 0)
-			dialog = wx.MessageDialog(self.frame, "Will not guess shift when you have more than 2 particles.",\
+			self.statbar.PushStatusText("ERROR: Abort guess shift; more than 2 particles", 0)
+			dialog = wx.MessageDialog(self.frame, 
+				"Will not guess shift when you have more than 2 particles.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
 
+		self.shift.SetBackgroundColour(wx.Color(200,0,0))
 		#cross-corrlate to get shift
 		img1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
 		tiltdiff = self.data['theta']
@@ -678,6 +693,8 @@ class PickerApp(wx.App):
 		#print "newpart=",newpart
 		self.panel1.setTargets('Picked', [origin])
 		self.panel2.setTargets('Picked', [newpart])
+		self.shift.SetBackgroundColour(self.deselectcolor)
+
 		return
 
 	#---------------------------------------
@@ -695,7 +712,21 @@ class PickerApp(wx.App):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
 		if len(a1) < 2 or len(a2) < 2:
+			self.statbar.PushStatusText(
+				"small arrays, no bad particles left:"+str(len(a1))+" right:"+str(len(a2))+" ", 0)
 			return ([], [])
+		if len(a1) != len(a2):
+			#a1b = self.getAlignedArray1()
+			#a2b = self.getAlignedArray2()
+			self.statbar.PushStatusText(
+				"uneven arrays, left:"+str(len(a1))+" right:"+str(len(a2))+" ", 0)
+			#uneven arrays, get rid of extra
+			if len(a1) > len(a2):
+				return (a1[len(a2):,:], [])
+				#return (a1[len(a2):,:], a2b[len(a1):,:])
+			elif len(a2) > len(a1):
+				return ([], a2[len(a1):,:])
+				#return (a1b[len(a2):,:], a2[len(a1):,:])
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
 		a1c = []
@@ -734,6 +765,11 @@ class PickerApp(wx.App):
 	def getGoodPicks(self):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
+		if len(a1) != len(a2):
+			#uneven arrays, get rid of extra
+			a1b = a1[0:len(a2),:]
+			a2b = a2[0:len(a1),:]
+			return (a1b, a2b)
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
 		a1c = []
@@ -753,8 +789,6 @@ class PickerApp(wx.App):
 				#good picks
 				a1c.append(a1[i,:])
 				a2c.append(a2[i,:])
-		self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD less than "
-			+str(int(cut))+ " pixels", 0)
 		a1d = numpy.asarray(a1c)
 		a2d = numpy.asarray(a2c)
 		return (a1d, a2d)
@@ -881,14 +915,17 @@ class PickerApp(wx.App):
 	def onFitAll(self, evt):
 		self.onUpdate(None)
 		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame, "You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, 
+				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-		if False and (len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5):
-			dialog = wx.MessageDialog(self.frame, "You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
+		if (len(self.panel1.getTargets('Picked')) < 5 
+		 or len(self.panel2.getTargets('Picked')) < 5):
+			dialog = wx.MessageDialog(self.frame, 
+				"You should pick at least 5 particle pairs first", 'Error',
+				 wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
-			return
 		self.data['optimrun'] = True
 		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
 		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
@@ -1287,9 +1324,24 @@ class PickerApp(wx.App):
 	def onQuit(self, evt):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
-		if len(a1) != len(a2):
-			self.statbar.PushStatusText("ERROR: One image has more picks than the other.\n Quit cancelled.", 0)
-			dialog = wx.MessageDialog(self.frame, "One image has more picks than the other. Quit cancelled",\
+		if len(a1) > len(a2):
+			self.statbar.PushStatusText(
+				"ERROR: Left image ("+str(len(a2))+") has more picks than the right ("
+				+str(len(a1))+"). Quit cancelled.", 0)
+			dialog = wx.MessageDialog(self.frame, 
+				"Left image ("+str(len(a2))+") has more picks than the right ("
+				+str(len(a1))+"). Quit cancelled.",
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return False
+		if len(a1) < len(a2):
+			self.statbar.PushStatusText(
+				"ERROR: Right image ("+str(len(a2))+") has more picks than the left ("
+				+str(len(a1))+"). Quit cancelled.", 0)
+			dialog = wx.MessageDialog(self.frame, 
+				"Right image ("+str(len(a2))+") has more picks than the left ("
+				+str(len(a1))+"). Quit cancelled.",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
