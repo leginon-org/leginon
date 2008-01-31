@@ -417,6 +417,29 @@ def mergePicks(picks1, picks2, limit=25.0):
 	newarray = numpy.vstack((picks1, goodarray))
 	return newarray
 
+def betterMergePicks(picks1a, picks1b, picks2a, picks2b, limit=25.0):
+	good = []
+	#newa1 = numpy.vstack((a1, list1))
+	for i,p1b in enumerate(picks1b):
+		p1a, dist = findClosestPick(p1b, picks1a)
+		if dist < limit:
+			picks1b = numpyPop2d(picks1b, i)
+			picks2b = numpyPop2d(picks2b, i)
+	for i,p2b in enumerate(picks2b):
+		p2a, dist = findClosestPick(p2b, picks2a)
+		if dist < limit:
+			picks1b = numpyPop2d(picks1b, i)
+			picks2b = numpyPop2d(picks2b, i)
+	apDisplay.printMsg("Kept "+str(len(picks1b))+" of "+str(len(picks1a))+" overlapping peaks")
+	if picks1b.shape[0] > 0 and picks2b.shape[0] > 0:
+		newa1 = numpy.vstack((picks1a, picks1b))
+		newa2 = numpy.vstack((picks2a, picks2b))
+		return newa1,newa2
+	return picks1a, picks2a
+
+def numpyPop2d(a, i):
+	return numpy.vstack((a[0:i,:],a[i+1:len(a),:]))
+
 def alignPicks(picks1, picks2, data, limit=20.0):
 	list1 = []
 	alignlist2 = []
