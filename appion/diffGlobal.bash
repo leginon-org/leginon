@@ -1,7 +1,7 @@
 #!/bin/bash
  
 ./clean.sh
-for i in `find . -type f | egrep -v "(CVS|old|tilting|ctftest|data)"`
+for i in `find . -type f | egrep -v "(CVS|old|tilting|ctftest|data|travel)"`
 do
 	if [ -f /ami/sw/packages/pyappion/$i ]
 	then
