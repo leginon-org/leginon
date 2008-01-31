@@ -655,8 +655,10 @@ class AppionLoop(object):
 		#only if an image was processed last
 		if(self.stats['lastcount'] != self.stats['count']):
 			if self.params['background'] is False:
-				apDisplay.printColor("\nStarting image "+str(self.stats['count'])+" ( skip:"+str(self.stats['skipcount'])\
-					+", remain:"+str(self.stats['imagesleft'])+")"+apDisplay.short(imgdata['filename']), "green")
+				apDisplay.printColor( "\nStarting image "+str(self.stats['count'])\
+					+" ( skip:"+str(self.stats['skipcount'])+", remain:"\
+					+str(self.stats['imagesleft'])+" ) file: "\
+					+apDisplay.short(imgdata['filename']), "green")
 			elif self.stats['count'] % 80 == 0:
 				sys.stderr.write("\n")
 			self.stats['lastcount'] = self.stats['count']
