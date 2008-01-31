@@ -8,6 +8,9 @@ try:
 except:
 	pass
 from apTilt import apTiltTransform
+import apDog
+import apPeaks
+import apImage
 
 ##
 ##
@@ -23,7 +26,8 @@ class FitThetaDialog(wx.Dialog):
 
 		inforow = wx.FlexGridSizer(3, 3, 15, 15)
 		thetastr = ("****** %3.3f ******" % self.theta)
-		label = wx.StaticText(self, -1, "Current tilt angle:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Current tilt angle:  ",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.tiltvalue = wx.StaticText(self, -1, thetastr, style=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
 		#self.tiltvalue = FloatEntry(self, -1, allownone=True, chars=5, value=thetastr)
 		label3 = wx.StaticText(self, -1, "degrees", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -32,7 +36,8 @@ class FitThetaDialog(wx.Dialog):
 		inforow.Add(label3, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		arealimstr = str(int(self.parent.data['arealim']))
-		label = wx.StaticText(self, -1, "Minimum Triangle Area:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Minimum Triangle Area:  ",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.arealimit = IntEntry(self, -1, allownone=False, chars=8, value=arealimstr)
 		label2 = wx.StaticText(self, -1, "square pixels", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -316,25 +321,41 @@ class DogPickerDialog(wx.Dialog):
 		wx.Dialog.__init__(self, self.parent.frame, -1, "DoG Auto Particle Picker")
 
 		inforow = wx.FlexGridSizer(3, 2, 15, 15)
+
+		"""
 		label = wx.StaticText(self, -1, "Pixel Size (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.apix = FloatEntry(self, -1, allownone=False, chars=5, value="1.0")
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.apix, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		"""
 
-		label = wx.StaticText(self, -1, "Particle diameter (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, "Particle diameter (pixels):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.diam = FloatEntry(self, -1, allownone=False, chars=5, value="100.0")
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.diam, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
+		label = wx.StaticText(self, -1, "Use ruler tool (above) to determine",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		"""
 		label = wx.StaticText(self, -1, "Diameter range (A):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.srange = FloatEntry(self, -1, allownone=False, chars=5, value="20.0")
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.srange, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		"""
 
 		label = wx.StaticText(self, -1, "Threshold:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.thresh = FloatEntry(self, -1, allownone=False, chars=5, value="0.7")
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(self.thresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Please wait after running",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
 
 		self.canceldog = wx.Button(self, wx.ID_CANCEL, '&Cancel')
 		self.rundog = wx.Button(self, wx.ID_OK, '&Run')
@@ -349,27 +370,61 @@ class DogPickerDialog(wx.Dialog):
 		self.SetSizerAndFit(self.sizer)
 
 	def onRunDogPicker(self, evt):
-		apix  = self.apix.GetValue()
-		diam  = self.diam.GetValue()
-		srange  = self.srange.GetValue()
+		#apix  = self.apix.GetValue()
+		pixdiam  = self.diam.GetValue()
+		#srange  = self.srange.GetValue()
 		thresh  = self.thresh.GetValue()
+		invert = True
 
-		#1: get image 1
-		#2: DoG image 1
-		#3: threshold image 1
-		#4: find peaks in image 1
-		#5: get image 2
-		#6: DoG image 2
-		#7: threshold image 2
-		#8: find peaks in image 2
-		#9: match peaks
-		#10: insert into picks
-
+		"""
 		self.parent.statbar.PushStatusText("ERROR: Dog Picker has not been implemented yet", 0)
-		dialog = wx.MessageDialog(self.parent.frame, "Dog Picker has not been implemented yet", 'Error', wx.OK|wx.ICON_ERROR)
+		dialog = wx.MessageDialog(self.parent.frame, 
+			"Dog Picker has not been implemented yet", 'Error', wx.OK|wx.ICON_ERROR)
 		if dialog.ShowModal() == wx.ID_OK:
 			dialog.Destroy()	
+		"""
 
 		self.Close()
-		self.parent.onUpdate(evt)
+
+		#1a: get image 1
+		img1 = numpy.asarray(self.parent.panel1.imagedata, dtype=numpy.float32)
+		if invert is True:
+			img1 = apImage.invertImage(img1)
+
+		#2a: DoG image 1
+		dogmap1 = apDog.diffOfGauss(img1, pixdiam/2.0, k=1.2)
+		dogmap1 = apImage.normStdev(dogmap1)/4.0
+		#3a: threshold & find peaks image 1
+		peaktree1 = apPeaks.findPeaksInMap(dogmap1, thresh, pixdiam)
+		peaktree1 = apPeaks.removeBorderPeaks(peaktree1, pixdiam, 
+			dogmap1.shape[0], dogmap1.shape[1])
+		#4a: insert into self.parent.picks1
+		self.parent.picks1 = self.peaktreeToPicks(peaktree1)
+
+		#1b: get image 2
+		img2 = numpy.asarray(self.parent.panel2.imagedata, dtype=numpy.float32)
+		if invert is True:
+			img2 = apImage.invertImage(img2)
+		#2b: DoG image 2
+		dogmap2 = apDog.diffOfGauss(img2, pixdiam/2.0, k=1.2)
+		dogmap2 = apImage.normStdev(dogmap2)/4.0
+		#3b: threshold & find peaks image 2
+		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam)
+		peaktree2 = apPeaks.removeBorderPeaks(peaktree2, pixdiam, 
+			dogmap2.shape[0], dogmap2.shape[1])
+
+		#4b: insert into self.parent.picks2
+		self.parent.picks2 = self.peaktreeToPicks(peaktree2)
+
+		self.parent.onImportPicks(None)
+		self.parent.onUpdate(None)
+
+
+
+	def peaktreeToPicks(self, peaktree):
+		picks = []
+		for p in peaktree:
+			picks.append( (p['xcoord'], p['ycoord']) )
+		npicks = numpy.asarray(picks, dtype=numpy.float32)
+		return npicks
 
