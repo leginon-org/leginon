@@ -17,7 +17,7 @@ import apDisplay
 from pyami import mrc
 
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
-		planeReg=True, median=0, invert=False, pixlimit=0):
+		planeReg=True, median=0, invert=False, pixlimit=0, msg=True):
 	"""
 	standard processing for an image
 	"""
@@ -25,9 +25,9 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	if median > 0:
 		simgarray = ndimage.median_filter(simgarray, size=median)
 	simgarray = binImg(simgarray,bin)
-	simgarray = highPassFilter(simgarray,apix,bin,highpass)
+	simgarray = highPassFilter(simgarray,apix,bin,highpass,msg=msg)
 	simgarray = pixelLimitFilter(simgarray, pixlimit)
-	simgarray = lowPassFilter(simgarray,apix,bin,lowpass)
+	simgarray = lowPassFilter(simgarray,apix,bin,lowpass,msg)
 	if planeReg is True:
 		simgarray = planeRegression(simgarray)
 	if invert is True:
@@ -37,12 +37,18 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 
 
 def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False, 
-		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=True, 
+		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=None, 
 		params={}):
 	"""
 	standard processing for an image
 	"""
 	startt = time.time()
+	#MESSAGING
+	if msg is None:
+		if 'background' in params:
+			msg = not params['background']
+		else:
+			msg = True
 	#BINNING
 	if bin is None:
 		if 'bin' in params:
@@ -96,7 +102,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 			pixlimit = 0
 			apDisplay.printWarning("'pixlimit' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
-	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert, pixlimit)
+	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert, pixlimit, msg)
 	if msg is True:
 		apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
@@ -163,22 +169,24 @@ def pixelLimitFilter(imgarray, pixlimit=0):
 #	print imgarray2
 	return imgarray2
 
-def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0):
+def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	low pass filter image to radius resolution
 	"""
 	if radius == 0:
-		print " ... skipping low pass filter"
+		if msg is True:
+			apDisplay.printMsg("skipping low pass filter")
 		return(imgarray)
 	sigma=float(radius/apix/float(bin))
 	return ndimage.gaussian_filter(imgarray, sigma=sigma/3.0)
 
-def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8):
+def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
 	high pass filter image to radius resolution
 	"""
 	if radius == 0 or imgarray.shape[0] < 256:
-		apDisplay.printMsg("skipping high pass filter")
+		if msg is True:
+			apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)
 	try:
 		bimgarray = binImg(imgarray, localbin)

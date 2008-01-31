@@ -204,9 +204,6 @@ def insertParticlePeaks(peaktree, imgdata, params):
 	if not runids:
 		apDisplay.printError("could not find runid in database")
 
-	# WRITE PARTICLES TO DATABASE
-	apDisplay.printMsg("Inserting "+str(len(peaktree))+" particles into database for "+apDisplay.shortenImageName(imgname))
-
 	### WRITE PARTICLES TO DATABASE
 	count = 0
 	for peakdict in peaktree:
@@ -236,7 +233,8 @@ def insertParticlePeaks(peaktree, imgdata, params):
 			if not presult:
 				count+=1
 				appiondb.insert(particlesq)
-	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database")
+	if params['background'] is False:
+		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database")
 	return
 
 def insertParticlePicks(params,imgdata,manual=False):
