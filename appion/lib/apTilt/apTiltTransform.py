@@ -418,32 +418,44 @@ def mergePicks(picks1, picks2, limit=25.0):
 	return newarray
 
 def betterMergePicks(picks1a, picks1b, picks2a, picks2b, limit=25.0, msg=True):
-	elim = 0
-	#elimate overlapping peaks
-	for i,p1b in enumerate(picks1b):
-		p1a, dist = findClosestPick(p1b, picks1a)
-		if dist < limit:
-			elim += 1
-			picks1b = numpyPop2d(picks1b, i)
-			picks2b = numpyPop2d(picks2b, i)
-	for i,p2b in enumerate(picks2b):
-		p2a, dist = findClosestPick(p2b, picks2a)
-		if dist < limit:
-			elim += 1
-			picks1b = numpyPop2d(picks1b, i)
-			picks2b = numpyPop2d(picks2b, i)
+	picks1c = []
+	picks2c = []
+	origpart = picks1b.shape[0]
+	#elimate peaks that overlap with already picked
+	for i in range(picks1b.shape[0]):
+		p1a, dist = findClosestPick(picks1b[i], picks1a)
+		if dist > limit:
+			#no nearby particle
+			picks1c.append(picks1b[i])
+			picks2c.append(picks2b[i])
+			#picks1b = numpyPop2d(picks1b, i)
+			#picks2b = numpyPop2d(picks2b, i)
+	#apDisplay.printMsg("Kept "+str(len(picks1c))+" of "+str(len(picks1b)))
+	#apDisplay.printMsg("Kept "+str(len(picks2c))+" of "+str(len(picks2b)))
+	picks1d = []
+	picks2d = []
+	for i,p2c in enumerate(picks2c):
+		p2a, dist = findClosestPick(p2c, picks2a)
+		if dist > limit:
+			#no nearby particle
+			picks1d.append(picks1c[i])
+			picks2d.append(picks2c[i])
+	#apDisplay.printMsg("Kept "+str(len(picks1d))+" of "+str(len(picks1c)))
+	#apDisplay.printMsg("Kept "+str(len(picks2d))+" of "+str(len(picks2c)))
+	picks1e = numpy.asarray(picks1d, dtype=numpy.int32)
+	picks2e = numpy.asarray(picks2d, dtype=numpy.int32)
 	#merge pick sets
-	if picks1b.shape[0] > 0 and picks2b.shape[0] > 0:
-		newa1 = numpy.vstack((picks1a, picks1b))
-		newa2 = numpy.vstack((picks2a, picks2b))
+	if picks1e.shape[0] > 0 and picks2e.shape[0] > 0:
+		newa1 = numpy.vstack((picks1a, picks1e))
+		newa2 = numpy.vstack((picks2a, picks2e))
 	else:
 		newa1 = picks1a
 		newa2 = picks2a
 	if msg is True:
 		newpart = len(newa1) - len(picks1a)
-		newpart1 = len(picks1b) - elim
-		apDisplay.printMsg("Merged "+str(newpart1)+","+str(newpart)+" of "+str(len(picks1b))
-			+" into " +str(len(picks1a))+" giving "+str(len(newa1))+" particles")
+		#newpart1 = len(picks1b) - elim
+		apDisplay.printMsg("Imported "+str(newpart)+" of "+str(origpart)
+			+" & merged with existing " +str(len(picks1a))+" giving "+str(len(newa1))+" particles")
 
 	return newa1,newa2
 
