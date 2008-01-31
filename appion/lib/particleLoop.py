@@ -109,13 +109,14 @@ class ParticleLoop(appionLoop.AppionLoop):
 		#creates self.peaktree
 		self.procimgarray = None
 		self.peaktree = self.particleProcessImage(imgdata)
-		apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
+		if self.params['background'] is False:
+			apDisplay.printMsg("Found "+str(len(self.peaktree))+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = len(self.peaktree)
 
 		#instead of re-processing image use one that is already processed...
 		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 		if self.procimgarray is None and os.path.isfile(procimgpath):
-			apDisplay.printMsg("reading processing mrc")
+			apDisplay.printMsg("re-processing mrc")
 			self.procimgarray = apImage.mrcToArray(procimgpath, msg=False)
 
 		if self.params['nojpegs'] is False:
@@ -123,7 +124,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 				threading.Thread(target=apPeaks.createPeakJpeg, args=(imgdata, self.peaktree, self.params, self.procimgarray)).start()
 			else:
 				apPeaks.createPeakJpeg(imgdata, self.peaktree, self.params, self.procimgarray)
-		else:
+		elif self.params['background'] is False:
 			apDisplay.printWarning("Skipping JPEG creation")
 		if self.params['defocpair'] is True:
 			self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
@@ -267,8 +268,8 @@ class ParticleLoop(appionLoop.AppionLoop):
 		self._createDirectory(os.path.join(self.params['rundir'],"pikfiles"),warning=False)
 		self._createDirectory(os.path.join(self.params['rundir'],"jpgs"),warning=False)
 		self._createDirectory(os.path.join(self.params['rundir'],self.params['mapdir']),warning=False)
-
-		apDisplay.printMsg("creating particle output directories")
+		if self.params['background'] is False:
+			apDisplay.printMsg("creating particle output directories")
 		self.particleCreateOutputDirs()
 
 	def specialParseParams(self, args):
@@ -318,7 +319,8 @@ class ParticleLoop(appionLoop.AppionLoop):
 				newargs.append(arg)
 
 		if len(newargs) > 0:
-			apDisplay.printMsg("parsing particle parameters")
+			if self.params['background'] is False:
+				apDisplay.printMsg("parsing particle parameters")
 			self.particleParseParams(newargs)
 
 	def specialParamConflicts(self):
@@ -329,8 +331,8 @@ class ParticleLoop(appionLoop.AppionLoop):
 				apDisplay.printError("autopik is currently not supported")
 			if self.params['thresh']==0 and self.params['autopik']==0:
 				apDisplay.printError("neither manual threshold or autopik parameters are set, please set one.")
-
-		apDisplay.printMsg("checking particle param conflicts")
+		if self.params['background'] is False:
+			apDisplay.printMsg("checking particle param conflicts")
 		self.particleParamConflicts()
 
 

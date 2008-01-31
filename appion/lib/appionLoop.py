@@ -252,8 +252,8 @@ class AppionLoop(object):
 			time.sleep(10)
 
 		self.result_dirs={}
-		
-		apDisplay.printMsg("creating special output directories")
+		if self.params['background'] is False:
+			apDisplay.printMsg("creating special output directories")
 		self.specialCreateOutputDirs()
 
 	def _checkParamConflicts(self):
@@ -272,8 +272,8 @@ class AppionLoop(object):
 			apDisplay.printError("models is a reserved runid, please use another runid")
 		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
 			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
-
-		apDisplay.printMsg("checking special param conflicts")
+		if self.params['background'] is False:
+			apDisplay.printMsg("checking special param conflicts")
 		self.specialParamConflicts()
 
 	def _createDefaultParams(self):
@@ -455,7 +455,8 @@ class AppionLoop(object):
 		self.params['session']=self.leginondb.query(sessionq)[0]
 
 		if len(newargs) > 0:
-			apDisplay.printMsg("parsing special parameters")
+			if self.params['background'] is False:
+				apDisplay.printMsg("parsing special parameters")
 			self.specialParseParams(newargs)
 
 		self.params['imgdir'] = apDatabase.getImgDir(self.params['sessionname'])
@@ -889,9 +890,10 @@ class AppionLoop(object):
 		#	sys.stderr.write("\a")
 		#	time.sleep(0.3)
 		print "ended ",time.strftime("%a, %d %b %Y %H:%M:%S")
-		print "====================================================="
-		print "====================================================="
-		print "====================================================="
+		if self.params['background'] is False:
+			print "====================================================="
+			print "====================================================="
+			print "====================================================="
 		print ""
 
 	def _parsePythonPath(self):
