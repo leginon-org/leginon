@@ -15,78 +15,102 @@ import apParam
 from pyami.imagefun import threshold, find_blobs
 
 
-def findPeaks(imgdict, ccmaplist, params, maptype="ccmaxmap"):
-
+def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	peaktreelist = []
 	count = 0
-	for ccmap in ccmaplist:
-		count += 1
-		peaktree = findPeaksInMap(ccmap, imgdict['filename'], count, params, maptype)
-		peaktreelist.append(peaktree)
 
-	peaktree = mergePeakTrees(imgdict, peaktreelist, params)
-
-	return peaktree
-
-def findPeaksInMap(ccmap, imgname, count, params, maptype):
-	threshold = float(params["thresh"])
+	imgname = imgdict['filename']
+	mapdir = os.path.join(params['rundir'],maptype+"s")
+	apParam.createDirectory(mapdir, warning=False)
+	thresh =    float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
 	apix =      float(params["apix"])
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
+	maxthresh = float(params["maxthresh"])
 	maxsizemult = float(params["maxsize"])
-	pixrad =    diam/apix/2.0
-	binpixrad = diam/apix/2.0/float(bin)
-	tmpldbid = None
-	mapdiam = None
-	if 'templateIds' in params:
-		#template correlator
-		tmpldbid =  params['templateIds'][count-1]
-	elif 'diamarray' in params:
-		#dogpicker
-		mapdiam = params['diamarray'][count-1]
-	mapdir = os.path.join(params['rundir'],maptype+"s")
+	msg =       not params['background']
+	pixdiam =   diam/apix/float(bin)
+	pixrad =    diam/apix/2.0/float(bin)
+	tmpldbid =  None
+	mapdiam =   None
+
+	for imgmap in maplist:
+		count += 1
+
+		if 'templateIds' in params:
+			#template correlator
+			tmpldbid =  params['templateIds'][count-1]
+		elif 'diamarray' in params:
+			#dogpicker
+			mapdiam = params['diamarray'][count-1]
+
+		#find peaks
+		peaktree = findPeaksInMap(imgmap, thresh, pixdiam, count, olapmult, 
+			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin)
+
+		#remove border peaks
+		peaktree = removeBorderPeaks(peaktree, pixdiam, imgmap.shape[0], imgmap.shape[1])
+
+		#write map to jpeg with highlighted peaks
+		outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
+		createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
+
+		#write pikfile
+		peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
+
+		#append to complete list of peaks
+		peaktreelist.append(peaktree)
+
+	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
+
+	return peaktree
+
+def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
+		maxsizemult=1.0, maxthresh=None, msg=True, tmpldbid=None, mapdiam=None, bin=1):
+
+	pixrad = pixdiam/2.0
 
 	#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
-	partarea = 4*math.pi*(binpixrad**2)
+	partarea = 4*math.pi*(pixrad**2)
 	maxsize = int(round(maxsizemult*partarea,0))+1
 
 	#VARY PEAKS FROM STATS
-	if params['background'] is False:
-		varyThreshold(ccmap, threshold, maxsize)
+	if msg is True:
+		varyThreshold(imgmap, thresh, maxsize)
+
 	#GET FINAL PEAKS
-	blobtree, percentcov = findBlobs(ccmap, threshold, maxsize=maxsize, maxpeaks=maxpeaks, summary=True)
+	blobtree, percentcov = findBlobs(imgmap, thresh, maxsize=maxsize,
+		maxpeaks=maxpeaks, summary=msg)
+	#convert
 	peaktree = convertBlobsToPeaks(blobtree, bin, tmpldbid, count, mapdiam)
-	print "Map "+str(count)+": Found",len(peaktree),"peaks ("+\
-		str(percentcov)+"% coverage)"
+
+	#warnings
+	if msg is True:
+		apDisplay.printMsg("Found "+str(len(peaktree))+" peaks ("+str(percentcov)+"% coverage)")
 	if(percentcov > 25):
-		apDisplay.printWarning("thresholding covers more than 25% of image; you should increase the threshold")
+		apDisplay.printWarning("thresholding covers more than 25% of image;"
+			+" you should increase the threshold")
 
+	#remove overlaps
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
-	removeOverlappingPeaks(peaktree, cutoff)
-	if params["maxthresh"] is not None:
-		peaktree = maxThreshPeaks(peaktree, float(params["maxthresh"]))
+	removeOverlappingPeaks(peaktree, cutoff, msg)
 
-	if maptype=='dogmap':
-		#remove peaks from areas near the border of the image
-		#only do this for dogmaps because findem already eliminates border pix from cccmaxmaps
-		peaktree=removeBorderPeaks(peaktree, diam, ccmap.shape[0], ccmap.shape[1])
+	#max threshold
+	if maxthresh is not None:
+		peaktree = maxThreshPeaks(peaktree, maxthresh)
 
+	#max peaks
 	peaktree.sort(_peakCompare)
 	if(len(peaktree) > maxpeaks):
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
 		peaktree = peaktree[0:maxpeaks]
 
-	apParam.createDirectory(mapdir, warning=False)
-	outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
-	createPeakMapImage(peaktree, ccmap, imgname=outfile, pixrad=pixrad, bin=bin)
-
-	peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
-
 	return peaktree
 
-def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0):
+
+def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0, msg=True):
 	image = apImage.arrayToImage(ccmap)
 	image = image.convert("RGB")
 
@@ -104,8 +128,9 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 	binpixrad = pixrad / float(bin)
 	drawPeaks(peaktree, draw, bin, binpixrad, fill=True)
 	image = Image.blend(image, image2, 0.3) 
-
-	apDisplay.printMsg("writing summary JPEG: "+imgname)
+	
+	if msg is True:
+		apDisplay.printMsg("writing summary JPEG: "+imgname)
 	image.save(imgname, "JPEG", quality=80)
 
 def maxThreshPeaks(peaktree, maxthresh):
@@ -115,8 +140,9 @@ def maxThreshPeaks(peaktree, maxthresh):
 			newpeaktree.append(peaktree[i])
 	return newpeaktree
 
-def mergePeakTrees(imgdict, peaktreelist, params):
-	print "Merging individual template peaks into one set"
+def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
+	if msg is True:
+		apDisplay.printMsg("Merging individual picked peaks into one set")
 	bin =         int(params["bin"])
 	diam =        float(params["diam"])
 	apix =        float(params["apix"])
@@ -133,7 +159,7 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 
 	#REMOVE OVERLAPPING PEAKS
 	cutoff   = olapmult*pixrad	#1.5x particle radius in pixels
-	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff)
+	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff, msg)
 
 	bestpeaktree = []
 	for peaktree in peaktreelist:
@@ -149,9 +175,10 @@ def mergePeakTrees(imgdict, peaktreelist, params):
 
 	return bestpeaktree
 
-def removeOverlappingPeaks(peaktree, cutoff):
+def removeOverlappingPeaks(peaktree, cutoff, msg=True):
 	#distance in pixels for two peaks to be too close together
-	print " ... overlap distance cutoff:",round(cutoff,1),"pixels"
+	if msg is True:
+		apDisplay.printMsg("overlap distance cutoff: "+str(round(cutoff,1))+" pixels")
 	cutsq = cutoff**2 + 1
 
 	initpeaks = len(peaktree)
@@ -169,7 +196,9 @@ def removeOverlappingPeaks(peaktree, cutoff):
 			j += 1
 		i += 1
 	postpeaks = len(peaktree)
-	apDisplay.printMsg("kept "+str(postpeaks)+" non-overlapping peaks of "+str(initpeaks)+" total peaks")
+	if msg is True:
+		apDisplay.printMsg("kept "+str(postpeaks)+" non-overlapping peaks of "
+			+str(initpeaks)+" total peaks")
 
 	return peaktree
 
@@ -327,18 +356,23 @@ def createPeakJpeg(imgdata, peaktree, params, procimgarray=None):
 	else:
 		imgarray = apImage.preProcessImage(imgarray, bin=bin, planeReg=False, params=params)
 
+	outfile = os.path.join(jpegdir, imgname+".prtl.jpg")
+	msg = not params['background']
+	subCreatePeakJpeg(imgarray, peaktree, binpixrad, outfile, bin, msg)
+
+	return
+
+def subCreatePeakJpeg(imgarray, peaktree, pixrad, imgfile, bin=1, msg=True):
 	image = apImage.arrayToImage(imgarray)
 	image = image.convert("RGB")
 	image2 = image.copy()
 	draw = ImageDraw.Draw(image2)
 	if len(peaktree) > 0:
-		drawPeaks(peaktree, draw, bin, binpixrad)
-	outfile = os.path.join(jpegdir, imgname+".prtl.jpg")
-	print " ... writing peak JPEG: ",outfile
+		drawPeaks(peaktree, draw, bin, pixrad)
+	if msg is True:
+		apDisplay.printMsg("writing peak JPEG: "+imgfile)
 	image = Image.blend(image, image2, 0.9) 
-	image.save(outfile, "JPEG", quality=95)
-
-	return
+	image.save(imgfile, "JPEG", quality=95)
 
 def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params, procimg1=None, procimg2=None):
 	if 'templatelist' in params:

@@ -60,49 +60,6 @@ class DogPicker(object):
 		self.params["maxsizemult"] = 1.0
 		self.params["maxthresh"] = 2.0
 
-	def findPeaksInMap(self, dogmap):
-		thresh = float(self.params["thresh"])
-		pixrad = self.params['pixdiam']/2.0
-
-		olapmult =  float(self.params["overlapmult"])
-		maxpeaks =  int(self.params["maxpeaks"])
-		maxsizemult = float(self.params["maxsizemult"])
-		maxthresh = float(self.params["maxthresh"])
-
-		#MAXPEAKSIZE ==> 1x AREA OF PARTICLE
-		partarea = 4*math.pi*(pixrad**2)
-		maxsize = int(round(maxsizemult*partarea,0))+1
-
-		#VARY PEAKS FROM STATS
-		apPeaks.varyThreshold(dogmap, thresh, maxsize)
-
-		#GET FINAL PEAKS
-		blobtree, percentcov = apPeaks.findBlobs(dogmap, thresh, maxsize=maxsize, maxpeaks=maxpeaks, summary=True)
-		peaktree = apPeaks.convertBlobsToPeaks(blobtree, 1, 1, 1, pixrad)
-		apDisplay.printMsg("Found "+str(len(peaktree))+" peaks ("+str(percentcov)+"% coverage)")
-		if(percentcov > 25):
-			apDisplay.printWarning("thresholding covers more than 25% of image; you should increase the threshold")
-
-		cutoff = olapmult*pixrad #1.5x particle radius in pixels
-		apPeaks.removeOverlappingPeaks(peaktree, cutoff)
-		if self.params["maxthresh"] is not None:
-			peaktree = apPeaks.maxThreshPeaks(peaktree, maxthresh)
-
-		#remove peaks from areas near the border of the image
-		peaktree = apPeaks.removeBorderPeaks(peaktree, pixrad*2.0, dogmap.shape[0], dogmap.shape[1])
-
-		peaktree.sort(apPeaks._peakCompare)
-		if(len(peaktree) > maxpeaks):
-			apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
-			peaktree = peaktree[0:maxpeaks]
-
-		dogimg = self.params['image'][:-4]+"-dogmap.jpg"
-		apPeaks.createPeakMapImage(peaktree, dogmap, imgname=dogimg, pixrad=pixrad)
-
-		#apPeaks.peakTreeToPikFile(peaktree, self.params['image'], 1, "..")
-
-		return peaktree
-
 	def _peakCompare(self, a, b):
 		if float(a['xcoord']+a['ycoord']) > float(b['xcoord']+b['ycoord']):
 			return 1
@@ -126,8 +83,19 @@ class DogPicker(object):
 		pixrad = self.params['pixdiam']/2.0
 		dogmap = apDog.diffOfGauss(imgarray, pixrad, k=1.2)
 		dogmap = apImage.normStdev(dogmap)/4.0
-		#apImage.arrayToJpeg(dogmap, "dogmap.jpg")
-		peaktree = self.findPeaksInMap(dogmap)
+		pixrad=self.params['pixdiam']/2.0
+		peaktree = apPeaks.findPeaksInMap(dogmap, thresh=self.params['thresh'],
+			pixdiam=self.params['pixdiam'], count=1, olapmult=self.params["overlapmult"],
+			maxpeaks=self.params["maxpeaks"], maxsizemult=self.params["maxsizemult"],
+			maxthresh=self.params["maxthresh"], msg=True, bin=1)
+		#remove peaks from areas near the border of the image
+		peaktree = apPeaks.removeBorderPeaks(peaktree, self.params['pixdiam'], 
+			dogmap.shape[0], dogmap.shape[1])
+		mapfile = self.params['image'][:-4]+"-map.jpg"
+		apPeaks.createPeakMapImage(peaktree, dogmap, imgname=mapfile, pixrad=pixrad)
+		imgfile = self.params['image'][:-4]+"-picks.jpg"
+		apPeaks.subCreatePeakJpeg(imgarray, peaktree, pixrad, imgfile, bin=1)
+
 		self.writeTextFile(peaktree)
 
 if __name__ == '__main__':
