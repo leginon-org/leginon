@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.86 $
+# $Revision: 1.87 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-19 00:35:25 $
+# $Date: 2008-01-31 02:11:14 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -35,12 +35,16 @@ SetParametersEventType = wx.NewEventType()
 SetDoseValueEventType = wx.NewEventType()
 SetCalibrationsEventType = wx.NewEventType()
 EditPresetEventType = wx.NewEventType()
+UpdatePresetLabelsEventType = wx.NewEventType()
+AcquireAlignDoneEventType = wx.NewEventType()
 
 EVT_PRESETS = wx.PyEventBinder(PresetsEventType)
 EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
 EVT_SET_CALIBRATIONS = wx.PyEventBinder(SetCalibrationsEventType)
 EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
 EVT_EDIT_PRESET = wx.PyEventBinder(EditPresetEventType)
+EVT_UPDATE_PRESET_LABELS = wx.PyEventBinder(UpdatePresetLabelsEventType)
+EVT_ACQUIRE_ALIGN_DONE = wx.PyEventBinder(AcquireAlignDoneEventType)
 
 class PresetsEvent(wx.PyCommandEvent):
 	def __init__(self, source):
@@ -70,6 +74,18 @@ class EditPresetEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, EditPresetEventType, source.GetId())
 		self.SetEventObject(source)
 		self.presetname = presetname
+
+class UpdatePresetLabelsEvent(wx.PyCommandEvent):
+	def __init__(self, source, leftpreset, rightpreset):
+		wx.PyCommandEvent.__init__(self, UpdatePresetLabelsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.leftpreset  = leftpreset
+		self.rightpreset = rightpreset
+
+class AcquireAlignDoneEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, AcquireAlignDoneEventType, source.GetId())
+		self.SetEventObject(source)
 
 class Calibrations(wx.StaticBoxSizer):
 	def __init__(self, parent):
@@ -474,8 +490,8 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		self.bnewfromscope.Enable(True)
 		self.bimport = self._bitmapButton('import', 'Import presets from another session')
 		self.bimport.Enable(True)
-		self.balign = self._bitmapButton('alignpresets', 'Align presets to each other')
-		self.balign.Enable(True)
+		self.bstart = self._bitmapButton('alignpresets', 'Align presets to each other')
+		self.bstart.Enable(True)
 
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
@@ -490,7 +506,7 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		sizer.Add(self.bacquire, (7, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bfromscope, (8, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bremove, (9, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.balign, (10, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bstart, (10, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bnewfromscope, (11, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bimport, (12, 1), (1, 1), wx.ALIGN_CENTER)
 		self.SetSizerAndFit(sizer)
@@ -623,6 +639,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(EVT_SET_CALIBRATIONS, self.onSetCalibrations)
 		self.Bind(EVT_SET_DOSE_VALUE, self.onSetDoseValue)
 		self.Bind(EVT_EDIT_PRESET, self.onEditPreset)
+		self.Bind(EVT_UPDATE_PRESET_LABELS, self.onUpdatePresetLabels)
+		self.Bind(EVT_ACQUIRE_ALIGN_DONE, self.onAcquireAlignDone)
 
 	def onNodeInitialized(self):
 		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
@@ -646,7 +664,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
 		self.aligndialog = AlignDialog(self, self.node)
-		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.balign)
+		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.bstart)
 
 		self.dosedialog = DoseDialog(self)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
@@ -706,17 +724,29 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onImport(self, evt):
 		self.importdialog.ShowModal()
 
+	def updatePresetLabels(self, leftpreset, rightpreset):
+		evt = UpdatePresetLabelsEvent(self, leftpreset, rightpreset)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def acquireAlignDone(self):
+		evt = AcquireAlignDoneEvent(self)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onAcquireAlignDone(self, evt):
+		self.aligndialog.enableContinue()
+
+	def onUpdatePresetLabels(self, evt):
+		self.aligndialog.presetlabelleft.SetLabel(evt.leftpreset)
+		self.aligndialog.presetlabelright.SetLabel(evt.rightpreset)
+
 	def onAlign(self, evt):
-		# update presets choice
-		preset_names = self.node.presets.keys()
-		self.aligndialog.choiceleft.setChoices(preset_names)
-		self.aligndialog.choiceright.setChoices(preset_names)
+		refpreset = self.presets.getSelectedPreset()
+		threading.Thread(target=self.node.initAlignPresets, args=(refpreset,)).start()
 		self.aligndialog.ShowModal()
 
 	def setAlignImage(self, image, typename, stats={}):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.aligndialog.GetEventHandler().AddPendingEvent(evt)
-
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
@@ -937,52 +967,54 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 class AlignDialog(wx.Dialog):
 	def __init__(self, parent, node):
 		wx.Dialog.__init__(self, parent, -1, 'Align Presets', style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-		imsize = 512
+		imsize = 384
 		self.node = node
 		self.parent = parent
 
-		preset_names = self.node.presets.keys()
+
 		lableft = wx.StaticText(self, -1, 'Reference Preset ')
-		self.choiceleft = gui.wx.Presets.PresetChoice(self, -1)
-		self.choiceleft.setChoices(preset_names)
+
+		self.presetlabelleft = wx.StaticText(self, -1)
+
 		self.imleft = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onLeftImageClicked, self.imleft)
 		#szleft = wx.GridBagSizer(5, 0)
 		szleft = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(lableft, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szpreset.Add(self.choiceleft, (0, 1), (1, 1))
+		szpreset.Add(self.presetlabelleft, (0, 1), (1, 1))
 		#szleft.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
 		#szleft.Add(self.imleft, (1, 0), (1, 1), wx.EXPAND)
 		szleft.Add(szpreset, 0, wx.EXPAND)
 		szleft.Add(self.imleft, 1, wx.EXPAND)
 
 		labright = wx.StaticText(self, -1, 'Preset To Adjust ')
-		self.choiceright = gui.wx.Presets.PresetChoice(self, -1)
-		self.choiceright.setChoices(preset_names)
+
+		self.presetlabelright = wx.StaticText(self, -1)
+
 		self.imright = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onRightImageClicked, self.imright)
 		#szright = wx.GridBagSizer(5, 0)
 		szright = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(labright, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szpreset.Add(self.choiceright, (0, 1), (1, 1))
+		szpreset.Add(self.presetlabelright, (0, 1), (1, 1))
 		#szright.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
 		#szright.Add(self.imright, (1, 0), (1, 1), wx.EXPAND)
 		szright.Add(szpreset, 0, wx.EXPAND)
 		szright.Add(self.imright, 1, wx.EXPAND)
 
-		self.bnext = wx.Button(self, -1, 'Next')
-		self.bnext.Enable(True)
-		self.balign = wx.Button(self, -1, 'Align')
-		self.balign.Enable(True)
-		bdone = wx.Button(self, wx.ID_OK, 'Done')
-		bdone.SetDefault()
+		self.bstart = wx.Button(self, -1, 'Start')
+		self.bstart.Enable(True)
+		self.bcontinue = wx.Button(self, -1, 'Continue')
+		#self.bcontinue.Enable(False)
+		#bdone = wx.Button(self, wx.ID_OK, 'Done')
+		#bdone.SetDefault()
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bnext, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szbutton.Add(self.balign, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		szbutton.Add(bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bstart, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bcontinue, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		#szbutton.Add(bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
 		szimages = wx.BoxSizer(wx.HORIZONTAL)
 		szimages.Add(szleft, 1)
@@ -999,35 +1031,33 @@ class AlignDialog(wx.Dialog):
 		self.SetAutoLayout(True)
 
 		#self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
-		self.Bind(wx.EVT_BUTTON, self.onNext, self.bnext)
-		self.Bind(wx.EVT_BUTTON, self.onAlign, self.balign)
-		self.Bind(wx.EVT_BUTTON, self.onNext, bdone)
+		self.Bind(wx.EVT_BUTTON, self.onNext, self.bcontinue)
+		self.Bind(wx.EVT_BUTTON, self.onAlign, self.bstart)
+		#self.Bind(wx.EVT_BUTTON, self.onNext, bdone)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onLeftImageClicked(self, evt):
-		self.node.onAlignImageClicked(0, evt.xy)
+		self.node.onAlignImageClicked('left', evt.xy)
 
 	def onRightImageClicked(self, evt):
-		self.node.onAlignImageClicked(1, evt.xy)
-
-	def onAcquire(self, evt):
-		leftpreset = self.choiceleft.GetStringSelection()
-		rightpreset = self.choiceright.GetStringSelection()
-		self.node.acquireAlignImages(leftpreset, rightpreset)
+		self.node.onAlignImageClicked('right', evt.xy)
 
 	def onNext(self, evt):
+		#self.bcontinue.Enable(False)
 		self.node.onAlignNext()
 
 	def onAlign(self, evt):
 		refname = self.parent.presets.getSelectedPreset()
-		#self.node.alignPresetsToRef(refname)
-		threading.Thread(target=self.node.alignPresetsToRef, args=(refname,)).start()
+		threading.Thread(target=self.node.loopAlignPresets, args=(refname,)).start()
 	
 	def onSetImage(self, evt):
 		if evt.typename == 'left':
 			self.imleft.setImage(evt.image)
 		else:
 			self.imright.setImage(evt.image)
+
+	def enableContinue(self):
+		self.bcontinue.Enable(True)
 
 class ImportDialog(wx.Dialog):
 	def __init__(self, parent, node):

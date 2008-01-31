@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.257 $
+# $Revision: 1.258 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-23 01:01:35 $
+# $Date: 2008-01-31 02:11:14 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1027,13 +1027,32 @@ class PresetsManager(node.Node):
 
 	def acquireAlignImages(self, leftpreset=None, rightpreset=None):
 		if leftpreset is None or rightpreset is None:
-			leftpreset = self.alignpresets[0]
-			rightpreset = self.alignpresets[1]
+			leftpreset = self.alignpresets['left']
+			rightpreset = self.alignpresets['right']
+
 		refpreset = self.refpreset
+
 		errstr = 'Acquire align image failed: %s'
-		self.alignpresets = [leftpreset, rightpreset, refpreset]
+		#self.alignpresets = [leftpreset, rightpreset, refpreset]
+		self.alignpresets = {'left': leftpreset, 'right': rightpreset, 'park':refpreset}
+		presetlabels = {leftpreset: 'left', rightpreset: 'right', refpreset:'park'}
+		# determine order to acquire images based on presets cycle
+		allpresetsorder = self.createCycleList(refpreset, refpreset, magshortcut=False)
+		print 'ALLORDER', allpresetsorder
+		print 'LEFT', leftpreset
+		print 'RIGHT', rightpreset
+		print 'PARK', refpreset
+		leftindex = allpresetsorder.index(leftpreset)
+		rightindex = allpresetsorder.index(rightpreset)
+		if leftindex < rightindex:
+			presetsorder = ['left', 'right', 'park']
+		else:
+			presetsorder = ['right', 'left', 'park']
+		print 'ACQUIREORDER', presetsorder
+
 		self.alignimages = {}
-		for i,presetname in enumerate(self.alignpresets):
+		for label in presetsorder:
+			presetname = self.alignpresets[label]
 			if not presetname:
 				e = 'invalid preset \'%s\'' % presetname
 				self.logger.error(errstr % e)
@@ -1048,18 +1067,13 @@ class PresetsManager(node.Node):
 				self.logger.error(errstr % e)
 				self.panel.presetsEvent()
 				return
-			if i < 2:
-				imagedata = self._acquireAlignImage(self.currentpreset)
-				self.alignimages[i] = imagedata
+			if label == 'park':
+				self.logger.info('Parked at preset "%s"' % (presetname,))
 			else:
-				self.logger.info('Parked at preset "%s"' % (refpreset))
-				imagedata = None
+				imagedata = self._acquireAlignImage(self.currentpreset)
+				self.alignimages[label] = imagedata
+				self.panel.setAlignImage(imagedata['image'], label)
  
-			if imagedata is not None:
-				if i==0:
-					self.panel.setAlignImage(imagedata['image'],'left')
-				else:
-					self.panel.setAlignImage(imagedata['image'],'right')
 			self.panel.presetsEvent()
 			
 
@@ -1269,12 +1283,13 @@ class PresetsManager(node.Node):
 			self.logger.error('Get value failed: %s' % (e,))
 			raise e
 
-	def onAlignImageClicked(self, index, xy):
+	def onAlignImageClicked(self, label, xy):
+		p = self.alignpresets[label]
 		row = xy[1]
 		col = xy[0]
-		imagedata = self.alignimages[index]
+		imagedata = self.alignimages[label]
 		acqimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
-		acqimagedata['preset'] = self.presets[self.alignpresets[index]]
+		acqimagedata['preset'] = self.presets[p]
 		target = leginondata.AcquisitionImageTargetData(image=acqimagedata)
 
 		dr = row - imagedata['image'].shape[0]/2 - 0.5
@@ -1282,54 +1297,88 @@ class PresetsManager(node.Node):
 
 		target['delta row'] = dr
 		target['delta column'] = dc
-		if index == 0:
+		if label == 'left':
 			movetype = 'stage position'
 		else:
 			movetype = 'image shift'
 		self.navclient.moveToTarget(target, movetype)
-		if index == 1:
+		if label == 'right':
 		#	save preset from the current microscope state if the right image is clicked
-			self.fromScope(self.alignpresets[index])
+			self.fromScope(p)
+		self.updateSameMagPresets(p)
 		self.acquireAlignImages()
 
-	def alignPresetsToRef(self, refname):
+	def unbinnedArea(self, presetname):
+		p = self.presets[presetname]
+		fov = p['binning']['x']*p['dimension']['x']*p['binning']['y']*p['dimension']['y']
+		return fov
+
+	def unbinnedAreaGreater(self, pname1, pname2):
+		return self.unbinnedArea(pname1) > self.unbinnedArea(pname2)
+
+	def sortByUnbinnedArea(self, presetnames):
+		presetnames.sort(self.unbinnedAreaGreater)
+
+	def initAlignPresets(self, refname):
 		if refname not in self.presets:
 			self.logger.error('Select a reference preset first.')
 			return
 		self.refpreset = refname
 		## order mags from highest to lowest
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
-		magpresets = {}
+		self.magpresets = {}
 		for p in self.presets.values():
+			if p['skip']:
+				continue
 			mag = p['magnification']
-			if mag in magpresets:
-				magpresets[mag].append(p['name'])
+			if mag in self.magpresets:
+				self.magpresets[mag].append(p['name'])
 			else:
-				magpresets[mag] = [p['name']]
-		mags = magpresets.keys()
+				self.magpresets[mag] = [p['name']]
+
+		## sort presets by largest field of view first
+		for presetnames in self.magpresets.values():
+			self.sortByUnbinnedArea(presetnames)
+
+		mags = self.magpresets.keys()
 		mags.sort()
 		refmag = self.presets[refname]['magnification']
 		refindex = mags.index(refmag)
-		highmags = mags[refindex+1:]
-		highmags.reverse()
-		lowmags = mags[:refindex]
-		self.logger.info('highmags: %s' % (highmags,))
-		self.logger.info('lowmags: %s' % (lowmags,))
+		self.highmags = mags[refindex+1:]
+		self.highmags.reverse()
+		self.lowmags = mags[:refindex]
+		self.logger.info('highmags: %s' % (self.highmags,))
+		self.logger.info('lowmags: %s' % (self.lowmags,))
 
 		refishift = {'image shift': self.presets[refname]['image shift']}
-		for otherpreset in magpresets[refmag]:
+		for otherpreset in self.magpresets[refmag]:
 			if otherpreset == refname:
 				continue
 			self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,refname))
 			self.updatePreset(otherpreset, refishift)
 
-		for maglist in [highmags, lowmags]:
-			presetleft = refname
+		if self.highmags:
+			magright = self.highmags[0]
+		elif self.lowmags:
+			magright = self.lowmags[0]
+		else:
+			magright = None
+			return
+		presetsright = self.magpresets[magright]
+		presetright = presetsright[0]
+		self.panel.updatePresetLabels(self.refpreset, presetright)
+
+	def loopAlignPresets(self, refname):
+		self.initAlignPresets(refname)
+		for maglist in [self.highmags, self.lowmags]:
+			presetleft = self.refpreset
 
 			while maglist:
 				magright = maglist[-1]
-				presetsright = magpresets[magright]
+				presetsright = self.magpresets[magright]
 				presetright = presetsright[0]
+
+				self.panel.updatePresetLabels(presetleft, presetright)
 
 				self.acquireAlignImages(presetleft, presetright)
 
@@ -1337,12 +1386,19 @@ class PresetsManager(node.Node):
 				self.alignnext.clear()
 
 				magleft = maglist.pop()
-				presetsleft = magpresets[magleft]
+				presetsleft = self.magpresets[magleft]
 				presetleft = presetsleft[0]
-				newishift = {'image shift': self.presets[presetleft]['image shift']}
-				for otherpreset in presetsleft[1:]:
-					self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,presetleft))
-					self.updatePreset(otherpreset, newishift)
+
+	def updateSameMagPresets(self, presetname):
+				newishift = {'image shift': self.presets[presetname]['image shift']}
+				mag = self.presets[presetname]['magnification']
+				for otherpreset in self.presets.keys():
+					if otherpreset == presetname:
+						continue
+					othermag = self.presets[otherpreset]['magnification']
+					if othermag == mag:
+						self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,presetname))
+						self.updatePreset(otherpreset, newishift)
 
 	def onAlignNext(self):
 		self.alignnext.set()
