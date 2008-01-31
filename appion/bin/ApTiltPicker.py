@@ -29,7 +29,8 @@ import gui.wx.TargetPanel
 
 class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
-		gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id, callback=callback, tool=tool, mode="vertical")
+		gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id, 
+			callback=callback, tool=tool, mode="vertical")
 		if name is not None:
 			self.outname = name
 		else:
@@ -244,6 +245,9 @@ class PickerApp(wx.App):
 		self.buttonrow.Add(self.saveas, 0, wx.ALL, 1)
 		"""
 
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
+
 		self.quit = wx.Button(self.frame, wx.ID_EXIT, '&Quit')
 		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
 		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
@@ -254,30 +258,34 @@ class PickerApp(wx.App):
 	def createLoopButtons(self):
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Worst Picks')
-		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
-		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
-
 		self.shift = wx.Button(self.frame,-1, '&Guess Shift')
 		self.frame.Bind(wx.EVT_BUTTON, self.onGuessShift, self.shift)
 		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
-
-		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
-		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
-		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
-
-		self.quit = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
-		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
-		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
 
 		self.importpicks = wx.Button(self.frame, -1, '&Import Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onImportPicks, self.importpicks)
 		self.buttonrow.Add(self.importpicks, 0, wx.ALL, 1)
 
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Worst Picks')
+		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
+		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
+
+		self.reset = wx.Button(self.frame, wx.ID_RESET, '&Reset')
+		self.frame.Bind(wx.EVT_BUTTON, self.onResetParams, self.reset)
+		self.buttonrow.Add(self.reset, 0, wx.ALL, 1)
+
+		#spacer
 		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
+
+		self.quit = wx.Button(self.frame, wx.ID_FORWARD, '&Forward')
+		self.frame.Bind(wx.EVT_BUTTON, self.onQuit, self.quit)
+		self.buttonrow.Add(self.quit, 0, wx.ALL, 1)
 
 		#label = wx.StaticText(self.frame, -1, "Assessment:  ", style=wx.ALIGN_RIGHT)
 		#self.buttonrow.Add(label, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		#spacer
+		self.buttonrow.Add((8,self.buttonheight), 0, wx.ALL, 1)
 
 		self.assessnone = wx.ToggleButton(self.frame, -1, "&None")
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleNone, self.assessnone)
@@ -645,7 +653,7 @@ class PickerApp(wx.App):
 		halfsh = origin + shift/2.0
 		if len(self.picks1) > 1:
 			#get center most pick
-			dmin = origin[0]
+			dmin = origin[0]/2.0
 			for pick in self.picks1:
 				da = numpy.hypot(pick[0]-halfsh[0], pick[1]-halfsh[1])
 				if da < dmin:
@@ -819,7 +827,9 @@ class PickerApp(wx.App):
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
 		if len1 < 1 or len2 < 1:
-			dialog = wx.MessageDialog(self.frame, "There are no picks to import: "+str(len1)+", "+str(len2), 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, 
+				"There are no picks to import: "+str(len1)+", "+str(len2), 
+				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
@@ -828,26 +838,36 @@ class PickerApp(wx.App):
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 		if len(a1) < 1 or len(a2) < 1:
-			dialog = wx.MessageDialog(self.frame, "You must pick a particle pair first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, 
+				"You must pick a particle pair first", 
+				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return False
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
 		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
-			apDisplay.printMsg("no new picks found")
+			dialog = wx.MessageDialog(self.frame, 
+				"No new picks were found", 
+				'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
 			return False
-		if a1.shape[0] > 0:
-			newa1 = apTiltTransform.mergePicks(a1, list1)
-		else:
-			newa1 = list1
-		if a2.shape[0] > 0:
-			newa2 = apTiltTransform.mergePicks(a2, list2)
-		else:
-			newa2 = list2
+
+		#new merge picks
+		#newa1 = apTiltTransform.mergePicks(a1, list1)
+		newa1, newa2 = apTiltTransform.betterMergePicks(a1, list1, a2, list2)
+		newparts = newa1.shape[0] - a1.shape[0]
 		self.panel1.setTargets('Picked', newa1)
 		self.panel2.setTargets('Picked', newa2)
 		self.onUpdate(None)
+
+		self.statbar.PushStatusText("Inserted "+str(newparts)+" new particles", 0)
+		dialog = wx.MessageDialog(self.frame, 
+			"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
+		if dialog.ShowModal() == wx.ID_OK:
+			dialog.Destroy()	
+
 		return True
 
 	#---------------------------------------
@@ -909,21 +929,28 @@ class PickerApp(wx.App):
 		Automatically picks image pairs using dog picker
 		"""
 		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame, "You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, 
+				"You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
-		if False and (len(self.panel1.getTargets('Picked')) < 5 or len(self.panel2.getTargets('Picked')) < 5):
-			dialog = wx.MessageDialog(self.frame, "You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
+		if False and (len(self.panel1.getTargets('Picked')) < 5 
+		 or len(self.panel2.getTargets('Picked')) < 5):
+			dialog = wx.MessageDialog(self.frame, 
+				"You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 		if self.data['gamma'] == 0.0 and self.data['optimrun'] is False:
-			dialog = wx.MessageDialog(self.frame, "You must run 'Optimize Angles' first", 'Error', wx.OK|wx.ICON_ERROR)
+			dialog = wx.MessageDialog(self.frame, 
+				"You must run 'Optimize Angles' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 		self.dogpick_dialog.Show()
+
+		
+
 
 	#---------------------------------------
 	def onInitParams(self, evt):
