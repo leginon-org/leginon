@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.88 $
+# $Revision: 1.89 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-01 22:04:45 $
-# $Author: acheng $
+# $Date: 2008-02-01 23:00:05 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -490,8 +490,10 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		self.bnewfromscope.Enable(True)
 		self.bimport = self._bitmapButton('import', 'Import presets from another session')
 		self.bimport.Enable(True)
-		self.bstart = self._bitmapButton('alignpresets', 'Align presets to each other')
-		self.bstart.Enable(True)
+		self.balign = self._bitmapButton('alignpresets', 'Align presets to each other')
+		self.balign.Enable(True)
+		self.bbeam = self._bitmapButton('presetsbeam', 'Shift beam for a preset')
+		self.bbeam.Enable(True)
 
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
@@ -506,9 +508,10 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		sizer.Add(self.bacquire, (7, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bfromscope, (8, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bremove, (9, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bstart, (10, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bnewfromscope, (11, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bimport, (12, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.balign, (10, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bbeam, (11, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bnewfromscope, (12, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bimport, (13, 1), (1, 1), wx.ALIGN_CENTER)
 		self.SetSizerAndFit(sizer)
 
 	def _bind(self):
@@ -664,7 +667,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
 		self.aligndialog = AlignDialog(self, self.node)
-		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.bstart)
+		self.Bind(wx.EVT_BUTTON, self.onAlign, self.presets.balign)
+
+		self.beamdialog = BeamDialog(self, self.node)
+		self.Bind(wx.EVT_BUTTON, self.onBeam, self.presets.bbeam)
 
 		self.dosedialog = DoseDialog(self)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
@@ -757,6 +763,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		threading.Thread(target=self.node.initAlignPresets, args=(refpreset,)).start()
 		self.aligndialog.ShowModal()
 
+	def onBeam(self, evt):
+		self.beamdialog.ShowModal()
+
 	def onDoneAlign(self):
 		self.aligndialog.disableContinue()
 		self.aligndialog.EndModal(0)
@@ -764,6 +773,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def setAlignImage(self, image, typename, stats={}):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.aligndialog.GetEventHandler().AddPendingEvent(evt)
+
+	def setBeamImage(self, image, stats={}):
+		evt = gui.wx.Events.SetImageEvent(image, typename=None)
+		self.beamdialog.GetEventHandler().AddPendingEvent(evt)
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
@@ -1124,6 +1137,51 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 	def onClose(self, evt):
 		self.disableContinue()
 		self.node.doneAlignPresets()
+
+class BeamDialog(wx.Dialog):
+	def __init__(self, parent, node):
+		wx.Dialog.__init__(self, parent, -1, 'Adjust Beam', style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		imsize = 512
+		self.node = node
+		self.parent = parent
+
+		self.im = gui.wx.ImagePanel.ClickImagePanel(self, -1, imagesize=(imsize,imsize))
+		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked, self.im)
+		szim = wx.BoxSizer(wx.VERTICAL)
+		szpreset = wx.GridBagSizer(2, 2)
+		szim.Add(szpreset, 0, wx.EXPAND)
+		szim.Add(self.im, 1, wx.EXPAND)
+
+		self.bacquire = wx.Button(self, -1, 'Acquire')
+		self.bacquire.Enable(True)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
+
+		szmain = wx.GridBagSizer(5,5)
+		szmain.Add(szim, (0, 1), (1, 1), wx.EXPAND)
+		szmain.Add(szbutton, (1, 1), (1, 1))
+
+		szmain.AddGrowableRow(0)
+		szmain.AddGrowableCol(0)
+		szmain.AddGrowableCol(1)
+
+		self.SetSizerAndFit(szmain)
+		self.SetAutoLayout(True)
+
+		#self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
+		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
+		#self.Bind(wx.EVT_BUTTON, self.onNext, bdone)
+		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+
+	def onImageClicked(self, evt):
+		self.node.onBeamImageClicked(evt.xy)
+
+	def onAcquire(self, evt):
+		threading.Thread(target=self.node.acquireBeamImage).start()
+
+	def onSetImage(self, evt):
+		self.im.setImage(evt.image)
 
 class ImportDialog(wx.Dialog):
 	def __init__(self, parent, node):

@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.259 $
+# $Revision: 1.260 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-01 22:04:45 $
-# $Author: acheng $
+# $Date: 2008-02-01 23:00:05 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -1136,8 +1136,6 @@ class PresetsManager(node.Node):
 			self.logger.error(errstr % 'unable to get corrected image')
 			return
 
-
-
 		return imagedata
 
 	def targetToScope(self, newpresetname, emtargetdata):
@@ -1440,4 +1438,53 @@ class PresetsManager(node.Node):
 
 	def onAlignNext(self):
 		self.alignnext.set()
+
+	def acquireBeamImage(self):
+		# go to selected preset
+		preset = self.currentpreset
+		if preset is None:
+			return
+
+		# calculate temporary mag
+		original_mag = preset['magnification']
+		newmag = original_mag / 10.0
+		allmags = self.instrument.tem.Magnifications
+		## find mag in list that is just greater than calculated mag
+		for mag in allmags:
+			if mag > newmag:
+				newmag = mag
+				break
+
+		# go to temporary mag
+		self.instrument.tem.Magnification = newmag
+		time.sleep(self.settings['pause time'])
+
+		# acquire image
+		self.beamimagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		self.panel.setBeamImage(self.beamimagedata['image'])
+
+		# return to original mag
+		self.instrument.tem.Magnification = original_mag
+
+	def onBeamImageClicked(self, xy):
+		row = xy[1]
+		col = xy[0]
+		imagedata = self.beamimagedata
+		acqimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
+		fakepreset = leginondata.PresetData(initializer=self.currentpreset)
+		fakepreset['magnification'] = imagedata['scope']['magnification']
+		acqimagedata['preset'] = fakepreset
+		target = leginondata.AcquisitionImageTargetData(image=acqimagedata)
+
+		dr = row - imagedata['image'].shape[0]/2 - 0.5
+		dc = col - imagedata['image'].shape[1]/2 - 0.5
+
+		target['delta row'] = dr
+		target['delta column'] = dc
+		movetype = 'beam shift'
+		self.navclient.moveToTarget(target, movetype)
+
+		### get new beam shift here and apply to whatever
+
+		self.acquireBeamImage()
 
