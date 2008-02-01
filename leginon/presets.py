@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.258 $
+# $Revision: 1.259 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-31 02:11:14 $
-# $Author: pulokas $
+# $Date: 2008-02-01 22:04:45 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -1042,9 +1042,14 @@ class PresetsManager(node.Node):
 		print 'LEFT', leftpreset
 		print 'RIGHT', rightpreset
 		print 'PARK', refpreset
-		leftindex = allpresetsorder.index(leftpreset)
-		rightindex = allpresetsorder.index(rightpreset)
-		if leftindex < rightindex:
+		notinpresetcycle = False
+		try:
+			leftindex = allpresetsorder.index(leftpreset)
+			rightindex = allpresetsorder.index(rightpreset)
+		except ValueError:
+			leftindex = -1
+			rightindex = -1
+		if leftindex < rightindex: 
 			presetsorder = ['left', 'right', 'park']
 		else:
 			presetsorder = ['right', 'left', 'park']
@@ -1305,7 +1310,8 @@ class PresetsManager(node.Node):
 		if label == 'right':
 		#	save preset from the current microscope state if the right image is clicked
 			self.fromScope(p)
-		self.updateSameMagPresets(p)
+		if self.panel.customalign == False:
+			self.updateSameMagPresets(p)
 		self.acquireAlignImages()
 
 	def unbinnedArea(self, presetname):
@@ -1320,10 +1326,9 @@ class PresetsManager(node.Node):
 		presetnames.sort(self.unbinnedAreaGreater)
 
 	def initAlignPresets(self, refname):
-		if refname not in self.presets:
-			self.logger.error('Select a reference preset first.')
-			return
-		self.refpreset = refname
+		self.aligndone = False
+		self.alignnext.clear()
+
 		## order mags from highest to lowest
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
 		self.magpresets = {}
@@ -1342,34 +1347,60 @@ class PresetsManager(node.Node):
 
 		mags = self.magpresets.keys()
 		mags.sort()
+		print self.magpresets
+
+		print "selected preset ", refname
+		if refname not in self.presets:
+			self.logger.warning('Overall reference preset not selected: Custom alignment assumed')
+			refname = self.magpresets[mags[-1]][0]
+			self.panel.customalign = True
+
+		print "modified preset ", refname
 		refmag = self.presets[refname]['magnification']
-		refindex = mags.index(refmag)
+		self.refpreset = refname
+		try:
+			refindex = mags.index(refmag)
+		except ValueError:
+			self.logger.warning('Reference preset not in cycle List: Custom alignment assumed')
+			self.panel.customalign = True
+		if self.panel.customalign == True:
+			self.firstrightpreset = refname
+			self.panel.updatePresetLabels(refname,refname)
+			self.highmags = [refmag]
+			self.lowmags = []
+			return
+
 		self.highmags = mags[refindex+1:]
 		self.highmags.reverse()
 		self.lowmags = mags[:refindex]
 		self.logger.info('highmags: %s' % (self.highmags,))
 		self.logger.info('lowmags: %s' % (self.lowmags,))
 
-		refishift = {'image shift': self.presets[refname]['image shift']}
-		for otherpreset in self.magpresets[refmag]:
-			if otherpreset == refname:
-				continue
-			self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,refname))
-			self.updatePreset(otherpreset, refishift)
+		if self.panel.customalign == False:
+			refishift = {'image shift': self.presets[refname]['image shift']}
+			for otherpreset in self.magpresets[refmag]:
+				if otherpreset == refname:
+					continue
+				self.logger.info('Updating image shift of %s to image shift of %s' % (otherpreset,refname))
+				self.updatePreset(otherpreset, refishift)
 
 		if self.highmags:
-			magright = self.highmags[0]
+			magright = self.highmags[-1]
 		elif self.lowmags:
-			magright = self.lowmags[0]
+			magright = self.lowmags[-1]
 		else:
 			magright = None
 			return
 		presetsright = self.magpresets[magright]
+		print "presetsright ",presetsright
 		presetright = presetsright[0]
+		self.firstrightpreset = presetsright[0]
 		self.panel.updatePresetLabels(self.refpreset, presetright)
 
 	def loopAlignPresets(self, refname):
 		self.initAlignPresets(refname)
+		print 'highmags in loop %s' %(self.highmags)
+		print 'lowmags in loop %s' %(self.lowmags)
 		for maglist in [self.highmags, self.lowmags]:
 			presetleft = self.refpreset
 
@@ -1384,10 +1415,17 @@ class PresetsManager(node.Node):
 
 				self.alignnext.wait()
 				self.alignnext.clear()
-
+				if self.aligndone == True:
+					return
 				magleft = maglist.pop()
 				presetsleft = self.magpresets[magleft]
 				presetleft = presetsleft[0]
+		self.doneAlignPresets()
+
+	def doneAlignPresets(self):
+			self.aligndone = True
+			self.alignnext.set()
+			self.panel.onDoneAlign()
 
 	def updateSameMagPresets(self, presetname):
 				newishift = {'image shift': self.presets[presetname]['image shift']}
