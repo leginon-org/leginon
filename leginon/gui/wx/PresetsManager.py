@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.89 $
+# $Revision: 1.90 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-01 23:00:05 $
-# $Author: pulokas $
+# $Date: 2008-02-02 02:51:51 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -743,14 +743,12 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onUpdatePresetLabels(self, evt):
 		refpreset = self.node.refpreset
-		print "refpreset ", refpreset
 		if self.customalign == True:
 			self.aligndialog.labref.SetLabel('Custom Alignment Mode ')
 			self.aligndialog.presetlabelref.SetLabel('no same mag automatic adjustment')
 		else:
 			self.aligndialog.labref.SetLabel('Overall Reference Preset: ')
 			self.aligndialog.presetlabelref.SetLabel(refpreset)
-#		self.aligndialog.presetlabelright.SetLabel(evt.rightpreset)
 		self.aligndialog.choiceleft.SetStringSelection(evt.leftpreset)
 		self.aligndialog.choiceright.SetStringSelection(evt.rightpreset)
 
@@ -1003,31 +1001,28 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 
 		
 		refname = self.parent.presets.getSelectedPreset()
-		szref = wx.GridBagSizer(5, 5)
+		sz = wx.BoxSizer(wx.HORIZONTAL)
 		self.labref = wx.StaticText(self, -1, 'Overall Reference Preset: ')
 		self.presetlabelref = wx.StaticText(self, -1)
-		szref.AddGrowableCol(0)
-		szref.AddGrowableCol(1)
-		szref.Add(self.labref, (0, 0), (1, 2), wx.ALIGN_CENTER)
-		szref.Add(self.presetlabelref, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		
+		sz.Add(self.labref, 1, wx.ALIGN_CENTER)
+		sz.AddSpacer((10,10))
+		sz.Add(self.presetlabelref, 1, wx.ALIGN_CENTER)
+		boxref = wx.StaticBox(self, -1)
+		szref = wx.StaticBoxSizer(boxref, wx.HORIZONTAL)
+		szref.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+			
 		
 		preset_names = self.node.presets.keys()
 		lableft = wx.StaticText(self, -1, 'Current Reference Preset ')
 		self.choiceleft = gui.wx.Presets.PresetChoice(self,-1)
 		self.choiceleft.setChoices(preset_names)
-#		self.presetlabelleft = wx.StaticText(self, -1)
 
 		self.imleft = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onLeftImageClicked, self.imleft)
-		#szleft = wx.GridBagSizer(5, 0)
 		szleft = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(lableft, (0, 0), (1, 1), wx.ALIGN_CENTER)
-	#	szpreset.Add(self.presetlabelleft, (0, 1), (1, 1))
-		szpreset.Add(self.choiceleft, (0, 2), (1, 1))
-		#szleft.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
-		#szleft.Add(self.imleft, (1, 0), (1, 1), wx.EXPAND)
+		szpreset.Add(self.choiceleft, (0, 1), (1, 1))
 		szleft.Add(szpreset, 0, wx.EXPAND)
 		szleft.Add(self.imleft, 1, wx.EXPAND)
 
@@ -1035,40 +1030,30 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		self.choiceright = gui.wx.Presets.PresetChoice(self,-1)
 		self.choiceright.setChoices(preset_names)
 
-#		self.presetlabelright = wx.StaticText(self, -1)
-
 		self.imright = gui.wx.ImagePanel.ClickImagePanel(self, -1,mode='vertical',imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onRightImageClicked, self.imright)
-		#szright = wx.GridBagSizer(5, 0)
 		szright = wx.BoxSizer(wx.VERTICAL)
 		szpreset = wx.GridBagSizer(2, 2)
 		szpreset.Add(labright, (0, 0), (1, 1), wx.ALIGN_CENTER)
-	#	szpreset.Add(self.presetlabelright, (0, 1), (1, 1))
-		szpreset.Add(self.choiceright, (0, 2), (1, 1))
-		#szright.Add(szpreset, (0, 0), (1, 1), wx.EXPAND)
-		#szright.Add(self.imright, (1, 0), (1, 1), wx.EXPAND)
+		szpreset.Add(self.choiceright, (0, 1), (1, 1))
 		szright.Add(szpreset, 0, wx.EXPAND)
 		szright.Add(self.imright, 1, wx.EXPAND)
 
 		self.bstart = wx.Button(self, -1, 'Start')
 		self.bstart.Enable(True)
 		self.bcontinue = wx.Button(self, -1, 'Continue')
-		#self.bcontinue.Enable(False)
-		#bdone = wx.Button(self, wx.ID_OK, 'Done')
-		#bdone.SetDefault()
 
 
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bstart, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcontinue, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		#szbutton.Add(bdone, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		
 		
 		szimages = wx.BoxSizer(wx.HORIZONTAL)
 		szimages.Add(szleft, 1, wx.EXPAND)
 		szimages.Add(szright, 1, wx.EXPAND)
 		szmain = wx.GridBagSizer(5,5)
-		szmain.Add(szref, (0,0),(1,1))
+		szmain.Add(szref, (0,0),(1,1),wx.ALL|wx.EXPAND, border=5)
 		szmain.Add(szimages, (1, 0), (1, 1), wx.EXPAND)
 		szmain.Add(szbutton, (2, 0), (1, 1), wx.ALL, border=5)
 
@@ -1078,10 +1063,8 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		self.SetSizerAndFit(szmain)
 		self.SetAutoLayout(True)
 
-		#self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.bcontinue)
-		self.Bind(wx.EVT_BUTTON, self.onAlign, self.bstart)
-		#self.Bind(wx.EVT_BUTTON, self.onNext, bdone)
+		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.disableContinue()
@@ -1096,12 +1079,11 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		self.bstart.Disable()
 		self.node.onAlignNext()
 
-	def onAlign(self, evt):
+	def onStart(self, evt):
 		currentpresetleft = self.choiceleft.GetStringSelection()
 		currentpresetright = self.choiceright.GetStringSelection()
 
 		refname = self.node.refpreset
-		print "custom? ", self.parent.customalign
 		if currentpresetleft == refname and currentpresetright == self.node.firstrightpreset and self.parent.customalign == False:
 			self.enableContinue()
 			threading.Thread(target=self.node.loopAlignPresets, args=(refname,)).start()
