@@ -11,6 +11,7 @@ viewer_header("My Preferences");
 ?>
 <h3>My Profile</h3>
 <?
+$haspass = $dbemauth->hasPassword($username);
 if ($_POST) {
 	if ($_POST['submit']=='update') {
 		$chpass=false;
@@ -18,7 +19,9 @@ if ($_POST) {
 			if ($k!='submit')
 				$$k = trim($v);
 
-	echo "$userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $password, $password2";
+	if (!$haspass)
+		$chpass=true;
+
 	$newprofil=$dbemauth->updateUser($userId, $username, $firstname, $lastname, $title, $institution, $dept, $address, $city, $statecountry, $zip, $phone, $fax, $email, $url, $chpass, $mypass1, $mypass2);
 		if ($newprofil!=2) {
 			echo '<p><font face="Arial, Helvetica, sans-serif" size="4" color="#FF2200">'.$newprofil.'</font></p>';

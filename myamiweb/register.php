@@ -115,7 +115,7 @@ if ($displayform) {
 	</td>
 </tr>
 <tr>
-	<td colspan="4"><span style="color:#FF0000">!! don't use your TSRI password; https is not enable !!</span>
+	<td colspan="4"><span style="color:#FF0000">!! don't use your TSRI password; https is not enabled !!</span>
 	</td>
 </tr>
 <tr>

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.83 $
- *	@version $Id: leginon.inc,v 1.83 2007-11-21 19:35:04 dfellman Exp $
+ *	@version $Revision: 1.84 $
+ *	@version $Id: leginon.inc,v 1.84 2008-02-05 18:16:12 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -628,7 +628,6 @@ class leginondata {
 			."ON (a2.`REF|PresetData|preset`=p2.`DEF_id`) "
 			."WHERE a1.DEF_id=$imageId "
 			."AND p1.`name`=p2.`name` ";
-		//echo "<FONT SIZE=-5>".$q."</FONT>";
 		list($r)=$this->mysql->getSQLResult($q);
 		if ($r['filename']) {
 			return $r['filename'];
