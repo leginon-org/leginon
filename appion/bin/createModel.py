@@ -73,15 +73,26 @@ def checkConflicts(params):
 	params['symm_id']=list[0];
 	params['symm_name']=list[1];
 
-def cleanup(norefpath):
+def cleanup(norefpath,norefclassid):
 	clean = "rm CCL.hed CCL.img"
-	move = "mv threed.0a.mrc %s/startAny.mrc" %(norefpath) 
+	n = 1
+	modelpath = os.path.join(norefpath,'startAny%i_%i' %(norefclassid,n)+'.mrc')
+	while os.path.exists(modelpath):
+		n = n+1
+		modelpath = os.path.join(norefpath,'startAny%i_%i' %(norefclassid,n)+'.mrc')
+	move = "mv threed.0a.mrc %s" %(modelpath) 
 	print "\nRemoving CCL.hed and CCL.img...\n"+clean+""
-	print "\nMoving threed.0a.mrc to "+norefpath+" and renaming it startAny.mrc...\n"+move+""
+	print "\nMoving threed.0a.mrc to "+norefpath+" and renaming it startAny%i_%i" %(norefclassid,n)+".mrc...\n"+move+""
 	f=os.popen(clean)
 	f=os.popen(move)
 	f.close()
-	return norefpath+"/startAny.mrc"
+	oldexcludepath = os.path.join(norefpath,'exclude.list')
+	if os.path.exists(oldexcludepath):
+		newexcludepath = os.path.join(norefpath,'exclude%i_%i.list' %(norefclassid,n))
+		move = "mv %s %s" %(oldexcludepath,newexcludepath)
+		f=os.popen(move)
+		f.close()
+	return modelpath
 
 def changeapix(mrcpath, apix):
 	cmd = "proc3d "+mrcpath+" "+mrcpath+" apix="+str(apix)
@@ -144,7 +155,20 @@ if __name__ == '__main__':
 			f.close()
 		
 		newclass = norefClassdata['classFile']+"-new.img"
-		
+		# old file need to be removed or the images will be appended
+		newclasspath = os.path.join(norefpath,newclass)
+		print newclasspath
+		if os.path.exists(os.path.join(norefpath,newclass)):
+			print "removing old image file %s" %(newclass)
+			os.remove(os.path.join(norefpath,newclass))
+			c = newclass.count('.img')
+			newhed = newclass.replace('.img','.hed')
+			if c > 1:
+				newhed = newhed.replace('.hed','.img',c-1)
+			print newhed
+			os.remove(os.path.join(norefpath,newhed))
+		else:
+			sys.exit()	
 		print "\nCreating new class averages "+newclass+" in "+norefpath+"..."
 		cmd = "proc2d %s %s exclude=%s/exclude.list" %(absnorefpath, norefpath+"/"+newclass+"", norefpath)
 		apEMAN.executeEmanCmd(cmd, verbose=True)
@@ -189,17 +213,17 @@ if __name__ == '__main__':
 
 	
 	#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
-	modelpath = cleanup(norefpath)
+	modelpath = cleanup(norefpath,int(params['norefclass']))
 	#change its apix back to be the same as the class average file
 	changeapix(modelpath, params['apix'])
 
-	
-	#call uploadModel
-	upload = "uploadModel.py %s session=%s apix=%.3f res=%i symmetry=%i contour=1.5 zoom=1.5 description=\"%s\"" %(modelpath, params['session'], params['apix'], int(params['lp']), int(params['symm_id']), params['description']) 	
+	if params['commit']:	
+		#call uploadModel
+		upload = "uploadModel.py %s session=%s apix=%.3f res=%i symmetry=%i contour=1.5 zoom=1.5 description=\"%s\"" %(modelpath, params['session'], params['apix'], int(params['lp']), int(params['symm_id']), params['description']) 	
 
-	print "\n############################################"
-	print "\nReady to upload model "+modelpath+" into the database...\n"
-	print upload
-	apEMAN.executeEmanCmd(upload, verbose=True)
+		print "\n############################################"
+		print "\nReady to upload model "+modelpath+" into the database...\n"
+		print upload
+		apEMAN.executeEmanCmd(upload, verbose=True)
 
 

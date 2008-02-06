@@ -369,8 +369,8 @@ class manualPicker(particleLoop.ParticleLoop):
 		self.app.panel.setTargets('Select Particles', [])
 		self.targets = []
 
-		#set the assessment status
-		self.assessold = apDatabase.getImgAssessmentStatus(imgdata)
+		#set the assessment and viewer status
+		self.assessold = apDatabase.checkInspectDB(imgdata)
 		self.assess = self.assessold
 		self.app.setAssessStatus()
 					
