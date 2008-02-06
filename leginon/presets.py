@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.260 $
+# $Revision: 1.261 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-01 23:00:05 $
+# $Date: 2008-02-06 19:24:15 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -1038,10 +1038,6 @@ class PresetsManager(node.Node):
 		presetlabels = {leftpreset: 'left', rightpreset: 'right', refpreset:'park'}
 		# determine order to acquire images based on presets cycle
 		allpresetsorder = self.createCycleList(refpreset, refpreset, magshortcut=False)
-		print 'ALLORDER', allpresetsorder
-		print 'LEFT', leftpreset
-		print 'RIGHT', rightpreset
-		print 'PARK', refpreset
 		notinpresetcycle = False
 		try:
 			leftindex = allpresetsorder.index(leftpreset)
@@ -1053,7 +1049,6 @@ class PresetsManager(node.Node):
 			presetsorder = ['left', 'right', 'park']
 		else:
 			presetsorder = ['right', 'left', 'park']
-		print 'ACQUIREORDER', presetsorder
 
 		self.alignimages = {}
 		for label in presetsorder:
@@ -1345,15 +1340,12 @@ class PresetsManager(node.Node):
 
 		mags = self.magpresets.keys()
 		mags.sort()
-		print self.magpresets
 
-		print "selected preset ", refname
 		if refname not in self.presets:
 			self.logger.warning('Overall reference preset not selected: Custom alignment assumed')
 			refname = self.magpresets[mags[-1]][0]
 			self.panel.customalign = True
 
-		print "modified preset ", refname
 		refmag = self.presets[refname]['magnification']
 		self.refpreset = refname
 		try:
@@ -1390,15 +1382,12 @@ class PresetsManager(node.Node):
 			magright = None
 			return
 		presetsright = self.magpresets[magright]
-		print "presetsright ",presetsright
 		presetright = presetsright[0]
 		self.firstrightpreset = presetsright[0]
 		self.panel.updatePresetLabels(self.refpreset, presetright)
 
 	def loopAlignPresets(self, refname):
 		self.initAlignPresets(refname)
-		print 'highmags in loop %s' %(self.highmags)
-		print 'lowmags in loop %s' %(self.lowmags)
 		for maglist in [self.highmags, self.lowmags]:
 			presetleft = self.refpreset
 
