@@ -198,6 +198,28 @@ def getNPtclsSpider(filepath):
 	f.close()
 	return(len(lines)-1)
 	
+def fakeConvertSpiderToEMAN(spifile, origlst):
+	# Used when too-few particles for subclassification that gives a bad spider file
+	fileroot = os.path.splitext(spifile)[0]
+	outfile = fileroot+".lst"
+	out = open(outfile, "w")
+	out.write('#LST\n')
+
+	# save ptls in an array from cls####.lst file
+	origptls=[]
+	f=open(origlst,'r')
+	for line in f:
+		n=line.split('\t')
+		if re.match("^[0-9]+",n[0]) and n[1].strip()!="proj.img":
+			origptls.append(line)
+	
+	for line in origptls:
+		#newline = re.sub('start','../../start',line)
+		out.write(line)
+	out.close()
+	f.close()
+	return outfile
+
 def convertSpiderToEMAN(spifile, origlst):
 	fileroot = os.path.splitext(spifile)[0]
 	outfile = fileroot+".lst"
@@ -309,6 +331,7 @@ if __name__== '__main__':
 			for ptcl in range(0,params['nptcls']):
 				dummyfile.write('%d 1 spidersux\n' % ptcl)
 			dummyfile.close()
+			print "WARNING not enough particles in class for subclassification"
 		# otherwise, run coran
 		else:
 			makeSpiderBatch(params,coranbatch,clsdir)
@@ -347,9 +370,12 @@ if __name__== '__main__':
 		averages[bestclass].setNImg(nptcls)
 		averages[bestclass].setRAlign(e)
 		averages[bestclass].writeImage('goodavgs.hed',-1)
-
-		# convert spider lst to EMAN lst
-		convertlst = convertSpiderToEMAN(classname,clslist[cls])
+		if getNPtcls(clslist[cls]) < 4:
+			# handle skipped coran because of limited number of prtcls
+			convertlst = fakeConvertSpiderToEMAN(classname,clslist[cls])
+		else:
+			# convert spider lst to EMAN lst
+			convertlst = convertSpiderToEMAN(classname,clslist[cls])
 		f = open(convertlst,'r')
 		f.readline()
 		lines=f.readlines()
