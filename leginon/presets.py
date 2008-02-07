@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.261 $
+# $Revision: 1.262 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-06 19:24:15 $
+# $Date: 2008-02-07 00:48:12 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -20,7 +20,7 @@ import copy
 import threading
 import time
 import unique
-from pyami import ordereddict
+from pyami import ordereddict, imagefun, arraystats
 import gui.wx.PresetsManager
 import instrument
 import random
@@ -1101,12 +1101,17 @@ class PresetsManager(node.Node):
 		if mode == 'bin':
 			## bin the full camera to at most imagelength x imagelength
 			for axis in ('x','y'):
-				camdim = camdata0['dimension'][axis]
-				while camdim > imagelength:
-					camdim = camdim / 2
-				extrabin = camdata0['dimension'][axis]/camdim
-				camdata1['dimension'][axis] = camdim
-				camdata1['binning'][axis] = camdata0['binning'][axis] * extrabin
+				#fix me to real camera dimension
+				fullcamdim = 4096
+				new_camdim = fullcamdim
+				new_bin = 1
+				while new_camdim > imagelength:
+					new_camdim = new_camdim / 2
+					new_bin = new_bin * 2
+				extrabin = new_bin / camdata0['binning'][axis]
+				camdata1['offset'][axis] = 0
+				camdata1['dimension'][axis] = new_camdim
+				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
 		try:
 			self.instrument.setData(camdata1)
@@ -1121,11 +1126,11 @@ class PresetsManager(node.Node):
 		try:
 			self.instrument.setData(camdata0)
 		except:
-			estr = 'Return to orginial preset camera dimemsion failed: %s'
+			estr = 'Return to orginial camera dimemsion failed: %s'
 			self.logger.error(estr % 'unable to set camera parameters')
 			return
 
-		self.logger.info('Returned to original preset camera dimensions')
+		self.logger.info('Returned to original camera dimensions')
 
 		if imagedata is None:
 			self.logger.error(errstr % 'unable to get corrected image')
@@ -1313,10 +1318,10 @@ class PresetsManager(node.Node):
 		return fov
 
 	def unbinnedAreaGreater(self, pname1, pname2):
-		return self.unbinnedArea(pname1) > self.unbinnedArea(pname2)
+		return self.unbinnedArea(pname1) > self.unbinnedArea(pname2):
 
 	def sortByUnbinnedArea(self, presetnames):
-		presetnames.sort(self.unbinnedAreaGreater)
+		return presetnames.sort(self.unbinnedAreaGreater)
 
 	def initAlignPresets(self, refname):
 		self.aligndone = False
@@ -1336,7 +1341,7 @@ class PresetsManager(node.Node):
 
 		## sort presets by largest field of view first
 		for presetnames in self.magpresets.values():
-			self.sortByUnbinnedArea(presetnames)
+			presetnames = self.sortByUnbinnedArea(presetnames)
 
 		mags = self.magpresets.keys()
 		mags.sort()
@@ -1436,24 +1441,65 @@ class PresetsManager(node.Node):
 
 		# calculate temporary mag
 		original_mag = preset['magnification']
-		newmag = original_mag / 10.0
+		temp_mag = original_mag / 10.0
 		allmags = self.instrument.tem.Magnifications
 		## find mag in list that is just greater than calculated mag
 		for mag in allmags:
-			if mag > newmag:
-				newmag = mag
+			if mag >= temp_mag:
+				temp_mag = mag
 				break
 
 		# go to temporary mag
-		self.instrument.tem.Magnification = newmag
+		self.instrument.tem.Magnification = temp_mag
 		time.sleep(self.settings['pause time'])
+		self.logger.info('Temporary mag: %d' % (temp_mag,))
+
+		# temp binning,dimension
+		orig_dim = preset['dimension']['x']
+		orig_bin = preset['binning']['x']
+		temp_bin = 4
+		temp_dim = orig_dim * orig_bin / temp_bin
+
+		self.instrument.ccdcamera.Dimension = {'x':temp_dim, 'y':temp_dim}
+		self.instrument.ccdcamera.Binning = {'x': temp_bin, 'y': temp_bin}
+		self.logger.info('Temporary Dimension, Binning: %d, %d' % (temp_dim, temp_bin,))
+
+		# calculate temporary exposure time
+		expscale = (temp_mag / float(original_mag)) ** 2
+		binscale = (orig_bin / float(temp_bin)) ** 2
+		original_exptime = preset['exposure time']
+		temp_exptime = int(expscale * binscale * original_exptime)
+		if temp_exptime < 5:
+			temp_exptime = 5
+		self.instrument.ccdcamera.ExposureTime = temp_exptime
+		self.logger.info('Beam image using temporary exposure time: %d' % (temp_exptime,))
 
 		# acquire image
 		self.beamimagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
-		self.panel.setBeamImage(self.beamimagedata['image'])
+		im = self.beamimagedata['image']
+		self.panel.setBeamImage(im)
 
-		# return to original mag
-		self.instrument.tem.Magnification = original_mag
+		# return to original preset
+		self.toScope(preset['name'])
+
+	def autoBeamCenter(self):
+		im = self.beamimagedata['image']
+		center = self.findBeamCenter(im)
+		xy = center[1], center[0]
+		self.onBeamImageClicked(xy)
+
+	def findBeamCenter(self, im):
+		stats = arraystats.all(im)
+		thresh = (stats['max'] + stats['min']) / 2
+		mask = imagefun.threshold(im, thresh)
+		maxsize = 0.9 * im.shape[0]*im.shape[1]
+		blobs = imagefun.find_blobs(im, mask, maxblobs=1, minblobsize=100, maxblobsize=maxsize)
+		if not blobs:
+			return None
+		blob = blobs[0]
+		center = blob.stats['center']
+		print 'CENTER', center
+		return center
 
 	def onBeamImageClicked(self, xy):
 		row = xy[1]
@@ -1474,6 +1520,13 @@ class PresetsManager(node.Node):
 		self.navclient.moveToTarget(target, movetype)
 
 		### get new beam shift here and apply to whatever
+		self.new_beamshift = self.instrument.tem.BeamShift
 
 		self.acquireBeamImage()
+
+	def commitBeamAdjustment(self):
+		if self.new_beamshift is None:
+			return
+		newbeamshift = {'beam shift': self.new_beamshift}
+		self.updatePreset(self.currentpreset['name'], newbeamshift)
 

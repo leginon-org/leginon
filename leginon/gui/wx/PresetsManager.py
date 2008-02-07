@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.90 $
+# $Revision: 1.91 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-02 02:51:51 $
-# $Author: acheng $
+# $Date: 2008-02-07 00:48:12 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -758,11 +758,17 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.aligndialog.choiceright.setChoices(preset_names)
 		refpreset = self.presets.getSelectedPreset()
 		self.customalign = False
+		self.aligndialog.imright.setImage(None)
+		self.aligndialog.imleft.setImage(None)
 		threading.Thread(target=self.node.initAlignPresets, args=(refpreset,)).start()
 		self.aligndialog.ShowModal()
 
 	def onBeam(self, evt):
+		self.beamdialog.im.setImage(None)
+		self.beamdialog.bautocenter.Disable()
+		self.beamdialog.bcommit.Disable()
 		self.beamdialog.ShowModal()
+		self.node.new_beamshift = None
 
 	def onDoneAlign(self):
 		self.aligndialog.disableContinue()
@@ -1136,9 +1142,15 @@ class BeamDialog(wx.Dialog):
 
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.bacquire.Enable(True)
+		self.bautocenter = wx.Button(self, -1, 'Auto Center')
+		self.bautocenter.Enable(False)
+		self.bcommit = wx.Button(self, -1, 'Commit')
+		self.bcommit.Enable(False)
 
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bautocenter, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bcommit, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
 		szmain = wx.GridBagSizer(5,5)
 		szmain.Add(szim, (0, 1), (1, 1), wx.EXPAND)
@@ -1153,7 +1165,8 @@ class BeamDialog(wx.Dialog):
 
 		#self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
 		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
-		#self.Bind(wx.EVT_BUTTON, self.onNext, bdone)
+		self.Bind(wx.EVT_BUTTON, self.onAutoCenter, self.bautocenter)
+		self.Bind(wx.EVT_BUTTON, self.onCommit, self.bcommit)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onImageClicked(self, evt):
@@ -1161,6 +1174,15 @@ class BeamDialog(wx.Dialog):
 
 	def onAcquire(self, evt):
 		threading.Thread(target=self.node.acquireBeamImage).start()
+		self.bautocenter.Enable(True)
+		self.bcommit.Enable(True)
+
+	def onAutoCenter(self, evt):
+		threading.Thread(target=self.node.autoBeamCenter).start()
+
+	def onCommit(self, evt):
+		threading.Thread(target=self.node.commitBeamAdjustment).start()
+		self.EndModal(0)
 
 	def onSetImage(self, evt):
 		self.im.setImage(evt.image)
