@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.262 $
+# $Revision: 1.263 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 00:48:12 $
-# $Author: pulokas $
+# $Date: 2008-02-07 02:54:52 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -24,6 +24,7 @@ from pyami import ordereddict, imagefun, arraystats
 import gui.wx.PresetsManager
 import instrument
 import random
+import math
 
 class PresetChangeError(Exception):
 	pass
@@ -1318,7 +1319,7 @@ class PresetsManager(node.Node):
 		return fov
 
 	def unbinnedAreaGreater(self, pname1, pname2):
-		return self.unbinnedArea(pname1) > self.unbinnedArea(pname2):
+		return self.unbinnedArea(pname1) > self.unbinnedArea(pname2)
 
 	def sortByUnbinnedArea(self, presetnames):
 		return presetnames.sort(self.unbinnedAreaGreater)
@@ -1484,11 +1485,18 @@ class PresetsManager(node.Node):
 
 	def autoBeamCenter(self):
 		im = self.beamimagedata['image']
-		center = self.findBeamCenter(im)
+		center, diameter = self.findBeamCenterDiameter(im)
+		scope = self.beamimagedata['scope']
+		tem = scope['tem']
+		cam = self.beamimagedata['camera']
+		ccdcamera = cam['ccdcamera']
+		pixelsize = self.calclients['pixel size'].retrievePixelSize(tem,ccdcamera,scope['magnification'])
+		diameter_micron = 1e6 * diameter * pixelsize * cam['binning']['x']
+		print 'diameter in micrometer', diameter_micron
 		xy = center[1], center[0]
 		self.onBeamImageClicked(xy)
 
-	def findBeamCenter(self, im):
+	def findBeamCenterDiameter(self, im):
 		stats = arraystats.all(im)
 		thresh = (stats['max'] + stats['min']) / 2
 		mask = imagefun.threshold(im, thresh)
@@ -1498,8 +1506,12 @@ class PresetsManager(node.Node):
 			return None
 		blob = blobs[0]
 		center = blob.stats['center']
+		area = blob.stats['n']
+		print 'AREA', area
 		print 'CENTER', center
-		return center
+		diameter = 2 * math.sqrt(area/3.14159)
+		print 'diameter', diameter
+		return center, diameter
 
 	def onBeamImageClicked(self, xy):
 		row = xy[1]
