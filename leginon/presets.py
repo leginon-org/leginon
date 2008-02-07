@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.264 $
+# $Revision: 1.265 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 04:17:47 $
+# $Date: 2008-02-07 20:41:30 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -238,6 +238,7 @@ class PresetsManager(node.Node):
 
 		# HACK: fix me
 		self.last_value = None
+		self.old_time = None
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
@@ -958,6 +959,7 @@ class PresetsManager(node.Node):
 		## store the dose in the current preset
 		params = {'dose': dose}
 		self.updatePreset(presetname, params)
+		self.old_time = None
 
 	def matchDose(self,presetname,dose_to_match,old_dose):
 		preset = self.presetByName(presetname)
@@ -966,14 +968,28 @@ class PresetsManager(node.Node):
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
 		old_time = camdata0['exposure time']
-		print old_time
-		print dose_to_match
-		print old_dose
+		self.old_time = old_time
 		new_time = old_time * dose_to_match / old_dose
-		print new_time
+		if new_time > 5000 or new_time <= 1:
+			self.logger.warning('Ignore unreasonable exposure time at %d ms' % new_time)
+			new_time = old_time
+
 		params = {'exposure time': new_time}
 		self.updatePreset(presetname, params)
 		self.acquireDoseImage(presetname)
+
+	def cancelDoseMeasure(self,presetname):
+		if self.old_time is None:
+			return
+		# revert matchDose result that was saved to the preset
+		preset = self.presetByName(presetname)
+		camdata0 = leginondata.CameraEMData()
+		camdata0.friendly_update(preset)
+		presettime = camdata0['exposure time']
+		if int(self.old_time) != presettime:
+			params = {'exposure time': self.old_time}
+			self.updatePreset(presetname,params)	
+		self.old_time = None
 
 	def updateDose(self, oldpreset, newpreset):
 		'''

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.92 $
+# $Revision: 1.93 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 04:17:47 $
+# $Date: 2008-02-07 20:41:30 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -594,19 +594,36 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		self.doselabel = wx.StaticText(self, -1, '')
 
 		self.sz.Add(self.image, (0, 0), (1, 1), wx.EXPAND)
-		self.sz.Add(self.doselabel, (1, 0), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		self.sz.AddGrowableRow(0)
 		self.sz.AddGrowableCol(0)
 
+		szmatch = wx.GridBagSizer(5, 5)
 		self.bmatch = wx.Button(self, -1, 'Match')
 		self.bmatch.Enable(True)
-		self.sz.Add(self.bmatch,(2,0),(1,1))
-		self.addButton('Yes', wx.ID_OK)
-		self.addButton('No', wx.ID_CANCEL)
+		szmatch.Add(self.bmatch,(0,0),(1,1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'to')
+		szmatch.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL )
+		self.dose_to_match = FloatEntry(self, -1, min=0,value='10', chars=5)
+		szmatch.Add(self.dose_to_match, (0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'e/A^2')
+		szmatch.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL )
+		self.sz.Add(szmatch, (1,0),(1,1), wx.ALIGN_RIGHT)
+
+		self.szbuttons.Add(self.doselabel, (0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		bsave = wx.Button(self, wx.ID_OK, 'YES')
+		bsave.Enable(True)
+		self.szbuttons.Add(bsave,(0,1),(1,1), wx.ALIGN_CENTER_VERTICAL)
+		bcancel = wx.Button(self, wx.ID_CANCEL, 'NO')
+		bcancel.Enable(True)
+		self.szbuttons.Add(bcancel,(0,2),(1,1), wx.ALIGN_CENTER_VERTICAL)
+		self.szbuttons.AddGrowableRow(0)
 
 		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
+		self.Bind(wx.EVT_BUTTON, self.onCancel, bcancel)
+		self.Bind(wx.EVT_CLOSE, self.onCancel)
 
 	def setDose(self, dose):
 		self.dose = dose
@@ -618,8 +635,14 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		self.doselabel.SetLabel(dosestr)
 
 	def onMatchDose(self,evt):
-		dose_to_match = 10.0 * 1e20
-		self.parent.onMatchDose(dose_to_match,self.dose)
+		dose_to_match = self.dose_to_match.GetValue()
+		self.parent.onMatchDose(dose_to_match * 1e20,self.dose)
+
+	def onCancel(self,evt):
+		self.parent.onCancelDoseMeasure()
+		self.EndModal(0)
+		
+		
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'presets'
@@ -740,6 +763,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onMatchDose(self, dose_to_match, dose):
 		presetname = self.presets.getSelectedPreset()
 		self.node.matchDose(presetname, dose_to_match, dose)	
+
+	def onCancelDoseMeasure(self):
+		presetname = self.presets.getSelectedPreset()
+		self.node.cancelDoseMeasure(presetname)
+
 	def onImport(self, evt):
 		self.importdialog.ShowModal()
 
