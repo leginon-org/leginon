@@ -213,7 +213,7 @@ def getSiblingImgAssessmentStatus(imgdata):
 
 	return status
 	
-def insertImgAssessmentStatus(imgdata, runname="pyapp1", assessment=None):
+def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None):
 	"""
 	Insert the assessment status 
 		keep = True
@@ -349,12 +349,11 @@ def checkInspectDB(imgdata):
 	status = getImageViewerStatus(imgdata)
 	if status is False:
 		return False
+	elif status is True:
+		return True
 	else:
-		if status is True:
-			return True
-		else:
-			keep = getImgAssessmentStatus(imgdata)
-			return keep
+		keep = getImgAssessmentStatus(imgdata)
+		return keep
 
 def isModelInDB(md5sum):
 	modelq = appionData.ApInitialModelData()

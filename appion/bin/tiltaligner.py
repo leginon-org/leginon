@@ -232,8 +232,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 				sys.stderr.write(" %d left\n" % (total-count))
 
 	def getTiltAssess(self, imgdata, tiltdata):
-		ass1 = apDatabase.getImgAssessmentStatus(imgdata)
-		ass2 = apDatabase.getImgAssessmentStatus(tiltdata)
+		ass1 = apDatabase.getImgCompleteStatus(imgdata)
+		ass2 = apDatabase.getImgCompleteStatus(tiltdata)
 		if ass1 is False or ass2 is False:
 			return False
 		if ass1 is True and ass2 is True:
