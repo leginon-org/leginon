@@ -50,25 +50,19 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin)
 
 		#remove border peaks
-		printPeakTree(peaktree)
 		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[0], imgdict['image'].shape[1])
 
 		#write map to jpeg with highlighted peaks
-		printPeakTree(peaktree)
 		outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
 		createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
 
-		printPeakTree(peaktree)
 		#write pikfile
 		peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
 
-		printPeakTree(peaktree)
 		#append to complete list of peaks
 		peaktreelist.append(peaktree)
 
-	printPeakTree(peaktreelist[0])
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
-	printPeakTree(peaktree)
 
 	return peaktree
 
