@@ -14,7 +14,6 @@ import apParam
 #leginon
 from pyami.imagefun import threshold, find_blobs
 
-
 def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	peaktreelist = []
 	count = 0
@@ -51,21 +50,32 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin)
 
 		#remove border peaks
-		peaktree = removeBorderPeaks(peaktree, pixdiam, imgmap.shape[0], imgmap.shape[1])
+		printPeakTree(peaktree)
+		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[0], imgdict['image'].shape[1])
 
 		#write map to jpeg with highlighted peaks
+		printPeakTree(peaktree)
 		outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
 		createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
 
+		printPeakTree(peaktree)
 		#write pikfile
 		peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
 
+		printPeakTree(peaktree)
 		#append to complete list of peaks
 		peaktreelist.append(peaktree)
 
+	printPeakTree(peaktreelist[0])
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
+	printPeakTree(peaktree)
 
 	return peaktree
+
+def printPeakTree(peaktree):
+	print "peaktree="
+	for i,p in enumerate(peaktree):
+		print "  ",i,":",int(p['xcoord']),int(p['ycoord'])
 
 def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
 		maxsizemult=1.0, maxthresh=None, msg=True, tmpldbid=None, mapdiam=None, bin=1):
