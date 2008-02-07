@@ -434,6 +434,7 @@ if ($sessionId) {
     'newrun'=>array($nrun, $celloption),
   );
 
+	// --- display Processing table ---//
 	$columns=array(
 		'action'=>'<h4>Action</h4>',
 		'result'=>'<h4>Results</h4>',
@@ -446,9 +447,6 @@ if ($sessionId) {
 }
 writeBottom($showproclink=False);
 exit;
-}
-
-function processData(&$data) {
 }
 
 function formatAction($img, $str) {
