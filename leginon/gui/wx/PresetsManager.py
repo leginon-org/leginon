@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.91 $
+# $Revision: 1.92 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 00:48:12 $
-# $Author: pulokas $
+# $Date: 2008-02-07 04:17:47 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -584,6 +584,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
 		gui.wx.Dialog.Dialog.__init__(self, parent, 'Dose Image', 'Dose Image')
 		self.dose = None
+		self.parent = parent
 
 	def onInitialize(self):
 		gui.wx.Dialog.Dialog.onInitialize(self)
@@ -599,8 +600,13 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 		self.sz.AddGrowableRow(0)
 		self.sz.AddGrowableCol(0)
 
+		self.bmatch = wx.Button(self, -1, 'Match')
+		self.bmatch.Enable(True)
+		self.sz.Add(self.bmatch,(2,0),(1,1))
 		self.addButton('Yes', wx.ID_OK)
 		self.addButton('No', wx.ID_CANCEL)
+
+		self.Bind(wx.EVT_BUTTON, self.onMatchDose, self.bmatch)
 
 	def setDose(self, dose):
 		self.dose = dose
@@ -610,6 +616,10 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 			dosestr = '%.2f' % (dose/1e20)
 		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
 		self.doselabel.SetLabel(dosestr)
+
+	def onMatchDose(self,evt):
+		dose_to_match = 10.0 * 1e20
+		self.parent.onMatchDose(dose_to_match,self.dose)
 
 class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'presets'
@@ -727,6 +737,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		args = (presetname,)
 		threading.Thread(target=target, args=args).start()
 
+	def onMatchDose(self, dose_to_match, dose):
+		presetname = self.presets.getSelectedPreset()
+		self.node.matchDose(presetname, dose_to_match, dose)	
 	def onImport(self, evt):
 		self.importdialog.ShowModal()
 

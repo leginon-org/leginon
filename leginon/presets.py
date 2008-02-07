@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.263 $
+# $Revision: 1.264 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 02:54:52 $
+# $Date: 2008-02-07 04:17:47 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -958,6 +958,22 @@ class PresetsManager(node.Node):
 		## store the dose in the current preset
 		params = {'dose': dose}
 		self.updatePreset(presetname, params)
+
+	def matchDose(self,presetname,dose_to_match,old_dose):
+		preset = self.presetByName(presetname)
+		if old_dose is None:
+			return
+		camdata0 = leginondata.CameraEMData()
+		camdata0.friendly_update(preset)
+		old_time = camdata0['exposure time']
+		print old_time
+		print dose_to_match
+		print old_dose
+		new_time = old_time * dose_to_match / old_dose
+		print new_time
+		params = {'exposure time': new_time}
+		self.updatePreset(presetname, params)
+		self.acquireDoseImage(presetname)
 
 	def updateDose(self, oldpreset, newpreset):
 		'''
