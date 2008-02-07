@@ -44,5 +44,6 @@ imagepng($image_p);
 
 // --- destroy resources in memory
 imagedestroy($image_p);
-imagedestroy($image);
+if (is_resource($image))
+	imagedestroy($image);
 ?>

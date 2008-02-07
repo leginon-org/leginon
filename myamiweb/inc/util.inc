@@ -556,6 +556,47 @@ function display_table($title, $content) {
 	return $html;
 }
 
+function array2table($data, $columns=array(), $display_header=false, $tableoption="class='tableborder' border='1' cellpadding='5'") {
+	$fields = ($columns) ? $columns : array_keys((array)$data[0]);
+	$html = "<table $tableoption >";
+	if ($display_header) {
+		$html .= "<tr>\n";
+		$option="";
+		foreach ($fields as $field=>$label) {
+			$l = (is_string($label)) ? $label : $field;
+			if (is_array($label)) {
+				$l=$label[0];
+				$option=$label[1];
+			} else {
+				$option="";
+			}
+			$html .= "<td $option ><b>".$l."</b></td>";
+		}
+		$html .= "</tr>\n";
+	}
+	foreach ((array)$data as $n=>$row) {
+		$html .= "<tr>\n";
+		foreach ($fields as $k=>$v) {
+			$field = is_numeric($k) ? $v : $k;
+			if (is_array($row[$field])) {
+				$l=$row[$field][0];
+				$option=" ".$row[$field][1]." ";
+			} else {
+				$l=$row[$field];
+				$option="";
+			}
+			if (empty($l))
+				continue;
+			$html .= "<td$option>"
+			.$l
+			."</td>";
+		}
+		$html .= "</tr>\n";
+	}
+	$html .= "</table>";
+	return $html;
+}
+
 function getPathFromString($str) {
 	//--- return path from a string
 	$parts = explode('/',$str);

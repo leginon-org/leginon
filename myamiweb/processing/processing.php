@@ -22,7 +22,7 @@ if ($_POST['login']) {
 
 processTable();
 
-function processTable($extra=False) {
+function processTable($extra=false) {
 $leginondata = new leginondata();
 
 // check if coming directly from a session
@@ -38,13 +38,12 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-writeTop("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>",False);
+writeTop("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>", false);
 
 // write out errors, if any came up:
 if ($extra) {
-  echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+  echo "<font color='red'>$extra</font>\n<hr />\n";
 }
-
 // create login form
 $display_login = ($_SESSION['username'] && $_SESSION['password']) ? false:true;
 
@@ -53,11 +52,7 @@ if ($display_login) {
   displayLogin($formAction);
 }
 
-echo"
-<P>
-<TABLE>
-<TR><TD ALIGN='LEFT'>
-<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+echo"<form name='viewerform' method='post' action='$formaction'>\n";
 
 // Collect session info from database
 $sessiondata=getSessionList($projectId,$sessionId);
@@ -66,26 +61,22 @@ $sessions=$sessiondata['sessions'];
 $currentproject=$sessiondata['currentproject'];
 
 // Set colors for unprocessed & finished steps:
-$nonecolor='#FFFFCC';
-$progcolor='#CCFFFF';
-$donecolor='#CCFFCC';
-$mode = "neild";
-if($mode == "neil") {
-	$donepic='img/icon-check.png';
-	$nonepic='img/icon-cross.png';
-	$progpic='img/icon-bluestar.png';
-} else {
-	$donepic='img/green_circle.gif';
-	$nonepic='img/red_circle.gif';
-	$progpic='img/blue_circle.gif';
-}
+// --- constants set in inc/processing.inc --- //
+
+$donecolor=DONE_COLOR;
+$nonecolor=NONE_COLOR;
+$progcolor=PROG_COLOR;
+
+$donepic=DONE_PIC;
+$nonepic=NONE_PIC;
+$progpic=PROG_PIC;
 
 $particle = new particledata();
 // If expId specified, don't show pulldowns, only session info
 if (!$expId){
   echo"
-  <B>Select Session:</B><BR>
-  <SELECT NAME='projectId' onchange='newexp()'>\n";
+  <b>Select Session:</b><br />
+  <select name='projectid' onchange='newexp()'>\n";
   $projects=getProjectList();
   foreach ($projects as $k=>$project) {
     $sel = ($project['id']==$projectId) ? "selected" : '';
@@ -94,10 +85,10 @@ if (!$expId){
   
   echo"
   </select>
-  <BR>
+  <br />
  
-  <SELECT NAME='sessionId' onchange='newexp()'>
-  <option value=''>all sessions</OPTION>\n";
+  <select name='sessionid' onchange='newexp()'>
+  <option value=''>all sessions</option>\n";
   foreach ($sessions as $k=>$session) {
     $sel = ($session['id']==$sessionId) ? 'selected' : '';
     $shortname=substr($session['name'],0,90);
@@ -111,22 +102,30 @@ else {
   $proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
   $sessionDescr=$sessioninfo['Purpose'];
 	$misc = $particle->getMiscInfoFromProject ($projectId);
-  echo "<TABLE>";
-  echo "<TR><TD><B>Project:</B></TD><TD>$proj_link</TD>";
-	if ($misc) echo "<TD><A HREF='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</A></TD>\n"; 
-	echo "</TR>\n";
-  echo "<TR><TD><B>Session:</B></TD><TD>$sessionDescr</TD></TR>\n";
+
+	
+	// --- display Project / Session / Path table info --- //
+	$ptable[]=array(
+		'c1'=>'<b>Project:</b>',
+		'c2'=>$proj_link,
+		'c3'=>($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : "" 
+	); 
+	$ptable[]=array(
+		'c1'=>'<b>Session:</b>',
+		'c2'=>$sessionDescr
+	);
 
   // get experiment information
-  $expinfo = $leginondata->getSessionInfo($expId);
-  if (!empty($expinfo)) {
-    $i=0;
-    $imgpath=$expinfo['Image path'];
-    echo "<TR><TD><B>Image Path:</B></TD><TD>$imgpath</TD></TR>\n";
+  if ($expinfo = $leginondata->getSessionInfo($expId)) {
+		$ptable[]=array(
+			'c1'=>'<b>Image Path:</b>',
+			'c2'=>$expinfo['Image path']
+		);
   }
-  echo "</TABLE>\n";
+  echo array2table($ptable, array(), false, "");
+
 }
-echo "<P>\n";
+echo "<p>\n";
 
 if ($sessionId) {
 // ---  Get CTF Data
@@ -199,169 +198,163 @@ if ($sessionId) {
     }
   }
 
-  echo"
-  </FORM>
-  <TABLE BORDER='1' CLASS='tableborder' CELLPADDING='5'>
-  <TR>\n";
-  //header
-  echo"
-	 <TD ALIGN='LEFT' COLSPAN='2'><H4>Action</H4></TD>
-	 <TD ALIGN='LEFT'><H4>Results</H4></TD>
-	 <TD ALIGN='LEFT'><H4>New run</H4></TD>
-  </TR><TR>\n";
+  echo"</form>";
+
   if ($prtlruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Particle Selection</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-  if ($prtlruns==0) {echo "none";}
-  else {echo "<A HREF='prtlreport.php?expId=$sessionId'>$prtlruns completed</A>\n";}
-  echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-  echo"<A HREF='runPySelexon.php?expId=$sessionId'>Template Picking</A><BR>
-    <A HREF='runDogPicker.php?expId=$sessionId'>";
-  if ($prtlruns==0) {echo "DoG Picking";}
-  else {echo "DoG Picking";}
-  echo"</A><BR>
-    <A HREF='runManualPicker.php?expId=$sessionId'>";
-  if ($prtlruns==0) {echo "Manual Picking";}
-  else {echo "Manually Edit Picking";}
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Particle Selection");
+
+  $result = ($prtlruns==0) ? "none" :
+		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns completed</a>\n";
+
+  $nrun = "<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>";
+	$nrun .= "<br />";
+	$nrun .= "<a href='runDogPicker.php?expId=$sessionId'>";
+  $nrun .= "DoG Picking";
+  $nrun .= "</a><br />";
+	$nrun .= "<a href='runManualPicker.php?expId=$sessionId'>";
+  $nrun .= ($prtlruns==0) ? "Manual Picking" : "Manually Edit Picking";
+	$nrun .= "</a><br />";
   $maxangle = $particle->getMaxTiltAngle($sessionId);
   if ($maxangle > 5) {
-    echo"</A><BR>
-    	<A HREF='tiltAligner.php?expId=$sessionId'>";
-    if ($prtlruns==0) {echo "Align Tilt Pairs";}
-    else {echo "Align Tilt Particle Pairs";}
-		}
-  echo"</A>
-    </TD>
-  </TR>
-  <TR>\n";
+		$nrun .="<a href='tiltAligner.php?expId=$sessionId'>";
+		$nrun .= ($prtlruns==0) ? "Align Tilt Pairs" :
+				"Align Tilt Particle Pairs";
+		$nrun .= "</a>";
+	}
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
+
   if ($ctfruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>CTF Estimation</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($ctfruns==0) {echo "none";}
-    else {echo "<A HREF='ctfreport.php?Id=$sessionId'>$ctfruns completed</A>";}
-    echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='runPyAce.php?expId=$sessionId'>";
-    if ($ctfruns==0) {echo "ACE Estimation";}
-    else {echo "ACE Estimation";}
-    echo"</A>
-    </TD>
-  </TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "CTF Estimation");
+
+	$result = ($ctfruns==0) ? "none" :
+			"<a href='ctfreport.php?Id=$sessionId'>$ctfruns completed</a>";
+	$nrun = "<a href='runPyAce.php?expId=$sessionId'>";
+	$nrun .= "ACE Estimation";
+	$nrun .= "</a>";
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
+
   if ($assessedimgs==0 || $totimgs == 0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   elseif ($assessedimgs < $totimgs) {$bgcolor=$progcolor; $gifimg=$progpic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Micrograph Assessment</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-    if ($assessedimgs==0 || $totimgs==0) { echo "none"; }
-    elseif ($assessedimgs < $totimgs) { echo "$assessedimgs of $totimgs completed"; }
-    elseif ($totimgs!=0) { echo "All $assessedimgs completed"; }
-    else { echo "none"; }
-    echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='imgassessor.php?expId=$sessionId'>";
-    if ($assessedimgs==0) {echo "Manual Image Assessment";}
-    else {
-      if ($assessedimgs < $totimgs || $totimgs==0) echo "Continue Manual Assessment";
-      else echo "Re-Assess Images";
-    }
-    echo"</A>
-    </TD>
-  </TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Micrograph Assessment");
+	$result = "none";
+	if ($assessedimgs < $totimgs) {
+		$result = "$assessedimgs of $totimgs completed"; 
+	} elseif ($totimgs!=0) {
+		$result = "All $assessedimgs completed";
+	}
+	$nrun = "<a href='imgassessor.php?expId=$sessionId'>";
+	if ($assessedimgs==0) {
+		$nrun .= "Manual Image Assessment";
+	} else {
+    $nrun .= ($assessedimgs < $totimgs || $totimgs==0) ? 
+			"Continue Manual Assessment" : "Re-Assess Images";
+	}
+	$nrun .= "</a>";
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
+
   if ($maskruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Region Mask Creation</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($maskruns==0) {echo "none";}
-    else {echo "<A HREF='maskreport.php?expId=$sessionId'>$maskruns completed</A>\n";}
-    echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>
-    <A HREF='runMaskMaker.php?expId=$sessionId'>";
-    if ($maskruns==0) {echo "Crud Finding";}
-    else {echo "Crud Finding";}
-    echo"</A><BR>
-    <A HREF='manualMaskMaker.php?expId=$sessionId'>";
-    if ($maskruns==0) {echo "Manual Masking";}
-    else {echo "Manual Masking";}
-    echo"</A>
-    </TD>
-  </TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Region Mask Creation");
+	$result = ($maskruns==0) ? "none" :
+			"<a href='maskreport.php?expId=$sessionId'>$maskruns completed</a>\n";
+	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>";
+  $nrun .= ($maskruns==0) ? "Crud Finding" : "Crud Finding";
+	$nrun .= "</a><br />";
+	$nrun .= "<a href='manualMaskMaker.php?expId=$sessionId'>";
+  $nrun .= "Manual Masking";
+	$nrun .= "</a>";
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
+
   if ($stackruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Stacks</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($stackruns==0) {echo "none";}
-    else {echo "<A HREF='stacksummary.php?expId=$sessionId'>$stackruns completed<A>";}
-    echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-    if ($prtlruns == 0) {
-      echo "<FONT SIZE=-1><I>Pick some particles first</I></FONT>";
-    } elseif ($stackruns == 0) {
-      echo"<A HREF='makestack.php?expId=$sessionId'>Stack creation</A>";
-    } else {
-      echo"<A HREF='makestack.php?expId=$sessionId'>Stack creation</A>";
-    }
-    echo"</TD></TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Stacks");
+	$result = ($stackruns==0) ? "none" :
+			"<a href='stacksummary.php?expId=$sessionId'>$stackruns completed<A>";
+	$nrun = "<a href='makestack.php?expId=$sessionId'>Stack creation</a>";
+	if ($prtlruns == 0) {
+      $nrun = "<font size=-1><i>Pick some particles first</i></font>";
+	}
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
+
   if ($norefruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Reference-free Classification</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($norefruns==0) {echo "none";}
-    else {echo "<A HREF='norefsummary.php?expId=$sessionId'>$norefruns completed<A>";}
-    echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-    if ($stackruns == 0) {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
-    else {echo"<A HREF='classifier.php?expId=$sessionId'>Ref-free Classification</A>";}
-    echo"</TD>
-  </TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+	$action = formatAction($gifimg, "Reference-free Classification");
+	$result = ($norefruns==0) ? "none" :
+			"<a href='norefsummary.php?expId=$sessionId'>$norefruns completed<A>";
+	$nrun = "<a href='classifier.php?expId=$sessionId'>Ref-free Classification</a>";
+	if ($stackruns == 0) {
+		$nrun = "<font size=-1><i>Create a stack first</i></font>";
+	}
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
+
   if ($refaliruns==0) {$bgcolor=$nonecolor;$gifimg=$nonepic;}
   else {$bgcolor=$donecolor;$gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Reference-based Alignment</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-    if ($refaliruns==0) {echo "none";}
-    else {echo "<A HREF='refalisummary.php?expId=$sessionId'>$refaliruns completed<A>";}
-    echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-    if ($stackruns == 0) {echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";}
-    elseif ($refruns == 0) {echo"<A HREF='refbasedali.php?expId=$sessionId'>Ref-based Alignment</A>";}
-    echo"</TD>
-  </TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+	$action = formatAction($gifimg, "Reference-based Alignment");
+	$result = ($refaliruns==0) ? "none" :
+			"<a href='refalisummary.php?expId=$sessionId'>$refaliruns completed<A>";
+
+	$nrun = "<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment</a>";
+	if ($stackruns == 0) {
+		$nrun = "<font size=-1><i>Create a stack first</i></font>";
+	}
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result, $celloption),
+		'newrun'=>array($nrun, $celloption),
+	);
 
   // if no submitted jobs, display none
   // for every uploaded job, subtract a submitted job
@@ -371,87 +364,95 @@ if ($sessionId) {
   if ($jobincomp>0 || $jobrun>0 || $jobqueue>0) { $bgcolor=$progcolor; $gifimg=$progpic; }
   elseif ($reconruns>0) { $bgcolor=$donecolor; $gifimg=$donepic;  }
   else { $bgcolor=$nonecolor; $gifimg=$nonepic; }
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Reconstructions</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+	$action = formatAction($gifimg, "Reconstructions");
+
+	$result = "none";
   if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
     $jlist=array();
-    if ($jobqueue>0)  $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobqueue queued</A>\n";
-    if ($jobrun>0)    $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobrun running</A>\n";
-    if ($jobincomp>0) $jlist[]="<A HREF='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</A>\n";
-    if ($reconruns>0) $jlist[]="<A HREF='reconsummary.php?expId=$sessionId'>$reconruns uploaded</A>\n";
-    $jout=implode('<br />',$jlist);
-    echo"$jout";
+    if ($jobqueue>0)  $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>\n";
+    if ($jobrun>0)    $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>\n";
+    if ($jobincomp>0) $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>\n";
+    if ($reconruns>0) $jlist[]="<a href='reconsummary.php?expId=$sessionId'>$reconruns uploaded</a>\n";
+    $result = implode('<br />',$jlist);
   }
-  else echo "none";
-  echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
+
+	$nrun = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
   if ($stackruns == 0) {
-    echo "<FONT SIZE=-1><I>Create a stack first</I></FONT>";
+    $nrun = "<font size=-1><i>Create a stack first</i></font>";
   } 
-  else {
-    echo"<A HREF='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</A>";
-  }
   if ($stackruns>0) {
-    echo"<BR><A HREF='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</A>";
+    $nrun .= "<br /><a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
   }
-  echo"</TD>
-  </TR>
-  <TR>
-    <TD COLSPAN='4'>
-    <BR/>
-    <B>Pipeline tools:</B>
-    </TD>
-  </TR>
-  ";
-  echo"
-  <TR>\n";
+	$data[]=array(
+    'action'=>array($action, $celloption),
+    'result'=>array($result, $celloption),
+    'newrun'=>array($nrun, $celloption),
+  );
+
+	$celloption="colspan='3'";
+	$data[]=array(
+    'action'=>array("<br /><b>Pipeline tools:</b>", $celloption)
+	);
+
   if ($templates==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Templates</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-  if ($templates==0) {echo "none";}
-  else {echo "<A HREF='viewtemplates.php?expId=$sessionId'>$templates available</A>";}
-  //else {echo "$templates available";}
-  echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-  if ($templates==0) { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload template</A>"; }
-  else { echo"<A HREF='uploadtemplate.php?expId=$sessionId'>Upload template</A>"; }
-  echo"</TD>
-  </TR>
-  <TR>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Templates");
+
+  $result = ($templates==0) ? "none" :
+			"<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
+  $nrun = ($templates==0) ? 
+		"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>" : 
+		"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>";
+
+	$data[]=array(
+    'action'=>array($action, $celloption),
+    'result'=>array($result, $celloption),
+    'newrun'=>array($nrun, $celloption),
+  );
+
   if ($models==0) {$bgcolor=$nonecolor; $gifimg=$nonepic;}
   else {$bgcolor=$donecolor; $gifimg=$donepic;}
-  echo"  <TD BGCOLOR='$bgcolor'><IMG SRC='$gifimg'></TD>
-    <TD BGCOLOR='$bgcolor'>
-    <B>Initial Models</B>
-    </TD>
-    <TD BGCOLOR='$bgcolor'>\n";
-  if ($models==0) {echo "none";}
-  else {echo "<A HREF='viewmodels.php?expId=$sessionId'>$models available</A>";}
-  echo"
-    </TD>
-    <TD BGCOLOR='$bgcolor'>";
-  if ($models==0) { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
-  else { echo"<A HREF='uploadmodel.php?expId=$sessionId'>Upload model</A>"; }
-  echo"</TD>
-  </TR>
-  </TABLE>
-  </TD>\n";
+
+	$celloption="bgcolor='$bgcolor'";
+
+	$action = formatAction($gifimg, "Initial Models");
+
+  $result = ($models==0) ? "none" :
+			"<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
+  $nrun = ($models==0) ? 
+		"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>" :
+		"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>";
+
+	$data[]=array(
+    'action'=>array($action, $celloption),
+    'result'=>array($result, $celloption),
+    'newrun'=>array($nrun, $celloption),
+  );
+
+	$columns=array(
+		'action'=>'<h4>Action</h4>',
+		'result'=>'<h4>Results</h4>',
+		'newrun'=>'<h4>New run</h4>'
+	);
+	$display_header=true;
+
+	echo array2table($data, $columns, $display_header);
+
 }
-echo"
-</TR>
-</TABLE>
-</CENTER>\n";
 writeBottom($showproclink=False);
 exit;
+}
+
+function processData(&$data) {
+}
+
+function formatAction($img, $str) {
+	return "<img style='padding-left: .5em; ' src='$img'><span style='padding-left:1em' ><b>$str</b></span>";
 }
 
 ?>
