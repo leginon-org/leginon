@@ -100,8 +100,8 @@ elseif ($_POST['submitjob']) {
   $cmd = "mkdir -p $outdir;\n";
   $cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
   exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-  echo "<TR><TD>Appion Directory</TD><TD>$outdir</TD></TR>\n";
-  echo "<TR><TD>Job File Name</TD><TD>$jobname.job</TD></TR>\n";
+  echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
+  echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
   // create directory on cluster and copy job file over
   $cmd = "mkdir -p $clusterpath;\n";
@@ -124,8 +124,8 @@ elseif ($_POST['submitjob']) {
   // insert cluster job id into row that was just created
   $particle->updateClusterQueue($jobid,$jobnum);
 
-  echo "<TR><TD>Cluster Directory</TD><TD>$clusterpath</TD></TR>\n";
-  echo "<TR><TD>Job number</TD><TD>$jobnum</TD></TR>\n";
+  echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
+  echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
   echo "</TABLE>\n";
 
   // check jobs that are running on garibaldi
@@ -244,33 +244,33 @@ function stackModelForm($extra=False) {
 
 # display starting models
       $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-      echo "<TR><TD COLSPAN=2>\n";
+      echo "<tr><TD COLSPAN=2>\n";
       $modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
       if (!$modelonly) {
-	echo "<INPUT TYPE='RADIO' NAME='model' VALUE='$modelvals' ";
+	echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
 	# check if model was selected
 	if ($model['DEF_id']==$minf[0]) echo " CHECKED";
 	echo ">\n";
       }
       echo"Use ";
       echo"Model ID: $model[DEF_id]\n";
-      echo "<INPUT TYPE='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
+      echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
       foreach ($pngfiles as $snapshot) {
   $snapfile = $model['path'].'/'.$snapshot;
   echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
       }
-      echo "</TD>\n";
-      echo "</TR>\n";
-      echo"<TR><TD COLSPAN=2>$model[description]</TD></TR>\n";
-      echo"<TR><TD COLSPAN=2>$model[path]/$model[name]</TD></TR>\n";
-      echo"<TR><TD>pixel size:</TD><TD>$model[pixelsize]</TD></TR>\n";
-      echo"<TR><TD>box size:</TD><TD>$model[boxsize]</TD></TR>\n";
-      echo"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\n";
-      echo"<TR><TD>resolution:</TD><TD>$model[resolution]</TD></TR>\n";
+      echo "</td>\n";
+      echo "</tr>\n";
+      echo"<tr><TD COLSPAN=2>$model[description]</td></tr>\n";
+      echo"<tr><TD COLSPAN=2>$model[path]/$model[name]</td></tr>\n";
+      echo"<tr><td>pixel size:</td><td>$model[pixelsize]</td></tr>\n";
+      echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
+      echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
+      echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
       echo "</TABLE>\n";
       echo "<P>\n";
     }
-    if (!$modelonly) echo"<P><INPUT TYPE='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
+    if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
   }
   else {echo "No initial models in database";}
   writeBottom();
@@ -344,86 +344,86 @@ function jobForm($extra=false) {
   echo "
   <FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR/>
   <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
-  <TR>
-    <TD><B>Job Run Name:</B></TD>
-    <TD><INPUT TYPE='text' NAME='jobname' VALUE='$jobname' SIZE=20></TD>
-  </TR>
-  <TR>
-    <TD><B>Output Directory:</B></TD>
-    <TD><INPUT TYPE='text' NAME='outdir' VALUE='$outdir' SIZE=50></TD>
-  </TR>
-  <TR>
-    <TD><B>Cluster Directory:</B></TD>
-    <TD><INPUT TYPE='text' NAME='clusterpath' VALUE='$clusterpath' SIZE=50></TD>
-  </TR>
+  <tr>
+    <td><B>Job Run Name:</B></td>
+    <td><input type='text' NAME='jobname' VALUE='$jobname' SIZE=20></td>
+  </tr>
+  <tr>
+    <td><B>Output Directory:</B></td>
+    <td><input type='text' NAME='outdir' VALUE='$outdir' SIZE=50></td>
+  </tr>
+  <tr>
+    <td><B>Cluster Directory:</B></td>
+    <td><input type='text' NAME='clusterpath' VALUE='$clusterpath' SIZE=50></td>
+  </tr>
   </TABLE>\n";
   echo "
   <P>
-  <INPUT TYPE='hidden' NAME='model' VALUE='".$_POST['model']."'>
-  <INPUT TYPE='hidden' NAME='stackval' VALUE='".$_POST['stackval']."'>";
-  echo"<TABLE BORDER='0' WIDTH='99%'><TR><TD VALIGN='TOP'>"; //overall table
+  <input type='hidden' NAME='model' VALUE='".$_POST['model']."'>
+  <input type='hidden' NAME='stackval' VALUE='".$_POST['stackval']."'>";
+  echo"<TABLE BORDER='0' WIDTH='99%'><tr><TD VALIGN='TOP'>"; //overall table
 
 //Cluster Parameters
   echo"
     <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
-    <TR>
+    <tr>
       <TD COLSPAN='4' ALIGN='CENTER'>
       <H4>PBS Cluster Parameters</H4>
-      </TD>
-    </TR>
-    <TR>
-      <TD><A HREF=\"javascript:refinfopopup('nodes')\">Nodes:</A></TD>
-      <TD><INPUT TYPE='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'></TD>
-      <TD><A HREF=\"javascript:refinfopopup('procpernode')\">Proc/Node:</A></TD>
-      <TD><INPUT TYPE='text' NAME='ppn' VALUE='$ppn' SIZE='3'></TD>
-    </TR>
-    <TR>
-      <TD><A HREF=\"javascript:refinfopopup('walltime')\">Wall Time:</A></TD>
-      <TD><INPUT TYPE='text' NAME='walltime' VALUE='$walltime' SIZE='4'></TD>
-      <TD><A HREF=\"javascript:refinfopopup('cputime')\">CPU Time</A></TD>
-      <TD><INPUT TYPE='text' NAME='cput' VALUE='$cput' SIZE='4'></TD>
-    </TR>
-    <TR>
+      </td>
+    </tr>
+    <tr>
+      <td><A HREF=\"javascript:refinfopopup('nodes')\">Nodes:</A></td>
+      <td><input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'></td>
+      <td><A HREF=\"javascript:refinfopopup('procpernode')\">Proc/Node:</A></td>
+      <td><input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'></td>
+    </tr>
+    <tr>
+      <td><A HREF=\"javascript:refinfopopup('walltime')\">Wall Time:</A></td>
+      <td><input type='text' NAME='walltime' VALUE='$walltime' SIZE='4'></td>
+      <td><A HREF=\"javascript:refinfopopup('cputime')\">CPU Time</A></td>
+      <td><input type='text' NAME='cput' VALUE='$cput' SIZE='4'></td>
+    </tr>
+    <tr>
       <TD COLSPAN='4'>
-      Reconstruction procs per node:<INPUT TYPE='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
-      </TD>
-    </TR>
+      Reconstruction procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
+      </td>
+    </tr>
     </TABLE>
     <BR/>";
 
-  echo"</TD><TD VALIGN='TOP'>"; //overall table
+  echo"</td><TD VALIGN='TOP'>"; //overall table
 
 //DMF Parameters TABLE
   echo"
     <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
-    <TR>
+    <tr>
       <TD COLSPAN='4' ALIGN='CENTER'>
       <H4>DMF Parameters</H4>
-      </TD>
-    </TR>
-    <TR>
-      <TD>DMF Directory:</TD>
-      <TD><INPUT TYPE='text' NAME='dmfpath' VALUE='$dmfpath' SIZE='40' ></TD>
-    </TR>
-    <TR>
-      <TD>Starting Model (mrc):</TD>
-      <TD><INPUT TYPE='text' NAME='dmfmod' VALUE='$dmfmod' SIZE='40' ></TD>
-    </TR>
-    <TR>
-      <TD>Stack (img or hed):</TD>
-      <TD><INPUT TYPE='text' NAME='dmfstack' VALUE='$dmfstack' SIZE='40' ></TD>
-    </TR>
-    <TR>
-      <TD>Save results to DMF</TD>
-      <TD><INPUT TYPE='checkbox' NAME='dmfstore' $dmfstorech></TD>
-    </TR>
+      </td>
+    </tr>
+    <tr>
+      <td>DMF Directory:</td>
+      <td><input type='text' NAME='dmfpath' VALUE='$dmfpath' SIZE='40' ></td>
+    </tr>
+    <tr>
+      <td>Starting Model (mrc):</td>
+      <td><input type='text' NAME='dmfmod' VALUE='$dmfmod' SIZE='40' ></td>
+    </tr>
+    <tr>
+      <td>Stack (img or hed):</td>
+      <td><input type='text' NAME='dmfstack' VALUE='$dmfstack' SIZE='40' ></td>
+    </tr>
+    <tr>
+      <td>Save results to DMF</td>
+      <td><input type='checkbox' NAME='dmfstore' $dmfstorech></td>
+    </tr>
     </TABLE>\n";
-  echo"</TD></TR></TABLE>"; //overall table
+  echo"</td></tr></TABLE>"; //overall table
   echo"
    <BR/><CENTER>
    <H4>EMAN Reconstruction Parameters</H4>
    </CENTER><HR/>
-  <INPUT TYPE='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
+  <input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
   for ($i=1; $i<=$numiters; $i++) {
     $angn="ang".$i;
     $maskn="mask".$i;
@@ -434,6 +434,10 @@ function jobForm($extra=false) {
     $classitern="classiter".$i;
     $filt3dn="filt3d".$i;
     $shrinkn="shrink".$i;
+    $euler2n="euler2".$i;
+    $xfilesn="xfiles".$i;
+    $perturbn="perturb".$i;
+    $treen="tree".$i;
     $mediann="median".$i;
     $phaseclsn="phasecls".$i;
     $refinen="refine".$i;
@@ -453,6 +457,8 @@ function jobForm($extra=false) {
     $classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
     $filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
     $shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
+    $euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
+    $xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
     $msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
     $msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
     ## use symmetry of model by default, but you can change it
@@ -465,7 +471,10 @@ function jobForm($extra=false) {
            $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
            $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
            $coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
+           $perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
            $msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
+           $treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
+           $treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
     }
     else {
            $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
@@ -474,67 +483,94 @@ function jobForm($extra=false) {
            $goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
            $eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
            $coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
+           $perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
            $msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
+           $treetwo=($_POST[$treen]=='2') ? 'selected' : '';
+           $treethree=($_POST[$treen]=='3') ? 'selected' : '';
     }
     $bgcolor="#E8E8E8";
     echo"
       <P><B>Iteration $i</B><BR/>
 
       <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
-      <TR>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('ang')\">ang:</A>
-          <INPUT TYPE='text' NAME='$angn' SIZE='3' VALUE='$ang'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('mask')\">mask:</A>
-          <INPUT TYPE='text' NAME='$maskn' SIZE='4' VALUE='$mask'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('imask')\">imask:</A>
-          <INPUT TYPE='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('sym')\">sym:</A>
-          <INPUT TYPE='text' NAME='$symn' SIZE='5' VALUE='$sym'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('hard')\">hard:</A>
-          <INPUT TYPE='text' NAME='$hardn' SIZE='3' VALUE='$hard'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('classkeep')\">classkeep:</A>
-          <INPUT TYPE='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('classiter')\">classiter:</A>
-          <INPUT TYPE='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('filt3d')\">filt3d:</A>
-          <INPUT TYPE='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></TD>
-      </TR>
-      <TR>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('shrink')\">shrink:</A>
-          <INPUT TYPE='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></TD>
-        <TD BGCOLOR='$bgcolor'>
-          <INPUT TYPE='checkbox' NAME='$mediann' $median><A HREF=\"javascript:refinfopopup('median')\">median</A></TD>
-        <TD BGCOLOR='$bgcolor'>
-          <INPUT TYPE='checkbox' NAME='$phaseclsn' $phasecls><A HREF=\"javascript:refinfopopup('phasecls')\">phasecls</A></TD>
-        <TD BGCOLOR='$bgcolor'>
-          <INPUT TYPE='checkbox' NAME='$refinen' $refine><A HREF=\"javascript:refinfopopup('refine')\">refine</A></TD>
-        <TD BGCOLOR='$bgcolor'>
-          <INPUT TYPE='checkbox' NAME='$goodbadn' $goodbad><A HREF=\"javascript:refinfopopup('goodbad')\">goodbad</A></TD>
-        <TD BGCOLOR='$bgcolor'>
-          <INPUT TYPE='checkbox' NAME='$eotestn' $eotest><A HREF=\"javascript:refinfopopup('eotest')\">eotest</A></TD>
-        <TD BGCOLOR='$bgcolor'>
-          <INPUT TYPE='checkbox' NAME='$corann' $coran><A HREF=\"javascript:refinfopopup('coran')\">coran</A></TD>
-        <TD BGCOLOR='$bgcolor'></TD>
-      </TR>
-      <TR>
-	<TD colspan=6 BGCOLOR='$bgcolor' CELLPADDING=0 CELLSPACING=0>
+      <tr>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('ang')\">ang:</A>
+          <input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('mask')\">mask:</A>
+          <input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('imask')\">imask:</A>
+          <input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('sym')\">sym:</A>
+          <input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('hard')\">hard:</A>
+          <input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('classkeep')\">classkeep:</A>
+          <input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('classiter')\">classiter:</A>
+          <input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('filt3d')\">filt3d:</A>
+          <input type='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></td>
+        <td bgcolor='$bgcolor'><a href=\"javascript:refinfopopup('xfiles')\">xfiles:</a>
+          <input type='text' size='5' name='$xfilesn' value='$xfiles'>
+        </td>
+
+      </tr>
+      <tr>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('shrink')\">shrink:</A>
+          <input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
+
+        <td bgcolor='$bgcolor'><a href=\"javascript:refinfopopup('euler2')\">euler2:</a>
+          <input type='text' size='2' name='$euler2n' value='$euler2'>
+        </td>
+
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$mediann' $median><A HREF=\"javascript:refinfopopup('median')\">median</A></td>
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$phaseclsn' $phasecls><A HREF=\"javascript:refinfopopup('phasecls')\">phasecls</A></td>
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$refinen' $refine><A HREF=\"javascript:refinfopopup('refine')\">refine</A></td>
+
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$perturbn' $perturb>
+          <A HREF=\"javascript:refinfopopup('perturb')\">perturb</A>
+        </td>
+
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$goodbadn' $goodbad><A HREF=\"javascript:refinfopopup('goodbad')\">goodbad</A></td>
+
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$eotestn' $eotest><A HREF=\"javascript:refinfopopup('eotest')\">eotest</A></td>
+        <td bgcolor='$bgcolor'>
+          <input type='checkbox' NAME='$corann' $coran><A HREF=\"javascript:refinfopopup('coran')\">coran</A></td>
+      </tr>
+      <tr>
+
+        <td bgcolor='$bgcolor'><a href=\"javascript:refinfopopup('tree')\">tree:</a>
+          <select name='$treen'>
+          <option>-</option>
+          <option $treetwo>2</option>
+          <option $treethree>3</option>
+          </select>
+        </td>
+
+	<TD colspan=6 bgcolor='$bgcolor' CELLPADDING=0 CELLSPACING=0>
 	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
-            <TR>
-        <TD BGCOLOR='$bgcolor'><INPUT TYPE='checkbox' NAME='$msgpn' $msgp><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
-          <INPUT TYPE='text' NAME='$msgp_corcutoffn' SIZE='4' VALUE='$msgp_corcutoff'></TD>
-        <TD BGCOLOR='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
-          <INPUT TYPE='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></TD>
-            </TR>
+            <tr>
+        <td bgcolor='$bgcolor'><input type='checkbox' NAME='$msgpn' $msgp><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
+          <input type='text' NAME='$msgp_corcutoffn' SIZE='4' VALUE='$msgp_corcutoff'></td>
+        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
+          <input type='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></td>
+            </tr>
           </TABLE>
-        <TD colspan=2 BGCOLOR='$bgcolor' ALIGN='CENTER'>
-          <INPUT TYPE='SUBMIT' NAME='duplicate' VALUE='Duplicate Iteration $i'></TD>
-      </TR>
+        <TD colspan=2 bgcolor='$bgcolor' ALIGN='CENTER'>
+          <input type='SUBMIT' NAME='duplicate' VALUE='Duplicate Iteration $i'></td>
+      </tr>
       </TABLE>\n";
   }
   echo"
-  <INPUT TYPE='hidden' NAME='numiters' VALUE='$numiters'><P>
-  <INPUT TYPE='SUBMIT' NAME='write' VALUE='Create Job File'>
+  <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
+  <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
   writeBottom();
   exit;
@@ -632,6 +668,10 @@ function writeJobFile ($extra=False) {
     $classiter=$_POST["classiter".$i];
     $filt3d=$_POST["filt3d".$i];
     $shrink=$_POST["shrink".$i];
+    $euler2=$_POST["euler2".$i];
+    $xfiles=$_POST["xfiles".$i];
+    $perturb=$_POST["perturb".$i];
+    $tree=$_POST["tree".$i];
     $median=$_POST["median".$i];
     $phasecls=$_POST["phasecls".$i];
     $refine=$_POST["refine".$i];
@@ -650,7 +690,10 @@ function writeJobFile ($extra=False) {
     if ($classiter) $line.=" classiter=$classiter";
     if ($filt3d) $line.=" filt3d=$filt3d";
     if ($shrink) $line.=" shrink=$shrink";
+    if ($xfiles) $line.=" xfiles=$apix,$xfiles,99";
     if ($median=='on') $line.=" median";
+    if ($perturb=='on') $line.=" perturb";
+    if ($tree=='2' || $tree=='3') $line.=" tree=$tree";
     if ($phasecls=='on') $line.=" phasecls";
     if ($refine=='on') $line.=" refine";
     if ($goodbad=='on') $line.=" goodbad";
@@ -708,21 +751,21 @@ function writeJobFile ($extra=False) {
     echo "If you are satisfied:<BR>\n";
     echo "1) Place files in DMF<BR>\n";
     echo "2) Once this is done, click the button to launch your job.<BR>\n";
-    echo"<INPUT TYPE='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
-    echo"<INPUT TYPE='hidden' NAME='dmfpath' VALUE=''>\n";
+    echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
+    echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
   }
   else {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
-  echo "<INPUT TYPE='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
+  echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
+  echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
+  echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
+  echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
   // convert \n to /\n's for script
   $header_conv=preg_replace('/\n/','|--|',$header);
-  echo "<INPUT TYPE='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
-  echo "<INPUT TYPE='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
+  echo "<input type='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
+  echo "<input type='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
   if (!$extra) {
     echo "<HR>\n";
     echo "<PRE>\n";
@@ -800,19 +843,27 @@ function writeJavaPopupFunctions () {
     } else if (infoname=='hard') {
       newwindow.document.write('Hard limit for <I>make3d</I> program. This specifies how well the class averages must match the model to be included, 25 is typical');
     } else if (infoname=='classkeep') {
-      newwindow.document.write('Classkeep is the keep value for <I>classalignall</I> program. The threshold value for keeping images. Standard deviation multiplier');
+      newwindow.document.write('<b>classkeep=[std dev multiplier]</b><br />This determines how many raw particles are discarded for each class-average. This is defined in terms of the standard-deviation of the self-similarity of the particle set. A value close to 0 (should not be exactly 0) will discard about 50% of the data. 1 is a typical value, and will typically discard 10-20% of the data.');
     } else if (infoname=='classiter') {
-      newwindow.document.write('Classiter is the interation value for <I>classalignall</I> program. Number of iterative loops');
+      newwindow.document.write('Generation of class averages is an iterative process. Rather than just aligning the raw particles to a reference, they are iteratively aligned toeach other to produce a class-average representative of the data, not of the model, eliminating initial model bias. Typically set to 8 in the early rounds and 3 in later rounds - 0 may be used at the end, but model bias may result.');
     } else if (infoname=='filt3d') {
-      newwindow.document.write('Radius of lowpass filter applied to the model after each iteration.');
+      newwindow.document.write('<b>fil3d=[rad]</b><br />Applies a gaussian low-pass filter to the 3D model between iterations. This can be used to correct problems that may result in high resolution terms being upweighted. [rad] is in pixels, not Angstroms');
     } else if (infoname=='shrink') {
-      newwindow.document.write('<I>Experimental</I>, shrinks images at several points for faster runs');
+      newwindow.document.write('<b>shrink=[n]</b><br /><i>Experimental</i>, Another option that can produce dramatic speed improvements. In some cases, this option can actually produce an improvement in classification accuracy. This option scales the particles and references down by a factor of [n] before classification. Since data is often heavily oversampled, and classification is dominated by low resolution terms, this can be both safe, and actually improve classification by \'filtering\' out high resolution noise. Generally shrink=2 is safe and effective especially for early refinement. In cases of extreme oversampling, larger values may be ok. This option should NOT be used for the final rounds of refinement at high resolution.');
+    } else if (infoname=='euler2') {
+      newwindow.document.write('<b>euler2=[oversample factor]</b><br /><i>Experimental</i>, This option should improve convergence and reconstruction quality, but has produced mixed results in the past. It adds an additional step to the refinement process in which class-averages orientations are redetermined by projection-matching. The parameter allows you to decrease the angular step (ang=) used to generateprojections. ie - 2 would produce projections with angular step of ang/2. It may be worth trying, but use it with caution on new projects.');
+    } else if (infoname=='perturb') {
+      newwindow.document.write('<i>Experimental</i>, potentially useful and at worst should be harmless. Has not been well characterized yet. Rather than generating Euler angles at evenly spaced positions, it adds some randomness to the positions. This should produce a more uniform distribution of data in 3D Fourier space and reduce Fourier artifacts');
+    } else if (infoname=='xfiles') {
+      newwindow.document.write('<b>xfiles=[mass in kD]</b><br />A convenience option.  For each 3D model it will produce a corresponding x-file (threed.1a.mrc -> x.1.mrc).  Based on the mass, the x-file will be scaled so an isosurface threshold of 1 will contain the specified mass.');
+    } else if (infoname=='tree') {
+      newwindow.document.write('This can be a risky option, but it can produce dramatic speedups in the refinement process. Rather than comparing each particle to every reference, this will decimate the reference population to 1/4 (if 2 is specified) or 1/9 (if 3 is specified) of its original size, classify, then locally determine which of the matches is best. Is is safest in conjunction with very small angular steps, ie - large numbers of projections. The safest way to use this is either:<br /><i>a)</i> for high-resolution, small-ang refinement or <br/><i>b)</i> for the initial iterations of refinement (then turn it off for the last couple of iterations).');
     } else if (infoname=='median') {
       newwindow.document.write('When creating class averages, use the median value for each pixel instead of the average.  If your dataset is noisy, this is recommended');
     } else if (infoname=='phasecls') {
       newwindow.document.write('Uses weighted mean phase error for classification (<I>experimental</I>)');
     } else if (infoname=='refine') {
-      newwindow.document.write('This will do subpixel alignment of the particle translations for classification and averaging. May have a significant impact at higher resolutions.');
+      newwindow.document.write('This will do subpixel alignment of the particle translations for classification and averaging. May have a significant impact at higher resolutions (with a speed penalty).');
     } else if (infoname=='goodbad') {
       newwindow.document.write('Saves good and bad class averages from 3D reconstruction. Overwrites each new iteration.');
     } else if (infoname=='eotest') {
