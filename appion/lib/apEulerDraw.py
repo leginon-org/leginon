@@ -37,6 +37,7 @@ def getEulersForIteration(reconid, iteration=1):
 			+"LEFT JOIN `ApRefinementData` AS rd "
 			+"ON pc.`REF|ApRefinementData|refinement` = rd.`DEF_id` "
 			+"WHERE rd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" "
+			+"AND pc.`thrown_out` IS NULL "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
 	#print query
