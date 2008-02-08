@@ -428,9 +428,9 @@ def phaseFlip(imgdata, params):
 	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
 	  outfile, defocus, voltage, params['apix'])
 	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
-
-	f=os.popen(cmd)
-	f.close()
+	apEMAN.executeEmanCmd(cmd)
+	#f=os.popen(cmd)
+	#f.close()
 
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
