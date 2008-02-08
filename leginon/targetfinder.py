@@ -129,13 +129,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		input: list of (x,y) tuples
 		output: sorted list of  (x,y) tuples
 		"""
-		print "targets=",targetlist
-		bestorder, bestscore = tsp.sortPoints(targetlist, numiter=3, maxeval=70000)
-		print "bestorder=",bestorder
+		#print "targets=",targetlist
+		bestorder, bestscore = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
+		#print "bestorder=",bestorder
 		sortedtargetlist = []
 		for i in bestorder:
 			sortedtargetlist.append(targetlist[i])
-		print "sortedtargets=",sortedtargets
+		#print "sortedtargets=",sortedtargets
 		return sortedtargetlist
 		
 	#--------------------
@@ -144,7 +144,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if not imagetargets:
 			return
-		#imagetargets = self.sortTargets(imagetargets)
+		imagetargets = self.sortTargets(imagetargets)
 		imagearray = imagedata['image']
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
