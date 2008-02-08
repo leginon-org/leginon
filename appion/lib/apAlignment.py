@@ -469,10 +469,20 @@ def spiderline(var, value, comment=None):
 	sys.stderr.write(line)
 	return line
 
+def estimateTime(numparts, boxsize=None):
+	#min time 60 sec vs. 289 from model
+	#linear time 0 sec vs. -1.1587 from model
+	esttime = ( 60.0 
+		+ 0.0 * numparts
+		+ 1.6642e-3 * numparts**2
+		+ 5.6333e-7 * numparts**3
+		+ 6.7367e-11 * numparts**4 )
+	return esttime
+
 def runSpiderClass(params, reclass=False):
 	spidercmd = "spider bat/spi @norefalign_edit"
 	if reclass is False:
-		esttime = 3*60*(params['numparticles']/500)**2
+		esttime = estimateTime(params['numparticles'])
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
 			apDisplay.timeString(esttime),"cyan")
 	starttime = time.time()
