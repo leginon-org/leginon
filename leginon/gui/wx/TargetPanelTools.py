@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetPanelTools.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-23 19:03:14 $
+# $Date: 2008-02-08 19:39:01 $
 # $Author: vossman $
 # $State: Exp $
 # $Locker:  $
@@ -23,7 +23,7 @@ import wx
 import sys
 import gui.wx.ImagePanelTools
 import gui.wx.TargetPanelBitmaps
-import shortpath
+#import shortpath
 
 TargetingEventType = wx.NewEventType()
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
