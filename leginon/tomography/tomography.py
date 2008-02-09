@@ -229,7 +229,7 @@ class Tomography(acquisition.Acquisition):
             scope_data[move_type] = {'x': 0.0, 'y': 0.0}
         client = self.calclients[move_type]
         # invert y and position
-        position = {'row': -position['y'], 'col': position['x']}
+        position = {'row': position['y'], 'col': -position['x']}
         try:
             scope_data = client.transform(position, scope_data, camera_data)
         except calibrationclient.NoMatrixCalibrationError, e:
@@ -265,7 +265,7 @@ class Tomography(acquisition.Acquisition):
             raise CalibrationError('no pixel size for %gx' % magnification)
 
         return high_tension, pixel_size
-
+    '''
     def getShift(self, shift, move_type):
         scope_data = self.instrument.getData(data.ScopeEMData)
         camera_data = self.instrument.getData(data.CameraEMData, image=False)
@@ -278,12 +278,13 @@ class Tomography(acquisition.Acquisition):
             raise CalibrationError(e)
         return scope_data[move_type]
 
+    
     def correctShift(self, shift, move_type):
         shift = self.getShift(shift, move_type)
         initializer = {move_type: shift}
         position = data.ScopeEMData(initializer=initializer)
         self.instrument.setData(position)
-
+    '''
     def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
         if len(tilts) < 2:
             raise ValueError
