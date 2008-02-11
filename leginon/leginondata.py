@@ -1065,6 +1065,7 @@ class TargetFinderSettingsData(SettingsData):
 			('queue', bool),
 			('user check', bool),
 			('queue drift', bool),
+			('sort target', bool),
 		)
 	typemap = classmethod(typemap)
 

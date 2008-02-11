@@ -43,6 +43,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'ignore images': False,
 		'user check': False,
 		'queue drift': True,
+		'sort target': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -151,7 +152,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if not imagetargets:
 			return
-		imagetargets = self.sortTargets(imagetargets)
+		if settings['sort target']:
+			imagetargets = self.sortTargets(imagetargets)
 		imagearray = imagedata['image']
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1

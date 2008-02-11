@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-08 01:10:10 $
-# $Author: vossman $
+# $Date: 2008-02-11 23:48:05 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -106,6 +106,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['queue'] = wx.CheckBox(self, -1,
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
+		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
@@ -116,6 +117,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['queue'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['queue drift'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
