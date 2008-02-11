@@ -250,7 +250,9 @@ def getImgCompleteStatus(imgdata):
 	#False overrides True
 	elif assess is False or hidden is False:
 		return False
-	return True
+	elif assess is True or hidden is True:
+		return True
+	return None
 
 def getImgAssessmentStatus(imgdata):
 	"""
