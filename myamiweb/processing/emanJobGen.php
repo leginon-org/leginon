@@ -134,6 +134,7 @@ elseif ($_POST['submitjob']) {
   if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
   else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
   echo "<p><a href='checkjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
+	echo "<P><FONT COLOR='RED'>Do not hit 'reload' it will re-submit job</FONT><P>\n";
   writeBottom(True, True);
   exit;
 }
@@ -624,6 +625,7 @@ function writeJobFile ($extra=False) {
     if ($stackname2) $javafunc.="    newwindow.document.write('<P>dmf put $stackpath/$stackname2 $dmffullpath/$stackname2')\n";
     $javafunc.="
     newwindow.document.write('<P>dmf put $modelpath/$modelname $dmffullpath/$modelname');
+    newwindow.document.write('<P>echo done');
     newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>');
     newwindow.document.close();
   }
