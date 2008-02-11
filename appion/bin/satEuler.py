@@ -283,7 +283,7 @@ class satEulerScript(appionScript.AppionScript):
 		Overriding appionScript version, this not a kosher thing to do
 		"""
 		self.datastr = "_r"+str(self.params['reconid'])+"_i"+str(self.params['iternum'])
-		self.params['outdir'] = os.path.join(os.path.abspath("."), "sat-recon"+str(self.params['reconid']))
+		self.params['outdir'] =os.path.join(self.params['outdir'], "sat-recon"+str(self.params['reconid']))
 		apDisplay.printMsg("Output directory: "+self.params['outdir'])
 		apParam.createDirectory(self.params['outdir'])
 		os.chdir(self.params['outdir'])
@@ -295,7 +295,7 @@ class satEulerScript(appionScript.AppionScript):
 			help="Reconstruction Run ID", metavar="INT")
 		self.parser.add_option("-i", "--iternum", dest="iternum", type='int',
 			help="Reconstruction Iteration Number, defaults to last iteration", metavar="INT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
+		self.parser.add_option("-o", "--outdir", dest="outdir", default=os.path.abspath("."),
 			help="Location to copy the templates to", metavar="PATH")
 		self.parser.add_option("--tiltrunid", dest="tiltrunid", type='int',
 			help="Automatically set", metavar="INT")
@@ -328,6 +328,7 @@ class satEulerScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			t0 = time.time()
 			results = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'], self.params['iternum'])
+			apDisplay.printColor("Found "+str(len(results))+" results", "cyan")
 			eulertree = self.convertSQLtoEulerTree(results)
 			self.processEulers(eulertree)
 			apDisplay.printMsg("Total time for "+str(len(eulertree))+" eulers: "+apDisplay.timeString(time.time()-t0))
