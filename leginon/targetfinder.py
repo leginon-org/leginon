@@ -129,13 +129,20 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		input: list of (x,y) tuples
 		output: sorted list of  (x,y) tuples
 		"""
+		if len(targetlist) < 3:
+			print "skipping sort targets"
+			return targetlist
 		#print "targets=",targetlist
 		bestorder, bestscore = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
 		#print "bestorder=",bestorder
+		if bestorder is None or len(bestorder) < 2:
+			print "skipping sort targets"
+			return targetlist
 		sortedtargetlist = []
 		for i in bestorder:
 			sortedtargetlist.append(targetlist[i])
 		#print "sortedtargets=",sortedtargets
+		print "returning sorted targets"
 		return sortedtargetlist
 		
 	#--------------------
