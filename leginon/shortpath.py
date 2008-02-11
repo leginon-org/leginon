@@ -256,7 +256,7 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 		total distance
 	"""
 
-	if not coords or len(coords) < 1:
+	if not coords or len(coords) < 2:
 		return [], 0.0
 
 	#setup starting order
