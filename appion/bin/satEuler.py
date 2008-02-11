@@ -328,10 +328,11 @@ class satEulerScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			t0 = time.time()
 			results = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'], self.params['iternum'])
-			apDisplay.printColor("Found "+str(len(results))+" results", "cyan")
 			eulertree = self.convertSQLtoEulerTree(results)
 			self.processEulers(eulertree)
 			apDisplay.printMsg("Total time for "+str(len(eulertree))+" eulers: "+apDisplay.timeString(time.time()-t0))
+		else:
+			apDisplay.printWarning("Not committing results")
 		self.subStackCmd()
 
 #=====================
