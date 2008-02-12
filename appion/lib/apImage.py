@@ -180,6 +180,30 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	sigma=float(radius/apix/float(bin))
 	return ndimage.gaussian_filter(imgarray, sigma=sigma/3.0)
 
+def fermiHighPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
+	"""
+	Fermi high pass filter image to radius resolution
+	"""
+	if radius == 0:
+		if msg is True:
+			apDisplay.printMsg("skipping high pass filter")
+		return(imgarray)
+	pixrad=float(radius/apix/float(bin))
+	filtimg = apSpider.fermiHighPassFilter(imgarray, pixrad)
+	return filtimg
+
+def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
+	"""
+	Fermi low pass filter image to radius resolution
+	"""
+	if radius == 0:
+		if msg is True:
+			apDisplay.printMsg("skipping low pass filter")
+		return(imgarray)
+	pixrad=float(radius/apix/float(bin))
+	filtimg = apSpider.fermiLowPassFilter(imgarray, pixrad)
+	return filtimg
+
 def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
 	high pass filter image to radius resolution
