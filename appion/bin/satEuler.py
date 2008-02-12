@@ -169,15 +169,15 @@ class satEulerScript(appionScript.AppionScript):
 		self.writeScatterFile(eulertree)
 
 		print "EULER ANGLE DATA:"
-		myrange = tuple((0,180,5))
+		myrange = tuple((0,180,2))
 		self.analyzeList(angdistlist, myrange, "eulerdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
-		myrange = tuple((-180,180,10))
+		myrange = tuple((-180,180,2))
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
-		myrange = tuple((0,180,5))
+		myrange = tuple((0,180,2))
 		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -200,21 +200,19 @@ class satEulerScript(appionScript.AppionScript):
 		r = open(rawfile, "w")
 		r.write("p1-id\tp1-e1\tp1-e2\tp1-e3\tp2-id\tp2-e1\tp2-e2\tp2-e3\tang-dist\trot-dist\ttotal-dist\n")
 		for eulerpair in eulertree:
-			mystr = ( "%d\t%3.4f \t%3.4f\t%3.4f\t"
-					+"%d\t%3.4f\t%3.4f\t%3.4f\t"
-					+"%3.6f\t%3.6f\t%3.6f\n" % (
-				eulerpair['part1']['partid'],
-				eulerpair['part1']['euler1'],
-				eulerpair['part1']['euler2'],
-				eulerpair['part1']['euler3'],
-				eulerpair['part2']['partid'],
-				eulerpair['part2']['euler1'],
-				eulerpair['part2']['euler2'],
-				eulerpair['part2']['euler3'],
-				eulerpair['angdist'], 
-				eulerpair['rotdist'],
-				eulerpair['totdist'],
-			) )
+			mystr = ( 
+				str(eulerpair['part1']['partid'])+"\t"+
+				str(eulerpair['part1']['euler1'])+"\t"+
+				str(eulerpair['part1']['euler2'])+"\t"+
+				str(eulerpair['part1']['euler3'])+"\t"+
+				str(eulerpair['part2']['partid'])+"\t"+
+				str(eulerpair['part2']['euler1'])+"\t"+
+				str(eulerpair['part2']['euler2'])+"\t"+
+				str(eulerpair['part2']['euler3'])+"\t"+
+				str(eulerpair['angdist'])+"\t"+
+				str(eulerpair['rotdist'])+"\t"+
+				str(eulerpair['totdist'])+"\n"
+			)
 			r.write(mystr)
 		r.close()
 		return
