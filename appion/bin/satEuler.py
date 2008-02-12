@@ -169,7 +169,8 @@ class satEulerScript(appionScript.AppionScript):
 		self.writeScatterFile(eulertree)
 
 		print "EULER ANGLE DATA:"
-		myrange = tuple((0,180,2))
+		#D-symmetry goes to 90, all other 180
+		myrange = tuple((0,90,2))
 		self.analyzeList(angdistlist, myrange, "eulerdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
@@ -177,7 +178,8 @@ class satEulerScript(appionScript.AppionScript):
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
-		myrange = tuple((0,180,2))
+		#D-symmetry goes to 90, all other 180
+		myrange = tuple((0,90,2))
 		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
