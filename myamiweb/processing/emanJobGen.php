@@ -229,7 +229,9 @@ function stackModelForm($extra=False) {
     echo "</SELECT>\n";
   }
   # show initial models
-  echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A>\n";
+  echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
+	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'>"
+		."</FORM><BR/>\n";
   echo "<P>\n";
   $minf = explode('|--|',$_POST['model']);
   if (is_array($models) && count($models)>0) {
@@ -271,7 +273,7 @@ function stackModelForm($extra=False) {
       echo "</TABLE>\n";
       echo "<P>\n";
     }
-    if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack & model'></FORM>\n";
+    if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
   }
   else {echo "No initial models in database";}
   writeBottom();
