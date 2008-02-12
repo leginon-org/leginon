@@ -129,8 +129,7 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 	### color peaks in map
 	image2 = image.copy()
 	draw = ImageDraw.Draw(image2)
-	binpixrad = pixrad / float(bin)
-	drawPeaks(peaktree, draw, bin, binpixrad, fill=True)
+	drawPeaks(peaktree, draw, bin, pixrad, fill=True)
 	image = Image.blend(image, image2, 0.3) 
 	
 	if msg is True:
