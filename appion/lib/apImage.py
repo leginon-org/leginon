@@ -13,6 +13,7 @@ from numpy import linalg
 from numpy import ma
 ## appion
 import apDisplay
+import apSpider
 ## pyami
 from pyami import mrc
 
