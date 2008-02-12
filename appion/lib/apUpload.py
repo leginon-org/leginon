@@ -100,6 +100,9 @@ def parseModelUploadInput(args,params):
 			params['description']=elements[1]
 		elif (elements[0]=='boxsize'):
 			params['newbox']=int(elements[1])
+		elif (arg=='chimeraonly'):
+			params['chimeraonly']=True
+			params['commit']=False
 		elif (elements[0]=='rescale'):
 			modinfo=elements[1].split(',')
 			if len(modinfo) == 2:

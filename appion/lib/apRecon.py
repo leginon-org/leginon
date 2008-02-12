@@ -32,6 +32,7 @@ def createDefaults():
 	params['modelid']=None
 	params['jobid']=None
 	params['jobinfo']=None
+	params['chimeraonly']=False
 	params['path']=os.path.abspath('.')
 	params['volumes']=[]
 	params['classavgs']=[]
@@ -126,6 +127,9 @@ def parseInput(args,params):
 			params['oneiteration']=int(elements[1])
 		elif (elements[0]=='description'):
 			params['description']=elements[1]
+		elif (arg=='chimeraonly'):
+			params['chimeraonly']=True
+			params['commit']=False
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -501,7 +505,8 @@ def insertIteration(iteration, params):
 		params['contour'], params['zoom'], params['apix'])
 
 	## uncommment this for chimera image only runs...
-	#return
+	if params['chimeraonly'] is True:
+		return
 
 	# insert resolution data
 	resData = insertResolutionData(params, iteration)
