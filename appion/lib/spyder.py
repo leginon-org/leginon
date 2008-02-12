@@ -42,7 +42,7 @@ def isSpiderRegister(s):
 
 class SpiderSession:
     def __init__(self, spiderexec=None, dataext='.spi'):
-        # spider executable
+        # spider executable		
         if spiderexec == None:
             if os.environ.has_key('SPIDER_LOC'):
                 self.spiderexec = os.path.join(os.environ['SPIDER_LOC'],'spider')
@@ -65,7 +65,8 @@ class SpiderSession:
         os.mkfifo(self.pipename)
 
         # Start spider process, initialize with some MD commands.
-        self.spider = os.popen(self.spiderexec, 'w')
+        #self.spider = os.popen(self.spiderexec, 'w')
+        self.spider, self.stdout = os.popen2(self.spiderexec, 'w')
         self.toSpider(self.dataext)
         self.toSpider("MD", "TERM OFF")
         self.toSpider("MD", "RESULTS OFF")
