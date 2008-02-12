@@ -112,7 +112,7 @@ class satEulerScript(appionScript.AppionScript):
 				#+"LIMIT 10 \n"
 			)
 		apDisplay.printMsg("Running MySQL query at "+time.asctime())
-		#print query
+		print query
 		self.cursor.execute(query)
 		numrows = int(self.cursor.rowcount)
 		apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
@@ -144,8 +144,8 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def calcRotationalDifference(self, eulerpair):
 		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
-		#if rotdist > 180.0:
-		#	rotdist -= 360.0
+		if rotdist > 180.0:
+			rotdist -= 360.0
 		return rotdist
 
 	#=====================
@@ -164,11 +164,12 @@ class satEulerScript(appionScript.AppionScript):
 			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
 
+		self.writeRawDataFile(eulertree)
 		self.writeKeepFile(eulertree)
 		self.writeScatterFile(eulertree)
 
 		print "EULER ANGLE DATA:"
-		myrange = tuple((0,90,5))
+		myrange = tuple((0,180,5))
 		self.analyzeList(angdistlist, myrange, "eulerdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
@@ -176,7 +177,7 @@ class satEulerScript(appionScript.AppionScript):
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
-		myrange = tuple((-180,180,10))
+		myrange = tuple((0,180,5))
 		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -189,6 +190,33 @@ class satEulerScript(appionScript.AppionScript):
 			s.write(mystr)
 		s.write("&\n")
 		s.close()
+		return
+
+	#=====================
+	def writeRawDataFile(self, eulertree):
+		#write to file
+		rawfile = "rawdata"+self.datastr+".dat"
+		apDisplay.printMsg("Writing raw data to file: "+rawfile)
+		r = open(rawfile, "w")
+		r.write("p1-id\tp1-e1\tp1-e2\tp1-e3\tp2-id\tp2-e1\tp2-e2\tp2-e3\tang-dist\trot-dist\ttotal-dist\n")
+		for eulerpair in eulertree:
+			mystr = ( "%d\t%3.4f \t%3.4f\t%3.4f\t"
+					+"%d\t%3.4f\t%3.4f\t%3.4f\t"
+					+"%3.6f\t%3.6f\t%3.6f\n" % (
+				eulerpair['part1']['partid'],
+				eulerpair['part1']['euler1'],
+				eulerpair['part1']['euler2'],
+				eulerpair['part1']['euler3'],
+				eulerpair['part2']['partid'],
+				eulerpair['part2']['euler1'],
+				eulerpair['part2']['euler2'],
+				eulerpair['part2']['euler3'],
+				eulerpair['angdist'], 
+				eulerpair['rotdist'],
+				eulerpair['totdist'],
+			) )
+			r.write(mystr)
+		r.close()
 		return
 
 	#=====================
