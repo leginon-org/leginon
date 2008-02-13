@@ -152,7 +152,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 		if not imagetargets:
 			return
-		if settings['sort target']:
+		if self.settings['sort target']:
 			imagetargets = self.sortTargets(imagetargets)
 		imagearray = imagedata['image']
 		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
