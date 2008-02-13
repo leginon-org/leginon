@@ -119,6 +119,8 @@ class SpiderSession:
                 if os.path.exists(file):
                     try: os.remove(file)
                     except: pass
+        #self.spider.flush
+        self.spider.close()
 
     
 # --------------------------------------------------------------
