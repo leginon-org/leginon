@@ -57,10 +57,10 @@ def fermiHighPassFilter(imgarray, pixrad=200.0, dataext="spi"):
 	os.popen("rm -f temp001."+dataext+" filt001."+dataext)
 	return filtarray
 
-def arrayToSpiderSingle(imgarray, imgfile):
+def arrayToSpiderSingle(imgarray, imgfile, msg=False):
 	### temp hack
-	apImage.arrayToMrc(imgarray, "temp001.mrc")
-	apEMAN.executeEmanCmd("proc2d temp001.mrc "+imgfile+" spiderswap-single", verbose=False)
+	apImage.arrayToMrc(imgarray, "temp001.mrc", msg=msg)
+	apEMAN.executeEmanCmd("proc2d temp001.mrc "+imgfile+" spiderswap-single", verbose=False, showcmd=False)
 	while(not os.path.isfile(imgfile)):
 		time.sleep(0.2)
 	os.popen("rm -f temp001.mrc")
@@ -68,14 +68,14 @@ def arrayToSpiderSingle(imgarray, imgfile):
 	#img = apImage.arrayToImage(imgarray)
 	#img.save(imgfile, format='SPIDER')
 
-def spiderSingleToArray(imgfile):
+def spiderSingleToArray(imgfile, msg=False):
 	### temp hack
 	if not os.path.isfile(imgfile):
 		apDisplay.printError("File: "+imgfile+" does not exist")
-	apEMAN.executeEmanCmd("proc2d "+imgfile+" temp001.mrc", verbose=False)
+	apEMAN.executeEmanCmd("proc2d "+imgfile+" temp001.mrc", verbose=False, showcmd=False)
 	while(not os.path.isfile("temp001.mrc")):
 		time.sleep(0.2)
-	imgarray = apImage.mrcToArray("temp001.mrc")
+	imgarray = apImage.mrcToArray("temp001.mrc", msg=msg)
 	os.popen("rm -f temp001.mrc")
 	### better way to do it
 	#img = Image.open(imgfile)
