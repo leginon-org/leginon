@@ -106,9 +106,11 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 		peaktree = maxThreshPeaks(peaktree, maxthresh)
 
 	#max peaks
-	peaktree.sort(_peakCompare)
 	if(len(peaktree) > maxpeaks):
+		#orders peaks from biggest to smallest
+		peaktree.sort(_peakCompareBigSmall)
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
+		print "Corr Best="+str(round(peaktree[0]['correlation'],3))+" Worst="+str(round(peaktree[len(peaktree)-1]['correlation'],3))
 		peaktree = peaktree[0:maxpeaks]
 
 	return peaktree
@@ -172,6 +174,10 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 
 	if(len(bestpeaktree) > maxpeaks):
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
+		#orders peaks from biggest to smallest
+		bestpeaktree.sort(_peakCompareBigSmall)
+		print ("Corr Best="+str(round(bestpeaktree[0]['correlation'],3))
+			+" Worst="+str(round(bestpeaktree[len(peaktree)-1]['correlation'],3)))
 		bestpeaktree = bestpeaktree[0:maxpeaks]
 
 	peakTreeToPikFile(bestpeaktree, imgname, 'a', params['rundir'])
@@ -186,7 +192,7 @@ def removeOverlappingPeaks(peaktree, cutoff, msg=True):
 
 	initpeaks = len(peaktree)
 	#orders peaks from smallest to biggest
-	peaktree.sort(_peakCompare)
+	peaktree.sort(_peakCompareSmallBig)
 	i=0
 	while i < len(peaktree):
 		j = i+1
@@ -219,8 +225,14 @@ def removeBorderPeaks(peaktree, diam, xdim, ydim):
 			newpeaktree.append(peak)
 	return newpeaktree
 	
-def _peakCompare(a, b):
+def _peakCompareSmallBig(a, b):
 	if float(a['correlation']) > float(b['correlation']):
+		return 1
+	else:
+		return -1
+
+def _peakCompareBigSmall(a, b):
+	if float(a['correlation']) < float(b['correlation']):
 		return 1
 	else:
 		return -1
