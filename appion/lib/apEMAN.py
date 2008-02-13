@@ -8,8 +8,9 @@ import sys
 #	apDisplay.printWarning("EMAN module did not get imported")
 #pass
 
-def executeEmanCmd(emancmd, verbose=False):
-	sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
+def executeEmanCmd(emancmd, verbose=False, showcmd=True):
+	if showcmd is True:
+		sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
 	try:
 		if verbose is False:
 			os.popen(emancmd)
