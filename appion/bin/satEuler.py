@@ -224,7 +224,7 @@ class satEulerScript(appionScript.AppionScript):
 		#find good particles
 		keeplist = []
 		for eulerpair in eulertree:
-			if abs(eulerpair['angdist'] - 15.0) < 10.0:
+			if abs(eulerpair['totdist'] - 15.0) < 10.0:
 				keeplist.append(eulerpair['part1']['partid']-1)
 				keeplist.append(eulerpair['part2']['partid']-1)
 		#sort
