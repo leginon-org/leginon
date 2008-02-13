@@ -397,6 +397,7 @@ class Tomography(acquisition.Acquisition):
 
         args = (beam_tilt, stig, correct_tilt, correlation_type, settle, image0)
         try:
+				#This does not seem to work right
             result = self.calclients['beam tilt'].measureDefocusStig(*args)
         except calibrationclient.NoMatrixCalibrationError, e:
             self.logger.error('Measurement failed without calibration: %s' % e)

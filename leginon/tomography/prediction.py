@@ -87,7 +87,9 @@ class Prediction(object):
             x, y = tilt_group.xs[-1], tilt_group.ys[-1]
             z = 0.0
         # HACK: use residuals instead
-        elif n_tilts < 3 or n_max < 16:
+        # elif n_tilts < 3 or n_max < 16:
+        # calculate real z correction for all n_max
+        elif n_tilts < 3:
             x, y = leastSquaresXY(tilt_group.tilts,
                                   tilt_group.xs,
                                   tilt_group.ys,
@@ -158,7 +160,6 @@ def leastSquaresModel(tilt_series_list):
             parameters.extend([0])
 
             tilts = scipy.array(tilt_group.tilts)
-
             cos_tilts = scipy.cos(tilts)
             sin_tilts = scipy.sin(tilts)
 
