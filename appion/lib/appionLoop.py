@@ -762,7 +762,7 @@ class AppionLoop(object):
 			apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
 	
 		if(self.stats['count'] > 15):
-			memlist = self.stats['memlist']
+			memlist = self.stats['memlist'][-15:]
 			n       = len(memlist)
 			gain    = (memlist[n-1] - memlist[0])/1024.0
 			sumx    = n*(n-1.0)/2.0
@@ -780,9 +780,9 @@ class AppionLoop(object):
 			slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
 			memleak = rho*slope
 			###
-			if(self.stats['memleak'] and slope > 0 and memleak > 32 and gain > 128): 
+			if(self.stats['memleak'] and slope > 0 and memleak > 128 and gain > 256): 
 				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
-			elif(memleak > 16):
+			elif(memleak > 32):
 				self.stats['memleak'] = True
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
