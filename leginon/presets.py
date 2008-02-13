@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.265 $
+# $Revision: 1.266 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 20:41:30 $
+# $Date: 2008-02-13 03:20:52 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -1135,7 +1135,10 @@ class PresetsManager(node.Node):
 			## bin the full camera to at most imagelength x imagelength
 			for axis in ('x','y'):
 				#fix me to real camera dimension
-				fullcamdim = 4096
+				if camdata1['ccdcamera']['name'] != 'Tietz PXL':
+					fullcamdim = 4096
+				else:
+					fullcamdim = 2048
 				new_camdim = fullcamdim
 				new_bin = 1
 				while new_camdim > imagelength:
@@ -1337,6 +1340,8 @@ class PresetsManager(node.Node):
 			movetype = 'stage position'
 		else:
 			movetype = 'image shift'
+		if self.currentpreset != p:
+			self.cycleToScope(p)
 		self.navclient.moveToTarget(target, movetype)
 		if label == 'right':
 		#	save preset from the current microscope state if the right image is clicked
