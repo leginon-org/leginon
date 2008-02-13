@@ -7,6 +7,7 @@ import random
 import math
 import time
 import pprint
+import cPickle
 #site-packages
 import numpy
 from scipy import ndimage, stats
@@ -111,14 +112,23 @@ class satEulerScript(appionScript.AppionScript):
 				+"ORDER BY stpart1.particleNumber ASC \n"
 				#+"LIMIT 10 \n"
 			)
-		apDisplay.printMsg("Running MySQL query at "+time.asctime())
-		print query
-		self.cursor.execute(query)
-		numrows = int(self.cursor.rowcount)
-		apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
-		apDisplay.printMsg("Fetching data at "+time.asctime())
-		results = self.cursor.fetchall()
-		apDisplay.printMsg("Fetched "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
+		#print query
+
+		cachefile = "mysql_cache-recon"+str(reconid)+"-iter"+str(iteration)+".pickle"
+		if not os.path.isfile(cachefile):
+			apDisplay.printMsg("Running MySQL query at "+time.asctime())
+			self.cursor.execute(query)
+			numrows = int(self.cursor.rowcount)
+			apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
+			apDisplay.printMsg("Fetching data at "+time.asctime())
+			results = self.cursor.fetchall()
+			cachef = open(cachefile, 'w', 0666)
+			cPickle.dump(results, cachef)
+		else:
+			apDisplay.printMsg("Using cached MySQL query data at "+time.asctime())
+			cachef = open(cachefile, 'r')
+			results = cPickle.load(cachef)
+		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
 		return results
 
 	#=====================
@@ -144,8 +154,9 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def calcRotationalDifference(self, eulerpair):
 		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
-		if rotdist > 180.0:
-			rotdist -= 360.0
+		#DOES this number affect the total angle?
+		#if rotdist > 180.0:
+		#	rotdist -= 360.0
 		return rotdist
 
 	#=====================
