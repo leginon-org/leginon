@@ -203,7 +203,7 @@ class satEulerScript(appionScript.AppionScript):
 	def writeScatterFile(self, eulertree):
 		s = open("scatter"+self.datastr+".dat", "w")
 		for eulerpair in eulertree:
-			mystr = ( "%3.4f %3.4f\n" % (eulerpair['angdist'], eulerpair['rotdist']) )
+			mystr = ( "%3.4f %3.4f\n" % (eulerpair['rotdist'], eulerpair['angdist']) )
 			s.write(mystr)
 		s.write("&\n")
 		s.close()
