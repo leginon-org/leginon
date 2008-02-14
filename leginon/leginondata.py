@@ -413,6 +413,26 @@ class PresetData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+def createCommonSubclass(baseclass, otherclass):
+	class NewClass(baseclass):
+		def typemap(cls):
+			ptypemap = otherclass.typemap()
+			stypemap = baseclass.typemap()
+			mytypemap = []
+			for sitem in stypemap:
+				sname = sitem[0]
+				for pitem in ptypemap:
+					pname = pitem[0]
+					if sname == pname:
+						mytypemap.append(sitem)
+						break
+			return tuple(mytypemap)
+		typemap = classmethod(typemap)
+	return NewClass
+
+PresetScopeEMData = createCommonSubclass(ScopeEMData, PresetData)
+PresetCameraEMData = createCommonSubclass(CameraEMData, PresetData)
+
 class NewPresetData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

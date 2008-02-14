@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.266 $
+# $Revision: 1.267 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-13 03:20:52 $
-# $Author: acheng $
+# $Date: 2008-02-14 17:00:00 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -608,13 +608,13 @@ class PresetsManager(node.Node):
 
 		self.logger.info('Preset from %s, %s' % (temname, camname))
 		try:
-			scopedata = self.instrument.getData(leginondata.ScopeEMData)
+			scopedata = self.instrument.getData(leginondata.PresetScopeEMData)
 		except Exception, e:
 			self.logger.error('Preset from instrument failed, unable to get TEM parameters: %s' % e)
 			return
 
 		try:
-			cameradata = self.instrument.getData(leginondata.CameraEMData, image=False)
+			cameradata = self.instrument.getData(leginondata.PresetCameraEMData, image=False)
 		except Exception, e:
 			self.logger.error('Preset from instrument failed, unable to get CCD camera parameters: %s' % e)
 			return
