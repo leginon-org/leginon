@@ -33,17 +33,19 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 
 	# calculate the distances between the original Euler and all the equivalents
 	mindist = 360.0
-	#distlist = []
+	distlist = []
 	for e2mat in e2equivMats:
 		dist = computeDistance(e1mat, e2mat)
-		#distlist.append(dist)
+		distlist.append(dist)
 		if dist < mindist:
 			mindist = dist
-
-	#print round(mindist,4),"<--",numpy.around(distlist,2)
-	#pprint.pprint(e1)
-	#pprint.pprint(e2)
-	#print ""
+	"""
+	if mindist > 91.0:
+		print round(mindist,4),"<--",numpy.around(distlist,2)
+		pprint.pprint(e1)
+		pprint.pprint(e2)
+		print ""
+	"""
 
 	#convert to degrees
 	return mindist
@@ -185,7 +187,7 @@ def computeDistance(m1,m2):
 		#apDisplay.printWarning("overflow return, diff="+str(diff)+" m1="+str(m1)+" m2="+str(m2))
 		if diff < 1.0e-6:
 			return 0.0
-		return 190.0
+		return 180.0
 	else:
 		#print "calculating"
 		theta = math.acos(s)

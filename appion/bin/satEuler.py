@@ -116,7 +116,7 @@ class satEulerScript(appionScript.AppionScript):
 
 		cachefile = "mysql_cache-recon"+str(reconid)+"-iter"+str(iteration)+".pickle"
 		if not os.path.isfile(cachefile):
-			apDisplay.printMsg("Running MySQL query at "+time.asctime())
+			apDisplay.printColor("Running MySQL query at "+time.asctime(), "yellow")
 			self.cursor.execute(query)
 			numrows = int(self.cursor.rowcount)
 			apDisplay.printMsg("Found "+str(numrows)+" rows in "+apDisplay.timeString(time.time()-t0))
@@ -125,7 +125,7 @@ class satEulerScript(appionScript.AppionScript):
 			cachef = open(cachefile, 'w', 0666)
 			cPickle.dump(results, cachef)
 		else:
-			apDisplay.printMsg("Using cached MySQL query data at "+time.asctime())
+			apDisplay.printColor("Using cached MySQL query data at "+time.asctime(), "cyan")
 			cachef = open(cachefile, 'r')
 			results = cPickle.load(cachef)
 		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
@@ -192,16 +192,20 @@ class satEulerScript(appionScript.AppionScript):
 
 		print "EULER ANGLE DATA:"
 		#D-symmetry goes to 90, all other 180
-		myrange = tuple((0,90,2))
+		maxang = int(math.ceil(ndimage.maximum(angdistlist)))
+		myrange = tuple((0,maxang,2))
 		self.analyzeList(angdistlist, myrange, "eulerdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
-		myrange = tuple((-180,180,2))
+		minrot = int(math.floor(ndimage.minimum(rotdistlist)))
+		maxrot = int(math.ceil(ndimage.maximum(rotdistlist)))
+		myrange = tuple((minrot,maxrot,2))
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		myrange = tuple((0,90,2))
+		maxtot = int(math.ceil(ndimage.maximum(totdistlist)))
+		myrange = tuple((0,maxtot,2))
 		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -301,7 +305,7 @@ class satEulerScript(appionScript.AppionScript):
 		#histogram
 		bins = []
 		mybin = mymin
-		while mybin < mymax:
+		while mybin <= mymax:
 			bins.append(mybin)
 			mybin += mystep
 		bins = numpy.asarray(bins, dtype=numpy.float32)
