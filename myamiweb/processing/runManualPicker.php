@@ -115,7 +115,8 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     Particle diameter for result images <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
     <BR><BR>";
   echo"
-    <B>Picking Icon <I>(only for visual purposes, does not affect data)</I>:</B><BR/>
+    <B>Picking Icon</B><I>
+		<BR/>(only for visual purposes, does not affect data)</I>:<BR/>
     <SELECT NAME='shape'>\n";
   $shapes = array('plus', 'circle', 'cross', 'point', 'square', 'diamond', );
   foreach($shapes as $shape) {
@@ -126,8 +127,9 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $shapesize = (int) $_POST['shapesize'];
   echo"
     <INPUT TYPE='text' NAME='shapesize' VALUE='$shapesize' SIZE='3'>&nbsp;
-    Picking icon diameter <FONT SIZE=-2><I>(in pixels)</I></FONT>
-    <BR><BR>";    
+    Picking icon diameter <FONT SIZE=-2><I>(in pixels; 0 = autosize)</I></FONT><BR/>
+		<I>16 pixels is best</I>
+    <BR/><BR/>";    
   createParticleLoopTable(-1, -1);
   echo "
     </TD>
