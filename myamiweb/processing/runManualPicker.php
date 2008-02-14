@@ -115,7 +115,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     Particle diameter for result images <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
     <BR><BR>";
   echo"
-    <B>Picking Icon:</B><BR/>
+    <B>Picking Icon <I>(only for visual purposes, does not affect data)</I>:</B><BR/>
     <SELECT NAME='shape'>\n";
   $shapes = array('plus', 'circle', 'cross', 'point', 'square', 'diamond', );
   foreach($shapes as $shape) {
