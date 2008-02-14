@@ -182,9 +182,9 @@ def computeDistance(m1,m2):
 		 (2) Vectors are opposite, i.e. 180 degrees
 		"""
 		diff = numpy.sum(pow((m1-m2),2))
+		#apDisplay.printWarning("overflow return, diff="+str(diff)+" m1="+str(m1)+" m2="+str(m2))
 		if diff < 1.0e-6:
 			return 0.0
-		#apDisplay.printWarning("overflow return, diff="+str(diff))
 		return 190.0
 	else:
 		#print "calculating"

@@ -152,7 +152,14 @@ class satEulerScript(appionScript.AppionScript):
 		return eulertree
 
 	#=====================
-	def calcRotationalDifference(self, eulerpair):
+	def calc3dRotationalDifference(self, eulerpair):
+		e1 = { "euler1": eulerpair['part1']['euler1'], "euler2": eulerpair['part1']['euler2'], "euler3": eulerpair['part1']['euler3'] }
+		e2 = { "euler1": eulerpair['part1']['euler1'], "euler2": eulerpair['part1']['euler2'], "euler3": eulerpair['part2']['euler3'] }
+		rotdist = apEulerCalc.eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=True)
+		return rotdist
+
+	#=====================
+	def calc2dRotationalDifference(self, eulerpair):
 		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
 		#DOES this number affect the total angle?
 		if rotdist > 180.0:
@@ -174,7 +181,7 @@ class satEulerScript(appionScript.AppionScript):
 				eulerpair['part2'], sym='d7', inplane=True)
 			angdistlist.append(eulerpair['angdist'])
 			totdistlist.append(eulerpair['totdist'])
-			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
+			eulerpair['rotdist'] = self.calc3dRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
 			+apDisplay.timeString(time.time()-t0))
@@ -201,9 +208,15 @@ class satEulerScript(appionScript.AppionScript):
 
 	#=====================
 	def writeScatterFile(self, eulertree):
+		"""
+		write:
+			(1) rotation angle diff in radians
+			(2) tilt angle diff in degrees	
+		for xmgrace display
+		"""
 		s = open("scatter"+self.datastr+".dat", "w")
 		for eulerpair in eulertree:
-			mystr = ( "%3.8f %3.8f\n" % (eulerpair['rotdist']*math.pi/180.0, eulerpair['angdist']*math.pi/180.0) )
+			mystr = ( "%3.8f %3.8f\n" % (eulerpair['rotdist']*math.pi/180.0, eulerpair['angdist']) )
 			s.write(mystr)
 		s.write("&\n")
 		s.close()
