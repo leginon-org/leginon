@@ -16,14 +16,7 @@ import apMask
 
 #Leginon
 import polygon
-try:
-	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
-except ImportError:
-	from  gui.wx import ImageViewer
-	ImagePanel = ImageViewer
-	ImagePanelTools = ImageViewer
-	TargetPanel = ImageViewer
-	TargetPanelTools = ImageViewer
+from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
 import pyami
 import numpy
 
@@ -66,12 +59,12 @@ class PickerApp(wx.App):
 		### BEGIN IMAGE PANEL
 		self.panel = ManualPickerPanel(self.frame, -1)
 
-		self.panel.addTargetTool('Select Particles', display=wx.Color(220,20,20), 
+		self.panel.addTargetTool('Select Particles', color=wx.Color(220,20,20), 
 			target=True, shape=self.shape, size=self.size)
 		self.panel.setTargets('Select Particles', [])
 		self.panel.selectiontool.setTargeting('Select Particles', True)
 
-		self.panel.addTargetTool('Region to Remove', display=wx.Color(20,220,20),
+		self.panel.addTargetTool('Region to Remove', color=wx.Color(20,220,20),
 			target=True, shape='polygon')
 		self.panel.setTargets('Region to Remove', [])
 		self.panel.selectiontool.setDisplayed('Region to Remove', True)
