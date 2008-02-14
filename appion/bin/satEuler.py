@@ -155,8 +155,8 @@ class satEulerScript(appionScript.AppionScript):
 	def calcRotationalDifference(self, eulerpair):
 		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
 		#DOES this number affect the total angle?
-		#if rotdist > 180.0:
-		#	rotdist -= 360.0
+		if rotdist > 180.0:
+			rotdist -= 360.0
 		return rotdist
 
 	#=====================
@@ -165,6 +165,8 @@ class satEulerScript(appionScript.AppionScript):
 		angdistlist = []
 		totdistlist = []
 		rotdistlist = []
+		t0 = time.time()
+		apDisplay.printMsg("Begin processing "+str(len(eulertree))+" euler distances")
 		for eulerpair in eulertree:
 			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
 				eulerpair['part2'], sym='d7', inplane=False)
@@ -174,6 +176,8 @@ class satEulerScript(appionScript.AppionScript):
 			totdistlist.append(eulerpair['totdist'])
 			eulerpair['rotdist'] = self.calcRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
+		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
+			+apDisplay.timeString(time.time()-t0))
 
 		self.writeRawDataFile(eulertree)
 		self.writeKeepFile(eulertree)
@@ -215,16 +219,16 @@ class satEulerScript(appionScript.AppionScript):
 		for eulerpair in eulertree:
 			mystr = ( 
 				str(eulerpair['part1']['partid'])+"\t"+
-				str(eulerpair['part1']['euler1'])+"\t"+
-				str(eulerpair['part1']['euler2'])+"\t"+
-				str(eulerpair['part1']['euler3'])+"\t"+
+				str(round(eulerpair['part1']['euler1'],2))+"\t"+
+				str(round(eulerpair['part1']['euler2'],2))+"\t"+
+				str(round(eulerpair['part1']['euler3'],2))+"\t"+
 				str(eulerpair['part2']['partid'])+"\t"+
-				str(eulerpair['part2']['euler1'])+"\t"+
-				str(eulerpair['part2']['euler2'])+"\t"+
-				str(eulerpair['part2']['euler3'])+"\t"+
-				str(eulerpair['angdist'])+"\t"+
-				str(eulerpair['rotdist'])+"\t"+
-				str(eulerpair['totdist'])+"\n"
+				str(round(eulerpair['part2']['euler1'],2))+"\t"+
+				str(round(eulerpair['part2']['euler2'],2))+"\t"+
+				str(round(eulerpair['part2']['euler3'],2))+"\t"+
+				str(round(eulerpair['angdist'],2))+"\t"+
+				str(round(eulerpair['rotdist'],2))+"\t"+
+				str(round(eulerpair['totdist'],2))+"\n"
 			)
 			r.write(mystr)
 		r.close()
