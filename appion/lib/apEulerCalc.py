@@ -26,8 +26,10 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	value in degrees
 	"""
 	e1mat = getEmanEulerMatrix(e1, inplane=inplane)
+	#print e1mat
 	#get list of equivalent euler matrices
-	e2equivMats = calculateEquivSym(e2, sym=sym)
+	e2equivMats = calculateEquivSym(e2, sym=sym, inplane=inplane)
+	#print e2equivMats[0]
 
 	# calculate the distances between the original Euler and all the equivalents
 	mindist = 360.0
@@ -169,18 +171,26 @@ def getMatrix3(eulerdata, inplane=False):
 	return m
 
 def computeDistance(m1,m2):
-	r=numpy.dot(m1.transpose(),m2)
+	r = numpy.dot(m1.transpose(),m2)
 	#print r
-	trace=r.trace()
-	s=(trace-1)/2.0
+	trace = r.trace()
+	s = (trace-1.0)/2.0
 	if int(round(abs(s),7)) == 1:
-		#apDisplay.printWarning("overflow return")
+		"""
+		Either: 
+		 (1) Vectors are the same , i.e. 0 degrees
+		 (2) Vectors are opposite, i.e. 180 degrees
+		"""
+		diff = numpy.sum(pow((m1-m2),2))
+		if diff < 1.0e-6:
+			return 0.0
+		#apDisplay.printWarning("overflow return, diff="+str(diff))
 		return 190.0
 	else:
 		#print "calculating"
-		theta=math.acos(s)
+		theta = math.acos(s)
 		#print 'theta',theta
-		t1=abs(theta/(2*math.sin(theta)))
+		t1 = abs(theta/(2*math.sin(theta)))
 		#print 't1',t1 
 		t2 = math.sqrt(pow(r[0,1]-r[1,0],2)+pow(r[0,2]-r[2,0],2)+pow(r[1,2]-r[2,1],2))
 		#print 't2',t2, t2*180/math.pi
