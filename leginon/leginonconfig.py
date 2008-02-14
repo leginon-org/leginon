@@ -14,27 +14,30 @@ import sys
 logevents = False
 
 pathmapping = {}
-def mapPath(path):
-		if not pathmapping:
-			return path
+if sys.platform == 'win32':
+	def mapPath(path):
+			if not pathmapping:
+				return path
+			for key, value in pathmapping.items():
+				if value == path[:len(value)]:
+					path = key + path[len(value):]
+					break
 
-		for key, value in pathmapping.items():
-			if value == path[:len(value)]:
-				path = key + path[len(value):]
-				break
+			return os.path.normpath(path)
 
-		return os.path.normpath(path)
-
-def unmapPath(path):
-		if not pathmapping:
-			return path
-
-		for key, value in pathmapping.items():
-			if key == path[:len(key)]:
-				path = value + path[len(key):]
-				break
-
-		return os.path.normpath(path)
+	def unmapPath(path):
+			if not pathmapping:
+				return path
+			for key, value in pathmapping.items():
+				if key == path[:len(key)]:
+					path = value + path[len(key):]
+					break
+			return os.path.normpath(path)
+else:
+	def mapPath(path):
+		return path
+	def unmapPath(path):
+		return path
 
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
