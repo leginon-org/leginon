@@ -433,6 +433,13 @@ def createCommonSubclass(baseclass, otherclass):
 PresetScopeEMData = createCommonSubclass(ScopeEMData, PresetData)
 PresetCameraEMData = createCommonSubclass(CameraEMData, PresetData)
 
+class NavigatorScopeEMData(PresetScopeEMData):
+	def typemap(cls):
+		return PresetScopeEMData.typemap() + (
+			('stage position', dict),
+		)
+	typemap = classmethod(typemap)
+
 class NewPresetData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

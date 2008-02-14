@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/navigator.py,v $
-# $Revision: 1.129 $
+# $Revision: 1.130 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 04:59:17 $
-# $Author: acheng $
+# $Date: 2008-02-14 22:08:15 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -154,7 +154,8 @@ class Navigator(node.Node):
 
 	def _moveback(self):
 		self.logger.info('moving back to previous state')
-		emdat = data.ScopeEMData(initializer=self.oldstate)
+		emdat = data.NavigatorScopeEMData()
+		emdat.friendly_update(self.oldstate)
 		try:
 			self.instrument.setData(emdat)
 		except:
@@ -189,7 +190,8 @@ class Navigator(node.Node):
 
 		self.oldstate = self.newstate
 		self.newstate = newstate
-		emdat = data.ScopeEMData(initializer=newstate)
+		emdat = data.NavigatorScopeEMData()
+		emdat.friendly_update(newstate)
 		try:
 			self.instrument.setData(emdat)
 		except:
