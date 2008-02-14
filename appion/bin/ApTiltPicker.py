@@ -211,7 +211,7 @@ class PickerApp(wx.App):
 		self.createMenuBar()
 
 		self.frame.SetSizer(self.sizer)
-		self.frame.SetMinSize((768,384))
+		self.frame.SetMinSize((512,384))
 		self.SetTopWindow(self.frame)
 		self.frame.Show(True)
 		return True
@@ -334,6 +334,7 @@ class PickerApp(wx.App):
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
+					( "Auto &DoG Pick Particles", "DoG Picker", self.onAutoDogPick ),
 				)),
 			]
 		else:
