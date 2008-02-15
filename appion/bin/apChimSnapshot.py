@@ -54,11 +54,27 @@ def color_surface_radially(surf):
 	rmin, rmax = rc.value_range(vertices, vertex_xform = None)
 	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
 
-	# Red,green,blue,opacity
+	#key: red,green,blue,opacity
+	#order: red, yellow, green, cyan, blue
 	colors = [(0.933,0.067,0.067,1), (0.933,0.933,0.067,1), (0.067,0.933,0.067,1), (0.067,0.933,0.933,1), (0.067,0.067,0.933,1)]  
 
 	rc.colormap = Color_Map(data_values, colors)
 	color_surface(surf, rc, caps_only = False, auto_update = False)
+
+def color_surface_cylinder(surf):
+	from SurfaceColor import color_surface, Cylinder_Color, Color_Map
+	cc = Cylinder_Color()
+	cc.origin = [0,0,0]
+	vertices, triangles = surf.surface_groups()[0].geometry()
+	rmin, rmax = cc.value_range(vertices, vertex_xform = None)
+	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
+
+	#key: red,green,blue,opacity
+	#order: orange, yellow, green, cyan, blue
+	colors = [(0.750,0.375,0.067,1), (0.750,0.750,0.067,1), (0.375,0.750,0.067,1), (0.067,0.750,0.067,1), (0.067,0.750,0.750,1)]  
+
+	cc.colormap = Color_Map(data_values, colors)
+	color_surface(surf, cc, caps_only = False, auto_update = False)
 
 # -----------------------------------------------------------------------------
 #
@@ -110,6 +126,8 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		save_image(image3, format=imgFormat) 
 
 	else:
+		if sym!='C1':
+			color_surface_cylinder(m)
 		writeMessageToLog("turn: flip image 180")
 		runChimCommand('turn x 180')
 		save_image(image1, format=imgFormat)
