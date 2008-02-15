@@ -377,7 +377,7 @@ class DogPickerDialog(wx.Dialog):
 		label = wx.StaticText(self, -1, "Max Peaks:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		self.maxpeaks = IntEntry(self, -1, allownone=False, chars=5, value="500")
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-		inforow.Add(self.thresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		inforow.Add(self.maxpeaks, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 
 		label = wx.StaticText(self, -1, "Please wait after running",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
