@@ -397,7 +397,7 @@ class particledata {
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
 			$childstackId = $rstack['stackId'];
 			//Get Parameters
-			$q = "SELECT sd.`DEF_id` as stackId, s.`DEF_id` as runid, s.*, p.*"
+			$q = "SELECT sd.`DEF_id` as stackId, s.`DEF_id` as runid, s.*, p.*,sd.*"
 				."FROM ApRunsInStackData as r "
 				."LEFT JOIN ApStackRunData as s "
 				."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
