@@ -374,6 +374,11 @@ class DogPickerDialog(wx.Dialog):
 
 		"""
 
+		label = wx.StaticText(self, -1, "Max Peaks:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.maxpeaks = IntEntry(self, -1, allownone=False, chars=5, value="500")
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.thresh, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
 		label = wx.StaticText(self, -1, "Please wait after running",
 			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
@@ -403,6 +408,7 @@ class DogPickerDialog(wx.Dialog):
 		#srange  = self.srange.GetValue()
 		thresh  = self.thresh.GetValue()
 		invert = self.partContrast(None)
+		maxpeaks = self.maxpeaks.GetValue()
 
 		if invert is True:	
 			apDisplay.printMsg("Picking light particles on dark backgound, i.e. stain")
@@ -428,7 +434,7 @@ class DogPickerDialog(wx.Dialog):
 		dogmap1 = apDog.diffOfGauss(img1, pixdiam/2.0, k=1.2)
 		dogmap1 = apImage.normStdev(dogmap1)/4.0
 		#3a: threshold & find peaks image 1
-		peaktree1 = apPeaks.findPeaksInMap(dogmap1, thresh, pixdiam)
+		peaktree1 = apPeaks.findPeaksInMap(dogmap1, thresh, pixdiam, maxpeaks=maxpeaks)
 		peaktree1 = apPeaks.removeBorderPeaks(peaktree1, pixdiam, 
 			dogmap1.shape[0], dogmap1.shape[1])
 		#4a: insert into self.parent.picks1
@@ -442,7 +448,7 @@ class DogPickerDialog(wx.Dialog):
 		dogmap2 = apDog.diffOfGauss(img2, pixdiam/2.0, k=1.2)
 		dogmap2 = apImage.normStdev(dogmap2)/4.0
 		#3b: threshold & find peaks image 2
-		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam)
+		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam, maxpeaks=maxpeaks)
 		peaktree2 = apPeaks.removeBorderPeaks(peaktree2, pixdiam, 
 			dogmap2.shape[0], dogmap2.shape[1])
 
