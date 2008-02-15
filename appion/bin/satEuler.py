@@ -78,13 +78,16 @@ class satEulerScript(appionScript.AppionScript):
 		"""
 		returns all classdata for a particular refinement iteration
 		"""
+		#get mirror and good/bad
 		t0 = time.time()
 		query = (
 			"SELECT \n"
 				+"  stpart1.particleNumber AS partnum1, \n"
 				+"  e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
+				+"  partclass1.`mirror` AS mirror1, partclass1.`thrown_out` AS reject1 \n"
 				+"  stpart2.particleNumber AS partnum2, \n"
-				+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2 \n"
+				+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2, \n"
+				+"  partclass2.`mirror` AS mirror2, partclass2.`thrown_out` AS reject2\n"
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
 				+"LEFT JOIN `ApImageTiltTransformData` as transform \n"
 				+"  ON tiltd.`REF|ApImageTiltTransformData|transform`=transform.`DEF_id` \n"
@@ -136,16 +139,21 @@ class satEulerScript(appionScript.AppionScript):
 		t0 = time.time()
 		eulertree = []
 		for row in results:
+			if len(row) < 11:
+				apDisplay.printError("delete MySQL cache file and run again")
 			eulerpair = { 'part1': {}, 'part2': {} }
 			eulerpair['part1']['partid'] = int(row[0])
 			eulerpair['part1']['euler1'] = float(row[1])
 			eulerpair['part1']['euler2'] = float(row[2])
 			eulerpair['part1']['euler3'] = float(row[3])
-
-			eulerpair['part2']['partid'] = int(row[4])
-			eulerpair['part2']['euler1'] = float(row[5])
-			eulerpair['part2']['euler2'] = float(row[6])
-			eulerpair['part2']['euler3'] = float(row[7])
+			eulerpair['part1']['mirror'] = int(row[4])
+			eulerpair['part1']['reject'] = int(row[5])
+			eulerpair['part2']['partid'] = int(row[6])
+			eulerpair['part2']['euler1'] = float(row[7])
+			eulerpair['part2']['euler2'] = float(row[8])
+			eulerpair['part2']['euler3'] = float(row[9])
+			eulerpair['part2']['mirror'] = int(row[10])
+			eulerpair['part2']['reject'] = int(row[11])
 			eulertree.append(eulerpair)
 
 		apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -181,7 +189,7 @@ class satEulerScript(appionScript.AppionScript):
 				eulerpair['part2'], sym='d7', inplane=True)
 			angdistlist.append(eulerpair['angdist'])
 			totdistlist.append(eulerpair['totdist'])
-			eulerpair['rotdist'] = self.calc3dRotationalDifference(eulerpair)
+			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
 			rotdistlist.append(eulerpair['rotdist'])
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
 			+apDisplay.timeString(time.time()-t0))
