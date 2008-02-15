@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-06-01 20:40:11 $
-# $Author: pulokas $
+# $Date: 2008-02-15 02:59:09 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -87,13 +87,14 @@ class SelectorItem(object):
 		evt.Skip()
 
 	def setSelected(self, selected):
+		color = wx.Color(0,50,125)
 		if selected:
 			for item in self.items:
 				if item is None:
 					continue
-				item.SetBackgroundColour(wx.Color(49, 106, 197))
-			self.panel.SetBackgroundColour(wx.Color(49, 106, 197))
-			self.items[1].SetForegroundColour(wx.WHITE)
+				item.SetBackgroundColour(color)
+			self.panel.SetBackgroundColour(color)
+			self.items[1].SetForegroundColour(wx.RED)
 		else:
 			for item in self.items:
 				if item is None:

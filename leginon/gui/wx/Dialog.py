@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Dialog.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-10-17 18:36:54 $
+# $Date: 2008-02-15 02:59:09 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -18,6 +18,10 @@ class Dialog(wx.Dialog):
 			style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER,pos=wx.DefaultPosition):
 		wx.Dialog.__init__(self, parent, -1, title, style=style,pos=pos)
 
+		if subtitle:
+			sb = wx.StaticBox(self, -1, subtitle)
+			self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+	
 		self.sz = wx.GridBagSizer(5, 5)
 
 		self.buttons = {}
@@ -26,8 +30,6 @@ class Dialog(wx.Dialog):
 		self.szbuttons.AddGrowableCol(0)
 
 		if subtitle:
-			sb = wx.StaticBox(self, -1, subtitle)
-			self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 			self.sbsz.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 			sz = self.sbsz
 		else:

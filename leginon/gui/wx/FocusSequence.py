@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/FocusSequence.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-02-27 21:06:59 $
+# $Date: 2008-02-15 02:59:09 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -227,11 +227,12 @@ class Dialog(gui.wx.Dialog.Dialog):
 		self.focus_sequence.setValues([s['name'] for s in self.settings.sequence])
 		sizer.Add(self.focus_sequence, (0, 0), (2, 1),
 					wx.EXPAND|wx.ALL, 5)
-
+		sizer.AddGrowableCol(0)
 		self.switch_checkbox = wx.CheckBox(self, -1, 'Enabled')
 		sizer.Add(self.switch_checkbox, (0, 1), (1, 1), wx.EXPAND)
 
 		## Frame for widgets that can be enabled by the "Enabled" button
+		sbparam = wx.StaticBox(self, -1)
 		paramsizer = wx.GridBagSizer(3, 3)
 
 		label = wx.StaticText(self, -1, 'Preset:')
@@ -248,6 +249,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		paramsizer.Add(self.focus_method_choice, (1, 1), (1, 1), wx.EXPAND)
 
 		### Frame for widgets that are not enabled for manual focusing
+		sbauto = wx.StaticBox(self, -1, '(Autofocus Only)')
 		autosizer = wx.GridBagSizer(3, 3)
 		self.autowidgets = []
 
@@ -356,14 +358,12 @@ class Dialog(gui.wx.Dialog.Dialog):
 		stigsizer.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		autosizer.Add(stigsizer, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, '(Autofocus Only)')
-		self.autowidgets.append(sb)
-		self.autobox = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.autowidgets.append(sbauto)
+		self.autobox = wx.StaticBoxSizer(sbauto, wx.VERTICAL)
 		self.autobox.Add(autosizer, 1, wx.EXPAND|wx.ALL, 5)
 		paramsizer.Add(self.autobox, (2,0), (1,3))
 
-		sb = wx.StaticBox(self, -1)
-		parambox = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		parambox = wx.StaticBoxSizer(sbparam, wx.VERTICAL)
 		parambox.Add(paramsizer, 1, wx.EXPAND|wx.ALL, 5)
 		sizer.Add(parambox, (1,1), (1,1))
 
@@ -385,6 +385,7 @@ class Dialog(gui.wx.Dialog.Dialog):
 		# select first one by default
 		if self.settings.sequence:
 			self.select(self.settings.sequence[0]['name'])
+
 
 	def onFocusMethodChoice(self, evt=None):
 		method = self.focus_method_choice.GetStringSelection()

@@ -16,7 +16,7 @@ class OrderListBox(wx.Panel):
     def _widgets(self, label):
         if label:
             self.storder = wx.StaticText(self, -1, label)
-        self.listbox = wx.ListBox(self, -1)
+        self.listbox = wx.ListBox(self, -1,size=(124,-1), style=wx.LB_HSCROLL)
         self.upbutton = self._bitmapButton('up', 'Move item up in order')
         self.downbutton = self._bitmapButton('down', 'Move down in order')
 

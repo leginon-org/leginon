@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Presets.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-17 23:40:38 $
-# $Author: pulokas $
+# $Date: 2008-02-15 02:59:09 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -121,7 +121,7 @@ class PresetOrder(wx.Panel):
 	def _widgets(self, label='Presets Order'):
 		if label:
 			self.storder = wx.StaticText(self, -1, label)
-		self.listbox = wx.ListBox(self, -1)
+		self.listbox = wx.ListBox(self, -1,size = (80,-1), style=wx.LB_HSCROLL)
 		self.upbutton = self._bitmapButton('up', 'Move preset up in cycle')
 		self.downbutton = self._bitmapButton('down', 'Move preset down in cycle')
 
