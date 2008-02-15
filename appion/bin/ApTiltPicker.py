@@ -852,7 +852,7 @@ class PickerApp(wx.App):
 		return na
 
 	#---------------------------------------
-	def onImportPicks(self, evt):
+	def onImportPicks(self, evt, pixdiam=None):
 		#a1 = numpy.array([[512,512]], dtype=numpy.float32)
 		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
 		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
@@ -880,7 +880,9 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
-		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data)
+		if pixdiam is None:
+			pixdiam = 20.0
+		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data, limit=pixdiam)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
 			dialog = wx.MessageDialog(self.frame, 
 				"No new picks were found", 

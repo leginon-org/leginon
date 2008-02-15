@@ -470,7 +470,7 @@ def alignPicks(picks1, picks2, data, limit=20.0):
 	#find closest pick and insert into lists
 	filled = {}
 	for pick in picks1:
-		closepick,dist = findClosestPick(pick, alignpicks2)
+		closepick, dist = findClosestPick(pick, alignpicks2)
 		if dist < limit: 
 			key = str(closepick)
 			if not key in filled:

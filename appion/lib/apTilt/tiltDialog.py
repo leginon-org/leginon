@@ -448,14 +448,14 @@ class DogPickerDialog(wx.Dialog):
 		dogmap2 = apDog.diffOfGauss(img2, pixdiam/2.0, k=1.2)
 		dogmap2 = apImage.normStdev(dogmap2)/4.0
 		#3b: threshold & find peaks image 2
-		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam, maxpeaks=maxpeaks)
+		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam, olapmult=1.5, maxpeaks=maxpeaks)
 		peaktree2 = apPeaks.removeBorderPeaks(peaktree2, pixdiam, 
 			dogmap2.shape[0], dogmap2.shape[1])
 
 		#4b: insert into self.parent.picks2
 		self.parent.picks2 = self.peaktreeToPicks(peaktree2)
 
-		self.parent.onImportPicks(None)
+		self.parent.onImportPicks(None, pixdiam)
 		apDisplay.printColor("Finished DoGPicker\n===================","cyan")
 
 	def peaktreeToPicks(self, peaktree):
