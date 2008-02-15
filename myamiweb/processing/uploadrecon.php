@@ -123,8 +123,13 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <TD VALIGN='TOP' CLASS='tablebg'>
       <P>";
   echo "Stack: ";
-  if ($jobId) echo "$stackid<INPUT TYPE='HIDDEN' NAME='stack' VALUE='$stackid'>\n";
-  else {
+  if ($jobId) {
+		echo "$stackid <INPUT TYPE='HIDDEN' NAME='stack' VALUE='$stackid'><BR/>\n";
+		$stackparams = $particle->getStackParams($stackid);
+		//print_r($stackparams);
+		echo "&nbsp;Name: ".$stackparams['shownstackname']."<BR/>\n";
+		echo "&nbsp;Desc: '".$stackparams['description']."'<BR/>\n";
+	} else {
     echo "<SELECT NAME='stack'>\n";
 
     // find each stack entry in database
@@ -149,8 +154,14 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
     echo "</SELECT>\n";
   }
   echo "<P>Initial Model:\n";
-  if ($jobId) echo "$modelid<INPUT TYPE='HIDDEN' NAME='model' VALUE='$modelid'>\n";
-  else {
+  if ($jobId) {
+		echo "$modelid <INPUT TYPE='HIDDEN' NAME='model' VALUE='$modelid'><BR/>\n";
+		$stackparams = $particle->getInitModelInfo($modelid);
+		//print_r($stackparams);
+		//echo "\n<BR/>";
+		echo "&nbsp;Name: ".$stackparams['name']."<BR/>\n";
+		echo "&nbsp;Desc: '".$stackparams['description']."'<BR/>\n";
+	} else {
     echo "
       <SELECT NAME='model'>
       <OPTION VALUE=''>Select One</OPTION>\n";
