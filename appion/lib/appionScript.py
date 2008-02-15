@@ -19,6 +19,7 @@ from pyami import mem
 class AppionScript(object):
 	def __init__(self):
 		#set the name of the function; needed for param setup
+		self.t0 = time.time()
 		self.functionname = apParam.getFunctionName(sys.argv[0])
 		self.setProcessingDirName()
 
@@ -34,7 +35,7 @@ class AppionScript(object):
 		self.setupOutputDirectory()
 
 		### write function log
-		apParam.writeFunctionLog(sys.argv)
+		self.logfile = apParam.writeFunctionLog(sys.argv)
 
 		### any custom init functions go here
 		self.onInit()
@@ -52,6 +53,11 @@ class AppionScript(object):
 		apDisplay.printMsg("Output directory: "+self.params['outdir'])
 		apParam.createDirectory(self.params['outdir'])
 		os.chdir(self.params['outdir'])
+
+	def close(self):
+		self.onClose()
+		apParam.closeFunctionLog(params=self.params, logfile=self.logfile)
+		apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
@@ -97,6 +103,9 @@ class AppionScript(object):
 	def onInit(self):
 		return
 
+	def onClose(self):
+		return
+
 class TestScript(AppionScript):
 	def start(self):
 		apDisplay.printMsg("Hey this works")
@@ -106,5 +115,8 @@ if __name__ == '__main__':
 	testscript = TestScript()
 	print "start"
 	testscript.start()
+	print "close"
+	testscript.close()
+	
 
 

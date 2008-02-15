@@ -3,11 +3,13 @@
 
 import sys
 import os
+import time
 import apParam
 import apDisplay
 import apRecon
 
 if __name__ == '__main__':
+	t0 = time.time()
 	# create params dictionary & set defaults
 	params = apRecon.createDefaults()
 
@@ -35,7 +37,7 @@ if __name__ == '__main__':
 	os.chdir(params['path'])
 
 	# record command line
-	apParam.writeFunctionLog(sys.argv)
+	logfile = apParam.writeFunctionLog(sys.argv)
 
 	# make sure that the stack & model IDs exist in database
 	emanJobFile = apRecon.findEmanJobFile(params)
@@ -73,3 +75,6 @@ if __name__ == '__main__':
 		sys.stderr.write("\n")
 		apRecon.insertIteration(iteration,params)
 
+	#finish up
+	apParam.closeFunctionLog(params=params, logfile=logfile)
+	apDisplay.printColor("COMPLETE UPLOAD:\t"+apDisplay.timeString(time.time()-t0),"green")
