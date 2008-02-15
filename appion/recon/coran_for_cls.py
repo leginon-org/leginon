@@ -266,6 +266,49 @@ def makeClassAverages(lst, outputstack,e,mask):
         avg.applyMask(params['mask'],0)
         avg.writeImage(outputstack,-1)
 
+def flagGoodParticleInClassLst(clsfile, goodclsfile):
+	# read original class list file
+	old_clsfile = open(clsfile,'r')
+	ptcls = old_clsfile.readlines()
+	ptext = ptcls[:]
+	pretext = [ptext[0],ptext[1]]
+	del ptext[0]
+	del ptext[0]
+	old_clsfile.close()
+
+	f = open(goodclsfile,'r')
+	f.readline()
+	lines=f.readlines()
+	f.close()
+
+	goodptcls = []
+	plines = lines[2:]
+	goodptcls = map((lambda x: int(x.split("\t")[0])),plines)
+
+	for i, t in enumerate(ptext):
+		ptcl = int(t.split("\t")[0])
+		if ptcl in goodptcls:
+			keep='1'
+		else:
+			keep='0'
+		newptext = ptext[i].split('\n')[0]+','+keep+'\n'
+		pretext.append(newptext)
+	new_clsfile = clsfile+'.new'	
+	f1 = open(new_clsfile, 'w')
+	for l in pretext:
+		f1.write(l)
+	f1.close()
+	os.rename(new_clsfile,clsfile)	
+	
+if __name__== '__main__':
+	#Parse inputs
+	args=sys.argv[1:]
+	params=createDefaults()
+	parseInput(args,params)
+	
+	#Determine box size
+	tmpimg=EMAN.readImages('start.hed',1,1)
+	params['boxsize']=tmpimg[0].xSize()
 if __name__== '__main__':
 	#Parse inputs
 	args=sys.argv[1:]
@@ -376,12 +419,15 @@ if __name__== '__main__':
 		else:
 			# convert spider lst to EMAN lst
 			convertlst = convertSpiderToEMAN(classname,clslist[cls])
-		f = open(convertlst,'r')
-		f.readline()
-		lines=f.readlines()
-		f.close()
 
+		#create new flaged class list from good particle list
+		flagGoodParticleInClassLst(clslist[cls],convertlst)
+    
 		if params['eotest'] is True:
+			f = open(convertlst,'r')
+			f.readline()
+			lines=f.readlines()
+			f.close()
 			# set up even & odd lst files
 			evenlst = os.path.join(classnamepath, clhcbasename+'.even.lst')
 			oddlst = os.path.join(classnamepath, clhcbasename+'.odd.lst')
@@ -446,6 +492,11 @@ if __name__== '__main__':
 	mvcommand='mv goodavgs.hed ../classes.%d.hed' % params['iter']
 	os.system(mvcommand)
 	mvcommand='mv goodavgs.img ../classes.%d.img' % params['iter']
+	os.system(mvcommand)
+
+	print "updating %s" % classfile
+	os.system('tar -cvf %s cls*.lst' % classfile)
+	mvcommand='mv %s ../%s' % (classfile,classfile)
 	os.system(mvcommand)
 	
 	
