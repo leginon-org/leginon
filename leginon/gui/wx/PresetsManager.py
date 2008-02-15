@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.93 $
+# $Revision: 1.94 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-07 20:41:30 $
+# $Date: 2008-02-15 02:58:40 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -710,6 +710,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.Bind(EVT_PRESETS, self.onPresets)
 
+		self.alignacquiremode = None
+
 	def _presetsEnable(self, enable):
 		self.toolbar.Enable(enable)
 		self.presets.Enable(enable)
@@ -792,6 +794,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			self.aligndialog.presetlabelref.SetLabel(refpreset)
 		self.aligndialog.choiceleft.SetStringSelection(evt.leftpreset)
 		self.aligndialog.choiceright.SetStringSelection(evt.rightpreset)
+		self.alignacquiremode = self.aligndialog.choiceacquiremode.GetStringSelection()
 
 	def onAlign(self, evt):
 		preset_names = self.node.presets.keys()
@@ -1039,6 +1042,7 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(2, wx.LIST_AUTOSIZE)
 
+
 class AlignDialog(gui.wx.Dialog.Dialog):
 	def __init__(self, parent, node):
 		gui.wx.Dialog.Dialog.__init__(self, parent, 'Align Presets')
@@ -1048,17 +1052,21 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 
 		
 		refname = self.parent.presets.getSelectedPreset()
+		boxref = wx.StaticBox(self, -1)
+		szref = wx.StaticBoxSizer(boxref, wx.HORIZONTAL)
 		sz = wx.BoxSizer(wx.HORIZONTAL)
 		self.labref = wx.StaticText(self, -1, 'Overall Reference Preset: ')
 		self.presetlabelref = wx.StaticText(self, -1)
-		sz.Add(self.labref, 1, wx.ALIGN_CENTER)
+		sz.Add(self.labref, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 		sz.AddSpacer((10,10))
-		sz.Add(self.presetlabelref, 1, wx.ALIGN_CENTER)
-		boxref = wx.StaticBox(self, -1)
-		szref = wx.StaticBoxSizer(boxref, wx.HORIZONTAL)
-		szref.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-			
-		
+		sz.Add(self.presetlabelref, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+#		szref = wx.BoxSizer(wx.HORIZONTAL)
+		szref.Add(sz, 1, wx.ALIGN_CENTER|wx.ALL, 5)
+		szmode = wx.BoxSizer(wx.HORIZONTAL)
+		szmode.Add(szref, 1)
+		self.choiceacquiremode = wx.Choice(self, -1, choices=(['Full CCD','Similar look across mags']))	
+		szmode.Add(self.choiceacquiremode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+
 		preset_names = self.node.presets.keys()
 		lableft = wx.StaticText(self, -1, 'Current Reference Preset ')
 		self.choiceleft = gui.wx.Presets.PresetChoice(self,-1)
@@ -1100,7 +1108,7 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		szimages.Add(szleft, 1, wx.EXPAND)
 		szimages.Add(szright, 1, wx.EXPAND)
 		szmain = wx.GridBagSizer(5,5)
-		szmain.Add(szref, (0,0),(1,1),wx.ALL|wx.EXPAND, border=5)
+		szmain.Add(szmode, (0,0),(1,1),wx.ALL|wx.EXPAND, border=5)
 		szmain.Add(szimages, (1, 0), (1, 1), wx.EXPAND)
 		szmain.Add(szbutton, (2, 0), (1, 1), wx.ALL, border=5)
 
@@ -1123,12 +1131,14 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		self.node.onAlignImageClicked('right', evt.xy)
 
 	def onNext(self, evt):
+		self.parent.alignacquiremode = self.choiceacquiremode.GetStringSelection()
 		self.bstart.Disable()
 		self.node.onAlignNext()
 
 	def onStart(self, evt):
 		currentpresetleft = self.choiceleft.GetStringSelection()
 		currentpresetright = self.choiceright.GetStringSelection()
+		self.parent.alignacquiremode = self.choiceacquiremode.GetStringSelection()
 
 		refname = self.node.refpreset
 		if currentpresetleft == refname and currentpresetright == self.node.firstrightpreset and self.parent.customalign == False:
