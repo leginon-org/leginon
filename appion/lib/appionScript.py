@@ -13,6 +13,7 @@ from optparse import OptionParser
 import apDisplay
 import apDatabase
 import apParam
+import apStack
 #leginon
 from pyami import mem
 
@@ -21,7 +22,6 @@ class AppionScript(object):
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
 		self.functionname = apParam.getFunctionName(sys.argv[0])
-		self.setProcessingDirName()
 
 		### setup default parser: output directory, etc.
 		self.parser = OptionParser()
@@ -32,6 +32,7 @@ class AppionScript(object):
 		self.checkConflicts()
 
 		### setup output directory
+		self.setProcessingDirName()
 		self.setupOutputDirectory()
 
 		### write function log
@@ -47,9 +48,18 @@ class AppionScript(object):
 			path = os.path.abspath(sessiondata['image path'])
 			path = re.sub("leginon","appion",path)
 			path = re.sub("/rawdata","",path)
+			path = os.path.join(path, self.processdirname)
+		if self.params['outdir'] is None and 'reconid' in self.params:
+			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
+		if self.params['outdir'] is None and 'stackid' in self.params:
+			#auto set the output directory
+			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+			path = os.path.abspath(stackdata['path']['path'])
+			path = os.path.dirname(path)
+			path = os.path.dirname(path)
 			self.params['outdir'] = os.path.join(path, self.processdirname)
-
-		#create the output directory, if needed
+	
+	#create the output directory, if needed
 		apDisplay.printMsg("Output directory: "+self.params['outdir'])
 		apParam.createDirectory(self.params['outdir'])
 		os.chdir(self.params['outdir'])

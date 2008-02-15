@@ -23,6 +23,9 @@ import sinedon
 
 class satEulerScript(appionScript.AppionScript):
 	def __init__(self):
+		"""
+		Need to connect to DB server before moving forward
+		"""
 		# connect
 		self.dbconf = sinedon.getConfig('appionData')
 		self.db     = MySQLdb.connect(**self.dbconf)
@@ -84,10 +87,10 @@ class satEulerScript(appionScript.AppionScript):
 			"SELECT \n"
 				+"  stpart1.particleNumber AS partnum1, \n"
 				+"  e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
-				+"  partclass1.`mirror` AS mirror1, partclass1.`thrown_out` AS reject1 \n"
+				+"  partclass1.`mirror` AS mirror1, partclass1.`thrown_out` AS reject1, \n"
 				+"  stpart2.particleNumber AS partnum2, \n"
 				+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2, \n"
-				+"  partclass2.`mirror` AS mirror2, partclass2.`thrown_out` AS reject2\n"
+				+"  partclass2.`mirror` AS mirror2, partclass2.`thrown_out` AS reject2 \n"
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
 				+"LEFT JOIN `ApImageTiltTransformData` as transform \n"
 				+"  ON tiltd.`REF|ApImageTiltTransformData|transform`=transform.`DEF_id` \n"
@@ -195,7 +198,7 @@ class satEulerScript(appionScript.AppionScript):
 			+apDisplay.timeString(time.time()-t0))
 
 		self.writeRawDataFile(eulertree)
-		self.writeKeepFile(eulertree)
+		self.writeKeepFiles(eulertree)
 		self.writeScatterFile(eulertree)
 
 		print "EULER ANGLE DATA:"
@@ -262,22 +265,35 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def writeKeepFile(self, eulertree):
 		#find good particles
-		keeplist = []
+		totkeeplist = []
+		angkeeplist = []
 		for eulerpair in eulertree:
 			if abs(eulerpair['totdist'] - 15.0) < 10.0:
-				keeplist.append(eulerpair['part1']['partid']-1)
-				keeplist.append(eulerpair['part2']['partid']-1)
+				totkeeplist.append(eulerpair['part1']['partid']-1)
+				totkeeplist.append(eulerpair['part2']['partid']-1)
+			if abs(eulerpair['angdist'] - 15.0) < 10.0:
+				angkeeplist.append(eulerpair['part1']['partid']-1)
+				angkeeplist.append(eulerpair['part2']['partid']-1)
 		#sort
-		keeplist.sort()
+		totkeeplist.sort()
+		angkeeplist.sort()
 
 		#write to file
-		k = open("keepfile"+self.datastr+".lst", "w")
-		for kid in keeplist:
+		k = open("totkeepfile"+self.datastr+".lst", "w")
+		for kid in totkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
 
-		percent = "%3.1f" % (50.0*len(keeplist) / float(len(eulertree)))
-		apDisplay.printMsg("Keeping "+str(len(keeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
+		#write to file
+		k = open("angkeeplist"+self.datastr+".lst", "w")
+		for kid in angkeeplist:
+			k.write(str(kid)+"\n")
+		k.close()
+
+		percent = "%3.1f" % (50.0*len(totkeeplist) / float(len(eulertree)))
+		apDisplay.printMsg("Total Keeping "+str(len(totkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
+		percent = "%3.1f" % (50.0*len(angkeeplist) / float(len(eulertree)))
+		apDisplay.printMsg("Angle Keeping "+str(len(angkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
 		return
 
 	#=====================
@@ -329,7 +345,7 @@ class satEulerScript(appionScript.AppionScript):
 			f.write("&\n")
 
 	def subStackCmd(self):
-		keepfile = os.path.join(self.params['outdir'], "keepfile"+self.datastr+".lst")
+		keepfile = os.path.join(self.params['outdir'], "angkeepfile"+self.datastr+".lst")
 		stackdata = apStack.getRunsInStack(self.params['stackid'])
 
 		cmd = ( "subStack.py "
@@ -346,15 +362,12 @@ class satEulerScript(appionScript.AppionScript):
 	######################################################
 
 	#=====================
-	def setupOutputDirectory(self):
-		"""
-		Overriding appionScript version, this not a kosher thing to do
-		"""
+	def onInit(self):
 		self.datastr = "_r"+str(self.params['reconid'])+"_i"+str(self.params['iternum'])
-		self.params['outdir'] =os.path.join(self.params['outdir'], "sat-recon"+str(self.params['reconid']))
-		apDisplay.printMsg("Output directory: "+self.params['outdir'])
-		apParam.createDirectory(self.params['outdir'])
-		os.chdir(self.params['outdir'])
+
+	#=====================
+	def setProcessingDirName(self):
+		self.processdirname = os.path.join(self.functionname, "sat-recon"+str(self.params['reconid']))
 
 	#=====================
 	def setupParserOptions(self):
@@ -363,7 +376,7 @@ class satEulerScript(appionScript.AppionScript):
 			help="Reconstruction Run ID", metavar="INT")
 		self.parser.add_option("-i", "--iternum", dest="iternum", type='int',
 			help="Reconstruction Iteration Number, defaults to last iteration", metavar="INT")
-		self.parser.add_option("-o", "--outdir", dest="outdir", default=os.path.abspath("."),
+		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location to copy the templates to", metavar="PATH")
 		self.parser.add_option("--tiltrunid", dest="tiltrunid", type='int',
 			help="Automatically set", metavar="INT")

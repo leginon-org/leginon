@@ -107,13 +107,14 @@ def getListFileParticle(line, linenum):
 	return particlenum
 
 #--------
-def getStackIdFromRecon(reconrunid):
+def getStackIdFromRecon(reconrunid, msg=True):
 	reconrundata = appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
 	if not reconrundata:
 		apDisplay.printWarning("Could not find stack id for Recon Run="+str(reconrunid))
 		return None
 	stackid = reconrundata['stack'].dbid
-	apDisplay.printMsg("Found Stack id="+str(stackid)+" for Recon Run id="+str(reconrunid))
+	if msg is True:
+		apDisplay.printMsg("Found Stack id="+str(stackid)+" for Recon Run id="+str(reconrunid))
 	return stackid
 
 #--------
