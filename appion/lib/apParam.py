@@ -87,6 +87,7 @@ def writeFunctionLog(cmdlist, params=None, logfile=None):
 			out += arg+" "
 	f.write(out+"\n")
 	f.close()
+	return logfile
 
 def parseWrappedLines(lines):
 	goodlines=[]
