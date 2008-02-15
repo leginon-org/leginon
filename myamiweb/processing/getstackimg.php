@@ -3,6 +3,8 @@ $file_hed=$_GET['hed'];
 $file_img=$_GET['img'];
 $img_num=$_GET['n'];
 $updateheader=($_GET['uh']==1) ? true : false;
+# don't remove
+$updateheader=true;
 
 if (!$t = $_GET['t'])
 	$t=80;
