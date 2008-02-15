@@ -180,7 +180,7 @@ class Corrector(node.Node):
 
 	def modifyNorm(self):
 		self.startTimer('modifyNorm')
-                try:
+		try:
 			camdata = self.settings['camera settings']
 			scopedata = self.instrument.getData(data.ScopeEMData)
 			ccdcameraname = self.instrument.getCCDCameraName()
@@ -189,7 +189,7 @@ class Corrector(node.Node):
 			corstate['offset'] = camdata['offset']
 			corstate['binning'] = camdata['binning']
 
-                        self.modifyByMask(self.maskimg, ccdcameraname, corstate, scopedata)
+			self.modifyByMask(self.maskimg, ccdcameraname, corstate, scopedata)
 		except Exception, e:
 			self.logger.exception('Modify normalization image failed: %s' % e)
 		self.stopTimer('modifyNorm')
@@ -507,44 +507,22 @@ class Corrector(node.Node):
 				self.logger.warning('No normalized image for modifications')
 				return
 
-			ref = self.researchRef(camstate, 'dark', ccdcameraname, scopedata, channel)
-			if ref:
-				## make it float to do float math later
-				dark = numpy.asarray(ref['image'], numpy.float32)
-			else:
-				self.logger.warning('No dark image for modifications')
-				return
 
-			ref = self.researchRef(camstate, 'bright', ccdcameraname, scopedata, channel)
-			if ref:
-				## make it float to do float math later
-				bright = numpy.asarray(ref['image'], numpy.float32)
-			else:
-				self.logger.warning('No bright image for modifications')
-				return
-
-			if dark.shape != mask.shape:
+			if norm.shape != mask.shape:
 				self.logger.warning('Wrong mask dimension for channel %d' %channel)
 			else:
-				maskedbright=ma.masked_array(bright,mask=mask)
-				maskeddark=ma.masked_array(dark,mask=mask)
-				bmean = maskedbright.mean()
-				dmean = maskeddark.mean()
-				dstd = maskeddark.std()
-				invmask = numpy.ones(mask.shape)-mask
-				invmaskedbright=ma.masked_array(bright,mask=invmask)
-				clean =	invmaskedbright.filled(fill_value=bmean)
-				newmask = ma.less(clean,dmean+10*dstd)
-
-				maskednorm=ma.masked_array(norm,mask=newmask)
-				maskeddark=ma.masked_array(dark,mask=newmask)
-				maskedbright=ma.masked_array(bright,mask=newmask)
+				maskednorm=ma.masked_array(norm,mask=mask)
 				nmean = maskednorm.mean()
-				bmean = maskedbright.mean()
-				dmean = maskeddark.mean()
-				newnorm = maskednorm.filled(fill_value = nmean)
-						
-				newdark = maskeddark.filled(fill_value = dmean-bmean)
+				nstd = maskednorm.std()
+				nmax = maskednorm.max()
+				nmin = maskednorm.min()
+				sigma = 100
+				ntop = nmean+sigma * nstd
+				nbottom = 1 / ntop
+				if nmax < ntop:
+					ntop = nmax
+				newnorm = numpy.clip(norm, nbottom, ntop) 
+				self.logger.info('Clipped normalization to between %e and %e'% (ntop,nbottom))	
 				try:
 					self.storeRef('norm', newnorm, camstate, scopedata, channel)
 					self.logger.info('Saved modified norm image for channel %d' %channel)
