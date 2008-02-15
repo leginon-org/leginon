@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.267 $
+# $Revision: 1.268 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-14 17:00:00 $
-# $Author: pulokas $
+# $Date: 2008-02-15 03:18:52 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -1058,6 +1058,41 @@ class PresetsManager(node.Node):
 					simdose = scale * newpreset['dose']
 					self.updatePreset(sim['name'], {'dose': simdose}, updatedose=False)
 
+	def getSimilarLook(self,camname,magdict,imagelength=512):
+		if len(magdict) != 2:
+			self.logger.warning('Error calculating similar look camera binning')
+			return None, None
+		keys = magdict.keys()
+		if magdict[keys[0]] >= magdict[keys[1]]:
+			highmag = magdict[keys[0]]
+			lowmag = magdict[keys[1]]
+			reverse = False
+		else:
+			highmag = magdict[keys[1]]
+			lowmag = magdict[keys[0]]
+			reverse = True
+
+		print camname,highmag,lowmag
+		#fix me to real camera dimension
+		if camname != 'Tietz PXL':
+			fullcamdim = 4096
+		else:
+			fullcamdim = 2048
+		#assume highmag imag is binning of full camera to imagelength
+		maxbin = fullcamdim / imagelength
+		highbin = maxbin
+		highmaglook = float(highmag) / highbin
+		lowbin = int(math.pow(2,round(math.log(lowmag / highmaglook) / math.log(2))))
+		if lowbin < 1:
+			lowbin = 1
+		 
+		print "similar look high mag bin", highbin
+		print "similar look low mag bin", lowbin
+		if reverse == False:
+			return {keys[0]:highbin, keys[1]:lowbin}
+		else:
+			return {keys[1]:highbin, keys[0]:lowbin}
+		
 	def acquireAlignImages(self, leftpreset=None, rightpreset=None):
 		if leftpreset is None or rightpreset is None:
 			leftpreset = self.alignpresets['left']
@@ -1083,6 +1118,19 @@ class PresetsManager(node.Node):
 		else:
 			presetsorder = ['right', 'left', 'park']
 
+		acquirebin = {}
+		if self.panel.alignacquiremode == 'Similar look across mags':
+			alignmags = {}
+			for label in ['left','right']:
+				presetname = self.alignpresets[label]
+				preset = self.presetByName(presetname)
+				alignmags[label] = preset['magnification']
+				camname = preset['ccdcamera']['name']
+			acquirebin = self.getSimilarLook(camname,alignmags)
+			print acquirebin
+		else:
+				acquirebin['right'] = None
+				acquirebin['left'] = None
 		self.alignimages = {}
 		for label in presetsorder:
 			presetname = self.alignpresets[label]
@@ -1103,7 +1151,7 @@ class PresetsManager(node.Node):
 			if label == 'park':
 				self.logger.info('Parked at preset "%s"' % (presetname,))
 			else:
-				imagedata = self._acquireAlignImage(self.currentpreset)
+				imagedata = self._acquireAlignImage(self.currentpreset, mode = 'bin', bin = acquirebin[label])
 				self.alignimages[label] = imagedata
 				self.panel.setAlignImage(imagedata['image'], label)
  
@@ -1112,11 +1160,11 @@ class PresetsManager(node.Node):
 
 #		self.outputEvent(event.AlignImagesAcquiredEvent())
 
-	def _acquireAlignImage(self, preset):
+	def _acquireAlignImage(self, preset, mode='bin', bin=None):
 		acquirestr = 'align'
-		return self._acquireSpecialImage(preset, acquirestr, mode='bin', imagelength=512)
+		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=512, bin=bin)
 
-	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None):
+	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, bin=None):
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
@@ -1141,14 +1189,21 @@ class PresetsManager(node.Node):
 					fullcamdim = 2048
 				new_camdim = fullcamdim
 				new_bin = 1
-				while new_camdim > imagelength:
-					new_camdim = new_camdim / 2
-					new_bin = new_bin * 2
-				extrabin = new_bin / camdata0['binning'][axis]
-				camdata1['offset'][axis] = 0
+				if bin is None:
+					while new_camdim > imagelength:
+						new_camdim = new_camdim / 2
+						new_bin = new_bin * 2
+				else:
+					new_bin = bin
+					new_camdim = fullcamdim/new_bin
+					if new_camdim >= imagelength:
+						new_camdim = imagelength
+				extrabin = float(new_bin) / camdata0['binning'][axis]
+				camdata1['offset'][axis] = (fullcamdim / new_bin - new_camdim) / 2
 				camdata1['dimension'][axis] = new_camdim
 				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
+			print camdata1['offset'],camdata1['dimension'],camdata1['binning'],camdata1['exposure time']
 		try:
 			self.instrument.setData(camdata1)
 		except:
