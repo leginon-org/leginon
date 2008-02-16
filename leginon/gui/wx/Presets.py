@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Presets.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-15 02:59:09 $
+# $Date: 2008-02-16 02:41:17 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -121,7 +121,7 @@ class PresetOrder(wx.Panel):
 	def _widgets(self, label='Presets Order'):
 		if label:
 			self.storder = wx.StaticText(self, -1, label)
-		self.listbox = wx.ListBox(self, -1,size = (80,-1), style=wx.LB_HSCROLL)
+		self.listbox = wx.ListBox(self, -1,size=(80,100), style=wx.LB_HSCROLL)
 		self.upbutton = self._bitmapButton('up', 'Move preset up in cycle')
 		self.downbutton = self._bitmapButton('down', 'Move preset down in cycle')
 
@@ -133,6 +133,7 @@ class PresetOrder(wx.Panel):
 		sizer.Add(self.downbutton, (2, 1), (1, 1),
 							wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.ALL)
 		sizer.AddGrowableRow(2)
+		sizer.AddGrowableCol(0)
 		self.SetSizerAndFit(sizer)
 
 	def _bind(self):
@@ -265,7 +266,7 @@ class PresetOrder(wx.Panel):
 class EditPresetOrder(PresetOrder):
 	def _widgets(self):
 		PresetOrder._widgets(self)
-		self.choice = wx.Choice(self, -1)
+		self.choice = wx.Choice(self, -1, size=(100,-1)) 
 		self.choice.Enable(False)
 		self.insertbutton = self._bitmapButton('plus', 'Insert preset into cycle')
 		self.deletebutton = self._bitmapButton('minus', 'Remove preset from cycle')
@@ -282,6 +283,7 @@ class EditPresetOrder(PresetOrder):
 		sizer.Add(self.downbutton, (4, 1), (1, 1),
 							wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.ALL)
 		sizer.AddGrowableRow(4)
+		sizer.AddGrowableCol(0)
 		self.SetSizerAndFit(sizer)
 
 	def _bind(self):
