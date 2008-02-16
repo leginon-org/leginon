@@ -144,23 +144,34 @@ class satEulerScript(appionScript.AppionScript):
 		for row in results:
 			if len(row) < 11:
 				apDisplay.printError("delete MySQL cache file and run again")
-			eulerpair = { 'part1': {}, 'part2': {} }
-			eulerpair['part1']['partid'] = int(row[0])
-			eulerpair['part1']['euler1'] = float(row[1])
-			eulerpair['part1']['euler2'] = float(row[2])
-			eulerpair['part1']['euler3'] = float(row[3])
-			eulerpair['part1']['mirror'] = int(row[4])
-			eulerpair['part1']['reject'] = int(row[5])
-			eulerpair['part2']['partid'] = int(row[6])
-			eulerpair['part2']['euler1'] = float(row[7])
-			eulerpair['part2']['euler2'] = float(row[8])
-			eulerpair['part2']['euler3'] = float(row[9])
-			eulerpair['part2']['mirror'] = int(row[10])
-			eulerpair['part2']['reject'] = int(row[11])
-			eulertree.append(eulerpair)
+			try:
+				eulerpair = { 'part1': {}, 'part2': {} }
+				eulerpair['part1']['partid'] = int(row[0])
+				eulerpair['part1']['euler1'] = float(row[1])
+				eulerpair['part1']['euler2'] = float(row[2])
+				eulerpair['part1']['euler3'] = float(row[3])
+				eulerpair['part1']['mirror'] = self.nullOrValue(row[4])
+				eulerpair['part1']['reject'] = self.nullOrValue(row[5])
+				eulerpair['part2']['partid'] = int(row[6])
+				eulerpair['part2']['euler1'] = float(row[7])
+				eulerpair['part2']['euler2'] = float(row[8])
+				eulerpair['part2']['euler3'] = float(row[9])
+				eulerpair['part2']['mirror'] = self.nullOrValue(row[10])
+				eulerpair['part2']['reject'] = self.nullOrValue(row[11])
+				eulertree.append(eulerpair)
+			except:
+				print row
+				apDisplay.printError("bad row entry")			
 
 		apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
 		return eulertree
+
+	#=====================
+	def nullOrValue(self, val):
+		if val is None:
+			return 0
+		else:
+			return 1
 
 	#=====================
 	def calc3dRotationalDifference(self, eulerpair):
@@ -190,10 +201,11 @@ class satEulerScript(appionScript.AppionScript):
 				eulerpair['part2'], sym='d7', inplane=False)
 			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
 				eulerpair['part2'], sym='d7', inplane=True)
-			angdistlist.append(eulerpair['angdist'])
-			totdistlist.append(eulerpair['totdist'])
 			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
-			rotdistlist.append(eulerpair['rotdist'])
+			if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
+				angdistlist.append(eulerpair['angdist'])
+				totdistlist.append(eulerpair['totdist'])
+				rotdistlist.append(eulerpair['rotdist'])
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
 			+apDisplay.timeString(time.time()-t0))
 
@@ -201,22 +213,22 @@ class satEulerScript(appionScript.AppionScript):
 		self.writeKeepFiles(eulertree)
 		self.writeScatterFile(eulertree)
 
-		print "EULER ANGLE DATA:"
+		print "ANGLE EULER DATA:"
 		#D-symmetry goes to 90, all other 180
 		maxang = int(math.ceil(ndimage.maximum(angdistlist)))
-		myrange = tuple((0,maxang,2))
-		self.analyzeList(angdistlist, myrange, "eulerdata"+self.datastr+".dat")
+		myrange = tuple((0,maxang,1))
+		self.analyzeList(angdistlist, myrange, "angdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
 		minrot = int(math.floor(ndimage.minimum(rotdistlist)))
 		maxrot = int(math.ceil(ndimage.maximum(rotdistlist)))
-		myrange = tuple((minrot,maxrot,2))
+		myrange = tuple((minrot,maxrot,1))
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
 		#D-symmetry goes to 90, all other 180
 		maxtot = int(math.ceil(ndimage.maximum(totdistlist)))
-		myrange = tuple((0,maxtot,2))
+		myrange = tuple((0,maxtot,1))
 		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -229,7 +241,25 @@ class satEulerScript(appionScript.AppionScript):
 			(2) tilt angle diff in degrees	
 		for xmgrace display
 		"""
-		s = open("scatter"+self.datastr+".dat", "w")
+		s = open("scatter"+self.datastr+".agr", "w")
+		s.write("@g0 type Polar\n")
+		s.write("@with g0\n")
+		s.write("@    world 0, 0, "+str(round(2.0*math.pi,6))+", 60\n")
+		s.write("@    xaxis  tick major "+str(round(2.0*math.pi/7.0,6))+"\n")
+		s.write("@    xaxis  tick major grid on\n")
+		s.write("@    xaxis  tick major linestyle 6\n")
+		s.write("@    yaxis  tick major 15.0\n")
+		s.write("@    yaxis  tick minor ticks 2\n")
+		s.write("@    yaxis  tick major grid on\n")
+		s.write("@    yaxis  tick minor grid on\n")
+		s.write("@    yaxis  tick minor linewidth 0.5\n")
+		s.write("@    yaxis  tick minor linestyle 4\n")
+		s.write("@    frame linestyle 0\n")
+		s.write("@    s0 symbol size 0.14\n")
+		s.write("@    s0 line type 0\n")
+		s.write("@    s0 symbol fill color 2\n")
+		s.write("\n")
+		s.write("@target G0.S0\n")
 		for eulerpair in eulertree:
 			mystr = ( "%3.8f %3.8f\n" % (eulerpair['rotdist']*math.pi/180.0, eulerpair['angdist']) )
 			s.write(mystr)
@@ -243,17 +273,23 @@ class satEulerScript(appionScript.AppionScript):
 		rawfile = "rawdata"+self.datastr+".dat"
 		apDisplay.printMsg("Writing raw data to file: "+rawfile)
 		r = open(rawfile, "w")
-		r.write("p1-id\tp1-e1\tp1-e2\tp1-e3\tp2-id\tp2-e1\tp2-e2\tp2-e3\tang-dist\trot-dist\ttotal-dist\n")
+		r.write("p1-id\tp1-e1\tp1-e2\tp1-e3\tmirror\treject\t"
+			+"p2-id\tp2-e1\tp2-e2\tp2-e3\tmirror\treject\t"
+			+"ang-dist\trot-dist\ttotal-dist\n")
 		for eulerpair in eulertree:
 			mystr = ( 
 				str(eulerpair['part1']['partid'])+"\t"+
 				str(round(eulerpair['part1']['euler1'],2))+"\t"+
 				str(round(eulerpair['part1']['euler2'],2))+"\t"+
 				str(round(eulerpair['part1']['euler3'],2))+"\t"+
+				str(eulerpair['part1']['mirror'])+"\t"+
+				str(eulerpair['part1']['reject'])+"\t"+
 				str(eulerpair['part2']['partid'])+"\t"+
 				str(round(eulerpair['part2']['euler1'],2))+"\t"+
 				str(round(eulerpair['part2']['euler2'],2))+"\t"+
 				str(round(eulerpair['part2']['euler3'],2))+"\t"+
+				str(eulerpair['part2']['mirror'])+"\t"+
+				str(eulerpair['part2']['reject'])+"\t"+
 				str(round(eulerpair['angdist'],2))+"\t"+
 				str(round(eulerpair['rotdist'],2))+"\t"+
 				str(round(eulerpair['totdist'],2))+"\n"
@@ -263,11 +299,13 @@ class satEulerScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def writeKeepFile(self, eulertree):
+	def writeKeepFiles(self, eulertree):
 		#find good particles
 		totkeeplist = []
 		angkeeplist = []
 		for eulerpair in eulertree:
+			if eulerpair['part1']['reject'] == 1 and eulerpair['part2']['reject'] == 1:
+				continue
 			if abs(eulerpair['totdist'] - 15.0) < 10.0:
 				totkeeplist.append(eulerpair['part1']['partid']-1)
 				totkeeplist.append(eulerpair['part2']['partid']-1)
@@ -420,6 +458,7 @@ class satEulerScript(appionScript.AppionScript):
 if __name__ == "__main__":
 	satEuler = satEulerScript()
 	satEuler.start()
+	satEuler.close()
 
 
 
