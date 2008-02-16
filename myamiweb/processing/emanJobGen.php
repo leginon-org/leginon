@@ -46,7 +46,7 @@ if ($_POST['write']) {
   writeJobFile();
 }
 
-elseif ($_POST['submitstackmodel'] || $_POST['duplicate']) {
+elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
   ## make sure a stack and model were selected
   if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
   if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
@@ -331,11 +331,10 @@ function jobForm($extra=false) {
   $numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
   if ($_POST['duplicate']) {
     $numiters+=1;
-    $newiter=explode(" ",$_POST['duplicate']);
-    $j=$newiter[2];
+    $j=$_POST['duplicate'];
   }
-
   else $j=$numiters;
+
   $javafunc .= defaultReconValues($box);
   $javafunc .= writeJavaPopupFunctions();
   writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
@@ -421,11 +420,31 @@ function jobForm($extra=false) {
     </tr>
     </TABLE>\n";
   echo"</td></tr></TABLE>"; //overall table
+  $bgcolor="#E8E8E8";
+  $display_keys = array('copy','itn','ang','mask','imask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
   echo"
-   <BR/><CENTER>
-   <H4>EMAN Reconstruction Parameters</H4>
-   </CENTER><HR/>
-  <input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
+  <BR/><CENTER>
+  <H4>EMAN Reconstruction Parameters</H4>
+  </CENTER><HR/>
+  <input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>
+  <select name='import' onChange='emanjob.submit()'>
+    <option>Import parameters</option>
+    <option value='groel1'>GroEL with 10,000+ particles</option>
+    <option value='virusgood'>Icos Virus with good starting model</option>
+  </select>
+  <br />
+  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
+    <tr>\n";
+  foreach ($display_keys as $key) {
+      echo"<td bgcolor='$bgcolor'><font class='sf'><A HREF=\"javascript:refinfopopup('$key')\">$key</a><font></td>\n";
+  }
+  echo"  </tr>\n";
+
+  // set number of iterations if importing:
+  if ($_POST['import']=='groel1') $numiters=20;
+  elseif ($_POST['import']=='virusgood') $numiters=14;
+
+  // otherwise use previously set values
   for ($i=1; $i<=$numiters; $i++) {
     $angn="ang".$i;
     $maskn="mask".$i;
@@ -442,6 +461,7 @@ function jobForm($extra=false) {
     $treen="tree".$i;
     $mediann="median".$i;
     $phaseclsn="phasecls".$i;
+    $fsclsn="fscls".$i;
     $refinen="refine".$i;
     $goodbadn="goodbad".$i;
     $eotestn="eotest".$i;
@@ -450,25 +470,69 @@ function jobForm($extra=false) {
     $msgp_corcutoffn="msgp_corcutoff".$i;
     $msgp_minptclsn="msgp_minptcls".$i;
 
-    $ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
-    $mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
-    $imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
-    $sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
-    $hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
-    $classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
-    $classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
-    $filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
-    $shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
-    $euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
-    $xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
-    $msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
-    $msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
-    ## use symmetry of model by default, but you can change it
-    if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
+    // if importing values, set them here
+    if ($_POST['import']=='groel1') {
+      // values that don't change:
+      $mask=($box/2)-2;
+      $hard='25';
+      $classkeep='0.8';
+      $median='CHECKED';
+      $phasecls='CHECKED';
+      $eotest='CHECKED';
+      $sym=$modsym;
+      $classiter=((($i+1) % 4) < 2) ? 3 : 8;
+      if ($i < 5) $ang=5;
+      elseif ($i < 9) $ang=4;
+      elseif ($i < 13) $ang=3;
+      elseif ($i < 17) $ang=2;
+      else {
+	$ang=1;
+	$refine='CHECKED';
+      }
+    }
+    elseif ($_POST['import']=='virusgood') {
+      // values that don't change:
+      $mask=($box/2)-2;
+      $hard='25';
+      $classkeep='0.8';
+      $median='CHECKED';
+      $phasecls='CHECKED';
+      $eotest='CHECKED';
+      $sym=$modsym;
+      $classiter=((($i+1) % 4) < 2) ? 3 : 8;
+      if ($i < 5) $ang=3;
+      elseif ($i < 9) $ang=2;
+      elseif ($i < 12) {
+	$ang=1;
+	$classiter=3;
+      }
+      else { 
+	$classiter=3;
+	$ang=0.8;
+	$refine='CHECKED';
+      }
+    }
+    else {
+      $ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
+      $mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
+      $imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
+      $sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
+      $hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
+      $classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
+      $classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
+      $filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
+      $shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
+      $euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
+      $xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
+      $msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
+      $msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
+      ## use symmetry of model by default, but you can change it
+      if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
 
-    if ($i>$j) {
+      if ($i>$j) {
            $median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
            $phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
+           $fscls=($_POST["fscls".($i-1)]=='on') ? 'CHECKED' : '';
            $refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
            $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
            $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
@@ -477,10 +541,11 @@ function jobForm($extra=false) {
            $msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
            $treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
            $treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
-    }
-    else {
+      }
+      else {
            $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
            $phasecls=($_POST[$phaseclsn]=='on') ? 'CHECKED' : '';
+           $fscls=($_POST[$fsclsn]=='on') ? 'CHECKED' : '';
            $refine=($_POST[$refinen]=='on') ? 'CHECKED' : '';
            $goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
            $eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
@@ -489,88 +554,53 @@ function jobForm($extra=false) {
            $msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
            $treetwo=($_POST[$treen]=='2') ? 'selected' : '';
            $treethree=($_POST[$treen]=='3') ? 'selected' : '';
+      }
     }
-    $bgcolor="#E8E8E8";
+    $rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
     echo"
-      <P><B>Iteration $i</B><BR/>
-
-      <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
       <tr>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('ang')\">ang:</A>
-          <input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('mask')\">mask:</A>
-          <input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('imask')\">imask:</A>
-          <input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('sym')\">sym:</A>
-          <input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('hard')\">hard:</A>
-          <input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('classkeep')\">classkeep:</A>
-          <input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('classiter')\">classiter:</A>
-          <input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('filt3d')\">filt3d:</A>
-          <input type='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></td>
-        <td bgcolor='$bgcolor'><a href=\"javascript:refinfopopup('xfiles')\">xfiles:</a>
-          <input type='text' size='5' name='$xfilesn' value='$xfiles'>
-        </td>
+        <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
+        <td bgcolor='$rcol'><b>$i</b></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></td>
+        <td bgcolor='$rcol'><input type='text' size='5' name='$xfilesn' value='$xfiles'>
+        <td bgcolor='$rcol'><input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
+        <td bgcolor='$rcol'><input type='text' size='2' name='$euler2n' value='$euler2'>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$mediann' $median></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$phaseclsn' $phasecls></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$fsclsn' $fscls></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$refinen' $refine></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>
+        <td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>
+        <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
+      </tr>\n";
 
-      </tr>
-      <tr>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('shrink')\">shrink:</A>
-          <input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
 
-        <td bgcolor='$bgcolor'><a href=\"javascript:refinfopopup('euler2')\">euler2:</a>
-          <input type='text' size='2' name='$euler2n' value='$euler2'>
-        </td>
 
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$mediann' $median><A HREF=\"javascript:refinfopopup('median')\">median</A></td>
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$phaseclsn' $phasecls><A HREF=\"javascript:refinfopopup('phasecls')\">phasecls</A></td>
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$refinen' $refine><A HREF=\"javascript:refinfopopup('refine')\">refine</A></td>
-
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$perturbn' $perturb>
-          <A HREF=\"javascript:refinfopopup('perturb')\">perturb</A>
-        </td>
-
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$goodbadn' $goodbad><A HREF=\"javascript:refinfopopup('goodbad')\">goodbad</A></td>
-
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$eotestn' $eotest><A HREF=\"javascript:refinfopopup('eotest')\">eotest</A></td>
-        <td bgcolor='$bgcolor'>
-          <input type='checkbox' NAME='$corann' $coran><A HREF=\"javascript:refinfopopup('coran')\">coran</A></td>
-      </tr>
-      <tr>
-
-        <td bgcolor='$bgcolor'><a href=\"javascript:refinfopopup('tree')\">tree:</a>
-          <select name='$treen'>
-          <option>-</option>
-          <option $treetwo>2</option>
-          <option $treethree>3</option>
-          </select>
-        </td>
-
-	<TD colspan=6 bgcolor='$bgcolor' CELLPADDING=0 CELLSPACING=0>
-	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
-            <tr>
-        <td bgcolor='$bgcolor'><input type='checkbox' NAME='$msgpn' $msgp><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
-          <input type='text' NAME='$msgp_corcutoffn' SIZE='4' VALUE='$msgp_corcutoff'></td>
-        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
-          <input type='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></td>
-            </tr>
-          </TABLE>
-        <TD colspan=2 bgcolor='$bgcolor' ALIGN='CENTER'>
-          <input type='SUBMIT' NAME='duplicate' VALUE='Duplicate Iteration $i'></td>
-      </tr>
-      </TABLE>\n";
+#	<TD colspan=6 bgcolor='$bgcolor' CELLPADDING=0 CELLSPACING=0>
+#	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
+#            <tr>
+#        <td bgcolor='$bgcolor'><input type='checkbox' NAME='$msgpn' $msgp><A HREF=\"javascript:refinfopopup('msgp')\">Subclassification by message passing:</A></td>
+#        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_corcutoff')\">CorCutoff:</A>
+#          <input type='text' NAME='$msgp_corcutoffn' SIZE='4' VALUE='$msgp_corcutoff'></td>
+#        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
+#          <input type='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></td>
+#            </tr>
+#          </TABLE>
+#        <TD colspan=2 bgcolor='$bgcolor' ALIGN='CENTER'>
+#      </tr>
   }
   echo"
+  </TABLE>
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
@@ -677,6 +707,7 @@ function writeJobFile ($extra=False) {
     $tree=$_POST["tree".$i];
     $median=$_POST["median".$i];
     $phasecls=$_POST["phasecls".$i];
+    $fscls=$_POST["fscls".$i];
     $refine=$_POST["refine".$i];
     $goodbad=$_POST["goodbad".$i];
     $eotest=$_POST["eotest".$i];
@@ -697,6 +728,7 @@ function writeJobFile ($extra=False) {
     if ($median=='on') $line.=" median";
     if ($perturb=='on') $line.=" perturb";
     if ($tree=='2' || $tree=='3') $line.=" tree=$tree";
+    if ($fscls=='on') $line.=" fscls";
     if ($phasecls=='on') $line.=" phasecls";
     if ($refine=='on') $line.=" refine";
     if ($goodbad=='on') $line.=" goodbad";
@@ -800,9 +832,13 @@ function defaultReconValues ($box) {
       //obj.filt3d1.value = '15.0';
       //obj.shrink1.value = '1';
       obj.median1.checked = true;
+      obj.xfiles1.value = '';
+      obj.euler21.checked = '';
       obj.phasecls1.checked = true;
+      obj.fscls1.checked = false;
       obj.refine1.checked = false;
       obj.goodbad1.checked = false;
+      obj.perturb1.checked = false;
       obj.eotest1.checked = true;
       obj.coran1.checked = false;
       obj.msgp1.checked = false;
@@ -837,6 +873,10 @@ function writeJavaPopupFunctions () {
       newwindow.document.write('Processors per node. Each computer (node) or Garibaldi has 4 processors (procs), so proc/node=4. For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process.');
     } else if (infoname=='ang') {
       newwindow.document.write('Angular step for projections (in degrees)');
+    } else if (infoname=='itn') {
+      newwindow.document.write('Iteration Number');
+    } else if (infoname=='copy') {
+      newwindow.document.write('Duplicate the parameters for this iteration');
     } else if (infoname=='mask') {
       newwindow.document.write('Radius of external mask');
     } else if (infoname=='imask') {
@@ -845,9 +885,9 @@ function writeJavaPopupFunctions () {
       newwindow.document.write('Imposes symmetry on the model, omit this option for no/unknown symmetry<BR/>Examples: c1, c2, d7, etc.');
     } else if (infoname=='hard') {
       newwindow.document.write('Hard limit for <I>make3d</I> program. This specifies how well the class averages must match the model to be included, 25 is typical');
-    } else if (infoname=='classkeep') {
+    } else if (infoname=='clskeep') {
       newwindow.document.write('<b>classkeep=[std dev multiplier]</b><br />This determines how many raw particles are discarded for each class-average. This is defined in terms of the standard-deviation of the self-similarity of the particle set. A value close to 0 (should not be exactly 0) will discard about 50% of the data. 1 is a typical value, and will typically discard 10-20% of the data.');
-    } else if (infoname=='classiter') {
+    } else if (infoname=='clsiter') {
       newwindow.document.write('Generation of class averages is an iterative process. Rather than just aligning the raw particles to a reference, they are iteratively aligned toeach other to produce a class-average representative of the data, not of the model, eliminating initial model bias. Typically set to 8 in the early rounds and 3 in later rounds - 0 may be used at the end, but model bias may result.');
     } else if (infoname=='filt3d') {
       newwindow.document.write('<b>fil3d=[rad]</b><br />Applies a gaussian low-pass filter to the 3D model between iterations. This can be used to correct problems that may result in high resolution terms being upweighted. [rad] is in pixels, not Angstroms');
@@ -863,8 +903,10 @@ function writeJavaPopupFunctions () {
       newwindow.document.write('This can be a risky option, but it can produce dramatic speedups in the refinement process. Rather than comparing each particle to every reference, this will decimate the reference population to 1/4 (if 2 is specified) or 1/9 (if 3 is specified) of its original size, classify, then locally determine which of the matches is best. Is is safest in conjunction with very small angular steps, ie - large numbers of projections. The safest way to use this is either:<br /><i>a)</i> for high-resolution, small-ang refinement or <br/><i>b)</i> for the initial iterations of refinement (then turn it off for the last couple of iterations).');
     } else if (infoname=='median') {
       newwindow.document.write('When creating class averages, use the median value for each pixel instead of the average.  If your dataset is noisy, this is recommended');
-    } else if (infoname=='phasecls') {
-      newwindow.document.write('Uses weighted mean phase error for classification (<I>experimental</I>)');
+    } else if (infoname=='phscls') {
+      newwindow.document.write('This option will use signal to noise ratio weighted phase residual as a classification criteria (instead of the default optimized real space variance). Over the last year or so, people working on cylindrical structures (like GroEL), have noticed that \'side views\' of this particle seem to frequently get classified as being tilted 4 or 5 degrees from the side view. While apparently this didn\'t effect the models significantly at the obtained resolution, it is quite irritating. This problem turns out to be due to resolution mismatch between the 3D model and the individual particles. Using phase residual solves this problem, although it\'s unclear if there is any resolution improvement. This option has a slight speed penalty');
+    } else if (infoname=='fscls') {
+      newwindow.document.write('An improvement, albeit an experimental one, over phasecls. phasecls ignores Fourier amplitude when making image comparisons. fscls will use a SNR weighted Fourier shell correlation as a similarity criteria. Preliminary tests have shown that this produces slightly better results than phasecls, but it should still be used with caution.');
     } else if (infoname=='refine') {
       newwindow.document.write('This will do subpixel alignment of the particle translations for classification and averaging. May have a significant impact at higher resolutions (with a speed penalty).');
     } else if (infoname=='goodbad') {
