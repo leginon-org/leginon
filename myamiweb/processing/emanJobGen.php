@@ -230,8 +230,7 @@ function stackModelForm($extra=False) {
   }
   # show initial models
   echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
-	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'>"
-		."</FORM><BR/>\n";
+  if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><BR/>\n";
   echo "<P>\n";
   $minf = explode('|--|',$_POST['model']);
   if (is_array($models) && count($models)>0) {
