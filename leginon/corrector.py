@@ -130,6 +130,7 @@ class Corrector(node.Node):
 				self.logger.exception('Cannot acquire dark reference: %s' % e)
 			else:
 				self.displayImage(imagedata)
+				self.currentimage = imagedata
 				self.beep()
 		self.panel.acquisitionDone()
 
@@ -142,6 +143,7 @@ class Corrector(node.Node):
 				self.logger.exception('Cannot acquire bright reference: %s' % e)
 			else:
 				self.displayImage(imagedata)
+				self.currentimage = imagedata
 				self.beep()
 		self.panel.acquisitionDone()
 
@@ -159,6 +161,7 @@ class Corrector(node.Node):
 			self.logger.exception('Raw acquisition failed: %s' % e)
 		else:
 			self.displayImage(image)
+			self.currentimage = image
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireRaw')
 
@@ -175,6 +178,7 @@ class Corrector(node.Node):
 		else:
 			if image is not None:
 				self.displayImage(image)
+				self.currentimage = image
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireCorrected')
 
@@ -194,6 +198,7 @@ class Corrector(node.Node):
 			self.logger.exception('Modify normalization image failed: %s' % e)
 		self.stopTimer('modifyNorm')
 		self.maskimg = numpy.zeros(self.maskimg.shape)
+		self.displayImage(self.currentimage)
 
 	def displayImage(self, image):
 		self.startTimer('Corrector.displayImage')
@@ -507,27 +512,37 @@ class Corrector(node.Node):
 				self.logger.warning('No normalized image for modifications')
 				return
 
-
-			if norm.shape != mask.shape:
-				self.logger.warning('Wrong mask dimension for channel %d' %channel)
+			if mask is not None:
+				if norm.shape != mask.shape:
+					self.logger.warning('Wrong mask dimension for channel %d' %channel)
+					return
+				else:
+					maskednorm=ma.masked_array(norm,mask=mask)
+					nmean = maskednorm.mean()
+					nstd = maskednorm.std()
+					nmax = maskednorm.max()
+					nmin = maskednorm.min()
+					sigma = 100
+					ntop = nmean+sigma * nstd
+					if nmax < ntop:
+						ntop = nmax
 			else:
-				maskednorm=ma.masked_array(norm,mask=mask)
-				nmean = maskednorm.mean()
-				nstd = maskednorm.std()
-				nmax = maskednorm.max()
-				nmin = maskednorm.min()
-				sigma = 100
-				ntop = nmean+sigma * nstd
-				nbottom = 1 / ntop
-				if nmax < ntop:
-					ntop = nmax
-				newnorm = numpy.clip(norm, nbottom, ntop) 
-				self.logger.info('Clipped normalization to between %e and %e'% (ntop,nbottom))	
-				try:
-					self.storeRef('norm', newnorm, camstate, scopedata, channel)
-					self.logger.info('Saved modified norm image for channel %d' %channel)
-				except:
-					pass
+				nmax = norm.max()
+				nmin = norm.min()
+				ntop = nmax
+				nbottom = nmin
+			self.logger.info('Unmasked region normalization is between %e and %e'% (nmax,nmin))	
+			## make it 20 if the unmask region has large norm factor
+			if ntop > 20:
+				ntop = 20
+			nbottom = 1 / ntop
+			newnorm = numpy.clip(norm, nbottom, ntop) 
+			self.logger.info('Clipped normalization to between %e and %e'% (ntop,nbottom))	
+			try:
+				self.storeRef('norm', newnorm, camstate, scopedata, channel)
+				self.logger.info('Saved modified norm image for channel %d' %channel)
+			except:
+				pass
 		return
 
 	def correct(self, ccdcamera, original, camstate, scopedata):
@@ -726,4 +741,6 @@ class Corrector(node.Node):
 		type(polygonimg)
 		self.maskimg = self.maskimg + polygonimg
 		self.maskimg = numpy.where(self.maskimg==0,0,1)
+		imageshown = self.currentimage * (numpy.ones(self.maskimg.shape)+self.maskimg*0.5)
+		self.displayImage(imageshown)
 		self.setTargets([], 'Regions', block=False)
