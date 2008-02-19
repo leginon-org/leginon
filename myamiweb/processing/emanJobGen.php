@@ -473,7 +473,8 @@ function jobForm($extra=false) {
     // if importing values, set them here
     if ($_POST['import']=='groel1') {
       // values that don't change:
-      $mask=($box/2)-2;
+			//if($post['mask0']) {
+      $mask = $_POST['mask1'] ? $_POST['mask1'] : ($box/2)-2;
       $hard='25';
       $classkeep='0.8';
       $median='CHECKED';
@@ -486,8 +487,8 @@ function jobForm($extra=false) {
       elseif ($i < 13) $ang=3;
       elseif ($i < 17) $ang=2;
       else {
-	$ang=1;
-	$refine='CHECKED';
+				$ang=1;
+				$refine='CHECKED';
       }
     }
     elseif ($_POST['import']=='virusgood') {
