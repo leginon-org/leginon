@@ -145,9 +145,6 @@ class tiltAligner(particleLoop.ParticleLoop):
 		"""
 		Over-writes the particleLoop commit and uses the appionLoop commit
 		"""
-		if len(self.peaktree1) < 3:
-			apDisplay.printWarning("Not enough particle picks; not commiting data")
-			return False
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is None:
 			apDisplay.printWarning("Tilt data not found; not commiting data")
@@ -155,15 +152,22 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 		### insert the runid
 		self.commitRunToDatabase(imgdata['session'], True)
+
+		if self.assess is not None:
+			#note runid is overrided to be 'run1'
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
+			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
+
+		if len(self.peaktree1) < 3 or len(self.peaktree1) < 3:
+			apDisplay.printWarning("Not enough particle picks; not commiting transform or particle data")
+			return False
+
 		### insert the transform
 		transdata = apTiltPair.insertTiltTransform(imgdata, tiltdata, self.tiltparams, self.params)
 		### insert the particles
 		self.insertParticlePeakPairs(imgdata, tiltdata, transdata)
 		### insert image assessment
-		if self.assess is not None:
-			#note runid is overrided to be 'run1'
-			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
-			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
+
 
 	##########################################
 	##### END PRE-DEFINED LOOP FUNCTIONS #####
