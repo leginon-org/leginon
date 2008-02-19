@@ -220,22 +220,32 @@ def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None):
 		reject = False 
 		unassessed = None
 	"""
-	if assessment is not True and assessment is not False:
-		return False
+	if assessment is True or assessment is False:
+		assessrun = appionData.ApAssessmentRunData()
+		assessrun['session'] = imgdata['session']
+		#override to ALWAYS be 'run1'
+		#assessrun['name'] = runname
+		assessrun['name'] = "run1"
 
-	assessrun = appionData.ApAssessmentRunData()
-	assessrun['session'] = imgdata['session']
-	#override to ALWAYS be 'run1'
-	#assessrun['name'] = runname
-	assessrun['name'] = "run1"
-	#assessrundata = appiondb.query(assessrun)
+		assessquery = appionData.ApAssessmentData()
+		assessquery['image'] = imgdata
+		assessquery['assessmentrun'] = assessrun
+		assessquery['selectionkeep'] = assessment
+		assessquery.insert()
+	else:
+		apDisplay.printWarning("No image assessment made, invalid data: "+str(assessment))
 
-	assessquery = appionData.ApAssessmentData()
-	assessquery['image'] = imgdata
-	assessquery['assessmentrun'] = assessrun
-	assessquery['selectionkeep'] = assessment
 
-	appiondb.insert(assessquery)
+	#check assessment
+	finalassess = getImgAssessmentStatus(imgdata)
+	imgname = apDisplay.short(imgdata['filename'])
+	if finalassess is True:
+		astr = apDisplay.colorString("keep", "green")
+	elif finalassess is False:
+		astr = apDisplay.colorString("reject", "red")
+	elif finalassess is None:
+		astr = apDisplay.colorString("none", "yellow")
+	apDisplay.printMsg("Final image assessment: "+astr+" ("+imgname+")")
 
 	return True
 
