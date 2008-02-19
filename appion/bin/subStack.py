@@ -93,5 +93,5 @@ if __name__ == '__main__':
 	apStack.makeNewStack(oldstack, newstack, params['keepfile'])
 
 	apStack.commitSubStack(params)
-	apStack.averageStack(params)
+	apStack.averageStack(stack=newstack)
 

@@ -118,16 +118,17 @@ def getStackIdFromRecon(reconrunid, msg=True):
 	return stackid
 
 #--------
-def averageStack(params):
-	if 'single' in params:
-		stackfile = params['single']
-	else:
-		stackfile = "start.hed"
-	apDisplay.printMsg("averaging stack for summary web page")
-	stack = os.path.join(params['outdir'], stackfile)
-	avgmrc = os.path.join(params['outdir'], "average.mrc")
-	emancmd = ( "proc2d "+stack+" "+avgmrc+" average" )
-	apEMAN.executeEmanCmd(emancmd)
+def averageStack(stack="start.hed", msg=True):
+	if msg is True:
+		apDisplay.printMsg("averaging stack for summary web page")
+	stackfile = os.path.abspath(stack)
+	if not os.path.isfile(stackfile):
+		apDisplay.printWarning("could not create stack average, average.mrc")
+		return False
+	avgmrc = os.path.join(os.path.dirname(stackfile), "average.mrc")
+	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
+	apEMAN.executeEmanCmd(emancmd, verbose=msg)
+	return True
 
 #--------
 def commitSubStack(params):

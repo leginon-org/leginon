@@ -869,7 +869,8 @@ if __name__ == '__main__':
 		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
 		if os.path.isfile(tmpboxfile):
 			os.remove(tmpboxfile)
-	apStack.averageStack(params)
+
+	apStack.averageStack(stack=os.path.join(params['outdir'], "start.hed"))
 	getStackId(params)
 	
 	print "Done!"
