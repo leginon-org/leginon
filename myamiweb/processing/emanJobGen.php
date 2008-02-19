@@ -731,6 +731,7 @@ function writeJobFile ($extra=False) {
     if ($fscls=='on') $line.=" fscls";
     if ($phasecls=='on') $line.=" phasecls";
     if ($refine=='on') $line.=" refine";
+    if ($euler2) $line.=" euler2=$euler2";
     if ($goodbad=='on') $line.=" goodbad";
     $line.=" > refine".$i.".txt\n";
     $line.="getProjEulers.py proj.img proj.$i.txt\n";
