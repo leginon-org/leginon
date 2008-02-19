@@ -134,8 +134,13 @@ class satEulerScript(appionScript.AppionScript):
 			apDisplay.printColor("Using cached MySQL query data at "+time.asctime(), "cyan")
 			cachef = open(cachefile, 'r')
 			results = cPickle.load(cachef)
+		cachef.close()
 		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
-		return results
+
+		#convert to tree form
+		eulertree = self.convertSQLtoEulerTree(results)
+
+		return eulertree
 
 	#=====================
 	def convertSQLtoEulerTree(self, results):
@@ -167,6 +172,119 @@ class satEulerScript(appionScript.AppionScript):
 		return eulertree
 
 	#=====================
+	def getEulersForIteration2(self, reconid, tiltrunid, stackid, iteration=1):
+		"""
+		returns all classdata for a particular refinement iteration
+		"""
+		#get mirror and good/bad
+		t0 = time.time()
+
+		cachefile = "mysql_cache-recon"+str(reconid)+"-iter"+str(iteration)+".pickle"
+		if os.path.isfile(cachefile):
+			apDisplay.printColor("Using cached MySQL query data at "+time.asctime(), "cyan")
+			cachef = open(cachefile, 'r')
+			eulertree = cPickle.load(cachef)
+			cachef.close()
+			apDisplay.printMsg("\nFetched "+str(len(eulertree))+" rows in "+apDisplay.timeString(time.time()-t0))
+			return eulertree
+
+		query = (
+			"SELECT \n"
+				+"  tiltd.`REF|ApParticleData|particle1` AS partnum1, \n"
+				+"  tiltd.`REF|ApParticleData|particle2` AS partnum2 \n"
+				+"FROM `ApTiltParticlePairData` AS tiltd \n"
+				+"LEFT JOIN `ApImageTiltTransformData` as transform \n"
+				+"  ON tiltd.`REF|ApImageTiltTransformData|transform` = transform.`DEF_id` \n"
+				+"LEFT JOIN `ApStackParticlesData` AS stpart1 \n"
+				+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
+				+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
+				+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
+				+"WHERE transform.`REF|ApSelectionRunData|tiltrun` = "+str(tiltrunid)+" \n"
+				+"  AND stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+				+"  AND stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+				#+"LIMIT 500 \n"
+			)
+		#print query
+		apDisplay.printColor("Getting all particles via MySQL query at "+time.asctime(), "yellow")
+		self.cursor.execute(query)
+		numrows = int(self.cursor.rowcount)
+		results = self.cursor.fetchall()
+		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
+
+		t0 = time.time()
+		eulertree = []
+		apDisplay.printColor("Getting individual particle info at "+time.asctime(), "yellow")
+		count = 0
+		for row in results:
+			count += 1
+			if count % 100 == 0:
+				sys.stderr.write(".")
+			eulerpair = { 'part1': {}, 'part2': {} }
+			eulerpair['part1']['partid'] = int(row[0])
+			eulerpair['part2']['partid'] = int(row[1])
+			query = (
+				"SELECT \n"
+					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
+					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
+					+"FROM `ApStackParticlesData` AS stpart \n"
+					+"LEFT JOIN `ApParticleClassificationData` AS partclass \n"
+					+"  ON partclass.`REF|ApStackParticlesData|particle` = stpart.`DEF_id` \n"
+					+"LEFT JOIN `ApEulerData` AS e \n"
+					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
+					+"LEFT JOIN `ApRefinementData` AS refd \n"
+					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
+					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(eulerpair['part1']['partid'])+" \n"
+					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"  AND refd.`iteration` = "+str(iteration)+" \n"
+					+"LIMIT 1 \n"
+			)
+			#print query
+			self.cursor.execute(query)
+			row = self.cursor.fetchone()
+			if not row:
+				continue
+			eulerpair['part1']['euler1'] = float(row[0])
+			eulerpair['part1']['euler2'] = float(row[1])
+			eulerpair['part1']['euler3'] = float(row[2])
+			eulerpair['part1']['mirror'] = self.nullOrValue(row[3])
+			eulerpair['part1']['reject'] = self.nullOrValue(row[4])
+			query = (
+				"SELECT \n"
+					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
+					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
+					+"FROM `ApStackParticlesData` AS stpart \n"
+					+"LEFT JOIN `ApParticleClassificationData` AS partclass \n"
+					+"  ON partclass.`REF|ApStackParticlesData|particle` = stpart.`DEF_id` \n"
+					+"LEFT JOIN `ApEulerData` AS e \n"
+					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
+					+"LEFT JOIN `ApRefinementData` AS refd \n"
+					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
+					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(eulerpair['part2']['partid'])+" \n"
+					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"  AND refd.`iteration` = "+str(iteration)+" \n"
+					+"LIMIT 1 \n"
+			)
+			#print query
+			self.cursor.execute(query)
+			row = self.cursor.fetchone()
+			if not row:
+				continue
+			eulerpair['part2']['euler1'] = float(row[0])
+			eulerpair['part2']['euler2'] = float(row[1])
+			eulerpair['part2']['euler3'] = float(row[2])
+			eulerpair['part2']['mirror'] = self.nullOrValue(row[3])
+			eulerpair['part2']['reject'] = self.nullOrValue(row[4])
+			eulertree.append(eulerpair)
+			#end loop
+		cachef = open(cachefile, 'w', 0666)
+		cPickle.dump(eulertree, cachef)
+		cachef.close()
+		apDisplay.printMsg("\nFetched "+str(len(eulertree))+" rows in "+apDisplay.timeString(time.time()-t0))
+		return eulertree
+
+
+
+	#=====================
 	def nullOrValue(self, val):
 		if val is None:
 			return 0
@@ -183,9 +301,9 @@ class satEulerScript(appionScript.AppionScript):
 	#=====================
 	def calc2dRotationalDifference(self, eulerpair):
 		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
-		#DOES this number affect the total angle?
-		if rotdist > 180.0:
-			rotdist -= 360.0
+		#With EMAN data the next line shouldn't be done
+		#if rotdist > 180.0:
+		#	rotdist -= 360.0
 		return rotdist
 
 	#=====================
@@ -258,7 +376,6 @@ class satEulerScript(appionScript.AppionScript):
 		s.write("@    s0 symbol size 0.14\n")
 		s.write("@    s0 line type 0\n")
 		s.write("@    s0 symbol fill color 2\n")
-		s.write("\n")
 		s.write("@target G0.S0\n")
 		for eulerpair in eulertree:
 			mystr = ( "%3.8f %3.8f\n" % (eulerpair['rotdist']*math.pi/180.0, eulerpair['angdist']) )
@@ -446,8 +563,10 @@ class satEulerScript(appionScript.AppionScript):
 		### Big slow process
 		if self.params['commit'] is True:
 			t0 = time.time()
-			results = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'], self.params['iternum'])
-			eulertree = self.convertSQLtoEulerTree(results)
+			eulertree = self.getEulersForIteration2(self.params['reconid'], self.params['tiltrunid'],
+				self.params['stackid'], self.params['iternum'])
+			#eulertree = self.getEulersForIteration(self.params['reconid'], self.params['tiltrunid'],
+			#	self.params['iternum'])
 			self.processEulers(eulertree)
 			apDisplay.printMsg("Total time for "+str(len(eulertree))+" eulers: "+apDisplay.timeString(time.time()-t0))
 		else:
