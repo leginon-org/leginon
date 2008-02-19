@@ -378,10 +378,11 @@ if ($sessionId) {
     $result = implode('<br />',$jlist);
   }
 
-	$nrun = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
-  if ($stackruns == 0) {
-    $nrun = "<font size=-1><i>Create a stack first</i></font>";
-  } 
+  // first check if there are stacks for a run, then check if logged
+  // in.  Then you can submit a job
+  if ($stackruns == 0) $nrun = "<font size=-1><i>Create a stack first</i></font>"; 
+  elseif (!$_SESSION['loggedin']) {$nrun = "<font size=-1><i>Log in to submit a job</i>\n";}
+  else $nrun = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
   if ($stackruns>0) {
     $nrun .= "<br /><a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
   }
