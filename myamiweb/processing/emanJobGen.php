@@ -18,7 +18,9 @@ if ($_POST['write']) {
   $particle = new particledata();
   if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
   if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=4");
-  if ($_POST['ppn'] > 4) jobForm("ERROR: Max processors per node is 4");
+  if ($_POST['ppn'] > 4 && $_POST['clustername']=='garibaldi') jobForm("ERROR: Max processors per node is 4");
+  if ($_POST['ppn'] > 8 && $_POST['clustername']=='guppy') jobForm("ERROR: Max processors per node is 4");
+  if ($_POST['nodes'] > 10 && $_POST['clustername']=='guppy') jobForm("ERROR: Max nodes on guppy is 10");
   if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=240");
   if ($_POST['walltime'] > 240) jobForm("ERROR: Max walltime is 240");
   if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=240");
@@ -26,9 +28,11 @@ if ($_POST['write']) {
   if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=4");
   if ($_POST['rprocs'] > $_POST['ppn'])
     jobForm("ERROR: Asking to reconstruct on more processors than available");
-  if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
-  if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
-  if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
+  if ($_POST['clustername']=='garibaldi') {
+    if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
+    if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
+    if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
+  }
   for ($i=1; $i<=$_POST['numiters']; $i++) {
     if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
     if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
@@ -316,6 +320,10 @@ function jobForm($extra=false) {
   $modsym=$syminfo[0];
   if ($modsym == 'Icosahedral') $modsym='icos';
 
+  ## guppy is selected by default
+  $garibaldicheck = ($_POST['clustername']=='garibaldi' || $_POST['model']) ? 'CHECKED' : '';
+  $guppycheck = ($_POST['clustername']=='guppy') ? 'CHECKED' : '';
+
   $jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
   $outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
   $clusterpath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $clusterpath;
@@ -337,6 +345,7 @@ function jobForm($extra=false) {
 
   $javafunc .= defaultReconValues($box);
   $javafunc .= writeJavaPopupFunctions();
+  $javafunc .= garibaldiFun();
   writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
@@ -345,6 +354,11 @@ function jobForm($extra=false) {
   echo "
   <FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR/>
   <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
+  <tr>
+    <td rowspan='2'><b>Cluster:</b></td>
+    <td><input type='radio' name='clustername' value='garibaldi' onClick=\"enableGaribaldi('true')\" $garibaldicheck>Garibaldi</td></tr>
+    <tr><td><input type='radio' name='clustername' value='guppy' onClick=\"enableGaribaldi('false')\" $guppycheck>Guppy</td>
+  </tr>
   <tr>
     <td><B>Job Run Name:</B></td>
     <td><input type='text' NAME='jobname' VALUE='$jobname' SIZE=20></td>
@@ -436,7 +450,7 @@ function jobForm($extra=false) {
   <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
     <tr>\n";
   foreach ($display_keys as $key) {
-      echo"<td bgcolor='$bgcolor'><font class='sf'><A HREF=\"javascript:refinfopopup('$key')\">$key</a><font></td>\n";
+      echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><A HREF=\"javascript:refinfopopup('$key')\">$key</a><font></td>\n";
   }
   echo"  </tr>\n";
 
@@ -473,7 +487,6 @@ function jobForm($extra=false) {
     // if importing values, set them here
     if ($_POST['import']=='groel1') {
       // values that don't change:
-			//if($post['mask0']) {
       $mask = $_POST['mask1'] ? $_POST['mask1'] : ($box/2)-2;
       $hard='25';
       $classkeep='0.8';
@@ -487,8 +500,8 @@ function jobForm($extra=false) {
       elseif ($i < 13) $ang=3;
       elseif ($i < 17) $ang=2;
       else {
-				$ang=1;
-				$refine='CHECKED';
+	$ang=1;
+	$refine='CHECKED';
       }
     }
     elseif ($_POST['import']=='virusgood') {
@@ -605,6 +618,7 @@ function jobForm($extra=false) {
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
+  if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
   writeBottom();
   exit;
 }
@@ -616,11 +630,12 @@ function writeJobFile ($extra=False) {
   $jobname = $_POST['jobname'];
   $jobfile ="$jobname.job";
 
+  $clustername = $_POST['clustername'];
   $outdir = $_POST['outdir'];
   if (substr($outdir,-1,1)!='/') $outdir.='/';
 
-  // clusterpath contains jobname
-  $clusterpath = $_POST['clusterpath'];
+  // clusterpath contains jobname, if running on guppy, cluster path is local
+  $clusterpath = ($clustername=='guppy') ? $outdir : $_POST['clusterpath'];
   if (substr($clusterpath,-1,1)!='/') $clusterpath.='/';
   $clusterfullpath = $clusterpath.$jobname;
 
@@ -671,19 +686,30 @@ function writeJobFile ($extra=False) {
   $header.= "#PBS -m e\n";
   $header.= "#PBS -r n\n\n";
   $clusterjob = "# stackId: $stackidval\n";
-  $clusterjob.= "# modelId: $modelid\n";
-  $clusterjob.= "\nmkdir -p $clusterfullpath\n";
-  $clusterjob.= "\ncd $clusterfullpath\n";
-  $clusterjob.= "\nrm -f recon\n";
-  $clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
-  $clusterjob.= "chmod 755 recon\n"; 
-  $clusterjob.= "cd recon\n";
-  // get file name, strip extension
-  $ext=strrchr($_POST['dmfstack'],'.');
-  $stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-  $clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
-  $clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
-  $clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
+  $clusterjob.= "# modelId: $modelid\n\n";
+
+  if ($clustername=='garibaldi') {
+    $clusterjob.= "mkdir -p $clusterfullpath\n";
+    $clusterjob.= "cd $clusterfullpath\n";
+    $clusterjob.= "rm -f recon\n";
+    $clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
+    $clusterjob.= "chmod 755 recon\n"; 
+    $clusterjob.= "cd recon\n";
+    // get file name, strip extension
+    $ext=strrchr($_POST['dmfstack'],'.');
+    $stackname=substr($_POST['dmfstack'],0,-strlen($ext));
+    $clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
+    $clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
+    $clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
+  }
+  else {
+    $clusterjob.= "set PBSREMOTEDIR $clusterfullpath\n";
+    $clusterjob.= "rm -rf \$PBSREMOTEDIR\n";
+    $clusterjob.= "mkdir -p \$PBSREMOTEDIR\n";
+    $clusterjob.= "cd \$PBSREMOTEDIR\n\n";
+    $clusterjob.= "ln -s $stackpath/$stackname1 start.hed\n";
+    $clusterjob.= "ln -s $modelpath/$modelname threed.0.mrc\n";
+  }
   $clusterjob.= "\nrm .mparm\nforeach i (`sort -u \$PBS_NODEFILE`)\n";
   $clusterjob.= "  echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm\n";
   $clusterjob.= "end\n";
@@ -784,12 +810,15 @@ function writeJobFile ($extra=False) {
     $clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
   }
   if (!$extra) {
-    echo "Please review your job below.<BR>";
-    echo "If you are satisfied:<BR>\n";
-    echo "1) Place files in DMF<BR>\n";
-    echo "2) Once this is done, click the button to launch your job.<BR>\n";
-    echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
-    echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
+    if ($clustername=='garibaldi') {
+      echo "Please review your job below.<BR>";
+      echo "If you are satisfied:<BR>\n";
+      echo "1) Place files in DMF<BR>\n";
+      echo "2) Once this is done, click the button to launch your job.<BR>\n";
+      echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
+      echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
+    }
+    else echo "Review your job, and submit.<br />\n";
   }
   else {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -927,3 +956,31 @@ function writeJavaPopupFunctions () {
   return $javafunc;
 };
 
+function garibaldiFun() {
+  $javafunc="
+  <script language='javascript'>
+  function enableGaribaldi(i) {
+    if (i=='true') {
+      document.emanjob.clusterpath.disabled=false;
+      document.emanjob.dmfpath.disabled=false;
+      document.emanjob.dmfmod.disabled=false;
+      document.emanjob.dmfstack.disabled=false;
+      document.emanjob.dmfstore.disabled=false;
+      document.emanjob.nodes.value=4;
+      document.emanjob.ppn.value=4;
+      document.emanjob.rprocs.value=4;
+    }
+    else {
+      document.emanjob.clusterpath.disabled=true;
+      document.emanjob.dmfpath.disabled=true;
+      document.emanjob.dmfmod.disabled=true;
+      document.emanjob.dmfstack.disabled=true;
+      document.emanjob.dmfstore.disabled=true;
+      document.emanjob.nodes.value=2;
+      document.emanjob.ppn.value=8;
+      document.emanjob.rprocs.value=8;
+    }
+  }
+  </script>\n";
+  return $javafunc;
+}
