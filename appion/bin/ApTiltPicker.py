@@ -165,14 +165,18 @@ class PickerApp(wx.App):
 		self.buttonrow = wx.FlexGridSizer(1,20)
 
 		self.theta_dialog = tiltDialog.FitThetaDialog(self)
-		self.fittheta = wx.Button(self.frame, -1, 'Find &Theta')
+		self.fittheta = wx.Button(self.frame, -1, 'Find &Theta...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFitTheta, self.fittheta)
 		self.buttonrow.Add(self.fittheta, 0, wx.ALL, 1)
 
 		self.fitall_dialog = tiltDialog.FitAllDialog(self)
-		self.fitall = wx.Button(self.frame, -1, '&Optimize Angles')
+		self.fitall = wx.Button(self.frame, -1, '&Optimize Angles...')
 		self.frame.Bind(wx.EVT_BUTTON, self.onFitAll, self.fitall)
 		self.buttonrow.Add(self.fitall, 0, wx.ALL, 1)
+
+		self.autooptim = wx.Button(self.frame, -1, 'Auto Op&timize')
+		self.frame.Bind(wx.EVT_BUTTON, self.onAutoOptim, self.autooptim)
+		self.buttonrow.Add(self.autooptim, 0, wx.ALL, 1)
 
 		self.update = wx.Button(self.frame, wx.ID_APPLY, '&Apply')
 		self.frame.Bind(wx.EVT_BUTTON, self.onUpdate, self.update)
@@ -328,13 +332,16 @@ class PickerApp(wx.App):
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
 					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
+					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
+					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
 					( "Auto &DoG Pick Particles", "DoG Picker", self.onAutoDogPick ),
+					( "&Calculate Percent Overlap", "Calculate percent overlap", self.onGetOverlap ),
 				)),
 			]
 		else:
@@ -347,10 +354,12 @@ class PickerApp(wx.App):
 					( "&Clear", "Clear all picked particles", self.onClearPicks, wx.ID_CLEAR ),
 					( "&Reset", "Reset parameters", self.onResetParams, wx.ID_RESET ),
 					( "Clear &Worst Picks", "Remove worst picked particles", self.onClearBadPicks, wx.ID_CLEAR ),
+					( "Clear &Polygon", "Clear particle with polygon", self.onClearPolygon, wx.ID_CLEAR ),
 				)),
 				("&Refine", (
 					( "Find &Theta", "Calculate theta from picked particles", self.onFitTheta ),
 					( "&Optimize Angles", "Optimize angles with least squares", self.onFitAll ),
+					( "Auto Op&timize", "Find theta and optimize angles", self.onAutoOptim ),
 					( "&Apply", "Apply picks", self.onUpdate, wx.ID_APPLY ),
 					( "&Mask Overlapping Region", "Mask overlapping region", self.onMaskRegion ),
 					( "&Calculate Percent Overlap", "Calculate percent overlap", self.onGetOverlap ),
@@ -909,24 +918,30 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
-		if len(self.panel1.getTargets('Picked')) > 3 and len(self.panel2.getTargets('Picked')) > 3:
-			self.data['thetarun'] = True
-			self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.data['theta']))
-			self.theta_dialog.Show()
+		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+			dialog = wx.MessageDialog(self.frame, 
+				"You should pick at least 5 particle pairs first", 'Error',
+				 wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		self.data['thetarun'] = True
+		self.theta_dialog.tiltvalue.SetLabel(label=("       %3.3f       " % self.data['theta']))
+		self.theta_dialog.Show()
 
 	#---------------------------------------
 	def onFitAll(self, evt):
 		self.onUpdate(None)
-		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame, 
-				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-		if (len(self.panel1.getTargets('Picked')) < 5 
-		 or len(self.panel2.getTargets('Picked')) < 5):
+		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
 			dialog = wx.MessageDialog(self.frame, 
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
+		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
+			dialog = wx.MessageDialog(self.frame, 
+				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 		self.data['optimrun'] = True
@@ -938,6 +953,56 @@ class PickerApp(wx.App):
 		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
 		self.fitall_dialog.Show()
 		#values are then modified, if the user selected apply in tiltDialog
+
+	#---------------------------------------
+	def onAutoOptim(self, evt):
+		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
+			dialog = wx.MessageDialog(self.frame, 
+				"You should pick at least 5 particle pairs first", 'Error',
+				 wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		### run find theta
+		self.theta_dialog.onRunTiltAng(None)
+		self.theta_dialog.onApplyTiltAng(None)
+		self.data['thetarun'] = True
+
+		### run optimize angles
+		self.fitall_dialog.thetavalue.SetValue(round(self.data['theta'],4))
+		self.fitall_dialog.gammavalue.SetValue(round(self.data['gamma'],4))
+		self.fitall_dialog.phivalue.SetValue(round(self.data['phi'],4))
+		self.fitall_dialog.scalevalue.SetValue(round(self.data['scale'],4))
+		self.fitall_dialog.shiftxvalue.SetValue(round(self.data['shiftx'],4))
+		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
+		if self.data['optimrun'] is False:
+			self.fitall_dialog.thetavalue.Enable(True)
+			self.fitall_dialog.thetatog.SetValue(True)
+			self.fitall_dialog.thetatog.SetLabel("Refine")
+			self.fitall_dialog.gammavalue.Enable(True)
+			self.fitall_dialog.gammatog.SetValue(True)
+			self.fitall_dialog.gammatog.SetLabel("Refine")
+			self.fitall_dialog.phivalue.Enable(True)
+			self.fitall_dialog.phitog.SetValue(True)
+			self.fitall_dialog.phitog.SetLabel("Refine")
+			self.fitall_dialog.scalevalue.Enable(False)
+			self.fitall_dialog.scaletog.SetValue(False)
+			self.fitall_dialog.scaletog.SetLabel("Locked")
+			self.fitall_dialog.shiftxvalue.Enable(True)
+			self.fitall_dialog.shiftyvalue.Enable(True)
+			self.fitall_dialog.shifttog.SetValue(True)
+			self.fitall_dialog.shifttog.SetLabel("Refine")
+		lastiter = [80,80,80]
+		count = 0
+		while (max(lastiter) > 75):
+			count += 1
+			self.fitall_dialog.onRunLeastSquares(None)
+			lastiter[2] = lastiter[1]
+			lastiter[1] = lastiter[0]
+			lastiter[0] = self.fitall_dialog.lsfit['iter']
+			apDisplay.printMsg(str(count)+": iter="+str(lastiter[0])
+				+"  rmsd="+str(round(self.fitall_dialog.lsfit['rmsd'],4)))
+		self.fitall_dialog.onApplyLeastSquares(None)
+		self.onMaskRegion(None)
 
 	#---------------------------------------
 	def onClearPicks(self, evt):
