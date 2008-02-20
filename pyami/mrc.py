@@ -412,7 +412,16 @@ Always saves in the native byte order.
 		a = a.byteswap()
 	f = open(filename, 'wb')
 	f.write(headerbytes)
-	a.tofile(f)
+
+	## write data in smaller chunks.  Otherwise, writing from
+	## windows to a samba share will fail if image is too large.
+	smallersize = 16 * 1024 * 1024
+	b = a.ravel()
+	items_per_write = int(smallersize / a.itemsize)
+	for start in range(0, b.size, items_per_write):
+		end = start + items_per_write
+		b[start:end].tofile(f)
+
 	f.close()
 
 def read(filename):
