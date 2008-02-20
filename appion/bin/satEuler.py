@@ -220,10 +220,39 @@ class satEulerScript(appionScript.AppionScript):
 			if count % 100 == 0:
 				sys.stderr.write(".")
 			eulerpair = { 'part1': {}, 'part2': {} }
+			partid1 = int(row[0])
+			partid2 = int(row[1])
+			query = (
+				"SELECT \n"
+					+"  stpart.`particleNumber` AS partnum, \n"
+					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
+					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
+					+"FROM `ApStackParticlesData` AS stpart \n"
+					+"LEFT JOIN `ApParticleClassificationData` AS partclass \n"
+					+"  ON partclass.`REF|ApStackParticlesData|particle` = stpart.`DEF_id` \n"
+					+"LEFT JOIN `ApEulerData` AS e \n"
+					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
+					+"LEFT JOIN `ApRefinementData` AS refd \n"
+					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
+					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(partid1)+" \n"
+					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"  AND refd.`iteration` = "+str(iteration)+" \n"
+					+"LIMIT 1 \n"
+			)
+			#print query
+			self.cursor.execute(query)
+			row = self.cursor.fetchone()
+			if not row:
+				continue
 			eulerpair['part1']['partid'] = int(row[0])
-			eulerpair['part2']['partid'] = int(row[1])
+			eulerpair['part1']['euler1'] = float(row[1])
+			eulerpair['part1']['euler2'] = float(row[2])
+			eulerpair['part1']['euler3'] = float(row[3])
+			eulerpair['part1']['mirror'] = self.nullOrValue(row[4])
+			eulerpair['part1']['reject'] = self.nullOrValue(row[5])
 			query = (
 				"SELECT \n"
+					+"  stpart.`particleNumber` AS partnum, \n"
 					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
 					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
 					+"FROM `ApStackParticlesData` AS stpart \n"
@@ -233,7 +262,7 @@ class satEulerScript(appionScript.AppionScript):
 					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
 					+"LEFT JOIN `ApRefinementData` AS refd \n"
 					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
-					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(eulerpair['part1']['partid'])+" \n"
+					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(partid2)+" \n"
 					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
 					+"  AND refd.`iteration` = "+str(iteration)+" \n"
 					+"LIMIT 1 \n"
@@ -243,37 +272,12 @@ class satEulerScript(appionScript.AppionScript):
 			row = self.cursor.fetchone()
 			if not row:
 				continue
-			eulerpair['part1']['euler1'] = float(row[0])
-			eulerpair['part1']['euler2'] = float(row[1])
-			eulerpair['part1']['euler3'] = float(row[2])
-			eulerpair['part1']['mirror'] = self.nullOrValue(row[3])
-			eulerpair['part1']['reject'] = self.nullOrValue(row[4])
-			query = (
-				"SELECT \n"
-					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
-					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
-					+"FROM `ApStackParticlesData` AS stpart \n"
-					+"LEFT JOIN `ApParticleClassificationData` AS partclass \n"
-					+"  ON partclass.`REF|ApStackParticlesData|particle` = stpart.`DEF_id` \n"
-					+"LEFT JOIN `ApEulerData` AS e \n"
-					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
-					+"LEFT JOIN `ApRefinementData` AS refd \n"
-					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
-					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(eulerpair['part2']['partid'])+" \n"
-					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
-					+"  AND refd.`iteration` = "+str(iteration)+" \n"
-					+"LIMIT 1 \n"
-			)
-			#print query
-			self.cursor.execute(query)
-			row = self.cursor.fetchone()
-			if not row:
-				continue
-			eulerpair['part2']['euler1'] = float(row[0])
-			eulerpair['part2']['euler2'] = float(row[1])
-			eulerpair['part2']['euler3'] = float(row[2])
-			eulerpair['part2']['mirror'] = self.nullOrValue(row[3])
-			eulerpair['part2']['reject'] = self.nullOrValue(row[4])
+			eulerpair['part2']['partid'] = int(row[0])
+			eulerpair['part2']['euler1'] = float(row[1])
+			eulerpair['part2']['euler2'] = float(row[2])
+			eulerpair['part2']['euler3'] = float(row[3])
+			eulerpair['part2']['mirror'] = self.nullOrValue(row[4])
+			eulerpair['part2']['reject'] = self.nullOrValue(row[5])
 			eulertree.append(eulerpair)
 			#end loop
 		cachef = open(cachefile, 'w', 0666)
