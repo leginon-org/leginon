@@ -224,7 +224,7 @@ class PickerApp(wx.App):
 	def createMenuButtons(self):
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Worst Picks')
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear &Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
@@ -270,7 +270,7 @@ class PickerApp(wx.App):
 		self.frame.Bind(wx.EVT_BUTTON, self.onImportPicks, self.importpicks)
 		self.buttonrow.Add(self.importpicks, 0, wx.ALL, 1)
 
-		self.clear = wx.Button(self.frame, wx.ID_CLEAR, '&Clear Worst Picks')
+		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear &Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
 		self.buttonrow.Add(self.clear, 0, wx.ALL, 1)
 
