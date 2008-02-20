@@ -11,6 +11,7 @@
 import sys
 import os
 import chimera
+import time
 
 chimlog=None
 
@@ -19,20 +20,20 @@ def openVolumeData(vpath, file_type="mrc", contour_level=1.5, color=None):
 	# set step size to 1
 	from VolumeViewer.volume import default_settings
 	default_settings.set('limit_voxel_count', False)
-	
-        from VolumeViewer import open_volume_file
-        v = open_volume_file(vpath, file_type)[0]
 
-        v.set_parameters(show_outline_box = False,
-                         surface_smoothing = True)
-        if contour_level != None:
-                v.set_parameters(surface_levels = [contour_level])
-	if color != None:
-                v.set_parameters(surface_colors = [color])
+	from VolumeViewer import open_volume_file
+	v = open_volume_file(vpath, file_type)[0]
+
+	v.set_parameters(show_outline_box = False, surface_smoothing = True, two_sided_lighting = False)
+
+	if contour_level is not None:
+		v.set_parameters(surface_levels = [contour_level])
+	if color is not None:
+		v.set_parameters(surface_colors = [color])
 
 	v.show('surface')
 
-        return v
+	return v
 
 # -----------------------------------------------------------------------------
 # Print status message.
@@ -98,7 +99,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	v = openVolumeData(tmp_path, file_type, contour)
 
 	m = v.surface_model()
-
+	
 	#from chimera import runCommand
 	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
 
@@ -106,7 +107,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	image2 = vol_path+'.2.png'
 	image3 = vol_path+'.3.png'
 
-	if sym=='Icosahedral':
+	if sym[:4] == 'Icos':
 		color_surface_radially(m)
 
 		# move clipping planes to obscure back half
@@ -114,7 +115,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 #		hither=float(zsize)/5
 #		runChimCommand('clip yon %.3f' % yon)
 #		runChimCommand('clip hither -%.3f' % hither)
-		
+	
 		save_image(image1, format=imgFormat)
 
 		writeMessageToLog("turn: down 3-fold axis")
@@ -125,10 +126,24 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		runChimCommand('turn y 20.906')
 		save_image(image3, format=imgFormat) 
 
+		### works about 75% of time ???
+		writeMessageToLog("turn: get clipped view")
+		xsize, ysize, zsize = v.data.size
+		yon = float(zsize)/2.0
+		runChimCommand('clip hither %.3f' % -yon)
+		runChimCommand('wait')
+		from SurfaceCap import surfcaps
+		sc = surfcaps.Surface_Capper()
+		sc.set_cap_color((0.375,0.750,0.067,1))
+		sc.show_cap(m)
+		runChimCommand('wait')
+		image6 = vol_path+'.6.png'
+		save_image(image6, format=imgFormat)
+
 	else:
 		if sym!='C1':
 			color_surface_cylinder(m)
-		writeMessageToLog("turn: flip image 180")
+		writeMessageToLog("turn: get top view")
 		runChimCommand('turn x 180')
 		save_image(image1, format=imgFormat)
 
@@ -139,6 +154,20 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		writeMessageToLog("turn: get side view")
 		runChimCommand('turn x -45')
 		save_image(image3, format=imgFormat)
+
+		### works about 75% of time ???
+		writeMessageToLog("turn: get clipped side view")
+		xsize, ysize, zsize = v.data.size
+		yon = float(zsize)/2.0
+		runChimCommand('clip hither %.3f' % -yon)
+		runChimCommand('wait')
+		from SurfaceCap import surfcaps
+		sc = surfcaps.Surface_Capper()
+		sc.set_cap_color((0.375,0.750,0.067,1))
+		sc.show_cap(m)
+		runChimCommand('wait')
+		image6 = vol_path+'.6.png'
+		save_image(image6, format=imgFormat)
 
 		if sym is not 'D':
 			image4 = vol_path+'.4.png'
