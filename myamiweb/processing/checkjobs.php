@@ -49,7 +49,7 @@ function checkJobs($showjobs=False,$extra=False) {
   if ($showjobs) {
     $user = $_SESSION['username'];
     $pass = $_SESSION['password'];
-    $queue = checkClusterJobs($user, $pass);
+    $queue = checkClusterJobs('garibaldi',$user, $pass);
     if ($queue) {
       echo "<p>Jobs currently running on the cluster:<p>\n";
       $list = streamToArray($queue);
@@ -79,6 +79,7 @@ function checkJobs($showjobs=False,$extra=False) {
     $display_keys['appion path'] = $jobinfo['appath'];
     $display_keys['dmf path'] = $jobinfo['dmfpath'];
     $display_keys['cluster path'] = $jobinfo['clusterpath'];
+    $display_keys['cluster'] = $jobinfo['cluster'];
 
     // find if job has been uploaded
     if ($particle->getReconIdFromClusterJobId($job['DEF_id'])) continue;
@@ -116,7 +117,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
     if ($showjobs && $status=='Running') {
       $previters=array();
-      $stat = checkJobStatus($jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
+      $stat = checkJobStatus($jobinfo['cluster'],$jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
       if (!empty($stat)) {
 	$current=0;
 	$laststart=0;
@@ -142,6 +143,7 @@ function checkJobs($showjobs=False,$extra=False) {
 	    }
 	  }
 	}
+
 	foreach ($previters as $previter) echo "$previter <br />\n";
 	$numtot=count($stat['allref']);
 	echo "<br/>\n<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
@@ -153,7 +155,6 @@ function checkJobs($showjobs=False,$extra=False) {
 	  foreach ($keys as $key) echo "<td><span class='datafield0'>$key</span></td>\n";
 	  echo "</tr>\n";
 	  for ($i=$lastindx; $i<count($stat['refinelog']); $i++) {
-
 	    if ($stat['refinelog'][$i][0] == 'project3d') {
 	      $t = getlogdate($stat['refinelog'][$i]);
 	      $steps['proj']['reconstruction step'] = "creating projections";
@@ -171,7 +172,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
 	      // get the number of particles that have been classified
 	      $cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
-	      $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+	      $r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 	      $r = trim($r);
 	      // find out how much time is left for rest of particles
 	      if ($r < $numinstack && $r > 0) {
@@ -248,29 +249,29 @@ function checkJobs($showjobs=False,$extra=False) {
   exit;
 }
 
-function checkJobStatus($jobpath,$jobfile,$user,$pass) {
+function checkJobStatus($host,$jobpath,$jobfile,$user,$pass) {
   $cmd = "grep refine $jobpath/$jobfile ";
-  $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+  $r = exec_over_ssh($host,$user,$pass,$cmd, True);
   $allref = streamToArray($r);
   if (empty($allref)) return;
   foreach ($allref as $i){
     if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
   }
   $cmd = "cat $jobpath/recon/refine.log";
-  $r = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+  $r = exec_over_ssh($host,$user,$pass,$cmd, True);
   if ($r) {
     $cmd = "echo 'RESOLUTIONS';cat $jobpath/recon/resolution.txt";
-    $r .= exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+    $r .= exec_over_ssh($host,$user,$pass,$cmd, True);
   }
   $curref = streamToArray($r);
   $stat['refinelog']=$curref;
 
   // check for errors:
   $cmd = "grep Alarm $jobpath/recon/refine*.txt ";
-  $stat['errors'] = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+  $stat['errors'] = exec_over_ssh($host,$user,$pass,$cmd, True);
   if (!$stat['errors']) {
     $cmd = "grep Error $jobpath/recon/refine*.txt ";
-    $stat['errors'] = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd, True);
+    $stat['errors'] = exec_over_ssh($host,$user,$pass,$cmd, True);
   }
   return $stat;
 }

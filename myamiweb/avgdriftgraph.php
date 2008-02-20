@@ -44,7 +44,7 @@ foreach ($data as $drift) {
 	if ($maxrate && $drift['rate'] > $maxrate)
 		continue;
 	$datax[] = $drift['unix_timestamp'];
-	$datay[] = $drift['rate'];
+	$datay[] = $drift['rate']*1.63*4;
 }
 $width = $_GET['w'];
 $height = $_GET['h'];

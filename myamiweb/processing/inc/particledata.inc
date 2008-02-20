@@ -905,7 +905,7 @@ class particledata {
     return $r;
   }
 
-  function insertClusterJobData($pathdir,$dmfpathdir,$clusterdir,$name,$expId) {
+  function insertClusterJobData($host,$pathdir,$dmfpathdir,$clusterdir,$name,$expId) {
     // put appion path in db
     $q = "SELECT DEF_id "
       ."FROM `ApPathData` "
@@ -951,6 +951,7 @@ class particledata {
       $jdata['REF|leginondata|SessionData|session'] = $expId;
       $jdata['REF|ApPathData|dmfpath'] = $dmfpathid;
       $jdata['REF|ApPathData|clusterpath'] = $clusterpathid;
+      $jdata['cluster'] = $host;
       $jid=$this->mysql->SQLInsert('ApClusterJobData',$jdata);
     }
     return $jid;

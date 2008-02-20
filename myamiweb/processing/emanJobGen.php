@@ -71,20 +71,22 @@ elseif ($_POST['submitjob']) {
 
   $expId = $_GET['expId'];
 
-  $host = PROCESSING_HOST;
+  $host =$_POST['clustername'];
   $user = $_SESSION['username'];
   $pass = $_SESSION['password'];
   if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
   $jobname=$_POST['jobname'];
-  $outdir=$_POST['outdir'].$jobname;
-  $dmfpath=$_POST['dmfpath'].$jobname;
-  $clusterpath=$_POST['clusterpath'].$jobname;
+  $outdir=$_POST['outdir'];
+  if ($host=='garibaldi') {
+    $dmfpath=$_POST['dmfpath'].$jobname;
+    $clusterpath=$_POST['clusterpath'].$jobname;
+  }
 
   $jobfile="$jobname.job";
   $tmpjobfile = "/tmp/$jobfile";
 
-  $jobid=$particle->insertClusterJobData($outdir,$dmfpath,$clusterpath,$jobfile,$expId);
+  $jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId);
 
   // add header & job id to the beginning of the script
   // convert /\n's back to \n for the script
@@ -104,20 +106,26 @@ elseif ($_POST['submitjob']) {
   $cmd = "mkdir -p $outdir;\n";
   $cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
   exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
+
+  // if running on garibaldi:
+  if ($host=='garibaldi') {
+    // create directory on cluster and copy job file over
+    $cmd = "mkdir -p $clusterpath;\n";
+    $cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
+    $jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
+  }
+  // if on guppy, clusterpath is same as outdir
+  else $clusterpath=$outdir;
+
   echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
   echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
-  // create directory on cluster and copy job file over
-  $cmd = "mkdir -p $clusterpath;\n";
-  $cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
-  $jobnum = exec_over_ssh(PROCESSING_HOST, $user, $pass, $cmd, True);
-
-  // submit job on garibaldi
+  // submit job on host
   $cmd = "cd $clusterpath; qsub $jobname.job;\n";
-  $jobnum = exec_over_ssh(PROCESSING_HOST, $user, $pass, $cmd, True);
+  $jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
   
   $jobnum=trim($jobnum);
-  $jobnum = ereg_replace('\.garibaldi','',$jobnum);
+  $jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
   if (!is_numeric($jobnum)) {
     echo "</TABLE><P>\n";
     echo "ERROR in job submission.  Check the cluster\n";
@@ -132,13 +140,13 @@ elseif ($_POST['submitjob']) {
   echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
   echo "</TABLE>\n";
 
-  // check jobs that are running on garibaldi
+  // check jobs that are running on the cluster
   echo "<P>Jobs currently running on the cluster:\n";
-  $subjobs = checkClusterJobs($user,$pass);
+  $subjobs = checkClusterJobs($host,$user,$pass);
   if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
   else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
   echo "<p><a href='checkjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
-	echo "<P><FONT COLOR='RED'>Do not hit 'reload' it will re-submit job</FONT><P>\n";
+	echo "<P><FONT COLOR='RED'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
   writeBottom(True, True);
   exit;
 }
@@ -303,7 +311,6 @@ function jobForm($extra=false) {
   $box=$stackinfo[2];
   $rootpathdata = explode('/', $sessionpath);
   $dmfpath = '/home/'.$_SESSION['username'].'/';
-#  $clusterpath = '/garibaldi/people-a/'.$_SESSION['username'].'/';
   $clusterpath = '~'.$_SESSION['username'].'/';
   for ($i=3 ; $i<count($rootpathdata); $i++) {
     $rootpath .= "$rootpathdata[$i]";
@@ -320,7 +327,7 @@ function jobForm($extra=false) {
   $modsym=$syminfo[0];
   if ($modsym == 'Icosahedral') $modsym='icos';
 
-  ## guppy is selected by default
+  ## garibaldi is selected by default
   $garibaldicheck = ($_POST['clustername']=='garibaldi' || $_POST['model']) ? 'CHECKED' : '';
   $guppycheck = ($_POST['clustername']=='guppy') ? 'CHECKED' : '';
 
@@ -599,7 +606,7 @@ function jobForm($extra=false) {
       </tr>\n";
 
 
-
+### commented out for now, since  not working properly
 #	<TD colspan=6 bgcolor='$bgcolor' CELLPADDING=0 CELLSPACING=0>
 #	  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4 WIDTH=100%>
 #            <tr>
@@ -703,7 +710,7 @@ function writeJobFile ($extra=False) {
     $clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
   }
   else {
-    $clusterjob.= "set PBSREMOTEDIR $clusterfullpath\n";
+    $clusterjob.= "set PBSREMOTEDIR $clusterfullpath/recon\n";
     $clusterjob.= "rm -rf \$PBSREMOTEDIR\n";
     $clusterjob.= "mkdir -p \$PBSREMOTEDIR\n";
     $clusterjob.= "cd \$PBSREMOTEDIR\n\n";
@@ -824,6 +831,7 @@ function writeJobFile ($extra=False) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
   echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
+  echo "<input type='hidden' name='clustername' value='$clustername'>\n";
   echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
   echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
   echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";

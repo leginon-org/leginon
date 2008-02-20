@@ -186,8 +186,8 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 	return $sessiondata;
 }
 
-function checkClusterJobs($user, $pass, $cmd='qstat -a | grep $user') {
-  $subjobs = exec_over_ssh(PROCESSING_HOST,$user,$pass,$cmd,True);
+function checkClusterJobs($host, $user, $pass, $cmd='qstat -a | grep $user') {
+  $subjobs = exec_over_ssh($host,$user,$pass,$cmd,True);
   return $subjobs;
 }
 
