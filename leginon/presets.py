@@ -4,9 +4,9 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.268 $
+# $Revision: 1.269 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-15 03:18:52 $
+# $Date: 2008-02-20 07:45:31 $
 # $Author: acheng $
 # $State: Exp $
 # $Locker:  $
@@ -1547,19 +1547,28 @@ class PresetsManager(node.Node):
 		time.sleep(self.settings['pause time'])
 		self.logger.info('Temporary mag: %d' % (temp_mag,))
 
+		#fix me to real camera dimension
+		camname = preset['ccdcamera']['name']
+		if camname != 'Tietz PXL':
+			fullcamdim = 4096
+		else:
+			fullcamdim = 2048
 		# temp binning,dimension
 		orig_dim = preset['dimension']['x']
 		orig_bin = preset['binning']['x']
 		temp_bin = 4
-		temp_dim = orig_dim * orig_bin / temp_bin
+		temp_dim = fullcamdim / temp_bin
 
 		self.instrument.ccdcamera.Dimension = {'x':temp_dim, 'y':temp_dim}
 		self.instrument.ccdcamera.Binning = {'x': temp_bin, 'y': temp_bin}
+		self.instrument.ccdcamera.Offset = {'x': 0, 'y': 0}
 		self.logger.info('Temporary Dimension, Binning: %d, %d' % (temp_dim, temp_bin,))
 
 		# calculate temporary exposure time
+		orig_unbinned_dim = orig_bin * orig_dim
+		orig_zoom = fullcamdim / orig_unbinned_dim 
 		expscale = (temp_mag / float(original_mag)) ** 2
-		binscale = (orig_bin / float(temp_bin)) ** 2
+		binscale = (orig_bin / float(temp_bin)/orig_zoom) ** 2
 		original_exptime = preset['exposure time']
 		temp_exptime = int(expscale * binscale * original_exptime)
 		if temp_exptime < 5:
