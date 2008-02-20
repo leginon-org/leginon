@@ -130,7 +130,13 @@ def read_coords(coord_file):
 def tour_length1(matrix,tour):
 	'''total up the total length of the tour based on the distance matrix'''
 	total=0
-	num_cities=len(tour)
+	try:
+		num_cities=len(tour)
+	except:
+		print "Could not get len of tour"
+		print type(tour)
+		print "Tour=",tour
+		return 1.0e10
 	for i in range(num_cities-1):
 		city_i=tour[i]
 		city_j=tour[i+1]
@@ -140,7 +146,13 @@ def tour_length1(matrix,tour):
 def tour_length2(matrix,tour):
 	'''total up the total length of the tour based on the distance matrix'''
 	total=0
-	num_cities=len(tour)
+	try:
+		num_cities=len(tour)
+	except:
+		print "Could not get len of tour"
+		print type(tour)
+		print "Tour=",tour
+		return 1.0e10
 	for i in range(num_cities):
 		j=(i+1)%num_cities
 		city_i=tour[i]
