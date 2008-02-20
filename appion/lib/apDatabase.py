@@ -213,7 +213,7 @@ def getSiblingImgAssessmentStatus(imgdata):
 
 	return status
 	
-def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None):
+def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True):
 	"""
 	Insert the assessment status 
 		keep = True
@@ -237,15 +237,16 @@ def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None):
 
 
 	#check assessment
-	finalassess = getImgAssessmentStatus(imgdata)
-	imgname = apDisplay.short(imgdata['filename'])
-	if finalassess is True:
-		astr = apDisplay.colorString("keep", "green")
-	elif finalassess is False:
-		astr = apDisplay.colorString("reject", "red")
-	elif finalassess is None:
-		astr = apDisplay.colorString("none", "yellow")
-	apDisplay.printMsg("Final image assessment: "+astr+" ("+imgname+")")
+	if msg is True:
+		finalassess = getImgAssessmentStatus(imgdata)
+		imgname = apDisplay.short(imgdata['filename'])
+		if finalassess is True:
+			astr = apDisplay.colorString("keep", "green")
+		elif finalassess is False:
+			astr = apDisplay.colorString("reject", "red")
+		elif finalassess is None:
+			astr = apDisplay.colorString("none", "yellow")
+		apDisplay.printMsg("final image assessment: "+astr+" ("+imgname+")")
 
 	return True
 
