@@ -975,22 +975,16 @@ class PickerApp(wx.App):
 		self.fitall_dialog.shiftxvalue.SetValue(round(self.data['shiftx'],4))
 		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
 		if self.data['optimrun'] is False:
-			self.fitall_dialog.thetavalue.Enable(True)
-			self.fitall_dialog.thetatog.SetValue(True)
-			self.fitall_dialog.thetatog.SetLabel("Refine")
-			self.fitall_dialog.gammavalue.Enable(True)
-			self.fitall_dialog.gammatog.SetValue(True)
-			self.fitall_dialog.gammatog.SetLabel("Refine")
-			self.fitall_dialog.phivalue.Enable(True)
-			self.fitall_dialog.phitog.SetValue(True)
-			self.fitall_dialog.phitog.SetLabel("Refine")
-			self.fitall_dialog.scalevalue.Enable(False)
-			self.fitall_dialog.scaletog.SetValue(False)
-			self.fitall_dialog.scaletog.SetLabel("Locked")
-			self.fitall_dialog.shiftxvalue.Enable(True)
-			self.fitall_dialog.shiftyvalue.Enable(True)
-			self.fitall_dialog.shifttog.SetValue(True)
-			self.fitall_dialog.shifttog.SetLabel("Refine")
+			if self.fitall_dialog.thetatog.GetValue() is False:
+				self.fitall_dialog.onToggleTheta(None)
+			if self.fitall_dialog.gammatog.GetValue() is False:
+				self.fitall_dialog.onToggleGamma(None)
+			if self.fitall_dialog.phitog.GetValue() is False:
+				self.fitall_dialog.onTogglePhi(None)
+			if self.fitall_dialog.scaletog.GetValue() is True:
+				self.fitall_dialog.onToggleScale(None)
+			if self.fitall_dialog.shifttog.GetValue() is False:
+				self.fitall_dialog.onToggleShift(None)
 		lastiter = [80,80,80]
 		count = 0
 		while (max(lastiter) > 75):
