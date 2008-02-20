@@ -50,7 +50,7 @@ class rejectUnpairedTilts(appionLoop.AppionLoop):
 		"""
 		imgassess = apDatabase.getImgCompleteStatus(imgdata)
 		tiltdata = apTiltPair.getTiltPair(imgdata)
-
+		msg = not self.params['background']
 		if tiltdata is None:
 			if imgassess is not False:
 				apDisplay.printColor("\nrejecting unpaired image: "+apDisplay.short(imgdata['filename']), "red")
@@ -65,8 +65,8 @@ class rejectUnpairedTilts(appionLoop.AppionLoop):
 				apDisplay.printColor("\nrejecting bad tilt images: "+apDisplay.short(imgdata['filename']), "magenta")
 			if tiltassess is not False:
 				apDisplay.printColor("\nrejecting bad tilt images: "+apDisplay.short(tiltdata['filename']), "magenta")
-			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False)
-			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], False)
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False, msg=msg)
+			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], False, msg=msg)
 			self.reject+=2
 		if self.params['background'] is False:
 			print "Assessment:", imgassess, tiltassess
