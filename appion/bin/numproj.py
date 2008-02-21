@@ -4,8 +4,11 @@ import math
 import sys
 
 """
+relavent EMAN code:
+	csym = dsym * 2.0
 	float az, az0=0, az1=2.0*PI;
 	float alt, alt0=0, alt1=PI/2.0;
+	alt1 /= csym
 	for (alt=alt0, j=0; alt<=alt1+angle_step*PI/180.0/2; alt+=angle_step*PI/180.0, j++) {
 		float h=floor(360.0/(angle_step*1.1547));	// the 1.1547 makes the overall distribution more like a hexagonal mesh
 		h = (int)floor(h*sin(alt)+.5);
@@ -33,36 +36,35 @@ def arange(start, stop=None, step=None):
         cur += step
 
 
-def numProj(ang=5, sym='d7', with_mirror = False):
+def numProj(ang=5, sym='d7', with_mirror=False):
 	csym = abs(float(sym[1:]))
-	if sym[0] == 'd':
-		csym *= 2.0
 	ang = abs(float(ang))
 	angrad = ang*math.pi/180.0
-	maxalt = math.pi/2.0 + angrad/2.0
+	maxalt = math.pi/2.0 + angrad/1.99
 	maxaz = 2.0*math.pi/csym
+	if sym[0] == 'd':
+		maxaz /= 2.0
 	numproj = 0
-	for i,alt in enumerate(arange(0.0, maxalt, angrad)): #alt=0.0, alt<=maxalt, alt+=angrad:
-		h = math.floor(360.0/(ang*1.1547));
-		h = math.floor(h * math.sin(alt) + 0.5)
-		if h < 1.0e-3:
-			h = 1.0
-		#make sure is multiple of csym
-		h = csym * math.floor(h/csym + 0.5)
-		if h < 1.0e-3:
-			h = 1.0
-		azstep = 2.0*math.pi/h
+	for i,alt in enumerate(arange(0.0, maxalt, angrad)):
+		numsteps = math.floor(360.0/(ang*1.1547));
+		numsteps = math.floor(numsteps * math.sin(alt) + 0.5)
+		if numsteps < 1.0e-3:
+			numsteps = 1.0
+		numsteps = csym * math.floor(numsteps/csym + 0.5)
+		if numsteps < 1.0e-3:
+			numsteps = 1.0e-3
+		azstep = 2.0*math.pi/numsteps
 		if alt < 1.0e-6:
 			azstep = maxaz
 		elif (maxaz/azstep) < 2.8:
+			### if less than 2.8 steps, use 2 steps
 			azstep = maxaz/2.1
-		for az in arange(0.0, maxaz-azstep/4.0, azstep): #az=initaz; az<maxaz; az+=azstep:
+		for az in arange(0.0, maxaz-azstep/4.0, azstep):
 			if not with_mirror and az > math.pi-1.0e-3 and abs(alt-math.pi/2.0) < 1.0e-3:
-				# ignore half of the equtor
+				### ignore half of the equtor
 				#print "skip mirror"
 				continue
 			numproj+=1
-			#print numproj,": alt=",round(alt*180.0/math.pi,3),"az=",round(az*180.0/math.pi,3)
 			print "%d\t%.2f\t%.2f\t0.00" % (numproj, alt*180.0/math.pi, az*180.0/math.pi)
 
 	print "Number of Projections: ",numproj
