@@ -115,6 +115,37 @@ def stretchImage(img, tilt):
 	newimg  = ndimage.affine_transform(img, tiltmat, mode='reflect')
 	return newimg
 
+def repairPicks(a1, a2, rmsd):
+	"""
+	Attempts to repair lists a1 and a2 that have become shifted
+	out of frame with minimal damage
+	"""
+	maxdev = ndimage.mean(rmsd[:5])
+	avgdev = 3*ndimage.mean(rmsd)
+	x0 = [ maxdev, avgdev, 0.25*len(rmsd), 0.75*len(rmsd) ]
+	print x0
+	solved = optimize.fmin(_rsmdStep, x0, args=([rmsd]), 
+		xtol=1e-4, ftol=1e-4, maxiter=500, maxfun=500, disp=0, full_output=1)
+	upstep = int(math.floor(solved[0][2]))
+	print solved
+
+	a1b = numpyPop2d(a1, upstep)
+	a2b = numpyPop2d(a2, upstep)
+
+	return a1b, a2b
+			
+def _rsmdStep(x1, rmsd):
+	mean1  = x1[0]
+	mean2  = x1[1]
+	upstep = int(x1[2])
+	dnstep = int(x1[3])
+	fit = numpy.ones((len(rmsd)))*mean1
+	fit[upstep:dnstep] += mean2
+	error = ndimage.mean((rmsd-fit)**2/fit)
+
+	return error
+
+
 ##
 ##
 ## Fit All Least Squares Routine

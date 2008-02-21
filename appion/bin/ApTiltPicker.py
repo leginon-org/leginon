@@ -190,6 +190,10 @@ class PickerApp(wx.App):
 		self.Bind(wx.EVT_BUTTON, self.onClearPolygon, self.clearPolygon)
 		self.buttonrow.Add(self.clearPolygon, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 3)
 
+		self.repairlist = wx.Button(self.frame, -1, 'Repair Picks')
+		self.frame.Bind(wx.EVT_BUTTON, self.onRepairList, self.repairlist)
+		self.buttonrow.Add(self.repairlist, 0, wx.ALL, 1)
+
 		if self.mode == 'default':
 			self.createMenuButtons()
 		else:
@@ -953,6 +957,32 @@ class PickerApp(wx.App):
 		self.fitall_dialog.shiftyvalue.SetValue(round(self.data['shifty'],4))
 		self.fitall_dialog.Show()
 		#values are then modified, if the user selected apply in tiltDialog
+
+
+	#---------------------------------------
+	def onRepairList(self, evt):
+		dialog = wx.MessageDialog(self.frame, 
+			"This attempt to repairs you picks when you delete"+
+			" from one image and not the other", 'Error',
+			wx.OK|wx.ICON_ERROR)
+		dialog.ShowModal()
+		dialog.Destroy()
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		rmsd = self.getRmsdArray()
+		a1b, a2b = apTiltTransform.repairPicks(a1, a2, rmsd)
+		self.panel1.setTargets('Picked', a1b)
+		rmsd1 = ndimage.sum(self.getRmsdArray())
+		self.panel1.setTargets('Picked', a1)
+		self.panel2.setTargets('Picked', a2b)
+		rmsd2 = ndimage.sum(self.getRmsdArray())
+		if rmsd1 < rmsd2:
+			self.panel1.setTargets('Picked', a1b)
+			self.panel2.setTargets('Picked', a2)
+		else:
+			self.panel1.setTargets('Picked', a1)
+			self.panel2.setTargets('Picked', a2b)
+		return
 
 	#---------------------------------------
 	def onAutoOptim(self, evt):
