@@ -37,7 +37,9 @@ def createDefaults():
 	params['volumes']=[]
 	params['classavgs']=[]
 	params['classvars']=[]
-	params['msgpassavgs']=[]
+	params['emanavgs']=[]
+	params['coranavgs']=[]
+	params['msgpavgs']=[]
 	params['iterations']=[]
 	params['fscs']=[]
 	params['package']='EMAN'
@@ -162,9 +164,62 @@ def listFiles(params):
 			params['classavgs'].append(f)
 		if re.match("fsc.eotest.\d+",f):
 			params['fscs'].append(f)
-		if re.match("goodavgs\.\d+\.img",f):
-			params['msgpassavgs'].append(f)
+		if re.match("classes_eman\.\d+\.img",f):
+			params['emanavgs'].append(f)
+		if re.match("classes_msgp\.\d+\.img",f):
+			params['msgpavgs'].append(f)
+		if re.match("classes_coran\.\d+\.img",f):
+			params['coranavgs'].append(f)
 
+def convertClassAvgFiles(params):
+	files_classavg = []
+	files_classold = []
+	files_classgood = []
+	for f in os.listdir(params['path']):
+		if re.match("classes_eman\.\d+\.img",f):
+			return
+		if re.match("classes_coran\.\d+\.img",f):
+			return
+		if re.match("classes_msgp\.\d+\.img",f):
+			return
+		if re.match("classes\.\d+\.img",f):
+			files_classavg.append(f)
+		if re.match("classavgsold\.\d+\.img",f):
+			files_classold.append(f)
+		if re.match("goodavgs\.\d+\.img",f):
+			files_classgood.append(f)
+	if params['package']=='EMAN':
+		for f in files_classavg:
+			for ext in ['.img','.hed']:
+				oldf = f.replace('.img',ext)
+				newf = oldf.replace('classes','classes_eman')
+				os.rename(oldf,newf)
+				os.symlink(newf,oldf)
+	if params['package']=='EMAN/SpiCoran':
+		for f in files_classavg:
+			for ext in ['.img','.hed']:
+				oldf = f.replace('.img',ext)
+				newf = oldf.replace('classes','classes_coran')
+				os.rename(oldf,newf)
+				os.symlink(newf,oldf)
+		for f in files_classold:
+			for ext in ['.img','.hed']:
+				oldf = f.replace('.img',ext)
+				newf = oldf.replace('classavgsold','classes_eman')
+				os.rename(oldf,newf)
+	if params['package']=='EMAN/MsgP':
+		for f in files_classgood:
+			for ext in ['.img','.hed']:
+				oldf = f.replace('.img',ext)
+				newf = oldf.replace('goodavgs','classes_msgp')
+				os.rename(oldf,newf)
+				os.symlink(newf,oldf)
+		for f in files_classavg:
+			for ext in ['.img','.hed']:
+				oldf = f.replace('.img',ext)
+				newf = oldf.replace('classes','classes_eman')
+				os.rename(oldf,newf)
+		
 # Parse MsgPassing params through EMAN jobfile
 def parseMsgPassingParams(params):
 	emanJobFile = os.path.join(params['path'], params['jobinfo']['name']) 
@@ -186,27 +241,6 @@ def parseMsgPassingParams(params):
 		lines.close()
 	else:
 		apDisplay.printError("EMAN Job file: "+emanJobFile+" does not exist!")
-
-# Parse MsgPassing params through msgPassing_subClassification.log
-def parseMsgPassingLogFile(params):
-	logfile=os.path.join(params['path'],'msgPassing_subClassification.log')
-	print "parsing massage passing log file:",logfile
-	lines=open(logfile,'r')
-	goodlines=apParam.parseWrappedLines(lines)
-	j=0
-	for i,line in enumerate(goodlines):
-		line=string.rstrip(line)
-		if re.search("msgPassing_subClassification", line):
-			msgpassparams=line.split(' ')
-			iteration = params['iterations'][j]
-			for p in msgpassparams:
-				elements=p.split('=')
-				if elements[0]=='corCutOff':
-					iteration['msgpasskeep']=float(elements[1])
-				elif elements[0]=='minNumOfPtcls':
-					iteration['msgpassminp']=int(elements[1])
-			j+=1
-	lines.close()
 
 def findEmanJobFile(params):
 	# first find the job file, if it doesn't exist, use the .eman log file
@@ -257,6 +291,10 @@ def parseLogFile(params):
 				elif elements[0]=='refine':
 					iteration['refine']=True
 			params['iterations'].append(iteration)
+		if re.search("coran_for_cls.py \d+ ", line):
+				params['package']='EMAN/SpiCoran'	
+		if re.search("msgPassing_subClassification.py \d+ ", line):
+				params['package']='EMAN/MsgP'	
 	lines.close()
 				
 def getEulersFromProj(params,iter):
@@ -514,10 +552,20 @@ def insertIteration(iteration, params):
 
 	classavg='classes.'+iteration['num']+'.img'
 	
-	if params['package']== 'EMAN/MsgP':
-		msgpassclassavg='goodavgs.'+iteration['num']+'.img'
-	else:
+	if params['package']== 'EMAN':
+		emanclassavg='classes_eman.'+iteration['num']+'.img'
+		coranclassavg=None
 		msgpassclassavg=None
+	elif params['package']== 'EMAN/SpiCoran':
+		emanclassavg='classes_eman.'+iteration['num']+'.img'
+		coranclassavg='classes_coran.'+iteration['num']+'.img'
+		msgpassclassavg=None
+	elif params['package']== 'EMAN/MsgP':
+		emanclassavg='classes_eman.'+iteration['num']+'.img'
+		coranclassavg=None
+		msgpassclassavg='classes_msgp.'+iteration['num']+'.img'
+	else:
+		apDisplay.printError("Refinement Package Not Valid")
 	
 	# insert refinement results
 	refineq = appionData.ApRefinementData()
@@ -533,9 +581,12 @@ def insertIteration(iteration, params):
 		refineq['classVariance'] = classvar
 	if volumeDensity in params['volumes']:
 		refineq['volumeDensity'] = volumeDensity
-	if msgpassclassavg in params['msgpassavgs']:
+	if emanclassavg in params['emanavgs']:
+		refineq['emanClassAvg'] = emanclassavg
+	if msgpassclassavg in params['msgpavgs']:
 		refineq['MsgPGoodClassAvg'] = msgpassclassavg
-
+	if coranclassavg in params['coranavgs']:
+		refineq['SpiCoranGoodClassAvg'] = coranclassavg
 	apDisplay.printMsg("inserting Refinement Data into database")
 	if params['commit'] is True:
 		appiondb.insert(refineq)
@@ -650,12 +701,17 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			if (other[3]=='1') :
 				prtlaliq['mirror']=True
 				
+			# SPIDER coran kept particle
+			if params['package']== 'EMAN/SpiCoran':
+				corank=bool(int(other[4]))
+			else:
+				corank=None
+
 			# message passing kept particle
 			if params['package']== 'EMAN/MsgP':
 				msgk=bool(int(ali[4]))
 			else:
 				msgk=None
-
 			# find particle in stack database
 			stackpq=appionData.ApStackParticlesData()
 			stackpq['stack']=params['stack']
@@ -674,6 +730,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			prtlaliq['inplane_rotation']=rot
 			prtlaliq['quality_factor']=qualf
 			prtlaliq['msgp_keep']=msgk
+			prtlaliq['coran_keep']=corank
 
 			#apDisplay.printMsg("inserting Particle Classification Data into database")
 			if params['commit'] is True:

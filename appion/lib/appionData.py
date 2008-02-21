@@ -510,7 +510,9 @@ class ApRefinementData(Data):
 			('classAverage', str),
 			('classVariance', str),
 			('volumeDensity',str),
+			('emanClassAvg',str),
 			('MsgPGoodClassAvg', str),
+			('SpiCoranGoodClassAvg',str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefinementData=ApRefinementData
@@ -567,6 +569,7 @@ class ApParticleClassificationData(Data):
 			('mirror', bool),
 			('thrown_out',bool),
 			('msgp_keep',bool),
+			('coran_keep',bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApParticleClassificationData=ApParticleClassificationData

@@ -17,8 +17,8 @@ if __name__ == '__main__':
 	apRecon.parseInput(sys.argv, params)
 
 	# msgPassing requires a jobId in order to get the jobfile & the paramters
-	if params['package'] == 'EMAN/MsgP' and params['jobid'] is None:
-		apDisplay.printError("EMAN/MsgP package requires a jobId to be processed. Please enter a jobId.")
+	if params['package'] == 'EMAN/MsgP' or params['package'] == 'EMAN/SpiCoran' and params['jobid'] is None:
+		apDisplay.printError("%s refinement requires a jobId to be processed. Please enter a jobId." % params['package'])
 
 	# if jobid is supplied, get the job info from the database
 	if params['jobid']:
@@ -55,7 +55,9 @@ if __name__ == '__main__':
 	# parse out the massage passing subclassification parameters from the job/log file
 	if params['package'] == 'EMAN/MsgP':
 		apRecon.parseMsgPassingParams(params)
-		#apRecon.parseMsgPassingLogFile(params)
+
+	# convert class average files from old to new format
+	apRecon.convertClassAvgFiles(params)
 
 	# get a list of the files in the directory
 	apRecon.listFiles(params)
