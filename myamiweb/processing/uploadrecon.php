@@ -51,10 +51,12 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
     foreach ($f as $line) {
       if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
       elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=ereg_replace('# modelId: ','',trim($line));
-      if ($stackid && $modelid) break;
+      elseif (preg_match('/^coran_for_cls.py\s/',$line)) $package='EMAN/SpiCoran';
+      elseif (preg_match('/^msgPassing_subClassification.py\s/',$line)) $package='EMAN/MsgP';
+      if ($stackid && $modelid && $package) break;
     }
   }
-
+	if (!$package) $package='EMAN';
   // if user wants to use templates from another project
 
   if($_POST['projectId'])
@@ -84,7 +86,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 
   
   // Set any existing parameters in form
-  $package = ($_POST['package']) ? $_POST['package'] : 'EMAN';
+  $package = ($_POST['package']) ? $_POST['package'] : $package;
   $contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
   $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
   $model = ($_POST['model']) ? $_POST['model'] : '';
@@ -176,23 +178,32 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       echo "</OPTION>\n";
     }
     echo"</SELECT>\n";
-  }
-  echo"<P>";
+  
+		echo"<P>";
+	}
+  echo "<P>Refinement Strategy:\n";
   $eman=array('description'=>'EMAN refine','setting'=>'EMAN');
   $eman_msgp=array('description'=>'EMAN refine followed by message passing subclassification','setting'=>'EMAN/MsgP');
-  $packages=array($eman,$eman_msgp);
-  echo "Process Used:
-      <SELECT NAME='package'> ";
-  foreach ($packages as $package) {
-    echo "<OPTION VALUE='$package[setting]'";
-    // select previously set stack on resubmit
-    if ($package['setting']==$_POST['package']) echo " SELECTED";
-    echo ">  $package[description]";
-    echo "</OPTION>\n";
-  }
-    echo"
-      </SELECT>
-
+  $eman_coran=array('description'=>'EMAN refine followed by SPIDER coran subclassification','setting'=>'EMAN/SpiCoran');
+	$packages=array('EMAN'=>$eman,'EMAN/SpiCoran'=>$eman_coran,'EMAN/MsgP'=>$eman_msgp);
+  if ($jobId) {
+		echo "$package<INPUT TYPE='HIDDEN' NAME='package' VALUE='$package'><BR/>\n";
+		echo "&nbsp;Desc: '".$packages[$package]['description']."'<BR/>\n";
+		echo "<BR/>\n";
+	} else {
+		echo "Process Used:
+		    <SELECT NAME='package'> ";
+		foreach ($packages as $p) {
+			echo "<OPTION VALUE='$p[setting]'";
+			// select previously set stack on resubmit
+			if ($p['setting']==$_POST['package']) echo " SELECTED";
+			echo ">  $p[description]";
+			echo "</OPTION>\n";
+		}
+		echo "
+      </SELECT>";
+	}
+	echo "
       <P>
       <B>Snapshot Options:</B>
       <BR>
@@ -266,8 +277,12 @@ function runUploadRecon() {
   }
   
 	//make sure specific result file is present
-  $jobinfo = $particle->getJobInfoFromId($jobId);
-	$fileerror = checkRequiredFileError($jobinfo['appath'],'resolution.txt'); 
+	if ($jobId) {
+		$jobinfo = $particle->getJobInfoFromId($jobId);
+		$fileerror = checkRequiredFileError($jobinfo['appath'],'resolution.txt'); 
+	} else {
+		$fileerror = checkRequiredFileError($runpath,'resolution.txt'); 
+	}
   if ($fileerror) createUploadReconForm($fileerror);
 
   //make sure the user only want one iteration to be uploaded
