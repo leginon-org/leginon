@@ -47,25 +47,32 @@ function checkJobs($showjobs=False,$extra=False) {
   }
   // if clicked button, list jobs in queue
   if ($showjobs) {
+    // first find out which clusters have jobs on them
+    $clusters=array();
+    foreach ($jobs as $job) {
+      if (!in_array($job['cluster'],$clusters)) $clusters[]=$job['cluster'];
+    }
     $user = $_SESSION['username'];
     $pass = $_SESSION['password'];
-    $queue = checkClusterJobs('garibaldi',$user, $pass);
-    if ($queue) {
-      echo "<p>Jobs currently running on the cluster:<p>\n";
-      $list = streamToArray($queue);
-      $dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
-      echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
-      echo "<tr>\n";
-      foreach ($dispkeys as $key) {
-	echo "<td><span class='datafield0'>$key</span></td>";
+    if ($clusters[0]) foreach ($clusters as $c) {
+      $queue = checkClusterJobs('garibaldi',$user, $pass);
+      if ($queue) {
+        echo "<p>Jobs currently running on the <b>$c</b> cluster:<p>\n";
+        $list = streamToArray($queue);
+        $dispkeys = array('Job ID','User','Queue','Jobname','SessId','NDS','TSK','ReqMem','ReqTime','S','ElapTime');
+        echo "<table class='tableborder' border=1 cellspacing=0, cellpadding=5>\n";
+        echo "<tr>\n";
+        foreach ($dispkeys as $key) {
+	  echo "<td><span class='datafield0'>$key</span></td>";
+        }
+        echo "</tr>\n";
+        foreach ($list as $line) {
+	  echo "<tr>\n";
+	  foreach ($line as $i) {echo "<td>$i</td>\n";}
+	  echo "</tr>\n";
+        }
+        echo "</table>\n";
       }
-      echo "</tr>\n";
-      foreach ($list as $line) {
-	echo "<tr>\n";
-	foreach ($line as $i) {echo "<td>$i</td>\n";}
-	echo "</tr>\n";
-      }
-      echo "</table>\n";
     }
     else {
       echo "no jobs on cluster\n";
