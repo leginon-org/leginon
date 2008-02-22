@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2006-09-13 22:10:58 $
+# $Date: 2008-02-22 22:48:19 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -389,6 +389,7 @@ parametermapping = (
 	('film text', 'FilmText'),
 	('film user code', 'FilmUserCode'),
 	('film date type', 'FilmDateType'),
+	('objective current', 'ObjectiveCurrent'),
 	# not used
 	#('beam blank', 'BeamBlank'),
 	#('film exposure', 'filmExposure'),
