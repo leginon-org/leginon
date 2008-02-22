@@ -22,8 +22,16 @@ try:
 		import tietzcom
 	except ImportError:
 		import pyScope.tietzcom as tietzcom
+	import enumproc
 except ImportError:
 	pass
+
+def CAMC_is_alive():
+	procs = enumproc.EnumProcesses()
+	for proc in procs:
+		if proc[:4].lower() == 'camc':
+			return True
+	return False
 
 class CameraControl(object):
 	def __init__(self):
@@ -154,6 +162,8 @@ class Tietz(object):
 	}
 
 	def __init__(self):
+		if CAMC_is_alive():
+			raise RuntimeError('CAMC is already running')
 		self.unsupported = []
 
 		if self.cameratype is None:
@@ -179,6 +189,10 @@ class Tietz(object):
 					supported = False
 			if not supported:
 				self.unsupported.append(methodname)
+
+		## some cameras require centered geometries
+		geo = self.calculateCenteredGeometry(self.dimension['x'], self.binning['x'])
+		self.setGeometry(geo)
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
@@ -374,7 +388,6 @@ class Tietz(object):
 		else:
 			cameracontrol.unlock()
 			raise ValueError('invalid exposure type for image acquisition')
-
 		cameracontrol.unlock()
 
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
@@ -662,7 +675,6 @@ class TietzPXL(Tietz, ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-'''
 class TietzSimulation(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz Simulation'
 	try:
@@ -673,7 +685,6 @@ class TietzSimulation(Tietz, ccdcamera.CCDCamera):
 	def __init__(self):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
-'''
 
 class TietzPVCam(Tietz, ccdcamera.CCDCamera):
 	name = 'Tietz PVCam'
@@ -719,3 +730,13 @@ class TietzSCX(Tietz, ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 
+class TietzFC415(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz FC415'
+	try:
+		cameratype = win32com.client.constants.ctFC415
+	except NameError:
+		pass
+	mmname = 'CAM_FC415_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
