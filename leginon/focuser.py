@@ -8,6 +8,7 @@
 import acquisition
 import node, data
 import calibrationclient
+import corrector
 import threading
 import event
 import time
@@ -71,6 +72,7 @@ class Focuser(acquisition.Acquisition):
 			'drift threshold': 3e-10,
 			'reset defocus': None,
 		}
+		self.samecorrection = False
 		self.manualchecklock = threading.Lock()
 		self.maskradius = 1.0
 		self.increment = 5e-7
@@ -82,6 +84,7 @@ class Focuser(acquisition.Acquisition):
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
+		self.corclient = corrector.CorrectorClient(self)
 		self.focus_sequence = self.researchFocusSequence()
 		self.deltaz = 0.0
 
@@ -510,6 +513,48 @@ class Focuser(acquisition.Acquisition):
 		evt = gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
+	def initSameCorrection(self):
+		self.samecorrection = True
+		self.correctargs = None
+
+	def endSameCorrection(self):
+		self.samecorrection = False
+
+	def acquireCorrectedImage(self):
+		if not self.samecorrection or (self.samecorrection and not self.correctargs):
+			## acquire image and scope/camera params
+			imagedata = self.instrument.getData(data.CameraImageData)
+			imarray = imagedata['image']
+			self.correctargs = {}
+			camdata = imagedata['camera']
+			self.correctargs['ccdcamera'] = camdata['ccdcamera']
+			corstate = data.CorrectorCamstateData()
+			corstate['dimension'] = camdata['dimension']
+			corstate['offset'] = camdata['offset']
+			corstate['binning'] = camdata['binning']
+			self.correctargs['camstate'] = corstate
+			self.correctargs['scopedata'] = imagedata['scope']
+		else:
+			## acquire only raw image
+			imarray = self.instrument.ccdcamera.Image
+
+		corrected = self.corclient.correct(original=imarray, **self.correctargs)
+		return corrected
+
+	def acquireManualFocusImage(self):
+		correction = self.settings['correct image']
+		self.manualchecklock.acquire()
+		if correction:
+			imarray = self.acquireCorrectedImage()
+		else:
+			imarray = self.instrument.ccdcamera.Image
+		self.manualchecklock.release()
+		pow = imagefun.power(imarray, self.maskradius)
+		self.man_power = pow.astype(numpy.float32)
+		self.man_image = imarray.astype(numpy.float32)
+		self.panel.setManualImage(self.man_image, 'Image')
+		self.panel.setManualImage(self.man_power, 'Power')
+
 	def manualCheckLoop(self, presetname=None, emtarget=None):
 		## go to preset and target
 		if presetname is not None:
@@ -518,6 +563,7 @@ class Focuser(acquisition.Acquisition):
 		self.beep()
 		self.manualplayer.play()
 		self.onManualCheck()
+		self.initSameCorrection()
 		while True:
 			state = self.manualplayer.state()
 			if state == 'stop':
@@ -531,26 +577,16 @@ class Focuser(acquisition.Acquisition):
 					self.presetsclient.toScope(presetname, emtarget)
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
-			correction = self.settings['correct image']
-			self.manualchecklock.acquire()
 			try:
-				if correction:
-					imagedata = self.instrument.getData(data.CorrectedCameraImageData)
-				else:
-					imagedata = self.instrument.getData(data.CameraImageData)
-				imarray = imagedata['image']
+				self.acquireManualFocusImage()
 			except:
 				raise
 				self.manualchecklock.release()
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image, pausing...')
 				continue
-			self.manualchecklock.release()
-			pow = imagefun.power(imarray, self.maskradius)
-			self.man_power = pow.astype(numpy.float32)
-			self.man_image = imarray.astype(numpy.float32)
-			self.panel.setManualImage(self.man_image, 'Image')
-			self.panel.setManualImage(self.man_power, 'Power')
+
+		self.endSameCorrection()
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
 
