@@ -9,7 +9,8 @@
 
  
 # ------- unit calibration --------
-f_defocus_H_rate = 1.65     # The measured defocus and indicated defocus has a factor of 1.65,
+f_defocus_H_rate = 1.0     # The measured defocus and indicated defocus has a factor of 1.65,
+#f_defocus_H_rate = 1.65     # The measured defocus and indicated defocus has a factor of 1.65,
                             # which was calibrated by Min and Yujun on 12-03-2007.
 f_defocus_H = 0.04 * f_defocus_H_rate  # 0.04 * f_defocus_H_rate micron meter per cliks in stepsize 3.
 		                    # Calibrated by Min Su on Aug.27,2006(Sunday).
@@ -114,26 +115,32 @@ HMSS = [40,30,20,15,10,7.5,5,3.5,2,1.5,1.2]
 
 
 # -------- Magnification table ---------
-# screen up
-screenup_mag = [25, 33, 43, 57, 75, 100, 130, 170, 220, 290,
+## Purdue
+if False:
+    # screen up
+    screenup_mag = [25, 33, 43, 57, 75, 100, 130, 170, 220, 290,
         380, 500, 660, 870, 1150, 1500, 1600, 2000, 2750, 3800,
         5000, 6600, 8800, 11500, 15000, 20000, 27500, 38000, 50000, 66000,
         88000, 115000, 150000, 200000, 275000, 340000, 420000, 590000, 820000]
 
-# screen down - Film
-screendown_mag = [22, 29, 38, 50, 66, 88, 115, 150, 195, 255,
+    # screen down - Film
+    screendown_mag = [22, 29, 38, 50, 66, 88, 115, 150, 195, 255,
         340, 440, 580, 770, 1000, 1350, 1400, 1750, 2450, 3400,
         4400, 5800, 7800, 10000, 13500, 17500, 24500, 34000, 44000, 58000,
         78000, 100000, 135000, 175000, 245000, 300000, 370000, 520000, 730000]
 
-# screen down - CCD Camera
-# calibrated between 9230 - 273560
-screenup_mag_ccd = [25, 33, 43, 57, 75, 100, 130, 170, 220, 290,
+    # screen down - CCD Camera
+    # calibrated between 9230 - 273560
+    screenup_mag_ccd = [25, 33, 43, 57, 75, 100, 130, 170, 220, 290,
         530, 700, 920, 1220, 1610, 2100, 2240, 2800, 3850, 5310,
         6690, 9230, 12220, 15770, 20570, 27720, 37760, 52260, 68050, 88860,
         118820, 159870, 208570, 273560, 376150, 465050, 574500, 807000, 1121600]
 
-
+## FSU CM300
+if True:
+    import cm300mags
+    screenup_mag = cm300mags.screenup
+    screendown_mag = cm300mags.screendown
 
 # ------- The turnknob ID --------
 TK_Ratio          = 0	 
