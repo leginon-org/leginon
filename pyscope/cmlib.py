@@ -93,8 +93,10 @@ class CMLIB(object):
         self.cmremote32.SetTimeOutTime(0,3000) # Default timeout value in ms for cmremote32.dll
                                                # to wait for an answer from SECS2_32.exe
         self.trials = 3                        # try 3 times
-        self.waitmid = 2                       # wait for 2 sec
-        self.waitend = 1                       # wait for 1 sec
+        #self.waitmid = 2                       # wait for 2 sec
+        #self.waitend = 1                       # wait for 1 sec
+        self.waitmid = 0                       # wait for 2 sec
+        self.waitend = 0                       # wait for 1 sec
         
         self.EquipmentAvailable()              # check the communication to microscope
         
@@ -833,6 +835,18 @@ class CMLIB(object):
                 time.sleep(self.waitend)
                 i = self.trials + 1
 
+    def GetAlignment(self):
+        a = CMData.ALIGNMENTSTYPE()
+        leng  = c_int(0)    # refer to GetCMVar for detail
+        err = self.cmremote32.GetAlignment(0,byref(a), byref(leng))
+	myarray = a.a
+
+    def GetCurrents(self):
+        c = CMData.CURRENTS()
+        leng  = c_int(0)    # refer to GetCMVar for detail
+        err = self.cmremote32.CurrentReadout(0,byref(c), byref(leng))
+	myarray = c.c
+	return myarray
 
     def __del__(self):
         print 'close connection to SECS2'
