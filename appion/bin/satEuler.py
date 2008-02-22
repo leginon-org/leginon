@@ -217,7 +217,7 @@ class satEulerScript(appionScript.AppionScript):
 		count = 0
 		for row in results:
 			count += 1
-			if count % 100 == 0:
+			if count % 500 == 0:
 				sys.stderr.write(".")
 			eulerpair = { 'part1': {}, 'part2': {} }
 			partid1 = int(row[0])
@@ -318,7 +318,11 @@ class satEulerScript(appionScript.AppionScript):
 		rotdistlist = []
 		t0 = time.time()
 		apDisplay.printMsg("Begin processing "+str(len(eulertree))+" euler distances")
+		count = 0
 		for eulerpair in eulertree:
+			count += 1
+			if count % 500 == 0:
+				sys.stderr.write(".")
 			eulerpair['angdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
 				eulerpair['part2'], sym='d7', inplane=False)
 			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
@@ -338,19 +342,19 @@ class satEulerScript(appionScript.AppionScript):
 		print "ANGLE EULER DATA:"
 		#D-symmetry goes to 90, all other 180
 		maxang = int(math.ceil(ndimage.maximum(angdistlist)))
-		myrange = tuple((0,maxang,1))
+		myrange = tuple((0,maxang,3))
 		self.analyzeList(angdistlist, myrange, "angdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
 		minrot = int(math.floor(ndimage.minimum(rotdistlist)))
 		maxrot = int(math.ceil(ndimage.maximum(rotdistlist)))
-		myrange = tuple((minrot,maxrot,1))
+		myrange = tuple((minrot,maxrot,3))
 		self.analyzeList(rotdistlist, myrange, "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
 		#D-symmetry goes to 90, all other 180
 		maxtot = int(math.ceil(ndimage.maximum(totdistlist)))
-		myrange = tuple((0,maxtot,1))
+		myrange = tuple((0,maxtot,3))
 		self.analyzeList(totdistlist, myrange, "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
@@ -438,13 +442,13 @@ class satEulerScript(appionScript.AppionScript):
 		angkeeplist.sort()
 
 		#write to file
-		k = open("totkeepfile"+self.datastr+".lst", "w")
+		k = open("keeplist-tot"+self.datastr+".lst", "w")
 		for kid in totkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
 
 		#write to file
-		k = open("angkeeplist"+self.datastr+".lst", "w")
+		k = open("keeplist-ang"+self.datastr+".lst", "w")
 		for kid in angkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
@@ -504,7 +508,7 @@ class satEulerScript(appionScript.AppionScript):
 			f.write("&\n")
 
 	def subStackCmd(self):
-		keepfile = os.path.join(self.params['outdir'], "angkeepfile"+self.datastr+".lst")
+		keepfile = os.path.join(self.params['outdir'], "keeplist-ang"+self.datastr+".lst")
 		stackdata = apStack.getRunsInStack(self.params['stackid'])
 
 		cmd = ( "subStack.py "
