@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-03-16 22:04:18 $
+# $Date: 2008-02-22 23:04:58 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -24,6 +24,14 @@ class CCDCamera(object):
 		self.buffer = {}
 		self.buffer_ready = {}
 		self.bufferlock = threading.Lock()
+
+	def calculateCenteredGeometry(self, dimension, binning):
+		camerasize = self.getCameraSize()
+		offset = (camerasize['x']/binning - dimension)/2
+		geometry = {'dimension': {'x': dimension, 'y': dimension},
+								'offset': {'x': offset, 'y': offset},
+								'binning': {'x': binning, 'y': binning}}
+		return geometry
 
 	def validateGeometry(self, geometry=None):
 		if geometry is None:
