@@ -1,6 +1,6 @@
 #
 # CM calibration table
-# Author: Min Su     su5@purdue.edu    min.su0@gmail.com
+# Author: Min Su
 #         Wen Jiang
 #
 # Change Log:
@@ -9,7 +9,9 @@
 
  
 # ------- unit calibration --------
-f_defocus_H = 2.56/1000.0   # 2.56 micron meter per thousand cliks in stepsize 1.
+f_defocus_H_rate = 1.65     # The measured defocus and indicated defocus has a factor of 1.65,
+                            # which was calibrated by Min and Yujun on 12-03-2007.
+f_defocus_H = 0.04 * f_defocus_H_rate  # 0.04 * f_defocus_H_rate micron meter per cliks in stepsize 3.
 		                    # Calibrated by Min Su on Aug.27,2006(Sunday).
 f_defocus_L = 300.0/1000.0  # 300 micron meter per thousand cliks in stepsize 1.
 		                    # Calibrated by Min Su on Aug.27,2006(Sunday).		                    
@@ -33,8 +35,8 @@ imgshiftpix = [ {'x': None, 'y': None},
                 {'x': None, 'y': None},
                 {'x': None, 'y': None},
                 {'x': 660.0/15.0*500.0/520.0/1e-6, 'y': 660.0/15.0*500.0/520.0/1e-6},    # not calibrated
-                {'x': None, 'y': None},
-                {'x': None, 'y': None},
+                {'x': 1500.0/15.0*500.0/520.0/1e-6, 'y': 1500.0/15.0*500.0/520.0/1e-6},
+                {'x': 1500.0/15.0*500.0/520.0/1e-6, 'y': 1500.0/15.0*500.0/520.0/1e-6}, 
                 {'x': 2100.0/15.0*500.0/520.0/1e-6, 'y': 2100.0/15.0*500.0/520.0/1e-6},    # not calibrated
                 {'x': 2240.0/15.0*500.0/520.0/1e-6,'y': 2240.0/15.0*500.0/520.0/1e-6},
                 {'x': 2800.0/15.0*500.0/520.0/1e-6,'y': 2800.0/15.0*500.0/520.0/1e-6},

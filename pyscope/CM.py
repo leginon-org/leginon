@@ -1,6 +1,6 @@
 #
 # CM.py is implemented suitable to CM series electron microscope
-# Author: Min Su    su5@purdue.edu    min.su0@gmail.com
+# Author: Min Su
 #         Wen Jiang
 # Structure Biology, Purdue University, West Lafayette, IN
 #
@@ -18,6 +18,7 @@ import pythoncom
 import cmlib
 import CMCal
 import time
+import math
 
 Debug = True
 
@@ -156,25 +157,12 @@ class CM(tem.TEM):
 		
 		# assume to be setted mag is always to the film, not mainscreen position dependant/
 		i = self._emcGetMagPosition(mag, 1)
-
-##		ret = self.CMLIB.PushButton(CMCal.PB_Diffraction,CMCal.PB_OFF)    # (Diffraction,off)
-##		
-##		if ret != None:
-##			raise SystemError('Push diffraction button failed')
-##
-##		if CMvar.MainScrn != 0:
-##			magnum = self._emcGetMagPosition(CMvar.Magn,1)
-##		else:
-##			magnum = self._emcGetMagPosition(CMvar.Magn,0)
-##		
-##		self.CMLIB.TurnKnob(CMCal.TK_Magnification,i-magnum)
-
 		if i < 16:
 			self.CMLIB.DirectOperation(6,i+1) # set Mag in LM mode
 		else:
 			self.CMLIB.DirectOperation(3,i+1) # set Mag in HM/SA mode
-		time.sleep(3)
-		self.CMLIB.DirectOperation(16,0)    # normalize imaging length
+		time.sleep(1)
+		self.CMLIB.DirectOperation(16,0)      # normalize imaging length
 
 
 	def getStagePosition(self):
@@ -223,14 +211,14 @@ class CM(tem.TEM):
 			return
 
 		if self.correctedstage:
-			delta = 4e-6
+			Backlash = 2e-6
 			prevalue = {}
 			# calculate pre-position
 			for axis in ('x','y','z','a'):
 				if axis == 'a':
 					prevalue[axis] = stagenow[axis]
 				else:
-					prevalue[axis] = stagenow[axis] - delta
+					prevalue[axis] = stagenow[axis] - Backlash
 			if axes != 8:
 				self.CMLIB.CSGotoPos(prevalue['x']*1e6,prevalue['y']*1e6,prevalue['z']*1e6,prevalue['a']*57.3,0,axes)
 
@@ -254,7 +242,7 @@ class CM(tem.TEM):
 	def getDefocus(self):
 		if Debug == True:
 			print 'from getDefocus'
-		defocus = self.CMLIB.GetCMVar().defocus*1e-9
+		defocus = self.CMLIB.GetCMVar().defocus*1e-9*CMCal.f_defocus_H_rate
 		return float(defocus)
 
 
@@ -263,7 +251,7 @@ class CM(tem.TEM):
 			print 'from setDefocus'
 		CMvar = self.CMLIB.GetCMVar()
 		if relative == 'absolute':
-			focus_now = float(CMvar.defocus*1e-9)
+			focus_now = float(CMvar.defocus*1e-9*CMCal.f_defocus_H_rate)
 			value = (defocus - focus_now) * 1e6
 		else:
 			value = defocus *1e6
@@ -274,17 +262,19 @@ class CM(tem.TEM):
 		else:
 			magnum = self._emcGetMagPosition(CMvar.Magn,0)
 		if magnum > 15:
-			focus = int(round(value/CMCal.f_defocus_H))
+			focus = int(round(0.49 + value/CMCal.f_defocus_H))
 		if magnum < 15:
-			focus = int(round(value/CMCal.f_defocus_L))
+			focus = int(0.49 + round(value/CMCal.f_defocus_L))
 		if magnum == 15:
 			if CMvar.Spotsize == 180:
-				focus = int(round(value/CMCal.f_defocus_L))
+				focus = int(0.49 + round(value/CMCal.f_defocus_L))
 			else:
-				focus = int(round(value/CMCal.f_defocus_H))
+				focus = int(0.49 + round(value/CMCal.f_defocus_H))
 
 		self.CMLIB.TurnKnob(CMCal.TK_FocusStep,-9)         # enforce stepsize knob back to the initial position, 
 													       # which is stepsize 1 no mather its current position.
+		self.CMLIB.TurnKnob(CMCal.TK_FocusStep,2)		   # set stepsize to 3, since the defocus calibration was
+		                                                   # done in this condition.
 		if focus != 0:										       
 			self.CMLIB.TurnKnob(CMCal.TK_FocusKnob,focus)
 
@@ -789,7 +779,7 @@ class CM(tem.TEM):
 		else:
 			return 'on'
 
-		
+
 	def setDarkFieldMode(self, mode):
 		if Debug == True:
 			print 'from setDarkFieldMode'
@@ -907,8 +897,8 @@ class CM(tem.TEM):
 	def getFilmExposureNumber(self):
 		if Debug == True:
 			print 'from getFilmExposureNumber'
-##		nr = self.cmremote32.CM_GetCmCamValues().exposure_nr
-##		return nr
+		nr = self.cmremote32.CM_GetCmCamValues().exposure_nr
+		return nr
 		return NotImplementedError()
 
 
