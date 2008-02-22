@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.55 $
+# $Revision: 1.56 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-01-18 21:55:06 $
-# $Author: acheng $
+# $Date: 2008-02-22 22:47:06 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -194,8 +194,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.settingsdialog = SettingsDialog(self)
 
-		self.node.getPlan()
-		self.setPlan(self.node.plan)
+		plan = self.node.getPlan()
+		self.setPlan(plan)
 
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
 		self.Bind(wx.EVT_BUTTON, self.onGrabPixels, self.bgrabpixels)
@@ -206,8 +206,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.ShowModal()
-		self.node.getPlan()
-		self.setPlan(self.node.plan)
+		plan = self.node.getPlan()
+		self.setPlan(plan)
 
 	def _acquisitionEnable(self, enable):
 		self.beditplan.Enable(enable)
@@ -254,21 +254,18 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		dialog = EditPlanDialog(self)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setPlan(dialog.plan)
-			self.node.plan = self.plan
 			# ...
-			threading.Thread(target=self.node.setPlan).start()
+			threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
 		dialog.Destroy()
 
 	def onGrabPixels(self, evt):
 		pixels = self.imagepanel.getTargetPositions('Bad Pixels')
 		self.setPlan({'pixels':pixels})
-		self.node.plan = self.plan
-		threading.Thread(target=self.node.setPlan).start()
+		threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
 
 	def onClearPixels(self, evt):
 		self.setPlan({'pixels':[]})
-		self.node.plan = self.plan
-		threading.Thread(target=self.node.setPlan).start()
+		threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
