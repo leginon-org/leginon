@@ -52,7 +52,7 @@ class TCMVar(Structure):
 
 
 class ALIGNMENTSTYPE(Structure):
-    _fields_ = [("a", c_byte)]
+    _fields_ = [("a", c_int * 5000)]
 
 
 
@@ -73,6 +73,9 @@ class STIGTYPE(Structure):
 
 class MODETYPE(Structure):
     _fields_ = [("m", c_int * 256)]
+
+class CURRENTS(Structure):
+    _fields_ = [("c", c_float * 26)]
     
 class ROTALGNTYPE(Structure):
     _fields_ = [ ("x", c_float),
