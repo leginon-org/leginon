@@ -124,6 +124,7 @@ scope_params = (
 	('film text', str),
 	('film user code', str),
 	('film date type', str),
+	('objective current', float),
 )
 camera_params = (
 	('dimension', dict),
@@ -143,6 +144,28 @@ camera_params = (
 class ScopeEMData(EMData):
 	def typemap(cls):
 		return EMData.typemap() + scope_params + (
+			('tem', InstrumentData),
+		)
+	typemap = classmethod(typemap)
+
+manacqparams = (
+	'magnification',
+	'spot size',
+	'intensity',
+	'image shift',
+	'beam shift',
+	'stage position',
+	'high tension',
+)
+class ManualAcquisitionScopeEMData(ScopeEMData):
+	def typemap(cls):
+		scopemap = ScopeEMData.typemap()
+		mymap = []
+		for item in scopemap:
+			if item[0] in manacqparams:
+				mymap.append(item)
+		mymap = tuple(mymap)
+		return EMData.typemap() + mymap + (
 			('tem', InstrumentData),
 		)
 	typemap = classmethod(typemap)
