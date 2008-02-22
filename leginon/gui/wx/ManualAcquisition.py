@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-12-11 21:52:58 $
-# $Author: acheng $
+# $Date: 2008-02-22 22:49:45 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -146,7 +146,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			self.onCommentTool(None)
 
 	def onSettingsTool(self, evt):
-		self.settingsdialog.ShowModal()
+		if self.settingsdialog.ShowModal() == wx.ID_OK:
+			self.node.initSameCorrection()
 
 	def onGridTool(self, evt):
 		dialog = GridDialog(self)

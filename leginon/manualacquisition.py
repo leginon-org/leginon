@@ -20,6 +20,7 @@ import calibrationclient
 import copy
 from pyami import arraystats, imagefun
 import numpy
+import corrector
 
 class AcquireError(Exception):
 	pass
@@ -78,6 +79,9 @@ class ManualAcquisition(node.Node):
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
 		self.comment = ''
 		self.published_images = []
+
+		self.corclient = corrector.CorrectorClient(self)
+		self.initSameCorrection()
 		
 		self.start()
 
@@ -88,6 +92,30 @@ class ManualAcquisition(node.Node):
 		stats = arraystats.all(image)
 		stats['stdev'] = stats['std']
 		return stats
+
+	def initSameCorrection(self):
+		self.correctargs = None
+
+	def acquireCorrectedImage(self):
+		if not self.correctargs:
+			## acquire image and scope/camera params
+			imagedata = self.instrument.getData(data.CameraImageData)
+			imarray = imagedata['image']
+			self.correctargs = {}
+			camdata = imagedata['camera']
+			self.correctargs['ccdcamera'] = camdata['ccdcamera']
+			corstate = data.CorrectorCamstateData()
+			corstate['dimension'] = camdata['dimension']
+			corstate['offset'] = camdata['offset']
+			corstate['binning'] = camdata['binning']
+			self.correctargs['camstate'] = corstate
+			self.correctargs['scopedata'] = imagedata['scope']
+		else:
+			## acquire only raw image
+			imarray = self.instrument.ccdcamera.Image
+
+		corrected = self.corclient.correct(original=imarray, **self.correctargs)
+		return corrected
 
 	def acquire(self):
 		correct = self.settings['correct image']
@@ -101,6 +129,9 @@ class ManualAcquisition(node.Node):
 			self.instrument.ccdcamera.ExposureType = 'dark'
 		else:
 			self.instrument.ccdcamera.ExposureType = 'normal'
+
+
+		'''
 		if self.settings['save image']:
 			try:
 				if correct:
@@ -119,6 +150,26 @@ class ManualAcquisition(node.Node):
 				image = imagedata['image']
 			else:
 				image = self.instrument.ccdcamera.Image
+		'''
+
+		try:
+			if correct:
+				#dataclass = data.CorrectedCameraImageData
+				image = self.acquireCorrectedImage()
+			else:
+				#dataclass = data.CameraImageData
+				image = self.instrument.ccdcamera.Image
+			#imagedata = self.instrument.getData(dataclass)
+			scope = self.instrument.getData(data.ManualAcquisitionScopeEMData)
+			scope = data.ScopeEMData(initializer=scope)
+			camera = self.instrument.getData(data.CameraEMData, image=False)
+			imagedata = data.CameraImageData(image=image, scope=scope, camera=camera)
+			imagedata['session'] = self.session
+		except Exception, e:
+			self.logger.exception('Error acquiring image: %s' % e)
+			raise AcquireError
+		image = imagedata['image']
+
 
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
@@ -130,6 +181,7 @@ class ManualAcquisition(node.Node):
 				self.publishImageData(imagedata)
 				self.published_images.append(self.getMostRecentImageData(self.session))
 			except node.PublishError, e:
+				raise
 				message = 'Error saving image to database'
 				self.logger.info(message)
 				if str(e):
@@ -174,6 +226,7 @@ class ManualAcquisition(node.Node):
 		try:
 			path = imagedata.mkpath()
 		except Exception, e:
+			raise
 			raise node.PublishError(e)
 		filenames = os.listdir(path)
 		pattern = '^%s_[0-9]{%d}%s_[0-9].%s$' % (prefix, digits, suffix, extension)
