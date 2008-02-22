@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-07-12 21:48:27 $
-# $Author: suloway $
+# $Date: 2008-02-22 22:50:11 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -115,18 +115,35 @@ class Object(object):
 				description[name][method] = True
 		return description
 
-	def _handleRequest(self, request):
-		if isinstance(request, MultiRequest):
-			results = []
-			for i, attributename in enumerate(request.attributename):
+	def handleMultiRequest(self, request):
+		results = []
+		usemulticall = 'multicall' in self._interface
+		if usemulticall:
+			print 'USING MULTICALL'
+			calls = []
+		print 'BEFORE LOOP'
+		for i, attributename in enumerate(request.attributename):
+			print 'III', i, attributename
+			type = request.type[i]
+			args = request.args[i]
+			kwargs = request.kwargs[i]
+			if usemulticall:
+				### NEW WAY
+				method = self._interface[attributename][type]
+				calls.append({'method':method, 'args':args, 'kwargs':kwargs})
+			else:
+				### OLD WAY
 				try:
-					results.append(self._execute(request.origin,
-																				attributename,
-																				request.type[i],
-																				request.args[i],
-																				request.kwargs[i]))
+					results.append(self._execute(request.origin, attributename, request.type[i], request.args[i], request.kwargs[i]))
 				except Exception, e:
 					results.append(e)
+		if usemulticall:
+			results = self._interface['multicall']['method'](calls)
+		return results
+
+	def _handleRequest(self, request):
+		if isinstance(request, MultiRequest):
+			results = self.handleMultiRequest(request)
 			return results
 		else:
 			return self._execute(request.origin,
