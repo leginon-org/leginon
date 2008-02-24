@@ -269,18 +269,18 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 	"""
 
 	if not coords or len(coords) < 2:
-		return [], 0.0
+		return range(len(coords)), 0.0
 
 	#setup starting order
 	#startorder = lambda: init_random_tour(len(coords)) #random
-	startorder = lambda: range(len(coords)) #ordered
-	bestorder = startorder
-	#print "startorder=",startorder()
+	startorderfunc = lambda: range(len(coords)) #ordered
+	bestorder = startorderfunc()
+	#print "startorder=",startorderfunc()
 
 	#setup distance matrix
 	matrix = cartesian_matrix(coords)
-	startscore = -tour_length1(matrix, startorder())
-	print "beginning distance=",startscore
+	startscore = -tour_length1(matrix, startorderfunc())
+	print "beginning distance="+str(round(-1*startscore,2))+" pixels"
 	bestscore = startscore
 
 	#setup fitness function: total distance
@@ -291,7 +291,7 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 	#print "###################"
 	method = reversed_sections
 	for i in range(numiter):
-		iters, score, order = run_hillclimb(startorder, method, fitnessfunc, 1, maxeval)
+		iters, score, order = run_hillclimb(startorderfunc, method, fitnessfunc, 1, maxeval)
 		if score > bestscore:
 			#print "new best score:", score
 			bestiters = iters
@@ -305,8 +305,8 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 	#print "###################"
 	method = shift_cities
 	for i in range(2):
-		startorder = lambda: bestorder
-		iters, score, order = run_hillclimb(startorder, method, fitnessfunc, 1, maxeval)
+		startorderfunc = lambda: bestorder
+		iters, score, order = run_hillclimb(startorderfunc, method, fitnessfunc, 1, maxeval)
 		if score > bestscore:
 			#print "new best score:", score
 			bestiters = iters
@@ -316,7 +316,7 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 			write_tour_to_img(coords, order, str(score), file(outfile,'w'))
 
 	percent = 100.0 * abs(startscore - bestscore) / abs(startscore)
-	print "shortest distance="+str(bestscore)+" ("+str(round(percent,2))+"% shorter)"
+	print "shortest distance="+str(round(-1*bestscore,2))+" pixels ("+str(round(percent,2))+"% shorter)"
 	print "best order=",bestorder
 	return bestorder, bestscore
 

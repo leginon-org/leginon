@@ -136,7 +136,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		#print "targets=",targetlist
 		bestorder, bestscore = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
 		#print "bestorder=",bestorder
-		if bestorder is None or len(bestorder) < 2:
+		if bestorder is None or len(bestorder) < 3:
 			print "skipping sort targets"
 			return targetlist
 		sortedtargetlist = []
