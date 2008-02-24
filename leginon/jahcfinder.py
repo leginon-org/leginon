@@ -265,6 +265,8 @@ class JAHCFinder(targetfinder.TargetFinder):
 		centerhole = self.focus_on_hole(temppoints, temppoints)
 		closexdist = 1.0e10
 		closeydist = 1.0e10
+		xdist = 0.0
+		ydist = 0.0
 		for point in points:
 			dist = math.hypot(point[0]-centerhole[0], point[1]-centerhole[1])
 			#find nearest lattice points and get the components
