@@ -276,7 +276,7 @@ class dropdown {
 
 function divtitle($title) {
 	$htmlstr = '
-	<div style="padding: 4px; border-style:solid; border-width:1; border-color:black; background-color:#CCCCFF">
+	<div style="padding: 4px; border:1px solid black; background-color:#CCCCFF">
 	<b>'.$title.'</b> 
 	</div>
 	';
@@ -653,6 +653,16 @@ function array_stats($a) {
 	$results['mean'] = $mean;
 	$results['stddev'] = $stddev;
 	return $results;
+}
+	
+function from_POST($args=array()) {
+  $r = array();
+  $keys=array_keys($_POST);
+  foreach($args as $arg) {
+    if (in_array($arg,$keys))
+      $r[$arg]=$_POST[$arg];
+  }
+  return $r;
 }
 
 ?>

@@ -16,6 +16,7 @@ require "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
+$url = urlencode($_SERVER['REQUEST_URI']);
 if ($expId) {
         $sessionId=$expId;
         $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -36,20 +37,22 @@ echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 echo "</FORM>\n";
 
-// --- Get Stack Data
+// --- Get Stack Data --- //
 $particle = new particledata();
+
 
 # find each stack entry in database
 $stackIds = $particle->getStackIds($sessionId);
-foreach ($stackIds as $stackid) {
-	$s=$particle->getStackParams($stackid[stackid]);
+foreach ($stackIds as $row) {
+	$stackid=$row['stackid'];
+	$s=$particle->getStackParams($stackid);
 	# get list of stack parameters from database
-	$nump=commafy($particle->getNumStackParticles($stackid[stackid]));
+	$nump=commafy($particle->getNumStackParticles($stackid));
 	if ($nump == 0) continue;
 	echo divtitle("STACK: <font class='aptitle'>".$s['shownstackname']
 		."</font> (ID: <font>"
 		."<a target='params' class='aptitle' href='stackreport.php?sId="
-		.$stackid[stackid]."'>".$stackid[stackid]."</a>"
+		.$stackid."'>".$stackid."</a>"
 		."</font>)");
 
 
@@ -63,7 +66,7 @@ foreach ($stackIds as $stackid) {
 	} #endif
 
 	# get pixel size of stack
-	$mpix=($particle->getStackPixelSizeFromStackId($stackid[stackid]));
+	$mpix=($particle->getStackPixelSizeFromStackId($stackid));
 	$apix=format_angstrom_number($mpix)."/pixel";
 
 	# get box size
@@ -74,7 +77,7 @@ foreach ($stackIds as $stackid) {
 	$display_keys['# prtls']=$nump;
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
-	$display_keys['name']="<A target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid[stackid]'>".$s['name']."</A>";
+	$display_keys['name']="<A target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>".$s['name']."</A>";
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 
