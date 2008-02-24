@@ -275,46 +275,49 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 	#startorder = lambda: init_random_tour(len(coords)) #random
 	startorder = lambda: range(len(coords)) #ordered
 	bestorder = startorder
-	print "startorder=",startorder()
+	#print "startorder=",startorder()
 
 	#setup distance matrix
 	matrix = cartesian_matrix(coords)
-	bestscore = -tour_length1(matrix, startorder())
-	print "starting score=",bestscore
+	startscore = -tour_length1(matrix, startorder())
+	print "beginning distance=",startscore
+	bestscore = startscore
 
 	#setup fitness function: total distance
 	fitnessfunc = lambda tour: -tour_length1(matrix, tour)
 
-	print "###################"
-	print "reversed sections"
-	print "###################"
+	#print "###################"
+	#print "reversed sections"
+	#print "###################"
 	method = reversed_sections
 	for i in range(numiter):
 		iters, score, order = run_hillclimb(startorder, method, fitnessfunc, 1, maxeval)
 		if score > bestscore:
-			print "new best score:", score
+			#print "new best score:", score
 			bestiters = iters
 			bestscore = score
 			bestorder = order
 			outfile = str(int(abs(score)))+".png"
 			write_tour_to_img(coords, order, str(score), file(outfile,'w'))
 
-	print "###################"
-	print "shift cities"
-	print "###################"
+	#print "###################"
+	#print "shift cities"
+	#print "###################"
 	method = shift_cities
 	for i in range(2):
 		startorder = lambda: bestorder
 		iters, score, order = run_hillclimb(startorder, method, fitnessfunc, 1, maxeval)
 		if score > bestscore:
-			print "new best score:", score
+			#print "new best score:", score
 			bestiters = iters
 			bestscore = score
 			bestorder = order
 			outfile = str(int(abs(score)))+".png"
 			write_tour_to_img(coords, order, str(score), file(outfile,'w'))
 
-	print "bestorder=",bestorder
+	percent = 100.0 * abs(startscore - bestscore) / abs(startscore)
+	print "shortest distance="+str(bestscore)+" ("+str(round(percent,2))+"% shorter)"
+	print "best order=",bestorder
 	return bestorder, bestscore
 
 
