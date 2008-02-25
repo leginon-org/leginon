@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-22 22:50:11 $
+# $Date: 2008-02-25 22:24:15 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -119,11 +119,8 @@ class Object(object):
 		results = []
 		usemulticall = 'multicall' in self._interface
 		if usemulticall:
-			print 'USING MULTICALL'
 			calls = []
-		print 'BEFORE LOOP'
 		for i, attributename in enumerate(request.attributename):
-			print 'III', i, attributename
 			type = request.type[i]
 			args = request.args[i]
 			kwargs = request.kwargs[i]
