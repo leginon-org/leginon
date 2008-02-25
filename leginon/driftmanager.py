@@ -268,6 +268,9 @@ class DriftManager(watcher.Watcher):
 			requested = True
 
 		status = 'ok'
+		current_drift = 1.0e-3
+		lastdrift1 = 1.0e-3
+		lastdrift2 = 1.0e-3
 		while 1:
 			# make sure we have waited at least "pause time" before acquire
 			t1 = self.instrument.tem.SystemTime
@@ -312,8 +315,14 @@ class DriftManager(watcher.Watcher):
 			colmeters = cols * binning * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
+			lastdrift2 = lastdrift1
+			lastdrift1 = current_drift
 			current_drift = meters / seconds
-			self.logger.info('Drift rate: %.2e' % (current_drift,))
+			avgdrift = (current_drift + lastdrift1 + lastdrift2) / 3.0
+			if lastdrift2 < 1.0e-4:
+				self.logger.info('Drift rate: %.2e, average of last three: %.2e' % (current_drift, avgdrift,))
+			else:
+				self.logger.info('Drift rate: %.2e' % (current_drift,))
 
 			## publish scope and camera to be used with drift data
 			scope = imagedata['scope']
