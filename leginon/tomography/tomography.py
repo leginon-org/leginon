@@ -346,7 +346,6 @@ class Tomography(acquisition.Acquisition):
 				if dist and dist < maxshift:
 					goodprediction = predictinfo
 					break
-				else:
 			if goodprediction is not None:
 				break
 
