@@ -17,11 +17,8 @@ import apXml
 import apParam
 #leginon
 from pyami import mem
-try:
-	import leginondata
-except:
-	apDisplay.printWarning("sinedon not available, use old data.py")
-	import data as leginondata
+import leginondata
+
 
 class AppionLoop(object):
 	appiondb  = apDB.apdb
@@ -862,16 +859,18 @@ class AppionLoop(object):
 			return False
 
 		#WAIT
-		self.stats['waittime'] += 10
+
 		if(self.stats['waittime'] > 120):
 			apDisplay.printWarning("waited longer than two hours for new images with no results, so I am quitting")
 			return False
 		print "\nAll images processed. Waiting ten minutes for new images (waited",\
 			self.stats['waittime'],"min so far)."
+		twait0 = time.time()
 		for i in range(20):
-			time.sleep(30)
+			time.sleep(20)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")
+		self.stats['waittime'] += round((time.time()-twait0)/60.0,2)
 		print ""
 
 		#GET NEW IMAGES
