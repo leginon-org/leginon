@@ -427,16 +427,22 @@ class satEulerScript(appionScript.AppionScript):
 	def writeKeepFiles(self, eulertree):
 		#find good particles
 		totkeeplist = []
+		bothkeeplist = []
 		angkeeplist = []
 		for eulerpair in eulertree:
 			if eulerpair['part1']['reject'] == 1 and eulerpair['part2']['reject'] == 1:
 				continue
-			if abs(eulerpair['totdist'] - 15.0) < 10.0:
+			goodtot = (abs(eulerpair['totdist'] - 15.0) < 10.0)
+			goodang = (abs(eulerpair['angdist'] - 15.0) < 10.0)
+			if goodtot:
 				totkeeplist.append(eulerpair['part1']['partid']-1)
 				totkeeplist.append(eulerpair['part2']['partid']-1)
-			if abs(eulerpair['angdist'] - 15.0) < 10.0:
+			if goodang:
 				angkeeplist.append(eulerpair['part1']['partid']-1)
 				angkeeplist.append(eulerpair['part2']['partid']-1)
+			if goodtot or goodang:
+				bothkeeplist.append(eulerpair['part1']['partid']-1)
+				bothkeeplist.append(eulerpair['part2']['partid']-1)
 		#sort
 		totkeeplist.sort()
 		angkeeplist.sort()
@@ -450,6 +456,12 @@ class satEulerScript(appionScript.AppionScript):
 		#write to file
 		k = open("keeplist-ang"+self.datastr+".lst", "w")
 		for kid in angkeeplist:
+			k.write(str(kid)+"\n")
+		k.close()
+
+		#write to file
+		k = open("keeplist-both"+self.datastr+".lst", "w")
+		for kid in bothkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
 
@@ -516,7 +528,11 @@ class satEulerScript(appionScript.AppionScript):
 			+" \\\n"+" --keep-file="+keepfile
 			+" \\\n"+" --new-stack-name=sub-"+stackdata[0]['stackRun']['stackRunName']
 			+" --commit"
-			+" --description='xxx xx' \n" )
+			+" --description='sat from recon "
+			+str(self.params['reconid'])
+			+" iter "
+			+str(self.params['iternum'])
+			+"' \n" )
 		print "New subStack.py Command:"
 		apDisplay.printColor(cmd, "purple")
 
