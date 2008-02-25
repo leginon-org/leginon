@@ -361,7 +361,10 @@ class particledata {
 		."FROM ApRunsInStackData as r "
 		."LEFT JOIN ApStackRunData as s ON "
 		."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		."LEFT JOIN ApStackData as st ON "
+		."(r.`REF|ApStackData|stack` = st.`DEF_id`) "
 		."WHERE s.`REF|leginondata|SessionData|session` = '$sessionId' "
+		." AND (st.`hidden` IS NULL OR st.`hidden` = 0) "
 		."ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
