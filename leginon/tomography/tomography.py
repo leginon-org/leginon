@@ -1,7 +1,7 @@
 import math
 import threading
 import calibrationclient
-import data
+import leginondata
 import event
 import acquisition
 import gui.wx.tomography.Tomography
@@ -21,7 +21,7 @@ class Tomography(acquisition.Acquisition):
 						event.MeasureDosePublishEvent]
 
 	panelclass = gui.wx.tomography.Tomography.Panel
-	settingsclass = data.TomographySettingsData
+	settingsclass = leginondata.TomographySettingsData
 
 	defaultsettings = {
 		'pause time': 2.5,
@@ -70,6 +70,7 @@ class Tomography(acquisition.Acquisition):
 		self.tilts = tilts.Tilts()
 		self.exposure = exposure.Exposure()
 		self.prediction = prediction.Prediction()
+		self.initGoodPredictionInfo()
 		self.loadPredictionInfo()
 
 		self.start()
@@ -206,8 +207,8 @@ class Tomography(acquisition.Acquisition):
 		return 'ok'
 
 	def getPixelPosition(self, move_type, position=None):
-		scope_data = self.instrument.getData(data.ScopeEMData)
-		camera_data = self.instrument.getData(data.CameraEMData, image=False)
+		scope_data = self.instrument.getData(leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -221,8 +222,8 @@ class Tomography(acquisition.Acquisition):
 		return {'x': pixel_position['col'], 'y': -pixel_position['row']}
 
 	def getParameterPosition(self, move_type, position=None):
-		scope_data = self.instrument.getData(data.ScopeEMData)
-		camera_data = self.instrument.getData(data.CameraEMData, image=False)
+		scope_data = self.instrument.getData(leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -239,7 +240,7 @@ class Tomography(acquisition.Acquisition):
 	def setPosition(self, move_type, position):
 		position = self.getParameterPosition(move_type, position)
 		initializer = {move_type: position}
-		position = data.ScopeEMData(initializer=initializer)
+		position = leginondata.ScopeEMData(initializer=initializer)
 		self.instrument.setData(position)
 		return position[move_type]
 
@@ -250,8 +251,8 @@ class Tomography(acquisition.Acquisition):
 		self.instrument.tem.Defocus = defocus
 
 	def getCalibrations(self):
-		scope_data = self.instrument.getData(data.ScopeEMData)
-		camera_data = self.instrument.getData(data.CameraEMData, image=False)
+		scope_data = self.instrument.getData(leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
 
 		tem = scope_data['tem']
 		ccd_camera = camera_data['ccdcamera']
@@ -267,8 +268,8 @@ class Tomography(acquisition.Acquisition):
 		return high_tension, pixel_size
 	'''
 	def getShift(self, shift, move_type):
-		scope_data = self.instrument.getData(data.ScopeEMData)
-		camera_data = self.instrument.getData(data.CameraEMData, image=False)
+		scope_data = self.instrument.getData(leginondata.ScopeEMData)
+		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
 		client = self.calclients[move_type]
 		# invert y
 		shift = {'row': shift['y'], 'col': -shift['x']}
@@ -282,7 +283,7 @@ class Tomography(acquisition.Acquisition):
 	def correctShift(self, shift, move_type):
 		shift = self.getShift(shift, move_type)
 		initializer = {move_type: shift}
-		position = data.ScopeEMData(initializer=initializer)
+		position = leginondata.ScopeEMData(initializer=initializer)
 		self.instrument.setData(position)
 	'''
 	def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
@@ -320,11 +321,47 @@ class Tomography(acquisition.Acquisition):
 
 		return target, emtarget
 
+	def initGoodPredictionInfo(self):
+		presets = self.settings['preset order']
+		try:
+			presetname = presets[0]
+		except IndexError:
+			self.logger.error('Choose preset for this node before doing tilt series')
+			return
+		preset = self.presetsclient.getPresetFromDB(presetname)
+
+		tem = preset['tem']
+		ccd = preset['ccdcamera']
+		mag = preset['magnification']
+		qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
+		qimage = leginondata.AcquisitionImageData(preset=qpreset)
+		query_data = leginondata.TomographyPredictionData(image=qimage)
+		maxshift = 150
+		for n in (10, 100, 500, 1000):
+			goodprediction = None
+			predictions = query_data.query(results=n)
+			for predictinfo in predictions:
+				cor = predictinfo['correlation']
+				dist = math.hypot(cor['x'],cor['y'])
+				if dist and dist < maxshift:
+					goodprediction = predictinfo
+					break
+				else:
+			if goodprediction is not None:
+				break
+
+		if goodprediction is None:
+			params = (0, 0, 0)
+		else:
+			params = goodprediction['predicted position']
+			params = (params['phi'], params['optical axis'], params['z0'])
+		self.prediction.parameters = params
+
 	def loadPredictionInfo(self):
 		initializer = {
 			'session': self.session,
 		}
-		query_data = data.TiltSeriesData(initializer=initializer)
+		query_data = leginondata.TiltSeriesData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
 
@@ -340,7 +377,7 @@ class Tomography(acquisition.Acquisition):
 		initializer = {
 			'session': self.session,
 		}
-		query_data = data.TomographyPredictionData(initializer=initializer)
+		query_data = leginondata.TomographyPredictionData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
 
@@ -368,13 +405,13 @@ class Tomography(acquisition.Acquisition):
 		self.logger.info(m)
 
 	def alignZeroLossPeak(self, preset_name):
-		request_data = data.AlignZeroLossPeakData()
+		request_data = leginondata.AlignZeroLossPeakData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
 
 	def measureDose(self, preset_name):
-		request_data = data.MeasureDoseData()
+		request_data = leginondata.MeasureDoseData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
