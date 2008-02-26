@@ -318,9 +318,7 @@ class satEulerScript(appionScript.AppionScript):
 	def processEulers(self, eulertree):
 		t0 = time.time()
 		angdistlist = []
-		mangdistlist = []
 		totdistlist = []
-		mtotdistlist = []
 		rotdistlist = []
 		t0 = time.time()
 		apDisplay.printMsg("Begin processing "+str(len(eulertree))+" euler distances")
@@ -336,12 +334,8 @@ class satEulerScript(appionScript.AppionScript):
 			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
 			if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
 				#print eulerpair['part1']['mirror'],eulerpair['part2']['mirror'],eulerpair['totdist']
-				if (eulerpair['part1']['mirror'] + eulerpair['part2']['mirror']) % 2 == 0:
-					angdistlist.append(eulerpair['angdist'])
-					totdistlist.append(eulerpair['totdist'])
-				else:
-					mtotdistlist.append(eulerpair['totdist'])
-					mangdistlist.append(eulerpair['angdist'])
+				angdistlist.append(eulerpair['angdist'])
+				totdistlist.append(eulerpair['totdist'])
 				rotdistlist.append(eulerpair['rotdist'])
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
 			+apDisplay.timeString(time.time()-t0))
@@ -352,16 +346,14 @@ class satEulerScript(appionScript.AppionScript):
 
 		print "ANGLE EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(angdistlist, tuple((0,None,2)), "angdata"+self.datastr+".dat")
-		self.analyzeList(mangdistlist, tuple((0,None,2)), "mangdata"+self.datastr+".dat")
+		self.analyzeList(angdistlist, tuple((None,None,1)), "angdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
-		self.analyzeList(rotdistlist, tuple((None,None,2)), "rotdata"+self.datastr+".dat")
+		self.analyzeList(rotdistlist, tuple((None,None,1)), "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(totdistlist, tuple((0,None,2)), "totaldata"+self.datastr+".dat")
-		self.analyzeList(mtotdistlist, tuple((0,None,2)), "mtotaldata"+self.datastr+".dat")
+		self.analyzeList(totdistlist, tuple((None,None,1)), "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
 
@@ -434,23 +426,22 @@ class satEulerScript(appionScript.AppionScript):
 	def writeKeepFiles(self, eulertree):
 		#find good particles
 		totkeeplist = []
-		bothkeeplist = []
 		angkeeplist = []
+		skippair = 0
 		for eulerpair in eulertree:
 			if eulerpair['part1']['reject'] == 1 and eulerpair['part2']['reject'] == 1:
+				skippair += 1
 				continue
 			goodtot = (abs(eulerpair['totdist'] - 15.0) < 10.0)
-			goodang = (abs(eulerpair['angdist'] - 15.0) < 10.0)
+			goodang = (abs(eulerpair['angdist'] - 15.0) < 5.0)
 			if goodtot:
 				totkeeplist.append(eulerpair['part1']['partid']-1)
 				totkeeplist.append(eulerpair['part2']['partid']-1)
 			if goodang:
 				angkeeplist.append(eulerpair['part1']['partid']-1)
 				angkeeplist.append(eulerpair['part2']['partid']-1)
-			if goodtot or goodang:
-				bothkeeplist.append(eulerpair['part1']['partid']-1)
-				bothkeeplist.append(eulerpair['part2']['partid']-1)
-		#sort
+		apDisplay.printMsg("skipped "+str(skippair)+" double bad pairs")
+ 		#sort
 		totkeeplist.sort()
 		angkeeplist.sort()
 
@@ -463,12 +454,6 @@ class satEulerScript(appionScript.AppionScript):
 		#write to file
 		k = open("keeplist-ang"+self.datastr+".lst", "w")
 		for kid in angkeeplist:
-			k.write(str(kid)+"\n")
-		k.close()
-
-		#write to file
-		k = open("keeplist-both"+self.datastr+".lst", "w")
-		for kid in bothkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
 
@@ -532,7 +517,7 @@ class satEulerScript(appionScript.AppionScript):
 		if filename is not None:
 			f = open(filename, "w")
 			for i in range(len(bins)):
-				out = ("%3.4f %d\n" % (bins[i] + 2.5, hist[i]) )
+				out = ("%3.4f %d\n" % (bins[i] + mystep/2.0, hist[i]) )
 				f.write(out)
 			f.write("&\n")
 
