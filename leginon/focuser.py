@@ -97,8 +97,16 @@ class Focuser(acquisition.Acquisition):
 		query = data.FocusSequenceData(initializer=initializer)
 		try:
 			focus_sequence_data = self.research(query, results=1)[0]
+			print 'found'
 		except IndexError:
-			return []
+			print 'try default'
+			# if that failed, try to load default settings from DB
+			query = data.FocusSequenceData(initializer={'isdefault': True, 'node name': self.name})
+			try:
+				focus_sequence_data = self.research(query, results=1)[0]
+				print 'found'
+			except IndexError:
+				return []
 
 		sequence = []
 		for name in focus_sequence_data['sequence']:
@@ -120,7 +128,12 @@ class Focuser(acquisition.Acquisition):
 		try:
 			focus_setting_data = self.research(query, results=1)[0]
 		except IndexError:
-			return None
+			# if that failed, try to load default settings from DB
+			query = data.FocusSettingData(initializer={'isdefault': True, 'node name': self.name, 'name': name})
+			try:
+				focus_setting_data = self.research(query, results=1)[0]
+			except IndexError:
+					return None
 		focus_setting = focus_setting_data.toDict()
 		del focus_setting['session']
 		del focus_setting['node name']
@@ -129,7 +142,7 @@ class Focuser(acquisition.Acquisition):
 	def getFocusSequence(self):
 		return [setting.copy() for setting in self.focus_sequence]
 
-	def setFocusSequence(self, sequence):
+	def setFocusSequence(self, sequence, isdefault=False):
 		sequence_names = [s['name'] for s in sequence]
 		if sequence_names != [s['name'] for s in self.focus_sequence]:
 			initializer = {
@@ -137,6 +150,10 @@ class Focuser(acquisition.Acquisition):
 				'sequence': sequence_names,
 				'node name': self.name,
 			}
+			if self.session['user']['name'] == 'administrator':
+				initializer['isdefault'] = True
+			else:
+				initializer['isdefault'] = isdefault
 			sequence_data = data.FocusSequenceData(initializer=initializer)
 			self.publish(sequence_data, database=True, dbforce=True)
 		for setting in sequence:
@@ -144,6 +161,10 @@ class Focuser(acquisition.Acquisition):
 				initializer = setting.copy()
 				initializer['session'] = self.session
 				initializer['node name'] = self.name
+				if self.session['user']['name'] == 'administrator':
+					initializer['isdefault'] = True
+				else:
+					initializer['isdefault'] = isdefault
 				setting_data = data.FocusSettingData(initializer=initializer)
 				self.publish(setting_data, database=True, dbforce=True)
 		self.focus_sequence = sequence

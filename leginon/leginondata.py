@@ -1386,6 +1386,7 @@ class StigAcquisitionSettingsData(AcquisitionSettingsData):
 			('stig1x', float),
 			('stig1y', float),
 			('stigcount', int),
+			('isdefault', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1394,6 +1395,7 @@ class FocusSequenceData(InSessionData):
 		return InSessionData.typemap() + (
 			('node name', str),
 			('sequence', list),
+			('isdefault', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1417,6 +1419,7 @@ class FocusSettingData(InSessionData):
 			('check drift', bool),
 			('drift threshold', float),
 			('reset defocus', bool),
+			('isdefault', bool),
 		)
 	typemap = classmethod(typemap)
 
