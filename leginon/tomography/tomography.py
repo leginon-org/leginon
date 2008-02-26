@@ -328,7 +328,12 @@ class Tomography(acquisition.Acquisition):
 		except IndexError:
 			self.logger.error('Choose preset for this node before doing tilt series')
 			return
-		preset = self.presetsclient.getPresetFromDB(presetname)
+
+		try:
+			preset = self.presetsclient.getPresetFromDB(presetname)
+		except:
+			self.logger.error('Preset %s does not exist in this session.' % (presetname,))
+			return
 
 		tem = preset['tem']
 		ccd = preset['ccdcamera']
