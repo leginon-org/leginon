@@ -70,7 +70,6 @@ class Tomography(acquisition.Acquisition):
 		self.tilts = tilts.Tilts()
 		self.exposure = exposure.Exposure()
 		self.prediction = prediction.Prediction()
-		self.initGoodPredictionInfo()
 		self.loadPredictionInfo()
 
 		self.start()
@@ -162,6 +161,7 @@ class Tomography(acquisition.Acquisition):
 		return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
+		self.initGoodPredictionInfo()
 		self.moveAndPreset(presetdata, emtarget)
 
 		try:
@@ -266,6 +266,12 @@ class Tomography(acquisition.Acquisition):
 			raise CalibrationError('no pixel size for %gx' % magnification)
 
 		return high_tension, pixel_size
+
+	def resetTiltSeriesList(self):
+		self.logger.info('Clear Tilt Series and Model History')
+		self.prediction.resetTiltSeriesList()
+		self.initGoodPredictionInfo()
+
 	'''
 	def getShift(self, shift, move_type):
 		scope_data = self.instrument.getData(leginondata.ScopeEMData)
@@ -341,7 +347,7 @@ class Tomography(acquisition.Acquisition):
 		qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
 		qimage = leginondata.AcquisitionImageData(preset=qpreset)
 		query_data = leginondata.TomographyPredictionData(image=qimage)
-		maxshift = 150
+		maxshift = 15
 		for n in (10, 100, 500, 1000):
 			goodprediction = None
 			predictions = query_data.query(results=n)
@@ -355,11 +361,12 @@ class Tomography(acquisition.Acquisition):
 				break
 
 		if goodprediction is None:
-			params = (0, 0, 0)
+			params = [0, 0, 0]
 		else:
 			params = goodprediction['predicted position']
-			params = (params['phi'], params['optical axis'], params['z0'])
+			params = [params['phi'], params['optical axis'], params['z0']]
 		self.prediction.parameters = params
+		self.logger.info('Initialize prediction parameters to (%e, %e, %e)' % tuple(params))
 
 	def loadPredictionInfo(self):
 		initializer = {

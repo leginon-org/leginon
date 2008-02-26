@@ -34,6 +34,10 @@ class Prediction(object):
 		self.tilt_series_list = []
 		self.parameters = [0, 0, 0]
 
+	def resetTiltSeriesList(self):
+		self.tilt_series_list = []
+		self.parameters = [0, 0, 0]
+
 	def addTiltSeries(self, tilt_series):
 		self.tilt_series_list.append(tilt_series)
 
@@ -76,37 +80,48 @@ class Prediction(object):
 		n_tilt_groups = len(tilt_series)
 		n_tilts = len(tilt_group)
 		n = []
+		gmaxtilt = []
+		gmintilt = []
 		for s in self.tilt_series_list:
 			for g in s.tilt_groups:
 				n.append(len(g))
+				gmaxtilt.append(max(g.tilts))
+				gmintilt.append(min(g.tilts))
 		n_max = max(n)
-
+		maxtilt = max(gmaxtilt)
+		mintilt = min(gmintilt)
 		if n_tilts < 1:
 			raise RuntimeError
 		elif n_tilts < 2:
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
-		# HACK: use residuals instead
-		# elif n_tilts < 3 or n_max < 16:
-		# calculate real z correction for all n_max
-		elif n_tilts < 3:
-			x, y = leastSquaresXY(tilt_group.tilts,
-								  tilt_group.xs,
-								  tilt_group.ys,
-								  tilt)
-			z = 0.0
+		# calculate real z correction with current parameters 
+		elif n_tilts < 3 or self.getCurrentParameters()==(0,0,0) or (n_tilt_series == 1 and n_tilt_groups == 1 and n_tilts < 5):
+			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
+			
+			x0 = tilt_group.xs[0]
+			y0 = tilt_group.ys[0]
+			tilt0 = tilt_group.tilts[0]
+			cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
+			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
+			parameters = self.getCurrentParameters()
+			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
+			result = model(parameters, args_list)
+			z0 = result[-1][0][2]
+			z = result[-1][-1][2] - z0
+
 		else:
 			x, y = leastSquaresXY(tilt_group.tilts,
 								  tilt_group.xs,
 								  tilt_group.ys,
 								  tilt)
-			tilt_group.addTilt(tilt, x, y)
+		#	tilt_group.addTilt(tilt, x, y)
 
 			self.calculate()
 
-			del tilt_group.tilts[-1]
-			del tilt_group.xs[-1]
-			del tilt_group.ys[-1]
+		#	del tilt_group.tilts[-1]
+		#	del tilt_group.xs[-1]
+		#	del tilt_group.ys[-1]
 
 			x0 = tilt_group.xs[0]
 			y0 = tilt_group.ys[0]
@@ -138,8 +153,14 @@ class Prediction(object):
 			tilt_series_list = self.tilt_series_list[-8:]
 		else:
 			tilt_series_list = self.tilt_series_list
-		print 'BEFORE SET PARAMS', self.parameters
-		self.parameters = leastSquaresModel(tilt_series_list)
+		fitparameters = leastSquaresModel(tilt_series_list)
+		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
+		# max_delta_z0 should be larger than the z eucentric error
+		max_delta_z0 = 500
+		if (fitparameters[-1]-self.parameters[-1])**2 > max_delta_z0**2:
+			print 'KEEP OLD PARAMETER because of bad z0', fitparameters[-1]
+		else:
+			self.parameters = fitparameters
 		return self.parameters
 
 def leastSquaresModel(tilt_series_list):
