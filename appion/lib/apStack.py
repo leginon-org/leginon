@@ -162,7 +162,11 @@ def commitSubStack(params):
 	newparticlenum = 1
 	f=open(listfile,'r')
 	apDisplay.printMsg("Inserting stack particles")
+	count = 0
 	for line in f:
+		count += 1
+		if count % 1000 == 0:
+			sys.stderr.write(".")
 		particlenum = getListFileParticle(line, newparticlenum)
 		if particlenum is None:
 			continue
@@ -182,7 +186,7 @@ def commitSubStack(params):
 			appiondb.insert(newstackq)
 		newparticlenum += 1
 	f.close()
-
+	sys.stderr.write("\n")
 	if newparticlenum == 0:
 		apDisplay.printError("No particles were inserted for the stack")
 
