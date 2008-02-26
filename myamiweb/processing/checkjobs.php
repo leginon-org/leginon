@@ -24,8 +24,8 @@ function checkJobs($showjobs=False,$extra=False) {
   $javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";  
   $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
   $javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";  
-  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/model.tar<br />')\n";
-  $javafunc.="    newwindow.document.write('rm -f '+outdir+'/results.tar<br />')\n";  
+  $javafunc.="    newwindow.document.write('rm -vf '+outdir+'/model.tar*<br />')\n";
+  $javafunc.="    newwindow.document.write('rm -vf '+outdir+'/results.tar*<br />')\n";  
   $javafunc.="    newwindow.document.write('echo done<br />')\n";  
   $javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
   $javafunc.="    newwindow.document.close()\n";
