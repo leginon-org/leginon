@@ -98,6 +98,18 @@ def randomEuler():
 	return (alt, az, phi)
 
 #=====================
+def genProjs(euler, tilt=False):
+	(alt, az, phi) = euler
+	rotcmd = ( "proc3d groel.mrc rotated.mrc rot="
+		+str(alt)+","+str(az)+","+str(phi) )
+	apEMAN.executeEmanCmd(rotcmd, verbose=False, showcmd=False)
+	if tilt is True:
+		cmd = "project3d rotated.mrc euler=15,90,-90"
+	else:
+		cmd = "project3d rotated.mrc euler=0,0,0"
+	apEMAN.executeEmanCmd(cmd, verbose=False, showcmd=False)
+
+#=====================
 def genProj(euler, tilt=False):
 	(alt, az, phi) = euler
 	rotcmd = ( "proc3d groel.mrc rotated.mrc rot="
@@ -114,6 +126,8 @@ def generateProjections(parttree):
 	t0 = time.time()
 	datafile = "parttree_data-"+str(stackid)+".txt"
 	dataf = open(datafile, 'w', 0666)
+	#eulerfile = "eulerlist-"+str(stackid)+".lst"
+	#eulerf = open(eulerfile, 'w', 0666)
 	count = 0.0
 	total = float(len(parttree))
 	mult = 0.05
@@ -132,6 +146,8 @@ def generateProjections(parttree):
 						pair['euler'] = part['euler']
 		### save to file
 		dataf.write(str(part)+"\n")
+		#eulerf.write("%d\t%.6f\t%.6f\t%.6f\n" % 
+		#	(part['part1'], part['euler'][0], part['euler'][1], part['euler'][2])
 		### generate projection
 		if count > mult*total:
 			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b"+str(int(100*mult))+"% complete")
