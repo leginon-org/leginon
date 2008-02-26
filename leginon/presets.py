@@ -4,10 +4,10 @@
 # see  http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/presets.py,v $
-# $Revision: 1.269 $
+# $Revision: 1.270 $
 # $Name: not supported by cvs2svn $
-# $Date: 2008-02-20 07:45:31 $
-# $Author: acheng $
+# $Date: 2008-02-26 00:34:19 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -1411,16 +1411,19 @@ class PresetsManager(node.Node):
 		return fov
 
 	def unbinnedAreaGreater(self, pname1, pname2):
-		return self.unbinnedArea(pname1) > self.unbinnedArea(pname2)
+			if self.unbinnedArea(pname1) > self.unbinnedArea(pname2):
+				return -1
+			if self.unbinnedArea(pname1) < self.unbinnedArea(pname2):
+				return 1
+			return 0
 
 	def sortByUnbinnedArea(self, presetnames):
-		return presetnames.sort(self.unbinnedAreaGreater)
+		presetnames.sort(self.unbinnedAreaGreater)
 
 	def initAlignPresets(self, refname):
 		self.aligndone = False
 		self.alignnext.clear()
 
-		## order mags from highest to lowest
 		self.logger.info('Aligning presets to reference: %s' % (refname,))
 		self.magpresets = {}
 		for p in self.presets.values():
@@ -1434,7 +1437,7 @@ class PresetsManager(node.Node):
 
 		## sort presets by largest field of view first
 		for presetnames in self.magpresets.values():
-			presetnames = self.sortByUnbinnedArea(presetnames)
+			self.sortByUnbinnedArea(presetnames)
 
 		mags = self.magpresets.keys()
 		mags.sort()
