@@ -237,6 +237,12 @@ class Panel(gui.wx.Acquisition.Panel):
         self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DOSE,
                              'dose',
                              shortHelpString='Check dose')
+        self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+                             'refresh', shortHelpString='Reset Learning')
+
+        self.toolbar.Bind(wx.EVT_TOOL, self.onResetTiltSeriesList,
+											id=gui.wx.ToolBar.ID_REFRESH)
+
         self.imagepanel = ImagePanel(self.viewer)
 
     def addImagePanel(self):
@@ -252,3 +258,5 @@ class Panel(gui.wx.Acquisition.Panel):
     def onCheckDose(self, evt):
         threading.Thread(target=self.node.checkDose).start()
 
+    def onResetTiltSeriesList(self, evt):
+        self.node.resetTiltSeriesList()
