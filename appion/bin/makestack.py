@@ -608,6 +608,7 @@ def insertStackRun(params):
 	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	stackq['name'] = params['single']
 	stackq['description'] = params['description']
+	stackq['hidden'] = False
 	
 	params['stackId']=stackq
 
