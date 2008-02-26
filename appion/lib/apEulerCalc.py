@@ -150,15 +150,28 @@ def getMatrix3(eulerdata, inplane=False):
 	#theta is a rotation about the x-axis, i.e. latitude
 	# 0 <= theta <= 180 degrees
 	the = eulerdata['euler1']*math.pi/180.0 #eman alt, altitude
-
 	#phi is a rotation in the xy-plane, i.e. longitude
 	# 0 <= phi <= 360 degrees
 	phi = eulerdata['euler2']*math.pi/180.0 #eman az, azimuthal
-
 	if inplane is True:
-		psi = round(eulerdata['euler3']*math.pi/180,2) #eman phi, inplane_rotation
+		psi = eulerdata['euler3']*math.pi/180.0 #eman phi, inplane_rotation
 	else:
 		psi = 0.0
+
+	if 'mirror' in eulerdata and eulerdata['mirror'] == 1:
+		"""
+		using mirror function
+		see: http://blake.bcm.tmc.edu/emanwiki/EMAN2/Symmetry
+		for documentation
+		"""
+		#theta flips to the back
+		the = math.pi - the
+		#phi is rotated 180 degrees
+		phi += math.pi
+		#this works without in_plane
+		if inplane is False:
+			#psi is rotated 180 degrees
+			psi += math.pi
 
 	m = numpy.zeros((3,3), dtype=numpy.float32)
 	m[0,0] =  math.cos(psi)*math.cos(phi) - math.cos(the)*math.sin(phi)*math.sin(psi)
