@@ -7,7 +7,7 @@ BINPATH=../bin
 FFLAGS=-O3 -Wall -w -fno-second-underscore -mtune=pentium3 -mcpu=pentium3
 CFLAGS=-O3 -Wall -mtune=pentium3 -mcpu=pentium3
 LIBS=$(LPATH)/imlib2k.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a $(LPATH)/plot2klib.a
-EXLIBS=-lg2c
+EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
 
 quick:	clean findem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/findem.exe findem.f90 $(LIBS) 
