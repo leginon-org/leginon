@@ -261,6 +261,7 @@ class ApStackData(Data):
 			('path', ApPathData),
 			('name' , str),
 			('description', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackData=ApStackData
