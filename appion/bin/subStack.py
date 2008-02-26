@@ -91,7 +91,11 @@ if __name__ == '__main__':
 	
 	#create the new sub stack
 	apStack.makeNewStack(oldstack, newstack, params['keepfile'])
+	if not os.path.isfile(newstack):
+		apDisplay.printError("No stack was created")
 
 	apStack.commitSubStack(params)
 	apStack.averageStack(stack=newstack)
+
+
 
