@@ -180,7 +180,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		runChimCommand('clip hither %.3f' % -yon)
 		from SurfaceCap import surfcaps
 		sc = surfcaps.Surface_Capper()
-		sc.set_cap_color((0.375,0.750,0.067,1))
+		#sc.set_cap_color((0.375,0.750,0.067,1))
 		sc.show_cap(m)
 		image6 = vol_path+'.6.png'
 		save_image(image6, format=imgFormat)
