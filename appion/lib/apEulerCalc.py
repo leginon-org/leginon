@@ -253,7 +253,15 @@ def calcZRot(a):
 	m[2,2]=1
 	return m
 
-
+def henryMult(m1,m2):
+	c=numpy.zeros((m1.shape[0],m2.shape[1]))
+	for i in range(0,c.shape[0]):
+		for j in range(0,c.shape[1]):
+			tot=0
+			for k in range(0,m1.shape[1]):
+				tot+=m1[i,k]*m2[k,j]
+			c[i,j]=tot
+	return c
 
 
 
