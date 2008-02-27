@@ -162,17 +162,64 @@ def generateProjections(parttree):
 	cachef.close()
 	apDisplay.printMsg("Projected "+str(len(parttree))+" particles in "+apDisplay.timeString(time.time()-t0))
 
+class fakeStackScript(appionScript.AppionScript):
+	#######################################################
+	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
+	#######################################################
+
+	#=====================
+	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --stackid=<session> --commit [options]")
+		self.parser.add_option("-o", "--outdir", dest="outdir",
+			help="Location to copy the templates to", metavar="PATH")
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
+			action="store_true", help="Commit template to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit template to database")
+		self.parser.add_option("--stackid", dest="stackid", type="int",
+			help="ID for particle stack (optional)", metavar="INT")
+		self.parser.add_option("--runid", "-r", dest="runid", default=self.timestamp,
+			help="Run ID name, e.g. --runid=run1", metavar="NAME")
+
+	#=====================
+	def checkConflicts(self):
+		if self.params['stackid'] is None:
+			apDisplay.printError("enter a stackid ID, e.g. --stackid=773")
+
+	#=====================
+	def setProcessingDirName(self):
+		self.processdirname = self.functionname
+
+	#=====================
+	def setOutDir(self):
+		#auto set the output directory
+		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		path = os.path.abspath(stackdata['path']['path'])
+		path = os.path.dirname(path)
+		time.
+		self.params['outdir'] = os.path.join(path, "fakestack")
+
+	#=====================
+	def start(self):
+		"""
+		this is the main component of the script
+		where all the processing is done
+		"""
+		if os.path.isfile("proj.hed"):
+			apDisplay.printWarning("Removing proj.hed and proj.img files")
+			time.sleep(2)
+			os.remove("proj.hed")
+			os.remove("proj.img")
+		parttree = getParticles(self.params['stackid'])
+		generateProjections(parttree)
+
+
 #=====================
 #=====================
 if __name__ == '__main__':
-	stackid = 773
-	if os.path.isfile("proj.hed"):
-		apDisplay.printWarning("Removing proj.hed and proj.img files")
-		time.sleep(2)
-		os.remove("proj.hed")
-		os.remove("proj.img")
-	parttree = getParticles(stackid)
-	generateProjections(parttree)
+	fakestack = fakeStackScript()
+	fakestack.start()
+	fakestack.close()
 
 
 
