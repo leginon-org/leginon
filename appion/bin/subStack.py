@@ -37,6 +37,8 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("new stack name was not defined")
 		if self.params['keepfile'] is None:
 			apDisplay.printError("keep file was not defined")
+		if self.params['description'] is None:
+			apDisplay.printError("enter a description")
 		self.params['keepfile'] = os.path.abspath(self.params['keepfile'])
 		if not os.path.isfile(self.params['keepfile']):
 			apDisplay.printError("Could not find keep file: "+params['keepfile'])
