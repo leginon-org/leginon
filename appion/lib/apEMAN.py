@@ -23,3 +23,26 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True):
 def getNumParticlesInStack(stackname):
 	numparticles = EMAN.fileCount(stackname)[0]
 	return numparticles
+
+
+def getEMANPcmp(ref,img):
+	"""returns EMAN quality factor for pcmp properly scaled"""
+	dot=ref.pcmp(img)
+	return((2.0-dot)*500.0)
+
+def getCC(ref,img):
+	"""returns straight up correlation coefficient"""
+ 	npix=ref.xSize()*ref.ySize()
+	avg1=ref.Mean()
+	avg2=img.Mean()
+	
+	var1=ref.Sigma()
+	var1=var1*var1
+	var2=img.Sigma()
+	var2=var2*var2
+	
+	cc=ref.dot(img)
+	cc=cc/npix
+	cc=cc-(avg1*avg2)
+	cc=cc/math.sqrt(var1*var2)
+	return(cc)
