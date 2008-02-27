@@ -28,6 +28,8 @@ import polygon
 import raster
 import presets
 import time
+import version
+
 try:
 	set = set
 except NameError:
@@ -57,8 +59,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 	def readImage(self, filename):
-		imagedata = self.getImageFromDB(filename)
+		imagedata = None
+		if filename:
+			imagedata = self.getImageFromDB(filename)
 		if imagedata is None:
+			if filename == '':
+				if self.name in ['Hole Targeting','Subsquare Targeting']:
+					filename = os.path.join(version.getInstalledLocation(),'sq_example.mrc')
+				else:
+					filename = os.path.join(version.getInstalledLocation(),'hl_example.mrc')
 			try:
 				orig = mrc.read(filename)
 			except Exception, e:
@@ -69,6 +78,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.currentimagedata = imagedata
 
 		self.setImage(orig, 'Original')
+		return orig
 
 	def getImageFromDB(self, filename):
 		# only want filename without path and extension

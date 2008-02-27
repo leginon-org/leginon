@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.47 $
+# $Revision: 1.48 $
 # $Name: not supported by cvs2svn $
-# $Date: 2007-09-14 20:03:24 $
-# $Author: vossman $
+# $Date: 2008-02-27 23:12:21 $
+# $Author: acheng $
 # $State: Exp $
 # $Locker:  $
 
@@ -53,8 +53,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 			dialog = OriginalSettingsDialog(self)
 			if dialog.ShowModal() == wx.ID_OK:
 				filename = self.node.settings['image filename']
-				if filename:
-					self.node.readImage(filename)
+				self.node.readImage(filename)
 			dialog.Destroy()
 			return
 

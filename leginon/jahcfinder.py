@@ -106,15 +106,17 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.start()
 
 	def readImage(self, filename):
-		targetfinder.TargetFinder.readImage(self, filename)
-		self.hf['original'] = self.currentimagedata['image']
+		self.hf['original'] = targetfinder.TargetFinder.readImage(self, filename)
 
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
 		# convert diameters to radii
 		diameter = self.settings['template diameter']
 		filediameter = self.settings['file diameter']
-		filename = self.settings['template filename']
+		if self.settings['template filename'] != '':
+			filename = self.settings['template filename']
+		else:
+			filename = default_template
 		self.hf.configure_template(diameter, filename, filediameter)
 		self.hf.create_template()
 		cortype = self.settings['template type']
