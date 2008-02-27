@@ -18,6 +18,7 @@ import apStack
 from pyami import mem
 
 class AppionScript(object):
+	#=====================
 	def __init__(self):
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
@@ -34,6 +35,7 @@ class AppionScript(object):
 		### setup output directory
 		self.setProcessingDirName()
 		self.setupOutputDirectory()
+		self.params['rundir'] = self.params['outdir']
 
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv)
@@ -41,29 +43,17 @@ class AppionScript(object):
 		### any custom init functions go here
 		self.onInit()
 
+	#=====================
 	def setupOutputDirectory(self):
-		if self.params['outdir'] is None and 'session' in self.params:
-			#auto set the output directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-			path = os.path.abspath(sessiondata['image path'])
-			path = re.sub("leginon","appion",path)
-			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname)
-		if self.params['outdir'] is None and 'reconid' in self.params:
-			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if self.params['outdir'] is None and 'stackid' in self.params:
-			#auto set the output directory
-			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-			path = os.path.abspath(stackdata['path']['path'])
-			path = os.path.dirname(path)
-			path = os.path.dirname(path)
-			self.params['outdir'] = os.path.join(path, self.processdirname)
-	
-	#create the output directory, if needed
+		#IF NO OUTDIR IS SET
+		if self.params['outdir'] is None:
+			self.setOutDir()
+		#create the output directory, if needed
 		apDisplay.printMsg("Output directory: "+self.params['outdir'])
 		apParam.createDirectory(self.params['outdir'])
 		os.chdir(self.params['outdir'])
 
+	#=====================
 	def close(self):
 		self.onClose()
 		apParam.closeFunctionLog(params=self.params, logfile=self.logfile)
@@ -73,6 +63,7 @@ class AppionScript(object):
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
 
+	#=====================
 	def setupParserOptions(self):
 		"""
 		set the input parameters
@@ -91,6 +82,7 @@ class AppionScript(object):
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
 
+	#=====================
 	def checkConflicts(self):
 		"""
 		make sure the necessary parameters are set correctly
@@ -100,9 +92,30 @@ class AppionScript(object):
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description")
 
+	#=====================
 	def setProcessingDirName(self):
 		self.processdirname = self.functionname
 
+	#=====================
+	def setOutDir(self):
+		if self.params['outdir'] is None and 'session' in self.params:
+			#auto set the output directory
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+			path = os.path.abspath(sessiondata['image path'])
+			path = re.sub("leginon","appion",path)
+			path = re.sub("/rawdata","",path)
+			path = os.path.join(path, self.processdirname)
+		if self.params['outdir'] is None and 'reconid' in self.params:
+			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
+		if self.params['outdir'] is None and 'stackid' in self.params:
+			#auto set the output directory
+			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+			path = os.path.abspath(stackdata['path']['path'])
+			path = os.path.dirname(path)
+			path = os.path.dirname(path)
+			self.params['outdir'] = os.path.join(path, self.processdirname)
+
+	#=====================
 	def start(self):
 		"""
 		this is the main component of the script
@@ -110,9 +123,11 @@ class AppionScript(object):
 		"""
 		raise NotImplementedError()
 
+	#=====================
 	def onInit(self):
 		return
 
+	#=====================
 	def onClose(self):
 		return
 
