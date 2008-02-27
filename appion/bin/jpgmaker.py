@@ -21,9 +21,11 @@ class MrcToJpgLoop(appionLoop.AppionLoop):
 	def specialDefaultParams(self):
 		self.params['min']= None
 		self.params['max']= None
-		self.params['quality']= 80
+		self.params['quality']= 60
 		self.params['imgsize']= 512
-	
+		self.params['pixlimit'] = 3.0
+		self.params['invert'] = False
+
 	def specialParseParams(self, args):
 		for arg in args:
 			elements=arg.split('=')
@@ -32,6 +34,12 @@ class MrcToJpgLoop(appionLoop.AppionLoop):
 				self.params['min']=int(elements[1])
 			elif (elements[0]=='max'):
 				self.params['max']=int(elements[1])
+			if (elements[0]=='lp'):
+				self.params['lowpass']=float(elements[1])
+			elif (elements[0]=='hp'):
+				self.params['highpass']=float(elements[1])
+			elif (elements[0]=='median'):
+				self.params['median']=int(elements[1])
 			elif (elements[0]=='quality'):
 				self.params['quality']=int(elements[1])
 			elif (elements[0]=='imgsize'):
@@ -43,10 +51,10 @@ class MrcToJpgLoop(appionLoop.AppionLoop):
 		imgmin = self.params['min']
 		quality = self.params['quality']
 		sizelimit = self.params['imgsize']
-		image = imgdata['image']
+		imgarray = imgdata['image']
 
 		# determine binning for the final image to be no larger than 512x512
-		shape = image.shape
+		shape = imgarray.shape
 		maxlength =max(shape)
 		bin = maxlength // sizelimit
 		if bin < 1:
@@ -56,15 +64,14 @@ class MrcToJpgLoop(appionLoop.AppionLoop):
 		self.params['bin'] = bin
 		
 		# binning first makes standard deviation scaling better
-		binnedimage = apImage.binImg(image, bin=self.params['bin'])
+		#binnedimage = apImage.binImg(imgarray, bin=self.params['bin'])
+		binimgarray = apImage.preProcessImage(imgarray, params=self.params)
 
+		outfile = os.path.join(self.params['rundir'], imgdata['filename']+".jpg")
 		if imgmin > imgmax:
-			imgmax = binnedimage.max()
-			imgmin = binnedimage.min()
-
-		outfile = os.path.join(self.params['rundir'],imgdata['filename']+".jpg")
-
-		jpg.write(binnedimage,outfile, min=imgmin,max=imgmax,quality=quality)
+			imgmax = binimgarray.max()
+			imgmin = binimgarray.min()
+		jpg.write(binimgarray, outfile, min=imgmin, max=imgmax, quality=quality)
 
 if __name__ == '__main__':
 	imgLoop = MrcToJpgLoop()
