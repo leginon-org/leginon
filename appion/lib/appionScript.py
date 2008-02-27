@@ -8,6 +8,7 @@ import time
 import math
 import random
 import cPickle
+from string import lowercase
 from optparse import OptionParser
 #appion
 import apDisplay
@@ -22,6 +23,7 @@ class AppionScript(object):
 	def __init__(self):
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
+		self.timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
 		self.functionname = apParam.getFunctionName(sys.argv[0])
 
 		### setup default parser: output directory, etc.
@@ -81,6 +83,8 @@ class AppionScript(object):
 			action="store_false", help="Do not commit template to database")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
+		self.parser.add_option("--runid", "-r", dest="runid", default=self.timestamp,
+			help="Run ID name, e.g. --runid=run1", metavar="NAME")
 
 	#=====================
 	def checkConflicts(self):
@@ -90,7 +94,7 @@ class AppionScript(object):
 		if self.params['session'] is None:
 			apDisplay.printError("enter a session ID, e.g. --session=07jun06a")
 		if self.params['description'] is None:
-			apDisplay.printError("enter a description")
+			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 
 	#=====================
 	def setProcessingDirName(self):
