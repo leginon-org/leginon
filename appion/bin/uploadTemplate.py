@@ -5,14 +5,10 @@
 import os
 import sys
 import re
-import shutil
-from optparse import OptionParser
-import glob
 import pprint
 import time
 #appion
 import apUpload
-import apParam
 import apTemplate
 import apStack
 import apDisplay
