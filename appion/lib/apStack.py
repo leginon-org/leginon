@@ -3,6 +3,7 @@
 import os, sys, re
 import time
 import apDB
+import apDatabase
 import apEMAN
 import apDisplay
 import appionData
@@ -35,8 +36,9 @@ def getStackParticlesFromId(stackid):
 	return(stackparticledata)
 
 #--------
-def getOneParticleFromStackId(stackid):
-	print "Getting particles for stack", stackid
+def getOneParticleFromStackId(stackid, msg=True):
+	if msg is True:
+		print "Getting one particle for stack", stackid
 	stackdata=appiondb.direct_query(appionData.ApStackData, stackid)
 	stackq=appionData.ApStackParticlesData()
 	stackq['stack'] = stackdata
@@ -206,5 +208,18 @@ def commitSubStack(params):
 	apDisplay.printMsg("finished")
 	return
 
+def getStackPixelSizeFromStackId(stackId):
+	"""
+	For a given stack id return stack apix
 
+	Not tested on defocal pairs
+	"""
+	apDisplay.printWarning("Getting stack pixel size from DB, not tested on defocal pairs")
+	stackpart = getOneParticleFromStackId(stackId, msg=False)
+	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
+	runsindata = getRunsInStack(stackId)
+	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
+	stackapix = imgapix*stackbin
+	apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
+	return stackapix
 
