@@ -27,18 +27,24 @@ def getParticleInfo(reconid, iteration):
 	"""
 	Get all particle data for given recon and iteration
 	"""
-	refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
-	
-	refineq=appionData.ApRefinementData()
+	refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
+	if not refinerundata:
+		apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
+
+	refineq = appionData.ApRefinementData()
 	refineq['refinementRun']=refinerundata
 	refineq['iteration']=iteration
-	refinedata=apdb.query(refineq, results=1)
+	refinedata = refineq.query(results=1)
 	
-	refineparticleq=appionData.ApParticleClassificationData()
-	refineparticleq['refinement']=refinedata[0]
+	if not refinedata:
+		apDisplay.printError("Could not find refinedata for reconrun id="
+			+str(reconid)+" iter="+str(iteration))
+
+	refinepartq=appionData.ApParticleClassificationData()
+	refinepartq['refinement']=refinedata[0]
 	t0 = time.time()
 	apDisplay.printMsg("querying particles on "+time.asctime())
-	refineparticledata = apdb.query(refineparticleq)
+	refineparticledata = refinepartq.query()
 	apDisplay.printMsg("received "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
 	return (refineparticledata)
 
@@ -63,9 +69,9 @@ def determineClasses(particles):
 	class_stats['min']=quality.min()
 	### print stats
 	print "-- quality factor stats --"
-	apDisplay.printMsg("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
+	print ("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
 		+str(round(class_stats['stdquality'],2)))
-	apDisplay.printMsg("min/max  :: "+str(round(class_stats['min'],2))+" <> "
+	print ("min/max  :: "+str(round(class_stats['min'],2))+" <> "
 		+str(round(class_stats['max'],2)))
 	apDisplay.printMsg("finished sorting in "+apDisplay.timeString(time.time()-t0))
 	return classes, class_stats
@@ -149,38 +155,45 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		eulerjump = apEulerJump.ApEulerJump()
 		numparts = len(particles)
 		apDisplay.printMsg("finding euler jumps for "+str(numparts)+" particles")
+
 		### prepare file
 		f = open('jumps.txt','w', 0666)
 		f.write("#partnum\t")
 		headerlist = ('mean', 'median', 'stdev', 'min', 'max')
 		for key in headerlist:
 			f.write(key+"\t")
+
+		### get stack particles
+		stackid = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
+		stackparts = apStack.getStackParticlesFromId(stackid)
+
 		### start loop
 		t0 = time.time()
-		t1 = time.time()
 		medians = []
-		for ptcl in range(1, numparts+1):
-			f.write('%d\t' % ptcl)
-			jumpdata = eulerjump.getEulerJumpData(ptcl, self.params['reconid'])
-			### no longer write individual jump values
-			#f.write('%3.3f\t' % (dist))
+		count = 0
+		for stackpart in stackparts:
+			count += 1
+			partnum = stackpart['particleNumber']
+			f.write('%d\t' % partnum)
+			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid)
 			medians.append(jumpdata['median'])
 			if jumpdata['median'] > self.params['avgjump']:
-				rejectlst.append(ptcl)
+				rejectlst.append(partnum)
 			for key in headerlist:
 				f.write("%3.4f\t" % (jumpdata[key]))
-			if ptcl % 500 == 0:
-				print ("particle=% 5d; median jump=% 3.2f, time=%s" % (ptcl,jumpdata['median'],
-					apDisplay.timeString(time.time()-t1)))
-				t1 = time.time()
-				f.flush()
+			if count % 1000 == 0:
+				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
+				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (partnum, jumpdata['median'],
+					apDisplay.timeString(timeremain)))
+				#f.flush()
 		apDisplay.printMsg("complete "+str(numparts)+" particles in "+apDisplay.timeString(time.time()-t0))
+
 		### print stats
 		print "-- median euler jumper stats --"
 		medians = numpy.asarray(medians, dtype=numpy.float32)
-		apDisplay.printMsg("mean/std :: "+str(round(medians.mean(),2))+" +/- "
+		print ("mean/std :: "+str(round(medians.mean(),2))+" +/- "
 			+str(round(medians.std(),2)))
-		apDisplay.printMsg("min/max  :: "+str(round(medians.min(),2))+" <> "
+		print ("min/max  :: "+str(round(medians.min(),2))+" <> "
 			+str(round(medians.max(),2)))
 		return rejectlst
 
@@ -242,7 +255,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
 		particles = getParticleInfo(self.params['reconid'], self.params['iter'])
 		stackdata = particles[0]['particle']['stack']
-		self.stack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
 		classes,cstats = determineClasses(particles)
 		
 		rejectlst=[]
@@ -266,7 +279,9 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		#loop through classes
 		for key in classkeys:
 			classnum+=1
-			print classnum
+			if classnum%10 == 0:
+				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
+				sys.stderr.write(str(classnum)+" of "+(str(len(classkeys))))
 			images=EMAN.EMData()
 
 			#loop through particles in class
@@ -281,8 +296,10 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				rot=ptcl['inplane_rotation']
 				rot=rot*math.pi/180
 				if ptcl['particle']['particleNumber'] not in rejectlst:
-					f.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
-						stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
+					f.write(
+						"%d\t%s\t%f,\t%f,%f,%f,%d\n" % 
+						(ptcl['particle']['particleNumber']-1, stack, ptcl['quality_factor'],
+						 rot, ptcl['shiftx'], ptcl['shifty'], mirror))
 					totalptcls+=1
 					nptcls+=1
 				else:
@@ -301,7 +318,12 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			if self.params['eotest']:
 				makeEvenOddClasses('tmp.lst',classes[key],self.params)
 			os.remove('tmp.lst')
+		sys.stderr.write("\n")
 		reject.close()
+		stackstr = str(stackdata.dbid)
+		reconstr = str(self.params['reconid'])
+		apDisplay.printColor("subStack.py -s "+stackstr+" -k reject.lst \\\n -d 'stack "
+			+stackstr+" recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
 
 #=====================
 #=====================
