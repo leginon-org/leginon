@@ -44,7 +44,7 @@ def getParticleInfo(reconid, iteration):
 
 def determineClasses(particles):
 	"""Takes refineparticledata and returns a dictionary of classes"""
-	apDisplay.printMsg("determining classes")
+	apDisplay.printMsg("sorting refineparticledata into classes")
 	classes={}
 	class_stats={}
 	quality=numpy.zeros(len(particles))
@@ -137,6 +137,9 @@ def removePtclsByLst(rejectlst, params):
 		rejectlst.append(int(words[0]))
 	return rejectlst
 
+
+#=====================
+#=====================
 class makeGoodAveragesScript(appionScript.AppionScript):
 	def __init__(self):
 		"""
@@ -148,6 +151,20 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		# create a cursor
 		self.cursor = self.db.cursor()
 		appionScript.AppionScript.__init__(self)
+
+	#=====================
+	def getMedianJump(self, partnum):
+		eulers = self.getEulersForParticle2(ptcl, self.params['reconid'])
+		eulers.sort(self.sortEulersByIteration)
+		distances = []
+		for i in range(len(eulers)-1):
+			#calculate distance (in degrees) for D7 symmetry
+			dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i]['eulers'], eulers[i+1]['eulers'], sym='d7', inplane=True)
+			distances.append(dist)
+			f.write('%3.3f\t' % (dist))
+		distances = numpy.asarray(distances, dtype=numpy.float32)
+		median = numpy.median(distances)
+		return median
 
 	#=====================
 	def removePtclsByJumps(self, particles, rejectlst):
@@ -181,7 +198,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				print ("particle=% 5d; median jump=% 3.2f, time=%s" % (ptcl,median, apDisplay.timeString(time.time()-t1)))
 				t1 = time.time()
 				f.flush()
-		apDisplay.printMsg("complete "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("complete "+str(len(particles))+" particles in "+apDisplay.timeString(time.time()-t0))
 		### print stats
 		print "-- euler jumper stats --"
 		medians = numpy.asarray(medians, dtype=numpy.float32)
@@ -413,11 +430,6 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				makeEvenOddClasses('tmp.lst',classes[key],self.params)
 			os.remove('tmp.lst')
 		reject.close()
-		
-		print
-		print "Total particles included =",totalptcls
-		print "Done!"
-
 
 #=====================
 #=====================
