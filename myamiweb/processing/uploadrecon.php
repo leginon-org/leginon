@@ -292,16 +292,16 @@ function runUploadRecon() {
     if ($oneiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really want to upload only one iteration");
   }
   $command.="uploadRecon.py ";
-  $command.="runid=$reconname ";
-  $command.="stackid=$stack ";
-  $command.="modelid=$model ";
-  $command.="package=$package ";
-  if (!$jobId) $command.="dir=$runpath ";
-  if ($jobId) $command.="jobid=$jobId ";
-  if ($contour) $command.="contour=$contour ";
-  if ($zoom) $command.="zoom=$zoom ";
-  if ($oneiteration=='on' && $iteration) $command.="oneiteration=$iteration ";
-  $command.="description=\"$description\"";
+  $command.="--runid=$reconname ";
+  $command.="--stackid=$stack ";
+  $command.="--modelid=$model ";
+  $command.="--package=$package ";
+  if (!$jobId) $command.="--outdir=$runpath ";
+  if ($jobId) $command.="--jobid=$jobId ";
+  if ($contour) $command.="--contour=$contour ";
+  if ($zoom) $command.="--zoom=$zoom ";
+  if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
+  $command.="--description=\"$description\"";
   
   writeTop("UploadRecon Run","UploadRecon Params");
 	
