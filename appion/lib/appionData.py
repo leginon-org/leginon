@@ -585,6 +585,20 @@ class ApEulerData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApEulerData=ApEulerData
 
+class ApEulerJumpData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('particle', ApStackParticlesData),
+			('refRun', ApRefinementRunData),
+			('median', float),
+			('mean', float),
+			('stdev', float),
+			('min', float),
+			('max', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApEulerData=ApEulerData
+
 class ApFSCData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
