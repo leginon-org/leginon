@@ -59,6 +59,7 @@ class AppionScript(object):
 	def close(self):
 		self.onClose()
 		apParam.closeFunctionLog(params=self.params, logfile=self.logfile)
+		apDisplay.printMsg("outdir:\n "+self.params['outdir'])
 		apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 
 	#######################################################
