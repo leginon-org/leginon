@@ -48,7 +48,9 @@ def getOneParticleFromStackId(stackid, msg=True):
 #--------
 def getOnlyStackData(stackid, msg=True):
 	apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
-	stackdata=appiondb.direct_query(appionData.ApStackData,stackid)
+	stackdata = appiondb.direct_query(appionData.ApStackData,stackid)
+	if not stackdata:
+		apDisplay.printError("Stack ID: "+str(stackid)+" does not exist in the database")
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 	if not os.path.isfile(stackpath):
 		apDisplay.printError("Could not find stack file: "+stackpath)

@@ -34,6 +34,7 @@ def createDefaults():
 	params['jobinfo']=None
 	params['chimeraonly']=False
 	params['path']=os.path.abspath('.')
+	params['outdir']=os.path.abspath('.')
 	params['volumes']=[]
 	params['classavgs']=[]
 	params['classvars']=[]
@@ -57,6 +58,7 @@ def createModelDefaults():
 	params['boxsize']=None
 	params['description']=None
 	params['path']=None
+	params['outdir']=None
 	params['name']=None
 
 def defineIteration():
@@ -119,6 +121,7 @@ def parseInput(args,params):
 			params['package']=elements[1]
 		elif (elements[0]=='dir'):
 			params['path']=os.path.abspath(elements[1])
+			params['outdir']=os.path.abspath(elements[1])
 		elif (elements[0]=='jobid'):
 			params['jobid']=int(elements[1])
 		elif (elements[0]=='contour'):
@@ -135,29 +138,18 @@ def parseInput(args,params):
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
-        
-def checkStackId(params):
-	stackinfo=appiondb.direct_query(appionData.ApStackData, params['stackid'])
-	if not stackinfo:
-		print "\nERROR: Stack ID",params['stackid'],"does not exist in the database"
-		sys.exit()
-	else:
-		params['stack']=stackinfo
-		print "Stack:",os.path.join(stackinfo['path']['path']+"/"+stackinfo['name'])
-	return
-	
-def checkModelId(params):
-	modelinfo=appiondb.direct_query(appionData.ApInitialModelData, params['modelid'])
-	if not modelinfo:
-		print "\nERROR: Initial model ID",params['modelid'],"does not exist in the database"
-		sys.exit()
-	else:
-		params['model']=modelinfo
-		print "Initial Model:",os.path.join(modelinfo['path']['path'],modelinfo['name'])
-	return
+
+def getModelData(modelid):
+	modeldata = appiondb.direct_query(appionData.ApInitialModelData, modelid)
+	if not modeldata:
+		apDisplay.printError("Initial model ID: "+str(modelid)+" does not exist in the database")
+	apDisplay.printMsg("Selected initial model: "+os.path.join(modeldata['path']['path'], modeldata['name']))
+	return modeldata
 
 def listFiles(params):
-	for f in os.listdir(params['path']):
+	for key in ('classavgs', 'classvars', 'volumes', 'fscs', 'emanavgs', 'msgpavgs', 'coranavgs'):
+		params[key] = []
+	for f in os.listdir(params['outdir']):
 		if re.match("threed\.\d+a\.mrc",f):
 			params['volumes'].append(f)
 		if re.match("classes\.\d+\.img",f):
@@ -175,7 +167,7 @@ def convertClassAvgFiles(params):
 	files_classavg = []
 	files_classold = []
 	files_classgood = []
-	for f in os.listdir(params['path']):
+	for f in os.listdir(params['outdir']):
 		if re.match("classes_eman\.\d+\.img",f):
 			return
 		if re.match("classes_coran\.\d+\.img",f):
@@ -222,7 +214,7 @@ def convertClassAvgFiles(params):
 		
 # Parse MsgPassing params through EMAN jobfile
 def parseMsgPassingParams(params):
-	emanJobFile = os.path.join(params['path'], params['jobinfo']['name']) 
+	emanJobFile = os.path.join(params['outdir'], params['jobinfo']['name']) 
 	if os.path.isfile(emanJobFile):
 		lines=open(emanJobFile,'r')
 		j=0
@@ -245,13 +237,13 @@ def parseMsgPassingParams(params):
 def findEmanJobFile(params):
 	# first find the job file, if it doesn't exist, use the .eman log file
 	if params['jobinfo'] is not None:
-		logfile = os.path.join(params['path'], params['jobinfo']['name'])
+		logfile = os.path.join(params['outdir'], params['jobinfo']['name'])
 		if os.path.isfile(logfile):
 			return logfile
-	logfile = os.path.join(params['path'], 'eman.log')
+	logfile = os.path.join(params['outdir'], 'eman.log')
 	if os.path.isfile(logfile):
 		return logfile
-	logfile = os.path.join(params['path'], '.emanlog')
+	logfile = os.path.join(params['outdir'], '.emanlog')
 	if os.path.isfile(logfile):
 		return logfile
 	apDisplay.printError("Could not find eman job or log file")
@@ -261,6 +253,7 @@ def parseLogFile(params):
 	logfile = findEmanJobFile(params)
 	apDisplay.printMsg("parsing eman log file: "+logfile)
 	lines=open(logfile,'r')
+	params['iterations'] = []
 	for line in lines:
 		# if read a refine line, get the parameters
 		line=string.rstrip(line)
@@ -301,7 +294,7 @@ def getEulersFromProj(params,iter):
 	# get Eulers from the projection file
 	eulers=[]
 	projfile="proj."+iter+".txt"
-	projfile=os.path.join(params['path'],projfile)
+	projfile=os.path.join(params['outdir'], projfile)
 	print "reading file, "+projfile
 	if not os.path.exists:
 		apDisplay.printError("no projection file found for iteration "+iter)
@@ -387,7 +380,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 def runChimeraScript(chimscript):
 	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	#apParam.resetVirtualFrameBuffer()
+	apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 	else:
@@ -419,7 +412,7 @@ def insertRefinementRun(params):
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	runq['description']=params['description']
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
@@ -447,7 +440,7 @@ def insertRefinementRun(params):
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
 	runq['package']=params['package']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	runq['description']=params['description']
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
@@ -468,7 +461,7 @@ def insertRefinementRun(params):
 
 def insertResolutionData(params,iteration):
 	fsc = 'fsc.eotest.'+iteration['num']
-	fscfile = os.path.join(params['path'],fsc)
+	fscfile = os.path.join(params['outdir'],fsc)
 
 	if not os.path.isfile(fscfile):
 		apDisplay.printWarning("Could not find FSC file: "+fscfile)
@@ -495,7 +488,7 @@ def insertResolutionData(params,iteration):
 def insertRMeasureData(params, iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
 
-	volPath = os.path.join(params['path'], volumeDensity)
+	volPath = os.path.join(params['outdir'], volumeDensity)
 	if not os.path.exists(volPath):
 		apDisplay.printWarning("R Measure failed, volume density not found: "+volPath)
 		return None
@@ -535,10 +528,10 @@ def insertIteration(iteration, params):
 	refineparamsq['MsgP_minptls']=iteration['msgpassminp']
 
 	#create Chimera snapshots
-	fscfile = os.path.join(params['path'], "fsc.eotest."+iteration['num'])
+	fscfile = os.path.join(params['outdir'], "fsc.eotest."+iteration['num'])
 	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
-	volDensPath = os.path.join(params['path'], volumeDensity)
+	volDensPath = os.path.join(params['outdir'], volumeDensity)
 	renderSnapshots(volDensPath, halfres, params['model'], 
 		params['contour'], params['zoom'], params['apix'])
 
@@ -594,7 +587,7 @@ def insertIteration(iteration, params):
 		apDisplay.printWarning("not committing results to database")
 
 	#insert FSC data
-	fscfile = os.path.join(params['path'], "fsc.eotest."+iteration['num'])
+	fscfile = os.path.join(params['outdir'], "fsc.eotest."+iteration['num'])
 	insertFSC(fscfile, refineq, params['commit'])
 	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
 	apDisplay.printColor("FSC 0.5 Resolution: "+str(halfres), "cyan")
@@ -603,13 +596,13 @@ def insertIteration(iteration, params):
 	eulers = getEulersFromProj(params,iteration['num'])	
 	
 	# get # of class averages and # kept
-	#params['eulers']=getClassInfo(os.path.join(params['path'],classavg))
+	#params['eulers']=getClassInfo(os.path.join(params['outdir'],classavg))
 
 	# get list of bad particles for this iteration
-	badprtls = readParticleLog(params['path'], iteration['num'])
+	badprtls = readParticleLog(params['outdir'], iteration['num'])
 
 	# expand cls.*.tar into temp file
-	clsf=os.path.join(params['path'],"cls."+iteration['num']+".tar")
+	clsf=os.path.join(params['outdir'], "cls."+iteration['num']+".tar")
 	print "reading",clsf
 	clstar=tarfile.open(clsf)
 	clslist=clstar.getmembers()
@@ -636,7 +629,7 @@ def insertIteration(iteration, params):
 	apDisplay.printMsg("creating euler frequency map")
 	refrunid = int(params['refinementRun'].dbid)
 	iternum = int(iteration['num'])
-	apEulerDraw.createEulerImages(refrunid, iternum, path=params['path'])
+	apEulerDraw.createEulerImages(refrunid, iternum, path=params['outdir'])
 
 	return
 

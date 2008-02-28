@@ -6,77 +6,125 @@ import os
 import time
 import apParam
 import apDisplay
+import apStack
 import apRecon
+import appionScript
 
+#=====================
+#=====================
+class UploadReconScript(appionScript.AppionScript):
+
+	#=====================
+	def setupParserOptions(self):
+		### unused params
+		"""	
+		params['classvars']=[]
+		"""
+		self.parser.set_usage("Usage: %prog --runid=<name> --stackid=<int> --modelid=<int>\n\t "
+			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --zoom=<float> "
+			+"--contour=<contour> --outdir=/path/ --commit ]")
+		self.parser.add_option("-r", "--runid", dest="runid", 
+			help="Name assigned to this reconstruction", metavar="TEXT")
+		self.parser.add_option("-i", "--oneiter", dest="oneiter", type="int",
+			help="Only upload one iteration", metavar="INT")
+		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
+			help="Stack id in the database", metavar="INT")
+		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
+			help="Initial model id in the database", metavar="INT")
+		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
+			help="Jobfile id in the database", metavar="FLOAT")
+		self.parser.add_option("-p", "--package", dest="package", default="EMAN",
+			help="Reconstruction package used (EMAN by default)", metavar="TEXT")
+		self.parser.add_option("-o", "--outdir", dest="outdir",
+			help="Location of reconstruction files", metavar="PATH")
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
+			action="store_true", help="Commit reconstruction to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit reconstruction to database")
+		self.parser.add_option("-d", "--description", dest="description",
+			help="Description of the reconstruction (must be in quotes)", metavar="TEXT")
+		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
+			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
+		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
+			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
+		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False,
+			action="store_true", help="Do not do any reconstruction calculations only run chimera")
+
+	#=====================
+	def checkConflicts(self):
+		# msgPassing requires a jobId in order to get the jobfile & the paramters
+		if ((self.params['package'] == 'EMAN/MsgP' or self.params['package'] == 'EMAN/SpiCoran') 
+		 and self.params['jobid'] is None):
+			apDisplay.printError(self.params['package']+" refinement requires a jobid. Please enter a jobId,"
+				+" e.g. --jobid=734")
+		if self.params['stackid'] is None:
+			apDisplay.printError("please enter a stack id, e.g. --stackid=734")
+		if self.params['modelid'] is None:
+			apDisplay.printError("please enter a starting model id, e.g. --modelid=34")
+
+		if self.params['description'] is None:
+			apDisplay.printError("please enter a recon description, e.g. --description='my fav recon'")
+		if self.params['runid'] is None:
+			apDisplay.printError("please enter a recon runid, e.g. --runid=recon11")
+
+	#=====================
+	def setOutDir(self):
+		if self.params['jobid']:
+			# if jobid is supplied, get the job info from the database
+			self.params['jobinfo'] = apRecon.getClusterJobDataFromID(self.params['jobid'])
+			if self.params['jobinfo'] is None:
+				apDisplay.printError("jobid supplied does not exist: "+str(self.params['jobid']))
+			self.params['outdir'] = self.params['jobinfo']['path']['path']
+		else:
+			"what to about outdir now?"
+		if not os.path.exists(self.params['outdir']):
+			apDisplay.printError("upload directory does not exist: "+self.params['outdir'])
+
+	#=====================
+	def start(self):
+		# create temp directory for extracting data
+		self.params['tmpdir'] = os.path.join(self.params['outdir'], "temp")
+		apParam.createDirectory(self.params['tmpdir'], warning=True)
+
+		# make sure that the stack & model IDs exist in database
+		emanJobFile = apRecon.findEmanJobFile(self.params)
+		self.params['stack'] = apStack.getOnlyStackData(self.params['stackid'])
+		self.params['model'] = apRecon.getModelData(self.params['modelid'])
+
+		# parse out the refinement parameters from the log file
+		apRecon.parseLogFile(self.params)
+
+		# parse out the massage passing subclassification parameters from the job/log file
+		if self.params['package'] == 'EMAN/MsgP':
+			apRecon.parseMsgPassingParams(self.params)
+
+		# convert class average files from old to new format
+		apRecon.convertClassAvgFiles(self.params)
+
+		# get a list of the files in the directory
+		apRecon.listFiles(self.params)
+		
+		# create a refinementRun entry in the database
+		apRecon.insertRefinementRun(self.params)
+
+		# insert the Iteration info
+		for iteration in self.params['iterations']:
+			# if only uploading one iteration, skip to that one
+			if self.params['oneiter'] and int(iteration['num']) != self.params['oneiter']:
+				continue
+
+			apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
+				+str(len(self.params['iterations']))+"\n", "green")
+			for i in range(75): 
+				sys.stderr.write("#")
+			sys.stderr.write("\n")
+			apRecon.insertIteration(iteration, self.params)
+
+
+#=====================
+#=====================
 if __name__ == '__main__':
-	t0 = time.time()
-	# create params dictionary & set defaults
-	params = apRecon.createDefaults()
+	uploadRecon = UploadReconScript()
+	uploadRecon.start()
+	uploadRecon.close()
 
-	# parse command line input
-	apRecon.parseInput(sys.argv, params)
-
-	# msgPassing requires a jobId in order to get the jobfile & the paramters
-	if params['package'] == 'EMAN/MsgP' or params['package'] == 'EMAN/SpiCoran' and params['jobid'] is None:
-		apDisplay.printError("%s refinement requires a jobId to be processed. Please enter a jobId." % params['package'])
-
-	# if jobid is supplied, get the job info from the database
-	if params['jobid']:
-		params['jobinfo']=apRecon.getClusterJobDataFromID(params['jobid'])
-		if params['jobinfo'] is None:
-			apDisplay.printError("jobid supplied does not exist: "+str(params['jobid']))
-		params['path'] = params['jobinfo']['path']['path']
-			
-	# check to make sure that necessary parameters are set
-	if params['stackid'] is None:
-		apDisplay.printError("enter a stack id")
-	if params['modelid'] is None:
-		apDisplay.printError("enter a starting model id")
-	if not os.path.exists(params['path']):
-		apDisplay.printError("upload directory does not exist: "+params['path'])
-	os.chdir(params['path'])
-
-	# record command line
-	logfile = apParam.writeFunctionLog(sys.argv)
-
-	# make sure that the stack & model IDs exist in database
-	emanJobFile = apRecon.findEmanJobFile(params)
-	apRecon.checkStackId(params)
-	apRecon.checkModelId(params)
-
-	# create directory for extracting data
-	if params['tmpdir'] is None:
-		params['tmpdir'] = os.path.join(params['path'],"temp")
-	apParam.createDirectory(params['tmpdir'], warning=True)
-	
-	# parse out the refinement parameters from the log file
-	apRecon.parseLogFile(params)
-
-	# parse out the massage passing subclassification parameters from the job/log file
-	if params['package'] == 'EMAN/MsgP':
-		apRecon.parseMsgPassingParams(params)
-
-	# convert class average files from old to new format
-	apRecon.convertClassAvgFiles(params)
-
-	# get a list of the files in the directory
-	apRecon.listFiles(params)
-	
-	# create a refinementRun entry in the database
-	apRecon.insertRefinementRun(params)
-
-	# insert the Iteration info
-	for iteration in params['iterations']:
-		# if only uploading one iteration, skip to that one
-		if params['oneiteration'] and int(iteration['num'])!=params['oneiteration']:
-			continue
-
-		apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "+str(len(params['iterations']))+"\n", "green")
-		for i in range(75): 
-			sys.stderr.write("#")
-		sys.stderr.write("\n")
-		apRecon.insertIteration(iteration,params)
-
-	#finish up
-	apParam.closeFunctionLog(params=params, logfile=logfile)
-	apDisplay.printColor("COMPLETE UPLOAD:\t"+apDisplay.timeString(time.time()-t0),"green")
