@@ -27,18 +27,35 @@ def makeNewStack(oldstack, newstack, listfile):
 	return
 
 #--------
-def getStackParticlesFromId(stackid):
-	print "Getting particles for stack", stackid
-	stackdata=appiondb.direct_query(appionData.ApStackData, stackid)
-	stackq=appionData.ApStackParticlesData()
-	stackq['stack']=stackdata
-	stackparticledata=appiondb.query(stackq)
-	return(stackparticledata)
+def getStackParticlesFromId(stackid, msg=True):
+	t0 = time.time()
+	if msg is True:
+		apDisplay.printMsg("querying stack particles from stackid="+str(stackid)+" at "+time.asctime())
+	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
+	stackq = appionData.ApStackParticlesData()
+	stackq['stack'] = stackdata
+	stackpartdata = stackq.query()
+	if not stackpartdata:
+		apDisplay.printWarning("failed to get particles of stackid="+str(stackid))
+	if msg is True:
+		apDisplay.printMsg("sorting particles")
+	stackpartdata.sort(sortStackParts)
+	if msg is True:
+		apDisplay.printMsg("received "+str(len(stackpartdata))
+			+" stack particles in "+apDisplay.timeString(time.time()-t0))
+	return stackpartdata
+
+#--------
+def sortStackParts(a, b):
+	if a['particleNumber'] > b['particleNumber']:
+		return 1
+	else:
+		return -1
 
 #--------
 def getOneParticleFromStackId(stackid, msg=True):
 	if msg is True:
-		print "Getting one particle for stack", stackid
+		apDisplay.printMsg("querying one stack particle from stackid="+str(stackid)+" on "+time.asctime())
 	stackdata=appiondb.direct_query(appionData.ApStackData, stackid)
 	stackq=appionData.ApStackParticlesData()
 	stackq['stack'] = stackdata
