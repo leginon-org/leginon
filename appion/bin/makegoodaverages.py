@@ -322,8 +322,9 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		reject.close()
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
-		apDisplay.printColor("subStack.py -s "+stackstr+" -k reject.lst \\\n -d 'stack "
-			+stackstr+" recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
+		apDisplay.printColor("subStack.py -s "+stackstr+" \\\n "
+			+" -k "+os.path.join(self.params['outdir'],"reject.lst")+" \\\n "
+			+" -d 'recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
 
 #=====================
 #=====================
