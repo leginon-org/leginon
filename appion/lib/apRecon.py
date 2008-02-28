@@ -383,7 +383,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 def runChimeraScript(chimscript):
 	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
-	apParam.resetVirtualFrameBuffer()
+	#apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
 	else:
