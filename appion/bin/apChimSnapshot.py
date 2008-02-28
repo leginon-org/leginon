@@ -172,18 +172,18 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 			writeMessageToLog("turn: bottom view")
 			runChimCommand('turn x -45')
 			save_image(image5, format=imgFormat)
-
-		### works about 35% of time ???
-		writeMessageToLog("turn: get clipped side view")
-		xsize, ysize, zsize = v.data.size
-		yon = float(zsize)/2.0
-		runChimCommand('clip hither %.3f' % -yon)
-		from SurfaceCap import surfcaps
-		sc = surfcaps.Surface_Capper()
-		#sc.set_cap_color((0.375,0.750,0.067,1))
-		sc.show_cap(m)
-		image6 = vol_path+'.6.png'
-		save_image(image6, format=imgFormat)
+		else:
+			### works about 35% of time ???
+			writeMessageToLog("turn: get clipped side view")
+			xsize, ysize, zsize = v.data.size
+			yon = float(zsize)/2.0
+			runChimCommand('clip hither %.3f' % -yon)
+			from SurfaceCap import surfcaps
+			sc = surfcaps.Surface_Capper()
+			#sc.set_cap_color((0.375,0.750,0.067,1))
+			sc.show_cap(m)
+			image6 = vol_path+'.6.png'
+			save_image(image6, format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
