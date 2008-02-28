@@ -32,8 +32,39 @@ class ApEulerJump(object):
 		self.appiondb = apDB.apdb
 
 	#=====================
-	def getEulerJumpData(self, stackpartnum, reconrunid):
-		stackpartid = self.getStackPartID(stackpartnum, reconrunid)
+	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None):
+		### get stack particles
+		if stackid is None:
+			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
+		stackparts = apStack.getStackParticlesFromId(self.params['stackid'])
+		### start loop
+		t0 = time.time()
+		medians = []
+		count = 0
+		for stackpart in stackparts:
+			count += 1
+			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid.dbid)
+			medians.append(jumpdata['median'])
+			if count % 500 == 0:
+				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
+				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (partnum, jumpdata['median'],
+					apDisplay.timeString(timeremain)))
+		apDisplay.printMsg("complete "+str(len(stackparts))+" particles in "+apDisplay.timeString(time.time()-t0))
+		### print stats
+		print "-- median euler jumper stats --"
+		medians = numpy.asarray(medians, dtype=numpy.float32)
+		print ("mean/std :: "+str(round(medians.mean(),2))+" +/- "
+			+str(round(medians.std(),2)))
+		print ("min/max  :: "+str(round(medians.min(),2))+" <> "
+			+str(round(medians.max(),2)))
+		return
+
+	#=====================
+	def getEulerJumpData(self, reconrunid,  stackpartnum=None, stackpartid=None, stackid=None):
+		if stackpartnum is None and stackpartid is None:
+			apDisplay.printError("please provide either stackpartnum or stackpartid")
+		if stackpartid is None:
+			stackpartid = self.getStackPartID(stackpartnum, reconrunid, stackid)
 		### check DB first for data
 		jumpdata = self.getJumpDataFromDB(stackpartid, reconrunid)
 		if jumpdata is not None:
@@ -63,9 +94,7 @@ class ApEulerJump(object):
 
 
 	#=====================
-	def getJumpDataFromDB(self, stackpartid, reconrunid, stackid=None):
-		if stackid is None:
-			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
+	def getJumpDataFromDB(self, stackpartid, reconrunid):
 		jumpq = appionData.ApEulerJumpData()
 		jumpq['particle'] = self.appiondb.direct_query(appionData.ApStackParticlesData, stackpartid)
 		jumpq['refRun'] = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
@@ -93,7 +122,7 @@ class ApEulerJump(object):
 	def calculateJumpData(self, stackpartid, reconrunid):
 		#apDisplay.printMsg("calculating jump data for "+str(stackpartid))
 		jumpdata = {}
-		eulers = self.getEulersForParticleSinedon(stackpartid, reconrunid)
+		eulers = self.getEulersForParticle(stackpartid, reconrunid)
 		eulers.sort(self.sortEulersByIteration)
 		distances = []
 		for i in range(len(eulers)-1):
