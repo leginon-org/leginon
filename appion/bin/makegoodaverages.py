@@ -1,13 +1,17 @@
 #!/usr/bin/python -O
 
-
+#python
 import os
 import math
 import sys
+import time
 #scipy
 import numpy
 #eman
 import EMAN
+#db
+import sinedon
+import MySQLdb
 #appion
 import apDB
 import appionData
@@ -17,9 +21,10 @@ import appionScript
 
 apdb=apDB.apdb
 
-	
 def getParticleInfo(reconid, iteration):
-	"""Get all particle data for given recon and iteration"""
+	"""
+	Get all particle data for given recon and iteration
+	"""
 	refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
 	
 	refineq=appionData.ApRefinementData()
@@ -29,13 +34,15 @@ def getParticleInfo(reconid, iteration):
 	
 	refineparticleq=appionData.ApParticleClassificationData()
 	refineparticleq['refinement']=refinedata[0]
-	print "Getting particles"
-	refineparticledata=apdb.query(refineparticleq)
+	t0 = time.time()
+	apDisplay.printMsg("querying particles on "+time.asctime())
+	refineparticledata = apdb.query(refineparticleq)
+	apDisplay.printMsg("received "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
 	return (refineparticledata)
 
 def determineClasses(particles):
 	"""Takes refineparticledata and returns a dictionary of classes"""
-	print "Determining classes"
+	apDisplay.printMsg("determining classes")
 	classes={}
 	class_stats={}
 	quality=numpy.zeros(len(particles))
@@ -51,12 +58,13 @@ def determineClasses(particles):
 	class_stats['stdquality']=quality.std()
 	class_stats['max']=quality.max()
 	class_stats['min']=quality.min()
-	print "Quality factor stats:"
-	print "mean =", class_stats['meanquality']
-	print "std =",class_stats['stdquality']
-	print "max =",class_stats['max']
-	print "min =",class_stats['min']
-	return classes,class_stats
+	### print stats
+	print "-- quality factor stats --"
+	apDisplay.printMsg("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
+		+str(round(class_stats['stdquality'],2)))
+	apDisplay.printMsg("min/max  :: "+str(round(class_stats['min'],2))+" <> "
+		+str(round(class_stats['max'],2)))
+	return classes, class_stats
 
 def makeClassAverages(lst, outputstack, classdata, params):
 	#align images in class
@@ -111,6 +119,8 @@ def makeEvenOddClasses(lst,classdata,params):
 	os.remove('even.lst')
 	os.remove('odd.lst')
 
+'''
+### sinedon is too slow
 def getEulersForParticle(particlenum, reconid):
 	"""
 	returns all classdata for a particular particle and refinement
@@ -121,56 +131,25 @@ def getEulersForParticle(particlenum, reconid):
 
 	stack=refinerundata['stack']
 	stackparticlesq=appionData.ApStackParticlesData()
-	stackparticlesq['stack']=stack
-	stackparticlesq['particleNumber']=particlenum
+	stackparticlesq['stack'] = stack
+	stackparticlesq['particleNumber'] = particlenum
 	stackparticlesdata=apdb.query(stackparticlesq)
 	
 	refinementq=appionData.ApRefinementData()
-	refinementq['refinementRun']=refinerundata
+	refinementq['refinementRun'] = refinerundata
 
-	particledata=stackparticlesdata[0]
-	ptclclassq=appionData.ApParticleClassificationData()
-	ptclclassq['particle']=particledata
-	ptclclassq['refinement']=refinementq
+	particledata = stackparticlesdata[0]
+	ptclclassq = appionData.ApParticleClassificationData()
+	ptclclassq['particle'] = particledata
+	ptclclassq['refinement']  = refinementq
 	ptclclassdata = apdb.query(ptclclassq)
 	
 	#for cls in ptclclassdata:
 		#print cls['refinement']['iteration'], cls['eulers']
 	return ptclclassdata
+'''
 
-def sortEulersByIteration(a, b):
-	if a['refinement']['iteration'] > b['refinement']['iteration']:
-		return 1
-	else:
-		return -1
-
-def removePtclsByJumps(particles,rejectlst,params):
-	nptcls=len(particles)
-	apDisplay.printMsg("Finding Euler jumps for "+str(nptcls)+" particles")
-	stackdata = particles[0]['particle']['stack']
-	stack = os.path.join(stackdata['path']['path'], stackdata['name'])
-	f=open('jumps.txt','w')
-	for ptcl in range(1,nptcls+1):
-		f.write('%d\t' % ptcl)
-		eulers = getEulersForParticle(ptcl, params['reconid'])
-		eulers.sort(sortEulersByIteration)
-		distances = numpy.zeros((len(eulers)-1), dtype=numpy.float32)
-		for i in range(len(eulers)-1):
-			#calculate distance (in degrees) for D7 symmetry
-			dist = eulerCalculateDistanceSym(eulers[i]['eulers'], eulers[i+1]['eulers'], sym='d7')
-			distances[i] = dist
-			f.write('%3.5f\t' % dist*math.pi/180.0)
-		median = numpy.median(distances)
-		if median > params['avgjump']:
-			rejectlst.append(ptcl)
-		f.write('%f\t%f\t%f\n' % (distances.mean(), median, distances.std()))
-		if ptcl%100 == 0:
-			print "particle=",ptcl,"; median jump=",median
-		#print distances
-		#print distances.mean()
-	return rejectlst
-
-def removePtclsByLst(rejectlst,params):
+def removePtclsByLst(rejectlst, params):
 	"""
 	Removes particles by reading a list of particle numbers generated externally.
 
@@ -187,6 +166,130 @@ def removePtclsByLst(rejectlst,params):
 	return rejectlst
 
 class makeGoodAveragesScript(appionScript.AppionScript):
+	def __init__(self):
+		"""
+		Need to connect to DB server before moving forward
+		"""
+		# connect
+		self.dbconf = sinedon.getConfig('appionData')
+		self.db     = MySQLdb.connect(**self.dbconf)
+		# create a cursor
+		self.cursor = self.db.cursor()
+		appionScript.AppionScript.__init__(self)
+
+	#=====================
+	def removePtclsByJumps(self, particles, rejectlst):
+		nptcls = len(particles)
+		apDisplay.printMsg("Finding Euler jumps for "+str(nptcls)+" particles")
+		stackdata = particles[0]['particle']['stack']
+		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		f=open('jumps.txt','w')
+		medians = []
+		t0 = time.time()
+		for ptcl in range(1, nptcls+1):
+			f.write('%d\t' % ptcl)
+			eulers = self.getEulersForParticle2(ptcl, self.params['reconid'])
+			eulers.sort(self.sortEulersByIteration)
+			distances = []
+			for i in range(len(eulers)-1):
+				#calculate distance (in degrees) for D7 symmetry
+				dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i]['eulers'], eulers[i+1]['eulers'], sym='d7')
+				distances.append(dist)
+				f.write('%3.5f\t' % (dist*math.pi/180.0))
+			distances = numpy.asarray(distances, dtype=numpy.float32)
+			median = numpy.median(distances)
+			medians.append(median)
+			if median > self.params['avgjump']:
+				rejectlst.append(ptcl)
+			f.write('%f\t%f\t%f\n' % (distances.mean(), median, distances.std()))
+			if ptcl % 100 == 0:
+				print ("particle=%05d; median jump=%3.2f" % (ptcl,median))
+		apDisplay.printMsg("complete "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
+		### print stats
+		print "-- euler jumper stats --"
+		medians = numpy.asarray(medians, dtype=numpy.float32)
+		apDisplay.printMsg("mean/std :: "+str(round(medians.mean(),2))+" +/- "
+			+str(round(medians.std(),2)))
+		apDisplay.printMsg("min/max  :: "+str(round(medians.min(),2))+" <> "
+			+str(round(medians.max(),2)))
+		return rejectlst
+
+	#=====================
+	def sortEulersByIteration(self, a, b):
+		if a['refinement']['iteration'] > b['refinement']['iteration']:
+			return 1
+		else:
+			return -1
+
+	#=====================
+	def getEulersForParticle2(self, partnum, reconid):
+		"""
+		returns euler data for a particular particle and refinement
+		"""
+		query = (
+			"SELECT \n"
+			+"  eulers.`euler1` AS alt, \n"
+			+"  eulers.`euler2` AS az, \n"
+			#+"  eulers.`euler3` AS euler3, \n"
+			+"  partclass.`inplane_rotation` AS phi, \n"
+			+"  partclass.`mirror` AS mirror, \n"
+			+"  partclass.`thrown_out` AS reject, \n"
+			+"  ref.`iteration` AS iteration \n"
+			+"FROM `ApParticleClassificationData` as partclass \n"
+			+"LEFT JOIN `ApRefinementData` AS ref \n"
+			+"  ON partclass.`REF|ApRefinementData|refinement` = ref.`DEF_id` \n"
+			+"LEFT JOIN `ApStackParticlesData` AS stackpart \n"
+			+"  ON partclass.`REF|ApStackParticlesData|particle` = stackpart.`DEF_id` \n"
+			+"LEFT JOIN `ApEulerData` AS eulers \n"
+			+"  ON partclass.`REF|ApEulerData|eulers` = eulers.`DEF_id` \n"
+			+"WHERE \n"
+			+"  ref.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+			+"AND \n"
+			+"  stackpart.`particleNumber` = "+str(partnum)+" \n" 
+		)
+		#print query
+		self.cursor.execute(query)
+		results = self.cursor.fetchall()
+		#apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
+		if not results:
+			print query
+			apDisplay.printError("Failed to get Eulers for Particle "+str(partnum))
+		return self.convertSQLtoEulerTree(results)
+
+	#=====================
+	def convertSQLtoEulerTree(self, results):
+		t0 = time.time()
+		eulertree = []
+		for row in results:
+			try:
+				euler = { 'eulers': {} }
+				eulerpair['eulers']['euler1'] = float(row[0])
+				eulerpair['eulers']['euler2'] = float(row[1])
+				eulerpair['eulers']['euler3'] = float(row[2])
+				eulerpair['eulers']['mirror'] = self.nullOrValue(row[3])
+				eulerpair['eulers']['reject'] = self.nullOrValue(row[4])
+				eulerpair['iteration'] = int(row[5])
+				eulertree.append(eulerpair)
+			except:
+				print row
+				apDisplay.printError("bad row entry")			
+		apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
+		return eulertree
+
+	#=====================
+	def nullOrValue(self, val):
+		if val is None:
+			return 0
+		else:
+			return 1
+
+	#=====================
+	def removePtclsByQualityFactor(self, particles, rejectlst, cutoff):
+		for ptcl in particles:
+			if ptcl['quality_factor'] < cutoff:
+				rejectlst.append(ptcl['particle']['particleNumber'])
+		return rejectlst
+
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
@@ -213,8 +316,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location of new class files", metavar="PATH")
 		self.parser.add_option("--eotest", dest="eotest", default=False,
-				  action="store_true", help="make even and odd averages")
-				  
+			action="store_true", help="make even and odd averages")
+
 	#=====================
 	def checkConflicts(self):
 		if self.params['reconid'] is None:
@@ -233,13 +336,6 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(refinerundata['path']['path'], 'eulers')
 
 	#=====================
-	def removePtclsByQualityFactor(particles, rejectlst, cutoff, params):
-		for ptcl in particles:
-			if ptcl['quality_factor'] < cutoff:
-				rejectlst.append(ptcl['particle']['particleNumber'])
-		return rejectlst
-
-	#=====================
 	def start(self):
 		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
 		particles = getParticleInfo(self.params['reconid'], self.params['iter'])
@@ -253,7 +349,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			print "Cutoff =",cutoff
 			rejectlst = self.removePtclsByQualityFactor(particles, rejectlst, cutoff, self.params)
 		if self.params['avgjump'] is not None:
-			rejectlst = removePtclsByJumps(particles, rejectlst, self.params)
+			rejectlst = self.removePtclsByJumps(particles, rejectlst)
 		if self.params['rejectlst']:
 			rejectlst = removePtclsByLst(rejectlst, self.params)
 
