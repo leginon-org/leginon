@@ -45,7 +45,8 @@ if ($reconRuns) {
 
 	$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'defid', 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 'best: fsc / rMeas (iter)', 'description');
+	$display_keys = array ( 'defid', 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 
+		'best: fsc / rMeas (iter)', 'avg median<br/>euler jump','description');
 	foreach($display_keys as $key) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
@@ -58,6 +59,7 @@ if ($reconRuns) {
 		$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
 		$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
 		$res = $particle->getHighestResForRecon($reconrun['DEF_id']);
+		$avgmedjump = $particle->getAverageMedianJump($reconrun['DEF_id']);
 
 		// PRINT INFO
 		$html .= "<TR>\n";
@@ -69,6 +71,10 @@ if ($reconRuns) {
 		$html .= "<TD>".$stackapix."</TD>\n";
 		$html .= "<TD>$stmodel[boxsize]</TD>\n";
 		$html .= sprintf("<TD>% 2.2f / % 2.2f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
+		if ($avgmedjump['count'] > 0)
+			$html .= sprintf("<TD>% 2.2f </TD>\n", $avgmedjump['avgmedian']);
+		else
+			$html .= "<TD></TD>\n";
 		$html .= "<TD>".$reconrun['description']."</TD>\n";
 		$html .= "</TR>\n";
 	}

@@ -1191,6 +1191,18 @@ class particledata {
 		return $r;
 	}
 
+	function getAverageMedianJump ($refineRunId) {
+		$q = "SELECT "
+			."COUNT(e.`median`) AS count, "
+			."AVG(e.`median`) AS avgmedian "
+			."FROM ApEulerJumpData AS e "
+			."WHERE "
+			."  e.`REF|ApRefinementRunData|refRun` = '$refineRunId' "
+			."GROUP BY e.`REF|ApRefinementRunData|refRun` ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 	function getParticleEuler ($refinementDataId) {
 		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
 			."FROM `ApParticleClassificationData` "
