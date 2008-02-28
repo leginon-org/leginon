@@ -236,10 +236,12 @@ def parseMsgPassingParams(params):
 
 def findEmanJobFile(params):
 	# first find the job file, if it doesn't exist, use the .eman log file
-	if params['jobinfo'] is not None:
+	if 'jobinfo' in params and params['jobinfo'] is not None:
 		logfile = os.path.join(params['outdir'], params['jobinfo']['name'])
 		if os.path.isfile(logfile):
 			return logfile
+	else:
+		params['jobinfo'] = None
 	logfile = os.path.join(params['outdir'], 'eman.log')
 	if os.path.isfile(logfile):
 		return logfile
@@ -288,6 +290,7 @@ def parseLogFile(params):
 				params['package']='EMAN/SpiCoran'	
 		if re.search("msgPassing_subClassification.py \d+ ", line):
 				params['package']='EMAN/MsgP'	
+	apDisplay.printColor("Found "+str(len(params['iterations']))+" iterations", "green")
 	lines.close()
 				
 def getEulersFromProj(params,iter):
@@ -414,16 +417,18 @@ def insertRefinementRun(params):
 	runq['package']=params['package']
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	runq['description']=params['description']
-	runq['package']=params['package']
 	runq['initialModel']=params['model']
 
 	result=appiondb.query(runq, results=1)
 
 	if earlyresult and not result:
+		for key in earlyresult[0]:
+			 if key in params and earlyresult[0][key] != params[key]:
+				print key,":",earlyresult[0][key]," != ",result[0][key]
 		apDisplay.printError("Refinement Run parameters have changed")	
 
 	# get stack apix
-	params['apix']=apDatabase.getApixFromStackData(params['stack'])
+	params['apix'] = apDatabase.getApixFromStackData(params['stack'])
 
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
