@@ -20,7 +20,7 @@ import apDisplay
 import apStack
 import apEulerCalc
 import appionScript
-
+import apEulerJump
 apdb=apDB.apdb
 
 def getParticleInfo(reconid, iteration):
@@ -45,6 +45,7 @@ def getParticleInfo(reconid, iteration):
 def determineClasses(particles):
 	"""Takes refineparticledata and returns a dictionary of classes"""
 	apDisplay.printMsg("sorting refineparticledata into classes")
+	t0 = time.time()
 	classes={}
 	class_stats={}
 	quality=numpy.zeros(len(particles))
@@ -66,6 +67,7 @@ def determineClasses(particles):
 		+str(round(class_stats['stdquality'],2)))
 	apDisplay.printMsg("min/max  :: "+str(round(class_stats['min'],2))+" <> "
 		+str(round(class_stats['max'],2)))
+	apDisplay.printMsg("finished sorting in "+apDisplay.timeString(time.time()-t0))
 	return classes, class_stats
 
 def makeClassAverages(lst, outputstack, classdata, params):
@@ -141,176 +143,46 @@ def removePtclsByLst(rejectlst, params):
 #=====================
 #=====================
 class makeGoodAveragesScript(appionScript.AppionScript):
-	def __init__(self):
-		"""
-		Need to connect to DB server before moving forward
-		"""
-		# connect
-		self.dbconf = sinedon.getConfig('appionData')
-		self.db     = MySQLdb.connect(**self.dbconf)
-		# create a cursor
-		self.cursor = self.db.cursor()
-		appionScript.AppionScript.__init__(self)
-
-	#=====================
-	def getMedianJump(self, partnum):
-		eulers = self.getEulersForParticle2(ptcl, self.params['reconid'])
-		eulers.sort(self.sortEulersByIteration)
-		distances = []
-		for i in range(len(eulers)-1):
-			#calculate distance (in degrees) for D7 symmetry
-			dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i]['eulers'], eulers[i+1]['eulers'], sym='d7', inplane=True)
-			distances.append(dist)
-			f.write('%3.3f\t' % (dist))
-		distances = numpy.asarray(distances, dtype=numpy.float32)
-		median = numpy.median(distances)
-		return median
 
 	#=====================
 	def removePtclsByJumps(self, particles, rejectlst):
-		nptcls = len(particles)
-		apDisplay.printMsg("finding euler jumps for "+str(nptcls)+" particles")
-		stackdata = particles[0]['particle']['stack']
-		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
-		f=open('jumps.txt','w', 0666)
-		medians = []
+		eulerjump = apEulerJump.ApEulerJump()
+		numparts = len(particles)
+		apDisplay.printMsg("finding euler jumps for "+str(numparts)+" particles")
+		### prepare file
+		f = open('jumps.txt','w', 0666)
+		f.write("#partnum\t")
+		headerlist = ('mean', 'median', 'stdev', 'min', 'max')
+		for key in headerlist:
+			f.write(key+"\t")
+		### start loop
 		t0 = time.time()
 		t1 = time.time()
-		for ptcl in range(1, nptcls+1):
+		medians = []
+		for ptcl in range(1, numparts+1):
 			f.write('%d\t' % ptcl)
-			t2 = time.time()
-			eulers = self.getEulersForParticle2(ptcl, self.params['reconid'])
-			#apDisplay.printMsg("got eulers in "+apDisplay.timeString(time.time()-t2))
-			eulers.sort(self.sortEulersByIteration)
-			distances = []
-			for i in range(len(eulers)-1):
-				#calculate distance (in degrees) for D7 symmetry
-				dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i]['eulers'], eulers[i+1]['eulers'], sym='d7', inplane=True)
-				distances.append(dist)
-				f.write('%3.3f\t' % (dist))
-			distances = numpy.asarray(distances, dtype=numpy.float32)
-			median = numpy.median(distances)
-			medians.append(median)
-			if median > self.params['avgjump']:
+			jumpdata = eulerjump.getEulerJumpData(ptcl, self.params['reconid'])
+			### no longer write individual jump values
+			#f.write('%3.3f\t' % (dist))
+			medians.append(jumpdata['median'])
+			if jumpdata['median'] > self.params['avgjump']:
 				rejectlst.append(ptcl)
-			f.write('%3.4f\t%3.4f\t%3.4f\n' % (distances.mean(), median, distances.std()))
-			if ptcl % 100 == 0:
-				print ("particle=% 5d; median jump=% 3.2f, time=%s" % (ptcl,median, apDisplay.timeString(time.time()-t1)))
+			for key in headerlist:
+				f.write("%3.4f\t" % (jumpdata[key]))
+			if ptcl % 500 == 0:
+				print ("particle=% 5d; median jump=% 3.2f, time=%s" % (ptcl,jumpdata['median'],
+					apDisplay.timeString(time.time()-t1)))
 				t1 = time.time()
 				f.flush()
-		apDisplay.printMsg("complete "+str(len(particles))+" particles in "+apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("complete "+str(numparts)+" particles in "+apDisplay.timeString(time.time()-t0))
 		### print stats
-		print "-- euler jumper stats --"
+		print "-- median euler jumper stats --"
 		medians = numpy.asarray(medians, dtype=numpy.float32)
 		apDisplay.printMsg("mean/std :: "+str(round(medians.mean(),2))+" +/- "
 			+str(round(medians.std(),2)))
 		apDisplay.printMsg("min/max  :: "+str(round(medians.min(),2))+" <> "
 			+str(round(medians.max(),2)))
 		return rejectlst
-
-	#=====================
-	def sortEulersByIteration(self, a, b):
-		if a['refinement']['iteration'] > b['refinement']['iteration']:
-			return 1
-		else:
-			return -1
-
-
-	#=====================
-	def getEulersForParticle(self, particlenum, reconid):
-		"""
-		returns all classdata for a particular particle and refinement
-
-		should be expanded to include 'inplane' and 'mirror'
-		"""
-		refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
-
-		stack=refinerundata['stack']
-		stackparticlesq=appionData.ApStackParticlesData()
-		stackparticlesq['stack'] = stack
-		stackparticlesq['particleNumber'] = particlenum
-		stackparticlesdata=apdb.query(stackparticlesq)
-		
-		refinementq=appionData.ApRefinementData()
-		refinementq['refinementRun'] = refinerundata
-
-		particledata = stackparticlesdata[0]
-		ptclclassq = appionData.ApParticleClassificationData()
-		ptclclassq['particle'] = particledata
-		ptclclassq['refinement']  = refinementq
-		ptclclassdata = apdb.query(ptclclassq)
-		
-		#for cls in ptclclassdata:
-			#print cls['refinement']['iteration'], cls['eulers']
-		return ptclclassdata
-
-
-	#=====================
-	def getEulersForParticle2(self, partnum, reconid):
-		"""
-		returns euler data for a particular particle and refinement
-		"""
-		query = (
-			"SELECT \n"
-			+"  eulers.`euler1` AS alt, \n"
-			+"  eulers.`euler2` AS az, \n"
-			#+"  eulers.`euler3` AS euler3, \n"
-			+"  partclass.`inplane_rotation` AS phi, \n"
-			+"  partclass.`mirror` AS mirror, \n"
-			+"  partclass.`thrown_out` AS reject, \n"
-			+"  ref.`iteration` AS iteration \n"
-			+"FROM `ApStackParticlesData` as stackpart \n"
-			+"LEFT JOIN `ApParticleClassificationData` AS partclass \n"
-			+"  ON partclass.`REF|ApStackParticlesData|particle` = stackpart.`DEF_id` \n"
-			+"LEFT JOIN `ApRefinementData` AS ref \n"
-			+"  ON partclass.`REF|ApRefinementData|refinement` = ref.`DEF_id` \n"
-			+"LEFT JOIN `ApEulerData` AS eulers \n"
-			+"  ON partclass.`REF|ApEulerData|eulers` = eulers.`DEF_id` \n"
-			+"WHERE \n"
-			+"  stackpart.`particleNumber` = "+str(partnum)+" \n" 
-			+"AND \n"
-			+"  stackpart.`REF|ApStackData|stack` = "+str(self.params['stackid'])+" \n" 
-			+"AND \n"
-			+"  ref.`REF|ApRefinementRunData|refinementRun` = "+str(self.params['reconid'])+" \n" 
-		)
-		#print query
-		#t0 = time.time()
-		self.cursor.execute(query)
-		#apDisplay.printMsg("query in "+apDisplay.timeString(time.time()-t0))
-		results = self.cursor.fetchall()
-		#apDisplay.printMsg("fetched data in "+apDisplay.timeString(time.time()-t0))
-		if not results:
-			print query
-			apDisplay.printError("Failed to get Eulers for Particle "+str(partnum))
-		eulertree = self.convertSQLtoEulerTree(results)
-		return eulertree
-
-	#=====================
-	def convertSQLtoEulerTree(self, results):
-		#t0 = time.time()
-		eulertree = []
-		for row in results:
-			try:
-				euler = { 'eulers': {}, 'refinement': {}}
-				euler['eulers']['euler1'] = float(row[0])
-				euler['eulers']['euler2'] = float(row[1])
-				euler['eulers']['euler3'] = float(row[2])
-				euler['eulers']['mirror'] = self.nullOrValue(row[3])
-				euler['eulers']['reject'] = self.nullOrValue(row[4])
-				euler['refinement']['iteration'] = int(row[5])
-				eulertree.append(euler)
-			except:
-				print row
-				apDisplay.printError("bad row entry")			
-		#apDisplay.printMsg("Converted "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
-		return eulertree
-
-	#=====================
-	def nullOrValue(self, val):
-		if val is None:
-			return 0
-		else:
-			return 1
 
 	#=====================
 	def removePtclsByQualityFactor(self, particles, rejectlst, cutoff):
