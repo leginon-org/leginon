@@ -134,19 +134,19 @@ def getTiltAngleDeg(imgdata):
 def getTiltAngleRad(imgdata):
 	return imgdata['scope']['stage position']['a']
 
-def getPixelSize(imgdict):
+def getPixelSize(imgdata):
 	"""
 	use image data object to get pixel size
 	multiplies by binning and also by 1e10 to return image pixel size in angstroms
 	shouldn't have to lookup db already should exist in imgdict
 	"""
 	pixelsizeq=leginondata.PixelSizeCalibrationData()
-	pixelsizeq['magnification'] = imgdict['scope']['magnification']
-	pixelsizeq['tem'] = imgdict['scope']['tem']
-	pixelsizeq['ccdcamera'] = imgdict['camera']['ccdcamera']
+	pixelsizeq['magnification'] = imgdata['scope']['magnification']
+	pixelsizeq['tem'] = imgdata['scope']['tem']
+	pixelsizeq['ccdcamera'] = imgdata['camera']['ccdcamera']
 	pixelsizedata=leginondb.query(pixelsizeq, results=1)
-	binning=imgdict['camera']['binning']['x']
-	pixelsize=pixelsizedata[0]['pixelsize'] * binning
+	binning = imgdata['camera']['binning']['x']
+	pixelsize = pixelsizedata[0]['pixelsize'] * binning
 	return(pixelsize*1e10)
 
 def getImgSize(imgdict):
@@ -166,27 +166,36 @@ def getImgSize(imgdict):
 
 def getApixFromStackData(stackdata):
 	# pixel size is obtained from the first image in the stack
-	stkptclq=appionData.ApStackParticlesData()
+	stkptclq = appionData.ApStackParticlesData()
 	stkptclq['stack'] = stackdata
-	stkptclresults=appiondb.query(stkptclq, results=1)
+	stkptclresults = appiondb.query(stkptclq, results=1)
 	if not stkptclresults:
 		apDisplay.printError("Stack not found")
 	stackbin = stkptclresults[0]['stackRun']['stackParams']['bin']
 	if stackbin is None:
 		stackbin = 1
 
-	imageref = stkptclresults[0]['particle'].special_getitem('image',dereference = False)
-	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+	### what is this next line???
+	imageref = stkptclresults[0]['particle'].special_getitem('image', dereference = False)
+	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData, imageref.dbid, readimages = False)
 
 	if 'defocpair' in stkptclresults[0]['stackRun']['stackParams']:
 		defocpair = stkptclresults[0]['stackRun']['stackParams']['defocpair']
 	else:
 		defocpair = None
 	if defocpair != 0:
-		imagedata = apDefocalPairs.getTransformedDefocPair(imagedata,1)
-	
-#	imagedata=leginondb.direct_query(leginondata.AcquisitionImageData,imageid)
+		defocdata = apDefocalPairs.getTransformedDefocPair(imagedata, 1)
+		if defocdata:
+			imagedata = defocdata
+		else:
+			apDisplay.printWarning("apDefocalPairs.getTransformedDefocPair() failed")
+
+	#imagedata=leginondb.direct_query(leginondata.AcquisitionImageData,imageid)
 		
+	if not imagedata:
+		apDisplay.printError("imagedata not found for stackid="+str(stackdata.dbid)
+			+" and image="+str(imageref.dbid))
+
 	apix = getPixelSize(imagedata)
 	stackapix = apix*stackbin
 
