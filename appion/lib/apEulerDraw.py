@@ -15,8 +15,8 @@ import apDisplay
 import sinedon
 
 # connect
-dbconf=sinedon.getConfig('appionData')
-db=MySQLdb.connect(**dbconf)
+dbconf = sinedon.getConfig('appionData')
+db = MySQLdb.connect(**dbconf)
 # create a cursor
 cursor = db.cursor()
 
