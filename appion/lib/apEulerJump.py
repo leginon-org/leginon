@@ -37,17 +37,19 @@ class ApEulerJump(object):
 		if stackid is None:
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
 		stackparts = apStack.getStackParticlesFromId(stackid)
+		stackparts.sort(self.sortStackParts)
+		numparts = len(stackparts)
 		### start loop
 		t0 = time.time()
 		medians = []
 		count = 0
 		for stackpart in stackparts:
 			count += 1
-			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid.dbid)
+			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid)
 			medians.append(jumpdata['median'])
 			if count % 500 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
-				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (partnum, jumpdata['median'],
+				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (stackpart['particleNumber'], jumpdata['median'],
 					apDisplay.timeString(timeremain)))
 		apDisplay.printMsg("complete "+str(len(stackparts))+" particles in "+apDisplay.timeString(time.time()-t0))
 		### print stats
@@ -58,6 +60,13 @@ class ApEulerJump(object):
 		print ("min/max  :: "+str(round(medians.min(),2))+" <> "
 			+str(round(medians.max(),2)))
 		return
+
+	#=====================
+	def sortStackParts(self, a, b):
+		if a['particleNumber'] > b['particleNumber']:
+			return 1
+		else:
+			return -1
 
 	#=====================
 	def getEulerJumpData(self, reconrunid,  stackpartnum=None, stackpartid=None, stackid=None):
