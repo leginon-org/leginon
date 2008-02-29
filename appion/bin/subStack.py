@@ -41,7 +41,7 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("enter a description")
 		self.params['keepfile'] = os.path.abspath(self.params['keepfile'])
 		if not os.path.isfile(self.params['keepfile']):
-			apDisplay.printError("Could not find keep file: "+params['keepfile'])
+			apDisplay.printError("Could not find keep file: "+self.params['keepfile'])
 
 	#=====================
 	def setOutDir(self):
