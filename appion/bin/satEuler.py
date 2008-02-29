@@ -346,14 +346,14 @@ class satEulerScript(appionScript.AppionScript):
 
 		print "ANGLE EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(angdistlist, tuple((None,None,1)), "angdata"+self.datastr+".dat")
+		self.analyzeList(angdistlist, tuple((None,None,self.params['stepsize'])), "angdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
-		self.analyzeList(rotdistlist, tuple((None,None,1)), "rotdata"+self.datastr+".dat")
+		self.analyzeList(rotdistlist, tuple((None,None,self.params['stepsize'])), "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(totdistlist, tuple((None,None,1)), "totaldata"+self.datastr+".dat")
+		self.analyzeList(totdistlist, tuple((None,None,self.params['stepsize'])), "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
 
@@ -567,6 +567,8 @@ class satEulerScript(appionScript.AppionScript):
 			action="store_true", help="Commit template to database")
 		self.parser.add_option("--no-commit", dest="commit", default=False,
 			action="store_false", help="Do not commit template to database")
+		self.parser.add_option("-s", "--stepsize", dest="stepsize", type='float', default=1.0,
+			help="Histogram step size in degrees, default=1.0", metavar="INT")
 
 	#=====================
 	def checkConflicts(self):
