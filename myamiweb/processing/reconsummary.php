@@ -70,9 +70,9 @@ if ($reconRuns) {
 		$html .= "$sym[symmetry]</TD>\n";
 		$html .= "<TD>".$stackapix."</TD>\n";
 		$html .= "<TD>$stmodel[boxsize]</TD>\n";
-		$html .= sprintf("<TD>% 2.2f / % 2.2f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
+		$html .= sprintf("<TD>% 2.2f / % 2.1f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
 		if ($avgmedjump['count'] > 0)
-			$html .= sprintf("<TD>% 2.2f </TD>\n", $avgmedjump['avgmedian']);
+			$html .= sprintf("<TD>%2.2f &plusmn; %2.1f </TD>\n", $avgmedjump['average'], $avgmedjump['stdev']);
 		else
 			$html .= "<TD></TD>\n";
 		$html .= "<TD>".$reconrun['description']."</TD>\n";

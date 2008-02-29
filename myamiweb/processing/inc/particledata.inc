@@ -1194,7 +1194,8 @@ class particledata {
 	function getAverageMedianJump ($refineRunId) {
 		$q = "SELECT "
 			."COUNT(e.`median`) AS count, "
-			."AVG(e.`median`) AS avgmedian "
+			."AVG(e.`median`) AS average, "
+			."STDDEV(e.`median`) AS stdev "
 			."FROM ApEulerJumpData AS e "
 			."WHERE "
 			."  e.`REF|ApRefinementRunData|refRun` = '$refineRunId' "

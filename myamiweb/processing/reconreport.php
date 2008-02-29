@@ -88,7 +88,7 @@ $symdata=$particle->getSymInfo($initmodel['REF|ApSymmetryData|symmetry']);
 $res = $particle->getHighestResForRecon($refinerun['DEF_id']);
 $avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
 if ($avgmedjump['count'] > 0)
-	$avgmedjumpstr = sprintf("% 2.2f", $avgmedjump['avgmedian']);
+	$avgmedjumpstr = sprintf("%2.2f &plusmn; %2.1f", $avgmedjump['average'], $avgmedjump['stdev']);
 else
 	$avgmedjumpstr = NULL;
 
@@ -105,7 +105,7 @@ $reconinfo = array(
 	'symmetry'=>$refinerun['symmetry'],
 	'refine package'=>$refinerun['package'],
 	'best resolution'=>	sprintf("% 2.2f / % 2.2f &Aring; (%d)", $res[half],$res[rmeas],$res[iter]),
-	'avg median euler jump'=>$avgmedjumpstr,
+	'median euler jump'=>$avgmedjumpstr,
 );
 $particle->displayParameters($title,$reconinfo,array());
 
