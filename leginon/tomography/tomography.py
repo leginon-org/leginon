@@ -343,29 +343,55 @@ class Tomography(acquisition.Acquisition):
 
 		tem = preset['tem']
 		ccd = preset['ccdcamera']
-		mag = preset['magnification']
-		qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
-		qimage = leginondata.AcquisitionImageData(preset=qpreset)
-		query_data = leginondata.TomographyPredictionData(image=qimage)
-		maxshift = 15
-		for n in (10, 100, 500, 1000):
-			goodprediction = None
-			predictions = query_data.query(results=n)
-			for predictinfo in predictions:
-				cor = predictinfo['correlation']
-				dist = math.hypot(cor['x'],cor['y'])
-				if dist and dist < maxshift:
-					goodprediction = predictinfo
-					break
-			if goodprediction is not None:
-				break
-
+		presetmag = preset['magnification']
+		presetpixelsize = self.calclients['pixel size'].retrievePixelSize(tem=tem, ccdcamera=ccd, mag=presetmag)
+		presetimage_pixel_size = presetpixelsize * preset['binning']['x']
+		allmags = self.instrument.tem.Magnifications
+		allmags.sort()
+		allmags.reverse()
+		try:
+			preset_mag_index = allmags.index(presetmag)
+		except ValueError:
+			self.logger.error('Preset magnification not listed for TEM')
+			params = [0, 0, 0]
+			preset_mag_index = None
+		goodprediction = None
+		if preset_mag_index is not None:
+			for i,mag in enumerate(allmags[preset_mag_index:]):
+				qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
+				qimage = leginondata.AcquisitionImageData(preset=qpreset)
+				query_data = leginondata.TomographyPredictionData(image=qimage)
+				maxshift = 2.0e-8
+				raw_correlation_binning = 6
+				for n in (10, 100, 500, 1000):
+					predictions = query_data.query(results=n)
+					for predictinfo in predictions:
+						prediction_pixel_size = predictions[0]['pixel size']
+						model_error_limit = maxshift /prediction_pixel_size
+						# correlation is recorded as multiples of raw_correlation_binning
+						if model_error_limit < raw_correlation_binning:
+							model_error_limit = raw_correlation_binning
+						paramdict = predictinfo['predicted position']
+						if paramdict['phi']==0 and paramdict['optical axis']==0 and paramsdict['z0']==0:
+							break
+						cor = predictinfo['correlation']
+						dist = math.hypot(cor['x'],cor['y'])
+						if dist and dist <= model_error_limit:
+							goodprediction = predictinfo
+							self.logger.info('good calibration found at %d x mag' % (mag,))
+							break
+					if goodprediction is not None:
+						break
+				if goodprediction is not None:
+						break
 		if goodprediction is None:
 			params = [0, 0, 0]
 		else:
-			params = goodprediction['predicted position']
-			params = [params['phi'], params['optical axis'], params['z0']]
+			scale = prediction_pixel_size / presetimage_pixel_size
+			paramsdict = goodprediction['predicted position']
+			params = [paramsdict['phi'], paramsdict['optical axis']*scale, paramsdict['z0']*scale]
 		self.prediction.parameters = params
+		self.prediction.image_pixel_size = presetimage_pixel_size
 		self.logger.info('Initialize prediction parameters to (%e, %e, %e)' % tuple(params))
 
 	def loadPredictionInfo(self):
