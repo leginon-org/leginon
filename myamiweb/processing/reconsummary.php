@@ -71,9 +71,10 @@ if ($reconRuns) {
 		$html .= "<TD>".$stackapix."</TD>\n";
 		$html .= "<TD>$stmodel[boxsize]</TD>\n";
 		$html .= sprintf("<TD>% 2.2f / % 2.1f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
-		if ($avgmedjump['count'] > 0)
-			$html .= sprintf("<TD>%2.2f &plusmn; %2.1f </TD>\n", $avgmedjump['average'], $avgmedjump['stdev']);
-		else
+		if ($avgmedjump['count'] > 0) {
+			$html .= "<TD><A HREF='eulergraph.php?hg=1&recon=$reconrun[DEF_id]'>";
+			$html .= sprintf("%2.2f &plusmn; %2.1f </A></TD>\n", $avgmedjump['average'], $avgmedjump['stdev']);
+		} else
 			$html .= "<TD></TD>\n";
 		$html .= "<TD>".$reconrun['description']."</TD>\n";
 		$html .= "</TR>\n";

@@ -1204,6 +1204,20 @@ class particledata {
 		return $r[0];
 	}
 
+	function getEulerJumps ($refineRunId) {
+		$q="SELECT "
+			."  e.`DEF_id`, "
+			."  e.`median` "
+			."FROM ApEulerJumpData AS e "
+			."WHERE "
+			."  e.`REF|ApRefinementRunData|refRun` = '$refineRunId' ";
+			//."ORDER BY e.`median` "
+			//."LIMIT 100 ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+
 	function getParticleEuler ($refinementDataId) {
 		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
 			."FROM `ApParticleClassificationData` "
