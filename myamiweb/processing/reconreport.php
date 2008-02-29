@@ -84,21 +84,43 @@ $initmodel=$particle->getInitModelInfo($refinerun['REF|ApInitialModelData|initia
 
 $stackfile=$stackparams['path']."/".$stackparams['name'];
 $initmodelname=$initmodel['name'];
-if (gettype($refinerun['description'])!= 'Null') {
-	echo "Run Description: ".$refinerun['description']."<BR>\n";
-}
+$symdata=$particle->getSymInfo($initmodel['REF|ApSymmetryData|symmetry']);
+$res = $particle->getHighestResForRecon($refinerun['DEF_id']);
+$avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
+if ($avgmedjump['count'] > 0)
+	$avgmedjumpstr = sprintf("% 2.2f", $avgmedjump['avgmedian']);
+else
+	$avgmedjumpstr = NULL;
+
+
+$title = "recon info";
+//print_r($refinerun);
+
+
+$reconinfo = array(
+	'id'=>"<A TARGET='reconsummary' HREF='reconsummary.php?expId=$expId'>$refinerun[DEF_id]</A>",
+	'name'=>$refinerun['name'],
+	'description'=>$refinerun['description'],
+	'path'=>$refinerun['path'],
+	'symmetry'=>$refinerun['symmetry'],
+	'refine package'=>$refinerun['package'],
+	'best resolution'=>	sprintf("% 2.2f / % 2.2f &Aring; (%d)", $res[half],$res[rmeas],$res[iter]),
+	'avg median euler jump'=>$avgmedjumpstr,
+);
+$particle->displayParameters($title,$reconinfo,array());
+
 
 $title = "stack info";
 $apixstr=format_angstrom_number($apix/1e10)."/pixel";
 //print_r($stackparams);
 $stackinfo = array(
 	'id'=>"<A TARGET='stackreport' HREF='stackreport.php?expId=$expId&sId=$stackId'>$stackId</A>",
-	'runid'=>$stackparams['stackRunName'],
+	'runid'=>$stackparams[0]['stackRunName'],
 	'description'=>$stackparams['description'],
-	'pixel size'=>$apixstr,
 	'name'=>"<A TARGET='stackview' HREF='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackparams[name]</A>",
+	'path'=>$stackparams['path'],
 	'num part'=>commafy($stackparticles),
-	'box size'=>$stackparams['boxsize'],
+	'pixel/box size'=>$apixstr."; ".$stackparams['boxSize']." pixels"
 );
 $particle->displayParameters($title,$stackinfo,array());
 
@@ -107,26 +129,11 @@ $title = "model info";
 $modelinfo = array(
 	'id'=>"<A TARGET='viewmodels' HREF='viewmodels.php?expId=$expId'>$initmodel[DEF_id]</A>",
 	'description'=>$initmodel['description'],
-	'path'=>$initmodel[path]."/".$initmodelname,
-	'symmetry'=>$initmodel['symmetry'],
-	'pixel size'=>format_angstrom_number($initmodel['pixelsize']/1e10)."/pixel",
-	'box size'=>$initmodel['boxsize'],
+	'path'=>$initmodel['path']."/".$initmodelname,
+	'symmetry'=>$symdata['symmetry'].", ".$symdata['description'],
+	'pixel/box size'=>format_angstrom_number($initmodel['pixelsize']/1e10)."/pixel; ".$initmodel['boxsize']." pixels",
 );
 $particle->displayParameters($title,$modelinfo,array());
-
-/*
-$title = "recon info";
-$reconinfo = array(
-	'id'=>"<A TARGET='stackreport' HREF='viewmodels.php?expId=$expId'>$initmodel[DEF_id]</A>",
-	//'runid'=>$initmodel['stackRunName'],
-	'description'=>$initmodel['description'],
-	'path'=>$initmodel[path]."/".$initmodelname,
-	'symmetry'=>$initmodel['symmetry'],
-);
-$particle->displayParameters($title,$reconinfo,array());
-*/
-
-echo "Reconstruction path: $refinerun[path]/<BR>\n";
 
 $misc = $particle->getMiscInfoFromReconId($reconId);
 if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><BR>\n"; 
@@ -321,7 +328,6 @@ echo "</select>\n";
 echo "<input type='submit' name='common particles' value='Show Common Particles' >\n";
 echo "<br />";
 echo "</FORM>\n";
-
 
 echo $html;
 
