@@ -279,7 +279,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		#loop through classes
 		for key in classkeys:
 			classnum+=1
-			if classnum%10 == 0:
+			if classnum%10 == 1:
 				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
 				sys.stderr.write(str(classnum)+" of "+(str(len(classkeys))))
 			images=EMAN.EMData()
