@@ -36,14 +36,14 @@ class ApEulerJump(object):
 		### get stack particles
 		if stackid is None:
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
-		stackparts = apStack.getStackParticlesFromId(self.params['stackid'])
+		stackparts = apStack.getStackParticlesFromId(stackid)
 		### start loop
 		t0 = time.time()
 		medians = []
 		count = 0
 		for stackpart in stackparts:
 			count += 1
-			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid.dbid)
+			jumpdata = eulerjump.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid.dbid)
 			medians.append(jumpdata['median'])
 			if count % 500 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
