@@ -33,6 +33,7 @@ class Prediction(object):
 	def __init__(self):
 		self.tilt_series_list = []
 		self.parameters = [0, 0, 0]
+		self.image_pixel_size = 2e-9
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
@@ -74,6 +75,7 @@ class Prediction(object):
 		return tuple(self.parameters[:2] + [self.parameters[-1]])
 
 	def predict(self, tilt):
+		n_start_fit = 5
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		n_tilt_series = len(self.tilt_series_list)
@@ -96,7 +98,7 @@ class Prediction(object):
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			z = 0.0
 		# calculate real z correction with current parameters 
-		elif n_tilts < 3 or self.getCurrentParameters()==(0,0,0) or (n_tilt_series == 1 and n_tilt_groups == 1 and n_tilts < 5):
+		elif n_tilts < n_start_fit:
 			x, y = tilt_group.xs[-1], tilt_group.ys[-1]
 			
 			x0 = tilt_group.xs[0]
@@ -109,8 +111,21 @@ class Prediction(object):
 			result = model(parameters, args_list)
 			z0 = result[-1][0][2]
 			z = result[-1][-1][2] - z0
+			x = result[-1][-1][0]
+			y = result[-1][-1][1]
 
 		else:
+			if n_tilts != n_start_fit:
+				self.forcemodel = False
+			else:
+				r2 = [0,0]
+				r2[0] = abs(_getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.xs[1:]))
+				r2[1] = abs(_getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.ys[1:]))
+				if max(r2) > 0.95:
+					self.forcemodel = True
+					print 'force model fit'
+				else:
+					self.forcemodel = False
 			x, y = leastSquaresXY(tilt_group.tilts,
 								  tilt_group.xs,
 								  tilt_group.ys,
@@ -155,13 +170,31 @@ class Prediction(object):
 			tilt_series_list = self.tilt_series_list
 		fitparameters = leastSquaresModel(tilt_series_list)
 		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
-		# max_delta_z0 should be larger than the z eucentric error
-		max_delta_z0 = 500
-		if (fitparameters[-1]-self.parameters[-1])**2 > max_delta_z0**2:
-			print 'KEEP OLD PARAMETER because of bad z0', fitparameters[-1]
-		else:
+		# max_delta_z0 should be larger than the z eucentric error ucenter_error in meters
+		ucenter_error = 2e-6
+		max_delta_z0 =  ucenter_error / self.image_pixel_size
+		if self.forcemodel or (fitparameters[-1]-self.parameters[-1])**2 <= max_delta_z0**2:
 			self.parameters = fitparameters
+		else:
+			print 'KEEP OLD PARAMETER because of bad z0 %e is more than %e away', fitparameters[-1], max_delta_z0
 		return self.parameters
+
+def _getCorrelationCoefficient(xs,ys):
+	if len(xs) != len(ys):
+		return 0
+	m = len(xs)
+	xa = scipy.zeros((m, 1), scipy.dtype('d'))
+	ya = scipy.zeros((m, 1), scipy.dtype('d'))
+	for i in range(m):
+		xa[i] = xs[i]
+		ya[i] = ys[i]
+	xmean = sum(xa)/m
+	ssxx = sum(xa*xa) - m*xmean*xmean
+	ymean = sum(ya)/m
+	ssyy = sum(ya*ya) - m*ymean*ymean
+	ssxy = sum(xa*ya) - m*xmean*ymean
+	r2 = ssxy * ssxy / (ssxx * ssyy)
+	return r2
 
 def leastSquaresModel(tilt_series_list):
 	parameters = [0, 0]
