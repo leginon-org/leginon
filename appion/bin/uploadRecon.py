@@ -50,6 +50,8 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
 		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False,
 			action="store_true", help="Do not do any reconstruction calculations only run chimera")
+		self.parser.add_option("--euler-only", dest="euleronly", default=False,
+			action="store_true", help="Do not do any reconstruction calculations only run euler jump calculation")
 
 	#=====================
 	def checkConflicts(self):
@@ -112,23 +114,25 @@ class UploadReconScript(appionScript.AppionScript):
 		### create a refinementRun entry in the database
 		apRecon.insertRefinementRun(self.params)
 
-		### insert the Iteration info
-		for iteration in self.params['iterations']:
-			### if only uploading one iteration, skip to that one
-			if self.params['oneiter'] and int(iteration['num']) != self.params['oneiter']:
-				continue
+		if self.params['euleronly'] is False:	
+			### insert the Iteration info
+			for iteration in self.params['iterations']:
+				### if only uploading one iteration, skip to that one
+				if self.params['oneiter'] and int(iteration['num']) != self.params['oneiter']:
+					continue
 
-			apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
-				+str(len(self.params['iterations']))+"\n", "green")
-			for i in range(75): 
-				sys.stderr.write("#")
-			sys.stderr.write("\n")
-			apRecon.insertIteration(iteration, self.params)
+				apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
+					+str(len(self.params['iterations']))+"\n", "green")
+				for i in range(75): 
+					sys.stderr.write("#")
+				sys.stderr.write("\n")
+				apRecon.insertIteration(iteration, self.params)
 
 		### calculate euler jumps
 		if self.params['commit'] is True:
 			reconrunid = self.params['refinementRun'].dbid	
 			stackid = self.params['stack'].dbid
+			apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 			eulerjump = apEulerJump.ApEulerJump()
 			eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
 
