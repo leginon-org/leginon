@@ -8,10 +8,8 @@ pi = numpy.pi
 
 try:
 	import libCV
-	print "libCV found"
 except:
 	pass
-	print "libCV not found"
 
 #-----------------------
 def radians(degrees):

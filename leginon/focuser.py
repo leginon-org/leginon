@@ -97,14 +97,11 @@ class Focuser(acquisition.Acquisition):
 		query = data.FocusSequenceData(initializer=initializer)
 		try:
 			focus_sequence_data = self.research(query, results=1)[0]
-			print 'found'
 		except IndexError:
-			print 'try default'
 			# if that failed, try to load default settings from DB
 			query = data.FocusSequenceData(initializer={'isdefault': True, 'node name': self.name})
 			try:
 				focus_sequence_data = self.research(query, results=1)[0]
-				print 'found'
 			except IndexError:
 				return []
 
