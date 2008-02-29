@@ -80,6 +80,7 @@ def writeFunctionLog(cmdlist, params=None, logfile=None):
 		if len(out) > 60 or len(out)+len(arg) > 90:
 			f.write(out+"\\\n")
 			out = "  "
+		#if ' ' in arg and ('=' in arg or not '-' in arg):
 		if ' ' in arg and '=' in arg:
 			elems = arg.split('=')
 			out += elems[0]+"='"+elems[1]+"' "
