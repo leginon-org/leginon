@@ -11,12 +11,6 @@
 import sinedon.data as data
 import gui.wx.Manager
 
-# TODO: handle better
-import warnings
-warnings.filterwarnings('ignore', module='sqldb')
-warnings.filterwarnings('ignore', module='sqldict')
-warnings.filterwarnings('ignore', module='sqlexpr')
-
 def start(options=None):
 	m = gui.wx.Manager.App(None, options=options)
 	if not m.abort:
