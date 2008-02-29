@@ -62,8 +62,8 @@ class UploadReconScript(appionScript.AppionScript):
 			apDisplay.printError("please enter a stack id, e.g. --stackid=734")
 		if self.params['modelid'] is None:
 			apDisplay.printError("please enter a starting model id, e.g. --modelid=34")
-		if self.params['description'] is None:
-			apDisplay.printError("please enter a recon description, e.g. --description='my fav recon'")
+		#if self.params['description'] is None:
+		#	apDisplay.printError("please enter a recon description, e.g. --description='my fav recon'")
 		if self.params['runid'] is None:
 			apDisplay.printError("please enter a recon runid, e.g. --runid=recon11")
 		if self.params['jobid']:
@@ -71,6 +71,8 @@ class UploadReconScript(appionScript.AppionScript):
 			self.params['jobinfo'] = apRecon.getClusterJobDataFromID(self.params['jobid'])
 			if self.params['jobinfo'] is None:
 				apDisplay.printError("jobid supplied does not exist: "+str(self.params['jobid']))
+		else:
+			self.params['jobinfo'] = None
 		if self.params['chimeraonly'] is True:
 			self.params['commit'] = False
 
@@ -79,7 +81,7 @@ class UploadReconScript(appionScript.AppionScript):
 		if self.params['jobinfo']:
 			self.params['outdir'] = self.params['jobinfo']['path']['path']
 		else:
-			"what to about outdir now?"
+			apDisplay.printError("please specify an output directory")
 		if not os.path.exists(self.params['outdir']):
 			apDisplay.printError("upload directory does not exist: "+self.params['outdir'])
 
