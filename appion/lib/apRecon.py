@@ -684,7 +684,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 
 			# gather alignment data from line
 			ali=line.split()
-			prtlnum=int(ali[0])
+			prtlnum = int(ali[0])
 
 			# check if bad particle
 			if str(prtlnum) in badprtls:
@@ -711,13 +711,14 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			else:
 				msgk=None
 			# find particle in stack database
-			stackpq=appionData.ApStackParticlesData()
-			stackpq['stack']=params['stack']
-			stackpq['particleNumber']=prtlnum
-			stackp=appiondb.query(stackpq, results=1)[0]
+			stackpq = appionData.ApStackParticlesData()
+			stackpq['stack'] = params['stack']
+			stackpq['particleNumber'] = prtlnum
+			stackpartdatas = stackpq.query(results=1)
 
-			if not stackp:
-				apDisplay.printError("particle "+prtlnum+" not in stack")
+			if not stackpartdatas:
+				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(params['stack'].dbid))
+			stackp = stackpartdatas[0]
 				
 			# insert classification info
 			prtlaliq['refinement']=refineq
