@@ -77,7 +77,7 @@ elseif ($_POST['submitjob']) {
   if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
   $jobname=$_POST['jobname'];
-  $outdir=$_POST['outdir'];
+  $outdir=$_POST['outdir'].$_POST['jobname'];
   if ($host=='garibaldi') {
     $dmfpath=$_POST['dmfpath'].$jobname;
     $clusterpath=$_POST['clusterpath'].$jobname;
