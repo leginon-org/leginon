@@ -45,6 +45,9 @@ $particle = new particledata();
 
 	echo "<br><table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
 
+	$stackfile=$s['path']."/".$s['name'];
+	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><BR>\n";
+
 //Report stack run parameters
 	$exclude_fields = array('DEF_id','DEF_timestamp','count','REF|ApPathData|path');
 	for ($i=1;$i < $s[count]; $i++) $exclude_fields[]=$i;

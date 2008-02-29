@@ -87,10 +87,47 @@ $initmodelname=$initmodel['name'];
 if (gettype($refinerun['description'])!= 'Null') {
 	echo "Run Description: ".$refinerun['description']."<BR>\n";
 }
-echo "Stack: <A TARGET='stackview' HREF='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackfile</A><BR>\n";
+
+$title = "stack info";
+$apixstr=format_angstrom_number($apix/1e10)."/pixel";
+//print_r($stackparams);
+$stackinfo = array(
+	'id'=>"<A TARGET='stackreport' HREF='stackreport.php?expId=$expId&sId=$stackId'>$stackId</A>",
+	'runid'=>$stackparams['stackRunName'],
+	'description'=>$stackparams['description'],
+	'pixel size'=>$apixstr,
+	'name'=>"<A TARGET='stackview' HREF='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackparams[name]</A>",
+	'num part'=>commafy($stackparticles),
+	'box size'=>$stackparams['boxsize'],
+);
+$particle->displayParameters($title,$stackinfo,array());
+
+$title = "model info";
+//print_r($initmodel);
+$modelinfo = array(
+	'id'=>"<A TARGET='viewmodels' HREF='viewmodels.php?expId=$expId'>$initmodel[DEF_id]</A>",
+	'description'=>$initmodel['description'],
+	'path'=>$initmodel[path]."/".$initmodelname,
+	'symmetry'=>$initmodel['symmetry'],
+	'pixel size'=>format_angstrom_number($initmodel['pixelsize']/1e10)."/pixel",
+	'box size'=>$initmodel['boxsize'],
+);
+$particle->displayParameters($title,$modelinfo,array());
+
+/*
+$title = "recon info";
+$reconinfo = array(
+	'id'=>"<A TARGET='stackreport' HREF='viewmodels.php?expId=$expId'>$initmodel[DEF_id]</A>",
+	//'runid'=>$initmodel['stackRunName'],
+	'description'=>$initmodel['description'],
+	'path'=>$initmodel[path]."/".$initmodelname,
+	'symmetry'=>$initmodel['symmetry'],
+);
+$particle->displayParameters($title,$reconinfo,array());
+*/
+
 echo "Reconstruction path: $refinerun[path]/<BR>\n";
-echo "Particles: $stackparticles<BR>\n";
-echo "Initial Model: $initmodel[path]/$initmodelname<BR>\n";
+
 $misc = $particle->getMiscInfoFromReconId($reconId);
 if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><BR>\n"; 
 
