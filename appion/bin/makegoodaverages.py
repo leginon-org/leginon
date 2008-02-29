@@ -186,8 +186,6 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (partnum, jumpdata['median'],
 					apDisplay.timeString(timeremain)))
 				#f.flush()
-		apDisplay.printMsg("complete "+str(numparts)+" particles in "+apDisplay.timeString(time.time()-t0))
-
 		### print stats
 		print "-- median euler jumper stats --"
 		medians = numpy.asarray(medians, dtype=numpy.float32)
@@ -195,6 +193,12 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			+str(round(medians.std(),2)))
 		print ("min/max  :: "+str(round(medians.min(),2))+" <> "
 			+str(round(medians.max(),2)))
+
+		perrej = round(100.0*float(numparts-len(rejectlst))/float(numparts),2)
+		apDisplay.printMsg("keeping "+str(numparts-len(rejectlst))+" of "+str(numparts)
+			+" particles ("+str(perrej)+"%) so far "
+			+" in "+apDisplay.timeString(time.time()-t0))
+
 		return rejectlst
 
 	#=====================
@@ -202,6 +206,11 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		for ptcl in particles:
 			if ptcl['quality_factor'] < cutoff:
 				rejectlst.append(ptcl['particle']['particleNumber'])
+		numparts = len(particles)
+		perrej = round(100.0*float(numparts-len(rejectlst))/float(numparts),2)
+		apDisplay.printMsg("keeping "+str(numparts-len(rejectlst))+" of "+str(numparts)
+			+" particles ("+str(perrej)+"%) so far "
+			+" in "+apDisplay.timeString(time.time()-t0))
 		return rejectlst
 
 	#######################################################
@@ -285,7 +294,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			images=EMAN.EMData()
 
 			#loop through particles in class
-			f=open('tmp.lst','w')
+			f=open('keep.lst','w')
 			f.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
@@ -313,17 +322,17 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			if nptcls<1:
 				continue
 			
-			makeClassAverages('tmp.lst',self.params['outputstack'], classes[key], self.params)
+			makeClassAverages('keep.lst',self.params['outputstack'], classes[key], self.params)
 			
 			if self.params['eotest']:
-				makeEvenOddClasses('tmp.lst',classes[key],self.params)
-			os.remove('tmp.lst')
+				makeEvenOddClasses('keep.lst',classes[key],self.params)
 		sys.stderr.write("\n")
 		reject.close()
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
-		apDisplay.printColor("subStack.py -s "+stackstr+" \\\n "
-			+" -k "+os.path.join(self.params['outdir'],"reject.lst")+" \\\n "
+		apDisplay.printColor("Make a new stack with only non-jumpers:\n"
+			+"subStack.py -s "+stackstr+" \\\n "
+			+" -k "+os.path.join(self.params['outdir'],"keep.lst")+" \\\n "
 			+" -d 'recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
 
 #=====================
