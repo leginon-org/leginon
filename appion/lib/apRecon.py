@@ -422,10 +422,10 @@ def insertRefinementRun(params):
 	result=appiondb.query(runq, results=1)
 
 	if earlyresult and not result:
-		for key in earlyresult[0]:
-			 if key in params and earlyresult[0][key] != params[key]:
-				print key,":",earlyresult[0][key]," != ",result[0][key]
-		apDisplay.printError("Refinement Run parameters have changed")	
+		if params['commit'] is True:
+			apDisplay.printError("Refinement Run parameters have changed")
+		else:
+			apDisplay.printWarning("Refinement Run parameters have changed")
 
 	# get stack apix
 	params['apix'] = apDatabase.getApixFromStackData(params['stack'])
