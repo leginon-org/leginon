@@ -43,7 +43,7 @@ class ApEulerJump(object):
 		count = 0
 		for stackpart in stackparts:
 			count += 1
-			jumpdata = getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid.dbid)
+			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid.dbid)
 			medians.append(jumpdata['median'])
 			if count % 500 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
