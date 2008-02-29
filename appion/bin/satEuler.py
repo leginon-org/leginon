@@ -346,14 +346,14 @@ class satEulerScript(appionScript.AppionScript):
 
 		print "ANGLE EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(angdistlist, tuple((None,None,self.params['stepsize'])), "angdata"+self.datastr+".dat")
+		self.analyzeList(angdistlist, tuple((0,None,self.params['stepsize'])), "angdata"+self.datastr+".dat")
 
 		print "PLANE ROTATION DATA:"
 		self.analyzeList(rotdistlist, tuple((None,None,self.params['stepsize'])), "rotdata"+self.datastr+".dat")
 
 		print "TOTAL EULER DATA:"
 		#D-symmetry goes to 90, all other 180
-		self.analyzeList(totdistlist, tuple((None,None,self.params['stepsize'])), "totaldata"+self.datastr+".dat")
+		self.analyzeList(totdistlist, tuple((0,None,self.params['stepsize'])), "totaldata"+self.datastr+".dat")
 
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "+apDisplay.timeString(time.time()-t0))
 
@@ -432,8 +432,8 @@ class satEulerScript(appionScript.AppionScript):
 			if eulerpair['part1']['reject'] == 1 and eulerpair['part2']['reject'] == 1:
 				skippair += 1
 				continue
-			goodtot = (abs(eulerpair['totdist'] - 15.0) < 10.0)
-			goodang = (abs(eulerpair['angdist'] - 15.0) < 5.0)
+			goodtot = (abs(eulerpair['totdist'] - 15.0) < self.params['cutrange'])
+			goodang = (abs(eulerpair['angdist'] - 15.0) < self.params['cutrange'])
 			if goodtot:
 				totkeeplist.append(eulerpair['part1']['partid']-1)
 				totkeeplist.append(eulerpair['part2']['partid']-1)
@@ -522,18 +522,16 @@ class satEulerScript(appionScript.AppionScript):
 			f.write("&\n")
 
 	def subStackCmd(self):
-		keepfile = os.path.join(self.params['outdir'], "keeplist-ang"+self.datastr+".lst")
+		keepfile = os.path.join(self.params['outdir'], "keeplist-tot"+self.datastr+".lst")
 		stackdata = apStack.getRunsInStack(self.params['stackid'])
 
 		cmd = ( "subStack.py "
 			+" --old-stack-id="+str(self.params['stackid'])
-			+" \\\n"+" --keep-file="+keepfile
-			+" \\\n"+" --new-stack-name=sub-"+stackdata[0]['stackRun']['stackRunName']
 			+" --commit"
-			+" --description='sat from recon "
-			+str(self.params['reconid'])
-			+" iter "
-			+str(self.params['iternum'])
+			+" \\\n --keep-file="+keepfile
+			+" \\\n --new-stack-name=sub-"+stackdata[0]['stackRun']['stackRunName']
+			+" \\\n --description='sat from recon "+str(self.params['reconid'])
+			+" iter "+str(self.params['iternum'])
 			+"' \n" )
 		print "New subStack.py Command:"
 		apDisplay.printColor(cmd, "purple")
@@ -568,7 +566,9 @@ class satEulerScript(appionScript.AppionScript):
 		self.parser.add_option("--no-commit", dest="commit", default=False,
 			action="store_false", help="Do not commit template to database")
 		self.parser.add_option("-s", "--stepsize", dest="stepsize", type='float', default=1.0,
-			help="Histogram step size in degrees, default=1.0", metavar="INT")
+			help="Histogram step size in degrees, default=1.0", metavar="FLOAT")
+		self.parser.add_option("-c", "--cutrange", dest="cutrange", type='float', default=5.0,
+			help="Keep list cut range, default=5.0", metavar="FLOAT")
 
 	#=====================
 	def checkConflicts(self):
