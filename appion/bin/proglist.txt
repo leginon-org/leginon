@@ -1,3 +1,29 @@
+
+#############################################
+############ needs repair ###################
+#############################################
+
+### future AppionScript
+classifier
+clstoaligned
+combinestack
+createModel
+postProc
+refBasedAlignment
+runrmeasure
+scalestack
+splitstack
+uploadMisc
+uploadModel
+uploadParticles
+
+### future AppionLoop
+makestack
+
+###############################################
+############ acceptable status ################
+###############################################
+
 ### AppionLoop
 alignDefocalPairs
 assembleBestCTFImages
@@ -20,6 +46,7 @@ createFakeStack
 makegoodaverages
 satEuler
 subStack
+uploadRecon
 uploadTemplate
 
 ### Unique
@@ -28,20 +55,3 @@ ApTiltPicker
 apChimSnapshot
 webcaller
 
-### future AppionScript
-classifier
-clstoaligned
-combinestack
-createModel
-postProc
-refBasedAlignment
-runrmeasure
-scalestack
-splitstack
-uploadMisc
-uploadModel
-uploadParticles
-uploadRecon
-
-### future AppionLoop
-makestack
