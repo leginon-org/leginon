@@ -57,6 +57,8 @@ class Tomography(acquisition.Acquisition):
 		'integer': False,
 		'intscale': 10,
 		'pausegroup': False,
+		'model mag': 'this preset and lower',
+		'z0 error': 2e-6,
 	}
 
 	def __init__(self, *args, **kwargs):
@@ -161,7 +163,7 @@ class Tomography(acquisition.Acquisition):
 		return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
-		self.initGoodPredictionInfo()
+		self.initGoodPredictionInfo(presetdata)
 		self.moveAndPreset(presetdata, emtarget)
 
 		try:
@@ -327,19 +329,19 @@ class Tomography(acquisition.Acquisition):
 
 		return target, emtarget
 
-	def initGoodPredictionInfo(self):
-		presets = self.settings['preset order']
-		try:
-			presetname = presets[0]
-		except IndexError:
-			self.logger.error('Choose preset for this node before doing tilt series')
-			return
-
-		try:
-			preset = self.presetsclient.getPresetFromDB(presetname)
-		except:
-			self.logger.error('Preset %s does not exist in this session.' % (presetname,))
-			return
+	def initGoodPredictionInfo(self,preset=None):
+		if preset == None:
+			presets = self.settings['preset order']
+			try:
+				presetname = presets[0]
+			except IndexError:
+				self.logger.error('Choose preset for this node before doing tilt series')
+				return
+			try:
+				preset = self.presetsclient.getPresetFromDB(presetname)
+			except:
+				self.logger.error('Preset %s does not exist in this session.' % (presetname,))
+				return
 
 		tem = preset['tem']
 		ccd = preset['ccdcamera']
@@ -353,26 +355,41 @@ class Tomography(acquisition.Acquisition):
 			preset_mag_index = allmags.index(presetmag)
 		except ValueError:
 			self.logger.error('Preset magnification not listed for TEM')
-			params = [0, 0, 0]
-			preset_mag_index = None
+			return
+		if self.settings['model mag'] == 'only this preset':
+			allmags = [presetmag]
+		elif self.settings['model mag'] != 'this preset and lower':
+			mag = int(self.settings['model mag'])
+			try:
+				mag_index = allmags.index(mag)
+			except ValueError:
+				self.logger.error('Initial model magnification not listed for TEM')
+				return
+			allmags = [mag]
+		else:
+			allmags = allmags[preset_mag_index:]	
+		
 		goodprediction = None
 		if preset_mag_index is not None:
-			for i,mag in enumerate(allmags[preset_mag_index:]):
+			for i,mag in enumerate(allmags):
+				self.logger.info('Looking for good model at mag of %d' %(mag))
 				qpreset = leginondata.PresetData(tem=tem, ccdcamera=ccd, magnification=mag)
 				qimage = leginondata.AcquisitionImageData(preset=qpreset)
 				query_data = leginondata.TomographyPredictionData(image=qimage)
 				maxshift = 2.0e-8
 				raw_correlation_binning = 6
 				for n in (10, 100, 500, 1000):
-					predictions = query_data.query(results=n)
+					predictions = query_data.query(results=n, readimages=False)
 					for predictinfo in predictions:
 						prediction_pixel_size = predictions[0]['pixel size']
+						if prediction_pixel_size is None:
+							continue
 						model_error_limit = maxshift /prediction_pixel_size
 						# correlation is recorded as multiples of raw_correlation_binning
 						if model_error_limit < raw_correlation_binning:
 							model_error_limit = raw_correlation_binning
 						paramdict = predictinfo['predicted position']
-						if paramdict['phi']==0 and paramdict['optical axis']==0 and paramsdict['z0']==0:
+						if paramdict['phi']==0 and paramdict['optical axis']==0 and paramdict['z0']==0:
 							break
 						cor = predictinfo['correlation']
 						dist = math.hypot(cor['x'],cor['y'])
@@ -392,6 +409,7 @@ class Tomography(acquisition.Acquisition):
 			params = [paramsdict['phi'], paramsdict['optical axis']*scale, paramsdict['z0']*scale]
 		self.prediction.parameters = params
 		self.prediction.image_pixel_size = presetimage_pixel_size
+		self.prediction.ucenter_limit = self.settings['z0 error']
 		self.logger.info('Initialize prediction parameters to (%e, %e, %e)' % tuple(params))
 
 	def loadPredictionInfo(self):

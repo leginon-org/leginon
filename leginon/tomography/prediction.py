@@ -176,7 +176,7 @@ class Prediction(object):
 		if self.forcemodel or (fitparameters[-1]-self.parameters[-1])**2 <= max_delta_z0**2:
 			self.parameters = fitparameters
 		else:
-			print 'KEEP OLD PARAMETER because of bad z0 %e is more than %e away', fitparameters[-1], max_delta_z0
+			print 'KEEP OLD PARAMETER because of bad z0 %e is more than %e away' % (fitparameters[-1], max_delta_z0)
 		return self.parameters
 
 def _getCorrelationCoefficient(xs,ys):
