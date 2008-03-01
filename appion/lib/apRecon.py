@@ -351,10 +351,9 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 	#low pass filter the volume to .6 * reported res
 	filtres = 0.6*res
-	cmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
-	print cmd
+	lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
 	apDisplay.printMsg("Low pass filtering model for images")
-	os.popen(cmd)
+	apEMAN.executeEmanCmd(lpcmd)
 	chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
 	os.environ["CHIMENV"] = chimsnapenv
 	appiondir = apParam.getAppionDirectory()
