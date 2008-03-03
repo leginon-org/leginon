@@ -757,7 +757,10 @@ class particledata {
 			."(nr.`REF|ApStackData|stack` = sd.`REF|ApStackData|stack`) "
 			."LEFT JOIN ApStackRunData AS sr ON "
 			."(sd.`REF|ApStackRunData|stackRun` = sr.`DEF_id`) "
-			."WHERE sr.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."WHERE "
+			."  sr.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND "
+			." ( nr.`hidden` = 0 OR nr.`hidden` IS NULL ) "
 			."ORDER BY nr.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -770,7 +773,10 @@ class particledata {
 			."(rr.`REF|ApStackData|stack` = sd.`REF|ApStackData|stack`) "
 			."LEFT JOIN ApStackRunData AS sr ON "
 			."(sd.`REF|ApStackRunData|stackRun` = sr.`DEF_id`) "
-			."WHERE sr.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."WHERE "
+			."  sr.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND "
+			." ( rr.`hidden` = 0 OR rr.`hidden` IS NULL ) "
 			."ORDER BY rr.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -780,6 +786,7 @@ class particledata {
 		$q = "SELECT * "
 			."FROM ApRefRunData "
 			."WHERE ApRefRunData.`DEF_id`='$refid'";
+
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
