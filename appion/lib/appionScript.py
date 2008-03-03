@@ -25,7 +25,10 @@ class AppionScript(object):
 		self.t0 = time.time()
 		self.timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
 		self.functionname = apParam.getFunctionName(sys.argv[0])
-		os.umask(000)
+		if os.getgid() == 773:
+			os.umask(002)
+		else:
+			os.umask(000)
 
 		### setup default parser: output directory, etc.
 		self.parser = OptionParser()
