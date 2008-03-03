@@ -1,229 +1,213 @@
 #!/usr/bin/python -O
-# Python script to upload a template to the database, and prepare images for import
+### From Pick-wei:
+###   create model from EMAN startAny function and automatically calls uploadModel.py
 
 import os
-import apDB
 import sys
 import re
+import time
 import shutil
-from optparse import OptionParser
-import apUpload
-import apParam
-import apTemplate
-import apStack
+### appion
 import apEMAN
 import apDisplay
+import apUpload
 import apDatabase
 import appionData
-import glob
+import appionScript
+import apDB
 
 appiondb = apDB.apdb
 
-def parseCommandLine():
-	usage = ( "Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
-		+"--description='<text>' [options]")
-	parser = OptionParser(usage=usage)
+#=====================
+#=====================
+class createModelScript(appionScript.AppionScript):
 
-	parser.add_option("--description", dest="description",
-		help="Description of the model (must be in quotes)", metavar="TEXT")
-	parser.add_option("--session", dest="session",
-		help="Session name associated with model (e.g. 06mar12a)", metavar="TEXT")
-	parser.add_option("--outdir", dest="outdir",
-		help="Location to copy the model to", metavar="PATH")
-	parser.add_option("--noref", dest="noref", type="int",
-		help="ID for reference-free alignment", metavar="INT")
-	parser.add_option("--norefClass", dest="norefclass", type="int",
-		help="ID for the classes of the reference-free alignment", metavar="INT")
-	parser.add_option("--exclude", dest="exclude",
-		help="Class indices to be excluded e.g. 1,0,10", metavar="TEXT")
-	parser.add_option("--symm", dest="symm",
-		help="Cn symmetry if any, e.g. c1", metavar="TEXT")
-	parser.add_option("--mask", dest="mask",
-		help="Mask radius", metavar="INT")
-	parser.add_option("--lp", dest="lp",
-		help="Lowpass filter radius in Fourier pixels", metavar="INT")
-	parser.add_option("--rounds", dest="rounds",
-		help="Rounds of Euler angle determination to use", metavar="INT")
-	parser.add_option("--apix", dest="apix", type=float,
-		help="Angstrom per pixel of the images in the class average file", metavar="FLOAT")
-	parser.add_option("--commit", dest="commit", default=True,
-		action="store_true", help="Commit model to database")
-	parser.add_option("--no-commit", dest="commit", default=True,
-		action="store_false", help="Do not commit model to database")
+	#=====================
+	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
+			+"--description='<text>' [options]")
 
-	params = apParam.convertParserToParams(parser)
-	return params
+		self.parser.add_option("--description", dest="description",
+			help="Description of the model (must be in quotes)", metavar="TEXT")
+		self.parser.add_option("--session", dest="session",
+			help="Session name associated with model (e.g. 06mar12a)", metavar="TEXT")
+		self.parser.add_option("--outdir", dest="outdir",
+			help="Location to copy the model to", metavar="PATH")
+		self.parser.add_option("--norefClass", dest="norefclass", type="int",
+			help="ID for the classes of the reference-free alignment", metavar="INT")
+		self.parser.add_option("--exclude", dest="exclude",
+			help="Class indices to be excluded e.g. 1,0,10", metavar="TEXT")
+		self.parser.add_option("--symm", dest="symm", default="c1",
+			help="Cn symmetry if any, e.g. --symm=4,c3", metavar="TEXT")
+		self.parser.add_option("--mask", dest="mask",
+			help="Mask radius", metavar="INT")
+		self.parser.add_option("--lp", dest="lp",
+			help="Lowpass filter radius in Fourier pixels", metavar="INT")
+		self.parser.add_option("--rounds", dest="rounds",
+			help="Rounds of Euler angle determination to use", metavar="INT")
+		self.parser.add_option("--apix", dest="apix", type=float,
+			help="Angstrom per pixel of the images in the class average file", metavar="FLOAT")
+		self.parser.add_option("--commit", dest="commit", default=True,
+			action="store_true", help="Commit model to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit model to database")
 
-def checkConflicts(params):
-	# make sure the necessary parameters are set
-	if params['session'] is None:
-		apDisplay.printError("enter a session ID")
-	if params['description'] is None:
-		apDisplay.printError("enter a template description")
-	if params['norefclass'] is None:
-		apDisplay.printError("enter the ID for the classes of the reference-free alignment")
-	if params['apix'] is None:
-		apDisplay.printError("enter the apix for the images of the class average file")
-	if params['lp'] is None:
-		apDisplay.printError("enter the low pass filter value for the model")
+	#=====================
+	def checkConflicts(self):
+		# make sure the necessary parameters are set
+		if self.params['session'] is None:
+			apDisplay.printError("enter a session ID")
+		if self.params['description'] is None:
+			apDisplay.printError("enter a template description")
+		if self.params['norefclass'] is None:
+			apDisplay.printError("enter the ID for the classes of the reference-free alignment")
+		if self.params['apix'] is None:
+			apDisplay.printError("enter the apix for the images of the class average file")
+		if self.params['lp'] is None:
+			apDisplay.printError("enter the low pass filter value for the model")
 
-	# split params['symm'] into its id and name
-	p= re.compile(r'\W+')
-	list = p.split(params['symm'])
-	params['symm_id']=list[0];
-	params['symm_name']=list[1];
+		# split self.params['symm'] into its id and name
+		try:
+			symlist = self.params['symm'].split(",")
+			print len(symlist), str(symlist)
+			self.params['symm_id']   = int(symlist[0])
+			self.params['symm_name'] = symlist[1].lower()
+			apDisplay.printMsg("Selected symmetry: "+str(self.params['symm_id'])+" named: "+self.params['symm_name'])
+		except:
+			apUpload.printSymmetries()
+			apDisplay.printError("Could not parse symmetry, should be of the form"
+				+" --symm=4,c3 NOT --symm="+str( self.params['symm']))
 
-def cleanup(norefpath,norefclassid):
-	clean = "rm CCL.hed CCL.img"
-	n = 1
-	modelpath = os.path.join(norefpath,'startAny%i_%i' %(norefclassid,n)+'.mrc')
-	while os.path.exists(modelpath):
-		n = n+1
-		modelpath = os.path.join(norefpath,'startAny%i_%i' %(norefclassid,n)+'.mrc')
-	move = "mv threed.0a.mrc %s" %(modelpath) 
-	print "\nRemoving CCL.hed and CCL.img...\n"+clean+""
-	print "\nMoving threed.0a.mrc to "+norefpath+" and renaming it startAny%i_%i" %(norefclassid,n)+".mrc...\n"+move+""
-	f=os.popen(clean)
-	f=os.popen(move)
-	f.close()
-	oldexcludepath = os.path.join(norefpath,'exclude.list')
-	if os.path.exists(oldexcludepath):
-		newexcludepath = os.path.join(norefpath,'exclude%i_%i.list' %(norefclassid,n))
-		move = "mv %s %s" %(oldexcludepath,newexcludepath)
-		f=os.popen(move)
-		f.close()
-	return modelpath
+	#=====================
+	def cleanup(self, norefpath, norefclassid):
+		clean = "rm -fv CCL.hed CCL.img"
+		for file in ("CCL.hed", "CCL.img"):
+			if os.path.isfile(file):
+				apDisplay.printWarning("Removing file: "+file)
+				os.remove(file)
+		for n in range(self.params['rounds']):
+			modelpath = os.path.join(norefpath, "startAny-"+str(norefclassid)+"_"+str(n+1)+".mrc")
+			if not os.path.exists(modelpath):
+				break
 
-def changeapix(mrcpath, apix):
-	cmd = "proc3d "+mrcpath+" "+mrcpath+" apix="+str(apix)
-	print "\nChanging the apix value of "+mrcpath+"...\n"+cmd
-	apEMAN.executeEmanCmd(cmd, verbose=True)
+		apDisplay.printWarning("Moving threed.0a.mrc to "+norefpath+" and renaming it startAny-"
+			+str(norefclassid)+"_"+str(n)+".mrc")
+		shutil.copy("threed.0a.mrc", modelpath)
 
+		oldexcludepath = os.path.join(norefpath, "exclude.lst")
+		if os.path.exists(oldexcludepath):
+			newexcludepath = os.path.join(norefpath, "exclude-"+str(norefclassid)+"_"+str(n)+".mrc")
+			apDisplay.printWarning("Moving "+oldexcludepath+" to "+newexcludepath)
+			shutil.copy(oldexcludepath, newexcludepath)
+		return modelpath
 
-if __name__ == '__main__':
-	# create params dictionary & set defaults
-	params = parseCommandLine()
-	apParam.writeFunctionLog(sys.argv)
-	
-	checkConflicts(params)
-	
-	if params['outdir'] is None:
-		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
-		path = os.path.abspath(sessiondata['image path'])
-		path = re.sub("lenorefpathginon","appion",path)
-		path = re.sub("/rawdata","",path)
-		params['outdir'] = os.path.join(path,"models")
-
-	#create the output directory, if needed
-	apDisplay.printMsg("Out directory: "+params['outdir'])
-	apParam.createDirectory(params['outdir'])			
-
- 	norefClassdata=appiondb.direct_query(appionData.ApNoRefClassRunData, params['norefclass'])
-
-	#Get class average file path through ApNoRefRunData
-	norefRun=norefClassdata['norefRun']
-	norefpath = (norefRun['path'])['path']
-	norefname = norefRun['name']
-	norefpath = os.path.join(norefpath,norefname)
-
-	#Get class average file name
-	norefClassFile = norefClassdata['classFile']
-	norefClassFile+=".img"
-
-	#complete path of the class average file
-	absnorefpath = os.path.join(norefpath,norefClassFile)
-
-	#create the list of the indexes to be excluded
-	if params['exclude'] is not None and params['exclude'] != "":
-		p= re.compile(r'\W+')
-		list = p.split(params['exclude'])
-		 
-		print "Creating exclude.list in "+norefpath+"..."
-
-		if os.path.isfile(norefpath+"/exclude.list"): 
-			print "\nThe file exclude.list exist in "+norefpath+"..."
-			print "\nRemoving the file exclude.list exist in "+norefpath+"...\n"
-			remove = "rm "+norefpath+"/exclude.list"
-			f=os.popen(remove)
-			f.close()
-		
-		for index in list:
-			cmd = "echo %s >> %s/exclude.list" %(index, norefpath)
-			print cmd
-			f=os.popen(cmd)
-			f.close()
-		
-		newclass = norefClassdata['classFile']+"-new.img"
-		# old file need to be removed or the images will be appended
-		newclasspath = os.path.join(norefpath,newclass)
-		print newclasspath
-		if os.path.exists(os.path.join(norefpath,newclass)):
-			print "removing old image file %s" %(newclass)
-			os.remove(os.path.join(norefpath,newclass))
-			c = newclass.count('.img')
-			newhed = newclass.replace('.img','.hed')
-			if c > 1:
-				newhed = newhed.replace('.hed','.img',c-1)
-			print newhed
-			os.remove(os.path.join(norefpath,newhed))
-		else:
-			sys.exit()	
-		print "\nCreating new class averages "+newclass+" in "+norefpath+"..."
-		cmd = "proc2d %s %s exclude=%s/exclude.list" %(absnorefpath, norefpath+"/"+newclass+"", norefpath)
+	#=====================
+	def changeapix(self, mrcpath, apix):
+		"""
+		this doesn't do anything, but copy the file, 
+		you need to use shrink=## to change pixel size
+			--neil
+		"""
+		cmd = "proc3d "+mrcpath+" "+mrcpath+" apix="+str(apix)
+		print "\nChanging the apix value of "+mrcpath+"...\n"+cmd
 		apEMAN.executeEmanCmd(cmd, verbose=True)
-		print cmd
+
+	#=====================
+	def setOutDir(self):
+		#auto set the output directory
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		path = os.path.abspath(sessiondata['image path'])
+		path = re.sub("leginon","appion",path)
+		path = re.sub("/rawdata","",path)
+		self.params['outdir'] = os.path.join(path, "createmodel", self.timestamp)
+
+	#=====================
+	def excludedClasses(self, classfile):
+		excludelist = self.params['exclude'].split(",")
+		 
+		apDisplay.printMsg( "Creating exclude.lst: "+norefpath )
+
+		excludefile = os.path.join(norefpath,"exclude.lst")
+		if os.path.isfile(excludefile): 
+			apDisplay.printWarning("Removing the file 'exclude.lst' from: "+norefpath)
+			os.remove(excludefile)
 		
-		#run startAny to create the model
-		startAny = "startAny %s proc=1" %(norefpath+"/"+newclass+"")
-		if params['symm_name'] is not None: 
-			startAny+=" sym="+params['symm_name']
-
-		if params['mask'] is not None: 
-			startAny+=" mask="+str(params['mask'])
-
-		if params['lp'] is not None: 
-			startAny+=" lp="+str(params['lp'])
+		f = open(excludefile, "w")
+		for excludeitem in excludelist:
+			f.write(str(excludeitem)+"\n")
+		f.close()
 		
-		if params['rounds'] is not None: 
-			startAny+=" rounds="+str(params['rounds'])
-		
-		print "\nCreating 3D model using class averages with EMAN function of startAny..."
-		apEMAN.executeEmanCmd(startAny, verbose=True)
-		print startAny
-		
-	#if there is no class to be excluded
-	else:
-		startAny = "startAny %s proc=1" %(absnorefpath)
-		if params['symm_name'] is not None: 
-			startAny+=" sym="+params['symm_name']
+		newclassfile = norefClassdata['classFile']+"-new"
+		# old file need to be removed or the images will be appended
+		if os.path.isfile(newclassfile):
+			apDisplay.printWarning("removing old image file: "+newclassfile )
+			os.remove(newclassfile+".hed")
+			os.remove(newclassfile+".img")
 
-		if params['mask'] is not None: 
-			startAny+=" mask="+str(params['mask'])
+		apDisplay.printMsg("Creating new class averages "+newclass+" in "+norefpath)
+		excludecmd = ( "proc2d "+classfile+".hed "+newclassfile+".hed exclude="+excludefile )
+		apEMAN.executeEmanCmd(excludecmd, verbose=True)
 
-		if params['lp'] is not None: 
-			startAny+=" lp="+str(params['lp'])
-		
-		if params['rounds'] is not None: 
-			startAny+=" rounds="+str(params['rounds'])
+		return newclassfile
 
-		print "\nCreating 3D model using class averages with EMAN function of startAny..."
-		apEMAN.executeEmanCmd(startAny, verbose=True)
-		print startAny
+	#=====================
+	def start(self):
 
-	
-	#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
-	modelpath = cleanup(norefpath,int(params['norefclass']))
-	#change its apix back to be the same as the class average file
-	changeapix(modelpath, params['apix'])
+	 	norefClassdata=appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclass'])
 
-	if params['commit']:	
+		#Get class average file path through ApNoRefRunData
+		norefpath = os.path.join(norefClassdata['norefRun']['path']['path'], norefClassdata['norefRun']['name'])
+
+		#Get class average file name
+		norefClassFile = norefClassdata['classFile']
+
+		if self.params['exclude'] is not None:
+			#create the list of the indexes to be excluded
+			classfile = self.excludedClasses(classfile)
+		else:
+			#complete path of the class average file
+			origclassfile = os.path.join(norefpath, norefClassFile)
+			classfile = norefClassdata['classFile']+"-orig"
+			apDisplay.printMsg("copying file "+origclassfile+" to "+classfile)
+			shutil.copy(origclassfile+".hed", classfile+".hed")
+			shutil.copy(origclassfile+".img", classfile+".img")
+
+		#if there is no class to be excluded
+		startAnyCmd = "startAny "+classfile+".hed proc=1 "
+		if self.params['symm_name'] is not None: 
+			startAnyCmd +=" sym="+self.params['symm_name']
+		if self.params['mask'] is not None: 
+			startAnyCmd +=" mask="+str(self.params['mask'])
+		if self.params['lp'] is not None: 
+			startAnyCmd +=" lp="+str(self.params['lp'])
+		if self.params['rounds'] is not None: 
+			startAnyCmd +=" rounds="+str(self.params['rounds'])
+
+		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of startAny")
+		apEMAN.executeEmanCmd(startAnyCmd, verbose=True)
+
+		#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
+		modelpath = self.cleanup(norefpath, int(self.params['norefclass']))
+		#change its apix back to be the same as the class average file
+		self.changeapix(modelpath, self.params['apix'])
+
+
 		#call uploadModel
-		upload = "uploadModel.py %s session=%s apix=%.3f res=%i symmetry=%i contour=1.5 zoom=1.5 description=\"%s\"" %(modelpath, params['session'], params['apix'], int(params['lp']), int(params['symm_id']), params['description']) 	
+		upload = ("uploadModel.py %s session=%s apix=%.3f res=%i symmetry=%i contour=1.5 zoom=1.5 description=\"%s\"" %
+			(modelpath, self.params['session'], self.params['apix'], 
+			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )	
 
 		print "\n############################################"
 		print "\nReady to upload model "+modelpath+" into the database...\n"
 		print upload
-		apEMAN.executeEmanCmd(upload, verbose=True)
+		time.sleep(10)
+		if self.params['commit']:	
+			apEMAN.executeEmanCmd(upload, verbose=True)
 
 
+#=====================
+#=====================
+if __name__ == '__main__':
+	createModel = createModelScript()
+	createModel.start()
+	createModel.close()
