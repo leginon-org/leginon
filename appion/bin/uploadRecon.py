@@ -17,10 +17,6 @@ class UploadReconScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		### unused params
-		"""	
-		params['classvars']=[]
-		"""
 		self.parser.set_usage("Usage: %prog --runid=<name> --stackid=<int> --modelid=<int>\n\t "
 			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --zoom=<float> "
 			+"--contour=<contour> --outdir=/path/ --commit ]")
