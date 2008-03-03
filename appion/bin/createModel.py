@@ -11,6 +11,7 @@ import shutil
 import apEMAN
 import apDisplay
 import apUpload
+import apParam
 import apDatabase
 import appionData
 import appionScript
@@ -173,7 +174,8 @@ class createModelScript(appionScript.AppionScript):
 			shutil.copy(origclassfile+".img", classfile+".img")
 
 		#if there is no class to be excluded
-		startAnyCmd = "startAny "+classfile+".hed proc=1 "
+		nproc = apParam.getNumProcessors()
+		startAnyCmd = "startAny "+classfile+".hed proc="+str(nproc)
 		if self.params['symm_name'] is not None: 
 			startAnyCmd +=" sym="+self.params['symm_name']
 		if self.params['mask'] is not None: 
