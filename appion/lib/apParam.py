@@ -226,5 +226,9 @@ def getNumProcessors(msg=True):
 		apDisplay.printMsg("Found "+str(nproc)+" processors on this machine")
 	return nproc
 
-
+def setUmask():
+	if os.getgid() == 773:
+		os.umask(002)
+	else:
+		os.umask(000)
 

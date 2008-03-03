@@ -15,20 +15,21 @@ import apDisplay
 import apDatabase
 import apParam
 import apStack
+import apDB
 #leginon
 from pyami import mem
 
 class AppionScript(object):
+	appiondb  = apDB.apdb
+	leginondb = apDB.db
+
 	#=====================
 	def __init__(self):
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
 		self.timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
 		self.functionname = apParam.getFunctionName(sys.argv[0])
-		if os.getgid() == 773:
-			os.umask(002)
-		else:
-			os.umask(000)
+		apParam.setUmask()
 
 		### setup default parser: output directory, etc.
 		self.parser = OptionParser()
