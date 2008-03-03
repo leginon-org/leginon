@@ -332,6 +332,7 @@ class ApNoRefRunData(Data):
 			('path', ApPathData),
 			('description', str),
 			('run_seconds', int),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApNoRefRunData=ApNoRefRunData
@@ -397,6 +398,7 @@ class ApRefRunData(Data):
 			('refParams', ApRefParamsData),
 			('path', ApPathData),
 			('description', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefRunData=ApRefRunData
