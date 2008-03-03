@@ -32,6 +32,7 @@ class AppionLoop(object):
 		#set the name of the function; needed for param setup
 		self.setFunctionName()
 		self.setProcessingDirName()
+		os.umask(000)
 
 		#set the resulttypes and resultkeys of the function; needed for param setup
 		self.setFunctionResultKeys()
