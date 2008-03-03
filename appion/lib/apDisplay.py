@@ -104,30 +104,51 @@ def short(imgname):
 	# ALIAS to shortenImageName
 	return shortenImageName(imgname)
 
-def timeString(avg,stdev=0):
+def timeString(avg, stdev=0):
 	""" 
 	returns a string with the length of time scaled for clarity
 	"""
 	avg = float(avg)
 	stdev = float(stdev)
-	#less than 75 seconds
-	if avg < 75.0:
+	#less than 70 seconds
+	if avg < 70.0:
 		if stdev > 0.0:
 			timestr = str(round(avg,2))+" +/- "+str(round(stdev,2))+" sec"
 		else:
 			timestr = str(round(avg,2))+" sec"
-	#less than 75 minutes
-	elif avg < 4500.0:
+	#less than 70 minutes
+	elif avg < 4200.0:
+		subbase = 1.0
+		base = subbase * 60.0
+		majorunit = "min"
+		minorunit = "sec"
 		if stdev > 0.0:
-			timestr = str(round(avg/60.0,2))+" +/- "+str(round(stdev/60.0,2))+" min"
+			timestr = str(round(avg/base, 2))+" +/- "+str(round(stdev/base, 2))+" "+majorunit
 		else:
-			timestr = str(int(avg/60.0))+" min "+str(int((avg/60.0-int(avg/60.0))*60.0+0.5))+" sec"
-	#more than 1.5 hours
+			timestr = ( str(int(math.floor(avg/base)))+" "+majorunit+" "
+				+str(int(round( (avg % base)/subbase )))+" "+minorunit )
+	#less than 28 hours
+	elif avg < 100800.0:
+		subbase = 60.0
+		base = subbase * 60.0
+		majorunit = "hr"
+		minorunit = "min"
+		if stdev > 0.0:
+			timestr = str(round(avg/base, 2))+" +/- "+str(round(stdev/base, 2))+" "+majorunit
+		else:
+			timestr = ( str(int(math.floor(avg/base)))+" "+majorunit+" "
+				+str(int(round( (avg % base)/subbase )))+" "+minorunit )
+	#more than 28 hours (1.2 days)
 	else:
+		subbase = 3600.0
+		base = subbase * 24.0
+		majorunit = "days"
+		minorunit = "hr"
 		if stdev > 0.0:
-			timestr = str(round(avg/3600.0,2))+" +/- "+str(round(stdev/3600.0,2))+" hrs"
+			timestr = str(round(avg/base, 2))+" +/- "+str(round(stdev/base, 2))+" "+majorunit
 		else:
-			timestr = str(int(avg/3600.0))+" hrs "+str(int((avg/3600.0-int(avg/3600.0))*60.0+0.5))+" min"
+			timestr = ( str(int(math.floor(avg/base)))+" "+majorunit+" "
+				+str(int(round( (avg % base)/subbase )))+" "+minorunit )
 	return str(timestr)
 
 def printDataBox(labellist,numlist,typelist=None):
