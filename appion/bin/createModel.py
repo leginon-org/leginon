@@ -40,13 +40,13 @@ class createModelScript(appionScript.AppionScript):
 			help="Class indices to be excluded e.g. 1,0,10", metavar="TEXT")
 		self.parser.add_option("--symm", dest="symm", default="c1",
 			help="Cn symmetry if any, e.g. --symm=4,c3", metavar="TEXT")
-		self.parser.add_option("--mask", dest="mask",
+		self.parser.add_option("--mask", dest="mask", type="int",
 			help="Mask radius", metavar="INT")
-		self.parser.add_option("--lp", dest="lp",
+		self.parser.add_option("--lp", dest="lp", type="float",
 			help="Lowpass filter radius in Fourier pixels", metavar="INT")
-		self.parser.add_option("--rounds", dest="rounds",
+		self.parser.add_option("--rounds", dest="rounds", type="int",
 			help="Rounds of Euler angle determination to use", metavar="INT")
-		self.parser.add_option("--apix", dest="apix", type=float,
+		self.parser.add_option("--apix", dest="apix", type="float",
 			help="Angstrom per pixel of the images in the class average file", metavar="FLOAT")
 		self.parser.add_option("--commit", dest="commit", default=True,
 			action="store_true", help="Commit model to database")
@@ -189,7 +189,7 @@ class createModelScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(startAnyCmd, verbose=True)
 
 		#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
-		modelpath = self.cleanup(norefpath, int(self.params['norefclass']))
+		modelpath = self.cleanup(norefpath, self.params['norefclass'])
 		#change its apix back to be the same as the class average file
 		self.changeapix(modelpath, self.params['apix'])
 
