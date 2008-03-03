@@ -219,8 +219,10 @@ def resetVirtualFrameBuffer():
 	#else
 	#	system("setenv DISPLAY :1");
 
-
-
+def getNumProcessors():
+	f = os.popen("cat /proc/cpuinfo | grep processor")
+	nproc = len(f.readlines())
+	return nproc
 
 
 
