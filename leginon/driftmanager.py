@@ -152,6 +152,9 @@ class DriftManager(watcher.Watcher):
 		newimagedata['emtarget'] = oldimagedata['emtarget']
 		newimagedata['version'] = oldimagedata['version'] + 1
 		newimagedata['corrected'] = correct
+		dim = newimagedata['camera']['dimension']
+		newimagedata['pixels'] = dim['x'] * dim['y']
+		newimagedata['pixeltype'] = str(newimagedata['image'].dtype)
 		target = newimagedata['target']
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			newimagedata['grid'] = target['grid']

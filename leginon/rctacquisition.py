@@ -319,8 +319,11 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.publish(imageold['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
+		dim = image0['camera']['dimension']
+		pixels = dim['x'] * dim['y']
+		pixeltype = str(image0['image'].dtype)
 		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name,\
-		 target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber)
+		 target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber, pixels=pixels, pixeltype=pixeltype)
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 
