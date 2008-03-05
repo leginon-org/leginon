@@ -358,9 +358,21 @@ function jobForm($extra=false) {
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
-  echo "
-  <FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR/>
-  <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
+  $helpdiv = "
+  <div id='dhelp'
+    style='position:absolute; 
+        background-color:FFFFDD;
+        color:black;
+        border: 1px solid black;
+        visibility:hidden;
+        z-index:+1'
+    onmouseover='overdiv=1;'
+    onmouseout='overdiv=0;'>
+</div>
+	";
+	echo "
+  <form name='emanjob' method='post' action='$formaction'><br />
+  <table class='tableborder' cellpadding=4 cellspacing=4>
   <tr>
     <td rowspan='2'><b>Cluster:</b></td>
     <td><input type='radio' name='clustername' value='garibaldi' onClick=\"enableGaribaldi('true')\" $garibaldicheck>Garibaldi</td></tr>
@@ -394,15 +406,15 @@ function jobForm($extra=false) {
       </td>
     </tr>
     <tr>
-      <td><A HREF=\"javascript:refinfopopup('nodes')\">Nodes:</A></td>
+      <td><a href='#' id='lcp1' onMouseOver='popLayer(\"nodes\", \"lcp1\")' onMouseOut='hideLayer()'>Nodes:</A></td>
       <td><input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'></td>
-      <td><A HREF=\"javascript:refinfopopup('procpernode')\">Proc/Node:</A></td>
+      <td><a href='#' id='lcp2' onMouseOver='popLayer(\"procpernode\", \"lcp2\")' onMouseOut='hideLayer()'>Proc/Node:</A></td>
       <td><input type='text' NAME='ppn' VALUE='$ppn' SIZE='3'></td>
     </tr>
     <tr>
-      <td><A HREF=\"javascript:refinfopopup('walltime')\">Wall Time:</A></td>
+      <td><a href='#' id='lcp3' onMouseOver='popLayer(\"walltime\", \"lcp3\")' onMouseOut='hideLayer()'>Wall Time:</A></td>
       <td><input type='text' NAME='walltime' VALUE='$walltime' SIZE='4'></td>
-      <td><A HREF=\"javascript:refinfopopup('cputime')\">CPU Time</A></td>
+      <td><a href='#' id='lcp4' onMouseOver='popLayer(\"cputime\", \"lcp4\")' onMouseOut='hideLayer()'>CPU Time</A></td>
       <td><input type='text' NAME='cput' VALUE='$cput' SIZE='4'></td>
     </tr>
     <tr>
@@ -442,22 +454,28 @@ function jobForm($extra=false) {
     </TABLE>\n";
   echo"</td></tr></TABLE>"; //overall table
   $bgcolor="#E8E8E8";
-  $display_keys = array('copy','itn','ang','mask','imask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
+  $display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
   echo"
-  <BR/><CENTER>
-  <H4>EMAN Reconstruction Parameters</H4>
-  </CENTER><HR/>
+  <br />
+  <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
+  <hr />
+	";
+	echo $helpdiv;
+	echo "
   <input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>
   <select name='import' onChange='emanjob.submit()'>
     <option>Import parameters</option>
     <option value='groel1'>GroEL with 10,000+ particles</option>
     <option value='virusgood'>Icos Virus with good starting model</option>
   </select>
+	";
+	echo "
   <br />
   <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
     <tr>\n";
-  foreach ($display_keys as $key) {
-      echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><A HREF=\"javascript:refinfopopup('$key')\">$key</a><font></td>\n";
+  foreach ($display_keys as $k=>$key) {
+			$id="l$k";
+      echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>$key</a></font></td>\n";
   }
   echo"  </tr>\n";
 
@@ -470,6 +488,9 @@ function jobForm($extra=false) {
     $angn="ang".$i;
     $maskn="mask".$i;
     $imaskn="imask".$i;
+    $amask1n="amask1".$i;
+    $amask2n="amask2".$i;
+    $amask3n="amask3".$i;
     $symn="sym".$i;
     $hardn="hard".$i;
     $classkeepn="classkeep".$i;
@@ -537,6 +558,9 @@ function jobForm($extra=false) {
       $ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
       $mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
       $imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
+      $amask1=($i>$j) ? $_POST["amask1".($i-1)] : $_POST[$amask1n];
+      $amask2=($i>$j) ? $_POST["amask2".($i-1)] : $_POST[$amask2n];
+      $amask3=($i>$j) ? $_POST["amask3".($i-1)] : $_POST[$amask3n];
       $sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
       $hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
       $classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
@@ -585,6 +609,9 @@ function jobForm($extra=false) {
         <td bgcolor='$rcol'><input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$amask1n' SIZE='3' VALUE='$amask1'>
+                            <input type='text' NAME='$amask2n' SIZE='2' VALUE='$amask2'>
+                            <input type='text' NAME='$amask3n' SIZE='2' VALUE='$amask3'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
@@ -729,6 +756,9 @@ function writeJobFile ($extra=False) {
     $ang=$_POST["ang".$i];
     $mask=$_POST["mask".$i];
     $imask=$_POST["imask".$i];
+    $amask1=$_POST["amask1".$i];
+    $amask2=$_POST["amask2".$i];
+    $amask3=$_POST["amask3".$i];
     $sym=$_POST["sym".$i];
     $hard=$_POST["hard".$i];
     $classkeep=$_POST["classkeep".$i];
@@ -752,6 +782,7 @@ function writeJobFile ($extra=False) {
     $line="\nrefine $i proc=$procs ang=$ang pad=$pad";
     if ($mask) $line.=" mask=$mask";
     if ($imask) $line.=" imask=$imask";
+    if ($amask1) $line.=" amask=$amask1,$amask2,$amask3";
     if ($sym) $line.=" sym=$sym";
     if ($hard) $line.=" hard=$hard";
     if ($classkeep) $line.=" classkeep=$classkeep";
@@ -859,7 +890,7 @@ function writeJobFile ($extra=False) {
 function defaultReconValues ($box) {
   $rad = ($box/2)-2;
   $javafunc = "
-  <SCRIPT LANGUAGE='JavaScript'>
+  <script type='text/javascript'>
     function setDefaults(obj) {
       obj.ang1.value = '5.0';
       obj.mask1.value = '$rad';
@@ -895,72 +926,55 @@ function writeJavaPopupFunctions () {
   <style type='text/css'>
     input { border-style: solid; border-color: #9dae9b; }
     select { border-style: solid; border-color: #9dae9b; }
+
+		span.info {
+			width: 100px;
+		}
   </style>\n";
 
     $javafunc .= "
-  <SCRIPT LANGUAGE='JavaScript'>
-  function refinfopopup(infoname) {
-    var newwindow=window.open('','name','height=250, width=400');
-    newwindow.document.write('<HTML><BODY>');
-    if (infoname=='nodes') {
-      newwindow.document.write('Nodes refers to the number of computer to process on simultaneously. The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.');
-    } else if (infoname=='walltime') {
-      newwindow.document.write('Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock. (The reference to a wall clock is how the term originally got its name.)');
-    } else if (infoname=='cputime') {
-      newwindow.document.write('Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock. (The reference to a wall clock is how the term originally got its name.)');
-    } else if (infoname=='procpernode') {
-      newwindow.document.write('Processors per node. Each computer (node) or Garibaldi has 4 processors (procs), so proc/node=4. For some cases, you may want to use less processors on each node, leaving more memory and system resources for each process.');
-    } else if (infoname=='ang') {
-      newwindow.document.write('Angular step for projections (in degrees)');
-    } else if (infoname=='itn') {
-      newwindow.document.write('Iteration Number');
-    } else if (infoname=='copy') {
-      newwindow.document.write('Duplicate the parameters for this iteration');
-    } else if (infoname=='mask') {
-      newwindow.document.write('Radius of external mask');
-    } else if (infoname=='imask') {
-      newwindow.document.write('Radius of internal mask');
-    } else if (infoname=='sym') {
-      newwindow.document.write('Imposes symmetry on the model, omit this option for no/unknown symmetry<BR/>Examples: c1, c2, d7, etc.');
-    } else if (infoname=='hard') {
-      newwindow.document.write('Hard limit for <I>make3d</I> program. This specifies how well the class averages must match the model to be included, 25 is typical');
-    } else if (infoname=='clskeep') {
-      newwindow.document.write('<b>classkeep=[std dev multiplier]</b><br />This determines how many raw particles are discarded for each class-average. This is defined in terms of the standard-deviation of the self-similarity of the particle set. A value close to 0 (should not be exactly 0) will discard about 50% of the data. 1 is a typical value, and will typically discard 10-20% of the data.');
-    } else if (infoname=='clsiter') {
-      newwindow.document.write('Generation of class averages is an iterative process. Rather than just aligning the raw particles to a reference, they are iteratively aligned toeach other to produce a class-average representative of the data, not of the model, eliminating initial model bias. Typically set to 8 in the early rounds and 3 in later rounds - 0 may be used at the end, but model bias may result.');
-    } else if (infoname=='filt3d') {
-      newwindow.document.write('<b>fil3d=[rad]</b><br />Applies a gaussian low-pass filter to the 3D model between iterations. This can be used to correct problems that may result in high resolution terms being upweighted. [rad] is in pixels, not Angstroms');
-    } else if (infoname=='shrink') {
-      newwindow.document.write('<b>shrink=[n]</b><br /><i>Experimental</i>, Another option that can produce dramatic speed improvements. In some cases, this option can actually produce an improvement in classification accuracy. This option scales the particles and references down by a factor of [n] before classification. Since data is often heavily oversampled, and classification is dominated by low resolution terms, this can be both safe, and actually improve classification by \'filtering\' out high resolution noise. Generally shrink=2 is safe and effective especially for early refinement. In cases of extreme oversampling, larger values may be ok. This option should NOT be used for the final rounds of refinement at high resolution.');
-    } else if (infoname=='euler2') {
-      newwindow.document.write('<b>euler2=[oversample factor]</b><br /><i>Experimental</i>, This option should improve convergence and reconstruction quality, but has produced mixed results in the past. It adds an additional step to the refinement process in which class-averages orientations are redetermined by projection-matching. The parameter allows you to decrease the angular step (ang=) used to generateprojections. ie - 2 would produce projections with angular step of ang/2. It may be worth trying, but use it with caution on new projects.');
-    } else if (infoname=='perturb') {
-      newwindow.document.write('<i>Experimental</i>, potentially useful and at worst should be harmless. Has not been well characterized yet. Rather than generating Euler angles at evenly spaced positions, it adds some randomness to the positions. This should produce a more uniform distribution of data in 3D Fourier space and reduce Fourier artifacts');
-    } else if (infoname=='xfiles') {
-      newwindow.document.write('<b>xfiles=[mass in kD]</b><br />A convenience option.  For each 3D model it will produce a corresponding x-file (threed.1a.mrc -> x.1.mrc).  Based on the mass, the x-file will be scaled so an isosurface threshold of 1 will contain the specified mass.');
-    } else if (infoname=='tree') {
-      newwindow.document.write('This can be a risky option, but it can produce dramatic speedups in the refinement process. Rather than comparing each particle to every reference, this will decimate the reference population to 1/4 (if 2 is specified) or 1/9 (if 3 is specified) of its original size, classify, then locally determine which of the matches is best. Is is safest in conjunction with very small angular steps, ie - large numbers of projections. The safest way to use this is either:<br /><i>a)</i> for high-resolution, small-ang refinement or <br/><i>b)</i> for the initial iterations of refinement (then turn it off for the last couple of iterations).');
-    } else if (infoname=='median') {
-      newwindow.document.write('When creating class averages, use the median value for each pixel instead of the average.  If your dataset is noisy, this is recommended');
-    } else if (infoname=='phscls') {
-      newwindow.document.write('This option will use signal to noise ratio weighted phase residual as a classification criteria (instead of the default optimized real space variance). Over the last year or so, people working on cylindrical structures (like GroEL), have noticed that \'side views\' of this particle seem to frequently get classified as being tilted 4 or 5 degrees from the side view. While apparently this didn\'t effect the models significantly at the obtained resolution, it is quite irritating. This problem turns out to be due to resolution mismatch between the 3D model and the individual particles. Using phase residual solves this problem, although it\'s unclear if there is any resolution improvement. This option has a slight speed penalty');
-    } else if (infoname=='fscls') {
-      newwindow.document.write('An improvement, albeit an experimental one, over phasecls. phasecls ignores Fourier amplitude when making image comparisons. fscls will use a SNR weighted Fourier shell correlation as a similarity criteria. Preliminary tests have shown that this produces slightly better results than phasecls, but it should still be used with caution.');
-    } else if (infoname=='refine') {
-      newwindow.document.write('This will do subpixel alignment of the particle translations for classification and averaging. May have a significant impact at higher resolutions (with a speed penalty).');
-    } else if (infoname=='goodbad') {
-      newwindow.document.write('Saves good and bad class averages from 3D reconstruction. Overwrites each new iteration.');
-    } else if (infoname=='eotest') {
-      newwindow.document.write('Run the <I>eotest</I> program that performs a 2 way even-odd test to determine the resolution of a reconstruction.');
-    } else if (infoname=='coran') {
-      newwindow.document.write('Use correspondence analysis particle clustering algorithm');
-    } else {
-      newwindow.document.write('Missing help info');
-    }
-    newwindow.document.write('</BODY></HTML>');
-    newwindow.document.close();
-  }
-  </SCRIPT>\n";
+  <script type='text/javascript' src='js/help.js'></script>
+  <script type='text/javascript' src='../js/prototype.js'></script>
+  <script type='text/javascript' src='../js/draglayer.js'></script>
+  <script type='text/javascript'>
+
+	overdiv='0'
+	var ie = (document.all)? true:false
+
+// create the popups 
+	function popLayer(a, id) {
+		dhelp=$('dhelp')
+		helpstr=eval('help.eman.'+a)
+		if(!helpstr){helpstr='<font color=red>Missing help info</font>'}
+
+		desc = '<div style=\'position: relative; width: 300px; padding: 1em\'>'+helpstr+'</div>'
+		dhelp.innerHTML=desc;
+
+		if (o=$(id)) {
+			wh = ie ? window.document.body.clientHeight : window.innerHeight
+			ww = ie ? window.document.body.clientWidth : window.innerWidth
+			wwo = ie ? window.document.body.scrollLeft : window.pageXOffset
+
+			left=getAbsLeft(o)
+			top=getAbsTop(o)
+			if (ww+wwo-left<300)
+				left -= 300
+			dhelp.style.left = left+ 'px'
+			dhelp.style.bottom= wh-top+20 + 'px'
+		}
+
+		dhelp.style.visibility='visible'
+	}
+
+	function hideLayer(){
+		dhelp=$('dhelp')
+		if (overdiv == '0') {
+			dhelp.innerHTML=''
+			dhelp.style.visibility='hidden';
+		}
+	}
+
+</script>\n";
   return $javafunc;
 };
 
