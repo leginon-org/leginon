@@ -211,16 +211,16 @@ function runUploadModel() {
   if (!$sym) createUploadModelForm("<B>ERROR:</B> Select a symmetry");
 
   $command.="uploadModel.py ";
-  $command.="$model ";
-  $command.="session=$session ";
-  $command.="apix=$apix ";
-  $command.="res=$res ";
-  $command.="symmetry=$sym ";
-  if ($boxsize) $command.="boxsize=$boxsize ";
-  if ($contour) $command.="contour=$contour ";
-  if ($zoom) $command.="zoom=$zoom ";
-  if ($_POST['newmodel']) $command.="rescale=$_GET[modelid],$apix ";
-  $command.="description=\"$description\"";
+	if (!$_GET[modelid]) $command.="--file=$model ";
+  $command.="--session=$session ";
+  $command.="--apix=$apix ";
+  $command.="--res=$res ";
+  $command.="--symmetry=$sym ";
+  if ($boxsize) $command.="--boxsize=$boxsize ";
+  if ($contour) $command.="--contour=$contour ";
+  if ($zoom) $command.="--zoom=$zoom ";
+  if ($_POST['newmodel']) $command.="--modelid=$_GET[modelid] ";
+  $command.="--description='$description' ";
   
   writeTop("UploadModel Run","UploadModel Params");
 	
