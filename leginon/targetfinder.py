@@ -73,9 +73,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			except Exception, e:
 				self.logger.exception('Read image failed: %s' % e[-1])
 				return
+			self.currentimagedata = {'image':orig} 
 		else:
 			orig = imagedata['image']
-		self.currentimagedata = imagedata
+			self.currentimagedata = imagedata
 
 		self.setImage(orig, 'Original')
 		return orig
