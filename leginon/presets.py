@@ -1550,12 +1550,7 @@ class PresetsManager(node.Node):
 		time.sleep(self.settings['pause time'])
 		self.logger.info('Temporary mag: %d' % (temp_mag,))
 
-		#fix me to real camera dimension
-		camname = preset['ccdcamera']['name']
-		if camname != 'Tietz PXL':
-			fullcamdim = 4096
-		else:
-			fullcamdim = 2048
+		fullcamdim = self.instrument.ccdcamera.CameraSize['x']
 		# temp binning,dimension
 		orig_dim = preset['dimension']['x']
 		orig_bin = preset['binning']['x']
