@@ -955,12 +955,12 @@ function writeJavaPopupFunctions () {
 			ww = ie ? window.document.body.clientWidth : window.innerWidth
 			wwo = ie ? window.document.body.scrollLeft : window.pageXOffset
 
-			left=getAbsLeft(o)
-			top=getAbsTop(o)
-			if (ww+wwo-left<300)
+			oleft=getAbsLeft(o)
+			otop=getAbsTop(o)
+			if (ww+wwo-oleft<300)
 				left -= 300
-			dhelp.style.left = left+ 'px'
-			dhelp.style.bottom= wh-top+20 + 'px'
+			dhelp.style.left = oleft+ 'px'
+			dhelp.style.bottom= wh-otop+20 + 'px'
 		}
 
 		dhelp.style.visibility='visible'
