@@ -121,7 +121,8 @@ class Prediction(object):
 				r2 = [0,0]
 				r2[0] = abs(_getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.xs[1:]))
 				r2[1] = abs(_getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.ys[1:]))
-				if max(r2) > 0.95:
+				r2xy = abs(_getCorrelationCoefficient(tilt_group.xs[1:], tilt_group.ys[1:]))
+				if max(r2) > 0.95 and r2xy > 0.95:
 					self.forcemodel = True
 					print 'force model fit'
 				else:

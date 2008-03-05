@@ -1605,6 +1605,8 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('integer', bool),
 			('intscale', float),
 			('pausegroup', bool),
+			('model mag', str),
+			('z0 error', float),
 		)
 	typemap = classmethod(typemap)
 

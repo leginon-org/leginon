@@ -217,17 +217,58 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
         miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
+        modelmags = self.getMagChoices()
+        self.widgets['model mag'] = wx.Choice(self, -1, choices=modelmags)
+        self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
+                                                            allownone=False,
+                                                            chars=6,
+                                                            value='2e-6')
+
+        magsz = wx.GridBagSizer(5, 5)
+        label = wx.StaticText(self, -1, 'Initialize with the model of')
+        magsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        magsz.Add(self.widgets['model mag'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'mag')
+        magsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        
+        zsz = wx.GridBagSizer(5, 5)
+        label = wx.StaticText(self, -1, 'Allow' )
+        zsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        zsz.Add(self.widgets['z0 error'],
+                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, 'meters of z0 jump between models' )
+        zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        modelsz = wx.GridBagSizer(5, 5)
+        modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        modelsz.Add(zsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        modelb = wx.StaticBox(self, -1, 'Model')
+        modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
+        modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+
         sz = wx.GridBagSizer(10, 10)
         sz.Add(tiltsbsz, (0, 0), (1, 2), wx.EXPAND)
         sz.Add(expsbsz, (1, 0), (1, 1), wx.EXPAND)
         sz.Add(bcsbsz, (1, 1), (1, 1), wx.EXPAND)
-        sz.Add(miscsbsz, (2, 0), (1, 2), wx.EXPAND)
+        sz.Add(miscsbsz, (2, 0), (1, 1), wx.EXPAND)
+        sz.Add(modelbsz, (2, 1), (1, 2), wx.EXPAND)
         sz.AddGrowableRow(0)
         sz.AddGrowableRow(1)
+        sz.AddGrowableRow(2)
         sz.AddGrowableCol(0)
         sz.AddGrowableCol(1)
 
         return szs + [sz]
+
+    def getMagChoices(self):
+    		choices = ['this preset and lower', 'only this preset']
+    		try:
+					mags = self.node.instrument.tem.Magnifications
+    		except:
+    			mags = [550,3500,5000]
+    		choices.extend( [str(int(m)) for m in mags])
+    		return choices
 
 class Panel(gui.wx.Acquisition.Panel):
     settingsdialogclass = SettingsDialog
