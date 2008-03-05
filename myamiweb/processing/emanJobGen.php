@@ -958,7 +958,7 @@ function writeJavaPopupFunctions () {
 			oleft=getAbsLeft(o)
 			otop=getAbsTop(o)
 			if (ww+wwo-oleft<300)
-				left -= 300
+				oleft -= 300
 			dhelp.style.left = oleft+ 'px'
 			dhelp.style.bottom= wh-otop+20 + 'px'
 		}
