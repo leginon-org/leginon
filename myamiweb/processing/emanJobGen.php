@@ -901,7 +901,7 @@ function defaultReconValues ($box) {
       obj.classiter1.value = '8';
       //obj.filt3d1.value = '15.0';
       //obj.shrink1.value = '1';
-      obj.median1.checked = true;
+      obj.median1.checked = false;
       obj.xfiles1.value = '';
       obj.euler21.checked = '';
       obj.phasecls1.checked = true;
