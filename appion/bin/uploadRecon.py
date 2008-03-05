@@ -29,7 +29,7 @@ class UploadReconScript(appionScript.AppionScript):
 		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
 			help="Initial model id in the database", metavar="INT")
 		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
-			help="Jobfile id in the database", metavar="FLOAT")
+			help="Jobfile id in the database", metavar="INT")
 		self.parser.add_option("-p", "--package", dest="package", default="EMAN",
 			help="Reconstruction package used (EMAN by default)", metavar="TEXT")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
