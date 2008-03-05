@@ -1,5 +1,7 @@
+import Image
+import numpy
 
-def readPILgrey(imfile):
+def read(imfile):
 	im = Image.open(imfile)
 	im = im.convert('L')
 	width,height = im.size
