@@ -7,14 +7,12 @@
 classifier
 clstoaligned
 combinestack
-createModel
 postProc
 refBasedAlignment
 runrmeasure
 scalestack
 splitstack
 uploadMisc
-uploadModel
 uploadParticles
 
 ### future AppionLoop
@@ -43,9 +41,11 @@ tiltaligner
 
 ### AppionScript
 createFakeStack
+createModel
 makegoodaverages
 satEuler
 subStack
+uploadModel
 uploadRecon
 uploadTemplate
 
