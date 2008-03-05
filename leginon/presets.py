@@ -1072,7 +1072,6 @@ class PresetsManager(node.Node):
 			lowmag = magdict[keys[0]]
 			reverse = True
 
-		print camname,highmag,lowmag
 		#fix me to real camera dimension
 		if camname != 'Tietz PXL':
 			fullcamdim = 4096
@@ -1086,8 +1085,6 @@ class PresetsManager(node.Node):
 		if lowbin < 1:
 			lowbin = 1
 		 
-		print "similar look high mag bin", highbin
-		print "similar look low mag bin", lowbin
 		if reverse == False:
 			return {keys[0]:highbin, keys[1]:lowbin}
 		else:
@@ -1127,7 +1124,6 @@ class PresetsManager(node.Node):
 				alignmags[label] = preset['magnification']
 				camname = preset['ccdcamera']['name']
 			acquirebin = self.getSimilarLook(camname,alignmags)
-			print acquirebin
 		else:
 				acquirebin['right'] = None
 				acquirebin['left'] = None
@@ -1203,7 +1199,8 @@ class PresetsManager(node.Node):
 				camdata1['dimension'][axis] = new_camdim
 				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
-			print camdata1['offset'],camdata1['dimension'],camdata1['binning'],camdata1['exposure time']
+				if camdata1['exposure time']< 5.0:
+					camdata1['exposure time'] = 5.0
 		try:
 			self.instrument.setData(camdata1)
 		except:

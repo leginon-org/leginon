@@ -1118,6 +1118,7 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 		self.SetSizerAndFit(szmain)
 		self.SetAutoLayout(True)
 
+		self.Bind(wx.EVT_CHOICE, self.onAcquireModeChoice, self.choiceacquiremode)
 		self.Bind(wx.EVT_BUTTON, self.onNext, self.bcontinue)
 		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
@@ -1129,6 +1130,11 @@ class AlignDialog(gui.wx.Dialog.Dialog):
 
 	def onRightImageClicked(self, evt):
 		self.node.onAlignImageClicked('right', evt.xy)
+
+	def onAcquireModeChoice(self, evt):
+		if not self.bstart.IsEnabled():
+			self.parent.alignacquiremode = self.choiceacquiremode.GetStringSelection()
+			self.node.acquireAlignImages(self)
 
 	def onNext(self, evt):
 		self.parent.alignacquiremode = self.choiceacquiremode.GetStringSelection()
