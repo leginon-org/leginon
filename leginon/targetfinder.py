@@ -15,7 +15,7 @@ import mosaic
 import threading
 import node
 import targethandler
-from pyami import convolver, imagefun, mrc
+from pyami import convolver, imagefun, mrc, numpil
 import numpy
 import scipy.ndimage as nd
 import gui.wx.TargetFinder
@@ -71,8 +71,11 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			try:
 				orig = mrc.read(filename)
 			except Exception, e:
-				self.logger.exception('Read image failed: %s' % e[-1])
-				return
+				try:
+					orig = numpil.read(filename)
+				except:
+					self.logger.exception('Read image failed: %s' % e[-1])
+					return
 			self.currentimagedata = {'image':orig} 
 		else:
 			orig = imagedata['image']
