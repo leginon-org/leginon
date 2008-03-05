@@ -36,6 +36,11 @@ if ($_POST['write']) {
   for ($i=1; $i<=$_POST['numiters']; $i++) {
     if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
     if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
+    // if amask is used, then xfiles must also be used
+    if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
+      if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
+      if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
+    } 
   }
   // check that job file doesn't already exist
   $outdir = $_POST['outdir'];
