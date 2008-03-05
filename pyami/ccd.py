@@ -3,34 +3,15 @@
 Classes for managing image corrections (bias, flat, dark) on CCD images
 '''
 
-### specify which array package to use:
-arraypackage = 'numarray'
-#arraypackage = 'numpy'
-
 ### turn debugging output on/off
 debug = False
 
-if arraypackage == 'numpy':
-	import numpy
-	numfloat = numpy.float32
-	imagemean = numpy.mean
-	imagestd = numpy.std
-	randomarray = numpy.random
-	def arange(n, type):
-		return numarray.arange(n, dtype=type)
-	median = numpy.median
-
-if arraypackage == 'numarray':
-	import numarray
-	numpy = numarray
-	numfloat = numarray.Float32
-	import numarray.nd_image
-	imagemean = numarray.nd_image.mean
-	imagestd = numarray.nd_image.standard_deviation
-	import numarray.random_array as randomarray
-	def arange(n, type):
-		return numarray.arange(n, type=type)
-	from numarray.image import median
+import numpy
+numfloat = numpy.float32
+imagemean = numpy.mean
+imagestd = numpy.std
+randomarray = numpy.random
+median = numpy.median
 
 class CorrectorError(RuntimeError):
 	pass
@@ -295,7 +276,7 @@ if __name__ == '__main__':
 	# add fake bias into fake darks
 	bias = c.bias()
 	dark = c.dark()
-	flat = 5 * arange(shape[0]*shape[1], numfloat)
+	flat = 5 * numpy.arange(shape[0]*shape[1], dtype=numfloat)
 	flat.shape = shape
 	flat = flat / flat.mean()
 	flats = [bias + exptime * dark + exptime * 1000 * flat for exptime in exptimes]
