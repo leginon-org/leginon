@@ -1,18 +1,13 @@
 #!/usr/bin/env python
-from sinedon import sqldict, dbconfig
+import sinedon
+from sinedon import sqldict
 import leginonconfig
 
 class NotConnectedError(Exception):
 	pass
 
 # connection to the project database
-dbparams = {
-	'host': leginonconfig.projectdb['hostname'],
-	'user': leginonconfig.projectdb['username'],
-	'db': leginonconfig.projectdb['name'],
-	'passwd': leginonconfig.projectdb['password'], 	 
-	} 	 
- 	 
+dbparams = sinedon.getConfig('projectData')
 
 class Project(sqldict.ObjectBuilder):
 	'''Project: a class object to access the
