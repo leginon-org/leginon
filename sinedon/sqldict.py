@@ -310,8 +310,11 @@ class _Table:
 
 			qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
 			## print qsel
-			c.execute(qsel)
-			result=c.fetchone()
+			try:
+				c.execute(qsel)
+				result=c.fetchone()
+			except:
+				result = None
 
 		if force or not result:
 			q = sqlexpr.Insert(self.table, v).sqlRepr()
