@@ -246,13 +246,14 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         modelb = wx.StaticBox(self, -1, 'Model')
         modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
         modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+        modelsz.AddGrowableCol(0)
 
-        sz = wx.GridBagSizer(10, 10)
+        sz = wx.GridBagSizer(5, 5)
         sz.Add(tiltsbsz, (0, 0), (1, 2), wx.EXPAND)
         sz.Add(expsbsz, (1, 0), (1, 1), wx.EXPAND)
         sz.Add(bcsbsz, (1, 1), (1, 1), wx.EXPAND)
         sz.Add(miscsbsz, (2, 0), (1, 1), wx.EXPAND)
-        sz.Add(modelbsz, (2, 1), (1, 2), wx.EXPAND)
+        sz.Add(modelbsz, (2, 1), (1, 1), wx.EXPAND)
         sz.AddGrowableRow(0)
         sz.AddGrowableRow(1)
         sz.AddGrowableRow(2)
@@ -266,7 +267,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     		try:
 					mags = self.node.instrument.tem.Magnifications
     		except:
-    			mags = [550,3500,5000]
+    			mags = []
     		choices.extend( [str(int(m)) for m in mags])
     		return choices
 
@@ -301,3 +302,4 @@ class Panel(gui.wx.Acquisition.Panel):
 
     def onResetTiltSeriesList(self, evt):
         self.node.resetTiltSeriesList()
+
