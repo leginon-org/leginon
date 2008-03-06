@@ -79,12 +79,6 @@ configfiles = configparser.read(config_locations)
 	#sys.stderr.write(str(configfile)+" ")
 #sys.stderr.write("\n")
 
-## Project Database
-projectdb = {}
-options = configparser.options('Project Database')
-for key in options:
-	projectdb[key] = configparser.get('Project Database', key)
-
 # drive mapping
 drives = configparser.options('Drive Mapping')
 for drive in drives:
