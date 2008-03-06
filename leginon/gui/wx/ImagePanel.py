@@ -706,7 +706,6 @@ class ClickImagePanel(ImagePanel):
 		if mode == "vertical":
 			self.clicktool = self.addTool(ImagePanelTools.ClickTool(self, self.toolsizer, disable))
 		else:
-			print "here"
 			self.clicktool = self.addTool(ImagePanelTools.ClickTool(self, self.toolsizer2, disable))
 		self.Bind(EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
