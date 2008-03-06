@@ -1649,6 +1649,7 @@ class TargetFilterSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
 			('bypass', bool),
+			('target type', str),
 		)
 	typemap = classmethod(typemap)
 

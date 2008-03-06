@@ -32,6 +32,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 10)
 
 		self.widgets['bypass'] = wx.CheckBox(self, -1,'Bypass Filter')
+		targettypes = ['acquisition','preview']
+		self.widgets['target type'] = wx.Choice(self, -1, choices=targettypes)
 
 		self.widgets['raster spacing'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['raster angle'] = FloatEntry(self, -1, min=0, chars=6)
@@ -47,7 +49,13 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['raster preset'].setChoices(presets)
 		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
 
-		sz.Add(self.widgets['bypass'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztype = wx.GridBagSizer(0,5)
+		sztype.Add(self.widgets['bypass'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Convoluting Target Type')
+		sztype.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztype.Add(self.widgets['target type'], (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztype.AddGrowableCol(0)
+		sz.Add(sztype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
 		sz.Add(self.autobut, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Raster Preset')

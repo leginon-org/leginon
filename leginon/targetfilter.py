@@ -21,7 +21,10 @@ import gui.wx.TargetFilter
 class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFilter.Panel
 	settingsclass = data.TargetFilterSettingsData
-	defaultsettings = {'bypass':True}
+	defaultsettings = {
+		'bypass':True,
+		'target type':'acquisition',	
+	}
 	eventinputs = node.Node.eventinputs + targethandler.TargetWaitHandler.eventinputs + [event.ImageTargetListPublishEvent]
 	eventoutputs = node.Node.eventoutputs + targethandler.TargetWaitHandler.eventoutputs + [event.TargetListDoneEvent]
 										
@@ -37,7 +40,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 
 	def handleTargetListPublish(self, pubevent):
 		targetlistdata = pubevent['data']
-		newtargetlistdata = self.__filterTargetList(targetlistdata)
+		newtargetlistdata = self.__filterTargetList(targetlistdata,self.settings['target type'])
 		tid = self.makeTargetListEvent(newtargetlistdata)
 		self.publish(newtargetlistdata, pubevent=pubevent)
 		status = self.waitForTargetListDone(tid)
@@ -54,14 +57,14 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		oldtargetlists = self.getListsInQueue(queuedata)
 
 		for oldtargetlist in oldtargetlists:
-				newtargetlist = self.__filterTargetList(oldtargetlist)
+				newtargetlist = self.__filterTargetList(oldtargetlist,self.settings['target type'])
 				if newtargetlist is not oldtargetlist:
 					# newtargetlist has already been put in queue, now dequeue old one
 					donetargetlist = data.DequeuedImageTargetListData(list=oldtargetlist,queue=queuedata)
 					self.publish(donetargetlist, database=True)
 		self.publish(queuedata, pubevent=True)
 
-	def __filterTargetList(self, targetlistdata):
+	def __filterTargetList(self, targetlistdata,type='acquisition'):
 		'''
 		- create a new ImageTargetListData for the new targets
 		- run the custom filter method on targets in this list
@@ -72,17 +75,25 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info('Bypassing target filter')
 			return targetlistdata
 		else:
-			oldtargets = self.researchTargets(list=targetlistdata)
+			oldtargets = self.researchTargets(list=targetlistdata,type=type)
 			self.logger.info('Filter input: %d' % (len(oldtargets),))
 			newtargets = self.filterTargets(oldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),))
-			self.markTargetsDone(oldtargets)
+			alltargets = self.researchTargets(list=targetlistdata)
+			for target in alltargets:
+				if target['type'] != type:
+					newtarget = data.AcquisitionImageTargetData(initializer=target)
+					newtarget['delta row'] = target['delta row']
+					newtarget['delta column'] = target['delta column']
+					newtargets.append(newtarget)
+			self.markTargetsDone(alltargets)
 			self.logger.info('Original targets marked done.')
 			newtargetlistdata = self.newTargetList()
 			newtargetlistdata.update(targetlistdata)
 			self.publish(newtargetlistdata, database=True, dbforce=True)
-			for newtarget in newtargets:
+			for i, newtarget in enumerate(newtargets):
 				newtarget['list'] = newtargetlistdata
+				newtarget['number'] = i+1
 				self.publish(newtarget, database=True, dbforce=True)
 			return newtargetlistdata
 
