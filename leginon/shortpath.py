@@ -6,6 +6,7 @@ from optparse import OptionParser
 import os
 from PIL import Image, ImageDraw, ImageFont
 from math import sqrt, hypot
+import numpy
 import logging
 
 def hillclimb(init_function,move_operator,objective_function,max_evaluations):
@@ -257,7 +258,7 @@ def setupOptParse():
 	return params
 
 
-def sortPoints(coords, numiter=3, maxeval=70000):
+def sortPoints(coords, numiter=3, maxeval=70000, writepng=False, msg=False):
 	"""
 	inputs:
 		list of coordinates
@@ -280,7 +281,7 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 	#setup distance matrix
 	matrix = cartesian_matrix(coords)
 	startscore = -tour_length1(matrix, startorderfunc())
-	print "beginning distance="+str(round(-1*startscore,2))+" pixels"
+	#print "beginning distance="+str(round(-1*startscore,2))+" pixels"
 	bestscore = startscore
 
 	#setup fitness function: total distance
@@ -296,9 +297,10 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 			#print "new best score:", score
 			bestiters = iters
 			bestscore = score
-			bestorder = order
-			outfile = str(int(abs(score)))+".png"
-			write_tour_to_img(coords, order, str(score), file(outfile,'w'))
+			bestorder = order	
+			if writepng is True:
+				outfile = str(int(abs(score)))+".png"
+				write_tour_to_img(coords, order, str(score), file(outfile,'w'))
 
 	#print "###################"
 	#print "shift cities"
@@ -312,13 +314,19 @@ def sortPoints(coords, numiter=3, maxeval=70000):
 			bestiters = iters
 			bestscore = score
 			bestorder = order
-			outfile = str(int(abs(score)))+".png"
-			write_tour_to_img(coords, order, str(score), file(outfile,'w'))
+			if writepng is True:
+				outfile = str(int(abs(score)))+".png"
+				write_tour_to_img(coords, order, str(score), file(outfile,'w'))
 
 	percent = 100.0 * abs(startscore - bestscore) / abs(startscore)
-	print "shortest distance="+str(round(-1*bestscore,2))+" pixels ("+str(round(percent,2))+"% shorter)"
-	print "best order=",bestorder
-	return bestorder, bestscore
+	messages = []
+	messages.append( "shortened distance from "+str(round(-1*startscore,2))+" to "
+		+str(round(-1*bestscore,2))+" pixels ("+str(round(percent,2))+"% shorter)" )
+	bestarray = numpy.asarray(bestorder, dtype=numpy.int32)
+	messages.append("best order="+str(bestarray+1))
+	if msg is True:
+		print message
+	return bestorder, bestscore, messages
 
 
 ##########################################

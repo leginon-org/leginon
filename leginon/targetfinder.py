@@ -148,16 +148,18 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			print "skipping sort targets"
 			return targetlist
 		#print "targets=",targetlist
-		bestorder, bestscore = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
+		bestorder, bestscore, messages = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
+		for msg in messages:
+			self.logger.info(msg)
 		#print "bestorder=",bestorder
 		if bestorder is None or len(bestorder) < 3:
-			print "skipping sort targets"
+			self.logger.info("skipping sort targets")
 			return targetlist
 		sortedtargetlist = []
 		for i in bestorder:
 			sortedtargetlist.append(targetlist[i])
 		#print "sortedtargets=",sortedtargets
-		print "returning sorted targets"
+		self.logger.info("returning sorted targets")
 		return sortedtargetlist
 		
 	#--------------------
