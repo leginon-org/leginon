@@ -443,6 +443,8 @@ def singleStack(params,imgdict):
 	cmd="proc2d %s %s" %(imgpath, output)
 	if params['normalized'] is True:
 		cmd += " norm=0.0,1.0"
+		# edge normalization
+		cmd += " edgenorm"
 
 	if params['highpass'] or params['lowpass']:
 		cmd += " apix=%s" % params['apix']
