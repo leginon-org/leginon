@@ -148,19 +148,21 @@ read the image from a database.
 		bias = self.bias()
 		if bias is None:
 			raise CorrectorError('bias image not available')
-		return input - self.bias()
+		return input - bias
 
 	def correctDark(self, input, exptime):
 		dark = self.dark()
 		if dark is None:
 			raise CorrectorError('dark image not available')
-		return input - exptime * self.dark()
+		return input - exptime * dark
 
 	def correctFlat(self, input):
 		flat = self.flat()
 		if flat is None:
 			raise CorrectorError('flat image not available')
-		return input * self.flat()
+		flattened = input * flat
+		flattened = numpy.where(numpy.isfinite(flattened), flattened, 0)
+		return flattened
 
 	def correctBiasDarkFlat(self, input, exptime):
 		input = self.correctBias(input)
