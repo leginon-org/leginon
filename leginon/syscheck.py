@@ -38,6 +38,7 @@ print '--------------------------------------------------------------'
 print 'Python:'
 
 import sys
+import os
 
 ## location of executable and module path
 print '    Python executable (if wrong, check PATH in your environment):'
@@ -59,6 +60,8 @@ if versionAtLeast(mypyver, minpyver):
 else:
 	print '        *** FAILED (at least %s required)' % (minstr,)
 	print '        Upgrade before installing other packages.'
+
+print '    Python says home directory is:  %s' % (os.path.expanduser('~'),)
 
 ######################################################################
 ## Python Imaging Library
