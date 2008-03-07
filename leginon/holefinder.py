@@ -263,8 +263,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
-		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
-		self.storeHoleStatsData(hfprefs)
+		if type(self.currentimagedata) == type(data.AcquisitionImageData()):
+			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
+			self.storeHoleStatsData(hfprefs)
 
 	def centroid(self, points):
 		## find centroid
