@@ -87,7 +87,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info('Filter output: %d' % (len(newtargets),))
 			alltargets = self.researchTargets(list=targetlistdata)
 			for target in alltargets:
-				if target['type'] != type:
+				if target['type'] != type and target['status'] not in ('done','aborted'):
 					newtarget = data.AcquisitionImageTargetData(initializer=target)
 					newtarget['delta row'] = target['delta row']
 					newtarget['delta column'] = target['delta column']
