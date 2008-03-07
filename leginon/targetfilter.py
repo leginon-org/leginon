@@ -76,8 +76,14 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			return targetlistdata
 		else:
 			oldtargets = self.researchTargets(list=targetlistdata,type=type)
-			self.logger.info('Filter input: %d' % (len(oldtargets),))
-			newtargets = self.filterTargets(oldtargets)
+
+			goodoldtargets = []
+			for oldtarget in oldtargets:
+				if oldtarget['status'] not in ('done', 'aborted'):
+					goodoldtargets.append(oldtarget)
+			
+			self.logger.info('Filter input: %d' % (len(goodoldtargets),))
+			newtargets = self.filterTargets(goodoldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),))
 			alltargets = self.researchTargets(list=targetlistdata)
 			for target in alltargets:
