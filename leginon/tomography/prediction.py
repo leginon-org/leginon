@@ -124,7 +124,6 @@ class Prediction(object):
 				r2xy = abs(_getCorrelationCoefficient(tilt_group.xs[1:], tilt_group.ys[1:]))
 				if max(r2) > 0.95 and r2xy > 0.95:
 					self.forcemodel = True
-					print 'force model fit'
 				else:
 					self.forcemodel = False
 			x, y = leastSquaresXY(tilt_group.tilts,
@@ -177,7 +176,7 @@ class Prediction(object):
 		if self.forcemodel or (fitparameters[-1]-self.parameters[-1])**2 <= max_delta_z0**2:
 			self.parameters = fitparameters
 		else:
-			print 'KEEP OLD PARAMETER because of bad z0 %e is more than %e away' % (fitparameters[-1], max_delta_z0)
+			pass
 		return self.parameters
 
 def _getCorrelationCoefficient(xs,ys):
