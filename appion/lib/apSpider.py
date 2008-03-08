@@ -1,9 +1,18 @@
-import apDisplay
+
+## python
+import time
 import os
+## PIL
+#import Image
+## spider
+import spyder
+## appion
 import apImage
 import apEMAN
-#import Image
-import time
+import apParam
+import apDisplay
+
+
 
 def spiderOutputLine(int1, int2, float1, float2, float3, float4, float5, float6=1.0):
 	line = "%04d" % int1
@@ -81,3 +90,117 @@ def spiderSingleToArray(imgfile, msg=False):
 	#img = Image.open(imgfile)
 	#imgarray = apImage.imageToArray(img)
 	return imgarray
+
+def alignParticles(stackfile, template, numpart, pixrad,
+		firstring=2, lastring=100, dataext=".spi"):
+	"""
+	inputs:
+		stack
+		template
+		search params
+	outputs:
+		aligned stack
+		rotation/shift params
+	"""
+	### setup
+	t0 = time.time()
+	apParam.createDirectory("alignment")
+
+	### perform alignment
+	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider.toSpider("CP", template+"@1", "_9") #copy template to memory
+	mySpider.toSpider("AP SR", 
+		stackfile+"@*****", "1-"+str(numpart), 
+		str(pixrad), str(firstring)+","+str(firstring), 
+		"_9", "alignment/avgimg***", "alignment/paramdoc***")
+	mySpider.close()
+
+	### find number of iterations
+	numiter = 0
+	while os.path.isfile("alignment/avgimg%03d%s" % (numiter+1, dataext)):
+		numiter += 1
+	if numiter == 0:
+		apDisplay.printWarning("alignment failed")
+		return
+	apDisplay.printMsg(str(numiter)+" alignment iterations were run by spider")
+
+	### I tried this loop in both spider and python: python was faster?!? -neil
+
+	### write aligned stack -- with python loop
+	t0 = time.time()
+	mySpider = spyder.SpiderSession(dataext=dataext)
+	for p in range(1,numpart+1):
+		mySpider.toSpider(
+			"UD IC,"+str(p)+",x21,x22,x23",
+			("alignment/paramdoc%03d" % (numiter)),
+			"RT SQ",
+			stackfile+"@"+("%05d" % (p)),
+			"aligned@"+("%05d" % (p)),
+			"x21", "x22,x23")
+	mySpider.close()
+	td1 = time.time()-t0
+
+	### write aligned stack -- with spider loop
+	t0 = time.time()
+	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider.toSpider(
+		"DO LB10 x11=1,"+str(numpart),
+		"  UD IC,x11,x21,x22,x23",
+		"  alignment/paramdoc%03d" % (numiter),
+		"  RT SQ",
+		"  "+stackfile+"@{*****x11}",
+		"  aligned@{*****x11}",
+		"  x21", 
+		"  x22,x23", 
+		"LB10")
+	mySpider.toSpider("UD ICE", ("alignment/paramdoc%03d" % (numiter)) )
+	mySpider.close()
+	td2 = time.time()-t0
+
+	time.sleep(2)
+	apDisplay.printMsg("complete alignment of "+str(numpart)
+		+" particles in "+apDisplay.timeString(td1))
+
+	apDisplay.printMsg("complete alignment of "+str(numpart)
+		+" particles in "+apDisplay.timeString(td2))
+
+	return 
+
+
+def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, factors=None,
+		dataext=".spi"):
+	"""
+	inputs:
+		aligned stack
+		search params
+	outputs:
+	
+	"""
+	### setup
+	t0 = time.time()
+	apParam.createDirectory("coran")
+	if factors is None:
+		factors = range(1,21)
+
+	### make template file
+	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider.toSpider("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskrad))
+
+	### performing correspondence analysis
+	apDisplay.printMsg("Performing correspondence analysis (long wait)")
+	mySpider.toSpider(
+		"CA S",
+		alignedstack+"@*****", "1-"+str(numpart),
+		"_9", str(max(factors)), "C", "10",
+		"coran/coran")
+
+	### pull put factors
+	for fact in factors:
+		mySpider.toSpider(
+			"CA SRE", "coran/coran", str(fact), 
+			"coran/eigenimg@"+str(fact), )
+
+
+
+
+
