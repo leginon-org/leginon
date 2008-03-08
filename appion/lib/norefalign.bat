@@ -140,13 +140,13 @@ _9              ; mask file
 20              ; number of factors to be used
 C               ; Coran analysis
 x92             ; additive constant (since coran can't have negative values)
-[ali]coran      ; output file prefix
+[corandir]coran ; output file prefix
 
 DO LB14 x11=1,20
 	CA SRE
-	[ali]coran
+	[corandir]coran
 	x11
-	[ali]sre@{***x11}
+	[corandir]eigenimg@{***x11}
 LB14
 
 
@@ -161,16 +161,16 @@ VM
 echo "  clustering..."
 
 CL HC          ; do hierarchical clustering
-[ali]coran_IMC ; coran image factor coordinate file
+[corandir]coran_IMC ; coran image factor coordinate file
 1-3            ; factor numbers to be included in clustering algorithm
 1.00           ; factor weights 
 1.00           ; for each factor number
 1.00
 5              ; use Ward's method
 Y              ; make a postscript of dendogram
-[ali]clhc.ps   ; dendogram image file
+[corandir]clhc.ps   ; dendogram image file
 Y              ; save dendogram doc file
-[ali]clhc_doc  ; dendogram doc file
+[corandir]clhc_doc  ; dendogram doc file
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Determine the cutoff for the desired number of classes ;;
@@ -192,7 +192,7 @@ DO LB13 x11=0,100
 
   CL HD
   x13             ; threshold value
-  [ali]clhc_doc   ; dendogram file 
+  [corandir]clhc_doc   ; dendogram file 
   tmpclhc_classes ; classes files
   
   UD N,x12        ; get number of determined classes
@@ -229,7 +229,7 @@ VM
 echo "  creating {%F5.1%x12} classes using a threshold of {%F7.5%x13}"
 CL HE         ; generate doc files containing particle numbers for classes
 x13           ; threshold (closer to 0=more classes)
-[ali]clhc_doc      ; dendogram doc file
+[corandir]clhc_doc      ; dendogram doc file
 [clhc_cls]****  ; selection doc file that will contain # of objects for classes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
