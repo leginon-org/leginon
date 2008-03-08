@@ -91,7 +91,7 @@ def spiderSingleToArray(imgfile, msg=False):
 	#imgarray = apImage.imageToArray(img)
 	return imgarray
 
-def alignParticles(stackfile, template, numpart, pixrad,
+def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		firstring=2, lastring=100, dataext=".spi"):
 	"""
 	inputs:
@@ -120,8 +120,7 @@ def alignParticles(stackfile, template, numpart, pixrad,
 	while os.path.isfile("alignment/avgimg%03d%s" % (numiter+1, dataext)):
 		numiter += 1
 	if numiter == 0:
-		apDisplay.printWarning("alignment failed")
-		return
+		apDisplay.printError("alignment failed")
 	apDisplay.printMsg(str(numiter)+" alignment iterations were run by spider")
 
 	### I tried this loop in both spider and python: python was faster?!? -neil
@@ -140,6 +139,7 @@ def alignParticles(stackfile, template, numpart, pixrad,
 	mySpider.close()
 	td1 = time.time()-t0
 
+	"""
 	### write aligned stack -- with spider loop
 	t0 = time.time()
 	mySpider = spyder.SpiderSession(dataext=dataext)
@@ -156,33 +156,33 @@ def alignParticles(stackfile, template, numpart, pixrad,
 	mySpider.toSpider("UD ICE", ("alignment/paramdoc%03d" % (numiter)) )
 	mySpider.close()
 	td2 = time.time()-t0
+	"""
 
 	time.sleep(2)
-	apDisplay.printMsg("complete alignment of "+str(numpart)
+	apDisplay.printMsg("completed alignment of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
 
-	apDisplay.printMsg("complete alignment of "+str(numpart)
-		+" particles in "+apDisplay.timeString(td2))
+	#apDisplay.printMsg("completed alignment of "+str(numpart)
+	#	+" particles in "+apDisplay.timeString(td2))
 
 	return 
 
 
-def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, factors=None,
-		dataext=".spi"):
+def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, factors=None, dataext=".spi"):
 	"""
 	inputs:
 		aligned stack
 		search params
 	outputs:
-	
+		eigen images
+		eigen vectors
+		coran parameters
 	"""
 	### setup
 	t0 = time.time()
 	apParam.createDirectory("coran")
-	if factors is None:
-		factors = range(1,21)
 
-	### make template file
+	### make template in memory
 	mySpider = spyder.SpiderSession(dataext=dataext)
 	mySpider.toSpider("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskrad))
 
@@ -194,12 +194,19 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, factors=None
 		"_9", str(max(factors)), "C", "10",
 		"coran/coran")
 
-	### pull put factors
+	### generate eigen images
+	if factors is None:
+		### use 1 through 20
+		factors = range(1,21)
 	for fact in factors:
 		mySpider.toSpider(
 			"CA SRE", "coran/coran", str(fact), 
 			"coran/eigenimg@"+str(fact), )
+	td1 = time.time()-t0
+	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
+		+" particles in "+apDisplay.timeString(td1))
 
+	return
 
 
 
