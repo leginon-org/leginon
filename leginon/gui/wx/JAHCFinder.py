@@ -383,8 +383,9 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.bice = wx.Button(self, -1, '&Test targeting')
 		self.cice = wx.Button(self, -1, '&Clear targets')
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bice, (0, 2), (1, 35), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.Add(self.cice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		szbutton.Add(self.cice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		szbutton.Add(self.bice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(1)
 		
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
 		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
