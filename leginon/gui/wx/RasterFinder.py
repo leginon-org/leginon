@@ -18,6 +18,8 @@ import gui.wx.Settings
 import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
 from gui.wx.Entry import Entry, IntEntry, FloatEntry
+from gui.wx.Presets import PresetChoice
+from gui.wx.Choice import Choice
 import gui.wx.TargetTemplate
 import gui.wx.ToolBar
 import threading
@@ -25,7 +27,8 @@ import threading
 class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
-		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
+#		self.SettingsDialog = gui.wx.TargetFinder.SettingsDialog
+		self.SettingsDialog = SettingsDialog
 
 		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -106,6 +109,33 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['raster center y'] = IntEntry(self, -1, chars=4)
 		self.widgets['raster symmetric'] = wx.CheckBox(self, -1, '&Symmetric')
 
+		## auto raster
+		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
+		self.Bind(wx.EVT_BUTTON, self.onAutoButton, self.autobut)
+		self.widgets['raster preset'] = PresetChoice(self, -1)
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['raster preset'].setChoices(presets)
+		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
+
+
+		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
+		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		szauto = wx.GridBagSizer(5, 5)
+		szauto.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Raster Preset')
+		szauto.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster preset'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Overlap percent')
+		szauto.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster overlap'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		movetypes = self.node.calclients.keys()
+		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
+		label = wx.StaticText(self, -1, 'Move Type')
+		szauto.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster movetype'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbszauto.Add(szauto, 1, wx.EXPAND|wx.ALL,5)
+
 		szraster = wx.GridBagSizer(5, 5)
 
 		label = wx.StaticText(self, -1, 'XY symmetry:')
@@ -168,7 +198,7 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbszraster, szbutton]
+		return [sbszauto,sbszraster, szbutton]
 
 	def onToggleSymm(self, evt):
 		if self.widgets['raster symmetric'].GetValue():
@@ -182,6 +212,14 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 			self.widgets['raster spacing asymm'].Enable(True)
 			self.widgets['raster limit asymm'].Enable(True)			
 		return
+
+	def onAutoButton(self, evt):
+		self.setNodeSettings()
+		s,a = self.node.autoSpacingAngle()
+		if s is not None:
+			self.widgets['raster spacing'].SetValue(s)
+			self.widgets['raster angle'].SetValue(a)
+			self.widgets['raster spacing asymm'].SetValue(s)
 
 	def onCheckBox(self, evt):
 		if self.widgets['raster center on image'].GetValue():
@@ -304,23 +342,46 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbszat.Add(szat, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bice = wx.Button(self, -1, 'Test')
-#		self.bice.SetMinSize((100,100))
+		self.cice = wx.Button(self, -1, '&Clear targets')
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bice, (0, 0), (1, 1),
+		szbutton.Add(self.cice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		szbutton.Add(self.bice, (0, 1), (1, 1),
 			wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.AddGrowableCol(0)
+		szbutton.AddGrowableCol(1)
 
 		szt = wx.GridBagSizer(5, 5)
 		szt.Add(sbszft, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 		szt.Add(sbszat, (0, 1), (1, 1), wx.EXPAND|wx.ALL)
 
+
 		self.Bind(wx.EVT_BUTTON, self.onAnalyzeIceButton, self.bice)
+		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
 
 		return [sbszice, szt, szbutton]
 
 	def onAnalyzeIceButton(self, evt):
 		self.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+
+	def onClearButton(self, evt):
+		self.setNodeSettings()
+		self.node.clearTargets('acquisition')
+		self.node.clearTargets('focus')
+
+class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+	def initialize(self):
+		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+
+		self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated raster target making')
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.widgets['skip'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
+		sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return tfsd + [sbsz]
 
 
 if __name__ == '__main__':
