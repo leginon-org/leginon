@@ -349,9 +349,9 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 																									'Use target template')
 		self.widgets['focus template'] = gui.wx.TargetTemplate.Panel(self,
-																									'Focus Target Template')
+			'Focus Target Template', autofill=True)
 		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
-																									'Acquisition Target Template')
+			'Acquisition Target Template', autofill=True)
 		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
 																								'Use focus template thickness')
 		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
@@ -420,19 +420,25 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.bice = wx.Button(self, -1, 'Test')
+		self.bice = wx.Button(self, -1, '&Test targeting')
+		self.cice = wx.Button(self, -1, '&Clear targets')
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bice, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.AddGrowableCol(0)
-
+		szbutton.Add(self.cice, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		szbutton.Add(self.bice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(1)
+		
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
-
+		self.Bind(wx.EVT_BUTTON, self.onClearButton, self.cice)
 		return [sbszice, sbsztt, szbutton]
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
+
+	def onClearButton(self, evt):
+		self.setNodeSettings()
+		self.node.clearTargets('acquisition')
+		self.node.clearTargets('focus')
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
