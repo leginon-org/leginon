@@ -24,8 +24,12 @@ class RasterFinder(targetfinder.TargetFinder):
 	settingsclass = data.RasterFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
+		'skip': False,
 		'publish polygon': False,
 		'image filename': '',
+		'raster movetype': None,
+		'raster preset': None,
+		'raster overlap': 0.0,
 		'raster spacing': 100,
 		'raster spacing asymm': None,
 		'raster angle': 0,
@@ -65,6 +69,47 @@ class RasterFinder(targetfinder.TargetFinder):
 			'Final': {},
 		}
 		self.start()
+
+	def autoSpacingAngle(self):
+		try:
+			imageid = self.currentimagedata.dbid
+		except:
+			self.logger.warning('Image not in database')
+			return None, None
+		imagedata = self.currentimagedata
+
+		tem = imagedata['scope']['tem']
+		cam = imagedata['camera']['ccdcamera']
+		ht = imagedata['scope']['high tension']
+
+		# transforming from target mag
+		targetpresetname = self.settings['raster preset']
+		targetpreset = self.presetsclient.getPresetByName(targetpresetname)
+		mag1 = targetpreset['magnification']
+		dim1 = targetpreset['dimension']['x']
+		bin1 = targetpreset['binning']['x']
+		fulldim = dim1 * bin1
+		p1 = (0,fulldim)
+
+		# transforming into mag of atlas
+		mag2 = imagedata['scope']['magnification']
+		bin2 = imagedata['camera']['binning']['x']
+
+		movetype = self.settings['raster movetype']
+		p2 = self.calclients[movetype].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		# bin
+		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
+		# overlap
+		overlap = self.settings['raster overlap']
+		overlapscale = 1.0 - overlap/100.0
+		p2 = overlapscale*p2[0], overlapscale*p2[1]
+		
+		spacing = numpy.hypot(*p2)
+		angle = numpy.arctan2(*p2)
+		#coordinate on image is left-handed and angle in makeRaster is right-handed
+		angle = math.degrees((-1)*angle)
+		
+		return spacing, angle
 
 	def createRaster(self):
 		"""
@@ -260,7 +305,8 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## automated part
 		self.currentimagedata = imdata
-		self.everything()
+		if not self.settings['skip']:
+			self.everything()
 
 		## user part
 		if self.settings['user check']:

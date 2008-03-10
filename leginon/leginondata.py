@@ -1222,6 +1222,9 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 		return TargetFinderSettingsData.typemap() + (
 			('publish polygon', bool),
 			('image filename', str),
+			('raster preset', str),
+			('raster movetype', str),
+			('raster overlap', float),
 			('raster spacing', int),
 			('raster spacing asymm', int),
 			('raster angle', float),
@@ -1243,6 +1246,7 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('acquisition convolve', bool),
 			('acquisition convolve template', list),
 			('acquisition constant template', list),
+			('skip', bool),
 		)
 	typemap = classmethod(typemap)
 
