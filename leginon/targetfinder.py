@@ -57,6 +57,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 																				**kwargs)
 		targethandler.TargetWaitHandler.__init__(self)
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
+		self.presetsclient = presets.PresetsClient(self)
+		self.calclients = {
+			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
+			'stage position': calibrationclient.StageCalibrationClient(self),
+			'modeled stage position':
+												calibrationclient.ModeledStageCalibrationClient(self)
+		}
 
 	def readImage(self, filename):
 		imagedata = None
@@ -65,9 +72,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if imagedata is None:
 			if filename == '':
 				if self.name in ['Hole Targeting','Subsquare Targeting']:
-					filename = os.path.join(version.getInstalledLocation(),'sq_example.mrc')
+					filename = os.path.join(version.getInstalledLocation(),'sq_example.jpg')
 				else:
-					filename = os.path.join(version.getInstalledLocation(),'hl_example.mrc')
+					filename = os.path.join(version.getInstalledLocation(),'hl_example.jpg')
 			try:
 				orig = mrc.read(filename)
 			except Exception, e:
