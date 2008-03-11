@@ -174,7 +174,9 @@ def commitSubStack(params):
 	if stackdata:
 		apDisplay.printWarning("A stack with these parameters already exists")
 		return
+	stackq['oldstack'] = oldstackdata
 	stackq['hidden'] = False
+	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
 
 	partinserted = 0
