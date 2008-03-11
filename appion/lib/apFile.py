@@ -20,7 +20,7 @@ def md5sumfile(fname):
 	return m.hexdigest()
 
 
-def numImagesInStack(imgfile):
+def numImagesInStack(imgfile, boxsize=None):
 	"""
 	Find the number of images in an 
 	IMAGIC stack based on the filesize
@@ -28,9 +28,15 @@ def numImagesInStack(imgfile):
 	if imgfile[-4:] == '.hed':
 		numimg = int('%d' % (os.stat(imgfile)[6]/1024))
 	elif imgfile[-4:] == '.img':
-		numimg = int('%d' % (os.stat(imgfile)[6]/102400))
+		hedfile = imgfile[:-4]+'.hed'
+		numimg = int('%d' % (os.stat(hedfile)[6]/1024))
 	elif os.path.isfile(imgfile+'.hed'):
 		numimg = int('%d' % (os.stat(imgfile+'.hed')[6]/1024))
+	elif imgfile[-4:] == '.spi':
+		if boxsize is None:
+			apDisplay.printError("boxsize is required for SPIDER stacks")
+		imgmem = boxsize*(boxsize+2)*4
+		numimg = int('%d' % (os.stat(imgfile)[6]/imgmem))
 	else:
-		apDisplay.printError("numImagesInStack requires an IMAGIC stack")
+		apDisplay.printError("numImagesInStack() requires an IMAGIC or SPIDER stacks")
 	return numimg
