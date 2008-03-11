@@ -20,8 +20,8 @@ def makeNewStack(oldstack, newstack, listfile):
 		#prefix=newstack.split('.')[0]
 		#os.remove(prefix+'.hed')
 		#os.remove(prefix+'.img')
-	apDisplay.printMsg("creating a newstack ("+newstack+
-		")\n\tfrom the oldstack ("+oldstack+")")
+	apDisplay.printMsg("creating a newstack\n\t"+newstack+
+		"\nfrom the oldstack\n\t"+oldstack+"\nusing list file\n\t"+listfile)
 	command=("proc2d "+oldstack+" "+newstack+" list="+listfile)
 	apEMAN.executeEmanCmd(command, verbose=True)
 	return
@@ -184,12 +184,16 @@ def commitSubStack(params):
 	listfile = params['keepfile']
 	newparticlenum = 1
 	f=open(listfile,'r')
+	total = len(f.readlines())
+	f.close()
+	f=open(listfile,'r')
 	apDisplay.printMsg("Inserting stack particles")
 	count = 0
 	for line in f:
 		count += 1
-		if count % 1000 == 0:
-			sys.stderr.write(".")
+		if count % 100 == 0:
+			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
+			sys.stderr.write(str(count)+" of "+(str(total))+" complete")
 		particlenum = getListFileParticle(line, newparticlenum)
 		if particlenum is None:
 			continue
