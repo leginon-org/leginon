@@ -240,6 +240,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			help="Location of new class files", metavar="PATH")
 		self.parser.add_option("--eotest", dest="eotest", default=False,
 			action="store_true", help="make even and odd averages")
+		self.parser.add_option("--skip-avg", dest="skipavg", default=False,
+			action="store_true", help="skip class averaging step")
 
 	#=====================
 	def checkConflicts(self):
@@ -283,6 +285,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		totalptcls=0
 		
 		reject=open('reject.lst','w')
+		keep=open('keep.lst','w')
 		reject.write('#LST\n')
 		print "Processing class"
 		#loop through classes
@@ -294,7 +297,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			images=EMAN.EMData()
 
 			#loop through particles in class
-			f=open('keep.lst','w')
+			f=open('class.lst','w')
 			f.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
@@ -311,6 +314,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 						 rot, ptcl['shiftx'], ptcl['shifty'], mirror))
 					totalptcls+=1
 					nptcls+=1
+					keep.write('%d\n' % (ptcl['particle']['particleNumber']-1))
 				else:
 					reject.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
 						stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
@@ -321,13 +325,14 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			
 			if nptcls<1:
 				continue
-			
-			makeClassAverages('keep.lst',self.params['outputstack'], classes[key], self.params)
+			if self.params['skipavg'] is False:
+				makeClassAverages('class.lst',self.params['outputstack'], classes[key], self.params)
 			
 			if self.params['eotest']:
-				makeEvenOddClasses('keep.lst',classes[key],self.params)
+				makeEvenOddClasses('class.lst',classes[key],self.params)
 		sys.stderr.write("\n")
 		reject.close()
+		keep.close()
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
 		apDisplay.printColor("Make a new stack with only non-jumpers:\n"
