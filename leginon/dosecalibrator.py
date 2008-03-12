@@ -109,6 +109,18 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.calclient.storeSensitivity(ht, sens)
 		CallAfter(self.panel.dialog._setSensitivityResults, sens)
 
+	def onSetSensitivity(self,sens):
+		try:
+			scope = self.instrument.getData(data.ScopeEMData)
+		except:
+			return None
+		ht = scope['high tension']
+		if sens:
+			self.calclient.storeSensitivity(ht,sens)
+			self.logger.info('Camera sensitivity saved as %.3f counts/e and %d kV' %(sens,ht/1000))
+		else:
+			self.logger.warning('Enter a pre-measured value before saving')
+		return
 	def abortCalibration(self):
 		raise NotImplementedError
 

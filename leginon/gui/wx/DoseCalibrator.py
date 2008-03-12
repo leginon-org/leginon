@@ -101,20 +101,23 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 
         self.szdose = sz
 
-        self.stsensitivity = wx.StaticText(self, -1, '')
+        self.sensitivity = FloatEntry(self, -1, chars=6)
+        self.setsensitivity = wx.Button(self, -1, 'Save')
         self.bcalibratesensitivity = wx.Button(self, -1, 'Calibrate')
 
         szcam = wx.GridBagSizer(5, 5)
+        szcam.Add(self.bcalibratesensitivity, (0, 0), (1, 4),
+                        wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+        szcam.AddGrowableCol(0)
         label = wx.StaticText(self, -1, 'Sensitivity:')
-        szcam.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        szcam.Add(self.stsensitivity, (0, 1), (1, 1),
+        szcam.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        szcam.Add(self.sensitivity, (1, 1), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         label = wx.StaticText(self, -1, 'counts/e')
-        szcam.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-        szcam.Add(self.bcalibratesensitivity, (1, 0), (1, 3),
+        szcam.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+        szcam.Add(self.setsensitivity, (1, 3), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
-        szcam.AddGrowableCol(1)
+
 
         sb = wx.StaticBox(self, -1, 'Camera Sensitivity')
         sbszcam = wx.StaticBoxSizer(sb, wx.VERTICAL)
@@ -123,6 +126,7 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
         self.Bind(wx.EVT_BUTTON, self.onScreenUpButton, self.bscreenup)
         self.Bind(wx.EVT_BUTTON, self.onScreenDownButton, self.bscreendown)
         self.Bind(wx.EVT_BUTTON, self.onMeasureDoseButton, self.bmeasuredose)
+        self.Bind(wx.EVT_BUTTON, self.onSetSensitivityButton, self.setsensitivity)
         self.Bind(wx.EVT_BUTTON, self.onCalibrateSensitivityButton,
                             self.bcalibratesensitivity)
 
@@ -155,11 +159,14 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 
     def _setSensitivityResults(self, results):
         if results is None:
-            self.stsensitivity.SetLabel('')
+            self.sensitivity.SetValue(0)
         else:
-            self.stsensitivity.SetLabel(str(results))
+            self.sensitivity.SetValue(results)
         self.szmain.Layout()
         self.Fit()
+
+    def onSetSensitivityButton(self, evt):
+        self.node.onSetSensitivity(self.sensitivity.GetValue())
 
     def onCalibrateSensitivityButton(self, evt):
         threading.Thread(target=self.node.uiCalibrateCamera).start()
