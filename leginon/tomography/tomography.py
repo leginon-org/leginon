@@ -133,7 +133,7 @@ class Tomography(acquisition.Acquisition):
 		else:
 			if preset['dose'] is not None:
 				dose = preset['dose']*1e-20
-				exposure_time = preset['exposure time']/1000.0
+			exposure_time = preset['exposure time']/1000.0
 
 		try:
 			self.exposure.update(total_dose=total_dose,

@@ -112,7 +112,7 @@ class Exposure:
 
     def updateExposures(self):
         default = ''
-        exposure = 1.0
+        exposure = self.exposure
         self.exposures = []
 
         if self.total_dose <= 0:
@@ -120,6 +120,7 @@ class Exposure:
         elif self.dose <= 0:
             default = 'dose is zero'
         elif self.exposure <= 0:
+            exposure = 1.0
             default = 'exposure time is zero'
         elif self.sum <= 0:
             default = 'exposure time sum is zero'
@@ -145,8 +146,9 @@ if __name__ == '__main__':
     import tilts
 
     args = [math.radians(arg) for arg in (-60, 60, 0, 1)]
-    tilts = tilts.Tilts(*args)
+    tilts = tilts.Tilts()
+    tilts.tilts = [args]
     tilts = tilts.getTilts()
-    exposure = Exposure()#total_dose=200.0, tilts=tilts, dose=0.65, exposure=0.5)
-    print exposure.getExposures()
+    exposure = Exposure(total_dose=200.0, tilts=tilts, dose=None)
+    exposure.update(dose=None, exposure=0.2)
 
