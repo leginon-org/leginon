@@ -572,6 +572,7 @@ class Focuser(acquisition.Acquisition):
 		self.man_image = imarray.astype(numpy.float32)
 		self.panel.setManualImage(self.man_image, 'Image')
 		self.panel.setManualImage(self.man_power, 'Power')
+		time.sleep(0.5)
 
 	def manualCheckLoop(self, presetname=None, emtarget=None):
 		## go to preset and target
