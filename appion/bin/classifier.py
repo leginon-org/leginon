@@ -19,6 +19,8 @@ if __name__ == "__main__":
 
 	if params['commit']is True:
 		apAlignment.insertNoRefRun(params, insert=False)
+	else:
+		apDisplay.printWarning("not committing results to DB")
 
 	classfile = os.path.join(params['rundir'], "classes_avg.spi")
 	varfile = os.path.join(params['rundir'], "classes_var.spi")
