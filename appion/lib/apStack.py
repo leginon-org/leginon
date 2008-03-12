@@ -192,7 +192,7 @@ def commitSubStack(params):
 	for line in f:
 		count += 1
 		if count % 100 == 0:
-			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
+			sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
 			sys.stderr.write(str(count)+" of "+(str(total))+" complete")
 		particlenum = getListFileParticle(line, newparticlenum)
 		if particlenum is None:
