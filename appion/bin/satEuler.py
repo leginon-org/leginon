@@ -140,6 +140,10 @@ class satEulerScript(appionScript.AppionScript):
 		#convert to tree form
 		eulertree = self.convertSQLtoEulerTree(results)
 
+		if len(eulertree) < 10:
+			print query
+			apDisplay.printError("Failed to get euler angles")
+
 		return eulertree
 
 	#=====================
@@ -199,10 +203,13 @@ class satEulerScript(appionScript.AppionScript):
 				+"  ON stpart1.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle1` \n"
 				+"LEFT JOIN `ApStackParticlesData` AS stpart2 \n"
 				+"  ON stpart2.`REF|ApParticleData|particle` = tiltd.`REF|ApParticleData|particle2` \n"
-				+"WHERE transform.`REF|ApSelectionRunData|tiltrun` = "+str(tiltrunid)+" \n"
-				+"  AND stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
-				+"  AND stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
-				#+"LIMIT 500 \n"
+				+"WHERE \n"
+				+"  transform.`REF|ApSelectionRunData|tiltrun` = "+str(tiltrunid)+" \n"
+				+"AND \n"
+				+"  stpart1.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+				+"AND \n"
+				+"  stpart2.`REF|ApStackData|stack` = "+str(stackid)+" \n" 
+				#+"LIMIT 50 \n"
 			)
 		#print query
 		apDisplay.printColor("Getting all particles via MySQL query at "+time.asctime(), "yellow")
@@ -210,6 +217,10 @@ class satEulerScript(appionScript.AppionScript):
 		numrows = int(self.cursor.rowcount)
 		results = self.cursor.fetchall()
 		apDisplay.printMsg("Fetched "+str(len(results))+" rows in "+apDisplay.timeString(time.time()-t0))
+
+		if len(results) < 3:
+			print query
+			apDisplay.printError("No tilt pairs found in this stackid="+str(stackid))
 
 		t0 = time.time()
 		eulertree = []
@@ -234,9 +245,12 @@ class satEulerScript(appionScript.AppionScript):
 					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
 					+"LEFT JOIN `ApRefinementData` AS refd \n"
 					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
-					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(partid1)+" \n"
-					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
-					+"  AND refd.`iteration` = "+str(iteration)+" \n"
+					+"WHERE "
+					+"  stpart.`REF|ApParticleData|particle` = "+str(partid1)+" \n"
+					+"AND \n"
+					+"  refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"AND \n"
+					+"  refd.`iteration` = "+str(iteration)+" \n"
 					+"LIMIT 1 \n"
 			)
 			#print query
@@ -262,9 +276,12 @@ class satEulerScript(appionScript.AppionScript):
 					+"  ON partclass.`REF|ApEulerData|eulers` = e.`DEF_id` \n"
 					+"LEFT JOIN `ApRefinementData` AS refd \n"
 					+"  ON partclass.`REF|ApRefinementData|refinement` = refd.`DEF_id` \n"
-					+"WHERE stpart.`REF|ApParticleData|particle` = "+str(partid2)+" \n"
-					+"  AND refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
-					+"  AND refd.`iteration` = "+str(iteration)+" \n"
+					+"WHERE "
+					+"  stpart.`REF|ApParticleData|particle` = "+str(partid2)+" \n"
+					+"AND \n"
+					+"  refd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" \n" 
+					+"AND \n"
+					+"  refd.`iteration` = "+str(iteration)+" \n"
 					+"LIMIT 1 \n"
 			)
 			#print query
