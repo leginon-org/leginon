@@ -15,11 +15,16 @@ import apDatabase
 import apCtf
 import apMatlab
 import apParam
+
+"""
 try:
 	import pymat
 except:
 	apDisplay.environmentError()
 	raise
+"""
+
+import mlabraw as pymat
 
 class aceLoop(appionLoop.AppionLoop):
 	def setProcessingDirName(self):
@@ -76,12 +81,22 @@ class aceLoop(appionLoop.AppionLoop):
 			time.sleep(5)
 			self.matlab = pymat.open()
 
-		scopeparams = {
-			'kv':      imgdata['scope']['high tension']/1000,
-			'apix':    apDatabase.getPixelSize(imgdata),
-			'cs':      self.params['cs'],
-			'tempdir': self.params['tempdir'],
-		}
+		####Scott's hack for FSU CM
+		####For CM high tension is given in kv instead of v
+		if imgdata['scope']['tem']['name'] == "CM":
+			scopeparams = {
+				'kv':      imgdata['scope']['high tension'],
+				'apix':    apDatabase.getPixelSize(imgdata),
+				'cs':      self.params['cs'],
+				'tempdir': self.params['tempdir'],
+			}
+		else:			
+			scopeparams = {
+				'kv':      imgdata['scope']['high tension']/1000,
+				'apix':    apDatabase.getPixelSize(imgdata),
+				'cs':      self.params['cs'],
+				'tempdir': self.params['tempdir'],
+			}
 		apMatlab.setScopeParams(self.matlab, scopeparams)
 		### RUN ACE
 		self.ctfvalue = apMatlab.runAce(self.matlab, imgdata, self.params)

@@ -15,11 +15,15 @@ import apCtf
 import apImage
 import apDatabase
 
+"""
 try:
 	import pymat
 except:
 	apDisplay.environmentError()
 	raise
+"""
+
+import mlabraw as pymat
 
 appiondb = apDB.apdb
 
@@ -73,15 +77,17 @@ def runAce(matlab, imgdata, params, showprev=True):
 			params['matdir'], params['display'], params['stig'],\
 			params['medium'], -nominal, params['tempdir']+"/", params['resamplefr'])
 		acecmd = makeMatlabCmd("ctfparams = measureAstigmatism(",");",plist)
-
+	
+	#print acecmd
 	pymat.eval(matlab,acecmd)
-
+	
 	matfile = os.path.join(params['matdir'], imgname+".mrc.mat")
 	if params['stig']==0:
 		savematcmd = "save('"+matfile+"','ctfparams','scopeparams', 'dforig');"
 		pymat.eval(matlab,savematcmd)
 
 	ctfvalue = pymat.get(matlab, 'ctfparams')
+	ctfvalue=ctfvalue[0]
 
 	apCtf.printResults(params, nominal, ctfvalue)
 
@@ -142,10 +148,11 @@ def setScopeParams(matlab,params):
 		plist = (params['kv'],params['cs'],params['apix'],tempdir)
 		acecmd1 = makeMatlabCmd("setscopeparams(",");",plist)
 		pymat.eval(matlab,acecmd1)
-
+				
 		plist = (params['kv'],params['cs'],params['apix'])
 		acecmd2 = makeMatlabCmd("scopeparams = [","];",plist)
 		pymat.eval(matlab,acecmd2)
+		
 	else:
 		apDisplay.printError("Temp directory, '"+params['tempdir']+"' not present.")
 	return
