@@ -10,50 +10,6 @@ import appionScript
 #=====================
 #=====================
 class UploadModelScript(appionScript.AppionScript):
-	params = {}
-	params['numclasses']=40
-	params['stackname']=None
-	params['session']=None
-	params['diam']=None
-	params['bin']=1
-	params['imask']=0
-	params['lp']=0
-	params['outdir']=None
-	params['mask']=None
-	params['runid']=None
-	params['description']=None
-	params['commit']=False
-	params['classonly']=False
-	params['refids']=None
-	params['xysearch']=None
-	params['iter']=2
-	params['csym']=1
-	params['staticref']=False
-	params['runtime']=None
-
-
-
-		elif elem[0] == "lp":
-			params['lp'] = int(elem[1])
-		elif arg == "staticref":
-			params['staticref'] = True
-		elif arg == "classonly":
-			params['classonly'] = True
-		elif elem[0] == "description":
-			params['description'] = elem[1]
-		elif elem[0] == "iter":
-			params['iter'] = int(elem[1])
-		elif elem[0] == "csym":
-			params['csym'] = int(elem[1])
-		elif elem[0] == "refids":
-			if not ',' in elem[1]:
-				params['refids'] = [ int(elem[1]) ]
-			else:
-				params['refids'] = elem[1].split(',')
-		elif elem[0] == "xysearch":
-			params['xysearch'] = int(elem[1])
-		else:
-			apDisplay.printError(str(elem[0])+" is not recognized as a valid parameter")
 
 	#=====================
 	def setupParserOptions(self):
@@ -68,9 +24,8 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Last ring radius for correlation (in pixels, < pixel radius)", metavar="#")
 		self.parser.add_option("-r", "--rad", dest="pixrad", type="int",
 			help="Expected pixel radius of particle for align", metavar="#")
-		self.parser.add_option("-m", "--mask", dest="pixrad", type="int",
+		self.parser.add_option("-m", "--mask", dest="maskrad", type="int",
 			help="Mask radius for particle coran (in pixels)", metavar="#")
-
 		self.parser.add_option("--lowpass", dest="pixrad", type="float",
 			help="Low pass filter radius (in pixels, > 2)", metavar="#")
 
@@ -84,7 +39,6 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Description of run", metavar="'TEXT'")
 		self.parser.add_option("--runname", dest="runname",
 			help="Name for this run", metavar="STR")
-
 
 	#=====================
 	def checkConflicts(self):
