@@ -560,6 +560,7 @@ class Focuser(acquisition.Acquisition):
 		return corrected
 
 	def acquireManualFocusImage(self):
+		t0 = time.time()
 		correction = self.settings['correct image']
 		self.manualchecklock.acquire()
 		if correction:
@@ -572,7 +573,11 @@ class Focuser(acquisition.Acquisition):
 		self.man_image = imarray.astype(numpy.float32)
 		self.panel.setManualImage(self.man_image, 'Image')
 		self.panel.setManualImage(self.man_power, 'Power')
-		time.sleep(0.5)
+		#sleep if too fast in simulation
+		safetime = 1.0
+		t1 = time.time()
+		if t1-t0 < safetime:
+			time.sleep(safetime-(t1-t0))
 
 	def manualCheckLoop(self, presetname=None, emtarget=None):
 		## go to preset and target
