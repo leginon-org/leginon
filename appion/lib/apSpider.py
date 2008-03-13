@@ -123,9 +123,8 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		apDisplay.printError("alignment failed")
 	apDisplay.printMsg(str(numiter)+" alignment iterations were run by spider")
 
-	### I tried this loop in both spider and python: python was faster?!? -neil
-
 	### write aligned stack -- with python loop
+	### I tried this loop in both spider and python: python was faster?!? -neil
 	t0 = time.time()
 	mySpider = spyder.SpiderSession(dataext=dataext)
 	for p in range(1,numpart+1):
@@ -139,36 +138,13 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	mySpider.close()
 	td1 = time.time()-t0
 
-	"""
-	### write aligned stack -- with spider loop
-	t0 = time.time()
-	mySpider = spyder.SpiderSession(dataext=dataext)
-	mySpider.toSpider(
-		"DO LB10 x11=1,"+str(numpart),
-		"  UD IC,x11,x21,x22,x23",
-		"  alignment/paramdoc%03d" % (numiter),
-		"  RT SQ",
-		"  "+stackfile+"@{*****x11}",
-		"  aligned@{*****x11}",
-		"  x21", 
-		"  x22,x23", 
-		"LB10")
-	mySpider.toSpider("UD ICE", ("alignment/paramdoc%03d" % (numiter)) )
-	mySpider.close()
-	td2 = time.time()-t0
-	"""
-
-	time.sleep(2)
 	apDisplay.printMsg("completed alignment of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
-
-	#apDisplay.printMsg("completed alignment of "+str(numpart)
-	#	+" particles in "+apDisplay.timeString(td2))
 
 	return 
 
 
-def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, factors=None, dataext=".spi"):
+def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=20, dataext=".spi"):
 	"""
 	inputs:
 		aligned stack
@@ -191,14 +167,11 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, factors=None
 	mySpider.toSpider(
 		"CA S",
 		alignedstack+"@*****", "1-"+str(numpart),
-		"_9", str(max(factors)), "C", "10",
+		"_9", str(numfactors), "C", "10",
 		"coran/coran")
 
 	### generate eigen images
-	if factors is None:
-		### use 1 through 20
-		factors = range(1,21)
-	for fact in factors:
+	for fact in range(1,numfactors+1):
 		mySpider.toSpider(
 			"CA SRE", "coran/coran", str(fact), 
 			"coran/eigenimg@"+str(fact), )
