@@ -244,7 +244,30 @@ def getStackPixelSizeFromStackId(stackId):
 	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
 	runsindata = getRunsInStack(stackId)
 	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
-	stackapix = imgapix*stackbin
+	stackapix = imgapix/stackbin
 	apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
 	return stackapix
+
+
+def getStackBoxsize(stackId):
+	"""
+	For a given stack id return stack box size
+	"""
+	stackpart = getOneParticleFromStackId(stackId, msg=False)
+	rawboxsize = stackpart['stackRun']['stackParams']['boxSize']
+	runsindata = getRunsInStack(stackId)
+	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
+	stackboxsize = rawboxsize/stackbin
+	apDisplay.printMsg("Stack "+str(stackId)+" box size: "+str(round(stackboxsize)))
+	return stackboxsize
+
+
+
+
+
+
+
+
+
+
 
