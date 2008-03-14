@@ -4,6 +4,7 @@ import os, sys
 import time
 from struct import unpack
 import re
+import subprocess
 
 """
 Downloaded from:
@@ -24,7 +25,7 @@ There are 2 streams:
  The spider session is started by creating an instance of the SpiderSession
  class:
 
-      sp = SpiderSession(dataext='dat')
+		sp = SpiderSession(dataext='dat')
 
  Then you use the instance methods (functions of sp)
  - send commands to Spider with sp.toSpider("op", "infile","outfile","args")
@@ -32,101 +33,72 @@ There are 2 streams:
 """
 
 
-external_pipename = "TMP_SPIDER_PIPE.pipe"
-      
-isSpiderReg = re.compile("[xX]\d\d")
-
-def isSpiderRegister(s):
-	" returns 1 if string matches pattern: 'X' or 'x' followed by 2 digits"
-	if isSpiderReg.match(s): return 1
-	else: return 0 
-
 class SpiderSession:
-	def __init__(self, spiderexec=None, dataext='.spi'):
-	   # spider executable		
-	   if spiderexec == None:
-	      if os.environ.has_key('SPIDER_LOC'):
-	            self.spiderexec = os.path.join(os.environ['SPIDER_LOC'],'spider')
-	      else:
-	            try:
-	            	self.spiderexec = os.popen("which spider").read().strip()
-	            except:
-	            	self.spiderexec = '/usr/local/spider/bin/spider'
-	   else:
-	      self.spiderexec = spiderexec
+	def __init__(self, spiderexec=None, dataext='.spi', projext=".dat"):
+		# spider executable		
+		if spiderexec is None:
+			if os.environ.has_key('SPIDER_LOC'):
+					self.spiderexec = os.path.join(os.environ['SPIDER_LOC'],'spider')
+			else:
+					try:
+						self.spiderexec =	subprocess.Popen("which spider", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+					except:
+						self.spiderexec = '/usr/local/spider/bin/spider'
+			#print "using spider executable: ",self.spiderexec
+		else:
+			self.spiderexec = spiderexec
 
-	   self.dataext = dataext
-	   if dataext[0] == '.': self.dataext = dataext[1:]
-	   
-	   # create the external fifo pipe to get [registers] from Spider
-	   self.pipename = external_pipename
-	   if os.path.exists(self.pipename):
-	      try: os.remove(self.pipename)
-	      except: pass
-	   os.mkfifo(self.pipename)
+		self.dataext = dataext
+		if dataext[0] == '.': self.dataext = dataext[1:]
+		self.projext = projext
+		if projext[0] == '.': self.projext = projext[1:]
 
-	   # Start spider process, initialize with some MD commands.
-	   self.spider = os.popen(self.spiderexec, 'w')
-	   #self.spider, self.stdout = os.popen2(self.spiderexec, 'w')
-	   self.toSpider(self.dataext)
-	   self.toSpider("MD", "TERM OFF")
-	   self.toSpider("MD", "RESULTS OFF")
-	   self.toSpider("MD", "PIPE", self.pipename)
-	   # open the pipe as a readable file (to get regs from Spider)
-	   self.fromSpider = open(self.pipename, 'r')
-	   
-	   # In Linux, the first register from Spider is piped in a different
-	   # format than subsequent calls to getreg().
-	   # The next 4 lines initialize the register pipeline with the first call.
-	   """
-	   if sys.platform[:5] == 'linux':
-	      self.toSpider("[i] = 3.241","PI REG", "[i]")
-	      rp = ""
-	      while len(rp) < 9:
-	            rp += self.fromSpider.readline()
-	      a,regval,c = unpack('ffc',rp)
-	   """
+		### Start spider process, initialize with some MD commands.
+		#self.spiderin = os.popen(self.spiderexec, 'w')
+		self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
+			stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		self.spiderin = self.spiderproc.stdin
+		self.spiderout = self.spiderproc.stdout
+
+		self.toSpiderQuiet(self.projext+"/"+self.dataext)
+		for i in range(7):
+			sys.stderr.write(self.spiderout.readline())
+		self.toSpiderQuiet("MD", "TERM OFF")
+		self.toSpiderQuiet("MD", "RESULTS OFF")
+
+	def wait(self):
+		### waits until spider quits	
+		self.spiderproc.wait()
 
 	def toSpider(self, *args):
-	   " each item is a line sent to Spider"
-	   for item in args:
-	      self.spider.write(str(item) + '\n')
-	   self.spider.flush()
+		" each item is a line sent to Spider"
+		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m")
+		for item in args:
+			self.spiderin.write(str(item) + '\n')
+		self.spiderin.flush()
 
-	def getreg(self, varname):
-	   varname = varname.strip()
-	   if varname[0] != '[' and not isSpiderRegister(varname):
-	      varname = '[' + varname + ']'
-	   self.toSpider("PI REG", varname)
-
-	   rp = ""   # sometimes it takes multiple readlines to get all 13 bytes
-	   while len(rp) < 13:
-	      rp += self.fromSpider.readline()
-	   
-	   if sys.platform[:5] == 'linux':
-	      a,b,regval,c = unpack('fffc',rp)            
-	   elif sys.platform[:4] == 'irix':
-	      regval,c = unpack('fc',rp)
-	      
-	   return regval
+	def toSpiderQuiet(self, *args):
+		" each item is a line sent to Spider"
+		for item in args:
+			self.spiderin.write(str(item) + '\n')
+		self.spiderin.flush()
 
 	def close(self, delturds=1):
-	   #print dir(self.spider)
-	   self.toSpider("en d")          # end the spider process,
-	   self.fromSpider.close()        # close the fifo pipe
-	   try: os.remove(self.pipename)
-	   except: pass
-	   if delturds:
-	      for file in ['fort.1', 'jnkASSIGN1', 'LOG.'+self.dataext]:
-	            if os.path.exists(file):
-	               try: os.remove(file)
-	               except: pass
-	   #self.spider.flush
-	   self.spider.close()
-	   #while not self.spider.closed():
-	   #	time.sleep(1)
+		self.toSpiderQuiet("EN D")			 # end the spider process,
+		if delturds:
+			for file in ['fort.1', 'jnkASSIGN1', 
+			 'LOG.'+self.dataext, 'LOG.'+self.projext, 
+			 "results."+self.projext+".0", "results."+self.projext+".1"]:
+				if os.path.exists(file):
+					try: os.remove(file)
+					except: pass
+		self.spiderproc.wait()
+		logf = open("spider.log", "a")
+		for line in self.spiderout.readlines():
+			logf.write(line)
+		logf.close()
 
-    
+	 
 # --------------------------------------------------------------
 if __name__ == '__main__':
 	sp = SpiderSession(dataext='dat')
