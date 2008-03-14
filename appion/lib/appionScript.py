@@ -43,6 +43,8 @@ class AppionScript(object):
 		self.setProcessingDirName()
 		self.setupOutputDirectory()
 		self.params['rundir'] = self.params['outdir']
+		if apParam.queryDirectory(self.params['outdir']):
+			apDisplay.printWarning("Output directory already exists in the database")
 
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv)
