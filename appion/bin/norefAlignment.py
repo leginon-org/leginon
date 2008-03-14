@@ -1,10 +1,13 @@
 #!/usr/bin/python -O
 
-import sys
 import os
+import time
 import apDisplay
 import apAlignment
 import apFile
+import apStack
+import apEMAN
+import apSpider
 import appionScript
 
 #=====================
@@ -56,12 +59,11 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
-
 	#=====================
 	def setOutDir(self):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
-		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
+		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['outdir'] = os.path.join(uppath, "noref", self.params['runname'])
 
 	#=====================
@@ -151,7 +153,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
 		if os.path.isfile(spiderstack):
-			apDisplay.printWarning(outfile+" already exists; removing it")
+			apDisplay.printWarning(spiderstack+" already exists; removing it")
 			time.sleep(5)
 			os.remove(spiderstack)
 		emancmd += spiderstack+" "
@@ -160,7 +162,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		if self.params['lowpass'] > 0:
 			emancmd += "lp="+str(self.params['lowpass'])+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
-		emancmd += "spiderswap "
+		emancmd += "spiderswap edgenorm"
 		starttime = time.time()
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
@@ -172,7 +174,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		"""
 		takes the spider file and creates an average template of all particles and masks it
 		"""
-		emancmd  = "proc2d "+self.stack['file']+" template.mrc average"
+		emancmd  = "proc2d "+self.stack['file']+" template.mrc average edgenorm"
 		apEMAN.executeEmanCmd(emancmd)
 
 		apDisplay.printMsg("Masking average by radius of "+str(self.params['maskrad'])+" Angstroms")
@@ -208,23 +210,31 @@ class NoRefAlignScript(appionScript.AppionScript):
 		#	templatefile = self.selectRandomTemplate()
 
 		#run the alignment
+		aligntime = time.time()
 		pixrad =  self.params['partrad']/self.stack['apix']
 		alignedstack = apSpider.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
 			self.params['firstring'], self.params['lastring'])
+		aligntime = time.time() - aligntime
+		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
-		if not self.param['skipcoran']:
+		corantime = time.time()
+		if not self.params['skipcoran']:
 			#do coran
 			maskpixrad = self.params['maskrad']/self.stack['apix']
 			apSpider.correspondenceAnalysis( alignedstack, 
 				self.stack['boxsize'], maskpixrad, 
 				self.params['numpart'], numfactors=20)
+		corantime = time.time() - corantime
 
 		if self.params['commit'] is True:
 			apAlignment.insertNoRefRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
+
+		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
+		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
 
 
 #=====================
