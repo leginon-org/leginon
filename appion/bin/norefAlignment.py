@@ -209,6 +209,11 @@ class NoRefAlignScript(appionScript.AppionScript):
 		#else:
 		#	templatefile = self.selectRandomTemplate()
 
+		maskpixrad = self.params['maskrad']/self.stack['apix']
+		esttime = apAlignment.estimateTime(self.params['numpart'], maskpixrad)
+		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
+			apDisplay.timeString(esttime),"cyan")
+
 		#run the alignment
 		aligntime = time.time()
 		pixrad =  self.params['partrad']/self.stack['apix']
@@ -219,9 +224,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
+		#do correspondence analysis
 		corantime = time.time()
 		if not self.params['skipcoran']:
-			#do coran
 			maskpixrad = self.params['maskrad']/self.stack['apix']
 			apSpider.correspondenceAnalysis( alignedstack, 
 				self.stack['boxsize'], maskpixrad, 
