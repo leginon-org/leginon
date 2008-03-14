@@ -117,17 +117,21 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		rotation/shift params
 	"""
 	### setup
+	if dataext in template:
+		template = template[:-4]
+	if dataext in stackfile:
+		stackfile = stackfile[:-4]
 	t0 = time.time()
 	apParam.createDirectory("alignment")
 
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext)
-	mySpider.toSpider("CP", template+"@1", "_9") #copy template to memory
+	# copy template to memory
+	mySpider.toSpider("CP", (template+"@1"), "_9") 
 	mySpider.toSpider("AP SR", 
 		stackfile+"@*****", "1-"+str(numpart), 
 		str(pixrad), str(firstring)+","+str(firstring), 
 		"_9", "alignment/avgimg***", "alignment/paramdoc***")
-	mySpider.close()
 
 	### find number of iterations
 	numiter = 0
@@ -140,7 +144,6 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	### write aligned stack -- with python loop
 	### I tried this loop in both spider and python: python was faster?!? -neil
 	t0 = time.time()
-	mySpider = spyder.SpiderSession(dataext=dataext)
 	for p in range(1,numpart+1):
 		mySpider.toSpider(
 			"UD IC,"+str(p)+",x21,x22,x23",
@@ -169,6 +172,8 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 		coran parameters
 	"""
 	### setup
+	if dataext in alignedstack:
+		alignedstack = alignedstack[:-4]
 	t0 = time.time()
 	apParam.createDirectory("coran")
 
@@ -189,15 +194,18 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 		mySpider.toSpider(
 			"CA SRE", "coran/corandata", str(fact), 
 			"coran/eigenimg@"+("%03d" % (fact)), )
-		### make a nice png for webpage
+	mySpider.close()
+
+	### make nice pngs for webpage
+	for fact in range(1,numfactors+1):
 		emancmd = ("proc2d coran/eigenimg.spi "
 			+"coran/eigenimg"+("%03d" % (fact))+".png "
 			+" first="+str(fact-1)+" last="+str(fact-1))
-		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 
 	### convert SPIDER image to IMAGIC for webpage
 	emancmd = "proc2d coran/eigenimg.spi coran/eigenimg.hed"
-	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+	apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 
 	td1 = time.time()-t0
 	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
