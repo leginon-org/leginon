@@ -43,7 +43,7 @@ class subStackScript(appionScript.AppionScript):
 
 	#=====================
 	def setOutDir(self):
-		stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
 		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
