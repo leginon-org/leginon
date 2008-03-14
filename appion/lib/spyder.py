@@ -34,7 +34,7 @@ There are 2 streams:
 
 
 class SpiderSession:
-	def __init__(self, spiderexec=None, dataext='.spi', projext=".dat"):
+	def __init__(self, spiderexec=None, dataext='.spi', projext=".dat", logo=True):
 		# spider executable		
 		if spiderexec is None:
 			if os.environ.has_key('SPIDER_LOC'):
@@ -61,8 +61,9 @@ class SpiderSession:
 		self.spiderout = self.spiderproc.stdout
 
 		self.toSpiderQuiet(self.projext+"/"+self.dataext)
-		for i in range(7):
-			sys.stderr.write(self.spiderout.readline())
+		if logo is True:
+			for i in range(7):
+				sys.stderr.write(self.spiderout.readline())
 		self.toSpiderQuiet("MD", "TERM OFF")
 		self.toSpiderQuiet("MD", "RESULTS OFF")
 
