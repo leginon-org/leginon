@@ -44,7 +44,7 @@ class AppionScript(object):
 		self.setupOutputDirectory()
 		self.params['rundir'] = self.params['outdir']
 		if apDatabase.queryDirectory(self.params['outdir']):
-			apDisplay.printWarning("Output directory already exists in the database")
+			self.preExistingDirectoryError()
 
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv)
@@ -72,6 +72,10 @@ class AppionScript(object):
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
+
+	#=====================
+	def preExistingDirectoryError(self):
+		apDisplay.printWarning("Output directory already exists in the database")
 
 	#=====================
 	def setupParserOptions(self):
