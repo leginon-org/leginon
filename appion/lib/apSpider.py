@@ -12,7 +12,21 @@ import apEMAN
 import apParam
 import apDisplay
 
+"""
+A large collection of SPIDER functions
 
+I try to keep the trend
+image file: 
+	*****img.spi
+doc/keep/reject file: 
+	*****doc.spi
+file with some data:
+	*****data.spi
+
+that way its easy to tell what type of file it is
+
+neil
+"""
 
 def spiderOutputLine(int1, int2, float1, float2, float3, float4, float5, float6=1.0):
 	line = "%04d" % int1
@@ -133,7 +147,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 			("alignment/paramdoc%03d" % (numiter)),
 			"RT SQ",
 			stackfile+"@"+("%05d" % (p)),
-			"aligned@"+("%05d" % (p)),
+			"alignedstack@"+("%05d" % (p)),
 			"x21", "x22,x23")
 	mySpider.close()
 	td1 = time.time()-t0
@@ -141,7 +155,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	apDisplay.printMsg("completed alignment of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
 
-	return 
+	return "alignedstack.spi"
 
 
 def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=20, dataext=".spi"):
@@ -168,13 +182,23 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 		"CA S",
 		alignedstack+"@*****", "1-"+str(numpart),
 		"_9", str(numfactors), "C", "10",
-		"coran/coran")
+		"coran/corandata")
 
 	### generate eigen images
 	for fact in range(1,numfactors+1):
 		mySpider.toSpider(
-			"CA SRE", "coran/coran", str(fact), 
-			"coran/eigenimg@"+str(fact), )
+			"CA SRE", "coran/corandata", str(fact), 
+			"coran/eigenimg@"+("%03d" % (fact)), )
+		### make a nice png for webpage
+		emancmd = ("proc2d coran/eigenimg.spi "
+			+"coran/eigenimg"+("%03d" % (fact))+".png "
+			+" first="+str(fact-1)+" last="+str(fact-1))
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+
+	### convert SPIDER image to IMAGIC for webpage
+	emancmd = "proc2d coran/eigenimg.spi coran/eigenimg.hed"
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+
 	td1 = time.time()-t0
 	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
