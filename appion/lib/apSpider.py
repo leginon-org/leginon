@@ -46,9 +46,9 @@ def fermiLowPassFilter(imgarray, pixrad=2.0, dataext="spi"):
 	### run the filter
 	import spyder
 	spider_exe = os.popen("which spider").read().strip()
-	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext)
+	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext, logo=False)
 	### filter request: infile, outfile, filter-type, inv-radius, temperature
-	mySpider.toSpider("FQ NP", "temp001", "filt001", "5", str(1.0/pixrad), "0.02")
+	mySpider.toSpiderQuiet("FQ NP", "temp001", "filt001", "5", str(1.0/pixrad), "0.02")
 	mySpider.close()
 	### this function does not wait for a results
 	while(not os.path.isfile("filt001."+dataext)):
@@ -66,9 +66,9 @@ def fermiHighPassFilter(imgarray, pixrad=200.0, dataext="spi"):
 	### run the filter
 	import spyder
 	spider_exe = os.popen("which spider").read().strip()
-	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext)
+	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext, logo=False)
 	### filter request: infile, outfile, filter-type, inv-radius, temperature
-	mySpider.toSpider("FQ NP", "temp001", "filt001", "6", str(1.0/pixrad), "0.02")
+	mySpider.toSpiderQuiet("FQ NP", "temp001", "filt001", "6", str(1.0/pixrad), "0.02")
 	mySpider.close()
 	### this function does not wait for a results
 	while(not os.path.isfile("filt001."+dataext)):
@@ -127,11 +127,12 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext)
 	# copy template to memory
-	mySpider.toSpider("CP", (template+"@1"), "_9") 
+	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9") 
 	mySpider.toSpider("AP SR", 
 		stackfile+"@*****", "1-"+str(numpart), 
 		str(pixrad), str(firstring)+","+str(firstring), 
 		"_9", "alignment/avgimg***", "alignment/paramdoc***")
+	mySpider.close()
 
 	### find number of iterations
 	numiter = 0
@@ -144,8 +145,9 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	### write aligned stack -- with python loop
 	### I tried this loop in both spider and python: python was faster?!? -neil
 	t0 = time.time()
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for p in range(1,numpart+1):
-		mySpider.toSpider(
+		mySpider.toSpiderQuiet(
 			"UD IC,"+str(p)+",x21,x22,x23",
 			("alignment/paramdoc%03d" % (numiter)),
 			"RT SQ",
@@ -179,7 +181,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 
 	### make template in memory
 	mySpider = spyder.SpiderSession(dataext=dataext)
-	mySpider.toSpider("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskrad))
+	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskrad))
 
 	### performing correspondence analysis
 	apDisplay.printMsg("Performing correspondence analysis (long wait)")
@@ -191,7 +193,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 
 	### generate eigen images
 	for fact in range(1,numfactors+1):
-		mySpider.toSpider(
+		mySpider.toSpiderQuiet(
 			"CA SRE", "coran/corandata", str(fact), 
 			"coran/eigenimg@"+("%03d" % (fact)), )
 	mySpider.close()
@@ -201,11 +203,11 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 		emancmd = ("proc2d coran/eigenimg.spi "
 			+"coran/eigenimg"+("%03d" % (fact))+".png "
 			+" first="+str(fact-1)+" last="+str(fact-1))
-		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
 	### convert SPIDER image to IMAGIC for webpage
 	emancmd = "proc2d coran/eigenimg.spi coran/eigenimg.hed"
-	apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 	td1 = time.time()-t0
 	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
