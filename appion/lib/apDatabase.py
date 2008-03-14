@@ -393,6 +393,11 @@ def isTemplateInDB(md5sum):
 		return True
 	return False
 
+def queryDirectory(path):
+	pathq = appionData.ApPathData()
+	pathq['path'] = os.path.abspath(path)
+	pathdata = pathq.query()
+	return pathdata
 
 if __name__ == '__main__':
 	id = 442
