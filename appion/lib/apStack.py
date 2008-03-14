@@ -64,7 +64,8 @@ def getOneParticleFromStackId(stackid, msg=True):
 
 #--------
 def getOnlyStackData(stackid, msg=True):
-	apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
+	if msg is True:
+		apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
 	stackdata = appiondb.direct_query(appionData.ApStackData,stackid)
 	if not stackdata:
 		apDisplay.printError("Stack ID: "+str(stackid)+" does not exist in the database")
@@ -252,6 +253,8 @@ def getStackPixelSizeFromStackId(stackId):
 def getStackBoxsize(stackId):
 	"""
 	For a given stack id return stack box size
+
+	Not tested on defocal pairs
 	"""
 	stackpart = getOneParticleFromStackId(stackId, msg=False)
 	rawboxsize = stackpart['stackRun']['stackParams']['boxSize']
