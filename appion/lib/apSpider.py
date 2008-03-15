@@ -244,7 +244,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 		bits = line.strip().split()
 		if len(bits) == 3:
 			count += 1
-			print count, float(bits[1])*100.0, float(bits[2])*100.0, float(bits[0])
+			print count, float(bits[1]), float(bits[2]), float(bits[0])
 
 	### make nice pngs for webpage
 	for fact in range(1,numfactors+1):
