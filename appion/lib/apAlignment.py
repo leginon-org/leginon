@@ -481,9 +481,9 @@ def estimateTime(numparts, maskpixrad=None):
 	"""
 	#quadradic time March 14, 2008
 	x = float(maskpixrad*numparts*2.0)
-	#esttime = ( 26.83 + 0.001809 * x + 1.8542e-09 * x**2 )
+	esttime = ( 26.83 + 0.001809 * x + 1.8542e-09 * x**2 )
 	#ln(y) = -13.182 + 1.531 * ln(x) ==>
-	esttime = 1.884e-6 * (x**1.531) + 26.0
+	#esttime = 1.884e-6 * (x**1.531) + 26.0
 	return esttime
 
 def runSpiderClass(params, reclass=False):
