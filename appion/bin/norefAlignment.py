@@ -25,7 +25,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			help="First ring radius for correlation (in pixels, > 2)", metavar="#")
 		self.parser.add_option("-l", "--last-ring", dest="lastring", type="int",
 			help="Last ring radius for correlation (in pixels, < pixel radius)", metavar="#")
-		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="int",
+		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstroms)", metavar="#")
@@ -216,7 +216,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		#run the alignment
 		aligntime = time.time()
-		pixrad =  self.params['partrad']/self.stack['apix']
+		pixrad = int(round(self.params['partrad']/self.stack['apix']))
 		alignedstack = apSpider.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
