@@ -1,6 +1,6 @@
 
 import apDisplay
-import os
+import subprocess
 import sys
 #try:
 #	import EMAN
@@ -13,9 +13,10 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True):
 		sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
 	try:
 		if verbose is False:
-			os.popen(emancmd)
+			emanproc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		else:
-			os.system(emancmd)
+			emanproc = subprocess.Popen(emancmd, shell=True)
+		emanproc.wait()
 	except:
 		apDisplay.printWarning("could not run eman command: "+emancmd)
 		raise
