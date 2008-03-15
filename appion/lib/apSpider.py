@@ -28,6 +28,7 @@ that way its easy to tell what type of file it is
 neil
 """
 
+#===============================
 def spiderOutputLine(int1, int2, float1, float2, float3, float4, float5, float6=1.0):
 	line = "%04d" % int1
 	line += " %1d" % int2
@@ -40,6 +41,7 @@ def spiderOutputLine(int1, int2, float1, float2, float3, float4, float5, float6=
 	line += "\n"
 	return line
 
+#===============================
 def fermiLowPassFilter(imgarray, pixrad=2.0, dataext="spi"):
 	### save array to spider file
 	arrayToSpiderSingle(imgarray, "temp001."+dataext)
@@ -60,6 +62,7 @@ def fermiLowPassFilter(imgarray, pixrad=2.0, dataext="spi"):
 	os.popen("rm -f temp001."+dataext+" filt001."+dataext)
 	return filtarray
 
+#===============================
 def fermiHighPassFilter(imgarray, pixrad=200.0, dataext="spi"):
 	### save array to spider file
 	arrayToSpiderSingle(imgarray, "temp001."+dataext)
@@ -80,6 +83,7 @@ def fermiHighPassFilter(imgarray, pixrad=200.0, dataext="spi"):
 	os.popen("rm -f temp001."+dataext+" filt001."+dataext)
 	return filtarray
 
+#===============================
 def arrayToSpiderSingle(imgarray, imgfile, msg=False):
 	### temp hack
 	apImage.arrayToMrc(imgarray, "temp001.mrc", msg=msg)
@@ -91,6 +95,7 @@ def arrayToSpiderSingle(imgarray, imgfile, msg=False):
 	#img = apImage.arrayToImage(imgarray)
 	#img.save(imgfile, format='SPIDER')
 
+#===============================
 def spiderSingleToArray(imgfile, msg=False):
 	### temp hack
 	if not os.path.isfile(imgfile):
@@ -105,6 +110,7 @@ def spiderSingleToArray(imgfile, msg=False):
 	#imgarray = apImage.imageToArray(img)
 	return imgarray
 
+#===============================
 def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		firstring=2, lastring=100, dataext=".spi"):
 	"""
@@ -137,6 +143,11 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	### find number of iterations
 	numiter = 0
 	while os.path.isfile("alignment/avgimg%03d%s" % (numiter+1, dataext)):
+		emancmd = ("proc2d "
+			+" alignment/avgimg"+("%03d%s" % (numiter+1, dataext))
+			+" alignment/avgimg"+("%03d%s" % (numiter+1, ".png"))
+		)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 		numiter += 1
 	if numiter == 0:
 		apDisplay.printError("alignment failed")
@@ -162,7 +173,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 
 	return "alignedstack.spi"
 
-
+#===============================
 def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=20, dataext=".spi"):
 	"""
 	inputs:
