@@ -34,7 +34,7 @@ There are 2 streams:
 
 
 class SpiderSession:
-	def __init__(self, spiderexec=None, dataext='.spi', projext=".dat", logo=True):
+	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True):
 		# spider executable		
 		if spiderexec is None:
 			if os.environ.has_key('SPIDER_LOC'):
@@ -64,15 +64,24 @@ class SpiderSession:
 		self.spidererr = self.spiderproc.stderr
 
 		self.toSpiderQuiet(self.projext+"/"+self.dataext)
-		#if self.logo is True:
-		#	for i in range(7):
-		#		sys.stderr.write(self.spiderout.readline())
 		self.toSpiderQuiet("MD", "TERM OFF")
 		self.toSpiderQuiet("MD", "RESULTS OFF")
+		if self.logo is True:
+			self.showlogo()
+
+	def showlogo(self):
+		self.logf.flush()
+		f = open("spider.log", "r")
+		for i in range(7):
+			sys.stderr.write(f.readline())
+		f.close()
 
 	def wait(self):
-		### waits until spider quits	
-		waittime = 15.0
+		### waits until spider quits
+		if self.logo is True:
+			waittime = 15.0
+		else:
+			waittime = 2.0
 		self.logf.flush()
 		if self.spiderproc.poll() is None:
 			waiting = True
