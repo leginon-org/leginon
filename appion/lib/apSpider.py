@@ -130,13 +130,22 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	t0 = time.time()
 	apParam.createDirectory("alignment")
 
+	### remove previous iterations
+	numiter = 0
+	while os.path.isfile("alignment/avgimg%03d%s" % (numiter+1, dataext)):
+		os.remove("alignment/avgimg%03d%s" % (numiter+1, dataext))
+		pngfile = "alignment/avgimg%03d%s" % (numiter+1, ".png")
+		if os.path.isfile(pngfile):
+			os.remove(pngfile)
+		numiter += 1
+
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext)
 	# copy template to memory
 	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9") 
 	mySpider.toSpider("AP SR", 
 		stackfile+"@*****", "1-"+str(numpart), 
-		str(pixrad), str(firstring)+","+str(firstring), 
+		str(int(pixrad)), str(int(firstring))+","+str(int(lastring)), 
 		"_9", "alignment/avgimg***", "alignment/paramdoc***")
 	mySpider.close()
 
@@ -147,7 +156,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 			+" alignment/avgimg"+("%03d%s" % (numiter+1, dataext))
 			+" alignment/avgimg"+("%03d%s" % (numiter+1, ".png"))
 		)
-		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		numiter += 1
 	if numiter == 0:
 		apDisplay.printError("alignment failed")
@@ -155,7 +164,6 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 
 	### write aligned stack -- with python loop
 	### I tried this loop in both spider and python: python was faster?!? -neil
-	t0 = time.time()
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for p in range(1,numpart+1):
 		mySpider.toSpiderQuiet(
@@ -209,6 +217,35 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 			"coran/eigenimg@"+("%03d" % (fact)), )
 	mySpider.close()
 
+	"""
+	output file info:
+	==================
+	* _SEQ :: Unformatted sequential file having image values under the mask. 
+	* _SET :: Transposed direct access file having image values under the mask.
+	* _MAS :: Mask FILE in SPIDER image format 
+	* _IMC :: Text file with image coordinates.
+		NUMIM, NFAC, NSAM, NROW, NUMIM, PCA
+		IMAGE(1) COORDINATES (1..NFAC), WEIGHTP(1), DOR, FIM(1)
+	* _PIX :: Text file with pixel coordinates.
+		NPIX, NFAC, NSAM , NROW , NUMIM, PCA
+		PIXEL(1) COORDINATES (1..NFAC), WEIGHTP(1), CO(1), FPIX
+	* _EIG :: Text file with eigenvalues.
+		NFAC, TOTAL WEIGHT, TRACE, PCA, N
+		EIGENVALUE(1), %, CUMULATIVE %
+	"""
+	### remove worthless temporary files
+	for tail in ["_SEQ", "_SET", "_MAS", "_PIX",]:
+		if os.path.isfile("coran/corandata"+tail+dataext):
+			os.remove("coran/corandata"+tail+dataext)
+
+	eigf = open("coran/corandata_EIG"+dataext, "r")
+	count = 0
+	for line in eigf:
+		bits = line.strip().split()
+		if len(bits) == 3:
+			count += 1
+			print count, float(bits[1])*100.0, float(bits[2])*100.0, float(bits[0])
+
 	### make nice pngs for webpage
 	for fact in range(1,numfactors+1):
 		emancmd = ("proc2d coran/eigenimg.spi "
@@ -217,7 +254,11 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
 	### convert SPIDER image to IMAGIC for webpage
-	emancmd = "proc2d coran/eigenimg.spi coran/eigenimg.hed"
+	eigenimg = "coran/eigenimg.hed"
+	if os.path.isfile(eigenimg):
+		os.remove(eigenimg)
+		os.remove(eigenimg[:-4]+".img")
+	emancmd = "proc2d coran/eigenimg.spi "+eigenimg
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 	td1 = time.time()-t0
