@@ -224,6 +224,11 @@ class NoRefAlignScript(appionScript.AppionScript):
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
+		#remove large, worthless stack
+		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
+		os.remove(spiderstack)
+
 		#do correspondence analysis
 		corantime = time.time()
 		if not self.params['skipcoran']:
