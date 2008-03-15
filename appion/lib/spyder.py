@@ -48,6 +48,7 @@ class SpiderSession:
 		else:
 			self.spiderexec = spiderexec
 
+		self.logo = logo
 		self.dataext = dataext
 		if dataext[0] == '.': self.dataext = dataext[1:]
 		self.projext = projext
@@ -55,50 +56,67 @@ class SpiderSession:
 
 		### Start spider process, initialize with some MD commands.
 		#self.spiderin = os.popen(self.spiderexec, 'w')
+		self.logf = open("spider.log", "a")
 		self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
-			stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			stdin=subprocess.PIPE, stdout=self.logf, stderr=subprocess.PIPE)
 		self.spiderin = self.spiderproc.stdin
-		self.spiderout = self.spiderproc.stdout
+		#self.spiderout = self.spiderproc.stdout
+		self.spidererr = self.spiderproc.stderr
 
 		self.toSpiderQuiet(self.projext+"/"+self.dataext)
-		if logo is True:
-			for i in range(7):
-				sys.stderr.write(self.spiderout.readline())
+		#if self.logo is True:
+		#	for i in range(7):
+		#		sys.stderr.write(self.spiderout.readline())
 		self.toSpiderQuiet("MD", "TERM OFF")
 		self.toSpiderQuiet("MD", "RESULTS OFF")
 
 	def wait(self):
 		### waits until spider quits	
+		waittime = 15.0
+		self.logf.flush()
+		if self.spiderproc.poll() is None:
+			waiting = True
+			sys.stderr.write("waiting for spider")
+		while self.spiderproc.poll() is None:
+			sys.stderr.write(".")
+			time.sleep(waittime)
+			waittime *= 1.1
+			self.logf.flush()
+		if waiting is True:
+			sys.stderr.write("\n")
 		self.spiderproc.wait()
 
 	def toSpider(self, *args):
 		" each item is a line sent to Spider"
-		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m")
+		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
 		for item in args:
 			self.spiderin.write(str(item) + '\n')
 		self.spiderin.flush()
+		self.logf.flush()
 
 	def toSpiderQuiet(self, *args):
 		" each item is a line sent to Spider"
 		for item in args:
 			self.spiderin.write(str(item) + '\n')
-		self.spiderin.flush()
+		#self.spiderin.flush()
 
 	def close(self, delturds=1):
 		self.toSpiderQuiet("EN D")			 # end the spider process,
-		if delturds:
-			for file in ['fort.1', 'jnkASSIGN1', 
-			 'LOG.'+self.dataext, 'LOG.'+self.projext, 
-			 "results."+self.projext+".0", "results."+self.projext+".1"]:
-				if os.path.exists(file):
-					try: os.remove(file)
-					except: pass
-		self.spiderproc.wait()
-		logf = open("spider.log", "a")
-		for line in self.spiderout.readlines():
-			logf.write(line)
-		logf.close()
 
+		self.wait()
+
+		for file in ['fort.1', 'jnkASSIGN1', 
+		 'LOG.'+self.dataext, 'LOG.'+self.projext, 
+		 "results."+self.projext+".0", "results."+self.projext+".1"]:
+			if os.path.exists(file):
+				try: os.remove(file)
+				except: pass
+		#self.logf = open("spider.log", "a")
+		#for line in self.spiderout.readlines():
+		#	self.logf.write(line)
+		self.logf.close()
+		if self.logo is True:
+			print self.spidererr.readline()
 	 
 # --------------------------------------------------------------
 if __name__ == '__main__':
