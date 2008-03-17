@@ -233,6 +233,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			qpreset = None
 		qimage = data.AcquisitionImageData(target=qtarget, preset=qpreset)
 		previouslists = self.researchTargetLists(image=qimage, sublist=False)
+		self.setTargets([], 'done', block=True)
 		if previouslists:
 			# I hope you can only have one target list on an image, right?
 			targetlist = previouslists[0]
@@ -245,9 +246,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			db = True
 			self.setTargets([], 'acquisition', block=True)
 			self.setTargets([], 'focus', block=True)
-		print self.settings['allow append'],previouslists
 		if self.settings['allow append'] or len(previouslists)==0:
-			print 'will find targets'
 			self.findTargets(imagedata, targetlist)
 		self.logger.debug('Publishing targetlist...')
 
