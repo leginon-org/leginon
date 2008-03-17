@@ -201,7 +201,8 @@ class ManualAcquisition(node.Node):
 		if self.settings['screen up']:
 			self.instrument.tem.MainScreenPosition = 'up'
 			time.sleep(self.settings['low dose pause time'])
-		self.instrument.tem.BeamBlank = 'off'
+		if self.settings['low dose']:
+			self.instrument.tem.BeamBlank = 'off'
 
 	def postExposure(self):
 		if self.lowdosemode is not None:
