@@ -14,7 +14,10 @@
 
 
 import tem
-import pythoncom
+try:
+	import pythoncom
+except:
+	pass
 import cmlib
 import CMCal
 import time
