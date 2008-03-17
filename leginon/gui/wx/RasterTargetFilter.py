@@ -36,7 +36,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['target type'] = wx.Choice(self, -1, choices=targettypes)
 
 		self.widgets['raster spacing'] = FloatEntry(self, -1, min=0, chars=6)
-		self.widgets['raster angle'] = FloatEntry(self, -1, min=0, chars=6)
+		self.widgets['raster angle'] = FloatEntry(self, -1, chars=8)
 		self.widgets['raster width'] = FloatEntry(self, -1, min=0, chars=6)
 
 		movetypes = self.node.calclients.keys()
