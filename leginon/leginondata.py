@@ -1116,6 +1116,7 @@ class TargetFinderSettingsData(SettingsData):
 			('user check', bool),
 			('queue drift', bool),
 			('sort target', bool),
+			('allow append', bool),
 		)
 	typemap = classmethod(typemap)
 
