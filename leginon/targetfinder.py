@@ -46,6 +46,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		'user check': False,
 		'queue drift': True,
 		'sort target': False,
+		'allow append': False,
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
@@ -116,8 +117,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		## research, but don't read images until later
 		images = self.research(querydata, readimages=False)
 		targetlist = self.newTargetList(queue=self.settings['queue'])
-		for imagedata in images:
-			self.findTargets(imagedata, targetlist)
+		if self.settings['allow append']:
+			print "will find targets"
+			for imagedata in images:
+				self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
 		if self.settings['queue']:
 			self.logger.info('Queue is on... not generating event')
@@ -242,8 +245,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			db = True
 			self.setTargets([], 'acquisition', block=True)
 			self.setTargets([], 'focus', block=True)
-
-		self.findTargets(imagedata, targetlist)
+		print self.settings['allow append'],previouslists
+		if self.settings['allow append'] or len(previouslists)==0:
+			print 'will find targets'
+			self.findTargets(imagedata, targetlist)
 		self.logger.debug('Publishing targetlist...')
 
 		## if queue is turned on, do not notify other nodes of each target list publish

@@ -107,6 +107,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																							'Queue up targets')
 		self.widgets['queue drift'] = wx.CheckBox(self, -1, 'Declare drift when queue submitted')
 		self.widgets['sort target'] = wx.CheckBox(self, -1, 'Sort targets by shortest path')
+		self.widgets['allow append'] = wx.CheckBox(self, -1, 'Allow target finding on old images')
 		self.Bind(wx.EVT_CHECKBOX, self.onQueueCheckbox, self.widgets['queue'])
 
 		sz = wx.GridBagSizer(5, 5)
@@ -119,6 +120,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['queue drift'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['sort target'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
