@@ -189,7 +189,7 @@ class Robot(node.Node):
 			gridboxes = projectdata.getGridBoxes()
 			for i in gridboxes.getall():
 				self.gridtrayids[i['label']] = i['gridboxId']
-		except project.NotConnectedError, e:
+		except Exception, e:
 			self.logger.error('Failed to connect to the project database: %s' % e)
 
 	def userContinue(self):
