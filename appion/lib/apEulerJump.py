@@ -38,6 +38,7 @@ class ApEulerJump(object):
 			sym = self.getSymmetry(reconrunid)
 		if not re.match("^[cd][0-9]+$", sym.lower()):
 			apDisplay.printWarning("Cannot calculate euler jumps for symmetry: "+sym)
+			return
 		### get stack particles
 		if stackid is None:
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
