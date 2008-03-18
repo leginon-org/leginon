@@ -3,6 +3,7 @@
 ### python
 import sys
 import os
+import re
 import time
 ### numpy
 import numpy
@@ -32,7 +33,11 @@ class ApEulerJump(object):
 		self.appiondb = apDB.apdb
 
 	#=====================
-	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None):
+	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None, sym=None):
+		if sym is None:
+			sym = self.getSymmetry(reconrunid)
+		if not re.match("^[cd][0-9]+$", sym.lower()):
+			apDisplay.printWarning("Cannot calculate euler jumps for symmetry: "+sym)
 		### get stack particles
 		if stackid is None:
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
@@ -45,7 +50,7 @@ class ApEulerJump(object):
 		count = 0
 		for stackpart in stackparts:
 			count += 1
-			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid)
+			jumpdata = self.getEulerJumpData(reconrunid, stackpartid=stackpart.dbid, stackid=stackid, sym=sym)
 			medians.append(jumpdata['median'])
 			if count % 500 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
@@ -69,7 +74,7 @@ class ApEulerJump(object):
 			return -1
 
 	#=====================
-	def getEulerJumpData(self, reconrunid,  stackpartnum=None, stackpartid=None, stackid=None):
+	def getEulerJumpData(self, reconrunid,  stackpartnum=None, stackpartid=None, stackid=None, sym='d7'):
 		if stackpartnum is None and stackpartid is None:
 			apDisplay.printError("please provide either stackpartnum or stackpartid")
 		if stackpartid is None:
@@ -79,7 +84,7 @@ class ApEulerJump(object):
 		if jumpdata is not None:
 			return jumpdata
 		### need to calculate the jump
-		jumpdata = self.calculateJumpData(stackpartid, reconrunid)
+		jumpdata = self.calculateJumpData(stackpartid, reconrunid, sym)
 		if jumpdata is None:
 			apDisplay.printError("Could not get or calculate jump data for stackpartid="
 				+str(stackpartid)+" and reconrunid="+str(reconrunid))
@@ -128,15 +133,15 @@ class ApEulerJump(object):
 		return stackpartdata[0].dbid		
 
 	#=====================
-	def calculateJumpData(self, stackpartid, reconrunid):
+	def calculateJumpData(self, stackpartid, reconrunid, sym='d7'):
 		#apDisplay.printMsg("calculating jump data for "+str(stackpartid))
 		jumpdata = {}
 		eulers = self.getEulersForParticle(stackpartid, reconrunid)
-		eulers.sort(self.sortEulersByIteration)
+		eulers.sort(self.sortByIteration)
 		distances = []
 		for i in range(len(eulers)-1):
 			#calculate distance (in degrees) for D7 symmetry
-			dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i], eulers[i+1], sym='d7', inplane=True)
+			dist = apEulerCalc.eulerCalculateDistanceSym(eulers[i], eulers[i+1], sym=sym, inplane=True)
 			distances.append(dist)
 			#f.write('%3.3f\t' % (dist))
 		distarray = numpy.asarray(distances, dtype=numpy.float32)
@@ -149,12 +154,28 @@ class ApEulerJump(object):
 		return jumpdata
 
 	#=====================
-	def sortEulersByIteration(self, a, b):
+	def sortByIteration(self, a, b):
 		if a['iteration'] > b['iteration']:
 			return 1
 		else:
 			return -1
 
+
+	#=====================
+	def getSymmetry(self, reconrunid, msg=True):
+		"""
+		get the symmetry from the last iteration of a refinement
+		"""
+		refrundata = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
+		modeldata = refrundata['initialModel']
+		symmdata = modeldata['symmetry']
+		symmname = symmdata['eman_name']
+		if msg is True:
+			apDisplay.printMsg("selected symmetry group: "
+				+apDisplay.colorString("'"+symmname+"'", "cyan")
+				+" for recon run: "+str(reconrunid))
+
+		return symmname
 
 	#=====================
 	def getEulersForParticleSinedon(self, stackpartid, reconrunid):
