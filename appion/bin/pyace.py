@@ -82,7 +82,7 @@ class aceLoop(appionLoop.AppionLoop):
 			self.matlab = pymat.open()
 
 		scopeparams = {
-			'kv':      imgdata['scope']['high tension'],
+			'kv':      imgdata['scope']['high tension']/1000,
 			'apix':    apDatabase.getPixelSize(imgdata),
 			'cs':      self.params['cs'],
 			'tempdir': self.params['tempdir'],
