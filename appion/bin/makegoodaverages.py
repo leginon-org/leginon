@@ -156,6 +156,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		numparts = len(particles)
 		apDisplay.printMsg("finding euler jumps for "+str(numparts)+" particles")
 
+		symmetry = eulerjump.getSymmetry(self.params['reconid'], msg=True)
+
 		### prepare file
 		f = open('jumps.txt','w', 0666)
 		f.write("#partnum\t")
@@ -164,18 +166,19 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			f.write(key+"\t")
 
 		### get stack particles
-		stackid = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
+		stackid = apStack.getStackIdFromRecon(self.params['reconid'], msg=True)
 		stackparts = apStack.getStackParticlesFromId(stackid)
 
 		### start loop
 		t0 = time.time()
 		medians = []
 		count = 0
+		apDisplay.printMsg("processing euler jumps for recon run="+str(self.params['reconid']))
 		for stackpart in stackparts:
 			count += 1
 			partnum = stackpart['particleNumber']
 			f.write('%d\t' % partnum)
-			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid)
+			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid, sym=symmetry)
 			medians.append(jumpdata['median'])
 			if jumpdata['median'] > self.params['avgjump']:
 				rejectlst.append(partnum)
