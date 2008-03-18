@@ -5,6 +5,7 @@ import os
 import math
 import sys
 import time
+import re
 import cPickle
 #scipy
 import numpy
@@ -156,7 +157,11 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		numparts = len(particles)
 		apDisplay.printMsg("finding euler jumps for "+str(numparts)+" particles")
 
+		### check symmetry
 		symmetry = eulerjump.getSymmetry(self.params['reconid'], msg=True)
+		if not re.match("^[cd][0-9]+$", symmetry.lower()):
+			apDisplay.printWarning("Cannot calculate euler jumps for symmetry: "+symmetry)
+			return
 
 		### prepare file
 		f = open('jumps.txt','w', 0666)
