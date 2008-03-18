@@ -498,6 +498,8 @@ leginondata.ApInitialModelData=ApInitialModelData
 class ApSymmetryData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('eman_name', str),
+			('fold_symmetry', int),
 			('symmetry', str),
 			('description', str),
 		)
