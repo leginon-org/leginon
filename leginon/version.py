@@ -15,7 +15,7 @@ import os.path
 
 cvsname = '$Name: not supported by cvs2svn $'
 
-def getVersion():
+def OLDgetVersion():
 	name = cvsname[7:-2]
 	if not name:
 		return None
@@ -54,6 +54,9 @@ def getVersion():
 		del tokens[0]
 
 	return version
+
+def getVersion():
+	return '1.5b1'
 
 def getInstalledLocation():
 	'''where is this module located'''
