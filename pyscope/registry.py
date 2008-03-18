@@ -39,8 +39,11 @@ def getClasses():
 import tecnai
 register(tecnai)
 
-import CM
-register(CM)
+try:
+	import CM
+	register(CM)
+except:
+	pass
 
 try:
 	import gatan
