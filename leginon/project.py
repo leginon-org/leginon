@@ -6,8 +6,6 @@ import leginonconfig
 class NotConnectedError(Exception):
 	pass
 
-# connection to the project database
-dbparams = sinedon.getConfig('projectData')
 
 class Project(sqldict.ObjectBuilder):
 	'''Project: a class object to access the
@@ -38,6 +36,8 @@ class GridLocation(sqldict.ObjectBuilder):
 
 class ProjectData:
 	def __init__(self, **kwargs):
+		# connection to the project database
+		dbparams = sinedon.getConfig('projectData')
 		if not dbparams['host']:
 			raise NotConnectedError('no hostname for project database')
 		try:

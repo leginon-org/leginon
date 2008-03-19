@@ -57,7 +57,7 @@ class ManualAcquisition(node.Node):
 
 		try:
 			self.projectdata = project.ProjectData()
-		except project.NotConnectedError:
+		except:
 			self.projectdata = None
 		self.gridmapping = {}
 		self.gridbox = None

@@ -251,7 +251,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		self.projectdata = None
 		try:
 			self.projectdata = project.ProjectData()
-		except project.NotConnectedError, e:
+		except Exception, e:
 			self.logger.warning('Failed to connect to the project database: %s' % e)
 		self.addEventInput(event.GridLoadedEvent, self.onGridLoaded)
 

@@ -734,7 +734,7 @@ class Setup(object):
 		self.publish = publish
 		try:
 			self.projectdata = project.ProjectData()
-		except project.NotConnectedError:
+		except:
 			self.projectdata = None
 
 	def getUsers(self):
