@@ -167,19 +167,6 @@ else:
 		print '        *** FAILED (at least %s required)' % (minstr,)
 
 ######################################################################
-## TargetPanel
-######################################################################
-print '--------------------------------------------------------------'
-print 'TargetPanel module:'
-print '    importing TargetPanel module...'
-try:
-	import TargetPanel
-except:
-	print '    *** FAILED: Could not import TargetPanel.'
-else:
-	print '        OK (no version requirement at this time)'
-
-######################################################################
 ## wxPython
 ######################################################################
 minwxver = (2, 5, 2, 8)
