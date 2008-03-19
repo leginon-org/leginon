@@ -565,13 +565,13 @@ class particledata {
 			$numimg=$particlestats['num'];
 			$ppimg = ($numimg > 0) ? (sprintf("%.1f", $numptl/$numimg)) : 0;
 			$particlestats['numimgs']=$numimg.'<br />('.$ppimg.' prtl/img)';
-			$particlestats['img'] = '<a href="'.$this->$baseurl.'particlegraph.php?hg=1&run='.$runId.'">'
+			$particlestats['img'] = '<a href="'.$this->baseurl.'particlegraph.php?hg=1&run='.$runId.'">'
 				.'<img border="0" '
-				.'src="'.$this->$baseurl.'particlegraph.php?w=150&hg=1&run='
+				.'src="'.$this->baseurl.'particlegraph.php?w=150&hg=1&run='
 				.$runId.'"></a>';
 			$q = "select name from `ApSelectionRunData` where `DEF_id` = $runId";
 			list($r0) = $this->mysql->getSQLResult($q);
-			$html .= '<td><a target="params" href="'.$this->$baseurl.'particlerunreport.php?rId='.$runId.'">'.$r0['name'].'</a></td>';
+			$html .= '<td><a target="params" href="'.$this->baseurl.'particlerunreport.php?rId='.$runId.'">'.$r0['name'].'</a></td>';
 			foreach($display_keys as $field) {
 							$data=$particlestats[$field];
 				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
