@@ -1,14 +1,13 @@
 ; reference-based alignment with the reference refinement
 
-x99=500 ; number of particles
+x99=500   ; number of particles
 x98=3     ; number of reference images
-x97=25     ; first ring for rotational alignment
+x97=25    ; first ring for rotational alignment
 x96=55    ; last ring for rotational alignment
 x95=6     ; translational search range (in pixels)
 x93=1     ; c-symmetry (rotational symmetry to be applied, 1 if none)
 x92=4     ; iteration number
-x37=0
-; last ring + translational search range MUST be < (box size/2)-1
+x37=0     ; last ring + translational search range MUST be < (box size/2)-1
 
 VM
 echo "running iteration {**x92}"
@@ -76,11 +75,11 @@ echo "  ** may crash if no particles align to a template"
 
 ; do the alignment
 AP MQ
-[refstack]@***    		; template for reference image
+[refstack]@***    ; template for reference image
 selref            ; file containing list of reference files
 (x95,1)           ; translational search range, step size
 x97,x96           ; first & last ring
-[alistack]@******    ; stack containing images to be aligned
+[alistack]@****** ; stack containing images to be aligned
 select            ; list of particles for alignment
 apmq			      ; output angles
 
