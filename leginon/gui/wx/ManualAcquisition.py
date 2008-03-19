@@ -565,13 +565,17 @@ class CommentDialog(gui.wx.Dialog.Dialog):
 		self.sz.Add(self.comment, (0, 0), (2, 2),
 			wx.EXPAND|wx.ALL)
 			
-		self.addButton('Normal', wx.ID_OK)
-		self.addButton('Hidden', wx.ID_REMOVE)
-		self.addButton('Examplar', wx.ID_SAVE)
+		self.addButton('Save', wx.ID_OK)
+		#Temporary disable Hidden and Examplar buttons and leave the decision to web viewer
+		#self.addButton('Normal', wx.ID_OK)
+		#self.addButton('Hidden', wx.ID_REMOVE)
+		#self.addButton('Examplar', wx.ID_SAVE)
 
 		self.Bind(wx.EVT_BUTTON, self.onNormalButton, id=wx.ID_OK)
-		self.Bind(wx.EVT_BUTTON, self.onHiddenButton, id=wx.ID_REMOVE)
-		self.Bind(wx.EVT_BUTTON, self.onExamplarButton, id=wx.ID_SAVE)
+		#self.Bind(wx.EVT_BUTTON, self.onHiddenButton, id=wx.ID_REMOVE)
+		#self.Bind(wx.EVT_BUTTON, self.onExamplarButton, id=wx.ID_SAVE)
+		size = wx.Size(150,wx.SIZE_AUTO_HEIGHT)
+		self.sz.SetMinSize(size)
 
 	def onNormalButton(self, evt):
 		self.viewstatus='normal'
