@@ -7,7 +7,7 @@ import apAlignment
 import apFile
 import apStack
 import apEMAN
-import apSpider
+from apSpider import alignment
 import appionScript
 
 #=====================
@@ -217,7 +217,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		#run the alignment
 		aligntime = time.time()
 		pixrad = int(round(self.params['partrad']/self.stack['apix']))
-		alignedstack = apSpider.refFreeAlignParticles(
+		alignedstack = alignment.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
 			self.params['firstring'], self.params['lastring'])
@@ -233,7 +233,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		corantime = time.time()
 		if not self.params['skipcoran']:
 			maskpixrad = self.params['maskrad']/self.stack['apix']
-			apSpider.correspondenceAnalysis( alignedstack, 
+			alignment.correspondenceAnalysis( alignedstack, 
 				self.stack['boxsize'], maskpixrad, 
 				self.params['numpart'], numfactors=20)
 		corantime = time.time() - corantime

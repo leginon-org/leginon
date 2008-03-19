@@ -16,7 +16,7 @@ from scipy import ndimage, optimize
 ## PIL
 import Image
 ## appion
-import apSpider
+from apSpider import operations
 import apXml
 import apImage
 import apDisplay
@@ -1240,29 +1240,29 @@ class PickerApp(wx.App):
 				f.write( " ;   "+str(k)+" : "+str(v)+"\n")
 		#PARAMETERS
 		f.write(" ; \n; \n; PARAMETERS\n")
-		f.write(apSpider.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
+		f.write(operations.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
 		f.write(" ; FITTED FLAG\n")
-		f.write(apSpider.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
+		f.write(operations.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
 		f.write(" ; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
-		f.write(apSpider.spiderOutputLine(3, 6, 
+		f.write(operations.spiderOutputLine(3, 6, 
 			self.data['point1'][0], self.data['point1'][1], 
 			self.data['point2'][0], self.data['point2'][1], 
 			1.0, 0.0))
 		f.write(" ; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
-		f.write(apSpider.spiderOutputLine(4, 6, 
+		f.write(operations.spiderOutputLine(4, 6, 
 			self.data['theta'], self.data['gamma'], self.data['phi'],
 			0.0, 0.0, 0.0))
 
 		#IMAGE 1
 		f.write( " ; left image 1: "+self.panel1.filename+"\n" )
 		for i,target in enumerate(targets1):
-			line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
+			line = operations.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
 			f.write(line)
 
 		#IMAGE 2
 		f.write( " ; right image 2: "+self.panel2.filename+"\n" )
 		for i,target in enumerate(targets2):
-			line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
+			line = operations.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
 			f.write(line)
 
 		f.close()
