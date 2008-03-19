@@ -13,7 +13,7 @@ from numpy import linalg
 from numpy import ma
 ## appion
 import apDisplay
-import apSpider
+from apSpider import filters
 ## pyami
 from pyami import mrc
 
@@ -25,12 +25,12 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	simgarray = imgarray.copy()
 	if median > 0:
 		simgarray = ndimage.median_filter(simgarray, size=median)
-	simgarray = binImg(simgarray,bin)
-	simgarray = highPassFilter(simgarray,apix,bin,highpass,msg=msg)
-	#simgarray = fermiHighPassFilter(simgarray,apix,bin,highpass,msg=msg)
+	simgarray = binImg(simgarray, bin)
+	simgarray = highPassFilter(simgarray, apix, bin, highpass, msg=msg)
+	#simgarray = fermiHighPassFilter(simgarray, apix, bin, highpass, msg=msg)
 	simgarray = pixelLimitFilter(simgarray, pixlimit)
-	simgarray = lowPassFilter(simgarray,apix,bin,lowpass,msg)
-	#simgarray = fermiLowPassFilter(simgarray,apix,bin,lowpass,msg)
+	simgarray = lowPassFilter(simgarray, apix, bin, lowpass, msg)
+	#simgarray = fermiLowPassFilter(simgarray, apix, bin, lowpass, msg)
 	if planeReg is True:
 		simgarray = planeRegression(simgarray)
 	if invert is True:
@@ -192,7 +192,7 @@ def fermiHighPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 			apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)
 	pixrad = float(radius/apix/float(bin))
-	filtimg = apSpider.fermiHighPassFilter(imgarray, pixrad)
+	filtimg = filters.fermiHighPassFilter(imgarray, pixrad)
 	return filtimg
 
 def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
@@ -205,9 +205,9 @@ def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 		return imgarray
 	pixrad = float(radius/apix/float(bin))
 	if pixrad < 2.0:
-		apDisplay.printWarning("low pass filter radius less than 2 pixels; skipping filter") 
+		apDisplay.printWarning("low pass filter radius "+str(round(pixrad,2))+" is less than 2 pixels; skipping filter") 
 		return imgarray
-	filtimg = apSpider.fermiLowPassFilter(imgarray, pixrad)
+	filtimg = filters.fermiLowPassFilter(imgarray, pixrad)
 	return filtimg
 
 def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
