@@ -9,6 +9,21 @@
 #  on this system to see if all requirements are met.
 ########################################################################
 
+def leginonInstalled():
+	'''print info about if Leginon is already installed'''
+
+	print 'Looking for previously installed Leginon...'
+	try:
+		import Leginon
+	except:
+		print '    None found.'
+		return
+
+	print '    Leginon found here:  ', Leginon.__path__[0]
+	print '''    *** It is best to uninstall your previous Leginon before installing
+    the new one.  The best way to uninstall is to move it to a backup
+    location, just in case you need to revert to the old version.'''
+
 def versionAtLeast(version, minimum):
 	'return True if version is at least minimum'
 
@@ -30,6 +45,13 @@ def versionAtLeast(version, minimum):
 			return False
 		# else equal, so check next digit
 	return True
+
+######################################################################
+## Python
+######################################################################
+print '--------------------------------------------------------------'
+leginonInstalled()
+print ''
 
 ######################################################################
 ## Python
