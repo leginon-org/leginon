@@ -3,6 +3,7 @@
 #python
 import os
 import sys
+import time
 import subprocess
 #appion
 import appionScript
@@ -43,19 +44,27 @@ class subStackScript(appionScript.AppionScript):
 
 	#=====================
 	def runCommand(self, cmd):
+		t0 = time.time()
 		if self.params['showcmd'] is True:
 			sys.stderr.write(
 				apDisplay.colorString("COMMAND: \n","magenta")
 				+apDisplay.colorString(cmd, "cyan")+"\n")
 		try:
 			if self.params['verbose'] is False:
-				proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				proc = subprocess.Popen(cmd, shell=True, 
+					stdout=subprocess.PIPE)#, stderr=subprocess.PIPE)
 			else:
 				proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
 		except:
 			apDisplay.printWarning("could not run command: "+cmd)
 			return False
+		runtime = time.time() - t0
+		apDisplay.printColor("command ran in "+apDisplay.timeString(runtime), "cyan")
+		if runtime < 10:
+			apDisplay.printWarning("command runtime was very short: "
+				+apDisplay.timeString(runtime))
+			return False			
 		return True
 
 	#=====================
@@ -63,8 +72,8 @@ class subStackScript(appionScript.AppionScript):
 		runid = "dog"
 		cmd = (os.path.join(self.appiondir, "bin", "dogPicker.py ")
 			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
-			+" diam=140 bin=8 maxpeaks=50 overlapmult=3 nocontinue "
-			+" lp=0 hp=0 pixlimit=3.0 median=3 ")
+			+" diam=160 bin=8 maxpeaks=50 overlapmult=3 nocontinue "
+			+" lp=0 hp=0 pixlimit=3.0 median=3 thresh=0.70 maxthresh=1.00 ")
 		if self.params['commit'] is True:
 			cmd += " commit "
 		self.runCommand(cmd)
@@ -75,7 +84,7 @@ class subStackScript(appionScript.AppionScript):
 		cmd = (os.path.join(self.appiondir, "bin", "templateCorrelator.py ")
 			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
 			+" diam=140 bin=4 maxpeaks=50 overlapmult=3 nocontinue "
-			+" templateIds=53 range1=0,180,30 thresh=0.45 "
+			+" templateIds=53 range1=0,180,30 thresh=0.50 maxthresh=0.60 "
 			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
 		if self.params['commit'] is True:
 			cmd += " commit "
@@ -130,7 +139,7 @@ class subStackScript(appionScript.AppionScript):
 		### FindEM
 		self.runFindEM()
 		### Man Picker
-		self.runManualPicker()
+		#self.runManualPicker()
 		### ACE
 		self.runAce()
 		### Make Stack
