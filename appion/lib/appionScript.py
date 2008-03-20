@@ -29,6 +29,7 @@ class AppionScript(object):
 		self.t0 = time.time()
 		self.timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
 		self.functionname = apParam.getFunctionName(sys.argv[0])
+		self.appiondir = apParam.getAppionDirectory()
 		apParam.setUmask()
 
 		### setup default parser: output directory, etc.
