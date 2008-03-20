@@ -46,6 +46,7 @@ class ManualAcquisition(node.Node):
 		'dark': False,
 		'manual focus exposure time': 100.0,
 		'force annotate': False,
+		'reduced params': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
@@ -160,8 +161,11 @@ class ManualAcquisition(node.Node):
 				#dataclass = data.CameraImageData
 				image = self.instrument.ccdcamera.Image
 			#imagedata = self.instrument.getData(dataclass)
-			scope = self.instrument.getData(data.ManualAcquisitionScopeEMData)
-			scope = data.ScopeEMData(initializer=scope)
+			if self.settings['reduced params']:
+				scope = self.instrument.getData(data.ManualAcquisitionScopeEMData)
+				scope = data.ScopeEMData(initializer=scope)
+			else:
+				scope = self.instrument.getData(data.ScopeEMData)
 			camera = self.instrument.getData(data.CameraEMData, image=False)
 			imagedata = data.CameraImageData(image=image, scope=scope, camera=camera)
 			imagedata['session'] = self.session

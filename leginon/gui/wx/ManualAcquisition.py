@@ -371,6 +371,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['force annotate'] = wx.CheckBox(self, -1, 'Always Annotate Saved Images')
 		sz.Add(self.widgets['force annotate'], (7,0), (1,1))
 
+		self.widgets['reduced params'] = wx.CheckBox(self, -1, 'Reduced EM Parameter Set (for slow TEMs)')
+		sz.Add(self.widgets['reduced params'], (8,0), (1,1))
+
 		szdefocus= wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1,'(leave both unchecked to use current defocus)')
 		szdefocus.Add(label, (0,0), (1,2))
