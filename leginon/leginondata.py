@@ -156,6 +156,7 @@ manacqparams = (
 	'beam shift',
 	'stage position',
 	'high tension',
+	'defocus',
 )
 class ManualAcquisitionScopeEMData(ScopeEMData):
 	def typemap(cls):
