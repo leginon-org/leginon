@@ -22,7 +22,7 @@ def printWarning(text):
 			f.close()
 		except:
 			print "write error"
-	print colorString("!!! WARNING: "+text,"brown")
+	sys.stderr.write(colorString("!!! WARNING: "+text,"brown")+"\n")
 
 def printMsg(text):
 	"""
