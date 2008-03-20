@@ -25,9 +25,11 @@ class subStackScript(appionScript.AppionScript):
 		### verbose
 		self.parser.add_option("-v", "--verbose", dest="verbose", default=True,
 			action="store_true", help="Show command output while running")
-		self.parser.add_option("-q" "--quiet", dest="verbose", default=True,
+		self.parser.add_option("-q", "--quiet", dest="verbose", default=True,
 			action="store_false", help="Do not show command output while running")
-
+		### outdir
+		self.parser.add_option("-o", "--outdir", dest="outdir",
+			help="Location to store output files", metavar="PATH")
 		return
 
 	#=====================
@@ -42,7 +44,9 @@ class subStackScript(appionScript.AppionScript):
 	#=====================
 	def runCommand(self, cmd):
 		if self.params['showcmd'] is True:
-			sys.stderr.write(apDisplay.colorString("COMMAND: ","magenta")+cmd+"\n")
+			sys.stderr.write(
+				apDisplay.colorString("COMMAND: \n","magenta")
+				+apDisplay.colorString(cmd, "cyan")+"\n")
 		try:
 			if self.params['verbose'] is False:
 				proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -63,6 +67,7 @@ class subStackScript(appionScript.AppionScript):
 			+" lp=0 hp=0 pixlimit=3.0 median=3 ")
 		if self.params['commit'] is True:
 			cmd += " commit "
+		self.runCommand(cmd)
 
 	#=====================
 	def runFindEM(self):
@@ -74,6 +79,7 @@ class subStackScript(appionScript.AppionScript):
 			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
 		if self.params['commit'] is True:
 			cmd += " commit "
+		self.runCommand(cmd)
 
 	#=====================
 	def runManualPicker(self):
@@ -85,6 +91,7 @@ class subStackScript(appionScript.AppionScript):
 			+" lp=25 hp=600 pixlimit=3.0 median=3 ")
 		if self.params['commit'] is True:
 			cmd += " commit "
+		self.runCommand(cmd)
 
 	#=====================
 	def runAce(self):
@@ -96,6 +103,7 @@ class subStackScript(appionScript.AppionScript):
 			+" display=1 stig=0 nocontinue ")
 		if self.params['commit'] is True:
 			cmd += " commit "
+		self.runCommand(cmd)
 
 	#=====================
 	def runMakeStack(self):
@@ -107,14 +115,15 @@ class subStackScript(appionScript.AppionScript):
 			+" lp=25 hp=600 partlimit=150  description='testing'")
 		if self.params['commit'] is True:
 			cmd += " commit "
+		self.runCommand(cmd)
 
 	#=====================
 	def start(self):
-		self.images = "07jan05b_00012gr_00001sq_v01_00002sq_00_00002en_00.mrc "
+		self.images = ("07jan05b_00012gr_00001sq_v01_00002sq_00_00002en_00.mrc "
 			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00003en_00.mrc "
 			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00004en_00.mrc "
 			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00005en_00.mrc "
-			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc "
+			+"07jan05b_00012gr_00001sq_v01_00002sq_00_00006en_00.mrc ")
 
 		### Dog Picker
 		self.runDogPicker()
