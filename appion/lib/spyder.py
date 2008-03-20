@@ -78,21 +78,35 @@ class SpiderSession:
 
 	def wait(self):
 		### waits until spider quits
+
+		### set wait times
 		if self.logo is True:
 			waittime = 15.0
 		else:
 			waittime = 2.0
 		self.logf.flush()
+		### check number 1
 		if self.spiderproc.poll() is None:
 			waiting = True
-			sys.stderr.write("waiting for spider")
+			time.sleep(waittime*2)
+		else:
+			self.spiderproc.wait()
+			return
+		### check number 2
+		if self.spiderproc.poll() is None:
+			waiting = True
+			sys.stdout.write("waiting for spider")
+		else:
+			self.spiderproc.wait()
+			return
+		### continuous check
 		while self.spiderproc.poll() is None:
-			sys.stderr.write(".")
+			sys.stdout.write(".")
 			time.sleep(waittime)
 			waittime *= 1.1
 			self.logf.flush()
 		if waiting is True:
-			sys.stderr.write("\n")
+			sys.stdout.write("\n")
 		self.spiderproc.wait()
 
 	def toSpider(self, *args):
