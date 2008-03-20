@@ -7,7 +7,7 @@ import os
 ## spider
 import spyder
 ## appion
-from apSpider import operations
+#from apSpider import operations ### fails
 import apImage
 import apEMAN
 import apParam
