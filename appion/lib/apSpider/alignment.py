@@ -166,7 +166,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	return "alignedstack.spi"
 
 #===============================
-def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=20, dataext=".spi"):
+def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactors=8, dataext=".spi"):
 	"""
 	inputs:
 		aligned stack
@@ -185,7 +185,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 
 	### make template in memory
 	mySpider = spyder.SpiderSession(dataext=dataext)
-	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskrad))
+	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskpixrad*2))
 
 	### performing correspondence analysis
 	apDisplay.printMsg("Performing correspondence analysis (long wait)")
@@ -202,39 +202,31 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 			rundir+"/eigenimg@"+("%03d" % (fact)), )
 	mySpider.close()
 
-	"""
-	output file info:
-	==================
-	* _SEQ :: Unformatted sequential file having image values under the mask. 
-	* _SET :: Transposed direct access file having image values under the mask.
-	* _MAS :: Mask FILE in SPIDER image format 
-	* _IMC :: Text file with image coordinates.
-		NUMIM, NFAC, NSAM, NROW, NUMIM, PCA
-		IMAGE(1) COORDINATES (1..NFAC), WEIGHTP(1), DOR, FIM(1)
-	* _PIX :: Text file with pixel coordinates.
-		NPIX, NFAC, NSAM , NROW , NUMIM, PCA
-		PIXEL(1) COORDINATES (1..NFAC), WEIGHTP(1), CO(1), FPIX
-	* _EIG :: Text file with eigenvalues.
-		NFAC, TOTAL WEIGHT, TRACE, PCA, N
-		EIGENVALUE(1), %, CUMULATIVE %
-	"""
 	### remove worthless temporary files
-	for tail in ["_SEQ", "_SET", "_MAS", "_PIX",]:
+	### save _PIX, _MAS for Differential images
+	for tail in ["_SEQ", "_SET", "_MAS", "_PIX", ]:
 		if os.path.isfile(rundir+"/corandata"+tail+dataext):
-			os.remove(rundir+"/corandata"+tail+dataext)
+			print "x"
+			#os.remove(rundir+"/corandata"+tail+dataext)
 
 	eigf = open(rundir+"/corandata_EIG"+dataext, "r")
 	count = 0
 	for line in eigf:
 		bits = line.strip().split()
+		contrib = float(bits[1])
+		cumm = float(bits[2])
+		eigval = float(bits[0])
 		if len(bits) == 3:
 			count += 1
-			print count, float(bits[1]), float(bits[2]), float(bits[0])
+			print count, contrib, cumm, eigval
 
 	### make nice pngs for webpage
 	for fact in range(1,numfactors+1):
+		pngfile = rundir+"/eigenimg"+("%03d" % (fact))+".png"
+		if os.path.isfile(pngfile):
+			os.remove(pngfile)
 		emancmd = ("proc2d "+rundir+"/eigenimg.spi "
-			+rundir+"/eigenimg"+("%03d" % (fact))+".png "
+			+pngfile+" "
 			+" first="+str(fact-1)+" last="+str(fact-1))
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
@@ -250,7 +242,57 @@ def correspondenceAnalysis(alignedstack, boxsize, maskrad, numpart, numfactors=2
 	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
 
+	### generate factor maps
+	mySpider = spyder.SpiderSession(dataext=dataext)
+	for f1 in range(1,numfactors):
+		for f2 in range(f1+1, numfactors+1):
+			factorfile = rundir+"/factorps"+("%03d-%03d" % (f1,f2))
+			mySpider.toSpiderQuiet(
+				"CA SME", "I",
+				rundir+"/corandata", #coran prefix
+				"0",
+				str(f1)+","+str(f2), #factors to plot
+				"S", "+", "Y", 
+				"5", "0",
+				factorfile, 
+				"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use default
+			)
+			#hack to get postscript converted to png
+			os.system("convert -trim "+factorfile+".ps "+factorfile+".png")
+			coordnums = []
+			numpix = 2
+			totpix = numpix*2 + 1
+			for c1 in range(-1*numpix,numpix+1):
+				for c2 in range(-1*numpix,numpix+1):
+					prefix = rundir+"/typical"
+					coordnum = ("%02d%02d" % (c1+numpix+1, c2+numpix+1))
+					mySpider.toSpider(
+						"CA SRA", 
+						rundir+"/corandata", #coran prefix
+						str(f1)+","+str(f2), #factors to plot
+						str(c1)+","+str(c2), #coordinates to plot
+						prefix+coordnum,
+					)
+					coordnums.append(coordnum)
+			numstr = ""
+			for i in coordnums:
+				numstr += i+","
+			mySpider.toSpider(
+				"MN S", #montage	
+				prefix+"****", numstr,
+				str(totpix)+",1", "2", 
+				rundir+"/montage"+("%03d-%03d" % (f1,f2)),
+			)
+			print numstr
+			mySpider.close()
+			return
+	mySpider.close()
 	return
+
+
+
+
+
 
 
 
