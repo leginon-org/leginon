@@ -46,9 +46,11 @@ class subStackScript(appionScript.AppionScript):
 	def runCommand(self, cmd):
 		t0 = time.time()
 		if self.params['showcmd'] is True:
+			apDisplay.printColor("###################################", "magenta")
 			sys.stderr.write(
 				apDisplay.colorString("COMMAND: \n","magenta")
 				+apDisplay.colorString(cmd, "cyan")+"\n")
+			apDisplay.printColor("###################################", "cyan")
 		try:
 			if self.params['verbose'] is False:
 				proc = subprocess.Popen(cmd, shell=True, 
@@ -60,7 +62,9 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printWarning("could not run command: "+cmd)
 			return False
 		runtime = time.time() - t0
-		apDisplay.printColor("command ran in "+apDisplay.timeString(runtime), "cyan")
+		if self.params['showcmd'] is True:
+			apDisplay.printColor("###################################", "cyan")
+			apDisplay.printColor("command ran in "+apDisplay.timeString(runtime), "cyan")
 		if runtime < 10:
 			apDisplay.printWarning("command runtime was very short: "
 				+apDisplay.timeString(runtime))
