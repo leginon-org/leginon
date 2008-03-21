@@ -749,9 +749,7 @@ function writeJobFile ($extra=False) {
     $clusterjob.= "ln -s $stackpath/$stackname1 start.hed\n";
     $clusterjob.= "ln -s $modelpath/$modelname threed.0.mrc\n";
   }
-  $clusterjob.= "\nrm .mparm\nforeach i (`sort -u \$PBS_NODEFILE`)\n";
-  $clusterjob.= "  echo 'rsh 1 ".$_POST['rprocs']."' \$i \$PBSREMOTEDIR >> .mparm\n";
-  $clusterjob.= "end\n";
+  $clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
   $procs=$_POST['nodes']*$_POST['rprocs'];
   $numiters=$_POST['numiters'];
   $pad=intval($box*1.25);
