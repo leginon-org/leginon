@@ -68,6 +68,10 @@ def color_surface_cylinder(surf):
 	cc.origin = [0,0,0]
 	vertices, triangles = surf.surface_groups()[0].geometry()
 	rmin, rmax = cc.value_range(vertices, vertex_xform = None)
+	if rmin is None:
+		rmin = 0
+	if rmax is None:
+		rmax = 1.0	
 	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
 
 	#key: red,green,blue,opacity
