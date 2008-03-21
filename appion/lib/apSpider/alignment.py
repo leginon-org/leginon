@@ -218,7 +218,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 		4. 2D factor plot visualization
 	"""
 	### 1. generate eigen images
-	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
 			"CA SRE", rundir+"/corandata", str(fact), 
@@ -258,6 +258,8 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	### need to plot & insert this data
 
 	### hack to get 'CA VIS' to work: break up stack into individual particles
+	"""
+	### this is broken in SPIDER 13.0
 	apParam.createDirectory("unstacked")
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet(
@@ -268,57 +270,97 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 		"LB1",
 	)
 	mySpider.close()
+	"""
 
 	### generate factor maps
 	for f1 in range(1,numfactors):
 		for f2 in range(f1+1, numfactors+1):
-			### 3. factor plot
-			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-			factorfile = rundir+"/factorps"+("%02d-%02d" % (f1,f2))
-			mySpider.toSpiderQuiet(
-				"CA SM", "I",
-				rundir+"/corandata", #coran prefix
-				"0",
-				str(f1)+","+str(f2), #factors to plot
-				"S", "+", "Y", 
-				"5", "0",
-				factorfile, 
-				"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use defaults
-			)
-			mySpider.close()
-			# hack to get postscript converted to png, require ImageMagick
-			cmd = "convert -trim -colorspace Gray -density 150x150 "+factorfile+".ps "+factorfile+".png"
-			proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			proc.wait()
-			if os.path.isfile(factorfile+".png"):
-				os.remove(factorfile+".ps")
-
-			### 4. factor plot visualization
-			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-			mySpider.toSpider(
-				"SD C", #create coordinate file
-				rundir+"/corandata", #coran prefix	
-				str(f1)+","+str(f2), #factors to plot
-				rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)),
-			)
-			visimg = rundir+"/visimg"+("%02d%02d" % (f1,f2))
-			mySpider.toSpider(
-				"CA VIS", #visualization	
-				"(700,700)",
-				rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)), #input doc from 'sd c'
-				rundir+"/visdoc"+("%02d%02d" % (f1,f2)), #output doc
-				"unstacked/img00001", # image in series ???
-				"(10,10)", #num of rows, cols
-				"5.0",       #stdev range
-				"(2.0,2.0)",   #upper, lower thresh
-				visimg, #output image
-				"1,"+str(numpart),
-				"1,2",
-			)
-			mySpider.close()
-			emancmd = ("proc2d "+visimg+dataext+" "+visimg+".png ")
-			apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
-
+			createFactorMap(f1, f2, rundir, dataext)
 	return
 
+#===============================
+def createFactorMap(f1, f2, rundir, dataext):
+	### 3. factor plot
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	factorfile = rundir+"/factorps"+("%02d-%02d" % (f1,f2))
+	mySpider.toSpiderQuiet(
+		"CA SM", "I",
+		rundir+"/corandata", #coran prefix
+		"0",
+		str(f1)+","+str(f2), #factors to plot
+		"S", "+", "Y", 
+		"5", "0",
+		factorfile, 
+		"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use defaults
+	)
+	mySpider.close()
+	# hack to get postscript converted to png, require ImageMagick
+	cmd = "convert -trim -colorspace Gray -density 150x150 "+factorfile+".ps "+factorfile+".png"
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.wait()
+	if os.path.isfile(factorfile+".png"):
+		os.remove(factorfile+".ps")
 
+	### 4. factor plot visualization
+	"""
+	### this is broken in SPIDER 13.0
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpider(
+		"SD C", #create coordinate file
+		rundir+"/corandata", #coran prefix	
+		str(f1)+","+str(f2), #factors to plot
+		rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)),
+	)
+	visimg = rundir+"/visimg"+("%02d%02d" % (f1,f2))
+	mySpider.toSpider(
+		"CA VIS", #visualization	
+		"(1024,1024)",
+		rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)), #input doc from 'sd c'
+		rundir+"/visdoc"+("%02d%02d" % (f1,f2)), #output doc
+		"alignedstack@00001", # image in series ???
+		"(12,12)", #num of rows, cols
+		"5.0",       #stdev range
+		"(5.0,5.0)",   #upper, lower thresh
+		visimg, #output image
+		"1,"+str(numpart),
+		"1,2",
+	)
+	mySpider.close()
+	emancmd = ("proc2d "+visimg+dataext+" "+visimg+".png ")
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+	"""
+	return
+
+#===============================
+def hierarchCluster(alignedstack, numpart, factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+	"""
+	inputs:
+
+	outputs:
+
+	"""
+	rundir = "cluster"
+
+	### make list of factors
+	factorstr = ""
+	for fact in factorlist:
+		factorstr += fact+","
+	factorstr = factorstr[:-1]
+
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpider(
+		"CL HC",   # do hierarchical clustering	
+		corandata, # path to coran data
+		factorstr, # factor string
+	)
+	## weight for each factor
+	for fact in factorlist:
+		mySpider.toSpider("1.0")	
+	mySpider.toSpider(
+		"5",         #use Ward's method
+		"Y", rundir+"/dendogram.ps", #dendogram image file
+		"Y", rundir+"/dendogramdoc", #dendogram doc file
+	)
+	mySpider.close()
+
+	return
