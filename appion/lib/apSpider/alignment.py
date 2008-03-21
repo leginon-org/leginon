@@ -51,9 +51,9 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 
 	### remove previous iterations
 	numiter = 0
-	while os.path.isfile(rundir+"/avgimg%03d%s" % (numiter+1, dataext)):
-		os.remove(rundir+"/avgimg%03d%s" % (numiter+1, dataext))
-		pngfile = rundir+"/avgimg%03d%s" % (numiter+1, ".png")
+	while os.path.isfile(rundir+"/avgimg%02d%s" % (numiter+1, dataext)):
+		os.remove(rundir+"/avgimg%02d%s" % (numiter+1, dataext))
+		pngfile = rundir+"/avgimg%02d%s" % (numiter+1, ".png")
 		if os.path.isfile(pngfile):
 			os.remove(pngfile)
 		numiter += 1
@@ -65,15 +65,15 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	mySpider.toSpider("AP SR", 
 		stackfile+"@*****", "1-"+str(numpart), 
 		str(int(pixrad)), str(int(firstring))+","+str(int(lastring)), 
-		"_9", rundir+"/avgimg***", rundir+"/paramdoc***")
+		"_9", rundir+"/avgimg**", rundir+"/paramdoc**")
 	mySpider.close()
 
 	### find number of iterations
 	numiter = 0
-	while os.path.isfile(rundir+"/avgimg%03d%s" % (numiter+1, dataext)):
+	while os.path.isfile(rundir+"/avgimg%02d%s" % (numiter+1, dataext)):
 		emancmd = ("proc2d "
-			+" "+rundir+"/avgimg"+("%03d%s" % (numiter+1, dataext))
-			+" "+rundir+"/avgimg"+("%03d%s" % (numiter+1, ".png"))
+			+" "+rundir+"/avgimg"+("%02d%s" % (numiter+1, dataext))
+			+" "+rundir+"/avgimg"+("%02d%s" % (numiter+1, ".png"))
 		)
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		numiter += 1
@@ -89,7 +89,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	for p in range(1,numpart+1):
 		mySpider.toSpiderQuiet(
 			"UD IC,"+str(p)+",x21,x22,x23",
-			(rundir+"/paramdoc%03d" % (numiter)),
+			(rundir+"/paramdoc%02d" % (numiter)),
 			"RT SQ",
 			stackfile+"@"+("%05d" % (p)),
 			"alignedstack@"+("%05d" % (p)),
@@ -132,13 +132,13 @@ def refBasedAlignParticles(stackfile, templatestack,
 	mySpider = spyder.SpiderSession(dataext=dataext)
 	# copy template to memory
 	mySpider.toSpider("AP MQ", 
-		templatestack+"@***",                       # reference image series
+		templatestack+"@**",                        # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
 		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
 		stackfile+"@*****",                         # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
-		rundir+"/paramdoc***",                      # output angles document file
+		rundir+"/paramdoc**",                       # output angles document file
 	)
 	mySpider.close()
 
@@ -152,7 +152,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	for p in range(1,numpart+1):
 		mySpider.toSpiderQuiet(
 			"UD IC,"+str(p)+",x21,x22,x23",
-			(rundir+"/paramdoc%03d" % (numiter)),
+			(rundir+"/paramdoc%02d" % (numiter)),
 			"RT SQ",
 			stackfile+"@"+("%05d" % (p)),
 			"alignedstack@"+("%05d" % (p)),
@@ -199,7 +199,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
 			"CA SRE", rundir+"/corandata", str(fact), 
-			rundir+"/eigenimg@"+("%03d" % (fact)), )
+			rundir+"/eigenimg@"+("%02d" % (fact)), )
 	mySpider.close()
 
 	### remove worthless temporary files
@@ -222,7 +222,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 
 	### make nice pngs for webpage
 	for fact in range(1,numfactors+1):
-		pngfile = rundir+"/eigenimg"+("%03d" % (fact))+".png"
+		pngfile = rundir+"/eigenimg"+("%02d" % (fact))+".png"
 		if os.path.isfile(pngfile):
 			os.remove(pngfile)
 		emancmd = ("proc2d "+rundir+"/eigenimg.spi "
@@ -243,12 +243,13 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 		+" particles in "+apDisplay.timeString(td1))
 
 	### generate factor maps
-	mySpider = spyder.SpiderSession(dataext=dataext)
 	for f1 in range(1,numfactors):
 		for f2 in range(f1+1, numfactors+1):
-			factorfile = rundir+"/factorps"+("%03d-%03d" % (f1,f2))
+			### factor plot
+			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+			factorfile = rundir+"/factorps"+("%02d-%02d" % (f1,f2))
 			mySpider.toSpiderQuiet(
-				"CA SME", "I",
+				"CA SM", "I",
 				rundir+"/corandata", #coran prefix
 				"0",
 				str(f1)+","+str(f2), #factors to plot
@@ -257,8 +258,14 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 				factorfile, 
 				"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use default
 			)
+			mySpider.close()
 			#hack to get postscript converted to png
-			os.system("convert -trim "+factorfile+".ps "+factorfile+".png")
+			cmd = "convert -trim -size=640x640 "+factorfile+".ps "+factorfile+".png"
+			print cmd
+			os.popen2(cmd)
+
+			### factor map???
+			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 			coordnums = []
 			numpix = 2
 			totpix = numpix*2 + 1
@@ -266,7 +273,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 				for c2 in range(-1*numpix,numpix+1):
 					prefix = rundir+"/typical"
 					coordnum = ("%02d%02d" % (c1+numpix+1, c2+numpix+1))
-					mySpider.toSpider(
+					mySpider.toSpiderQuiet(
 						"CA SRA", 
 						rundir+"/corandata", #coran prefix
 						str(f1)+","+str(f2), #factors to plot
@@ -277,16 +284,41 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 			numstr = ""
 			for i in coordnums:
 				numstr += i+","
+			numstr = numstr[:-1]
 			mySpider.toSpider(
 				"MN S", #montage	
 				prefix+"****", numstr,
 				str(totpix)+",1", "2", 
-				rundir+"/montage"+("%03d-%03d" % (f1,f2)),
+				rundir+"/montage"+("%02d-%02d" % (f1,f2)),
 			)
-			print numstr
 			mySpider.close()
-			return
-	mySpider.close()
+			for i in coordnums:
+				file = prefix+i+dataext
+				if os.path.isfile(file):
+					os.remove(prefix+i+dataext)
+
+			### visualization
+			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+			mySpider.toSpider(
+				"SD C", #create coordinate file
+				rundir+"/corandata", #coran prefix	
+				str(f1)+","+str(f2), #factors to plot
+				rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)),
+			)
+			mySpider.toSpider(
+				"CA VIS", #visualization	
+				"(700,700)",
+				rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)), #input doc from 'sd c'
+				rundir+"/visdoc"+("%02d%02d" % (f1,f2)), #output doc
+				rundir+"/corandata_MAS", # image in series ???
+				"(10,10)", #num of rows, cols
+				"5",       #stdev range
+				"(1.5,2.5)",   #upper, lower thresh
+				rundir+"/visimg"+("%02d%02d" % (f1,f2)), #output image
+				"1-"+str(numpart),
+				"2,3",
+			)
+			mySpider.close()
 	return
 
 
