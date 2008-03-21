@@ -176,7 +176,7 @@ def convertClassAvgFiles(params):
 			return
 		if re.match("classes\.\d+\.img",f):
 			files_classavg.append(f)
-		if re.match("classavgsold\.\d+\.img",f):
+		if re.match("classes\.\d+\.old\.img",f):
 			files_classold.append(f)
 		if re.match("goodavgs\.\d+\.img",f):
 			files_classgood.append(f)
@@ -197,8 +197,9 @@ def convertClassAvgFiles(params):
 		for f in files_classold:
 			for ext in ['.img','.hed']:
 				oldf = f.replace('.img',ext)
-				newf = oldf.replace('classavgsold','classes_eman')
-				os.rename(oldf,newf)
+				newf = oldf.replace('classes','classes_eman')
+				new2f = newf.replace('old.','')
+				os.rename(oldf,new2f)
 	if params['package']=='EMAN/MsgP':
 		for f in files_classgood:
 			for ext in ['.img','.hed']:
@@ -333,6 +334,11 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	# if eotest failed, filter to 30 
 	if not res:
 		res=30
+	if str(res) == 'nan':
+		res=100
+		badres = True
+	else:
+		badres = False
 	syms = initmodel['symmetry']['symmetry'].split()
 	sym = syms[0]
 	# strip digits from symmetry
@@ -377,7 +383,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	apEMAN.executeEmanCmd(slicecmd)
 	os.remove(tmphed)
 	os.remove(tmpimg)
-	return
+	return badres
 	
 
 def runChimeraScript(chimscript):
@@ -455,7 +461,6 @@ def insertRefinementRun(params):
 	if result:
 		params['refinementRun'] = result[0]
 	elif params['commit'] is True:
-		#apDisplay.printError("Refinement Run was not found")
 		apDisplay.printWarning("Refinement Run was not found, setting to inserted values")
 		params['refinementRun'] = runq		
 	else:
@@ -476,7 +481,7 @@ def insertResolutionData(params,iteration):
 
 		# calculate the resolution:
 		halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
-
+		
 		# save to database
 		resq['half'] = halfres
 		resq['fscfile'] = fsc
@@ -536,7 +541,7 @@ def insertIteration(iteration, params):
 	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	volDensPath = os.path.join(params['outdir'], volumeDensity)
-	renderSnapshots(volDensPath, halfres, params['model'], 
+	badres = renderSnapshots(volDensPath, halfres, params['model'], 
 		params['contour'], params['zoom'], params['apix'])
 
 	## uncommment this for chimera image only runs...
@@ -544,7 +549,11 @@ def insertIteration(iteration, params):
 		return
 
 	# insert resolution data
-	resData = insertResolutionData(params, iteration)
+	if badres != True:
+		resData = insertResolutionData(params, iteration)
+	else:
+		apDisplay.printWarning("resolution reported as nan, not committing results to database")
+		return	
 	RmeasureData = insertRMeasureData(params, iteration)
 
 	classavg='classes.'+iteration['num']+'.img'
