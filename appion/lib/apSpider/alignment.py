@@ -195,6 +195,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 		alignedstack+"@*****", "1-"+str(numpart),
 		"_9", str(numfactors), "C", "10",
 		rundir+"/corandata")
+	mySpider.close()
 
 	analyzeEigenFactors(alignedstack, rundir, numpart, numfactors, dataext)
 
@@ -217,6 +218,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 		4. 2D factor plot visualization
 	"""
 	### 1. generate eigen images
+	mySpider = spyder.SpiderSession(dataext=dataext)
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
 			"CA SRE", rundir+"/corandata", str(fact), 
