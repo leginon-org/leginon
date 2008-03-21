@@ -218,7 +218,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 		eigval = float(bits[0])
 		if len(bits) == 3:
 			count += 1
-			print count, contrib, cumm, eigval
+			print "Factor", count, contrib, "%\t", cumm, "%\t", eigval
 
 	### make nice pngs for webpage
 	for fact in range(1,numfactors+1):
@@ -238,9 +238,17 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	emancmd = "proc2d "+rundir+"/eigenimg.spi "+eigenimg
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
-	td1 = time.time()-t0
-	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
-		+" particles in "+apDisplay.timeString(td1))
+	### hack to get things to work
+	apParam.createDirectory("unstacked")
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpiderQuiet(
+		"DO LB1 i=1,"+str(numpart),
+		" CP",
+		" alignedstack@{*****x0}",
+		" unstacked/img{*****x0}",
+		"LB1",
+	)
+	mySpider.close()
 
 	### generate factor maps
 	for f1 in range(1,numfactors):
@@ -260,42 +268,9 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 			)
 			mySpider.close()
 			#hack to get postscript converted to png
-			cmd = "convert -trim -size=640x640 "+factorfile+".ps "+factorfile+".png"
+			cmd = "convert -trim -colorspace Gray -density 150x150 "+factorfile+".ps "+factorfile+".png"
 			print cmd
 			os.popen2(cmd)
-
-			### factor map???
-			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-			coordnums = []
-			numpix = 2
-			totpix = numpix*2 + 1
-			for c1 in range(-1*numpix,numpix+1):
-				for c2 in range(-1*numpix,numpix+1):
-					prefix = rundir+"/typical"
-					coordnum = ("%02d%02d" % (c1+numpix+1, c2+numpix+1))
-					mySpider.toSpiderQuiet(
-						"CA SRA", 
-						rundir+"/corandata", #coran prefix
-						str(f1)+","+str(f2), #factors to plot
-						str(c1)+","+str(c2), #coordinates to plot
-						prefix+coordnum,
-					)
-					coordnums.append(coordnum)
-			numstr = ""
-			for i in coordnums:
-				numstr += i+","
-			numstr = numstr[:-1]
-			mySpider.toSpider(
-				"MN S", #montage	
-				prefix+"****", numstr,
-				str(totpix)+",1", "2", 
-				rundir+"/montage"+("%02d-%02d" % (f1,f2)),
-			)
-			mySpider.close()
-			for i in coordnums:
-				file = prefix+i+dataext
-				if os.path.isfile(file):
-					os.remove(prefix+i+dataext)
 
 			### visualization
 			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
@@ -305,20 +280,28 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 				str(f1)+","+str(f2), #factors to plot
 				rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)),
 			)
+			visimg = rundir+"/visimg"+("%02d%02d" % (f1,f2))
 			mySpider.toSpider(
 				"CA VIS", #visualization	
 				"(700,700)",
 				rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)), #input doc from 'sd c'
 				rundir+"/visdoc"+("%02d%02d" % (f1,f2)), #output doc
-				rundir+"/corandata_MAS", # image in series ???
+				"unstacked/img00001", # image in series ???
 				"(10,10)", #num of rows, cols
-				"5",       #stdev range
-				"(1.5,2.5)",   #upper, lower thresh
-				rundir+"/visimg"+("%02d%02d" % (f1,f2)), #output image
-				"1-"+str(numpart),
-				"2,3",
+				"5.0",       #stdev range
+				"(2.0,2.0)",   #upper, lower thresh
+				visimg, #output image
+				"1,"+str(numpart),
+				"1,2",
 			)
 			mySpider.close()
+			emancmd = ("proc2d "+visimg+dtatext+" "+visimg+".png "
+			apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+
+	td1 = time.time()-t0
+	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
+		+" particles in "+apDisplay.timeString(td1))
+
 	return
 
 
