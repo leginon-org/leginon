@@ -2,6 +2,7 @@
 ## python
 import time
 import os
+import subprocess
 ## PIL
 #import Image
 ## spider
@@ -195,20 +196,53 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 		"_9", str(numfactors), "C", "10",
 		rundir+"/corandata")
 
-	### generate eigen images
+	analyzeEigenFactors(alignedstack, rundir, numpart, numfactors, dataext)
+
+	td1 = time.time()-t0
+	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
+		+" particles in "+apDisplay.timeString(td1))
+
+	return
+
+
+#===============================
+def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".spi"):
+	"""
+	inputs:
+		coran run data
+	outputs:
+		1. generate eigen images
+		2. collect eigenimage contribution percentage
+		3. 2D factor plot
+		4. 2D factor plot visualization
+	"""
+	### 1. generate eigen images
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
 			"CA SRE", rundir+"/corandata", str(fact), 
 			rundir+"/eigenimg@"+("%02d" % (fact)), )
 	mySpider.close()
 
-	### remove worthless temporary files
-	### save _PIX, _MAS for Differential images
-	for tail in ["_SEQ", "_SET", "_MAS", "_PIX", ]:
-		if os.path.isfile(rundir+"/corandata"+tail+dataext):
-			print "x"
-			#os.remove(rundir+"/corandata"+tail+dataext)
 
+	### convert to nice individual eigen image pngs for webpage
+	for fact in range(1,numfactors+1):
+		pngfile = rundir+"/eigenimg"+("%02d" % (fact))+".png"
+		if os.path.isfile(pngfile):
+			os.remove(pngfile)
+		emancmd = ("proc2d "+rundir+"/eigenimg.spi "
+			+pngfile+" "
+			+" first="+str(fact-1)+" last="+str(fact-1))
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+
+	### convert eigen SPIDER stack to IMAGIC for stack viewer
+	eigenimg = rundir+"/eigenimg.hed"
+	if os.path.isfile(eigenimg):
+		os.remove(eigenimg)
+		os.remove(eigenimg[:-4]+".img")
+	emancmd = "proc2d "+rundir+"/eigenimg.spi "+eigenimg
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+
+	### 2. collect eigenimage contribution percentage
 	eigf = open(rundir+"/corandata_EIG"+dataext, "r")
 	count = 0
 	for line in eigf:
@@ -219,32 +253,15 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 		if len(bits) == 3:
 			count += 1
 			print "Factor", count, contrib, "%\t", cumm, "%\t", eigval
+	### need to plot & insert this data
 
-	### make nice pngs for webpage
-	for fact in range(1,numfactors+1):
-		pngfile = rundir+"/eigenimg"+("%02d" % (fact))+".png"
-		if os.path.isfile(pngfile):
-			os.remove(pngfile)
-		emancmd = ("proc2d "+rundir+"/eigenimg.spi "
-			+pngfile+" "
-			+" first="+str(fact-1)+" last="+str(fact-1))
-		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
-
-	### convert SPIDER image to IMAGIC for webpage
-	eigenimg = rundir+"/eigenimg.hed"
-	if os.path.isfile(eigenimg):
-		os.remove(eigenimg)
-		os.remove(eigenimg[:-4]+".img")
-	emancmd = "proc2d "+rundir+"/eigenimg.spi "+eigenimg
-	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
-
-	### hack to get things to work
+	### hack to get 'CA VIS' to work: break up stack into individual particles
 	apParam.createDirectory("unstacked")
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet(
 		"DO LB1 i=1,"+str(numpart),
 		" CP",
-		" alignedstack@{*****x0}",
+		" "+alignedstack+"@{*****x0}",
 		" unstacked/img{*****x0}",
 		"LB1",
 	)
@@ -253,7 +270,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	### generate factor maps
 	for f1 in range(1,numfactors):
 		for f2 in range(f1+1, numfactors+1):
-			### factor plot
+			### 3. factor plot
 			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 			factorfile = rundir+"/factorps"+("%02d-%02d" % (f1,f2))
 			mySpider.toSpiderQuiet(
@@ -264,15 +281,17 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 				"S", "+", "Y", 
 				"5", "0",
 				factorfile, 
-				"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use default
+				"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use defaults
 			)
 			mySpider.close()
-			#hack to get postscript converted to png
+			# hack to get postscript converted to png, require ImageMagick
 			cmd = "convert -trim -colorspace Gray -density 150x150 "+factorfile+".ps "+factorfile+".png"
-			print cmd
-			os.popen2(cmd)
+			proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			proc.wait()
+			if os.path.isfile(factorfile+".png"):
+				os.remove(factorfile+".ps")
 
-			### visualization
+			### 4. factor plot visualization
 			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 			mySpider.toSpider(
 				"SD C", #create coordinate file
@@ -298,17 +317,6 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 			emancmd = ("proc2d "+visimg+dataext+" "+visimg+".png ")
 			apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
-	td1 = time.time()-t0
-	apDisplay.printMsg("completed correspondence analysis of "+str(numpart)
-		+" particles in "+apDisplay.timeString(td1))
-
 	return
-
-
-
-
-
-
-
 
 
