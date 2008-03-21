@@ -19,6 +19,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
 			help="Number of particles to use", metavar="#")
+		self.parser.add_option("--num-factors", dest="numfactors", type="int", default=8,
+			help="Number of factors to use in classification", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 		self.parser.add_option("-f", "--first-ring", dest="firstring", type="int", default=2,
@@ -28,7 +30,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
-			help="Mask radius for particle coran (in Angstroms)", metavar="#")
+			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--lowpass", dest="lowpass", type="float",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
@@ -76,7 +78,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		paramq = appionData.ApNoRefParamsData()
 		paramq['num_particles'] = self.params['numpart']
 		paramq['particle_diam'] = self.params['diam']
-		paramq['mask_diam'] = self.params['maskrad']
+		paramq['mask_diam'] = 2*self.params['maskrad']
 		paramq['lp_filt'] = self.params['lowpass']
 		paramsdata = appiondb.query(paramq, results=1)
 
@@ -235,7 +237,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			maskpixrad = self.params['maskrad']/self.stack['apix']
 			alignment.correspondenceAnalysis( alignedstack, 
 				self.stack['boxsize'], maskpixrad, 
-				self.params['numpart'], numfactors=20)
+				self.params['numpart'], numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 		if self.params['commit'] is True:
