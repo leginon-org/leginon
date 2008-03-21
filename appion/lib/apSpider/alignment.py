@@ -295,7 +295,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 				"1,2",
 			)
 			mySpider.close()
-			emancmd = ("proc2d "+visimg+dtatext+" "+visimg+".png "
+			emancmd = ("proc2d "+visimg+dataext+" "+visimg+".png ")
 			apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
 	td1 = time.time()-t0
