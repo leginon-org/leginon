@@ -88,7 +88,7 @@ class SpiderSession:
 		### check number 1
 		if self.spiderproc.poll() is None:
 			waiting = True
-			time.sleep(waittime*2)
+			time.sleep(2.0)
 		else:
 			self.spiderproc.wait()
 			return
@@ -125,7 +125,7 @@ class SpiderSession:
 
 	def close(self, delturds=1):
 		self.toSpiderQuiet("EN D")			 # end the spider process,
-
+		self.toSpiderQuiet("EN D")			 # end the spider process,
 		self.wait()
 
 		for file in ['fort.1', 'jnkASSIGN1', 
