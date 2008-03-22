@@ -95,18 +95,18 @@ class SpiderSession:
 		### check number 2
 		if self.spiderproc.poll() is None:
 			waiting = True
-			sys.stdout.write("waiting for spider")
+			sys.stderr.write("waiting for spider")
 		else:
 			self.spiderproc.wait()
 			return
 		### continuous check
 		while self.spiderproc.poll() is None:
-			sys.stdout.write(".")
+			sys.stderr.write(".")
 			time.sleep(waittime)
 			waittime *= 1.1
 			self.logf.flush()
 		if waiting is True:
-			sys.stdout.write("\n")
+			sys.stderr.write("\n")
 		self.spiderproc.wait()
 
 	def toSpider(self, *args):
