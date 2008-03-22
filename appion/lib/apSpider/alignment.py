@@ -367,7 +367,7 @@ def hierarchCluster(alignedstack, numpart,
 
 	### determining threshold cutoff for number of classes
 	thresh = 0.5
-	stepsize = 0.1
+	stepsize = 0.25
 	classes = 0
 	count = 0
 	
@@ -392,7 +392,7 @@ def hierarchCluster(alignedstack, numpart,
 			thresh += stepsize
 		elif classes < numclasses:
 			thresh -= stepsize
-		stepsize /= 1.5
+		stepsize /= 2.0
 
 	### create class doc files
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
