@@ -332,7 +332,8 @@ def createFactorMap(f1, f2, rundir, dataext):
 	return
 
 #===============================
-def hierarchCluster(alignedstack, numpart, factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+def hierarchCluster(alignedstack, numpart,
+		numclasses=40, factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
 
@@ -340,27 +341,78 @@ def hierarchCluster(alignedstack, numpart, factorlist=range(1,5), corandata="cor
 
 	"""
 	rundir = "cluster"
-
+	apParam.createDirectory(rundir)
 	### make list of factors
 	factorstr = ""
 	for fact in factorlist:
-		factorstr += fact+","
+		factorstr += str(fact)+","
 	factorstr = factorstr[:-1]
 
+	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpider(
-		"CL HC",   # do hierarchical clustering	
-		corandata, # path to coran data
+		"CL HC",
+		corandata+"_IMC", # path to coran data
 		factorstr, # factor string
 	)
 	## weight for each factor
 	for fact in factorlist:
-		mySpider.toSpider("1.0")	
+		mySpider.toSpiderQuiet("1.0")	
 	mySpider.toSpider(
 		"5",         #use Ward's method
 		"Y", rundir+"/dendogram.ps", #dendogram image file
 		"Y", rundir+"/dendogramdoc", #dendogram doc file
 	)
+	mySpider.close()
+
+	### determining threshold cutoff for number of classes
+	thresh = 0.5
+	stepsize = 0.1
+	classes = 0
+	count = 0
+	
+	while(classes != numclasses and count < 100):
+		count += 1
+		classfile = rundir+"/classes"
+		if os.path.isfile(classfile+dataext):
+			os.remove(classfile+dataext)
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+		mySpider.toSpiderQuiet(
+			"CL HD",
+			thresh, #threshold
+			rundir+"/dendogramdoc", # dendogram doc file 
+			classfile
+		)
+		mySpider.close()
+		claf = open(classfile+dataext, "r")
+		classes = len(claf.readlines()) - 1
+		claf.close()
+		print thresh, classes
+		if classes > numclasses:
+			thresh += stepsize
+		elif classes < numclasses:
+			thresh -= stepsize
+		stepsize /= 1.5
+
+	### create class doc files
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpider(
+		"CL HE",
+		thresh,
+		rundir+"/dendogramdoc", # dendogram doc file 
+		rundir+"/classdoc****", # class doc file
+	)
+
+	### create class averages
+	for classnum in range(1, classes):
+		mySpider.toSpiderQuiet(
+			"AS R",
+			alignedstack+"@*****",
+			rundir+("/classdoc%04d" % (classnum)),
+			"A",
+			rundir+("/classavgimg@%04d" % (classnum)),
+			rundir+("/classvarimg@%04d" % (classnum)),
+		)
 	mySpider.close()
 
 	return
