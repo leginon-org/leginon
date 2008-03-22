@@ -403,6 +403,11 @@ def hierarchCluster(alignedstack, numpart,
 		rundir+"/classdoc****", # class doc file
 	)
 
+	if os.path.isfile(rundir+"/classavgimg"+dataext):
+		os.remove(rundir+"/classavgimg"+dataext)
+	if os.path.isfile(rundir+"/classvarimg"+dataext):
+		os.remove(rundir+"/classvarimg"+dataext)
+
 	### create class averages
 	for classnum in range(1, classes):
 		mySpider.toSpiderQuiet(
@@ -415,4 +420,9 @@ def hierarchCluster(alignedstack, numpart,
 		)
 	mySpider.close()
 
+	return
+
+
+
+def findThreshold():
 	return
