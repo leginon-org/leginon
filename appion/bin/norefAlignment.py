@@ -53,6 +53,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("run description was not defined")
+		if self.params['maskrad'] is None:
+			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -241,6 +243,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		corantime = time.time() - corantime
 
 		if self.params['commit'] is True:
+			apDisplay.printError("not working yet")
 			apAlignment.insertNoRefRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
