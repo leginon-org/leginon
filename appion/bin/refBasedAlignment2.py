@@ -315,15 +315,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		os.remove(spiderstack)
 
-		#do correspondence analysis
-		corantime = time.time()
-		if not self.params['skipcoran']:
-			maskpixrad = self.params['maskrad']/self.stack['apix']
-			alignment.correspondenceAnalysis( alignedstack, 
-				self.stack['boxsize'], maskpixrad, 
-				self.params['numpart'], numfactors=self.params['numfactors'])
-		corantime = time.time() - corantime
-
 		if self.params['commit'] is True:
 			apDisplay.printError("not working yet")
 			apAlignment.insertRefBasedRun(insert=True)
