@@ -24,9 +24,15 @@ appiondb = apDB.apdb
 
 def getTemplates(params):
 	"""
-	Reads params['templateIds'], a list of template ids
-	Copies and scales templates
-	Returns params['templatelist'], a list of template file basenames
+	Inputs:
+		params['templateIds'], a list of template ids
+		params['apix'], desired pixel size
+		params['rundir'], output directory
+		image processing params
+	Processing:
+		Copies, scales, and filters templates
+	Outputs:
+		params['templatelist'], a list of template file basenames
 	"""
 
 	apDisplay.printMsg("getting templates")
@@ -37,6 +43,7 @@ def getTemplates(params):
 	params['templatelist'] = [] #list of scaled files 
 	for i,templateid in enumerate(params['templateIds']):
 		index = i+1
+		templateid = int(templateid)
 		#QUERY DB FOR TEMPLATE INFO
 		templatedata = appiondb.direct_query(appionData.ApTemplateImageData, templateid)
 		if not (templatedata):
