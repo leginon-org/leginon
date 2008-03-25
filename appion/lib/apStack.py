@@ -260,8 +260,8 @@ def getStackBoxsize(stackId):
 	rawboxsize = stackpart['stackRun']['stackParams']['boxSize']
 	runsindata = getRunsInStack(stackId)
 	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
-	stackboxsize = rawboxsize/stackbin
-	apDisplay.printMsg("Stack "+str(stackId)+" box size: "+str(round(stackboxsize)))
+	stackboxsize = int(rawboxsize/stackbin)
+	apDisplay.printMsg("Stack "+str(stackId)+" box size: "+str(stackboxsize))
 	return stackboxsize
 
 
