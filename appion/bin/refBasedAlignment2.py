@@ -229,7 +229,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		return templatestack
 
 	#=====================
-	def updateTemplateStack(self, partlist, iternum):
+	def updateTemplateStack(self, alignedstack, partlist, iternum):
 		templatestr = os.path.join(self.params['outdir'], "templates/filt*.mrc")
 		oldfilelist = glob.glob(templatestr)
 
@@ -239,31 +239,36 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			time.sleep(2)
 			os.remove(templatestack)
 
-		### init list of lists
-		templatelists = []
-		for templatenum in range(self.params['numtemplate']):
-			templatelists.append([])
-
 		statlist = []
 		for partdict in partlist:
 			statlist.append(partdict['score'])
 		statlist.sort()
 		cutoff = statlist[int(0.1*len(partlist))]
-		print statlist, cutoff
+		apDisplay.printMsg("using a 10% correlation cutoff of: "+str(round(cutoff)))
 
+		### init list of files
+		keeplists = []
+		for templatenum in range(1, self.params['numtemplate']+1):
+			f = open(("templates/keeplist%02d-%02d.list" % (iternum, templatenum)), "w")
+			keeplists.append(f)
 		for partdict in partlist:
 			#EMAN lists start at zero
-			templatelists[partdict['template']-1].append(partdict['num']-1)
-		print templatelists
+			if partdict['score'] > cutoff:
+				keeplists[partdict['template']-1].write(str(partdict['num']-1)+"\n")
+		for f in keeplists:
+			f.close()
 
-
-		### create keep files
+		filelist = []
 		for templatenum in range(1, self.params['numtemplate']+1):
-			keepfile = ("templatekeep%02d.lst" % templatenum)
-			keepf = open(keepfile, "w")
-			keepf.close()
+			keeplist = "templates/keeplist%02d-%02d.list" % (iternum, templatenum)	
+			mrcfile = "templates/templateavg%02d-%02d.mrc" % (iternum, templatenum)
+			emancmd  = ("proc2d "+alignedstack+" "+mrcfile
+				+" list="+keeplist
+				+" edgenorm average ")
+			apEMAN.executeEmanCmd(emancmd)
+			filelist.append(mrcfile)
 
-		for mrcfile in oldfilelist:
+		for mrcfile in filelist:
 			emancmd  = ("proc2d "+mrcfile+" "+templatestack
 				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
 				+" edgenorm spiderswap ")
@@ -301,7 +306,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				self.params['numpart'], self.params['numtemplate'],
 				self.params['firstring'], self.params['lastring'], iternum=iternum)
 			usestack = alignedstack
-			templatestack = self.updateTemplateStack(partlist, iternum)
+			templatestack = self.updateTemplateStack(alignedstack, partlist, iternum)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
