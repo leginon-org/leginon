@@ -257,7 +257,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		#remove large, worthless stack
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
-		#os.remove(spiderstack)
+		os.remove(spiderstack)
 
 		#do correspondence analysis
 		corantime = time.time()
