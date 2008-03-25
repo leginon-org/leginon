@@ -84,37 +84,52 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	apDisplay.printMsg(str(numiter)+" alignment iterations were run by spider")
 
 	### convert spider rotation, shift data to python
+	docfile = rundir+("/paramdoc%02d" % (numiter))+dataext
+	picklefile = rundir+("/paramdoc%02d" % (numiter))+".pickle"
+	partlist = readRefBasedDocFile(docfile, picklefile)
 
 	### write aligned stack -- with python loop
-	### I tried this loop in both spider and python: python was faster?!? -neil
 	alignedstack = "alignedstack"
-	if os.path.isfile(alignedstack+dataext):
-		apDisplay.printWarning("Removing existing aligned stack: "+alignedstack+dataext)
-		time.sleep(2)
-		os.remove(alignedstack+dataext)
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-	for p in range(1,numpart+1):
-		mySpider.toSpiderQuiet(
-			"UD IC,"+str(p)+",x21,x22,x23",
-			(rundir+"/paramdoc%02d" % (numiter)),
-			"RT SQ",
-			stackfile+"@"+("%05d" % (p)),
-			alignedstack+"@"+("%05d" % (p)),
-			"x21", "x22,x23")
-	mySpider.close()
-	td1 = time.time()-t0
+	alignStack(stackfile, alignedstack, partlist, dataext)
 
+	td1 = time.time()-t0
 	apDisplay.printMsg("completed alignment of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
 
 	return "alignedstack.spi"
 
 #===============================
+def readRefFreeDocFile(docfile, picklefile):
+	apDisplay.printMsg("processing alignment doc file")
+	if not os.path.isfile(docfile):
+		apDisplay.printError("Doc file, "+docfile+" does not exist")
+	docf = open(docfile, "r")
+	partlist = []
+	for line in docf:
+		data = line.strip().split()
+		if data[0][0] == ";":
+			continue
+		if len(data) < 4:
+			continue
+		partdict = {
+			'num': int(data[0]),
+			'rot': float(data[2]),
+			'xshift': float(data[3]),
+			'yshift': float(data[4]),
+		}
+		partlist.append(partdict)
+	docf.close()
+	picklef = open(picklefile, "w")
+	cPickle.dump(partlist, picklef)
+	picklef.close()
+	return partlist
+
+#===============================
 def refBasedAlignParticles(stackfile, templatestack, 
 		xysearch, xystep, 
 		numpart, numtemplate,
 		firstring=2, lastring=100, 
-		dataext=".spi"):
+		dataext=".spi", iternum=1):
 	"""
 	inputs:
 		stack
@@ -130,17 +145,15 @@ def refBasedAlignParticles(stackfile, templatestack,
 	if dataext in stackfile:
 		stackfile = stackfile[:-4]
 	t0 = time.time()
-	rundir = "alignment"
+	rundir = "alignments"
 	apParam.createDirectory(rundir)
 
 	### remove previous iterations
-	numiter = 1
-	if os.path.isfile(rundir+"/paramdoc%02d%s" % (numiter, dataext)):
-		os.remove(rundir+"/paramdoc%02d%s" % (numiter, dataext))
+	if os.path.isfile(rundir+"/paramdoc%02d%s" % (iternum, dataext)):
+		os.remove(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext)
-	# copy template to memory
 	mySpider.toSpider("AP MQ", 
 		templatestack+"@**",                        # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
@@ -148,68 +161,99 @@ def refBasedAlignParticles(stackfile, templatestack,
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
 		stackfile+"@*****",                         # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
-		rundir+("/paramdoc%02d" % (numiter)),                       # output angles document file
+		rundir+("/paramdoc%02d" % (iternum)),                       # output angles document file
 	)
 	mySpider.close()
 
-	### find number of iterations
-
 	### convert spider rotation, shift data to python
+	docfile = rundir+("/paramdoc%02d" % (iternum))+dataext
+	picklefile = rundir+("/paramdoc%02d" % (iternum))+".pickle"
+	partlist = readRefBasedDocFile(docfile, picklefile)
 
 	### write aligned stack -- with python loop
-	### I tried this loop in both spider and python: python was faster?!? -neil
-	alignedstack = rundir+("/alignedstack%02d" % (numiter))
-	if os.path.isfile(alignedstack+dataext):
-		apDisplay.printWarning("Removing existing aligned stack: "+alignedstack+dataext)
-		time.sleep(2)
-		os.remove(alignedstack+dataext)
-	pdocf = open(rundir+("/paramdoc%02d" % (numiter)), "r")
-	for line in pdocf:
-		data = line.strip.split()
+	alignedstack = rundir+("/alignedstack%02d" % (iternum))
+	alignStack(stackfile, alignedstack, partlist, dataext)
+
+	### average stack
+	emancmd = ( "proc2d "+alignedstack+dataext+" "
+		+rundir+("/avgimg%02d" % (iternum))+".mrc "
+		+" average")
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+
+	td1 = time.time()-t0
+	apDisplay.printMsg("completed alignment of "+str(numpart)
+		+" particles in "+apDisplay.timeString(td1))
+
+	return alignedstack+dataext, partlist
+
+#===============================
+def readRefBasedDocFile(docfile, picklefile):
+	apDisplay.printMsg("processing alignment doc file")
+	if not os.path.isfile(docfile):
+		apDisplay.printError("Doc file, "+docfile+" does not exist")
+	docf = open(docfile, "r")
+	partlist = []
+	for line in docf:
+		data = line.strip().split()
+		if data[0][0] == ";":
+			continue
+		if len(data) < 6:
+			continue
+		templatenum = float(data[2])
 		partdict = {
 			'num': int(data[0]),
-			'template': int(abs(data[2])),
-			'mirror': int(int(data[2])/abs(float(data[2]))),
+			'template': int(abs(templatenum)),
+			'mirror': int(templatenum/abs(templatenum)),
+			'score': float(data[3]),
 			'rot': float(data[4]),
 			'xshift': float(data[5]),
 			'yshift': float(data[6]),
 		}
-		print partdict
+		partlist.append(partdict)
+	docf.close()
+	picklef = open(picklefile, "w")
+	cPickle.dump(partlist, picklef)
+	picklef.close()
+	return partlist
+
+#===============================
+def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
+	"""
+	write aligned stack -- with python loop
+	
+	I tried this loop in both spider and python; 
+	python was faster?!? -neil
+	"""
+
+	apDisplay.printMsg("applying alignment parameters to stack")
+
+	if os.path.isfile(alignedstack+dataext):
+		apDisplay.printWarning("Removing existing aligned stack: "+alignedstack+dataext)
+		time.sleep(2)
+		os.remove(alignedstack+dataext)
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-	for p in range(1,numpart+1):
+	for partdict in partlist:
+		p = partdict['num']
 		mySpider.toSpiderQuiet(
-			"UD IC,"+str(p)+",x21,x22,x23,x24,x25,x26",
-			(rundir+"/paramdoc%02d" % (numiter)),
-			"IF (X21.GT.0) THEN",
 			"RT SQ",
-			stackfile+"@"+("%05d" % (p)),
-			alignedstack+"@"+("%05d" % (p)),
-			"x23", "x24,x25",
-			"ELSE",
-			"RT SQ",
-			stackfile+"@"+("%05d" % (p)),
+			oldstack+"@"+("%05d" % (p)),
 			"_1",
-			"x23", "x24,x25",
-			"MR",
-			"_1",
-			alignedstack+"@"+("%05d" % (p)),
-			"Y", "ENDIF",)
+			str(partdict['rot']), str(partdict['xshift'])+","+str(partdict['yshift']),
+		)
+		if 'mirror' in partdict and partdict['mirror'] == 1:
+			mySpider.toSpiderQuiet(
+				"MR", "_1",
+				alignedstack+"@"+("%05d" % (p)),	"Y", 
+			)
+		else:
+			mySpider.toSpiderQuiet(
+				"CP", "_1",
+				alignedstack+"@"+("%05d" % (p)),	
+			)
 	mySpider.close()
-	td1 = time.time()-t0
+	return
 
-	### average stack
-	emancmd = ( "proc2d "+alignedstack+dataext
-		+(" avgimg%02d" % (numiter))+".mrc "
-		+" average")
-	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
-
-	apDisplay.printMsg("completed alignment of "+str(numpart)
-		+" particles in "+apDisplay.timeString(td1))
-
-	apDisplay.printError("stopping")
-
-	return alignedstack+dataext
 
 #===============================
 def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactors=8, dataext=".spi"):
