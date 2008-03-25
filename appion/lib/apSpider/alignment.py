@@ -3,6 +3,7 @@
 import time
 import os
 import subprocess
+import cPickle
 ## PIL
 #import Image
 ## spider
@@ -86,6 +87,11 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 
 	### write aligned stack -- with python loop
 	### I tried this loop in both spider and python: python was faster?!? -neil
+	alignedstack = "alignedstack"
+	if os.path.isfile(alignedstack+dataext):
+		apDisplay.printWarning("Removing existing aligned stack: "+alignedstack+dataext)
+		time.sleep(2)
+		os.remove(alignedstack+dataext)
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for p in range(1,numpart+1):
 		mySpider.toSpiderQuiet(
@@ -93,7 +99,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 			(rundir+"/paramdoc%02d" % (numiter)),
 			"RT SQ",
 			stackfile+"@"+("%05d" % (p)),
-			"alignedstack@"+("%05d" % (p)),
+			alignedstack+"@"+("%05d" % (p)),
 			"x21", "x22,x23")
 	mySpider.close()
 	td1 = time.time()-t0
@@ -129,6 +135,8 @@ def refBasedAlignParticles(stackfile, templatestack,
 
 	### remove previous iterations
 	numiter = 1
+	if os.path.isfile(rundir+"/paramdoc%02d%s" % (numiter, dataext)):
+		os.remove(rundir+"/paramdoc%02d%s" % (numiter, dataext))
 
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext)
@@ -150,6 +158,24 @@ def refBasedAlignParticles(stackfile, templatestack,
 
 	### write aligned stack -- with python loop
 	### I tried this loop in both spider and python: python was faster?!? -neil
+	alignedstack = rundir+("/alignedstack%02d" % (numiter))
+	if os.path.isfile(alignedstack+dataext):
+		apDisplay.printWarning("Removing existing aligned stack: "+alignedstack+dataext)
+		time.sleep(2)
+		os.remove(alignedstack+dataext)
+	pdocf = open(rundir+("/paramdoc%02d" % (numiter)), "r")
+	for line in pdocf:
+		data = line.strip.split()
+		partdict = {
+			'num': int(data[0]),
+			'template': int(abs(data[2])),
+			'mirror': int(int(data[2])/abs(float(data[2]))),
+			'rot': float(data[4]),
+			'xshift': float(data[5]),
+			'yshift': float(data[6]),
+		}
+		print partdict
+
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for p in range(1,numpart+1):
 		mySpider.toSpiderQuiet(
@@ -158,7 +184,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 			"IF (X21.GT.0) THEN",
 			"RT SQ",
 			stackfile+"@"+("%05d" % (p)),
-			"alignedstack@"+("%05d" % (p)),
+			alignedstack+"@"+("%05d" % (p)),
 			"x23", "x24,x25",
 			"ELSE",
 			"RT SQ",
@@ -167,15 +193,23 @@ def refBasedAlignParticles(stackfile, templatestack,
 			"x23", "x24,x25",
 			"MR",
 			"_1",
-			"alignedstack@"+("%05d" % (p)),
+			alignedstack+"@"+("%05d" % (p)),
 			"Y", "ENDIF",)
 	mySpider.close()
 	td1 = time.time()-t0
 
+	### average stack
+	emancmd = ( "proc2d "+alignedstack+dataext
+		+(" avgimg%02d" % (numiter))+".mrc "
+		+" average")
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+
 	apDisplay.printMsg("completed alignment of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
 
-	return "alignedstack.spi"
+	apDisplay.printError("stopping")
+
+	return alignedstack+dataext
 
 #===============================
 def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactors=8, dataext=".spi"):
