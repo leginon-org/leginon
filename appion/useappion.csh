@@ -2,13 +2,10 @@
 
 setenv APPIONDIR /home/`whoami`/pyappion
 setenv PYTHONPATH ${APPIONDIR}/lib:${PYTHONPATH}
-setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/ami/sw/lib
-pathmgr -var PATH promote $APPIONDIR/particle_manager
-pathmgr -var PATH promote $APPIONDIR/ace
-pathmgr -var PATH promote $APPIONDIR/bin
-setenv FINDEM_EXE ${APPIONDIR}/particle_manager/findem.exe
+setenv PATH ${APPIONDIR}/bin:${PATH}
 setenv MATLABPATH ${MATLABPATH}:${APPIONDIR}/ace
 
+#setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/ami/sw/lib
 #setenv FINDEM_EXE /ami/sw/packages/FindEM/FindEM_SB
 #setenv SELEXON_PATH /ami/sw/packages/selexon
 
