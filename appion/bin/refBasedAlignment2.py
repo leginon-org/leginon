@@ -7,6 +7,7 @@ import apAlignment
 import apFile
 import apStack
 import apEMAN
+import apTemplate
 from apSpider import alignment
 import appionScript
 
@@ -27,9 +28,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			help="First ring radius for correlation (in pixels, > 2)", metavar="#")
 		self.parser.add_option("-l", "--last-ring", dest="lastring", type="int",
 			help="Last ring radius for correlation (in pixels, < pixel radius)", metavar="#")
-		self.parser.add_option("-x", "--xy-search", dest="xyserach", type="int", default=3
+		self.parser.add_option("-x", "--xy-search", dest="xysearch", type="int", default=3,
 			help="XY search distance (in pixels)", metavar="#")
-		self.parser.add_option("--xy-step", dest="xyserach", type="int", default=1
+		self.parser.add_option("--xy-step", dest="xystep", type="int", default=1,
 			help="XY step distance (in pixels)", metavar="#")
 		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
@@ -39,6 +40,10 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
 			action="store_true", help="Skip correspondence analysis")
+		self.parser.add_option("--template-list", dest="templatelist",
+			help="List of template id to use", metavar="x,y,z")
+		self.parser.add_option("--invert-templates", dest="inverttemplates", default=False,
+			action="store_true", help="Invert the density of the templates")
 
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
@@ -57,6 +62,13 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("run description was not defined")
+		if self.params['maskrad'] is None:
+			apDisplay.printError("a mask radius was not provided")
+		if self.params['templatelist'] is None:
+			apDisplay.printError("template list was not provided")
+		if self.params['lastring'] is None:
+			apDisplay.printWarning("a last ring radius was not provided; using mask-2")
+			self.params['lastring'] = int(self.params['maskrad'])-2
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -180,22 +192,36 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		"""
 		takes the spider file and creates an average template of all particles and masks it
 		"""
-		emancmd  = "proc2d "+self.stack['file']+" template.mrc average edgenorm"
-		apEMAN.executeEmanCmd(emancmd)
+		templatelist = self.params['templatelist'].strip().split(",")
+		if not templatelist or type(templatelist) != type([]):
+			apDisplay.printError("could not parse template list="+self.params['templatelist'])
+		self.params['numtemplate'] = len(templatelist)
 
-		apDisplay.printMsg("Masking average by radius of "+str(self.params['maskrad'])+" Angstroms")
-		emancmd  = "proc2d template.mrc template.mrc apix="+str(self.stack['apix'])+" mask="+str(self.params['maskrad'])
-		apEMAN.executeEmanCmd(emancmd)
-
-		templatefile = "template.spi"
-		if os.path.isfile(templatefile):
-			apDisplay.printWarning(templatefile+" already exists; removing it")
+		templatestack = os.path.join(self.params['outdir'], "templatestack.spi")
+		if os.path.isfile(templatestack):
+			apDisplay.printWarning(templatestack+" already exists; removing it")
 			time.sleep(2)
-			os.remove(templatefile)
-		emancmd  = "proc2d template.mrc "+templatefile+" spiderswap"
-		apEMAN.executeEmanCmd(emancmd)
+			os.remove(templatestack)
 
-		return templatefile
+		templateparams = {}
+		templateparams['apix'] = self.stack['apix']
+		templateparams['rundir'] = self.params['outdir']
+		templateparams['templateIds'] = templatelist
+		templateparams['bin'] = 1
+		templateparams['lowpass'] = self.params['lowpass']
+		templateparams['median'] = None
+		templateparams['pixlimit'] = None
+		filelist = apTemplate.getTemplates(templateparams)
+
+		for mrcfile in filelist:
+			emancmd  = ("proc2d "+mrcfile+" "+templatestack
+				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
+				+" edgenorm spiderswap ")
+			if self.params['inverttemplates'] is True:
+				emancmd += " invert "
+			apEMAN.executeEmanCmd(emancmd)
+
+		return templatestack
 
 
 	#=====================
@@ -231,7 +257,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		#remove large, worthless stack
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
-		os.remove(spiderstack)
+		#os.remove(spiderstack)
 
 		#do correspondence analysis
 		corantime = time.time()
@@ -243,6 +269,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		corantime = time.time() - corantime
 
 		if self.params['commit'] is True:
+			apDisplay.printError("not working yet")
 			apAlignment.insertRefBasedRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
