@@ -322,7 +322,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			apDisplay.printWarning("not committing results to DB")
 
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
-		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
 
 
 #=====================
