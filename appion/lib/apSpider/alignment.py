@@ -153,7 +153,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 		os.remove(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
 	### perform alignment
-	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("AP MQ", 
 		templatestack+"@**",                        # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
@@ -203,7 +203,7 @@ def readRefBasedDocFile(docfile, picklefile):
 		partdict = {
 			'num': int(data[0]),
 			'template': int(abs(templatenum)),
-			'mirror': int(templatenum/abs(templatenum)),
+			'mirror': checkMirror(templatenum),
 			'score': float(data[3]),
 			'rot': float(data[4]),
 			'xshift': float(data[5]),
@@ -215,6 +215,12 @@ def readRefBasedDocFile(docfile, picklefile):
 	cPickle.dump(partlist, picklef)
 	picklef.close()
 	return partlist
+
+#===============================
+def checkMirror(templatenum):
+	if templatenum < 0:
+		return True
+	return False
 
 #===============================
 def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
@@ -241,7 +247,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 			"_1",
 			str(partdict['rot']), str(partdict['xshift'])+","+str(partdict['yshift']),
 		)
-		if 'mirror' in partdict and partdict['mirror'] == -1:
+		if 'mirror' in partdict and partdict['mirror'] is True:
 			mySpider.toSpiderQuiet(
 				"MR", "_1",
 				alignedstack+"@"+("%05d" % (p)),	"Y", 
