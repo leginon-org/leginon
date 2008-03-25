@@ -241,7 +241,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 			"_1",
 			str(partdict['rot']), str(partdict['xshift'])+","+str(partdict['yshift']),
 		)
-		if 'mirror' in partdict and partdict['mirror'] == 1:
+		if 'mirror' in partdict and partdict['mirror'] == -1:
 			mySpider.toSpiderQuiet(
 				"MR", "_1",
 				alignedstack+"@"+("%05d" % (p)),	"Y", 
