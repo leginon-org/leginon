@@ -119,8 +119,8 @@ def refBasedAlignParticles(stackfile, templatestack,
 		rotation/shift params
 	"""
 	### setup
-	if dataext in template:
-		template = template[:-4]
+	if dataext in templatestack:
+		templatestack = templatestack[:-4]
 	if dataext in stackfile:
 		stackfile = stackfile[:-4]
 	t0 = time.time()
@@ -128,6 +128,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	apParam.createDirectory(rundir)
 
 	### remove previous iterations
+	numiter = 1
 
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext)
@@ -139,7 +140,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
 		stackfile+"@*****",                         # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
-		rundir+"/paramdoc**",                       # output angles document file
+		rundir+("/paramdoc%02d" % (numiter)),                       # output angles document file
 	)
 	mySpider.close()
 
@@ -152,12 +153,22 @@ def refBasedAlignParticles(stackfile, templatestack,
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for p in range(1,numpart+1):
 		mySpider.toSpiderQuiet(
-			"UD IC,"+str(p)+",x21,x22,x23",
+			"UD IC,"+str(p)+",x21,x22,x23,x24,x25,x26",
 			(rundir+"/paramdoc%02d" % (numiter)),
+			"IF (X21.GT.0) THEN",
 			"RT SQ",
 			stackfile+"@"+("%05d" % (p)),
 			"alignedstack@"+("%05d" % (p)),
-			"x21", "x22,x23")
+			"x23", "x24,x25",
+			"ELSE",
+			"RT SQ",
+			stackfile+"@"+("%05d" % (p)),
+			"_1",
+			"x23", "x24,x25",
+			"MR",
+			"_1",
+			"alignedstack@"+("%05d" % (p)),
+			"Y", "ENDIF",)
 	mySpider.close()
 	td1 = time.time()-t0
 
