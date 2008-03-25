@@ -1,13 +1,17 @@
 #!/usr/bin/python -O
 
+#python
 import os
 import time
+import glob
+#appion
 import apDisplay
 import apAlignment
 import apFile
 import apStack
 import apEMAN
 import apTemplate
+import apParam
 from apSpider import alignment
 import appionScript
 
@@ -197,7 +201,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			apDisplay.printError("could not parse template list="+self.params['templatelist'])
 		self.params['numtemplate'] = len(templatelist)
 
-		templatestack = os.path.join(self.params['outdir'], "templatestack.spi")
+		templatestack = os.path.join(self.params['outdir'], "templatestack00.spi")
 		if os.path.isfile(templatestack):
 			apDisplay.printWarning(templatestack+" already exists; removing it")
 			time.sleep(2)
@@ -205,16 +209,17 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		templateparams = {}
 		templateparams['apix'] = self.stack['apix']
-		templateparams['rundir'] = self.params['outdir']
+		templateparams['rundir'] = os.path.join(self.params['outdir'], "templates")
 		templateparams['templateIds'] = templatelist
 		templateparams['bin'] = 1
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
+		apParam.createDirectory(os.path.join(self.params['outdir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
 		for mrcfile in filelist:
-			emancmd  = ("proc2d "+mrcfile+" "+templatestack
+			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
 				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
 				+" edgenorm spiderswap ")
 			if self.params['inverttemplates'] is True:
@@ -223,6 +228,48 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		return templatestack
 
+	#=====================
+	def updateTemplateStack(self, partlist, iternum):
+		templatestr = os.path.join(self.params['outdir'], "templates/filt*.mrc")
+		oldfilelist = glob.glob(templatestr)
+
+		templatestack = os.path.join(self.params['outdir'], ("templatestack%02d.spi" % iternum))
+		if os.path.isfile(templatestack):
+			apDisplay.printWarning(templatestack+" already exists; removing it")
+			time.sleep(2)
+			os.remove(templatestack)
+
+		### init list of lists
+		templatelists = []
+		for templatenum in range(self.params['numtemplate']):
+			templatelists.append([])
+
+		statlist = []
+		for partdict in partlist:
+			statlist.append(partdict['score'])
+		statlist.sort()
+		cutoff = statlist[int(0.1*len(partlist))]
+		print statlist, cutoff
+
+		for partdict in partlist:
+			#EMAN lists start at zero
+			templatelists[partdict['template']-1].append(partdict['num']-1)
+		print templatelists
+
+
+		### create keep files
+		for templatenum in range(1, self.params['numtemplate']+1):
+			keepfile = ("templatekeep%02d.lst" % templatenum)
+			keepf = open(keepfile, "w")
+			keepf.close()
+
+		for mrcfile in oldfilelist:
+			emancmd  = ("proc2d "+mrcfile+" "+templatestack
+				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
+				+" edgenorm spiderswap ")
+			apEMAN.executeEmanCmd(emancmd)
+
+		return templatestack
 
 	#=====================
 	def start(self):
@@ -246,11 +293,15 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		#run the alignment
 		aligntime = time.time()
-		alignedstack = alignment.refBasedAlignParticles(
-			spiderstack, templatestack, 
-			self.params['xysearch'], self.params['xystep'],
-			self.params['numpart'], self.params['numtemplate'],
-			self.params['firstring'], self.params['lastring'])
+		usestack = spiderstack
+		for iternum in range(1,4):
+			alignedstack, partlist = alignment.refBasedAlignParticles(
+				usestack, templatestack, 
+				self.params['xysearch'], self.params['xystep'],
+				self.params['numpart'], self.params['numtemplate'],
+				self.params['firstring'], self.params['lastring'], iternum=iternum)
+			usestack = alignedstack
+			templatestack = self.updateTemplateStack(partlist, iternum)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
