@@ -24,8 +24,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
 			help="Number of particles to use", metavar="#")
-		self.parser.add_option("--num-factors", dest="numfactors", type="int", default=8,
-			help="Number of factors to use in classification", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 		self.parser.add_option("-f", "--first-ring", dest="firstring", type="int", default=2,
@@ -36,14 +34,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			help="XY search distance (in pixels)", metavar="#")
 		self.parser.add_option("--xy-step", dest="xystep", type="int", default=1,
 			help="XY step distance (in pixels)", metavar="#")
-		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
-			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
-		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
-			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--lowpass", dest="lowpass", type="float",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
-		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
-			action="store_true", help="Skip correspondence analysis")
 		self.parser.add_option("--template-list", dest="templatelist",
 			help="List of template id to use", metavar="x,y,z")
 		self.parser.add_option("--invert-templates", dest="inverttemplates", default=False,
@@ -66,13 +58,10 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("run description was not defined")
-		if self.params['maskrad'] is None:
-			apDisplay.printError("a mask radius was not provided")
 		if self.params['templatelist'] is None:
 			apDisplay.printError("template list was not provided")
 		if self.params['lastring'] is None:
-			apDisplay.printWarning("a last ring radius was not provided; using mask-2")
-			self.params['lastring'] = int(self.params['maskrad'])-2
+			apDisplay.printError("a last ring radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -98,7 +87,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		paramq = appionData.ApRefBasedParamsData()
 		paramq['num_particles'] = self.params['numpart']
 		paramq['particle_diam'] = self.params['diam']
-		paramq['mask_diam'] = 2*self.params['maskrad']
 		paramq['lp_filt'] = self.params['lowpass']
 		paramsdata = appiondb.query(paramq, results=1)
 
@@ -194,7 +182,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 	#=====================
 	def createTemplateStack(self):
 		"""
-		takes the spider file and creates an average template of all particles and masks it
+		takes the spider file and creates an average template of all particles
 		"""
 		templatelist = self.params['templatelist'].strip().split(",")
 		if not templatelist or type(templatelist) != type([]):
@@ -290,11 +278,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		#create template stack
 		templatestack = self.createTemplateStack()
-
-		maskpixrad = self.params['maskrad']/self.stack['apix']
-		esttime = apAlignment.estimateTime(self.params['numpart'], maskpixrad)
-		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
-			apDisplay.timeString(esttime),"cyan")
 
 		#run the alignment
 		aligntime = time.time()
