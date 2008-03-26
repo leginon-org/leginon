@@ -125,7 +125,7 @@ class subStackScript(appionScript.AppionScript):
 			+" "+self.images+" runid="+runid+" outdir="+self.params['outdir']+" "
 			+" single=start.hed phaseflip boxsize=128 bin=4 "
 			+" pickrunid=53 mindefocus=-0.25e-6 ace=0.95 "
-			+" lp=25 hp=600 partlimit=150  description='testing'")
+			+" lp=25 hp=600 partlimit=150  description='testing makestack'")
 		if self.params['commit'] is True:
 			cmd += " commit "
 		self.runCommand(cmd)
