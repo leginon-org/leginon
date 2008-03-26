@@ -11,9 +11,8 @@ modulepath = os.path.dirname(__file__)
 configfilename = 'sinedon.cfg'
 
 config_locations = [
-	configfilename,
-	os.path.join(HOME, configfilename),
 	os.path.join(modulepath, configfilename),
+	os.path.join(HOME, configfilename),
 ]
 
 configparser = ConfigParser.SafeConfigParser()
