@@ -213,7 +213,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				+" edgenorm spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
-			apEMAN.executeEmanCmd(emancmd)
+			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 		return templatestack
 
@@ -261,9 +261,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		emancmd  = ("proc2d "+alignedstack+" "+junkmrcfile
 			+" list="+junklist
 			+" edgenorm average ")
-		apEMAN.executeEmanCmd(emancmd)
+		apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
-		#create averaged templates
+		### create averaged templates
 		filelist = []
 		for templatenum in range(1, self.params['numtemplate']+1):
 			keeplist = "templates/keeplist%02d-%02d.list" % (iternum, templatenum)	
@@ -272,13 +272,13 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				emancmd  = ("proc2d "+alignedstack+" "+mrcfile
 					+" list="+keeplist
 					+" edgenorm average ")
-				apEMAN.executeEmanCmd(emancmd)
+				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			else:
 				apDisplay.printWarning("No particles aligned to template "+str(templatenum))
 				emancmd  = ("proc2d "+junkmrcfile+" "+mrcfile
 					+" addnoise=0.1 "
 					+" edgenorm ")
-				apEMAN.executeEmanCmd(emancmd)
+				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			filelist.append(mrcfile)
 
 		### create new template stack
@@ -286,7 +286,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			emancmd  = ("proc2d "+mrcfile+" "+templatestack
 				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
 				+" edgenorm spiderswap ")
-			apEMAN.executeEmanCmd(emancmd)
+			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 		return templatestack
 
@@ -310,6 +310,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		usestack = spiderstack
 		for i in range(self.params['numiter']):
 			iternum = i+1
+			apDisplay.printColor("\n\nITERATION "+str(iternum), "green")
 			alignedstack, partlist = alignment.refBasedAlignParticles(
 				usestack, templatestack, 
 				self.params['xysearch'], self.params['xystep'],
