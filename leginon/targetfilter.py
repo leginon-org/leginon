@@ -92,6 +92,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 					newtarget['delta row'] = target['delta row']
 					newtarget['delta column'] = target['delta column']
 					newtargets.append(newtarget)
+			totaloldtargetcount = self.getAllTargetCount(alltargets)
 			self.markTargetsDone(alltargets)
 			self.logger.info('Original targets marked done.')
 			newtargetlistdata = self.newTargetList()
@@ -99,9 +100,21 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			self.publish(newtargetlistdata, database=True, dbforce=True)
 			for i, newtarget in enumerate(newtargets):
 				newtarget['list'] = newtargetlistdata
-				newtarget['number'] = i+1
+				newtarget['number'] = i+1+totaloldtargetcount
 				self.publish(newtarget, database=True, dbforce=True)
 			return newtargetlistdata
+
+	def getAllTargetCount(self,alltargetdata):
+		parentimgs =[]
+		totalcount = 0
+		for target in alltargetdata:
+			parentim = target.special_getitem('image',dereference=False)
+			if parentim.dbid not in parentimgs:
+				parentimgs.append(parentim.dbid)
+				imagetargets = self.researchTargets(image=parentim)
+				if imagetargets:
+					totalcount = totalcount + len(imagetargets)
+		return totalcount
 
 	def filterTargets(self, targetlist):
 		raise NotImplementedError()
