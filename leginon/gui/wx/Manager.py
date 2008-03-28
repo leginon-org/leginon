@@ -746,7 +746,7 @@ class RunApplicationDialog(wx.Dialog):
 		self.launchernames = launchernames
 		self.launchers = launchers
 
-		wx.Dialog.__init__(self, parent, -1, 'Run Application')
+		wx.Dialog.__init__(self, parent, -1, 'Run Application',style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
 		self.dialogsizer = wx.GridBagSizer()
 		self.sizer = wx.GridBagSizer(5, 5)
