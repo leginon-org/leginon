@@ -644,7 +644,7 @@ function array_stats($a) {
 
 	$median = ($len & 1) ? ($a[$len/2]+$a[$len/2+1])/2 : $a[$len/2];
 	$mean = $sum/$len;
-	$var = ($sumsq - $len*$mean*$mean) / ($len-1);
+	$var = ($len > 1) ? ($sumsq - $len*$mean*$mean) / ($len-1) : 0;
 	$stddev = sqrt($var);
 
 	$results['median'] = $median;
