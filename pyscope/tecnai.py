@@ -62,7 +62,8 @@ class Tecnai(tem.TEM):
 		try:
 			self.lowdose = win32com.client.Dispatch('LDServer.LdSrv')
 		except pythoncom.com_error, (hr, msg, exc, arg):
-			raise RuntimeError('unable to initialize low dose interface, %s' % msg)
+			print 'unable to initialize low dose interface, %s' % msg
+			self.lowdose = None
 
 		try:
 			self.exposure = win32com.client.Dispatch('adaExp.TAdaExp',
