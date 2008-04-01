@@ -774,7 +774,7 @@ class AppionLoop(object):
 			###
 			stdx  = math.sqrt(n*sumxsq - sumx**2)
 			stdy  = math.sqrt(n*sumysq - sumy**2)
-			rho   = float(n*sumxy - sumx*sumy)/float(stdx*stdy)
+			rho   = float(n*sumxy - sumx*sumy)/float(stdx*stdy+1e-6)
 			slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
 			memleak = rho*slope
 			###
