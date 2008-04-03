@@ -210,24 +210,36 @@ class CameraPanel(wx.Panel):
 		dialog.Destroy()
 
 	def getCenteredGeometry(self, dimension, binning):
-		offset = (self.size['x']/binning - dimension)/2
+		offset ={}
+		for axis in ['x','y']:
+			offset[axis] = (self.size[axis]/binning - dimension)/2
+
 		geometry = {'dimension': {'x': dimension, 'y': dimension},
-								'offset': {'x': offset, 'y': offset},
+								'offset': {'x': offset['x'], 'y': offset['y']},
+								'binning': {'x': binning, 'y': binning}}
+		return geometry
+
+	def getFullGeometry(self,binning):
+		geometry = {'dimension': {'x': self.size['x'], 'y': self.size['y']},
+								'offset': {'x': 0, 'y': 0},
 								'binning': {'x': binning, 'y': binning}}
 		return geometry
 
 	def getCenteredGeometries(self):
 		geometries = {}
+		keys = []
 		if self.size['x'] != self.size['y']:
-			return geometries
+			key = '(%d x %d) x 1' % (self.size['x'],self.size['y'])
+			geometries[key] = self.getFullGeometry(1)
+			keys.append(key)
 		if self.binnings['x'] != self.binnings['y']:
 			return geometries
-		dimensions = map(lambda b: self.size['x']/b, self.binnings['x'])
+		self.minsize = min(self.size['x'],self.size['y'])
+		dimensions = map(lambda b: self.minsize/b, self.binnings['x'])
 		dimensions.reverse()
-		keys = []
 		for d in dimensions:
 			for b in self.binnings['x']:
-				if d*b <= self.size['x']:
+				if d*b <= self.minsize:
 					#key = '%d² × %d' % (d, b)
 					key = '%d x %d' % (d, b)
 					geometries[key] = self.getCenteredGeometry(d, b)
