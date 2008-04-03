@@ -47,6 +47,7 @@ class aceLoop(appionLoop.AppionLoop):
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			return None
+		defocus = ctfvalue['defocus1']
 		acepath = ctfvalue['acerun']['path']['path']
 		opimgpath = os.path.join(acepath,"opimages")
 		#print opimgpath
@@ -60,11 +61,16 @@ class aceLoop(appionLoop.AppionLoop):
 		else:
 			confdir = "questionable"
 
+		defocusdir = "defocus"+str(int(math.floor(defocus*-1e6)))
+		apParam.createDirectory(os.path.join(self.params['opimage1'], defocusdir), warning=False)
+		apParam.createDirectory(os.path.join(self.params['opimage2'], defocusdir), warning=False)
+
 		#copy first file
 		opfile = os.path.join(opimgpath, ctfvalue['graph1'])
 		if os.path.isfile(opfile):
 			shutil.copyfile(opfile, os.path.join(self.params['opimage1'], "all", ctfvalue['graph1']))
 			shutil.copyfile(opfile, os.path.join(self.params['opimage1'], confdir, ctfvalue['graph1']))
+			shutil.copyfile(opfile, os.path.join(self.params['opimage1'], defocusdir, ctfvalue['graph1']))
 		else:
 			apDisplay.printWarning("could not find opimage: "+opfile)
 
@@ -73,6 +79,7 @@ class aceLoop(appionLoop.AppionLoop):
 		if os.path.isfile(opfile):
 			shutil.copyfile(opfile, os.path.join(self.params['opimage2'], "all", ctfvalue['graph2']))
 			shutil.copyfile(opfile, os.path.join(self.params['opimage2'], confdir, ctfvalue['graph2']))
+			shutil.copyfile(opfile, os.path.join(self.params['opimage2'], defocusdir, ctfvalue['graph2']))
 		else:
 			apDisplay.printWarning("could not find opimage: "+opfile)
 
