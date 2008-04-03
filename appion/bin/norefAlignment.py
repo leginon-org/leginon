@@ -2,6 +2,7 @@
 
 import os
 import time
+import sys
 import apDisplay
 import apAlignment
 import apFile
@@ -9,6 +10,7 @@ import apStack
 import apEMAN
 from apSpider import alignment
 import appionScript
+import appionData
 
 #=====================
 #=====================
@@ -23,16 +25,19 @@ class NoRefAlignScript(appionScript.AppionScript):
 			help="Number of factors to use in classification", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
+
+		### radii
 		self.parser.add_option("-f", "--first-ring", dest="firstring", type="int", default=2,
-			help="First ring radius for correlation (in pixels, > 2)", metavar="#")
+			help="First ring radius for correlation (in pixels)", metavar="#")
 		self.parser.add_option("-l", "--last-ring", dest="lastring", type="int",
-			help="Last ring radius for correlation (in pixels, < pixel radius)", metavar="#")
+			help="Last ring radius for correlation (in pixels)", metavar="#")
 		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--lowpass", dest="lowpass", type="float",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
+
 		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
 			action="store_true", help="Skip correspondence analysis")
 
@@ -57,7 +62,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		if self.params['numfactors'] is not None and self.params['numfactors'] > 20:
+		if self.params['numpart'] > 9999:
+			apDisplay.printError("too many particles requested, max 9999: "+str(self.params['numpart']))
+		if self.params['numfactors'] > 20:
 			apDisplay.printError("too many factors defined: "+str(self.params['numfactors']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -81,69 +88,74 @@ class NoRefAlignScript(appionScript.AppionScript):
 		# create a norefParam object
 		paramq = appionData.ApNoRefParamsData()
 		paramq['num_particles'] = self.params['numpart']
-		paramq['particle_diam'] = self.params['diam']
-		paramq['mask_diam'] = 2*self.params['maskrad']
+		paramq['num_factors'] = self.params['numfactors']
+		paramq['particle_diam'] = 2.0*self.params['partrad']
+		paramq['mask_diam'] = 2.0*self.params['maskrad']
 		paramq['lp_filt'] = self.params['lowpass']
-		paramsdata = appiondb.query(paramq, results=1)
+		paramq['first_ring'] = self.params['firstring']
+		paramq['last_ring'] = self.params['lastring']
+		paramq['skip_coran'] = self.params['skipcoran']
+		paramsdata = paramq.query(results=1)
 
 		### create a norefRun object
 		runq = appionData.ApNoRefRunData()
-		runq['name'] = self.params['runid']
 		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		runq['stack'] = self.stack['data']
-		# ... stackId, runId and norefPath make the norefRun unique:
-		uniquerun = appiondb.query(runq, results=1)
-		# ... continue filling non-unique variables:
-		runq['description'] = self.params['description']
+		# ... path makes the run unique:
+		uniquerun = runq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+params['runname']+"' for stackid="+\
+				str(params['stackid'])+"\nis already in the database")
 
+		# ... continue filling non-unique variables:
+		runq['name'] = self.params['runname']
+		runq['stack'] = self.stack['data']
+		runq['description'] = self.params['description']
+		runq['hidden'] = False
 		if paramsdata:
 			runq['norefParams'] = paramsdata[0]
 		else:
 			runq['norefParams'] = paramq
-		# ... check if params associated with unique norefRun are consistent:
-		if uniquerun and not self.params['classonly']:
-			for i in runq:
-				if uniquerun[0][i] != runq[i]:
-					apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
-						str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
-		#else:
-		#	apDisplay.printWarning("Run name '"+params['runid']+"' already exists in database")
-		runq['run_seconds'] = self.params['runtime']
+		runq['run_seconds'] = self.runtime
 
-		### create a classRun object
-		classq = appionData.ApNoRefClassRunData()
-		classq['num_classes'] = self.params['numclasses']
-		norefrun = appiondb.query(runq, results=1)
-		if self.params['classonly']:
-			classq['norefRun'] = uniquerun[0]
-		elif norefrun:
-			classq['norefRun'] = norefrun[0]
-		elif not self.params['classonly']:
-			classq['norefRun'] = runq
-		else:
-			apDisplay.printError("parameters have changed for run name '"+self.params['runid']+\
-				"', specify 'classonly' to re-average classes")
-		# ... numclasses and norefRun make the class unique:
-		uniqueclass = appiondb.query(classq, results=1)
-		# ... continue filling non-unique variables:
-		classq['classFile'] = self.params['classfile']
-		classq['varFile'] = self.params['varfile']
-		# ... check if params associated with unique classRun are consistent:
-		if uniqueclass:
-			for i in classq:
-				apXml.fancyPrintDict(uniqueclass[0])
-				apXml.fancyPrintDict(classq)
-				if uniqueclass[0][i] != classq[i]:
-					apDisplay.printError("NoRefRun name '"+self.params['runid']+"' for numclasses="+\
-						str(self.params['numclasses'])+"\nis already in the database with different parameter: "+str(i))
+		apDisplay.printMsg("inserting run parameters into database")
+		if insert is True:
+			runq.insert()
 
-		classdata = appiondb.query(classq, results=1)
+		### eigen data
+		for i in range(self.params['numfactors']):
+			factnum = i+1
+			eigenq = appionData.ApCoranEigenImageData()
+			eigenq['norefRun'] = runq
+			eigenq['factor_num'] = factnum
+			path = os.path.join(self.params['outdir'], "coran")
+			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
+			imgname = ("eigenimg%02d.png" % (factnum))
+			eigenq['image_name'] = imgname
+			if not os.path.isfile(os.path.join(path, imgname)):
+				apDisplay.printWarning(imgname+" does not exist")
+				continue
+			eigenq['percent_contrib'] = self.contriblist[i]
+			if insert is True:
+				eigenq.insert()
 
-		norefrun = appiondb.query(runq, results=1)
-		if not classdata and insert is True:
-			# ideal case nothing pre-exists
-			apDisplay.printMsg("inserting noref run parameters into database")
-			appiondb.insert(classq)
+		### particle align data
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		count = 0
+		for partdict in self.partlist:
+			count += 1
+			if count % 100 == 0:
+				sys.stderr.write(".")
+			partq = appionData.ApNoRefAlignParticlesData()
+			partq['norefRun'] = runq
+			# I can only assume this gets the correct particle:
+			stackpart = apStack.getStackParticle(self.params['stackid'], partdict['num'])
+			partq['particle'] = stackpart
+			# actual parameters
+			partq['shift_x'] = partdict['xshift']		
+			partq['shift_y'] = partdict['yshift']		
+			partq['rotation'] = partdict['rot']
+			if insert is True:
+				partq.insert()
 
 		return
 
@@ -223,7 +235,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		#run the alignment
 		aligntime = time.time()
 		pixrad = int(round(self.params['partrad']/self.stack['apix']))
-		alignedstack = alignment.refFreeAlignParticles(
+		alignedstack, self.partlist = alignment.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
 			self.params['firstring'], self.params['lastring'])
@@ -239,14 +251,14 @@ class NoRefAlignScript(appionScript.AppionScript):
 		corantime = time.time()
 		if not self.params['skipcoran']:
 			maskpixrad = self.params['maskrad']/self.stack['apix']
-			alignment.correspondenceAnalysis( alignedstack, 
+			self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
 				boxsize=self.stack['boxsize'], maskpixrad=maskpixrad, 
 				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 		if self.params['commit'] is True:
-			apDisplay.printError("not working yet")
-			apAlignment.insertNoRefRun(insert=True)
+			self.runtime = corantime + aligntime
+			self.insertNoRefRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 
