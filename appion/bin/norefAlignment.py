@@ -57,6 +57,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
+		if self.params['numfactors'] is not None and self.params['numfactors'] > 20:
+			apDisplay.printError("too many factors defined: "+str(self.params['numfactors']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
@@ -238,8 +240,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 		if not self.params['skipcoran']:
 			maskpixrad = self.params['maskrad']/self.stack['apix']
 			alignment.correspondenceAnalysis( alignedstack, 
-				self.stack['boxsize'], maskpixrad, 
-				self.params['numpart'], numfactors=self.params['numfactors'])
+				boxsize=self.stack['boxsize'], maskpixrad=maskpixrad, 
+				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 		if self.params['commit'] is True:

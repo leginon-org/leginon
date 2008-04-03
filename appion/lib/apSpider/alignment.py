@@ -86,7 +86,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	### convert spider rotation, shift data to python
 	docfile = rundir+("/paramdoc%02d" % (numiter))+dataext
 	picklefile = rundir+("/paramdoc%02d" % (numiter))+".pickle"
-	partlist = readRefBasedDocFile(docfile, picklefile)
+	partlist = readRefFreeDocFile(docfile, picklefile)
 
 	### write aligned stack -- with python loop
 	alignedstack = "alignedstack"
@@ -319,7 +319,6 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 			"CA SRE", rundir+"/corandata", str(fact), 
 			rundir+"/eigenimg@"+("%02d" % (fact)), )
 	mySpider.close()
-
 
 	### convert to nice individual eigen image pngs for webpage
 	for fact in range(1,numfactors+1):
