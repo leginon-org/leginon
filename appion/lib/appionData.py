@@ -330,7 +330,6 @@ class ApNoRefRunData(Data):
 			('name', str),
 			('stack', ApStackData), #Redundant
 			('norefParams', ApNoRefParamsData),
-			#('norefPath', str),
 			('path', ApPathData),
 			('description', str),
 			('run_seconds', int),
@@ -346,26 +345,38 @@ class ApNoRefParamsData(Data):
 			('mask_diam', float),
 			('lp_filt', int),
 			('num_particles', int), #Redundant?
+			('num_factors', int),
+			('first_ring', int),
+			('last_ring', int),
+			('skip_coran', bool),
 #			('norefalign_method', str),
-#			('pca_method', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApNoRefParamsData=ApNoRefParamsData
+
+class ApCoranEigenImageData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('norefRun', ApNoRefRunData),
+			('factor_num', int),
+			('percent_contrib', float),
+			('image_name', str),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApCoranEigenImageData = ApCoranEigenImageData
 
 class ApNoRefAlignParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('norefRun', ApNoRefRunData),
-			('stack_particle', ApStackParticlesData),
-			('shiftx', float),
-			('shifty', float),
-			('inplane_rotation', float),
+			('particle', ApStackParticlesData),
+			('shift_x', float),
+			('shift_y', float),
+			('rotation', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApNoRefAlignParticlesData=ApNoRefAlignParticlesData
-
-#class ApNoRefEigenVectorData(Data):
-#class ApNoRefEigenValueParticlesData(Data):
 
 class ApNoRefClassRunData(Data):
 	def typemap(cls):
@@ -427,19 +438,21 @@ class ApRefParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApRefParamsData=ApRefParamsData
 
-class ApRefAlignParticlesData(Data):
+class ApRefBasedAlignParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refIter', ApRefIterationData),
-			('stack_particle', ApStackParticlesData),
-			('cc', float),
-			('shiftx', float),
-			('shifty', float),
-			('inplane_rotation', float),
+			('refBasedRun', ApRefRunData),
+			('particle', ApStackParticlesData),
+			('rot_corr', float),
+			('reference', int),
+			('shift_x', float),
+			('shift_y', float),
+			('rotation', float),
 			('mirror', bool),
+			('template', ApTemplateImageData),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApRefAlignParticlesData=ApRefAlignParticlesData
+leginondata.ApRefBasedAlignParticlesData=ApRefBasedAlignParticlesData
 
 class ApRefIterationData(Data):
 	def typemap(cls):
