@@ -256,15 +256,17 @@ class NoRefAlignScript(appionScript.AppionScript):
 				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
+		inserttime = time.time()
 		if self.params['commit'] is True:
 			self.runtime = corantime + aligntime
 			self.insertNoRefRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
+		inserttime = time.time() - inserttime
 
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
-
+		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
 #=====================
 if __name__ == "__main__":
