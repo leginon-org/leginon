@@ -27,7 +27,7 @@ class leginondata {
 
 	var $crlf = "\n";
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all', 'atlas', 'examplar', 'hidden');
+	var $defaulttypes = array('all', 'atlas', 'exemplar', 'hidden');
 	var $manualtype = 'manual';
 	var $rcttype = 'rct';
 	var $calibrationtables = array (
@@ -334,7 +334,7 @@ class leginondata {
 		}
 			$hiddenjoin = "left join `viewer_pref_image` r on (r.imageId=a.DEF_id) ";
 			$hiddenjoin .= "left join `ImageStatusData` ir on (ir.`REF|AcquisitionImageData|image`=a.DEF_id) ";
-		if ($defaultname=="hidden" || $defaultname=="examplar") {
+		if ($defaultname=="hidden" || $defaultname=="exemplar") {
 			$hiddenwhere = "and  ((r.id is not null and r.status='$defaultname') ";
 			$hiddenwhere .= "or  (ir.`DEF_id` is not null and ir.status='$defaultname'))";
 		} else {

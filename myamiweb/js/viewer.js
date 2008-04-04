@@ -17,7 +17,7 @@ if (window.XMLHttpRequest) {
 }
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); }
 
-function image_is_examplar(view) {
+function image_is_exemplar(view) {
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
 	displaydebug("a:"+view+" "+selpreset)
@@ -125,7 +125,7 @@ function getKey(e)
 			update_image_list()
 			break
 		case 'E':
-			image_is_examplar()
+			image_is_exemplar()
 			incIndex()
 			updateviews()
 			break

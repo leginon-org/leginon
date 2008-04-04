@@ -1163,7 +1163,7 @@ class view {
 		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
         .' onClick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
 		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onClick=\'image_is_examplar("'.$name.'"); incIndex(); updateviews()\' ><u><b>e</b></u>xamplar</button>';
+        .' onClick=\'image_is_exemplar("'.$name.'"); incIndex(); updateviews()\' ><u><b>e</b></u>xemplar</button>';
 		}
 
 		$htmlframe .= '
