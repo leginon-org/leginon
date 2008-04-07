@@ -142,3 +142,9 @@ class SimCCDCamera(ccdcamera.CCDCamera):
     def getPixelSize(self):
         return dict(self.pixel_size)
 
+class SimOtherCCDCamera(SimCCDCamera):
+	name = 'SimOtherCCDCamera'
+	def _getImage(self):
+		im = SimCCDCamera._getImage(self)
+		im = 10 * im
+		return im
