@@ -1170,7 +1170,7 @@ class particledata {
 		return $r[0];
 	}
 
-	function getIterationInfo ($reconId) {
+	function getIterationInfo ($reconId,$iteration=0) {
 		$q = "SELECT * "
 				."FROM `ApRefinementData` r "
 				."LEFT JOIN `ApRefinementParamsData` p "
@@ -1178,6 +1178,9 @@ class particledata {
 				."WHERE r.`REF|ApRefinementRunData|refinementRun` = '$reconId' "
 				."ORDER BY r.`iteration` ASC ";
 		$r = $this->mysql->getSQLResult($q);
+		if ($iteration >0) {
+			return $r[$iteration-1];
+		}
 		return $r;
 	}
 

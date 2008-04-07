@@ -190,7 +190,11 @@ foreach ($iterations as $iteration){
   $msgpbadprtls=$particle->getNumMsgPRejectParticles($refinementData['DEF_id']);
   $prtlsused=$stackparticles-$badprtls;
   $goodprtlsused=$stackparticles-$msgpbadprtls;
+
   $html .= "<TR>\n";
+  $html .= "<TD>\n";
+
+/*
   $html .= "<TD><A HREF=\"javascript:infopopup(";
   $refinestr2='';
   foreach ($refine_params_fields as $param) {
@@ -200,7 +204,9 @@ foreach ($iterations as $iteration){
   }
   $refinestr2=rtrim($refinestr2,',');
   $html .=$refinestr2;
-  $html .=")\">$iteration[iteration]</A></TD>\n";
+*/ 
+	$html .="<a target='params' class='aptitle' href='iterationreport.php?rId=".$reconId."&itr=".$iteration[iteration]."'\n";
+ $html .=")\">$iteration[iteration]</A></TD>\n";
   $html .= "<TD>$iteration[ang]&deg;</TD>\n";
   $html .= "<TD><I>FSC 0.5:</I><br />$halfres<br />\n";
   
