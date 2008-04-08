@@ -78,9 +78,12 @@ class Panel(gui.wx.Node.Panel):
 			settings = self.node.getSettings()
 			settings['grid tray'] = traylabel
 			self.node.setSettings(settings)
-		self.tray.setGrids(self.node.getGridLocations(traylabel))
+		
 		self.node.setTray(traylabel)
-
+		gridlocations, gridids = self.node.getGridLocations(traylabel)
+		gridlabels = self.node.getGridLabels(gridids)
+		self.tray.setGrids(gridlocations,gridlabels)
+		
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
@@ -254,11 +257,13 @@ class Tray(wx.Panel):
 
 		self.gridlist = []
 		self.gridqueue = []
+		self.showlabel = None
 
 		self.updateDrawing()
 
 		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
 		self.Bind(wx.EVT_RIGHT_UP, self.onRightUp)
+		self.Bind(wx.EVT_MIDDLE_DOWN, self.onMiddleDown)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
 		self.Bind(gui.wx.Events.EVT_UPDATE_DRAWING, self.onUpdateDrawing)
 
@@ -286,26 +291,41 @@ class Tray(wx.Panel):
 	def onUpdateDrawing(self, evt):
 		self.updateDrawing()
 
-	def setGrids(self, grids):
+	def setGrids(self, grids,gridlabels):
 		self.gridlist = grids
+		self.gridlabels = gridlabels
 		self.gridqueue = []
+		self.showlabel = None
 		self.updateDrawing()
 
 	def draw(self, dc):
 		dc.SetBackground(self.brush)
 		dc.Clear()
+		font = wx.SWISS_FONT
+		defaultpointsize = font.GetPointSize()
 		offset = (42, 34)
 		cellsize = (11, 11)
 		cellspacing = (20, 20)
 		n = (12, 8)
 		dc.DrawBitmap(self.traybitmap, 0, 0, True)
-		for grid in self.gridlist:
+		dc.SetTextForeground(wx.RED)
+		dc.SetFont(font)
+		for m, grid in enumerate(self.gridlist):
 			i, j = divmod(grid - 1, n[1])
 			i = n[0] - i - 1
 			x = offset[0] + i*(cellsize[0] + cellspacing[0])
 			y = offset[1] + j*(cellsize[1] + cellspacing[1])
 			dc.DrawBitmap(self.gridbitmap, x, y, True)
-		dc.SetFont(wx.SWISS_FONT)
+			if grid == self.showlabel:
+				#Display mid-mouse button selected grid label in red and smaller font
+				label = self.gridlabels[m]
+				xextent, yextent = dc.GetTextExtent(label)
+				font.SetPointSize(defaultpointsize - 2)
+				dc.SetFont(font)
+				dc.DrawText(label, x + cellsize[0]-(xextent)/2,  y - cellsize[1])
+		font.SetPointSize(defaultpointsize)
+		dc.SetFont(font)
+		dc.SetTextForeground(wx.BLACK)
 		for index, grid in enumerate(self.gridqueue):
 			i, j = divmod(grid - 1, n[1])
 			i = n[0] - i - 1
@@ -351,6 +371,14 @@ class Tray(wx.Panel):
 		position = self._clientToPosition(evt.m_x, evt.m_y)
 		try:
 			self.gridqueue.remove(position)
+			self.updateDrawing()
+		except ValueError:
+			pass
+
+	def onMiddleDown(self, evt):
+		position = self._clientToPosition(evt.m_x, evt.m_y)
+		try:
+			self.showlabel = position
 			self.updateDrawing()
 		except ValueError:
 			pass

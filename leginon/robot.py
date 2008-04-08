@@ -838,6 +838,17 @@ class Robot(node.Node):
 		except KeyError:
 			raise ValueError('unknown tray label')
 	
+	def getGridLabels(self, gridlist):
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to get grid labels: %s' % e)
+			return None
+		gridlabels = []
+		for gridid in gridlist:
+			gridlabels.append(str(projectdata.getGridLabel(gridid)))
+		return gridlabels
+
 	def getGridLocations(self, traylabel):
 		try:
 			gridboxid = self.gridtrayids[traylabel]
@@ -851,7 +862,8 @@ class Robot(node.Node):
 		gridlocations = projectdata.getGridLocations()
 		gridboxidindex = gridlocations.Index(['gridboxId'])
 		gridlocations = gridboxidindex[gridboxid].fetchall()
-		return [int(i['location']) for i in gridlocations]
+		gridlabels = [i['gridId'] for i in gridlocations]
+		return [int(i['location']) for i in gridlocations],gridlabels
 
 	def gridInserted(self, gridnumber):
 		if self.simulate or self.settings['simulate']:
