@@ -220,19 +220,6 @@ def checkParamConflicts(params):
 		apDisplay.printError("Specify a box size")
 	return
 
-def getFilePath(imgdict):
-	session=imgdict.split('_')[0] # get session from beginning of file name
-	f=os.popen('dbemgetpath %s' % session)
-	result=f.readlines()
-	f.close()
-	if (result==[]):
-		print "rawdata directory does not exist!\n"
-		sys.exit(1)
-	else:
-		words=result[0].split('\t')
-		path=string.rstrip(words[1])
-	return path
-
 def checkInspectFile(imgdict):
 	filename=imgdict['filename']+'.mrc'
 	f=open(params['inspectfile'],'r')
@@ -320,8 +307,6 @@ def batchBox(params, imgdict):
 	
 		apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 		apEMAN.executeEmanCmd(cmd)
-		#f=os.popen(cmd)
-		#f.close()
 		if params['stig']:
 			os.remove(os.path.join(params['outdir'],tmpname))
 		return(nptcls)
@@ -429,8 +414,6 @@ def phaseFlip(imgdata, params):
 	  outfile, defocus, voltage, params['apix'])
 	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 	apEMAN.executeEmanCmd(cmd)
-	#f=os.popen(cmd)
-	#f.close()
 
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
@@ -468,6 +451,7 @@ def singleStack(params,imgdict):
  	apDisplay.printMsg("appending particles to stack: "+output)
 	# run proc2d & get number of particles
 	f=os.popen(cmd)
+	#apEMAN.executeEmanCmd(cmd)
  	lines=f.readlines()
 	f.close()
 	for n in lines:
