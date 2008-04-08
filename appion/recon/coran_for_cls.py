@@ -485,14 +485,20 @@ if __name__== '__main__':
 		print fsccommand
 		os.system(fsccommand)
 	
-	mvcommand='mv ../classes.%d.hed ../classes.%d.old.hed' % (params['iter'],params['iter'])
+#	mvcommand='mv ../classes.%d.hed ../classes.%d.old.hed' % (params['iter'],params['iter'])
+#	os.system(mvcommand)
+#	mvcommand='mv ../classes.%d.img ../classes.%d.old.img' % (params['iter'],params['iter'])
+#	os.system(mvcommand)
+	mvcommand='mv goodavgs.hed ../classes_coran.%d.hed' % params['iter']
 	os.system(mvcommand)
-	mvcommand='mv ../classes.%d.img ../classes.%d.old.img' % (params['iter'],params['iter'])
+	mvcommand='mv goodavgs.img ../classes_coran.%d.img' % params['iter']
 	os.system(mvcommand)
-	mvcommand='mv goodavgs.hed ../classes.%d.hed' % params['iter']
-	os.system(mvcommand)
-	mvcommand='mv goodavgs.img ../classes.%d.img' % params['iter']
-	os.system(mvcommand)
+	rmcommand='rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
+	os.system(rmcommand)
+	lncommand='ln -s classes_coran.%d.hed ../classes.%d.hed' % (params['iter'], params['iter'])
+	os.system(lncommand)
+	lncommand='ln -s classes_coran.%d.img ../classes.%d.img' % (params['iter'], params['iter'])
+	os.system(lncommand)
 
 	print "updating %s" % classfile
 	os.system('tar -cvf %s cls*.lst' % classfile)

@@ -364,15 +364,24 @@ if __name__== '__main__':
 	print proc3dcommand
 	os.system(proc3dcommand)
 	if params['findResolution']=='no':
+		#copy the resulting class average images to the main recon directory
 		os.system('cp threed.%da.mrc ../.'%(params['iter']))
-		os.system('cp goodavgs.hed ../goodavgs.%d.hed' %(params['iter']))
-		os.system('cp goodavgs.img ../goodavgs.%d.img' %(params['iter']))
+		os.system('cp goodavgs.hed ../classes_msgp.%d.hed' %(params['iter']))
+		os.system('cp goodavgs.img ../classes_msgp.%d.img' %(params['iter']))
+		#link msgp result as the final result for this iteration
+		rmcommand='rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
+		os.system(rmcommand)
+		lncommand='ln -s classes_msgp.%d.hed ../classes.%d.hed' % (params['iter'], params['iter'])
+		os.system(lncommand)
+		lncommand='ln -s classes_msgp.%d.img ../classes.%d.img' % (params['iter'], params['iter'])
+		os.system(lncommand)
 	elif params['findResolution']=='odd':
 		os.system('cp threed.%da.mrc ../threed.%da.o.mrc' %(params['iter'], params['iter']))
 	elif params['findResolution']=='even':
 		os.system('cp threed.%da.mrc ../threed.%da.e.mrc' %(params['iter'], params['iter']))
 		os.system('proc3d threed.%da.mrc ../threed.%da.o.mrc fsc=../corEO%d.fsc.dat' %(params['iter'], params['iter'], params['iter']))
 
+	#replace the old cls*.lst with the new extended one
 	os.system('tar cvzf %s %s' % (newclassfile,"cls*.lst.new"))
 	os.system('cp %s ../%s' %(newclassfile,classfile))
 
