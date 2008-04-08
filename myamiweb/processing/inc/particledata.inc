@@ -1061,6 +1061,12 @@ class particledata {
     $this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
   }
 
+  function abortClusterJob($jobid) {
+    $data = array('status'=>'A');
+    $where = array('DEF_id'=>$jobid);
+    $this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
+  }
+
   function getSubmittedJobs($expId) {
     $q="SELECT * "
       ."FROM `ApClusterJobData` "

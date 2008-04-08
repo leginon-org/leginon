@@ -6,12 +6,12 @@ require "inc/project.inc";
 require "inc/processing.inc";
 
 if ($_POST['checkjobs']) {
-  checkJobs($showjobs=True);
+	checkJobs($showjobs=True);
 }
 
 checkJobs();
 
-function checkJobs($showjobs=False,$extra=False) {
+function checkJobs($showjobs=False,$showall=False,$extra=False) {
   $expId= $_GET['expId'];
   $particle = new particledata();
   $projectId=getProjectFromExpId($expId);
@@ -55,7 +55,7 @@ function checkJobs($showjobs=False,$extra=False) {
     $user = $_SESSION['username'];
     $pass = $_SESSION['password'];
     if ($clusters[0]) foreach ($clusters as $c) {
-      $queue = checkClusterJobs('garibaldi',$user, $pass);
+      $queue = checkClusterJobs($c,$user, $pass);
       if ($queue) {
         echo "<p>Jobs currently running on the <b>$c</b> cluster:<p>\n";
         $list = streamToArray($queue);
@@ -90,7 +90,7 @@ function checkJobs($showjobs=False,$extra=False) {
 
     // find if job has been uploaded
     if ($particle->getReconIdFromClusterJobId($job['DEF_id'])) continue;
-
+		if ($showall != True && $jobinfo['status'] == 'A') continue;
     // get stack id for job from job file
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
     if (!file_exists($jobfile)) {
@@ -104,12 +104,19 @@ function checkJobs($showjobs=False,$extra=False) {
     $numinstack = $particle->getNumStackParticles($stackid);
 
     $dlbuttons = '';
-    if ($jobinfo['status']=='Q') $status='Queued';
-    elseif ($jobinfo['status']=='R') $status='Running';
+    if ($jobinfo['status']=='Q') {
+      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+			$status='Queued';
+		}
+    elseif ($jobinfo['status']=='R') {
+      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+			$status='Running';
+		}
 		elseif ($jobinfo['status']=='A') $status='Aborted';
     elseif ($jobinfo['status']=='D') {
       $dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
       $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
+      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
       $status='Awaiting Upload';
     }
     if ($status) $display_keys['status'] = $status;
