@@ -31,29 +31,17 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.sens = None
 		self.start()
 
-	def screenDown(self):
-		if self.initInstruments():
-			return
-		self.instrument.tem.MainScreenPosition = 'down'
-		time.sleep(2)
-
-	def screenUp(self):
-		if self.initInstruments():
-			return
-		self.instrument.tem.MainScreenPosition = 'up'
-		time.sleep(2)
-
 	def uiMeasureDoseRate(self):
 		if self.initInstruments():
 			return
-		self.instrument.tem.MainScreenPosition = 'down'
-		time.sleep(2)
+		try:
+			self.instrument.tem.MainScreenPosition = 'down'
+			time.sleep(2)
+			self.info('screen down')
+		except:
+			self.info('screen down failed (may be unsupported)')
 		status = self.getCurrentAndMag()
-		if status == 'ok':
-			pass
-		elif status == 'screen':
-			self.logger.error('Cannot measure current with main screen up')
-		elif status == None:
+		if status == 'error':
 			e = 'Unable to measure dose rate: unable to access instrument'
 			self.logger.error(e)
 			return
@@ -67,27 +55,28 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def getCurrentAndMag(self):
 		if self.initInstruments():
-			return
+			return 'error'
 		try:
 			scope = self.instrument.getData(data.ScopeEMData)
 		except:
-			return None
-		if scope['main screen position'] == 'down':
-			mag = scope['main screen magnification']
-			current = scope['screen current']
-			scale = self.settings['scale factor']
-			self.results['screen magnification'] = mag
-			self.results['beam current'] = current * scale
-			return 'ok'
-		else:
-			return 'screen'
+			return 'error'
+		mag = scope['main screen magnification']
+		current = scope['screen current']
+		scale = self.settings['scale factor']
+		self.results['screen magnification'] = mag
+		self.results['beam current'] = current * scale
+		return 'ok'
 
 	def acquireImage(self):
 		if self.initInstruments():
 			self.panel.acquisitionDone()
 			return
-		self.instrument.tem.MainScreenPosition = 'up'
-		time.sleep(2)
+		try:
+			self.instrument.tem.MainScreenPosition = 'up'
+			time.sleep(2)
+			self.info('screen up')
+		except:
+			self.info('screen up failed (may be unsupported)')
 		return calibrator.Calibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):
