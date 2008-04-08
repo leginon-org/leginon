@@ -31,6 +31,7 @@ function abortJob($showjobs=False,$extra=False) {
     echo "</form>\n";
   }
 	$jobs = array($particle->getJobInfoFromId($jobId));
+	$qdeljob = False;
   // if clicked button, list jobs in queue
   if ($showjobs) {
     // first find out which clusters have jobs on them
@@ -62,7 +63,7 @@ function abortJob($showjobs=False,$extra=False) {
 					// delete queued job on host
 					$cmd = "qdel ".$queuejobnum.".".$c.";\n";
 					$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
-  
+					$qdeljob = True; 
 				} else {
 					echo "<td><tr>".$job[clusterjobid]." Not Runing</tr></td>";
 				}
@@ -125,7 +126,13 @@ function abortJob($showjobs=False,$extra=False) {
 	}
 
   writeBottom();
-	$particle->abortClusterJob($jobId);
+	if (!is_null($jobinfo['user'])) {
+		#allow only the user created the job to abort it
+		$particle->abortClusterJob($jobId,$user);
+	} else {
+		#old jobs has no user field in db.  Therefore, anyone can set status to abort
+		$particle->abortClusterJob($jobId);
+	}
 	echo '<script type="text/javascript">history.go(-1);</script>';
   exit;
 }

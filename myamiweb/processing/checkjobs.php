@@ -45,6 +45,8 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
     echo "<input type='submit' name='checkjobs' value='Check Jobs in Queue'>\n";
     echo "</form>\n";
   }
+  $user = $_SESSION['username'];
+  $pass = $_SESSION['password'];
   // if clicked button, list jobs in queue
   if ($showjobs) {
     // first find out which clusters have jobs on them
@@ -52,8 +54,6 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
     foreach ($jobs as $job) {
       if (!in_array($job['cluster'],$clusters)) $clusters[]=$job['cluster'];
     }
-    $user = $_SESSION['username'];
-    $pass = $_SESSION['password'];
     if ($clusters[0]) foreach ($clusters as $c) {
       $queue = checkClusterJobs($c,$user, $pass);
       if ($queue) {
@@ -105,18 +105,21 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 
     $dlbuttons = '';
     if ($jobinfo['status']=='Q') {
-      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+			if ($user == $job['user'] || is_null($job['user']))
+				$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
 			$status='Queued';
 		}
     elseif ($jobinfo['status']=='R') {
-      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
+			if ($user == $job['user'] || is_null($job['user']))
+				$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='abort job'>\n";
 			$status='Running';
 		}
 		elseif ($jobinfo['status']=='A') $status='Aborted';
     elseif ($jobinfo['status']=='D') {
       $dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
       $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
-      $dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
+			if ($user == $job['user'] || is_null($job['user']))
+				$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('abortjob.php?expId=$expId&jobId=$job[DEF_id]')\" value='ignore job'>\n";
       $status='Awaiting Upload';
     }
     if ($status) $display_keys['status'] = $status;
