@@ -802,6 +802,10 @@ function writeJobFile ($extra=False) {
     if ($euler2) $line.=" euler2=$euler2";
     if ($goodbad=='on') $line.=" goodbad";
     $line.=" > refine".$i.".txt\n";
+    $line.="mv classes.".$i.".hed classes_eman.".$i.".hed\n";
+    $line.="ln -s classes_eman.".$i.".hed classes.".$i.".hed\n";
+    $line.="mv classes.".$i.".img classes_eman.".$i.".img\n";
+    $line.="ln -s classes_eman.".$i.".img classes.".$i.".img\n";
     $line.="getProjEulers.py proj.img proj.$i.txt\n";
     # if ref-free correllation analysis
     if ($coran=='on') {
@@ -838,10 +842,14 @@ function writeJobFile ($extra=False) {
     $line.="rm cls*.lst\n";
     $clusterjob.= $line;
   }
+
+	
+  $clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
+
   if ($_POST['dmfstore']=='on') {
     $clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
     $clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
-    $line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* proj.* sym.* .emanlog *txt ";
+    $line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
     if ($msgp=='on') {
 	$line .= "goodavgs.* ";
 	$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
