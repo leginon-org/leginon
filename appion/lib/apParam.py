@@ -5,12 +5,8 @@ import re
 import socket
 import time
 import random
-## sinedon
-#import sinedon.data as data
-## pyami
-#from pyami import mem
-## pyappion
-#import apVersion
+import subprocess
+#appion
 import apDisplay
 
 def getAppionDirectory():
@@ -195,29 +191,72 @@ def convertParserToParams(parser):
 	return params
 
 def resetVirtualFrameBuffer():
-	blue = "\033[34m"
-	clear = "\033[0m"
-	sys.stderr.write(blue)
-	apDisplay.printMsg("ignore following errors in blue")
-	#user = os.getlogin() #os.environ["USER"]
-	os.popen("killall Xvfb");
-	#os.system("kill `ps -U "+user+" | grep Xvfb | sed \'s\/pts.*$\/\/\'`");
-	time.sleep(1);
+	logf = open("xvfb.log", "a")
+	xvfbcmd = "killall Xvfb\n"
+	logf.write(xvfbcmd)
+	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=logf, stderr=logf)
+	proc.wait()
 	port = 1
+	fontpath = getFontPath()
+	securfile = getSecureFile()
+	rgbfile = getRgbFile()
 	while (port%10 == 0 or port%10 == 1):
-		port = int(random.random()*30+2)
-	port = str(port)
-	port = str("5")
-	apDisplay.printMsg("opening Xvfb port "+port)
-	os.popen("Xvfb :"+port+" -screen 0 800x800x8 &");
-	time.sleep(1);
-	os.environ["DISPLAY"] = ":"+port
+		port = int(random.random()*90+2)
+	#port = str("5")
+	portstr = str(port)
+	apDisplay.printMsg("opening Xvfb port "+portstr)
+	xvfbcmd = (
+		"Xvfb :"+portstr
+		+" -ac -pn -screen 0 800x800x8 "
+		+fontpath+securfile+rgbfile
+		+" &\n"
+	)
+	print xvfbcmd
+	logf.write(xvfbcmd)
+	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=logf, stderr=logf)
+	time.sleep(1)
+	os.environ["DISPLAY"] = ":"+portstr
 	time.sleep(2)
-	sys.stderr.write(clear)
-	#if 'bash' in os.environ.get("SHELL"):
-	#	system("export DISPLAY=':1'");	
-	#else
-	#	system("setenv DISPLAY :1");
+	logf.close()
+
+def getFontPath(msg=True):
+	pathlist = [
+		"/usr/share/X11/fonts/misc",
+		"/usr/share/fonts/X11/misc",
+		"/usr/X11R6/lib64/X11/fonts/misc",
+		"/usr/X11R6/lib/X11/fonts/misc",
+	]
+	for path in pathlist:
+		alias = os.path.join(path, "fonts.alias")
+		if os.path.isdir(path) and os.path.isfile(alias):
+			return " -fp "+path
+	apDisplay.printWarning("Xvfb: could not find Font Path")
+	return " "
+
+def getSecureFile(msg=True):
+	filelist = [
+		"/usr/X11R6/lib64/X11/xserver/SecurityPolicy",
+		"/usr/lib64/xserver/SecurityPolicy",
+		"/usr/X11R6/lib/X11/xserver/SecurityPolicy",
+		"/usr/lib/xserver/SecurityPolicy",
+	]
+	for securfile in filelist:
+		if os.path.isfile(securfile):
+			return " -sp "+securfile
+	apDisplay.printWarning("Xvfb: could not find Security File")
+	return " "
+
+def getRgbFile(msg=True):
+	filelist = [
+		"/usr/share/X11/rgb",
+		"/usr/X11R6/lib64/X11/rgb",
+		"/usr/X11R6/lib/X11/rgb",
+	]
+	for rgbfile in filelist:
+		if os.path.isfile(rgbfile+".txt"):
+			return " -co "+rgbfile
+	apDisplay.printWarning("Xvfb: could not find RGB File")
+	return " "
 
 def getNumProcessors(msg=True):
 	f = os.popen("cat /proc/cpuinfo | grep processor")
