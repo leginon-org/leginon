@@ -37,9 +37,9 @@ class DoseCalibrator(calibrator.Calibrator):
 		try:
 			self.instrument.tem.MainScreenPosition = 'down'
 			time.sleep(2)
-			self.info('screen down')
+			self.logger.info('screen down')
 		except:
-			self.info('screen down failed (may be unsupported)')
+			self.logger.info('screen down failed (may be unsupported)')
 		status = self.getCurrentAndMag()
 		if status == 'error':
 			e = 'Unable to measure dose rate: unable to access instrument'
@@ -74,9 +74,9 @@ class DoseCalibrator(calibrator.Calibrator):
 		try:
 			self.instrument.tem.MainScreenPosition = 'up'
 			time.sleep(2)
-			self.info('screen up')
+			self.logger.info('screen up')
 		except:
-			self.info('screen up failed (may be unsupported)')
+			self.logger.info('screen up failed (may be unsupported)')
 		return calibrator.Calibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):
