@@ -68,11 +68,8 @@ class CorrectorClient(object):
 		imagetemp['channel'] = channel
 		try:
 			ref = self.node.research(datainstance=imagetemp, results=1)
-		except node.ResearchError, e:
-			self.node.logger.warning('Loading reference image failed: %s' % (e,))
-			ref = None
 		except Exception, e:
-			self.node.logger.error('Loading reference image failed: %s' % e)
+			self.node.logger.warning('Loading reference image failed: %s' % e)
 			ref = None
 
 		if ref:
@@ -81,7 +78,11 @@ class CorrectorClient(object):
 			# check if no results because no ref of requested channel
 			# try to get ref of any channel
 			imagetemp['channel'] = None
-			ref = self.node.research(datainstance=imagetemp, results=1)
+			try:
+				ref = self.node.research(datainstance=imagetemp, results=1)
+			except Exception, e:
+				self.node.logger.warning('Loading reference image from any channel failed: %s' % e)
+				ref = None
 			if ref:
 				ref = ref[0]
 				self.node.logger.warning('channel requested: %s, channel available: %s' % (channel, ref['channel']))
