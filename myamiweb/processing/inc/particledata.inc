@@ -306,10 +306,14 @@ class particledata {
 	}
 
 	function getNumImgsFromSessionId ($sessionId){
-		$q="SELECT count(distinct `REF|leginondata|AcquisitionImageData|image`) as num "
-			. "FROM `ApParticleData` p "
-			. "left join `ApSelectionRunData` r on (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+		$q= "SELECT "
+			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) AS num  "
+			. "FROM `ApParticleData` AS p "
+			. "LEFT JOIN `ApSelectionRunData` AS r "
+			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
 			. "WHERE r.`REF|leginondata|SessionData|session`='$sessionId' ";
+			#. "  ORDER BY num LIMIT 10";
+		#echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
@@ -331,6 +335,45 @@ class particledata {
 		return $r['num'];
 	}
 
+	function getNumViewerPrefImages ($sessionId) {
+		$q = "SELECT "
+			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` AS p "
+			. "LEFT JOIN `ApSelectionRunData` AS r "
+			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+			. "LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
+			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
+			. "WHERE "
+			. "  viewer.`status` IS NOT NULL "
+			. " AND "
+			. "  r.`REF|leginondata|SessionData|session`='$sessionId' ";
+		#echo $q.";<br/><br/>\n";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
+	function getNumTotalAssessImages ($sessionId) {
+		$rid = $this->getLastAssessmentRun($sessionId);
+		$q = "SELECT "
+			. "  COUNT(DISTINCT part.`REF|leginondata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` AS part "
+			. "LEFT JOIN `ApSelectionRunData` AS partrun "
+			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
+			. "LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
+			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN `ApAssessmentData` AS assess "
+			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "WHERE ("
+			. " ( assess.`selectionkeep` IS NOT NULL AND `REF|ApAssessmentRunData|assessmentrun` = '$rid' )"
+			. "OR "
+			. "  viewer.`status` IS NOT NULL "
+			. ") AND "
+			. "  partrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		#echo $q.";<br/><br/>\n";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
 	function getNumRejectAssessedImages ($sessionId) {
 		$rid = $this->getLastAssessmentRun($sessionId);
 		$q = "SELECT COUNT(assess.`DEF_id`) as num "
@@ -343,29 +386,39 @@ class particledata {
 	}
 
 	function getNumHiddenImages ($sessionId) {
-		$rid = $this->getLastAssessmentRun($sessionId);
-		$q = "SELECT COUNT(assess.`DEF_id`) as num "
-			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
-			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
-			."WHERE "
-			."  viewer.`status` = 'hidden' "
-			."AND `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
+		$q = "SELECT "
+			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` AS p "
+			. "LEFT JOIN `ApSelectionRunData` AS r "
+			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+			. "LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
+			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
+			. "WHERE "
+			. "  viewer.`status` = 'hidden' "
+			. "AND "
+			. "  r.`REF|leginondata|SessionData|session`='$sessionId' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}
 
 	function getNumTotalRejectImages ($sessionId) {
 		$rid = $this->getLastAssessmentRun($sessionId);
-		$q = "SELECT COUNT(assess.`DEF_id`) as num "
-			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
-			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
-			."WHERE "
-			." ( assess.`selectionkeep` = 0 "
-			."OR "
-			."  viewer.`status` = 'hidden' ) "
-			."AND `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
+		$q = "SELECT "
+			. "  COUNT(DISTINCT part.`REF|leginondata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` AS part "
+			. "LEFT JOIN `ApSelectionRunData` AS partrun "
+			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
+			. "LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
+			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN `ApAssessmentData` AS assess "
+			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "WHERE ("
+			. " ( assess.`selectionkeep` = 0 AND `REF|ApAssessmentRunData|assessmentrun` = '$rid' )"
+			. "OR "
+			. "  viewer.`status` = 'hidden'  "
+			. ") AND "
+			. "  partrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		#echo $q.";<br/><br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}
@@ -384,29 +437,40 @@ class particledata {
 	}
 
 	function getNumExemplarImages ($sessionId) {
-		$rid = $this->getLastAssessmentRun($sessionId);
-		$q = "SELECT COUNT(assess.`DEF_id`) as num "
-			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
-			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
-			."WHERE "
-			."  viewer.`status` = 'exemplar' "
-			."AND `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
+		$q = "SELECT "
+			. "  COUNT(DISTINCT p.`REF|leginondata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` AS p "
+			. "LEFT JOIN `ApSelectionRunData` AS r "
+			. "  ON (p.`REF|ApSelectionRunData|selectionrun` = r.`DEF_id`) "
+			. "LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
+			. "  ON viewer.`imageId` = p.`REF|leginondata|AcquisitionImageData|image` "
+			. "WHERE "
+			. "  viewer.`status` = 'exemplar' "
+			. "AND "
+			. "  r.`REF|leginondata|SessionData|session`='$sessionId' ";
+		#echo $q.";<br/><br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}
 
 	function getNumTotalKeepImages ($sessionId) {
 		$rid = $this->getLastAssessmentRun($sessionId);
-		$q = "SELECT COUNT(assess.`DEF_id`) as num "
-			."FROM `ApAssessmentData` AS assess "
-			."LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
-			."  ON viewer.`imageId` = assess.`REF|leginondata|AcquisitionImageData|image` "
-			."WHERE "
-			." ( assess.`selectionkeep` = 1 "
-			."OR "
-			."  viewer.`status` = 'exemplar' ) "
-			."AND `REF|ApAssessmentRunData|assessmentrun` = '$rid'";
+		$q = "SELECT "
+			. "  COUNT(DISTINCT part.`REF|leginondata|AcquisitionImageData|image`) as num "
+			. "FROM `ApParticleData` AS part "
+			. "LEFT JOIN `ApSelectionRunData` AS partrun "
+			. "  ON (part.`REF|ApSelectionRunData|selectionrun` = partrun.`DEF_id`) "
+			. "LEFT JOIN dbemdata.`viewer_pref_image` AS viewer"
+			. "  ON viewer.`imageId` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "LEFT JOIN `ApAssessmentData` AS assess "
+			. "  ON assess.`REF|leginondata|AcquisitionImageData|image` = part.`REF|leginondata|AcquisitionImageData|image` "
+			. "WHERE ( "
+			. "  ( assess.`selectionkeep` = 1 AND `REF|ApAssessmentRunData|assessmentrun` = '$rid' )"
+			. "OR "
+			. "  viewer.`status` = 'exemplar' "
+			. ") AND "
+			. "  partrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		#echo $q.";<br/><br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}
