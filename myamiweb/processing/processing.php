@@ -154,7 +154,7 @@ if ($sessionId) {
 
   // --- Get Micrograph Assessment Data
   $totimgs = $particle->getNumImgsFromSessionId($sessionId);
-  $assessedimgs = $particle->getNumAssessedImages($sessionId);
+  $assessedimgs = $particle->getNumTotalAssessImages($sessionId);
   
   // --- Get Stack Data
   if ($stackIds = $particle->getStackIds($sessionId))
