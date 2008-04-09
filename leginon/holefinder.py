@@ -427,16 +427,22 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def findTargets(self, imdata, targetlist):
 		self.setStatus('processing')
+		autofailed = None
 
 		## auto or not?
 		self.hf['original'] = imdata['image']
 		self.currentimagedata = imdata
 		self.setImage(imdata['image'], 'Original')
 		if not self.settings['skip']:
-			self.everything()
+			autofailed = False
+			try:
+				self.everything()
+			except Exception, e:
+				self.logger.error('auto target finder failed: %s' % (e,))
+				autofailed = True
 
 		## user part
-		if self.settings['user check']:
+		if self.settings['user check'] or autofailed:
 			self.setStatus('user input')
 			self.logger.info('Waiting for user to check targets...')
 			self.panel.submitTargets()
