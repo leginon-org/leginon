@@ -574,6 +574,23 @@ class BrightImageData(CorrectorImageData):
 class NormImageData(CorrectorImageData):
 	pass
 
+class CorrectionImageSet(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('scope', ScopeEMData),
+			('camera', CameraEMData),
+			('channel', int),
+		)
+	typemap = classmethod(typemap)
+
+class CorrectionImageData(ImageData):
+	def typemap(cls):
+		return ImageData.typemap() + (
+			('set', CorrectionImageSet),
+			('type', str),
+		)
+	typemap = classmethod(typemap)
+
 class MosaicTileData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
