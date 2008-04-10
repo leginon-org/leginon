@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
@@ -12,8 +14,6 @@
 # $Locker:  $
 
 import os.path
-
-cvsname = '$Name: not supported by cvs2svn $'
 
 def OLDgetVersion():
 	name = cvsname[7:-2]
