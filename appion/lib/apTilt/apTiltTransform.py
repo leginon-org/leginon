@@ -25,17 +25,24 @@ def getTiltedShift(img1, img2, tiltdiff):
 	tilt2 (in degrees)
 	"""
 
-	### untilt images
-	#dtilt = (tilt1 - tilt2)/2.0
-	halftilt = tiltdiff/2.0
-	#this is correct
+	### untilt images by stretching and compressing
+	# choose angle s/t compressFactor = 1/stretchFactor
+	#halftilt = abs(tiltdiff)/2.0
+	halftiltrad = math.acos(math.sqrt(math.cos(abs(tiltdiff)/180.0*math.pi)))
+	# go from zero tilt to half tilt
+	compressFactor = math.cos(halftiltrad)
+	# go from max tilt to half tilt
+	stretchFactor = math.cos(halftiltrad) / math.cos(abs(tiltdiff)/180.0*math.pi)
 	if tiltdiff > 0: 
-		untilt1 = compressImage(img1, halftilt)
-		untilt2 = stretchImage(img2, halftilt)
+		#apDisplay.printMsg("compress image 1")
+		untilt1 = transformImage(img1, compressFactor)
+		untilt2 = transformImage(img2, stretchFactor)
+		xfactor = compressFactor
 	else:
-		untilt1 = stretchImage(img1, halftilt)
-		untilt2 = compressImage(img2, halftilt)
-	#need to do something with empty space!!!
+		#apDisplay.printMsg("stretch image 1")
+		untilt1 = transformImage(img1, stretchFactor)
+		untilt2 = transformImage(img2, compressFactor)
+		xfactor = stretchFactor
 
 	#shrink images
 	bin = 2
@@ -50,7 +57,7 @@ def getTiltedShift(img1, img2, tiltdiff):
 
 	### cross-correlate
 	cc = correlator.cross_correlate(filt1, filt2, pad=True)
-	rad = min(cc.shape)/10.0
+	rad = min(cc.shape)/20.0
 	cc = apImage.highPassFilter(cc, radius=rad)
 	cc = apImage.normRange(cc)
 	cc = blackEdges(cc)
@@ -60,16 +67,28 @@ def getTiltedShift(img1, img2, tiltdiff):
 	cc = apImage.lowPassFilter(cc, radius=10.0)
 
 	#find peak
-	peak = peakfinder.findSubpixelPeak(cc, lpf=0)
+	peakdict = peakfinder.findSubpixelPeak(cc, lpf=0)
 	#import pprint
 	#pprint.pprint(peak)
-	apDisplay.printMsg("Guessed xy-shift btw two images; SNR = "+str(round(peak['snr'],2)))
-	pixpeak = peak['subpixel peak']
-	shift = correlator.wrap_coord(pixpeak, cc.shape)
-	shift = numpy.array([shift[1]*bin, shift[0]*bin])
+	pixpeak = peakdict['subpixel peak']
 	apImage.arrayToJpegPlusPeak(cc, "guess-cross.jpg", pixpeak)
 
-	return shift
+	rawpeak = numpy.array([pixpeak[1], pixpeak[0]]) #swap coord
+	shift = numpy.asarray(correlator.wrap_coord(rawpeak, cc.shape))*bin
+	adjshift = numpy.array([shift[0]*xfactor, shift[1]])
+
+	apDisplay.printMsg("Guessed xy-shift btw two images"
+		+";\n\t SNR= "+str(round(peakdict['snr'],2))
+		+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
+		#+";\n\t compressFactor= "+str(round(compressFactor, 3))
+		#+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
+		+";\n\t xFactor= "+str(round(xfactor, 3))
+		#+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
+		#+";\n\t shift= "+str(numpy.around(shift, 1))
+		+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
+	)
+
+	return adjshift, xfactor
 
 def blackEdges(img, rad=None, black=None):
 	shape = img.shape
@@ -100,19 +119,18 @@ def blackEdges(img, rad=None, black=None):
 	img2[0:shape[0],int(shape[1]/2.0-rad):int(shape[1]/2.0+rad)] = black
 	return img2
 
-
-def compressImage(img, tilt):
-	#compress image along x-axis
-	coord = 1.0/math.cos(abs(tilt)/180.0*math.pi)
-	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
-	newimg  = ndimage.affine_transform(img, tiltmat, mode='reflect')
-	return newimg
-
-def stretchImage(img, tilt):
-	#expand image along x-axis
-	coord = math.cos(abs(tilt)/180.0*math.pi)
-	tiltmat = numpy.array([[ 1.0, 0.0 ], [ 0.0, coord ]])
-	newimg  = ndimage.affine_transform(img, tiltmat, mode='reflect')
+def transformImage(img, xfactor, msg=False):
+	"""
+	stretches or compresses an image only along the x-axis
+	"""
+	if msg is True:
+		if xfactor > 1:
+			apDisplay.printMsg("stretching image by "+str(round(xfactor,3)))
+		else:
+			apDisplay.printMsg("compressing image by "+str(round(xfactor,3)))
+	transMat = numpy.array([[ 1.0, 0.0 ], [ 0.0, 1.0/xfactor ]])
+	#print "transMat",transMat
+	newimg  = ndimage.affine_transform(img, transMat, mode='reflect')
 	return newimg
 
 def repairPicks(a1, a2, rmsd):
