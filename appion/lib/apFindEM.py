@@ -4,6 +4,7 @@
 import os
 import threading
 import sys
+import subprocess
 #appion
 import apDisplay
 import apImage
@@ -61,11 +62,13 @@ def runFindEM(imgdict, params, thread=False):
 			joblist.append(current)
 			current.start()
 		else:
-			fin=''
-			fin=os.popen( getFindEMPath(), 'w')
+			logf = open("findem.log", "a")
+			proc = subprocess.Popen( getFindEMPath(), shell=True, 
+				stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+			fin = proc.stdin
 			fin.write(feed)
-			fin.flush
-			fin.close()
+			fin.flush()
+			proc.wait()
 
 		#READ OUTPUT FILE
 		if not os.path.isfile(ccmapfile):
