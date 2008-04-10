@@ -777,6 +777,10 @@ class PickerApp(wx.App):
 				+str(int(cut))+ " pixels; selected worst one with RMSD = "+str(round(maxerr,2)), 0)
 			a1d = numpy.asarray([worst1])
 			a2d = numpy.asarray([worst2])
+		if a1d[0] is None:
+			a1d = []
+		if a2d[0] is None:
+			a2d = []
 		return (a1d, a2d)
 
 	#---------------------------------------
