@@ -376,10 +376,16 @@ def maskOverlapRegion(image1, image2, data):
 	####################################
 	mean2 = ndimage.mean(image2)
 	std2 = ndimage.standard_deviation(image2)
-	immin2 = mean2 - 0.0 * std2
+	immin2 = mean2 - 2.0*std2
+	#med2 = numpy.median(image2.flatten())
+	#print "MAX=",ndimage.maximum(image2), med2, mean2, std2
 	#immin2 = ndimage.minimum(image2)+1.0
-	image2 = (image2+immin2)*mask2
-	immax2 = ndimage.maximum(image2)
+	image2 = (image2-immin2)*mask2/255.0
+	#mean2 = ndimage.mean(image2)
+	#std2 = ndimage.standard_deviation(image2)
+	#med2 = numpy.median(image2.flatten())
+	immax2 = min(ndimage.maximum(image2), 8.0*std2)
+	#print "MAX=",ndimage.maximum(image2), med2, mean2, std2
 	#immax2 = mean2 + 3.0 * std2
 	image2 = numpy.where(image2==0, immax2, image2)
 
@@ -398,10 +404,16 @@ def maskOverlapRegion(image1, image2, data):
 	####################################
 	mean1 = ndimage.mean(image1)
 	std1 = ndimage.standard_deviation(image1)
-	immin1 = mean1 - 0.0 * std1
+	#med1 = numpy.median(image1.flatten())
+	immin1 = mean1 - 2.0 * std1
 	#immin1 = ndimage.minimum(image1)+1.0
-	image1 = (image1+immin1)*mask1
-	immax1 = ndimage.maximum(image1)
+	#print "MAX=",ndimage.maximum(image1), med1, mean1, std1
+	image1 = (image1-immin1)*mask1/255.0
+	#mean1 = ndimage.mean(image1)
+	#std1 = ndimage.standard_deviation(image1)
+	#med1 = numpy.median(image1.flatten())
+	immax1 = min(ndimage.maximum(image1), 8.0*std1)
+	#print "MAX=",ndimage.maximum(image1), med1, mean1, std1
 	#immax1 = mean1 + 3.0 * std1
 	image1 = numpy.where(image1==0, immax1, image1)
 
