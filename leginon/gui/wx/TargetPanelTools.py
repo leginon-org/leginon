@@ -21,6 +21,7 @@
 
 import wx
 import sys
+import numpy
 import gui.wx.ImagePanelTools
 import gui.wx.TargetPanelBitmaps
 #import shortpath
@@ -199,8 +200,13 @@ class TargetType(object):
 				self.targets.append(StatsTarget(target['x'], target['y'], self, target['stats']))
 			elif isinstance(target, Target):
 				self.targets.append(Target(target.x, target.y, self))
+			elif isinstance(target, list) or isinstance(target, numpy.ndarray) or isinstance(target, tuple):
+				if len(target) < 2:
+					print "bad target list: ",target
+				else:
+					self.targets.append(Target(target[0], target[1], self))
 			else:
-				self.targets.append(Target(target[0], target[1], self))
+				print "unknown target type: ",target,"type:",type(target)
 
 	#--------------------
 	def getTargetPositions(self):
