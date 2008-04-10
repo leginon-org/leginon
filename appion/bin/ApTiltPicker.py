@@ -750,8 +750,8 @@ class PickerApp(wx.App):
 		a1c = []
 		a2c = []
 		maxerr = 4.0
-		worst1 = []
-		worst2 = []
+		worst1 = None
+		worst2 = None
 		for i,e in enumerate(err):
 			if e > maxerr:
 				maxerr = e
