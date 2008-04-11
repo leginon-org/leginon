@@ -56,7 +56,8 @@ class SelectorItem(object):
 		else:
 			self.items.append(wx.StaticBitmap(self.panel, -1))
 
-		label = wx.StaticText(self.panel, -1, name)
+    showname = '_'.join(name.split())
+    label = wx.StaticText(self.panel, -1, showname)
 		self.items.append(label)
 
 		self.items.append(wx.StaticBitmap(self.panel, -1))
