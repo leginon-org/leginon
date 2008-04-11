@@ -28,7 +28,6 @@ import numpy
 import wx
 import sys
 import Image
-import numextension
 import gui.wx.Stats
 import ImagePanelTools
 import SelectionTool
@@ -172,15 +171,7 @@ class ImagePanel(wx.Panel):
 		Set the internal wx.Bitmap to current Numeric image
 		'''
 		if isinstance(self.imagedata, numpy.ndarray):
-			clip = self.contrasttool.getRange()
-			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
-			if self.colormap is None:
-				wximage.SetData(numextension.rgbstring(self.imagedata,
-																								clip[0], clip[1]))
-			else:
-				wximage.SetData(numextension.rgbstring(self.imagedata,
-																								clip[0], clip[1],
-																								self.colormap))
+			wximage = self.numpyToWxImage(self.imagedata)
 		elif isinstance(self.imagedata, Image.Image):
 			wximage = wx.EmptyImage(self.imagedata.size[0], self.imagedata.size[1])
 			wximage.SetData(self.imagedata.convert('RGB').tostring())
@@ -195,6 +186,31 @@ class ImagePanel(wx.Panel):
 			self.bitmap = wx.BitmapFromImage(wximage.Scale(width, height))
 		else:
 			self.bitmap = wx.BitmapFromImage(wximage)
+
+	#--------------------
+	def numpyToWxImage(self, array):
+		clip = self.contrasttool.getRange()
+		wximage = wx.EmptyImage(array.shape[1], array.shape[0])
+		normarray = array.astype(numpy.float32)
+		normarray = normarray.clip(min=clip[0], max=clip[1])
+		normarray = (normarray - clip[0]) / (clip[1] - clip[0]) * 255.0
+		if self.colormap is None:
+			normarray = normarray.astype(numpy.uint8)
+			h, w = normarray.shape[:2]
+			imagedata = Image.fromstring("L", (w, h), normarray.tostring())
+		else:
+			valarray = normarray*6.0
+			valarray = valarray.astype(numpy.uint16)
+			remapColor = numpy.array(self.colormap)
+			rgbarray = remapColor[valarray].astype(numpy.uint8)
+			print rgbarray[:,:,0]
+			h, w = normarray.shape[:2]
+			r = Image.fromstring("L", (w, h), rgbarray[:,:,0].tostring())
+			g = Image.fromstring("L", (w, h), rgbarray[:,:,1].tostring())
+			b = Image.fromstring("L", (w, h), rgbarray[:,:,2].tostring())
+			imagedata = Image.merge("RGB", (r,g,b))
+		wximage.SetData(imagedata.convert('RGB').tostring())
+		return wximage
 
 	#--------------------
 	def setBuffer(self):
