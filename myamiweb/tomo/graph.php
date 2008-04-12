@@ -8,10 +8,17 @@ $axis = $_GET['axis'];
 $width = $_GET['width'];
 $height = $_GET['height'];
 
-function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $height) {
+function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $title, $width, $height) {
 		// --- to avoid jpgraph plot warning image --- merci beaucoup --- //
 		if (count($correlation)==1)
 			$correlation[]=$correlation[0];
+
+    for($i = 0; $i < count($prediction); $i++) {
+        $prediction[$i] *= $pixel_size[$i]/1e-6;
+        $position[$i] *= $pixel_size[$i]/1e-6;
+		}
+		if ($prediction[0]==0) $prediction[0]=$prediction;
+		if ($position[0]==0) $position[0]=$position[1];
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetY2Scale("lin");
@@ -22,6 +29,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $
     $graph->xgrid->Show(true, false);
     $graph->ygrid->Show(true, false);
     $graph->ygrid->SetFill(true,'#EFEFEF@0.75','#BBCCFF@0.75');
+
 
     $correlationplot = new LinePlot($correlation);
     $correlationplot->SetColor("darkgreen");
@@ -53,7 +61,7 @@ function graphXY($prediction, $position, $correlation, $tilts, $title, $width, $
 
     $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
     $graph->yaxis->title->SetFont(FF_ARIAL);
-    $graph->yaxis->title->Set("pixels");
+    $graph->yaxis->title->Set("um");
     $graph->yaxis->SetTitleMargin(50);
 
     $graph->y2axis->SetColor("darkgreen");
@@ -78,7 +86,7 @@ function graphZ($prediction, $position, $tilts, $pixel_size, $title, $width, $he
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
-    $graph->img->SetMargin(70, 20, 50, 50);
+    $graph->img->SetMargin(70, 70, 50, 50);
     $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
@@ -125,11 +133,59 @@ function graphZ($prediction, $position, $tilts, $pixel_size, $title, $width, $he
     $graph->Stroke();
 }
 
+function graphDistance($prediction, $tilts, $pixel_size, $title, $width, $height) {
+		// --- to avoid jpgraph plot warning image --- merci beaucoup --- //
+		if (count($prediction)==1)
+			$prediction[]=$prediction[0];
+    $graph = new Graph($width, $height, "auto");    
+    $graph->SetScale("textlin");
+    $graph->SetMarginColor('white');
+    $graph->img->SetMargin(70, 70, 50, 50);
+    $graph->img->SetAntiAliasing();
+
+    $graph->xgrid->Show(true, false);
+    $graph->ygrid->Show(true, false);
+    $graph->ygrid->SetFill(true,'#EFEFEF@0.75','#BBCCFF@0.75');
+
+    for($i = 0; $i < count($prediction); $i++) {
+        $prediction[$i] *= $pixel_size[$i]/1e-6;
+    }
+    $predictionplot= new LinePlot($prediction);
+    $predictionplot->SetColor("blue");
+    $predictionplot->SetLegend("Prediction");
+
+    $graph->Add($predictionplot);
+
+    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->Set($title);
+    $graph->title->SetMargin(12);
+
+    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->title->Set("Tilt (degrees)");
+
+    $graph->xaxis->SetTickLabels($tilts);
+    $graph->xaxis->SetTextTickInterval(10);
+    $graph->xaxis->SetPos("min");
+
+    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->title->Set("Prediction (microns)");
+    $graph->yaxis->SetTitleMargin(50);
+
+    $graph->legend->SetFillColor('#FFFFFF@0.25');
+    $graph->legend->SetFont(FF_ARIAL);
+    $graph->legend->SetAbsPos(20, 20, 'right', 'top');
+    $graph->legend->SetLayout(LEGEND_HOR);
+
+    $graph->Stroke();
+}
+
 function graphNT($prediction, $tilts, $title, $width, $height) {
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
-    $graph->img->SetMargin(70, 20, 50, 50);
+    $graph->img->SetMargin(70, 70, 50, 50);
     $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
@@ -165,7 +221,7 @@ function graphTheta($prediction, $tilts, $title, $width, $height) {
     $graph = new Graph($width, $height, "auto");    
     $graph->SetScale("textlin");
     $graph->SetMarginColor('white');
-    $graph->img->SetMargin(70, 20, 50, 50);
+    $graph->img->SetMargin(70, 70, 50, 50);
     $graph->img->SetAntiAliasing();
 
     $graph->xgrid->Show(true, false);
@@ -257,7 +313,7 @@ $title = $axis.'-axis';
 
 $pixel_size = $predictionData['pixel size'];
 
-if ($axis == 'z') {
+if ($axis == 'z' || $axis == 'z0' ) {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
     $position = $predictionData['measured defocus'];
     graphZ($prediction, $position, $tilts, $pixel_size, $title, $width, $height);
@@ -266,13 +322,13 @@ if ($axis == 'z') {
 #    $position = $predictionData['SUBD|correlated position|'.$axis];
     $position = $predictionData['SUBD|position|'.$axis];
     $correlation = $predictionData['SUBD|correlation|'.$axis];
-    graphXY($prediction, $position, $correlation, $tilts, $title, $width, $height);
-#} else if ($axis == 'n' || $axis == 't') {
-#    $prediction = $predictionData['SUBD|predicted position|'.$axis];
-#    graphNT($prediction, $tilts, $title, $width, $height);
-} else if ($axis == 'theta') {
+    graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $title, $width, $height);
+} else if ($axis == 'optical axis') {
     $prediction = $predictionData['SUBD|predicted position|'.$axis];
-    graphTheta($prediction, $tilts, "theta", $width, $height);
+    graphDistance($prediction, $tilts, $pixel_size, $axis, $width, $height);
+} else if ($axis == 'phi') {
+    $prediction = $predictionData['SUBD|predicted position|'.$axis];
+    graphTheta($prediction, $tilts, "phi", $width, $height);
 }
 
 ?>

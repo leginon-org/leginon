@@ -3,6 +3,7 @@ require_once('tomography.php');
 require_once('thumbnails.php');
 $sessionId = $_GET['sessionId'];
 $tiltSeriesId = $_GET['tiltSeriesId'];
+$showmodel = $_GET['model'];
 ?>
 <?php
 $sessions = $tomography->getTiltSeriesSessions();
@@ -21,7 +22,7 @@ $width = 800;
 $height = 300;
 $images = array();
 #$axes = array('x', 'y', 'z', 'n', 't', 'theta');
-$axes = array('x', 'y', 'z', 'theta');
+$axes = array('x', 'y', 'z', 'phi','optical axis', 'z0');
 foreach ($axes as $axis) {
 	$images[] = '<img src="graph.php?'
 		."tiltSeriesId=$tiltSeriesId"
@@ -68,7 +69,7 @@ function init() {
 <table>
 <tr><td colspan=2>Session <?php echo $sessionSelector; ?></td></tr>
 <tr>
-<td rowspan=7 valign=top>Tilt Series<br>
+<td rowspan=10 valign=top>Tilt Series<br>
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
@@ -85,11 +86,17 @@ if($tiltSeriesId != NULL) {
 <tr><td><?php echo $images[0]; ?></td></tr>
 <tr><td><?php echo $images[1]; ?></td></tr>
 <tr><td><?php echo $images[2]; ?></td></tr>
-<!--- <tr><td><?php echo $images[3]; ?></td></tr> --->
+<? if ($showmodel) {
+?>
+<tr><td><?php echo $images[3]; ?></td></tr>
+<tr><td><?php echo $images[4]; ?></td></tr>
+<tr><td><?php echo $images[5]; ?></td></tr>
+<? } ?>
+<!--- <tr><td><?php echo $images[6]; ?></td></tr> --->
 <?php
 if($tiltSeriesId != NULL) {
 	echo '<tr><td>';
-	echo $images[4];
+	echo $images[6];
 	echo '</td></tr>';
 }
 ?>
