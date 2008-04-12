@@ -6,7 +6,8 @@ from gui.wx.Entry import FloatEntry, IntEntry, EVT_ENTRY
 try:
 	import radermacher
 except:
-	pass
+	print "using slow tilt angle calculator"
+	import slowmacher as radermacher
 from apTilt import apTiltTransform
 import apDog
 import apPeaks

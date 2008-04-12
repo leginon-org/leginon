@@ -11,10 +11,10 @@ def getArea(i, j, k):
 	a = j - i
 	b = k - i
 	area = abs(a[0]*b[1] - a[1]*b[0])
-	return area
+	return float(area)
 
 
-def tiltang(picks1=None, picks2=None, arealim=5000.0, maxtri=50000, speed=40.0):
+def tiltang(picks1, picks2, arealim=5000.0, maxtri=10000, speed=30.0):
 	leng = picks1.shape[0]
 	choo = leng*(leng-1)*(leng-2)/6
 	arealimsq = float(arealim**2)
@@ -53,7 +53,7 @@ def tiltang(picks1=None, picks2=None, arealim=5000.0, maxtri=50000, speed=40.0):
 					theta = math.acos(area2 / area1)
 				else:
 					theta = -1.0*math.acos(area1 / area2)
-				weight = float(area1 + area2) / arealimsq
+				weight = float(area1 + area2) / (arealim + 500.0)
 				datadict['numtri'] += 1
 				datadict['sum'] +=    theta
 				datadict['sumsq'] +=  theta**2
@@ -64,11 +64,10 @@ def tiltang(picks1=None, picks2=None, arealim=5000.0, maxtri=50000, speed=40.0):
 				if datadict['numtri'] > maxtri:
 					break
 	#time stats
-	print choo
+	#print choo
 	datadict['time'] = time.time()-t0
-	print datadict['time'], "seconds"
 	datadict['speed'] = datadict['time']/float(datadict['tottri'])*1.0e6
-	print datadict['speed'], "ns/oper"
+	print apDisplay.timeString(datadict['time']), datadict['speed'], "ns/oper"
 
 	#post-analysis
 	datadict['theta'] = datadict['sum'] / datadict['numtri']*180.0/math.pi
@@ -78,12 +77,14 @@ def tiltang(picks1=None, picks2=None, arealim=5000.0, maxtri=50000, speed=40.0):
 		datadict['thetadev'] = 0
 	else:
 		datadict['thetadev'] = math.sqrt( top / (datadict['numtri'] * (datadict['numtri'] - 1.0)) )
+	datadict['thetadev'] *= 180.0/math.pi
 
 	wtop = datadict['wsumsq']*datadict['wtot'] - datadict['wsum']*datadict['wsum']
 	wbot = datadict['wtot']*datadict['wtot'] - datadict['wsqtot']
 	datadict['wthetadev'] = math.sqrt(wtop/wbot);
+	datadict['wthetadev'] *= 180.0/math.pi
 
-	print datadict
+	#print datadict
 	return datadict
 
 
