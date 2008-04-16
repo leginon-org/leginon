@@ -1071,12 +1071,9 @@ class PresetsManager(node.Node):
 			highmag = magdict[keys[1]]
 			lowmag = magdict[keys[0]]
 			reverse = True
+		# fix me: This only works for equal dimension power of 2 camera
+		fullcamdim = self.instrument.camerasizes[camname]['x']
 
-		#fix me to real camera dimension
-		if camname != 'Tietz PXL':
-			fullcamdim = 4096
-		else:
-			fullcamdim = 2048
 		#assume highmag imag is binning of full camera to imagelength
 		maxbin = fullcamdim / imagelength
 		highbin = maxbin
@@ -1167,7 +1164,7 @@ class PresetsManager(node.Node):
 		camdata0.friendly_update(preset)
 
 		camdata1 = copy.copy(camdata0)
-	
+
 		if mode == 'center':
 			## figure out if we want to cut down to imagelength x imagelength
 			for axis in ('x','y'):
@@ -1178,11 +1175,7 @@ class PresetsManager(node.Node):
 		if mode == 'bin':
 			## bin the full camera to at most imagelength x imagelength
 			for axis in ('x','y'):
-				#fix me to real camera dimension
-				if camdata1['ccdcamera']['name'] != 'Tietz PXL':
-					fullcamdim = 4096
-				else:
-					fullcamdim = 2048
+				fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']][axis]
 				new_camdim = fullcamdim
 				new_bin = 1
 				if bin is None:
