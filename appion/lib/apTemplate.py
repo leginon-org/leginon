@@ -229,6 +229,8 @@ def insertTemplateImage(params):
 			templateq['stack_image_number']=int(params['stackimgnum'])
 		templateq['description']=params['description']
 		templateq['project|projects|project']=params['projectId']
+		## PHP web tools expect 'hidden' field, set it to False initially
+		templateq['hidden'] = False
 		if params['commit'] is True:
 			time.sleep(2)
 			appiondb.insert(templateq)

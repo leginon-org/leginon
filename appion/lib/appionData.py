@@ -144,6 +144,7 @@ class ApTemplateImageData(Data):
 			('noref', ApNoRefClassRunData),
 			#('ref', ApRefRunData),
 			('stack_image_number', int),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTemplateImageData=ApTemplateImageData
