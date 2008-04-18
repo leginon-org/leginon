@@ -482,6 +482,13 @@ class Data(newdict.TypedDict):
 		results = db.query(self, **kwargs)
 		return results
 
+	def direct_query(cls, dbid, **kwargs):
+		modulename = cls.__module__
+		db = connections.getConnection(modulename)
+		result = db.direct_query(cls, dbid, **kwargs)
+		return result
+	direct_query = classmethod(direct_query)
+
 	def update(self, other):
 		'''
 		needs to not dereference
