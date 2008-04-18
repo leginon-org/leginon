@@ -38,12 +38,13 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 			'refresh', shortHelpString='Refresh')
 		self.toolbar.InsertTool(9, gui.wx.ToolBar.ID_CURRENT_POSITION,
 			'currentposition', shortHelpString='Show Position')
+		self.addOtherTools()
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def addOtherTools(self):
 		self.toolbar.InsertSeparator(10)
 		self.toolbar.InsertTool(11, gui.wx.ToolBar.ID_FIND_SQUARES,
 			'squarefinder',shortHelpString='Find Squares')
-
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
-
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
@@ -57,12 +58,14 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_REFRESH)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onShowPositionButton,
 											id=gui.wx.ToolBar.ID_CURRENT_POSITION)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
-											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
 		self.Bind(gui.wx.ImagePanelTools.EVT_SETTINGS, self.onImageSettings)
 
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
+
+	def addOtherBindings(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
+											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
 	def onSubmitTool(self, evt):
 		threading.Thread(target=self._onSubmitTool, args=(evt,)).start()

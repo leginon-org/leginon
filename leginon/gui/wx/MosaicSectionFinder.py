@@ -27,30 +27,19 @@ class Panel(gui.wx.MosaicClickTargetFinder.Panel):
 	def initialize(self):
 		gui.wx.MosaicClickTargetFinder.Panel.initialize(self)
 
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+	def addOtherTools(self):
+#		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('region', wx.Color(64,128,255), target=True, settings=True, shape='polygon')
 		self.imagepanel.selectiontool.setDisplayed('region', True)
-
-		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
-		self.imagepanel.selectiontool.setDisplayed('focus', True)
-		self.imagepanel.addTargetTool('done', wx.RED)
-		self.imagepanel.selectiontool.setDisplayed('done', True)
-		self.imagepanel.addTargetTool('position', wx.Color(255, 128, 0))
-		self.imagepanel.selectiontool.setDisplayed('position', True)
-		self.imagepanel.addTypeTool('Image', display=True)
-		self.imagepanel.selectiontool.setDisplayed('Image', True)
-		self.imagepanel.addTargetTool('reference', wx.Color(128, 0, 128))
-
-		self.szmain.AddGrowableRow(1)
-		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
 		gui.wx.MosaicClickTargetFinder.Panel.onNodeInitialized(self)
 
 		# need this enabled for new auto region target finding
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
+
+	def addOtherBindings(self):
+		pass
 
 	def onImageSettings(self, evt):
 		gui.wx.MosaicClickTargetFinder.Panel.onImageSettings(self,evt)
@@ -67,7 +56,7 @@ class Panel(gui.wx.MosaicClickTargetFinder.Panel):
 			dialog.ShowModal()
 			dialog.Destroy()
 
-	def _onSubmitTool(self, evt):
+	def onSubmitTool(self, evt):
 		'''overriding so that submit button stays enabled'''
 		autofind = False
 		if self.node.settings['find section options'] == 'Regions from Centers':
@@ -173,34 +162,46 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 
 		szoptions = wx.GridBagSizer(5, 5)
 
+		## auto raster
+		self.widgets['raster preset'] = PresetChoice(self, -1)
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['raster preset'].setChoices(presets)
+		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
+		movetypes = self.node.calclients.keys()
+		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
+		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
+
+		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
+		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		szauto = wx.GridBagSizer(5, 5)
+		szauto.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Raster Preset')
+		szauto.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster preset'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Overlap percent')
+		szauto.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster overlap'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Move Type')
+		szauto.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szauto.Add(self.widgets['raster movetype'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbszauto.Add(szauto, 1, wx.EXPAND|wx.ALL,5)
+
+		self.Bind(wx.EVT_BUTTON, self.onAutoButton, self.autobut)
+		## end of auto raster
+
+		szoptions.Add(sbszauto, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+			
 		label = wx.StaticText(self, -1, 'Raster Spacing')
 		self.widgets['raster spacing'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['raster spacing'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster spacing'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Raster Angle')
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['raster angle'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoptions.Add(self.widgets['raster angle'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		## auto raster
-		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
-		self.Bind(wx.EVT_BUTTON, self.onAutoButton, self.autobut)
-		szoptions.Add(self.autobut, (2, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Target Preset')
-		self.widgets['targetpreset'] = PresetChoice(self, -1)
-		presets = self.node.presetsclient.getPresetNames()
-		self.widgets['targetpreset'].setChoices(presets)
-		szoptions.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['targetpreset'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Overlap percent')
-		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
-		szoptions.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szoptions.Add(self.widgets['raster overlap'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		szbutton = wx.GridBagSizer(6, 5)
+		szbutton = wx.GridBagSizer(5, 5)
 
 		self.bclear = wx.Button(self, -1, 'Clear Targets')
 		szbutton.Add(self.bclear, (0, 0), (1, 1),

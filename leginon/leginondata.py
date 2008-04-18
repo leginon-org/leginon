@@ -1365,7 +1365,7 @@ class MosaicSectionFinderSettingsData(ClickTargetFinderSettingsData,
 			('section display', bool),
 			('raster spacing', float),
 			('raster angle', float),
-			('targetpreset', str),
+			('raster preset', str),
 			('raster overlap', float),
 			('black on white', bool),
 		)
@@ -1631,6 +1631,9 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('pausegroup', bool),
 			('model mag', str),
 			('z0 error', float),
+			('phi', float),
+			('offset', float),
+			('fixed model', bool),
 		)
 	typemap = classmethod(typemap)
 

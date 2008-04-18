@@ -52,9 +52,10 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		'max sections': 5,
 		'adjust section area': 0.0,
 		'section display': False,
-		'targetpreset': None,
+		'raster preset': None,
 		'raster spacing': 50,
 		'raster angle': 0,
+		'raster movetype': 'stage position',
 	})
 
 	eventoutputs = mosaictargetfinder.MosaicClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
@@ -421,7 +422,7 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		ht = imagedata['scope']['high tension']
 
 		# transforming from target mag
-		targetpresetname = self.settings['targetpreset']
+		targetpresetname = self.settings['raster preset']
 		targetpreset = self.presetsclient.getPresetByName(targetpresetname)
 		mag1 = targetpreset['magnification']
 		dim1 = targetpreset['dimension']['x']
@@ -433,7 +434,11 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		mag2 = imagedata['scope']['magnification']
 		bin2 = imagedata['camera']['binning']['x']
 
-		p2 = self.calclients['modeled stage position'].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		try:
+			p2 = self.calclients[self.settings['raster movetype']].pixelToPixel(tem, cam, ht, mag1, mag2, p1)
+		except Exception, e:
+			self.logger.warning('Failed to calculate raster: %s' % e)
+
 		# bin
 		p2 = p2[0]/float(bin2), p2[1]/float(bin2)
 		# atlas scaling
@@ -456,15 +461,18 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		anglerad = math.radians(angledeg)
 		rasterpoints = raster.createRaster(shape, spacing, anglerad)
 
-		#if self.regionarrays is not defined, make it an empty array
-		try:
-			len(self.regionarrays)
-		except TypeError:
+		if self.settings['autofinder']:
 			self.regionarrays=[]
+		else:
+			#if self.regionarrays is not defined, make it an empty array
+			try:
+				len(self.regionarrays)
+			except TypeError:
+				self.regionarrays=[]
 
 		# if self.regionarrays is empty, check for manually picked region
-		#if not self.regionarrays:
-		if len(self.regionarrays) < 1 and self.settings['find section options']!='Regions from Centers':
+		if (len(self.regionarrays) < 1 and self.settings['find section options']!='Regions from Centers') or not self.settings['autofinder']:
+
 			manualregion = self.panel.getTargetPositions('region')
 			if manualregion:
 				manualregion = self.transpose_points(manualregion)
@@ -474,8 +482,9 @@ class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 		if len(self.regionarrays) > 0:
 			rasterpoints = self.insideRegionArrays(rasterpoints,spacing)
 		else:
-			rasterpoints = self.insideRegionImage(rasterpoints)
-
+			if self.regionimage is not None:
+				rasterpoints = self.insideRegionImage(rasterpoints)
+				
 		fullrasterdisplay = self.transpose_points(rasterpoints)
 		self.setTargets(fullrasterdisplay, 'acquisition', block=True)
 
