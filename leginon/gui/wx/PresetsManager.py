@@ -498,20 +498,26 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
 		sizer.Add(self.storder, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sizer.Add(self.listbox, (1, 0), (12, 1), wx.EXPAND)
-		sizer.Add(self.upbutton, (1, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.downbutton, (2, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.listbox, (1, 0), (1, 1), wx.EXPAND)
 
-		sizer.Add(self.btoscope, (4, 1), (1, 1), wx.ALIGN_CENTER)
+		optionsizer = wx.GridBagSizer(3,3)
+		optionsizer.Add(self.upbutton, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.downbutton, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		sizer.Add(self.bedit, (6, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bacquire, (7, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bfromscope, (8, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bremove, (9, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.balign, (10, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bbeam, (11, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bnewfromscope, (12, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bimport, (13, 1), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.btoscope, (3, 0), (1, 1), wx.ALIGN_CENTER)
+
+		optionsizer.Add(self.bedit, (5, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.bacquire, (6, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.bfromscope, (7, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.bremove, (8, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.balign, (9, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.bbeam, (10, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.bnewfromscope, (11, 0), (1, 1), wx.ALIGN_CENTER)
+		optionsizer.Add(self.bimport, (12, 0), (1, 1), wx.ALIGN_CENTER)
+
+		sizer.Add(optionsizer, (1, 1), (1,1), wx.EXPAND)
+		sizer.AddGrowableRow(1)
+		sizer.AddGrowableCol(0)
 		self.SetSizerAndFit(sizer)
 
 	def _bind(self):
@@ -661,10 +667,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.presets = EditPresets(self, -1)
 
 		self.sz = wx.GridBagSizer(5, 5)
-		self.sz.Add(self.presets, (0, 0), (2, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.presets, (0, 0), (2, 1), wx.ALIGN_CENTER|wx.EXPAND)
 		self.sz.Add(self.calibrations, (0, 1), (1, 1), wx.EXPAND|wx.ALL)
 		self.sz.Add(self.parameters, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 		self.szmain.Add(self.sz, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 5)
+		self.sz.AddGrowableCol(0)
 		self.sz.AddGrowableCol(1)
 
 		self.SetSizer(self.szmain)
