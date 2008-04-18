@@ -1,9 +1,9 @@
+#!/usr/bin/env python
 '''
 This will count the number of particles and tell you how many are from
 reject images versus other images.
 usage:    pcount.py <session name> <particle selection run name>
 '''
-#!/usr/bin/env python
 
 import appionData
 import leginondata
