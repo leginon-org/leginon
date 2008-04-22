@@ -224,8 +224,8 @@ function streamToArray($stream) {
 }
 
 function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
-  $javascript = "
-<style>
+	$javascript = "
+	<style>
 	input, select {
 		border: 1px solid #AABDCC;
 	}
@@ -240,46 +240,46 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 		background-color: #ccc;
 		padding: 8px;
 	}
-</style>
-<script src=\"../js/prototype.js\"></script>
-<script>
+	</style>
+	<script src=\"../js/prototype.js\"></script>
+	<script>
 
-var file_hed=\"$file_hed\"
-var file_img=\"$file_img\"
-var n_images=\"$n_images\"
-var updateheader=\"$updateheader\"\n";
-  if (is_array($plist)) {
-    $javascript.="imgArray = new Array()\n";
-    foreach ($plist as $p) {
-      $javascript.="imgArray.push(\"$p[p]\");";
-    }
-    $javascript.="
-function displaystack(imgArray, startImg, endImg, force) {
-	var wholemap = $('wholemap')
-	var i=0
-	for(i = startImg; i <= endImg; i++) {
-		 var tileId = addTile(wholemap, imgArray[i], force)
+	var file_hed=\"$file_hed\"
+	var file_img=\"$file_img\"
+	var n_images=\"$n_images\"
+	var updateheader=\"$updateheader\"\n";
+	if (is_array($plist)) {
+		$javascript.="imgArray = new Array()\n";
+		foreach ($plist as $p) {
+			$javascript.="imgArray.push(\"$p[p]\");";
+		}
+		$javascript.="
+		function displaystack(imgArray, startImg, endImg, force) {
+			var wholemap = $('wholemap')
+			var i=0
+			for(i = startImg; i <= endImg; i++) {
+				var tileId = addTile(wholemap, imgArray[i], force)
+			}
+		}\n";
+  	}
+
+	else {
+		$javascript.="
+		function displaystack(startImg, endImg, force) {
+			var wholemap = $('wholemap')
+			var i=0
+			for(i = startImg; i <= endImg; i++) {
+				var tileId = addTile(wholemap, i, force)
+			}
+		}\n";
 	}
-}\n";
-  }
 
-  else {
-    $javascript.="
-function displaystack(startImg, endImg, force) {
-	var wholemap = $('wholemap')
-	var i=0
-	for(i = startImg; i <= endImg; i++) {
-		 var tileId = addTile(wholemap, i, force)
-	}
-}\n";
-  }
-
-  $javascript.= "
-function addTile(wholemap, i, force) {
-	binning = $('binning').value
-	t = $('quality').value
-	var tileId = \"img\"+i
-	var filename = 'getstackimg.php?'
+	$javascript.= "
+	function addTile(wholemap, i, force) {
+		binning = $('binning').value
+		t = $('quality').value
+		var tileId = \"img\"+i
+		var filename = 'getstackimg.php?'
 				+'hed='+file_hed
 				+'&img='+file_img
 				+'&n='+i
@@ -287,45 +287,120 @@ function addTile(wholemap, i, force) {
 				+'&b='+binning
 				+'&uh='+updateheader
 
-   var img = $(tileId)
-   if(!img || force){
-      img = document.createElement(\"img\")
-      img.src = filename
-      img.setAttribute(\"id\", tileId)
-      img.setAttribute(\"class\", \"imgtile\")
-      wholemap.appendChild(img)
-   }
+		var img = $(tileId)
+		if(!img || force){
+			img = document.createElement(\"img\")
+			img.src = filename
+			img.setAttribute(\"id\", tileId)
+			img.setAttribute(\"class\", \"imgtile\")
+			wholemap.appendChild(img)
+		}
 
-	return tileId
-}
-
-function load() {
-	clean()
-	startImg=parseInt($('startimg').value)
-	endImg=parseInt($('endimg').value)
-	if (endImg > n_images-1) {
-	  endImg=n_images-1
+		return tileId
 	}
-	force=1
-	displaystack(\n";
-  if (is_array($plist)) $javascript.="imgArray, ";
-  $javascript.="startImg, endImg, force) 
+
+	function load() {
+		clean()
+		startImg=parseInt($('startimg').value)
+		endImg=parseInt($('endimg').value)
+		if (endImg > n_images-1) {
+			endImg=n_images-1
+		}
+		force=1
+		displaystack(\n";
+		if (is_array($plist)) $javascript.="imgArray, ";
+		$javascript.="startImg, endImg, force) 
+	}
+
+	function clean() {
+		var wholemap = $('wholemap')
+		var allTiles = wholemap.getElementsByTagName('img')
+		for(i = 0; i < allTiles.length; i++) {
+			var id = allTiles[i].getAttribute('id')
+			wholemap.removeChild(allTiles[i])
+			i-- 
+		}
+	}
+
+	function setImage() {
+		window.document.myf.submit(); 
+	}
+
+	</script>\n";
+	return $javascript; 
 }
 
-function clean() {
-	var wholemap = $('wholemap')
-  var allTiles = wholemap.getElementsByTagName('img')
-	for(i = 0; i < allTiles.length; i++) {
-		var id = allTiles[i].getAttribute('id')
-		wholemap.removeChild(allTiles[i])
-		i-- 
+function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
+	$particle=new particleData();
+
+	$host = 'guppy';
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+
+	if ($testimg){
+		//submit directly to head node on cluster if testing 1 image
+		$cmd = "mkdir -p $outdir; cd $outdir; $command; exit;";
+		echo $cmd;
+		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
+		return;
+	}
+
+	else {
+		// create job file
+		$jobid=$particle->insertClusterJobData($host,$outdir,'',$outdir,$jobfile,$expId,$user);
+		$jobtext .= "#PBS -l nodes=1:ppn=1\n";
+		$jobtext .= "#PBS -r n\n\n";
+		$jobtext .= "updateAppionDB.py $jobid R\n\n";
+		$jobtext .= "$command\n";
+		$jobtext .= "updateAppionDB.py $jobid D\n\n";
+		$jobtext .= "exit\n"; 
+	
+		// write jobfile to tmp dir on cronus3
+		$randstr = randomString(16);
+		$tmpfile = "/tmp/$randstr.txt";
+		$f = fopen($tmpfile,'w');
+		fwrite($f,$jobtext);
+		fclose($f);
+
+		// copy file to run directory
+		$cmd = "mkdir -p $outdir; cp $tmpfile $outdir/$jobfile;\n";
+		exec_over_ssh($_SERVER['HTTP_HOST'],$user,$pass,$cmd, True);
+	
+		writeTop("Appion Job Submission","Appion Job Submission");
+		echo "<table width='600'>\n";
+		echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
+		echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
+		$cmd = "cd $outdir; qsub $jobfile;\n";
+		// submit job on cluster
+		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
+		$jobnum=trim($jobnum);
+		$jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
+		if (!is_numeric($jobnum)) {
+			echo "</table><p>\n";
+			echo "ERROR in job submission.  Check the cluster\n";
+			writeBottom();
+			exit;
+		}
+		// insert cluster job id into row that was just created
+		$particle->updateClusterQueue($jobid,$jobnum);
+
+		echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
+		echo "</table>\n";
+
+		// check jobs that are running on the cluster
+		echo "<p>Jobs currently running on the cluster:\n";
+		$subjobs = checkClusterJobs($host,$user,$pass);
+		if ($subjobs) {echo "<pre>$subjobs</pre>\n";}
+		else {echo "<font color='red'>No Jobs on the cluster, check your settings</font>\n";}
+#	echo "<p><a href='checkappionjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
+		echo "<p><font color='red'>Do not hit 'reload' - it will re-submit job</font><p>\n";
+		writeBottom(True, True);
+		exit;
 	}
 }
-
-function setImage() {
-	window.document.myf.submit(); 
-}
-
-</script>\n";
-  return $javascript; 
+function randomString($length) {
+	$s = md5(time());
+	$i = 32-$length;
+	$randstring=substr($s,rand(0,$i),$length);
+	return $randstring;
 }

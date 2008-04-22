@@ -232,11 +232,11 @@ function parseAppionLoopParams () {
 	}
 
 	// CREATE COMMAND
-	if ($runid) $command.=" runid=$runid";
-	if ($outdir) $command.=" outdir=$outdir";
 	if ($testimage) $command.=" $testimage";
 	elseif ($dbimages) $command.=" dbimages=$dbimages";
 	else $command.=" alldbimages=$_POST[sessionname]";
+	if ($runid) $command.=" runid=$runid";
+	if ($outdir) $command.=" outdir=$outdir";
 	if ($norejects) $command.=" norejects";
 	if ($bestimages) $command.=" bestimages";
 	if ($nowait) $command.=" nowait";

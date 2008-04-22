@@ -335,6 +335,10 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 */
 
 function runTemplateCorrelator() {
+	$expId = $_GET['expId'];
+	$runid = $_POST['runid'];
+	$outdir = $_POST['outdir'];
+
 	$command .="templateCorrelator.py ";
 	$command .= templateCommand();
 
@@ -356,26 +360,28 @@ function runTemplateCorrelator() {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
-	if ($testimage && $_POST['process']=="Run Correlator") {
+	if ($_POST['process']=="Run Correlator") {
 		$host = $_POST['host'];
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
+
+		$procdir = $outdir.'/'.$runid;
+
 		if (!($user && $password)) {
 			createTCForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
-		$prefix =  "source /ami/sw/ami.csh;";
-		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-		$cmd = "$prefix webcaller.py '$command' templateCorrelatorLog.txt";
-		echo "$cmd<BR>\n";
-		$result=exec_over_ssh($host, $user, $password, $cmd, True);
+		$particle = new particleData();
+
+		# submit job to cluster
+		$cmd = "webcaller.py '$command' $procdir/templateCorrelatorLog.txt";
+		submitJob($cmd,$procdir,'templateCorrelator.job',$expId,$testimage);
+		if (!$testimage) exit;
 	}
 
 	writeTop("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
-		$runid = $_POST['runid'];
-		$outdir = $_POST['outdir'];
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		echo  " <B>Template Correlator Command:</B><BR/>$command";
 		$testjpg=ereg_replace(".mrc","",$testimage);
