@@ -391,17 +391,16 @@ def runChimeraScript(chimscript):
 	apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
+		os.environ['CHIMERA'] = chimpath
+		os.environ['CHIMERAPATH'] = os.path.join(chimpath,"share")
+		os.environ['LD_LIBRARY_PATH'] = os.path.join(chimpath,"lib")+":"+os.environ['LD_LIBRARY_PATH']
+		chimexe = os.path.join(chimpath,"bin/chimera")
+		if not os.path.isfile(chimexe):
+			apDisplay.printWarning("Could not find chimera at: "+chimexe)
 	else:
 		chimpath = None
-		apDisplay.printError("Could not find Chimera, 'CHIMERA' environmental variable is unset")
-	if not os.path.isdir(chimpath):
-		apDisplay.printError("Could not find chimera at: "+chimpath)
-	os.environ['CHIMERA'] = chimpath
-	os.environ['CHIMERAPATH'] = os.path.join(chimpath,"share")
-	os.environ['LD_LIBRARY_PATH'] = os.path.join(chimpath,"lib")+":"+os.environ['LD_LIBRARY_PATH']
-	chimexe = os.path.join(chimpath,"bin/chimera")
-	if not os.path.isfile(chimexe):
-		apDisplay.printError("Could not find chimera at: "+chimexe)
+		chimexe = "chimera"
+		apDisplay.printWarning("'CHIMERA' environmental variable is unset")
 	rendercmd = (chimexe+" python:"+chimscript)
 	os.popen(rendercmd)
 	return
