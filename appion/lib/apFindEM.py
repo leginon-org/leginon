@@ -143,7 +143,12 @@ def processAndSaveImage(imgdata, params):
 	return
 
 def getFindEMPath():
-	findempath = os.path.join(apParam.getAppionDirectory(), 'bin', 'findem.exe')
+	unames = os.uname()
+	if unames[-1].find('64') >= 0:
+		exename = 'findem64.exe'
+	else:
+		exename = 'findem.exe'
+	findempath = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
  	if not os.path.isfile(findempath):
 		apDisplay.printError("findem.exe was not found at: "+findempath)
 	return findempath
