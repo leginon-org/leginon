@@ -147,7 +147,7 @@ def getFindEMPath():
 	if unames[-1].find('64') >= 0:
 		exename = 'findem64.exe'
 	else:
-		exename = 'findem.exe'
+		exename = 'findem32.exe'
 	findempath = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
  	if not os.path.isfile(findempath):
 		apDisplay.printError("findem.exe was not found at: "+findempath)
