@@ -751,6 +751,7 @@ class AcquisitionImageTargetData(ImageTargetData):
 			## exposures on this target.  For now, this is just to
 			## keep track of when we have done the melt ice thing.
 			('pre_exposure', bool),
+			('fromtarget', AcquisitionImageTargetData),
 		)
 	typemap = classmethod(typemap)
 

@@ -37,5 +37,6 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 		for i in range(0,outputnumber):
 			target = targetdistances[distlist[i]]
 			newtarget = data.AcquisitionImageTargetData(initializer=target)
+			newtarget['fromtarget'] = target
 			newlist.append(newtarget)
 		return newlist

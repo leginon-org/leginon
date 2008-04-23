@@ -110,5 +110,6 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 				newtarget = data.AcquisitionImageTargetData(initializer=target)
 				newtarget['delta row'] += rp[0]
 				newtarget['delta column'] += rp[1]
+				newtarget['fromtarget'] = target
 				newlist.append(newtarget)
 		return newlist
