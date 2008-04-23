@@ -146,7 +146,7 @@ class Collection(object):
 		self.logger.info('Collection loop completed.')
 
 	def _loop(self, tilts, exposures):
-		pixel_size = self.pixel_size*self.preset['binning']['x']
+		image_pixel_size = self.pixel_size*self.preset['binning']['x']
 
 		tilt0 = tilts[0]
 		position0 = self.node.getPixelPosition(self.settings['move type'])
@@ -167,9 +167,10 @@ class Collection(object):
 			self.checkAbort()
 
 			self.logger.info('Current tilt angle: %g degrees.' % math.degrees(tilt))
-
-			predicted_position = self.prediction.predict(tilt)
-
+			try:
+				predicted_position = self.prediction.predict(tilt)
+			except:
+				raise
 			self.checkAbort()
 
 			predicted_shift = {}
@@ -177,7 +178,9 @@ class Collection(object):
 			predicted_shift['y'] = predicted_position['y'] - position['y']
 
 			predicted_shift['z'] = -defocus
-			defocus = defocus0 + predicted_position['z']*pixel_size
+			defocus = defocus0 + predicted_position['z']*image_pixel_size
+			self.logger.info('defocus0: %g meters,sintilt: %g' % (defocus0,math.sin(tilt)))
+#			defocus = defocus0 + predicted_shift['x']*0.5*math.sin(tilt)*image_pixel_size
 			predicted_shift['z'] += defocus
 
 			try:
@@ -190,8 +193,8 @@ class Collection(object):
 			m = 'Predicted position: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (predicted_position['x'],
 								  predicted_position['y'],
-								  predicted_position['x']*pixel_size,
-								  predicted_position['y']*pixel_size))
+								  predicted_position['x']*image_pixel_size,
+								  predicted_position['y']*image_pixel_size))
 			self.logger.info('Predicted defocus: %g meters.' % defocus)
 
 			self.node.setDefocus(defocus)
@@ -295,14 +298,14 @@ class Collection(object):
 			m = 'Correlated shift from feature: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (correlation['x'],
 								  correlation['y'],
-								  correlation['x']*pixel_size,
-								  correlation['y']*pixel_size))
+								  correlation['x']*image_pixel_size,
+								  correlation['y']*image_pixel_size))
 
 			m = 'Feature position: %g, %g pixels, %g, %g meters.'
 			self.logger.info(m % (position['x'],
 								  position['y'],
-								  position['x']*pixel_size,
-								  position['y']*pixel_size))
+								  position['x']*image_pixel_size,
+								  position['y']*image_pixel_size))
 
 			raw_correlation = self.correlator.getShift(True)
 			s = (raw_correlation['x'], raw_correlation['y'])
@@ -320,7 +323,7 @@ class Collection(object):
 				position,
 				correlation,
 				raw_correlation,
-				pixel_size,
+				image_pixel_size,
 				tilt_series_image_data,
 				measured_defocus,
 				measured_fit,
@@ -334,7 +337,7 @@ class Collection(object):
 
 		self.viewer.clearImages()
 
-	def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, pixel_size, image, measured_defocus=None, measured_fit=None):
+	def savePredictionInfo(self, predicted_position, predicted_shift, position, correlation, raw_correlation, image_pixel_size, image, measured_defocus=None, measured_fit=None):
 		initializer = {
 			'session': self.node.session,
 			'predicted position': predicted_position,
@@ -342,7 +345,7 @@ class Collection(object):
 			'position': position,
 			'correlation': correlation,
 			'raw correlation': raw_correlation,
-			'pixel size': pixel_size,
+			'pixel size': image_pixel_size,
 			'image': image,
 			'measured defocus': measured_defocus,
 			'measured fit': measured_fit,

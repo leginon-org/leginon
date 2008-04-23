@@ -1,3 +1,4 @@
+import math
 import scipy
 import scipy.optimize
 from scipy.linalg import lstsq
@@ -32,15 +33,19 @@ class TiltGroup(object):
 class Prediction(object):
 	def __init__(self):
 		self.tilt_series_list = []
+		self.tilt_series_pixel_size_list = []
 		self.parameters = [0, 0, 0]
 		self.image_pixel_size = 2e-9
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
+		self.tilt_series_pixel_size_list = []
 		self.parameters = [0, 0, 0]
 
 	def addTiltSeries(self, tilt_series):
 		self.tilt_series_list.append(tilt_series)
+		self.tilt_series_pixel_size_list.append(self.image_pixel_size)
+		self.getValidTiltSeriesList()
 
 	def newTiltSeries(self):
 		if self.tilt_series_list and len(self.tilt_series_list[-1]) < 1:
@@ -49,7 +54,16 @@ class Prediction(object):
 		self.addTiltSeries(tilt_series)
 
 	def getCurrentTiltSeries(self):
-		return self.tilt_series_list[-1]
+		return self.valid_tilt_series_list[-1]
+
+	def getValidTiltSeriesList(self):
+		self.valid_tilt_series_list = []
+		self.valid_tilt_series_pixel_size_list = []
+		current_pixel_size = self.tilt_series_pixel_size_list[-1]
+		for i, tilt_series in enumerate(self.tilt_series_list):
+			if self.tilt_series_pixel_size_list[i] == current_pixel_size:
+				self.valid_tilt_series_list.append(tilt_series)
+				self.valid_tilt_series_pixel_size_list.append(self.image_pixel_size)
 
 	def newTiltGroup(self):
 		tilt_series = self.getCurrentTiltSeries()
@@ -72,19 +86,22 @@ class Prediction(object):
 		tilt_group.addTilt(tilt, position['x'], position['y'])
 
 	def getCurrentParameters(self):
+			
 		return tuple(self.parameters[:2] + [self.parameters[-1]])
 
 	def predict(self, tilt):
 		n_start_fit = 5
+		print len(self.tilt_series)
+		print len(self.valid_tilt_series)
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
-		n_tilt_series = len(self.tilt_series_list)
+		n_tilt_series = len(self.valid_tilt_series_list)
 		n_tilt_groups = len(tilt_series)
 		n_tilts = len(tilt_group)
 		n = []
 		gmaxtilt = []
 		gmintilt = []
-		for s in self.tilt_series_list:
+		for s in self.valid_tilt_series_list:
 			for g in s.tilt_groups:
 				n.append(len(g))
 				gmaxtilt.append(max(g.tilts))
@@ -92,6 +109,7 @@ class Prediction(object):
 		n_max = max(n)
 		maxtilt = max(gmaxtilt)
 		mintilt = min(gmintilt)
+		parameters = self.getCurrentParameters()
 		if n_tilts < 1:
 			raise RuntimeError
 		elif n_tilts < 2:
@@ -106,7 +124,7 @@ class Prediction(object):
 			tilt0 = tilt_group.tilts[0]
 			cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
 			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
-			parameters = self.getCurrentParameters()
+		#	parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
 			result = self.model(parameters, args_list)
 			z0 = result[-1][0][2]
@@ -126,12 +144,13 @@ class Prediction(object):
 					self.forcemodel = True
 				else:
 					self.forcemodel = False
+			# x,y is only a smooth polynomial fit
 			x, y = self.leastSquaresXY(tilt_group.tilts,
 								  tilt_group.xs,
 								  tilt_group.ys,
 								  tilt)
 		#	tilt_group.addTilt(tilt, x, y)
-
+			## calculate optical axis tilt and offset
 			self.calculate()
 
 		#	del tilt_group.tilts[-1]
@@ -164,11 +183,12 @@ class Prediction(object):
 		tilt_group = self.getCurrentTiltGroup()
 		if len(tilt_group) < 3:
 			return
-		if len(self.tilt_series_list) > 8:
-			tilt_series_list = self.tilt_series_list[-8:]
+		if len(self.valid_tilt_series_list) > 8:
+			tilt_series_list = self.valid_tilt_series_list[-8:]
 		else:
-			tilt_series_list = self.tilt_series_list
+			tilt_series_list = self.valid_tilt_series_list
 		fitparameters = self.leastSquaresModel(tilt_series_list)
+		print 'fit z0',fitparameters[-1]
 		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
 		# max_delta_z0 should be larger than the z eucentric error ucenter_error in meters
 		ucenter_error = 2e-6
@@ -197,7 +217,11 @@ class Prediction(object):
 		return r2
 
 	def leastSquaresModel(self, tilt_series_list):
-		parameters = [0, 0]
+		phi, optical_axis, z0 = self.getCurrentParameters()
+		if self.fixed_model == True:
+			phi = self.phi0
+			optical_axis = self.offset0
+		parameters = [phi, optical_axis]
 		args_list = []
 		for tilt_series in tilt_series_list:
 			for tilt_group in tilt_series.tilt_groups:
@@ -232,11 +256,15 @@ class Prediction(object):
 	def getParameters(self, parameters):
 		phi = parameters[0]
 		optical_axis = parameters[1]
+		if self.fixed_model == True:
+			phi = self.phi0
+			optical_axis = self.offset0
 		zs = scipy.array(parameters[2:], scipy.dtype('d'))
 		return phi, optical_axis, zs
 
 	def model(self, parameters, args_list):
 		phi, optical_axis, zs = self.getParameters(parameters)
+		print 'phi=',math.degrees(phi),'optical_axis=',optical_axis
 		sin_phi = scipy.sin(phi)
 		cos_phi = scipy.cos(phi)
 		position_groups = []
@@ -244,11 +272,13 @@ class Prediction(object):
 			positions = scipy.zeros((cos_tilts.shape[0], 3), 'd')
 			z = zs[i]
 			# transform position, rotate, inverse transform to get rotated x, y, z
+			print 'before transform',x0,y0
 			positions[:, 0] = cos_phi*x0 + sin_phi*y0
 			positions[:, 1] = -sin_phi*x0 + cos_phi*y0
 			positions[:, 0] += optical_axis
-			positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*z
-			positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*z
+			print 'x',positions[-1,0],'y',positions[-1,1],'z',z,'z0',self.parameters[-1]
+			positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*(z)
+			positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*(z)
 			positions[:, 0] -= optical_axis
 			x_positions = cos_phi*positions[:, 0] - sin_phi*positions[:, 1]
 			y_positions = sin_phi*positions[:, 0] + cos_phi*positions[:, 1]
@@ -259,7 +289,9 @@ class Prediction(object):
 
 	def residuals(self, parameters, args_list):
 		residuals_list = []
+		print 'args_list',args_list
 		position_groups = self.model(parameters, args_list)
+		print 'position_groups',position_groups
 		for i, positions in enumerate(position_groups):
 			n = positions.shape[0]
 			cos_tilts, sin_tilts, x0, y0, x, y = args_list[i]
@@ -269,6 +301,7 @@ class Prediction(object):
 			residuals -= positions[:, :2]
 			residuals_list.extend(residuals[:, 0])
 			residuals_list.extend(residuals[:, 1])
+		print 'residuals_list',residuals_list
 		residuals_list = scipy.array(residuals_list, scipy.dtype('d'))
 		residuals_list.shape = (residuals_list.size,)
 		return residuals_list

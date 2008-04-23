@@ -219,29 +219,57 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
         modelmags = self.getMagChoices()
         self.widgets['model mag'] = wx.Choice(self, -1, choices=modelmags)
+        self.widgets['phi'] = FloatEntry(self, -1, allownone=False,
+            chars=4, value='0.0')
+        self.widgets['offset'] = FloatEntry(self, -1, allownone=False,
+            chars=6, value='0.0')
         self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
-                                                            allownone=False,
-                                                            chars=6,
-                                                            value='2e-6')
+            allownone=False, chars=6, value='2e-6')
+        self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the optical axis parameters fixed')
 
         magsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Initialize with the model of')
         magsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         magsz.Add(self.widgets['model mag'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        label = wx.StaticText(self, -1, 'mag')
-        magsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        phisz = wx.GridBagSizer(2, 2)
+        phisz.AddGrowableCol(0)
+        label = wx.StaticText(self, -1, 'Tilt from Y axis')
+        phisz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        phisz.Add(self.widgets['phi'],
+                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'degs')
+        phisz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        offsetsz = wx.GridBagSizer(2, 2)
+        label = wx.StaticText(self, -1, 'Offset:')
+        offsetsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        offsetsz.Add(self.widgets['offset'],
+                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, 'um')
+        offsetsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        optsz = wx.GridBagSizer(5, 10)
+        optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        optsz.Add(offsetsz, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+        optb = wx.StaticBox(self, -1, 'Optical Axis')
+        optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
+        optbsz.Add(optsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
+        optsz.AddGrowableCol(0)
         
         zsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Allow' )
         zsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         zsz.Add(self.widgets['z0 error'],
                    (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-        label = wx.StaticText(self, -1, 'meters of z0 jump between models' )
+        label = wx.StaticText(self, -1, 'um of z0 jump between models' )
         zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         modelsz = wx.GridBagSizer(5, 5)
         modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        modelsz.Add(zsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        modelsz.Add(optbsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         modelb = wx.StaticBox(self, -1, 'Model')
         modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
@@ -263,7 +291,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         return szs + [sz]
 
     def getMagChoices(self):
-    		choices = ['this preset and lower', 'only this preset']
+    		choices = ['this preset and lower mags', 'only this preset','custom values']
     		try:
 					mags = self.node.instrument.tem.Magnifications
     		except:

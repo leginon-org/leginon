@@ -57,8 +57,11 @@ class Tomography(acquisition.Acquisition):
 		'integer': False,
 		'intscale': 10,
 		'pausegroup': False,
-		'model mag': 'this preset and lower',
+		'model mag': 'this preset and lower mags',
 		'z0 error': 2e-6,
+		'phi': 0.0,
+		'offset': 0.0,
+		'fixed model': False,
 	}
 
 	def __init__(self, *args, **kwargs):
@@ -356,9 +359,12 @@ class Tomography(acquisition.Acquisition):
 		except ValueError:
 			self.logger.error('Preset magnification not listed for TEM')
 			return
+
 		if self.settings['model mag'] == 'only this preset':
 			allmags = [presetmag]
-		elif self.settings['model mag'] != 'this preset and lower':
+		elif self.settings['model mag'] == 'custom values':
+			allmags = []
+		elif self.settings['model mag'] != 'this preset and lower mags':
 			mag = int(self.settings['model mag'])
 			try:
 				mag_index = allmags.index(mag)
@@ -401,15 +407,26 @@ class Tomography(acquisition.Acquisition):
 						break
 				if goodprediction is not None:
 						break
+		
 		if goodprediction is None:
-			params = [0, 0, 0]
+			if self.settings['model mag'] == 'custom values':
+				phi = math.radians(self.settings['phi'])
+				optical_axis = self.settings['offset']*(1e-6)/presetimage_pixel_size
+				params = [phi, optical_axis, 0]
+			else:
+				params = [0, 0, 0]
 		else:
 			scale = prediction_pixel_size / presetimage_pixel_size
 			paramsdict = goodprediction['predicted position']
 			params = [paramsdict['phi'], paramsdict['optical axis']*scale, paramsdict['z0']*scale]
+
 		self.prediction.parameters = params
 		self.prediction.image_pixel_size = presetimage_pixel_size
-		self.prediction.ucenter_limit = self.settings['z0 error']
+		self.prediction.ucenter_limit = self.settings['z0 error']*(1e-6)
+		self.prediction.fixed_model = self.settings['fixed model']
+		self.prediction.phi0 = params[0]
+		self.prediction.offset0 = params[1]
+		self.prediction.z00 = params[2]
 		self.logger.info('Initialize prediction parameters to (%e, %e, %e)' % tuple(params))
 
 	def loadPredictionInfo(self):
@@ -423,11 +440,13 @@ class Tomography(acquisition.Acquisition):
 		keys = []
 		settings = {}
 		positions = {}
+		image_pixel_sizes = {}
 		for result in results:
 			key = result.dbid
 			keys.append(key)
 			settings[key] = result
 			positions[key] = []
+			image_pixel_sizes[key] = []
 
 		initializer = {
 			'session': self.session,
@@ -439,11 +458,13 @@ class Tomography(acquisition.Acquisition):
 		for result in results:
 			image = result.special_getitem('image', True, readimages=False)
 			tilt_series = image['tilt series']
+			image_pixel_sizes[tilt_series.dbid] = result['pixel size']
 			tilt = image['scope']['stage position']['a']
 			position = result['position']
 			positions[tilt_series.dbid].append((tilt, position))
 
 		for key in keys:
+			self.prediction.image_pixel_size = image_pixel_sizes[key]
 			start = settings[key]['tilt start']
 			self.prediction.newTiltSeries()
 			for tilt, position in positions[key]:
@@ -477,7 +498,11 @@ class Tomography(acquisition.Acquisition):
 			self.alignZeroLossPeak(preset_name)
 		if self.settings['measure dose']:
 			self.measureDose(preset_name)
-		acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+		try:
+			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
+		except Exception, e:
+	#		raise
+			self.logger.error('Failed to process the target: %s' % e)
 
 	def measureDefocus(self):
 		beam_tilt = 0.01
