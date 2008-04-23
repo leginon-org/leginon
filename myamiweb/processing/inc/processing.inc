@@ -404,3 +404,46 @@ function randomString($length) {
 	$randstring=substr($s,rand(0,$i),$length);
 	return $randstring;
 }
+
+function bashcolor2html($str) {
+	$chr27=chr(27);
+	$str=trim($str);
+	$str=ereg_replace($chr27, 'e',$str);
+	preg_match_all('/(e\[[0-9]{1,2}m)/', $str, $matches);
+	$htmlstyles=array();
+	foreach ((array)$matches[1] as $code) {
+		if (!empty($code)) {
+			$codeescaped=ereg_replace('\[','\\[',$code);
+			$str=ereg_replace($codeescaped, '',$str);
+			$htmlstyles[]=getHtmlStyle($code);
+		}
+	}
+	$style='style="'.implode(';', $htmlstyles).'"';
+	$html='<font '.$style.'>'.$str.'</font>';
+	return $html;
+}
+
+function getHtmlStyle($code) {
+	$codes['e[1m']='font-weight:bold';
+	$codes['e[0m']='';
+	$codes['e[4m']='text-decoration: underline';
+	$codes['e[7m']='';
+	$codes['e[30m']='color:black';
+	$codes['e[31m']='color:red';
+	$codes['e[32m']='color:green';
+	$codes['e[33m']='color:yellow';
+	$codes['e[34m']='color:blue';
+	$codes['e[35m']='color:magenta';
+	$codes['e[36m']='color:cyan';
+	$codes['e[37m']='color:white';
+	$codes['e[40m']='background-color:black';
+	$codes['e[41m']='background-color:red';
+	$codes['e[42m']='background-color:green';
+	$codes['e[43m']='background-color:yellow';
+	$codes['e[44m']='background-color:blue';
+	$codes['e[45m']='background-color:magenta';
+	$codes['e[46m']='background-color:cyan';
+	$codes['e[47m']='background-color:white';
+	return $codes[$code];
+}
+?>
