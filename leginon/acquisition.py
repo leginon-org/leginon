@@ -696,7 +696,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				imagedata.__setitem__('image', num, force=True)
 			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
 
-	def adjustTargetForDrift(self, oldtarget, force=False, drifted=False):
+	def adjustTargetForDrift(self, oldtarget):
 		if oldtarget['image'] is None:
 			return oldtarget
 		## check if drift has occurred since target's parent image was acquired
@@ -711,7 +711,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# last declared drift
 		lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
 		self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
-		if not lastdeclared and not drifted:
+		if not lastdeclared:
 			## no drift declared, no adjustment needed
 			self.logger.info('target does not need shift')
 			return oldtarget
@@ -719,14 +719,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		lastdeclared = lastdeclared[0]
 		lastdeclaredtime = lastdeclared['system time']
 		# has drift occurred?
-		if imagetime > lastdeclaredtime and not drifted:
+		if imagetime > lastdeclaredtime:
 			self.logger.info('target does not need shift')
 			return oldtarget
 		self.logger.info('target needs shift')
 		# yes, now we need a recent image drift for this image
 		# was image drift already measured for this image?
 		driftsequence = self.getImageDriftSequence(imagedata)
-		if not driftsequence or force:
+		if not driftsequence:
 			self.logger.info('need to request image drift')
 			# no, request measurement now
 			imagedrift = self.requestImageDrift(imagedata)
@@ -734,7 +734,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			lastimagedrift = driftsequence[-1]
 			# yes, but was it measured after declared drift?
-			if lastimagedrift['system time'] < lastdeclaredtime or drifted:
+			if lastimagedrift['system time'] < lastdeclaredtime:
 				# too old, need to measure it again
 				self.logger.info('existing image drift, but too old, requesting new one')
 				imagedrift = self.requestImageDrift(lastimagedrift['new image'])
