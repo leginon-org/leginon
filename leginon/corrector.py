@@ -93,7 +93,6 @@ class CorrectorClient(object):
 
 		if ref is not None:
 			self.node.logger.info('Reference image loaded: %s' % (ref['filename'],))
-			sinedon.data.datamanager.remove(ref.dmid)
 
 		return ref
 
