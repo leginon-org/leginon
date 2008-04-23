@@ -408,13 +408,14 @@ function randomString($length) {
 function bashcolor2html($str) {
 	$chr27=chr(27);
 	$str=trim($str);
-	$str=ereg_replace($chr27, 'e',$str);
+	$str=preg_replace("/$chr27/", 'e',$str);
+	$str=preg_replace('/;/', 'me[',$str);
 	preg_match_all('/(e\[[0-9]{1,2}m)/', $str, $matches);
 	$htmlstyles=array();
 	foreach ((array)$matches[1] as $code) {
 		if (!empty($code)) {
-			$codeescaped=ereg_replace('\[','\\[',$code);
-			$str=ereg_replace($codeescaped, '',$str);
+			$codeescaped=preg_replace('/\[/','\\[',$code);
+			$str=preg_replace("/$codeescaped/", '',$str);
 			$htmlstyles[]=getHtmlStyle($code);
 		}
 	}
