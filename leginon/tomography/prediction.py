@@ -91,8 +91,8 @@ class Prediction(object):
 
 	def predict(self, tilt):
 		n_start_fit = 5
-		print len(self.tilt_series)
-		print len(self.valid_tilt_series)
+		print len(self.tilt_series_list)
+		print len(self.valid_tilt_series_list)
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		n_tilt_series = len(self.valid_tilt_series_list)
