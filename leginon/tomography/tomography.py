@@ -322,7 +322,8 @@ class Tomography(acquisition.Acquisition):
 			time.sleep(1.0)
 
 		#self.driftDetected(preset_name, emtarget, None)
-		target = self.adjustTargetForDrift(target, drifted=True)
+		self.declareDrift('tilt')
+		target = self.adjustTargetForDrift(target)
 		emtarget = self.targetToEMTargetData(target)
 
 		self.presetsclient.toScope(preset_name, emtarget)
