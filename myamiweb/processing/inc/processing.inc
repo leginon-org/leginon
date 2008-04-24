@@ -330,27 +330,39 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	return $javascript; 
 }
 
-function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
+function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False) {
 	$particle=new particleData();
 
 	$host = 'guppy';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
+	$procdir = $outdir.'/'.$runid;
+
+	// set names of cluster job file and output log
+	$jobfile = "$runid.appionsub.job";
+	$logfile = "$runid.appionsub.log";
+
+	// create appion command
+	$apcmd = "webcaller.py '$command' $procdir/$logfile";
+
+	$cmd = "mkdir -p $procdir;";
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
-		$cmd = "mkdir -p $outdir; cd $outdir; $command; exit;";
+		$cmd .= "cd $procdir; $apcmd; exit;";
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		return;
 	}
 
 	else {
 		// create job file
-		$jobid=$particle->insertClusterJobData($host,$outdir,'',$outdir,$jobfile,$expId,$user);
+		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$user);
 		$jobtext .= "#PBS -l nodes=1:ppn=1\n";
+		$jobtext .= "#PBS -l walltime=240:00:00\n";
+		$jobtext .= "#PBS -l cput=240:00:00\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$jobtext .= "updateAppionDB.py $jobid R\n\n";
-		$jobtext .= "$command\n";
+		$jobtext .= "$apcmd\n";
 		$jobtext .= "updateAppionDB.py $jobid D\n\n";
 		$jobtext .= "exit\n"; 
 	
@@ -362,14 +374,14 @@ function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
 		fclose($f);
 
 		// copy file to run directory
-		$cmd = "mkdir -p $outdir; cp $tmpfile $outdir/$jobfile;\n";
+		$cmd .= "cp $tmpfile $procdir/$jobfile;\n";
 		exec_over_ssh($_SERVER['HTTP_HOST'],$user,$pass,$cmd, True);
 	
 		writeTop("Appion Job Submission","Appion Job Submission");
 		echo "<table width='600'>\n";
-		echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
+		echo "<tr><td>Appion Directory</td><td>$procdir</td></tr>\n";
 		echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
-		$cmd = "cd $outdir; qsub $jobfile;\n";
+		$cmd = "cd $procdir; qsub $jobfile;\n";
 		// submit job on cluster
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		$jobnum=trim($jobnum);
@@ -381,7 +393,7 @@ function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
 			exit;
 		}
 		// insert cluster job id into row that was just created
-		$particle->updateClusterQueue($jobid,$jobnum);
+		$particle->updateClusterQueue($jobid,$jobnum,'Q');
 
 		echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
 		echo "</table>\n";
@@ -391,7 +403,7 @@ function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
 		$subjobs = checkClusterJobs($host,$user,$pass);
 		if ($subjobs) {echo "<pre>$subjobs</pre>\n";}
 		else {echo "<font color='red'>No Jobs on the cluster, check your settings</font>\n";}
-#	echo "<p><a href='checkappionjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
+		echo "<p><a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[Check status of this job]</a><p>\n";
 		echo "<p><font color='red'>Do not hit 'reload' - it will re-submit job</font><p>\n";
 		writeBottom(True, True);
 		exit;
@@ -421,7 +433,7 @@ function bashcolor2html($str) {
 	$chr27=chr(27);
 	$str=trim($str);
 	$str=preg_replace("/$chr27/", 'e',$str);
-	$str=preg_replace('/;/', 'me[',$str);
+#	$str=preg_replace('/;/', 'me[',$str);
 	preg_match_all('/(e\[[0-9]{1,2}m)/', $str, $matches);
 	$htmlstyles=array();
 	foreach ((array)$matches[1] as $code) {

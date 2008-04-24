@@ -126,19 +126,11 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		</TD>
 	</TR>
 	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		Host: <select name='host'>\n";
-
-	$hosts=getHosts();
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
+		<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "</select>
 		<BR>
 		<input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run DogPicker'><BR>
-		<FONT class='apcomment'>Submission will NOT run Dog Picker, only output a command that you can copy and paste into a unix shell</FONT>
 		</TD>
 	</TR>
 	</TABLE>";
@@ -156,9 +148,6 @@ function runDogPicker() {
 	$outdir = $_POST['outdir'];
 
 	$command .="dogPicker.py ";
-
-	$jobfile = "dogPicker.job";
-	$logfile = "dogPickerLog.txt";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -204,20 +193,17 @@ function runDogPicker() {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
+	// submit job to cluster
 	if ($_POST['process']=="Run DogPicker") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
-
-		$procdir = $outdir.'/'.$runid;
 
 		if (!($user && $password)) {
 			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
 
-		# submit job to cluster
-		$cmd = "webcaller.py '$command' $procdir/$logfile";
-		submitJob($cmd,$procdir,$jobfile,$expId,$testimage);
+		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
 		if (!$testimage) exit;
 	}
 

@@ -1119,9 +1119,9 @@ class particledata {
     return $jid;
   }
 
-  function updateClusterQueue($jobid,$queueid) {
+  function updateClusterQueue($jobid,$queueid,$status) {
     $data = array('clusterjobid'=>$queueid);
-    $data['status']='Q';
+    $data['status']=$status;
     $where = array('DEF_id'=>$jobid);
     $this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
   }

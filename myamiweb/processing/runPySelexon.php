@@ -342,9 +342,6 @@ function runTemplateCorrelator() {
 	$command .="templateCorrelator.py ";
 	$command .= templateCommand();
 
-	$jobfile = "templateCorrelator.job";
-	$logfile = "templateCorrelatorLog.txt";
-
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createTCForm($apcommand);
@@ -367,17 +364,12 @@ function runTemplateCorrelator() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		$procdir = $outdir.'/'.$runid;
-
 		if (!($user && $password)) {
 			createTCForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
-		$particle = new particleData();
 
-		# submit job to cluster
-		$cmd = "webcaller.py '$command' $procdir/$logfile";
-		submitJob($cmd,$procdir,$jobfile,$expId,$testimage);
+		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
 		if (!$testimage) exit;
 	}
 

@@ -192,9 +192,12 @@ if ($sessionId) {
     $jobrun=0;
     $jobdone=0;
     foreach ($subjobs as $j) {
-      if ($j['status']=='Q') $jobqueue++;
-      elseif ($j['status']=='R') $jobrun++;
-      elseif ($j['status']=='D') $jobdone++;
+      // skip appion jobs
+      if (!(ereg('.appionsub.',$j['name']))) {
+	if ($j['status']=='Q') $jobqueue++;
+	elseif ($j['status']=='R') $jobrun++;
+	elseif ($j['status']=='D') $jobdone++;
+      }
     }
   }
 

@@ -139,7 +139,7 @@ elseif ($_POST['submitjob']) {
   }
 
   // insert cluster job id into row that was just created
-  $particle->updateClusterQueue($jobid,$jobnum);
+  $particle->updateClusterQueue($jobid,$jobnum,'Q');
 
   echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
   echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
