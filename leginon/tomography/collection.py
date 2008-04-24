@@ -184,7 +184,7 @@ class Collection(object):
 			predicted_shift['z'] += defocus
 
 			try:
-				self.node.setPosition(self.settings['move type'], predicted_position)
+				self.node.setPosition('image shift', predicted_position)
 			except Exception, e:
 				self.logger.error('Calibration error: %s' % e) 
 				self.finalize()

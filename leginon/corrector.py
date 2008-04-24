@@ -590,8 +590,8 @@ class Corrector(node.Node):
 		corstate['dimension'] = cameradata['dimension']
 		corstate['offset'] = cameradata['offset']
 		corstate['binning'] = cameradata['binning']
-		self.corclient.retrieveRef(corstate, 'dark', ccdcameraname, scopedata, self.channel)
-		self.corclient.retrieveRef(corstate, 'norm', ccdcameraname, scopedata, self.channel)
+		self.corclient.retrieveRef(corstate, 'dark', ccdcameraname, scopedata, self.corclient.channel)
+		self.corclient.retrieveRef(corstate, 'norm', ccdcameraname, scopedata, self.corclient.channel)
 		self.logger.info('done preload dark/norm')
 
 		errstr = 'Acquisition of corrected image failed: %s'
