@@ -340,7 +340,6 @@ function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
 		$cmd = "mkdir -p $outdir; cd $outdir; $command; exit;";
-		echo $cmd;
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		return;
 	}
@@ -398,6 +397,19 @@ function submitJob($command,$outdir,$jobfile,$expId,$testimg=False) {
 		exit;
 	}
 }
+
+function writeTestResults($jpg,$ccclist,$bin){
+        echo"<center>\n";
+        echo"<a href='loadimg.php?filename=$jpg' target='blank'>\n";
+        echo"<img src='loadimg.php?filename=$jpg&s=256'></a>\n";
+        if (count($ccclist)>1) echo "<BR>\n";
+        foreach ($ccclist as $ccc){
+                echo"<a href='loadimg.php?filename=$ccc' target='blank'>\n";
+                echo"<img src='loadimg.php?filename=$ccc&s=256'></a>\n";
+        }
+        echo"</center>\n";
+}
+
 function randomString($length) {
 	$s = md5(time());
 	$i = 32-$length;

@@ -3,6 +3,7 @@
 $filename=$_GET['filename'];
 $scale = ($_GET['scale']);
 $rescale = ($_GET['rescale']);
+$s = $_GET['s'];
 
 if (preg_match('`\.mrc$`i',$filename)) {
 	$src_mrc = mrcread($filename);
@@ -26,12 +27,22 @@ elseif (preg_match('`\.png$`i',$filename)) {
 }
 
 if ($scale){
-  $width=imagesx($image);
+	$width=imagesx($image);
 	$height=imagesy($image);
 
 	$new_width = $width * $scale;
 	$new_height = $height * $scale;
 
+	$image_p = imagecreatetruecolor($new_width, $new_height);
+	imagecopyresampled($image_p, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+}
+
+elseif ($s) {
+	$width=imagesx($image);
+	$height=imagesy($image);
+
+	$new_width = $s;
+	$new_height = $s;
 	$image_p = imagecreatetruecolor($new_width, $new_height);
 	imagecopyresampled($image_p, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
 }

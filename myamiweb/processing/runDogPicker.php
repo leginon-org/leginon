@@ -151,8 +151,15 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 }
 
 function runDogPicker() {
+	$expId = $_GET['expId'];
+	$runid = $_POST['runid'];
+	$outdir = $_POST['outdir'];
 
-	$command.="dogPicker.py ";
+	$command .="dogPicker.py ";
+
+	$jobfile = "dogPicker.job";
+	$logfile = "dogPickerLog.txt";
+
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createDogPickerForm($apcommand);
@@ -166,7 +173,6 @@ function runDogPicker() {
 		exit;
 	}
 	$command .= $partcommand;
-
 
 	$numslices = (int) $_POST[numslices];
 	$sizerange = $_POST[sizerange];
@@ -198,18 +204,21 @@ function runDogPicker() {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
-	if ($testimage && $_POST['process']=="Run DogPicker") {
-		$host = $_POST['host'];
+	if ($_POST['process']=="Run DogPicker") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
+
+		$procdir = $outdir.'/'.$runid;
+
 		if (!($user && $password)) {
 			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
-		$prefix =  "source /ami/sw/ami.csh;";
-		$prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-		$cmd = "$prefix webcaller.py '$command' dogPickerLog.txt";
-		$result=exec_over_ssh($host, $user, $password, $cmd, True);
+
+		# submit job to cluster
+		$cmd = "webcaller.py '$command' $procdir/$logfile";
+		submitJob($cmd,$procdir,$jobfile,$expId,$testimage);
+		if (!$testimage) exit;
 	}
 
 	writeTop("Particle Selection Results","Particle Selection Results");
@@ -224,7 +233,7 @@ function runDogPicker() {
 		$ccclist=array();
 		$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap1.jpg";
 		$ccclist[]=$cccimg;
-		$images=writeTestResults($jpgimg,$ccclist);
+		$images=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
 		createDogPickerForm($images,'Particle Selection Test Results','');
 		exit;
 	}
@@ -242,16 +251,5 @@ function runDogPicker() {
 	writeBottom(True, True);
 }
 
-function writeTestResults($jpg,$ccclist){
-	echo"<CENTER>\n";
-	echo"<A HREF='loadimg.php?filename=$jpg&scale=0.8'>\n";
-	echo"<IMG SRC='loadimg.php?filename=$jpg&scale=0.35'></A>\n";
-	if (count($ccclist)>1) echo "<BR>\n";
-	foreach ($ccclist as $ccc){
-		echo"<A HREF='loadimg.php?filename=$ccc&scale=0.8'>\n";
-		echo"<IMG SRC='loadimg.php?filename=$ccc&scale=0.35'></A>\n";
-	}
-	echo"</CENTER>\n";
-}
 
 ?>

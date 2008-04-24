@@ -342,6 +342,9 @@ function runTemplateCorrelator() {
 	$command .="templateCorrelator.py ";
 	$command .= templateCommand();
 
+	$jobfile = "templateCorrelator.job";
+	$logfile = "templateCorrelatorLog.txt";
+
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createTCForm($apcommand);
@@ -361,7 +364,6 @@ function runTemplateCorrelator() {
 	}
 
 	if ($_POST['process']=="Run Correlator") {
-		$host = $_POST['host'];
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -374,8 +376,8 @@ function runTemplateCorrelator() {
 		$particle = new particleData();
 
 		# submit job to cluster
-		$cmd = "webcaller.py '$command' $procdir/templateCorrelatorLog.txt";
-		submitJob($cmd,$procdir,'templateCorrelator.job',$expId,$testimage);
+		$cmd = "webcaller.py '$command' $procdir/$logfile";
+		submitJob($cmd,$procdir,$jobfile,$expId,$testimage);
 		if (!$testimage) exit;
 	}
 
@@ -461,28 +463,6 @@ function templateCommand () {
 	}
 
 	return $command;
-}
-
-/*
-**
-**
-** TEST RESULTS
-**
-**
-*/
-
-function writeTestResults($jpg,$ccclist,$bin){
-	echo"<CENTER>\n";
-	$sc = $bin*.09375;
-#	$sc = $bin*.25;
-	echo"<A HREF='loadimg.php?filename=$jpg'>\n";
-	echo"<IMG SRC='loadimg.php?filename=$jpg&scale=$sc'></A>\n";
-	if (count($ccclist)>1) echo "<BR>\n";
-	foreach ($ccclist as $ccc){
-		echo"<A HREF='loadimg.php?filename=$ccc'>\n";
-		echo"<IMG SRC='loadimg.php?filename=$ccc&scale=$sc'></A>\n";
-	}
-	echo"</CENTER>\n";
 }
 
 ?>
