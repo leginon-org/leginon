@@ -398,17 +398,6 @@ function runMaskMaker() {
 }
 
 
-function writeTestResults($testdir,$filelist){
-	echo"<CENTER>\n";
-	if (count($filelist)>1) echo "<BR>\n";
-	foreach ($filelist as $file){
-		echo $testdir.$file;
-		echo"<A HREF='loadimg.php?filename=$testdir.$file&scale=0.25'>\n";
-		echo"<IMG SRC='loadimg.php?filename=$testdir$file&scale=0.25'></A>\n";
-	}
-	echo"</CENTER>\n";
-}
-
 function displayTestResults($testimage,$imgdir,$files){
 	echo "<CENTER>\n";
 	echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";

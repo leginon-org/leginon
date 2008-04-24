@@ -296,13 +296,4 @@ function runjpgmaker() {
 }
 
 
-function writeTestResults($testdir,$filelist){
-	echo"	<CENTER>\n";
-	if (count($filelist)>1) echo "<BR>\n";
-	foreach ($filelist as $file){
-		echo"<A HREF='loadimg.php?filename=$testdir$file&scale=1'>\n";
-		echo"<IMG SRC='loadimg.php?filename=$testdir$file&scale=0.25'></A><br/>";
-	}
-	echo $testdir.$file;
-	echo"</CENTER>";
-}
+?>

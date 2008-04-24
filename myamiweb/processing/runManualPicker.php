@@ -253,16 +253,4 @@ function runManualPicker() {
   writeBottom();
 }
 
-function writeTestResults($jpg,$ccclist){
-  echo"<CENTER>\n";
-  echo"<A HREF='loadimg.php?filename=$jpg&scale=0.8'>\n";
-  echo"<IMG SRC='loadimg.php?filename=$jpg&scale=0.35'></A>\n";
-  if (count($ccclist)>1) echo "<BR>\n";
-  foreach ($ccclist as $ccc){
-    echo"<A HREF='loadimg.php?filename=$ccc&scale=0.8'>\n";
-    echo"<IMG SRC='loadimg.php?filename=$ccc&scale=0.35'></A>\n";
-  }
-  echo"</CENTER>\n";
-}
-
 ?>
