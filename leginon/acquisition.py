@@ -796,6 +796,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.received_image_drift.wait()
 		self.setStatus('processing')
 		self.logger.info('Done waiting for NeedTargetShiftEvent')
+		# drift manager moved away from target
+		self.onTarget = False
 		return self.requested_drift
 
 	def handleImageDrift(self, ev):
