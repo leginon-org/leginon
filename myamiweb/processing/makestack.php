@@ -383,23 +383,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
 		<HR>";
-/*		Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>
-	User: <select name='user'>\n";
-	foreach($users as $user) {
-		$s = ($_POST['user']==$user) ? 'selected' : '';
-		echo "<option $s >$user</option>\n";
-	}
-	echo"
-	  </select>";*/
   echo"   <BR/>
-	  <input type='submit' name='process' value='Generate Make Stack Command'><BR>
-	  <FONT class='apcomment'>Submission will NOT create a stack,<BR/>
-					only output a command that you can copy and paste into a unix shell</FONT>
+	  <input type='submit' name='process' value='Just Show Command'>
+	  <input type='submit' name='process' value='Make Stack'><br />
 	  </TD>
 	</TR>
 	</TABLE>
@@ -410,18 +396,19 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 }
 
 function runMakestack() {
-	$host = $_POST['host'];
-	$user = $_POST['user'];
- 
+	$expId = $_GET['expId'];
+	$runid = $_POST['runid'];
+	$outdir = $_POST['outdir'];
+
+	$command.="makestack.py ";
+
 	$single=$_POST['single'];
-	$runid=$_POST['runid'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description) createMakestackForm("<B>ERROR:</B> Enter a brief description of the stack");
 
 	//make sure a session was selected
-	$outdir=$_POST['outdir'];
 	if (!$outdir) createMakestackForm("<B>ERROR:</B> Select an experiment session");
 
 	// get selexon runId
@@ -493,10 +480,6 @@ function runMakestack() {
 		if (!is_numeric($limit)) createMakestackForm("<B>ERROR:</B> Particle limit must be an integer");
 	}
 
-//	$command ="source /ami/sw/ami.csh;";
-//	$command.="source /ami/sw/share/python/usepython.csh common32;";
-//	$command.="source /home/$user/pyappion/useappion.csh;";
-	$command.="makestack.py ";
 	$command.="single=$single ";
 	$command.="runid=$runid ";
 	$command.="outdir=$outdir ";
@@ -523,8 +506,16 @@ function runMakestack() {
 	if ($limit) $command.="partlimit=$limit ";
 	$command.="description=\"$description\"";
 
-	$cmd = "exec ssh $user@$host '$command > makestacklog.txt &'";
-//	exec($cmd ,$result);
+	// submit job to cluster
+	if ($_POST['process']=="Make Stack") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password)) createMakestackForm("<B>ERROR:</B> Enter a user name and password");
+
+		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+		exit;
+	}
 
 	writeTop("Makestack Run","Makestack Params");
 
