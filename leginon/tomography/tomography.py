@@ -321,12 +321,13 @@ class Tomography(acquisition.Acquisition):
 			self.instrument.tem.StagePosition = {'a': alpha}
 			time.sleep(1.0)
 
-		#self.driftDetected(preset_name, emtarget, None)
 		self.declareDrift('tilt')
 		target = self.adjustTargetForDrift(target)
 		emtarget = self.targetToEMTargetData(target)
 
-		self.presetsclient.toScope(preset_name, emtarget)
+		presetdata = self.presetsclient.getPresetFromDB(preset_name)
+		self.moveAndPreset(presetdata, emtarget)
+
 		current_preset = self.presetsclient.getCurrentPreset()
 		if current_preset['name'] != preset_name:
 			raise RutimeError('error setting preset \'%s\'' % preset_name)
