@@ -122,13 +122,18 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
 
+			// get pixel size and box size
+			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
+			$apix=format_angstrom_number($mpix)."/pixel";
+			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+
 			//handle multiple runs in stack
 			$runname=$stackparams[shownstackname];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			echo "<OPTION VALUE='$stack[stackid]'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
-			echo">$runname ($totprtls prtls)</OPTION>\n";
+			echo">$runname ($totprtls prtls, $apix a/pix, $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 	}
@@ -185,22 +190,8 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
 		<HR>";
-/*		Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>
-	User: <select name='user'>\n";
-	foreach($users as $user) {
-		$s = ($_POST['user']==$user) ? 'selected' : '';
-		echo "<option $s >$user</option>\n";
-	}
-	echo"
-	  </select><BR/>*/
 		echo"
 	  <input type='submit' name='process' value='Create Class'><BR>
-	  <FONT class='apcomment'>Submission will NOT start classification, only output a command that you can copy and paste into a unix shell</FONT>
 	  </TD>
 	</TR>
 	</TABLE>

@@ -471,4 +471,62 @@ function getHtmlStyle($code) {
 	$codes['e[47m']='background-color:white';
 	return $codes[$code];
 }
+
+function writeJavaPopupFunctions ($help) {
+  $javafunc = "
+  <style type='text/css'>
+    input { border-style: solid; border-color: #9dae9b; }
+    select { border-style: solid; border-color: #9dae9b; }
+
+		span.info {
+			width: 100px;
+		}
+  </style>\n";
+
+    $javafunc .= "
+  <script type='text/javascript' src='js/help.js'></script>
+  <script type='text/javascript' src='../js/prototype.js'></script>
+  <script type='text/javascript' src='../js/draglayer.js'></script>
+  <script type='text/javascript'>
+
+	overdiv='0'
+	var ie = (document.all)? true:false
+
+// create the popups 
+	function popLayer(a, id) {
+		dhelp=$('dhelp')
+		helpstr=eval('help.$help.'+a)
+		if(!helpstr){helpstr='<font color=red>Missing help info</font>'}
+
+		desc = '<div style=\'position: relative; width: 300px; padding: 1em\'>'+helpstr+'</div>'
+		dhelp.innerHTML=desc;
+
+		if (o=$(id)) {
+			wh = ie ? window.document.body.clientHeight : window.innerHeight
+			ww = ie ? window.document.body.clientWidth : window.innerWidth
+			wwo = ie ? window.document.body.scrollLeft : window.pageXOffset
+
+			oleft=getAbsLeft(o)
+			otop=getAbsTop(o)
+			if (ww+wwo-oleft<350)
+				oleft -= 300
+			dhelp.style.left = oleft+ 'px'
+			dhelp.style.bottom= wh-otop+20 + 'px'
+		}
+
+		dhelp.style.visibility='visible'
+	}
+
+	function hideLayer(){
+		dhelp=$('dhelp')
+		if (overdiv == '0') {
+			dhelp.innerHTML=''
+			dhelp.style.visibility='hidden';
+		}
+	}
+
+</script>\n";
+  return $javafunc;
+};
+
 ?>

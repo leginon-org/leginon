@@ -56,6 +56,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	   }
 	</SCRIPT>\n";
 	$javafunctions .= appionLoopJavaCommands();
+	$javafunctions .= writeJavaPopupFunctions('eman');	
 	$javafunctions .= particleLoopJavaCommands();
 	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
 
@@ -101,16 +102,16 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$sizerange = ($_POST['sizerange']) ? $_POST['sizerange'] : "";
 	echo "
 		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='6'>&nbsp;
-		<A HREF=\"javascript:particleinfopopup('kfactor')\">
+<a href='#' id='lkfactor' onMouseOver='popLayer(\"kfactor\",\"lkfactor\")' onMouseOut='hideLayer()'>
 		K-factor</A>&nbsp;<FONT SIZE=-2><I>(sloppiness)</I></FONT>
 		<BR/><BR/>
 		<B>Multi-scale dogpicker:</B><BR/>
 		<INPUT TYPE='text' NAME='numslices' VALUE='$numslices' SIZE='3'>&nbsp;
-		<A HREF=\"javascript:particleinfopopup('numslices')\">
+<a href='#' id='lnumslices' onMouseOver='popLayer(\"numslices\",\"lnumslices\")' onMouseOut='hideLayer()'>
 		Number of Slices</A>&nbsp;<FONT SIZE=-2><I>(number of sizes)</I></FONT>
 		<BR/>
 		<INPUT TYPE='text' NAME='sizerange' VALUE='$sizerange' SIZE='3'>&nbsp;
-		<A HREF=\"javascript:particleinfopopup('sizerange')\">
+<a href='#' id='lsizerange' onMouseOver='popLayer(\"sizerange\",\"lsizerange\")' onMouseOut='hideLayer()'>
 		Size Range</A>&nbsp;<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
 		<BR/>
 		<HR>

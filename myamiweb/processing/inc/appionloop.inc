@@ -44,6 +44,18 @@ function appioninfopopup(infoname){
 }
 
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0) {
+	$helpdiv = "
+	<div id='dhelp'
+		style='position:absolute; 
+        	background-color:FFFFDD;
+        	color:black;
+        	border: 1px solid black;
+        	visibility:hidden;
+        	z-index:+1'
+    		onmouseover='overdiv=1;'
+    		onmouseout='overdiv=0;'>
+	</div>\n";
+	echo $helpdiv;
 	echo "<!-- BEGIN Appion Loop Param -->";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
@@ -63,7 +75,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 
 	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
-	echo "<a href=\"javascript:infopopup('runid')\"><B>Run Name:</B></A>
+	echo "<a href='#' id='lrunid' onMouseOver='popLayer(\"runid\",\"lrunid\")' onMouseOut='hideLayer()'><B>Run Name:</B></A>
 	    <input type='text' name='runid' VALUE='$runid'><BR/><BR/>";
 	
 	//check for output directory [appion = 0, leginon = 1]
@@ -116,8 +128,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'non-rejected';
 	$checkimages=array('non-rejected','all','best');
-	echo"
-	<a href=\"javascript:appioninfopopup('checkimages')\">
+	echo"<a href='#' id='lcheckimages' onMouseOver='popLayer(\"checkimages\",\"lcheckimages\")' onMouseOut='hideLayer()'>
 	<B>Process</B></A>\n<SELECT name='checkimage'>\n";
 	foreach ($checkimages as $checkimage) {
 		echo "<OPTION VALUE='$checkimage' ";
@@ -129,24 +140,24 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 echo "
 <input type='checkbox' name='nowait' $nowait>
-<a href=\"javascript:appioninfopopup('nowait')\">
+<a href='#' id='lnowait' onMouseOver='popLayer(\"nowait\",\"lnowait\")' onMouseOut='hideLayer()'>
 Wait for more images after finishing</A><br/>
 
 <input type='checkbox' name='background' $background>
-<a href=\"javascript:appioninfopopup('background')\">
+<a href='#' id='lbackground' onMouseOver='popLayer(\"background\",\"lbackground\")' onMouseOut='hideLayer()'>
 Run in background mode</A><br/>
 
 <input type='checkbox' name='shuffle' $shuffle>
-<a href=\"javascript:appioninfopopup('shuffle')\">
+<a href='#' id='lshuffle' onMouseOver='popLayer(\"shuffle\",\"lshuffle\")' onMouseOut='hideLayer()'>
 Shuffle the images</A><br/>
 
-<a href=\"javascript:appioninfopopup('limit')\">
+<a href='#' id='llimit' onMouseOver='popLayer(\"limit\",\"llimit\")' onMouseOut='hideLayer()'>
 Limit</A>: only process&nbsp;
 <input type='text' name='limit' VALUE='$limit' size='4'>&nbsp;
 images<br/>
 
-<a href=\"javascript:appioninfopopup('continue')\">
-<I>Continuation:</I></A><br/>
+<a href='#' id='lcont' onMouseOver='popLayer(\"cont\",\"lcont\")' onMouseOut='hideLayer()'>
+<I>Continuation:</I></a><br />
 <input type='radio' name='apcontinue' VALUE='1' $apcontinuecheck>
 Continue unfinished run <font size=-2><I>(default)</I></font><br/>
 <input type='radio' name='apcontinue' VALUE='0' $apreproccheck>
@@ -156,7 +167,7 @@ Reprocess all images<br/><br/>
  border-collapse: collapse;'>
 
 <input type='checkbox' name='commit' $commit>
-<a href=\"javascript:appioninfopopup('commit')\">
+<a href='#' id='lcommit' onMouseOver='popLayer(\"commit\",\"lcommit\")' onMouseOut='hideLayer()'>
 <B>Commit results to database</B></A><br/>
 ";
 	echo "<!-- END Appion Loop Param -->";
@@ -375,15 +386,15 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 <B>Peak thresholds:</B><br/>
 
 <input type='text' name='thresh' VALUE='$threshv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('thresh')\">
+<a href='#' id='lminthresh' onMouseOver='popLayer(\"minthresh\",\"lminthresh\")' onMouseOut='hideLayer()'>
 Minimum threshold</A><br/>
 
 <input type='text' name='maxthresh' VALUE='$maxthreshv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('maxthresh')\">
+<a href='#' id='lmaxthresh' onMouseOver='popLayer(\"maxthresh\",\"lmaxthresh\")' onMouseOut='hideLayer()'>
 Maximum threshold</A><br/>
 
 <input type='text' name='maxpeaks' VALUE='$maxpeaksv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('maxpeaks')\">
+<a href='#' id='lmaxpeaks' onMouseOver='popLayer(\"maxpeaks\",\"lmaxpeaks\")' onMouseOut='hideLayer()'>
 Max number of particles allowed per image</A><br/>
 <br/>
 ";
@@ -392,29 +403,29 @@ Max number of particles allowed per image</A><br/>
 <B>Filter Values:</B><br/>
 
 <input type='text' name='lp' VALUE='$lpv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('lp')\">
+<a href='#' id='llpval' onMouseOver='popLayer(\"lpval\",\"llpval\")' onMouseOut='hideLayer()'>
 Low Pass</A> <font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br/>
 
 <input type='text' name='hp' VALUE='$hpv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('hp')\">
+<a href='#' id='lhpval' onMouseOver='popLayer(\"hpval\",\"lhpval\")' onMouseOut='hideLayer()'>
 High Pass</A> <font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br/>
 
 <input type='text' name='median' VALUE='$medianv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('median')\">
+<a href='#' id='lmedianval' onMouseOver='popLayer(\"medianval\",\"lmedianvalval\")' onMouseOut='hideLayer()'>
 Median</A> <font size=-2><I>(in Pixels; 0 = off)</I></font><br/>
 
 <input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('pixlimit')\">
+<a href='#' id='lpixlimit' onMouseOver='popLayer(\"pixlimit\",\"lpixlimitval\")' onMouseOut='hideLayer()'>
 Pixel Limit</A> <font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br/>
 
 <input type='text' name='bin' VALUE='$binv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('bin')\">
+<a href='#' id='lbinval' onMouseOver='popLayer(\"binval\",\"lbinval\")' onMouseOut='hideLayer()'>
 Binning</A> <font size=-2><I>(power of 2)</I></font><br/>
 <br/>
 
 <B>Defocal pairs:</B><br/>
 <input type='checkbox' name='defocpair' $defocpairv>&nbsp;
-<a href=\"javascript:particleinfopopup('defocpair')\">
+<a href='#' id='ldefocpair' onMouseOver='popLayer(\"defocpair\",\"ldefocpair\")' onMouseOut='hideLayer()'>
 Calculate shifts for defocal pairs</A><br/>
 <br/>
 <B>Advanced options:</B><br/>";
@@ -422,23 +433,23 @@ Calculate shifts for defocal pairs</A><br/>
 		echo "
 
 <input type='text' name='maxsize' VALUE='$maxsizev' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('maxsize')\">
+<a href='#' id='lmaxsize' onMouseOver='popLayer(\"maxsize\",\"lmaxsize\")' onMouseOut='hideLayer()'>
 Maximum peak area multiple</A><br/>
 
 <input type='text' name='overlapmult' VALUE='$overlapmultv' size='4'>&nbsp;
-<a href=\"javascript:particleinfopopup('overlapmult')\">
+<a href='#' id='loverlapmult' onMouseOver='popLayer(\"overlapmult\",\"loverlapmult\")' onMouseOut='hideLayer()'>
 Minimum peak overlap distance multiple</A><br/>
 		";
 	} else {
 		echo "
 <input type='checkbox' name='nojpegs' $nojpegsv>&nbsp;
-<a href=\"javascript:particleinfopopup('nojpegs')\">
+<a href='#' id='lnojpegs' onMouseOver='popLayer(\"nojpegs\",\"lnojpegs\")' onMouseOut='hideLayer()'>
 Do NOT create summary peak jpegs</A><br/>
 		";
 	}
 	echo "
 <input type='checkbox' name='invert' $invertv>&nbsp;
-<a href=\"javascript:particleinfopopup('invert')\">
+<a href='#' id='linvert' onMouseOver='popLayer(\"invert\",\"linvert\")' onMouseOut='hideLayer()'>
 Invert image density</A><br/>
 ";
 	echo "<!-- END Particle Loop Param -->";

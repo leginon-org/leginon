@@ -3,7 +3,38 @@
  */
 
 var help = {
+/**	'appion' : {
+*	}
+**/
 	'eman' : {
+		'runid' : 'Specifies the name associated with the processing results unique to the specified session and parameters. An attempt to use the same run name for a session using different processing parameters will result in an error.',
+		'checkimages' : 'Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXEMPLAR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.',
+		'nowait' : 'By default the program will check to see if Leginon has collected more images after finishing for 2 hours. If this is unchecked then when the program finishes it will immediately stop.',
+		'background' : 'This a feature the turns off some of the fancy output used when the program runs',
+		'shuffle' : 'The shuffle feature shuffles the order of the images before the processing begins that way you do not always start from the beginning.',
+		'limit' : 'If you do not want to process all the images, enter a number and the program will only process this number of images. Good for testing a few images before committing the results to the database.',
+		'cont' : 'By default you ALWAYS want to continue, unless you are NOT committing to the database yet and you want to reprocess an image.',
+		'commit' : 'This is the main checkbox of the program. When testing do NOT commit, but once you are happy with the results. Start commiting the data otherwise all information will be lost.',
+		'minthresh' : 'Threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are considered particles.<br/>Fortemplate correlation, this should be between 0.0 and 1.0, typically 0.4 to 0.6 is used.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 0.4 to 3.0 with typical values falling between 0.7 and 1.0',
+		'maxthresh' : 'Maximum threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are rejected.<br/>For template correlation, you probably do not need this, but typical values would be between 0.7 and 0.8.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 1.0 to 5.0 with typical values falling between 1.5 and 2.5',
+		'maxpeaks' : 'This a feature limits the number of particles allowed in an image. By default it is set to 1500, but if you want no more than 50 particles an image fill in this value',
+		'lpval' : 'Low pass filtering of the image before picking. This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty good',
+		'hpval' : 'High pass filtering of the image before picking. This removes any darkness gradients in the image. Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good. Warning this feature typically normalizes the crud so more particles get picked from crud.',
+		'medianval' : 'Median filtering of the image before picking. This helps remove any noise spikes in the image. Typical values are 2, 3, or 5. The bigger the number the more information is thrown away.',
+		'binval' : 'Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Typically you want to use 4 or 8 depending on the quality of you templates.',
+		'defocpair' : 'If defocal pairs were collected you want to use this. This feature takes both of the en and ef images and aligns them, so you can use makestack later.',
+		'maxsize' : 'Max size multiple of the particle peak. When the peak is found in the thresholded image it has a size in pixels. Now if that size is greater than maxsize*particle diameter then the peak is rejected.',
+		'overlapmult' : 'The overlap multiple specifies the minimum distance allowed between two peaks. If two peaks are closer than overlapmult*particle diameter the only the larger of the two peaks is retained.',
+		'pixlimit' : 'Limit the values of the pixels to within this number of standard deviations from the mean. 0.0 turns this feature off.',
+		'kfactor' : 'The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes. Cannot be used with multi-scale dogpicker: numslices or sizerange',
+		'numslices' : 'Defines the number of different sizes (or slices) to break up the size range into for separating particles of different size.',
+		'sizerange' : 'Defines the range of sizes for separating particles of different size.',
+		'invert' : 'Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.',
+		'nojpegs' : 'Do NOT write out the summary jpegs for image assessor.',
+
+/**
+* these should be separate
+**/
 		'imask' : 'Radius of internal mask (in pixels)',
 		'nodes' : 'Nodes refers to the number of computer to process on simultaneously. The more nodes you get the faster things will get process, but more nodes requires that you wait longer before being allowed to begin processing.',
 		'walltime' : 'Wall time, also called real-world time or wall-clock time, refers to elapsed time as determined by a chronometer such as a wristwatch or wall clock. (The reference to a wall clock is how the term originally got its name.)',
