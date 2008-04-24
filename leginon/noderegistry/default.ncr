@@ -58,6 +58,10 @@ type: Calibrations
 module: robot
 type: Pipeline
 
+[Robot2]
+module: robot2
+type: Pipeline
+
 [AtlasTargetMaker]
 module: atlastargetmaker
 type: Pipeline
