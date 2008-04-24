@@ -581,18 +581,18 @@ class Corrector(node.Node):
 		self.setTargets([], 'Regions', block=False)
 		self.startTimer('acquireCorrectedImageData')
 		self.setStatus('processing')
-
-		self.logger.info('preload dark/norm')
-		cameradata = self.instrument.getData(data.CameraEMData, ccdcameraname=ccdcameraname)
-		scopedata = self.instrument.getData(data.ScopeEMData)
-		ccdcamera = cameradata['ccdcamera']
-		corstate = data.CorrectorCamstateData()
-		corstate['dimension'] = cameradata['dimension']
-		corstate['offset'] = cameradata['offset']
-		corstate['binning'] = cameradata['binning']
-		self.corclient.retrieveRef(corstate, 'dark', ccdcameraname, scopedata, self.corclient.channel)
-		self.corclient.retrieveRef(corstate, 'norm', ccdcameraname, scopedata, self.corclient.channel)
-		self.logger.info('done preload dark/norm')
+		if self.instrument.getTEMName() != 'CM':
+			self.logger.info('preload dark/norm')
+			cameradata = self.instrument.getData(data.CameraEMData, ccdcameraname=ccdcameraname)
+			scopedata = self.instrument.getData(data.ScopeEMData)
+			ccdcamera = cameradata['ccdcamera']
+			corstate = data.CorrectorCamstateData()
+			corstate['dimension'] = cameradata['dimension']
+			corstate['offset'] = cameradata['offset']
+			corstate['binning'] = cameradata['binning']
+			self.corclient.retrieveRef(corstate, 'dark', ccdcameraname, scopedata, self.corclient.channel)
+			self.corclient.retrieveRef(corstate, 'norm', ccdcameraname, scopedata, self.corclient.channel)
+			self.logger.info('done preload dark/norm')
 
 		errstr = 'Acquisition of corrected image failed: %s'
 		tries = 10
