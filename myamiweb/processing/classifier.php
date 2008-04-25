@@ -133,7 +133,9 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 			echo "<OPTION VALUE='$stack[stackid]'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
-			echo">$runname ($totprtls prtls, $apix a/pix, $boxsz pixels)</OPTION>\n";
+			echo ">$runname ($totprtls prtls,";
+			if ($mpix) echo " $apix a/pix,";
+			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 	}
