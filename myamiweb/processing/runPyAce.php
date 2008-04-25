@@ -231,6 +231,7 @@ function createPyAceForm($extra=false) {
 
 	</SCRIPT>\n";
 	$javafunctions .= appionLoopJavaCommands();
+	$javafunctions .= writeJavaPopupFunctions('eman');
 	writeTop("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 
 	if ($extra) {
@@ -276,54 +277,53 @@ function createPyAceForm($extra=false) {
 
 	  <TABLE CELLSPACING=0 CELLPADDING=2><TR>
 
-	    <TD VALIGN='TOP'>
-	    <A HREF=\"javascript:infopopup('edgethresh')\"><B>Edge Thresholds:</B></A><br/>
-	    <INPUT TYPE='text' NAME='edgethcarbon' VALUE='0.8' SIZE='4'>
-	    Carbon<br/>
-	    <INPUT TYPE='text' NAME='edgethice' VALUE='0.6' SIZE='4'>
-	    Ice
-	    </TD>
+	    <TD VALIGN='TOP'>\n";
+	echo docpop('edgethresh','<b>Edge Thresholds</b>');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='edgethcarbon' VALUE='0.8' SIZE='4'>\n";
+	echo "Carbon<br />\n";
+	echo "<INPUT TYPE='text' NAME='edgethice' VALUE='0.6' SIZE='4'>\n";
+	echo "Ice\n";
+	echo "</TD>\n";
+	echo "<td>&nbsp;</td>\n";
+	echo "<td>&nbsp;</td>\n";
+	echo "<TD VALIGN='TOP'>\n";
+	echo docpop('pfact','<b>Power Factors:</b>');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='pfcarbon' VALUE='0.9' SIZE='4'>\n";
+	echo "Carbon<br />\n";
+	echo "<INPUT TYPE='text' NAME='pfice' VALUE='0.3' SIZE='4'>\n";
+	echo "Ice\n";
+	echo "</TD>\n";
 
-	    <TD VALIGN='CENTER'>&nbsp;</TD>
-	    <TD VALIGN='CENTER'>&nbsp;</TD>
+	echo "</TR></TABLE><br />\n";
 
-	    <TD VALIGN='TOP'>
-	    <A HREF=\"javascript:infopopup('pfact')\"><B>Power Factors:</B></A><br/>
-	    <INPUT TYPE='text' NAME='pfcarbon' VALUE='0.9' SIZE='4'>
-	    Carbon<br/>
-	    <INPUT TYPE='text' NAME='pfice' VALUE='0.3' SIZE='4'>
-	    Ice
-	    </TD>
-
-	  </TR></TABLE><br/>
-
-	    <INPUT TYPE='text' NAME='resamplefr' VALUE='1.5' size='4'>
-	    <A HREF=\"javascript:infopopup('resamplefr')\">Resampling Frequency</A><br/>
-
-	    <INPUT TYPE='text' NAME='overlap' VALUE='2' SIZE='4'>
-	    <A HREF=\"javascript:infopopup('overlap')\">Averaging Overlap</A><br/>
-
-	    <INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>
-	    <A HREF=\"javascript:infopopup('field')\">Field Size</A><br/>
-
-	    <INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>
-	    Spherical Aberration<br/>
-
-	    <INPUT TYPE='checkbox' NAME='drange'>
-	    <A HREF=\"javascript:infopopup('drange')\">Compress Dynamic Range</A><br/>
-	    <br/>
-
-	    <INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>
-	    Reprocess Below Confidence Value<br/>
-	    Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>
-	    <FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br/>
-	    <br/>
-
-	    <B>Nominal override:</B><br/>
-	    <INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>
-	    Override Nominal Defocus<br/>
-	    Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>
-	    <FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><br/>";
+	echo "<INPUT TYPE='text' NAME='resamplefr' VALUE='1.5' size='4'>\n";
+	echo docpop('resamplefr','Resampling Frequency');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='overlap' VALUE='2' SIZE='4'>\n";
+	echo docpop('overlap','Averaging Overlap');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>\n";
+	echo docpop('field','Field Size');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>\n";
+	echo docpop('cs','Spherical Aberration');
+	echo "<br />\n";
+	echo "<INPUT TYPE='checkbox' NAME='drange'>\n";
+	echo docpop('drange','Compress Dynamic Range');
+	echo "<br />\n";
+	echo "<br />\n";
+	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
+	echo "Reprocess Below Confidence Value<br />\n";
+	echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
+	echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
+	echo "<br />\n";
+	echo "<B>Nominal override:</B><br />\n";
+	echo "<INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>\n";
+	echo "Override Nominal Defocus<br />\n";
+	echo "Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>\n";
+	echo "<FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><br />";
 	if ($ctfruns > 0) {
 		echo"
 			<INPUT TYPE='checkbox' NAME='newnominal'>

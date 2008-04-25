@@ -56,7 +56,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
     		onmouseout='overdiv=0;'>
 	</div>\n";
 	echo $helpdiv;
-	echo "<!-- BEGIN Appion Loop Param -->";
+	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
@@ -75,8 +75,8 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 
 	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
-	echo "<a href='#' id='lrunid' onMouseOver='popLayer(\"runid\",\"lrunid\")' onMouseOut='hideLayer()'><B>Run Name:</B></A>
-	    <input type='text' name='runid' VALUE='$runid'><BR/><BR/>";
+	echo docpop('runid','<b>Run Name:</b> ');
+	echo "<input type='text' name='runid' VALUE='$runid'><BR/><BR/>\n";
 	
 	//check for output directory [appion = 0, leginon = 1]
 	$leg_check = $leginon;
@@ -97,7 +97,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
 	echo"&nbsp;&nbsp;&nbsp;Output Directory<BR/>
-	    <input type='text' name='outdir' VALUE='$outdir' size='45'><BR/><BR/>";
+	    <input type='text' name='outdir' VALUE='$outdir' size='45'><br /><br />\n";
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$presets=$sessiondata['presets'];
@@ -123,13 +123,13 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 
 	echo "
 <HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid; border-collapse: collapse;'>
-<input type='hidden' name='sessionname' value='$sessionname'>";
+<input type='hidden' name='sessionname' value='$sessionname'>\n";
 
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'non-rejected';
 	$checkimages=array('non-rejected','all','best');
-	echo"<a href='#' id='lcheckimages' onMouseOver='popLayer(\"checkimages\",\"lcheckimages\")' onMouseOut='hideLayer()'>
-	<B>Process</B></A>\n<SELECT name='checkimage'>\n";
+	echo docpop('checkimages','<b>Process</b>');
+	echo"<SELECT name='checkimage'>\n";
 	foreach ($checkimages as $checkimage) {
 		echo "<OPTION VALUE='$checkimage' ";
 		// make norejects selected by default
@@ -138,39 +138,29 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 	echo"</SELECT>images<br/><br/>\n";
 
-echo "
-<input type='checkbox' name='nowait' $nowait>
-<a href='#' id='lnowait' onMouseOver='popLayer(\"nowait\",\"lnowait\")' onMouseOut='hideLayer()'>
-Wait for more images after finishing</A><br/>
+	echo "<input type='checkbox' name='nowait' $nowait>\n";
+	echo docpop('nowait','Wait for more images after finishing');
+	echo "<br />\n";
+	echo "<input type='checkbox' name='background' $background>\n";
+	echo docpop('background','Run in background mode');
+	echo "<br />\n";
+	echo "<input type='checkbox' name='shuffle' $shuffle>\n";
+	echo docpop('shuffle','Shuffle the images');
+	echo "<br />\n";
+	echo docpop('limit','Limit: ');
+	echo "only process&nbsp; <input type='text' name='limit' VALUE='$limit' size='4'>&nbsp; images<br />\n";
+	echo docpop('cont','<i>Continuation:</i>'); 
+	echo "<br />\n";
+	echo "<input type='radio' name='apcontinue' VALUE='1' $apcontinuecheck>\n";
+	echo "Continue unfinished run <font size=-2><i>(default)</i></font><br/>\n";
+	echo "<input type='radio' name='apcontinue' VALUE='0' $apreproccheck>\n";
+	echo "Reprocess all images<br/><br/>\n";
 
-<input type='checkbox' name='background' $background>
-<a href='#' id='lbackground' onMouseOver='popLayer(\"background\",\"lbackground\")' onMouseOut='hideLayer()'>
-Run in background mode</A><br/>
-
-<input type='checkbox' name='shuffle' $shuffle>
-<a href='#' id='lshuffle' onMouseOver='popLayer(\"shuffle\",\"lshuffle\")' onMouseOut='hideLayer()'>
-Shuffle the images</A><br/>
-
-<a href='#' id='llimit' onMouseOver='popLayer(\"limit\",\"llimit\")' onMouseOut='hideLayer()'>
-Limit</A>: only process&nbsp;
-<input type='text' name='limit' VALUE='$limit' size='4'>&nbsp;
-images<br/>
-
-<a href='#' id='lcont' onMouseOver='popLayer(\"cont\",\"lcont\")' onMouseOut='hideLayer()'>
-<I>Continuation:</I></a><br />
-<input type='radio' name='apcontinue' VALUE='1' $apcontinuecheck>
-Continue unfinished run <font size=-2><I>(default)</I></font><br/>
-<input type='radio' name='apcontinue' VALUE='0' $apreproccheck>
-Reprocess all images<br/><br/>
-
-<HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid;
- border-collapse: collapse;'>
-
-<input type='checkbox' name='commit' $commit>
-<a href='#' id='lcommit' onMouseOver='popLayer(\"commit\",\"lcommit\")' onMouseOut='hideLayer()'>
-<B>Commit results to database</B></A><br/>
-";
-	echo "<!-- END Appion Loop Param -->";
+	echo "<HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid; border-collapse: collapse;'>\n";
+	echo "<input type='checkbox' name='commit' $commit>\n";
+	echo docpop('commit','<b>Commit results to database</b>');
+	echo "<br />\n";
+	echo "<!-- END Appion Loop Param -->\n";
 };
 
 function appionLoopSummaryTable () {
@@ -365,7 +355,7 @@ function particleinfopopup(infoname){
 
 
 function createParticleLoopTable ($defthresh, $defmaxthresh) {
-	echo "<!-- BEGIN Particle Loop Param -->";
+	echo "<!-- BEGIN Particle Loop Param -->\n";
 //	prettytable2();
 //	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><font COLOR=#DDDDDD>Appion Loop Params</font></TD></TR>
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
@@ -382,78 +372,60 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$nojpegsv = ($_POST['nojpegs']=="on") ? "CHECKED" : "";
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
 	if ($defthresh != -1) {
-		echo "
-<B>Peak thresholds:</B><br/>
-
-<input type='text' name='thresh' VALUE='$threshv' size='4'>&nbsp;
-<a href='#' id='lminthresh' onMouseOver='popLayer(\"minthresh\",\"lminthresh\")' onMouseOut='hideLayer()'>
-Minimum threshold</A><br/>
-
-<input type='text' name='maxthresh' VALUE='$maxthreshv' size='4'>&nbsp;
-<a href='#' id='lmaxthresh' onMouseOver='popLayer(\"maxthresh\",\"lmaxthresh\")' onMouseOut='hideLayer()'>
-Maximum threshold</A><br/>
-
-<input type='text' name='maxpeaks' VALUE='$maxpeaksv' size='4'>&nbsp;
-<a href='#' id='lmaxpeaks' onMouseOver='popLayer(\"maxpeaks\",\"lmaxpeaks\")' onMouseOut='hideLayer()'>
-Max number of particles allowed per image</A><br/>
-<br/>
-";
+		echo "<B>Peak thresholds:</B><br/>\n";
+		echo "<input type='text' name='thresh' VALUE='$threshv' size='4'>\n";
+		echo docpop('minthresh',' Minimum threshold');
+		echo "<br />\n";
+		echo "<input type='text' name='maxthresh' VALUE='$maxthreshv' size='4'>\n";
+		echo docpop('maxthresh',' Maximum threshold');
+		echo "<br />\n";		
+		echo "<input type='text' name='maxpeaks' VALUE='$maxpeaksv' size='4'>\n";
+		echo docpop('maxpeaks',' Max number of particles allowed per image');
+		echo "<br />\n";
+		echo "<br />\n";
 	}
-	echo"
-<B>Filter Values:</B><br/>
+	echo"<b>Filter Values:</b><br />\n";
+	echo "<input type='text' name='lp' VALUE='$lpv' size='4'>\n";
+	echo docpop('lpval',' Low Pass');
+	echo "<font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br />\n";
+	echo "<input type='text' name='hp' VALUE='$hpv' size='4'>\n";
+	echo docpop('hpval', 'High Pass');
+	echo "<font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br />\n";
+	echo "<input type='text' name='median' VALUE='$medianv' size='4'>\n";
+	echo docpop('medianval',' Median');
+	echo "<font size=-2><I>(in pixels; 0 = off)</I></font><br />\n";
+	echo "<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>\n";
+	echo docpop('pixlimit',' Pixel Limit');
+	echo "<font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br />\n";
+	echo "<input type='text' name='bin' VALUE='$binv' size='4'>\n";
+	echo docpop('binval',' Binning');
+	echo "<font size=-2><I>(power of 2)</I></font><br />\n";
+	echo "<br />\n";
+	echo "<B>Defocal pairs:</B><br />\n";
+	echo "<input type='checkbox' name='defocpair' $defocpairv>\n";
+	echo docpop('defocpair',' Calculate shifts for defocal pairs');
+	echo "<br />\n";
+	echo "<br />\n";
 
-<input type='text' name='lp' VALUE='$lpv' size='4'>&nbsp;
-<a href='#' id='llpval' onMouseOver='popLayer(\"lpval\",\"llpval\")' onMouseOut='hideLayer()'>
-Low Pass</A> <font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br/>
-
-<input type='text' name='hp' VALUE='$hpv' size='4'>&nbsp;
-<a href='#' id='lhpval' onMouseOver='popLayer(\"hpval\",\"lhpval\")' onMouseOut='hideLayer()'>
-High Pass</A> <font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br/>
-
-<input type='text' name='median' VALUE='$medianv' size='4'>&nbsp;
-<a href='#' id='lmedianval' onMouseOver='popLayer(\"medianval\",\"lmedianvalval\")' onMouseOut='hideLayer()'>
-Median</A> <font size=-2><I>(in Pixels; 0 = off)</I></font><br/>
-
-<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>&nbsp;
-<a href='#' id='lpixlimit' onMouseOver='popLayer(\"pixlimit\",\"lpixlimitval\")' onMouseOut='hideLayer()'>
-Pixel Limit</A> <font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br/>
-
-<input type='text' name='bin' VALUE='$binv' size='4'>&nbsp;
-<a href='#' id='lbinval' onMouseOver='popLayer(\"binval\",\"lbinval\")' onMouseOut='hideLayer()'>
-Binning</A> <font size=-2><I>(power of 2)</I></font><br/>
-<br/>
-
-<B>Defocal pairs:</B><br/>
-<input type='checkbox' name='defocpair' $defocpairv>&nbsp;
-<a href='#' id='ldefocpair' onMouseOver='popLayer(\"defocpair\",\"ldefocpair\")' onMouseOut='hideLayer()'>
-Calculate shifts for defocal pairs</A><br/>
-<br/>
-<B>Advanced options:</B><br/>";
+	echo "<b>Advanced options:</b><br />\n";
 	if ($defthresh != -1) {
-		echo "
-
-<input type='text' name='maxsize' VALUE='$maxsizev' size='4'>&nbsp;
-<a href='#' id='lmaxsize' onMouseOver='popLayer(\"maxsize\",\"lmaxsize\")' onMouseOut='hideLayer()'>
-Maximum peak area multiple</A><br/>
-
-<input type='text' name='overlapmult' VALUE='$overlapmultv' size='4'>&nbsp;
-<a href='#' id='loverlapmult' onMouseOver='popLayer(\"overlapmult\",\"loverlapmult\")' onMouseOut='hideLayer()'>
-Minimum peak overlap distance multiple</A><br/>
-		";
-	} else {
-		echo "
-<input type='checkbox' name='nojpegs' $nojpegsv>&nbsp;
-<a href='#' id='lnojpegs' onMouseOver='popLayer(\"nojpegs\",\"lnojpegs\")' onMouseOut='hideLayer()'>
-Do NOT create summary peak jpegs</A><br/>
-		";
+		echo "<input type='text' name='maxsize' VALUE='$maxsizev' size='4'>\n";
+		echo docpop('maxsize','Maximum peak area multiple');
+		echo "<br />\n";
+		echo "<input type='text' name='overlapmult' VALUE='$overlapmultv' size='4'>\n";
+		echo docpop('overlapmult',' Minimum peak overlap distance multiple');
+		echo "<br />\n";
 	}
-	echo "
-<input type='checkbox' name='invert' $invertv>&nbsp;
-<a href='#' id='linvert' onMouseOver='popLayer(\"invert\",\"linvert\")' onMouseOut='hideLayer()'>
-Invert image density</A><br/>
-";
-	echo "<!-- END Particle Loop Param -->";
-};
+	else {
+		echo "<input type='checkbox' name='nojpegs' $nojpegsv>\n";
+		echo docpop('nojpegs',' Do NOT create summary peak jpegs');
+		echo "<br />\n";
+	}
+	echo "<input type='checkbox' name='invert' $invertv>\n";
+	echo docpop('invert',' Invert image density');
+	echo "<br />\n";
+	echo "<!-- END Particle Loop Param -->\n";
+}
 
 function parseParticleLoopParams ($type) {
 	// CHECK FOR ERRORS

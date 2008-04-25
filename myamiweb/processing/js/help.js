@@ -29,8 +29,16 @@ var help = {
 		'kfactor' : 'The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes. Cannot be used with multi-scale dogpicker: numslices or sizerange',
 		'numslices' : 'Defines the number of different sizes (or slices) to break up the size range into for separating particles of different size.',
 		'sizerange' : 'Defines the range of sizes for separating particles of different size.',
-		'invert' : 'Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.',
+		'invert' : 'If the density of your template is opposite the density of your micrographs, use this flag.  For example, if you are using a template created from negatively-stained data to process ice images, check this box.',
 		'nojpegs' : 'Do NOT write out the summary jpegs for image assessor.',
+		'edgethresh' : 'The threshold set for edge detection. ACE searches a range of values to determine a good threshold, but this value should be increased if there are more edges in the power spectrum than in the ring.  Decrease if no edges are detected.',
+		'pfact' : 'Location of the upper cutoff frequency.  If thon rings extend beyond the power spectrum cutoff frequency, increase this value.  In cases of low signal to noise ratio with few thon rings, decrease this value.',
+		'drange' : 'Use in cases where the signal to noise ratio is so high that the edge detection is incorrect.',
+		'resamplefr': 'Sets the sampling size of the CTF.  At high defoci or at higher magnifications, the first thon rings may be so close to the origin that they are not processed by ACE. In these cases raise the resampling value (2.0 works well in these cases).<br/><br/><TABLE><TR><TD COLSPAN=2>typical values for defocus/apix</TD></TR><TR><TD>0.5</TD><TD>1.2</TD></TR><TR><TD>1.0</TD><TD>1.5</TD></TR><TR><TD>1.5</TD><TD>1.6</TD></TR><TR><TD>2.0</TD><TD>1.8</TD></TR><TR><TD>3.0</TD><TD>2.2</TD></TR><TR><TD>4.0</TD><TD>2.7</TD></TR></TABLE><br/>For example, with defocus = 2.0 (-2.0x10<SUP>-6</SUP> m) and apix (&Aring;/pixel) = 1.63<br/>then defocus/apix = 1.22 and you should use resamplefr=1.6<br/>(as long as its close it should work.)',
+		'overlap' : 'During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value (n) will result in successive images having an overlap of (1-n)*field size. Increase in cases of very low signal to noise ratio.',
+		'field' : 'During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value refers to the width (in pixels) of the cropped images.',
+		'cs' : 'Also referred to as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is specific to the microscope',
+		'pdiam' : 'This will be the diameter used by the leginon image viewer for displaying picked particles -	it will NOT affect the size of the boxed particles later on, this is only for display purposes.',
 
 /**
 * these should be separate

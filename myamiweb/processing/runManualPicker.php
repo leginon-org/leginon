@@ -56,15 +56,16 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
                  }
         </SCRIPT>\n";
   $javafunctions .= appionLoopJavaCommands();
+  $javafunctions .= writeJavaPopupFunctions('eman');
   $javafunctions .= particleLoopJavaCommands();
   writeTop("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
 
   if ($extra) {
-    echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+    echo "<font COLOR='#DD0000' SIZE=+2>$extra</font>\n<HR>\n";
   }
   echo"
   <form name='viewerform' method='POST' ACTION='$formAction'>
-  <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+  <input type='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
   $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
@@ -81,18 +82,18 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 
   echo"
   <P>
-  <TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
+  <table BORDER=0 CLASS=tableborder CELLPADDING=15>
   <TR>
     <TD VALIGN='TOP'>";
 
   createAppionLoopTable($sessiondata, $defrunid, "extract");
 
   if (!$prtlrunIds) {
-    echo"<FONT COLOR='RED'><B>No Particles for this Session</B></FONT>\n";
-    echo"<INPUT TYPE='HIDDEN' NAME='pickrunid' VALUE='None'>\n";
+    echo"<font COLOR='RED'><B>No Particles for this Session</B></font>\n";
+    echo"<input type='HIDDEN' NAME='pickrunid' VALUE='None'>\n";
   }
   else {
-    echo "<BR/>Edit Particle Picks:
+    echo "<br />Edit Particle Picks:
     <SELECT NAME='pickrunid'>\n";
     echo "<OPTION VALUE='None'>None</OPTION>";
     foreach ($prtlrunIds as $prtlrun){
@@ -108,37 +109,36 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     echo "</SELECT>\n";
   }
   $diam = ($_POST['diam']) ? $_POST['diam'] : "";
-  echo"
-    <TD CLASS='tablebg'>
-    <B>Particle Diameter:</B><BR>
-    <INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
-    Particle diameter for result images <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-    <BR><BR>";
-  echo"
-    <B>Picking Icon</B><I>
-		<BR/>(only for visual purposes, does not affect data)</I>:<BR/>
-    <SELECT NAME='shape'>\n";
+  echo "<TD CLASS='tablebg'>\n";
+  echo "<b>Particle Diameter:</b><br />\n";
+  echo "<input type='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
+  echo docpop('pdiam','Particle diameter for result images');
+  echo "<font SIZE=-2><I>(in &Aring;ngstroms)</I></font>\n";
+  echo "<br /><br />\n";
+  echo "<B>Picking Icon</B><I>\n";
+  echo "<br />(only for visual purposes, does not affect data)</I>:<br />\n";
+  echo "<SELECT NAME='shape'>\n";
   $shapes = array('plus', 'circle', 'cross', 'point', 'square', 'diamond', );
   foreach($shapes as $shape) {
     $s = ($_POST['shape']==$shape) ? 'SELECTED' : '';
     echo "<OPTION $s>$shape</OPTION>\n";
   }
-  echo "</SELECT>\n&nbsp;Picking icon shape<BR/>";
+  echo "</SELECT>\n&nbsp;Picking icon shape<br />";
   $shapesize = (int) $_POST['shapesize'];
   echo"
-    <INPUT TYPE='text' NAME='shapesize' VALUE='$shapesize' SIZE='3'>&nbsp;
-    Picking icon diameter <FONT SIZE=-2><I>(in pixels; 0 = autosize)</I></FONT><BR/>
+    <input type='text' NAME='shapesize' VALUE='$shapesize' SIZE='3'>&nbsp;
+    Picking icon diameter <font SIZE=-2><I>(in pixels; 0 = autosize)</I></font><br />
 		<I>16 pixels is best</I>
-    <BR/><BR/>";    
+    <br /><br />";    
   createParticleLoopTable(-1, -1);
   echo "
     </TD>
   </TR>
   <TR>
     <TD COLSPAN='2' ALIGN='CENTER'><HR/>";
-  /*  <INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
+  /*  <input type='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
     Test these settings on image:
-    <INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
+    <input type='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
     <HR>
     </TD>
   </TR>
@@ -152,19 +152,19 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     echo "<option $s >$host</option>\n";
   }
   echo "</select>
-  <BR>
-  User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
-  Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
+  <br />
+  User: <input type='text' name='user' value=".$_POST['user'].">
+  Password: <input type='password' name='password' value=".$_POST['password'].">\n";
   echo"
     </select>*/
-  echo"<BR/>";
+  echo"<br />";
   //echo"<input type='submit' name='process' value='Just Show Command'>";
-  echo"<input type='submit' name='process' value='Run ManualPicker'><BR>";
-  echo"<FONT class='apcomment'>Submission will NOT run Manual Picker,<BR/>
-    only output a command that you can copy and paste into a unix shell</FONT>
+  echo"<input type='submit' name='process' value='Run ManualPicker'><br />";
+  echo"<font class='apcomment'>Submission will NOT run Manual Picker,<br />
+    only output a command that you can copy and paste into a unix shell</font>
     </TD>
   </TR>
-  </TABLE>";
+  </table>";
   writeBottom();
   ?>
 
@@ -228,7 +228,7 @@ function runManualPicker() {
     $runid = $_POST[runid];
     $outdir = $_POST[outdir];
     if (substr($outdir,-1,1)!='/') $outdir.='/';
-    echo "<B>ManualPicker Command:</B><BR>$command";
+    echo "<B>ManualPicker Command:</B><br />$command";
     $testjpg=ereg_replace(".mrc","",$testimage);
     $jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
     $ccclist=array();
@@ -241,15 +241,15 @@ function runManualPicker() {
 
   echo"
     <P>
-    <TABLE WIDTH='600'>
+    <table WIDTH='600'>
     <TR><TD COLSPAN='2'>
-    <B>Manual Picker Command:</B><BR>
+    <B>Manual Picker Command:</B><br />
     $command<HR>
     </TD></TR>";
 
   appionLoopSummaryTable();
   particleLoopSummaryTable();
-  echo"</TABLE>\n";
+  echo"</table>\n";
   writeBottom();
 }
 

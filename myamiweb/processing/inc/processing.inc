@@ -45,6 +45,11 @@ function getHosts(){
 	return array();
 }
 
+// write popup function 'a href'
+function docpop($key,$text) {
+	return "<a href='#' id='l".$key."' onMouseOver='popLayer(\"".$key."\",\"l".$key."\")' onMouseOut='hideLayer()'>$text</a>\n";
+}
+
 function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True){
   global $_GET;
   echo"<HTML>

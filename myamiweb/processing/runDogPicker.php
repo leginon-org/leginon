@@ -61,11 +61,11 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
 
 	if ($extra) {
-		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+		echo "<font COLOR='#DD0000' size=+2>$extra</font>\n<hr>\n";
 	}
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
-	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+	<input type='HIDDEN' NAME='lastSessionId' value='$sessionId'>\n";
 
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
@@ -81,64 +81,63 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	echo"
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
-	<TR>
-		<TD VALIGN='TOP'>";
+	<tr>
+		<td VALIGN='TOP'>";
 	srand(time());
 	if ((rand()%9) > 7) {
 		echo"
-	<CENTER><IMG SRC='img/dogpicker.jpg' WIDTH='300'></CENTER><BR/>\n";
+	<center><IMG SRC='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
 	}
 	createAppionLoopTable($sessiondata, $defrunid, "extract");
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
-	echo"
-		<TD CLASS='tablebg'>
-		<B>Particle Diameter:</B><BR>
-		<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
-		Particle diameter for filtering <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-		<BR><BR>";
+	echo "<td CLASS='tablebg'>\n";
+	echo "<b>Particle Diameter:</b><br />\n";
+	echo "<input type='text' NAME='diam' value='$diam' size='4'>\n";
+	echo docpop('pdiam','Particle diameter for filtering');
+	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
+	echo "<br /><br />\n";
 	createParticleLoopTable(0.7, 1.5);
 	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "";
 	$numslices = ($_POST['numslices']) ? $_POST['numslices'] : "";
 	$sizerange = ($_POST['sizerange']) ? $_POST['sizerange'] : "";
-	echo "
-		<INPUT TYPE='text' NAME='kfactor' VALUE='$kfactor' SIZE='6'>&nbsp;
-<a href='#' id='lkfactor' onMouseOver='popLayer(\"kfactor\",\"lkfactor\")' onMouseOut='hideLayer()'>
-		K-factor</A>&nbsp;<FONT SIZE=-2><I>(sloppiness)</I></FONT>
-		<BR/><BR/>
-		<B>Multi-scale dogpicker:</B><BR/>
-		<INPUT TYPE='text' NAME='numslices' VALUE='$numslices' SIZE='3'>&nbsp;
-<a href='#' id='lnumslices' onMouseOver='popLayer(\"numslices\",\"lnumslices\")' onMouseOut='hideLayer()'>
-		Number of Slices</A>&nbsp;<FONT SIZE=-2><I>(number of sizes)</I></FONT>
-		<BR/>
-		<INPUT TYPE='text' NAME='sizerange' VALUE='$sizerange' SIZE='3'>&nbsp;
-<a href='#' id='lsizerange' onMouseOver='popLayer(\"sizerange\",\"lsizerange\")' onMouseOut='hideLayer()'>
-		Size Range</A>&nbsp;<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-		<BR/>
-		<HR>
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>
-		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
+	echo "<input type='text' name='kfactor' value='$kfactor' size='6'>\n";
+	echo docpop('kfactor',' K-factor');
+	echo " <font size=-2><i>(sloppiness)</i></font>\n";
+	echo "<br /><br />\n";
+	echo "<b>Multi-scale dogpicker:</b><br />\n";
+	echo "<input type='text' name='numslices' value='$numslices' size='3'>\n";
+	echo docpop('numslices',' Number of Slices');
+	echo " <font size=-2><i>(number of sizes)</i></font>\n";
+	echo "<br />\n";
+	echo "<input type='text' name='sizerange' value='$sizerange' size='3'>\n";
+	echo docpop('sizerange',' Size Range');
+	echo " <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
+	echo "<br />\n";
+	echo "<hr>
+		</td>
+	</tr>
+	<tr>
+		<td COLSPAN='2' ALIGN='center'>
+		<hr>
+		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these settings on image:
-		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
+		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
 
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>\n";
+		</td>
+	</tr>
+	<tr>
+		<td COLSPAN='2' ALIGN='center'>\n";
 	echo "</select>
-		<BR>
+		<br />
 		<input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run DogPicker'><BR>
-		</TD>
-	</TR>
+		<input type='submit' name='process' value='Run DogPicker'><br />
+		</td>
+	</tr>
 	</TABLE>";
 	writeBottom();
 	?>
 
-	</CENTER>
+	</center>
 	</FORM>
 	<?
 }
@@ -214,7 +213,7 @@ function runDogPicker() {
 		$runid = $_POST[runid];
 		$outdir = $_POST[outdir];
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		echo "<B>DogPicker Command:</B><BR>$command";
+		echo "<B>DogPicker Command:</B><br />$command";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
@@ -228,10 +227,10 @@ function runDogPicker() {
 	echo"
 		<P>
 		<TABLE WIDTH='600'>
-		<TR><TD COLSPAN='2'>
-		<B>Dog Picker Command:</B><BR>
-		$command<HR>
-		</TD></TR>";
+		<tr><td COLSPAN='2'>
+		<B>Dog Picker Command:</B><br />
+		$command<hr>
+		</td></tr>";
 	appionLoopSummaryTable();
 	particleLoopSummaryTable();
 	echo"</TABLE>\n";
