@@ -4,6 +4,8 @@ import time
 import os
 import subprocess
 import cPickle
+import sys
+import math
 ## PIL
 #import Image
 ## spider
@@ -429,7 +431,7 @@ def createFactorMap(f1, f2, rundir, dataext):
 
 #===============================
 def hierarchCluster(alignedstack, numpart,
-		numclasses=40, factorlist="1-3", corandata="coran/corandata", dataext=".spi"):
+		numclasses=40, factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
 
@@ -437,9 +439,17 @@ def hierarchCluster(alignedstack, numpart,
 
 	"""
 	rundir = "cluster"
-	classavg = ("classavgstack%03d" % numclasses)
-	classvar = ("classvarstack%03d" % numclasses)
+	classavg = rundir+"/"+("classavgstack%03d" % numclasses)
+	classvar = rundir+"/"+("classvarstack%03d" % numclasses)
 	apParam.createDirectory(rundir)
+	if os.path.isfile(rundir+"/dendogramdoc.spi"):
+		os.remove(rundir+"/dendogramdoc.spi")
+
+	### make list of factors 	 
+	factorstr = "" 	 
+	for fact in factorlist: 	 
+		factorstr += str(fact)+","
+	factorstr = factorstr[:-1]
 
 	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
@@ -459,13 +469,15 @@ def hierarchCluster(alignedstack, numpart,
 	mySpider.close()
 
 	### determining threshold cutoff for number of classes
-	thresh = 0.5
-	stepsize = 0.25
+	minthresh = 0.0
+	maxthresh = 1.0
 	classes = 0
 	count = 0
 	
-	while(classes != numclasses and count < 100):
+	sys.stderr.write("finding threshold")
+	while(classes != numclasses and count < 30):
 		count += 1
+		thresh = (maxthresh-minthresh)/3.0 + minthresh
 		classfile = rundir+"/classes"
 		if os.path.isfile(classfile+dataext):
 			os.remove(classfile+dataext)
@@ -480,12 +492,13 @@ def hierarchCluster(alignedstack, numpart,
 		claf = open(classfile+dataext, "r")
 		classes = len(claf.readlines()) - 1
 		claf.close()
-		print thresh, classes
-		if classes > numclasses:
-			thresh += stepsize
+		if classes > classes:
+			minthresh = thresh
 		elif classes < numclasses:
-			thresh -= stepsize
-		stepsize /= 2.0
+			maxthresh = thresh
+		sys.stderr.write(".")
+		#print " ",classes, thresh, maxthresh, minthresh
+	print count, "rounds for", classes, "classes"
 
 	### create class doc files
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
@@ -496,20 +509,27 @@ def hierarchCluster(alignedstack, numpart,
 		rundir+"/classdoc****", # class doc file
 	)
 
-	if os.path.isfile(rundir+"/"+classavg+dataext):
-		os.remove(rundir+"/"+classavg+dataext)
-	if os.path.isfile(rundir+"/"+classvar+dataext):
-		os.remove(rundir+"/"+classvar+dataext)
+	### delete existing files
+	sys.stderr.write("delete existing files")
+	for dext in (".hed", ".img", dataext):
+		if os.path.isfile(classavg+dext):
+			os.remove(classavg+dext)
+			sys.stderr.write("!")
+		if os.path.isfile(classvar+dext):
+			os.remove(classvar+dext)
+			sys.stderr.write("!")
+	print ""
 
 	### create class averages
-	for classnum in range(1, classes):
+	for i in range(classes):
+		classnum = i+1
 		mySpider.toSpiderQuiet(
 			"AS R",
 			alignedstack+"@*****",
 			rundir+("/classdoc%04d" % (classnum)),
 			"A",
-			rundir+("/"+classavg+"@%04d" % (classnum)),
-			rundir+("/"+classvar+"@%04d" % (classnum)),
+			(classavg+"@%04d" % (classnum)),
+			(classvar+"@%04d" % (classnum)),
 		)
 	mySpider.close()
 
@@ -518,6 +538,8 @@ def hierarchCluster(alignedstack, numpart,
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendogram.ps dendogram.png"
+	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
 
 	return
 

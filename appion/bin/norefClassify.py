@@ -25,7 +25,7 @@ class NoRefClassScript(appionScript.AppionScript):
 			help="No ref database id", metavar="ID#")
 
 		#with defaults
-		self.parser.add_option("-f", "--factor-list", dest="factorlist", type="str", default="1-3",
+		self.parser.add_option("-f", "--factor-list", dest="factorstr", type="str", default="1,2,3",
 			help="List of factors to use in classification", metavar="#")
 		self.parser.add_option("-N", "--num-class", dest="numclass", type="int", default=40,
 			help="Number of classes to make", metavar="#")
@@ -33,8 +33,8 @@ class NoRefClassScript(appionScript.AppionScript):
 			action="store_true", help="Commit noref class to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit noref class to database")
-		#self.parser.add_option("-o", "--outdir", dest="outdir",
-		#	help="Output directory", metavar="PATH")
+		self.parser.add_option("-o", "--outdir", dest="outdir",
+			help="Output directory", metavar="PATH")
 
 	#=====================
 	def checkConflicts(self):
@@ -49,7 +49,7 @@ class NoRefClassScript(appionScript.AppionScript):
 		self.params['outdir'] = self.norefdata['path']['path']
 
 	#=====================
-	def insertNoRefClassRun(self, insert=False):
+	def insertNoRefClass(self, insert=False):
 		# create a norefParam object
 		classq = appionData.ApNoRefClassRunData()
 		classq['num_classes'] = self.params['numclass']
@@ -59,9 +59,9 @@ class NoRefClassScript(appionScript.AppionScript):
 			apDisplay.printWarning("Classification of "+str(classq['num_classes'])+" classes for norefid="+\
 				str(self.params['norefid'])+"\nis already in the database")
 
-		classq['factor_list'] = self.params['factorlist']
-		classq['classFile'] = ("classavgstack%03d.hed" % self.params['numclass'])
-		classq['varFile'] = ("classvarstack%03d.hed" % self.params['numclass'])
+		classq['factor_list'] = self.params['factorstr']
+		classq['classFile'] = ("cluster/classavgstack%03d" % self.params['numclass'])
+		classq['varFile'] = ("cluster/classvarstack%03d" % self.params['numclass'])
 
 		apDisplay.printMsg("inserting classification parameters into database")
 		if insert is True:
@@ -91,12 +91,16 @@ class NoRefClassScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 
-		alignedstack = os.path.join(self.norefdata['path']['path'], "alignedstack.spi")
-		numpart = self.norefdata['num_particles']
+		alignedstack = os.path.join(self.norefdata['path']['path'], "alignedstack")
+		numpart = self.norefdata['norefParams']['num_particles']
+		factorlist = self.params['factorstr'].split(",")
+		if len(factorlist) > self.norefdata['norefParams']['num_factors']:
+			print "factorlist",factorlist
+			apDisplay.printError("Requested factor list is longer than available factors")
 
 		#run the classification
 		alignment.hierarchCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
-			factorlist=self.params['factorlist'], corandata="coran/corandata", dataext=".spi")
+			factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
 
 		if self.params['commit'] is True:
 			self.insertNoRefClass(insert=True)
