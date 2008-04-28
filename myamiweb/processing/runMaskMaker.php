@@ -25,43 +25,6 @@ else {
 	createMMForm();
 }
 
-function maskMakerJavaCommands () {
-	$minthresh = $_POST[minthresh];
-	$maxthresh = $_POST[maxthresh];
-	$blur = $_POST[blur];
-	$bin = $_POST[bin];
-	$masktype = ($_POST[masktype]);
-	$crudstd = $_POST[crudstd];
-
-	echo"
-      <SCRIPT LANGUAGE='JavaScript'>
-		function mminfopopup(infoname){
-			 var newwindow=window.open('','name','height=250, width=400');
-			 newwindow.document.write('<HTML><BODY>');
-			 if (infoname=='minthresh'){
-			    newwindow.document.write('Lower limit in gradient amplitude for Canny edge detection.<BR>This should be between 0.0 to 1.0 and should be smaller than that of the high limit<BR>');
-			 }
-			 if (infoname=='maxthresh'){
-			    newwindow.document.write('Threshold for Canny edge detector to consider as an edge in the gradient amplitude map.<BR>  The edge is then extended continuously from such places until the gradient falls below the Low threshold<BR>The value should be between 0.0 to 1.0 and should be close to 1.0');
-			 }
-			 if (infoname=='blur'){
-			    newwindow.document.write('Gaurssian filter bluring used for producing the gradient amplitude map<BR> 1.0=no bluring');
-			 }
-			 if (infoname=='crudstd'){
-			    newwindow.document.write('Threshold to eliminate false positive regions that picks up the background<BR> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<BR> Leave it blank or as 0.0 if not considered');
-			 }
-			 if (infoname=='masktype'){
-			    newwindow.document.write('Crud: Selexon crudfinder. Canny edge detector and Convex Hull is used<BR>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<BR>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.');
-			 }
-			 if (infoname=='bin'){
-			    newwindow.document.write('Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Typically you want to use 4 or 8 depending on the quality of you templates.');
-			 }
-			 newwindow.document.write('</BODY></HTML>');
-			 newwindow.document.close();
-		}
-      </SCRIPT>\n";
-}
-
 function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 	echo "<!-- BEGIN Mask Maker Param -->";
 //	prettytable2();
@@ -76,8 +39,8 @@ function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 	$masktypes = array('crud','edge','aggr');
 	$masktypeval = ($_POST['masktype']) ? $_POST['masktype'] : 'crud';
 	$masktype = $masktypeval;
-	echo "
-<B>Mask Type</B>\n<SELECT NAME='masktype'>\n";
+	echo docpop('masktype','<b>Mask Type : </b>');
+	echo "\n<SELECT NAME='masktype'>\n";
 		foreach ($masktypes as $masktype) {
 			echo "<OPTION VALUE='$masktype' ";
 			// make crud selected by default
@@ -89,37 +52,26 @@ function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 
 <B>Canny Edge thresholds:</B><BR>
 
-<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('blur')\">
-Gradient bluring</A><BR>
-
-<INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthresh' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('maxthresh')\">
-High threshold for the start of edge detection</A><BR>
-
-<INPUT TYPE='text' NAME='minthresh' VALUE='$minthresh' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('minthresh')\">
-Low threshold to extend the edge down to</A><BR>
-
-<BR>
-
-<B>Image Option:</B><BR>
-
-<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('bin')\">
-Binning</A><BR>
-<BR>
-
-<B>Advanced thresholding:</B><BR>
-<INPUT TYPE='text' NAME='crudstd' VALUE='$crudstd' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('crudstd')\">
-Standard deviation threshold</A><BR>
-
-<INPUT TYPE='text' NAME='convolve' VALUE='$convolve' SIZE='4'>&nbsp;
-<A HREF=\"javascript:mminfopopup('crudstd')\">
-Convoluted map threshold for aggregate mask (0.0-1.0)</A><BR>
-
-";
+<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>\n";
+	echo docpop('blur','Gradient bluring');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthresh' SIZE='4'>\n";
+	echo docpop('crudmaxthresh','High threshold for the start of edge detection');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='minthresh' VALUE='$minthresh' SIZE='4'>\n";
+	echo docpop('crudminthresh','Low threshold for edge extension');
+	echo "<br /><br />\n";
+	echo "<B>Image Option:</B><br />\n";
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
+	echo docpop('binval','Binning');
+	echo "<br /><br />\n";
+	echo "<B>Advanced thresholding:</B><br />\n";
+	echo "<INPUT TYPE='text' NAME='crudstd' VALUE='$crudstd' SIZE='4'>\n";
+	echo docpop('crudstd','Standard deviation threshold');
+	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='convolve' VALUE='$convolve' SIZE='4'>\n";
+	echo docpop('convolve','Convoluted map threshold for aggregate mask (0.0-1.0)');
+	echo "<br />\n";
 	echo "<!-- END Mask Maker Param -->";
 };
 
@@ -219,7 +171,8 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		 }
 	</SCRIPT>\n";
 	$javascript.=appionLoopJavaCommands();
-	maskMakerJavaCommands();
+	$javascript.=writeJavaPopupFunctions('eman');
+
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
@@ -250,9 +203,10 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		</TD>
 		<TD CLASS='tablebg'>
 			<B>Particle Diameter:</B><BR>
-			<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
-			Particle diameter as referencefor template <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-			<BR><BR>";
+			<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
+	echo docpop('pdiam','Particle diameter as reference for template');
+	echo "<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
+	echo "<br /><br />";
 	echo"
 			<B>Minimal Mask Region Diameter:</B><BR>
 			<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>&nbsp;

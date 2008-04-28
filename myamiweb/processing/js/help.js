@@ -39,6 +39,11 @@ var help = {
 		'field' : 'During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value refers to the width (in pixels) of the cropped images.',
 		'cs' : 'Also referred to as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is specific to the microscope',
 		'pdiam' : 'This will be the diameter used by the leginon image viewer for displaying picked particles -	it will NOT affect the size of the boxed particles later on, this is only for display purposes.',
+		'crudminthresh' : 'Lower limit in gradient amplitude for Canny edge detection.<BR>This should be between 0.0 to 1.0 and should be smaller than that of the high limit',
+		'crudmaxthresh' : 'Threshold for Canny edge detector to consider as an edge in the gradient amplitude map.<BR>  The edge is then extended continuously from such places until the gradient falls below the Low threshold<BR>The value should be between 0.0 to 1.0 and should be close to 1.0',
+		'blur' : 'Gaussian filter bluring used for producing the gradient amplitude map<BR> 1.0=no bluring',
+		'crudstd' : 'Threshold to eliminate false positive regions that picks up the background<BR> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<BR> Leave it blank or as 0.0 if not considered',
+		'masktype' : 'Crud: Selexon crudfinder. Canny edge detector and Convex Hull is used<BR>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<BR>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.',
 
 /**
 * these should be separate
