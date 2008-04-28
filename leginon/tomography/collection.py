@@ -149,7 +149,7 @@ class Collection(object):
 		image_pixel_size = self.pixel_size*self.preset['binning']['x']
 
 		tilt0 = tilts[0]
-		position0 = self.node.getPixelPosition(self.settings['move type'])
+		position0 = self.node.getPixelPosition('image shift')
 		defocus0 = self.node.getDefocus()
 
 		m = 'Initial feature position: %g, %g pixels.'

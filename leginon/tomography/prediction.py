@@ -104,6 +104,7 @@ class Prediction(object):
 		for s in self.valid_tilt_series_list:
 			for g in s.tilt_groups:
 				n.append(len(g))
+				print 'n, g.tilts', n, g.tilts
 				gmaxtilt.append(max(g.tilts))
 				gmintilt.append(min(g.tilts))
 		n_max = max(n)
@@ -151,7 +152,17 @@ class Prediction(object):
 								  tilt)
 		#	tilt_group.addTilt(tilt, x, y)
 			## calculate optical axis tilt and offset
-			self.calculate()
+			print tilt,maxtilt,mintilt
+			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)) or abs(tilt) < math.radians(30):
+				## optical axis offset fit is not reliable at small tilts
+				orig_fixed_model = self.fixed_model
+				self.fixed_model = True
+				self.calculate()
+				self.fixed_model = orig_fixed_model
+				print 'return to',self.fixed_model
+			else:
+				print 'current',self.fixed_model
+				self.calculate()
 
 		#	del tilt_group.tilts[-1]
 		#	del tilt_group.xs[-1]
@@ -289,9 +300,7 @@ class Prediction(object):
 
 	def residuals(self, parameters, args_list):
 		residuals_list = []
-		print 'args_list',args_list
 		position_groups = self.model(parameters, args_list)
-		print 'position_groups',position_groups
 		for i, positions in enumerate(position_groups):
 			n = positions.shape[0]
 			cos_tilts, sin_tilts, x0, y0, x, y = args_list[i]
@@ -301,7 +310,6 @@ class Prediction(object):
 			residuals -= positions[:, :2]
 			residuals_list.extend(residuals[:, 0])
 			residuals_list.extend(residuals[:, 1])
-		print 'residuals_list',residuals_list
 		residuals_list = scipy.array(residuals_list, scipy.dtype('d'))
 		residuals_list.shape = (residuals_list.size,)
 		return residuals_list
