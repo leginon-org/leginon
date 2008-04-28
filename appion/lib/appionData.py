@@ -386,6 +386,7 @@ class ApNoRefClassRunData(Data):
 			('num_classes', int),
 #			('cluster_method', str),
 #			('classParams', ApNoRefClassParamData),
+			('factor_list', str),
 			('classFile', str),
 			('varFile', str),
 		)
