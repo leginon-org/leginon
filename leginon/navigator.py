@@ -264,17 +264,16 @@ class Navigator(node.Node):
 		oldshape = self.oldimagedata['image'].shape
 		limit = oldshape
 		location = oldshape[0]/2.0-0.5+self.origmove[0], oldshape[1]/2.0-0.5+self.origmove[1]
-
-		im1 = imagefun.crop_at(self.origimagedata['image'], location, limit, mode='constant', cval=0.0)
-		im2 = imagefun.crop_at(self.newimagedata['image'], 'center', limit)
+		im1 = self.origimagedata['image']
+		im2 = self.newimagedata['image']
 		pc = correlator.phase_correlate(im2, im1, zero=False)
 		subpixelpeak = self.peakfinder.subpixelPeak(newimage=pc, guess=(0.5,0.5), limit=limit)
 		res = self.peakfinder.getResults()
 		pixelpeak = res['pixel peak']
 		unsignedpixelpeak = res['unsigned pixel peak']
 		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
-		r_error = subpixelpeak[0]
-		c_error = subpixelpeak[1]
+		r_error = subpixelpeak[0]+self.origmove[0]
+		c_error = subpixelpeak[1]+self.origmove[1]
 
 		self.setImage(pc, 'Correlation')
 		peaktargets = [(unsignedpixelpeak[1], unsignedpixelpeak[0])]
@@ -301,13 +300,13 @@ class Navigator(node.Node):
 		self.panel.acquisitionDone()
 
 	def reacquireImage(self):
-		if self.newimagedata is None:
+		if self.origimagedata is None:
 			raise RuntimeError('no image to reacquire')
 		# configure camera just like current image
-		cameradata = self.newimagedata['camera']
+		cameradata = self.origimagedata['camera']
 		ccdcamera = cameradata['ccdcamera']
 		## except correction channel should be opposite
-		if self.newimagedata['correction channel']:
+		if self.origimagedata['correction channel']:
 			corchannel = 0
 		else:
 			corchannel = 1
