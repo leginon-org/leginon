@@ -437,6 +437,8 @@ def hierarchCluster(alignedstack, numpart,
 
 	"""
 	rundir = "cluster"
+	classavg = ("classavgstack%03d" % numclasses)
+	classvar = ("classvarstack%03d" % numclasses)
 	apParam.createDirectory(rundir)
 
 	### do hierarchical clustering
@@ -494,10 +496,10 @@ def hierarchCluster(alignedstack, numpart,
 		rundir+"/classdoc****", # class doc file
 	)
 
-	if os.path.isfile(rundir+"/classavgimg"+dataext):
-		os.remove(rundir+"/classavgimg"+dataext)
-	if os.path.isfile(rundir+"/classvarimg"+dataext):
-		os.remove(rundir+"/classvarimg"+dataext)
+	if os.path.isfile(rundir+"/"+classavg+dataext):
+		os.remove(rundir+"/"+classavg+dataext)
+	if os.path.isfile(rundir+"/"+classvar+dataext):
+		os.remove(rundir+"/"+classvar+dataext)
 
 	### create class averages
 	for classnum in range(1, classes):
@@ -506,10 +508,16 @@ def hierarchCluster(alignedstack, numpart,
 			alignedstack+"@*****",
 			rundir+("/classdoc%04d" % (classnum)),
 			"A",
-			rundir+("/classavgimg@%04d" % (classnum)),
-			rundir+("/classvarimg@%04d" % (classnum)),
+			rundir+("/"+classavg+"@%04d" % (classnum)),
+			rundir+("/"+classvar+"@%04d" % (classnum)),
 		)
 	mySpider.close()
+
+	### convert to IMAGIC
+	emancmd = "proc2d "+classavg+".spi "+classavg+".hed"
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 	return
 

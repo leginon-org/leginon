@@ -60,8 +60,8 @@ class NoRefClassScript(appionScript.AppionScript):
 				str(self.params['norefid'])+"\nis already in the database")
 
 		classq['factor_list'] = self.params['factorlist']
-		classq['classFile'] = ("classavgimg%03d.hed" % self.params['numclass'])
-		classq['varFile'] = ("classvarimg%03d.hed" % self.params['numclass'])
+		classq['classFile'] = ("classavgstack%03d.hed" % self.params['numclass'])
+		classq['varFile'] = ("classvarstack%03d.hed" % self.params['numclass'])
 
 		apDisplay.printMsg("inserting classification parameters into database")
 		if insert is True:
