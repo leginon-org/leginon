@@ -56,6 +56,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
                  }
         </SCRIPT>\n";
   $javafunctions .= appionLoopJavaCommands();
+  $javafunctions .= writeJavaPopupFunctions('eman');
   $javafunctions .= particleLoopJavaCommands();
   writeTop("Tilt Aligner Launcher","Tilt Aligner Particle Selection and Editing",$javafunctions);
 
@@ -110,9 +111,10 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
   $diam = ($_POST['diam']) ? $_POST['diam'] : "";
   echo"
     <TD CLASS='tablebg'>
-    <B>Particle Diameter:</B><BR>
-    <INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
-    Particle diameter for result images <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+    <B>Particle Diameter:</B><br />
+    <INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
+  echo docpop('pdiam',' Particle diameter for result images');
+  echo "<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
     <BR><BR>";
   /*echo"
     <B>Picking Icon:</B><BR/>
