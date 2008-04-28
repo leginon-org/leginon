@@ -47,12 +47,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId));
 
-	// --- find hosts to run makestack.py
-	$hosts=getHosts();
-
-	// --- get list of users
-	$users[]=glander;
-
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
 	
@@ -99,15 +93,29 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	    }
 	  }
 	  </SCRIPT>\n";
+	$javascript .= writeJavaPopupFunctions('eman');
 	
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font COLOR='RED'>$extra</font>\n<HR>\n";
 	}
+
+	$helpdiv = "
+	<div id='dhelp'
+		style='position:absolute; 
+        	background-color:FFFFDD;
+        	color:black;
+        	border: 1px solid black;
+        	visibility:hidden;
+        	z-index:+1'
+    		onmouseover='overdiv=1;'
+    		onmouseout='overdiv=0;'>
+	</div>\n";
+	echo $helpdiv;
   
 	echo"
-       <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+       <FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -153,52 +161,53 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	echo"
 	<P>
-	<TABLE BORDER=0 CLASS=tableborder>
-	<TR>
-		<TD VALIGN='TOP'>
-		<TABLE CELLPADDING='5' BORDER='0'>
-		<TR>
-			<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>Stack File Name:</B></A>
-			<INPUT TYPE='text' NAME='single' VALUE='$single'>
-			</TD>
-		</TR>
-		<TR>
-			<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>Stack Run Name:</B></A>
-			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
-			<HR>
-			</TD>
-		</TR>
-		<TR>
-			<TD VALIGN='TOP'>
-			<B>Stack Description:</B><BR>
-			<TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
-			</TD>
-		</TR>
-		<TR>
-			<TD VALIGN='TOP'>	 
-			<B>Output Directory:</B><BR>
-			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='38'>
-			</TD>
-		</TR>
-		<TR>
-			<TD>\n";
+	<table border=0 class=tableborder>
+	<tr>
+		<td valign='TOP'>
+		<table cellpadding='5' border='0'>
+		<tr>
+			<td valign='TOP'>\n";
+	echo docpop('stackname','<b>Stack File Name:</b>');
+	echo "<input type='text' name='single' value='$single'>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "<td valign='top'>\n";
+	echo docpop('runid','<b>Stack Run Name:</b>');
+	echo "<input type='text' name='runid' value='$runidval'>\n";
+	echo "<hr>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "<td valign='top'>\n";
+	echo docpop('stackdescr','<b>Stack Description:</b>');
+	echo "<br />\n";
+	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "<td valign='top'>\n";	 
+	echo "<b>Output Directory:</b><br />\n";
+	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "<td>\n";
 
 	$prtlruns=count($prtlrunIds);
 
 	if (!$prtlrunIds) {
-		echo"<FONT COLOR='RED'><B>No Particles for this Session</B></FONT>\n";
+		echo"<font COLOR='RED'><b>No Particles for this Session</b></font>\n";
 	}
 	else {
-		echo "Particles:
-		<SELECT NAME='prtlrunId'>\n";
+		echo docpop('stackparticles','Particles:');
+		echo "<select name='prtlrunId'>\n";
 		foreach ($prtlrunIds as $prtlrun){
 			$prtlrunId=$prtlrun['DEF_id'];
 			$runname=$prtlrun['name'];
 			$prtlstats=$particle->getStats($prtlrunId);
 			$totprtls=commafy($prtlstats['totparticles']);
-			echo "<OPTION VALUE='$prtlrunId'";
+			echo "<OPTION value='$prtlrunId'";
 			// select previously set prtl on resubmit
 			if ($prtlrunval==$prtlrunId) echo " SELECTED";
 			echo">$runname ($totprtls prtls)</OPTION>\n";
@@ -206,21 +215,21 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</SELECT>\n";
 	}
 	echo"
-		</TD>
-	</TR>
-	<TR>
-		<TD>\n";
+		</td>
+	</tr>
+	<tr>
+		<td>\n";
 
 	$massessruns=count($massessrunIds);
 	$massessname = '';
 	$massessnames= $particle->getMaskAssessNames($sessionId);
 
 	if (!$massessnames) {
-		echo"<FONT class='apcomment'><B>No Mask Assessed for this Session</B></FONT>\n";
+		echo"<font class='apcomment'><b>No Mask Assessed for this Session</b></font>\n";
 	}
 	else {
 		echo "Mask Assessment:
-		<SELECT NAME='massessname'>\n";
+		<SELECT name='massessname'>\n";
 		foreach ($massessnames as $name) {
 			$massessname = $name;
 			$massessruns = $particle->getMaskAssessRunByName($sessionId,$massessname);
@@ -231,7 +240,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 				$permaskkeeps=$massessstats['totkeeps'];
 				$totkeeps = $totkeeps + $permaskkeeps;
 			}
-			echo "<OPTION VALUE='$massessname'";
+			echo "<OPTION value='$massessname'";
 		       	 // select previously set assessment on resubmit
 		       	if ($massessval==$massessname) echo " SELECTED";
 			$totkeepscm=commafy($totkeeps);
@@ -240,32 +249,32 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "</SELECT>\n";
 	}
 	echo"
-		</TD>
-	</TR>
-	<TR>
-		<TD VALIGN='TOP'>
-		<B>Density:</B><BR>
-		<INPUT TYPE='checkbox' NAME='density' $invcheck VALUE='invert'>
-		Invert image density<BR>
-		</TD>
-	</TR>
-	<TR>
-		<TD>
-		<INPUT TYPE='checkbox' NAME='normalize' $normcheck>
-		Normalize Stack Particles<BR>\n";
+		</td>
+	</tr>
+	<tr>
+		<td valign='TOP'>
+		<b>Density:</b><br />
+		<input type='checkbox' name='density' $invcheck value='invert'>\n";
+	echo docpop('stackinv','Invert image density');
+	echo "<br />
+		</td>
+	</tr>
+	<tr>
+		<td>
+		<input type='checkbox' name='normalize' $normcheck>\n";
+	echo docpop('stacknorm','Normalize Stack Particles');
+	echo "<br />\n";
 	if ($ctfdata) {
-	  echo"<INPUT TYPE='checkbox' NAME='phaseflip' onclick='uncheckstig(this)' $phasecheck>"
-		."\nPhaseflip Particle Images<BR>";
-	  echo"<INPUT TYPE='checkbox' NAME='stig' onclick='uncheckflip(this)' $stigcheck>"
-		."\nPhaseflip Micrograph Images <I>(experimental)</I><BR>";
+	  echo"<input type='checkbox' name='phaseflip' onclick='uncheckstig(this)' $phasecheck>"
+		."\nPhaseflip Particle Images<br />";
+	  echo"<input type='checkbox' name='stig' onclick='uncheckflip(this)' $stigcheck>"
+		."\nPhaseflip Micrograph Images <I>(experimental)</I><br />";
 	}
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'best';
-	$checkimages=array('best','non-rejected','all');
-	echo"
-	<a href=\"javascript:appioninfopopup('checkimages')\">
-	<b>Use</b></a>
-	<select name='checkimage'>\n";
+	$checkimages=array('Non-rejected','Best','All');
+	echo docpop('checkimage','<b>Use</b>');
+	echo "<select name='checkimage'>\n";
 	foreach ($checkimages as $checkimage) {
 		echo "<option value='$checkimage' ";
 		// make norejects selected by default
@@ -274,79 +283,86 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	}
 	echo"</select>images<br />\n";
 
-	echo"
-		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-		Commit to Database<BR>
-		</TD>
-	</TR>
-	<TR>
-		<TD VALIGN='TOP'>
-		<B>File Format:</B><BR>
-		<SELECT NAME='fileformat'>\n";
+	echo "
+		<input type='checkbox' name='commit' $commitcheck>\n";
+	echo docpop('commit','Commit to Database');
+	echo "<br />\n";
+	echo "</td>
+	</tr>
+	<tr>
+		<td valign='TOP'>
+		<b>File Format:</b><br />
+		<SELECT name='fileformat'>\n";
 	foreach($fileformats as $format) {
 		$s = ($_POST['fileformat']==$format) ? 'SELECTED' : '';
 		echo "<OPTION $s >$format</option>\n";
 	}
 	echo"
 		</SELECT>
-		</TD>
-	</TR>
-	</TABLE>
-	</TD>
-	<TD CLASS='tablebg'>
-	<TABLE CELLPADDING='5' BORDER='0'>
-	<TR>
-		<TD VALIGN='TOP'>
-		<INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxszval'>
-		Box Size (Unbinned, in pixels)<BR>
-		</TD>
-	</TR>
-	<TR>
-		<TD VALIGN='TOP'>
-		<B>Filter Values:</B></A><BR>
-		<INPUT TYPE='text' NAME='lp' VALUE='$lpval' SIZE='4'>
-	        Low Pass<BR>
-		<INPUT TYPE='text' NAME='hp' VALUE='$hpval' SIZE='4'>
-		High Pass<BR>
-		<INPUT TYPE='text' NAME='bin' VALUE='$binval' SIZE='4'>
-		Binning<BR>
-	</TR>\n";
+		</td>
+	</tr>
+	</table>
+	</td>
+	<td class='tablebg'>
+	<table cellpadding='5' border='0'>
+	<tr>
+		<td valign='TOP'>
+		<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
+	echo docpop('boxsize','Box Size');
+	echo "(Unbinned, in pixels)<br />\n";
+	echo "		</td>
+	</tr>
+	<tr>
+		<td valign='TOP'>
+		<b>Filter Values:</b></A><br />
+		<input type='text' name='lp' value='$lpval' size='4'>\n";
+	echo "Low Pass <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
+	echo "<br />\n";
+	echo "<input type='text' name='hp' value='$hpval' size='4'>\n";
+	echo "High Pass <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
+	echo "<br />\n";
+	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
+	echo docpop('stackbin','Binning');
+	echo "<br />
+	</tr>\n";
 
 	// commented out for now, since not implemented
-//	<TR>
-//		<TD>
-//		<INPUT TYPE='checkbox' NAME='icecheck' onclick='enableice(this)' $icecheck>
-//		Ice Thickness Cutoff<BR>
-//		Use Ice Thinner Than:<INPUT TYPE='text' NAME='ice' $icedisable VALUE='$iceval' SIZE='4'>
+//	<tr>
+//		<td>
+//		<input type='checkbox' name='icecheck' onclick='enableice(this)' $icecheck>
+//		Ice Thickness Cutoff<br />
+//		Use Ice Thinner Than:<input type='text' name='ice' $icedisable value='$iceval' size='4'>
 //		(between 0.0 - 1.0)
-//		</TD>
-//	</TR>\n";
+//		</td>
+//	</tr>\n";
 	if ($ctfdata) {
 		echo"
-	<TR>
-		<TD>
-		<INPUT TYPE='checkbox' NAME='acecheck' onclick='enableace(this)' $acecheck>
-		ACE Confidence Cutoff<BR>
-		Use Values Above:<INPUT TYPE='text' NAME='ace' $acedisable VALUE='$aceval' SIZE='4'>
+	<tr>
+		<td>
+		<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>
+		ACE Confidence Cutoff<br />
+		Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
 		(between 0.0 - 1.0)
-		</TD>
-	</TR>\n";
+		</td>
+	</tr>\n";
 	}
 	if ($prtlrunIds) {
 		echo"	
-	<TR>
-		<TD>
-		<INPUT TYPE='checkbox' NAME='selexcheck' onclick='enableselex(this)' $selexcheck>
-		Particle Correlation Cutoff<BR>
-		(between 0.0 - 1.0)<BR>
-		Use Values Above:<INPUT TYPE='text' NAME='selexonmin' $selexdisable VALUE='$selexminval' SIZE='4'><BR>
-		Use Values Below:<INPUT TYPE='text' NAME='selexonmax' $selexdisable VALUE='$selexmaxval' SIZE='4'><BR>
-		<BR>
-		<B>Defocal pairs:</B><BR>
-		<INPUT TYPE='checkbox' NAME='defocpair' $defocpair>&nbsp;
-		Calculate shifts for defocal pairs<BR>
-		</TD>
-	</TR>\n";
+	<tr>
+		<td>
+		<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>
+		Particle Correlation Cutoff<br />
+		(between 0.0 - 1.0)<br />
+		Use Values Above:<input type='text' name='selexonmin' $selexdisable value='$selexminval' size='4'><br />
+		Use Values Below:<input type='text' name='selexonmax' $selexdisable value='$selexmaxval' size='4'><br />
+		<br />\n";
+		echo "<b>Defocal pairs:</b>\n";
+		echo "<br />\n";
+		echo "<input type='checkbox' name='defocpair' $defocpair>\n";
+		echo docpop('stackdfpair','Calculate shifts for defocal pairs');
+		echo "<br />
+		</td>
+	</tr>\n";
 	}	
 	//if there is CTF data, show min & max defocus range
 	if ($ctfdata) {
@@ -361,34 +377,34 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		$minval = ereg_replace("E","e",round($minval,8));
 		$maxval = ereg_replace("E","e",round($maxval,8));
 		echo"
-		<TR>
-			<TD VALIGN='TOP'>
-			<B>Defocus Limits</B><BR>
-			<INPUT TYPE='text' NAME='dfmin' VALUE='$minval' SIZE='25'>
-			<INPUT TYPE='hidden' NAME='dbmin' VALUE='$minval'>
-			Minimum<BR>
-			<INPUT TYPE='text' NAME='dfmax' VALUE='$maxval' SIZE='25'>
-			<INPUT TYPE='hidden' NAME='dbmax' VALUE='$maxval'>
+		<tr>
+			<td valign='TOP'>
+			<b>Defocus Limits</b><br />
+			<input type='text' name='dfmin' value='$minval' size='25'>
+			<input type='hidden' name='dbmin' value='$minval'>
+			Minimum<br />
+			<input type='text' name='dfmax' value='$maxval' size='25'>
+			<input type='hidden' name='dbmax' value='$maxval'>
 			Maximum
-			</TD>
-		</TR>\n";
+			</td>
+		</tr>\n";
 	}
-	echo"
-	<TR><TD>
-	  Limit # of particles to:<INPUT TYPE='text' NAME='plimit' VALUE='$plimit' SIZE='8'>
-	</TD></TR>
-	</TABLE>
-	</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
+	echo "<tr><td>\n";
+	echo docpop('stacklim','Limit # of particles to: ');
+	echo "<input type='text' name='plimit' value='$plimit' size='8'>\n";
+	echo "</td></tr>
+	</table>
+	</td>
+	</tr>
+	<tr>
+		<td colspan='2' align='CENTER'>
 		<HR>";
   echo"   <BR/>
 	  <input type='submit' name='process' value='Just Show Command'>
 	  <input type='submit' name='process' value='Make Stack'><br />
-	  </TD>
-	</TR>
-	</TABLE>
+	  </td>
+	</tr>
+	</table>
 	</FORM>
 	</CENTER>\n";
 	writeBottom();
@@ -406,14 +422,14 @@ function runMakestack() {
 
 	//make sure a session was selected
 	$description=$_POST['description'];
-	if (!$description) createMakestackForm("<B>ERROR:</B> Enter a brief description of the stack");
+	if (!$description) createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
 
 	//make sure a session was selected
-	if (!$outdir) createMakestackForm("<B>ERROR:</B> Select an experiment session");
+	if (!$outdir) createMakestackForm("<b>ERROR:</b> Select an experiment session");
 
 	// get selexon runId
 	$prtlrunId=$_POST['prtlrunId'];
-	if (!$prtlrunId) createMakestackForm("<B>ERROR:</B> No particle coordinates in the database");
+	if (!$prtlrunId) createMakestackForm("<b>ERROR:</b> No particle coordinates in the database");
 	
 	$invert = ($_POST['density']=='invert') ? '' : 'noinvert';
 	$normalize = ($_POST['normalize']=='on') ? '' : 'nonorm';
@@ -432,36 +448,36 @@ function runMakestack() {
 	// binning amount
 	$bin=$_POST['bin'];
 	if ($bin) {
-		if (!is_numeric($bin)) createMakestackForm("<B>ERROR:</B> Binning amount must be 2, 4, 8, 16, 32...");
+		if (!is_numeric($bin)) createMakestackForm("<b>ERROR:</b> Binning amount must be 2, 4, 8, 16, 32...");
 	}
 	// don't bother with bin if it's just 1
 	if ($bin == 1) $bin='';
 
 	// box size
 	$boxsize = $_POST['boxsize'];
-	if (!$boxsize) createMakestackForm("<B>ERROR:</B> Specify a box size");
-	if (!is_numeric($boxsize)) createMakestackForm("<B>ERROR:</B> Box size must be an integer");
+	if (!$boxsize) createMakestackForm("<b>ERROR:</b> Specify a box size");
+	if (!is_numeric($boxsize)) createMakestackForm("<b>ERROR:</b> Box size must be an integer");
 
 	// lp filter
 	$lp = $_POST['lp'];
-	  if ($lp && !is_numeric($lp)) createMakestackForm("<B>ERROR:</B> low pass filter must be a number");
+	  if ($lp && !is_numeric($lp)) createMakestackForm("<b>ERROR:</b> low pass filter must be a number");
 
 	// hp filter
 	$hp = $_POST['hp'];
-	if ($hp && !is_numeric($hp)) createMakestackForm("<B>ERROR:</B> high pass filter must be a number");
+	if ($hp && !is_numeric($hp)) createMakestackForm("<b>ERROR:</b> high pass filter must be a number");
 
 	// ace cutoff
 	if ($_POST['acecheck']=='on') {
 		$ace=$_POST['ace'];
-		if ($ace > 1 || $ace < 0 || !$ace) createMakestackForm("<B>ERROR:</B> Ace cutoff must be between 0 & 1");
+		if ($ace > 1 || $ace < 0 || !$ace) createMakestackForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
 	}
 
 	// selexon cutoff
 	if ($_POST['selexcheck']=='on') {
 		$selexonmin=$_POST['selexonmin'];
 		$selexonmax=$_POST['selexonmax'];
-		if ($selexonmin > 1 || $selexonmin < 0) createMakestackForm("<B>ERROR:</B> Selexon Min cutoff must be between 0 & 1");
-		if ($selexonmax > 1 || $selexonmax < 0) createMakestackForm("<B>ERROR:</B> Selexon Max cutoff must be between 0 & 1");
+		if ($selexonmin > 1 || $selexonmin < 0) createMakestackForm("<b>ERROR:</b> Selexon Min cutoff must be between 0 & 1");
+		if ($selexonmax > 1 || $selexonmax < 0) createMakestackForm("<b>ERROR:</b> Selexon Max cutoff must be between 0 & 1");
 	}
 
 	// check defocus cutoffs
@@ -477,7 +493,7 @@ function runMakestack() {
 	// limit the number of particles
 	$limit=$_POST['plimit'];
 	if ($limit) {
-		if (!is_numeric($limit)) createMakestackForm("<B>ERROR:</B> Particle limit must be an integer");
+		if (!is_numeric($limit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	}
 
 	$command.="single=$single ";
@@ -511,7 +527,7 @@ function runMakestack() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createMakestackForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createMakestackForm("<b>ERROR:</b> Enter a user name and password");
 
 		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
 		exit;
@@ -520,38 +536,38 @@ function runMakestack() {
 	writeTop("Makestack Run","Makestack Params");
 
 	if ($massessname) {
-		echo"<FONT COLOR='RED'><B>Use a 32-bit machine to use the masks</B></FONT>\n";
+		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
 	}
 	echo"
 	<P>
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>Makestack Command:</B><BR>
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>Makestack Command:</b><br />
 	$command
-	</TD></TR>
-	<TR><TD>stack name</TD><TD>$single</TD></TR>
-	<TR><TD>runid</TD><TD>$runid</TD></TR>
-	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	<TR><TD>selexonId</TD><TD>$prtlrunId</TD></TR>
-	<TR><TD>invert</TD><TD>$invert</TD></TR>
-	<TR><TD>nonorm</TD><TD>$nonorm</TD></TR>
-	<TR><TD>phaseflip</TD><TD>$phaseflip</TD></TR>
-	<TR><TD>stig</TD><TD>$stig</TD></TR>
-	<TR><TD>inspected</TD><TD>$inspected</TD></TR>
-	<TR><TD>norejects</TD><TD>$norejects</TD></TR>
-	<TR><TD>mask assessment</TD><TD>$massessname</TD></TR>
-	<TR><TD>commit</TD><TD>$commit</TD></TR>
-	<TR><TD>box size</TD><TD>$boxsize</TD></TR>
-	<TR><TD>binning</TD><TD>$bin</TD></TR>
-	<TR><TD>ace cutoff</TD><TD>$ace</TD></TR>
-	<TR><TD>selexonmin cutoff</TD><TD>$selexonmin</TD></TR>
-	<TR><TD>selexonmax cutoff</TD><TD>$selexonmax</TD></TR>
-	<TR><TD>minimum defocus</TD><TD>$dfmin</TD></TR>
-	<TR><TD>maximum defocus</TD><TD>$dfmax</TD></TR>
-	<TR><TD>particle limit</TD><TD>$limit</TD></TR>
-	<TR><TD>spider</TD><TD>$fileformat</TD></TR>
-	</TABLE>\n";
+	</td></tr>
+	<tr><td>stack name</td><td>$single</td></tr>
+	<tr><td>runid</td><td>$runid</td></tr>
+	<tr><td>outdir</td><td>$outdir</td></tr>
+	<tr><td>description</td><td>$description</td></tr>
+	<tr><td>selexonId</td><td>$prtlrunId</td></tr>
+	<tr><td>invert</td><td>$invert</td></tr>
+	<tr><td>nonorm</td><td>$nonorm</td></tr>
+	<tr><td>phaseflip</td><td>$phaseflip</td></tr>
+	<tr><td>stig</td><td>$stig</td></tr>
+	<tr><td>inspected</td><td>$inspected</td></tr>
+	<tr><td>norejects</td><td>$norejects</td></tr>
+	<tr><td>mask assessment</td><td>$massessname</td></tr>
+	<tr><td>commit</td><td>$commit</td></tr>
+	<tr><td>box size</td><td>$boxsize</td></tr>
+	<tr><td>binning</td><td>$bin</td></tr>
+	<tr><td>ace cutoff</td><td>$ace</td></tr>
+	<tr><td>selexonmin cutoff</td><td>$selexonmin</td></tr>
+	<tr><td>selexonmax cutoff</td><td>$selexonmax</td></tr>
+	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
+	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
+	<tr><td>particle limit</td><td>$limit</td></tr>
+	<tr><td>spider</td><td>$fileformat</td></tr>
+	</table>\n";
 	writeBottom(True,True);
 }
 ?>

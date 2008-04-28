@@ -14,7 +14,7 @@ var help = {
 		'shuffle' : 'The shuffle feature shuffles the order of the images before the processing begins that way you do not always start from the beginning.',
 		'limit' : 'If you do not want to process all the images, enter a number and the program will only process this number of images. Good for testing a few images before committing the results to the database.',
 		'cont' : 'By default you ALWAYS want to continue, unless you are NOT committing to the database yet and you want to reprocess an image.',
-		'commit' : 'This is the main checkbox of the program. When testing do NOT commit, but once you are happy with the results. Start commiting the data otherwise all information will be lost.',
+		'commit' : 'This is the main checkbox of the program. When testing do NOT commit, but once you are happy with the results start commiting the data, otherwise all information will be lost.',
 		'minthresh' : 'Threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are considered particles.<br/>Fortemplate correlation, this should be between 0.0 and 1.0, typically 0.4 to 0.6 is used.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 0.4 to 3.0 with typical values falling between 0.7 and 1.0',
 		'maxthresh' : 'Maximum threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are rejected.<br/>For template correlation, you probably do not need this, but typical values would be between 0.7 and 0.8.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 1.0 to 5.0 with typical values falling between 1.5 and 2.5',
 		'maxpeaks' : 'This a feature limits the number of particles allowed in an image. By default it is set to 1500, but if you want no more than 50 particles an image fill in this value',
@@ -44,6 +44,16 @@ var help = {
 		'blur' : 'Gaussian filter bluring used for producing the gradient amplitude map<BR> 1.0=no bluring',
 		'crudstd' : 'Threshold to eliminate false positive regions that picks up the background<BR> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<BR> Leave it blank or as 0.0 if not considered',
 		'masktype' : 'Crud: Selexon crudfinder. Canny edge detector and Convex Hull is used<BR>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<BR>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.',
+		'stackname' : 'name of the output stack, usually start.*',
+		'stackdescr' : 'brief description attributed to this stack',
+		'stackparticles' : 'Particle selection run providing the coordinates that will be used for extracting the particles',
+		'stackinv' : 'Density of your extracted particles will be inverted.  Three dimensional reconstruction packages usually require light density on a dark background.  2-D alignment algorithms usually do not.',
+		'stacknorm' : 'normalize each of the particle images',
+		'checkimage' : 'This option specifies which images to use for particle extraction.<br /><br /><b><i>Non-rejected: </b></i>images that are specified as "Hidden" in the Leginon Image Viewers or selected to "Reject" using the image assessor will NOT be used for stack creation.  This means that any uninspected images will be processed.<br /><br /><b><i>Best:</i></b> only images that are specified as "Exemplar" in the Leginon Image Viewers or were selected to "Keep" using the image assessor will be used for stack creation.<br /><br /><b><i>All: </i></b>all images will be used, regardless of their status.',
+		'boxsize' : 'The size (width & height) of the square area that will be extracted from each raw micrograph, using each particle coordinate as its center. Generally the box size should be at least 1.5 times greater than the diameter of your particle, an even number, and (if possible) has a small prime factor.<br /> NOTE: This value is in pixels, not Angstroms!',
+		'stackbin' : 'Amount to bin the particles by after they are extracted from each image.  Note that this binning occurs AFTER boxing from the raw image, so that your box size must correspond to the UNBINNED micrograph. Usually bin by 2.',
+		'stackdfpair' : 'If you picked your particles on far-from focus images, select this to use the shift information to box out the particles from the close-to focus images',
+		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit. Leave blank to process all the micrographs.',
 
 /**
 * these should be separate
