@@ -429,7 +429,7 @@ def createFactorMap(f1, f2, rundir, dataext):
 
 #===============================
 def hierarchCluster(alignedstack, numpart,
-		numclasses=40, factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+		numclasses=40, factorlist="1-3", corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
 
@@ -438,11 +438,6 @@ def hierarchCluster(alignedstack, numpart,
 	"""
 	rundir = "cluster"
 	apParam.createDirectory(rundir)
-	### make list of factors
-	factorstr = ""
-	for fact in factorlist:
-		factorstr += str(fact)+","
-	factorstr = factorstr[:-1]
 
 	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
