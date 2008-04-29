@@ -16,13 +16,13 @@ require  "inc/viewer.inc";
 require  "inc/project.inc";
 
 if ($_POST['process']) { // Create command
-	reRunClassifier();
+	reRunNoRefAlign();
 } else { // Create the form page
-	createClassifierSummary();
+	createNoRefAlignSummary();
 }
 
 
-function createClassifierSummary() {
+function createNoRefAlignSummary() {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -62,6 +62,14 @@ function createClassifierSummary() {
 		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
 		echo "<table border='0' >\n";
 
+		$norefnum = $norefid['DEF_id'];
+		if ($r['first_ring']) {
+			echo "<tr><td bgcolor='#bbffbb'>";
+			echo "<a href='runNoRefClassify.php?expId=$expId&norefId=$norefnum'>";
+			echo "Average particles into classes</a>";
+			echo"</td></tr>";	
+		}
+
 		//$display_keys['name']=$r['name'];
 		$display_keys['description']=$r['description'];
 		$display_keys['time']=$r['DEF_timestamp'];
@@ -100,14 +108,7 @@ function createClassifierSummary() {
 			//	echo formatHtmlRow($k,$v);
 			//}
 		}
-		$norefnum = $norefid['DEF_id'];
-		echo "
-		<tr><td bgcolor='#eedddd' colspan=2>
-			Quickly re-average particles into
-			<INPUT TYPE='text' NAME='numclass' VALUE='$numclass' SIZE='4'> classes: &nbsp;&nbsp;&nbsp;
-			<INPUT TYPE='submit' NAME='process' VALUE='Re-average classes'>
-			<INPUT TYPE='hidden' NAME='norefnum' VALUE=$norefnum>
-		</td></tr>";	
+
 		echo"</TABLE>\n";
 		echo "</FORM>\n";
 		echo"<P>\n";
@@ -116,39 +117,5 @@ function createClassifierSummary() {
 	exit;
 };
 
-function reRunClassifier() {
-	$norefnum=$_POST['norefnum'];
-	$numclass=$_POST['numclass'];
-
-	$particle = new particledata();
-	$r = $particle->getNoRefParams($norefnum);
-	$runid = $r['name'];	
-	$outdir = $r['path'];
-	$stackid = $r['REF|ApStackData|stack'];
-
-	$command.="classifier.py ";
-	$command.="runid=$runid ";
-	$command.="stackid=$stackid ";
-	$command.="outdir=$outdir ";
-	$command.="numclass=$numclass ";
-	$command.="classonly ";
-	$command.="commit ";
-
-	writeTop("Classifier Run","Classifier Params");
-
-	echo"
-	<P>
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>Classifier Command:</B><BR>
-	$command
-	</TD></TR>
-	<TR><TD>runid</TD><TD>$runid</TD></TR>
-	<TR><TD>stackid</TD><TD>$stackid</TD></TR>
-	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
-	<TR><TD>numclass</TD><TD>$numclass</TD></TR>
-	</TABLE>\n";
-	writeBottom();
-}
 
 ?>
