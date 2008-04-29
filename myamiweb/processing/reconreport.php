@@ -186,11 +186,42 @@ foreach ($iterations as $iteration){
   $fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
   $halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
   $rmeasureres = ($RMeasure) ? sprintf("%.2f",$RMeasure['rMeasure']) : "None" ;
-  $badprtls=$particle->getNumBadParticles($refinementData['DEF_id']);
-  $msgpbadprtls=$particle->getNumMsgPRejectParticles($refinementData['DEF_id']);
-  $prtlsused=$stackparticles-$badprtls;
-  $goodprtlsused=$stackparticles-$msgpbadprtls;
-
+	$badprtls = array();
+	$goodprtls = array();
+	$clsavgs = array();
+	$refinetypes = array('EMAN','SpiCoran','MsgP');
+	foreach ($refinetypes as $type) {
+		switch ($type) {
+			case 'EMAN':
+				$clsavgfield = 'emanClassAvg';
+				break;
+			case 'SpiCoran':
+				$clsavgfield = 'SpiCoranGoodClassAvg';
+			  break; 	 
+			case 'MsgP':
+				$clsavgfield = 'MsgPGoodClassAvg';
+			  break;
+		}
+		if ($refinementData[$clsavgfield]) {
+			$clsavgs[$type] = $refinementData[$clsavgfield]; 
+			$badprtls[$type]=$particle->getNumBadParticles($refinementData['DEF_id'],$type);
+			$goodprtls[$type]=$particle->getNumGoodParticles($refinementData['DEF_id'],$type);
+		}
+	}
+	# old data has no class average distinction, only eman bad particles
+	if ((count($badprtls)==0) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$badprtls)))) 
+		$badprtls['EMAN']=$particle->getNumBadParticles($refinementData['DEF_id']);
+		$goodprtls['EMAN']=$particle->getNumGoodParticles($refinementData['DEF_id']);
+	# old data has no class average distinction, force association 
+	if ((count($clsavgs)==0 && ($refinerun['package'] == 'EMAN')) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$clsavgs)))) { 
+		$clsavgs['EMAN']= $refinementData['classAverage'];
+	} elseif (count($clsavgs)==0 && $refinerun['package']=='EMAN/SpiCoran') {
+		$classnamearray = explode('.',$refinementData['classAverage']);
+		$newnamearray = array_slice($classnamearray,0,count($classnamearray)-1);
+		array_push($newnamearray,'old',$classnamearray[count($classnamearray)-1]);
+		$clsavgs['EMAN'] = implode('.',$newnamearray);
+		$clsavgs['SpiCoran']= $refinementData['classAverage'];
+	}
   $html .= "<TR>\n";
   $html .= "<TD>\n";
 
@@ -206,7 +237,7 @@ foreach ($iterations as $iteration){
   $html .=$refinestr2;
 */ 
 	$html .="<a target='params' class='aptitle' href='iterationreport.php?rId=".$reconId."&itr=".$iteration[iteration]."'\n";
- $html .=")\">$iteration[iteration]</A></TD>\n";
+	$html .=")\">$iteration[iteration]</A></TD>\n";
   $html .= "<TD>$iteration[ang]&deg;</TD>\n";
   $html .= "<TD><I>FSC 0.5:</I><br />$halfres<br />\n";
   
@@ -217,11 +248,17 @@ foreach ($iterations as $iteration){
   if ($halfres!='None')
     $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
   else $html .= "<TD>-</TD>\n";
+
   $html .="<TD><table>";
-  $clsavg = $refinerun['path'].'/'.$iteration['classAverage'];
 	$html .= "<TR><TD>";
 	$html .= "$numclasses classes<br />\n";
-	$html .= "<a target='stackview' href='viewstack.php?file=$clsavg'>".$iteration['classAverage']."</a><br />";
+	foreach ($refinetypes as $type) {
+		if (array_key_exists($type,$clsavgs)) {
+			$clsavgfile = $refinerun['path'].'/'.$clsavgs[$type];
+			$html .= "<a target='stackview' href='viewstack.php?file=$clsavgfile'>".$clsavgs[$type]."</a><br />";
+		}
+	}
+
 	// Euler Plots
 	$oldeulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
 	if (file_exists($oldeulerfile)) {
@@ -243,24 +280,24 @@ foreach ($iterations as $iteration){
 	}
 
 	$html .= "</td></tr>\n";
-  
-  if ($refinerun['package']=='EMAN/MsgP') {
-    $goodavg = $refinerun['path'].'/'.$iteration['MsgPGoodClassAvg'];
-    $html .= "<TR><TD><A TARGET='stackview' HREF='viewstack.php?uh=1&file=$goodavg'>$iteration[MsgPGoodClassAvg]</A></TD></TR>\n";
-  }
   $html .= "</table></TD>";
   
-  
+	//particle stack viewing 
   $html .="<TD><table>";
-  $html .= "<TR><TD ALIGN='CENTER'>"
-		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good'>[$prtlsused good]</A><BR/>"
-		."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad'>[$badprtls bad]</A>"
-		."</TD></TR>\n";
-  if ($refinerun['package']=='EMAN/MsgP') 
-    $html .= "<TR><TD>$goodprtlsused MsgP<BR><A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=msgpbad'>[$msgpbadprtls bad]</A></TD></TR>\n";
+	foreach ($refinetypes as $type) {
+		if (array_key_exists($type,$badprtls)) {
+			$prtlsused=$stackparticles-$badprtls[$type];
+			$html .= "<TR><TD>\n"
+			."$type </TD></TR>\n";
+			if ($prtlsused != $goodprtls[$type]) 
+				$html .= "<TR><TD>Not all prtls accounted for!!!</TD></TR>";
+			$html .= "<TR><TD>\n"
+			."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><BR/></TD></TR><TR><TD>"
+			."<A TARGET='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</A></TD></TR>\n";
+		}
+	}	
   $html .= "</table></TD>";
   
-  $html .= "</TD>\n";
   $html .= "<td>$iteration[volumeDensity]<br />\n";
   $html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a><br />\n";
   $html .= "<A HREF='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'><FONT CLASS='sf'>[new averages]</FONT></a>\n";

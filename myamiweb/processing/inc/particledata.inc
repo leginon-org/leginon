@@ -1289,26 +1289,38 @@ class particledata {
 		return $r[0];
 	}
 
-	function getSubsetParticlesInStack ($refinementDataId, $subset) {
+	function getSubsetParticlesInStack ($refinementDataId, $subset, $refinetype='EMAN') {
 		$q = "SELECT particleNumber as p "
 		  ."FROM `ApParticleClassificationData` apcd "
 		  ."LEFT JOIN `ApStackParticlesData` aspd "
 		  ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
-		  ."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' ";
-		if ($subset=='bad') $q.="AND `thrown_out` = 1 ";
-		elseif ($subset=='good') $q.="AND `thrown_out` is NULL ";
+			."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' ";
+		switch ($refinetype) {
+			case 'EMAN':
+				if ($subset=='bad') $q.="AND `thrown_out` = 1 ";
+				elseif ($subset=='good') $q.="AND `thrown_out` is NULL ";
+				break;
+			case 'SpiCoran':
+				if ($subset=='bad') $q.="AND `coran_keep` = 0 ";
+				elseif ($subset=='good') $q.="AND `coran_keep` = 1 ";
+			  break; 	 
+			case 'MsgP':
+				if ($subset=='bad') $q.="AND `msgp_keep` = 0 ";
+				elseif ($subset=='good') $q.="AND `msgp_keep` = 1 ";
+			  break;
+		}
 		$q.= "ORDER BY aspd.`DEF_id` ASC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
+	function getNumBadParticles ($refinementDataId, $refinetype='EMAN' ) {
+		$r = $this->getSubsetParticlesInStack($refinementDataId, 'bad',$refinetype);
+		return count($r);
+	}
 
-	function getNumBadParticles ($refinementDataId) {
-		$q="SELECT count(DEF_id) "
-			."FROM `ApParticleClassificationData` "
-			."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
-			."AND `thrown_out` = 1";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0]['count(DEF_id)'];
+	function getNumGoodParticles ($refinementDataId, $refinetype='EMAN' ) {
+		$r = $this->getSubsetParticlesInStack($refinementDataId, 'good',$refinetype);
+		return count($r);
 	}
 
   function listAllStackParticles ($stackId) {
@@ -1323,26 +1335,6 @@ class particledata {
     $r = $this->mysql->getSQLResult($q);
     return $r;
   }
-
-	function getMsgPRejectParticlesInStack ($refinementDataId) {
-		$q = "SELECT particleNumber as p "
-				."FROM `ApParticleClassificationData` apcd "
-				."LEFT JOIN `ApStackParticlesData` aspd "
-				."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
-				."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' "
-				."AND `msgp_keep` = 0";
-		$r = $this->mysql->getSQLResult($q);
-		return $r;
-	}
-
-	function getNumMsgPRejectParticles ($refinementDataId) {
-		$q = "SELECT count(DEF_id) as num "
-				."FROM `ApParticleClassificationData` "
-				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
-				."AND `msgp_keep` = 0";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
-	}
 
 	function getNumClasses ($refinementDataId) {
 		$q = "SELECT count(distinct(`REF|ApEulerData|eulers`)) as num "
