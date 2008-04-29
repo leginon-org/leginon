@@ -38,7 +38,7 @@ var help = {
 		'overlap' : 'During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value (n) will result in successive images having an overlap of (1-n)*field size. Increase in cases of very low signal to noise ratio.',
 		'field' : 'During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value refers to the width (in pixels) of the cropped images.',
 		'cs' : 'Also referred to as Cs, it corresponds to the imperfection produced by the lenses in the electron microscope.  This is specific to the microscope',
-		'pdiam' : 'This will be the diameter used by the leginon image viewer for displaying picked particles -	it will NOT affect the size of the boxed particles later on, this is only for display purposes.',
+		'pdiam' : 'For template correlator this is used to mask out the particle from the image. Otherwise, this will be the diameter used by the leginon image viewer for displaying picked particles -	it will NOT affect the size of the boxed particles later on, this is only for display purposes. ',
 		'crudminthresh' : 'Lower limit in gradient amplitude for Canny edge detection.<BR>This should be between 0.0 to 1.0 and should be smaller than that of the high limit',
 		'crudmaxthresh' : 'Threshold for Canny edge detector to consider as an edge in the gradient amplitude map.<BR>  The edge is then extended continuously from such places until the gradient falls below the Low threshold<BR>The value should be between 0.0 to 1.0 and should be close to 1.0',
 		'blur' : 'Gaussian filter bluring used for producing the gradient amplitude map<BR> 1.0=no bluring',
@@ -54,7 +54,8 @@ var help = {
 		'stackbin' : 'Amount to bin the particles by after they are extracted from each image.  Note that this binning occurs AFTER boxing from the raw image, so that your box size must correspond to the UNBINNED micrograph. Usually bin by 2.',
 		'stackdfpair' : 'If you picked your particles on far-from focus images, select this to use the shift information to box out the particles from the close-to focus images',
 		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit. Leave blank to process all the micrographs.',
-
+		'maskrad' : 'Radius of external mask (in Angstroms)',
+		'numpart' : 'Number of particles to use',
 /**
 * these should be separate
 **/
