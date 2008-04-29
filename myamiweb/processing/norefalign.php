@@ -17,12 +17,12 @@ require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-	runClassifier();
+	runNoRefAlign();
 } else { // Create the form page
-	createClassifierForm();
+	createNoRefAlignForm();
 }
 
-function createClassifierForm($extra=false, $title='classifier.py Launcher', $heading='Reference Free Classification') {
+function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $heading='Reference Free Alignment') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -41,16 +41,11 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 	$ctfdata=$ctf->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
-   $norefIds = $particle->getNoRefIds($sessionId);
-   $norefruns=count($norefIds);
+	$norefIds = $particle->getNoRefIds($sessionId);
+	$norefruns=count($norefIds);
 
-	// --- find hosts to run classifier.py
-	$hosts=getHosts();
-
-	// --- get list of users
-	$users[]=glander;
-	
-	$javascript="<script src='../js/viewer.js'></script>";
+	$javascript = "<script src='../js/viewer.js'></script>";
+	$javascript .= writeJavaPopupFunctions('eman');	
 
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
@@ -58,6 +53,19 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	}
   
+	$helpdiv = "
+	<div id='dhelp'
+		style='position:absolute; 
+        	background-color:FFFFDD;
+        	color:black;
+        	border: 1px solid black;
+        	visibility:hidden;
+        	z-index:+1'
+    		onmouseover='overdiv=1;'
+    		onmouseout='overdiv=0;'>
+	</div>\n";
+	echo $helpdiv;
+
 	echo"
        <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
@@ -76,11 +84,13 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$commitcheck = ($_POST['commit']=='off') ? '' : 'CHECKED';
 	// classifier params
-	$numclass = 40;
+	$numfactors = 10;
 	$numpart = 3000;
-	$lp = 10;
-	$partdiam = 150;
-	$maskdiam = 200;
+	$lowpass = 10;
+	$partrad = 150;
+	$maskrad = 200;
+	$firstring = 2;
+	$lastring = 150;
 	echo"
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder>
@@ -89,13 +99,13 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 		<TABLE CELLPADDING='10' BORDER='0'>
 		<TR>
 			<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>Class Run Name:</B></A>
+			<A HREF=\"javascript:infopopup('runid')\"><B>NoRef Run Name:</B></A>
 			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
 			</TD>
 		</TR>\n";
 		echo"<TR>
 			<TD VALIGN='TOP'>
-			<B>Class Description:</B><BR>
+			<B>Description of NoRef Alignment:</B><BR>
 			<TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
 			</TD>
 		</TR>\n";
@@ -139,146 +149,136 @@ function createClassifierForm($extra=false, $title='classifier.py Launcher', $he
 		}
 		echo "</SELECT>\n";
 	}
-	echo"
-		</SELECT><BR>
-		</TD>
-	</TR>
-	<TR>
-		<TD VALIGN='TOP'>
-		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-		<B>Commit to Database</B><BR>
-		</TD>
-	</TR>\n";
-	//echo"<TR>
-	//	<TD VALIGN='TOP'>
-	//	<B>File Format:</B><BR>
-	//	<SELECT NAME='fileformat'>\n";
-	//foreach($fileformats as $format) {
-	//	$s = ($_POST['fileformat']==$format) ? 'SELECTED' : '';
-	//	echo "<OPTION $s >$format</option>\n";
-	//}";
-	echo"
-	</TABLE>
-	</TD>
-	<TD CLASS='tablebg'>
-	<TABLE CELLPADDING='5' BORDER='0'>
-	<TR>
-		<TD VALIGN='TOP'>
-		<B>Particle Params:</B></A><BR>
-		<INPUT TYPE='text' NAME='partdiam' SIZE='5' VALUE='$partdiam'>
-		Particle Diameter (in Angstroms)<BR>
-		<INPUT TYPE='text' NAME='maskdiam' SIZE='5' VALUE='$maskdiam'>
-		Mask Diameter (in Angstroms)<BR>
-		<INPUT TYPE='text' NAME='lp' SIZE='5' VALUE='$lp'>
-		Low Pass Filter (in Angstroms)<BR>
-		</TD>
-	</TR>
-	<TR>
-		<TD VALIGN='TOP'>
-		<B>Classification Params:</B></A><BR>
-		<INPUT TYPE='text' NAME='numclass' VALUE='$numclass' SIZE='4'>
-		Number of Classes to Make<BR>
-		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
-		Number of Particles to Use<BR>
-		<FONT COLOR=#DD0000>WARNING: more than 3000 particles can take forever to process<BR>
-	</TR>\n";
-	echo"
-		</SELECT>
-		</TD>
-	</TR>
-	</TABLE>
-	</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>";
-		echo"
-	  <input type='submit' name='process' value='Create Class'><BR>
-	  </TD>
-	</TR>
-	</TABLE>
-	</FORM>
-	</CENTER>\n";
+	echo"</SELECT><BR>";
+	echo "</TD></TR><TR>";
+	echo "<TD VALIGN='TOP'>";
+	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>";
+	echo docpop('commit','Commit to Database');
+	echo "";
+	echo "<BR></TD></TR>\n</TABLE>\n";
+	echo "</TD>";
+	echo "<TD CLASS='tablebg'>";
+	echo "<TABLE CELLPADDING='5' BORDER='0'>";
+	echo "<TR><TD VALIGN='TOP'>";
+	//echo "<B>Particle Params:</B></A><BR>";
+
+	echo "<FONT COLOR='#3333DD'>Values in &Aring;ngstroms</FONT><BR>";
+
+	echo "<INPUT TYPE='text' NAME='partrad' SIZE='4' VALUE='$partrad'>";
+	echo docpop('partrad','Particle Radius');
+	echo " (in &Aring;ngstroms)<BR>";
+
+	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$maskrad'>";
+	echo docpop('maskrad','Mask Radius');
+	echo " (in &Aring;ngstroms)<BR>";
+
+	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>";
+	echo docpop('lpval','Low Pass Filter Radius');
+	echo " (in &Aring;ngstroms)<BR>";
+
+	echo "<FONT COLOR='#3333DD'>Values in pixels</FONT><BR>";
+
+	echo "<INPUT TYPE='text' NAME='firstring' SIZE='4' VALUE='$firstring'>";
+	echo docpop('firstring','First Ring Radius');
+	echo " (in Pixels)<BR>";
+
+	echo "<INPUT TYPE='text' NAME='lastring' SIZE='4' VALUE='$lastring'>";
+	echo docpop('lastring','Last Ring Radius');
+	echo " (in Pixels)<BR>";
+
+	echo "<FONT COLOR='#DD3333' SIZE='-2'>WARNING: more than 3000 particles can take forever to process</FONT><BR>";
+
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>";
+	echo docpop('numpart','Number of Particles');
+	echo " to Use<BR>";
+
+	echo "</TR>\n";
+	echo"</SELECT>";
+	echo "	</TD>";
+	echo "</TR>";
+	echo "</TABLE>";
+	echo "</TD>";
+	echo "</TR>";
+	echo "<TR>";
+	echo "	<TD COLSPAN='2' ALIGN='CENTER'>";
+	echo "	<HR>";
+	echo"<input type='submit' name='process' value='Start NoRef Alignment'><BR>";
+	echo "  </TD>";
+	echo "</TR>";
+	echo "</TABLE>";
+	echo "</FORM>";
+	echo "</CENTER>\n";
 	writeBottom();
 	exit;
 }
 
-function runClassifier() {
-	$host = $_POST['host'];
-	$user = $_POST['user'];
-
+function runNoRefAlign() {
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
 	$stackid=$_POST['stackid'];
-	$partdiam=$_POST['partdiam'];
-	$maskdiam=$_POST['maskdiam'];
-	$lp=$_POST['lp'];
+	$partrad=$_POST['partrad'];
+	$maskrad=$_POST['maskrad'];
+	$lowpass=$_POST['lowpass'];
+	$firstring=$_POST['firstring'];
+	$lastring=$_POST['lastring'];
+	$numpart=$_POST['numpart'];
+	$numfactors=$_POST['numfactors'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
-	if (!$description) createClassifierForm("<B>ERROR:</B> Enter a brief description of the class");
+	if (!$description) createNoRefAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
 	$stackid=$_POST['stackid'];
-	if (!$stackid) createClassifierForm("<B>ERROR:</B> No stack selected");
+	if (!$stackid) createNoRefAlignForm("<B>ERROR:</B> No stack selected");
 
 	// make sure outdir ends with '/'
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 
 	// classification
-	$numclass=$_POST['numclass'];
-	$numpart=$_POST['numpart'];
-	if ($numpart > 6000 || $numpart < 10) createClassifierForm("<B>ERROR:</B> Number of particles must be between 10 & 6000");
-	if ($numclass > 300 || $numclass < 1) createClassifierForm("<B>ERROR:</B> Number of classes must be between 1 & 300");
+	if ($numpart > 6000 || $numpart < 10) createNoRefAlignForm("<B>ERROR:</B> Number of particles must be between 10 & 6000");
+	if ($numfactors > 20 || $numfactors < 1) createNoRefAlignForm("<B>ERROR:</B> Number of factors must be between 1 & 20");
 
-	     $particle = new particledata();
+	$particle = new particledata();
 	$totprtls=$particle->getNumStackParticles($stackid);
-	if ($numpart > $totprtls) createClassifierForm("<B>ERROR:</B> Number of particles to classify ($numpart) must be less than the number of particles in the stack ($totprtls)");
+	if ($numpart > $totprtls) createNoRefAlignForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls)");
 
-	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
-
-//	$command ="source /ami/sw/ami.csh;";
-//	$command.="source /ami/sw/share/python/usepython.csh common32;";
-//	$command.="source /home/$user/pyappion/useappion.csh;";
-	$command.="classifier.py ";
-	$command.="runid=$runid ";
-	$command.="stackid=$stackid ";
-	if ($partdiam) $command.="diam=$partdiam ";
-	if ($maskdiam) $command.="maskdiam=$maskdiam ";
-	$command.="outdir=$outdir ";
-	$command.="description=\"$description\" ";
-	$command.="lp=$lp ";
-	//if ($fileformat) $command.="spider ";
-	$command.="numpart=$numpart ";
-	$command.="numclass=$numclass ";
+	$command.="norefAlignment.py ";
+	if ($outdir) $command.="--outdir=$outdir ";
+	$command.="--description=\"$description\" ";
+	$command.="--runname==$runid ";
+	$command.="--stack=$stackid ";
+	$command.="--rad=$partrad ";
+	$command.="--mask=$maskrad ";
+	$command.="--first-ring=$firstring ";
+	$command.="--last-ring=$lastring ";
+	if ($lowpass) $command.="--lowpass=$lowpass ";
+	$command.="--num-part=$numpart ";
+	$command.="--num-factors=$numfactors ";
 	if ($commit) $command.="commit ";
 
-	$cmd = "exec ssh $user@$host '$command > classifierlog.txt &'";
-//	exec($cmd ,$result);
-
-	writeTop("Classifier Run","Classifier Params");
+	writeTop("No Ref Align Run Params","No Ref Align Params");
 
 	echo"
 	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
-	<B>Classifier Command:</B><BR>
+	<B>NoRef Alignment Command:</B><BR>
 	$command
 	</TD></TR>
 	<TR><TD>runid</TD><TD>$runid</TD></TR>
 	<TR><TD>stackid</TD><TD>$stackid</TD></TR>
+	<TR><TD>partrad</TD><TD>$partrad</TD></TR>
+	<TR><TD>maskrad</TD><TD>$maskrad</TD></TR>
+	<TR><TD>lowpass</TD><TD>$lowpass</TD></TR>
+	<TR><TD>firstring</TD><TD>$firstring</TD></TR>
+	<TR><TD>lastring</TD><TD>$lastring</TD></TR>
 	<TR><TD>numpart</TD><TD>$numpart</TD></TR>
-	<TR><TD>numclass</TD><TD>$numclass</TD></TR>
-	<TR><TD>partdiam</TD><TD>$partdiam</TD></TR>
-	<TR><TD>maskdiam</TD><TD>$maskdiam</TD></TR>
+	<TR><TD>numfactors</TD><TD>$numfactors</TD></TR>
 	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
-	<TR><TD>lowpass</TD><TD>$lp</TD></TR>
+	<TR><TD>commit</TD><TD>$commit</TD></TR>
 	</TABLE>\n";
-	//<TR><TD>description</TD><TD>$description</TD></TR>
-	//<TR><TD>commit</TD><TD>$commit</TD></TR>
-	//<TR><TD>fileformat</TD><TD>$fileformat</TD></TR>
 	writeBottom();
 }
 ?>
