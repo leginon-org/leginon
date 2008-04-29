@@ -74,7 +74,7 @@ function createClassifierSummary() {
 		foreach($display_keys as $k=>$v) {
 			echo formatHtmlRow($k,$v);
 		}
-		$norefpath = $r[path]."/".$r[name]."/";
+		$norefpath = $r[path]."/";
 
 		$classIds = $particle->getNoRefClassRuns($norefid['DEF_id']);
 		$classnum = count($classIds);
