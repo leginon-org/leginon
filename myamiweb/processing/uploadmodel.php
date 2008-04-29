@@ -99,7 +99,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   }
   else {
     echo"
-      <B>Model Root Name:</B><BR/>
+      <B>Model file name with path:</B><BR/>
       <INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
 # <INPUT TYPE='file' NAME='model' VALUE='$model' SIZE='50'/><BR/>\n"; doesn't work & is confusing depending on web brower
   }
