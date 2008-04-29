@@ -76,7 +76,7 @@ foreach ($refaliIds as $refid) {
   }
   echo "<TR><TD BGCOLOR='#FFCCCC' COLSPAN=2>
     $numiters iterations: &nbsp;&nbsp;&nbsp;
-    <A HREF='refaliIters.php?refaliId=$refid[DEF_id]'>View Iterations</a>
+    <A HREF='refbasediters.php?refaliId=$refid[DEF_id]'>View Iterations</a>
     </TD></TR>";
   echo"</TABLE>\n";
   echo "</FORM>\n";
