@@ -71,42 +71,50 @@ function createNoRefAlignSummary() {
 		}
 
 		//$display_keys['name']=$r['name'];
+		$display_keys = array();
 		$display_keys['description']=$r['description'];
 		$display_keys['time']=$r['DEF_timestamp'];
 		$display_keys['path']=$r['path'];
 		$display_keys['# particles']=$r['num_particles'];
 		$display_keys['lp filt']=$r['lp_filt'];
 		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
-		$display_keys['stack run name']=$s['shownstackname'];
+		$stackstr = "<a href='stackreport.php?sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
+		$display_keys['stack run name'] = $stackstr;
+			
+		$dendrofile = $r['path']."/cluster/dendogram.png";
+		if(file_exists($dendrofile)) {
+			$dendrotext = "<a href='loadimg.php?filename=$dendrofile'>dendogram.png</a>";
+			$display_keys['dendrogram']=$dendrotext;
+		}
 
 		foreach($display_keys as $k=>$v) {
 			echo formatHtmlRow($k,$v);
 		}
-		$norefpath = $r[path]."/";
 
 		$classIds = $particle->getNoRefClassRuns($norefid['DEF_id']);
 		$classnum = count($classIds);
 		foreach ($classIds as $classid) {
+			$norefpath = $r['path']."/";
 			$classfile = $norefpath.$classid[classFile].".img";
+			if(!file_exists($classfile)) {
+				$norefpath = $r['path']."/".$r['name']."/";
+				$classfile = $norefpath."/".$classid[classFile].".img";
+			}
+			if(!file_exists($classfile)) continue;
 			$varfile = $norefpath.$classid[varFile].".img";
 			$totimg = $classid[num_classes];
 			$endimg = $classid[num_classes]-1;
-			echo "
-			<tr><td bgcolor='#ffcccc' colspan=2>
-				Averaged into $totimg classes: &nbsp;&nbsp;&nbsp;
-				<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
-			if ($classid[varFile]) {
-				echo "
-				<font size=-1>&nbsp;
-					<a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>
-				</font>";
+			echo "<tr><td bgcolor='#ffcccc' colspan=2>";
+			echo "<b>$totimg</b> classes: &nbsp;&nbsp;&nbsp;";
+			echo "<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&";
+			echo "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
+			if ($classid[varFile] && file_exists($varfile)) {
+				echo "<font size=-1>&nbsp;";
+				echo " <a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&";
+				echo "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>";
+				echo "</font>";
 			}
 			echo"</td></tr>";
-		
-			//echo "<tr><td bgcolor='#ff4444'>"; print_r ($classid); echo "</td></tr>";
-			//foreach($classid as $k=>$v) {
-			//	echo formatHtmlRow($k,$v);
-			//}
 		}
 
 		echo"</TABLE>\n";
