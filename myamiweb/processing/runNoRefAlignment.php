@@ -83,14 +83,13 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$commitcheck = ($_POST['commit']=='off') ? '' : 'CHECKED';
-	// classifier params
-	$numfactors = 10;
-	$numpart = 3000;
-	$lowpass = 10;
-	$partrad = 150;
-	$maskrad = 200;
-	$firstring = 2;
-	$lastring = 150;
+	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '10';
+	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
+	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
+	$partrad = ($_POST['partrad']) ? $_POST['partrad'] : '150';
+	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '200';
+	$firstring = ($_POST['numpart']) ? $_POST['firstring'] : '2';
+	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : '150';
 	echo"
 	<P>
 	<TABLE BORDER=0 CLASS=tableborder>
@@ -246,9 +245,28 @@ function runNoRefAlign() {
 	if ($numfactors > 20 || $numfactors < 1) createNoRefAlignForm("<B>ERROR:</B> Number of factors must be between 1 & 20");
 
 	$particle = new particledata();
+
+	// check num of particles
 	$totprtls=$particle->getNumStackParticles($stackid);
 	if ($numpart > $totprtls) createNoRefAlignForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls)");
 
+	$stackparams=$particle->getStackParams($stackid);
+
+	// get pixel size and box size
+	$mpix=$particle->getStackPixelSizeFromStackId($stackid);
+	$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+
+	// check first & last ring radii
+	if ($firstring > (($boxsz/2)-2)) createNoRefAlignForm("<b>ERROR:</b> First Ring Radius too large!");
+	if ($lastring > (($boxsz/2)-2)) createNoRefAlignForm("<b>ERROR:</b> Last Ring Radius too large!");
+
+	// check particle radii
+	if ($mpix) {
+		$boxrad = $mpix * $boxsz;
+		if ($partrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Particle radius too large!");
+		if ($maskrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Mask radius too large!");
+	}
+	
 	$command.="norefAlignment.py ";
 	if ($outdir) $command.="--outdir=$outdir ";
 	$command.="--description=\"$description\" ";
