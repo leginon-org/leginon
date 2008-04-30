@@ -127,7 +127,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	else {
 		echo "
 		Particles:<BR>
-		<SELECT NAME='stackid'>\n";
+		<select name='stackid'>\n";
 		foreach ($stackIds as $stack) {
 			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
@@ -140,7 +140,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 			//handle multiple runs in stack
 			$runname=$stackparams[shownstackname];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
-			echo "<OPTION VALUE='$stack[stackid]'";
+			$stackid = $stack['stackid'];
+			echo "<OPTION VALUE='$stackid'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
 			echo ">$runname ($totprtls prtls,";
