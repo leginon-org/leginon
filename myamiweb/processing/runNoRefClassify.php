@@ -44,7 +44,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='red'>$extra</font>\n<hr>\n";
 	}
   
 	$helpdiv = "
@@ -61,7 +61,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo $helpdiv;
 
 	echo"
-       <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+       <form name='viewerform' method='post' action='$formAction'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
 	$norefparams = $particle->getNoRefParams($norefid);
@@ -76,90 +76,113 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	$factorlist = ($_POST['factorlist']) ? $_POST['factorlist'] : "1,2,3";
 	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : 40;
 
-	echo "<INPUT TYPE='hidden' NAME='norefid' VALUE=$norefid>";
+	echo "<input type='hidden' name='norefid' value=$norefid>";
 
 	echo"
-	<P>
-	<TABLE BORDER=0 CLASS=tableborder>
-	<TR>
-		<TD VALIGN='TOP'>
-		<TABLE CELLPADDING='10' BORDER='0'>
-		<TR>";
-	echo "<TD VALIGN='TOP'>";
+	<p>
+	<table border='0' class='tableborder'>
+	<tr>
+		<td valign='top'>
+		<table cellpadding='10' border='0'>
+		<tr>";
+	echo "<td valign='top'>";
 
-	echo "<INPUT TYPE='text' NAME='numclass' SIZE='4' VALUE='$numclass'>";
+	echo "<input type='text' name='numclass' size='4' value='$numclass'>";
 	echo docpop('numclass','Number of Classes');
-	echo " <BR/><BR/>";
+	echo " <br /><br />";
 
-	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>";
+	echo "<input type='checkbox' name='commit' $commitcheck>";
 	echo docpop('commit','Commit to Database');
 	echo "";
-	echo "<BR></TD></TR>\n</TABLE>\n";
-	echo "</TD>";
-	echo "<TD CLASS='tablebg'>";
+	echo "<br /></td></tr>\n</table>\n";
+	echo "</td>";
+	echo "<td class='tablebg'>";
 
 
-	echo "<TABLE CELLPADDING='5' BORDER='0'>";
-	echo "<TR><TD VALIGN='TOP'>";
-	echo "<B>Eigen Images:</B></A><BR>";
+	echo "<table cellpadding='5' border='0'>";
+	echo "<tr><td valign='TOP'>\n";
+	echo docpop('factorlist','<b>Eigen Images</b>');
+	echo "<br />\n";
+	echo "Choose factors to use (Click on the image to enlarge) : \n";
+	echo "<br />\n";
 
 	$eigenpath = $norefparams['path']."/coran/";
 	$eigendir = opendir($eigenpath);
 	//echo $eigenpath;
 	while ($f = readdir($eigendir)){
-	  if (eregi("eigenimg".'.*\.png$',$f)) {
-	    $eigenpngs[] = $f;
-	  }
+		if (eregi("eigenimg".'.*\.png$',$f)) {
+			$eigenpngs[] = $f;
+		}
 	}
 	if($eigenpngs) {
 		sort($eigenpngs);
 		$i = 0;
+		echo "<table border='1' cellpadding='5'>\n";
+		echo "<tr>\n";
 		foreach ($eigenpngs as $epng) {
 			$i++;
 			$efile = $eigenpath.$epng;
-			echo "$i <a href='loadimg.php?filename=$efile' target='eiginimage'><IMG SRC='loadimg.php?filename=$efile'></a>\n";
-			if ($i % 4 == 0) echo "<br />\n";
+			echo "<td>\n";
+			echo "<a href='loadimg.php?filename=$efile' target='eigenimage'><img src='loadimg.php?filename=$efile'></a><br />\n";
+			$imgname = 'eigenimg'.$i;
+			echo "<center><input type='checkbox' name='$imgname' ";
+			// when first loading page select first 3
+			// eigenimgs, otherwise reload selected
+			if (($i<=3 && !$_POST['process']) || $_POST[$imgname]) echo "checked";
+			echo "></center>\n";
+			echo "</td>\n";
+			if ($i % 4 == 0) echo "</tr>\n";
 		}
+		if (!$i % 4 == 0) echo "</tr>\n";
+		echo "</table>\n";
 	}
-	echo "<BR/><BR/>\n\n";
+	echo "<input type='hidden' name='numeigenimgs' value='$i'>\n";
 
-	echo docpop('factorlist','List of Factors<br/>');
-	echo "<INPUT TYPE='text' NAME='factorlist' SIZE='20' VALUE='$factorlist'><BR/>";
-	echo " (comma separated, e.g. 1,2,3)<BR>";
-
-	echo "</TR>\n";
-	echo"</SELECT>";
-	echo "	</TD>";
-	echo "</TR>";
-	echo "</TABLE>";
-	echo "</TD>";
-	echo "</TR>";
-	echo "<TR>";
-	echo "	<TD COLSPAN='2' ALIGN='CENTER'>";
-	echo "	<HR>";
-	echo"<input type='submit' name='process' value='Start NoRef Classify'><BR>";
-	echo "  </TD>";
-	echo "</TR>";
-	echo "</TABLE>";
-	echo "</FORM>";
-	echo "</CENTER>\n";
+	echo "</tr>\n";
+	echo"</select>";
+	echo "	</td>";
+	echo "</tr>";
+	echo "</table>";
+	echo "</td>";
+	echo "</tr>";
+	echo "<tr>";
+	echo "	<td colspan='2' align='center'>";
+	echo "	<hr>";
+	echo "<input type='submit' name='process' value='Start NoRef Classify'><br />";
+	echo "  </td>";
+	echo "</tr>";
+	echo "</table>";
+	echo "</form>";
+	echo "</center>\n";
 	writeBottom();
 	exit;
 }
 
 function runNoRefClassify() {
 	$numclass=$_POST['numclass'];
-	$factorlist=$_POST['factorlist'];
+#	$factorlist=$_POST['factorlist'];
 	$norefid=$_POST['norefid'];
+	$numeigenimgs = $_POST['numeigenimgs'];
+
+	// get selected eigenimgs
+	$factorlistAR=array();
+	for ($i=1;$i<=$numeigenimgs;$i++) {
+		$imgname = 'eigenimg'.$i;
+		if ($_POST[$imgname]) $factorlistAR[]=$i;
+	}
+	$factorlist=implode(',',$factorlistAR);
+
+	// make sure eigenimgs were selected
+	if (!$factorlist) createNoRefClassifyForm('<b>ERROR:</b> No eigenimages selected');
 
 	//make sure a stack was selected
-	if (!$norefid) createNoRefClassifyForm("<B>ERROR:</B> No NoRef Alignment selected, norefId=$norefid");
+	if (!$norefid) createNoRefClassifyForm("<b>ERROR:</b> No NoRef Alignment selected, norefId=$norefid");
 
 	// make sure outdir ends with '/'
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
  
 	// classification
-	if ($numclass > 200 || $numclass < 2) createNoRefClassifyForm("<B>ERROR:</B> Number of classes must be between 2 & 200");
+	if ($numclass > 200 || $numclass < 2) createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 & 200");
 
 	$particle = new particledata();
 
@@ -172,16 +195,16 @@ function runNoRefClassify() {
 	writeTop("No Ref Classify Run Params","No Ref Classify Params");
 
 	echo"
-	<P>
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>NoRef Classify Command:</B><BR>
+	<p>
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>NoRef Classify Command:</b><br />
 	$command
-	</TD></TR>
-	<TR><TD>numclass</TD><TD>$numclass</TD></TR>
-	<TR><TD>factorlist</TD><TD>$factorlist</TD></TR>
-	<TR><TD>commit</TD><TD>$commit</TD></TR>
-	</TABLE>\n";
+	</td></tr>
+	<tr><td>numclass</td><td>$numclass</td></tr>
+	<tr><td>factorlist</td><td>$factorlist</td></tr>
+	<tr><td>commit</td><td>$commit</td></tr>
+	</table>\n";
 	writeBottom();
 }
 ?>
