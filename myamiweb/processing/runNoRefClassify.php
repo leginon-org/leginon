@@ -103,7 +103,8 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<tr><td valign='TOP'>\n";
 	echo docpop('factorlist','<b>Eigen Images</b>');
 	echo "<br />\n";
-	echo "Choose factors to use (Click on the image to enlarge) : \n";
+	echo "Choose factors to use: ";
+	echo "<font size='-2'>(Click on the image to view)</font>\n";
 	echo "<br />\n";
 
 	$eigenpath = $norefparams['path']."/coran/";
