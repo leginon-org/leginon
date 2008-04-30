@@ -192,6 +192,10 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo docpop('numpart','Number of Particles');
 	echo " to Use<BR>";
 
+	echo "<INPUT TYPE='text' NAME='numfactors' VALUE='$numfactors' SIZE='4'>";
+	echo docpop('numfactors','Number of Factors');
+	echo " in Coran<BR>";
+
 	echo "</TR>\n";
 	echo"</SELECT>";
 	echo "	</TD>";
