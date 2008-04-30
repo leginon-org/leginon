@@ -70,10 +70,11 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 
 
 	// Set any existing parameters in form
-	$commitcheck = ($_POST['commit']=='off') ? '' : 'CHECKED';
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+
 	// classifier params
-	$factorlist = "1,2,3";
-	$numclass = 40;
+	$factorlist = ($_POST['factorlist']) ? $_POST['factorlist'] : "1,2,3";
+	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : 40;
 
 	echo "<INPUT TYPE='hidden' NAME='norefid' VALUE=$norefid>";
 
@@ -113,12 +114,12 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	if($eigenpngs) {
 		sort($eigenpngs);
 		$i = 0;
-	  foreach ($eigenpngs as $epng) {
+		foreach ($eigenpngs as $epng) {
 			$i++;
-	    $efile = $eigenpath.$epng;
-	    echo "$i <A HREF='loadimg.php?filename=$efile' target='eiginimage'><IMG SRC='loadimg.php?filename=$efile'>\n";
-			if ($i % 4 == 0) echo "<BR/>\n";
-	  }
+			$efile = $eigenpath.$epng;
+			echo "$i <a href='loadimg.php?filename=$efile' target='eiginimage'><IMG SRC='loadimg.php?filename=$efile'></a>\n";
+			if ($i % 4 == 0) echo "<br />\n";
+		}
 	}
 	echo "<BR/><BR/>\n\n";
 
@@ -156,9 +157,9 @@ function runNoRefClassify() {
 
 	// make sure outdir ends with '/'
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-
+ 
 	// classification
-	if ($numclass > 200 || $numclass < 1) createNoRefClassifyForm("<B>ERROR:</B> Number of classes must be between 2 & 200");
+	if ($numclass > 200 || $numclass < 2) createNoRefClassifyForm("<B>ERROR:</B> Number of classes must be between 2 & 200");
 
 	$particle = new particledata();
 
@@ -166,6 +167,7 @@ function runNoRefClassify() {
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
 	if ($commit) $command.="commit ";
+	else $command.="--no-commit ";
 
 	writeTop("No Ref Classify Run Params","No Ref Classify Params");
 

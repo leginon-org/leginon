@@ -77,12 +77,13 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 		$sessionname=$sessioninfo['Name'];
 	}
 
+	// set commit on by default when first loading page, else set
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
 	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'noref'.($norefruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$commitcheck = ($_POST['commit']=='off') ? '' : 'CHECKED';
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '10';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -236,8 +237,10 @@ function runNoRefAlign() {
 	$stackid=$_POST['stackid'];
 	if (!$stackid) createNoRefAlignForm("<B>ERROR:</B> No stack selected");
 
-	// make sure outdir ends with '/'
+	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$outdir=$outdir.$runid;
+	
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 
 	// classification
@@ -270,7 +273,7 @@ function runNoRefAlign() {
 	$command.="norefAlignment.py ";
 	if ($outdir) $command.="--outdir=$outdir ";
 	$command.="--description=\"$description\" ";
-	$command.="--runname==$runid ";
+	$command.="--runname=$runid ";
 	$command.="--stack=$stackid ";
 	$command.="--rad=$partrad ";
 	$command.="--mask=$maskrad ";
@@ -279,7 +282,7 @@ function runNoRefAlign() {
 	if ($lowpass) $command.="--lowpass=$lowpass ";
 	$command.="--num-part=$numpart ";
 	$command.="--num-factors=$numfactors ";
-	if ($commit) $command.="commit ";
+	if (!$commit) $command.="--no-commit ";
 
 	writeTop("No Ref Align Run Params","No Ref Align Params");
 
