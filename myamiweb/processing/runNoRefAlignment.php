@@ -241,7 +241,7 @@ function runNoRefAlign() {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$outdir=$outdir.$runid;
 	
-	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
 	if ($numpart > 6000 || $numpart < 10) createNoRefAlignForm("<B>ERROR:</B> Number of particles must be between 10 & 6000");
@@ -282,7 +282,8 @@ function runNoRefAlign() {
 	if ($lowpass) $command.="--lowpass=$lowpass ";
 	$command.="--num-part=$numpart ";
 	$command.="--num-factors=$numfactors ";
-	if (!$commit) $command.="--no-commit ";
+	if ($commit) $command.-="--commit ";
+	else $command.="--no-commit ";
 
 	writeTop("No Ref Align Run Params","No Ref Align Params");
 

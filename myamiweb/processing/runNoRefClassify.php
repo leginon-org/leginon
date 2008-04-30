@@ -190,7 +190,7 @@ function runNoRefClassify() {
 	$command.="norefClassify.py ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
-	if ($commit) $command.="commit ";
+	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
 	writeTop("No Ref Classify Run Params","No Ref Classify Params");
