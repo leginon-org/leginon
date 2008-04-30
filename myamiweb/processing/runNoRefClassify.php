@@ -164,6 +164,7 @@ function runNoRefClassify() {
 #	$factorlist=$_POST['factorlist'];
 	$norefid=$_POST['norefid'];
 	$numeigenimgs = $_POST['numeigenimgs'];
+	$norefId = $_GET['norefId'];
 
 	// get selected eigenimgs
 	$factorlistAR=array();
@@ -188,6 +189,7 @@ function runNoRefClassify() {
 	$particle = new particledata();
 
 	$command.="norefClassify.py ";
+	$command.="--norefid=$norefId ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
 	if ($commit) $command.="--commit ";
