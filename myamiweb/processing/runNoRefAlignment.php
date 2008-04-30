@@ -144,7 +144,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
 			echo ">$runname ($totprtls prtls,";
-			if ($mpix) echo " $apix a/pix,";
+			if ($mpix) echo " $apix,";
 			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
@@ -262,7 +262,7 @@ function runNoRefAlign() {
 
 	// check particle radii
 	if ($mpix) {
-		$boxrad = $mpix * $boxsz;
+		$boxrad = $mpix * 1E10 * $boxsz;
 		if ($partrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Particle radius too large!");
 		if ($maskrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Mask radius too large!");
 	}
