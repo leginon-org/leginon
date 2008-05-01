@@ -126,7 +126,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		norefRun=norefClassdata['norefRun']
 		norefpath = norefRun['path']['path']
 		norefname = norefRun['name']
-		norefpath = os.path.join(norefpath, norefname)
+		#norefpath = os.path.join(norefpath, norefname)
 				
 		#Get class average file name
 		norefClassFile = norefClassdata['classFile']
