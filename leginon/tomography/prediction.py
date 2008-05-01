@@ -36,6 +36,7 @@ class Prediction(object):
 		self.tilt_series_pixel_size_list = []
 		self.parameters = [0, 0, 0]
 		self.image_pixel_size = 2e-9
+		self.ucenter_limit = 2e-6
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
@@ -152,16 +153,13 @@ class Prediction(object):
 								  tilt)
 		#	tilt_group.addTilt(tilt, x, y)
 			## calculate optical axis tilt and offset
-			print tilt,maxtilt,mintilt
 			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)) or abs(tilt) < math.radians(30):
 				## optical axis offset fit is not reliable at small tilts
 				orig_fixed_model = self.fixed_model
 				self.fixed_model = True
 				self.calculate()
 				self.fixed_model = orig_fixed_model
-				print 'return to',self.fixed_model
 			else:
-				print 'current',self.fixed_model
 				self.calculate()
 
 		#	del tilt_group.tilts[-1]
@@ -202,8 +200,8 @@ class Prediction(object):
 		print 'fit z0',fitparameters[-1]
 		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
 		# max_delta_z0 should be larger than the z eucentric error ucenter_error in meters
-		ucenter_error = 2e-6
-		max_delta_z0 =  ucenter_error / self.image_pixel_size
+		print 'ucenter_limit',self.ucenter_limit
+		max_delta_z0 =  self.ucenter_limit / self.image_pixel_size
 		if self.forcemodel or (fitparameters[-1]-self.parameters[-1])**2 <= max_delta_z0**2:
 			self.parameters = fitparameters
 		else:
@@ -275,9 +273,10 @@ class Prediction(object):
 
 	def model(self, parameters, args_list):
 		phi, optical_axis, zs = self.getParameters(parameters)
-		print 'phi=',math.degrees(phi),'optical_axis=',optical_axis
+		print 'phi=',math.degrees(phi),'optical_axis(pixels)=',optical_axis
 		sin_phi = scipy.sin(phi)
 		cos_phi = scipy.cos(phi)
+		print 'shift=',(cos_phi*optical_axis, sin_phi*optical_axis)
 		position_groups = []
 		for i, (cos_tilts, sin_tilts, x0, y0, x, y) in enumerate(args_list):
 			positions = scipy.zeros((cos_tilts.shape[0], 3), 'd')
