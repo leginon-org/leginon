@@ -429,7 +429,8 @@ class Tomography(acquisition.Acquisition):
 		self.prediction.phi0 = params[0]
 		self.prediction.offset0 = params[1]
 		self.prediction.z00 = params[2]
-		self.logger.info('Initialize prediction parameters to (%e, %e, %e)' % tuple(params))
+		self.logger.info('Initialize prediction parameters to (%.0f, %.0f, %.0f)' % tuple(params))
+
 
 	def loadPredictionInfo(self):
 		initializer = {
