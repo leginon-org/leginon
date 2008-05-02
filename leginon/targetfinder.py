@@ -155,7 +155,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		output: sorted list of  (x,y) tuples
 		"""
 		if len(targetlist) < 3:
-			print "skipping sort targets"
+			self.logger.info("skipping sort targets")
 			return targetlist
 		#print "targets=",targetlist
 		bestorder, bestscore, messages = shortpath.sortPoints(targetlist, numiter=3, maxeval=70000)
