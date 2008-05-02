@@ -1276,42 +1276,42 @@ class ImportDialog(wx.Dialog):
 		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED,size=(80,60))
 		self.lbpresets.SetMinSize((40, 100))
 
+		### left side of import window
 		sz0 = wx.GridBagSizer(5, 0)
 		sz0.Add(self.instrumentselection, (0, 0), (1, 4), wx.EXPAND)
-
 		sz0.Add(self.session, (1, 0), (1, 4), wx.EXPAND)
-
 		sz0.Add(agelab1, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz0.Add(self.ageentry, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sz0.Add(agelab2, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-		sz0.Add(self.findpresets, (2, 3), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz0.Add(self.findpresets, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		### when window is stretched, stretch session list
+		sz0.AddGrowableCol(0)
+		sz0.AddGrowableRow(1)
+
+		### right side of import window
 		sz1 = wx.GridBagSizer(5, 0)
 		sz1.Add(self.parameters, (0, 0), (1, 4), wx.EXPAND)
 		label = wx.StaticText(self, -1, 'Presets')
 		sz1.Add(label, (1, 0), (1, 4), wx.ALIGN_CENTER)
-		#sz.Add(self.lbpresets, (5, 0), (1, 4), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sz1.Add(self.lbpresets, (2, 0), (1, 4), wx.EXPAND)
+		### when window is stretched vertically, stretch preset list
+		sz1.AddGrowableRow(2)
 
-		#sz1.AddGrowableCol(3)
-		#sz1.AddGrowableRow(1)
-		#sz.AddGrowableRow(5)
-
+		### buttons at bottom of window
 		self.bimport = wx.Button(self, -1, 'Import')
 		self.bimport.Enable(False)
 		bdone = wx.Button(self, wx.ID_OK, 'Done')
 		bdone.SetDefault()
-
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bimport, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(bdone, (0, 1), (1, 1), wx.ALIGN_CENTER)
 
+		### merge windows and buttons
 		self.szmain = wx.GridBagSizer(5, 5)
 		self.szmain.Add(sz0, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 		self.szmain.Add(sz1, (0, 1), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.szmain.Add(szbutton, (1, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
-
+		self.szmain.Add(szbutton, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
+		### when window is stretched, stretch left window horiz., and both panes vert.
 		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 
