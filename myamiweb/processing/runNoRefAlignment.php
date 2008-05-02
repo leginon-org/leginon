@@ -45,6 +45,9 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$norefruns=count($norefIds);
 
 	$javascript = "<script src='../js/viewer.js'></script>";
+	// javascript to switch the defaults based on the stack
+	
+
 	$javascript .= writeJavaPopupFunctions('eman');	
 
 	writeTop($title,$heading,$javascript);
@@ -282,7 +285,7 @@ function runNoRefAlign() {
 	if ($lowpass) $command.="--lowpass=$lowpass ";
 	$command.="--num-part=$numpart ";
 	$command.="--num-factors=$numfactors ";
-	if ($commit) $command.-="--commit ";
+	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
 	writeTop("No Ref Align Run Params","No Ref Align Params");
