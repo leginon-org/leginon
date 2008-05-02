@@ -51,6 +51,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		'blobs border': 20,
 		'blobs max': 300,
 		'blobs max size': 1000,
+		'blobs min size': 10,
 		'lattice spacing': 150.0,
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
@@ -163,8 +164,9 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.logger.info('find blobs')
 		border = self.settings['blobs border']
 		blobsize = self.settings['blobs max size']
+		minblobsize = self.settings['blobs min size']
 		maxblobs = self.settings['blobs max']
-		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
+		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs, minblobsize=minblobsize)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
 		targets = self.blobStatsTargets(blobs)
@@ -427,6 +429,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			'blob-border': self.settings['blobs border'],
 			'blob-max-number': self.settings['blobs max'],
 			'blob-max-size': self.settings['blobs max size'],
+			'blob-min-size': self.settings['blobs min size'],
 			'lattice-spacing': self.settings['lattice spacing'],
 			'lattice-tolerance': self.settings['lattice tolerance'],
 			'stats-radius': self.settings['lattice hole radius'],

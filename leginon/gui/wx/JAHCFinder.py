@@ -201,7 +201,7 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['blobs border'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs max'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs max size'] = IntEntry(self, -1, min=0, chars=6)
-		#self.widgets['blobs min size'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs min size'] = IntEntry(self, -1, min=0, chars=6)
 		#self.widgets['blobs max moment'] = IntEntry(self, -1, min=1, chars=6)
 
 		szblobs = wx.GridBagSizer(5, 5)
@@ -217,13 +217,13 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		szblobs.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szblobs.Add(self.widgets['blobs max size'], (2, 1), (1, 1),
 			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		#label = wx.StaticText(self, -1, 'Min. blob size:')
-		#szblobs.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#szblobs.Add(self.widgets['blobs min size'], (2, 1), (1, 1),
-		#	wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Min. blob size:')
+		szblobs.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szblobs.Add(self.widgets['blobs min size'], (3, 1), (1, 1),
+			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		#label = wx.StaticText(self, -1, 'Max. blob moment (elongation):')
 		#szblobs.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#szblobs.Add(self.widgets['blobs max moment'], (2, 1), (1, 1),
+		#szblobs.Add(self.widgets['blobs max moment'], (4, 1), (1, 1),
 		#	wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szblobs.AddGrowableCol(1)
 

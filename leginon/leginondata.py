@@ -901,6 +901,7 @@ class HoleFinderPrefsData(InSessionData):
 			('blob-border', int),
 			('blob-max-number', int),
 			('blob-max-size', int),
+			('blob-min-size', int),
 			('lattice-spacing', float),
 			('lattice-tolerance', float),
 			('stats-radius', float),
@@ -938,6 +939,7 @@ class HoleDepthFinderPrefsData(InSessionData):
 			('blob-border', int),
 			('blob-max-number', int),
 			('blob-max-size', int),
+			('blob-min-size', int),
 			('stats-radius', float),
 			('ice-zero-thickness', float),
 		)
@@ -1182,6 +1184,7 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('blobs border', int),
 			('blobs max', int),
 			('blobs max size', int),
+			('blobs min size', int),
 			('lattice spacing', float),
 			('lattice tolerance', float),
 			('lattice hole radius', float),
@@ -1223,6 +1226,7 @@ class HoleDepthFinderSettingsData(TargetFinderSettingsData):
 			('blobs border', int),
 			('blobs max', int),
 			('blobs max size', int),
+			('blobs min size', int),
 			('pickhole radius', float),
 			('pickhole zero thickness', float),
 		)
