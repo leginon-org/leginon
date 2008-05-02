@@ -1527,7 +1527,7 @@ class PresetsManager(node.Node):
 
 		# calculate temporary mag
 		original_mag = preset['magnification']
-		temp_mag = original_mag / 10.0
+		temp_mag = original_mag / 5.0
 		allmags = self.instrument.tem.Magnifications
 		## find mag in list that is just greater than calculated mag
 		for mag in allmags:
