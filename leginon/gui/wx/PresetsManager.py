@@ -1197,6 +1197,7 @@ class BeamDialog(wx.Dialog):
 		self.node = node
 		self.parent = parent
 
+		### create imageviewer
 		self.im = gui.wx.ImagePanel.ClickImagePanel(self, -1, imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked, self.im)
 		szim = wx.BoxSizer(wx.VERTICAL)
@@ -1204,25 +1205,24 @@ class BeamDialog(wx.Dialog):
 		szim.Add(szpreset, 0, wx.EXPAND)
 		szim.Add(self.im, 1, wx.EXPAND)
 
+		### create buttons
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.bacquire.Enable(True)
 		self.bautocenter = wx.Button(self, -1, 'Auto Center')
 		self.bautocenter.Enable(False)
 		self.bcommit = wx.Button(self, -1, 'Commit')
 		self.bcommit.Enable(False)
-
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bautocenter, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcommit, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
+		### merge buttons and imageviewer
 		szmain = wx.GridBagSizer(5,5)
-		szmain.Add(szim, (0, 1), (1, 1), wx.EXPAND)
-		szmain.Add(szbutton, (1, 1), (1, 1))
-
+		szmain.Add(szim, (0, 0), (1, 1), wx.EXPAND)
+		szmain.Add(szbutton, (1, 0), (1, 1))
 		szmain.AddGrowableRow(0)
 		szmain.AddGrowableCol(0)
-		szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(szmain)
 		self.SetAutoLayout(True)
