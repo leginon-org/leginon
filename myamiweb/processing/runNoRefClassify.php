@@ -118,7 +118,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 		echo "<table border='1' cellpadding='5'>\n";
 		echo "<tr valign='bottom'>\n";
 		foreach ($eigendata as $edata) {
-			$index = $edata['num'];
+			$index = (int) $edata['num'];
 			$efile = $edata['path']."/".$edata['name'];
 			$contrib = round($edata['contrib'],1);
 			$level = dechex($contrib/$eigendata[0]['contrib']*239 + 16);
@@ -137,7 +137,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 		if (!$index % 4 == 0) echo "</tr>\n";
 		echo "</table>\n";
 	}
-	echo "<input type='hidden' name='numeigenimgs' value='$i'>\n";
+	echo "<input type='hidden' name='numeigenimgs' value='$index'>\n";
 
 	echo "</tr>\n";
 	echo"</select>";
@@ -172,19 +172,23 @@ function runNoRefClassify() {
 		$imgname = 'eigenimg'.$i;
 		if ($_POST[$imgname]) $factorlistAR[]=$i;
 	}
+	//print_r($factorlistAR);
 	$factorlist=implode(',',$factorlistAR);
 
 	// make sure eigenimgs were selected
-	if (!$factorlist) createNoRefClassifyForm('<b>ERROR:</b> No eigenimages selected');
+	if (!$factorlist) 
+		createNoRefClassifyForm('<b>ERROR:</b> No eigenimages selected');
 
 	//make sure a stack was selected
-	if (!$norefid) createNoRefClassifyForm("<b>ERROR:</b> No NoRef Alignment selected, norefId=$norefid");
+	if (!$norefid) 
+		createNoRefClassifyForm("<b>ERROR:</b> No NoRef Alignment selected, norefId=$norefid");
 
 	// make sure outdir ends with '/'
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
  
 	// classification
-	if ($numclass > 200 || $numclass < 2) createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 & 200");
+	if ($numclass > 200 || $numclass < 2) 
+		createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 & 200");
 
 	$particle = new particledata();
 
