@@ -917,6 +917,22 @@ class particledata {
 		return $r;
 	}
 
+	function getCoranEigenData ($norefRunId) {
+		$q = "SELECT "
+			."ce.factor_num AS num, "
+			."ce.image_name AS name, "
+			."ce.percent_contrib AS contrib, "
+			."p.path AS path "
+			."FROM ApCoranEigenImageData AS ce "
+			."LEFT JOIN ApPathData AS p "
+			."  ON (ce.`REF|ApPathData|path` = p.`DEF_id`) "
+			."WHERE "
+			."  ce.`REF|ApNoRefRunData|norefRun` = '$norefRunId' "
+			."ORDER BY ce.`factor_num` ASC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 		function getRefAliIds ($sessionId) {
 		$q = "SELECT rr.`DEF_id` "
 			."FROM ApRefRunData AS rr "
