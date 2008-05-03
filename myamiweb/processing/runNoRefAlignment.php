@@ -268,7 +268,7 @@ function runNoRefAlign() {
 	if (!$description) createNoRefAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
-	$stackid=$_POST['stackid'];
+	//$stackid=$_POST['stackid'];
 	if (!$stackid) createNoRefAlignForm("<B>ERROR:</B> No stack selected");
 
 	// make sure outdir ends with '/' and append run name
