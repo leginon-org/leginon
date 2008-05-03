@@ -67,8 +67,6 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	$norefparams = $particle->getNoRefParams($norefid);
 	//print_r($norefparams);
 	
-
-
 	// Set any existing parameters in form
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
@@ -86,6 +84,12 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 		<table cellpadding='10' border='0'>
 		<tr>";
 	echo "<td valign='top'>";
+
+	$dendrofile = $norefparams['path']."/dendogram.png";
+	if(file_exists($dendrofile)) {
+		echo "<a href='loadimg.php?filename=$dendrofile'>"
+			."<img src='loadimg.php?filename=$dendrofile' width=384></a><br/><br/>\n";
+	}
 
 	echo "<input type='text' name='numclass' size='4' value='$numclass'>";
 	echo docpop('numclass','Number of Classes');
