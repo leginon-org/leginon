@@ -357,9 +357,11 @@ class AlignRotationCenterDialog(wx.Dialog):
 		self.SetSizerAndFit(self.sizer)
 
 	def onMeasureButton(self, evt):
+		self.Close()
 		d1 = self.d1value.GetValue()
 		d2 = self.d2value.GetValue()
 		threading.Thread(target=self.node.alignRotationCenter, args=(d1,d2,)).start()
+
 
 class MeasureDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
