@@ -54,7 +54,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	// limit stack to 3000 particles
 	$javascript .= "	if (stackArray[3] >= 3000) {stackArray[3]=3000};\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
-	$javascript .= "	document.viewerform.numfactors.value = Math.floor(Math.sqrt(stackArray[3])*.25);\n";
+	//$javascript .= "	document.viewerform.numfactors.value = Math.floor(Math.sqrt(stackArray[3])*.25);\n";
 	// set max last ring radius
 	$javascript .= "	var maxlastring = (stackArray[2]/2)-2;\n";
 	// set particle & mask radius and lp
@@ -107,7 +107,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '10';
+	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
 	$partrad = ($_POST['partrad']) ? $_POST['partrad'] : '150';
