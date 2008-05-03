@@ -81,12 +81,11 @@ function createNoRefAlignSummary() {
 		$stackstr = "<a href='stackreport.php?sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
 		$display_keys['stack run name'] = $stackstr;
 			
-		$dendrofile = $r['path']."/cluster/dendogram.png";
+		$dendrofile = $r['path']."/dendogram.png";
 		if(file_exists($dendrofile)) {
 			$dendrotext = "<a href='loadimg.php?filename=$dendrofile'>dendogram.png</a>";
 			$display_keys['dendrogram']=$dendrotext;
 		}
-
 		foreach($display_keys as $k=>$v) {
 			echo formatHtmlRow($k,$v);
 		}
