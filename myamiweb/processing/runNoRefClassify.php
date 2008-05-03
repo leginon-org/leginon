@@ -111,34 +111,30 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<font size='-2'>(Click on the image to view)</font>\n";
 	echo "<br />\n";
 
-	$eigenpath = $norefparams['path']."/coran/";
-	$eigendir = opendir($eigenpath);
-	//echo $eigenpath;
-	while ($f = readdir($eigendir)){
-		if (eregi("eigenimg".'.*\.png$',$f)) {
-			$eigenpngs[] = $f;
-		}
-	}
-	if($eigenpngs) {
-		sort($eigenpngs);
-		$i = 0;
+	$eigendata = $particle->getCoranEigenData($norefid);
+	//print_r($eigendata[0]);
+
+	if($eigendata) {
 		echo "<table border='1' cellpadding='5'>\n";
-		echo "<tr>\n";
-		foreach ($eigenpngs as $epng) {
-			$i++;
-			$efile = $eigenpath.$epng;
+		echo "<tr valign='bottom'>\n";
+		foreach ($eigendata as $edata) {
+			$index = $edata['num'];
+			$efile = $edata['path']."/".$edata['name'];
+			$contrib = round($edata['contrib'],1);
+			$level = dechex($contrib/$eigendata[0]['contrib']*239 + 16);
 			echo "<td>\n";
-			echo "<a href='loadimg.php?filename=$efile' target='eigenimage'><img src='loadimg.php?filename=$efile'></a><br />\n";
-			$imgname = 'eigenimg'.$i;
-			echo "<center><input type='checkbox' name='$imgname' ";
+			echo "<a href='loadimg.php?filename=$efile' target='eigenimage'>\n"
+				."<img src='loadimg.php?filename=$efile'></a><br />\n";
+			$imgname = 'eigenimg'.$index;
+			echo "<center>$index <input type='checkbox' name='$imgname' ";
 			// when first loading page select first 3
 			// eigenimgs, otherwise reload selected
-			if (($i<=3 && !$_POST['process']) || $_POST[$imgname]) echo "checked";
-			echo "></center>\n";
+			if (($index<=3 && !$_POST['process']) || $_POST[$imgname]) echo "checked";
+			echo "><font color='#".$level."2222' size='-1'>($contrib %)</font></center>\n";
 			echo "</td>\n";
-			if ($i % 4 == 0) echo "</tr>\n";
+			if ($index % 4 == 0) echo "</tr>\n";
 		}
-		if (!$i % 4 == 0) echo "</tr>\n";
+		if (!$index % 4 == 0) echo "</tr>\n";
 		echo "</table>\n";
 	}
 	echo "<input type='hidden' name='numeigenimgs' value='$i'>\n";
