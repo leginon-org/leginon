@@ -63,7 +63,8 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		numiter += 1
 
 	### perform alignment
-	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	apDisplay.printMsg("Performing particle alignment")
 	# copy template to memory
 	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9") 
 	mySpider.toSpider("AP SR", 
@@ -282,7 +283,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	apParam.createDirectory(rundir)
 
 	### make template in memory
-	mySpider = spyder.SpiderSession(dataext=dataext)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskpixrad*2))
 
 	### performing correspondence analysis
@@ -430,8 +431,42 @@ def createFactorMap(f1, f2, rundir, dataext):
 	return
 
 #===============================
-def hierarchCluster(alignedstack, numpart,
-		numclasses=40, factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", dataext=".spi"):
+
+	rundir = "cluster"
+	apParam.createDirectory(rundir)
+	### make list of factors 	 
+	factorstr = "" 	 
+	for fact in range(1,numfactors+1): 	 
+		factorstr += str(fact)+","
+	factorstr = factorstr[:-1]
+
+	### do hierarchical clustering
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpider(
+		"CL HC",
+		corandata+"_IMC", # path to coran data
+		factorstr, # factor string
+	)
+	## weight for each factor
+	for fact in range(numfactors):
+		mySpider.toSpiderQuiet("1.0")	
+	mySpider.toSpider(
+		"5",         #use Ward's method
+		"Y", rundir+"/dendogram.ps", #dendogram image file
+		"Y", rundir+"/dendogramdoc", #dendogram doc file
+	)
+	mySpider.close()
+
+	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendogram.ps dendogram.png"
+	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
+	if not os.path.isfile("dendogram.png"):
+		apDisplay.printWarning("Dendrogram image conversion failed")
+
+
+#===============================
+def hierarchCluster(alignedstack, numpart, numclasses=40, 
+		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
 
@@ -538,8 +573,11 @@ def hierarchCluster(alignedstack, numpart,
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+
 	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendogram.ps dendogram.png"
 	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
+	if not os.path.isfile("dendogram.png"):
+		apDisplay.printWarning("Dendrogram image conversion failed")
 
 	return
 

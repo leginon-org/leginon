@@ -219,10 +219,10 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
-		#convert stack to spider
+		### convert stack to spider
 		spiderstack = self.createSpiderFile()
 
-		#create initialization template
+		### create initialization template
 		templatefile = self.averageTemplate()
 		#else:
 		#	templatefile = self.selectRandomTemplate()
@@ -232,7 +232,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
 			apDisplay.timeString(esttime),"cyan")
 
-		#run the alignment
+		### run the alignment
 		aligntime = time.time()
 		pixrad = int(round(self.params['partrad']/self.stack['apix']))
 		alignedstack, self.partlist = alignment.refFreeAlignParticles(
@@ -242,19 +242,22 @@ class NoRefAlignScript(appionScript.AppionScript):
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
-		#remove large, worthless stack
+		### remove large, worthless stack
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		os.remove(spiderstack)
 
-		#do correspondence analysis
+		### do correspondence analysis
 		corantime = time.time()
 		if not self.params['skipcoran']:
 			maskpixrad = self.params['maskrad']/self.stack['apix']
 			self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
 				boxsize=self.stack['boxsize'], maskpixrad=maskpixrad, 
 				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
+			### make dendrogram
+			alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
+
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
