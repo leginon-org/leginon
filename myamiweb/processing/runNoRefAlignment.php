@@ -44,9 +44,29 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$norefIds = $particle->getNoRefIds($sessionId);
 	$norefruns=count($norefIds);
 
-	$javascript = "<script src='../js/viewer.js'></script>";
+	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
-	
+	$javascript .= "<script>\n";
+	$javascript .= "function switchDefaults(stackvars) {\n";
+	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	// remove commas from number
+	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
+	// limit stack to 3000 particles
+	$javascript .= "	if (stackArray[3] >= 3000) {stackArray[3]=3000};\n";
+	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
+	$javascript .= "	document.viewerform.numfactors.value = Math.floor(Math.sqrt(stackArray[3])*.25);\n";
+	// set max last ring radius
+	$javascript .= "	var maxlastring = (stackArray[2]/2)-2;\n";
+	// set particle & mask radius and lp
+	$javascript .= "	if (stackArray[1]) {\n";
+	$javascript .= "		var maxmask = Math.floor(((stackArray[2]/2)-2)*stackArray[1]);\n";
+	$javascript .= "		document.viewerform.maskrad.value = maxmask;\n";
+	$javascript .= "		document.viewerform.partrad.value = maxmask-2;\n";
+	$javascript .= "		document.viewerform.lowpass.value = Math.floor(maxmask/25);\n";
+	$javascript .= "	}\n";
+	$javascript .= "	document.viewerform.lastring.value = maxlastring;\n";
+	$javascript .= "}\n";
+	$javascript .= "</script>\n";
 
 	$javascript .= writeJavaPopupFunctions('eman');	
 
@@ -130,92 +150,100 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	else {
 		echo "
 		Particles:<BR>
-		<select name='stackid'>\n";
+		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
 
 			// get pixel size and box size
 			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
-			$apix=format_angstrom_number($mpix)."/pixel";
+			if ($mpix) {
+				$apix = $mpix*1E10;
+				$apixtxt=format_angstrom_number($mpix)."/pixel";
+			}
 			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 			//handle multiple runs in stack
 			$runname=$stackparams[shownstackname];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
-			echo "<OPTION VALUE='$stackid'";
+			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
 			echo ">$runname ($totprtls prtls,";
-			if ($mpix) echo " $apix,";
+			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 	}
-	echo"</SELECT><BR>";
-	echo "</TD></TR><TR>";
-	echo "<TD VALIGN='TOP'>";
-	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>";
+	echo"</SELECT><BR>\n";
+	echo "</TD></TR><TR>\n";
+	echo "<TD VALIGN='TOP'>\n";
+	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','Commit to Database');
 	echo "";
 	echo "<BR></TD></TR>\n</TABLE>\n";
-	echo "</TD>";
-	echo "<TD CLASS='tablebg'>";
-	echo "<TABLE CELLPADDING='5' BORDER='0'>";
-	echo "<TR><TD VALIGN='TOP'>";
-	//echo "<B>Particle Params:</B></A><BR>";
+	echo "</TD>\n";
+	echo "<TD CLASS='tablebg'>\n";
+	echo "<TABLE CELLPADDING='5' BORDER='0'>\n";
+	echo "<TR><TD VALIGN='TOP'>\n";
+	//echo "<B>Particle Params:</B></A><BR>\n";
 
-	echo "<FONT COLOR='#3333DD'>Values in &Aring;ngstroms</FONT><BR>";
-
-	echo "<INPUT TYPE='text' NAME='partrad' SIZE='4' VALUE='$partrad'>";
+	echo "<FONT COLOR='#3333DD'>Values in &Aring;ngstroms</FONT><BR>\n";
+	if  (!$apix) {
+        	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
+		echo "Make sure you are within the limitations of the box size</font><br />\n";
+	}
+	echo "<INPUT TYPE='text' NAME='partrad' SIZE='4' VALUE='$partrad'>\n";
 	echo docpop('partrad','Particle Radius');
-	echo " (in &Aring;ngstroms)<BR>";
+	echo " (in &Aring;ngstroms)<BR>\n";
 
-	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$maskrad'>";
+	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$maskrad'>\n";
 	echo docpop('maskrad','Mask Radius');
-	echo " (in &Aring;ngstroms)<BR>";
+	echo " (in &Aring;ngstroms)<BR>\n";
 
-	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>";
+	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>\n";
 	echo docpop('lpval','Low Pass Filter Radius');
-	echo " (in &Aring;ngstroms)<BR>";
+	echo " (in &Aring;ngstroms)<BR>\n";
 
-	echo "<FONT COLOR='#3333DD'>Values in pixels</FONT><BR>";
+	echo "<FONT COLOR='#3333DD'>Values in pixels</FONT><BR>\n";
 
-	echo "<INPUT TYPE='text' NAME='firstring' SIZE='4' VALUE='$firstring'>";
+	echo "<INPUT TYPE='text' NAME='firstring' SIZE='4' VALUE='$firstring'>\n";
 	echo docpop('firstring','First Ring Radius');
-	echo " (in Pixels)<BR>";
+	echo " (in Pixels)<BR>\n";
 
-	echo "<INPUT TYPE='text' NAME='lastring' SIZE='4' VALUE='$lastring'>";
+	echo "<INPUT TYPE='text' NAME='lastring' SIZE='4' VALUE='$lastring'>\n";
 	echo docpop('lastring','Last Ring Radius');
-	echo " (in Pixels)<BR>";
+	echo " (in Pixels)<BR>\n";
 
-	echo "<FONT COLOR='#DD3333' SIZE='-2'>WARNING: more than 3000 particles can take forever to process</FONT><BR>";
+	echo "<FONT COLOR='#DD3333' SIZE='-2'>WARNING: more than 3000 particles can take forever to process</FONT><BR>\n";
 
-	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>";
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>\n";
 	echo docpop('numpart','Number of Particles');
-	echo " to Use<BR>";
+	echo " to Use<BR>\n";
 
-	echo "<INPUT TYPE='text' NAME='numfactors' VALUE='$numfactors' SIZE='4'>";
+	echo "<INPUT TYPE='text' NAME='numfactors' VALUE='$numfactors' SIZE='4'>\n";
 	echo docpop('numfactors','Number of Factors');
-	echo " in Coran<BR>";
+	echo " in Coran<BR>\n";
 
 	echo "</TR>\n";
-	echo"</SELECT>";
-	echo "	</TD>";
-	echo "</TR>";
-	echo "</TABLE>";
-	echo "</TD>";
-	echo "</TR>";
-	echo "<TR>";
-	echo "	<TD COLSPAN='2' ALIGN='CENTER'>";
-	echo "	<HR>";
-	echo"<input type='submit' name='process' value='Start NoRef Alignment'><BR>";
-	echo "  </TD>";
-	echo "</TR>";
-	echo "</TABLE>";
-	echo "</FORM>";
+	echo"</SELECT>\n";
+	echo "	</TD>\n";
+	echo "</TR>\n";
+	echo "</TABLE>\n";
+	echo "</TD>\n";
+	echo "</TR>\n";
+	echo "<TR>\n";
+	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
+	echo "	<HR>\n";
+	echo"<input type='submit' name='process' value='Start NoRef Alignment'><br />\n";
+	echo "  </TD>\n";
+	echo "</TR>\n";
+	echo "</TABLE>\n";
+	echo "</FORM>\n";
 	echo "</CENTER>\n";
+	// first time loading page, set defaults:
+	if (!$_POST['process']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	writeBottom();
 	exit;
 }
@@ -223,7 +251,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 function runNoRefAlign() {
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
-	$stackid=$_POST['stackid'];
+	$stackvars=$_POST['stackid'];
 	$partrad=$_POST['partrad'];
 	$maskrad=$_POST['maskrad'];
 	$lowpass=$_POST['lowpass'];
@@ -231,6 +259,9 @@ function runNoRefAlign() {
 	$lastring=$_POST['lastring'];
 	$numpart=$_POST['numpart'];
 	$numfactors=$_POST['numfactors'];
+
+	// get stack id, apix, & box size from input
+	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -258,17 +289,13 @@ function runNoRefAlign() {
 
 	$stackparams=$particle->getStackParams($stackid);
 
-	// get pixel size and box size
-	$mpix=$particle->getStackPixelSizeFromStackId($stackid);
-	$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
-
 	// check first & last ring radii
 	if ($firstring > (($boxsz/2)-2)) createNoRefAlignForm("<b>ERROR:</b> First Ring Radius too large!");
 	if ($lastring > (($boxsz/2)-2)) createNoRefAlignForm("<b>ERROR:</b> Last Ring Radius too large!");
 
 	// check particle radii
-	if ($mpix) {
-		$boxrad = $mpix * 1E10 * $boxsz;
+	if ($apix) {
+		$boxrad = $apix * $boxsz;
 		if ($partrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Particle radius too large!");
 		if ($maskrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Mask radius too large!");
 	}
