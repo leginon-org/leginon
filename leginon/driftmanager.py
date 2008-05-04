@@ -324,8 +324,10 @@ class DriftManager(watcher.Watcher):
 			avgdrift = (current_drift + lastdrift1 + lastdrift2) / 3.0
 			if lastdrift2 < 1.0e-4:
 				self.logger.info('Drift rate: %.2e, average of last three: %.2e' % (current_drift, avgdrift,))
+				drift_rate = avgdrift
 			else:
 				self.logger.info('Drift rate: %.2e' % (current_drift,))
+				drift_rate = current_drift
 
 			## publish scope and camera to be used with drift data
 			scope = imagedata['scope']
@@ -339,7 +341,7 @@ class DriftManager(watcher.Watcher):
 			## t0 becomes t1 and t1 will be reset for next image
 			t0 = t1
 
-			if current_drift < threshold:
+			if drift_rate < threshold:
 				return status, d, imagedata
 			else:
 				status = 'drifted'
