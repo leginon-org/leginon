@@ -115,31 +115,30 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$firstring = ($_POST['numpart']) ? $_POST['firstring'] : '2';
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : '150';
 	echo"
-	<P>
-	<TABLE BORDER=0 CLASS=tableborder>
-	<TR>
-		<TD VALIGN='TOP'>
-		<TABLE CELLPADDING='10' BORDER='0'>
-		<TR>
-			<TD VALIGN='TOP'>
-			<A HREF=\"javascript:infopopup('runid')\"><B>NoRef Run Name:</B></A>
-			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
-			</TD>
-		</TR>\n";
-		echo"<TR>
-			<TD VALIGN='TOP'>
-			<B>Description of NoRef Alignment:</B><BR>
-			<TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
-			</TD>
-		</TR>\n";
-		echo"<TR>
-			<TD VALIGN='TOP'>	 
-			<B>Output Directory:</B><BR>
-			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='38'>
-			</TD>
-		</TR>
-		<TR>
-			<TD>\n";
+	<p>
+	<table border='0' class='tableborder'>
+	<tr>
+		<td valign='top'>\n";
+	echo "<table border='0' cellpadding='5'>\n";
+	echo "<tr><td>\n";
+	openRoundBorder();
+	echo docpop('runid','<b>NoRef Run Name:</b>');
+	echo "<input type='text' name='runid' value='$runidval'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('descr','<b>Description of NoRef Alignment:</b>');
+	echo "<br />\n";
+	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
+	closeRoundBorder();
+	echo "</td>
+		</tr>\n";
+	echo "<tr>
+			<td>\n";
 
 	$prtlruns=count($prtlrunIds);
 
@@ -189,32 +188,37 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<TR><TD VALIGN='TOP'>\n";
 	//echo "<B>Particle Params:</B></A><BR>\n";
 
-	echo "<FONT COLOR='#3333DD'>Values in &Aring;ngstroms</FONT><BR>\n";
+	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
+	echo "<br />\n";
 	if  (!$apix) {
         	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
 	}
 	echo "<INPUT TYPE='text' NAME='partrad' SIZE='4' VALUE='$partrad'>\n";
 	echo docpop('partrad','Particle Radius');
-	echo " (in &Aring;ngstroms)<BR>\n";
-
+	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<br />\n";
 	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$maskrad'>\n";
 	echo docpop('maskrad','Mask Radius');
-	echo " (in &Aring;ngstroms)<BR>\n";
-
+	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<br />\n";
 	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>\n";
 	echo docpop('lpval','Low Pass Filter Radius');
-	echo " (in &Aring;ngstroms)<BR>\n";
-
-	echo "<FONT COLOR='#3333DD'>Values in pixels</FONT><BR>\n";
-
+	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo "<b>Alignment-specific Radii (in Pixels)</b>\n";
+	echo "<br />\n";
 	echo "<INPUT TYPE='text' NAME='firstring' SIZE='4' VALUE='$firstring'>\n";
 	echo docpop('firstring','First Ring Radius');
-	echo " (in Pixels)<BR>\n";
+	echo "<font size='-2'>(pixels)</font>\n";
+	echo "<br />\n";
 
 	echo "<INPUT TYPE='text' NAME='lastring' SIZE='4' VALUE='$lastring'>\n";
 	echo docpop('lastring','Last Ring Radius');
-	echo " (in Pixels)<BR>\n";
+	echo "<font size='-2'>(pixels)</font>\n";
+	echo "<br />\n";
+	echo "<br />\n";
 
 	echo "<FONT COLOR='#DD3333' SIZE='-2'>WARNING: more than 3000 particles can take forever to process</FONT><BR>\n";
 

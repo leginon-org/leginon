@@ -8,6 +8,7 @@ var help = {
 **/
 	'eman' : {
 		'runid' : 'Specifies the name associated with the processing results unique to the specified session and parameters. An attempt to use the same run name for a session using different processing parameters will result in an error.',
+		'outdir' : 'Output directory to which files will be stored.  If you are testing, switch \"appion\" to \"temp\".',
 		'checkimages' : 'Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXEMPLAR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.',
 		'nowait' : 'By default the program will check to see if Leginon has collected more images after finishing for 2 hours. If this is unchecked then when the program finishes it will immediately stop.',
 		'background' : 'This a feature the turns off some of the fancy output used when the program runs',

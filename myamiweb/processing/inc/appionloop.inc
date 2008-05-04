@@ -75,6 +75,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 
 	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
+	openRoundBorder();
 	echo docpop('runid','<b>Run Name:</b> ');
 	echo "<input type='text' name='runid' VALUE='$runid'><BR/><BR/>\n";
 	
@@ -96,8 +97,11 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
-	echo"&nbsp;&nbsp;&nbsp;Output Directory<BR/>
-	    <input type='text' name='outdir' VALUE='$outdir' size='45'><br /><br />\n";
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' VALUE='$outdir' size='45'><br />\n";
+	closeRoundBorder();
+	echo "<br />\n";
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$presets=$sessiondata['presets'];
@@ -121,9 +125,8 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 			."Will Process ALL Images</I><BR/>\n";
 	}
 
-	echo "
-<HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid; border-collapse: collapse;'>
-<input type='hidden' name='sessionname' value='$sessionname'>\n";
+	echo "<hr>\n";
+	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'non-rejected';
@@ -156,7 +159,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	echo "<input type='radio' name='apcontinue' VALUE='0' $apreproccheck>\n";
 	echo "Reprocess all images<br/><br/>\n";
 
-	echo "<HR style='margin: 1em 1em 1em 0; border: 1px #333333 solid; border-collapse: collapse;'>\n";
+	echo "<hr>\n";
 	echo "<input type='checkbox' name='commit' $commit>\n";
 	echo docpop('commit','<b>Commit results to database</b>');
 	echo "<br />\n";
@@ -356,8 +359,6 @@ function particleinfopopup(infoname){
 
 function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<!-- BEGIN Particle Loop Param -->\n";
-//	prettytable2();
-//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><font COLOR=#DDDDDD>Appion Loop Params</font></TD></TR>
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
 	$lpv = ($_POST['lp'] || $_POST['process']) ? $_POST['lp'] : '5';

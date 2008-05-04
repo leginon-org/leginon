@@ -375,10 +375,12 @@ function jobForm($extra=false) {
     onmouseout='overdiv=0;'>
 </div>
 	";
-	echo "
-  <form name='emanjob' method='post' action='$formaction'><br />
-  <table class='tableborder' cellpadding=4 cellspacing=4>
-  <tr>
+	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
+	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
+	echo "<tr><td>\n";
+	openRoundBorder();
+	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
+	echo "<tr>
     <td rowspan='2'><b>Cluster:</b></td>
     <td><input type='radio' name='clustername' value='garibaldi' onClick=\"enableGaribaldi('true')\" $garibaldicheck>Garibaldi</td></tr>
     <tr><td><input type='radio' name='clustername' value='guppy' onClick=\"enableGaribaldi('false')\" $guppycheck>Guppy</td>
@@ -395,22 +397,26 @@ function jobForm($extra=false) {
     <td><B>Cluster Directory:</B></td>
     <td><input type='text' NAME='clusterpath' VALUE='$clusterpath' SIZE=50></td>
   </tr>
-  </TABLE>\n";
-  echo "
-  <P>
-  <input type='hidden' NAME='model' VALUE='".$_POST['model']."'>
-  <input type='hidden' NAME='stackval' VALUE='".$_POST['stackval']."'>";
-  echo"<TABLE BORDER='0' WIDTH='99%'><tr><TD VALIGN='TOP'>"; //overall table
+  </table>\n";
+	closeRoundBorder();
+	echo "</td></tr>\n";
+	echo "</table>\n";
+	echo "<p>\n";
+	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
+	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 
-//Cluster Parameters
-  echo"
-    <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
-    <tr>
-      <TD COLSPAN='4' ALIGN='CENTER'>
-      <H4>PBS Cluster Parameters</H4>
-      </td>
-    </tr>
-    <tr>
+	//overall PBS & DMF tables
+	echo "<table border='0'><tr><td valign='top'>"; 
+
+	//Cluster Parameters
+	openRoundBorder();
+	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
+	echo "<tr>\n";
+	echo "<td colspan='4' align='center'>\n";
+	echo "<h4>PBS Cluster Parameters</h4>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr>
       <td><a href='#' id='lcp1' onMouseOver='popLayer(\"nodes\", \"lcp1\")' onMouseOut='hideLayer()'>Nodes:</A></td>
       <td><input type='text' NAME='nodes' VALUE='$nodes' SIZE='4' MAXCHAR='4'></td>
       <td><a href='#' id='lcp2' onMouseOver='popLayer(\"procpernode\", \"lcp2\")' onMouseOut='hideLayer()'>Proc/Node:</A></td>
@@ -427,15 +433,15 @@ function jobForm($extra=false) {
       Reconstruction procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
       </td>
     </tr>
-    </TABLE>
-    <BR/>";
+    </table>\n";
+	closeRoundBorder();
 
-  echo"</td><TD VALIGN='TOP'>"; //overall table
+	echo"</td><td valign='top'>"; //overall table
 
-//DMF Parameters TABLE
-  echo"
-    <TABLE CLASS='tableborder' CELLPADDING=4 CELLSPACING=4>
-    <tr>
+	//DMF Parameters TABLE
+	openRoundBorder();
+	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
+	echo "<tr>
       <TD COLSPAN='4' ALIGN='CENTER'>
       <H4>DMF Parameters</H4>
       </td>
@@ -456,8 +462,9 @@ function jobForm($extra=false) {
       <td>Save results to DMF</td>
       <td><input type='checkbox' NAME='dmfstore' $dmfstorech></td>
     </tr>
-    </TABLE>\n";
-  echo"</td></tr></TABLE>"; //overall table
+    </table>\n";
+	closeRoundBorder();
+	echo"</td></tr></table>"; //overall table
   $bgcolor="#E8E8E8";
   $display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
   echo"

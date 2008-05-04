@@ -58,6 +58,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('eman');	
 	$javafunctions .= particleLoopJavaCommands();
+
 	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
 
 	if ($extra) {
@@ -90,7 +91,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	}
 	createAppionLoopTable($sessiondata, $defrunid, "extract");
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
-	echo "<td CLASS='tablebg'>\n";
+	echo "<td class='tablebg'>\n";
 	echo "<b>Particle Diameter:</b><br />\n";
 	echo "<input type='text' NAME='diam' value='$diam' size='4'>\n";
 	echo docpop('pdiam','Particle diameter for filtering');
@@ -113,8 +114,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	echo docpop('sizerange',' Size Range');
 	echo " <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br />\n";
-	echo "<hr>
-		</td>
+	echo "</td>
 	</tr>
 	<tr>
 		<td COLSPAN='2' ALIGN='center'>

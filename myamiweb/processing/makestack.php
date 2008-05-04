@@ -159,36 +159,31 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
 	// normalization check (checked by default)
 	$normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	echo"
-	<P>
-	<table border=0 class=tableborder>
-	<tr>
-		<td valign='TOP'>
-		<table cellpadding='5' border='0'>
-		<tr>
-			<td valign='TOP'>\n";
+	echo "<p>\n";
+	echo "<table border=0 class=tableborder>\n";
+	echo "<tr>\n";
+	echo "<td valign='TOP'>\n";
+	echo "<table cellpadding='5' border='0'>\n";
+	echo "<tr>\n";
+	echo "<td valign='TOP'>\n";
+	openRoundBorder();
 	echo docpop('stackname','<b>Stack File Name:</b>');
 	echo "<input type='text' name='single' value='$single'>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td valign='top'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
 	echo docpop('runid','<b>Stack Run Name:</b>');
 	echo "<input type='text' name='runid' value='$runidval'>\n";
-	echo "<hr>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td valign='top'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
 	echo docpop('stackdescr','<b>Stack Description:</b>');
 	echo "<br />\n";
 	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "<tr>\n";
-	echo "<td valign='top'>\n";	 
-	echo "<b>Output Directory:</b><br />\n";
-	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+	closeRoundBorder();
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";

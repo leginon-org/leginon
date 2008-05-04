@@ -79,17 +79,32 @@ function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True)
 }
 
 function writeBottom($showproclink=True, $nytimes=False){
-  global $_GET;
-  echo"
+	global $_GET;
+	echo"
   </TD>
   </TR>
   </TABLE>\n";
 #  if ($nytimes) echo "<table cellpadding='5' class='tableborder' border='1'><tr><td align='center'><a href='http://www.nytimes.com'>While waiting, enjoy <br /><img border='0' src='img/nytimes.gif' alt='New York Times'></A></td></tr></table><br />\n";
-  if ($showproclink && $_GET['expId']) echo "<A HREF='processing.php?expId=$_GET[expId]' CLASS='header'>[Back to Processing Page]</A>\n";
-  echo "
-  </CENTER>
-  </BODY>
-  </HTML>\n";
+	if ($showproclink && $_GET['expId']) {
+		echo "<table border='0' cellpadding='0' cellspacing='0'>\n";
+		echo "<tr>\n";
+		echo "<td valign='center'>\n";
+		echo "<a href='processing.php?expId=$_GET[expId]' class='header'>\n";
+		echo "<img border='0' src='img/leftendButton.gif'>\n";
+		echo "</a>\n";
+		echo "</td>\n";
+		echo "<td align='center' valign='center' background='img/middleButton.gif'>\n";
+		echo "<a href='processing.php?expId=$_GET[expId]' class='header'><font size='-2'>Back to Processing Page</font></a>\n";
+		echo "</td>\n";
+		echo "<td valign='center'>\n";
+		echo "<img border='0' src='img/rightendButton.gif'>\n";
+		echo "</td>\n";
+		echo "</tr>\n";
+		echo "</table>\n";
+	}
+	echo "</center>\n";
+	echo "</body>\n";
+	echo "</html>\n";
 }
 
 function displayLogin($formAction) {
@@ -478,7 +493,7 @@ function getHtmlStyle($code) {
 }
 
 function writeJavaPopupFunctions ($help) {
-  $javafunc = "
+	$javafunc = "
   <style type='text/css'>
     input { border-style: solid; border-color: #9dae9b; }
     select { border-style: solid; border-color: #9dae9b; }
@@ -488,7 +503,7 @@ function writeJavaPopupFunctions ($help) {
 		}
   </style>\n";
 
-    $javafunc .= "
+	$javafunc .= "
   <script type='text/javascript' src='js/help.js'></script>
   <script type='text/javascript' src='../js/prototype.js'></script>
   <script type='text/javascript' src='../js/draglayer.js'></script>
@@ -531,7 +546,20 @@ function writeJavaPopupFunctions ($help) {
 	}
 
 </script>\n";
-  return $javafunc;
+	return $javafunc;
 };
 
+function openRoundBorder() {
+	echo "<div id='roundbox'>\n";
+	echo "<b class='xtop'><b class='xb1'></b><b class='xb2'></b><b class='xb3'></b><b class='xb4'></b></b>\n";
+	echo "<div class='roundboxcontent'>\n";
+	echo "<p>\n";
+}
+
+function closeRoundBorder() {
+	echo "</p>\n";
+	echo "</div><!--/rounboxcontent-->\n";
+	echo "<b class='xbottom'><b class='xb4'></b><b class='xb3'></b><b class='xb2'></b><b class='xb1'></b></b>\n";
+	echo "</div><!--/roundbox-->\n";
+}
 ?>
