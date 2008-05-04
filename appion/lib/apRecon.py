@@ -5,6 +5,8 @@ import tempfile
 import cPickle
 import math
 import string
+import subprocess
+#appion
 import appionData
 import apDB
 import apDatabase
@@ -402,7 +404,10 @@ def runChimeraScript(chimscript):
 		chimexe = "chimera"
 		apDisplay.printWarning("'CHIMERA' environmental variable is unset")
 	rendercmd = (chimexe+" python:"+chimscript)
-	os.popen(rendercmd)
+	logf = open("chimera.log", "a")
+	proc = subprocess.Popen(rendercmd, shell=True, stdout=logf, stderr=logf)
+	proc.wait()
+	logf.close()
 	return
 
 def insertRefinementRun(params):
