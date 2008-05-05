@@ -89,8 +89,13 @@ def execFindEM(feed):
 	fin = proc.stdin
 	fin.write(feed)
 	fin.flush()
+	waittime = 2.0
+	while proc.poll() is None:
+		sys.stderr.write(".")
+		time.sleep(waittime)
+		logf.flush()
 	proc.wait()
-	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
+	apDisplay.printMsg("\nfinished in "+apDisplay.timeString(time.time()-t0))
 
 #===========
 def findEMString(classavg, templatename, imgname, ccmapfile, params):
