@@ -4,28 +4,14 @@
 import os
 import threading
 import sys
+import time
 import subprocess
 #appion
 import apDisplay
 import apImage
 import apParam
 
-#########################################################
-
-class findemjob(threading.Thread):
-	def __init__ (self, feed):
-		threading.Thread.__init__(self)
-		self.feed = feed
-   	def run(self):
-		fin=''
-		fin=os.popen( getFindEMPath(), 'w')
-		fin.write(self.feed)
-		print "running findem.exe"
-		fin.flush()
-		fin.close()
-
-#########################################################
-
+#===========
 def runFindEM(imgdict, params, thread=False):
 	"""
 	runs a separate thread of findem.exe for each template 
@@ -46,8 +32,8 @@ def runFindEM(imgdict, params, thread=False):
 
 		#DETERMINE OUTPUT FILE NAME
 		#CHANGE THIS TO BE 00%i in future
-		#numstr = "%03d" % classavg
-		numstr = str(classavg%10)+"00"
+		numstr = "%03d" % classavg
+		#numstr = str(classavg%10)+"00"
 		ccmapfile="cccmaxmap"+numstr+".mrc"
 		if (os.path.isfile(ccmapfile)):
 			os.remove(ccmapfile)
@@ -56,19 +42,12 @@ def runFindEM(imgdict, params, thread=False):
 		feed = findEMString(classavg, templatename, imgname, ccmapfile, params)
 
 		#RUN THE PROGRAM
-		apDisplay.printMsg("running findem.exe")
-		if thread == True:
+		if thread is True:
 			current = findemjob(feed)
 			joblist.append(current)
 			current.start()
 		else:
-			logf = open("findem.log", "a")
-			proc = subprocess.Popen( getFindEMPath(), shell=True, 
-				stdin=subprocess.PIPE, stdout=logf, stderr=logf)
-			fin = proc.stdin
-			fin.write(feed)
-			fin.flush()
-			proc.wait()
+			execFindEM(feed)
 
 		#READ OUTPUT FILE
 		if not os.path.isfile(ccmapfile):
@@ -78,12 +57,42 @@ def runFindEM(imgdict, params, thread=False):
 			ccmaxmap = apImage.mrcToArray(ccmapfile)
 			ccmaplist.append(ccmaxmap)
 
-	if thread == True:
+	if thread is True:
 		for job in joblist:
 			job.join()
 	return ccmaplist
 
+#===========
+class findemjob(threading.Thread):
+	def __init__ (self, feed):
+		threading.Thread.__init__(self)
+		self.feed = feed
+   	def run(self):
+			findemexe = getFindEMPath()
+			apDisplay.printMsg("threading "+os.path.basename(findemexe))
+			logf = open("findem.log", "a")
+			proc = subprocess.Popen( findemexe, shell=True, 
+				stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+			fin = proc.stdin
+			fin.write(self.feed)
+			fin.flush()
+			fin.close()
 
+#===========
+def execFindEM(feed):
+	t0 = time.time()
+	findemexe = getFindEMPath()
+	apDisplay.printMsg("running "+os.path.basename(findemexe))
+	logf = open("findem.log", "a")
+	proc = subprocess.Popen( findemexe, shell=True, 
+		stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+	fin = proc.stdin
+	fin.write(feed)
+	fin.flush()
+	proc.wait()
+	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
+
+#===========
 def findEMString(classavg, templatename, imgname, ccmapfile, params):
 
 	#IMAGE INFO
@@ -110,8 +119,8 @@ def findEMString(classavg, templatename, imgname, ccmapfile, params):
 	feed += str(params["diam"])+"\n"
 
 	#RUN ID FOR OUTPUT FILENAME
-	#numstr = "%03d" % classav
-	numstr = str(classavg%10)+"00\n"
+	numstr = ("%03d" % classavg)+"\n"
+	#numstr = str(classavg%10)+"00\n"
 	feed += numstr
 
 	#ROTATION PARAMETERS
@@ -131,6 +140,7 @@ def findEMString(classavg, templatename, imgname, ccmapfile, params):
 
 	return feed
 
+#===========
 def processAndSaveImage(imgdata, params):
 	#downsize and filter leginon image
 	if params['uncorrected']:
@@ -142,6 +152,7 @@ def processAndSaveImage(imgdata, params):
 	apImage.arrayToMrc(imgarray, imgpath, msg=False)
 	return
 
+#===========
 def getFindEMPath():
 	unames = os.uname()
 	if unames[-1].find('64') >= 0:
@@ -150,6 +161,8 @@ def getFindEMPath():
 		exename = 'findem32.exe'
 	findempath = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
  	if not os.path.isfile(findempath):
-		apDisplay.printError("findem.exe was not found at: "+findempath)
+		findempath = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+ 	if not os.path.isfile(findempath):
+		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 	return findempath
 
