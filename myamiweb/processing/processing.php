@@ -261,15 +261,17 @@ if ($sessionId) {
 	$celloption="bgcolor='$bgcolor'";
 
 	$action = formatAction($gifimg, "Micrograph Assessment");
-	$result = "<a href='assesssummary.php?expId=$sessionId'>";
 	if ($assessedimgs < $totimgs) {
+		$result = "<a href='assesssummary.php?expId=$sessionId'>";
 		$result .= "$assessedimgs of $totimgs completed"; 
+		$result .= "</a>";
 	} elseif ($totimgs!=0) {
+		$result = "<a href='assesssummary.php?expId=$sessionId'>";
 		$result .= "All $assessedimgs completed";
+		$result .= "</a>";
 	} else {
-		$result .= "none";
+		$result = "none";
 	}
-	$result .= "</a>";
 
 	$nrun = "<a href='imgassessor.php?expId=$sessionId'>";
 	if ($assessedimgs==0) {
