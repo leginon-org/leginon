@@ -442,6 +442,9 @@ class Focuser(acquisition.Acquisition):
 			self.stopTimer('autoStage')
 
 		resultdata['status'] = status
+		scopedata = self.instrument.getData(data.ScopeEMData)
+		scopedata.insert(force=True)
+		resultdata['scope'] = scopedata
 		self.publish(resultdata, database=True, dbforce=True)
 
 		return status

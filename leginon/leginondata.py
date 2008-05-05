@@ -811,6 +811,7 @@ class FocuserResultData(InSessionData):
 			('method', str),
 			('status', str),
 			('drift', DriftData),
+			('scope', ScopeEMData),
 		)
 	typemap = classmethod(typemap)
 
