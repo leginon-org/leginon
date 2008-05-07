@@ -262,7 +262,7 @@ def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True
 
 def getImgCompleteStatus(imgdata):
 	assess = getImgAssessmentStatus(imgdata)
-	hidden = getImageViewerStatus(imgdata)
+	hidden = getImgViewerStatus(imgdata)
 	if hidden is None:
 		return assess
 	elif assess is None:
@@ -334,7 +334,7 @@ def getDarkNorm(sessionname, cameraconfig):
 
 	return result
 
-def getImageViewerStatus(imgdata):
+def getImgViewerStatus(imgdata):
 	"""
 	Function that returns whether or not the image was hidden in the viewer
 	False: Image was hidden
@@ -368,7 +368,7 @@ def getImageViewerStatus(imgdata):
 
 
 def checkInspectDB(imgdata):
-	status = getImageViewerStatus(imgdata)
+	status = getImgViewerStatus(imgdata)
 	if status is False:
 		return False
 	elif status is True:
