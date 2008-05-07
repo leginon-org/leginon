@@ -3,6 +3,7 @@
 import time
 import os
 ## PIL
+import numpy
 #import Image
 ## spider
 import spyder
@@ -12,6 +13,7 @@ import apImage
 import apEMAN
 import apParam
 import apDisplay
+from pyami import spider
 
 """
 A large collection of SPIDER functions
@@ -74,29 +76,12 @@ def fermiHighPassFilter(imgarray, pixrad=200.0, dataext="spi"):
 
 #===============================
 def arrayToSpiderSingle(imgarray, imgfile, msg=False):
-	### temp hack
-	apImage.arrayToMrc(imgarray, "temp001.mrc", msg=msg)
-	apEMAN.executeEmanCmd("proc2d temp001.mrc "+imgfile+" spiderswap-single", verbose=False, showcmd=False)
-	while(not os.path.isfile(imgfile)):
-		time.sleep(0.2)
-	os.popen("rm -f temp001.mrc")
-	### better way to do it
-	#img = apImage.arrayToImage(imgarray)
-	#img.save(imgfile, format='SPIDER')
+	spider.write(imgarray, imgfile)
+	return
 
 #===============================
 def spiderSingleToArray(imgfile, msg=False):
-	### temp hack
-	if not os.path.isfile(imgfile):
-		apDisplay.printError("File: "+imgfile+" does not exist")
-	apEMAN.executeEmanCmd("proc2d "+imgfile+" temp001.mrc", verbose=False, showcmd=False)
-	while(not os.path.isfile("temp001.mrc")):
-		time.sleep(0.2)
-	imgarray = apImage.mrcToArray("temp001.mrc", msg=msg)
-	os.popen("rm -f temp001.mrc")
-	### better way to do it
-	#img = Image.open(imgfile)
-	#imgarray = apImage.imageToArray(img)
+	imgarray = spider.read(imgfile)
 	return imgarray
 
 
