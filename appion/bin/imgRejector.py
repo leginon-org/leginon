@@ -78,7 +78,7 @@ class ImageRejector(appionLoop.AppionLoop):
 
 		### tilt pair stuff
 		if imgassess is not False and self.params['notiltpairs'] is True:
-			imgassess *= self.rejectTiltPairs(imgdata)
+			imgassess = self.rejectTiltPairs(imgdata)
 
 		### picking stuff
 		if imgassess is not False and self.params['nopicks'] is True:
@@ -89,7 +89,7 @@ class ImageRejector(appionLoop.AppionLoop):
 
 		### ace stuff
 		if imgassess is not False:
-			imgassess *= self.rejectAceInfo(imgdata)
+			imgassess = self.rejectAceInfo(imgdata)
 
 		### set global value
 		self.imgassess = imgassess
@@ -121,7 +121,7 @@ class ImageRejector(appionLoop.AppionLoop):
 		### insert False values
 		if self.imgassess is False:
 			self.reject += 1
-			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False, msg=msg)
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False, msg=True)
 			f = open("imageRejectList.txt", "a")
 			f.write(imgdata['filename']+"\n")
 			f.close()
