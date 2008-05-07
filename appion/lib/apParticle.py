@@ -64,6 +64,16 @@ def getParticles(imgdata, selectionRunId):
 
 	return particles
 
+def getOneParticle(imgdata):
+	"""
+	returns paticles (as a list of dicts) for a given image
+	ex: particles[0]['xcoord'] is the xcoord of particle 0
+	"""
+	partq = appionData.ApParticleData()
+	partq['image'] = imgdata
+	partd = partq.query(results=1)
+	return partd
+
 def getParticlesForImageFromRunName(imgdata,runname):
 	"""
 	returns particles for a given image and selection run name
