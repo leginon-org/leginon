@@ -59,11 +59,10 @@ SpiderHeaderDict = {
 def getHeaderDict(hdr):
 	hdrdict = {}
 	hdrdict['header'] = hdr
-	hdrdict['hdrlen'] = len(hdr)
+	hdrlen = len(hdr)
 	hdrdict['bigendian'] = hdr[0]
 
-
-	for i in range(1, hdrdict['hdrlen']):
+	for i in range(1, hdrlen):
 		if i in SpiderHeaderDict:
 			name = SpiderHeaderDict[i]
 			if name in ['NOTUSED', 'unused']:
