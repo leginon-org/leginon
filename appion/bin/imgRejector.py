@@ -29,12 +29,12 @@ class ImageRejector(appionLoop.AppionLoop):
 		self.params['nowait'] = True
 		self.params['background'] = True
 		#new params
-		self.params['mindefocus'] = 0.0
-		self.params['maxdefocus'] = -5.0e-6
-		self.params['acevalue'] = 0.8
+		self.params['mindefocus'] = None
+		self.params['maxdefocus'] = None
+		self.params['acecutoff'] = None
 		self.params['noace'] = False
 		self.params['nopicks'] = False
-		self.params['notiltpair'] = False
+		self.params['notiltpairs'] = False
 		return
 
 	### ==================================
@@ -42,8 +42,8 @@ class ImageRejector(appionLoop.AppionLoop):
 		for arg in args:
 			elements = arg.split('=')
 			elements[0] = elements[0].lower()
-			if (arg == 'notiltpair'):
-				self.params['notiltpair']=True
+			if (arg == 'notiltpairs'):
+				self.params['notiltpairs']=True
 			elif (arg == 'noace'):
 				self.params['noace']=True
 			elif (arg == 'nopicks'):
@@ -59,7 +59,41 @@ class ImageRejector(appionLoop.AppionLoop):
 
 	### ==================================
 	def processImage(self, imgdata):
-		time.sleep(0.01)
+		### reset global value
+		self.imgassess = True
+
+		### get initial assessment
+		imgassess = apDatabase.getImgAssessmentStatus(imgdata)
+		if imgassess is False:
+			return
+		if imgassess is None:
+			imgassess = True
+
+		### hidden image
+		imgview = apDatabase.getImgViewerStatus(imgdata)
+		if imgview is False:
+			apDisplay.printColor("\nrejecting hidden image: "+apDisplay.short(imgdata['filename']), "green")
+			self.imgassess = False
+			return
+
+		### tilt pair stuff
+		if imgassess is not False and self.params['notiltpairs'] is True:
+			imgassess *= self.rejectTiltPairs(imgdata)
+
+		### picking stuff
+		if imgassess is not False and self.params['nopicks'] is True:
+			part = apParticle.getOneParticle(imgdata)
+			if not part:
+				apDisplay.printColor("\nrejecting unpicked image: "+apDisplay.short(imgdata['filename']), "cyan")
+				imgassess = False
+
+		### ace stuff
+		if imgassess is not False:
+			imgassess *= self.rejectAceInfo(imgdata)
+
+		### set global value
+		self.imgassess = imgassess
+
 		return
 
 	### ==================================
@@ -84,35 +118,13 @@ class ImageRejector(appionLoop.AppionLoop):
 		Uses the appionLoop commit
 		"""
 		msg = not self.params['background']
-
-		### get initial assessment
-		imgassess = apDatabase.getImgAssessmentStatus(imgdata)
-		if imgassess is False:
-			return
-
-		### hidden image
-		imgassess *= apDatabase.getImgViewerStatus(imgdata)
-		### tilt pair stuff
-		if imgassess is not False and self.params['notiltpair'] is True:
-			imgassess *= self.rejectTiltPairs(imgdata)
-		### picking stuff
-		if imgassess is not False and self.params['nopicks'] is True:
-			part = apParticle.getOneParticle(imgdata)
-			if not part:
-				apDisplay.printColor("\nrejecting unpicked image: "+apDisplay.short(imgdata['filename']), "cyan")
-				imgassess = False
-		### ace stuff
-		if imgassess is not False:
-			imgassess *= self.rejectAceInfo(imgdata)
-
 		### insert False values
-		if imgassess is False:
+		if self.imgassess is False:
 			self.reject += 1
 			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False, msg=msg)
-
-		if msg is True:
-			print "Assessment:", imgassess	
-
+			f = open("imageRejectList.txt", "a")
+			f.write(imgdata['filename']+"\n")
+			f.close()
 
 	##########################################
 	##### END PRE-DEFINED LOOP FUNCTIONS #####
@@ -135,7 +147,7 @@ class ImageRejector(appionLoop.AppionLoop):
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 
  		if ctfvalue is None:
-			if self.params['noace']:
+			if self.params['noace'] is True:
 				apDisplay.printColor("\nrejecting no ACE values: "+apDisplay.short(imgdata['filename']), "yellow")
 				return False
 			else:
@@ -143,7 +155,7 @@ class ImageRejector(appionLoop.AppionLoop):
 				return True
 
 		### check that ACE estimation is above confidence threshold
-		if params['acecutoff'] and conf < self.params['acecutoff']:
+		if self.params['acecutoff'] and conf < self.params['acecutoff']:
 			apDisplay.printColor("\nrejecting below ACE cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
 			return False
 
