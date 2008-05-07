@@ -170,7 +170,7 @@ class Tomography(acquisition.Acquisition):
 		self.moveAndPreset(presetdata, emtarget)
 
 		try:
-			calibrations = self.getCalibrations()
+			calibrations = self.getCalibrations(presetdata)
 		except CalibrationError, e:
 			self.logger.error('Calibration error: %s' % e) 
 			return 'failed'
@@ -255,14 +255,19 @@ class Tomography(acquisition.Acquisition):
 	def setDefocus(self, defocus):
 		self.instrument.tem.Defocus = defocus
 
-	def getCalibrations(self):
-		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
-
-		tem = scope_data['tem']
-		ccd_camera = camera_data['ccdcamera']
-		high_tension = scope_data['high tension']
-		magnification = scope_data['magnification']
+	def getCalibrations(self, presetdata=None):
+		if preset is None:
+			scope_data = self.instrument.getData(leginondata.ScopeEMData)
+			camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+			tem = scope_data['tem']
+			ccd_camera = camera_data['ccdcamera']
+			high_tension = scope_data['high tension']
+			magnification = scope_data['magnification']
+		else:
+			tem = presetdata['tem']
+			ccd_camera = presetdata['ccdcamera']
+			high_tension = self.instrument.tem.HighTension
+			magnification = presetdata['magnification']
 
 		args = (magnification, tem, ccd_camera)
 		pixel_size = self.calclients['pixel size'].getPixelSize(*args)
