@@ -99,6 +99,8 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$noacecheck = ($_POST['noace']=='on') ? 'CHECKED' : ($ctfdata ? 'CHECKED' : '');
 	$nopickscheck = ($_POST['nopicks']=='on') ? 'CHECKED' : ($prtlrunIds ? 'CHECKED' : '');
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
+	$presets=$sessiondata['presets'];
 	// ace check params
 	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
 	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
@@ -117,8 +119,32 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	echo docpop('outdir','<b>Output Directory:</b>');
 	echo "<br />\n";
 	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
-	echo "</td>\n";
-	echo "</tr>\n";
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
+	$presets=$sessiondata['presets'];
+	if ($presets && count($presets) > 1) {
+		echo"<B>Preset</B>\n<SELECT name='preset'>\n";
+		foreach ($presets as $preset) {
+			echo "<OPTION VALUE='$preset' ";
+			// make en selected by default
+			if ($preset==$presetval) echo "SELECTED";
+			echo ">$preset</OPTION>\n";
+		}
+		echo"</SELECT><br/><br/>\n";
+	} elseif ($presets) {
+		echo"<B>Preset:</B>&nbsp;&nbsp;".$presets[0]."\n\n";
+		echo"<input type='hidden' name='preset' VALUE=".$presets[0].">\n";
+		echo"<br/>\n";
+	} else {
+		//no presets
+		echo"<input type='hidden' name='alldbimages' VALUE=1>\n";
+		echo"<I>No Presets for this Session<br/>\n"
+			."Will Process ALL Images</I><BR/>\n";
+	}
+	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
+	echo "</td></tr>\n";
 
 	echo "<tr><td>\n";
 	echo "<input type='checkbox' name='notiltpairs' $notiltpairscheck>\n";
@@ -209,6 +235,8 @@ function runImgRejector() {
 	$outdir = $_POST['outdir'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 
+	if ($_POST[preset]) $dbimages=$_POST['sessionname'].",".$_POST['preset'];
+
 	$command.="imgRejector.py ";
 
 	//make sure a session was selected
@@ -227,6 +255,8 @@ function runImgRejector() {
 
 	$command.="runid=$runid ";
 	$command.="outdir=$outdir ";
+	if ($dbimages) $command.=" dbimages=$dbimages ";
+	else $command.=" alldbimages=$_POST[sessionname] ";
 	if ($_POST['commit']=='on') $command.="commit ";
 	if ($_POST['notiltpairs']=='on') $command.="notiltpairs ";
 	if ($_POST['nopicks']=='on') $command.="nopicks ";
@@ -234,6 +264,14 @@ function runImgRejector() {
 	if ($acecutoff) $command.="acecutoff=$acecutoff ";
 	if ($dfmin) $command.="mindefocus=$dfmin ";
 	if ($dfmax) $command.="maxdefocus=$dfmax ";
+	elseif ($_POST['sessionname']) {
+		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
+		elseif(!$_POST['alldbimages']) {
+			return ("<B>ERROR:</B> Select an image preset for template matching");
+			exit;
+		}
+	}
+
 
 	// submit job to cluster
 	if ($_POST['process']=="Make Stack") {
