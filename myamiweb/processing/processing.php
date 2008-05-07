@@ -22,6 +22,8 @@ if ($_POST['login']) {
 
 processTable();
 
+
+
 function processTable($extra=false) {
 $leginondata = new leginondata();
 
@@ -130,6 +132,7 @@ echo "<p>\n";
 if ($sessionId) {
 // ---  Get CTF Data
   $ctf = new ctfdata();
+
   if ($ctfrunIds = $ctf->getCtfRunIds($sessionId))
 		$ctfruns=count($ctfrunIds);
 
@@ -242,8 +245,17 @@ if ($sessionId) {
 
 	$action = formatAction($gifimg, "CTF Estimation");
 
-	$result = ($ctfruns==0) ? "none" :
-			"<a href='ctfreport.php?Id=$sessionId'>$ctfruns completed</a>";
+	if ($ctfruns==0) {
+		$result = "none";
+	} else {
+		$result = "<a href='ctfreport.php?Id=$sessionId'>$ctfruns completed</a>";
+		//$best = $ctf->getPercentPassCtfForSessionId($sessionId, 0.8);
+		//print_r($best);
+		//$all = $ctf->getPercentPassCtfForSessionId($sessionId);
+		//$percent = 100.0 * count($best) / ((float) count($all));
+		//$result .= "<br/>\n".round($percent,1)."% pass criteria";
+	}
+
 	$nrun = "<a href='runPyAce.php?expId=$sessionId'>";
 	$nrun .= "ACE Estimation";
 	$nrun .= "</a>";
@@ -275,12 +287,14 @@ if ($sessionId) {
 
 	$nrun = "<a href='imgassessor.php?expId=$sessionId'>";
 	if ($assessedimgs==0) {
-		$nrun .= "Manual Image Assessment";
+		$nrun .= "Web Image Assessment";
 	} else {
     $nrun .= ($assessedimgs < $totimgs || $totimgs==0) ? 
-			"Continue Manual Assessment" : "Re-Assess Images";
+			"Continue Web Assessment" : "Re-Assess Images";
 	}
-	$nrun .= "</a>";
+	$nrun .= "</a><br/>";
+	$nrun .= "<a href='runImgRejector.php?expId=$sessionId'>";
+	$nrun .= "Run Image Rejector</a>";
 
 	$data[]=array(
 		'action'=>array($action, $celloption),
