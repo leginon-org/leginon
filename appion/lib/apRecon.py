@@ -20,9 +20,6 @@ except:
 	pass
 import tarfile
 
-
-import subprocess
-
 #leginondb = apDB.db
 appiondb = apDB.apdb
 
