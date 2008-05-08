@@ -399,6 +399,8 @@ class Tomography(acquisition.Acquisition):
 				for n in (10, 100, 500, 1000):
 					predictions = query_data.query(results=n, readimages=False)
 					for predictinfo in predictions:
+						image = predictinfo.special_getitem('image', readimages=False)
+						a = image['scope']['stage position']['a']
 						prediction_pixel_size = predictions[0]['pixel size']
 						if prediction_pixel_size is None:
 							continue
