@@ -31,6 +31,7 @@ import Image
 import gui.wx.Stats
 import ImagePanelTools
 import SelectionTool
+import icons
 #import time
 
 wx.InitAllImageHandlers()
@@ -113,7 +114,8 @@ class ImagePanel(wx.Panel):
 		#self.panel.SetMinSize(self.imagesize)
 		self.panel.SetBackgroundColour(wx.WHITE)
 		self.panel.SetScrollRate(1, 1)
-		self.defaultcursor = wx.CROSS_CURSOR
+		cursorfile = icons.getPath('picker.png')
+		self.defaultcursor = wx.Cursor(cursorfile, wx.BITMAP_TYPE_PNG, 16, 16)
 		self.panel.SetCursor(self.defaultcursor)
 		if self.mode == "vertical":
 			self.sizer.Add(self.panel, (1, 0), (1, 1), wx.EXPAND) 
