@@ -47,6 +47,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId));
 
+	$hosts=getHosts();
+
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
 	
@@ -394,7 +396,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	<tr>
 		<td colspan='2' align='CENTER'>
 		<HR>";
-  echo"   <BR/>
+
+	echo "Host: <select name='host'>\n";
+	foreach($hosts as $host) {
+		$s = ($_POST['host']==$host) ? 'selected' : '';
+		echo "<option $s >$host</option>\n";
+	}
+  	echo "</SELECT><BR/>
 	  <input type='submit' name='process' value='Just Show Command'>
 	  <input type='submit' name='process' value='Make Stack'><br />
 	  </td>
