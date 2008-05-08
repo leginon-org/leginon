@@ -60,7 +60,9 @@ class Tomography(acquisition.Acquisition):
 		'model mag': 'this preset and lower mags',
 		'z0 error': 2e-6,
 		'phi': 0.0,
+		'phi2': 0.0,
 		'offset': 0.0,
+		'offset2': 0.0,
 		'fixed model': False,
 	}
 
@@ -76,6 +78,7 @@ class Tomography(acquisition.Acquisition):
 		self.exposure = exposure.Exposure()
 		self.prediction = prediction.Prediction()
 		self.loadPredictionInfo()
+		self.first_tilt_direction = 1
 
 		self.start()
 
@@ -166,9 +169,6 @@ class Tomography(acquisition.Acquisition):
 		return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
-		self.initGoodPredictionInfo(presetdata)
-		self.moveAndPreset(presetdata, emtarget)
-
 		try:
 			calibrations = self.getCalibrations(presetdata)
 		except CalibrationError, e:
@@ -182,6 +182,11 @@ class Tomography(acquisition.Acquisition):
 		self.update()
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
+		# HACK: assume tilt start from 0
+		tiltsum = sum(tilts[0])
+		if tiltsum != 0:
+			self.first_tilt_direction = tiltsum/abs(tiltsum)
+		self.initGoodPredictionInfo(presetdata)
 
 		collect = collection.Collection()
 		collect.node = self
@@ -256,7 +261,7 @@ class Tomography(acquisition.Acquisition):
 		self.instrument.tem.Defocus = defocus
 
 	def getCalibrations(self, presetdata=None):
-		if preset is None:
+		if presetdata is None:
 			scope_data = self.instrument.getData(leginondata.ScopeEMData)
 			camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
 			tem = scope_data['tem']
@@ -339,8 +344,8 @@ class Tomography(acquisition.Acquisition):
 
 		return target, emtarget
 
-	def initGoodPredictionInfo(self,preset=None):
-		if preset == None:
+	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=1):
+		if presetdata == None:
 			presets = self.settings['preset order']
 			try:
 				presetname = presets[0]
@@ -348,16 +353,16 @@ class Tomography(acquisition.Acquisition):
 				self.logger.error('Choose preset for this node before doing tilt series')
 				return
 			try:
-				preset = self.presetsclient.getPresetFromDB(presetname)
+				presetdata = self.presetsclient.getPresetFromDB(presetname)
 			except:
 				self.logger.error('Preset %s does not exist in this session.' % (presetname,))
 				return
 
-		tem = preset['tem']
-		ccd = preset['ccdcamera']
-		presetmag = preset['magnification']
+		tem = presetdata['tem']
+		ccd = presetdata['ccdcamera']
+		presetmag = presetdata['magnification']
 		presetpixelsize = self.calclients['pixel size'].retrievePixelSize(tem=tem, ccdcamera=ccd, mag=presetmag)
-		presetimage_pixel_size = presetpixelsize * preset['binning']['x']
+		presetimage_pixel_size = presetpixelsize * presetdata['binning']['x']
 		allmags = self.instrument.tem.Magnifications
 		allmags.sort()
 		allmags.reverse()
@@ -417,8 +422,20 @@ class Tomography(acquisition.Acquisition):
 		
 		if goodprediction is None:
 			if self.settings['model mag'] == 'custom values':
-				phi = math.radians(self.settings['phi'])
-				optical_axis = self.settings['offset']*(1e-6)/presetimage_pixel_size
+				# initialize phi, offset by tilt direction
+				if self.first_tilt_direction == 1:
+					offsetlist = [self.settings['offset'],self.settings['offset2']]
+					philist = [self.settings['phi'],self.settings['phi2']]
+				else:
+					offsetlist = [self.settings['offset2'],self.settings['offset']]
+					philist = [self.settings['phi2'],self.settings['phi']]
+				if tiltgroup == 2:
+					axis_offset = offsetlist[1]
+					phi = math.radians(philist[1])
+				else:
+					axis_offset = offsetlist[0]
+					phi = math.radians(philist[0])
+				optical_axis = axis_offset*(1e-6)/presetimage_pixel_size
 				params = [phi, optical_axis, 0]
 			else:
 				params = [0, 0, 0]
@@ -434,8 +451,27 @@ class Tomography(acquisition.Acquisition):
 		self.prediction.phi0 = params[0]
 		self.prediction.offset0 = params[1]
 		self.prediction.z00 = params[2]
-		self.logger.info('Initialize prediction parameters to (%.0f, %.0f, %.0f)' % tuple(params))
+		self.logger.info('Initialize prediction parameters to (%.2f, %.0f, %.0f)' % (math.degrees(params[0]),params[1],params[2]))
+		pixelshift={}
+		pixelshift['col'] = params[1]*math.cos(params[0])
+		# reverse y as in getPixelPosition
+		pixelshift['row'] = -params[1]*math.sin(params[0])
+		self.logger.info('prediction pixel shift (%.0f, %.0f)' % (pixelshift['col'],pixelshift['row']))
+		if pixelshift is not None:
+			fakescope = leginondata.ScopeEMData()
+			fakescope.friendly_update(presetdata)
+			fakecam = leginondata.CameraEMData()
+			fakecam.friendly_update(presetdata)
 
+			# get high tension from scope		
+			fakescope['high tension'] = self.instrument.tem.HighTension
+
+			## convert pixel shift to image shift
+			newscope = self.calclients['image shift'].transform(pixelshift, fakescope, fakecam)
+			ishift = newscope['image shift']
+			shift0x = ishift['x'] - presetdata['image shift']['x']
+			shift0y = (ishift['y'] - presetdata['image shift']['y'])
+			self.logger.info('calculated image shift to center tilt axis (x,y): (%.4e, %.4e)' % (shift0x,shift0y))
 
 	def loadPredictionInfo(self):
 		initializer = {
