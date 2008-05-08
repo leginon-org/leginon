@@ -104,6 +104,7 @@ class Collection(object):
 				self.node.player.wait()
 				self.node.logger.info('Continuing')
 				self.node.setStatus('processing')
+			self.node.initGoodPredictionInfo(tiltgroup=2)
 			self.prediction.newTiltGroup()
 			self.loop(self.tilts[1], self.exposures[1], True)
 		else:
