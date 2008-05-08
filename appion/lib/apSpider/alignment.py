@@ -527,7 +527,7 @@ def hierarchCluster(alignedstack, numpart, numclasses=40,
 		claf = open(classfile+dataext, "r")
 		classes = len(claf.readlines()) - 1
 		claf.close()
-		if classes > classes:
+		if classes > numclasses:
 			minthresh = thresh
 		elif classes < numclasses:
 			maxthresh = thresh
