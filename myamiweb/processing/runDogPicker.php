@@ -40,6 +40,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$projectId=$_POST['projectId'];
 
 	// --- find hosts to run Dog Picker
+	$hosts=getHosts();
 
 	$javafunctions="
 	<script src='../js/viewer.js'></script>
@@ -122,6 +123,15 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
+		<HR>
+		Host: <select name='host'>\n";
+	foreach($hosts as $host) {
+		$s = ($_POST['host']==$host) ? 'selected' : '';
+		echo "<option $s >$host</option>\n";
+	}
+	echo "
+
+
 
 		</td>
 	</tr>
