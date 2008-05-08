@@ -408,10 +408,11 @@ class ManualAcquisition(node.Node):
 		tmpcam = copy.deepcopy(origcam)
 
 		## cut down to 512x512, adjust offset to keep same center
+		cutsize = 1024
 		for axis in ('x','y'):
-			change = origcam['dimension'][axis] - 512
+			change = origcam['dimension'][axis] - cutsize
 			if change > 0:
-				tmpcam['dimension'][axis] = 512
+				tmpcam['dimension'][axis] = cutsize
 				tmpcam['offset'][axis] += (change / 2)
 
 		self.instrument.ccdcamera.Settings = tmpcam
@@ -420,7 +421,7 @@ class ManualAcquisition(node.Node):
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 
 		# display
-		self.logger.info('Displaying 512x512 dose image...')
+		self.logger.info('Displaying %dx%d dose image...' % (cutsize,cutsize))
 		self.getImageStats(imagedata['image'])
 		self.setImage(imagedata['image'])
 
@@ -466,10 +467,11 @@ class ManualAcquisition(node.Node):
 		camdata1 = {}
 
 		camdata1['exposure time']=self.focexptime
-		camdata1['dimension'] = {'x':512, 'y':512}
+		cutsize = 1024
+		camdata1['dimension'] = {'x':cutsize, 'y':cutsize}
 		camdata1['binning'] = {'x':1, 'y':1}
 		camsize = self.instrument.ccdcamera.getCameraSize()
-		camdata1['offset'] = {'x': (camsize['x']-512)/2, 'y':(camsize['y']-512)/2}
+		camdata1['offset'] = {'x': (camsize['x']-cutsize)/2, 'y':(camsize['y']-cutsize)/2}
 		self.instrument.ccdcamera.Settings = camdata1
 		self.manualplayer.play()
 		self.onManualCheck()
