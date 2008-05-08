@@ -16,8 +16,11 @@ require "inc/processing.inc";
 require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST['process']) {
-	runNoRefAlign();
+if ($_POST['showcommand']) {
+	runNoRefAlign(0);
+}
+else if ($_POST['process']) {
+	runNoRefAlign(1);
 } else { // Create the form page
 	createNoRefAlignForm();
 }
@@ -34,6 +37,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 		$formAction=$_SERVER['PHP_SELF'];
 	}
 	$projectId=$_POST['projectId'];
+
+	$hosts=getHosts();
 
 	// connect to particle and ctf databases
 	$particle = new particledata();
@@ -240,6 +245,15 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<HR>\n";
+	echo"<input type='submit' name='showcommand' value='Show Command Only'><br />\n";
+
+	echo "<br/>Host: <select name='host'>\n";
+	foreach($hosts as $host) {
+		$s = ($_POST['host']==$host) ? 'selected' : '';
+		echo "<option $s >$host</option>\n";
+	}
+	echo "</select>";
+
 	echo"<input type='submit' name='process' value='Start NoRef Alignment'><br />\n";
 	echo "  </TD>\n";
 	echo "</TR>\n";
@@ -252,7 +266,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	exit;
 }
 
-function runNoRefAlign() {
+function runNoRefAlign($runjob) {
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
 	$stackvars=$_POST['stackid'];
@@ -319,8 +333,12 @@ function runNoRefAlign() {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	if ($runjob) {
+		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+	}
+	else {
 	writeTop("No Ref Align Run Params","No Ref Align Params");
-
+	writeBottom();
 	echo"
 	<P>
 	<TABLE WIDTH='600' BORDER='1'>
@@ -341,5 +359,6 @@ function runNoRefAlign() {
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
 	</TABLE>\n";
 	writeBottom();
+	}
 }
 ?>
