@@ -27,6 +27,7 @@ def getTiltedShift(img1, img2, tiltdiff):
 
 	### untilt images by stretching and compressing
 	# choose angle s/t compressFactor = 1/stretchFactor
+	# this only works if one image is untilted (RCT) of both images are opposite tilt (OTR)
 	#halftilt = abs(tiltdiff)/2.0
 	halftiltrad = math.acos(math.sqrt(math.cos(abs(tiltdiff)/180.0*math.pi)))
 	# go from zero tilt to half tilt
