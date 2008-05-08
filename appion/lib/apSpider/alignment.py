@@ -510,7 +510,7 @@ def hierarchCluster(alignedstack, numpart, numclasses=40,
 	count = 0
 	
 	sys.stderr.write("finding threshold")
-	while(classes != numclasses and count < 30):
+	while(classes != numclasses and count < 300):
 		count += 1
 		thresh = (maxthresh-minthresh)/3.0 + minthresh
 		classfile = rundir+"/classes"
