@@ -422,7 +422,6 @@ function runMakestack() {
 	$command.="makestack.py ";
 
 	$single=$_POST['single'];
-print_r($_POST);
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description) createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
