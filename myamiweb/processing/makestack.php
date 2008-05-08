@@ -422,7 +422,7 @@ function runMakestack() {
 	$command.="makestack.py ";
 
 	$single=$_POST['single'];
-
+print_r($_POST);
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description) createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
@@ -442,9 +442,9 @@ function runMakestack() {
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	// set image inspection selection
 	$norejects=$inspected=0;
-	if ($_POST['checkimage']=="non-rejected") {
+	if ($_POST['checkimage']=="Non-rejected") {
 		$norejects=1;
-	} elseif ($_POST['checkimage']=="best") {
+	} elseif ($_POST['checkimage']=="Best") {
 		$norejects=1;
 		$inspected=1;
 	}
