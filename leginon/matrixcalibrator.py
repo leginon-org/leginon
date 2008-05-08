@@ -70,8 +70,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.parameter = 'stage position'
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.settle = {
-		  'image shift': 0.25,
-		  'beam shift': 0.25,
+		  'image shift': 5.0,
+		  'beam shift': 1.0,
 		  'stage position': 1.0
 		}
 
