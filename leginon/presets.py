@@ -14,7 +14,6 @@
 import node
 import calibrationclient
 import leginondata
-import datatransport
 import event
 import copy
 import threading
