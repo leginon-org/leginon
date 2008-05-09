@@ -268,7 +268,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         optsz.Add(offsetsz, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-        optb = wx.StaticBox(self, -1, 'Custom Optical Axis in +/- Alpha Tilt Directions(d)')
+        optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
         optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
         optbsz.Add(optsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
         optsz.AddGrowableCol(0)
