@@ -1638,7 +1638,9 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('model mag', str),
 			('z0 error', float),
 			('phi', float),
+			('phi2', float),
 			('offset', float),
+			('offset2', float),
 			('fixed model', bool),
 		)
 	typemap = classmethod(typemap)
