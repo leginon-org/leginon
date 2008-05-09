@@ -1018,7 +1018,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 	def measureTiltAxisLocation(self, tilt_value=0.26, numtilts=1, tilttwice=False,
 	  update=False, snrcut=10.0, correlation_type='phase', medfilt=False):
 		"""
-		irint 'onMeasure', update
+		print 'onMeasure', update
 		measure position on image of tilt axis
 		tilt_value is in radians
 		"""
@@ -1030,14 +1030,14 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		for i in range(numtilts):
 			#get first image
 			imagedata0, ps = self._getPeakFromTiltStates(tilt0imagedata=None, 
-			  tilt1=-tilt_value, medfilt=medfilt, snrcut=snrcut, correlation_type=correlation_type)
+				tilt1=-tilt_value, medfilt=medfilt, snrcut=snrcut, correlation_type=correlation_type)
 			if ps['snr'] > snrcut:
 				pixelshiftree.append(ps)
 
 			if tilttwice is True:
 				#get second image
 				imagedata0, ps = self._getPeakFromTiltStates(tilt0imagedata=imagedata0, 
-				  tilt1=tilt_value, medfilt=medfilt, snrcut=snrcut)
+					tilt1=tilt_value, medfilt=medfilt, snrcut=snrcut)
 				if ps['snr'] > snrcut:
 					pixelshiftree.append(ps)
 		
@@ -1104,6 +1104,76 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		return imagedata0, pixelshift
 
 
+	def measureTiltAxisLocation2(self, tilt_value=0.0696, tilttwice=False,
+	  update=False, correlation_type='phase', beam_tilt=0.01):
+		"""
+		print 'onMeasure', update
+		measure position on image of tilt axis
+		tilt_value is in radians
+		"""
+
+		### BEGIN TILTING
+
+		# need to do something with this data
+		defshifts = []
+		#get first image
+		imagedata0, defshift = self._getDefocDiffFromTiltStates(tilt0imagedata=None, 
+			tilt1=-tilt_value, correlation_type=correlation_type, beam_tilt_value=beam_tilt)
+		if defshift is not None and abs(defshift) < 1e-5:
+			defshifts.append(-defshift)
+
+		if tilttwice is True:
+			#get second image
+			imagedata0, defshift = self._getDefocDiffFromTiltStates(tilt0imagedata=imagedata0, 
+				tilt1=tilt_value, correlation_type=correlation_type, beam_tilt_value=beam_tilt)
+			if defshift is not None and abs(defshift) < 1e-5:
+				defshifts.append(defshift)
+		print defshifts	
+		### END TILTING; BEGIN ASSESSMENT
+
+		if len(defshifts) < 1:
+			#no good defocus measurement
+			self.node.logger.error("bad defocus measurements")
+			return imagedata0, None
+		else:
+			self.node.logger.info("averaging %s measurements for final value" % (len(defshifts)))
+
+		deltaz = sum(defshifts)/len(defshifts)
+		self.node.logger.info("final defocus shift: %.2f um" % (deltaz/1e-6))
+		
+		### END ASSESSMENT; BEGIN CORRECTION
+
+		## only want the y offset (distance from tilt axis)
+		deltay = deltaz/math.sin(tilt_value)
+		## scale correlation shift to the axis offset
+
+		tem = self.instrument.getTEMData()
+		ccdcamera = self.instrument.getCCDCameraData()
+
+		axisoffset = data.StageTiltAxisOffsetData(offset=deltay,tem=tem,ccdcamera=ccdcamera)
+
+		if update:
+			q = data.StageTiltAxisOffsetData(tem=tem,ccdcamera=ccdcamera)
+			offsets = self.node.research(q, results=1)
+			if offsets:
+				axisoffset['offset'] += offsets[0]['offset']
+
+		self.node.publish(axisoffset, database=True, dbforce=True)
+
+		self.node.logger.info('stage delta y: %s' % (deltay,))
+
+		shift = {'x':0, 'y':deltay}
+		position = dict(imagedata0['scope']['stage position'])
+		position['x'] += shift['x']
+		position['y'] += shift['y']
+		pixelshift = self.itransform(position, imagedata0['scope'], imagedata0['camera'])
+		self.node.logger.info('pixelshift for delta y: %s' % (pixelshift,))
+
+		pixelshift = {'row':pixelshift['row'], 'col':pixelshift['col']}
+		self.node.logger.info('pixel shift from axis: %s' % (pixelshift,))
+
+		return imagedata0, pixelshift
+
 	def _getPeakFromTiltStates(self, tilt0imagedata=None, tilt1=0.26, medfilt=True, snrcut=10.0, correlation_type='phase'):
 		orig_a = self.instrument.tem.StagePosition['a']
 		state0 = data.ScopeEMData()
@@ -1168,6 +1238,57 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		self.node.logger.info("signal-to-noise ratio: %s" % (round(snr,2),))
 
 		return imagedata0, pixelshift
+
+	def _getDefocDiffFromTiltStates(self, tilt0imagedata=None, tilt1=0.26, correlation_type='phase',beam_tilt_value=0.01):
+		orig_a = self.instrument.tem.StagePosition['a']
+		state0 = data.ScopeEMData()
+		state1 = data.ScopeEMData()
+		state0['stage position'] = {'a':0.0}
+		state1['stage position'] = {'a':tilt1}
+		tilt1deg = round(-tilt1*180.0/math.pi,4)
+
+		if tilt0imagedata is None:
+			self.node.logger.info('acquiring tilt=0 degrees')
+			self.instrument.setData(state0)
+			time.sleep(0.5)
+			imagedata0 = self.instrument.getData(data.CorrectedCameraImageData)
+			im0 = imagedata0['image']
+			self.displayImage(im0)
+		else:
+			imagedata0 = tilt0imagedata
+			im0 = imagedata0['image']
+			self.displayImage(im0)
+		try:
+			defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata0)
+		except RuntimeError, e:
+			self.node.logger.error('Measurement failed: %s' % e)
+			return imagedata0, None 
+		def0 = defresult['defocus']
+		print defresult
+		minres = defresult['min']
+		self.node.logger.info('acquiring tilt=%s degrees' % (tilt1deg))
+		self.instrument.setData(state1)
+		time.sleep(0.5)
+		imagedata1 = self.instrument.getData(data.CorrectedCameraImageData)
+		self.stagetiltcorrector.undo_tilt(imagedata1)
+		im1 = imagedata1['image']
+		self.displayImage(im1)
+		defresult = self.node.btcalclient.measureDefocusStig(beam_tilt_value, False, False, correlation_type, 0.5, imagedata1)
+		def1 = defresult['defocus']
+		print defresult
+		minres = min((minres,defresult['min']))
+		if minres > 5000000:
+			self.node.logger.error('Measurement not reliable: residual= %.0f' % minres)
+			return imagedata0, None
+
+		### RETURN SCOPE TO ORIGINAL STATE
+		self.instrument.tem.StagePosition = {'a':orig_a}
+
+		## calculate defocus difference
+		defocusdiff = def1 - def0
+		self.node.logger.info("measured defocus difference is %.2f um" % (defocusdiff*1e6))
+
+		return imagedata0, defocusdiff 
 
 class ModeledStageCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
