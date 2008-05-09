@@ -182,10 +182,10 @@ class Tomography(acquisition.Acquisition):
 		self.update()
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
-		# HACK: assume tilt start from 0
+		# Find first tilt group direction 
 		tiltsum = sum(tilts[0])
-		if tiltsum != 0:
-			self.first_tilt_direction = tiltsum/abs(tiltsum)
+		if tiltsum < len(tilts[0])*tilts[0][0]:
+			self.first_tilt_direction = 2
 		self.initGoodPredictionInfo(presetdata)
 
 		collect = collection.Collection()
@@ -399,24 +399,25 @@ class Tomography(acquisition.Acquisition):
 				for n in (10, 100, 500, 1000):
 					predictions = query_data.query(results=n, readimages=False)
 					for predictinfo in predictions:
-						image = predictinfo.special_getitem('image', readimages=False)
-						a = image['scope']['stage position']['a']
 						prediction_pixel_size = predictions[0]['pixel size']
 						if prediction_pixel_size is None:
 							continue
+						image = predictinfo.special_getitem('image', dereference=True, readimages=False)
+						a = image['scope']['stage position']['a']
 						model_error_limit = maxshift /prediction_pixel_size
 						# correlation is recorded as multiples of raw_correlation_binning
 						if model_error_limit < raw_correlation_binning:
 							model_error_limit = raw_correlation_binning
 						paramdict = predictinfo['predicted position']
 						if paramdict['phi']==0 and paramdict['optical axis']==0 and paramdict['z0']==0:
-							break
+							continue
 						cor = predictinfo['correlation']
 						dist = math.hypot(cor['x'],cor['y'])
 						if dist and dist <= model_error_limit:
-							goodprediction = predictinfo
-							self.logger.info('good calibration found at %d x mag' % (mag,))
-							break
+							if (self.first_tilt_direction == tiltgroup and a > self.settings['tilt start']) or (self.first_tilt_direction != tiltgroup and a < self.settings['tilt start']):
+								goodprediction = predictinfo
+								self.logger.info('good calibration found at %d x mag' % (mag,))
+								break
 					if goodprediction is not None:
 						break
 				if goodprediction is not None:
