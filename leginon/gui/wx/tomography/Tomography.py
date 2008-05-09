@@ -221,7 +221,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         self.widgets['model mag'] = wx.Choice(self, -1, choices=modelmags)
         self.widgets['phi'] = FloatEntry(self, -1, allownone=False,
             chars=4, value='0.0')
+        self.widgets['phi2'] = FloatEntry(self, -1, allownone=False,
+            chars=4, value='0.0')
         self.widgets['offset'] = FloatEntry(self, -1, allownone=False,
+            chars=6, value='0.0')
+        self.widgets['offset2'] = FloatEntry(self, -1, allownone=False,
             chars=6, value='0.0')
         self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
             allownone=False, chars=6, value='2e-6')
@@ -234,25 +238,37 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
         phisz = wx.GridBagSizer(2, 2)
         phisz.AddGrowableCol(0)
-        label = wx.StaticText(self, -1, 'Tilt from Y axis')
-        phisz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, 'Tilt Axis from Y')
+        phisz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, '+d')
+        phisz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         phisz.Add(self.widgets['phi'],
-                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+                   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, '-d')
+        phisz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        phisz.Add(self.widgets['phi2'],
+                   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'degs')
-        phisz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        phisz.Add(label, (0, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
 
         offsetsz = wx.GridBagSizer(2, 2)
         label = wx.StaticText(self, -1, 'Offset:')
-        offsetsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        offsetsz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, '+d')
+        offsetsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         offsetsz.Add(self.widgets['offset'],
-                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+                   (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'um')
-        offsetsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        offsetsz.Add(label, (0, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
+        label = wx.StaticText(self, -1, '-d')
+        offsetsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        offsetsz.Add(self.widgets['offset2'],
+                   (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         optsz = wx.GridBagSizer(5, 10)
         optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         optsz.Add(offsetsz, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-        optb = wx.StaticBox(self, -1, 'Optical Axis')
+        optb = wx.StaticBox(self, -1, 'Custom Optical Axis in +/- Alpha Tilt Directions(d)')
         optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
         optbsz.Add(optsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
         optsz.AddGrowableCol(0)
