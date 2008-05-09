@@ -405,17 +405,20 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 
 	def measureTiltAxis(self, atilt, anumtilts=1, atilttwice=False, update=False, asnr=10.0,
-	  acorr='phase', amedfilt=False):
+	  acorr='phase', amedfilt=False, usedefocus=False):
 
 		atiltrad = atilt * math.pi / 180.0
-		im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(tilt_value=atiltrad, numtilts=anumtilts,
-		  tilttwice=atilttwice, update=update, snrcut=asnr, correlation_type=acorr, medfilt=amedfilt)
-
-		oldscope = im0['scope']
-		newscope = self.imageshiftcalclient.transform(pixelshift, oldscope, im0['camera'])
-		imx = newscope['image shift']['x'] - oldscope['image shift']['x']
-		imy = newscope['image shift']['y'] - oldscope['image shift']['y']
-		self.logger.info('Image shift offset:  x = %.3e, y = %.3e' % (imx, imy))
+		if usedefocus == False:
+			im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation(tilt_value=atiltrad, numtilts=anumtilts,
+				tilttwice=atilttwice, update=update, snrcut=asnr, correlation_type=acorr, medfilt=amedfilt)
+		else:
+			im0, pixelshift = self.stagetiltcalclient.measureTiltAxisLocation2(atiltrad, atilttwice, update, acorr, 0.01)
+		if pixelshift is not None:
+			oldscope = im0['scope']
+			newscope = self.imageshiftcalclient.transform(pixelshift, oldscope, im0['camera'])
+			imx = newscope['image shift']['x'] - oldscope['image shift']['x']
+			imy = newscope['image shift']['y'] - oldscope['image shift']['y']
+			self.logger.info('Image shift offset:  x = %.3e, y = %.3e' % (imx, imy))
 
 	def processFocusSetting(self, setting, emtarget=None):
 		resultdata = data.FocuserResultData(session=self.session)
