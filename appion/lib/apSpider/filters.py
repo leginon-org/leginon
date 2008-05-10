@@ -13,7 +13,10 @@ import apImage
 import apEMAN
 import apParam
 import apDisplay
-from pyami import spider
+try:
+	from pyami import spider
+except:
+	print "could not import spider from pyami"
 
 """
 A large collection of SPIDER functions
