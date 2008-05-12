@@ -31,6 +31,7 @@ class aceLoop(appionLoop.AppionLoop):
 		self.processdirname = "ace"
 
 	def preLoopFunctions(self):
+		apParam.resetVirtualFrameBuffer()
 		apMatlab.checkMatlabPath(self.params)
 		acepath = os.path.join(os.getcwd(), self.functionname+".py")
 		#if not os.path.isfile(acepath):
