@@ -334,7 +334,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	def alreadyAcquired(self, target, presetname):
 		return False
 
-	def getTiltSeries(self, targetdata):
+	def getTiltSeries(self, targetdata, presetdata):
 		'''
 		targetdata argument is target about to be acquired.  Find the tilt
 		series that this new image will belong to if it exists, otherwise
@@ -344,7 +344,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		targetnumber = targetdata['number']
 		qimage1 = data.AcquisitionImageData(target=commontarget)
 		qtarget = data.AcquisitionImageTargetData(image=qimage1, number=targetnumber)
-		qimage2 = data.AcquisitionImageData(target=qtarget)
+		qpreset = data.PresetData(name=presetdata['name'], session=presetdata['session'])
+		qimage2 = data.AcquisitionImageData(target=qtarget, preset=qpreset, session=presetdata['session'])
 		images = self.research(qimage2, readimages=False)
 		if images:
 			tiltseries = images[0]['tilt series']
@@ -361,7 +362,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		'''
 		acquisition.Acquisition.moveAndPreset(self, presetdata, emtarget)
 		targetdata = emtarget['target']
-		tiltseries,defocus = self.getTiltSeries(targetdata)
+		tiltseries,defocus = self.getTiltSeries(targetdata, presetdata)
 		if tiltseries is None:
 			self.tiltseries = data.TiltSeriesData()
 			self.publish(self.tiltseries, database=True, dbforce=True)
