@@ -183,8 +183,24 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo"</SELECT><BR>\n";
 	echo "</TD></TR><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
+	echo docpop('initmethod','<B>Alignment initialization method:</B>');
+	echo "<br/>";
+	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='allaverage' "
+		.((!$_POST['initmethod'] || $_POST['initmethod'] == 'allaverage') ? 'CHECKED' : '')
+		.">\n Average all particles in stack<br/>\n";
+	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='selectrand' "
+		.($_POST['initmethod'] == 'selectrand' ? 'CHECKED' : '')
+		.">\n Average random 1% of partcles<br/>\n";
+	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='randpart' "
+		.($_POST['initmethod'] == 'randpart' ? 'CHECKED' : '')
+		.">\n Pick a random particle<br/>\n";
+	//echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='template' "
+	//	.($_POST['initmethod'] == 'template' ? 'CHECKED' : '')
+	//	.">\n Use a template image<br/>\n";
+	echo "</TD></TR><TR>\n";
+	echo "<TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
-	echo docpop('commit','Commit to Database');
+	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
 	echo "<BR></TD></TR>\n</TABLE>\n";
 	echo "</TD>\n";
@@ -277,6 +293,7 @@ function runNoRefAlign($runjob) {
 	$lastring=$_POST['lastring'];
 	$numpart=$_POST['numpart'];
 	$numfactors=$_POST['numfactors'];
+	$initmethod=$_POST['initmethod'];
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
@@ -330,6 +347,7 @@ function runNoRefAlign($runjob) {
 	if ($lowpass) $command.="--lowpass=$lowpass ";
 	$command.="--num-part=$numpart ";
 	$command.="--num-factors=$numfactors ";
+	if ($initmethod) $command.="--init-method=$initmethod ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
@@ -340,24 +358,25 @@ function runNoRefAlign($runjob) {
 	writeTop("No Ref Align Run Params","No Ref Align Params");
 	writeBottom();
 	echo"
-	<P>
+	<P><CENTER>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>NoRef Alignment Command:</B><BR>
 	$command
 	</TD></TR>
-	<TR><TD>runid</TD><TD>$runid</TD></TR>
-	<TR><TD>stackid</TD><TD>$stackid</TD></TR>
-	<TR><TD>partrad</TD><TD>$partrad</TD></TR>
-	<TR><TD>maskrad</TD><TD>$maskrad</TD></TR>
-	<TR><TD>lowpass</TD><TD>$lowpass</TD></TR>
-	<TR><TD>firstring</TD><TD>$firstring</TD></TR>
-	<TR><TD>lastring</TD><TD>$lastring</TD></TR>
-	<TR><TD>numpart</TD><TD>$numpart</TD></TR>
-	<TR><TD>numfactors</TD><TD>$numfactors</TD></TR>
-	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
+	<TR><TD>run id</TD><TD>$runid</TD></TR>
+	<TR><TD>stack id</TD><TD>$stackid</TD></TR>
+	<TR><TD>part rad</TD><TD>$partrad</TD></TR>
+	<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>
+	<TR><TD>low pass</TD><TD>$lowpass</TD></TR>
+	<TR><TD>first ring</TD><TD>$firstring</TD></TR>
+	<TR><TD>last ring</TD><TD>$lastring</TD></TR>
+	<TR><TD>num part</TD><TD>$numpart</TD></TR>
+	<TR><TD>num factors</TD><TD>$numfactors</TD></TR>
+	<TR><TD>init method</TD><TD>$initmethod</TD></TR>
+	<TR><TD>out dir</TD><TD>$outdir</TD></TR>
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
-	</TABLE>\n";
+	</TABLE></CENTER>\n";
 	writeBottom();
 	}
 }
