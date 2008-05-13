@@ -1,0 +1,92 @@
+/* style sheet for appionweb pages */
+
+body {     
+	margin:0;
+	padding:0 0 15px 0;
+	color:#000;
+	background:#fff;
+}
+
+/* Header */
+#apheader hr {display:none;}
+
+#apheader {
+	  font-size: 9pt;
+	  color:#eee;
+	  border-bottom:1px solid #fff;
+}
+
+#apheader a {
+	  color:#eee;
+	  text-decoration:underline;
+}	  
+
+#apheader a:hover {
+	  color:#fff;
+	  text-decoration:underline;
+}  
+
+/* Accessibility bar and login */
+#apheader .aptopbar {
+	  float:left;
+	  width:100%;
+	  background-color:#386F8F;
+	  border-bottom:1px solid #fff;
+	  padding:4px 0 5px 0;
+}
+
+#apheader .aplogin {
+	  float:left;
+	  text-decoration:none;
+	  padding-left:20px;
+	  text-align:left;
+}
+
+#apheader .aplogout {
+	  float:right;
+	  padding-right:10px;
+	  text-align:right;	  
+}
+
+#apheader .middlebar {
+	  float: left;
+	  width:100%;
+	  background-color:#004e6f;
+	  border-bottom:1px solid #fff;
+}
+
+#apheader .aptitle {
+	  float: left;
+	  height: 60px;
+	  padding-left: 20px;
+	  display: inline;
+	  text-align: left;
+}
+
+#apheader .aptitle td {
+	  color:#fff;
+	  font-size: 15pt;
+}
+
+#apheader .apbottombar {
+	  float:left;
+	  width:100%;
+	  background-color:#386F8F;
+	  border-bottom:1px solid #fff;
+	  padding: 5px 0 2px 0;
+}
+
+#apheader .apbottomcontent {
+	  padding-left:20px;
+	  float:left;
+}
+
+#apheader .apbottomcontent td{
+	  color:#fff;
+}
+
+#apheader .apshadow {
+	  width:100%;
+	  background: #fff;
+	  background-image:  url(../img/appionshadow.jpg);
+}
