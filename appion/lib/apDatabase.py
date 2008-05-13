@@ -344,9 +344,9 @@ def getImgViewerStatus(imgdata):
 	see 'ImageStatusData' table in dbemdata
 	or 'viewer_pref_image' table in dbemdata
 	"""
-	statusq = leginondata.ImageStatusData()
-	statusq['image'] = imgdata
-	statusdata = statusq.query(results=1)
+	#statusq = leginondata.ImageStatusData()
+	#statusq['image'] = imgdata
+	#statusdata = statusq.query(results=1)
 
 	### quick fix to get status from viewer_pref_image
 	dbconf=sinedon.getConfig('leginondata')
@@ -364,6 +364,58 @@ def getImgViewerStatus(imgdata):
 		return False
 	if result['status']=='examplar':
 		return True
+	return None
+
+def setImgViewerStatus(imgdata, status=None, msg=True):
+	"""
+	Function that returns whether or not the image was hidden in the viewer
+	False: Image was hidden
+	True: Image is an exemplar
+	None: Image is visible
+
+	see 'viewer_pref_image' table in dbemdata
+	"""
+
+	if status is False:
+		statusVal = 'hidden'
+	elif status is True:
+		statusVal = 'exemplar'
+	else:
+		print "skipping set viewer status"
+		return None
+
+	dbconf=sinedon.getConfig('leginondata')
+	db=sinedon.sqldb.sqlDB(**dbconf)
+	imageId=imgdata.dbid
+	q="SELECT `status` FROM dbemdata.`viewer_pref_image` WHERE imageId=%i" % (imageId,)
+	result=db.selectone(q)
+	if result is None:
+		#insert new
+		sessionId = imgdata['session'].dbid
+		q= ( "INSERT INTO dbemdata.`viewer_pref_image` "
+			+" (sessionId, imageId, status) VALUES "
+			+ (" ( %d, %d, '%s')" % (sessionId, imageId, statusVal)))
+		db.execute(q)
+	elif result['status'] != statusVal:
+		#update column
+		q= ( "UPDATE dbemdata.`viewer_pref_image` "
+			+"SET status = '"+statusVal
+			+ ("' WHERE imageId=%i" % (imageId,)))
+		print q
+		db.execute(q)
+
+	#check assessment
+	if msg is True:
+		finalassess = getImgViewerStatus(imgdata)
+		imgname = apDisplay.short(imgdata['filename'])
+		if finalassess is True:
+			astr = apDisplay.colorString("exemplar", "green")
+		elif finalassess is False:
+			astr = apDisplay.colorString("hidden", "red")
+		elif finalassess is None:
+			astr = apDisplay.colorString("none", "yellow")
+		apDisplay.printMsg("final image assessment: "+astr+" ("+imgname+")")
+
 	return None
 
 
