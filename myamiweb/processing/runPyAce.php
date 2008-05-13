@@ -69,6 +69,13 @@ foreach($hosts as $host) {
 
 // --- parse data and process on submit
 function runPyAce() {
+	$expId = $_GET['expId'];
+	$runid = $_POST['runid'];
+	$outdir=$_POST['outdir'];
+
+	$command.= "pyace.py ";
+
+	// parse params
 	$edgethcarbon=$_POST[edgethcarbon];
 	$edgethice=$_POST[edgethice];
 	$pfcarbon=$_POST[pfcarbon];
@@ -76,10 +83,8 @@ function runPyAce() {
 	$overlap=$_POST[overlap];
 	$fieldsize=$_POST[fieldsize];
 	$resamplefr=$_POST[resamplefr];
-	//$tempdir=$_POST[tempdir];
 	$medium=$_POST[medium];
 	$cs=$_POST[cs];
-	$outdir=$_POST[outdir];
 	$nominal=$_POST[nominal];
 	$reprocess=$_POST[reprocess];
 	$display = ($_POST[display]=="on") ? "1" : '0';
@@ -90,13 +95,6 @@ function runPyAce() {
 	$commit = ($_POST[commit]=="on") ? "1" : '0';
 	$proc = $_POST[processor];
 
-	//$command ="source /ami/sw/ami.csh;";
-	//$command.="source /ami/sw/share/python/usepython.csh common32;";
-	//$command.="source /home/$user/pyappion/useappion.csh;";
-	//$command.="alias matlab /ami/sw/packages/matlab72/bin/matlab;";
-	//$command.="cd /home/$user/pyappion/ace/;";
-
-	$command.="pyace.py ";
 	$command.="edgethcarbon=$edgethcarbon ";
 	$command.="edgethice=$edgethice ";
 	$command.="pfcarbon=$pfcarbon ";
@@ -104,7 +102,6 @@ function runPyAce() {
 	$command.="overlap=$overlap ";
 	$command.="fieldsize=$fieldsize ";
 	$command.="resamplefr=$resamplefr ";
-	//$command.="tempdir=$tempdir ";
 	$command.="medium=$medium ";
 	$command.="cs=$cs ";
 	$command.="drange=$drange ";
@@ -119,6 +116,21 @@ function runPyAce() {
 		exit;
 	}
 	$command .= $apcommand;
+
+	// submit job to cluster
+	if ($_POST['process']=="Run ACE") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		$xcommand .= $command;
+		if (!($user && $password)) {
+			createPyAceForm("<B>ERROR:</B> Enter a user name and password");
+			exit;
+		}
+
+		submitAppionJob($xcommand,$outdir,$runid,$expId,False,True);
+		exit;
+	}
 
 	writeTop("PyACE Results","PyACE Results");
 
@@ -333,27 +345,13 @@ function createPyAceForm($extra=false) {
 	  </TD>
 	</TR>
 	<TR>
-	  <TD COLSPAN='2' ALIGN='CENTER'>\n<HR>\n";
-/*
-	  Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>\nUser: <select name='user'>\n";
-	foreach($users as $user) {
-		$s = ($_POST['user']==$user) ? 'selected' : '';
-		echo "<option $s >$user</option>\n";
-	}
-	echo"</select>";*/
-	echo"<br/>
-	  <input type='submit' name='process' value='Generate ACE Command'><br/>
-	  <FONT class='apcomment'>Submission will NOT run ACE,<BR/>
-		only output a command that you can copy and paste into a unix shell</FONT>
-	  </TD>
-	</TR>
-	</TABLE>
-	</FORM>\n";
+	  <TD COLSPAN='2' ALIGN='CENTER'>\n<HR>
+	  <input type='submit' name='process' value='Just Show ACE Command'>
+	  <input type='submit' name='process' value='Run ACE'><br />
+	  </td>
+	</tr>
+	</table>
+	</form>\n";
 	writeBottom();
 }
 
