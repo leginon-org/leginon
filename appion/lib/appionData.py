@@ -350,6 +350,7 @@ class ApNoRefParamsData(Data):
 			('first_ring', int),
 			('last_ring', int),
 			('skip_coran', bool),
+			('init_method', str),
 #			('norefalign_method', str),
 		)
 	typemap = classmethod(typemap)

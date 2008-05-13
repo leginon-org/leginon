@@ -105,6 +105,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		paramq['first_ring'] = self.params['firstring']
 		paramq['last_ring'] = self.params['lastring']
 		paramq['skip_coran'] = self.params['skipcoran']
+		paramq['init_method'] = self.params['initmethod']
 		paramsdata = paramq.query(results=1)
 
 		### create a norefRun object
