@@ -123,33 +123,19 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
-		<HR>
-		Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "
-
-
-
+		<hr />
 		</td>
 	</tr>
 	<tr>
-		<td COLSPAN='2' ALIGN='center'>\n";
-	echo "</select>
-		<br />
-		<input type='submit' name='process' value='Just Show Command'>
+		<td COLSPAN='2' ALIGN='center'>
+	        <input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run DogPicker'><br />
 		</td>
 	</tr>
-	</TABLE>";
+	</form>
+	</table>
+	</center>\n";
 	writeBottom();
-	?>
-
-	</center>
-	</FORM>
-	<?
 }
 
 function runDogPicker() {
@@ -220,8 +206,6 @@ function runDogPicker() {
 	writeTop("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
-		$runid = $_POST[runid];
-		$outdir = $_POST[outdir];
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		echo "<B>DogPicker Command:</B><br />$command";
 		$testjpg=ereg_replace(".mrc","",$testimage);
