@@ -3,6 +3,8 @@
 import os
 import time
 import sys
+import random
+#appion
 import apDisplay
 import apAlignment
 import apFile
@@ -18,6 +20,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
+		self.initmethods = ('allaverage', 'selectrand', 'randpart', 'template')
+
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
 			help="Number of particles to use", metavar="#")
@@ -40,6 +44,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
 			action="store_true", help="Skip correspondence analysis")
+		self.parser.add_option("--init-method", dest="initmethod", default="allaverage",
+			help="Initialization method: "+str(self.initmethods), metavar="#")
+
 
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
@@ -64,6 +71,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("run name was not defined")
 		if self.params['numpart'] > 9999:
 			apDisplay.printError("too many particles requested, max 9999: "+str(self.params['numpart']))
+		if self.params['initmethod'] not in self.initmethods:
+			apDisplay.printError("unknown initialization method defined: "
+				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
 		if self.params['numfactors'] > 20:
 			apDisplay.printError("too many factors defined: "+str(self.params['numfactors']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -209,6 +219,72 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		return templatefile
 
+	#=====================
+	def selectRandomParticles(self):
+		"""
+		takes the spider file and creates an average template of all particles and masks it
+		"""
+		### create random keep list
+		f = open("randkeep.lst", "w")
+		keepdict = {}
+		randpart = int(self.params['numpart']/100)+2
+		apDisplay.printMsg("Selecting 1% of particles ("+str(randpart)+") to average")
+		for i in range(randpart):
+			rand = int(random.random()*randpart)
+			while rand in keepdict:
+				rand = int(random.random()*randpart)
+			keepdict[rand] = 1
+			f.write(str(rand)+"\n")
+		f.close()
+
+		emancmd  = "proc2d "+self.stack['file']+" template.mrc list=randkeep.lst average edgenorm"
+		apEMAN.executeEmanCmd(emancmd)
+
+		apDisplay.printMsg("Masking average by radius of "+str(self.params['maskrad'])+" Angstroms")
+		emancmd  = ( "proc2d template.mrc template.mrc apix="+str(self.stack['apix'])
+			+" mask="+str(self.params['maskrad']) )
+		apEMAN.executeEmanCmd(emancmd)
+
+		templatefile = "template.spi"
+		if os.path.isfile(templatefile):
+			apDisplay.printWarning(templatefile+" already exists; removing it")
+			time.sleep(2)
+			os.remove(templatefile)
+		emancmd  = "proc2d template.mrc "+templatefile+" spiderswap"
+		apEMAN.executeEmanCmd(emancmd)
+
+		return templatefile
+
+	#=====================
+	def pickRandomParticle(self):
+		"""
+		takes the spider file and creates an average template of all particles and masks it
+		"""
+		### create random keep list
+		f = open("randkeep.lst", "w")
+		keepdict = {}
+		randpart = int(random.random()*self.params['numpart'])
+		apDisplay.printMsg("Selecting random particle ("+str(randpart)+") to average")
+
+		emancmd  = ( "proc2d "+self.stack['file']+" template.mrc first="
+			+str(randpart)+" last="+str(randpart)+" edgenorm" )
+		apEMAN.executeEmanCmd(emancmd)
+
+		apDisplay.printMsg("Masking particle by radius of "+str(self.params['maskrad'])+" Angstroms")
+		emancmd  = ( "proc2d template.mrc template.mrc apix="+str(self.stack['apix'])
+			+" mask="+str(self.params['maskrad']) )
+		apEMAN.executeEmanCmd(emancmd)
+
+		templatefile = "template.spi"
+		if os.path.isfile(templatefile):
+			apDisplay.printWarning(templatefile+" already exists; removing it")
+			time.sleep(2)
+			os.remove(templatefile)
+		emancmd  = "proc2d template.mrc "+templatefile+" spiderswap"
+		apEMAN.executeEmanCmd(emancmd)
+
+		return templatefile
+
 
 	#=====================
 	def start(self):
@@ -223,9 +299,19 @@ class NoRefAlignScript(appionScript.AppionScript):
 		spiderstack = self.createSpiderFile()
 
 		### create initialization template
-		templatefile = self.averageTemplate()
-		#else:
-		#	templatefile = self.selectRandomTemplate()
+		if self.params['initmethod'] == 'allaverage':
+			templatefile = self.averageTemplate()
+		elif self.params['initmethod'] == 'selectrand':
+			templatefile = self.selectRandomParticles()
+		elif self.params['initmethod'] == 'randpart':
+			templatefile = self.pickRandomParticle()
+		elif self.params['initmethod'] == 'template':
+			templatefile = self.getTemplate()
+			apDisplay.printError("unknown initialization method defined: "
+				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
+		else:
+			apDisplay.printError("unknown initialization method defined: "
+				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
 
 		maskpixrad = self.params['maskrad']/self.stack['apix']
 		esttime = apAlignment.estimateTime(self.params['numpart'], maskpixrad)
