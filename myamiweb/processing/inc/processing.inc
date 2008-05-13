@@ -57,6 +57,7 @@ function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True)
   <title>$title</title>
   <link rel='stylesheet' type='text/css' href='../css/viewer.css'> 
   <link rel='stylesheet' type='text/css' href='../css/view.css'>
+  <link rel='stylesheet' type='text/css' href='css/proc.css'>
   <SCRIPT SRC='../js/viewer.js'>
   </SCRIPT>
   $headerstuff
@@ -350,7 +351,7 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	return $javascript; 
 }
 
-function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False) {
+function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=False) {
 	$particle=new particleData();
 
 	$host = 'guppy';
@@ -382,6 +383,9 @@ function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False) {
 		$jobtext .= "#PBS -l cput=240:00:00\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$jobtext .= "updateAppionDB.py $jobid R\n\n";
+
+		// create virtual window for matlab images
+		if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
 		$jobtext .= "$apcmd\n";
 		$jobtext .= "updateAppionDB.py $jobid D\n\n";
 		$jobtext .= "exit\n"; 
