@@ -5,7 +5,7 @@ import icons
 import plugins
 import tools
 import window
-
+from pyami import arraystats
 class Viewer(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
@@ -80,8 +80,9 @@ class Viewer(wx.Panel):
         if array is None:
             extrema = None
         else:
-            min = array.min()
-            max = array.max()
+            stats = arraystats.all(array)
+            min = stats['mean']- 3 * stats['std']
+            max = stats['mean']+ 3 * stats['std']
             extrema = (min, max)
         self.numarrayplugin.setNumpy(array)
         self.tools.infotool.setStatistics(array)
@@ -215,4 +216,3 @@ if __name__ == '__main__':
         targets.append((x, y))
     app.panel.targetsplugin.addTargets(targets)
     app.MainLoop()
-
