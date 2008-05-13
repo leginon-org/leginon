@@ -97,7 +97,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'reject1';	 
 	$commitcheck = 'CHECKED';
 	$noacecheck = ($_POST['noace']=='on') ? 'CHECKED' : ($ctfdata ? 'CHECKED' : '');
-	$nopickscheck = ($_POST['nopicks']=='on') ? 'CHECKED' : ($prtlrunIds ? 'CHECKED' : '');
+	$nopickscheck = ($_POST['nopicks']=='on') ? 'CHECKED' : '';
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$presets=$sessiondata['presets'];
