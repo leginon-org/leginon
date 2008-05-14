@@ -7,6 +7,7 @@
 #
 
 import data
+import event
 import node
 import project
 import threading
@@ -28,6 +29,7 @@ class AcquireError(Exception):
 class ManualAcquisition(node.Node):
 	panelclass = gui.wx.ManualAcquisition.Panel
 	settingsclass = data.ManualAcquisitionSettingsData
+	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
 	defaultsettings = {
 		'camera settings': None,
 		'screen up': False,
@@ -264,7 +266,7 @@ class ManualAcquisition(node.Node):
 		try:
 			self.publish(imagedata['scope'], database=True)
 			self.publish(imagedata['camera'], database=True)
-			self.publish(acquisitionimagedata, database=True)
+			self.publish(acquisitionimagedata, database=True, pubevent=True)
 		except RuntimeError:
 			raise node.PublishError
 

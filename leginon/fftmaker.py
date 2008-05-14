@@ -15,6 +15,7 @@ from pyami import imagefun
 import gui.wx.FFTMaker
 
 class FFTMaker(imagewatcher.ImageWatcher):
+	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
 	panelclass = gui.wx.FFTMaker.Panel
 	settingsclass = data.FFTMakerSettingsData
 	defaultsettings = {
