@@ -21,7 +21,8 @@ if ($_POST['showcommand']) {
 }
 else if ($_POST['process']) {
 	runNoRefAlign(1);
-} else { // Create the form page
+}
+else { // Create the form page
 	createNoRefAlignForm();
 }
 
@@ -261,21 +262,13 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<HR>\n";
-	echo"<input type='submit' name='showcommand' value='Show Command Only'><br />\n";
-
-	echo "<br/>Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>";
-
+	echo"<input type='submit' name='showcommand' value='Show Command Only'>\n";
 	echo"<input type='submit' name='process' value='Start NoRef Alignment'><br />\n";
 	echo "  </TD>\n";
 	echo "</TR>\n";
 	echo "</TABLE>\n";
 	echo "</FORM>\n";
-	echo "</CENTER>\n";
+	echo "<p>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	writeBottom();
@@ -283,8 +276,12 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 }
 
 function runNoRefAlign($runjob) {
+	$expId=$_GET['expId'];
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
+
+	$command.="norefAlignment.py ";
+
 	$stackvars=$_POST['stackid'];
 	$partrad=$_POST['partrad'];
 	$maskrad=$_POST['maskrad'];
@@ -306,10 +303,6 @@ function runNoRefAlign($runjob) {
 	//$stackid=$_POST['stackid'];
 	if (!$stackid) createNoRefAlignForm("<B>ERROR:</B> No stack selected");
 
-	// make sure outdir ends with '/' and append run name
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$outdir=$outdir.$runid;
-	
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
@@ -335,7 +328,6 @@ function runNoRefAlign($runjob) {
 		if ($maskrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Mask radius too large!");
 	}
 	
-	$command.="norefAlignment.py ";
 	if ($outdir) $command.="--outdir=$outdir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runid ";
@@ -351,14 +343,24 @@ function runNoRefAlign($runjob) {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	// submit job to cluster
 	if ($runjob) {
-		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password)) {
+			createNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
+			exit;
+		}
+
+		submitAppionJob($command,$outdir,$runid,$expId);
+		exit;
 	}
 	else {
-	writeTop("No Ref Align Run Params","No Ref Align Params");
-	writeBottom();
-	echo"
-	<P><CENTER>
+		writeTop("No Ref Align Run Params","No Ref Align Params");
+		writeBottom();
+		echo"
+	<p><center>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>NoRef Alignment Command:</B><BR>
@@ -376,8 +378,8 @@ function runNoRefAlign($runjob) {
 	<TR><TD>init method</TD><TD>$initmethod</TD></TR>
 	<TR><TD>out dir</TD><TD>$outdir</TD></TR>
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
-	</TABLE></CENTER>\n";
-	writeBottom();
+	</table></center>\n";
+		writeBottom();
 	}
 }
 ?>
