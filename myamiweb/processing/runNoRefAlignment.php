@@ -270,7 +270,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "</FORM>\n";
 	echo "<p>\n";
 	// first time loading page, set defaults:
-	if (!$_POST['process']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
+	if (!$_POST['process'] && !$_POST['showcommand']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	writeBottom();
 	exit;
 }
@@ -363,7 +363,6 @@ function runNoRefAlign($runjob) {
 	}
 	else {
 		writeTop("No Ref Align Run Params","No Ref Align Params");
-		writeBottom();
 		echo"
 	<p><center>
 	<TABLE WIDTH='600' BORDER='1'>
