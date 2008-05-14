@@ -139,10 +139,8 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	}
 	echo "<input type='hidden' name='numeigenimgs' value='$index'>\n";
 
+	echo "	</td>\n";
 	echo "</tr>\n";
-	echo"</select>";
-	echo "	</td>";
-	echo "</tr>";
 	echo "</table>";
 	echo "</td>";
 	echo "</tr>";
@@ -154,7 +152,6 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "</tr>";
 	echo "</table>";
 	echo "</form>";
-	echo "</center>\n";
 	writeBottom();
 	exit;
 }
