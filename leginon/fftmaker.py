@@ -11,6 +11,8 @@ import event
 import imagewatcher
 import threading
 import node
+import numpy
+import scipy.ndimage
 from pyami import imagefun
 import gui.wx.FFTMaker
 
@@ -22,6 +24,8 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		'process': False,
 		'mask radius': 1.0,
 		'label': '',
+		'reduced': True,
+		'save': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
@@ -34,13 +38,23 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		calculate and publish fft of the imagedata
 		'''
 		if self.settings['process']:
-			self.publishPowerImage(imagedata)
+			pow = self.calculatePowerImage(imagedata)
+			if self.settings['save']:
+				self.publishPowerImage(imagedata,pow)
 
-	def publishPowerImage(self, imagedata):
-		imarray = imagedata['image']
-		self.logger.info('Calculating power spectrum for image')
-		pow = imagefun.power(imarray, self.settings['mask radius'])
-		powdata = data.AcquisitionFFTData(session=self.session, source=imagedata, image=pow)
+	def calculatePowerImage(self, imagedata):
+			imarray = imagedata['image']
+			if self.settings['reduced']:
+				size = max(imarray.shape)
+				if size > 1024:
+					imarray = scipy.ndimage.zoom(imarray, 1024.0/imarray.shape[0])
+			self.logger.info('Calculating power spectrum for image')
+			pow = imagefun.power(imarray, self.settings['mask radius'])
+			self.setImage(numpy.asarray(pow, numpy.float32), 'Power')
+			return pow
+
+	def publishPowerImage(self, imagedata, powimage):
+		powdata = data.AcquisitionFFTData(session=self.session, source=imagedata, image=powimage)
 
 		# filename
 		self.setImageFilename(powdata)

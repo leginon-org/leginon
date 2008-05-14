@@ -16,8 +16,10 @@ from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.ImagePanel
 
 class Panel(gui.wx.Node.Panel):
+	imagepanelclass = gui.wx.ImagePanel.ImagePanel
 	icon = 'fftmaker'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
@@ -35,10 +37,19 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self.toolbar.Realize()
 
+		self.addImagePanel()
+
 		self.szmain.AddGrowableCol(0)
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
+
+	def addImagePanel(self):
+		# image
+		self.imagepanel = self.imagepanelclass(self, -1)
+		self.imagepanel.addTypeTool('Power', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Power', True)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
@@ -68,7 +79,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['process'] = wx.CheckBox(self, -1,
-																			'Calculate FFT and save to the database')
+																			'Calculate FFT')
+		self.widgets['save'] = wx.CheckBox(self, -1,
+																			'Save to the database')
+		self.widgets['reduced'] = wx.CheckBox(self, -1,
+																			'Reduce FFT size to center maximal 1024 pixels')
 		self.widgets['mask radius'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['label'] = Entry(self, -1)
 
@@ -81,8 +96,10 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szmaskradius.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(self.widgets['process'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmaskradius, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['reduced'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['process'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['save'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmaskradius, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'FFT')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

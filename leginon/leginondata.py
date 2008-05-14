@@ -1126,6 +1126,8 @@ class FFTMakerSettingsData(SettingsData):
 			('process', bool),
 			('mask radius', float),
 			('label', str),
+			('save', bool),
+			('reduced', bool),
 		)
 	typemap = classmethod(typemap)
 
