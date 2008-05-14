@@ -218,11 +218,10 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
       <INPUT type='submit' name='process' value='Upload Template'><BR/>
       <FONT class='apcomment'>Submission will NOT upload the template,<BR/>
 			only output a command that you can copy and paste into a unix shell</FONT>
-    </TD>
-	</TR>
-  </TABLE>
-  </FORM>
-  </CENTER>\n";
+    </td>
+	</tr>
+  </table>
+  </form>\n";
 
 	writeBottom();
 	exit;
