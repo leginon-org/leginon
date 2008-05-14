@@ -294,18 +294,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		Test these setting on image:
 		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
                 <HR>
-		Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-
-	echo "</select>
-		<BR>
 		<input type='submit' name='process' value='Just Show Command'>\n";
 	if ($_SESSION['loggedin']) echo "<input type='submit' name='process' value='Run Correlator'>\n";
-	echo"<BR>
-		<FONT class='apcomment'>Submission will NOT run Template Correlator, only output a command that you can copy and paste into a unix shell</FONT>
+	echo"
 		</TD>
 	</TR>
 	</TABLE>
