@@ -83,7 +83,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['save'] = wx.CheckBox(self, -1,
 																			'Save to the database')
 		self.widgets['reduced'] = wx.CheckBox(self, -1,
-																			'Reduce FFT size to center maximal 1024 pixels')
+																			'Truncate FFT to center 1024 pixels')
 		self.widgets['mask radius'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['label'] = Entry(self, -1)
 

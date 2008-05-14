@@ -39,7 +39,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		'''
 		if self.settings['process']:
 			pow = self.calculatePowerImage(imagedata)
-			if self.settings['save']:
+			if imagedata['filename'] and self.settings['save']:
 				self.publishPowerImage(imagedata,pow)
 
 	def calculatePowerImage(self, imagedata):
