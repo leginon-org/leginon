@@ -1,0 +1,99 @@
+#!/bin/sh
+
+USAGE="`/bin/basename $0` COMMAND [options]"
+
+if [ $# -lt 1 ]; then
+	echo $USAGE
+	exit 1
+fi
+
+# Local hacks to make this wrapper work with all of our
+# centralized packages.  This shouldn't be in any released 
+# versions.
+EMANDIR="/ami/sw/packages/EMAN"
+MATLAB="/ami/sw/packages/matlab"
+SPIDER="/ami/sw/packages/spider"
+
+export SPMAN_DIR="$SPIDER/man/"
+export SPRGB_DIR=" $SPIDER/rgb"
+export SPPROC_DIR="$SPIDER/proc"
+
+
+
+if [ $LD_LIBRARY_PATH ]; then
+  export LD_LIBRARY_PATH="$EMANDIR/lib:$LD_LIBRARY_PATH"
+else 
+  export LD_LIBRARY_PATH="$EMANDIR/lib"
+fi
+
+ARCH=`uname -m`
+if [ $ARCH == "x86_64" ]; then
+  ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:/ami/sw/$EMANDIR/lib:/ami/sw/lib64/python2.4/site-packages"
+  export LD_LIBRARY_PATH="$MATLAB/bin/glnxa64:$LD_LIBRARY_PATH"
+  export PATH="$PATH:/ami/sw/bin64"
+else
+  ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:/ami/sw/$EMANDIR/lib:/ami/sw/lib/python2.4/site-packages"
+  export LD_LIBRARY_PATH="$MATLAB/bin/glnx86:$LD_LIBRARY_PATH"
+  export PATH="$PATH:/ami/sw/bin"
+fi
+
+
+if [ $PYTHONHOME ]; then
+ unset $PYTHONHOME
+fi
+ 
+## End site dependent crap
+
+app=`/bin/basename $0`
+
+if [ ! "$APPION" -o ! -x "$APPION/bin/appion" ]
+then
+	cd `/usr/bin/dirname $0`
+	if [ -h $app ]; then
+		tmp=`ls -l $app |sed 's/.* -> //'`
+		newdir=`/usr/bin/dirname $tmp`
+		cd $newdir
+	fi
+	cd ..
+	APPION=`pwd -P`		
+fi  
+
+if [ $PYTHONPATH ]; then
+	export PYTHONPATH="$APPION/lib:$ADTOPYPATH:$PYTHONPATH"
+else 
+	export PYTHONPATH="$APPION/lib:$ADTOPYPATH"
+fi
+
+if [ $MATLABPATH ]; then 			
+	export MATLABPATH="$MATLABPATH:$APPION/ace"
+else
+	export MATLABPATH="$APPION/ace"
+fi
+
+CMD="$1.py"
+
+#turn off case sensitivity su aligndefocalpairs matches alignDefocalPairs, etc ..
+shopt -s nocasematch
+ 
+#for f in $FUNCTIONS
+cd $APPION/bin
+
+for f in *.py
+do
+	if [[ $CMD == $f ]]; then
+		APPION_PROG="$APPION/bin/$f"
+		break
+	fi
+done
+
+#turn back on case sensitivity
+shopt -u nocasematch
+
+if [ "$APPION_PROG" = "" ]; then
+	echo "Unknown command"
+	exit 1
+else
+
+	shift 1
+	exec $APPION_PROG "$@"
+fi
