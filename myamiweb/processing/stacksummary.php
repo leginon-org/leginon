@@ -27,7 +27,29 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-$javascript="<script src='../js/viewer.js'></script>\n";
+$javascript = "<script src='../js/viewer.js'></script>\n";
+
+// javascript for hiding/showing edit text & form
+$javascript = "<script language='javascript' type='text/javascript'>\n";
+$javascript.= "function hideEditForm(stackid) {\n";
+$javascript.= "  var descText='descText'+stackid;\n";
+$javascript.= "  var descForm='descForm'+stackid;\n";
+$javascript.= "  if (document.getElementById) { // DOM3 = IE5, NS6\n";
+$javascript.= "    document.getElementById(descText).style.visibility = 'hidden';\n"; 
+$javascript.= "    document.getElementById(descForm).style.visibility = 'visible';\n"; 
+$javascript.= "  }\n"; 
+$javascript.= "  else {\n"; 
+$javascript.= "    if (document.layers) { // Netscape 4\n"; 
+$javascript.= "      document.descText.visibility = 'hidden';\n"; 
+$javascript.= "      document.descForm.visibility = 'visible';\n"; 
+$javascript.= "    }\n"; 
+$javascript.= "    else { // IE 4\n"; 
+$javascript.= "      document.all.descText.style.visibility = 'hidden';\n"; 
+$javascript.= "      document.all.descForm.style.visibility = 'visible';\n"; 
+$javascript.= "    }\n"; 
+$javascript.= "  }\n"; 
+$javascript.= "}\n";
+$javascript.= "</script>\n";
 
 writeTop("Stack Report","Stack Summary Page", $javascript,False);
 
@@ -40,6 +62,8 @@ echo "</FORM>\n";
 // --- Get Stack Data --- //
 $particle = new particledata();
 
+// edit description form
+echo "<form name='stackform' method='post' action='$formAction'>\n";
 
 # find each stack entry in database
 $stackIds = $particle->getStackIds($sessionId);
@@ -62,7 +86,7 @@ foreach ($stackIds as $row) {
 		echo "<tr><td rowspan='15' align='center'>";
 		echo "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
 		echo "<i>averaged stack image</i><br/>\n";
-		echo "</td></tr>";
+		echo "</td></tr>\n\n";
 	} #endif
 
 	# get pixel size of stack
@@ -73,7 +97,20 @@ foreach ($stackIds as $row) {
 	$boxsz=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
 	$boxsz.=" pixels";
 	
-	$display_keys['description']=$s['description'];
+	# add edit button to description
+	$descDiv="<div id='descText".$stackid."' style='position:absolute'>";
+	$descDiv.=$s['description'];
+	$descDiv.=" <input type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$stackid')\">";
+	$descDiv.="</div>\n";
+	$descDiv.="<div id='descForm".$stackid."' style='visibility:hidden;'>";
+	$descDiv.="<input type='text' name='newdescription' value='";
+	$descDiv.=$s['description'];
+	$descDiv.="'>";
+	$descDiv.=" <input type='submit' name='updateDesc' value='Update'>";
+	$descDiv.="</div>\n";
+
+	$display_keys['description']=$descDiv;
+
 	$display_keys['# prtls']=$nump;
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
@@ -97,8 +134,9 @@ foreach ($stackIds as $row) {
 	foreach($display_keys as $k=>$v) {
 	        echo formatHtmlRow($k,$v);
 	}
-	echo"</table>\n";
-	echo"<P>\n";
+	echo "</table>\n";
+	echo "<p>\n";
 }
+echo "</form>\n";
 writeBottom();
 ?>
