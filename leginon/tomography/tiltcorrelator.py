@@ -16,7 +16,7 @@ def hanning(size):
 class Correlator(object):
     def __init__(self, tilt_axis, correlation_binning=1):
         self.correlation = correlator.Correlator()
-        self.peakfinder = peakfinder.PeakFinder(lpf=None)
+        self.peakfinder = peakfinder.PeakFinder()
         self.reset()
         self.setCorrelationBinning(correlation_binning)
         self.hanning = None
