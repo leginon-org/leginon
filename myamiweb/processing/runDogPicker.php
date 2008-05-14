@@ -124,17 +124,12 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
 		<hr />
-		</td>
-	</tr>
-	<tr>
-		<td COLSPAN='2' ALIGN='center'>
 	        <input type='submit' name='process' value='Just Show Command'>
 		<input type='submit' name='process' value='Run DogPicker'><br />
 		</td>
 	</tr>
 	</form>
-	</table>
-	</center>\n";
+	</table>\n";
 	writeBottom();
 }
 
