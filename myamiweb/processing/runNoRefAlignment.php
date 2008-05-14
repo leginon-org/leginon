@@ -198,7 +198,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	//echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='template' "
 	//	.($_POST['initmethod'] == 'template' ? 'CHECKED' : '')
 	//	.">\n Use a template image<br/>\n";
-	echo "</TD></TR><TR>\n";
+	echo "</TD></TR>\n";
+	echo "<TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
@@ -206,8 +207,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<BR></TD></TR>\n</TABLE>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
-	echo "<TABLE CELLPADDING='5' BORDER='0'>\n";
-	echo "<TR><TD VALIGN='TOP'>\n";
+	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
+	echo "  <TR><TD VALIGN='TOP'>\n";
 	//echo "<B>Particle Params:</B></A><BR>\n";
 
 	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
@@ -251,12 +252,9 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<INPUT TYPE='text' NAME='numfactors' VALUE='$numfactors' SIZE='4'>\n";
 	echo docpop('numfactors','Number of Factors');
 	echo " in Coran<BR>\n";
-
-	echo "</TR>\n";
-	echo"</SELECT>\n";
-	echo "	</TD>\n";
-	echo "</TR>\n";
-	echo "</TABLE>\n";
+	echo "  </td>\n";
+	echo "  </tr>\n";
+	echo "</table>\n";
 	echo "</TD>\n";
 	echo "</TR>\n";
 	echo "<TR>\n";
@@ -264,11 +262,10 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "	<HR>\n";
 	echo"<input type='submit' name='showcommand' value='Show Command Only'>\n";
 	echo"<input type='submit' name='process' value='Start NoRef Alignment'><br />\n";
-	echo "  </TD>\n";
-	echo "</TR>\n";
-	echo "</TABLE>\n";
-	echo "</FORM>\n";
-	echo "<p>\n";
+	echo "  </td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process'] && !$_POST['showcommand']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
 	writeBottom();
