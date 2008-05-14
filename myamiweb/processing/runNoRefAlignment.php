@@ -328,7 +328,12 @@ function runNoRefAlign($runjob) {
 		if ($maskrad > $boxrad) createNoRefAlignForm("<b>ERROR:</b> Mask radius too large!");
 	}
 	
-	if ($outdir) $command.="--outdir=$outdir ";
+	if ($outdir) {
+		// make sure outdir ends with '/' and append run name
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$procdir = $outdir.$runid;
+		$command.="--outdir=$procdir ";
+	}
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runid ";
 	$command.="--stack=$stackid ";
