@@ -189,6 +189,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.publish(adjustedtarget, database=True)
 			self.logger.debug('Processing target published')
 
+			#self.setZ(adjustedtarget)
 			# this while loop allows target to repeat
 			process_status = 'repeat'
 			attempt = 0
