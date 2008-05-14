@@ -184,7 +184,7 @@ class ManualAcquisition(node.Node):
 		if self.settings['save image']:
 			self.logger.info('Saving image to database...')
 			try:
-				self.publishImageData(imagedata)
+				self.publishImageData(imagedata, save=True)
 				self.published_images.append(self.getMostRecentImageData(self.session))
 			except node.PublishError, e:
 				raise
@@ -194,6 +194,8 @@ class ManualAcquisition(node.Node):
 					message += ' (%s)' % str(e)
 				self.logger.error(message)
 				raise AcquireError
+		else:
+			self.publishImageData(imagedata, save=False)
 		self.logger.info('Image acquisition complete')
 
 	def preExposure(self):
@@ -251,24 +253,28 @@ class ManualAcquisition(node.Node):
 		filename = ('%s_%0' + str(digits) + 'd%s' + '%s') % (prefix, number, suffix, defindex)
 		imagedata['filename'] = filename
 
-	def publishImageData(self, imagedata):
+	def publishImageData(self, imagedata, save):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
-		if self.grid is not None:
-			gridinfo = self.gridmapping[self.grid]
-			griddata = data.GridData()
-			griddata['grid ID'] = gridinfo['gridId']
-			acquisitionimagedata['grid'] = griddata
-
-		acquisitionimagedata['label'] = self.settings['image label']
-
-		self.setImageFilename(acquisitionimagedata)
-
-		try:
-			self.publish(imagedata['scope'], database=True)
-			self.publish(imagedata['camera'], database=True)
-			self.publish(acquisitionimagedata, database=True, pubevent=True)
-		except RuntimeError:
-			raise node.PublishError
+		if save:
+			if self.grid is not None:
+				gridinfo = self.gridmapping[self.grid]
+				griddata = data.GridData()
+				griddata['grid ID'] = gridinfo['gridId']
+				acquisitionimagedata['grid'] = griddata
+	
+			acquisitionimagedata['label'] = self.settings['image label']
+	
+			self.setImageFilename(acquisitionimagedata)
+	
+			try:
+				self.publish(imagedata['scope'], database=True)
+				self.publish(imagedata['camera'], database=True)
+				self.publish(acquisitionimagedata, database=True)
+			except RuntimeError:
+				raise node.PublishError
+		
+		## publish event even if no save
+		self.publish(acquisitionimagedata, pubevent=True)
 
 	def acquireImage(self, dose=False):
 		self.published_images = []
