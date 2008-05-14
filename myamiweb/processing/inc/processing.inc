@@ -50,52 +50,110 @@ function docpop($key,$text) {
 	return "<a href='#' id='l".$key."' onMouseOver='popLayer(\"".$key."\",\"l".$key."\")' onMouseOut='hideLayer()'>$text</a>\n";
 }
 
-function writeTop($title,$heading=false,$headerstuff=false,$showloginerror=True){
-  global $_GET;
-  echo"<HTML>
-  <HEAD>
-  <title>$title</title>
-  <link rel='stylesheet' type='text/css' href='../css/viewer.css'> 
-  <link rel='stylesheet' type='text/css' href='../css/view.css'>
-  <link rel='stylesheet' type='text/css' href='css/proc.css'>
-  <SCRIPT SRC='../js/viewer.js'>
-  </SCRIPT>
-  $headerstuff
-  </HEAD>
-  <BODY>
-  <CENTER>
-  <TABLE BORDER='0'>
-  <TR>
-  <TD ALIGN='LEFT'>\n";
-  if ($heading) echo"<H3 ALIGN='CENTER'>$heading</H3>\n";
-  if ($_SESSION['username']) {
-    echo "<FONT CLASS='sf' ALIGN='right'><I>logged in as <B>$_SESSION[username]</B></I></FONT>\n";
-    echo "<A CLASS='header' HREF='endsession.php?expId=$_GET[expId]'><FONT CLASS='sf'>[Log Out]</FONT></A>\n";
-    $_SESSION['loggedin']=True;
-  }
-  elseif ($showloginerror==True) {
-    echo "<FONT COLOR='red'><B>WARNING:</B> You cannot submit jobs without logging in</FONT> <A CLASS='header' HREF='login.php?expId=$_GET[expId]&prev=$_SERVER[PHP_SELF]'>[Log In]</A>\n";
-  }
-  echo"<HR>\n";
+function writeTop($title,$heading=false,$headerstuff=false){
+	global $_GET;
+	$expId = $_GET['expId'];
+	$leginondata = new leginondata();
+	$particle = new particledata();
+	$projectId=getProjectFromExpId($expId);
+
+	// Collect session info from database
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	$sessions=$sessiondata['sessions'];
+	$currentproject=$sessiondata['currentproject'];
+
+	// Show project & session pulldowns
+	$sessionDescr=$sessioninfo['Purpose'];
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
+	$misc = $particle->getMiscInfoFromProject ($projectId);
+
+	
+  	echo "<html>\n";
+	echo "<head>\n";
+	echo "<title>$title</title>\n";
+	echo "<link rel='stylesheet' type='text/css' href='../css/viewer.css'> \n";
+	echo "<link rel='stylesheet' type='text/css' href='../css/view.css'>\n";
+	echo "<link rel='stylesheet' type='text/css' href='css/proc.css'>\n";
+	echo "<script src='../js/viewer.js'>\n";
+	echo "</script>\n";
+	echo "$headerstuff\n";
+	echo "</head>\n";
+	echo "<body>\n";
+	echo "<center>\n";
+	echo "<!-- header -->\n";
+	echo "<div id='apheader'>\n";
+	echo "  <div class='aptopbar'>\n";
+	if ($_SESSION['username']) {
+		echo "    <div class='aplogged'>\n";
+		echo "      <i>logged in as <b>$_SESSION[username]</b></i>\n";
+		echo "    </div>\n";
+		echo "    <div class='aplogout'>\n";
+		echo "      <a class='header' href='endsession.php?expId=$_GET[expId]'>[Log Out]</a>\n";
+		$_SESSION['loggedin']=True;
+	}
+	else {
+		$expId=$_GET['expId'];
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+		echo "    <div class='aplogin'>\n";
+		displayLogin($formAction);
+	}
+	echo "    </div>\n";
+	echo "  </div>\n";
+	echo "  <hr />\n";
+	echo "  <div class='middlebar'>\n";
+	echo "    <div class='aptitle'>\n";
+	echo "      <table border='0' cellpadding='5' cellspacing='0'>\n";
+	echo "      <tr><td valign='middle'><img src='img/topbarbackgrnd.jpg'></td>\n";
+	echo "	    <td valign='middle'>$heading</td></tr>\n";
+	echo "      </table>\n";
+	echo "    </div>\n";
+	echo "  </div>\n";
+	echo "  <hr />\n";
+	echo "  <div class='apbottombar'>\n";
+	echo "    <div class='apbottomcontent'>\n";
+	// --- display Project / Session / Path table info --- //
+	$ptable[]=array(
+			'c1'=>'<b>Project:</b>',
+			'c2'=>$proj_link,
+			'c3'=>($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : "" 
+				); 
+	$ptable[]=array(
+			'c1'=>'<b>Session:</b>',
+			'c2'=>$session_link
+			);
+
+	// get experiment information
+	if ($expinfo = $leginondata->getSessionInfo($expId)) {
+		$ptable[]=array(
+				'c1'=>'<b>Image Path:</b>',
+				'c2'=>$expinfo['Image path']
+				);
+	}
+	echo array2table($ptable, array(), false, "");
+	echo "    </div>\n";
+	echo "  </div>\n";
+	echo "  <hr />\n";
+	echo "  <div class='apshadow'>\n";
+	echo "    &nbsp;\n";
+	echo "  </div>\n";
+	echo "</div>\n";
 }
 
-function writeBottom($showproclink=True, $nytimes=False){
+function writeBottom($showproclink=True){
 	global $_GET;
-	echo"
-  </TD>
-  </TR>
-  </TABLE>\n";
-#  if ($nytimes) echo "<table cellpadding='5' class='tableborder' border='1'><tr><td align='center'><a href='http://www.nytimes.com'>While waiting, enjoy <br /><img border='0' src='img/nytimes.gif' alt='New York Times'></A></td></tr></table><br />\n";
+	echo "<p>\n";
 	if ($showproclink && $_GET['expId']) {
 		echo "<table border='0' cellpadding='0' cellspacing='0'>\n";
 		echo "<tr>\n";
 		echo "<td valign='center'>\n";
-		echo "<a href='processing.php?expId=$_GET[expId]' class='header'>\n";
+		echo "<a href='index.php?expId=$_GET[expId]' class='header'>\n";
 		echo "<img border='0' src='img/leftendButton.gif'>\n";
 		echo "</a>\n";
 		echo "</td>\n";
 		echo "<td align='center' valign='center' background='img/middleButton.gif'>\n";
-		echo "<a href='processing.php?expId=$_GET[expId]' class='header'><font size='-2'>Back to Processing Page</font></a>\n";
+		echo "<a href='index.php?expId=$_GET[expId]' class='header'><font size='-2'>Back to Processing Page</font></a>\n";
 		echo "</td>\n";
 		echo "<td valign='center'>\n";
 		echo "<img border='0' src='img/rightendButton.gif'>\n";
@@ -109,15 +167,11 @@ function writeBottom($showproclink=True, $nytimes=False){
 }
 
 function displayLogin($formAction) {
-  echo "<FORM NAME='jobform' method='POST' ACTION='$formAction'>\n";
-  echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='5'>\n";
-  echo "<TR><TD>\n";
-  echo "Username: <INPUT TYPE='text' name='username' value='$_POST[username]'>\n";
-  echo "Password: <INPUT TYPE='password' name='password'><BR>\n";
-  echo "<CENTER><INPUT TYPE='submit' NAME='login' VALUE='Log In'></CENTER>\n";
-  echo "</TD></TR>\n";
-  echo "</TABLE>\n";
-  echo "</FORM>\n";  
+  echo "<form name='jobform' method='post' action='$formAction'>\n";
+  echo "Username: <input type='text' name='username' value='$_POST[username]'>\n";
+  echo "Password: <input type='password' name='password'>\n";
+  echo "<input type='submit' name='login' value='Log In'>\n";
+  echo "</form>\n";  
 }
 
 function checkLogin() {
@@ -358,7 +412,10 @@ function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=Fal
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
-	$procdir = $outdir.'/'.$runid;
+	
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$procdir = $outdir.$runid;
 
 	// set names of cluster job file and output log
 	$jobfile = "$runid.appionsub.job";
