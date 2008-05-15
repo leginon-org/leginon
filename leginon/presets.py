@@ -1580,11 +1580,13 @@ class PresetsManager(node.Node):
 		self.beamimagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		im = self.beamimagedata['image']
 		self.panel.setBeamImage(im)
+		beamshift = self.instrument.tem.BeamShift
+		self.panel.displayBeamShift(beamshift)
 
 		# return to original preset
 		self.toScope(preset['name'])
 
-	def autoBeamCenter(self):
+	def autoBeamCenter(self, cycle):
 		im = self.beamimagedata['image']
 		center, diameter = self.findBeamCenterDiameter(im)
 		scope = self.beamimagedata['scope']
@@ -1595,7 +1597,7 @@ class PresetsManager(node.Node):
 		diameter_micron = 1e6 * diameter * pixelsize * cam['binning']['x']
 		print 'diameter in micrometer', diameter_micron
 		xy = center[1], center[0]
-		self.onBeamImageClicked(xy)
+		self.onBeamImageClicked(xy, cycle)
 
 	def findBeamCenterDiameter(self, im):
 		stats = arraystats.all(im)
@@ -1614,7 +1616,7 @@ class PresetsManager(node.Node):
 		print 'diameter', diameter
 		return center, diameter
 
-	def onBeamImageClicked(self, xy):
+	def onBeamImageClicked(self, xy, cycle):
 		row = xy[1]
 		col = xy[0]
 		imagedata = self.beamimagedata
@@ -1635,11 +1637,19 @@ class PresetsManager(node.Node):
 		### get new beam shift here and apply to whatever
 		self.new_beamshift = self.instrument.tem.BeamShift
 
+		if cycle:
+			preset = self.currentpreset['name']
+			self.cycleToScope(preset)
+			self.instrument.tem.BeamShift = self.new_beamshift
+
 		self.acquireBeamImage()
 
 	def commitBeamAdjustment(self):
 		if self.new_beamshift is None:
 			return
 		newbeamshift = {'beam shift': self.new_beamshift}
-		self.updatePreset(self.currentpreset['name'], newbeamshift)
+		mag = self.currentpreset['magnification']
+		for preset in self.presets.values():
+			if preset['magnification'] == mag:
+				self.updatePreset(preset['name'], newbeamshift)
 

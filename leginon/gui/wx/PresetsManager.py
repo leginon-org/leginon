@@ -835,6 +835,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		evt = gui.wx.Events.SetImageEvent(image, typename=None)
 		self.beamdialog.GetEventHandler().AddPendingEvent(evt)
 
+	def displayBeamShift(self, beamshift):
+		self.beamdialog.beamshift.SetLabel('current beam shift:  x: %.4e,  y: %.4e' % (beamshift['x'], beamshift['y']))
+
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
 		self._presetsEnable(False)
@@ -1214,10 +1217,16 @@ class BeamDialog(wx.Dialog):
 		self.bautocenter.Enable(False)
 		self.bcommit = wx.Button(self, -1, 'Commit')
 		self.bcommit.Enable(False)
+		self.bcycle = wx.CheckBox(self, -1, 'Cycle for each adjustment')
+		self.bcycle.SetValue(True)
+		self.beamshift = wx.StaticText(self, -1, 'current beam shift:')
+
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bautocenter, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(self.bcommit, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bcycle, (0, 3), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.beamshift, (1, 0), (1, 4), wx.ALIGN_CENTER)
 
 		### merge buttons and imageviewer
 		szmain = wx.GridBagSizer(5,5)
@@ -1236,7 +1245,8 @@ class BeamDialog(wx.Dialog):
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onImageClicked(self, evt):
-		self.node.onBeamImageClicked(evt.xy)
+		cycle = self.bcycle.GetValue()
+		self.node.onBeamImageClicked(evt.xy, cycle=cycle)
 
 	def onAcquire(self, evt):
 		threading.Thread(target=self.node.acquireBeamImage).start()
@@ -1244,7 +1254,8 @@ class BeamDialog(wx.Dialog):
 		self.bcommit.Enable(True)
 
 	def onAutoCenter(self, evt):
-		threading.Thread(target=self.node.autoBeamCenter).start()
+		cycle = self.bcycle.GetValue()
+		threading.Thread(target=self.node.autoBeamCenter, kwargs={'cycle':cycle}).start()
 
 	def onCommit(self, evt):
 		threading.Thread(target=self.node.commitBeamAdjustment).start()
