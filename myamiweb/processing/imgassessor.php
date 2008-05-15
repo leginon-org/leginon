@@ -9,10 +9,10 @@
  */
 
 require "inc/particledata.inc";
-require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/leginon.inc";
+require "inc/project.inc";
 
 $particle=new particledata();
 
