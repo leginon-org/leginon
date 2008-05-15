@@ -69,6 +69,9 @@ echo "<form name='stackform' method='post' action='$formAction'>\n";
 $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $row) {
 	$stackid=$row['stackid'];
+	if ($_POST['updateDesc'.$stackid]) {
+		$particle->updateDescription('ApStackData',$stackid,$_POST['newdescription'.$stackid]);
+	}
 	$s=$particle->getStackParams($stackid);
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid));
@@ -103,10 +106,10 @@ foreach ($stackIds as $row) {
 	$descDiv.=" <input type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$stackid')\">";
 	$descDiv.="</div>\n";
 	$descDiv.="<div id='descForm".$stackid."' style='visibility:hidden;'>";
-	$descDiv.="<input type='text' name='newdescription' value='";
+	$descDiv.="<input type='text' name='newdescription".$stackid."' value='";
 	$descDiv.=$s['description'];
 	$descDiv.="'>";
-	$descDiv.=" <input type='submit' name='updateDesc' value='Update'>";
+	$descDiv.=" <input type='submit' name='updateDesc".$stackid."' value='Update')>";
 	$descDiv.="</div>\n";
 
 	$display_keys['description']=$descDiv;

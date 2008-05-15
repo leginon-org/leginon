@@ -1135,6 +1135,19 @@ class particledata {
     return $jid;
   }
 
+	function updateDescription($table, $id, $newtext) {
+		$q = "SELECT description "
+			."FROM `".$table."` "
+			."WHERE `DEF_id`=".$id." ";
+		$olddata = $this->mysql->getSQLResult($q);
+    if (array_key_exists('description',$olddata[0])) {
+			$data = array();
+			$data['description']=$newtext;
+			$where = array('DEF_id'=>$id);
+			$this->mysql->SQLUpdate($table,$data,$where);
+		}
+	}			 
+
   function updateClusterQueue($jobid,$queueid,$status) {
     $data = array('clusterjobid'=>$queueid);
     $data['status']=$status;
