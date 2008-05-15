@@ -372,6 +372,8 @@ class Tomography(acquisition.Acquisition):
 			self.logger.error('Preset magnification not listed for TEM')
 			return
 
+		if not self.settings['model mag']:
+			self.settings['model mag'] = 'this preset and lower mags'
 		if self.settings['model mag'] == 'only this preset':
 			allmags = [presetmag]
 		elif self.settings['model mag'] == 'custom values':
