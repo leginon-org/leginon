@@ -278,7 +278,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo ($checkimage==$checkimageval) ? "selected" : "";
 		echo ">$checkimage</option>\n";
 	}
-	echo"</select>images<br />\n";
+	echo"</select> images<br />\n";
 
 	echo "
 		<input type='checkbox' name='commit' $commitcheck>\n";

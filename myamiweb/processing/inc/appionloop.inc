@@ -137,9 +137,9 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 		echo "<OPTION VALUE='$checkimage' ";
 		// make norejects selected by default
 		if ($checkimage==$checkimageval) echo "SELECTED";
-		echo ">$checkimage</OPTION>\n";
+		echo ">$checkimage</option>\n";
 	}
-	echo"</SELECT>images<br/><br/>\n";
+	echo"</select> images<br /><br />\n";
 
 	echo "<input type='checkbox' name='nowait' $nowait>\n";
 	echo docpop('nowait','Wait for more images after finishing');
