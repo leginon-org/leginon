@@ -127,8 +127,13 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 			transq[key] = val
 		#print i,v
 
+
 	### this overlap is wrong because the images are binned by 'bin' and now we give it the full image
-	bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(imgdata1['image'], imgdata2['image'], tiltparams)
+	imgShape1 = numpy.asarray(imgdata1.shape, dtype=numpy.int8)/params['bin']
+	image1 = numpy.ones(imgShape1)
+	imgShape2 = numpy.asarray(imgdata2.shape, dtype=numpy.int8)/params['bin']
+	image2 = numpy.ones(imgShape2)
+	bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, tiltparams)
 	print "image overlaps", bestOverlap, tiltOverlap
 	transq['overlap'] = round(bestOverlap,5)
 
