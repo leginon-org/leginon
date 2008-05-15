@@ -124,8 +124,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
 		<hr />
-	        <input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run DogPicker'><br />
+	        <input type='submit' name='process' value='Just Show Command'>\n";
+	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Run DogPicker'>\n";
+	echo "  <br />
 		</td>
 	</tr>
 	</form>
