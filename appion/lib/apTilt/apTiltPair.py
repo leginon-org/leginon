@@ -116,7 +116,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	if dbdict is None:
 		return None
 	#Can I do for key in appionData.ApImageTiltTransformData() ro transq???
-	for key in ('image1_x','image1_y','image1_rotation','image2_x','image2_y','image2_rotation','scale_factor','tilt_angle'):
+	for key in ('image1_x','image1_y','image1_rotation','image2_x','image2_y','image2_rotation','scale_factor','tilt_angle', 'overlap'):
 		if key not in dbdict:
 			apDisplay.printError("Key: "+key+" was not found in transformation data")
 
@@ -127,7 +127,9 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 			transq[key] = val
 		#print i,v
 
+	### this overlap is wrong because the images are binned by 'bin' and now we give it the full image
 	bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(imgdata1['image'], imgdata2['image'], tiltparams)
+	print "image overlaps", bestOverlap, tiltOverlap
 	transq['overlap'] = round(bestOverlap,5)
 
 	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
