@@ -48,8 +48,9 @@ class CorrectorClient(object):
 		self.node = node
 		self.channel = 0
 		self.ref_cache = {}
+		self.ref_cache_id = {}
 
-	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel):
+	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel, readimages=True):
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
@@ -68,7 +69,7 @@ class CorrectorClient(object):
 		imagetemp['scope']['high tension'] = scopedata['high tension']
 		imagetemp['channel'] = channel
 		try:
-			ref = self.node.research(datainstance=imagetemp, results=1)
+			ref = self.node.research(datainstance=imagetemp, results=1, readimages=readimages)
 		except Exception, e:
 			self.node.logger.warning('Loading reference image failed: %s' % e)
 			ref = None
@@ -129,6 +130,17 @@ class CorrectorClient(object):
 		mylist.append(channel)
 		return tuple(mylist)
 
+	def getFromCache(self, camstate, type, ccdcameraname, scopedata, channel):
+		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
+		cachedim = self.ref_cache[key]
+		newref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel, readimages=False)
+		if newref.dbid != self.ref_cache_id[key]:
+			self.ref_cache[key] = newref['image']
+			self.ref_cache_id[key] = newref.dbid
+			return newref['image']
+		else:
+			return cachedim
+
 	def retrieveRef(self, camstate, type, ccdcameraname, scopedata, channel):
 		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
 		## another way to do the cache would be to use the local
@@ -136,7 +148,7 @@ class CorrectorClient(object):
 
 		## try to use reference image from cache
 		try:
-			return self.ref_cache[key]
+			return self.getFromCache(camstate, type, ccdcameraname, scopedata, channel)
 		except KeyError:
 			self.node.logger.info('Loading %s...' % self.formatKey(key))
 
@@ -146,6 +158,7 @@ class CorrectorClient(object):
 			## make it float to do float math later
 			image = numpy.asarray(ref['image'], numpy.float32)
 			self.ref_cache[key] = image
+			self.ref_cache_id[key] = ref.dbid
 		else:
 			image = None
 		return image
@@ -311,6 +324,7 @@ class CorrectorClient(object):
 		except node.PublishError, e:
 			self.node.logger.error('Publishing reference image failed: %s' % (e,))
 			return None
+		self.ref_cache_id[key] = imagetemp.dbid
 		self.node.logger.info('Reference image published')
 		return imagetemp
 
