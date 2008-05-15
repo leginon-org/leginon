@@ -722,7 +722,7 @@ class PickerApp(wx.App):
 		errorArray2 = ndimage.minimum_filter(errorArray, size=size, mode='wrap')
 		mean = ndimage.mean(errorArray2)
 		stdev = ndimage.standard_deviation(errorArray2)
-		cut = mean + 5.0 * stdev + 3.0
+		cut = mean + 5.0 * stdev + 2.0
 		return cut
 
 	#---------------------------------------
@@ -747,6 +747,28 @@ class PickerApp(wx.App):
 				#return (a1b[len(a2):,:], a2[len(a1):,:])
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
+		a1c = range(15)
+		while len(a1c) > 10:
+			cut = int(cut+1)
+			a1c, a2c, worst1, worst2, maxerr = self._selectBadPicks(a1, a2, err, cut)
+		if len(a1c) > 0:
+			self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
+				+str(int(cut))+ " pixels", 0)
+			a1d = numpy.asarray(a1c)
+			a2d = numpy.asarray(a2c)
+		else:
+			self.statbar.PushStatusText("no particles had an RMSD greater than "
+				+str(int(cut))+ " pixels; selected worst one with RMSD = "+str(round(maxerr,2)), 0)
+			a1d = numpy.asarray([worst1])
+			a2d = numpy.asarray([worst2])
+		if a1d[0] is None:
+			a1d = []
+		if a2d[0] is None:
+			a2d = []
+		return (a1d, a2d)
+
+	#---------------------------------------
+	def _selectBadPicks(self, a1, a2, err, cut):
 		a1c = []
 		a2c = []
 		maxerr = 4.0
@@ -767,21 +789,7 @@ class PickerApp(wx.App):
 					a1c.append(a1[i,:])
 				if i < len(a2):
 					a2c.append(a2[i,:])
-		if len(a1c) > 0:
-			self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
-				+str(int(cut))+ " pixels", 0)
-			a1d = numpy.asarray(a1c)
-			a2d = numpy.asarray(a2c)
-		else:
-			self.statbar.PushStatusText("no particles had an RMSD greater than "
-				+str(int(cut))+ " pixels; selected worst one with RMSD = "+str(round(maxerr,2)), 0)
-			a1d = numpy.asarray([worst1])
-			a2d = numpy.asarray([worst2])
-		if a1d[0] is None:
-			a1d = []
-		if a2d[0] is None:
-			a2d = []
-		return (a1d, a2d)
+		return a1c, a2c, worst1, worst2, maxerr
 
 	#---------------------------------------
 	def getGoodPicks(self):
