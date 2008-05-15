@@ -3,10 +3,7 @@
  */
 
 var help = {
-/**	'appion' : {
-*	}
-**/
-	'eman' : {
+	'appion' : {
 		'runid' : 'Specifies the name associated with the processing results unique to the specified session and parameters. An attempt to use the same run name for a session using different processing parameters will result in an error.',
 		'outdir' : 'Output directory to which files will be stored.  If you are testing, switch \"appion\" to \"temp\".',
 		'checkimages' : 'Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXEMPLAR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.',
@@ -20,6 +17,8 @@ var help = {
 		'maxthresh' : 'Maximum threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are rejected.<br/>For template correlation, you probably do not need this, but typical values would be between 0.7 and 0.8.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 1.0 to 5.0 with typical values falling between 1.5 and 2.5',
 		'maxpeaks' : 'This a feature limits the number of particles allowed in an image. By default it is set to 1500, but if you want no more than 50 particles an image fill in this value',
 		'lpval' : 'Low pass filtering of the image before picking. This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty good',
+		'lpstackval' : 'Low pass filter applied to individual particles',
+		'hpstackval' : 'High pass filter applied to individual particles',
 		'hpval' : 'High pass filtering of the image before picking. This removes any darkness gradients in the image. Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good. Warning this feature typically normalizes the crud so more particles get picked from crud.',
 		'medianval' : 'Median filtering of the image before picking. This helps remove any noise spikes in the image. Typical values are 2, 3, or 5. The bigger the number the more information is thrown away.',
 		'binval' : 'Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Typically you want to use 4 or 8 depending on the quality of you templates.',
@@ -57,6 +56,11 @@ var help = {
 		'stacklim' : 'Makestack will continue processing micrographs and checking the stack size.  Once the number of particles matches or exceeds this limit, it will stop processing images.  Since all particles from a micrograph are added to the stack before checking, the final stack rarely has exactly the number of particles specified by the limit. Leave blank to process all the micrographs.',
 		'maskrad' : 'Radius of external mask (in Angstroms)',
 		'numpart' : 'Number of particles to use',
+		'phaseflip' : 'Check this box if you wish to use the defocus value determined by ACE to flip the phases of the particle images (flipping is performed on each individual particle).  The ACE value with the highest confidence will be used. Note: Amplitudes are NOT affected.',
+		'aceconf' : 'Only micrographs with an ACE confidence equal to or above the value specified will be used in the creation of the stack.  Values range from 0 (lowest confidence) to 1 (greatest confidence). Empirically a confidence value of 0.8 or greater signifies a good estimation of the defocus.',
+	},
+
+	'eman' : {
 /**
 * these should be separate
 **/
@@ -87,6 +91,6 @@ var help = {
 		'refine' : 'This will do subpixel alignment of the particle translations for classification and averaging. May have a significant impact at higher resolutions (with a speed penalty).',
 		'goodbad' : 'Saves good and bad class averages from 3D reconstruction. Overwrites each new iteration.',
 		'eotest' : 'Run the <I>eotest</I> program that performs a 2 way even-odd test to determine the resolution of a reconstruction.',
-		'coran' : 'Use correspondence analysis particle clustering algorithm'
+		'coran' : 'Use correspondence analysis particle clustering algorithm',
 	}
 }

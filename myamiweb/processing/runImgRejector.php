@@ -61,7 +61,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	    }
 	  }
 	  </SCRIPT>\n";
-	$javascript .= writeJavaPopupFunctions('eman');
+	$javascript .= writeJavaPopupFunctions('appion');
 	
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:

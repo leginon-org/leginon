@@ -171,7 +171,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 		 }
 	</SCRIPT>\n";
 	$javascript.=appionLoopJavaCommands();
-	$javascript.=writeJavaPopupFunctions('eman');
+	$javascript.=writeJavaPopupFunctions('appion');
 
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:

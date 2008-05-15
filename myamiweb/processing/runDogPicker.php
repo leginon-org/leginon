@@ -57,7 +57,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	   }
 	</SCRIPT>\n";
 	$javafunctions .= appionLoopJavaCommands();
-	$javafunctions .= writeJavaPopupFunctions('eman');	
+	$javafunctions .= writeJavaPopupFunctions('appion');	
 	$javafunctions .= particleLoopJavaCommands();
 
 	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);

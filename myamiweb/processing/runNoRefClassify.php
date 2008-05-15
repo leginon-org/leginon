@@ -39,7 +39,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	$particle = new particledata();
 
 	$javascript = "<script src='../js/viewer.js'></script>";
-	$javascript .= writeJavaPopupFunctions('eman');	
+	$javascript .= writeJavaPopupFunctions('appion');	
 
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:

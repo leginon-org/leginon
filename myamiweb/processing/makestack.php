@@ -95,7 +95,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	    }
 	  }
 	  </SCRIPT>\n";
-	$javascript .= writeJavaPopupFunctions('eman');
+	$javascript .= writeJavaPopupFunctions('appion');
 	
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:
@@ -249,8 +249,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('stacknorm','Normalize Stack Particles');
 	echo "<br />\n";
 	if ($ctfdata) {
-	  echo"<input type='checkbox' name='phaseflip' onclick='uncheckstig(this)' $phasecheck>"
-		."\nPhaseflip Particle Images<br />";
+	  echo"<input type='checkbox' name='phaseflip' onclick='uncheckstig(this)' $phasecheck>\n";
+	  echo docpop('phaseflip','Phaseflip Particle Images');
+	  echo "<br />\n";
 	  echo"<input type='checkbox' name='stig' onclick='uncheckflip(this)' $stigcheck>"
 		."\nPhaseflip Micrograph Images <I>(experimental)</I><br />";
 	}
@@ -300,10 +301,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		<td valign='TOP'>
 		<b>Filter Values:</b></A><br />
 		<input type='text' name='lp' value='$lpval' size='4'>\n";
-	echo "Low Pass <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
+	echo docpop('lpstackval', 'Low Pass');
+	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br />\n";
 	echo "<input type='text' name='hp' value='$hpval' size='4'>\n";
-	echo "High Pass <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
+	echo docpop('hpstackval', 'High Pass');
+	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br />\n";
 	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
 	echo docpop('stackbin','Binning');
@@ -323,9 +326,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo"
 	<tr>
 		<td>
-		<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>
-		ACE Confidence Cutoff<br />
-		Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
+		<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>\n";
+		echo docpop('aceconf','ACE Confidence Cutoff');
+		echo "<br />\n";
+		echo "Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
 		(between 0.0 - 1.0)
 		</td>
 	</tr>\n";

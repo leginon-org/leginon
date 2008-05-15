@@ -74,7 +74,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$javascript .= "}\n";
 	$javascript .= "</script>\n";
 
-	$javascript .= writeJavaPopupFunctions('eman');	
+	$javascript .= writeJavaPopupFunctions('appion');	
 
 	writeTop($title,$heading,$javascript);
 	// write out errors, if any came up:

@@ -56,7 +56,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
                  }
         </SCRIPT>\n";
   $javafunctions .= appionLoopJavaCommands();
-  $javafunctions .= writeJavaPopupFunctions('eman');
+  $javafunctions .= writeJavaPopupFunctions('appion');
   $javafunctions .= particleLoopJavaCommands();
   writeTop("Tilt Aligner Launcher","Tilt Aligner Particle Selection and Editing",$javafunctions);
 
