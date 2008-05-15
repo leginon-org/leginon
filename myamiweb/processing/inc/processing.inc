@@ -64,7 +64,7 @@ function writeTop($title,$heading=false,$headerstuff=false){
 	$currentproject=$sessiondata['currentproject'];
 
 	// Show project & session pulldowns
-	$sessionDescr=$sessioninfo['Purpose'];
+	$sessionDescr=$sessioninfo['Name']." - ".$sessioninfo['Purpose'];
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
@@ -234,7 +234,7 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 			."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 		$sessionDescr=$sessiondata['info']['Purpose'];
 		$session_link="<a class='header' target='project' href='../3wviewer.php?expId=$expId'>$sessionDescr</a>";
-		echo "Project: $proj_link<BR>\nSession: $session_link\n";
+		echo "Project: $proj_link<br />\nSession: $session_link\n";
 
 	} else {
 
