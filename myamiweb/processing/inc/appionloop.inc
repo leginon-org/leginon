@@ -44,18 +44,6 @@ function appioninfopopup(infoname){
 }
 
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0) {
-	$helpdiv = "
-	<div id='dhelp'
-		style='position:absolute; 
-        	background-color:FFFFDD;
-        	color:black;
-        	border: 1px solid black;
-        	visibility:hidden;
-        	z-index:+1'
-    		onmouseover='overdiv=1;'
-    		onmouseout='overdiv=0;'>
-	</div>\n";
-	echo $helpdiv;
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";

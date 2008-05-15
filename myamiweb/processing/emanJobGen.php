@@ -363,18 +363,6 @@ function jobForm($extra=false) {
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
   }
-  $helpdiv = "
-  <div id='dhelp'
-    style='position:absolute; 
-        background-color:FFFFDD;
-        color:black;
-        border: 1px solid black;
-        visibility:hidden;
-        z-index:+1'
-    onmouseover='overdiv=1;'
-    onmouseout='overdiv=0;'>
-</div>
-	";
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
 	echo "<tr><td>\n";
@@ -472,7 +460,6 @@ function jobForm($extra=false) {
   <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
   <hr />
 	";
-	echo $helpdiv;
 	echo "
   <input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>
   <select name='import' onChange='emanjob.submit()'>

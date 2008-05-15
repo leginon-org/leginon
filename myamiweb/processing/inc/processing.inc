@@ -139,6 +139,10 @@ function writeTop($title,$heading=false,$headerstuff=false){
 	echo "    &nbsp;\n";
 	echo "  </div>\n";
 	echo "</div>\n";
+	// for help popup documentation
+	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
+	echo $helpdiv;
+
 }
 
 function writeBottom($showproclink=True){

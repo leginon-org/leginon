@@ -76,3 +76,15 @@ body {
 	  background-image:  url(../img/appionshadow.jpg);
 }
 
+/* for floating help documentation */
+
+.aphelpdoc {
+	   position: absolute;
+	   background-color:#ffffdd;
+	   font-size: 10pt;
+	   color: black;
+	   border: 1px solid black;
+	   visibility: hidden;
+	   z-index: +1;
+	   text-align: left;
+}

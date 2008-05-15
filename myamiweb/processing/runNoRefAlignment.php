@@ -82,19 +82,6 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	}
   
-	$helpdiv = "
-	<div id='dhelp'
-		style='position:absolute; 
-        	background-color:FFFFDD;
-        	color:black;
-        	border: 1px solid black;
-        	visibility:hidden;
-        	z-index:+1'
-    		onmouseover='overdiv=1;'
-    		onmouseout='overdiv=0;'>
-	</div>\n";
-	echo $helpdiv;
-
 	echo"
        <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
