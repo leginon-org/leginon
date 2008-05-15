@@ -226,38 +226,38 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 	global $PROJECT_URL;
 	// Collect session info from database
 	$sessiondata=getSessionList($projectId,$sessionId);
-	$sessions=$sessiondata['sessions'];
-	$currentproject=$sessiondata['currentproject'];
+// 	$sessions=$sessiondata['sessions'];
+// 	$currentproject=$sessiondata['currentproject'];
 
-	if ($expId){
-		$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL
-			."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
-		$sessionDescr=$sessiondata['info']['Purpose'];
-		$session_link="<a class='header' target='project' href='../3wviewer.php?expId=$expId'>$sessionDescr</a>";
-		echo "Project: $proj_link<br />\nSession: $session_link\n";
+// 	if ($expId){
+// 		$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL
+// 			."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
+// 		$sessionDescr=$sessiondata['info']['Purpose'];
+// 		$session_link="<a class='header' target='project' href='../3wviewer.php?expId=$expId'>$sessionDescr</a>";
+// 		echo "Project: $proj_link<br />\nSession: $session_link\n";
 
-	} else {
+// 	} else {
 
-		echo"
-		<b>Select Session:</b><br />
-		<select name='projectId' onchange='newexp()'>\n";
-		$projects=getProjectList();
-		foreach ($projects as $k=>$project) {
-			$sel = ($project['id']==$projectId) ? "selected" : '';
-			echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-		}
-		echo"
-		</select>
-		<br />
-		<select name='sessionId' onchange='newexp()'>
-		<option value=''>all sessions</option>\n";
-		foreach ($sessions as $k=>$session) {
-			$sel = ($session['id']==$sessionId) ? 'selected' : '';
-			$shortname=substr($session['name'],0,90);
-			echo "<option value='".$session['id']."'".$sel.">".$shortname."</option>\n";
-		}
-		echo"</select>\n";
-	}
+// 		echo"
+// 		<b>Select Session:</b><br />
+// 		<select name='projectId' onchange='newexp()'>\n";
+// 		$projects=getProjectList();
+// 		foreach ($projects as $k=>$project) {
+// 			$sel = ($project['id']==$projectId) ? "selected" : '';
+// 			echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
+// 		}
+// 		echo"
+// 		</select>
+// 		<br />
+// 		<select name='sessionId' onchange='newexp()'>
+// 		<option value=''>all sessions</option>\n";
+// 		foreach ($sessions as $k=>$session) {
+// 			$sel = ($session['id']==$sessionId) ? 'selected' : '';
+// 			$shortname=substr($session['name'],0,90);
+// 			echo "<option value='".$session['id']."'".$sel.">".$shortname."</option>\n";
+// 		}
+// 		echo"</select>\n";
+// 	}
 	return $sessiondata;
 }
 
