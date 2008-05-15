@@ -386,30 +386,23 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			</td>
 		</tr>\n";
 	}
-	echo "<tr><td>\n";
+	echo "  <tr><td>\n";
 	echo docpop('stacklim','Limit # of particles to: ');
-	echo "<input type='text' name='plimit' value='$plimit' size='8'>\n";
-	echo "</td></tr>
-	</table>
-	</td>
-	</tr>
-	<tr>
-		<td colspan='2' align='CENTER'>
-		<HR>";
-
-	echo "Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-  	echo "</SELECT><BR/>
-	  <input type='submit' name='process' value='Just Show Command'>
-	  <input type='submit' name='process' value='Make Stack'><br />
-	  </td>
-	</tr>
-	</table>
-	</FORM>
-	</CENTER>\n";
+	echo "    <input type='text' name='plimit' value='$plimit' size='8'>\n";
+	echo "  </td></tr>\n";
+	echo "  </table>\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "<tr>\n";
+	echo "<td colspan='2' align='CENTER'>\n";
+	echo "  <hr />\n";
+	echo "  <input type='submit' name='process' value='Just Show Command'>\n";
+	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Make Stack'>\n";
+	echo "  <br />\n";
+	echo "</td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+	echo "</form>\n";
 	writeBottom();
 	exit;
 }
