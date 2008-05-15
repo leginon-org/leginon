@@ -815,6 +815,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.aligndialog.ShowModal()
 
 	def onBeam(self, evt):
+		selectedpreset = self.presets.getSelectedPreset()
+		self.beamdialog.setPreset(selectedpreset)
 		self.beamdialog.im.setImage(None)
 		self.beamdialog.bautocenter.Disable()
 		self.beamdialog.bcommit.Disable()
@@ -1247,6 +1249,9 @@ class BeamDialog(wx.Dialog):
 	def onCommit(self, evt):
 		threading.Thread(target=self.node.commitBeamAdjustment).start()
 		self.EndModal(0)
+
+	def setPreset(self, preset):
+		self.node.initBeamAdjust(preset)
 
 	def onSetImage(self, evt):
 		self.im.setImage(evt.image)

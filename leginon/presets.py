@@ -232,6 +232,7 @@ class PresetsManager(node.Node):
 
 		self.currentselection = None
 		self.currentpreset = None
+		self.selectedpreset = None
 		self.presets = ordereddict.OrderedDict()
 		self.selectedsessionpresets = None
 
@@ -1517,6 +1518,18 @@ class PresetsManager(node.Node):
 
 	def onAlignNext(self):
 		self.alignnext.set()
+
+	def initBeamAdjust(self,selectedpreset):
+		# go to selected preset
+		if self.currentpreset is None:
+			preset = None
+		else:
+			preset = self.currentpreset['name']
+		if preset is None and selectedpreset is None:
+			return
+		if preset != selectedpreset:
+			self.logger.info('Send the selected preset to scope')
+			self.cycleToScope(selectedpreset)
 
 	def acquireBeamImage(self):
 		# go to selected preset
