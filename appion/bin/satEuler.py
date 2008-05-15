@@ -86,9 +86,11 @@ class satEulerScript(appionScript.AppionScript):
 		query = (
 			"SELECT \n"
 				+"  stpart1.particleNumber AS partnum1, \n"
+				+"  stpart1.`DEF_id` AS dbid1, \n"
 				+"  e1.euler1 AS alt1, e1.euler2 AS az1, partclass1.`inplane_rotation` AS phi1, \n"
 				+"  partclass1.`mirror` AS mirror1, partclass1.`thrown_out` AS reject1, \n"
 				+"  stpart2.particleNumber AS partnum2, \n"
+				+"  stpart2.`DEF_id` AS dbid2, \n"
 				+"  e2.euler1 AS alt2, e2.euler2 AS az2, partclass2.`inplane_rotation` AS phi2, \n"
 				+"  partclass2.`mirror` AS mirror2, partclass2.`thrown_out` AS reject2 \n"
 				+"FROM `ApTiltParticlePairData` AS tiltd \n"
@@ -156,17 +158,22 @@ class satEulerScript(appionScript.AppionScript):
 			try:
 				eulerpair = { 'part1': {}, 'part2': {} }
 				eulerpair['part1']['partid'] = int(row[0])
-				eulerpair['part1']['euler1'] = float(row[1])
-				eulerpair['part1']['euler2'] = float(row[2])
-				eulerpair['part1']['euler3'] = float(row[3])
-				eulerpair['part1']['mirror'] = self.nullOrValue(row[4])
-				eulerpair['part1']['reject'] = self.nullOrValue(row[5])
-				eulerpair['part2']['partid'] = int(row[6])
-				eulerpair['part2']['euler1'] = float(row[7])
-				eulerpair['part2']['euler2'] = float(row[8])
-				eulerpair['part2']['euler3'] = float(row[9])
-				eulerpair['part2']['mirror'] = self.nullOrValue(row[10])
-				eulerpair['part2']['reject'] = self.nullOrValue(row[11])
+				eulerpair['part1']['dbid']   = int(row[1])
+				eulerpair['part1']['euler1'] = float(row[2])
+				eulerpair['part1']['euler2'] = float(row[3])
+				eulerpair['part1']['euler3'] = float(row[4])
+				eulerpair['part1']['mirror'] = self.nullOrValue(row[5])
+				eulerpair['part1']['reject'] = self.nullOrValue(row[6])
+				eulerpair['part1']['tilt']   = apStack.getStackParticleTilt(eulerpair['part1']['dbid'])
+
+				eulerpair['part2']['partid'] = int(row[7])
+				eulerpair['part2']['dbid']   = int(row[8])
+				eulerpair['part2']['euler1'] = float(row[9])
+				eulerpair['part2']['euler2'] = float(row[10])
+				eulerpair['part2']['euler3'] = float(row[11])
+				eulerpair['part2']['mirror'] = self.nullOrValue(row[12])
+				eulerpair['part2']['reject'] = self.nullOrValue(row[13])
+				eulerpair['part2']['tilt']   = apStack.getStackParticleTilt(eulerpair['part2']['dbid'])
 				eulertree.append(eulerpair)
 			except:
 				print row
@@ -236,6 +243,7 @@ class satEulerScript(appionScript.AppionScript):
 			query = (
 				"SELECT \n"
 					+"  stpart.`particleNumber` AS partnum, \n"
+					+"  stpart.`DEF_id` AS dbid, \n"
 					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
 					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
 					+"FROM `ApStackParticlesData` AS stpart \n"
@@ -259,14 +267,17 @@ class satEulerScript(appionScript.AppionScript):
 			if not row:
 				continue
 			eulerpair['part1']['partid'] = int(row[0])
-			eulerpair['part1']['euler1'] = float(row[1])
-			eulerpair['part1']['euler2'] = float(row[2])
-			eulerpair['part1']['euler3'] = float(row[3])
-			eulerpair['part1']['mirror'] = self.nullOrValue(row[4])
-			eulerpair['part1']['reject'] = self.nullOrValue(row[5])
+			eulerpair['part1']['dbid']   = int(row[1])
+			eulerpair['part1']['euler1'] = float(row[2])
+			eulerpair['part1']['euler2'] = float(row[3])
+			eulerpair['part1']['euler3'] = float(row[4])
+			eulerpair['part1']['mirror'] = self.nullOrValue(row[5])
+			eulerpair['part1']['reject'] = self.nullOrValue(row[6])
+			eulerpair['part1']['tilt']   = apStack.getStackParticleTilt(eulerpair['part1']['dbid'])
 			query = (
 				"SELECT \n"
 					+"  stpart.`particleNumber` AS partnum, \n"
+					+"  stpart.`DEF_id` AS dbid, \n"
 					+"  e.euler1 AS alt, e.euler2 AS az, partclass.`inplane_rotation` AS phi, \n"
 					+"  partclass.`mirror` AS mirror, partclass.`thrown_out` AS reject \n"
 					+"FROM `ApStackParticlesData` AS stpart \n"
@@ -290,11 +301,13 @@ class satEulerScript(appionScript.AppionScript):
 			if not row:
 				continue
 			eulerpair['part2']['partid'] = int(row[0])
-			eulerpair['part2']['euler1'] = float(row[1])
-			eulerpair['part2']['euler2'] = float(row[2])
-			eulerpair['part2']['euler3'] = float(row[3])
-			eulerpair['part2']['mirror'] = self.nullOrValue(row[4])
-			eulerpair['part2']['reject'] = self.nullOrValue(row[5])
+			eulerpair['part2']['dbid']   = int(row[1])
+			eulerpair['part2']['euler1'] = float(row[2])
+			eulerpair['part2']['euler2'] = float(row[3])
+			eulerpair['part2']['euler3'] = float(row[4])
+			eulerpair['part2']['mirror'] = self.nullOrValue(row[5])
+			eulerpair['part2']['reject'] = self.nullOrValue(row[6])
+			eulerpair['part2']['tilt']   = apStack.getStackParticleTilt(eulerpair['part2']['dbid'])
 			eulertree.append(eulerpair)
 			#end loop
 		cachef = open(cachefile, 'w', 0666)
@@ -443,6 +456,7 @@ class satEulerScript(appionScript.AppionScript):
 	def writeKeepFiles(self, eulertree):
 		#find good particles
 		totkeeplist = []
+		notiltkeeplist = []
 		angkeeplist = []
 		skippair = 0
 		for eulerpair in eulertree:
@@ -452,6 +466,10 @@ class satEulerScript(appionScript.AppionScript):
 			goodtot = (abs(eulerpair['totdist'] - 15.0) < self.params['cutrange'])
 			goodang = (abs(eulerpair['angdist'] - 15.0) < self.params['cutrange'])
 			if goodtot:
+				if eulerpair['part1']['tilt'] < eulerpair['part2']['tilt']:
+					notiltkeeplist.append(eulerpair['part1']['partid']-1)
+				else:
+					notiltkeeplist.append(eulerpair['part2']['partid']-1)
 				totkeeplist.append(eulerpair['part1']['partid']-1)
 				totkeeplist.append(eulerpair['part2']['partid']-1)
 			if goodang:
@@ -460,19 +478,26 @@ class satEulerScript(appionScript.AppionScript):
 		apDisplay.printMsg("skipped "+str(skippair)+" double bad pairs")
  		#sort
 		totkeeplist.sort()
+		notiltkeeplist.sort()
 		angkeeplist.sort()
 
-		#write to file
+		### write to file
 		k = open("keeplist-tot"+self.datastr+".lst", "w")
 		for kid in totkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
 
-		#write to file
-		k = open("keeplist-ang"+self.datastr+".lst", "w")
-		for kid in angkeeplist:
+		### write to file
+		k = open("keeplist-notilt"+self.datastr+".lst", "w")
+		for kid in notiltkeeplist:
 			k.write(str(kid)+"\n")
 		k.close()
+
+		### write to file
+		#k = open("keeplist-ang"+self.datastr+".lst", "w")
+		#for kid in angkeeplist:
+		#	k.write(str(kid)+"\n")
+		#k.close()
 
 		percent = "%3.1f" % (50.0*len(totkeeplist) / float(len(eulertree)))
 		apDisplay.printMsg("Total Keeping "+str(len(totkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
