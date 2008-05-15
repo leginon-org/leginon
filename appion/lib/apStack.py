@@ -2,6 +2,7 @@
 
 import os, sys, re
 import time
+import math
 import apDB
 import apDatabase
 import apEMAN
@@ -265,7 +266,13 @@ def getStackBoxsize(stackId):
 	return stackboxsize
 
 
-
+def getStackParticleTilt(stpartid):
+	"""
+	For a given stack part dbid return tilt angle
+	"""
+	stpartdata = appiondb.direct_query(appionData.ApStackParticlesData, stpartid)
+	tilt = stpartdata['particle']['image']['scope']['stage position']['a']*180.0/math.pi
+	return abs(tilt)
 
 
 
