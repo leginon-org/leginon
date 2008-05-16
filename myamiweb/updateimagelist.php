@@ -6,8 +6,8 @@ $username = $_GET['username'];
 $imageId = $_GET['imageId'];
 $sessionId = $_GET['sessionId'];
 $action = $_GET['ac'];
-$status = ($_GET['s']=="ex") ? "examplar" : "hidden";
-$prefpreset = (in_array($_GET['p'], array('hidden', 'examplar'))) ? true : false;
+$status = ($_GET['s']=="ex") ? "exemplar" : "hidden";
+$prefpreset = (in_array($_GET['p'], array('hidden', 'exemplar'))) ? true : false;
 $dbc = $leginondata->mysql;
 $ret_val = "0";
 if ($imageId && $sessionId) {
