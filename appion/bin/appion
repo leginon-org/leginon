@@ -30,7 +30,7 @@ ARCH=`uname -m`
 if [ $ARCH == "x86_64" ]; then
   ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:/ami/sw/$EMANDIR/lib:/ami/sw/lib64/python2.4/site-packages"
   export LD_LIBRARY_PATH="$MATLAB/bin/glnxa64:$LD_LIBRARY_PATH"
-  export PATH="$PATH:/ami/sw/bin64"
+  export PATH="$PATH:/ami/sw/bin64:/ami/sw/bin"
 else
   ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:/ami/sw/$EMANDIR/lib:/ami/sw/lib/python2.4/site-packages"
   export LD_LIBRARY_PATH="$MATLAB/bin/glnx86:$LD_LIBRARY_PATH"
