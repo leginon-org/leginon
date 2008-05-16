@@ -1830,3 +1830,9 @@ class ImageStatusData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class ImageBackup(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('path', str),
+		)
+	typemap = classmethod(typemap)
