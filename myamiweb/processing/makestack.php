@@ -338,9 +338,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo"	
 	<tr>
 		<td>
-		<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>
-		Particle Correlation Cutoff<br />
-		(between 0.0 - 1.0)<br />
+		<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>\n";
+		echo docpop('partcutoff','Particle Correlation Cutoff');
+		echo "<br />\n";
+		echo "(between 0.0 - 1.0)<br />
 		Use Values Above:<input type='text' name='selexonmin' $selexdisable value='$selexminval' size='4'><br />
 		Use Values Below:<input type='text' name='selexonmax' $selexdisable value='$selexmaxval' size='4'><br />
 		<br />\n";
