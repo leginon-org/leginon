@@ -56,6 +56,7 @@ $javascript = $viewer->getJavascript();
 $view1 = new view('View 1', 'v1');
 $view1->setDataTypes($datatypes);
 $view1->setParam('ptclparams',$particleruns);
+$view1->displayDeqIcon(true);
 $viewer->add($view1);
 
 $view2 = new view('Main View', 'v2');
@@ -64,11 +65,13 @@ $view2->setParam('ptclparams',$particleruns);
 $view2->setDataTypes($datatypes);
 $view2->setSize(512);
 $view2->setSpan(2,2);
+$view2->displayDeqIcon(true);
 $viewer->add($view2);
 
 $view3 = new view('View 3', 'v3');
 $view3->setDataTypes($datatypes);
 $view3->setParam('ptclparams',$particleruns);
+$view3->displayDeqIcon(true);
 $viewer->add($view3);
 
 
