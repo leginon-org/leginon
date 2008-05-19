@@ -82,12 +82,12 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   $syms = $particle->getSymmetries();
   echo"
   <P>\n";
-  if (!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
   echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
-    <TD VALIGN='TOP'>
-    <TABLE>
+    <TD VALIGN='TOP'>\n";
+  if (!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
+  echo"<TABLE>
     <TR>
       <TD VALIGN='TOP'>
       <BR/>\n";
@@ -169,8 +169,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
     </TD>
 	</TR>
   </TABLE>
-  </FORM>
-  </CENTER>\n";
+  </FORM>\n";
   writeBottom();
   exit;
 }

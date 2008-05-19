@@ -1,6 +1,6 @@
 
 A:link {
-     color:	rgb( 0, 150, 150 );
+     color:	rgb( 0, 110, 140 );
      text-decoration: none;
 }
 A:visited {
@@ -8,11 +8,11 @@ A:visited {
      text-decoration: none;
 }
 A:active {
-    color:     rgb( 0, 204, 204 );
+    color:     rgb( 0, 180, 210 );
      text-decoration: none;
 }
 A:hover{
-    color:     rgb( 0, 204, 204 );
+    color:     rgb( 0, 180, 210 );
      text-decoration: none;
 }
 
@@ -175,20 +175,20 @@ A.header {
 }
 
 A.header:link {
-     color:	rgb( 0, 150, 150 );
+     color:	rgb( 0, 110, 140 );
      text-decoration: none;
 	margin-left:0em;
 }
 A.header:visited {
-     color:	rgb( 0, 150, 150 );
+     color:	rgb( 0, 110, 140 );
      text-decoration: none;
 }
 A.header:active {
-    color:     rgb( 0, 204, 204 );
+    color:     rgb( 0, 180, 210 );
      text-decoration: none;
 }
 A.header:hover{
-    color:     rgb( 0, 204, 204 );
+    color:     rgb( 0, 180, 210 );
      text-decoration: none;
 }
 
@@ -240,7 +240,7 @@ INPUT.button {
 
 .tablebg 
 {
-	background-color: #D4D0C8;
+	background-color: #EEEEEE;
 }
 
 .tableborder
