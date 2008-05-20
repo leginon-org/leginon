@@ -16,11 +16,9 @@ require "inc/processing.inc";
 require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST['process']) {
-	runNoRefClassify();
-} else { // Create the form page
-	createNoRefClassifyForm();
-}
+if ($_POST['showcommand']) runNoRefClassify(); 
+elseif ($_POST['process']) runNoRefClassify(True);
+else createNoRefClassifyForm();
 
 function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher', $heading='Reference Free Classify') {
 	$norefid=$_GET['norefId'];
@@ -134,7 +132,9 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<tr>";
 	echo "	<td colspan='2' align='center'>";
 	echo "	<hr>";
-	echo "<input type='submit' name='process' value='Start NoRef Classify'><br />";
+	echo"<input type='submit' name='showcommand' value='Show Command Only'>\n";
+	if ($_SESSION['username']) echo "<input type='submit' name='process' value='Start NoRef Classify'>\n";
+	echo "  <br />";
 	echo "  </td>";
 	echo "</tr>";
 	echo "</table>";
@@ -143,12 +143,16 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	exit;
 }
 
-function runNoRefClassify() {
-	$numclass=$_POST['numclass'];
-#	$factorlist=$_POST['factorlist'];
-	$norefid=$_POST['norefid'];
-	$numeigenimgs = $_POST['numeigenimgs'];
+function runNoRefClassify($runjob=False) {
+	$expId = $_GET['expId'];
 	$norefId = $_GET['norefId'];
+
+	$command.="norefClassify.py ";
+
+	$numclass = $_POST['numclass'];
+	$norefid = $_POST['norefid'];
+	$numeigenimgs = $_POST['numeigenimgs'];
+	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 
 	// get selected eigenimgs
 	$factorlistAR=array();
@@ -167,8 +171,6 @@ function runNoRefClassify() {
 	if (!$norefid) 
 		createNoRefClassifyForm("<b>ERROR:</b> No NoRef Alignment selected, norefId=$norefid");
 
-	// make sure outdir ends with '/'
-	$commit = ($_POST['commit']=="on") ? 'commit' : '';
  
 	// classification
 	if ($numclass > 200 || $numclass < 2) 
@@ -176,13 +178,38 @@ function runNoRefClassify() {
 
 	$particle = new particledata();
 
-	$command.="norefClassify.py ";
 	$command.="--norefid=$norefId ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
+	// submit job to cluster
+	if ($runjob) {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password)) {
+			createNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
+			exit;
+		}
+		// get the output directory (already contains runid)
+		$norefparams = $particle->getNoRefParams($norefid);
+		$outdir = $norefparams['path'];
+		$runid = $norefparams['name'];
+		// take runid off of outdir
+		$outdir = ereg_replace($runid,'',$outdir);
+		// in case there are more than 1 '/' at the end
+		if (substr($outdir,-1,1)=='/') $outdir=substr($outdir,0,-1);
+
+		// create unique id for the job, since multiple may be
+		// submitted - id is the factor list and num classes
+		$uniqId=implode('',$factorlistAR);
+		$uniqId.=".$numclass";
+
+		submitAppionJob($command,$outdir,$runid,$expId,False,False,$uniqId);
+		exit;
+	}
 	writeTop("No Ref Classify Run Params","No Ref Classify Params");
 
 	echo"

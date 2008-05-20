@@ -409,7 +409,7 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	return $javascript; 
 }
 
-function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=False) {
+function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=False,$xtra=False) {
 	$particle=new particleData();
 
 	$host = 'guppy';
@@ -420,6 +420,10 @@ function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=Fal
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;
+
+	// if more than one job running in the directory (like
+	// classification of ref free)
+	if ($xtra) $runid = "$runid.$xtra";
 
 	// set names of cluster job file and output log
 	$jobfile = "$runid.appionsub.job";

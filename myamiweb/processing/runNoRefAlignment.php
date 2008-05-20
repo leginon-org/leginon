@@ -16,15 +16,9 @@ require "inc/processing.inc";
 require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST['showcommand']) {
-	runNoRefAlign(0);
-}
-else if ($_POST['process']) {
-	runNoRefAlign(1);
-}
-else { // Create the form page
-	createNoRefAlignForm();
-}
+if ($_POST['showcommand']) runNoRefAlign();
+elseif ($_POST['process']) runNoRefAlign(True);
+else createNoRefAlignForm();
 
 function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $heading='Reference Free Alignment') {
 	// check if coming directly from a session
@@ -248,7 +242,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<HR>\n";
 	echo"<input type='submit' name='showcommand' value='Show Command Only'>\n";
-	echo"<input type='submit' name='process' value='Start NoRef Alignment'><br />\n";
+	if ($_SESSION['username']) echo"<input type='submit' name='process' value='Start NoRef Alignment'>\n";
+	echo "  <br />\n";
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
@@ -259,7 +254,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	exit;
 }
 
-function runNoRefAlign($runjob) {
+function runNoRefAlign($runjob=False) {
 	$expId=$_GET['expId'];
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
