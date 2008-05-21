@@ -141,7 +141,6 @@ class ImagePanel(wx.Panel):
 		else:
 			self.statstypesizer.Add(self.statspanel, (0, 0), (1, 1), wx.ALIGN_TOP|wx.ALL, 3)
 			self.sizer.Add(self.statstypesizer, (1, 0), (1, 1), wx.ALIGN_TOP)
-			self.sizer.AddGrowableCol(0)
 
 		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
