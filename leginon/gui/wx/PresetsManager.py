@@ -1205,11 +1205,8 @@ class BeamDialog(wx.Dialog):
 		### create imageviewer
 		self.im = gui.wx.ImagePanel.ClickImagePanel(self, -1, imagesize=(imsize,imsize))
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked, self.im)
-		szim = wx.BoxSizer(wx.VERTICAL)
-		szpreset = wx.GridBagSizer(2, 2)
-		szim.Add(szpreset, 0, wx.EXPAND)
-		szim.Add(self.im, 1, wx.EXPAND)
-
+		self.im.statstypesizer.SetEmptyCellSize((110, 100))
+	
 		### create buttons
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.bacquire.Enable(True)
@@ -1230,7 +1227,7 @@ class BeamDialog(wx.Dialog):
 
 		### merge buttons and imageviewer
 		szmain = wx.GridBagSizer(5,5)
-		szmain.Add(szim, (0, 0), (1, 1), wx.EXPAND)
+		szmain.Add(self.im, (0, 0), (1, 1), wx.EXPAND)
 		szmain.Add(szbutton, (1, 0), (1, 1))
 		szmain.AddGrowableRow(0)
 		szmain.AddGrowableCol(0)
