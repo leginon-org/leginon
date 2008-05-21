@@ -1,5 +1,6 @@
 #python
 import re
+import numpy
 #leginon
 import leginondata
 #appion
