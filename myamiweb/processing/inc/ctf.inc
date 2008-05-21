@@ -83,8 +83,8 @@ class ctfdata {
 			."c.`graph2` , "
 			."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."from ApCtfData c left join ApAceRunData r on (c.`REF|ApAceRunData|acerun` = r.`DEF_id`) "
-			."left join dbemdata.AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
-			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."left join ".DB.".AcquisitionImageData i on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
+			."left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and r.`DEF_id`='$runId' ";
@@ -150,9 +150,9 @@ class ctfdata {
 			."from ApCtfData c "
 			."left join(ApAceRunData r, ApPathData p) "
 			."on ( r.DEF_id=c.`REF|ApAceRunData|acerun` and p.DEF_id=r.`REF|ApPathData|path`) "
-			."left join dbemdata.AcquisitionImageData i "
+			."left join ".DB.".AcquisitionImageData i "
 			."on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
-			."left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
 		$q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		if ($order) {
@@ -178,13 +178,13 @@ class ctfdata {
 			."		c.`confidence`,c.`confidence_d` , "
 			."		(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 			."	from dbappiondata.`ApCtfData` c "
-			."	left join dbemdata.`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
-			."	left join dbemdata.`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
-			."	left join dbemdata.`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+			."	left join ".DB.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
+			."	left join ".DB.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
+			."	left join ".DB.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."	where "
 			."	c.`REF|leginondata|AcquisitionImageData|image` in  "
 			."	( "
-			."		select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
+			."		select a.`DEF_id` from ".DB.".`AcquisitionImageData` a  "
 			."		where a.`REF|SessionData|session`='$sessionId'  "
 			."		)  "
 			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
@@ -213,11 +213,11 @@ class ctfdata {
 		$stats = array();
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
-			."from ApCtfData c left join dbemdata.AcquisitionImageData i "
+			."from ApCtfData c left join ".DB.".AcquisitionImageData i "
 			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join dbemdata.`ScopeEMData` s "
+			."left join ".DB.".`ScopeEMData` s "
 			."on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
-			."left join dbemdata.`PresetData` p "
+			."left join ".DB.".`PresetData` p "
 			."on (`p`.`DEF_id`=`i`.`REF|PresetData|preset`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
@@ -264,13 +264,13 @@ class ctfdata {
 				."			c.`confidence`,c.`confidence_d` , "
 				."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from dbappiondata.`ApCtfData` c "
-				."		left join dbemdata.`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
-				."		left join dbemdata.`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
-				."		left join dbemdata.ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+				."		left join ".DB.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
+				."		left join ".DB.".`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
+				."		left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 				."		where "
 				."		c.`REF|leginondata|AcquisitionImageData|image` in  "
 				."		( "
-				."			select a.`DEF_id` from dbemdata.`AcquisitionImageData` a  "
+				."			select a.`DEF_id` from ".DB.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
 				."			order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
@@ -300,9 +300,9 @@ class ctfdata {
 		$stats = array();
 		foreach ($selects as $k=>$select) {
 			$q =	"select ".$select." "
-			."from ctf c left join dbemdata.AcquisitionImageData i"
+			."from ctf c left join ".DB.".AcquisitionImageData i"
 			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join dbemdata.ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) " 
+			."left join ".DB.".ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) " 
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
