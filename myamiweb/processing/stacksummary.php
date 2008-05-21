@@ -110,7 +110,7 @@ foreach ($stackIds as $row) {
 	$descDiv.="<div id='descForm".$stackid."' style='visibility:hidden;'>";
 	$descDiv.="<input type='text' name='newdescription".$stackid."' size='".strlen($s['description'])."' value='";
 	# convert single quotes to html
-	$descDiv.=htmlspecialchars($s['description'], ENT_QUOTES);
+	$descDiv.=htmlentities($s['description'], ENT_QUOTES);
 	$descDiv.="'>";
 	$descDiv.=" <input type='submit' name='updateDesc".$stackid."' value='Update')>";
 	$descDiv.="</div>\n";
