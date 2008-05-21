@@ -132,13 +132,15 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 
 
 	### this overlap is wrong because the images are binned by 'bin' and now we give it the full image
-	imgShape1 = numpy.asarray(imgdata1.shape, dtype=numpy.int8)/params['bin']
+	"""
+	imgShape1 = numpy.asarray(imgdata1['image'].shape, dtype=numpy.int8)/params['bin']
 	image1 = numpy.ones(imgShape1)
-	imgShape2 = numpy.asarray(imgdata2.shape, dtype=numpy.int8)/params['bin']
+	imgShape2 = numpy.asarray(imgdata2['image'].shape, dtype=numpy.int8)/params['bin']
 	image2 = numpy.ones(imgShape2)
 	bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, tiltparams)
 	print "image overlaps", bestOverlap, tiltOverlap
 	transq['overlap'] = round(bestOverlap,5)
+	"""
 
 	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
