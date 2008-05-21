@@ -79,10 +79,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(uppath, "refbased", self.params['runname'])
 
 	#=====================
-	def preExistingDirectoryError(self):
-		apDisplay.printError("Output directory already exists in the database, please change run name")
-
-	#=====================
 	def insertRefBasedRun(self, insert=False):
 		# create a refBasedParam object
 		paramq = appionData.ApRefBasedParamsData()

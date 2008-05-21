@@ -89,9 +89,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['outdir'] = os.path.join(uppath, "noref", self.params['runname'])
 
-	#=====================
-	def preExistingDirectoryError(self):
-		apDisplay.printError("Output directory already exists in the database, please change run name")
 
 	#=====================
 	def insertNoRefRun(self, insert=False):
