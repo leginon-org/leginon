@@ -10,7 +10,6 @@ import spyder
 ## appion
 #from apSpider import operations ### fails
 import apImage
-import apEMAN
 import apParam
 import apDisplay
 try:
