@@ -114,8 +114,11 @@ class ImagePanel(wx.Panel):
 		#self.panel.SetMinSize(self.imagesize)
 		self.panel.SetBackgroundColour(wx.WHITE)
 		self.panel.SetScrollRate(1, 1)
-		cursorfile = icons.getPath('picker.png')
-		self.defaultcursor = wx.Cursor(cursorfile, wx.BITMAP_TYPE_PNG, 16, 16)
+		try:
+			cursorfile = icons.getPath('picker.png')
+			self.defaultcursor = wx.Cursor(cursorfile, wx.BITMAP_TYPE_PNG, 16, 16)
+		except:
+			self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
 		if self.mode == "vertical":
 			self.sizer.Add(self.panel, (1, 0), (1, 1), wx.EXPAND) 
