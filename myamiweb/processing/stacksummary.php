@@ -70,7 +70,9 @@ $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $row) {
 	$stackid=$row['stackid'];
 	if ($_POST['updateDesc'.$stackid]) {
-		$particle->updateDescription('ApStackData',$stackid,$_POST['newdescription'.$stackid]);
+		# convert html back to single quotes
+		$desc = html_entity_decode($_POST['newdescription'.$stackid],ENT_QUOTES);
+		$particle->updateDescription('ApStackData',$stackid, $desc);
 	}
 	$s=$particle->getStackParams($stackid);
 	# get list of stack parameters from database
@@ -107,7 +109,8 @@ foreach ($stackIds as $row) {
 	$descDiv.="</div>\n";
 	$descDiv.="<div id='descForm".$stackid."' style='visibility:hidden;'>";
 	$descDiv.="<input type='text' name='newdescription".$stackid."' size='".strlen($s['description'])."' value='";
-	$descDiv.=$s['description'];
+	# convert single quotes to html
+	$descDiv.=htmlspecialchars($s['description'], ENT_QUOTES);
 	$descDiv.="'>";
 	$descDiv.=" <input type='submit' name='updateDesc".$stackid."' value='Update')>";
 	$descDiv.="</div>\n";
