@@ -106,7 +106,7 @@ foreach ($stackIds as $row) {
 	$descDiv.=" <input type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$stackid')\">";
 	$descDiv.="</div>\n";
 	$descDiv.="<div id='descForm".$stackid."' style='visibility:hidden;'>";
-	$descDiv.="<input type='text' name='newdescription".$stackid."' value='";
+	$descDiv.="<input type='text' name='newdescription".$stackid."' size='".strlen($s['description'])."' value='";
 	$descDiv.=$s['description'];
 	$descDiv.="'>";
 	$descDiv.=" <input type='submit' name='updateDesc".$stackid."' value='Update')>";
