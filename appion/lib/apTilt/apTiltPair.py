@@ -79,6 +79,8 @@ def tiltPickerToDbNames(tiltparams):
 	if 'point2' in tiltparams:
 		newdict['image2_x'] = tiltparams['point2'][0]
 		newdict['image2_y'] = tiltparams['point2'][1]
+	if 'overlap' in tiltparams:
+		newdict['overlap'] = tiltparams['overlap']
 	return newdict
 
 def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
