@@ -1226,10 +1226,16 @@ class PickerApp(wx.App):
 		f = open(filepath, "w")
 		f.write( "image 1: "+self.panel1.filename+" (x,y,err,ax,ay)\n" )
 		for i, target in enumerate(targets1):
-			f.write( '%d,%d, %.3f, %.1f,%.1f\n' % (target[0], target[1], rmsd[i], align2[i][0], align2[i][1],) )
+			f.write( '%d,%d, %.3f,' % (target[0], target[1], rmsd[i], ))
+			if i < len(align2):
+				f.write( ' %.1f,%.1f' % (align2[i][0], align2[i][1],) )
+			f.write( '\n' )
 		f.write( "image 2: "+self.panel2.filename+" (x,y,err,ax,ay)\n" )
 		for i, target in enumerate(targets2):
-			f.write( '%d,%d, %.3f, %.1f,%.1f\n' % (target[0], target[1], rmsd[i], align1[i][0], align1[i][1],) )
+			f.write( '%d,%d, %.3f,' % (target[0], target[1], rmsd[i], ))
+			if i < len(align1):
+				f.write( ' %.1f,%.1f' % (align1[i][0], align1[i][1],))
+			f.write( '\n' )
 		f.close()
 		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+self.data['outfile'], 0)
 		return True
