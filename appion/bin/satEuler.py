@@ -610,7 +610,7 @@ class satEulerScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--stepsize", dest="stepsize", type='float', default=1.0,
 			help="Histogram step size in degrees, default=1.0", metavar="FLOAT")
 		self.parser.add_option("-c", "--cutrange", dest="cutrange", type='float', default=5.0,
-			help="Keep list cut range, default=5.0", metavar="FLOAT")
+			help="Keep list cut range, default=5.0 ==> 15 +- 5 ==> 10 -- 20", metavar="FLOAT")
 
 	#=====================
 	def checkConflicts(self):
