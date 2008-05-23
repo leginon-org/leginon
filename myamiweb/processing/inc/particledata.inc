@@ -699,6 +699,7 @@ class particledata {
 	}
 
 	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
+		$expId=$_GET['expId'];
 		if (!is_array($particleruns))
 			return ;
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -707,7 +708,6 @@ class particledata {
 			$html .= "<td> <span class='datafield0'>".$key."</span> </td> ";
 		}
 		$html .= "</tr>";
-
 		foreach ($particleruns as $particle) {
 			$runId=$particle['DEF_id'];
 			$particlestats = $this->getStats($runId, $inspect, $selexval);
@@ -722,7 +722,7 @@ class particledata {
 				.$runId.'"></a>';
 			$q = "select name from `ApSelectionRunData` where `DEF_id` = $runId";
 			list($r0) = $this->mysql->getSQLResult($q);
-			$html .= '<td><a target="params" href="'.$this->baseurl.'particlerunreport.php?rId='.$runId.'">'.$r0['name'].'</a></td>';
+			$html .= '<td><a href="'.$this->baseurl.'particlerunreport.php?expId='.$expId.'&rId='.$runId.'">'.$r0['name'].'</a></td>';
 			foreach($display_keys as $field) {
 							$data=$particlestats[$field];
 				if (eregi('^min|^max|^avg|^stddev', $field)) $data=format_sci_number($data,4);
