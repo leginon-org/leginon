@@ -51,7 +51,7 @@ $javascript.= "  }\n";
 $javascript.= "}\n";
 $javascript.= "</script>\n";
 
-writeTop("Stack Report","Stack Summary Page", $javascript,False);
+processing_header("Stack Report","Stack Summary Page", $javascript,False);
 
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -144,5 +144,5 @@ foreach ($stackIds as $row) {
 	echo "<p>\n";
 }
 echo "</form>\n";
-writeBottom();
+processing_footer();
 ?>
