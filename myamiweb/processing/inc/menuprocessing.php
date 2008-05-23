@@ -345,7 +345,7 @@ $menulink='<a id="hidelk" href="javascript:m_hideall()">Hide</a> /
 <a id="eclk" href="javascript:m_expandcontract()">Expand</a>';
 
 $menuprocessing="";
-	foreach($data as $menu) {
+	foreach((array)$data as $menu) {
 		$action=$menu['action'][0]; 
 		$result=$action.' : '.$menu['result'][0]; 
 		$menuprocesing.=addMenu($result);
