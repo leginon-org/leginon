@@ -71,6 +71,7 @@ $numinspected=$particle->getNumAssessedImages($sessionId);
 echo"Inpected images: $numinspected\n";
 if ($particle->hasParticleData($sessionId)) {
 	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev', 'img');
+	$display_keys = array ( 'totparticles', 'numimgs', 'min', 'max', 'avg', 'stddev');
 	$particleruns=$particle->getParticleRunIds($sessionId);
 	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
 }

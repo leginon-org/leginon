@@ -50,7 +50,195 @@ function docpop($key,$text) {
 	return "<a href='#' id='l".$key."' onMouseOver='popLayer(\"".$key."\",\"l".$key."\")' onMouseOut='hideLayer()'>$text</a>\n";
 }
 
-function writeTop($title,$heading=false,$headerstuff=false){
+function processing_header($title,$heading=false,$headerstuff=false) {
+	$expId = $_GET['expId'];
+	$leginondata = new leginondata();
+	$particle = new particledata();
+	$projectId=getProjectFromExpId($expId);
+
+	// Collect session info from database
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	$sessions=$sessiondata['sessions'];
+	$currentproject=$sessiondata['currentproject'];
+
+	// Show project & session pulldowns
+	$sessionDescr=$sessioninfo['Name']." - ".$sessioninfo['Purpose'];
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
+	$misc = $particle->getMiscInfoFromProject ($projectId);
+	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
+	$expinfo = $leginondata->getSessionInfo($expId);
+
+$html='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>'.$title.'</title>
+<link rel="stylesheet" type="text/css" href="../css/viewer.css">
+<link rel="stylesheet" type="text/css" href="css/proc.css">
+<link rel="stylesheet" type="text/css" href="../css/lvmenu.css">
+<script src="../js/lvmenu.js"></script>
+'.$headerstuff.'
+</head>
+<body>
+<div id="apheader">
+  <div class="aptopbar"> </div>
+  <hr />
+  <div class="middlebar">
+<div style="float: right; padding:10px">';
+if ($_SESSION['username']) {
+		$html.='<i>logged in as <b>'.$_SESSION['username'].'</b></i>'."\n";
+		$html.='<a class="header" href="endsession.php?expId='.$_GET['expId'].'">[Log Out]</a>'."\n";
+		$_SESSION['loggedin']=true;
+} else {
+	$expId=$_GET['expId'];
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$html.=displayLogin($formAction);
+}
+
+$html.='
+    </div>
+<div style="padding:5px; padding-left:20px; font-size: 15pt">
+	<img style="vertical-align:middle" src="img/topbarbackgrnd.jpg">
+	'.$heading.'
+</div>
+  </div>
+  <hr />
+  <div class="apbottombar">
+<div class="apbottomcontent">
+<ul>
+<li><b>Project:</b> '.$proj_link.'</li>
+<li><b>Session:</b> '.$session_link.'</li>
+<li><b>Image Path:</b> '.$expinfo['Image path'].'</li>
+</ul>
+	</div>
+	<div style="float: right"> 
+   </div>
+</div>
+
+<hr />
+  <div class="apshadow">
+    &nbsp;
+  </div>
+</div>';
+	// --- for help popup documentation --- //
+	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
+	$html.=$helpdiv;
+
+	require "menuprocessing.php";
+	$html.= $menujs;
+	$html.= $menulink;
+	$html.='
+<div id="content">
+
+<div style="position: relative; float:left" id="leftcontent">
+    <div style="width: 350px" class="lvmenu">'
+		.$menuprocesing
+		.'</div>
+</div>
+<div id="maincontent" style="position: relative; float: left; ">';
+echo $html;
+}
+
+function processing_footer() {
+	$html='		</div>
+	</div>
+	</body>
+</html>';
+	echo $html;
+}
+
+function writeTop($title,$heading=false,$headerstuff=false) {
+	$expId = $_GET['expId'];
+	$leginondata = new leginondata();
+	$particle = new particledata();
+	$projectId=getProjectFromExpId($expId);
+
+	// Collect session info from database
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	$sessions=$sessiondata['sessions'];
+	$currentproject=$sessiondata['currentproject'];
+
+	// Show project & session pulldowns
+	$sessionDescr=$sessioninfo['Name']." - ".$sessioninfo['Purpose'];
+	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
+	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
+	$misc = $particle->getMiscInfoFromProject ($projectId);
+	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
+	$expinfo = $leginondata->getSessionInfo($expId);
+
+$html='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>'.$title.'</title>
+<link rel="stylesheet" type="text/css" href="../css/viewer.css">
+<link rel="stylesheet" type="text/css" href="../css/view.css">
+<link rel="stylesheet" type="text/css" href="css/proc.css">
+<link rel="stylesheet" type="text/css" href="../css/lvmenu.css">
+<script src="../js/lvmenu.js"></script>
+'.$headerstuff.'
+</head>
+<style>
+	ul {
+      margin:     0;
+      padding:    0;
+      list-style: none inside;
+   }
+	input {
+		border: 1px solid #aabbcc;
+	}
+
+</style>
+<body>
+<div id="apheader">
+  <div class="aptopbar"> </div>
+  <hr />
+  <div class="middlebar">
+<div style="float: right; padding:10px">';
+if ($_SESSION['username']) {
+		$html.="      <i>logged in as <b>$_SESSION[username]</b></i>\n";
+		$html.="      <a class='header' href='endsession.php?expId=$_GET[expId]'>[Log Out]</a>\n";
+		$_SESSION['loggedin']=True;
+} else {
+	$expId=$_GET['expId'];
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$html.=displayLogin($formAction);
+}
+
+$html.='
+    </div>
+<div style="padding:5px; padding-left:20px; font-size: 15pt">
+	<img style="vertical-align:middle" src="img/topbarbackgrnd.jpg">
+	'.$heading.'
+</div>
+  </div>
+  <hr />
+  <div class="apbottombar">
+<div class="apbottomcontent">
+<ul>
+<li><b>Project:</b> '.$proj_link.'</li>
+<li><b>Session:</b> '.$session_link.'</li>
+<li><b>Image Path:</b> '.$expinfo['Image path'].'</li>
+</ul>
+	</div>
+	<div style="float: right"> 
+   </div>
+</div>
+
+<hr />
+  <div class="apshadow">
+    &nbsp;
+  </div>
+</div>';
+	// for help popup documentation
+	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
+	$html.=$helpdiv;
+	echo $html;
+
+}
+
+function writeTop_org($title,$heading=false,$headerstuff=false) {
 	global $_GET;
 	$expId = $_GET['expId'];
 	$leginondata = new leginondata();
@@ -85,6 +273,7 @@ function writeTop($title,$heading=false,$headerstuff=false){
 	echo "<!-- header -->\n";
 	echo "<div id='apheader'>\n";
 	echo "  <div class='aptopbar'>\n";
+
 	if ($_SESSION['username']) {
 		echo "    <div class='aplogged'>\n";
 		echo "      <i>logged in as <b>$_SESSION[username]</b></i>\n";
@@ -131,7 +320,9 @@ function writeTop($title,$heading=false,$headerstuff=false){
 				'c2'=>$expinfo['Image path']
 				);
 	}
-	echo array2table($ptable, array(), false, "");
+	echo "<div class='aplogged'>".array2table($ptable, array(), false, "");
+	echo "</div>";
+		echo "<div class='aplogout'>      <a class='header' href='endsession.php?expId=$_GET[expId]'>[Log Out]</a></div>\n";
 	echo "    </div>\n";
 	echo "  </div>\n";
 	echo "  <hr />\n";
@@ -159,7 +350,7 @@ function writeBottom($showproclink=True){
 		echo "<td align='center' valign='center' background='img/middleButton.gif'>\n";
 		echo "<a href='index.php?expId=$_GET[expId]' class='header'><font size='-2'>Back to Processing Page</font></a>\n";
 		echo "</td>\n";
-		echo "<td valign='center'>\n";
+		echo "<td valign='top'>\n";
 		echo "<img border='0' src='img/rightendButton.gif'>\n";
 		echo "</td>\n";
 		echo "</tr>\n";
@@ -171,11 +362,12 @@ function writeBottom($showproclink=True){
 }
 
 function displayLogin($formAction) {
-  echo "<form name='jobform' method='post' action='$formAction'>\n";
-  echo "Username: <input type='text' name='username' value='$_POST[username]'>\n";
-  echo "Password: <input type='password' name='password'>\n";
-  echo "<input type='submit' name='login' value='Log In'>\n";
-  echo "</form>\n";  
+  $html='<form name="jobform" method="post" action="'.$formAction.'">
+Username: <input type="text" name="username" value="'.$_POST['username'].'">
+Password: <input type="password" name="password">
+<input type="submit" name="login" value="Log In">
+</form>';  
+	return $html;
 }
 
 function checkLogin() {

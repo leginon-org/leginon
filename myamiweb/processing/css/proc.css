@@ -7,8 +7,16 @@ body {
 	background:#fff;
 }
 
+input {
+		border: 1px solid #aabbcc;
+}
 /* Header */
 #apheader hr {display:none;}
+#apheader ul {
+	margin:     0;
+	padding:    0;
+	list-style: none inside;
+}
 
 #apheader {
 	  font-size: 9pt;
