@@ -100,14 +100,14 @@ $html.='
     </div>
 <div style="padding:5px; padding-left:20px; font-size: 15pt">
 	<img style="vertical-align:middle" src="img/topbarbackgrnd.jpg">
-	'.$heading.'
+	<font color="#fff">'.$heading.'</font>
 </div>
   </div>
   <hr />
   <div class="apbottombar">
 <div class="apbottomcontent">
 <ul>
-<li><b>Project:</b> '.$proj_link.'</li>
+<li><b>Project:</font></b> '.$proj_link.'</li>
 <li><b>Session:</b> '.$session_link.'</li>
 <li><b>Image Path:</b> '.$expinfo['Image path'].'</li>
 </ul>
@@ -129,10 +129,10 @@ $html.='
 	$html.= $menujs;
 	$html.= $menulink;
 	$html.='
-<div id="content">
+<div id="content" style="padding-left: 5px">
 
 <div style="position: relative; float:left" id="leftcontent">
-    <div style="width: 350px" class="lvmenu">'
+    <div class="lvmenu">'
 		.$menuprocesing
 		.'</div>
 </div>
@@ -210,7 +210,7 @@ $html.='
     </div>
 <div style="padding:5px; padding-left:20px; font-size: 15pt">
 	<img style="vertical-align:middle" src="img/topbarbackgrnd.jpg">
-	'.$heading.'
+	<font color="#fff">'.$heading.'</font>
 </div>
   </div>
   <hr />

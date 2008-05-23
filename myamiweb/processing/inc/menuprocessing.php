@@ -115,18 +115,18 @@ if ($sessionId) {
 
 	$action = "Particle Selection";
 
-  $result = ($prtlruns==0) ? "none" :
-		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns completed</a>\n";
+	$result = ($prtlruns==0) ? "" :
+		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
 	$nrun=array();
-  $nrun[] = "<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>";
+	$nrun[] = "<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>";
 	$nrun[] = "<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>";
 	$nrun[] = "<a href='runManualPicker.php?expId=$sessionId'>"
 						.($prtlruns==0) ? "Manual Picking" : "Manually Edit Picking"
 						."</a>";
 
-  $maxangle = $particle->getMaxTiltAngle($sessionId);
-  if ($maxangle > 5) {
+	$maxangle = $particle->getMaxTiltAngle($sessionId);
+	if ($maxangle > 5) {
 		$nrun[] ="<a href='tiltAligner.php?expId=$sessionId'>"
 						.($prtlruns==0) ? "Align Tilt Pairs" : "Align Tilt Particle Pairs"
 						."</a>";
@@ -142,9 +142,9 @@ if ($sessionId) {
 	$action = "CTF Estimation";
 
 	if ($ctfruns==0) {
-		$result = "none";
+		$result = "";
 	} else {
-		$result = "<a href='ctfreport.php?Id=$sessionId'>$ctfruns completed</a>";
+		$result = "<a href='ctfreport.php?Id=$sessionId'>$ctfruns</a>";
 	}
 
 	$nruns = array();
@@ -158,17 +158,13 @@ if ($sessionId) {
 		'newrun'=>array($nruns, $celloption),
 	);
 
-	$action = "Micrograph Assessment";
-	if ($assessedimgs < $totimgs) {
+	$action = "Img Assessment";
+
+	$result='';
+	if ($assessedimgs < $totimgs && $totimgs!=0) {
 		$result = "<a href='assesssummary.php?expId=$sessionId'>";
-		$result .= "$assessedimgs of $totimgs completed"; 
+		$result .= "$assessedimgs/$totimgs"; 
 		$result .= "</a>";
-	} elseif ($totimgs!=0) {
-		$result = "<a href='assesssummary.php?expId=$sessionId'>";
-		$result .= "All $assessedimgs completed";
-		$result .= "</a>";
-	} else {
-		$result = "none";
 	}
 
 	$nrun = "<a href='imgassessor.php?expId=$sessionId'>";
@@ -190,8 +186,8 @@ if ($sessionId) {
 	);
 
 	$action = "Region Mask Creation";
-	$result = ($maskruns==0) ? "none" :
-			"<a href='maskreport.php?expId=$sessionId'>$maskruns completed</a>\n";
+	$result = ($maskruns==0) ? "" :
+			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>\n";
 	$nruns=array();
 	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>";
   $nrun .= ($maskruns==0) ? "Crud Finding" : "Crud Finding";
@@ -207,94 +203,97 @@ if ($sessionId) {
 		'result'=>array($result),
 		'newrun'=>array($nruns, $celloption),
 	);
+	
+	// display the stack menu only if have particles picked
+	if ($prtlruns > 0) {
+		$action = "Stacks";
+		$result = ($stackruns==0) ? "" :
+			"<a href='stacksummary.php?expId=$sessionId'>$stackruns<A>";
+		$nrun = "<a href='makestack.php?expId=$sessionId'>Stack creation</a>";
 
-
-	$action = "Stacks";
-	$result = ($stackruns==0) ? "none" :
-			"<a href='stacksummary.php?expId=$sessionId'>$stackruns completed<A>";
-	$nrun = "<a href='makestack.php?expId=$sessionId'>Stack creation</a>";
-	if ($prtlruns == 0) {
-      $nrun = "<font size=-1><i>Pick some particles first</i></font>";
+		$nruns=array();
+		$nruns[]=$nrun;
+		
+		$data[]=array(
+			      'action'=>array($action, $celloption),
+			      'result'=>array($result),
+			      'newrun'=>array($nruns, $celloption),
+			      );
 	}
 
-	$nruns=array();
-	$nruns[]=$nrun;
+	// display particle alignment only if there is a stack
+	if ($stackruns > 0) {
+		$action = "Particle Alignment";
+		$resultnoref = ($norefruns==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefruns</a>\n";
+		$resultbasedref = ($refbasedruns==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbasedruns</a>\n";
+		$result = $norefruns+$refbasedruns;
 
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nruns, $celloption),
-	);
+		$nruns=array();
 
-	$action = "Particle Alignment";
-	$resultnoref = ($norefruns==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefruns ref-free aligned</a>\n";
-	$resultbasedref = ($refbasedruns==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbasedruns ref-based aligned</a>\n";
-	$result = $resultnoref.$resultbasedref;
-	if(!$result) $result = "none";
+		$reffreelink = "<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment</a>";
+		if ($resultnoref) $reffreelink .= " - $resultnoref";
+		$refbasedlink = "<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment</a>";
+		if ($resultbasedref) $refbasedlink .= " - $resultbasedref";
+		$nruns[] = $reffreelink;
+		$nruns[] = $refbasedlink;
+		$nruns[]=$nrun;
 
-	$nruns=array();
-	if ($stackruns == 0) {
-		$nruns[] = "<font size=-1><i>Create a stack first</i></font>";
-	} else {
-		$nruns[] = "<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment</a> - $resultnoref";
-		$nruns[] = "<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment</a> - $resultbasedref\n";
+		$data[]=array(
+			      'action'=>array($action, $celloption),
+			      'result'=>array($result),
+			      'newrun'=>array($nruns, $celloption),
+			      );
+
+		// for every uploaded job, subtract a submitted job
+		// if all submitted jobs are uploaded, it should be 0
+		$jobincomp = $jobdone-$reconruns; //incomplete
+
+		$action = "Reconstructions";
+		
+		$result = '';
+
+		if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
+			$jlist=array();
+			if ($jobqueue>0)  $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>\n";
+			if ($jobrun>0)    $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>\n";
+			if ($jobincomp>0) $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>\n";
+			if ($reconruns>0) $jlist[]="<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>\n";
+			$result = implode('<br />',$jlist);
+		}
+
+		// first check if there are stacks for a run, then check if logged
+		// in.  Then you can submit a job
+		$nruns=array();
+		if (!$_SESSION['loggedin']) {$nruns[] = "<i>Log in to submit a job</i>\n";}
+		else $nruns[] = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
+		if ($stackruns>0) {
+			$nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
+		}
+		$data[]=array(
+			      'action'=>array($action, $celloption),
+			      'result'=>array($result),
+			      'newrun'=>array($nruns, $celloption),
+			      );
 	}
-	$nruns[]=$nrun;
-
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nruns, $celloption),
-	);
-
-  // if no submitted jobs, display none
-  // for every uploaded job, subtract a submitted job
-  // if all submitted jobs are uploaded, it should be 0
-  $jobincomp = $jobdone-$reconruns; //incomplete
-
-	$action = "Reconstructions";
-
-	$result = "none";
-  if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
-    $jlist=array();
-    if ($jobqueue>0)  $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>\n";
-    if ($jobrun>0)    $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>\n";
-    if ($jobincomp>0) $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>\n";
-    if ($reconruns>0) $jlist[]="<a href='reconsummary.php?expId=$sessionId'>$reconruns uploaded</a>\n";
-    $result = implode('<br />',$jlist);
-  }
-
-  // first check if there are stacks for a run, then check if logged
-  // in.  Then you can submit a job
-	$nruns=array();
-  if ($stackruns == 0) $nruns[] = "<font size=-1><i>Create a stack first</i></font>"; 
-  elseif (!$_SESSION['loggedin']) {$nruns[] = "<font size=-1><i>Log in to submit a job</i>\n";}
-  else $nruns[] = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
-  if ($stackruns>0) {
-    $nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
-  }
-	$data[]=array(
-    'action'=>array($action, $celloption),
-		'result'=>array($result),
-    'newrun'=>array($nruns, $celloption),
-  );
 
 	$action = "Pipeline tools";
 
-  $result = ($templates==0) ? "none" :
-			"<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
-  $nrun = "<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>";
+	$result = ($templates==0) ? "" :
+	  "<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
+	$nrun = "<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>";
 	$nrun.="	-	".$result;
 
 	$nruns=array();
 	$nruns[]=$nrun;
 
-  $result = ($models==0) ? "none" :
-			"<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
-  $nrun = "<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>";
+	$result = ($models==0) ? "" :
+	  "<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
+	$nrun = "<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>";
 	$nrun.=" -	".$result;
 
 	$nruns[]=$nrun;
+
+
 	$data[]=array(
     'action'=>array($action, $celloption),
 		'result'=>array(),
@@ -316,7 +315,7 @@ $menujs='<script type="text/javascript">
 			if (leftdiv.style.visibility=="hidden") {
 				leftdiv.style.visibility="visible"
 				updatelink("hidelk", "Hide", "javascript:m_hideall()")
-					leftdiv.style.width="350px"
+					leftdiv.style.width="250px"
 			} else {
 				leftdiv.style.visibility="hidden"
 				if (maindiv=document.getElementById("maincontent")) {
@@ -341,13 +340,14 @@ $menujs='<script type="text/javascript">
 </script>
 ';
 
-$menulink='<a id="hidelk" href="javascript:m_hideall()">Hide</a> /
-<a id="eclk" href="javascript:m_expandcontract()">Expand</a>';
+$menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideall()">Hide</a> /
+<a id="eclk" href="javascript:m_expandcontract()">Expand</a></div>';
 
 $menuprocessing="";
 	foreach((array)$data as $menu) {
 		$action=$menu['action'][0]; 
-		$result=$action.' : '.$menu['result'][0]; 
+		$result=$action;
+		if ($menu['result'][0]) $result .= ' : '.$menu['result'][0]; 
 		$menuprocesing.=addMenu($result);
 		$menuprocesing.=addSubmenu($menu['newrun'][0]);
 	}
@@ -362,7 +362,7 @@ $menuprocessing="";
 	function addSubmenu($data) {
 		$text="<ul>";
 		foreach((array)$data as $submenu) {
-			$text.="<li>$submenu</li>";
+			$text.="<li>$submenu</li>\n";
 		}
 		$text.="</ul>";
 		return '<div class="submenu">'.$text.'</div>';

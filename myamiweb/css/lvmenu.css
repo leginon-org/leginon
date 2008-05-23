@@ -1,10 +1,19 @@
 .lvmenu {
-    width: 250px;
     font-family: Sans-Serif;
-    font-size: 12px;
-    padding-bottom: 10px;
+    font-size: 10px;
+    padding-bottom: 5px;
     background: #eee url(../img/lvmenu/bottom.gif) no-repeat  right bottom;
     color: #FFF;
+}
+
+.lvmenu a {
+	color: #ffe88d;
+	text-decoration:none;
+}
+
+.lvmenu a:hover {
+	color: #ffcc00;
+	text-decoration:underline;
 }
 
 .lvmenu ul {
@@ -15,10 +24,10 @@
 
 .lvmenu .title, .lvmenu .titlehidden{
     display: block;
-    padding: 5px 0;
+    padding: 5px 4px 5px 0;
     font-weight: bold;
     color: white;
-    background: #FFF url(../img/lvmenu/title.gif) repeat-x;
+    background: #FFF url(../processing/img/aptitle.gif) repeat-x;
 }
 
 .lvmenu .title {
