@@ -91,7 +91,7 @@ elseif ($_POST['submitjob']) {
   $jobfile="$jobname.job";
   $tmpjobfile = "/tmp/$jobfile";
 
-  $jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,$user);
+  $jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
 
   // add header & job id to the beginning of the script
   // convert /\n's back to \n for the script

@@ -207,7 +207,7 @@ function runNoRefClassify($runjob=False) {
 		$uniqId=implode('',$factorlistAR);
 		$uniqId.=".$numclass";
 
-		submitAppionJob($command,$outdir,$runid,$expId,False,False,$uniqId);
+		submitAppionJob($command,$outdir,$runid,$expId,'norefclass',False,False,$uniqId);
 		exit;
 	}
 	writeTop("No Ref Classify Run Params","No Ref Classify Params");

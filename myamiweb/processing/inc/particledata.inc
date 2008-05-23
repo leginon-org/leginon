@@ -1082,58 +1082,59 @@ class particledata {
     return $r;
   }
 
-  function insertClusterJobData($host,$pathdir,$dmfpathdir,$clusterdir,$name,$expId,$user=NULL) {
-    // put appion path in db
-    $q = "SELECT DEF_id "
-      ."FROM `ApPathData` "
-      ."WHERE `path`='$pathdir'";
-    $r = $this->mysql->getSQLResult($q);
-    $pathid=$r[0]['DEF_id'];
-    if (!$pathid) {
-      $pdata['path']=$pathdir;
-      $pathid=$this->mysql->SQLInsert('ApPathData',$pdata);
-    }
-    // put dmf path in db
-    $q = "SELECT DEF_id "
-      ."FROM `ApPathData` "
-      ."WHERE `path`='$dmfpathdir'";
-    $r = $this->mysql->getSQLResult($q);
-    $dmfpathid=$r[0]['DEF_id'];
-    if (!$dmfpathid) {
-      $pdata['path']=$dmfpathdir;
-      $dmfpathid=$this->mysql->SQLInsert('ApPathData',$pdata);
-    }
-    // put cluster path in db
-    $q = "SELECT DEF_id "
-      ."FROM `ApPathData` "
-      ."WHERE `path`='$clusterdir'";
-    $r = $this->mysql->getSQLResult($q);
-    $clusterpathid=$r[0]['DEF_id'];
-    if (!$clusterpathid) {
-      $pdata['path']=$clusterdir;
-      $clusterpathid=$this->mysql->SQLInsert('ApPathData',$pdata);
-    }
-    // find if job is in database
-    $q = "SELECT DEF_id "
-      ."FROM `ApClusterJobData` "
-      ."WHERE `REF|ApPathData|path` = $pathid AND "
-      ."`name` = '$name' AND "
-      ."`REF|leginondata|SessionData|session` = $expId";
-    $r = $this->mysql->getSQLResult($q);
-    $jid=$r[0]['DEF_id'];
-    // if not in database, insert
-    if (!$jid) {
-      $jdata['REF|ApPathData|path'] = $pathid;
-      $jdata['name'] = $name;
-      $jdata['REF|leginondata|SessionData|session'] = $expId;
-      $jdata['REF|ApPathData|dmfpath'] = $dmfpathid;
-      $jdata['REF|ApPathData|clusterpath'] = $clusterpathid;
-      $jdata['cluster'] = $host;
-      $jdata['user'] = $user;
-      $jid=$this->mysql->SQLInsert('ApClusterJobData',$jdata);
-    }
-    return $jid;
-  }
+	function insertClusterJobData($host,$pathdir,$dmfpathdir,$clusterdir,$name,$expId,$jobtype,$user=NULL) {
+		// put appion path in db
+		$q = "SELECT DEF_id "
+		  ."FROM `ApPathData` "
+		  ."WHERE `path`='$pathdir'";
+		$r = $this->mysql->getSQLResult($q);
+		$pathid=$r[0]['DEF_id'];
+		if (!$pathid) {
+			$pdata['path']=$pathdir;
+			$pathid=$this->mysql->SQLInsert('ApPathData',$pdata);
+		}
+		// put dmf path in db
+		$q = "SELECT DEF_id "
+		  ."FROM `ApPathData` "
+		  ."WHERE `path`='$dmfpathdir'";
+		$r = $this->mysql->getSQLResult($q);
+		$dmfpathid=$r[0]['DEF_id'];
+		if (!$dmfpathid) {
+			$pdata['path']=$dmfpathdir;
+			$dmfpathid=$this->mysql->SQLInsert('ApPathData',$pdata);
+		}
+		// put cluster path in db
+		$q = "SELECT DEF_id "
+		  ."FROM `ApPathData` "
+		  ."WHERE `path`='$clusterdir'";
+		$r = $this->mysql->getSQLResult($q);
+		$clusterpathid=$r[0]['DEF_id'];
+		if (!$clusterpathid) {
+			$pdata['path']=$clusterdir;
+			$clusterpathid=$this->mysql->SQLInsert('ApPathData',$pdata);
+		}
+		// find if job is in database
+		$q = "SELECT DEF_id "
+		  ."FROM `ApClusterJobData` "
+		  ."WHERE `REF|ApPathData|path` = $pathid AND "
+		  ."`name` = '$name' AND "
+		  ."`REF|leginondata|SessionData|session` = $expId";
+		$r = $this->mysql->getSQLResult($q);
+		$jid=$r[0]['DEF_id'];
+		// if not in database, insert
+		if (!$jid) {
+			$jdata['REF|ApPathData|path'] = $pathid;
+			$jdata['name'] = $name;
+			$jdata['jobtype'] = $jobtype;
+			$jdata['REF|leginondata|SessionData|session'] = $expId;
+			$jdata['REF|ApPathData|dmfpath'] = $dmfpathid;
+			$jdata['REF|ApPathData|clusterpath'] = $clusterpathid;
+			$jdata['cluster'] = $host;
+			$jdata['user'] = $user;
+			$jid=$this->mysql->SQLInsert('ApClusterJobData',$jdata);
+		}
+		return $jid;
+	}
 
 	function updateDescription($table, $id, $newtext) {
 		$q = "SELECT description "
@@ -1148,28 +1149,29 @@ class particledata {
 		}
 	}			 
 
-  function updateClusterQueue($jobid,$queueid,$status) {
-    $data = array('clusterjobid'=>$queueid);
-    $data['status']=$status;
-    $where = array('DEF_id'=>$jobid);
-    $this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
-  }
+	function updateClusterQueue($jobid,$queueid,$status) {
+		$data = array('clusterjobid'=>$queueid);
+		$data['status']=$status;
+		$where = array('DEF_id'=>$jobid);
+		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
+	}
 
-  function abortClusterJob($jobid,$user=NULL) {
-    $data = array('status'=>'A');
-    $where = array('DEF_id'=>$jobid);
+	function abortClusterJob($jobid,$user=NULL) {
+		$data = array('status'=>'A');
+		$where = array('DEF_id'=>$jobid);
 		if (!is_null($user)) $where['user'] = $user;
-    $this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
-  }
+		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
+	}
 
-  function getSubmittedJobs($expId) {
-    $q="SELECT * "
-      ."FROM `ApClusterJobData` "
-      ."WHERE `REF|leginondata|SessionData|session`=$expId";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
+	function getSubmittedJobs($expId) {
+		$q="SELECT * "
+		  ."FROM `ApClusterJobData` "
+		  ."WHERE `REF|leginondata|SessionData|session`=$expId";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
 
+  
 	function getReconIdFromClusterJobId ($jobid) {
 		$q="SELECT * "
 		  ."FROM `ApRefinementRunData` "

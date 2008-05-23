@@ -361,7 +361,7 @@ function runTemplateCorrelator() {
 			exit;
 		}
 
-		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+		submitAppionJob($command,$outdir,$runid,$expId,'templatepicker',$testimage);
 		if (!$testimage) exit;
 	}
 

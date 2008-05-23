@@ -337,7 +337,7 @@ function runNoRefAlign($runjob=False) {
 			exit;
 		}
 
-		submitAppionJob($command,$outdir,$runid,$expId);
+		submitAppionJob($command,$outdir,$runid,$expId,'norefali');
 		exit;
 	}
 	else {

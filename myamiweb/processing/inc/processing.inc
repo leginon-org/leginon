@@ -601,7 +601,7 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	return $javascript; 
 }
 
-function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=False,$xtra=False) {
+function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,$xvfb=False,$xtra=False) {
 	$particle=new particleData();
 
 	$host = 'guppy';
@@ -634,7 +634,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$testimg=False,$xvfb=Fal
 
 	else {
 		// create job file
-		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$user);
+		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
 		$jobtext .= "#PBS -l nodes=1:ppn=1\n";
 		$jobtext .= "#PBS -l walltime=240:00:00\n";
 		$jobtext .= "#PBS -l cput=240:00:00\n";

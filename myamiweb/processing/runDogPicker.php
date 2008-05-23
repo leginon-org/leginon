@@ -195,7 +195,7 @@ function runDogPicker() {
 			exit;
 		}
 
-		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+		submitAppionJob($command,$outdir,$runid,$expId,'dogpicker',$testimage);
 		if (!$testimage) exit;
 	}
 

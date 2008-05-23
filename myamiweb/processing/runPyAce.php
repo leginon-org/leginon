@@ -128,7 +128,7 @@ function runPyAce() {
 			exit;
 		}
 
-		submitAppionJob($xcommand,$outdir,$runid,$expId,False,True);
+		submitAppionJob($xcommand,$outdir,$runid,$expId,'ace',False,True);
 		exit;
 	}
 
