@@ -1,0 +1,59 @@
+.lvmenu {
+    width: 250px;
+    font-family: Sans-Serif;
+    font-size: 12px;
+    padding-bottom: 10px;
+    background: #eee url(../img/lvmenu/bottom.gif) no-repeat  right bottom;
+    color: #FFF;
+}
+
+.lvmenu ul {
+	margin:     0;
+	padding:    0;
+	list-style: none inside;
+}
+
+.lvmenu .title, .lvmenu .titlehidden{
+    display: block;
+    padding: 5px 0;
+    font-weight: bold;
+    color: white;
+    background: #FFF url(../img/lvmenu/title.gif) repeat-x;
+}
+
+.lvmenu .title {
+    border-bottom: 1px solid #DDD;
+}
+
+.lvmenu .arrow {
+		margin-left: 10px;
+    margin-right: 7px;
+}
+
+.lvmenu .titlehidden {
+    border-bottom: none;
+}
+
+.lvmenu .submenu {
+    overflow: hidden;
+}
+
+.lvmenu .submenu li {
+    padding: 4px 0;
+    text-indent: 10px;
+    background: #EEE;
+    display: block;
+    border-bottom: 1px solid #DDD;
+    color: #066;
+    text-decoration: none;
+}
+.lvmenu .submenu a {
+    background: #EEE;
+    color: #066;
+    text-decoration: none;
+}
+
+.lvmenu .submenu a:hover {
+    background : #386F8F;
+    color: #FFF;
+}
