@@ -136,7 +136,7 @@ $html.='
 		.$menuprocesing
 		.'</div>
 </div>
-<div id="maincontent" style="position: relative; float: left; ">';
+<div id="maincontent" style="position: relative; float: left; padding-left: 10px">';
 echo $html;
 }
 
