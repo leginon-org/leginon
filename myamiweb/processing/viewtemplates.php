@@ -17,7 +17,7 @@ require "inc/project.inc";
 
 $expId = (int) $_GET[expId];
 
-writeTop("Template Summary", "Template Summary", "",False);
+processing_header("Template Summary", "Template Summary", "",False);
 
 if ($expId && is_int($expId)){
 	$projectId = (int) getProjectFromExpId($expId);

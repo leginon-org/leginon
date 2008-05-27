@@ -98,7 +98,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	</SCRIPT>\n";
 
-	writeTop($title,$heading,$javafunctions);
+	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -223,7 +223,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
   </table>
   </form>\n";
 
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -274,7 +274,7 @@ function runUploadTemplate() {
 	if ($norefClassId) $command.="--norefid=$norefClassId ";
 	if ($avgstack) $command.="--avgstack ";
 
-	writeTop("UploadTemplate Run", "UploadTemplate Params");
+	processing_header("UploadTemplate Run", "UploadTemplate Params");
 
 	echo"
 	<P>
@@ -304,7 +304,7 @@ function runUploadTemplate() {
 	if ($norefId) echo"<TR><TD>noref id</TD><TD>$norefId</TD></TR>";
 	echo"
 	</TABLE>\n";
-	writeBottom();
+	processing_footer();
 }
 
 ?>

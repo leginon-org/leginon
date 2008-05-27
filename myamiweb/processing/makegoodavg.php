@@ -70,7 +70,7 @@ if ($_POST['run']) {
 	if ($sigma) $command.= "-s $sigma ";
 	if ($eotest=='on') $command.="--eotest ";
 
-	writeTop("Create New Class Averages","Create New Class Averages");
+	processing_header("Create New Class Averages","Create New Class Averages");
 	echo"
 	<P>
 	<TABLE WIDTH='600' BORDER='1'>
@@ -86,7 +86,7 @@ if ($_POST['run']) {
         <tr><td>sigma</td><td>$sigma</td></tr>
         <tr><td>eotest</td><td>$eotest</td></tr>
         </table>\n";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -100,7 +100,7 @@ function createform($extra=False) {
 
 	$javascript=javaCommands();
 
-	writeTop("Create New Class Averages", "Create New Class Averages",$javascript);
+	processing_header("Create New Class Averages", "Create New Class Averages",$javascript);
 
 	// write out errors, if any came up:
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -150,7 +150,7 @@ function createform($extra=False) {
 	echo "</tr>\n";
 	echo "</table>\n";
 	echo "</FORM>\n";
-	writeBottom();
+	processing_footer();
 	exit();
 }
 ?>

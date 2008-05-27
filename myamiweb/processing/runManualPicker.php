@@ -58,7 +58,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $javafunctions .= appionLoopJavaCommands();
   $javafunctions .= writeJavaPopupFunctions('appion');
   $javafunctions .= particleLoopJavaCommands();
-  writeTop("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
+  processing_header("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
 
   if ($extra) {
     echo "<font COLOR='#DD0000' SIZE=+2>$extra</font>\n<HR>\n";
@@ -165,7 +165,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
     </TD>
   </TR>
   </table>";
-  writeBottom();
+  processing_footer();
   ?>
 
   </CENTER>
@@ -222,7 +222,7 @@ function runManualPicker() {
     $result=exec_over_ssh($host, $user, $password, $cmd, True);
   }
 
-  writeTop("Particle Selection Results","Particle Selection Results");
+  processing_header("Particle Selection Results","Particle Selection Results");
 
   if ($testimage) {
     $runid = $_POST[runid];
@@ -250,7 +250,7 @@ function runManualPicker() {
   appionLoopSummaryTable();
   particleLoopSummaryTable();
   echo"</table>\n";
-  writeBottom();
+  processing_footer();
 }
 
 ?>

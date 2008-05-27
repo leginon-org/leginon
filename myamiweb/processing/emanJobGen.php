@@ -104,7 +104,7 @@ elseif ($_POST['submitjob']) {
   $f = file_get_contents($tmpjobfile);
   file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
-  writeTop("Eman Job Submitted","EMAN Job Submitted",$javafunc);
+  processing_header("Eman Job Submitted","EMAN Job Submitted",$javafunc);
   echo "<TABLE WIDTH='600'>\n";
 
   // create appion directory & copy job file
@@ -134,7 +134,7 @@ elseif ($_POST['submitjob']) {
   if (!is_numeric($jobnum)) {
     echo "</TABLE><P>\n";
     echo "ERROR in job submission.  Check the cluster\n";
-    writeBottom();
+    processing_footer();
     exit;
   }
 
@@ -152,7 +152,7 @@ elseif ($_POST['submitjob']) {
   else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
   echo "<p><a href='checkjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
 	echo "<P><FONT COLOR='RED'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
-  writeBottom(True, True);
+  processing_footer(True, True);
   exit;
 }
 
@@ -197,11 +197,11 @@ function stackModelForm($extra=False) {
   }
   $javafunc="<script src='../js/viewer.js'></script>\n";
   if (!$modelonly) {
-    writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
+    processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
   }
 
   else {
-    writeTop("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
+    processing_header("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
   }
   // write out errors, if any came up:
   if ($extra) {
@@ -292,7 +292,7 @@ function stackModelForm($extra=False) {
     if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
   }
   else {echo "No initial models in database";}
-  writeBottom();
+  processing_footer();
   exit;
 }
 
@@ -358,7 +358,7 @@ function jobForm($extra=false) {
   $javafunc .= defaultReconValues($box);
   $javafunc .= writeJavaPopupFunctions('eman');
   $javafunc .= garibaldiFun();
-  writeTop("Eman Job Generator","EMAN Job Generator",$javafunc);
+  processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -652,7 +652,7 @@ function jobForm($extra=false) {
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
   if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
-  writeBottom();
+  processing_footer();
   exit;
 }
 
@@ -711,7 +711,7 @@ function writeJobFile ($extra=False) {
   }
   </SCRIPT>\n";
   }
-  writeTop("Eman Job Generator","EMAN Job Generator", $javafunc);
+  processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
 
   $header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
   $header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
@@ -888,7 +888,7 @@ function writeJobFile ($extra=False) {
     fwrite($f,$clusterjob);
     fclose($f);
   }	
-  writeBottom();
+  processing_footer();
   exit;
 };
 

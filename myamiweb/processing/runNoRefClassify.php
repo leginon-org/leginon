@@ -39,7 +39,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	$javascript = "<script src='../js/viewer.js'></script>";
 	$javascript .= writeJavaPopupFunctions('appion');	
 
-	writeTop($title,$heading,$javascript);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='red'>$extra</font>\n<hr>\n";
@@ -139,7 +139,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "</tr>";
 	echo "</table>";
 	echo "</form>";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -210,7 +210,7 @@ function runNoRefClassify($runjob=False) {
 		submitAppionJob($command,$outdir,$runid,$expId,'norefclass',False,False,$uniqId);
 		exit;
 	}
-	writeTop("No Ref Classify Run Params","No Ref Classify Params");
+	processing_header("No Ref Classify Run Params","No Ref Classify Params");
 
 	echo"
 	<p>
@@ -223,6 +223,6 @@ function runNoRefClassify($runjob=False) {
 	<tr><td>factorlist</td><td>$factorlist</td></tr>
 	<tr><td>commit</td><td>$commit</td></tr>
 	</table>\n";
-	writeBottom();
+	processing_footer();
 }
 ?>

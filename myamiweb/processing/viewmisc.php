@@ -17,7 +17,7 @@ require "inc/processing.inc";
 // --- check if reconstruction is specified
 $reconId = $_GET['reconId'];
 $projectId = $_GET['projId'];
-writeTop("Miscellaneous","Miscellaneous Stuff");
+processing_header("Miscellaneous","Miscellaneous Stuff");
 
 // --- Get Reconstruction Data
 $particle = new particledata();
@@ -47,5 +47,5 @@ $html.="</TABLE>\n";
 
 echo $html;
 
-writeBottom();
+processing_footer();
 ?>

@@ -133,7 +133,7 @@ function createTemplateForm($extra=False) {
 	}
 	$javafunctions.="<script src='../js/viewer.js'></script>\n";
 
-	writeTop("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
+	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	echo"
   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
@@ -160,7 +160,7 @@ function createTemplateForm($extra=False) {
 	}
 	else echo "<B>Project does not contain any templates.</B>\n";
 	echo"</FORM>\n";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -252,7 +252,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$javafunctions .= particleLoopJavaCommands();
-	writeTop($title,$heading,$javafunctions);
+	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
@@ -315,7 +315,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	</TR></TABLE>
 	</CENTER>
 	</FORM>\n";
-	writeBottom();
+	processing_footer();
 }
 
 /*
@@ -365,7 +365,7 @@ function runTemplateCorrelator() {
 		if (!$testimage) exit;
 	}
 
-	writeTop("Particle Selection Results","Particle Selection Results");
+	processing_header("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -407,7 +407,7 @@ function runTemplateCorrelator() {
 	appionLoopSummaryTable($_POST);
 	particleLoopSummaryTable($_POST);
 	echo"</TABLE>\n";
-	writeBottom(True, True);
+	processing_footer(True, True);
 }
 
 /*

@@ -54,9 +54,9 @@ $javascript.="                newwindow.document.close()\n";
 $javascript.="        }\n";
 $javascript.="</script>\n";
  
-writeTop("Reconstruction Report","Reconstruction Report Page", $javascript);
+processing_header("Reconstruction Report","Reconstruction Report Page", $javascript);
 if (!$reconId) {
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -375,5 +375,5 @@ echo "</FORM>\n";
 
 echo $html;
 
-writeBottom();
+processing_footer();
 ?>

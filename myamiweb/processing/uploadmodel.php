@@ -50,7 +50,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   }
   $projectId=$_POST['projectId'];
   
-  writeTop($title,$heading,$javascript);
+  processing_header($title,$heading,$javascript);
   // write out errors, if any came up:
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -170,7 +170,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	</TR>
   </TABLE>
   </FORM>\n";
-  writeBottom();
+  processing_footer();
   exit;
 }
 
@@ -221,7 +221,7 @@ function runUploadModel() {
   if ($_POST['newmodel']) $command.="--modelid=$_GET[modelid] ";
   $command.="--description='$description' ";
   
-  writeTop("UploadModel Run","UploadModel Params");
+  processing_header("UploadModel Run","UploadModel Params");
 	
   echo"
 	<P>
@@ -239,6 +239,6 @@ function runUploadModel() {
 	<TR><TD>session</TD><TD>$session</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
 	</TABLE>\n";
-  writeBottom();
+  processing_footer();
 }
 ?>

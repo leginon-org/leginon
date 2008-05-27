@@ -18,7 +18,7 @@ function abortJob($showjobs=False,$extra=False) {
   $particle = new particledata();
   $projectId=getProjectFromExpId($expId);
 
-  writeTop("Cluster Job To Be Aborted","Aborting Job",$javafunc);
+  processing_header("Cluster Job To Be Aborted","Aborting Job",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
     echo "<font color='RED'>$extra</font>\n<HR>\n";
@@ -125,7 +125,7 @@ function abortJob($showjobs=False,$extra=False) {
     echo "</table>\n";
 	}
 
-  writeBottom();
+  processing_footer();
 	if (!is_null($jobinfo['user'])) {
 		#allow only the user created the job to abort it
 		$particle->abortClusterJob($jobId,$user);

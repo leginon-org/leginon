@@ -13,7 +13,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$host = 'guppy';
 	$particle = new particledata();
 
-	writeTop("Appion Job","Appion Job Status",$javafunc);
+	processing_header("Appion Job","Appion Job Status",$javafunc);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font color='RED'>$extra</font>\n<HR>\n";
@@ -104,7 +104,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 		}
 	}
-	writeBottom();
+	processing_footer();
 	exit;
 }
 

@@ -27,7 +27,7 @@ $projectId=$_POST['projectId'];
 
 $javascript="<script src='../js/viewer.js'></script>\n";
 
-writeTop("Reconstruction Summary","Reconstruction Summary Page", $javascript);
+processing_header("Reconstruction Summary","Reconstruction Summary Page", $javascript);
 
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -88,5 +88,5 @@ if ($reconRuns) {
 }
 
 
-writeBottom();
+processing_footer();
 ?>

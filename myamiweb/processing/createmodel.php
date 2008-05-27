@@ -83,7 +83,7 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
 
 	</SCRIPT>\n";
 
-	writeTop($title,$heading,$javafunctions);
+	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -204,7 +204,7 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
   </FORM>
   </CENTER>\n";
 
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -254,7 +254,7 @@ function runCreateModel() {
 	if ($mask != "") { $command.="--mask=$mask "; }
 	if ($rounds != "") { $command.="--rounds=$rounds "; }
 	
-	writeTop("Create Model Run", "CreateModel Params");
+	processing_header("Create Model Run", "CreateModel Params");
 
 	echo"
 	<P>
@@ -281,7 +281,7 @@ function runCreateModel() {
 	
 	echo"
 	</TABLE>\n";
-	writeBottom();
+	processing_footer();
 }
 
 ?>

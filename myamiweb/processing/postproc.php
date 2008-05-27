@@ -47,7 +47,7 @@ if ($_POST['run']) {
 	if ($invert=='on') $command.="--invert ";
 	if ($viper=='on') $command.="--viper ";
 
-	writeTop("Post Process Reconstructed Density", "Post Process Reconstructed Density");
+	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
 	echo"
 	<P>
 	<TABLE WIDTH='600' BORDER='1'>
@@ -68,7 +68,7 @@ if ($_POST['run']) {
         <tr><td>invert</td><td>$invert</td></tr>
         <tr><td>viper</td><td>$viper</td></tr>
         </table>\n";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -77,7 +77,7 @@ else createform();
 function createform($extra=False) {
 	$expId = $_GET['expId'];
 	$refid = $_GET['refinement'];
-	writeTop("Post Process Reconstructed Density", "Post Process Reconstructed Density");
+	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
 
 	// write out errors, if any came up:
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -165,7 +165,7 @@ function createform($extra=False) {
 	echo "<INPUT TYPE='hidden' name='path' value='$info[path]'>\n";
 	echo "<center><INPUT type='submit' name='run' value='Perform amplitude adjustment'></center>\n";
 	echo "</FORM>\n";
-	writeBottom();
+	processing_footer();
 	exit();
 }
 ?>

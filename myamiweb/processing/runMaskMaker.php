@@ -173,7 +173,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	$javascript.=appionLoopJavaCommands();
 	$javascript.=writeJavaPopupFunctions('appion');
 
-	writeTop($title,$heading,$javascript);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
@@ -249,7 +249,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	</CENTER>
 	</FORM>
 	<?
-	writeBottom();
+	processing_footer();
 }
 function runMaskMaker() {
 	$process = $_POST['process'];
@@ -301,7 +301,7 @@ function runMaskMaker() {
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
-	writeTop("Bad Region Detection Results","Bad Region Detection Results",$javascript);
+	processing_header("Bad Region Detection Results","Bad Region Detection Results",$javascript);
 
 	if ($testimage) {
 		$outdir=$_POST[outdir];
@@ -348,7 +348,7 @@ function runMaskMaker() {
 	appionLoopSummaryTable();
 	maskMakerSummaryTable();
 	echo"</TABLE>\n";
-	writeBottom();
+	processing_footer();
 }
 
 

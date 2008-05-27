@@ -81,7 +81,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	</SCRIPT>\n";
 	echo $javascript;
 	$javascript.=appionLoopJavaCommands();
-	writeTop($title,$heading,$javascript);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
@@ -178,7 +178,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	</CENTER>
 	</FORM>
 	<?
-	writeBottom();
+	processing_footer();
 }
 
 function runjpgmaker() {
@@ -251,7 +251,7 @@ function runjpgmaker() {
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
-	writeTop("JPEG Maker Results","JPEG Maker Results",$javascript);
+	processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
 
 	if ($testimage) {
 		$runid = $_POST[runid];
@@ -292,7 +292,7 @@ function runjpgmaker() {
   
 	//appionLoopSummaryTable();
 	echo"</TABLE>\n";
-	writeBottom();
+	processing_footer();
 }
 
 

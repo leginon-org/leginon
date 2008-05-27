@@ -97,7 +97,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  </SCRIPT>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
 	
-	writeTop($title,$heading,$javascript);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font COLOR='RED'>$extra</font>\n<HR>\n";
@@ -395,7 +395,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "</tr>\n";
 	echo "</table>\n";
 	echo "</form>\n";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -520,7 +520,7 @@ function runMakestack() {
 		exit;
 	}
 
-	writeTop("Makestack Run","Makestack Params");
+	processing_header("Makestack Run","Makestack Params");
 
 	if ($massessname) {
 		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
@@ -555,6 +555,6 @@ function runMakestack() {
 	<tr><td>particle limit</td><td>$limit</td></tr>
 	<tr><td>spider</td><td>$fileformat</td></tr>
 	</table>\n";
-	writeBottom(True,True);
+	processing_footer(True,True);
 }
 ?>

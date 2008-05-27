@@ -40,7 +40,7 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-writeTop("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>", false);
+processing_header("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>", false);
 
 // write out errors, if any came up:
 if ($extra) {
@@ -456,7 +456,7 @@ if ($sessionId) {
 	echo array2table($data, $columns, $display_header);
 
 }
-writeBottom($showproclink=False);
+processing_footer($showproclink=False);
 exit;
 }
 

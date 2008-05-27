@@ -66,7 +66,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 
   $projects=getProjectList();
 
-  writeTop($title,$heading,$javascript);
+  processing_header($title,$heading,$javascript);
   // write out errors, if any came up:
 
   if ($extra) {
@@ -228,7 +228,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   </TABLE>
   </FORM>
   </CENTER>\n";
-  writeBottom();
+  processing_footer();
   exit;
 }
 
@@ -303,7 +303,7 @@ function runUploadRecon() {
   if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
   $command.="--description=\"$description\"";
   
-  writeTop("UploadRecon Run","UploadRecon Params");
+  processing_header("UploadRecon Run","UploadRecon Params");
 	
   echo"
 	<P>
@@ -321,6 +321,6 @@ function runUploadRecon() {
 	<TR><TD>zoom</TD><TD>$zoom</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
 	</TABLE>\n";
-  writeBottom();
+  processing_footer();
 }
 ?>

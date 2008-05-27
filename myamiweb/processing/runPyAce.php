@@ -132,7 +132,7 @@ function runPyAce() {
 		exit;
 	}
 
-	writeTop("PyACE Results","PyACE Results");
+	processing_header("PyACE Results","PyACE Results");
 
 	echo"
 	<P>
@@ -162,7 +162,7 @@ function runPyAce() {
 	else echo "<TR><TD>reprocess</TD><TD><I>NULL</I></TD></TR>\n";
 	echo "<TR><TD>newnominal</TD><TD>$newnominal</TD></TR>\n";
 	echo "</TABLE>\n";
-	writeBottom(True, True);
+	processing_footer(True, True);
 }
 
 /*
@@ -244,7 +244,7 @@ function createPyAceForm($extra=false) {
 	</SCRIPT>\n";
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
-	writeTop("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
+	processing_header("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
@@ -352,7 +352,7 @@ function createPyAceForm($extra=false) {
 	</tr>
 	</table>
 	</form>\n";
-	writeBottom();
+	processing_footer();
 }
 
 function getdata($str_field, $str_data) {

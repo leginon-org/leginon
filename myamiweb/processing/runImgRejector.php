@@ -63,7 +63,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	  </SCRIPT>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
 	
-	writeTop($title,$heading,$javascript);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<font COLOR='RED'>$extra</font>\n<HR>\n";
@@ -212,7 +212,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	</table>
 	</FORM>
 	</CENTER>\n";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -271,7 +271,7 @@ function runImgRejector() {
 		exit;
 	}
 
-	writeTop("ImgRejector Run","ImgRejector Params");
+	processing_header("ImgRejector Run","ImgRejector Params");
 
 	if ($massessname) {
 		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
@@ -293,6 +293,6 @@ function runImgRejector() {
 	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
 	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
 	</table>\n";
-	writeBottom(True,True);
+	processing_footer(True,True);
 }
 ?>

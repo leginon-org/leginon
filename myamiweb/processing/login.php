@@ -16,7 +16,7 @@ if ($_POST['login']) {
 loginform();
 
 function loginform($extra=false) {
-    writeTop('Appion Login','Appion Login',false,false);
+    processing_header('Appion Login','Appion Login',false,false);
     $formAction=$_SERVER['PHP_SELF'];
     $expId=$_GET['expId'];
     $prev=$_GET['prev'];
@@ -28,7 +28,7 @@ function loginform($extra=false) {
 
     displayLogin($formAction);
 
-    writeBottom();
+    processing_footer();
     exit;
   }
 ?>

@@ -47,7 +47,7 @@ else {
 $imgtypes=array('jpg','png','mrc','dwn.mrc');
 
 $javascript="<script src='../js/viewer.js'></script>\n";
-writeTop("Leginon Image Assessor","Image Assessor",$javascript);
+processing_header("Leginon Image Assessor","Image Assessor",$javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
 $sessiondata=displayExperimentForm($projectId, $sessionId, $expId);
@@ -244,7 +244,7 @@ echo"<BR/></TD></TR>\n";
 
 echo"</TABLE>\n";
 echo"</FORM>\n";
-writeBottom();
+processing_footer();
 
 
 function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentrid) {

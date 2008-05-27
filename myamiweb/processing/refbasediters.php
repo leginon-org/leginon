@@ -25,7 +25,7 @@ else {
 }
 
 function displayIterations($refaliId) {
-	writeTop("Reference-Based Alignment Iteration Summary","Reference-Based Alignment Iteration Summary", $javascript);
+	processing_header("Reference-Based Alignment Iteration Summary","Reference-Based Alignment Iteration Summary", $javascript);
 
 	// --- Get Iterations Data
 	$particle = new particledata();
@@ -86,5 +86,5 @@ function displayIterations($refaliId) {
 		echo"<P>\n";
 	}
 }
-writeBottom();
+processing_footer();
 ?>

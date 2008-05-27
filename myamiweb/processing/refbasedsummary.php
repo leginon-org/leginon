@@ -28,7 +28,7 @@ $projectId=$_POST['projectId'];
 
 $javascript="<script src='../js/viewer.js'></script>\n";
 
-writeTop("Reference-Based Alignment Summary","Reference-Based Alignment Summary", $javascript);
+processing_header("Reference-Based Alignment Summary","Reference-Based Alignment Summary", $javascript);
 
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -83,5 +83,5 @@ foreach ($refaliIds as $refid) {
   echo"<P>\n";
 }
 
-writeBottom();
+processing_footer();
 ?>

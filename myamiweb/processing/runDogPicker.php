@@ -60,7 +60,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 	$javafunctions .= particleLoopJavaCommands();
 
-	writeTop("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
+	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
 
 	if ($extra) {
 		echo "<font COLOR='#DD0000' size=+2>$extra</font>\n<hr>\n";
@@ -131,7 +131,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	</tr>
 	</form>
 	</table>\n";
-	writeBottom();
+	processing_footer();
 }
 
 function runDogPicker() {
@@ -199,7 +199,7 @@ function runDogPicker() {
 		if (!$testimage) exit;
 	}
 
-	writeTop("Particle Selection Results","Particle Selection Results");
+	processing_header("Particle Selection Results","Particle Selection Results");
 
 	if ($testimage) {
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -224,7 +224,7 @@ function runDogPicker() {
 	appionLoopSummaryTable();
 	particleLoopSummaryTable();
 	echo"</TABLE>\n";
-	writeBottom(True, True);
+	processing_footer(True, True);
 }
 
 

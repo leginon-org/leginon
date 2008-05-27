@@ -88,7 +88,7 @@ function createTemplateForm() {
 		$templatetable.="</TABLE>\n";
 	}
 
-	writeTop("Template Correlator Launcher","Automated Particle Selection with Template Correlator","");
+	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator","");
 	echo"
   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
   <B>Select Project:</B><BR>
@@ -140,7 +140,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   $refaliIds = $particle->getRefAliIds($sessionId);
   $refaliruns=count($refaliIds);
 
-  writeTop($title,$heading,"");
+  processing_header($title,$heading,"");
   // write out errors, if any came up:
   if ($extra) {
     echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -326,7 +326,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo "$templateForm\n";
 	echo "$templateTable\n";
 
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -392,7 +392,7 @@ function runAlignment() {
 	$cmd = "exec ssh $user@$host '$command > refBasedAlignmentlog.txt &'";
 //	exec($cmd ,$result);
 
-	writeTop("Alignment Run","Alignment Params");
+	processing_header("Alignment Run","Alignment Params");
 
 	echo"
 	<P>
@@ -413,7 +413,7 @@ function runAlignment() {
 	<TR><TD>lowpass</TD><TD>$lp</TD></TR>";
 	if ($csym > 1) echo"	<TR><TD>c-symmetry</TD><TD>$csym</TD></TR>";
 	echo"	</TABLE>\n";
-	writeBottom();
+	processing_footer();
 }
 
 /*

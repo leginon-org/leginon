@@ -70,7 +70,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 
 	$javascript .= writeJavaPopupFunctions('appion');	
 
-	writeTop($title,$heading,$javascript);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -250,7 +250,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process'] && !$_POST['showcommand']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
-	writeBottom();
+	processing_footer();
 	exit;
 }
 
@@ -341,7 +341,7 @@ function runNoRefAlign($runjob=False) {
 		exit;
 	}
 	else {
-		writeTop("No Ref Align Run Params","No Ref Align Params");
+		processing_header("No Ref Align Run Params","No Ref Align Params");
 		echo"
 	<p><center>
 	<TABLE WIDTH='600' BORDER='1'>
@@ -362,7 +362,7 @@ function runNoRefAlign($runjob=False) {
 	<TR><TD>out dir</TD><TD>$outdir</TD></TR>
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
 	</table></center>\n";
-		writeBottom();
+		processing_footer();
 	}
 }
 ?>

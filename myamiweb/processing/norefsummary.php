@@ -36,7 +36,7 @@ function createNoRefAlignSummary() {
 
 	$javascript="<script src='../js/viewer.js'></script>\n";
 
-	writeTop("NoRef Class Report","Reference-free Classification Summary Page", $javascript);
+	processing_header("NoRef Class Report","Reference-free Classification Summary Page", $javascript);
 
 	echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -120,7 +120,7 @@ function createNoRefAlignSummary() {
 		echo "</FORM>\n";
 		echo"<P>\n";
 	}
-	writeBottom();
+	processing_footer();
 	exit;
 };
 

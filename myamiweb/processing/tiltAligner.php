@@ -58,7 +58,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
   $javafunctions .= appionLoopJavaCommands();
   $javafunctions .= writeJavaPopupFunctions('appion');
   $javafunctions .= particleLoopJavaCommands();
-  writeTop("Tilt Aligner Launcher","Tilt Aligner Particle Selection and Editing",$javafunctions);
+  processing_header("Tilt Aligner Launcher","Tilt Aligner Particle Selection and Editing",$javafunctions);
 
   if ($extra) {
     echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
@@ -175,7 +175,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
     </TD>
   </TR>
   </TABLE>";
-  writeBottom();
+  processing_footer();
   ?>
 
   </CENTER>
@@ -237,7 +237,7 @@ function runTiltAligner() {
     $result=exec_over_ssh($host, $user, $password, $cmd, True);
   }
 
-  writeTop("Particle Selection Results","Particle Selection Results");
+  processing_header("Particle Selection Results","Particle Selection Results");
 
   if ($testimage) {
     $runid = $_POST[runid];
@@ -265,7 +265,7 @@ function runTiltAligner() {
   appionLoopSummaryTable();
   particleLoopSummaryTable();
   echo"</TABLE>\n";
-  writeBottom();
+  processing_footer();
 }
 
 ?>
