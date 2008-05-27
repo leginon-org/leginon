@@ -81,7 +81,6 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
   $testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
   echo"
-  <P>
   <TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
   <TR>
     <TD VALIGN='TOP'>";
@@ -255,7 +254,6 @@ function runTiltAligner() {
   }
 
   echo"
-    <P>
     <TABLE WIDTH='600'>
     <TR><TD COLSPAN='2'>
     <B>Tilt Aligner Command:</B><BR>

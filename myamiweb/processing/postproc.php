@@ -49,7 +49,6 @@ if ($_POST['run']) {
 
 	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
 	echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
 	<B>PostProc Command:</B><BR>
@@ -120,8 +119,6 @@ function createform($extra=False) {
 	$amplist[3]['name']="ampcor11.spi";
 	$amplist[3]['res']=11.519;
 	$amplist[3]['src']="Experimental X-ray curve, smoothed by Dmitri Svergun";
-
-	echo "<P>\n";
 	echo "Density File: $densityfile<br />\n";
 	echo "Resolution (FSC = 0.5): $halfres<br />\n";
 	echo "Resolution (Rmeasure): $rmeasureres<br />\n";

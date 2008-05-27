@@ -37,7 +37,6 @@ $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 // --- Get Stack Data
 $particle = new particledata();
 
-echo"<P>\n";
 $totimgs = $particle->getNumImgsFromSessionId($sessionId);
 $viewerimgs = $particle->getNumViewerPrefImages($sessionId);
 $assessedimgs = $particle->getNumAssessedImages($sessionId);

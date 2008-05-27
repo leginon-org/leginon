@@ -99,8 +99,7 @@ function createTemplateForm() {
 		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
 	}
 	echo"
-  </select>
-  <P>\n";
+  </select>\n";
 	if ($templatetable) {
 		echo"
     <CENTER>
@@ -205,7 +204,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo "<INPUT TYPE='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
 
   echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder>
 	<TR>
 		<TD VALIGN='TOP'>
@@ -395,7 +393,6 @@ function runAlignment() {
 	processing_header("Alignment Run","Alignment Params");
 
 	echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>Alignment Command:</B><BR>

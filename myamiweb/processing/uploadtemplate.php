@@ -136,7 +136,6 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	}
 	
 	echo"
-	<P>
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
 	<TR>
@@ -277,7 +276,6 @@ function runUploadTemplate() {
 	processing_header("UploadTemplate Run", "UploadTemplate Params");
 
 	echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>";
 	//display this line if there's a norefId or stackId

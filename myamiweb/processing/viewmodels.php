@@ -1,26 +1,18 @@
 <?php
 require"inc/particledata.inc";
-require"inc/util.inc";
+require"inc/viewer.inc";
+require"inc/processing.inc";
 require"inc/leginon.inc";
 require"inc/project.inc";
-require"inc/processing.inc";
 
 $expId= $_GET['expId'];
 $particle = new particledata();
 $projectId=getProjectFromExpId($expId);
-?>
 
-<html>
-<head>
-<title>Initial Models</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css">
-</head>
-<body>
-
-<?php
 $models = $particle->getModelsFromProject($projectId);
-echo divtitle("Initial Models");
-echo "<P>\n";
+
+processing_header("Initial Models","Initial Models");
+
 foreach ($models as $model) {
   echo "<TABLE CLASS='tableborder' BORDER='1' CELLSPACING='1' CELLPADDING='2'>\n";
   # get list of png files in directory
@@ -48,9 +40,6 @@ foreach ($models as $model) {
   echo"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\n";
   echo"<TR><TD>resolution:</TD><TD>$model[resolution]</TD></TR>\n";
   echo "</TABLE>\n";
-  echo "<P>\n";
 }
 
-?>
-</body>
-</html>
+processing_footer();

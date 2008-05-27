@@ -102,13 +102,12 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$firstring = ($_POST['numpart']) ? $_POST['firstring'] : '2';
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : '150';
 	echo"
-	<p>
 	<table border='0' class='tableborder'>
 	<tr>
 		<td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
-	openRoundBorder();
+	echo openRoundBorder();
 	echo docpop('runid','<b>NoRef Run Name:</b>');
 	echo "<input type='text' name='runid' value='$runidval'>\n";
 	echo "<br />\n";
@@ -121,7 +120,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo docpop('descr','<b>Description of NoRef Alignment:</b>');
 	echo "<br />\n";
 	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
-	closeRoundBorder();
+	echo closeRoundBorder();
 	echo "</td>
 		</tr>\n";
 	echo "<tr>
@@ -343,7 +342,7 @@ function runNoRefAlign($runjob=False) {
 	else {
 		processing_header("No Ref Align Run Params","No Ref Align Params");
 		echo"
-	<p><center>
+	<center>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>NoRef Alignment Command:</B><BR>

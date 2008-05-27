@@ -63,7 +63,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	}
 
 	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
-	openRoundBorder();
+	echo openRoundBorder();
 	echo docpop('runid','<b>Run Name:</b> ');
 	echo "<input type='text' name='runid' VALUE='$runid'><BR/><BR/>\n";
 	
@@ -88,7 +88,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	echo docpop('outdir','<b>Output Directory:</b>');
 	echo "<br />\n";
 	echo "<input type='text' name='outdir' VALUE='$outdir' size='45'><br />\n";
-	closeRoundBorder();
+	echo closeRoundBorder();
 	echo "<br />\n";
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';

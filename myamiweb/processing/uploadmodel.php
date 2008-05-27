@@ -81,8 +81,6 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   
   $syms = $particle->getSymmetries();
   echo"
-  <P>\n";
-  echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
@@ -224,7 +222,6 @@ function runUploadModel() {
   processing_header("UploadModel Run","UploadModel Params");
 	
   echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>UploadModel Command:</B><BR>

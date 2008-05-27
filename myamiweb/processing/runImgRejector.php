@@ -92,7 +92,6 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
 	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
 	$acecutoff = ($_POST['acecheck']=='on') ? $_POST['acecutoff'] : '0.8';
-	echo "<p>\n";
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
@@ -277,7 +276,6 @@ function runImgRejector() {
 		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
 	}
 	echo"
-	<P>
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
 	<b>ImgRejector Command:</b><br />

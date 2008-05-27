@@ -146,7 +146,6 @@ if ($_POST['oldimgtype'] != $_POST['imgtype']) {
 // save for future comparison
 echo "<INPUT TYPE='hidden' NAME='oldimgrun' VALUE='$imgrun'>";
 echo "<INPUT TYPE='hidden' NAME='oldimgtype' VALUE='$imgtype'>";
-echo"<P>\n";
 
 // Read and Display images
 echo"<TABLE CLASS='tableborder' CELLPADING='10' CELLSPACING='5'>\n";

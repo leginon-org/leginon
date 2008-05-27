@@ -192,7 +192,6 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	$cdiam = ($_POST['cdiam']) ? $_POST['cdiam'] :'';
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
@@ -335,7 +334,6 @@ function runMaskMaker() {
 
 
 	echo"
-  <P>
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
   <B>Mask Maker Command:</B><BR>

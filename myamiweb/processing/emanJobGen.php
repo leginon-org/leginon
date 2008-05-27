@@ -366,7 +366,7 @@ function jobForm($extra=false) {
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
 	echo "<tr><td>\n";
-	openRoundBorder();
+	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>
     <td rowspan='2'><b>Cluster:</b></td>
@@ -386,7 +386,7 @@ function jobForm($extra=false) {
     <td><input type='text' NAME='clusterpath' VALUE='$clusterpath' SIZE=50></td>
   </tr>
   </table>\n";
-	closeRoundBorder();
+	echo closeRoundBorder();
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "<p>\n";
@@ -397,7 +397,7 @@ function jobForm($extra=false) {
 	echo "<table border='0'><tr><td valign='top'>"; 
 
 	//Cluster Parameters
-	openRoundBorder();
+	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>\n";
 	echo "<td colspan='4' align='center'>\n";
@@ -422,12 +422,12 @@ function jobForm($extra=false) {
       </td>
     </tr>
     </table>\n";
-	closeRoundBorder();
+	echo closeRoundBorder();
 
 	echo"</td><td valign='top'>"; //overall table
 
 	//DMF Parameters TABLE
-	openRoundBorder();
+	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>
       <TD COLSPAN='4' ALIGN='CENTER'>
@@ -451,7 +451,7 @@ function jobForm($extra=false) {
       <td><input type='checkbox' NAME='dmfstore' $dmfstorech></td>
     </tr>
     </table>\n";
-	closeRoundBorder();
+	echo closeRoundBorder();
 	echo"</td></tr></table>"; //overall table
   $bgcolor="#E8E8E8";
   $display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  

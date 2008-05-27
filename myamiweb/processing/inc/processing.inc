@@ -811,16 +811,18 @@ function writeJavaPopupFunctions ($help) {
 };
 
 function openRoundBorder() {
-	echo "<div id='roundbox'>\n";
-	echo "<b class='xtop'><b class='xb1'></b><b class='xb2'></b><b class='xb3'></b><b class='xb4'></b></b>\n";
-	echo "<div class='roundboxcontent'>\n";
-	echo "<p>\n";
+	$text = "<div id='roundbox'>\n";
+	$text .= "<b class='xtop'><b class='xb1'></b><b class='xb2'></b><b class='xb3'></b><b class='xb4'></b></b>\n";
+	$text .= "<div class='roundboxcontent'>\n";
+	$text .= "<p>\n";
+	return ($text);
 }
 
 function closeRoundBorder() {
-	echo "</p>\n";
-	echo "</div><!--/rounboxcontent-->\n";
-	echo "<b class='xbottom'><b class='xb4'></b><b class='xb3'></b><b class='xb2'></b><b class='xb1'></b></b>\n";
-	echo "</div><!--/roundbox-->\n";
+	$text = "</p>\n";
+	$text .= "</div><!--/roundboxcontent-->\n";
+	$text .= "<b class='xbottom'><b class='xb4'></b><b class='xb3'></b><b class='xb2'></b><b class='xb1'></b></b>\n";
+	$text .= "</div><!--/roundbox-->\n";
+	return ($text);
 }
 ?>

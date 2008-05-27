@@ -72,7 +72,6 @@ if ($_POST['run']) {
 
 	processing_header("Create New Class Averages","Create New Class Averages");
 	echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
 	<B>Create Class Averages Command:</B><BR>
@@ -118,7 +117,6 @@ function createform($extra=False) {
 	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
 	$eocheck=($_POST['eotest']=='on' || !$_POST['run']) ? 'checked' : '';
 
-        echo "<P>\n";
 	echo "<FORM NAME='postproc' METHOD='POST' ACTION='$formAction'>\n";
 	echo "<TABLE cellpadding='5' BORDER=3 CLASS=tableborder>\n";
 	echo "<TR>\n";

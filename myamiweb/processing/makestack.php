@@ -148,14 +148,13 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$invcheck = ($_POST['density']=='invert' || !$_POST['process']) ? 'CHECKED' : '';
 	// normalization check (checked by default)
 	$normcheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	echo "<p>\n";
 	echo "<table border=0 class=tableborder>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
 	echo "<table cellpadding='5' border='0'>\n";
 	echo "<tr>\n";
 	echo "<td valign='TOP'>\n";
-	openRoundBorder();
+	echo openRoundBorder();
 	echo docpop('stackname','<b>Stack File Name:</b>');
 	echo "<input type='text' name='single' value='$single'>\n";
 	echo "<br />\n";
@@ -172,7 +171,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo docpop('stackdescr','<b>Stack Description:</b>');
 	echo "<br />\n";
 	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
-	closeRoundBorder();
+	echo closeRoundBorder();
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
@@ -526,7 +525,6 @@ function runMakestack() {
 		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
 	}
 	echo"
-	<P>
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
 	<b>Makestack Command:</b><br />

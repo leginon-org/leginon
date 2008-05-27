@@ -108,7 +108,6 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	$_POST['commit']='on';
 	echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 	  <TD VALIGN='TOP'>";
@@ -273,8 +272,6 @@ function runjpgmaker() {
 
 
 	echo"
-  
-  <P>
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
   <B>JPEG Maker Command:</B><BR>

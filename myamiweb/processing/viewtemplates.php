@@ -11,7 +11,6 @@
 require "inc/particledata.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-require "inc/appionloop.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 
@@ -21,7 +20,6 @@ processing_header("Template Summary", "Template Summary", "",False);
 
 if ($expId && is_int($expId)){
 	$projectId = (int) getProjectFromExpId($expId);
-	//echo "project id = $projectId<BR/>";
 }
 
 // if user wants to use templates from another project
@@ -35,7 +33,7 @@ if (is_int($projectId)) {
 }
 
 
-echo"<BR/><INPUT TYPE='hidden' NAME='projectId' value='$projectId'>\n";
+echo"<INPUT TYPE='hidden' NAME='projectId' value='$projectId'>\n";
 
 // extract template info
 if ($templateData) {
@@ -56,14 +54,13 @@ if ($templateData) {
 			$templatetable.="<B>Template ID:</B>  $templateinfo[DEF_id]<BR/>\n";
 			$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<BR/>\n";
 			$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<BR/>\n";
+			$templatetable.=openRoundBorder();
 			$templatetable.="<B>File:</B><BR/>";
-			$templatetable.="<TABLE CLASS='tableborder' BORDER='1'><TR><TD CLASS='tablebg'>\n";
 			$templatetable.=$filename;
-			$templatetable.="</TD></TR></TABLE>\n";
+			$templatetable.="<br />\n";
 			$templatetable.="<B>Description:</B><BR/>";
-			$templatetable.="<TABLE CLASS='tableborder' BORDER='1'><TR><TD CLASS='tablebg'>\n";
-			$templatetable.=$templateinfo[description];
-			$templatetable.="</TD></TR></TABLE>\n";
+			$templatetable.=$templateinfo['description'];
+			$templatetable.=closeRoundBorder();
 			$templatetable.="</TD></TR>\n";
 			$i++;
 		}

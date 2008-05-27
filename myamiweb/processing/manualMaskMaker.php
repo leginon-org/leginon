@@ -33,7 +33,7 @@ function maskMakerJavaCommands () {
 	$masktype = ($_POST[masktype]);
 	$crudstd = $_POST[crudstd];
 
-	echo"
+	$java ="
       <SCRIPT LANGUAGE='JavaScript'>
 		function mminfopopup(infoname){
 			 var newwindow=window.open('','name','height=250, width=400');
@@ -60,12 +60,11 @@ function maskMakerJavaCommands () {
 			 newwindow.document.close();
 		}
       </SCRIPT>\n";
+	return($java);
 }
 
 function createManualMaskMakerTable ($sessionId) {
 	echo "<!-- BEGIN Mask Maker Param -->";
-//	prettytable2();
-//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
 	
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '4';
 	$assess = ($_POST['assess']) ? $_POST['assess']:0;
@@ -222,7 +221,7 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 		 }
 	</SCRIPT>\n";
 	$javascript.=appionLoopJavaCommands();
-	maskMakerJavaCommands();
+	$javascript.=maskMakerJavaCommands();
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
@@ -237,7 +236,6 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
@@ -322,7 +320,6 @@ function runMaskMaker() {
 
 
 	echo"
-  <P>
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
   <B>Mask Maker Command:</B><BR>

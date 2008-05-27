@@ -62,7 +62,6 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<input type='hidden' name='norefid' value=$norefid>";
 
 	echo"
-	<p>
 	<table border='0' class='tableborder'>
 	<tr>
 		<td valign='top'>
@@ -213,7 +212,6 @@ function runNoRefClassify($runjob=False) {
 	processing_header("No Ref Classify Run Params","No Ref Classify Params");
 
 	echo"
-	<p>
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
 	<b>NoRef Classify Command:</b><br />

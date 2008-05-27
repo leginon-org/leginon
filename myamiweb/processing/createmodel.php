@@ -123,7 +123,6 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
 	$syms = $particle->getSymmetries();
 	
 	echo"
-	<P>
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
 	<TR>
@@ -257,7 +256,6 @@ function runCreateModel() {
 	processing_header("Create Model Run", "CreateModel Params");
 
 	echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>";
 	

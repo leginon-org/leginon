@@ -95,7 +95,6 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   $oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
   $iteration = $_POST['iteration'];
   echo"
-  <P>
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>
@@ -306,7 +305,6 @@ function runUploadRecon() {
   processing_header("UploadRecon Run","UploadRecon Params");
 	
   echo"
-	<P>
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>UploadRecon Command:</B><BR>
