@@ -19,13 +19,14 @@ require_once "inc/project.inc";
 // check if coming directly from a session
 $expId=$_GET['expId'];
 if ($expId){
-  $sessionId=$expId;
-  $projectId=getProjectFromExpId($expId);
-  $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$sessionId=$expId;
+	$projectId=getProjectFromExpId($expId);
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 }
+
 else {
-  $sessionId=$_POST['sessionId'];
-  $formAction=$_SERVER['PHP_SELF'];  
+	$sessionId=$_POST['sessionId'];
+	$formAction=$_SERVER['PHP_SELF'];  
 }
 
 // Collect session info from database
@@ -38,92 +39,136 @@ $currentproject=$sessiondata['currentproject'];
 $particle = new particledata();
 
 if ($sessionId) {
-// ---  Get CTF Data
-  $ctf = new ctfdata();
+	// sort out submitted job information
+	$clusterjobs = $particle->getJobIdsFromSession($expId);
+	$subclusterjobs=array();
+	foreach ($clusterjobs as $job) {
+		$jobtype = $job['jobtype'];
+		if ($job['status']=='D') $subclusterjobs[$jobtype]['done'][]=$job['DEF_id'];
+		elseif ($job['status']=='R') $subclusterjobs[$jobtype]['running'][]=$job['DEF_id'];
+		elseif ($job['status']=='Q') $subclusterjobs[$jobtype]['queued'][]=$job['DEF_id'];
+	}
 
-  if ($ctfrunIds = $ctf->getCtfRunIds($sessionId)) {
+	// ---  Get CTF Data
+	$ctf = new ctfdata();
+
+	if ($ctfrunIds = $ctf->getCtfRunIds($sessionId)) {
 		$ctfruns=count($ctfrunIds);
 	}
 
-  // --- Get Particle Selection Data
-  if ($prtlrunIds = $particle->getParticleRunIds($sessionId)) {
+	// --- Get Particle Selection Data
+	if ($prtlrunIds = $particle->getParticleRunIds($sessionId)) {
 		$prtlruns=count($prtlrunIds);
 	}
-  // --- retrieve template info from database for this project
-  if ($expId){
-    $projectId=getProjectFromExpId($expId);
-  }
-  if ($projectId) {
-    if ($templatesData=$particle->getTemplatesFromProject($projectId))
-			$templates = count($templatesData);
-    if ($modelData=$particle->getModelsFromProject($projectId))
-			$models = count($modelData);
-  }
 
-  // --- Get Mask Maker Data
-  if ($maskrunIds = $particle->getMaskMakerRunIds($sessionId))
+	// --- retrieve template info from database for this project
+	$projectId=getProjectFromExpId($expId);
+
+	if ($projectId) {
+		if ($templatesData=$particle->getTemplatesFromProject($projectId)) $templates = count($templatesData);
+		if ($modelData=$particle->getModelsFromProject($projectId)) $models = count($modelData);
+	}
+
+	// --- Get Mask Maker Data
+	if ($maskrunIds = $particle->getMaskMakerRunIds($sessionId))
 		$maskruns=count($maskrunIds);
 
-  // --- Get Micrograph Assessment Data
-  $totimgs = $particle->getNumImgsFromSessionId($sessionId);
-  $assessedimgs = $particle->getNumTotalAssessImages($sessionId);
-  
-  // --- Get Stack Data
-  if ($stackIds = $particle->getStackIds($sessionId))
+	// --- Get Micrograph Assessment Data
+	$totimgs = $particle->getNumImgsFromSessionId($sessionId);
+	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
+	
+	// --- Get Stack Data
+	if ($stackIds = $particle->getStackIds($sessionId))
 		$stackruns=count($stackIds);
 
-  // --- Get NoRef Data
-  if ($stackruns>0) {
-    $norefIds = $particle->getNoRefIds($sessionId);
-    $norefruns=count($norefIds);
-  } else {
-    $norefruns=0;
-  };
+	// --- Get NoRef Data
+	if ($stackruns>0) {
+		$norefIds = $particle->getNoRefIds($sessionId);
+		$norefruns=count($norefIds);
+	}
+	else {
+		$norefruns=0;
+	};
 
-  // --- Get Ref-based Alignment Data
-  if ($stackruns>0) {
-    $refbasedIds = $particle->getRefAliIds($sessionId);
+	// --- Get Ref-based Alignment Data
+	if ($stackruns>0) {
+		$refbasedIds = $particle->getRefAliIds($sessionId);
 		$refbasedruns=count($refbasedIds);
-  } else {
-    $refbasedruns=0;
-  };
+	} 
+	else {
+		$refbasedruns=0;
+	}
+	
+	// --- Get Reconstruction Data
+	if ($stackruns>0) {
+		foreach ((array)$stackIds as $stackid) {
+			$reconIds = $particle->getReconIds($stackid['stackid']);
+			if ($reconIds) $reconruns+=count($reconIds);
+		}
+		// get number of jobs submitted
+		$subjobs = $particle->getSubmittedJobs($sessionId);
 
-  // --- Get Reconstruction Data
-  if ($stackruns>0) {
-    foreach ((array)$stackIds as $stackid) {
-      $reconIds = $particle->getReconIds($stackid['stackid']);
-      if ($reconIds) {
-        $reconruns+=count($reconIds);
-      }
-    }
-    // get number of jobs submitted
-    $subjobs = $particle->getSubmittedJobs($sessionId);
-
-    // get num of jubs queued, submitted or done
-    $jobqueue=0;
-    $jobrun=0;
-    $jobdone=0;
-    foreach ($subjobs as $j) {
-      // skip appion jobs
-      if (!(ereg('.appionsub.',$j['name']))) {
+		// get num of jubs queued, submitted or done
+		$jobqueue=0;
+		$jobrun=0;
+		$jobdone=0;
+		foreach ($subjobs as $j) {
+			// skip appion jobs
+			if (!(ereg('.appionsub.',$j['name']))) {
 				if ($j['status']=='Q') $jobqueue++;
 				elseif ($j['status']=='R') $jobrun++;
 				elseif ($j['status']=='D') $jobdone++;
-      }
-    }
-  }
+			}
+		}
+	}
 
 	$action = "Particle Selection";
+
+	// get template picking stats:
+	$tresults=array();
+	$drsults=array();
+	$mresults=array();
+
+	$tdone = count($subclusterjobs['templatepicker']['done']);
+	$trun = count($subclusterjobs['templatepicker']['running']);
+	$tq = count($subclusterjobs['templatepicker']['queued']);
+
+	$ddone = count($subclusterjobs['dogpicker']['done']);
+	$drun = count($subclusterjobs['dogpicker']['running']);
+	$dq = count($subclusterjobs['dogpicker']['queued']);
+
+	$mdone = count($subclusterjobs['manualpicker']['done']);
+	$mrun = count($subclusterjobs['manualpicker']['running']);
+	$mq = count($subclusterjobs['manualpicker']['queued']);
+
+	$tresults[] = ($tdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tdone complete</a>";
+	$tresults[] = ($trun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=templatepicker'>$trun running</a>";
+	$tresults[] = ($tq==0) ? "" : "$tq queued";
+
+	$dresults[] = ($ddone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$ddone complete</a>";
+	$dresults[] = ($drun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=dogpicker'>$drun running</a>";
+	$dresults[] = ($dq==0) ? "" : "$dq queued";
+
+	$mresults[] = ($mdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$mdone complete</a>";
+	$mresults[] = ($mrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
+	$mresults[] = ($mq==0) ? "" : "$mq queued";
 
 	$result = ($prtlruns==0) ? "" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
 	$nrun=array();
-	$nrun[] = "<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>";
-	$nrun[] = "<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>";
-	$nrun[] = "<a href='runManualPicker.php?expId=$sessionId'>"
-						.($prtlruns==0) ? "Manual Picking" : "Manually Edit Picking"
-						."</a>";
+	$nrun[] = array(
+			'name'=>"<a href='runPySelexon.php?expId=$sessionId'>Template Picking >></a>",
+			'result'=>$tresults,
+			);
+	$nrun[] = array(
+			'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking >></a>",
+			'result'=>$dresults,
+			);
+	$nrun[] = array(
+			'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking >></a>",
+			'result'=>$mresults,
+			);
 
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
 	if ($maxangle > 5) {
@@ -141,20 +186,29 @@ if ($sessionId) {
 
 	$action = "CTF Estimation";
 
-	if ($ctfruns==0) {
-		$result = "";
-	} else {
-		$result = "<a href='ctfreport.php?Id=$sessionId'>$ctfruns</a>";
-	}
+	// get ctf estimation stats:
+	$ctfresults=array();	
+	$ctfdone = count($subclusterjobs['ace']['done']);
+	$ctfrun = count($subclusterjobs['ace']['running']);
+	$ctfq = count($subclusterjobs['ace']['queued']);
+
+	$ctfresults[] = ($ctfdone==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctfdone complete</a>";
+	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=ace'>$ctfrun running</a>";
+	$ctfresults[] = ($ctfq==0) ? "" : "$ctfq queued";
+
+	// number running and number finished:
+	$totruns=$ctfdone+$ctfrun+$ctfq;
+	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?Id=$sessionId'>$totruns</a>";
 
 	$nruns = array();
-	$nruns[] = "<a href='runPyAce.php?expId=$sessionId'>"
-					."ACE Estimation"
-					."</a>";
+	$nruns[] = array(
+			 'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation >></a>",
+			 'result'=>$ctfresults,
+			 );
 
 	$data[]=array(
 		'action'=>array($action, $celloption),
-		'result'=>array($result),
+		'result'=>array($totresult),
 		'newrun'=>array($nruns, $celloption),
 	);
 
@@ -167,17 +221,10 @@ if ($sessionId) {
 		$result .= "</a>";
 	}
 
-	$nrun = "<a href='imgassessor.php?expId=$sessionId'>";
-	if ($assessedimgs==0) {
-		$nrun .= "Web Image Assessment";
-	} else {
-    $nrun .= ($assessedimgs < $totimgs || $totimgs==0) ? 
-			"Continue Web Assessment" : "Re-Assess Images";
-	}
-	$nrun .= "</a>";
+	$nrun = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment >></a>";
 	$nruns=array();
 	$nruns[]=$nrun;
-	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector</a>";
+	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector >></a>";
 
 	$data[]=array(
 		'action'=>array($action, $celloption),
@@ -187,14 +234,12 @@ if ($sessionId) {
 
 	$action = "Region Mask Creation";
 	$result = ($maskruns==0) ? "" :
-			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>\n";
+			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
 	$nruns=array();
-	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>";
-  $nrun .= ($maskruns==0) ? "Crud Finding" : "Crud Finding";
-	$nrun .= "</a>";
+	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding >></a>";
 	$nruns[]=$nrun;
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
-  $nrun .= "Manual Masking";
+	$nrun .= "Manual Masking >>";
 	$nrun .= "</a>";
 	$nruns[]=$nrun;
 
@@ -207,16 +252,32 @@ if ($sessionId) {
 	// display the stack menu only if have particles picked
 	if ($prtlruns > 0) {
 		$action = "Stacks";
-		$result = ($stackruns==0) ? "" :
-			"<a href='stacksummary.php?expId=$sessionId'>$stackruns<A>";
-		$nrun = "<a href='makestack.php?expId=$sessionId'>Stack creation</a>";
+
+		// get ctf estimation stats:
+		$sresults=array();	
+		$sdone = count($subclusterjobs['makestack']['done']);
+		$srun = count($subclusterjobs['makestack']['running']);
+		$sq = count($subclusterjobs['makestack']['queued']);
+
+		$sresults[] = ($sdone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId'>$sdone complete</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
+		$sresults[] = ($sq==0) ? "" : "$sq queued";
+
+		// stacks being created and stacks completed
+		$totstack = $sdone+$srun+$sq;
+
+		$totresult = ($totstack==0) ? "" :
+			"<a href='stacksummary.php?expId=$sessionId'>$totstack</a>";
 
 		$nruns=array();
-		$nruns[]=$nrun;
+		$nruns[]=array (
+				'name'=>"<a href='makestack.php?expId=$sessionId'>Stack creation >></a>",
+				'result'=>$sresults,
+				);
 		
 		$data[]=array(
 			      'action'=>array($action, $celloption),
-			      'result'=>array($result),
+			      'result'=>array($totresult),
 			      'newrun'=>array($nruns, $celloption),
 			      );
 	}
@@ -224,23 +285,50 @@ if ($sessionId) {
 	// display particle alignment only if there is a stack
 	if ($stackruns > 0) {
 		$action = "Particle Alignment";
-		$resultnoref = ($norefruns==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefruns</a>\n";
-		$resultbasedref = ($refbasedruns==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbasedruns</a>\n";
-		$result = $norefruns+$refbasedruns;
+
+		// get ref-free alignment stats:
+		$norefresults=array();	
+		$norefdone = count($subclusterjobs['norefali']['done']);
+		$norefrun = count($subclusterjobs['norefali']['running']);
+		$norefq = count($subclusterjobs['norefali']['queued']);
+
+		$norefresults[] = ($norefdone==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefdone complete</a>";
+		$norefresults[] = ($norefrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
+		$norefresults[] = ($norefq==0) ? "" : "$norefq queued";
+
+		// stacks being created and stacks completed
+		$totnoref = $norefdone+$norefrun+$norefq;
+
+
+		// get ref-based alignment stats:
+		$refbasedresults=array();	
+		$refbaseddone = count($subclusterjobs['refbasedali']['done']);
+		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
+		$refbasedq = count($subclusterjobs['refbasedali']['queued']);
+
+		$refbasedresults[] = ($refbaseddone==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbaseddone complete</a>";
+		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
+		$refbasedresults[] = ($refbasedq==0) ? "" : "$refbasedq queued";
+
+		// stacks being created and stacks completed
+		$totrefbased = $refbaseddone+$refbasedrun+$refbasedq;
+
+		$totresult = $totnoref+$totrefbased;
 
 		$nruns=array();
 
-		$reffreelink = "<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment</a>";
-		if ($resultnoref) $reffreelink .= " - $resultnoref";
-		$refbasedlink = "<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment</a>";
-		if ($resultbasedref) $refbasedlink .= " - $resultbasedref";
-		$nruns[] = $reffreelink;
-		$nruns[] = $refbasedlink;
-		$nruns[]=$nrun;
+		$nruns[]=array(
+			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment >></a>",
+			       'result'=>$norefresults,
+				 );
+		$nruns[] = array(
+				 'name'=>"<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment >></a>",
+				 'result'=>$refbasedresults,
+				 );
 
 		$data[]=array(
 			      'action'=>array($action, $celloption),
-			      'result'=>array($result),
+			      'result'=>array($totresult),
 			      'newrun'=>array($nruns, $celloption),
 			      );
 
@@ -264,9 +352,8 @@ if ($sessionId) {
 		// first check if there are stacks for a run, then check if logged
 		// in.  Then you can submit a job
 		$nruns=array();
-		if (!$_SESSION['loggedin']) {$nruns[] = "<i>Log in to submit a job</i>\n";}
-		else $nruns[] = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
-		if ($stackruns>0) {
+		if ($_SESSION['loggedin']) {
+			$nruns[] = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
 			$nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
 		}
 		$data[]=array(
@@ -280,25 +367,26 @@ if ($sessionId) {
 
 	$result = ($templates==0) ? "" :
 	  "<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
-	$nrun = "<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>";
-	$nrun.="	-	".$result;
 
 	$nruns=array();
-	$nruns[]=$nrun;
+	$nruns[]=array(
+		       'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template >></a>",
+		       'result'=>$result,
+		       );
 
 	$result = ($models==0) ? "" :
 	  "<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
-	$nrun = "<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>";
-	$nrun.=" -	".$result;
 
-	$nruns[]=$nrun;
-
+	$nruns[]=array(
+		       'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model >></a>",
+		       'result'=>$result,
+		       );
 
 	$data[]=array(
-    'action'=>array($action, $celloption),
-		'result'=>array(),
-    'newrun'=>array($nruns, $celloption),
-  );
+		      'action'=>array(	$action, $celloption),
+		      'result'=>array(),
+		      'newrun'=>array($nruns, $celloption),
+		      );
 }
 
 $menujs='<script type="text/javascript">
@@ -361,8 +449,19 @@ $menuprocessing="";
 
 	function addSubmenu($data) {
 		$text="<ul>";
+		// print out the title of the subfunction
 		foreach((array)$data as $submenu) {
-			$text.="<li>$submenu</li>\n";
+			if (is_array($submenu)) {
+				$text.="<li>".$submenu['name']."</li>";
+				// if there are results for the
+				// subfunction, print them out
+				if ($submenu['result'][0]) {
+					foreach ((array)$submenu['result'] as $res) {
+						$text.=($res) ? "<li class='sub1'>$res</li>" : "";
+					}
+				}
+			}
+			else $text.="<li>$submenu</li>\n";
 		}
 		$text.="</ul>";
 		return '<div class="submenu">'.$text.'</div>';

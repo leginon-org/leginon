@@ -52,10 +52,18 @@
     text-indent: 10px;
     background: #EEE;
     display: block;
-    border-bottom: 1px solid #DDD;
+    border-top: 1px solid #DDD;
     color: #066;
     text-decoration: none;
+    font-weight: bold;
 }
+
+.lvmenu .submenu li.sub1 {
+	text-indent: 20px;
+	border-top: none;
+	font-weight: normal;
+}
+
 .lvmenu .submenu a {
     background: #EEE;
     color: #066;
