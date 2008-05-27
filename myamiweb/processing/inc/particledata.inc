@@ -1047,10 +1047,15 @@ class particledata {
 		return $r;
 	}
 
-	function getJobIdsFromSession($expId) {
-		$q="SELECT * "
-		  ."FROM `ApClusterJobData` "
+	function getJobIdsFromSession($expId,$jobtype=False,$status=False) {
+		$q="SELECT j.*, "
+		  ."p.path as appath "
+		  ."FROM `ApClusterJobData` AS j "
+		  ."LEFT JOIN `ApPathData` AS p ON "
+		  ."(j.`REF|ApPathData|path` = p.`DEF_id`) "
 		  ."WHERE `REF|leginondata|SessionData|session` = $expId";
+		if ($jobtype) $q.=" AND `jobtype` = '$jobtype'";
+		if ($status) $q.=" AND `status` = '$status'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

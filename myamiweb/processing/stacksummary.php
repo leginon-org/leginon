@@ -78,11 +78,7 @@ foreach ($stackIds as $row) {
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid));
 	if ($nump == 0) continue;
-	echo divtitle("STACK: <font class='aptitle'>".$s['shownstackname']
-		."</font> (ID: <font>"
-		."<a target='params' class='aptitle' href='stackreport.php?sId="
-		.$stackid."'>".$stackid."</a>"
-		."</font>)");
+	echo divtitle("Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>".$s['shownstackname']."</a> (ID: $stackid)");
 
 
 	echo "<table border='0'>\n";
@@ -120,7 +116,7 @@ foreach ($stackIds as $row) {
 	$display_keys['# prtls']=$nump;
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
-	$display_keys['name']="<A target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>".$s['name']."</A>";
+	$display_keys['name']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>".$s['name']."</A>";
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 

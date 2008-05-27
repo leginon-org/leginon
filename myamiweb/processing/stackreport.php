@@ -14,21 +14,11 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 
+$expId = $_GET['expId'];
 $sessionId= $_GET['Id'];
 $stackid = $_GET['sId'];
 
 $particle = new particledata();
-
-?>
-
-<html>
-<head>
-<title>Particle Stack Report</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css">
-</head>
-<body>
-
-<?php
 
 	$s=$particle->getStackParams($stackid);
 	# get list of stack parameters from database
@@ -40,10 +30,12 @@ $particle = new particledata();
 	$boxsize= $s[boxSize]/$s[bin];
 	$s['boxsize']=$boxsize;
 
-	echo divtitle("Stack report for STACK: <FONT class='aptitle'>".$s['shownstackname']
+processing_header('Particle Stack Report','Particle Stack Report');
+
+	echo divtitle("Stack: <FONT class='aptitle'>".$s['shownstackname']
 		."</FONT> (ID: <FONT class='aptitle'>".$stackid."</FONT>)");
 
-	echo "<br><table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
+	echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
 
 	$stackfile=$s['path']."/".$s['name'];
 	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><BR>\n";
@@ -65,6 +57,5 @@ $particle = new particledata();
 		echo "</td><td>";
 	}
 	echo "</td><tr></table>";
-?>
-</body>
-</html>
+
+processing_footer();

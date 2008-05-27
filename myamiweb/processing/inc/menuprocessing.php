@@ -142,15 +142,15 @@ if ($sessionId) {
 	$mq = count($subclusterjobs['manualpicker']['queued']);
 
 	$tresults[] = ($tdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tdone complete</a>";
-	$tresults[] = ($trun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=templatepicker'>$trun running</a>";
+	$tresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatepicker'>$trun running</a>";
 	$tresults[] = ($tq==0) ? "" : "$tq queued";
 
 	$dresults[] = ($ddone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$ddone complete</a>";
-	$dresults[] = ($drun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=dogpicker'>$drun running</a>";
+	$dresults[] = ($drun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=dogpicker'>$drun running</a>";
 	$dresults[] = ($dq==0) ? "" : "$dq queued";
 
 	$mresults[] = ($mdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$mdone complete</a>";
-	$mresults[] = ($mrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
+	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
 	$mresults[] = ($mq==0) ? "" : "$mq queued";
 
 	$result = ($prtlruns==0) ? "" :
@@ -193,7 +193,7 @@ if ($sessionId) {
 	$ctfq = count($subclusterjobs['ace']['queued']);
 
 	$ctfresults[] = ($ctfdone==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ctfdone complete</a>";
-	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=ace'>$ctfrun running</a>";
+	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace'>$ctfrun running</a>";
 	$ctfresults[] = ($ctfq==0) ? "" : "$ctfq queued";
 
 	// number running and number finished:
@@ -260,7 +260,7 @@ if ($sessionId) {
 		$sq = count($subclusterjobs['makestack']['queued']);
 
 		$sresults[] = ($sdone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId'>$sdone complete</a>";
-		$sresults[] = ($srun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "$sq queued";
 
 		// stacks being created and stacks completed
@@ -293,7 +293,7 @@ if ($sessionId) {
 		$norefq = count($subclusterjobs['norefali']['queued']);
 
 		$norefresults[] = ($norefdone==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefdone complete</a>";
-		$norefresults[] = ($norefrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
+		$norefresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
 		$norefresults[] = ($norefq==0) ? "" : "$norefq queued";
 
 		// stacks being created and stacks completed
@@ -307,7 +307,7 @@ if ($sessionId) {
 		$refbasedq = count($subclusterjobs['refbasedali']['queued']);
 
 		$refbasedresults[] = ($refbaseddone==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbaseddone complete</a>";
-		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listappionjobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
+		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
 		$refbasedresults[] = ($refbasedq==0) ? "" : "$refbasedq queued";
 
 		// stacks being created and stacks completed
@@ -455,10 +455,8 @@ $menuprocessing="";
 				$text.="<li>".$submenu['name']."</li>";
 				// if there are results for the
 				// subfunction, print them out
-				if ($submenu['result'][0]) {
-					foreach ((array)$submenu['result'] as $res) {
-						$text.=($res) ? "<li class='sub1'>$res</li>" : "";
-					}
+				foreach ((array)$submenu['result'] as $res) {
+					$text.=($res) ? "<li class='sub1'>$res</li>" : "";
 				}
 			}
 			else $text.="<li>$submenu</li>\n";
