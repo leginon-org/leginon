@@ -270,7 +270,6 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
 	echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
@@ -387,7 +386,6 @@ function runTemplateCorrelator() {
 	}
 
 	echo"
-		<P>
 		<TABLE WIDTH='600'>
 		<TR><TD COLSPAN='2'>
 		<B>Template Correlation Picker Command:</B><BR>

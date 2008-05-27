@@ -1,57 +1,51 @@
 <?php
-require "inc/ctf.inc";
-require "inc/util.inc";
+
+require "inc/particledata.inc";
 require "inc/leginon.inc";
+require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
+require "inc/appionloop.inc";
+require "inc/ctf.inc";
 
 $ctf = new ctfdata();
 
-$defaultId= 1766;
-$sessionId= ($_GET['Id']) ? $_GET['Id'] : $defaultId;
+$sessionId = $_GET['expId'];
 $ace_params_fields = array ('acerun', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
 
-
-	
-?>
-<html>
-<head>
-<title><?php echo $title; ?> CTF report</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css"> 
+$javafunctions="
 <script LANGUAGE='JavaScript'>
-	function infopopup(<?
-		foreach ($ace_params_fields as $param) {
-			if (ereg("\|", $param)) {
-				$namesplit=explode("|",$param);
-				$param=end($namesplit);
-			}
-			$acestring .= "$param,";
-		}
-
-		$acestring=rtrim($acestring,',');	
-		echo $acestring;
-		?>){
-		var newwindow=window.open('','name','height=400, width=200, resizable=1, scrollbars=1');
-		newwindow.document.write('<HTML><HEAD><link rel="stylesheet" type="text/css" href="../css/viewer.css">');
-		newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
-		newwindow.document.write("</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>");
-		<?
-				foreach ($ace_params_fields as $param) {
-					if (ereg("\|", $param)) {
-						$namesplit=explode("|",$param);
-						$param=end($namesplit);
-					}
-					echo "newwindow.document.write('<TR><TD>$param</TD>');\n";
-					echo "newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
-				}
-				echo "newwindow.document.write('</TABLE></BODY></HTML>');\n";
-				echo "newwindow.document.close()\n";
-			?>
+	function infopopup(";
+foreach ($ace_params_fields as $param) {
+	if (ereg("\|", $param)) {
+		$namesplit=explode("|",$param);
+		$param=end($namesplit);
 	}
-</script>
-</head>
-<body>
-<?php echo  divtitle("CTF Report $title Experiment"); ?>
-<br>
-<?php
+	$acestring .= "$param,";
+}
+
+$acestring=rtrim($acestring,',');	
+$javafunctions.= $acestring;
+$javafunctions.="){
+		var newwindow=window.open('','name','height=400, width=200, resizable=1, scrollbars=1');
+		newwindow.document.write(\"<HTML><HEAD><link rel='stylesheet' type='text/css' href='../css/viewer.css'>\");
+		newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
+		newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");";
+
+foreach ($ace_params_fields as $param) {
+	if (ereg("\|", $param)) {
+		$namesplit=explode("|",$param);
+		$param=end($namesplit);
+	}
+	$javafunctions.= "newwindow.document.write('<TR><TD>$param</TD>');\n";
+	$javafunctions.= "newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
+}
+$javafunctions.= "newwindow.document.write('</TABLE></BODY></HTML>');\n";
+$javafunctions.= "newwindow.document.close();\n";
+$javafunctions.= "}\n";
+$javafunctions.= "</script>\n";
+
+processing_header('CTF report','CTF Report',$javafunctions);
 
 $runIds = $ctf->getCtfRunIds($sessionId);
 foreach ($runIds as $runId) {
@@ -79,7 +73,7 @@ foreach ($runIds as $runId) {
 	}
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	if ($display_ctf) {
-		echo "\n<table>";
+		echo "<table>";
 		echo "<tr>";
 			echo "<td>";
 			echo "Run: ";
@@ -99,6 +93,4 @@ foreach ($runIds as $runId) {
 	} else echo "no CTF information available";
 }
 
-?>
-</body>
-</html>
+processing_footer();

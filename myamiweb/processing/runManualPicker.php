@@ -81,7 +81,6 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
   echo"
-  <P>
   <table BORDER=0 CLASS=tableborder CELLPADDING=15>
   <TR>
     <TD VALIGN='TOP'>";
@@ -240,7 +239,6 @@ function runManualPicker() {
   }
 
   echo"
-    <P>
     <table WIDTH='600'>
     <TR><TD COLSPAN='2'>
     <B>Manual Picker Command:</B><br />

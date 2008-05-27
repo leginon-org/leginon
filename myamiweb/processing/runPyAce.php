@@ -135,7 +135,6 @@ function runPyAce() {
 	processing_header("PyACE Results","PyACE Results");
 
 	echo"
-	<P>
 	<TABLE WIDTH='600'>
 	<TR><TD COLSPAN='2'>
 	<B>ACE Command:</B><br/>
@@ -264,7 +263,6 @@ function createPyAceForm($extra=false) {
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
 	$defrunid = 'acerun'.($ctfruns+1);
 	echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 	  <TD VALIGN='TOP'>";

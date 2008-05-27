@@ -81,7 +81,6 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 
 	echo"
-	<P>
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<tr>
 		<td VALIGN='TOP'>";
@@ -215,7 +214,6 @@ function runDogPicker() {
 	}
 
 	echo"
-		<P>
 		<TABLE WIDTH='600'>
 		<tr><td COLSPAN='2'>
 		<B>Dog Picker Command:</B><br />
