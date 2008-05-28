@@ -13,7 +13,6 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {

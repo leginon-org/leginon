@@ -11,7 +11,6 @@
 require "inc/particledata.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-require "inc/ctf.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 

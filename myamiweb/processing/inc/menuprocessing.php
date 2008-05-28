@@ -201,7 +201,7 @@ if ($expId) {
 	
 	// in case weren't submitted by web:
 	if  ($ctfruns > $totruns) $totruns = $ctfruns;
-	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?Id=$sessionId'>$totruns</a>";
+	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$totruns</a>";
 
 	$nruns = array();
 	$nruns[] = array(
