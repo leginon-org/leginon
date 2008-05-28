@@ -39,11 +39,10 @@ $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 $particle = new particledata();
 #$stackIds = $particle->getStackIds($sessionId);
 // --- Get Reconstruction Data
-echo"<P>\n";
 $reconRuns = $particle->getReconIdsFromSession($sessionId);
 if ($reconRuns) {
 
-	$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
 	$display_keys = array ( 'defid', 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 
 		'best: fsc / rMeas (iter)', 'avg median<br/>euler jump','description');
