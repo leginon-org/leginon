@@ -429,6 +429,7 @@ function format_sci_number($data) {
 		}
 		$data = sprintf("%0.".$decimal."f".$sup1.$power.$sup2, $data);
 	}
+	else $data=sprintf("%0.".$decimal."f", abs($data_org));
 	if ($power==1)
 		$data = sprintf("%0.".$decimal."f", abs($data_org));
 	if ($neg)
