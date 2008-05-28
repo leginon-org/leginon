@@ -130,9 +130,8 @@ echo "<p>\n";
 
 if ($sessionId) {
 // ---  Get CTF Data
-  $ctf = new ctfdata();
 
-  if ($ctfrunIds = $ctf->getCtfRunIds($sessionId))
+  if ($ctfrunIds = $particle->getCtfRunIds($sessionId))
 		$ctfruns=count($ctfrunIds);
 
   // --- Get Particle Selection Data

@@ -70,13 +70,15 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 
 	$dendrofile = $norefparams['path']."/dendogram.png";
 	if(file_exists($dendrofile)) {
-		echo "<a href='loadimg.php?filename=$dendrofile'>"
-			."<img src='loadimg.php?filename=$dendrofile' width=384></a><br/><br/>\n";
+		echo docpop('dendogram','<b>Dendogram:</b>');
+		echo "<a href='loadimg.php?filename=$dendrofile'><font size='-2'>(click to enlarge)</font><br />"
+			."<img src='loadimg.php?filename=$dendrofile' width='256' border='0'></a><br/><br/>\n";
 	}
 
-	echo "<input type='text' name='numclass' size='4' value='$numclass'>";
+	echo "<hr />\n";
+	echo "<input type='text' name='numclass' size='3' value='$numclass'> ";
 	echo docpop('numclass','Number of Classes');
-	echo " <br /><br />";
+	echo "<br /><br />";
 
 	echo "<input type='checkbox' name='commit' $commitcheck>";
 	echo docpop('commit','Commit to Database');
@@ -107,7 +109,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 			$level = dechex($contrib/$eigendata[0]['contrib']*239 + 16);
 			echo "<td>\n";
 			echo "<a href='loadimg.php?filename=$efile' target='eigenimage'>\n"
-				."<img src='loadimg.php?filename=$efile'></a><br />\n";
+				."<img src='loadimg.php?filename=$efile' width='128' height='128' border='0'></a><br />\n";
 			$imgname = 'eigenimg'.$index;
 			echo "<center>$index <input type='checkbox' name='$imgname' ";
 			// when first loading page select first 3
@@ -115,9 +117,9 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 			if (($index<=3 && !$_POST['process']) || $_POST[$imgname]) echo "checked";
 			echo "><font color='#".$level."2222' size='-1'>($contrib %)</font></center>\n";
 			echo "</td>\n";
-			if ($index % 4 == 0) echo "</tr>\n";
+			if ($index % 3 == 0) echo "</tr>\n";
 		}
-		if (!$index % 4 == 0) echo "</tr>\n";
+		if (!$index % 3 == 0) echo "</tr>\n";
 		echo "</table>\n";
 	}
 	echo "<input type='hidden' name='numeigenimgs' value='$index'>\n";

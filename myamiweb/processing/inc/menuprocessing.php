@@ -172,9 +172,7 @@ if ($expId) {
 
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
 	if ($maxangle > 5) {
-		$nrun[] ="<a href='tiltAligner.php?expId=$sessionId'>"
-						.($prtlruns==0) ? "Align Tilt Pairs" : "Align Tilt Particle Pairs"
-						."</a>";
+		$nrun[] ="<a href='tiltAligner.php?expId=$sessionId'>Align Tilt Pairs >></a>";
 	}
 
 	$data[]=array(
