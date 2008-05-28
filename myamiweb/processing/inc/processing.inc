@@ -141,7 +141,8 @@ echo $html;
 }
 
 function processing_footer() {
-	$html='		</div>
+	$html='<p>
+		</div>
 	</div>
 	</body>
 </html>';

@@ -47,6 +47,6 @@ if (count($templateparams) > 0) {
 //Report selection run parameters
 $title = "Selection parameters";
 $exclude_fields = array('DEF_timestamp');
-$particle->displayParameters($title,$runparams,$exclude_fields);
+$particle->displayParameters($title,$runparams,$exclude_fields,$expId);
 
 processing_footer();

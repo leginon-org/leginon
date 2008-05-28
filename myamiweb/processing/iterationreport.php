@@ -14,41 +14,27 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 
+$expId= $_GET['expId'];
 $runId= $_GET['rId'];
 $itr = $_GET['itr'];
 
 $particle = new particledata();
 
-?>
-
-<html>
-<head>
-<title>Refine Iteration Report</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css">
-</head>
-<body>
-
-<?php
+processing_header('Refine Iteration Report','Refine Iteration Report');
 
 	$itrinfo=$particle->getRefinementData($runId,$itr);
 	$paraminfo=$particle->getIterationInfo($runId,$itr);
 
-	$report_title = 'Refine Iteration Report for Iteration';
+	$report_title = 'Report for Iteration';
 	$report_spec = $itrinfo['DEF_id'];
 	echo divtitle($report_title."<FONT class='aptitle'>
 		</FONT> (ID: <FONT class='aptitle'>".$report_spec."</FONT>)");
-/*
-// Report summary line
-	echo "<br><table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
-*/
-//Report parameters
 	echo "<table><tr><td>";
 	$datainfo=$paraminfo;
 	$exclude_fields = array('DEF_id','DEF_timestamp','REF|ApPathData|path');
 	$title = "refinement parameters";
-	$particle->displayParameters($title,$datainfo,$exclude_fields);
+	$particle->displayParameters($title,$datainfo,$exclude_fields,$expId);
 	echo "</td><td>";
 	echo "</td><tr></table>";
-?>
-</body>
-</html>
+
+processing_footer();

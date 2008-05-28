@@ -78,7 +78,7 @@ function createNoRefAlignSummary() {
 		$display_keys['# particles']=$r['num_particles'];
 		$display_keys['lp filt']=$r['lp_filt'];
 		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
-		$stackstr = "<a href='stackreport.php?sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
+		$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
 		$display_keys['stack run name'] = $stackstr;
 			
 		$dendrofile = $r['path']."/dendogram.png";

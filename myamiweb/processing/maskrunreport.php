@@ -1,23 +1,16 @@
 <?php
 require "inc/particledata.inc";
-require "inc/util.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
 require "inc/leginon.inc";
+require "inc/project.inc";
 
-$sessionId= $_GET['Id'];
-$runId = $_GET'[rId'];
-//$runId = 76;
+$expId= $_GET['expId'];
+$runId = $_GET['rId'];
 $particle = new particledata();
 
-?>
+processing_header('Mask Maker Run Report','Mask Maker Run Report');
 
-<html>
-<head>
-<title>Mask Maker Run Report</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css">
-</head>
-<body>
-
-<?php
 list($runparams) = $particle->getMaskMakerParams($runId);
 echo divtitle("Mask Maker report for $runparams[name]");
 
@@ -40,7 +33,5 @@ foreach($selection_fields as $key) {
 }
 echo "</table>\n";
 
-
+processing_footer();
 ?>
-</body>
-</html>

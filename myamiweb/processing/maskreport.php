@@ -8,12 +8,14 @@
  */
 
 require "inc/particledata.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
-$expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
+$expId = $_GET['expId'];
 $sessioninfo = $leginondata->getSessionInfo($expId);
 $title = $sessioninfo[Name];
 
@@ -24,13 +26,8 @@ if($projectdb) {
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 }
 
-
-?>
-<html>
-<head>
-<title><?php echo $title; ?> Mask Creation Results</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css"> 
-<STYLE type="text/css">
+$javascript = "
+<STYLE type='text/css'>
 DIV.comment_section { text-align: justify; 
 		margin-top: 5px;
 		font-size: 10pt}
@@ -44,14 +41,14 @@ DIV.comment_subsection { text-indent: 2em;
 function init() {
 	this.focus();
 }
-</script>
-</head>
+</script>\n";
 
-<body onload="init();" >
-<table border="0" cellpadding=10>
+processing_header('Mask Creation Results','Mask Creation Results');
+
+echo"<table border='0' cellpadding=10>
 <TR>
-  <TD>
-<?
+  <TD>\n";
+
 $sessionDescr=$sessioninfo['Purpose'];
 echo "<TABLE>";
 echo "<TR><TD><B>Project:</B></TD><TD>$proj_link</TD></TR>\n";
@@ -72,16 +69,17 @@ echo"Inpected images: $numinspected\n";
 if ($particle->hasMaskMakerData($sessionId)) {
 	$display_keys = array ( 'totregions', 'numimgs', 'areamean', 'Imean', 'Istddev', 'img');
 	$maskruns=$particle->getMaskMakerRunIds($sessionId);
-	echo $particle->displayMaskRegionStats($maskruns, $display_keys, $inspectcheck);
+	echo $particle->displayMaskRegionStats($expId,$maskruns, $display_keys, $inspectcheck);
 }
 else {
         echo "no Mask information available";
 }
 
 
-?>
-</td>
+echo "</td>
 </tr>
-</table>
-</body>
-</html>
+</table>\n";
+
+processing_footer();
+
+?>

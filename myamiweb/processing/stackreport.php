@@ -18,6 +18,8 @@ $expId = $_GET['expId'];
 $sessionId= $_GET['Id'];
 $stackid = $_GET['sId'];
 
+processing_header('Particle Stack Report','Particle Stack Report');
+
 $particle = new particledata();
 
 	$s=$particle->getStackParams($stackid);
@@ -29,8 +31,6 @@ $particle = new particledata();
 	$s['pixelsize']=$apix;
 	$boxsize= $s[boxSize]/$s[bin];
 	$s['boxsize']=$boxsize;
-
-processing_header('Particle Stack Report','Particle Stack Report');
 
 	echo divtitle("Stack: <FONT class='aptitle'>".$s['shownstackname']
 		."</FONT> (ID: <FONT class='aptitle'>".$stackid."</FONT>)");
@@ -44,7 +44,7 @@ processing_header('Particle Stack Report','Particle Stack Report');
 	$exclude_fields = array('DEF_id','DEF_timestamp','count','REF|ApPathData|path');
 	for ($i=1;$i < $s[count]; $i++) $exclude_fields[]=$i;
 	$title = "stack parameters";
-	$particle->displayParameters($title,$s,$exclude_fields);
+	$particle->displayParameters($title,$s,$exclude_fields,$expId);
 
 //Report stack run parameters
 	echo "<table><tr><td>";
@@ -53,7 +53,7 @@ processing_header('Particle Stack Report','Particle Stack Report');
 		$s[$i]['particleSelection']=array('display'=>$selectionruninfo['name'], 'link'=>$selectionruninfo['selectionid']);
 		$exclude_fields = array('DEF_id','DEF_timestamp','REF|ApPathData|path');
 		$title = "run parameters";
-		$particle->displayParameters($title,$s[$i],$exclude_fields);
+		$particle->displayParameters($title,$s[$i],$exclude_fields,$expId);
 		echo "</td><td>";
 	}
 	echo "</td><tr></table>";

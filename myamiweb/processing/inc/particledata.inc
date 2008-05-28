@@ -327,13 +327,13 @@ class particledata {
 	}
 
 	//-------particle functions --------//
-	function displayParameters ($title,$params,$exclude_fields) {
+	function displayParameters ($title,$params,$exclude_fields,$expId) {
 		//standard parameter table display
 
 		//Array of $params keys that are shown as a link to another report
 		$links=array(
-			'stackId'=>'stackreport.php?sId='
-			,'particleSelection'=>'particlerunreport.php?rId='
+			'stackId'=>"stackreport.php?expId=$expId&sId="
+			,'particleSelection'=>"particlerunreport.php?expId=$expId&rId="
 		);
 
 		echo "<h4>".$title."</h4>";
@@ -385,7 +385,7 @@ class particledata {
 							$datalink = $params[$key]['link'];
 						}
 						$link = $link.$datalink;
-						echo "<a target='params' href='".$link."'>".$datadisplay."</a>";
+						echo "<a href='".$link."'>".$datadisplay."</a>";
 					}
 					echo "</td></tr>\n";
 				}
@@ -1134,7 +1134,7 @@ class particledata {
 			
 	}
 
-	function displayMaskRegionStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
+	function displayMaskRegionStats ($expId,$particleruns, $display_keys, $inspect=False, $selexval=False) {
 		if (!is_array($particleruns))
 			return ;
 		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -1159,7 +1159,7 @@ class particledata {
 			$q = "select name from `ApMaskMakerRunData` where `DEF_id` = $runId";
 			$r = $this->mysql->getSQLResult($q);
 			$r0 = $r[0];
-			$html .= '<td><a target="params" href="maskrunreport.php?rId='.$runId.'">'.$r0[name].'</a></td>';
+			$html .= "<td><a target='params' href='maskrunreport.php?expId=$expId&rId=$runId'>".$r0['name']."</a></td>";
 			foreach($display_keys as $field) {
 							$data=$regionstats[$field];
 				if (eregi('^areamean|^Imean|^Istddev', $field)) $data=format_sci_number($data,4);
