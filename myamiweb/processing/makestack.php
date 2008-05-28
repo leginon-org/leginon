@@ -10,7 +10,6 @@
 
 require "inc/particledata.inc";
 require "inc/processing.inc";
-require "inc/ctf.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
@@ -41,8 +40,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	// connect to particle and ctf databases
 	$particle = new particledata();
-	$ctf = new ctfdata();
-	$ctfdata=$ctf->hasCtfData($sessionId);
+	$ctfdata=$particle->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId));
@@ -355,7 +353,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	//if there is CTF data, show min & max defocus range
 	if ($ctfdata) {
 		$fields = array('defocus1', 'defocus2');
-		$bestctf = $ctf->getBestStats($fields, $sessionId);
+		$bestctf = $particle->getBestStats($fields, $sessionId);
 		$min="-".$bestctf['defocus1'][0]['min'];
 		$max="-".$bestctf['defocus1'][0]['max'];
 		// check if user has changed values on submit

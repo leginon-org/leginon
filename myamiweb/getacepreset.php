@@ -19,7 +19,7 @@
 <td>
 <?php
 require "inc/leginon.inc";
-require "inc/ctf.inc";
+require "inc/particledata.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
@@ -29,7 +29,7 @@ $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 
-$ctf = new ctfdata();
+$ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);
 list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 

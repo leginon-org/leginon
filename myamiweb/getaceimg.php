@@ -1,7 +1,7 @@
 <?php
 require "inc/leginon.inc";
 require "inc/image.inc";
-require "inc/ctf.inc";
+require "inc/particledata.inc";
 
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
@@ -15,7 +15,7 @@ $sessionId = $imageinfo['sessionId'];
 
 $path = $leginondata->getImagePath($sessionId);
 $filename = $leginondata->getFilenameFromId($imgId);
-$ctf = new ctfdata();
+$ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);
 list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 $filename=$ctfdata['path']."/opimages/".$ctfdata[$graph];

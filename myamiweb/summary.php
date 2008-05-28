@@ -10,7 +10,6 @@
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/particledata.inc";
-require "inc/ctf.inc";
 
 
 // --- Set  experimentId
@@ -280,7 +279,7 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 		$ds['defocus'][]=$cstats;
 	}
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	echo display_stats($ds, $display_keys);
+	echo displayCTFstats($ds, $display_keys);
 ?>
 </td>
 </tr>
@@ -311,10 +310,10 @@ $minconf = (is_numeric($_POST['mconf'])) ? $_POST['mconf']
 
 echo divtitle("CTF");
 $sessionId=$expId;
-$ctf = new ctfdata();
-if ($ctf->hasCtfData($sessionId)) {
+$particle = new particledata();
+if ($particle->hasCtfData($sessionId)) {
 
-	echo "<a href='processing/ctfreport.php?Id=$sessionId'>report &raquo;</a>\n";
+	echo "<a href='processing/ctfreport.php?expId=$sessionId'>report &raquo;</a>\n";
 	?>
 	<form method="POST" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
 		minimum allowed confidence:<input class="field" name="mconf" type="text" size="5" value="<?php echo $minconf; ?>">
@@ -325,7 +324,7 @@ if ($ctf->hasCtfData($sessionId)) {
 
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	$fields = array('defocus1', 'confidence', 'confidence_d','difference');
-	$bestctf = $ctf->getBestStats($fields, $sessionId, $minconf);
+	$bestctf = $particle->getBestStats($fields, $sessionId, $minconf);
 	
 	if ($bestctf) {
 		foreach($bestctf as $field=>$data) {
@@ -348,7 +347,7 @@ if ($ctf->hasCtfData($sessionId)) {
 		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vd=1">[data]</a>';
 		echo '<a href="processing/showctfdata.php?Id='.$sessionId.''.$urlmconf.'&vs=1">[sql]</a>';
 		$display_keys = array ( 'name', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-		echo display_stats($bestctf, $display_keys);
+		echo displayCTFstats($bestctf, $display_keys);
 	}
 	else echo "Database Error";
 }
@@ -364,7 +363,6 @@ else {
 <?php
 echo divtitle("Particles");
 $sessionId=$expId;
-$particle = new particledata();
 if ($particle->hasParticleData($sessionId)) {
 	$inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
 	$mselexval=(is_numeric($_POST['mselex'])) ? $_POST['mselex'] 

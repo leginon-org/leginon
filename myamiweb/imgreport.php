@@ -9,7 +9,7 @@
 
 require "inc/leginon.inc";
 require "inc/viewer.inc";
-require "inc/ctf.inc";
+require "inc/particledata.inc";
 
 // display data tree ?
 $displaytreevalue  = ($_POST) ? (($_POST['datatree']=='on') ? "off" : "on") : "off";
@@ -65,7 +65,7 @@ if ($displaytree)
 $types = $leginondata->getMatrixCalibrationTypes();
 
 // --- getCTF Info, if any
-$ctf = new ctfdata;
+$ctf = new particledata;
 $runId = $ctf->getLastCtfRun($sessionId);
 $ctfdata  = $ctf->getCtfInfoFromImageId($imgId);
 

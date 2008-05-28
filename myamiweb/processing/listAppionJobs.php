@@ -4,7 +4,7 @@ require "inc/util.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/processing.inc";
-require "inc/ctf.inc";
+
 checkJobs();
 
 function checkJobs($showjob=False,$showall=False,$extra=False) {
@@ -61,10 +61,9 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 			// if ace, show stats:
 			elseif ($jobtype=='ace') {
-				$ctf = new ctfdata();
-				$aceinfo = $ctf->getAceRunIdFromPath($job['appath']);
+				$aceinfo = $particle->getAceRunIdFromPath($job['appath']);
 				$fields = array('defocus1', 'confidence', 'confidence_d');
-				$astats = $ctf->getStats($fields,$expId,$aceinfo[0]['DEF_id']);
+				$astats = $particle->getCTFStats($fields,$expId,$aceinfo[0]['DEF_id']);
 				$dstats = $astats['defocus1'][0];
 				$c1stats = $astats['confidence'][0];
 				$c2stats = $astats['confidence_d'][0];

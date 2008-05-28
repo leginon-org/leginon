@@ -6,9 +6,8 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
-require "inc/ctf.inc";
 
-$ctf = new ctfdata();
+$ctf = new particledata();
 
 $sessionId = $_GET['expId'];
 $ace_params_fields = array ('acerun', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
@@ -58,7 +57,7 @@ foreach ($runIds as $runId) {
 	else {
 		$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d');
 	}
-	$stats = $ctf->getStats($fields, $sessionId, $rId);
+	$stats = $ctf->getCTFStats($fields, $sessionId, $rId);
 	$display_ctf=false;
 	foreach($stats as  $field=>$data) {
 			foreach($data as $k=>$v) {
@@ -87,7 +86,7 @@ foreach ($runIds as $runId) {
 			echo ")\"><B>$rName</B></A>";
 			echo "</td>";
 		echo "</tr>\n";
-		echo display_stats($stats, $display_keys);
+		echo displayCTFstats($stats, $display_keys);
 		echo "</table>";
 		echo "<br>";	
 	} else echo "no CTF information available";

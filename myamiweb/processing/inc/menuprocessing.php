@@ -9,12 +9,10 @@
  */
 
 require_once "inc/particledata.inc";
-require_once "inc/viewer.inc";
-require_once "inc/processing.inc";
-require_once "inc/ctf.inc";
 require_once "inc/leginon.inc";
 require_once "inc/project.inc";
-
+require_once "inc/viewer.inc";
+require_once "inc/processing.inc";
 
 // check if coming directly from a session
 $expId=$_GET['expId'];
@@ -38,7 +36,7 @@ $currentproject=$sessiondata['currentproject'];
 
 $particle = new particledata();
 
-if ($sessionId) {
+if ($expId) {
 	// sort out submitted job information
 	$clusterjobs = $particle->getJobIdsFromSession($expId);
 	$subclusterjobs=array();
@@ -50,9 +48,7 @@ if ($sessionId) {
 	}
 
 	// ---  Get CTF Data
-	$ctf = new ctfdata();
-
-	if ($ctfrunIds = $ctf->getCtfRunIds($sessionId)) {
+	if ($ctfrunIds = $particle->getCtfRunIds($expId)) {
 		$ctfruns=count($ctfrunIds);
 	}
 
@@ -153,6 +149,10 @@ if ($sessionId) {
 	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
 	$mresults[] = ($mq==0) ? "" : "$mq queued";
 
+	// in case weren't submitted by web:
+	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq;
+	if  ($prtlruns > $totruns) $totruns = $prtlruns;
+	
 	$result = ($prtlruns==0) ? "" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
@@ -198,6 +198,9 @@ if ($sessionId) {
 
 	// number running and number finished:
 	$totruns=$ctfdone+$ctfrun+$ctfq;
+	
+	// in case weren't submitted by web:
+	if  ($ctfruns > $totruns) $totruns = $ctfruns;
 	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?Id=$sessionId'>$totruns</a>";
 
 	$nruns = array();

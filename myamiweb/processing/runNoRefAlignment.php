@@ -13,7 +13,6 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-require "inc/ctf.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['showcommand']) runNoRefAlign();
@@ -35,10 +34,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 
 	$hosts=getHosts();
 
-	// connect to particle and ctf databases
+	// connect to particle database
 	$particle = new particledata();
-	$ctf = new ctfdata();
-	$ctfdata=$ctf->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
 	$norefIds = $particle->getNoRefIds($sessionId);

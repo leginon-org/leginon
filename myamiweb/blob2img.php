@@ -1,10 +1,10 @@
 <?php
-require "inc/ctf.inc";
+require "inc/particledata.inc";
 $field = $_GET['f'];
 $id = $_GET['id'];
 $n_width = $_GET['w'];
 $n_height = $_GET['h'];
-$ctf = new ctfdata;
+$ctf = new particledata;
 $blob = $ctf->getCTFBlobs($field, $id);
 header("Content-type: image/x-png");
 $source = imagecreatefromstring($blob);

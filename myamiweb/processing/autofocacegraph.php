@@ -14,7 +14,6 @@ require "inc/jpgraph_line.php";
 require "inc/jpgraph_scatter.php";
 require "inc/jpgraph_bar.php";
 require "inc/histogram.inc";
-require "inc/ctf.inc";
 require "inc/image.inc";
 
 $defaultId= 1766;
@@ -26,7 +25,7 @@ $preset=$_GET['preset'];
 $summary = ($_GET[s]==1 ) ? true : false;
 $minimum = $_GET[mconf];
 
-$ctf = new ctfdata();
+$ctf = new particledata();
 
 //If summary is true, get only the data with the best confidence
 if ($summary) {

@@ -14,8 +14,6 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
-require "inc/ctf.inc";
-//require "inc/ssh.inc";
 
 $defaultcs="2.0";
 
@@ -259,7 +257,7 @@ function createPyAceForm($extra=false) {
 		$sessionpath=ereg_replace("rawdata","pyAce/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
-	$ctf = new ctfdata();
+	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
 	$defrunid = 'acerun'.($ctfruns+1);
 	echo"
