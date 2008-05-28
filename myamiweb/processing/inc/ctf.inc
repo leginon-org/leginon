@@ -231,6 +231,16 @@ class ctfdata {
 		return $stats;
 	}
 
+	function getAceRunIdFromPath($path){
+		$q= "SELECT r.* "
+		  . "FROM `ApAceRunData` AS r "
+		  . "LEFT JOIN ApPathData AS p "
+		  . "ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+		  . "WHERE p.`path` LIKE '$path%'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+  	}
+
 	function getBestStats($fields, $sessionId, $limit=false) {
 		if (!is_array($fields))
 			return False;

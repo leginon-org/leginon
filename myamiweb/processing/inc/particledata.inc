@@ -318,6 +318,15 @@ class particledata {
 		return $r[0]['num'];
 	}
 
+	function getSelectionRunIdFromPath($path){
+		$q= "SELECT r.* "
+		  . "FROM `ApSelectionRunData` AS r "
+		  . "LEFT JOIN ApPathData AS p "
+		  . "ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+		  . "WHERE p.`path` LIKE '$path%'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+  	}
 	#--------- IMAGE ASSESSMENT FUNCTIONS ---------------#
 
 	function getNumAssessedImages ($sessionId) {
@@ -505,6 +514,16 @@ class particledata {
 	}
 
 	#--------- MAKE STACK FUNCTIONS---------------#
+
+	function getStackRunIdFromPath($path){
+		$q= "SELECT sd.* "
+		  . "FROM `ApStackData` AS sd "
+		  . "LEFT JOIN ApPathData AS p "
+		  . "ON (sd.`REF|ApPathData|path` = p.`DEF_id`) "
+		  . "WHERE p.`path` LIKE '$path%'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+  	}
 
 	function getStackIds ($sessionId) {
 		// this function is really slow
