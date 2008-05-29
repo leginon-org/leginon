@@ -1,57 +1,98 @@
+from apSpider import operations
 
-
-filetypes = ['text', 'xml', 'spider', 'pickle',]
+filetypes = ['text', 'xml', 'spider', 'pickle', 'box', 'pik',]
 filetypesel = (
 	"Text Files (*.txt)|*.txt" 
 	+ "|XML Files (*.xml)|*.xml"
 	+ "|Spider Files (*.spi)|*.[a-z][a-z][a-z]" 
-	+ "|Python Pickle File (*.pik)|*.pik" )
+	+ "|Python Pickle File (*.pickle)|*.pickle" )
+	+ "|EMAN Box File (*.box)|*.box" )
+	+ "|Pik File (*.pik)|*.pik" )
 
 #---------------------------------------	
-def savePicks(targets1, targets2, data, frame=None):
-	data['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
-	data['filetype'] = filetypes[data['filetypeindex']]
-	if len(targets1) < 1 or len(targets2) < 1:
-		self.statbar.PushStatusText("ERROR: Cannot save file. Not enough picks", 0)
-		dialog = wx.MessageDialog(frame, "Cannot save file.\nNot enough picks\n(less than 4 particle pairs)",\
-			'Error', wx.OK|wx.ICON_ERROR)
-		dialog.ShowModal()
-		dialog.Destroy()
-		return False
+"""
+Each file should have the following information
+
+1. Theta (tilt) angle
+2. Gamma (image 1 rotation) angle
+3. Phi (image 2 rotation) angle
+4. List of image 1 particles
+5. List of image 2 particles
+
+"""
+#---------------------------------------	
+def savePicks(targets1, targets2, data):
+	"""
+	Nx2 numpy list of picks 1
+	Nx2 numpy list of picks 2
+	data dictionary
+	"""
+
+	saved = {}
+	saved['theta'] = data['theta']
+	saved['gamma'] = data['gamma']
+	saved['phi'] = data['phi']
+	saved['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
+	saved['filetype'] = filetypes[data['filetypeindex']]
+	saved['picks1'] = self.getArray1()
+	saved['picks2'] = self.getArray2()
+	saved['align1'] = self.getAlignedArray1()
+	saved['align2'] = self.getAlignedArray2()
+	saved['rmsd'] = self.getRmsdArray()
+	saved['filepath'] = os.path.join(data['dirname'], data['outfile'])
+	saved['image1name'] = self.panel1.filename
+	saved['image2name'] = self.panel2.filename
+
 	if data['filetypeindex'] == 0:
-		savePicksToTextFile(targets1, targets2, data)
+		savePicksToTextFile(saved)
 	elif data['filetypeindex'] == 1:
-		savePicksToXMLFile(targets1, targets2, data)
+		savePicksToXMLFile(saved)
 	elif data['filetypeindex'] == 2:
-		savePicksToSpiderFile(targets1, targets2, data)
+		savePicksToSpiderFile(saved)
 	elif data['filetypeindex'] == 3:
-		savePicksToPickleFile(targets1, targets2, data)
+		savePicksToPickleFile(saved)
 	else:
 		raise NotImplementedError
 	sys.stderr.write("Saved particles and parameters to '"+data['outfile']+\
 		"' of type "+data['filetype']+"\n")
-	
+	self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+data['outfile'], 0)
 
 #---------------------------------------
-def savePicksToTextFile(targets1, targets2, data):
-	filepath = os.path.join(data['dirname'], data['outfile'])
-	targets1 = self.panel1.getTargets('Picked')
-	targets2 = self.panel2.getTargets('Picked')
-	filename = os.path.basename(filepath)
-	f = open(filepath, "w")
-	f.write( "image 1: "+self.panel1.filename+"\n" )
-	for target in targets1:
-		f.write( '%d,%d,%.3f\n' % (target.x, target.y) )
-	f.write( "image 2: "+self.panel2.filename+"\n" )
-	for target in targets2:
-		f.write( '%d,%d,%.3f\n' % (target.x, target.y) )
+def savePicksToTextFile(saved):
+	f = open(saved['filepath'], "w")
+
+	f.write( "date: \t%sf\n"  % ( saved['savetime'], ))
+	f.write( "theta:\t%.5f\n" % ( saved['theta'], ))
+	f.write( "gamma:\t%.5f\n" % ( saved['gamma'], ))
+	f.write( "phi:  \t%.5f\n" % ( saved['phi'], ))
+
+	#IMAGE 1
+	f.write( "image 1: \t%sf\n"  % ( saved['image1name'], ))
+	for i in len(saved['picks1']):
+		f.write( '%d,%d, ' % (saved['picks1'][i][0], saved['picks1'][i][1],) )
+		if i < len(saved['align1']):
+			f.write( '%.1f,%.1f, ' % (saved['align1'][i][0], saved['align1'][i][1],) )
+		if i < len(saved['rmsd']):
+			f.write(' %.3f, ' % ( saved['rmsd'][i] ) )
+		f.write('\n')
+
+	#IMAGE 2
+	f.write( "image 2: \t%sf\n"  % ( saved['image2name'], ))
+	for i in len(saved['picks2']):
+		f.write( '%d,%d, ' % (saved['picks2'][i][0], saved['picks2'][i][1],) )
+		if i < len(saved['align2']):
+			f.write( '%.1f,%.1f, ' % (saved['align2'][i][0], saved['align2'][i][1],) )
+		if i < len(saved['rmsd']):
+			f.write(' %.3f, ' % ( saved['rmsd'][i] ) )
+		f.write('\n')
 	f.close()
-	self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+data['outfile'], 0)
+
 	return True
 
 #---------------------------------------
 def savePicksToXMLFile(targets1, targets2, data):
-	filepath = os.path.join(data['dirname'], data['outfile'])
+	f = open(saved['filepath'], "w")
+
 	data['targets1'] = self.targetsToArray(self.panel1.getTargets('Picked'))
 	data['targets2'] = self.targetsToArray(self.panel2.getTargets('Picked'))
 	filename = os.path.basename(filepath)
@@ -59,46 +100,48 @@ def savePicksToXMLFile(targets1, targets2, data):
 	self.statbar.PushStatusText("Saved "+str(len(data['targets1']))+" particles and parameters to "+data['outfile'], 0)
 	return True
 
-#---------------------------------------
-def savePicksToSpiderFile(targets1, targets2, data):
-	filepath = os.path.join(data['dirname'], data['outfile'])
-	filename = os.path.basename(filepath)
-	f = open(filepath, "w")
-	f.write(" ; ApTiltPicker complete parameter dump:\n")
-	f.write( " ;   parameter : value\n")
-	for k,v in data.items():
-		if type(v) in [type(1), type(1.0), type(""),]:
-			f.write( " ;   "+str(k)+" : "+str(v)+"\n")
-	#PARAMETERS
-	f.write(" ; \n; \n; PARAMETERS\n")
-	f.write(apSpider.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
-	f.write(" ; FITTED FLAG\n")
-	f.write(apSpider.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
-	f.write(" ; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
-	f.write(apSpider.spiderOutputLine(3, 6, 
-		data['point1'][0], data['point1'][1], 
-		data['point2'][0], data['point2'][1], 
-		1.0, 0.0))
-	f.write(" ; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
-	f.write(apSpider.spiderOutputLine(4, 6, 
-		data['theta'], data['gamma'], data['phi'],
-		0.0, 0.0, 0.0))
+	#---------------------------------------
+	def savePicksToSpiderFile(self):
+		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
+		targets1 = self.panel1.getTargets('Picked')
+		targets2 = self.panel2.getTargets('Picked')
+		filename = os.path.basename(filepath)
+		f = open(filepath, "w")
+		f.write(" ; ApTiltPicker complete parameter dump:\n")
+		f.write( " ;   parameter : value\n")
+		for k,v in self.data.items():
+			if type(v) in [type(1), type(1.0), type(""),]:
+				f.write( " ;   "+str(k)+" : "+str(v)+"\n")
+		#PARAMETERS
+		f.write(" ; \n; \n; PARAMETERS\n")
+		f.write(operations.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
+		f.write(" ; FITTED FLAG\n")
+		f.write(operations.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
+		f.write(" ; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
+		f.write(operations.spiderOutputLine(3, 6, 
+			self.data['point1'][0], self.data['point1'][1], 
+			self.data['point2'][0], self.data['point2'][1], 
+			1.0, 0.0))
+		f.write(" ; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
+		f.write(operations.spiderOutputLine(4, 6, 
+			self.data['theta'], self.data['gamma'], self.data['phi'],
+			0.0, 0.0, 0.0))
 
-	#IMAGE 1
-	f.write( " ; left image 1: "+self.panel1.filename+"\n" )
-	for i,target in enumerate(targets1):
-		line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
-		f.write(line)
+		#IMAGE 1
+		f.write( " ; left image 1: "+self.panel1.filename+"\n" )
+		for i,target in enumerate(targets1):
+			line = operations.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
+			f.write(line)
 
-	#IMAGE 2
-	f.write( " ; right image 2: "+self.panel2.filename+"\n" )
-	for i,target in enumerate(targets2):
-		line = apSpider.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
-		f.write(line)
+		#IMAGE 2
+		f.write( " ; right image 2: "+self.panel2.filename+"\n" )
+		for i,target in enumerate(targets2):
+			line = operations.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
+			f.write(line)
 
-	f.close()
-	self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+data['outfile'], 0)
-	return True
+		f.close()
+		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+self.data['outfile'], 0)
+		return True
 
 
 #---------------------------------------
