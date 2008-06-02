@@ -267,6 +267,7 @@ if ($expId) {
 		// stacks being created and stacks completed
 		$totstack = $sdone+$srun+$sq;
 
+		$totstack = ($totstack > $stackruns) ? $totstack : $stackruns;
 		$totresult = ($totstack==0) ? "" :
 			"<a href='stacksummary.php?expId=$sessionId'>$totstack</a>";
 
