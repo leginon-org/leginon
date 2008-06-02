@@ -730,6 +730,58 @@ function bashcolor2html($str) {
 	return $html;
 }
 
+function editTextJava() {
+	// javascript for hiding/showing edit text & form
+	$javascript = "<script language='javascript' type='text/javascript'>\n";
+	$javascript.= "function hideEditForm(stackid) {\n";
+	$javascript.= "  var descText='descText'+stackid;\n";
+	$javascript.= "  var descForm='descForm'+stackid;\n";
+	$javascript.= "  if (document.getElementById) { // DOM3 = IE5, NS6\n";
+	$javascript.= "    document.getElementById(descText).style.visibility = 'hidden';\n"; 
+	$javascript.= "    document.getElementById(descForm).style.visibility = 'visible';\n"; 
+	$javascript.= "  }\n"; 
+	$javascript.= "  else {\n"; 
+	$javascript.= "    if (document.layers) { // Netscape 4\n"; 
+	$javascript.= "      document.descText.visibility = 'hidden';\n"; 
+	$javascript.= "      document.descForm.visibility = 'visible';\n"; 
+	$javascript.= "    }\n"; 
+	$javascript.= "    else { // IE 4\n"; 
+	$javascript.= "      document.all.descText.style.visibility = 'hidden';\n"; 
+	$javascript.= "      document.all.descForm.style.visibility = 'visible';\n"; 
+	$javascript.= "    }\n"; 
+	$javascript.= "  }\n"; 
+	$javascript.= "}\n";
+	$javascript.= "</script>\n";
+	return $javascript;
+}
+
+function editButton($editid,$text) {
+	# add edit button to description
+	$editButton="<div id='descText".$editid."' style='position:absolute'>";
+	$editButton.=$text;
+	$editButton.=" <input type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$editid')\">";
+	$editButton.="</div>\n";
+	$editButton.="<div id='descForm".$editid."' style='visibility:hidden;'>";
+	//	$editButton.="<textarea name='newdescription".$editid."' size='".strlen($text)."' value='";
+	$cols = (strlen($text) > 40) ? 40 : strlen($text);
+	$rows = ($cols==40) ? ceil(strlen($text)/40) : 1;
+	$editButton.="<textarea name='newdescription".$editid."' cols='$cols' rows='$rows'>";
+	# convert single quotes to html
+	$editButton.=htmlentities($text, ENT_QUOTES);
+	$editButton.="</textarea>";
+	$editButton.=" <input type='submit' name='updateDesc".$editid."' value='Update')>";
+	$editButton.="</div>\n";
+	return $editButton;
+}
+
+function updateDescription($table, $editid, $text) {
+	$particle=new particledata();
+
+	# convert html back to single quotes
+	$desc = html_entity_decode($text, ENT_QUOTES);
+	$particle->updateDescription($table, $editid, $desc);
+}
+
 function getHtmlStyle($code) {
 	$codes['e[1m']='font-weight:bold';
 	$codes['e[0m']='';

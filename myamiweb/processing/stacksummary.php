@@ -29,35 +29,9 @@ $projectId=$_POST['projectId'];
 
 $javascript = "<script src='../js/viewer.js'></script>\n";
 
-// javascript for hiding/showing edit text & form
-$javascript = "<script language='javascript' type='text/javascript'>\n";
-$javascript.= "function hideEditForm(stackid) {\n";
-$javascript.= "  var descText='descText'+stackid;\n";
-$javascript.= "  var descForm='descForm'+stackid;\n";
-$javascript.= "  if (document.getElementById) { // DOM3 = IE5, NS6\n";
-$javascript.= "    document.getElementById(descText).style.visibility = 'hidden';\n"; 
-$javascript.= "    document.getElementById(descForm).style.visibility = 'visible';\n"; 
-$javascript.= "  }\n"; 
-$javascript.= "  else {\n"; 
-$javascript.= "    if (document.layers) { // Netscape 4\n"; 
-$javascript.= "      document.descText.visibility = 'hidden';\n"; 
-$javascript.= "      document.descForm.visibility = 'visible';\n"; 
-$javascript.= "    }\n"; 
-$javascript.= "    else { // IE 4\n"; 
-$javascript.= "      document.all.descText.style.visibility = 'hidden';\n"; 
-$javascript.= "      document.all.descForm.style.visibility = 'visible';\n"; 
-$javascript.= "    }\n"; 
-$javascript.= "  }\n"; 
-$javascript.= "}\n";
-$javascript.= "</script>\n";
+$javascript.= editTextJava();
 
 processing_header("Stack Report","Stack Summary Page", $javascript,False);
-
-echo"<form name='viewerform' method='POST' ACTION='$formAction'>
-<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-
-$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-echo "</FORM>\n";
 
 // --- Get Stack Data --- //
 $particle = new particledata();
@@ -69,11 +43,8 @@ echo "<form name='stackform' method='post' action='$formAction'>\n";
 $stackIds = $particle->getStackIds($sessionId);
 foreach ($stackIds as $row) {
 	$stackid=$row['stackid'];
-	if ($_POST['updateDesc'.$stackid]) {
-		# convert html back to single quotes
-		$desc = html_entity_decode($_POST['newdescription'.$stackid],ENT_QUOTES);
-		$particle->updateDescription('ApStackData',$stackid, $desc);
-	}
+	if ($_POST['updateDesc'.$stackid])
+		updateDescription('ApStackData', $stackid, $_POST['newdescription'.$stackid]);
 	$s=$particle->getStackParams($stackid);
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid));
@@ -81,7 +52,7 @@ foreach ($stackIds as $row) {
 	echo divtitle("Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>".$s['shownstackname']."</a> (ID: $stackid)");
 
 
-	echo "<table border='0'>\n";
+	echo "<table border='0' width='600'>\n";
 	$stackavg = $s['path']."/average.mrc";
 	if (file_exists($stackavg)) {
 		echo "<tr><td rowspan='15' align='center'>";
@@ -98,18 +69,8 @@ foreach ($stackIds as $row) {
 	$boxsz=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
 	$boxsz.=" pixels";
 	
-	# add edit button to description
-	$descDiv="<div id='descText".$stackid."' style='position:absolute'>";
-	$descDiv.=$s['description'];
-	$descDiv.=" <input type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$stackid')\">";
-	$descDiv.="</div>\n";
-	$descDiv.="<div id='descForm".$stackid."' style='visibility:hidden;'>";
-	$descDiv.="<input type='text' name='newdescription".$stackid."' size='".strlen($s['description'])."' value='";
-	# convert single quotes to html
-	$descDiv.=htmlentities($s['description'], ENT_QUOTES);
-	$descDiv.="'>";
-	$descDiv.=" <input type='submit' name='updateDesc".$stackid."' value='Update')>";
-	$descDiv.="</div>\n";
+	# add edit button to description if logged in
+	$descDiv = ($_SESSION['username']) ? editButton($stackid,$s['description']) : $s['description'];
 
 	$display_keys['description']=$descDiv;
 

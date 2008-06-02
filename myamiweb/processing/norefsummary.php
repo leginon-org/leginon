@@ -35,17 +35,15 @@ function createNoRefAlignSummary() {
 	$projectId=$_POST['projectId'];
 
 	$javascript="<script src='../js/viewer.js'></script>\n";
+	$javascript.= editTextJava();
 
 	processing_header("NoRef Class Report","Reference-free Classification Summary Page", $javascript);
 
-	echo"<form name='viewerform' method='POST' ACTION='$formAction'>
-	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-	echo "</FORM>\n";
-
 	// --- Get NoRef Data
 	$particle = new particledata();
+
+	// edit description form
+	echo "<form name='stackform' method='post' action='$formAction'>\n";
 
 	# find each noref entry in database
 	$norefIds = $particle->getNoRefIds($sessionId);
@@ -53,16 +51,20 @@ function createNoRefAlignSummary() {
 
 	foreach ($norefIds as $norefid) {
 		//print_r ($norefid);
+		$norefnum = $norefid['DEF_id'];
+
+		// update description
+		if ($_POST['updateDesc'.$norefnum])
+			updateDescription('ApNoRefRunData',$norefnum,$_POST['newdescription'.$norefnum]);
 		# get list of noref parameters from database
-		$r = $particle->getNoRefParams($norefid['DEF_id']);
+		$r = $particle->getNoRefParams($norefnum);
 		$s = $particle->getStackParams($r['REF|ApStackData|stack']);
-		echo divtitle("NOREF ALIGN: <FONT class='aptitle'>".$r['name']
-		."</FONT> (ID: <FONT class='aptitle'>".$norefid[DEF_id]."</FONT>)");
+		echo divtitle("Ref-free Run: <font class='aptitle'>".$r['name']
+		."</font> (ID: <font class='aptitle'>$norefnum</font>)");
 		//echo divtitle("NoRef Id: $norefid[DEF_id]");
 		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
-		echo "<table border='0' >\n";
+		echo "<table border='0' width='600'>\n";
 
-		$norefnum = $norefid['DEF_id'];
 		if ($r['first_ring']) {
 			echo "<tr><td bgcolor='#bbffbb'>";
 			echo "<a href='runNoRefClassify.php?expId=$expId&norefId=$norefnum'>";
@@ -70,9 +72,11 @@ function createNoRefAlignSummary() {
 			echo"</td></tr>";	
 		}
 
-		//$display_keys['name']=$r['name'];
+		# add edit button to description if logged in
+		$descDiv = ($_SESSION['username']) ? editButton($norefnum,$r['description']) : $r['description'];
+		
 		$display_keys = array();
-		$display_keys['description']=$r['description'];
+		$display_keys['description']=$descDiv;
 		$display_keys['time']=$r['DEF_timestamp'];
 		$display_keys['path']=$r['path'];
 		$display_keys['# particles']=$r['num_particles'];
@@ -90,7 +94,7 @@ function createNoRefAlignSummary() {
 			echo formatHtmlRow($k,$v);
 		}
 
-		$classIds = $particle->getNoRefClassRuns($norefid['DEF_id']);
+		$classIds = $particle->getNoRefClassRuns($norefnum);
 		$classnum = count($classIds);
 		foreach ($classIds as $classid) {
 			$norefpath = $r['path']."/";
