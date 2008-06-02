@@ -293,6 +293,7 @@ if ($expId) {
 		$norefrun = count($subclusterjobs['norefali']['running']);
 		$norefq = count($subclusterjobs['norefali']['queued']);
 
+		$norefdone = ($norefruns > $norefdone) ? $norefruns : $norefdone;
 		$norefresults[] = ($norefdone==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefdone complete</a>";
 		$norefresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
 		$norefresults[] = ($norefq==0) ? "" : "$norefq queued";
@@ -307,6 +308,7 @@ if ($expId) {
 		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
 		$refbasedq = count($subclusterjobs['refbasedali']['queued']);
 
+		$norbaseddone = ($refbasedruns > $refbaseddone) ? $refbasedruns : $refbaseddone;
 		$refbasedresults[] = ($refbaseddone==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbaseddone complete</a>";
 		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
 		$refbasedresults[] = ($refbasedq==0) ? "" : "$refbasedq queued";
