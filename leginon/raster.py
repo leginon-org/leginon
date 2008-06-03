@@ -62,11 +62,10 @@ def createIndices(shape):
 
 def createIndices2(a,b,angle):
 	'''
-  indices enclosed an ellipse
+  indices enclosed by an ellipse
 	'''
 	cos = math.cos(angle)
 	sin = math.sin(angle)
-	print math.degrees(angle)	
 	maxind = 1+2*int(max(a,b))
 	shape = maxind,maxind
 	ind = numpy.indices(shape, numpy.float32)
@@ -77,8 +76,12 @@ def createIndices2(a,b,angle):
 	indices = zip(ind[0].flat, ind[1].flat)
 	goodindices = []
 	for index in indices:
-		col = abs(index[0]*cos-index[1]*sin)-0.5
-		row = abs(index[0]*sin+index[1]*cos)-0.5
+		if index != (0,0):
+			col = abs(index[0]*cos-index[1]*sin)-0.5
+			row = abs(index[0]*sin+index[1]*cos)-0.5
+		else:
+			col = 0
+			row = 0
 		if (col/a)**2+(row/b)**2 <= 1:
 			goodindices.append(index)
 	return goodindices
