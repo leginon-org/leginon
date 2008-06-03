@@ -25,19 +25,17 @@ else {
 }
 $projectId=$_POST['projectId'];
 
-$javascript="<script src='../js/viewer.js'></script>\n";
+$javascript = "<script src='../js/viewer.js'></script>\n";
+$javascript.= editTextJava();
 
 processing_header("Reconstruction Summary","Reconstruction Summary Page", $javascript);
 
-echo"<form name='viewerform' method='POST' ACTION='$formAction'>
-<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-
-$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-
+// edit description form
+echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 // --- Get Stack Data
 $particle = new particledata();
-#$stackIds = $particle->getStackIds($sessionId);
+
 // --- Get Reconstruction Data
 $reconRuns = $particle->getReconIdsFromSession($sessionId);
 if ($reconRuns) {
@@ -51,14 +49,23 @@ if ($reconRuns) {
 	}
 
 	foreach ($reconRuns as $reconrun) {
+		$reconid = $reconrun['DEF_id'];
+
+		// update description
+		if ($_POST['updateDesc'.$reconid]) {
+			updateDescription('ApRefinementRunData', $reconid, $_POST['newdescription'.$reconid]);
+			$reconrun['description']=$_POST['newdescription'.$reconid];
+
+		}
+
 		// GET INFO
 		$stackcount=$particle->getNumStackParticles($reconrun['REF|ApStackData|stack']);
 		$stackmpix = $particle->getStackPixelSizeFromStackId($reconrun['REF|ApStackData|stack']);
 		$stackapix = format_angstrom_number($stackmpix);
 		$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
 		$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
-		$res = $particle->getHighestResForRecon($reconrun['DEF_id']);
-		$avgmedjump = $particle->getAverageMedianJump($reconrun['DEF_id']);
+		$res = $particle->getHighestResForRecon($reconid);
+		$avgmedjump = $particle->getAverageMedianJump($reconid);
 
 		// PRINT INFO
 		$html .= "<TR>\n";
@@ -75,7 +82,11 @@ if ($reconRuns) {
 			$html .= sprintf("%2.2f &plusmn; %2.1f </A></TD>\n", $avgmedjump['average'], $avgmedjump['stdev']);
 		} else
 			$html .= "<TD></TD>\n";
-		$html .= "<TD>".$reconrun['description']."</TD>\n";
+
+		# add edit button to description if logged in
+		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
+
+		$html .= "<td>$descDiv</td>\n";
 		$html .= "</TR>\n";
 	}
 

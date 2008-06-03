@@ -54,7 +54,6 @@ function createTemplateForm() {
 	if ($templateData) {
 		$i=1;
 		$templatetable="<TABLE CLASS='tableborder' BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
-		$templatetable.="<style type='text/css'><!-- input { font-size: 14px; } --></style>";
 		$numtemplates=count($templateData);
 
 		foreach($templateData as $templateinfo) { 

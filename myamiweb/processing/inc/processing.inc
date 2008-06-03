@@ -763,8 +763,9 @@ function editButton($editid,$text) {
 	$editButton.="</div>\n";
 	$editButton.="<div id='descForm".$editid."' style='visibility:hidden;'>";
 	//	$editButton.="<textarea name='newdescription".$editid."' size='".strlen($text)."' value='";
-	$cols = (strlen($text) > 40) ? 40 : strlen($text);
-	$rows = ($cols==40) ? ceil(strlen($text)/40) : 1;
+	$len=(strlen($text)==0) ? 15 : strlen($text);
+	$cols = ($len > 40) ? 40 : $len;
+	$rows = ($cols==40) ? ceil($len/40) : 1;
 	$editButton.="<textarea name='newdescription".$editid."' cols='$cols' rows='$rows'>";
 	# convert single quotes to html
 	$editButton.=htmlentities($text, ENT_QUOTES);
