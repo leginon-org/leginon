@@ -363,8 +363,6 @@ function runTemplateCorrelator() {
 		if (!$testimage) exit;
 	}
 
-	processing_header("Particle Selection Results","Particle Selection Results");
-
 	if ($testimage) {
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		echo  " <B>Template Correlator Command:</B><BR/>$command";
@@ -383,6 +381,8 @@ function runTemplateCorrelator() {
 		createTCForm($images,'Particle Selection Results','');
 		exit;
 	}
+
+	else processing_header("Particle Selection Results","Particle Selection Results");
 
 	echo"
 		<TABLE WIDTH='600'>

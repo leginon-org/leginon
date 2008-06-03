@@ -198,8 +198,6 @@ function runDogPicker() {
 		if (!$testimage) exit;
 	}
 
-	processing_header("Particle Selection Results","Particle Selection Results");
-
 	if ($testimage) {
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		echo "<B>DogPicker Command:</B><br />$command";
@@ -212,6 +210,8 @@ function runDogPicker() {
 		createDogPickerForm($images,'Particle Selection Test Results','');
 		exit;
 	}
+
+	else processing_header("Particle Selection Results","DogPicker Command");
 
 	echo"
 		<TABLE WIDTH='600'>
