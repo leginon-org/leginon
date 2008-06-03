@@ -19,9 +19,11 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		'raster spacing': 50.0,
 		'raster angle': 0.0,
 		'raster movetype': None,
-		'raster width': 1.0,
 		'raster overlap': 0.0,
 		'raster preset': None,
+		'ellipse angle': 0.0,
+		'ellipse a': 1.0,
+		'ellipse b': 1.0,
 	})
 
 	def __init__(self, *args, **kwargs):
@@ -92,16 +94,21 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		spacing = self.settings['raster spacing']
 		angledeg = self.settings['raster angle']
 		anglerad = math.radians(angledeg)
-		limit = self.settings['raster width']
-		rasterpoints = raster.createRaster2(spacing, anglerad, limit)
+		rasterpoints = raster.createRaster3(spacing, anglerad, self.goodindices)
 		return rasterpoints
 
 	def filterTargets(self, targetlist):
-		limit = self.settings['raster width']
-		self.logger.info('filtering target list:  use center %d targets' %limit)
+		self.logger.info('filtering target list:  convolve targets with a raster')
 		newlist = []
-		distlist = []
-		targetdistances = {}
+		angledeg = self.settings['raster angle']
+		anglerad = math.radians(angledeg)
+		# define goodindices for raster convolution
+		limitangledeg = self.settings['ellipse angle']
+		limitanglerad = math.radians(limitangledeg)
+		limita = self.settings['ellipse a']
+		limitb = self.settings['ellipse b']
+		self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad)
+		# create raster
 		for target in targetlist:
 			oldtarget = data.AcquisitionImageTargetData(initializer=target)
 			self.targetdata = oldtarget

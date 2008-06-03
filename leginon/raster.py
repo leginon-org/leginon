@@ -2,6 +2,7 @@
 convenience functions for raster of points
 '''
 import numpy
+import math
 
 def createRaster(shape, spacing, angle, indices=False, limit=None):
 	'''
@@ -48,6 +49,9 @@ def createRaster(shape, spacing, angle, indices=False, limit=None):
 
 
 def createIndices(shape):
+	'''
+	square indices
+	'''
 	ind = numpy.indices(shape, numpy.float32)
 	center0 = shape[0] / 2.0 - 0.5
 	center1 = shape[1] / 2.0 - 0.5
@@ -56,9 +60,32 @@ def createIndices(shape):
 	indices = zip(ind[0].flat, ind[1].flat)
 	return indices
 
+def createIndices2(a,b,angle):
+	'''
+  indices enclosed an ellipse
+	'''
+	cos = math.cos(angle)
+	sin = math.sin(angle)
+	print math.degrees(angle)	
+	maxind = 1+2*int(max(a,b))
+	shape = maxind,maxind
+	ind = numpy.indices(shape, numpy.float32)
+	center0 = shape[0] / 2.0 - 0.5
+	center1 = shape[1] / 2.0 - 0.5
+	ind[0] = ind[0] - center0
+	ind[1] = ind[1] - center1
+	indices = zip(ind[0].flat, ind[1].flat)
+	goodindices = []
+	for index in indices:
+		col = abs(index[0]*cos-index[1]*sin)-0.5
+		row = abs(index[0]*sin+index[1]*cos)-0.5
+		if (col/a)**2+(row/b)**2 <= 1:
+			goodindices.append(index)
+	return goodindices
+
 def createRaster2(spacing, angle, limit):
 	'''
-	raster across entire image
+	raster across image, limited by square defined by limit
 	'''
 	co = spacing * numpy.cos(angle)
 	si = spacing * numpy.sin(angle)
@@ -73,6 +100,25 @@ def createRaster2(spacing, angle, limit):
 	ind = createIndices(shape)
 
 	for i in ind:
+		p = numpy.dot(E, numpy.array(i, numpy.float32))
+		rasterpoints.append(tuple(p))
+
+	return rasterpoints
+
+
+def createRaster3(spacing, angle, limitindices):
+	'''
+	raster across entire image, limited by index list
+	'''
+	co = spacing * numpy.cos(angle)
+	si = spacing * numpy.sin(angle)
+	E = numpy.array(((co,si),(-si,co)), numpy.float32)
+	Einv = numpy.linalg.inv(E)
+
+	# create full raster over whole image
+	rasterpoints = []
+
+	for i in limitindices:
 		p = numpy.dot(E, numpy.array(i, numpy.float32))
 		rasterpoints.append(tuple(p))
 

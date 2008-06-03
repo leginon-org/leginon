@@ -37,11 +37,12 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['raster spacing'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=8)
-		self.widgets['raster width'] = FloatEntry(self, -1, min=0, chars=6)
+		self.widgets['ellipse angle'] = FloatEntry(self, -1, chars=6)
+		self.widgets['ellipse a'] = FloatEntry(self, -1, min=0, chars=6)
+		self.widgets['ellipse b'] = FloatEntry(self, -1, min=0, chars=6)
 
 		movetypes = self.node.calclients.keys()
 		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
-		## auto raster
 		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
 		self.Bind(wx.EVT_BUTTON, self.onAutoButton, self.autobut)
 		self.widgets['raster preset'] = PresetChoice(self, -1)
@@ -49,6 +50,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['raster preset'].setChoices(presets)
 		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
 
+		## filter
 		sztype = wx.GridBagSizer(0,5)
 		sztype.Add(self.widgets['bypass'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Convoluting Target Type')
@@ -57,35 +59,75 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sztype.AddGrowableCol(0)
 		sz.Add(sztype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		sz.Add(self.autobut, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Raster Preset')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['raster preset'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Overlap percent')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['raster overlap'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		## auto raster calculator
+		szcalc = wx.GridBagSizer(5,5)
+		sztype.AddGrowableCol(0)
+		szcalc.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Preset for raster')
+		szcalc.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcalc.Add(self.widgets['raster preset'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Overlap Percent')
+		szcalc.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcalc.Add(self.widgets['raster overlap'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Move Type')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['raster movetype'], (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcalc.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcalc.Add(self.widgets['raster movetype'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		sbcalc = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
+		sbszcalc = wx.StaticBoxSizer(sbcalc, wx.VERTICAL)
+		sbszcalc.Add(szcalc, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sz.Add(sbszcalc, (1, 0), (1, 2), wx.EXPAND)
+
+		## raster
+		szr = wx.GridBagSizer(5,5)
 		label = wx.StaticText(self, -1, 'Spacing')
-		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['raster spacing'], (5, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szr.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szr.Add(self.widgets['raster spacing'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'pixels in parent image')
+		szr.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Angle')
-		sz.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['raster angle'], (6, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szr.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szr.Add(self.widgets['raster angle'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'degrees')
+		szr.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'Width')
-		sz.Add(label, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['raster width'], (7, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		## raster limiting ellipse
+		szlimit = wx.GridBagSizer(0,5)
+		label = wx.StaticText(self, -1, 'Angle to a-axis')
+		szlimit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(self.widgets['ellipse angle'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'degrees')
+		szlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Target Filter')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		label = wx.StaticText(self, -1, 'a-axis')
+		szlimit.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(self.widgets['ellipse a'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'raster spacings')
+		szlimit.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		return [sbsz]
+		label = wx.StaticText(self, -1, 'b-axis')
+		szlimit.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlimit.Add(self.widgets['ellipse b'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'raster spacings')
+		szlimit.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sblimit = wx.StaticBox(self, -1, 'Limiting Ellipse')
+		sbszlimit = wx.StaticBoxSizer(sblimit, wx.VERTICAL)
+		sbszlimit.Add(szlimit, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		szr.Add(sbszlimit, (2, 0), (1, 3), wx.EXPAND)
+
+		sbr = wx.StaticBox(self, -1, 'Target Raster')
+		sbszr = wx.StaticBoxSizer(sbr, wx.VERTICAL)
+		sbszr.Add(szr, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sz.Add(sbszr, (2, 0), (1, 2), wx.EXPAND)
+
+		#sb = wx.StaticBox(self, -1, 'Target Filter')
+		#sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		#sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return [sz]
 
 	def onAutoButton(self, evt):
 		self.setNodeSettings()
