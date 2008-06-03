@@ -281,8 +281,8 @@ function runNoRefAlign($runjob=False) {
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
-	if ($numpart > 6000 || $numpart < 10) createNoRefAlignForm("<B>ERROR:</B> Number of particles must be between 10 & 6000");
-	if ($numfactors > 20 || $numfactors < 1) createNoRefAlignForm("<B>ERROR:</B> Number of factors must be between 1 & 20");
+       	if ($numpart < 10) createNoRefAlignForm("<B>ERROR:</B> Must have more than 10 particles");
+	if ($numfactors < 2) createNoRefAlignForm("<B>ERROR:</B> Must have at least 2 factors");
 
 	$particle = new particledata();
 
