@@ -769,7 +769,7 @@ function editButton($editid,$text) {
 	# convert single quotes to html
 	$editButton.=htmlentities($text, ENT_QUOTES);
 	$editButton.="</textarea>";
-	$editButton.=" <input type='submit' name='updateDesc".$editid."' value='Update')>";
+	$editButton.=" <input type='submit' name='updateDesc".$editid."' value='Update'>";
 	$editButton.="</div>\n";
 	return $editButton;
 }

@@ -9,23 +9,21 @@
  */
 
 require "inc/particledata.inc";
-require "inc/viewer.inc";
-require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
+require "inc/viewer.inc";
+require "inc/processing.inc";
 
-$expId = (int) $_GET[expId];
+$expId = (int) $_GET['expId'];
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-processing_header("Template Summary", "Template Summary", "",False);
+$javascript = editTextJava();
+
+processing_header("Template Summary", "Template Summary", $javascript,False);
 
 if ($expId && is_int($expId)){
 	$projectId = (int) getProjectFromExpId($expId);
 }
-
-// if user wants to use templates from another project
-if($_POST['projectId']) $projectId=$_POST['projectId'];
-
-//$projects=getProjectList();
 
 if (is_int($projectId)) {
 	$particle=new particleData;
@@ -33,39 +31,50 @@ if (is_int($projectId)) {
 }
 
 
+// edit description form
+echo "<form name='templateform' method='post' action='$formAction'>\n";
+
 echo"<INPUT TYPE='hidden' NAME='projectId' value='$projectId'>\n";
 
 // extract template info
 if ($templateData) {
 	$i=1;
-	$templatetable="<TABLE CLASS='tableborder' BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
-	$templatetable.="<style type='text/css'><!-- input { font-size: 14px; } --></style>";
+	$templatetable="<TABLE class='tableborder' BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
 	$numtemplates=count($templateData);
 
 	foreach($templateData as $templateinfo) { 
 		if (is_array($templateinfo)) {
+			$templateId=$templateinfo['DEF_id'];
+			if ($_POST['updateDesc'.$templateId]) {
+				updateDescription('ApTemplateImageData', $templateId, $_POST['newdescription'.$templateId]);
+				$templateinfo['description']=$_POST['newdescription'.$templateId];
+			}
 			$filename = $templateinfo['path'] ."/".$templateinfo['templatename'];
 			// create the image template table
 			$templatetable.="<TR><TD>\n";
-			$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></TD>\n";
+			$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='150'></TD>\n";
 			$templatetable.="<TD>\n";
 			$templatetable.="<BR/>\n";
 			//$templatetable.=print_r($templateinfo);
-			$templatetable.="<B>Template ID:</B>  $templateinfo[DEF_id]<BR/>\n";
+			$templatetable.="<B>Template ID:</B>  $templateId<BR/>\n";
 			$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<BR/>\n";
 			$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<BR/>\n";
-			$templatetable.=openRoundBorder();
+			//$templatetable.=openRoundBorder();
 			$templatetable.="<B>File:</B><BR/>";
 			$templatetable.=$filename;
 			$templatetable.="<br />\n";
-			$templatetable.="<B>Description:</B><BR/>";
-			$templatetable.=$templateinfo['description'];
-			$templatetable.=closeRoundBorder();
+			$templatetable.="<b>Description:</b><br />";
+
+			# add edit button to description if logged in
+			$descDiv = ($_SESSION['username']) ? editButton($templateId,$templateinfo['description']) : $templateinfo['description'];
+			$templatetable.=$descDiv;
+			//$templatetable.=closeRoundBorder();
 			$templatetable.="</TD></TR>\n";
 			$i++;
 		}
 	}
 	$templatetable.="</TABLE>\n";
+	$templatetable.="</form>\n";
 }
 
 if ($templatetable) {
@@ -76,6 +85,8 @@ if ($templatetable) {
   <CENTER>
   <INPUT TYPE='hidden' NAME='numtemplates' value='$numtemplates'>
   </CENTER>\n";
-} else echo "<B>Project does not contain any templates.</B>\n";
+} 
+else echo "<B>Project does not contain any templates.</B>\n";
+processing_footer();
 
-
+?>
