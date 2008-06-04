@@ -15,9 +15,6 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 
 $errors=false;
-if ($_POST['login']) {
-  $errors = checkLogin();
-}
 
 $leginondata = new leginondata();
 

@@ -52,6 +52,12 @@ function docpop($key,$text) {
 
 function processing_header($title,$heading=false,$headerstuff=false) {
 	$expId = $_GET['expId'];
+
+	// check if logged in
+	if ($_POST['login']) {
+		$errors = checkLogin();
+	}
+	
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectId=getProjectFromExpId($expId);
@@ -363,7 +369,7 @@ function writeBottom($showproclink=True){
 }
 
 function displayLogin($formAction) {
-  $html='<form name="jobform" method="post" action="'.$formAction.'">
+	$html='<form name="loginform" method="post" action="'.$formAction.'">
 Username: <input type="text" name="username" value="'.$_POST['username'].'">
 Password: <input type="password" name="password">
 <input type="submit" name="login" value="Log In">
