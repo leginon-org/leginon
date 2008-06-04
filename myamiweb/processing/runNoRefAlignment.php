@@ -48,8 +48,6 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
-	// limit stack to 3000 particles
-	$javascript .= "	if (stackArray[3] >= 3000) {stackArray[3]=3000};\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	//$javascript .= "	document.viewerform.numfactors.value = Math.floor(Math.sqrt(stackArray[3])*.25);\n";
 	// set max last ring radius
