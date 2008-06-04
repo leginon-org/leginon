@@ -665,7 +665,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		$cmd .= "cp $tmpfile $procdir/$jobfile;\n";
 		exec_over_ssh($_SERVER['HTTP_HOST'],$user,$pass,$cmd, True);
 	
-		writeTop("Appion Job Submission","Appion Job Submission");
+		processing_header("Appion Job Submission","Appion Job Submission");
 		echo "<table width='600'>\n";
 		echo "<tr><td>Appion Directory</td><td>$procdir</td></tr>\n";
 		echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
@@ -693,7 +693,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		else {echo "<font color='red'>No Jobs on the cluster, check your settings</font>\n";}
 		echo "<p><a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[Check status of this job]</a><p>\n";
 		echo "<p><font color='red'>Do not hit 'reload' - it will re-submit job</font><p>\n";
-		writeBottom(True, True);
+		processing_footer();
 		exit;
 	}
 }
