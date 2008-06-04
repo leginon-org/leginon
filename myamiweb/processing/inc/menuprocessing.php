@@ -295,9 +295,20 @@ if ($expId) {
 		$norefq = count($subclusterjobs['norefali']['queued']);
 
 		$norefdone = ($norefruns > $norefdone) ? $norefruns : $norefdone;
-		$norefresults[] = ($norefdone==0) ? "" : "<a href='norefsummary.php?expId=$sessionId'>$norefdone complete</a>";
-		$norefresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
-		$norefresults[] = ($norefq==0) ? "" : "$norefq queued";
+		// get ref-free alignment stats:
+		$norefclresults=array();	
+		$norefcldone = count($subclusterjobs['norefclass']['done']);
+		$norefclrun = count($subclusterjobs['norefclass']['running']);
+		$norefclq = count($subclusterjobs['norefclass']['queued']);
+
+		$done = "<a href='norefsummary.php?expId=$sessionId'>$norefdone complete";
+		$done.= (!$norefcldone==0) ? " ($norefcldone avg)" : "";
+		$done.= "</a>";
+		$norefresults[] = ($norefdone==0) ? "" : $done;
+		$norefresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun align running</a>";
+		$norefresults[] = ($norefclrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefclass'>$norefrun avg running</a>";
+		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
+		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
 		// stacks being created and stacks completed
 		$totnoref = $norefdone+$norefrun+$norefq;
