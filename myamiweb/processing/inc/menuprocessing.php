@@ -444,7 +444,7 @@ $menujs='<script type="text/javascript">
 ';
 
 $menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideall()">Hide</a> /
-<a id="eclk" href="javascript:m_expandcontract()">Expand</a></div>';
+<a id="eclk" href="javascript:m_expandcontract()">Expand</a></span>';
 
 $menuprocessing="";
 	foreach((array)$data as $menu) {
