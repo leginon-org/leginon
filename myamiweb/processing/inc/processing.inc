@@ -635,6 +635,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
 		$cmd .= "cd $procdir; $apcmd; exit;";
+		if ($xvfb) $cmd = "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &; $cmd; kill %1;";
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		return;
 	}

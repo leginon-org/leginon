@@ -27,16 +27,10 @@ else {
 function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launcher', $heading='Upload a template') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
-	if ($expId){
-		$sessionId=$expId;
-		$projectId=getProjectFromExpId($expId);
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	}
-	else {
-		$sessionId=$_POST['sessionId'];
-		$formAction=$_SERVER['PHP_SELF'];
-	}
-	$projectId=$_POST['projectId'];
+
+	$projectId=getProjectFromExpId($expId);
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+
 	$file=$_GET['file'];
 	$templateId=$_GET['templateId'];
 	$norefId=$_GET['norefId'];
@@ -104,14 +98,20 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+
+	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
 	$sessioninfo=$sessiondata['info'];
+
+	// get path for submission
+	$outdir=$sessioninfo['Image path'];
+	$outdir=ereg_replace("leginon","appion",$outdir);
+	$outdir=ereg_replace("rawdata","templates",$outdir);
 
 	if (!empty($sessioninfo)) {
 		$sessionname=$sessioninfo['Name'];
-		echo"<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
+		echo "<input type='hidden' name='sessionname' VALUE='$sessionname'>\n";
+		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
-	
 	
 	echo"<INPUT TYPE='hidden' NAME='hed' VALUE='$hed'>\n";
 	
@@ -212,11 +212,10 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
   <TR>
     <TD ALIGN='CENTER'>
       <HR>
-      <BR/>
-      <INPUT type='submit' name='process' value='Upload Template'><BR/>
-      <FONT class='apcomment'>Submission will NOT upload the template,<BR/>
-			only output a command that you can copy and paste into a unix shell</FONT>
-    </td>
+      <input type='submit' name='process' value='Just Show Command'>\n";
+	if ($_SESSION['username']) echo "<input type='submit' name='process' value='Upload Template'>\n";
+	echo "  <br />
+	</td>
 	</tr>
   </table>
   </form>\n";
@@ -226,12 +225,17 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 }
 
 function runUploadTemplate() {
+	$expId = $_GET['expId'];
+	$outdir = $_POST['outdir'];
+
+	$command.="uploadTemplate.py ";
+
 	//make sure a template root or a class/stack root was entered
 	$template=$_POST['template'];
 	$hed=$_POST['hed'];
 	if (!$template && !$hed) createUploadTemplateForm("<B>ERROR:</B> Enter a the root name of the template or stack/noref class");
 
-	//make sure a session was selected
+	//make sure a description is provided
 	$description=$_POST['description'];
 	if (!$description) createUploadTemplateForm("<B>ERROR:</B> Enter a brief description of the template");
 
@@ -247,6 +251,10 @@ function runUploadTemplate() {
 	$apix=$_POST['apix'];
 	if (!$apix) createUploadTemplateForm("<B>ERROR:</B> Enter the pixel size");
 
+	// filename will be the runid if running on cluster
+	$runid = basename($template);
+	$runid = $runid.'.upload';
+
 	$templateId=$_POST['templateId'];
 	$stackId=$_POST['stackId'];
 	$norefId=$_POST['norefId'];
@@ -255,13 +263,12 @@ function runUploadTemplate() {
 
 	//check if the template is an existing file (wild type is not searched)
 	if (!file_exists($template)) {
-		$template_warning="File ".$template." does not exist. This is fine you are uploading more than one template"; 
+		$template_warning="File ".$template." does not exist. This is OK if you are uploading more than one template"; 
 	} else {
 		$template_warning="File ".$template." exist. Make sure that this is the file that you want!";
 	}
 
 	//putting together command
-	$command.="uploadTemplate.py ";
 	$command.="--template=$template ";
 	$command.="--session=$session ";
 	$command.="--apix=$apix ";
@@ -272,21 +279,45 @@ function runUploadTemplate() {
 	if ($norefClassId) $command.="--norefid=$norefClassId ";
 	if ($avgstack) $command.="--avgstack ";
 
-	processing_header("UploadTemplate Run", "UploadTemplate Params");
+	// submit job to cluster
+	if ($_POST['process']=="Upload Template") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>";
-	//display this line if there's a norefId or stackId
-	if ($norefId || $stackId) {
-	echo"
-	<B>This command will create a new MRC file called</B> $template<BR><BR>";
-	} else {
-	echo"$template_warning<BR>";
+		if (!($user && $password)) createUploadTemplateForm("<B>ERROR:</B> You must be logged in to submit");
+
+		submitAppionJob($command,$outdir,$runid,$expId,'uploadtemplate',True);
+
+		// check that upload finished properly
+		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$status = "Template was uploaded";
+		if (file_exists($jobf)) {
+			$jf = file($jobf);
+			$jfnum = count($jf);
+			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
+			  // if anything is red, it's not good
+				if (preg_match("/red/",$jf[$i])) {
+					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
+					continue;
+				}
+			}
+		}
+		else $status = "Job did not run, contact the appion team";
+		processing_header("Template Upload", "Template Upload");
+		echo "$status\n";
 	}
 
+	else {
+		processing_header("UploadTemplate Command", "UploadTemplate Command");
+
+		//display this line if there's a norefId or stackId
+		if ($norefId || $stackId) echo"<font class='apcomment'><b>This command will create a new MRC file called:</b><br />$template</font><br /><br />";
+		else echo"$template_warning<br />";
+	}
 	//rest of the page
 	echo"
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
 	$template_command 
 	<B>UploadTemplate Command:</B><BR>
 	$command

@@ -120,13 +120,12 @@ function runPyAce() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		$xcommand .= $command;
 		if (!($user && $password)) {
 			createPyAceForm("<B>ERROR:</B> Enter a user name and password");
 			exit;
 		}
 
-		submitAppionJob($xcommand,$outdir,$runid,$expId,'ace',False,True);
+		submitAppionJob($command,$outdir,$runid,$expId,'ace',False,True);
 		exit;
 	}
 
