@@ -66,7 +66,7 @@ function createNoRefAlignSummary() {
 		echo "<table border='0' width='600'>\n";
 
 		if ($r['first_ring']) {
-			echo "<tr><td bgcolor='#bbffbb'>";
+			echo "<tr><td colspan='2' bgcolor='#bbffbb'>";
 			echo "<a href='runNoRefClassify.php?expId=$expId&norefId=$norefnum'>";
 			echo "Average particles into classes</a>";
 			echo"</td></tr>";	
