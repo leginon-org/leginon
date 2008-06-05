@@ -239,7 +239,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		Particles:<BR>
 		<SELECT NAME='stackid'>\n";
 		foreach ($stackIds as $stack) {
-			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
 			$runname=$stackparams['shownstackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));

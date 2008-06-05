@@ -32,7 +32,7 @@ $particle = new particledata();
 	$boxsize= $s[boxSize]/$s[bin];
 	$s['boxsize']=$boxsize;
 
-	echo divtitle("Stack: <FONT class='aptitle'>".$s['shownstackname']
+	echo apdivtitle("Stack: <FONT class='aptitle'>".$s['shownstackname']
 		."</FONT> (ID: <FONT class='aptitle'>".$stackid."</FONT>)");
 
 	echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";

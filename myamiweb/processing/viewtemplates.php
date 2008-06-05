@@ -33,12 +33,11 @@ if (is_int($projectId)) {
 // edit description form
 echo "<form name='templateform' method='post' action='$formAction'>\n";
 
-echo"<INPUT TYPE='hidden' NAME='projectId' value='$projectId'>\n";
+echo"<INPUt='hidden' NAME='projectId' value='$projectId'>\n";
 
 // extract template info
 if ($templateData) {
 	$i=1;
-	$templatetable="<TABLE class='tableborder' BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
 	$numtemplates=count($templateData);
 
 	foreach($templateData as $templateinfo) { 
@@ -50,12 +49,11 @@ if ($templateData) {
 			}
 			$filename = $templateinfo['path'] ."/".$templateinfo['templatename'];
 			// create the image template table
-			$templatetable.="<TR><TD>\n";
-			$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='150'></TD>\n";
-			$templatetable.="<TD>\n";
-			$templatetable.="<BR/>\n";
-			//$templatetable.=print_r($templateinfo);
-			$templatetable.="<B>Template ID:</B>  $templateId<BR/>\n";
+			$templatetable.= apdivtitle("Template ID: $templateId");
+			$templatetable.="<table border='0' cellpadding='5'>\n";
+			$templatetable.="<tr><td valign='top'>\n";
+			$templatetable.="<img src='loadimg.php?filename=$filename&rescale=True' width='100'></td>\n";
+			$templatetable.="<td>\n";
 			$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<BR/>\n";
 			$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<BR/>\n";
 			//$templatetable.=openRoundBorder();
@@ -68,11 +66,11 @@ if ($templateData) {
 			$descDiv = ($_SESSION['username']) ? editButton($templateId,$templateinfo['description']) : $templateinfo['description'];
 			$templatetable.=$descDiv;
 			//$templatetable.=closeRoundBorder();
-			$templatetable.="</TD></TR>\n";
+			$templatetable.="</td></tr>\n";
+			$templatetable.="</table>\n";
 			$i++;
 		}
 	}
-	$templatetable.="</TABLE>\n";
 	$templatetable.="</form>\n";
 }
 

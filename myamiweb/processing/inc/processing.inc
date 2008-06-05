@@ -50,6 +50,15 @@ function docpop($key,$text) {
 	return "<a href='#' id='l".$key."' onMouseOver='popLayer(\"".$key."\",\"l".$key."\")' onMouseOut='hideLayer()'>$text</a>\n";
 }
 
+function apdivtitle($title) {
+	$htmlstr = '
+	<div style="padding: 4px; border:1px solid black; background-color:#b5d0df; font-size:10pt;" >
+	<b>'.$title.'</b> 
+	</div>
+	';
+	return $htmlstr;
+}
+
 function processing_header($title,$heading=false,$headerstuff=false) {
 	$expId = $_GET['expId'];
 
@@ -615,7 +624,13 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
-	
+	// first check that the user has sinedon.cfg & leginon.cfg
+	// files in their guppy home directory
+	$filecheck = exec_over_ssh($host,$user,$pass,'ls leginon.cfg',True);
+	if (trim($filecheck)!='leginon.cfg') return "You are missing the leginon.cfg file on the cluster";
+	$filecheck = exec_over_ssh($host,$user,$pass,'ls sinedon.cfg',True);
+	if (trim($filecheck)!='sinedon.cfg') return "You are missing the sinedon.cfg file on the cluster";
+
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;

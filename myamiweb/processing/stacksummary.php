@@ -49,7 +49,7 @@ foreach ($stackIds as $row) {
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackid));
 	if ($nump == 0) continue;
-	echo divtitle("Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>".$s['shownstackname']."</a> (ID: $stackid)");
+	echo apdivtitle("Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>".$s['shownstackname']."</a> (ID: $stackid)");
 
 
 	echo "<table border='0' width='600'>\n";

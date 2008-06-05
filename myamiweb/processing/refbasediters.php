@@ -39,7 +39,7 @@ function displayIterations($refaliId) {
 	//$t = $particle->getTemplatesFromId($refaliId['REF|ApTemplateImageData|refTemplate']);
 	if ($p['csym']>1) $csym=$p['csym'];
 
-	echo divtitle("Original templates");
+	echo apdivtitle("Original templates");
 	echo "<TABLE BORDER='0'><TR>\n";
 	foreach ($ts as $t) {
 		echo "<TD>\n";
@@ -52,7 +52,7 @@ function displayIterations($refaliId) {
 	echo"<P>\n";
 
 	foreach ($iters as $i) {
-		echo divtitle("Iteration $i[iteration]");
+		echo apdivtitle("Iteration $i[iteration]");
 		echo "<TABLE CLASS='tableborder' BORDER='0'><TR>\n";
 		$count = 0;
 		foreach ($ts as $t) {

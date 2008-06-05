@@ -59,9 +59,9 @@ function createNoRefAlignSummary() {
 		# get list of noref parameters from database
 		$r = $particle->getNoRefParams($norefnum);
 		$s = $particle->getStackParams($r['REF|ApStackData|stack']);
-		echo divtitle("Ref-free Run: <font class='aptitle'>".$r['name']
+		echo apdivtitle("Ref-free Run: <font class='aptitle'>".$r['name']
 		."</font> (ID: <font class='aptitle'>$norefnum</font>)");
-		//echo divtitle("NoRef Id: $norefid[DEF_id]");
+		//echo apdivtitle("NoRef Id: $norefid[DEF_id]");
 		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
 		echo "<table border='0' width='600'>\n";
 
@@ -80,7 +80,7 @@ function createNoRefAlignSummary() {
 		$display_keys['time']=$r['DEF_timestamp'];
 		$display_keys['path']=$r['path'];
 		$display_keys['# particles']=$r['num_particles'];
-		$display_keys['lp filt']=$r['lp_filt'];
+		if ($r['lp_filt']) $display_keys['lp filt']=$r['lp_filt'];
 		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
 		$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
 		$display_keys['stack run name'] = $stackstr;

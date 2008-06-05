@@ -50,9 +50,8 @@ foreach ($refaliIds as $refid) {
   $r = $particle->getRefAliParams($refid['DEF_id']);
   $s = $particle->getStackParams($r['REF|ApStackData|stack']);
   $t = $particle->getTemplatesFromId($r['REF|ApTemplateImageData|refTemplate']);
-	echo divtitle("REF ALIGN: <FONT class='aptitle'>".$r['name']
+	echo apdivtitle("REF ALIGN: <FONT class='aptitle'>".$r['name']
 		."</FONT> (ID: <FONT class='aptitle'>".$refid[DEF_id]."</FONT>)");
-  //echo divtitle("Refali Run Id: $refid[DEF_id]");
   // --- get iteration info
   $iters = $particle->getRefAliIters($refid['DEF_id']);
   $numiters = count($iters);

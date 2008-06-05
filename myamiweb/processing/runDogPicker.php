@@ -189,12 +189,12 @@ function runDogPicker() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) {
-			createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
+		if (!($user && $password)) createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'dogpicker',$testimage);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'dogpicker',$testimage);
+		// if errors:
+		if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
+
 		if (!$testimage) exit;
 	}
 

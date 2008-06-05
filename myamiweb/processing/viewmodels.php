@@ -27,7 +27,6 @@ foreach ($models as $model) {
 		$model['description']=$_POST['newdescription'.$modelid];
 	}
 
-	echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 	# get list of png files in directory
 	$pngfiles=array();
 	$modeldir= opendir($model['path']);
@@ -37,26 +36,25 @@ foreach ($models as $model) {
 	sort($pngfiles);
   
 # display starting model
-	echo "<TR><TD COLSPAN=2>\n";
-	echo "<B>Model ID: $modelid</b><br />\n";
+	echo apdivtitle("Model ID: $modelid");
 	foreach ($pngfiles as $snapshot) {
 		$snapfile = $model['path'].'/'.$snapshot;
-		echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+		echo "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
+		echo "<img src='loadimg.php?filename=$snapfile' height='80'></a>\n";
 	}
-	echo "</TD>\n";
-	echo "</TR>\n";
 	$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 
 	# add edit button to description if logged in
 	$descDiv = ($_SESSION['username']) ? editButton($modelid,$model['description']) : $model['description'];
 	
-	echo"<TR><TD COLSPAN=2>$descDiv</TD></TR>\n";
-	echo"<TR><TD COLSPAN=2>$model[path]/$model[name]</TD></TR>\n";
-	echo"<TR><TD>pixel size:</TD><TD>$model[pixelsize]</TD></TR>\n";
-	echo"<TR><TD>box size:</TD><TD>$model[boxsize]</TD></TR>\n";
-	echo"<TR><TD>symmetry:</TD><TD>$sym[symmetry]</TD></TR>\n";
-	echo"<TR><TD>resolution:</TD><TD>$model[resolution]</TD></TR>\n";
-	echo "</table>\n";
+	echo "<br />\n";
+	echo"<b>pixel size:</b> $model[pixelsize]<br />\n";
+	echo"<b>box size:</b> $model[boxsize]<br />\n";
+	echo"<b>symmetry:</b> $sym[symmetry]<br />\n";
+	echo"<b>resolution:</b> $model[resolution]<br />\n";
+	echo"<b>Filename:</b><br />$model[path]/$model[name]<br />\n";
+	echo"<b>Description:</b><br />$descDiv<br />\n";
+	echo"<br />\n";
 }
 
 echo "</form>\n";

@@ -219,7 +219,9 @@ function runUploadModel() {
 
 		if (!($user && $password)) createUploadModelForm("<B>ERROR:</B> You must be logged in to submit");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'uploadmodel',True,True);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadmodel',True,True);
+		// if errors:
+		if ($sub) createUploadModelForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
 		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';

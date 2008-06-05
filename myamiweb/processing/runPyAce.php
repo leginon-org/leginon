@@ -120,12 +120,11 @@ function runPyAce() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) {
-			createPyAceForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
+		if (!($user && $password)) createPyAceForm("<b>ERROR:</b> Enter a user name and password");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'ace',False,True);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'ace',False,True);
+		// if errors:
+		if ($sub) createPyAceForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 
@@ -243,7 +242,7 @@ function createPyAceForm($extra=false) {
 	processing_header("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 
 	if ($extra) {
-		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+		echo "<font color='#DD0000'>$extra</FONT><br />\n";
 	}
 	echo"
 	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";

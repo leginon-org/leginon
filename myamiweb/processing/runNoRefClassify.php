@@ -189,10 +189,8 @@ function runNoRefClassify($runjob=False) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) {
-			createNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
+		if (!($user && $password)) createNoRefClassifyForm("<B>ERROR:</B> Enter a user name and password");
+
 		// get the output directory (already contains runid)
 		$norefparams = $particle->getNoRefParams($norefid);
 		$outdir = $norefparams['path'];
@@ -207,7 +205,10 @@ function runNoRefClassify($runjob=False) {
 		$uniqId=implode('',$factorlistAR);
 		$uniqId.=".$numclass";
 
-		submitAppionJob($command,$outdir,$runid,$expId,'norefclass',False,False,$uniqId);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'norefclass',False,False,$uniqId);
+
+		// if errors:
+		if ($sub) createNoRefClassifyForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	processing_header("No Ref Classify Run Params","No Ref Classify Params");

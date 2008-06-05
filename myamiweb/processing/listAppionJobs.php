@@ -76,7 +76,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				$extraKeys['avg confidence2']=format_sci_number($c2stats['avg'],4);
 			}
 
-			echo divtitle("Job: <a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>$name</a> (ID: $jobid)\n");
+			echo apdivtitle("Job: <a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>$name</a> (ID: $jobid)\n");
 			echo openRoundBorder();
 			echo "<table border='0'>\n";
 			foreach ($display_keys as $k=>$v) echo formatHtmlRow($k,$v);

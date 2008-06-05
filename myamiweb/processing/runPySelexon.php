@@ -354,12 +354,11 @@ function runTemplateCorrelator() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) {
-			createTCForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
+		if (!($user && $password)) createTCForm("<B>ERROR:</B> Enter a user name and password");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'templatepicker',$testimage);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'templatepicker',$testimage);
+		// if errors:
+		if ($sub) createTCForm("<b>ERROR:</b> $sub");
 		if (!$testimage) exit;
 	}
 

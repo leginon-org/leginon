@@ -264,7 +264,10 @@ function runImgRejector() {
 
 		if (!($user && $password)) createImgRejectorForm("<b>ERROR:</b> Enter a user name and password");
 
-		submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,$testimage);
+		
+		// if errors:
+		if ($sub) createImgRejectorForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 

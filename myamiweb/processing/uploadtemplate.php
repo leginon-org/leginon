@@ -286,7 +286,9 @@ function runUploadTemplate() {
 
 		if (!($user && $password)) createUploadTemplateForm("<B>ERROR:</B> You must be logged in to submit");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'uploadtemplate',True);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadtemplate',True);
+		// if errors:
+		if ($sub) createUploadTemplateForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
 		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';

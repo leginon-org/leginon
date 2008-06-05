@@ -513,7 +513,9 @@ function runMakestack() {
 
 		if (!($user && $password)) createMakestackForm("<b>ERROR:</b> Enter a user name and password");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'makestack',$testimage);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack',$testimage);
+		// if errors:
+		if ($sub) createMakestackForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 

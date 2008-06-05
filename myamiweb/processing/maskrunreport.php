@@ -12,7 +12,7 @@ $particle = new particledata();
 processing_header('Mask Maker Run Report','Mask Maker Run Report');
 
 list($runparams) = $particle->getMaskMakerParams($runId);
-echo divtitle("Mask Maker report for $runparams[name]");
+echo apdivtitle("Mask Maker report for $runparams[name]");
 
 $regionstats = $particle->getMaskRegionStats($runId);
 echo "<br><table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total regions for $runparams[name]: </span></td><td>$regionstats[totregions]</td></tr></table>\n";

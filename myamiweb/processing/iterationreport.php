@@ -27,7 +27,7 @@ processing_header('Refine Iteration Report','Refine Iteration Report');
 
 	$report_title = 'Report for Iteration';
 	$report_spec = $itrinfo['DEF_id'];
-	echo divtitle($report_title."<FONT class='aptitle'>
+	echo apdivtitle($report_title."<FONT class='aptitle'>
 		</FONT> (ID: <FONT class='aptitle'>".$report_spec."</FONT>)");
 	echo "<table><tr><td>";
 	$datainfo=$paraminfo;

@@ -132,7 +132,6 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 		Particles:<BR>
 		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
-			// echo divtitle("Stack Id: $stack[stackid]");
 			$stackparams=$particle->getStackParams($stack[stackid]);
 
 			// get pixel size and box size
@@ -326,12 +325,11 @@ function runNoRefAlign($runjob=False) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) {
-			createNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
+		if (!($user && $password)) createNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		submitAppionJob($command,$outdir,$runid,$expId,'norefali');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'norefali');
+		// if errors:
+		if ($sub) createNoRefAlignForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	else {
