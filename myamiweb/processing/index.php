@@ -30,7 +30,7 @@ else {
   $formAction=$_SERVER['PHP_SELF'];  
 }
 
-processing_header("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>");
+$data = processing_header("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>");
 // --- main window starts here --- //
 
 // write out errors, if any came up:

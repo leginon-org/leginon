@@ -9,7 +9,24 @@ body {
 }
 
 input {
-		border: 1px solid #aabbcc;
+	border: 1px solid #aabbcc;
+}
+
+input[type="submit"]:hover {
+	background: #ffe88d;
+}
+
+input[type="button"]:hover {
+	background: #ffe88d;
+}
+
+textarea {
+	 border: 1px solid #aabbcc;
+}
+
+input.edit {
+      font-size: 9px;
+      padding: 1px 1px 1px 1px;
 }
 
 /* Header */

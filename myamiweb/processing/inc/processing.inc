@@ -152,7 +152,10 @@ $html.='
 		.'</div>
 </div>
 <div id="maincontent" style="position: relative; float: left; padding-left: 10px">';
-echo $html;
+	echo $html;
+
+	// return all the menu data
+	return $data;
 }
 
 function processing_footer() {
@@ -781,7 +784,7 @@ function editButton($editid,$text) {
 	# add edit button to description
 	$editButton="<div id='descText".$editid."' style='position:absolute'>";
 	$editButton.=$text;
-	$editButton.=" <input type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$editid')\">";
+	$editButton.=" <input class='edit' type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$editid')\">";
 	$editButton.="</div>\n";
 	$editButton.="<div id='descForm".$editid."' style='visibility:hidden;'>";
 	//	$editButton.="<textarea name='newdescription".$editid."' size='".strlen($text)."' value='";
@@ -792,7 +795,7 @@ function editButton($editid,$text) {
 	# convert single quotes to html
 	$editButton.=htmlentities($text, ENT_QUOTES);
 	$editButton.="</textarea>";
-	$editButton.=" <input type='submit' name='updateDesc".$editid."' value='Update'>";
+	$editButton.=" <input class='edit' type='submit' name='updateDesc".$editid."' value='Update'>";
 	$editButton.="</div>\n";
 	return $editButton;
 }
