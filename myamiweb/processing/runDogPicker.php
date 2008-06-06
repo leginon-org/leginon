@@ -25,7 +25,7 @@ else {
 }
 
 
-function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker') {
+function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $heading='Automated Particle Selection with DoG Picker', $results=false) {
 
 	// check if coming directly from a session
    $expId = $_GET['expId'];
@@ -38,9 +38,6 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
 	$projectId=$_POST['projectId'];
-
-	// --- find hosts to run Dog Picker
-	$hosts=getHosts();
 
 	$javafunctions="
 	<script src='../js/viewer.js'></script>
@@ -59,12 +56,17 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 	$javafunctions .= particleLoopJavaCommands();
+	$javafunctions .= pleaseWaitJava();
 
-	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions);
+	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions,True);
 
 	if ($extra) {
 		echo "<font COLOR='#DD0000' size=+2>$extra</font>\n<hr>\n";
 	}
+	if ($results){
+		echo "$results<hr>\n";
+	}
+	
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<input type='HIDDEN' NAME='lastSessionId' value='$sessionId'>\n";
@@ -123,14 +125,15 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
 		<hr />
-	        <input type='submit' name='process' value='Just Show Command'>\n";
-	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Run DogPicker'>\n";
+	        <input type='submit' name='process' value='Just Show Command' onclick='pleasewait(this.form)'>\n";
+	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Run DogPicker' onclick='pleasewait(this.form)'>\n";
 	echo "  <br />
 		</td>
 	</tr>
 	</form>
 	</table>\n";
 	processing_footer();
+	exit;
 }
 
 function runDogPicker() {
@@ -158,25 +161,13 @@ function runDogPicker() {
 	$sizerange = $_POST[sizerange];
 	$kfactor = $_POST[kfactor];
 	if ($numslices) {
-		if($numslices < 2) {
-			createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
-			exit;
-		}
-		if(!$sizerange) {
-			createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
-			exit;
-		}
-		if($sizerange < 2.0) {
-			createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
-			exit;
-		}
+		if($numslices < 2) createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
+		if(!$sizerange) createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
+		if($sizerange < 2.0) createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
 		$command .= " numslices=".$numslices;
 		$command .= " sizerange=".$sizerange;
 	} elseif($kfactor) {
-		if ($kfactor < 1.00001 || $kfactor > 5.0) {
-			createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
-			exit;
-		}
+		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
 		$command .= " kfactor=".$kfactor;
 	}
 
@@ -195,19 +186,21 @@ function runDogPicker() {
 		// if errors:
 		if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
 
-		if (!$testimage) exit;
-	}
-
-	if ($testimage) {
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		echo "<B>DogPicker Command:</B><br />$command";
-		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
-		$ccclist=array();
-		$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap1.jpg";
-		$ccclist[]=$cccimg;
-		$images=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
-		createDogPickerForm($images,'Particle Selection Test Results','');
+		if ($testimage) {
+			if (substr($outdir,-1,1)!='/') $outdir.='/';
+			$results = "<table width='600' border='0'>\n";
+			$results.= "<tr><td>\n";
+			$results.= "<B>DogPicker Command:</B><br />$command";
+			$results.= "</td></tr></table>\n";
+			$results.= "<br />\n";
+			$testjpg=ereg_replace(".mrc","",$testimage);
+			$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
+			$ccclist=array();
+			$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap1.jpg";
+			$ccclist[]=$cccimg;
+			$results.=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
+			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
+		}
 		exit;
 	}
 

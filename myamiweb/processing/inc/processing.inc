@@ -59,7 +59,7 @@ function apdivtitle($title) {
 	return $htmlstr;
 }
 
-function processing_header($title,$heading=false,$headerstuff=false) {
+function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false) {
 	$expId = $_GET['expId'];
 
 	// check if logged in
@@ -152,6 +152,19 @@ $html.='
 		.'</div>
 </div>
 <div id="maincontent" style="position: relative; float: left; padding-left: 10px">';
+
+	// div for the 'please wait' box to show when processing
+	if ($pleaseWait) {
+		$html.= "<div id='pleasewaitScreen' style='position:absolute;z-index:5;top:30%;left:35%;visibility:hidden;'>\n";
+		$html.= "<table border='1' bordercolor='#000000' cellpadding='0' cellspacing='0' height='200' width='300'>\n";
+		$html.= "<tr><td width='100%' height='100%' bgcolor='#ffffff' align='center' valign='middle'>\n";
+		$html.= "<b>Processing, Please wait...</b>\n";
+		$html.= "<br />\n";
+		$html.= "<img src='img/ajax-loader.gif' border='0'>\n";
+		$html.= "</td></tr>\n";
+		$html.= "</table>\n";
+		$html.= "</div>\n";
+	}
 	echo $html;
 
 	// return all the menu data
@@ -689,6 +702,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		echo "<tr><td>Appion Directory</td><td>$procdir</td></tr>\n";
 		echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
 		$cmd = "cd $procdir; qsub $jobfile;\n";
+
 		// submit job on cluster
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		$jobnum=trim($jobnum);
@@ -718,15 +732,16 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 }
 
 function writeTestResults($jpg,$ccclist,$bin){
-        echo"<center>\n";
-        echo"<a href='loadimg.php?filename=$jpg' target='blank'>\n";
-        echo"<img src='loadimg.php?filename=$jpg&s=256'></a>\n";
-        if (count($ccclist)>1) echo "<BR>\n";
+        $html = "<center>\n";
+        $html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
+        $html.= "<img src='loadimg.php?filename=$jpg&s=256'></a>\n";
+        if (count($ccclist)>1) $html.=  "<br />\n";
         foreach ($ccclist as $ccc){
-                echo"<a href='loadimg.php?filename=$ccc' target='blank'>\n";
-                echo"<img src='loadimg.php?filename=$ccc&s=256'></a>\n";
+                $html.= "<a href='loadimg.php?filename=$ccc' target='blank'>\n";
+                $html.= "<img src='loadimg.php?filename=$ccc&s=256'></a>\n";
         }
-        echo"</center>\n";
+        $html.= "</center>\n";
+	return $html;
 }
 
 function randomString($length) {
@@ -806,6 +821,17 @@ function updateDescription($table, $editid, $text) {
 	# convert html back to single quotes
 	$desc = html_entity_decode($text, ENT_QUOTES);
 	$particle->updateDescription($table, $editid, $desc);
+}
+
+function pleaseWaitJava() {
+	$java = "<script language='Javascript'>";
+	$java.= "function pleasewait(values) {\n";
+	$java.= "	pleasewaitScreen=$('pleasewaitScreen');\n";
+	$java.= "	pleasewaitScreen.style.visibility='visible';\n";
+	$java.= "	document.viewerform.submit(values);\n";
+	$java.= "}\n"; 
+	$java.= "</script>\n";
+	return $java;
 }
 
 function getHtmlStyle($code) {
