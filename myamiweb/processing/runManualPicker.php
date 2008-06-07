@@ -25,7 +25,7 @@ else {
 }
 
 
-function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $heading='Manual Particle Selection and Editing') {
+function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $heading='Manual Particle Selection and Editing', $results=false) {
 
   // check if coming directly from a session
    $expId = $_GET['expId'];
@@ -63,6 +63,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   if ($extra) {
     echo "<font COLOR='#DD0000' SIZE=+2>$extra</font>\n<HR>\n";
   }
+  if ($results) echo "$results<hr />\n";
   echo"
   <form name='viewerform' method='POST' ACTION='$formAction'>
   <input type='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -157,19 +158,16 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   echo"
     </select>*/
   echo"<br />";
-  //echo"<input type='submit' name='process' value='Just Show Command'>";
-  echo"<input type='submit' name='process' value='Run ManualPicker'><br />";
-  echo"<font class='apcomment'>Submission will NOT run Manual Picker,<br />
-    only output a command that you can copy and paste into a unix shell</font>
-    </TD>
+  echo"<input type='submit' name='process' value='Just Show Command'>";
+  //  if ($_SESSION['username']) echo" <input type='submit' name='process' value='Run ManualPicker'><br />";
+  echo "</TD>
   </TR>
-  </table>";
-  processing_footer();
-  ?>
-
+  </table>
   </CENTER>
   </FORM>
-  <?
+";
+  processing_footer();
+  exit;
 }
 
 function runManualPicker() {
@@ -208,35 +206,29 @@ function runManualPicker() {
   }
 
   if ($testimage && $_POST['process']=="Run ManualPicker") {
-    $host = $_POST['host'];
-    $user = $_POST['user'];
-    $password = $_POST['password'];
-    if (!($user && $password)) {
-      createManualPickerForm("<B>ERROR:</B> Enter a user name and password");
-      exit;
-    }
     $prefix =  "source /ami/sw/ami.csh;";
     $prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
     $cmd = "$prefix $command > manualpickerlog.txt";
     $result=exec_over_ssh($host, $user, $password, $cmd, True);
   }
 
-  processing_header("Particle Selection Results","Particle Selection Results");
-
   if ($testimage) {
-    $runid = $_POST[runid];
-    $outdir = $_POST[outdir];
-    if (substr($outdir,-1,1)!='/') $outdir.='/';
-    echo "<B>ManualPicker Command:</B><br />$command";
-    $testjpg=ereg_replace(".mrc","",$testimage);
-    $jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
-    $ccclist=array();
-    //$cccimg=$outdir.$runid."/manualmaps/".$testjpg.".manualmap1.jpg";
-    //$ccclist[]=$cccimg;
-    $images=writeTestResults($jpgimg,$ccclist);
-    createManualPickerForm($images,'Particle Selection Test Results','');
-    exit;
+  	$runid = $_POST[runid];
+    	$outdir = $_POST[outdir];
+    	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$images = "<table width='600' border='0'>\n";
+	$images.= "<tr><td>\n";
+    	$images.= "<b>ManualPicker Command:</b><br />$command";
+	$results.= "</td></tr></table>\n";
+	$results.= "<br />\n";
+    	$testjpg=ereg_replace(".mrc","",$testimage);
+	$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
+	$ccclist=array();
+	$images.= writeTestResults($jpgimg,$ccclist);
+	createManualPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$images);
   }
+
+  else processing_header("Particle Selection Results","Particle Selection Results");
 
   echo"
     <table WIDTH='600'>

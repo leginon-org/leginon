@@ -85,33 +85,36 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$proj_link.=($misc) ? "<a href='viewmisc.php?projId=$projectId'>[Related Images, Movies, etc]</a>" : ""; 
 	$expinfo = $leginondata->getSessionInfo($expId);
 
-$html='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"  "http://www.w3.org/TR/html4/strict.dtd">
+	$html="<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN'  'http://www.w3.org/TR/html4/strict.dtd'>
 <html>
 <head>
 <title>'.$title.'</title>
-<link rel="stylesheet" type="text/css" href="../css/viewer.css">
-<link rel="stylesheet" type="text/css" href="css/proc.css">
-<link rel="stylesheet" type="text/css" href="../css/lvmenu.css">
-<script src="../js/lvmenu.js"></script>
-'.$headerstuff.'
-</head>
+<link rel='stylesheet' type='text/css' href='../css/viewer.css'>
+<link rel='stylesheet' type='text/css' href='css/proc.css'>
+<link rel='stylesheet' type='text/css' href='../css/lvmenu.css'>
+<script src='../js/lvmenu.js'></script>\n";
+	// javascript for please wait div to show up on submit
+	if ($pleaseWait) $html.= pleaseWaitJava();
+	$html.= $headerstuff;
+	$html.= "</head>
 <body>
-<div id="apheader">
-  <div class="aptopbar"> </div>
+<div id='apheader'>
+  <div class='aptopbar'> </div>
   <hr />
-  <div class="middlebar">
-<div style="float: right; padding:10px">';
-if ($_SESSION['username']) {
+  <div class='middlebar'>
+<div style='float: right; padding:10px'>\n";
+	if ($_SESSION['username']) {
 		$html.='<i>logged in as <b>'.$_SESSION['username'].'</b></i>'."\n";
 		$html.='<a class="header" href="endsession.php?expId='.$_GET['expId'].'">[Log Out]</a>'."\n";
 		$_SESSION['loggedin']=true;
-} else {
-	$expId=$_GET['expId'];
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	$html.=displayLogin($formAction);
-}
+	}
+	else {
+		$expId=$_GET['expId'];
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+		$html.=displayLogin($formAction);
+	}
 
-$html.='
+	$html.='
     </div>
 <div style="padding:5px; padding-left:20px; font-size: 15pt">
 	<img style="vertical-align:middle" src="img/topbarbackgrnd.jpg">
@@ -732,6 +735,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 }
 
 function writeTestResults($jpg,$ccclist,$bin){
+	if (!file_exists($jpg)) return "<font class='apcomment'>An Error occurred - No image was created</font><br />\n";
         $html = "<center>\n";
         $html.= "<a href='loadimg.php?filename=$jpg' target='blank'>\n";
         $html.= "<img src='loadimg.php?filename=$jpg&s=256'></a>\n";
@@ -825,10 +829,9 @@ function updateDescription($table, $editid, $text) {
 
 function pleaseWaitJava() {
 	$java = "<script language='Javascript'>";
-	$java.= "function pleasewait(values) {\n";
+	$java.= "function pleasewait() {\n";
 	$java.= "	pleasewaitScreen=$('pleasewaitScreen');\n";
 	$java.= "	pleasewaitScreen.style.visibility='visible';\n";
-	$java.= "	document.viewerform.submit(values);\n";
 	$java.= "}\n"; 
 	$java.= "</script>\n";
 	return $java;

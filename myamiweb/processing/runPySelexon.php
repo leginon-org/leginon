@@ -171,7 +171,7 @@ function createTemplateForm($extra=False) {
 **
 */
 
-function createTCForm($extra=false, $title='Template Correlator Launcher' , $heading='Automated Particle Selection with Template Correlator' ) {
+function createTCForm($extra=false, $title='Template Correlator Launcher' , $heading='Automated Particle Selection with Template Correlator', $results=false) {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -251,11 +251,12 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	$javafunctions .= particleLoopJavaCommands();
-	processing_header($title,$heading,$javafunctions);
+	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
 	}
+	if ($results) echo "$results<hr />\n";
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -292,8 +293,8 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		Test these setting on image:
 		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
                 <HR>
-		<input type='submit' name='process' value='Just Show Command'>\n";
-	if ($_SESSION['loggedin']) echo "<input type='submit' name='process' value='Run Correlator'>\n";
+		<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+	if ($_SESSION['loggedin']) echo "<input type='submit' name='process' value='Run Correlator' onclick='pleasewait()'>\n";
 	echo"
 		</TD>
 	</TR>
@@ -314,6 +315,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	</CENTER>
 	</FORM>\n";
 	processing_footer();
+	exit;
 }
 
 /*
@@ -364,7 +366,11 @@ function runTemplateCorrelator() {
 
 	if ($testimage) {
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		echo  " <B>Template Correlator Command:</B><BR/>$command";
+		$results = "<table width='600' border='0'>\n";
+		$results.= "<tr><td>\n";
+		$results.= "<b>Template Correlator Command:</b><br />$command";
+		$results.= "</td></tr></table>\n";
+		$results.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
@@ -376,8 +382,8 @@ function runTemplateCorrelator() {
 			$ccclist[]=$cccimg;
 			$i++;
 		}
-		$images=writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
-		createTCForm($images,'Particle Selection Results','');
+		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
+		createTCForm($false,'Particle Selection Results','Particle Selection Results',$results);
 		exit;
 	}
 

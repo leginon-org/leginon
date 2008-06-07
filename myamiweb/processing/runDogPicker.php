@@ -56,16 +56,13 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');	
 	$javafunctions .= particleLoopJavaCommands();
-	$javafunctions .= pleaseWaitJava();
 
 	processing_header("DoG Picker Launcher","Automated Particle Selection with DoG Picker",$javafunctions,True);
 
 	if ($extra) {
 		echo "<font COLOR='#DD0000' size=+2>$extra</font>\n<hr>\n";
 	}
-	if ($results){
-		echo "$results<hr>\n";
-	}
+	if ($results) echo "$results<hr>\n";
 	
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
@@ -125,8 +122,8 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
 		<hr />
-	        <input type='submit' name='process' value='Just Show Command' onclick='pleasewait(this.form)'>\n";
-	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Run DogPicker' onclick='pleasewait(this.form)'>\n";
+	        <input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Run DogPicker' onclick='pleasewait()'>\n";
 	echo "  <br />
 		</td>
 	</tr>

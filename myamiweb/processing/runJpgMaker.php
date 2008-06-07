@@ -26,7 +26,7 @@ else {
 }
 
 
-function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPEG convertion with jpgmaker') {
+function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPEG convertion with jpgmaker',$results=false) {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -86,6 +86,8 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
 	}
+	if ($results) echo "$results<hr />\n";
+
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
@@ -178,6 +180,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	</FORM>
 	<?
 	processing_footer();
+	exit;
 }
 
 function runjpgmaker() {
@@ -224,7 +227,7 @@ function runjpgmaker() {
 	if ($commit) $apcommand.=" commit";
 	if (!$apcontinue) $apcommand.=" nocontinue";
 	else $apcommand.=" continue";
-	//$apcommand = parseAppionLoopParams($_POST);
+
 	if ($apcommand[0] == "<") {
 		createJMForm($apcommand);
 		exit;
@@ -250,26 +253,23 @@ function runjpgmaker() {
 		$result=exec_over_ssh($host, $user, $password, $cmd, True);
 	}
 
-	processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
-
 	if ($testimage) {
 		$runid = $_POST[runid];
 		$outdir = $_POST[outdir];
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		echo "<CENTER><TABLE WIDTH='650'>
-  		<TR><TD COLSPAN='2'>";
-		echo "<B>JPEG Maker Command:</B><BR>$command<HR>";
+		$images = "<center><table width='600' border='0'>\n";
+  		$images.= "<tr><td>";
+		$images.= "<b>JPEG Maker Command:</b><br />$command";
+		$images.= "</td></tr></table>\n";
+		$images.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$jpgdir=$outdir.$runid."/";
 		$jpgimg=$testjpg.".jpg";
-		$images=writeTestResults($jpgdir,array($jpgimg));
-  		echo "</TD></TR>
-		</TABLE></CENTER>";
-		
-		createJMForm($images,'JPG File Maker Test Results','');
-		exit;
+		$images.= writeTestResults($jpgdir,array($jpgimg));
+		createJMForm(false,'JPG File Maker Test Results','JPEG Maker Results',$images);
 	}
 
+	else processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
 
 	echo"
   <TABLE WIDTH='600'>
