@@ -395,14 +395,14 @@ class particledata {
 		echo "</table>\n";
 	}
 		
-	function getTemplatesFromProject ($projectId) {
+	function getTemplatesFromProject ($projectId, $getHidden=False) {
 		$q="SELECT temp.*, path.path "
 			."FROM `ApTemplateImageData` AS temp "
 			."LEFT JOIN ApPathData AS path ON "
 			."(temp.`REF|ApPathData|path`=path.`DEF_id`) "
-			."WHERE `project|projects|project`='$projectId' "
-		        ."AND (temp.`hidden` IS NULL OR temp.`hidden` = 0) "
-			."ORDER BY temp.`DEF_id` DESC";
+		        ."WHERE `project|projects|project`='$projectId' ";
+		if (!$getHidden) $q.= "AND (temp.`hidden` IS NULL OR temp.`hidden` = 0) ";
+		$q.= "ORDER BY temp.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -1467,6 +1467,19 @@ class particledata {
 		if (array_key_exists('description',$olddata[0])) {
 			$data = array();
 			$data['description']=$newtext;
+			$where = array('DEF_id'=>$id);
+			$this->mysql->SQLUpdate($table,$data,$where);
+		}
+	}			 
+
+	function updateHide($table, $id, $value) {
+		$q = "SELECT hidden "
+			."FROM `".$table."` "
+			."WHERE `DEF_id`=".$id." ";
+		$olddata = $this->mysql->getSQLResult($q);
+		if (array_key_exists('hidden',$olddata[0])) {
+			$data = array();
+			$data['hidden']=$value;
 			$where = array('DEF_id'=>$id);
 			$this->mysql->SQLUpdate($table,$data,$where);
 		}
