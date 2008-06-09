@@ -30,10 +30,6 @@ if (is_int($projectId)) {
 	$templateData=$particle->getTemplatesFromProject($projectId,True);
 }
 
-
-// edit description form
-echo "<form name='templateform' method='post' action='$formAction'>\n";
-
 // extract template info
 if ($templateData) {
 	// separate hidden from shown;
@@ -55,13 +51,13 @@ if ($templateData) {
 			else $shown[]=$templateinfo;
 		}
 	}
-	$templatetable='';
-	foreach ($shown as $templateinfo) $templatetable.=templateEntry($templateinfo);
+	$templatetable="<form name='templateform' method='post' action='$formAction'>\n";
+	foreach ($shown as $template) $templatetable.=templateEntry($template);
 	// show hidden templates
 	if ($_GET['showHidden'] && $hidden) {
 		$templatetable.="<b>Hidden Templates</b> ";
 		$templatetable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
-		foreach ($hidden as $templateinfo) $templatetable.= templateEntry($templateinfo,True);
+		foreach ($hidden as $template) $templatetable.= templateEntry($template,True);
 	}
 	$templatetable.="</form>\n";
 }
