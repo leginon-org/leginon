@@ -12,12 +12,12 @@
 require  "inc/particledata.inc";
 require  "inc/processing.inc";
 require  "inc/leginon.inc";
-require  "inc/viewer.inc";
 require  "inc/project.inc";
 
 if ($_POST['process']) { // Create command
 	reRunNoRefAlign();
-} else { // Create the form page
+} 
+else { // Create the form page
 	createNoRefAlignSummary();
 }
 
@@ -25,16 +25,9 @@ if ($_POST['process']) { // Create command
 function createNoRefAlignSummary() {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
-	if ($expId) {
-		$sessionId=$expId;
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	} else {
-		$sessionId=$_POST['sessionId'];
-		$formAction=$_SERVER['PHP_SELF'];
-	}
-	$projectId=$_POST['projectId'];
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	if ($_GET['showHidden']) $formAction.="&showHidden=True";
 
-	$javascript="<script src='../js/viewer.js'></script>\n";
 	$javascript.= editTextJava();
 
 	processing_header("NoRef Class Report","Reference-free Classification Summary Page", $javascript);
@@ -42,91 +35,121 @@ function createNoRefAlignSummary() {
 	// --- Get NoRef Data
 	$particle = new particledata();
 
-	// edit description form
-	echo "<form name='stackform' method='post' action='$formAction'>\n";
-
 	# find each noref entry in database
-	$norefIds = $particle->getNoRefIds($sessionId);
-	$norefruns=count($norefIds);
+	$norefData = $particle->getNoRefIds($expId, True);
+	$norefruns=count($norefData);
 
-	foreach ($norefIds as $norefid) {
-		//print_r ($norefid);
-		$norefnum = $norefid['DEF_id'];
-
-		// update description
-		if ($_POST['updateDesc'.$norefnum])
-			updateDescription('ApNoRefRunData',$norefnum,$_POST['newdescription'.$norefnum]);
-		# get list of noref parameters from database
-		$r = $particle->getNoRefParams($norefnum);
-		$s = $particle->getStackParams($r['REF|ApStackData|stack']);
-		echo apdivtitle("Ref-free Run: <font class='aptitle'>".$r['name']
-		."</font> (ID: <font class='aptitle'>$norefnum</font>)");
-		//echo apdivtitle("NoRef Id: $norefid[DEF_id]");
-		echo"<FORM NAME='numclass' METHOD='POST' ACTION='$formAction'>\n";
-		echo "<table border='0' width='600'>\n";
-
-		if ($r['first_ring']) {
-			echo "<tr><td colspan='2' bgcolor='#bbffbb'>";
-			echo "<a href='runNoRefClassify.php?expId=$expId&norefId=$norefnum'>";
-			echo "Average particles into classes</a>";
-			echo"</td></tr>";	
-		}
-
-		# add edit button to description if logged in
-		$descDiv = ($_SESSION['username']) ? editButton($norefnum,$r['description']) : $r['description'];
-		
-		$display_keys = array();
-		$display_keys['description']=$descDiv;
-		$display_keys['time']=$r['DEF_timestamp'];
-		$display_keys['path']=$r['path'];
-		$display_keys['# particles']=$r['num_particles'];
-		if ($r['lp_filt']) $display_keys['lp filt']=$r['lp_filt'];
-		$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
-		$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
-		$display_keys['stack run name'] = $stackstr;
-			
-		$dendrofile = $r['path']."/dendogram.png";
-		if(file_exists($dendrofile)) {
-			$dendrotext = "<a href='loadimg.php?filename=$dendrofile'>dendogram.png</a>";
-			$display_keys['dendrogram']=$dendrotext;
-		}
-		foreach($display_keys as $k=>$v) {
-			echo formatHtmlRow($k,$v);
-		}
-
-		$classIds = $particle->getNoRefClassRuns($norefnum);
-		$classnum = count($classIds);
-		foreach ($classIds as $classid) {
-			$norefpath = $r['path']."/";
-			$classfile = $norefpath.$classid[classFile].".img";
-			if(!file_exists($classfile)) {
-				$norefpath = $r['path']."/".$r['name']."/";
-				$classfile = $norefpath."/".$classid[classFile].".img";
+	if ($norefData) {
+		// separate hidden from shown;
+		$shown = array();
+		$hidden = array();
+		foreach($norefData as $norefinfo) { 
+			if (is_array($norefinfo)) {
+				$norefId=$norefinfo['DEF_id'];
+				// first update hide value
+				if ($_POST['hideNoref'.$norefId]) {
+					$particle->updateHide('ApNoRefRunData',$norefId,1);
+					$norefinfo['hidden']=1;
+				}
+				elseif ($_POST['unhideNoref'.$norefId]) {
+					$particle->updateHide('ApNoRefRunData',$norefId,0);
+					$norefinfo['hidden']='';
+				}
+				if ($norefinfo['hidden']==1) $hidden[]=$norefinfo;
+				else $shown[]=$norefinfo;
 			}
-			if(!file_exists($classfile)) continue;
-			$varfile = $norefpath.$classid[varFile].".img";
-			$totimg = $classid[num_classes];
-			$endimg = $classid[num_classes]-1;
-			echo "<tr><td bgcolor='#ffcccc' colspan=2>";
-			echo "<b>$totimg</b> classes: &nbsp;&nbsp;&nbsp;";
-			echo "<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&";
-			echo "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
-			if ($classid[varFile] && file_exists($varfile)) {
-				echo "<font size=-1>&nbsp;";
-				echo " <a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&";
-				echo "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>";
-				echo "</font>";
-			}
-			echo"</td></tr>";
 		}
-
-		echo"</TABLE>\n";
-		echo "</FORM>\n";
-		echo"<P>\n";
+		$noreftable="<form name='norefform' method='post' action='$formAction'>\n";
+		foreach ($shown as $nr) $noreftable.=norefEntry($nr,$particle);
+		// show hidden norefs
+		if ($_GET['showHidden'] && $hidden) {
+			if ($shown) $noreftable.="<hr />\n";
+			$noreftable.="<b>Hidden Norefs</b> ";
+			$noreftable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
+			foreach ($hidden as $nr) $noreftable.= norefEntry($nr,$particle,True);
+		}
+		$noreftable.="</form>\n";
 	}
+
+	if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Alignments]</a><br />\n";
+
+	if ($shown || $hidden) echo $noreftable;
+	else echo "<B>Project does not contain any Alignments.</B>\n";
 	processing_footer();
 	exit;
-};
+}
 
+function norefEntry($norefid, $particle, $hidden=False) {
+	//print_r ($norefid);
+	$norefnum = $norefid['DEF_id'];
 
+	// update description
+	if ($_POST['updateDesc'.$norefnum])
+		updateDescription('ApNoRefRunData',$norefnum,$_POST['newdescription'.$norefnum]);
+	# get list of noref parameters from database
+	$r = $particle->getNoRefParams($norefnum);
+	$s = $particle->getStackParams($r['REF|ApStackData|stack']);
+	$j = "Ref-free Run: <font class='aptitle'>";
+	$j.= $r['name'];
+	$j.= "</font> (ID: <font class='aptitle'>$norefnum</font>)";
+	if ($hidden) $j.= " <input class='edit' type='submit' name='unhideNoref".$norefnum."' value='unhide'>";
+	else $j.= " <input class='edit' type='submit' name='hideNoref".$norefnum."' value='hide'>";
+	$noreftable.= apdivtitle($j);
+	$noreftable.= "<table border='0' width='600'>\n";
+	if ($r['first_ring']) {
+		$noreftable.= "<tr><td colspan='2' bgcolor='#bbffbb'>";
+		$noreftable.= "<a href='runNoRefClassify.php?expId=$expId&norefId=$norefnum'>";
+		$noreftable.= "Average particles into classes</a>";
+		$noreftable.="</td></tr>";	
+	}
+
+	# add edit button to description if logged in
+	$descDiv = ($_SESSION['username']) ? editButton($norefnum,$r['description']) : $r['description'];
+	
+	$display_keys = array();
+	$display_keys['description']=$descDiv;
+	$display_keys['time']=$r['DEF_timestamp'];
+	$display_keys['path']=$r['path'];
+	$display_keys['# particles']=$r['num_particles'];
+	if ($r['lp_filt']) $display_keys['lp filt']=$r['lp_filt'];
+	$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
+	$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
+	$display_keys['stack run name'] = $stackstr;
+			
+	$dendrofile = $r['path']."/dendogram.png";
+	if(file_exists($dendrofile)) {
+		$dendrotext = "<a href='loadimg.php?filename=$dendrofile'>dendogram.png</a>";
+		$display_keys['dendrogram']=$dendrotext;
+	}
+	foreach($display_keys as $k=>$v) $noreftable.= formatHtmlRow($k,$v);
+
+	$classIds = $particle->getNoRefClassRuns($norefnum);
+	$classnum = count($classIds);
+	foreach ($classIds as $classid) {
+		$norefpath = $r['path']."/";
+		$classfile = $norefpath.$classid[classFile].".img";
+		if(!file_exists($classfile)) {
+			$norefpath = $r['path']."/".$r['name']."/";
+			$classfile = $norefpath."/".$classid[classFile].".img";
+		}
+		if(!file_exists($classfile)) continue;
+		$varfile = $norefpath.$classid[varFile].".img";
+		$totimg = $classid[num_classes];
+		$endimg = $classid[num_classes]-1;
+		$noreftable.= "<tr><td bgcolor='#ffcccc' colspan=2>";
+		$noreftable.= "<b>$totimg</b> classes: &nbsp;&nbsp;&nbsp;";
+		$noreftable.= "<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&";
+		$noreftable.= "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
+		if ($classid[varFile] && file_exists($varfile)) {
+			$noreftable.= "<font size=-1>&nbsp;";
+			$noreftable.= " <a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&";
+			$noreftable.= "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>";
+			$noreftable.= "</font>";
+		}
+		$noreftable.="</td></tr>";
+	}
+	$noreftable.="</table>\n";
+	$noreftable.="<p>\n";
+	return $noreftable;
+}
 ?>
