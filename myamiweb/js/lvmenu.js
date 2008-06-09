@@ -1,6 +1,7 @@
 var menu_cookie="menu";
 var remember=true; 
 var contractall_default=false;
+var viewmenu=1;
 
 var menu, titles, submenus, arrows, bypixels;
 var heights = new Array();
@@ -49,11 +50,15 @@ function initmenu() {
 		} else if (contractall_default) {
 				m_collapseall() 
 		}
+		if (viewmenu==0)
+			m_hideall()
 }
 
 function restore() {
     if(getcookie(menu_cookie) != null) {
-        var hidden = getcookie(menu_cookie).split(",");
+        var cookiestring = getcookie(menu_cookie).split("|");
+				viewmenu=cookiestring[1];
+        var hidden = cookiestring[0].split(",");
         for(var i in hidden) {
 						if (hidden[i]) {
 							titles[hidden[i]].className = "titlehidden";
@@ -115,7 +120,8 @@ function store() {
         if(titles[i].className == "titlehidden")
             hidden.push(i);
     }
-    putcookie(menu_cookie, hidden.join(","), 30);
+		var cookie_value=hidden.join(",")+"|"+viewmenu
+    putcookie(menu_cookie, cookie_value, 30);
 }
 
 function getElementsByClassName(strClassName, strTagName, oElm){

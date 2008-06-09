@@ -70,8 +70,8 @@ if ($expId) {
 		$maskruns=count($maskrunIds);
 
 	// --- Get Micrograph Assessment Data
-	$totimgs = $particle->getNumImgsFromSessionId($sessionId);
-	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
+	$totimgs = 1000; #$particle->getNumImgsFromSessionId($sessionId);
+	$assessedimgs = 100; #$particle->getNumTotalAssessImages($sessionId);
 	
 	// --- Get Stack Data
 	if ($stackIds = $particle->getStackIds($sessionId))
@@ -418,8 +418,10 @@ $menujs='<script type="text/javascript">
 			if (leftdiv.style.visibility=="hidden") {
 				leftdiv.style.visibility="visible"
 				updatelink("hidelk", "Hide", "javascript:m_hideall()")
-					leftdiv.style.width="250px"
+				leftdiv.style.width="250px"
+				viewmenu=1
 			} else {
+				viewmenu=0
 				leftdiv.style.visibility="hidden"
 				if (maindiv=document.getElementById("maincontent")) {
 					leftdiv.style.width="0px"
@@ -443,8 +445,10 @@ $menujs='<script type="text/javascript">
 </script>
 ';
 
-$menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideall()">Hide</a> /
-<a id="eclk" href="javascript:m_expandcontract()">Expand</a></span>';
+$menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideall()">Hide</a> |
+<a href="javascript:m_expandall()">Expand</a> |
+<a href="javascript:m_collapseall()">Contract</a>
+</span>';
 
 $menuprocessing="";
 	foreach((array)$data as $menu) {
