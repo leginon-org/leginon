@@ -55,6 +55,7 @@ if ($templateData) {
 	foreach ($shown as $template) $templatetable.=templateEntry($template);
 	// show hidden templates
 	if ($_GET['showHidden'] && $hidden) {
+		if ($shown) $templatetable.="<hr />\n";
 		$templatetable.="<b>Hidden Templates</b> ";
 		$templatetable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
 		foreach ($hidden as $template) $templatetable.= templateEntry($template,True);
@@ -62,7 +63,7 @@ if ($templateData) {
 	$templatetable.="</form>\n";
 }
 
-if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>Show Hidden Templates</a><br />\n";
+if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Templates]</a><br />\n";
 
 if ($shown || $hidden) echo $templatetable;
 else echo "<B>Project does not contain any templates.</B>\n";
