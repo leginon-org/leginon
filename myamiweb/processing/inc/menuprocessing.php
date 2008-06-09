@@ -420,6 +420,9 @@ $menujs='<script type="text/javascript">
 				updatelink("hidelk", "Hide", "javascript:m_hideall()")
 				leftdiv.style.width="250px"
 				viewmenu=1
+				if (lk=document.getElementById("eclk")) {
+					lk.style.visibility="visible"
+				}
 			} else {
 				viewmenu=0
 				leftdiv.style.visibility="hidden"
@@ -427,27 +430,19 @@ $menujs='<script type="text/javascript">
 					leftdiv.style.width="0px"
 					updatelink("hidelk", "View Menu", "javascript:m_hideall()")
 				}
+				if (lk=document.getElementById("eclk")) {
+					lk.style.visibility="hidden"
+				}
 			}
 		}
 	}
 
-	function m_expandcontract() {
-		if (lk=document.getElementById("eclk")) {
-			if (lk.innerHTML=="Expand") {
-				updatelink("eclk", "Contract", "javascript:m_expandcontract()")
-				m_expandall()
-			} else {
-				updatelink("eclk", "Expand", "javascript:m_expandcontract()")
-				m_collapseall()
-			}
-		}
-	}
 </script>
 ';
 
-$menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideall()">Hide</a> |
-<a href="javascript:m_expandall()">Expand</a> |
-<a href="javascript:m_collapseall()">Contract</a>
+$menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideall()">Hide</a>
+<span id="eclk"> | <a href="javascript:m_expandall()">Expand</a> |
+<a href="javascript:m_collapseall()">Contract</a></span>
 </span>';
 
 $menuprocessing="";

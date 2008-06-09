@@ -60,7 +60,7 @@ function restore() {
 				viewmenu=cookiestring[1];
         var hidden = cookiestring[0].split(",");
         for(var i in hidden) {
-						if (hidden[i]) {
+						if (titles[hidden[i]]) {
 							titles[hidden[i]].className = "titlehidden";
 							submenus[hidden[i]].style.height = "0px";
 							submenus[hidden[i]].style.display = "none";

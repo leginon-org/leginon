@@ -92,13 +92,13 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 <title>".$title."</title>
 <link rel='stylesheet' type='text/css' href='../css/viewer.css'>
 <link rel='stylesheet' type='text/css' href='css/proc.css'>
-<link rel='stylesheet' type='text/css' href='../css/lvmenu.css'>
-<script src='../js/lvmenu.js'></script>\n";
+<link rel='stylesheet' type='text/css' href='../css/lvmenu.css'>\n";
 	// javascript for please wait div to show up on submit
 	if ($pleaseWait) $html.= pleaseWaitJava();
 	$html.= $headerstuff;
+	$html.="<script src='../js/lvmenu.js'></script>\n";
 	$html.= "</head>
-<body>
+<body onload='initmenu()'>
 <div id='apheader'>
   <div class='aptopbar'> </div>
   <hr />
