@@ -150,12 +150,12 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.='
 <div id="content" style="padding-left: 5px">
 
-<div style="position: relative; float:left" id="leftcontent">
+<div style="position: relative; float:left; margin-right:10px" id="leftcontent">
     <div class="lvmenu">'
 		.$menuprocesing
 		.'</div>
 </div>
-<div id="maincontent" style="position:relative; float:left; margin-left:5px; padding-left:0px; width:400px;">';
+<div id="maincontent" style="z-index:0; width:auto; text-align:left; ">';
 
 	// div for the 'please wait' box to show when processing
 	if ($pleaseWait) {
