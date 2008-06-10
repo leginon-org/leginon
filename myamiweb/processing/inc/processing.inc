@@ -155,7 +155,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		.$menuprocesing
 		.'</div>
 </div>
-<div id="maincontent" style="position: relative; top: 0px; left:10px">';
+<div id="maincontent" style="position:relative; float:left; margin-left:5px; padding-left:0px; width:400px;">';
 
 	// div for the 'please wait' box to show when processing
 	if ($pleaseWait) {
