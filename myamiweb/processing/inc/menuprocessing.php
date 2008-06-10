@@ -353,27 +353,28 @@ if ($expId) {
 
 		$action = "Reconstructions";
 		
-		$result = '';
+		$reconresults = array();
 
-		if ($jobdone>0 || $jobrun>0 || $jobqueue>0 || $reconruns >0) {
-			$jlist=array();
-			if ($jobqueue>0)  $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>\n";
-			if ($jobrun>0)    $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>\n";
-			if ($jobincomp>0) $jlist[]="<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>\n";
-			if ($reconruns>0) $jlist[]="<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>\n";
-			$result = implode('<br />',$jlist);
-		}
+		$reconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
+		$reconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
+		$reconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
+		$reconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns uploaded</a>" : "";
+
+		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 
 		// first check if there are stacks for a run, then check if logged
 		// in.  Then you can submit a job
 		$nruns=array();
 		if ($_SESSION['loggedin']) {
-			$nruns[] = "<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>";
+			$nruns[] = array(
+					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>",
+					 'result'=>$reconresults,
+					 );
 			$nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
 		}
 		$data[]=array(
 			      'action'=>array($action, $celloption),
-			      'result'=>array($result),
+			      'result'=>array($totresult),
 			      'newrun'=>array($nruns, $celloption),
 			      );
 	}
