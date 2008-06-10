@@ -419,7 +419,7 @@ $menujs='<script type="text/javascript">
 			if (leftdiv.style.visibility=="hidden") {
 				leftdiv.style.visibility="visible"
 				updatelink("hidelk", "Hide", "javascript:m_hideall()")
-				leftdiv.style.width="250px"
+				leftdiv.style.width="140px"
 				viewmenu=1
 				if (lk=document.getElementById("eclk")) {
 					lk.style.visibility="visible"
