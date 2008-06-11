@@ -778,21 +778,11 @@ function bashcolor2html($str) {
 function editTextJava() {
 	// javascript for hiding/showing edit text & form
 	$javascript = "<script language='javascript' type='text/javascript'>\n";
-	$javascript.= "function hideEditForm(stackid) {\n";
+	$javascript.= "function hideEditForm(stackid, text,cols,rows) {\n";
 	$javascript.= "  var descText='descText'+stackid;\n";
-	$javascript.= "  var descForm='descForm'+stackid;\n";
+	$javascript.= "  var textarea=\"<textarea name='newdescription\"+stackid+\"' cols='\"+cols+\"' rows='\"+rows+\"'>\"+text+\"</textarea><input class='edit' type='submit' name='updateDesc\"+stackid+\"' value='Update'>\";\n";
 	$javascript.= "  if (document.getElementById) { // DOM3 = IE5, NS6\n";
-	$javascript.= "    document.getElementById(descText).innerHTML=document.getElementById(descForm).innerHTML;\n"; 
-	$javascript.= "  }\n"; 
-	$javascript.= "  else {\n"; 
-	$javascript.= "    if (document.layers) { // Netscape 4\n"; 
-	$javascript.= "      document.descText.visibility = 'hidden';\n"; 
-	$javascript.= "      document.descForm.visibility = 'visible';\n"; 
-	$javascript.= "    }\n"; 
-	$javascript.= "    else { // IE 4\n"; 
-	$javascript.= "      document.all.descText.style.visibility = 'hidden';\n"; 
-	$javascript.= "      document.all.descForm.style.visibility = 'visible';\n"; 
-	$javascript.= "    }\n"; 
+	$javascript.= "    document.getElementById(descText).innerHTML=textarea;\n";
 	$javascript.= "  }\n"; 
 	$javascript.= "}\n";
 	$javascript.= "</script>\n";
@@ -800,22 +790,23 @@ function editTextJava() {
 }
 
 function editButton($editid,$text) {
-	# add edit button to description
-	$editButton="<div id='descText".$editid."' style='position:relative'>";
-	$editButton.=$text;
-	$editButton.=" <input class='edit' type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$editid')\">";
-	$editButton.="</div>\n";
-	$editButton.="<div id='descForm".$editid."' style='visibility:hidden;'>";
-	//	$editButton.="<textarea name='newdescription".$editid."' size='".strlen($text)."' value='";
 	$len=(strlen($text)==0) ? 15 : strlen($text);
-	$cols = ($len > 40) ? 40 : $len;
-	$rows = ($cols==40) ? ceil($len/40) : 1;
-	$editButton.="<textarea name='newdescription".$editid."' cols='$cols' rows='$rows'>";
+	$cols = ($len > 50) ? 50 : $len;
+	$rows = ($cols==50) ? ceil($len/50) : 1;
+
+	// create textarea input
+	//$textbox="<textarea name=\"newdescription".$editid."\" cols=\"$cols\" rows=\"$rows\">";
 	# convert single quotes to html
-	$editButton.=htmlentities($text, ENT_QUOTES);
-	$editButton.="</textarea>";
-	$editButton.=" <input class='edit' type='submit' name='updateDesc".$editid."' value='Update'>";
+	$textbox.=htmlentities($text, ENT_QUOTES);
+
+	# add edit button to description
+	$editButton="<div id='descText".$editid."' style='position:relative;'>";
+	$editButton.=$text;
+	$editButton.=" <input class='edit' type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$editid','$textbox','$cols','$rows')\">";
 	$editButton.="</div>\n";
+	//	$editButton.="<div id='descForm".$editid."' style='visibility:hidden; z=index:1'>";
+	//	$editButton.=" <input class='edit' type='submit' name='updateDesc".$editid."' value='Update'>";
+	//	$editButton.="</div>\n";
 	return $editButton;
 }
 
@@ -828,7 +819,7 @@ function updateDescription($table, $editid, $text) {
 }
 
 function pleaseWaitJava() {
-	$java = "<script language='Javascript'>";
+	$java = "<script language='Javascript'>\n";
 	$java.= "function pleasewait() {\n";
 	$java.= "	pleasewaitScreen=$('pleasewaitScreen');\n";
 	$java.= "	pleasewaitScreen.style.visibility='visible';\n";
