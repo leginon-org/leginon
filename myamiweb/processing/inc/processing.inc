@@ -782,8 +782,7 @@ function editTextJava() {
 	$javascript.= "  var descText='descText'+stackid;\n";
 	$javascript.= "  var descForm='descForm'+stackid;\n";
 	$javascript.= "  if (document.getElementById) { // DOM3 = IE5, NS6\n";
-	$javascript.= "    document.getElementById(descText).style.visibility = 'hidden';\n"; 
-	$javascript.= "    document.getElementById(descForm).style.visibility = 'visible';\n"; 
+	$javascript.= "    document.getElementById(descText).innerHTML=document.getElementById(descForm).innerHTML;\n"; 
 	$javascript.= "  }\n"; 
 	$javascript.= "  else {\n"; 
 	$javascript.= "    if (document.layers) { // Netscape 4\n"; 
