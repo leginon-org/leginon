@@ -11,7 +11,7 @@ filetypesel = (
 
 #---------------------------------------	
 """
-Each file should have the following information
+Each file should have at a minimum the following information
 
 1. Theta (tilt) angle
 2. Gamma (image 1 rotation) angle
@@ -21,41 +21,34 @@ Each file should have the following information
 
 """
 #---------------------------------------	
-def savePicks(targets1, targets2, data):
+def saveData(saved):
 	"""
-	Nx2 numpy list of picks 1
-	Nx2 numpy list of picks 2
-	data dictionary
+		saved = {}
+		saved['theta'] = self.data['theta']
+		saved['gamma'] = self.data['gamma']
+		saved['phi'] = self.data['phi']
+		saved['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
+		saved['filetype'] = tiltfile.filetypes[self.data['filetypeindex']]
+		saved['picks1'] = self.getArray1()
+		saved['picks2'] = self.getArray2()
+		saved['align1'] = self.getAlignedArray1()
+		saved['align2'] = self.getAlignedArray2()
+		saved['rmsd'] = self.getRmsdArray()
+		saved['filepath'] = os.path.join(self.data['dirname'], self.data['outfile'])
+		saved['image1name'] = self.panel1.filename
+		saved['image2name'] = self.panel2.filename
 	"""
 
-	saved = {}
-	saved['theta'] = data['theta']
-	saved['gamma'] = data['gamma']
-	saved['phi'] = data['phi']
-	saved['savetime'] = time.asctime()+" "+time.tzname[time.daylight]
-	saved['filetype'] = filetypes[data['filetypeindex']]
-	saved['picks1'] = self.getArray1()
-	saved['picks2'] = self.getArray2()
-	saved['align1'] = self.getAlignedArray1()
-	saved['align2'] = self.getAlignedArray2()
-	saved['rmsd'] = self.getRmsdArray()
-	saved['filepath'] = os.path.join(data['dirname'], data['outfile'])
-	saved['image1name'] = self.panel1.filename
-	saved['image2name'] = self.panel2.filename
-
-	if data['filetypeindex'] == 0:
+	if saved['filetype'] == 'text':
 		savePicksToTextFile(saved)
-	elif data['filetypeindex'] == 1:
+	elif saved['filetype'] == 'xml':
 		savePicksToXMLFile(saved)
-	elif data['filetypeindex'] == 2:
+	elif saved['filetype'] == 'spider':
 		savePicksToSpiderFile(saved)
-	elif data['filetypeindex'] == 3:
+	elif saved['filetype'] == 'pickle':
 		savePicksToPickleFile(saved)
 	else:
-		raise NotImplementedError
-	sys.stderr.write("Saved particles and parameters to '"+data['outfile']+\
-		"' of type "+data['filetype']+"\n")
-	self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+data['outfile'], 0)
+		return False
 
 #---------------------------------------
 def savePicksToTextFile(saved):
@@ -65,7 +58,6 @@ def savePicksToTextFile(saved):
 	f.write( "theta:\t%.5f\n" % ( saved['theta'], ))
 	f.write( "gamma:\t%.5f\n" % ( saved['gamma'], ))
 	f.write( "phi:  \t%.5f\n" % ( saved['phi'], ))
-
 	#IMAGE 1
 	f.write( "image 1: \t%sf\n"  % ( saved['image1name'], ))
 	for i in len(saved['picks1']):
@@ -100,48 +92,48 @@ def savePicksToXMLFile(targets1, targets2, data):
 	self.statbar.PushStatusText("Saved "+str(len(data['targets1']))+" particles and parameters to "+data['outfile'], 0)
 	return True
 
-	#---------------------------------------
-	def savePicksToSpiderFile(self):
-		filepath = os.path.join(self.data['dirname'], self.data['outfile'])
-		targets1 = self.panel1.getTargets('Picked')
-		targets2 = self.panel2.getTargets('Picked')
-		filename = os.path.basename(filepath)
-		f = open(filepath, "w")
-		f.write(" ; ApTiltPicker complete parameter dump:\n")
-		f.write( " ;   parameter : value\n")
-		for k,v in self.data.items():
-			if type(v) in [type(1), type(1.0), type(""),]:
-				f.write( " ;   "+str(k)+" : "+str(v)+"\n")
-		#PARAMETERS
-		f.write(" ; \n; \n; PARAMETERS\n")
-		f.write(operations.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
-		f.write(" ; FITTED FLAG\n")
-		f.write(operations.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
-		f.write(" ; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
-		f.write(operations.spiderOutputLine(3, 6, 
-			self.data['point1'][0], self.data['point1'][1], 
-			self.data['point2'][0], self.data['point2'][1], 
-			1.0, 0.0))
-		f.write(" ; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
-		f.write(operations.spiderOutputLine(4, 6, 
-			self.data['theta'], self.data['gamma'], self.data['phi'],
-			0.0, 0.0, 0.0))
+#---------------------------------------
+def savePicksToSpiderFile(saved):
+	f = open(saved['filepath'], "w")
 
-		#IMAGE 1
-		f.write( " ; left image 1: "+self.panel1.filename+"\n" )
-		for i,target in enumerate(targets1):
-			line = operations.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
-			f.write(line)
+	f.write( " ; particles picked with ApTiltPicker\n")
+	f.write( " ; http://appion.org\n")
+	f.write( " ; "+saved['savetime']+"\n")
+	f.write( " ; mean rmsd: %.3f\n" % ( saved['meanrmsd'],) )
+	#PARAMETERS
+	f.write(" ; \n; \n; PARAMETERS\n")
+	f.write(operations.spiderOutputLine(1, 6, 0.0, 0.0, 0.0, 0.0, 111.0, 1.0))
+	f.write(" ; FITTED FLAG\n")
+	f.write(operations.spiderOutputLine(2, 6, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
+	f.write(" ; (X0,Y0) FOR LEFT IMAGE1, (X0s,Y0s) FOR RIGHT IMAGE2, REDUCTION FACTOR\n")
+	f.write(operations.spiderOutputLine(3, 6, 
+		saved['picks1'][0][0], saved['picks1'][0][1], 
+		saved['picks2'][0][0], saved['picks2'][0][1], 
+		1.0, 0.0))
+	f.write(" ; TILT ANGLE (THETA), LEFT IMAGE1 ROTATION (GAMMA), RIGHT IMAGE2 ROTATION (PHI)\n")
+	f.write(operations.spiderOutputLine(4, 6, 
+		saved['theta'], saved['gamma'], saved['phi'],
+		0.0, 0.0, 0.0))
 
-		#IMAGE 2
-		f.write( " ; right image 2: "+self.panel2.filename+"\n" )
-		for i,target in enumerate(targets2):
-			line = operations.spiderOutputLine(i+1, 6, i+1, target.x, target.y, target.x, target.y, 1.0)
-			f.write(line)
+	#IMAGE 1
+	f.write( " ; LEFT IMAGE 1: "+saved['image1name']+"\n" )
+	for i in len(saved['picks1']):
+		line = operations.spiderOutputLine(i+1, 6, i+1, 
+			saved['picks1'][i][0], saved['picks1'][i][1], 
+			saved['picks1'][i][0], saved['picks1'][i][1], 1.0)
+		f.write(line)
 
-		f.close()
-		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles and parameters to "+self.data['outfile'], 0)
-		return True
+	#IMAGE 2
+	f.write( " ; RIGHT IMAGE 2: "+saved['image2name']+"\n" )
+	for i in len(saved['picks2']):
+		line = operations.spiderOutputLine(i+1, 6, i+1, 
+			saved['picks2'][i][0], saved['picks2'][i][1], 
+			saved['picks2'][i][0], saved['picks2'][i][1], 1.0)
+		f.write(line)
+
+	f.close()
+
+	return True
 
 
 #---------------------------------------
@@ -160,34 +152,34 @@ def guessFileType(self, filepath):
 	if filepath is None or filepath == "":
 		return None
 	print filepath
-	data['outfile'] = os.path.basename(filepath)
-	data['extension'] = data['outfile'][-3:]
-	if data['extension'] == "txt":
-		data['filetypeindex'] = 0
-	elif data['extension'] == "xml":
-		data['filetypeindex'] = 1
-	elif data['extension'] == "spi":
-		data['filetypeindex'] = 2
-	elif data['extension'] == "pik":
-		data['filetypeindex'] = 3
+	self.data['outfile'] = os.path.basename(filepath)
+	self.data['extension'] = self.data['outfile'][-3:]
+	if self.data['extension'] == "txt":
+		self.data['filetypeindex'] = 0
+	elif self.data['extension'] == "xml":
+		self.data['filetypeindex'] = 1
+	elif self.data['extension'] == "spi":
+		self.data['filetypeindex'] = 2
+	elif self.data['extension'] == "pik":
+		self.data['filetypeindex'] = 3
 	else:
 		raise "Could not determine filetype of picks file (argument 3)"
-	data['filetype'] = self.filetypes[data['filetypeindex']]
+	self.data['filetype'] = self.filetypes[self.data['filetypeindex']]
 	return
 
 #---------------------------------------
 def getExtension(self):
-	if data['filetypeindex'] == 0:
-		data['extension'] = "txt"
-	elif data['filetypeindex'] == 1:
-		data['extension'] = "xml"
-	elif data['filetypeindex'] == 2:
-		data['extension'] = "spi"
-	elif data['filetypeindex'] == 3:
-		data['extension'] = "pik"
+	if self.data['filetypeindex'] == 0:
+		self.data['extension'] = "txt"
+	elif self.data['filetypeindex'] == 1:
+		self.data['extension'] = "xml"
+	elif self.data['filetypeindex'] == 2:
+		self.data['extension'] = "spi"
+	elif self.data['filetypeindex'] == 3:
+		self.data['extension'] = "pik"
 	else:
 		return "pik"
-	return data['extension']
+	return self.data['extension']
 
 #---------------------------------------
 def onFileOpen(self, evt):
