@@ -802,7 +802,7 @@ function editTextJava() {
 
 function editButton($editid,$text) {
 	# add edit button to description
-	$editButton="<div id='descText".$editid."' style='position:absolute'>";
+	$editButton="<div id='descText".$editid."' style='position:relative'>";
 	$editButton.=$text;
 	$editButton.=" <input class='edit' type='button' name='editdesc' value='edit' onclick=\"javascript:hideEditForm('$editid')\">";
 	$editButton.="</div>\n";
