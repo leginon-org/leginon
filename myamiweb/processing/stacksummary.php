@@ -68,6 +68,7 @@ exit;
 
 function stackEntry($stack, $particle, $hidden=False) {
 	$stackid=$stack['stackid'];
+	$expId=$_GET['expId'];
 	if ($_POST['updateDesc'.$stackid])
 		updateDescription('ApStackData', $stackid, $_POST['newdescription'.$stackid]);
 	$s=$particle->getStackParams($stackid);
