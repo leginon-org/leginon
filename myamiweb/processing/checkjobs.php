@@ -32,7 +32,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
   $javafunc.="  }\n";
   $javafunc.="  </script>\n";
 
-  processing_header("Cluster Jobs","Cluster Jobs Awaiting Upload",$javafunc);
+  processing_header("Cluster Jobs","Cluster Job Status",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
     echo "<font color='RED'>$extra</font>\n<HR>\n";

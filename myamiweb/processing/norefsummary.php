@@ -81,6 +81,7 @@ function createNoRefAlignSummary() {
 
 function norefEntry($norefid, $particle, $hidden=False) {
 	//print_r ($norefid);
+	$expId = $_GET['expId'];
 	$norefnum = $norefid['DEF_id'];
 
 	// update description
@@ -138,11 +139,11 @@ function norefEntry($norefid, $particle, $hidden=False) {
 		$endimg = $classid[num_classes]-1;
 		$noreftable.= "<tr><td bgcolor='#ffcccc' colspan=2>";
 		$noreftable.= "<b>$totimg</b> classes: &nbsp;&nbsp;&nbsp;";
-		$noreftable.= "<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$sessionId&";
+		$noreftable.= "<a target='stackview' href='viewstack.php?file=$classfile&endimg=$endimg&expId=$expId&";
 		$noreftable.= "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>View Class Averages</a>";
 		if ($classid[varFile] && file_exists($varfile)) {
 			$noreftable.= "<font size=-1>&nbsp;";
-			$noreftable.= " <a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$sessionId&";
+			$noreftable.= " <a target='stackview' href='viewstack.php?file=$varfile&endimg=$endimg&expId=$expId&";
 			$noreftable.= "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>";
 			$noreftable.= "</font>";
 		}
