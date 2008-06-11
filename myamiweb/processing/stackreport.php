@@ -37,6 +37,16 @@ $particle = new particledata();
 
 	echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
 
+
+	$stackavg = $s['path']."/average.mrc";
+	if (file_exists($stackavg)) {
+		echo "<table border='0'>\n";
+		echo "<tr><td rowspan='15' align='center'>";
+		echo "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
+		echo "<i>averaged stack image</i><br/>\n";
+		echo "</td></tr></table>\n\n";
+	} #endif
+
 	$stackfile=$s['path']."/".$s['name'];
 	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><BR>\n";
 
