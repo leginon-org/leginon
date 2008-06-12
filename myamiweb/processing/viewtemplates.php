@@ -72,6 +72,7 @@ exit;
 
 function templateEntry($templateinfo, $hidden=False){
 	$templateId=$templateinfo['DEF_id'];
+	$expId = (int) $_GET['expId'];
 	if ($_POST['updateDesc'.$templateId]) {
 		updateDescription('ApTemplateImageData', $templateId, $_POST['newdescription'.$templateId]);
 		$templateinfo['description']=$_POST['newdescription'.$templateId];

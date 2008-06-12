@@ -57,7 +57,8 @@ processing_footer();
 exit;
 
 function modelEntry($model,$particle,$hidden=False) {
-	$modelid = $model['DEF_id'];
+  	$modelid = $model['DEF_id'];
+	$expId= $_GET['expId'];
 	// get updated description
 	if ($_POST['updateDesc'.$modelid]) {
 		updateDescription('ApInitialModelData', $modelid, $_POST['newdescription'.$modelid]);

@@ -16,6 +16,11 @@ require "inc/project.inc";
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
 $expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+if ($_GET['showHidden']) $formAction.="&showHidden=True";
+
+$javascript.= editTextJava();
+
 $sessioninfo = $leginondata->getSessionInfo($expId);
 $title = $sessioninfo[Name];
 
@@ -26,7 +31,7 @@ if($projectdb) {
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$currentproject['projectId'].'">'.$currentproject['name'].'</a>';
 }
 
-processing_header("Particle Selection Results","Particle Selection Results",$javascript);
+processing_header("Particle Selection Results","Particle Selection Results",$javascript,False);
 
 $inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
 $mselexval=(is_numeric($_POST['mselex'])) ? $_POST['mselex'] 
