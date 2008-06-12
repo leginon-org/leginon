@@ -801,13 +801,14 @@ class particledata {
 		return $r;
 	}
 
-	function getParticleRunIds ($sessionId) {
+	function getParticleRunIds ($sessionId,$showHidden=False) {
 		$q = "SELECT r.*, p.path "
-			."FROM `ApSelectionRunData` AS r "
-			."LEFT JOIN ApPathData AS p "
-			."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
-			."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
-			."ORDER BY r.`DEF_id` DESC ";
+		  ."FROM `ApSelectionRunData` AS r "
+		  ."LEFT JOIN ApPathData AS p "
+		  ."ON (r.`REF|ApPathData|path` = p.`DEF_id`) "
+		  ."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -1028,6 +1029,7 @@ class particledata {
 		$html .= "</tr>";
 		foreach ($particleruns as $particle) {
 			$runId=$particle['DEF_id'];
+			if ($particle['hidden']) continue;
 			$particlestats = $this->getStats($runId, $inspect, $selexval);
 			$html .= "<tr>";
 			$numptl=$particlestats['totparticles'];
