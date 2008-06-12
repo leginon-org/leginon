@@ -79,7 +79,7 @@ class combineStackScript(appionScript.AppionScript):
 	#=====================
 	def commitStack(self, stackid):
 
-		startpart = self.partnum + 1
+		startpart = self.partnum
 
 		stackq = appionData.ApStackData()
 		stackq['name'] = self.params['stackfilename']
@@ -95,8 +95,9 @@ class combineStackScript(appionScript.AppionScript):
 			rinstackq['stackRun'] = run['stackRun']
 			rinstackq.insert()
 				
-		stackparticlesdata = apStack.getStackParticlesFromId(stackid)
-		for particle in stackparticlesdata:
+		stpartsdata = apStack.getStackParticlesFromId(stackid)
+		print "inserting "+str(len(stpartsdata))+" particles into DB"
+		for particle in stpartsdata:
 			stpartq = appionData.ApStackParticlesData()
 			stpartq['particleNumber'] = self.partnum
 			stpartq['stack']    = stackq
@@ -104,6 +105,9 @@ class combineStackScript(appionScript.AppionScript):
 			stpartq['particle'] = particle['particle']
 			stpartq.insert()
 			self.partnum += 1
+			if self.partnum % 1000 == 0:
+				sys.stderr.write(".")
+			sys.stderr.write("\n")
 		
 		apDisplay.printMsg("commited particles "+str(startpart)+"-"+str(self.partnum))
 
@@ -120,7 +124,6 @@ class combineStackScript(appionScript.AppionScript):
 			apDisplay.printError("A stack with name "+self.params['stackfilename']+" and path "
 				+self.params['outdir']+" already exists.")
 
-
 		### loop through stacks
 		for stackstr in self.params['stackids']:
 			stackid = int(stackstr)
@@ -133,7 +136,7 @@ class combineStackScript(appionScript.AppionScript):
 			
 			if self.params['commit'] is True:
 				### insert stack data
-				apDisplay.printColor("inserting new stack particles for stackid="+str(stackid), "cyan")
+				apDisplay.printColor("inserting new stack particles from stackid="+str(stackid), "cyan")
 				self.commitStack(stackid)
 			else:
 				apDisplay.printWarning("not committing data to database")
