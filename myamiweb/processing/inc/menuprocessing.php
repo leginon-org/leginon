@@ -216,7 +216,7 @@ if ($expId) {
 	$action = "Img Assessment";
 
 	$result='';
-	if ($assessedimgs < $totimgs && $totimgs!=0) {
+	if ($assessedimgs <= $totimgs && $totimgs!=0) {
 		$result = "<a href='assesssummary.php?expId=$sessionId'>";
 		$result .= "$assessedimgs/$totimgs"; 
 		$result .= "</a>";
