@@ -25,6 +25,8 @@ def numImagesInStack(imgfile, boxsize=None):
 	Find the number of images in an 
 	IMAGIC stack based on the filesize
 	"""
+	if not os.path.isfile(imgfile):
+		return 0
 	if imgfile[-4:] == '.hed':
 		numimg = int('%d' % (os.stat(imgfile)[6]/1024))
 	elif imgfile[-4:] == '.img':
