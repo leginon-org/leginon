@@ -25,6 +25,8 @@ class AppionScript(object):
 
 	#=====================
 	def __init__(self):
+		### clean up any preliminary warnings
+		sys.stderr.write("\n\n\n\n\n")
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
 		self.timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
