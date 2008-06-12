@@ -1,115 +1,151 @@
 #!/usr/bin/python -O
 
-import appionData
-import apDB
+
 import os
 import sys
+### appion
 import apStack
+import apDisplay
+import appionScript
+import appionData
+import apEMAN
+import apFile
 
-apdb=apDB.apdb
+#=====================
+#=====================
+class combineStackScript(appionScript.AppionScript):
 
-def createDefaults():
-	params={}
-	params['stackname']='start.hed'
-	params['outdir']=os.getcwd()
-	params['description']=''
-	params['commit']=False
-	params['particleNumber']=1
-	return params
+	#=====================
+	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --name=<name> --stacks=<int>,<int>,<int>  "
+			+"--description='<text>' --commit [options]")
 
-def parseParams(args,params):
-	for arg in args:
-		elements=arg.split('=')
-		if elements[0]=='stackids':
+		self.parser.add_option("--name", dest="runname",
+			help="Name of stack, e.g. combinestack1", metavar="NAME")
+		self.parser.add_option("--description", dest="description",
+			help="Description of the model (must be in quotes)", metavar="TEXT")
+		self.parser.add_option("--stacks", dest="stacks",
+			help="list of stack ids to combine, e.g. --stackids=11,14,7", metavar="LIST")
+		self.parser.add_option("--commit", "-C", dest="commit", default=True,
+			action="store_true", help="Commit stack to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit stack to database")
+
+		self.parser.add_option("--outdir", dest="outdir",
+			help="Location to copy the model to", metavar="PATH")
+		self.parser.add_option("--stack-filename", dest="stackfilename", default="start.hed",
+			help="Name of stack file name, e.g. start.hed", metavar="start.hed")
+
+	#=====================
+	def checkConflicts(self):
+		if self.params['stacks'] and ',' in self.params['stacks']:
 			#remember stackids are a list of strings
-			stackids=elements[1].split(',')
-			params['stackids']=stackids
-		elif elements[0]=='stackname':
-			params['stackname']=elements[1]
-		elif elements[0]=='outdir':
-			params['outdir']=elements[1]
-		elif elements[0]=='description':
-			params['description']=elements[1]
-		elif elements[0]=='commit':
-			params['commit']=True
+			stackids = self.params['stacks'].split(',')
+			self.params['stackids'] = stackids
 		else:
-			print elements[0], 'is not recognized as a valid parameter'
-			sys.exit()
-	return(params)
+			apDisplay.printError("enter a list of stack ids to combine, e.g. --stackids=11,14,7")
+		if self.params['runname'] is None:
+			apDisplay.printError("enter a stack run name, e.g. combinestack1")
+		if self.params['description'] is None:
+			apDisplay.printError("enter a stack description")
 
-def checkParams(params):
-	if os.path.exists(params['outdir']):
-		if os.path.exists(os.path.join(params['outdir'],params['stackname'])):
-			print "\n\nA stack with name",params['stackname'],"and path",params['outdir'],"already exists."
-			print "Exiting."
-			sys.exit()
-	else:
-		os.makedirs(params['outdir'])	
-	return
+	#=====================
+	def setOutDir(self):
+		stackid = int(self.params['stackids'][-1])
+		stackdata = apStack.getOnlyStackData(stackid, msg=False)
+		path = stackdata['path']['path']
+		uppath = os.path.dirname(os.path.abspath(path))
+		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
 
-def printHelp():
-	print "\n\nUsage:"
-	print 'combinestack.py stackids=<DEF_id>,<DEF_id>,<...> outdir=<path> stackname=<stackfile> description=<"text"> [commit] '
-	sys.exit()
+	#=====================
+	def appendToStack(self, stackdata):
+		addfile  = os.path.join( stackdata['path']['path'], stackdata['name'] )
 
-def appendToStack(stackdata,params):
-	origstackdir=stackdata['path']['path']
-	origstackname=stackdata['name']
-	newstackdir=params['outdir']
-	newstackname=params['stackname']
-	command="proc2d %s %s" % (os.path.join(origstackdir,origstackname), os.path.join(newstackdir,newstackname))
-	print command
-	os.system(command)
-	return
+		addnumpart = apFile.numImagesInStack(addfile)
+		orignumpart = apFile.numImagesInStack(self.combinefile)
 
-def commitStack(stackid,params):
-	stackparticlesdata=apStack.getStackParticlesFromId(stackid)
-	
-	newstackq=appionData.ApStackData()
-	newstackq['name']=params['stackname']
-	newstackq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
-	newstackq['description']=params['description']
-	
-	rinstackdata=apStack.getRunsInStack(stackid)
-	for run in rinstackdata:
-		newrinstackq=appionData.ApRunsInStackData()
-		newrinstackq['stack']=newstackq
-		newrinstackq['stackRun']=run['stackRun']
-		apdb.insert(newrinstackq)
-	
-	for particle in stackparticlesdata:
-		newstackparticleq=appionData.ApStackParticlesData()
-		newstackparticleq['particleNumber']=params['particleNumber']
-		newstackparticleq['stack']=newstackq
-		newstackparticleq['stackRun']=particle['stackRun']
-		newstackparticleq['particle']=particle['particle']
-		apdb.insert(newstackparticleq)
-		params['particleNumber']+=1
-	return
-	
-	
-if __name__=='__main__':
-	params=createDefaults()
-	if len(sys.argv) < 2:
-		printHelp()
-	
-	params=parseParams(sys.argv[1:],params)
-	
-	#check for conflicts and set up outdir
-	checkParams(params)
-	
-	#loop through stacks
-	for stack in params['stackids']:
-		stackid=int(stack)
-		#find stack
-		stackdata=apStack.getOnlyStackData(stackid)
+		cmd = "proc2d "+addfile+" "+self.combinefile
+		apDisplay.printMsg("adding "+str(addnumpart)+" particles to "+str(orignumpart)+" particles")
+		apEMAN.executeEmanCmd(cmd, verbose=True, showcmd=True)
 		
-		#append stack
-		appendToStack(stackdata,params)
+		newnumpart = apFile.numImagesInStack(self.combinefile)
+				
+		apDisplay.printMsg("added "+str(addnumpart)+" particles from stackid="+str(stackdata.dbid)+" to "
+			+str(orignumpart)+" particles giving a new combined stack of "+str(newnumpart)+" particles")
+	
+		return
+
+
+	#=====================
+	def commitStack(self, stackid):
+
+		startpart = self.partnum + 1
+
+		stackq = appionData.ApStackData()
+		stackq['name'] = self.params['stackfilename']
+		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		stackq['description'] = self.params['description']
+		stackq['substackname'] = self.params['runname']
+		stackq['hidden'] = False
+
+		rinstackdata = apStack.getRunsInStack(stackid)
+		for run in rinstackdata:
+			rinstackq = appionData.ApRunsInStackData()
+			rinstackq['stack']    = stackq
+			rinstackq['stackRun'] = run['stackRun']
+			rinstackq.insert()
+				
+		stackparticlesdata = apStack.getStackParticlesFromId(stackid)
+		for particle in stackparticlesdata:
+			stpartq = appionData.ApStackParticlesData()
+			stpartq['particleNumber'] = self.partnum
+			stpartq['stack']    = stackq
+			stpartq['stackRun'] = particle['stackRun']
+			stpartq['particle'] = particle['particle']
+			stpartq.insert()
+			self.partnum += 1
 		
-		if params['commit']:
-			#commit stack
-			print "Committing new stack particles"
-			commitStack(stackid,params)
-	print "Done!"
+		apDisplay.printMsg("commited particles "+str(startpart)+"-"+str(self.partnum))
+
+		return
+		
+	#=====================
+	def start(self):
+		### universal particle counter
+		self.partnum = 1
+
+		### final stack file
+		self.combinefile = os.path.join( self.params['outdir'], self.params['stackfilename'] )
+		if os.path.isfile(self.combinefile):
+			apDisplay.printError("A stack with name "+self.params['stackfilename']+" and path "
+				+self.params['outdir']+" already exists.")
+
+
+		### loop through stacks
+		for stackstr in self.params['stackids']:
+			stackid = int(stackstr)
+
+			### get stack data
+			stackdata = apStack.getOnlyStackData(stackid)
+			
+			### append particle to stack file
+			self.appendToStack(stackdata)
+			
+			if self.params['commit'] is True:
+				### insert stack data
+				apDisplay.printColor("inserting new stack particles for stackid="+str(stackid), "cyan")
+				self.commitStack(stackid)
+			else:
+				apDisplay.printWarning("not committing data to database")
+
+		apStack.averageStack(stack=self.combinefile)
+
+
+#=====================
+if __name__ == "__main__":
+	combineStack = combineStackScript()
+	combineStack.start()
+	combineStack.close()
+
+
 	
