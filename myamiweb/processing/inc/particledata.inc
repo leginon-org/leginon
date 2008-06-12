@@ -1533,11 +1533,12 @@ class particledata {
 		return $r;
 	} 
 
-	function getReconIds ($stackId) {
+	function getReconIds ($stackId, $showHidden=False) {
 		$q = "SELECT * "
-			."FROM `ApRefinementRunData` AS r "
-			."WHERE r.`REF|ApStackData|stack` = '$stackId'"
-			."ORDER BY r.`DEF_id` DESC";
+		  ."FROM `ApRefinementRunData` AS r "
+		  ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
+		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		$q.= "ORDER BY r.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	} 
