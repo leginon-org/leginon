@@ -39,7 +39,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
   }
 
   $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-  $jobs = $particle->getJobIdsFromSession($expId);
+  $jobs = $particle->getJobIdsFromSession($expId, 'recon');
   if ($_SESSION['loggedin']==True) {
     echo "<form name='jobform' method='post' action='$formAction'>\n";
     echo "<input type='submit' name='checkjobs' value='Check Jobs in Queue'>\n";
