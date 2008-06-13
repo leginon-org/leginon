@@ -1,5 +1,8 @@
 #!/usr/bin/python -O
 
+import warnings
+warnings.filterwarnings('ignore', module='scipy')
+
 #builtin
 import sys
 import os
@@ -18,8 +21,6 @@ import apParam
 #leginon
 from pyami import mem
 import leginondata
-import warnings
-warnings.filterwarnings('ignore', module='scipy')
 
 class AppionLoop(object):
 	appiondb  = apDB.apdb
