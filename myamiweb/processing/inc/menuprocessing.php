@@ -342,7 +342,6 @@ if ($expId) {
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0
 		$jobincomp = $jobdone-$reconruns; //incomplete
-		echo "done:$jobdone<br />runs:$reconruns</br>\n";
 
 		$action = "Reconstructions";
 		
