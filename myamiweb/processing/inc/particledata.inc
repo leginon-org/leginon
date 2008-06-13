@@ -1535,9 +1535,13 @@ class particledata {
 
 	function getReconIds ($stackId, $showHidden=False) {
 		$q = "SELECT * "
-		  ."FROM `ApRefinementRunData` AS r "
-		  ."WHERE r.`REF|ApStackData|stack` = '$stackId'";
-		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
+		  ."FROM `ApRefinementRunData` AS r ";
+		if (!$showHidden)
+		  $q.= "LEFT JOIN ApStackData AS s "
+		    ." ON r.`REF|ApStackData|stack` = s.`DEF_id` ";
+		$q.= "WHERE r.`REF|ApStackData|stack` = '$stackId'";
+		if (!$showHidden) $q.= " AND (s.`hidden` IS NULL OR s.`hidden` = 0) "
+				    ." AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
 		$q.= "ORDER BY r.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
