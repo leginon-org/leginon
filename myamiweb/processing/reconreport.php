@@ -246,7 +246,7 @@ foreach ($iterations as $iteration){
   $html .= "</TD>";
   
   if ($halfres!='None')
-    $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
+    $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
   else $html .= "<TD>-</TD>\n";
 
   $html .="<TD><table>";
@@ -262,19 +262,19 @@ foreach ($iterations as $iteration){
 	// Euler Plots
 	$oldeulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
 	if (file_exists($oldeulerfile)) {
-		$html .= "<a href='loadimg.php?filename=".$oldeulerfile."'>"
+		$html .= "<a href='loadimg.php?filename=".$oldeulerfile."' target='snapshot'>"
 		."<img src='loadimg.php?scale=.125&filename=".$oldeulerfile."'>"
 		."</a>";
 	}
 	$eulertrifile = $refinerun['path']."/eulerTriangle-".$refinerun['DEF_id']."_".$iteration['iteration'].".png";
 	if (file_exists($eulertrifile)) {
-		$html .= "<a href='loadimg.php?filename=".$eulertrifile."'>"
+		$html .= "<a href='loadimg.php?filename=".$eulertrifile."' target='snapshot'>"
 		."<img src='loadimg.php?scale=.125&filename=".$eulertrifile."'>"
 		."</a>";
 	}
 	$eulerpolarfile = $refinerun['path']."/eulerPolar-".$refinerun['DEF_id']."_".$iteration['iteration'].".png";
 	if (file_exists($eulerpolarfile)) {
-		$html .= "<a href='loadimg.php?filename=".$eulerpolarfile."'>"
+		$html .= "<a href='loadimg.php?filename=".$eulerpolarfile."' target='snapshot'>"
 		."<img src='loadimg.php?scale=.125&filename=".$eulerpolarfile."'>"
 		."</a>";
 	}
