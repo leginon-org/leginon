@@ -103,19 +103,11 @@ if ($expId) {
 		}
 		// get number of jobs submitted
 		$subjobs = $particle->getSubmittedJobs($sessionId);
-
+		
 		// get num of jubs queued, submitted or done
-		$jobqueue=0;
-		$jobrun=0;
-		$jobdone=0;
-		foreach ($subjobs as $j) {
-			// skip appion jobs
-			if (!(ereg('.appionsub.',$j['name']))) {
-				if ($j['status']=='Q') $jobqueue++;
-				elseif ($j['status']=='R') $jobrun++;
-				elseif ($j['status']=='D') $jobdone++;
-			}
-		}
+		$jobqueue=count($subclusterjobs['recon']['queued']);
+		$jobrun=count($subclusterjobs['recon']['running']);
+		$jobdone=count($subclusterjobs['recon']['done']);
 	}
 
 	$action = "Particle Selection";
@@ -350,6 +342,7 @@ if ($expId) {
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0
 		$jobincomp = $jobdone-$reconruns; //incomplete
+		echo "done:$jobdone<br />runs:$reconruns</br>\n";
 
 		$action = "Reconstructions";
 		
@@ -358,7 +351,7 @@ if ($expId) {
 		$reconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
 		$reconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
 		$reconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
-		$reconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns uploaded</a>" : "";
+		$reconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
 
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 
