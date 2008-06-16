@@ -155,6 +155,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		.$menuprocesing
 		.'</div>
 </div>
+<table border="0" cellpadding="0" cellspacing="0"><tr><td>
 <div id="maincontent" style="z-index:0; width:auto; text-align:left; ">';
 
 	// div for the 'please wait' box to show when processing
@@ -178,6 +179,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 function processing_footer() {
 	$html='<p>
 		</div>
+		</td></tr></table>
 	</div>
 	</body>
 </html>';
