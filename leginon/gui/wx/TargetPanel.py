@@ -35,7 +35,8 @@ import gui.wx.TargetPanelTools
 ##################################
 
 class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
-	def __init__(self, parent, id, callback=None, tool=True, imagesize=(520, 520), mode="horizontal"):
+	def __init__(self, parent, id, callback=None, 
+			tool=True, imagesize=(256, 256), mode="horizontal"):
 		gui.wx.ImagePanel.ImagePanel.__init__(self, parent, id, imagesize, mode)
 		self.order = []
 		self.reverseorder = []
