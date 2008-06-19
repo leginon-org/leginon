@@ -1,5 +1,8 @@
 #!/usr/bin/python -O
 
+import warnings
+warnings.filterwarnings('ignore', module='scipy')
+
 #builtin
 import sys
 import os
@@ -18,8 +21,7 @@ import apStack
 import apDB
 #leginon
 from pyami import mem
-import warnings
-warnings.filterwarnings('ignore', module='scipy')
+
 
 class AppionScript(object):
 	appiondb  = apDB.apdb
