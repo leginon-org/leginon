@@ -8,13 +8,13 @@ import re
 import time
 import shutil
 ### appion
+import appionScript
 import apEMAN
 import apDisplay
 import apUpload
 import apParam
 import apDatabase
 import appionData
-import appionScript
 import apDB
 
 appiondb = apDB.apdb

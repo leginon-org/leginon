@@ -10,9 +10,6 @@ import cPickle
 from optparse import OptionParser
 ## wxPython
 import wx
-## numpy/scipy
-import numpy
-from scipy import ndimage, optimize
 ## PIL
 import Image
 ## appion
@@ -25,6 +22,9 @@ from apTilt import tiltDialog, apTiltTransform
 ## leginon
 import polygon
 import gui.wx.TargetPanel
+## numpy/scipy
+import numpy
+from scipy import ndimage, optimize
 
 
 class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):

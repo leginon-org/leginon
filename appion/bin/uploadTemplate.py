@@ -8,6 +8,7 @@ import re
 import pprint
 import time
 #appion
+import appionScript
 import apUpload
 import apTemplate
 import apStack
@@ -16,7 +17,7 @@ import apDatabase
 import appionData
 import apDB
 import apEMAN
-import appionScript
+
 
 appiondb = apDB.apdb
 

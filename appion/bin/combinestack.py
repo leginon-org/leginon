@@ -4,9 +4,9 @@
 import os
 import sys
 ### appion
+import appionScript
 import apStack
 import apDisplay
-import appionScript
 import appionData
 import apEMAN
 import apFile

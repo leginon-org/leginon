@@ -8,10 +8,6 @@ import math
 import time
 import pprint
 import cPickle
-#site-packages
-import numpy
-from scipy import ndimage, stats
-import MySQLdb
 #appion
 import appionScript
 import apDisplay
@@ -20,6 +16,10 @@ import apEulerCalc
 import apParam
 #sinedon
 import sinedon
+#site-packages
+import numpy
+from scipy import ndimage, stats
+import MySQLdb
 
 class satEulerScript(appionScript.AppionScript):
 	def __init__(self):

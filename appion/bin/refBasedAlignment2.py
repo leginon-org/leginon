@@ -4,6 +4,7 @@
 import os
 import time
 #appion
+import appionScript
 import apDisplay
 import apAlignment
 import apFile
@@ -12,7 +13,7 @@ import apEMAN
 import apTemplate
 import apParam
 from apSpider import alignment
-import appionScript
+
 
 #=====================
 #=====================

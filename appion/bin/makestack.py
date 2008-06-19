@@ -9,15 +9,9 @@ import math
 import string
 import time
 #sinedon
-try:
-	import sinedon.data as data
-except:
-	import data
+import sinedon.data as data
 #leginon
-try:
-	import leginondata
-except:
-	import data as leginondata
+import leginondata
 #appion
 import appionData
 import apDisplay

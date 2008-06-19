@@ -6,6 +6,7 @@ import sys
 import time
 import re
 import shutil
+import appionScript
 import apUpload
 import apParam
 import apFile
@@ -13,7 +14,7 @@ import apDisplay
 import apDatabase
 import apRecon
 import apVolume
-import appionScript
+
 
 #=====================
 #=====================

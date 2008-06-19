@@ -5,13 +5,13 @@ import time
 import sys
 import random
 #appion
+import appionScript
 import apDisplay
 import apAlignment
 import apFile
 import apStack
 import apEMAN
 from apSpider import alignment
-import appionScript
 import appionData
 
 #=====================

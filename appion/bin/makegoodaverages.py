@@ -15,12 +15,12 @@ import EMAN
 import sinedon
 import MySQLdb
 #appion
+import appionScript
 import apDB
 import appionData
 import apDisplay
 import apStack
 import apEulerCalc
-import appionScript
 import apEulerJump
 apdb=apDB.apdb
 
