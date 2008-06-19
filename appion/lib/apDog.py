@@ -87,11 +87,16 @@ def diffOfGauss(imgarray, pixrad, k=1.2):
 	sigma1 = kfact * pixrad
 	# divide by sqrt(k) to span desired area 
 	sigma1 = sigma1 / math.sqrt(k)
+	#calulate pixel range
+	pixrange = pixrad*(math.sqrt(k) - 1.0/math.sqrt(k))
+	apDisplay.printMsg("selecting particles of size "+str(pixrad)+" +/- "
+		+str(round(pixrange,1))+" pixels")
 	#sigma2 = k * sigma1 ==> sigmaDiff = 
 	sigmaDiff = sigma1*math.sqrt(k*k-1.0)
 	imgarray1 = ndimage.gaussian_filter(imgarray, sigma=sigma1)
 	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaDiff)
-
+	#apImage.arrayToJpeg(imgarray1, "imgarray1.jpg")
+	#apImage.arrayToJpeg(imgarray2, "imgarray2.jpg")
 	return imgarray2-imgarray1
 
 def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
@@ -127,8 +132,8 @@ def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
 		gaussmaps.append(gaussmap)
 
 	#print sigmavals
-	#for i,gaussmap in enumerate(gaussmaps):
-	#	apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
+	for i,gaussmap in enumerate(gaussmaps):
+		#apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
 
 	dogarrays = []
 	pixradlist = []
