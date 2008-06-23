@@ -132,8 +132,8 @@ def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
 		gaussmaps.append(gaussmap)
 
 	#print sigmavals
-	for i,gaussmap in enumerate(gaussmaps):
-		#apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
+	#for i,gaussmap in enumerate(gaussmaps):
+	#	apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
 
 	dogarrays = []
 	pixradlist = []
