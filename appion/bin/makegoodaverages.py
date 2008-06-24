@@ -295,7 +295,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		reject=open('reject.lst','w')
 		keep=open('keep.lst','w')
 		reject.write('#LST\n')
-		print "Processing class"
+		print "Processing classes"
 		#loop through classes
 		for key in classkeys:
 			classnum+=1
@@ -305,8 +305,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			images=EMAN.EMData()
 
 			#loop through particles in class
-			f=open('class.lst','w')
-			f.write('#LST\n')
+			keeplist=open('class.lst','w')
+			keeplist.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
 				if ptcl['mirror']:
@@ -316,7 +316,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				rot=ptcl['inplane_rotation']
 				rot=rot*math.pi/180
 				if ptcl['particle']['particleNumber'] not in rejectlst:
-					f.write(
+					keeplist.write(
 						"%d\t%s\t%f,\t%f,%f,%f,%d\n" % 
 						(ptcl['particle']['particleNumber']-1, stack, ptcl['quality_factor'],
 						 rot, ptcl['shiftx'], ptcl['shifty'], mirror))
@@ -329,12 +329,12 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				#if ptcl['quality_factor']>cstats['meanquality']+3*cstats['stdquality']:
 				#	high.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
 				#		stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-			f.close()
+			keeplist.close()
 			
 			if nptcls<1:
 				continue
 			if self.params['skipavg'] is False:
-				makeClassAverages('class.lst',self.params['outputstack'], classes[key], self.params)
+				makeClassAverages('class.lst', self.params['outputstack'], classes[key], self.params)
 			
 			if self.params['eotest']:
 				makeEvenOddClasses('class.lst',classes[key],self.params)
