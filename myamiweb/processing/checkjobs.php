@@ -257,7 +257,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	  echo "</table>\n";
 	}
 	else echo "<p>getting files from DMF...</p>\n";
-	if ($stat['errors']) echo "<p><font color='red'><b>There are errors in this job, you should resubmit</b></font><p>";
+	if ($stat['errors']) echo "<p><font color='red'><b>There are errors (Alarm/Error in refine*.txt) in this job, you should resubmit</b></font><p>";
       }
     }
     echo "<p>\n";
