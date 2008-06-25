@@ -257,7 +257,11 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	  echo "</table>\n";
 	}
 	else echo "<p>getting files from DMF...</p>\n";
-	if ($stat['errors']) echo "<p><font color='red'><b>There are errors (Alarm/Error in refine*.txt) in this job, you should resubmit</b></font><p>";
+	if ($stat['errors']) {
+		if ($stat['alarm']) echo "<p><font color='red'><b>There are EMAN Alarm errors (in refine*.txt) for this job, you should resubmit</b></font><p>";
+		else echo "<p><font color='red'><b>There are unknown errors (refine*.txt) for this job, you should resubmit</b></font><p>";
+	}
+
       }
     }
     echo "<p>\n";
@@ -289,7 +293,9 @@ function checkJobStatus($host,$jobpath,$jobfile,$user,$pass) {
   if (!$stat['errors']) {
     $cmd = "grep Error $jobpath/recon/refine*.txt ";
     $stat['errors'] = exec_over_ssh($host,$user,$pass,$cmd, True);
-  }
+  } else {
+		$stat['alarm'] = True;
+	}
   return $stat;
 }
 
