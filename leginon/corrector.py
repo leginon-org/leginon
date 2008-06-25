@@ -597,7 +597,7 @@ class Corrector(node.Node):
 		self.setStatus('processing')
 		if self.instrument.getTEMName() != 'CM':
 			self.logger.info('preload dark/norm')
-			cameradata = self.instrument.getData(data.CameraEMData, ccdcameraname=ccdcameraname)
+			cameradata = self.instrument.getData(data.CameraEMData, ccdcameraname=ccdcameraname, image=False)
 			scopedata = self.instrument.getData(data.ScopeEMData)
 			ccdcamera = cameradata['ccdcamera']
 			corstate = data.CorrectorCamstateData()
