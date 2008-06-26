@@ -4,6 +4,7 @@ require_once('thumbnails.php');
 $sessionId = $_GET['sessionId'];
 $tiltSeriesId = $_GET['tiltSeriesId'];
 $showmodel = $_GET['model'];
+#$showmodel = 1;
 ?>
 <?php
 $sessions = $tomography->getTiltSeriesSessions();
@@ -16,7 +17,12 @@ $sessionSelector = $tomography->getSessionSelector($sessions, $sessionId);
 
 $tiltSeries = $tomography->getTiltSeries($sessionId);
 
-$tiltSeriesSelector = $tomography->getTiltSeriesSelector($tiltSeries, $tiltSeriesId);
+$tiltSeriesSelector_array = $tomography->getTiltSeriesSelector($tiltSeries, $tiltSeriesId);
+$tiltSeriesSelector = $tiltSeriesSelector_array[0];
+$tiltSeriesNumber = $tiltSeriesSelector_array[1];
+$tiltSeriesData = $tomography->getTiltSeriesData($tiltSeriesId);
+$first_filename = $tiltSeriesData[0]['filename'];
+$tiltSeriesName = substr($first_filename,0,strrpos($first_filename,'_'));
 
 $width = 800;
 $height = 300;
@@ -73,13 +79,14 @@ function init() {
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
-    echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId>Download MRC stack</a><br>";
+    echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download MRC stack</a><br>";
 }
 ?>
 <?php
 if($tiltSeriesId != NULL) {
 	echo '<tr><td>';
 	thumbnails($tiltSeriesId, $tomography);
+	echo $tiltSeriesName; 
 	echo '</td></tr>';
 }
 ?>

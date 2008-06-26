@@ -247,10 +247,18 @@ require_once('tomography.php');
 
 header("Content-Type: text/plain");
 $tiltSeriesId = $_GET['tiltSeriesId'];
+$tiltSeriesNumber = $_GET['tiltSeriesNumber'];
 $session = $tomography->getTiltSeriesSession($tiltSeriesId);
 $results = $tomography->getTiltSeriesData($tiltSeriesId);
 
 $n_results = count($results);
+$first_imageid = $results[0]["imageId"];
+$parents = $tomography->getImageParent($first_imageid);
+while ($parents[0]['parentId']) {
+	$lastparents = $parents;
+	$parents = $tomography->getImageParent($parents[0]['parentId']);
+}
+$atlas_name = $tomography->getAtlasName($lastparents[0]['parentId']);
 
 # look for start of each tilt series
 $threshold = 0.05;
@@ -323,7 +331,7 @@ foreach($results as $result) {
     $extended_header["exposure time"] = $result["exposure_time"];
     $extended_header["tilt axis"] = $result["tilt_axis"];
     $extended_header["mean intensity"] = $result["mean"];
-    $extended_header["pixel size"] = $result["pixel_size"];
+    $extended_header["pixel size"] = $result["pixel_size"]*$result["binning_x"];
     $extended_header["reserved"] = NULL;
 
     $extended_headers[] = array(
@@ -348,8 +356,19 @@ $stack_header["n floats"] = $mrc_stack_extended_format_size/$float_size;
 
 $stack_size += $mrc_header_size;
 
-$filename = $results[0]["filename"];
-$filename = ereg_replace("_[0-9]*$", '_stack.mrc', $filename);
+#$filename = $results[0]["filename"];
+#$filename = ereg_replace("_[0-9]*$", '_stack.mrc', $filename);
+$filename = $session['name'].'_'.$atlas_name.'_';
+if ($tiltSeriesNumber < 10) {
+	$filename .= '00'.$tiltSeriesNumber; 
+} else {
+	if ($tiltSeriesNumber < 100) {
+		$filename .= '0'.$tiltSeriesNumber; 
+	} else {
+		$filename .= $tiltSeriesNumber; 
+	}
+}
+
 if (!eregi("\.mrc$", $filename))
 	$filename = ereg_replace("$", ".mrc", $filename);
 
@@ -373,5 +392,4 @@ foreach($extended_headers as $extended_header) {
 
     fclose($handle);
 }
-
 ?> 
