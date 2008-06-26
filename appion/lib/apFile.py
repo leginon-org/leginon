@@ -21,18 +21,22 @@ def md5sumfile(fname):
 
 def removeStack(filename):
 	rootname = os.path.splitext(filename)[0]
-	try:
-		os.remove(rootname+".hed")
-		os.remove(rootname+".img")
-	except:
-		apDisplay.printWarning('%s.hed/img can not be removed' % rootname)
+	for f in (rootname+".hed", rootname+".img"):
+		if os.path.isfile(f):
+			apDisplay.printWarning("removing file:"+f)
+			try:
+				os.remove(f)
+			except:
+				apDisplay.printWarning('%s could not be removed' % f)
 
 def removeFile(filename):
-	fullpath = os.path.abspath(filename)
-	try:
-		os.remove(fullpath)
-	except:
-		apDisplay.printWarning('%s can not be removed' % fullpath)
+	f = os.path.abspath(filename)
+	if os.path.isfile(f):
+		apDisplay.printWarning("removing file:"+f)
+		try:
+			os.remove(f)
+		except:
+			apDisplay.printWarning('%s could not be removed' % f)
 
 def numImagesInStack(imgfile, boxsize=None):
 	"""
