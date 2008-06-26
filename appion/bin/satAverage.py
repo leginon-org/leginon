@@ -126,7 +126,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def makeClassAverages(self, classlist, outputstack, classdata, maskrad):
 		#align images in class
-		print classlist
+		#print classlist
 		images = EMAN.readImages(classlist, -1, -1, 0)
 		for image in images:
 			image.rotateAndTranslate()
@@ -179,6 +179,28 @@ class satAverageScript(appionScript.AppionScript):
 		apDisplay.printMsg("finished sorting in "+apDisplay.timeString(time.time()-t0))
 		return classes, class_stats
 
+	#=====================
+	def getClassData(self, reconid, iternum):
+		t0 = time.time()
+		cachefile = os.path.join(self.params['outdir'], 
+			"partclassdata-r"+str(reconid)+"-i"+str(iternum)+".cache")
+		if os.path.isfile(cachefile):
+			apDisplay.printColor("loading particle class data from cache file", "cyan")
+			f = open(cachefile, 'r')
+			classes = cPickle.load(f)
+			f.close()
+		else:
+			apDisplay.printMsg("determine particle class data from database")
+			particles = self.getParticleInfo(reconid, iternum)
+			classes, cstats = self.determineClasses(particles)
+			f = open(cachefile, 'w')
+			apDisplay.printMsg("saving particle class data to cache file")
+			cPickle.dump(classes, f)
+			f.close()
+		apDisplay.printMsg("received "+str(len(classes))+" classes in "+apDisplay.timeString(time.time()-t0))
+		return classes
+
+
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
@@ -227,31 +249,11 @@ class satAverageScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(refinerundata['path']['path'], 'satavg')
 
 	#=====================
-	def getClassData(self, reconid, iternum):
-		t0 = time.time()
-		cachefile = os.path.join(self.params['outdir'], 
-			"partclassdata-r"+str(reconid)+"-i"+str(iternum)+".cache")
-		if os.path.isfile(cachefile):
-			apDisplay.printColor("loading particle class data from cache file", "cyan")
-			f = open(cachefile, 'r')
-			classes = cPickle.load(f)
-			f.close()
-		else:
-			particles = self.getParticleInfo(reconid, iternum)
-			classes = self.determineClasses(particles)
-			f = open(cachefile, 'w')
-			cPickle.dump(classes, f)
-			f.close()
-		apDisplay.printMsg("received "+str(len(classes))+" classes in "+apDisplay.timeString(time.time()-t0))
-		return classes
-
-
-	#=====================
 	def start(self):
 		self.rootname = self.params['stackname'].split(".")[0]
 		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
 		
-		classes = self.getClassData(self.params['reconid'], self.params['iter'], 
+		classes = self.getClassData(self.params['reconid'], self.params['iter'])
 		stackid = apStack.getStackIdFromRecon(self.params['reconid'])
 		stackdata = apStack.getOnlyStackData(stackid)
 		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
