@@ -126,6 +126,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def makeClassAverages(self, classlist, outputstack, classdata, maskrad):
 		#align images in class
+		print classlist
 		images = EMAN.readImages(classlist, -1, -1, 0)
 		for image in images:
 			image.rotateAndTranslate()
@@ -139,9 +140,9 @@ class satAverageScript(appionScript.AppionScript):
 		#write class average
 		e = EMAN.Euler()
 		alt = classdata['euler']['euler1']*math.pi/180
-		az = classdata['euler']['euler2']*math.pi/180
+		az  = classdata['euler']['euler2']*math.pi/180
 		phi = classdata['euler']['euler3']*math.pi/180
-		e.setAngle(alt,az,phi)
+		e.setAngle(alt, az, phi)
 		avg.setRAlign(e)
 		avg.setNImg(len(images))
 		avg.applyMask(maskrad, 0)
@@ -273,9 +274,9 @@ class satAverageScript(appionScript.AppionScript):
 
 			if nptcls<1:
 				continue
-			self.makeClassAverages('class.lst', self.params['outputstack'], classes[key], self.params['mask'])
+			self.makeClassAverages(classfile, self.params['outputstack'], classes[key], self.params['mask'])
 			if self.params['eotest'] is True:
-				self.makeEvenOddClasses('class.lst', self.params['outputstack'], classes[key], self.params['mask'])
+				self.makeEvenOddClasses(classfile, self.params['outputstack'], classes[key], self.params['mask'])
 
 			apFile.removeFile(classfile)
 
