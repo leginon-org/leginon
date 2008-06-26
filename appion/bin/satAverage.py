@@ -38,9 +38,9 @@ class satAverageScript(appionScript.AppionScript):
 		lines = f.readlines()
 		f.close()
 		randstr = str(int(random.random()*10e5))
-		evenfile = "even"+randstr+".lst"
+		evenfile = self.rootname+"-even.lst"
 		evenf = open(evenfile,'w')
-		oddfile = "odd"+randstr+".lst"
+		oddfile = self.rootname+"-odd.lst"
 		oddf = open(oddfile,'w')
 		evenf.write("#LST\n")
 		oddf.write("#LST\n")
@@ -228,7 +228,7 @@ class satAverageScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		rootname = self.params['stackname'].split(".")[0]
+		self.rootname = self.params['stackname'].split(".")[0]
 		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
 		particles = self.getParticleInfo(self.params['reconid'], self.params['iter'])
 		stackdata = particles[0]['particle']['stack']
@@ -251,7 +251,7 @@ class satAverageScript(appionScript.AppionScript):
 				sys.stderr.write(str(classnum)+" of "+(str(len(classkeys))))
 
 			#loop through particles in class
-			classfile = rootname+"-class.lst"
+			classfile = self.rootname+"-class.lst"
 			classlist = open(classfile, 'w')
 			classlist.write('#LST\n')
 			nptcls=0
@@ -281,7 +281,7 @@ class satAverageScript(appionScript.AppionScript):
 			apFile.removeFile(classfile)
 
 		sys.stderr.write("\n")
-		finalfilename = rootname+"-keep.lst"
+		finalfilename = self.rootname+"-keep.lst"
 		finalf = open(finalfilename, 'w')
 		finallist.sort()
 		for partnum in finallist:
@@ -291,14 +291,14 @@ class satAverageScript(appionScript.AppionScript):
 		reconstr = str(self.params['reconid'])
 
 		### recon 3d volumes
-		threedname = os.path.join(self.params['outdir'], rootname+".a.mrc")
+		threedname = os.path.join(self.params['outdir'], self.rootname+".a.mrc")
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
 			+threedname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 		#print emancmd
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 		if self.params['eotest'] is True:
 			# even 
-			evenname = os.path.join(self.params['outdir'], rootname+"-even.a.mrc")
+			evenname = os.path.join(self.params['outdir'], self.rootname+"-even.a.mrc")
 			if os.path.isfile(self.params['evenstack']):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
 					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
@@ -306,7 +306,7 @@ class satAverageScript(appionScript.AppionScript):
 				apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True)
 
 			# odd
-			oddname = os.path.join(self.params['outdir'], rootname+"-odd.a.mrc")
+			oddname = os.path.join(self.params['outdir'], self.rootname+"-odd.a.mrc")
 			if os.path.isfile(self.params['oddstack']):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
 					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
@@ -315,7 +315,7 @@ class satAverageScript(appionScript.AppionScript):
 
 			#eotest
 			if os.path.isfile(oddname) and os.path.isfile(evenname):
-				fscout = os.path.join(self.params['outdir'], rootname+"-fsc.eotest")
+				fscout = os.path.join(self.params['outdir'], self.rootname+"-fsc.eotest")
 				eotestcmd = "proc3d "+oddname+" "+evenname+" fsc="+fscout
 				apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
 
