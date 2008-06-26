@@ -20,7 +20,7 @@ def md5sumfile(fname):
 	return m.hexdigest()
 
 def removeStack(filename):
-	rootname = os.path.splittext(filename)[0]
+	rootname = os.path.splitext(filename)[0]
 	try:
 		os.remove(rootname+".hed")
 		os.remove(rootname+".img")
