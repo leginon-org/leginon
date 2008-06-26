@@ -6,7 +6,6 @@
 ### future AppionScript
 classifier
 clstoaligned
-combinestack
 postProc
 refBasedAlignment
 runrmeasure
@@ -40,6 +39,7 @@ templateCorrelator
 tiltaligner
 
 ### AppionScript
+combinestack
 createFakeStack
 createModel
 makegoodaverages
@@ -48,6 +48,7 @@ subStack
 uploadModel
 uploadRecon
 uploadTemplate
+
 
 ### Unique
 ApDogPicker
