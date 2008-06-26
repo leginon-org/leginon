@@ -296,22 +296,25 @@ class satAverageScript(appionScript.AppionScript):
 		if self.params['eotest'] is True:
 			# even 
 			evenname = os.path.join(self.params['outdir'], rootname+"-even.a.mrc")
-			evenemancmd = ( "make3d "+self.params['evenstack']+" out="
-				+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
-			#print evenemancmd
-			apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True)
+			if os.path.isfile(self.params['evenstack']):
+				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
+					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
+				#print evenemancmd
+				apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True)
 
 			# odd
 			oddname = os.path.join(self.params['outdir'], rootname+"-odd.a.mrc")
-			oddemancmd = ( "make3d "+self.params['oddstack']+" out="
-				+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
-			#print oddemancmd
-			apEMAN.executeEmanCmd(oddemancmd, verbose=False, showcmd=True)
+			if os.path.isfile(self.params['oddstack']):
+				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
+					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
+				#print oddemancmd
+				apEMAN.executeEmanCmd(oddemancmd, verbose=False, showcmd=True)
 
 			#eotest
-			fscout = os.path.join(self.params['outdir'], rootname+"-fsc.eotest")
-			eotestcmd = "proc3d "+oddname+" "+evenname+" fsc="+fscout
-			apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
+			if os.path.isfile(oddname) and os.path.isfile(evenname):
+				fscout = os.path.join(self.params['outdir'], rootname+"-fsc.eotest")
+				eotestcmd = "proc3d "+oddname+" "+evenname+" fsc="+fscout
+				apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
 
 #=====================
 #=====================
