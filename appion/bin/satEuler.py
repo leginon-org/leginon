@@ -456,6 +456,7 @@ class satEulerScript(appionScript.AppionScript):
 	def writeKeepFiles(self, eulertree):
 		#find good particles
 		totkeeplist = []
+		totbadlist = []
 		notiltkeeplist = []
 		angkeeplist = []
 		skippair = 0
@@ -464,6 +465,7 @@ class satEulerScript(appionScript.AppionScript):
 				skippair += 1
 				continue
 			goodtot = (abs(eulerpair['totdist'] - 15.0) < self.params['cutrange'])
+			badtot = (abs(eulerpair['totdist'] - 15.0) > 3*self.params['cutrange'])
 			goodang = (abs(eulerpair['angdist'] - 15.0) < self.params['cutrange'])
 			if goodtot:
 				if eulerpair['part1']['tilt'] < eulerpair['part2']['tilt']:
@@ -472,6 +474,9 @@ class satEulerScript(appionScript.AppionScript):
 					notiltkeeplist.append(eulerpair['part2']['partid']-1)
 				totkeeplist.append(eulerpair['part1']['partid']-1)
 				totkeeplist.append(eulerpair['part2']['partid']-1)
+			if badtot:
+				totbadlist.append(eulerpair['part1']['partid']-1)
+				totbadlist.append(eulerpair['part2']['partid']-1)
 			if goodang:
 				angkeeplist.append(eulerpair['part1']['partid']-1)
 				angkeeplist.append(eulerpair['part2']['partid']-1)
@@ -480,6 +485,7 @@ class satEulerScript(appionScript.AppionScript):
 		totkeeplist.sort()
 		notiltkeeplist.sort()
 		angkeeplist.sort()
+		totbadlist.sort()
 
 		### write to file
 		k = open("keeplist-tot"+self.datastr+".lst", "w")
@@ -498,6 +504,12 @@ class satEulerScript(appionScript.AppionScript):
 		#for kid in angkeeplist:
 		#	k.write(str(kid)+"\n")
 		#k.close()
+
+		### write to file
+		k = open("badlist-tot"+self.datastr+".lst", "w")
+		for kid in totbadlist:
+			k.write(str(kid)+"\n")
+		k.close()
 
 		percent = "%3.1f" % (50.0*len(totkeeplist) / float(len(eulertree)))
 		apDisplay.printMsg("Total Keeping "+str(len(totkeeplist))+" of "+str(2*len(eulertree))+" ("+percent+"%) eulers")
