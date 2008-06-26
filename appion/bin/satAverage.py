@@ -145,6 +145,8 @@ class satAverageScript(appionScript.AppionScript):
 		avg.setRAlign(e)
 		avg.setNImg(len(images))
 		avg.applyMask(maskrad, 0)
+		if os.path.isfile(outputstack):
+			apFile.removeStack(outputstack)
 		avg.writeImage(outputstack,-1)
 
 	#=====================

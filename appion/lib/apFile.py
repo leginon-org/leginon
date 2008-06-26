@@ -19,6 +19,14 @@ def md5sumfile(fname):
 	f.close()
 	return m.hexdigest()
 
+def removeStack(filename):
+	rootname = os.path.splittext(filename)[0]
+	try:
+		os.remove(rootname+".hed")
+		os.remove(rootname+".img")
+	except:
+		apDisplay.printWarning('%s.hed/img can not be removed' % rootname)
+
 def removeFile(filename):
 	fullpath = os.path.abspath(filename)
 	try:
