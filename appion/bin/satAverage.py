@@ -41,7 +41,7 @@ class satAverageScript(appionScript.AppionScript):
 		evenfile = "even"+randstr+".lst"
 		evenf = open(evenfile,'w')
 		oddfile = "odd"+randstr+".lst"
-		oddf = open('odd.lst','w')
+		oddf = open(oddfile,'w')
 		evenf.write("#LST\n")
 		oddf.write("#LST\n")
 		neven=0
@@ -59,9 +59,9 @@ class satAverageScript(appionScript.AppionScript):
 		self.params['oddstack'] = os.path.splitext(outputstack)[0]+'.odd.hed'
 
 		if neven>0:
-			self.makeClassAverages('even.lst', self.params['evenstack'], classdata, maskrad)
+			self.makeClassAverages(evenfile, self.params['evenstack'], classdata, maskrad)
 		if nodd>0:
-			self.makeClassAverages('odd.lst', self.params['oddstack'], classdata, maskrad)
+			self.makeClassAverages(oddfile, self.params['oddstack'], classdata, maskrad)
 		apFile.removeFile(evenfile)
 		apFile.removeFile(oddfile)
 
