@@ -19,6 +19,12 @@ def md5sumfile(fname):
 	f.close()
 	return m.hexdigest()
 
+def removeFile(filename):
+	fullpath = os.path.abspath(filename)
+	try:
+		os.remove(fullpath)
+	except:
+		apDisplay.printWarning('%s can not be removed' % fullpath)
 
 def numImagesInStack(imgfile, boxsize=None):
 	"""
