@@ -15,7 +15,7 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--old-stack-id", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
 		self.parser.add_option("-k", "--keep-file", dest="keepfile",
-			help="File listing which particles to keep", metavar="FILE")
+			help="File listing which particles to keep, EMAN style 0,1,...", metavar="FILE")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
