@@ -19,20 +19,22 @@ def md5sumfile(fname):
 	f.close()
 	return m.hexdigest()
 
-def removeStack(filename):
+def removeStack(filename, warn=True):
 	rootname = os.path.splitext(filename)[0]
 	for f in (rootname+".hed", rootname+".img"):
 		if os.path.isfile(f):
-			apDisplay.printWarning("removing file:"+f)
+			if warn is True:
+				apDisplay.printWarning("removing file:"+f)
 			try:
 				os.remove(f)
 			except:
 				apDisplay.printWarning('%s could not be removed' % f)
 
-def removeFile(filename):
+def removeFile(filename, warn=False):
 	f = os.path.abspath(filename)
 	if os.path.isfile(f):
-		apDisplay.printWarning("removing file:"+f)
+		if warn is True:
+			apDisplay.printWarning("removing file:"+f)
 		try:
 			os.remove(f)
 		except:
