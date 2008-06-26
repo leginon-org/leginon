@@ -30,6 +30,7 @@ apdb=apDB.apdb
 #=====================
 class satAverageScript(appionScript.AppionScript):
 
+
 	#=====================
 	def makeEvenOddClasses(self, listfile, outputstack, classdata, maskrad):
 		f=open(listfile,'r')
@@ -66,26 +67,40 @@ class satAverageScript(appionScript.AppionScript):
 		"""
 		Get all particle data for given recon and iteration
 		"""
-		refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
-		if not refinerundata:
-			apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
-
-		refineq = appionData.ApRefinementData()
-		refineq['refinementRun'] = refinerundata
-		refineq['iteration'] = iteration
-		refinedata = refineq.query(results=1)
-		
-		if not refinedata:
-			apDisplay.printError("Could not find refinedata for reconrun id="
-				+str(reconid)+" iter="+str(iteration))
-
-		refinepartq=appionData.ApParticleClassificationData()
-		refinepartq['refinement']=refinedata[0]
 		t0 = time.time()
-		apDisplay.printMsg("querying particles on "+time.asctime())
-		refineparticledata = refinepartq.query()
+		cachefile = os.path.join(self.params['outdir'], 
+			"refineparticledata-r"+str(reconid)+"-i"+str(iteration)+".cache")
+		if os.path.isfile(cachefile):
+			apDisplay.printColor("loading refineparticledata from cache file", "cyan")
+			f = open(cachefile, 'r')
+			refineparticledata = cPickle.load(f)
+			f.close()
+		else:
+			refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
+			if not refinerundata:
+				apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
+
+			refineq = appionData.ApRefinementData()
+			refineq['refinementRun'] = refinerundata
+			refineq['iteration'] = iteration
+			refinedata = refineq.query(results=1)
+			
+			if not refinedata:
+				apDisplay.printError("Could not find refinedata for reconrun id="
+					+str(reconid)+" iter="+str(iteration))
+
+			refinepartq=appionData.ApParticleClassificationData()
+			refinepartq['refinement']=refinedata[0]
+
+			apDisplay.printMsg("querying particles on "+time.asctime())
+			refineparticledata = refinepartq.query()
+			apDisplay.printMsg("saving refineparticledata to cache file")
+			f = open(cachefile, 'w')
+			cPickle.dump(refineparticledata, f)
+			f.close()
+
 		apDisplay.printMsg("received "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
-		return (refineparticledata)
+		return refineparticledata
 
 	#=====================
 	def procKeepList(self):
@@ -231,7 +246,7 @@ class satAverageScript(appionScript.AppionScript):
 			images=EMAN.EMData()
 
 			#loop through particles in class
-			classlist=open('class.lst', 'w')
+			classlist = open('class.lst', 'w')
 			classlist.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
