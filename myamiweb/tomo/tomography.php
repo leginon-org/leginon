@@ -87,15 +87,17 @@ class Tomography {
         for ($i = 0; $i < count($tiltSeries); $i++) {
             $series = $tiltSeries[$i];
             $selector .= '<option class="fixed" value='.$series['id'];
-            if ($series['id'] == $tiltSeriesId)
+            if ($series['id'] == $tiltSeriesId) {
                 $selector .= ' selected ';
+								$selected_number = $i + 1;
+						}
             $number = str_pad($i + 1, $length, ' ', STR_PAD_LEFT).'. ';
             $number = str_replace(" ", "&nbsp;", $number);
             $timestamp = date('m/d/y H:i:s', $series['timestamp']);
             $selector .= '>'.$number.$timestamp.'</option>';
         }
         $selector .= '</select>';
-        return $selector;
+        return array($selector,$selected_number);
     }
 
     function getPredictionData($tiltSeriesId) {
@@ -190,6 +192,8 @@ class Tomography {
                 .'s.magnification AS magnification, '
                 .'c.`SUBD|dimension|x` AS dimension_x, '
                 .'c.`SUBD|dimension|y` AS dimension_y, '
+                .'c.`SUBD|binning|x` AS binning_x, '
+                .'c.`SUBD|binning|y` AS binning_y, '
                 .'c.`exposure time` AS exposure_time, '
                 #.'DEGREES(TomographyPredictionData.`SUBD|predicted position|theta`) AS tilt_axis, '
                 .'AcquisitionImageStatsData.mean AS mean, '
@@ -222,6 +226,48 @@ class Tomography {
 
         return $this->mysql->getSQLResult($query);
     }
+
+	function getImageParent($imgId) {
+		$q = "select "  
+			."parent.`DEF_id` as parentId, "
+			."parent.`MRC|image` as parentimage, "
+			."parenttarget.`type` as parenttype, "
+			."pp.`name` as parentpreset "
+			."from "
+			."AcquisitionImageData a "
+			."left join PresetData p "
+			."on (p.DEF_id=a.`REF|PresetData|preset`) "
+			."left join AcquisitionImageTargetData parenttarget "
+			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join AcquisitionImageData parent "
+			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
+			."left join AcquisitionImageTargetData targets "
+			."on (targets.`REF|AcquisitionImageData|image`=parenttarget.`REF|AcquisitionImageData|image`) "
+			."left join PresetData pp "
+			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
+			."where "
+			."a.`DEF_id` ='".$imgId."' "; 
+		$parents = array();
+		$Rparent = $this->mysql->SQLQuery($q);
+		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))
+			$parents[]=$parent;
+		return $parents;
+	}
+
+		function getAtlasName($imageId) {
+        $query = 'SELECT '
+                .'tlist.`label` AS label '
+                .'FROM ImageTargetListData tlist '
+                .'LEFT JOIN AcquisitionImageTargetData t '
+								.'ON tlist.`DEF_id` = t.`REF|ImageTargetListData|list` '
+								.'LEFT JOIN AcquisitionImageData a '
+								.'ON t.`DEF_id` = a.`REF|AcquisitionImageTargetData|target` '
+								.'WHERE a.`DEF_id`='.$imageId.' '
+								.';';
+				$results = $this->mysql->getSQLResult($query);
+				if ($results)
+					return $results[0]['label'];
+		}
 
     function getMeanValues($tilt_series_id) {
         if($tilt_series_id == NULL)
