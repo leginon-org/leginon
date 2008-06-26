@@ -55,8 +55,6 @@ class satAverageScript(appionScript.AppionScript):
 				evenf.write(lines[i])
 		evenf.close()
 		oddf.close()
-		self.params['evenstack'] = os.path.splitext(outputstack)[0]+'.even.hed'
-		self.params['oddstack'] = os.path.splitext(outputstack)[0]+'.odd.hed'
 
 		if neven>0:
 			self.makeClassAverages(evenfile, self.params['evenstack'], classdata, maskrad)
@@ -146,8 +144,7 @@ class satAverageScript(appionScript.AppionScript):
 		avg.setRAlign(e)
 		avg.setNImg(len(images))
 		avg.applyMask(maskrad, 0)
-		if os.path.isfile(outputstack):
-			apFile.removeStack(outputstack)
+
 		avg.writeImage(outputstack,-1)
 
 	#=====================
@@ -253,6 +250,16 @@ class satAverageScript(appionScript.AppionScript):
 		self.rootname = self.params['stackname'].split(".")[0]
 		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
 		
+		if os.path.isfile(self.params['outputstack']):
+			apFile.removeStack(self.params['outputstack'])
+		if self.params['eotest'] is True:
+			self.params['evenstack'] = os.path.splitext(self.params['outputstack'])[0]+'.even.hed'
+			if os.path.isfile(self.params['evenstack']):
+				apFile.removeStack(self.params['evenstack'])
+			self.params['oddstack'] = os.path.splitext(self.params['outputstack'])[0]+'.odd.hed'
+			if os.path.isfile(self.params['oddstack']):
+				apFile.removeStack(self.params['oddstack'])
+
 		classes = self.getClassData(self.params['reconid'], self.params['iter'])
 		stackid = apStack.getStackIdFromRecon(self.params['reconid'])
 		stackdata = apStack.getOnlyStackData(stackid)
