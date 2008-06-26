@@ -7,10 +7,11 @@ import sys
 import time
 import re
 import cPickle
-#scipy
-import numpy
+import random
 #eman
 import EMAN
+#scipy
+import numpy
 #db
 import sinedon
 import MySQLdb
@@ -30,15 +31,17 @@ apdb=apDB.apdb
 #=====================
 class satAverageScript(appionScript.AppionScript):
 
-
 	#=====================
 	def makeEvenOddClasses(self, listfile, outputstack, classdata, maskrad):
 		f=open(listfile,'r')
 		f.readline()
 		lines = f.readlines()
 		f.close()
-		evenf=open('even.lst','w')
-		oddf=open('odd.lst','w')
+		randstr = str(int(random.random()*10e5))
+		evenfile = "even"+randstr+".lst"
+		evenf = open(evenfile,'w')
+		oddfile = "odd"+randstr+".lst"
+		oddf = open('odd.lst','w')
 		evenf.write("#LST\n")
 		oddf.write("#LST\n")
 		neven=0
@@ -59,8 +62,8 @@ class satAverageScript(appionScript.AppionScript):
 			self.makeClassAverages('even.lst', self.params['evenstack'], classdata, maskrad)
 		if nodd>0:
 			self.makeClassAverages('odd.lst', self.params['oddstack'], classdata, maskrad)
-		apFile.removeFile('even.lst')
-		apFile.removeFile('odd.lst')
+		apFile.removeFile(evenfile)
+		apFile.removeFile(oddfile)
 
 	#=====================
 	def getParticleInfo(self, reconid, iteration):
@@ -243,10 +246,10 @@ class satAverageScript(appionScript.AppionScript):
 			if classnum%10 == 1:
 				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
 				sys.stderr.write(str(classnum)+" of "+(str(len(classkeys))))
-			images=EMAN.EMData()
 
 			#loop through particles in class
-			classlist = open('class.lst', 'w')
+			classfile = rootname+"-class.lst"
+			classlist = open(classfile, 'w')
 			classlist.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
@@ -266,14 +269,13 @@ class satAverageScript(appionScript.AppionScript):
 					finallist.append(ptcl['particle']['particleNumber']-1)
 			classlist.close()
 
-			
 			if nptcls<1:
 				continue
 			self.makeClassAverages('class.lst', self.params['outputstack'], classes[key], self.params['mask'])
 			if self.params['eotest'] is True:
 				self.makeEvenOddClasses('class.lst', self.params['outputstack'], classes[key], self.params['mask'])
 
-			apFile.removeFile('class.lst')
+			apFile.removeFile(classfile)
 
 		sys.stderr.write("\n")
 		finalfilename = rootname+"-keep.lst"
