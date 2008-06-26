@@ -2,6 +2,8 @@
 import apDisplay
 import subprocess
 import sys
+import time
+
 #try:
 #	import EMAN
 #except ImportError:
@@ -16,7 +18,11 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True):
 			emanproc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		else:
 			emanproc = subprocess.Popen(emancmd, shell=True)
+		t0 = time.time()
 		emanproc.wait()
+		tdiff = time.time() - t0
+		if tdiff > 20:
+			apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	except:
 		apDisplay.printWarning("could not run eman command: "+emancmd)
 		raise
