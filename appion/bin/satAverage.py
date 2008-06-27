@@ -324,7 +324,7 @@ class satAverageScript(appionScript.AppionScript):
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
 			+threedname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 		#print emancmd
-		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
 			# even 
 			evenname = os.path.join(self.params['outdir'], self.rootname+"-even.a.mrc")
@@ -332,7 +332,9 @@ class satAverageScript(appionScript.AppionScript):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
 					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 				#print evenemancmd
-				apEMAN.executeEmanCmd(evenemancmd, verbose=True, showcmd=True)
+				apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eveneman.log")
+			else:
+				apDisplay.printWarning("file "+self.params['evenstack']+" does not exist")
 
 			# odd
 			oddname = os.path.join(self.params['outdir'], self.rootname+"-odd.a.mrc")
@@ -340,13 +342,25 @@ class satAverageScript(appionScript.AppionScript):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
 					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 				#print oddemancmd
-				apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
+				apEMAN.executeEmanCmd(oddemancmd, verbose=False, showcmd=True, logfile=self.rootname+"-oddeman.log")
+			else:
+				apDisplay.printWarning("file "+self.params['oddstack']+" does not exist")
 
 			#eotest
+			fscout = os.path.join(self.params['outdir'], self.rootname+"-fsc.eotest")
 			if os.path.isfile(oddname) and os.path.isfile(evenname):
-				fscout = os.path.join(self.params['outdir'], self.rootname+"-fsc.eotest")
 				eotestcmd = "proc3d "+oddname+" "+evenname+" fsc="+fscout
 				apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
+			else:
+				apDisplay.printWarning("could not perform eotest")
+
+			if os.path.isfile(fscout):
+				res = apRecon.getResolutionFromFSCFile(fscout, 160.0, 1.63)
+				apDisplay.printColor( ("resolution: %.5f" % (res)), "cyan")
+				resfile = self.rootname+"-res.txt"
+				f = open(resfile, 'a')
+				f.write("[ %s ]\nresolution: %.5f\n" % (time.asctime(), res))
+				f.close()
 
 #=====================
 #=====================
