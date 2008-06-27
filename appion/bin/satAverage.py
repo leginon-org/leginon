@@ -350,7 +350,7 @@ class satAverageScript(appionScript.AppionScript):
 			fscout = os.path.join(self.params['outdir'], self.rootname+"-fsc.eotest")
 			if os.path.isfile(oddname) and os.path.isfile(evenname):
 				eotestcmd = "proc3d "+oddname+" "+evenname+" fsc="+fscout
-				apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
+				apEMAN.executeEmanCmd(eotestcmd, verbose=True, showcmd=True)
 			else:
 				apDisplay.printWarning("could not perform eotest")
 
