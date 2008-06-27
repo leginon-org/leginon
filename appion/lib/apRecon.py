@@ -850,6 +850,32 @@ def getRefinementsFromRun(refinerundata):
 	refineitq['refinementRun'] = refinerundata
 	return appiondb.query(refineitq)
 
+def getResolutionFromFSCFile(fscfile, boxsize, apix):
+	if not os.path.isfile(fscfile):
+		apDisplay.printError("fsc file does not exist")
+	f = open(fscfile, 'r')
+	lastx=0
+	lasty=0
+	for line in f:
+		xy = line.strip().split()
+		x = float(xy[0])
+		y = float(xy[1])
+		if y > 0.5:
+			#store values for later
+			lastx = x
+			lasty = y
+		else:
+			# get difference of fsc
+			diffy = lasty-y
+			# get distance from 0.5
+			distfsc = (0.5-y) / diffy
+			# get interpolated spatial freq
+			intfsc = x - distfsc * (x-lastx)
+			# convert to Angstroms
+			res = boxsize * apix / intfsc
+			f.close()
+			return res
+
 if __name__ == '__main__':
 	r = runRMeasure(6.52,'threed.1a.mrc')
 	print r
