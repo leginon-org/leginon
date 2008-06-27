@@ -8,35 +8,41 @@ import time
 #	import EMAN
 #except ImportError:
 #	apDisplay.printWarning("EMAN module did not get imported")
-#pass
+#	pass
 
+#=====================
 def executeEmanCmd(emancmd, verbose=False, showcmd=True):
+	"""
+	executes an EMAN command in a controlled fashion
+	"""
 	if showcmd is True:
 		sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
+	t0 = time.time()
 	try:
 		if verbose is False:
 			emanproc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		else:
 			emanproc = subprocess.Popen(emancmd, shell=True)
-		t0 = time.time()
 		emanproc.wait()
-		tdiff = time.time() - t0
-		if tdiff > 20:
-			apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	except:
 		apDisplay.printWarning("could not run eman command: "+emancmd)
 		raise
+	tdiff = time.time() - t0
+	if tdiff > 20:
+		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 
+#=====================
 def getNumParticlesInStack(stackname):
 	numparticles = EMAN.fileCount(stackname)[0]
 	return numparticles
 
-
+#=====================
 def getEMANPcmp(ref,img):
 	"""returns EMAN quality factor for pcmp properly scaled"""
 	dot=ref.pcmp(img)
 	return((2.0-dot)*500.0)
 
+#=====================
 def getCC(ref,img):
 	"""returns straight up correlation coefficient"""
  	npix=ref.xSize()*ref.ySize()
