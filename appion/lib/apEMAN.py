@@ -11,7 +11,7 @@ import time
 #	pass
 
 #=====================
-def executeEmanCmd(emancmd, verbose=False, showcmd=True):
+def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 	"""
 	executes an EMAN command in a controlled fashion
 	"""
@@ -19,7 +19,10 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True):
 		sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
 	t0 = time.time()
 	try:
-		if verbose is False:
+		if logfile is not None:
+			logf = open(logfile, 'a')
+			emanproc = subprocess.Popen(emancmd, shell=True, stdout=logf, stderr=logf)
+		elif verbose is False:
 			emanproc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		else:
 			emanproc = subprocess.Popen(emancmd, shell=True)
