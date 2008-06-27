@@ -240,7 +240,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def setOutDir(self):
 		reconid = self.params['reconid']
-		refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
+		refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
 		self.params['outdir'] = os.path.join(refinerundata['path']['path'], 'satavg')
@@ -263,16 +263,15 @@ class satAverageScript(appionScript.AppionScript):
 		classes = self.getClassData(self.params['reconid'], self.params['iter'])
 		stackid = apStack.getStackIdFromRecon(self.params['reconid'])
 		stackdata = apStack.getOnlyStackData(stackid)
-		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 
-		classkeys=classes.keys()
+		classkeys = classes.keys()
 		classkeys.sort()
+
 		classnum=0
-		totalptcls=0
-		
 		keeplist = self.procKeepList()
 		finallist = []
-		apDisplay.printMsg("Processing classes")
+		apDisplay.printMsg("Processing "+str(len(classes))+" classes")
 		#loop through classes
 		for key in classkeys:
 			classnum+=1
@@ -280,27 +279,27 @@ class satAverageScript(appionScript.AppionScript):
 				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
 				sys.stderr.write(str(classnum)+" of "+(str(len(classkeys))))
 
-			#loop through particles in class
+			# loop through particles in class
 			classfile = self.rootname+"-class.lst"
-			classlist = open(classfile, 'w')
-			classlist.write('#LST\n')
+			classf = open(classfile, 'w')
+			classf.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
-				if ptcl['mirror']:
-					mirror=1
-				else:
-					mirror=0
-				rot=ptcl['inplane_rotation']
-				rot=rot*math.pi/180
-				if ptcl['particle']['particleNumber'] in keeplist:
-					classlist.write(
+				# translate DB into EMAN
+				partnum = ptcl['particle']['particleNumber'] - 1
+				if partnum in keeplist:
+					if ptcl['mirror']:
+						mirror=1
+					else:
+						mirror=0
+					rot = ptcl['inplane_rotation']*math.pi/180.0
+					classf.write(
 						"%d\t%s\t%f,\t%f,%f,%f,%d\n" % 
-						(ptcl['particle']['particleNumber']-1, stack, ptcl['quality_factor'], 
+						(partnum, stackpath, ptcl['quality_factor'], 
 						rot, ptcl['shiftx'], ptcl['shifty'], mirror))
-					totalptcls+=1
 					nptcls+=1
-					finallist.append(ptcl['particle']['particleNumber']-1)
-			classlist.close()
+					finallist.append(partnum)
+			classf.close()
 
 			if nptcls<1:
 				continue
@@ -325,7 +324,7 @@ class satAverageScript(appionScript.AppionScript):
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
 			+threedname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 		#print emancmd
-		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 		if self.params['eotest'] is True:
 			# even 
 			evenname = os.path.join(self.params['outdir'], self.rootname+"-even.a.mrc")
@@ -333,7 +332,7 @@ class satAverageScript(appionScript.AppionScript):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
 					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 				#print evenemancmd
-				apEMAN.executeEmanCmd(evenemancmd, verbose=False, showcmd=True)
+				apEMAN.executeEmanCmd(evenemancmd, verbose=True, showcmd=True)
 
 			# odd
 			oddname = os.path.join(self.params['outdir'], self.rootname+"-odd.a.mrc")
@@ -341,7 +340,7 @@ class satAverageScript(appionScript.AppionScript):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
 					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
 				#print oddemancmd
-				apEMAN.executeEmanCmd(oddemancmd, verbose=False, showcmd=True)
+				apEMAN.executeEmanCmd(oddemancmd, verbose=True, showcmd=True)
 
 			#eotest
 			if os.path.isfile(oddname) and os.path.isfile(evenname):
