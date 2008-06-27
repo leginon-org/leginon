@@ -47,7 +47,7 @@ def getFunctionName(arg=None):
 	functionname = os.path.splitext(functionname)[0]
 	return functionname
 
-def writeFunctionLog(cmdlist, params=None, logfile=None):
+def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
 	"""
 	Used by appionLoop
 	"""
@@ -57,7 +57,8 @@ def writeFunctionLog(cmdlist, params=None, logfile=None):
 		logfile = params['functionLog']
 	else:
 		logfile = getFunctionName(sys.argv[0])+".log"
-	apDisplay.printMsg("writing function log to: "+logfile)
+	if msg is True:
+		apDisplay.printMsg("writing function log to: "+logfile)
 	#WRITE INFO
 	try:
 		user = os.getlogin() #os.environ.get('USER')
@@ -106,7 +107,7 @@ def parseWrappedLines(lines):
 		
 	return goodlines		
 			
-def closeFunctionLog(params=None, logfile=None):
+def closeFunctionLog(params=None, logfile=None, msg=True):
 	"""
 	Used by appionLoop
 	"""
@@ -116,7 +117,8 @@ def closeFunctionLog(params=None, logfile=None):
 		logfile = params['functionLog']
 	else:
 		logfile = "function.log"
-	apDisplay.printMsg("closing out function log: "+logfile)
+	if msg is True:
+		apDisplay.printMsg("closing out function log: "+logfile)
 	#WRITE INFO
 	timestamp = "["+time.asctime()+"]\n"
 	out="finished run"

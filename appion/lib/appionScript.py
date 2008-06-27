@@ -29,8 +29,9 @@ class AppionScript(object):
 
 	#=====================
 	def __init__(self):
+		self.quiet = False
 		### clean up any preliminary warnings
-		sys.stderr.write("\n\n\n\n\n")
+		sys.stderr.write("\n\n")
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
 		self.timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
@@ -54,7 +55,7 @@ class AppionScript(object):
 			self.preExistingDirectoryError()
 
 		### write function log
-		self.logfile = apParam.writeFunctionLog(sys.argv)
+		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
 
 		### any custom init functions go here
 		self.onInit()
@@ -65,16 +66,18 @@ class AppionScript(object):
 		if self.params['outdir'] is None:
 			self.setOutDir()
 		#create the output directory, if needed
-		apDisplay.printMsg("Output directory: "+self.params['outdir'])
-		apParam.createDirectory(self.params['outdir'])
+		if self.quiet is False:
+			apDisplay.printMsg("Output directory: "+self.params['outdir'])
+		apParam.createDirectory(self.params['outdir'], warning=(not self.quiet))
 		os.chdir(self.params['outdir'])
 
 	#=====================
 	def close(self):
 		self.onClose()
-		apParam.closeFunctionLog(params=self.params, logfile=self.logfile)
-		apDisplay.printMsg("outdir:\n "+self.params['outdir'])
-		apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
+		apParam.closeFunctionLog(params=self.params, logfile=self.logfile, msg=(not self.quiet))
+		if self.quiet is False:
+			apDisplay.printMsg("outdir:\n "+self.params['outdir'])
+			apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
