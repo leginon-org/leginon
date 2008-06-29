@@ -21,6 +21,7 @@ import apDB
 import appionData
 import apDisplay
 import apStack
+import apRecon
 import apEMAN
 import apFile
 apdb=apDB.apdb
