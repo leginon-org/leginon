@@ -62,6 +62,7 @@ class NoRefClassScript(appionScript.AppionScript):
 		classq['factor_list'] = self.params['factorstr']
 		classq['classFile'] = ("cluster/classavgstack%03d" % self.params['numclass'])
 		classq['varFile'] = ("cluster/classvarstack%03d" % self.params['numclass'])
+		classq['numpart']
 
 		apDisplay.printMsg("inserting classification parameters into database")
 		if insert is True:
@@ -71,18 +72,17 @@ class NoRefClassScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 		count = 0
 		for partdict in self.partlist:
+			### query for norefpart
+			norefpart = getNoRefPart(partdict)
+
 			count += 1
 			if count % 100 == 0:
 				sys.stderr.write(".")
-			partq = appionData.ApNoRefAlignParticlesData()
-			partq['norefRun'] = runq
-			# I can only assume this gets the correct particle:
-			stackpart = apStack.getStackParticle(self.params['stackid'], partdict['num'])
-			partq['particle'] = stackpart
+			cpartq = appionData.ApNoRefClassParticlesData()
+			cpartq['classRun'] = classq
+			cpartq['noref_particle'] = norefpart
+			cpartq['classNumber'] = classnum
 			# actual parameters
-			partq['shift_x'] = partdict['xshift']		
-			partq['shift_y'] = partdict['yshift']		
-			partq['rotation'] = partdict['rot']
 			if insert is True:
 				partq.insert()
 		"""
