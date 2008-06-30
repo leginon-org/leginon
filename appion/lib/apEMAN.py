@@ -30,7 +30,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 			emanproc.wait()
 		else:
 			### continuous check
-			waittime = 15.0
+			waittime = 2.0
 			while emanproc.poll() is None:
 				sys.stderr.write(".")
 				waittime *= 1.1
