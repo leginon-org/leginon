@@ -165,7 +165,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		runChimCommand('turn x -45')
 		save_image(image3, format=imgFormat)
 
-		if sym is not 'D':
+		if sym.upper()[0] is not 'D':
 			image4 = vol_path+'.4.png'
 			image5 = vol_path+'.5.png'
 
@@ -219,6 +219,11 @@ if True:
 		#writeMessageToLog("no environmental data")
 		sys.exit(1)
 	params = env.split(',')
+
+	## change bg color	
+	from chimera.colorTable import getColorByName
+	white = getColorByName('white')
+	chimera.viewer.background = white
 
 	tmpfile_path = params[0] #sys.argv[2]
 	volume_path = params[1] #sys.argv[3]
