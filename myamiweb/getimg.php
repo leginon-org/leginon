@@ -10,6 +10,7 @@
 
 require "inc/leginon.inc";
 require "inc/image.inc";
+@require_once "inc/project.inc";
 
 $g=true;
 if (!$sessionId=stripslashes($_GET['session'])) {
@@ -47,7 +48,8 @@ if (!$binning=$_GET['binning'])
 	$binning = 'auto';
 
 $displayloadingtime = false;
-$displayfilename = ($_GET['df']==1) ? true : false;
+$displayfilename = ($_GET['df']&1) ? true : false;
+$displaysample= ($_GET['df']&2) ? true : false;
 $loadjpg= ($_GET['lj']==1) ? true : false;
 
 if ($g) {
@@ -109,8 +111,17 @@ if ($g) {
 	$nimgId = $leginondata->findImage($id, $preset);
 	list($res) = $leginondata->getFilename($nimgId['id']);
 	$filename = $res['filename'];
-	if ($displayfilename)
+	if ($displayfilename) {
 		imagestringshadow($img, 2, 10, 10, $filename, imagecolorallocate($img,255,255,255));
+	}
+	if ($displaysample) {
+		$projectdata = new project();
+		$tag=$projectdata->getSample();
+		$margin=10;
+		$tagoffset=strlen($tag)*6+$margin;
+		$xpos=imagesx($img)-$tagoffset;
+		imagestringshadow($img, 2, $xpos, 10, $tag, imagecolorallocate($img,255,255,255));
+	}
 
 	$filename = ereg_replace('mrc$', $ext, $filename);
 	Header( "Content-type: $type ");

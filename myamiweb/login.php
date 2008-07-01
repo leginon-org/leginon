@@ -44,7 +44,6 @@ exit;
 	if ($usern)
     insertlog($usern, $_SERVER['REMOTE_ADDR'], implode(", ",$_SERVER));
 
-  $redirect="index.php";
 	redirect($redirect);
 }
 ?>

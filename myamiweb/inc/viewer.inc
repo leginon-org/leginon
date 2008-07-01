@@ -408,7 +408,7 @@ class viewer {
    <td>name<br>
    <input class="field" type="text" name="name" size="20" maxlength="20"
 	value=""> 
-	<div><div id="commentdiv" style="position:absolute; z-index:99; visibility: hidden"><img src="addcomment.php" name="commentimg" ></div></div>
+	<div><div id="commentdiv" style="position:absolute; z-index:99; visibility: hidden"><img alt="comment" src="addcomment.php" name="commentimg" ></div></div>
    </td>
    <td rowspan="2" >comment<br>
    <textarea class="textarea" name="comment" rows="5" cols="20" wrap="virtual"
@@ -417,7 +417,7 @@ class viewer {
   </tr>
   <tr>
    <td>
-    <input class="bt1" type="button" name="action" value="Save" onClick=\'addComment()\'/>
+    <input class="bt1" type="button" name="action" value="Save" onclick=\'addComment()\'/>
    </td>
   </tr>
  </table>
@@ -462,12 +462,12 @@ class viewer {
 			$display .= '<br>';
 		}
 		$display .= '<input class="bt1" type="button" name="action_comment_box " '
-				.'value="Save" onClick=\'addCommentBox()\'/>';
+				.'value="Save" onclick=\'addCommentBox()\'/>';
 		$display .= '<input class="bt1" type="button" name="action_comment_box " '
-				.'value="Clear" onClick=\'clearCommentBox()\'/>';
+				.'value="Clear" onclick=\'clearCommentBox()\'/>';
 		$display .= '<input class="bt1" type="button" name="action_update_list" '
-				.'value="Remove" onClick=\'update_image_list()\'/>';
-		$display .= '<div><div id="commentboxdiv" style="position:absolute; z-index:99; visibility: hidden"><img src="addcommentbox.php" name="commentboximg" ></div></div>';
+				.'value="Remove" onclick=\'update_image_list()\'/>';
+		$display .= '<div><div id="commentboxdiv" style="position:absolute; z-index:99; visibility: hidden"><img alt="commentbox" src="addcommentbox.php" name="commentboximg" ></div></div>';
 		$display .= '</td>';
 		}
 		$display .= '<td valign="top">';
@@ -587,6 +587,8 @@ class view {
 		$this->loadjpg= "0";
 		$this->ptclsel = "0";
 		$this->jsacepar= "1";
+		$this->jstagpar1= "1";
+		$this->jstagpar2= "0";
 		$this->jsprtlpick= "1";
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
@@ -822,6 +824,8 @@ class view {
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
+			.'var jstagparam1'.$this->name.'="'.$this->jstagpar1.'";'.$this->crlf
+			.'var jstagparam2'.$this->name.'="'.$this->jstagpar2.'";'.$this->crlf
 			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
 			.$this->crlf;
@@ -1036,8 +1040,8 @@ class view {
 				<td width="15">';
 			$htmlframe .= $this->btace->display();
 			$htmlframe .= '</td><td width="9">';
-			$downimg='<img src="img/menudown1.gif" border="0">';
-			$closedownimg='<img src="img/close_bt_off.gif" border="0">';
+			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
 			$acemenu = new dropdown($downimg, $name."ace");
 			$acemenu->closeval=$closedownimg;
 			$acemenu->height="";
@@ -1046,7 +1050,7 @@ class view {
 			$aceform.="<option value='1'>graph1</option>";
 			$aceform.="<option value='2'>graph2</option>";
 			$aceform.="</select>";
-			$aceform.='<input type="button" value="update" onClick=setAceParam(\''.$name.'\') />';
+			$aceform.='<input type="button" value="update" onclick=setAceParam(\''.$name.'\') />';
 			$acemenu->setContent($aceform);
 			$htmlframe.=$acemenu->display();
 		$htmlframe .= '
@@ -1058,8 +1062,8 @@ class view {
 				<td width="15">';
 			$htmlframe .= $this->btnptcl->display();
 			$htmlframe .= '</td><td width="9">';
-			$downimg='<img src="img/menudown1.gif" border="0">';
-			$closedownimg='<img src="img/close_bt_off.gif" border="0">';
+			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
 			$ptclmenu = new dropdown($downimg, $name."ptcl");
 			$ptclmenu->closeval=$closedownimg;
 			$ptclmenu->height="";
@@ -1071,7 +1075,7 @@ class view {
 				}
 			}
 			$ptclform.="</select>";
-			$ptclform.='<input type="button" value="update" onClick=setPtclParam(\''.$name.'\') />';
+			$ptclform.='<input type="button" value="update" onclick=setPtclParam(\''.$name.'\') />';
 			$ptclmenu->setContent($ptclform);
 			$htmlframe.=$ptclmenu->display();
 		}
@@ -1080,6 +1084,20 @@ class view {
 			$htmlframe .= '
 				<td width="15">';
 			$htmlframe .= $this->bttag->display();
+			$htmlframe .= '</td><td width="9">';
+			$downimg='<img alt="menu" src="img/menudown1.gif" border="0">';
+			$closedownimg='<img alt="close" src="img/close_bt_off.gif" border="0">';
+			$tagmenu = new dropdown($downimg, $name."tag");
+			$tagmenu->closeval=$closedownimg;
+			$tagmenu->height="";
+			$tagmenu->width="";
+			$tagform='image:<input type="checkbox" id="'.$name.'tagparam1" checked " >';
+			$tagform.='<br />';
+			$tagform.='sample:<input type="checkbox" id="'.$name.'tagparam2" >';
+			$tagform.='<br />';
+			$tagform.='<input type="button" value="update" onclick=setTagParam(\''.$name.'\') />';
+			$tagmenu->setContent($tagform);
+			$htmlframe.=$tagmenu->display();
 			$htmlframe .= '
 			</td>';
 		}
@@ -1134,7 +1152,7 @@ class view {
 		}
 		$htmlframe .= '
 						</td>';
-		$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img class="setting" src="img/export.png" ></a>';
+		$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img alt="export" class="setting" src="img/export.png" ></a>';
 		$htmlframe .= "<td>$export_icon</td>";
 		$htmlframe .= '
 						<td valign="center">
@@ -1144,7 +1162,7 @@ class view {
 		$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
 		';
-		$settings_icon = '<img class="setting" src="img/settings.png" >';
+		$settings_icon = '<img alt="setting" class="setting" src="img/settings.png" >';
 //		$quality = (is_numeric($this->quality)) ? "jpg".$this->quality : $this->quality;
 //		$filter = ($this->filter=='default') ? "no filter": "filter:".$this->filter;
 		$minpix = ($this->minpix) ? "&min=".$this->minpix : "";
@@ -1152,18 +1170,18 @@ class view {
 		$colormap = ($this->colormap) ? "&colormap=".$this->colormap : "";
 		$gradoptions = "h=12&w=100&dm=1".$minpix.$maxpix.$colormap;
 		$gradient = "img/dfe/grad.php?".$gradoptions;
-		$imgstatus = "<div id='".$this->name."imgstat'><img name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon."</div>";
+		$imgstatus = "<div id='".$this->name."imgstat'><img alt='gradient' name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon."</div>";
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
 			</a>';
 		// -- HACK for now -- //
 		if ($this->title=="Main View") {
 		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onClick=\'update_image_list("'.$name.'")\' ><u><b>h</b></u>ide</button>';
+        .' onclick=\'update_image_list("'.$name.'")\' ><u><b>h</b></u>ide</button>';
 		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onClick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
+        .' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
 		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onClick=\'image_is_exemplar("'.$name.'"); incIndex(); updateviews()\' ><u><b>e</b></u>xemplar</button>';
+        .' onclick=\'image_is_exemplar("'.$name.'"); incIndex(); updateviews()\' ><u><b>e</b></u>xemplar</button>';
 		}
 
 		$htmlframe .= '
@@ -1202,11 +1220,11 @@ class view {
 	$htmlframe .= '<tr>
 			<td  width="'.$this->size.'">';
 	$htmlframe .= '
-<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img src="img/progress_1.gif"></h4></div></div>
+<div><div id="loadingdiv'.$this->name.'" style="position:absolute; z-index:69; visibility: hidden"><h4> Loading <img alt="progress" src="img/progress_1.gif"></h4></div></div>
 		';
 		$htmlframe .= '
 			<a href="javascript:void(0)" id="'.$this->name.'href">'.
-			'<img name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" ></a>'; 
+			'<img alt="empty" name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" ></a>'; 
 
 		$htmlframe .= '
 				</td>
@@ -1241,11 +1259,12 @@ function add_comment_box($name) {
 
 function viewer_header($title="", $javascript="", $onload="") {
 	global $_SERVER, $dbemauth;
+	$redirect=$_SERVER['PHP_SELF'];
 	$authorized_files=array('login.php', 'index.php', 'lostpass.php', 'register.php', 'confirm.php');
 
 	if (!ereg(implode("|", $authorized_files), $_SERVER['PHP_SELF'])) {
     if (!$login_check = $dbemauth->is_logged()) {
-      redirect('login.php');
+      redirect('login.php?ln='.$redirect);
       exit;     
 		}
   }

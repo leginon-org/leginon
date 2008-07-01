@@ -344,7 +344,9 @@ function newfile(view){
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
-	displayfilename = (eval(view+"tag_bt_st")) ? "&df=1" : ""
+	t1=(eval("jstagparam1"+view)==1) ? 1 : 0
+	t1+=(eval("jstagparam2"+view)==1) ? 2 : 0
+	displayfilename = (eval(view+"tag_bt_st")) ? "&df="+t1 : ""
 	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
@@ -408,6 +410,18 @@ function setAceParam(view) {
 		eval("jsaceparam"+view+"="+vf)
 		newfile(view)
 	}
+}
+
+function setTagParam(view) {
+	if (param = document.getElementById(view+"tagparam1")) {
+		t1=(param.checked) ? true : false
+	}
+	if (param = document.getElementById(view+"tagparam2")) {
+		t2=(param.checked) ? true : false
+	}
+	eval("jstagparam1"+view+"="+t1)
+	eval("jstagparam2"+view+"="+t2)
+	newfile(view)
 }
 
 function setPtclParam(view) {

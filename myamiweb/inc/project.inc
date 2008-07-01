@@ -85,5 +85,11 @@ class project {
                 return $projects;
         }
 
+	function getSample($sessionId="") {
+		# get sample name from project database
+		$sample="";
+		return $sample;
+	}
+
 }
 ?>
