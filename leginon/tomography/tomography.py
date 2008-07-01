@@ -10,6 +10,7 @@ import tilts
 import exposure
 import prediction
 import time
+from pyami import correlator, peakfinder
 
 class CalibrationError(Exception):
 	pass
@@ -169,6 +170,7 @@ class Tomography(acquisition.Acquisition):
 		return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
+		self.moveAndPreset(presetdata, emtarget)
 		try:
 			calibrations = self.getCalibrations(presetdata)
 		except CalibrationError, e:
@@ -311,38 +313,40 @@ class Tomography(acquisition.Acquisition):
 		if len(tilts) < 2:
 			raise ValueError
 
+		## acquire initial image
+		imagedata0 = self.instrument.getData(leginondata.CorrectedCameraImageData)
+
+		## tilt then return in slow increments
 		delta = math.radians(5.0)
 		n = 5
 		increment = delta/n
-
 		if tilts[1] - tilts[0] > 0:
 			sign = -1
 		else:
 			sign = 1
-
 		alpha = tilts[0] + sign*delta
-
 		self.instrument.tem.StagePosition = {'a': alpha}
-
 		time.sleep(1.0)
-
 		for i in range(n):
 			alpha -= sign*increment
 			self.instrument.tem.StagePosition = {'a': alpha}
 			time.sleep(1.0)
 
-		self.declareDrift('tilt')
-		target = self.adjustTargetForDrift(target)
-		emtarget = self.targetToEMTargetData(target)
+		## acquire final image
+		imagedata1 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
-		presetdata = self.presetsclient.getPresetFromDB(preset_name)
-		self.moveAndPreset(presetdata, emtarget)
-
-		current_preset = self.presetsclient.getCurrentPreset()
-		if current_preset['name'] != preset_name:
-			raise RutimeError('error setting preset \'%s\'' % preset_name)
-
-		return target, emtarget
+		## find shift between image0, image1
+		pc = correlator.phase_correlate(imagedata0['image'], imagedata1['image'], False)
+		peakinfo = peakfinder.findSubpixelPeak(pc, lpf=1.5)
+		subpixelpeak = peakinfo['subpixel peak']
+		shift = correlator.wrap_coord(subpixelpeak, imagedata0['image'].shape)
+		shift = {'row': shift[0], 'col': shift[1]}
+		
+		## transform pixel to image shift
+		newscope = self.calclients['image shift'].transform(shift, imagedata0['scope'], imagedata0['camera'])
+		ishift = newscope['image shift']
+		self.logger.info('adjusting imageshift after backlash: %s' % (ishift,))
+		self.instrument.tem.ImageShift = ishift
 
 	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=1):
 		if presetdata == None:
