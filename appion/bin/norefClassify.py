@@ -11,6 +11,8 @@ import apStack
 import apEMAN
 from apSpider import alignment
 import appionData
+import apDB
+appiondb = apDB.apdb
 
 #=====================
 #=====================
@@ -49,7 +51,30 @@ class NoRefClassScript(appionScript.AppionScript):
 		self.params['outdir'] = self.norefdata['path']['path']
 
 	#=====================
-	def insertNoRefClass(self, insert=False):
+	def readClassDocFile(self, docfile):
+		partlist = []
+		f = open(docfile, 'r')
+		for line in f:
+			if line.strip()[0] == ';':
+				continue
+			bits = line.split()
+			partnum = int(float(bits[2]))
+			partlist.append(partnum)
+		return partlist.sort()
+
+	#=====================
+	def getNoRefPart(self, partnum):
+		norefpartq = appionData.ApNoRefAlignParticlesData()
+		norefpartq['norefRun'] = self.norefdata
+		stackid = self.norefdata['stack'].dbid
+		stackpart = apStack.getStackParticle(stackid, partnum)
+		norefpartq['particle'] = stackpart
+		norefparts = norefpartq.query(results=1)
+
+		return norefparts[0]
+
+	#=====================
+	def insertNoRefClass(self,  insert=False):
 		# create a norefParam object
 		classq = appionData.ApNoRefClassRunData()
 		classq['num_classes'] = self.params['numclass']
@@ -62,30 +87,29 @@ class NoRefClassScript(appionScript.AppionScript):
 		classq['factor_list'] = self.params['factorstr']
 		classq['classFile'] = ("cluster/classavgstack%03d" % self.params['numclass'])
 		classq['varFile'] = ("cluster/classvarstack%03d" % self.params['numclass'])
-		classq['numpart']
 
 		apDisplay.printMsg("inserting classification parameters into database")
 		if insert is True:
 			classq.insert()
-		"""
+
+
 		### particle class data
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
-		count = 0
-		for partdict in self.partlist:
-			### query for norefpart
-			norefpart = getNoRefPart(partdict)
+		for i in range(self.params['numclass']):
+			classnum = i+1
+			classdocfile = os.path.join(self.params['outdir'], "cluster/classdoc%04d.spi" % (classnum))
+			partlist = self.readClassDocFile(classdocfile)
+			sys.stderr.write(".")
+			for partnum in partlist:
+				norefpart = self.getNoRefPart(partnum)
+				cpartq = appionData.ApNoRefClassParticlesData()
+				cpartq['classRun'] = classq
+				cpartq['noref_particle'] = norefpart
+				cpartq['classNumber'] = classnum
+				# actual parameters
+				if insert is True:
+					cpartq.insert()
 
-			count += 1
-			if count % 100 == 0:
-				sys.stderr.write(".")
-			cpartq = appionData.ApNoRefClassParticlesData()
-			cpartq['classRun'] = classq
-			cpartq['noref_particle'] = norefpart
-			cpartq['classNumber'] = classnum
-			# actual parameters
-			if insert is True:
-				partq.insert()
-		"""
 		return
 
 	#=====================
