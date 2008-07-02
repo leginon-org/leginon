@@ -90,6 +90,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
+	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
 	$partrad = ($_POST['partrad']) ? $_POST['partrad'] : '150';
@@ -161,10 +162,10 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo docpop('initmethod','<B>Alignment initialization method:</B>');
 	echo "<br/>";
 	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='allaverage' "
-		.((!$_POST['initmethod'] || $_POST['initmethod'] == 'allaverage') ? 'CHECKED' : '')
+		.($_POST['initmethod'] == 'allaverage' ? 'CHECKED' : '')
 		.">\n Average all particles in stack<br/>\n";
 	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='selectrand' "
-		.($_POST['initmethod'] == 'selectrand' ? 'CHECKED' : '')
+		.((!$_POST['initmethod'] || $_POST['initmethod'] == 'selectrand') ? 'CHECKED' : '')
 		.">\n Average random 1% of partcles<br/>\n";
 	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='randpart' "
 		.($_POST['initmethod'] == 'randpart' ? 'CHECKED' : '')
@@ -215,6 +216,11 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo docpop('lastring','Last Ring Radius');
 	echo "<font size='-2'>(pixels)</font>\n";
 	echo "<br />\n";
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
+	echo docpop('bin','Particle binning');
+	echo "<font size='-2'>(adjust above ring numbers)</font><BR>\n";
+
+
 	echo "<br />\n";
 
 	echo "<FONT COLOR='#DD3333' SIZE='-2'>WARNING: more than 3000 particles can take forever to process</FONT><BR>\n";
@@ -222,6 +228,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>\n";
 	echo docpop('numpart','Number of Particles');
 	echo " to Use<BR>\n";
+
 
 	echo "<INPUT TYPE='text' NAME='numfactors' VALUE='$numfactors' SIZE='4'>\n";
 	echo docpop('numfactors','Number of Factors');
@@ -262,6 +269,7 @@ function runNoRefAlign($runjob=False) {
 	$lastring=$_POST['lastring'];
 	$numpart=$_POST['numpart'];
 	$numfactors=$_POST['numfactors'];
+	$bin=$_POST['bin'];
 	$initmethod=$_POST['initmethod'];
 
 	// get stack id, apix, & box size from input
@@ -316,6 +324,7 @@ function runNoRefAlign($runjob=False) {
 	if ($lowpass) $command.="--lowpass=$lowpass ";
 	$command.="--num-part=$numpart ";
 	$command.="--num-factors=$numfactors ";
+	$command.="--bin=$bin ";
 	if ($initmethod) $command.="--init-method=$initmethod ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
@@ -350,6 +359,7 @@ function runNoRefAlign($runjob=False) {
 	<TR><TD>last ring</TD><TD>$lastring</TD></TR>
 	<TR><TD>num part</TD><TD>$numpart</TD></TR>
 	<TR><TD>num factors</TD><TD>$numfactors</TD></TR>
+	<TR><TD>binning</TD><TD>$bin</TD></TR>
 	<TR><TD>init method</TD><TD>$initmethod</TD></TR>
 	<TR><TD>out dir</TD><TD>$outdir</TD></TR>
 	<TR><TD>commit</TD><TD>$commit</TD></TR>
