@@ -65,6 +65,7 @@ class Tomography(acquisition.Acquisition):
 		'offset': 0.0,
 		'offset2': 0.0,
 		'fixed model': False,
+		'use lpf': True,
 	}
 
 	def __init__(self, *args, **kwargs):
@@ -309,6 +310,13 @@ class Tomography(acquisition.Acquisition):
 		position = leginondata.ScopeEMData(initializer=initializer)
 		self.instrument.setData(position)
 	'''
+	def adjusttarget(self,preset_name,target,emtarget):
+		self.declareDrift('tilt')
+		target = self.adjustTargetForDrift(target)
+		emtarget = self.targetToEMTargetData(target)
+		presetdata = self.presetsclient.getPresetFromDB(preset_name)
+		self.moveAndPreset(presetdata, emtarget)
+
 	def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
 		if len(tilts) < 2:
 			raise ValueError

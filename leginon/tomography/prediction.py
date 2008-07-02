@@ -91,7 +91,7 @@ class Prediction(object):
 		return tuple(self.parameters[:2] + [self.parameters[-1]])
 
 	def predict(self, tilt):
-		n_start_fit = 5
+		n_start_fit = 3
 		print len(self.tilt_series_list)
 		print len(self.valid_tilt_series_list)
 		tilt_series = self.getCurrentTiltSeries()
@@ -126,7 +126,7 @@ class Prediction(object):
 			tilt0 = tilt_group.tilts[0]
 			cos_tilts = scipy.cos(scipy.array([tilt0, tilt]))
 			sin_tilts = scipy.sin(scipy.array([tilt0, tilt]))
-		#	parameters = self.getCurrentParameters()
+			parameters = self.getCurrentParameters()
 			args_list = [(cos_tilts, sin_tilts, x0, y0, None, None)]
 			result = self.model(parameters, args_list)
 			z0 = result[-1][0][2]

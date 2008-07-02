@@ -14,9 +14,9 @@ def hanning(size):
     return numpy.fromfunction(function, (size, size))
 
 class Correlator(object):
-    def __init__(self, tilt_axis, correlation_binning=1):
+    def __init__(self, tilt_axis, correlation_binning=1,lpf=None):
         self.correlation = correlator.Correlator()
-        self.peakfinder = peakfinder.PeakFinder()
+        self.peakfinder = peakfinder.PeakFinder(lpf)
         self.reset()
         self.setCorrelationBinning(correlation_binning)
         self.hanning = None
@@ -98,7 +98,7 @@ class Correlator(object):
 
 if __name__ == '__main__':
     import numpy.random
-    _correlator = Correlator(None, 2)
+    _correlator = Correlator(None, 2,1.5)
 
     size = 16
 

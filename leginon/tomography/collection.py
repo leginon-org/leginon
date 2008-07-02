@@ -65,7 +65,11 @@ class Collection(object):
 												 self.target, self.emtarget)
 		self.tilt_series.save()
 
-		self.correlator = tiltcorrelator.Correlator(self.theta, 6)
+		if self.settings['use lpf']:
+			lpf = 1.5
+		else:
+			lpf = None
+		self.correlator = tiltcorrelator.Correlator(self.theta, 6, lpf)
 		#self.settings['xcf bin']
 
 		if self.settings['run buffer cycle']:
@@ -127,6 +131,12 @@ class Collection(object):
 
 		if second_loop:
 			self.restoreInstrumentState()
+			self.logger.info('Adjust target for the second tilt group...')
+			try:
+				self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
+			except Exception, e:
+				self.logger.error('Failed to adjust target: %s.' % e)
+				raise
 
 		self.logger.info('Removing tilt backlash...')
 		try:
