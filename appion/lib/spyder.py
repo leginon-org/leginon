@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-import os, sys
+import os
+import sys
 import time
+import math
 from struct import unpack
 import re
 import subprocess
@@ -57,6 +59,7 @@ class SpiderSession:
 		### Start spider process, initialize with some MD commands.
 		#self.spiderin = os.popen(self.spiderexec, 'w')
 		self.logf = open("spider.log", "a")
+		self.starttime = time.time()
 		self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
 			stdin=subprocess.PIPE, stdout=self.logf, stderr=subprocess.PIPE)
 		self.spiderin = self.spiderproc.stdin
@@ -69,7 +72,43 @@ class SpiderSession:
 		if self.logo is True:
 			self.showlogo()
 
+	def timeString(self, tottime):
+		""" 
+		returns a string with the length of time scaled for clarity
+		"""
+		tottime = float(tottime)
+		#less than 70 seconds
+		if tottime < 70.0:
+			timestr = str(round(tottime,2))+" sec"
+		#less than 70 minutes
+		elif tottime < 4200.0:
+			subbase = 1.0
+			base = subbase * 60.0
+			majorunit = "min"
+			minorunit = "sec"
+			timestr = ( str(int(math.floor(tottime/base)))+" "+majorunit+" "
+				+str(int(round( (tottime % base)/subbase )))+" "+minorunit )
+		#less than 28 hours
+		elif tottime < 100800.0:
+			subbase = 60.0
+			base = subbase * 60.0
+			majorunit = "hr"
+			minorunit = "min"
+			timestr = ( str(int(math.floor(tottime/base)))+" "+majorunit+" "
+				+str(int(round( (tottime % base)/subbase )))+" "+minorunit )
+		#more than 28 hours (1.2 days)
+		else:
+			subbase = 3600.0
+			base = subbase * 24.0
+			majorunit = "days"
+			minorunit = "hr"
+			timestr = ( str(int(math.floor(tottime/base)))+" "+majorunit+" "
+				+str(int(round( (tottime % base)/subbase )))+" "+minorunit )
+		return str(timestr)
+
+
 	def showlogo(self):
+		time.sleep(1)
 		self.logf.flush()
 		f = open("spider.log", "r")
 		for i in range(7):
@@ -101,12 +140,18 @@ class SpiderSession:
 			return
 		### continuous check
 		while self.spiderproc.poll() is None:
-			sys.stderr.write(".")
+			if waittime > 10:
+				sys.stderr.write(".")
 			time.sleep(waittime)
 			waittime *= 1.1
 			self.logf.flush()
 		if waiting is True:
-			sys.stderr.write("\n")
+			tdiff = time.time()-self.starttime
+			if tdiff > 20:
+				tstr = self.timeString(tdiff)
+				sys.stderr.write("\nSPIDER completed in "+tstr+"\n")
+			else:
+				sys.stderr.write("\n")
 		self.spiderproc.wait()
 
 	def toSpider(self, *args):
