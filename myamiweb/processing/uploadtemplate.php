@@ -211,10 +211,10 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
   </TR>
   <TR>
     <TD ALIGN='CENTER'>
-      <HR>
-      <input type='submit' name='process' value='Just Show Command'>\n";
-	if ($_SESSION['username']) echo "<input type='submit' name='process' value='Upload Template'>\n";
-	echo "  <br />
+      <hr />
+	";
+	echo getSubmitForm("Upload Template");
+	echo "
 	</td>
 	</tr>
   </table>

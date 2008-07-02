@@ -184,9 +184,6 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	}
 	$projectId=$_POST['projectId'];
 
-	// --- find hosts to run Template Correlator
-	$hosts=getHosts();
-
 	$numtemplates=$_POST['numtemplates'];
 	$templateForm='';
 	$templateTable="<TABLE CLASS='tableborder'><TR><TD>\n";
@@ -292,9 +289,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these setting on image:
 		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-                <HR>
-		<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
-	if ($_SESSION['loggedin']) echo "<input type='submit' name='process' value='Run Correlator' onclick='pleasewait()'>\n";
+                <hr />
+	";
+	echo getSubmitForm("Run Correlator");
 	echo"
 		</TD>
 	</TR>

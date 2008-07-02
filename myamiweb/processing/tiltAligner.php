@@ -153,24 +153,9 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
   </TR>
   <TR>
     <TD COLSPAN='2' ALIGN='CENTER'>";
-    Host: <select name='host'>\n";
-
-  $hosts=getHosts();
-  foreach($hosts as $host) {
-    $s = ($_POST['host']==$host) ? 'selected' : '';
-    echo "<option $s >$host</option>\n";
-  }
-  echo "</select>
-  <BR>
-  User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
-  Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
-  echo"
-    </select>*/
-  echo"<BR/>";
-  //echo"<input type='submit' name='process' value='Just Show Command'>";
-  echo"<input type='submit' name='process' value='Run Tilt Aligner'><BR>";
-  echo"<FONT class='apcomment'>Submission will NOT run Tilt Aligner,<BR/>
-    only output a command that you can copy and paste into a unix shell</FONT>
+	*/
+	echo getSubmitForm("Run Tilt Aligner");
+	echo "
     </TD>
   </TR>
   </TABLE>";
@@ -223,7 +208,7 @@ function runTiltAligner() {
   }
 
   if ($testimage && $_POST['process']=="Run Tilt Aligner") {
-    $host = $_POST['host'];
+    $host = $_POST['processinghost'];
     $user = $_POST['user'];
     $password = $_POST['password'];
     if (!($user && $password)) {

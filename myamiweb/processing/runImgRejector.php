@@ -200,15 +200,14 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	</tr>
 	<tr>
 		<td colspan='2' align='CENTER'>
-		<HR>";
-  echo"   <BR/>
-	  <input type='submit' name='process' value='Just Show Command'>
-	  <!--<input type='submit' name='process' value='Make Stack'>--><br />
+		<hr />";
+  echo getSubmitForm("Make Stack", false, true);
+	echo "
 	  </td>
 	</tr>
 	</table>
-	</FORM>
-	</CENTER>\n";
+	</form>
+	</center>\n";
 	processing_footer();
 	exit;
 }

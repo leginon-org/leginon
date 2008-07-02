@@ -39,9 +39,6 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	}
 	$projectId=$_POST['projectId'];
 
-	// --- find hosts to run jpgmaker 
-	$hosts=getHosts();
- 
 
 	$particle=new particleData;
 	$javascript="
@@ -152,22 +149,15 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	</TR>
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
-		Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>
-	<BR>
+	<br />
 	User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
 	Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
 	echo"
-		</select>
-		<BR>
-		<input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run JPEG Maker'><BR>
-		<FONT class='apcomment'>Submission will NOT run JPEG Maker, only output a command that you can copy and paste into a unix shell</FONT>
-		<BR>
+		<br />
+	";
+	echo getSubmitForm("Run JPEG Maker", true, true);
+	echo "
+		<br />
 		</TD>
 	</TR>
 	</TABLE>
@@ -240,7 +230,7 @@ function runjpgmaker() {
 	if ($imgsize != 512) $command.=" imgsize=".$imgsize;
 
 	if ($testimage && $_POST['process']=="Run JPEG Maker") {
-		$host = $_POST['host'];
+		$host = $_POST['processinghost'];
 		$user = $_POST['user'];
 		$password = $_POST['password'];
 		if (!($user && $password)) {

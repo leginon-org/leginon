@@ -55,14 +55,6 @@ if (!empty($sessioninfo)) {
 	$sessionname=$sessioninfo['Name'];
 }
 
-// --- find hosts to run ACE
-$path = "/var/lib/wwwrun/.ssh/";
-$result=array();
-foreach($hosts as $host) {
-	list($str) = split(" ", $host); 
-	list($str) = split(",", $str); 
-	$hosts_select[]=$str;
-}
 */
 
 // --- parse data and process on submit
@@ -182,10 +174,6 @@ function createPyAceForm($extra=false) {
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
 	$projectId=$_POST['projectId'];
-
-	// --- find hosts to run PyACE
-	$hosts = getHosts();
-	$users[]="glander";
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions="

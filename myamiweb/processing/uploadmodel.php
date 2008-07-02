@@ -145,9 +145,9 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   <TR>
     <TD ALIGN='CENTER'>
       <hr>
-      <input type='submit' name='process' value='Just Show Command'>\n";
-	if ($_SESSION['username']) echo "<input type='submit' name='process' value='Upload Model'>\n";
-	echo "  <br />
+	";
+	echo getSubmitForm("Upload Model");
+	echo "
         </td>
 	</tr>
   </table>

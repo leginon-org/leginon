@@ -121,10 +121,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these settings on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
-		<hr />
-	        <input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
-	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Run DogPicker' onclick='pleasewait()'>\n";
-	echo "  <br />
+		<hr />";
+	echo getSubmitForm("Run DogPicker");
+	echo "
 		</td>
 	</tr>
 	</form>
@@ -174,6 +173,7 @@ function runDogPicker() {
 
 	// submit job to cluster
 	if ($_POST['process']=="Run DogPicker") {
+		$_SESSION['processinghost']=$_POST['processinghost'];
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

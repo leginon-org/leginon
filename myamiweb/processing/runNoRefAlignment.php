@@ -32,8 +32,6 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	}
 	$projectId=$_POST['projectId'];
 
-	$hosts=getHosts();
-
 	// connect to particle database
 	$particle = new particledata();
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
@@ -240,10 +238,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "</TR>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
-	echo "	<HR>\n";
-	echo"<input type='submit' name='showcommand' value='Show Command Only'>\n";
-	if ($_SESSION['username']) echo"<input type='submit' name='process' value='Start NoRef Alignment'>\n";
-	echo "  <br />\n";
+	echo "	<hr />\n";
+	echo getSubmitForm("Start NoRef Alignment");
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";

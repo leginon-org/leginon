@@ -45,8 +45,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId));
 
-	$hosts=getHosts();
-
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
 	
@@ -385,9 +383,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<tr>\n";
 	echo "<td colspan='2' align='CENTER'>\n";
 	echo "  <hr />\n";
-	echo "  <input type='submit' name='process' value='Just Show Command'>\n";
-	if ($_SESSION['username']) echo "  <input type='submit' name='process' value='Make Stack'>\n";
-	echo "  <br />\n";
+	echo getSubmitForm("Make Stack");
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";

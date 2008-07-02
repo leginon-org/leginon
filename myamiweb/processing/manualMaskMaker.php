@@ -178,10 +178,6 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 	}
 	$projectId=$_POST['projectId'];
 
-	// --- find hosts to run maskmaker 
-	$hosts=getHosts();
- 
-
 	$particle=new particleData;
 	$javascript="
 	<script src='../js/viewer.js'></script>
@@ -251,17 +247,9 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 		</TD>
 		</TR>
 		<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>
-		<BR>
-		<input type='submit' name='process' value='Just Show Command'>
-		<input type='submit' name='process' value='Run MaskMaker'><BR>
-		<FONT class='apcomment'>Submission will NOT run MaskMaker, only output a command that you can copy and paste into a unix shell</FONT>
+		<TD COLSPAN='2' ALIGN='CENTER'>";
+	echo getSubmitForm("Run MaskMaker", true, true);
+	echo "
 		</TD>
 	</TR>
 	</TABLE>
@@ -303,7 +291,7 @@ function runMaskMaker() {
 	$command .= parseManualMaskMakerParams($_POST);
 
 	if ($testimage && $_POST['process']=="Run ManualMaskMaker") {
-		$host = $_POST['host'];
+		$host = $_POST['processinghost'];
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 		if (!($user && $password)) {

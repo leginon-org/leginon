@@ -46,6 +46,33 @@ function getHosts(){
 	return array();
 }
 
+function getHostForm() {
+  $h=array();
+	$current_host=$_SESSION['processinghost'];
+  foreach ((array)getHosts() as $host) {
+			$s=($host==$current_host) ? "selected" : "";
+      $h[]="<option $s >$host</option>\n";
+  }
+  $html="<select name=\"processinghost\">\n";
+  $html.=join("\n",$h);
+  $html.="</select>";
+  return $html;
+}
+
+function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
+	$html="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
+	if ($displayhost) {
+		$html.=getHostForm();
+	}
+	if ($_SESSION['loggedin']) {
+		$html.="  <input type='submit' name='process' value='$name' onclick='pleasewait()'>\n";
+	}
+	if ($warning) {
+		$html.="<br/><font class='apcomment'>Submission will NOT run, only output a command that you can copy and paste into a unix shell</font>";
+	}
+	return $html;
+}
+
 // write popup function 'a href'
 function docpop($key,$text) {
 	return "<a href='#' id='l".$key."' onMouseOver='popLayer(\"".$key."\",\"l".$key."\")' onMouseOut='hideLayer()'>$text</a>\n";
@@ -314,7 +341,7 @@ function writeTop_org($title,$heading=false,$headerstuff=false) {
 
 	if ($_SESSION['username']) {
 		echo "    <div class='aplogged'>\n";
-		echo "      <i>logged in as <b>$_SESSION[username]</b></i>\n";
+		echo "      <i>logged in as <b>".$_SESSION['username']."</b></i>\n";
 		echo "    </div>\n";
 		echo "    <div class='aplogout'>\n";
 		echo "      <a class='header' href='endsession.php?expId=$_GET[expId]'>[Log Out]</a>\n";
@@ -643,6 +670,10 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	$particle=new particleData();
 
 	$host = 'guppy';
+	if ($_POST['processinghost']) {
+		$_SESSION['processinghost']=$_POST['processinghost'];
+	}
+	$host = $_SESSION['processinghost'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
@@ -821,7 +852,7 @@ function updateDescription($table, $editid, $text) {
 }
 
 function pleaseWaitJava() {
-	$java = "<script language='Javascript'>\n";
+	$java = "<script type=\"text/javascript\" >\n";
 	$java.= "function pleasewait() {\n";
 	$java.= "	pleasewaitScreen=$('pleasewaitScreen');\n";
 	$java.= "	pleasewaitScreen.style.visibility='visible';\n";

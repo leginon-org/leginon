@@ -144,22 +144,8 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   </TR>
   <TR>
     <TD COLSPAN='2' ALIGN='CENTER'>";
-    Host: <select name='host'>\n";
-
-  $hosts=getHosts();
-  foreach($hosts as $host) {
-    $s = ($_POST['host']==$host) ? 'selected' : '';
-    echo "<option $s >$host</option>\n";
-  }
-  echo "</select>
-  <br />
-  User: <input type='text' name='user' value=".$_POST['user'].">
-  Password: <input type='password' name='password' value=".$_POST['password'].">\n";
-  echo"
-    </select>*/
-  echo"<br />";
-  echo"<input type='submit' name='process' value='Just Show Command'>";
-  //  if ($_SESSION['username']) echo" <input type='submit' name='process' value='Run ManualPicker'><br />";
+	*/
+	echo getSubmitForm("Run ManualPicker", false, true);
   echo "</TD>
   </TR>
   </table>

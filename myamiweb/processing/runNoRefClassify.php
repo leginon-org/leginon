@@ -131,10 +131,8 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "</tr>";
 	echo "<tr>";
 	echo "	<td colspan='2' align='center'>";
-	echo "	<hr>";
-	echo"<input type='submit' name='showcommand' value='Show Command Only'>\n";
-	if ($_SESSION['username']) echo "<input type='submit' name='process' value='Start NoRef Classify'>\n";
-	echo "  <br />";
+	echo "	<hr />";
+	echo getSubmitForm("Start NoRef Classify");
 	echo "  </td>";
 	echo "</tr>";
 	echo "</table>";
