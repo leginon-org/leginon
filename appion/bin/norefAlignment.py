@@ -4,6 +4,7 @@ import os
 import time
 import sys
 import random
+import math
 #appion
 import appionScript
 import apDisplay
@@ -41,6 +42,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--lowpass", dest="lowpass", type="float",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="Bin images by factor", metavar="#")
 
 		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
 			action="store_true", help="Skip correspondence analysis")
@@ -103,6 +106,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		paramq['last_ring'] = self.params['lastring']
 		paramq['skip_coran'] = self.params['skipcoran']
 		paramq['init_method'] = self.params['initmethod']
+		paramq['bin'] = self.params['bin']
 		paramsdata = paramq.query(results=1)
 
 		### create a norefRun object
@@ -110,8 +114,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		# ... path makes the run unique:
 		uniquerun = runq.query(results=1)
-		if uniquerun:
-			apDisplay.printError("Run name '"+params['runname']+"' for stackid="+\
+		if uniquerun and insert is True:
+			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
 				str(params['stackid'])+"\nis already in the database")
 
 		# ... continue filling non-unique variables:
@@ -152,7 +156,10 @@ class NoRefAlignScript(appionScript.AppionScript):
 		for partdict in self.partlist:
 			count += 1
 			if count % 100 == 0:
-				sys.stderr.write(".")
+				if insert is True:
+					sys.stderr.write(".")
+				else:
+					sys.stderr.write("x")
 			partq = appionData.ApNoRefAlignParticlesData()
 			partq['norefRun'] = runq
 			# I can only assume this gets the correct particle:
@@ -178,16 +185,16 @@ class NoRefAlignScript(appionScript.AppionScript):
 		emancmd += self.stack['file']+" "
 
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
-		if os.path.isfile(spiderstack):
-			apDisplay.printWarning(spiderstack+" already exists; removing it")
-			time.sleep(5)
-			os.remove(spiderstack)
+		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 		
 		emancmd += "apix="+str(self.stack['apix'])+" "
 		if self.params['lowpass'] > 0:
 			emancmd += "lp="+str(self.params['lowpass'])+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
+		emancmd += "shrink="+str(self.params['bin'])+" "
+		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
 		emancmd += "spiderswap edgenorm"
 		starttime = time.time()
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
@@ -203,17 +210,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		emancmd  = "proc2d "+self.stack['file']+" template.mrc average edgenorm"
 		apEMAN.executeEmanCmd(emancmd)
 
-		apDisplay.printMsg("Masking average by radius of "+str(self.params['maskrad'])+" Angstroms")
-		emancmd  = "proc2d template.mrc template.mrc apix="+str(self.stack['apix'])+" mask="+str(self.params['maskrad'])
-		apEMAN.executeEmanCmd(emancmd)
-
-		templatefile = "template.spi"
-		if os.path.isfile(templatefile):
-			apDisplay.printWarning(templatefile+" already exists; removing it")
-			time.sleep(2)
-			os.remove(templatefile)
-		emancmd  = "proc2d template.mrc "+templatefile+" spiderswap"
-		apEMAN.executeEmanCmd(emancmd)
+		templatefile = self.processTemplate("template.mrc")
 
 		return templatefile
 
@@ -223,33 +220,28 @@ class NoRefAlignScript(appionScript.AppionScript):
 		takes the spider file and creates an average template of all particles and masks it
 		"""
 		### create random keep list
-		f = open("randkeep.lst", "w")
+		numrandpart = int(self.params['numpart']/100)+2
+		apDisplay.printMsg("Selecting 1% of particles ("+str(numrandpart)+") to average")
+		# create random list
 		keepdict = {}
-		randpart = int(self.params['numpart']/100)+2
-		apDisplay.printMsg("Selecting 1% of particles ("+str(randpart)+") to average")
-		for i in range(randpart):
-			rand = int(random.random()*randpart)
+		randlist = []
+		for i in range(numrandpart):
+			rand = int(random.random()*self.params['numpart'])
 			while rand in keepdict:
-				rand = int(random.random()*randpart)
+				rand = int(random.random()*self.params['numpart'])
 			keepdict[rand] = 1
+			randlist.append(rand)
+		# sort and write to file
+		randlist.sort()
+		f = open("randkeep.lst", "w")
+		for rand in randlist:
 			f.write(str(rand)+"\n")
 		f.close()
 
 		emancmd  = "proc2d "+self.stack['file']+" template.mrc list=randkeep.lst average edgenorm"
 		apEMAN.executeEmanCmd(emancmd)
 
-		apDisplay.printMsg("Masking average by radius of "+str(self.params['maskrad'])+" Angstroms")
-		emancmd  = ( "proc2d template.mrc template.mrc apix="+str(self.stack['apix'])
-			+" mask="+str(self.params['maskrad']) )
-		apEMAN.executeEmanCmd(emancmd)
-
-		templatefile = "template.spi"
-		if os.path.isfile(templatefile):
-			apDisplay.printWarning(templatefile+" already exists; removing it")
-			time.sleep(2)
-			os.remove(templatefile)
-		emancmd  = "proc2d template.mrc "+templatefile+" spiderswap"
-		apEMAN.executeEmanCmd(emancmd)
+		templatefile = self.processTemplate("template.mrc")
 
 		return templatefile
 
@@ -268,20 +260,35 @@ class NoRefAlignScript(appionScript.AppionScript):
 			+str(randpart)+" last="+str(randpart)+" edgenorm" )
 		apEMAN.executeEmanCmd(emancmd)
 
-		apDisplay.printMsg("Masking particle by radius of "+str(self.params['maskrad'])+" Angstroms")
-		emancmd  = ( "proc2d template.mrc template.mrc apix="+str(self.stack['apix'])
+		templatefile = self.processTemplate("template.mrc")
+
+		return templatefile
+
+	#=====================
+	def processTemplate(self, mrcfile):
+		### mask
+		apDisplay.printMsg("Masking template by radius of "+str(self.params['maskrad'])+" Angstroms")
+		emancmd  = ( "proc2d "+mrcfile+" "+mrcfile+" apix="+str(self.stack['apix'])
 			+" mask="+str(self.params['maskrad']) )
 		apEMAN.executeEmanCmd(emancmd)
 
-		templatefile = "template.spi"
-		if os.path.isfile(templatefile):
-			apDisplay.printWarning(templatefile+" already exists; removing it")
-			time.sleep(2)
-			os.remove(templatefile)
-		emancmd  = "proc2d template.mrc "+templatefile+" spiderswap"
+		### shrink
+		apDisplay.printMsg("Binning template by a factor of "+str(self.params['bin']))
+		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+		emancmd  = ( "proc2d "+mrcfile+" "+mrcfile+" shrink="
+			+str(self.params['bin'])+" spiderswap " )
+		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
 		apEMAN.executeEmanCmd(emancmd)
 
-		return templatefile
+		### convert to SPIDER
+		apDisplay.printMsg("Converting template to SPIDER")
+		templatefile = "template.spi"
+		if os.path.isfile(templatefile):
+			apFile.removeFile(templatefile, warn=True)
+		emancmd = "proc2d template.mrc "+templatefile+" spiderswap "
+		apEMAN.executeEmanCmd(emancmd)
+
+		return templatefile	
 
 
 	#=====================
@@ -311,14 +318,14 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("unknown initialization method defined: "
 				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
 
-		maskpixrad = self.params['maskrad']/self.stack['apix']
+		maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
 		esttime = apAlignment.estimateTime(self.params['numpart'], maskpixrad)
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
 			apDisplay.timeString(esttime),"cyan")
 
 		### run the alignment
 		aligntime = time.time()
-		pixrad = int(round(self.params['partrad']/self.stack['apix']))
+		pixrad = int(round(self.params['partrad']/self.stack['apix']/self.params['bin']))
 		alignedstack, self.partlist = alignment.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
@@ -329,14 +336,15 @@ class NoRefAlignScript(appionScript.AppionScript):
 		### remove large, worthless stack
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
-		os.remove(spiderstack)
+		apFile.removeFile(spiderstack, warn=False)
 
 		### do correspondence analysis
 		corantime = time.time()
 		if not self.params['skipcoran']:
-			maskpixrad = self.params['maskrad']/self.stack['apix']
+			maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
+			boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 			self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
-				boxsize=self.stack['boxsize'], maskpixrad=maskpixrad, 
+				boxsize=boxsize, maskpixrad=maskpixrad, 
 				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
 			### make dendrogram
 			alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
