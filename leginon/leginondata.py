@@ -1644,6 +1644,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('offset', float),
 			('offset2', float),
 			('fixed model', bool),
+			('use lpf', bool),
 		)
 	typemap = classmethod(typemap)
 
