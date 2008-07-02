@@ -45,6 +45,11 @@ class AppionScript(object):
 		self.params = apParam.convertParserToParams(self.parser)
 
 		### check if user wants to print help message
+		if 'commit' in self.params:
+			if self.params['commit'] is False:
+				apDisplay.printWarning("Not committing data to database")
+			else:
+				apDisplay.printMsg("Committing data to database")
 		self.checkConflicts()
 
 		### setup output directory
