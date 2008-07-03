@@ -123,11 +123,12 @@ class SpiderSession:
 			waittime = 15.0
 		else:
 			waittime = 2.0
+		time.sleep(waittime)
 		self.logf.flush()
 		### check number 1
 		if self.spiderproc.poll() is None:
 			waiting = True
-			time.sleep(2.0)
+			time.sleep(waittime)
 		else:
 			self.spiderproc.wait()
 			return
