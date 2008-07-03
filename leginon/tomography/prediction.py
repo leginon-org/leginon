@@ -197,10 +197,8 @@ class Prediction(object):
 		else:
 			tilt_series_list = self.valid_tilt_series_list
 		fitparameters = self.leastSquaresModel(tilt_series_list)
-		print 'fit z0',fitparameters[-1]
 		# Use the old, good parameter if the fitting result suggest a very large tilt axis z offset
 		# max_delta_z0 should be larger than the z eucentric error ucenter_error in meters
-		print 'ucenter_limit',self.ucenter_limit
 		max_delta_z0 =  self.ucenter_limit / self.image_pixel_size
 		if self.forcemodel or (fitparameters[-1]-self.parameters[-1])**2 <= max_delta_z0**2:
 			self.parameters = fitparameters
@@ -273,20 +271,16 @@ class Prediction(object):
 
 	def model(self, parameters, args_list):
 		phi, optical_axis, zs = self.getParameters(parameters)
-		print 'phi=',math.degrees(phi),'optical_axis(pixels)=',optical_axis
 		sin_phi = scipy.sin(phi)
 		cos_phi = scipy.cos(phi)
-		print 'shift=',(cos_phi*optical_axis, sin_phi*optical_axis)
 		position_groups = []
 		for i, (cos_tilts, sin_tilts, x0, y0, x, y) in enumerate(args_list):
 			positions = scipy.zeros((cos_tilts.shape[0], 3), 'd')
 			z = zs[i]
 			# transform position, rotate, inverse transform to get rotated x, y, z
-			print 'before transform',x0,y0
 			positions[:, 0] = cos_phi*x0 + sin_phi*y0
 			positions[:, 1] = -sin_phi*x0 + cos_phi*y0
 			positions[:, 0] += optical_axis
-			print 'x',positions[-1,0],'y',positions[-1,1],'z',z,'z0',self.parameters[-1]
 			positions[:, 2] = sin_tilts*positions[:, 0] + cos_tilts*(z)
 			positions[:, 0] = cos_tilts*positions[:, 0] - sin_tilts*(z)
 			positions[:, 0] -= optical_axis

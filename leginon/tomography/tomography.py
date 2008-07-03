@@ -189,6 +189,8 @@ class Tomography(acquisition.Acquisition):
 		tiltsum = sum(tilts[0])
 		if tiltsum < len(tilts[0])*tilts[0][0]:
 			self.first_tilt_direction = 2
+		else:
+			self.first_tilt_direction = 1
 		self.initGoodPredictionInfo(presetdata)
 
 		collect = collection.Collection()
@@ -494,12 +496,14 @@ class Tomography(acquisition.Acquisition):
 		self.prediction.phi0 = params[0]
 		self.prediction.offset0 = params[1]
 		self.prediction.z00 = params[2]
-		self.logger.info('Initialize prediction parameters to (%.2f, %.0f, %.0f)' % (math.degrees(params[0]),params[1],params[2]))
+		phi_degree = math.degrees(params[0])
+		offset_um = params[1]*presetimage_pixel_size/(1e-6)
+		z0_um = params[2]*presetimage_pixel_size/(1e-6)
+		self.logger.info('Initialize prediction parameters to (phi,offset,z0) = (%.2f deg, %.2f um, %.2f um)' % (phi_degree,offset_um,z0_um))
 		pixelshift={}
 		pixelshift['col'] = params[1]*math.cos(params[0])
 		# reverse y as in getPixelPosition
 		pixelshift['row'] = -params[1]*math.sin(params[0])
-		self.logger.info('prediction pixel shift (%.0f, %.0f)' % (pixelshift['col'],pixelshift['row']))
 		if pixelshift is not None:
 			fakescope = leginondata.ScopeEMData()
 			fakescope.friendly_update(presetdata)
