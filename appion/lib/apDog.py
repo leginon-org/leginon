@@ -75,89 +75,113 @@ def diffOfGaussParam(imgarray, params):
 		params['diamarray'] = diamarray
 		return dogarrays
 
-def diffOfGauss(imgarray, pixrad, k=1.2):
+def diffOfGauss(imgarray0, pixrad, k=1.2):
 	"""
 	given bin, apix and diam of particle perform a difference of Gaussian
 	about the size of that particle
 	k := sloppiness coefficient
 	"""
-	#find k-factor
-	kfact = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
-	# divide by sqrt(k) to span desired area 
-	sigma1 = kfact * pixrad
-	# divide by sqrt(k) to span desired area 
-	sigma1 = sigma1 / math.sqrt(k)
-	#calulate pixel range
-	pixrange = pixrad*(math.sqrt(k) - 1.0/math.sqrt(k))
+	# find xi (E) function of k
+	Ek = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
+	# convert pixrad to sigma1
+	sigma1 = Ek * pixrad
+	# find sigmaprime
+	sigmaprime = sigma1 * math.sqrt(k*k-1.0)
+	#determine pixel range
+	pixrange = pixrad * (k - 1.0) / math.sqrt(k)
 	apDisplay.printMsg("selecting particles of size "+str(pixrad)+" +/- "
 		+str(round(pixrange,1))+" pixels")
-	#sigma2 = k * sigma1 ==> sigmaDiff = 
-	sigmaDiff = sigma1*math.sqrt(k*k-1.0)
-	imgarray1 = ndimage.gaussian_filter(imgarray, sigma=sigma1)
-	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaDiff)
+	#do the blurring
+	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1)
+	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime)
 	#apImage.arrayToJpeg(imgarray1, "imgarray1.jpg")
 	#apImage.arrayToJpeg(imgarray2, "imgarray2.jpg")
 	return imgarray2-imgarray1
 
-def diffOfGaussLevels(imgarray, pixrad, numslices, pixrange):
-	if pixrange >= 1.95*pixrad:
+def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
+	if writeImg is True:
+		apImage.arrayToJpeg(imgarray, "binned-image.jpg")
+
+	if dr >= 1.95*r0:
 		apDisplay.printError("size range has be less than twice the diameter")
 
-	#apDisplay.printError("This is method unfinished, remove the numslices and sizerange options")
+	# initial params
+	print "r0=", r0*apix
+	print "dr=", dr*apix
+	print "N=", N
 
-	#get initial parameters
-	kmult = estimateKfactorIncrement(pixrad, pixrange, numslices)
-	kfact = math.sqrt( (kmult**2 - 1.0) / (2.0 * kmult**2 * math.log(kmult)) )
-	sigma0 = kfact * pixrad
+	# find k based on info
+	k = estimateKfactorIncrement(r0, dr, N)
+	print "k=", k
+	# find xi (E) function of k
+	Ek = math.sqrt( (k**2 - 1.0) / (2.0 * k**2 * math.log(k)) )
+	##Ek = 1.0 / Ek
+	print "E(k)=", Ek
+	# convert r0 to sigma1
+	sigma1 = Ek * r0
+	print "sigma1=", sigma1*apix
+	# find sigmaprime
+	sigmaprime = sigma1 * math.sqrt(k**2 - 1.0)
+	print "sigma'=", sigmaprime*apix
+	#sigma0 = sigma1 * k ^ (1-N)/2
+	power = (float(1-N) / 2.0)
+	print "power=", power
+	sigma0 = sigma1 * k**(float(1-N) / 2.0)
+	print "sigma0=", sigma0*apix
 
-	#get two more slices than requested, since we are subtracting
-	spower = -1.0 * float(numslices-1) / 2.0
-	apDisplay.printMsg("s power: "+str(round(spower,3)))
-	sigma1 = sigma0 * kmult**(spower)
-	apDisplay.printMsg("sigma1: "+str(round(sigma1,3)))
-
-	sigma = sigma1
-	gaussmap = ndimage.gaussian_filter(imgarray, sigma=sigma)
+	# calculate first image blur
+	sigma = sigma0
+	gaussmap = ndimage.gaussian_filter(imgarray, sigma=sigma0)
+	sigmavals = [sigma0,]
+	sigprimes = []
 	gaussmaps = [gaussmap,]
-	sigmavals = [sigma,]
-	for i in range(numslices):
-		lastmap = gaussmaps[len(gaussmaps)-1]
-		sigmaDiff = sigma*math.sqrt(kmult*kmult - 1.0)
-		apDisplay.printMsg("sigmaDiff: "+str(round(sigmaDiff,3)))
-		if sigmaDiff < 0.8:
-			apDisplay.printWarning("sigma difference less than 0.8, reduce bin factor")
-		sigma *= kmult
+	for i in range(N):
+		sigmaprime = sigma * math.sqrt(k**2 - 1.0)
+		sigprimes.append(sigmaprime)
+		#calculate new sigma
+		sigma = math.sqrt( sigma**2 + sigmaprime**2 )
 		sigmavals.append(sigma)
-		gaussmap = ndimage.gaussian_filter(lastmap, sigma=sigmaDiff)
+		# all subsequent blurs are by sigmaprime
+		lastmap = gaussmaps[-1]
+		gaussmap = ndimage.gaussian_filter(lastmap, sigma=sigmaprime)
 		gaussmaps.append(gaussmap)
 
-	#print sigmavals
-	#for i,gaussmap in enumerate(gaussmaps):
-	#	apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
+	print "sigma' values=    ", numpy.array(sigprimes)*apix
+	sizevals = numpy.array(sigmavals)/Ek/math.sqrt(k)*apix
+	print "map sigma sizes=  ", numpy.array(sigmavals)*apix
+	sizevals = numpy.array(sigmavals)/Ek/math.sqrt(k)*apix
+	print "map central sizes=", sizevals
+	sizevals = numpy.array(sigmavals)/Ek*apix
+	print "map pixel sizes=  ", sizevals[:-1]
+	if writeImg is True:
+		for i,gaussmap in enumerate(gaussmaps):
+			apImage.arrayToJpeg(gaussmap, "gaussmap"+str(i)+".jpg")
 
 	dogarrays = []
 	pixradlist = []
-	for i in range(numslices):
+	for i in range(N):
+		pixrad = r0 * k**(float(i) - float(N-1) / 2.0)
+		pixradlist.append(pixrad)
+		# subtract blurs to get dog maps
 		dogarray = gaussmaps[i+1] - gaussmaps[i]
-		pixradlist.append((sigmavals[i+1] + sigmavals[i])/2.0)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		dogarrays.append(dogarray)
-		#apImage.arrayToJpeg(dogarray, "dogmap"+str(i)+".jpg")
+
+		if writeImg is True:
+			apImage.arrayToJpeg(dogarray, "dogmap"+str(i)+".jpg")
+
+	sizevals = numpy.array(pixradlist)
+	print "particle pixel sizes=", sizevals*apix
 
 	#sys.exit(1)
-	return dogarrays, pixradlist
+	return dogarrays, sizevals
 
-def estimateKfactorIncrement(pixrad, pixrange, numslices):
-	#lower bound estimate
-	k1 = (1.0 - float(pixrange)/(2.0*float(pixrad)))**(-2.0/float(numslices-1))
-	#upper bound estimate
-	k2 = (1.0 + float(pixrange)/(2.0*float(pixrad)))**(2.0/float(numslices-1))
-	#average both
-	kavg = (k1 + k2)/2.0
-	apDisplay.printMsg("mean k: "+str(round(kavg,3))+"; lower k: "+str(round(k1,3))+"; upper k: "+str(round(k2,3)))
-	kerr = abs(k1 - k2)/(kavg - 1.0)
-	#print kerr
-	if kerr > 0.3:
-		apDisplay.printWarning("large difference between upper and lower k values; selected range will not be inaccurate")
+def estimateKfactorIncrement(r0, dr, N):
+	dR = dr / ( 2.0 * r0 )
+	powk = dR + math.sqrt( dR**2 + 1.0 )
+	k = powk**(2.0/N)
+	return k
 
-	return kavg
+
+
+
