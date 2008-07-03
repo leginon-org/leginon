@@ -15,9 +15,11 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST['showcommand']) runNoRefAlign();
-elseif ($_POST['process']) runNoRefAlign(True);
-else createNoRefAlignForm();
+if ($_POST) {
+	runNoRefAlign(($_POST['process']=="Run NoRef Alignment") ? true : false);
+} else {
+	createNoRefAlignForm();
+}
 
 function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $heading='Reference Free Alignment') {
 	// check if coming directly from a session
@@ -239,7 +241,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
-	echo getSubmitForm("Start NoRef Alignment");
+	echo getSubmitForm("Run NoRef Alignment");
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
@@ -250,7 +252,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	exit;
 }
 
-function runNoRefAlign($runjob=False) {
+function runNoRefAlign($runjob=false) {
 	$expId=$_GET['expId'];
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
@@ -341,24 +343,24 @@ function runNoRefAlign($runjob=False) {
 		processing_header("No Ref Align Run Params","No Ref Align Params");
 		echo"
 	<center>
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>NoRef Alignment Command:</B><BR>
+	<table width='600' class='tableborder' border='1'>
+	<tr><td colspan='2'>
+	<b>NoRef Alignment Command:</b><br />
 	$command
-	</TD></TR>
-	<TR><TD>run id</TD><TD>$runid</TD></TR>
-	<TR><TD>stack id</TD><TD>$stackid</TD></TR>
-	<TR><TD>part rad</TD><TD>$partrad</TD></TR>
-	<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>
-	<TR><TD>low pass</TD><TD>$lowpass</TD></TR>
-	<TR><TD>first ring</TD><TD>$firstring</TD></TR>
-	<TR><TD>last ring</TD><TD>$lastring</TD></TR>
-	<TR><TD>num part</TD><TD>$numpart</TD></TR>
-	<TR><TD>num factors</TD><TD>$numfactors</TD></TR>
-	<TR><TD>binning</TD><TD>$bin</TD></TR>
-	<TR><TD>init method</TD><TD>$initmethod</TD></TR>
-	<TR><TD>out dir</TD><TD>$outdir</TD></TR>
-	<TR><TD>commit</TD><TD>$commit</TD></TR>
+	</td></tr>
+	<tr><td>run id</td><td>$runid</td></tr>
+	<tr><td>stack id</td><td>$stackid</td></tr>
+	<tr><td>part rad</td><td>$partrad</td></tr>
+	<tr><td>mask rad</td><td>$maskrad</td></tr>
+	<tr><td>low pass</td><td>$lowpass</td></tr>
+	<tr><td>first ring</td><td>$firstring</td></tr>
+	<tr><td>last ring</td><td>$lastring</td></tr>
+	<tr><td>num part</td><td>$numpart</td></tr>
+	<tr><td>num factors</td><td>$numfactors</td></tr>
+	<tr><td>binning</td><td>$bin</td></tr>
+	<tr><td>init method</td><td>$initmethod</td></tr>
+	<tr><td>out dir</td><td>$outdir</td></tr>
+	<tr><td>commit</td><td>$commit</td></tr>
 	</table></center>\n";
 		processing_footer();
 	}
