@@ -333,6 +333,7 @@ class Tomography(acquisition.Acquisition):
 		## acquire parent preset image, initial image
 		if adjust:
 			self.presetsclient.toScope(parentname)
+			self.instrument.setCorrectionChannel(0)
 			imagedata0 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
 		## tilt then return in slow increments
@@ -353,6 +354,7 @@ class Tomography(acquisition.Acquisition):
 
 		if adjust:
 			## acquire parent preset image, final image
+			self.instrument.setCorrectionChannel(1)
 			imagedata1 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
 			## return to tomography preset
