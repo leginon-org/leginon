@@ -316,13 +316,24 @@ class Tomography(acquisition.Acquisition):
 		emtarget = self.targetToEMTargetData(target)
 		presetdata = self.presetsclient.getPresetFromDB(preset_name)
 		self.moveAndPreset(presetdata, emtarget)
+		return emtarget
 
 	def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
 		if len(tilts) < 2:
 			raise ValueError
 
-		## acquire initial image
-		imagedata0 = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		## change to parent preset
+		try:
+			parentname = target['image']['preset']['name']
+		except:
+			adjust = False
+		else:
+			adjust = True
+
+		## acquire parent preset image, initial image
+		if adjust:
+			self.presetsclient.toScope(parentname)
+			imagedata0 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
 		## tilt then return in slow increments
 		delta = math.radians(5.0)
@@ -340,21 +351,34 @@ class Tomography(acquisition.Acquisition):
 			self.instrument.tem.StagePosition = {'a': alpha}
 			time.sleep(1.0)
 
-		## acquire final image
-		imagedata1 = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		if adjust:
+			## acquire parent preset image, final image
+			imagedata1 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
-		## find shift between image0, image1
-		pc = correlator.phase_correlate(imagedata0['image'], imagedata1['image'], False)
-		peakinfo = peakfinder.findSubpixelPeak(pc, lpf=1.5)
-		subpixelpeak = peakinfo['subpixel peak']
-		shift = correlator.wrap_coord(subpixelpeak, imagedata0['image'].shape)
-		shift = {'row': shift[0], 'col': shift[1]}
+			## return to tomography preset
+			if emtarget['movetype'] == 'image shift':
+				presetdata = self.presetsclient.getPresetFromDB(preset_name)
+				self.moveAndPreset(presetdata, emtarget)
+			else:
+				self.presetsclient.toScope(preset_name)
+
+			## find shift between image0, image1
+			pc = correlator.phase_correlate(imagedata0['image'], imagedata1['image'], False)
+			peakinfo = peakfinder.findSubpixelPeak(pc, lpf=1.5)
+			subpixelpeak = peakinfo['subpixel peak']
+			shift = correlator.wrap_coord(subpixelpeak, imagedata0['image'].shape)
+			shift = {'row': shift[0], 'col': shift[1]}
 		
-		## transform pixel to image shift
-		newscope = self.calclients['image shift'].transform(shift, imagedata0['scope'], imagedata0['camera'])
-		ishift = newscope['image shift']
-		self.logger.info('adjusting imageshift after backlash: %s' % (ishift,))
-		self.instrument.tem.ImageShift = ishift
+			## transform pixel to image shift
+			oldscope = imagedata0['scope']
+			newscope = self.calclients['image shift'].transform(shift, oldscope, imagedata0['camera'])
+			ishiftx = newscope['image shift']['x'] - oldscope['image shift']['x']
+			ishifty = newscope['image shift']['y'] - oldscope['image shift']['y']
+
+			oldishift = self.instrument.tem.ImageShift
+			newishift = {'x': oldishift['x'] + ishiftx, 'y': oldishift['y'] + ishifty}
+			self.logger.info('adjusting imageshift after backlash: dx,dy = %s,%s' % (ishiftx,ishifty))
+			self.instrument.tem.ImageShift = newishift
 
 	def initGoodPredictionInfo(self,presetdata=None, tiltgroup=1):
 		if presetdata == None:
