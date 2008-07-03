@@ -68,7 +68,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	# copy template to memory
 	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9") 
 	mySpider.toSpider("AP SR", 
-		stackfile+"@*****", "1-"+str(numpart), 
+		stackfile+"@******", "1-"+str(numpart), 
 		str(int(pixrad)), str(int(firstring))+","+str(int(lastring)), 
 		"_9", rundir+"/avgimg**", rundir+"/paramdoc**")
 	mySpider.close()
@@ -162,7 +162,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
 		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
-		stackfile+"@*****",                         # unaligned image series
+		stackfile+"@******",                         # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
 		rundir+("/paramdoc%02d" % (iternum)),                       # output angles document file
 	)
@@ -290,7 +290,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	apDisplay.printMsg("Performing correspondence analysis (long wait)")
 	mySpider.toSpider(
 		"CA S",
-		alignedstack+"@*****", "1-"+str(numpart),
+		alignedstack+"@******", "1-"+str(numpart),
 		"_9", str(numfactors), "C", "10",
 		rundir+"/corandata")
 	mySpider.close()
@@ -364,8 +364,8 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	mySpider.toSpiderQuiet(
 		"DO LB1 i=1,"+str(numpart),
 		" CP",
-		" "+alignedstack+"@{*****x0}",
-		" unstacked/img{*****x0}",
+		" "+alignedstack+"@{******x0}",
+		" unstacked/img{******x0}",
 		"LB1",
 	)
 	mySpider.close()
@@ -560,7 +560,7 @@ def hierarchCluster(alignedstack, numpart, numclasses=40,
 		classnum = i+1
 		mySpider.toSpiderQuiet(
 			"AS R",
-			alignedstack+"@*****",
+			alignedstack+"@******",
 			rundir+("/classdoc%04d" % (classnum)),
 			"A",
 			(classavg+"@%04d" % (classnum)),
