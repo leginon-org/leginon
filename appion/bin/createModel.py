@@ -157,7 +157,7 @@ class createModelScript(appionScript.AppionScript):
 	 	norefClassdata=appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclass'])
 
 		#Get class average file path through ApNoRefRunData
-		norefpath = os.path.join(norefClassdata['norefRun']['path']['path'], norefClassdata['norefRun']['name'])
+		norefpath = norefClassdata['norefRun']['path']['path']
 
 		#Get class average file name
 		norefClassFile = norefClassdata['classFile']
@@ -168,7 +168,7 @@ class createModelScript(appionScript.AppionScript):
 		else:
 			#complete path of the class average file
 			origclassfile = os.path.join(norefpath, norefClassFile)
-			classfile = norefClassdata['classFile']+"-orig"
+			classfile = origclassfile+"-orig"
 			apDisplay.printMsg("copying file "+origclassfile+" to "+classfile)
 			shutil.copy(origclassfile+".hed", classfile+".hed")
 			shutil.copy(origclassfile+".img", classfile+".img")
@@ -195,7 +195,7 @@ class createModelScript(appionScript.AppionScript):
 
 
 		#call uploadModel
-		upload = ("uploadModel.py %s session=%s apix=%.3f res=%i symmetry=%i contour=1.5 zoom=1.5 description=\"%s\"" %
+		upload = ("uploadModel.py --file=%s --session=%s --apix=%.3f --res=%i --symmetry=%i --contour=1.5 --zoom=1.5 --description=\"%s\"" %
 			(modelpath, self.params['session'], self.params['apix'], 
 			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )	
 
