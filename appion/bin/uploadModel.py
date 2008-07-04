@@ -135,7 +135,7 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(path,"models")
 
 	#=====================
-	def setNewFileName(self):
+	def setNewFileName(self, unique=False):
 		#clean up old name
 		basename = os.path.basename(self.params['file'])
 		basename = re.sub(".mrc", "", basename)
@@ -147,12 +147,15 @@ class UploadModelScript(appionScript.AppionScript):
 		foldname = os.path.basename(os.path.dirname(self.params['file']))
 		apixname = re.sub("\.", "_", str(round(self.params['newapix'],2)))+"apix"
 		boxsizename = str(int(self.params['newbox']))+"box"
+		if unique:
+			uniqueid = '-'+str(time.time())
+		else:
+			uniqueid = ''
 		if self.params['oldmodelid'] is not None:
 
-			self.params['name'] = basename+"-"+apixname+"-"+boxsizename+".mrc"
+			self.params['name'] = basename+"-"+apixname+"-"+boxsizename+uniqueid+".mrc"
 		else:
-			self.params['name'] = foldname+"-"+basename+"-"+apixname+"-"+boxsizename+".mrc"
-
+			self.params['name'] = foldname+"-"+basename+"-"+apixname+"-"+boxsizename+uniqueid+".mrc"
 
 	#=====================
 	def getModelParams(self):
@@ -181,8 +184,11 @@ class UploadModelScript(appionScript.AppionScript):
 		mdnew = apFile.md5sumfile(newmodelpath)
 		mdold = apFile.md5sumfile(origmodelpath)
 		if mdnew != mdold:
-			### they are different
-			apDisplay.printError("the models are different, cannot overwrite")
+			### they are different, make unique name
+			self.setNewFileName(unique=True)
+			apDisplay.printWarning("the models are different, cannot overwrite, so using new name: %s" % (self.params['name'],))
+			# restart
+			self.start()
 		elif apDatabase.isModelInDB(mdnew):
 			### they are the same and its in the database already
 			apDisplay.printWarning("same model with md5sum '"+mdnew+"' already exists in the DB!")
