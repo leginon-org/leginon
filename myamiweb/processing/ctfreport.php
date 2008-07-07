@@ -89,7 +89,7 @@ foreach ($runIds as $runId) {
 		echo displayCTFstats($stats, $display_keys);
 		echo "</table>";
 		echo "<br>";	
-	} else echo "no CTF information available";
+	} else echo "no CTF information available <br/>";
 }
 
 processing_footer();
