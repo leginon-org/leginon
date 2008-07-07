@@ -522,8 +522,9 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 	return $sessiondata;
 }
 
-function checkClusterJobs($host, $user, $pass, $cmd='qstat -a | grep $user') {
-  $subjobs = exec_over_ssh($host,$user,$pass,$cmd,True);
+function checkClusterJobs($host, $user, $pass) {
+	$cmd='qstat -a | grep '.$user;
+  $subjobs = exec_over_ssh($host,$user,$pass,$cmd,true);
   return $subjobs;
 }
 
@@ -669,7 +670,6 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,$xvfb=False,$xtra=False) {
 	$particle=new particleData();
 
-	$host = 'guppy';
 	if ($_POST['processinghost']) {
 		$_SESSION['processinghost']=$_POST['processinghost'];
 	}
@@ -742,8 +742,8 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 
 		// submit job on cluster
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
-		$jobnum=trim($jobnum);
-		$jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
+		ereg("([0-9]{1,})", $jobnum, $regs);
+		$jobnum = $regs[1];
 		if (!is_numeric($jobnum)) {
 			echo "</table><p>\n";
 			echo "ERROR in job submission.  Check the cluster\n";
