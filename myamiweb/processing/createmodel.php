@@ -53,6 +53,9 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
 	if (!$lp) $lp = $_POST['lp'];
 	if (!$mask) $mask = $_POST['mask'];
 	if (!$rounds) $rounds = $_POST['rounds'];
+	if (!$_POST['rounds']) {
+		$rounds=2;
+	}
 	if (!$apix) $apix = $_POST['apix'];
 
 	$javafunctions="
