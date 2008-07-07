@@ -52,6 +52,8 @@ class NoRefClassScript(appionScript.AppionScript):
 
 	#=====================
 	def readClassDocFile(self, docfile):
+		if not os.path.isfile(docfile):
+			apDisplay.printError("could not read doc file, "+docfile)
 		partlist = []
 		f = open(docfile, 'r')
 		for line in f:
@@ -118,8 +120,8 @@ class NoRefClassScript(appionScript.AppionScript):
 		alignedstack = os.path.join(self.norefdata['path']['path'], "alignedstack")
 		numpart = self.norefdata['norefParams']['num_particles']
 		factorlist = self.params['factorstr'].split(",")
+		apDisplay.printMsg("using factorlist "+str(factorlist))
 		if len(factorlist) > self.norefdata['norefParams']['num_factors']:
-			print "factorlist",factorlist
 			apDisplay.printError("Requested factor list is longer than available factors")
 
 		#run the classification
