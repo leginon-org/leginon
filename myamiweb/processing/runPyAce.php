@@ -327,9 +327,9 @@ function createPyAceForm($extra=false) {
 	  </TD>
 	</TR>
 	<TR>
-	  <TD COLSPAN='2' ALIGN='CENTER'>\n<HR>
-	  <input type='submit' name='process' value='Just Show ACE Command'>
-	  <input type='submit' name='process' value='Run ACE'><br />
+	  <TD COLSPAN='2' ALIGN='CENTER'>\n<hr />";
+	echo getSubmitForm("Run ACE");
+	echo "
 	  </td>
 	</tr>
 	</table>
