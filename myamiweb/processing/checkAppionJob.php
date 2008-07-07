@@ -10,7 +10,6 @@ checkJobs();
 function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$expId= $_GET['expId'];
 	$jobId= $_GET['jobId'];
-	$host = 'guppy';
 	$particle = new particledata();
 
 	processing_header("Appion Job","Appion Job Status",$javafunc);
@@ -21,6 +20,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&jobId=$jobId";
 
+	$host = $_SESSION['processinghost'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
