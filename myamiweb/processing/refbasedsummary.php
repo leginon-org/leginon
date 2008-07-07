@@ -45,7 +45,7 @@ $stackIds = $particle->getStackIds($sessionId);
 $stackruns=count($stackIds);
 
 // --- list out the alignment runs
-foreach ($refaliIds as $refid) {
+foreach ((array)$refaliIds as $refid) {
   # get list of alignment parameters from database
   $r = $particle->getRefAliParams($refid['DEF_id']);
   $s = $particle->getStackParams($r['REF|ApStackData|stack']);
