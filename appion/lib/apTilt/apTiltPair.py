@@ -8,6 +8,7 @@ import appionData
 import apDB
 import apImage
 import apDisplay
+import apStack
 import apTiltTransform
 
 leginondb = apDB.db
@@ -146,6 +147,43 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
 	appiondb.insert(transq)
 	return transq
+
+def getStackParticleTiltPair(stackid, partnum):
+	stackpartdata1 = apStack.getStackParticle(stackid, partnum)
+	partdata = stackpartdata1['particle']
+
+	tiltpartq1 = appionData.ApTiltParticlePairData()
+	tiltpartq1['particle1'] = partdata
+	tiltpartdatas1 = tiltpartq1.query(results=1)
+
+	tiltpartq2 = appionData.ApTiltParticlePairData()
+	tiltpartq2['particle2'] = partdata
+	tiltpartdatas2 = tiltpartq2.query(results=1)
+
+	if not tiltpartdatas1 and tiltpartdatas2:
+		otherpart = tiltpartdatas2[0]['particle1']
+	elif tiltpartdatas1 and not tiltpartdatas2:
+		otherpart = tiltpartdatas1[0]['particle2']
+	else:
+		print partdata
+		print tiltpartdatas1
+		print tiltpartdatas2
+		apDisplay.printError("failed to get tilt pair data")
+
+	stackpartq = appionData.ApStackParticlesData()
+	stackpartq['stack'] = stackpartdata1['stack']
+	stackpartq['particle'] = otherpart
+	stackpartdatas2 = stackpartq.query(results=1)
+	if not stackpartdatas2:
+		#apDisplay.printWarning("particle "+str(partnum)+" has no tilt pair in stackid="+str(stackid))
+		return None
+	stackpartnum = stackpartdatas2[0]['particleNumber']
+
+	#print partnum,"-->",stackpartnum
+	return stackpartnum
+
+
+
 
 
 
