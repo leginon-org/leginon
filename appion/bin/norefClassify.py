@@ -65,7 +65,6 @@ class NoRefClassScript(appionScript.AppionScript):
 		if not partlist:
 			apDisplay.printError("reading class doc file did not work: "+docfile)
 		partlist.sort()
-		print partlist
 		return partlist
 
 	#=====================
