@@ -453,9 +453,10 @@ def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", data
 		corandata+"_IMC", # path to coran data
 		factorstr, # factor string
 	)
+
 	## weight for each factor
 	for fact in range(numfactors):
-		mySpider.toSpiderQuiet("1.0")	
+		mySpider.toSpiderQuiet("1.0")	 
 	mySpider.toSpider(
 		"5",         #use Ward's method
 		"T", "5.1", rundir+"/dendrogram.ps",  #dendrogram image file
@@ -503,9 +504,10 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40,
 	## weight for each factor
 	for fact in factorlist:
 		mySpider.toSpiderQuiet("1.0")	
+	minclasssize = "%.4f" % (numpart*0.001+2.0)
 	mySpider.toSpider(
 		"5",         #use Ward's method
-		"T", "5.1", rundir+"/dendrogram.ps", #dendrogram image file
+		"T", minclasssize, rundir+"/dendrogram.ps", #dendrogram image file
 		"Y", rundir+"/dendrogramdoc", #dendrogram doc file
 	)
 	mySpider.close()

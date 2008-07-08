@@ -62,7 +62,11 @@ class NoRefClassScript(appionScript.AppionScript):
 			bits = line.split()
 			partnum = int(float(bits[2]))
 			partlist.append(partnum)
-		return partlist.sort()
+		if not partlist:
+			apDisplay.printError("reading class doc file did not work: "+docfile)
+		partlist.sort()
+		print partlist
+		return partlist
 
 	#=====================
 	def getNoRefPart(self, partnum):
