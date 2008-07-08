@@ -68,9 +68,9 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 		<tr>";
 	echo "<td valign='top'>";
 
-	$dendrofile = $norefparams['path']."/dendogram.png";
+	$dendrofile = $norefparams['path']."/dendrogram.png";
 	if(file_exists($dendrofile)) {
-		echo docpop('dendogram','<b>Dendogram:</b>');
+		echo docpop('dendrogram','<b>Dendrogram:</b>');
 		echo "<a href='loadimg.php?filename=$dendrofile'><font size='-2'>(click to enlarge)</font><br />"
 			."<img src='loadimg.php?filename=$dendrofile' width='256' border='0'></a><br/><br/>\n";
 	}

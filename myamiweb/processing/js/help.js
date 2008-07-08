@@ -60,7 +60,7 @@ var help = {
 		'aceconf' : 'Only micrographs with an ACE confidence equal to or above the value specified will be used in the creation of the stack.  Values range from 0 (lowest confidence) to 1 (greatest confidence). Empirically a confidence value of 0.8 or greater signifies a good estimation of the defocus.',
 		'partcutoff' : 'The automated particle selection functions assign each paticle a correlation value - here you set a range of correlation values to use.  Correlation values that are very high or low may be contamination of noise on the micrograph.',
 		'factorlist' : 'These images represent a set of eigenvectors, certain traits of the particles should be presented by each eigenvector.  Choosing an image below will use its eigenvectors as a basis for averaging the particles.',
-		'dendogram' : 'Graphical representation of the clusters produced by the clustering algorithm.',
+		'dendrogram' : 'Graphical representation of the clusters produced by the clustering algorithm.',
 		'numclass' : 'Particle stack will be aligned according to the selected eigen images and averaged into this number of classes.',
 	},
 

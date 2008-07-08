@@ -117,9 +117,9 @@ function norefEntry($norefid, $particle, $hidden=False) {
 	$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
 	$display_keys['stack run name'] = $stackstr;
 			
-	$dendrofile = $r['path']."/dendogram.png";
+	$dendrofile = $r['path']."/dendrogram.png";
 	if(file_exists($dendrofile)) {
-		$dendrotext = "<a href='loadimg.php?filename=$dendrofile'>dendogram.png</a>";
+		$dendrotext = "<a href='loadimg.php?filename=$dendrofile'>dendrogram.png</a>";
 		$display_keys['dendrogram']=$dendrotext;
 	}
 	foreach($display_keys as $k=>$v) $noreftable.= formatHtmlRow($k,$v);
