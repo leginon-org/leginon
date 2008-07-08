@@ -189,6 +189,7 @@ class UploadModelScript(appionScript.AppionScript):
 			apDisplay.printWarning("the models are different, cannot overwrite, so using new name: %s" % (self.params['name'],))
 			# restart
 			self.start()
+			return True
 		elif apDatabase.isModelInDB(mdnew):
 			### they are the same and its in the database already
 			apDisplay.printWarning("same model with md5sum '"+mdnew+"' already exists in the DB!")
@@ -220,7 +221,8 @@ class UploadModelScript(appionScript.AppionScript):
 		origmodelpath = self.params['file']
 		if os.path.isfile(newmodelpath):
 			### rescale old model to a new size
-			self.checkExistingFile()
+			if self.checkExistingFile():
+				return
 		elif (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or 
 			abs(self.params['oldbox'] - self.params['newbox']) > 1.0e-1):
 			### rescale old model to a new size
