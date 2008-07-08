@@ -6,6 +6,7 @@ import subprocess
 import cPickle
 import sys
 import math
+import random
 ## PIL
 #import Image
 ## spider
@@ -15,6 +16,7 @@ import apImage
 import apEMAN
 import apParam
 import apDisplay
+import apFile
 
 """
 A large collection of SPIDER functions
@@ -56,10 +58,9 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	### remove previous iterations
 	numiter = 0
 	while os.path.isfile(rundir+"/avgimg%02d%s" % (numiter+1, dataext)):
-		os.remove(rundir+"/avgimg%02d%s" % (numiter+1, dataext))
+		apFile.removeFile(rundir+"/avgimg%02d%s" % (numiter+1, dataext))
 		pngfile = rundir+"/avgimg%02d%s" % (numiter+1, ".png")
-		if os.path.isfile(pngfile):
-			os.remove(pngfile)
+		apFile.removeFile(pngfile)
 		numiter += 1
 
 	### perform alignment
@@ -152,8 +153,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	apParam.createDirectory(rundir)
 
 	### remove previous iterations
-	if os.path.isfile(rundir+"/paramdoc%02d%s" % (iternum, dataext)):
-		os.remove(rundir+"/paramdoc%02d%s" % (iternum, dataext))
+	apFile.removeFile(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
@@ -236,29 +236,26 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 
 	apDisplay.printMsg("applying alignment parameters to stack")
 
-	if os.path.isfile(alignedstack+dataext):
-		apDisplay.printWarning("Removing existing aligned stack: "+alignedstack+dataext)
-		time.sleep(2)
-		os.remove(alignedstack+dataext)
+	apFile.removeFile(alignedstack+dataext)
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for partdict in partlist:
 		p = partdict['num']
 		mySpider.toSpiderQuiet(
 			"RT SQ",
-			oldstack+"@"+("%05d" % (p)),
+			oldstack+"@"+("%06d" % (p)),
 			"_1",
 			str(partdict['rot']), str(partdict['xshift'])+","+str(partdict['yshift']),
 		)
 		if 'mirror' in partdict and partdict['mirror'] is True:
 			mySpider.toSpiderQuiet(
 				"MR", "_1",
-				alignedstack+"@"+("%05d" % (p)),	"Y", 
+				alignedstack+"@"+("%06d" % (p)),	"Y", 
 			)
 		else:
 			mySpider.toSpiderQuiet(
 				"CP", "_1",
-				alignedstack+"@"+("%05d" % (p)),	
+				alignedstack+"@"+("%06d" % (p)),	
 			)
 	mySpider.close()
 	return
@@ -319,26 +316,25 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
-			"CA SRE", rundir+"/corandata", str(fact), 
-			rundir+"/eigenimg@"+("%02d" % (fact)), )
+			#"CA SRE", rundir+"/corandata", str(fact), 
+			#rundir+"/eigenstack@"+("%02d" % (fact)), )
+			"CA SRD", rundir+"/corandata", str(fact), str(fact), 
+			rundir+"/eigenstack@***", )
 	mySpider.close()
 
 	### convert to nice individual eigen image pngs for webpage
 	for fact in range(1,numfactors+1):
 		pngfile = rundir+"/eigenimg"+("%02d" % (fact))+".png"
-		if os.path.isfile(pngfile):
-			os.remove(pngfile)
-		emancmd = ("proc2d "+rundir+"/eigenimg.spi "
+		apFile.removeFile(pngfile)
+		emancmd = ("proc2d "+rundir+"/eigenstack.spi "
 			+pngfile+" "
 			+" first="+str(fact-1)+" last="+str(fact-1))
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
 	### convert eigen SPIDER stack to IMAGIC for stack viewer
-	eigenimg = rundir+"/eigenimg.hed"
-	if os.path.isfile(eigenimg):
-		os.remove(eigenimg)
-		os.remove(eigenimg[:-4]+".img")
-	emancmd = "proc2d "+rundir+"/eigenimg.spi "+eigenimg
+	eigenstack = rundir+"/eigenstack.hed"
+	apFile.removeStack(eigenstack)
+	emancmd = "proc2d "+rundir+"/eigenstack.spi "+eigenstack
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 	### 2. collect eigenimage contribution percentage
@@ -347,6 +343,10 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	contriblist = []
 	for line in eigf:
 		bits = line.strip().split()
+		if len(contriblist) == numfactors:
+			break
+		if len(bits) < 3:
+			continue
 		contrib = float(bits[1])
 		cumm = float(bits[2])
 		eigval = float(bits[0])
@@ -372,16 +372,21 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	"""
 
 	### generate factor maps
+	apDisplay.printMsg("creating factor maps")
 	for f1 in range(1,numfactors):
+		sys.stderr.write(".")
 		for f2 in range(f1+1, numfactors+1):
 			createFactorMap(f1, f2, rundir, dataext)
+	sys.stderr.write("\n")
+
 	return contriblist
 
 #===============================
 def createFactorMap(f1, f2, rundir, dataext):
 	### 3. factor plot
+	apParam.createDirectory(rundir+"/factors", warning=False)
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-	factorfile = rundir+"/factorps"+("%02d-%02d" % (f1,f2))
+	factorfile = rundir+"/factors/factorps"+("%02d-%02d" % (f1,f2))
 	mySpider.toSpiderQuiet(
 		"CA SM", "I",
 		rundir+"/corandata", #coran prefix
@@ -392,13 +397,13 @@ def createFactorMap(f1, f2, rundir, dataext):
 		factorfile, 
 		"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use defaults
 	)
+	time.sleep(2)
 	mySpider.close()
 	# hack to get postscript converted to png, require ImageMagick
 	cmd = "convert -trim -colorspace Gray -density 150x150 "+factorfile+".ps "+factorfile+".png"
 	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	proc.wait()
-	if os.path.isfile(factorfile+".png"):
-		os.remove(factorfile+".ps")
+	apFile.removeFile(factorfile+".ps")
 
 	### 4. factor plot visualization
 	"""
@@ -453,19 +458,19 @@ def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", data
 		mySpider.toSpiderQuiet("1.0")	
 	mySpider.toSpider(
 		"5",         #use Ward's method
-		"Y", rundir+"/dendogram.ps", #dendogram image file
-		"Y", rundir+"/dendogramdoc", #dendogram doc file
+		"T", rundir+"/dendrogram.ps", "5.1", #dendrogram image file
+		"Y", rundir+"/dendrogramdoc", #dendrogram doc file
 	)
 	mySpider.close()
 
-	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendogram.ps dendogram.png"
+	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendrogram.ps dendrogram.png"
 	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
-	if not os.path.isfile("dendogram.png"):
+	if not os.path.isfile("dendrogram.png"):
 		apDisplay.printWarning("Dendrogram image conversion failed")
 
 
 #===============================
-def hierarchCluster(alignedstack, numpart, numclasses=40, 
+def hierarchCluster(alignedstack, numpart=None, numclasses=40, 
 		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
@@ -473,12 +478,14 @@ def hierarchCluster(alignedstack, numpart, numclasses=40,
 	outputs:
 
 	"""
+	if alignedstack[-4:] == dataext:
+		alignedstack = alignedstack[:-4]
+
 	rundir = "cluster"
 	classavg = rundir+"/"+("classavgstack%03d" % numclasses)
 	classvar = rundir+"/"+("classvarstack%03d" % numclasses)
 	apParam.createDirectory(rundir)
-	if os.path.isfile(rundir+"/dendogramdoc.spi"):
-		os.remove(rundir+"/dendogramdoc.spi")
+	apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
 
 	### make list of factors 	 
 	factorstr = "" 	 
@@ -498,61 +505,30 @@ def hierarchCluster(alignedstack, numpart, numclasses=40,
 		mySpider.toSpiderQuiet("1.0")	
 	mySpider.toSpider(
 		"5",         #use Ward's method
-		"Y", rundir+"/dendogram.ps", #dendogram image file
-		"Y", rundir+"/dendogramdoc", #dendogram doc file
+		"T", rundir+"/dendrogram.ps", "5.1", #dendrogram image file
+		"Y", rundir+"/dendrogramdoc", #dendrogram doc file
 	)
 	mySpider.close()
 
-	### determining threshold cutoff for number of classes
-	minthresh = 0.0
-	maxthresh = 1.0
-	classes = 0
-	count = 0
-	
-	sys.stderr.write("finding threshold")
-	while(classes != numclasses and count < 300):
-		count += 1
-		thresh = (maxthresh-minthresh)/3.0 + minthresh
-		classfile = rundir+"/classes"
-		if os.path.isfile(classfile+dataext):
-			os.remove(classfile+dataext)
-		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-		mySpider.toSpiderQuiet(
-			"CL HD",
-			thresh, #threshold
-			rundir+"/dendogramdoc", # dendogram doc file 
-			classfile
-		)
-		mySpider.close()
-		claf = open(classfile+dataext, "r")
-		classes = len(claf.readlines()) - 1
-		claf.close()
-		if classes > numclasses:
-			minthresh = thresh
-		elif classes < numclasses:
-			maxthresh = thresh
-		sys.stderr.write(".")
-		#print " ",classes, thresh, maxthresh, minthresh
-	print count, "rounds for", classes, "classes"
+	if not os.path.isfile(rundir+"/dendrogramdoc"+dataext):
+		apDisplay.printError("dendrogram creation (CL HC) failed")
+
+	thresh, classes = findThreshold(numclasses, rundir, dataext)
 
 	### create class doc files
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpider(
 		"CL HE",
 		thresh,
-		rundir+"/dendogramdoc", # dendogram doc file 
+		rundir+"/dendrogramdoc", # dendrogram doc file 
 		rundir+"/classdoc****", # class doc file
 	)
 
 	### delete existing files
 	sys.stderr.write("delete existing files")
 	for dext in (".hed", ".img", dataext):
-		if os.path.isfile(classavg+dext):
-			os.remove(classavg+dext)
-			sys.stderr.write("!")
-		if os.path.isfile(classvar+dext):
-			os.remove(classvar+dext)
-			sys.stderr.write("!")
+		apFile.removeFile(classavg+dext)
+		apFile.removeFile(classvar+dext)
 	print ""
 
 	### create class averages
@@ -574,12 +550,163 @@ def hierarchCluster(alignedstack, numpart, numclasses=40,
 	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
-	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendogram.ps dendogram.png"
+	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendrogram.ps dendrogram.png"
 	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
-	if not os.path.isfile("dendogram.png"):
+	if not os.path.isfile("dendrogram.png"):
 		apDisplay.printWarning("Dendrogram image conversion failed")
 
 	return
 
-def findThreshold():
+#===============================
+def kmeansCluster(alignedstack, numpart=None, numclasses=40, 
+		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+	"""
+	inputs:
+
+	outputs:
+
+	"""
+	if alignedstack[-4:] == dataext:
+		alignedstack = alignedstack[:-4]
+
+	rundir = "cluster"
+	classavg = rundir+"/"+("classavgstack%03d" % numclasses)
+	classvar = rundir+"/"+("classvarstack%03d" % numclasses)
+	apParam.createDirectory(rundir)
+	for i in range(numclasses):
+		apFile.removeFile(rundir+("/classdoc%04d" % (i+1))+dataext)
+	apFile.removeFile(rundir+("/allclassesdoc%04d" % (numclasses))+dataext)
+
+	### make list of factors 	 
+	factorstr = "" 	 
+	for fact in factorlist: 	 
+		factorstr += str(fact)+","
+	factorstr = factorstr[:-1]
+
+	### do hierarchical clustering
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider(
+		"CL KM",
+		corandata+"_IMC", # path to coran data
+		str(numclasses), # num classes
+		factorstr, # factor string
+	)
+	## weight for each factor
+	for fact in factorlist:
+		mySpider.toSpiderQuiet("1.0")	
+	randnum = (int(random.random()*1000) + 1)
+	mySpider.toSpider(
+		str(randnum),
+		rundir+"/classdoc****",	#clusterdoc file
+		rundir+("/allclassesdoc%04d" % (numclasses)),	#clusterdoc file
+	)
+	mySpider.close()
+
+	### delete existing files
+	sys.stderr.write("delete existing files")
+	for dext in (".hed", ".img", dataext):
+		apFile.removeFile(classavg+dext)
+		apFile.removeFile(classvar+dext)
+	print ""
+
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	### create class averages
+	apDisplay.printMsg("Averaging particles into classes")
+	for i in range(numclasses):
+		classnum = i+1
+		mySpider.toSpiderQuiet(
+			"AS R",
+			alignedstack+"@******",
+			rundir+("/classdoc%04d" % (classnum)),
+			"A",
+			(classavg+"@%04d" % (classnum)),
+			(classvar+"@%04d" % (classnum)),
+		)
+		if classnum % 10 == 0:
+			sys.stderr.write(".")
+		time.sleep(1)
+	mySpider.close()
+
+	### convert to IMAGIC
+	emancmd = "proc2d "+classavg+".spi "+classavg+".hed"
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+
 	return
+
+#===============================
+def ClCla(alignedstack, numpart=None, numclasses=40, 
+		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
+	"""
+	this doesn't work
+	"""
+	if alignedstack[-4:] == dataext:
+		alignedstack = alignedstack[:-4]
+
+	rundir = "cluster"
+	classavg = rundir+"/"+("classavgstack%03d" % numclasses)
+	classvar = rundir+"/"+("classvarstack%03d" % numclasses)
+	apParam.createDirectory(rundir)
+	for i in range(numclasses):
+		apFile.removeFile(rundir+("/classdoc%04d" % (i+1))+dataext)
+	apFile.removeFile(rundir+"/clusterdoc"+dataext)
+
+	### do hierarchical clustering
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider(
+		"CL CLA",
+		corandata, # path to coran data
+		rundir+"/clusterdoc",	#clusterdoc file
+		str(factorlist[-1]), #factor numbers
+		"5,8", 
+		"4", 
+		"0", # minimum number of particles per class
+		"Y", rundir+"/dendrogram.ps",
+		"Y", rundir+"/dendrogramdoc",
+	)
+	mySpider.close()
+
+#===============================
+def findThreshold(numclasses, rundir, dataext):
+	if not os.path.isfile(rundir+"/dendrogramdoc"+dataext):
+		apDisplay.printError("dendrogram creation (CL CLA) failed")
+
+	### determining threshold cutoff for number of classes
+	minthresh = 0.0
+	maxthresh = 1.0
+	minclass = 0.0
+	maxclass = 1.0
+	classes = 0
+	count = 0
+
+	sys.stderr.write("finding threshold")
+	while(classes != numclasses and count < 50):
+		count += 1
+		if count % 70 == 0:
+			sys.stderr.write("\n["+str(minclass)+"->"+str(minclass)+"]")
+		thresh = (maxthresh-minthresh)/3.0 + minthresh
+		classfile = rundir+"/classes"
+		apFile.removeFile(classfile+dataext)
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+		mySpider.toSpiderQuiet(
+			"CL HD",
+			thresh, #threshold
+			rundir+"/dendrogramdoc", # dendrogram doc file 
+			classfile
+		)
+		mySpider.close()
+		claf = open(classfile+dataext, "r")
+		classes = len(claf.readlines()) - 1
+		claf.close()
+		if classes > numclasses:
+			minthresh = thresh
+			maxclass = classes
+		elif classes < numclasses:
+			maxthresh = thresh
+			minclass = classes
+		sys.stderr.write(".")
+		#print " ",count, classes, thresh, maxthresh, minthresh
+	print count, "rounds for", classes, "classes"
+
+	return thresh, classes
