@@ -28,13 +28,15 @@ fi
 
 ARCH=`uname -m`
 if [ $ARCH == "x86_64" ]; then
-  ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:/ami/sw/$EMANDIR/lib:/ami/sw/lib64/python2.4/site-packages"
-  export LD_LIBRARY_PATH="$MATLAB/bin/glnxa64:$LD_LIBRARY_PATH"
-  export PATH="$PATH:/ami/sw/bin64:/ami/sw/bin"
+  EMANDIR="/ami/sw/packages/EMAN64"
+  ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:$EMANDIR/lib:/ami/sw/lib64/python2.4/site-packages"
+  export LD_LIBRARY_PATH="$MATLAB/bin/glnxa64:$EMANDIR/lib:$LD_LIBRARY_PATH"
+  export PATH="$PATH:/ami/sw/bin64:/ami/sw/bin:$EMANDIR/bin"
 else
-  ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:/ami/sw/$EMANDIR/lib:/ami/sw/lib/python2.4/site-packages"
-  export LD_LIBRARY_PATH="$MATLAB/bin/glnx86:$LD_LIBRARY_PATH"
-  export PATH="$PATH:/ami/sw/bin"
+  EMANDIR="/ami/sw/packages/EMAN"
+  ADTOPYPATH="/ami/sw/leginon/pyleginon-cvs:$EMANDIR/lib:/ami/sw/lib/python2.4/site-packages"
+  export LD_LIBRARY_PATH="$MATLAB/bin/glnx86:$EMANDIR/lib:$LD_LIBRARY_PATH"
+  export PATH="$PATH:/ami/sw/bin:$EMANDIR/bin"
 fi
 
 
