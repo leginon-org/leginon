@@ -775,6 +775,7 @@ def calcRes(fscfile, boxsize, apix):
 	f.close()
 	return
 
+#===========
 def insertFSC(fscfile, refineData, commit=True):
 	if not os.path.isfile(fscfile):
 		apDisplay.printWarning("Could not open FSC file: "+fscfile)
@@ -797,11 +798,29 @@ def insertFSC(fscfile, refineData, commit=True):
 	f.close()
 
 
+#===========
+def getRMeasurePath():
+	unames = os.uname()
+	if unames[-1].find('64') >= 0:
+		exename = 'rmeasure64.exe'
+	else:
+		exename = 'rmeasure32.exe'
+	rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+ 	if not os.path.isfile(rmeasexe):
+		rmeasexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
+ 	if not os.path.isfile(rmeasexe):
+		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
+	return rmeasexe
+
+#===========
 def runRMeasure(apix, volpath):
 	t0 = time.time()
 
 	apDisplay.printMsg("R Measure, processing volume: "+volpath)
-	fin,fout = os.popen2("rmeasure")
+	rmeasexe = getRMeasurePath()
+	rmeasproc = subprocess.Popen(rmeasexe, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	fin = rmeasproc.stdin
+	fout = rmeasproc.stdout
 	fin.write(volpath+"\n"+str(apix)+"\n")
 	fin.flush()
 	fin.close()
