@@ -79,11 +79,13 @@ def getOnlyStackData(stackid, msg=True):
 	return stackdata
 
 #--------
-def getStackParticle(stackid, particlenumber):
+def getStackParticle(stackid, partnum):
 	stackparticleq = appionData.ApStackParticlesData()
 	stackparticleq['stack'] = appiondb.direct_query(appionData.ApStackData, stackid)
-	stackparticleq['particleNumber'] = particlenumber
-	stackparticledata = appiondb.query(stackparticleq)
+	stackparticleq['particleNumber'] = partnum
+	stackparticledata = stackparticleq.query()
+	if not stackparticledata:
+		apDisplay.printError("partnum="+str(partnum)+" was not found in stackid="+str(stackid))
 	if len(stackparticledata) > 1:
 		apDisplay.printError("There's a problem with this stack. More than one particle with the same number.")
 	return stackparticledata[0]
