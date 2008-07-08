@@ -458,7 +458,7 @@ def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", data
 		mySpider.toSpiderQuiet("1.0")	
 	mySpider.toSpider(
 		"5",         #use Ward's method
-		"T", rundir+"/dendrogram.ps", "5.1", #dendrogram image file
+		"T", "5.1", rundir+"/dendrogram.ps",  #dendrogram image file
 		"Y", rundir+"/dendrogramdoc", #dendrogram doc file
 	)
 	mySpider.close()
@@ -505,7 +505,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40,
 		mySpider.toSpiderQuiet("1.0")	
 	mySpider.toSpider(
 		"5",         #use Ward's method
-		"T", rundir+"/dendrogram.ps", "5.1", #dendrogram image file
+		"T", "5.1", rundir+"/dendrogram.ps", #dendrogram image file
 		"Y", rundir+"/dendrogramdoc", #dendrogram doc file
 	)
 	mySpider.close()
