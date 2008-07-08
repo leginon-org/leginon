@@ -168,7 +168,7 @@ def insertModel(params):
 	modq['name'] = params['name']
 	modq['symmetry'] = symdata
 	modq['pixelsize'] = params['newapix']
-	modq['boxsize'] = params['oldbox']
+	modq['boxsize'] = params['newbox']
 	modq['resolution'] = params['res']
 	modq['hidden'] = False
 	filepath = os.path.join(params['outdir'], params['name'])
