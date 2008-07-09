@@ -418,6 +418,12 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 
 	return None
 
+def checkMag(imgdata,goodmag):
+	mag = imgdata['scope']['magnification']
+	if mag ==goodmag:
+		return True
+	else:
+		return False
 
 def checkInspectDB(imgdata):
 	status = getImgViewerStatus(imgdata)
