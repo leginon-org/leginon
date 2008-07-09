@@ -9,7 +9,7 @@ import subprocess
 import appionScript
 import apDisplay
 
-class subStackScript(appionScript.AppionScript):
+class testScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog [ --commit --show-cmd --verbose ]")
@@ -153,7 +153,7 @@ class subStackScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	subStack = subStackScript()
-	subStack.start()
-	subStack.close()
+	tester = testScript()
+	tester.start()
+	tester.close()
 
