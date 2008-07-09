@@ -84,7 +84,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	<tr>
 		<td VALIGN='TOP'>";
 	srand(time());
-	if ((rand()%9) > 7) {
+	if ((rand()%2) == 1) {
 		echo"
 	<center><IMG SRC='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
 	}
