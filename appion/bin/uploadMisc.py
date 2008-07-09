@@ -1,34 +1,69 @@
 #!/usr/bin/python -O
-# Upload pik or box files to the database
 
+import appionScript
 import sys
 import os
 import apParam
 import apDisplay
 import apUpload
 
+#=====================
+#=====================
+class UploadMiscScript(appionScript.AppionScript):
+	#==================
+	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --recon=<#> \n\t "
+			+" --description='text' ")
+		self.parser.add_option("-f", "--file", dest="file", 
+			help="File to upload", metavar="FILE")
+		self.parser.add_option("-s", "--session", dest="session",
+			help="Session name associated with file (e.g. 06mar12a)", metavar="SESSION")
+		self.parser.add_option("-r", "--reconid", dest="reconid",
+			help="ReconID associated with file (e.g. --reconid=311)", metavar="RECONID")
+		self.parser.add_option("-d", "--description", dest="description",
+			help="Description of the file (must be in quotes)", metavar="'TEXT'")
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
+			action="store_true", help="Commit file to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit file database")
+
+	#=====================
+	def checkConflicts(self):
+		# make sure the necessary parameters are set
+		if self.params['description'] is None:
+			apDisplay.printError("enter a file description")
+		if self.params['session'] is None and self.params['recon'] is None:
+			apDisplay.printError("please enter either session or reconID")
+
+	#=====================
+	def setProcessingDirName(self):
+		self.processdirname = "misc"
+
+
+	#=====================
+	def start(self):
+		self.params['name'] = os.path.basename(self.params['file'])
+
+		# make sure that the stack & model IDs exist in database
+		if self.params['reconid'] is not None:
+			apUpload.checkReconId(self.params)
+
+		if self.params['session'] is not None:
+			apUpload.getProjectId(self.params)
+		# insert the info
+		if self.params['commit'] is True:
+			apUpload.insertMisc(self.params)	
+		else:
+			apDisplay.printWarning("not committing to DB")
+
+
+#=====================
+#=====================
 if __name__ == '__main__':
-	# record command line
-	apParam.writeFunctionLog(sys.argv)
+	uploadMisc = UploadMiscScript()
+	uploadMisc.start()
+	uploadMisc.close()
 
-	# create params dictionary & set defaults
-	params = apUpload.createDefaults()
 
-	# parse command line input
-	apUpload.parseMiscUploadInput(sys.argv, params)
 
-	# check to make sure that necessary parameters are set
-	if params['reconid'] is None and params['session'] is None:
-		apDisplay.printError("enter a reconstruction id and/or session name")
-	if params['description'] is None:
-		apDisplay.printError("enter a description")
-
-	# make sure that the stack & model IDs exist in database
-	if params['reconid'] is not None:
-		apUpload.checkReconId(params)
-
-	if params['session'] is not None:
-		apUpload.getProjectId(params)
-	# insert the info
-	apUpload.insertMisc(params)
 
