@@ -15,8 +15,6 @@ import apDatabase
 import apCtf
 import apParam
 
-"test"
-
 class ctfTiltLoop(appionLoop.AppionLoop):
 	"""
 	appion Loop function that 
