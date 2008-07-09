@@ -50,7 +50,7 @@ $last=end($sx);
 $graph->SetAlphaBlending();
 
 if (!$nomargin) {
-  $graph->SetScale("linlin",0,'auto',$sx[0],$last);
+  $graph->SetScale("linlin",0.0,1.0,$sx[0],$last);
   $graph->img->SetMargin(50,40, 30,70);	
 	$graph->title->Set('Fourier Shell Correlation ');
 	$graph->xaxis->SetTitlemargin(30);
@@ -61,7 +61,7 @@ if (!$nomargin) {
 	$graph->AddLine(new PlotLine(HORIZONTAL,0.5,"black",1));
 }
 else {
-  $graph->SetScale("intlin",0,'auto',$sx[0],$last);
+  $graph->SetScale("intlin",0.0,1.0,$sx[0],$last);
   $graph->img->SetMargin(2,4,4,4);	
 	$graph->ygrid->Show(false,false);
 	$graph->xgrid->Show(false,false);
