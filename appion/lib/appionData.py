@@ -640,7 +640,7 @@ class ApMiscData(Data):
 		return Data.typemap() + (
 			('project|projects|project', int),
 			('refinementRun', ApRefinementRunData),
-			#('path', str),
+			('session', leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
 			('description', str),
