@@ -25,11 +25,6 @@ def printPrtlUploadHelp():
 	print "\n"
 	sys.exit(1)
 
-def printMiscUploadHelp():
-	print "\nUsage:\nuploadMisc.py <filename> reconid=<n> session=<session> description=<\"text\">\n"
-	print "uploadMisc.py cpmv_cross_section.png reconid=311 description=\"cpmv cross section with pdb docked in\"\n"
-	sys.exit(1)
-
 def parsePrtlUploadInput(args,params):
 	# check that there are enough input parameters
 	if (len(args)<2 or args[1]=='help') :
@@ -63,30 +58,6 @@ def parsePrtlUploadInput(args,params):
 			params['runid']=elements[1]
 		elif (elements[0]=='diam'):
 			params['diam']=int(elements[1])
-		else:
-			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
-
-def parseMiscUploadInput(args,params):
-	# check that there are enough input parameters
-	if (len(args)<2 or args[1]=='help') :
-		printMiscUploadHelp()
-	# get file
-	miscfile=args[1]
-	if (os.path.isfile(miscfile)):
-		(params['path'], params['name']) = os.path.split(miscfile)
-		if not params['path']:
-			params['path']=params['abspath']
-	else:
-		apDisplay.printError("file '"+miscfile+"' does not exist\n")
-	# save the input parameters into the "params" dictionary
-	for arg in args[2:]:
-		elements=arg.split('=')
-		if (elements[0]=='reconid'):
-			params['reconid']=int(elements[1])
-		elif (elements[0]=='session'):
-			params['session']=elements[1]
-		elif (elements[0]=='description'):
-			params['description']=elements[1]
 		else:
 			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 	
@@ -192,11 +163,14 @@ def checkReconId(params):
 def insertMisc(params):
 	print "inserting into database"
 	miscq = appionData.ApMiscData()
+	if params['session'] is not None:
+		sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+		miscq['session']= sessiondata
 	if params['reconid'] is not None:
 		miscq['refinementRun']= params['recon']
 	if params['projectId'] is not None:
 		miscq['project|projects|project']= params['projectId']
-	miscq['path'] = appionData.ApPathData(path=os.path.abspath(params['path']))
+	miscq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	miscq['name']= params['name']
 	miscq['description']=params['description']
 	appiondb.insert(miscq)
