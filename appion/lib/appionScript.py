@@ -136,7 +136,8 @@ class AppionScript(object):
 			path = re.sub("leginon","appion",path)
 			path = re.sub("/rawdata","",path)
 			path = os.path.join(path, self.processdirname)
-		if self.params['outdir'] is None and 'reconid' in self.params:
+			self.params['outdir'] = path
+		if self.params['outdir'] is None and 'reconid' in self.params and self.params['reconid'] is not None:
 			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
 		if self.params['outdir'] is None and 'stackid' in self.params:
 			#auto set the output directory
