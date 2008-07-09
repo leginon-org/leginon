@@ -58,6 +58,7 @@ def createDefaults():
 	params['norejects']=None
 	params['bestimages']=None
 	params['inspectfile']=None
+	params['mag']=None
 	params['phaseFlipped']=False
 	params['apix']=0
 	params['kv']=0
@@ -147,6 +148,8 @@ def parseInput(args):
 			params['lowpass']=float(elements[1])
 		elif (elements[0]=='hp'):
 			params['highpass']=float(elements[1])
+		elif (elements[0]=='mag'):
+			params['mag']=int(elements[1])
 		elif (arg=='norejects'):
 			params['checkImage']=True
 			params['norejects']=True
@@ -654,13 +657,16 @@ def rejectImage(imgdata, params):
 		if params['defocpair'] and checkPairInspectDB(imgdata, params) is False:
 			apDisplay.printColor(shortname+".mrc has been rejected by manual defocpair inspection\n","cyan")
 			return False
-
 	if params['bestimages']:
 		if apDatabase.checkInspectDB(imgdata) is None:
 			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Examplor","cyan")
 			return False
 		if params['defocpair'] and checkPairInspectDB(imgdata, params) is None:
 			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Examplor","cyan")
+			return False
+	if params['mag']:
+		if not apDatabase.checkMag(imgdata, params['mag']):
+			apDisplay.printColor(shortname+".mrc was not at the specific magnification","cyan")
 			return False
 
 	if params['tiltangle'] is not None:
