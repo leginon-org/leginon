@@ -14,6 +14,7 @@ import apParam
 import apDisplay
 import apEMAN
 import apEulerDraw
+import apStack
 try:
 	import EMAN
 except:
@@ -897,6 +898,13 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix):
 			res = boxsize * apix / intfsc
 			f.close()
 			return res
+
+def getSessionDataFromReconId(reconid):
+	stackid = apStack.getStackIdFromRecon(reconid)
+	partdata = apStack.getOneParticleFromStackId(stackid, msg=False)
+	sessiondata = partdata['particle']['selectionrun']['session']
+	return sessiondata
+
 
 if __name__ == '__main__':
 	r = runRMeasure(6.52,'threed.1a.mrc')
