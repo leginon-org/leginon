@@ -154,6 +154,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# process the good ones
 		targetliststatus = 'success'
 		for i, target in enumerate(goodtargets):
+			self.goodnumber = i
 			self.logger.debug('target %s status %s' % (i, target['status'],))
 			# ...
 			if self.player.state() == 'pause':

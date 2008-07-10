@@ -425,6 +425,7 @@ class Node(object):
 		declared['system time'] = self.instrument.tem.SystemTime
 		declared['type'] = type
 		declared['session'] = self.session
+		declared['node'] = self.name
 		self.publish(declared, database=True, dbforce=True)
 
 	def timerKey(self, label):

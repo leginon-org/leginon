@@ -76,6 +76,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																				'Publish and wait for rejected targets')
 		self.widgets['adjust for drift'] = wx.CheckBox(self, -1,
 																				'Adjust targets for drift')
+		self.widgets['drift between'] = wx.CheckBox(self, -1,
+																				'Declare drift between targets')
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -149,14 +151,16 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['adjust for drift'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['correct image'], (6, 0), (1, 1),
+		sz.Add(self.widgets['drift between'], (6, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['save integer'], (7, 0), (1, 1),
+		sz.Add(self.widgets['correct image'], (7, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (8,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmover, (8,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmoveprec, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_target_type, (10,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['save integer'], (8, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (9,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmover, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmoveprec, (10,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_target_type, (11,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)

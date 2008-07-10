@@ -246,6 +246,7 @@ class DriftDeclaredData(InSessionData):
 		return InSessionData.typemap() + (
 			('system time', float),
 			('type', str),
+			('node', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1403,6 +1404,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait time', float),
 			('iterations', int),
 			('adjust for drift', bool),
+			('drift between', bool),
 			('mover', str),
 			('move precision', float),
 			('save integer', bool),
