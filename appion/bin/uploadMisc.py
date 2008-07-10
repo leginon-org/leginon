@@ -86,7 +86,7 @@ class UploadMiscScript(appionScript.AppionScript):
 
 		self.filename = os.path.basename(self.params['file'])
 		self.newfile = os.path.join(self.params['outdir'], self.filename)
-		if os.path.isfile(newfile):
+		if os.path.isfile(self.newfile):
 			apDisplay.printError("File "+self.filename+" already exists in dir "+self.params['outdir'])
 		shutil.copy(self.oldfile, self.newfile)
 
