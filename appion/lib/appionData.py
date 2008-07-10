@@ -693,6 +693,8 @@ class ApCtfData(Data):
 			('defocusinit', float),
 			('amplitude_contrast', float),
 			('angle_astigmatism', float),
+			#('tilt_angle', float),
+			#('tilt_axis_angle', float),
 			('noise1', float),
 			('noise2', float),
 			('noise3', float),
