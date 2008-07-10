@@ -129,7 +129,9 @@ class AppionScript(object):
 
 	#=====================
 	def setOutDir(self):
-		if self.params['outdir'] is None and 'session' in self.params:
+		if ( self.params['outdir'] is None 
+		and 'session' in self.params 
+		and self.params['session'] is not None ):
 			#auto set the output directory
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 			path = os.path.abspath(sessiondata['image path'])
@@ -137,9 +139,13 @@ class AppionScript(object):
 			path = re.sub("/rawdata","",path)
 			path = os.path.join(path, self.processdirname)
 			self.params['outdir'] = path
-		if self.params['outdir'] is None and 'reconid' in self.params and self.params['reconid'] is not None:
+		if ( self.params['outdir'] is None 
+		and 'reconid' in self.params 
+		and self.params['reconid'] is not None ):
 			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if self.params['outdir'] is None and 'stackid' in self.params:
+		if ( self.params['outdir'] is None 
+		and 'stackid' in self.params
+		and self.params['stackid'] is not None ):
 			#auto set the output directory
 			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 			path = os.path.abspath(stackdata['path']['path'])
