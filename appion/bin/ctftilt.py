@@ -7,6 +7,7 @@ import re
 import math
 import cPickle
 import time
+import subprocess
 #appion
 import appionLoop
 import apImage
@@ -22,15 +23,34 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 	to estimate the CTF in tilted images
 	"""
 
+	#======================
 	def setProcessingDirName(self):
 		self.processdirname = "ctftilt"
 
+	#======================
 	def preLoopFunctions(self):
+		self.ctftiltexe = self.getCtfTiltPath()
 		return
 
+	#======================
+	def getCtfTiltPath(self):
+		unames = os.uname()
+		if unames[-1].find('64') >= 0:
+			exename = 'ctftilt64.exe'
+		else:
+			exename = 'ctftilt32.exe'
+		ctftiltexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+	 	if not os.path.isfile(ctftiltexe):
+			ctftiltexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
+	 	if not os.path.isfile(ctftiltexe):
+			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
+		return ctftiltexe
+
+	#======================
 	def postLoopFunctions(self):
 		apCtf.printCtfSummary(self.params)
 
+	#======================
 	def reprocessImage(self, imgdata):
 		"""
 		Returns 
@@ -49,55 +69,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		else:
 			return True
 
+	#======================
 	def processImage(self, imgdata):
-		#get Defocus in Angstroms
-		defocus = imgdata['scope']['defocus']*-1.0e10
-
-		inputparams = {
-			'orig':    os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
-			'input':   apDisplay.short(imgdata['filename'])+".mrc",
-			'output':  apDisplay.short(imgdata['filename'])+"-pow.mrc",
-
-			'cs':      self.params['cs'],
-			'kv':      imgdata['scope']['high tension']/1000.0,
-			'ampcnst': self.params['ampcnst '+self.params['medium']],
-			'mag':     imgdata['scope']['magnification'],
-			'dstep':   apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
-			'pixavg':  self.params['pixavg'],
-
-			'box':     self.params['fieldsize'],
-			'resmin':  200.0,
-			'resmax':  8.0,		
-			'defmin':  round(defocus*0.9, 1),
-			'defmax':  round(defocus*1.1, 1),
-			'defstep': round(defocus*0.2/32.0, 1),
-		}
-		t0 = time.time()
-		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
-		cmd += "/home/vossman/devel/ctftilt/ctftilt.exe << eof\n"
-		cmd += inputparams['input']+"\n"
-		cmd += inputparams['output']+"\n"
-		cmd += (
-			str(inputparams['cs'])+","
-			+ str(inputparams['kv'])+","
-			+ str(inputparams['ampcnst'])+","
-			+ str(inputparams['mag'])+","
-			+ str(inputparams['dstep'])+","
-			+ str(inputparams['pixavg'])+"\n")
-		cmd += (
-			str(inputparams['box'])+","
-			+ str(inputparams['resmin'])+","
-			+ str(inputparams['resmax'])+","
-			+ str(inputparams['defmin'])+","
-			+ str(inputparams['defmax'])+","
-			+ str(inputparams['defstep'])+"\n")
-		cmd += "eof\n"
-		cmd += ("mv "+inputparams['output']+" "
-			+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
-
-		apDisplay.printColor(cmd, "purple")
-		time.sleep(1.0)
-		sys.exit(1)
 		"""
 		time ./ctffind3.exe << eof
 		micrograph.mrc
@@ -146,26 +119,95 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		dFMax: End defocus value for grid search in Angstrom.
 		FStep: Step width for grid search in Angstrom.
 		"""
-		self.ctfvalue = None
+
+		#get Defocus in Angstroms
+		defocus = imgdata['scope']['defocus']*-1.0e10
+
+		inputparams = {
+			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
+			'input': apDisplay.short(imgdata['filename'])+".mrc",
+			'output': apDisplay.short(imgdata['filename'])+"-pow.mrc",
+
+			'cs': self.params['cs'],
+			'kv': imgdata['scope']['high tension']/1000.0,
+			'ampcnst': self.params['ampcnst '+self.params['medium']],
+			'mag': float(imgdata['scope']['magnification']),
+			'dstep': apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
+			'pixavg': self.params['pixavg'],
+
+			'box': self.params['fieldsize'],
+			'resmin': 100.0,
+			'resmax': 5.0,
+			'defmin': round(defocus*0.8, 1),
+			'defmax': round(defocus*1.2, 1),
+			'defstep': 250.0, #round(defocus/32.0, 1),
+		}
+		t0 = time.time()
+		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
+		cmd += self.ctftiltexe+" << eof\n"
+		cmd += inputparams['input']+"\n"
+		cmd += inputparams['output']+"\n"
+		cmd += (
+			str(inputparams['cs'])+","
+			+ str(inputparams['kv'])+","
+			+ str(inputparams['ampcnst'])+","
+			+ str(inputparams['mag'])+","
+			+ str(inputparams['dstep'])+","
+			+ str(inputparams['pixavg'])+"\n")
+		cmd += (
+			str(inputparams['box'])+","
+			+ str(inputparams['resmin'])+","
+			+ str(inputparams['resmax'])+","
+			+ str(inputparams['defmin'])+","
+			+ str(inputparams['defmax'])+","
+			+ str(inputparams['defstep'])+"\n")
+		cmd += "eof\n"
+		#cmd += ("mv "+inputparams['output']+" "
+		#	+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
+
+		apDisplay.printColor(cmd, "cyan")
+		time.sleep(1.0)
+		sys.exit(1)
+
+		### end tested
+
+		ctftiltlog = os.path.splitext(imgdata['filename'])[0]+"-ctftilt.log"
+		logf = open(ctftiltlog, "w")
+		ctftiltproc = subprocess.Popen(self.ctftiltexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
+		ctftiltproc.stdin.write('')
+
+		logf.close()
+
+		#read STDOUT
+		#values DFMID1, DFMID2, ANGAST, TLTAXIS, TANGLE, CC
+
+		#convert powerspectra to JPEG
+
 		return
 
+	#======================
 	def commitToDatabase(self, imgdata):
-		apCtf.insertAceParams(imgdata, self.params)
-		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
+		print ""
+		#apCtf.insertAceParams(imgdata, self.params)
+		#apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 
+	#======================
 	def specialDefaultParams(self):
 		self.params['ampcnst carbon']=0.07
 		self.params['ampcnst ice']=0.15
-		self.params['pixavg']=2
-		self.params['fieldsize']=512
+		self.params['pixavg']=1
+		self.params['fieldsize']=256
 		self.params['medium']="carbon"
 		self.params['cs']=2.0
 		self.params['nominal']=None
 		self.params['newnominal']=False
 
+	#======================
 	def specialCreateOutputDirs(self):
-		apParam.createDirectory(os.path.join(self.params['rundir'], "powerspectra"), warning=False)
+		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
+		apParam.createDirectory(self.powerspecdir, warning=False)
 
+	#======================
 	def specialParseParams(self,args):
 		for arg in args:
 			elements=arg.split('=')
@@ -199,6 +241,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
+	#======================
 	def specialParamConflicts(self):
 		if self.params['nominal'] is not None and (self.params['nominal'] > 0 or self.params['nominal'] < -15e-6):
 			apDisplay.printError("Nominal should be of the form nominal=-1.2e-6 for -1.2 microns")
