@@ -15,9 +15,11 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST['showcommand']) runNoRefClassify(); 
-elseif ($_POST['process']) runNoRefClassify(True);
-else createNoRefClassifyForm();
+if ($_POST) {
+	runNoRefClassify(($_POST['process']=="Run NoRef Classify") ? true : false);
+} else {
+	createNoRefClassifyForm();
+}
 
 function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher', $heading='Reference Free Classify') {
 	$norefid=$_GET['norefId'];
@@ -132,7 +134,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<tr>";
 	echo "	<td colspan='2' align='center'>";
 	echo "	<hr />";
-	echo getSubmitForm("Start NoRef Classify");
+	echo getSubmitForm("Run NoRef Classify");
 	echo "  </td>";
 	echo "</tr>";
 	echo "</table>";
@@ -212,7 +214,7 @@ function runNoRefClassify($runjob=False) {
 	processing_header("No Ref Classify Run Params","No Ref Classify Params");
 
 	echo"
-	<table width='600' border='1'>
+	<table width='600' class='tableborder' border='1'>
 	<tr><td colspan='2'>
 	<b>NoRef Classify Command:</b><br />
 	$command

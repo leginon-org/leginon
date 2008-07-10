@@ -247,7 +247,9 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "</table>\n";
 	echo "</form>\n";
 	// first time loading page, set defaults:
-	if (!$_POST['process'] && !$_POST['showcommand']) echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
+	if (!$_POST['process']) {
+		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
+	}
 	processing_footer();
 	exit;
 }
@@ -342,7 +344,6 @@ function runNoRefAlign($runjob=false) {
 	else {
 		processing_header("No Ref Align Run Params","No Ref Align Params");
 		echo"
-	<center>
 	<table width='600' class='tableborder' border='1'>
 	<tr><td colspan='2'>
 	<b>NoRef Alignment Command:</b><br />
@@ -361,7 +362,7 @@ function runNoRefAlign($runjob=false) {
 	<tr><td>init method</td><td>$initmethod</td></tr>
 	<tr><td>out dir</td><td>$outdir</td></tr>
 	<tr><td>commit</td><td>$commit</td></tr>
-	</table></center>\n";
+	</table>\n";
 		processing_footer();
 	}
 }
