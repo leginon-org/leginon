@@ -1,11 +1,15 @@
 #!/usr/bin/python -O
 
-import appionScript
+
 import sys
 import os
+import appionScript
+import apDatabase
+import apRecon
 import apParam
 import apDisplay
 import apUpload
+import appionData
 
 #=====================
 #=====================
@@ -32,6 +36,8 @@ class UploadMiscScript(appionScript.AppionScript):
 	#=====================
 	def checkConflicts(self):
 		# make sure the necessary parameters are set
+		if self.params['file'] is None:
+			apDisplay.printError("no file was specified")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a file description")
 		if self.params['session'] is None and self.params['recon'] is None:
@@ -42,19 +48,33 @@ class UploadMiscScript(appionScript.AppionScript):
 		self.processdirname = "misc"
 
 	#=====================
-	def start(self):
-		self.params['name'] = os.path.basename(self.params['file'])
-
-		# make sure that the stack & model IDs exist in database
-		if self.params['reconid'] is not None and self.params['reconid'] > 0:
-			apDisplay.printMsg("recon id is: "+str(self.params['reconid']))
-			apUpload.checkReconId(self.params)
-
+	def insertMisc(self):
+		print "inserting into database"
+		miscq = appionData.ApMiscData()
 		if self.params['session'] is not None:
-			apUpload.getProjectId(self.params)
+			miscq['session'] = self.sessiondata
+		if self.params['reconid'] is not None:
+			miscq['refinementRun'] = self.recondata
+		if self.params['projectId'] is not None:
+			miscq['project|projects|project'] = self.params['projectId']
+		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		miscq['name'] = os.path.basename(self.params['file'])
+		miscq['description'] = self.params['description']
+		appiondb.insert(miscq)
+
+	#=====================
+	def start(self):
+
+		if self.params['reconid'] is not None:
+			self.recondata = apRecon.getRefineRunDataFromID(self.params['reconid']
+			print "Associated with",recondata['name'],":",recondata['path']
+		if self.params['session'] is not None:
+			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+			self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
+
 		# insert the info
 		if self.params['commit'] is True:
-			apUpload.insertMisc(self.params)	
+			self.insertMisc()	
 		else:
 			apDisplay.printWarning("not committing to DB")
 
