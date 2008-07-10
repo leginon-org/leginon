@@ -45,7 +45,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			apDisplay.printError("file does not exist")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a file description")
-		if self.params['session'] is None and self.params['recon'] is None:
+		if self.params['session'] is None and self.params['reconid'] is None:
 			apDisplay.printError("please enter either session or reconID")
 
 	#=====================
@@ -56,12 +56,16 @@ class UploadMiscScript(appionScript.AppionScript):
 	def insertMisc(self):
 		print "inserting into database"
 		miscq = appionData.ApMiscData()
-		if self.params['session'] is not None:
-			miscq['session'] = self.sessiondata
 		if self.params['reconid'] is not None:
 			miscq['refinementRun'] = self.recondata
-		if self.params['projectId'] is not None:
-			miscq['project|projects|project'] = self.params['projectId']
+			sessiondata = apRecon.getSessionDataFromReconId(self.params['reconid'])
+			miscq['session'] = sessiondata
+			projectid = apDatabase.getProjectIdFromSessionName(sessiondata['name'])
+			miscq['project|projects|project'] = projectid
+		elif self.params['session'] is not None:
+			miscq['session'] = self.sessiondata
+			projectid = apDatabase.getProjectIdFromSessionName(self.params['session'])
+			miscq['project|projects|project'] = projectid
 		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		miscq['name'] = self.filename
 		miscq['description'] = self.params['description']
@@ -79,7 +83,7 @@ class UploadMiscScript(appionScript.AppionScript):
 
 		if self.params['reconid'] is not None:
 			self.recondata = apRecon.getRefineRunDataFromID(self.params['reconid'])
-			print "Associated with",recondata['name'],":",recondata['path']
+			print "Associated with",self.recondata['name'],":",self.recondata['path']
 		if self.params['session'] is not None:
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 			self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
