@@ -150,7 +150,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 			'pixlimit': 'pixel_value_limit',
 			'invert': 'invert',
 			'thresh': 'threshold',
-			'thresh': 'manual_thresh',
+			#'thresh': 'manual_thresh',# major bug, do not overwrite dict variables!!!
 			'maxthresh': 'max_threshold',
 			'maxpeaks': 'max_peaks',
 			'maxsize': 'maxsize',
