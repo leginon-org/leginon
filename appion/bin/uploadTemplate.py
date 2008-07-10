@@ -20,8 +20,9 @@ import apEMAN
 
 
 appiondb = apDB.apdb
-
+#=====================
 class uploadTemplateScript(appionScript.AppionScript):
+	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage( "Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
 			+"--description='<text>' [options]")
@@ -50,6 +51,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		self.parser.add_option("--avgstack", dest="avgstack", default=False,
 			action="store_true", help="Average all particles in stack for template")
 
+	#=====================
 	def checkConflicts(self):
 		# make sure the necessary parameters are set
 		if self.params['stackid'] is None and self.params['apix'] is None:
@@ -66,8 +68,6 @@ class uploadTemplateScript(appionScript.AppionScript):
 			apDisplay.printError("enter a session ID")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a template description")
-
-
 
 	#=====================
 	def setOutDir(self):
