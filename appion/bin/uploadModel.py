@@ -236,7 +236,7 @@ class UploadModelScript(appionScript.AppionScript):
 			shutil.copyfile(origmodelpath, newmodelpath)
 
 		### upload Initial Model
-		apUpload.getProjectId(self.params)
+		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
 		initmodel={}

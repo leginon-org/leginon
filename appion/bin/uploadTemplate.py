@@ -175,7 +175,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		# copy templates to final location
 		apTemplate.copyTemplatesToOutdir(self.params)
 
-		apUpload.getProjectId(self.params)
+		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
 
 		# insert templates to database
 		apTemplate.insertTemplateImage(self.params)
