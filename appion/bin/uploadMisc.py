@@ -3,6 +3,7 @@
 
 import sys
 import os
+import shutil
 import appionScript
 import apDatabase
 import apRecon
@@ -38,6 +39,9 @@ class UploadMiscScript(appionScript.AppionScript):
 		# make sure the necessary parameters are set
 		if self.params['file'] is None:
 			apDisplay.printError("no file was specified")
+		self.oldfile = os.path.abspath(self.params['file'])
+		if not os.path.isfile(self.oldfile):
+			apDisplay.printError("file does not exist")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a file description")
 		if self.params['session'] is None and self.params['recon'] is None:
@@ -60,7 +64,11 @@ class UploadMiscScript(appionScript.AppionScript):
 		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		miscq['name'] = os.path.basename(self.params['file'])
 		miscq['description'] = self.params['description']
-		appiondb.insert(miscq)
+		if self.params['commit'] is True:
+			miscq.insert()
+		else:
+			apDisplay.printWarning("not committing to DB")
+	
 
 	#=====================
 	def start(self):
@@ -72,11 +80,14 @@ class UploadMiscScript(appionScript.AppionScript):
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 			self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
 
+		self.filename = os.path.basename(self.params['file'])
+		newfile = os.path.join(self.params['outdir'], self.filename)
+		if os.path.isfile(newfile):
+			apDisplay.printError("File "+self.filename+" already exists in dir "+self.params['outdir'])
+		shutil.copy(self.oldfile, newfile)
+
 		# insert the info
-		if self.params['commit'] is True:
-			self.insertMisc()	
-		else:
-			apDisplay.printWarning("not committing to DB")
+		self.insertMisc()	
 
 
 #=====================
