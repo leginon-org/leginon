@@ -95,17 +95,6 @@ def getSymmetryData(symid, msg=True):
 			+apDisplay.colorString(str(symdata['symmetry']), "cyan"))
 	return symdata
 
-def getProjectId(params):
-	projectdata = project.ProjectData()
-	projects = projectdata.getProjectExperiments()
-	for i in projects.getall():
-		if i['name'] == params['session']:
-			params['projectId'] = i['projectId']
-	print params['session'], params['projectId']
-	if not params['projectId']:
-		apDisplay.printError("no project associated with this session\n")
-	return
-
 def compSymm(a, b):
 	if a.dbid > b.dbid:
 		return 1
@@ -150,30 +139,6 @@ def insertModel(params):
 	else:
 		apDisplay.printWarning("not commiting model to database")
 
-def checkReconId(params):
-	reconinfo=appiondb.direct_query(appionData.ApRefinementRunData, params['reconid'])
-	if not reconinfo:
-		print "\nERROR: Recon ID",params['reconid'],"does not exist in the database"
-		sys.exit()
-	else:
-		params['recon']=reconinfo
-		print "Associated with",reconinfo['name'],":",reconinfo['path']
-	return
-
-def insertMisc(params):
-	print "inserting into database"
-	miscq = appionData.ApMiscData()
-	if params['session'] is not None:
-		sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
-		miscq['session']= sessiondata
-	if params['reconid'] is not None:
-		miscq['refinementRun']= params['recon']
-	if params['projectId'] is not None:
-		miscq['project|projects|project']= params['projectId']
-	miscq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
-	miscq['name']= params['name']
-	miscq['description']=params['description']
-	appiondb.insert(miscq)
 
 def insertManualParams(params, expid):
 	sessiondata = appiondb.direct_query(leginondata.SessionData, expid)
