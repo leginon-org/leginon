@@ -1,12 +1,22 @@
 <?php
 require_once('tomography.php');
 require_once('thumbnails.php');
-$sessionId = $_GET['sessionId'];
-$tiltSeriesId = $_GET['tiltSeriesId'];
-$showmodel = $_GET['model'];
-#$showmodel = 1;
 ?>
+<html>
+
+<head>
+<title>Tomography</title>
+<link rel="stylesheet" href="../css/viewer.css" type="text/css" /> 
+</head>
+
+<body onLoad="init()">
+<form name="tomography" method="POST" action="index.php">
+
 <?php
+$sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
+$tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
+$showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
+
 $sessions = $tomography->getTiltSeriesSessions();
 
 if ($sessionId == NULL) {
@@ -45,17 +55,9 @@ $images[] = '<img src="graphmean.php?'
 	."&height=$height"
 	.'" '
 	."width=$width height=$height>";
+
 ?>
-<html>
 
-<head>
-<title>Tomography</title>
-<link rel="stylesheet" href="../css/viewer.css" type="text/css" /> 
-</head>
-
-<body onLoad="init()">
-
-<form name="tomography" method="GET" action="index.php">
 
 <script language="JavaScript">
 function submit() {
@@ -68,14 +70,21 @@ function init() {
 </script>
 
 <div class="header">
+<table><tr><td>
 <a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
+</td><td width=200 align=right>
+	<B>show model parameters:</B>
+	<input type='checkbox' name='showmodel' <?=$showmodel?> onClick="submit(this.form)">
+</td></tr>
 </div>
 
 <div class="body">
 <table>
-<tr><td colspan=2>Session <?php echo $sessionSelector; ?></td></tr>
+<tr><td colspan=2>Session <?php echo $sessionSelector; ?></td>
+</tr>
 <tr>
-<td rowspan=10 valign=top>Tilt Series<br>
+<td rowspan=10 valign=top>Tilt Series
+<br>
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
@@ -85,8 +94,11 @@ if($tiltSeriesId != NULL) {
 <?php
 if($tiltSeriesId != NULL) {
 	echo '<tr><td>';
+	echo '<table><tr><td colspan=2>';
 	thumbnails($tiltSeriesId, $tomography);
+	echo '</td></tr><tr><td>';
 	echo $tiltSeriesName; 
+	echo '</td></tr></table>';
 	echo '</td></tr>';
 }
 ?>
