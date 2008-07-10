@@ -253,6 +253,7 @@ def findEmanJobFile(params):
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
 	logfile = findEmanJobFile(params)
+	print logfile
 	apDisplay.printMsg("parsing eman log file: "+logfile)
 	lines=open(logfile,'r')
 	params['iterations'] = []
@@ -261,6 +262,8 @@ def parseLogFile(params):
 		line=string.rstrip(line)
 		if re.search("refine \d+ ", line):
 			emanparams=line.split(' ')
+			if emanparams[0] is "#":
+				emanparams.pop(0)
 			iteration=defineIteration()
 			iteration['num']=emanparams[1]
 			for p in emanparams:
