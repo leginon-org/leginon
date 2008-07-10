@@ -194,7 +194,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 					apDisplay.printError("wrong number of values in "+str(bits))
 				(def1, def2, astigang, tiltaxisang, tiltang, crosscor) = bits[0:6]
 				print "nominal=", defocus, "tilt=", apDatabase.getTiltAngleDeg(imgdata)
-				print "def1, def2, astigang, tiltaxisang, tiltang, crosscor"
+				print "defocus_1, defocus_2, astig_angle, tilt_axis_angle, tilt_angle, cross_corr"
 				print def1, def2, astigang, tiltaxisang, tiltang, crosscor
 
 
