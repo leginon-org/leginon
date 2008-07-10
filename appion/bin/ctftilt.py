@@ -8,6 +8,7 @@ import math
 import cPickle
 import time
 import subprocess
+import shutil
 #appion
 import appionLoop
 import apImage
@@ -122,7 +123,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		#get Defocus in Angstroms
 		defocus = imgdata['scope']['defocus']*-1.0e10
-
+		bestdef = apCtf.getBestDefocusForImage(imgdata)*-1.0e10
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -138,11 +139,12 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			'box': self.params['fieldsize'],
 			'resmin': 100.0,
 			'resmax': 5.0,
-			'defmin': round(defocus*0.8, 1),
-			'defmax': round(defocus*1.2, 1),
+			'defmin': round(bestdef*0.8, 1),
+			'defmax': round(bestdef*1.2, 1),
 			'defstep': 250.0, #round(defocus/32.0, 1),
 		}
-		t0 = time.time()
+
+		### create local link to image
 		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
@@ -172,6 +174,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		### end tested
 
+		t0 = time.time()
 		ctftiltlog = os.path.splitext(imgdata['filename'])[0]+"-ctftilt.log"
 		logf = open(ctftiltlog, "w")
 		ctftiltproc = subprocess.Popen(self.ctftiltexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
@@ -180,10 +183,14 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		ctftiltproc.stdin.write(line3cmd)
 		ctftiltproc.stdin.write(line4cmd)
 		ctftiltproc.wait()
-
 		logf.close()
+
 		apDisplay.printMsg("ctftilt completed in "+apDisplay.timeString(time.time()-t0))
 
+		shutil.move(inputparams['output'], "powerspectra/"+inputparams['output'])
+		#apFile.removeFile(inputparams['input'])
+
+		### parse ctftilt output
 		logf = open(ctftiltlog, "r")
 		for line in logf:
 			sline = line.strip()
@@ -193,16 +200,23 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 				if len(bits) != 8:
 					apDisplay.printError("wrong number of values in "+str(bits))
 				(def1, def2, astigang, tiltaxisang, tiltang, crosscor) = bits[0:6]
-				print "nominal=", defocus, "tilt=", apDatabase.getTiltAngleDeg(imgdata)
-				print "defocus_1, defocus_2, astig_angle, tilt_axis_angle, tilt_angle, cross_corr"
-				print def1, def2, astigang, tiltaxisang, tiltang, crosscor
 
-
-		#read STDOUT
-		#values DFMID1, DFMID2, ANGAST, TLTAXIS, TANGLE, CC
+		### write to log file
+		f = open("ctfvalues.log", "a")
+		f.write("=== "+imgdata['filename']+" ===\n")
+		tiltang = apDatabase.getTiltAngleDeg(imgdata)
+		line1 = ("nominal=%.1f, bestdef=%.1f, tilt=%.1f," % ( defocus, bestdef, tiltang))
+		print line1
+		f.write(line1)
+		line2 = ("def_1=%.1f, def_2=%.1f, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.1f," % 
+			( defocus_1, defocus_2, astig_angle, tilt_angle, tilt_axis_angle, cross_corr ))
+		print line2
+		f.write(line2)
+		f.close()
 
 		#convert powerspectra to JPEG
-		outputjpg = os.path.splitext(inputparams['output'])[0]+".jpg"
+		outputjpg = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
+		outputjpg = os.path.join(self.params['outdir'], "powerspectra", 
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
 
