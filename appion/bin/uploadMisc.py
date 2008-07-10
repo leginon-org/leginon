@@ -66,7 +66,7 @@ class UploadMiscScript(appionScript.AppionScript):
 	def start(self):
 
 		if self.params['reconid'] is not None:
-			self.recondata = apRecon.getRefineRunDataFromID(self.params['reconid']
+			self.recondata = apRecon.getRefineRunDataFromID(self.params['reconid'])
 			print "Associated with",recondata['name'],":",recondata['path']
 		if self.params['session'] is not None:
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
