@@ -11,6 +11,7 @@ import apParam
 import apDisplay
 import apUpload
 import appionData
+import apFile
 
 #=====================
 #=====================
@@ -62,8 +63,11 @@ class UploadMiscScript(appionScript.AppionScript):
 		if self.params['projectId'] is not None:
 			miscq['project|projects|project'] = self.params['projectId']
 		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		miscq['name'] = os.path.basename(self.params['file'])
+		miscq['name'] = self.filename
 		miscq['description'] = self.params['description']
+		miscq['md5sum'] = apFile.md5sumfile(self.newfile)
+		miscq['hidden'] = False
+
 		if self.params['commit'] is True:
 			miscq.insert()
 		else:
@@ -81,10 +85,10 @@ class UploadMiscScript(appionScript.AppionScript):
 			self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
 
 		self.filename = os.path.basename(self.params['file'])
-		newfile = os.path.join(self.params['outdir'], self.filename)
+		self.newfile = os.path.join(self.params['outdir'], self.filename)
 		if os.path.isfile(newfile):
 			apDisplay.printError("File "+self.filename+" already exists in dir "+self.params['outdir'])
-		shutil.copy(self.oldfile, newfile)
+		shutil.copy(self.oldfile, self.newfile)
 
 		# insert the info
 		self.insertMisc()	

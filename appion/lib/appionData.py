@@ -644,6 +644,8 @@ class ApMiscData(Data):
 			('path', ApPathData),
 			('name', str),
 			('description', str),
+			('md5sum', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApMiscData=ApMiscData
