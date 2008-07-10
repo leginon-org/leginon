@@ -144,44 +144,68 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		}
 		t0 = time.time()
 		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
-		cmd += self.ctftiltexe+" << eof\n"
-		cmd += inputparams['input']+"\n"
-		cmd += inputparams['output']+"\n"
-		cmd += (
+		proc = subprocess.Popen(cmd, shell=True)
+		proc.wait()
+
+		#cmd += self.ctftiltexe+" << eof\n"
+		#line1cmd = inputparams['orig']+"\n"
+		line1cmd = inputparams['input']+"\n"
+		line2cmd = inputparams['output']+"\n"
+		line3cmd = (
 			str(inputparams['cs'])+","
 			+ str(inputparams['kv'])+","
 			+ str(inputparams['ampcnst'])+","
 			+ str(inputparams['mag'])+","
 			+ str(inputparams['dstep'])+","
 			+ str(inputparams['pixavg'])+"\n")
-		cmd += (
+		line4cmd = (
 			str(inputparams['box'])+","
 			+ str(inputparams['resmin'])+","
 			+ str(inputparams['resmax'])+","
 			+ str(inputparams['defmin'])+","
 			+ str(inputparams['defmax'])+","
 			+ str(inputparams['defstep'])+"\n")
-		cmd += "eof\n"
+		#cmd += "eof\n"
 		#cmd += ("mv "+inputparams['output']+" "
 		#	+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
-
-		apDisplay.printColor(cmd, "cyan")
-		time.sleep(1.0)
-		sys.exit(1)
+		#apDisplay.printColor(cmd, "cyan")
 
 		### end tested
 
 		ctftiltlog = os.path.splitext(imgdata['filename'])[0]+"-ctftilt.log"
 		logf = open(ctftiltlog, "w")
 		ctftiltproc = subprocess.Popen(self.ctftiltexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
-		ctftiltproc.stdin.write('')
+		ctftiltproc.stdin.write(line1cmd)
+		ctftiltproc.stdin.write(line2cmd)
+		ctftiltproc.stdin.write(line3cmd)
+		ctftiltproc.stdin.write(line4cmd)
+		ctftiltproc.wait()
 
 		logf.close()
+		apDisplay.printMsg("ctftilt completed in "+apDisplay.timeString(time.time()-t0))
+
+		logf = open(ctftiltlog, "r")
+		for line in logf:
+			sline = line.strip()
+			if sline[-12:] == "Final Values":
+				#print sline
+				bits = sline.split()
+				if len(bits) != 8:
+					apDisplay.printError("wrong number of values in "+str(bits))
+				(def1, def2, astigang, tiltaxisang, tiltang, crosscor) = bits[0:6]
+				print "nominal=", defocus, "tilt=", apDatabase.getTiltAngleDeg(imgdata)
+				print def1, def2, astigang, tiltaxisang, tiltang, crosscor
+
 
 		#read STDOUT
 		#values DFMID1, DFMID2, ANGAST, TLTAXIS, TANGLE, CC
 
 		#convert powerspectra to JPEG
+		outputjpg = os.path.splitext(inputparams['output'])[0]+".jpg"
+		powspec = apImage.mrcToArray(inputparams['output'])
+		apImage.arrayToJpeg(powspec, outputjpg)
+
+		#sys.exit(1)
 
 		return
 
