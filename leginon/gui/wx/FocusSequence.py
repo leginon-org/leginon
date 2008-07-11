@@ -391,6 +391,13 @@ class Dialog(gui.wx.Dialog.Dialog):
 		method = self.focus_method_choice.GetStringSelection()
 		if method == 'Stage Tilt':
 			self.enableAuto(True)
+			self.correction_type_choice.SetStringSelection('Stage Z')
+			self.correction_type_choice.Disable()
+			self.fit_limit_entry.Disable()
+			self.correct_astig_checkbox.SetValue(False)
+			self.correct_astig_checkbox.Disable()
+			self.stig_defocus_max_entry.Disable()
+			self.stig_defocus_min_entry.Disable()
 			self.tiltlabel.SetLabel('degrees')
 		if method == 'Beam Tilt':
 			self.enableAuto(True)
