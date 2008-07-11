@@ -17,6 +17,7 @@ import apDisplay
 import apDatabase
 import apCtf
 import apParam
+import apFile
 
 class ctfTiltLoop(appionLoop.AppionLoop):
 	"""
