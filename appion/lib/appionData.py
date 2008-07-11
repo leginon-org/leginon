@@ -56,7 +56,7 @@ class ApSelectionParamsData(Data):
 		return Data.typemap() + (
 			('diam', int),
 			('bin', int),
-			('manual_thresh', float),
+			('threshold', float),
 			#('auto_thresh', int),
 			('lp_filt', int),
 			('hp_filt', int),
