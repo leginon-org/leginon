@@ -56,30 +56,30 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         label = wx.StaticText(self, -1, 'Min.')
         tiltsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
         label = wx.StaticText(self, -1, 'Max.')
-        tiltsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
-        label = wx.StaticText(self, -1, 'Start')
         tiltsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER)
+        label = wx.StaticText(self, -1, 'Start')
+        tiltsz.Add(label, (0, 5), (1, 1), wx.ALIGN_CENTER)
         label = wx.StaticText(self, -1, 'Step')
-        tiltsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER)
+        tiltsz.Add(label, (0, 7), (1, 1), wx.ALIGN_CENTER)
 
         label = wx.StaticText(self, -1, 'Parameters')
-        tiltsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        tiltsz.Add(self.widgets['tilt min'], (1, 1), (1, 1),
+        tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        tiltsz.Add(self.widgets['tilt min'], (0, 2), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['tilt max'], (1, 2), (1, 1),
+        tiltsz.Add(self.widgets['tilt max'], (0, 4), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['tilt start'], (1, 3), (1, 1),
+        tiltsz.Add(self.widgets['tilt start'], (0, 6), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['tilt step'], (1, 4), (1, 1),
+        tiltsz.Add(self.widgets['tilt step'], (0, 8), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'degree(s)')
-        tiltsz.Add(label, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        tiltsz.Add(label, (0, 9), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-        tiltsz.Add(self.widgets['equally sloped'], (2, 0), (1, 4),
+        tiltsz.Add(self.widgets['equally sloped'], (1, 2), (1, 6),
                     wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        tiltsz.Add(self.widgets['equally sloped n'], (2, 4), (1, 1),
+        tiltsz.Add(self.widgets['equally sloped n'], (1, 9), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['pausegroup'], (3, 1), (1, 2))
+        tiltsz.Add(self.widgets['pausegroup'], (1, 0), (1, 2))
 
         tiltsz.AddGrowableCol(0)
 
@@ -111,22 +111,22 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         label = wx.StaticText(self, -1, 'Min.')
-        expsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER)
+        expsz.Add(label, (1, 1), (1, 1), wx.ALIGN_RIGHT)
         label = wx.StaticText(self, -1, 'Max.')
-        expsz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER)
+        expsz.Add(label, (1, 3), (1, 1), wx.ALIGN_RIGHT)
 
         label = wx.StaticText(self, -1, 'Exposure time')
-        expsz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        expsz.Add(self.widgets['min exposure'], (2, 1), (1, 1),
-                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        expsz.Add(self.widgets['max exposure'], (2, 2), (1, 1),
-                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+        expsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        expsz.Add(self.widgets['min exposure'], (1, 2), (1, 1),
+                    wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+        expsz.Add(self.widgets['max exposure'], (1, 4), (1, 1),
+                    wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'seconds')
-        expsz.Add(label, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        expsz.Add(label, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         expsz.AddGrowableCol(0)
         expsz.AddGrowableRow(0)
-        expsz.AddGrowableRow(2)
+        expsz.AddGrowableRow(1)
 
         expsb = wx.StaticBox(self, -1, 'Exposure')
         expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
@@ -140,12 +140,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         bcsz.Add(self.widgets['run buffer cycle'],
                    (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         bcsz.Add(self.widgets['align zero loss peak'],
-                   (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+                   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         bcsz.Add(self.widgets['measure dose'],
-                   (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+                   (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         bcsz.AddGrowableRow(0)
         bcsz.AddGrowableRow(1)
-        bcsz.AddGrowableRow(2)
         bcsz.AddGrowableCol(0)
 
         bcsb = wx.StaticBox(self, -1, 'Before Collection')
