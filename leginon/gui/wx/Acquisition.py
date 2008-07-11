@@ -139,28 +139,32 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 25)
-		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (0, 1), (7, 1), wx.ALIGN_CENTER)
+		sz_misc = wx.GridBagSizer(0, 0)
+		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['preset order'], (0, 2), (4, 1), wx.ALIGN_CENTER)
 #		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['save image'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['wait for process'], (3, 0), (1, 1),
+		sz_save = wx.GridBagSizer(0, 0)
+		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['wait for rejects'], (4, 0), (1, 1),
+		sz_misc.Add(self.widgets['correct image'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['adjust for drift'], (5, 0), (1, 1),
+		sz_misc.Add(self.widgets['wait for process'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['drift between'], (6, 0), (1, 1),
+		sz_misc.Add(self.widgets['wait for rejects'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['correct image'], (7, 0), (1, 1),
+		sz_misc.Add(self.widgets['adjust for drift'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['save integer'], (8, 0), (1, 1),
+		sz_misc.Add(self.widgets['drift between'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (9,0), (3,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmover, (9,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmoveprec, (10,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_target_type, (11,1), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_save, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (3,0), (4,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_misc, (2,1), (5,1), wx.ALIGN_TOP)
+		sz.Add(szmover, (4,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmoveprec, (5,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_target_type, (6,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)

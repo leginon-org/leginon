@@ -53,31 +53,33 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
         tiltsz = wx.GridBagSizer(5, 10)
 
+        tiltpsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Min.')
-        tiltsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
+        tiltpsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
         label = wx.StaticText(self, -1, 'Max.')
-        tiltsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER)
+        tiltpsz.Add(label, (0, 3), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
         label = wx.StaticText(self, -1, 'Start')
-        tiltsz.Add(label, (0, 5), (1, 1), wx.ALIGN_CENTER)
+        tiltpsz.Add(label, (0, 5), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
         label = wx.StaticText(self, -1, 'Step')
-        tiltsz.Add(label, (0, 7), (1, 1), wx.ALIGN_CENTER)
+        tiltpsz.Add(label, (0, 7), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
 
         label = wx.StaticText(self, -1, 'Parameters')
         tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        tiltsz.Add(self.widgets['tilt min'], (0, 2), (1, 1),
-                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['tilt max'], (0, 4), (1, 1),
-                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['tilt start'], (0, 6), (1, 1),
-                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-        tiltsz.Add(self.widgets['tilt step'], (0, 8), (1, 1),
-                    wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+        tiltpsz.Add(self.widgets['tilt min'], (0, 2), (1, 1),
+                    wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        tiltpsz.Add(self.widgets['tilt max'], (0, 4), (1, 1),
+                    wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        tiltpsz.Add(self.widgets['tilt start'], (0, 6), (1, 1),
+                    wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+        tiltpsz.Add(self.widgets['tilt step'], (0, 8), (1, 1),
+                    wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'degree(s)')
-        tiltsz.Add(label, (0, 9), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        tiltpsz.Add(label, (0, 9), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+        tiltsz.Add(tiltpsz, (0, 1), (1, 8), wx.ALIGN_CENTER_VERTICAL)
         tiltsz.Add(self.widgets['equally sloped'], (1, 2), (1, 6),
                     wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        tiltsz.Add(self.widgets['equally sloped n'], (1, 9), (1, 1),
+        tiltsz.Add(self.widgets['equally sloped n'], (1, 8), (1, 1),
                     wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
         tiltsz.Add(self.widgets['pausegroup'], (1, 0), (1, 2))
 
@@ -108,21 +110,23 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         #text = u'e\N{SUPERSCRIPT MINUS}/\N{ANGSTROM SIGN}\N{SUPERSCRIPT TWO}'
         #label = wx.StaticText(self, -1, text)
         label = wx.StaticText(self, -1, 'e-/A^2')
-        expsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        expsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
+        exptsz = wx.GridBagSizer(0,0)
         label = wx.StaticText(self, -1, 'Min.')
-        expsz.Add(label, (1, 1), (1, 1), wx.ALIGN_RIGHT)
+        exptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, 'Max.')
-        expsz.Add(label, (1, 3), (1, 1), wx.ALIGN_RIGHT)
+        exptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 
         label = wx.StaticText(self, -1, 'Exposure time')
         expsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-        expsz.Add(self.widgets['min exposure'], (1, 2), (1, 1),
+        exptsz.Add(self.widgets['min exposure'], (0, 1), (1, 1),
                     wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
-        expsz.Add(self.widgets['max exposure'], (1, 4), (1, 1),
+        exptsz.Add(self.widgets['max exposure'], (0, 3), (1, 1),
                     wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'seconds')
-        expsz.Add(label, (1, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        exptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        expsz.Add(exptsz, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         expsz.AddGrowableCol(0)
         expsz.AddGrowableRow(0)
@@ -187,11 +191,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         mtsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         ctsz = wx.GridBagSizer(5, 5)
-        label = wx.StaticText(self, -1, 'Abort series if one half has collected less than')
+        label = wx.StaticText(self, -1, 'Abort if first half collected less than')
         ctsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         ctsz.Add(self.widgets['collection threshold'],
                    (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-        label = wx.StaticText(self, -1, 'percent of images')
+        label = wx.StaticText(self, -1, '% of images')
         ctsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
         tptsz = wx.GridBagSizer(5, 5)
@@ -230,7 +234,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
             chars=6, value='0.0')
         self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
             allownone=False, chars=6, value='2e-6')
-        self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the optical axis parameters fixed')
+        self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
 
         magsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Initialize with the model of')
@@ -242,11 +246,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         label = wx.StaticText(self, -1, 'Tilt Axis from Y')
         phisz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, '+d')
-        phisz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        phisz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         phisz.Add(self.widgets['phi'],
                    (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, '-d')
-        phisz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        phisz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         phisz.Add(self.widgets['phi2'],
                    (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'degs')
@@ -256,13 +260,13 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         label = wx.StaticText(self, -1, 'Offset:')
         offsetsz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, '+d')
-        offsetsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        offsetsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         offsetsz.Add(self.widgets['offset'],
                    (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         label = wx.StaticText(self, -1, 'um')
         offsetsz.Add(label, (0, 3), (2, 1), wx.ALIGN_CENTER_VERTICAL)
         label = wx.StaticText(self, -1, '-d')
-        offsetsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        offsetsz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         offsetsz.Add(self.widgets['offset2'],
                    (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
         optsz = wx.GridBagSizer(5, 10)
