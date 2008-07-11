@@ -212,7 +212,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 					'cross_correlation':	float(bits[5]),
 					'nominal':	defocus*1e-10,
 					'defocusinit':	bestdef*1e-10,
-					'confidence_d':	math.sqrt(float(bits[5]))
+					'confidence_d':	round(math.sqrt(float(bits[5])), 5)
 				}
 
 		### write to log file
