@@ -87,15 +87,21 @@ class Tomography {
 		$length = strlen(count($tiltSeries));
 		for ($i = 0; $i < count($tiltSeries); $i++) {
 			$series = $tiltSeries[$i];
+			# use real series number if exist
+			if (!is_null($series['number'])) {
+				$number = $series['number'];
+			} else {
+				$number = $i + 1;
+			}
 			$selector .= '<option class="fixed" value='.$series['id'];
 			if ($series['id'] == $tiltSeriesId) {
 				$selector .= ' selected ';
-				$selected_number = $i + 1;
-						}
-			$number = str_pad($i + 1, $length, ' ', STR_PAD_LEFT).'. ';
-			$number = str_replace(" ", "&nbsp;", $number);
+				$selected_number = $number;
+			}
+			$shownumber = str_pad($number, $length, ' ', STR_PAD_LEFT).'. ';
+			$shownumber = str_replace(" ", "&nbsp;", $shownumber);
 			$timestamp = date('m/d/y H:i:s', $series['timestamp']);
-			$selector .= '>'.$number.$timestamp.'</option>';
+			$selector .= '>'.$shownumber.$timestamp.'</option>';
 		}
 		$selector .= '</select>';
 		return array($selector,$selected_number);
