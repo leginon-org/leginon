@@ -123,6 +123,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'iterations': 1,
 		'wait time': 0,
 		'adjust for drift': False,
+		'drift between': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,
 		'process target type': 'acquisition',
@@ -266,6 +267,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				continue
 
 			if self.settings['adjust for drift']:
+				if self.settings['drift between'] and self.goodnumber > 0:
+					self.declareDrift('between targets')
 				targetdata = self.adjustTargetForDrift(targetdata)
 
 			### determine how to move to target
@@ -411,6 +414,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## when returning to the same target,
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
+		print 'EMTARGET', emtargetdata
 		return emtargetdata
 
 	def lastFilmAcquisition(self):
@@ -654,7 +658,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.setStatus('processing')
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
-			self.logger.warning('No preset currently on instrument. Targeting may fail.')
+			try:
+				presetnames = self.validatePresets()
+			except InvalidPresetsSequence:
+				self.logger.error('Configure at least one preset in the settings for this node.' % (ret,))
+				return
+			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
 		targetdata = self.newSimulatedTarget(preset=currentpreset)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
