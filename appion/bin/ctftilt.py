@@ -187,7 +187,6 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		apDisplay.printMsg("ctftilt completed in "+apDisplay.timeString(time.time()-t0))
 
-		shutil.move(inputparams['output'], "powerspectra/"+inputparams['output'])
 		#apFile.removeFile(inputparams['input'])
 
 		### parse ctftilt output
@@ -215,10 +214,12 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		f.close()
 
 		#convert powerspectra to JPEG
-		outputjpg = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
-		outputjpg = os.path.join(self.params['outdir'], "powerspectra", 
+		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
+		outputjpg = os.path.join(self.params['outdir'], "powerspectra", outputjpgbase)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
+		shutil.move(inputparams['output'], "powerspectra/"+inputparams['output'])
+		#apFile.removeFile(inputparams['input'])
 
 		#sys.exit(1)
 
@@ -235,7 +236,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		self.params['ampcnst carbon']=0.07
 		self.params['ampcnst ice']=0.15
 		self.params['pixavg']=1
-		self.params['fieldsize']=256
+		self.params['fieldsize']=512
 		self.params['medium']="carbon"
 		self.params['cs']=2.0
 		self.params['nominal']=None
