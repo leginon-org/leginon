@@ -56,7 +56,7 @@ class ApSelectionParamsData(Data):
 		return Data.typemap() + (
 			('diam', int),
 			('bin', int),
-			('threshold', float),
+			('manual_thresh', float),
 			#('auto_thresh', int),
 			('lp_filt', int),
 			('hp_filt', int),
@@ -78,7 +78,7 @@ class ApDogParamsData(Data):
 		return Data.typemap() + (
 			('diam', int),
 			('bin', int),
-			('threshold', float),
+			('manual_thresh', float),
 			('max_threshold', float),
 			('invert', int),
 			('lp_filt', int),
