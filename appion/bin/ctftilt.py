@@ -11,6 +11,7 @@ import subprocess
 import shutil
 #appion
 import appionLoop
+import appionData
 import apImage
 import apDisplay
 import apDatabase
@@ -132,7 +133,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 			'cs': self.params['cs'],
 			'kv': imgdata['scope']['high tension']/1000.0,
-			'ampcnst': self.params['ampcnst '+self.params['medium']],
+			'ampcnst': self.params['amp'+self.params['medium']],
 			'mag': float(imgdata['scope']['magnification']),
 			'dstep': apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
 			'pixavg': self.params['bin'],
@@ -174,7 +175,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			apFile.removeFile(inputparams['output'])
 
 		t0 = time.time()
-		apDisplay.printMsg("running ctftilt")
+		apDisplay.printMsg("running ctftilt at "+time.asctime())
 		ctftiltlog = os.path.join(self.logdir, os.path.splitext(imgdata['filename'])[0]+"-ctftilt.log")
 		logf = open(ctftiltlog, "w")
 		ctftiltproc = subprocess.Popen(self.ctftiltexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
@@ -290,7 +291,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		return True
 
 	#======================
-	def insertCtfValue(self, imgdata):
+	def insertCtfValues(self, imgdata):
 		if self.ctfvalues is None:
 			apDisplay.printWarning("ctf tilt failed to find any values")
 			return False
@@ -304,7 +305,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',\
 			'cross_correlation','tilt_angle','tilt_axis_angle','confidence_d')
 		for i in range(len(ctfvaluelist)):
-			ctfq[ ctfvaluelist[i] ] = self.ctfvalues[i]
+			key = ctfvaluelist[i]
+			ctfq[ key ] = self.ctfvalues[key]
 		ctfq.insert()
 		return True
 
@@ -312,8 +314,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 	#======================
 	def specialDefaultParams(self):
 		self.ctfrun = None
-		self.params['ampcnst carbon']=0.07
-		self.params['ampcnst ice']=0.15
+		self.params['ampcarbon']=0.07
+		self.params['ampice']=0.15
 		self.params['bin']=1
 		self.params['fieldsize']=512
 		self.params['medium']="carbon"
@@ -338,9 +340,9 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 				or elements[0]=='-h' or elements[0]=='-help'):
 				sys.exit(1)
 			elif (elements[0]=='ampcarbon'):
-				self.params['ampcnst carbon']=float(elements[1])
+				self.params['ampcarbon']=float(elements[1])
 			elif (elements[0]=='ampice'):
-				self.params['ampcnst ice']=float(elements[1])
+				self.params['ampice']=float(elements[1])
 			elif (elements[0]=='overlap'):
 				self.params['overlap']=int(elements[1])
 			elif (elements[0]=='fieldsize'):
