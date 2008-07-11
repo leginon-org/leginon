@@ -256,6 +256,9 @@ if ($sessionId) {
 
 	$nrun = "<a href='runPyAce.php?expId=$sessionId'>";
 	$nrun .= "ACE Estimation";
+	$nrun .= "</a><br/>";
+	$nrun .= "<a href='runCtfTilt.php?expId=$sessionId'>";
+	$nrun .= "CtfTilt Estimation";
 	$nrun .= "</a>";
 
 	$data[]=array(

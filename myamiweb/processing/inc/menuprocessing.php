@@ -198,6 +198,10 @@ if ($expId) {
 			 'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation >></a>",
 			 'result'=>$ctfresults,
 			 );
+	$nruns[] = array(
+			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation >></a>",
+			'result'=>$mresults,
+			);
 
 	$data[]=array(
 		'action'=>array($action, $celloption),

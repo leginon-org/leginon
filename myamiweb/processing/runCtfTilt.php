@@ -126,8 +126,12 @@ function createCtfTiltForm($extra=false) {
 	processing_header("CtfTilt Launcher", "CTF Estimation by CtfTilt", $javafunctions);
 
 	if ($extra) {
-		echo "<font color='#DD0000'>$extra</FONT><br />\n";
+		echo "<font color='#dd0000'>$extra</FONT><br />\n";
+	} else {
+		echo "<font color='#bb8800' size='+1'>WARNING: CtfTilt is very slow and "
+			."you cannot use the tilt angle or astigmatism results in makestack</font><br/><br/>\n";
 	}
+
 	echo"
 	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
