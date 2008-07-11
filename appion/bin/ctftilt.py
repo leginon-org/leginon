@@ -123,7 +123,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		#get Defocus in Angstroms
 		defocus = imgdata['scope']['defocus']*-1.0e10
-		bestdef = apCtf.getBestDefocusForImage(imgdata)*-1.0e10
+		bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",
@@ -198,7 +198,10 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 				bits = sline.split()
 				if len(bits) != 8:
 					apDisplay.printError("wrong number of values in "+str(bits))
+				for i,bit in enumerate(bits[0:6]):
+					bits[i] = float(bit)
 				(def1, def2, astigang, tiltaxisang, tiltang, crosscor) = bits[0:6]
+
 
 		### write to log file
 		f = open("ctfvalues.log", "a")
@@ -215,7 +218,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		#convert powerspectra to JPEG
 		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
-		outputjpg = os.path.join(self.params['outdir'], "powerspectra", outputjpgbase)
+		outputjpg = os.path.join(self.params['rundir'], "powerspectra", outputjpgbase)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
 		shutil.move(inputparams['output'], "powerspectra/"+inputparams['output'])
