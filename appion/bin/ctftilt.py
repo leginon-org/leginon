@@ -209,7 +209,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		print line1
 		f.write(line1)
 		line2 = ("def_1=%.1f, def_2=%.1f, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.1f," % 
-			( defocus_1, defocus_2, astig_angle, tilt_angle, tilt_axis_angle, cross_corr ))
+			( def1, def2, astigang, tiltang, tiltaxisang, crosscor ))
 		print line2
 		f.write(line2)
 		f.close()
