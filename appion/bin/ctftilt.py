@@ -122,6 +122,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		"""
 
 		#get Defocus in Angstroms
+
 		defocus = imgdata['scope']['defocus']*-1.0e10
 		bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
 		inputparams = {
@@ -134,23 +135,23 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			'ampcnst': self.params['ampcnst '+self.params['medium']],
 			'mag': float(imgdata['scope']['magnification']),
 			'dstep': apDatabase.getPixelSize(imgdata)*imgdata['scope']['magnification']/10000.0,
-			'pixavg': self.params['pixavg'],
+			'pixavg': self.params['bin'],
 
 			'box': self.params['fieldsize'],
 			'resmin': 100.0,
 			'resmax': 5.0,
 			'defmin': round(bestdef*0.8, 1),
 			'defmax': round(bestdef*1.2, 1),
-			'defstep': 250.0, #round(defocus/32.0, 1),
+			'defstep': 500.0, #round(defocus/32.0, 1),
 		}
 
 		### create local link to image
-		cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
-		proc = subprocess.Popen(cmd, shell=True)
-		proc.wait()
-
-		#cmd += self.ctftiltexe+" << eof\n"
-		#line1cmd = inputparams['orig']+"\n"
+		if not os.path.exists(inputparams['input']):
+			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
+			proc = subprocess.Popen(cmd, shell=True)
+			proc.wait()
+	
+		### make standard input for ctftilt
 		line1cmd = inputparams['input']+"\n"
 		line2cmd = inputparams['output']+"\n"
 		line3cmd = (
@@ -167,15 +168,14 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			+ str(inputparams['defmin'])+","
 			+ str(inputparams['defmax'])+","
 			+ str(inputparams['defstep'])+"\n")
-		#cmd += "eof\n"
-		#cmd += ("mv "+inputparams['output']+" "
-		#	+os.path.join(self.params['rundir'], "powerspectra", inputparams['output'])+"\n")
-		#apDisplay.printColor(cmd, "cyan")
 
-		### end tested
+		if os.path.isfile(inputparams['output']):
+			# program crashes if this file exists
+			apFile.removeFile(inputparams['output'])
 
 		t0 = time.time()
-		ctftiltlog = os.path.splitext(imgdata['filename'])[0]+"-ctftilt.log"
+		apDisplay.printMsg("running ctftilt")
+		ctftiltlog = os.path.join(self.logdir, os.path.splitext(imgdata['filename'])[0]+"-ctftilt.log")
 		logf = open(ctftiltlog, "w")
 		ctftiltproc = subprocess.Popen(self.ctftiltexe, shell=True, stdin=subprocess.PIPE, stdout=logf)
 		ctftiltproc.stdin.write(line1cmd)
@@ -190,6 +190,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		#apFile.removeFile(inputparams['input'])
 
 		### parse ctftilt output
+		self.ctfvalues = {}
 		logf = open(ctftiltlog, "r")
 		for line in logf:
 			sline = line.strip()
@@ -200,25 +201,38 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 					apDisplay.printError("wrong number of values in "+str(bits))
 				for i,bit in enumerate(bits[0:6]):
 					bits[i] = float(bit)
-				(def1, def2, astigang, tiltaxisang, tiltang, crosscor) = bits[0:6]
-
+				self.ctfvalues = {
+					'defocus1':	float(bits[0]),
+					'defocus2':	float(bits[1]),
+					'angle_astigmatism':	float(bits[2]),
+					'tilt_axis_angle':	float(bits[3]),
+					'tilt_angle':	float(bits[4]),
+					'cross_correlation':	float(bits[5]),
+					'nominal':	defocus,
+					'defocusinit':	bestdef,
+					'confidence_d':	math.sqrt(float(bits[5]))
+				}
 
 		### write to log file
 		f = open("ctfvalues.log", "a")
 		f.write("=== "+imgdata['filename']+" ===\n")
 		tiltang = apDatabase.getTiltAngleDeg(imgdata)
-		line1 = ("nominal=%.1f, bestdef=%.1f, tilt=%.1f," % ( defocus, bestdef, tiltang))
+		line1 = ("nominal=%.1f, bestdef=%.1f, tilt=%.1f,\n" % 
+			( self.ctfvalues['nominal'], self.ctfvalues['defocusinit'], tiltang))
+		self.ctfvalues['origtiltang'] = tiltang
 		print line1
 		f.write(line1)
-		line2 = ("def_1=%.1f, def_2=%.1f, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.1f," % 
-			( def1, def2, astigang, tiltang, tiltaxisang, crosscor ))
+		line2 = ("def_1=%.1f, def_2=%.1f, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.1f,\n" % 
+			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'], 
+				self.ctfvalues['tilt_angle'], self.ctfvalues['tilt_axis_angle'], self.ctfvalues['cross_correlation'] ))
 		print line2
 		f.write(line2)
 		f.close()
 
 		#convert powerspectra to JPEG
 		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
-		outputjpg = os.path.join(self.params['rundir'], "powerspectra", outputjpgbase)
+		self.lastjpg = os.path.join("powerspectra", outputjpgbase)
+		outputjpg = os.path.join(self.params['rundir'], self.lastjpg)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
 		shutil.move(inputparams['output'], "powerspectra/"+inputparams['output'])
@@ -232,13 +246,75 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 	def commitToDatabase(self, imgdata):
 		print ""
 		#apCtf.insertAceParams(imgdata, self.params)
+		self.insertCtfTiltRun(imgdata)
 		#apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
+		self.insertCtfValues(imgdata)
+
+	#======================
+	def insertCtfTiltRun(self, imgdata):
+		if isinstance(self.ctfrun, appionData.ApCtfTiltRunData):
+			return False
+
+		# first create an aceparam object
+		paramq = appionData.ApCtfTiltParamsData()
+		copyparamlist = ('medium','ampcarbon','ampice','fieldsize','cs','bin',)
+		for p in copyparamlist:
+			if p in self.params:
+				paramq[p] = self.params[p]
+
+		# create an acerun object
+		runq = appionData.ApCtfTiltRunData()
+		runq['name'] = self.params['runid']
+		runq['session'] = imgdata['session'];
+
+		# see if acerun already exists in the database
+		runids = runq.query(results=1)
+
+		if (runids):
+			if not (runids[0]['ctftilt_params'] == paramq):
+				for i in runids[0]['ctftilt_params']:
+					if runids[0]['ctftilt_params'][i] != paramq[i]:
+						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
+				apDisplay.printError("All parameters for a single CtfTilt run must be identical! \n"+\
+						     "please check your parameter settings.")
+			self.ctfrun = runids[0]
+			return False
+
+		#create path
+		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+
+		# if no run entry exists, insert new run entry into db
+		runq['ctftilt_params'] = paramq
+		runq.insert()
+		self.ctfrun = runq
+		return True
+
+	#======================
+	def insertCtfValue(self, imgdata):
+		if self.ctfvalues is None:
+			apDisplay.printWarning("ctf tilt failed to find any values")
+			return False
+
+		print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
+		ctfq = appionData.ApCtfData()
+		ctfq['ctftiltrun'] = self.ctfrun
+		ctfq['image']      = imgdata
+		ctfq['graph1']     = self.lastjpg
+
+		ctfvaluelist = ('defocus1','defocus2','defocusinit','angle_astigmatism',\
+			'cross_correlation','tilt_angle','tilt_axis_angle','confidence_d')
+		for i in range(len(ctfvaluelist)):
+			ctfq[ ctfvaluelist[i] ] = self.ctfvalues[i]
+		ctfq.insert()
+		return True
+
 
 	#======================
 	def specialDefaultParams(self):
+		self.ctfrun = None
 		self.params['ampcnst carbon']=0.07
 		self.params['ampcnst ice']=0.15
-		self.params['pixavg']=1
+		self.params['bin']=1
 		self.params['fieldsize']=512
 		self.params['medium']="carbon"
 		self.params['cs']=2.0
@@ -249,6 +325,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 	def specialCreateOutputDirs(self):
 		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
 		apParam.createDirectory(self.powerspecdir, warning=False)
+		self.logdir = os.path.join(self.params['rundir'], "logfiles")
+		apParam.createDirectory(self.logdir, warning=False)
 
 	#======================
 	def specialParseParams(self,args):
@@ -259,22 +337,22 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			if (elements[0]=='help' or elements[0]=='--help' \
 				or elements[0]=='-h' or elements[0]=='-help'):
 				sys.exit(1)
-			elif (elements[0]=='ampcnst-carbon'):
+			elif (elements[0]=='ampcarbon'):
 				self.params['ampcnst carbon']=float(elements[1])
-			elif (elements[0]=='ampcnst-ice'):
+			elif (elements[0]=='ampice'):
 				self.params['ampcnst ice']=float(elements[1])
 			elif (elements[0]=='overlap'):
 				self.params['overlap']=int(elements[1])
 			elif (elements[0]=='fieldsize'):
 				self.params['fieldsize']=int(elements[1])
-			elif (elements[0]=='pixavg'):
-				self.params['pixavg']=int(elements[1])
+			elif (elements[0]=='bin'):
+				self.params['bin']=int(elements[1])
 			elif (elements[0]=='medium'):
 				medium=elements[1]
-				if medium is 'carbon' or medium is 'ice':
+				if medium == 'carbon' or medium == 'ice':
 					self.params['medium']=medium
 				else:
-					apDisplay.printError("medium can only be 'carbon' or 'ice'")
+					apDisplay.printError("medium can only be 'carbon' or 'ice', NOT "+medium)
 			elif (elements[0]=='cs'):
 				self.params['cs']=float(elements[1])
 			elif (elements[0]=='nominal'):

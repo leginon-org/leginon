@@ -683,18 +683,44 @@ class ApAceParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApAceParamsData=ApAceParamsData
 
+
+class ApCtfTiltRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('path', ApPathData),
+			('ctftilt_params', ApCtfTiltParamsData),
+			('session', leginondata.SessionData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAceRunData=ApAceRunData
+
+class ApCtfTiltParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('medium', str),
+			('ampcarbon', float),
+			('ampice', float),
+			('fieldsize', int),
+			('cs', float),
+			('bin', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAceParamsData=ApAceParamsData
+
 class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('acerun', ApAceRunData),
+			('ctftiltrun', ApCtfTiltRunData),
 			('image', leginondata.AcquisitionImageData),
 			('defocus1', float),
 			('defocus2', float),
 			('defocusinit', float),
 			('amplitude_contrast', float),
 			('angle_astigmatism', float),
-			#('tilt_angle', float),
-			#('tilt_axis_angle', float),
+			('tilt_angle', float),
+			('tilt_axis_angle', float),
 			('noise1', float),
 			('noise2', float),
 			('noise3', float),
@@ -706,13 +732,12 @@ class ApCtfData(Data):
 			('lowercutoff', float),
 			('uppercutoff', float),
 			('snr', float),
-			#('graphpath', str), #remove in future
-			#('matpath', str), #remove in future
 			('confidence', float),
 			('confidence_d', float),
 			('graph1', str),
 			('graph2', str),
 			('mat_file', str),
+			('cross_correlation', float)
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCtfData=ApCtfData
