@@ -19,12 +19,24 @@ class TiltSeries(object):
 		self.image_counter = 0
 
 	def save(self):
+		dataq = self.dataclass(session=self.session)
+		old_tilt_series_data = dataq.query()
+		if len(old_tilt_series_data) > 0:	
+			if old_tilt_series_data[0]['number'] is not None:
+				series_number = 1 + old_tilt_series_data[0]['number']
+			else:
+				# old series has no number
+				series_number = 1 + len(old_tilt_series_data)
+		else:
+			# new session has no tilt_series_data
+			series_number = 1
 		initializer = {
 			'session': self.session,
 			'tilt min': self.settings['tilt min'],
 			'tilt max': self.settings['tilt max'],
 			'tilt start': self.settings['tilt start'],
 			'tilt step': self.settings['tilt step'],
+			'number':	series_number,
 		}
 		tilt_series_data = self.dataclass(initializer=initializer)
 
