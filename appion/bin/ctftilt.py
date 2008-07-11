@@ -140,7 +140,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 			'box': self.params['fieldsize'],
 			'resmin': 100.0,
-			'resmax': 5.0,
+			'resmax': 15.0,
 			'defmin': round(bestdef*0.8, 1),
 			'defmax': round(bestdef*1.2, 1),
 			'defstep': 500.0, #round(defocus/32.0, 1),
@@ -203,14 +203,14 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 				for i,bit in enumerate(bits[0:6]):
 					bits[i] = float(bit)
 				self.ctfvalues = {
-					'defocus1':	float(bits[0]),
-					'defocus2':	float(bits[1]),
+					'defocus1':	float(bits[0])*1e-10,
+					'defocus2':	float(bits[1])*1e-10,
 					'angle_astigmatism':	float(bits[2]),
 					'tilt_axis_angle':	float(bits[3]),
 					'tilt_angle':	float(bits[4]),
 					'cross_correlation':	float(bits[5]),
-					'nominal':	defocus,
-					'defocusinit':	bestdef,
+					'nominal':	defocus*1e-10,
+					'defocusinit':	bestdef*1e-10,
 					'confidence_d':	math.sqrt(float(bits[5]))
 				}
 
@@ -218,12 +218,12 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		f = open("ctfvalues.log", "a")
 		f.write("=== "+imgdata['filename']+" ===\n")
 		tiltang = apDatabase.getTiltAngleDeg(imgdata)
-		line1 = ("nominal=%.1f, bestdef=%.1f, tilt=%.1f,\n" % 
+		line1 = ("nominal=%.1e, bestdef=%.1e, tilt=%.1f,\n" % 
 			( self.ctfvalues['nominal'], self.ctfvalues['defocusinit'], tiltang))
 		self.ctfvalues['origtiltang'] = tiltang
 		print line1
 		f.write(line1)
-		line2 = ("def_1=%.1f, def_2=%.1f, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.1f,\n" % 
+		line2 = ("def_1=%.1e, def_2=%.1e, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.3f,\n" % 
 			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'], 
 				self.ctfvalues['tilt_angle'], self.ctfvalues['tilt_axis_angle'], self.ctfvalues['cross_correlation'] ))
 		print line2
