@@ -361,7 +361,8 @@ if ($expId) {
 		// first check if there are stacks for a run, then check if logged
 		// in.  Then you can submit a job
 		$nruns=array();
-		if ($_SESSION['loggedin']) {
+//		if ($_SESSION['loggedin']) {
+		if (TRUE) {
 			$nruns[] = array(
 					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>",
 					 'result'=>$reconresults,
