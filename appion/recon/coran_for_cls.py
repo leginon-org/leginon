@@ -309,15 +309,6 @@ if __name__== '__main__':
 	#Determine box size
 	tmpimg=EMAN.readImages('start.hed',1,1)
 	params['boxsize']=tmpimg[0].xSize()
-if __name__== '__main__':
-	#Parse inputs
-	args=sys.argv[1:]
-	params=createDefaults()
-	parseInput(args,params)
-	
-	#Determine box size
-	tmpimg=EMAN.readImages('start.hed',1,1)
-	params['boxsize']=tmpimg[0].xSize()
 	#Set up for coran
 	if os.path.exists(params['corandir']):
 		print "Warning %s exists and is being overwritten" % params['corandir']
