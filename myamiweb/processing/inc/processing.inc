@@ -47,21 +47,26 @@ function getHosts(){
 }
 
 function getHostForm() {
-  $h=array();
+	$h=array();
 	$current_host=$_SESSION['processinghost'];
-  foreach ((array)getHosts() as $host) {
+	$proc_list = (array)getHosts();
+	// only list hosts if there are more than 1
+	if (count($proc_list) > 1){
+		foreach ($proc_list as $host) {
 			$s=($host==$current_host) ? "selected" : "";
-      $h[]="<option $s >$host</option>\n";
-  }
-  $html="<select name=\"processinghost\">\n";
-  $html.=join("\n",$h);
-  $html.="</select>";
-  return $html;
+			$h[]="<option $s >$host</option>\n";
+  		}
+		$html="<select name=\"processinghost\">\n";
+		$html.=join("\n",$h);
+		$html.="</select>";
+	}
+	else $html="<input type='hidden' name=\"processinghost\" value='$proc_list[0]'>\n";
+	return $html;
 }
 
 function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
 	$html="<input type='submit' name='process' value='Just Show Command' onclick='pleasewait()'>\n";
-	if ($displayhost) {
+	if ($displayhost && $_SESSION['username']) {
 		$html.=getHostForm();
 	}
 	if ($_SESSION['loggedin']) {
