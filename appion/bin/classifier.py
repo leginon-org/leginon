@@ -7,7 +7,7 @@ import apParam
 import apAlignment
 
 if __name__ == "__main__":
-	apDisplay.printError("this function is dead")
+	#apDisplay.printError("this function is dead")
 
 	params = apAlignment.defaults()
 	params['appiondir'] = apParam.getAppionDirectory()

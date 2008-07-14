@@ -8,6 +8,7 @@ import apDatabase
 import apEMAN
 import apDisplay
 import appionData
+import numpy
 
 appiondb = apDB.apdb
 
@@ -276,6 +277,54 @@ def getStackParticleTilt(stpartid):
 	tilt = stpartdata['particle']['image']['scope']['stage position']['a']*180.0/math.pi
 	return abs(tilt)
 
+#########################################################
+# Imagic I/O
+#########################################################
+
+def readImagic(filename):
+	"""
+Rudimentary Imagic stack reader
+Could be improved with more sophisticated error testing and header parsing
+Currently  only reads image data as floats
+Currently reads header information for only first image in stack
+"""
+	root=filename.split('.')[0]
+	headerfilename=root + ".hed"
+	datafilename=root + ".img"
+	stack={}
+	stack['header']=readImagicHeader(headerfilename)
+	stack['images']=readImagicData(datafilename, stack['header'])
+	return stack
+	
+def readImagicHeader(headerfilename):
+	headfile=open(headerfilename,'rb')
+	
+	# Header information for each image contained in 256 byte chunks
+	# First image header contains all necessary info to read entire stack
+	headerbytes=headfile.read(256)
+	headfile.close()
+	
+	i=numpy.fromstring(headerbytes, dtype="Int32")
+	f=numpy.fromstring(headerbytes, dtype="Float32")
+	
+	header={}
+	imgnum=i[0]
+	imgfollow=i[1]
+	header['nimg']=imgnum+imgfollow
+	header['npix']=i[11]
+	header['lines']=i[12]
+	header['rows']=i[13]
+	header['avg']=f[17]
+	header['sig']=f[18]
+	header['max']=f[21]
+	header['min']=f[22]
+
+	return header
+	
+def readImagicData(datafilename, headerdict):
+	images=numpy.fromfile(file=datafilename, dtype="Float32")
+	images=images.reshape(headerdict['nimg'],headerdict['rows'],headerdict['lines'])
+	return images
 
 
 

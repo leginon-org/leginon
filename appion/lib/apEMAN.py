@@ -75,3 +75,23 @@ def getCC(ref,img):
 	cc=cc-(avg1*avg2)
 	cc=cc/math.sqrt(var1*var2)
 	return(cc)
+
+def getClassInfo(classes):
+	# read a classes.*.img file, get # of images
+	imgnum, imgtype = EMAN.fileCount(classes)
+	img = EMAN.EMData()
+	img.readImage(classes, 0, 1)
+
+	# for projection images, get eulers
+	projeulers=[]
+	for i in range(imgnum):
+		img.readImage(classes, i, 1)
+		e = img.getEuler()
+		alt = e.thetaMRC()*180./math.pi
+		az = e.phiMRC()*180./math.pi
+		phi = e.omegaMRC()*180./math.pi
+		eulers=[alt,az,phi]
+		if i%2==0:
+			projeulers.append(eulers)
+	return projeulers
+
