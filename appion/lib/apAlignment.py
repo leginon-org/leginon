@@ -635,16 +635,19 @@ def convertClasslistToEMANlist(params):
 		n = int(splitn[1])
 		num = ("%04d" % (n-1) )
 		outfile = os.path.join(params['rundir'], "classes/"+classroot+num+".lst")
-		inlines = open(infile, "r")
-		out = open(outfile, "w")
-		out.write('#LST\n')
-		for line in inlines:
-			if line.strip()[0]!=';':
-				words = line.split()
-				ptcl = math.floor(float(words[2]))
-				out.write('%d\t%s\n' % (ptcl-1, params['stackfile']))
-		out.close()
-		inlines.close()
+		convertSpiDocToEMANlist(infile,outfile,params['stackfile'])
+
+def convertSpiDocToEMANlist(infile,outfile,stackfile):
+	inlines = open(infile, "r")
+	out = open(outfile, "w")
+	out.write('#LST\n')
+	for line in inlines:
+		if line.strip()[0]!=';':
+			words = line.split()
+			ptcl = math.floor(float(words[2]))
+			out.write('%d\t%s\n' % (ptcl-1, stackfile))
+	out.close()
+	inlines.close()
 
 def insertNoRefRun(params, insert=False):
 	# create a norefParam object
