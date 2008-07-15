@@ -368,6 +368,7 @@ if ($expId) {
 					 'result'=>$reconresults,
 					 );
 			$nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
+			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Reconstruction</a>" ;
 		} else {
 			$nruns[] = "<font color='888888'><i>please login first</i></font>";
 		}
