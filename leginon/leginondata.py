@@ -1675,6 +1675,7 @@ class TiltSeriesData(InSessionData):
 			('tilt max', float),
 			('tilt start', float),
 			('tilt step', float),
+			('number', int),
 		)
 	typemap = classmethod(typemap)
 
