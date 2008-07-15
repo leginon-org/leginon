@@ -498,6 +498,20 @@ class ApRefinementRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApRefinementRunData=ApRefinementRunData
 
+class ApTomogramData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginondata.SessionData),
+			('tiltseries', leginondata.TiltSeriesData),
+			('path', ApPathData),
+			('name', str),
+			('pixelsize', float),
+			('description', str),
+			('md5sum', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApTomogramData=ApTomogramData
+
 class ApInitialModelData(Data):
 	def typemap(cls):
 		return Data.typemap() + (

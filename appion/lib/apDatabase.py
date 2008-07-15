@@ -444,6 +444,16 @@ def isModelInDB(md5sum):
 		return True
 	return False
 	
+def isTomoInDB(md5sum):
+	tomoq = appionData.ApTomogramData()
+	tomoq['md5sum'] = md5sum
+	tomod = tomoq.query(results=1)
+	print tomod
+	sys.exit()
+	if tomod:
+		return True
+	return False
+	
 def isTemplateInDB(md5sum):
 	templq = appionData.ApTemplateImageData()
 	templq['md5sum'] = md5sum

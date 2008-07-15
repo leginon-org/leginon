@@ -58,32 +58,16 @@ class UploadModelScript(appionScript.AppionScript):
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym", type="int",
-			help="Symmetry id in the database", metavar="INT")
-		self.parser.add_option("--old-apix", dest="oldapix", type="float",
-			help="Original pixel size in Angstroms if oldapix != apix, it will be rescaled", metavar="FLOAT")
 		self.parser.add_option("-a", "--apix", dest="newapix", type="float",
 			help="Pixel size in Angstroms", metavar="FLOAT")
-		self.parser.add_option("--res", "--resolution", dest="res", type="float",
-			help="Map resolution in Angstroms", metavar="FLOAT")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Description of the reconstruction (must be in quotes)", metavar="'TEXT'")
-		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
-			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
-		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
-			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True, action="store_true", 
 			help="Commit reconstruction to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True, action="store_false", 
 			help="Do not commit reconstruction to database")
-		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False, action="store_true",
-			help="Do not do any reconstruction calculations only run chimera")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location to store uploaded model", metavar="PATH")
-		self.parser.add_option("-b", "--boxsize", "--newbox", dest="newbox", type="int",
-			help="Boxsize of new model", metavar="INT")
-		self.parser.add_option("-m", "--modelid", "--old-model-id", dest="oldmodelid", type="int",
-			help="Initial model id in the database to rescale", metavar="INT")
 		self.parser.add_option("-n", "--name", dest="name",
 			help="File name for new model, automatically set")
 
@@ -93,21 +77,7 @@ class UploadModelScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a session ID")
 		if self.params['description'] is None:
 			apDisplay.printError("Enter a description of the initial model")
-		if self.params['chimeraonly'] is True:
-			self.params['commit'] = False
-		if self.params['newbox'] is not None and self.params['newbox'] % 16 != 0:
-			apDisplay.printWarning("Box size is not a multiple of 16")
-		if self.params['newbox'] is None:
-			self.params['rescale'] = False
-		else:
-			self.params['rescale'] = True
 		### program requires either a model id  or filename
-		if self.params['oldmodelid'] is not None and self.params['file'] is not None:
-			apDisplay.printError("Either provide a modelid or file, but not both")
-		elif self.params['oldmodelid'] is not None and self.params['rescale'] is False:
-			apDisplay.printError("Please specify either a new boxsize or scale for your model")
-		elif self.params['oldmodelid'] is not None:
-			self.getModelParams()
 		elif self.params['file'] is not None:
 			if not os.path.isfile(self.params['file']):
 				apDisplay.printError("could not find file: "+self.params['file'])
@@ -119,52 +89,31 @@ class UploadModelScript(appionScript.AppionScript):
 		### required only if now model id is provided
 		if self.params['newapix'] is None:
 			apDisplay.printError("Enter the pixel size of the model")
-		if self.params['sym'] is None:
-			apUpload.printSymmetries()
-			apDisplay.printError("Enter a symmetry ID, e.g. --symm=19")
-		if self.params['res'] is None:
-			apDisplay.printError("Enter the resolution of the initial model")
 
 
 	#=====================
 	def setOutDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		print sessiondata
+		print self.params
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
 		self.params['outdir'] = os.path.join(path,"models")
-		sys.exit()
 
 	#=====================
 	def setNewFileName(self, unique=False):
 		#clean up old name
 		basename = os.path.basename(self.params['file'])
 		basename = re.sub(".mrc", "", basename)
-		basename = re.sub("-[0-9]_[0-9]+(apix)?", "", basename)
-		basename = re.sub("-[0-9]+(box)?", "", basename)
-		basename = re.sub("[0-9]+", "", basename)
-		basename = re.sub("-", "", basename)
-		# set apix, box, and foldname
+		# set foldname
 		foldname = os.path.basename(os.path.dirname(self.params['file']))
-		apixname = re.sub("\.", "_", str(round(self.params['newapix'],2)))+"apix"
-		boxsizename = str(int(self.params['newbox']))+"box"
-		if unique:
-			uniqueid = '-'+str(time.time())
-		else:
-			uniqueid = ''
-		if self.params['oldmodelid'] is not None:
-
-			self.params['name'] = basename+"-"+apixname+"-"+boxsizename+uniqueid+".mrc"
-		else:
-			self.params['name'] = foldname+"-"+basename+"-"+apixname+"-"+boxsizename+uniqueid+".mrc"
+		self.params['name'] = basename+".mrc"
 
 	#=====================
 	def getModelParams(self):
 		modeldata = apVolume.getModelFromId(self.params['oldmodelid'])
 		self.params['oldapix'] = float(modeldata['pixelsize'])
-		self.params['sym'] = int(modeldata['symmetry'].dbid)
-		self.params['res'] = float(modeldata['resolution'])
 		self.params['file'] = os.path.join(modeldata['path']['path'], modeldata['name'])
 
 	#=====================
@@ -192,7 +141,7 @@ class UploadModelScript(appionScript.AppionScript):
 			# restart
 			self.start()
 			return True
-		elif apDatabase.isModelInDB(mdnew):
+		elif apDatabase.isTomoInDB(mdnew):
 			### they are the same and its in the database already
 			apDisplay.printWarning("same model with md5sum '"+mdnew+"' already exists in the DB!")
 			apDisplay.printWarning("creating new images, but skipping upload for file: '"+newmodelpath+"'")
@@ -208,13 +157,7 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.params['syminfo'] = apUpload.getSymmetryData(self.params['sym'])
-		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
-		if self.params['newbox'] is None:
-			self.params['newbox'] = self.params['oldbox']
-		if self.params['oldapix'] is None:
-			self.params['oldapix'] = self.params['newapix']
-		self.params['scale'] =  self.params['oldapix']/self.params['newapix']
+		self.params['oldapix'] = self.params['newapix']
 		if self.params['name'] is None:
 			self.setNewFileName()
 		apDisplay.printColor("Naming initial model as: "+self.params['name'], "cyan")
@@ -225,13 +168,6 @@ class UploadModelScript(appionScript.AppionScript):
 			### rescale old model to a new size
 			if self.checkExistingFile():
 				return
-		elif (abs(self.params['oldapix'] - self.params['newapix']) > 1.0e-2 or 
-			abs(self.params['oldbox'] - self.params['newbox']) > 1.0e-1):
-			### rescale old model to a new size
-			apDisplay.printWarning("rescaling original model to a new size")
-			apDisplay.printMsg("rescaling model "+origmodelpath+" by "+str(round(self.params['scale']*100.0,2))+"%")
-			apVolume.rescaleModel(origmodelpath, newmodelpath, 
-				self.params['oldapix'], self.params['newapix'], self.params['newbox'])
 		else:
 			### simple upload, just copy file to models folder
 			apDisplay.printMsg("copying original model to a new location: "+newmodelpath)
