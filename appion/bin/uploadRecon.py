@@ -10,6 +10,7 @@ import apDisplay
 import apStack
 import apRecon
 import apEulerJump
+import appionData
 
 #=====================
 #=====================
@@ -54,8 +55,9 @@ class UploadReconScript(appionScript.AppionScript):
 		# msgPassing requires a jobId in order to get the jobfile & the paramters
 		if ((self.params['package'] == 'EMAN/MsgP' or self.params['package'] == 'EMAN/SpiCoran') 
 		 and self.params['jobid'] is None):
-			apDisplay.printError(self.params['package']+" refinement requires a jobid. Please enter a jobId,"
-				+" e.g. --jobid=734")
+			err = self.tryToGetJobID()
+			if err:
+				apDisplay.printError(self.params['package']+" refinement requires a jobid. Please enter a jobId," +" e.g. --jobid=734" + '\n' + err)
 		if self.params['stackid'] is None:
 			apDisplay.printError("please enter a stack id, e.g. --stackid=734")
 		if self.params['modelid'] is None:
@@ -73,6 +75,26 @@ class UploadReconScript(appionScript.AppionScript):
 			self.params['jobinfo'] = None
 		if self.params['chimeraonly'] is True:
 			self.params['commit'] = False
+
+	def tryToGetJobID(self):
+		jobname = self.params['runid'] + '.job'
+		jobtype = 'recon'
+		jobpath = self.params['outdir']
+		qpath = appionData.ApPathData(path=jobpath)
+		q = appionData.ApClusterJobData(name=jobname, jobtype=jobtype, path=qpath)
+		results = q.query()
+		if len(results) == 1:
+			## success, only one job id found
+			self.params['jobid'] = results[0].dbid
+			return ''
+		elif len(results) > 1:
+			## fail because too many job ids
+			jobids = [result.dbid for result in results]
+			return 'Several Job IDs found for this run: %s\nYou will have to manually specify a jobid' % (jobids,)
+		else:
+			## fail because no job found
+			return 'Tried to look up job based on recon name and path, but no job was found'
+
 
 	#=====================
 	def setOutDir(self):
