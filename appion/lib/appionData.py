@@ -480,6 +480,7 @@ class ApClusterJobData(Data):
 			('dmfpath', ApPathData),
 			('clusterpath', ApPathData),
 			('cluster', str),
+			('jobtype', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApClusterJobData=ApClusterJobData
