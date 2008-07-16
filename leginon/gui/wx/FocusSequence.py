@@ -391,8 +391,9 @@ class Dialog(gui.wx.Dialog.Dialog):
 		method = self.focus_method_choice.GetStringSelection()
 		if method == 'Stage Tilt':
 			self.enableAuto(True)
-			self.correction_type_choice.SetStringSelection('Stage Z')
-			self.correction_type_choice.Disable()
+			# stage tilt focus measurement can not be used to correct defocus
+			if self.correction_type_choice.GetStringSelection()=='Defocus':
+				self.correction_type_choice.SetStringSelection('Stage Z') 
 			self.fit_limit_entry.Disable()
 			self.correct_astig_checkbox.SetValue(False)
 			self.correct_astig_checkbox.Disable()
