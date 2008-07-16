@@ -325,12 +325,12 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		precsz.Add(label2, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		maxerrsz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Local Correlation Size (pixels)')
-		self.widgets['max error'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
-		maxerrsz.Add(label, (0, 0), (1, 1))
-		maxerrsz.Add(self.widgets['max error'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		#maxerrsz = wx.GridBagSizer(5, 5)
+		#label = wx.StaticText(self, -1, 'Local Correlation Size (pixels)')
+		#self.widgets['max error'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')
+		#maxerrsz.Add(label, (0, 0), (1, 1))
+		#maxerrsz.Add(self.widgets['max error'], (0, 1), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
 
 		hysfixsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, '')
@@ -343,8 +343,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5,5)
 		sz.Add(self.widgets['check calibration'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(maxerrsz, (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(maxerrsz, (1, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(precsz, (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(hysfixsz, (3, 0), (1, 1),
