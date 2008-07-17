@@ -24,6 +24,10 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	given two euler as dicts in degrees
 	calculate distance between euler values
 	value in degrees
+	
+	euler1 = alt
+	euler2 = az
+	euler3 = in plane rotation
 	"""
 	e1mat = getEmanEulerMatrix(e1, inplane=inplane)
 	#print e1mat
