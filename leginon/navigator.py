@@ -22,6 +22,8 @@ import gui.wx.Navigator
 import instrument
 import presets
 import types
+import numpy
+import leginondata
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
@@ -35,6 +37,8 @@ class NavigatorClient(object):
 		ev['move precision'] = precision
 		self.node.outputEvent(ev, wait=True)
 		self.node.stopTimer('moveToTarget')
+		## wait for event
+		return status
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
@@ -199,6 +203,38 @@ class Navigator(node.Node):
 			return True
 
 		return False
+
+	def move_away_move_back(self, label, moves, distance, angle=None):
+		self.origmove = 0,0
+		self.origimagedata = self.newimagedata
+		origscope = self.origimagedata['scope']
+		origcamera = self.origimagedata['camera']
+		origstage = origscope['stage position']
+		origx = origstage['x']
+		origy = origstage['y']
+		for i in range(moves):
+			if angle is None:
+				rangle = 2 * numpy.pi * numpy.random.rand()
+			else:
+				rangle = angle
+			deltax = distance * numpy.cos(rangle)
+			deltay = distance * numpy.sin(rangle)
+			tmpx = origx + deltax
+			tmpy = origy + deltay
+			self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+			self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+			self.reacquireImage()
+			r,c,dist = self.checkMoveError()
+			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
+			repdata = leginondata.StageReproducibilityData()
+			repdata['session'] = self.session
+			repdata['label'] = label
+			repdata['move x'] = deltax
+			repdata['move y'] = deltay
+			repdata['error pixels r'] = r
+			repdata['error pixels c'] = c
+			repdata['error meters'] = dist
+			repdata.insert(force=True)
 
 	def cycleToPreset(self, preset=None):
 		if preset is None:

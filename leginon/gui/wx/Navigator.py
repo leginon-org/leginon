@@ -13,7 +13,7 @@
 
 import threading
 import wx
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
+from gui.wx.Entry import IntEntry, FloatEntry, Entry, EVT_ENTRY
 import gui.wx.Camera
 from gui.wx.Choice import Choice
 import gui.wx.ImagePanelTools
@@ -25,8 +25,9 @@ import gui.wx.ToolBar
 import gui.wx.Instrument
 
 LocationsEventType = wx.NewEventType()
-
 EVT_LOCATIONS = wx.PyEventBinder(LocationsEventType)
+TestEventType = wx.NewEventType()
+EVT_TEST = wx.PyEventBinder(TestEventType)
 
 class LocationsEvent(wx.PyCommandEvent):
 	def __init__(self, source, locations):
@@ -51,6 +52,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_STAGE_LOCATIONS,
 													'stagelocations',
 													shortHelpString='Stage Locations')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
+													'ruler',
+													shortHelpString='Test stage reproducibility')
 		# image
 		self.imagepanel = gui.wx.TargetPanel.ClickAndTargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
@@ -88,9 +92,16 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
 											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onReproTest,
+											id=gui.wx.ToolBar.ID_MEASURE)
 		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
 		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
+		self.test_dialog = ReproTestDialog(self)
+		self.Bind(EVT_TEST, self.onReproTest, self)
+
+	def onReproTest(self, evt):
+		self.test_dialog.Show()
 
 	def onMoveTypeChoice(self, evt):
 		self.node.settings['move type'] = evt.GetString()
@@ -413,6 +424,55 @@ class NewLocationDialog(wx.Dialog):
 			self.comment = self.tccomment.GetValue()
 			self.xyonly = self.cbxyonly.GetValue()
 			evt.Skip()
+
+class ReproTestDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+
+		wx.Dialog.__init__(self, parent, -1, 'Test Reproducibiltiy')
+
+		self.measure = wx.Button(self, -1, 'Run')
+		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.measure, (0, 0), (1, 1), wx.EXPAND)
+
+		sbsz = wx.GridBagSizer(5, 5)
+
+		label = wx.StaticText(self, -1, 'Label:')
+		self.labvalue = Entry(self, -1, chars=20, value='test1')
+		sbsz.Add(label, (0,0), (1,1))
+		sbsz.Add(self.labvalue, (0,1), (1,1))
+
+		label = wx.StaticText(self, -1, 'Moves:')
+		self.movesvalue = IntEntry(self, -1, allownone=False, chars=5, value='10')
+		sbsz.Add(label, (1,0), (1,1))
+		sbsz.Add(self.movesvalue, (1,1), (1,1))
+
+		label = wx.StaticText(self, -1, 'Distance:')
+		self.distvalue = FloatEntry(self, -1, allownone=False, chars=5, value='1e-5')
+		sbsz.Add(label, (2,0), (1,1))
+		sbsz.Add(self.distvalue, (2,1), (1,1))
+
+		label = wx.StaticText(self, -1, 'Angle:')
+		self.angvalue = FloatEntry(self, -1, allownone=True, chars=5, value='')
+		sbsz.Add(label, (3,0), (1,1))
+		sbsz.Add(self.angvalue, (3,1), (1,1))
+
+		self.sizer = wx.GridBagSizer(5, 5)
+		self.sizer.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(self.measure, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		self.SetSizerAndFit(self.sizer)
+
+	def onMeasureButton(self, evt):
+		self.Close()
+		label = self.labvalue.GetValue()
+		moves = self.movesvalue.GetValue()
+		distance = self.distvalue.GetValue()
+		angle = self.angvalue.GetValue()
+		threading.Thread(target=self.node.move_away_move_back, args=(label,moves,distance,angle)).start()
+
 
 if __name__ == '__main__':
 	class Node(object):
