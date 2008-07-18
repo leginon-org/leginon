@@ -222,7 +222,9 @@ class Navigator(node.Node):
 			tmpx = origx + deltax
 			tmpy = origy + deltay
 			self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+			time.sleep(2)
 			self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+			time.sleep(2)
 			self.reacquireImage()
 			r,c,dist = self.checkMoveError()
 			self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
