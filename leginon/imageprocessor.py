@@ -38,21 +38,9 @@ class ImageProcessor(node.Node):
 
 		## query, but don't read image files yet, or else run out of memory
 		imagelist = imquery.query(readimages=False)
-		imageids = [image.dbid for image in imagelist]
-		# process in chronological order
-		imageids.reverse()
-		del imagelist
-		for imageid in imageids:
-			self.__processImage(imageid)
-		self.setStatus('idle')
+		## list is reverse chronological, so reverse it
+		imagelist.reverse()
+		self.processImageList(imagelist)
 
-	def __processImage(self, imageid):
-		self.logger.info('processing image: %s' % (imageid,))
-		imagedata = leginondata.AcquisitionImageData.direct_query(imageid)
-		try:
-			self.processImage(imagedata)
-			status = 'success'
-		except:
-			status = 'fail'
-		done = leginondata.ImageProcessDoneData(image=imagedata, status=status)
-		done.insert(force=True)
+	def processImageList(self, imagelist):
+		raise NotImplementedError()
