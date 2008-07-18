@@ -30,7 +30,7 @@ class TargetHandler(object):
 	def reportTargetListDone(self, targetlistdata, status):
 		listid = targetlistdata.dmid
 		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
-		e = event.TargetListDoneEvent(targetlistid=listid, status=status)
+		e = event.TargetListDoneEvent(targetlistid=listid, status=status, targetlist=targetlistdata)
 		self.outputEvent(e)
 
 	def researchTargets(self, **kwargs):
@@ -258,8 +258,9 @@ class TargetHandler(object):
 		return targetdata
 
 	def newSimulatedTarget(self, preset=None):
-		## current state of TEM
+		## current state of TEM, but use preset
 		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		scopedata.friendly_update(preset)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
 		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset)
