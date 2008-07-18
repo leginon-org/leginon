@@ -1855,3 +1855,19 @@ class ImageBackup(InSessionData):
 			('path', str),
 		)
 	typemap = classmethod(typemap)
+
+class ImageProcessorSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ImageProcessDoneData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('status', str),
+		)
+	typemap = classmethod(typemap)
+

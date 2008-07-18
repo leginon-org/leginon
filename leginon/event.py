@@ -100,6 +100,7 @@ class TargetListDoneEvent(NotificationEvent):
 		return NotificationEvent.typemap() + (
 			('targetlistid', tuple),
 			('status', str),
+			('targetlist', leginondata.ImageTargetListData),
 		)
 	typemap = classmethod(typemap)
 

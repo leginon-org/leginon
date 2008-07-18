@@ -163,3 +163,10 @@ type: Utility
 module: maskassessor
 type: Utility
 
+[ImageProcessor]
+module: imageprocessor
+type: Pipeline
+
+[MaxFinder]
+module: maxfinder
+type: Pipeline
