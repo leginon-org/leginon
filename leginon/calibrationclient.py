@@ -986,11 +986,14 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		'''
 		orig_a = self.instrument.tem.StagePosition['a']
 
-		## do positive tilt and measure image shift
 		state1 = data.ScopeEMData()
 		state2 = data.ScopeEMData()
 		state1['stage position'] = {'a':-tilt_value}
 		state2['stage position'] = {'a':tilt_value}
+		## alpha backlash correction
+		self.instrument.tem.StagePosition = state1['stage position']
+		self.instrument.tem.StagePosition = state2['stage position']
+		## do tilt and measure image shift
 		im1 = self.acquireImage(state1)
 		shiftinfo = self.measureScopeChange(im1, state2, correlation_type=correlation_type)
 		self.instrument.tem.StagePosition = {'a':orig_a}
