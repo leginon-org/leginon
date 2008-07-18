@@ -373,6 +373,18 @@ class ModeledStageMoveTestData(MoveTestData):
 		)
 	typemap = classmethod(typemap)
 
+class StageReproducibilityData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('label', str),
+			('move x', float),
+			('move y', float),
+			('error pixels r', float),
+			('error pixels c', float),
+			('error meters', float),
+		)
+	typemap = classmethod(typemap)
+
 class StageModelCalibrationData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
