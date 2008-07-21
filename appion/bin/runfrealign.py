@@ -240,7 +240,7 @@ if __name__ =='__main__':
 		params['invol']=newinvol
 	
 	#if mode is type "search" then generate input parameter file
-	if params['mode']==3:
+	if params['mode']==3 or params['mode']==4:
 		generateParticleParams(params)
 	
 	
