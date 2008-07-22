@@ -205,6 +205,24 @@ class Navigator(node.Node):
 		return False
 
 	def move_away_move_back(self, label, moves, distance, angle=None):
+		# initial move
+		origstage = self.instrument.tem.StagePosition
+		origx = origstage['x']
+		origy = origstage['y']
+		if angle is None:
+			rangle = 2 * numpy.pi * numpy.random.rand()
+		else:
+			rangle = angle
+		deltax = distance * numpy.cos(rangle)
+		deltay = distance * numpy.sin(rangle)
+		tmpx = origx + deltax
+		tmpy = origy + deltay
+		self.instrument.tem.StagePosition = {'x': tmpx, 'y': tmpy}
+		time.sleep(2)
+		self.instrument.tem.StagePosition = {'x': origx, 'y': origy}
+		time.sleep(2)
+		self.acquireImage()
+
 		self.origmove = 0,0
 		self.origimagedata = self.newimagedata
 		origscope = self.origimagedata['scope']
