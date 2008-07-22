@@ -2,6 +2,7 @@
 
 # this will save the particle stack number into the header of a stack.
 # use this if you want to run cenalignint, and keep track of the particles.
+# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!!
 
 import sys
 from EMAN import *
@@ -16,6 +17,6 @@ n=fileCount(filename)[0]
 im=EMData()
 for i in range(n):
     im.readImage(filename,i)
-    im.setNImg(i+1)
+    im.setNImg(i)
     im.writeImage(filename,i)
-    print i+1
+    print i

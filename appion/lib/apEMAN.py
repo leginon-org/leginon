@@ -55,19 +55,34 @@ def getNumParticlesInStack(stackname):
 #=====================
 def numberParticlesInStack(stackname, startnum=1):
 	# store the particle number in the stack header
+	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
 	apDisplay.printMsg("saving particle numbers to header")
 	n=EMAN.fileCount(stackname)[0]
 	print n, "particles in stack"
-	im=''
 	im=EMAN.EMData()
 	for i in range(n):
 		j=startnum+i
 		im.readImage(stackname,i)
-		im.setNImg(j+1)
+		im.setNImg(j)
 		im.writeImage(stackname,i)
-		print j+1
+		print j
 	return
-	
+
+#=====================
+def writeStackParticlesToFile(stackname, filename):
+	# write out the particle numbers from imagic header to a file
+	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
+	apDisplay.printMsg("saving list of saved particles to:")
+	apDisplay.printMsg(filename)
+	f = open(filename,'w')
+	n=EMAN.fileCount(stackname)[0]
+	im=EMAN.EMData()
+	for i in range(n):
+		im.readImage(stackname,i)
+		f.write(str(im.NImg())+"\n")
+	f.close()
+	return
+
 #=====================
 def getEMANPcmp(ref,img):
 	"""returns EMAN quality factor for pcmp properly scaled"""

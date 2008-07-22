@@ -156,8 +156,26 @@ def averageStack(stack="start.hed", msg=True):
 	apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
 
+#========
+def centerParticles(stack):
+	apDisplay.printMsg("centering stack: "+stack)
+	ext=stack.split('.')[-1]
+	fsize = os.stat(stack)[6]
+	# if imagic file, use larger img file
+	if ext == 'hed':
+		fsize = os.stat(re.sub(".hed$",".img",stack))[6]
+	# stack will be centered in 2 gb increments, determine how many
+	frac = int(math.ceil(fsize/2000000000.0))
+	apDisplay.printMsg("file is "+str(fsize)+" bytes, will be split into "+str(frac)+" fractions")
+	for i in range(frac):
+		emancmd = "cenalignint "+stack
+		if frac > 1:
+			emancmd += " frac="+str(i)+"/"+str(frac)
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+	return
+	
 #--------
-def commitSubStack(params):
+def commitSubStack(params, newname=False):
 	"""
 	commit a substack to database
 	
@@ -175,7 +193,13 @@ def commitSubStack(params):
 	stackq = appionData.ApStackData()
 	stackq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	stackq['name'] = oldstackdata['name']
+
+	# use new stack name if provided
+	if newname:
+		stackq['name'] = newname
+
 	stackdata=appiondb.query(stackq, results=1)
+
 	if stackdata:
 		apDisplay.printWarning("A stack with these parameters already exists")
 		return
