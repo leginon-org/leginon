@@ -16,6 +16,6 @@ n=fileCount(filename)[0]
 im=EMData()
 for i in range(n):
     im.readImage(filename,i)
-    im.setNImg(i)
+    im.setNImg(i+1)
     im.writeImage(filename,i)
-    print i
+    print i+1

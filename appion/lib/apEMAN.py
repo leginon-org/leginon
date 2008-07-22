@@ -4,11 +4,11 @@ import subprocess
 import sys
 import time
 
-#try:
-#	import EMAN
-#except ImportError:
-#	apDisplay.printWarning("EMAN module did not get imported")
-#	pass
+try:
+	import EMAN
+except ImportError:
+	apDisplay.printWarning("EMAN module did not get imported")
+	pass
 
 #=====================
 def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
@@ -52,6 +52,22 @@ def getNumParticlesInStack(stackname):
 	numparticles = EMAN.fileCount(stackname)[0]
 	return numparticles
 
+#=====================
+def numberParticlesInStack(stackname, startnum=1):
+	# store the particle number in the stack header
+	apDisplay.printMsg("saving particle numbers to header")
+	n=EMAN.fileCount(stackname)[0]
+	print n, "particles in stack"
+	im=''
+	im=EMAN.EMData()
+	for i in range(n):
+		j=startnum+i
+		im.readImage(stackname,i)
+		im.setNImg(j+1)
+		im.writeImage(stackname,i)
+		print j+1
+	return
+	
 #=====================
 def getEMANPcmp(ref,img):
 	"""returns EMAN quality factor for pcmp properly scaled"""

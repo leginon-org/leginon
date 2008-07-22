@@ -826,12 +826,16 @@ if __name__ == '__main__':
 		params['apix'] = apDatabase.getPixelSize(imgdict)
 
 		# box the particles
+		prevptcls = totptcls
 		totptcls += batchBox(params,imgdict)
 		
 		if not os.path.isfile(os.path.join(params['outdir'], imgname+".hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
 			continue
 
+		# store particle numbers to the header
+		apEMAN.numberParticlesInStack(os.path.join(params['outdir'],imgname+".hed"),prevptcls)
+		
 		# phase flip boxed particles if requested
 		if params['phaseFlipped']:
 			phaseFlip(imgdict, params) # phase flip stack file
