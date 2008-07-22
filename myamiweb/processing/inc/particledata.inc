@@ -859,6 +859,7 @@ class particledata {
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."WHERE sd.`DEF_id` = '$stackId'";
 		list($stack_primary_array) = $this->mysql->getSQLResult($q);
+		if (!$stack_primary_array) return
 		// Get runs in stack
 		$q = "SELECT r.`REF|ApStackRunData|stackRun` as runid "
 			."FROM ApRunsInStackData as r "
