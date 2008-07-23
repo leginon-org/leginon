@@ -78,6 +78,8 @@ function stackEntry($stack, $particle, $hidden=False) {
 	$j = "Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>".$s['shownstackname']."</a> (ID: $stackid)";
 	if ($hidden) $j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>";
 	else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>";
+
+	if ($s['name'] == 'ali.hed' || $s['name'] == 'ali.img') $centered=True;
 	$stacktable.= apdivtitle($j);
 
 	$stacktable.= "<table border='0' width='600'>\n";
@@ -86,6 +88,7 @@ function stackEntry($stack, $particle, $hidden=False) {
 		$stacktable.= "<tr><td rowspan='15' align='center'>";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i><br/>\n";
+		if (!$centered) $stacktable.= "<a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
 		$stacktable.= "</td></tr>\n\n";
 	} #endif
 
@@ -106,6 +109,11 @@ function stackEntry($stack, $particle, $hidden=False) {
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
 	$display_keys['name']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>".$s['name']."</A>";
+	# if stack was created by cenalignint, also view avg & bad stacks
+	if ($centered) {
+		$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$s['path']."/avg.hed&expId=$expId'>avg.hed</A>";
+		$display_keys['bad particles']="<a target='stackview' HREF='viewstack.php?file=".$s['path']."/bad.hed&expId=$expId'>bad.hed</A>";
+	}
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 
