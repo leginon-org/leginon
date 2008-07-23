@@ -64,23 +64,23 @@ def checkStackNumbering(stackname):
 	# renumber the entire stack
 	if n-1 != im.NImg():
 		apDisplay.printWarning("Original stack is not numbered! numbering now...")
-		numberParticlesInStack(stackname)
+		numberParticlesInStack(stackname, startnum=0, verbose=True)
 	return
 	
 #=====================
-def numberParticlesInStack(stackname, startnum=0):
+def numberParticlesInStack(stackname, startnum=0, verbose=False):
 	# store the particle number in the stack header
 	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
 	apDisplay.printMsg("saving particle numbers to header")
 	n=EMAN.fileCount(stackname)[0]
-	print n, "particles in stack"
 	im=EMAN.EMData()
 	for i in range(n):
 		j=startnum+i
 		im.readImage(stackname,i)
 		im.setNImg(j)
 		im.writeImage(stackname,i)
-		print j
+		if verbose is True:
+			print j
 	return
 
 #=====================

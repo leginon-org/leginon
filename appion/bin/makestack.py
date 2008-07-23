@@ -60,7 +60,7 @@ def createDefaults():
 	params['inspectfile']=None
 	params['mag']=None
 	params['phaseFlipped']=False
-	params['apix']=0
+	params['apix']=0.0
 	params['kv']=0
 	params['tiltangle']=None
 	params['inverted']=True
@@ -592,6 +592,7 @@ def insertStackRun(params):
 	stackq['name'] = params['single']
 	stackq['description'] = params['description']
 	stackq['hidden'] = False
+	stackq['pixelsize'] = params['apix']*params['bin']
 	
 	params['stackId']=stackq
 
@@ -659,10 +660,10 @@ def rejectImage(imgdata, params):
 			return False
 	if params['bestimages']:
 		if apDatabase.checkInspectDB(imgdata) is None:
-			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Examplor","cyan")
+			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Exemplar","cyan")
 			return False
 		if params['defocpair'] and checkPairInspectDB(imgdata, params) is None:
-			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Examplor","cyan")
+			apDisplay.printColor(shortname+".mrc was not in KEEP list nor an Exemplar","cyan")
 			return False
 	if params['mag']:
 		if not apDatabase.checkMag(imgdata, params['mag']):
@@ -748,6 +749,15 @@ if __name__ == '__main__':
 		else:
 			images = getImgsFromSelexonId(params)
 
+		# make sure that images all have same pixel size:
+		# first get pixel size of first image:
+		apDisplay.printMsg("Making sure all images are of the same pixel size...")
+		params['apix'] = apDatabase.getPixelSize(images[0])
+		for imgdict in images:
+			# get pixel size
+			if apDatabase.getPixelSize(imgdict) != params['apix']:
+				apDisplay.printError("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
+		
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
 		if params['outdir'] is None:
@@ -799,7 +809,6 @@ if __name__ == '__main__':
 		params['session']=images[0]['session']['name']
 		params['sessionname']=images[0]['session']['name']
 			
-
 	# box particles
 	# if any restrictions are set, check the image
 	totptcls=0
@@ -821,9 +830,6 @@ if __name__ == '__main__':
 
 		if rejectImage(imgdict, params) is False:
 			continue
-
-		# get pixel size
-		params['apix'] = apDatabase.getPixelSize(imgdict)
 
 		# box the particles
 		prevptcls = totptcls
