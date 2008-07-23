@@ -167,6 +167,6 @@ type: Utility
 module: imageprocessor
 type: Pipeline
 
-[MaxFinder]
-module: maxfinder
+[FileNames]
+module: imageprocessorexample
 type: Pipeline
