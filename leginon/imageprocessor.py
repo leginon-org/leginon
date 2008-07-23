@@ -41,6 +41,7 @@ class ImageProcessor(node.Node):
 		## list is reverse chronological, so reverse it
 		imagelist.reverse()
 		self.processImageList(imagelist)
+		self.setStatus('idle')
 
 	def processImageList(self, imagelist):
 		raise NotImplementedError()
