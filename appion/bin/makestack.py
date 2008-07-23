@@ -592,7 +592,7 @@ def insertStackRun(params):
 	stackq['name'] = params['single']
 	stackq['description'] = params['description']
 	stackq['hidden'] = False
-	stackq['pixelsize'] = params['apix']*params['bin']
+	stackq['pixelsize'] = params['apix']*params['bin']*1e-10
 	
 	params['stackId']=stackq
 
