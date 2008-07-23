@@ -954,6 +954,12 @@ class particledata {
 	}		
 
 	function getStackPixelSizeFromStackId ($stackId) {
+		// first see if it's stored in the ApStackData Table (easiest)
+		$q="SELECT pixelsize FROM ApStackData WHERE DEF_id=$stackId";
+		$r = $this->mysql->getSQLResult($q);
+		$apix = $r[0]['pixelsize'];
+		if ($apix && $apix != 0) return $apix;
+
 		//get the first image of the stack assume using defocpair if not specified
 		$q="SELECT "
 			." IF( ( pimage . `defocpair` IS NULL OR pimage . `defocpair` = 1 ) , "
@@ -990,7 +996,7 @@ class particledata {
 			list($r1)= $this->mysql->getSQLResult($q);
 		//if no sibling image when defocpair param is not specified, use the original image
 		$imgId = ($r1['image']) ? $r1['image'] : $r1['pimage'];
-		
+
 		// get image bin and the most recent pixel calibration
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 			."pc.`pixelsize` as ccdpixelsize "
