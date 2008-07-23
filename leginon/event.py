@@ -393,6 +393,14 @@ class MoveToTargetEvent(Event):
 		)
 	typemap = classmethod(typemap)
 
+class MoveToTargetDoneEvent(Event):
+	def typemap(cls):
+		return Event.typemap() + (
+			('target', leginondata.AcquisitionImageTargetData),
+			('status', str),
+		)
+	typemap = classmethod(typemap)
+
 class DevicePublishEvent(PublishEvent):
 	dataclass = leginondata.DeviceData
 	def typemap(cls):

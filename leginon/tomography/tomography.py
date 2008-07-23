@@ -171,7 +171,10 @@ class Tomography(acquisition.Acquisition):
 		return
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
-		self.moveAndPreset(presetdata, emtarget)
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return
 		try:
 			calibrations = self.getCalibrations(presetdata)
 		except CalibrationError, e:

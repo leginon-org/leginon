@@ -24,21 +24,30 @@ import presets
 import types
 import numpy
 import leginondata
+import threading
 
 class NavigatorClient(object):
 	eventoutputs = [event.MoveToTargetEvent]
+	eventinputs = [event.MoveToTargetDoneEvent]
 
 	def __init__(self, node):
 		self.node = node
+		self.node.addEventInput(event.MoveToTargetDoneEvent, self.handleMoveDone)
+
+	def handleMoveDone(self, evt):
+		self.movedonestatus = evt['status']
+		self.movedone.set()
 
 	def moveToTarget(self, target, movetype, precision=0.0):
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
-		self.node.outputEvent(ev, wait=True)
-		self.node.stopTimer('moveToTarget')
+		self.movedone = threading.Event()
+		self.node.outputEvent(ev, wait=False)
 		## wait for event
-		return status
+		self.movedone.wait()
+		self.node.stopTimer('moveToTarget')
+		return self.movedonestatus
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
@@ -74,7 +83,7 @@ class Navigator(node.Node):
 			),
 	}
 	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.MoveToTargetEvent]
-	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent]
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.CameraImagePublishEvent, event.MoveToTargetDoneEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
@@ -120,9 +129,11 @@ class Navigator(node.Node):
 		else:
 			check=False
 		self.startTimer('move')
-		self.move(rows, cols, movetype, precision, check, preset=preset)
+		status = self.move(rows, cols, movetype, precision, check, preset=preset)
 		self.stopTimer('move')
-		self.confirmEvent(ev)
+
+		evt = event.MoveToTargetDoneEvent(status=status, target=targetdata)
+		self.outputEvent(evt)
 
 	def newImage(self, imagedata):
 		self.oldimagedata = self.newimagedata
@@ -269,15 +280,16 @@ class Navigator(node.Node):
 		err = self._move(row, col, movetype)
 		if err:
 			self.setStatus('idle')
-			return
+			return 'error'
 
 		shape = self.origimagedata['image'].shape
 		target = shape[0]/2.0-0.5+self.origmove[0], shape[1]/2.0-0.5+self.origmove[1]
+		status = 'ok'
 		if check:
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
 				self.setStatus('idle')
-				return
+				return 'error'
 			if self.settings['cycle each']:
 				self.cycleToPreset(preset)
 			self.reacquireImage()
@@ -298,13 +310,15 @@ class Navigator(node.Node):
 					self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 					if dist > lastdist:
 						self.logger.info('error got worse')
-						self._moveback()
+						#self._moveback()
+						status = 'error'
 						break
 				self.logger.info('correction done')
 				if self.settings['cycle after']:
 					self.cycleToPreset(preset)
 
 		self.setStatus('idle')
+		return status
 
 	def outofbounds(self, coord, shape):
 		if coord[0] < 0 or coord[0] > shape[0]-1:

@@ -132,7 +132,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
 										event.ImageProcessDoneEvent, event.AcquisitionImageDriftPublishEvent, event.AcquisitionImagePublishEvent] \
-								+ presets.PresetsClient.eventinputs
+								+ presets.PresetsClient.eventinputs \
+								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
 									+ [event.LockEvent,
 											event.UnlockEvent,
@@ -475,6 +476,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('Screen up.')
 
 	def moveAndPreset(self, presetdata, emtarget):
+			status = 'ok'
 			presetname = presetdata['name']
 			targetdata = emtarget['target']
 			#### move and change preset
@@ -488,10 +490,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 				emtarget = None
 				if not self.onTarget and targetdata['type'] != 'simulated':
 					precision = self.settings['move precision']
-					self.navclient.moveToTarget(targetdata, movetype, precision)
+					status = self.navclient.moveToTarget(targetdata, movetype, precision)
+					if status == 'error':
+						return status
 			self.presetsclient.toScope(presetname, emtarget)
 			self.onTarget = True
 			self.setStatus('processing')
+			return status
 
 	def acquireCCD(self, presetdata, emtarget=None):
 		targetdata = emtarget['target']
@@ -532,7 +537,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return imagedata
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
-		self.moveAndPreset(presetdata, emtarget)
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this target')
+			return
 
 		pausetime = self.settings['pause time']
 		self.startTimer('pause')
