@@ -47,10 +47,14 @@ class centerStackScript(appionScript.AppionScript):
 		#new stack path
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+
+		#make sure that old stack is numbered
+		apEMAN.checkStackNumbering(oldstack)
+
 		alignedstack = os.path.join(self.params['outdir'], 'ali.img')
 		apStack.checkForPreviousStack(alignedstack)
 
-		#create the new sub stack
+		#run centering algorithm
 		apStack.centerParticles(oldstack)
 		self.params['keepfile'] = os.path.join(self.params['outdir'],'keepfile.txt')
 		apEMAN.writeStackParticlesToFile(alignedstack, self.params['keepfile'])
