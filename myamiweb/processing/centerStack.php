@@ -67,7 +67,6 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	# get stack name
 	$stackp = $particle->getStackParams($stackId);
 	$filename = $stackp['path'].'/'.$stackp['name'];
-	echo basename($stackp['path']);
 	echo"
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
