@@ -321,14 +321,18 @@ class satAverageScript(appionScript.AppionScript):
 		reconstr = str(self.params['reconid'])
 
 		### recon 3d volumes
-		threedname = os.path.join(self.params['outdir'], self.rootname+".a.mrc")
+		threedname = os.path.join(self.params['outdir'], self.rootname+"."+str(self.params['iter'])+"a.mrc")
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
-			+threedname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
+			+threedname+" hard=25 sym=d7 pad=240 mask="+str(self.params['mask'])+"; echo ''" )
 		#print emancmd
+		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
+		threednameb = os.path.join(self.params['outdir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
+		emancmd = ( "proc3d "+threedname+" "+threednameb
+			+" apix=1.63 norm=0,1 lp=6 mask="+str(self.params['mask'])+"; echo '' " )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
 			# even 
-			evenname = os.path.join(self.params['outdir'], self.rootname+"-even.a.mrc")
+			evenname = os.path.join(self.params['outdir'], self.rootname+"-even."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['evenstack']):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
 					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
@@ -338,7 +342,7 @@ class satAverageScript(appionScript.AppionScript):
 				apDisplay.printWarning("file "+self.params['evenstack']+" does not exist")
 
 			# odd
-			oddname = os.path.join(self.params['outdir'], self.rootname+"-odd.a.mrc")
+			oddname = os.path.join(self.params['outdir'], self.rootname+"-odd."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['oddstack']):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
 					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )

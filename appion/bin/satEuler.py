@@ -575,6 +575,7 @@ class satEulerScript(appionScript.AppionScript):
 				f.write(out)
 			f.write("&\n")
 
+	#=====================
 	def subStackCmd(self):
 		keepfile = os.path.join(self.params['outdir'], "keeplist-tot"+self.datastr+".lst")
 		stackdata = apStack.getRunsInStack(self.params['stackid'])
@@ -588,6 +589,19 @@ class satEulerScript(appionScript.AppionScript):
 			+" iter "+str(self.params['iternum'])
 			+"' \n" )
 		print "New subStack.py Command:"
+		apDisplay.printColor(cmd, "purple")
+
+	#=====================
+	def satAverageCmd(self):
+		keepfile = os.path.join(self.params['outdir'], "keeplist-tot"+self.datastr+".lst")
+		newname = "recon%d_cut%d_iter%d.hed" % (self.params['reconid'], self.params['cutrange']*10, self.params['iternum'])
+		cmd = ( "satAverage.py "
+			+" --reconid="+str(self.params['reconid'])
+			+" \\\n --mask=62 --iter="+str(self.params['iternum'])
+			+" \\\n --stackname="+newname
+			+" \\\n --keep-list="+keepfile
+			+" \n" )
+		print "New satAverage.py Command:"
 		apDisplay.printColor(cmd, "purple")
 
 	######################################################
@@ -654,6 +668,7 @@ class satEulerScript(appionScript.AppionScript):
 		else:
 			apDisplay.printWarning("Not committing results")
 		self.subStackCmd()
+		self.satAverageCmd()
 
 #=====================
 if __name__ == "__main__":
