@@ -52,6 +52,7 @@ class centerStackScript(appionScript.AppionScript):
 		apEMAN.checkStackNumbering(oldstack)
 
 		alignedstack = os.path.join(self.params['outdir'], 'ali.img')
+		badstack = os.path.join(self.params['outdir'], 'bad.img')
 		apStack.checkForPreviousStack(alignedstack)
 
 		#run centering algorithm
@@ -72,6 +73,8 @@ class centerStackScript(appionScript.AppionScript):
 		
 		apStack.commitSubStack(self.params, newname='ali.hed')
 		apStack.averageStack(stack=alignedstack)
+		if (os.path.exists(badstack)):
+			apStack.averageStack(stack=badstack, outfile='badaverage.mrc')
 
 #=====================
 if __name__ == "__main__":

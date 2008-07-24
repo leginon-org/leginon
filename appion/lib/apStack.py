@@ -144,14 +144,14 @@ def getStackIdFromRecon(reconrunid, msg=True):
 	return stackid
 
 #--------
-def averageStack(stack="start.hed", msg=True):
+def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	if msg is True:
 		apDisplay.printMsg("averaging stack for summary web page")
 	stackfile = os.path.abspath(stack)
 	if not os.path.isfile(stackfile):
 		apDisplay.printWarning("could not create stack average, average.mrc")
 		return False
-	avgmrc = os.path.join(os.path.dirname(stackfile), "average.mrc")
+	avgmrc = os.path.join(os.path.dirname(stackfile), outfile)
 	emancmd = ( "proc2d "+stackfile+" "+avgmrc+" average" )
 	apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
