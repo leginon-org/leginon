@@ -80,15 +80,14 @@ class Viewer(wx.Panel):
         if array is None:
             extrema = None
         else:
-            stats = arraystats.all(array)
-            min = stats['mean']- 3 * stats['std']
-            max = stats['mean']+ 3 * stats['std']
+            min = array.min()
+            max = array.mas()
             extrema = (min, max)
 
         mean = array.mean()
         std = array.std()
-        imagemin = mean - 5 * std
-        imagemax = mean + 5 * std
+        imagemin = mean - 3 * std
+        imagemax = mean + 3 * std
         self.numarrayplugin.setNumpy(array)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
