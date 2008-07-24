@@ -17,7 +17,6 @@ from optparse import OptionParser
 import apDisplay
 import apDatabase
 import apParam
-import apStack
 import apDB
 #leginon
 from pyami import mem
@@ -129,6 +128,7 @@ class AppionScript(object):
 
 	#=====================
 	def setOutDir(self):
+		import apStack
 		if ( self.params['outdir'] is None 
 		and 'session' in self.params 
 		and self.params['session'] is not None ):
