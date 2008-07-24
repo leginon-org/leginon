@@ -107,7 +107,7 @@ def parseWrappedLines(lines):
 		
 	return goodlines		
 			
-def closeFunctionLog(params=None, logfile=None, msg=True):
+def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
 	"""
 	Used by appionLoop
 	"""
@@ -119,6 +119,16 @@ def closeFunctionLog(params=None, logfile=None, msg=True):
 		logfile = "function.log"
 	if msg is True:
 		apDisplay.printMsg("closing out function log: "+logfile)
+	if stats is not None and stats['count'] > 3:
+		timesum = stats['timesum']
+		timesumsq = stats['timesumsq']
+		count = stats['count']
+		timeavg = float(timesum)/float(count)
+		timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
+		avgtimestr = "average time: "+apDisplay.timeString(timeavg,timestdev)+"\n"
+	else:
+		avgtimestr = ""
+
 	#WRITE INFO
 	timestamp = "["+time.asctime()+"]\n"
 	out="finished run"
@@ -127,6 +137,7 @@ def closeFunctionLog(params=None, logfile=None, msg=True):
 	out += "\n"
 	f=open(logfile,'a')
 	f.write(timestamp)
+	f.write(avgtimestr)
 	f.write(out)
 	f.close()
 
