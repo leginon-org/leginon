@@ -865,7 +865,7 @@ class AppionLoop(object):
 		if(self.stats['waittime'] > 120):
 			apDisplay.printWarning("waited longer than two hours for new images with no results, so I am quitting")
 			return False
-		apParam.closeFunctionLog(params=self.params)
+		apParam.closeFunctionLog(params=self.params, msg=False, stats=self.stats)
 		print "\nAll images processed. Waiting ten minutes for new images (waited",\
 			self.stats['waittime'],"min so far)."
 		twait0 = time.time()
