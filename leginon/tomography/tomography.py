@@ -295,33 +295,15 @@ class Tomography(acquisition.Acquisition):
 		self.prediction.resetTiltSeriesList()
 		self.initGoodPredictionInfo()
 
-	'''
-	def getShift(self, shift, move_type):
-		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
-		client = self.calclients[move_type]
-		# invert y
-		shift = {'row': shift['y'], 'col': -shift['x']}
-		try:
-			scope_data = client.transform(shift, scope_data, camera_data)
-		except calibrationclient.NoMatrixCalibrationError, e:
-			raise CalibrationError(e)
-		return scope_data[move_type]
-
-	
-	def correctShift(self, shift, move_type):
-		shift = self.getShift(shift, move_type)
-		initializer = {move_type: shift}
-		position = leginondata.ScopeEMData(initializer=initializer)
-		self.instrument.setData(position)
-	'''
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')
 		target = self.adjustTargetForDrift(target)
 		emtarget = self.targetToEMTargetData(target)
 		presetdata = self.presetsclient.getPresetFromDB(preset_name)
-		self.moveAndPreset(presetdata, emtarget)
-		return emtarget
+		status = self.moveAndPreset(presetdata, emtarget)
+		if status == 'error':
+			self.logger.warning('Move failed. skipping acquisition at this adjusted target')
+		return emtarget, status
 
 	def removeStageAlphaBacklash(self, tilts, preset_name, target, emtarget):
 		if len(tilts) < 2:

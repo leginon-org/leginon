@@ -133,11 +133,13 @@ class Collection(object):
 			self.restoreInstrumentState()
 			self.logger.info('Adjust target for the second tilt group...')
 			try:
-				self.emtarget = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
+				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
 			except Exception, e:
 				self.logger.error('Failed to adjust target: %s.' % e)
 				raise
-
+			if status == 'error':
+				self.finalize()
+				return
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, self.preset['name'], self.target, self.emtarget)
