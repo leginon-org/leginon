@@ -53,12 +53,36 @@ def parseCommandLine():
 	params = apParam.convertParserToParams(parser)
 	return params
 
+def locateAmpFile(ampfile):
+	## may be ready to use as is
+	ampabspath = os.path.abspath(ampfile)
+	if os.path.exists(ampabspath):
+		return ampabspath
+
+	## try to find it in same directory as apVolume.py
+	ampfilebase = os.path.basename(ampfile)
+	apvolfile = os.path.abspath(apVolume.__file__)
+	apvoldir = os.path.dirname(apvolfile)
+	ampabspath = os.path.join(apvoldir, ampfilebase)
+	if os.path.exists(ampabspath):
+		return ampabspath
+
+	## can't find it
+	return None
+
 def checkConflicts(params):
 	# make sure the necessary parameters are set
 	if params['apix'] is None:
 		apDisplay.printError("enter a pixel size")
 	if params['file'] is None:
 		apDisplay.printError("enter a file name for processing")
+	if params['ampfile'] is not None:
+		newampfile = locateAmpFile(params['ampfile'])
+		if newampfile is None:
+			apDisplay.printError("Could not locate amplitude file: %s" % (params['ampfile'],))
+		else:
+			params['ampfile'] = newampfile
+			
 	if params['ampfile'] is not None and params['maxfilt'] is None:
 		apDisplay.printError("if performing amplitude correction, enter a filter limit")
 
