@@ -20,6 +20,7 @@ db = MySQLdb.connect(**dbconf)
 # create a cursor
 cursor = db.cursor()
 
+#===========
 def getEulersForIteration(reconid, iteration=1):
 	"""
 	returns all classdata for a particular refinement iteration
@@ -41,72 +42,85 @@ def getEulersForIteration(reconid, iteration=1):
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
 	#print query
+	print "querying for euler values at "+time.asctime()
 	cursor.execute(query)
 	numrows = int(cursor.rowcount)
 	apDisplay.printColor("Found "+str(numrows)+" euler values", "cyan")
 	result = cursor.fetchall()
 	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
-	#r0 = resToEuler(result[int( float(len(result)) * random.random() )])
-	#r1 = resToEuler(result[int( float(len(result)) * random.random() )])
-	#dist = eulerCalculateDistance(r0, r1)
-	#print mat0
-	#print mat1
-	#print "dist=",dist
-	radlist = []
-	anglelist = []
-	freqlist = []
-	xlist = []
-	ylist = []
-	xlist = [ x*30.0 for x in range(-3, 3+1)]
-	ylist = [ y*30.0 for y in range(-3, 3+1)]
 
-	#freqmap = calcFreqEqualArea(result)
-	indres = 1.0
-	indmult = int(90.0/indres)
-	indrange = len(range(-indmult, indmult+1))
-	#freqmap = calcFreqGrid(result, indres)
+	# sort eulers into classes
 	freqmap = calcFreqNative(result)
-	#pprint.pprint(freqmap)
-	#radlist = numpy.zeros((len(freqmap)), dtype=numpy.float32)
-	#anglelist = numpy.zeros((len(freqmap)), dtype=numpy.float32)
-	freqgrid = numpy.zeros((indrange,indrange), dtype=numpy.int32)
 	items = freqmap.items()
 	items.sort(sortFreqMapCart)
 	freqsort = [value for key, value in items]
-	#print freqsort
 
+	# fill lists of data
+	radlist = []
+	anglelist = []
+	freqlist = []
 	for val in freqsort:
 		radlist.append(val[0]/90.0)
-		xlist.append(val[0])
-		ylist.append(val[1])
-		#radlist[val[3]] = val[0]/90.0
 		anglelist.append(val[1]/180.0*math.pi)
-		#anglelist[val[4]] = val[1]/180.0*math.pi
 		freqlist.append(val[2])
-		#freqgrid[val[3],val[4]] = val[2]
-		#freqlist.append(math.log10(val[2]))
-	xlist = [x*indres for x in range(-indmult, indmult+1) ]
-	ylist = [y*indres for y in range(-indmult, indmult+1) ]
+	freqListStat(freqlist)
 
+	return radlist,anglelist,freqlist
+
+#===========
+def freqListStat(freqlist):
 	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
-	#print(freqlist)
-	#print "min=",ndimage.minimum(freqnumpy)
-	#print "max=",ndimage.maximum(freqnumpy)
-	#print "mean=",ndimage.mean(freqnumpy)
-	#print "stdev=",ndimage.standard_deviation(freqnumpy)
+	print "min=",   ndimage.minimum(freqnumpy)
+	print "max=",   ndimage.maximum(freqnumpy)
+	print "mean=",  ndimage.mean(freqnumpy)
+	print "stdev=", ndimage.standard_deviation(freqnumpy)
 	#print "median=",ndimage.median(freqnumpy)
 
-	return radlist,anglelist,freqlist,freqgrid
+#===========
+def getEulersForIterationCoran(reconid, iteration=1):
+	"""
+	returns all classdata for a particular refinement iteration
+	"""
+	t0 = time.time()
+	query = (
+		"SELECT e.euler1, e.euler2, pc.`inplane_rotation` "
+			+"FROM `ApEulerData` AS e "
+			+"LEFT JOIN `ApParticleClassificationData` AS pc "
+			+"ON pc.`REF|ApEulerData|eulers` = e.`DEF_id` "
+			+"LEFT JOIN `ApRefinementData` AS rd "
+			+"ON pc.`REF|ApRefinementData|refinement` = rd.`DEF_id` "
+			+"WHERE rd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" "
+			+"AND pc.`thrown_out` IS NULL "
+			+"AND pc.`coran_keep` = 1 "
+			+"AND rd.`iteration` = "+str(iteration)+" "
+		)
+	#print query
+	print "querying for coran euler values at "+time.asctime()
+	cursor.execute(query)
+	numrows = int(cursor.rowcount)
+	apDisplay.printColor("Found "+str(numrows)+" coran euler values", "cyan")
+	result = cursor.fetchall()
+	apDisplay.printMsg("Fetched coran part data in "+apDisplay.timeString(time.time()-t0))
 
-	for i in range(1000):
-		index = int( float(len(result)) * random.random() )
-		record = result[index]
-		radlist.append(record[2])
-		anglelist.append(record[3])
-		#print record[2] , ",", record[3], ",", record[5]
-	return radlist,anglelist,[],[]
+	# sort results
+	freqmap = calcFreqNative(result)
+	items = freqmap.items()
+	items.sort(sortFreqMapCart)
+	freqsort = [value for key, value in items]
 
+	# put into lists
+	radlist = []
+	anglelist = []
+	freqlist = []
+	for val in freqsort:
+		radlist.append(val[0]/90.0)
+		anglelist.append(val[1]/180.0*math.pi)
+		freqlist.append(val[2])
+	freqListStat(freqlist)
 
+	return radlist,anglelist,freqlist
+
+#===========
 def sortFreqMapCart(a, b):
 	if a[1][3] > b[1][3]:
 		return 1
@@ -119,6 +133,7 @@ def sortFreqMapCart(a, b):
 	else:
 		return 0
 
+#===========
 def sortFreqMapPolar(a, b):
 	ax,ay = polarToCart(a[1][3],a[1][4])
 	bx,by = polarToCart(b[1][3],b[1][4])
@@ -133,7 +148,7 @@ def sortFreqMapPolar(a, b):
 	else:
 		return 0
 
-
+#===========
 def calcFreqGrid(points, indres=30.0):
 	indmult = int(90.0/indres)
 	indexmap = {}
@@ -159,12 +174,14 @@ def calcFreqGrid(points, indres=30.0):
 		indexmap[index] = [xbox*indres, ybox*indres, oldcounts+1, xbox, ybox]
 	return indexmap
 
+#===========
 def polarToCart(rad, thrad):
 	#thrad = thdeg*math.pi/180.0
 	x = rad*math.cos(thrad)
 	y = rad*math.sin(thrad)
 	return x,y
 
+#===========
 def cartToPolar(x, y):
 	r = math.hypot(x,y)
 	if x > 0:
@@ -185,6 +202,7 @@ def cartToPolar(x, y):
 			th = 0
 	return r, th*180.0/math.pi
 
+#===========
 def calcFreqNative(points):
 	indres = 0.1
 	indmult = int(90.0/indres)
@@ -202,7 +220,7 @@ def calcFreqNative(points):
 		indexmap[index] = [rad, theta, oldcounts+1, rbox, tbox]
 	return indexmap
 
-
+#===========
 def calcFreqEqualArea(points, rstep=9.0):
 	indexmap = {}
 	rlen = int(90.0/rstep)
@@ -256,7 +274,7 @@ def calcFreqEqualArea(points, rstep=9.0):
 	#pprint.pprint(indexmap)
 	return indexmap
 
-
+#===========
 def fillDataDict(radlist, anglelist, freqlist):
 	d = {}
 
@@ -291,6 +309,7 @@ def fillDataDict(radlist, anglelist, freqlist):
 
 	return d
 
+#===========
 def makeTriangleImage(radlist, anglelist, freqlist, 
 		imgname="temp.png", imgdim=640, crad=8, frame=30):
 	d = {}
@@ -332,7 +351,7 @@ def makeTriangleImage(radlist, anglelist, freqlist,
 
 	return
 
-
+#===========
 def makePolarImage(radlist, anglelist, freqlist, 
 		imgname="temp.png", imgdim=640, crad=8, frame=60):
 	"""
@@ -386,11 +405,12 @@ def makePolarImage(radlist, anglelist, freqlist,
 
 	return
 
-
+#===========
 def freqToColor(freq, maxf, rangef):
 	fgray = 255.0*((maxf-freq)/rangef)**2
 	return fgray
 
+#===========
 def drawAxes(draw, imgdim, crad, img, d):
 
 	#pprint.pprint(d)
@@ -437,7 +457,7 @@ def drawAxes(draw, imgdim, crad, img, d):
 	coord = (end-shiftx, end)
 	draw.text(coord, txt, fill="black")
 
-
+#===========
 def drawPolarAxes(draw, imgdim, frame, img, d, overmult=1.02):
 	#Axes 1
 	x, y = polarToCart(d['minr'], 0.0)
@@ -553,6 +573,7 @@ def drawPolarAxes(draw, imgdim, frame, img, d, overmult=1.02):
 
 	return
 
+#===========
 def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=10):
 	rangef = maxf - minf
 	xs = imgdim-crad*numsc*gap-crad*2
@@ -577,6 +598,7 @@ def drawLegend(draw, imgdim, crad=10, minf=0, maxf=100, gap=4, numsc=10):
 	draw.text(cartcoord2, "number of particles", fill="black")
 	return
 
+#===========
 def grayToColor(gray):
 	b = 32
 	if gray < 128:
@@ -589,6 +611,7 @@ def grayToColor(gray):
 		g = 2*(255 - gray)
 	return colorTupleToHex(r, g, b, scale=0.8)
 
+#===========
 def colorTupleToHex(r, g, b, scale=1):
 	#print r,g,b
 	ir = int(r*scale)
@@ -598,6 +621,7 @@ def colorTupleToHex(r, g, b, scale=1):
 	hexstr = "#"+apDisplay.leftPadString(hexcode, n=6, fill='0')
 	return hexstr
 
+#===========
 def makePlot(radlist,anglelist,freqlist,freqgrid):
 	import pylab
 	from matplotlib import cm
@@ -635,6 +659,7 @@ def makePlot(radlist,anglelist,freqlist,freqgrid):
 	#pylab.savefig('polar_test2')
 	pylab.show()
 
+#===========
 def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
 	"""
 	stolen from http://mail.python.org/pipermail/image-sig/2000-July/001141.html
@@ -683,31 +708,41 @@ def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
 
 	return im
 
-def createEulerImages(recon=239, iternum=1, path="."):
-	radlist, anglelist, freqlist, freqgrid = getEulersForIteration(recon, iternum)
+#===========
+def createEulerImages(recon=239, iternum=1, path=".", coran=False):
+	radlist, anglelist, freqlist = getEulersForIteration(recon, iternum)
 	file1 = os.path.join(path, "eulerTriangle-"+str(recon)+"_"+str(iternum)+".png")
 	makeTriangleImage(radlist, anglelist, freqlist, imgname=file1)	
 	file2 = os.path.join(path, "eulerPolar-"+str(recon)+"_"+str(iternum)+".png")
-	makePolarImage(radlist, anglelist, freqlist, imgname=file2)	
+	makePolarImage(radlist, anglelist, freqlist, imgname=file2)
 
+	if coran is True:
+		radlist, anglelist, freqlist = getEulersForIterationCoran(recon, iternum)
+		file3 = os.path.join(path, "eulerPolarCoran-"+str(recon)+"_"+str(iternum)+".png")
+		makePolarImage(radlist, anglelist, freqlist, imgname=file3)
+
+#===========
+#===========
 if __name__ == "__main__":
 	t0 = time.time()
 	#createEulerImages(239, 4)  ## small groEL
 	#createEulerImages(212, 4)  ## icos virus
-	createEulerImages(212, 8)  ## icos virus
+	#createEulerImages(212, 8)  ## icos virus
 	#createEulerImages(231, 3)  ## c6 virus tail
-	createEulerImages(231, 9)  ## c6 virus tail
+	#createEulerImages(231, 9)  ## c6 virus tail
 	#createEulerImages(239, 8)  ## med groEL
 	#createEulerImages(217, 1)  ## small assymmetric
-	createEulerImages(217, 12)  ## big assymmetric
-	createEulerImages(239, 20)  ## large groEL
+	#createEulerImages(217, 12)  ## big assymmetric
+	#createEulerImages(239, 20)  ## large groEL
 	#createEulerImages(181, 4)
-	createEulerImages(173, 12) ## huge groEL, broken
+	#createEulerImages(173, 12) ## huge groEL, broken
 	#createEulerImages(158, 1)  ## small assymmetric
 	#createEulerImages(118, 2)
 	#createEulerImages(159, 1)  ## small assymmetric
 	#createEulerImages(158, 4)
 
+	### coran
+	createEulerImages(296, 2, ".", True)
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
 
 

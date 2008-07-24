@@ -647,7 +647,12 @@ def insertIteration(iteration, params):
 	apDisplay.printMsg("creating euler frequency map")
 	refrunid = int(params['refinementRun'].dbid)
 	iternum = int(iteration['num'])
-	apEulerDraw.createEulerImages(refrunid, iternum, path=params['outdir'])
+	if params['package'] == 'EMAN/SpiCoran':
+		coran = True
+	else:
+		coran = False
+
+	apEulerDraw.createEulerImages(refrunid, iternum, path=params['outdir'], coran=coran)
 
 	return
 
