@@ -12,6 +12,7 @@ import convolver
 import imagefun
 
 import numpy
+import quietscipy
 import scipy.ndimage as nd_image
 from scipy.linalg import lstsq as linear_least_squares
 

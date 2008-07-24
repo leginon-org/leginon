@@ -7,6 +7,7 @@
 #
 
 import numpy
+import quietscipy
 import scipy.ndimage
 import fftengine
 import numextension

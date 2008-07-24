@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy
+import quietscipy
 from scipy import fftpack
 import scipy.ndimage
 import correlator

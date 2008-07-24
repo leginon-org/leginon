@@ -3,6 +3,7 @@ things that make affine_transform easier
 '''
 
 import numpy
+import quietscipy
 import scipy.ndimage
 
 def affine_transform_offset(inputshape, outputshape, affine_matrix, offset=(0,0)):

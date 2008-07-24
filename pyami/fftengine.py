@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import quietscipy
 import scipy.fftpack
 import scipy.__config__
 
