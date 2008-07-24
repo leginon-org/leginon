@@ -33,6 +33,7 @@ class NavigatorClient(object):
 	def __init__(self, node):
 		self.node = node
 		self.node.addEventInput(event.MoveToTargetDoneEvent, self.handleMoveDone)
+		self.movedone = threading.Event()
 
 	def handleMoveDone(self, evt):
 		self.movedonestatus = evt['status']
@@ -42,7 +43,7 @@ class NavigatorClient(object):
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
-		self.movedone = threading.Event()
+		self.movedone.clear()
 		self.node.outputEvent(ev, wait=False)
 		## wait for event
 		self.movedone.wait()
