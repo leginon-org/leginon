@@ -14,7 +14,10 @@ class TiltSeries(object):
 		return len(self.tilt_groups)
 
 	def getCurrentTiltGroup(self):
-		return self.tilt_groups[-1]
+		if self.tilt_groups:
+			return self.tilt_groups[-1]
+		else:
+			return TiltGroup()
 
 class TiltGroup(object):
 	def __init__(self):
