@@ -69,8 +69,14 @@ class Collection(object):
 			lpf = 1.5
 		else:
 			lpf = None
-		self.correlator = tiltcorrelator.Correlator(self.theta, 6, lpf)
-		#self.settings['xcf bin']
+		# bin down images for correlation
+		imageshape = self.preset['dimension']
+		maxsize = max((imageshape['x'],imageshape['y']))
+		if maxsize > 512:
+			correlation_bin = int(max((imageshape['x'],imageshape['y']))/(1024/3.0))
+		else:
+			correlation_bin = 1
+		self.correlator = tiltcorrelator.Correlator(self.theta, correlation_bin, lpf)
 
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
