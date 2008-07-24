@@ -73,13 +73,18 @@ function stackEntry($stack, $particle, $hidden=False) {
 		updateDescription('ApStackData', $stackid, $_POST['newdescription'.$stackid]);
 	$s=$particle->getStackParams($stackid);
 	# get list of stack parameters from database
-	$nump=commafy($particle->getNumStackParticles($stackid));
+	$nump=$particle->getNumStackParticles($stackid);
 	if ($nump == 0) return;
 	$j = "Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>".$s['shownstackname']."</a> (ID: $stackid)";
 	if ($hidden) $j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>";
 	else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>";
 
-	if ($s['name'] == 'ali.hed' || $s['name'] == 'ali.img') $centered=True;
+	// if particles were centered, find out info about original stack
+	if ($s['name'] == 'ali.hed' || $s['name'] == 'ali.img') {
+		$centered=True;
+		$oldnump=$particle->getNumStackParticles($s[0]['stackId']);
+	}
+
 	$stacktable.= apdivtitle($j);
 
 	$stacktable.= "<table border='0' width='600'>\n";
@@ -114,7 +119,12 @@ function stackEntry($stack, $particle, $hidden=False) {
 
 	$display_keys['description']=$descDiv;
 
-	$display_keys['# prtls']=$nump;
+	if ($centered) {
+		$display_keys['# good prtls']=commafy($nump);
+		$display_keys['# bad prtls']=commafy($oldnump-$nump);
+	}
+	else $display_keys['# prtls']=commafy($nump);
+	
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
 	$display_keys['name']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>".$s['name']."</A>";
