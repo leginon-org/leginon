@@ -79,20 +79,21 @@ class Viewer(wx.Panel):
     def setNumpy(self, array):
         if array is None:
             extrema = None
+            contrastlimit = None
         else:
             min = array.min()
-            max = array.mas()
+            max = array.max()
             extrema = (min, max)
-
-        mean = array.mean()
-        std = array.std()
-        imagemin = mean - 3 * std
-        imagemax = mean + 3 * std
+            mean = array.mean()
+            std = array.std()
+            imagemin = mean - 3 * std
+            imagemax = mean + 3 * std
+            contrastlimit = (imagemin,imagemax)
         self.numarrayplugin.setNumpy(array)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
                                                       fromrange=extrema)
-        self.tools.valuescaletool.setValueRange((imagemin, imagemax))
+        self.tools.valuescaletool.setValueRange(contrastlimit)
 
     def onDisplayBitmap(self, evt):
         self.tools.toggleShown(self.tools.displaytool)
