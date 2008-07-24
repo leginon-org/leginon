@@ -84,11 +84,16 @@ class Viewer(wx.Panel):
             min = stats['mean']- 3 * stats['std']
             max = stats['mean']+ 3 * stats['std']
             extrema = (min, max)
+
+        mean = array.mean()
+        std = array.std()
+        imagemin = mean - 5 * std
+        imagemax = mean + 5 * std
         self.numarrayplugin.setNumpy(array)
         self.tools.infotool.setStatistics(array)
         self.tools.valuescalebitmap.updateParameters(extrema=extrema,
                                                       fromrange=extrema)
-        self.tools.valuescaletool.setValueRange(extrema)
+        self.tools.valuescaletool.setValueRange((imagemin, imagemax))
 
     def onDisplayBitmap(self, evt):
         self.tools.toggleShown(self.tools.displaytool)
