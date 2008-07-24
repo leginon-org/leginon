@@ -95,8 +95,8 @@ class Prediction(object):
 
 	def predict(self, tilt):
 		n_start_fit = 3
-		print len(self.tilt_series_list)
-		print len(self.valid_tilt_series_list)
+		if len(self.tilt_series_list) != len(self.valid_tilt_series_list):
+			print "%s out of %s tilt series are used in prediction"
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		n_tilt_series = len(self.valid_tilt_series_list)
@@ -108,10 +108,9 @@ class Prediction(object):
 		for s in self.valid_tilt_series_list:
 			for g in s.tilt_groups:
 				n.append(len(g))
-				print 'n, g.tilts', n, g.tilts
-				gmaxtilt.append(max(g.tilts))
-				gmintilt.append(min(g.tilts))
-		n_max = max(n)
+				if len(g.tilts) > 0:
+					gmaxtilt.append(max(g.tilts))
+					gmintilt.append(min(g.tilts))
 		maxtilt = max(gmaxtilt)
 		mintilt = min(gmintilt)
 		parameters = self.getCurrentParameters()
