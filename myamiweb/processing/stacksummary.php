@@ -84,12 +84,21 @@ function stackEntry($stack, $particle, $hidden=False) {
 
 	$stacktable.= "<table border='0' width='600'>\n";
 	$stackavg = $s['path']."/average.mrc";
+	$badstackavg = $s['path']."/badaverage.mrc";
 	if (file_exists($stackavg)) {
-		$stacktable.= "<tr><td rowspan='15' align='center'>";
+		$stacktable.= "<tr>\n";
+		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i><br/>\n";
 		if (!$centered) $stacktable.= "<a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
-		$stacktable.= "</td></tr>\n\n";
+		$stacktable.= "</td>\n";
+		if ($centered && file_exists($badstackavg)) {
+			$stacktable.= "<td rowspan='15' align='center' valign='top'>";
+			$stacktable.= "<img src='loadimg.php?filename=$badstackavg' height='150'><br/>\n";
+			$stacktable.= "<i>averaged bad stack</i><br/>\n";
+			$stacktable.= "</td>\n";
+		}
+		$stacktable.= "</tr>\n\n";
 	} #endif
 
 	# get pixel size of stack
