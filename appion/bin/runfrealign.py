@@ -7,8 +7,8 @@ import apDB
 import apStack
 import apVolume
 import apCtf
-#from pyami import mrc
-import mymrc as mrc
+from pyami import mrc
+#import mymrc as mrc
 
 apdb=apDB.apdb
 workingstackname="start.hed"
@@ -19,7 +19,7 @@ def createFrealignJob (params):
 	remainder= params['last']%params['proc']
 	lastparticle=0	
 	for n in range(0,params['proc']):
-		print "remainder", remainder		
+		#print "remainder", remainder		
 		firstparticle=lastparticle+1
 		lastparticle=firstparticle+ptcls_per_job-1
 		
@@ -62,16 +62,16 @@ def setupParserOptions():
 	parser.add_option('--astigrefine', dest="astigrefine" , default = 'F', help = "no astigmatism refinemet")
 	parser.add_option('--fliptilt', dest="fliptilt" , default = 'F', help = "no rotation of theta by 180 degrees")
 	parser.add_option('--ewald', dest="ewald" , default = 0, type='int', help = "no ewald curvature correction")
-	parser.add_option('--matches', dest="matches" , default = 'F', help = "write out particles with matching projections")
+	parser.add_option('--matches', dest="matches" , default = 'T', help = "write out particles with matching projections")
 	parser.add_option('--history', dest="history" , default = 'F', help = "write out history of itmax randomization trials")
 	parser.add_option('--finalsym', dest="finalsym" , default = 'F', help = "apply final real space symmetrization to beautify reconstruction")
 	parser.add_option('--fomfilter', dest="fomfilter" , default = 'F', help = "apply FOM filter to final reconstruction")
 	parser.add_option('--fsc', dest="fsc" , default = 0, type='int', help = "internall calculate FSC between even and odd particles")
 	
 	####card 2
-	parser.add_option('--radius', dest="radius" , default = 146, type='int', help = "radius from center of particle to outer edge")
+	parser.add_option('--radius', dest="radius" , type='int', help = "radius from center of particle to outer edge")
 	parser.add_option('--iradius', dest="iradius" , default = 0, type='int', help = "inner mask radius")
-	parser.add_option('--apix', dest="apix" , default = 3.11, type='float', help = "pixel size in angstroms")
+	parser.add_option('--apix', dest="apix" , type='float', help = "pixel size in angstroms")
 	parser.add_option('--ampcontrast', dest="ampcontrast" , default = 0.07, type='float', help = "amplitude contrast")
 	parser.add_option('--maskthresh', dest="maskthresh" , default = 0.0, type='float', help = "standard deviations above mean for masking of input model")
 	parser.add_option('--phaseconstant', dest="phaseconstant" , default = 100,type='int', help = "conversion constant for phase residual weighting of particles. 100 gives equal weighting")
@@ -81,11 +81,11 @@ def setupParserOptions():
 	parser.add_option('--maxmatch', dest="maxmatch" , default = 10, type='int', help = "number of potential matches in a search that should be tested further in local refinement")
 	
 	####card 3
-	parser.add_option('--psi', dest="psi" , default = 0, type='int', help = "refine psi")
-	parser.add_option('--theta', dest="theta" , default = 0, type='int', help = "refine theta")
-	parser.add_option('--phi', dest="phi" , default = 0, type='int',help = "refine phi")
-	parser.add_option('--deltax', dest="deltax" , default = 0, type='int', help = "refine delta X")
-	parser.add_option('--deltay', dest="deltay" , default = 0, type='int', help = "refine delta Y")
+	parser.add_option('--psi', dest="psi" , default = 1, type='int', help = "refine psi")
+	parser.add_option('--theta', dest="theta" , default = 1, type='int', help = "refine theta")
+	parser.add_option('--phi', dest="phi" , default = 1, type='int',help = "refine phi")
+	parser.add_option('--deltax', dest="deltax" , default = 1, type='int', help = "refine delta X")
+	parser.add_option('--deltay', dest="deltay" , default = 1, type='int', help = "refine delta Y")
 	
 	####card 4
 	parser.add_option('--first', dest="first" , default = 1, type='int', help = "first particle")
@@ -96,7 +96,7 @@ def setupParserOptions():
 	
 	####card 6
 	parser.add_option('--relmag', dest="relmag" , default = 1, type='float', help = "relative magnification of dataset?")
-	parser.add_option('--dstep', dest="dstep" , default = 14.0, type='float', help = "densitometer step size")
+	#parser.add_option('--dstep', dest="dstep" , default = 14.0, type='float', help = "densitometer step size")
 	parser.add_option('--targetresidual', dest="targetresidual" , default = 25.0, type='float', help = "target phase residual during refinement")
 	parser.add_option('--residualthresh', dest="residualthresh" , default = 90.0, type='float', help = "phase residual threshold cut-off")
 	parser.add_option('--cs', dest="cs" , default = 2.0, type='float', help = "spherical aberation")
@@ -106,8 +106,8 @@ def setupParserOptions():
 	
 	####card 7
 	parser.add_option('--reslimit', dest="reslimit" , default = 10.0, type='float',  help = "resolution to which to limit the reconstruction")
-	parser.add_option('--hp', dest="hp" , default = 100.0, type='float', help = "upper limit for low resolution signal")
-	parser.add_option('--lp', dest="lp" , default = 35.0, type='float', help = "lower limit for high resolution signal")
+	parser.add_option('--hp', dest="hp" , default = 500.0, type='float', help = "upper limit for low resolution signal")
+	parser.add_option('--lp', dest="lp" , default = 10.0, type='float', help = "lower limit for high resolution signal")
 	parser.add_option('--bfactor', dest="bfactor" , default = 0.0, type='float', help = "bfactor to apply to particles before classification. 0.0 applies no bfactor.")
 	
 	####card 8
@@ -117,16 +117,16 @@ def setupParserOptions():
 	parser.add_option('--matchstack', dest="matchstack" , default = 'match.mrc', help = "output projection matches")
 	
 	####card 10
-	parser.add_option('--inpar', dest="inpar" , default = 'inpar.par', help = "input particle parameter file")
+	parser.add_option('--inpar', dest="inpar" , default = 'params.0.par', help = "input particle parameter file")
 	
 	####card 11
-	parser.add_option('--outpar', dest="outpar" , default = 'outpar.par', help = "output particle parameter file")
+	parser.add_option('--outpar', dest="outpar" , default = 'params.1.par', help = "output particle parameter file")
 
 	####card 12
 	parser.add_option('--outshiftpar', dest="outshiftpar" , default = 'shift.par', help = "output particle shift parameter file")
 	
 	####card 13
-	parser.add_option('--invol', dest="invol" , default = 'threed.0a.mrc', help = "input reference volume")
+	parser.add_option('--invol', dest="invol" , default = 'threed.0.mrc', help = "input reference volume")
 	
 	####card 14
 	parser.add_option('--weight3d', dest="weight3d" , default = 'weights.mrc', help = "???")
@@ -149,7 +149,7 @@ def setupParserOptions():
 	#### Appion params
 	parser.add_option('--stackid', dest='stackid', help="stack id from database")
 	parser.add_option('--mrchack', dest='mrchack', action='store_true', help="hack to fix machine stamp in mrc header")
-	parser.add_option('--outvol', dest='outvol', help="name of output volume")
+	parser.add_option('--outvol', dest='outvol', help="name of output volume", default = 'threed.1.mrc')
 	parser.add_option('--proc', dest='proc', default=1, type='int', help="number of processors")
 	 
 	return parser
@@ -177,6 +177,7 @@ def writeParticleParamLine(particleparams, fileobject):
 
 def generateParticleParams(params):
 	stackdata=apStack.getStackParticlesFromId(params['stackid'])
+	apix=params['apix']
 	particleparams={}
 	f=open(params['inpar'],'w')
 	print "Writing out particle parameters"
@@ -187,7 +188,7 @@ def generateParticleParams(params):
 		particleparams['df1']=ctfdata['defocus1']*1e10
 		particleparams['df2']=ctfdata['defocus2']*1e10
 		particleparams['angast']=ctfdata['angle_astigmatism']
-		particleparams['mag'] = stackdata[0]['particle']['image']['scope']['magnification']
+		particleparams['mag'] = (params['dstep']*10000)/apix #calculate mag from apix and step sizels
 		particleparams['psi']=0
 		particleparams['theta']=0
 		particleparams['phi']=0
@@ -199,13 +200,31 @@ def generateParticleParams(params):
 		writeParticleParamLine(particleparams,f)
 	f.close()
 	
+def forceMrcHeader(array=None):
+	'''
+Hack to force MRC header to something that frealign will accept.
+This may only be necessary on 64-bit machine
+	'''
+	h=mrc.newHeader()
+	mrc.updateHeaderDefaults(h)
+	if array is not None:
+		mrc.updateHeaderUsingArray(h,array)
+	h['byteorder']=0x4144
+	return h
+
 def imagicToMrc(stackname,mrcname):
 	stackdict=apStack.readImagic(stackname)
-	mrc.write(stackdict['images'],mrcname)
+	#force machine stamp integer
+	print "forcing machine stamp"
+	h=forceMrcHeader(array=stackdict['images'])
+	mrc.write(stackdict['images'],mrcname, header=h)
 
 def fixMrcHeaderHack(involname, outvolname):
 	a=mrc.read(involname)
-	mrc.write(a,outvolname)
+	#force machine stamp integer
+	print "forcing machine stamp"
+	h=forceMrcHeader(array=a)
+	mrc.write(a,outvolname,header=h)
 		
 if __name__ =='__main__':
 
@@ -215,6 +234,9 @@ if __name__ =='__main__':
 	#set up parameters
 	parser=setupParserOptions()
 	params=apParam.convertParserToParams(parser)
+	
+	#force densitometer step size to be 14.0. This param is required, so we fake it for CCD
+	params['dstep']=14.0
 	params['iter']=3
 
 	#set up directories
@@ -256,7 +278,7 @@ if __name__ =='__main__':
 	for n in params['jobs']:
 		command=("frealign < %s " % (n))
 		print command
-	#os.system(command)
+	os.system(command)
 	
 	
 	#copy results back to run dir

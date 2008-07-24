@@ -312,7 +312,7 @@ Could be improved with more sophisticated error testing and header parsing
 Currently  only reads image data as floats
 Currently reads header information for only first image in stack
 """
-	root=filename.split('.')[0]
+	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
 	stack={}
