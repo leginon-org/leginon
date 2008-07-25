@@ -100,6 +100,16 @@ def getSessionDataFromSessionName(sessionname):
 	else:
 		apDisplay.printError("could not find session, "+sessionname)
 
+def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
+        apDisplay.printMsg("looking up session, "+ str(sessiondata.dbid)); 
+        tiltq = leginondata.TiltSeriesData()
+        tiltseriesq = leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
+        tiltseriesdata = leginondb.query(tiltseriesq, readimages=False,results=1)
+        if tiltseriesdata:
+                return tiltseriesdata[0]
+        else:
+                apDisplay.printError("could not find tilt series, "+sessionname)
+
 def getImageData(imgname):
 	"""
 	get image data object from database
@@ -448,6 +458,7 @@ def isTomoInDB(md5sum):
 	tomoq = appionData.ApTomogramData()
 	tomoq['md5sum'] = md5sum
 	tomod = tomoq.query(results=1)
+	print tomoq
 	print tomod
 	sys.exit()
 	if tomod:
