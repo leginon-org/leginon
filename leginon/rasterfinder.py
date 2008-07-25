@@ -14,6 +14,7 @@ import threading
 import ice
 import numpy
 import math
+import pyami.quietscipy
 from scipy import ndimage
 from pyami import arraystats
 import gui.wx.RasterFinder

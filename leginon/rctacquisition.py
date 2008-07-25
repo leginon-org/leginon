@@ -12,6 +12,7 @@ import libCVwrapper
 import numpy
 import time
 import math
+import pyami.quietscipy
 from scipy import ndimage
 pi = numpy.pi
 
