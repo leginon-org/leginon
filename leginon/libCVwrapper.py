@@ -3,6 +3,7 @@
 import threading
 import numpy
 import math
+import pyami.quietscipy
 from scipy import ndimage
 pi = numpy.pi
 

@@ -12,6 +12,7 @@ import imagewatcher
 import threading
 import node
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun
 import gui.wx.FFTMaker

@@ -13,6 +13,7 @@ on a tilted stage so that they appear to be untilted.
 '''
 
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 from pyami import arraystats, convolver, affine
 import math

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy
+import pyami.quietscipy
 from scipy.optimize import leastsq
 
 def gaussian(sigma, a, b, dr, dc, r, c):

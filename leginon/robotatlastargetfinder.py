@@ -13,6 +13,7 @@
 
 import math
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 import threading
 import align

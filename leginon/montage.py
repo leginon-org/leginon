@@ -8,6 +8,7 @@ offset means:
 '''
 
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 import leginondata
 import polygon
