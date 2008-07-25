@@ -149,6 +149,10 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	return transq
 
 def getStackParticleTiltPair(stackid, partnum):
+	"""
+	takes a stack id and particle number (1+) spider-style
+	returns the stack particle number for the tilt pair
+	"""
 	stackpartdata1 = apStack.getStackParticle(stackid, partnum)
 	partdata = stackpartdata1['particle']
 
