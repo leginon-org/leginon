@@ -237,56 +237,61 @@ function createForm() {
 	$formAction=$_SERVER['PHP_SELF']."?session=".$_POST['session']."&id=".$_POST['image'];
 	?>
 <html>
-  <head>
-    <title><?=$title; ?> queue remover</title>
-    <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-    <STYLE type="text/css">
-       DIV.comment_section { text-align: justify; 
+	<head>
+		<title><?=$title; ?> queue remover</title>
+		<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+		<STYLE type="text/css">
+			 DIV.comment_section { text-align: justify; 
 		margin-top: 5px;
 		font-size: 10pt}
-       DIV.comment_subsection { text-indent: 2em;
+			 DIV.comment_subsection { text-indent: 2em;
 		font-size: 10pt;
 		margin-top: 5px ;
 		margin-bottom: 15px ;
 	}
-    </STYLE>
-    <script>
-       function init() {
+		</STYLE>
+		<script>
+			 function init() {
 	 this.focus();
-       }
-    </script>
-  </head>
-  <body onload="init();" >
-    <table border=0 cellspacing="0" cellpadding=0>
-      <tr>
-        <td>
-          <table>
-            <tr>
-              <td>total target list =
-              </td>
-              <td> <? echo count($imagetls); ?>
-              </td>
-            </tr>
-            <tr>
-              <td>total dequeued image target list =
-              </td>
-              <td> <? echo count($dqimagetls); ?>
-              </td>
-            </tr>
-          </table>
-        </td>
-        <TD ALIGN='RIGHT' VALIGN='BOTTOM'>
+			 }
+		</script>
+	</head>
+	<body onload="init();" >
+		<table border=0 cellspacing="0" cellpadding=0>
+			<tr>
+				<td colspan = "2"><h5>*Only work for the lists not yet start processing
+						 </br>Use the ABORT button in Leginon for the current list</h5>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<table>
+						<tr>
+							<td>total target list =
+							</td>
+							<td> <? echo count($imagetls); ?>
+							</td>
+						</tr>
+						<tr>
+							<td>total dequeued image target list =
+							</td>
+							<td> <? echo count($dqimagetls); ?>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<TD ALIGN='RIGHT' VALIGN='BOTTOM'>
  <FORM name='removeform' method='POST' ACTION='<?$formAction?>' >
-          <input type='submit' name='remove' value='Remove Active'><BR>
+					<input type='submit' name='remove' value='Remove Active'><BR>
 	</FORM>
-        </TD>
-      </tr>
-      <tr valign="top">
-         <td colspan="4"> 
+				</TD>
+			</tr>
+			<tr valign="top">
+				 <td colspan="4"> 
 	 <?php echo divtitle("Active Target List");?>
-    <table width=100% class='tableborder' cellspacing='1' cellpadding='2'>
-      <tr>
-        <td>
+		<table width=100% class='tableborder' cellspacing='1' cellpadding='2'>
+			<tr>
+				<td>
 	<?
 	if (count($aborting)>0) {
 		foreach ($aborting as $deq) {
@@ -297,28 +302,28 @@ function createForm() {
 			</td><td><?
 			echo $targetimage[0]['filename'].".mrc";
 	?>
-        </td>
-      </tr>
-      <tr>
-        <td>
+				</td>
+			</tr>
+			<tr>
+				<td>
 	<?
 			}
 		}
 	} else {
-		echo "    NO ACTIVE TARGET LIST";
+		echo "NO ACTIVE LIST FOR THIS IMAGE AND DESCENDENTS";
 	}
 	?>
-       </td>
-      </tr>
-    </table>
-  </td></tr></table>
-  </body>
+			 </td>
+			</tr>
+		</table>
+	</td></tr></table>
+	</body>
 </html>
 <?
 }
 
 function runQueueRemover() {
-  global $leginondata;
+	global $leginondata;
 	$remove = $_POST['remove'];
 	if ($remove=='Remove Active') {
 		$results=createData();
