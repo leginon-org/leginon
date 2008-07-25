@@ -17,6 +17,7 @@ import node
 import targethandler
 from pyami import convolver, imagefun, mrc, numpil
 import numpy
+import pyami.quietscipy
 import scipy.ndimage as nd
 import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder

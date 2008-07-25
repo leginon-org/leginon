@@ -6,6 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import pyami.quietscipy
 import scipy.ndimage as nd
 import sinedon.data
 import imageassessor

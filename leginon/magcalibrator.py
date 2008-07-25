@@ -15,6 +15,7 @@ import time
 import libCVwrapper
 import numpy
 from pyami import arraystats, mrc, affine, msc
+import pyami.quietscipy
 from scipy import ndimage
 
 class MagCalibrator(calibrator.Calibrator):
