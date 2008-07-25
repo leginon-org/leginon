@@ -34,14 +34,16 @@ def scipyblobs(im,mask):
 	return blobs
 
 # input parameters
-scale_factor = 15.0  #scale the map so that the we can pretend the atom sphere as a gold bead
-threshold = 500 #map intensity threshold to generate blobs
+scale_factor = 15 #scale the map so that the we can pretend the atom sphere as a gold bead
+threshold = -70 #map intensity threshold to generate blobs
 minsize = 50 #minimal blob size to be considered as a gold cluster
 # end of input variables
 
-image = mrc.read('test.mrc')
-out = open('test.pdb','w')
-line = "HEADER test_tomo2mrc\n"
+input1 = raw_input('Enter the .mrc for pdb conversion: ') 
+image = mrc.read(input1)
+output1 = raw_input('Enter the destination name: ')
+out = open(output1,'w')
+line = "HEADER " + output1 + "\n"
 out.write(line)
 shape = image.shape
 print shape
