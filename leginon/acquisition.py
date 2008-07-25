@@ -267,7 +267,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
 
-			if self.settings['adjust for drift']:
+			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for drift']:
 				if self.settings['drift between'] and self.goodnumber > 0:
 					self.declareDrift('between targets')
 				targetdata = self.adjustTargetForDrift(targetdata)
@@ -415,7 +415,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## when returning to the same target,
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
-		print 'EMTARGET', emtargetdata
 		return emtargetdata
 
 	def lastFilmAcquisition(self):
