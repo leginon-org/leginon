@@ -578,7 +578,7 @@ function popUpMap(URL) {
 }
 
 function popUpW(URL) {
-	window.open(URL, "deq", "left=0,top=0,height=512,width=300,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
+	window.open(URL, "deq", "left=0,top=0,height=512,width=400,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
 }
 
 
