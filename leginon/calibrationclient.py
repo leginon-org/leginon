@@ -13,6 +13,7 @@
 
 import node, data, event
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 import math
 from pyami import correlator, peakfinder, arraystats
