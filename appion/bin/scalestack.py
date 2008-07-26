@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 
 import os, sys
 import appionData

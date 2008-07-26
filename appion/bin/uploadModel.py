@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python 
 # Upload pik or box files to the database
 
 import os

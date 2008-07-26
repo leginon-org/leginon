@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 # Will by create a "masks" directory and save png images of the mask
 
 import sys

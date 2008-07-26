@@ -8,7 +8,7 @@ import apStack
 import apVolume
 import apCtf
 from pyami import mrc
-#import mymrc as mrc
+import threading
 
 apdb=apDB.apdb
 workingstackname="start.hed"
@@ -225,6 +225,13 @@ def fixMrcHeaderHack(involname, outvolname):
 	print "forcing machine stamp"
 	h=forceMrcHeader(array=a)
 	mrc.write(a,outvolname,header=h)
+
+class frealignjob(threading.Thread):
+	def __init__ (self, command):
+		self.command = command
+	def run (self):
+		print command
+		os.system(command)
 		
 if __name__ =='__main__':
 

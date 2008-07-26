@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 ### From Pick-wei:
 ###   create model from EMAN startAny function and automatically calls uploadModel.py
 

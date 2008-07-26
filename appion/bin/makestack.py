@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 # Will create a stack file based on a set of input parameters using EMAN's batchboxer
 
 #pythonlib

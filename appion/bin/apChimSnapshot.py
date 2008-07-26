@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # -----------------------------------------------------------------------------
 # Script to radially color a contour surface of a density map and save an

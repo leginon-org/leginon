@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 
 # this will save the particle stack number into the header of a stack.
 # use this if you want to run cenalignint, and keep track of the particles.

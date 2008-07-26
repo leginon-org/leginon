@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 # Python script to upload a template to the database, and prepare images for import
 
 import os
