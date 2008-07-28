@@ -31,14 +31,13 @@ def getEulersForIteration(reconid, iteration=1):
 	"""
 	t0 = time.time()
 	query = (
-		"SELECT e.euler1, e.euler2, pc.`inplane_rotation` "
+		"SELECT e.euler1, e.euler2, pc.`thrown_out`, pc.`coran_keep`"
 			+"FROM `ApEulerData` AS e "
 			+"LEFT JOIN `ApParticleClassificationData` AS pc "
 			+"ON pc.`REF|ApEulerData|eulers` = e.`DEF_id` "
 			+"LEFT JOIN `ApRefinementData` AS rd "
 			+"ON pc.`REF|ApRefinementData|refinement` = rd.`DEF_id` "
 			+"WHERE rd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" "
-			+"AND pc.`thrown_out` IS NULL "
 			+"AND rd.`iteration` = "+str(iteration)+" "
 		)
 	#print query
@@ -50,22 +49,9 @@ def getEulersForIteration(reconid, iteration=1):
 	apDisplay.printMsg("Fetched data in "+apDisplay.timeString(time.time()-t0))
 
 	# sort eulers into classes
-	freqmap = calcFreqNative(result)
-	items = freqmap.items()
-	items.sort(sortFreqMapCart)
-	freqsort = [value for key, value in items]
+	alldict, eulerdict, corandict = calcDictNative(result)
 
-	# fill lists of data
-	radlist = []
-	anglelist = []
-	freqlist = []
-	for val in freqsort:
-		radlist.append(val[0]/90.0)
-		anglelist.append(val[1]/180.0*math.pi)
-		freqlist.append(val[2])
-	freqListStat(freqlist)
-
-	return radlist,anglelist,freqlist
+	return alldict, eulerdict, corandict
 
 #===========
 def freqListStat(freqlist):
@@ -75,50 +61,6 @@ def freqListStat(freqlist):
 	print "mean=",  ndimage.mean(freqnumpy)
 	print "stdev=", ndimage.standard_deviation(freqnumpy)
 	#print "median=",ndimage.median(freqnumpy)
-
-#===========
-def getEulersForIterationCoran(reconid, iteration=1):
-	"""
-	returns all classdata for a particular refinement iteration
-	"""
-	t0 = time.time()
-	query = (
-		"SELECT e.euler1, e.euler2, pc.`inplane_rotation` "
-			+"FROM `ApEulerData` AS e "
-			+"LEFT JOIN `ApParticleClassificationData` AS pc "
-			+"ON pc.`REF|ApEulerData|eulers` = e.`DEF_id` "
-			+"LEFT JOIN `ApRefinementData` AS rd "
-			+"ON pc.`REF|ApRefinementData|refinement` = rd.`DEF_id` "
-			+"WHERE rd.`REF|ApRefinementRunData|refinementRun` = "+str(reconid)+" "
-			+"AND pc.`thrown_out` IS NULL "
-			+"AND pc.`coran_keep` = 1 "
-			+"AND rd.`iteration` = "+str(iteration)+" "
-		)
-	#print query
-	print "querying for coran euler values at "+time.asctime()
-	cursor.execute(query)
-	numrows = int(cursor.rowcount)
-	apDisplay.printColor("Found "+str(numrows)+" coran euler values", "cyan")
-	result = cursor.fetchall()
-	apDisplay.printMsg("Fetched coran part data in "+apDisplay.timeString(time.time()-t0))
-
-	# sort results
-	freqmap = calcFreqNative(result)
-	items = freqmap.items()
-	items.sort(sortFreqMapCart)
-	freqsort = [value for key, value in items]
-
-	# put into lists
-	radlist = []
-	anglelist = []
-	freqlist = []
-	for val in freqsort:
-		radlist.append(val[0]/90.0)
-		anglelist.append(val[1]/180.0*math.pi)
-		freqlist.append(val[2])
-	freqListStat(freqlist)
-
-	return radlist,anglelist,freqlist
 
 #===========
 def sortFreqMapCart(a, b):
@@ -221,6 +163,42 @@ def calcFreqNative(points):
 	return indexmap
 
 #===========
+def calcDictNative(points):
+	""" SELECT e.euler1, e.euler2, pc.`thrown_out`, pc.`coran_keep` """
+	alldict = {}
+	eulerdict = {}
+	corandict = {}
+	for point in points:
+		### convert data
+		#print point
+		rad = float(point[0])
+		theta = float(point[1])
+		thrownout = bool(point[2])
+		corankeep = bool(point[3])
+		key = ( "%.3f,%.3f" % (rad, theta))
+		#print thrownout,corankeep,key
+
+		### sort points
+		if key in alldict:
+			alldict[key] += 1
+		else:
+			alldict[key] = 0
+		if thrownout is False:
+			if key in eulerdict:
+				eulerdict[key] += 1
+			else:
+				eulerdict[key] = 0
+		if corankeep is True:
+			if key in corandict:
+				corandict[key] += 1
+			else:
+				corandict[key] = 0
+	#import pprint
+	#pprint.pprint( alldict)
+	return alldict, eulerdict, corandict
+
+
+#===========
 def calcFreqEqualArea(points, rstep=9.0):
 	indexmap = {}
 	rlen = int(90.0/rstep)
@@ -276,8 +254,10 @@ def calcFreqEqualArea(points, rstep=9.0):
 
 #===========
 def fillDataDict(radlist, anglelist, freqlist):
+	"""
+	Get min/max statistics on data lists
+	"""
 	d = {}
-
 	freqnumpy = numpy.asarray(freqlist, dtype=numpy.int32)
 	d['minf'] = float(ndimage.minimum(freqnumpy))
 	d['maxf'] = float(ndimage.maximum(freqnumpy))
@@ -310,32 +290,40 @@ def fillDataDict(radlist, anglelist, freqlist):
 	return d
 
 #===========
-def makeTriangleImage(radlist, anglelist, freqlist, 
-		imgname="temp.png", imgdim=640, crad=8, frame=30):
-	d = {}
-	#'L' -> grayscale
-	#'RGB' -> color
-	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
-	draw = ImageDraw.Draw(img)
-	anglelist = numpy.asarray(anglelist)/60.0
+def makeTriangleImage(eulerdict, imgname="temp.png",
+		imgdim=640, crad=8, frame=30):
+	"""
+	Creates the classic triangle euler plot
+	"""
+
+	### convert to lists
+	radlist   = []
+	anglelist = []
+	freqlist  = []
+	for key,val in eulerdict.items():
+		rad,ang = map(float, key.split(','))
+		radlist.append(rad*math.pi/180.0*math.pi/180.0)
+		anglelist.append(ang*math.pi/180.0*math.pi/180.0)
+		freqlist.append(val)
+
+	### find min/max data
 	d = fillDataDict(radlist, anglelist, freqlist)
 	#pprint.pprint(d)
 
+	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
+	draw = ImageDraw.Draw(img)
+
 	drawAxes(draw, imgdim, crad, img, d)
 	drawLegend(draw, imgdim, crad, d['minf'], d['maxf'])
-	for i in range(len(radlist)):
+	for key,freq in eulerdict.items():
 		#frequency
-		freq = freqlist[i]
 		fgray = freqToColor(freq, d['maxf'], d['rangef'])
 		fcolor = grayToColor(fgray)
 
 		#direct polar
-		rad = radlist[i]			
-		ang = anglelist[i]
-		#ax = float(imgdim-2*frame)*(ang-d['mina'])/d['rangea']+frame
-		#ry = float(imgdim-2*frame)*(rad-d['minr'])/d['ranger']+frame
-		#polarcoord = (ax-crad, ry-crad, ax+crad, ry+crad)
-
+		rad, ang = map(float, key.split(','))
+		rad *= (math.pi/180.0)**2
+		ang *= (math.pi/180.0)**2
 		#polar -> cartesian
 		x, y = polarToCart(rad, ang-d['mina'])
 		ys = float(imgdim-2*frame)*(x-d['minx'])/d['rangex']+frame
@@ -352,20 +340,28 @@ def makeTriangleImage(radlist, anglelist, freqlist,
 	return
 
 #===========
-def makePolarImage(radlist, anglelist, freqlist, 
-		imgname="temp.png", imgdim=640, crad=8, frame=60):
+def makePolarImage(eulerdict, imgname="temp.png",
+		imgdim=640, crad=8, frame=60):
 	"""
 	make a round polar plot of euler angles
 	"""
 
-	d = {}
-	#'L' -> grayscale
-	#'RGB' -> color
-	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
-	draw = ImageDraw.Draw(img)
+	### convert to lists
+	radlist   = []
+	anglelist = []
+	freqlist  = []
+	for key,val in eulerdict.items():
+		rad,ang = map(float, key.split(','))
+		radlist.append(rad*math.pi/180.0)
+		anglelist.append(ang*math.pi/180.0)
+		freqlist.append(val)
 
+	### find min/max data
 	d = fillDataDict(radlist, anglelist, freqlist)
 	#pprint.pprint(d)
+
+	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
+	draw = ImageDraw.Draw(img)
 
 	drawLegend(draw, imgdim, crad, d['minf'], d['maxf'])
 	for i in range(len(radlist)):
@@ -710,16 +706,35 @@ def addRotatedText(im, text, where, rotation, color = "black", maxSize = None):
 
 #===========
 def createEulerImages(recon=239, iternum=1, path=".", coran=False):
-	radlist, anglelist, freqlist = getEulersForIteration(recon, iternum)
-	file1 = os.path.join(path, "eulerTriangle-"+str(recon)+"_"+str(iternum)+".png")
-	makeTriangleImage(radlist, anglelist, freqlist, imgname=file1)	
-	file2 = os.path.join(path, "eulerPolar-"+str(recon)+"_"+str(iternum)+".png")
-	makePolarImage(radlist, anglelist, freqlist, imgname=file2)
+	### get data from database
+	alldict, eulerdict, corandict = getEulersForIteration(recon, iternum)
 
-	if coran is True:
-		radlist, anglelist, freqlist = getEulersForIterationCoran(recon, iternum)
-		file3 = os.path.join(path, "eulerPolarCoran-"+str(recon)+"_"+str(iternum)+".png")
-		makePolarImage(radlist, anglelist, freqlist, imgname=file3)
+	### create image in triangle form
+	triangfile = os.path.join(path, "eulerTriangle-"+str(recon)+"_"+str(iternum)+".png")
+	makeTriangleImage(eulerdict, imgname=triangfile)
+
+	### create image in polar form
+	polarfile = os.path.join(path, "eulerPolar-"+str(recon)+"_"+str(iternum)+".png")
+	makePolarImage(eulerdict, imgname=polarfile)
+
+	### create image of rejected particles
+	rejectfile = os.path.join(path, "eulerPolarReject-"+str(recon)+"_"+str(iternum)+".png")
+	rejectdict = alldict
+	for key,val in eulerdict.items():
+		rejectdict[key] -= val
+	makePolarImage(rejectdict, imgname=rejectfile)
+	
+	if coran is True and corandict:
+		### create image of coran keep particle
+		coranfile = os.path.join(path, "eulerPolarCoran-"+str(recon)+"_"+str(iternum)+".png")
+		makePolarImage(corandict, imgname=coranfile)
+
+		### create image of coran difference
+		corandiffdict = eulerdict
+		for key,val in corandict.items():
+			corandiffdict[key] -= val
+		corandifffile = os.path.join(path, "eulerPolarCoranDiff-"+str(recon)+"_"+str(iternum)+".png")
+		makePolarImage(corandiffdict, imgname=corandifffile)
 
 #===========
 #===========
@@ -739,10 +754,11 @@ if __name__ == "__main__":
 	#createEulerImages(158, 1)  ## small assymmetric
 	#createEulerImages(118, 2)
 	#createEulerImages(159, 1)  ## small assymmetric
-	#createEulerImages(158, 4)
+	createEulerImages(158, 4, ".", True)
 
 	### coran
-	createEulerImages(296, 2, ".", True)
+	#createEulerImages(296, 2, ".", True)
+	#createEulerImages(305, 12, ".", True)
 	apDisplay.printColor("Finished in "+apDisplay.timeString(time.time()-t0), "cyan")
 
 
