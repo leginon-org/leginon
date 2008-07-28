@@ -40,14 +40,14 @@ $javascript.=") {
                 newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
                 newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");\n";
 foreach($refine_params_fields as $param) {
-        if (ereg("\|", $param)) {
-	        $namesplit=explode("|", $param);
+	if (ereg("\|", $param)) {
+		$namesplit=explode("|", $param);
 		$param=end($namesplit);
 	}
 	$javascript.="                if ($param) {\n";
 	$javascript.="                        newwindow.document.write('<TR><TD>$param</TD>');\n";
-        $javascript.="                        newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
-        $javascript.="                }\n";
+	$javascript.="                        newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
+	$javascript.="                }\n";
 }
 $javascript.="                newwindow.document.write('</TABLE></BODY></HTML>');\n";
 $javascript.="                newwindow.document.close()\n";
@@ -96,7 +96,6 @@ if ($avgmedjump['count'] > 0) {
 
 $title = "recon info";
 //print_r($refinerun);
-
 
 $reconinfo = array(
 	'id'=>"<A HREF='reconsummary.php?expId=$expId'>$refinerun[DEF_id]</A>",
@@ -153,13 +152,18 @@ sort($initpngs);
 
 # get list of png files in directory
 $pngfiles=array();
+$eulerfiles=array();
+$eulerstr = 'euler.*\.png$';
 $refinedir = opendir($refinerun['path']);
 while ($f = readdir($refinedir)) {
-  if (eregi('\.png$',$f)) {
+	if (eregi($eulerstr, $f)) {
+		$eulerfiles[] = $f;
+  } elseif (eregi('\.png$',$f)) {
     $pngfiles[] = $f;
   }
 }
 sort($pngfiles);
+sort($eulerfiles);
 
 # display starting model
 $html .= "<TR>\n";
@@ -259,24 +263,16 @@ foreach ($iterations as $iteration){
 		}
 	}
 
-	// Euler Plots
-	$oldeulerfile = $refinerun['path']."/eulermap".$iteration['iteration'].".png";
-	if (file_exists($oldeulerfile)) {
-		$html .= "<a href='loadimg.php?filename=".$oldeulerfile."' target='snapshot'>"
-		."<img src='loadimg.php?scale=.125&filename=".$oldeulerfile."'>"
-		."</a>";
-	}
-	$eulertrifile = $refinerun['path']."/eulerTriangle-".$refinerun['DEF_id']."_".$iteration['iteration'].".png";
-	if (file_exists($eulertrifile)) {
-		$html .= "<a href='loadimg.php?filename=".$eulertrifile."' target='snapshot'>"
-		."<img src='loadimg.php?scale=.125&filename=".$eulertrifile."'>"
-		."</a>";
-	}
-	$eulerpolarfile = $refinerun['path']."/eulerPolar-".$refinerun['DEF_id']."_".$iteration['iteration'].".png";
-	if (file_exists($eulerpolarfile)) {
-		$html .= "<a href='loadimg.php?filename=".$eulerpolarfile."' target='snapshot'>"
-		."<img src='loadimg.php?scale=.125&filename=".$eulerpolarfile."'>"
-		."</a>";
+	//Euler plots
+  foreach ($eulerfiles as $eulername) {
+		if (eregi("_".$iteration['iteration']."\.png$", $eulername)) {
+      $eulerfile = $refinerun['path'].'/'.$eulername;
+		  if (file_exists($eulerfile)) {
+				$html .= "<a href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
+				."<img src='loadimg.php?scale=.125&filename=".$eulerfile."'>"
+				."</a>\n";
+			}
+		}
 	}
 
 	$html .= "</td></tr>\n";
