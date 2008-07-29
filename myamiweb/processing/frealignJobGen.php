@@ -209,6 +209,7 @@ function jobForm($extra=false) {
   ## get stack data
   $stackinfo = explode('|--|',$_POST['stackval']);
   $stackidval=$stackinfo[0];
+  $nump=$particle->getNumStackParticles($stackidval);
   $apix=$stackinfo[1];
   $box=$stackinfo[2];
   $stackpath=$stackinfo[3];
@@ -246,7 +247,6 @@ function jobForm($extra=false) {
 
   $javafunc .= defaultReconValues($box);
   $javafunc .= writeJavaPopupFunctions('frealign');
-  $javafunc .= garibaldiFun();
   processing_header("Frealign Job Generator","Frealign Job Generator",$javafunc);
   // write out errors, if any came up:
   if ($extra) {
@@ -333,20 +333,28 @@ function jobForm($extra=false) {
     $outresidualn="outresidual".$i;
     $pointspreadvoln="pointspreadvol".$i;
 
-      //ones that don't change go here
+    $mrchackn="mrchack".$i;
+    $outvoln="outvol".$i;
+    $setuponlyn="setuponly".$i;
+    $procn="proc".$i;
+
+      ###ones that don't change go here
       if ($i==1) {
       	$apix=$apix;
 	$stack=$stackname1;
+	$last=$nump;
       }
       else {
       	$apix=($i>$j) ? $_POST["apix".($i-1)] : $_POST[$apixn];
       	$stack=($i>$j) ? $_POST["stack".($i-1)] : $_POST[$stackn];
+	$last=($i>$j) ? $_POST["last".($i-1)] : $_POST[$lastn];
       }
 
       ###set default values that iterate
       $invol=$modelname.".".($i-1).".mrc";
       $inpar=$parname.".".($i-1).".par";
       $outpar=$parname.".".($i).".par";
+      $outvol=$modelname.".".($i).".mrc";
 
       $format=($i>$j) ? $_POST["format".($i-1)] : $_POST[$formatn];
       $mode=($i>$j) ? $_POST["mode".($i-1)] : $_POST[$moden];
@@ -375,7 +383,6 @@ function jobForm($extra=false) {
       $deltax=($i>$j) ? $_POST["deltax".($i-1)] : $_POST[$deltaxn];
       $deltay=($i>$j) ? $_POST["deltay".($i-1)] : $_POST[$deltayn];
       $first=($i>$j) ? $_POST["first".($i-1)] : $_POST[$firstn];
-      $last=($i>$j) ? $_POST["last".($i-1)] : $_POST[$lastn];
       $sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
       $relmag=($i>$j) ? $_POST["relmag".($i-1)] : $_POST[$relmagn];
       $dstep=($i>$j) ? $_POST["dstep".($i-1)] : $_POST[$dstepn];
@@ -397,6 +404,10 @@ function jobForm($extra=false) {
       $outresidual=($i>$j) ? $_POST["outresidual".($i-1)] : $_POST[$outresidualn];
       $pointspreadvol=($i>$j) ? $_POST["pointspreadvol".($i-1)] : $_POST[$pointspreadvoln];
 
+      $proc=($i>$j) ? $_POST["proc".($i-1)] : $_POST[$procn];
+
+
+
       ## use symmetry of model by default, but you can change it
       if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
 
@@ -414,6 +425,9 @@ function jobForm($extra=false) {
     	  $phi=($_POST["phi".($i-1)]=='on') ? 'CHECKED' : '';
     	  $deltax=($_POST["deltax".($i-1)]=='on') ? 'CHECKED' : '';
     	  $deltay=($_POST["deltay".($i-1)]=='on') ? 'CHECKED' : '';
+	  
+    	  $mrchack=($_POST["mrchack".($i-1)]=='on') ? 'CHECKED' : '';	  
+    	  $setuponly=($_POST["setuponly".($i-1)]=='on') ? 'CHECKED' : '';	  
       }
       else {
    	   $magrefine=($_POST[$magrefinen]=='on') ? 'CHECKED' : '';
@@ -430,6 +444,8 @@ function jobForm($extra=false) {
    	   $deltax=($_POST[$deltaxn]=='on') ? 'CHECKED' : '';
    	   $deltay=($_POST[$deltayn]=='on') ? 'CHECKED' : '';
 
+   	   $mrchack=($_POST[$mrchackn]=='on') ? 'CHECKED' : '';
+   	   $setuponly=($_POST[$setuponlyn]=='on') ? 'CHECKED' : '';
       }
     $rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
      echo"
@@ -483,8 +499,8 @@ function jobForm($extra=false) {
 				<tr>
         				<td bgcolor='$rcol'><input type='text' NAME='$radiusn' SIZE='3' VALUE='$radius'></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$iradiusn' SIZE='3' VALUE='$iradius'></td>
-        				<td bgcolor='$rcol'><input type='text' NAME='$apixn' SIZE='3' VALUE='$apix'></td>
-        				<td bgcolor='$rcol'><input type='text' NAME='$ampcontrastn' SIZE='3' VALUE='$ampcontrast'></td>
+        				<td bgcolor='$rcol'><input type='text' NAME='$apixn' SIZE='5' VALUE='$apix'></td>
+        				<td bgcolor='$rcol'><input type='text' NAME='$ampcontrastn' SIZE='4' VALUE='$ampcontrast'></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$maskthreshn' SIZE='3' VALUE='$maskthresh'></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$phaseconstantn' SIZE='3' VALUE='$phaseconstant'></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$avgresidualn' SIZE='3' VALUE='$avgresidual'></td>
@@ -515,7 +531,7 @@ function jobForm($extra=false) {
 				</tr>
 				<tr>
         				<td bgcolor='$rcol'><input type='text' NAME='$firstn' SIZE='3' VALUE='$first'></td>
-        				<td bgcolor='$rcol'><input type='text' NAME='$lastn' SIZE='3' VALUE='$last'></td>
+        				<td bgcolor='$rcol'><input type='text' NAME='$lastn' SIZE='8' VALUE='$last'></td>
 				</tr>	
 
 				<tr>
@@ -538,7 +554,7 @@ function jobForm($extra=false) {
 					<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l37\" onMouseOver='popLayer(\"beamtilty\", \"l37\")' onMouseOut='hideLayer()'>beamtilty</a></font></td>
 				</tr>				
 				<tr>	
-					<td bgcolor='$rcol'><input type='text' NAME='$dstepn' SIZE='3' VALUE='$dstep'></td>
+					<td bgcolor='$rcol'>14</td>
         				<td bgcolor='$rcol'><input type='text' NAME='$targetresidualn' SIZE='3' VALUE='$targetresidual'></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$residualthreshn' SIZE='3' VALUE='$residualthresh'></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$csn' SIZE='3' VALUE='$cs'></td>
@@ -615,6 +631,24 @@ function jobForm($extra=false) {
 					<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l52\" onMouseOver='popLayer(\"pointspreadvol\", \"l52\")' onMouseOut='hideLayer()'>pointspreadvol</a></font></td>
         				<td bgcolor='$rcol'><input type='text' NAME='$pointspreadvoln' SIZE='10' VALUE='$pointspreadvol'></td>
 				</tr>
+
+				<tr>
+					<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l52\" onMouseOver='popLayer(\"outvol\", \"l52\")' onMouseOut='hideLayer()'>outvol</a></font></td>
+        				<td bgcolor='$rcol'><input type='text' NAME='$outvoln' SIZE='10' VALUE='$outvol'></td>
+				</tr>
+
+				<tr>
+					<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l52\" onMouseOver='popLayer(\"mrchack\", \"l52\")' onMouseOut='hideLayer()'>mrchack</a></font></td>
+					<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l52\" onMouseOver='popLayer(\"proc\", \"l52\")' onMouseOut='hideLayer()'>proc</a></font></td>
+					<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"l52\" onMouseOver='popLayer(\"setuponly\", \"l52\")' onMouseOut='hideLayer()'>setuponly</a></font></td>
+				</tr>
+				
+				<tr>
+        				<td bgcolor='$rcol'><input type='checkbox' NAME='$mrchackn' $mrchack></td>
+        				<td bgcolor='$rcol'><input type='text' NAME='$procn' SIZE='3' VALUE='$proc'></td>
+					<td bgcolor='$rcol'><input type='checkbox' NAME='$setuponlyn' $setuponly></td>
+				</tr>
+				
 				</table>
 			</td>
   		</tr>
@@ -690,7 +724,7 @@ function writeJobFile ($extra=False) {
   }
   </SCRIPT>\n";
   }
-  processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
+  processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
 
   $numiters=$_POST['numiters'];
   $pad=intval($box*1.25);
@@ -750,8 +784,17 @@ function writeJobFile ($extra=False) {
     $evenvol=$_POST["evenvol".$i];
     $outresidual=$_POST["outresidual".$i];
     $pointspreadvol=$_POST["pointspreadvol".$i];
-
-    $line="\nrunfrealign.py $i --format=$format  --mode=$mode --ewald=$ewald --fsc=$fsc  --radius=$radius  --iradius=$iradius  --apix=$apix  --ampcontrast=$ampcontrast  --maskthresh=$maskthresh  --phaseconstant=$phaseconstant  --avgresidual=$avgresidual  --ang=$ang  --itmax=$itmax  --maxmatch=$maxmatch --first=$first  --last=$last  --sym=$sym  --relmag=$relmag  --dstep=$dstep  --targetresidual=$targetresidual  --residualthresh=$residualthresh  --cs=$cs  --kv=$kv  --beamtiltx=$beamtiltx  --beamtilty=$beamtilty  --reslimit=$reslimit  --hp=$hp  --lp=$lp  --bfactor=$bfactor  --stack=$stack  --matchstack=$matchstack  --inpar=$inpar  --outpar=$outpar  --outshiftpar=$outshiftpar  --invol=$invol  --weight3d=$weight3d  --oddvol=$oddvol  --evenvol=$evenvol  --outresidual=$outresidual  --pointspreadvol=$pointspreadvol";
+    $outvol=$_POST["outvol".$i];
+    $proc=$_POST["proc".$i];
+    $mrchack=$_POST["mrchack".$i];
+    $setuponly=$_POST["setuponly".$i];
+    
+    $line="\nrunfrealign.py --format=$format --mode=$mode --ewald=$ewald --fsc=$fsc --radius=$radius --iradius=$iradius --apix=$apix ";
+    $line.="--ampcontrast=$ampcontrast --maskthresh=$maskthresh --phaseconstant=$phaseconstant --avgresidual=$avgresidual --ang=$ang --itmax=$itmax ";
+    $line.="--maxmatch=$maxmatch --first=$first --last=$last --sym=$sym --relmag=$relmag --targetresidual=$targetresidual --residualthresh=$residualthresh ";
+    $line.="--cs=$cs --kv=$kv --beamtiltx=$beamtiltx --beamtilty=$beamtilty --reslimit=$reslimit --hp=$hp --lp=$lp --bfactor=$bfactor --stack=$stack ";
+    $line.="--matchstack=$matchstack --inpar=$inpar --outpar=$outpar --outshiftpar=$outshiftpar --invol=$invol --weight3d=$weight3d --oddvol=$oddvol ";
+    $line.="--evenvol=$evenvol --outresidual=$outresidual --pointspreadvol=$pointspreadvol --proc=$proc --outvol=$outvol";
     if ($magrefine=='on') $line.=" --magrefine='T'";
     if ($defocusrefine=='on') $line.=" --defocusrefine='T'";
     if ($astigrefine=='on') $line.=" --astigrefine='T'";
@@ -765,26 +808,20 @@ function writeJobFile ($extra=False) {
     if ($theta=='on') $line.=" --theta=1";
     if ($deltax=='on') $line.=" --deltax=1";
     if ($deltay=='on') $line.=" --deltay=1";
-
+    if ($mrchack=='on') $line.=" --mrchack";
+    if ($setuponly=='on') $line.=" --setuponly";
+    
+    //
+    //appion specific options
+    //
+    
+    $line .=" --stackid=$stackidval";
     $line.=" > runfrealign".$i.".txt\n";
     $clusterjob.= $line;
   }
 
 	
-  $clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
-
-  if ($_POST['dmfstore']=='on') {
-    $clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
-    $clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
-    $line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
-    if ($msgp=='on') {
-	$line .= "goodavgs.* ";
-	$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
-    }
-    $line .= "\n";
-    $clusterjob.= $line;
-    $clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
-  }
+ 
   if (!$extra) {
     if ($clustername=='garibaldi') {
       echo "Please review your job below.<BR>";
@@ -808,7 +845,6 @@ function writeJobFile ($extra=False) {
   // convert \n to /\n's for script
   $header_conv=preg_replace('/\n/','|--|',$header);
   echo "<input type='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
-  echo "<input type='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
   if (!$extra) {
     echo "<HR>\n";
     echo "<PRE>\n";
@@ -837,12 +873,11 @@ function defaultReconValues ($box) {
       obj.astigrefine1.checked = false;
       obj.fliptilt1.checked = false;
       obj.ewald1.value = '0';
-      obj.matches1.checked = false;
+      obj.matches1.checked = true;
       obj.history1.checked = false;
-      obj.finalsym1.checked = true;
+      obj.finalsym1.checked = false;
       obj.fomfilter1.checked = false;
       obj.fsc1.value = '0';
-      obj.radius1.value = '146';
       obj.iradius1.value = '0';
       obj.ampcontrast1.value = '0.07';
       obj.maskthresh1.value = '0.0';
@@ -857,57 +892,33 @@ function defaultReconValues ($box) {
       obj.deltax1.checked = true;
       obj.deltay1.checked = true;
       obj.first1.value = '1';
-      obj.last1.value = '200';
       obj.relmag1.value = '1';
-      obj.dstep1.value = '14.0';
       obj.targetresidual1.value = '25.0';
       obj.residualthresh1.value = '90.0';
+      obj.cs1.value = '2.0';
+      obj.kv1.value = '300.0';
       obj.beamtiltx1.value = '0.0';
       obj.beamtilty1.value = '0.0';
       obj.reslimit1.value = '10.0';
-      obj.hp1.value = '100.0';
-      obj.lp1.value = '35';
+      obj.hp1.value = '500.0';
+      obj.lp1.value = '10.0';
       obj.bfactor1.value = '0.0';
+      obj.stack1.value = 'start.mrc';
       obj.matchstack1.value = 'match.mrc';
-      obj.inpar1.value = 'inpar.par';
-      obj.outpar1.value = 'outpar.par';
       obj.outshiftpar1.value = 'shift.par';
+      obj.invol1.value = 'threed.0.mrc';
       obj.weight3d1.value = 'weights.mrc';
       obj.oddvol1.value = 'odd.mrc';
       obj.evenvol1.value = 'even.mrc';
       obj.outresidual1.value = 'phasediffs.mrc';
       obj.pointspreadvol1.value = 'pointspread.mrc';
+      obj.mrchack1.value = false;
+      obj.outvol1.value = 'threed.1.mrc';
+      obj.proc1.value = '1';
+      obj.setuponly1.value = false;
       return;
     }
   </SCRIPT>\n";
   return $javafunc;
 };
 
-function garibaldiFun() {
-  $javafunc="
-  <script language='javascript'>
-  function enableGaribaldi(i) {
-    if (i=='true') {
-      document.emanjob.clusterpath.disabled=false;
-      document.emanjob.dmfpath.disabled=false;
-      document.emanjob.dmfmod.disabled=false;
-      document.emanjob.dmfstack.disabled=false;
-      document.emanjob.dmfstore.disabled=false;
-      document.emanjob.nodes.value=4;
-      document.emanjob.ppn.value=4;
-      document.emanjob.rprocs.value=4;
-    }
-    else {
-      document.emanjob.clusterpath.disabled=true;
-      document.emanjob.dmfpath.disabled=true;
-      document.emanjob.dmfmod.disabled=true;
-      document.emanjob.dmfstack.disabled=true;
-      document.emanjob.dmfstore.disabled=true;
-      document.emanjob.nodes.value=2;
-      document.emanjob.ppn.value=8;
-      document.emanjob.rprocs.value=8;
-    }
-  }
-  </script>\n";
-  return $javafunc;
-}
