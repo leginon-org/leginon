@@ -9,15 +9,17 @@ import apVolume
 import apCtf
 from pyami import mrc
 import threading
+import glob
 
 apdb=apDB.apdb
 workingstackname="start.hed"
 
-def createFrealignJob (params):
+def createMultipleJobs (params):
 	params['jobs']=[]
 	ptcls_per_job = params['last']/params['proc']
 	remainder= params['last']%params['proc']
-	lastparticle=0	
+	lastparticle=0
+	params['outparlst']=[]	
 	for n in range(0,params['proc']):
 		#print "remainder", remainder		
 		firstparticle=lastparticle+1
@@ -27,30 +29,43 @@ def createFrealignJob (params):
 			lastparticle+=1
 			remainder-=1
 		
-		jobname=("frealign_%d.%d.job" % (params['iter'],n))
+		jobname=("frealign.%d.job" % (n))
 		params['jobs'].append(jobname)
-		f=open(jobname,'w')
-		
-		f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' % ('M', params['mode'], params['magrefine'], params['defocusrefine'], params['astigrefine'], params['fliptilt'], params['ewald'], params['matches'], params['history'], params['finalsym'], params['fomfilter'], params['fsc']))
-		f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], params['ang'], params['itmax'], params['maxmatch']))
-		f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
-		f.write('%d, %d\n' % (firstparticle, lastparticle))
-		f.write('%s\n' % (params['sym']))
-		f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (params['relmag'], params['dstep'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))
-		f.write('%.2f,%.2f,%.2f,%.2f\n' % (params['reslimit'], params['hp'], params['lp'], params['bfactor']))
-		f.write('%s\n' % (os.path.join(params['rundir'],params['stack'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['matchstack'])))
-		f.write('%s\n' % (os.path.join(params['rundir'],params['inpar'])))
-		f.write('%s\n' % (os.path.join(params['rundir'],params['outpar'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['outshiftpar'])))
-		f.write('0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0\n')
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['workingvol'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['weight3d'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['oddvol'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['evenvol'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['outresidual'])))
-		f.write('%s\n' % (os.path.join(params['workingdir'],params['pointspreadvol'])))
-		f.close()
+		outparname=params['outpar']+'.'+str(n)
+		params['outparlst'].append(outparname)
+		print 'outparname is', outparname
+		createFrealignJob(params, jobname, params['mode'], params['inpar'], outparname, firstparticle, lastparticle, norecon=True)
+
+def createFrealignJob (params, jobname, mode, inparname, outparname, firstparticle, lastparticle, norecon=False):
+
+	if norecon:
+		#relmag=-100.0
+		relmag=1
+	else:
+		relmag=params['relmag']
+	
+	f=open(jobname,'w')
+
+	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' % ('M', mode, params['magrefine'], params['defocusrefine'], params['astigrefine'], params['fliptilt'], params['ewald'], params['matches'], params['history'], params['finalsym'], params['fomfilter'], params['fsc']))
+	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], params['ang'], params['itmax'], params['maxmatch']))
+	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
+	f.write('%d, %d\n' % (firstparticle, lastparticle))
+	f.write('%s\n' % (params['sym']))
+	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (relmag, params['dstep'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))
+	f.write('%.2f,%.2f,%.2f,%.2f\n' % (params['reslimit'], params['hp'], params['lp'], params['bfactor']))
+	f.write('%s\n' % (os.path.join(params['rundir'],params['stack'])))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['matchstack'])))
+	f.write('%s\n' % (os.path.join(params['rundir'],inparname)))
+	f.write('%s\n' % (os.path.join(params['rundir'],outparname)))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['outshiftpar'])))
+	f.write('0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0\n')
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['workingvol'])))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['weight3d'])))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['oddvol'])))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['evenvol'])))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['outresidual'])))
+	f.write('%s\n' % (os.path.join(params['workingdir'],params['pointspreadvol'])))
+	f.close()
 		
 def setupParserOptions():
 	parser=OptionParser()
@@ -151,6 +166,7 @@ def setupParserOptions():
 	parser.add_option('--mrchack', dest='mrchack', action='store_true', help="hack to fix machine stamp in mrc header")
 	parser.add_option('--outvol', dest='outvol', help="name of output volume", default = 'threed.1.mrc')
 	parser.add_option('--proc', dest='proc', default=1, type='int', help="number of processors")
+	parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true', help="if setuponly is specified, everything will be set up but frealign will not be run")
 	 
 	return parser
 
@@ -226,12 +242,51 @@ def fixMrcHeaderHack(involname, outvolname):
 	h=forceMrcHeader(array=a)
 	mrc.write(a,outvolname,header=h)
 
-class frealignjob(threading.Thread):
+class FrealignJob(threading.Thread):
 	def __init__ (self, command):
+		threading.Thread.__init__(self)
 		self.command = command
 	def run (self):
-		print command
-		os.system(command)
+		print self.command
+		os.system(self.command)
+		
+def runParallel(params):
+	createMultipleJobs(params)
+	joblist=[]
+	for n in params['jobs']:		
+		command=("frealign < %s " % (n))
+		print "command is", command
+		job=FrealignJob(command)
+		job.start()
+		joblist.append(job)
+
+	for job in joblist:
+		job.join()
+
+	#combine results of multiple runs and create volume
+	combinedparams = params['outpar']+'.all'
+	combinefile=open(os.path.join(params['rundir'],combinedparams),'w')
+	for outpar in params['outparlst']:
+		f=open(os.path.join(params['rundir'],outpar), 'r')
+		lines=f.readlines()
+		f.close()
+
+		for n in lines:
+			if n[0] != 'C':
+				combinefile.write(n)
+			else:
+				print "comment"
+	combinefile.close()
+	combinejobname="frealign.job" 
+	createFrealignJob(params, combinejobname, 0, combinedparams, params['outpar'], params['first'], params['last'], norecon=False)
+	command='frealign < ' + combinejobname
+	os.system(command)	
+
+def runSingle(params):
+	jobname='frealign.job'
+	createFrealignJob(params, jobname, params['mode'], params['inpar'], params['outpar'], params['first'], params['last'], norecon=False)
+	command='frealign < ' + jobname
+	os.system(command)
 		
 if __name__ =='__main__':
 
@@ -273,21 +328,20 @@ if __name__ =='__main__':
 		generateParticleParams(params)
 	
 	
-	
 	#copy necessary files to working dir
 	shutil.copy(params['invol'],os.path.join(params['workingdir'],params['workingvol']))
 	
 
 	#run frealign
 	os.chdir(params['workingdir'])
-	createFrealignJob (params)
 	
-	for n in params['jobs']:
-		command=("frealign < %s " % (n))
-		print command
-	os.system(command)
-	
-	
-	#copy results back to run dir
-	shutil.copy(params['workingvol'],("../"+params['outvol']))
+	if not params['setuponly']:
+		if params['proc'] > 1:
+			runParallel(params)
+		else:
+			runSingle(params)
+			
+		#copy results back to run dir
+		shutil.copy(params['workingvol'],(os.path.join(params['rundir'],params['outvol'])))
+
 	print "Done!"
