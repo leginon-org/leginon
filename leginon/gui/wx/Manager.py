@@ -107,7 +107,7 @@ class App(wx.App):
 		self.tcpport = tcpport
 		self.kwargs = kwargs
 		self.abort = False
-		wx.App.__init__(self)
+		wx.App.__init__(self,0)
 
 	def OnInit(self):
 		try:
