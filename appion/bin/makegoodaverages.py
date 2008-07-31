@@ -241,7 +241,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		self.parser.add_option("-j", "--avgjump", dest="avgjump", type="float",
 			help="Throw away ptcls with median euler jumps greater than this", metavar="FLOAT")
 		self.parser.add_option("--rejectlst", dest="rejectlst",
-			help="Throw away ptcls in the specified text file. DB style 1,2,..., metavar="TEXT")
+			help="Throw away ptcls in the specified text file. DB style 1,2,...", metavar="TEXT")
 		self.parser.add_option("-n", "--stackname", dest="stackname", default="goodavgs.hed",
 			help="Name of the stack to write the averages", metavar="TEXT")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
