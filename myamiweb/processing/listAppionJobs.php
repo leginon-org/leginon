@@ -82,6 +82,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			foreach ($display_keys as $k=>$v) echo formatHtmlRow($k,$v);
 			echo "</table>\n";
 			echo closeRoundBorder();
+			echo "<a href='checkAppionJob.php?expId=$expId&jobId=$jobid'>[check logfile]</a><br />\n";
 			if ($extraKeys) {
 				echo "<table border='0'>\n";
 				foreach ($extraKeys as $k=>$v) echo formatHtmlRow($k,$v);

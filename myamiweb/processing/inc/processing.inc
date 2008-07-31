@@ -725,7 +725,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		// create virtual window for matlab images
 		if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
 		$jobtext .= "$apcmd\n";
-		$jobtext .= "updateAppionDB.py $jobid D\n\n";
+		$jobtext .= "\nupdateAppionDB.py $jobid D\n\n";
 		$jobtext .= "exit\n"; 
 	
 		// write jobfile to tmp dir on cronus3
