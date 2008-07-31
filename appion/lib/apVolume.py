@@ -15,6 +15,7 @@ import string
 import apDisplay
 import appionData
 import apAlignment
+import apParam
 import apEMAN
 import apDB
 #pyami
@@ -62,13 +63,14 @@ def MRCtoSPI(infile,outdir):
 	return tmpspifile
 
 def createAmpcorBatchFile(infile,params):
-	scriptfile = os.path.join(params['appiondir'],"lib/enhance.bat")
+	appiondir = apParam.getAppionDirectory()
+	scriptfile = os.path.join(appiondir, "lib/enhance.bat")
 	if not os.path.isfile(scriptfile):
 		apDisplay.printError("could not find spider script: "+scriptfile)
 	inf = open(scriptfile, "r")
 
 	tmpfile="out"+randomfilename(8)+".spi"
-	tmpfile=os.path.join(params['outdir'],tmpfile)
+	tmpfile=os.path.join(params['outdir'], tmpfile)
 	
 	outfile = "enhance_edit.bat"
 	if os.path.isfile(outfile):
@@ -96,9 +98,9 @@ def createAmpcorBatchFile(infile,params):
 			elif re.search("^\[scatter\]",line):
 				outf.write(apAlignment.spiderline("scatter",params['ampfile'],"amplitude curve file"))
 			elif re.search("^\[pwsc\]",line):
-				outf.write(apAlignment.spiderline("pwsc",os.path.join(params['appiondir'],"lib/pwsc"),"scaling script"))
+				outf.write(apAlignment.spiderline("pwsc",os.path.join(appiondir,"lib/pwsc"),"scaling script"))
 			elif re.search("^\[applyfen\]",line):
-				outf.write(apAlignment.spiderline("applyfen",os.path.join(params['appiondir'],"lib/applyfen"),"scaling script"))
+				outf.write(apAlignment.spiderline("applyfen",os.path.join(appiondir,"lib/applyfen"),"scaling script"))
 			else:
 				outf.write(line)
 	return tmpfile
