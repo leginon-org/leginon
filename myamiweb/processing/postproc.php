@@ -38,7 +38,7 @@ if ($_POST['run']) {
 	$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
 	$command.= "--maxfilt=$res ";
 	$command.= "--apix=$apix ";
-	$command.= "--outdir=$path ";
+	$command.= "--outdir=$path/postproc ";
 	if ($mask) $command.="--mask=$mask ";
 	if ($imask) $command.="--imask=$imask ";
 	if ($lp) $command.="--lp=$lp ";
@@ -61,7 +61,7 @@ if ($_POST['run']) {
         <tr><td>imask</td><td>$imask</td></tr>
         <tr><td>norm</td><td>$norm</td></tr>
         <tr><td>apix</td><td>$apix</td></tr>
-        <tr><td>outdir</td><td>$path</td></tr>
+        <tr><td>outdir</td><td>$path/postproc</td></tr>
         <tr><td>lp</td><td>$lp</td></tr>
         <tr><td>yflip</td><td>$yflip</td></tr>
         <tr><td>invert</td><td>$invert</td></tr>
