@@ -90,6 +90,7 @@ if __name__ == '__main__':
 	# create params dictionary & set defaults
 	params = parseCommandLine()
 	params['appiondir'] = apParam.getAppionDirectory()
+	os.chdir(params['outdir'])
 	apParam.writeFunctionLog(sys.argv)
 
 	checkConflicts(params)
