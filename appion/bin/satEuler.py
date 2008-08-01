@@ -362,11 +362,12 @@ class satEulerScript(appionScript.AppionScript):
 			eulerpair['totdist'] = apEulerCalc.eulerCalculateDistanceSym(eulerpair['part1'],
 				eulerpair['part2'], sym='d7', inplane=True)
 			eulerpair['rotdist'] = self.calc2dRotationalDifference(eulerpair)
-			if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
-				#print eulerpair['part1']['mirror'],eulerpair['part2']['mirror'],eulerpair['totdist']
-				angdistlist.append(eulerpair['angdist'])
-				totdistlist.append(eulerpair['totdist'])
-				rotdistlist.append(eulerpair['rotdist'])
+			### ignore rejected particles
+			#if eulerpair['part1']['reject'] == 0 or eulerpair['part2']['reject'] == 0:
+			#print eulerpair['part1']['mirror'],eulerpair['part2']['mirror'],eulerpair['totdist']
+			angdistlist.append(eulerpair['angdist'])
+			totdistlist.append(eulerpair['totdist'])
+			rotdistlist.append(eulerpair['rotdist'])
 		apDisplay.printMsg("Processed "+str(len(eulertree))+" eulers in "
 			+apDisplay.timeString(time.time()-t0))
 
