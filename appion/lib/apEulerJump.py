@@ -168,9 +168,16 @@ class ApEulerJump(object):
 		get the symmetry from the last iteration of a refinement
 		"""
 		refrundata = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
-		modeldata = refrundata['initialModel']
-		symmdata = modeldata['symmetry']
-		symmname = symmdata['eman_name']
+		refdataq = appionData.ApRefinementData()
+		refdataq['refinementRun'] = refrundata
+		refdata = refdataq.query()
+		uniqsym = refdata[0]['refinementParams']['symmetry']
+		for data in refdata:
+			if uniqsym != data['refinementParams']['symmetry']:
+				apDisplay.printWarning("symmetry is not consistent throughout reconstruction!")
+				apDisplay.printWarning("using symmetry of last iteration")
+			uniqsym = data['refinementParams']['symmetry']
+		symmname = uniqsym['eman_name']
 		if msg is True:
 			apDisplay.printMsg("selected symmetry group: "
 				+apDisplay.colorString("'"+symmname+"'", "cyan")

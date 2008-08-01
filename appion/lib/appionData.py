@@ -568,6 +568,7 @@ class ApRefinementParamsData(Data):
 			('lpfilter', int),
 			('hpfilter', int),
 			('pad', int),
+			('symmetry', ApSymmetryData),
 			('EMAN_hard', int),
 			('EMAN_classkeep', float),
 			('EMAN_classiter', int),

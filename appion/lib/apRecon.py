@@ -15,6 +15,7 @@ import apDisplay
 import apEMAN
 import apEulerDraw
 import apStack
+import apUpload
 try:
 	import EMAN
 except:
@@ -254,7 +255,6 @@ def findEmanJobFile(params):
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
 	logfile = findEmanJobFile(params)
-	print logfile
 	apDisplay.printMsg("parsing eman log file: "+logfile)
 	lines=open(logfile,'r')
 	params['iterations'] = []
@@ -267,6 +267,7 @@ def parseLogFile(params):
 				emanparams.pop(0)
 			iteration=defineIteration()
 			iteration['num']=emanparams[1]
+			iteration['sym']=''
 			for p in emanparams:
 				elements=p.strip().split('=')
 				if elements[0]=='ang':
@@ -277,6 +278,8 @@ def parseLogFile(params):
 					iteration['imask']=int(float(elements[1]))
 				elif elements[0]=='pad':
 					iteration['pad']=int(float(elements[1]))
+				elif elements[0]=='sym':
+					iteration['sym'] = apUpload.findSymmetry(elements[1])
 				elif elements[0]=='hard':
 					iteration['hard']=int(float(elements[1]))
 				elif elements[0]=='classkeep':
@@ -532,6 +535,7 @@ def insertIteration(iteration, params):
 	refineparamsq['lpfilter']=iteration['lpfilter']
 	refineparamsq['hpfilter']=iteration['hpfilter']
 	refineparamsq['pad']=iteration['pad']
+	refineparamsq['symmetry']=iteration['sym']
 	refineparamsq['EMAN_hard']=iteration['hard']
 	refineparamsq['EMAN_classkeep']=iteration['classkeep']
 	refineparamsq['EMAN_classiter']=iteration['classiter']

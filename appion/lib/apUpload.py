@@ -85,6 +85,19 @@ def createDefaults():
 	params['newbox']=None
 	return params
 
+def findSymmetry(symtext):
+	# find the symmetry entry in the database
+	# based on the text version from EMAN
+	# first convert to lower case
+	symtext = string.lower(symtext)
+	symdataq = appionData.ApSymmetryData(eman_name=symtext)
+	symdata = symdataq.query(results=1)
+	if not symdata:
+		apDisplay.printWarning("No symmetry found, assuming c1 (asymmetric)")
+		symdataq = appionData.ApSymmetryData(eman_name = 'c1')
+		symdata = symdataq.query(results=1)
+	return symdata[0]
+	
 def getSymmetryData(symid, msg=True):
 	symdata = appiondb.direct_query(appionData.ApSymmetryData, symid)
 	if not symdata:
