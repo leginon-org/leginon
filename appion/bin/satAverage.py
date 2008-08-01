@@ -215,7 +215,7 @@ class satAverageScript(appionScript.AppionScript):
 		self.parser.add_option("-i", "--iter", dest="iter", type="int",
 			help="Final eulers applied to particles will come from this iteration", metavar="INT")
 		self.parser.add_option("-n", "--stackname", dest="stackname", default="goodavgs.hed",
-			help="Name of the stack to write the averages", metavar="TEXT")
+			help="Name of the stack to write the averages", metavar="file.hed")
 		self.parser.add_option("--keep-list", dest="keeplist",
 			help="Keep particles in the specified text file, EMAN style 0,1,...", metavar="TEXT")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
@@ -237,6 +237,11 @@ class satAverageScript(appionScript.AppionScript):
 		if not os.path.isfile(self.params['keeplist']):
 			apDisplay.printError("could not find list file")
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
+		if self.params['stackname'][-4:] != ".hed":
+			s = os.path.splitext(self.params['stackname'])[0]
+			s += ".hed"
+			self.params['stackname'] = s
+		apDisplay.printMsg("Stack name: "+self.params['stackname'])
 
 	#=====================
 	def setOutDir(self):
