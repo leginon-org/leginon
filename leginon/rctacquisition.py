@@ -361,7 +361,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		extend Acquisition.moveAndPreset because additionally we need to
 		return to the same defocus as the other images in the tilt series
 		'''
-		acquisition.Acquisition.moveAndPreset(self, presetdata, emtarget)
+		status = acquisition.Acquisition.moveAndPreset(self, presetdata, emtarget)
+		if status == 'error':
+			return status
 		targetdata = emtarget['target']
 		tiltseries,defocus = self.getTiltSeries(targetdata, presetdata)
 		if tiltseries is None:
@@ -371,6 +373,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.tiltseries = tiltseries
 			self.logger.info('using defocus of first tilt at this target')
 			self.instrument.tem.Defocus = defocus
+		return status
 
 	def testAcquire(self):
 		im = self.acquireImage()
@@ -407,7 +410,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			r,c = region['regionEllipse'][:2]
 			targets.append((c,r))
 		self.setTargets(targets, 'Peak')
-		
+
 	def acquireImage(self):
 		errstr = 'Acquire image failed: %s'
 		if self.presetsclient.getCurrentPreset() is None:
