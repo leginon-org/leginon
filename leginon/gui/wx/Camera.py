@@ -345,6 +345,8 @@ class CameraPanel(wx.Panel):
 class CustomDialog(wx.Dialog):
 	def __init__(self, parent, geometry):
 		wx.Dialog.__init__(self, parent, -1, 'Custom')
+		sb = wx.StaticBox(self, -1, 'Camera Configuration')
+		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		stx = wx.StaticText(self, -1, 'x')
 		sty = wx.StaticText(self, -1, 'y')
@@ -386,8 +388,6 @@ class CustomDialog(wx.Dialog):
 		szbutton.Add(bok, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
 
-		sb = wx.StaticBox(self, -1, 'Camera Configuration')
-		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.sbsz.Add(self.szxy, 0, wx.ALIGN_CENTER)
 
 		sz = wx.GridBagSizer(5, 5)
