@@ -41,7 +41,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
   
-	processing_header($title,$heading);
+	processing_header($title,$heading,False,True);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -210,7 +210,7 @@ function runUploadModel() {
 	if ($contour) $command.="--contour=$contour ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	if ($_POST['newmodel']) $command.="--modelid=$_GET[modelid] ";
-	$command.="--description='$description' ";
+	$command.="--description=\"$description\" ";
 	
 	// submit job to cluster
 	if ($_POST['process']=="Upload Model") {
