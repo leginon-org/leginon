@@ -274,11 +274,9 @@ class AlignZeroLossPeak(Reference):
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return False
-		print self.reference_target.dbid
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
-		print stageposition
 		lastresetq = data.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
 		result = lastresetq.query(readimages=False, results=1)
 
@@ -309,7 +307,6 @@ class AlignZeroLossPeak(Reference):
 			return
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		stageposition = imagedata['scope']['stage position']
-		print stageposition
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)
 
