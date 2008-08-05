@@ -83,7 +83,6 @@ class ToolBar(wx.ToolBar):
 		#self.spacer = wx.StaticText(self, -1, '')
 		self.spacer = wx.Control(self, -1, style=wx.NO_BORDER)
 		self.AddControl(self.spacer)
-		print dir(self)
 		#print self.ToolSize()
 		size = wx.Size(16,16)
 		#self.setSize(size)
