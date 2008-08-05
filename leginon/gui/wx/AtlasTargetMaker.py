@@ -89,6 +89,8 @@ class Panel(gui.wx.Node.Panel):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Atlas')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['preset'] = PresetChoice(self, -1)
@@ -137,8 +139,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Atlas')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]

@@ -44,6 +44,8 @@ class ExtrapolateDialog(wx.Dialog):
 		self.node = parent.node
 
 		wx.Dialog.__init__(self, parent, -1, 'Extrapolate Pixel Size')
+		sb = wx.StaticBox(self, -1, 'Select Magnifications to Calculate')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.fromps = fromps
 		self.pslc = PixelSizeListCtrl(self, -1)
@@ -57,8 +59,8 @@ class ExtrapolateDialog(wx.Dialog):
 
 		label = wx.StaticText(self, -1, 'Pixel Sizes:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.pslc, (1, 0), (1, 1), wx.EXPAND)
 		sz.SetItemMinSize(self.pslc, self.pslc.getBestSize())
+		sz.Add(self.pslc, (1, 0), (1, 1), wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Comment:')
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -67,8 +69,6 @@ class ExtrapolateDialog(wx.Dialog):
 		sz.AddGrowableRow(1)
 		sz.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Select Magnifications to Calculate')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bextrapolate = wx.Button(self, -1, 'Calculate Selected')
@@ -110,6 +110,8 @@ class ExtrapolateDialog(wx.Dialog):
 class EditDialog(wx.Dialog):
 	def __init__(self, parent, mag, ps, comment):
 		wx.Dialog.__init__(self, parent, -1, 'Edit Pixel Size')
+		sb = wx.StaticBox(self, -1, 'Pixel Size')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.stmag = wx.StaticText(self, -1)
 		self.stmag.SetLabel(str(mag))
@@ -139,8 +141,6 @@ class EditDialog(wx.Dialog):
 		szedit.AddGrowableRow(3)
 		szedit.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Pixel Size')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(szedit, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bsave = wx.Button(self, wx.ID_OK, 'Save')
@@ -187,6 +187,8 @@ class MeasureDialog(wx.Dialog):
 		self.node = parent.node
 
 		wx.Dialog.__init__(self, parent, -1, 'Measure Pixel Size')
+		sb = wx.StaticBox(self, -1, 'Measure')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.pixeldistance = parent.measurement['magnitude']
 
@@ -237,8 +239,6 @@ class MeasureDialog(wx.Dialog):
 		szedit.AddGrowableRow(3)
 		szedit.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Measure')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(szedit, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bmeasure = wx.Button(self, -1, 'Calculate')
@@ -337,6 +337,8 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 
 		wx.Dialog.__init__(self, parent, -1, 'Pixel Size Calibration',
 												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		sb = wx.StaticBox(self, -1, 'Pixel Size')
+		sbszps = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.measurement = parent.measurement
 		self.mag, self.mags = self.node.getMagnification()
@@ -362,28 +364,30 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.bdone = wx.Button(self, wx.ID_OK, 'Done')
 
 		szps = wx.GridBagSizer(5, 5)
-		szps.Add(self.lcpixelsize, (0, 0), (1, 3), wx.EXPAND)
-		szps.SetItemMinSize(self.lcpixelsize, self.lcpixelsize.getBestSize())
-		szps.Add(self.bedit, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		szps.Add(self.bextrapolate, (1, 1), (1, 1), wx.ALIGN_CENTER)
-		szps.Add(self.bmeasure, (1, 2), (1, 1), wx.ALIGN_CENTER)
+		#szlc.SetItemMinSize(self.lcpixelsize, self.lcpixelsize.getBestSize())
+		szps.Add(self.lcpixelsize, (0, 0), (1, 1),wx.EXPAND )
+		#szps.Add(szlc, (0, 0), (1, 1), wx.EXPAND)
+		szpsopt = wx.GridBagSizer(5, 5)
+		szpsopt.Add(self.bedit, (0, 0), (1, 1), wx.ALIGN_LEFT)
+		szpsopt.Add(self.bextrapolate, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szpsopt.Add(self.bmeasure, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		szps.Add(szpsopt, (1, 0), (1, 1), wx.EXPAND)
 		szps.AddGrowableRow(0)
 		szps.AddGrowableCol(0)
-		szps.AddGrowableCol(1)
-		szps.AddGrowableCol(2)
+		#szps.AddGrowableCol(2)
 
-		sb = wx.StaticBox(self, -1, 'Pixel Size')
-		sbszps = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszps.Add(szps, 1, wx.EXPAND|wx.ALL, 5)
 
-		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bdone, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.AddGrowableCol(0)
+		#szbutton = wx.GridBagSizer(5, 5)
+		#szbutton.Add(self.bdone, (0, 0), (1, 1),
+		#								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		#szbutton.AddGrowableCol(0)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(sbszps, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		sz.Add(self.bdone, (1, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+		#sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 		sz.AddGrowableRow(0)
 		sz.AddGrowableCol(0)
 

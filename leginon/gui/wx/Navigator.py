@@ -275,6 +275,12 @@ class StageLocationsDialog(wx.Dialog):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Navigation')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		overridebox = wx.StaticBox(self, -1, "Override Preset")
+		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
+		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
+		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)
 
 		# move type
 #		movetypes = self.node.calclients.keys()
@@ -320,8 +326,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
 		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
-		overridebox = wx.StaticBox(self, -1, "Override Preset")
-		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
 		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# error checking and correction
@@ -360,8 +364,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(hysfixsz, (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		errbox = wx.StaticBox(self, -1, "Error Checking and Correction")
-		errsz = wx.StaticBoxSizer(errbox, wx.VERTICAL)
 		errsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# settings sizer
@@ -371,8 +373,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(errsz, (2,0), (1,1))
 		#sz.AddGrowableRow(2)
 
-		sb = wx.StaticBox(self, -1, 'Navigation')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]

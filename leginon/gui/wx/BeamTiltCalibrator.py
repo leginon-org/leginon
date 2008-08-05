@@ -24,6 +24,8 @@ import gui.wx.ToolBar
 class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		sizers = gui.wx.Calibrator.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Beam Tilt')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 #		self.widgets['measure beam tilt'] = FloatEntry(self, -1, chars=7)
 		self.widgets['correct tilt'] = wx.CheckBox(self, -1, 'Correct image for tilt')
@@ -45,8 +47,6 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		sizer.AddGrowableCol(0)
 		sizer.AddGrowableCol(2)
 
-		sb = wx.StaticBox(self, -1, 'Beam Tilt')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sizer, 0, wx.EXPAND|wx.ALL, 5)
 
 		return sizers + [sbsz]
@@ -230,6 +230,8 @@ class Panel(gui.wx.Calibrator.Panel):
 class DefocusSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Defocus Calibration')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['defocus beam tilt'] = FloatEntry(self, -1, chars=9)
 		self.widgets['first defocus'] = FloatEntry(self, -1, chars=9)
@@ -246,8 +248,6 @@ class DefocusSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['second defocus'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
-		sb = wx.StaticBox(self, -1, 'Defocus Calibration')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
@@ -255,6 +255,8 @@ class DefocusSettingsDialog(gui.wx.Settings.Dialog):
 class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Stigmator Calibration')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['stig beam tilt'] = FloatEntry(self, -1, chars=9)
 		self.widgets['stig delta'] = FloatEntry(self, -1, chars=9)
@@ -269,8 +271,6 @@ class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['stig delta'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
-		sb = wx.StaticBox(self, -1, 'Stigmator Calibration')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
@@ -278,6 +278,8 @@ class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 class ComafreeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Coma-free Calibration')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['comafree beam tilt'] = FloatEntry(self, -1, chars=9)
 		self.widgets['comafree misalign'] = FloatEntry(self, -1, chars=9)
@@ -292,8 +294,6 @@ class ComafreeSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['comafree misalign'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
-		sb = wx.StaticBox(self, -1, 'Coma-free Calibration')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
@@ -367,6 +367,8 @@ class MeasureDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Parameters')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['measure beam tilt'] = FloatEntry(self, -1, chars=7)
 
@@ -413,8 +415,6 @@ class MeasureDialog(gui.wx.Settings.Dialog):
 		sz.Add(szresult, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(szbutton, (0, 1), (1, 1), wx.ALIGN_CENTER)
 
-		sb = wx.StaticBox(self, -1, 'Parameters')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.measure)

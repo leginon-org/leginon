@@ -34,6 +34,8 @@ class Panel(gui.wx.Acquisition.Panel):
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		sizers = gui.wx.Acquisition.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Stig Options')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 4)
 		bordersize = 3
@@ -63,8 +65,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		self.widgets['stigcount'] = IntEntry(self, -1, chars=6)
 		sizer.Add(self.widgets['stigcount'], (4,1), (1,1), wx.ALL|wx.ALIGN_CENTER_VERTICAL, bordersize)
 
-		sb = wx.StaticBox(self, -1, 'Stig Options')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER|wx.ALL, 2)
 
 		return sizers + [sbsz]

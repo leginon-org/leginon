@@ -86,6 +86,7 @@ class EditHandlerDialog(wx.Dialog):
 		else:
 			title = 'Edit Handler'
 		wx.Dialog.__init__(self, parent, -1, title)
+		sbsz = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Handler'), wx.VERTICAL)
 
 		self.handler = handler
 		self.window = window
@@ -136,7 +137,6 @@ class EditHandlerDialog(wx.Dialog):
 		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.AddGrowableCol(0)
 
-		sbsz = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Handler'), wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		szdialog = wx.GridBagSizer(5, 5)
@@ -222,6 +222,7 @@ class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 class HandlersPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent, -1)
+		sbsz = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Handlers'), wx.VERTICAL)
 
 		self.logger = None
 
@@ -241,7 +242,6 @@ class HandlersPanel(wx.Panel):
 		sz.AddGrowableCol(0)
 		sz.AddGrowableRow(3)
 
-		sbsz = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Handlers'), wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.SetSizerAndFit(sbsz)
@@ -328,8 +328,8 @@ class LoggingConfigurationDialog(wx.Dialog):
 		buttonsizer.AddGrowableCol(0)
 
 		sizer = wx.GridBagSizer(5, 5)
-		sizer.Add(self.tree, (0, 0), (4, 1), wx.EXPAND)
 		sizer.SetItemMinSize(self.tree, (self.tree.GetSize()[0]*2, -1))
+		sizer.Add(self.tree, (0, 0), (4, 1), wx.EXPAND)
 		sizer.Add(self.cbpropagate, (0, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Level:')
 		sizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)

@@ -225,6 +225,8 @@ class GridDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
 		wx.Dialog.__init__(self, parent, -1, 'Grid Selection')
+		sb = wx.StaticBox(self, -1, 'Grid')
+		sbszgrid = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		choices = ['None'] + self.node.getGridBoxes()
 		self.cgridbox = wx.Choice(self, -1, choices=choices)
@@ -250,8 +252,6 @@ class GridDialog(wx.Dialog):
 		szgrid.Add(self.cgrid, (1, 1), (1, 1), wx.EXPAND)
 		szgrid.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Grid')
-		sbszgrid = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszgrid.Add(szgrid, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bselect = wx.Button(self, wx.ID_OK, 'Select')
@@ -302,6 +302,14 @@ class GridDialog(wx.Dialog):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Acquisition')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Main Screen')
+		sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Low Dose')
+		sbszlowdose = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Defocus Pair')
+		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.instrumentselection)
@@ -325,8 +333,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szscreen.Add(self.widgets['screen down'], (1, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Main Screen')
-		sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszscreen.Add(szscreen, 1, wx.EXPAND|wx.ALL, 5)
 
 		szlowdose = wx.GridBagSizer(5, 5)
@@ -342,8 +348,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szlowdose.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlowdose.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Low Dose')
-		sbszlowdose = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlowdose.Add(szlowdose, 1, wx.EXPAND|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 5)
@@ -385,13 +389,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szdefocus.Add(self.widgets['defocus2switch'], (2,0), (1,1))
 		self.widgets['defocus2'] = FloatEntry(self, -1, chars=6)
 		szdefocus.Add(self.widgets['defocus2'], (2,1), (1,1))
-		sb = wx.StaticBox(self, -1, 'Defocus Pair')
-		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszdefocus.Add(szdefocus, 1, wx.EXPAND|wx.ALL, 5)
 
 
-		sb = wx.StaticBox(self, -1, 'Acquisition')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		
 		sb2 = wx.GridBagSizer(5,5)

@@ -79,6 +79,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Original Image')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['image filename'].SetMinSize((500,50))
@@ -88,8 +90,6 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
@@ -97,6 +97,8 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
+		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['template lpf'] = {}
 		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
@@ -109,10 +111,10 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlpf.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
-		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
 
+		sb = wx.StaticBox(self, -1, 'Template Correlation')
+		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['template rings'] = gui.wx.Rings.Panel(self)
 		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
 
@@ -129,8 +131,6 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		sztemplate.Add(self.widgets['template rings'], (1, 0), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
-		sb = wx.StaticBox(self, -1, 'Template Correlation')
-		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsztemplate.Add(sztemplate, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -150,6 +150,8 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
+		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['edge lpf'] = {}
 		self.widgets['edge lpf']['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
@@ -161,8 +163,6 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlpf.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
-		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
 
 #		self.widgets['edge'] = wx.CheckBox(self, -1, 'Use edge finding')
@@ -171,6 +171,8 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 #		self.widgets['edge log sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
 #		self.widgets['edge absolute'] = wx.CheckBox(self, -1,
 #																					'Take absolute value of edge values')
+		sb = wx.StaticBox(self, -1, 'Edge Finding')
+		sbszedge = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['edge threshold'] = FloatEntry(self, -1, chars=9)
 
 		szedge = wx.GridBagSizer(5, 5)
@@ -195,8 +197,6 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szedge.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Edge Finding')
-		sbszedge = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszedge.Add(szedge, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -217,6 +217,8 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		sb = wx.StaticBox(self, -1, 'Threshold')
+		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['threshold'] = FloatEntry(self, -1, chars=9)
 
 		szthreshold = wx.GridBagSizer(5, 5)
@@ -226,8 +228,6 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szthreshold.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Threshold')
-		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszthreshold.Add(szthreshold, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -247,6 +247,8 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Blob finding')
+		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['blobs border'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs max'] = IntEntry(self, -1, min=0, chars=6)
@@ -267,8 +269,6 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szblobs.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Blob finding')
-		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszblobs.Add(szblobs, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -288,6 +288,10 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Lattice Fitting')
+		sbszlattice = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Hole Statistics')
+		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['lattice spacing'] = FloatEntry(self, -1, chars=6)
 		self.widgets['lattice tolerance'] = FloatEntry(self, -1, chars=6)
@@ -305,8 +309,6 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlattice.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Lattice Fitting')
-		sbszlattice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlattice.Add(szlattice, 1, wx.EXPAND|wx.ALL, 5)
 
 		szstats = wx.GridBagSizer(5, 5)
@@ -320,8 +322,6 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szstats.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Hole Statistics')
-		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszstats.Add(szstats, 1, wx.EXPAND|wx.ALL, 5)
 
 		szbutton = wx.GridBagSizer(5, 5)
@@ -341,6 +341,12 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
+		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Focus Template Thickness')
+		sbszftt = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Target Template')
+		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
@@ -378,8 +384,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
-		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
 		szftt = wx.GridBagSizer(5, 5)
@@ -403,8 +407,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szftt.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Focus Template Thickness')
-		sbszftt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszftt.Add(szftt, 1, wx.EXPAND|wx.ALL, 5)
 
 		sztt = wx.GridBagSizer(5, 5)
@@ -416,8 +418,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sztt.Add(self.widgets['acquisition template'], (2, 1), (1, 1),
 							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
-		sb = wx.StaticBox(self, -1, 'Target Template')
-		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bice = wx.Button(self, -1, '&Test targeting')
@@ -443,6 +443,8 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['skip'] = wx.CheckBox(self, -1,
 																	'Skip automated hole finder')
@@ -450,8 +452,6 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 		sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return tfsd + [sbsz]

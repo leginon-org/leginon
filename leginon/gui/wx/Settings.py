@@ -86,7 +86,7 @@ class Dialog(wx.Dialog):
 
 		# set values
 		self.SetSizerAndFit(szmain)
-		self.SetAutoLayout(True)
+#		self.SetAutoLayout(True)
 
 		self.szmain = szmain
 

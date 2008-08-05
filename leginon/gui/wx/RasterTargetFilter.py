@@ -28,6 +28,12 @@ class Panel(gui.wx.TargetFilter.Panel):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sbr = wx.StaticBox(self, -1, 'Target Raster')
+		sbszr = wx.StaticBoxSizer(sbr, wx.VERTICAL)
+		sbcalc = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
+		sbszcalc = wx.StaticBoxSizer(sbcalc, wx.VERTICAL)
+		sblimit = wx.StaticBox(self, -1, 'Limiting Ellipse')
+		sbszlimit = wx.StaticBoxSizer(sblimit, wx.VERTICAL)
 
 		sz = wx.GridBagSizer(5, 10)
 
@@ -74,8 +80,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szcalc.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szcalc.Add(self.widgets['raster movetype'], (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sbcalc = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
-		sbszcalc = wx.StaticBoxSizer(sbcalc, wx.VERTICAL)
 		sbszcalc.Add(szcalc, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		sz.Add(sbszcalc, (1, 0), (1, 2), wx.EXPAND)
 
@@ -113,13 +117,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'raster spacings')
 		szlimit.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sblimit = wx.StaticBox(self, -1, 'Limiting Ellipse')
-		sbszlimit = wx.StaticBoxSizer(sblimit, wx.VERTICAL)
 		sbszlimit.Add(szlimit, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		szr.Add(sbszlimit, (2, 0), (1, 3), wx.EXPAND)
 
-		sbr = wx.StaticBox(self, -1, 'Target Raster')
-		sbszr = wx.StaticBoxSizer(sbr, wx.VERTICAL)
 		sbszr.Add(szr, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		sz.Add(sbszr, (2, 0), (1, 2), wx.EXPAND)
 

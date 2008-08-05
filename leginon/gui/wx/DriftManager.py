@@ -93,6 +93,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Drift Management')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
@@ -123,8 +125,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.instrumentselection, (2, 0), (1, 1), wx.EXPAND)
 		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1), wx.EXPAND)
 
-		sb = wx.StaticBox(self, -1, 'Drift Management')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]

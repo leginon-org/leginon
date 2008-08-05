@@ -39,6 +39,8 @@ class SetConfigurationEvent(wx.PyCommandEvent):
 class CameraPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent, -1)
+		sb = wx.StaticBox(self, -1, 'Camera Configuration')
+		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.size = None
 		self.geometry = None
 		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
@@ -93,8 +95,6 @@ class CameraPanel(wx.Panel):
 
 		self.szmain.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Camera Configuration')
-		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.SetSizerAndFit(self.sbsz)

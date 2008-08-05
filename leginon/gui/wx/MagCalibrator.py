@@ -31,6 +31,8 @@ class Panel(gui.wx.Calibrator.Panel):
 class MagCalibrationDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Stuff')
+		sbsz= wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sz = wx.GridBagSizer(5, 5)
 
@@ -90,8 +92,6 @@ class MagCalibrationDialog(gui.wx.Settings.Dialog):
 		sz.Add(lab, (10,0), (1,1))
 		sz.Add(self.widgets['magsteps'], (10,1), (1,1))
 
-		sb = wx.StaticBox(self, -1, 'Stuff')
-		sbsz= wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.Bind(wx.EVT_BUTTON, self.onGo, self.gobut)

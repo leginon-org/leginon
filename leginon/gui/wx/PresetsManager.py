@@ -935,6 +935,8 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Preset Management')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 #		self.widgets['xy only'] = wx.CheckBox(self, -1,
@@ -966,8 +968,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['mag only'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['apply offset'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Preset Management')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]

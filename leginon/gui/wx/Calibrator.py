@@ -25,6 +25,8 @@ import gui.wx.Instrument
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Calibration')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.cortypes)
 		self.widgets['override preset'] = wx.CheckBox(self, -1, 'Override Preset')
@@ -50,8 +52,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.AddGrowableCol(0)
 		sz.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Calibration')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]

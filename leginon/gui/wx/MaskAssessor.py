@@ -116,6 +116,8 @@ class Panel(gui.wx.ImageAssessor.Panel):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Settings')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sz = wx.GridBagSizer(5, 10)
 
@@ -140,8 +142,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['jump filename'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
-		sb = wx.StaticBox(self, -1, 'Settings')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz,]

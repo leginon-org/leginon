@@ -25,6 +25,8 @@ class Panel(gui.wx.TargetFilter.Panel):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Target Filter')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['bypass'] = wx.CheckBox(self, -1,'Bypass Filter')
 		self.widgets['limit'] = IntEntry(self, -1, min=0, chars=6)
@@ -35,8 +37,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['limit'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
-		sb = wx.StaticBox(self, -1, 'Target Filter')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]

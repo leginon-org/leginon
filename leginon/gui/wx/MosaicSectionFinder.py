@@ -159,6 +159,8 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
+		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		szoptions = wx.GridBagSizer(5, 5)
 
@@ -171,8 +173,6 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['raster movetype'] = Choice(self, -1, choices=movetypes)
 		self.autobut = wx.Button(self, -1, 'Calculate spacing and angle using the following parameters:')
 
-		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
-		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		szauto = wx.GridBagSizer(5, 5)
 		szauto.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Raster Preset')

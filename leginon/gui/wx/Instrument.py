@@ -1137,6 +1137,8 @@ class SelectionPanel(wx.Panel):
 		instrument selection that is used conditionally.
 		'''
 		wx.Panel.__init__(self, parent, -1)
+		sb = wx.StaticBox(self, -1, 'Instrument')
+		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.nonestring = 'None'
 		self.passive = passive
@@ -1154,8 +1156,6 @@ class SelectionPanel(wx.Panel):
 
 		sz.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Instrument')
-		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.SetSizer(self.sbsz)

@@ -97,6 +97,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'test image')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
 								labelText='Test Image:', fileMask='*.mrc')
@@ -107,8 +109,6 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['test image'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'test image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
@@ -116,6 +116,8 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Matlab Module')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		#gui.wx.Settings.Dialog.initialize(self)
 
 #		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
@@ -129,8 +131,6 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 		sz.Add(self.widgets['module path'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Matlab Module')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return tfsbsz + [sbsz]

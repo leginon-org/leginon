@@ -28,6 +28,10 @@ import targethandler
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Image Acquisition')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
+		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 
 		# move type
 		movetypes = self.node.calclients.keys()
@@ -101,8 +105,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szsim.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsim.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
-		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		szmover = wx.GridBagSizer(5, 5)
@@ -169,8 +171,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)
 
-		sb = wx.StaticBox(self, -1, 'Image Acquisition')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]

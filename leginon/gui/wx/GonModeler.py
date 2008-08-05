@@ -21,6 +21,10 @@ import gui.wx.ToolBar
 class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		szcal = gui.wx.Calibrator.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Measurement')
+		sbszmeasure = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Modeling')
+		sbszmodel = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['measure axis'] = Choice(self, -1, choices=self.node.axes)
 		self.widgets['measure points'] = IntEntry(self, -1, min=2, chars=5)
@@ -60,8 +64,6 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		szmeasure.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Measurement')
-		sbszmeasure = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszmeasure.Add(szmeasure, 1, wx.EXPAND|wx.ALL, 5)
 
 		szmodel = wx.GridBagSizer(5, 5)
@@ -84,8 +86,6 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		szmodel.Add(self.widgets['model mag only'], (4, 0), (1, 2), wx.ALIGN_CENTER)
 		szmodel.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Modeling')
-		sbszmodel = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszmodel.Add(szmodel, 1, wx.EXPAND|wx.ALL, 5)
 
 		return szcal + [sbszmeasure, sbszmodel]

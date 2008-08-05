@@ -26,6 +26,8 @@ class TemplateUpdatedEvent(wx.PyCommandEvent):
 class Dialog(wx.Dialog):
 	def __init__(self, parent, title, target=None, targetname='Relative target'):
 		wx.Dialog.__init__(self, parent, -1, title)
+		sbsztarget = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Target'),
+																		wx.VERTICAL)
 
 		self.targetname = targetname
 		self.iex = IntEntry(self, -1, chars=4)
@@ -50,8 +52,6 @@ class Dialog(wx.Dialog):
 		label = wx.StaticText(self, -1, 'pixels')
 		sztarget.Add(label, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sbsztarget = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Target'),
-																		wx.VERTICAL)
 		sbsztarget.Add(sztarget, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bok = wx.Button(self, wx.ID_OK, 'OK')

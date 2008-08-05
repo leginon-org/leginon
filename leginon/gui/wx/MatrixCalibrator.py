@@ -118,6 +118,8 @@ class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		self.sb = wx.StaticBox(self, -1, '%s calibration' % self.parametername)
+		sbsz = wx.StaticBoxSizer(self.sb, wx.VERTICAL)
 
 		self.widgets['%s tolerance' % self.parameter] = FloatEntry(self, -1, chars=9)
 		self.widgets['%s shift fraction' % self.parameter] = FloatEntry(self, -1, chars=9)
@@ -168,8 +170,6 @@ class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(szbase, (5, 0), (1, 3), wx.ALIGN_CENTER)
 		sz.AddGrowableCol(1)
 
-		self.sb = wx.StaticBox(self, -1, '%s calibration' % self.parametername)
-		sbsz = wx.StaticBoxSizer(self.sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]

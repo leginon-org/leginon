@@ -16,6 +16,8 @@ import gui.wx.ToolBar
 class SettingsDialog(gui.wx.Settings.Dialog):
     def initialize(self):
         gui.wx.Settings.Dialog.initialize(self)
+        sb = wx.StaticBox(self, -1, 'Reference Target')
+        sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
         move_types = self.node.calibration_clients.keys()
         move_types.sort()
@@ -42,8 +44,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
         sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         sz.Add(szintervaltime, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-        sb = wx.StaticBox(self, -1, 'Reference Target')
-        sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
         sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
         return [sbsz]

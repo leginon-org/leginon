@@ -80,6 +80,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Original Image')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['image filename'].SetMinSize((500,50))
@@ -89,8 +91,6 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
@@ -98,6 +98,10 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Raster')
+		sbszraster = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
+		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['raster spacing'] = IntEntry(self, -1, chars=4, min=1)
 		self.widgets['raster spacing asymm'] = IntEntry(self, -1, chars=4)
@@ -118,8 +122,6 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['raster overlap'] = FloatEntry(self, -1, chars=8)
 
 
-		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
-		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		szauto = wx.GridBagSizer(5, 5)
 		szauto.Add(self.autobut, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Raster Preset')
@@ -187,8 +189,6 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 			self.widgets['raster spacing asymm'].Enable(True)
 			self.widgets['raster limit asymm'].Enable(True)		
 
-		sb = wx.StaticBox(self, -1, 'Raster')
-		sbszraster = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszraster.Add(szraster, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -236,6 +236,8 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Polygon')
+		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Wait for polygon selection')
 		self.widgets['publish polygon'] = wx.CheckBox(self, -1, 'Publish polygon vertices as targets')
 
@@ -243,8 +245,6 @@ class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 		szpolygon.Add(self.widgets['select polygon'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpolygon.Add(self.widgets['publish polygon'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Polygon')
-		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszpolygon.Add(szpolygon, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
@@ -271,6 +271,12 @@ class PolygonRasterSettingsDialog(gui.wx.Settings.Dialog):
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Ice Analysis')
+		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Focus Targets')
+		sbszft = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
+		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['ice box size'] = FloatEntry(self, -1, chars=8)
 		self.widgets['ice thickness'] = FloatEntry(self, -1, chars=8)
@@ -311,8 +317,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 			wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Ice Analysis')
-		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
 		szft = wx.GridBagSizer(5, 5)
@@ -324,8 +328,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Focus Targets')
-		sbszft = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszft.Add(szft, 1, wx.EXPAND|wx.ALL, 5)
 
 		szat = wx.GridBagSizer(5, 5)
@@ -337,8 +339,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 			wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szat.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
-		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszat.Add(szat, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bice = wx.Button(self, -1, 'Test')
@@ -371,14 +371,14 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['skip'] = wx.CheckBox(self, -1, 'Skip automated raster target making')
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['skip'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return tfsd + [sbsz]

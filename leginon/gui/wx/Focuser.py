@@ -152,6 +152,8 @@ class Panel(gui.wx.Acquisition.Panel):
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		sizers = gui.wx.Acquisition.SettingsDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Focusing')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 5)
 		self.widgets['melt time'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.0')
@@ -176,8 +178,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sizer.Add(self.widgets['acquire final'], (2, 0), (1, 2),
 				  wx.ALIGN_CENTER)
 
-		sb = wx.StaticBox(self, -1, 'Focusing')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz]
@@ -187,6 +187,8 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		self.node = parent.node
 
 		wx.Dialog.__init__(self, parent, -1, "Measure Stage Tilt Axis Location")
+		sb = wx.StaticBox(self, -1, 'Tilt Axis Params')
+		sbsz2 = wx.StaticBoxSizer(sb, wx.EXPAND|wx.VERTICAL)
 
 		sbsz = wx.GridBagSizer(3,6)
 
@@ -237,8 +239,6 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		self.measureupdate = wx.Button(self,  -1, 'Update\nOffset')
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButtonUpdate, self.measureupdate)
 
-		sb = wx.StaticBox(self, -1, 'Tilt Axis Params')
-		sbsz2 = wx.StaticBoxSizer(sb, wx.EXPAND|wx.VERTICAL)
 		sbsz2.Add(sbsz, 0, wx.EXPAND|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 1)
 
 		buttonrow = wx.GridSizer(1,3)

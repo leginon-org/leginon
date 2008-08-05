@@ -270,6 +270,14 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Image Correction')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Clipping')
+		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Despike')
+		sbszdespike = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Reference Creation')
+		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
 		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
@@ -294,8 +302,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szclip.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szclip.Add(self.widgets['clip max'], (1, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szclip.AddGrowableCol(1)
-		sb = wx.StaticBox(self, -1, 'Clipping')
-		sbszclip = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszclip.Add(szclip, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		szdespike = wx.GridBagSizer(5, 5)
@@ -310,8 +316,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szdespike.Add(self.widgets['despike threshold'], (2, 1), (1, 1),
 									wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szdespike.AddGrowableCol(1)
-		sb = wx.StaticBox(self, -1, 'Despike')
-		sbszdespike = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszdespike.Add(szdespike, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		szref = wx.GridBagSizer(5, 5)
@@ -329,8 +333,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szref.Add(self.widgets['channels'], (2, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		szref.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Reference Creation')
-		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszref.Add(szref, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		sz = wx.GridBagSizer(5, 10)
@@ -340,8 +342,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(sbszclip, (1, 1), (1, 1), wx.EXPAND)
 		sz.Add(sbszdespike, (2, 1), (1, 1), wx.EXPAND)
 
-		sb = wx.StaticBox(self, -1, 'Image Correction')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]

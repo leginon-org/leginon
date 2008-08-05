@@ -30,6 +30,18 @@ class ImagePanel(object):
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
         szs = gui.wx.Acquisition.SettingsDialog.initialize(self)
+        tiltsb = wx.StaticBox(self, -1, 'Tilt')
+        tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
+        expsb = wx.StaticBox(self, -1, 'Exposure')
+        expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
+        bcsb = wx.StaticBox(self, -1, 'Before Collection')
+        bcsbsz = wx.StaticBoxSizer(bcsb, wx.VERTICAL)
+        miscsb = wx.StaticBox(self, -1, 'Misc.')
+        miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
+        modelb = wx.StaticBox(self, -1, 'Model')
+        modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
+        optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
+        optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
 
         self.widgets['tilt min'] = FloatEntry(self, -1,
                                                allownone=False,
@@ -85,8 +97,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
         tiltsz.AddGrowableCol(0)
 
-        tiltsb = wx.StaticBox(self, -1, 'Tilt')
-        tiltsbsz = wx.StaticBoxSizer(tiltsb, wx.VERTICAL)
         tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
 
         self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
@@ -132,8 +142,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         expsz.AddGrowableRow(0)
         expsz.AddGrowableRow(1)
 
-        expsb = wx.StaticBox(self, -1, 'Exposure')
-        expsbsz = wx.StaticBoxSizer(expsb, wx.VERTICAL)
         expsbsz.Add(expsz, 1, wx.EXPAND|wx.ALL, 5)
 
         self.widgets['run buffer cycle'] = wx.CheckBox(self, -1, 'Run buffer cycle')
@@ -151,8 +159,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         bcsz.AddGrowableRow(1)
         bcsz.AddGrowableCol(0)
 
-        bcsb = wx.StaticBox(self, -1, 'Before Collection')
-        bcsbsz = wx.StaticBoxSizer(bcsb, wx.VERTICAL)
         bcsbsz.Add(bcsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
         self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
@@ -218,8 +224,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         miscsz.AddGrowableRow(2)
         miscsz.AddGrowableCol(0)
 
-        miscsb = wx.StaticBox(self, -1, 'Misc.')
-        miscsbsz = wx.StaticBoxSizer(miscsb, wx.VERTICAL)
         miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
         modelmags = self.getMagChoices()
@@ -273,8 +277,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         optsz.Add(phisz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         optsz.Add(offsetsz, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-        optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
-        optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
         optbsz.Add(optsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
         optsz.AddGrowableCol(0)
         
@@ -292,8 +294,6 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-        modelb = wx.StaticBox(self, -1, 'Model')
-        modelbsz = wx.StaticBoxSizer(modelb, wx.VERTICAL)
         modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
         modelsz.AddGrowableCol(0)
 

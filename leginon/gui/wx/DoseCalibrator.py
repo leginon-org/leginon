@@ -36,6 +36,12 @@ class Panel(gui.wx.Calibrator.Panel):
 class DoseCalibrationDialog(gui.wx.Settings.Dialog):
     def initialize(self):
         gui.wx.Settings.Dialog.initialize(self)
+        sb = wx.StaticBox(self, -1, 'Main Screen')
+        sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
+        sb = wx.StaticBox(self, -1, 'Dose Measurement')
+        sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+        sb = wx.StaticBox(self, -1, 'Camera Sensitivity')
+        sbszcam = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
         self.bscreenup = wx.Button(self, -1, 'Up')
         self.bscreendown = wx.Button(self, -1, 'Down')
@@ -46,8 +52,6 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
         szscreen.AddGrowableCol(0)
         szscreen.AddGrowableCol(1)
 
-        sb = wx.StaticBox(self, -1, 'Main Screen')
-        sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
         sbszscreen.Add(szscreen, 0, wx.EXPAND|wx.ALL, 5)
 
         self.stbeamcurrent = wx.StaticText(self, -1, '')
@@ -95,8 +99,6 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 
         sz.AddGrowableCol(1)
 
-        sb = wx.StaticBox(self, -1, 'Dose Measurement')
-        sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
         sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
         self.szdose = sz
@@ -118,9 +120,6 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
         szcam.Add(self.setsensitivity, (1, 3), (1, 1),
                         wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
 
-
-        sb = wx.StaticBox(self, -1, 'Camera Sensitivity')
-        sbszcam = wx.StaticBoxSizer(sb, wx.VERTICAL)
         sbszcam.Add(szcam, 1, wx.EXPAND|wx.ALL, 5)
 
         self.Bind(wx.EVT_BUTTON, self.onScreenUpButton, self.bscreenup)

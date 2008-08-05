@@ -157,6 +157,9 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.__init__(self, parent, 'Mosaic Settings')
 
 	def initialize(self):
+		sb = wx.StaticBox(self, -1, 'Mosaics')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
 		choices = self.node.calclients.keys()
 		self.widgets['calibration parameter'] = Choice(self, -1, choices=choices)
 		self.widgets['scale image'] = wx.CheckBox(self, -1, 'Scale image to')
@@ -198,8 +201,6 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(szc, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szb, (3, 0), (1, 1), wx.ALIGN_CENTER)
 
-		sb = wx.StaticBox(self, -1, 'Mosaics')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bcreate.Enable(self.node.mosaic.hasTiles())
@@ -220,6 +221,8 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 
 class LPFSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['lpf'] = {}
 		self.widgets['lpf']['size'] = IntEntry(self, -1, min=1, chars=4)
 		self.widgets['lpf']['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
@@ -235,8 +238,6 @@ class LPFSettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		sz.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
@@ -244,6 +245,8 @@ class LPFSettingsDialog(gui.wx.Settings.Dialog):
 
 class BlobSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
+		sb = wx.StaticBox(self, -1, 'Blob Finding')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['blobs'] = {}
 		self.widgets['blobs']['border'] = IntEntry(self, -1, min=0, chars=6)
@@ -295,8 +298,6 @@ class BlobSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(szrange, (3, 0), (1, 2), wx.ALIGN_CENTER)
 		sz.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Blob Finding')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]

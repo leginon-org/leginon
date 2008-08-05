@@ -78,6 +78,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Original Image')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['image filename'].SetMinSize((500,50))
@@ -87,8 +89,6 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'Original Image')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
@@ -162,6 +162,12 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Ice Analysis')
+		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Focus Targets')
+		sbszft = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
+		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['ice box size'] = FloatEntry(self, -1, chars=8)
 		self.widgets['ice thickness'] = FloatEntry(self, -1, chars=8)
@@ -204,8 +210,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Ice Analysis')
-		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
 		szft = wx.GridBagSizer(5, 5)
@@ -217,8 +221,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Focus Targets')
-		sbszft = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszft.Add(szft, 1, wx.EXPAND|wx.ALL, 5)
 
 		szat = wx.GridBagSizer(5, 5)
@@ -230,8 +232,6 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szat.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
-		sbszat = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszat.Add(szat, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bice = wx.Button(self, -1, 'Analyze Ice')

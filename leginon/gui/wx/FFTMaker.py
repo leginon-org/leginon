@@ -77,6 +77,10 @@ class Panel(gui.wx.Node.Panel):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'FFT')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Images in Database')
+		sbszdb = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['process'] = wx.CheckBox(self, -1,
 																			'Calculate FFT')
@@ -101,8 +105,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['save'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szmaskradius, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'FFT')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 5)
@@ -111,8 +113,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['label'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		sb = wx.StaticBox(self, -1, 'Images in Database')
-		sbszdb = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszdb.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz, sbszdb]
