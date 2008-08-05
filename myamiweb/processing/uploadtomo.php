@@ -210,7 +210,7 @@ function runUploadTomogram() {
 	if ($contour) $command.="--contour=$contour ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	if ($_POST['newmodel']) $command.="--modelid=$_GET[modelid] ";
-	$command.="--description='$description' ";
+	$command.="--description=\"$description\" ";
 	
 	// submit job to cluster
 	if ($_POST['process']=="Upload Tomogram") {
