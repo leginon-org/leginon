@@ -16,6 +16,7 @@ import presets
 import targethandler
 import watcher
 import gui.wx.Reference
+import gui.wx.AlignZLP
 
 class MoveError(Exception):
 	pass
@@ -71,7 +72,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.reference_target = target_data
 		self.lock.release()
 
-	def getEMTargetData(self):
+	def getEMTargetData(self,check_preset_name=None):
 		target_data = self.reference_target
 		if target_data is None:
 			raise MoveError('no reference target available')
@@ -96,8 +97,11 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			raise MoveError(message % (move_type, e))
 
 		em_target_data = data.EMTargetData()
-
-		em_target_data['preset'] = target_data['preset']
+		if check_preset_name is None:
+			em_target_data['preset'] = target_data['preset']
+		else:
+			check_preset_data = self.presets_client.getPresetByName(check_preset_name)
+			em_target_data['preset'] = check_preset_data
 		em_target_data['movetype'] = move_type
 		for i in ['image shift', 'beam shift', 'stage position']:
 			em_target_data[i] = dict(scope[i])
@@ -106,7 +110,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		return em_target_data
 
 	def moveToTarget(self, preset_name):
-		em_target_data = self.getEMTargetData()
+		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
 
@@ -156,13 +160,16 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		pass
 
 class AlignZeroLossPeak(Reference):
+	settingsclass = data.AlignZLPSettingsData
 	defaultsettings = {
 		'move type': 'stage position',
 		'pause time': 3.0,
 		'interval time': 900.0,
+		'check preset': '',
+		'threshold': 1.5,
 	}
 	eventinputs = Reference.eventinputs + [event.AlignZeroLossPeakPublishEvent]
-	panelclass = gui.wx.Reference.AlignZeroLossPeakPanel
+	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
 	def __init__(self, *args, **kwargs):
 		try:
 			watch = kwargs['watchfor']
@@ -176,6 +183,39 @@ class AlignZeroLossPeak(Reference):
 		if isinstance(incoming_data, data.AlignZeroLossPeakData):
 			self.processRequest(incoming_data)
 
+	def _processRequest(self, request_data):
+		#shift_preset_name = self.settings['shift check preset']
+		check_preset_name = selft.settings['check preset']
+		self.checkpreset = self.presets_client.getPresetFromDB(check_preset_name)
+		preset_name = request_data['preset']
+		pause_time = self.settings['pause time']
+		interval_time = self.settings['interval time']
+
+		if interval_time is not None and self.last_processed is not None:
+			interval = time.time() - self.last_processed
+			if interval < interval_time:
+				message = '%d second(s) since last request, ignoring request'
+				self.logger.info(message % interval)
+				return
+
+		try:
+			self.moveToTarget(check_preset_name)
+		except Exception, e:
+			self.logger.error('Error moving to target, %s' % e)
+			return
+
+		if pause_time is not None:
+			time.sleep(pause_time)
+		need_align = self.checkShift()
+
+		if need_align:
+			try:
+				self.execute(request_data)
+			except Exception, e:
+				self.logger.error('Error executing request, %s' % e)
+				return
+#			self.last_processed = time.time()
+	
 	def execute(self, request_data):
 		ccd_camera = self.instrument.ccdcamera
 		if not ccd_camera.EnergyFiltered:
@@ -227,6 +267,51 @@ class AlignZeroLossPeak(Reference):
 
 		shift_data = data.InternalEnergyShiftData(session=self.session, before=before_shift, after=after_shift)
 		self.publish(shift_data, database=True, dbforce=True)
+		self.resetZeroLossCheck()
+
+	def checkShift(self):
+		ccd_camera = self.instrument.ccdcamera
+		if not ccd_camera.EnergyFiltered:
+			self.logger.warning('No energy filter on this instrument.')
+			return False
+		print self.reference_target.dbid
+		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		image = imagedata['image']
+		stageposition = imagedata['scope']['stage position']
+		print stageposition
+		lastresetq = data.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
+		result = lastresetq.query(readimages=False, results=1)
+
+		if result is None:
+			self.publishZeroLossCheck(image)
+		else:
+			if result:
+				# compare the standard deviation with that from last alignment
+				if result[0]['std'] * self.settings['threshold'] > image.std():
+					self.logger.info('Energe filter slit has not shifted significantly')
+					return False
+		return True
+
+	def publishZeroLossCheck(self,image):
+		resetdata = data.ZeroLossCheckData()
+		resetdata['session'] = self.session
+		resetdata['reference'] = self.reference_target
+		resetdata['preset'] = self.checkpreset
+		resetdata['mean'] = image.mean()
+		resetdata['std'] = image.std()
+		self.publish(resetdata, database=True, dbforce=True)
+
+	def resetZeroLossCheck(self):
+		try:
+			self.moveToTarget(self.checkpreset['name'])
+		except Exception, e:
+			self.logger.error('Error moving to target, %s' % e)
+			return
+		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		stageposition = imagedata['scope']['stage position']
+		print stageposition
+		image = imagedata['image']
+		self.publishZeroLossCheck(image)
 
 class MeasureDose(Reference):
 	defaultsettings = {

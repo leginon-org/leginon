@@ -786,6 +786,16 @@ class ReferenceRequestData(InSessionData):
 class AlignZeroLossPeakData(ReferenceRequestData):
 	pass
 
+class ZeroLossCheckData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('reference', ReferenceTargetData),
+			('preset', PresetData),
+			('mean', float),
+			('std', float),
+		)
+	typemap = classmethod(typemap)
+
 class MeasureDoseData(ReferenceRequestData):
 	pass
 
@@ -1800,6 +1810,14 @@ class ReferenceSettingsData(SettingsData):
 			('move type', str),
 			('pause time', float),
 			('interval time', float),
+		)
+	typemap = classmethod(typemap)
+
+class AlignZLPSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
+			('check preset', str),
+			('threshold', float),
 		)
 	typemap = classmethod(typemap)
 

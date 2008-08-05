@@ -63,9 +63,6 @@ class ReferencePanel(gui.wx.Node.Panel):
         dialog.ShowModal()
         dialog.Destroy()
 
-class AlignZeroLossPeakPanel(ReferencePanel):
-    icon = 'alignzlp'
-
 class MeasureDosePanel(ReferencePanel):
     icon = 'dose'
 
