@@ -83,6 +83,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 	$sessionname=$sessioninfo['Name'];
   }
 
+  echo "<input type='hidden' name='outdir' value='$sessionpath'>\n";
   
   // Set any existing parameters in form
   $package = ($_POST['package']) ? $_POST['package'] : $package;
@@ -216,11 +217,9 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   </TR>
   <TR>
     <TD ALIGN='CENTER'>
-      <HR>
-      <BR/>
-      <INPUT type='submit' name='process' value='Upload Recon'><BR/>
-      <FONT class='apcomment'>Submission will NOT upload the reconstruction,<BR/>
-			only output a command that you can copy and paste into a unix shell</FONT>
+      <hr />\n";
+	echo getSubmitForm("Upload Recon");
+	echo "
     </TD>
 	</TR>
   </TABLE>
@@ -231,48 +230,54 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 }
 
 function runUploadRecon() {
-
-  $particle = new particledata();
+	$expId = $_GET['expId'];
+	$outdir = $_POST['outdir'];
  
- $jobId=$_GET['jobId'];
-  $description=$_POST['description'];
-  $contour=$_POST['contour'];
-  $zoom=$_POST['zoom'];
-  $oneiteration=$_POST['oneiteration'];
-  $iteration=$_POST['iteration'];
+	$command.="uploadRecon.py ";
 
-  //make sure a recon run name was entered
-  $reconname=$_POST['reconname'];
-  if ($_POST['reconname']) $reconname=$_POST['reconname'];
-  if (!$reconname) createUploadReconForm("<B>ERROR:</B> Enter a name of the recon run");
+	$particle = new particledata();
+
+	// parse params
+	$jobId=$_GET['jobId'];
+	$description=$_POST['description'];
+	$contour=$_POST['contour'];
+	$zoom=$_POST['zoom'];
+	$oneiteration=$_POST['oneiteration'];
+	$iteration=$_POST['iteration'];
+
+	//make sure a recon run name was entered
+	$runid=$_POST['reconname'];
+	if ($_POST['reconname']) $runid=$_POST['reconname'];
+	if (!$runid) createUploadReconForm("<B>ERROR:</B> Enter a name of the recon run");
   
-  //make sure a stack was chosen
-  $model=$_POST['stack'];
-  if ($_POST['stack']) $stack=$_POST['stack'];
-  if (!$stack) createUploadReconForm("<B>ERROR:</B> Select the image stack used");
-
-  //make sure a model was chosen
-  $model=$_POST['model'];
-  if ($_POST['model']) $model=$_POST['model'];
-  if (!$model) createUploadReconForm("<B>ERROR:</B> Select the initial model used");
+	//make sure a stack was chosen
+	$model=$_POST['stack'];
+	if ($_POST['stack']) $stack=$_POST['stack'];
+	if (!$stack) createUploadReconForm("<B>ERROR:</B> Select the image stack used");
+	
+	//make sure a model was chosen
+	$model=$_POST['model'];
+	if ($_POST['model']) $model=$_POST['model'];
+	if (!$model) createUploadReconForm("<B>ERROR:</B> Select the initial model used");
   
-  //make sure a package was chosen
-  $package=$_POST['package'];
-  if (!$package) createUploadReconForm("<B>ERROR:</B> Enter the reconstruction process used");
+	//make sure a package was chosen
+	$package=$_POST['package'];
+	if (!$package) createUploadReconForm("<B>ERROR:</B> Enter the reconstruction process used");
 
-  //make sure a description was entered
-  $description=$_POST['description'];
-  if (!$description) createUploadReconForm("<B>ERROR:</B> Enter a description of the reconstruction");
+	//make sure a description was entered
+	$description=$_POST['description'];
+	if (!$description) createUploadReconForm("<B>ERROR:</B> Enter a description of the reconstruction");
 
-  //make sure a package was chosen
-  if ($_POST['reconpath'] && $_POST['reconpath']!="./") {
-    $reconpath = $_POST['reconpath'];
-    if (substr($reconpath,-1,1)!='/') $reconpath.='/';
-    $runpath = $reconpath.$reconname;
-    if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> Could not find recon run directory: ".$runpath);
-  } else {
-    $runpath = "./";
-  }
+	//make sure a package was chosen
+	if ($_POST['reconpath'] && $_POST['reconpath']!="./") {
+		$reconpath = $_POST['reconpath'];
+		if (substr($reconpath,-1,1)!='/') $reconpath.='/';
+		$runpath = $reconpath.$runid;
+		if (!file_exists($runpath)) createUploadReconForm("<B>ERROR:</B> Could not find recon run directory: ".$runpath);
+	}
+	else {
+		$runpath = "./";
+	}
   
 	//make sure specific result file is present
 	if ($jobId) {
@@ -281,35 +286,48 @@ function runUploadRecon() {
 	} else {
 		$fileerror = checkRequiredFileError($runpath,'resolution.txt'); 
 	}
-  if ($fileerror) createUploadReconForm($fileerror);
+	if ($fileerror) createUploadReconForm($fileerror);
 
-  //make sure the user only want one iteration to be uploaded
-  if ($iteration) {
-    if (!$oneiteration=='on') createUploadReconForm("<B>ERROR:</B> Select the check box if you really want to upload only one iteration");
-  } else {
-    if ($oneiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really want to upload only one iteration");
-  }
-  $command.="uploadRecon.py ";
-  $command.="--runid=$reconname ";
-  $command.="--stackid=$stack ";
-  $command.="--modelid=$model ";
-  $command.="--package=$package ";
-  if (!$jobId) $command.="--outdir=$runpath ";
-  if ($jobId) $command.="--jobid=$jobId ";
-  if ($contour) $command.="--contour=$contour ";
-  if ($zoom) $command.="--zoom=$zoom ";
-  if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
-  $command.="--description=\"$description\"";
+	//make sure the user only want one iteration to be uploaded
+	if ($iteration) {
+		if (!$oneiteration=='on') createUploadReconForm("<B>ERROR:</B> Select the check box if you really want to upload only one iteration");
+	}
+	else {
+		if ($oneiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really want to upload only one iteration");
+	}
+
+	$command.="--runid=$runid ";
+	$command.="--stackid=$stack ";
+	$command.="--modelid=$model ";
+	$command.="--package=$package ";
+	if (!$jobId) $command.="--outdir=$runpath ";
+	if ($jobId) $command.="--jobid=$jobId ";
+	if ($contour) $command.="--contour=$contour ";
+	if ($zoom) $command.="--zoom=$zoom ";
+	if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
+	$command.="--description=\"$description\"";
   
-  processing_header("UploadRecon Run","UploadRecon Params");
+	// submit job to cluster
+	if ($_POST['process']=="Upload Recon") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password)) createUploadReconForm("<b>ERROR:</b> Enter a user name and password");
+		echo $outdir;
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadrecon');
+		// if errors:
+		if ($sub) createUploadReconForm("<b>ERROR:</b> $sub");
+		exit;
+	}
+	processing_header("UploadRecon Run","UploadRecon Params");
 	
-  echo"
+	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
 	<B>UploadRecon Command:</B><BR>
 	$command
 	</TD></TR>
-	<TR><TD>run name</TD><TD>$reconname</TD></TR>
+	<TR><TD>run name</TD><TD>$runid</TD></TR>
 	<TR><TD>stack ID</TD><TD>$stack</TD></TR>
 	<TR><TD>model</TD><TD>$model</TD></TR>
 	<TR><TD>path</TD><TD>$reconpath</TD></TR>
@@ -318,6 +336,6 @@ function runUploadRecon() {
 	<TR><TD>zoom</TD><TD>$zoom</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
 	</TABLE>\n";
-  processing_footer();
+	processing_footer();
 }
 ?>
