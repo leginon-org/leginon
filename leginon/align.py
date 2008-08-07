@@ -1,5 +1,6 @@
 import math
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 import numextension
 from pyami import mrc
