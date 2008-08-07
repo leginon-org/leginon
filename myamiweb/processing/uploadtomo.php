@@ -40,8 +40,10 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
-  
-	processing_header($title,$heading);
+	
+	$javafunctions .= writeJavaPopupFunctions('appion');  
+	
+	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -63,85 +65,66 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	// Set any existing parameters in form
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$res = ($_POST['res']) ? $_POST['res'] : '';
-	$contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
-	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
-	$model = ($_POST['model']) ? $_POST['model'] : '';
-	$modelname = ($_POST['modelname']) ? $_POST['modelname'] : '';
+	$tiltseries = ($_POST['tiltseries']) ? $_POST['tiltseries'] : ' ';
+	$tomospace = ($_POST['tomospace']) ? $_POST['tomospace'] : ' ';
+	$tomoname = ($_POST['tomoname']) ? $_POST['tomoname'] : '';
 	$description = $_POST['description'];
-	$newmodel = ($_POST['newmodel']) ? $_POST['newmodel'] : $outdir.'/rescale.mrc';
+	$outdir.'/rescale.mrc';
   
 	$syms = $particle->getSymmetries();
+	$tomotype = array("number","shape");
+
 	echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
-	if (!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
-	echo"<TABLE>
-    <TR>
-      <TD VALIGN='TOP'>
-      <BR/>\n";
-	if ($rescale) echo "
-      <B>New Tomogram Name:</B><BR>
-      <INPUT TYPE='text' NAME='newmodel' VALUE='$newmodel' SIZE='50'><br />\n";
-	else echo"
-      <B>Tomogram file name with path:</B><BR/>
-      <INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
-	echo"
-      <P>
+	
+   if ($rescale) echo "";
+       else echo"
+	<B>Tomogram file name with path:</B><BR/>
+      <INPUT TYPE='text' NAME='tomoname' VALUE='$tomoname' SIZE='50'><br />\n";
+	
+	echo"<P>
       <B>Tomogram Description:</B><BR/>
-      <TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA>
+      <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
       </TD>
     </TR>
     <TR>
-      <TD VALIGN='TOP' CLASS='tablebg'>
-      <P>
-      <B>Tomogram Symmetry:</B>\n";
-	if ($rescale) {
-		$symid=$modelinfo['REF|ApSymmetryData|symmetry'];
-		$symmetry=$particle->getSymInfo($symid);
-		$res = $modelinfo['resolution'];
-		$apix = ($_POST['apix']) ? $_POST['apix'] : $modelinfo['pixelsize'];
-		$boxsize = ($_POST['boxsize']) ? $_POST['boxsize'] : $modelinfo['boxsize'];
-		echo "$symmetry[symmetry]<BR>
-    <INPUT TYPE='hidden' NAME='sym' VALUE='$symid'>
-    <B>Tomogram Resolution:</B> $res<BR>
-    <INPUT TYPE='hidden' NAME='res' VALUE='$res' SIZE='5'>
-    <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'><B>New Pixel Size</B> (originally $modelinfo[pixelsize])<BR>
-    <INPUT TYPE='hidden' NAME='origapix' VALUE='$modelinfo[pixelsize]'>
-    <INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxsize'><B>New Box Size</B> (originally $modelinfo[boxsize])<BR>\n";
-	}
-	else {
-		echo"
-      <SELECT NAME='sym'>
-      <OPTION VALUE=''>Select One</OPTION>\n";
-		foreach ($syms as $sym) {
-			echo "<OPTION VALUE='$sym[DEF_id]'";
-			if ($sym['DEF_id']==$_POST['sym']) echo " SELECTED";
-			echo ">$sym[symmetry]";
-			if ($sym['symmetry']=='C1') echo " (no symmetry)";
-			echo "</OPTION>\n";
-		}
-		echo"
-      </SELECT>
-      <P>
-      <INPUT TYPE='text' NAME='res' VALUE='$res' SIZE='5'> Tomogram Resolution
-      <BR>
-      <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>
-      Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
-	}
+      <TD VALIGN='TOP' CLASS='tablebg'>";       
+
+
 	echo "
+	
+		<B> <CENTER>Tomogram Params: </CENTER></B>
+
       <P>
-      <B>Snapshot Options:</B>
-      <BR>
-      <INPUT TYPE='text' NAME='contour' VALUE='$contour' SIZE='5'> Contour Level
-      <BR>
-      <INPUT TYPE='text' NAME='zoom' VALUE='$zoom' SIZE='5'> Zoom
-      <P>
+      <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n";
+		echo docpop('apix','Pixel Size');
+		echo "<FONT>(in &Aring;ngstroms per pixel)</FONT>
+		
+		<BR>
+      <INPUT TYPE='text' NAME='tiltseries' VALUE='$tiltseries' SIZE='5'>\n";
+		echo docpop('tiltseries', 'Tilt Series');
+		echo "<FONT>(# tomogram tilt)</FONT>
+      
+		<BR>
+      <INPUT TYPE='text' NAME='session' VALUE='$session' SIZE='5'>\n";
+		echo docpop('session', 'Session Name');
+		echo "<FONT> (specific to database capture)</FONT>
+  		
+		<BR>
+      <INPUT TYPE='text' NAME='tomospace' VALUE='$tomospace' SIZE='5'>\n";
+		echo docpop('tomospace', 'TomoSpace');
+   	echo "<FONT>(subset area of image)</FONT>     
+
+		<P>
       </TD>
-    </TR>
+   </TR>
     </TABLE>
   </TD>
   </TR>
+  <td
+
   <TR>
     <TD ALIGN='CENTER'>
       <hr>
@@ -158,59 +141,45 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 }
 
 function runUploadTomogram() {
+
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
 	$command = "uploadTomo.py ";
 
-	$contour=$_POST['contour'];
-	$zoom=$_POST['zoom'];
-	$session=$_POST['sessionname'];
+	$tomoname=$_POST['tomoname'];
+	$tiltseries=$_POST['tiltseries'];
+	$tomospace=$_POST['tomospace'];
+	$session=$_POST['session'];
+	$apix=$_POST['apix'];	
 
 	//make sure a model root was entered
 	$model=$_POST['model'];
-	if ($_POST['modelname']) $model=$_POST['modelname'];
+	if ($_POST['tomoname']) $model=$_POST['tomoname'];
 
 	//make sure a apix was provided
 	$apix=$_POST['apix'];
 	if (!$apix) createUploadTomogramForm("<B>ERROR:</B> Enter the pixel size");
   
-	// if rescaling, make sure there is a boxsize
-	if ($_POST['newmodel']) {
-		$model=$_POST['newmodel'];
-		$boxsize=$_POST['boxsize'];
-		$origapix=$_POST['origapix'];
-		if (!$boxsize) createUploadTomogramForm("<B>ERROR:</B> Enter the final box size of the model");
-	}
-
+	
 	if (!$model) createUploadTomogramForm("<B>ERROR:</B> Enter a root name of the model");
   
 	//make sure a description was provided
 	$description=$_POST['description'];
 	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the model");
 
-	//make sure a resolution was provided
-	$res=$_POST['res'];
-	if (!$res) createUploadTomogramForm("<B>ERROR:</B> Enter the model resolution");
-
-	// make sure a symmetry was selected
-	$sym = $_POST['sym'];
-	if (!$sym) createUploadTomogramForm("<B>ERROR:</B> Select a symmetry");
 
 	// filename will be the runid if running on cluster
 	$runid = basename($model);
 	$runid = $runid.'.upload';
 
-	if (!$_GET['modelid']) $command.="--file=$model ";
-	$command.="--session=$session ";
-	$command.="--apix=$apix ";
-	$command.="--res=$res ";
-	$command.="--symmetry=$sym ";
-	if ($boxsize) $command.="--boxsize=$boxsize ";
-	if ($contour) $command.="--contour=$contour ";
-	if ($zoom) $command.="--zoom=$zoom ";
-	if ($_POST['newmodel']) $command.="--modelid=$_GET[modelid] ";
-	$command.="--description=\"$description\" ";
+	if (!$_GET['modelid']) $command.="-f $tomoname ";
+	$command.="-s $session ";
+	$command.="-a $apix ";
+	$command.="-t $tiltseries ";
+	//if ($tomospace) $command.="-t $tomospace ";
+	$command.="-d \"$description\"";
+
 	
 	// submit job to cluster
 	if ($_POST['process']=="Upload Tomogram") {
@@ -251,15 +220,16 @@ function runUploadTomogram() {
 	<B>UploadTomogram Command:</B><BR>
 	$command
 	</TD></TR>
-	<TR><TD>model name</TD><TD>$model</TD></TR>
-	<TR><TD>symmetry ID</TD><TD>$sym</TD></TR>
+	<TR><TD>tomo name</TD><TD>$model</TD></TR>
 	<TR><TD>apix</TD><TD>$apix</TD></TR>
-	<TR><TD>res</TD><TD>$res</TD></TR>
-	<TR><TD>contour</TD><TD>$contour</TD></TR>
-	<TR><TD>zoom</TD><TD>$contour</TD></TR>
+	<TR><TD>tiltseries</TD><TD>$tiltseries</TD></TR>
+	<TR><TD>tomospace</TD><TD>$tomospace</TD></TR>
 	<TR><TD>session</TD><TD>$session</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
 	</TABLE>\n";
 	processing_footer();
 }
-?>
+
+
+?> 
+
