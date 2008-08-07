@@ -39,10 +39,11 @@ class NavigatorClient(object):
 		self.movedonestatus = evt['status']
 		self.movedone.set()
 
-	def moveToTarget(self, target, movetype, precision=0.0):
+	def moveToTarget(self, target, movetype, precision=0.0, final_imageshift=False):
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
+		ev['final image shift'] = final_imageshift
 		self.movedone.clear()
 		self.node.outputEvent(ev, wait=False)
 		## wait for event
@@ -118,6 +119,7 @@ class Navigator(node.Node):
 		movetype = ev['movetype']
 		targetdata = ev['target']
 		precision = ev['move precision']
+		final_imageshift = ev['final image shift']
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
 		imagedata = targetdata['image']
 		self.newImage(imagedata)
@@ -130,7 +132,7 @@ class Navigator(node.Node):
 		else:
 			check=False
 		self.startTimer('move')
-		status = self.move(rows, cols, movetype, precision, check, preset=preset)
+		status = self.move(rows, cols, movetype, precision, check, preset=preset, final_imageshift=final_imageshift)
 		self.stopTimer('move')
 
 		evt = event.MoveToTargetDoneEvent(status=status, target=targetdata)
@@ -146,6 +148,7 @@ class Navigator(node.Node):
 	def navigate(self, xy):
 		movetype = self.settings['move type']
 		precision = self.settings['precision']
+		final_imageshift = self.settings['final image shift']
 		clickrow = xy[1]
 		clickcol = xy[0]
 		clickshape = self.newimagedata['image'].shape
@@ -157,13 +160,15 @@ class Navigator(node.Node):
 		deltacol = clickcol - centerc
 
 		check = self.settings['check calibration']
-		self.move(deltarow, deltacol, movetype, precision, check)
+		status = self.move(deltarow, deltacol, movetype, precision, check, final_imageshift=final_imageshift)
 
 		# wait for a while
 		time.sleep(self.settings['pause time'])
 
 		## acquire image if check not done
 		if not check:
+			self.reacquireImage()
+		elif status != 'error' and movetype != 'image shift' and final_imageshift:
 			self.reacquireImage()
 
 		self.panel.navigateDone()
@@ -274,7 +279,7 @@ class Navigator(node.Node):
 		self.logger.info('preset cycle')
 		self.presetsclient.toScope(preset['name'])
 
-	def move(self, row, col, movetype, precision=0.0, check=False, preset=None):
+	def move(self, row, col, movetype, precision=0.0, check=False, preset=None, final_imageshift=False):
 		self.setStatus('processing')
 		self.origimagedata = self.newimagedata
 		self.origmove = row,col
@@ -314,7 +319,13 @@ class Navigator(node.Node):
 						#self._moveback()
 						status = 'error'
 						break
-				self.logger.info('correction done')
+
+				# final image shift
+				if status != 'error' and movetype != 'image shift' and final_imageshift:
+					self.logger.info('making final correction with image shift')
+					self._move(r, c, 'image shift')
+					
+				self.logger.info('move correction done, status: %s' % (status,))
 				if self.settings['cycle after']:
 					self.cycleToPreset(preset)
 

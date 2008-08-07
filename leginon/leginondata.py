@@ -1132,6 +1132,7 @@ class NavigatorSettingsData(SettingsData):
 			('max error', float),
 			('cycle each', bool),
 			('cycle after', bool),
+			('final image shift', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1430,6 +1431,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('drift between', bool),
 			('mover', str),
 			('move precision', float),
+			('final image shift', bool),
 			('save integer', bool),
 		)
 	typemap = classmethod(typemap)

@@ -340,6 +340,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		precsz.Add(label2, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		self.widgets['final image shift'] = wx.CheckBox(self, -1, 'Final Image Shift')
+		precsz.Add(self.widgets['final image shift'], (1,0),(1,2))
+
 		#maxerrsz = wx.GridBagSizer(5, 5)
 		#label = wx.StaticText(self, -1, 'Local Correlation Size (pixels)')
 		#self.widgets['max error'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='0.0')

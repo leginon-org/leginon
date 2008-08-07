@@ -489,7 +489,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				emtarget = None
 				if not self.onTarget and targetdata['type'] != 'simulated':
 					precision = self.settings['move precision']
-					status = self.navclient.moveToTarget(targetdata, movetype, precision)
+					final_imageshift = self.settings['final image shift']
+					status = self.navclient.moveToTarget(targetdata, movetype, precision, final_imageshift=final_imageshift)
 					if status == 'error':
 						return status
 			self.presetsclient.toScope(presetname, emtarget)
