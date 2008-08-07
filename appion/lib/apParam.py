@@ -8,6 +8,7 @@ import random
 import subprocess
 #appion
 import apDisplay
+import math
 
 def getAppionDirectory():
 	"""
