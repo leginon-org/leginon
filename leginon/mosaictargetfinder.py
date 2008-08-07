@@ -17,6 +17,7 @@ import node
 import targethandler
 from pyami import convolver, imagefun, mrc
 import numpy
+import pyami.quietscipy
 import scipy.ndimage as nd
 import gui.wx.MosaicClickTargetFinder
 import os
