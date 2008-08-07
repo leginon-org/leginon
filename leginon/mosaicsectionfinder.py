@@ -18,6 +18,7 @@ import targethandler
 from pyami import convolver, imagefun, mrc
 import numpy
 ma = numpy.ma
+import pyami.quietscipy
 import scipy.ndimage as nd
 import mosaictargetfinder
 import gui.wx.MosaicSectionFinder
