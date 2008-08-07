@@ -10,6 +10,70 @@ import subprocess
 import apDisplay
 import apImage
 import apParam
+import apFile
+
+#===========
+def runSpectralFindEM(imgdict, params, thread=False):
+	"""
+	runs a separate thread of findem.exe for each template 
+	to get cross-correlation maps
+	"""
+	imgname = imgdict['filename']
+	os.chdir(params['rundir'])
+	joblist = []
+	ccmaplist = []
+
+	processAndSaveImage(imgdict, params)
+
+	if len(params['templatelist']) < 1:
+		apDisplay.printError("templatelist == 0; there are no templates")
+
+	for i,templatename in enumerate(params['templatelist']):
+		classavg = i + 1
+
+		#First round: normal findem: template x image
+		numstr = "%03d" % (100+classavg)
+		ccmapfile1 = "cccmaxmap"+numstr+".mrc"
+		apFile.removeFile(ccmapfile1)
+		params["startang"+str(100+classavg)] = params["startang"+str(classavg)] 
+		params["endang"+str(100+classavg)] = params["endang"+str(classavg)]
+		params["incrang"+str(100+classavg)] = params["incrang"+str(classavg)]
+		feed = findEMString(100+classavg, templatename, imgname, ccmapfile1, params)
+		execFindEM(feed)
+
+		#Second round: template x template
+		numstr = "%03d" % (200+classavg)
+		ccmapfile2 = "cccmaxmap"+numstr+".mrc"
+		apFile.removeFile(ccmapfile2)
+		params["startang"+str(200+classavg)] = params["startang"+str(classavg)] 
+		params["endang"+str(200+classavg)] = params["endang"+str(classavg)]
+		params["incrang"+str(200+classavg)] = params["incrang"+str(classavg)]
+		feed = findEMString(200+classavg, templatename, templatename, ccmapfile2, params)
+		execFindEM(feed)
+
+		#Final round: (template x template) x (template x image) = spectral
+		numstr = "%03d" % (300+classavg)
+		ccmapfile3 = "cccmaxmap"+numstr+".mrc"
+		apFile.removeFile(ccmapfile3)
+		params["startang"+str(300+classavg)] = 0
+		params["endang"+str(300+classavg)] = 10
+		params["incrang"+str(300+classavg)] = 20
+		feed = findEMString(300+classavg, ccmapfile2, ccmapfile1, ccmapfile3, params)
+		execFindEM(feed)		
+
+		#READ OUTPUT FILE
+		if not os.path.isfile(ccmapfile3):
+			apDisplay.printError("findem.exe did not run or crashed.\n"+
+				"Did you source useappion.sh?")
+		else:
+			ccmaxmap = apImage.mrcToArray(ccmapfile3)
+			ccmaplist.append(ccmaxmap)
+
+	if thread is True:
+		for job in joblist:
+			job.join()
+	return ccmaplist
+
 
 #===========
 def runFindEM(imgdict, params, thread=False):
@@ -35,8 +99,7 @@ def runFindEM(imgdict, params, thread=False):
 		numstr = "%03d" % classavg
 		#numstr = str(classavg%10)+"00"
 		ccmapfile="cccmaxmap"+numstr+".mrc"
-		if (os.path.isfile(ccmapfile)):
-			os.remove(ccmapfile)
+		apFile.removeFile(ccmapfile)
 
 		#GET FINDEM RUN COMMANDS
 		feed = findEMString(classavg, templatename, imgname, ccmapfile, params)
