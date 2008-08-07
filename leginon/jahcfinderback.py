@@ -9,6 +9,7 @@
 #
 
 import numpy
+import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun, peakfinder, convolver, correlator, mrc, arraystats
 import ice
