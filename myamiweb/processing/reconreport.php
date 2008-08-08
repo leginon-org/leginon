@@ -57,7 +57,9 @@ $javascript.="        }\n";
 $javascript.="	function switchEulerImg(i,img) {\n";
 $javascript.="		var eulerimage = 'eulerimg'+i;\n";
 $javascript.="		var eulerlink = 'loadimg.php?scale=.125&filename='+img;\n";
+$javascript.="		var eulerbiglink = 'loadimg.php?filename='+img;\n";
 $javascript.="		document['eulerimg'+i].src = eulerlink;\n";
+$javascript.="		document.getElementById('eulerlink'+i).href = eulerbiglink;\n";
 $javascript.="	}\n";
 $javascript.="</script>\n";
 
@@ -289,7 +291,7 @@ foreach ($iterations as $iteration){
 	}
 	$eulerSelect .= "</select>\n";
 	
-	$eulerhtml = "<a href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
+	$eulerhtml = "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
 	  ."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$firsteulerimg."'>"
 	  ."</a><br />\n";
 	$eulerhtml .= $eulerSelect;
