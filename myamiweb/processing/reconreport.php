@@ -291,7 +291,7 @@ foreach ($iterations as $iteration){
 	}
 	$eulerSelect .= "</select>\n";
 	
-	$eulerhtml = "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
+	$eulerhtml = "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$firsteulerimg."' target='snapshot'>"
 	  ."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$firsteulerimg."'>"
 	  ."</a><br />\n";
 	$eulerhtml .= $eulerSelect;
