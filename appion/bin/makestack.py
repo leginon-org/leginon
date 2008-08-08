@@ -397,7 +397,13 @@ def phaseFlip(imgdata, params):
 	imgname = imgdata['filename']
 	infile  = os.path.join(params['outdir'], imgname+".hed")
 	outfile = os.path.join(params['outdir'], imgname+".ctf.hed")
-	voltage = (imgdata['scope']['high tension'])/1000
+	
+	### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
+	if imgdata['scope']['tem']['name'] == "CM":
+		voltage = imgdata['scope']['high tension']
+	else:
+		voltage = (imgdata['scope']['high tension'])/1000
+
 	defocus = 1.0e6 * apCtf.getBestDefocusForImage(imgdata)
 
 	if defocus > 0:
