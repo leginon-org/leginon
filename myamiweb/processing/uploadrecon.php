@@ -94,6 +94,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   $description = $_POST['description'];
   $oneiteration = ($_POST['oneiteration']=="on") ? "CHECKED" : "";
   $iteration = $_POST['iteration'];
+  $contiteration = ($_POST['contiteration']=="on") ? "CHECKED" : "";
+  $startiteration = $_POST['startiteration'];
   echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
@@ -116,8 +118,10 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <B>Recon Description:</B><BR/>
       <TEXTAREA NAME='description' ROWS='3' COLS='50'>$description</TEXTAREA>
 <BR>
-      <INPUT TYPE='checkbox' NAME='oneiteration' $oneiteration><B>Upload only iteration </B>
-<INPUT TYPE='text' NAME='iteration' VALUE='$iteration' SIZE='4'/><BR/>
+      <INPUT TYPE='checkbox' NAME='oneiteration' $oneiteration><B>Upload only iteration </b>
+<INPUT TYPE='text' NAME='iteration' VALUE='$iteration' SIZE='4'/><br />
+      <INPUT TYPE='checkbox' NAME='contiteration' $contiteration><b>Begin with iteration </b>
+<INPUT TYPE='text' NAME='startiteration' VALUE='$startiteration' SIZE='4'/><br/>
       </TD>
 
     <TR>
@@ -244,6 +248,8 @@ function runUploadRecon() {
 	$zoom=$_POST['zoom'];
 	$oneiteration=$_POST['oneiteration'];
 	$iteration=$_POST['iteration'];
+	$contiteration=$_POST['contiteration'];
+	$startiteration=$_POST['startiteration'];
 
 	//make sure a recon run name was entered
 	$runid=$_POST['reconname'];
@@ -296,6 +302,14 @@ function runUploadRecon() {
 		if ($oneiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really want to upload only one iteration");
 	}
 
+	//make sure the user wants to start iteration from the middle
+	if ($startiteration) {
+		if (!$contiteration=='on') createUploadReconForm("<B>ERROR:</B> Select the check box if you really want to begin at iteration $startiteration");
+	}
+	else {
+		if ($contiteration) createUploadReconForm("<B>ERROR:</B> Enter the iteration number if you really don't want to start at the beginning");
+	}
+
 	$command.="--runid=$runid ";
 	$command.="--stackid=$stack ";
 	$command.="--modelid=$model ";
@@ -305,6 +319,7 @@ function runUploadRecon() {
 	if ($contour) $command.="--contour=$contour ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
+	if ($contiteration=='on' && $startiteration) $command.="--startiter=$startiteration ";
 	$command.="--description=\"$description\"";
   
 	// submit job to cluster
