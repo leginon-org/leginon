@@ -81,7 +81,7 @@ $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $st
 $html .= "<form name='iterations'>\n";
 $html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
-$display_keys = array ( 'iter', 'ang', 'res', 'fsc', 'classes', '# particles', 'density','snapshot');
+$display_keys = array ( 'iter', 'ang', 'fsc', 'classes', '# particles', 'density','snapshot');
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
@@ -249,18 +249,18 @@ foreach ($iterations as $iteration){
   $refinestr2=rtrim($refinestr2,',');
   $html .=$refinestr2;
 */ 
-	$html .="<a class='aptitle' href='iterationreport.php?expId=$expId&rId=".$reconId."&itr=".$iteration[iteration]."'\n";
+	$html .="<a class='aptitle' href='iterationreport.php?expId=$expId&rId=".$reconId."&itr=".$iteration['iteration']."'\n";
 	$html .=")\">$iteration[iteration]</A></TD>\n";
   $html .= "<TD>$iteration[ang]&deg;</TD>\n";
-  $html .= "<TD><I>FSC 0.5:</I><br />$halfres<br />\n";
+  if ($halfres!='None')
+    $html .= "<td><a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
+  else $html .= "<TD>\n";
+  $html .= "<I>FSC 0.5:</I><br />$halfres<br />\n";
   
   if ($rmeasureres!='None')
     $html .= "<I>Rmeas:</I><br>$rmeasureres\n";
   $html .= "</TD>";
   
-  if ($halfres!='None')
-    $html .= "<TD><A HREF='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><IMG SRC='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'>\n";
-  else $html .= "<TD>-</TD>\n";
 
   $html .="<TD><table>";
 	$html .= "<TR><TD>";
