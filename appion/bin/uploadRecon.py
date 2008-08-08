@@ -19,12 +19,14 @@ class UploadReconScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --runid=<name> --stackid=<int> --modelid=<int>\n\t "
-			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --zoom=<float> "
+			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
 			+"--contour=<contour> --outdir=/path/ --commit ]")
 		self.parser.add_option("-r", "--runid", dest="runid", 
 			help="Name assigned to this reconstruction", metavar="TEXT")
 		self.parser.add_option("-i", "--oneiter", dest="oneiter", type="int",
 			help="Only upload one iteration", metavar="INT")
+		self.parser.add_option("--startiter", dest="startiter", type="int",
+			help="Begin upload from this iteration", metavar="INT")
 		self.parser.add_option("-s", "--stackid", dest="stackid", type="int",
 			help="Stack id in the database", metavar="INT")
 		self.parser.add_option("-m", "--modelid", dest="modelid", type="int",
@@ -138,7 +140,9 @@ class UploadReconScript(appionScript.AppionScript):
 				### if only uploading one iteration, skip to that one
 				if self.params['oneiter'] and int(iteration['num']) != self.params['oneiter']:
 					continue
-
+				### if beginning at later iteration, skip to that one
+				if self.params['startiter'] and int(iteration['num']) < self.params['startiter']:
+					continue
 				apDisplay.printColor("\nUploading iteration "+str(iteration['num'])+" of "
 					+str(len(self.params['iterations']))+"\n", "green")
 				for i in range(75): 
