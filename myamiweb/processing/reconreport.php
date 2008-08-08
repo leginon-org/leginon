@@ -52,8 +52,15 @@ foreach($refine_params_fields as $param) {
 $javascript.="                newwindow.document.write('</TABLE></BODY></HTML>');\n";
 $javascript.="                newwindow.document.close()\n";
 $javascript.="        }\n";
-$javascript.="</script>\n";
  
+// javascript to switch the euler image
+$javascript.="	function switchEulerImg(i,img) {\n";
+$javascript.="		var eulerimage = 'eulerimg'+i;\n";
+$javascript.="		var eulerlink = 'loadimg.php?scale=.125&filename='+img;\n";
+$javascript.="		document['eulerimg'+i].src = eulerlink;\n";
+$javascript.="	}\n";
+$javascript.="</script>\n";
+
 processing_header("Reconstruction Report","Reconstruction Report Page", $javascript);
 if (!$reconId) {
 	processing_footer();
@@ -71,6 +78,7 @@ $apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 //$apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
 $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
+$html .= "<form name='iterations'>\n";
 $html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
 $display_keys = array ( 'iter', 'ang', 'res', 'fsc', 'classes', '# particles', 'density','snapshot');
@@ -182,6 +190,7 @@ $html .= "</TR>\n";
 
 # show info for each iteration
 //sort($iterations);
+
 foreach ($iterations as $iteration){
   $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
   $numclasses=$particle->getNumClasses($refinementData['DEF_id']);
@@ -264,22 +273,34 @@ foreach ($iterations as $iteration){
 	}
 
 	//Euler plots
-  foreach ($eulerfiles as $eulername) {
-		if (eregi("_".$iteration['iteration']."\.png$", $eulername)) {
-      $eulerfile = $refinerun['path'].'/'.$eulername;
-		  if (file_exists($eulerfile)) {
-				$html .= "<a href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
-				."<img src='loadimg.php?scale=.125&filename=".$eulerfile."'>"
-				."</a>\n";
+	$firsteulerimg='';
+	$eulerSelect = "<select name='eulerplot".$iteration['iteration']."' onChange='switchEulerImg(".$iteration['iteration'].",this.options(this.selectedIndex).value)'>\n";
+	foreach ($eulerfiles as $eulername) {
+		if (eregi($reconId."_".$iteration['iteration']."\.png$", $eulername)) {
+			$eulerfile = $refinerun['path'].'/'.$eulername;
+			$opname = ereg_replace("euler","",$eulername);
+			$opname = ereg_replace("-".$reconId."_".$iteration['iteration']."\.png$","",$opname);
+			if (file_exists($eulerfile)) {
+				$eulerSelect.= "<option value='$eulerfile'>$opname</option>\n";
+				// set the first image as the default
+				if (!$firsteulerimg) $firsteulerimg = $eulerfile;
 			}
 		}
 	}
+	$eulerSelect .= "</select>\n";
+	
+	$eulerhtml = "<a href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
+	  ."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$firsteulerimg."'>"
+	  ."</a><br />\n";
+	$eulerhtml .= $eulerSelect;
+	// add euler plots to iteration if exist
+	if ($firsteulerimg) $html .=$eulerhtml;
 
 	$html .= "</td></tr>\n";
-  $html .= "</table></TD>";
+	$html .= "</table></td>\n";
   
 	//particle stack viewing 
-  $html .="<TD><table>";
+	$html .="<TD><table>";
 	foreach ($refinetypes as $type) {
 		if (array_key_exists($type,$badprtls)) {
 			$prtlsused=$stackparticles-$badprtls[$type];
@@ -308,6 +329,7 @@ foreach ($iterations as $iteration){
   $html .= "</TD>\n";
   $html .= "</TR>\n";
 }
+$html .= "</form>\n";
 $html.="</TABLE>\n";
 
 echo "<P><FORM NAME='compareparticles' METHOD='POST' ACTION='compare_eulers.php'>
