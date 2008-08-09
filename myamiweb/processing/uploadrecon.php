@@ -328,7 +328,6 @@ function runUploadRecon() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createUploadReconForm("<b>ERROR:</b> Enter a user name and password");
-		echo $outdir;
 		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadrecon');
 		// if errors:
 		if ($sub) createUploadReconForm("<b>ERROR:</b> $sub");
