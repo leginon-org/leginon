@@ -1383,6 +1383,7 @@ class particledata {
 		  ."WHERE `REF|leginondata|SessionData|session` = $expId";
 		if ($jobtype) $q.=" AND `jobtype` = '$jobtype'";
 		if ($status) $q.=" AND `status` = '$status'";
+		$q.=" ORDER BY j.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
