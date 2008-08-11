@@ -1350,6 +1350,7 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
+
 	function getModelsFromProject ($projectId, $getHidden=False) {
 		$q="SELECT i.*, p.path "
 			."FROM `ApInitialModelData` i "
@@ -1382,6 +1383,15 @@ class particledata {
 		  ."WHERE `REF|leginondata|SessionData|session` = $expId";
 		if ($jobtype) $q.=" AND `jobtype` = '$jobtype'";
 		if ($status) $q.=" AND `status` = '$status'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getFscFromRefinementDataId ($id) {
+		$q = "SELECT * "
+		  ."FROM ApFSCData "
+		  ."WHERE `REF|ApRefinementData|refinementData` = $id "
+		  ."ORDER BY pix";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}

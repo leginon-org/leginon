@@ -20,6 +20,7 @@ $height=$_GET['height'];
 $nomargin=$_GET['nomargin'];
 $apix=$_GET['apix'];
 $box=$_GET['box'];
+$fscid=$_GET['fscid'];
 
 if (!$width || !$height){
 	$width=800;
@@ -29,18 +30,30 @@ if (!$width || !$height){
 if (!$apix) $apix=1;
 if (!$box) $box=100;
 
-$data = file($fsc);
-
 $sx = array();
 $sy = array();
-if (is_array($data))
+
+if ($fscid) {
+	$particle=new particledata;
+	$data = $particle->getFscFromRefinementDataId($fscid);
 	foreach ($data as $line) {
-		$line=rtrim($line);
-		list($x,$sy[])=split("\t",$line);
-		$sx[]=$x;
-		// convert pixels to resolution in angstroms
-		$xpix[]=sprintf("%.2f",$box*$apix/$x);
+		$sx[]=$line['pix'];
+		$sy[]=$line['value'];
+		$xpix[]=sprintf("%.2f",$box*$apix/$line['pix']);
 	}
+}
+
+else {
+	$data = file($fsc);
+	if (is_array($data))
+		foreach ($data as $line) {
+			$line=rtrim($line);
+			list($x,$sy[])=split("\t",$line);
+			$sx[]=$x;
+			// convert pixels to resolution in angstroms
+			$xpix[]=sprintf("%.2f",$box*$apix/$x);
+		}
+}
 
 // Setup the basic graph
 $graph = new Graph($width,$height,"auto");

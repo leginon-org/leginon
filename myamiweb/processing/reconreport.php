@@ -194,13 +194,14 @@ $html .= "</TR>\n";
 //sort($iterations);
 
 foreach ($iterations as $iteration){
-  $refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
-  $numclasses=$particle->getNumClasses($refinementData['DEF_id']);
-  $res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
-  $RMeasure = $particle->getRMeasureInfo($iteration['REF|ApRMeasureData|rMeasure']);
-  $fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
-  $halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
-  $rmeasureres = ($RMeasure) ? sprintf("%.2f",$RMeasure['rMeasure']) : "None" ;
+	$refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
+	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
+	$res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
+	$RMeasure = $particle->getRMeasureInfo($iteration['REF|ApRMeasureData|rMeasure']);
+	$fscid = ($res) ? $refinementData['DEF_id'] : False;
+	$fscfile = ($res) ? $refinerun['path'].'/'.$res['fscfile'] : "None" ;
+	$halfres = ($res) ? sprintf("%.2f",$res['half']) : "None" ;
+	$rmeasureres = ($RMeasure) ? sprintf("%.2f",$RMeasure['rMeasure']) : "None" ;
 	$badprtls = array();
 	$goodprtls = array();
 	$clsavgs = array();
@@ -237,8 +238,8 @@ foreach ($iterations as $iteration){
 		$clsavgs['EMAN'] = implode('.',$newnamearray);
 		$clsavgs['SpiCoran']= $refinementData['classAverage'];
 	}
-  $html .= "<TR>\n";
-  $html .= "<TD>\n";
+	$html .= "<TR>\n";
+	$html .= "<TD>\n";
 
 /*
   $html .= "<TD><A HREF=\"javascript:infopopup(";
@@ -253,18 +254,19 @@ foreach ($iterations as $iteration){
 */ 
 	$html .="<a class='aptitle' href='iterationreport.php?expId=$expId&rId=".$reconId."&itr=".$iteration['iteration']."'\n";
 	$html .=")\">$iteration[iteration]</A></TD>\n";
-  $html .= "<TD>$iteration[ang]&deg;</TD>\n";
-  if ($halfres!='None')
-    $html .= "<td><a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
-  else $html .= "<TD>\n";
-  $html .= "<I>FSC 0.5:</I><br />$halfres<br />\n";
+	$html .= "<TD>$iteration[ang]&deg;</TD>\n";
+	if ($halfres!='None' && $fscid)
+		$html .= "<td><a href='fscplot.php?fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscid=$fscid&width=100&height=80&nomargin=TRUE'></a><br />\n";
+	elseif ($halfres!='None' && $fscfile) 
+		$html .= "<td><a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
+	else $html .= "<TD>\n";
+	$html .= "<I>FSC 0.5:</I><br />$halfres<br />\n";
   
-  if ($rmeasureres!='None')
-    $html .= "<I>Rmeas:</I><br>$rmeasureres\n";
-  $html .= "</TD>";
+	if ($rmeasureres!='None')
+		$html .= "<I>Rmeas:</I><br>$rmeasureres\n";
+	$html .= "</TD>";
   
-
-  $html .="<TD><table>";
+	$html .="<TD><table>";
 	$html .= "<TR><TD>";
 	$html .= "$numclasses classes<br />\n";
 	foreach ($refinetypes as $type) {
