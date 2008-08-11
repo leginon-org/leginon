@@ -62,6 +62,10 @@ var help = {
 		'factorlist' : 'These images represent a set of eigenvectors, certain traits of the particles should be presented by each eigenvector.  Choosing an image below will use its eigenvectors as a basis for averaging the particles.',
 		'dendrogram' : 'Graphical representation of the clusters produced by the clustering algorithm.',
 		'numclass' : 'Particle stack will be aligned according to the selected eigen images and averaged into this number of classes.',
+	'apix' : 'Pixel size of the acquired image in Angstroms. Conversion: (1 nm = 10 Angstroms)',
+	'tiltseries': 'Tilt series number from tomogram session, listed in numeric order in the tomography viewer and can be obtained from the end of the individual .mrc image name.',
+	'session': 'Session name as created at leginon startup on the date of image capture.',
+	'tomospace': 'Subset space of tomogram used to reconstruct a bounded area (often a specific structure) of the image volume.',
 	},
 
 	'eman' : {
