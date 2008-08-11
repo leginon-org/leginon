@@ -248,6 +248,10 @@ def getFontPath(msg=True):
 	return " "
 
 def getSecureFile(msg=True):
+	"""
+	This file comes with xorg-x11-server-Xorg in Fedora 7,8
+	missing in Fedora 9
+	"""
 	filelist = [
 		"/usr/X11R6/lib64/X11/xserver/SecurityPolicy",
 		"/usr/lib64/xserver/SecurityPolicy",
@@ -261,6 +265,11 @@ def getSecureFile(msg=True):
 	return " "
 
 def getRgbFile(msg=True):
+	"""
+	This file comes with xorg-x11-server-Xorg in Fedora 7,8
+	missing in Fedora 9
+	"""
+	#return " "
 	filelist = [
 		"/usr/share/X11/rgb",
 		"/usr/X11R6/lib64/X11/rgb",
