@@ -3,9 +3,21 @@
 import sys
 import mrc
 import numpil
+from optparse import OptionParser
 
-infile = sys.argv[1]
-outfile = sys.argv[2]
+parser = OptionParser()
+
+parser.add_option('-f', '--format', action='store', dest='format',
+                  help="output file format")
+(options, args) = parser.parse_args()
+
+format = options.format
+
+infile = args[0]
+try:
+	outfile = args[1]
+except IndexError:
+	outfile = None
 
 im = mrc.read(infile)
-numpil.write(im, outfile)
+numpil.write(im, outfile, format=format)
