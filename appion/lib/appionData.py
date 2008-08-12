@@ -503,12 +503,13 @@ class ApTomogramData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('session', leginondata.SessionData),
+			('snapshot', str),
 			('tiltseries', leginondata.TiltSeriesData),
 			('path', ApPathData),
 			('name', str),
 			('pixelsize', float),
 			('description', str),
-			('md5sum', str),
+			('md5sum', str),			
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTomogramData=ApTomogramData
