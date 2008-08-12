@@ -177,7 +177,7 @@ function runUploadTomogram() {
 	$command.="-s $session ";
 	$command.="-a $apix ";
 	$command.="-t $tiltseries ";
-	//if ($tomospace) $command.="-t $tomospace ";
+	$command.="-p $tomospace ";
 	$command.="-d \"$description\"";
 
 	
