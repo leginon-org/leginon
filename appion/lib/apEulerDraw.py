@@ -4,6 +4,7 @@ import MySQLdb
 import math
 import os
 import numpy
+import pyami.quietscipy
 from scipy import ndimage
 import Image
 import ImageDraw

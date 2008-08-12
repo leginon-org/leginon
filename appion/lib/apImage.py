@@ -8,6 +8,7 @@ import Image
 import ImageDraw
 ## numpy
 import numpy
+import pyami.quietscipy
 from scipy import ndimage
 from numpy import linalg
 from numpy import ma

@@ -6,6 +6,7 @@ import apDisplay
 import math
 import numpy
 import apImage
+import pyami.quietscipy
 from scipy import ndimage
 
 def runDogDetector(imagename, params):

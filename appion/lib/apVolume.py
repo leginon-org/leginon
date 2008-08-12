@@ -4,6 +4,7 @@
 import math
 import time
 #numpy
+import pyami.quietscipy
 import numpy
 from scipy import ndimage
 from numpy import linalg
