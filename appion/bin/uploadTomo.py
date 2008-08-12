@@ -131,7 +131,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			### simple upload, just copy file to Tomo folder
 			apDisplay.printMsg("Copying original tomogram to a new location: "+newtomopath)
 			shutil.copyfile(origtomopath, newtomopath)
-			shutil.copyfile(image, newtomopath)			
+			shutil.copyfile(self.params['image'], newtomopath)			
 
 		### upload Initial Tomo
 		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
