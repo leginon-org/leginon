@@ -162,6 +162,7 @@ def insertTomo(params):
 	tomoq['pixelsize'] = params['apix']
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	tomoq['name'] = params['name']
+	tomoq['snapshot'] = params['image'] 
 	filepath = os.path.join(params['outdir'], params['name'])
 	tomoq['md5sum'] = apFile.md5sumfile(filepath)
 	tomoq['description'] = params['description']
