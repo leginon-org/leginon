@@ -1,16 +1,41 @@
 #!/usr/bin/env python
 
 import sys
-from pyami import mrc, numpil
+try:
+	from pyami import mrc, numpil, imagefun, arraystats
+except:
+	import mrc, numpil, imagefun, arraystats
 from optparse import OptionParser
 
-parser = OptionParser()
+usage = '''
+To list available output formats:
+   %prog --list-formats
+To convert MRC image to another format:
+   %prog [options] input-file [output-file]
+If output-file is not given, it will output to standard output.
+If you do not specify an output file format, it will attempt to detect it
+from the extension of your output file name.
+'''
 
+parser = OptionParser(usage=usage)
+
+parser.add_option('-l', '--list-formats', action='store_true', dest='listformats', help="list available output formats")
 parser.add_option('-f', '--format', action='store', dest='format',
-                  help="output file format")
+                  help="output file format, use -l to list the available formats")
+parser.add_option('-b', '--binning', action='store', type='int', dest='binning',
+                  help="binning to apply to original image")
+parser.add_option('-r', '--range', action='store', type='string', dest='range',
+                  help="range of values in the MRC that will be scaled to the range 0,255 in the output image.  Default if not specified is mean-3*std,mean+3*std")
+
 (options, args) = parser.parse_args()
 
-format = options.format
+if options.listformats:
+	for format in numpil.pilformats:
+		print format
+	sys.exit(0)
+elif not args:
+	parser.print_help()
+	sys.exit(0)
 
 infile = args[0]
 try:
@@ -19,4 +44,22 @@ except IndexError:
 	outfile = None
 
 im = mrc.read(infile)
-numpil.write(im, outfile, format=format)
+
+if options.range is None:
+	try:
+		head = mrc.getHeader(im)
+		range = head['amean']-3*head['rms'],head['amean']+3*head['rms']
+	except:
+		range = None
+else:
+	try:
+		range = options.range.split(',')
+		range = float(range[0]), float(range[1])
+	except:
+		sys.stderr.write('unable to parse range\n')
+		sys.exit(1)
+
+if options.binning and options.binning != 1:
+	im = imagefun.bin(im, options.binning)
+
+numpil.write(im, outfile, format=options.format, limits=range)
