@@ -319,7 +319,9 @@ class Tomography(acquisition.Acquisition):
 
 		## acquire parent preset image, initial image
 		if adjust:
+			isoffset = self.getImageShiftOffset()
 			self.presetsclient.toScope(parentname)
+			self.setImageShiftOffset(isoffset)
 			self.instrument.setCorrectionChannel(0)
 			imagedata0 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 

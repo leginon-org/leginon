@@ -474,6 +474,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.tem.MainScreenPosition = 'up'
 		self.logger.info('Screen up.')
 
+	def getImageShiftOffset(self):
+		pimageshift = self.presetsclient.currentpreset['image shift']
+		simageshift = self.instrument.tem.ImageShift
+		offsetx = simageshift['x'] - pimageshift['x']
+		offsety = simageshift['y'] - pimageshift['y']
+		return {'x': offsetx, 'y': offsety}
+
+	def setImageShiftOffset(self, imageshift):
+		simageshift = self.instrument.tem.ImageShift
+		x = simageshift['x'] + imageshift['x']
+		y = simageshift['y'] + imageshift['y']
+		self.instrument.tem.ImageShift = {'x':x, 'y':y}
+
 	def moveAndPreset(self, presetdata, emtarget):
 			status = 'ok'
 			presetname = presetdata['name']
