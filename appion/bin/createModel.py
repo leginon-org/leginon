@@ -123,7 +123,7 @@ class createModelScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(path, "createmodel", self.timestamp)
 
 	#=====================
-	def excludedClasses(self, classfile):
+	def excludedClasses(self, origclassfile, norefpath):
 		excludelist = self.params['exclude'].split(",")
 		 
 		apDisplay.printMsg( "Creating exclude.lst: "+norefpath )
@@ -138,15 +138,15 @@ class createModelScript(appionScript.AppionScript):
 			f.write(str(excludeitem)+"\n")
 		f.close()
 		
-		newclassfile = norefClassdata['classFile']+"-new"
+		newclassfile = origclassfile+"-new"
 		# old file need to be removed or the images will be appended
 		if os.path.isfile(newclassfile):
 			apDisplay.printWarning("removing old image file: "+newclassfile )
 			os.remove(newclassfile+".hed")
 			os.remove(newclassfile+".img")
 
-		apDisplay.printMsg("Creating new class averages "+newclass+" in "+norefpath)
-		excludecmd = ( "proc2d "+classfile+".hed "+newclassfile+".hed exclude="+excludefile )
+		apDisplay.printMsg("Creating new class averages "+newclassfile)
+		excludecmd = ( "proc2d "+origclassfile+".hed "+newclassfile+".hed exclude="+excludefile )
 		apEMAN.executeEmanCmd(excludecmd, verbose=True)
 
 		return newclassfile
@@ -161,13 +161,13 @@ class createModelScript(appionScript.AppionScript):
 
 		#Get class average file name
 		norefClassFile = norefClassdata['classFile']
+		origclassfile = os.path.join(norefpath, norefClassFile)
 
 		if self.params['exclude'] is not None:
 			#create the list of the indexes to be excluded
-			classfile = self.excludedClasses(classfile)
+			classfile = self.excludedClasses(origclassfile, norefpath)
 		else:
 			#complete path of the class average file
-			origclassfile = os.path.join(norefpath, norefClassFile)
 			classfile = origclassfile+"-orig"
 			apDisplay.printMsg("copying file "+origclassfile+" to "+classfile)
 			shutil.copy(origclassfile+".hed", classfile+".hed")
