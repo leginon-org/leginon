@@ -24,6 +24,8 @@ class UploadTomoScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
 			+" [--rescale=<model ID,scale factor> --boxsize=<#>] ")
+		self.parser.add_option("-i", "--image", dest="image", 
+			help="image file to upload", metavar="IMAGE")
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
@@ -42,11 +44,15 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
 		self.parser.add_option("-a", "--pixel size", dest="apix",
 			help="Pixel Size in Angstroms of Images", metavar="APIX")
+		self.parser.add_option("-p", "--tomospace", dest="tomospace",
+			help="Tomospace partition from original voxel volume", metavar="TOMOSPACE")
 
 	#=====================
 	def checkConflicts(self):
 		if self.params['tiltseries'] is None:
 			apDisplay.printError("Enter a Tilt Series")
+		if self.params['tomospace'] is None:
+			apDisplay.printError("Enter a Tomo Space #")
 		if self.params['session'] is None:
 			apDisplay.printError("Enter a session ID")
 		if self.params['description'] is None:
@@ -68,7 +74,9 @@ class UploadTomoScript(appionScript.AppionScript):
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
 		tiltseriespath = "tiltseries" +  self.params['tiltseries']
-		self.params['outdir'] = os.path.join(path,tiltseriespath)
+		tomospacepath = "tomospace" + self.params['tomospace']
+		intermediatepath = os.path.join(tiltseriespath,tomospacepath)
+		self.params['outdir'] = os.path.join(path,intermediatepath)
 
 	#=====================
 	def setNewFileName(self, unique=False):
@@ -126,8 +134,8 @@ class UploadTomoScript(appionScript.AppionScript):
 
 		### upload Initial Tomo
 		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
-
-		### may be of use to insert
+		
+		### inserting tomogram
 		apUpload.insertTomo(self.params)
 
 #=====================
