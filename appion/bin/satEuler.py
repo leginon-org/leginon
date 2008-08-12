@@ -18,6 +18,7 @@ import apParam
 import sinedon
 #site-packages
 import numpy
+import pyami.quietscipy
 from scipy import ndimage, stats
 import MySQLdb
 
