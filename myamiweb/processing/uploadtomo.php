@@ -82,7 +82,9 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
    if ($rescale) echo "";
        else echo"
 	<B>Tomogram file name with path:</B><BR/>
-      <INPUT TYPE='text' NAME='tomoname' VALUE='$tomoname' SIZE='50'><br />\n";
+      <INPUT TYPE='text' NAME='tomoname' VALUE='$tomoname' SIZE='50'><br />\n
+	<B>Snapshot file name with path:</B><BR/>
+      <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 	
 	echo"<P>
       <B>Tomogram Description:</B><BR/>
@@ -151,7 +153,8 @@ function runUploadTomogram() {
 	$tiltseries=$_POST['tiltseries'];
 	$tomospace=$_POST['tomospace'];
 	$session=$_POST['session'];
-	$apix=$_POST['apix'];	
+	$apix=$_POST['apix'];
+	$snapshot=$_POST['snapshot'];
 
 	//make sure a model root was entered
 	$model=$_POST['model'];
@@ -178,7 +181,8 @@ function runUploadTomogram() {
 	$command.="-a $apix ";
 	$command.="-t $tiltseries ";
 	$command.="-p $tomospace ";
-	$command.="-d \"$description\"";
+	$command.="-d \"$description\" ";
+	$command.="-i $snapshot ";
 
 	
 	// submit job to cluster
