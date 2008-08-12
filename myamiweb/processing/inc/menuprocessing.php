@@ -405,6 +405,13 @@ if ($expId) {
 		       'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram >></a>",
 		       'result'=>$result,
 		       );
+	
+	$result = ($tomograms==0) ? "" :
+          "<a href='viewtomos.php?expId=$sessionId'>$tomograms listed</a>";
+        $nruns[]=array(
+                       'name'=>"<a href='tomosummary.php?expId=$sessionId'>View Tomo List >></a>",
+                       'result'=>$result,
+                       );
 
 	$data[]=array(
 		      'action'=>array(	$action, $celloption),
