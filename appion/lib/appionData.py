@@ -831,3 +831,4 @@ class ApMaskAssessmentData(Data):
 			('keep', int),
 		)
 	typemap = classmethod(typemap)
+

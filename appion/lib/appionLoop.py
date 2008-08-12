@@ -1,7 +1,6 @@
 #!/usr/bin/python -O
 
-import warnings
-warnings.filterwarnings('ignore', module='scipy')
+import pyami.quietscipy
 
 #builtin
 import sys

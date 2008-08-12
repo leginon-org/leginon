@@ -7,6 +7,7 @@ import apDisplay
 import os
 import sys
 import math
+import pyami.quietscipy
 import numpy
 ma = numpy.ma
 import scipy.ndimage as nd
