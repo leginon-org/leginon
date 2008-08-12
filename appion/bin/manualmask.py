@@ -28,6 +28,7 @@ except ImportError:
 	TargetPanelTools = ImageViewer
 import pyami
 import numpy
+import pyami.quietscipy
 import scipy.ndimage as nd
 
 class ManualMaskMakerPanel(manualpicker.ManualPickerPanel):
