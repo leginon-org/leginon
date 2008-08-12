@@ -1363,6 +1363,19 @@ class particledata {
 		return $r;
 	}
 
+	function updateExemplar($table, $id, $value) {
+		$q = "SELECT exemplar "
+			."FROM `".$table."` "
+			."WHERE `DEF_id`=".$id." ";
+		$olddata = $this->mysql->getSQLResult($q);
+		if (array_key_exists('exemplar',$olddata[0])) {
+			$data = array();
+			$data['exemplar']=$value;
+			$where = array('DEF_id'=>$id);
+			$this->mysql->SQLUpdate($table,$data,$where);
+		}
+	}			 
+
 	function getMiscInfoFromProject ($projectId) {
 		$q="SELECT i.*, p.path "
 			."FROM `ApMiscData` i "
@@ -1681,9 +1694,10 @@ class particledata {
 		return $r[0];
 	}
 
-	function getSubsetParticlesInStack ($refinementDataId, $subset, $refinetype='EMAN') {
-		$q = "SELECT particleNumber as p "
-		  ."FROM `ApParticleClassificationData` apcd "
+	function getSubsetParticlesInStack ($refinementDataId, $subset, $refinetype='EMAN', $count=False) {
+		$q = "SELECT particleNumber as p ";
+		if ($count) $q = "SELECT count(particleNumber) as p ";
+		$q .= "FROM `ApParticleClassificationData` apcd "
 		  ."LEFT JOIN `ApStackParticlesData` aspd "
 		  ."ON (apcd.`REF|ApStackParticlesData|particle` = aspd.`DEF_id`) "
 			."WHERE apcd.`REF|ApRefinementData|refinement` = '$refinementDataId' ";
@@ -1701,32 +1715,24 @@ class particledata {
 				elseif ($subset=='good') $q.="AND `msgp_keep` = 1 ";
 			  break;
 		}
-		$q.= "ORDER BY aspd.`DEF_id` ASC ";
+		if (!$count) $q.= "ORDER BY aspd.`DEF_id` ASC ";
+		$r = $this->mysql->getSQLResult($q);
+		if ($count) return $r[0]['p'];
+		return $r;
+	}
+
+	function listAllStackParticles ($stackId) {
+		$q="SELECT sp.`particleNumber`, db.`MRC|image`, "
+		  ."p.`xcoord` , p.`ycoord` "
+		  ."FROM  `ApStackParticlesData` sp "
+		  ."LEFT JOIN ApParticleData p ON "
+		  ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) " 
+		  ."LEFT JOIN dbemdata.AcquisitionImageData db ON "
+		  ."( p.`REF|leginondata|AcquisitionImageData|image` = db.`DEF_id` ) " 
+		  ."WHERE sp.`REF|ApStackData|stack`=$stackId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
-	function getNumBadParticles ($refinementDataId, $refinetype='EMAN' ) {
-		$r = $this->getSubsetParticlesInStack($refinementDataId, 'bad',$refinetype);
-		return count($r);
-	}
-
-	function getNumGoodParticles ($refinementDataId, $refinetype='EMAN' ) {
-		$r = $this->getSubsetParticlesInStack($refinementDataId, 'good',$refinetype);
-		return count($r);
-	}
-
-  function listAllStackParticles ($stackId) {
-    $q="SELECT sp.`particleNumber`, db.`MRC|image`, "
-      ."p.`xcoord` , p.`ycoord` "
-      ."FROM  `ApStackParticlesData` sp "
-      ."LEFT JOIN ApParticleData p ON "
-      ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) " 
-      ."LEFT JOIN dbemdata.AcquisitionImageData db ON "
-      ."( p.`REF|leginondata|AcquisitionImageData|image` = db.`DEF_id` ) " 
-      ."WHERE sp.`REF|ApStackData|stack`=$stackId";
-    $r = $this->mysql->getSQLResult($q);
-    return $r;
-  }
 
 	function getNumClasses ($refinementDataId) {
 		$q = "SELECT count(distinct(`REF|ApEulerData|eulers`)) as num "

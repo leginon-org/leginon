@@ -19,6 +19,8 @@ if (!$reconId = $_GET['reconId'])
 	$reconId=false;
 $expId = $_GET['expId'];
 
+$formAction = $_SERVER['PHP_SELF']."?expId=$expId&reconId=$reconId";
+
 $refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine','cckeep','minptls');
 $javascript="<script src='../js/viewer.js'></script>\n";
 
@@ -80,8 +82,8 @@ $apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 //$apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
 $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
-$html .= "<form name='iterations'>\n";
-$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html .= "<form name='iterations' method='post' action='$formAction'>\n";
+$html .= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
 $display_keys = array ( 'iter', 'ang', 'fsc', 'classes', '# particles', 'density','snapshot');
 foreach($display_keys as $key) {
@@ -102,7 +104,6 @@ if ($avgmedjump['count'] > 0) {
 	$avgmedjumpstr .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
 } else
 	$avgmedjumpstr = NULL;
-
 
 $title = "recon info";
 //print_r($refinerun);
@@ -195,6 +196,18 @@ $html .= "</TR>\n";
 
 foreach ($iterations as $iteration){
 	$refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
+	// set as exemplar if submitted
+	if ($_POST['exemplar'.$refinementData['DEF_id']]) {
+		$particle->updateExemplar('ApRefinementData',$refinementData['DEF_id'],1);
+		$refinementData['exemplar'] = 1;
+	}
+	elseif ($_POST['notExemplar'.$refinementData['DEF_id']]) {
+		$particle->updateExemplar('ApRefinementData',$refinementData['DEF_id'],0);
+		$refinementData['exemplar'] = False;
+	}
+
+	// set background color of line based on exemplar
+	$bg = ($refinementData['exemplar']) ? "#EEEEEE" : "#FFFFFF";
 	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
 	$res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
 	$RMeasure = $particle->getRMeasureInfo($iteration['REF|ApRMeasureData|rMeasure']);
@@ -220,14 +233,14 @@ foreach ($iterations as $iteration){
 		}
 		if ($refinementData[$clsavgfield]) {
 			$clsavgs[$type] = $refinementData[$clsavgfield]; 
-			$badprtls[$type]=$particle->getNumBadParticles($refinementData['DEF_id'],$type);
-			$goodprtls[$type]=$particle->getNumGoodParticles($refinementData['DEF_id'],$type);
+			$badprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', $type, True);
+			$goodprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', $type, True);
 		}
 	}
 	# old data has no class average distinction, only eman bad particles
 	if ((count($badprtls)==0) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$badprtls)))) 
-		$badprtls['EMAN']=$particle->getNumBadParticles($refinementData['DEF_id']);
-		$goodprtls['EMAN']=$particle->getNumGoodParticles($refinementData['DEF_id']);
+		$badprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', 'EMAN', True);
+		$goodprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', 'EMAN', True);
 	# old data has no class average distinction, force association 
 	if ((count($clsavgs)==0 && ($refinerun['package'] == 'EMAN')) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$clsavgs)))) { 
 		$clsavgs['EMAN']= $refinementData['classAverage'];
@@ -238,8 +251,8 @@ foreach ($iterations as $iteration){
 		$clsavgs['EMAN'] = implode('.',$newnamearray);
 		$clsavgs['SpiCoran']= $refinementData['classAverage'];
 	}
-	$html .= "<TR>\n";
-	$html .= "<TD>\n";
+	$html .= "<tr>\n";
+	$html .= "<td bgcolor='$bg'>\n";
 
 /*
   $html .= "<TD><A HREF=\"javascript:infopopup(";
@@ -254,20 +267,20 @@ foreach ($iterations as $iteration){
 */ 
 	$html .="<a class='aptitle' href='iterationreport.php?expId=$expId&rId=".$reconId."&itr=".$iteration['iteration']."'\n";
 	$html .=")\">$iteration[iteration]</A></TD>\n";
-	$html .= "<TD>$iteration[ang]&deg;</TD>\n";
+	$html .= "<TD bgcolor='$bg'>$iteration[ang]&deg;</TD>\n";
 	if ($halfres!='None' && $fscid)
-		$html .= "<td><a href='fscplot.php?fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscid=$fscid&width=100&height=80&nomargin=TRUE'></a><br />\n";
+		$html .= "<td bgcolor='$bg'><a href='fscplot.php?fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscid=$fscid&width=100&height=80&nomargin=TRUE'></a><br />\n";
 	elseif ($halfres!='None' && $fscfile) 
-		$html .= "<td><a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
-	else $html .= "<TD>\n";
+		$html .= "<td bgcolor='$bg'><a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
+	else $html .= "<td bgcolor='$bg'>\n";
 	$html .= "<I>FSC 0.5:</I><br />$halfres<br />\n";
   
 	if ($rmeasureres!='None')
 		$html .= "<I>Rmeas:</I><br>$rmeasureres\n";
 	$html .= "</TD>";
   
-	$html .="<TD><table>";
-	$html .= "<TR><TD>";
+	$html .="<td bgcolor='$bg'><table>";
+	$html .= "<TR><td bgcolor='$bg'>";
 	$html .= "$numclasses classes<br />\n";
 	foreach ($refinetypes as $type) {
 		if (array_key_exists($type,$clsavgs)) {
@@ -304,34 +317,36 @@ foreach ($iterations as $iteration){
 	$html .= "</table></td>\n";
   
 	//particle stack viewing 
-	$html .="<TD><table>";
+	$html .="<td bgcolor='$bg'><table>";
 	foreach ($refinetypes as $type) {
 		if (array_key_exists($type,$badprtls)) {
 			$prtlsused=$stackparticles-$badprtls[$type];
-			$html .= "<TR><TD>\n"
+			$html .= "<TR><td bgcolor='$bg'>\n"
 			."$type </TD></TR>\n";
 			if ($prtlsused != $goodprtls[$type]) 
-				$html .= "<TR><TD>Not all prtls accounted for!!!</TD></TR>";
-			$html .= "<TR><TD>\n"
-			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><BR/></TD></TR><TR><TD>"
+				$html .= "<TR><td bgcolor='$bg'>Not all prtls accounted for!!!</TD></TR>";
+			$html .= "<TR><td bgcolor='$bg'>\n"
+			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><BR/></TD></TR><TR><td bgcolor='$bg'>"
 			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</A></TD></TR>\n";
 		}
 	}	
-  $html .= "</table></TD>";
+	$html .= "</table></TD>";
   
-  $html .= "<td>$iteration[volumeDensity]<br />\n";
-  $html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a><br />\n";
-  $html .= "<A HREF='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'><FONT CLASS='sf'>[new averages]</FONT></a>\n";
-  $html .= "</td>\n";
-  $html .= "<td>\n";
-  foreach ($pngfiles as $snapshot) {
-    if (eregi($iteration['volumeDensity'],$snapshot)) {
-      $snapfile = $refinerun['path'].'/'.$snapshot;
-      $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
-    }
+	$html .= "<td bgcolor='$bg'>$iteration[volumeDensity]<br />\n";
+	$html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a><br />\n";
+	$html .= "<A HREF='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'><FONT CLASS='sf'>[new averages]</FONT></a><br />\n";
+	if ($refinementData['exemplar']) $html .= "<input class='edit' type='submit' name='notExemplar".$refinementData['DEF_id']."' value='not exemplar'>";
+	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='exemplar'>";
+	$html .= "</td>\n";
+	$html .= "<td bgcolor='$bg'>\n";
+	foreach ($pngfiles as $snapshot) {
+		if (eregi($iteration['volumeDensity'],$snapshot)) {
+			$snapfile = $refinerun['path'].'/'.$snapshot;
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+		}
 	}
-  $html .= "</TD>\n";
-  $html .= "</TR>\n";
+	$html .= "</TD>\n";
+	$html .= "</TR>\n";
 }
 $html .= "</form>\n";
 $html.="</TABLE>\n";
