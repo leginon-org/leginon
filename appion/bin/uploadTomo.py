@@ -86,6 +86,13 @@ class UploadTomoScript(appionScript.AppionScript):
 		# set foldname
 		foldname = os.path.basename(os.path.dirname(self.params['file']))
 		self.params['name'] = basename+".mrc"
+		
+		#clean up old name
+		snapshotname = os.path.basename(self.params['image'])
+		snapshotname = re.sub(".png", "", snapshotname)
+		# set foldname
+		foldname = os.path.basename(os.path.dirname(self.params['image']))
+		self.params['imagename'] = basename+".png"
 
 	#=====================
 	def checkExistingFile(self):
