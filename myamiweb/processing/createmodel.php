@@ -231,14 +231,8 @@ function runCreateModel() {
 	$apix=$_POST['apix'];
 
 	$particle = new particledata();
-	$syms = $particle->getSymmetries();
-
-	foreach ($syms as $sym) {
-		if ($sym[DEF_id] == $symm) {
-			preg_match("/(^C[0-9]+)/", $sym[symmetry], $match);
-			$symm_name = $match[0];
-		}
-	}
+	$syminfo = $particle->getSymmetryInfo($symm);
+	$symm_name = $syminfo['symmetry'];
 
 	//putting together command
 	$command.="createModel.py ";
