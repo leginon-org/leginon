@@ -263,6 +263,7 @@ function stackModelForm($extra=False) {
 
 # display starting models
       $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
+      $sym['symmetry'] = strtolower($sym['symmetry']);
       echo "<tr><TD COLSPAN=2>\n";
       $modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
       if (!$modelonly) {
