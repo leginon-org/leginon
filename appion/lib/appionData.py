@@ -392,6 +392,7 @@ class ApNoRefClassRunData(Data):
 			('factor_list', str),
 			('classFile', str),
 			('varFile', str),
+			('method', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApNoRefClassRunData=ApNoRefClassRunData
