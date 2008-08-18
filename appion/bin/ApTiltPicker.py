@@ -24,7 +24,6 @@ import polygon
 import gui.wx.TargetPanel
 ## numpy/scipy
 import numpy
-import pyami.quietscipy
 from scipy import ndimage, optimize
 
 
