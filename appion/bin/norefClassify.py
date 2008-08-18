@@ -35,6 +35,10 @@ class NoRefClassScript(appionScript.AppionScript):
 			action="store_true", help="Commit noref class to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit noref class to database")
+		self.parser.add_option("--method", dest="method", default="hierach",
+			help="Method to use for classification: 'hierach' or 'kmeans'")
+
+
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
 
@@ -42,8 +46,10 @@ class NoRefClassScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['norefid'] is None:
 			apDisplay.printError("No ref id was not defined")
-		if self.params['numclass'] > 200:
+		if self.params['numclass'] > 900:
 			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
+		if self.params['method'] not in ['hierach','kmeans']:
+			apDisplay.printError("--method must be either 'hierach' or 'kmeans', e.g. --method=hierach")
 		self.norefdata = self.appiondb.direct_query(appionData.ApNoRefRunData, self.params['norefid'])
 
 	#=====================
@@ -79,7 +85,7 @@ class NoRefClassScript(appionScript.AppionScript):
 		return norefparts[0]
 
 	#=====================
-	def insertNoRefClass(self,  insert=False):
+	def insertNoRefClass(self, classavg=None, classvar=None, insert=False):
 		# create a norefParam object
 		classq = appionData.ApNoRefClassRunData()
 		classq['num_classes'] = self.params['numclass']
@@ -90,8 +96,14 @@ class NoRefClassScript(appionScript.AppionScript):
 				str(self.params['norefid'])+"\nis already in the database")
 
 		classq['factor_list'] = self.params['factorstr']
-		classq['classFile'] = ("cluster/classavgstack%03d" % self.params['numclass'])
-		classq['varFile'] = ("cluster/classvarstack%03d" % self.params['numclass'])
+		if classavg is None:
+			classq['classFile'] = ("cluster/classavgstack%03d_%s" % (self.params['numclass'], self.timestamp))
+		else:
+			classq['classFile'] = classavg
+		if classvar is None:
+			classq['varFile'] = ("cluster/classvarstack%03d_%s" % (self.params['numclass'], self.timestamp))
+		else:
+			classq['varFile'] = classvar
 
 		apDisplay.printMsg("inserting classification parameters into database")
 		if insert is True:
@@ -128,11 +140,19 @@ class NoRefClassScript(appionScript.AppionScript):
 			apDisplay.printError("Requested factor list is longer than available factors")
 
 		#run the classification
-		alignment.hierarchCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
-			factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
+		if self.params['method'] == "kmeans":
+			apDisplay.printMsg("Using the k-means clustering method")
+			classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
+				timestamp=self.timestamp, factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
+		else:
+			apDisplay.printMsg("Using the hierarch clustering method")
+			classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
+				timestamp=self.timestamp, factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
+
+
 
 		if self.params['commit'] is True:
-			self.insertNoRefClass(insert=True)
+			self.insertNoRefClass(classavg, classvar, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 

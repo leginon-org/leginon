@@ -6,6 +6,7 @@ import subprocess
 import cPickle
 import sys
 import math
+from string import lowercase
 import random
 ## PIL
 #import Image
@@ -471,7 +472,7 @@ def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", data
 
 
 #===============================
-def hierarchCluster(alignedstack, numpart=None, numclasses=40, 
+def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
@@ -479,12 +480,15 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40,
 	outputs:
 
 	"""
+	if timestamp is None:
+		timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
+
 	if alignedstack[-4:] == dataext:
 		alignedstack = alignedstack[:-4]
 
 	rundir = "cluster"
-	classavg = rundir+"/"+("classavgstack%03d" % numclasses)
-	classvar = rundir+"/"+("classvarstack%03d" % numclasses)
+	classavg = rundir+"/"+("classavgstack_%s_%03d" %  (timestamp, numclasses))
+	classvar = rundir+"/"+("classvarstack_%s_%03d" %  (timestamp, numclasses))
 	apParam.createDirectory(rundir)
 	apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
 
@@ -557,10 +561,10 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40,
 	if not os.path.isfile("dendrogram.png"):
 		apDisplay.printWarning("Dendrogram image conversion failed")
 
-	return
+	return classavg,classvar
 
 #===============================
-def kmeansCluster(alignedstack, numpart=None, numclasses=40, 
+def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	inputs:
@@ -568,12 +572,15 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40,
 	outputs:
 
 	"""
+	if timestamp is None:
+		timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
+
 	if alignedstack[-4:] == dataext:
 		alignedstack = alignedstack[:-4]
 
 	rundir = "cluster"
-	classavg = rundir+"/"+("classavgstack%03d" % numclasses)
-	classvar = rundir+"/"+("classvarstack%03d" % numclasses)
+	classavg = rundir+"/"+("classavgstack_%s_%03d" %  (timestamp, numclasses))
+	classvar = rundir+"/"+("classvarstack_%s_%03d" %  (timestamp, numclasses))
 	apParam.createDirectory(rundir)
 	for i in range(numclasses):
 		apFile.removeFile(rundir+("/classdoc%04d" % (i+1))+dataext)
@@ -635,7 +642,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40,
 	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
-	return
+	return classavg,classvar
 
 #===============================
 def ClCla(alignedstack, numpart=None, numclasses=40, 
