@@ -82,6 +82,16 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo docpop('numclass','Number of Classes');
 	echo "<br /><br />";
 
+	echo docpop('classmethod','<B>Particle classification method:</B>');
+	echo "<br/>";
+	echo "<INPUT TYPE='radio' NAME='classmethod' VALUE='hierarch' "
+		.((!$_POST['classmethod'] || $_POST['classmethod'] == 'hierarch') ? 'CHECKED' : '')
+		.">\n Hierarchical clustering<br/>\n";
+	echo "<INPUT TYPE='radio' NAME='classmethod' VALUE='kmeans' "
+		.($_POST['classmethod'] == 'kmeans' ? 'CHECKED' : '')
+		.">\n K-means Clustering<br/>\n";
+	echo "<br /><br />";
+
 	echo "<input type='checkbox' name='commit' $commitcheck>";
 	echo docpop('commit','Commit to Database');
 	echo "";
@@ -146,13 +156,13 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 function runNoRefClassify($runjob=False) {
 	$expId = $_GET['expId'];
 	$norefId = $_GET['norefId'];
-
 	$command.="norefClassify.py ";
 
 	$numclass = $_POST['numclass'];
 	$norefid = $_POST['norefid'];
 	$numeigenimgs = $_POST['numeigenimgs'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$classmethod=$_POST['classmethod'];
 
 	// get selected eigenimgs
 	$factorlistAR=array();
@@ -173,14 +183,15 @@ function runNoRefClassify($runjob=False) {
 
  
 	// classification
-	if ($numclass > 200 || $numclass < 2) 
-		createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 & 200");
+	if ($numclass > 300 || $numclass < 2) 
+		createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 & 300");
 
 	$particle = new particledata();
 
 	$command.="--norefid=$norefId ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
+	if ($classmethod) $command.="--method=$classmethod ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
