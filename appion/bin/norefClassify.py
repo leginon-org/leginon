@@ -105,10 +105,11 @@ class NoRefClassScript(appionScript.AppionScript):
 		else:
 			classq['varFile'] = classvar
 
+		classq['method'] = self.params['method']
+
 		apDisplay.printMsg("inserting classification parameters into database")
 		if insert is True:
 			classq.insert()
-
 
 		### particle class data
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
