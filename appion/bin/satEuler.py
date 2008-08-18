@@ -339,7 +339,7 @@ class satEulerScript(appionScript.AppionScript):
 
 	#=====================
 	def calc2dRotationalDifference(self, eulerpair):
-		rotdist = abs(eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
+		rotdist = (eulerpair['part1']['euler3'] - eulerpair['part2']['euler3']) % 360.0
 		#With EMAN data the next line shouldn't be done
 		#if rotdist > 180.0:
 		#	rotdist -= 360.0
