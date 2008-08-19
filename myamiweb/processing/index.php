@@ -30,7 +30,10 @@ else {
 
 $sessioninfo = $leginondata->getSessionInfo($expId);
 
-$data = processing_header("Appion Data Processing","Appion Data Processing", "<script src='../js/viewer.js'></script>");
+$javascript = "<script src='../js/viewer.js'></script>\n";
+$javascript.=eulerImgJava();
+
+$data = processing_header("Appion Data Processing","Appion Data Processing", $javascript);
 // --- main window starts here --- //
 
 $particle=new particleData();
@@ -307,6 +310,5 @@ foreach ($reconRuns as $recon) {
 	$m .= "</td></tr></table>\n";
 	echo $m;
 }
-
 processing_footer();
 ?>

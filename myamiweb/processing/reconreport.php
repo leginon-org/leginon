@@ -54,16 +54,9 @@ foreach($refine_params_fields as $param) {
 $javascript.="                newwindow.document.write('</TABLE></BODY></HTML>');\n";
 $javascript.="                newwindow.document.close()\n";
 $javascript.="        }\n";
- 
-// javascript to switch the euler image
-$javascript.="	function switchEulerImg(i,img) {\n";
-$javascript.="		var eulerimage = 'eulerimg'+i;\n";
-$javascript.="		var eulerlink = 'loadimg.php?scale=.125&filename='+img;\n";
-$javascript.="		var eulerbiglink = 'loadimg.php?filename='+img;\n";
-$javascript.="		document['eulerimg'+i].src = eulerlink;\n";
-$javascript.="		document.getElementById('eulerlink'+i).href = eulerbiglink;\n";
-$javascript.="	}\n";
 $javascript.="</script>\n";
+
+$javascript.=eulerImgJava(); 
 
 processing_header("Reconstruction Report","Reconstruction Report Page", $javascript);
 if (!$reconId) {
