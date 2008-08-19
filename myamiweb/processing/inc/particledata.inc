@@ -28,6 +28,102 @@ class particledata {
 					PARTICLE_DB);
 	}
 
+	//------ Tomo functions ---------//
+	
+	function getTomogramInfo($tomogramId){
+		$q =  "SELECT t.`DEF_id` as DEF_id, "
+			."t.name as name, "
+			."t.snapshot as snapshot, "
+			."t.description as description, "
+			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			." p.`path` "
+			."FROM `ApTomogramData` t "
+			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."WHERE t.`DEF_id` = " .$tomogramId;
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTomogramsFromSession($sessionId){
+		$q =  "SELECT t.`DEF_id` as DEF_id, "
+			."t.name as name, "
+			."t.description as description, "
+			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			." p.`path` "
+			."FROM `ApTomogramData` t "
+			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId;
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTiltSeries($sessionId) {
+		if($sessionId == NULL)
+			return array();
+		$query = 'SELECT `DEF_id` as id, '
+			.'UNIX_TIMESTAMP(DEF_timestamp) as timestamp, '
+			.'`number` '
+			.'FROM dbemdata.`TiltSeriesData` '
+			."WHERE `REF|SessionData|session`='$sessionId' "
+			.'ORDER BY DEF_timestamp;';
+		return $this->mysql->getSQLResult($query);
+	}
+
+	function getTiltSeriesSelector($tiltSeries, $tiltSeriesId=NULL) {
+		$selector = '<select name="tiltseriesId" '
+				.'size=5 '
+				.'onchange=submit()>';
+		$length = strlen(count($tiltSeries));
+		for ($i = 0; $i < count($tiltSeries); $i++) {
+			$series = $tiltSeries[$i];
+			# use real series number if exist
+			if (!is_null($series['number'])) {
+				$number = $series['number'];
+			} else {
+				$number = $i + 1;
+			}
+			$selector .= '<option class="fixed" value='.$series['id'];
+			if ($series['id'] == $tiltSeriesId) {
+				$selector .= ' selected ';
+				$selected_number = $number;
+			}
+			$shownumber = str_pad($number, $length, ' ', STR_PAD_LEFT).'. ';
+			$shownumber = str_replace(" ", "&nbsp;", $shownumber);
+			$timestamp = date('m/d/y H:i:s', $series['timestamp']);
+			$selector .= '>'.$shownumber.$timestamp.'</option>';
+		}
+		$selector .= '</select>';
+		return array($selector,$selected_number);
+	}
+
+	function checkforTomogram($tiltseriesId){
+		$q =  "SELECT t.name , p.`path` "
+			."FROM `ApTomogramData` t "
+			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId;
+		return $this->mysql->getSQLResult($q);
+	}	
+	function getTiltSeriesInfo($tiltseriesId){
+		// get image bin and the most recent pixel calibration
+		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
+			."pc.`pixelsize` as ccdpixelsize, "
+			."a.`REF|SessionData|session` as session, "
+			."t.`number` as number "
+			."FROM dbemdata.`AcquisitionImageData` a "
+			."left join dbemdata.`TiltSeriesData` t "
+			."on (a.`REF|TiltSeriesData|tilt series`= t.`DEF_id`) "
+			."left join dbemdata.`PresetData` pd "
+			."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+			.", dbemdata.PixelSizeCalibrationData pc "
+			."WHERE a.`REF|TiltSeriesData|tilt series`='$tiltseriesId' "
+			."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
+			."AND pc.`magnification`= pd.`magnification` "
+			."AND "
+			."pc.`REF|InstrumentData|ccdcamera`= pd.`REF|InstrumentData|ccdcamera` "
+			."AND "
+			."pc.`DEF_timestamp`<	a.`DEF_timestamp` "
+			."ORDER BY pc.`DEF_timestamp` DESC ";
+		return $this->mysql->getSQLResult($q);
+	}	
+
 	// ------CTF data functions -------//
 	function hasCtfData($sessionId) {
 		$d = ($this->getLastCtfRun($sessionId)) ? true : false;

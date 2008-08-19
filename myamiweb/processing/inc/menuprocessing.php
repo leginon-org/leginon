@@ -110,6 +110,12 @@ if ($expId) {
 		$jobdone=count($subclusterjobs['recon']['done']);
 	}
 
+	// --- Get TiltSeries Data
+	if ($tiltseries = $particle->getTiltSeries($sessionId))
+		$tiltruns=count($tiltseries);
+	if ($tomograms = $particle->getTomogramsFromSession($sessionId))
+		$tomoruns=count($tomograms);
+
 	$action = "Particle Selection";
 
 	// get template picking stats:
@@ -379,6 +385,41 @@ if ($expId) {
 			      );
 	}
 
+	// display the tomography menu only if there are tilt serieses
+	if ($tiltruns > 0) {
+		$action = "Tomography";
+
+		// get ctf estimation stats:
+		$sresults=array();	
+		$sdone = count($subclusterjobs['uploadtomo']['done']);
+		$srun = count($subclusterjobs['uploadtomo']['running']);
+		$sq = count($subclusterjobs['uploadtomo']['queued']);
+
+		$sresults[] = ($sdone==0) ? "" : "<a href='tomosummary.php?expId=$sessionId'>$sdone complete</a>";
+		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=uploadtomo'>$srun running</a>";
+		$sresults[] = ($sq==0) ? "" : "$sq queued";
+
+		// tomograms being created and completed
+		$tottomo = $sdone+$srun+$sq;
+
+		$tottomo = ($tottomo > $tomoruns) ? $tottomo : $tomoruns;
+		$totresult = ($tottomo==0) ? "" :
+			"<a href='tomosummary.php?expId=$sessionId'>$tottomo</a>";
+
+		$nruns=array();
+		$nruns[]=array (
+				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload Tomogram >></a>",
+				'result'=>$sresults,
+				);
+		
+		$data[]=array(
+			      'action'=>array($action, $celloption),
+			      'result'=>array($totresult),
+			      'newrun'=>array($nruns, $celloption),
+			      );
+	}
+
+	// display particle alignment only if there is a stack
 	$action = "Pipeline tools";
 
 	$result = ($templates==0) ? "" :
@@ -397,21 +438,6 @@ if ($expId) {
 		       'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model >></a>",
 		       'result'=>$result,
 		       );
-
-	$result = ($tomograms==0) ? "" :
-	  "<a href='viewtomos.php?expId=$sessionId'>$tomograms available</a>";
-
-	$nruns[]=array(
-		       'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram >></a>",
-		       'result'=>$result,
-		       );
-	
-	$result = ($tomograms==0) ? "" :
-          "<a href='viewtomos.php?expId=$sessionId'>$tomograms listed</a>";
-        $nruns[]=array(
-                       'name'=>"<a href='tomosummary.php?expId=$sessionId'>View Tomo List >></a>",
-                       'result'=>$result,
-                       );
 
 	$data[]=array(
 		      'action'=>array(	$action, $celloption),

@@ -27,19 +27,11 @@ else {
 function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launcher', $heading='Upload an Initial Tomogram') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
-	$rescale=$_GET['rescale'];
 
 	$particle = new particledata();
 
-	// find out if rescaling an existing initial model
-	if ($rescale) {
-		$modelid=$_GET['modelid'];
-		$modelinfo = $particle->getInitTomogramInfo($modelid);
-	}
-
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
 	
 	$javafunctions .= writeJavaPopupFunctions('appion');  
 	
@@ -56,31 +48,31 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];
 		$outdir=ereg_replace("leginon","appion",$outdir);
-		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=ereg_replace("rawdata","tomo",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
-  
-	// Set any existing parameters in form
-	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$res = ($_POST['res']) ? $_POST['res'] : '';
-	$tiltseries = ($_POST['tiltseries']) ? $_POST['tiltseries'] : ' ';
-	$tomospace = ($_POST['tomospace']) ? $_POST['tomospace'] : ' ';
-	$tomoname = ($_POST['tomoname']) ? $_POST['tomoname'] : '';
-	$description = $_POST['description'];
-	$outdir.'/rescale.mrc';
-  
-	$syms = $particle->getSymmetries();
-	$tomotype = array("number","shape");
 
+	// Set any existing parameters in form
+	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
+	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
+	$volume = ($_POST['volume']) ? $_POST['volume'] : 'volume1';
+	$tomoname = ($_POST['tomoname']) ? $_POST['tomoname'] : '';
+	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
+	$description = $_POST['description'];
+	$outdir .= $tomoname.'mrc';
+
+	$alltiltseries = $particle->getTiltSeries($expId);
+	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
+	$tiltSeriesSelector = $seriesselector_array[0];
+  
 	echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
 	
-   if ($rescale) echo "";
-       else echo"
+  echo"
 	<B>Tomogram file name with path:</B><BR/>
       <INPUT TYPE='text' NAME='tomoname' VALUE='$tomoname' SIZE='50'><br />\n
 	<B>Snapshot file name with path:</B><BR/>
@@ -100,24 +92,28 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 		<B> <CENTER>Tomogram Params: </CENTER></B>
 
       <P>
-      <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n";
-		echo docpop('apix','Pixel Size');
-		echo "<FONT>(in &Aring;ngstroms per pixel)</FONT>
+      <INPUT TYPE='text' NAME='extrabin' SIZE='5' VALUE='$extrabin'>\n";
+		echo docpop('extrabin','Binning');
+		echo "<FONT>(additional binning in tomogram)</FONT>
 		
-		<BR>
-      <INPUT TYPE='text' NAME='tiltseries' VALUE='$tiltseries' SIZE='5'>\n";
+		<BR>";
+		echo $seriesselector_array[0];
+  #    <INPUT TYPE='text' NAME='tiltseries' VALUE='$tiltseries' SIZE='5'>\n";
 		echo docpop('tiltseries', 'Tilt Series');
-		echo "<FONT>(# tomogram tilt)</FONT>
-      
+		#echo "<FONT>(tilt series)</FONT>";
+   
+	if (!$sessionname) {
+		echo "
 		<BR>
-      <INPUT TYPE='text' NAME='session' VALUE='$session' SIZE='5'>\n";
+      <INPUT TYPE='text' NAME='sessionname' VALUE='$sessionname' SIZE='5'>\n";
 		echo docpop('session', 'Session Name');
-		echo "<FONT> (specific to database capture)</FONT>
-  		
+		echo "<FONT> (leginon session name)</FONT>";
+	}
+		echo "	  		
 		<BR>
-      <INPUT TYPE='text' NAME='tomospace' VALUE='$tomospace' SIZE='5'>\n";
-		echo docpop('tomospace', 'TomoSpace');
-   	echo "<FONT>(subset area of image)</FONT>     
+      <INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='5'>\n";
+		echo docpop('volume', 'Volume');
+   	echo "<FONT>(subvolume name of the full tomogram)</FONT>     
 
 		<P>
       </TD>
@@ -150,39 +146,38 @@ function runUploadTomogram() {
 	$command = "uploadTomo.py ";
 
 	$tomoname=$_POST['tomoname'];
-	$tiltseries=$_POST['tiltseries'];
-	$tomospace=$_POST['tomospace'];
-	$session=$_POST['session'];
-	$apix=$_POST['apix'];
+	$tiltseriesId=$_POST['tiltseriesId'];
+	$volume=$_POST['volume'];
+	$sessionname=$_POST['sessionname'];
+	$extrabin=$_POST['extrabin'];
 	$snapshot=$_POST['snapshot'];
 
-	//make sure a model root was entered
-	$model=$_POST['model'];
+	//make sure a tilt series was provided
+	if (!$tiltseriesId) createUploadTomogramForm("<B>ERROR:</B> Select the tilt series");
+//make sure a model root was entered
 	if ($_POST['tomoname']) $model=$_POST['tomoname'];
-
-	//make sure a apix was provided
-	$apix=$_POST['apix'];
-	if (!$apix) createUploadTomogramForm("<B>ERROR:</B> Enter the pixel size");
-  
-	
 	if (!$model) createUploadTomogramForm("<B>ERROR:</B> Enter a root name of the model");
-  
 	//make sure a description was provided
 	$description=$_POST['description'];
 	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the model");
 
+	$particle = new particledata();
+	$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
+	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
+	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 
 	// filename will be the runid if running on cluster
 	$runid = basename($model);
 	$runid = $runid.'.upload';
 
 	if (!$_GET['modelid']) $command.="-f $tomoname ";
-	$command.="-s $session ";
+	$command.="-s $sessionname ";
 	$command.="-a $apix ";
-	$command.="-t $tiltseries ";
-	$command.="-p $tomospace ";
+	$command.="-t $tiltseriesnumber ";
+	$command.="-v $volume ";
 	$command.="-d \"$description\" ";
-	$command.="-i $snapshot ";
+  if ($snapshot) 
+		$command.="-i $snapshot ";
 
 	
 	// submit job to cluster
@@ -226,9 +221,9 @@ function runUploadTomogram() {
 	</TD></TR>
 	<TR><TD>tomo name</TD><TD>$model</TD></TR>
 	<TR><TD>apix</TD><TD>$apix</TD></TR>
-	<TR><TD>tiltseries</TD><TD>$tiltseries</TD></TR>
-	<TR><TD>tomospace</TD><TD>$tomospace</TD></TR>
-	<TR><TD>session</TD><TD>$session</TD></TR>
+	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
+	<TR><TD>volume</TD><TD>$volume</TD></TR>
+	<TR><TD>session</TD><TD>$sessionname</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
 	</TABLE>\n";
 	processing_footer();

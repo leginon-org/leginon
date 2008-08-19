@@ -63,9 +63,10 @@ var help = {
 		'dendrogram' : 'Graphical representation of the clusters produced by the clustering algorithm.',
 		'numclass' : 'Particle stack will be aligned according to the selected eigen images and averaged into this number of classes.',
 	'apix' : 'Pixel size of the acquired image in Angstroms. Conversion: (1 nm = 10 Angstroms)',
-	'tiltseries': 'Tilt series number from tomogram session, listed in numeric order in the tomography viewer and can be obtained from the end of the individual .mrc image name.',
+	'tiltseries': 'Select the tilt series number of the session that corresponds to the tomogram to be uploaded.',
 	'session': 'Session name as created at leginon startup on the date of image capture.',
-	'tomospace': 'Subset space of tomogram used to reconstruct a bounded area (often a specific structure) of the image volume.',
+	'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
+	'volume': 'a bounded subvolume (often a specific structure) of the full tomogram. default is to number sequentially',
 	},
 
 	'eman' : {
