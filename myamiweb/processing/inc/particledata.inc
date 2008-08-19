@@ -498,7 +498,7 @@ class particledata {
 		return $r;	
 	}
 
-	function getSelectionParams ($runId) {
+	function getSelectionParams ($runId, $returntype=False) {
 		$q = "select * from ApSelectionRunData "
 			." where `DEF_id` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
@@ -511,27 +511,31 @@ class particledata {
 			$selectionparamid=$r['REF|ApSelectionParamsData|params'];
 			$q .= "from ApSelectionParamsData s "
 				 ."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApSelectionParamsData|params`) ";
+			$type = "Template Correlator";
 		}
 		elseif ($r['REF|ApDogParamsData|dogparams']) {
 			$dogparamid=$r['REF|ApDogParamsData|dogparams'];
 			$q .= "from ApDogParamsData s "
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApDogParamsData|dogparams`) ";
+			$type = "DOG Picker";
 		}
 		elseif ($r['REF|ApManualParamsData|manparams']) {
 			$manparamid=$r['REF|ApManualParamsData|manparams'];
 			$q .= "from ApManualParamsData s "
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApManualParamsData|manparams`) ";
+			$type = "Manual Picker";
 		}
 		elseif ($r['REF|ApTiltAlignParamsData|tiltparams']) {
 			$manparamid=$r['REF|ApTiltAlignParamsData|tiltparams'];
 			$q .= "from ApTiltAlignParamsData s "
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApTiltAlignParamsData|tiltparams`) ";
+			$type = "Tilt Picker";
 		}
 		
-			$q .= "where r.`DEF_id` = '$runId' ";
-		//echo $q;
+		if ($returntype) return $type;
+
+		$q .= "where r.`DEF_id` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
-		//print_r ($r);
 		return $r;
 	}
 
@@ -815,6 +819,29 @@ class particledata {
 
 	#--------- MAKE STACK FUNCTIONS---------------#
 
+
+	function getParticleRunsFromStack($stackid) {
+		// return all the particle runs contributing to a stack,
+		// accounting for multiple runs in 1 stack (combinestack)
+		$q = "SELECT `REF|ApStackRunData|stackRun` as stackrun "
+		  . "FROM `ApRunsInStackData` as rs "
+		  . "WHERE `REF|ApStackData|stack` = $stackid ";
+		$r = $this->mysql->getSQLResult($q);
+		$pruns = array();
+		foreach ($r as $srun) {
+			// get particle run from the first stack particle of
+		  	// each run
+		  	$q = "SELECT `REF|ApSelectionRunData|selectionrun` as DEF_id "
+			  . "FROM `ApParticleData` as p "
+			  . "LEFT JOIN `ApStackParticlesData` AS sp "
+			  . "ON sp.`REF|ApParticleData|particle` = p.`DEF_id` "
+			  . "WHERE sp.`REF|ApStackRunData|stackRun`=".$srun['stackrun']." "
+			  . "LIMIT 1 ";
+			$pruns[] = $this->mysql->getSQLResult($q);
+		}
+		return $pruns;
+	}
+
 	function getStackRunIdFromPath($path){
 		$q= "SELECT sd.* "
 		  . "FROM `ApStackData` AS sd "
@@ -959,7 +986,11 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		$apix = $r[0]['pixelsize'];
 		if ($apix && $apix != 0) return $apix;
+		$preset = getPresetFromStackId($stackId);
+		return $preset['stackpixelsize'];
+	}
 
+	function getPresetFromStackId ($stackId) {
 		//get the first image of the stack assume using defocpair if not specified
 		$q="SELECT "
 			." IF( ( pimage . `defocpair` IS NULL OR pimage . `defocpair` = 1 ) , "
@@ -999,10 +1030,13 @@ class particledata {
 
 		// get image bin and the most recent pixel calibration
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
-			."pc.`pixelsize` as ccdpixelsize "
-			."FROM dbemdata.`AcquisitionImageData` a "
-			."left join dbemdata.`PresetData` pd "
-			."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+		  ."pc.`pixelsize` as ccdpixelsize, pd.*, "
+		  ."pscope.`high tension` as hightension "
+		  ."FROM dbemdata.`AcquisitionImageData` a "
+		  ."left join dbemdata.`PresetData` pd "
+		  ."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+		  ."LEFT JOIN dbemdata.`ScopeEMData` pscope "
+		  ."ON (pscope.`DEF_id` = a.`REF|ScopeEMData|scope`) "
 			.", dbemdata.PixelSizeCalibrationData pc "
 			."WHERE a.`DEF_id`='$imgId' "
 			."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
@@ -1012,7 +1046,6 @@ class particledata {
 			."AND "
 			."pc.`DEF_timestamp`<	a.`DEF_timestamp` "
 			."ORDER BY pc.`DEF_timestamp` DESC ";
-
 		list($r2)=$this->mysql->getSQLResult($q);
 		if (!is_null($r1['stackbin']) ) {
 			settype($r1['stackbin'],"integer");
@@ -1020,15 +1053,15 @@ class particledata {
 		} else {
 			$stackbin = 1;
 		}
-		$stackpixelsize = $r2['ccdpixelsize']*$r2['imgbin']*$stackbin;
-		return $stackpixelsize;
+		$r2['stackpixelsize'] = $r2['ccdpixelsize']*$r2['imgbin']*$stackbin;
+		return $r2;
 	}
 
-	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False) {
+	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False, $dispImg=True) {
 		$expId=$_GET['expId'];
 		if (!is_array($particleruns))
 			return ;
-		$html = "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+		$html = "\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 		$html .= "<tr> <td> </td>";
 		foreach($display_keys as $key) {
 			$html .= "<td> <span class='datafield0'>".$key."</span> </td> ";
@@ -1043,7 +1076,8 @@ class particledata {
 			$numimg=$particlestats['num'];
 			$ppimg = ($numimg > 0) ? (sprintf("%.1f", $numptl/$numimg)) : 0;
 			$particlestats['numimgs']=$numimg.'<br />('.$ppimg.' prtl/img)';
-			$particlestats['img'] = '<a href="'.$this->baseurl.'particlegraph.php?hg=1&run='.$runId.'">'
+			if ($dispImg = True)
+				$particlestats['img'] = '<a href="'.$this->baseurl.'particlegraph.php?hg=1&run='.$runId.'">'
 				.'<img border="0" '
 				.'src="'.$this->baseurl.'particlegraph.php?w=150&hg=1&run='
 				.$runId.'"></a>';
@@ -1564,6 +1598,29 @@ class particledata {
 		return $r;
 	} 
 
+	function getExemplarReconsFromSession ($sessionId, $showHidden=False) {
+		$q = "SELECT refdata.`DEF_id` as refdataid, "
+		  ."refrun.`DEF_id` as refrunid, "
+		  ."refdata.*, refrun.*, stackrun.*, runs.*, p.*, params.* "
+		  ." FROM `ApRefinementData` AS refdata "
+		  ."LEFT JOIN `ApRefinementRunData` AS refrun "
+		  . "ON refdata.`REF|ApRefinementRunData|refinementRun` = refrun.`DEF_id` "
+		  ."LEFT JOIN `ApRefinementParamsData` AS params "
+		  ." ON (refdata.`REF|ApRefinementParamsData|refinementParams` = params.`DEF_id`) "
+		  ."LEFT JOIN ApRunsInStackData AS runs "
+		  ." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
+		  ."LEFT JOIN ApStackRunData AS stackrun "
+		  ." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+		  ."LEFT JOIN ApPathData as p "
+		  ." ON refrun.`REF|ApPathData|path` = p.`DEF_id` "
+		  ."WHERE refdata.exemplar = 1 "
+		  ."AND stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
+		$q.= " ORDER BY refrun.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	} 
+
 	function getReconIds ($stackId, $showHidden=False) {
 		$q = "SELECT * "
 		  ."FROM `ApRefinementRunData` AS r ";
@@ -1661,11 +1718,11 @@ class particledata {
 		return $r;
 	}
 
-	function getRefinementData ($refinementRun,$iteration) {
+	function getRefinementData ($refinementRun,$iteration=False) {
 		$q = "SELECT * "
-				."FROM `ApRefinementData` "
-				."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun "
-				."AND `iteration` = $iteration";
+		  ."FROM `ApRefinementData` "
+		  ."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun ";
+		if ($iteration) $q.="AND `iteration` = $iteration";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
@@ -1978,7 +2035,7 @@ function displayCTFstats($stats, $display_keys) {
 				if (eregi('defocus', $key))
 						$val = format_micro_number($val);
 				if (eregi('^min|^max|^avg|^stddev', $key))
-					if (eregi('defocus', $field)) {
+					if (eregi('defocus', $field) || eregi('nominal', $field)) {
 							$val = format_micro_number($val);
 					} else {
 						$val = format_sci_number($val, 3);

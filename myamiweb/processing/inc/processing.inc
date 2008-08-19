@@ -962,4 +962,54 @@ function closeRoundBorder() {
 	$text .= "</div><!--/roundbox-->\n";
 	return ($text);
 }
+
+function showStackInfo($stackId, $stackparams, $apix, $expId, $particle) {
+	$title = "stack info";
+	$stackparticles = $particle->getNumStackParticles($stackId);
+	$apixstr=format_angstrom_number($apix/1e10)."/pixel";
+	//print_r($stackparams);
+	$stackinfo = array(
+	'id'=>"<a href='stackreport.php?expId=$expId&sId=$stackId'>$stackId</A>",
+	'runid'=>$stackparams[0]['stackRunName'],
+	'description'=>$stackparams['description'],
+	'name'=>"<a target='stackview' href='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackparams[name]</A>",
+	'path'=>$stackparams['path'],
+	'num part'=>commafy($stackparticles),
+	'pixel/box size'=>$apixstr."; ".$stackparams['boxSize']." pixels"
+	);
+	$particle->displayParameters($title,$stackinfo,array(),$expId);
+	return $stackparticles;
+}
+
+function showModelInfo($model, $expId, $particle) {
+	$title = "initial model info";
+	//print_r($model);
+	$symdata=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
+	$modelname=$model['name'];
+	$modelinfo = array(
+	'id'=>"<a href='viewmodels.php?expId=$expId'>$model[DEF_id]</A>",
+	'description'=>$model['description'],
+	'path'=>$model['path']."/".$modelname,
+	'symmetry'=>$symdata['symmetry'].", ".$symdata['description'],
+	'pixel/box size'=>format_angstrom_number($model['pixelsize']/1e10)."/pixel; ".$model['boxsize']." pixels",
+	);
+	$particle->displayParameters($title,$modelinfo,array(),$expId);
+	return $modelname;
+}
+
+function getPngList($dir) {
+	$pngimages=array();
+	$pngimages['pngfiles']=array();
+	$pngimages['eulerfiles']=array();
+	$eulerstr = 'euler.*\.png$';
+	$refinedir = opendir($dir);
+	while ($f = readdir($refinedir)) {
+		if (eregi($eulerstr, $f)) $pngimages['eulerfiles'][] = $f;
+		elseif (eregi('\.png$',$f)) $pngimages['pngfiles'][] = $f;
+	}
+	sort($pngimages['pngfiles']);
+	sort($pngimages['eulerfiles']);
+	return $pngimages;
+}
+
 ?>

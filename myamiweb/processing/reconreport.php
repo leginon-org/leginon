@@ -74,7 +74,6 @@ if (!$reconId) {
 // --- Get Reconstruction Data
 $particle = new particledata();
 $stackId = $particle->getStackIdFromReconId($reconId);
-$stackparticles = $particle->getNumStackParticles($stackId);
 $stackparams = $particle->getStackParams($stackId);
 // get pixel size
 $apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
@@ -95,8 +94,6 @@ $refinerun=$particle->getRefinementRunInfo($reconId);
 $initmodel=$particle->getInitModelInfo($refinerun['REF|ApInitialModelData|initialModel']);
 
 $stackfile=$stackparams['path']."/".$stackparams['name'];
-$initmodelname=$initmodel['name'];
-$symdata=$particle->getSymInfo($initmodel['REF|ApSymmetryData|symmetry']);
 $res = $particle->getHighestResForRecon($refinerun['DEF_id']);
 $avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
 if ($avgmedjump['count'] > 0) {
@@ -113,7 +110,6 @@ $reconinfo = array(
 	'name'=>$refinerun['name'],
 	'description'=>$refinerun['description'],
 	'path'=>$refinerun['path'],
-	'symmetry'=>$refinerun['symmetry'],
 	'refine package'=>$refinerun['package'],
 	'best resolution'=>	sprintf("% 2.2f / % 2.2f &Aring; (%d)", $res[half],$res[rmeas],$res[iter]),
 	'median euler jump'=>$avgmedjumpstr,
@@ -121,30 +117,9 @@ $reconinfo = array(
 $particle->displayParameters($title,$reconinfo,array(),$expId);
 
 
-$title = "stack info";
-$apixstr=format_angstrom_number($apix/1e10)."/pixel";
-//print_r($stackparams);
-$stackinfo = array(
-	'id'=>"<a href='stackreport.php?expId=$expId&sId=$stackId'>$stackId</A>",
-	'runid'=>$stackparams[0]['stackRunName'],
-	'description'=>$stackparams['description'],
-	'name'=>"<a target='stackview' href='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackparams[name]</A>",
-	'path'=>$stackparams['path'],
-	'num part'=>commafy($stackparticles),
-	'pixel/box size'=>$apixstr."; ".$stackparams['boxSize']." pixels"
-);
-$particle->displayParameters($title,$stackinfo,array(),$expId);
+$stackparticles = showStackInfo($stackId, $stackparams, $apix, $expId, $particle);
 
-$title = "model info";
-//print_r($initmodel);
-$modelinfo = array(
-	'id'=>"<a href='viewmodels.php?expId=$expId'>$initmodel[DEF_id]</A>",
-	'description'=>$initmodel['description'],
-	'path'=>$initmodel['path']."/".$initmodelname,
-	'symmetry'=>$symdata['symmetry'].", ".$symdata['description'],
-	'pixel/box size'=>format_angstrom_number($initmodel['pixelsize']/1e10)."/pixel; ".$initmodel['boxsize']." pixels",
-);
-$particle->displayParameters($title,$modelinfo,array(),$expId);
+$initmodelname = showModelInfo($initmodel, $expId, $particle);
 
 $misc = $particle->getMiscInfoFromReconId($reconId);
 if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><BR>\n"; 
@@ -154,27 +129,16 @@ $iterations = $particle->getIterationInfo($reconId);
 # get starting model png files
 $initpngs = array();
 $initdir = opendir($initmodel['path']);
+echo "initmodelname: $initmodelname";
 while ($f = readdir($initdir)){
-  if (eregi($initmodelname.'.*\.png$',$f)) {
-    $initpngs[] = $f;
-  }
+	if (eregi($initmodelname.'.*\.png$',$f)) {
+		$initpngs[] = $f;
+	}
 }
 sort($initpngs);
 
 # get list of png files in directory
-$pngfiles=array();
-$eulerfiles=array();
-$eulerstr = 'euler.*\.png$';
-$refinedir = opendir($refinerun['path']);
-while ($f = readdir($refinedir)) {
-	if (eregi($eulerstr, $f)) {
-		$eulerfiles[] = $f;
-  } elseif (eregi('\.png$',$f)) {
-    $pngfiles[] = $f;
-  }
-}
-sort($pngfiles);
-sort($eulerfiles);
+$pngimages = getPngList($refinerun['path']);
 
 # display starting model
 $html .= "<TR>\n";
@@ -208,6 +172,7 @@ foreach ($iterations as $iteration){
 
 	// set background color of line based on exemplar
 	$bg = ($refinementData['exemplar']) ? "#EEEEEE" : "#FFFFFF";
+
 	$numclasses=$particle->getNumClasses($refinementData['DEF_id']);
 	$res = $particle->getResolutionInfo($iteration['REF|ApResolutionData|resolution']);
 	$RMeasure = $particle->getRMeasureInfo($iteration['REF|ApRMeasureData|rMeasure']);
@@ -292,7 +257,7 @@ foreach ($iterations as $iteration){
 	//Euler plots
 	$firsteulerimg='';
 	$eulerSelect = "<select name='eulerplot".$iteration['iteration']."' onChange='switchEulerImg(".$iteration['iteration'].",this.options(this.selectedIndex).value)'>\n";
-	foreach ($eulerfiles as $eulername) {
+	foreach ($pngimages['eulerfiles'] as $eulername) {
 		if (eregi($reconId."_".$iteration['iteration']."\.png$", $eulername)) {
 			$eulerfile = $refinerun['path'].'/'.$eulername;
 			$opname = ereg_replace("euler","",$eulername);
@@ -339,7 +304,7 @@ foreach ($iterations as $iteration){
 	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='exemplar'>";
 	$html .= "</td>\n";
 	$html .= "<td bgcolor='$bg'>\n";
-	foreach ($pngfiles as $snapshot) {
+	foreach ($pngimages['pngfiles'] as $snapshot) {
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
 			$snapfile = $refinerun['path'].'/'.$snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";

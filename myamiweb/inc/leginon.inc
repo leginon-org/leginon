@@ -224,7 +224,7 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getSummary($expId) {
+	function getSummary($expId, $presetname=False) {
 	/*
 		$q="select if (isnull(p.name), '"
 			.$this->manualtype."', p.name) as name, count(a.`DEF_id`) as nb from AcquisitionImageData a "
@@ -233,11 +233,12 @@ class leginondata {
 			." group by p.name ";
 	*/
 		$q="SELECT p.name, count(a.`DEF_id`) as nb, p.magnification "
-			." FROM AcquisitionImageData a "
-			." LEFT JOIN PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			." WHERE a.`REF|SessionData|session` = '$expId'"
-			." GROUP BY p.name "
-			." ORDER BY p.magnification ";
+		  ." FROM AcquisitionImageData a "
+		  ." LEFT JOIN PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+		  ." WHERE a.`REF|SessionData|session` = '$expId' ";
+		if ($presetname) $q .= "AND p.name = '$presetname' ";
+		$q.=" GROUP BY p.name "
+		  ." ORDER BY p.magnification ";
 		return $this->mysql->getSQLResult($q);
 	}
 
