@@ -248,6 +248,15 @@ require_once('tomography.php');
 header("Content-Type: text/plain");
 $tiltSeriesId = $_GET['tiltSeriesId'];
 $tiltSeriesNumber = $_GET['tiltSeriesNumber'];
+//Use the following to combine two half tilt series separated by 5
+#$numbers = array($tiltSeriesId-5,$tiltSeriesId);
+$numbers = array($tiltSeriesId);
+$extended_headers = array();
+$stack_size = 0;
+$min = NULL;
+$mean = 0.0;
+$max = NULL;
+foreach ($numbers as $tiltSeriesId) {
 $session = $tomography->getTiltSeriesSession($tiltSeriesId);
 $results = $tomography->getTiltSeriesData($tiltSeriesId);
 
@@ -288,11 +297,6 @@ if($n_results > 2) {
     }
 }
 
-$min = NULL;
-$mean = 0.0;
-$max = NULL;
-$extended_headers = array();
-$stack_size = 0;
 foreach($results as $result) {
     $filename = $session['image path'].'/'.$result['filename'].'.mrc';
     $handle = fopen($filename, "rb");
@@ -341,7 +345,9 @@ foreach($results as $result) {
     );
     fclose($handle);
 }
-
+}
+$n_results = count($numbers) * $n_results;
+# make stack
 $stack_header = array_diff($header, array());
 $stack_header['n->z'] = $n_results;
 $stack_header['m->z'] = $n_results;
