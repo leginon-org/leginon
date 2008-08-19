@@ -986,7 +986,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		$apix = $r[0]['pixelsize'];
 		if ($apix && $apix != 0) return $apix;
-		$preset = getPresetFromStackId($stackId);
+		$preset = $this->getPresetFromStackId($stackId);
 		return $preset['stackpixelsize'];
 	}
 
