@@ -184,28 +184,21 @@ foreach ($reconRuns as $recon) {
 	}
 
 	//Euler plots
-	$firsteulerimg='';
-	$eulerSelect = "<select name='eulerplot".$recon['iteration']."' onChange='switchEulerImg(".$recon['iteration'].",this.options(this.selectedIndex).value)'>\n";
+	$eulerhtml = "<table border='0'><tr>\n";
 	foreach ($pngimages['eulerfiles'] as $eulername) {
 		if (eregi($reconrunid."_".$recon['iteration']."\.png$", $eulername)) {
 			$eulerfile = $recon['path'].'/'.$eulername;
 			$opname = ereg_replace("euler","",$eulername);
-			$opname = ereg_replace("-".$reconId."_".$recon['iteration']."\.png$","",$opname);
+			$opname = ereg_replace("-".$reconrunid."_".$recon['iteration']."\.png$","",$opname);
 			if (file_exists($eulerfile)) {
-				$eulerSelect.= "<option value='$eulerfile'>$opname</option>\n";
-				// set the first image as the default
-				if (!$firsteulerimg) $firsteulerimg = $eulerfile;
+			  $eulerhtml .= "<td align='center'>\n";
+			  $eulerhtml .= "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$eulerfile."' target='snapshot'>"
+			    ."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$eulerfile."'>\n";
+			  $eulerhtml .= "<br />$opname</a></td>\n";
 			}
 		}
 	}
-	$eulerSelect .= "</select>\n";
-	
-	$eulerhtml = "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$firsteulerimg."' target='snapshot'>"
-	  ."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$firsteulerimg."'>"
-	  ."</a><br />\n";
-	$eulerhtml .= $eulerSelect;
-	// add euler plots to iteration if exist
-	if ($firsteulerimg) $eulers .=$eulerhtml;
+	$eulerhtml .= "</tr></table>\n";
 
 	// particle stacks classification/viewing 
 	$phtml="<table border='0' cellpadding='3' cellspacing='2'><tr><td>\n";
@@ -245,7 +238,7 @@ foreach ($reconRuns as $recon) {
 	'median euler jump'=>$avgmedjumpstr,
 	'resolution'=>$reshtml,
 	'classes'=>$classhtml,
-	'eulers'=>$eulers,
+	'eulers'=>$eulerhtml,
 	'particles'=>$phtml,
 );
 	$particle->displayParameters($title,$reconinfo,array(),$expId);
