@@ -25,7 +25,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
 			+" [--rescale=<model ID,scale factor> --boxsize=<#>] ")
 		self.parser.add_option("-i", "--image", dest="image", 
-			help="image file to upload", metavar="IMAGE")
+			help="snapshot image file to upload", metavar="IMAGE")
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
@@ -40,19 +40,19 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="Location to store uploaded model", metavar="PATH")
 		self.parser.add_option("-n", "--name", dest="name",
 			help="File name for new model, automatically set")
-		self.parser.add_option("-t", "--tilt series", dest="tiltseries",
+		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber",
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
-		self.parser.add_option("-a", "--pixel size", dest="apix",
+		self.parser.add_option("-a", "--pixelsize", dest="apix",
 			help="Pixel Size in Angstroms of Images", metavar="APIX")
-		self.parser.add_option("-p", "--tomospace", dest="tomospace",
-			help="Tomospace partition from original voxel volume", metavar="TOMOSPACE")
+		self.parser.add_option("-v", "--volume", dest="volume",
+			help="Subvolume from original voxel volume", metavar="VOLUME")
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['tiltseries'] is None:
+		if self.params['tiltseriesnumber'] is None:
 			apDisplay.printError("Enter a Tilt Series")
-		if self.params['tomospace'] is None:
-			apDisplay.printError("Enter a Tomo Space #")
+		if self.params['volume'] is None:
+			apDisplay.printError("Enter a Tomo Volume name")
 		if self.params['session'] is None:
 			apDisplay.printError("Enter a session ID")
 		if self.params['description'] is None:
@@ -69,13 +69,13 @@ class UploadTomoScript(appionScript.AppionScript):
 	#=====================
 	def setOutDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseries'],sessiondata)
+		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
-		path = re.sub("/rawdata","",path)
-		tiltseriespath = "tiltseries" +  self.params['tiltseries']
-		tomospacepath = "tomospace" + self.params['tomospace']
-		intermediatepath = os.path.join(tiltseriespath,tomospacepath)
+		path = re.sub("/rawdata","/tomo",path)
+		tiltseriespath = "tiltseries" +  self.params['tiltseriesnumber']
+		tomovolumepath = self.params['volume']
+		intermediatepath = os.path.join(tiltseriespath,tomovolumepath)
 		self.params['outdir'] = os.path.join(path,intermediatepath)
 
 	#=====================
@@ -83,20 +83,16 @@ class UploadTomoScript(appionScript.AppionScript):
 		#clean up old name
 		basename = os.path.basename(self.params['file'])
 		basename = re.sub(".mrc", "", basename)
-		# set foldname
-		foldname = os.path.basename(os.path.dirname(self.params['file']))
-		self.params['name'] = basename+".mrc"
+		self.params['name'] = basename
 		
 		#clean up old name
-		snapshotname = os.path.basename(self.params['image'])
-		snapshotname = re.sub(".png", "", snapshotname)
-		# set foldname
-		foldname = os.path.basename(os.path.dirname(self.params['image']))
-		self.params['imagename'] = basename+".png"
+		if self.params['image']:
+			snapshotname = os.path.basename(self.params['image'])
+			snapshotname = re.sub(".png", "", snapshotname)
 
 	#=====================
 	def checkExistingFile(self):
-		newtomopath = os.path.join(self.params['outdir'], self.params['name'])
+		newtomopath = os.path.join(self.params['outdir'], self.params['name']+".mrc")
 		origtomopath = self.params['file']
 		apDisplay.printWarning("A Tomogram by the same filename already exists: '"+newtomopath+"'")
 		### a model by the same name already exists
@@ -119,26 +115,25 @@ class UploadTomoScript(appionScript.AppionScript):
 			apDisplay.printWarning("The same tomogram with name '"+newtomopath+"' already exists, but is not uploaded!")
 			if self.params['commit'] is True:
 				apDisplay.printMsg("Inserting tomogram into database...")
-		if self.params['rescale'] is True:
-			apDisplay.printError("cannot rescale an existing model")	
 
 	#=====================
 	def start(self):
 		if self.params['name'] is None:
 			self.setNewFileName()
-		apDisplay.printColor("Naming initial tomogram as: "+self.params['name'], "cyan")
+		apDisplay.printColor("Naming tomogram as: "+self.params['name'], "cyan")
 
-		newtomopath = os.path.join(self.params['outdir'], self.params['name'])
+		newtomopath = os.path.join(self.params['outdir'], self.params['name']+".mrc")
+		print newtomopath
 		origtomopath = self.params['file']
 		if os.path.isfile(newtomopath):
-			### rescale old Tomo to a new size
 			if self.checkExistingFile():
 				return
 		else:
 			### simple upload, just copy file to Tomo folder
 			apDisplay.printMsg("Copying original tomogram to a new location: "+newtomopath)
 			shutil.copyfile(origtomopath, newtomopath)
-			shutil.copyfile(self.params['image'], newtomopath)			
+			if self.params['image']:
+				shutil.copyfile(self.params['image'], self.params['outdir']+'/snapshot.png')			
 
 		### upload Initial Tomo
 		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])

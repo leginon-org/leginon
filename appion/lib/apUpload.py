@@ -153,23 +153,22 @@ def insertModel(params):
 		apDisplay.printWarning("not commiting model to database")
 
 def insertTomo(params):
-	apDisplay.printMsg("Commiting tomo to database")
+	apDisplay.printMsg("Commiting tomogram to database")
 	tomoq = appionData.ApTomogramData()
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
-	tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(params['tiltseries'],sessiondata)
+	tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(params['tiltseriesnumber'],sessiondata)
 	tomoq['session'] = sessiondata
 	tomoq['tiltseries'] = tiltdata
 	tomoq['pixelsize'] = params['apix']
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	tomoq['name'] = params['name']
-	tomoq['snapshot'] = params['imagename'] 
-	filepath = os.path.join(params['outdir'], params['name'])
+	filepath = os.path.join(params['outdir'], params['name']+".mrc")
 	tomoq['md5sum'] = apFile.md5sumfile(filepath)
 	tomoq['description'] = params['description']
 	if params['commit'] is True:
 		appiondb.insert(tomoq)
 	else:
-		apDisplay.printWarning("not commiting model to database")
+		apDisplay.printWarning("not commiting tomogram to database")
 
 
 
