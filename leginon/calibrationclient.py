@@ -1388,8 +1388,8 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 		angles = [caldatax['angle'],caldatay['angle']]
 		matrix = numpy.ones((2,2), numpy.float64)
 		matrix[0, 0]=means[0]*math.sin(angles[0])
-		matrix[1, 0]=means[0]*math.cos(angles[0])
-		matrix[0, 1]=means[1]*math.sin(angles[1])
+		matrix[1, 0]=-means[0]*math.cos(angles[0])
+		matrix[0, 1]=-means[1]*math.sin(angles[1])
 		matrix[1, 1]=means[1]*math.cos(angles[1])
 		
 		return matrix
