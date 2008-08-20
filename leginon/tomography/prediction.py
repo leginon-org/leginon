@@ -266,7 +266,6 @@ class Prediction(object):
 			#'ftol': 1e-12,
 			#'xtol': 1e-12,
 		}
-		print args_list
 		result = scipy.optimize.leastsq(self.residuals, parameters, **kwargs)
 		try:
 			x = list(result[0])
