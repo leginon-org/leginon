@@ -336,6 +336,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 	def bypass(self):
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
+		self.setTargets([], 'preview', block=True)
 
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')
@@ -469,11 +470,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check'] or autofailed:
-			self.setStatus('user input')
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
+			self.handlePreviewTargets(imdata,targetlist)
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
 

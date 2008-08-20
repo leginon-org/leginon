@@ -66,6 +66,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
+		self.targetnames = ['acquisition','focus','preview','reference','done']
 
 	def readImage(self, filename):
 		imagedata = None
@@ -109,6 +110,26 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		Virtual function, inheritting classes implement creating targets
 		'''
 		raise NotImplementedError()
+
+	def handlePreviewTargets(self,imdata,targetlist):
+		wait = True
+		while wait:
+			self.setStatus('user input')
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
+			self.userpause.clear()
+			self.userpause.wait()
+			self.setStatus('processing')
+			preview_targets = self.panel.getTargetPositions('preview')
+			if preview_targets:
+				self.publishTargets(imdata, 'preview', targetlist)
+				self.setTargets([], 'preview', block=True)
+				self.makeTargetListEvent(targetlist)
+				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+				self.setStatus('waiting')
+				self.waitForTargetListDone()
+			else:
+				wait = False
 
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
@@ -223,6 +244,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if self.settings['ignore images']:
 			return
 
+		for target_name in self.targetnames:
+			self.setTargets([], target_name, block=True)
 		# check if there is already a target list for this image
 		# or any other versions of this image (all from same target/preset)
 		# exclude sublists (like rejected target lists)
@@ -234,7 +257,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			qpreset = None
 		qimage = data.AcquisitionImageData(target=qtarget, preset=qpreset)
 		previouslists = self.researchTargetLists(image=qimage, sublist=False)
-		self.setTargets([], 'done', block=True)
 		if previouslists:
 			# I hope you can only have one target list on an image, right?
 			targetlist = previouslists[0]
@@ -245,8 +267,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			# no previous list, so create one and fill it with targets
 			targetlist = self.newTargetList(image=imagedata, queue=self.settings['queue'])
 			db = True
-			self.setTargets([], 'acquisition', block=True)
-			self.setTargets([], 'focus', block=True)
 		if self.settings['allow append'] or len(previouslists)==0:
 			self.findTargets(imagedata, targetlist)
 		self.logger.debug('Publishing targetlist...')
@@ -297,27 +317,8 @@ class ClickTargetFinder(TargetFinder):
 
 	def findTargets(self, imdata, targetlist):
 		# display image
-		for target_name in self.targetnames:
-			self.setTargets([], target_name, block=True)
 		self.setImage(imdata['image'], 'Image')
-		wait = True
-		while wait:
-			self.setStatus('user input')
-			self.logger.info('Waiting for user to check targets...')
-			self.panel.submitTargets()
-			self.userpause.clear()
-			self.userpause.wait()
-			self.setStatus('processing')
-			preview_targets = self.panel.getTargetPositions('preview')
-			if preview_targets:
-				self.publishTargets(imdata, 'preview', targetlist)
-				self.setTargets([], 'preview', block=True)
-				self.makeTargetListEvent(targetlist)
-				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
-				self.setStatus('waiting')
-				self.waitForTargetListDone()
-			else:
-				wait = False
+		self.handlePreviewTargets(imdata,targetlist)
 		self.panel.targetsSubmitted()
 		self.setStatus('processing')
 		self.logger.info('Publishing targets...')
@@ -327,6 +328,7 @@ class ClickTargetFinder(TargetFinder):
 			else:
 				self.publishTargets(imdata, i, targetlist)
 		self.setStatus('idle')
+
 
 	def publishReferenceTarget(self, image_data):
 		try:
