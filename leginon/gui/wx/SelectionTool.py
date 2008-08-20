@@ -192,7 +192,10 @@ class SelectionTool(wx.Panel):
 
 	#--------------------
 	def setTargets(self, name, targets):
-		tool = self._getTypeTool(name)
+		try:
+			tool = self._getTypeTool(name)
+		except ValueError:
+			return
 		tool.targettype.setTargets(targets)
 		if self.isDisplayed(name):
 			self.parent.setDisplayedTargets(tool.targettype, tool.targettype.targets)
