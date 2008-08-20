@@ -96,7 +96,7 @@ class Prediction(object):
 	def predict(self, tilt):
 		n_start_fit = 3
 		if len(self.tilt_series_list) != len(self.valid_tilt_series_list):
-			print "%s out of %s tilt series are used in prediction"
+			print "%s out of %s tilt series are used in prediction" %(len(self.valid_tilt_series_list),len(self.tilt_series_list))
 		tilt_series = self.getCurrentTiltSeries()
 		tilt_group = self.getCurrentTiltGroup()
 		n_tilt_series = len(self.valid_tilt_series_list)
@@ -108,6 +108,7 @@ class Prediction(object):
 		for s in self.valid_tilt_series_list:
 			for g in s.tilt_groups:
 				n.append(len(g))
+				# old tilts may be aborted before start and therefore tilts=[]
 				if len(g.tilts) > 0:
 					gmaxtilt.append(max(g.tilts))
 					gmintilt.append(min(g.tilts))
@@ -155,7 +156,7 @@ class Prediction(object):
 								  tilt)
 		#	tilt_group.addTilt(tilt, x, y)
 			## calculate optical axis tilt and offset
-			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)) or abs(tilt) < math.radians(30):
+			if (abs(maxtilt) < math.radians(30) and abs(mintilt) < math.radians(30)):
 				## optical axis offset fit is not reliable at small tilts
 				orig_fixed_model = self.fixed_model
 				self.fixed_model = True
@@ -179,16 +180,23 @@ class Prediction(object):
 			z0 = result[-1][0][2]
 			z = result[-1][-1][2] - z0
 
+		phi,offset = self.convertparams(self.parameters[0],self.parameters[1])
 		result = {
 			'x': float(x),
 			'y': float(y),
 			'z': float(z),
-			'phi': float(self.parameters[0]),
-			'optical axis': float(self.parameters[1]),
+			'phi': float(phi),
+			'optical axis': float(offset),
 			'z0': float(self.parameters[-1]),
 		}
 
 		return result
+
+	def convertparams(self, phi, offset):
+		if math.cos(phi) < 0:
+			offset = -offset
+		phi = math.atan(math.tan(phi))
+		return phi,offset
 
 	def calculate(self):
 		tilt_group = self.getCurrentTiltGroup()
@@ -234,6 +242,9 @@ class Prediction(object):
 		args_list = []
 		for tilt_series in tilt_series_list:
 			for tilt_group in tilt_series.tilt_groups:
+				if len(tilt_group.tilts) == 0  or len(tilt_group.xs) != len(tilt_group.tilts) or len(tilt_group.ys) != len(tilt_group.tilts):
+				# To Do: wrong direction tilt group should not be included in the fit
+					break
 				parameters.extend([0])
 
 				tilts = scipy.array(tilt_group.tilts)
@@ -255,6 +266,7 @@ class Prediction(object):
 			#'ftol': 1e-12,
 			#'xtol': 1e-12,
 		}
+		print args_list
 		result = scipy.optimize.leastsq(self.residuals, parameters, **kwargs)
 		try:
 			x = list(result[0])
