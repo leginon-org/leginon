@@ -122,7 +122,7 @@ class PresetsClient(object):
 		self.node.outputEvent(unlockevent, wait=True)
 		self.havelock = False
 
-	def toScope(self, presetname, emtarget=None):
+	def toScope(self, presetname, emtarget=None, keep_shift=False):
 		'''
 		send the named preset to the scope
 		optionally send a target to the scope as well
@@ -133,6 +133,7 @@ class PresetsClient(object):
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
+		evt['keep image shift'] = keep_shift
 		self.node.logger.info('Requesting preset change to \'%s\'...' % presetname)
 		self.pchanged[presetname] = threading.Event()
 		self.node.startTimer('preset toScope')
@@ -298,7 +299,19 @@ class PresetsManager(node.Node):
 			try:
 				if emtarget is None or emtarget['movetype'] is None:
 					self.logger.info('Changing preset to "%s"' % pname)
+					if ievent['keep image shift']:
+						# figure out image shift offset from current preset
+						scope_ishift = self.instrument.tem.ImageShift
+						dx = scope_ishift['x'] - self.currentpreset['image shift']['x']
+						dy = scope_ishift['y'] - self.currentpreset['image shift']['y']
 					self._cycleToScope(pname)
+					if ievent['keep image shift']:
+						self.logger.info('Keeping pre-existing image shift offset')
+						# send image shift offset to scope
+						scope_ishift = self.instrument.tem.ImageShift
+						ix = scope_ishift['x'] + dx
+						iy = scope_ishift['y'] + dy
+						self.instrument.tem.ImageShift = {'x': ix, 'y': iy}
 				else:
 					self.logger.info('Changing preset to "%s" and targeting' % pname)
 					self.targetToScope(pname, emtarget)
@@ -658,7 +671,7 @@ class PresetsManager(node.Node):
 		self._cycleToScope(presetname)
 		self.panel.presetsEvent()
 
-	def _cycleToScope(self, presetname, dofinal=True):
+	def _cycleToScope(self, presetname, dofinal=True, keep_shift=False):
 		'''
 		prestename = target preset
 		force = True:  cycle even if cycling to same preset
