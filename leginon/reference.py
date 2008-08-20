@@ -185,7 +185,7 @@ class AlignZeroLossPeak(Reference):
 
 	def _processRequest(self, request_data):
 		#shift_preset_name = self.settings['shift check preset']
-		check_preset_name = selft.settings['check preset']
+		check_preset_name = self.settings['check preset']
 		self.checkpreset = self.presets_client.getPresetFromDB(check_preset_name)
 		preset_name = request_data['preset']
 		pause_time = self.settings['pause time']
@@ -296,6 +296,7 @@ class AlignZeroLossPeak(Reference):
 		resetdata['reference'] = self.reference_target
 		resetdata['preset'] = self.checkpreset
 		resetdata['mean'] = image.mean()
+		self.logger.info('published zero-loss check data')
 		resetdata['std'] = image.std()
 		self.publish(resetdata, database=True, dbforce=True)
 
@@ -305,6 +306,7 @@ class AlignZeroLossPeak(Reference):
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
+		self.logger.info('reset zero-loss check data')
 		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
