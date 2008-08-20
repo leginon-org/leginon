@@ -349,6 +349,7 @@ class ChangePresetEvent(Event):
 			('name', str),
 			('emtarget', leginondata.EMTargetData),
 			('key', str),
+			('keep image shift', bool),
 		)
 	typemap = classmethod(typemap)
 

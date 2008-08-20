@@ -494,6 +494,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			#### move and change preset
 			movetype = self.settings['move type']
 			movefunction = self.settings['mover']
+			keep_shift = False
 			if movetype == 'image shift' and movefunction == 'navigator':
 				self.logger.warning('Navigator cannot be used for image shift, using Presets Manager instead')
 				movefunction = 'presets manager'
@@ -503,10 +504,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 				if not self.onTarget and targetdata['type'] != 'simulated':
 					precision = self.settings['move precision']
 					final_imageshift = self.settings['final image shift']
+					if final_imageshift:
+						keep_shift = True
 					status = self.navclient.moveToTarget(targetdata, movetype, precision, final_imageshift=final_imageshift)
 					if status == 'error':
 						return status
-			self.presetsclient.toScope(presetname, emtarget)
+			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
 			self.onTarget = True
 			self.setStatus('processing')
 			return status

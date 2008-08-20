@@ -273,11 +273,11 @@ class Navigator(node.Node):
 			repdata['error meters'] = dist
 			repdata.insert(force=True)
 
-	def cycleToPreset(self, preset=None):
+	def cycleToPreset(self, preset=None, keep_shift=False):
 		if preset is None:
 			return
 		self.logger.info('preset cycle')
-		self.presetsclient.toScope(preset['name'])
+		self.presetsclient.toScope(preset['name'], keep_shift=keep_shift)
 
 	def move(self, row, col, movetype, precision=0.0, check=False, preset=None, final_imageshift=False):
 		self.setStatus('processing')
@@ -327,7 +327,7 @@ class Navigator(node.Node):
 					
 				self.logger.info('move correction done, status: %s' % (status,))
 				if self.settings['cycle after']:
-					self.cycleToPreset(preset)
+					self.cycleToPreset(preset, keep_shift=True)
 
 		self.setStatus('idle')
 		return status

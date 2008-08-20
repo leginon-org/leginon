@@ -99,6 +99,14 @@ class DriftManager(watcher.Watcher):
 		# other things that make correlation difficult if they changed:
 		# stage tilt also ???
 		# what if preset mag changed ???
+		oldscope = im['scope']
+		oldishift = oldscope['image shift']
+		oldstage = oldscope['stage position']
+		newscope = data.ScopeEMData()
+		newscope['stage position'] = {'x': oldstage['x'], 'y': oldstage['y']}
+		newscope['image shift'] = oldishift
+		self.logger.info('Returning to original stage position and image shift')
+		self.instrument.setData(newscope)
 
 		## acquire new image using different correction channel
 		correct = im['corrected']

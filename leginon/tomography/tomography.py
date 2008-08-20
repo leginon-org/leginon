@@ -351,7 +351,9 @@ class Tomography(acquisition.Acquisition):
 				presetdata = self.presetsclient.getPresetFromDB(preset_name)
 				self.moveAndPreset(presetdata, emtarget)
 			else:
+				isoffset = self.getImageShiftOffset()
 				self.presetsclient.toScope(preset_name)
+				self.setImageShiftOffset(isoffset)
 
 			## find shift between image0, image1
 			pc = correlator.phase_correlate(imagedata0['image'], imagedata1['image'], False)
@@ -359,7 +361,6 @@ class Tomography(acquisition.Acquisition):
 			subpixelpeak = peakinfo['subpixel peak']
 			shift = correlator.wrap_coord(subpixelpeak, imagedata0['image'].shape)
 			shift = {'row': shift[0], 'col': shift[1]}
-		
 			## transform pixel to image shift
 			oldscope = imagedata0['scope']
 			newscope = self.calclients['image shift'].transform(shift, oldscope, imagedata0['camera'])
@@ -579,8 +580,7 @@ class Tomography(acquisition.Acquisition):
 		try:
 			acquisition.Acquisition.processTargetData(self, *args, **kwargs)
 		except Exception, e:
-	#		raise
-			self.logger.error('Failed to process the target: %s' % e)
+			self.logger.error('Failed to process the tomo target: %s' % e)
 
 	def measureDefocus(self):
 		beam_tilt = 0.01
