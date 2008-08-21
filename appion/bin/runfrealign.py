@@ -163,7 +163,7 @@ def setupParserOptions():
 
 	#### Appion params
 	parser.add_option('--stackid', dest='stackid', help="stack id from database")
-	parser.add_option('--mrchack', dest='mrchack', action='store_true', help="hack to fix machine stamp in mrc header")
+	parser.add_option('--mrchack', dest='mrchack', default=False, action='store_true', help="hack to fix machine stamp in mrc header")
 	parser.add_option('--outvol', dest='outvol', help="name of output volume", default = 'threed.1.mrc')
 	parser.add_option('--proc', dest='proc', default=1, type='int', help="number of processors")
 	parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true', help="if setuponly is specified, everything will be set up but frealign will not be run")
