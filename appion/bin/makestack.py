@@ -762,7 +762,7 @@ if __name__ == '__main__':
 		for imgdict in images:
 			# get pixel size
 			if apDatabase.getPixelSize(imgdict) != params['apix']:
-				apDisplay.printError("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
+				apDisplay.printWarning("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
 		
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
