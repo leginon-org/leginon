@@ -579,15 +579,15 @@ class Tecnai(tem.TEM):
 		self.setMagnificationIndex(savedindex)
 	
 	def getStagePosition(self):
-		value = {'x': None, 'y': None, 'z': None, 'a': None}
-		if(self.tecnai.Stage.Holder == win32com.client.constants.hoDoubleTilt):
-			value['b'] = None
+		value = {}
 		value['x'] = float(self.tecnai.Stage.Position.X)
 		value['y'] = float(self.tecnai.Stage.Position.Y)
 		value['z'] = float(self.tecnai.Stage.Position.Z)
 		value['a'] = float(self.tecnai.Stage.Position.A)
-		if 'b' in value:
+		try:
 			value['b'] = float(self.tecnai.Stage.Position.B)
+		except:
+			pass
 		return value
 
 	def _setStagePosition(self, position, relative = 'absolute'):
