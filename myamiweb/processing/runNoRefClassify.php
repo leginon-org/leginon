@@ -183,15 +183,15 @@ function runNoRefClassify($runjob=False) {
 
  
 	// classification
-	if ($numclass > 300 || $numclass < 2) 
-		createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 & 300");
+	if ($numclass > 999 || $numclass < 2) 
+		createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
 	$particle = new particledata();
 
 	$command.="--norefid=$norefId ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
-	if ($classmethod) $command.="--method=$classmethod ";
+	if ($classmethod && $classmethod != 'hierarch') $command.="--method=$classmethod ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
