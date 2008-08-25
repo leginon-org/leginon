@@ -1517,7 +1517,7 @@ class particledata {
 		return $r;
 	}
 
-	function getJobIdsFromSession($expId,$jobtype=False,$status=False) {
+	function getJobIdsFromSession($expId,$jobtype=False,$status=False,$ignore=True) {
 		$q="SELECT j.*, "
 		  ."p.path as appath "
 		  ."FROM `ApClusterJobData` AS j "
@@ -1526,6 +1526,7 @@ class particledata {
 		  ."WHERE `REF|leginondata|SessionData|session` = $expId";
 		if ($jobtype) $q.=" AND `jobtype` = '$jobtype'";
 		if ($status) $q.=" AND `status` = '$status'";
+		if ($ignore) $q.=" AND `status` != 'I'";
 		$q.=" ORDER BY j.`DEF_id` DESC ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
