@@ -755,7 +755,8 @@ if __name__ == "__main__":
 	#createEulerImages(158, 1)  ## small assymmetric
 	#createEulerImages(118, 2)
 	#createEulerImages(159, 1)  ## small assymmetric
-	createEulerImages(158, 4, ".", True)
+	#createEulerImages(158, 4, ".", True)
+	createEulerImages(110, 16, ".", True)
 
 	### coran
 	#createEulerImages(296, 2, ".", True)
