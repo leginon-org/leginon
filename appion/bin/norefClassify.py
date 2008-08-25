@@ -35,8 +35,8 @@ class NoRefClassScript(appionScript.AppionScript):
 			action="store_true", help="Commit noref class to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit noref class to database")
-		self.parser.add_option("--method", dest="method", default="hierach",
-			help="Method to use for classification: 'hierach' or 'kmeans'")
+		self.parser.add_option("--method", dest="method", default="hierarch",
+			help="Method to use for classification: 'hierarch' or 'kmeans'")
 
 
 		self.parser.add_option("-o", "--outdir", dest="outdir",
@@ -48,8 +48,8 @@ class NoRefClassScript(appionScript.AppionScript):
 			apDisplay.printError("No ref id was not defined")
 		if self.params['numclass'] > 900:
 			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
-		if self.params['method'] not in ['hierach','kmeans']:
-			apDisplay.printError("--method must be either 'hierach' or 'kmeans', e.g. --method=hierach")
+		if self.params['method'] not in ['hierarch','kmeans']:
+			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
 		self.norefdata = self.appiondb.direct_query(appionData.ApNoRefRunData, self.params['norefid'])
 
 	#=====================
