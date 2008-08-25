@@ -28,6 +28,98 @@ class particledata {
 					PARTICLE_DB);
 	}
 
+	//------ General DB summary functions ---------//
+
+	function getTotalParticleStats(){
+		$q = "SELECT count(*) AS particles, "
+		  ."COUNT(DISTINCT p.`REF|ApSelectionRunData|selectionrun`) AS runs "
+		  ."FROM `ApSelectionRunData` AS s "
+		  ."LEFT JOIN `ApParticleData` AS p "
+		  ."ON s.`DEF_id` = p.`REF|ApSelectionRunData|selectionrun` ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getSloppyTotalParticleStats(){
+		$q = "SELECT count(*) AS runs, "
+		  ."COUNT(DISTINCT `REF|ApDogParamsData|dogparams`) AS dog, "
+		  ."COUNT(DISTINCT `REF|ApManualParamsData|manparams`) AS manual, "
+		  ."COUNT(DISTINCT `REF|ApTiltAlignParamsData|tiltparams`) AS tilt "
+		  ."FROM `ApSelectionRunData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results = $r[0];
+		$q = "SELECT count(*) AS p "
+		  ."FROM `ApParticleData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results['particles']=$r[0]['p'];
+		return $results;
+	}
+
+	function getTotalStackStats(){
+		$q = "SELECT count(*) AS particles, "
+		  ."COUNT(DISTINCT p.`REF|ApStackData|stack`) AS stacks "
+		  ."FROM `ApStackData` AS s "
+		  ."LEFT JOIN `ApStackParticlesData` AS p "
+		  ."ON s.`DEF_id` = p.`REF|ApStackData|stack` ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getSloppyTotalStackStats(){
+		$q = "SELECT count(*) AS s "
+		  ."FROM `ApStackData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results=array();
+		$results['stacks']=$r[0]['s'];
+		$q = "SELECT count(*) AS p "
+		  ."FROM `ApStackParticlesData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results['particles']=$r[0]['p'];
+		return $results;
+	}
+
+	function getTotalReconStats(){
+		$q = "SELECT count(*) AS particles, "
+		  ."COUNT(DISTINCT p.`REF|ApRefinementData|refinement`) AS iter, "
+		  ."COUNT(DISTINCT i.`REF|ApRefinementRunData|refinementRun`) AS runs "
+		  ."FROM `ApRefinementData` AS i "
+		  ."LEFT JOIN `ApParticleClassificationData` AS p "
+		  ."ON i.`DEF_id` = p.`REF|ApRefinementData|refinement` ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getSloppyTotalReconStats(){
+		$q = "SELECT count(*) AS i "
+		  ."FROM `ApRefinementData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results=array();
+		$results['iter']=$r[0]['i'];
+		$q = "SELECT count(*) AS p "
+		  ."FROM `ApParticleClassificationData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results['particles']=$r[0]['p'];
+		$q = "SELECT count(*) AS r "
+		  ."FROM `ApRefinementRunData`";
+		$r = $this->mysql->getSQLResult($q);
+		$results['runs']=$r[0]['r'];
+		return $results;
+	}
+
+	function getTotalTemplates(){
+		$q = "SELECT count(*) AS templates "
+		  ."FROM ApTemplateImageData";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getTotalModels(){
+		$q = "SELECT count(*) AS models "
+		  ."FROM ApInitialModelData";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 	//------ Tomo functions ---------//
 	
 	function getTomogramInfo($tomogramId){

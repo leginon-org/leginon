@@ -122,7 +122,7 @@ $iterations = $particle->getIterationInfo($reconId);
 # get starting model png files
 $initpngs = array();
 $initdir = opendir($initmodel['path']);
-echo "initmodelname: $initmodelname";
+
 while ($f = readdir($initdir)){
 	if (eregi($initmodelname.'.*\.png$',$f)) {
 		$initpngs[] = $f;

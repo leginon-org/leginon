@@ -128,14 +128,16 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	// javascript for please wait div to show up on submit
 	if ($pleaseWait) $html.= pleaseWaitJava();
 	$html.= $headerstuff;
-	$html.="<script src='../js/lvmenu.js'></script>\n";
-	$html.= "</head>
-<body onload='initmenu()'>
-<div id='apheader'>
-  <div class='aptopbar'> </div>
-  <hr />
-  <div class='middlebar'>
-<div style='float: right; padding:10px'>\n";
+	$html.= "<script src='../js/lvmenu.js'></script>\n";
+	$html.= "</head>\n";
+	$html.= "<body onload='initmenu()'>\n";
+	$html.= "<div id='apheader'>\n"; // open apheader div
+	$html.= "<div class='aptopbar'>\n"; // open topbar div
+	$html.= "</div>\n"; // close topbar div
+	$html.= "<hr />\n";
+	$html.= "<div class='middlebar'>\n"; // open middlebar div
+	$html.= "<div style='float: right; padding:10px'>\n"; // open
+							      // login div
 	if ($_SESSION['username']) {
 		$html.='<i>logged in as <b>'.$_SESSION['username'].'</b></i>'."\n";
 		$html.='<a class="header" href="endsession.php?expId='.$_GET['expId'].'">[Log Out]</a>'."\n";
@@ -147,31 +149,36 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 		$html.=displayLogin($formAction);
 	}
 
-	$html.='
-    </div>
-<div style="padding:5px; padding-left:20px; font-size: 15pt">
-	<img style="vertical-align:middle" src="img/topbarbackgrnd.jpg">
-	<font color="#fff">'.$heading.'</font>
-</div>
-  </div>
-  <hr />
-  <div class="apbottombar">
-<div class="apbottomcontent">
-<ul>
-<li><b>Project:</font></b> '.$proj_link.'</li>
-<li><b>Session:</b> '.$session_link.'</li>
-<li><b>Image Path:</b> '.$expinfo['Image path'].'</li>
-</ul>
-	</div>
-	<div style="float: right"> 
-   </div>
-</div>
+	$html.= "</div>\n"; // close login div
+	$html.= "<div style='padding:5px; padding-left:20px; font-size: 15pt'>\n"; // open title div
+	$html.= "<img style='vertical-align:middle' src='img/topbarbackgrnd.jpg'>\n";
+	$html.= "<font color='#fff'>".$heading."</font>\n";
+	$html.= "</div>\n"; // close title div
+	$html.= "</div>\n"; // close middlebar div
+	$html.= "<hr />\n";
+	$html.= "<div class='apbottombar'>\n";  // open bottombar div
+	$html.= "<div class='apbottomcontent'>\n"; // open
+						   // bottomcontent div
+	$html.= "<ul>\n";
+	$html.= "<div style='float: right; padding-right:10px;'>\n";
+	$html.= "<a href='procsummary.php?expId=$expId'>[Appion Stats]</a>\n";
+	$html.= "</div>\n";
 
-<hr />
-  <div class="apshadow">
-    &nbsp;
-  </div>
-</div>';
+	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
+	$html.= "<li><b>Session:</b> ".$session_link."</li>\n";
+	$html.= "<li><b>Image Path:</b> ".$expinfo['Image path']."</li>\n";
+
+	$html.= "</ul>\n";
+	$html.= "</div>\n"; // close bottomcontent div
+	$html.= "<div style='float: right'>\n"; // open right content div
+	$html.= "</div>\n"; // close right content div
+	$html.= "</div>\n"; // close bottombar div
+	$html.= "<hr />\n";
+	$html.= "<div class='apshadow'>\n"; // open shadow div
+	$html.= "&nbsp;\n";
+	$html.= "</div>\n"; // close shadow div
+	$html.= "</div>\n"; // close apheader div
+
 	// --- for help popup documentation --- //
 	$helpdiv = "<div id='dhelp' class='aphelpdoc' onmouseover='overdiv=1;' onmouseout='overdiv=0;'></div>\n";
 	$html.=$helpdiv;
@@ -737,8 +744,11 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 
 		// copy file to run directory
 		$cmd .= "cp $tmpfile $procdir/$jobfile;\n";
+		echo "$tmpfile<br />\n";
 		exec_over_ssh($_SERVER['HTTP_HOST'],$user,$pass,$cmd, True);
 	
+	echo "$jobtext\n";
+	exit();
 		processing_header("Appion Job Submission","Appion Job Submission");
 		echo "<table width='600'>\n";
 		echo "<tr><td>Appion Directory</td><td>$procdir</td></tr>\n";
