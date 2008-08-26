@@ -18,7 +18,7 @@ from pyami import mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder
 try:
-	import pymat
+	import mlabraw as pymat
 except:
 	pymat = None
 
@@ -62,6 +62,8 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 
 		self.setTargets(acquisition, 'acquisition')
 		self.setTargets(focus, 'focus')
+		import time
+		time.sleep(1)
 
 		if self.settings['user check']:
 			self.panel.foundTargets()
