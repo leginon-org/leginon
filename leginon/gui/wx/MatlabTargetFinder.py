@@ -43,8 +43,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
-		#self.imagepanel.addTargetTool('done', wx.RED)
-		#self.imagepanel.selectiontool.setDisplayed('done', True)
+		self.imagepanel.addTargetTool('done', wx.RED)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
@@ -89,7 +89,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onSubmitTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
-		gui.wx.TargetFinder.onSubmitTool(self, evt)
+		gui.wx.TargetFinder.Panel.onSubmitTool(self, evt)
 
 	def onTargetTestImage(self, evt):
 		threading.Thread(target=self.node.targetTestImage).start()
