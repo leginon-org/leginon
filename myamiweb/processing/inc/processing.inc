@@ -746,9 +746,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		$cmd .= "cp $tmpfile $procdir/$jobfile;\n";
 		echo "$tmpfile<br />\n";
 		exec_over_ssh($_SERVER['HTTP_HOST'],$user,$pass,$cmd, True);
-	
-	echo "$jobtext\n";
-	exit();
+
 		processing_header("Appion Job Submission","Appion Job Submission");
 		echo "<table width='600'>\n";
 		echo "<tr><td>Appion Directory</td><td>$procdir</td></tr>\n";
