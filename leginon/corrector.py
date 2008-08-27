@@ -182,7 +182,8 @@ class CorrectorClient(object):
 		reverse the normalization to create a raw image
 		'''
 		camstate = leginondata.CorrectorCamstateData()
-		camstate.friendly_update(imagedata['camera'])
+		for key in ('dimension', 'offset', 'binning'):
+			camstate[key] = imagedata['camera'][key]
 		ccdcameraname = imagedata['camera']['ccdcamera']['name']
 		scopedata = imagedata['scope']
 		channel = imagedata['correction channel']
@@ -202,7 +203,8 @@ class CorrectorClient(object):
 		else:
 			self.channel = 1
 		camstate = leginondata.CorrectorCamstateData()
-		camstate.friendly_update(imagedata['camera'])
+		for key in ('dimension', 'offset', 'binning'):
+			camstate[key] = imagedata['camera'][key]
 		ccdcameraname = imagedata['camera']['ccdcamera']['name']
 		scopedata = imagedata['scope']
 		
