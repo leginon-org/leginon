@@ -119,9 +119,10 @@ class DTFinder(targetfinder.TargetFinder):
 		for key in peakinfo:
 			print '  %s:  %s' % (key, peakinfo[key])
 
-	def makeAcquisitionTargets(self):
+	def makeFinalTargets(self):
 		targets = self.panel.getTargetPositions('peak')
 		self.setTargets(targets, 'acquisition')
+		self.setTargets(targets, 'focus')
 
 	def storeTemplateInfo(self, imagedata, row, column):
 		temp = leginondata.DynamicTemplateData()
@@ -185,7 +186,7 @@ class DTFinder(targetfinder.TargetFinder):
 		if template is None:
 			raise RuntimeError('could not make template')
 		self.correlateTemplate()
-		self.makeAcquisitionTargets()
+		self.makeFinalTargets()
 
 	def findTargets(self, imdata, targetlist):
 		self.setStatus('processing')
@@ -225,4 +226,5 @@ class DTFinder(targetfinder.TargetFinder):
 
 		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'acquisition', targetlist)
+		self.publishTargets(imdata, 'focus', targetlist)
 		self.setStatus('idle')

@@ -30,6 +30,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTargetTool('peak', wx.Color(255,128,0), target=True, settings=False, numbers=False)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True, numbers=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
@@ -51,6 +53,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		elif evt.name == 'peak':
 			dialog = CorrelationSettingsDialog(self)
 		elif evt.name == 'acquisition':
+			dialog = FinalSettingsDialog(self)
+		elif evt.name == 'focus':
 			dialog = FinalSettingsDialog(self)
 
 		dialog.ShowModal()
@@ -148,10 +152,11 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def onClearButton(self, evt):
 		self.setNodeSettings()
 		self.node.clearTargets('acquisition')
+		self.node.clearTargets('focus')
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()
-		threading.Thread(target=self.node.makeAcquisitionTargets).start()
+		threading.Thread(target=self.node.makeFinalTargets).start()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
