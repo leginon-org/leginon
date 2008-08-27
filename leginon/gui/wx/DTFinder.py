@@ -105,11 +105,15 @@ class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
 		szcor = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Use')
 		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
-		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
+		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.cortypes)
+		szcor.Add(self.widgets['correlation type'], (0, 1), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'correlation')
 		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Correlation Low Pass')
+		self.widgets['correlation lpf'] = FloatEntry(self, -1, min=0.0, chars=4)
+		szcor.Add(label, (1,0), (1,1))
+		szcor.Add(self.widgets['correlation lpf'], (1,1), (1,1))
 
 		self.bcor = wx.Button(self, -1, 'Correlate')
 		szbutton = wx.GridBagSizer(5, 5)

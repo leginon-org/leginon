@@ -1166,6 +1166,7 @@ class TargetFinderSettingsData(SettingsData):
 			('queue drift', bool),
 			('sort target', bool),
 			('allow append', bool),
+			('skip', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1195,7 +1196,6 @@ class LowPassFilterSettingsData(Data):
 class HoleFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
-			('skip', bool),
 			('image filename', str),
 			('edge lpf', LowPassFilterSettingsData),
 			('edge', bool),
@@ -1269,10 +1269,12 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class DTFinderSettingsData(HoleFinderSettingsData):
+class DTFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
-		return HoleFinderSettingsData.typemap() + (
+		return TargetFinderSettingsData.typemap() + (
 			('template size', int),
+			('correlation lpf', float),
+			('correlation type', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1305,7 +1307,6 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('acquisition convolve', bool),
 			('acquisition convolve template', list),
 			('acquisition constant template', list),
-			('skip', bool),
 		)
 	typemap = classmethod(typemap)
 

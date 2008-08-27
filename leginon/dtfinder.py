@@ -28,6 +28,7 @@ class DTFinder(targetfinder.TargetFinder):
 		'image filename': '',
 		'correlation type': 'phase',
 		'template size': 256,
+		'correlation lpf': 1.3,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -87,22 +88,36 @@ class DTFinder(targetfinder.TargetFinder):
 
 		self.images['template'] = fulltemplate
 
-
 		return fulltemplate
 
 	def correlateTemplate(self):
 		## correlate
 		im1 = self.images['original']
 		im2 = self.images['template']
-		cor = correlator.phase_correlate(im1, im2, zero=False, pad=False)
+		if self.settings['correlation type'] == 'phase':
+			cor = correlator.phase_correlate(im1, im2, zero=False, pad=False)
+		else:
+			cor = correlator.cross_correlate(im1, im2, pad=False)
 		self.images['correlation'] = cor
+
+		# low pass filter
+		if self.settings['correlation lpf']:
+			cor = scipy.ndimage.gaussian_filter(cor, self.settings['correlation lpf'])
+
+		# display correlation
 		self.setImage(cor, 'correlation')
-		
+
 		# find peak
 		peakinfo = peakfinder.findSubpixelPeak(cor)
+		self.printPeakInfo(peakinfo)
 		self.corpeak = peakinfo['subpixel peak']
 		ivtargets = [(self.corpeak[1],self.corpeak[0])]
 		self.setTargets(ivtargets, 'peak', block=True)
+
+	def printPeakInfo(self, peakinfo):
+		print 'Peak Info:'
+		for key in peakinfo:
+			print '  %s:  %s' % (key, peakinfo[key])
 
 	def makeAcquisitionTargets(self):
 		targets = self.panel.getTargetPositions('peak')
