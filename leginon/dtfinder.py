@@ -73,13 +73,14 @@ class DTFinder(targetfinder.TargetFinder):
 		fulltemplate = numpy.zeros(newimage.shape, newimage.dtype)
 		fulltemplate[:template.shape[0], :template.shape[1]] = template
 
+		self.setImage(fulltemplate, 'template')
+
 		# shift center of template to 0,0
 		shift = -template.shape[0]/2, -template.shape[1]/2
 		fulltemplate = scipy.ndimage.shift(fulltemplate, shift, mode='wrap')
 
 		self.images['template'] = fulltemplate
 
-		self.setImage(fulltemplate, 'template')
 
 		return fulltemplate
 
