@@ -227,7 +227,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
 				pstr = '%s: %g' % (axis, stageposition[axis])
 				messagestr = 'Aborting target: stage position %s out of range' % pstr
-				self.logger.error(messagestr)
+				self.logger.info(messagestr)
 				raise InvalidStagePosition(messagestr)
 
 	def validatePresets(self):
