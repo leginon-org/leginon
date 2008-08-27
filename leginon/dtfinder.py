@@ -17,6 +17,7 @@ import gui.wx.DTFinder
 import numpy
 from pyami import quietscipy
 import scipy.ndimage
+import corrector
 
 class DTFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.DTFinder.Panel
@@ -40,6 +41,7 @@ class DTFinder(targetfinder.TargetFinder):
 
 		self.cortypes = ['cross', 'phase']
 		self.userpause = threading.Event()
+		self.correctorclient = corrector.CorrectorClient(self)
 
 		self.start()
 
@@ -58,8 +60,12 @@ class DTFinder(targetfinder.TargetFinder):
 			return None
 
 		oldimagedata = tempinfo['image']
-		oldimage = oldimagedata['image']
 		newimagedata = self.currentimagedata
+		if oldimagedata['correction channel'] == newimagedata['correction channel']:
+			self.logger.info('reversing template corrector channel')
+			oldimagedata = self.correctorclient.reverse_channel(oldimagedata)
+
+		oldimage = oldimagedata['image']
 		newimage = newimagedata['image']
 
 		# use template info to crop out region of interest from old image
