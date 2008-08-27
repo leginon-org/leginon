@@ -1269,6 +1269,13 @@ class JAHCFinderSettingsData(HoleFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class DTFinderSettingsData(HoleFinderSettingsData):
+	def typemap(cls):
+		return HoleFinderSettingsData.typemap() + (
+			('template size', int),
+		)
+	typemap = classmethod(typemap)
+
 class RasterFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
@@ -1891,3 +1898,11 @@ class ImageProcessDoneData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class DynamicTemplateData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('center_row', float),
+			('center_column', float),
+		)
+	typemap = classmethod(typemap)

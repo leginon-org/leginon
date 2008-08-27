@@ -98,6 +98,10 @@ type: Pipeline
 module: jahcfinder
 type: Pipeline
 
+[DTFinder]
+module: dtfinder
+type: Pipeline
+
 [RasterFinder]
 module: rasterfinder
 type: Pipeline
