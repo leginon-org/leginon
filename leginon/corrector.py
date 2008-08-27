@@ -177,6 +177,40 @@ class CorrectorClient(object):
 			self.node.logger.warning('Cannot find references, image will not be normalized')
 			return raw
 
+	def denormalize(self, imagedata):
+		'''
+		reverse the normalization to create a raw image
+		'''
+		camstate = leginondata.CorrectorCamstateData()
+		camstate.friendly_update(imagedata['camera'])
+		ccdcameraname = imagedata['camera']['ccdcamera']['name']
+		scopedata = imagedata['scope']
+		channel = imagedata['correction channel']
+		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata, channel)
+		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
+		corrected = imagedata['image']
+		raw = corrected / norm
+		raw = numpy.where(numpy.isfinite(raw), raw, 0)
+		raw = raw + dark
+		return raw
+
+	def reverse_channel(self, imagedata):
+		raw = self.denormalize(imagedata)
+		oldchannel = imagedata['correction channel']
+		if oldchannel == 1:
+			self.channel = 0
+		else:
+			self.channel = 1
+		camstate = leginondata.CorrectorCamstateData()
+		camstate.friendly_update(imagedata['camera'])
+		ccdcameraname = imagedata['camera']['ccdcamera']['name']
+		scopedata = imagedata['scope']
+		
+		corrected = self.normalize(raw, camstate, ccdcameraname, scopedata)
+		newimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
+		newimagedata['image'] = corrected
+		return newimagedata
+
 	def correct(self, ccdcamera, original, camstate, scopedata, despike=False, despikesize=None, despikethresh=None, clip=None):
 		'''
 		this puts an image through a pipeline of corrections
