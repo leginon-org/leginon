@@ -65,7 +65,7 @@ class Navigator(node.Node):
 		'max error': 256,
 		'cycle after': False,
 		'cycle each': False,
-		'final image shift': False
+		'final image shift': False,
 		'camera settings':
 			data.CameraSettingsData(
 				initializer={
