@@ -1275,6 +1275,8 @@ class DTFinderSettingsData(TargetFinderSettingsData):
 			('template size', int),
 			('correlation lpf', float),
 			('correlation type', str),
+			('rotate', bool),
+			('angle increment', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1905,5 +1907,7 @@ class DynamicTemplateData(InSessionData):
 			('image', AcquisitionImageData),
 			('center_row', float),
 			('center_column', float),
+			('minsum', float),
+			('snr', float),
 		)
 	typemap = classmethod(typemap)

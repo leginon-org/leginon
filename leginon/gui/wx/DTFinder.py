@@ -25,7 +25,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('original', display=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('original', True)
-		self.imagepanel.addTypeTool('template', display=True, settings=True)
+		self.imagepanel.addTypeTool('templateA', display=True, settings=True)
+		self.imagepanel.addTypeTool('templateB', display=True, settings=True)
 		self.imagepanel.addTypeTool('correlation', display=True, settings=False)
 		self.imagepanel.addTargetTool('peak', wx.Color(255,128,0), target=True, settings=False, numbers=False)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True, numbers=True)
@@ -46,8 +47,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 			dialog.Destroy()
 			return
 
-		if evt.name == 'template':
-			dialog = TemplateSettingsDialog(self)
+		if evt.name == 'templateA':
+			dialog = TemplateASettingsDialog(self)
+		if evt.name == 'templateB':
+			dialog = TemplateBSettingsDialog(self)
 		elif evt.name == 'correlation':
 			dialog = CorrelationSettingsDialog(self)
 		elif evt.name == 'peak':
@@ -78,17 +81,17 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbsz]
 
-class TemplateSettingsDialog(gui.wx.Settings.Dialog):
+class TemplateASettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		sbsztemplate = wx.GridBagSizer(5,5)
-		lab = wx.StaticText(self, -1, 'Template Size')
+		lab = wx.StaticText(self, -1, 'Template Size (percent of image)')
 		self.widgets['template size'] = IntEntry(self, -1, chars=4)
 		sbsztemplate.Add(lab, (0,0), (1,1))
 		sbsztemplate.Add(self.widgets['template size'], (0,1), (1,1))
 
-		self.btest = wx.Button(self, -1, 'Make Template')
+		self.btest = wx.Button(self, -1, 'Make Template A')
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.btest, (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -100,7 +103,34 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onButton(self, evt):
 		self.setNodeSettings()
-		self.node.makeTemplate()
+		self.node.makeTemplateA()
+
+class TemplateBSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		sbsztemplate = wx.GridBagSizer(5,5)
+		lab = wx.StaticText(self, -1, 'Test Angle (degrees)')
+		self.testangle = FloatEntry(self, -1, allownone=False, chars=5, value='0.0')
+		sbsztemplate.Add(lab, (0,0), (1,1))
+		sbsztemplate.Add(self.testangle, (0,1), (1,1))
+		sbsztemplate.AddGrowableCol(0)
+
+		self.btest = wx.Button(self, -1, 'Make Template B')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onButton, self.btest)
+
+		return [sbsztemplate, szbutton]
+
+	def onButton(self, evt):
+		self.setNodeSettings()
+		angle = self.testangle.GetValue()
+		self.node.makeTemplateB(angle)
+
 
 class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -118,6 +148,12 @@ class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['correlation lpf'] = FloatEntry(self, -1, min=0.0, chars=4)
 		szcor.Add(label, (1,0), (1,1))
 		szcor.Add(self.widgets['correlation lpf'], (1,1), (1,1))
+		self.widgets['rotate'] = wx.CheckBox(self, -1, 'Rotate')
+		szcor.Add(self.widgets['rotate'], (2,0), (1,1))
+		label = wx.StaticText(self, -1, 'Angle Increment')
+		self.widgets['angle increment'] = FloatEntry(self, -1, min=0.0, chars=4)
+		szcor.Add(label, (3,0), (1,1))
+		szcor.Add(self.widgets['angle increment'], (3,1), (1,1))
 
 		self.bcor = wx.Button(self, -1, 'Correlate')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -129,7 +165,7 @@ class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onCorrelate(self, evt):
 		self.setNodeSettings()
-		threading.Thread(target=self.node.correlateTemplate).start()
+		threading.Thread(target=self.node.correlateRotatingTemplate).start()
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

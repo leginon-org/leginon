@@ -27,14 +27,17 @@ class DTFinder(targetfinder.TargetFinder):
 		'skip': False,
 		'image filename': '',
 		'correlation type': 'phase',
-		'template size': 256,
+		'template size': 100,
 		'correlation lpf': 1.3,
+		'rotate': False,
+		'angle increment': 5,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.images = {
 			'original': None,
-			'template': None,
+			'templateA': None,
+			'templateB': None,
 			'correlation': None,
 		}
 
@@ -43,6 +46,7 @@ class DTFinder(targetfinder.TargetFinder):
 		self.cortypes = ['cross', 'phase']
 		self.userpause = threading.Event()
 		self.correctorclient = corrector.CorrectorClient(self)
+		self.correlator = correlator.Correlator()
 
 		self.start()
 
@@ -50,18 +54,26 @@ class DTFinder(targetfinder.TargetFinder):
 		targetfinder.TargetFinder.readImage(self, filename)
 		self.images['original'] = self.currentimagedata['image']
 
-	def makeTemplate(self):
-		# find most recent template info from this session
-		qtempinfo = leginondata.DynamicTemplateData(session=self.session)
-		try:
-			tempinfo = qtempinfo.query(results=1)[0]
-		except:
-			self.images['template'] = None
-			self.logger.info('No template found for this session.')
-			return None
+	def makeTemplateA(self, current=None):
+		newimagedata = self.currentimagedata
+
+		if current is not None:
+			tempinfo = {'image': self.currentimagedata, 'center_row': current[0], 'center_column': current[1]}
+		else:
+			# find most recent template info from this session
+			qtempinfo = leginondata.DynamicTemplateData(session=self.session)
+			try:
+				tempinfo = qtempinfo.query(results=1)[0]
+			except:
+				self.images['templateA'] = None
+				self.logger.info('No template found for this session.')
+				return None
+			self.oldpeakinfo = {}
+			for key in ('minsum', 'snr'):
+				self.oldpeakinfo[key] = tempinfo[key]
 
 		oldimagedata = tempinfo['image']
-		newimagedata = self.currentimagedata
+
 		if oldimagedata['correction channel'] == newimagedata['correction channel']:
 			self.logger.info('reversing template corrector channel')
 			oldimagedata = self.correctorclient.reverse_channel(oldimagedata)
@@ -73,31 +85,76 @@ class DTFinder(targetfinder.TargetFinder):
 		center_r = tempinfo['center_row']
 		center_c = tempinfo['center_column']
 		tempsize = self.settings['template size']
+		tempsize = int(tempsize * oldimage.shape[0] / 100.0)
 		tempshape = tempsize,tempsize
-		template = imagefun.crop_at(oldimage, (center_r, center_c), tempshape, mode='constant', cval=0)
+		templateA = imagefun.crop_at(oldimage, (center_r, center_c), tempshape, mode='constant', cval=0)
+		self.images['templateA'] = templateA
+		self.setImage(templateA, 'templateA')
+		return templateA
+
+	def makeTemplateB(self, angle=0):
+		# rotate template
+		if angle:
+			template = scipy.ndimage.rotate(self.images['templateA'], angle)
+		else:
+			template = self.images['templateA']
 
 		# pad with zeros to the size of the new image
+		newimagedata = self.currentimagedata
+		newimage = newimagedata['image']
 		fulltemplate = numpy.zeros(newimage.shape, newimage.dtype)
 		fulltemplate[:template.shape[0], :template.shape[1]] = template
 
-		self.setImage(fulltemplate, 'template')
+		self.setImage(fulltemplate, 'templateB')
 
 		# shift center of template to 0,0
 		shift = -template.shape[0]/2, -template.shape[1]/2
 		fulltemplate = scipy.ndimage.shift(fulltemplate, shift, mode='wrap')
 
-		self.images['template'] = fulltemplate
+		self.images['templateB'] = fulltemplate
 
 		return fulltemplate
 
+	def makeAngles(self):
+		angleinc = self.settings['angle increment']
+		angles = [0]
+		for angle in numpy.arange(angleinc, 180, angleinc):
+			angles.extend([-angle, angle])
+		print 'ANGLES', angles
+		return angles
+
+	def autoCorrelate(self, point):
+		self.makeTemplateA(current=point)
+		self.makeTemplateB()
+		self.newpeakinfo = self.correlateTemplate()
+
+	def correlateRotatingTemplate(self):
+		if not self.settings['rotate']:
+			self.makeTemplateB()
+			peakinfo = self.correlateTemplate()
+			return
+
+		angles = self.makeAngles()
+		for angle in angles:
+			self.makeTemplateB(angle)
+			peakinfo = self.correlateTemplate()
+			peakinfo['template angle'] = angle
+			if self.checkPeakInfo(peakinfo):
+				break
+		self.newpeakinfo = peakinfo
+
+	def checkPeakInfo(self, peakinfo):
+		print 'OLDPEAK', self.oldpeakinfo
+		print 'NEWPEAK', peakinfo
+		return True
+
 	def correlateTemplate(self):
 		## correlate
-		im1 = self.images['original']
-		im2 = self.images['template']
+		self.correlator.setImage(0, self.images['templateB'])
 		if self.settings['correlation type'] == 'phase':
-			cor = correlator.phase_correlate(im1, im2, zero=False, pad=False)
+			cor = self.correlator.phaseCorrelate(zero=False)
 		else:
-			cor = correlator.cross_correlate(im1, im2, pad=False)
+			cor = self.correlator.crossCorrelate()
 		self.images['correlation'] = cor
 
 		# low pass filter
@@ -113,6 +170,7 @@ class DTFinder(targetfinder.TargetFinder):
 		self.corpeak = peakinfo['subpixel peak']
 		ivtargets = [(self.corpeak[1],self.corpeak[0])]
 		self.setTargets(ivtargets, 'peak', block=True)
+		return peakinfo
 
 	def printPeakInfo(self, peakinfo):
 		print 'Peak Info:'
@@ -124,68 +182,25 @@ class DTFinder(targetfinder.TargetFinder):
 		self.setTargets(targets, 'acquisition')
 		self.setTargets(targets, 'focus')
 
-	def storeTemplateInfo(self, imagedata, row, column):
+	def storeTemplateInfo(self, imagedata, row, column, peakinfo):
 		temp = leginondata.DynamicTemplateData()
 		temp['session'] = self.session
 		temp['image'] = imagedata
 		temp['center_row'] = row
 		temp['center_column'] = column
+		for key in ('minsum', 'snr'):
+			temp[key] = peakinfo[key]
 		temp.insert(force=True)
 
 	def bypass(self):
 		self.setTargets([], 'acquisition', block=True)
 		self.setTargets([], 'focus', block=True)
 
-	def applyTargetTemplate(self, centers):
-		self.logger.info('apply template')
-		imshape = self.hf['original'].shape
-		acq_vect = self.settings['acquisition template']
-		foc_vect = self.settings['focus template']
-		newtargets = {'acquisition':[], 'focus':[]}
-		for center in centers:
-			self.logger.info('applying template to hole at %s' % (center,))
-			for vect in acq_vect:
-				target = center[0]+vect[0], center[1]+vect[1]
-				tarx = target[0]
-				tary = target[1]
-				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
-					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
-					continue
-				newtargets['acquisition'].append(target)
-			for vect in foc_vect:
-				target = center[0]+vect[0], center[1]+vect[1]
-				tarx = target[0]
-				tary = target[1]
-				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
-					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
-					continue
-				## check if target has good thickness
-				if self.settings['focus template thickness']:
-					rad = self.settings['focus stats radius']
-					tmin = self.settings['focus min mean thickness']
-					tmax = self.settings['focus max mean thickness']
-					tstd = self.settings['focus max stdev thickness']
-					coord = target[1], target[0]
-					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
-					if stats is None:
-						self.logger.info('skipping template point %s:  stats region out of bounds' % (vect,))
-						continue
-					tm = self.icecalc.get_thickness(stats['mean'])
-					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
-					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
-					if (tmin <= tm <= tmax) and (ts < tstd):
-						self.logger.info('template point %s passed thickness test' % (vect,))
-						newtargets['focus'].append(target)
-						break
-				else:
-					newtargets['focus'].append(target)
-		return newtargets
-
 	def everything(self):
-		template = self.makeTemplate()
-		if template is None:
+		templateA = self.makeTemplateA()
+		if templateA is None:
 			raise RuntimeError('could not make template')
-		self.correlateTemplate()
+		self.correlateRotatingTemplate()
 		self.makeFinalTargets()
 
 	def findTargets(self, imdata, targetlist):
@@ -195,6 +210,7 @@ class DTFinder(targetfinder.TargetFinder):
 		## auto or not?
 		self.images['original'] = imdata['image']
 		self.currentimagedata = imdata
+		self.correlator.setImage(1, self.images['original'])
 		self.setImage(imdata['image'], 'original')
 		if not self.settings['skip']:
 			autofailed = False
@@ -213,13 +229,17 @@ class DTFinder(targetfinder.TargetFinder):
 			self.userpause.wait()
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
+			targets = self.panel.getTargetPositions('acquisition')
+			row = targets[0][1]
+			col = targets[0][0]
+			self.autoCorrelate((row,col))
 
 		## store the acquisition target coords in template info
 		targets = self.panel.getTargetPositions('acquisition')
 		if len(targets) == 1:
 			row = targets[0][1]
 			col = targets[0][0]
-			self.storeTemplateInfo(self.currentimagedata, row, col)
+			self.storeTemplateInfo(self.currentimagedata, row, col, self.newpeakinfo)
 			self.logger.info('New template info stored')
 		else:
 			self.logger.info('No acquisition target, no new template info stored')
