@@ -1909,5 +1909,6 @@ class DynamicTemplateData(InSessionData):
 			('center_column', float),
 			('minsum', float),
 			('snr', float),
+			('angle', float),
 		)
 	typemap = classmethod(typemap)

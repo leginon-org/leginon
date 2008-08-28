@@ -87,7 +87,7 @@ class DTFinder(targetfinder.TargetFinder):
 		tempsize = self.settings['template size']
 		tempsize = int(tempsize * oldimage.shape[0] / 100.0)
 		tempshape = tempsize,tempsize
-		templateA = imagefun.crop_at(oldimage, (center_r, center_c), tempshape, mode='constant', cval=0)
+		templateA = imagefun.crop_at(oldimage, (center_r, center_c), tempshape, mode='wrap')
 		self.images['templateA'] = templateA
 		self.setImage(templateA, 'templateA')
 		return templateA
@@ -120,6 +120,7 @@ class DTFinder(targetfinder.TargetFinder):
 		angles = [0]
 		for angle in numpy.arange(angleinc, 180, angleinc):
 			angles.extend([-angle, angle])
+		angles.append(180)
 		print 'ANGLES', angles
 		return angles
 
@@ -135,18 +136,49 @@ class DTFinder(targetfinder.TargetFinder):
 			return
 
 		angles = self.makeAngles()
+		bestangle = None
+		bestpeakinfo = {'snr': 0}
+		goodcheck = False
 		for angle in angles:
+			print 'ANGLE', angle
 			self.makeTemplateB(angle)
 			peakinfo = self.correlateTemplate()
 			peakinfo['template angle'] = angle
+			snr = peakinfo['snr']
+			if snr > bestpeakinfo['snr']:
+				bestpeakinfo = peakinfo
+				bestangle = angle
+			#from pyami import mrc
+			#mrc.write(self.images['correlation'], 'cor%d.mrc' % (angle,))
 			if self.checkPeakInfo(peakinfo):
+				goodcheck = True
 				break
-		self.newpeakinfo = peakinfo
+		if goodcheck:
+			self.newpeakinfo = peakinfo
+		else:
+			self.newpeakinfo = bestpeakinfo
+		self.logger.info('best angle: %s' % (self.newpeakinfo['template angle']
 
 	def checkPeakInfo(self, peakinfo):
-		print 'OLDPEAK', self.oldpeakinfo
-		print 'NEWPEAK', peakinfo
-		return True
+		oldsnr = self.oldpeakinfo['snr']
+		oldminsum = self.oldpeakinfo['minsum']
+		newsnr = peakinfo['snr']
+		newminsum = peakinfo['minsum']
+		snrdiff = newsnr - oldsnr
+		minsumdiff = newminsum - oldminsum
+		percentsnr = 100 * snrdiff / oldsnr
+		percentminsum = 100 * minsumdiff / oldminsum
+
+		print '  OLD'
+		print '    MINSUM', oldminsum
+		print '    SNR', oldsnr
+		print '  NEW'
+		print '    MINSUM', newminsum
+		print '    SNR', newsnr
+		print '  ERR'
+		print '    MINSUM', minsumdiff, percentminsum
+		print '    SNR', snrdiff, percentsnr
+		return False
 
 	def correlateTemplate(self):
 		## correlate
@@ -166,7 +198,7 @@ class DTFinder(targetfinder.TargetFinder):
 
 		# find peak
 		peakinfo = peakfinder.findSubpixelPeak(cor)
-		self.printPeakInfo(peakinfo)
+		#self.printPeakInfo(peakinfo)
 		self.corpeak = peakinfo['subpixel peak']
 		ivtargets = [(self.corpeak[1],self.corpeak[0])]
 		self.setTargets(ivtargets, 'peak', block=True)
