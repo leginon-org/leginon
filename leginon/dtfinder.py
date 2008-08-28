@@ -157,7 +157,7 @@ class DTFinder(targetfinder.TargetFinder):
 			self.newpeakinfo = peakinfo
 		else:
 			self.newpeakinfo = bestpeakinfo
-		self.logger.info('best angle: %s' % (self.newpeakinfo['template angle'])
+		self.logger.info('best angle: %s' % (self.newpeakinfo['template angle']))
 
 	def checkPeakInfo(self, peakinfo):
 		oldsnr = self.oldpeakinfo['snr']
