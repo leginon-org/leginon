@@ -262,9 +262,10 @@ class DTFinder(targetfinder.TargetFinder):
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
 			targets = self.panel.getTargetPositions('acquisition')
-			row = targets[0][1]
-			col = targets[0][0]
-			self.autoCorrelate((row,col))
+			if targets:
+				row = targets[0][1]
+				col = targets[0][0]
+				self.autoCorrelate((row,col))
 
 		## store the acquisition target coords in template info
 		targets = self.panel.getTargetPositions('acquisition')
