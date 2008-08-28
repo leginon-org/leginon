@@ -1277,6 +1277,7 @@ class DTFinderSettingsData(TargetFinderSettingsData):
 			('correlation type', str),
 			('rotate', bool),
 			('angle increment', float),
+			('snr threshold', float),
 		)
 	typemap = classmethod(typemap)
 

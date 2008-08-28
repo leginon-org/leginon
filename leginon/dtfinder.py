@@ -31,17 +31,17 @@ class DTFinder(targetfinder.TargetFinder):
 		'correlation lpf': 1.3,
 		'rotate': False,
 		'angle increment': 5,
+		'snr threshold': 6.0,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.images = {
 			'original': None,
 			'templateA': None,
+			'templateB-unshifted': None,
 			'templateB': None,
 			'correlation': None,
 		}
-
-		self.corpeak = None
 
 		self.cortypes = ['cross', 'phase']
 		self.userpause = threading.Event()
@@ -95,7 +95,7 @@ class DTFinder(targetfinder.TargetFinder):
 	def makeTemplateB(self, angle=0):
 		# rotate template
 		if angle:
-			template = scipy.ndimage.rotate(self.images['templateA'], angle)
+			template = scipy.ndimage.rotate(self.images['templateA'], angle, reshape=False)
 		else:
 			template = self.images['templateA']
 
@@ -105,6 +105,7 @@ class DTFinder(targetfinder.TargetFinder):
 		fulltemplate = numpy.zeros(newimage.shape, newimage.dtype)
 		fulltemplate[:template.shape[0], :template.shape[1]] = template
 
+		self.images['templateB-unshifted'] = fulltemplate
 		self.setImage(fulltemplate, 'templateB')
 
 		# shift center of template to 0,0
@@ -159,6 +160,12 @@ class DTFinder(targetfinder.TargetFinder):
 			self.newpeakinfo = bestpeakinfo
 		self.logger.info('best angle: %s' % (self.newpeakinfo['template angle']))
 
+		self.setImage(self.newpeakinfo['templateB-unshifted'], 'templateB')
+		self.setImage(self.newpeakinfo['correlation'], 'correlation')
+		corpeak = self.newpeakinfo['subpixel peak']
+		ivtargets = [(corpeak[1], corpeak[0])]
+		self.setTargets(ivtargets, 'peak', block=True)
+
 	def checkPeakInfo(self, peakinfo):
 		oldsnr = self.oldpeakinfo['snr']
 		oldminsum = self.oldpeakinfo['minsum']
@@ -169,16 +176,17 @@ class DTFinder(targetfinder.TargetFinder):
 		percentsnr = 100 * snrdiff / oldsnr
 		percentminsum = 100 * minsumdiff / oldminsum
 
-		print '  OLD'
-		print '    MINSUM', oldminsum
-		print '    SNR', oldsnr
 		print '  NEW'
 		print '    MINSUM', newminsum
 		print '    SNR', newsnr
 		print '  ERR'
 		print '    MINSUM', minsumdiff, percentminsum
 		print '    SNR', snrdiff, percentsnr
-		return False
+
+		if newsnr > self.settings['snr threshold']:
+			return True
+		else:
+			return False
 
 	def correlateTemplate(self):
 		## correlate
@@ -198,9 +206,11 @@ class DTFinder(targetfinder.TargetFinder):
 
 		# find peak
 		peakinfo = peakfinder.findSubpixelPeak(cor)
+		peakinfo['correlation'] = cor
+		peakinfo['templateB-unshifted'] = self.images['templateB-unshifted']
 		#self.printPeakInfo(peakinfo)
-		self.corpeak = peakinfo['subpixel peak']
-		ivtargets = [(self.corpeak[1],self.corpeak[0])]
+		corpeak = peakinfo['subpixel peak']
+		ivtargets = [(corpeak[1], corpeak[0])]
 		self.setTargets(ivtargets, 'peak', block=True)
 		return peakinfo
 
@@ -211,8 +221,8 @@ class DTFinder(targetfinder.TargetFinder):
 
 	def makeFinalTargets(self):
 		targets = self.panel.getTargetPositions('peak')
-		self.setTargets(targets, 'acquisition')
-		self.setTargets(targets, 'focus')
+		self.setTargets(targets, 'acquisition', block=True)
+		self.setTargets(targets, 'focus', block=True)
 
 	def storeTemplateInfo(self, imagedata, row, column, peakinfo):
 		temp = leginondata.DynamicTemplateData()
@@ -220,6 +230,7 @@ class DTFinder(targetfinder.TargetFinder):
 		temp['image'] = imagedata
 		temp['center_row'] = row
 		temp['center_column'] = column
+		temp['angle'] = peakinfo['template angle']
 		for key in ('minsum', 'snr'):
 			temp[key] = peakinfo[key]
 		temp.insert(force=True)

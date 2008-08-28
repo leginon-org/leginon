@@ -150,10 +150,16 @@ class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
 		szcor.Add(self.widgets['correlation lpf'], (1,1), (1,1))
 		self.widgets['rotate'] = wx.CheckBox(self, -1, 'Rotate')
 		szcor.Add(self.widgets['rotate'], (2,0), (1,1))
+
 		label = wx.StaticText(self, -1, 'Angle Increment')
 		self.widgets['angle increment'] = FloatEntry(self, -1, min=0.0, chars=4)
 		szcor.Add(label, (3,0), (1,1))
 		szcor.Add(self.widgets['angle increment'], (3,1), (1,1))
+
+		label = wx.StaticText(self, -1, 'SNR Threshold')
+		self.widgets['snr threshold'] = FloatEntry(self, -1, min=0.0, chars=4)
+		szcor.Add(label, (4,0), (1,1))
+		szcor.Add(self.widgets['angle increment'], (4,1), (1,1))
 
 		self.bcor = wx.Button(self, -1, 'Correlate')
 		szbutton = wx.GridBagSizer(5, 5)
