@@ -85,9 +85,16 @@ class DTFinder(targetfinder.TargetFinder):
 		center_r = tempinfo['center_row']
 		center_c = tempinfo['center_column']
 		tempsize = self.settings['template size']
-		tempsize = int(tempsize * oldimage.shape[0] / 100.0)
-		tempshape = tempsize,tempsize
-		templateA = imagefun.crop_at(oldimage, (center_r, center_c), tempshape, mode='wrap')
+		if tempsize == 100:
+			imcenter_r = oldimage.shape[0] / 2
+			imcenter_c = oldimage.shape[1] / 2
+			shift_r = imcenter_r - center_r
+			shift_c = imcenter_c - center_c
+			templateA = scipy.ndimage.shift(oldimage, (shift_r, shift_c), mode='wrap')
+		else:
+			tempsize = int(tempsize * oldimage.shape[0] / 100.0)
+			tempshape = tempsize,tempsize
+			templateA = imagefun.crop_at(oldimage, (center_r, center_c), tempshape, mode='wrap')
 		self.images['templateA'] = templateA
 		self.setImage(templateA, 'templateA')
 		return templateA
@@ -230,7 +237,6 @@ class DTFinder(targetfinder.TargetFinder):
 		temp['image'] = imagedata
 		temp['center_row'] = row
 		temp['center_column'] = column
-		temp['angle'] = peakinfo['template angle']
 		for key in ('minsum', 'snr'):
 			temp[key] = peakinfo[key]
 		temp.insert(force=True)

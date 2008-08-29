@@ -159,7 +159,7 @@ class CorrelationSettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'SNR Threshold')
 		self.widgets['snr threshold'] = FloatEntry(self, -1, min=0.0, chars=4)
 		szcor.Add(label, (4,0), (1,1))
-		szcor.Add(self.widgets['angle increment'], (4,1), (1,1))
+		szcor.Add(self.widgets['snr threshold'], (4,1), (1,1))
 
 		self.bcor = wx.Button(self, -1, 'Correlate')
 		szbutton = wx.GridBagSizer(5, 5)
