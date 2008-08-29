@@ -184,7 +184,6 @@ class AlignZeroLossPeak(Reference):
 			self.processRequest(incoming_data)
 
 	def _processRequest(self, request_data):
-		#shift_preset_name = self.settings['shift check preset']
 		check_preset_name = self.settings['check preset']
 		self.checkpreset = self.presets_client.getPresetFromDB(check_preset_name)
 		preset_name = request_data['preset']
@@ -206,15 +205,17 @@ class AlignZeroLossPeak(Reference):
 
 		if pause_time is not None:
 			time.sleep(pause_time)
-		need_align = self.checkShift()
-
+		if self.settings['threshold'] >= 0.1:
+			need_align = self.checkShift()
+		else:
+			need_align = True
 		if need_align:
 			try:
 				self.execute(request_data)
 			except Exception, e:
 				self.logger.error('Error executing request, %s' % e)
 				return
-#			self.last_processed = time.time()
+			self.last_processed = time.time()
 	
 	def execute(self, request_data):
 		ccd_camera = self.instrument.ccdcamera
