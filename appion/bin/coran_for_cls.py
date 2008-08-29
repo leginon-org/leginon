@@ -309,15 +309,7 @@ if __name__== '__main__':
 	#Determine box size
 	tmpimg=EMAN.readImages('start.hed',1,1)
 	params['boxsize']=tmpimg[0].xSize()
-if __name__== '__main__':
-	#Parse inputs
-	args=sys.argv[1:]
-	params=createDefaults()
-	parseInput(args,params)
-	
-	#Determine box size
-	tmpimg=EMAN.readImages('start.hed',1,1)
-	params['boxsize']=tmpimg[0].xSize()
+
 	#Set up for coran
 	if os.path.exists(params['corandir']):
 		print "Warning %s exists and is being overwritten" % params['corandir']
@@ -346,6 +338,7 @@ if __name__== '__main__':
 
 	f=open('commands.txt','w')
 	for cls in clslist:
+		print "processing class",cls
 		#make aligned stack
 		command='clstoaligned.py ' + cls
 		print command
@@ -358,10 +351,12 @@ if __name__== '__main__':
 		os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
 		
 		coranbatch='coranfor'+cls.split('.')[0]+'.bat'
-		print coranbatch
 
 		#make spider batch
 		params['nptcls']=getNPtcls(cls)
+		# if no particles, create an empty class average
+		if params['nprcls'] == 0:
+			os.system("proc2d ")
 		# if only 3 particles or less, turn particles into the class averages
 		if params['nptcls'] < 4:
 			#this is an ugly hack because spider sux
@@ -372,7 +367,7 @@ if __name__== '__main__':
 			dummyfile=open(os.path.join(dummyclsdir,dummyfilename),'w')
 			dummyfile.write(';bat/spi\n')
 			for ptcl in range(0,params['nptcls']):
-				dummyfile.write('%d 1 spidersux\n' % ptcl)
+				dummyfile.write('%d 1 %d\n' % (ptcl,ptcl+1))
 			dummyfile.close()
 			print "WARNING not enough particles in class for subclassification"
 		# otherwise, run coran
@@ -461,6 +456,13 @@ if __name__== '__main__':
 	pad=params['boxsize']*1.25
 	if pad%2:
 		pad=pad+1
+
+	# save previous model
+	mvcommand='mv ../threed.%d.mrc ../threed.%d.old.mrc' % (params['iter'],params['iter'])
+	os.system(mvcommand)
+	mvcommand='mv ../threed.%da.mrc ../threed.%da.old.mrc' % (params['iter'],params['iter'])
+	os.system(mvcommand)
+	
 	# create 3d model:
 	make3dcommand='make3d goodavgs.hed out=threed.%d.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['iter'], params['mask'], params['sym'], pad, params['hard'])
 	print make3dcommand
@@ -485,10 +487,6 @@ if __name__== '__main__':
 		print fsccommand
 		os.system(fsccommand)
 	
-#	mvcommand='mv ../classes.%d.hed ../classes.%d.old.hed' % (params['iter'],params['iter'])
-#	os.system(mvcommand)
-#	mvcommand='mv ../classes.%d.img ../classes.%d.old.img' % (params['iter'],params['iter'])
-#	os.system(mvcommand)
 	mvcommand='mv goodavgs.hed ../classes_coran.%d.hed' % params['iter']
 	os.system(mvcommand)
 	mvcommand='mv goodavgs.img ../classes_coran.%d.img' % params['iter']
