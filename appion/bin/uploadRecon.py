@@ -121,7 +121,7 @@ class UploadReconScript(appionScript.AppionScript):
 		### parse out the refinement parameters from the log file
 		apRecon.parseLogFile(self.params)
 
-		### parse out the massage passing subclassification parameters from the job/log file
+		### parse out the message passing subclassification parameters from the job/log file
 		if self.params['package'] == 'EMAN/MsgP':
 			apRecon.parseMsgPassingParams(self.params)
 
