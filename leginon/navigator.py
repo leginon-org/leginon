@@ -296,6 +296,7 @@ class Navigator(node.Node):
 			if self.outofbounds(target, shape):
 				self.logger.info('target out of bounds, so cannot check error')
 				self.setStatus('idle')
+				self.reacquireImage()
 				return 'error'
 			if self.settings['cycle each']:
 				self.cycleToPreset(preset)
