@@ -299,7 +299,17 @@ def flagGoodParticleInClassLst(clsfile, goodclsfile):
 		f1.write(l)
 	f1.close()
 	os.rename(new_clsfile,clsfile)	
-	
+
+def writeBlankImage(outfile,boxsize,place,type=None):
+	a=EMAN.EMData()
+	a.setSize(boxsize,boxsize)
+	a.zero()
+	if type:
+		a.writeImage(outfile,place,type)
+	else:
+		a.writeImage(outfile,place)
+	return
+
 if __name__== '__main__':
 	#Parse inputs
 	args=sys.argv[1:]
@@ -348,18 +358,21 @@ if __name__== '__main__':
 		clsdir=cls.split('.')[0]+'.dir'
 		os.mkdir(clsdir)
 	
-		os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
+		if os.path.exists('aligned.spi'):
+			os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
 		
 		coranbatch='coranfor'+cls.split('.')[0]+'.bat'
 
 		#make spider batch
 		params['nptcls']=getNPtcls(cls)
 		# if no particles, create an empty class average
-		if params['nprcls'] == 0:
-			os.system("proc2d ")
+		if params['nptcls'] == 0:
+			writeBlankImage('classes_avg.spi',params['boxsize'],0,EMAN.EMData.SINGLE_SPIDER)
+			print "WARNING!! no particles in class"
+			
 		# if only 3 particles or less, turn particles into the class averages
-		if params['nptcls'] < 4:
-			#this is an ugly hack because spider sux
+		elif params['nptcls'] < 4:
+			#this is an ugly hack, just average the particles together, no ref-free
 			os.system("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
 			dummyclsdir=os.path.join(clsdir,'classes')
 			os.mkdir(dummyclsdir)
@@ -369,7 +382,8 @@ if __name__== '__main__':
 			for ptcl in range(0,params['nptcls']):
 				dummyfile.write('%d 1 %d\n' % (ptcl,ptcl+1))
 			dummyfile.close()
-			print "WARNING not enough particles in class for subclassification"
+			print "WARNING!! not enough particles in class for subclassification"
+
 		# otherwise, run coran
 		else:
 			makeSpiderBatch(params,coranbatch,clsdir)
@@ -382,6 +396,19 @@ if __name__== '__main__':
 	#Determine best averages
 	#Create list of cc values	
 	for cls in range(0,len(clslist)):
+		# if no particles in class, create empty class averages
+		if not os.path.exists(os.path.join(clslist[cls].split('.')[0]+'.dir','aligned.spi')):
+			# blank projection image
+			writeBlankImage('goodavgs.hed',params['boxsize'],-1)
+			# blank class average
+			writeBlankImage('goodavgs.hed',params['boxsize'],-1)
+			# blank "good" average
+			writeBlankImage('allavgs.hed',params['boxsize'],-1)
+			if params['eotest'] is True:
+				writeBlankImage('goodavgs.even.hed',params['boxsize'],-1)
+				writeBlankImage('goodavgs.odd.hed',params['boxsize'],-1)
+				continue
+			
 		avgname=os.path.join(clslist[cls].split('.')[0]+'.dir','classes_avg.spi')
 		averages=EMAN.readImages(avgname,-1,-1,0)
 		e=projections[cls].getEuler()
