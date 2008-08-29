@@ -105,8 +105,9 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		# define goodindices for raster convolution
 		limitangledeg = self.settings['ellipse angle']
 		limitanglerad = math.radians(limitangledeg)
-		limita = self.settings['ellipse a']
-		limitb = self.settings['ellipse b']
+		# use ellipse diameter to define raster limit
+		limita = self.settings['ellipse a'] / 2.0
+		limitb = self.settings['ellipse b'] / 2.0
 		self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad)
 		# create raster
 		for target in targetlist:
