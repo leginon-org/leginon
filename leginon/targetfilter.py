@@ -15,6 +15,7 @@ Subclasses need to implement the filterTargets method.
 import node
 import data
 import event
+import threading
 import targethandler
 import gui.wx.TargetFilter
 
@@ -24,17 +25,21 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 	defaultsettings = {
 		'bypass':True,
 		'target type':'acquisition',	
+		'user check': False,
 	}
 	eventinputs = node.Node.eventinputs + targethandler.TargetWaitHandler.eventinputs + [event.ImageTargetListPublishEvent]
 	eventoutputs = node.Node.eventoutputs + targethandler.TargetWaitHandler.eventoutputs + [event.TargetListDoneEvent]
 										
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.userpause = threading.Event()
 		targethandler.TargetWaitHandler.__init__(self)
 
 		self.addEventInput(event.ImageTargetListPublishEvent, self.handleTargetListPublish)
 		self.addEventInput(event.QueuePublishEvent, self.handleQueuePublish)
 
+		self.test = False
+		self.abort = False
 		if self.__class__ == TargetFilter:
 			self.start()
 
@@ -43,6 +48,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		newtargetlistdata = self.__filterTargetList(targetlistdata,self.settings['target type'])
 		tid = self.makeTargetListEvent(newtargetlistdata)
 		self.publish(newtargetlistdata, pubevent=pubevent)
+		self.setStatus('idle')
 		status = self.waitForTargetListDone(tid)
 		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dmid, status=status)
 		self.outputEvent(e)
@@ -63,6 +69,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 					donetargetlist = data.DequeuedImageTargetListData(list=oldtargetlist,queue=queuedata)
 					self.publish(donetargetlist, database=True)
 		self.publish(queuedata, pubevent=True)
+		self.setStatus('idle')
 
 	def __filterTargetList(self, targetlistdata,type='acquisition'):
 		'''
@@ -76,22 +83,47 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			return targetlistdata
 		else:
 			oldtargets = self.researchTargets(list=targetlistdata,type=type)
-
+			alltargets = self.researchTargets(list=targetlistdata)
+			self.alltargets = alltargets
 			goodoldtargets = []
 			for oldtarget in oldtargets:
 				if oldtarget['status'] not in ('done', 'aborted'):
 					goodoldtargets.append(oldtarget)
-			
+			self.goodoldtargets = goodoldtargets
 			self.logger.info('Filter input: %d' % (len(goodoldtargets),))
 			newtargets = self.filterTargets(goodoldtargets)
 			self.logger.info('Filter output: %d' % (len(newtargets),))
-			alltargets = self.researchTargets(list=targetlistdata)
-			for target in alltargets:
-				if target['type'] != type and target['status'] not in ('done','aborted'):
-					newtarget = data.AcquisitionImageTargetData(initializer=target)
-					newtarget['delta row'] = target['delta row']
-					newtarget['delta column'] = target['delta column']
-					newtargets.append(newtarget)
+			newtargets = self.appendOtherTargets(alltargets,newtargets)
+			self.displayTargets(newtargets,targetlistdata)
+			if self.settings['user check']:
+				self.setStatus('user input')
+				self.logger.info('Waiting for user to check targets...')
+				self.panel.enableSubmitTargets()
+				self.userpause.clear()
+				self.userpause.wait()
+				self.setStatus('processing')
+				if self.abort:
+					self.markTargetsDone(alltargets)
+					self.abort = False
+					return targetlistdata
+				newtargets = self.onTest()
+				newtargets = self.appendOtherTargets(alltargets,newtargets)
+			self.newtargets = newtargets
+			self.targetlistdata = targetlistdata
+			newtargetlistdata = self.submitTargets()
+			return newtargetlistdata
+
+	def onSubmitTargets(self):
+		self.userpause.set()
+
+	def onAbortTargets(self):
+		self.abort = True
+		self.userpause.set()
+
+	def submitTargets(self):
+			targetlistdata = self.targetlistdata
+			alltargets = self.alltargets
+			newtargets = self.newtargets
 			totaloldtargetcount = self.getAllTargetCount(alltargets)
 			self.markTargetsDone(alltargets)
 			self.logger.info('Original targets marked done.')
@@ -103,6 +135,49 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				newtarget['number'] = i+1+totaloldtargetcount
 				self.publish(newtarget, database=True, dbforce=True)
 			return newtargetlistdata
+
+	def appendOtherTargets(self,alltargets,newtargets):
+			for target in alltargets:
+				if target['type'] != type and target['status'] not in ('done','aborted'):
+					newtarget = data.AcquisitionImageTargetData(initializer=target)
+					newtarget['delta row'] = target['delta row']
+					newtarget['delta column'] = target['delta column']
+					newtargets.append(newtarget)
+			return newtargets
+		
+	def displayTargets(self,targets,oldtargetlistdata):
+		done = []
+		acq = []
+		foc = []
+		preview = []
+		if oldtargetlistdata['image'] is not None:
+			halfrows = oldtargetlistdata['image']['camera']['dimension']['y'] / 2
+			halfcols = oldtargetlistdata['image']['camera']['dimension']['x'] / 2
+			image = oldtargetlistdata['image']['image']
+		elif len(targets) > 0:
+			halfrows = targets[0]['image']['camera']['dimension']['y'] / 2
+			halfcols = targets[0]['image']['camera']['dimension']['x'] / 2
+			image = targets[0]['image']['image']
+		else:
+			return
+		self.setImage(image, 'Image')
+		for target in targets:
+			drow = target['delta row']
+			dcol = target['delta column']
+			x = dcol + halfcols
+			y = drow + halfrows
+			disptarget = x,y
+			if target['status'] in ('done', 'aborted'):
+				done.append(disptarget)
+			elif target['type'] == 'acquisition':
+				acq.append(disptarget)
+			elif target['type'] == 'preview':
+				preview.append(disptarget)
+			elif target['type'] == 'focus':
+				foc.append(disptarget)
+		self.setTargets(acq, 'acquisition', block=True)
+		self.setTargets(foc, 'focus', block=True)
+		self.setTargets(preview, 'preview', block=True)
 
 	def getAllTargetCount(self,alltargetdata):
 		parentimgs =[]
@@ -118,3 +193,11 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 
 	def filterTargets(self, targetlist):
 		raise NotImplementedError()
+
+	def onTest(self):
+		goodoldtargets = self.goodoldtargets
+		self.logger.info('Filter input: %d' % (len(goodoldtargets),))
+		newtargets = self.filterTargets(goodoldtargets)
+		self.logger.info('Filter output: %d' % (len(newtargets),))
+		self.displayTargets(newtargets,{'image':None})
+		return newtargets

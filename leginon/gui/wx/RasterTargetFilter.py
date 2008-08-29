@@ -11,6 +11,7 @@ import gui.wx.TargetFilter
 from gui.wx.Entry import IntEntry, FloatEntry
 from gui.wx.Presets import PresetChoice
 from gui.wx.Choice import Choice
+import threading
 
 class Panel(gui.wx.TargetFilter.Panel):
 	icon = 'targetfilter'
@@ -40,6 +41,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['bypass'] = wx.CheckBox(self, -1,'Bypass Filter')
 		targettypes = ['acquisition','preview']
 		self.widgets['target type'] = wx.Choice(self, -1, choices=targettypes)
+		self.widgets['user check'] = wx.CheckBox(self, -1,'Verify filter before submitting')
 
 		self.widgets['raster spacing'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=8)
@@ -62,6 +64,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'Convoluting Target Type')
 		sztype.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sztype.Add(self.widgets['target type'], (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztype.Add(self.widgets['user check'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sztype.AddGrowableCol(0)
 		sz.Add(sztype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
@@ -105,13 +108,13 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'degrees')
 		szlimit.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'a-axis')
+		label = wx.StaticText(self, -1, '2 * a-axis')
 		szlimit.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlimit.Add(self.widgets['ellipse a'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'raster spacings')
 		szlimit.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		label = wx.StaticText(self, -1, 'b-axis')
+		label = wx.StaticText(self, -1, '2 * b-axis')
 		szlimit.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlimit.Add(self.widgets['ellipse b'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'raster spacings')
@@ -123,11 +126,20 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszr.Add(szr, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		sz.Add(sbszr, (2, 0), (1, 2), wx.EXPAND)
 
+		#test button
+		testbut = wx.Button(self, -1, 'test')
+		sz.Add(testbut, (3, 0), (1, 2), wx.ALIGN_RIGHT)
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, testbut)
+
 		#sb = wx.StaticBox(self, -1, 'Target Filter')
 		#sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		#sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sz]
+
+	def onTestButton(self, evt):
+		self.setNodeSettings()
+		threading.Thread(target=self.node.onTest).start()
 
 	def onAutoButton(self, evt):
 		self.setNodeSettings()
