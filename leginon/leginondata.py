@@ -1727,6 +1727,7 @@ class TargetFilterSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('bypass', bool),
 			('target type', str),
+			('user check', bool),
 		)
 	typemap = classmethod(typemap)
 
