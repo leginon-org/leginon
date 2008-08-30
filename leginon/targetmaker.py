@@ -98,9 +98,10 @@ class MosaicTargetMaker(TargetMaker):
 		if targets:
 			raise AtlasError('label "%s" is already used, choose another' % (label,))
 
-	def validateSettings(self):
-		label = self.settings['label']
-		self.checkLabel(label)
+	def validateSettings(self, evt=None):
+		if evt is None:
+			label = self.settings['label']
+			self.checkLabel(label)
 		radius = self.settings['radius']
 		if radius <= 0.0:
 			raise AtlasError('invalid radius specified')
@@ -182,11 +183,20 @@ class MosaicTargetMaker(TargetMaker):
 			# generated from external event
 			grid = evt['grid']
 			parts = []
+
+			if 'emgrid' in grid and grid['emgrid'] is not None and grid['emgrid']['name']:
+				# new, shorter style with grid name
+				gridname = grid['emgrid']['name'].replace(' ','_')
+				leadlabels = ['','i']
+			else:
+				# old style
+				gridname = '05d' % (grid['grid ID'])
+				leadlabels = ['GridID','Insertion']
 			if 'grid ID' in grid and grid['grid ID'] is not None:
-				grididstr = 'GridID%05d' % (grid['grid ID'],)
+				grididstr = leadlabels[0]+gridname
 				parts.append(grididstr)
 			if 'insertion' in grid and grid['insertion'] is not None:
-				insertionstr = 'Insertion%03d' % (grid['insertion'],)
+				insertionstr = '%s%03d' % (leadlabels[1],grid['insertion'])
 				parts.append(insertionstr)
 			sep = '_'
 			label = sep.join(parts)
@@ -195,13 +205,13 @@ class MosaicTargetMaker(TargetMaker):
 		return targetlist, grid
 
 	def _makeAtlas(self, evt):
-		args = self._calculateAtlas()
+		args = self._calculateAtlas(evt)
 		kwargs = {'evt': evt}
 		self._publishAtlas(*args, **kwargs)
 
-	def _calculateAtlas(self):
+	def _calculateAtlas(self,evt=None):
 		self.logger.info('Creating atlas targets...')
-		radius, overlap = self.validateSettings()
+		radius, overlap = self.validateSettings(evt)
 		scope, camera = self.getState()
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()

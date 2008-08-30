@@ -737,6 +737,15 @@ class GridData(Data):
 		return Data.typemap() + (
 			('grid ID', int),
 			('insertion', int),
+			('emgrid', EMGridData),
+		)
+	typemap = classmethod(typemap)
+
+class EMGridData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('project', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1624,6 +1633,13 @@ class RobotSettingsData(SettingsData):
 			('grid clear wait', bool),
 			('pause', bool),
 			('grid tray', str),
+		)
+	typemap = classmethod(typemap)
+
+class GridEntrySettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('grid name', str),
 		)
 	typemap = classmethod(typemap)
 

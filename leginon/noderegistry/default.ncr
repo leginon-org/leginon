@@ -174,3 +174,8 @@ type: Pipeline
 [FileNames]
 module: imageprocessorexample
 type: Pipeline
+
+[GridEntry]
+module: gridentry
+type: Pipeline
+
