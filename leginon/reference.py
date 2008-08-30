@@ -82,11 +82,9 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		target_delta_row = target_data['delta row']
 		target_delta_column = target_data['delta column']
 		pixel_shift = {'row': -target_delta_row, 'col': -target_delta_column}
-
 		target_scope = data.ScopeEMData(initializer=target_data['scope'])
 		for i in ['image shift', 'beam shift', 'stage position']:
 			target_scope[i] = dict(target_data['scope'][i])
-
 		target_camera = target_data['camera']
 
 		args = (pixel_shift, target_scope, target_camera)
@@ -102,9 +100,15 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		else:
 			check_preset_data = self.presets_client.getPresetByName(check_preset_name)
 			em_target_data['preset'] = check_preset_data
+		for i in ['image shift', 'beam shift']:
+			em_target_data[i] = em_target_data['preset'][i]
+		em_target_data['stage position'] = scope['stage position']
 		em_target_data['movetype'] = move_type
-		for i in ['image shift', 'beam shift', 'stage position']:
-			em_target_data[i] = dict(scope[i])
+		if move_type == 'modeled stage position':
+			scope_move_type = 'stage position'
+		else:
+			scope_move_type = move_type
+		em_target_data[scope_move_type] = scope[scope_move_type]
 		em_target_data['target'] = data.AcquisitionImageTargetData(initializer=target_data)
 
 		return em_target_data
@@ -166,7 +170,7 @@ class AlignZeroLossPeak(Reference):
 		'pause time': 3.0,
 		'interval time': 900.0,
 		'check preset': '',
-		'threshold': 1.5,
+		'threshold': 0.0,
 	}
 	eventinputs = Reference.eventinputs + [event.AlignZeroLossPeakPublishEvent]
 	panelclass = gui.wx.AlignZLP.AlignZeroLossPeakPanel
@@ -198,7 +202,7 @@ class AlignZeroLossPeak(Reference):
 				return
 
 		try:
-			self.moveToTarget(check_preset_name)
+			self.moveToTarget(preset_name)
 		except Exception, e:
 			self.logger.error('Error moving to target, %s' % e)
 			return
@@ -206,7 +210,14 @@ class AlignZeroLossPeak(Reference):
 		if pause_time is not None:
 			time.sleep(pause_time)
 		if self.settings['threshold'] >= 0.1:
+			try:
+				self.moveToTarget(check_preset_name)
+			except Exception, e:
+				self.logger.error('Error moving to target, %s' % e)
+				return
 			need_align = self.checkShift()
+			self.moveToTarget(preset_name)
+			
 		else:
 			need_align = True
 		if need_align:
@@ -268,7 +279,8 @@ class AlignZeroLossPeak(Reference):
 
 		shift_data = data.InternalEnergyShiftData(session=self.session, before=before_shift, after=after_shift)
 		self.publish(shift_data, database=True, dbforce=True)
-		self.resetZeroLossCheck()
+		if self.settings['threshold'] >= 0.1:
+			self.resetZeroLossCheck()
 
 	def checkShift(self):
 		ccd_camera = self.instrument.ccdcamera
@@ -338,7 +350,7 @@ class MeasureDose(Reference):
 
 	# override move to measure dose...
 	def moveToTarget(self, preset_name):
-		em_target_data = self.getEMTargetData()
+		em_target_data = self.getEMTargetData(preset_name)
 
 		self.publish(em_target_data, database=True)
 
