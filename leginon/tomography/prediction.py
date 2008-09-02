@@ -145,7 +145,7 @@ class Prediction(object):
 				r2[0] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.xs[1:]))
 				r2[1] = abs(self._getCorrelationCoefficient(tilt_group.tilts[1:], tilt_group.ys[1:]))
 				r2xy = abs(self._getCorrelationCoefficient(tilt_group.xs[1:], tilt_group.ys[1:]))
-				if max(r2) > 0.95 and r2xy > 0.95:
+				if max(r2) > 0.95 and r2xy > 0.95 and not self.fixed_model:
 					self.forcemodel = True
 				else:
 					self.forcemodel = False
