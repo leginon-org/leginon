@@ -94,9 +94,9 @@ class UploadReconScript(appionScript.AppionScript):
 			jobids = [result.dbid for result in results]
 			return 'Several Job IDs found for this run: %s\nYou will have to manually specify a jobid' % (jobids,)
 		else:
-			## fail because no job found
-			return 'Tried to look up job based on recon name and path, but no job was found'
-
+			## no job found
+			self.params['jobid'] = None
+			return ''
 
 	#=====================
 	def setOutDir(self):
