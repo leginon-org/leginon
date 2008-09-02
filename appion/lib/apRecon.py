@@ -728,7 +728,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 				corank=None
 
 			# message passing kept particle
-			if params['package']== 'EMAN/MsgP':
+			if params['package']== 'EMAN/MsgP' and len(ali) > 4:
 				msgk=bool(int(ali[4]))
 			else:
 				msgk=None
