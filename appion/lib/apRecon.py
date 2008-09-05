@@ -375,7 +375,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 
 	image1 = density+".1.png"
 	if not os.path.isfile(image1):
-		apDisplay.printError("Chimera failed to generate images")
+		apDisplay.printWarning("Chimera failed to generate images")
 
 	# create mrc of central slice for viruses
 	tmphed = density + '.hed'
