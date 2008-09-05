@@ -72,7 +72,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		if self.params['numpart'] > 9999:
+		if self.params['numpart'] > 129999:
 			apDisplay.printError("too many particles requested, max 9999: "+str(self.params['numpart']))
 		if self.params['initmethod'] not in self.initmethods:
 			apDisplay.printError("unknown initialization method defined: "
@@ -279,6 +279,11 @@ class NoRefAlignScript(appionScript.AppionScript):
 			+str(self.params['bin'])+" spiderswap " )
 		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
 		apEMAN.executeEmanCmd(emancmd)
+
+		### normalize and center
+		#apDisplay.printMsg("Normalize and centering template")
+		#emancmd = "proc2d "+mrcfile+" "+mrcfile+" edgenorm center"
+		#apEMAN.executeEmanCmd(emancmd)
 
 		### convert to SPIDER
 		apDisplay.printMsg("Converting template to SPIDER")
