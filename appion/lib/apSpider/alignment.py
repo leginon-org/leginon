@@ -163,9 +163,9 @@ def refBasedAlignParticles(stackfile, templatestack,
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
 		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
-		stackfile+"@******",                         # unaligned image series
+		stackfile+"@******",                        # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
-		rundir+("/paramdoc%02d" % (iternum)),                       # output angles document file
+		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
 	)
 	mySpider.close()
 
@@ -230,7 +230,16 @@ def checkMirror(templatenum):
 def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	"""
 	write aligned stack -- with python loop
-	
+
+	inputs:
+		oldstack
+		newstack (empty)
+		list of particle dictionaries for operations
+	modifies:
+		newstack
+	output:
+		none
+
 	I tried this loop in both spider and python; 
 	python was faster?!? -neil
 	"""
