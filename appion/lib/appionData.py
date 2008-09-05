@@ -438,24 +438,28 @@ class ApRefParamsData(Data):
 			('imask_diam', int),
 			('lp', int),
 			('xysearch', int),
+			('xystep', int),
+			('first_ring', int),
+			('last_ring', int),
+			('num_iter', int),
+			('invert_templs', bool),
 			('csym', int),
 			('num_particles', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefParamsData=ApRefParamsData
 
-class ApRefBasedAlignParticlesData(Data):
+class ApRefAlignParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refBasedRun', ApRefRunData),
+			('refTemplate', ApRefTemplateRunData),
 			('particle', ApStackParticlesData),
-			('rot_corr', float),
 			('reference', int),
-			('shift_x', float),
-			('shift_y', float),
+			('x_shift', float),
+			('y_shift', float),
 			('rotation', float),
+			('correlation', float),
 			('mirror', bool),
-			('template', ApTemplateImageData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefBasedAlignParticlesData=ApRefBasedAlignParticlesData
