@@ -40,7 +40,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
-		self.parser.add_option("--lowpass", dest="lowpass", type="float",
+		self.parser.add_option("--lowpass", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
