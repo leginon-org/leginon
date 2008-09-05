@@ -670,7 +670,7 @@ def ClCla(alignedstack, numpart=None, numclasses=40,
 		str(factorlist[-1]), #factor numbers
 		"5,8", 
 		"4", 
-		"0", # minimum number of particles per class
+		"2", # minimum number of particles per class
 		"Y", rundir+"/dendrogram.ps",
 		"Y", rundir+"/dendrogramdoc",
 	)
