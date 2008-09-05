@@ -418,6 +418,7 @@ class ApRefRunData(Data):
 			('path', ApPathData),
 			('description', str),
 			('hidden', bool),
+			('run_seconds', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefRunData=ApRefRunData
@@ -443,6 +444,7 @@ class ApRefParamsData(Data):
 			('last_ring', int),
 			('num_iter', int),
 			('invert_templs', bool),
+			('num_templs', int),
 			('csym', int),
 			('num_particles', int),
 		)
@@ -462,7 +464,7 @@ class ApRefAlignParticlesData(Data):
 			('mirror', bool),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApRefBasedAlignParticlesData=ApRefBasedAlignParticlesData
+leginondata.ApRefAlignParticlesData=ApRefAlignParticlesData
 
 class ApRefIterationData(Data):
 	def typemap(cls):
