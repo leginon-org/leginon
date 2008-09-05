@@ -12,6 +12,7 @@ import apStack
 import apEMAN
 import apTemplate
 import apParam
+import appionData
 from apSpider import alignment
 
 #=====================
@@ -33,7 +34,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			help="XY search distance (in pixels)", metavar="#")
 		self.parser.add_option("--xy-step", dest="xystep", type="int", default=1,
 			help="XY step distance (in pixels)", metavar="#")
-		self.parser.add_option("--lowpass", dest="lowpass", type="int",
+		self.parser.add_option("--lowpass", dest="lowpass", type="int", default=0,
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--template-list", dest="templatelist",
 			help="List of template ids to use, e.g. 1,2", metavar="2,5,6")
@@ -72,6 +73,13 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
+		### convert / check template data
+		self.templatelist = self.params['templatelist'].strip().split(",")
+		if not self.templatelist or type(self.templatelist) != type([]):
+			apDisplay.printError("could not parse template list="+self.params['templatelist'])
+		self.params['numtemplate'] = len(self.templatelist)
+		apDisplay.printMsg("Found "+str(self.params['numtemplate'])+" templates")
+
 	#=====================
 	def setOutDir(self):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -81,10 +89,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def insertRefBasedRun(self, partlist, insert=False):
-		# create a refBasedParam object
-		paramq = appionData.ApRefBasedParamsData()
+		# create a refParam object
+		paramq = appionData.ApRefParamsData()
 		paramq['num_particles'] = self.params['numpart']
-		paramq['particle_diam'] = self.params['diam']
 		paramq['lp'] = self.params['lowpass']
 		paramq['xysearch'] = self.params['xysearch']
 		paramq['xystep'] = self.params['xystep']
@@ -95,37 +102,40 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		paramq['invert_templs'] = self.params['inverttemplates']
 		paramsdata = paramq.query(results=1)
 
-		### create a refBasedRun object
-		runq = appionData.ApRefBasedRunData()
+		### create a refRun object
+		runq = appionData.ApRefRunData()
 		runq['name'] = self.params['runname']
 		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		runq['stack'] = self.stack['data']
-		### stackId, runId and refBasedPath make the refBasedRun unique:
+		### stackId, runname and refPath make the refRun unique:
 		uniquerun = runq.query(results=1)
 		### continue filling non-unique variables:
 		runq['description'] = self.params['description']
 		runq['run_seconds'] = self.params['runtime']
 
 		if paramsdata:
-			runq['refBasedParams'] = paramsdata[0]
+			runq['refParams'] = paramsdata[0]
 		else:
-			runq['refBasedParams'] = paramq
+			runq['refParams'] = paramq
 		# ... check if params associated with unique refBasedRun are consistent:
 		if uniquerun:
 			for i in runq:
 				if uniquerun[0][i] != runq[i]:
-					apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
-						str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
-		runq.insert()
+					apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
+						str(self.params['stackid'])+"\nis already in the database with different parameter: "+str(i))
+		if insert is True:
+			runq.insert()
 
 		### insert template data
+		reftempllist = []
 		for templateid in self.templatelist:
 			templatedata = apTemplate.getTemplateFromId(templateid)
 			reftemplq = appionData.ApRefTemplateRunData()
 			reftemplq['refRun'] = runq
 			reftemplq['refTemplate'] = templatedata
+			reftempllist.append(reftemplq)
 			reftempldata = reftemplq.query(results=1)
-			if not reftempldata:
+			if not reftempldata and insert is True:
 				reftemplq.insert()
 
 		### insert particle data
@@ -142,13 +152,12 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			'yshift': float(data[6]),
 			"""
 
-			alignpartq = ApRefAlignParticlesData()
-			#template
-			templateid = self.templatelist[partdict['template']-1]
-			templatedata = apTemplate.getTemplateFromId(templateid)
-			alignpartq['refTemplate'] = templatedata
+			alignpartq = appionData.ApRefAlignParticlesData()
+			#template data
+			reftempldata = reftempllist[partdict['template']-1]
+			alignpartq['refTemplate'] = reftempldata
 			#stack particle
-			stackpart = apStack.getStackParticle(stackid, partdict['num'])
+			stackpart = apStack.getStackParticle(self.params['stackid'], partdict['num'])
 			alignpartq['particle'] = stackpart
 			#direct info
 			alignpartq['reference'] = partdict['template']
@@ -159,7 +168,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			alignpartq['mirror'] = partdict['mirror']
 
 			alignpartdata = alignpartq.query(results=1)
-			if not alignpartdata:
+			if not alignpartdata and insert is True:
 				alignpartq.insert()
 		return
 
@@ -196,10 +205,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		"""
 		takes the spider file and creates an average template of all particles
 		"""
-		self.templatelist = self.params['templatelist'].strip().split(",")
-		if not self.templatelist or type(self.templatelist) != type([]):
-			apDisplay.printError("could not parse template list="+self.params['templatelist'])
-		self.params['numtemplate'] = len(self.templatelist)
+
 
 		templatestack = os.path.join(self.params['outdir'], "templatestack00.spi")
 		if os.path.isfile(templatestack):
@@ -216,6 +222,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
+		print templateparams
 		apParam.createDirectory(os.path.join(self.params['outdir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
@@ -232,9 +239,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 	#=====================
 	def updateTemplateStack(self, alignedstack, partlist, iternum):
 		"""
-		Function does 2 things:
-		(1) Average particles that match template to create new template
-		(2) Rotate and center particles for next round of refinement
+		Function to Average particles that match template to create new templates
 		"""
 
 		#templatestr = os.path.join(self.params['outdir'], "templates/filt*.mrc")
@@ -317,6 +322,10 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
+		### test insert to make sure data is not overwritten
+		self.params['runtime'] = 0
+		self.insertRefBasedRun([], insert=False)
+
 		#convert stack to spider
 		spiderstack = self.createSpiderFile()
 
@@ -347,11 +356,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			self.params['runtime'] = aligntime
 			apDisplay.printWarning("insert not working yet")
-			apAlignment.insertRefBasedRun(partlist, insert=False)
+			self.insertRefBasedRun(partlist, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
-
-		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 
 #=====================
