@@ -95,7 +95,7 @@ def save_image(path, format):
 # -----------------------------------------------------------------------------
 #
 def render_volume(tmp_path, vol_path, contour=1.5, 
-	zoom_factor=1.0, image_size=(512, 512), imgFormat="PNG", sym="C"):
+	zoom_factor=1.0, image_size=(1024, 1024), imgFormat="PNG", sym="C"):
 
 	chimera.viewer.windowSize = image_size
 
@@ -177,6 +177,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 			runChimCommand('turn x -45')
 			save_image(image5, format=imgFormat)
 		else:
+			return
 			### works about 35% of time ???
 			writeMessageToLog("turn: get clipped side view")
 			xsize, ysize, zsize = v.data.size
