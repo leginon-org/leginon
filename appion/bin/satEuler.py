@@ -466,9 +466,9 @@ class satEulerScript(appionScript.AppionScript):
 			if eulerpair['part1']['reject'] == 1 and eulerpair['part2']['reject'] == 1:
 				skippair += 1
 				continue
-			goodtot = (abs(eulerpair['totdist'] - 15.0) < self.params['cutrange'])
-			badtot = (abs(eulerpair['totdist'] - 15.0) > 3*self.params['cutrange'])
-			goodang = (abs(eulerpair['angdist'] - 15.0) < self.params['cutrange'])
+			goodtot = (abs(eulerpair['totdist'] - self.params['angle']) < self.params['cutrange'])
+			badtot = (abs(eulerpair['totdist'] - self.params['angle']) > 3*self.params['cutrange'])
+			goodang = (abs(eulerpair['angdist'] - self.params['angle']) < self.params['cutrange'])
 			if goodtot:
 				if eulerpair['part1']['tilt'] < eulerpair['part2']['tilt']:
 					notiltkeeplist.append(eulerpair['part1']['partid']-1)
@@ -639,6 +639,8 @@ class satEulerScript(appionScript.AppionScript):
 			help="Histogram step size in degrees, default=1.0", metavar="FLOAT")
 		self.parser.add_option("-c", "--cutrange", dest="cutrange", type='float', default=5.0,
 			help="Keep list cut range, default=5.0 ==> 15 +- 5 ==> 10 -- 20", metavar="FLOAT")
+		self.parser.add_option("-a", "--angle", dest="angle", type='float', default=15.0,
+			help="Ideal angle in degrees, default=15.0", metavar="FLOAT")
 
 	#=====================
 	def checkConflicts(self):
