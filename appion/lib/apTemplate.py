@@ -57,6 +57,7 @@ def getTemplates(params):
 		copytemplatepath = os.path.join(params['rundir'], "origTemplate"+str(index)+".mrc")
 		scaletemplatepath = os.path.join(params['rundir'], "scaledTemplate"+str(index)+".mrc")
 		filtertemplatepath = os.path.join(params['rundir'], "filterTemplate"+str(index)+".mrc")
+		#masktemplatepath = os.path.join(params['rundir'], "maskTemplate"+str(index)+".mrc")
 		shutil.copyfile(origtemplatepath, copytemplatepath)
 
 		#RESCALE THE TEMPLATE
@@ -71,6 +72,12 @@ def getTemplates(params):
 		templatearray = apImage.preProcessImage(templatearray, params=params, highpass=0, planeReg=False, invert=False)
 		#write to file
 		apImage.arrayToMrc(templatearray, filtertemplatepath, msg=False)
+
+		### MASK THE TEMPLATE AND SAVE
+		#mask the template, visual purposes only
+		#maskrad = params['diam']/params['apix']/params['bin']/2.0
+		#maskarray = 
+		#apImage.arrayToMrc(templatearray, masktemplatepath, msg=False)
 
 		#ADD TO TEMPLATE LIST
 		params['templatelist'].append(os.path.basename(filtertemplatepath))
