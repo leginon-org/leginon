@@ -19,6 +19,7 @@ def runSpectralFindEM(imgdict, params, thread=False):
 	to get cross-correlation maps
 	"""
 	imgname = imgdict['filename']
+	dwnimgname = os.path.splitext(imgname)[0]+".dwn.mrc"
 	os.chdir(params['rundir'])
 	joblist = []
 	ccmaplist = []
@@ -38,7 +39,7 @@ def runSpectralFindEM(imgdict, params, thread=False):
 		params["startang"+str(100+classavg)] = params["startang"+str(classavg)] 
 		params["endang"+str(100+classavg)] = params["endang"+str(classavg)]
 		params["incrang"+str(100+classavg)] = params["incrang"+str(classavg)]
-		feed = findEMString(100+classavg, templatename, imgname, ccmapfile1, params)
+		feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
 		execFindEM(feed)
 
 		#Second round: template x template
@@ -74,7 +75,6 @@ def runSpectralFindEM(imgdict, params, thread=False):
 			job.join()
 	return ccmaplist
 
-
 #===========
 def runFindEM(imgdict, params, thread=False):
 	"""
@@ -82,6 +82,7 @@ def runFindEM(imgdict, params, thread=False):
 	to get cross-correlation maps
 	"""
 	imgname = imgdict['filename']
+	dwnimgname = os.path.splitext(imgname)[0]+".dwn.mrc"
 	os.chdir(params['rundir'])
 	joblist = []
 	ccmaplist = []
@@ -102,7 +103,7 @@ def runFindEM(imgdict, params, thread=False):
 		apFile.removeFile(ccmapfile)
 
 		#GET FINDEM RUN COMMANDS
-		feed = findEMString(classavg, templatename, imgname, ccmapfile, params)
+		feed = findEMString(classavg, templatename, dwnimgname, ccmapfile, params)
 
 		#RUN THE PROGRAM
 		if thread is True:
@@ -161,10 +162,9 @@ def execFindEM(feed):
 	apDisplay.printMsg("\nfinished in "+apDisplay.timeString(time.time()-t0))
 
 #===========
-def findEMString(classavg, templatename, imgname, ccmapfile, params):
+def findEMString(classavg, templatename, dwnimgname, ccmapfile, params):
 
 	#IMAGE INFO
-	dwnimgname = os.path.splitext(imgname)[0]+".dwn.mrc"
 	if not os.path.isfile(dwnimgname):
 		apDisplay.printError("image file, "+dwnimgname+" was not found")
 	apDisplay.printMsg("image file, "+apDisplay.short(dwnimgname))
