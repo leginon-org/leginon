@@ -207,7 +207,7 @@ def commitSubStack(params, newname=False):
 	stackq['hidden'] = False
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
-	stackq['pixelsize'] = params['pixelsize']
+	stackq['pixelsize'] = oldstackdata['pixelsize']
 
 	partinserted = 0
 	#Insert particles
