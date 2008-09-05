@@ -207,6 +207,7 @@ def commitSubStack(params, newname=False):
 	stackq['hidden'] = False
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
+	stackq['pixelsize'] = params['pixelsize']
 
 	partinserted = 0
 	#Insert particles
@@ -268,6 +269,12 @@ def getStackPixelSizeFromStackId(stackId):
 
 	Not tested on defocal pairs
 	"""
+	stackdata = getOnlyStackData(stackId, msg=False)
+	if stackdata['pixelsize'] is not None:
+		### Quicker method
+		stackapix = stackdata['pixelsize']*1e10
+		apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
+		return stackapix
 	apDisplay.printWarning("Getting stack pixel size from DB, not tested on defocal pairs")
 	stackpart = getOneParticleFromStackId(stackId, msg=False)
 	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
