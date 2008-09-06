@@ -313,7 +313,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for partdict in partlist:
-		print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
+		#print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
 		p = partdict['num']
 		mySpider.toSpiderQuiet(
 			"RT SQ",
