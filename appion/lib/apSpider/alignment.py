@@ -25,6 +25,8 @@ A large collection of SPIDER functions
 I try to keep the trend
 image file: 
 	*****img.spi
+image stack file: 
+	*****stack.spi
 doc/keep/reject file: 
 	*****doc.spi
 file with some data:
@@ -131,10 +133,12 @@ def readRefFreeDocFile(docfile, picklefile):
 
 #===============================
 def refBasedAlignParticles(stackfile, templatestack, 
+		origstackfile, 
 		xysearch, xystep, 
 		numpart, numtemplate,
 		firstring=2, lastring=100, 
-		dataext=".spi", iternum=1):
+		dataext=".spi", 
+		iternum=1, oldpartlist=None):
 	"""
 	inputs:
 		stack
@@ -149,6 +153,8 @@ def refBasedAlignParticles(stackfile, templatestack,
 		templatestack = templatestack[:-4]
 	if dataext in stackfile:
 		stackfile = stackfile[:-4]
+	if dataext in origstackfile:
+		origstackfile = origstackfile[:-4]
 	t0 = time.time()
 	rundir = "alignments"
 	apParam.createDirectory(rundir)
@@ -172,11 +178,14 @@ def refBasedAlignParticles(stackfile, templatestack,
 	### convert spider rotation, shift data to python
 	docfile = rundir+("/paramdoc%02d" % (iternum))+dataext
 	picklefile = rundir+("/paramdoc%02d" % (iternum))+".pickle"
-	partlist = readRefBasedDocFile(docfile, picklefile)
+	if oldpartlist is not None and iternum > 1:
+		partlist = updateRefBasedDocFile(oldpartlist, docfile, picklefile)
+	else:
+		partlist = readRefBasedDocFile(docfile, picklefile)
 
 	### write aligned stack -- with python loop
 	alignedstack = rundir+("/alignedstack%02d" % (iternum))
-	alignStack(stackfile, alignedstack, partlist, dataext)
+	alignStack(origstackfile, alignedstack, partlist, dataext)
 
 	### average stack
 	emancmd = ( "proc2d "+alignedstack+dataext+" "
@@ -191,8 +200,60 @@ def refBasedAlignParticles(stackfile, templatestack,
 	return alignedstack+dataext, partlist
 
 #===============================
+def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
+	apDisplay.printMsg("updating data from alignment doc file "+docfile)
+	if not os.path.isfile(docfile):
+		apDisplay.printError("Doc file, "+docfile+" does not exist")
+	docf = open(docfile, "r")
+	partlist = []
+	for line in docf:
+		data = line.strip().split()
+		if data[0][0] == ";":
+			continue
+		if len(data) < 6:
+			continue
+		templatenum = float(data[2])
+		newpartdict = {
+			'num': int(data[0]),
+			'template': int(abs(templatenum)),
+			'mirror': checkMirror(templatenum),
+			'score': float(data[3]),
+			'rot': wrap360(float(data[4])),
+			'xshift': float(data[5]),
+			'yshift': float(data[6]),
+		}
+		oldpartdict = oldpartlist[newpartdict['num']-1]
+		if newpartdict['num'] == oldpartdict['num']:
+			partdict = {
+				'num': newpartdict['num'],
+				'template': newpartdict['template'],
+				'score': newpartdict['score'],
+				'mirror': bool(oldpartdict['mirror']-newpartdict['mirror']),
+				'rot': wrap360(oldpartdict['rot']+newpartdict['rot']),
+				'xshift': oldpartdi_ct['xshift']+newpartdict['xshift'],
+				'yshift': oldpartdict['yshift']+newpartdict['yshift'],
+			}
+		else:
+			print oldpartdict
+			print newpartdict
+			apDisplay.printError("wrong particle in update")
+		partlist.append(partdict)
+	docf.close()
+	picklef = open(picklefile, "w")
+	cPickle.dump(partlist, picklef)
+	picklef.close()
+	return partlist
+
+#===============================
+def wrap360(theta):
+	f = theta % 360
+	if f > 180:
+		f = f - 360
+	return f
+
+#===============================
 def readRefBasedDocFile(docfile, picklefile):
-	apDisplay.printMsg("processing alignment doc file")
+	apDisplay.printMsg("processing alignment doc file "+docfile)
 	if not os.path.isfile(docfile):
 		apDisplay.printError("Doc file, "+docfile+" does not exist")
 	docf = open(docfile, "r")
@@ -209,7 +270,7 @@ def readRefBasedDocFile(docfile, picklefile):
 			'template': int(abs(templatenum)),
 			'mirror': checkMirror(templatenum),
 			'score': float(data[3]),
-			'rot': float(data[4]),
+			'rot': wrap360(float(data[4])),
 			'xshift': float(data[5]),
 			'yshift': float(data[6]),
 		}
@@ -243,6 +304,8 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	I tried this loop in both spider and python; 
 	python was faster?!? -neil
 	"""
+	if not os.path.isfile(oldstack+dataext):
+		apDisplay.printError("Could not find original stack: "+oldstack+dataext)
 
 	apDisplay.printMsg("applying alignment parameters to stack")
 
@@ -250,6 +313,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for partdict in partlist:
+		print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
 		p = partdict['num']
 		mySpider.toSpiderQuiet(
 			"RT SQ",
@@ -268,6 +332,10 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 				alignedstack+"@"+("%06d" % (p)),	
 			)
 	mySpider.close()
+
+	if not os.path.isfile(alignedstack+dataext):
+		apDisplay.printError("Failed to create stack "+alignedstack+dataext)
+
 	return
 
 

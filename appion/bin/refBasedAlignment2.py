@@ -6,7 +6,6 @@ import time
 #appion
 import appionScript
 import apDisplay
-import apAlignment
 import apFile
 import apStack
 import apEMAN
@@ -339,10 +338,11 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			iternum = i+1
 			apDisplay.printColor("\n\nITERATION "+str(iternum), "green")
 			alignedstack, partlist = alignment.refBasedAlignParticles(
-				usestack, templatestack, 
+				usestack, templatestack, spiderstack,
 				self.params['xysearch'], self.params['xystep'],
 				self.params['numpart'], self.params['numtemplate'],
-				self.params['firstring'], self.params['lastring'], iternum=iternum)
+				self.params['firstring'], self.params['lastring'], 
+				iternum=iternum, oldpartlist=None)
 			usestack = alignedstack
 			templatestack = self.updateTemplateStack(alignedstack, partlist, iternum)
 		aligntime = time.time() - aligntime
@@ -355,7 +355,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		if self.params['commit'] is True:
 			self.params['runtime'] = aligntime
-			apDisplay.printWarning("insert not working yet")
 			self.insertRefBasedRun(partlist, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
