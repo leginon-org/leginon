@@ -354,6 +354,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		os.remove(spiderstack)
 
 		if self.params['commit'] is True:
+			apDisplay.printMsg("committing results to DB")
 			self.params['runtime'] = aligntime
 			self.insertRefBasedRun(partlist, insert=True)
 		else:
