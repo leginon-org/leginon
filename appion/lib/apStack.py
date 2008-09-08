@@ -8,6 +8,7 @@ import apDatabase
 import apEMAN
 import apDisplay
 import appionData
+import apFile
 import numpy
 
 appiondb = apDB.apdb
@@ -46,6 +47,15 @@ def getStackParticlesFromId(stackid, msg=True):
 		apDisplay.printMsg("received "+str(len(stackpartdata))
 			+" stack particles in "+apDisplay.timeString(time.time()-t0))
 	return stackpartdata
+
+#--------
+def getNumberStackParticlesFromId(stackid, msg=True):
+	t0 = time.time()
+	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
+	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
+	numpart = apFile.numImagesInStack(stackpath)
+	return numpart
+
 
 #--------
 def sortStackParts(a, b):
