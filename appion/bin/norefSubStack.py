@@ -17,7 +17,7 @@ appiondb = apDB.apdb
 class subStackScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --norefclass=ID --keep-file=FILE [options]")
+		self.parser.set_usage("Usage: %prog --norefclass=ID --exclude=0,1,... [options]")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
@@ -28,10 +28,10 @@ class subStackScript(appionScript.AppionScript):
 			help="Stack description", metavar="TEXT")
 		self.parser.add_option("-n", "--new-stack-name", dest="runname",
 			help="Run id name", metavar="STR")
-		self.parser.add_option("--norefclass", dest="norefclassid",
-			help="REQUIRED: noref class id", metavar="ID")
+		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
+			help="noref class id", metavar="ID")
 		self.parser.add_option("--exclude", dest="exclude",
-			help="REQUIRED: classes to exclude in the new stack (1,5,8) following EMAN style in the webviewer", metavar="string")
+			help="EMAN style classes to exclude in the new stack (0,5,8)", metavar="0,1,...")
 
 	#=====================
 	def checkConflicts(self):
