@@ -758,22 +758,25 @@ class particledata {
 		return $r;
 	}
 
+	function getParticleCorrelationStats($runId) {
+	}
+
 	function hasParticleData ($sessionId) {
 		$r= ($this->getLastParticleRun($sessionId)) ? true : false;
 		return $r;
 	}
 
-	function getStats ($runId, $inspect=False, $selexval=False){
+	function getStats ($runId, $inspect=false, $selexval=false) {
 		$q="select count(p.`DEF_id`) as `totparticles`, "
 			."count(distinct p.`REF|leginondata|AcquisitionImageData|image`) as num, "
 			."min(p.correlation) as `min`, "
 			."max(p.correlation) as `max`, "
 			."avg(p.correlation) as `avg`, "
 			."stddev(p.correlation) as `stddev` "
-						."from ApParticleData p ";
+			."from ApParticleData p ";
 		// use the latest inspection value. This should be changed later 
 		if ($inspect) {
-						$q.= "left join ApAssessmentData ad "
+				$q.= "left join ApAssessmentData ad "
 				."on (ad.`REF|leginondata|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image`) ";
 		}
 		$q.="WHERE ";
@@ -783,8 +786,8 @@ class particledata {
 		}
 		if ($selexval) $q.="p.`correlation`>='$selexval' AND ";
 		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 			
 	}
 
@@ -2191,6 +2194,17 @@ class particledata {
 		return $r;
 		
 	}
+
+	function getNoRefClassParticleNumber($runId) {
+		$q="select classNumber, count(DEF_id) as number "
+			."from ApNoRefClassParticlesData "
+			."where `REF|ApNoRefClassRunData|classRun`='$runId' "
+			."group by classNumber "
+			."order by classNumber";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 }
 
 function simplify($e) {

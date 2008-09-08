@@ -574,7 +574,7 @@ function streamToArray($stream) {
 
 function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	$javascript = "
-	<style>
+  <style type='text/css'>
 	input, select {
 		border: 1px solid #AABDCC;
 	}
@@ -596,7 +596,11 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	var file_hed=\"$file_hed\"
 	var file_img=\"$file_img\"
 	var n_images=\"$n_images\"
-	var updateheader=\"$updateheader\"\n";
+	var updateheader=\"$updateheader\"
+	var excludeimages=Array()
+	var selectimages=Array()
+	var n_tiles=0
+	var lastselectedimage\n";
 	if (is_array($plist)) {
 		$javascript.="imgArray = new Array()\n";
 		foreach ($plist as $p) {
@@ -609,6 +613,7 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 			for(i = startImg; i <= endImg; i++) {
 				var tileId = addTile(wholemap, imgArray[i], force)
 			}
+			n_tiles=i
 		}\n";
   	}
 
@@ -620,6 +625,7 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 			for(i = startImg; i <= endImg; i++) {
 				var tileId = addTile(wholemap, i, force)
 			}
+			n_tiles=i
 		}\n";
 	}
 
@@ -636,16 +642,116 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 				+'&b='+binning
 				+'&uh='+updateheader
 
+		if (typeof stackinfo == 'object' && stackinfo[i]) {
+			filename +='&i='+stackinfo[i]
+		}
+
 		var img = $(tileId)
 		if(!img || force){
 			img = document.createElement(\"img\")
 			img.src = filename
 			img.setAttribute(\"id\", tileId)
 			img.setAttribute(\"class\", \"imgtile\")
-			wholemap.appendChild(img)
-		}
+			img.setAttribute(\"onclick\", \"setSelection(\"+i+\",\"+tileId+\")\")
+      wholemap.appendChild(img)
+   }
 
 		return tileId
+	}
+
+	function setSelection(id, img) {
+		if (mode=='exclude') {
+			c=excludeImage(id)
+			if(c!=-1) { 
+				img.style.border='1px solid #f00'
+				img.style.opacity=0.5
+			} else {
+				img.style.border=''
+				img.style.opacity=''
+			}
+			if (typeof addexcludefn== 'function') {
+				addexcludefn()
+			}
+		}
+		if (mode=='select') {
+			c=selectImage(id)
+			img.style.border=(c!=-1) ? '1px solid #0f0' : ''
+			if (typeof addselectfn== 'function') {
+				addselectfn()
+			}
+		}
+		if (o=$('excludedIndex')) {
+			o.value=getExcludeImages()
+		}
+		if (o=$('selectedIndex')) {
+			o.value=getSelectImages()
+		}
+	}
+
+	function selectImage(id) {
+		var cindex=selectimages.length
+		for(var i=0; i<selectimages.length; i++) {
+			if (selectimages[i]==id) {
+				cindex=i
+				id=-1
+				break
+			}
+		}
+		selectimages[cindex]=id
+		return id
+	}
+
+	function select2exclude() {
+		var selected=false
+		for(var j=0; j<n_tiles; j++) {
+			selected=false
+			for(var i=0; i<selectimages.length; i++) {
+				if (selectimages[i]==j) {
+					selected=true
+				}
+			}
+			excludeimages[j]=(selected) ? -1 : j
+		}
+	}
+
+	function getSelectImages() {
+		var a=Array();
+		for(var i=0; i<selectimages.length; i++) {
+			if (selectimages[i]!=-1) {
+				a[a.length]=selectimages[i]
+			}
+		}
+		if (a.length) {
+			lastselectedimage=a[a.length-1]
+		}
+		return a.toString()
+	}
+
+	function getLastSelectedImage() {
+		return lastselectedimage
+	}
+
+	function getExcludeImages() {
+		var a=Array();
+		for(var i=0; i<excludeimages.length; i++) {
+			if (excludeimages[i]!=-1) {
+				a[a.length]=excludeimages[i]
+			}
+		}
+		return a.toString()
+	}
+
+	function excludeImage(id) {
+		var cindex=excludeimages.length
+		for(var i=0; i<excludeimages.length; i++) {
+			if (excludeimages[i]==id) {
+				cindex=i
+				id=-1
+				break
+			}
+		}
+		excludeimages[cindex]=id
+		return id
 	}
 
 	function load() {
@@ -673,6 +779,33 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 
 	function setImage() {
 		window.document.myf.submit(); 
+	}
+
+	function resetSelection() {
+		selectimages=Array()
+		excludeimages=Array()
+		for(var id=0; id<n_tiles; id++) {
+			var img = $('img'+id)
+			if(s=img.style) {
+				s.border=''
+				s.opacity=''
+			}
+		}
+	}
+
+	var mode='exclude'
+	function setMode(){
+		resetSelection()
+		if (o=$('mode')) {
+			if (mode=='select') {
+				o.style.border='1px solid #F00'
+				mode='exclude'
+			} else {
+				o.style.border='1px solid #0F0'
+				mode='select'
+			}
+			o.value=mode
+		}
 	}
 
 	</script>\n";

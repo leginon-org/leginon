@@ -46,6 +46,11 @@ if ($reconId) {
 	}
 	foreach ($arrayall as $s) $subprtls[]=array('p' => $s);
 	$numbad = count($subprtls);
+
+}
+if ($norefClassId) {
+	$particle = new particledata();
+	$classnumber=$particle->getNoRefClassParticleNumber($norefClassId);
 }
 
 if ($refinement) {
@@ -85,13 +90,32 @@ $n_images = ($substack) ? $numbad : $info['count']+1;
 <html>
 <head>
 <? echo stackViewer($file_hed,$file_img,$n_images,$updateheader, $subprtls);?>
-<script>
+<script type="text/javascript">
 var expId="<?=$expId?>"
 var sessionname="<?=$sessionname?>"
 var filename="<?=$filename?>"
 var norefId="<?=$norefId?>"
 var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
+<?php
+if ($norefClassId) {
+	$c=array();
+	foreach($classnumber as $cn) {
+		$c[]=$cn['number'];
+	}
+echo 'var stackinfo=['.implode(',',$c).']'."\n";
+echo 'var addselectfn=selectextra'."\n";
+
+}
+?>
+
+function selectextra() {
+	select2exclude()
+	if (o=$('templateId')) {
+		getSelectImages()
+		o.value=getLastSelectedImage()
+	}
+}
 
 function upload() {
 	var templateId=$('templateId').value
@@ -119,8 +143,9 @@ function createModel() {
 function createStack() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
-	
 }
+	
+
 </script>
 </head>
 <body onload='load()'>
@@ -146,15 +171,19 @@ quality: <select id="quality">
 		<option value="90">jpeg 90</option>
 		<option value="png">png</option>
 	</select>
-<input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();"> <br />
+<input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
+<p style="margin-top: 2px; margin-bottom: 4px">
+<span>selection mode: </span><input id="mode" style="font-size: 12px; border: 1px solid #F00" type="button" value="exclude" onclick="setMode()">
+</p>
 <?
 if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
         <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
         <br />\n";
 
 if ($norefId) {
-  	echo "Exclude these classes (e.g. 0,1,5): 
-<INPUT TYPE='text' ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=createModel()> <INPUT TYPE='button' value='Create SubStack' onClick=createStack()>\n <BR/>";
+  echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
+<input type='button' value='Create Model' onClick='createModel()' >
+<input type='button' value='Create SubStack' onClick='createStack()' > \n";
 }
 elseif ($stackId) {
   echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
@@ -164,6 +193,7 @@ elseif ($stackId) {
 ?>
 
 
+<br />
 <br />
 <div class="scrollpane">
    <div id="wholemap">

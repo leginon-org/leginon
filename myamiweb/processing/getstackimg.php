@@ -2,6 +2,7 @@
 $file_hed=$_GET['hed'];
 $file_img=$_GET['img'];
 $img_num=$_GET['n'];
+$info=$_GET['i'];
 $updateheader=($_GET['uh']==1) ? true : false;
 # don't remove
 $updateheader=true;
@@ -30,14 +31,19 @@ mrcbinning($mrcimg,$binning);
 $img = mrctoimage($mrcimg,$pmin,$pmax);
 mrcdestroy($mrcimg);
 
+$text="$img_num";
+if ($info) {
+  $text.=", $info";
+}
+
 $color=imagecolorallocate($img,128,0,128);
 $w=imagecolorallocate($img,255,255,255);
 $x1=0;
 $y1=imagesy($img)-15;
-$x2=strlen("$img_num")*7;
+$x2=strlen($text)*6;
 $y2=imagesy($img);
 imagefilledrectangle ($img, $x1, $y1, $x2, $y2, $color );
-imagestring($img, 2, 1, $y1, "$img_num", $w);
+imagestring($img, 2, 1, $y1, $text, $w);
 
 $filename="image$img_num.$ext";
 header( "Content-type: $type ");
