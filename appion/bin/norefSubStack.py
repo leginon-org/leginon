@@ -121,9 +121,12 @@ class subStackScript(appionScript.AppionScript):
 
 		#get number of particles
 		numparticles = len(includeParticle)
-		self.params['description'] += ( " ... %d particle substack of stackid %d with classes %s being excluded" 
-			% (numparticles, self.params['stackid'], self.params['exclude']))
-		
+		if excludelist:
+			self.params['description'] += ( " ... %d particle substack of id %d with %s classes excluded" 
+				% (numparticles, self.params['stackid'], self.params['exclude']))
+		elif includelist:
+			self.params['description'] += ( " ... %d particle substack of id %d with %s classes included" 
+				% (numparticles, self.params['stackid'], self.params['include']))	
 		#create the new sub stack
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 		if not os.path.isfile(newstack):
