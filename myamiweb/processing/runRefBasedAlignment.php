@@ -135,8 +135,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   $templateinfo = $particle->getTemplatesFromId($templateid);
   $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $stackIds = $particle->getStackIds($sessionId);
-  $refaliIds = $particle->getRefAliIds($sessionId);
-  $refaliruns=count($refaliIds);
+  $refbasedIds = $particle->getRefAliIds($sessionId);
+  $refbasedruns=count($refbasedIds);
 
   processing_header($title,$heading,"");
   // write out errors, if any came up:
@@ -154,7 +154,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   }
   
   // Set any existing parameters in form
-  $runidval = ($_POST['runid']) ? $_POST['runid'] : 'refali'.($refaliruns+1);
+  $runidval = ($_POST['runid']) ? $_POST['runid'] : 'refbased'.($refbasedruns+1);
   $rundescrval = $_POST['description'];
   $stackidval =$_POST['stackid'];
   $lp = $_POST['lp'];
@@ -396,7 +396,7 @@ function runAlignment() {
 
 	if ($maskdiam) $command.="--last-ring=$maskdiam ";
 	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
-	$command.="--outdir=$outdir/$runid ";
+	$command.="--outdir=".$outdir.$runid."/ ";
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lp ";
 	#if ($csym > 1) $command.="--csym=$csym ";
