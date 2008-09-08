@@ -112,7 +112,7 @@ class subStackScript(appionScript.AppionScript):
 				num = line.split()
 				if num[0] != ";bat/spi":
 					# set flag of excluded particle to 1
-					excludeParticle[int(float(num[2]))] = 1
+					excludeParticle[int(float(num[2]))-1] = 1
 			f.close()
 
 		
@@ -121,7 +121,7 @@ class subStackScript(appionScript.AppionScript):
 		# print to keep file the particles that are to be kept
 		for i in range(stackSize):
 			if excludeParticle[i] == 1:
-				continue
+				print "Excluding particle " + str(i)
 			else:
 				print >>kf, str(i)
 
