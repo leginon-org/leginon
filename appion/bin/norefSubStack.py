@@ -4,6 +4,7 @@
 import sys
 import os
 import shutil
+import numpy
 #appion
 import appionScript
 import apStack
@@ -70,62 +71,48 @@ class subStackScript(appionScript.AppionScript):
 		# using noref class ID to retrieve the noref class data
 		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
 				
-		norefRun=norefclassdata['norefRun']
+		norefRun = norefclassdata['norefRun']
 		norefclasspath = norefRun['path']['path']+"/cluster"
 		norefname = norefRun['name']
 
-		# creating the keep list		
-		keepfile = norefclasspath+"/keepfile.list"
-		if os.path.isfile(keepfile):
-			apDisplay.printWarning("File %s already exist!!!" % (keepfile))
-		self.params['keepfile'] = keepfile
-
 		# get stack size
-		stackSize = len(apStack.getStackParticlesFromId(self.params['stackid']))
+		stackSize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 
 		# list of classes to be excluded		
-		excludelist = self.params['exclude'].split(",")
+		excludestrlist = self.params['exclude'].split(",")
+		excludelist = []
+		for excld in excludestrlist:
+			excludelist.append(int(excld.strip()))
 
-		# initialize an array the size of the original stack
-		excludeParticle = []
-		for i in range(stackSize):
-			excludeParticle.append(0) 
+		apDisplay.printMsg("Exclude list: "+str(excludelist))
 
-		# for each of the excluded class
-		for exClass in excludelist:
-			# correct for the class index from eman to spider
-			index = int(exClass)+1
-			if len(str(index)) == 1:
-				exClass = "000"+str(index)
-			elif len(str(index)) == 2:
-				exClass = "00"+str(index)
-			elif len(str(index)) == 3:
-				exClass = "0"+str(index)
+		#get particles from noref class run
+		classpartq = appionData.ApNoRefClassParticlesData()
+		classpartq['classRun'] = norefclassdata
+		classpartdatas = classpartq.query()
 
-			# noref class 
-			norefclassfile = norefclasspath+"/classdoc"+exClass+".spi"
-			apDisplay.printColor("Excluding the classfile "+ norefclassfile, "red")
-
-			# read noref class index file (Spider file)
-			f = open(norefclassfile, "r")
-			for line in f.readlines():
-				num = line.split()
-				if num[0] != ";bat/spi":
-					# set flag of excluded particle to 1
-					excludeParticle[int(float(num[2]))-1] = 1
-			f.close()
-
-		
-		kf = open(norefclasspath+"/keepfile.list", "w")
-
-		# print to keep file the particles that are to be kept
-		for i in range(stackSize):
-			if excludeParticle[i] == 1:
-				print "Excluding particle " + str(i)
+		includeParticle = []
+		excludeParticle = 0
+		for classpart in classpartdatas:
+			#write to text file
+			classnum = classpart['classNumber']-1
+			emanstackpartnum = classpart['noref_particle']['particle']['particleNumber']-1
+			if not classnum in excludelist:
+				includeParticle.append(emanstackpartnum)
 			else:
-				print >>kf, str(i)
+				excludeParticle += 1
+		includeParticle.sort()
+		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
 
-		kf.close()			
+		#print includeParticle
+
+		### write kept particles to file
+		self.params['keepfile'] = os.path.join(norefclasspath, "keepfile-"+self.timestamp+".list")
+		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
+		kf = open(self.params['keepfile'], "w")
+		for partnum in includeParticle:
+			kf.write(str(partnum)+"\n")
+		kf.close()
 
 		#get number of particles
 		f = open(keepfile, "r")
@@ -135,15 +122,12 @@ class subStackScript(appionScript.AppionScript):
 			% (numparticles, self.params['stackid'], self.params['exclude']))
 		
 		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, keepfile)
+		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 
 		apStack.commitSubStack(self.params)
 		apStack.averageStack(stack=newstack)
-
-		command=("rm "+keepfile)
-		apEMAN.executeEmanCmd(command, verbose=False)
 
 #=====================
 if __name__ == "__main__":
