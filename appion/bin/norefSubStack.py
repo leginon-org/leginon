@@ -33,7 +33,7 @@ class subStackScript(appionScript.AppionScript):
 			help="noref class id", metavar="ID")
 		self.parser.add_option("--exclude", dest="exclude",
 			help="EMAN style classes to EXCLUDE in the new stack (0,5,8)", metavar="0,1,...")
-		self.parser.add_option("--exclude", dest="exclude",
+		self.parser.add_option("--include", dest="include",
 			help="EMAN style classes to INCLUDE in the new stack (0,2,7)", metavar="0,1,...")
 
 	#=====================
@@ -88,7 +88,6 @@ class subStackScript(appionScript.AppionScript):
 				includelist.append(int(incld.strip()))		
 		apDisplay.printMsg("Include list: "+str(includelist))
 
-
 		#get particles from noref class run
 		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
 		classpartq = appionData.ApNoRefClassParticlesData()
@@ -113,7 +112,7 @@ class subStackScript(appionScript.AppionScript):
 		#print includeParticle
 
 		### write kept particles to file
-		self.params['keepfile'] = os.path.join(norefclasspath, "keepfile-"+self.timestamp+".list")
+		self.params['keepfile'] = os.path.join(norefclassdata['norefRun']['path']['path'], "keepfile-"+self.timestamp+".list")
 		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
 		kf = open(self.params['keepfile'], "w")
 		for partnum in includeParticle:
