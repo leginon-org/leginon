@@ -100,9 +100,9 @@ class subStackScript(appionScript.AppionScript):
 			#write to text file
 			classnum = classpart['classNumber']-1
 			emanstackpartnum = classpart['noref_particle']['particle']['particleNumber']-1
-			if classnum in includelist:
+			if includelist and classnum in includelist:
 				includeParticle.append(emanstackpartnum)
-			elif not classnum in excludelist:
+			elif excludelist and not classnum in excludelist:
 				includeParticle.append(emanstackpartnum)
 			else:
 				excludeParticle += 1
