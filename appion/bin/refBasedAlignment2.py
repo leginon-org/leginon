@@ -3,6 +3,7 @@
 #python
 import os
 import time
+import random
 #appion
 import appionScript
 import apDisplay
@@ -182,12 +183,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		emancmd += self.stack['file']+" "
 
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
-		if os.path.isfile(spiderstack):
-			apDisplay.printWarning(spiderstack+" already exists; removing it")
-			time.sleep(5)
-			os.remove(spiderstack)
+		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
-		
+
 		emancmd += "apix="+str(self.stack['apix'])+" "
 		if self.params['lowpass'] > 0:
 			emancmd += "lp="+str(self.params['lowpass'])+" "
@@ -205,12 +203,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		takes the spider file and creates an average template of all particles
 		"""
 
-
 		templatestack = os.path.join(self.params['outdir'], "templatestack00.spi")
-		if os.path.isfile(templatestack):
-			apDisplay.printWarning(templatestack+" already exists; removing it")
-			time.sleep(2)
-			os.remove(templatestack)
+		apFile.removeFile(templatestack, warn=True)
 
 		### hack to use standard filtering library
 		templateparams = {}
@@ -246,17 +240,14 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		### clear old stacks
 		templatestack = os.path.join(self.params['outdir'], ("templatestack%02d.spi" % iternum))
-		if os.path.isfile(templatestack):
-			apDisplay.printWarning(templatestack+" already exists; removing it")
-			time.sleep(2)
-			os.remove(templatestack)
+		apFile.removeFile(templatestack, warn=True)
 
 		### calculate correlation stats
 		statlist = []
 		for partdict in partlist:
 			statlist.append(partdict['score'])
 		statlist.sort()
-		cutoff = statlist[int(0.1*len(partlist))]
+		cutoff = statlist[int(0.1*len(partlist))]*0.999
 		apDisplay.printMsg("using a 10% correlation cutoff of: "+str(round(cutoff)))
 
 		### init list of files
@@ -267,22 +258,30 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		junk = open(("templates/rejectlist%02d.list" % (iternum)), "w")
 
 		### allocate particles to keep lists
+		numjunk = 0
 		for partdict in partlist:
 			#EMAN lists start at zero
 			if partdict['score'] > cutoff:
 				keeplists[partdict['template']-1].write(str(partdict['num']-1)+"\n")
 			else:
+				numjunk+=1
 				junk.write(str(partdict['num']-1)+"\n")
 		for f in keeplists:
 			f.close()
 		junk.close()
 
 		### average junk for fun
+		apDisplay.printMsg(str(numjunk)+" particles were marked as junk")
+		if numjunk == 0:
+			junk = open(("templates/rejectlist%02d.list" % (iternum)), "w")
+			randpart = random.random()*(len(partlist)-1)
+			junk.write(str(randpart)+"\n")
+			junk.close()
 		junklist = "templates/rejectlist%02d.list" % (iternum)	
 		junkmrcfile = "templates/junkavg%02d.mrc" % (iternum)
 		emancmd  = ("proc2d "+alignedstack+" "+junkmrcfile
 			+" list="+junklist
-			+" edgenorm average ")
+			+" edgenorm average norm=0,1 ")
 		apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 		### create averaged templates
@@ -293,13 +292,17 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			if os.path.isfile(keeplist) and os.stat(keeplist)[6] > 1:
 				emancmd  = ("proc2d "+alignedstack+" "+mrcfile
 					+" list="+keeplist
-					+" edgenorm average ")
+					+" edgenorm average norm=0,1 ")
 				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			else:
 				apDisplay.printWarning("No particles aligned to template "+str(templatenum))
+				if numjunk == 0:
+					apDisplay.printWarning("Using random particle as new template")
+				else:
+					apDisplay.printWarning("Using worst 10% of particles as new template")
 				emancmd  = ("proc2d "+junkmrcfile+" "+mrcfile
-					+" addnoise=10 "
-					+" edgenorm ")
+					+" addnoise=1.5 "
+					+" edgenorm norm=0,1 ")
 				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			filelist.append(mrcfile)
 
@@ -307,7 +310,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		for mrcfile in filelist:
 			emancmd  = ("proc2d "+mrcfile+" "+templatestack
 				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
-				+" edgenorm spiderswap ")
+				+" edgenorm norm=0,1 spiderswap ")
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 		return templatestack
@@ -334,6 +337,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		#run the alignment
 		aligntime = time.time()
 		usestack = spiderstack
+		oldpartlist = None
 		for i in range(self.params['numiter']):
 			iternum = i+1
 			apDisplay.printColor("\n\nITERATION "+str(iternum), "green")
@@ -342,7 +346,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				self.params['xysearch'], self.params['xystep'],
 				self.params['numpart'], self.params['numtemplate'],
 				self.params['firstring'], self.params['lastring'], 
-				iternum=iternum, oldpartlist=None)
+				iternum=iternum, oldpartlist=oldpartlist)
+			oldpartlist = partlist
 			usestack = alignedstack
 			templatestack = self.updateTemplateStack(alignedstack, partlist, iternum)
 		aligntime = time.time() - aligntime
@@ -351,7 +356,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		#remove large, worthless stack
 		spiderstack = os.path.join(self.params['outdir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
-		os.remove(spiderstack)
+		apFile.removeFile(spiderstack, warn=True)
 
 		if self.params['commit'] is True:
 			apDisplay.printMsg("committing results to DB")

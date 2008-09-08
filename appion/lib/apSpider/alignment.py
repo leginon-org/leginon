@@ -179,9 +179,13 @@ def refBasedAlignParticles(stackfile, templatestack,
 	docfile = rundir+("/paramdoc%02d" % (iternum))+dataext
 	picklefile = rundir+("/paramdoc%02d" % (iternum))+".pickle"
 	if oldpartlist is not None and iternum > 1:
+		apDisplay.printMsg("updating particle doc info")
 		partlist = updateRefBasedDocFile(oldpartlist, docfile, picklefile)
-	else:
+	elif iternum == 1:	
+		apDisplay.printMsg("reading initial particle doc info")
 		partlist = readRefBasedDocFile(docfile, picklefile)
+	else:
+		apDisplay.printError("reading (not updating) particle doc info on iteration "+str(iternum))
 
 	### write aligned stack -- with python loop
 	alignedstack = rundir+("/alignedstack%02d" % (iternum))
@@ -230,13 +234,17 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 				'score': newpartdict['score'],
 				'mirror': bool(oldpartdict['mirror']-newpartdict['mirror']),
 				'rot': wrap360(oldpartdict['rot']+newpartdict['rot']),
-				'xshift': oldpartdi_ct['xshift']+newpartdict['xshift'],
+				'xshift': oldpartdict['xshift']+newpartdict['xshift'],
 				'yshift': oldpartdict['yshift']+newpartdict['yshift'],
 			}
 		else:
 			print oldpartdict
 			print newpartdict
 			apDisplay.printError("wrong particle in update")
+		#if partdict['num'] in [3,6,7]:
+		#	print "old", oldpartdict['num'], oldpartdict['template'], oldpartdict['mirror'], round(oldpartdict['rot'],3)
+		#	print "new", newpartdict['num'], newpartdict['template'], newpartdict['mirror'], round(newpartdict['rot'],3)
+		#	print "update", partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
 		partlist.append(partdict)
 	docf.close()
 	picklef = open(picklefile, "w")
@@ -313,7 +321,8 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for partdict in partlist:
-		#print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
+		#if partdict['num'] in [3,6,7]:
+		#	print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
 		p = partdict['num']
 		mySpider.toSpiderQuiet(
 			"RT SQ",
