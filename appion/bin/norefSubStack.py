@@ -32,7 +32,9 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
 			help="noref class id", metavar="ID")
 		self.parser.add_option("--exclude", dest="exclude",
-			help="EMAN style classes to exclude in the new stack (0,5,8)", metavar="0,1,...")
+			help="EMAN style classes to EXCLUDE in the new stack (0,5,8)", metavar="0,1,...")
+		self.parser.add_option("--exclude", dest="exclude",
+			help="EMAN style classes to INCLUDE in the new stack (0,2,7)", metavar="0,1,...")
 
 	#=====================
 	def checkConflicts(self):
@@ -50,8 +52,10 @@ class subStackScript(appionScript.AppionScript):
 
 		if self.params['stackid'] is None:
 			apDisplay.printError("stackid was not defined")
-		if self.params['exclude'] is None:
-			apDisplay.printError("noref classes to be excluded was not defined")
+		if self.params['exclude'] is None and self.params['include'] is None:
+			apDisplay.printError("noref classes to be included/excluded was not defined")
+		if self.params['exclude'] is not None and self.params['include'] is not None:
+			apDisplay.printError("both include and exclude were defined, only one is allowed")
 
 	#=====================
 	def setOutDir(self):
@@ -68,25 +72,25 @@ class subStackScript(appionScript.AppionScript):
 		newstack = os.path.join(self.params['outdir'], stackdata['name'])
 		apStack.checkForPreviousStack(newstack)
 
-		# using noref class ID to retrieve the noref class data
-		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
-				
-		norefRun = norefclassdata['norefRun']
-		norefclasspath = norefRun['path']['path']+"/cluster"
-		norefname = norefRun['name']
-
-		# get stack size
-		stackSize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
-
-		# list of classes to be excluded		
-		excludestrlist = self.params['exclude'].split(",")
+		### list of classes to be excluded
 		excludelist = []
-		for excld in excludestrlist:
-			excludelist.append(int(excld.strip()))
-
+		if self.params['exclude'] is not None:
+			excludestrlist = self.params['exclude'].split(",")
+			for excld in excludestrlist:
+				excludelist.append(int(excld.strip()))
 		apDisplay.printMsg("Exclude list: "+str(excludelist))
 
+		### list of classes to be included
+		includelist = []
+		if self.params['include'] is not None:
+			includestrlist = self.params['include'].split(",")
+			for incld in includestrlist:
+				includelist.append(int(incld.strip()))		
+		apDisplay.printMsg("Include list: "+str(includelist))
+
+
 		#get particles from noref class run
+		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
 		classpartq = appionData.ApNoRefClassParticlesData()
 		classpartq['classRun'] = norefclassdata
 		classpartdatas = classpartq.query()
@@ -97,7 +101,9 @@ class subStackScript(appionScript.AppionScript):
 			#write to text file
 			classnum = classpart['classNumber']-1
 			emanstackpartnum = classpart['noref_particle']['particle']['particleNumber']-1
-			if not classnum in excludelist:
+			if classnum in includelist:
+				includeParticle.append(emanstackpartnum)
+			elif not classnum in excludelist:
 				includeParticle.append(emanstackpartnum)
 			else:
 				excludeParticle += 1
@@ -115,10 +121,8 @@ class subStackScript(appionScript.AppionScript):
 		kf.close()
 
 		#get number of particles
-		f = open(keepfile, "r")
-		numparticles = len(f.readlines())
-		f.close()
-		self.params['description'] += ( " ... %d particle substack of stackid %d with class(es) %s being excluded" 
+		numparticles = len(includeParticle)
+		self.params['description'] += ( " ... %d particle substack of stackid %d with classes %s being excluded" 
 			% (numparticles, self.params['stackid'], self.params['exclude']))
 		
 		#create the new sub stack
