@@ -25,7 +25,7 @@ else {
 }
 
 function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $heading='Create a model') {
-        // check if coming directly from a session
+   // check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
@@ -42,10 +42,9 @@ function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $
 	$norefClassId=$_GET['norefClass'];
 	$file=$_GET['file'];
 	
-
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
-	if (!$exclude) $exclude = $_POST['exclude'];
+	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 	if (!$norefId) $norefId = $_POST['norefId'];
 	if (!$norefClassId) $norefClassId = $_POST['norefClassId'];
 	if (!$file) $file = $_POST['file'];
