@@ -111,10 +111,14 @@ function uploadavg() {
   }
 }
 
-function goTo() {
+function createModel() {
 	var index = $('excludedIndex').value
 	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
+}
 	
+function createStack() {
+	var index = $('excludedIndex').value
+	window.open("subStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 	
 }
 </script>
@@ -149,7 +153,8 @@ if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='
         <br />\n";
 
 if ($norefId) {
-  echo "Create initial model using these class averages <BR/> exclude these classes (e.g. 0,1,5): <INPUT TYPE='text' INPUT ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=goTo()>\n";
+  	echo "Exclude these classes (e.g. 0,1,5): 
+<INPUT TYPE='text' ID='excludedIndex' VALUE=''> <INPUT TYPE='button' value='Create Model' onClick=createModel()> <INPUT TYPE='button' value='Create SubStack' onClick=createStack()>\n <BR/>";
 }
 elseif ($stackId) {
   echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
