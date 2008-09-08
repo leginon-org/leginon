@@ -27,7 +27,6 @@ else {
 function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
-
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
@@ -36,17 +35,21 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$exclude=$_GET['exclude'];
 	$norefClassfile=$_GET['file'];
 
+	echo"$norefClassId";
+
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
 
 	// Set any existing parameters in form
-	$description = $_POST['description'];
+	if (!$description) $description = $_POST['description'];
 	$runid = ($_POST['runid']) ? $_POST['runid'] : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 	if (!$norefClassId) $norefClassId = $_POST['norefClass'];
 	if (!$norefId) $norefId = $_POST['noref'];
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 	if (!$norefClassfile) $norefClassfile = $_POST['file'];
+
+	
 
 	// get outdir path
 	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
@@ -130,11 +133,14 @@ function runSubStack() {
 	$runid=$_POST['runid'];
 	$stackId=$_POST['stackId'];
 	$norefClassId=$_POST['norefClassId'];
+	$norefId=$_POST['norefId'];
 	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
 	$exclude=$_POST['exclude'];
 
 	$command.="norefSubStack.py ";
+
+	echo"$norefClassId, $stackId";
 
 	//make sure a description is provided
 	$description=$_POST['description'];
@@ -149,6 +155,7 @@ function runSubStack() {
 	$command.="-n $runid ";
 	$command.="-norefclass $norefClassId ";
 	$command.="-d \"$description\" ";
+	$command.="--exclude=$exclude ";
 	if ($outdir) $command.="-o $procdir ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
