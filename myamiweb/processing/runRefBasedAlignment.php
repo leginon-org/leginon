@@ -1,4 +1,4 @@
-<?php
+re<?php
 /**
  *      The Leginon software is Copyright 2003 
  *      The Scripps Research Institute, La Jolla, CA
@@ -367,23 +367,21 @@ function runAlignment() {
 //	$command ="source /ami/sw/ami.csh;";
 //	$command.="source /ami/sw/share/python/usepython.csh common32;";
 //	$command.="source /home/$user/pyappion/useappion.csh;";
-	$command.="refBasedAlignment.py ";
-	$command.="refids=".templateCommand()." ";
-	$command.="runid=$runid ";
-	$command.="stackid=$stackid ";
-	//$command.="refid=$refid ";
-	$command.="iter=$iters ";
-	if ($maskdiam) $command.="maskdiam=$maskdiam ";
-	if ($imaskdiam) $command.="imask=$imaskdiam ";
-	$command.="outdir=$outdir ";
-	$command.="description=\"$description\" ";
-	$command.="lp=$lp ";
-	if ($csym > 1) $command.="csym=$csym ";
-	//if ($fileformat) $command.="spider ";
-	$command.="xysearch=$xysearch ";
-	$command.="numpart=$numpart ";
-	if ($staticref) $command.="staticref ";
-	if ($commit) $command.="commit ";
+	$command.="refBasedAlignment2.py ";
+	$command.="--templateids=".templateCommand()." ";
+	$command.="--runname=$runid ";
+	$command.="--stackid=$stackid ";
+	$command.="--num-iter=$iters ";
+	if ($maskdiam) $command.="--last-ring=$maskdiam ";
+	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
+	$command.="--outdir=$outdir ";
+	$command.="--description=\"$description\" ";
+	$command.="--lowpass=$lp ";
+	if ($csym > 1) $command.="--csym=$csym ";
+	$command.="--xysearch=$xysearch ";
+	$command.="--num-part=$numpart ";
+	if ($staticref) $command.="--static-ref ";
+	if ($commit) $command.="--commit ";
 
 	$cmd = "exec ssh $user@$host '$command > refBasedAlignmentlog.txt &'";
 //	exec($cmd ,$result);
