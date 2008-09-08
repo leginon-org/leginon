@@ -149,7 +149,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   if (!empty($sessioninfo)) {
     $sessionpath=$sessioninfo['Image path'];
     $sessionpath=ereg_replace("leginon","appion",$sessionpath);
-    $sessionpath=ereg_replace("rawdata","refali/",$sessionpath);
+    $sessionpath=ereg_replace("rawdata","refbased/",$sessionpath);
     $sessionname=$sessioninfo['Name'];
   }
   
@@ -157,7 +157,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   $runidval = ($_POST['runid']) ? $_POST['runid'] : 'refali'.($refaliruns+1);
   $rundescrval = $_POST['description'];
   $stackidval =$_POST['stackid'];
-  $imaskdiam = $_POST['imaskdiam'] ? $_POST['imaskdiam'] : 5;
   $lp = $_POST['lp'];
   $csym = $_POST['csym'];
   $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
@@ -168,10 +167,11 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   $iters = ($_POST['iters']) ? $_POST['iters'] : 5;
   $lp = ($_POST['lp']) ? $_POST['lp'] : 10;
 	$diam = $_POST['diam'] ? $_POST['diam'] : 160;
-  $xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : ceil($diam*0.1);
+  $xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '3';
+  $xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
   $csym = 1;
   $maskdiam = ($_POST['maskdiam']) ? $_POST['maskdiam'] : $diam;
-  $imaskdiam = ($_POST['imaskdiam']) ? $_POST['imaskdiam'] : ceil($diam/16-2);
+  $imaskdiam = ($_POST['imaskdiam']) ? $_POST['imaskdiam'] : '2';
 
 
 	$templateCheck='';
@@ -251,41 +251,60 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	}
 	echo"
 		</TD>
-	</TR>
+	</TR>";
+	echo"
 	<TR>
 		<TD VALIGN='TOP'>
 		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
 		<B>Commit to Database</B><BR>
 		</TD>
-	</TR>
+	</TR>";
+	echo"
 	</TABLE>
 	</TD>
 	<TD CLASS='tablebg'>
 	<TABLE CELLPADDING='5' BORDER='0'>
-	<TR>
+	<TR>";
+	echo"
 		<TD VALIGN='TOP'>
-		<B>Particle Params:</B></A><BR>
+		<B>Particle Params:</B></A><BR>";
+	echo"
 		<INPUT TYPE='text' NAME='maskdiam' SIZE='5' VALUE='$maskdiam'>
-		Mask Diameter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>
+		Last Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+	echo"
 		<INPUT TYPE='text' NAME='imaskdiam' SIZE='5' VALUE='$imaskdiam'>
-		Inner Mask Diameter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>
+		First Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+	echo"
 		<INPUT TYPE='text' NAME='lp' SIZE='5' VALUE='$lp'>
-		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>
+		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+	echo"
 		</TD>
 	</TR>
 	<TR>
 		<TD VALIGN='TOP'>
-		<B>Alignment Params:</B></A><BR>
+		<B>Alignment Params:</B></A><BR>";
+	echo"
 		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>
-		Iterations<BR>
+		Iterations<BR>";
+	echo"
 		<INPUT TYPE='text' NAME='xysearch' VALUE='$xysearch' SIZE='4'>
-		Search range from center <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>
-		<INPUT TYPE='text' NAME='csym' VALUE='$csym' SIZE='4'>
-		C-symmetry to apply<BR>
+		Search range from center <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+	echo"
+		<INPUT TYPE='text' NAME='xystep' VALUE='$xystep' SIZE='4'>
+		Step size for parsing search range <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+	//echo"
+	//	<INPUT TYPE='text' NAME='csym' VALUE='$csym' SIZE='4'>
+	//	C-symmetry to apply<BR>";
+	echo"
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
-		Number of Particles to Use<BR>
-		<INPUT TYPE='checkbox' NAME='staticref' $staticref>
-		Use original references for each iteration<BR>
+		Number of Particles to Use<BR>";
+	//echo"
+	//	<INPUT TYPE='checkbox' NAME='staticref' $staticref>
+	//	Use original references for each iteration<BR>";
+	echo"
+		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
+		Invert density of all templates before alignment<BR>";
+	echo"
 		</TD>
 	</TR>
 	</TR>
@@ -338,8 +357,12 @@ function runAlignment() {
 	$lp=$_POST['lp'];
 	$csym=$_POST['csym'];
 	$xysearch=$_POST['xysearch'];
+	$xystep=$_POST['xystep'];
 	$refid=$_POST['refid'];
 	$iters=$_POST['iters'];
+	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$staticref = ($_POST['staticref']=="on") ? 'staticref' : '';
+	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -352,8 +375,7 @@ function runAlignment() {
 	// make sure outdir ends with '/'
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
-	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$staticref = ($_POST['staticref']=="on") ? 'staticref' : '';
+
 
 	// alignment
 	$numpart=$_POST['numpart'];
@@ -368,20 +390,24 @@ function runAlignment() {
 //	$command.="source /ami/sw/share/python/usepython.csh common32;";
 //	$command.="source /home/$user/pyappion/useappion.csh;";
 	$command.="refBasedAlignment2.py ";
-	$command.="--templateids=".templateCommand()." ";
+	$command.="--template-list=".templateCommand()." ";
 	$command.="--runname=$runid ";
-	$command.="--stackid=$stackid ";
-	$command.="--num-iter=$iters ";
+	$command.="--stack=$stackid ";
+
 	if ($maskdiam) $command.="--last-ring=$maskdiam ";
 	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
-	$command.="--outdir=$outdir ";
+	$command.="--outdir=$outdir/$runid ";
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lp ";
-	if ($csym > 1) $command.="--csym=$csym ";
-	$command.="--xysearch=$xysearch ";
+	#if ($csym > 1) $command.="--csym=$csym ";
+	$command.="--xy-search=$xysearch ";
+	$command.="--xy-step=$xystep ";
+	$command.="--num-iter=$iters ";
 	$command.="--num-part=$numpart ";
-	if ($staticref) $command.="--static-ref ";
+	if ($inverttempl) $command.="--invert-templates ";
+	#if ($staticref) $command.="--static-ref ";
 	if ($commit) $command.="--commit ";
+	else $command.="--no-commit ";
 
 	$cmd = "exec ssh $user@$host '$command > refBasedAlignmentlog.txt &'";
 //	exec($cmd ,$result);
@@ -394,15 +420,16 @@ function runAlignment() {
 	<B>Alignment Command:</B><BR>
 	$command
 	</TD></TR>
-	<TR><TD>runid</TD><TD>$runid</TD></TR>
+	<TR><TD>runname</TD><TD>$runid</TD></TR>
 	<TR><TD>stackid</TD><TD>$stackid</TD></TR>
 	<TR><TD>refids</TD><TD>".templateCommand()."</TD></TR>
 	<TR><TD>iter</TD><TD>$iters</TD></TR>
 	<TR><TD>numpart</TD><TD>$numpart</TD></TR>
-	<TR><TD>maskdiam</TD><TD>$maskdiam</TD></TR>
-	<TR><TD>imaskdiam</TD><TD>$imaskdiam</TD></TR>
+	<TR><TD>last ring</TD><TD>$maskdiam</TD></TR>
+	<TR><TD>first ring</TD><TD>$imaskdiam</TD></TR>
 	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
 	<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
+	<TR><TD>xystep</TD><TD>$xystep</TD></TR>
 	<TR><TD>lowpass</TD><TD>$lp</TD></TR>";
 	if ($csym > 1) echo"	<TR><TD>c-symmetry</TD><TD>$csym</TD></TR>";
 	echo"	</TABLE>\n";
