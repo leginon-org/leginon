@@ -339,7 +339,7 @@ if ($expId) {
 			       'result'=>$norefresults,
 				 );
 		$nruns[] = array(
-				 'name'=>"<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment >></a>",
+				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>Ref-based Alignment >></a>",
 				 'result'=>$refbasedresults,
 				 );
 

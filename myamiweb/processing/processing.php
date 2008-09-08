@@ -358,7 +358,7 @@ if ($sessionId) {
 		$nrun = "<font size=-1><i>Create a stack first</i></font>";
 	} else {
 		$nrun = "<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment</a><br/>\n";
-		$nrun .= "<a href='refbasedali.php?expId=$sessionId'>Ref-based Alignment</a><br/>\n";
+		$nrun .= "<a href='runRefBasedAlignment.php?expId=$sessionId'>Ref-based Alignment</a><br/>\n";
 	}
 
 	$data[]=array(
