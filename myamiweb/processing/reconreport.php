@@ -107,8 +107,21 @@ $reconinfo = array(
 	'best resolution'=>	sprintf("% 2.2f / % 2.2f &Aring; (%d)", $res[half],$res[rmeas],$res[iter]),
 	'median euler jump'=>$avgmedjumpstr,
 );
-$particle->displayParameters($title,$reconinfo,array(),$expId);
 
+if ($refinerun['package']=='EMAN/SpiCoran') {
+	$corankeepplotfile = $refinerun['path']."/corankeepplot-".$refinerun['DEF_id'].".png";
+	if (file_exists($corankeepplotfile)) {
+		echo "<TABLE><TR><TD>\n";
+		$particle->displayParameters($title,$reconinfo,array(),$expId);
+		echo "</TD><TD>";
+		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='corankeepplotfile'><IMG SRC='loadimg.php?filename=$corankeepplotfile' HEIGHT='180'><BR/>\nCoran Keep Plot</A>";
+		echo "</TD></TR></TABLE>";
+	} else {
+		$particle->displayParameters($title,$reconinfo,array(),$expId);
+	}
+} else {
+	$particle->displayParameters($title,$reconinfo,array(),$expId);
+}
 
 $stackparticles = showStackInfo($stackId, $stackparams, $apix, $expId, $particle);
 
@@ -141,7 +154,7 @@ foreach ($display_keys as $p) {
   elseif ($p == 'snapshot') {
     foreach ($initpngs as $snapshot) {
       $snapfile = $initmodel['path'].'/'.$snapshot;
-      $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+      $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'></A>\n";
     }
   }
   $html .= "</TD>";
