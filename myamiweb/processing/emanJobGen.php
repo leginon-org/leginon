@@ -518,7 +518,8 @@ function jobForm($extra=false) {
       $mask = $_POST['mask1'] ? $_POST['mask1'] : ($box/2)-2;
       $hard='25';
       $classkeep='0.8';
-      $median='CHECKED';
+      $median = $_POST['median1']=='on' ? 'CHECKED' : '';
+      $coran = $_POST['coran1']=='on' ? 'CHECKED' : '';
       $phasecls='CHECKED';
       $eotest='CHECKED';
       $sym=$modsym;
