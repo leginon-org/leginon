@@ -11,6 +11,7 @@ import apStack
 import apRecon
 import apEulerJump
 import appionData
+import apCoranKeepPlot
 
 #=====================
 #=====================
@@ -157,6 +158,10 @@ class UploadReconScript(appionScript.AppionScript):
 			apDisplay.printMsg("calculating euler jumpers for recon="+str(reconrunid))
 			eulerjump = apEulerJump.ApEulerJump()
 			eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
+			### coran keep plot
+			if self.params['package']=='EMAN/SpiCoran':
+				apCoranKeepPlot.makeCoranKeepPlot(reconrunid)
+				
 
 
 #=====================
