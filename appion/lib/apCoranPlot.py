@@ -46,6 +46,20 @@ def getParticlesForIter(reconid, iternum):
 	return results
 
 #==================
+def getAllCoranRecons():
+	query = ( " SELECT DISTINCT refdat.`REF|ApRefinementRunData|refinementRun` AS reconid "
+		+" FROM `ApRefinementData` AS refdat "
+		+" WHERE refdat.`SpiCoranGoodClassAvg` IS NOT NULL "
+		+"   AND refdat.`iteration` > '7' " )
+	cursor.execute(query)
+	results = cursor.fetchall()
+	reconids = []
+	for row in results:
+		reconids.append(int(row[0]))
+	print "found "+str(len(reconids))+" reconids: ", reconids
+	return reconids
+
+#==================
 def writeXmGraceData(counts, numpart):
 	datastr = "@target G0.S0\n@type xy\n"
 	for i in range(8):
@@ -56,7 +70,6 @@ def writeXmGraceData(counts, numpart):
 	header = re.sub("@    world -0.999999, 1, 8.999999, 110000", "@    world -0.99999, 1, 8.99999, "+str(upperlimit), xmgraceheader)
 	gracedata = header.strip()+"\n"+datastr
 	return gracedata
-
 
 #==================
 xmgraceheader = """
@@ -427,7 +440,7 @@ def makeCoranKeepPlot(reconid):
 	else:
 		apDisplay.printMsg("found "+str(numiter)+" iterations")
 	numpart = getTotalNumParticles(reconid, numiter-1)
-	if numpart < 5000:
+	if numpart < 2000:
 		apDisplay.printWarning("Cannot create coran keep plot, not enough particles")
 		return None
 	else:
@@ -452,7 +465,7 @@ def makeCoranKeepPlot(reconid):
 	print "maxpart=", maxpart
 	print str(partdict)[:80]
 	### summarize results
-	counts = numpy.zeros((8))
+	counts = numpy.zeros((8), dtype=numpy.int16)
 	for key in partdict.keys():
 		numtimes = partdict[key]
 		for i in range(numtimes):
@@ -466,20 +479,40 @@ def makeCoranKeepPlot(reconid):
 	f.write(gracedata)
 	f.close()
 
-	pngfile = "corankeepplot-"+str(reconid)+".png"
 	epsfile = "corankeepplot-"+str(reconid)+".eps"
 	proc = subprocess.Popen("xmgrace "+gracefile+" -printfile "+epsfile+" -hardcopy -hdevice EPS", shell=True)
 	proc.wait()
 	time.sleep(1)
+
+	pngfile = "corankeepplot-"+str(reconid)+".png"
 	proc = subprocess.Popen("convert -resize 1024x1024 -trim "+epsfile+" "+pngfile, shell=True)
 	proc.wait()
 	time.sleep(1)
 	os.remove(epsfile)
+
+	if os.path.isfile(pngfile):
+		apDisplay.printColor("Successfully created the Coran Keep Plot: "+pngfile, "green")
+
 	
 #==================
 #==================
 #==================
 if __name__ == '__main__':
-	reconid = int(sys.argv[1])
-	makeCoranKeepPlot(reconid)
+	if len(sys.argv) > 1:
+		reconid = int(sys.argv[1])
+		makeCoranKeepPlot(reconid)
+	else:
+		reconids = getAllCoranRecons()
+		for reconid in reconids:
+			recondata = apRecon.getRefineRunDataFromID(reconid)
+			reconpath = recondata['path']['path']
+			print reconpath
+			os.chdir(reconpath)
+			try:
+				makeCoranKeepPlot(reconid)
+			except:
+				pass
+			
+
+
 
