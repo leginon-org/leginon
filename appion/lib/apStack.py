@@ -167,7 +167,7 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	return True
 
 #========
-def centerParticles(stack):
+def centerParticles(stack, mask=False, maxshift=False):
 	apDisplay.printMsg("centering stack: "+stack)
 	ext=stack.split('.')[-1]
 	fsize = os.stat(stack)[6]
@@ -181,11 +181,15 @@ def centerParticles(stack):
 		emancmd = "cenalignint "+stack
 		if frac > 1:
 			emancmd += " frac="+str(i)+"/"+str(frac)
+		if mask is not False:
+			emancmd += " mask="+str(mask)
+		if maxshift is not False:
+			emancmd += " maxshift="+str(maxshift)
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 	
 #--------
-def commitSubStack(params, newname=False):
+def commitSubStack(params, newname=False, centered=False):
 	"""
 	commit a substack to database
 	
@@ -218,6 +222,11 @@ def commitSubStack(params, newname=False):
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
 	stackq['pixelsize'] = oldstackdata['pixelsize']
+	if centered is not False:
+		stackq['centered'] = True
+		if params['mask']:
+			stackq['mask'] = params['mask']
+			stackq['maxshift'] = params['maxshift']
 
 	partinserted = 0
 	#Insert particles

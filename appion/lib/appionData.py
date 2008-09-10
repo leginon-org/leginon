@@ -266,6 +266,9 @@ class ApStackData(Data):
 			('oldstack', ApStackData),
 			('substackname', str),
 			('pixelsize', float),
+			('centered', bool),
+			('mask', int),
+			('maxshift', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackData=ApStackData

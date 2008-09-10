@@ -21,6 +21,10 @@ class centerStackScript(appionScript.AppionScript):
 			action="store_false", help="Do not commit stack to database")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
+		self.parser.add_option("-m", "--mask", dest="mask", type="int",
+			help="Outer mask")
+		self.parser.add_option("-x", "--maxshift", dest="maxshift", type="int",
+			help="Maximum shift")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Stack description", metavar="TEXT")
 		self.parser.add_option("-n", "--new-stack-name", dest="runname",
@@ -34,13 +38,20 @@ class centerStackScript(appionScript.AppionScript):
 			apDisplay.printError("substack description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
+		
 
 	#=====================
 	def setOutDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
+		# add mask & maxshift to outdir if specifie
+		if self.params['mask'] is not None:
+			self.params['runname'] = self.params['runname']+"_"+str(self.params['mask'])
+		if self.params['maxshift'] is not None:
+			self.params['runname'] = self.params['runname']+"_"+str(self.params['maxshift'])
 		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
+		
 
 	#=====================
 	def start(self):
@@ -56,7 +67,7 @@ class centerStackScript(appionScript.AppionScript):
 		apStack.checkForPreviousStack(alignedstack)
 
 		#run centering algorithm
-		apStack.centerParticles(oldstack)
+		apStack.centerParticles(oldstack, self.params['mask'], self.params['maxshift'])
 		self.params['keepfile'] = os.path.join(self.params['outdir'],'keepfile.txt')
 		apEMAN.writeStackParticlesToFile(alignedstack, self.params['keepfile'])
 		if not os.path.isfile(alignedstack, ):
@@ -71,7 +82,7 @@ class centerStackScript(appionScript.AppionScript):
 			% (numparticles, self.params['stackid']))
 		)
 		
-		apStack.commitSubStack(self.params, newname='ali.hed')
+		apStack.commitSubStack(self.params, newname='ali.hed', centered=True)
 		apStack.averageStack(stack=alignedstack)
 		if (os.path.exists(badstack)):
 			apStack.averageStack(stack=badstack, outfile='badaverage.mrc')
