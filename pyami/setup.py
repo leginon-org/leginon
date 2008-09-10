@@ -6,5 +6,5 @@ setup(
 	description='Core Python tools for AMI Group',
 	packages=['pyami'],
 	package_dir={'pyami': ''},
-	scripts=['mrc2any'],
+	scripts=['mrc2any', 'any2mrc'],
 )

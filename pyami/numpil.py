@@ -50,16 +50,26 @@ def write(a, imfile=None, format=None, limits=None, float=False):
 
 	size = a.shape[1], a.shape[0]
 
-	if float:
-		a = numpy.asarray(a, numpy.float32)
-		im = Image.frombuffer('F', size, a, 'raw', 'F', 0, 1)
-	else:
-		a = imagefun.linearscale(a, limits, (0,255))
-		a = a.clip(0,255)
-		a = numpy.asarray(a, numpy.uint8)
-		im = Image.frombuffer('L', size, a, 'raw', 'L', 0, 1)
 	if imfile is None:
 		imfile = sys.stdout
+
+	## try saving float data
+	if a.dtype.type in (numpy.int64, numpy.float32):
+		a = numpy.asarray(a, numpy.float32)
+		im = Image.frombuffer('F', size, a, 'raw', 'F', 0, 1)
+		try:
+			im.save(imfile, format=format)
+			return
+		except:
+			## assume any exception here means that float32 not supported
+			pass
+
+	## save scaled 8 bit data
+	a = imagefun.linearscale(a, limits, (0,255))
+	a = a.clip(0,255)
+	a = numpy.asarray(a, numpy.uint8)
+	im = Image.frombuffer('L', size, a, 'raw', 'L', 0, 1)
+
 	try:
 		im.save(imfile, format=format)
 	except KeyError:

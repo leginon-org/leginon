@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import sys
+try:
+	from pyami import mrc, numpil
+except:
+	import mrc, numpil
+from optparse import OptionParser
+import numpy
+
+usage = '''
+To convert another image format to MRC:
+   %prog [options] input-file output-file
+Supported MRC data types:
+  0:  unsigned 8 bit integer
+  1:  signed 16 bit integer
+  2:  32 bit float
+  6:  unsigned 16 bit integer
+'''
+
+parser = OptionParser(usage=usage)
+parser.add_option('-m', '--mrctype', action='store', type='int', dest='mrctype', help='Convert to the specified MRC type.  Supported types: 0 (unsigned 8 bit integer), 1 (signed 16 bit integer), 2 (32 bit float), 6 (unsigned 16 bit integer)')
+
+(options, args) = parser.parse_args()
+
+if len(args) < 2:
+	parser.print_help()
+	sys.exit(0)
+
+infile = args[0]
+outfile = args[1]
+
+im = numpil.read(infile)
+
+# convert to format compatible with MRC
+if options.mrctype is not None:
+	numtype = mrc.mrc2numpy[options.mrctype]
+	im = numpy.asarray(im, numtype)
+
+mrc.write(im, outfile)
