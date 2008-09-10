@@ -463,15 +463,15 @@ def makeCoranKeepPlot(reconid):
 				partdict[partnum] = 1
 
 	print "maxpart=", maxpart
-	print str(partdict)[:80]
+	#print str(partdict)[:80]
 	### summarize results
-	counts = numpy.zeros((8), dtype=numpy.int16)
+	counts = numpy.zeros((8), dtype=numpy.int32)
 	for key in partdict.keys():
 		numtimes = partdict[key]
 		for i in range(numtimes):
 			counts[i] += 1
 	print counts
-
+	print numpy.around(100.0*numpy.asarray(counts, dtype=numpy.float32)/float(numpart), 4)
 
 	gracefile = "corankeepplot-"+str(reconid)+".agr"
 	gracedata = writeXmGraceData(counts, numpart)
