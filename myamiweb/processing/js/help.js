@@ -67,6 +67,8 @@ var help = {
 	'session': 'Session name as created at leginon startup on the date of image capture.',
 	'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
 	'volume': 'a bounded subvolume (often a specific structure) of the full tomogram. default is to number sequentially',
+	'mask' : 'Radius of external mask',
+	'maxshift' : 'Maximum distance a particle can be translated',
 	},
 
 	'eman' : {

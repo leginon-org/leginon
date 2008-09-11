@@ -88,8 +88,10 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
-	echo "Outer Mask: <input type='text' name='mask' value='$mask' size='4'> (radius in pixels)<br />\n";
-	echo "Maximum Shift: <input type='text' name='maxshift' value='$maxshift' size='4'> (pixels)<br />\n";
+	echo docpop('mask','Outer Mask: ');
+	echo "<input type='text' name='mask' value='$mask' size='4'> (radius in pixels)<br />\n";
+	echo docpop('maxshift', 'Maximum Shift: ');
+	echo "<input type='text' name='maxshift' value='$maxshift' size='4'> (pixels)<br />\n";
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
 	echo "<br />\n";
