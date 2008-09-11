@@ -52,6 +52,21 @@ class Collection(object):
 		except Exception, e:
 			self.logger.error('Run buffer cycle failed: %s' % e)
 
+	def calcBinning(self, origsize, min_newsize, max_newsize):
+		## new size can be bigger than origsize, no binning needed
+		if max_newsize >= origsize:
+			return 1
+		## try to find binning that will make new image size <= newsize
+		bin = origsize / max_newsize
+		remain = origsize % max_newsize
+		while remain:
+			bin += 1
+			remain = origsize % bin
+			newsize = float(origsize) / bin
+			if newsize < min_newsize:
+				return None
+		return bin
+
 	def initialize(self):
 		self.logger.info('Initializing...')
 
@@ -73,7 +88,7 @@ class Collection(object):
 		imageshape = self.preset['dimension']
 		maxsize = max((imageshape['x'],imageshape['y']))
 		if maxsize > 512:
-			correlation_bin = int(max((imageshape['x'],imageshape['y']))/(1024/3.0))
+			correlation_bin = self.calcBinning(maxsize, 256, 512)
 		else:
 			correlation_bin = 1
 		self.correlator = tiltcorrelator.Correlator(self.theta, correlation_bin, lpf)

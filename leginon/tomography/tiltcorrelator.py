@@ -59,7 +59,7 @@ class Correlator(object):
             raise ValueError
 
         if self.correlation_binning != 1:
-            image = scipy.ndimage.zoom(image, 1.0/self.correlation_binning)
+            image = imagefun.bin(image, int(self.correlation_binning))
 
         mean = image.mean()
         image -= mean
