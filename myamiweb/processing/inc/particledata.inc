@@ -30,6 +30,24 @@ class particledata {
 
 	//------ General DB summary functions ---------//
 
+	function getTotalAceStats(){
+		$q = "SELECT count(DISTINCT `REF|ApAceRunData|acerun`) AS runs, "
+		  ."COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS img "
+		  ."FROM `ApCtfData` ";
+		$r = $this->mysql->getSQLResult($q);
+		$results = $r[0];
+		$q = "SELECT COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) as i "
+		  ."FROM `ApCtfData` "
+		  ."WHERE (`confidence`>=0.8 OR `confidence_d`>=0.8)";
+		$r = $this->mysql->getSQLResult($q);
+		$results['conf']=$r[0]['i'];
+		$q = "SELECT COUNT(DISTINCT `REF|leginondata|SessionData|session`) as i "
+		  ."FROM `ApAceRunData` ";
+		$r = $this->mysql->getSQLResult($q);
+		$results['sessions']=$r[0]['i'];
+		return $results;
+	}
+
 	function getTotalParticleStats(){
 		$q = "SELECT count(*) AS particles, "
 		  ."COUNT(DISTINCT p.`REF|ApSelectionRunData|selectionrun`) AS runs "
@@ -44,14 +62,17 @@ class particledata {
 		$q = "SELECT count(*) AS runs, "
 		  ."COUNT(DISTINCT `REF|ApDogParamsData|dogparams`) AS dog, "
 		  ."COUNT(DISTINCT `REF|ApManualParamsData|manparams`) AS manual, "
-		  ."COUNT(DISTINCT `REF|ApTiltAlignParamsData|tiltparams`) AS tilt "
+		  ."COUNT(DISTINCT `REF|ApTiltAlignParamsData|tiltparams`) AS tilt, "
+		  ."COUNT(DISTINCT `REF|leginondata|SessionData|session`) AS sessions "
 		  ."FROM `ApSelectionRunData`";
 		$r = $this->mysql->getSQLResult($q);
 		$results = $r[0];
-		$q = "SELECT count(*) AS p "
+		$q = "SELECT count(`DEF_id`) AS p, "
+		  ."COUNT(DISTINCT `REF|leginondata|AcquisitionImageData|image`) AS i "
 		  ."FROM `ApParticleData`";
 		$r = $this->mysql->getSQLResult($q);
 		$results['particles']=$r[0]['p'];
+		$results['imgs']=$r[0]['i'];
 		return $results;
 	}
 

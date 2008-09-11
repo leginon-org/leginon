@@ -19,6 +19,33 @@ $particle = new particledata();
 
 processing_header("Appion Data Processing Summary", "Appion Data Processing Summary");
 
+$totSessions = $leginondata->getTotalSessions();
+$totImgs = $leginondata->getTotalImgs();
+echo "<b>Total Sessions:</b> ";
+echo commafy($totSessions);
+echo "<br />\n";
+echo "<b>Total Images:</b> ";
+echo commafy($totImgs);
+echo "<br />\n";
+
+$aceinfo = array();
+$acestats = $particle->getTotalAceStats();
+$runs = $acestats['runs'];
+$imgs = $acestats['img'];
+$conf = $acestats['conf'];
+$sess = $acestats['sessions'];
+
+$aceinfo['Total ACE runs'] = commafy($runs);
+$aceinfo['Sessions with Processing'] = commafy($sess);
+$aceinfo['Sessions with Processing'] .= " (".round($sess/$totSessions*100)."%)";
+$aceinfo['Total Processed Images'] = commafy($imgs);
+$aceinfo['Total Processed Images'] .= " (".round($imgs/$totImgs*100)."%)";
+$aceinfo['Imgs w/ Conf > 0.8'] = commafy($conf);
+$aceinfo['Imgs w/ Conf > 0.8'] .= " (".round($conf/$imgs*100)."%)";
+$particle->displayParameters("ACE Info", $aceinfo,array(),$expId);
+
+echo "<br />\n";
+
 $totalPrtls = $particle->getSloppyTotalParticleStats();
 $prtlinfo = array();
 $runs = $totalPrtls['runs'];
@@ -28,6 +55,8 @@ $tilt = $totalPrtls['tilt'];
 $template = $runs-$dog-$manual-$tilt;
 $particles = $totalPrtls['particles'];
 $avgp = $particles/$runs;
+$sess = $totalPrtls['sessions'];
+$imgs = $totalPrtls['imgs'];
 
 $prtlinfo['Total Selection Runs'] = commafy($runs);
 $prtlinfo['Total TemplatePicker Runs'] = commafy($template);
@@ -38,6 +67,10 @@ $prtlinfo['Total ManualPicker Runs'] = commafy($manual);
 $prtlinfo['Total ManualPicker Runs'] .= " (".round($manual/$runs*100)."%)";
 $prtlinfo['Total TiltPicker Runs'] = commafy($tilt);
 $prtlinfo['Total TiltPicker Runs'] .= " (".round($tilt/$runs*100)."%)";
+$prtlinfo['Sessions with Processing'] = commafy($sess);
+$prtlinfo['Sessions with Processing'] .= " (".round($sess/$totSessions*100)."%)";
+$prtlinfo['Total Processed Images'] = commafy($imgs);
+$prtlinfo['Total Processed Images'] .= " (".round($imgs/$totImgs*100)."%)";
 $prtlinfo['Total Selected Particles'] = commafy($particles);
 $prtlinfo['Avg Prtl/Run'] = commafy(round($avgp));
 $particle->displayParameters("Particle Selection Info",$prtlinfo,array(),$expId);

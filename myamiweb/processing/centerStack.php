@@ -39,6 +39,8 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	// Set any existing parameters in form
 	$description = $_POST['description'];
 	$runid = ($_POST['runid']) ? $_POST['runid'] : 'cenali'.$stackId;
+	$mask = ($_POST['mask']) ? $_POST['mask'] : '';
+	$maxshift = ($_POST['maxshift']) ? $_POST['maxshift'] : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 	if (!$stackId) $stackId = $_POST['stackId'];
 
@@ -58,15 +60,18 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 		echo "<font color='red'>$extra</font>\n<hr />\n";
 	}
   
-	echo"<form name='viewerform' method='post' action='$formAction'>\n";
+	echo "<form name='viewerform' method='post' action='$formAction'>\n";
 	
+	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	//query the database for parameters
 	$particle = new particledata();
 	
-
 	# get stack name
 	$stackp = $particle->getStackParams($stackId);
 	$filename = $stackp['path'].'/'.$stackp['name'];
+	$boxsize = $stackp['boxSize']/$stackp['bin'];
+	echo "<input type='hidden' name='box' value='$boxsize'>\n";
+
 	echo"
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
@@ -80,11 +85,11 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 					<br />\n";
 	echo docpop('runid','<b>Run Name:</b> ');
 	echo "<input type='text' name='runid' value='$runid'><br />\n";
-	echo docpop('outdir','<b>Output Directory:</b> ');
-	echo "<input type='text' name='outdir' value='$outdir' size='38'><br />\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
+	echo "Outer Mask: <input type='text' name='mask' value='$mask' size='4'> (radius in pixels)<br />\n";
+	echo "Maximum Shift: <input type='text' name='maxshift' value='$maxshift' size='4'> (pixels)<br />\n";
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
 	echo "<br />\n";
@@ -111,6 +116,9 @@ function runCenterParticles() {
 	$stackId=$_POST['stackId'];
 	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
+	$mask = $_POST['mask'];
+	$maxshift = $_POST['maxshift'];
+	$box = $_POST['box'];
 
 	$command.="centerParticleStack.py ";
 
@@ -119,6 +127,10 @@ function runCenterParticles() {
 	if (!$runid) createCenterForm("<b>ERROR:</b> Specify a runid");
 	if (!$description) createCenterForm("<B>ERROR:</B> Enter a brief description");
 
+	// make sure diameter & max shifts are within box size
+	if ($mask > $box/2) createCenterForm("<b>ERROR:</b> Mask radius too large, must be smaller than ".round($box/2)." pixels");
+	if ($maxshift > $box/2) createCenterForm("<b>ERROR:</b> Shift too large, must be smaller than ".round($box/2)." pixels");
+
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;
@@ -126,8 +138,9 @@ function runCenterParticles() {
 	//putting together command
 	$command.="-n $runid ";
 	$command.="-s $stackId ";
+	if ($mask) $command.="-m $mask ";
+	if ($maxshift) $command.="-x $maxshift ";
 	$command.="-d \"$description\" ";
-	if ($outdir) $command.="-o $procdir ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
 	// submit job to cluster

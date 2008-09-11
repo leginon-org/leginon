@@ -93,6 +93,21 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 	
+
+	function getTotalImgs() {
+		$q = "SELECT COUNT(DISTINCT `DEF_id`) as i "
+		  ."FROM `AcquisitionImageData`";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['i'];
+	}
+
+	function getTotalSessions() {
+		$q = "SELECT COUNT(DISTINCT `DEF_id`) as i "
+		  ."FROM `SessionData`";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0]['i'];
+	}
+
 	function getLastSessionId() {
 		$q = "select distinct(s.DEF_id) from AcquisitionImageData a "
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
