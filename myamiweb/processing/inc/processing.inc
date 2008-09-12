@@ -1007,6 +1007,7 @@ function updateDescription($table, $editid, $text) {
 
 	# convert html back to single quotes
 	$desc = html_entity_decode($text, ENT_QUOTES);
+	$desc = trim($desc);
 	$particle->updateDescription($table, $editid, $desc);
 }
 
