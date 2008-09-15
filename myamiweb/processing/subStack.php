@@ -138,8 +138,6 @@ function runSubStack() {
 
 	$command.="norefSubStack.py ";
 
-	echo"$norefClassId, $stackId";
-
 	//make sure a description is provided
 	$description=$_POST['description'];
 	if (!$runid) createNorefSubStackForm("<b>ERROR:</b> Specify a runid");
