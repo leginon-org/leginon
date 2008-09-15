@@ -35,8 +35,6 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$exclude=$_GET['exclude'];
 	$norefClassfile=$_GET['file'];
 
-	echo"$norefClassId";
-
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
 
