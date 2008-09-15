@@ -153,7 +153,7 @@ function runSubStack() {
 
 	//putting together command
 	$command.="-n $runid ";
-	$command.="-norefclass $norefClassId ";
+	$command.="--norefclass=$norefClassId ";
 	$command.="-d \"$description\" ";
 	$command.="--exclude=$exclude ";
 	if ($outdir) $command.="-o $procdir ";
