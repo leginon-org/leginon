@@ -13,6 +13,7 @@ import apDB
 import appionData
 import apEMAN
 import apTilt
+from apTilt import apTiltPair
 
 appiondb = apDB.apdb
 
@@ -66,45 +67,6 @@ class subStackScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
 
 	#=====================
-	def getStackParticleTiltPair(self, stackid, particlenum):
-		"""
-		takes a stack id and particle number (1+) spider-style
-		returns the stack particle number for the tilt pair
-		"""
-		stackpartdata1 = apStack.getStackParticle(stackid, particlenum)
-		partdata = stackpartdata1['particle']
-
-		tiltpartq1 = appionData.ApTiltParticlePairData()
-		tiltpartq1['particle1'] = partdata
-		tiltpartdatas1 = tiltpartq1.query(results=1)
-
-		tiltpartq2 = appionData.ApTiltParticlePairData()
-		tiltpartq2['particle2'] = partdata
-		tiltpartdatas2 = tiltpartq2.query(results=1)
-
-		if not tiltpartdatas1 and tiltpartdatas2:
-			otherpart = tiltpartdatas2[0]['particle1']
-		elif tiltpartdatas1 and not tiltpartdatas2:
-			otherpart = tiltpartdatas1[0]['particle2']
-		else:
-			#print partdata
-			#print tiltpartdatas1
-			#print tiltpartdatas2
-			apDisplay.printError("failed to get tilt pair data")
-
-		stackpartq = appionData.ApStackParticlesData()
-		stackpartq['stack'] = stackpartdata1['stack']
-		stackpartq['particle'] = otherpart
-		stackpartdatas2 = stackpartq.query(results=1)
-		if not stackpartdatas2:
-			#apDisplay.printWarning("particle "+str(partnum)+" has no tilt pair in stackid="+str(stackid))
-			return None
-		stackpartnum = stackpartdatas2[0]['particleNumber']
-
-		#print partnum,"-->",stackpartnum
-		return stackpartnum
-
-	#=====================
 	def start(self):
 		#new stack path
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
@@ -152,7 +114,8 @@ class subStackScript(appionScript.AppionScript):
 			if excludelist and not classnum in excludelist:
 				try:
 					#get the particle number of the tilt pair
-					tiltpair = self.getStackParticleTiltPair(stackid, stackpartnum)
+					tiltpairdata = ApTiltPair.getStackParticleTiltPair(stackid, stackpartnum)
+					tiltpair = tiltpairdata['particleNumber']
 					
 					#convert to eman numbering for substack function
 					emanstackpartnum = tiltpair-1
