@@ -320,7 +320,9 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	apFile.removeFile(alignedstack+dataext)
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	count = 0
 	for partdict in partlist:
+		count += 1
 		#if partdict['num'] in [3,6,7]:
 		#	print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
 		p = partdict['num']
@@ -340,6 +342,10 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 				"CP", "_1",
 				alignedstack+"@"+("%06d" % (p)),	
 			)
+		if count % 10000 == 0:
+			### align 1000 particles, close spider, open new thread
+			mySpider.close()
+			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.close()
 
 	if not os.path.isfile(alignedstack+dataext):
