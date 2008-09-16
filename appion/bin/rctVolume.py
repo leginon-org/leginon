@@ -90,7 +90,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("stackfile does not exist: "+emanstackfile)
 		emancmd += emanstackfile+" "
 
-		spiderstack = os.path.join(self.params['outdir'], "rctstack1.spi")
+		spiderstack = os.path.join(self.params['outdir'], "rctstack0.spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 		
@@ -168,6 +168,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		eulerfile = os.path.join(self.params['outdir'], "eulersdoc001.spi")
 		eulerf = open(eulerfile, "w")
 		apDisplay.printMsg("creating Euler doc file")
+		starttime = time.time()
 		for stackpartdata in tiltParticlesData:
 			count += 1
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
@@ -176,16 +177,32 @@ class rctVolumeScript(appionScript.AppionScript):
 			line = operations.spiderOutputLine3(count, phi, tiltangle, psi)
 			eulerf.write(line)
 		eulerf.close()
-		
+		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+
 		### iterations over volume creation
+		looptime = time.time()
 		for iternum in range(self.params['numiters']):
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### back project particles into volume
-			volfile = os.path.join(self.params['outdir'], "volume%03d"%(iternum))
+			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum))
 			backproject.reconstructRct(spiderstack, eulerfile, volfile,
 				numpart=len(includeParticle), pixrad=50)
-			### project volume
+
+			### center/convert the volume file
+			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
+			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=5"
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			apFile.removeFile(volfile)
+			emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
+
 			### xy-shift particles to volume projections
+			backproject.rctParticleShift(volfile, spiderstack, eulerfile, iternum, 
+				numpart=len(includeParticle), pixrad=40)
+			apDisplay.printColor("finished volume refinement in "
+				+apDisplay.timeString(time.time()-looptime), "cyan")
+
+			### kill things
 			apDisplay.printError("end of line")
 
 		### optimize Euler angles
