@@ -38,24 +38,39 @@ neil
 """
 
 #===============================
-def reconstructRct():
+def reconstructRct(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".spi"):
 	"""
 	inputs:
-		stack
-		template
-		search params
+		stack, in spider format
+		eulerdocfile
 	outputs:
-		aligned stack
-		rotation/shift params
+		volume
 	"""
 	### setup
-	if dataext in template:
-		template = template[:-4]
 	if dataext in stackfile:
 		stackfile = stackfile[:-4]
+	if dataext in eulerdocfile:
+		eulerdocfile = eulerdocfile[:-4]
+	if dataext in volfile:
+		volfile = volfile[:-4]
 	t0 = time.time()
-	rundir = "reconstruct"
+	rundir = "volumes"
 	apParam.createDirectory(rundir)
 
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("BP CG", 
+		stackfile+"@*****", #stack file
+		"1-%d"%(numpart), #number of particles
+		str(pixrad), #particle radius
+		eulerdocfile, #angle doc file
+		"N", #has symmetry?, does not work
+		volfile, #filename for volume
+ 		"%.1e,%.1f" % (1.0e-5, 0.0), #error, chi^2 limits
+ 		"%d,%d" % (25,1), #iterations, 1st derivative mode
+ 		"2000", #lambda - higher=less sensitive to noise
+	)
+	mySpider.close()
 	return
+
+
 

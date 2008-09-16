@@ -5,6 +5,7 @@ import sys
 import os
 import shutil
 import numpy
+import time
 #appion
 import appionScript
 import apStack
@@ -12,6 +13,7 @@ import apDisplay
 import apDB
 import appionData
 import apEMAN
+import apFile
 from apTilt import apTiltPair
 from apSpider import operations, backproject
 
@@ -65,14 +67,46 @@ class rctVolumeScript(appionScript.AppionScript):
 
 	#=====================
 	def getParticleNoRefInPlaneRotation(self, stackpartdata):
+		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'], 
+			stackpartdata['particleNumber'], self.params['notstackid'])
 		classpartq = appionData.ApNoRefClassParticlesData()
 		classpartq['classRun'] = self.norefclassdata
-		classpartq['noref_particle']['particle'] = stackpartdata
+		norefpartq = appionData.ApNoRefAlignParticlesData()
+		norefpartq['particle'] = notstackpartdata
+		classpartq['noref_particle'] = norefpartq
 		classpartdatas = classpartq.query(results=1)
 		if not classpartdatas or len(classpartdatas) != 1:
 			apDisplay.printError("could not get inplane rotation")
 		inplane = classpartdatas[0]['noref_particle']['rotation']
 		return inplane
+
+	#=====================
+	def convertStackToSpider(self, emanstackfile):
+		"""
+		takes the stack file and creates a spider file ready for processing
+		"""
+		emancmd  = "proc2d "
+		if not os.path.isfile(emanstackfile):
+			apDisplay.printError("stackfile does not exist: "+emanstackfile)
+		emancmd += emanstackfile+" "
+
+		spiderstack = os.path.join(self.params['outdir'], "rctstack1.spi")
+		apFile.removeFile(spiderstack, warn=True)
+		emancmd += spiderstack+" "
+		
+		#emancmd += "apix="+str(self.stack['apix'])+" "
+		#if self.params['lowpass'] > 0:
+		#	emancmd += "lp="+str(self.params['lowpass'])+" "
+		#emancmd += "last="+str(self.params['numpart']-1)+" "
+		#emancmd += "shrink="+str(self.params['bin'])+" "
+		#clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+		#emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
+		emancmd += "spiderswap edgenorm"
+		starttime = time.time()
+		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		return spiderstack
 
 	#=====================
 	def start(self):
@@ -84,6 +118,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		classpartq = appionData.ApNoRefClassParticlesData()
 		classpartq['classRun'] = self.norefclassdata
 		classpartdatas = classpartq.query()
+		apDisplay.printMsg("Found "+str(len(classpartdatas))+" particles in the norefRun")
 
 		### get good particle numbers
 		includeParticle = []
@@ -94,16 +129,16 @@ class rctVolumeScript(appionScript.AppionScript):
 		for classpart in classpartdatas:
 			#write to text file
 			classnum = classpart['classNumber']-1
-			notstackpartnum = classpart['noref_particle']['particle']['particleNumber']
-			tiltstackpartnum = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
-				notstackpartnum, self.params['tiltstackid'])
-			if tiltstackpartdata is None:
-				nopairParticle += 1
-			elif classnum == self.params['classnum']:
-				emantiltstackpartnum = tiltstackpartnum-1
-				apDisplay.printError(str(tiltstackpartdata))
-				includeParticle.append(emanstackpartnum)
-				tiltParticlesData.append(tiltstackpartdata)
+			if classnum == self.params['classnum']:
+				notstackpartnum = classpart['noref_particle']['particle']['particleNumber']
+				tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+					notstackpartnum, self.params['tiltstackid'])
+				if tiltstackpartdata is None:
+					nopairParticle += 1
+				else:
+					emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+					includeParticle.append(emantiltstackpartnum)
+					tiltParticlesData.append(tiltstackpartdata)
 			else:
 				excludeParticle += 1
 		includeParticle.sort()
@@ -124,12 +159,15 @@ class rctVolumeScript(appionScript.AppionScript):
 		### make new stack of tilted particle from that run
 		tiltstackfile = os.path.join(tiltstackdata['path']['path'], tiltstackdata['name'])
 		rctstackfile = os.path.join(self.params['outdir'], "rctstack-"+self.timestamp+".hed")
+		apFile.removeStack(rctstackfile)
 		apStack.makeNewStack(tiltstackfile, rctstackfile, self.params['keepfile'])
+		spiderstack = self.convertStackToSpider(rctstackfile)
 
 		### make doc file of Euler angles
 		count = 0
 		eulerfile = os.path.join(self.params['outdir'], "eulersdoc001.spi")
 		eulerf = open(eulerfile, "w")
+		apDisplay.printMsg("creating Euler doc file")
 		for stackpartdata in tiltParticlesData:
 			count += 1
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
@@ -141,9 +179,13 @@ class rctVolumeScript(appionScript.AppionScript):
 		
 		### iterations over volume creation
 		for iternum in range(self.params['numiters']):
-			### back project particles into volume	
+			apDisplay.printMsg("running backprojection iteration "+str(iternum))
+			### back project particles into volume
+			volfile = os.path.join(self.params['outdir'], "volume%03d"%(iternum))
+			backproject.reconstructRct(spiderstack, eulerfile, volfile,
+				numpart=len(includeParticle), pixrad=50)
 			### project volume
-			### re-align particles volume
+			### xy-shift particles to volume projections
 			apDisplay.printError("end of line")
 
 		### optimize Euler angles

@@ -214,17 +214,17 @@ def getParticleTiltRotationAngles(stackpartdata):
 	tiltpartq2['particle2'] = partdata
 	tiltpartdatas2 = tiltpartq2.query(results=1)
 
-	if not tiltpartdatas1 and tiltpartdatas2:
+	if tiltpartdatas1 and not tiltpartdatas2:
 		#if first particle ApTiltParticlePairData
-		transformdata = tiltpartdatas1['transform']
+		transformdata = tiltpartdatas1[0]['transform']
 		gamma = transformdata['image1_rotation']
 		theta = transformdata['tilt_angle']
 		phi   = transformdata['image2_rotation']
 		tiltangle = apDatabase.getTiltAngleDeg(transformdata['image1'])
 
-	elif tiltpartdatas1 and not tiltpartdatas2:
+	elif not tiltpartdatas1 and tiltpartdatas2:
 		#if second particle ApTiltParticlePairData
-		transformdata = tiltpartdatas2['transform']
+		transformdata = tiltpartdatas2[0]['transform']
 		gamma = transformdata['image2_rotation']
 		theta = transformdata['tilt_angle']
 		phi   = transformdata['image1_rotation']
