@@ -196,10 +196,10 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 		#print otherpart.dbid
 		#apDisplay.printError("particle "+str(partnum)+" has no tilt pair in stackid="+str(tiltstackid))
 		return None
-	stackpartnum = stackpartdatas2[0]['particleNumber']
+	stackpartdata = stackpartdatas2[0]
 
 	#print partnum,"-->",stackpartnum
-	return stackpartnum
+	return stackpartdata
 
 #===============================
 def getParticleTiltRotationAngles(stackpartdata):
