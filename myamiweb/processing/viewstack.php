@@ -140,11 +140,15 @@ function createModel() {
 	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 }
 	
-function createStack() {
+function createNorefSubStack() {
 	var index = $('excludedIndex').value
-	window.open("subStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
+	window.open("norefSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 }
-	
+
+function createTiltPairSubStack() {
+	var index = $('excludedIndex').value
+	window.open("norefTiltPairSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
+}	
 
 </script>
 </head>
@@ -183,7 +187,8 @@ if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='
 if ($norefId) {
   echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
 <input type='button' value='Create Model' onClick='createModel()' >
-<input type='button' value='Create SubStack' onClick='createStack()' > \n";
+<input type='button' value='Create SubStack' onClick='createNorefSubStack()' > 
+<input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
 }
 elseif ($stackId) {
   echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
