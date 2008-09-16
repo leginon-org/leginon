@@ -83,6 +83,8 @@ def read(filename):
 
 # --------------------------------------------------------------------
 def spider2array(filename):
+	if not os.path.isfile(filename):
+		return None
 	" Convert a SPIDER file into a numpy array "
 	hdr = getSpiderHeader(filename)
 	hdrdict = getHeaderDict(hdr) # a class that simplifies accessing header elements 
