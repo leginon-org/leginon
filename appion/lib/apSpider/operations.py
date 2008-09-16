@@ -35,4 +35,13 @@ def spiderOutputLine(int1, int2, float1, float2, float3, float4, float5, float6=
 	return line
 
 
+#===============================
+def spiderOutputLine3(int1, float1, float2, float3):
+	line = "%04d" % int1
+	line += " %1d" % 3
+	line += apDisplay.leftPadString("%4.6f" % float1, n=12)
+	line += apDisplay.leftPadString("%4.6f" % float2, n=12)
+	line += apDisplay.leftPadString("%4.6f" % float3, n=12)
+	line += "\n"
+	return line
 
