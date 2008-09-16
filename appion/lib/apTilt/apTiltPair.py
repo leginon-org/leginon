@@ -9,10 +9,8 @@ import apDB
 import apImage
 import apDisplay
 import apStack
+import apDatabase
 import apTiltTransform
-
-leginondb = apDB.db
-appiondb  = apDB.apdb
 
 """
 Denis's query
@@ -35,6 +33,7 @@ $q="select "
 	imgtree = leginondb.query(imgquery, readimages=False)
 """
 
+#===============================
 def getTiltPair(imgdata):
 	imageq  = leginondata.AcquisitionImageData()
 	imageq['tilt series'] = imgdata['tilt series']
@@ -43,7 +42,7 @@ def getTiltPair(imgdata):
 	imageq['preset'] = presetq
 	#if beam changed between tilting, presets would be different
 	origid=imgdata.dbid
-	alltilts = leginondb.query(imageq, readimages=False)
+	alltilts = imageq.query(readimages=False)
 	tiltpair = None
 	if len(alltilts) > 1:
 		#could be multiple tiltpairs but we are taking only the most recent
@@ -53,6 +52,7 @@ def getTiltPair(imgdata):
 				break
 	return tiltpair
 
+#===============================
 def tiltPickerToDbNames(tiltparams):
 	#('image1', leginondata.AcquisitionImageData),
 	#('image2', leginondata.AcquisitionImageData),
@@ -85,6 +85,7 @@ def tiltPickerToDbNames(tiltparams):
 		newdict['overlap'] = tiltparams['overlap']
 	return newdict
 
+#===============================
 def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	#First we need to sort imgdata
 	#'07aug30b_a_00013gr_00010sq_v01_00002sq_v01_00016en_00'
@@ -96,7 +97,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	runq = appionData.ApSelectionRunData()
 	runq['name'] = params['runid']
 	runq['session'] = imgdata1['session']
-	runids=appiondb.query(runq, results=1)
+	runids = runq.query(results=1)
 	if not runids:
 		apDisplay.printError("could not find runid in database")
 
@@ -106,7 +107,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 			transq = appionData.ApImageTiltTransformData()
 			transq["image"+index] = imgdata
 			transq['tiltrun'] = runids[0]
-			transdata = appiondb.query(transq)
+			transdata = transq.query()
 			if transdata:
 				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
 				return transdata[0]
@@ -145,17 +146,26 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 
 	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
-	appiondb.insert(transq)
+	transq.insert()
 	return transq
 
-def getStackParticleTiltPair(stackid, partnum):
+#===============================
+def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	"""
 	takes a stack id and particle number (1+) spider-style
 	returns the stack particle number for the tilt pair
 	"""
+	#print stackid, partnum
+	if tiltstackid is None:
+		tiltstackid = stackid
+
 	stackpartdata1 = apStack.getStackParticle(stackid, partnum)
+
 	partdata = stackpartdata1['particle']
 
+	#print partdata
+
+	### figure out if its particle 1 or 2
 	tiltpartq1 = appionData.ApTiltParticlePairData()
 	tiltpartq1['particle1'] = partdata
 	tiltpartdatas1 = tiltpartq1.query(results=1)
@@ -165,8 +175,10 @@ def getStackParticleTiltPair(stackid, partnum):
 	tiltpartdatas2 = tiltpartq2.query(results=1)
 
 	if not tiltpartdatas1 and tiltpartdatas2:
+		#print "image1"
 		otherpart = tiltpartdatas2[0]['particle1']
 	elif tiltpartdatas1 and not tiltpartdatas2:
+		#print "image2"
 		otherpart = tiltpartdatas1[0]['particle2']
 	else:
 		print partdata
@@ -174,20 +186,58 @@ def getStackParticleTiltPair(stackid, partnum):
 		print tiltpartdatas2
 		apDisplay.printError("failed to get tilt pair data")
 
+	### get tilt stack particle
+	tiltstackdata = apStack.getOnlyStackData(tiltstackid, msg=False)
 	stackpartq = appionData.ApStackParticlesData()
-	stackpartq['stack'] = stackpartdata1['stack']
+	stackpartq['stack'] = tiltstackdata
 	stackpartq['particle'] = otherpart
 	stackpartdatas2 = stackpartq.query(results=1)
 	if not stackpartdatas2:
-		#apDisplay.printWarning("particle "+str(partnum)+" has no tilt pair in stackid="+str(stackid))
+		#print otherpart.dbid
+		#apDisplay.printError("particle "+str(partnum)+" has no tilt pair in stackid="+str(tiltstackid))
 		return None
 	stackpartnum = stackpartdatas2[0]['particleNumber']
 
 	#print partnum,"-->",stackpartnum
 	return stackpartnum
 
+#===============================
+def getParticleTiltRotationAngles(stackpartdata):
+	partdata = stackpartdata['particle']
+	#if first particle
+	tiltpartq1 = appionData.ApTiltParticlePairData()
+	tiltpartq1['particle1'] = partdata
+	tiltpartdatas1 = tiltpartq1.query(results=1)
+
+	#if second particle
+	tiltpartq2 = appionData.ApTiltParticlePairData()
+	tiltpartq2['particle2'] = partdata
+	tiltpartdatas2 = tiltpartq2.query(results=1)
+
+	if not tiltpartdatas1 and tiltpartdatas2:
+		#if first particle ApTiltParticlePairData
+		transformdata = tiltpartdatas1['transform']
+		gamma = transformdata['image1_rotation']
+		theta = transformdata['tilt_angle']
+		phi   = transformdata['image2_rotation']
+		tiltangle = apDatabase.getTiltAngleDeg(transformdata['image1'])
+
+	elif tiltpartdatas1 and not tiltpartdatas2:
+		#if second particle ApTiltParticlePairData
+		transformdata = tiltpartdatas2['transform']
+		gamma = transformdata['image2_rotation']
+		theta = transformdata['tilt_angle']
+		phi   = transformdata['image1_rotation']
+		tiltangle = apDatabase.getTiltAngleDeg(transformdata['image2'])
+	else:
+		#no particle pair info was found
+		print partdata
+		print tiltpartdatas1
+		print tiltpartdatas2
+		apDisplay.printError("failed to get tilt pair data")
 
 
+	return gamma, theta, phi, tiltangle
 
 
 
