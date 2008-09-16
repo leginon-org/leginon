@@ -17,7 +17,7 @@ from apSpider import operations, backproject
 
 appiondb = apDB.apdb
 
-class subStackScript(appionScript.AppionScript):
+class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnum=# [options]")
@@ -95,12 +95,13 @@ class subStackScript(appionScript.AppionScript):
 			#write to text file
 			classnum = classpart['classNumber']-1
 			notstackpartnum = classpart['noref_particle']['particle']['particleNumber']
-			tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+			tiltstackpartnum = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
 				notstackpartnum, self.params['tiltstackid'])
 			if tiltstackpartdata is None:
 				nopairParticle += 1
 			elif classnum == self.params['classnum']:
-				emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+				emantiltstackpartnum = tiltstackpartnum-1
+				apDisplay.printError(str(tiltstackpartdata))
 				includeParticle.append(emanstackpartnum)
 				tiltParticlesData.append(tiltstackpartdata)
 			else:
@@ -149,7 +150,7 @@ class subStackScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	subStack = subStackScript()
-	subStack.start()
-	subStack.close()
+	rctVolume = rctVolumeScript()
+	rctVolume.start()
+	rctVolume.close()
 
