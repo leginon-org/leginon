@@ -21,10 +21,10 @@ if ($_POST['process']) {
 
 // Create the form page
 else {
-	createNorefSubStackForm();
+	createTiltPairSubStackForm();
 }
 
-function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
+function createTiltPairSubStackForm($extra=false, $title='norefTiltPairSubStack.py Launcher', $heading='Make a partial Stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
@@ -136,12 +136,12 @@ function runSubStack() {
 	$commit=$_POST['commit'];
 	$exclude=$_POST['exclude'];
 
-	$command.="norefSubStack.py ";
+	$command.="norefTiltPairSubStack.py ";
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createNorefSubStackForm("<b>ERROR:</b> Specify a runid");
-	if (!$description) createNorefSubStackForm("<B>ERROR:</B> Enter a brief description");
+	if (!$runid) createTiltPairSubStackForm("<b>ERROR:</b> Specify a runid");
+	if (!$description) createTiltPairSubStackForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -160,11 +160,11 @@ function runSubStack() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createNorefSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+		if (!($user && $password)) createTiltPairSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
 		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
 		// if errors:
-		if ($sub) createNorefSubStackForm("<b>ERROR:</b> $sub");
+		if ($sub) createTiltPairSubStackForm("<b>ERROR:</b> $sub");
 		exit();
 	}
 
@@ -174,10 +174,11 @@ function runSubStack() {
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
-	<b>centerParticleStack.py command:</b><br />
+	<b>norefTiltPairSubStack.py command:</b><br />
 	$command
 	</td></tr>\n";
 	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
+	echo "<tr><td>norefclass id</td><td>$norefClassId</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
