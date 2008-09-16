@@ -181,29 +181,27 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### iterations over volume creation
 		looptime = time.time()
+		alignstack = spiderstack
 		for iternum in range(self.params['numiters']):
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### back project particles into volume
 			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum))
-			backproject.reconstructRct(spiderstack, eulerfile, volfile,
+			backproject.reconstructRct(alignstack, eulerfile, volfile,
 				numpart=len(includeParticle), pixrad=50)
 
 			### center/convert the volume file
 			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
-			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=5"
+			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			apFile.removeFile(volfile)
 			emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 			### xy-shift particles to volume projections
-			backproject.rctParticleShift(volfile, spiderstack, eulerfile, iternum, 
+			alignstack = backproject.rctParticleShift(volfile, spiderstack, eulerfile, iternum, 
 				numpart=len(includeParticle), pixrad=40)
 			apDisplay.printColor("finished volume refinement in "
 				+apDisplay.timeString(time.time()-looptime), "cyan")
-
-			### kill things
-			apDisplay.printError("end of line")
 
 		### optimize Euler angles
 

@@ -6,7 +6,7 @@ import subprocess
 import cPickle
 import sys
 import math
-from string import lowercase
+import numpy
 import random
 ## PIL
 #import Image
@@ -19,7 +19,7 @@ import apParam
 import apDisplay
 import apFile
 from apSpider import operations
-from pyami import peakfinder, spider
+from pyami import peakfinder, spider, correlator
 
 """
 A large collection of SPIDER functions
@@ -49,6 +49,7 @@ def reconstructRct(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".
 		volume
 	"""
 	### setup
+	starttime = time.time()
 	if dataext in stackfile:
 		stackfile = stackfile[:-4]
 	if dataext in eulerdocfile:
@@ -56,9 +57,6 @@ def reconstructRct(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".
 	if dataext in volfile:
 		volfile = volfile[:-4]
 	apFile.removeFile(volfile+".spi")
-	t0 = time.time()
-	rundir = "volumes"
-	apParam.createDirectory(rundir)
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("BP CG", 
@@ -73,6 +71,7 @@ def reconstructRct(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".
  		"2000", #lambda - higher=less sensitive to noise
 	)
 	mySpider.close()
+	apDisplay.printColor("finished backprojection in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return
 
 #===============================
@@ -80,6 +79,7 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 	"""
 	project 3D volumes using given Euler angles
 	"""
+	starttime = time.time()
 	if dataext in volfile:
 		volfile = volfile[:-4]
 	if dataext in eulerdocfile:
@@ -96,6 +96,7 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 		projstackfile+"@*****", #output projections
 	)
 	mySpider.close()
+	apDisplay.printColor("finished projections in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return
 
 #===============================
@@ -104,12 +105,12 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, datae
 		infile = infile[:-4]
 	if dataext in reffile:
 		reffile = reffile[:-4]
-	if dataext in ccdocfile:
-		ccdocfile = ccdocfile[:-4]
+	if dataext in alignfile:
+		alignfile = alignfile[:-4]
 	tempccfile = "tempccfile"
 	### cross correlate images
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
-	mySpider.toSpider("CC N", 
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpiderQuiet("CC N", 
 		infile+("@%05d"%(partnum)), #picture
 		reffile+("@%05d"%(partnum)), #reference
 		tempccfile, #output file
@@ -117,21 +118,35 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, datae
 	mySpider.close()
 
 	### find pixel peak from cc map
+	if not os.path.isfile(tempccfile+dataext):
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+		mySpider.toSpiderQuiet("CP", 
+			infile+("@%05d"%(partnum)), #old stack
+			alignfile+("@%05d"%(partnum)), #new stack
+		)
+		mySpider.close()
+		return
 	ccmap = spider.read(tempccfile+dataext)
-	pf = peakfinder.PeakFinder()
-	peak = pf.subpixelPeak(newimage=ccmap, npix=5)
+	peak = peakfinder.findSubpixelPeak(ccmap, lpf=1.5)
+	subpixpeak = numpy.asarray(peak['subpixel peak'], dtype=numpy.float32)
+	shift = subpixpeak - numpy.asarray(ccmap.shape, dtype=numpy.float32)/2.0
+	### cannot shift more the 1/4 size of the image
+	if abs(shift[0]) > ccmap.shape[0]/4.0:
+		shift[0] = ccmap.shape[0]/4.0*shift[0]/abs(shift[0])
+	if abs(shift[1]) > ccmap.shape[1]/4.0:
+		shift[1] = ccmap.shape[1]/4.0*shift[1]/abs(shift[1])
 	apFile.removeFile(tempccfile+dataext)
 	f = open(ccdocfile, "a")
-	spiline = operations.spiderOutputLine3(partnum, peak[0], peak[1], 0.0)
+	spiline = operations.spiderOutputLine3(partnum, shift[0], shift[1], 0.0)
 	f.write(spiline)
 	f.close()
 
 	### shift the images images
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
-	mySpider.toSpider("SH", 
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpiderQuiet("SH", 
 		infile+("@%05d"%(partnum)), #old stack
 		alignfile+("@%05d"%(partnum)), #new stack
-		"%.3f,%.3f"%(peak[0],peak[1]), #output file
+		"%.3f,%.3f"%(shift[0], shift[1]), #output file
 	)
 	mySpider.close()
 	return
@@ -145,16 +160,23 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	outputs:
 		volume
 	"""
+	### create corresponding projections
 	projstackfile = "projstack%03d.spi"%(iternum)
 	projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext)
 
-	partnum = 1
+	### align particles to projection
 	ccdocfile = "ccdocfile%03d.spi"%(iternum)
+	apFile.removeFile(ccdocfile)
 	alignstackfile = "alignstack%03d.spi"%(iternum)
+	apDisplay.printMsg("Shifting particles")
+	starttime = time.time()
+	partnum = 0
 	while partnum <= numpart:
 		partnum+=1
+		if partnum%50 == 0:
+			print "partnum=", partnum
 		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
-
+	apDisplay.printColor("finished correlations in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return alignstackfile
 
 
