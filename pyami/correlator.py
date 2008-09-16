@@ -118,7 +118,7 @@ class Correlator(object):
 			cc = self.results['cross correlation image']
 		return cc
 
-	def phaseCorrelate(self, zero=True):
+	def phaseCorrelate(self, zero=True, wiener=False):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
 		#print 'phaseCorrelate start'
@@ -126,7 +126,17 @@ class Correlator(object):
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']
 
-			pcfft = ccfft / numpy.absolute(ccfft)
+			if wiener:
+				rstart = int(0.2 * ccfft.shape[0])
+				rstop = int(0.5 * ccfft.shape[0])
+				region = ccfft[rstart:rstop]
+				noise = 10 * numpy.mean(region.real * region.real + region.imag * region.imag)
+				d = numpy.sqrt(ccfft.real*ccfft.real+ccfft.imag*ccfft.imag+noise)
+			else:
+				d = numpy.absolute(ccfft)
+
+			pcfft = ccfft / d
+
 			self.results['phase correlation fft'] = pcfft
 			pc = self.fftengine.itransform(pcfft)
 			if zero:
@@ -156,11 +166,11 @@ def cross_correlate(im1, im2, pad=False):
 	cor.setImage(1, im1)
 	return cor.crossCorrelate()
 
-def phase_correlate(im1, im2, zero, pad=False):
+def phase_correlate(im1, im2, zero, pad=False, wiener=False):
 	cor = Correlator(pad=pad)
 	cor.setImage(0, im2)
 	cor.setImage(1, im1)
-	return cor.phaseCorrelate(zero=zero)
+	return cor.phaseCorrelate(zero=zero, wiener=wiener)
 
 def auto_correlate(im, pad=False):
 	return cross_correlate(im, im, pad=pad)
