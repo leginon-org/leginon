@@ -181,27 +181,39 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### iterations over volume creation
 		looptime = time.time()
+		### back project particles into filter volume
+		volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(0))
+		backproject.backprojectCG(spiderstack, eulerfile, volfile,
+			numpart=len(includeParticle), pixrad=50)
 		alignstack = spiderstack
+		### center/convert the volume file
+		emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
+		emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		apFile.removeFile(volfile)
+		emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+
 		for iternum in range(self.params['numiters']):
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
-			### back project particles into volume
-			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum))
-			backproject.reconstructRct(alignstack, eulerfile, volfile,
+			### xy-shift particles to volume projections
+			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 
 				numpart=len(includeParticle), pixrad=50)
+			apDisplay.printColor("finished volume refinement in "
+				+apDisplay.timeString(time.time()-looptime), "cyan")
+
+			### back project particles into better volume
+			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum+1))
+			backproject.backproject3F(alignstack, eulerfile, volfile,
+				numpart=len(includeParticle))
 
 			### center/convert the volume file
-			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
+			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum+1))
 			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			apFile.removeFile(volfile)
 			emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
-
-			### xy-shift particles to volume projections
-			alignstack = backproject.rctParticleShift(volfile, spiderstack, eulerfile, iternum, 
-				numpart=len(includeParticle), pixrad=40)
-			apDisplay.printColor("finished volume refinement in "
-				+apDisplay.timeString(time.time()-looptime), "cyan")
 
 		### optimize Euler angles
 
