@@ -101,6 +101,8 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 
 #===============================
 def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, dataext=".spi"):
+	### rewrite this and do the whole thing in memory in SPIDER, it'll be faster
+
 	if dataext in infile:
 		infile = infile[:-4]
 	if dataext in reffile:
@@ -175,7 +177,8 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	while partnum <= numpart:
 		partnum+=1
 		if partnum%50 == 0:
-			print "partnum=", partnum
+			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
+			print "partnum=", partnum, apDisplay.timeString(esttime), "remain"
 		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
 	apDisplay.printColor("finished correlations in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return alignstackfile
