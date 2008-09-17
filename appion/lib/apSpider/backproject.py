@@ -187,7 +187,7 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, datae
 
 #===============================
 def crossCorrelateAndShift2(infile, reffile, alignfile, ccdocfile, partnum, dataext=".spi"):
-	### rewriten to do the whole thing in memory in SPIDER, it'll be faster
+	### rewriten to do the whole thing in memory in SPIDER, it should be faster
 	if dataext in infile:
 		infile = infile[:-4]
 	if dataext in reffile:
@@ -197,11 +197,11 @@ def crossCorrelateAndShift2(infile, reffile, alignfile, ccdocfile, partnum, data
 	ccmap = "_5"
 	windccmap = "_6"
 
-	### cross correlate images
+	### cross correlate images; reversed order to avoid -1*shift
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("CC N", 
-		infile+("@%05d"%(partnum)), #picture
 		reffile+("@%05d"%(partnum)), #reference
+		infile+("@%05d"%(partnum)), #picture
 		ccmap, #output file
 	)
 
