@@ -121,7 +121,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$phasecheck = ($_POST['phaseflip']=='on' || !$_POST['process']) ? 'CHECKED' : ''; 		 
 	$stigcheck = ($_POST['stig']=='on') ? 'CHECKED' : ''; 		 
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
-	$commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxszval = $_POST['boxsize'];
 	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$plimit = $_POST['plimit'];
