@@ -210,7 +210,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 			### center/convert the volume file
 			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
-			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
+			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=3"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			apFile.removeFile(volfile)
 			emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
