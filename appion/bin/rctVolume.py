@@ -187,14 +187,15 @@ class rctVolumeScript(appionScript.AppionScript):
 			numpart=len(includeParticle), pixrad=50)
 		alignstack = spiderstack
 		### center/convert the volume file
-		emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
+		emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, 0))
 		emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apFile.removeFile(volfile)
 		emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
-		for iternum in range(self.params['numiters']):
+		for i in range(self.params['numiters']):
+			iternum = i+1
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 
@@ -203,12 +204,12 @@ class rctVolumeScript(appionScript.AppionScript):
 				+apDisplay.timeString(time.time()-looptime), "cyan")
 
 			### back project particles into better volume
-			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum+1))
+			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum))
 			backproject.backproject3F(alignstack, eulerfile, volfile,
 				numpart=len(includeParticle))
 
 			### center/convert the volume file
-			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum+1))
+			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
 			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			apFile.removeFile(volfile)
