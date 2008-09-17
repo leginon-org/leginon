@@ -168,6 +168,7 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	ccdocfile = "ccdocfile%03d.spi"%(iternum)
 	apFile.removeFile(ccdocfile)
 	alignstackfile = "alignstack%03d.spi"%(iternum)
+	apFile.removeFile(alignstackfile)
 	apDisplay.printMsg("Shifting particles")
 	starttime = time.time()
 	partnum = 0
