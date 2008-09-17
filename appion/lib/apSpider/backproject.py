@@ -222,8 +222,12 @@ def crossCorrelateAndShift2(infile, reffile, alignfile, ccdocfile, partnum, data
 		"1,1", #origin coordinates
 	)
 
+	### save info to doc file
+	mySpider.toSpiderQuiet("SD %d,x11,x12"%(partnum), 
+		ccdocfile, #input ccmap file
+	)
+
 	### shift the images images
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("SH", 
 		infile+("@%05d"%(partnum)), #old stack
 		alignfile+("@%05d"%(partnum)), #new stack
@@ -258,7 +262,7 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 		partnum+=1
 		if partnum%50 == 0:
 			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
-			print "partnum=", partnum, apDisplay.timeString(esttime), "remain"
+			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
 		crossCorrelateAndShift2(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
 	apDisplay.printColor("finished correlations in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return alignstackfile
