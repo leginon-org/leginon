@@ -259,7 +259,7 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	apDisplay.printMsg("Shifting particles")
 	starttime = time.time()
 	partnum = 0
-	while partnum <= numpart:
+	while partnum < numpart:
 		partnum+=1
 		if partnum%50 == 0:
 			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
