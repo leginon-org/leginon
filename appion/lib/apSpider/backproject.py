@@ -206,9 +206,9 @@ def crossCorrelateAndShift2(infile, reffile, alignfile, ccdocfile, partnum, data
 	)
 
 	### cannot shift more the 1/4 size of the image
-	mySpider.toSpiderQuiet("FI x52", infile+("@%05d"%(partnum)) )
-	mySpider.toSpiderQuiet("x54=int(x52/2)")
-	mySpider.toSpiderQuiet("x55=int(x52/4)")
+	mySpider.toSpiderQuiet("FI x52", infile+("@%05d"%(partnum)), "12" )
+	mySpider.toSpiderQuiet("x54=int(x52/2)") #window size
+	mySpider.toSpiderQuiet("x55=int(x52/4)") #window topleft
 	mySpider.toSpiderQuiet("WI", 
 		ccmap, #input file
 		windccmap, #output file
@@ -217,13 +217,14 @@ def crossCorrelateAndShift2(infile, reffile, alignfile, ccdocfile, partnum, data
 	)
 
 	### find the cross-correlation peak
-	mySpider.toSpiderQuiet("PK M x11,x12", 
+	mySpider.toSpiderQuiet("x56=int(x52/4)+1") #center of window
+	mySpider.toSpiderQuiet("PK M x11,x12,x13,x14", 
 		windccmap, #input ccmap file
-		"1,1", #origin coordinates
+		"x56,x56", #origin coordinates
 	)
 
 	### save info to doc file
-	mySpider.toSpiderQuiet("SD %d,x11,x12"%(partnum), 
+	mySpider.toSpiderQuiet("SD %d,x13,x14"%(partnum), 
 		ccdocfile, #input ccmap file
 	)
 
@@ -231,7 +232,7 @@ def crossCorrelateAndShift2(infile, reffile, alignfile, ccdocfile, partnum, data
 	mySpider.toSpiderQuiet("SH", 
 		infile+("@%05d"%(partnum)), #old stack
 		alignfile+("@%05d"%(partnum)), #new stack
-		"x11,x12", #shift value file
+		"x13,x14", #shift value file
 	)
 	mySpider.close()
 	return
