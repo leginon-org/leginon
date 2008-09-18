@@ -160,7 +160,7 @@ class UploadReconScript(appionScript.AppionScript):
 			eulerjump.calculateEulerJumpsForEntireRecon(reconrunid, stackid)
 			### coran keep plot
 			if self.params['package']=='EMAN/SpiCoran':
-				apCoranKeepPlot.makeCoranKeepPlot(reconrunid)
+				apCoranPlot.makeCoranKeepPlot(reconrunid)
 				
 
 
