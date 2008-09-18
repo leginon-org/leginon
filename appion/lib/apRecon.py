@@ -872,7 +872,15 @@ def getNumIterationsFromRefineRunID(refinerunid):
 	refrundata = appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
 	refq = appionData.ApRefinementData()
 	refq['refinementRun'] = refrundata
-	return len(refq.query())
+	refdatas = refq.query()
+	if not refdatas:
+		return 0
+	maxiter = 0
+	for refdata in refdatas:
+		iternum = refdata['iteration']
+		if iternum > maxiter:
+			maxiter = iternum
+	return maxiter
 
 def getClusterJobDataFromID(jobid):
 	return appiondb.direct_query(appionData.ApClusterJobData, jobid)
