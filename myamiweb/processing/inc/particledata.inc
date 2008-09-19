@@ -388,7 +388,7 @@ class particledata {
 			."		c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 			."		c.`confidence`,c.`confidence_d` , "
 			."		(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
-			."	from dbappiondata.`ApCtfData` c "
+			."	from `ApCtfData` c "
 			."	left join ".DB.".`AcquisitionImageData` i on (i.`DEF_id` = c.`REF|leginondata|AcquisitionImageData|image`) "
 			."	left join ".DB.".`PresetData` p on (p.DEF_id = i.`REF|PresetData|preset`) "
 			."	left join ".DB.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
@@ -484,7 +484,7 @@ class particledata {
 				."			c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 				."			c.`confidence`,c.`confidence_d` , "
 				."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
-				."		from dbappiondata.`ApCtfData` c "
+				."		from `ApCtfData` c "
 				."		left join ".DB.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
 				."		left join ".DB.".`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
 				."		left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
@@ -666,7 +666,7 @@ class particledata {
 		// returns a boolean value, 0 if rejected, 1 if keeping,
 		// null if no status in database
 		$q = "select * "
-			."from dbappiondata.ApAssessmentData "
+			."from ApAssessmentData "
 			."where `REF|leginondata|AcquisitionImageData|image` = '$imageId' "
 			."and `REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
