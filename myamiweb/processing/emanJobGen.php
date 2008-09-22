@@ -733,16 +733,19 @@ function writeJobFile ($extra=False) {
 		$clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
 		$clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
 		$clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
+		$clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
 	}
 	else {
-		$clusterjob.= "set PBSREMOTEDIR $clusterfullpath/recon\n";
-		$clusterjob.= "rm -rf \$PBSREMOTEDIR\n";
-		$clusterjob.= "mkdir -p \$PBSREMOTEDIR\n";
-		$clusterjob.= "cd \$PBSREMOTEDIR\n\n";
-		$clusterjob.= "ln -s $stackpath/$stackname1 start.hed\n";
+		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
+		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
+		$clusterjob.= "cd $clusterfullpath/recon\n\n";
+		$ext=strrchr($stackname1,'.');
+		$stackname=substr($stackname1,0,-strlen($ext));
+		$clusterjob.= "ln -s $stackpath/$stackname.hed start.hed\n";
+		$clusterjob.= "ln -s $stackpath/$stackname.img start.img\n";
 		$clusterjob.= "ln -s $modelpath/$modelname threed.0.mrc\n";
+		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";
 	}
-	$clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
 	$procs=$_POST['nodes']*$_POST['rprocs'];
 	$numiters=$_POST['numiters'];
 	$pad=intval($box*1.25);
@@ -837,19 +840,25 @@ function writeJobFile ($extra=False) {
 	}
 	
 	
-	$clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
-
-	if ($_POST['dmfstore']=='on') {
-		$clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
-		$clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
-		$line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
-		if ($msgp=='on') {
-			$line .= "goodavgs.* ";
-			$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
+	if ($clustername=='garibaldi') {
+		$clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
+		if ($_POST['dmfstore']=='on') {
+			$clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
+			$clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
+			$line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
+			if ($msgp=='on') {
+				$line .= "goodavgs.* ";
+				$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
+			}
+			$line .= "\n";
+			$clusterjob.= $line;
+			$clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
 		}
-		$line .= "\n";
-		$clusterjob.= $line;
-		$clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
+	}
+	else {
+		$clusterjob.= "\nmv $clusterfullpath/recon/* $clusterfullpath/.\n";
+		$clusterjob.= "\nmv $clusterfullpath/recon/.* $clusterfullpath/.\n";
+		$clusterjob.= "\nrm -rf $clusterfullpath/recon\n";
 	}
 	if (!$extra) {
 		if ($clustername=='garibaldi') {
