@@ -170,6 +170,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 					$steps = array();
 					foreach ($keys as $key) echo "<td><span class='datafield0'>$key</span></td>\n";
 					echo "</tr>\n";
+					$reconpath=$jobinfo['clusterpath']."/recon";
 					for ($i=$lastindx; $i<count($stat['refinelog']); $i++) {
 						if ($stat['refinelog'][$i][0] == 'project3d') {
 							$t = getlogdate($stat['refinelog'][$i]);
@@ -187,7 +188,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$steps['proj']['duration'] = getduration($lasttime,$t['timestamp']);
 
 							// get the number of particles that have been classified
-							$cmd = "grep ' -> ' $jobinfo[clusterpath]/recon/refine$current.txt | wc -l";
+							$cmd = "grep ' -> ' $reconpath/refine$current.txt | wc -l";
 							$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$r = trim($r);
 							// find out how much time is left for rest of particles
@@ -210,15 +211,30 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							// set duration of previous run based on time stamp
 							$steps['clsbymra']['duration'] = getduration($lasttime,$t['timestamp']);
 
-							$steps['clsalign']['reconstruction step'] = "iterative class averaging";
+							// get the number of classes
+							$cmd = "ls cls*.lst | wc -l";
+							$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+							$cls = trim($cls);
+							// get the number of classes that have been aligned
+							$cmd = "grep Final $reconpath/refine$current.txt | wc -l";
+							$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+							$r = trim($r);
+							// find out how much time is left for rest of particles
+							if ($r < $cls && $r > 0) {
+								$left = gettimeleft($r,$cls,$t['timestamp']);
+							}
+							$p = "iterative class averaging ($r/$cls)";
+							$steps['clsalign']['reconstruction step'] = $p;
 							$steps['clsalign']['started'] = "$t[date]";
 							$steps['clsalign']['duration'] = getduration($t['timestamp'],time());
 							$steps['clsalign']['status'] = "<font class='apcomment'>running</font>";
+							if ($left) $steps['clsalign']['status'] = "<font class='apcomment'><b>$left</b> remain</font>";
 							$lasttime=$t['timestamp'];
 						}
 
 						elseif ($stat['refinelog'][$i][0] == 'make3d') {
 							$steps['clsalign']['status'] = "<font class='green'> Done</font>";
+							$steps['clsalign']['reconstruction step'] = 'iterative class averaging';
 							$t = getlogdate($stat['refinelog'][$i]);
 							// set duration of previous run based on time stamp
 							$steps['clsalign']['duration'] = getduration($lasttime,$t['timestamp']);
@@ -249,10 +265,47 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							// set duration of previous run based on time stamp
 							$steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
 
-							$steps['eotest']['reconstruction step'] = "performing even/odd test";
+							// see if making model
+							$cmd = "grep classalignall $reconpath/eotest$current.txt | wc -l";
+							$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+							$r = trim($r);
+							if ($r < 2) {
+								// get the number of e/o classes
+								$cmd = "ls $reconpath/cls*.*.lst | wc -l";
+								$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+								$cls = trim($cls);
+								// get the number of classes that have been aligned
+								$cmd = "grep Final $reconpath/eotest$current.txt | wc -l";
+								$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+								$r = trim($r);
+								// find out how much time is left for rest of particles
+								$left = gettimeleft($r,$cls,$t['timestamp']);
+								$p = "creating e/o classes ($r/$cls)";
+								$steps['eotest']['status'] = "<font class='apcomment'>$left remain</font>";
+							}
+							else {
+								// see if transforming
+								$cmd = "grep '[0-9]*/[0-9]*([0-9]*)' $reconpath/eotest$current.txt | wc -l";
+								$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+								$r = trim($r);
+								if ($r > 0) {
+									// get the number of classes
+									$cmd = "ls $reconpath/cls*.lst | grep 'cls[0-9]*.lst' | wc -l";
+									$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+									$cls = trim($cls);
+									// find number of times cycled
+									$numt = floor($r/$cls);
+									$m = $r%$cls;
+									$tran = "transforming slice: $m/$cls";
+									if ($numt) $tran = "(completed $numt rounds)";
+									$steps['eotest']['status'] = "<font class='apcomment'>$tran</font>";
+								}
+								else $steps['eotest']['status'] = "<font class='apcomment'>running</font>";
+								$p = "creating e/o 3d models";
+							}
+							$steps['eotest']['reconstruction step'] = "$p";
 							$steps['eotest']['started'] = "$t[date]";
 							$steps['eotest']['duration'] = getduration($t['timestamp'],time());
-							$steps['eotest']['status'] = "<font class='apcomment'>running</font>";
 							break;
 						}
 					}
