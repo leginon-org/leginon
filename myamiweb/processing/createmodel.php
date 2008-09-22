@@ -420,19 +420,19 @@ function runCreateModel() {
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
 	// submit job to cluster
-	if ($_POST['process']=="Create SubStack") {
+	if ($_POST['process']=="Create Initial Model") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createNorefSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+		if (!($user && $password)) createEMANInitialModelForm("<B>ERROR:</B> You must be logged in to submit");
 
 		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
 		// if errors:
-		if ($sub) createNorefSubStackForm("<b>ERROR:</b> $sub");
+		if ($sub) createEMANInitialModelForm("<b>ERROR:</b> $sub");
 		exit();
 	}
 
-	processing_header("Creating a SubStack", "Creating a SubStack");
+	processing_header("Creating an Initial Model", "Creating an Initial Model");
 
 	//rest of the page
 	echo"
