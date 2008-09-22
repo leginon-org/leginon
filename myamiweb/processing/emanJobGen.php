@@ -15,355 +15,352 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 
 if ($_POST['write']) {
-  $particle = new particledata();
-  if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
-  if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=4");
-  if ($_POST['ppn'] > 4 && $_POST['clustername']=='garibaldi') jobForm("ERROR: Max processors per node is 4");
-  if ($_POST['ppn'] > 8 && $_POST['clustername']=='guppy') jobForm("ERROR: Max processors per node is 4");
-  if ($_POST['nodes'] > 10 && $_POST['clustername']=='guppy') jobForm("ERROR: Max nodes on guppy is 10");
-  if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=240");
-  if ($_POST['walltime'] > 240) jobForm("ERROR: Max walltime is 240");
-  if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=240");
-  if ($_POST['cput'] > 240) jobForm("ERROR: Max CPU time is 240");
-  if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=4");
-  if ($_POST['rprocs'] > $_POST['ppn'])
-    jobForm("ERROR: Asking to reconstruct on more processors than available");
-  if ($_POST['clustername']=='garibaldi') {
-    if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
-    if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
-    if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
-  }
-  for ($i=1; $i<=$_POST['numiters']; $i++) {
-    if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
-    if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
-    // if amask is used, then xfiles must also be used
-    if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
-      if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
-      if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
-    } 
-  }
-  // check that job file doesn't already exist
-  $outdir = $_POST['outdir'];
-  if (substr($outdir,-1,1)!='/') $outdir.='/';
-  $outdir .= $_POST['jobname'];
+	$particle = new particledata();
+	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
+	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=4");
+	if ($_POST['ppn'] > 4 && $_POST['clustername']=='garibaldi') jobForm("ERROR: Max processors per node is 4");
+	if ($_POST['ppn'] > 8 && $_POST['clustername']=='guppy') jobForm("ERROR: Max processors per node is 4");
+	if ($_POST['nodes'] > 10 && $_POST['clustername']=='guppy') jobForm("ERROR: Max nodes on guppy is 10");
+	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=240");
+	if ($_POST['walltime'] > 240) jobForm("ERROR: Max walltime is 240");
+	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=240");
+	if ($_POST['cput'] > 240) jobForm("ERROR: Max CPU time is 240");
+	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=4");
+	if ($_POST['rprocs'] > $_POST['ppn'])
+	  jobForm("ERROR: Asking to reconstruct on more processors than available");
+	if ($_POST['clustername']=='garibaldi') {
+		if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
+		if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
+		if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
+	}
+  	for ($i=1; $i<=$_POST['numiters']; $i++) {
+		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
+		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
+		// if amask is used, then xfiles must also be used
+		if ($_POST['amask1'.$i] || $_POST['amask2'.$i] || $_POST['amask3'.$i]) {
+			if (!($_POST['amask1'.$i] && $_POST['amask2'.$i] && $_POST['amask3'.$i])) jobForm("ERROR: All 3 amask values of amask must be entered for iteration $i");
+			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
+		} 
+	}
+	// check that job file doesn't already exist
+	$outdir = $_POST['outdir'];
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$outdir .= $_POST['jobname'];
 
-  // jobname ends with .job
-  $jobname = $_POST['jobname'];
-  $jobname .= '.job';
-  $exists = $particle->getJobFileFromPath($outdir,$jobname);
-  //  if ($exists[0]) jobForm("ERROR: This job name already exists");
-  writeJobFile();
-}
+	// jobname ends with .job
+	$jobname = $_POST['jobname'];
+	$jobname .= '.job';
+	$exists = $particle->getJobFileFromPath($outdir,$jobname);
+	//  if ($exists[0]) jobForm("ERROR: This job name already exists");
+	writeJobFile();
+}	
 
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
-  ## make sure a stack and model were selected
-  if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-  if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
+	## make sure a stack and model were selected
+	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
+	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
 
-  ## make sure that box sizes are the same
-  ## get stack data
-  $stackinfo = explode('|--|',$_POST['stackval']);
-  $stackbox = $stackinfo[2];
-  ## get model data
-  $modelinfo = explode('|--|',$_POST['model']);
-  $modbox = $modelinfo[3];
-  if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
-  jobForm();
+	// make sure that box sizes are the same
+	// get stack data
+	$stackinfo = explode('|--|',$_POST['stackval']);
+	$stackbox = $stackinfo[2];
+	// get model data
+	$modelinfo = explode('|--|',$_POST['model']);
+	$modbox = $modelinfo[3];
+	if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
+	jobForm();
 }
 
 elseif ($_POST['submitjob']) {
-  $particle = new particledata();
+	$particle = new particledata();
 
-  $expId = $_GET['expId'];
+	$expId = $_GET['expId'];
 
-  $host =$_POST['clustername'];
-  $user = $_SESSION['username'];
-  $pass = $_SESSION['password'];
-  if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
+	$host =$_POST['clustername'];
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+	if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
-  $jobname=$_POST['jobname'];
-  $outdir=$_POST['outdir'].$_POST['jobname'];
-  if ($host=='garibaldi') {
-    $dmfpath=$_POST['dmfpath'].$jobname;
-    $clusterpath=$_POST['clusterpath'].$jobname;
-  }
+	$jobname=$_POST['jobname'];
+	$outdir=$_POST['outdir'].$_POST['jobname'];
+	if ($host=='garibaldi') {
+		$dmfpath=$_POST['dmfpath'].$jobname;
+		$clusterpath=$_POST['clusterpath'].$jobname;
+	}
 
-  $jobfile="$jobname.job";
-  $tmpjobfile = "/tmp/$jobfile";
+	$jobfile="$jobname.job";
+	$tmpjobfile = "/tmp/$jobfile";
 
-  $jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
+	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
 
-  // add header & job id to the beginning of the script
-  // convert /\n's back to \n for the script
-  $header = explode('|--|',$_POST['header']);
-  $clusterjob = "## $jobname\n";
-  foreach ($header as $l) $clusterjob.="$l\n";
-  $clusterjob.= "\nupdateAppionDB.py $jobid R\n\n";
-  $clusterjob.= "# jobId: $jobid\n";
-  $clusterlastline.= "updateAppionDB.py $jobid D\nexit\n\n";
-  $f = file_get_contents($tmpjobfile);
-  file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
+	// add header & job id to the beginning of the script
+	// convert /\n's back to \n for the script
+	$header = explode('|--|',$_POST['header']);
+	$clusterjob = "## $jobname\n";
+	foreach ($header as $l) $clusterjob.="$l\n";
+	$clusterjob.= "\nupdateAppionDB.py $jobid R\n\n";
+	$clusterjob.= "# jobId: $jobid\n";
+	$clusterlastline.= "updateAppionDB.py $jobid D\nexit\n\n";
+	$f = file_get_contents($tmpjobfile);
+	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
-  processing_header("Eman Job Submitted","EMAN Job Submitted",$javafunc);
-  echo "<TABLE WIDTH='600'>\n";
+	processing_header("Eman Job Submitted","EMAN Job Submitted",$javafunc);
+	echo "<TABLE WIDTH='600'>\n";
 
-  // create appion directory & copy job file
-  $cmd = "mkdir -p $outdir;\n";
-  $cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
-  exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
+	// create appion directory & copy job file
+	$cmd = "mkdir -p $outdir;\n";
+	$cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
+	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
 
-  // if running on garibaldi:
-  if ($host=='garibaldi') {
-    // create directory on cluster and copy job file over
-    $cmd = "mkdir -p $clusterpath;\n";
-    $cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
-    $jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
-  }
-  // if on guppy, clusterpath is same as outdir
-  else $clusterpath=$outdir;
+	// if running on garibaldi:
+	if ($host=='garibaldi') {
+		// create directory on cluster and copy job file over
+		$cmd = "mkdir -p $clusterpath;\n";
+		$cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
+		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
+	}
+	// if on guppy, clusterpath is same as outdir
+	else $clusterpath=$outdir;
 
-  echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
-  echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
+	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
+	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
-  // submit job on host
-  $cmd = "cd $clusterpath; qsub $jobname.job;\n";
-  $jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
+	// submit job on host
+	$cmd = "cd $clusterpath; qsub $jobname.job;\n";
+	$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
   
-  $jobnum=trim($jobnum);
-  $jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
-  if (!is_numeric($jobnum)) {
-    echo "</TABLE><P>\n";
-    echo "ERROR in job submission.  Check the cluster\n";
-    processing_footer();
-    exit;
-  }
+	$jobnum=trim($jobnum);
+	$jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
+	if (!is_numeric($jobnum)) {
+		echo "</TABLE><P>\n";
+		echo "ERROR in job submission.  Check the cluster\n";
+		processing_footer();
+		exit;
+	}
 
-  // insert cluster job id into row that was just created
-  $particle->updateClusterQueue($jobid,$jobnum,'Q');
+	// insert cluster job id into row that was just created
+	$particle->updateClusterQueue($jobid,$jobnum,'Q');
 
-  echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
-  echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
-  echo "</TABLE>\n";
+	echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
+	echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
+	echo "</TABLE>\n";
 
-  // check jobs that are running on the cluster
-  echo "<P>Jobs currently running on the cluster:\n";
-  $subjobs = checkClusterJobs($host,$user,$pass);
-  if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
-  else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
-  echo "<p><a href='checkjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
+	// check jobs that are running on the cluster
+	echo "<P>Jobs currently running on the cluster:\n";
+	$subjobs = checkClusterJobs($host,$user,$pass);
+	if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
+	else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
+	echo "<p><a href='checkjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
 	echo "<P><FONT COLOR='RED'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
-  processing_footer(True, True);
-  exit;
+	processing_footer(True, True);
+	exit;
 }
 
 else stackModelForm();
 
 function stackModelForm($extra=False) {
-  // check if session provided
-  $expId = $_GET['expId'];
-  $modelonly = $_GET['modelonly'];
-  if ($expId) {
-    $sessionId=$expId;
-    $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-  }
-  else {
-    $sessionId=$_POST['sessionId'];
-    $formAction=$_SERVER['PHP_SELF'];
-  }
+	// check if session provided
+	$expId = $_GET['expId'];
+	$modelonly = $_GET['modelonly'];
+	if ($expId) {
+		$sessionId=$expId;
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	}
+	else {
+		$sessionId=$_POST['sessionId'];
+		$formAction=$_SERVER['PHP_SELF'];
+	}
 
 
-  // if user wants to use models from another project
+	// if user wants to use models from another project
 
-  if($_POST['projectId'])
-    $projectId = $_POST[projectId];
-  else
-    $projectId=getProjectFromExpId($expId);
+	if($_POST['projectId'])
+		$projectId = $_POST[projectId];
+	else
+		$projectId=getProjectFromExpId($expId);
 
-  $projects=getProjectList();
+	$projects=getProjectList();
 
-  if (is_numeric($projectId)) {
-    $particle = new particledata();
-    // get initial models associated with project
-    $models=$particle->getModelsFromProject($projectId);
-  }
-  if (!$modelonly) {
-    // find each stack entry in database
-    // THIS IS REALLY, REALLY SLOW
-    $stackIds = $particle->getStackIds($sessionId);
-    $stackinfo=explode('|--|',$_POST['stackval']);
-    $stackidval=$stackinfo[0];
-    $apix=$stackinfo[1];
-    $box=$stackinfo[2];
-  }
-  $javafunc="<script src='../js/viewer.js'></script>\n";
-  if (!$modelonly) {
-    processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
-  }
+	if (is_numeric($projectId)) {
+		$particle = new particledata();
+		// get initial models associated with project
+		$models=$particle->getModelsFromProject($projectId);
+	}
+	if (!$modelonly) {
+	 	 // find each stack entry in database
+	  	// THIS IS REALLY, REALLY SLOW
+		$stackIds = $particle->getStackIds($sessionId);
+		$stackinfo=explode('|--|',$_POST['stackval']);
+		$stackidval=$stackinfo[0];
+		$apix=$stackinfo[1];
+		$box=$stackinfo[2];
+	}
+	$javafunc="<script src='../js/viewer.js'></script>\n";
+	if (!$modelonly) {
+	  	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	}
 
-  else {
-    processing_header("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
-  }
-  // write out errors, if any came up:
-  if ($extra) {
-    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-  }
-  echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formAction'>\n";
-  echo "
+	else {
+		processing_header("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
+	}
+	// write out errors, if any came up:
+	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formAction'>\n";
+	echo "
   <B>Select Project:</B><BR>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
-  foreach ($projects as $k=>$project) {
-    $sel = ($project['id']==$projectId) ? "selected" : '';
-    echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-  }
-  echo"
+	foreach ($projects as $k=>$project) {
+		$sel = ($project['id']==$projectId) ? "selected" : '';
+		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
+	}
+	echo"
   </select>
   <P>\n";
-  if (!$modelonly) {
-    echo"
-    <B>Stack:</B><BR>";
-    echo "<SELECT NAME='stackval'>\n";
+	if (!$modelonly) {
+		echo"<b>Stack:</b<br />";
+		echo "<select name='stackval'>\n";
 
-    foreach ($stackIds as $stackid){
-      // get stack parameters from database
-      $s=$particle->getStackParams($stackid['stackid']);
-      // get number of particles in each stack
-      $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-      // get pixel size of stack
-      $apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-      // get box size
-      $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-      // get stack path with name
-      $opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
-      // if imagic stack, send both hed & img files for dmf
-      if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-      if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
-      echo "<OPTION VALUE='$opvals'";
-      // select previously set stack on resubmit
-      if ($stackid['stackid']==$stackidval) echo " SELECTED";
-      echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
-    }
-    echo "</SELECT>\n";
-  }
-  # show initial models
-  echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
-  if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><BR/>\n";
-  echo "<P>\n";
-  $minf = explode('|--|',$_POST['model']);
-  if (is_array($models) && count($models)>0) {
-    foreach ($models as $model) {
-      echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
-# get list of png files in directory
-      $pngfiles=array();
-      $modeldir= opendir($model['path']);
-      while ($f = readdir($modeldir)) {
-  if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-      }
-      sort($pngfiles);
+		foreach ($stackIds as $stackid){
+			// get stack parameters from database
+			$s=$particle->getStackParams($stackid['stackid']);
+			// get number of particles in each stack
+			$nump=commafy($particle->getNumStackParticles($stackid['stackid']));
+			// get pixel size of stack
+			$apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			// get box size
+			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+			// get stack path with name
+			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
+			// if imagic stack, send both hed & img files for dmf
+			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+			echo "<OPTION VALUE='$opvals'";
+			// select previously set stack on resubmit
+			if ($stackid['stackid']==$stackidval) echo " SELECTED";
+			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+		}
+		echo "</SELECT>\n";
+	}
+	// show initial models
+	echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
+	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><BR/>\n";
+	echo "<P>\n";
+	$minf = explode('|--|',$_POST['model']);
+	if (is_array($models) && count($models)>0) {
+		foreach ($models as $model) {
+			echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
+			// get list of png files in directory
+			$pngfiles=array();
+			$modeldir= opendir($model['path']);
+			while ($f = readdir($modeldir)) {
+				if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+			}
+			sort($pngfiles);
 
-# display starting models
-      $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
-      $sym['symmetry'] = strtolower($sym['symmetry']);
-      echo "<tr><TD COLSPAN=2>\n";
-      $modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
-      if (!$modelonly) {
-	echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
-	# check if model was selected
-	if ($model['DEF_id']==$minf[0]) echo " CHECKED";
-	echo ">\n";
-      }
-      echo"Use ";
-      echo"Model ID: $model[DEF_id]\n";
-      echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
-      foreach ($pngfiles as $snapshot) {
-  $snapfile = $model['path'].'/'.$snapshot;
-  echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
-      }
-      echo "</td>\n";
-      echo "</tr>\n";
-      echo"<tr><TD COLSPAN=2>$model[description]</td></tr>\n";
-      echo"<tr><TD COLSPAN=2>$model[path]/$model[name]</td></tr>\n";
-      echo"<tr><td>pixel size:</td><td>$model[pixelsize]</td></tr>\n";
-      echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
-      echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
-      echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
-      echo "</TABLE>\n";
-      echo "<P>\n";
-    }
-    if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
-  }
-  else {echo "No initial models in database";}
-  processing_footer();
-  exit;
+			// display starting models
+			$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
+			$sym['symmetry'] = strtolower($sym['symmetry']);
+			echo "<tr><TD COLSPAN=2>\n";
+			$modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
+			if (!$modelonly) {
+				echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
+				// check if model was selected
+				if ($model['DEF_id']==$minf[0]) echo " CHECKED";
+				echo ">\n";
+			}
+			echo"Use ";
+			echo"Model ID: $model[DEF_id]\n";
+			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
+			foreach ($pngfiles as $snapshot) {
+				$snapfile = $model['path'].'/'.$snapshot;
+				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+			}
+			echo "</td>\n";
+			echo "</tr>\n";
+			echo"<tr><TD COLSPAN=2>$model[description]</td></tr>\n";
+			echo"<tr><TD COLSPAN=2>$model[path]/$model[name]</td></tr>\n";
+			echo"<tr><td>pixel size:</td><td>$model[pixelsize]</td></tr>\n";
+			echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
+			echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
+			echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
+			echo "</TABLE>\n";
+			echo "<P>\n";
+		}
+		if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
+	}
+	else echo "No initial models in database";
+	processing_footer();
+	exit;
 }
 
 function jobForm($extra=false) {
-  $expId = $_GET['expId'];
+	$expId = $_GET['expId'];
 
-  ## get path data for this session for output
-  $leginondata = new leginondata();
-  $sessiondata = $leginondata->getSessionInfo($expId);
-  $sessionpath = $sessiondata['Image path'];
-  $sessionpath = ereg_replace("leginon","appion",$sessionpath);
-  $sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
+	// get path data for this session for output
+	$leginondata = new leginondata();
+	$sessiondata = $leginondata->getSessionInfo($expId);
+	$sessionpath = $sessiondata['Image path'];
+	$sessionpath = ereg_replace("leginon","appion",$sessionpath);
+	$sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
 
-  $particle = new particledata();
-  $reconruns = count($particle->getJobIdsFromSession($expId));
-  $defrunid = 'recon'.($reconruns+1);
+	$particle = new particledata();
+	$reconruns = count($particle->getJobIdsFromSession($expId));
+	$defrunid = 'recon'.($reconruns+1);
 
-  ## get stack data
-  $stackinfo = explode('|--|',$_POST['stackval']);
-  $dmfstack = $stackinfo[4];
-  $box=$stackinfo[2];
-  $rootpathdata = explode('/', $sessionpath);
-  $dmfpath = '/home/'.$_SESSION['username'].'/';
-  $clusterpath = '~'.$_SESSION['username'].'/';
-  for ($i=3 ; $i<count($rootpathdata); $i++) {
-    $rootpath .= "$rootpathdata[$i]";
-    if ($i+1<count($rootpathdata)) $rootpath.='/';
-  }
+	// get stack data
+	$stackinfo = explode('|--|',$_POST['stackval']);
+	$dmfstack = $stackinfo[4];
+	$box=$stackinfo[2];
+	$rootpathdata = explode('/', $sessionpath);
+	$dmfpath = '/home/'.$_SESSION['username'].'/';
+	$clusterpath = '~'.$_SESSION['username'].'/';
+	for ($i=3 ; $i<count($rootpathdata); $i++) {
+		$rootpath .= "$rootpathdata[$i]";
+		if ($i+1<count($rootpathdata)) $rootpath.='/';
+	}
   
-  $dmfpath .= $rootpath;
-  $clusterpath .= $rootpath;
+	$dmfpath .= $rootpath;
+	$clusterpath .= $rootpath;
 
-  ## get model data
-  $modelinfo = explode('|--|',$_POST['model']);
-  $dmfmod = $modelinfo[2];
-  $syminfo = explode(' ',$modelinfo[4]);
-  $modsym=$syminfo[0];
-  if ($modsym == 'Icosahedral') $modsym='icos';
+	// get model data
+	$modelinfo = explode('|--|',$_POST['model']);
+	$dmfmod = $modelinfo[2];
+	$syminfo = explode(' ',$modelinfo[4]);
+	$modsym=$syminfo[0];
+	if ($modsym == 'Icosahedral') $modsym='icos';
 
-  ## garibaldi is selected by default
-  $garibaldicheck = ($_POST['clustername']=='garibaldi' || $_POST['model']) ? 'CHECKED' : '';
-  $guppycheck = ($_POST['clustername']=='guppy') ? 'CHECKED' : '';
+	// garibaldi is selected by default
+	$garibaldicheck = ($_POST['clustername']=='garibaldi' || $_POST['model']) ? 'CHECKED' : '';
+	$guppycheck = ($_POST['clustername']=='guppy') ? 'CHECKED' : '';
 
-  $jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
-  $outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-  $clusterpath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $clusterpath;
-  $nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
-  $ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
-  $rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
-  $walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
-  $cput = ($_POST['cput']) ? $_POST['cput'] : 240;
-  $dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : $dmfstack;
-  $dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : $dmfpath;
-  $dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : $dmfmod;
-  $dmfstorech = ($_POST['dmfstore']=='on' || $_POST['model']) ? 'CHECKED' : '';
-  $numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
-  if ($_POST['duplicate']) {
-    $numiters+=1;
-    $j=$_POST['duplicate'];
-  }
-  else $j=$numiters;
+	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$clusterpath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $clusterpath;
+	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
+	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
+	$rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
+	$walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
+	$cput = ($_POST['cput']) ? $_POST['cput'] : 240;
+	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : $dmfstack;
+	$dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : $dmfpath;
+	$dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : $dmfmod;
+	$dmfstorech = ($_POST['dmfstore']=='on' || $_POST['model']) ? 'CHECKED' : '';
+	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
+	if ($_POST['duplicate']) {
+		$numiters+=1;
+		$j=$_POST['duplicate'];
+	}
+	else $j=$numiters;
 
-  $javafunc .= defaultReconValues($box);
-  $javafunc .= writeJavaPopupFunctions('eman');
-  $javafunc .= garibaldiFun();
-  processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
-  // write out errors, if any came up:
-  if ($extra) {
-    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-  }
+	$javafunc .= defaultReconValues($box);
+	$javafunc .= writeJavaPopupFunctions('eman');
+	$javafunc .= garibaldiFun();
+	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	// write out errors, if any came up:
+	if ($extra) {
+		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	}
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
 	echo "<tr><td>\n";
@@ -454,9 +451,9 @@ function jobForm($extra=false) {
     </table>\n";
 	echo closeRoundBorder();
 	echo"</td></tr></table>"; //overall table
-  $bgcolor="#E8E8E8";
-  $display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
-  echo"
+	$bgcolor="#E8E8E8";
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
+	echo"
   <br />
   <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
   <hr />
@@ -473,137 +470,137 @@ function jobForm($extra=false) {
   <br />
   <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
     <tr>\n";
-  foreach ($display_keys as $k=>$key) {
-			$id="l$k";
-      echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>$key</a></font></td>\n";
-  }
-  echo"  </tr>\n";
+	foreach ($display_keys as $k=>$key) {
+		$id="l$k";
+		echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>$key</a></font></td>\n";
+	}
+	echo"  </tr>\n";
 
-  // set number of iterations if importing:
-  if ($_POST['import']=='groel1') $numiters=20;
-  elseif ($_POST['import']=='virusgood') $numiters=14;
+	// set number of iterations if importing:
+	if ($_POST['import']=='groel1') $numiters=20;
+	elseif ($_POST['import']=='virusgood') $numiters=14;
 
-  // otherwise use previously set values
-  for ($i=1; $i<=$numiters; $i++) {
-    $angn="ang".$i;
-    $maskn="mask".$i;
-    $imaskn="imask".$i;
-    $amask1n="amask1".$i;
-    $amask2n="amask2".$i;
-    $amask3n="amask3".$i;
-    $symn="sym".$i;
-    $hardn="hard".$i;
-    $classkeepn="classkeep".$i;
-    $classitern="classiter".$i;
-    $filt3dn="filt3d".$i;
-    $shrinkn="shrink".$i;
-    $euler2n="euler2".$i;
-    $xfilesn="xfiles".$i;
-    $perturbn="perturb".$i;
-    $treen="tree".$i;
-    $mediann="median".$i;
-    $phaseclsn="phasecls".$i;
-    $fsclsn="fscls".$i;
-    $refinen="refine".$i;
-    $goodbadn="goodbad".$i;
-    $eotestn="eotest".$i;
-    $corann="coran".$i;
-    $msgpn="msgp".$i;
-    $msgp_corcutoffn="msgp_corcutoff".$i;
-    $msgp_minptclsn="msgp_minptcls".$i;
+	// otherwise use previously set values
+	for ($i=1; $i<=$numiters; $i++) {
+		$angn="ang".$i;
+		$maskn="mask".$i;
+		$imaskn="imask".$i;
+		$amask1n="amask1".$i;
+		$amask2n="amask2".$i;
+		$amask3n="amask3".$i;
+		$symn="sym".$i;
+		$hardn="hard".$i;
+		$classkeepn="classkeep".$i;
+		$classitern="classiter".$i;
+		$filt3dn="filt3d".$i;
+		$shrinkn="shrink".$i;
+		$euler2n="euler2".$i;
+		$xfilesn="xfiles".$i;
+		$perturbn="perturb".$i;
+		$treen="tree".$i;
+		$mediann="median".$i;
+		$phaseclsn="phasecls".$i;
+		$fsclsn="fscls".$i;
+		$refinen="refine".$i;
+		$goodbadn="goodbad".$i;
+		$eotestn="eotest".$i;
+		$corann="coran".$i;
+		$msgpn="msgp".$i;
+		$msgp_corcutoffn="msgp_corcutoff".$i;
+		$msgp_minptclsn="msgp_minptcls".$i;
 
-    // if importing values, set them here
-    if ($_POST['import']=='groel1') {
-      // values that don't change:
-      $mask = $_POST['mask1'] ? $_POST['mask1'] : ($box/2)-2;
-      $hard='25';
-      $classkeep='0.8';
-      $median = $_POST['median1']=='on' ? 'CHECKED' : '';
-      $coran = $_POST['coran1']=='on' ? 'CHECKED' : '';
-      $phasecls='CHECKED';
-      $eotest='CHECKED';
-      $sym=$modsym;
-      $classiter=((($i+1) % 4) < 2) ? 3 : 8;
-      if ($i < 5) $ang=5;
-      elseif ($i < 9) $ang=4;
-      elseif ($i < 13) $ang=3;
-      elseif ($i < 17) $ang=2;
-      else {
-	$ang=1;
-	$refine='CHECKED';
-      }
-    }
-    elseif ($_POST['import']=='virusgood') {
-      // values that don't change:
-      $mask=($box/2)-2;
-      $hard='25';
-      $classkeep='0.8';
-      $median='CHECKED';
-      $phasecls='CHECKED';
-      $eotest='CHECKED';
-      $sym=$modsym;
-      $classiter=((($i+1) % 4) < 2) ? 3 : 8;
-      if ($i < 5) $ang=3;
-      elseif ($i < 9) $ang=2;
-      elseif ($i < 12) {
-	$ang=1;
-	$classiter=3;
-      }
-      else { 
-	$classiter=3;
-	$ang=0.8;
-	$refine='CHECKED';
-      }
-    }
-    else {
-      $ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
-      $mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
-      $imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
-      $amask1=($i>$j) ? $_POST["amask1".($i-1)] : $_POST[$amask1n];
-      $amask2=($i>$j) ? $_POST["amask2".($i-1)] : $_POST[$amask2n];
-      $amask3=($i>$j) ? $_POST["amask3".($i-1)] : $_POST[$amask3n];
-      $sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
-      $hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
-      $classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
-      $classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
-      $filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
-      $shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
-      $euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
-      $xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
-      $msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
-      $msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
-      ## use symmetry of model by default, but you can change it
-      if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
-
-      if ($i>$j) {
-           $median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
-           $phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
-           $fscls=($_POST["fscls".($i-1)]=='on') ? 'CHECKED' : '';
-           $refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
-           $goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
-           $eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
-           $coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
-           $perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
-           $msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
-           $treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
-           $treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
-      }
-      else {
-           $median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
-           $phasecls=($_POST[$phaseclsn]=='on') ? 'CHECKED' : '';
-           $fscls=($_POST[$fsclsn]=='on') ? 'CHECKED' : '';
-           $refine=($_POST[$refinen]=='on') ? 'CHECKED' : '';
-           $goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
-           $eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
-           $coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
-           $perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
-           $msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
-           $treetwo=($_POST[$treen]=='2') ? 'selected' : '';
-           $treethree=($_POST[$treen]=='3') ? 'selected' : '';
-      }
-    }
-    $rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
-    echo"
+		// if importing values, set them here
+		if ($_POST['import']=='groel1') {
+			// values that don't change:
+			$mask = $_POST['mask1'] ? $_POST['mask1'] : ($box/2)-2;
+			$hard='25';
+			$classkeep='0.8';
+			$median = $_POST['median1']=='on' ? 'CHECKED' : '';
+			$coran = $_POST['coran1']=='on' ? 'CHECKED' : '';
+			$phasecls='CHECKED';
+			$eotest='CHECKED';
+			$sym=$modsym;
+			$classiter=((($i+1) % 4) < 2) ? 3 : 8;
+			if ($i < 5) $ang=5;
+			elseif ($i < 9) $ang=4;
+			elseif ($i < 13) $ang=3;
+			elseif ($i < 17) $ang=2;
+			else {
+				$ang=1;
+				$refine='CHECKED';
+			}
+		}
+		elseif ($_POST['import']=='virusgood') {
+			// values that don't change:
+			$mask=($box/2)-2;
+			$hard='25';
+			$classkeep='0.8';
+			$median='CHECKED';
+			$phasecls='CHECKED';
+			$eotest='CHECKED';
+			$sym=$modsym;
+			$classiter=((($i+1) % 4) < 2) ? 3 : 8;
+			if ($i < 5) $ang=3;
+			elseif ($i < 9) $ang=2;
+			elseif ($i < 12) {
+				$ang=1;
+				$classiter=3;
+			}
+			else { 
+				$classiter=3;
+				$ang=0.8;
+				$refine='CHECKED';
+			}
+		}
+		else {
+			$ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
+			$mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
+			$imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
+			$amask1=($i>$j) ? $_POST["amask1".($i-1)] : $_POST[$amask1n];
+			$amask2=($i>$j) ? $_POST["amask2".($i-1)] : $_POST[$amask2n];
+			$amask3=($i>$j) ? $_POST["amask3".($i-1)] : $_POST[$amask3n];
+			$sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
+			$hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
+			$classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
+			$classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
+			$filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
+			$shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
+			$euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
+			$xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
+			$msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
+			$msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
+			// use symmetry of model by default, but you can change it
+			if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
+			
+			if ($i>$j) {
+				$median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
+				$phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
+				$fscls=($_POST["fscls".($i-1)]=='on') ? 'CHECKED' : '';
+				$refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
+				$goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
+				$eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
+				$coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
+				$perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
+				$msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
+				$treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
+				$treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
+			}
+			else {
+				$median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
+				$phasecls=($_POST[$phaseclsn]=='on') ? 'CHECKED' : '';
+				$fscls=($_POST[$fsclsn]=='on') ? 'CHECKED' : '';
+				$refine=($_POST[$refinen]=='on') ? 'CHECKED' : '';
+				$goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
+				$eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
+				$coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
+				$perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
+				$msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
+				$treetwo=($_POST[$treen]=='2') ? 'selected' : '';
+				$treethree=($_POST[$treen]=='3') ? 'selected' : '';
+			}
+		}
+		$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
+		echo"
       <tr>
         <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
         <td bgcolor='$rcol'><b>$i</b></td>
@@ -647,256 +644,256 @@ function jobForm($extra=false) {
 #          </TABLE>
 #        <TD colspan=2 bgcolor='$bgcolor' ALIGN='CENTER'>
 #      </tr>
-  }
-  echo"
+	}
+	echo"
   </TABLE>
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
-  if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
-  processing_footer();
-  exit;
+	if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
+	processing_footer();
+	exit;
 }
 
 function writeJobFile ($extra=False) {
-  $expId = $_GET['expId'];
-  $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$expId = $_GET['expId'];
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-  $jobname = $_POST['jobname'];
-  $jobfile ="$jobname.job";
+	$jobname = $_POST['jobname'];
+	$jobfile ="$jobname.job";
 
-  $clustername = $_POST['clustername'];
-  $outdir = $_POST['outdir'];
-  if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$clustername = $_POST['clustername'];
+	$outdir = $_POST['outdir'];
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
-  // clusterpath contains jobname, if running on guppy, cluster path is local
-  $clusterpath = ($clustername=='guppy') ? $outdir : $_POST['clusterpath'];
-  if (substr($clusterpath,-1,1)!='/') $clusterpath.='/';
-  $clusterfullpath = $clusterpath.$jobname;
+	// clusterpath contains jobname, if running on guppy, cluster path is local
+	$clusterpath = ($clustername=='guppy') ? $outdir : $_POST['clusterpath'];
+	if (substr($clusterpath,-1,1)!='/') $clusterpath.='/';
+	$clusterfullpath = $clusterpath.$jobname;
 
-  // make sure dmf store dir ends with '/'
-  $dmfpath=$_POST['dmfpath'];
-  if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
-  $dmffullpath = $dmfpath.$jobname;
+	// make sure dmf store dir ends with '/'
+	$dmfpath=$_POST['dmfpath'];
+	if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
+	$dmffullpath = $dmfpath.$jobname;
 
-  // get the stack info (pixel size, box size)
-  $stackinfo=explode('|--|',$_POST['stackval']);
-  $stackidval=$stackinfo[0];
-  $apix=$stackinfo[1];
-  $box=$stackinfo[2];
-  $stackpath=$stackinfo[3];
-  $stackname1=$stackinfo[4];
-  $stackname2=$stackinfo[5];
+	// get the stack info (pixel size, box size)
+	$stackinfo=explode('|--|',$_POST['stackval']);
+	$stackidval=$stackinfo[0];
+	$apix=$stackinfo[1];
+	$box=$stackinfo[2];
+	$stackpath=$stackinfo[3];
+	$stackname1=$stackinfo[4];
+	$stackname2=$stackinfo[5];
 
-  // get the model id
-  $modelinfo=explode('|--|',$_POST['model']);
-  $modelid=$modelinfo[0];
-  $modelpath = $modelinfo[1];
-  $modelname = $modelinfo[2];
+	// get the model id
+	$modelinfo=explode('|--|',$_POST['model']);
+	$modelid=$modelinfo[0];
+	$modelpath = $modelinfo[1];
+	$modelname = $modelinfo[2];
 
-  // insert the job file into the database
-  if (!$extra) {
-    // create dmf put javascript
-    $javafunc.="
+	// insert the job file into the database
+	if (!$extra) {
+		// create dmf put javascript
+		$javafunc.="
   <SCRIPT LANGUAGE='JavaScript'>
   function displayDMF() {
     newwindow=window.open('','name','height=150, width=900')
     newwindow.document.write('<HTML><BODY>')
     newwindow.document.write('dmf mkdir -p $dmffullpath');
     newwindow.document.write('<P>dmf put $stackpath/$stackname1 $dmffullpath/$stackname1')\n";
-    if ($stackname2) $javafunc.="    newwindow.document.write('<P>dmf put $stackpath/$stackname2 $dmffullpath/$stackname2')\n";
-    $javafunc.="
+		if ($stackname2) $javafunc.="    newwindow.document.write('<P>dmf put $stackpath/$stackname2 $dmffullpath/$stackname2')\n";
+		$javafunc.="
     newwindow.document.write('<P>dmf put $modelpath/$modelname $dmffullpath/$modelname');
     newwindow.document.write('<P>echo done');
     newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>');
     newwindow.document.close();
   }
   </SCRIPT>\n";
-  }
-  processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
+	}
+	processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
 
-  $header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
-  $header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
-  $header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-  $header.= "#PBS -m e\n";
-  $header.= "#PBS -r n\n\n";
-  $clusterjob = "# stackId: $stackidval\n";
-  $clusterjob.= "# modelId: $modelid\n\n";
-
-  if ($clustername=='garibaldi') {
-    $clusterjob.= "mkdir -p $clusterfullpath\n";
-    $clusterjob.= "cd $clusterfullpath\n";
-    $clusterjob.= "rm -f recon\n";
-    $clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
-    $clusterjob.= "chmod 755 recon\n"; 
-    $clusterjob.= "cd recon\n";
-    // get file name, strip extension
-    $ext=strrchr($_POST['dmfstack'],'.');
-    $stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-    $clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
-    $clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
-    $clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
-  }
-  else {
-    $clusterjob.= "set PBSREMOTEDIR $clusterfullpath/recon\n";
-    $clusterjob.= "rm -rf \$PBSREMOTEDIR\n";
-    $clusterjob.= "mkdir -p \$PBSREMOTEDIR\n";
-    $clusterjob.= "cd \$PBSREMOTEDIR\n\n";
-    $clusterjob.= "ln -s $stackpath/$stackname1 start.hed\n";
-    $clusterjob.= "ln -s $modelpath/$modelname threed.0.mrc\n";
-  }
-  $clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
-  $procs=$_POST['nodes']*$_POST['rprocs'];
-  $numiters=$_POST['numiters'];
-  $pad=intval($box*1.25);
-  // make sure $pad value is even int
-  $pad = ($pad%2==1) ? $pad+=1 : $pad;
-  for ($i=1; $i<=$numiters; $i++) {
-    $ang=$_POST["ang".$i];
-    $mask=$_POST["mask".$i];
-    $imask=$_POST["imask".$i];
-    $amask1=$_POST["amask1".$i];
-    $amask2=$_POST["amask2".$i];
-    $amask3=$_POST["amask3".$i];
-    $sym=$_POST["sym".$i];
-    $hard=$_POST["hard".$i];
-    $classkeep=$_POST["classkeep".$i];
-    $classiter=$_POST["classiter".$i];
-    $filt3d=$_POST["filt3d".$i];
-    $shrink=$_POST["shrink".$i];
-    $euler2=$_POST["euler2".$i];
-    $xfiles=$_POST["xfiles".$i];
-    $perturb=$_POST["perturb".$i];
-    $tree=$_POST["tree".$i];
-    $median=$_POST["median".$i];
-    $phasecls=$_POST["phasecls".$i];
-    $fscls=$_POST["fscls".$i];
-    $refine=$_POST["refine".$i];
-    $goodbad=$_POST["goodbad".$i];
-    $eotest=$_POST["eotest".$i];
-    $coran=$_POST["coran".$i];
-    $msgp=$_POST["msgp".$i];
-    $msgp_corcutoff=$_POST["msgp_corcutoff".$i];
-    $msgp_minptcls=$_POST["msgp_minptcls".$i];
-    $line="\nrefine $i proc=$procs ang=$ang pad=$pad";
-    if ($mask) $line.=" mask=$mask";
-    if ($imask) $line.=" imask=$imask";
-    if ($amask1) $line.=" amask=$amask1,$amask2,$amask3";
-    if ($sym) $line.=" sym=$sym";
-    if ($hard) $line.=" hard=$hard";
-    if ($classkeep) $line.=" classkeep=$classkeep";
-    if ($classiter) $line.=" classiter=$classiter";
-    if ($filt3d) $line.=" filt3d=$filt3d";
-    if ($shrink) $line.=" shrink=$shrink";
-    if ($xfiles) $line.=" xfiles=$apix,$xfiles,99";
-    if ($median=='on') $line.=" median";
-    if ($perturb=='on') $line.=" perturb";
-    if ($tree=='2' || $tree=='3') $line.=" tree=$tree";
-    if ($fscls=='on') $line.=" fscls";
-    if ($phasecls=='on') $line.=" phasecls";
-    if ($refine=='on') $line.=" refine";
-    if ($euler2) $line.=" euler2=$euler2";
-    if ($goodbad=='on') $line.=" goodbad";
-    $line.=" > refine".$i.".txt\n";
-    $line.="mv classes.".$i.".hed classes_eman.".$i.".hed\n";
-    $line.="ln -s classes_eman.".$i.".hed classes.".$i.".hed\n";
-    $line.="mv classes.".$i.".img classes_eman.".$i.".img\n";
-    $line.="ln -s classes_eman.".$i.".img classes.".$i.".img\n";
-    $line.="getProjEulers.py proj.img proj.$i.txt\n";
-    # if ref-free correllation analysis
-    if ($coran=='on') {
-      $line .="coran_for_cls.py mask=$mask proc=$procs iter=$i";
-      if ($sym) $line .= " sym=$sym";
-      if ($hard) $line .= " hard=$hard";
-      if ($eotest=='on') $line .= " eotest";
-      $line .= " > coran".$i.".txt\n";
-      $line.="getRes.pl >> resolution.txt $i $box $apix\n";
-    }
-    # if eotest specified with coran, don't do eotest here:
-    elseif ($eotest=='on') {
-      $line.="eotest proc=$procs pad=$pad";
-      if ($mask) $line.=" mask=$mask";
-      if ($imask) $line.=" imask=$imask";
-      if ($sym) $line.=" sym=$sym";
-      if ($hard) $line.=" hard=$hard";
-      if ($classkeep) $line.=" classkeep=$classkeep";
-      if ($classiter) $line.=" classiter=$classiter";
-      if ($median=='on') $line.=" median";
-      if ($refine=='on') $line.=" refine";
-      $line.=" > eotest".$i.".txt\n";
-      $line.="mv fsc.eotest fsc.eotest.".$i."\n";
-      $line.="getRes.pl >> resolution.txt $i $box $apix\n";
-    }
-    if ($msgp=='on') {
-      $line .="msgPassing_subClassification.py mask=$mask iter=$i";
-      if ($sym) $line .= " sym=$sym";
-      if ($hard) $line .= " hard=$hard";
-      if ($msgp_corcutoff) $line .= " corCutOff=$msgp_corcutoff";
-      if ($msgp_minptcls) $line .= " minNumOfPtcls=$msgp_minptcls";
-      $line .= "\n";
-    }
-    $line.="rm cls*.lst\n";
-    $clusterjob.= $line;
-  }
-
+	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
+	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
+	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
+	$header.= "#PBS -m e\n";
+	$header.= "#PBS -r n\n\n";
+	$clusterjob = "# stackId: $stackidval\n";
+	$clusterjob.= "# modelId: $modelid\n\n";
 	
-  $clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
+	if ($clustername=='garibaldi') {
+		$clusterjob.= "mkdir -p $clusterfullpath\n";
+		$clusterjob.= "cd $clusterfullpath\n";
+		$clusterjob.= "rm -f recon\n";
+		$clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
+		$clusterjob.= "chmod 755 recon\n"; 
+		$clusterjob.= "cd recon\n";
+		// get file name, strip extension
+		$ext=strrchr($_POST['dmfstack'],'.');
+		$stackname=substr($_POST['dmfstack'],0,-strlen($ext));
+		$clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
+		$clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
+		$clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
+	}
+	else {
+		$clusterjob.= "set PBSREMOTEDIR $clusterfullpath/recon\n";
+		$clusterjob.= "rm -rf \$PBSREMOTEDIR\n";
+		$clusterjob.= "mkdir -p \$PBSREMOTEDIR\n";
+		$clusterjob.= "cd \$PBSREMOTEDIR\n\n";
+		$clusterjob.= "ln -s $stackpath/$stackname1 start.hed\n";
+		$clusterjob.= "ln -s $modelpath/$modelname threed.0.mrc\n";
+	}
+	$clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
+	$procs=$_POST['nodes']*$_POST['rprocs'];
+	$numiters=$_POST['numiters'];
+	$pad=intval($box*1.25);
+	// make sure $pad value is even int
+	$pad = ($pad%2==1) ? $pad+=1 : $pad;
+	for ($i=1; $i<=$numiters; $i++) {
+		$ang=$_POST["ang".$i];
+		$mask=$_POST["mask".$i];
+		$imask=$_POST["imask".$i];
+		$amask1=$_POST["amask1".$i];
+		$amask2=$_POST["amask2".$i];
+		$amask3=$_POST["amask3".$i];
+		$sym=$_POST["sym".$i];
+		$hard=$_POST["hard".$i];
+		$classkeep=$_POST["classkeep".$i];
+		$classiter=$_POST["classiter".$i];
+		$filt3d=$_POST["filt3d".$i];
+		$shrink=$_POST["shrink".$i];
+		$euler2=$_POST["euler2".$i];
+		$xfiles=$_POST["xfiles".$i];
+		$perturb=$_POST["perturb".$i];
+		$tree=$_POST["tree".$i];
+		$median=$_POST["median".$i];
+		$phasecls=$_POST["phasecls".$i];
+		$fscls=$_POST["fscls".$i];
+		$refine=$_POST["refine".$i];
+		$goodbad=$_POST["goodbad".$i];
+		$eotest=$_POST["eotest".$i];
+		$coran=$_POST["coran".$i];
+		$msgp=$_POST["msgp".$i];
+		$msgp_corcutoff=$_POST["msgp_corcutoff".$i];
+		$msgp_minptcls=$_POST["msgp_minptcls".$i];
+		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
+		if ($mask) $line.=" mask=$mask";
+		if ($imask) $line.=" imask=$imask";
+		if ($amask1) $line.=" amask=$amask1,$amask2,$amask3";
+		if ($sym) $line.=" sym=$sym";
+		if ($hard) $line.=" hard=$hard";
+		if ($classkeep) $line.=" classkeep=$classkeep";
+		if ($classiter) $line.=" classiter=$classiter";
+		if ($filt3d) $line.=" filt3d=$filt3d";
+		if ($shrink) $line.=" shrink=$shrink";
+		if ($xfiles) $line.=" xfiles=$apix,$xfiles,99";
+		if ($median=='on') $line.=" median";
+		if ($perturb=='on') $line.=" perturb";
+		if ($tree=='2' || $tree=='3') $line.=" tree=$tree";
+		if ($fscls=='on') $line.=" fscls";
+		if ($phasecls=='on') $line.=" phasecls";
+		if ($refine=='on') $line.=" refine";
+		if ($euler2) $line.=" euler2=$euler2";
+		if ($goodbad=='on') $line.=" goodbad";
+		$line.=" > refine".$i.".txt\n";
+		$line.="mv classes.".$i.".hed classes_eman.".$i.".hed\n";
+		$line.="ln -s classes_eman.".$i.".hed classes.".$i.".hed\n";
+		$line.="mv classes.".$i.".img classes_eman.".$i.".img\n";
+		$line.="ln -s classes_eman.".$i.".img classes.".$i.".img\n";
+		$line.="getProjEulers.py proj.img proj.$i.txt\n";
+		// if ref-free correllation analysis
+		if ($coran=='on') {
+			$line .="coran_for_cls.py mask=$mask proc=$procs iter=$i";
+			if ($sym) $line .= " sym=$sym";
+			if ($hard) $line .= " hard=$hard";
+			if ($eotest=='on') $line .= " eotest";
+			$line .= " > coran".$i.".txt\n";
+			$line.="getRes.pl >> resolution.txt $i $box $apix\n";
+		}
+		// if eotest specified with coran, don't do eotest here:
+		elseif ($eotest=='on') {
+			$line.="eotest proc=$procs pad=$pad";
+			if ($mask) $line.=" mask=$mask";
+			if ($imask) $line.=" imask=$imask";
+			if ($sym) $line.=" sym=$sym";
+			if ($hard) $line.=" hard=$hard";
+			if ($classkeep) $line.=" classkeep=$classkeep";
+			if ($classiter) $line.=" classiter=$classiter";
+			if ($median=='on') $line.=" median";
+			if ($refine=='on') $line.=" refine";
+			$line.=" > eotest".$i.".txt\n";
+			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
+			$line.="getRes.pl >> resolution.txt $i $box $apix\n";
+		}
+		if ($msgp=='on') {
+			$line .="msgPassing_subClassification.py mask=$mask iter=$i";
+			if ($sym) $line .= " sym=$sym";
+			if ($hard) $line .= " hard=$hard";
+			if ($msgp_corcutoff) $line .= " corCutOff=$msgp_corcutoff";
+			if ($msgp_minptcls) $line .= " minNumOfPtcls=$msgp_minptcls";
+			$line .= "\n";
+		}
+		$line.="rm cls*.lst\n";
+		$clusterjob.= $line;
+	}
+	
+	
+	$clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
 
-  if ($_POST['dmfstore']=='on') {
-    $clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
-    $clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
-    $line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
-    if ($msgp=='on') {
-	$line .= "goodavgs.* ";
-	$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
-    }
-    $line .= "\n";
-    $clusterjob.= $line;
-    $clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
-  }
-  if (!$extra) {
-    if ($clustername=='garibaldi') {
-      echo "Please review your job below.<BR>";
-      echo "If you are satisfied:<BR>\n";
-      echo "1) Place files in DMF<BR>\n";
-      echo "2) Once this is done, click the button to launch your job.<BR>\n";
-      echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
-      echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
-    }
-    else echo "Review your job, and submit.<br />\n";
-  }
-  else {
-    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-  }
-  echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
-  echo "<input type='hidden' name='clustername' value='$clustername'>\n";
-  echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
-  echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
-  echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
-  echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
-  // convert \n to /\n's for script
-  $header_conv=preg_replace('/\n/','|--|',$header);
-  echo "<input type='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
-  echo "<input type='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
-  if (!$extra) {
-    echo "<HR>\n";
-    echo "<PRE>\n";
-    echo $header;
-    echo $clusterjob;
-    echo "</PRE>\n";
-    $tmpfile = "/tmp/$jobfile";
-    // write file to tmp directory
-    $f = fopen($tmpfile,'w');
-    fwrite($f,$clusterjob);
-    fclose($f);
-  }	
-  processing_footer();
-  exit;
+	if ($_POST['dmfstore']=='on') {
+		$clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
+		$clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
+		$line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
+		if ($msgp=='on') {
+			$line .= "goodavgs.* ";
+			$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
+		}
+		$line .= "\n";
+		$clusterjob.= $line;
+		$clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
+	}
+	if (!$extra) {
+		if ($clustername=='garibaldi') {
+			echo "Please review your job below.<BR>";
+			echo "If you are satisfied:<BR>\n";
+			echo "1) Place files in DMF<BR>\n";
+			echo "2) Once this is done, click the button to launch your job.<BR>\n";
+			echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
+			echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
+		}
+		else echo "Review your job, and submit.<br />\n";
+	}
+	else {
+		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	}
+	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
+	echo "<input type='hidden' name='clustername' value='$clustername'>\n";
+	echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
+	echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
+	echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
+	echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
+	// convert \n to /\n's for script
+	$header_conv=preg_replace('/\n/','|--|',$header);
+	echo "<input type='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
+	echo "<input type='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
+	if (!$extra) {
+		echo "<HR>\n";
+		echo "<PRE>\n";
+		echo $header;
+		echo $clusterjob;
+		echo "</PRE>\n";
+		$tmpfile = "/tmp/$jobfile";
+		// write file to tmp directory
+		$f = fopen($tmpfile,'w');
+		fwrite($f,$clusterjob);
+		fclose($f);
+	}	
+	processing_footer();
+	exit;
 };
 
 function defaultReconValues ($box) {
-  $rad = ($box/2)-2;
-  $javafunc = "
+	$rad = ($box/2)-2;
+	$javafunc = "
   <script type='text/javascript'>
     function setDefaults(obj) {
       obj.ang1.value = '5.0';
@@ -924,11 +921,11 @@ function defaultReconValues ($box) {
       return;
     }
   </SCRIPT>\n";
-  return $javafunc;
+	return $javafunc;
 };
 
 function garibaldiFun() {
-  $javafunc="
+	$javafunc="
   <script language='javascript'>
   function enableGaribaldi(i) {
     if (i=='true') {
@@ -953,5 +950,5 @@ function garibaldiFun() {
     }
   }
   </script>\n";
-  return $javafunc;
+	return $javafunc;
 }
