@@ -94,8 +94,9 @@ function stackEntry($stack, $particle, $hidden=False) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
-		$stacktable.= "<i>averaged stack image</i><br/>\n";
-		if (!$centered) $stacktable.= "<a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+		$stacktable.= "<i>averaged stack image</i>\n";
+		if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
+		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
 			$stacktable.= "<td rowspan='15' align='center' valign='top'>";

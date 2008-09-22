@@ -21,33 +21,32 @@ if ($_POST['process']) {
 
 // Create the form page
 else {
-	createNorefSubStackForm();
+	createSubStackForm();
 }
 
-function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
+function createSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
+	$stackId = $_GET['sId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-
-	$norefClassId=$_GET['norefClass'];
-	$norefId=$_GET['noref'];
-	$exclude=$_GET['exclude'];
-	$norefClassfile=$_GET['file'];
 
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
 
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
-	$runid = ($_POST['runid']) ? $_POST['runid'] : '';
-	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
-	if (!$norefClassId) $norefClassId = $_POST['norefClass'];
-	if (!$norefId) $norefId = $_POST['noref'];
-	if (!strlen($exclude)) $exclude = $_POST['exclude'];
-	if (!$norefClassfile) $norefClassfile = $_POST['file'];
+	$runid = ($_POST['runid']) ? $_POST['runid'] : 'sub'.$stackId;
 
-	
+	$subcheck = ($_POST['subsplit']=='sub' || !$_POST['process']) ? 'checked' : '';		
+	$firstpdisable = ($subcheck) ? '' : 'disabled';		
+	$lastpdisable = ($subcheck) ? '' : 'disabled';		
+	$splitcheck = ($_POST['subsplit']=='split') ? 'checked' : '';		
+	$splitdisable = ($splitcheck) ? '' : 'disabled';		
+	$split = ($_POST['split']) ? $_POST['split'] : '2';		
+	$firstp = ($_POST['firstp']) ? $_POST['firstp'] : '';		
+	$lastp = ($_POST['lastp']) ? $_POST['lastp'] : '';		
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 
 	// get outdir path
 	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
@@ -59,6 +58,25 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
+	$javafunctions .="<script language='JavaScript'>\n";
+	$javafunctions .="function subORsplit(check){\n";
+	$javafunctions .="  if (check=='split'){\n";
+	$javafunctions .="    document.viewerform.split.disabled=false;\n";
+	$javafunctions .="    document.viewerform.firstp.disabled=true;\n";
+	$javafunctions .="    document.viewerform.lastp.disabled=true;\n";
+	$javafunctions .="    document.viewerform.split.value='2';\n";
+	$javafunctions .="  }\n";
+	$javafunctions .="  else {\n";
+	$javafunctions .="    document.viewerform.split.disabled=true;\n";
+	$javafunctions .="    document.viewerform.firstp.disabled=false;\n";
+	$javafunctions .="    document.viewerform.lastp.disabled=false;\n";
+	$javafunctions .="    document.viewerform.split.value='2';\n";
+	$javafunctions .="    document.viewerform.firstp.value='';\n";
+	$javafunctions .="    document.viewerform.lastp.value='';\n";
+	$javafunctions .="  }\n";
+	$javafunctions .="}";
+	$javafunctions .="</script>\n";
+	
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
@@ -72,11 +90,9 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	
 
 	# get stack name
-	$noref = $particle->getNoRefParams($norefId);
-	$stackId = $noref['REF|ApStackData|stack'];
 	$stackp = $particle->getStackParams($stackId);
+	$nump=$particle->getNumStackParticles($stackId);
 	$filename = $stackp['path'].'/'.$stackp['name'];
-	
 
 	echo"
 	<TABLE BORDER=3 CLASS=tableborder>";
@@ -87,28 +103,34 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 					<b>Original Stack Information:</b> <br />
 					Name & Path: $filename <br />	
 					Stack ID: $stackId<br />
+					# Particles: $nump<br />
                      <input type='hidden' name='stackId' value='$stackId'>
-					<br />\n";
-
-	echo"
-					<b>Reference Free Class Information:</b> <br />
-					Name & Path: $norefClassfile <br />
-					Noref Class ID: $norefClassId<br />
-							<input type='hidden' name='norefClassId' value='$norefClassId'>
 					<br />\n";
 
 	echo docpop('runid','<b>Run Name:</b> ');
 	echo "<input type='text' name='runid' value='$runid'><br />\n";
-	echo docpop('outdir','<b>Output Directory:</b> ');
-	echo "<input type='text' name='outdir' value='$outdir' size='38'><br />\n";
-	echo docpop('test','<b>Excluded Classes:</b> ');
-	echo "<input type='text' name='exclude' value='$exclude' size='38'><br />\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
+	echo openRoundBorder();
+	echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'><tr><td width='50%' valign='top'>\n";
+	echo "<input type='radio' name='subsplit' onclick='subORsplit(\"sub\")' value='sub' $subcheck>\n";
+	echo "<b>Select Subset of Particles (1-$nump)</b><br />\n";
+	echo docpop('firstp', '<b>First:</b> ');
+     	echo "<input type='text' name='firstp' value='$firstp' size='7' $firstpdisable><br />\n";
+	echo docpop('lastp', '<b>Last:</b> ');
+	echo "<input type='text' name='lastp' value='$lastp' size='7' $lastpdisable> (included)<br />\n";
+	echo "</td><td width='50%' valign='top'>\n";
+	echo "<input type='radio' name='subsplit' onclick='subORsplit(\"split\")' value='split' $splitcheck>\n";
+	echo "<b>Split Stack</b><br />\n";
+	echo docpop('split','<b>Split into:</b> ');
+	echo "<input type='text' name='split' value='$split' size='3' $splitdisable> sets\n";
+	echo "</td></tr></table>\n";
+	echo closeRoundBorder();
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
 	echo "<br />\n";
+	echo "<input type='hidden' name='outdir' value='$outdir' size='38'>\n";
 	echo "</td>
   </tr>
   <tr>
@@ -130,29 +152,39 @@ function runSubStack() {
 
 	$runid=$_POST['runid'];
 	$stackId=$_POST['stackId'];
-	$norefClassId=$_POST['norefClassId'];
-	$norefId=$_POST['norefId'];
 	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
-	$exclude=$_POST['exclude'];
-
-	$command.="norefSubStack.py ";
+	$subsplit = $_POST['subsplit'];
+	$firstp = $_POST['firstp'];
+	$lastp = $_POST['lastp'];
+	$split = $_POST['split'];
+	
+	$command.="subStack.py ";
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createNorefSubStackForm("<b>ERROR:</b> Specify a runid");
-	if (!$description) createNorefSubStackForm("<B>ERROR:</B> Enter a brief description");
+	if (!$runid) createSubStackForm("<b>ERROR:</b> Specify a runid");
+	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;
 
+	// check sub stack particle numbers
+	if ($subsplit == 'sub') {
+		if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
+		if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
+	}
+	elseif (!$split) {
+		if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter # of stacks");
+	}
+
 	//putting together command
+	$command.="-s $stackId ";
 	$command.="-n $runid ";
-	$command.="--norefclass=$norefClassId ";
 	$command.="-d \"$description\" ";
-	$command.="--exclude=$exclude ";
-	if ($outdir) $command.="-o $procdir ";
+	if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
+	elseif ($split) $command.="--split=$split ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
 	// submit job to cluster
@@ -160,11 +192,11 @@ function runSubStack() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createNorefSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
 		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
 		// if errors:
-		if ($sub) createNorefSubStackForm("<b>ERROR:</b> $sub");
+		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
 		exit();
 	}
 
