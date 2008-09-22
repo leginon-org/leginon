@@ -23,7 +23,7 @@ def makeNewStack(oldstack, newstack, listfile):
 		#prefix=newstack.split('.')[0]
 		#os.remove(prefix+'.hed')
 		#os.remove(prefix+'.img')
-	apDisplay.printMsg("creating a newstack\n\t"+newstack+
+	apDisplay.printMsg("creating a new stack\n\t"+newstack+
 		"\nfrom the oldstack\n\t"+oldstack+"\nusing list file\n\t"+listfile)
 	command=("proc2d "+oldstack+" "+newstack+" list="+listfile)
 	apEMAN.executeEmanCmd(command, verbose=True)

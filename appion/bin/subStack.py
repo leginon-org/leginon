@@ -26,6 +26,12 @@ class subStackScript(appionScript.AppionScript):
 			help="Stack description", metavar="TEXT")
 		self.parser.add_option("-n", "--new-stack-name", dest="runname",
 			help="Run id name", metavar="STR")
+		self.parser.add_option("--first", dest="first", type="int",
+			help="First Particle to include")
+		self.parser.add_option("--last", dest="last", type="int",
+			help="Last Particle to include")
+		self.parser.add_option("--split", dest="split", type="int", default=1,
+			help="Number of files into which the stack will be split")
 
 	#=====================
 	def checkConflicts(self):
@@ -35,11 +41,13 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("substack description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
-		if self.params['keepfile'] is None:
-			apDisplay.printError("keep file was not defined")
-		self.params['keepfile'] = os.path.abspath(self.params['keepfile'])
-		if not os.path.isfile(self.params['keepfile']):
-			apDisplay.printError("Could not find keep file: "+self.params['keepfile'])
+		if self.params['first'] is None and self.params['last'] is None and self.params['split'] == 1:
+			if self.params['keepfile'] is None:
+				apDisplay.printError("keep file was not defined")
+			else:
+				self.params['keepfile'] = os.path.abspath(self.params['keepfile'])
+				if not os.path.isfile(self.params['keepfile']):
+					apDisplay.printError("Could not find keep file: "+self.params['keepfile'])
 
 	#=====================
 	def setOutDir(self):
@@ -50,32 +58,71 @@ class subStackScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		#copy keep file
-		if not os.path.isfile(os.path.basename(self.params['keepfile'])):
+		# if first and last are specified, create a file
+		if self.params['first'] is not None and self.params['last'] is not None:
+			stp = str(self.params['first'])
+			enp = str(self.params['last'])
+			fname = 'sub'+str(self.params['stackid'])+'_'+stp+'-'+enp+'.lst'
+			self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+			apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
+			f=open(self.params['keepfile'],'w')
+			for i in range(self.params['first'],self.params['last']+1):
+				f.write('%i\n' % i)
+			f.close()
+		# if splitting, create files containing the split values
+		elif self.params['split'] > 1:
+			num = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+			for i in range(self.params['split']):
+				fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
+				self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+				apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
+				f = open(self.params['keepfile'],'w')
+				for p in range(num):
+					if (p % self.params['split'])-i==0:
+						f.write('%i\n' % p)
+				f.close()
+		# otherwise, just copy the file
+		elif not os.path.isfile(os.path.basename(self.params['keepfile'])):
 			shutil.copy(self.params['keepfile'], os.path.basename(self.params['keepfile']))
 
 		#new stack path
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		newname = stackdata['name']
+
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
-		newstack = os.path.join(self.params['outdir'], stackdata['name'])
-		apStack.checkForPreviousStack(newstack)
 
-		#get number of particles
-		f = open(self.params['keepfile'], "r")
-		numparticles = len(f.readlines())
-		f.close()
-		self.params['description'] += (
-			(" ... %d particle substack of stackid %d" 
-			% (numparticles, self.params['stackid']))
-		)
-		
-		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
-		if not os.path.isfile(newstack):
-			apDisplay.printError("No stack was created")
+		ogdescr = self.params['description']
+		for i in range(self.params['split']):
+			sb = os.path.splitext(stackdata['name'])
+			if self.params['first'] is not None and self.params['last'] is not None:
+				newname = sb[0]+'.'+str(self.params['first'])+'-'+str(self.params['last'])+sb[-1]
+			elif self.params['split'] > 1:
+				fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
+				self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+				newname = sb[0]+'.'+str(i+1)+'of'+str(self.params['split'])+sb[-1]
+			newstack = os.path.join(self.params['outdir'], newname)
+			apStack.checkForPreviousStack(newstack)
 
-		apStack.commitSubStack(self.params)
-		apStack.averageStack(stack=newstack)
+			#get number of particles
+			f = open(self.params['keepfile'], "r")
+			numparticles = len(f.readlines())
+			f.close()
+			self.params['description'] = ogdescr
+			self.params['description'] += (
+				(" ... %d particle substack of stackid %d" 
+				 % (numparticles, self.params['stackid']))
+			)
+			#if splitting, add to description
+			if self.params['split'] > 1:
+				self.params['description'] += (" (%i of %i)" % (i+1, self.params['split']))
+			
+			#create the new sub stack
+			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+			if not os.path.isfile(newstack):
+				apDisplay.printError("No stack was created")
+
+			apStack.commitSubStack(self.params, newname)
+			apStack.averageStack(stack=newstack)
 
 #=====================
 if __name__ == "__main__":
