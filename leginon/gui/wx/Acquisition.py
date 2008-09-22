@@ -114,12 +114,16 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		szmover.Add(self.widgets['mover'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		szmoveprec = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Navigator Tolerance (m):')
+		label = wx.StaticText(self, -1, 'Navigator Target Tolerance (m):')
 		self.widgets['move precision'] = FloatEntry(self, -1, min=0.0, chars=6)
 		szmoveprec.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szmoveprec.Add(self.widgets['move precision'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Navigator Acceptable Tolerance (m):')
+		self.widgets['accept precision'] = FloatEntry(self, -1, min=0.0, chars=6)
+		szmoveprec.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmoveprec.Add(self.widgets['accept precision'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		self.widgets['final image shift'] = wx.CheckBox(self, -1, 'Final Image Shift')
-		szmoveprec.Add(self.widgets['final image shift'], (1,0), (1,2))
+		szmoveprec.Add(self.widgets['final image shift'], (2,0), (1,2))
 
 		sz_target_type = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Process')

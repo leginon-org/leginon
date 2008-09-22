@@ -339,9 +339,16 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		precsz.Add(self.widgets['precision'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		precsz.Add(label2, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label1 = wx.StaticText(self, -1, 'Acceptable distance:') 
+		self.widgets['accept precision'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=6, value='1e-3')
+		label2 = wx.StaticText(self, -1, '(m) if move error get worse')
+		precsz.Add(label1, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		precsz.Add(self.widgets['accept precision'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		precsz.Add(label2, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		self.widgets['final image shift'] = wx.CheckBox(self, -1, 'Final Image Shift')
-		precsz.Add(self.widgets['final image shift'], (1,0),(1,2))
+		precsz.Add(self.widgets['final image shift'], (2,0),(1,2))
 
 		#maxerrsz = wx.GridBagSizer(5, 5)
 		#label = wx.StaticText(self, -1, 'Local Correlation Size (pixels)')

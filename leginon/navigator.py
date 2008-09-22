@@ -39,10 +39,11 @@ class NavigatorClient(object):
 		self.movedonestatus = evt['status']
 		self.movedone.set()
 
-	def moveToTarget(self, target, movetype, precision=0.0, final_imageshift=False):
+	def moveToTarget(self, target, movetype, precision=0.0, accept_precision=1e-3, final_imageshift=False):
 		self.node.startTimer('moveToTarget')
 		ev = event.MoveToTargetEvent(target=target, movetype=movetype)
 		ev['move precision'] = precision
+		ev['accept precision'] = accept_precision
 		ev['final image shift'] = final_imageshift
 		self.movedone.clear()
 		self.node.outputEvent(ev, wait=False)
@@ -60,6 +61,7 @@ class Navigator(node.Node):
 		'move type': 'image shift',
 		'check calibration': True,
 		'precision': 0.0,
+		'accept precision': 1e-3,
 		'complete state': True,
 		'override preset': False,
 		'max error': 256,
@@ -120,6 +122,7 @@ class Navigator(node.Node):
 		movetype = ev['movetype']
 		targetdata = ev['target']
 		precision = ev['move precision']
+		accept_precision = ev['accept precision']
 		final_imageshift = ev['final image shift']
 		self.logger.info('handling %s request from %s' % (movetype, nodename,))
 		imagedata = targetdata['image']
@@ -133,7 +136,7 @@ class Navigator(node.Node):
 		else:
 			check=False
 		self.startTimer('move')
-		status = self.move(rows, cols, movetype, precision, check, preset=preset, final_imageshift=final_imageshift)
+		status = self.move(rows, cols, movetype, precision, accept_precision, check, preset=preset, final_imageshift=final_imageshift)
 		self.stopTimer('move')
 
 		evt = event.MoveToTargetDoneEvent(status=status, target=targetdata)
@@ -149,6 +152,7 @@ class Navigator(node.Node):
 	def navigate(self, xy):
 		movetype = self.settings['move type']
 		precision = self.settings['precision']
+		accept_precision = self.settings['accept precision']
 		final_imageshift = self.settings['final image shift']
 		clickrow = xy[1]
 		clickcol = xy[0]
@@ -161,7 +165,7 @@ class Navigator(node.Node):
 		deltacol = clickcol - centerc
 
 		check = self.settings['check calibration']
-		status = self.move(deltarow, deltacol, movetype, precision, check, final_imageshift=final_imageshift)
+		status = self.move(deltarow, deltacol, movetype, precision, accept_precision, check, final_imageshift=final_imageshift)
 
 		# wait for a while
 		time.sleep(self.settings['pause time'])
@@ -280,7 +284,7 @@ class Navigator(node.Node):
 		self.logger.info('preset cycle')
 		self.presetsclient.toScope(preset['name'], keep_shift=keep_shift)
 
-	def move(self, row, col, movetype, precision=0.0, check=False, preset=None, final_imageshift=False):
+	def move(self, row, col, movetype, precision=0.0, accept_precision=1e-3, check=False, preset=None, final_imageshift=False):
 		self.setStatus('processing')
 		self.origimagedata = self.newimagedata
 		self.origmove = row,col
@@ -318,8 +322,10 @@ class Navigator(node.Node):
 					self.logger.info('move error: pixels: %s, %s, %.3em,' % (r,c,dist,))
 					if dist > lastdist:
 						self.logger.info('error got worse')
-						#self._moveback()
-						status = 'error'
+						if dist > accept_precision:
+							status = 'error'
+						else:
+							self._moveback()
 						break
 
 				# final image shift

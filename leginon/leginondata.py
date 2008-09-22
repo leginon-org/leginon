@@ -1138,6 +1138,7 @@ class NavigatorSettingsData(SettingsData):
 			('camera settings', CameraSettingsData),
 			('instruments', dict),
 			('precision', float),
+			('accept precision', float),
 			('max error', float),
 			('cycle each', bool),
 			('cycle after', bool),
@@ -1451,6 +1452,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('drift between', bool),
 			('mover', str),
 			('move precision', float),
+			('accept precision', float),
 			('final image shift', bool),
 			('save integer', bool),
 		)
@@ -1699,6 +1701,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('offset2', float),
 			('fixed model', bool),
 			('use lpf', bool),
+			('use wiener', bool),
 		)
 	typemap = classmethod(typemap)
 

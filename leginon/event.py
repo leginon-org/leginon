@@ -391,6 +391,7 @@ class MoveToTargetEvent(Event):
 			('target', leginondata.AcquisitionImageTargetData),
 			('movetype', str),
 			('move precision', float),
+			('accept precision', float),
 			('final image shift', bool),
 		)
 	typemap = classmethod(typemap)

@@ -126,6 +126,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'drift between': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,
+		'accept precision': 1e-3,
 		'process target type': 'acquisition',
 		'save integer': False,
 	}
@@ -503,10 +504,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 				emtarget = None
 				if not self.onTarget and targetdata['type'] != 'simulated':
 					precision = self.settings['move precision']
+					accept_precision = self.settings['accept precision']
 					final_imageshift = self.settings['final image shift']
 					if final_imageshift:
 						keep_shift = True
-					status = self.navclient.moveToTarget(targetdata, movetype, precision, final_imageshift=final_imageshift)
+					status = self.navclient.moveToTarget(targetdata, movetype, precision, accept_precision, final_imageshift=final_imageshift)
 					if status == 'error':
 						return status
 			self.presetsclient.toScope(presetname, emtarget, keep_shift=keep_shift)
