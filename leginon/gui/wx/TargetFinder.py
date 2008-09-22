@@ -98,6 +98,8 @@ class Panel(gui.wx.Node.Panel):
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		#self.widgets['wait for done'] = wx.CheckBox(self, -1,
 		#			'Wait for another node to process targets before marking them done')
@@ -124,8 +126,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['allow append'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
