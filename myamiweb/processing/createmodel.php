@@ -19,259 +19,441 @@ if ($_POST['process']) {
 	runCreateModel();
 }
 
-// Create the form page
-else {
-	createCreateModelForm();
+// IF METHOD IS SELECTED
+elseif ($_POST['selectmethod']) {
+	createSelectParameterForm();
 }
 
-function createCreateModelForm($extra=false, $title='CreateModel.py Launcher', $heading='Create a model') {
+// Create the form page
+else {
+	createEMANInitialModelForm();
+}
+
+
+#######################################################################################
+
+
+function createEMANInitialModelForm($extra=false, $title='createModel.py Launcher', $heading='Make an initial model') {
    // check if coming directly from a session
 	$expId=$_GET['expId'];
-	if ($expId){
-		$sessionId=$expId;
-		$projectId=getProjectFromExpId($expId);
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	}
-	else {
-		$sessionId=$_POST['sessionId'];
-		$formAction=$_SERVER['PHP_SELF'];
-	}
-	$projectId=$_POST['projectId'];
-	$exclude=$_GET['exclude'];
-	$norefId=$_GET['noref'];
+	$projectId=getProjectFromExpId($expId);
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+
 	$norefClassId=$_GET['norefClass'];
-	$file=$_GET['file'];
+	$norefClassfile=$_GET['file'];
+	$norefId=$_GET['noref'];
+	$exclude=$_GET['exclude'];
 	
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
+	if (!$norefClassId) $norefClassId = $_POST['norefClass'];
+	if (!$norefId) $norefId = $_POST['noref'];
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
-	if (!$norefId) $norefId = $_POST['norefId'];
-	if (!$norefClassId) $norefClassId = $_POST['norefClassId'];
-	if (!$file) $file = $_POST['file'];
-	if (!$symm) $symm = $_POST['symm'];
-	if (!$lp) $lp = $_POST['lp'];
-	if (!$mask) $mask = $_POST['mask'];
-	if (!$rounds) $rounds = $_POST['rounds'];
-	if (!$_POST['rounds']) {
-		$rounds=2;
-	}
-	if (!$apix) $apix = $_POST['apix'];
+	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
+	$startcsymcheck = ($_POST['method']=='startcsym') ? 'CHECKED' : '';
 
-	$javafunctions="
-	<script src='../js/viewer.js'></script>
-	<script LANGUAGE='JavaScript'>
-		function infopopup(infoname){
-			var newwindow=window.open('','name','height=250,width=400');
-			newwindow.document.write('<HTML><BODY>');
-			
-			if (infoname=='classpath'){
-				newwindow.document.write('This is the path and name of the reference free class average file which will be used to create an initial model');
-			}
+	// get outdir path
+	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessioninfo=$sessiondata['info'];
 
-			if (infoname=='rounds'){
-				newwindow.document.write('This is rounds of Euler angle determination to use');
-			}
-			if (infoname=='mask'){
-				newwindow.document.write('Mask radius');
-			}
-			if (infoname=='lowpass'){
-				newwindow.document.write('Lowpass filter radius in Fourier pixels');
-			}
-	
-			newwindow.document.write('</BODY></HTML>');
-			newwindow.document.close();
-		}
-
-	</SCRIPT>\n";
-
+	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='red'>$extra</font>\n<hr />\n";
 	}
   
-	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-	$sessioninfo=$sessiondata['info'];
-
-	if (!empty($sessioninfo)) {
-		$sessionname=$sessioninfo['Name'];
-		echo"<INPUT TYPE='hidden' NAME='sessionname' VALUE='$sessionname'>\n";
-	}
-	
-	
-	//get the path for where the model is going to be created
-	if  ($file) {
-		if ( preg_match("/\.img/", $file) ) {
-			$path=ereg_replace("\/classes_avg[0-9]*.img","",$file);
-		}
-	}
+	echo"<form name='viewerform' method='post' action='$formAction'>\n";
 	
 	//query the database for parameters
 	$particle = new particledata();
-	$norefparams=$particle->getNoRefParams($norefId);	
 	
-	//get stack id in order to get apix
-	if (!$stackId) {
-		$stackId=$norefparams["REF|ApStackData|stack"];
-	}
-	
-	//get apix from stack 
-	if (!$apix) {
-		$apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
-	}
+	# get outdir
+	$noref = $particle->getNoRefParams($norefId);
+	$outdir = $noref['path'];
 
-	$syms = $particle->getSymmetries();
+	# get apix
+	if (!$apix) {
+		$apix=($particle->getStackPixelSizeFromStackId($noref["REF|ApStackData|stack"]))*1e10;
+	}
+	echo "<input type='hidden' name='apix' value='$apix'>";
 	
 	echo"
 	<TABLE BORDER=3 CLASS=tableborder>";
 	echo"
 	<TR>
-		<TD VALIGN='TOP'>
-			<TABLE> \n";
-	
-	echo"<INPUT TYPE='hidden' NAME='path' VALUE='$path'>\n";
-	echo"<INPUT TYPE='hidden' NAME='file' VALUE='$file'>\n";
-	echo"<INPUT TYPE='hidden' NAME='apix' VALUE='$apix'>\n";
+		<TD VALIGN='TOP'>\n";
 	echo"
-			<TR>
-				<TD VALIGN='TOP'>
-					<BR/>
-					<B>NoRef Class information:</B> <BR/>
-					<A HREF=\"javascript:infopopup('classpath')\">Class name & path</A>: $file <BR/>	
-					Class ID: $norefClassId<BR/> <INPUT TYPE='hidden' NAME='norefClassId' VALUE='$norefClassId'> <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>
-					Excluded Classes: $exclude
-					<INPUT TYPE='hidden' NAME='exclude' VALUE='$exclude'>
-					<BR/>\n";
+		<b>Reference Free Class Information:</b> <br />
+			Name & Path: $norefClassfile <br />
+			<input type='hidden' name='norefClassfile' value='$norefClassfile'>
+			Noref Class ID: $norefClassId<br />
+			<input type='hidden' name='norefClassId' value='$norefClassId'>
+			<input type='hidden' name='norefId' value='$norefId'>
+		<br />\n";
+
+	echo docpop('emanprog','<b>EMAN Program:</b> ');
+	echo "<input type='radio' name='method' value='startCSym' 'CHECKED'> StartCSym\n";
+	echo "<input type='radio' name='method' value='startIcos' > StartIcos\n";
+	echo "<input type='radio' name='method' value='startOct' > StartOct\n";
+	echo "<input type='radio' name='method' value='startAny' > StartAny<br /><br />\n";
+
+	echo docpop('outdir','<b>Output Directory:</b> ');
+	echo "<input type='text' name='outdir' value='$outdir' size='38'><br />\n";
+	echo docpop('test','<b>Excluded Classes:</b> ');
+	echo "<input type='text' name='exclude' value='$exclude' size='38'><br /><br />\n";
+	echo "<b>Description:</b><br />\n";
+	echo "<textarea name='descript' rows='3'cols='70'>$description</textarea>\n";
+	echo "<br />\n";
+	echo "<input type='checkbox' name='commit' $commit>\n";
+	echo docpop('commit','<b>Commit model to database');
+	echo "<br />\n";
+	echo "</td><tr><td align='center'>";
+
+	echo"<P><input type='SUBMIT' NAME='selectmethod' VALUE='Use this EMAN initial model method'>";
+
 	echo "
-					<BR/>
-					<B>Model Description:</B><BR/>
-					<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>
-					<BR/>
-					<BR/>
-				</TD>
-			</TR>
-			<TR>
-				<TD VALIGN='TOP' CLASS='tablebg'>
-					<TABLE WIDTH='350' BORDER='0'>
-					<TR><TD COLSPAN='2'>
-						
-						<B>Required Parameters:</B><BR/>
-						<TR><TD>Model Symmetry:</TD><TD>
-						
-						<SELECT NAME='symm'>
-      						<OPTION VALUE=''>Select One</OPTION>\n";
-							foreach ($syms as $sym) {
-								echo "<OPTION VALUE='".$sym['DEF_id']."'";
-								if ($sym['DEF_id']==$_POST['symm']) echo " SELECTED";
-								echo ">".$sym['symmetry'];
-								if ($sym['symmetry']=='C1') echo " (no symmetry)";					
-								echo "</OPTION>\n";
-							}
-    						echo"
-      						</SELECT>					
-						<TR><TD><A HREF=\"javascript:infopopup('lowpass')\">Low Pass Filter</A>:</TD><TD>
-						<INPUT TYPE='text' NAME='lp' SIZE='5' VALUE='$lp'>
-						<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT></TD></TR>
-						<TR><TD><B>Optional Parameters:</B><BR/></TD></TR>
-						<TR><TD><A HREF=\"javascript:infopopup('mask')\">Mask</A>:</TD><TD>
-						<INPUT TYPE='text' NAME='mask' SIZE='5' VALUE='$mask'>
-						<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT></TD></TR>
-						
-						<TR><TD><A HREF=\"javascript:infopopup('rounds')\">Rounds</A>:</TD><TD>
-						<INPUT TYPE='text' NAME='rounds' SIZE='5' VALUE='$rounds'>
-						<FONT SIZE='-2'>(2-5)</FONT></TD></TR>
-												
-					</TABLE>
-				</TD>
-		  	</TR>
-			
-		  </TABLE>
-		</TD>
-  </TR>
-  <TR>
-    <TD ALIGN='CENTER'>
-      <HR>
-      <BR/>
-      <INPUT type='submit' name='process' value='Create Model'><BR/>
-      <FONT class='apcomment'>Submission will NOT create the model,<BR/>
-			only output a command that you can copy and paste into a unix shell</FONT>
-    </TD>
-	</TR>
-  </TABLE>
-  </FORM>
-  </CENTER>\n";
+	</td>
+	</tr>
+  	</table>
+  	</form>\n";
 
 	processing_footer();
 	exit;
 }
 
-function runCreateModel() {
-	//make sure a session was selected
-	$description=$_POST['description'];
-	if (!$description) createCreateModelForm("<B>ERROR:</B> Enter a brief description of the model");
+#######################################################################################
 
-	//make sure a session was selected
-	$session=$_POST['sessionname'];
-	if (!$session) createCreateModelForm("<B>ERROR:</B> Select an experiment session");
 
-	$symm=$_POST['symm'];
-	if (!$symm) createCreateModelForm("<B>ERROR:</B> Select a symmetry for the model");
+function createSelectParameterForm($extra=false, $title='createModel.py Launcher', $heading='Making an initial model... selecting parameters'){
 
-	$lp=$_POST['lp'];
-	if (!$lp) createCreateModelForm("<B>ERROR:</B> Select a low pass filter value");
+	// get from previous from
+	$expId = $_GET['expId'];
+	$projectId=getProjectFromExpId($expId);
 
-	$path=$_POST['path'];
-	$mask=$_POST['mask'];
-	$rounds=$_POST['rounds'];
-	$exclude=$_POST['exclude'];
-	$norefId=$_POST['norefId'];
 	$norefClassId=$_POST['norefClassId'];
+	$norefClassfile=$_POST['norefClassfile'];
+	$norefId=$_POST['norefId'];
 	$apix=$_POST['apix'];
+	$outdir=$_POST['outdir'];
+	$commit=$_POST['commit'];
+	$exclude=$_POST['exclude'];
+	$method=$_POST['method'];
 
-	$particle = new particledata();
-	$syminfo = $particle->getSymmetryInfo($symm);
-	$symm_name = $syminfo['symmetry'];
+	$description=$_POST['descript'];
+	if (!$description) createEMANInitialModelForm("<B>ERROR:</B> Enter a brief description");
+	
+	// Set any existing parameters in form
+	if (!$description) $description = $_POST['descript'];		
+	if (!$norefClassId) $norefClassId = $_POST['norefClass'];
+	if (!$norefClassfile) $norefClassfile = $_POST['file'];
+	if (!$norefId) $norefId = $_POST['noref'];
+	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 
-	//putting together command
+	// get outdir path
+	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessioninfo=$sessiondata['info'];
+
+	$javafunctions .= writeJavaPopupFunctions('appion');
+	processing_header($title,$heading,$javafunctions);
+
+	// write out errors, if any came up:
+	if ($extra) {
+		echo "<font color='red'>$extra</font>\n<hr />\n";
+	}
+	
+	echo"<form name='viewerform' method='post' action='$formAction'>\n";
+
+	echo "<input type='hidden' name='method' value='$method'>";
+	echo "<input type='hidden' name='descript' value='$description'>";
+	echo "<input type='hidden' name='exclude' value='$exclude'>";
+	echo "<input type='hidden' name='commit' value='$commit'>";
+	echo "<input type='hidden' name='norefClassId' value='$norefClassId'>";
+	echo "<input type='hidden' name='norefId' value='$norefId'>";
+	echo "<input type='hidden' name='outdir' value='$outdir'>";
+	echo "<input type='hidden' name='apix' value='$apix'>";
+
+	if (!empty($sessioninfo)) {
+		$sessionname=$sessioninfo['Name'];
+		echo"<INPUT TYPE='hidden' NAME='session' VALUE='$sessionname'>\n";
+	}
+
+	echo"
+
+		<TABLE BORDER=3 CLASS=tableborder>
+			<TR><TD VALIGN='TOP'>\n";
+	
+			if( $_POST['method'] == 'startCSym') {
+				echo " <B>EMAN Program: StartCSym</B><BR/><BR/>";
+			} elseif ( $_POST['method'] == 'startIcos') {
+				echo " <B>EMAN Program: StartIcos</B><BR/><BR/>";	
+			} elseif ( $_POST['method'] == 'startOct') {
+				echo " <B>EMAN Program: StartOct</B><BR/><BR/>";
+			} elseif ( $_POST['method'] == 'startAny') {
+				echo " <B>EMAN Program: StartAny</B><BR/><BR/>";
+			} 
+	
+			echo"
+				<b>Reference Free Class Information:</b> <br />
+				Name & Path: $norefClassfile <br />
+				Noref Class ID: $norefClassId<br />
+				<br />";
+
+			$particle = new particledata();
+			$syms = $particle->getSymmetries();
+
+		#Options to display for each EMAN method	
+		if( $_POST['method'] == 'startCSym') {
+			echo "
+			
+			<TR>
+			<TD VALIGN='TOP' CLASS='tablebg'>
+				<TABLE WIDTH='400' BORDER='0'>
+					<TR><TD COLSPAN='2'>
+						
+						<B>Required Parameters:</B><BR/>
+						<TR><TD>Model Symmetry:</TD>
+						
+							<TD><SELECT NAME='symm'>
+      						<OPTION VALUE=''>Select One</OPTION>\n";
+							foreach ($syms as $sym) {
+								#if ($sym['symmetry']=='C1') {
+								echo "<OPTION VALUE='".$sym['DEF_id']."'";
+								if ($sym['DEF_id']==$_POST['symm']) echo " SELECTED";
+								echo ">".$sym['symmetry'];
+								if ($sym['symmetry']=='C1') echo " (no symmetry)";					
+								echo "</OPTION>\n";
+								#}
+							}
+    					echo" </SELECT>";
+					
+						echo "<TR><TD>";   
+						echo docpop('partnum','<b>Particle Number:</b> ');
+						echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";  
+						echo "<TR><TD>";   
+						echo docpop('lp','<b>Low Pass Filter:</b> ');
+						echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
+						echo "<TR><TD>";
+						echo "<B>Optional Parameters:</B><BR/>";
+						echo "<TR><TD>";
+						echo docpop('model','<b>Internal Mask:</b> ');
+						echo "</TD><TD><INPUT TYPE='text' name='imask' value='$imask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
+						
+		} elseif ( $_POST['method'] == 'startIcos') {
+			echo "
+			
+				<TR>
+				<TD VALIGN='TOP' CLASS='tablebg'>
+					<TABLE WIDTH='400' BORDER='0'>
+						<TR><TD COLSPAN='2'>
+						
+						<B>Required Parameters:</B><BR/>";							
+						
+			echo "<TR><TD>";   
+			echo docpop('model','<b>Particle Number:</b> ');
+			echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";  
+			echo "<TR><TD>";
+			echo docpop('lp','<b>Low Pass Filter:</b> ');
+			echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
+			echo "<TR><TD>";
+			echo "<B>Optional Parameters:</B><BR/>";
+			echo "<TR><TD>";
+			echo docpop('model','<b>Internal Mask:</b> ');
+			echo "</TD><TD><INPUT TYPE='text' name='imask' value='$imask'> <br/>";
+			
+		} elseif ( $_POST['method'] == 'startOct') {
+			echo "
+			
+				<TR>
+				<TD VALIGN='TOP' CLASS='tablebg'>
+					<TABLE WIDTH='400' BORDER='0'>
+						<TR><TD COLSPAN='2'>
+						
+						<B>Required Parameters:</B><BR/>";
+
+			echo "<TR><TD>";   
+			echo docpop('lp','<b>Low Pass Filter:</b> ');
+			echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  			
+			echo "<TR><TD>";   
+			echo docpop('model','<b>Particle Number:</b> ');
+			echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";
+
+		} elseif ( $_POST['method'] == 'startAny') {
+			echo "
+			
+			<TR>
+			<TD VALIGN='TOP' CLASS='tablebg'>
+			<TABLE WIDTH='400' BORDER='0'>
+				<TR><TD COLSPAN='2'>
+						
+					<B>Required Parameters:</B><BR/>
+					<TR><TD>Model Symmetry:</TD>
+						
+					<TD><SELECT NAME='symm'>
+      			<OPTION VALUE=''>Select One</OPTION>\n";
+						foreach ($syms as $sym) {
+							echo "<OPTION VALUE='".$sym['DEF_id']."'";
+							if ($sym['DEF_id']==$_POST['symm']) echo " SELECTED";
+							echo ">".$sym['symmetry'];
+							if ($sym['symmetry']=='C1') echo " (no symmetry)";					
+							echo "</OPTION>\n";
+						}
+    					echo" </SELECT>";
+					
+					echo "<TR><TD>";   
+					echo docpop('lp','<b>Low Pass Filter:</b> ');
+					echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
+					echo "<TR><TD>";
+					echo "<B>Optional Parameters:</B><BR/>";
+					echo "<TR><TD>";
+					echo docpop('model','<b>Mask:</b> ');
+					echo "</TD><TD><INPUT TYPE='text' name='mask' value='$mask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
+					echo "<TR><TD>";
+					echo docpop('model','<b>Rounds:</b> ');
+					echo "</TD><TD><INPUT TYPE='text' name='rounds' value='$rounds'> <FONT SIZE='-2'>(2-5)</FONT><br/>";
+		
+	} else {
+
+		###print error
+	}
+
+	echo "
+												
+		</TABLE>
+		</TD>
+	  	</TR>
+		
+	   </TABLE>
+		</TD>
+  		</TR>
+  		<TR>
+    	<TD ALIGN='CENTER'>
+     		<HR>
+     		<BR/>
+     		<INPUT type='SUBMIT' name='process' value='Create Model'><BR/>
+     		<FONT class='apcomment'>Submission will NOT create the model,<BR/>
+				only output a command that you can copy and paste into a unix shell</FONT>
+    	</TD>
+		</TR>
+  		</TABLE>
+  		</FORM>
+  		</CENTER>\n";
+
+}
+
+
+#######################################################################################
+
+
+function runCreateModel() {
+	$expId = $_GET['expId'];
+
+	$session=$_POST['session'];
+	$method=$_POST['method'];
+	$norefClassId=$_POST['norefClassId'];
+	$norefId=$_POST['norefId'];
+	$apix=$_POST['apix'];
+	$outdir=$_POST['outdir'];
+	$commit=$_POST['commit'];
+	$exclude=$_POST['exclude'];
+	$lp=$_POST['lp'];
+
 	$command.="createModel.py ";
+
+	$symmetry=$_POST['symm'];
+
+	if ($symmetry) {
+		$particle = new particledata();
+		$syminfo = $particle->getSymInfo($symmetry);
+		$symm_name = $syminfo['symmetry'];
+
+		$symm_name_array=explode(" ",$symm_name);
+		$symm_name = $symm_name_array[0];
+	}
+
+	if ($method == 'startCSym') {
+
+		$particleNum=$_POST['partnum'];
+		$imask=$_POST['imask'];
+
+	} elseif ($method == 'startIcos') {
+
+		$particleNum=$_POST['partnum'];
+		$imask=$_POST['imask'];
+
+	} elseif ($method == 'startOct') {
+		
+		$particleNum=$_POST['partnum'];
+
+	} elseif ($method == 'startAny') {
+
+		$mask=$_POST['mask'];
+		$rounds=$_POST['rounds'];
+	}
+
+
+	//make sure a description is provided
+	$description=$_POST['descript'];
+	if (!$description) createSelectParameterForm("<B>ERROR:</B> Enter a brief description");
+
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$procdir = $outdir.$runid;
+ 
+	//putting together command
+	$command.="--method=$method ";
 	$command.="--session=$session ";
 	$command.="--noref=$norefId ";
 	$command.="--norefClass=$norefClassId ";
-	$command.="--apix=$apix ";
 	$command.="--description=\"$description\" ";
-	if ($exclude != "") { $command.="--exclude=$exclude "; }
-	if ($symm != "") { $command.="--symm=$symm,$symm_name "; }
-	if ($lp != "") { $command.="--lp=$lp "; }
-	if ($mask != "") { $command.="--mask=$mask "; }
-	if ($rounds != "") { $command.="--rounds=$rounds "; }
+	$command.="--lp=$lp ";
+	$command.="--apix=$apix ";
+	if ($exclude) $command.="--exclude=$exclude ";
+	if ($symmetry) $command.="--symm=$symmetry,$symm_name ";
+	if ($particleNum) $command.="--partnum=$particleNum ";
+	if ($mask) $command.="--mask=$mask ";
+	if ($imask) $command.="--imask=$imask ";
+	if ($rounds) $command.="--rounds=$rounds ";
 	
-	processing_header("Create Model Run", "CreateModel Params");
 
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>";
-	
+	if ($outdir) $command.="--outdir=$procdir ";
+	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+
+	// submit job to cluster
+	if ($_POST['process']=="Create SubStack") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password)) createNorefSubStackForm("<B>ERROR:</B> You must be logged in to submit");
+
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		// if errors:
+		if ($sub) createNorefSubStackForm("<b>ERROR:</b> $sub");
+		exit();
+	}
+
+	processing_header("Creating a SubStack", "Creating a SubStack");
+
 	//rest of the page
 	echo"
-	$template_command 
-	<B>UploadTemplate Command:</B><BR>
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>createModel.py command:</b><br />
 	$command
-	</TD></TR>
-	<TR><TD>session</TD><TD>$session</TD></TR>
-	<TR><TD>noref id</TD><TD>$norefId</TD></TR>
-	<TR><TD>noref class id</TD><TD>$norefClassId</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	<TR><TD>excluded classes</TD><TD>$exclude</TD></TR>
-	<TR><TD>symmetry name</TD><TD>$symm_name</TD></TR>
-	<TR><TD>symmetry id</TD><TD>$symm</TD></TR>
-	<TR><TD>lp</TD><TD>$lp</TD></TR>";
-
-	if ($mask) echo"<TR><TD>mask</TD><TD>$mask</TD></TR>";
-	if ($rounds) echo"<TR><TD>rounds</TD><TD>$rounds</TD></TR>";
-	
-	echo"
-	</TABLE>\n";
+	</td></tr>\n";
+	echo "<tr><td>EMAN method</td><td>$method</td></tr>\n";
+	echo "<tr><td>noref id</td><td>$norefId</td></tr>\n";
+	echo "<tr><td>noref class id</td><td>$norefClassId</td></tr>\n";
+	echo "<tr><td>description</td><td>$description</td></tr>\n";
+	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
+	echo "<tr><td>apix</td><td>$apix</td></tr>\n";
+	if ($exclude) echo "<tr><td>Excluded classes</td><td>$exclude</td></tr>\n";
+	if ($symmetry) echo "<tr><td>Symmetry</td><td>$symmetry,$symm_name</td></tr>\n";
+	if ($particleNum) echo "<tr><td>Particle Number</td><td>$particleNum</td></tr>\n";
+	if ($mask) echo "<tr><td>Mask</td><td>$mask</td></tr>\n";
+	if ($imask) echo "<tr><td>Internal mask</td><td>$imask</td></tr>\n";
+	if ($rounds) echo "<tr><td>Rounds</td><td>$rounds</td></tr>\n";
+	echo"</table>\n";
 	processing_footer();
 }
 
