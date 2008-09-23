@@ -178,8 +178,9 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
                                                             allownone=False,
                                                             chars=5,
                                                             value='1.0')
-        self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
+#        self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
         self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
+        self.widgets['use wiener'] = wx.CheckBox(self, -1, 'Use Wiener filter phase correlation')
 
 
         intsz = wx.GridBagSizer(5, 5)
@@ -218,7 +219,8 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
-        miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
+        miscsz.Add(self.widgets['use wiener'], (5, 0), (1, 1), wx.ALIGN_CENTER)
+        #miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
         miscsz.AddGrowableRow(2)

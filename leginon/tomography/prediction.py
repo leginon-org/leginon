@@ -64,6 +64,10 @@ class Prediction(object):
 		self.valid_tilt_series_list = []
 		self.valid_tilt_series_pixel_size_list = []
 		current_pixel_size = self.tilt_series_pixel_size_list[-1]
+		# Hack, need to clean up
+		if current_pixel_size == [] and len(self.tilt_series_pixel_size_list) >= 2:
+			current_pixel_size = self.tilt_series_pixel_size_list[-2]
+
 		for i, tilt_series in enumerate(self.tilt_series_list):
 			if self.tilt_series_pixel_size_list[i] == current_pixel_size:
 				self.valid_tilt_series_list.append(tilt_series)

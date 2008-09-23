@@ -311,7 +311,7 @@ class Collection(object):
 			#self.correlator.setTiltAxis(predicted_position['phi'])
 			while True:
 				try:
-					correlation_image = self.correlator.correlate(image, tilt, channel=channel)
+					correlation_image = self.correlator.correlate(image, tilt, channel=channel, wiener=self.settings['use wiener'])
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))

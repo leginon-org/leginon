@@ -66,6 +66,7 @@ class Tomography(acquisition.Acquisition):
 		'offset2': 0.0,
 		'fixed model': False,
 		'use lpf': True,
+		'use wiener': False,
 	}
 
 	def __init__(self, *args, **kwargs):
