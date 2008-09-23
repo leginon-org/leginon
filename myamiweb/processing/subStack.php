@@ -29,11 +29,13 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
 	$stackId = $_GET['sId'];
+	$exclude = $_GET['exclude'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
-
+	$formAction.=($exclude) ? "&exclude=$exclude" : "";
+	
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
 	$runid = ($_POST['runid']) ? $_POST['runid'] : 'sub'.$stackId;
@@ -45,8 +47,9 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$splitdisable = ($splitcheck) ? '' : 'disabled';		
 	$split = ($_POST['split']) ? $_POST['split'] : '2';		
 	$firstp = ($_POST['firstp']) ? $_POST['firstp'] : '';		
-	$lastp = ($_POST['lastp']) ? $_POST['lastp'] : '';		
-	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
+	$lastp = ($_POST['lastp']) ? $_POST['lastp'] : '';
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+			
 
 	// get outdir path
 	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
@@ -104,29 +107,37 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 					Name & Path: $filename <br />	
 					Stack ID: $stackId<br />
 					# Particles: $nump<br />
+					 
                      <input type='hidden' name='stackId' value='$stackId'>
-					<br />\n";
+					\n";
+	if ($exclude) {
+		echo "Particles to be excluded: $exclude<br />
+				<input type='hidden' name='exclude' value='$exclude'>";
+	}
 
+	echo "<br />";
 	echo docpop('runid','<b>Run Name:</b> ');
 	echo "<input type='text' name='runid' value='$runid'><br />\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
-	echo openRoundBorder();
-	echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'><tr><td width='50%' valign='top'>\n";
-	echo "<input type='radio' name='subsplit' onclick='subORsplit(\"sub\")' value='sub' $subcheck>\n";
-	echo "<b>Select Subset of Particles (1-$nump)</b><br />\n";
-	echo docpop('firstp', '<b>First:</b> ');
+	if (!$exclude) { 
+		echo openRoundBorder();
+		echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'><tr><td width='50%' valign='top'>\n";
+		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"sub\")' value='sub' $subcheck>\n";
+		echo "<b>Select Subset of Particles (1-$nump)</b><br />\n";
+		echo docpop('firstp', '<b>First:</b> ');
      	echo "<input type='text' name='firstp' value='$firstp' size='7' $firstpdisable><br />\n";
-	echo docpop('lastp', '<b>Last:</b> ');
-	echo "<input type='text' name='lastp' value='$lastp' size='7' $lastpdisable> (included)<br />\n";
-	echo "</td><td width='50%' valign='top'>\n";
-	echo "<input type='radio' name='subsplit' onclick='subORsplit(\"split\")' value='split' $splitcheck>\n";
-	echo "<b>Split Stack</b><br />\n";
-	echo docpop('split','<b>Split into:</b> ');
-	echo "<input type='text' name='split' value='$split' size='3' $splitdisable> sets\n";
-	echo "</td></tr></table>\n";
-	echo closeRoundBorder();
+		echo docpop('lastp', '<b>Last:</b> ');
+		echo "<input type='text' name='lastp' value='$lastp' size='7' $lastpdisable> (included)<br />\n";
+		echo "</td><td width='50%' valign='top'>\n";
+		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"split\")' value='split' $splitcheck>\n";
+		echo "<b>Split Stack</b><br />\n";
+		echo docpop('split','<b>Split into:</b> ');
+		echo "<input type='text' name='split' value='$split' size='3' $splitdisable> sets\n";
+		echo "</td></tr></table>\n";
+		echo closeRoundBorder();
+	}
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
 	echo "<br />\n";
@@ -152,6 +163,7 @@ function runSubStack() {
 
 	$runid=$_POST['runid'];
 	$stackId=$_POST['stackId'];
+	$exclude=$_POST['exclude'];
 	$outdir=$_POST['outdir'];
 	$commit=$_POST['commit'];
 	$subsplit = $_POST['subsplit'];
@@ -171,20 +183,26 @@ function runSubStack() {
 	$procdir = $outdir.$runid;
 
 	// check sub stack particle numbers
-	if ($subsplit == 'sub') {
-		if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
-		if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
-	}
-	elseif (!$split) {
-		if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter # of stacks");
+	if (!$exclude) {
+		if ($subsplit == 'sub') {
+			if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
+			if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
+		}
+		elseif (!$split) {
+			if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter # of stacks");
+		}
 	}
 
 	//putting together command
 	$command.="-s $stackId ";
 	$command.="-n $runid ";
 	$command.="-d \"$description\" ";
-	if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
-	elseif ($split) $command.="--split=$split ";
+	if (!$exclude) {
+		if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
+		elseif ($split) $command.="--split=$split ";
+	} else {
+		$command.="--exclude=".$exclude." ";
+	}
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
 	// submit job to cluster
