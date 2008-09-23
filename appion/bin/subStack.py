@@ -47,13 +47,11 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("new stack name was not defined")
 		if self.params['first'] is None and self.params['last'] is None and self.params['split'] == 1:
 			if self.params['keepfile'] is None and self.params['exclude'] is None and self.params['include'] is None:
-				apDisplay.printError("keep file was not defined")
+				apDisplay.printError("Please define either keepfile, exclude or include")
 			elif self.params['keepfile']:
 				self.params['keepfile'] = os.path.abspath(self.params['keepfile'])
 				if not os.path.isfile(self.params['keepfile']):
 					apDisplay.printError("Could not find keep file: "+self.params['keepfile'])
-		if self.params['keepfile'] is None and self.params['exclude'] is None and self.params['include'] is None:
-			apDisplay.printError("Please define either keepfile, exclude or include")
 		if self.params['keepfile'] and (self.params['exclude'] is not None or self.params['include'] is not None):
 			apDisplay.printError("Please define only either keepfile, exclude or include")
 		if self.params['exclude'] and (self.params['keepfile'] is not None or self.params['include'] is not None):
