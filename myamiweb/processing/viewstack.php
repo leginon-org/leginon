@@ -145,6 +145,11 @@ function createNorefSubStack() {
 	window.open("norefSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 }
 
+function createSubStack() {
+	var index = $('excludedIndex').value
+	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
+}
+
 function createTiltPairSubStack() {
 	var index = $('excludedIndex').value
 	window.open("norefTiltPairSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
@@ -191,8 +196,13 @@ if ($norefId) {
 <input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
 }
 elseif ($stackId) {
-  echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
-  echo "<br />\n";
+	echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
+  	echo "<br />\n";
+
+	echo "Remove particles from stack: <input type='text' id='excludedIndex' value=''>
+		<input type='button' value='Create SubStack' onClick='createSubStack()' >\n";
+
+  	
 }
 
 ?>
