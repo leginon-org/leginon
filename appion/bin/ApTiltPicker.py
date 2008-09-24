@@ -673,43 +673,9 @@ class PickerApp(wx.App):
 		img1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
 		tiltdiff = self.data['theta']
 		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
-		shift, xfactor = apTiltTransform.getTiltedShift(img1, img2, tiltdiff)
-		#print "shift=",shift
 
-		if min(abs(shift)) < min(img1.shape)/16.0:
-			self.statbar.PushStatusText("Warning: Overlap was close to edge and possibly wrong.", 0)
+		origin, newpart = apTiltTransform.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
 
-		origin = numpy.asarray(img1.shape)/2.0
-		origin2 = numpy.array([origin[0]*xfactor**2, origin[1]]) - shift
-		#print "origin=",origin
-		#print "origin2=",origin2
-		halfsh = (origin + origin2)/2.0
-		if len(self.picks1) > 1:
-			#get center most pick
-			dmin = origin[0]/2.0
-			for pick in self.picks1:
-				da = numpy.hypot(pick[0]-halfsh[0], pick[1]-halfsh[1])
-				if da < dmin:
-					dmin = da
-					origin = pick
-		newpart = numpy.array([origin[0]*xfactor**2, origin[1]]) - shift
-		#print "origin=",origin
-		#print "origin2=",origin2
-		#print "newpart=",newpart
-		while newpart[0] < 10:
-			newpart += numpy.asarray((20,0))
-			origin += numpy.asarray((20,0))
-		while newpart[1] < 10:
-			newpart += numpy.asarray((0,20))
-			origin += numpy.asarray((0,20))
-		while newpart[0] > img1.shape[0]-10:
-			newpart -= numpy.asarray((20,0))
-			origin -= numpy.asarray((20,0))
-		while newpart[1] > img1.shape[1]-10:
-			newpart -= numpy.asarray((0,20))
-			origin -= numpy.asarray((0,20))
-		#print "origin2=",origin
-		#print "newpart2=",newpart
 		self.panel1.setTargets('Picked', [origin])
 		self.panel2.setTargets('Picked', [newpart])
 		self.shift.SetBackgroundColour(self.deselectcolor)

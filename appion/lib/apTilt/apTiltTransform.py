@@ -13,6 +13,65 @@ import apDog
 from pyami import peakfinder
 from pyami import correlator
 
+
+def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[]):
+	"""
+	takes two images tilted 
+	with respect to one another 
+	and tries to find overlap
+	
+	img1 (as numpy array)
+	img2 (as numpy array)
+	tiltdiff (in degrees)
+		negative, img1 is more compressed (tilted)
+		positive, img2 is more compressed (tilted)
+	picks1, list of particles picks for image 1
+	"""
+	shift, xfactor = getTiltedShift(img1, img2, tiltdiff)
+	
+	if min(abs(shift)) < min(img1.shape)/16.0:
+		print "Warning: Overlap was too close to the edge and possibly wrong."
+
+	### case 1: find tilted center of first image
+	origin = numpy.asarray(img1.shape)/2.0
+	origin2 = numpy.array([(origin[0]/xfactor+shift[0])/xfactor, origin[1]+shift[1]])
+	#print "origin=",origin
+	#print "origin2=",origin2
+	halfsh = (origin + origin2)/2.0
+	origin = halfsh
+
+	### case 2: using a list of picks
+	if len(picks1) > 1:
+		#get center most pick
+		dmin = origin[0]/2.0
+		for pick in picks1:
+			da = numpy.hypot(pick[0]-halfsh[0], pick[1]-halfsh[1])
+			if da < dmin:
+				dmin = da
+				origin = pick
+
+	newpart = numpy.array([(origin[0]*xfactor-shift[0])*xfactor, origin[1]-shift[1]])
+	print "origin=",origin
+	print "newpart=",newpart
+
+	return origin, newpart
+
+	while newpart[0] < 10:
+		newpart += numpy.asarray((20,0))
+		origin += numpy.asarray((20,0))
+	while newpart[1] < 10:
+		newpart += numpy.asarray((0,20))
+		origin += numpy.asarray((0,20))
+	while newpart[0] > img1.shape[0]-10:
+		newpart -= numpy.asarray((20,0))
+		origin -= numpy.asarray((20,0))
+	while newpart[1] > img1.shape[1]-10:
+		newpart -= numpy.asarray((0,20))
+		origin -= numpy.asarray((0,20))
+
+	return origin, newpart
+
+
 def getTiltedShift(img1, img2, tiltdiff):
 	"""
 	takes two images tilted 
@@ -20,9 +79,10 @@ def getTiltedShift(img1, img2, tiltdiff):
 	and tries to find overlap
 	
 	img1 (as numpy array)
-	tilt1 (in degrees)
 	img2 (as numpy array)
-	tilt2 (in degrees)
+	tiltdiff (in degrees)
+		negative, img1 is more compressed (tilted)
+		positive, img2 is more compressed (tilted)
 	"""
 
 	### untilt images by stretching and compressing
@@ -35,12 +95,12 @@ def getTiltedShift(img1, img2, tiltdiff):
 	# go from max tilt to half tilt
 	stretchFactor = math.cos(halftiltrad) / math.cos(abs(tiltdiff)/180.0*math.pi)
 	if tiltdiff > 0: 
-		#apDisplay.printMsg("compress image 1")
+		apDisplay.printMsg("compress image 1")
 		untilt1 = transformImage(img1, compressFactor)
 		untilt2 = transformImage(img2, stretchFactor)
 		xfactor = compressFactor
 	else:
-		#apDisplay.printMsg("stretch image 1")
+		apDisplay.printMsg("stretch image 1")
 		untilt1 = transformImage(img1, stretchFactor)
 		untilt2 = transformImage(img2, compressFactor)
 		xfactor = stretchFactor
@@ -81,15 +141,15 @@ def getTiltedShift(img1, img2, tiltdiff):
 	apDisplay.printMsg("Guessed xy-shift btw two images"
 		+";\n\t SNR= "+str(round(peakdict['snr'],2))
 		+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
-		#+";\n\t compressFactor= "+str(round(compressFactor, 3))
-		#+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
+		+";\n\t compressFactor= "+str(round(compressFactor, 3))
+		+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
 		+";\n\t xFactor= "+str(round(xfactor, 3))
-		#+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
-		#+";\n\t shift= "+str(numpy.around(shift, 1))
+		+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
+		+";\n\t shift= "+str(numpy.around(shift, 1))
 		+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
 	)
 
-	return adjshift, xfactor
+	return shift, xfactor
 
 def blackEdges(img, rad=None, black=None):
 	shape = img.shape
@@ -99,13 +159,13 @@ def blackEdges(img, rad=None, black=None):
 		black = ndimage.minimum(img[int(rad/2.0):int(shape[0]-rad/2.0), int(rad/2.0):int(shape[1]-rad/2.0)])
 	img2 = img
 	#left edge
-	#img2[0:int(rad/2.0), 0:shape[1]] = black
+	img2[0:1, 0:shape[1]] = black
 	#right edge
-	#img2[int(shape[0]-rad/2.0):shape[0], 0:shape[1]] = black
+	img2[int(shape[0]-1):shape[0], 0:shape[1]] = black
 	#top edge
-	#img2[0:shape[0], 0:int(rad/2.0)] = black
+	img2[0:shape[0], 0:1] = black
 	#bottom edge
-	#img2[0:shape[0], int(shape[1]-rad/2.0):shape[1]] = black
+	img2[0:shape[0], int(shape[1]-1):shape[1]] = black
 	#top-left corner
 	img2[0:int(rad/2.0), 0:int(rad/2.0)] = black
 	#bottom-left corner
@@ -283,8 +343,8 @@ def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
 	"""
 	flips the values and runs a2Toa1
 	"""
-	raise NotImplementedError
-	a1b = a2Toa1(a1, -1.0*theta, -1.0*phi, -1.0*gamma, 1.0/scale, point1, point2)
+	#raise NotImplementedError
+	a1b = a2Toa1(a1, -1.0*theta, 1.0*phi, 1.0*gamma, 1.0/scale, point2, point1)
 	return a1b
 
 def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
