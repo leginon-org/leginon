@@ -1068,7 +1068,7 @@ class PickerApp(wx.App):
 	def onInitParams(self, evt):
 		self.data['thetarun'] = False
 		self.data['optimrun'] = False
-		self.data['arealim'] = 50000.0
+		self.data['arealim'] = 5000.0
 		if self.appionloop is None:
 			self.data['theta'] = 0.0
 		else:
