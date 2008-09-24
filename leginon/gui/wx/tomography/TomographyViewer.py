@@ -63,9 +63,9 @@ class Viewer(wx.Panel):
         evt = ImageEvent('_setImage', args, kwargs)
         self.GetEventHandler().AddPendingEvent(evt)
 
-    def _setImage(self, index, image, shift=None):
+    def _setImage(self, index, image, shift=None,use_extrema=False):
         self.viewers[index].targetsplugin.clearTargets()
-        self.viewers[index].setNumpy(image)
+        self.viewers[index].setNumpy(image,use_extrema)
         if image is not None and shift is not None:
             x, y = shift
             x += image.shape[1]/2
@@ -88,7 +88,7 @@ class Viewer(wx.Panel):
         self.GetEventHandler().AddPendingEvent(evt)
 
     def _setXC(self, xc, shift=None):
-        self.setImage(2, xc, shift=shift)
+        self.setImage(2, xc, shift=shift, use_extrema=True)
 
     def setXCShift(self, *args, **kwargs):
         evt = ImageEvent('_setXCShift', args, kwargs)
