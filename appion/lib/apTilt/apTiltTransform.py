@@ -27,7 +27,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[]):
 		positive, img2 is more compressed (tilted)
 	picks1, list of particles picks for image 1
 	"""
-	shift, xfactor = getTiltedShift(img1, img2, tiltdiff)
+	shift, xfactor, snr = getTiltedShift(img1, img2, tiltdiff)
 	
 	if min(abs(shift)) < min(img1.shape)/16.0:
 		print "Warning: Overlap was too close to the edge and possibly wrong."
@@ -54,7 +54,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[]):
 	print "origin=",origin
 	print "newpart=",newpart
 
-	return origin, newpart
+	return origin, newpart, snr
 
 	while newpart[0] < 10:
 		newpart += numpy.asarray((20,0))
@@ -149,7 +149,7 @@ def getTiltedShift(img1, img2, tiltdiff):
 		+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
 	)
 
-	return shift, xfactor
+	return shift, xfactor, peakdict['snr']
 
 def blackEdges(img, rad=None, black=None):
 	shape = img.shape

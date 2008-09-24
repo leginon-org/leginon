@@ -674,11 +674,25 @@ class PickerApp(wx.App):
 		tiltdiff = self.data['theta']
 		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
 
-		origin, newpart = apTiltTransform.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
+		origin, newpart, snr = apTiltTransform.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
 
 		self.panel1.setTargets('Picked', [origin])
 		self.panel2.setTargets('Picked', [newpart])
 		self.shift.SetBackgroundColour(self.deselectcolor)
+
+		# snr > than arbitrary value run some other stuff
+		if snr > 2.3:
+			#self.onMaskRegion(None)
+			self.onImportPicks(None, msg=False)
+			self.onAutoOptim(None)
+			self.onClearBadPicks(None)
+			self.onImportPicks(None, msg=False)
+		else:
+			dialog = wx.MessageDialog(self.frame, 
+				"Unsure about initial shift", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
+			if dialog.ShowModal() == wx.ID_OK:
+				dialog.Destroy()	
+
 
 		return
 
@@ -848,7 +862,7 @@ class PickerApp(wx.App):
 		return na
 
 	#---------------------------------------
-	def onImportPicks(self, evt, pixdiam=None):
+	def onImportPicks(self, evt, pixdiam=None, msg=True):
 		#a1 = numpy.array([[512,512]], dtype=numpy.float32)
 		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
 		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
@@ -896,10 +910,11 @@ class PickerApp(wx.App):
 		self.onUpdate(None)
 
 		self.statbar.PushStatusText("Inserted "+str(newparts)+" new particles", 0)
-		dialog = wx.MessageDialog(self.frame, 
-			"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
-		if dialog.ShowModal() == wx.ID_OK:
-			dialog.Destroy()	
+		if msg is True:
+			dialog = wx.MessageDialog(self.frame, 
+				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
+			if dialog.ShowModal() == wx.ID_OK:
+				dialog.Destroy()	
 
 		return True
 
