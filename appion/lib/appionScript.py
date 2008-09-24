@@ -22,12 +22,12 @@ from pyami import mem
 
 
 class AppionScript(object):
-	appiondb  = apDB.apdb
-	leginondb = apDB.db
 
 	#=====================
 	def __init__(self):
 		self.quiet = False
+		self.appiondb  = apDB.apdb
+		self.leginondb = apDB.db
 		### clean up any preliminary warnings
 		sys.stderr.write("\n\n")
 		#set the name of the function; needed for param setup
