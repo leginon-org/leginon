@@ -686,7 +686,9 @@ class PickerApp(wx.App):
 			self.onImportPicks(None, msg=False)
 			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
+			self.onAutoOptim(None)
 			self.onImportPicks(None, msg=False)
+			self.onAutoOptim(None)
 		else:
 			dialog = wx.MessageDialog(self.frame, 
 				"Unsure about initial shift", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
