@@ -78,7 +78,7 @@ class FitThetaDialog(wx.Dialog):
 		na2 = numpy.array(a2, dtype=numpy.int32)
 		self.fittheta = radermacher.tiltang(na1, na2, arealim)
 		#pprint.pprint(self.fittheta)
-		if 'wtheta' in self.fittheta:
+		if self.fittheta and 'wtheta' in self.fittheta:
 			self.fittheta['point1'], self.fittheta['point2'] = \
 				apTiltTransform.getPointsFromArrays(a1, a2, self.parent.data['shiftx'], self.parent.data['shifty'])
 			self.theta = self.fittheta['wtheta']
