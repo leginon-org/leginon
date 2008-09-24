@@ -82,7 +82,6 @@ class Tilts(object):
 	def updateTilts(self):
 		self.tilts = []
 
-		'''
 		if self.equally_sloped:
 			if self.start < self.min or self.start > self.max:
 				raise ValueError('start angle out of range')
@@ -113,7 +112,8 @@ class Tilts(object):
 			tilt_half.reverse()
 			if len(tilt_half) > 1:
 				self.tilts.append(tilt_half)
-		'''
+			'''
+		# This is for symmetrical data collection not equally sloped
 		if self.equally_sloped:
 			parameters = [
 				(self.min, self.max, self.start, self.step),
@@ -126,6 +126,7 @@ class Tilts(object):
 				if len(tilts) < 2:
 					continue
 				self.tilts.append(tilts)
+			'''
 		else:
 			parameters = [
 				(self.min, self.max, self.start, self.step),
