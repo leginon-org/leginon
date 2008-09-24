@@ -39,6 +39,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Run name", metavar="ID")
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
 			help="number of tilted image shift refinement iterations", metavar="#")
+		self.parser.add_option("--part-rad", dest="radius", type="int",
+			help="particle radius in pixels", metavar="ID")
 
 	#=====================
 	def checkConflicts(self):
@@ -50,6 +52,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("noref class ID was not defined")
 		if self.params['tiltstackid'] is None:
 			apDisplay.printError("tilt stack ID was not defined")
+		if self.params['radius'] is None:
+			apDisplay.printError("particle radius was not defined")
 		
 		#get the stack ID from the noref class ID
 		self.norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
@@ -184,7 +188,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		### back project particles into filter volume
 		volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(0))
 		backproject.backprojectCG(spiderstack, eulerfile, volfile,
-			numpart=len(includeParticle), pixrad=50)
+			numpart=len(includeParticle), pixrad=self.params['radius'])
 		alignstack = spiderstack
 		### center/convert the volume file
 		emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, 0))
@@ -199,7 +203,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 
-				numpart=len(includeParticle), pixrad=50)
+				numpart=len(includeParticle), pixrad=self.params['radius'])
 			apDisplay.printColor("finished volume refinement in "
 				+apDisplay.timeString(time.time()-looptime), "cyan")
 
