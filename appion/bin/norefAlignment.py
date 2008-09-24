@@ -298,6 +298,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		self.appiondb.dbd.ping()
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
@@ -329,12 +330,14 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.timeString(esttime),"cyan")
 
 		### run the alignment
+		self.appiondb.dbd.ping()
 		aligntime = time.time()
 		pixrad = int(round(self.params['partrad']/self.stack['apix']/self.params['bin']))
 		alignedstack, self.partlist = alignment.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
 			self.params['firstring'], self.params['lastring'])
+		self.appiondb.dbd.ping()
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
@@ -348,9 +351,11 @@ class NoRefAlignScript(appionScript.AppionScript):
 		if not self.params['skipcoran']:
 			maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
 			boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
+			self.appiondb.dbd.ping()
 			self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
 				boxsize=boxsize, maskpixrad=maskpixrad, 
 				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
+			self.appiondb.dbd.ping()
 			### make dendrogram
 			alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
