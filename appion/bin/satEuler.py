@@ -589,6 +589,8 @@ class satEulerScript(appionScript.AppionScript):
 			+" \\\n --new-stack-name=sub-"+stackdata[0]['stackRun']['stackRunName']
 			+" \\\n --description='sat from recon "+str(self.params['reconid'])
 			+" iter "+str(self.params['iternum'])
+			+" with angle "+str(self.params['angle'])
+			+" +/- "+str(self.params['cutrange'])
 			+"' \n" )
 		print "New subStack.py Command:"
 		apDisplay.printColor(cmd, "purple")
