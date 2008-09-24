@@ -51,7 +51,7 @@ def color_surface_radially(surf):
 	from SurfaceColor import color_surface, Radial_Color, Color_Map
 	rc = Radial_Color()
 	rc.origin = [0,0,0]
-	vertices, triangles = surf.surface_groups()[0].geometry()
+	vertices, triangles = surf.surfacePieces[0].geometry
 	rmin, rmax = rc.value_range(vertices, vertex_xform = None)
 	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
 
@@ -66,7 +66,7 @@ def color_surface_cylinder(surf):
 	from SurfaceColor import color_surface, Cylinder_Color, Color_Map
 	cc = Cylinder_Color()
 	cc.origin = [0,0,0]
-	vertices, triangles = surf.surface_groups()[0].geometry()
+	vertices, triangles = surf.surfacePieces[0].geometry()
 	rmin, rmax = cc.value_range(vertices, vertex_xform = None)
 	if rmin is None:
 		rmin = 0
@@ -102,7 +102,11 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	file_type='mrc'
 	v = openVolumeData(tmp_path, file_type, contour)
 
-	m = v.surface_model()
+	from _surface import SurfaceModel
+	from chimera import openModels as om
+	surfs = om.list(modelTypes=[SurfaceModel])
+	
+#	m = v.surface_model()
 	
 	#from chimera import runCommand
 	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
@@ -112,7 +116,8 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	image3 = vol_path+'.3.png'
 
 	if sym[:4] == 'Icos':
-		color_surface_radially(m)
+		for s in surfs:
+			color_surface_radially(s)
 
 		# move clipping planes to obscure back half
 #		xsize,ysize,zsize=dr.data.size
@@ -130,29 +135,22 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		runChimCommand('turn y 20.906')
 		save_image(image3, format=imgFormat) 
 
-		### works about 75% of time ???
 		writeMessageToLog("turn: get clipped view")
-		xsize, ysize, zsize = v.data.size
-		yon = float(zsize)/1.5
 		time.sleep(0.5)
-		runChimCommand('clip hither %.3f' % -yon)
+		runChimCommand('mclip #0 coords screen axis z')
 		runChimCommand('wait')
 		time.sleep(0.5)
-		from SurfaceCap import surfcaps
-		sc = surfcaps.Surface_Capper()
-		time.sleep(0.5)
-		sc.show_cap(m)
-		time.sleep(0.5)
-		sc.set_cap_color((0.375,0.750,0.067,1))
-		time.sleep(0.5)
+		runChimCommand('ac cc')
 		runChimCommand('wait')
+		
 		time.sleep(0.5)
 		image6 = vol_path+'.6.png'
 		save_image(image6, format=imgFormat)
 
 	else:
 		if sym!='C1':
-			color_surface_cylinder(m)
+			for s in surfs:
+				color_surface_radially(s)
 		writeMessageToLog("turn: get top view")
 		runChimCommand('turn x 180')
 		save_image(image1, format=imgFormat)
@@ -178,15 +176,14 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 			save_image(image5, format=imgFormat)
 		else:
 			return
-			### works about 35% of time ???
 			writeMessageToLog("turn: get clipped side view")
-			xsize, ysize, zsize = v.data.size
-			yon = float(zsize)/2.0
-			runChimCommand('clip hither %.3f' % -yon)
-			from SurfaceCap import surfcaps
-			sc = surfcaps.Surface_Capper()
-			#sc.set_cap_color((0.375,0.750,0.067,1))
-			sc.show_cap(m)
+			time.sleep(0.5)
+			runChimCommand('mclip #0 coords screen axis z')
+			runChimCommand('wait')
+			time.sleep(0.5)
+			runChimCommand('ac cc')
+			runChimCommand('wait')
+		
 			image6 = vol_path+'.6.png'
 			save_image(image6, format=imgFormat)
 
