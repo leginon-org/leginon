@@ -120,6 +120,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// set phaseflip on by default
 	$phasecheck = ($_POST['phaseflip']=='on' || !$_POST['process']) ? 'CHECKED' : ''; 		 
 	$stigcheck = ($_POST['stig']=='on') ? 'CHECKED' : ''; 		 
+	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : ''; 		 
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxszval = $_POST['boxsize'];
@@ -376,6 +377,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "  <tr><td>\n";
 	echo docpop('stacklim','Limit # of particles to: ');
 	echo "    <input type='text' name='plimit' value='$plimit' size='8'>\n";
+	echo "<br />\n";
+	echo "<input type='checkbox' name='boxfiles' $boxfilescheck>\n";
+	echo docpop('boxfiles', 'Only create EMAN boxfiles');
 	echo "  </td></tr>\n";
 	echo "  </table>\n";
 	echo "</td>\n";
@@ -417,6 +421,7 @@ function runMakestack() {
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
+	$boxfiles = ($_POST['boxfiles']=='on') ? 'boxfiles' : '';
 	// set image inspection selection
 	$norejects=$inspected=0;
 	if ($_POST['checkimage']=="Non-rejected") {
@@ -500,6 +505,7 @@ function runMakestack() {
 	if ($dfmax) $command.="maxdefocus=$dfmax ";
 	if ($fileformat) $command.="spider ";
 	if ($limit) $command.="partlimit=$limit ";
+	if ($boxfiles) $command.="boxfiles ";
 	$command.="description=\"$description\"";
 
 	// submit job to cluster
