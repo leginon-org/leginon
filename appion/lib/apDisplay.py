@@ -98,7 +98,7 @@ def orderOfMag(num):
 		elif num < 1e12:
 			return str(int(num/1e9))+"G"
 	else:
-		return num
+		return str(num)
 
 def short(imgname):
 	# ALIAS to shortenImageName
