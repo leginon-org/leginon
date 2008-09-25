@@ -1705,6 +1705,22 @@ class TomographySettingsData(AcquisitionSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TomographySimuSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('simu tilt series', str),
+			('model mag', str),
+			('z0 error', float),
+			('phi', float),
+			('phi2', float),
+			('offset', float),
+			('offset2', float),
+			('fixed model', bool),
+			('use lpf', bool),
+			('use wiener', bool),
+		)
+	typemap = classmethod(typemap)
+
 class TomographyPredictionData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

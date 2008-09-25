@@ -119,6 +119,11 @@ module: tomography
 type: Pipeline
 package: tomography
 
+[TomographySimu]
+module: tomographysimu
+type: Pipeline
+package: tomography
+
 [RCTAcquisition]
 module: rctacquisition 
 type: Pipeline
