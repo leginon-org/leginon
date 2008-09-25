@@ -34,6 +34,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a symmetry group, e.g. d7, c1, c4, or icos")
 		if self.params['file'] is None:
 			apDisplay.printError("Enter a file name, e.g. -f threed.20a.mrc")
+		if not os.path.isfile(self.params['file']):
+			apDisplay.printError("Could not find file: "+self.params['file'])
 		self.params['file'] = os.path.abspath(self.params['file'])
 
 	#=====================
