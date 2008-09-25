@@ -218,7 +218,7 @@ class Prediction(object):
 			self.parameters = fitparameters
 		else:
 			pass
-		return self.parameters
+		return
 
 	def _getCorrelationCoefficient(self,xs,ys):
 		if len(xs) != len(ys):
