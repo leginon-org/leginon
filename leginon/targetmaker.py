@@ -183,7 +183,6 @@ class MosaicTargetMaker(TargetMaker):
 			# generated from external event
 			grid = evt['grid']
 			parts = []
-
 			if 'emgrid' in grid and grid['emgrid'] is not None and grid['emgrid']['name']:
 				# new, shorter style with grid name
 				gridname = grid['emgrid']['name'].replace(' ','_')
@@ -192,9 +191,8 @@ class MosaicTargetMaker(TargetMaker):
 				# old style
 				gridname = '05d' % (grid['grid ID'])
 				leadlabels = ['GridID','Insertion']
-			if 'grid ID' in grid and grid['grid ID'] is not None:
-				grididstr = leadlabels[0]+gridname
-				parts.append(grididstr)
+			grididstr = leadlabels[0]+gridname
+			parts.append(grididstr)
 			if 'insertion' in grid and grid['insertion'] is not None:
 				insertionstr = '%s%03d' % (leadlabels[1],grid['insertion'])
 				parts.append(insertionstr)

@@ -49,6 +49,8 @@ class Panel(gui.wx.Node.Panel):
 		self.newgrid = Entry(self, -1)
 		szgrid.Add(self.newgrid, (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		self.savenewgrid = wx.Button(self, wx.ID_APPLY)
+		szgrid.Add(self.savenewgrid, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		self.szmain.Add(szgrid, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.AddGrowableCol(0)
@@ -65,6 +67,21 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_REFRESH)
 
 		self.Bind(wx.EVT_CHOICE, self.onGridChoice, self.cgrid)
+		self.Bind(wx.EVT_BUTTON, self.onSaveNewGrid, self.savenewgrid)
+		self.refreshGrids()
+
+	def onSaveNewGrid(self,evt=None):
+		choices = self.node.getGridNames()
+		newgrid = self.newgrid.Update()
+		newgrid = self.newgrid.GetValue()
+		if newgrid is None or newgrid == '':
+			self.node.onBadEMGridName('No Grid Name')
+			return
+		elif newgrid in choices:
+			self.node.onBadEMGridName('Grid Name Exists')
+			return
+		else:
+			self.node.publishNewEMGrid(newgrid)
 		self.refreshGrids()
 
 	def onGridChoice(self, evt=None):
@@ -72,10 +89,13 @@ class Panel(gui.wx.Node.Panel):
 			gridlabel = self.cgrid.GetStringSelection()
 		else:
 			gridlabel = evt.GetString()
+		settings = self.node.getSettings()
+		settings['grid name'] = gridlabel
+		self.node.setSettings(settings)
 		if gridlabel != '--New Grid as Below--':
-			settings = self.node.getSettings()
-			settings['grid name'] = gridlabel
-			self.node.setSettings(settings)
+			self.newgrid.Enable(False)
+		else:
+			self.newgrid.Enable(True)
 
 	def setGridSelection(self,choices):
 		if choices:
@@ -101,6 +121,7 @@ class Panel(gui.wx.Node.Panel):
 		gridlabel = self.cgrid.GetStringSelection()
 		if gridlabel == '--New Grid as Below--':
 			choices = self.node.getGridNames()
+			newgrid = self.newgrid.Update()
 			newgrid = self.newgrid.GetValue()
 			if newgrid is None or newgrid == '':
 				self.node.onBadEMGridName('No Grid Name')

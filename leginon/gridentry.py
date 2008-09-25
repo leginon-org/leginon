@@ -33,7 +33,6 @@ class GridEntry(node.Node):
 		self.start()
 
 	def publishNewEMGrid(self,newgrid):
-		print newgrid
 		emgridq = leginondata.EMGridData()
 		emgridq['name'] = newgrid
 		emgridq['project'] = self.projectid
@@ -68,7 +67,11 @@ class GridEntry(node.Node):
 		results = emgridq.query()
 		if results:
 			for result in results:
-				gridnames.append(result['name'])
+				newname = result['name']
+				if newname not in gridnames:
+					gridnames.append(newname)
+				else:
+					self.logger.warning('Duplicated grid name "%s" not included' % newname)
 		return gridnames
 					
 	def getEMGrid(self, gridname):
@@ -86,15 +89,15 @@ class GridEntry(node.Node):
 		emgriddata = self.getEMGrid(gridname)
 		if emgriddata is None:
 			return None
-		gridid = emgriddata.dbid
-		initializer = {'grid ID': gridid}
+		emgridid = emgriddata.dbid
+		initializer = {'emgrid': emgriddata}
 		querydata = leginondata.GridData(initializer=initializer)
 		griddatalist = self.research(querydata)
 		insertion = 0
 		for griddata in griddatalist:
 			if griddata['insertion'] > insertion:
 				insertion = griddata['insertion']
-		initializer = {'grid ID': gridid, 'insertion': insertion + 1,'emgrid':emgriddata}
+		initializer = {'grid ID': None, 'insertion': insertion+1,'emgrid':emgriddata}
 		griddata = leginondata.GridData(initializer=initializer)
 		self.publish(griddata, database=True)
 		return griddata
