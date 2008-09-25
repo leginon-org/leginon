@@ -38,7 +38,13 @@ class GridLocation(sqldict.ObjectBuilder):
 class ProjectData:
 	def __init__(self, **kwargs):
 		# connection to the project database
-		dbparams = sinedon.getConfig('projectData')
+		try:
+			dbparams = sinedon.getConfig('projectdata')
+		except:
+			try:
+				dbparams = sinedon.getConfig('projectData')
+			except:
+				raise NotConnectedError('no project database')
 		if not dbparams['host']:
 			raise NotConnectedError('no hostname for project database')
 		try:
