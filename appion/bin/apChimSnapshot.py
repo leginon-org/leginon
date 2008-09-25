@@ -66,7 +66,7 @@ def color_surface_cylinder(surf):
 	from SurfaceColor import color_surface, Cylinder_Color, Color_Map
 	cc = Cylinder_Color()
 	cc.origin = [0,0,0]
-	vertices, triangles = surf.surfacePieces[0].geometry()
+	vertices, triangles = surf.surfacePieces[0].geometry
 	rmin, rmax = cc.value_range(vertices, vertex_xform = None)
 	if rmin is None:
 		rmin = 0
@@ -150,7 +150,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	else:
 		if sym!='C1':
 			for s in surfs:
-				color_surface_radially(s)
+				color_surface_cylinder(s)
 		writeMessageToLog("turn: get top view")
 		runChimCommand('turn x 180')
 		save_image(image1, format=imgFormat)
