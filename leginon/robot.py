@@ -655,7 +655,7 @@ class Robot(node.Node):
 		gridsindex = grids.Index(['gridId'])
 		grid = gridsindex[gridid].fetchone()
 		if grid is None:
-			self.logger.error('Failed to find grid information: %s' % e)
+			self.logger.error('Failed to find grid information')
 			return None
 		if grid['boxId'] != self.gridtrayid:
 			self.logger.error('Grid ID #%s is not in selected grid tray' % gridid)
