@@ -345,7 +345,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			self.logger.warning('No grid information, ignoring image (DBID %d)'
 													% imagedata.dbid)
 			return False
-		elif imagedata['grid']['grid ID'] is None:
+		elif imagedata['grid']['grid ID'] is None and (not 'emgrid' in imagedata['grid'].keys() or imagedata['grid']['emgrid'] is None):
 			self.logger.warning('No grid ID, ignoring image (DBID %d)'
 													% imagedata.dbid)
 			return False
