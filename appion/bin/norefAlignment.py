@@ -166,8 +166,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			stackpart = apStack.getStackParticle(self.params['stackid'], partdict['num'])
 			partq['particle'] = stackpart
 			# actual parameters
-			partq['shift_x'] = partdict['xshift']		
-			partq['shift_y'] = partdict['yshift']		
+			partq['shift_x'] = partdict['xshift']
+			partq['shift_y'] = partdict['yshift']
 			partq['rotation'] = partdict['rot']
 			if insert is True:
 				partq.insert()
