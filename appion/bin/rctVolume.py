@@ -178,6 +178,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
 			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
 			psi = -1.0*(gamma + inplane)
+			while psi < 0:
+				psi += 360.0
 			line = operations.spiderOutputLine3(count, phi, tiltangle, psi)
 			eulerf.write(line)
 		eulerf.close()
