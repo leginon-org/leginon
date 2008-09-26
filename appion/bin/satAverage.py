@@ -333,7 +333,7 @@ class satAverageScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		threednameb = os.path.join(self.params['outdir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
 		emancmd = ( "proc3d "+threedname+" "+threednameb
-			+" apix=1.63 norm=0,1 lp=6 mask="+str(self.params['mask'])+"; echo '' " )
+			+" apix=1.63 norm=0,1 lp=6 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
 			# even 
