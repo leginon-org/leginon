@@ -240,7 +240,9 @@ def getParticleTiltRotationAngles(stackpartdata):
 		print tiltpartdatas2
 		apDisplay.printError("failed to get tilt pair data")
 
-
+	if tiltangle < 0:
+		#swap angles
+		return phi, -1.0*theta, gamma, -1.0*tiltangle
 	return gamma, theta, phi, tiltangle
 
 
