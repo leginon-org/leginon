@@ -11,7 +11,6 @@ refBasedAlignment
 runrmeasure
 scalestack
 splitstack
-uploadMisc
 uploadParticles
 
 ### future AppionLoop
@@ -48,7 +47,7 @@ subStack
 uploadModel
 uploadRecon
 uploadTemplate
-
+uploadMisc
 
 ### Unique
 ApDogPicker

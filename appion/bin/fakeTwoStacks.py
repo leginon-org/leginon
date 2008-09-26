@@ -227,8 +227,8 @@ class fakeStackScript(appionScript.AppionScript):
 
 	#=====================
 	def checksizes(self):
-		newnots = apFile.numImagesInStack("notstack.hed")
-		newtilts = apFile.numImagesInStack("tiltstack.hed")
+		newnots = apFile.numImagesInStack(self.params['notstack'])
+		newtilts = apFile.numImagesInStack(self.params['tiltstack'])
 		stackdata1 = apStack.getOnlyStackData(self.params['stack1'], msg=False)
 		stackpath1 = os.path.join(stackdata1['path']['path'], stackdata1['name'])
 		oldnots = apFile.numImagesInStack(stackpath1)
@@ -279,12 +279,11 @@ class fakeStackScript(appionScript.AppionScript):
 				mult += 0.01
 
 			### generate projection
-			if part['tilt'] is True and part['stackid1'] == self.params['stack2']:
-				self.genProj(part['euler'], density, tilt=True)
-				tilts += 1
-			elif part['tilt'] is False and part['stackid1'] == self.params['stack1']:
-				self.genProj(part['euler'], density, tilt=False)
+			self.genProj(part['euler'], density, tilt=part['tilt'])
+			if part['tilt'] is False:
 				nots += 1
+			else:
+				tilts += 1
 
 		dataf.close()
 		print "tilts=",tilts,"nots=",nots
@@ -297,9 +296,9 @@ class fakeStackScript(appionScript.AppionScript):
 			+str(alt)+","+str(az)+","+str(phi) )
 		apEMAN.executeEmanCmd(rotcmd, verbose=False, showcmd=False)
 		if tilt is True:
-			cmd = "project3d rotated.mrc out=tiltstack"+self.timestamp+".hed euler=55,90,-90"
+			cmd = "project3d rotated.mrc out="+self.params['tiltstack']+" euler=55,90,-90"
 		else:
-			cmd = "project3d rotated.mrc out=notstack"+self.timestamp+".hed euler=0,0,0"
+			cmd = "project3d rotated.mrc out="+self.params['notstack']+" euler=0,0,0"
 		apEMAN.executeEmanCmd(cmd, verbose=False, showcmd=False)
 
 	#=====================
@@ -308,8 +307,11 @@ class fakeStackScript(appionScript.AppionScript):
 		this is the main component of the script
 		where all the processing is done
 		"""
-		apFile.removeStack("notstack.hed")
-		apFile.removeStack("tiltstack.hed")
+		self.params['notstack'] = os.path.join(self.params['outdir'], "notstack-"+self.timestamp+".hed")
+		self.params['tiltstack'] = os.path.join(self.params['outdir'], "tiltstack-"+self.timestamp+".hed")
+
+		apFile.removeStack(self.params['notstack'])
+		apFile.removeStack(self.params['tiltstack'])
 
 		parttree = getParticles(self.params['stack1'], self.params['stack2'])
 
