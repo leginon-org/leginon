@@ -238,8 +238,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		availablepresets = self.getPresetNames()
 		for presetname in presetorder:
 			if presetname not in availablepresets:
-				raise InvalidPresetsSequence()
-		return list(presetorder)
+				raise InvalidPresetsSequence('bad preset %s in presets order' % (presetname,))
 
 	def processTargetData(self, targetdata, attempt=None):
 		'''
@@ -248,9 +247,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		a target (going to presets, acquiring images, etc.)
 		'''
 		try:
-			presetnames = self.validatePresets()
-		except InvalidPresetsSequence:
-			estr = 'Presets sequence is invalid, please correct it'
+			self.validatePresets()
+		except InvalidPresetsSequence, e:
+			estr = str(e) + ' ,please correct it'
 			if targetdata is None or targetdata['type'] == 'simulated':
 				self.logger.error(estr + ' and try again')
 				return 'aborted'
@@ -262,6 +261,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.beep()
 				return 'repeat'
 
+		presetnames = self.settings['preset order']
 		ret = 'ok'
 		self.onTarget = False
 		for newpresetname in presetnames:
@@ -685,10 +685,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		currentpreset = self.presetsclient.getCurrentPreset()
 		if currentpreset is None:
 			try:
-				presetnames = self.validatePresets()
+				self.validatePresets()
 			except InvalidPresetsSequence:
 				self.logger.error('Configure at least one preset in the settings for this node.' % (ret,))
 				return
+			presetnames = self.settings['preset order']
 			currentpreset = self.presetsclient.getPresetByName(presetnames[0])
 		targetdata = self.newSimulatedTarget(preset=currentpreset)
 		self.publish(targetdata, database=True)

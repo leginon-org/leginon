@@ -71,6 +71,9 @@ class Focuser(acquisition.Acquisition):
 			'check drift': False,
 			'drift threshold': 3e-10,
 			'reset defocus': None,
+			'acquire final': False,
+			'melt preset': None,
+			'melt time': 0,
 		}
 		self.samecorrection = False
 		self.manualchecklock = threading.Lock()
@@ -87,6 +90,28 @@ class Focuser(acquisition.Acquisition):
 		self.corclient = corrector.CorrectorClient(self)
 		self.focus_sequence = self.researchFocusSequence()
 		self.deltaz = 0.0
+
+	def validatePresets(self):
+		### check normal acquisition presets
+		try:
+			acquisition.Acquisition.validatePresets(self)
+		except:
+			if self.settings['acquire final']:
+				raise
+		availablepresets = self.getPresetNames()
+
+		### check melt preset
+		if self.settings['melt time']:
+			meltpreset = self.settings['melt preset']
+			if meltpreset not in availablepresets:
+				raise acquisition.InvalidPresetsSequence('bad melt preset: %s' % (meltpreset,))
+
+		### check sequence presets
+		for setting in self.focus_sequence:
+			presetname = setting['preset name']
+			settingname = setting['name']
+			if presetname not in availablepresets:
+				raise acquisition.InvalidPresetsSequence('bad preset %s in focus sequence %s' % (presetname, settingname))
 
 	def researchFocusSequence(self):
 		user_data = self.session['user']
