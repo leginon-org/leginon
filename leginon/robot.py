@@ -234,6 +234,7 @@ class Robot(node.Node):
 		self.logger.info('_queueHandler '+str(self.simulate)+' setting'+str(self.settings['simulate']))
 		if self.simulate:
 			self.communication = TestCommunication()
+			communication_good = TestCommunication()
 		else:
 			try:
 				pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
