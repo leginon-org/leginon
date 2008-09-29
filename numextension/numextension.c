@@ -29,6 +29,7 @@
 ******************************************/
 
 static PyObject * radialPower( PyObject * self, PyObject * args );
+void bandpass1D( double * data, int size, double sigma1, double sigma2 );
 
 /****
 The minmax function calculates both min and max of an array in one loop.
@@ -662,11 +663,11 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	fprintf(stderr,"Computing power spectrum...");
 	
 	int i, k;
-	float sigma = 0;
+	float lp = 0, hp = 0;
 	PyObject * image;
 	PyArray_Descr * type;
 	
-	if ( !PyArg_ParseTuple(args,"Of",&image,&sigma) ) return NULL;
+	if ( !PyArg_ParseTuple(args,"Off",&image,&lp,&hp) ) return NULL;
 	
 	type = PyArray_DescrNewFromType(NPY_FLOAT64);
 	image = PyArray_FromAny(image,type,0,0,NPY_CARRAY|NPY_FORCECAST,NULL);
@@ -761,50 +762,76 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	for(i=0;i<rad_size;i++) if ( rad_cnt[i] != 0.0 ) rad_avg[i] = rad_avg[i] / rad_cnt[i];
 	for(i=0;i<rad_size;i++) rad_avg[i] = sqrt(rad_avg[i]);	
 	
-//	for(i=0,k=0;i<rad_size-1;i++,k+=2) rad_avg[i] = rad_avg[k] + rad_avg[k+1];
-//	for(i=0,k=0;i<rad_size-1;i++,k+=2) rad_avg[i] = rad_avg[k] + rad_avg[k+1];
-	
-//	for(i=0;i<rad_size/4;i++) fprintf(stderr,"%e\n",rad_avg[i]);
-	
 	free(rad_cnt);
 	
 	fprintf(stderr,"DONE\n");
-	
-	if ( sigma == 0.0 ) return radial_avg;
-	
-	fprintf(stderr,"Performing background normalization with sigma %2.2f...",sigma);
-	
-	int krad = sigma * 4;
-	krad = MAX(krad,1);
-	double * kernel = malloc(sizeof(double)*krad);
-	double * low_pass = malloc(sizeof(double)*rad_size);
-	
-	if ( kernel == NULL || low_pass == NULL ) { free(low_pass); free(kernel); return radial_avg; }
 
-	double two_s2  = 1.0 / ( sigma * sigma * 2.0 );
-	double norm    = 1.0 / ( sigma * sqrt(2.0*M_PI) );
+	fprintf(stderr,"Performing background normalization with lp %2.2f hp %2.2f...",lp,hp);
 	
-	for (i=0;i<krad;i++) kernel[i] = norm * exp( -(double)i*(double)i*two_s2 );
-
-	for(i=0;i<rad_size;i++) {
-		double sum = rad_avg[i] * kernel[0];
-		for(k=1;k<krad;k++) {
-			int pos1 = i - k;
-			int pos2 = i + k;
-			if ( pos1 < 0 ) pos1 = 0;
-			if ( pos2 > rad_size-1 ) pos2 = rad_size-1;
-			sum += ( rad_avg[pos1] + rad_avg[pos2] ) * kernel[k];
-		}
-		low_pass[i] = sum;
-	}
+	bandpass1D(rad_avg,rad_size,lp,hp);
 	
-	for(i=0;i<rad_size;i++) rad_avg[i] = rad_avg[i] / low_pass[i];
-	free(kernel);
-	free(low_pass);
-
 	fprintf(stderr,"DONE\n");
 	
 	return radial_avg;
+	
+}
+
+void bandpass1D( double * data, int size, double sigma1, double sigma2 ) {
+	
+	int i, k, krad = 0;
+	
+	double * kernel;
+	double * temp = malloc(sizeof(double)*size);
+
+	double two_s2, norm;
+	
+	if ( sigma1 >= 0.8 ) {
+		krad = MAX(sigma1*4,1);
+		kernel = malloc(sizeof(double)*krad);
+		if ( kernel == NULL ) goto error;
+		two_s2  = 1.0 / ( sigma1 * sigma1 * 2.0 );
+		norm    = 1.0 / ( sigma1 * sqrt(2.0*M_PI) );
+		for (i=0;i<krad;i++) kernel[i] = norm * exp( -(double)i*(double)i*two_s2 );
+		for (i=0;i<size;i++) {
+			double sum = data[i] * kernel[0];
+			for(k=1;k<krad;k++) {
+				int pos1 = i - k;
+				int pos2 = i + k;
+				if ( pos1 < 0 ) pos1 = 0;
+				if ( pos2 > size-1 ) pos2 = size-1;
+				sum += ( data[pos1] + data[pos2] ) * kernel[k];
+			}
+			temp[i] = sum;
+		}
+		for (i=0;i<size;i++) data[i] = temp[i];
+		free(kernel);
+	}
+	
+	if ( sigma2 >= 0.8 ) {
+		krad = MAX(sigma2*4,1);
+		kernel = malloc(sizeof(double)*krad);
+		if ( kernel == NULL ) goto error;		
+		two_s2  = 1.0 / ( sigma2 * sigma1 * 2.0 );
+		norm    = 1.0 / ( sigma2 * sqrt(2.0*M_PI) );
+		for (i=0;i<krad;i++) kernel[i] = norm * exp( -(double)i*(double)i*two_s2 );
+		for(i=0;i<size;i++) {
+			double sum = data[i] * kernel[0];
+			for(k=1;k<krad;k++) {
+				int pos1 = i - k;
+				int pos2 = i + k;
+				if ( pos1 < 0 ) pos1 = 0;
+				if ( pos2 > size-1 ) pos2 = size-1;
+				sum += ( data[pos1] + data[pos2] ) * kernel[k];
+			}
+			temp[i] = sum;
+		}
+		free(kernel);
+		for(i=0;i<size;i++) data[i] = data[i] / temp[i];
+	}
+	
+	error:
+	
+	free(temp);
 	
 }
 
