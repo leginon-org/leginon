@@ -914,8 +914,9 @@ class PresetsManager(node.Node):
 		if updatedose:
 			self.updateDose(oldpreset, newpreset)
 
-		if self.currentselection is newpreset:
-			self.panel.setParameters(newpreset)
+		## if this preset selected, refresh display
+		if self.currentselection['name'] == newpreset['name']:
+			self.selectPreset(newpreset['name'])
 		self.presetToDB(newpreset)
 		return newpreset
 
