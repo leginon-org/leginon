@@ -88,6 +88,7 @@ def createDefaults():
 	params['fileType']='imagic'
 	params['lowpass']=None
 	params['highpass']=None
+	params['boxfiles']=False
 	return params
 
 def parseInput(args):
@@ -200,6 +201,8 @@ def parseInput(args):
 		elif arg=='stig':
 			params['stig']=True
 			params['phaseFlipped']=False	
+		elif arg=='boxfiles':
+			params['boxfiles']=True
 		else:
 			print "undefined parameter '"+arg+"'\n"
 			sys.exit(1)
@@ -259,7 +262,7 @@ def batchBox(params, imgdict):
 	# if getting particles from database, a temporary
 	# box file will be created
 	if params['selexonId']:
-		dbbox=os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
+		dbbox=os.path.join(params['outdir'], imgname+".eman.box")
 		if params['defocpair']:
 			particles,shift = apParticle.getDefocPairParticles(imgdict,params)
 		else:
@@ -287,6 +290,9 @@ def batchBox(params, imgdict):
 	else:
 		dbbox=imgname+".box"
 		hasparticles=True
+	
+	if params['boxfiles']:
+		return(0)
 	
 	if hasparticles:
 		#count number of particles in box file
@@ -841,6 +847,9 @@ if __name__ == '__main__':
 		prevptcls = totptcls
 		totptcls += batchBox(params,imgdict)
 		
+		if params['boxfiles']:
+			continue
+		
 		if not os.path.isfile(os.path.join(params['outdir'], imgname+".hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
 			continue
@@ -869,7 +878,7 @@ if __name__ == '__main__':
 			if totptcls > params['partlimit']:
 				break
 
-		tmpboxfile = os.path.join(params['outdir'], "temporaryParticlesFromDB.box")
+		tmpboxfile = os.path.join(params['outdir'], imgdict['filename']+".eman.box")
 		if os.path.isfile(tmpboxfile):
 			os.remove(tmpboxfile)
 
