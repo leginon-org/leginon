@@ -177,10 +177,10 @@ class rctVolumeScript(appionScript.AppionScript):
 			count += 1
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
 			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
-			psi = -1.0*(gamma + inplane)
+			psi = -1.0*(gamma*0.0 + inplane)
 			while psi < 0:
 				psi += 360.0
-			line = operations.spiderOutputLine3(count, phi, tiltangle, psi)
+			line = operations.spiderOutputLine3(count, phi*0.0, tiltangle, psi)
 			eulerf.write(line)
 		eulerf.close()
 		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")

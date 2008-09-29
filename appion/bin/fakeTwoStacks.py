@@ -77,7 +77,7 @@ def getParticles(notstackid, tiltstackid):
 	if not results:
 		apDisplay.printError("Failed to get stack particles")
 	apDisplay.printMsg("Fetched "+str(len(results))+" data pairs in "+apDisplay.timeString(time.time()-t0))
-	parttree = convertSQLtoTree(results)
+	parttree = convertSQLtoTree(results, notstackid)
 	parttree.sort(compPart)
 
 	### save to file
@@ -85,10 +85,16 @@ def getParticles(notstackid, tiltstackid):
 	cPickle.dump(parttree, cachef)
 	cachef.close()
 
+	for part in parttree:
+		if part['part2'] is None:
+			print part
+	print ""
+	print ""
+
 	return parttree
 
 #=====================
-def convertSQLtoTree(results):
+def convertSQLtoTree(results, notstackid):
 	t0 = time.time()
 	parttree = []
 	minpartnum1 = 1e6
@@ -109,18 +115,24 @@ def convertSQLtoTree(results):
 				minpartnum1 = partnum1
 			if partnum2 and partnum2 < minpartnum2:
 				minpartnum2 = partnum2
-			if whichIsTilted(angle1, angle2) == 1:
-				### particle 2 is untilted
-				if partnum1 is not None:
-					partpair1 = { 'part1': -partnum1, 'part2': partnum2, 'stackid1': stackid1, 'stackid2': stackid2, 'tilt': True }
-				if partnum2 is not None:
-					partpair2 = { 'part1': partnum2, 'part2': -partnum1, 'stackid1': stackid2, 'stackid2': stackid1, 'tilt': False }
-			else:
-				### particle 1 is untilted
-				if partnum1 is not None:
+			if partnum1 is not None and partnum2 is not None:
+				if stackid1 == notstackid:
 					partpair1 = { 'part1': partnum1, 'part2': -partnum2, 'stackid1': stackid1, 'stackid2': stackid2, 'tilt': False }
-				if partnum2 is not None:
 					partpair2 = { 'part1': -partnum2, 'part2': partnum1, 'stackid1': stackid2, 'stackid2': stackid1, 'tilt': True }
+				else:
+					partpair1 = { 'part1': -partnum1, 'part2': partnum2, 'stackid1': stackid1, 'stackid2': stackid2, 'tilt': True }
+					partpair2 = { 'part1': partnum2, 'part2': -partnum1, 'stackid1': stackid2, 'stackid2': stackid1, 'tilt': False }
+			elif partnum1 is not None:
+				if stackid1 == notstackid:
+					partpair1 = { 'part1': partnum1, 'part2': None, 'stackid1': stackid1, 'stackid2': None, 'tilt': False }
+				else:
+					partpair1 = { 'part1': -partnum1, 'part2': None, 'stackid1': stackid1, 'stackid2': None, 'tilt': True }
+			elif partnum2 is not None:
+				if stackid2 == notstackid:
+					partpair2 = { 'part1': partnum2, 'part2': None, 'stackid1': stackid2, 'stackid2': None, 'tilt': False }
+				else:
+					partpair2 = { 'part1': -partnum2, 'part2': None, 'stackid1': stackid2, 'stackid2': None, 'tilt': True }
+
 			if partnum1 is not None:	
 				parttree.append(partpair1)
 				count += 1
@@ -172,11 +184,11 @@ def randomEuler():
 	"""
 	#alt = int(round(random.random()*90.0,0))
 	alt = 0
-	az = int(round(random.random()*51.43,0))
-	phi = int(round(random.random()*360.0,0))
+	#az = int(round(random.random()*51.43,0))
+	az = 0
+	#phi = int(round(random.random()*360.0,0))
+	phi = int(round(random.random()*6.0,0))*60
 	return (alt, az, phi)
-
-
 
 
 
