@@ -670,9 +670,9 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	
 	type = PyArray_DescrNewFromType(NPY_FLOAT64);
 	image = PyArray_FromAny(image,type,0,0,NPY_CARRAY|NPY_FORCECAST,NULL);
-	
+
+	npy_intp * dims = PyArray_DIMS(image);	
 	npy_intp ndim = PyArray_NDIM(image);
-	npy_intp * dims = PyArray_DIMS(image);
 	npy_intp size = PyArray_SIZE(image);
 	
 	if ( ndim != 2 ) return NULL;
@@ -730,20 +730,15 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 
 	npy_intp rad_dim[1] = { rad_size };
 	PyObject * radial_avg = PyArray_SimpleNew(1,rad_dim,NPY_FLOAT64);
-	if (radial_avg == NULL) {
-		printf("FAIL radial_avg\n");
-	}
+	if (radial_avg == NULL) return NULL;
+	
 	double * rad_avg = PyArray_DATA(radial_avg); 
 	double * rad_cnt = malloc(sizeof(double)*rad_size);
-	if (rad_avg == NULL) {
-		printf("FAIL rad_avg\n");
-	}
-	if (rad_cnt == NULL) {
-		printf("FAIL rad_cnt\n");
-	}
-
-	for(i=0;i<rad_size;i++) rad_avg[i] = 0;
-	for(i=0;i<rad_size;i++) rad_cnt[i] = 0;
+	if (rad_avg == NULL) return NULL;
+	if (rad_cnt == NULL) return NULL;
+	
+	for(i=0;i<rad_size;i++) rad_avg[i] = 0.0;
+	for(i=0;i<rad_size;i++) rad_cnt[i] = 0.0;
 	
 	int r,c;
 	for(r=0;r<rows;r++) {
@@ -752,6 +747,7 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 			double y = r - y_rad;
 			double rad = sqrt(x*x+y*y);
 			if ( rad >= rad_size-1 ) continue;
+			if ( rad < 5 ) continue;
 			int i_rad = rad;
 			double rwt1 = rad - i_rad;
 			double rwt2 = 1.0 - rwt1;
@@ -763,6 +759,13 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	}
 	
 	for(i=0;i<rad_size;i++) if ( rad_cnt[i] != 0.0 ) rad_avg[i] = rad_avg[i] / rad_cnt[i];
+	for(i=0;i<rad_size;i++) rad_avg[i] = sqrt(rad_avg[i]);	
+	
+//	for(i=0,k=0;i<rad_size-1;i++,k+=2) rad_avg[i] = rad_avg[k] + rad_avg[k+1];
+//	for(i=0,k=0;i<rad_size-1;i++,k+=2) rad_avg[i] = rad_avg[k] + rad_avg[k+1];
+	
+//	for(i=0;i<rad_size/4;i++) fprintf(stderr,"%e\n",rad_avg[i]);
+	
 	free(rad_cnt);
 	
 	fprintf(stderr,"DONE\n");
@@ -778,27 +781,27 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	
 	if ( kernel == NULL || low_pass == NULL ) { free(low_pass); free(kernel); return radial_avg; }
 
-	double two_s2  = 1.0 / ( sigma * sigma * 2 );
-	double norm    = 1.0 / ( sigma * sqrt(2*M_PI) );
+	double two_s2  = 1.0 / ( sigma * sigma * 2.0 );
+	double norm    = 1.0 / ( sigma * sqrt(2.0*M_PI) );
 	
-	for (i=0;i<krad;i++) kernel[i] = norm * exp( -i*i*two_s2 );
+	for (i=0;i<krad;i++) kernel[i] = norm * exp( -(double)i*(double)i*two_s2 );
 
 	for(i=0;i<rad_size;i++) {
-		double sum = data[i] * kernel[0];
+		double sum = rad_avg[i] * kernel[0];
 		for(k=1;k<krad;k++) {
 			int pos1 = i - k;
 			int pos2 = i + k;
 			if ( pos1 < 0 ) pos1 = 0;
-			if ( pos2 >= rad_size ) pos2 = rad_size-1;
-			sum += ( data[pos1] + data[pos2] ) * kernel[i];
+			if ( pos2 > rad_size-1 ) pos2 = rad_size-1;
+			sum += ( rad_avg[pos1] + rad_avg[pos2] ) * kernel[k];
 		}
 		low_pass[i] = sum;
 	}
 	
-	for(i=0;i<rad_size;i++) data[i] = data[i] / low_pass[i];
+	for(i=0;i<rad_size;i++) rad_avg[i] = rad_avg[i] / low_pass[i];
 	free(kernel);
 	free(low_pass);
-	
+
 	fprintf(stderr,"DONE\n");
 	
 	return radial_avg;
