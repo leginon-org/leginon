@@ -4,7 +4,7 @@ import numpy
 
 numpyinc = numpy.get_include()
 
-module = Extension('numextension', sources = ['numextension.c', 'canny_edge.c'], include_dirs=[numpyinc,])
+module = Extension('numextension', sources = ['numextension.c', 'canny_edge.c'], libraries=['fftw','m'], include_dirs=[numpyinc,])
 
 setup(
 	name='NumExtension',

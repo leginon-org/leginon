@@ -1,8 +1,10 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <math.h>
+#include <complex.h>
 #include "imgbase.h"
 #include "edge.h"
+#include <fftw.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -26,6 +28,8 @@
  statistical functions
 ******************************************/
 
+static PyObject * radialPower( PyObject * self, PyObject * args );
+
 /****
 The minmax function calculates both min and max of an array in one loop.
 It is faster than the sum of both min and max above because it does
@@ -33,9 +37,7 @@ It is faster than the sum of both min and max above because it does
 element
 ****/
 
-static PyObject *
-minmax(PyObject *self, PyObject *args)
-{
+static PyObject * minmax(PyObject *self, PyObject *args) {
 	PyObject *input, *inputarray;
 	PyArray_Descr *inputdesc;
 	float *iter;
@@ -245,9 +247,7 @@ static PyObject * gaussian_nd( PyObject *self, PyObject *args) {
 
 } 
 
-static PyObject *
-despike(PyObject *self, PyObject *args)
-{
+static PyObject * despike(PyObject *self, PyObject *args) {
 	PyObject *image, *floatimage;
 	int rows, cols, size, debug;
 	float ztest;
@@ -284,9 +284,7 @@ despike(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static PyObject *
-bin(PyObject *self, PyObject *args)
-{
+static PyObject * bin(PyObject *self, PyObject *args) {
 	PyObject *image, *floatimage, *result;
 	int binsize, rows, cols;
 	npy_intp newdims[2];
@@ -366,7 +364,7 @@ bin(PyObject *self, PyObject *args)
 	return result;
 }
 
-static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
+static PyObject * nonmaximasuppress(PyObject *self, PyObject *args) {
 	PyObject *input, *gradient;
 	PyObject *inputarray, *gradientarray;
 	int window = 7;
@@ -408,7 +406,7 @@ static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
 	return Py_None;
 }
 
-static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
+static PyObject * hysteresisthreshold(PyObject *self, PyObject *args) {
 	PyObject *input;
 	PyObject *inputarray, *outputarray;
 	int i, j, k, l;
@@ -447,7 +445,7 @@ static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
 	return outputarray;
 }
 
-static PyObject *houghline(PyObject *self, PyObject *args) {
+static PyObject * houghline(PyObject *self, PyObject *args) {
 	PyObject *input, *gradient = NULL;
 	PyObject *inputarray, *gradientarray = NULL, *hough;
 	npy_intp dimensions[3];
@@ -523,7 +521,7 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 	return (PyObject *)hough;
 }
 
-static PyObject *rgbstring(PyObject *self, PyObject *args) {
+static PyObject * rgbstring(PyObject *self, PyObject *args) {
 	PyObject *input, *output, *colormap = NULL, *values = NULL, *cvalue = NULL;
 	PyObject *inputarray;
 	int i, j, size;
@@ -593,7 +591,7 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	return output;
 }
 
-static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
+static PyObject * hanning(PyObject * self, PyObject *args, PyObject *kwargs) {
 	int m, n;
 	npy_intp dims[2];
 	float a = 0.5, b;
@@ -625,7 +623,7 @@ static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
 	return result;
 }
 
-static PyObject *highpass(PyObject *self, PyObject *args) {
+static PyObject * highpass(PyObject *self, PyObject *args) {
 	int m, n;
 	PyObject *result;
 	int i, j;
@@ -652,7 +650,153 @@ static PyObject *highpass(PyObject *self, PyObject *args) {
 	return result;
 }
 
-static PyObject *logpolar(PyObject *self, PyObject *args) {
+static PyObject * radialPower( PyObject * self, PyObject * args ) {
+	
+	// Caveats to this function:
+	//  1.  The inverting used to center the FFT in the middle is only technically accurate when the
+	//      image dimensions are multiples of 2
+	//  2.  TODO: The function could be made about 2X faster if the R2C fft is used rather than the complex fft
+	//  3.  The radial averaging should be done based on the sampling frequency along both axis, right now the
+	//      averaging is not correct if the image dimensions are not the same.
+	
+	fprintf(stderr,"Computing power spectrum...");
+	
+	int i, k;
+	float sigma = 0;
+	PyObject * image;
+	PyArray_Descr * type;
+	
+	if ( !PyArg_ParseTuple(args,"Of",&image,&sigma) ) return NULL;
+	
+	type = PyArray_DescrNewFromType(NPY_FLOAT64);
+	image = PyArray_FromAny(image,type,0,0,NPY_CARRAY|NPY_FORCECAST,NULL);
+	
+	npy_intp ndim = PyArray_NDIM(image);
+	npy_intp * dims = PyArray_DIMS(image);
+	npy_intp size = PyArray_SIZE(image);
+	
+	if ( ndim != 2 ) return NULL;
+	
+	int cur_pos[ndim+1];
+	int cur_dim[ndim+1];
+	
+	for(i=0;i<ndim+1;i++) cur_pos[i] = 0;
+	for(i=0;i<ndim;i++) cur_dim[i] = dims[i];
+	cur_dim[ndim] = 0;
+	
+	double * data = PyArray_DATA(image);
+	complex * fft = fftw_malloc(sizeof(complex)*size);
+	
+	int flip_state = 0;
+	for(i=0;i<size;i++) {
+			
+		for(k=0;cur_pos[k]==cur_dim[k];k++) {
+			cur_pos[k] = 0;
+			cur_pos[k+1]++;
+			flip_state = flip_state - cur_dim[k] + 1;
+		}
+		
+		if ( flip_state % 2 == 0 ) fft[i] = (fftw_complex)(data[i]);
+		else fft[i] = -(fftw_complex)(data[i]);
+
+		cur_pos[0]++; flip_state++;
+		
+	}
+	
+	fftw_plan plan = fftw_plan_dft(ndim, cur_dim, fft, fft, FFTW_FORWARD, FFTW_ESTIMATE);
+	fftw_execute(plan);
+	
+	for (i=0;i<size;i++) {
+		double real = creal(fft[i]);
+		double imag = cimag(fft[i]);
+		data[i] = real*real + imag*imag;
+	}
+	
+	fftw_destroy_plan(plan);
+	free(fft);
+	
+	fprintf(stderr,"DONE\n");
+	
+	fprintf(stderr,"Computing radial average...");
+	
+	// Now we rotationally average the power spectrum
+	
+	int rows = cur_dim[0];
+	int cols = cur_dim[1];
+	int rad_size = MIN(rows/2,cols/2);
+	
+	double x_rad = cols / 2.0;
+	double y_rad = rows / 2.0;
+	
+	int rad_dim[1] = { rad_size };
+	PyObject * radial_avg = PyArray_SimpleNew(1,rad_dim,NPY_FLOAT64);
+	double * rad_avg = PyArray_DATA(radial_avg); 
+	double * rad_cnt = malloc(sizeof(double)*rad_size);
+	
+	for(i=0;i<rad_size;i++) rad_avg[i] = 0;
+	for(i=0;i<rad_size;i++) rad_cnt[i] = 0;
+	
+	int r,c;
+	for(r=0;r<rows;r++) {
+		for(c=0;c<cols;c++) {
+			double x = c - x_rad;
+			double y = r - y_rad;
+			double rad = sqrt(x*x+y*y);
+			if ( rad >= rad_size-1 ) continue;
+			int i_rad = rad;
+			double rwt1 = rad - i_rad;
+			double rwt2 = 1.0 - rwt1;
+			rad_avg[i_rad] += rwt2 * data[r*cols+c];
+			rad_avg[i_rad+1] += rwt1 * data[r*cols+c];
+			rad_cnt[i_rad] += rwt2;
+			rad_cnt[i_rad+1] += rwt1;
+		}
+	}
+	
+	for(i=0;i<rad_size;i++) if ( rad_cnt[i] != 0.0 ) rad_avg[i] = rad_avg[i] / rad_cnt[i];
+	free(rad_cnt);
+	
+	fprintf(stderr,"DONE\n");
+	
+	if ( sigma == 0.0 ) return radial_avg;
+	
+	fprintf(stderr,"Performing background normalization with sigma %2.2f...",sigma);
+	
+	int krad = sigma * 4;
+	krad = MAX(krad,1);
+	double * kernel = malloc(sizeof(double)*krad);
+	double * low_pass = malloc(sizeof(double)*rad_size);
+	
+	if ( kernel == NULL || low_pass == NULL ) { free(low_pass); free(kernel); return radial_avg; }
+
+	double two_s2  = 1.0 / ( sigma * sigma * 2 );
+	double norm    = 1.0 / ( sigma * sqrt(2*M_PI) );
+	
+	for (i=0;i<krad;i++) kernel[i] = norm * exp( -i*i*two_s2 );
+
+	for(i=0;i<rad_size;i++) {
+		double sum = data[i] * kernel[0];
+		for(k=1;k<krad;k++) {
+			int pos1 = i - k;
+			int pos2 = i + k;
+			if ( pos1 < 0 ) pos1 = 0;
+			if ( pos2 >= rad_size ) pos2 = rad_size-1;
+			sum += ( data[pos1] + data[pos2] ) * kernel[i];
+		}
+		low_pass[i] = sum;
+	}
+	
+	for(i=0;i<rad_size;i++) data[i] = data[i] / low_pass[i];
+	free(kernel);
+	free(low_pass);
+	
+	fprintf(stderr,"DONE\n");
+	
+	return radial_avg;
+	
+}
+
+static PyObject * logpolar(PyObject *self, PyObject *args) {
 	PyObject *input;
 	int phis, logrhos;
 	double center[2];
@@ -754,8 +898,7 @@ int FilterFunction(	double *buffer, int filter_size, double *return_value, void 
 
 /* return 1 if center element of buffer is local maximum, otherwise 0 */
 /* callback_data points to index of center element */
-int isLocalMaximum(double *buffer, int filter_size, double *return_value, void *callback_data)
-{
+int isLocalMaximum(double *buffer, int filter_size, double *return_value, void *callback_data) {
 	double center_value, *p;
 	int i;
 	center_value = buffer[*(int *)callback_data];
@@ -773,8 +916,7 @@ int isLocalMaximum(double *buffer, int filter_size, double *return_value, void *
 
 /* return 1 if center element of buffer is local minimum, otherwise 0 */
 /* callback_data points to index of center element */
-int isLocalMinimum(double *buffer, int filter_size, double *return_value, void *callback_data)
-{
+int isLocalMinimum(double *buffer, int filter_size, double *return_value, void *callback_data) {
 	double center_value, *p;
 	int i;
 	center_value = buffer[*(int *)callback_data];
@@ -790,9 +932,7 @@ int isLocalMinimum(double *buffer, int filter_size, double *return_value, void *
 	return 1;
 }
 
-static PyObject *
-py_isLocalMaximum(PyObject *obj, PyObject *args)
-{
+static PyObject * py_isLocalMaximum(PyObject *obj, PyObject *args) {
 	int center_index;
 	if (!PyArg_ParseTuple(args, "i", &center_index)) {
 		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
@@ -803,9 +943,7 @@ py_isLocalMaximum(PyObject *obj, PyObject *args)
 	}
 }
 
-static PyObject *
-py_isLocalMinimum(PyObject *obj, PyObject *args)
-{
+static PyObject * py_isLocalMinimum(PyObject *obj, PyObject *args) {
 	int center_index;
 	if (!PyArg_ParseTuple(args, "i", &center_index)) {
 		PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
@@ -816,10 +954,7 @@ py_isLocalMinimum(PyObject *obj, PyObject *args)
 	}
 }
 
-
-int
-pointInPolygon(float x, float y, float *polygon, int nvertices)
-{
+int pointInPolygon(float x, float y, float *polygon, int nvertices) {
 	int intersections=0;
 	float *ax, *ay, *bx, *by;
 	int i;
@@ -856,11 +991,7 @@ pointInPolygon(float x, float y, float *polygon, int nvertices)
 	return intersections % 2;
 }
 
-
-
-static PyObject *
-py_pointsInPolygon(PyObject *obj, PyObject *args)
-{
+static PyObject * py_pointsInPolygon(PyObject *obj, PyObject *args) {
 	PyObject *points, *polygon, *temp, *temp2, *insidelist, *insidebool;
 	float pointx, pointy;
 	float *vertices;
@@ -917,8 +1048,7 @@ py_pointsInPolygon(PyObject *obj, PyObject *args)
 	return insidelist;
 }
 
-void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_flag)
-{
+void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_flag) {
 
   int i;
   float min1, max1, scale;
@@ -949,8 +1079,7 @@ void float_to_ubyte( float* image, int nsize, unsigned char* outimg, int scale_f
   }
 }
 
-
-PyObject *cannyedge(PyObject *self, PyObject *args) {
+static PyObject *cannyedge(PyObject *self, PyObject *args) {
 	PyObject *input;
 	PyObject *inputarray=NULL, *outputarraym=NULL, *outputarray=NULL;
 	int i;
@@ -994,9 +1123,8 @@ PyObject *cannyedge(PyObject *self, PyObject *args) {
 
 }
 
-
-
 static struct PyMethodDef numeric_methods[] = {
+
 // used by align, ImageViewer2,
 	{"minmax", minmax, METH_VARARGS},
 
@@ -1027,18 +1155,21 @@ static struct PyMethodDef numeric_methods[] = {
 	{"islocalminimum", py_isLocalMinimum, METH_VARARGS},
 	{"pointsInPolygon", py_pointsInPolygon, METH_VARARGS},
 
+	{"radialPower",radialPower,METH_VARARGS},
+
+	{"cannyedge", cannyedge, METH_VARARGS},
+
 // from beamfinder.c
-	//{"resamplearray", resamplearray, METH_VARARGS},
-	{"cannyedge", cannyedge, METH_VARARGS}, 
-	//{"componentlabeling", componentlabeling, METH_VARARGS}, 
-	//{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
+//	{"resamplearray", resamplearray, METH_VARARGS},
+//	{"componentlabeling", componentlabeling, METH_VARARGS}, 
+//	{"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
 
 	{NULL, NULL}
+	
 };
 
-void initnumextension()
-{
-	(void) Py_InitModule("numextension", numeric_methods);
+void initnumextension() {
+	Py_InitModule("numextension", numeric_methods);
 	import_array();
 }
 
