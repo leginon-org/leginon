@@ -727,12 +727,21 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	
 	double x_rad = cols / 2.0;
 	double y_rad = rows / 2.0;
-	
-	int rad_dim[1] = { rad_size };
+
+	npy_intp rad_dim[1] = { rad_size };
 	PyObject * radial_avg = PyArray_SimpleNew(1,rad_dim,NPY_FLOAT64);
+	if (radial_avg == NULL) {
+		printf("FAIL radial_avg\n");
+	}
 	double * rad_avg = PyArray_DATA(radial_avg); 
 	double * rad_cnt = malloc(sizeof(double)*rad_size);
-	
+	if (rad_avg == NULL) {
+		printf("FAIL rad_avg\n");
+	}
+	if (rad_cnt == NULL) {
+		printf("FAIL rad_cnt\n");
+	}
+
 	for(i=0;i<rad_size;i++) rad_avg[i] = 0;
 	for(i=0;i<rad_size;i++) rad_cnt[i] = 0;
 	
