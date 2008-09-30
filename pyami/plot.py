@@ -13,13 +13,12 @@ if __name__ == '__main__':
 	import imagefun
 	import numpil
 	a = mrc.read(sys.argv[1])
-	a2 = mrc.read(sys.argv[2])
+	low = float(sys.argv[2])
+	high = float(sys.argv[3])
 
 	print 'SHAPE', a.shape
 	#pow = imagefun.power(a)
 	#numpil.write(pow, 'pow.png')
-	b = numextension.radialPower(a, 50)
-	b2 = numextension.radialPower(a2, 50)
-	plot(b[5:])
-	plot(b2[5:])
+	b = numextension.radialPower(a, low, high)
+	plot(b)
 	raw_input('enter to quit')
