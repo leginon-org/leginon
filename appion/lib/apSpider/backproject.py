@@ -153,8 +153,8 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, datae
 
 	### cannot shift more the 1/4 size of the image
 	mySpider.toSpiderQuiet("FI x52", infile+("@%05d"%(partnum)), "12" )
-	mySpider.toSpiderQuiet("x54=int(x52/2)") #window size
-	mySpider.toSpiderQuiet("x55=int(x52/4)") #window topleft
+	mySpider.toSpiderQuiet("x54=int(x52/4)") #window size
+	mySpider.toSpiderQuiet("x55=int(3*x52/8)") #window topleft
 	mySpider.toSpiderQuiet("WI", 
 		ccmap, #input file
 		windccmap, #output file
@@ -208,7 +208,7 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	partnum = 0
 	while partnum < numpart:
 		partnum+=1
-		if partnum%50 == 0:
+		if partnum%25 == 0:
 			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
 			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
 		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)

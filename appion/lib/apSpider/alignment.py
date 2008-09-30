@@ -803,10 +803,11 @@ def findThreshold(numclasses, rundir, dataext):
 		if classes > numclasses:
 			minthresh = thresh
 			maxclass = classes
+			sys.stderr.write(">")
 		elif classes < numclasses:
 			maxthresh = thresh
 			minclass = classes
-		sys.stderr.write(".")
+			sys.stderr.write("<")
 		#print " ",count, classes, thresh, maxthresh, minthresh
 	print count, "rounds for", classes, "classes"
 
