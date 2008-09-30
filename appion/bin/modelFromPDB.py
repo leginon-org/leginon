@@ -60,7 +60,7 @@ class modelFromPDB(appionScript.AppionScript):
 	#=====================
 	def setNewFileName(self, unique=False):
 		# set apix, box, and foldname
-		self.params['name'] = self.params['pdbid']+"-"+
+		self.params['name'] = self.params['pdbid']+"-"
 		self.params['name'] += str(self.params['apix'])+"-"
 		self.params['name'] += str(self.params['res'])+"-"
 		self.params['name'] += str(self.params['box'])+".mrc"
