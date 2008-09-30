@@ -439,6 +439,9 @@ if ($expId) {
 		       'result'=>$result,
 		       );
 
+	$nruns[]=array(
+		       'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
+		       );
 	$data[]=array(
 		      'action'=>array(	$action, $celloption),
 		      'result'=>array(),

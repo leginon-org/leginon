@@ -28,7 +28,8 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	$rescale=$_GET['rescale'];
-
+	$pdbmod=$_GET['pdbmod'];
+	
 	$particle = new particledata();
 
 	// find out if rescaling an existing initial model
@@ -40,6 +41,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
+	if ($pdbmod) $formAction .="&pdbmod=$pdbmod";
   
 	processing_header($title,$heading,False,True);
 	// write out errors, if any came up:
@@ -83,9 +85,14 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	if ($rescale) echo "
       <B>New Model Name:</B><BR>
       <INPUT TYPE='text' NAME='newmodel' VALUE='$newmodel' SIZE='50'><br />\n";
-	else echo"
-      <B>Model file name with path:</B><BR/>
-      <INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
+	else {
+		echo"<b>Model file name with path:</b><br />\n";
+		if ($_GET['pdbmod']) {
+			echo $_GET['pdbmod'];
+			echo "<input type='hidden' name='modelname' value='".$_GET['pdbmod']."'><br />\n";
+		}
+		else echo "<INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
+	}
 	echo"
       <P>
       <B>Model Description:</B><BR/>
@@ -121,13 +128,12 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 			if ($sym['symmetry']=='C1') echo " (no symmetry)";
 			echo "</OPTION>\n";
 		}
-		echo"
-      </SELECT>
-      <P>
-      <INPUT TYPE='text' NAME='res' VALUE='$res' SIZE='5'> Model Resolution
-      <BR>
-      <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>
-      Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
+		echo "</select>\n";
+		echo "<P>\n";
+		echo "<INPUT TYPE='text' NAME='res' VALUE='$res' SIZE='5'> Model Resolution\n";
+      		echo "<br />\n";
+      		echo "<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n";
+      		echo "Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
 	}
 	echo "
       <P>
