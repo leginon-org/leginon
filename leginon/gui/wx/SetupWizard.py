@@ -15,6 +15,7 @@ import sys
 import data
 import icons
 import leginonconfig
+import leginondata
 import os.path
 import project
 import time
@@ -349,13 +350,21 @@ class SessionNamePage(WizardPage):
 		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 
-		sizer.Add(wx.StaticText(self, -1, 'Description:'), (2, 0), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
+		holders = leginondata.GridHolderData()
+		holders = holders.query()
+		holders = [holder['name'] for holder in holders]
+		self.holderctrl = wx.ComboBox(self, -1, choices=holders, style=wx.CB_DROPDOWN)
+		self.holderctrl.SetValue('Unknown Holder')
+		sizer.Add(wx.StaticText(self, -1, 'Choose holder from list or enter new one:'), (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.holderctrl, (2,1), (1,1))
+
+		sizer.Add(wx.StaticText(self, -1, 'Description:'), (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
-		sizer.Add(self.descriptiontextctrl, (3, 0), (1, 2), wx.EXPAND|wx.ALL)
+		sizer.Add(self.descriptiontextctrl, (4, 0), (1, 2), wx.EXPAND|wx.ALL)
+
 
 		sizer.Add(wx.StaticText(self, -1,
-									'Then press the "Next" button to continue.'), (5, 0), (1, 2))
+									'Then press the "Next" button to continue.'), (6, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -653,9 +662,12 @@ class SetupWizard(wx.wizard.Wizard):
 			user = self.userpage.getSelectedUser()
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
+			holder = self.namepage.holderctrl.GetValue()
+			holderdata = leginondata.GridHolderData(name=holder)
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.session = self.setup.createSession(user, name, description,
 																							directory)
+			self.session['holder'] = holderdata
 			self.publish(self.session, database=True)
 			if self.projectpage is not None:
 				projectid = self.projectpage.getSelectedProjectId()
