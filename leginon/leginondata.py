@@ -61,6 +61,14 @@ class SessionData(Data):
 			('user', UserData),
 			('image path', str),
 			('comment', str),
+			('holder', GridHolderData),
+		)
+	typemap = classmethod(typemap)
+
+class GridHolderData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
 		)
 	typemap = classmethod(typemap)
 
