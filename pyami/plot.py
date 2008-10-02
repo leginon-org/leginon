@@ -14,25 +14,18 @@ class PlotPanel(wxmpl.PlotPanel):
 		axes = fig.gca()
 		axes.plot(x,y)
 
+	def clear(self):
+		fig = self.get_figure()
+		axes = fig.gca()
+		axes.cla()
+		
+
 if __name__ == '__main__':
-	import mrc
-	import sys
-	import numextension
-	import imagefun
-	import numpil
 	import wx
-	a = mrc.read(sys.argv[1])
-	low = float(sys.argv[2])
-	high = float(sys.argv[3])
-
-	print 'SHAPE', a.shape
-	#pow = imagefun.power(a)
-	#numpil.write(pow, 'pow.png')
-	b = numextension.radialPower(a, low, high)
-
 	app = wx.PySimpleApp()
 	frame = wx.Frame(None, -1, title='My Plot')
 	plotpanel = PlotPanel(frame, -1)
+	b = [2,3,5,4,3]
 	plotpanel.plot(b)
 	frame.Show()
 	app.MainLoop()
