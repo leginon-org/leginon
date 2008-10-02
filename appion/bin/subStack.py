@@ -123,71 +123,65 @@ class subStackScript(appionScript.AppionScript):
 
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
 
-
-		#if keep file is given...
-		if self.params['keepfile']:
-			ogdescr = self.params['description']
-			for i in range(self.params['split']):
-				sb = os.path.splitext(stackdata['name'])
-				if self.params['first'] is not None and self.params['last'] is not None:
-					newname = sb[0]+'.'+str(self.params['first'])+'-'+str(self.params['last'])+sb[-1]
-				elif self.params['split'] > 1:
-					fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
-					self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
-					newname = sb[0]+'.'+str(i+1)+'of'+str(self.params['split'])+sb[-1]
-				newstack = os.path.join(self.params['outdir'], newname)
-				apStack.checkForPreviousStack(newstack)
-
-				#get number of particles
-				f = open(self.params['keepfile'], "r")
-				numparticles = len(f.readlines())
-				f.close()
-				self.params['description'] = ogdescr
-				self.params['description'] += (
-					(" ... %d particle substack of stackid %d" 
-					 % (numparticles, self.params['stackid']))
-				)
-				#if splitting, add to description
-				if self.params['split'] > 1:
-					self.params['description'] += (" (%i of %i)" % (i+1, self.params['split']))
-
-				#if include or exclude list is given...			
-				if self.params['include'] is not None or self.params['exclude'] is not None:
+		#if include or exclude list is given...			
+		if self.params['include'] is not None or self.params['exclude'] is not None:
 		
-				#old stack size
-				stacksize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+			#old stack size
+			stacksize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 
-				includeParticle = []
-				excludeParticle = 0
+			includeParticle = []
+			excludeParticle = 0
 
-				for partnum in range(stacksize):
-					if includelist and partnum in includelist:
-						includeParticle.append(partnum)
-					elif excludelist and not partnum in excludelist:
-						includeParticle.append(partnum)
-					else:
-						excludeParticle += 1
-				includeParticle.sort()
+			for partnum in range(stacksize):
+				if includelist and partnum in includelist:
+					includeParticle.append(partnum)
+				elif excludelist and not partnum in excludelist:
+					includeParticle.append(partnum)
+				else:
+					excludeParticle += 1
+			includeParticle.sort()
 		
-				### write kept particles to file
-				self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
-				apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
-				kf = open(self.params['keepfile'], "w")
-				for partnum in includeParticle:
-					kf.write(str(partnum)+"\n")
-				kf.close()		
+			### write kept particles to file
+			self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
+			apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
+			kf = open(self.params['keepfile'], "w")
+			for partnum in includeParticle:
+				kf.write(str(partnum)+"\n")
+			kf.close()		
 
-				#get number of particles
-				numparticles = len(includeParticle)
-				if excludelist:
-					self.params['description'] += ( " ... %d particle substack of stackid %d" 
-					% (numparticles, self.params['stackid']))
-				elif includelist:
-					self.params['description'] += ( " ... %d particle substack of stackid %d" 
-					% (numparticles, self.params['stackid']))	
+			#get number of particles
+			numparticles = len(includeParticle)
+			if excludelist:
+				self.params['description'] += ( " ... %d particle substack of stackid %d" 
+				% (numparticles, self.params['stackid']))
+			elif includelist:
+				self.params['description'] += ( " ... %d particle substack of stackid %d" 
+				% (numparticles, self.params['stackid']))	
 		
-				newstack = os.path.join(self.params['outdir'], newname)
-				apStack.checkForPreviousStack(newstack)
+		ogdescr = self.params['description']
+		for i in range(self.params['split']):
+			sb = os.path.splitext(stackdata['name'])
+			if self.params['first'] is not None and self.params['last'] is not None:
+				newname = sb[0]+'.'+str(self.params['first'])+'-'+str(self.params['last'])+sb[-1]
+			elif self.params['split'] > 1:
+				fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
+				self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+				newname = sb[0]+'.'+str(i+1)+'of'+str(self.params['split'])+sb[-1]
+			newstack = os.path.join(self.params['outdir'], newname)
+			apStack.checkForPreviousStack(newstack)
+
+			#get number of particles
+			f = open(self.params['keepfile'], "r")
+			numparticles = len(f.readlines())
+			f.close()
+			self.params['description'] = ogdescr
+			self.params['description'] += (
+				(" ... %d particle substack of stackid %d" 
+				 % (numparticles, self.params['stackid']))
+			)
+			#if splitting, add to description
+			if self.params['split'] > 1:
+				self.params['description'] += (" (%i of %i)" % (i+1, self.params['split']))
 
 			#create the new sub stack
 			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
