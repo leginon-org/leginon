@@ -69,6 +69,12 @@ var help = {
 	'volume': 'a bounded subvolume (often a specific structure) of the full tomogram. default is to number sequentially',
 	'mask' : 'Radius of external mask',
 	'maxshift' : 'Maximum distance a particle can be translated',
+	'excludeClass' : 'Classes from classification that will excluded',
+	'commonlineemanprog' : 'EMAN common line program for initial model generation',
+	'imask' : 'Inside mask used to exclude inside regions',
+	'lp' : 'Lowpass filter radius in Fourier pixels',
+	'partnum' : 'Number of particles to use for each view. This number should be at least 10-20, and at most ~10% of the total particle data set. 50-100 is good for typical data sets of 2000 or more particles.',
+	'rounds' : 'Rounds of Euler angle determination to use (2-5)',
 	},
 
 	'eman' : {
