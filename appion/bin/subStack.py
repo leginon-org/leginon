@@ -151,50 +151,50 @@ class subStackScript(appionScript.AppionScript):
 				if self.params['split'] > 1:
 					self.params['description'] += (" (%i of %i)" % (i+1, self.params['split']))
 
-		#if include or exclude list is given...			
-		if self.params['include'] is not None or self.params['exclude'] is not None:
+				#if include or exclude list is given...			
+				if self.params['include'] is not None or self.params['exclude'] is not None:
 		
-			#old stack size
-			stacksize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
+				#old stack size
+				stacksize = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 
-			includeParticle = []
-			excludeParticle = 0
+				includeParticle = []
+				excludeParticle = 0
 
-			for partnum in range(stacksize):
-				if includelist and partnum in includelist:
-					includeParticle.append(partnum)
-				elif excludelist and not partnum in excludelist:
-					includeParticle.append(partnum)
-				else:
-					excludeParticle += 1
-			includeParticle.sort()
+				for partnum in range(stacksize):
+					if includelist and partnum in includelist:
+						includeParticle.append(partnum)
+					elif excludelist and not partnum in excludelist:
+						includeParticle.append(partnum)
+					else:
+						excludeParticle += 1
+				includeParticle.sort()
 		
-			### write kept particles to file
-			self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
-			apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
-			kf = open(self.params['keepfile'], "w")
-			for partnum in includeParticle:
-				kf.write(str(partnum)+"\n")
-			kf.close()		
+				### write kept particles to file
+				self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
+				apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
+				kf = open(self.params['keepfile'], "w")
+				for partnum in includeParticle:
+					kf.write(str(partnum)+"\n")
+				kf.close()		
 
-			#get number of particles
-			numparticles = len(includeParticle)
-			if excludelist:
-				self.params['description'] += ( " ... %d particle substack of stackid %d" 
-				% (numparticles, self.params['stackid']))
-			elif includelist:
-				self.params['description'] += ( " ... %d particle substack of stackid %d" 
-				% (numparticles, self.params['stackid']))	
+				#get number of particles
+				numparticles = len(includeParticle)
+				if excludelist:
+					self.params['description'] += ( " ... %d particle substack of stackid %d" 
+					% (numparticles, self.params['stackid']))
+				elif includelist:
+					self.params['description'] += ( " ... %d particle substack of stackid %d" 
+					% (numparticles, self.params['stackid']))	
 		
-			newstack = os.path.join(self.params['outdir'], newname)
-			apStack.checkForPreviousStack(newstack)
+				newstack = os.path.join(self.params['outdir'], newname)
+				apStack.checkForPreviousStack(newstack)
 
-		#create the new sub stack
-		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
-		if not os.path.isfile(newstack):
-			apDisplay.printError("No stack was created")
-		apStack.commitSubStack(self.params, newname)
-		apStack.averageStack(stack=newstack)
+			#create the new sub stack
+			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+			if not os.path.isfile(newstack):
+				apDisplay.printError("No stack was created")
+			apStack.commitSubStack(self.params, newname)
+			apStack.averageStack(stack=newstack)
 
 #=====================
 if __name__ == "__main__":
