@@ -92,7 +92,7 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 			<input type='hidden' name='norefId' value='$norefId'>
 		<br />\n";
 
-	echo docpop('emanprog','<b>EMAN Program:</b> ');
+	echo docpop('commonlineemanprog','<b>EMAN Program:</b> ');
 	echo "<input type='radio' name='method' value='startCSym' 'CHECKED'> StartCSym\n";
 	echo "<input type='radio' name='method' value='startIcos' > StartIcos\n";
 	echo "<input type='radio' name='method' value='startOct' > StartOct\n";
@@ -100,7 +100,7 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 
 	echo docpop('outdir','<b>Output Directory:</b> ');
 	echo "<input type='text' name='outdir' value='$outdir' size='38'><br />\n";
-	echo docpop('test','<b>Excluded Classes:</b> ');
+	echo docpop('excludeClass','<b>Excluded Classes:</b> ');
 	echo "<input type='text' name='exclude' value='$exclude' size='38'><br /><br />\n";
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='descript' rows='3'cols='70'>$description</textarea>\n";
@@ -208,7 +208,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			
 			<TR>
 			<TD VALIGN='TOP' CLASS='tablebg'>
-				<TABLE WIDTH='400' BORDER='0'>
+				<TABLE WIDTH='450' BORDER='0'>
 					<TR><TD COLSPAN='2'>
 						
 						<B>Required Parameters:</B><BR/>
@@ -236,7 +236,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 						echo "<TR><TD>";
 						echo "<B>Optional Parameters:</B><BR/>";
 						echo "<TR><TD>";
-						echo docpop('model','<b>Internal Mask:</b> ');
+						echo docpop('imask','<b>Internal Mask:</b> ');
 						echo "</TD><TD><INPUT TYPE='text' name='imask' value='$imask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
 						
 		} elseif ( $_POST['method'] == 'startIcos') {
@@ -244,13 +244,13 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			
 				<TR>
 				<TD VALIGN='TOP' CLASS='tablebg'>
-					<TABLE WIDTH='400' BORDER='0'>
+					<TABLE WIDTH='450' BORDER='0'>
 						<TR><TD COLSPAN='2'>
 						
 						<B>Required Parameters:</B><BR/>";							
 						
 			echo "<TR><TD>";   
-			echo docpop('model','<b>Particle Number:</b> ');
+			echo docpop('partnum','<b>Particle Number:</b> ');
 			echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";  
 			echo "<TR><TD>";
 			echo docpop('lp','<b>Low Pass Filter:</b> ');
@@ -258,7 +258,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			echo "<TR><TD>";
 			echo "<B>Optional Parameters:</B><BR/>";
 			echo "<TR><TD>";
-			echo docpop('model','<b>Internal Mask:</b> ');
+			echo docpop('imask','<b>Internal Mask:</b> ');
 			echo "</TD><TD><INPUT TYPE='text' name='imask' value='$imask'> <br/>";
 			
 		} elseif ( $_POST['method'] == 'startOct') {
@@ -266,7 +266,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			
 				<TR>
 				<TD VALIGN='TOP' CLASS='tablebg'>
-					<TABLE WIDTH='400' BORDER='0'>
+					<TABLE WIDTH='450' BORDER='0'>
 						<TR><TD COLSPAN='2'>
 						
 						<B>Required Parameters:</B><BR/>";
@@ -275,7 +275,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			echo docpop('lp','<b>Low Pass Filter:</b> ');
 			echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  			
 			echo "<TR><TD>";   
-			echo docpop('model','<b>Particle Number:</b> ');
+			echo docpop('partnum','<b>Particle Number:</b> ');
 			echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";
 
 		} elseif ( $_POST['method'] == 'startAny') {
@@ -283,7 +283,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			
 			<TR>
 			<TD VALIGN='TOP' CLASS='tablebg'>
-			<TABLE WIDTH='400' BORDER='0'>
+			<TABLE WIDTH='450' BORDER='0'>
 				<TR><TD COLSPAN='2'>
 						
 					<B>Required Parameters:</B><BR/>
@@ -306,10 +306,10 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 					echo "<TR><TD>";
 					echo "<B>Optional Parameters:</B><BR/>";
 					echo "<TR><TD>";
-					echo docpop('model','<b>Mask:</b> ');
+					echo docpop('mask','<b>Mask:</b> ');
 					echo "</TD><TD><INPUT TYPE='text' name='mask' value='$mask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
 					echo "<TR><TD>";
-					echo docpop('model','<b>Rounds:</b> ');
+					echo docpop('rounds','<b>Rounds:</b> ');
 					echo "</TD><TD><INPUT TYPE='text' name='rounds' value='$rounds'> <FONT SIZE='-2'>(2-5)</FONT><br/>";
 		
 	} else {
