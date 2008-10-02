@@ -33,7 +33,9 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   
-	processing_header($title,$heading,False,True);
+	$javafunctions = writeJavaPopupFunctions('appion');
+
+	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -57,10 +59,14 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	$res = ($_POST['res']) ? $_POST['res'] : '';
 	$pdbid = ($_POST['pdbid']) ? $_POST['pdbid'] : '';
 	$box = ($_POST['box']) ? $_POST['box'] : '';
-  
+	$bunitcheck = ($_POST['bunit'] == 'on') ? 'checked' : '';
+
 	echo "<table BORDER=3 CLASS=tableborder><tr><td valign='top'>\n";
-	echo "<b>PDB ID:</b>\n";
-	echo "<input type='text' name='pdbid' value='$pdbid' size='5'>\n";
+	echo docpop('pdbid', '<b>PDB ID:</b>');
+	echo "<input type='text' name='pdbid' value='$pdbid' size='5'><br />\n";
+	echo "<input type='checkbox' name='bunit' $bunitcheck>\n";
+	echo "Use the ";
+	echo docpop('biolunit', "biological unit");
 	echo "</td></tr>\n";
 	echo "<tr><td valign='top' class='tablebg'>\n";
 	echo "<p>\n";
@@ -89,13 +95,13 @@ function runUploadModel() {
 
 	$session=$_POST['sessionname'];
 
-	//make sure a apix was provided
-	$apix=$_POST['apix'];
-	if (!$apix) createForm("<B>ERROR:</B> Enter the pixel size");
-
 	//make sure a pdb id was entered
 	$pdbid=$_POST['pdbid'];
   	if (!$pdbid) createForm("<B>ERROR:</B> Enter a PDB ID");
+
+	//make sure a apix was provided
+	$apix=$_POST['apix'];
+	if (!$apix) createForm("<B>ERROR:</B> Enter the pixel size");
 
 	//make sure a resolution was provided
 	$res=$_POST['res'];
@@ -104,6 +110,8 @@ function runUploadModel() {
 	//make sure a boxsize was provided
 	$box=$_POST['box'];
 	if (!$box) createForm("<B>ERROR:</B> Enter a box size");
+
+	// check if downloading the biological unit
 
 	if (!is_float($res)) $res = $res.".0";
 	$filename = $pdbid.'-'.$apix.'-'.$res.'-'.$box;
@@ -115,6 +123,7 @@ function runUploadModel() {
 	$command.="-a $apix ";
 	$command.="-r $res ";
 	$command.="-b $box ";
+	if ($_POST['bunit']=='on') $command.="-u" ;
 	
 	// submit job to cluster
 	if ($_POST['process']=="Create Model") {
