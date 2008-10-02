@@ -120,7 +120,7 @@ def checkForPreviousStack(stackname, stackpath=None):
 	stackq['name'] = os.path.basename(stackname)
 	stackdata = appiondb.query(stackq, results=1)
 	if stackdata:
-		apDisplay.printError("A stack with name "+stackname+" and path "+stackpath+" already exists!")
+		apDisplay.printError("A stack with name "+stackname+" and path "+spath+" already exists!")
 	return
 
 #--------
