@@ -15,6 +15,7 @@ import apDisplay
 import apDatabase
 import urllib
 import apEMAN
+import gzip
 from apSpider import volFun
 
 class modelFromPDB(appionScript.AppionScript):
@@ -35,7 +36,11 @@ class modelFromPDB(appionScript.AppionScript):
 			help="Pixel size of model (in Angstroms)")
 		self.parser.add_option("-b", "--box", dest="box", type='int', default=None,
 			help="Box size of model (in Pixels)")
-		
+		self.parser.add_option("-u", "--biolunit", dest="bunit", default=False,
+			action="store_true", help="Download the biological unit")
+				       
+				       
+
 	#=====================
 	def checkConflicts(self):
 		if self.params['session'] is None:
@@ -67,11 +72,19 @@ class modelFromPDB(appionScript.AppionScript):
 
 	def fetchPDB(self):
 		# retrieve pdb from web based on pdb id
-		url = "http://www.rcsb.org/pdb/files/%s.pdb" % self.params['pdbid']
+		pdbid = self.params['pdbid']+'.pdb'
+		# set filename if getting biological unit
+		if self.params['bunit'] is True:
+			pdbid=self.params['pdbid']+'.pdb1'
+		url = "http://www.rcsb.org/pdb/files/%s.gz" % pdbid
 		apDisplay.printMsg("retrieving pdb file: %s" %url)
+		# uncompress file & save
 		outfile = self.params['tmpname']+".pdb"
+		data = urllib.urlretrieve(url)[0]
+		g = gzip.open(data,'r').read()
+		
 		f=open(outfile,'w')
-		f.write(urllib.urlopen(url).read())
+		f.write(g)
 		f.close()
 		return outfile
 	
@@ -98,12 +111,12 @@ class modelFromPDB(appionScript.AppionScript):
 		
 		if not os.path.exists(self.params['tmpname']+'.spi'):
 			os.remove(self.params['tmpname']+".pdb")
-			os.remove(self.params['tmpname']+".spi")
 			apDisplay.printError("SPIDER could not create density file")
 			
 		### convert spider to mrc format
 		apDisplay.printMsg("converting spider file to mrc")
-		emancmd='proc3d %s.spi %s.mrc norm' % (self.params['tmpname'], self.params['basename'])
+		emancmd='proc3d %s.spi %s.mrc apix=%f lp=%f norm' % (self.params['tmpname'], self.params['basename'],
+								     self.params['apix'], self.params['res'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 		os.remove(self.params['tmpname']+".pdb")
 		os.remove(self.params['tmpname']+".spi")
