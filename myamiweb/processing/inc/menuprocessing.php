@@ -349,6 +349,23 @@ if ($expId) {
 			      'newrun'=>array($nruns, $celloption),
 			      );
 
+	}
+
+	// initial model creation tools
+	$action = "Initial Model Creation";
+
+	$nruns=array();
+	$nruns[]=array(
+		       'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
+		       );
+	$data[]=array(
+		      'action'=>array($action, $celloption),
+		      'result'=>array(),
+		      'newrun'=>array($nruns, $celloption),
+		      );
+
+	// display reconstructions only if there is a stack
+	if ($stackruns > 0) {
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0
 		$jobincomp = $jobdone-$reconruns; //incomplete
@@ -364,8 +381,6 @@ if ($expId) {
 
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 
-		// first check if there are stacks for a run, then check if logged
-		// in.  Then you can submit a job
 		$nruns=array();
 //		if ($_SESSION['loggedin']) {
 		if (TRUE) {
@@ -419,7 +434,7 @@ if ($expId) {
 			      );
 	}
 
-	// display particle alignment only if there is a stack
+	// upload model & template tools
 	$action = "Pipeline tools";
 
 	$result = ($templates==0) ? "" :
@@ -439,14 +454,12 @@ if ($expId) {
 		       'result'=>$result,
 		       );
 
-	$nruns[]=array(
-		       'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
-		       );
 	$data[]=array(
-		      'action'=>array(	$action, $celloption),
+		      'action'=>array($action, $celloption),
 		      'result'=>array(),
 		      'newrun'=>array($nruns, $celloption),
 		      );
+
 }
 
 $menujs='<script type="text/javascript">
