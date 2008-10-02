@@ -125,9 +125,8 @@ class Correlator(object):
 		if self.results['phase correlation image'] is None:
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']
-
 			if wiener:
-				rstart = int(0.2 * ccfft.shape[0])
+				rstart = int(0.4 * ccfft.shape[0])
 				rstop = int(0.5 * ccfft.shape[0])
 				region = ccfft[rstart:rstop]
 				noise = 10 * numpy.mean(region.real * region.real + region.imag * region.imag)
