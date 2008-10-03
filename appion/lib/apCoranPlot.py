@@ -39,7 +39,8 @@ def getParticlesForIter(reconid, iternum):
 		+" LEFT JOIN `ApRefinementData` AS refdat "
 		+"   ON (reconpart.`REF|ApRefinementData|refinement` = refdat.`DEF_id`) "
 		+" WHERE refdat.`REF|ApRefinementRunData|refinementRun` = '"+str(reconid)+"' "
-		+"   AND reconpart.`coran_keep` = 1 "
+		+"   AND reconpart.`coran_keep` = 1 " # for Coran plot
+		#+"   AND reconpart.`thrown_out` IS NULL " # for EMAN plot
 		+"   AND refdat.`iteration` = '"+str(iternum)+"' " )
 	cursor.execute(query)
 	results = cursor.fetchall()
