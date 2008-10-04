@@ -4,7 +4,7 @@
 #include <complex.h>
 #include "imgbase.h"
 #include "edge.h"
-#include <fftw.h>
+#include <fftw3.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -660,9 +660,7 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	//  3.  The radial averaging should be done based on the sampling frequency along both axis, right now the
 	//      averaging is not correct if the image dimensions are not the same.
 	
-	fprintf(stderr,"Computing power spectrum...");
-	
-	int i, k;
+	int i;
 	float lp = 0, hp = 0;
 	PyObject * image;
 	PyArray_Descr * type;
@@ -674,50 +672,14 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 
 	npy_intp * dims = PyArray_DIMS(image);	
 	npy_intp ndim = PyArray_NDIM(image);
-	npy_intp size = PyArray_SIZE(image);
 	
 	if ( ndim != 2 ) return NULL;
 	
-	int cur_pos[ndim+1];
 	int cur_dim[ndim+1];
 	
-	for(i=0;i<ndim+1;i++) cur_pos[i] = 0;
 	for(i=0;i<ndim;i++) cur_dim[i] = dims[i];
 	cur_dim[ndim] = 0;
-	
-	double * data = PyArray_DATA(image);
-	complex * fft = fftw_malloc(sizeof(complex)*size);
-	
-	int flip_state = 0;
-	for(i=0;i<size;i++) {
-			
-		for(k=0;cur_pos[k]==cur_dim[k];k++) {
-			cur_pos[k] = 0;
-			cur_pos[k+1]++;
-			flip_state = flip_state - cur_dim[k] + 1;
-		}
-		
-		if ( flip_state % 2 == 0 ) fft[i] = (fftw_complex)(data[i]);
-		else fft[i] = -(fftw_complex)(data[i]);
 
-		cur_pos[0]++; flip_state++;
-		
-	}
-	
-	fftw_plan plan = fftw_plan_dft(ndim, cur_dim, fft, fft, FFTW_FORWARD, FFTW_ESTIMATE);
-	fftw_execute(plan);
-	
-	for (i=0;i<size;i++) {
-		double real = creal(fft[i]);
-		double imag = cimag(fft[i]);
-		data[i] = real*real + imag*imag;
-	}
-	
-	fftw_destroy_plan(plan);
-	free(fft);
-	
-	fprintf(stderr,"DONE\n");
-	
 	fprintf(stderr,"Computing radial average...");
 	
 	// Now we rotationally average the power spectrum
@@ -733,6 +695,7 @@ static PyObject * radialPower( PyObject * self, PyObject * args ) {
 	PyObject * radial_avg = PyArray_SimpleNew(1,rad_dim,NPY_FLOAT64);
 	if (radial_avg == NULL) return NULL;
 	
+	double * data = PyArray_DATA(image);
 	double * rad_avg = PyArray_DATA(radial_avg); 
 	double * rad_cnt = malloc(sizeof(double)*rad_size);
 	if (rad_avg == NULL) return NULL;
