@@ -1174,6 +1174,12 @@ class FFTMakerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class FFTAnalyzerSettingsData(SettingsData):
+	def typemap(cls):
+		return FFTMakerSettingsData.typemap() + (
+		)
+	typemap = classmethod(typemap)
+
 class TargetFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -1463,6 +1469,14 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('accept precision', float),
 			('final image shift', bool),
 			('save integer', bool),
+		)
+	typemap = classmethod(typemap)
+
+class BeamTiltImagerSettingsData(SettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('beam tilt', float),
+			('sites', int),
 		)
 	typemap = classmethod(typemap)
 
