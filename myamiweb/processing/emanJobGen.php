@@ -743,7 +743,7 @@ function writeJobFile ($extra=False) {
 		$stackname=substr($stackname1,0,-strlen($ext));
 		$clusterjob.= "ln -s $stackpath/$stackname.hed start.hed\n";
 		$clusterjob.= "ln -s $stackpath/$stackname.img start.img\n";
-		$clusterjob.= "ln -s $modelpath/$modelname threed.0.mrc\n";
+		$clusterjob.= "ln -s $modelpath/$modelname threed.0a.mrc\n";
 		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";
 	}
 	$procs=$_POST['nodes']*$_POST['rprocs'];
