@@ -45,7 +45,7 @@ class FFTAnalyzer(fftmaker.FFTMaker):
 		'''
 		if self.settings['process']:
 			pow = self.calculatePowerImage(imagedata)
-			self.displayPowerImage(pow)
+			#self.displayPowerImage(pow)
 			if imagedata['filename'] and self.settings['save']:
 				self.publishPowerImage(imagedata,pow)
 #			if self.settings['radial average']:
