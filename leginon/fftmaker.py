@@ -45,13 +45,15 @@ class FFTMaker(imagewatcher.ImageWatcher):
 
 	def calculatePowerImage(self, imagedata):
 			imarray = imagedata['image']
+			imageshape = imarray.shape
 			if self.settings['reduced']:
-				size = max(imarray.shape)
+				size = max(imageshape)
 				if size > 1024:
-					imarray = scipy.ndimage.zoom(imarray, 1024.0/imarray.shape[0])
+					imarray = scipy.ndimage.zoom(imarray, 1024.0/imageshape[0])
 			self.logger.info('Calculating power spectrum for image')
 			pow = imagefun.power(imarray, self.settings['mask radius'])
 			self.setImage(numpy.asarray(pow, numpy.float32), 'Power')
+			self.imageshape = imageshape
 			return pow
 
 	def publishPowerImage(self, imagedata, powimage):
