@@ -29,8 +29,6 @@ AlignRotationCenterEventType = wx.NewEventType()
 
 EVT_ALIGN = wx.PyEventBinder(AlignRotationCenterEventType)
 
-		self.SetEventObject(source)
-
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
 	imagepanelclass = gui.wx.TargetPanel.TargetImagePanel
@@ -66,27 +64,29 @@ class Panel(gui.wx.Acquisition.Panel):
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		sizers = gui.wx.Acquisition.SettingsDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Focusing')
+		sb = wx.StaticBox(self, -1, 'Tilt Imaging and Correlation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		sizer = wx.GridBagSizer(5, 5)
 		self.widgets['beam tilt'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=4, value='0.01')
-		melt_sizer = wx.GridBagSizer(5, 5)
-		melt_sizer.Add(self.widgets['beam tilt'], (0, 0), (1, 1),
+		bt_sizer = wx.GridBagSizer(5, 5)
+		bt_sizer.Add(self.widgets['beam tilt'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		melt_sizer.Add(wx.StaticText(self, -1, 'radian'), (0, 1), (1, 1),
+		bt_sizer.Add(wx.StaticText(self, -1, 'radian'), (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Melt time:')
+		label = wx.StaticText(self, -1, 'Beam Tilt:')
 		sizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(melt_sizer, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(bt_sizer, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
 		self.widgets['sites'] = IntEntry(self, -1, min=0, allownone=False, chars=4, value='0')
-		melt_sizer = wx.GridBagSizer(5, 5)
-		melt_sizer.Add(self.widgets['sites'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Number of tilt directions:')
 		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(melt_sizer, (1, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.widgets['sites'], (1, 1), (1, 1), wx.ALIGN_CENTER)
 
+		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.correlation_types)
+		label = wx.StaticText(self, -1, 'Correlation Type:')
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['correlation type'], (2, 1), (1, 1), wx.ALIGN_CENTER)
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz]
