@@ -516,11 +516,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.setStatus('processing')
 			return status
 
-	def acquireCCD(self, presetdata, emtarget=None):
+	def acquireCCD(self, presetdata, emtarget=None,channel=None):
 		targetdata = emtarget['target']
 		## set correction channel
 		## in the future, may want this based on preset or something
-		self.instrument.setCorrectionChannel(0)
+		if channel is None:
+			self.instrument.setCorrectionChannel(0)
+		else:
+			self.instrument.setCorrectionChannel(channel)
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
 		correctimage = self.settings['correct image']
@@ -554,11 +557,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 		return imagedata
 
-	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
+	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
-			return
+			return status,None
 
 		pausetime = self.settings['pause time']
 		self.startTimer('pause')
@@ -573,12 +576,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if presetdata['film']:
 			imagedata = self.acquireFilm(presetdata, emtarget)
 		else:
-			imagedata = self.acquireCCD(presetdata, emtarget)
+			imagedata = self.acquireCCD(presetdata, emtarget, channel=channel)
 
 		targetdata = emtarget['target']
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
 		self.publishDisplayWait(imagedata)
+		return status,imagedata
 
 	def publishDisplayWait(self, imagedata):
 		'''
