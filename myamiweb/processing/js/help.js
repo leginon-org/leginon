@@ -67,7 +67,7 @@ var help = {
 	'session': 'Session name as created at leginon startup on the date of image capture.',
 	'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
 	'volume': 'a bounded subvolume (often a specific structure) of the full tomogram. default is to number sequentially',
-	'mask' : 'Radius of external mask',
+	'mask' : 'Radius of external mask (in pixels)',
 	'maxshift' : 'Maximum distance a particle can be translated',
 	'excludeClass' : 'Classes from classification that will excluded',
 	'commonlineemanprog' : 'EMAN common line program for initial model generation',
@@ -77,6 +77,10 @@ var help = {
 	'rounds' : 'Rounds of Euler angle determination to use (2-5)',
 	'pdbid' : 'ID for an experimentally determined biological molecule from the RCSB Protein Data Bank (www.rcsb.org)',
 	'biolunit' : 'Use the functional / oligomeric form of the structure for model creation',
+	'eulers' : 'Eulers assigned to the particles for this iteration will be used when creating class averages.',
+	'sigma' : 'Standard deviation multiplier to determine the quality of particle to be used.  Setting this to 0, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\".  If no value is specified, all particles will be used.',
+	'keepavg' : 'Any particles that have a median euler jump greater than this value will not be used in the class averages',
+	'eotest' : 'even and odd class averages will be created in addition to the new class averages, to be used for an even/odd test',
 	},
 
 	'eman' : {
