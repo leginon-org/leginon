@@ -17,6 +17,7 @@ var help = {
 		'maxthresh' : 'Maximum threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are rejected.<br/>For template correlation, you probably do not need this, but typical values would be between 0.7 and 0.8.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 1.0 to 5.0 with typical values falling between 1.5 and 2.5',
 		'maxpeaks' : 'This a feature limits the number of particles allowed in an image. By default it is set to 1500, but if you want no more than 50 particles an image fill in this value',
 		'lpval' : 'Low pass filtering of the image before picking. This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty good',
+		'tiltangle' : 'Tilt Angle of micrographs, exclude all images where tilt angle is not equal to specified value',
 		'lpstackval' : 'Low pass filter applied to individual particles',
 		'hpstackval' : 'High pass filter applied to individual particles',
 		'hpval' : 'High pass filtering of the image before picking. This removes any darkness gradients in the image. Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good. Warning this feature typically normalizes the crud so more particles get picked from crud.',
