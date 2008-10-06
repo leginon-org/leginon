@@ -123,6 +123,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : ''; 		 
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$tiltangle = $_POST['tiltangle'];
 	$boxszval = $_POST['boxsize'];
 	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$plimit = $_POST['plimit'];
@@ -240,10 +241,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		</td>
 	</tr>
 	<tr>
-		<td>
-		<input type='checkbox' name='normalize' $normcheck>\n";
+		<td>";
+
+
+	echo docpop('tiltangle','Tilt Angle:');
+	echo "&nbsp; <input type='text' name='tiltangle' VALUE='$tiltangle' size='4'>&nbsp; degrees<br />\n";
+
+	echo "<input type='checkbox' name='normalize' $normcheck>\n";
 	echo docpop('stacknorm','Normalize Stack Particles');
 	echo "<br />\n";
+
 	if ($ctfdata) {
 	  echo"<input type='checkbox' name='phaseflip' onclick='uncheckstig(this)' $phasecheck>\n";
 	  echo docpop('phaseflip','Phaseflip Particle Images');
@@ -251,6 +258,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  echo"<input type='checkbox' name='stig' onclick='uncheckflip(this)' $stigcheck>"
 		."\nPhaseflip Micrograph Images <I>(experimental)</I><br />";
 	}
+
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'best';
 	$checkimages=array('Non-rejected','Best','All');
@@ -420,6 +428,7 @@ function runMakestack() {
 	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
+	$tiltangle = $_POST['tiltangle'];
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	$boxfiles = ($_POST['boxfiles']=='on') ? 'boxfiles' : '';
 	// set image inspection selection
@@ -495,6 +504,7 @@ function runMakestack() {
 	if ($norejects) $command.="norejects ";
 	if ($massessname) $command.="maskassess=$massessname ";
 	if ($commit) $command.="commit ";
+	if ($tiltangle) $command.="tiltangle=$tiltangle ";
 	$command.="boxsize=$boxsize ";
 	if ($bin) $command.="bin=$bin ";
 	if ($ace) $command.="ace=$ace ";
@@ -537,6 +547,7 @@ function runMakestack() {
 	<tr><td>outdir</td><td>$outdir</td></tr>
 	<tr><td>description</td><td>$description</td></tr>
 	<tr><td>selexonId</td><td>$prtlrunId</td></tr>
+	<tr><td>tilt angle</td><td>$tiltangle</td></tr>
 	<tr><td>invert</td><td>$invert</td></tr>
 	<tr><td>nonorm</td><td>$nonorm</td></tr>
 	<tr><td>phaseflip</td><td>$phaseflip</td></tr>

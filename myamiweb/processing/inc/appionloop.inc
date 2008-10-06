@@ -50,6 +50,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
 	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
+	$tiltangle = $_POST[tiltangle];
 	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
 	$apcontinue = $_POST[apcontinue];
 	// continue is checkmarked by default
@@ -139,7 +140,9 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	echo docpop('shuffle','Shuffle the images');
 	echo "<br />\n";
 	echo docpop('limit','Limit: ');
-	echo "only process&nbsp; <input type='text' name='limit' VALUE='$limit' size='4'>&nbsp; images<br />\n";
+	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images<br />\n";
+	echo docpop('tiltangle','Tilt Angle:');
+	echo "&nbsp; <input type='text' name='tiltangle' VALUE='$tiltangle' size='4'>&nbsp; degrees<br />\n";
 	echo docpop('cont','<i>Continuation:</i>'); 
 	echo "<br />\n";
 	echo "<input type='radio' name='apcontinue' VALUE='1' $apcontinuecheck>\n";
@@ -168,6 +171,7 @@ function appionLoopSummaryTable () {
 	$background = ($_POST[background]=="on") ? "1" : "0";
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
 	$limit = $_POST[limit];
+	$tiltangle = $_POST[tiltangle];
 	$apcontinue = $_POST[apcontinue];
 	$commit = ($_POST[commit]=="on") ? "1" : "0";
 	$runid = $_POST[runid];
@@ -188,6 +192,7 @@ function appionLoopSummaryTable () {
 	echo "<TR><TD>background</TD><TD>$background</TD></TR>\n";
 	echo "<TR><TD>shuffle</TD><TD>$shuffle</TD></TR>\n";
 	echo "<TR><TD>limit</TD><TD>$limit</TD></TR>\n";
+	echo "<TR><TD>tilt angle</TD><TD>$tiltangle</TD></TR>\n";
 	echo "<TR><TD>continue</TD><TD>$apcontinue</TD></TR>\n";
 }
 
@@ -213,6 +218,7 @@ function parseAppionLoopParams () {
 	$background = ($_POST[background]=="on") ? "1" : "0";
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
 	$limit = $_POST[limit];
+	$tiltangle = $_POST[tiltangle];
 	$apcontinue = $_POST[apcontinue];
 	$commit = ($_POST[commit]=="on") ? "1" : "0";
 	$runid = $_POST[runid];
@@ -238,6 +244,7 @@ function parseAppionLoopParams () {
 	if ($background) $command.=" background";
 	if ($shuffle) $command.=" shuffle";
 	if ($limit) $command.=" limit=$limit";
+	if ($tiltangle) $command.=" tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" nocontinue";
 	else $command.=" continue";
 
