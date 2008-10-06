@@ -681,7 +681,7 @@ class PickerApp(wx.App):
 		self.shift.SetBackgroundColour(self.deselectcolor)
 
 		# snr > than arbitrary value run some other stuff
-		if snr > 2.3:
+		if snr > 2.3 and len(self.picks1) > 10 and len(self.picks2) > 10:
 			#self.onMaskRegion(None)
 			self.onImportPicks(None, msg=False)
 			self.onAutoOptim(None)
