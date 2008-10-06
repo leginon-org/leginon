@@ -176,6 +176,7 @@ function appionLoopSummaryTable () {
 	else $alldbimages = $_POST[sessionname];
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		$testimage = ereg_replace(" ","\ ", $testimage);
 	}
 
 	echo "<TR><TD>runid</TD><TD>$runid</TD></TR>\n";
@@ -220,6 +221,7 @@ function parseAppionLoopParams () {
 	else $alldbimages = $_POST[sessionname];
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		$testimage = ereg_replace(" ","\ ", $testimage);
 		$apcontinue = false;
 	}
 

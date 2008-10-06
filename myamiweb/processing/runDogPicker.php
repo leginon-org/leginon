@@ -169,6 +169,7 @@ function runDogPicker() {
 
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		$testimage = ereg_replace(" ","\ ",$testimage);
 	}
 
 	// submit job to cluster
@@ -190,7 +191,7 @@ function runDogPicker() {
 			$results.= "<B>DogPicker Command:</B><br />$command";
 			$results.= "</td></tr></table>\n";
 			$results.= "<br />\n";
-			$testjpg=ereg_replace(".mrc","",$testimage);
+			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
 			$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 			$ccclist=array();
 			$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap1.jpg";
