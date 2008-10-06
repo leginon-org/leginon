@@ -184,3 +184,11 @@ type: Pipeline
 module: gridentry
 type: Pipeline
 
+[FFTAnalyzer]
+module: fftanalyzer
+type: Pipeline
+
+[BeamTiltImager]
+module: beamtiltimager
+type: Pipeline
+
