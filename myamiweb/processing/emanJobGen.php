@@ -14,6 +14,9 @@ require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
 
+// bin directory for appion functions
+$appionbin = '/garibaldi/people-a/bcarr/appionbin/';
+
 if ($_POST['write']) {
 	$particle = new particledata();
 	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
@@ -86,6 +89,7 @@ elseif ($_POST['submitjob']) {
 	if ($host=='garibaldi') {
 		$dmfpath=$_POST['dmfpath'].$jobname;
 		$clusterpath=$_POST['clusterpath'].$jobname;
+		global $appionbin;
 	}
 
 	$jobfile="$jobname.job";
@@ -98,9 +102,9 @@ elseif ($_POST['submitjob']) {
 	$header = explode('|--|',$_POST['header']);
 	$clusterjob = "## $jobname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
-	$clusterjob.= "\nupdateAppionDB.py $jobid R\n\n";
+	$clusterjob.= $appionbin."updateAppionDB.py $jobid R\n\n";
 	$clusterjob.= "# jobId: $jobid\n";
-	$clusterlastline.= "updateAppionDB.py $jobid D\nexit\n\n";
+	$clusterlastline.= $appionbin."updateAppionDB.py $jobid D\nexit\n\n";
 	$f = file_get_contents($tmpjobfile);
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
@@ -297,6 +301,9 @@ function stackModelForm($extra=False) {
 function jobForm($extra=false) {
 	$expId = $_GET['expId'];
 
+	$user = $_SESSION['username'];
+	$pass = $_SESSION['password'];
+
 	// get path data for this session for output
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
@@ -358,8 +365,9 @@ function jobForm($extra=false) {
 	$javafunc .= garibaldiFun();
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
+	if (!($user && $pass)) echo "<font color='red'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='red'>$extra</font>\n<hr />\n";
 	}
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
@@ -458,16 +466,34 @@ function jobForm($extra=false) {
   <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
   <hr />
 	";
-	echo "
-  <input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>
-  <select name='import' onChange='emanjob.submit()'>
-    <option>Import parameters</option>
-    <option value='groel1'>GroEL with 10,000+ particles</option>
-    <option value='virusgood'>Icos Virus with good starting model</option>
-  </select>
-	";
-	echo "
-  <br />
+
+	// import values from previous uploaded reconstruction
+	$projectId=getProjectFromExpId($expId);
+	$sessions = $leginondata->getSessions("",$projectId);
+	if (is_array($sessions)) {
+	  	$ropt = "";
+		foreach ($sessions as $s) {
+			$recons = $particle->getReconIdsFromSession($s['id']);
+			if (is_array($recons)) {
+				foreach ($recons as $r) {
+					$ropt.= "<option value='".$r['DEF_id']."'>";
+					$ropt.= $s['name']." : ";
+					$ropt.= $r['name']." - ".$r['description'];
+					$ropt.= "</option>\n";
+				}
+			}
+		}
+	}
+	
+	echo "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
+	echo "<select name='import' onChange='emanjob.submit()'>\n";
+	echo "<option>Import parameters</option>\n";
+	echo "<option value='groel1'>GroEL with 10,000+ particles</option>\n";
+	echo "<option value='virusgood'>Icos Virus with good starting model</option>\n";
+	echo "<option value=''>------------------------------</option>\n";
+	echo $ropt;
+	echo "</select>\n";
+	echo "<br />
   <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
     <tr>\n";
 	foreach ($display_keys as $k=>$key) {
@@ -479,6 +505,15 @@ function jobForm($extra=false) {
 	// set number of iterations if importing:
 	if ($_POST['import']=='groel1') $numiters=20;
 	elseif ($_POST['import']=='virusgood') $numiters=14;
+	elseif (is_numeric($_POST['import'])) {
+		$iterinfo = $particle->getIterationInfo($_POST['import']);
+		// get initial model info
+		$refinfo = $particle->getRefinementRunInfo($_POST['import']);
+		$initmodel = $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
+		// get scaling factor for box sizes
+		$boxscale = $box / $initmodel['boxsize'];
+		$numiters = count($iterinfo);
+	}
 
 	// otherwise use previously set values
 	for ($i=1; $i<=$numiters; $i++) {
@@ -550,6 +585,36 @@ function jobForm($extra=false) {
 				$classiter=3;
 				$ang=0.8;
 				$refine='CHECKED';
+			}
+		}
+		elseif (is_numeric($_POST['import'])) {
+			foreach ($iterinfo as $iter) {
+				if ($iter['iteration'] == $i) {
+					$ang=$iter['ang'];
+					$mask=ceil($boxscale*$iter['mask']);
+					$imask=$iter['imask'];
+					$amask1=$iter['EMAN_amask1'];
+					$amask2=$iter['EMAN_amask2'];
+					$amask3=$iter['EMAN_amask3'];
+					$hard=$iter['EMAN_hard'];
+					$classiter=$iter['EMAN_classiter'];
+					$classkeep=$iter['EMAN_classkeep'];
+					$filt3d=$iter['EMAN_filt3d'];
+					$shrink=$iter['EMAN_shrink'];
+					$euler2=$iter['EMAN_euler2'];
+					$xfiles=$iter['EMAN_xfiles'];
+					$median = ($iter['EMAN_median']) ? 'CHECKED' : '';
+					$phasecls = ($iter['EMAN_phasecls']) ? 'CHECKED' : '';
+					$fscls = ($iter['EMAN_fscls']) ? 'CHECKED' : '';
+					$refine = ($iter['EMAN_refine']) ? 'CHECKED' : '';
+					$goodbad = ($iter['EMAN_goodbad']) ? 'CHECKED' : '';
+					$coran = ($iter['SpiCoranGoodClassAvg']) ? 'CHECKED' : '';
+					$perturb = ($iter['EMAN_perturb']) ? 'CHECKED' : '';
+					$eotest = ($iter['REF|ApResolutionData|resolution']) ? 'CHECKED' : '';
+					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
+					$sym = $symmetry['eman_name'];
+					continue;
+				}
 			}
 		}
 		else {
@@ -717,6 +782,7 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n\n";
+	$header.= "#PBS -j oe\n";
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
@@ -734,6 +800,7 @@ function writeJobFile ($extra=False) {
 		$clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
 		$clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
 		$clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
+		global $appionbin;
 	}
 	else {
 		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
@@ -805,12 +872,12 @@ function writeJobFile ($extra=False) {
 		$line.="getProjEulers.py proj.img proj.$i.txt\n";
 		// if ref-free correllation analysis
 		if ($coran=='on') {
-			$line .="coran_for_cls.py mask=$mask proc=$procs iter=$i";
+			$line .= $appionbin."coran_for_cls.py mask=$mask proc=$procs iter=$i";
 			if ($sym) $line .= " sym=$sym";
 			if ($hard) $line .= " hard=$hard";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
-			$line.="getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.=$appionbin."getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		// if eotest specified with coran, don't do eotest here:
 		elseif ($eotest=='on') {
@@ -825,7 +892,7 @@ function writeJobFile ($extra=False) {
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
 			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
-			$line.="getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.=$appionbin."getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		if ($msgp=='on') {
 			$line .="msgPassing_subClassification.py mask=$mask iter=$i";
