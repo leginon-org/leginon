@@ -287,13 +287,15 @@ class ApEulerJump(object):
 
 #==================
 if __name__ == "__main__":
-	if len(sys.argv) < 3:
-		print "Usage: ./apEulerJump.py reconid sym\n\te.g. ./apEulerJump.py 418 icos"
+	if len(sys.argv) < 2:
+		print "Usage: ./apEulerJump.py reconid [sym]\n\te.g. ./apEulerJump.py 418"
 		sys.exit(1)
 	reconrunid = int(sys.argv[1].strip())
-	sym = sys.argv[2].strip()
-	stackid = apStack.getStackIdFromRecon(reconrunid)
+	if len(sys.argv) > 2:
+		sym = sys.argv[2].strip()
+	else:
+		sym=None
 	a = ApEulerJump()
-	a.calculateEulerJumpsForEntireRecon(reconrunid, stackid, sym)
+	a.calculateEulerJumpsForEntireRecon(reconrunid, sym=sym)
 
 
