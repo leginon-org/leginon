@@ -164,6 +164,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.calclients['stage position'] = calibrationclient.StageCalibrationClient(self)
 		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
 		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
+		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
@@ -388,7 +389,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 				## if stage is tilted and moving by image shift,
 				## calculate z offset between center of image and target
-				if movetype in ('image shift','image beam shift') and abs(targetscope['stage position']['a']) > 0.02:
+				if movetype in ('image shift','image beam shift','beam shift') and abs(targetscope['stage position']['a']) > 0.02:
 					calclient = self.calclients['stage position']
 					try:
 						tmpscope = calclient.transform(pixelshift, targetscope, targetcamera)
