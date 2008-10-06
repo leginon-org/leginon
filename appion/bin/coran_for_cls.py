@@ -480,7 +480,7 @@ if __name__== '__main__':
 		       		makeClassAverages(oddlst,oddstack,e,params['mask'])
 			
 
-	pad=params['boxsize']*1.25
+	pad=int(params['boxsize']*1.25)
 	if pad%2:
 		pad=pad+1
 
