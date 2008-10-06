@@ -74,9 +74,16 @@ def defineIteration():
 	iteration['hard']=None
 	iteration['classkeep']=None
 	iteration['classiter']=None
+	iteration['filt3d']=None
+	iteration['shrink']=None
+	iteration['euler2']=None
+	iteration['xfiles']=None
 	iteration['median']=None
 	iteration['phasecls']=None
+	iteration['fscls']=None
 	iteration['refine']=None
+	iteration['goodbad']=None
+	iteration['perturb']=None
 	iteration['msgpasskeep']=None
 	iteration['msgpassminp']=None
 	return iteration
@@ -265,8 +272,10 @@ def parseLogFile(params):
 			emanparams=line.split(' ')
 			if emanparams[0] is "#":
 				emanparams.pop(0)
+			# get rid of first "refine"
+			emanparams.pop(0)
 			iteration=defineIteration()
-			iteration['num']=emanparams[1]
+			iteration['num']=emanparams[0]
 			iteration['sym']=''
 			for p in emanparams:
 				elements=p.strip().split('=')
@@ -286,12 +295,32 @@ def parseLogFile(params):
 					iteration['classkeep']=float(elements[1].strip())
 				elif elements[0]=='classiter':
 					iteration['classiter']=int(float(elements[1]))
+				elif elements[0]=='filt3d':
+					iteration['filt3d']=int(float(elements[1]))
+				elif elements[0]=='shrink':
+					iteration['shrink']=int(float(elements[1]))
+				elif elements[0]=='euler2':
+					iteration['euler2']=int(float(elements[1]))
+				elif elements[0]=='xfiles':
+					iteration['xfiles']=float(elements[1])
+				elif elements[0]=='amask1':
+					iteration['amask1']=float(elements[1]))
+				elif elements[0]=='amask2':
+					iteration['amask2']=float(elements[1]))
+				elif elements[0]=='amask3':
+					iteration['amask3']=float(elements[1]))
 				elif elements[0]=='median':
 					iteration['median']=True
 				elif elements[0]=='phasecls':
 					iteration['phasecls']=True
+				elif elements[0]=='fscls':
+					iteration['fscls']=True
 				elif elements[0]=='refine':
 					iteration['refine']=True
+				elif elements[0]=='goodbad':
+					iteration['goodbad']=True
+				elif elements[0]=='perturb':
+					iteration['perturb']=True
 			params['iterations'].append(iteration)
 		if re.search("coran_for_cls.py \d+ ", line):
 				params['package']='EMAN/SpiCoran'	
@@ -539,9 +568,16 @@ def insertIteration(iteration, params):
 	refineparamsq['EMAN_hard']=iteration['hard']
 	refineparamsq['EMAN_classkeep']=iteration['classkeep']
 	refineparamsq['EMAN_classiter']=iteration['classiter']
+	refineparamsq['EMAN_filt3d']=iteration['filt3d']
+	refineparamsq['EMAN_shrink']=iteration['shrink']
+	refineparamsq['EMAN_euler2']=iteration['euler2']
+	refineparamsq['EMAN_xfiles']=iteration['xfiles']
 	refineparamsq['EMAN_median']=iteration['median']
 	refineparamsq['EMAN_phasecls']=iteration['phasecls']
+	refineparamsq['EMAN_fscls']=iteration['fscls']
 	refineparamsq['EMAN_refine']=iteration['refine']
+	refineparamsq['EMAN_goodbad']=iteration['goodbad']
+	refineparamsq['EMAN_perturb']=iteration['perturb']
 	refineparamsq['MsgP_cckeep']=iteration['msgpasskeep']
 	refineparamsq['MsgP_minptls']=iteration['msgpassminp']
 
