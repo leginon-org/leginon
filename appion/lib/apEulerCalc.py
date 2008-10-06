@@ -7,6 +7,9 @@ import time
 import pprint
 import apDisplay
 
+#==================
+#==================
+#==================
 def eulerCalculateDistance(e1, e2, inplane=False):
 	"""
 	given two euler as dicts
@@ -19,6 +22,7 @@ def eulerCalculateDistance(e1, e2, inplane=False):
 	#convert to degrees
 	return dist
 
+#==================
 def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	"""
 	given two euler as dicts in degrees
@@ -32,7 +36,10 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	e1mat = getEmanEulerMatrix(e1, inplane=inplane)
 	#print e1mat
 	#get list of equivalent euler matrices
-	e2equivMats = calculateEquivSym(e2, sym=sym, inplane=inplane)
+	if len(sym) > 3 and sym.lower()[:4] == "icos":
+		e2equivMats = calculateEquivIcos(e2, inplane=inplane)
+	else:
+		e2equivMats = calculateEquivSym(e2, sym=sym, inplane=inplane)
 	#print e2equivMats[0]
 
 	# calculate the distances between the original Euler and all the equivalents
@@ -54,6 +61,7 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	#convert to degrees
 	return mindist
 
+#==================
 def calculateEquivSym(euler, sym='d7', symout=False, inplane=False):
 	"""
 	rotates eulers about any c and d symmetry group
@@ -72,7 +80,7 @@ def calculateEquivSym(euler, sym='d7', symout=False, inplane=False):
 
 	# if D symmetry, combine each rotations with x axis rotation
 	if sym[0] == 'd':
-		x1 = calcXRot(math.pi)
+		x1 = calcYRot(math.pi)
 		for i in range(numrot):	
 			symMats.append( numpy.dot(x1, symMats[i]) )
 
@@ -91,9 +99,62 @@ def calculateEquivSym(euler, sym='d7', symout=False, inplane=False):
  		f.close()
 	return equivMats
 
+#==================
+def calculateEquivIcos(euler, symout=False, inplane=False):
+	"""
+	rotates eulers about icosahedral symmetry group
+
+	input:
+		individual euler dict
+	output:
+		list of equiv. euler matrices
+	"""
+	symMats = []
+
+	### first 5 rotations
+	for i in range(5):
+		symMats.append( calcZRot(2.0*math.pi*float(i)/float(5)) )
+	### second 5 are rotated 180 out of phase
+	x1 = calcYRot(math.pi)
+	for i in range(5):	
+		symMats.append( numpy.dot(x1, symMats[i]) )
+	### next 25 include a y rotation duplicated 5 times with another z rotation
+	y1 = calcYRot(296.56505*math.pi/180.0)
+	for i in range(5):
+		mysym = numpy.dot(y1, calcZRot(2.0*math.pi*float(i)/5.0+36.0))
+		symMats.append( mysym )
+		for i in range(4):
+			z2 = calcZRot(2.0*math.pi*float(i+1)/5.0)
+			symMats.append( numpy.dot(z2, mysym) )
+	### final 25 include a y rotation duplicated 5 times with another z rotation
+	y1 = calcYRot(243.43495*math.pi/180.0)
+	for i in range(5):
+		mysym = numpy.dot(y1, calcZRot(2.0*math.pi*float(i)/5.0))
+		symMats.append( mysym )
+		for i in range(4):
+			z2 = calcZRot(2.0*math.pi*float(i+1)/5.0+36.0)
+			symMats.append( numpy.dot(z2, mysym) )
+
+	#calculate new euler matices
+	eulerMat = getEmanEulerMatrix(euler, inplane=inplane)
+	equivMats=[]
+	for symMat in symMats:	
+		equivMats.append(numpy.dot(eulerMat, symMat))
+
+	if symout is True:
+		f=open('matrices.txt','w')
+ 		for n,e in enumerate(equivMats):
+ 			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[0,0], e[0,1], e[0,2]))
+ 			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[1,0], e[1,1], e[1,2]))
+ 			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[2,0], e[2,1], e[2,2]))
+ 		f.close()
+	return equivMats
+
+#==================
 def getEmanEulerMatrix(eulerdata, inplane=True):
 	return getMatrix3(eulerdata, inplane=inplane)
 
+#==================
 def getMatrix(eulerdata):
 	a=eulerdata['euler3']*math.pi/180
 	b=eulerdata['euler1']*math.pi/180
@@ -110,6 +171,7 @@ def getMatrix(eulerdata):
 	m[2,2]=math.cos(b)
 	return m
 
+#==================
 def getMatrix2(eulerdata):
 	alpha=eulerdata['euler1']*math.pi/180
 	beta=eulerdata['euler2']*math.pi/180
@@ -144,6 +206,7 @@ def getMatrix2(eulerdata):
 	
 	return(m)
 
+#==================
 def getMatrix3(eulerdata, inplane=False):
 	"""
 	math from http://mathworld.wolfram.com/EulerAngles.html
@@ -189,6 +252,7 @@ def getMatrix3(eulerdata, inplane=False):
 	m[2,2] =  math.cos(the)
 	return m
 
+#==================
 def computeDistance(m1,m2):
 	r = numpy.dot(m1.transpose(),m2)
 	#print r
@@ -218,6 +282,7 @@ def computeDistance(m1,m2):
 		#print 'dist=',dist
 		return dist
 
+#==================
 def calcXRot(a):
 	m=numpy.zeros((3,3))
 	m[0,0]=1
@@ -231,6 +296,7 @@ def calcXRot(a):
 	m[2,2]=math.cos(a)
 	return m
 
+#==================
 def calcYRot(a):
 	m=numpy.zeros((3,3))
 	m[0,0]=math.cos(a)
@@ -244,6 +310,7 @@ def calcYRot(a):
 	m[2,2]=math.cos(a)
 	return m
 
+#==================
 def calcZRot(a):
 	m=numpy.zeros((3,3))
 	m[0,0]=math.cos(a)
@@ -257,6 +324,7 @@ def calcZRot(a):
 	m[2,2]=1
 	return m
 
+#==================
 def henryMult(m1,m2):
 	c=numpy.zeros((m1.shape[0],m2.shape[1]))
 	for i in range(0,c.shape[0]):
@@ -266,6 +334,5 @@ def henryMult(m1,m2):
 				tot+=m1[i,k]*m2[k,j]
 			c[i,j]=tot
 	return c
-
 
 
