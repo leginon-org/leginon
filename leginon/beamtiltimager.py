@@ -39,6 +39,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		'adjust for drift': False,
 		'beam tilt': 0.01,
 		'sites': 0,
+		'startangle': 0,
 		'correlation type': 'phase',
 	}
 
@@ -77,11 +78,12 @@ class BeamTiltImager(acquisition.Acquisition):
 		if self.settings['sites'] == 0:
 			return tiltlist
 		angle = 2*3.14159/self.settings['sites']
+		startangle = self.settings['startangle'] * numpy.pi / 180.0
 		for i in range(0,self.settings['sites']):
 			bt = {}
 			tilt = self.settings['beam tilt']
-			bt['x']=math.cos(i*angle)*tilt
-			bt['y']=math.sin(i*angle)*tilt
+			bt['x']=math.cos(i*angle+startangle)*tilt
+			bt['y']=math.sin(i*angle+startangle)*tilt
 			tiltlist.append(bt)
 		return tiltlist
 
@@ -100,8 +102,24 @@ class BeamTiltImager(acquisition.Acquisition):
 		# aquire and save the focus image
 		oldbt = self.instrument.tem.BeamTilt
 		tiltlist = self.getBeamTiltList()
+
+		## first target is the one given, the remaining are created now
+		targetlist = []
+		targetlist.append(target)
+		for i in range(len(tiltlist)-1):
+			## check if target is simulated or not
+			if ???:
+				targetdata = self.newSimulatedTarget(preset=currentpreset)
+			else:
+				self.newTargetForImage(self, imagedata, drow=target, dcol)
+				lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
+				newnumber = lastnumber+1
+				newtarget = leginondata.AcquisitionImageTargetData(initializer=target, number=newnumber)
+			targetlist.append(newtarget)
+
 		displace = []
 		for i,bt in enumerate(tiltlist):
+			target = targetlist[i]
 			if i == 0:
 				channel = 0
 			else:
