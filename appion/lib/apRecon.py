@@ -304,11 +304,11 @@ def parseLogFile(params):
 				elif elements[0]=='xfiles':
 					iteration['xfiles']=float(elements[1])
 				elif elements[0]=='amask1':
-					iteration['amask1']=float(elements[1]))
+					iteration['amask1']=float(elements[1])
 				elif elements[0]=='amask2':
-					iteration['amask2']=float(elements[1]))
+					iteration['amask2']=float(elements[1])
 				elif elements[0]=='amask3':
-					iteration['amask3']=float(elements[1]))
+					iteration['amask3']=float(elements[1])
 				elif elements[0]=='median':
 					iteration['median']=True
 				elif elements[0]=='phasecls':
