@@ -17,6 +17,10 @@ require "inc/processing.inc";
 // --- check if reconstruction is specified
 
 if ($_POST['run']) {
+	$leginon = new leginondata();
+
+	$expId = $_GET['expId'];
+	$refId = $_GET['refinement'];
 	$ampcor=$_POST['ampcor'];
 	$lp=$_POST['lp'];
 	$yflip=$_POST['yflip'];
@@ -28,17 +32,29 @@ if ($_POST['run']) {
 	$norm=$_POST['norm'];
 	$mask=$_POST['mask'];
 	$imask=$_POST['imask'];
+	$sym=$_POST['sym'];
+	$zoom = $_POST['zoom'];
+	$contour = $_POST['contour'];
 	$densitypath=$path."/".$file;
 	// make sure that an amplitude curve was selected
 	if (!$ampcor) createform('<B>ERROR:</B> Select an amplitude adjustment curve');
 	list($ampfile, $res) = explode('|~~|',$ampcor);
 
+	// get session name from expId
+	$sessioninfo = $leginondata->getSessionInfo($expId);
+	$sessname = $sessioninfo['Name'];
+
 	$command = "postProc.py ";
+	$command.= "-s $sessname ";
 	$command.= "-f $densitypath ";
 	$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
 	$command.= "--maxfilt=$res ";
 	$command.= "--apix=$apix ";
-	$command.= "--outdir=$path/postproc ";
+	$command.= "--res=$res ";
+	$command.= "--sym=$sym ";
+	$command.= "--reconid=$refId ";
+	$command.= "-z $zoom ";
+	$command.= "-c $contour ";
 	if ($mask) $command.="--mask=$mask ";
 	if ($imask) $command.="--imask=$imask ";
 	if ($lp) $command.="--lp=$lp ";
@@ -75,17 +91,24 @@ else createform();
 
 function createform($extra=False) {
 	$expId = $_GET['expId'];
-	$refid = $_GET['refinement'];
+	$refId = $_GET['refinement'];
+
+	$particle = new particledata();
+
+	$refinementParams = $particle->getParamsFromRefinementDataId($refId);
+	$sym=$refinementParams['REF|ApSymmetryData|symmetry'];
 	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
 
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	if ($extra) echo "<font color='red'>$extra</font>\n<hr />\n";
 		
-	$particle = new particledata();
-	$info = $particle->getReconInfoFromRefinementId($refid);
+	$info = $particle->getReconInfoFromRefinementId($refId);
 
-	// get symmetry of initial model
-	$init = $particle->getInitModelInfo($info['REF|ApInitialModelData|initialModel']);
+	// get symmetry of initial model if no symmetry saved for iteration
+	if (!$sym) {
+		$init = $particle->getInitModelInfo($info['REF|ApInitialModelData|initialModel']);
+		$sym=$init['REF|ApSymmetryData|symmetry'];
+	}
 	$fscres = $particle->getResolutionInfo($info['REF|ApResolutionData|resolution']);
 	$halfres = ($fscres) ? sprintf("%.2f",$fscres['half']) : "None" ;
 	$rmeas = $particle->getRMeasureInfo($info['REF|ApRMeasureData|rMeasure']);
@@ -94,7 +117,7 @@ function createform($extra=False) {
 	$densityfile = $info['path']."/".$info['volumeDensity'];
 	$apix = ($particle->getStackPixelSizeFromStackId($info['REF|ApStackData|stack']))*1e10;
 
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&refinement=$refid";
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&refinement=$refId";
 
 	$amplist = array();
 
@@ -105,6 +128,9 @@ function createform($extra=False) {
 	$invertcheck=($_POST['invert']=='on') ? 'checked' : '';
 	$vipercheck=($_POST['viper']=='on') ? 'checked' : '';
 	$normcheck=($_POST['norm']=='on' || !$_POST['run']) ? 'checked' : '';
+	$res = ($_POST['res']) ? $_POST['res'] : $halfres;
+	$contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
+	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
 
 	// manually create list of the amplitude adjustment files
 	$amplist[0]['name']="ampcor5.spi";
@@ -119,13 +145,19 @@ function createform($extra=False) {
 	$amplist[3]['name']="ampcor11.spi";
 	$amplist[3]['res']=11.519;
 	$amplist[3]['src']="Experimental X-ray curve, smoothed by Dmitri Svergun";
+	echo "<form name='postproc' method='post' action='$formAction'>\n";
 	echo "Density File: $densityfile<br />\n";
-	echo "Resolution (FSC = 0.5): $halfres<br />\n";
-	echo "Resolution (Rmeasure): $rmeasureres<br />\n";
 	echo "Pixel Size: $apix ang/pix<br />\n";
-	echo "<HR>\n";
-	echo "<FORM NAME='postproc' METHOD='POST' ACTION='$formAction'>\n";
-	echo "<center><INPUT type='submit' name='run' value='Perform amplitude adjustment'></center>\n";
+	echo "<b>Reported Resolution:</b><br />\n";
+	echo "FSC = 0.5: $halfres<br />\n";
+	echo "Rmeasure: $rmeasureres<br />\n";
+	echo "<b>Snapshot Options:</b>\n";
+	echo "<br />\n";
+	echo "<input type'text' name='res' value='$res' size='5'> Resolution\n";	echo "<br />\n";
+	echo "<input type'text' name='contour' value='$contour' size='5'> Contour Level\n";
+	echo "<br />\n";
+	echo "<input type='text' name='zoom' value='$zoom' size='5'> Zoom\n";
+	echo "<hr />\n";
 	echo "<P>\n";
 	echo "<table class='tableborder' border='1' cellpadding='5'>\n";
 	echo "<tr><td>\n";
@@ -137,31 +169,32 @@ function createform($extra=False) {
 	echo "<input type='text' name='imask' size='4' value='$imaskval'> &Aring;ngstroms<br />\n";
 	echo "<input type='checkbox' name='yflip' $yflipcheck>Flip handedness of density<br />\n";
 	echo "<input type='checkbox' name='invert' $invertcheck>Invert the magnitude of the density<br />\n";
-	if ($init['REF|ApSymmetryData|symmetry']< 3) {
-	  echo "<input type='checkbox' name='viper' $vipercheck>Rotate density from EMAN to Viper orientation<br />\n";
+	if ($sym< 3) {
+		echo "<input type='checkbox' name='viper' $vipercheck>Rotate density from EMAN to Viper orientation<br />\n";
 	}
+	echo "<input type='hidden' name='sym' value='$sym'>\n";
 	echo "<input type='checkbox' name='norm' $normcheck>Normalize the resulting density<br />\n";
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "<P>\n";
 	echo "<TABLE CLASS='tableborder' BORDER='1' WIDTH='600'>\n";
 	foreach ($amplist as $amp) {
-	  $ampfile = $appiondir.$amp['name'];
-	  echo "<TR><TD>\n";
-	  echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'><IMG SRC='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=TRUE'>\n";
-	  echo "</TD><TD>\n";
-	  echo "<B>Resolution limit:</B> $amp[res]<br />\n";
-	  echo "<B>Source:</B> $amp[src]<br />\n";
-	  echo "<INPUT TYPE='radio' name='ampcor' value='$amp[name]|~~|$amp[res]'> Use this amplitude curve\n";
-	  echo "</TD></TR>\n";
+		$ampfile = $appiondir.$amp['name'];
+		echo "<TR><TD>\n";
+		echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'><IMG SRC='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=TRUE'>\n";
+		echo "</TD><TD>\n";
+		echo "<B>Resolution limit:</B> $amp[res]<br />\n";
+		echo "<B>Source:</B> $amp[src]<br />\n";
+		echo "<INPUT TYPE='radio' name='ampcor' value='$amp[name]|~~|$amp[res]'> Use this amplitude curve\n";
+		echo "</TD></TR>\n";
 	}
 	echo "</TABLE>\n";
 	echo "<P>\n";
 	echo "<INPUT TYPE='hidden' name='apix' value='$apix'>\n";
 	echo "<INPUT TYPE='hidden' name='file' value='$info[volumeDensity]'>\n";
 	echo "<INPUT TYPE='hidden' name='path' value='$info[path]'>\n";
-	echo "<center><INPUT type='submit' name='run' value='Perform amplitude adjustment'></center>\n";
-	echo "</FORM>\n";
+	echo "<center><INPUT type='submit' name='run' value='Post Process'></center>\n";
+	echo "</form>\n";
 	processing_footer();
 	exit();
 }
