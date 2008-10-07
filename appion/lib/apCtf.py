@@ -196,22 +196,59 @@ def getBestCtfValueForImage(imgdata, ctfavg=False):
 				bestctfvalue = ctfvalue
 	return bestctfvalue, bestconf
 
+def getBestTiltCtfValueForImage(imgdata):
+	"""
+	takes an image and get the tilted ctf parameters for that image
+	"""
+	### get all ctf values
+	ctfq = appionData.ApCtfData()
+	ctfq['image'] = imgdata
+	ctfvalues = appiondb.query(ctfq)
+	
+	bestctftiltvalue = None
+	cross_correlation = 0.0
+	for ctfvalue in ctfvalues:
+		if ctfvalue['ctftiltrun'] is not None:
+			if bestctftiltvalue is None:
+				cross_correlation = ctfvalue['cross_correlation']
+				bestctftiltvalue = ctfvalue
+			else:
+				if cross_correlation < ctfvalue['cross_correlation']:
+					cross_correlation = ctfvalue['cross_correlation']
+					bestctftiltvalue = ctfvalue
+
+	return bestctftiltvalue	
+
+
 def ctfValuesToParams(ctfvalue, params):
-	if ctfvalue['acerun']['aceparams']['stig'] == 1:
-		apDisplay.printWarning("astigmatism was estimated for this image"+\
-		 " and average defocus estimate may be incorrect")
-		params['hasace'] = True
-		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
-		params['df']     = avgdf*-1.0e6
-		params['conf_d'] = ctfvalue['confidence_d']
-		params['conf']   = ctfvalue['confidence']
-		return -avgdf
-	else:
-		params['hasace'] = True
-		params['df']     = ctfvalue['defocus1']*-1.0e6
-		params['conf_d'] = ctfvalue['confidence_d']
-		params['conf']   = ctfvalue['confidence']
-		return -ctfvalue['defocus1']
+	if ctfvalue['acerun'] is not None:
+		if ctfvalue['acerun']['aceparams']['stig'] == 1:
+			apDisplay.printWarning("astigmatism was estimated for this image"+\
+			 " and average defocus estimate may be incorrect")
+			params['hasace'] = True
+			avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+			params['df']     = avgdf*-1.0e6
+			params['conf_d'] = ctfvalue['confidence_d']
+			params['conf']   = ctfvalue['confidence']
+			return -avgdf
+		else:
+			params['hasace'] = True
+			params['df']     = ctfvalue['defocus1']*-1.0e6
+			params['conf_d'] = ctfvalue['confidence_d']
+			params['conf']   = ctfvalue['confidence']
+			return -ctfvalue['defocus1']
+	if ctfvalue['ctftiltrun'] is not None:
+			params['hasctftilt'] = True
+			params['df1'] = ctfvalue['defocus1']*-1.0e6
+			params['df2'] = ctfvalue['defocus2']*-1.0e6
+			params['dfinit'] = ctfvalue['defocusinit']*-1.0e6
+			params['angle_astigmatism'] = ctfvalue['angle_astigmatism']
+			params['cross_correlation'] = ctfvalue['cross_correlation']
+			params['tilt_angle'] = ctfvalue['tilt_angle']
+			params['tilt_axis_angle'] = ctfvalue['tilt_axis_angle']
+			params['confidence_d'] = ctfvalue['confidence_d']
+			return -ctfvalue['defocus1']	
+
 	return None
 
 
