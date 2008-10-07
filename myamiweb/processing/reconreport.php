@@ -149,15 +149,15 @@ $pngimages = getPngList($refinerun['path']);
 # display starting model
 $html .= "<TR>\n";
 foreach ($display_keys as $p) {
-  $html .= "<TD>";
-  if ($p == 'iteration') $html .= "0";
-  elseif ($p == 'snapshot') {
-    foreach ($initpngs as $snapshot) {
-      $snapfile = $initmodel['path'].'/'.$snapshot;
-      $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'></A>\n";
-    }
-  }
-  $html .= "</TD>";
+	$html .= "<TD>";
+	if ($p == 'iteration') $html .= "0";
+	elseif ($p == 'snapshot') {
+		foreach ($initpngs as $snapshot) {
+			$snapfile = $initmodel['path'].'/'.$snapshot;
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'></A>\n";
+		}
+	}
+	$html .= "</TD>";
 }
 $html .= "</TR>\n";
 
@@ -303,12 +303,15 @@ foreach ($iterations as $iteration){
 	}	
 	$html .= "</table></TD>";
   
+	// postproc/makegoodaverages
 	$html .= "<td bgcolor='$bg'>$iteration[volumeDensity]<br />\n";
 	$html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a><br />\n";
 	$html .= "<A HREF='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'><FONT CLASS='sf'>[new averages]</FONT></a><br />\n";
 	if ($refinementData['exemplar']) $html .= "<input class='edit' type='submit' name='notExemplar".$refinementData['DEF_id']."' value='not exemplar'>";
 	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='exemplar'>";
 	$html .= "</td>\n";
+
+	// snapshot images
 	$html .= "<td bgcolor='$bg'>\n";
 	foreach ($pngimages['pngfiles'] as $snapshot) {
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
@@ -316,8 +319,31 @@ foreach ($iterations as $iteration){
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 		}
 	}
-	$html .= "</TD>\n";
-	$html .= "</TR>\n";
+	// check for post procs
+	$postprocs = $particle->getPostProcsFromRefId($refinementData['DEF_id']);
+	if (is_array($postprocs)) {
+		$html .= "<table class='tableborder' border='1'>\n";
+		foreach ($postprocs as $p) {
+			# get list of png files in directory
+	  		$procimgs = getPngList($p['path']);			
+			$html .= "<tr><td>\n";
+			$html .= "path: ".$p['path'];
+			$html .= "<br />\n";
+			$html .= "name: ".$p['name'];
+			$html .= "<br />\n";
+			foreach ($procimgs['pngfiles'] as $s) {
+			  	if (eregi($p['name'],$s)) {
+					$sfile = $p['path'].'/'.$s;
+					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'><img src='loadimg.php?filename=$sfile' height='80'>\n";
+				}
+			}
+			$html .="</td></tr>\n";
+		}
+		$html .= "</table>\n";
+	}
+	  
+	$html .= "</td>\n";
+	$html .= "</tr>\n";
 }
 $html .= "</form>\n";
 $html.="</TABLE>\n";

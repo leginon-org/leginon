@@ -1858,6 +1858,19 @@ class particledata {
 		return $r;
 	}
 
+	function getPostProcsFromRefId($refid) {
+	  	$q = "SELECT d.*, "
+		  ."p.path as path , a.path as amppath "
+		  ."FROM `Ap3dDensityData` AS d "
+		  ."LEFT JOIN `ApPathData` AS p ON "
+		  ."(d.`REF|ApPathData|path` = p.`DEF_id`) "
+		  ."LEFT JOIN `ApPathData` AS a ON "
+		  ."(d.`REF|ApPathData|ampPath` = a.`DEF_id`) "
+		  ."WHERE d.`REF|ApRefinementData|iterid` = $refid ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getInitModelInfo ($modelId) {
 		$q = "SELECT d.*,p.path "
 				."FROM `ApInitialModelData` AS d "
