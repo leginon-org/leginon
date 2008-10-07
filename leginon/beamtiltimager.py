@@ -108,7 +108,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		targetlist.append(target)
 		for i in range(len(tiltlist)-1):
 			## check if target is simulated or not
-			if ???:
+			if target['type'] == 'simulated':
 				targetdata = self.newSimulatedTarget(preset=currentpreset)
 			else:
 				self.newTargetForImage(self, imagedata, drow=target, dcol)
