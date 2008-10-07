@@ -109,7 +109,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		for i in range(len(tiltlist)-1):
 			## check if target is simulated or not
 			if target['type'] == 'simulated':
-				targetdata = self.newSimulatedTarget(preset=currentpreset)
+				newtarget = self.newSimulatedTarget(preset=presetdata)
 			else:
 				lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
 				newnumber = lastnumber+1
