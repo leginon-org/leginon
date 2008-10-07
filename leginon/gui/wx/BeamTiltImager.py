@@ -40,6 +40,7 @@ class Panel(gui.wx.Acquisition.Panel):
 							 shortHelpString='Align rotation center')
 		# correlation image
 		self.imagepanel.addTypeTool('Correlation', display=True)
+		self.imagepanel.addTypeTool('Tableau', display=True)
 		self.imagepanel.addTargetTool('Peak', wx.Color(255, 128, 0))
 
 		self.szmain.Layout()
@@ -95,6 +96,11 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['correlation type'], (3, 1), (1, 1), wx.ALIGN_CENTER)
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+
+		self.widgets['tableau binning'] = IntEntry(self, -1, min=0, allownone=False, chars=4, value='2')
+		label = wx.StaticText(self, -1, 'Tableau Binning:')
+		sizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['tableau binning'], (4, 1), (1, 1), wx.ALIGN_CENTER)
 
 		return sizers + [sbsz]
 

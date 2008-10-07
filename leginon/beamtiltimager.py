@@ -19,6 +19,7 @@ import numpy
 import copy
 import gui.wx.BeamTiltImager
 import player
+import tableau
 
 class BeamTiltImager(acquisition.Acquisition):
 	panelclass = gui.wx.BeamTiltImager.Panel
@@ -75,18 +76,45 @@ class BeamTiltImager(acquisition.Acquisition):
 
 	def getBeamTiltList(self):
 		tiltlist = []
+		anglelist = []
 		tiltlist.append({'x':0.0,'y':0.0})
+		anglelist.append(None)
 		if self.settings['sites'] == 0:
 			return tiltlist
-		angle = 2*3.14159/self.settings['sites']
+		angleinc = 2*3.14159/self.settings['sites']
 		startangle = self.settings['startangle'] * numpy.pi / 180.0
 		for i in range(0,self.settings['sites']):
 			bt = {}
 			tilt = self.settings['beam tilt']
-			bt['x']=math.cos(i*angle+startangle)*tilt
-			bt['y']=math.sin(i*angle+startangle)*tilt
+			angle = i * angleinc + startangle
+			anglelist.append(angle)
+			bt['x']=math.cos(angle)*tilt
+			bt['y']=math.sin(angle)*tilt
 			tiltlist.append(bt)
-		return tiltlist
+		return tiltlist, anglelist
+
+	def initTableau(self):
+		self.tableauimages = []
+		self.tableauangles = []
+
+	def insertTableau(self, image, angle):
+		binning = self.settings['tableau binning']
+		print 'BINNING', binning
+		binned = imagefun.bin(image, binning)
+		self.tableauimages.append(binned)
+		self.tableauangles.append(angle)
+
+	def renderTableau(self):
+		if not self.tableauimages:
+			return
+		size = self.tableauimages[0].shape[0]
+		rad = numpy.sqrt(2 * size * size)
+		tab = tableau.Tableau(radius=rad)
+		for i,im in enumerate(self.tableauimages):
+			angle = self.tableauangles[i]
+			tab.insertImage(im, angle)
+		tabimage = tab.render()
+		self.displayTableau(tabimage)
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
@@ -102,7 +130,10 @@ class BeamTiltImager(acquisition.Acquisition):
 
 		# aquire and save the focus image
 		oldbt = self.instrument.tem.BeamTilt
-		tiltlist = self.getBeamTiltList()
+		tiltlist,anglelist = self.getBeamTiltList()
+
+		## initialize a new tableau
+		self.initTableau()
 
 		## first target is the one given, the remaining are created now
 		emtargetlist = []
@@ -135,6 +166,9 @@ class BeamTiltImager(acquisition.Acquisition):
 			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
 			status,imagedata = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
 			self.instrument.tem.BeamTilt = oldbt
+			angle = anglelist[i]
+			pow = imagefun.power(imagedata['image'])
+			self.insertTableau(pow, angle)
 			try:
 				shiftinfo = self.correlateOriginal(i,imagedata)
 			except Exception, e:
@@ -142,6 +176,7 @@ class BeamTiltImager(acquisition.Acquisition):
 				return 'error'
 			pixelshift = shiftinfo['pixel shift']
 			displace.append((pixelshift['row'],pixelshift['col']))
+		self.renderTableau()
 		print displace
 		return status
 
@@ -196,6 +231,12 @@ class BeamTiltImager(acquisition.Acquisition):
 	def displayCorrelation(self, im):
 		try:
 			self.setImage(im, 'Correlation')
+		except:
+			pass
+
+	def displayTableau(self, im):
+		try:
+			self.setImage(im, 'Tableau')
 		except:
 			pass
 
