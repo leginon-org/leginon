@@ -6,7 +6,8 @@
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
 import acquisition
-import node, data
+import node
+import leginondata
 import calibrationclient
 import corrector
 import threading
@@ -21,7 +22,7 @@ import player
 
 class BeamTiltImager(acquisition.Acquisition):
 	panelclass = gui.wx.BeamTiltImager.Panel
-	settingsclass = data.BeamTiltImagerSettingsData
+	settingsclass = leginondata.BeamTiltImagerSettingsData
 	defaultsettings = {
 		'pause time': 2.5,
 		'move type': 'image shift',
@@ -104,21 +105,26 @@ class BeamTiltImager(acquisition.Acquisition):
 		tiltlist = self.getBeamTiltList()
 
 		## first target is the one given, the remaining are created now
-		targetlist = []
-		targetlist.append(target)
+		emtargetlist = []
+		emtargetlist.append(emtarget)
 		for i in range(len(tiltlist)-1):
 			## check if target is simulated or not
 			if target['type'] == 'simulated':
 				newtarget = self.newSimulatedTarget(preset=presetdata)
+				print 'NUMBER', newtarget['number']
+				newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
 			else:
 				lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
 				newnumber = lastnumber+1
 				newtarget = leginondata.AcquisitionImageTargetData(initializer=target, number=newnumber)
-			targetlist.append(newtarget)
+				newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
+
+			newemtarget.insert(force=True)
+			emtargetlist.append(newemtarget)
 
 		displace = []
 		for i,bt in enumerate(tiltlist):
-			target = targetlist[i]
+			emtarget = emtargetlist[i]
 			if i == 0:
 				channel = 0
 			else:
@@ -214,12 +220,12 @@ class BeamTiltImager(acquisition.Acquisition):
 	def acquireCorrectedImage(self):
 		if not self.samecorrection or (self.samecorrection and not self.correctargs):
 			## acquire image and scope/camera params
-			imagedata = self.instrument.getData(data.CameraImageData)
+			imagedata = self.instrument.getData(leginondata.CameraImageData)
 			imarray = imagedata['image']
 			self.correctargs = {}
 			camdata = imagedata['camera']
 			self.correctargs['ccdcamera'] = camdata['ccdcamera']
-			corstate = data.CorrectorCamstateData()
+			corstate = leginondata.CorrectorCamstateData()
 			corstate['dimension'] = camdata['dimension']
 			corstate['offset'] = camdata['offset']
 			corstate['binning'] = camdata['binning']
