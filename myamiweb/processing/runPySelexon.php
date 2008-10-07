@@ -369,7 +369,7 @@ function runTemplateCorrelator() {
 		$results.= "<b>Template Correlator Command:</b><br />$command";
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
-		$testjpg=ereg_replace(".mrc","",$testimage);
+		$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
 		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
 		$i=1;
