@@ -33,12 +33,13 @@ if ($_POST['run']) {
 	$mask=$_POST['mask'];
 	$imask=$_POST['imask'];
 	$sym=$_POST['sym'];
+	$res = $_POST['res'];
 	$zoom = $_POST['zoom'];
 	$contour = $_POST['contour'];
 	$densitypath=$path."/".$file;
 	// make sure that an amplitude curve was selected
 	if (!$ampcor) createform('<B>ERROR:</B> Select an amplitude adjustment curve');
-	list($ampfile, $res) = explode('|~~|',$ampcor);
+	list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
 
 	// get session name from expId
 	$sessioninfo = $leginondata->getSessionInfo($expId);
@@ -48,7 +49,7 @@ if ($_POST['run']) {
 	$command.= "-s $sessname ";
 	$command.= "-f $densitypath ";
 	$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
-	$command.= "--maxfilt=$res ";
+	$command.= "--maxfilt=$maxfilt ";
 	$command.= "--apix=$apix ";
 	$command.= "--res=$res ";
 	$command.= "--sym=$sym ";
@@ -72,7 +73,7 @@ if ($_POST['run']) {
 	</td></tr>
         <tr><td>file</td><td>$densitypath</td></tr>
         <tr><td>ampcor curve</td><td>$ampfile</td></tr>
-        <tr><td>max filt</td><td>$res</td></tr>
+        <tr><td>max filt</td><td>$maxfilt</td></tr>
         <tr><td>mask</td><td>$mask</td></tr>
         <tr><td>imask</td><td>$imask</td></tr>
         <tr><td>norm</td><td>$norm</td></tr>
@@ -129,21 +130,22 @@ function createform($extra=False) {
 	$vipercheck=($_POST['viper']=='on') ? 'checked' : '';
 	$normcheck=($_POST['norm']=='on' || !$_POST['run']) ? 'checked' : '';
 	$res = ($_POST['res']) ? $_POST['res'] : $halfres;
+	$maxfilt = ($_POST['maxfilt']) ? $_POST['maxfilt'] : '';
 	$contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
 
 	// manually create list of the amplitude adjustment files
 	$amplist[0]['name']="ampcor5.spi";
-	$amplist[0]['res']=4.6;
+	$amplist[0]['maxfilt']=4.6;
 	$amplist[0]['src']="GroEL SAXS data";
 	$amplist[1]['name']="ampcorRNAvirus5.spi";
-	$amplist[1]['res']=4.808;
+	$amplist[1]['maxfilt']=4.808;
 	$amplist[1]['src']="Wild type CCMV Virus SAXS data collected by Kelly Lee (closed form, RNA-filled)";
 	$amplist[2]['name']="ampcor8.spi";
-	$amplist[2]['res']=7.854;
+	$amplist[2]['maxfilt']=7.854;
 	$amplist[2]['src']="Experimental X-ray curve, smoothed by Dmitri Svergun";
 	$amplist[3]['name']="ampcor11.spi";
-	$amplist[3]['res']=11.519;
+	$amplist[3]['maxfilt']=11.519;
 	$amplist[3]['src']="Experimental X-ray curve, smoothed by Dmitri Svergun";
 	echo "<form name='postproc' method='post' action='$formAction'>\n";
 	echo "Density File: $densityfile<br />\n";
@@ -183,9 +185,9 @@ function createform($extra=False) {
 		echo "<TR><TD>\n";
 		echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'><IMG SRC='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=TRUE'>\n";
 		echo "</TD><TD>\n";
-		echo "<B>Resolution limit:</B> $amp[res]<br />\n";
+		echo "<B>Resolution limit:</B> $amp[maxfilt]<br />\n";
 		echo "<B>Source:</B> $amp[src]<br />\n";
-		echo "<INPUT TYPE='radio' name='ampcor' value='$amp[name]|~~|$amp[res]'> Use this amplitude curve\n";
+		echo "<INPUT TYPE='radio' name='ampcor' value='$amp[name]|~~|$amp[maxfilt]'> Use this amplitude curve\n";
 		echo "</TD></TR>\n";
 	}
 	echo "</TABLE>\n";
