@@ -11,6 +11,7 @@ import appionScript
 import apDisplay
 import apAlignment
 import apFile
+import apTemplate
 import apStack
 import apEMAN
 from apSpider import alignment
