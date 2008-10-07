@@ -1,9 +1,18 @@
 #!/usr/bin/env python
 
 import numpy
-print 'NUMPY', numpy
 from pyami import imagefun
 import math
+
+def splitTableau(image, split):
+	tabimage = numpy.zeros(image.shape, image.dtype)
+	splitsize = image.shape[0]/int(split), image.shape[1]/int(split)
+	for row in range(0,image.shape[0],splitsize[0]):
+		rowslice = slice(row,row+splitsize[0])
+		for col in range(0,image.shape[1],splitsize[1]):
+			colslice = slice(col,col+splitsize[1])
+			tabimage[rowslice,colslice] = imagefun.power(image[rowslice,colslice])
+	return tabimage
 
 class Tableau(object):
 	def __init__(self, radius):
@@ -61,6 +70,9 @@ class Tableau(object):
 			imagefun.pasteInto(image['image'], finalimage, pos)
 
 		return finalimage
+
+
+
 
 if __name__ == '__main__':
 	from pyami import mrc

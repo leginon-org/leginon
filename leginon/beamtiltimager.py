@@ -102,14 +102,8 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tableauangles = []
 
 	def splitTableau(self, image):
-		tabimage = numpy.zeros(image.shape, image.dtype)
 		split = self.settings['tableau split']
-		splitsize = image.shape[0]/int(split), image.shape[1]/int(split)
-		for row in range(0,image.shape[0],splitsize[0]):
-			rowslice = slice(row,row+splitsize[0])
-			for col in range(0,image.shape[1],splitsize[1]):
-				colslice = slice(col,col+splitsize[1])
-				tabimage[rowslice,colslice] = imagefun.power(image[rowslice,colslice])
+		tabimage = tableau.splitTableau(image, split)
 		self.displayTableau(tabimage)
 
 	def insertTableau(self, image, angle):
@@ -157,7 +151,6 @@ class BeamTiltImager(acquisition.Acquisition):
 			## check if target is simulated or not
 			if target['type'] == 'simulated':
 				newtarget = self.newSimulatedTarget(preset=presetdata)
-				print 'NUMBER', newtarget['number']
 				newemtarget = leginondata.EMTargetData(initializer=emtarget, target=newtarget)
 			else:
 				lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
