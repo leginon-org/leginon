@@ -177,12 +177,15 @@ def insert3dDensity(params):
 		if not iterdata:
 			apDisplay.printError("this iteration was not found in the database\n")
 		modq['iterid'] = iterdata
-		modq['maxfilt'] = params['maxfilt']
 	### if ampfile specified
 	if params['ampfile'] is not None:
 		(ampdir, ampname) = os.path.split(params['ampfile'])
 		modq['ampPath'] = appionData.ApPathData(path=os.path.abspath(ampdir))
 		modq['ampName'] = ampname
+		modq['maxfilt'] = params['maxfilt']
+	modq['handflip'] = params['yflip']
+	modq['norm'] = params['norm']
+	modq['invert'] = params['invert']
 	modq['hidden'] = False
 	filepath = os.path.join(params['outdir'], params['name'])
 	modq['md5sum'] = apFile.md5sumfile(filepath)

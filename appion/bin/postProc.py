@@ -156,12 +156,14 @@ class PostProcScript(appionScript.AppionScript):
 			maskpix=int(self.params['mask']/self.params['apix'])
 			fileroot += (".m%d" % ( int(self.params['mask']), ))
 			emancmd += "mask=%d " %maskpix
+			self.params['mask'] = maskpix
 
 		if self.params['imask'] is not None:
 			# convert ang to pixels
 			maskpix=int(self.params['imask']/self.params['apix'])
 			fileroot += (".im%d" % ( int(self.params['imask']), ))
 			emancmd += "imask=%d " %maskpix
+			self.params['imask'] = maskpix
 			
 		if self.params['norm'] is True:
 			fileroot += ".norm"
