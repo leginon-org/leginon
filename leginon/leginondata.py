@@ -1477,6 +1477,7 @@ class BeamTiltImagerSettingsData(SettingsData):
 		return AcquisitionSettingsData.typemap() + (
 			('beam tilt', float),
 			('sites', int),
+			('startangle', float),
 			('correlation type', str),
 		)
 	typemap = classmethod(typemap)
