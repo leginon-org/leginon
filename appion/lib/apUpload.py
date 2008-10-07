@@ -152,6 +152,45 @@ def insertModel(params):
 	else:
 		apDisplay.printWarning("not commiting model to database")
 
+def insert3dDensity(params):
+	apDisplay.printMsg("commiting density to database")
+	symdata=appiondb.direct_query(appionData.ApSymmetryData, params['sym'])
+	if not symdata:
+		apDisplay.printError("no symmetry associated with this id\n")		
+	params['syminfo'] = symdata
+	modq=appionData.Ap3dDensityData()
+	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+	modq['session'] = sessiondata
+	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	modq['name'] = params['name']
+	modq['resolution'] = params['res']
+	modq['symmetry'] = symdata
+	modq['pixelsize'] = params['apix']
+	modq['boxsize'] = params['box']
+	modq['description'] = params['description']
+	modq['lowpass'] = params['lp']
+	modq['highpass'] = params['hp']
+	modq['mask'] = params['mask']
+	modq['imask'] = params['imask']
+	if params['reconid'] is not None:
+		iterdata = appiondb.direct_query(appionData.ApRefinementData, params['reconid'])
+		if not iterdata:
+			apDisplay.printError("this iteration was not found in the database\n")
+		modq['iterid'] = iterdata
+		modq['maxfilt'] = params['maxfilt']
+	### if ampfile specified
+	if params['ampfile'] is not None:
+		(ampdir, ampname) = os.path.split(params['ampfile'])
+		modq['ampPath'] = appionData.ApPathData(path=os.path.abspath(ampdir))
+		modq['ampName'] = ampname
+	modq['hidden'] = False
+	filepath = os.path.join(params['outdir'], params['name'])
+	modq['md5sum'] = apFile.md5sumfile(filepath)
+	if params['commit'] is True:
+		appiondb.insert(modq)
+	else:
+		apDisplay.printWarning("not commiting model to database")
+
 def insertTomo(params):
 	apDisplay.printMsg("Commiting tomogram to database")
 	tomoq = appionData.ApTomogramData()

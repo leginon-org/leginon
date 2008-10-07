@@ -12,7 +12,9 @@ import apDisplay
 import apEMAN
 import apVolume
 import apFile
-
+import apUpload
+import apDatabase
+import apRecon
 
 #=====================
 #=====================
@@ -21,6 +23,8 @@ class PostProcScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --outdir=<dir> "
 			+"[options]")
+		self.parser.add_option("-s", "--session", dest="session",
+			help="Session name associated with density (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("-f", "--file", dest="file",
 			help="Filename of the density", metavar="FILE")
 		self.parser.add_option("--amp", dest="ampfile",
@@ -29,12 +33,16 @@ class PostProcScript(appionScript.AppionScript):
 			help="Density pixel size in Angstroms per pixel", metavar="FLOAT")
 		self.parser.add_option("--lp", dest="lp", type="float",
 			help="Low pass filter value (in Angstroms)", metavar="FLOAT")
+		self.parser.add_option("--hp", dest="hp", type="float",
+			help="High pass filter value (in Angstroms)", metavar="FLOAT")
 		self.parser.add_option("--mask", dest="mask", type="float",
 			help="Radius of outer mask (in Angstroms)", metavar="FLOAT")
 		self.parser.add_option("--imask", dest="imask", type="float",
 			help="Radius of inner mask (in Angstroms)", metavar="FLOAT")
 		self.parser.add_option("--maxfilt", dest="maxfilt", type="float",
 			help="filter limit to which data will adjusted (in Angstroms)", metavar="FLOAT")
+		self.parser.add_option("--res", dest="res", type="float",
+			help="resolution of the reconstruction (in Angstroms)", metavar="FLOAT")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location to which output file will be saved", metavar="PATH")
 		self.parser.add_option("-y", "--yflip", dest="yflip", default=False,
@@ -45,17 +53,32 @@ class PostProcScript(appionScript.AppionScript):
 			action="store_true", help="Rotate icosahedral densities from Eman orientation to Viper orientation")
 		self.parser.add_option("--norm", dest="norm", default=False,
 			action="store_true", help="Normalize the final density such that mean=0, sigma=1")
-		# no commit self.params yet
-		#self.parser.add_option("--commit", dest="commit", default=True,
-		#	action="store_true", help="Commit template to database")
-		#self.parser.add_option("--no-commit", dest="commit", default=True,
-		#	action="store_false", help="Do not commit template to database")
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym", type="int",
+			help="Symmetry id in the database", metavar="INT")
+		self.parser.add_option("-d", "--description", dest="description",
+			help="Description of the density (must be in quotes)", metavar="'TEXT'")
+		self.parser.add_option("--reconid", dest="reconid",
+			help="RefinementData Id for this iteration (not the recon id)", metavar="INT")
+		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
+			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="FLOAT")
+		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
+			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
+			action="store_true", help="Commit template to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit template to database")
 		return 
 
 	#=====================
 	def checkConflicts(self):
+		if self.params['session'] is None:
+			apDisplay.printError("Enter a sessionID")
 		if self.params['apix'] is None:
 			apDisplay.printError("enter a pixel size")
+		if self.params['sym'] is None:
+			apDisplay.printError("enter a symmetry ID")
+		if self.params['res'] is None:
+			apDisplay.printError("enter a resolution")
 		if self.params['file'] is None:
 			apDisplay.printError("enter a file name for processing")
 		self.params['filepath'] = os.path.dirname(os.path.abspath(self.params['file']))
@@ -86,13 +109,11 @@ class PostProcScript(appionScript.AppionScript):
 		### can't find it
 		apDisplay.printError("Could not locate amplitude file: %s" % (self.params['ampfile'],))
 
-
 	#=====================
 	def start(self):
 		### start the outfile name
 		fileroot = os.path.splitext(self.params['filename'])[0]
 		fileroot += "-"+self.timestamp
-		outfile = os.path.join(self.params['outdir'], fileroot)
 
 		if self.params['ampfile'] is not None:
 			### run amplitude correction
@@ -101,8 +122,13 @@ class PostProcScript(appionScript.AppionScript):
 			tmpfile = apVolume.createAmpcorBatchFile(spifile, self.params)
 			apVolume.runAmpcor()
 
+			### check if spider was successful
+			fileroot += ".amp"
+			if not os.path.isfile(tmpfile) :
+				apDisplay.printError("amplitude correction failed")
+				
 			### convert amplitude corrected file back to mrc
-			outfile += ".amp"
+			fileroot += ".amp"
 			emancmd = "proc3d "+tmpfile+" "
 		else :
 			### just run proc3d
@@ -110,47 +136,69 @@ class PostProcScript(appionScript.AppionScript):
 
 		emancmd+="apix=%s " %self.params['apix']
 		if self.params['lp'] is not None:
-			outfile += (".lp%d" % ( int(self.params['lp']), ))
+			fileroot += (".lp%d" % ( int(self.params['lp']), ))
 			emancmd += "lp=%d " %self.params['lp']
 
 		if self.params['yflip'] is True:
-			outfile += ".yflip"
+			fileroot += ".yflip"
 			emancmd +="yflip "
 
 		if self.params['invert'] is True:
-			outfile += ".inv"
-			emancmd +="invert "
+			fileroot += ".inv"
+			emancmd +="mult=-1 "
 
 		if self.params['viper'] is True:
-			outfile += ".vip"
+			fileroot += ".vip"
 			emancmd +="icos5fTo2f "
 			
 		if self.params['mask'] is not None:
 			# convert ang to pixels
 			maskpix=int(self.params['mask']/self.params['apix'])
-			outfile += (".m%d" % ( int(self.params['mask']), ))
+			fileroot += (".m%d" % ( int(self.params['mask']), ))
 			emancmd += "mask=%d " %maskpix
 
 		if self.params['imask'] is not None:
 			# convert ang to pixels
 			maskpix=int(self.params['imask']/self.params['apix'])
-			outfile += (".im%d" % ( int(self.params['imask']), ))
+			fileroot += (".im%d" % ( int(self.params['imask']), ))
 			emancmd += "imask=%d " %maskpix
 			
 		if self.params['norm'] is True:
-			outfile += ".norm"
+			fileroot += ".norm"
 			emancmd += "norm=0,1 "
 			
 		### add output filename to emancmd string
-		outfile += ".mrc"
+		fileroot += ".mrc"
+		self.params['name'] = fileroot
+		
+		outfile = os.path.join(self.params['outdir'], fileroot)
 		emancmd = re.sub(" apix=",(" %s apix=" % outfile), emancmd)
 
 		apEMAN.executeEmanCmd(emancmd)
 
+		if self.params['description'] is None:
+			self.params['description'] = "Volume from recon with amplitude adjustment"
+			
 		### clean up files created during amp correction
 		if self.params['ampfile'] is not None:
 			apFile.removeFile(spifile)
 			apFile.removeFile(tmpfile)
+
+		## see if density is in the database
+		md5 = apFile.md5sumfile(outfile)
+		if apDatabase.isModelInDB(md5):
+			### they are the same and its in the database already
+			apDisplay.printError("3d density with md5sum '"+md5+"' already exists in the DB!")
+
+		if self.params['commit'] is True:
+			apUpload.insert3dDensity(self.params)
+			### render chimera images of model
+			density={}
+			density['pixelsize'] = self.params['apix']
+			density['boxsize']   = self.params['box']
+			density['symmetry']  = apUpload.getSymmetryData(self.params['sym'])
+
+			apRecon.renderSnapshots(outfile, self.params['res'], density, self.params['contour'], self.params['zoom'])
 
 #=====================
 #=====================

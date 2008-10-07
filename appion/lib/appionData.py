@@ -533,12 +533,38 @@ class ApInitialModelData(Data):
 			('symmetry', ApSymmetryData),
 			('pixelsize', float),
 			('boxsize', int),
+			('handflip', bool),
 			('description', str),
 			('hidden', bool),
 			('md5sum', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApInitialModelData=ApInitialModelData
+
+class Ap3dDensityData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginondata.SessionData),
+			('path', ApPathData),
+			('name', str),
+			('resolution', float),
+			('symmetry', ApSymmetryData),
+			('pixelsize', float),
+			('boxsize', int),
+			('description', str),
+			('lowpass', float),
+			('highpass', float),
+			('mask', int),
+			('imask', int),
+			('iterid', ApRefinementData),
+			('ampPath', ApPathData),
+			('ampName', str),
+			('maxfilt', float),
+			('hidden', bool),
+			('md5sum', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.Ap3dDensityData=Ap3dDensityData
 
 class ApSymmetryData(Data):
 	def typemap(cls):
