@@ -43,6 +43,9 @@ class BeamTiltImager(acquisition.Acquisition):
 		'sites': 0,
 		'startangle': 0,
 		'correlation type': 'phase',
+		'tableau type': 'split image',
+		'tableau binning': 2,
+		'tableau split': 8,
 	}
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -52,6 +55,7 @@ class BeamTiltImager(acquisition.Acquisition):
 
 		self.correlator = correlator.Correlator()
 		self.correlation_types = ['cross', 'phase']
+		self.tableau_types = ['beam tilt series', 'split image']
 		self.maskradius = 1.0
 		self.increment = 5e-7
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
@@ -80,7 +84,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		tiltlist.append({'x':0.0,'y':0.0})
 		anglelist.append(None)
 		if self.settings['sites'] == 0:
-			return tiltlist
+			return tiltlist, anglelist
 		angleinc = 2*3.14159/self.settings['sites']
 		startangle = self.settings['startangle'] * numpy.pi / 180.0
 		for i in range(0,self.settings['sites']):
@@ -97,10 +101,21 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tableauimages = []
 		self.tableauangles = []
 
+	def splitTableau(self, image):
+		tabimage = numpy.zeros(image.shape, image.dtype)
+		split = self.settings['tableau split']
+		splitsize = image.shape[0]/int(split), image.shape[1]/int(split)
+		for row in range(0,image.shape[0],splitsize[0]):
+			rowslice = slice(row,row+splitsize[0])
+			for col in range(0,image.shape[1],splitsize[1]):
+				colslice = slice(col,col+splitsize[1])
+				tabimage[rowslice,colslice] = imagefun.power(image[rowslice,colslice])
+		self.displayTableau(tabimage)
+
 	def insertTableau(self, image, angle):
+		pow = imagefun.power(image)
 		binning = self.settings['tableau binning']
-		print 'BINNING', binning
-		binned = imagefun.bin(image, binning)
+		binned = imagefun.bin(pow, binning)
 		self.tableauimages.append(binned)
 		self.tableauangles.append(angle)
 
@@ -167,8 +182,10 @@ class BeamTiltImager(acquisition.Acquisition):
 			status,imagedata = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
 			self.instrument.tem.BeamTilt = oldbt
 			angle = anglelist[i]
-			pow = imagefun.power(imagedata['image'])
-			self.insertTableau(pow, angle)
+			if self.settings['tableau type'] == 'split image':
+				self.splitTableau(imagedata['image'])
+			elif self.settings['tableau type'] == 'beam tilt series':
+				self.insertTableau(imagedata['image'], angle)
 			try:
 				shiftinfo = self.correlateOriginal(i,imagedata)
 			except Exception, e:
@@ -176,7 +193,8 @@ class BeamTiltImager(acquisition.Acquisition):
 				return 'error'
 			pixelshift = shiftinfo['pixel shift']
 			displace.append((pixelshift['row'],pixelshift['col']))
-		self.renderTableau()
+		if self.settings['tableau type'] == 'beam tilt series':
+			self.renderTableau()
 		print displace
 		return status
 

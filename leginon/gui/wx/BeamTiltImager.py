@@ -95,12 +95,23 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		label = wx.StaticText(self, -1, 'Correlation Type:')
 		sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['correlation type'], (3, 1), (1, 1), wx.ALIGN_CENTER)
-		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
-		self.widgets['tableau binning'] = IntEntry(self, -1, min=0, allownone=False, chars=4, value='2')
-		label = wx.StaticText(self, -1, 'Tableau Binning:')
+		self.widgets['tableau type'] = Choice(self, -1, choices=self.node.tableau_types)
+		label = wx.StaticText(self, -1, 'Tableau Type:')
 		sizer.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['tableau binning'], (4, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.widgets['tableau type'], (4, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.widgets['tableau binning'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='2')
+		label = wx.StaticText(self, -1, 'Tableau Binning:')
+		sizer.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['tableau binning'], (5, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.widgets['tableau split'] = IntEntry(self, -1, min=1, allownone=False, chars=4, value='8')
+		label = wx.StaticText(self, -1, 'Tableau Split:')
+		sizer.Add(label, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['tableau split'], (6, 1), (1, 1), wx.ALIGN_CENTER)
+
+		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz]
 

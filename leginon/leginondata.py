@@ -1478,7 +1478,9 @@ class BeamTiltImagerSettingsData(SettingsData):
 			('beam tilt', float),
 			('sites', int),
 			('startangle', float),
+			('tableau type', str),
 			('tableau binning', int),
+			('tableau split', int),
 			('correlation type', str),
 		)
 	typemap = classmethod(typemap)
