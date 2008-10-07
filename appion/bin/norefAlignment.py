@@ -5,6 +5,7 @@ import time
 import sys
 import random
 import math
+import shutil
 #appion
 import appionScript
 import apDisplay
@@ -49,7 +50,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			action="store_true", help="Skip correspondence analysis")
 		self.parser.add_option("--init-method", dest="initmethod", default="allaverage",
 			help="Initialization method: "+str(self.initmethods), metavar="#")
-
+		self.parser.add_option("--templateid", dest="templateid", type="int",
+			help="Template Id for template init method", metavar="#")
 
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
@@ -265,6 +267,23 @@ class NoRefAlignScript(appionScript.AppionScript):
 		return templatefile
 
 	#=====================
+	def getTemplate(self):
+		"""
+		takes the spider file and creates an average template of all particles and masks it
+		"""
+		### create random keep list
+		templatedata = apTemplate.getTemplateFromId(self.params['templateid'])
+		templatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
+		if not os.path.isfile(templatepath):
+			apDisplay.printError("Could not find template: "+templatepath)
+		newpath = os.path.join(self.params['outdir'], "template.mrc")
+		shutil.copy(templatepath, newpath)
+
+		templatefile = self.processTemplate("template.mrc")
+
+		return templatefile
+
+	#=====================
 	def processTemplate(self, mrcfile):
 		### mask
 		apDisplay.printMsg("Masking template by radius of "+str(self.params['maskrad'])+" Angstroms")
@@ -318,8 +337,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 			templatefile = self.pickRandomParticle()
 		elif self.params['initmethod'] == 'template':
 			templatefile = self.getTemplate()
-			apDisplay.printError("unknown initialization method defined: "
-				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
 		else:
 			apDisplay.printError("unknown initialization method defined: "
 				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
