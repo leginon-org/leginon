@@ -83,10 +83,17 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.widgets['sites'], (1, 1), (1, 1), wx.ALIGN_CENTER)
 
+		self.widgets['startangle'] = FloatEntry(self, -1, min=0, allownone=False, chars=4, value='0')
+		label = wx.StaticText(self, -1, 'Start Angle:')
+		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['startangle'], (2, 1), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'degrees')
+		sizer.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.correlation_types)
 		label = wx.StaticText(self, -1, 'Correlation Type:')
-		sizer.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.widgets['correlation type'], (2, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.widgets['correlation type'], (3, 1), (1, 1), wx.ALIGN_CENTER)
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
 
 		return sizers + [sbsz]
