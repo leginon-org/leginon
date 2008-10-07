@@ -347,6 +347,7 @@ function runTemplateCorrelator() {
 
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		$testimage = ereg_replace(" ","\ ",$testimage);
 	}
 
 	if ($_POST['process']=="Run Correlator") {

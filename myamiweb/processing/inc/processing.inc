@@ -832,6 +832,8 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;
+	// always write to data00
+	$procdir = ereg_replace("/ami/data..","/ami/data00",$procdir);
 
 	// if more than one job running in the directory (like
 	// classification of ref free)
