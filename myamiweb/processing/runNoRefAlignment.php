@@ -97,6 +97,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '200';
 	$firstring = ($_POST['numpart']) ? $_POST['firstring'] : '2';
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : '150';
+	$templateid = ($_POST['templateid']) ? $_POST['templateid'] : '';
 	echo"
 	<table border='0' class='tableborder'>
 	<tr>
@@ -170,9 +171,13 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='randpart' "
 		.($_POST['initmethod'] == 'randpart' ? 'CHECKED' : '')
 		.">\n Pick a random particle<br/>\n";
-	//echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='template' "
-	//	.($_POST['initmethod'] == 'template' ? 'CHECKED' : '')
-	//	.">\n Use a template image<br/>\n";
+	echo "<INPUT TYPE='radio' NAME='initmethod' VALUE='template' "
+		.($_POST['initmethod'] == 'template' ? 'CHECKED' : '')
+		.">\n Use a template image<br/>\n";
+	echo docpop('template','Template Id');
+	echo ":&nbsp;<INPUT TYPE='text' NAME='templateid' SIZE='4' VALUE='$templateid'>\n";
+	echo "<br />\n";
+
 	echo "</TD></TR>\n";
 	echo "<TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
@@ -271,6 +276,7 @@ function runNoRefAlign($runjob=false) {
 	$numfactors=$_POST['numfactors'];
 	$bin=$_POST['bin'];
 	$initmethod=$_POST['initmethod'];
+	$templateid=$_POST['templateid'];
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
@@ -326,6 +332,7 @@ function runNoRefAlign($runjob=false) {
 	$command.="--num-factors=$numfactors ";
 	$command.="--bin=$bin ";
 	if ($initmethod) $command.="--init-method=$initmethod ";
+	if ($initmethod=='template' && $templateid) $command.="--templateid=$templateid ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
