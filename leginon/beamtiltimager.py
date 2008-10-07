@@ -111,7 +111,6 @@ class BeamTiltImager(acquisition.Acquisition):
 			if target['type'] == 'simulated':
 				targetdata = self.newSimulatedTarget(preset=currentpreset)
 			else:
-				self.newTargetForImage(self, imagedata, drow=target, dcol)
 				lastnumber = self.lastTargetNumber(image=target['image'], session=self.session)
 				newnumber = lastnumber+1
 				newtarget = leginondata.AcquisitionImageTargetData(initializer=target, number=newnumber)
