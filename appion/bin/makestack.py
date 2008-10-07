@@ -87,6 +87,7 @@ def createDefaults():
 	params['matlab']=None
 	params['fileType']='imagic'
 	params['lowpass']=None
+	params['ctftilt']=False
 	params['highpass']=None
 	params['boxfiles']=False
 	return params
@@ -132,7 +133,7 @@ def parseInput(args):
 		elif (elements[0]=='selexonmax'):
 			params['correlationMax']=float(elements[1])
 		elif (elements[0]=='tiltangle'):
-			params['tiltangle']=abs(float(elements[1]))
+			params['tiltangle']=float(elements[1])
 		elif (elements[0]=='maskassess'):
 			params['checkMask']=elements[1]
 		elif (elements[0]=='boxsize'):
@@ -166,6 +167,8 @@ def parseInput(args):
 			params['inverted']=False
 		elif (arg=='invert'):
 			params['inverted']=True
+		elif (arg=='ctftilt'):
+			params['ctftilt']=True
 		elif (arg=='spider'):
 			params['spider']=True
 			params['fileType']='spider'
@@ -258,6 +261,11 @@ def batchBox(params, imgdict):
 	else:
 		imgpath = os.path.join(params['filepath'], imgname+".mrc")
 	output = os.path.join(params['outdir'], imgname+".hed")
+	outputctf = os.path.join(params['outdir'], imgname+".ctf.hed")
+	outputtemp = os.path.join(params['outdir'], imgname+"-temp.hed")
+	outputtempimg = os.path.join(params['outdir'], imgname+"-temp.img")
+	outputtempctf = os.path.join(params['outdir'], imgname+"-temp-ctf.hed")
+	outputtempimgctf = os.path.join(params['outdir'], imgname+"-temp-ctf.img")
 
 	# if getting particles from database, a temporary
 	# box file will be created
@@ -278,9 +286,48 @@ def batchBox(params, imgdict):
 				particles = eliminateMaskedParticles(particles,params,imgdict)
 			
 			###save particles
-			if len(particles) > 0:
+			### for untilted data set
+			if len(particles) > 0 and not params['ctftilt']:
 				hasparticles=True
 				saveParticles(particles,shift,dbbox,params,imgdict)
+			### for tilted data set (ctf correction is done here)
+			elif len(particles) > 0 and params['ctftilt']: 
+				hasparticles=True
+				thrownout = 0
+				#for each individual particle
+				for i,part in enumerate(particles):
+					saveIndvParticles(part,shift,dbbox,params,imgdict)
+					f=open(dbbox,'r')
+					lines=f.readlines()
+					f.close()
+					nptcls=len(lines)
+					if params['selexonId'] and nptcls > 0:
+						cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, outputtemp, params['boxSize'])
+						apEMAN.executeEmanCmd(cmd)
+						#if ctf correction is selected
+						if params['phaseFlipped'] is True:
+							#ctf correct using ctftilt parameters
+							ctftiltPhaseFlip(part, outputtemp, outputtempctf, params, imgdict)
+
+							#move temp particle to growing stack						
+							appendcmd="proc2d %s %s" %(outputtempctf, outputctf)
+							apEMAN.executeEmanCmd(appendcmd)
+							#remove temp particle
+							rmtempcmd="rm %s %s %s %s" %(outputtemp, outputtempimg, outputtempctf, outputtempimgctf)
+							f=os.popen(rmtempcmd)
+							f.close()
+						else:
+							#move temp particle to growing stack						
+							appendcmd="proc2d %s %s" %(outputtemp, output)
+							apEMAN.executeEmanCmd(appendcmd)
+							#remove temp particle
+							rmtempcmd="rm %s %s" %(outputtemp, outputtempimg)
+							f=os.popen(rmtempcmd)
+							f.close()
+					else:
+						thrownout+=1
+				#number of particles for the micrograph
+				numpart = i-thrownout+1
 			else:
 				hasparticles=False
 				apDisplay.printColor(shortname+".mrc had no unmasked particles and has been rejected\n","cyan")
@@ -293,33 +340,37 @@ def batchBox(params, imgdict):
 	
 	if params['boxfiles']:
 		return(0)
-	
-	if hasparticles:
-		#count number of particles in box file
-		f=open(dbbox,'r')
-		lines=f.readlines()
-		f.close()
-		nptcls=len(lines)
-		# write batchboxer command
-		if params['selexonId']:
-			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, params['boxSize'])
-		elif params['boxSize']:
-			cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, params['boxSize'])
-		else: 
-	 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
-	
-		apDisplay.printMsg("boxing "+str(nptcls)+" particles")
-		apEMAN.executeEmanCmd(cmd)
-		if params['stig']:
-			os.remove(os.path.join(params['outdir'],tmpname))
-		return(nptcls)
-	else:
-		if params['stig']:
-			os.remove(os.path.join(params['outdir'],tmpname))
-		return(0)
-		
 
+	### only perform below if no ctf tilt correction
+	if not params['ctftilt']:
+		if hasparticles:
+			#count number of particles in box file
+			f=open(dbbox,'r')
+			lines=f.readlines()
+			f.close()
+			nptcls=len(lines)
+			# write batchboxer command
+			if params['selexonId']:
+				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, params['boxSize'])
+			elif params['boxSize']:
+				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, params['boxSize'])
+			else: 
+		 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
 	
+			apDisplay.printMsg("boxing "+str(nptcls)+" particles")
+			apEMAN.executeEmanCmd(cmd)
+			if params['stig']:
+				os.remove(os.path.join(params['outdir'],tmpname))
+			return(nptcls)
+		else:
+			if params['stig']:
+				os.remove(os.path.join(params['outdir'],tmpname))
+			return(0)
+	### for tilted data set
+	else:
+		apDisplay.printMsg("number of particles in this micrograph is " + str(numpart))
+		return(numpart)
+		
 def eliminateMaskedParticles(particles,params,imgdata):
 	newparticles = []
 	eliminated = 0
@@ -398,7 +449,82 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 	boxfile=open(dbbox,'w')
 	boxfile.writelines(plist)
 	boxfile.close()
+
+# used in tilted data ctf correction
+def saveIndvParticles(particle,shift,dbbox,params,imgdict):
+	imgname = imgdict['filename']
+	plist=[]
+	box=params['boxSize']
+	imgxy=imgdict['camera']['dimension']
+	eliminated=0
 	
+	xcoord=int(math.floor(shift['scale']*(particle['xcoord']-shift['shiftx'])-(box/2)+0.5))
+	ycoord=int(math.floor(shift['scale']*(particle['ycoord']-shift['shifty'])-(box/2)+0.5))
+
+	if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
+		plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
+		# save the particles to the database
+		if params['commit']:
+			stackpq=appionData.ApStackParticlesData()
+			stackpq['stack']=params['stackId']
+			stackpq['stackRun']=params['stackRun']
+			stackpq['particle']=particle
+			params['particleNumber'] += 1
+			stackpq['particleNumber']=params['particleNumber']
+			apdb.insert(stackpq)
+	else:
+		eliminated+=1
+	if eliminated > 0:
+		apDisplay.printMsg(str(eliminated)+" particle(s) eliminated because out of bounds")
+	#write boxfile
+	boxfile=open(dbbox,'w')
+	boxfile.writelines(plist)
+	boxfile.close()
+
+# tilted CTF correction  
+def ctftiltPhaseFlip(particle, tempinfile, tempoutfile, params, imgdict):
+
+	### calculate defocus at given position
+	CX = 2048
+	CY = 2048
+	
+	N1 = -math.sin(params['tilt_axis_angle']* math.pi / 180)
+	N2 = math.cos(params['tilt_axis_angle']* math.pi / 180)
+	PSIZE = params['apix']
+	DX = CX - particle['xcoord']
+	DY = CY - particle['ycoord']
+	
+ 	DF = (N1*DX+N2*DY)*PSIZE*math.tan(params['tilt_angle']* math.pi / 180)
+	DFL1 = params['df1']*-1e4 + DF
+	DFL2 = params['df2']*-1e4 + DF		
+	DF_final = (DFL1+DFL2)/2
+
+	### create input file and output file
+	imgname = imgdict['filename']
+	infile  = tempinfile
+	outfile = tempoutfile
+
+	### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
+	if imgdict['scope']['tem']['name'] == "CM":
+		voltage = imgdict['scope']['high tension']
+	else:
+		voltage = (imgdict['scope']['high tension'])/1000
+
+	defocus = DF_final*-1.0e-4
+
+	if defocus > 0:
+		apDisplay.printError("defocus is positive "+str(defocus)+" for image "+imgname)
+	elif defocus < -1.0e3:
+		apDisplay.printError("defocus is very big "+str(defocus)+" for image "+imgname)
+	elif defocus > -1.0e-3:
+		apDisplay.printError("defocus is very small "+str(defocus)+" for image "+imgname)
+
+	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
+	  outfile, defocus, voltage, params['apix'])
+	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
+	apEMAN.executeEmanCmd(cmd)
+
+# untilted CTF correction	
 def phaseFlip(imgdata, params):
 	imgname = imgdata['filename']
 	infile  = os.path.join(params['outdir'], imgname+".hed")
@@ -433,6 +559,7 @@ def singleStack(params,imgdict):
 	output = os.path.join(params['outdir'], params['single'])
 
 	cmd="proc2d %s %s" %(imgpath, output)
+	print "command is "+cmd
 	if params['normalized'] is True:
 		cmd += " norm=0.0,1.0"
 		# edge normalization
@@ -477,12 +604,17 @@ def singleStack(params,imgdict):
 		f.write(line+"\n")
 	f.close()
 	params['particle'] = count
-	
-	os.remove(os.path.join(params['outdir'], imgname+".hed"))
-	os.remove(os.path.join(params['outdir'], imgname+".img"))
+	try:
+		os.remove(os.path.join(params['outdir'], imgname+".hed"))
+		os.remove(os.path.join(params['outdir'], imgname+".img"))
+	except:
+		apDisplay.printWarning(os.path.join(params['outdir'], imgname+".hed")+" does not exist!")
 	if params['phaseFlipped'] is True:
-		os.remove(os.path.join(params['outdir'], imgname+".ctf.hed"))
-		os.remove(os.path.join(params['outdir'], imgname+".ctf.img"))
+		try:
+			os.remove(os.path.join(params['outdir'], imgname+".ctf.hed"))
+			os.remove(os.path.join(params['outdir'], imgname+".ctf.img"))
+		except:
+			apDisplay.printWarning(os.path.join(params['outdir'], imgname+".ctf.hed")+" does not exist!")
 
 # since we're using a batchboxer approach, we must first get a list of
 # images that contain particles
@@ -683,39 +815,59 @@ def rejectImage(imgdata, params):
 			return False
 
 	if params['tiltangle'] is not None:
-		tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
-		if abs(params['tiltangle'] - tiltangle) > 2.0:
+		tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+		if params['tiltangle'] == -1.0:
+			if tiltangle > 0:
+				apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
+					" != "+str(round(params['tiltangle'],1))+"\n","cyan")
+				return False
+		elif params['tiltangle'] == 1.0:
+			if tiltangle < 0:
+				apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
+					" != "+str(round(params['tiltangle'],1))+"\n","cyan")
+				return False
+		elif abs(abs(params['tiltangle']) - abs(tiltangle)) > 2.0:
 			apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
 				" != "+str(round(params['tiltangle'],1))+"\n","cyan")
 			return False
 
-	### Get CTF values
-	ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
-	
- 	if ctfvalue is None:
-		if params['aceCutoff'] or params['minDefocus'] or params['maxDefocus'] or params['phaseFlipped']:
-			apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
-			return False
+	if params['ctftilt'] is not None:
+		### Get tilted CTF values
+		ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
+
+		if ctfvalue is not None:
+			apCtf.ctfValuesToParams(ctfvalue, params)
 		else:
-			apDisplay.printWarning(shortname+".mrc has no ACE values")
+			apDisplay.printColor(shortname+".mrc was rejected because it has no CTFtilt values\n","cyan")
+			return False
+	else:
+		### Get CTF values
+		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+	
+ 		if ctfvalue is None:
+			if params['aceCutoff'] or params['minDefocus'] or params['maxDefocus'] or params['phaseFlipped']:
+				apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
+				return False
+			else:
+				apDisplay.printWarning(shortname+".mrc has no ACE values")
 
- 	if ctfvalue is not None:
-		apCtf.ctfValuesToParams(ctfvalue, params)
+ 		if ctfvalue is not None:
+			apCtf.ctfValuesToParams(ctfvalue, params)
 
-		### check that ACE estimation is above confidence threshold
-		if params['aceCutoff'] and conf < params['aceCutoff']:
+			### check that ACE estimation is above confidence threshold
+			if params['aceCutoff'] and conf < params['aceCutoff']:
 				apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 				return False
 
-		### skip micrograph that have defocus above or below min & max defocus levels
-		if params['minDefocus'] and params['df'] > params['minDefocus']:
-			apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
-				") is less than mindefocus ("+str(params['minDefocus'])+")\n","cyan")
-			return False
-		if params['maxDefocus'] and params['df'] < params['maxDefocus']:
-			apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
-				") is greater than maxdefocus ("+str(params['maxDefocus'])+")\n","cyan")
-			return False
+			### skip micrograph that have defocus above or below min & max defocus levels
+			if params['minDefocus'] and params['df'] > params['minDefocus']:
+				apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
+					") is less than mindefocus ("+str(params['minDefocus'])+")\n","cyan")
+				return False
+			if params['maxDefocus'] and params['df'] < params['maxDefocus']:
+				apDisplay.printColor(shortname+".mrc defocus ("+str(round(params['df'],3))+\
+					") is greater than maxdefocus ("+str(params['maxDefocus'])+")\n","cyan")
+				return False
 
 	return True
 
@@ -836,9 +988,9 @@ if __name__ == '__main__':
 
 		# first remove any existing boxed files
 		stackfile = os.path.join(params['outdir'], imgname)
-		for ext in ("hed", "img"):
-			if os.path.isfile(stackfile+"."+ext):
-				os.remove(stackfile+"."+ext)
+		for ext in (".hed", ".img", "-temp.hed", "-temp.img", ".ctf.hed", ".ctf.img", "-temp-ctf.hed", "-temp-ctf.img"):
+			if os.path.isfile(stackfile+ext):
+				os.remove(stackfile+ext)
 
 		if rejectImage(imgdict, params) is False:
 			continue
@@ -850,16 +1002,18 @@ if __name__ == '__main__':
 		if params['boxfiles']:
 			continue
 		
-		if not os.path.isfile(os.path.join(params['outdir'], imgname+".hed")):
+		if not os.path.isfile(os.path.join(params['outdir'], imgname+".hed")) and not os.path.isfile(os.path.join(params['outdir'], imgname+".ctf.hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
 			continue
 
 		# store particle numbers to the header
 		apEMAN.numberParticlesInStack(os.path.join(params['outdir'],imgname+".hed"),prevptcls)
 		
-		# phase flip boxed particles if requested
-		if params['phaseFlipped']:
+		# phase flip boxed particles if requested (Only for untilted dataset -- ctf correction for tilted dataset is taken care of in BatchBoxer)
+		if params['phaseFlipped'] and not params['ctftilt']:
 			phaseFlip(imgdict, params) # phase flip stack file
+		elif params['phaseFlipped'] and params['ctftilt']:
+			print "ctf tilt phase correction is done"
 		
 		# add boxed particles to a single stack
 		if params['single']:
