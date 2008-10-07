@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import shutil
+import math
 import apRecon
 import sinedon
 import numpy
@@ -67,8 +68,10 @@ def writeXmGraceData(counts, numpart):
 		datastr += ( "%.1f\t%d\n" % (float(i)+0.5, counts[i]))
 	datastr += "&\n@target G0.S1\n@type xy\n"
 	datastr += ( "-0.5\t%d\n0.5\t0\n&\n" % (numpart))
-	upperlimit = (round(numpart/5000.0)+1)*5000
-	header = re.sub("@    world -0.999999, 1, 8.999999, 110000", "@    world -0.99999, 1, 8.99999, "+str(upperlimit), xmgraceheader)
+	cutsize = 10.0**int(math.log10(numpart)-0.3)
+	upperlimit = (round(numpart/cutsize)+1)*cutsize
+	header = re.sub("@    world -0.999999, 1, 8.999999, 110000",
+		 "@    world -0.99999, 1, 8.99999, "+str(upperlimit), xmgraceheader)
 	gracedata = header.strip()+"\n"+datastr
 	return gracedata
 
