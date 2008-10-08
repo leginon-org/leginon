@@ -9,7 +9,7 @@ endif
 rm -rf results.*
 rm -rf LOG.*
 
-spider prj/spi <<eof
+spider bat/spi <<eof
 
 FR G
 <vol>$1
