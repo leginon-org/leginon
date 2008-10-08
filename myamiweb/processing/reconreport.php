@@ -78,6 +78,7 @@ $html .= "<form name='iterations' method='post' action='$formAction'>\n";
 $html .= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
 $display_keys = array ( 'iter', 'ang', 'fsc', 'classes', '# particles', 'density','snapshot');
+$numcols = count($display_keys);
 foreach($display_keys as $key) {
         $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 }
@@ -316,34 +317,50 @@ foreach ($iterations as $iteration){
 	foreach ($pngimages['pngfiles'] as $snapshot) {
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
 			$snapfile = $refinerun['path'].'/'.$snapshot;
-			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'></a>\n";
 		}
 	}
+	"</td></tr>\n";
 	// check for post procs
 	$postprocs = $particle->getPostProcsFromRefId($refinementData['DEF_id']);
-	if (is_array($postprocs)) {
-		$html .= "<table class='tableborder' border='1'>\n";
+	if ($postprocs[0]) {
+		$html .= "<tr>\n";
 		foreach ($postprocs as $p) {
+		  print_r($p);
 			# get list of png files in directory
-	  		$procimgs = getPngList($p['path']);			
-			$html .= "<tr><td>\n";
-			$html .= "path: ".$p['path'];
-			$html .= "<br />\n";
-			$html .= "name: ".$p['name'];
-			$html .= "<br />\n";
+	  		$procimgs = getPngList($p['path']);
+			$html .= "<td bgcolor='$bg' colspan='".($numcols-1)."'>\n";
+			$html .= "<b>Post Processing of ".$iteration['volumeDensity']."</b>\n";
+			if ($p['handflip']) $html .= "(handedness flipped)\n";
+			$html .= "<table border='0' cellpadding='0' cellspacing='0'>\n";
+			$html .= "<tr><td><b>path: </b></td><td>".$p['path']."</td></td>\n";
+			$html .= "<tr><td><b>name: </b></td><td>".$p['name']."</td></td>\n";
+			if ($p['ampName']) $html .= "<tr><td><b>ampcor file: </b></td><td>".$p['amppath']."/".$p['ampName']."</td></tr>\n";
+			if ($p['lowpass']) $html .= "<tr><td><b>low pass filter: </b></td><td>".$p['lowpass']." angstroms</td></tr>\n";
+			if ($p['highpass']) $html .= "<tr><td><b>high pass filter: </b></td><td>".$p['highpass']." angstroms</td></tr>\n";
+			if ($p['mask']) {
+			  	// convert to pixels
+			  	$boxang = $p['mask']*$apix;
+			  	$html .= "<tr><td><b>Mask: </b></td><td>$boxang Angstroms (".$p['mask']." pixels)</td></tr>\n";
+			}
+			if ($p['imask']) {
+			  	// convert to pixels
+			  	$boxang = $p['imask']*$apix;
+				$boxang = sprintf("%.1f",$boxang);
+			  	$html .= "<tr><td><b>Inner Mask: </b></td><td>$boxang Angstroms (".$p['imask']." pixels)</td></tr>\n";
+			}
+			$html .= "</table>\n";
+			$html .= "</td><td>\n";
 			foreach ($procimgs['pngfiles'] as $s) {
 			  	if (eregi($p['name'],$s)) {
 					$sfile = $p['path'].'/'.$s;
-					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'><img src='loadimg.php?filename=$sfile' height='80'>\n";
+					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'><img src='loadimg.php?filename=$sfile' height='80'></a>\n";
 				}
 			}
-			$html .="</td></tr>\n";
+			$html .= "</td>\n";
+			$html .= "</tr>\n";
 		}
-		$html .= "</table>\n";
-	}
-	  
-	$html .= "</td>\n";
-	$html .= "</tr>\n";
+	}	  
 }
 $html .= "</form>\n";
 $html.="</TABLE>\n";

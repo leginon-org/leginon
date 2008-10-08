@@ -16,7 +16,7 @@ require "inc/processing.inc";
   
 // --- check if reconstruction is specified
 
-if ($_POST['run']) {
+if ($_POST['process']) {
 	$leginon = new leginondata();
 
 	$expId = $_GET['expId'];
@@ -37,6 +37,8 @@ if ($_POST['run']) {
 	$zoom = $_POST['zoom'];
 	$contour = $_POST['contour'];
 	$densitypath=$path."/".$file;
+	$outdir=$path."/postproc";
+	$densityname = $_POST['densityname'];
 	// make sure that an amplitude curve was selected
 	if (!$ampcor) createform('<B>ERROR:</B> Select an amplitude adjustment curve');
 	list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
@@ -64,7 +66,39 @@ if ($_POST['run']) {
 	if ($invert=='on') $command.="--invert ";
 	if ($viper=='on') $command.="--viper ";
 
+	// filename will be the runid if running on cluster
+	$randstr = randomString(5);
+	$runid = "$densityname.$randstr.upload";
+
+	// submit job to cluster
+	if ($_POST['process']=='Post Process') {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploaddensity',True);
+		// if errors:
+		if ($sub) createUploadModelForm("<b>ERROR:</b> $sub");
+
+		// check that upload finished properly
+		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$status = "Model was uploaded";
+		if (file_exists($jobf)) {
+			$jf = file($jobf);
+			$jfnum = count($jf);
+			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
+			  // if anything is red, it's not good
+				if (preg_match("/red/",$jf[$i])) {
+					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
+					continue;
+				}
+			}
+		}
+		else $status = "Job did not run, contact the appion team";
+	}
+
 	processing_header("Post Process Reconstructed Density", "Post Process Reconstructed Density");
+	echo $status;
+	echo "<br />\n";
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
@@ -148,6 +182,7 @@ function createform($extra=False) {
 	$amplist[3]['maxfilt']=11.519;
 	$amplist[3]['src']="Experimental X-ray curve, smoothed by Dmitri Svergun";
 	echo "<form name='postproc' method='post' action='$formAction'>\n";
+	echo "<input type='hidden' name='densityname' value='".$info['volumeDensity']."'>";
 	echo "Density File: $densityfile<br />\n";
 	echo "Pixel Size: $apix ang/pix<br />\n";
 	echo "<b>Reported Resolution:</b><br />\n";
@@ -195,7 +230,9 @@ function createform($extra=False) {
 	echo "<INPUT TYPE='hidden' name='apix' value='$apix'>\n";
 	echo "<INPUT TYPE='hidden' name='file' value='$info[volumeDensity]'>\n";
 	echo "<INPUT TYPE='hidden' name='path' value='$info[path]'>\n";
-	echo "<center><INPUT type='submit' name='run' value='Post Process'></center>\n";
+	echo "<center>\n";
+	echo getSubmitForm("Post Process");
+	echo "</center>\n";
 	echo "</form>\n";
 	processing_footer();
 	exit();

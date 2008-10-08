@@ -1858,7 +1858,7 @@ class particledata {
 		return $r;
 	}
 
-	function getPostProcsFromRefId($refid) {
+	function getPostProcsFromRefId($refid, $getHidden=False) {
 	  	$q = "SELECT d.*, "
 		  ."p.path as path , a.path as amppath "
 		  ."FROM `Ap3dDensityData` AS d "
@@ -1867,6 +1867,7 @@ class particledata {
 		  ."LEFT JOIN `ApPathData` AS a ON "
 		  ."(d.`REF|ApPathData|ampPath` = a.`DEF_id`) "
 		  ."WHERE d.`REF|ApRefinementData|iterid` = $refid ";
+		if (!$getHidden) $q.= "AND (d.`hidden` IS NULL OR d.`hidden` = 0) ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
