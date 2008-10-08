@@ -82,6 +82,11 @@ var help = {
 	'sigma' : 'Standard deviation multiplier to determine the quality of particle to be used.  Setting this to 0, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\".  If no value is specified, all particles will be used.',
 	'keepavg' : 'Any particles that have a median euler jump greater than this value will not be used in the class averages',
 	'eotest' : 'even and odd class averages will be created in addition to the new class averages, to be used for an even/odd test',
+	'classums' : 'This input will be used as the default filename for your class averages and in all subsequent files in which the name occurs',	
+	'mask_radius' :'The mask radius is used during masking / filtering of the stack AND during the creation of eigenimages. The output images will be normalized inside a circular mask with this radius. The radius should be chosen such that no part of the molecules are cut off by the resulting mask. This value may be specified as a fraction of the inner radius of the image or in pixels. Radius = 1 means that the whole image is used for normalization.',
+	'mask_dropoff' : 'If you specify a drop-off the mask will be a soft mask. The drop-off parameter determines the width of the soft edge (halfwidth of soft-edge Gaussian drop-off) by which the circular mask is smoothed. A value of 0 specifies a hard mask.',
+	'box_size' : 'number of columns & number of rows for each particle in the stack (these should be equal)',
+	'new_classums' : 'These classums will be created from your input stack so as to maximize the signal-to-noize ratio and IMAGIC\'s ability to assign correct euler angles to your images. The goal is to represent the different views in your stack with new averages that have an improved SNR. Choosing 25% of the particles in your stack has worked well in test runs. For example, if your stack contains 400 particles, input 100 here.',
 	},
 
 	'eman' : {
