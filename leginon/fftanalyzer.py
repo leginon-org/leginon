@@ -69,8 +69,8 @@ class FFTAnalyzer(fftmaker.FFTMaker):
 		binned_pixelsize = pixelsize * camera['binning']['x']
 		rec_pixelsize = 1/(self.imageshape[0]*1e10*binned_pixelsize)
 		# calculate radial average of the power spectrum
-		low = 10
-		high = 50
+		low = 0
+		high = 0
 		b = numextension.radialPower(pow, low, high)
 		# plot
 		indices = range(0,len(b))
