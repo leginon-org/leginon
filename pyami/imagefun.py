@@ -390,12 +390,9 @@ def crop_at(im, center, shape, mode='wrap', cval=None):
 	cropped = shifted[:shape[0], :shape[1]]
 	return cropped
 
-### python implementation of some Viewit functions
-
 def threshold(a, limit):
 	return a >= limit
 
-def zscore(image):
-	m = arraystats.mean(image)
-	s = arraystats.std(image)
-	return (image - m) / s
+def pasteInto(a, b, pos):
+	'''paste image a into image b at position pos'''
+	b[pos[0]:pos[0]+a.shape[0], pos[1]:pos[1]+a.shape[1]] = a
