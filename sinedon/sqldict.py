@@ -1316,6 +1316,8 @@ def datatype(in_dict, join=None, parentclass=None):
 				## not in result, but create reference
 				dclassname = tablename
 				dclass = findDataClass(modulename, dclassname)
+				if dclass is None:
+					continue
 				# host and name should come from parent object
 				content[fieldname] = data.DataReference(dataclass=dclass, dbid=value)
 		elif a0 == 'SUBD':
