@@ -466,7 +466,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 
 	### generate factor maps
 	apDisplay.printMsg("creating factor maps")
-	for f1 in range(1,numfactors):
+	for f1 in range(1,min(numfactors,2)):
 		sys.stderr.write(".")
 		for f2 in range(f1+1, numfactors+1):
 			createFactorMap(f1, f2, rundir, dataext)
@@ -493,9 +493,7 @@ def createFactorMap(f1, f2, rundir, dataext):
 	time.sleep(2)
 	mySpider.close()
 	# hack to get postscript converted to png, require ImageMagick
-	cmd = "convert -trim -colorspace Gray -density 150x150 "+factorfile+".ps "+factorfile+".png"
-	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	proc.wait()
+	convertPostscriptToPng(factorfile+".ps", factorfile+".png", size=200)
 	apFile.removeFile(factorfile+".ps")
 
 	### 4. factor plot visualization
@@ -557,10 +555,30 @@ def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", data
 	)
 	mySpider.close()
 
-	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendrogram.ps dendrogram.png"
+	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
+
+#===============================
+def convertPostscriptToPng(psfile, pngfile, size=1024):
+
+	### better pstopnm pre-step
+	pstopnmcmd = "pstopnm -xsize=2000 -ysize=2000 -xborder=0 -yborder=0 -portrait "+psfile
+	apEMAN.executeEmanCmd(pstopnmcmd, verbose=False, showcmd=False)
+
+	### direct conversion
+	ppmfile = os.path.splitext(psfile)[0]+"001.ppm"
+	if os.path.isfile(ppmfile):
+		imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+			+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
+	else:
+		imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+			+str(size)+"x"+str(size)+" "+psfile+" "+pngfile)
 	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
-	if not os.path.isfile("dendrogram.png"):
-		apDisplay.printWarning("Dendrogram image conversion failed")
+
+	if os.path.isfile(ppmfile):
+		apFile.removeFile(ppmfile)
+
+	if not os.path.isfile(pngfile):
+		apDisplay.printWarning("Postscript image conversion failed")	
 
 
 #===============================
@@ -648,10 +666,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
-	imagemagickcmd = "convert -trim -resize 1024x1024 cluster/dendrogram.ps dendrogram.png"
-	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
-	if not os.path.isfile("dendrogram.png"):
-		apDisplay.printWarning("Dendrogram image conversion failed")
+	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
 
 	return classavg,classvar
 
