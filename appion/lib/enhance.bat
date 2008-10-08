@@ -23,9 +23,6 @@ FR G
 [out]fen      ; output enhancement curve
 
 FR G
-[pwsc]pwsc    ; scaling script
-
-FR G
 [applyfen]applyfen.csh ; apply curve to data script
 
 x35 = x99*x80/x98   ; filter limit (in pixels). Filter the data out to point P,
@@ -76,7 +73,7 @@ UD IC,x21,x51
 x55=(x21-1)/(2*(x66-1))
 x56=x80/x55
 
-@<pwsc>[x56,x77]
+@pwsc[x56,x77]
 <scatter>
 
 ; Xray/EM

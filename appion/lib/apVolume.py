@@ -19,6 +19,7 @@ import apAlignment
 import apParam
 import apEMAN
 import apDB
+import shutil
 #pyami
 from pyami import mrc
 from pyami import imagefun
@@ -66,8 +67,11 @@ def MRCtoSPI(infile,outdir):
 def createAmpcorBatchFile(infile,params):
 	appiondir = apParam.getAppionDirectory()
 	scriptfile = os.path.join(appiondir, "lib/enhance.bat")
+	pwscfile = os.path.join(appiondir, "lib/pwsc.bat")
 	if not os.path.isfile(scriptfile):
 		apDisplay.printError("could not find spider script: "+scriptfile)
+	if not os.path.isfile(pwscfile):
+		apDisplay.printError("could not find spider script: "+pwscfile)
 	inf = open(scriptfile, "r")
 
 	tmpfile="out"+randomfilename(8)+".spi"
@@ -78,6 +82,10 @@ def createAmpcorBatchFile(infile,params):
 		apDisplay.printWarning(outfile+" already exists; removing it")
 		time.sleep(2)
 		os.remove(outfile)
+	if os.path.isfile('pwsc.bat'):
+		apDisplay.printWarning(pwscfile+" already exists; replacing it")
+		time.sleep(2)
+	shutil.copyfile(pwscfile, 'pwsc.bat')
 	outf = open(outfile, "w")
 
 	notdone = True
@@ -99,9 +107,9 @@ def createAmpcorBatchFile(infile,params):
 			elif re.search("^\[scatter\]",line):
 				outf.write(apAlignment.spiderline("scatter",params['ampfile'],"amplitude curve file"))
 			elif re.search("^\[pwsc\]",line):
-				outf.write(apAlignment.spiderline("pwsc",os.path.join(appiondir,"lib/pwsc"),"scaling script"))
+				outf.write(apAlignment.spiderline("pwsc","pwsc","scaling script"))
 			elif re.search("^\[applyfen\]",line):
-				outf.write(apAlignment.spiderline("applyfen",os.path.join(appiondir,"lib/applyfen"),"scaling script"))
+				outf.write(apAlignment.spiderline("applyfen",os.path.join(appiondir,"lib/applyfen"),"apply curve to data script"))
 			else:
 				outf.write(line)
 	return tmpfile
@@ -110,6 +118,10 @@ def runAmpcor():
 	spidercmd = "spider bat/spi @enhance_edit"
 	starttime = time.time()
 	apAlignment.executeSpiderCmd(spidercmd)
+	if os.path.isfile('pwsc.bat'):
+		os.remove('pwsc.bat')
+	if os.path.isfile('enhance_edit.bat'):
+		os.remove('enhance_edit.bat')
 	apDisplay.printColor("finished spider in "+apDisplay.timeString(time.time()-starttime),"cyan")
 	
 def randomfilename(num):
