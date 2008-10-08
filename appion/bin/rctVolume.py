@@ -40,7 +40,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
 			help="number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--part-rad", dest="radius", type="int",
-			help="particle radius in pixels", metavar="ID")
+			help="particle radius (in pixels)", metavar="ID")
 
 	#=====================
 	def checkConflicts(self):
@@ -61,6 +61,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.params['notstackid'] = norefRun['stack'].dbid
 		if self.params['notstackid'] is None:
 			apDisplay.printError("untilted stackid was not defined")
+		boxsize = apStack.getStackBoxsize(self.params['notstackid'])
+		if self.params['radius']*2 > boxsize-2:
+			apDisplay.printError("particle radius is too big for stack boxsize")	
 
 	#=====================
 	def setOutDir(self):
@@ -111,6 +114,12 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return spiderstack
+
+	#=====================
+	def sortTiltParticlesData(self, a, b):
+		if a['particleNumber'] > b['particleNumber']:
+			return 1
+		return -1
 
 	#=====================
 	def start(self):
@@ -173,14 +182,16 @@ class rctVolumeScript(appionScript.AppionScript):
 		eulerf = open(eulerfile, "w")
 		apDisplay.printMsg("creating Euler doc file")
 		starttime = time.time()
+		tiltParticlesData.sort(self.sortTiltParticlesData)
 		for stackpartdata in tiltParticlesData:
 			count += 1
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
 			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
-			psi = -1.0*(gamma*0.0 + inplane)
+			psi = -1.0*(gamma + inplane)
 			while psi < 0:
 				psi += 360.0
-			line = operations.spiderOutputLine3(count, phi*0.0, tiltangle, psi)
+			partnum = stackpartdata['particleNumber']-1
+			line = operations.spiderOutLine(count, [phi, tiltangle, psi, partnum])
 			eulerf.write(line)
 		eulerf.close()
 		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
