@@ -831,7 +831,7 @@ def rejectImage(imgdata, params):
 				" != "+str(round(params['tiltangle'],1))+"\n","cyan")
 			return False
 
-	if params['ctftilt'] is not None:
+	if params['ctftilt']:
 		### Get tilted CTF values
 		ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
 
