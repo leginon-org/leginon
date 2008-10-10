@@ -41,6 +41,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// connect to particle and ctf databases
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
+	$ctftiltdata = $particle->hasCtfTiltData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId));
@@ -51,17 +52,18 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$javascript="<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 	function enableice(){
-	  if (document.viewerform.icecheck.checked){
-	      document.viewerform.ice.disabled=false;
-	      document.viewerform.ice.value='';
-	    }
-	    else {
-	      document.viewerform.ice.disabled=true;
-	      document.viewerform.ice.value='0.8';
-	    }
-	  }
-	  function enableace(){
-	    if (document.viewerform.acecheck.checked){
+	  	if (document.viewerform.icecheck.checked){
+	   	document.viewerform.ice.disabled=false;
+	   	document.viewerform.ice.value='';
+		}
+		else {
+	   	document.viewerform.ice.disabled=true;
+	   	document.viewerform.ice.value='0.8';
+		}
+	}
+	  
+	function enableace(){
+		if (document.viewerform.acecheck.checked){
 	      document.viewerform.ace.disabled=false;
 	      document.viewerform.ace.value='0.8';
 	    }
@@ -69,15 +71,32 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	      document.viewerform.ace.disabled=true;
 	      document.viewerform.ace.value='0.8';
 	    }
-	  }
-          function uncheckstig(){
-            document.viewerform.stig.checked=false;
-          }
-          function uncheckflip(){
-            document.viewerform.phaseflip.checked=false;
-          }
-	  function enableselex(){
-	    if (document.viewerform.selexcheck.checked){
+	}
+
+	function enablectftilt() {
+		if (document.viewerform.ctftilt.checked){
+			document.viewerform.acecheck.disabled=true;
+		} else {
+			document.viewerform.acecheck.disabled=false;
+		}
+	}
+
+	function uncheckstig(){
+		document.viewerform.stig.checked=false;
+		if (document.viewerform.phaseflip.checked){
+			document.viewerform.ctftilt.disabled=false;
+		} else {
+			document.viewerform.ctftilt.disabled=true;
+		}
+	}
+
+   function uncheckflip(){
+		document.viewerform.phaseflip.checked=false;
+		document.viewerform.ctftilt.disabled=true;
+	}
+
+	function enableselex(){
+		if (document.viewerform.selexcheck.checked){
 	      document.viewerform.selexonmin.disabled=false;
 	      document.viewerform.selexonmin.value='0.5';
 	      document.viewerform.selexonmax.disabled=false;
@@ -90,7 +109,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	      document.viewerform.selexonmax.value='1.0';
 	    }
 	  }
-	  </SCRIPT>\n";
+	</SCRIPT>\n";
 	$javascript .= writeJavaPopupFunctions('appion');
 	
 	processing_header($title,$heading,$javascript);
@@ -137,6 +156,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$acecheck = ($_POST['acecheck']=='on') ? 'CHECKED' : '';
 	$acedisable = ($_POST['acecheck']=='on') ? '' : 'DISABLED';
 	$aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
+	//ctftilt check params
+	$ctftiltcheck = ($_POST['ctftiltcheck']=='on') ? 'CHECKED' : '';
 	// selexon check params
 	$selexminval = ($_POST['selexcheck']=='on') ? $_POST['selexonmin'] : '0.5';
 	$selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['selexonmax'] : '1.0';
@@ -255,10 +276,17 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	  echo"<input type='checkbox' name='phaseflip' onclick='uncheckstig(this)' $phasecheck>\n";
 	  echo docpop('phaseflip','Phaseflip Particle Images');
 	  echo "<br />\n";
-	  echo"<input type='checkbox' name='stig' onclick='uncheckflip(this)' $stigcheck>"
-		."\nPhaseflip Micrograph Images <I>(experimental)</I><br />";
 	}
 
+	if ($ctftiltdata) {
+		echo"&nbsp; &nbsp;<input type='checkbox' name='ctftilt' onclick='enablectftilt(this)' $ctftiltcheck>\n";
+		echo docpop('ctftilt','CTF tilt correction<br />');
+	}
+
+	if ($ctfdata) {
+		echo"<input type='checkbox' name='stig' onclick='uncheckflip(this)' $stigcheck>"
+		."\nPhaseflip Micrograph Images <I>(experimental)</I><br />";
+	}
 
 	$checkimageval= ($_POST['checkimage']) ? $_POST['checkimage'] : 'best';
 	$checkimages=array('Non-rejected','Best','All');
@@ -408,6 +436,7 @@ function runMakestack() {
 	$expId = $_GET['expId'];
 	$runid = $_POST['runid'];
 	$outdir = $_POST['outdir'];
+	$ctftilt =$_POST['ctftilt'];
 
 	$command.="makestack.py ";
 
@@ -431,6 +460,7 @@ function runMakestack() {
 	$tiltangle = $_POST['tiltangle'];
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	$boxfiles = ($_POST['boxfiles']=='on') ? 'boxfiles' : '';
+
 	// set image inspection selection
 	$norejects=$inspected=0;
 	if ($_POST['checkimage']=="Non-rejected") {
@@ -516,7 +546,8 @@ function runMakestack() {
 	if ($fileformat) $command.="spider ";
 	if ($limit) $command.="partlimit=$limit ";
 	if ($boxfiles) $command.="boxfiles ";
-	$command.="description=\"$description\"";
+	$command.="description=\"$description\" ";
+	if ($ctftilt) $command.="ctftilt ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Make Stack") {
