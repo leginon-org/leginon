@@ -243,9 +243,21 @@ class particledata {
 		return $d;
 	}
 
+	function hasCtfTiltData($sessionId) {
+		$d = ($this->getLastCtfTiltRun($sessionId)) ? true : false;
+		return $d;
+	}
+
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r[runId];
+	}
+
+	function getLastCtfTiltRun($sessionId) {
+		$q = "select max(DEF_id) as runId "
+			."from `ApCtfTiltRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r[runId];
 	}
