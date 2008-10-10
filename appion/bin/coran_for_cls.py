@@ -321,6 +321,7 @@ if __name__== '__main__':
 	params['boxsize']=tmpimg[0].xSize()
 
 	#Set up for coran
+	params['corandir']=params['corandir']+str(params['iter'])
 	if os.path.exists(params['corandir']):
 		print "Warning %s exists and is being overwritten" % params['corandir']
 		shutil.rmtree(params['corandir'])
