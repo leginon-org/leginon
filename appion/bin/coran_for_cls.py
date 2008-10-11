@@ -6,159 +6,10 @@ import shutil
 import math
 import string
 import re
+import apEMAN
+from apSpider import alignment
 
 clslist=glob.glob('cls*.lst')
-
-def makeSpiderBatch(params,filename,clsdir):
-	nfacts=20
-	if params['nptcls'] < 21:
-		nfacts=params['nptcls']-1
-	f=open(filename,'w')
-	f.write('MD ; verbose off in spider log file\n')
-	f.write('VB OFF\n')
-	f.write('\n')
-	f.write('MD\n')
-	f.write('SET MP\n')
-	f.write('%d\n' % 4)
-	f.write('\n')
-	f.write('x99=%d  ; number of particles in stack\n' % params['nptcls']) 
-	f.write('x98=%d   ; box size\n' % params['boxsize'])
-	f.write('x94=%d    ; mask radius\n' % params['mask'])
-	f.write('x93=%f  ; cutoff for hierarchical clustering\n' % params['haccut'])
-	f.write('x92=20    ; additive constant for hierarchical clustering\n')
-	f.write('\n')
-	f.write('FR G ; aligned stack file\n')
-	f.write('[aligned]%s/aligned\n' % clsdir)
-	f.write('\n')
-	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
-	f.write('\n')
-	f.write('FR G ; home dir\n')
-	f.write('[home]%s/\n' % clsdir)
-	f.write('\n')
-	f.write('FR G ; where to write class lists\n')
-	f.write('[clhc_cls]%s/classes/clhc_cls\n' % clsdir)
-	f.write('\n')
-	f.write('FR G ; where to write alignment data\n')
-	f.write('[ali]%s/alignment/\n' % clsdir)
-	f.write('\n')
-	f.write('VM\n')
-	f.write('mkdir %s/alignment\n' % clsdir) 
-	f.write('\n')
-	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
-	f.write(';; create the sequential file and then use that file and do a hierarchical ;;\n')
-	f.write(';; clustering. Run clhd and clhe to classify the particles into different  ;;\n')
-	f.write(';; groups.                                                                 ;;\n')
-	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
-	f.write('\n')
-	f.write('VM\n')
-	f.write('echo Performing multivariate statistical analysis\n')
-	f.write('VM\n')
-	f.write('echo "  making template file"\n')
-	f.write('\n')
-	f.write('MO      ; make mask template\n')
-	f.write('_9      ; save template in memory\n')
-	f.write('x98,x98 ; box size\n')
-	f.write('c       ; circle\n')
-	f.write('x94     ; radius of mask\n')
-	f.write('\n')
-	f.write('VM\n')
-	f.write('echo "  doing correspondence analysis"\n')
-	f.write('\n')
-	f.write('CA S           ; do correspondence analysis\n')
-	f.write('[aligned]@***** ; aligned stack\n')
-	f.write('1-x99          ; particles to use\n')
-	f.write('_9             ; mask file\n')
-	f.write('%d             ; number of factors to be used\n' % nfacts)
-	f.write('C              ; Coran analysis\n')
-	f.write('x92            ; additive constant (since coran cannot have negative values)\n')
-	f.write('[ali]coran     ; output file prefix\n')
-	f.write('\n')
-	f.write('\n')
-	f.write('DO LB14 x11=1,%d\n' % nfacts)
-	f.write('CA SRE\n')
-	f.write('[ali]coran\n')
-	f.write('x11\n')
-	f.write('[ali]sre@{***x11}\n')
-	f.write('LB14\n')
-	f.write('\n')
-	#f.write('VM\n')
-	#f.write('eigendoc.py alignment/coran_EIG.spi alignment/eigendoc.out 30\n')
-	#f.write('\n')
-	f.write('VM\n')
-	f.write('echo "  clustering..."\n')
-	f.write('\n')
-	f.write('CL HC          ; do hierarchical clustering\n')
-	f.write('[ali]coran_IMC ; coran image factor coordinate file\n')
-	f.write('1-3\n')
-	f.write('1.00           ; factor numbers to be included in clustering algorithm\n')
-	f.write('1.00           ; factor weights\n')
-	f.write('1.00           ; for each factor number\n')
-	f.write('5              ; use Wards method\n')
-	f.write('Y              ; make a postscript of dendogram\n')
-	f.write('[ali]clhc.ps   ; dendogram image file\n')
-	f.write('Y              ; save dendogram doc file\n')
-	f.write('[ali]clhc_doc  ; dendogram doc file\n')
-	f.write('\n')
-	f.write('\n')
-	f.write(';;;determine number of classes for given threshold\n')
-	f.write('CL HD\n')
-	f.write('x93\n')
-	f.write('[ali]clhc_doc\n')
-	f.write('[home]clhc_classes\n')
-	f.write('\n')
-	f.write('UD N,x12\n')
-	f.write('[home]clhc_classes\n')
-	f.write('\n')
-	f.write('VM\n')
-	f.write('mkdir %s/classes\n' % clsdir)
-	f.write('\n')
-	f.write('VM\n')
-	f.write('echo "Creating {%F5.1%x12} classes using a threshold of {%F7.5%x93}"\n')
-	f.write('CL HE         ; generate doc files containing particle numbers for classes\n')
-	f.write('x93         ; threshold (closer to 0=more classes)\n')
-	f.write('[ali]clhc_doc      ; dendogram doc file\n')
-	f.write('[clhc_cls]****  ; selection doc file that will contain # of objects for classes\n')
-	f.write('\n')
-	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
-	f.write(';; average aligned particles together ;;\n')
-	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
-	f.write('\n')
-	f.write('VM\n')
-	f.write('echo Averaging particles into classes\n')
-	f.write('\n')
-	f.write('DO LB20 x81=1,x12\n')
-	f.write('AS R\n')
-	f.write('[aligned]@*****\n')
-	f.write('[clhc_cls]{****x81}\n')
-	f.write('A\n')
-	f.write('[home]classes_avg@{****x81}\n')
-	f.write('[home]classes_var@{****x81}\n')
-	f.write('LB20\n')
-	f.write('\n')
-	f.write('EN D\n')
-
-def getNPtcls(filename):
-	f=open(filename)
-	lines=f.readlines()
-	f.close()
-	nlines=len(lines)
-	return(nlines-2)
-
-def cc(img1,img2):
-	npix=img1.xSize()*img1.ySize()
-	avg1=img1.Mean()
-	avg2=img2.Mean()
-	
-	var1=img1.Sigma()
-	var1=var1*var1
-	var2=img2.Sigma()
-	var2=var2*var2
-	
-	cc=img1.dot(img2)
-	cc=cc/npix
-	cc=cc-(avg1*avg2)
-	cc=cc/math.sqrt(var1*var2)
-	return(cc)
 
 def parseInput(args,params):
 	for arg in args:
@@ -191,124 +42,6 @@ def createDefaults():
 	params['hard']=None
 	params['eotest']=False
 	return(params)
-	
-def getNPtclsSpider(filepath):
-	f=open(filepath,'r')
-	lines=f.readlines()
-	f.close()
-	return(len(lines)-1)
-	
-def fakeConvertSpiderToEMAN(spifile, origlst):
-	# Used when too-few particles for subclassification that gives a bad spider file
-	fileroot = os.path.splitext(spifile)[0]
-	outfile = fileroot+".lst"
-	out = open(outfile, "w")
-	out.write('#LST\n')
-
-	# save ptls in an array from cls####.lst file
-	origptls=[]
-	f=open(origlst,'r')
-	for line in f:
-		n=line.split('\t')
-		if re.match("^[0-9]+",n[0]) and n[1].strip()!="proj.img":
-			origptls.append(line)
-	
-	for line in origptls:
-		#newline = re.sub('start','../../start',line)
-		out.write(line)
-	out.close()
-	f.close()
-	return outfile
-
-def convertSpiderToEMAN(spifile, origlst):
-	fileroot = os.path.splitext(spifile)[0]
-	outfile = fileroot+".lst"
-	inlines = open(spifile, "r")
-	out = open(outfile, "w")
-	out.write('#LST\n')
-
-	# save ptls in an array from cls####.lst file
-	origptls=[]
-	f=open(origlst,'r')
-	for line in f:
-		n=line.split('\t')
-		if re.match("^[0-9]+",n[0]) and n[1].strip()!="proj.img":
-			origptls.append(line)
-
-	# create new lst file
-	for line in inlines:
-		if line.strip()[0]!=';':
-			words = line.split()
-			ptcl = int(float(words[2]))
-			# get this particle in the cls####.lst array
-			spiptcl = origptls[ptcl-1]
-			out.write(spiptcl)
-	out.close()
-	inlines.close()
-	return outfile
-
-def makeClassAverages(lst, outputstack,e,mask):
-        #align images in class
-	print "creating class average from",lst,"to",outputstack
-        images=EMAN.readImages(lst,-1,-1,0)
-        for image in images:
-                image.rotateAndTranslate()
-                if image.isFlipped():
-                        image.hFlip()
-
-        #make class average
-        avg=EMAN.EMData()
-        avg.makeMedian(images)
-
-        #write class average
-        avg.setRAlign(e)
-        avg.setNImg(len(images))
-        avg.applyMask(params['mask'],0)
-        avg.writeImage(outputstack,-1)
-
-def flagGoodParticleInClassLst(clsfile, goodclsfile):
-	# read original class list file
-	old_clsfile = open(clsfile,'r')
-	ptcls = old_clsfile.readlines()
-	ptext = ptcls[:]
-	pretext = [ptext[0],ptext[1]]
-	del ptext[0]
-	del ptext[0]
-	old_clsfile.close()
-
-	f = open(goodclsfile,'r')
-	f.readline()
-	lines=f.readlines()
-	f.close()
-
-	goodptcls = []
-	plines = lines[2:]
-	goodptcls = map((lambda x: int(x.split("\t")[0])),plines)
-
-	for i, t in enumerate(ptext):
-		ptcl = int(t.split("\t")[0])
-		if ptcl in goodptcls:
-			keep='1'
-		else:
-			keep='0'
-		newptext = ptext[i].split('\n')[0]+','+keep+'\n'
-		pretext.append(newptext)
-	new_clsfile = clsfile+'.new'	
-	f1 = open(new_clsfile, 'w')
-	for l in pretext:
-		f1.write(l)
-	f1.close()
-	os.rename(new_clsfile,clsfile)	
-
-def writeBlankImage(outfile,boxsize,place,type=None):
-	a=EMAN.EMData()
-	a.setSize(boxsize,boxsize)
-	a.zero()
-	if type:
-		a.writeImage(outfile,place,type)
-	else:
-		a.writeImage(outfile,place)
-	return
 
 if __name__== '__main__':
 	#Parse inputs
@@ -365,10 +98,10 @@ if __name__== '__main__':
 		coranbatch='coranfor'+cls.split('.')[0]+'.bat'
 
 		#make spider batch
-		params['nptcls']=getNPtcls(cls)
+		params['nptcls']=apEMAN.getNPtcls(cls)
 		# if no particles, create an empty class average
 		if params['nptcls'] == 0:
-			writeBlankImage('classes_avg.spi',params['boxsize'],0,EMAN.EMData.SINGLE_SPIDER)
+			apEMAN.writeBlankImage('classes_avg.spi',params['boxsize'],0,EMAN.EMData.SINGLE_SPIDER)
 			print "WARNING!! no particles in class"
 			
 		# if only 3 particles or less, turn particles into the class averages
@@ -387,7 +120,7 @@ if __name__== '__main__':
 
 		# otherwise, run coran
 		else:
-			makeSpiderBatch(params,coranbatch,clsdir)
+			alignment.makeSpiderCoranBatch(params,coranbatch,clsdir)
 			os.system("spider bat/spi @%s\n" % coranbatch.split('.')[0])
 		
 	f.close()
@@ -418,7 +151,7 @@ if __name__== '__main__':
 		projections[cls].writeImage('goodavgs.hed',-1)
 		print "CC Values:"
 		for avg in averages:
-			ccval=cc(projections[cls],avg)
+			ccval=apEMAN.getCC(projections[cls],avg)
 			cclist.append(ccval)
 			avg.setNImg(10)
 			avg.setRAlign(e)
@@ -432,19 +165,15 @@ if __name__== '__main__':
 		clhcbasename = 'clhc_cls'+string.zfill(bestclass+1,4)
 		classname=os.path.join(classnamepath, clhcbasename+'.spi')
 		
-		nptcls=getNPtclsSpider(classname)
+		nptcls=apEMAN.getNPtclsSpider(classname,spider=True)
 		averages[bestclass].setNImg(nptcls)
 		averages[bestclass].setRAlign(e)
 		averages[bestclass].writeImage('goodavgs.hed',-1)
-		if getNPtcls(clslist[cls]) < 4:
-			# handle skipped coran because of limited number of prtcls
-			convertlst = fakeConvertSpiderToEMAN(classname,clslist[cls])
-		else:
-			# convert spider lst to EMAN lst
-			convertlst = convertSpiderToEMAN(classname,clslist[cls])
+		# convert spider lst to EMAN lst
+		convertlst = apEMAN.convertSpiderToEMAN(classname,clslist[cls])
 
 		#create new flaged class list from good particle list
-		flagGoodParticleInClassLst(clslist[cls],convertlst)
+		apEMAN.flagGoodParticleInClassLst(clslist[cls],convertlst)
     
 		if params['eotest'] is True:
 			f = open(convertlst,'r')
@@ -476,9 +205,9 @@ if __name__== '__main__':
 			oddstack = 'goodavgs.odd.hed'
 
 			if neven>0:
-				makeClassAverages(evenlst,evenstack,e,params['mask'])
+				apEMAN.makeClassAverages(evenlst,evenstack,e,params['mask'])
 			if nodd>0:
-		       		makeClassAverages(oddlst,oddstack,e,params['mask'])
+		       		apEMAN.makeClassAverages(oddlst,oddstack,e,params['mask'])
 			
 
 	pad=int(params['boxsize']*1.25)

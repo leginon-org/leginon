@@ -1,14 +1,126 @@
 
+import os
+import re
 import apDisplay
 import subprocess
 import sys
 import time
+import math
 
 try:
 	import EMAN
 except ImportError:
 	apDisplay.printWarning("EMAN module did not get imported")
 	pass
+
+#=====================
+
+def getNPtcls(filename,spider=False):
+	### get number of particles from cls file
+	f=open(filename,'r')
+	lines=f.readlines()
+	f.close()
+	nlines=len(lines)
+	if spider is True:
+		return (nlines-1)
+	return(nlines-2)
+
+def makeClassAverages(lst, outputstack,e,mask):
+        #align images in class
+	print "creating class average from",lst,"to",outputstack
+        images=EMAN.readImages(lst,-1,-1,0)
+        for image in images:
+                image.rotateAndTranslate()
+                if image.isFlipped():
+                        image.hFlip()
+
+        #make class average
+        avg=EMAN.EMData()
+        avg.makeMedian(images)
+
+        #write class average
+        avg.setRAlign(e)
+        avg.setNImg(len(images))
+        avg.applyMask(params['mask'],0)
+        avg.writeImage(outputstack,-1)
+
+def convertSpiderToEMAN(spifile, origlst):
+	fileroot = os.path.splitext(spifile)[0]
+	outfile = fileroot+".lst"
+	out = open(outfile, "w")
+	out.write('#LST\n')
+
+	# save ptls in an array from cls####.lst file
+	origptls=[]
+	f=open(origlst,'r')
+	for line in f:
+		n=line.split('\t')
+		if re.match("^[0-9]+",n[0]) and n[1].strip()!="proj.img":
+			origptls.append(line)
+
+	# handle skipped coran because of limited number of prtcls
+	if self.getNPtcls(origlst) < 4:
+		for line in origptls:
+			out.write(line)
+	# create new lst file
+	else:
+		inlines = open(spifile, "r")
+		for line in inlines:
+			if line.strip()[0]!=';':
+				words = line.split()
+				ptcl = int(float(words[2]))
+				# get this particle in the cls####.lst array
+				spiptcl = origptls[ptcl-1]
+				out.write(spiptcl)
+		inlines.close()
+
+	out.close()
+	f.close()
+	return outfile
+
+def writeBlankImage(outfile,boxsize,place,type=None):
+	a=EMAN.EMData()
+	a.setSize(boxsize,boxsize)
+	a.zero()
+	if type:
+		a.writeImage(outfile,place,type)
+	else:
+		a.writeImage(outfile,place)
+	return
+
+def flagGoodParticleInClassLst(clsfile, goodclsfile):
+	# read original class list file
+	old_clsfile = open(clsfile,'r')
+	ptcls = old_clsfile.readlines()
+	ptext = ptcls[:]
+	pretext = [ptext[0],ptext[1]]
+	del ptext[0]
+	del ptext[0]
+	old_clsfile.close()
+
+	f = open(goodclsfile,'r')
+	f.readline()
+	lines=f.readlines()
+	f.close()
+
+	goodptcls = []
+	plines = lines[2:]
+	goodptcls = map((lambda x: int(x.split("\t")[0])),plines)
+
+	for i, t in enumerate(ptext):
+		ptcl = int(t.split("\t")[0])
+		if ptcl in goodptcls:
+			keep='1'
+		else:
+			keep='0'
+		newptext = ptext[i].split('\n')[0]+','+keep+'\n'
+		pretext.append(newptext)
+	new_clsfile = clsfile+'.new'	
+	f1 = open(new_clsfile, 'w')
+	for l in pretext:
+		f1.write(l)
+	f1.close()
+	os.rename(new_clsfile,clsfile)	
 
 #=====================
 def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
