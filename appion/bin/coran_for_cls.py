@@ -82,51 +82,10 @@ if __name__== '__main__':
 
 	f=open('commands.txt','w')
 	for cls in clslist:
-		print "processing class",cls
-		#make aligned stack
-		command='clstoaligned.py ' + cls
-		print command
-		os.system(command)
-		
-		#set up cls dir
-		clsdir=cls.split('.')[0]+'.dir'
-		os.mkdir(clsdir)
-	
-		if os.path.exists('aligned.spi'):
-			os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
-		
-		coranbatch='coranfor'+cls.split('.')[0]+'.bat'
-
-		#make spider batch
-		params['nptcls']=apEMAN.getNPtcls(cls)
-		# if no particles, create an empty class average
-		if params['nptcls'] == 0:
-			apEMAN.writeBlankImage('classes_avg.spi',params['boxsize'],0,EMAN.EMData.SINGLE_SPIDER)
-			print "WARNING!! no particles in class"
-			
-		# if only 3 particles or less, turn particles into the class averages
-		elif params['nptcls'] < 4:
-			#this is an ugly hack, just average the particles together, no ref-free
-			os.system("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
-			dummyclsdir=os.path.join(clsdir,'classes')
-			os.mkdir(dummyclsdir)
-			dummyfilename='clhc_cls0001.spi'
-			dummyfile=open(os.path.join(dummyclsdir,dummyfilename),'w')
-			dummyfile.write(';bat/spi\n')
-			for ptcl in range(0,params['nptcls']):
-				dummyfile.write('%d 1 %d\n' % (ptcl,ptcl+1))
-			dummyfile.close()
-			print "WARNING!! not enough particles in class for subclassification"
-
-		# otherwise, run coran
-		else:
-			alignment.makeSpiderCoranBatch(params,coranbatch,clsdir)
-			os.system("spider bat/spi @%s\n" % coranbatch.split('.')[0])
-		
+		## create SPIDER batch file and run coran
+		alignment.runCoranClass(params,cls)
 	f.close()
-	print "Running spider"
-	#os.system('runpar proc=%d file=%s' % (params['proc'],'commands.txt'))
-
+	
 	#Determine best averages
 	#Create list of cc values	
 	for cls in range(0,len(clslist)):

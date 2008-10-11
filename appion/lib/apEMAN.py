@@ -59,7 +59,7 @@ def convertSpiderToEMAN(spifile, origlst):
 			origptls.append(line)
 
 	# handle skipped coran because of limited number of prtcls
-	if self.getNPtcls(origlst) < 4:
+	if getNPtcls(origlst) < 4:
 		for line in origptls:
 			out.write(line)
 	# create new lst file
