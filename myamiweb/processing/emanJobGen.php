@@ -89,9 +89,8 @@ elseif ($_POST['submitjob']) {
 	if ($host=='garibaldi') {
 		$dmfpath=$_POST['dmfpath'].$jobname;
 		$clusterpath=$_POST['clusterpath'].$jobname;
-		global $appionbin;
 	}
-
+	else $appionbin='';
 	$jobfile="$jobname.job";
 	$tmpjobfile = "/tmp/$jobfile";
 
@@ -612,7 +611,8 @@ function jobForm($extra=false) {
 					$perturb = ($iter['EMAN_perturb']) ? 'CHECKED' : '';
 					$eotest = ($iter['REF|ApResolutionData|resolution']) ? 'CHECKED' : '';
 					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
-					$sym = $symmetry['eman_name'];
+					if (!is_array($symmetry)) $sym=$modsym;
+					else $sym = $symmetry['eman_name'];
 					continue;
 				}
 			}
