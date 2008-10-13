@@ -108,18 +108,20 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 def runCoranClass(params,cls):
 	print "processing class",cls
 
-	#make aligned stack
-	command='clstoaligned.py ' + cls
-	print command
-	os.system(command)
-		
 	#set up cls dir
 	clsdir=cls.split('.')[0]+'.dir'
-	os.mkdir(clsdir)
+#	os.mkdir(clsdir)
 	
-	if os.path.exists('aligned.spi'):
-		os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
-		
+	clscmd='clstoaligned.py ' + cls
+	## if multiprocessor, don't run clstoaligned yet
+	if params['proc'] == 1:
+		#make aligned stack
+		os.system(clscmd)
+#	       	if os.path.exists('aligned.spi'):
+#			os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
+
+	corancmd=clscmd+'\n'
+
 	coranbatch='coranfor'+cls.split('.')[0]+'.bat'
 
 	#make spider batch
@@ -132,7 +134,10 @@ def runCoranClass(params,cls):
 	# if only 3 particles or less, turn particles into the class averages
 	elif params['nptcls'] < 4:
 #this is an ugly hack, just average the particles together, no ref-free
-		os.system("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
+		avgcmd=("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
+		if params['proc']==1:
+			os.system(avgcmd)
+		corancmd+=avgcmd+'\n'
 		dummyclsdir=os.path.join(clsdir,'classes')
 		os.mkdir(dummyclsdir)
 		dummyfilename='clhc_cls0001.spi'
@@ -146,8 +151,13 @@ def runCoranClass(params,cls):
 	# otherwise, run coran
 	else:
 		makeSpiderCoranBatch(params,coranbatch,clsdir)
-		os.system("spider bat/spi @%s\n" % coranbatch.split('.')[0])
-
+		spidercmd = ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
+		## if multiprocessor, don't run spider yet
+		if params['proc'] == 1:
+			os.system(spidercmd)
+		corancmd+=spidercmd
+		return corancmd
+	
 #===============================
 def readRefFreeDocFile(docfile, picklefile):
 	apDisplay.printMsg("processing alignment doc file")

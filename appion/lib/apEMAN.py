@@ -15,6 +15,14 @@ except ImportError:
 
 #=====================
 
+def writeEMANTime(filename, cmd):
+	### write the cmd and time to the filename
+	lc=time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())
+	out = cmd+"   "+lc+"\n"
+	f=open(filename,'a')
+	f.write(out)
+	f.close()
+
 def getNPtcls(filename,spider=False):
 	### get number of particles from cls file
 	f=open(filename,'r')
@@ -41,7 +49,7 @@ def makeClassAverages(lst, outputstack,e,mask):
         #write class average
         avg.setRAlign(e)
         avg.setNImg(len(images))
-        avg.applyMask(params['mask'],0)
+        avg.applyMask(mask,0)
         avg.writeImage(outputstack,-1)
 
 def convertSpiderToEMAN(spifile, origlst):
