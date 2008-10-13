@@ -88,12 +88,12 @@ elseif ($_POST['submitjob']) {
 	$outdir=$_POST['outdir'].$_POST['jobname'];
 	if ($host=='garibaldi') {
 		$dmfpath=$_POST['dmfpath'].$jobname;
-		$clusterpath=$_POST['clusterpath'].$jobname;
 	}
 	else $appionbin='';
+	$clusterpath=$_POST['clusterpath'].$jobname;
 	$jobfile="$jobname.job";
 	$tmpjobfile = "/tmp/$jobfile";
-
+	
 	$jobid=$particle->insertClusterJobData($host,$outdir,$dmfpath,$clusterpath,$jobfile,$expId,'recon',$user);
 
 	// add header & job id to the beginning of the script
