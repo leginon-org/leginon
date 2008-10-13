@@ -25,6 +25,8 @@ class dogPicker(particleLoop.ParticleLoop):
 			apDisplay.printWarning("highpass filter value greater than zero; will ignore for maps and only use it for summary images")
 		#if self.params['kfactor'] is not None and self.params['numslices'] is not None:
 		#	apDisplay.printError("only one of 'kfactor' or 'numslices' can be defined")
+		if self.params['numslices'] is not None and self.params['numslices'] >= 10:
+			apDisplay.printError("too many slices defined by numslices, should be more like 2-6")
 		if self.params['sizerange'] is not None and self.params['sizerange'] >= 1.95*self.params['diam']:
 			apDisplay.printError("size range has be less than twice the diameter")
 		return
