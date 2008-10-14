@@ -9,11 +9,9 @@ import math
 from string import lowercase
 import random
 ## PIL
-#import Image
 ## spider
 import spyder
 ## appion
-import apImage
 import apEMAN
 import apParam
 import apDisplay
