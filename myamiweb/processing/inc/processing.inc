@@ -20,6 +20,9 @@ define(PROCESSING_HOST, 'garibaldi');
 define(DONE_PIC,'img/green_circle.gif');
 define(NONE_PIC,'img/red_circle.gif');
 define(PROG_PIC,'img/blue_circle.gif');
+//define(DONE_PIC,'img/icon-check.png');
+//define(NONE_PIC,'img/icon-cross.png');
+//define(PROG_PIC,'img/icon-bluestar.png');
 
 define(NONE_COLOR,'#FFFFCC');
 define(PROG_COLOR,'#CCFFFF');
@@ -111,7 +114,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$currentproject=$sessiondata['currentproject'];
 
 	// Show project & session pulldowns
-	$sessionDescr=$sessioninfo['Name']." - ".$sessioninfo['Purpose'];
+	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
@@ -163,7 +166,6 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$html.= "<div style='float: right; padding-right:10px;'>\n";
 	$html.= "<a href='procsummary.php?expId=$expId'>[Appion Stats]</a>\n";
 	$html.= "</div>\n";
-
 	$html.= "<li><b>Project:</font></b> ".$proj_link."</li>\n";
 	$html.= "<li><b>Session:</b> ".$session_link."</li>\n";
 	$html.= "<li><b>Image Path:</b> ".$expinfo['Image path']."</li>\n";
@@ -238,7 +240,7 @@ function writeTop($title,$heading=false,$headerstuff=false) {
 	$currentproject=$sessiondata['currentproject'];
 
 	// Show project & session pulldowns
-	$sessionDescr=$sessioninfo['Name']." - ".$sessioninfo['Purpose'];
+	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
@@ -329,7 +331,7 @@ function writeTop_org($title,$heading=false,$headerstuff=false) {
 	$currentproject=$sessiondata['currentproject'];
 
 	// Show project & session pulldowns
-	$sessionDescr=$sessioninfo['Name']." - ".$sessioninfo['Purpose'];
+	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
 	$proj_link= '<a class="header" target="project" href="'.$PROJECT_URL."getproject.php?pId=".$projectId.'">'.$currentproject['name'].'</a>';
 	$session_link= '<a class="header" target="viewer" href="../imageviewer.php?expId='.$expId.'">'.$sessionDescr.'</a>';
 	$misc = $particle->getMiscInfoFromProject ($projectId);
