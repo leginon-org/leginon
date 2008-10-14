@@ -33,6 +33,20 @@ def getNPtcls(filename,spider=False):
 		return (nlines-1)
 	return(nlines-2)
 
+def combineSpiParticleList(infiles, outfile):
+	out = open(outfile,'w')
+	n=0 # particle number
+	for file in infiles:
+		f=open(file,'r')
+		for line in f:
+			if line.strip()[0]!=';':
+				p=parseSpiderPtcl(line)
+				n += 1
+				out.write('%d\t1\t%d\n' % (n,p))
+		f.close()
+	out.close()
+	return
+		
 def makeClassAverages(lst, outputstack,e,mask):
         #align images in class
 	print "creating class average from",lst,"to",outputstack
@@ -75,8 +89,7 @@ def convertSpiderToEMAN(spifile, origlst):
 		inlines = open(spifile, "r")
 		for line in inlines:
 			if line.strip()[0]!=';':
-				words = line.split()
-				ptcl = int(float(words[2]))
+				ptcl = parseSpiderPtcl(line)
 				# get this particle in the cls####.lst array
 				spiptcl = origptls[ptcl-1]
 				out.write(spiptcl)
@@ -86,6 +99,12 @@ def convertSpiderToEMAN(spifile, origlst):
 	f.close()
 	return outfile
 
+def parseSpiderPtcl(line):
+	if line.strip()[0]!=';':
+		words = line.split()
+		ptcl = int(float(words[2]))
+	return ptcl
+	
 def writeBlankImage(outfile,boxsize,place,type=None):
 	a=EMAN.EMData()
 	a.setSize(boxsize,boxsize)
@@ -185,6 +204,14 @@ def checkStackNumbering(stackname):
 	if n-1 != im.NImg():
 		apDisplay.printWarning("Original stack is not numbered! numbering now...")
 		numberParticlesInStack(stackname, startnum=0, verbose=True)
+	return
+	
+def writeImageToImage(instack, inn, outstack, outn=-1, particles=0):
+	# copy an image from an input stack to another one
+	img = EMAN.EMData()
+	img.readImage(instack,inn)
+	img.setNImg(particles)
+	img.writeImage(outstack,outn)
 	return
 	
 #=====================

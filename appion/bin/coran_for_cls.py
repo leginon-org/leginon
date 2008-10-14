@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 import glob,os,sys
+import operator
 import EMAN
 import shutil
 import math
 import string
 import re
+import time
 import apEMAN
 from apSpider import alignment
 
@@ -26,6 +28,8 @@ def parseInput(args,params):
 			params['sym']=elements[1]
 		elif elements[0]=='hard':
 			params['hard']=int(elements[1])
+		elif elements[0]=='ccCutoff':
+			params['ccCutoff']=float(elements[1])
 		elif arg=='eotest':
 			params['eotest']=True
 		else:
@@ -41,6 +45,7 @@ def createDefaults():
 	params['sym']='c1'
 	params['hard']=None
 	params['eotest']=False
+	params['ccCutoff']=1.0
 	return(params)
 
 if __name__== '__main__':
@@ -99,8 +104,7 @@ if __name__== '__main__':
 		while spnum < len(clslist):
 			for n in range(params['proc']):
 				if spnum==len(clslist):
-					spnum+=1
-					continue
+					break
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
@@ -114,11 +118,25 @@ if __name__== '__main__':
 				f.close()
 				spnum+=1
 			os.system('pbsdsh -v '+coranscript)
+			time.sleep(2)
 			## remove spider files after completed
 			for n in range(params['proc']):
 				procfile=('spider.%i.csh' %n)
-				os.remove(procfile)
-				
+				if os.path.exists(procfile):
+					os.remove(procfile)
+			time.sleep(2)
+		### make sure class averages were created for all classes if aligned.spi exists,
+		### sometimes for some reason the spider job doesn't run
+		print "Checking that all spider jobs completed"
+		for cls in clslist:
+			clsdir=cls.split('.')[0]+'.dir'
+			alignedfile = os.path.join(clsdir,'aligned.spi')
+			clsavgfile = os.path.join(clsdir,'classes_avg.spi')
+			if os.path.exists(alignedfile) and not os.path.exists(clsavgfile):
+				spijobfile='coranfor'+cls.split('.')[0]+'.bat'
+				print "WARNING!!! rerunning "+spijobfile
+				if os.path.exists(spijobfile):
+					os.system("spider bat/spi @%s\n" % spijobfile.split('.')[0])
 	else:
 		for cls in clslist:
 		## create SPIDER batch file and run coran	
@@ -147,6 +165,7 @@ if __name__== '__main__':
 		averages=EMAN.readImages(avgname,-1,-1,0)
 		e=projections[cls].getEuler()
 		cclist=[]
+		cutofflist=[]
 		projections[cls].setNImg(-1)
 		projections[cls].writeImage('goodavgs.hed',-1)
 
@@ -160,20 +179,62 @@ if __name__== '__main__':
 			avg.setRAlign(e)
 			avg.writeImage('allavgs.hed',-1)
 		f.close()
-		bestclass=cclist.index(max(cclist))
-		print "Using average %d for class %d" % (bestclass, cls)
 
-		#get N imgs
+		### order class averages in order of highest cc value
+		sortccindex = [i for (i,j) in sorted(enumerate(cclist),key=operator.itemgetter(1),reverse=True)]
 		classnamepath = os.path.join(clsdir,'classes')
-		clhcbasename = 'clhc_cls'+string.zfill(bestclass+1,4)
-		classname=os.path.join(classnamepath, clhcbasename+'.spi')
+		for n in sortccindex:
+			## get N imgs
+			clhcbasename = 'clhc_cls'+string.zfill(n+1,4)
+			classname=os.path.join(classnamepath, clhcbasename+'.spi')
+			## save if has cc higher than cutoff
+			if cclist[n] > params['ccCutoff']:
+				cutofflist.append(n)
+			nptcls=apEMAN.getNPtcls(classname,spider=True)
+			apEMAN.writeImageToImage(os.path.join(clsdir,'classes_avg.spi'),n,os.path.join(clsdir,'sortavg.hed'),particles=nptcls)
 		
-		nptcls=apEMAN.getNPtcls(classname,spider=True)
-		averages[bestclass].setNImg(nptcls)
-		averages[bestclass].setRAlign(e)
-		averages[bestclass].writeImage('goodavgs.hed',-1)
-		# convert spider lst to EMAN lst
-		convertlst = apEMAN.convertSpiderToEMAN(classname,clslist[cls])
+		### if multiple classes have values higher than cutoff
+		if len(cutofflist) > 1:
+			print "combining "+str(len(cutofflist))+" of "+str(len(cclist))+" classes"
+			spilist=[]
+			for n in cutofflist:
+				clhcbasename = 'clhc_cls'+string.zfill(n+1,4)
+				classname=os.path.join(classnamepath, clhcbasename+'.spi')
+				spilist.append(classname)
+			classname=os.path.join(classnamepath,'combined.spi')
+			apEMAN.combineSpiParticleList(spilist,classname)
+			clhcbasename='combined'
+					      
+			# convert spider lst to EMAN lst
+			convertlst = apEMAN.convertSpiderToEMAN(classname,clslist[cls])
+			# change location of start file reference
+			f=open(convertlst,'r')
+			fnew = open(convertlst+'.tmp','w')
+			for l in f:
+				fnew.write(re.sub('\tstart','\t../../start',l))
+			f.close()
+			fnew.close()
+			os.rename(convertlst+'.tmp',convertlst)
+			
+			apEMAN.makeClassAverages(convertlst,'goodavgs.hed',e,params['mask'])
+
+		### otherwise just use the best class average
+		else:
+			bestclass=cclist.index(max(cclist))
+			print "Using average %d for class %d" % (bestclass, cls)
+
+			#get N imgs
+			clhcbasename = 'clhc_cls'+string.zfill(bestclass+1,4)
+			classname=os.path.join(classnamepath, clhcbasename+'.spi')
+		
+			nptcls=apEMAN.getNPtcls(classname,spider=True)
+			averages[bestclass].setNImg(nptcls)
+			averages[bestclass].setRAlign(e)
+			averages[bestclass].writeImage('goodavgs.hed',-1)
+			
+
+			# convert spider lst to EMAN lst
+			convertlst = apEMAN.convertSpiderToEMAN(classname,clslist[cls])
 
 		#create new flaged class list from good particle list
 		apEMAN.flagGoodParticleInClassLst(clslist[cls],convertlst)
@@ -193,7 +254,7 @@ if __name__== '__main__':
 			neven=0
 			nodd=0
 			for line in range(0,len(lines)):
-				newline = re.sub('start','../../start',lines[line])
+				newline = re.sub('\tstart','\t../../start',lines[line])
 				if line%2:
 					nodd+=1
 					odd.write(newline)
