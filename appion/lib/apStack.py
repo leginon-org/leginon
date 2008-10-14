@@ -333,17 +333,17 @@ def getStackParticleTilt(stpartid):
 
 def readImagic(filename):
 	"""
-Rudimentary Imagic stack reader
-Could be improved with more sophisticated error testing and header parsing
-Currently  only reads image data as floats
-Currently reads header information for only first image in stack
-"""
+	Rudimentary Imagic stack reader
+	Could be improved with more sophisticated error testing and header parsing
+	Currently  only reads image data as floats
+	Currently reads header information for only first image in stack
+	"""
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
 	stack={}
-	stack['header']=readImagicHeader(headerfilename)
-	stack['images']=readImagicData(datafilename, stack['header'])
+	stack['header'] = readImagicHeader(headerfilename)
+	stack['images'] = readImagicData(datafilename, stack['header'])
 	return stack
 	
 def readImagicHeader(headerfilename):
@@ -354,8 +354,8 @@ def readImagicHeader(headerfilename):
 	headerbytes=headfile.read(256)
 	headfile.close()
 	
-	i=numpy.fromstring(headerbytes, dtype="Int32")
-	f=numpy.fromstring(headerbytes, dtype="Float32")
+	i=numpy.fromstring(headerbytes, dtype=numpy.int32)
+	f=numpy.fromstring(headerbytes, dtype=numpy.float32)
 	
 	header={}
 	imgnum=i[0]
@@ -372,8 +372,8 @@ def readImagicHeader(headerfilename):
 	return header
 	
 def readImagicData(datafilename, headerdict):
-	images=numpy.fromfile(file=datafilename, dtype="Float32")
-	images=images.reshape(headerdict['nimg'],headerdict['rows'],headerdict['lines'])
+	images = numpy.fromfile(file=datafilename, dtype=numpy.float32)
+	images = images.reshape(headerdict['nimg'], headerdict['rows'], headerdict['lines'])
 	return images
 
 
