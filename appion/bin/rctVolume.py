@@ -39,8 +39,10 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Run name", metavar="ID")
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
 			help="number of tilted image shift refinement iterations", metavar="#")
-		self.parser.add_option("--part-rad", dest="radius", type="int",
-			help="particle radius (in pixels)", metavar="ID")
+		self.parser.add_option("--mask-rad", dest="radius", type="int",
+			help="particle mask radius (in pixels)", metavar="ID")
+		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float",
+			help="low pass volume filter (in Angstroms)", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -204,11 +206,13 @@ class rctVolumeScript(appionScript.AppionScript):
 			numpart=len(includeParticle), pixrad=self.params['radius'])
 		alignstack = spiderstack
 		### center/convert the volume file
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
 		emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, 0))
-		emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=4"
+		emancmd = ("proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix="
+			+str(apix)+" lp="+str(self.params['lowpassvol']))
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apFile.removeFile(volfile)
-		emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
+		emancmd = "proc3d "+emanvolfile+" "+volfile+" origin=0,0,0 spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		for i in range(self.params['numiters']):
@@ -227,10 +231,11 @@ class rctVolumeScript(appionScript.AppionScript):
 
 			### center/convert the volume file
 			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
-			emancmd = "proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix=1.63 lp=3"
+			emancmd = ("proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix="
+				+str(apix)+" lp="+str(self.params['lowpassvol']))
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			apFile.removeFile(volfile)
-			emancmd = "proc3d "+emanvolfile+" "+volfile+" center spidersingle"
+			emancmd = "proc3d "+emanvolfile+" "+volfile+" origin=0,0,0 spidersingle"
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		### optimize Euler angles
