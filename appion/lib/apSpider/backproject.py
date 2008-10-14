@@ -184,7 +184,7 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, datae
 	return
 
 #===============================
-def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pixrad, dataext=".spi"):
+def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pixrad, timestamp, dataext=".spi"):
 	"""
 	inputs:
 		stack, in spider format
@@ -193,13 +193,13 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 		volume
 	"""
 	### create corresponding projections
-	projstackfile = "projstack%03d.spi"%(iternum)
+	projstackfile = "projstack%s-%03d.spi"%(timestamp, iternum)
 	projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext)
 
 	### clean up files
-	ccdocfile = "ccdocfile%03d.spi"%(iternum)
+	ccdocfile = "ccdocfile%s-%03d.spi"%(timestamp, iternum)
 	apFile.removeFile(ccdocfile)
-	alignstackfile = "alignstack%03d.spi"%(iternum)
+	alignstackfile = "alignstack%s-%03d.spi"%(timestamp, iternum)
 	apFile.removeFile(alignstackfile)
 
 	### align particles to projection

@@ -72,7 +72,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(self.params['tiltstackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
-		self.params['outdir'] = os.path.join(uppath, "rctvolume", self.params['runname'])
+		self.params['outdir'] = os.path.join(uppath, "rctvolume", 
+			self.params['runname'], "class%03d"%(self.params['classnum']) )
 
 	#=====================
 	def getParticleNoRefInPlaneRotation(self, stackpartdata):
@@ -99,7 +100,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("stackfile does not exist: "+emanstackfile)
 		emancmd += emanstackfile+" "
 
-		spiderstack = os.path.join(self.params['outdir'], "rctstack0.spi")
+		spiderstack = os.path.join(self.params['outdir'], "rctstack"+self.timestamp+".spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 		
@@ -164,7 +165,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		#print includeParticle
 
 		### write kept particles to file
-		self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
+		self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile"+self.timestamp+".lst")
 		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
 		kf = open(self.params['keepfile'], "w")
 		for partnum in includeParticle:
@@ -173,14 +174,14 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### make new stack of tilted particle from that run
 		tiltstackfile = os.path.join(tiltstackdata['path']['path'], tiltstackdata['name'])
-		rctstackfile = os.path.join(self.params['outdir'], "rctstack-"+self.timestamp+".hed")
+		rctstackfile = os.path.join(self.params['outdir'], "rctstack"+self.timestamp+".hed")
 		apFile.removeStack(rctstackfile)
 		apStack.makeNewStack(tiltstackfile, rctstackfile, self.params['keepfile'])
 		spiderstack = self.convertStackToSpider(rctstackfile)
 
 		### make doc file of Euler angles
 		count = 0
-		eulerfile = os.path.join(self.params['outdir'], "eulersdoc001.spi")
+		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
 		eulerf = open(eulerfile, "w")
 		apDisplay.printMsg("creating Euler doc file")
 		starttime = time.time()
@@ -201,18 +202,20 @@ class rctVolumeScript(appionScript.AppionScript):
 		### iterations over volume creation
 		looptime = time.time()
 		### back project particles into filter volume
-		volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(0))
+		volfile = os.path.join(self.params['outdir'], "volume%s-%03d.spi"%(self.timestamp, 0))
 		backproject.backprojectCG(spiderstack, eulerfile, volfile,
 			numpart=len(includeParticle), pixrad=self.params['radius'])
 		alignstack = spiderstack
 		### center/convert the volume file
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, 0))
+		emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, 0))
 		emancmd = ("proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix="
 			+str(apix)+" lp="+str(self.params['lowpassvol']))
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apFile.removeFile(volfile)
-		emancmd = "proc3d "+emanvolfile+" "+volfile+" origin=0,0,0 spidersingle"
+		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" origin=0,0,0"
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		emancmd = "proc3d "+emanvolfile+" "+volfile+" spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		for i in range(self.params['numiters']):
@@ -220,17 +223,17 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 
-				numpart=len(includeParticle), pixrad=self.params['radius'])
+				numpart=len(includeParticle), pixrad=self.params['radius'], timestamp=self.timestamp)
 			apDisplay.printColor("finished volume refinement in "
 				+apDisplay.timeString(time.time()-looptime), "cyan")
 
 			### back project particles into better volume
-			volfile = os.path.join(self.params['outdir'], "volume%03d.spi"%(iternum))
+			volfile = os.path.join(self.params['outdir'], "volume%s-%03d.spi"%(self.timestamp, iternum))
 			backproject.backproject3F(alignstack, eulerfile, volfile,
 				numpart=len(includeParticle))
 
 			### center/convert the volume file
-			emanvolfile = os.path.join(self.params['outdir'], "volume-%s-%03d.mrc"%(self.timestamp, iternum))
+			emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
 			emancmd = ("proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix="
 				+str(apix)+" lp="+str(self.params['lowpassvol']))
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
