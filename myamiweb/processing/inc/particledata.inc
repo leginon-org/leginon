@@ -1583,21 +1583,53 @@ class particledata {
 	}
 
 	function getNoRefClassRuns ($norefId) {
-	$q = "SELECT * "
-		."FROM ApNoRefClassRunData as cr "
-		."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId' "
-		."ORDER BY cr.`num_classes`";
-	$r = $this->mysql->getSQLResult($q);
-	return $r;
+		$q = "SELECT * "
+			."FROM ApNoRefClassRunData as cr "
+			."WHERE cr.`REF|ApNoRefRunData|norefRun` = '$norefId' "
+			."ORDER BY cr.`num_classes`";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getAllNoRefClassRuns ($sessionId) {
+		$q = "SELECT "
+			."  classrun.`DEF_id`, "
+			."  alignrun.`name`, "
+			."  classrun.`num_classes`, "
+			."  alignrun.`description` "
+			."FROM ApNoRefClassRunData as classrun "
+			."LEFT JOIN ApNoRefRunData as alignrun "
+			."  ON classrun.`REF|ApNoRefRunData|norefRun` = alignrun.`DEF_id` "
+			."LEFT JOIN ApStackData as stack "
+			."  ON alignrun.`REF|ApStackData|stack` = stack.`DEF_id` "
+		  ."LEFT JOIN ApRunsInStackData as runsin "
+		  ."  ON runsin.`REF|ApStackData|stack` = stack.`DEF_id` "
+		  ."LEFT JOIN ApStackRunData as stackrun "
+		  ."  ON runsin.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+			."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY alignrun.`DEF_id` DESC, "
+			." classrun.`num_classes` DESC ";
+		//echo $q."\n<BR/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getNoRefClassRunData ($classrun) {
+		$q = "SELECT classrun.* "
+			."FROM ApNoRefClassRunData as classrun "
+			."WHERE classrun.`DEF_id` = '$classrun' ";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
 	}
 
 	function getRefAliIters ($refaliId) {
-	$q = "SELECT * "
-		."FROM ApRefIterationData as i "
-		."WHERE i.`REF|ApRefRunData|refRun` = '$refaliId' "
-		."ORDER BY i.`iteration`";
-	$r = $this->mysql->getSQLResult($q);
-	return $r;
+		$q = "SELECT * "
+			."FROM ApRefIterationData as i "
+			."WHERE i.`REF|ApRefRunData|refRun` = '$refaliId' "
+			."ORDER BY i.`iteration`";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 	#---------RECONSTRUCTION FUNCTIONS---------------#
