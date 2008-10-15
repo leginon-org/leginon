@@ -71,9 +71,6 @@ class Focuser(acquisition.Acquisition):
 			'check drift': False,
 			'drift threshold': 3e-10,
 			'reset defocus': None,
-			'acquire final': False,
-			'melt preset': None,
-			'melt time': 0,
 		}
 		self.samecorrection = False
 		self.manualchecklock = threading.Lock()
