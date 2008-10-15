@@ -184,9 +184,10 @@ type: Pipeline
 module: gridentry
 type: Pipeline
 
-[FFTAnalyzer]
-module: fftanalyzer
-type: Pipeline
+## make sure you have wxmpl, matplotlib, etc before using FFTAnalyzer
+#[FFTAnalyzer]
+#module: fftanalyzer
+#type: Pipeline
 
 [BeamTiltImager]
 module: beamtiltimager
