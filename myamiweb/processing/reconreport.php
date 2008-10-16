@@ -326,7 +326,6 @@ foreach ($iterations as $iteration){
 	if ($postprocs[0]) {
 		$html .= "<tr>\n";
 		foreach ($postprocs as $p) {
-		  print_r($p);
 			# get list of png files in directory
 	  		$procimgs = getPngList($p['path']);
 			$html .= "<td bgcolor='$bg' colspan='".($numcols-1)."'>\n";

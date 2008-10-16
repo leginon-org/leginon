@@ -233,6 +233,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 						}
 
 						elseif ($stat['refinelog'][$i][0] == 'make3d') {
+							if ($steps['make3d']['status'] == "<font class='green'> Done</font>") continue;
 							$steps['clsalign']['status'] = "<font class='green'> Done</font>";
 							$steps['clsalign']['reconstruction step'] = 'iterative class averaging';
 							$t = getlogdate($stat['refinelog'][$i]);
@@ -247,9 +248,9 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 						} 
 						
 						// if running coran:
-						elseif ($stat['refinelog'][$i][1] == 'coran') {
+						elseif (ereg('coran',$stat['refinelog'][$i][0])) {
 							$steps['make3d']['status'] = "<font class='green'> Done</font>";
-							$t = getlogdata($stat['refinelog'][$i]);
+							$t = getlogdate($stat['refinelog'][$i]);
 							// set duration of previous run based on time stamp
 							$steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
 							$steps['coran']['reconstruction step'] = "performing SPIDER subclass";
