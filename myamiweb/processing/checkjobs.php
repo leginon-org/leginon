@@ -245,7 +245,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$steps['make3d']['duration'] = getduration($t['timestamp'],time());
 							$steps['make3d']['status'] = "<font class='apcomment'>running</font>";
 							$lasttime=$t['timestamp'];
-						} 
+						}
 						
 						// if running coran:
 						elseif (ereg('coran',$stat['refinelog'][$i][0])) {
