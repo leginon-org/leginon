@@ -13,6 +13,15 @@ from apSpider import alignment
 
 clslist=glob.glob('cls*.lst')
 
+def getPBSTasknum(outdir):
+	outfile = os.path.join(outdir,'PBSTASKNUM.txt')
+	os.system("pbsdsh -n 0 sh -c 'echo $PBS_TASKNUM > %s'" % outfile)
+	f = open(outfile)
+	tasknum=f.readlines()[0]
+	f.close()
+	print "Current PBS_TASKNUM is:",tasknum
+	return int(tasknum.strip())
+	
 def parseInput(args,params):
 	for arg in args:
 		elements=arg.split('=')
@@ -65,7 +74,7 @@ if __name__== '__main__':
 	#Set up for coran
 	params['corandir']=params['corandir']+str(params['iter'])
 	if os.path.exists(params['corandir']):
-		print "Warning %s exists and is being overwritten" % params['corandir']
+		print "WARNING!!! %s exists and is being overwritten" % params['corandir']
 		shutil.rmtree(params['corandir'])
 		os.mkdir(params['corandir'])
 	else:
@@ -94,7 +103,7 @@ if __name__== '__main__':
 		### create pbsdsh script
 		cscript = open("coranscript.csh",'w')
 		cscript.write("#!/bin/csh\n")
-		spiscript = os.path.join(os.path.abspath('.'),'spider.$PBS_VNODENUM.csh')
+		spiscript = os.path.join(os.path.abspath('.'),'spider.$PBS_TASKNUM.csh')
 		cscript.write("csh "+spiscript+"\n")
 		cscript.close()
 		os.chmod("coranscript.csh",0777)
@@ -102,14 +111,19 @@ if __name__== '__main__':
 		spnum = 0
 		coranscript=os.path.join(os.path.abspath('.'),'coranscript.csh')
 		while spnum < len(clslist):
+			### get the current tasknum
+			tasknum=getPBSTasknum(os.path.abspath('.'))
+
+			### loop through number of processors
 			for n in range(params['proc']):
 				if spnum==len(clslist):
 					break
+				tasknum+=1
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
 				spidercmd = alignment.runCoranClass(params,cls)
-				procfile=('spider.%i.csh' %n)
+				procfile=('spider.%i.csh' % tasknum)
 				f=open(procfile, 'w')
 				f.write("#!/bin/csh\n\n")
 				f.write("cd "+os.path.abspath('.')+"\n");
@@ -120,11 +134,10 @@ if __name__== '__main__':
 			os.system('pbsdsh -v '+coranscript)
 			time.sleep(2)
 			## remove spider files after completed
-			for n in range(params['proc']):
-				procfile=('spider.%i.csh' %n)
-				if os.path.exists(procfile):
-					os.remove(procfile)
+			for file in glob.glob('spider.*.csh'):
+				os.remove(file)
 			time.sleep(2)
+
 		### make sure class averages were created for all classes if aligned.spi exists,
 		### sometimes for some reason the spider job doesn't run
 		print "Checking that all spider jobs completed"
