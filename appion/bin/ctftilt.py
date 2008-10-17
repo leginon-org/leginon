@@ -198,6 +198,8 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 			sline = line.strip()
 			if sline[-12:] == "Final Values":
 				#print sline
+				if '**********' in sline:
+					sline = re.sub('**********', ' **********', sline)
 				bits = sline.split()
 				if len(bits) != 8:
 					apDisplay.printError("wrong number of values in "+str(bits))
