@@ -358,21 +358,16 @@ if ($expId) {
 	$nruns[]=array(
 		       'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
 		       );
+	if ($norefdone >= 1 && $stackruns >= 2) {
+		$nruns[]=array(
+			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>"
+		);
+	}
 	$data[]=array(
 		      'action'=>array($action, $celloption),
 		      'result'=>array(),
 		      'newrun'=>array($nruns, $celloption),
 		      );
-	if ($norefdone >= 1 && $stackruns >= 2) {
-		$nruns[]=array(
-			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>"
-		);
-		$data[]=array(
-			'action'=>array($action, $celloption),
-			'result'=>array(),
-			'newrun'=>array($nruns, $celloption),
-		);
-	}
 
 	// display reconstructions only if there is a stack
 	if ($stackruns > 0) {
