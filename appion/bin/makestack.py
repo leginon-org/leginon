@@ -817,12 +817,12 @@ def rejectImage(imgdata, params):
 	if params['tiltangle'] is not None:
 		tiltangle = apDatabase.getTiltAngleDeg(imgdata)
 		if params['tiltangle'] == -1.0:
-			if tiltangle > 0:
+			if tiltangle > -3:
 				apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
 					" != "+str(round(params['tiltangle'],1))+"\n","cyan")
 				return False
 		elif params['tiltangle'] == 1.0:
-			if tiltangle < 0:
+			if tiltangle < 3:
 				apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
 					" != "+str(round(params['tiltangle'],1))+"\n","cyan")
 				return False
