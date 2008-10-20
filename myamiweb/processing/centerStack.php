@@ -133,8 +133,8 @@ function runCenterParticles() {
 	if ($mask > $box/2) createCenterForm("<b>ERROR:</b> Mask radius too large, must be smaller than ".round($box/2)." pixels");
 	if ($maxshift > $box/2) createCenterForm("<b>ERROR:</b> Shift too large, must be smaller than ".round($box/2)." pixels");
 
-	if ($mask) $runid.='_$mask';
-	if ($maxshift) $runid.='_$maxshift';
+	if ($mask) $runid.='_'.$mask;
+	if ($maxshift) $runid.='_'.$maxshift;
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;
@@ -142,8 +142,8 @@ function runCenterParticles() {
 	//putting together command
 	$command.="-n $runid ";
 	$command.="-s $stackId ";
-	if ($mask) $command.="-m $mask ";
-	if ($maxshift) $command.="-x $maxshift ";
+	if ($mask) $command.="-m ".$mask." ";
+	if ($maxshift) $command.="-x ".$maxshift." ";
 	$command.="-d \"$description\" ";
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
 
