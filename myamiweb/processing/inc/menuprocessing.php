@@ -363,6 +363,13 @@ if ($expId) {
 			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>"
 		);
 	}
+
+	if ($norefdone >= 1 ) {
+		$nruns[]=array(
+			'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
+		);
+	}
+
 	$data[]=array(
 		      'action'=>array($action, $celloption),
 		      'result'=>array(),
