@@ -858,6 +858,12 @@ def getRMeasurePath():
  	if not os.path.isfile(rmeasexe):
 		rmeasexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
  	if not os.path.isfile(rmeasexe):
+		exename = "rmeasure.exe"
+		rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+ 	if not os.path.isfile(rmeasexe):
+		exename = "rmeasure"
+		rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+ 	if not os.path.isfile(rmeasexe):
 		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 	return rmeasexe
 
