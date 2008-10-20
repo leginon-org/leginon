@@ -1,4 +1,4 @@
-# Python functions for selexon.py
+#!/usr/bin/env python
 
 import os, re, sys, time
 import tempfile
@@ -862,7 +862,7 @@ def getRMeasurePath():
 	return rmeasexe
 
 #===========
-def runRMeasure(apix, volpath):
+def runRMeasure(apix, volpath, imask=0):
 	t0 = time.time()
 
 	apDisplay.printMsg("R Measure, processing volume: "+volpath)
@@ -870,7 +870,7 @@ def runRMeasure(apix, volpath):
 	rmeasproc = subprocess.Popen(rmeasexe, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	fin = rmeasproc.stdin
 	fout = rmeasproc.stdout
-	fin.write(volpath+"\n"+str(apix)+"\n")
+	fin.write(volpath+"\n"+str(apix)+"\n"+"0,0\n")
 	fin.flush()
 	fin.close()
 	output = fout.readlines()
@@ -960,6 +960,6 @@ def getSessionDataFromReconId(reconid):
 
 
 if __name__ == '__main__':
-	r = runRMeasure(6.52,'threed.1a.mrc')
+	r = runRMeasure(1.63,"/ami/data15/appion/08may09b/recon/recon1/threed.20a.mrc",'0,0')
 	print r
 
