@@ -313,7 +313,7 @@ class Collection(object):
 				try:
 					w = False
 					if self.settings['use wiener']:
-						if math.degrees(tilt) < self.settings['wiener max tilt']:
+						if abs(math.degrees(tilt)) < self.settings['wiener max tilt']:
 							self.logger.info('wiener filter enabled for this tilt')
 							w = True
 						else:
