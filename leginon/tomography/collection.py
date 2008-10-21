@@ -298,7 +298,7 @@ class Collection(object):
 
 			try:
 				next_tilt = tilts[i + 1]
-				s = 'Tilting stage to next angle (%g degrees)...' % math.degrees(tilt)
+				s = 'Tilting stage to next angle (%g degrees)...' % math.degrees(next_tilt)
 				self.logger.info(s)
 				stage_position = {'a': next_tilt}
 				self.instrument.tem.StagePosition = stage_position
@@ -311,7 +311,14 @@ class Collection(object):
 			#self.correlator.setTiltAxis(predicted_position['phi'])
 			while True:
 				try:
-					correlation_image = self.correlator.correlate(image, tilt, channel=channel, wiener=self.settings['use wiener'])
+					w = False
+					if self.settings['use wiener']:
+						if math.degrees(tilt) < self.settings['wiener max tilt']:
+							self.logger.info('wiener filter enabled for this tilt')
+							w = True
+						else:
+							self.logger.info('wiener filter disabled for this tilt')
+					correlation_image = self.correlator.correlate(image, tilt, channel=channel, wiener=w)
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))

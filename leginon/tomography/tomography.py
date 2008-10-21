@@ -67,6 +67,7 @@ class Tomography(acquisition.Acquisition):
 		'fixed model': False,
 		'use lpf': True,
 		'use wiener': False,
+		'wiener max tilt': 45,
 	}
 
 	def __init__(self, *args, **kwargs):
