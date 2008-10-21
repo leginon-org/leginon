@@ -1476,6 +1476,7 @@ class BeamTiltImagerSettingsData(SettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('beam tilt', float),
+			('beam tilt count', int),
 			('sites', int),
 			('startangle', float),
 			('tableau type', str),
@@ -1729,6 +1730,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('fixed model', bool),
 			('use lpf', bool),
 			('use wiener', bool),
+			('wiener max tilt', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1974,5 +1976,13 @@ class DynamicTemplateData(InSessionData):
 			('minsum', float),
 			('snr', float),
 			('angle', float),
+		)
+	typemap = classmethod(typemap)
+
+class testtable(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('b', int),
+			('c', int),
 		)
 	typemap = classmethod(typemap)
