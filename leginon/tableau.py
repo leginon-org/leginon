@@ -15,24 +15,21 @@ def splitTableau(image, split):
 	return tabimage
 
 class Tableau(object):
-	def __init__(self, radius):
+	def __init__(self):
 		self.images = []
-		self.radius = radius
 
-	def insertImage(self, image, angle=None):
-		if angle is None:
-			center = True
-		else:
-			center = False
-		info = {'image': image, 'angle': angle, 'center': center}
+	def insertImage(self, image, angle=None, radius=0):
+		info = {'image': image, 'angle': angle, 'radius': radius}
 		self.images.append(info)
 
 	def imageExtents(self, imageinfo):
-		if imageinfo['angle'] is None:
+		ang = imageinfo['angle']
+		rad = imageinfo['radius']
+		if (not ang) or (not rad):
 			x = y = 0
 		else:
-			x = int(self.radius * math.cos(imageinfo['angle']))
-			y = int(self.radius * math.sin(imageinfo['angle']))
+			x = int(rad * math.cos(ang))
+			y = int(rad * math.sin(ang))
 		center_row = -y
 		center_col = x
 		image = imageinfo['image']
@@ -78,20 +75,16 @@ if __name__ == '__main__':
 	from pyami import mrc
 
 	shape = 16,16
-	images = []
-	nimages = 4
-	angleinc = 2.0 * numpy.pi / nimages
-	angles = []
-	for i in range(nimages):
-		image = i * numpy.ones(shape)
-		images.append(image)
-		angle = i * angleinc + numpy.pi/4.0
-		angles.append(angle)
-		print 'ANGLE', angle
 
-	t = Tableau(radius=shape[0])
+	a = numpy.ones(shape)
+	b = 2 * numpy.ones(shape)
+	c = 3 * numpy.ones(shape)
+
+	t = Tableau()
 	for i, image in enumerate(images):
-		t.insertImage(image, angles[i])
+		t.insertImage(a, angle=0, radius=0)
+		t.insertImage(b, angle=0, radius=16)
+		t.insertImage(c, angle=numpy.pi, radius=16)
 
 	final = t.render()
 	mrc.write(final, 'final.mrc')

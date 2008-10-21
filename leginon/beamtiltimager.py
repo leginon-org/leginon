@@ -40,6 +40,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		'process target type': 'focus',
 		'adjust for drift': False,
 		'beam tilt': 0.01,
+		'beam tilt count': 1,
 		'sites': 0,
 		'startangle': 0,
 		'correlation type': 'phase',
@@ -81,47 +82,56 @@ class BeamTiltImager(acquisition.Acquisition):
 	def getBeamTiltList(self):
 		tiltlist = []
 		anglelist = []
+		radlist = []
+
 		tiltlist.append({'x':0.0,'y':0.0})
 		anglelist.append(None)
+		radlist.append(0)
+
 		if self.settings['sites'] == 0:
 			return tiltlist, anglelist
 		angleinc = 2*3.14159/self.settings['sites']
 		startangle = self.settings['startangle'] * numpy.pi / 180.0
 		for i in range(0,self.settings['sites']):
-			bt = {}
-			tilt = self.settings['beam tilt']
-			angle = i * angleinc + startangle
-			anglelist.append(angle)
-			bt['x']=math.cos(angle)*tilt
-			bt['y']=math.sin(angle)*tilt
-			tiltlist.append(bt)
-		return tiltlist, anglelist
+			for n in range(1, 1 + self.settings['beam tilt count']):
+				radlist.append(n)	
+				tilt = n * self.settings['beam tilt']
+				angle = i * angleinc + startangle
+				anglelist.append(angle)
+				bt = {}
+				bt['x']=math.cos(angle)*tilt
+				bt['y']=math.sin(angle)*tilt
+				tiltlist.append(bt)
+		return tiltlist, anglelist, radlist
 
 	def initTableau(self):
 		self.tableauimages = []
 		self.tableauangles = []
+		self.tableaurads = []
 
 	def splitTableau(self, image):
 		split = self.settings['tableau split']
 		tabimage = tableau.splitTableau(image, split)
 		self.displayTableau(tabimage)
 
-	def insertTableau(self, image, angle):
+	def insertTableau(self, image, angle, rad):
 		pow = imagefun.power(image)
 		binning = self.settings['tableau binning']
 		binned = imagefun.bin(pow, binning)
 		self.tableauimages.append(binned)
 		self.tableauangles.append(angle)
+		self.tableaurads.append(rad)
 
 	def renderTableau(self):
 		if not self.tableauimages:
 			return
 		size = self.tableauimages[0].shape[0]
-		rad = numpy.sqrt(2 * size * size)
-		tab = tableau.Tableau(radius=rad)
+		radinc = numpy.sqrt(2 * size * size)
+		tab = tableau.Tableau()
 		for i,im in enumerate(self.tableauimages):
-			angle = self.tableauangles[i]
-			tab.insertImage(im, angle)
+			ang = self.tableauangles[i]
+			rad = radinc * self.tableaurads[i]
+			tab.insertImage(im, angle=ang, radius=rad)
 		tabimage = tab.render()
 		self.displayTableau(tabimage)
 
@@ -139,7 +149,7 @@ class BeamTiltImager(acquisition.Acquisition):
 
 		# aquire and save the focus image
 		oldbt = self.instrument.tem.BeamTilt
-		tiltlist,anglelist = self.getBeamTiltList()
+		tiltlist,anglelist,radlist = self.getBeamTiltList()
 
 		## initialize a new tableau
 		self.initTableau()
@@ -175,10 +185,11 @@ class BeamTiltImager(acquisition.Acquisition):
 			status,imagedata = acquisition.Acquisition.acquire(self, presetdata, emtarget, channel= channel)
 			self.instrument.tem.BeamTilt = oldbt
 			angle = anglelist[i]
+			rad = radlist[i]
 			if self.settings['tableau type'] == 'split image':
 				self.splitTableau(imagedata['image'])
 			elif self.settings['tableau type'] == 'beam tilt series':
-				self.insertTableau(imagedata['image'], angle)
+				self.insertTableau(imagedata['image'], angle, rad)
 			try:
 				shiftinfo = self.correlateOriginal(i,imagedata)
 			except Exception, e:
