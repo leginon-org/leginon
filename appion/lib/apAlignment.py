@@ -140,8 +140,9 @@ def conflicts(params):
 		apDisplay.printError("Please provide a stackid from database, example: stackid=15")
 	if params['numclasses'] > 999:
 		apDisplay.printError("The number of classes is too large (> 999), please provide a smaller number")
-	if params['numparticles'] > 9999:
-		apDisplay.printError("The number of particles is too large (> 9999), please provide a smaller number")
+	maxparticles = 150000
+	if params['numparticles'] > maxparticles:
+		apDisplay.printError("The number of particles is too large (> %d), please provide a smaller number" % (maxparticles,))
 	return
 
 def refconflicts(params):

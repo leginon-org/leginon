@@ -75,8 +75,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		if self.params['numpart'] > 129999:
-			apDisplay.printError("too many particles requested, max 9999: "+str(self.params['numpart']))
+		maxparticles = 150000
+		if self.params['numpart'] > maxparticles:
+			apDisplay.printError("too many particles requested, max: " + str(maxparticles) + " requested: " + str(self.params['numpart']))
 		if self.params['initmethod'] not in self.initmethods:
 			apDisplay.printError("unknown initialization method defined: "
 				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
