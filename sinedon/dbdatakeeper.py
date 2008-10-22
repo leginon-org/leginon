@@ -14,7 +14,7 @@ import _mysql_exceptions
 import MySQLdb.constants.CR
 import dbconfig
 
-tables_created = {}
+columns_created = {}
 
 class DatabaseError(Exception):
 	pass
@@ -281,11 +281,19 @@ class DBDataKeeper(object):
 		tablename = newdata.__class__.__name__
 		table = (dbname, tablename)
 		definition, formatedData = sqldict.dataSQLColumns(newdata)
-		## assuming table definition does not change dynamically within
-		## a script, only check each table once.
-		if table not in tables_created:
+		## check for any new columns that have not been created
+		for d in definition:
+			print d['Field']
+		if table not in columns_created:
+			columns_created[table] = {}
+		fields = [d['Field'] for d in definition]
+		create_table = False
+		for field in fields:
+			if field not in columns_created[table]:
+				columns_created[table][field] = None
+				create_table = True
+		if create_table:
 			self.dbd.createSQLTable(table, definition)
-			tables_created[table] = None
 		myTable = self.dbd.Table(table)
 		newid = myTable.insert([formatedData], force=force)
 		return newid
