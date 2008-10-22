@@ -5,6 +5,7 @@ import tempfile
 import cPickle
 import math
 import string
+import shutil
 import subprocess
 #appion
 import appionData
@@ -15,6 +16,7 @@ import apDisplay
 import apEMAN
 import apEulerDraw
 import apStack
+import apFile
 import apUpload
 try:
 	import EMAN
@@ -365,42 +367,44 @@ def getClassInfo(classes):
 			projeulers.append(eulers)
 	return projeulers
 
-def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stackapix=None):
-	# if eotest failed, filter to 30 
+def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, 
+		apix=None, sym=None, box=None, lpfilter=True):
+	### if eotest failed, filter to 30
+	badres = False 
 	if not res:
 		res=30
-	if str(res) == 'nan':
+	elif str(res) == 'nan':
 		res=100
 		badres = True
-	else:
-		badres = False
-	syms = initmodel['symmetry']['symmetry'].split()
-	sym = syms[0]
-	# strip digits from symmetry
-	replace=re.compile('\d')
-	sym=replace.sub('',sym)
-			
-	tmpf = density+'.tmp.mrc'
-	
-	if stackapix is None:
-		apDisplay.printMsg("undefined stack pixelsize, using initial model pixelsize")
+	### set any unknown params
+	if sym is None:
+		syms = initmodel['symmetry']['symmetry'].split()
+		sym = syms[0]
+		# strip digits from symmetry
+		replace=re.compile('\d')
+		sym=replace.sub('',sym)
+	if apix is None:
 		apix = initmodel['pixelsize']
-	else:
-		apix = stackapix
-	box = initmodel['boxsize']
-	halfbox = int(initmodel['boxsize']/2)
+	if box is None:
+		box = initmodel['boxsize']
+	halfbox = int(box/2)
 
-	#low pass filter the volume to .6 * reported res
-	filtres = 0.6*res
-	lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
-	apDisplay.printMsg("Low pass filtering model for images")
-	apEMAN.executeEmanCmd(lpcmd)
+	### low pass filter the volume to 60% of reported res
+	tmpf = density+'.tmp.mrc'
+	if lpfilter is True:
+		filtres = 0.6*res
+		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
+		apDisplay.printMsg("Low pass filtering model for images")
+		apEMAN.executeEmanCmd(lpcmd)
+	else:
+		shutil.copy(density, tmpf)
+
+	### setup chimera params
 	chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
 	os.environ["CHIMENV"] = chimsnapenv
-	appiondir = apParam.getAppionDirectory()
-	chimsnappath = os.path.join(appiondir, "bin", "apChimSnapshot.py")
+	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
 	runChimeraScript(chimsnappath)
-	os.remove(tmpf)
+	apFile.removeFile(tmpf)
 
 	image1 = density+".1.png"
 	if not os.path.isfile(image1):
@@ -416,8 +420,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, stac
 	pngslice = density + '.slice.png'
 	slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
 	apEMAN.executeEmanCmd(slicecmd)
-	os.remove(tmphed)
-	os.remove(tmpimg)
+	apFile.removeStack(tmphed, warn=False)
 	return badres
 	
 
