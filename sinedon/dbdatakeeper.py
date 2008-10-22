@@ -282,11 +282,12 @@ class DBDataKeeper(object):
 		table = (dbname, tablename)
 		definition, formatedData = sqldict.dataSQLColumns(newdata)
 		## check for any new columns that have not been created
-		for d in definition:
-			print d['Field']
 		if table not in columns_created:
 			columns_created[table] = {}
 		fields = [d['Field'] for d in definition]
+		for field in formatedData.keys():
+			if field not in fields:
+				del formatedData[field]
 		create_table = False
 		for field in fields:
 			if field not in columns_created[table]:
