@@ -13,6 +13,7 @@ import numpy
 
 appiondb = apDB.apdb
 
+#===============
 def makeNewStack(oldstack, newstack, listfile):
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
@@ -29,7 +30,7 @@ def makeNewStack(oldstack, newstack, listfile):
 	apEMAN.executeEmanCmd(command, verbose=True)
 	return
 
-#--------
+#===============
 def getStackParticlesFromId(stackid, msg=True):
 	t0 = time.time()
 	if msg is True:
@@ -48,7 +49,7 @@ def getStackParticlesFromId(stackid, msg=True):
 			+" stack particles in "+apDisplay.timeString(time.time()-t0))
 	return stackpartdata
 
-#--------
+#===============
 def getNumberStackParticlesFromId(stackid, msg=True):
 	t0 = time.time()
 	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
@@ -57,14 +58,14 @@ def getNumberStackParticlesFromId(stackid, msg=True):
 	return numpart
 
 
-#--------
+#===============
 def sortStackParts(a, b):
 	if a['particleNumber'] > b['particleNumber']:
 		return 1
 	else:
 		return -1
 
-#--------
+#===============
 def getOneParticleFromStackId(stackid, msg=True):
 	if msg is True:
 		apDisplay.printMsg("querying one stack particle from stackid="+str(stackid)+" on "+time.asctime())
@@ -74,7 +75,7 @@ def getOneParticleFromStackId(stackid, msg=True):
 	stackparticledata=appiondb.query(stackq, results=1)
 	return stackparticledata[0]
 
-#--------
+#===============
 def getOnlyStackData(stackid, msg=True):
 	if msg is True:
 		apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
@@ -89,7 +90,7 @@ def getOnlyStackData(stackid, msg=True):
 		apDisplay.printColor("'"+stackdata['description']+"'","cyan")
 	return stackdata
 
-#--------
+#===============
 def getStackParticle(stackid, partnum):
 	stackparticleq = appionData.ApStackParticlesData()
 	stackparticleq['stack'] = appiondb.direct_query(appionData.ApStackData, stackid)
@@ -101,7 +102,7 @@ def getStackParticle(stackid, partnum):
 		apDisplay.printError("There's a problem with this stack. More than one particle with the same number.")
 	return stackparticledata[0]
 
-#--------
+#===============
 def getRunsInStack(stackid):
 	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
 	runsinstackq = appionData.ApRunsInStackData()
@@ -109,7 +110,18 @@ def getRunsInStack(stackid):
 	runsinstackdata = appiondb.query(runsinstackq)
 	return runsinstackdata
 
-#--------
+#===============
+def getOneSessionIdFromStackId(stackid):
+	"""
+	For a given stack id return any corresponding session id
+	"""
+	runsinstackdata = getRunsInStack(stackid)
+	if len(runsinstackdata) < 1:
+		return None
+	sessionid = runsinstackdata[0]['stackRun']['session'].dbid
+	return sessionid
+
+#===============
 def checkForPreviousStack(stackname, stackpath=None):
 	if stackpath is None:
 		spath = os.path.dirname(stackname)
@@ -123,7 +135,7 @@ def checkForPreviousStack(stackname, stackpath=None):
 		apDisplay.printError("A stack with name "+stackname+" and path "+spath+" already exists!")
 	return
 
-#--------
+#===============
 def getListFileParticle(line, linenum):
 	sline = line.strip()
 	if sline == "":
@@ -142,7 +154,7 @@ def getListFileParticle(line, linenum):
 
 	return particlenum
 
-#--------
+#===============
 def getStackIdFromRecon(reconrunid, msg=True):
 	reconrundata = appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
 	if not reconrundata:
@@ -153,7 +165,7 @@ def getStackIdFromRecon(reconrunid, msg=True):
 		apDisplay.printMsg("Found Stack id="+str(stackid)+" for Recon Run id="+str(reconrunid))
 	return stackid
 
-#--------
+#===============
 def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	if msg is True:
 		apDisplay.printMsg("averaging stack for summary web page")
@@ -166,7 +178,7 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	apEMAN.executeEmanCmd(emancmd, verbose=msg)
 	return True
 
-#========
+#===============
 def centerParticles(stack, mask=False, maxshift=False):
 	apDisplay.printMsg("centering stack: "+stack)
 	ext=stack.split('.')[-1]
@@ -188,7 +200,7 @@ def centerParticles(stack, mask=False, maxshift=False):
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 	
-#--------
+#===============
 def commitSubStack(params, newname=False, centered=False):
 	"""
 	commit a substack to database
@@ -282,6 +294,7 @@ def commitSubStack(params, newname=False, centered=False):
 	apDisplay.printMsg("finished")
 	return
 
+#===============
 def getStackPixelSizeFromStackId(stackId):
 	"""
 	For a given stack id return stack apix
@@ -303,7 +316,7 @@ def getStackPixelSizeFromStackId(stackId):
 	apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
 	return stackapix
 
-
+#===============
 def getStackBoxsize(stackId):
 	"""
 	For a given stack id return stack box size
@@ -318,7 +331,7 @@ def getStackBoxsize(stackId):
 	apDisplay.printMsg("Stack "+str(stackId)+" box size: "+str(stackboxsize))
 	return stackboxsize
 
-
+#===============
 def getStackParticleTilt(stpartid):
 	"""
 	For a given stack part dbid return tilt angle
@@ -331,6 +344,7 @@ def getStackParticleTilt(stpartid):
 # Imagic I/O
 #########################################################
 
+#===============
 def readImagic(filename):
 	"""
 	Rudimentary Imagic stack reader
@@ -345,7 +359,8 @@ def readImagic(filename):
 	stack['header'] = readImagicHeader(headerfilename)
 	stack['images'] = readImagicData(datafilename, stack['header'])
 	return stack
-	
+
+#===============	
 def readImagicHeader(headerfilename):
 	headfile=open(headerfilename,'rb')
 	
@@ -370,7 +385,8 @@ def readImagicHeader(headerfilename):
 	header['min']=f[22]
 
 	return header
-	
+
+#===============	
 def readImagicData(datafilename, headerdict):
 	images = numpy.fromfile(file=datafilename, dtype=numpy.float32)
 	images = images.reshape(headerdict['nimg'], headerdict['rows'], headerdict['lines'])

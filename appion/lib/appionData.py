@@ -564,6 +564,7 @@ class Ap3dDensityData(Data):
 			('maxfilt', float),
 			('hidden', bool),
 			('md5sum', str),
+			('rctrun', ApRctRunData),
 		)
 	typemap = classmethod(typemap)
 leginondata.Ap3dDensityData=Ap3dDensityData
@@ -873,6 +874,20 @@ class ApMaskAssessmentData(Data):
 			('run', ApMaskAssessmentRunData),
 			('region', ApMaskRegionData),
 			('keep', int),
+		)
+	typemap = classmethod(typemap)
+
+class ApRctRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('classnum', int),
+			('numiter', int),
+			('maskrad', int),
+			('lowpassvol', float),
+			('path', ApPathData),
+			('tiltstack', ApStackData),
+			('norefclass', ApNoRefClassRunData),
 		)
 	typemap = classmethod(typemap)
 

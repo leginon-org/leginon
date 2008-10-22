@@ -6,18 +6,16 @@ import os
 import shutil
 import numpy
 import time
+import threading
 #appion
 import appionScript
 import apStack
 import apDisplay
-import apDB
 import appionData
 import apEMAN
 import apFile
 from apTilt import apTiltPair
 from apSpider import operations, backproject
-
-appiondb = apDB.apdb
 
 class rctVolumeScript(appionScript.AppionScript):
 	#=====================
@@ -55,17 +53,19 @@ class rctVolumeScript(appionScript.AppionScript):
 		if self.params['tiltstackid'] is None:
 			apDisplay.printError("tilt stack ID was not defined")
 		if self.params['radius'] is None:
-			apDisplay.printError("particle radius was not defined")
+			apDisplay.printError("particle mask radius was not defined")
 		
 		#get the stack ID from the noref class ID
-		self.norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
+		self.norefclassdata = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
 		norefRun = self.norefclassdata['norefRun']
 		self.params['notstackid'] = norefRun['stack'].dbid
 		if self.params['notstackid'] is None:
 			apDisplay.printError("untilted stackid was not defined")
-		boxsize = apStack.getStackBoxsize(self.params['notstackid'])
+		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
 		if self.params['radius']*2 > boxsize-2:
 			apDisplay.printError("particle radius is too big for stack boxsize")	
+
+
 
 	#=====================
 	def setOutDir(self):
@@ -74,6 +74,13 @@ class rctVolumeScript(appionScript.AppionScript):
 		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
 		self.params['outdir'] = os.path.join(uppath, "rctvolume", 
 			self.params['runname'], "class%03d"%(self.params['classnum']) )
+
+		### check if path exists in db already
+		rctrunq = appionData.ApRctRunData()
+		rctrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		rctdata = rctrunq.query()
+		if rctdata:
+			apDisplay.printError("rct data already exists in database")
 
 	#=====================
 	def getParticleNoRefInPlaneRotation(self, stackpartdata):
@@ -123,6 +130,66 @@ class rctVolumeScript(appionScript.AppionScript):
 		if a['particleNumber'] > b['particleNumber']:
 			return 1
 		return -1
+
+	#=====================
+	def insertRctRun(self, volfile):
+		### insert rct run data
+		rctrunq = appionData.ApRctRunData()
+		rctrunq['runname']    = self.params['runname']
+		rctrunq['classnum']   = self.params['classnum']
+		rctrunq['numiter']    = self.params['numiter']
+		rctrunq['maskrad']    = self.params['radius']
+		rctrunq['lowpassvol'] = self.params['lowpassvol']
+		rctrunq['description'] = self.params['description']
+		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		rctrunq['norefclass'] = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
+		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
+		rctrunq.insert()
+
+		### insert 3d volume density
+		densq = appionData.Ap3dDensityData()
+		densq['rctrun'] = rctrunq
+		densq['path'] = appionData.ApPathData(path=os.path.abspath(os.path.dirname(volfile)))
+		densq['name'] = os.path.basename(volfile)
+		densq['hidden'] = False
+		densq['norm'] = True
+		densq['symmetry'] = self.appiondb.direct_query(appionData.ApSymmetryData, 25)
+		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
+		densq['boxsize'] = apStack.getStackBoxsize(self.params['tiltstackid'])
+		densq['lowpass'] = self.params['lowpassvol']
+		densq['mask'] = self.params['radius']
+		densq['iterid'] = self.params['numiter']
+		densq['description'] = self.params['description']
+		#densq['resolution'] = float
+		densq['session'] = apStack.getOneSessionIdFromStackId(self.params['tiltstackid'])
+		densq['md5sum'] = apFile.md5sumfile(volfile)
+		densq.insert()
+
+		return
+
+	#=====================
+	def processVolume(spivolfile, iternum):
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
+		rawspifile = os.path.join(self.params['outdir'], "rawvolume%s-%03d.spi"%(self.timestamp, iternum))
+		shutil.copy(spivolfile, rawspifile)
+		emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
+		emancmd = ("proc3d "+spivolfile+" "+emanvolfile+" center norm=0,1 apix="
+			+str(apix)+" lp="+str(self.params['lowpassvol']))
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+		apFile.removeFile(volfile)
+		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" origin=0,0,0 "
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" mask="+str(self.params['radius'])
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+		emancmd = "proc3d "+emanvolfile+" "+spivolfile+" spidersingle"
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
+		chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
+			args=(emanvolfile, 30, None, 1.5, 0.9, apix))
+		chimerathread.setDaemon(1)
+		chimerathread.start()
+
+		return emanvolfile
 
 	#=====================
 	def start(self):
@@ -206,17 +273,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		backproject.backprojectCG(spiderstack, eulerfile, volfile,
 			numpart=len(includeParticle), pixrad=self.params['radius'])
 		alignstack = spiderstack
+
 		### center/convert the volume file
-		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, 0))
-		emancmd = ("proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix="
-			+str(apix)+" lp="+str(self.params['lowpassvol']))
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		apFile.removeFile(volfile)
-		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" origin=0,0,0"
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		emancmd = "proc3d "+emanvolfile+" "+volfile+" spidersingle"
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		emanvolfile = self.processVolume(volfile, 0)
 
 		for i in range(self.params['numiters']):
 			iternum = i+1
@@ -233,15 +292,14 @@ class rctVolumeScript(appionScript.AppionScript):
 				numpart=len(includeParticle))
 
 			### center/convert the volume file
-			emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
-			emancmd = ("proc3d "+volfile+" "+emanvolfile+" center norm=0,1 apix="
-				+str(apix)+" lp="+str(self.params['lowpassvol']))
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
-			apFile.removeFile(volfile)
-			emancmd = "proc3d "+emanvolfile+" "+volfile+" origin=0,0,0 spidersingle"
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
+
+			emanvolfile = self.processVolume(volfile, iternum)
 
 		### optimize Euler angles
+
+
+		### insert volumes into DB
+		self.insertRctRun(emanvolfile)
 
 #=====================
 if __name__ == "__main__":
