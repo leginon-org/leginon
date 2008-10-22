@@ -29,7 +29,6 @@ class AppionLoop(object):
 		"""
 		Starts a new function and gets all the parameters
 		"""
-
 		#set the name of the function; needed for param setup
 		self.setFunctionName()
 		self.setProcessingDirName()
@@ -80,11 +79,13 @@ class AppionLoop(object):
 		os.chdir(self.params['rundir'])
 		self.preLoopFunctions()
 		### start the loop
-		notdone=True
-		while notdone:
+		self.notdone=True
+		while self.notdone:
 			apDisplay.printColor("\nBeginning Main Loop", "green")
-			for imgdata in self.imgtree:
-
+			imgnum = 0
+			while imgnum < len(self.imgtree) and self.notdone is True:
+				imgdata = self.imgtree[imgnum]
+				
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
 					continue
@@ -115,7 +116,8 @@ class AppionLoop(object):
 					apDisplay.printWarning("reached image limit of "+str(self.params['limit'])+"; now stopping")
 
 				#END LOOP OVER IMAGES
-			notdone = self._waitForMoreImages()
+			if self.notdone is True:
+				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
 		self._finishLoop()
