@@ -14,6 +14,7 @@ import apDisplay
 import appionData
 import apEMAN
 import apFile
+import apRecon
 from apTilt import apTiltPair
 from apSpider import operations, backproject
 
@@ -64,8 +65,6 @@ class rctVolumeScript(appionScript.AppionScript):
 		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
 		if self.params['radius']*2 > boxsize-2:
 			apDisplay.printError("particle radius is too big for stack boxsize")	
-
-
 
 	#=====================
 	def setOutDir(self):
@@ -144,12 +143,13 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		rctrunq['norefclass'] = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
-		rctrunq.insert()
+		if self.params['commit'] is True:
+			rctrunq.insert()
 
 		### insert 3d volume density
 		densq = appionData.Ap3dDensityData()
 		densq['rctrun'] = rctrunq
-		densq['path'] = appionData.ApPathData(path=os.path.abspath(os.path.dirname(volfile)))
+		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
@@ -163,47 +163,43 @@ class rctVolumeScript(appionScript.AppionScript):
 		#densq['resolution'] = float
 		densq['session'] = apStack.getOneSessionIdFromStackId(self.params['tiltstackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
-		densq.insert()
+		if self.params['commit'] is True:
+			densq.insert()
 
 		return
 
 	#=====================
-	def processVolume(spivolfile, iternum):
+	def processVolume(self, spivolfile, iternum=0):
+		### set values
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
+		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
 		rawspifile = os.path.join(self.params['outdir'], "rawvolume%s-%03d.spi"%(self.timestamp, iternum))
-		shutil.copy(spivolfile, rawspifile)
 		emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
+		lowpass = self.params['lowpassvol']
+		### copy original to raw file
+		shutil.copy(spivolfile, rawspifile)
+		### process volume files
 		emancmd = ("proc3d "+spivolfile+" "+emanvolfile+" center norm=0,1 apix="
-			+str(apix)+" lp="+str(self.params['lowpassvol']))
+			+str(apix)+" lp="+str(lowpass))
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		apFile.removeFile(volfile)
 		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" origin=0,0,0 "
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" mask="+str(self.params['radius'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
+		### convert to spider
+		apFile.removeFile(spivolfile)
 		emancmd = "proc3d "+emanvolfile+" "+spivolfile+" spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-
+		### image with chimera
 		chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-			args=(emanvolfile, 30, None, 1.5, 0.9, apix))
+			args=(emanvolfile, 30, None, 1.5, 0.9, apix, 'c1', boxsize, False))
 		chimerathread.setDaemon(1)
 		chimerathread.start()
 
 		return emanvolfile
 
 	#=====================
-	def start(self):
-		### get stack data
-		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
-		tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
-
-		### get particles from noref class run
-		classpartq = appionData.ApNoRefClassParticlesData()
-		classpartq['classRun'] = self.norefclassdata
-		classpartdatas = classpartq.query()
-		apDisplay.printMsg("Found "+str(len(classpartdatas))+" particles in the norefRun")
-
-		### get good particle numbers
+	def getGoodParticles(self, classpartdatas):
 		includeParticle = []
 		tiltParticlesData = []
 		nopairParticle = 0
@@ -230,6 +226,47 @@ class rctVolumeScript(appionScript.AppionScript):
 		if len(includeParticle) < 1:
 			apDisplay.printError("No particles were kept")
 		#print includeParticle
+		return includeParticle, tiltParticlesData
+
+	#=====================
+	def makeEulerDoc(self, tiltParticlesData):
+		count = 0
+		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
+		eulerf = open(eulerfile, "w")
+		apDisplay.printMsg("creating Euler doc file")
+		starttime = time.time()
+		tiltParticlesData.sort(self.sortTiltParticlesData)
+		for stackpartdata in tiltParticlesData:
+			count += 1
+			if count%100 == 0:
+				sys.stderr.write(".")
+				eulerf.flush()
+			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
+			psi = -1.0*(gamma + inplane)
+			while psi < 0:
+				psi += 360.0
+			partnum = stackpartdata['particleNumber']-1
+			line = operations.spiderOutLine(count, [phi, tiltangle, psi, partnum])
+			eulerf.write(line)
+		eulerf.close()
+		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		return eulerfile
+
+	#=====================
+	def start(self):
+		### get stack data
+		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
+		tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
+
+		### get particles from noref class run
+		classpartq = appionData.ApNoRefClassParticlesData()
+		classpartq['classRun'] = self.norefclassdata
+		classpartdatas = classpartq.query()
+		apDisplay.printMsg("Found "+str(len(classpartdatas))+" particles in the norefRun")
+
+		### get good particle numbers
+		includeParticle, tiltParticlesData = self.getGoodParticles(classpartdatas)
 
 		### write kept particles to file
 		self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile"+self.timestamp+".lst")
@@ -247,24 +284,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		spiderstack = self.convertStackToSpider(rctstackfile)
 
 		### make doc file of Euler angles
-		count = 0
-		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
-		eulerf = open(eulerfile, "w")
-		apDisplay.printMsg("creating Euler doc file")
-		starttime = time.time()
-		tiltParticlesData.sort(self.sortTiltParticlesData)
-		for stackpartdata in tiltParticlesData:
-			count += 1
-			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
-			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
-			psi = -1.0*(gamma + inplane)
-			while psi < 0:
-				psi += 360.0
-			partnum = stackpartdata['particleNumber']-1
-			line = operations.spiderOutLine(count, [phi, tiltangle, psi, partnum])
-			eulerf.write(line)
-		eulerf.close()
-		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		eulerfile = self.makeEulerDoc(tiltParticlesData)
 
 		### iterations over volume creation
 		looptime = time.time()
@@ -292,11 +312,10 @@ class rctVolumeScript(appionScript.AppionScript):
 				numpart=len(includeParticle))
 
 			### center/convert the volume file
-
 			emanvolfile = self.processVolume(volfile, iternum)
 
 		### optimize Euler angles
-
+		#NOT IMPLEMENTED YET
 
 		### insert volumes into DB
 		self.insertRctRun(emanvolfile)
