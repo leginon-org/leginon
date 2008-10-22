@@ -417,7 +417,7 @@ function runCreateModel() {
 	
 
 	if ($outdir) $command.="--outdir=$procdir ";
-	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Create Initial Model") {
