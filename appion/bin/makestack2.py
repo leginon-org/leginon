@@ -28,6 +28,9 @@ apdb = apDB.apdb
 
 class makestack (appionLoop.AppionLoop):
 
+############################################################
+## Pre-loop Functions 
+############################################################
 	def preLoopFunctions(self):
 		if self.params['selexonId'] is None and self.params['sessionname'] is not None:
 			self.params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
@@ -35,14 +38,21 @@ class makestack (appionLoop.AppionLoop):
 		if self.params['commit']:
 			self.insertStackRun()
 	
-		sys.exit(1)
-		
 		self.checkPixelSize()
 
-		#remove existing stack
+		# Not completely tested yet
+		if self.params['defocpair']:
+			self.imgtree = apDatabase.getDefocPairFromSelexonId(self.params['selexonId'])
+
+		# remove existing stack
 		if self.params['single']:
 			self.removeExistingStack()
-
+		
+		self.totpart=0
+			
+	############################################################
+	## Check pixel size
+	############################################################
 	def checkPixelSize(self):
 		# make sure that images all have same pixel size:
 		# first get pixel size of first image:
@@ -53,13 +63,16 @@ class makestack (appionLoop.AppionLoop):
 			# get pixel size
 			if apDatabase.getPixelSize(imgdata) != self.params['apix']:
 				apDisplay.printWarning("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
-
+				
+	############################################################
+	## Remove existing stack
+	############################################################
 	def removeExistingStack(self):
 		# if making a single stack, remove existing stack if exists
 		stackfile=os.path.join(self.params['rundir'], os.path.splitext(self.params['single'])[0])
 		# if saving to the database, store the stack parameters
 		if self.params['commit']is True:
-			insertStackRun(params)
+			insertStackRun(self.params)
 		if self.params['spider'] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
@@ -73,49 +86,11 @@ class makestack (appionLoop.AppionLoop):
  		if (os.path.isfile(p_logfile)):
 			os.remove(p_logfile)
 		self.params['particle']=0
-
-###########################################################################################################################
-
-	def getImgDefocPairFromSelexonId(params):
-		startt = time.time()
-		apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(params['selexonId']))
-	
-		# get selection run id
-		selexonrun=apdb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
-		if not (selexonrun):
-			apDisplay.printError("specified runId '"+str(self.params['selexonId'])+"' not in database")
 		
-		# from id get the session
-		self.params['sessionid']=selexonrun['session']
-	
-		# get all images from session
-		dbimgq=leginondata.AcquisitionImageData(session=self.params['sessionid'])
-		dbimginfo=db.query(dbimgq,readimages=False)
-	
-		if not (dbimginfo):
-			apDisplay.printError("no images associated with this runId")
-	
-		apDisplay.printMsg("Find corresponding image entry in the particle database")
-		# for every image, find corresponding image entry in the particle database
-		dbimglist=[]
-		params['sibpairs']={}
-		for imgdata in dbimginfo:
-			pimgq=appionData.ApParticleData()
-			pimgq['image']=imgdata
-			pimgq['selectionrun']=selexonrun
-			pimg=apdb.query(pimgq, results=1)
-			if pimg:
-				siblingimage = apDefocalPairs.getTransformedDefocPair(imgdata,1)
-				if siblingimage:
-					#create a dictionary for keeping the dbids of image pairs so we don't have to query later
-					params['sibpairs'][siblingimage.dbid] = imgdata.dbid
-					dbimglist.append(siblingimage)
-				else:
-					apDisplay.printWarning("no shift data for "+apDisplay.short(imgdata['filename']))
-		apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
-		return (dbimglist)
 		
-###########################################################################################################################
+############################################################
+## Process Image 
+############################################################
 
 	def processImage(self, imgdata):
 		# get defocus pair image from database if defocpair option is selected
@@ -139,9 +114,9 @@ class makestack (appionLoop.AppionLoop):
 
 		# run batchboxer
 		if self.params['ctftilt']:
-			self.ctfTiltBatchBox(imgdata)
+			numpart = self.ctfTiltBatchBox(imgdata)
 		else:
-			self.batchBox(imgdata)
+			numpart = self.batchBox(imgdata)
 
 		# check to see if a temporary stack of boxed particles was formed			
 		if not os.path.isfile(os.path.join(self.params['rundir'], imgname+".hed")) and not os.path.isfile(os.path.join(self.params['rundir'], imgname+".ctf.hed")):
@@ -152,10 +127,28 @@ class makestack (appionLoop.AppionLoop):
 		if self.params['single']:
 			self.singleStack(imgdata)
 
+		self.totpart = self.totpart + numpart
+				
+		expectedptcles = str(int(float(self.totpart)/float(self.stats['count'])*self.stats['imagecount']))
+		apDisplay.printMsg(str(self.totpart)+" total particles so far ("+str(self.stats['imagesleft'])+" images remain; expect "+\
+			expectedptcles+" particles)\n")
+		
+		# check if particle limit is met
+		if self.params['partlimit'] is not None and self.totpart > self.params['partlimit']:
+			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+"; now stopping")
+			self.imgtree = []
+			self.notdone = False
 
-		print self.params
+		self.removeTmpBoxFile(imgdata)
 
-		sys.exit(1)
+	############################################################
+	##  remove box file	
+	############################################################
+	def removeTmpBoxFile(self, imgdata):
+		tmpboxfile = os.path.join(self.params['rundir'], imgdata['filename']+".eman.box")
+		if os.path.isfile(tmpboxfile):
+			os.remove(tmpboxfile)
+
 
 	############################################################
 	##  skip image if additional criteria is not met	
@@ -233,6 +226,14 @@ class makestack (appionLoop.AppionLoop):
 						") is greater than maxdefocus ("+str(self.params['maxDefocus'])+")\n","cyan")
 					return False
 		return True
+
+
+############################################################
+## Post-loop Functions 
+############################################################
+	def postLoopFunctions(self):
+		### Averaging completed stack
+		apStack.averageStack(stack=os.path.join(self.params['rundir'], "start.hed"))
 
 
 ############################################################
@@ -695,6 +696,7 @@ class makestack (appionLoop.AppionLoop):
 			except:
 				apDisplay.printWarning(os.path.join(self.params['rundir'], imgname+".ctf.hed")+" does not exist!")
 
+
 ############################################################
 ## Insert and Committing 
 ############################################################
@@ -707,7 +709,7 @@ class makestack (appionLoop.AppionLoop):
 		for p in paramlist:
 			if p in self.params:
 				stparamq[p] = self.params[p]
-		paramslist=apdb.query(stparamq)	
+		paramslist = stparamq.query()	
 
 		# make sure that NULL values were not filled in during query
 		goodplist=None
@@ -839,7 +841,7 @@ class makestack (appionLoop.AppionLoop):
 		for arg in args:
 			elements=arg.split('=')
 			elements[0] = elements[0].lower()
-			print elements
+			#print elements
 			if (elements[0]=='help' or elements[0]=='--help' \
 				or elements[0]=='-h' or elements[0]=='-help'):
 				sys.exit(1)
@@ -871,6 +873,8 @@ class makestack (appionLoop.AppionLoop):
 				self.params['description']=elements[1]
 			elif (elements[0]=='ctftilt'):
 				self.params['ctftilt']=True
+			elif (elements[0]=='partlimit'):
+				self.params['partlimit']=int(elements[1])
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a parameter")
 
