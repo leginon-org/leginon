@@ -85,7 +85,8 @@ class AppionLoop(object):
 			imgnum = 0
 			while imgnum < len(self.imgtree) and self.notdone is True:
 				imgdata = self.imgtree[imgnum]
-				
+				imgnum += 1
+			
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
 					continue
@@ -671,22 +672,22 @@ class AppionLoop(object):
 		if self.params['apix'] != None and ('diam' in self.params and self.params['diam'] > 0):
 			self.params['pixdiam']    = self.params['diam']/self.params['apix']
 			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
-
+		
 		# skip if image doesn't exist:
 		imgpath = os.path.join(self.params['imgdir'], imgdata['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
 			return False
-
+		
 		# check to see if image has already been processed
 		#if self._alreadyProcessed(imgdata):
 		#	return False
 		if imgdata['filename'] in self.donedict:
 			return False
-
+		
 		self.stats['startloop'] = time.time()
 		self.stats['waittime'] = 0
-
+		
 		if self.reprocessImage(imgdata) is True:
 			if self.params['background'] is True:
 				sys.stderr.write(",")
