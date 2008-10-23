@@ -77,6 +77,7 @@ var help = {
 	'partnum' : 'Number of particles to use for each view. This number should be at least 10-20, and at most ~10% of the total particle data set. 50-100 is good for typical data sets of 2000 or more particles.',
 	'rounds' : 'Rounds of Euler angle determination to use (2-5)',
 	'pdbid' : 'ID for an experimentally determined biological molecule from the RCSB Protein Data Bank (www.rcsb.org)',
+	'emdbid' : 'ID for an experimentally determined electron density map from the EM Data Bank',
 	'biolunit' : 'Use the functional / oligomeric form of the structure for model creation',
 	'eulers' : 'Eulers assigned to the particles for this iteration will be used when creating class averages.',
 	'sigma' : 'Standard deviation multiplier to determine the quality of particle to be used.  Setting this to 0, only particles that have a quality factor equal to or greater than the mean quality factor will be used in making the class averages.  A larger sigma will result in fewer particles, but of higher \"quality\".  If no value is specified, all particles will be used.',
