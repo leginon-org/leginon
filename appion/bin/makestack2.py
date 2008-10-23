@@ -752,7 +752,7 @@ class makestack (appionLoop.AppionLoop):
 		# create a stackRun object
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runid']
-		runq['session'] = self.params['sessionid']	
+		runq['session'] = self.params['session']	
 
       # see if stack already exists in the database (just checking path)
 		stacks = apdb.query(stackq, results=1)
@@ -771,7 +771,7 @@ class makestack (appionLoop.AppionLoop):
 		# recreate a stackRun object
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runid']
-		runq['session'] = self.params['sessionid']
+		runq['session'] = self.params['session']
 		if goodplist:
 			runq['stackParams'] = goodplist
 		else:
@@ -866,7 +866,6 @@ class makestack (appionLoop.AppionLoop):
 		self.params['boxfiles']=False
 		self.params['stackId']=None
 		self.params['stackRun']=None
-		self.params['sessionid']=None
 
 	def specialParseParams(self,args):
 		for arg in args:
