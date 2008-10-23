@@ -27,6 +27,11 @@ else {
 function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $heading='Upload an Initial Model') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
+	if ($_GET['apix'])
+		$_POST['apix'] = $_GET['apix'];
+	if ($_GET['sym'])
+		$_POST['sym'] = $_GET['sym'];
+
 	$rescale=$_GET['rescale'];
 	$pdbmod=$_GET['pdbmod'];
 	
@@ -165,6 +170,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 
 function runUploadModel() {
 	$expId = $_GET['expId'];
+	
 	$outdir = $_POST['outdir'];
 
 	$command = "uploadModel.py ";

@@ -5,68 +5,71 @@ require"inc/project.inc";
 require"inc/processing.inc";
 
 $expId= $_GET['expId'];
-$densityId= $_GET['densityId'];
-$formAction=$_SERVER['PHP_SELF']."?expId=$expId&densityId=$densityId";
+$rctId= $_GET['rctId'];
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId&rctId=$rctId";
 $projectId=getProjectFromExpId($expId);
 
 $particle = new particledata();
 
-$density = $particle->get3dDensityFromId($densityId);
+$rctrun = $particle->getRctRunDataFromId($rctId);
 $javascript = editTextJava();
 
-processing_header("3d Density Volume Report", "3d Density Volume Report", $javascript);
+processing_header("RCT Run Report", "RCT Run Report", $javascript);
 
 
 // get updated description
-if ($_POST['updateDesc'.$densityId]) {
-	updateDescription('Ap3dDensityData', $densityId, $_POST['newdescription'.$densityId]);
-	$densitydata['description']=$_POST['newdescription'.$densityId];
+if ($_POST['updateDesc'.$rctId]) {
+	updateDescription('ApRctRunData', $rctId, $_POST['newdescription'.$rctId]);
+	$rctrun['description']=$_POST['newdescription'.$rctId];
 }
 
 # get list of png files in directory
 $pngfiles=array();
-$densitydir= opendir($density['path']);
-while ($f = readdir($densitydir)) {
-	if (eregi($density['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+$rctrundir= opendir($rctrun['path']);
+while ($f = readdir($rctrundir)) {
+	if (eregi('^volume.*\.mrc\.[0-9]\.png$', $f))
+		$pngfiles[] = $f;
 }
 sort($pngfiles);
 
-    // display starting density
-$j = "Density ID: $densityId";
-$densitytable = apdivtitle($j);
-foreach ($pngfiles as $snapshot) {
-	$snapfile = $density['path'].'/'.$snapshot;
-	$densitytable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
-	$densitytable.= "<img src='loadimg.php?scale=0.2&filename=$snapfile' height='120'></a>\n";
-}
-$sym=$particle->getSymInfo($density['REF|ApSymmetryData|symmetry']);
+    // display starting rctrun
+$j = "RCT Run ID: $rctId";
+$rcttable = apdivtitle($j);
 
 # add edit button to description if logged in
-$descDiv = ($_SESSION['username']) ? editButton($densityid, $density['description']) : $density['description'];
+$descDiv = ($_SESSION['username']) ? editButton($rctId, $rctrun['description']) : $rctrun['description'];
 
-$densitytable.= "<br />\n";
-$densitytable.= "<b>pixel size:</b> $density[pixelsize]<br />\n";
-$densitytable.= "<b>box size:</b> $density[boxsize]<br />\n";
-$densitytable.= "<b>symmetry:</b> $sym[symmetry]<br />\n";
-$densitytable.= "<b>resolution:</b> $density[resolution]<br />\n";
-$densitytable.= "<b>Filename:</b><br />$density[path]/$density[name]<br />\n";
-$densitytable.= "<b>Description:</b><br />$descDiv<br />\n";
+$stackcount= $particle->getNumStackParticles($rctrun['REF|ApStackData|tiltstack']);
+$stackmpix = $particle->getStackPixelSizeFromStackId($rctrun['REF|ApStackData|tiltstack']);
+$stackapix = format_angstrom_number($stackmpix);
 
-$densitytable.= "<b>History:</b><br />\n";
-if ($density['REF|ApRctRunData|rctrun'])
-	$densitytable .= "<A HREF='rctreport.php?expId=$expId&rctId="
-		.$density['REF|ApRctRunData|rctrun']."'>RCT volume run #"
-		.$density['REF|ApRctRunData|rctrun']."</A>\n";
-elseif ($density['REF|ApRefinementData|iterid'])
-	$densitytable .= "<A HREF='reconreport.php?expId=$expId&reconId="
-		.$density['refrun']."'>EMAN refinement run #"
-		.$density['refrun']."</A>\n";
-else
-	$densitytable .= "<I>unknown</I>\n";
-$densitytable.= "<br />\n";
+$rcttable.= "<br />\n";
+$rcttable.= "<b>num part:</b> $stackcount<br />\n";
+$rcttable.= "<b>pixel size:</b> $stackapix<br />\n";
+$rcttable.= "<b>box size:</b> $rctrun[boxsize]<br />\n";
+//$rcttable.= "<b>resolution:</b> $density[resolution]<br />\n";
+$rcttable.= "<b>Filename:</b><br />$rctrun[path]<br />\n";
+$rcttable.= "<b>Description:</b><br />$descDiv<br />\n";
+
+$numiter = (int) $rctrun['numiter'];
+for ($i = 0; $i <= $numiter; $i++) {
+	$j = "RCT Run iteration ".$i."<br/>\n";
+	$rcttable .= apdivtitle($j);
+	foreach ($pngfiles as $snapshot) {
+		$searchstr = "^volume.*".$i."\.mrc\.[0-9]\.png$";
+		if (eregi($searchstr, $snapshot)) {
+			$snapfile = $rctrun['path'].'/'.$snapshot;
+			$rcttable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
+			$rcttable.= "<img src='loadimg.php?scale=0.2&filename=$snapfile' height='120'></a>\n";
+		}
+	}
+	$rcttable.= "<br/>\n";
+}
+
+$rcttable.= "<br/>\n";
 
 
-echo $densitytable;
+echo $rcttable;
 
 processing_footer();
 exit;

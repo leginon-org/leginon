@@ -2314,6 +2314,24 @@ class particledata {
 		return $r;
 	}
 
+	function getRctRunDataFromId($rctId) {
+		$q="SELECT rctrun.*, "
+			."  path.`path` AS path, "
+			."  stparam.`boxSize` AS boxsize "
+			."FROM ApRctRunData as rctrun "
+			."LEFT JOIN ApRunsInStackData AS runsin "
+			."  ON rctrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS strun "
+			."  ON (runsin.`REF|ApStackRunData|stackRun` = strun.`DEF_id`) "
+			."LEFT JOIN ApStackParamsData AS stparam "
+			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			."  ON rctrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE "
+			."  rctrun.`DEF_id` = '$rctId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
 
 	function get3dDensitysFromSession($sessionId) {
 		$q="SELECT "

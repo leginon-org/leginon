@@ -20,7 +20,7 @@ processing_header("3d Density Volume Report", "3d Density Volume Report", $javas
 // get updated description
 if ($_POST['updateDesc'.$densityId]) {
 	updateDescription('Ap3dDensityData', $densityId, $_POST['newdescription'.$densityId]);
-	$densitydata['description']=$_POST['newdescription'.$densityId];
+	$density['description']=$_POST['newdescription'.$densityId];
 }
 
 # get list of png files in directory
@@ -63,8 +63,11 @@ elseif ($density['REF|ApRefinementData|iterid'])
 		.$density['refrun']."</A>\n";
 else
 	$densitytable .= "<I>unknown</I>\n";
-$densitytable.= "<br />\n";
+$densitytable.= "<br/><br/>\n";
 
+$densitytable.= "<b>Initial Model:</b><br/>\n";
+$densitytable.= "<A HREF='uploadmodel.php?expId=$expId&apix=$density[pixelsize]&sym=25"
+	."&pdbmod=$density[path]/$density[name]'>Upload Density file as an Initial Model</A><br/>\n";
 
 echo $densitytable;
 
