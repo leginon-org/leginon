@@ -2313,7 +2313,8 @@ class particledata {
 			."WHERE "
 			."  rctrun.`DEF_id` IS NOT NULL "
 			."AND "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY rctrun.`DEF_id` DESC ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -2348,7 +2349,8 @@ class particledata {
 			."LEFT JOIN ApRefinementData AS iterid "
 			."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` "
 			."WHERE "
-			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."ORDER BY dens.`DEF_id` DESC ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
