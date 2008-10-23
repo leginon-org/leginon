@@ -111,15 +111,16 @@ def getRunsInStack(stackid):
 	return runsinstackdata
 
 #===============
-def getOneSessionIdFromStackId(stackid):
+def getSessionDataFromStackId(stackid):
 	"""
-	For a given stack id return any corresponding session id
+	For a given stack id return any corresponding session data
+	If the stack is a combined stack, it only returns the first session found
 	"""
 	runsinstackdata = getRunsInStack(stackid)
 	if len(runsinstackdata) < 1:
 		return None
-	sessionid = runsinstackdata[0]['stackRun']['session'].dbid
-	return sessionid
+	sessiondata = runsinstackdata[0]['stackRun']['session']
+	return sessiondata
 
 #===============
 def checkForPreviousStack(stackname, stackpath=None):

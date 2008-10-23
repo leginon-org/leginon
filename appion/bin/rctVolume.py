@@ -23,9 +23,9 @@ class rctVolumeScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnum=# [options]")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
+			action="store_true", help="Commit RCT run to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
+			action="store_false", help="Do not commit RCT run to database")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
 		self.parser.add_option("--classnum", dest="classnum", type="int",
@@ -33,15 +33,19 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
 		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
-			help="noref class id", metavar="ID")
+			help="Noref class id", metavar="ID")
 		self.parser.add_option("--runname", dest="runname",
 			help="Run name", metavar="ID")
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
-			help="number of tilted image shift refinement iterations", metavar="#")
+			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
-			help="particle mask radius (in pixels)", metavar="ID")
-		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float",
-			help="low pass volume filter (in Angstroms)", metavar="#")
+			help="Particle mask radius (in pixels)", metavar="ID")
+		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float", default=10.0,
+			help="Low pass volume filter (in Angstroms)", metavar="#")
+		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
+			help="High pass particle filter (in Angstroms)", metavar="#")
+		self.parser.add_option("--description", dest="description", type="str",
+			help="Description of RCT run", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -55,6 +59,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("tilt stack ID was not defined")
 		if self.params['radius'] is None:
 			apDisplay.printError("particle mask radius was not defined")
+		if self.params['description'] is None:
+			apDisplay.printError("enter a description")
 		
 		#get the stack ID from the noref class ID
 		self.norefclassdata = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
@@ -101,22 +107,24 @@ class rctVolumeScript(appionScript.AppionScript):
 		"""
 		takes the stack file and creates a spider file ready for processing
 		"""
-		emancmd  = "proc2d "
 		if not os.path.isfile(emanstackfile):
 			apDisplay.printError("stackfile does not exist: "+emanstackfile)
-		emancmd += emanstackfile+" "
 
+		### first high pass filter particles
+		apDisplay.printMsg("pre-filtering particles")
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
+		emancmd = ("proc2d "+emanstackfile+" "+emanstackfile
+			+" apix="+str(apix)+" hp="+str(self.params['highpasspart'])
+			+" inplace")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+
+		### convert imagic stack to spider
+		emancmd  = "proc2d "
+		emancmd += emanstackfile+" "
 		spiderstack = os.path.join(self.params['outdir'], "rctstack"+self.timestamp+".spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
-		
-		#emancmd += "apix="+str(self.stack['apix'])+" "
-		#if self.params['lowpass'] > 0:
-		#	emancmd += "lp="+str(self.params['lowpass'])+" "
-		#emancmd += "last="+str(self.params['numpart']-1)+" "
-		#emancmd += "shrink="+str(self.params['bin'])+" "
-		#clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
-		#emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
+
 		emancmd += "spiderswap edgenorm"
 		starttime = time.time()
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
@@ -136,9 +144,10 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq = appionData.ApRctRunData()
 		rctrunq['runname']    = self.params['runname']
 		rctrunq['classnum']   = self.params['classnum']
-		rctrunq['numiter']    = self.params['numiter']
+		rctrunq['numiter']    = self.params['numiters']
 		rctrunq['maskrad']    = self.params['radius']
 		rctrunq['lowpassvol'] = self.params['lowpassvol']
+		rctrunq['highpasspart'] = self.params['highpasspart']
 		rctrunq['description'] = self.params['description']
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		rctrunq['norefclass'] = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
@@ -157,11 +166,12 @@ class rctVolumeScript(appionScript.AppionScript):
 		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
 		densq['boxsize'] = apStack.getStackBoxsize(self.params['tiltstackid'])
 		densq['lowpass'] = self.params['lowpassvol']
+		densq['highpass'] = self.params['highpasspart']
 		densq['mask'] = self.params['radius']
-		densq['iterid'] = self.params['numiter']
+		#densq['iterid'] = self.params['numiters']
 		densq['description'] = self.params['description']
 		#densq['resolution'] = float
-		densq['session'] = apStack.getOneSessionIdFromStackId(self.params['tiltstackid'])
+		densq['session'] = apStack.getSessionDataFromStackId(self.params['tiltstackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
 		if self.params['commit'] is True:
 			densq.insert()
@@ -299,6 +309,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		for i in range(self.params['numiters']):
 			iternum = i+1
+			self.appiondb.dbd.ping()
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 

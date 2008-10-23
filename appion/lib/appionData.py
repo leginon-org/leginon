@@ -885,6 +885,8 @@ class ApRctRunData(Data):
 			('numiter', int),
 			('maskrad', int),
 			('lowpassvol', float),
+			('highpasspart', float),
+			('description', str),
 			('path', ApPathData),
 			('tiltstack', ApStackData),
 			('norefclass', ApNoRefClassRunData),
