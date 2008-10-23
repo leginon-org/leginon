@@ -78,6 +78,16 @@ if ($densityRuns) {
 			$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId="
 				.$densityrun['refrun']."'> refine run #"
 				.$densityrun['refrun']."</A></TD>\n";
+		elseif ($densityrun['pdbid'])
+			$html .= "<TD><A HREF='http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId="
+				.$densityrun['pdbid']."'> PDB id "
+				.$densityrun['pdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+				."</A></TD>\n";
+		elseif ($densityrun['emdbid'])
+			$html .= "<TD><A HREF='http://www.ebi.ac.uk/msd-srv/emsearch/atlas/"
+				.$densityrun['emdbid']."_visualization.html'> EMDB id "
+				.$densityrun['emdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+				."</A></TD>\n";
 		else
 			$html .= "<TD><I>unknown</I></TD>\n";
 

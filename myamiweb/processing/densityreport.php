@@ -61,6 +61,16 @@ elseif ($density['REF|ApRefinementData|iterid'])
 	$densitytable .= "<A HREF='reconreport.php?expId=$expId&reconId="
 		.$density['refrun']."'>EMAN refinement run #"
 		.$density['refrun']."</A>\n";
+elseif ($density['pdbid'])
+	$densitytable .= "<A HREF='http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId="
+		.$density['pdbid']."'> PDB id "
+		.$density['pdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+		."</A>\n";
+elseif ($density['emdbid'])
+	$densitytable .= "<A HREF='http://www.ebi.ac.uk/msd-srv/emsearch/atlas/"
+		.$density['emdbid']."_visualization.html'> EMDB id "
+		.$density['emdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+		."</A>\n";
 else
 	$densitytable .= "<I>unknown</I>\n";
 $densitytable.= "<br/><br/>\n";
