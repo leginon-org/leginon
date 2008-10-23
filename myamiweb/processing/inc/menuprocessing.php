@@ -374,6 +374,16 @@ if ($expId) {
 		);
 	}
 
+	/* 3d Density Volumes */
+	$threedvols = $particle->get3dDensitysFromSession($sessionId);
+	$num3dvols = count($threedvols);
+	if ($num3dvols >= 1) {
+		$nruns[]=array(
+			'name'=>"<a href='upgradeVolume.php?expId=$sessionId'>3d Density Volume</a>",
+			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols complete</a>",
+		);
+	}
+
 	$data[]=array(
 		      'action'=>array($action, $celloption),
 		      'result'=>array(),
