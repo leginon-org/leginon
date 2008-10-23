@@ -175,7 +175,7 @@ echo formatHtmlRow('Size', $filesize);
 echo formatHtmlRow('Acquired', $imageinfo[timestamp]);
 echo formatHtmlRow('Path', $path);
 echo formatHtmlRow('Session', "$sessioninfo[Name] - $sessioninfo[Purpose]");
-echo formatHtmlRow('Instrument', $sessioninfo[Instrument].' - '.$sessioninfo['Instrument description']);
+echo formatHtmlRow('Instrument', $imageinfo['scope'].' - '.$imageinfo['camera']);
 echo "</table>";
 ?>
 	</td>

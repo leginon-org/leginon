@@ -1085,6 +1085,8 @@ class leginondata {
 			."a.`REF|SessionData|session` as `sessionId`,"
 			."a.`MRC|image` as filename, "
 			."p.`name` as `preset`, "
+			."isc.`name` as `scope`, "
+			."ic.`name` as `camera`, "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
 			."c.`SUBD|binning|y` as binning, "
@@ -1095,7 +1097,9 @@ class leginondata {
 			."scope.`high tension` "
 			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
+			."join InstrumentData isc on (isc.`DEF_id`=scope.`REF|InstrumentData|tem`)"
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
+			."join InstrumentData ic on (ic.`DEF_id`=c.`REF|InstrumentData|ccdcamera`)"
 			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			.$parenttargetjoin
 			.$gridjoin
