@@ -359,6 +359,10 @@ if ($expId) {
 		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
 	);
 
+	$nruns[]=array(
+		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
+	);
+
 	/* RCT Volumes */
 	$numrctvols = $particle->getNumberOfRctRuns($sessionId);
 	if ($norefdone >= 1 && $stackruns >= 2) {
