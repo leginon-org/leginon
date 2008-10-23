@@ -2284,6 +2284,36 @@ class particledata {
 		return $r;
 	}
 
+
+	function getNumberOfRctRuns($sessionId) {
+		$q="SELECT count(rctrun.`DEF_id`) AS number "
+			."FROM ApRunsInStackData as runsin "
+			."LEFT JOIN ApStackRunData AS strun "
+			."  ON (runsin.`REF|ApStackRunData|stackRun` = strun.`DEF_id`) "
+			."LEFT JOIN ApRctRunData AS rctrun "
+			."  ON rctrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
+			."WHERE strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0]['number'];
+	}
+
+	function getRctRunsFromSession($sessionId) {
+		$q="SELECT rctrun.*, stparam.`boxSize` AS boxsize "
+			."FROM ApRunsInStackData as runsin "
+			."LEFT JOIN ApStackRunData AS strun "
+			."  ON (runsin.`REF|ApStackRunData|stackRun` = strun.`DEF_id`) "
+			."LEFT JOIN ApRctRunData AS rctrun "
+			."  ON rctrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackParamsData AS stparam "
+			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
+			."WHERE "
+			."  rctrun.`DEF_id` IS NOT NULL "
+			."AND "
+			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 }
 
 function simplify($e) {

@@ -356,11 +356,15 @@ if ($expId) {
 
 	$nruns=array();
 	$nruns[]=array(
-		       'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
-		       );
+		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
+	);
+
+	/* RCT Volumes */
+	$numrctvols = $particle->getNumberOfRctRuns($sessionId);
 	if ($norefdone >= 1 && $stackruns >= 2) {
 		$nruns[]=array(
-			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>"
+			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
+			'result'=>"<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>",
 		);
 	}
 
