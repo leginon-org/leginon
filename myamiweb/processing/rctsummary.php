@@ -42,7 +42,7 @@ if ($rctRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'defid', 'name', 'num prtls', 'pixel size', 'box size','description');
+	$display_keys = array ( 'defid', 'name', 'image', 'num prtls', 'pixel size', 'box size','description');
 	foreach($display_keys as $key) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
@@ -65,6 +65,18 @@ if ($rctRuns) {
 		$html .= "<TR>\n";
 		$html .= "<TD>$rctrun[DEF_id]</TD>\n";
 		$html .= "<TD><A HREF='rctreport.php?expId=$expId&rctId=$rctrun[DEF_id]'>$rctrun[runname]</A></TD>\n";
+
+		# sample image
+		$rctrundir= opendir($rctrun['path']);
+		while ($f = readdir($rctrundir)) {
+			if (eregi('^volume.*'.$rctrun['numiter'].'\.mrc\.1\.png$', $f))
+				$pngfile = $rctrun['path']."/".$f;
+		}
+		if (file_exists($pngfile))
+			$html .= "<TD><IMG SRC='loadimg.php?scale=0.07&filename=$pngfile' HEIGHT=71></TD>\n";
+		else
+			$html .= "<TD>$pngfile</TD>\n";
+
 		$html .= "<TD>$stackcount</TD>\n";
 		$html .= "<TD>$stackapix</TD>\n";
 		$html .= "<TD>$rctrun[boxsize]</TD>\n";

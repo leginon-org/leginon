@@ -2298,7 +2298,9 @@ class particledata {
 	}
 
 	function getRctRunsFromSession($sessionId) {
-		$q="SELECT rctrun.*, stparam.`boxSize` AS boxsize "
+		$q="SELECT rctrun.*, "
+			."  path.`path` AS path, "
+			."  stparam.`boxSize` AS boxsize "
 			."FROM ApRunsInStackData as runsin "
 			."LEFT JOIN ApStackRunData AS strun "
 			."  ON (runsin.`REF|ApStackRunData|stackRun` = strun.`DEF_id`) "
@@ -2306,6 +2308,8 @@ class particledata {
 			."  ON rctrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
 			."LEFT JOIN ApStackParamsData AS stparam "
 			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			."  ON rctrun.`REF|ApPathData|path` = path.`DEF_id` "
 			."WHERE "
 			."  rctrun.`DEF_id` IS NOT NULL "
 			."AND "
