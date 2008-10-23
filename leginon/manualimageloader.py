@@ -1,0 +1,215 @@
+#
+# COPYRIGHT:
+#			 The Leginon software is Copyright 2003
+#			 The Scripps Research Institute, La Jolla, CA
+#			 For terms of the license agreement
+#			 see	http://ami.scripps.edu/software/leginon-license
+#
+
+import data
+import event
+import node
+import project
+import threading
+import time
+import manualacquisition
+import gui.wx.ManualImageLoader
+import player
+import instrument
+import os
+import re
+import calibrationclient
+import copy
+from pyami import arraystats, imagefun, mrc
+import numpy
+import corrector
+
+class AcquireError(Exception):
+	pass
+
+class ManualImageLoader(manualacquisition.ManualAcquisition):
+	panelclass = gui.wx.ManualImageLoader.Panel
+	settingsclass = data.ManualImageLoaderSettingsData
+	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
+	defaultsettings = {
+		'instruments': {'tem': None, 'ccdcamera': None},
+		'save image': False,
+		'batch script': '',
+		'camera settings': None,
+	}
+
+	def __init__(self, id, session, managerlocation, **kwargs):
+		self.loopstop = threading.Event()
+		self.loopstop.set()
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		self.defocus = None
+		self.instrument = instrument.Proxy(self.objectservice,
+																				self.session,
+																				self.panel)
+
+		self.calclient = calibrationclient.PixelSizeCalibrationClient(self)
+
+		self.manualplayer = player.Player(callback=self.onManualPlayer)
+		self.comment = ''
+		self.published_images = []
+		self.viewstatus = None
+
+		self.start()
+
+	def acquire(self):
+		#This replaces the function of the same name in ManualAcquisition
+		#to pretend an image acquisition
+		self.logger.info('Loading image as if acquired...')
+		self.instrument.ccdcamera.Settings = self.uploadedInfo['camera settings']
+
+		try:
+			image = self.uploadedInfo['image']
+			scope = self.instrument.getData(data.ScopeEMData)
+			camera = self.instrument.getData(data.CameraEMData, image=False)
+			imagedata = data.CameraImageData(image=image, scope=scope, camera=camera)
+			imagedata['session'] = self.session
+		except Exception, e:
+			self.logger.exception('Error loading image: %s' % e)
+			raise AcquireError
+		image = imagedata['image']
+
+
+		self.logger.info('Displaying image...')
+		self.getImageStats(image)
+		self.setImage(image)
+
+		if self.settings['save image']:
+			self.logger.info('Saving image to database...')
+			filedir, filename = os.path.split(self.uploadedInfo['original filepath'])
+			self.settings['image label'] = filename
+			self.comment = filename
+			try:
+				self.publishImageData(imagedata, save=True)
+				self.published_images.append(self.getMostRecentImageData(self.session))
+				self.viewstatus = 'normal'
+				self.saveComment()
+			except node.PublishError, e:
+				raise
+				message = 'Error saving image to database'
+				self.logger.info(message)
+				if str(e):
+					message += ' (%s)' % str(e)
+				self.logger.error(message)
+				raise AcquireError
+		else:
+			self.publishImageData(imagedata, save=False)
+		self.logger.info('Image acquisition complete')
+
+	def acquireImage(self):
+		#single image testing disabled in GUI
+		self.published_images = []
+		try:
+			self.readUploadInfo()
+			self.setInfoToInstrument()
+			self.acquire()
+		except:
+			self.panel.acquisitionDone()
+			return
+		self.logger.info('Image uploaded.')
+		self.panel.acquisitionDone()
+
+	def acquisitionLoop(self):
+		#batch loading
+		self.logger.info('Starting uploading loop...')
+		batchinfo = self.readBatchUploadInfo()
+		self.loopstop.clear()
+		self.logger.info('Image loading loop started')
+		self.loopStarted()
+		for info in batchinfo:
+			if self.loopstop.isSet():
+				break
+			self.published_images = []
+			try:
+				self.readUploadInfo(info)
+				self.setInfoToInstrument()
+				self.acquire()
+			except:
+				self.loopstop.set()
+				break
+		self.loopstop.set()
+
+		self.loopStopped()
+		self.logger.info('Image loading loop stopped')
+
+	def readBatchUploadInfo(self):
+		# in this example, the batch script file should be separated by tab
+		# see example in function readUploadInfo for format
+		batchfilename = self.settings['batch script']
+		if not os.path.exists(batchfilename):
+			self.logger.error('Batch file %s not exist' % batchfilename)
+			return []
+		batchfile = open(batchfilename,'r')
+		lines = batchfile.readlines()
+		batchfile.close()
+		batchinfo = []
+		for line in lines:
+			texts = line.split('\n')
+			info = texts[0].split('\t')
+			batchinfo.append(info)
+		return batchinfo
+
+	def readUploadInfo(self,info=None):
+		if info is None:
+			# example
+			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000']
+		try:
+			self.uploadedInfo = {}
+			self.uploadedInfo['original filepath'] = info[0]
+			self.uploadedInfo['unbinned pixelsize'] = float(info[1])
+			self.uploadedInfo['binning'] = {'x':int(info[2]),'y':int(info[3])}
+			self.uploadedInfo['magnification'] = int(info[4])
+			self.uploadedInfo['defocus'] = float(info[5])
+			self.uploadedInfo['high tension'] = int(info[6])
+		except:
+			self.logger.exception('Bad batch file parameters')
+			raise
+		try:
+			self.uploadedInfo['image'] = mrc.read(self.uploadedInfo['original filepath'])
+		except IOError, e:
+			self.logger.exception('File %s not available for upload' % self.uploadedInfo['original filepath'])
+			raise
+
+	def setInfoToInstrument(self):
+		# uploaded information is send to the instruments to simulate an acquisition
+		self.instrument.tem.HighTension = self.uploadedInfo['high tension']
+		self.instrument.tem.Defocus = self.uploadedInfo['defocus']
+		self.instrument.tem.Magnification = self.uploadedInfo['magnification']
+		cam_settings = self.settings['camera settings']
+		shape = self.uploadedInfo['image'].shape
+		cam_settings['exposure time'] = 1000
+		cam_settings['dimension']['x'] = shape[0]
+		cam_settings['dimension']['y'] = shape[1]
+		cam_settings['binning']['x'] = self.uploadedInfo['binning']['x']
+		cam_settings['binning']['y'] = self.uploadedInfo['binning']['y']
+		cam_settings['offset']['x'] = 0
+		cam_settings['offset']['y'] = 0
+		self.uploadedInfo['camera settings'] = cam_settings
+		self.instrument.ccdcamera.Settings = cam_settings
+		if self.settings['save image']:
+			self.updatePixelSizeCalibration()
+	
+	def updatePixelSizeCalibration(self):
+		# This updates the pixel size for the magnification on the
+		# instruments before the image is published.  Later query will look up the
+		# pixelsize calibration closest and before the published image 
+		temdata = self.instrument.getTEMData()
+		camdata = self.instrument.getCCDCameraData()
+		mag = self.instrument.tem.Magnification
+		current_pixelsize = self.calclient.getPixelSize(mag, temdata, camdata)
+		if current_pixelsize != self.uploadedInfo['unbinned pixelsize']:
+			self.logger.info('Updating pixel size at %d' % mag)
+			caldata = data.PixelSizeCalibrationData()
+			caldata['magnification'] = mag
+			caldata['pixelsize'] = self.uploadedInfo['unbinned pixelsize']
+			caldata['comment'] = 'based on uploaded pixel size'
+			caldata['session'] = self.session
+			caldata['tem'] = temdata
+			caldata['ccdcamera'] = camdata
+			self.publish(caldata, database=True)
+			

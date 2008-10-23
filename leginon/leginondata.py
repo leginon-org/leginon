@@ -1645,6 +1645,16 @@ class ManualAcquisitionSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class ManualImageLoaderSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('instruments', dict),
+			('camera settings', CameraSettingsData),
+			('save image', bool),
+			('batch script', str),
+		)
+	typemap = classmethod(typemap)
+
 class IntensityMonitorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -1914,18 +1924,6 @@ class StageTiltAxisOffsetData(CalibrationData):
 	def typemap(cls):
 		return CalibrationData.typemap() + (
 			('offset', float),
-		)
-	typemap = classmethod(typemap)
-
-class ManualImageLoaderSettingsData(SettingsData):
-	def typemap(cls):
-		return SettingsData.typemap() + (
-			('camera settings', CameraSettingsData),
-			('correct image', bool),
-			('save image', bool),
-			('defocus', float),
-			('image directory', str),
-			('jump filename', str),
 		)
 	typemap = classmethod(typemap)
 
