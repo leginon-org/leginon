@@ -193,3 +193,7 @@ type: Pipeline
 module: beamtiltimager
 type: Pipeline
 
+[ManualImageLoader]
+module: manualimageloader
+type: Utility
+
