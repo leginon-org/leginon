@@ -115,7 +115,8 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 		echo "<TABLE><TR><TD>\n";
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
 		echo "</TD><TD>";
-		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='corankeepplotfile'><IMG SRC='loadimg.php?filename=$corankeepplotfile' HEIGHT='180'><BR/>\nCoran Keep Plot</A>";
+		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='corankeepplotfile'>"
+			."<IMG SRC='loadimg.php?filename=$corankeepplotfile' HEIGHT='180'><BR/>\nCoran Keep Plot</A>";
 		echo "</TD></TR></TABLE>";
 	} else {
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
@@ -155,7 +156,8 @@ foreach ($display_keys as $p) {
 	elseif ($p == 'snapshot') {
 		foreach ($initpngs as $snapshot) {
 			$snapfile = $initmodel['path'].'/'.$snapshot;
-			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'></A>\n";
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
+				."<IMG SRC='loadimg.php?scale=0.2&filename=$snapfile' HEIGHT='80'></A>\n";
 		}
 	}
 	$html .= "</TD>";
@@ -278,9 +280,10 @@ foreach ($iterations as $iteration){
 	}
 	$eulerSelect .= "</select>\n";
 	
-	$eulerhtml = "<a id='eulerlink".$iteration['iteration']."' href='loadimg.php?filename=".$firsteulerimg."' target='snapshot'>"
-	  ."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$firsteulerimg."'>"
-	  ."</a><br />\n";
+	$eulerhtml = "<a id='eulerlink".$iteration['iteration']
+		."' href='loadimg.php?filename=".$firsteulerimg."' target='snapshot'>"
+		."<img name='eulerimg".$iteration['iteration']."' src='loadimg.php?scale=.125&filename=".$firsteulerimg."'>"
+		."</a><br />\n";
 	$eulerhtml .= $eulerSelect;
 	// add euler plots to iteration if exist
 	if ($firsteulerimg) $html .=$eulerhtml;
@@ -317,7 +320,8 @@ foreach ($iterations as $iteration){
 	foreach ($pngimages['pngfiles'] as $snapshot) {
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
 			$snapfile = $refinerun['path'].'/'.$snapshot;
-			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'></a>\n";
+			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
+				."<IMG SRC='loadimg.php?scale=0.2&filename=$snapfile' HEIGHT='80'></a>\n";
 		}
 	}
 	"</td></tr>\n";
@@ -353,7 +357,8 @@ foreach ($iterations as $iteration){
 			foreach ($procimgs['pngfiles'] as $s) {
 			  	if (eregi($p['name'],$s)) {
 					$sfile = $p['path'].'/'.$s;
-					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'><img src='loadimg.php?filename=$sfile' height='80'></a>\n";
+					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'>"
+						."<img src='loadimg.php?scale=0.2&filename=$sfile' height='80'></a>\n";
 				}
 			}
 			$html .= "</td>\n";
