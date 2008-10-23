@@ -29,8 +29,11 @@ apdb = apDB.apdb
 class makestack (appionLoop.AppionLoop):
 
 ############################################################
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## Pre-loop Functions 
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ############################################################
+
 	def preLoopFunctions(self):
 		if self.params['selexonId'] is None and self.params['sessionname'] is not None:
 			self.params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
@@ -45,10 +48,16 @@ class makestack (appionLoop.AppionLoop):
 			self.imgtree = apDatabase.getDefocPairFromSelexonId(self.params['selexonId'])
 
 		# remove existing stack
-		if self.params['single']:
+		if self.params['nocontinue']:
 			self.removeExistingStack()
+			self.totpart=0
+		else:
+			self.totpart=self.setExistingStackInfo()
+			
+		if self.params['partlimit'] is not None and self.params['partlimit'] <= self.totpart:
+			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
 		
-		self.totpart=0
+		
 			
 	############################################################
 	## Check pixel size
@@ -71,8 +80,6 @@ class makestack (appionLoop.AppionLoop):
 		# if making a single stack, remove existing stack if exists
 		stackfile=os.path.join(self.params['rundir'], os.path.splitext(self.params['single'])[0])
 		# if saving to the database, store the stack parameters
-		if self.params['commit']is True:
-			insertStackRun(self.params)
 		if self.params['spider'] is True and os.path.isfile(stackfile+".spi"):
 			os.remove(stackfile+".spi")
 		if (os.path.isfile(stackfile+".hed")):
@@ -80,16 +87,25 @@ class makestack (appionLoop.AppionLoop):
 		if (os.path.isfile(stackfile+".img")):
 			os.remove(stackfile+".img")
 
-		# set up counter for particle log
-		p_logfile=os.path.join(self.params['rundir'], ".particlelog")
-
- 		if (os.path.isfile(p_logfile)):
-			os.remove(p_logfile)
 		self.params['particle']=0
 		
+	############################################################
+	## Retrive existing stack info
+	############################################################
+	def setExistingStackInfo(self):
+		stackfile=os.path.join(self.params['rundir'], os.path.splitext(self.params['single'])[0])
+		if (os.path.isfile(stackfile+".hed")):
+			imagic = apStack.readImagic(stackfile+".hed")
+			self.params['particle']=len(imagic['images'])
+		else:
+			self.params['particle']=0
+		
+		return int(self.params['particle'])
 		
 ############################################################
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## Process Image 
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ############################################################
 
 	def processImage(self, imgdata):
@@ -227,17 +243,20 @@ class makestack (appionLoop.AppionLoop):
 					return False
 		return True
 
-
 ############################################################
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## Post-loop Functions 
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ############################################################
+
 	def postLoopFunctions(self):
 		### Averaging completed stack
 		apStack.averageStack(stack=os.path.join(self.params['rundir'], "start.hed"))
 
-
 ############################################################
-## Functions for CTF tilt correction
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## Functions for tilted CTF correction
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ############################################################
 
 	############################################################
@@ -414,8 +433,10 @@ class makestack (appionLoop.AppionLoop):
 		apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 		apEMAN.executeEmanCmd(cmd)		
 		
-############################################################
+############################################################		
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## Functions for untilted CTF correction
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ############################################################
 
 	############################################################
@@ -575,6 +596,7 @@ class makestack (appionLoop.AppionLoop):
 ############################################################
 ## Shared function for tilted and untilted CTF correction
 ############################################################
+
 	def createStackParticle(self,prtl):
 		stackpq=appionData.ApStackParticlesData()
 		stackpq['stack']=self.params['stackId']
@@ -769,8 +791,9 @@ class makestack (appionLoop.AppionLoop):
 		if not stacks:
 			if not runids:
 				print "Inserting stack parameters into DB"
-				#if self.params['commit'] is True:
-					#rinstackq.insert()
+				if self.params['commit'] is True:
+					self.removeExistingStack()
+					rinstackq.insert()
 			else:
 				apDisplay.printError("Run name '"+self.params['runid']+"' already in the database")
 		
@@ -793,11 +816,19 @@ class makestack (appionLoop.AppionLoop):
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
 				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 							     "please check your parameter settings.")
-			apDisplay.printWarning("Recreating an existing stack! Previous stack will be overwritten!")
+
+			if self.params['nocontinue']:
+				apDisplay.printWarning("Stack already exist in database! 'nocontinue' option chosen -- existing stack will be overwritten")
+			else:
+				apDisplay.printWarning("Stack already exist in database! Appending new particles to stack")			
 	
 			
-###########################################################################################################################		
-
+############################################################
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## Additional parameters
+##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+############################################################
+		
 	def specialDefaultParams(self):
 		self.params['single']=None
 		self.params['aceCutoff']=None
