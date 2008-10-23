@@ -82,6 +82,7 @@ class ManualAcquisition(node.Node):
 		self.manualplayer = player.Player(callback=self.onManualPlayer)
 		self.comment = ''
 		self.published_images = []
+		self.viewstatus = None
 
 		self.corclient = corrector.CorrectorClient(self)
 		self.initSameCorrection()
