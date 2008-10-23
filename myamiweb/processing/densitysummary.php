@@ -76,12 +76,12 @@ if ($densityRuns) {
 				.$densityrun['REF|ApRctRunData|rctrun']."</A></TD>\n";
 		elseif ($densityrun['REF|ApRefinementData|iterid'])
 			$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId="
-				.$densityrun['refrun']."'> refine iter #"
+				.$densityrun['refrun']."'> refine run #"
 				.$densityrun['refrun']."</A></TD>\n";
 		else
 			$html .= "<TD><I>unknown</I></TD>\n";
 
-		$html .= "<TD>$densityrun[pixelsize]</TD>\n";
+		$html .= "<TD>".round($densityrun[pixelsize],2)."</TD>\n";
 		$html .= "<TD>$densityrun[boxsize]</TD>\n";
 		$html .= "<TD>$densityrun[resolution]</TD>\n";
 

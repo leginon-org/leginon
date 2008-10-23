@@ -2331,6 +2331,23 @@ class particledata {
 		return $r;
 	}
 
+	function get3dDensityFromId($densityId) {
+		$q="SELECT "
+			."  dens.*, "
+			."  path.`path` AS path, "
+			."  iterid.`REF|ApRefinementRunData|refinementRun` AS refrun "
+			."FROM Ap3dDensityData as dens "
+			."LEFT JOIN ApPathData AS path "
+			."  ON dens.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApRefinementData AS iterid "
+			."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` "
+			."WHERE "
+			."  dens.`DEF_id` = '$densityId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+
 }
 
 function simplify($e) {

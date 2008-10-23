@@ -379,7 +379,7 @@ if ($expId) {
 	$num3dvols = count($threedvols);
 	if ($num3dvols >= 1) {
 		$nruns[]=array(
-			'name'=>"<a href='upgradeVolume.php?expId=$sessionId'>3d Density Volume</a>",
+			'name'=>"<a href='upgradeVolume.php?expId=$sessionId'>3d Density Volumes</a>",
 			'result'=>"<a href='densitysummary.php?expId=$sessionId'>$num3dvols complete</a>",
 		);
 	}
