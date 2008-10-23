@@ -564,6 +564,8 @@ class Ap3dDensityData(Data):
 			('maxfilt', float),
 			('hidden', bool),
 			('md5sum', str),
+			('pdbid', str),
+			('emdbid', str),
 			('rctrun', ApRctRunData),
 		)
 	typemap = classmethod(typemap)

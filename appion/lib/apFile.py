@@ -32,6 +32,11 @@ def removeStack(filename, warn=True):
 			except:
 				apDisplay.printWarning('%s could not be removed' % f)
 
+def fileSize(filename, msg=False):
+	stats = os.stat(filename)
+	size = stats[6]
+	return size
+
 def removeFile(filename, warn=False):
 	f = os.path.abspath(filename)
 	if os.path.isfile(f):

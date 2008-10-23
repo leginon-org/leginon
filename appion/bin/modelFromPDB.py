@@ -15,6 +15,9 @@ import apDisplay
 import apDatabase
 import urllib
 import apEMAN
+import apRecon
+import apFile
+import appionData
 import gzip
 from apSpider import volFun
 
@@ -38,8 +41,10 @@ class modelFromPDB(appionScript.AppionScript):
 			help="Box size of model (in Pixels)")
 		self.parser.add_option("-u", "--biolunit", dest="bunit", default=False,
 			action="store_true", help="Download the biological unit")
-				       
-				       
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
+			action="store_true", help="Commit EMDB volume to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit EMDB volume to database")
 
 	#=====================
 	def checkConflicts(self):
@@ -56,8 +61,8 @@ class modelFromPDB(appionScript.AppionScript):
 
 	#=====================
 	def setOutDir(self):
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-		path = os.path.abspath(sessiondata['image path'])
+		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
 		self.params['outdir'] = os.path.join(path,"models")
@@ -89,13 +94,38 @@ class modelFromPDB(appionScript.AppionScript):
 		return outfile
 	
 	#=====================
+	def uploadDensity(self, volfile):
+		### insert 3d volume density
+		densq = appionData.Ap3dDensityData()
+		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq['name'] = os.path.basename(volfile)
+		densq['hidden'] = False
+		densq['norm'] = True
+		#densq['symmetry'] = self.appiondb.direct_query(appionData.ApSymmetryData, 25)
+		densq['pixelsize'] = self.params['apix']
+		densq['boxsize'] = self.params['box']
+		densq['lowpass'] = self.params['res']
+		#densq['highpass'] = self.params['highpasspart']
+		#densq['mask'] = self.params['radius']
+		densq['description'] = "PDB density from id="+str(self.params['pdbid'])
+		densq['resolution'] = self.params['res']
+		densq['session'] = self.sessiondata
+		densq['md5sum'] = apFile.md5sumfile(volfile)
+		densq['pdbid'] = self.params['pdbid']
+		if self.params['commit'] is True:
+			densq.insert()
+		return 
+
+
+	#=====================
 	def start(self):
 		if self.params['name'] is None:
 			self.setNewFileName()
 		apDisplay.printColor("Naming pdb model: "+self.params['name'], "cyan")
 
 		newmodelpath = os.path.join(self.params['outdir'], self.params['name'])
-		
+		mrcname = newmodelpath+".mrc"		
+
 		self.params['basename']=os.path.splitext(newmodelpath)[0]
 		### remove '.' from basename for spider
 		self.params['tmpname'] = re.sub("\.", "_", self.params['basename'])
@@ -115,11 +145,19 @@ class modelFromPDB(appionScript.AppionScript):
 			
 		### convert spider to mrc format
 		apDisplay.printMsg("converting spider file to mrc")
-		emancmd='proc3d %s.spi %s.mrc apix=%f lp=%f norm' % (self.params['tmpname'], self.params['basename'],
-								     self.params['apix'], self.params['res'])
+		emancmd='proc3d %s.spi %s.mrc apix=%f lp=%f norm' % (self.params['tmpname'], mrcname,
+			self.params['apix'], self.params['res'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
-		os.remove(self.params['tmpname']+".pdb")
-		os.remove(self.params['tmpname']+".spi")
+		apFile.removeFile(self.params['tmpname']+".pdb")
+		apFile.removeFile(self.params['tmpname']+".spi")
+
+		### chimera imaging
+		apRecon.renderSnapshots(mrcname, self.params['res'], None, 
+			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
+
+		### upload it
+		self.uploadDensity(mrcname)
+
 
 #=====================
 if __name__ == "__main__":
