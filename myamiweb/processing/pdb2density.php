@@ -163,11 +163,11 @@ function runUploadModel() {
 	echo "<p>\n";
 	if (!file_exists($outdir.'/'.$filename.'.mrc')) {
 		echo "EM Density file to be created:<br />\n";
-		echo "<b>$outdir/$filename.mrc</b><br />\n";
+		echo "<b><a href='densitysummary.php?expId=$expId'>$outdir/$filename.mrc</a></b><br />\n";
 	}
 	else {
 		echo "EM Density file created:<br />\n";
-		echo "<b>$outdir/$filename.mrc</b><br />\n";
+		echo "<b><a href='densitysummary.php?expId=$expId'>$outdir/$filename.mrc</a></b><br />\n";
 		echo "<hr />\n";
 		$formAction="uploadmodel.php?expId=$expId";
 		$formAction.="&pdbmod=$outdir/$filename.mrc";
