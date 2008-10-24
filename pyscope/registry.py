@@ -69,8 +69,5 @@ register(simtem)
 import simccdcamera
 register(simccdcamera)
 
-try:
-	import filmscanner
-	register(filmscanner)
-except:
-	pass
+#import filmscanner
+#register(filmscanner)
