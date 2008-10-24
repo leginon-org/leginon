@@ -50,7 +50,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin)
 
 		#remove border peaks
-		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[0], imgdict['image'].shape[1])
+		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
 
 		#write map to jpeg with highlighted peaks
 		outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
@@ -161,7 +161,6 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 	mergepeaktree = []
 	for peaktree in peaktreelist:
 		mergepeaktree.extend(peaktree)
-
 	#REMOVE OVERLAPPING PEAKS
 	cutoff   = olapmult*pixrad	#1.5x particle radius in pixels
 	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff, msg)
@@ -265,10 +264,8 @@ def convertListToPeaks(peaks, params):
 	peaktree = []
 	peak = {}
 	for i in range(peaks.shape[0]):
-		row = peaks[i,0] * bin
-		col = peaks[i,1] * bin
-		peak['xcoord'] = row
-		peak['ycoord'] = col
+		peak['xcoord'] = peaks[i,0] * bin
+		peak['ycoord'] = peaks[i,1] * bin
 		peak['peakarea'] = 1
 		peaktree.append(peak.copy())
 	return peaktree
@@ -296,7 +293,7 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 	"""
 	calls leginon's find_blobs
 	"""
-	totalarea = (ccmap.shape)[0]**2
+	totalarea = (ccmap.shape)[0]*(ccmap.shape)[1]
 	ccthreshmap = threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
