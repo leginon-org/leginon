@@ -200,6 +200,13 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			raise
 
 	def setInfoToInstrument(self):
+		try:
+			self.instrument.setTEM(self.settings['instruments']['tem'])
+			self.instrument.setCCDCamera(self.settings['instruments']['ccdcamera'])
+		except Exception, e:
+			msg = 'Instrument Set failed: %s' % (e,)
+			self.logger.error(msg)
+			raise AquireError(msg)
 		# uploaded information is send to the instruments to simulate an acquisition
 		self.instrument.tem.HighTension = self.uploadedInfo['high tension']
 		self.instrument.tem.Defocus = self.uploadedInfo['defocus']
