@@ -23,7 +23,9 @@ import copy
 from pyami import arraystats, imagefun, mrc
 import numpy
 import corrector
+import version
 
+default_batch = os.path.join(version.getInstalledLocation(),'upload_example.txt')
 class AcquireError(Exception):
 	pass
 
@@ -34,7 +36,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 	defaultsettings = {
 		'instruments': {'tem': None, 'ccdcamera': None},
 		'save image': False,
-		'batch script': '',
+		'batch script': default_batch,
 		'camera settings': None,
 	}
 
