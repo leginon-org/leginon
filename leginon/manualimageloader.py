@@ -54,6 +54,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		self.comment = ''
 		self.published_images = []
 		self.viewstatus = None
+		self.grid = None
 
 		self.start()
 
@@ -79,20 +80,19 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		self.getImageStats(image)
 		self.setImage(image)
 
+		self.settings['image label'] = 'uploaded'
 		if self.settings['save image']:
 			self.logger.info('Saving image to database...')
-			filedir, filename = os.path.split(self.uploadedInfo['original filepath'])
-			self.settings['image label'] = filename
-			self.comment = filename
 			try:
+				filedir, filename = os.path.split(self.uploadedInfo['original filepath'])
+				notes = 'uploaded from %s' % self.uploadedInfo['original filepath']
+				self.comment = notes
 				self.publishImageData(imagedata, save=True)
 				self.published_images.append(self.getMostRecentImageData(self.session))
 				self.viewstatus = 'normal'
 				self.saveComment()
-			except node.PublishError, e:
-				raise
+			except Exception, e:
 				message = 'Error saving image to database'
-				self.logger.info(message)
 				if str(e):
 					message += ' (%s)' % str(e)
 				self.logger.error(message)
@@ -137,6 +137,26 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		self.loopStopped()
 		self.logger.info('Image loading loop stopped')
 
+	def setImageFilename(self, imagedata):
+		try:
+			path = imagedata.mkpath()
+		except Exception, e:
+			raise node.PublishError(e)
+		try:
+			filedir, filename = os.path.split(self.uploadedInfo['original filepath'])
+			filenamesplit = filename.split('.')
+			if filenamesplit[-1] == 'mrc':
+				filenamesplit.pop()
+			filename = '.'.join(filenamesplit)
+			if os.path.exists(os.path.join(path,filename+'.mrc')):
+				e = '%s already exists in %s' % (filename+'.mrc',path)
+				self.logger.error(e)
+				raise node.PublishError()
+		except:
+			raise
+		self.logger.info('save the image as %s.mrc' % filename)
+		imagedata['filename'] = filename
+
 	def readBatchUploadInfo(self):
 		# in this example, the batch script file should be separated by tab
 		# see example in function readUploadInfo for format
@@ -160,12 +180,14 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000']
 		try:
 			self.uploadedInfo = {}
-			self.uploadedInfo['original filepath'] = info[0]
+			self.uploadedInfo['original filepath'] = os.path.abspath(info[0])
 			self.uploadedInfo['unbinned pixelsize'] = float(info[1])
 			self.uploadedInfo['binning'] = {'x':int(info[2]),'y':int(info[3])}
 			self.uploadedInfo['magnification'] = int(info[4])
 			self.uploadedInfo['defocus'] = float(info[5])
 			self.uploadedInfo['high tension'] = int(info[6])
+			# add other items in the dictionary and set to instrument in the function
+			# setInfoToInstrument if needed
 		except:
 			self.logger.exception('Bad batch file parameters')
 			raise
@@ -183,8 +205,8 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		cam_settings = self.settings['camera settings']
 		shape = self.uploadedInfo['image'].shape
 		cam_settings['exposure time'] = 1000
-		cam_settings['dimension']['x'] = shape[0]
-		cam_settings['dimension']['y'] = shape[1]
+		cam_settings['dimension']['x'] = shape[1]
+		cam_settings['dimension']['y'] = shape[0]
 		cam_settings['binning']['x'] = self.uploadedInfo['binning']['x']
 		cam_settings['binning']['y'] = self.uploadedInfo['binning']['y']
 		cam_settings['offset']['x'] = 0
