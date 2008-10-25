@@ -582,15 +582,15 @@ class CommentDialog(gui.wx.Dialog.Dialog):
 
 	def onNormalButton(self, evt):
 		self.viewstatus='normal'
-		self.Destroy()
+		self.EndModal(0)
 
 	def onHiddenButton(self, evt):
 		self.viewstatus='hidden'
-		self.Destroy()
+		self.EndModal(0)
 
 	def onExamplarButton(self, evt):
 		self.viewstatus='examplar'
-		self.Destroy()
+		self.EndModal(0)
 
 
 if __name__ == '__main__':
