@@ -108,6 +108,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		## loop through each tilt
 		focused = False
 		for i,tilt in enumerate(tilts):
+			if self.player.state() == 'stop':
+				break
 			self.tiltnumber = i
 
 			## only make new targets if tilt is different than tilt0
@@ -371,8 +373,6 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.publish(self.tiltseries, database=True, dbforce=True)
 		else:
 			self.tiltseries = tiltseries
-			self.logger.info('using defocus of first tilt at this target')
-			self.instrument.tem.Defocus = defocus
 		return status
 
 	def testAcquire(self):
