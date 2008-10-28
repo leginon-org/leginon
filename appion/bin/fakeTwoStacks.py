@@ -183,11 +183,13 @@ def randomEuler():
 	phi = int(round(random.random()*360.0,0))
 	"""
 	#alt = int(round(random.random()*90.0,0))
-	alt = 0
+	alt = int(round(random.random()*180.0,0))
+	#alt = 0
 	#az = int(round(random.random()*51.43,0))
-	az = 0
-	#phi = int(round(random.random()*360.0,0))
-	phi = int(round(random.random()*6.0,0))*60
+	az = int(round(random.random()*360.0,0))
+	#az = 0
+	phi = int(round(random.random()*360.0,0))
+	#phi = int(round(random.random()*6.0,0))*60
 	return (alt, az, phi)
 
 
