@@ -59,6 +59,7 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.addImagePanel()
 
 		self.szmain.AddGrowableCol(0)
+		self.szmain.AddGrowableRow(1)
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()

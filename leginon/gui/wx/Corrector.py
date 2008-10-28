@@ -172,7 +172,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.szmain.Add(self.imagepanel, (0, 1), (2, 1), wx.EXPAND)
 
-		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizer(self.szmain)
