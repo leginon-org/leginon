@@ -14,6 +14,8 @@ from pyami import peakfinder
 from pyami import correlator
 
 
+#================================
+#================================
 def repairPicks(a1, a2, rmsd):
 	"""
 	Attempts to repair lists a1 and a2 that have become shifted
@@ -32,7 +34,9 @@ def repairPicks(a1, a2, rmsd):
 	a2b = numpyPop2d(a2, upstep)
 
 	return a1b, a2b
-			
+
+#================================
+#================================			
 def _rsmdStep(x1, rmsd):
 	mean1  = x1[0]
 	mean2  = x1[1]
@@ -52,6 +56,8 @@ def _rsmdStep(x1, rmsd):
 ##
 
 
+#================================
+#================================
 def willsq(a1, a2, \
 		 theta0, gamma0=0.0, phi0=0.0, scale0=1.0, shiftx0=0.0, shifty0=0.0,\
 		 xscale=numpy.ones((6), dtype=numpy.float32)):
@@ -103,6 +109,8 @@ def willsq(a1, a2, \
 	fit['prob'] = math.exp(-1.0*math.sqrt(abs(fit['rmsd'])))**2
 	return fit
 
+#================================
+#================================
 def _diffParticles(x1, initx, xscale, a1, a2):
 	x2 = x1 * xscale + initx
 	theta  = x2[0]
@@ -122,6 +130,8 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	#print (x2*57.29).round(decimals=3),round(rmsd,6)
 	return rmsd
 
+#================================
+#================================
 def getPointsFromArrays(a1, a2, shiftx, shifty):
 	if len(a1) == 0 or len(a2) == 0:
 		return None,None
@@ -129,6 +139,8 @@ def getPointsFromArrays(a1, a2, shiftx, shifty):
 	point2 = numpy.asarray(a2[0,:], dtype=numpy.float32) + numpy.array([shiftx,shifty], dtype=numpy.float32)
 	return (point1, point2)
 
+#================================
+#================================
 def setPointsFromArrays(a1, a2, data):
 	if len(a1) > 0 and len(a2) > 0:
 		data['point1'] = numpy.asarray(a1[0,:], dtype=numpy.float32)
@@ -138,6 +150,8 @@ def setPointsFromArrays(a1, a2, data):
 			- numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
 	return
 
+#================================
+#================================
 def a1Toa2Data(a1, data):
 	thetarad = data['theta']*math.pi/180.0
 	gammarad = data['gamma']*math.pi/180.0
@@ -149,6 +163,8 @@ def a1Toa2Data(a1, data):
 	return a2Toa1(a1, -1.0*thetarad, 1.0*phirad, 1.0*gammarad, 
 		1.0/data['scale'], data['point2'], data['point1'])
 
+#================================
+#================================
 def a2Toa1Data(a2, data):
 	"""
 	flips the values and runs a2Toa1
@@ -159,6 +175,8 @@ def a2Toa1Data(a2, data):
 	return a2Toa1(a2, thetarad, gammarad, phirad, 
 		data['scale'], data['point1'], data['point2'])
 
+#================================
+#================================
 def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
 	"""
 	flips the values and runs a2Toa1
@@ -167,6 +185,8 @@ def a1Toa2(a1, theta, gamma, phi, scale, point1, point2):
 	a1b = a2Toa1(a1, -1.0*theta, 1.0*phi, 1.0*gamma, 1.0/scale, point2, point1)
 	return a1b
 
+#================================
+#================================
 def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	"""
 	transforms second list of points one into same affine space as first list
@@ -207,6 +227,8 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 		a2b[i,1] = a2c[1]
 	return a2b
 
+#================================
+#================================
 def maskOverlapRegion(image1, image2, data):
 	#image1 = ndimage.median_filter(image1, size=2)
 	#image2 = ndimage.median_filter(image2, size=2)
@@ -300,6 +322,8 @@ def maskOverlapRegion(image1, image2, data):
 
 	return (image1, image2)
 
+#================================
+#================================
 def getOverlapPercent(image1, image2, data):
 	#SET IMAGE LIMITS
 	gap = int(image1.shape[0]/256.0)
@@ -345,6 +369,8 @@ def getOverlapPercent(image1, image2, data):
 
 	return max(percent1,percent2), min(percent1,percent2)
 
+#================================
+#================================
 def mergePicks(picks1, picks2, limit=25.0):
 	good = []
 	#newa1 = numpy.vstack((a1, list1))
@@ -401,9 +427,13 @@ def betterMergePicks(picks1a, picks1b, picks2a, picks2b, limit=25.0, msg=True):
 
 	return newa1,newa2
 
+#================================
+#================================
 def numpyPop2d(a, i):
 	return numpy.vstack((a[0:i,:],a[i+1:len(a),:]))
 
+#================================
+#================================
 def alignPicks(picks1, picks2, data, limit=20.0):
 	list1 = []
 	alignlist2 = []
@@ -448,6 +478,8 @@ def alignPicks(picks1, picks2, data, limit=20.0):
 		" particles to "+str(len(nlist2))+" of "+str(len(picks2)))
 	return nlist1, nlist2
 
+#================================
+#================================
 def findClosestPick(origpick, picks):
 	picked = None
 	bestdist = 512.0
@@ -458,6 +490,8 @@ def findClosestPick(origpick, picks):
 			bestdist = dist
 	return picked,bestdist
 
+#================================
+#================================
 def pickDist(pick1, pick2):
 	dist = math.hypot(pick1[0]-pick2[0], pick1[1]-pick2[1])
 	return dist
