@@ -13,6 +13,7 @@ import apStack
 import apDisplay
 import apEMAN
 import apFile
+from apSpider import operations
 import sinedon
 
 class tiltStackAlign(appionScript.AppionScript):
@@ -67,6 +68,17 @@ class tiltStackAlign(appionScript.AppionScript):
 		results2 = self.cursor.fetchall()
 
 		parttree = self.parseResults(results1, results2)
+
+		f = open("partalign-"+self.timestamp+".dat", "w")
+		count = 0
+		for partdict in parttree:
+			count+=1
+			emannotnum = partdict['not']-1
+			emantiltnum = partdict['tilt']-1		
+			line = operations.spiderOutLine(count, (emannotnum,emantiltnum))
+			f.write(line)
+		f.close()
+
 		return parttree
 
 	#=====================
