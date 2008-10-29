@@ -18,7 +18,7 @@ import apXml
 import apImage
 import apDisplay
 import apParam
-from apTilt import tiltDialog, apTiltTransform
+from apTilt import tiltDialog, apTiltTransform, apTiltShift
 ## leginon
 import polygon
 import gui.wx.TargetPanel
@@ -73,7 +73,7 @@ class PickerApp(wx.App):
 	def __init__(self, mode='default', 
 	 pickshape="cross", pshapesize=16, 
 	 alignshape="circle", ashapesize=16,
-	 errorshape="plus", eshapesize=16):
+	 errorshape="square", eshapesize=18):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -674,7 +674,7 @@ class PickerApp(wx.App):
 		tiltdiff = self.data['theta']
 		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
 
-		origin, newpart, snr = apTiltTransform.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
+		origin, newpart, snr = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
 
 		self.panel1.setTargets('Picked', [origin])
 		self.panel2.setTargets('Picked', [newpart])
@@ -1372,7 +1372,7 @@ class PickerApp(wx.App):
 		if filepath is None or filepath == "" or not os.path.isfile(filepath):
 			return
 		f = open(filepath,"r")
-		size = int(len(f.readlines())/2-1)
+		size = int(len(f.readlines())/2)
 		f.close()
 		self.data['outfile'] = os.path.basename(filepath)
 		self.data['dirname'] = os.path.dirname(filepath)
