@@ -1984,3 +1984,12 @@ class testtable(Data):
 			('c', int),
 		)
 	typemap = classmethod(typemap)
+
+class RaptorProcessorSettingsData(ImageProcessorSettingsData):
+	def typemap(cls):
+		return ImageProcessorSettingsData.typemap() + (
+			('path', str),
+			('time', int),
+			('binning', int),
+		)
+	typemap = classmethod(typemap)

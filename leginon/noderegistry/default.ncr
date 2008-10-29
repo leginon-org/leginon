@@ -176,6 +176,10 @@ type: Utility
 module: imageprocessor
 type: Pipeline
 
+[RaptorProcessor]
+module: raptorprocessor
+type: Pipeline
+
 [FileNames]
 module: imageprocessorexample
 type: Pipeline
