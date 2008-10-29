@@ -4,7 +4,7 @@ import os
 import sys
 from pyami import quietscipy
 import apImage
-from apTilt import apTiltTransform
+from apTilt import apTiltShift
 
 
 def runTestShift(img1name, img2name, imgpath, tiltdiff, coord):
@@ -19,11 +19,11 @@ def runTestShift(img1name, img2name, imgpath, tiltdiff, coord):
 	apImage.arrayToMrc(img1,"img1a-raw.mrc")
 	apImage.arrayToMrc(img2,"img2a-raw.mrc")
 
-	origin, newpart = apTiltTransform.getTiltedCoordinates(img1, img2, tiltdiff, coord)
+	origin, newpart = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, coord)
 	apImage.arrayToJpegPlusPeak(img1, "img1a-guess.jpg", (origin[1], origin[0]))
 	apImage.arrayToJpegPlusPeak(img2, "img2a-guess.jpg", (newpart[1], newpart[0]))
 
-	#origin, newpart = apTiltTransform.getTiltedCoordinates(img2, img1, -1.0*tiltdiff, coord)
+	#origin, newpart = apTiltShift.getTiltedCoordinates(img2, img1, -1.0*tiltdiff, coord)
 	#apImage.arrayToJpegPlusPeak(img1, "img1b-guess.jpg", (origin[1], origin[0]))
 	#apImage.arrayToJpegPlusPeak(img2, "img2b-guess.jpg", (newpart[1], newpart[0]))
 
