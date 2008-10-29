@@ -19,11 +19,11 @@ def runTestShift(img1name, img2name, imgpath, tiltdiff, coord):
 	apImage.arrayToMrc(img1,"img1a-raw.mrc")
 	apImage.arrayToMrc(img2,"img2a-raw.mrc")
 
-	origin, newpart = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, coord)
+	origin, newpart, snr = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, coord)
 	apImage.arrayToJpegPlusPeak(img1, "img1a-guess.jpg", (origin[1], origin[0]))
 	apImage.arrayToJpegPlusPeak(img2, "img2a-guess.jpg", (newpart[1], newpart[0]))
 
-	#origin, newpart = apTiltShift.getTiltedCoordinates(img2, img1, -1.0*tiltdiff, coord)
+	#origin, newpart, snr = apTiltShift.getTiltedCoordinates(img2, img1, -1.0*tiltdiff, coord)
 	#apImage.arrayToJpegPlusPeak(img1, "img1b-guess.jpg", (origin[1], origin[0]))
 	#apImage.arrayToJpegPlusPeak(img2, "img2b-guess.jpg", (newpart[1], newpart[0]))
 
@@ -47,6 +47,33 @@ if __name__ == "__main__":
 	#correct is: 350, 620
 	#runTestShift(img1name, img2name, imgpath, tiltdiff, coord)
 
+	### brian RCT data
+	img1name = "08sep18b_a_00025gr_00007sq_v01_00002cs_01_00076en_01.mrc" #untilted
+	img2name = "08sep18b_a_00025gr_00007sq_v01_00002cs_v01_00076en_00.mrc" #tilted
+	imgpath = "/ami/data00/leginon/08sep18b/rawdata/"
+	tiltdiff = 50.0
+	coord = [(100,100),(101,100),]
+	#correct is: ??, ??
+	#runTestShift(img1name, img2name, imgpath, tiltdiff, coord)
+
+	### ribosome RCT data
+	img1name = "08oct24d_00010sq_v01_00002cs_01_00024en_01.mrc" #untilted
+	img2name = "08oct24d_00010sq_v01_00002cs_00_00024en_00.mrc" #tilted
+	imgpath = "/ami/data00/leginon/08oct24d/rawdata/"
+	tiltdiff = 50.0
+	coord = [(500,500),(501,500),]
+	#correct is: ??, ??
+	runTestShift(img1name, img2name, imgpath, tiltdiff, coord)
+
+	### yarden RCT data
+	img1name = "08oct28a_a_00032gr_00034sq_00002cs_01_00015en_01.mrc" #untilted
+	img2name = "08oct28a_a_00032gr_00034sq_00002cs_00_00015en_00.mrc" #tilted
+	imgpath = "/ami/data00/leginon/08oct28a/rawdata/"
+	tiltdiff = 50.0
+	coord = [(500,500),(501,500),]
+	#correct is: ??, ??
+	#runTestShift(img1name, img2name, imgpath, tiltdiff, coord)
+
 	### pick-wei OTR data
 	img1name = "08aug02a_00025sq_v01_00002cs_01_00010en_01.mrc" #otr1
 	img2name = "08aug02a_00025sq_v01_00002cs_00_00010en_00.mrc" #otr2
@@ -64,7 +91,7 @@ if __name__ == "__main__":
 	coord = [(400,600),(401,600),]
 	#correct is: 345, 620
 	#runTestShift(img1name, img2name, imgpath, tiltdiff, coord)
-	runTestShift(img1name, img2name, imgpath, tiltdiff, [])
+	#runTestShift(img1name, img2name, imgpath, tiltdiff, [])
 	
 
 
