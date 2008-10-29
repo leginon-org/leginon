@@ -424,6 +424,54 @@ Always saves in the native byte order.
 
 	f.close()
 
+def append(a, filename):
+	# read existing header
+	f = open(filename, 'rb+')
+	f.seek(0)
+	headerbytes = f.read(1024)
+	oldheader = parseHeader(headerbytes)
+
+	# make a header for new array
+	newheader = {}
+	updateHeaderUsingArray(newheader, a)
+
+	## check that new array is compatible with old array
+	notmatch = []
+	for key in ('nx', 'ny', 'mode'):
+		if newheader[key] != oldheader[key]:
+			notmatch.append(key)
+	if notmatch:
+		raise RuntimeError('Array to append is not compatible with existing array: %s' % (notmatch,))
+
+	## update old header for final MRC
+	oldheader['nz'] += newheader['nz']
+	## (could also update some other fields of header...)
+
+	headerbytes = makeHeaderData(oldheader)
+
+	# make sure array is right type for MRC
+	a = asMRCtype(a)
+	# make sure array is in native byte order
+	if not a.dtype.isnative:
+		a = a.byteswap()
+
+	## write new header to file
+	f.seek(0)
+	f.write(headerbytes)
+
+	f.seek(0, 2)
+
+	## write data in smaller chunks.  Otherwise, writing from
+	## windows to a samba share will fail if image is too large.
+	smallersize = 16 * 1024 * 1024
+	b = a.ravel()
+	items_per_write = int(smallersize / a.itemsize)
+	for start in range(0, b.size, items_per_write):
+		end = start + items_per_write
+		b[start:end].tofile(f)
+
+	f.close()
+
 def read(filename):
 	'''
 Read the MRC file given by filename, return numpy ndarray object
