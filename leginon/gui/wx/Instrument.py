@@ -496,7 +496,11 @@ class FocusSizer(wx.StaticBoxSizer):
 
 	def onResetDefocus(self, evt):
 		name = self.parent.GetParent().choice.GetStringSelection()
-		self.parent.GetParent().node.resetDefocus(name)
+		node = self.parent.GetParent().node
+		node.resetDefocus(name)
+
+		args = (name, ['Defocus'])
+		threading.Thread(target=node.refresh, args=args).start()
 
 class MainSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Main'):
