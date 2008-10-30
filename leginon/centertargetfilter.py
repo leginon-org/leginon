@@ -8,10 +8,10 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 	'''
 	panelclass = gui.wx.CenterTargetFilter.Panel
 	settingsclass = data.CenterTargetFilterSettingsData
-	defaultsettings = {
+	defaultsettings = dict(targetfilter.TargetFilter.defaultsettings)
+	defaultsettings.update({
 		'limit':1,
-		'bypass':True,
-	}
+	})
 
 	def __init__(self, *args, **kwargs):
 		targetfilter.TargetFilter.__init__(self, *args, **kwargs)

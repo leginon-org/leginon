@@ -137,13 +137,14 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 			return newtargetlistdata
 
 	def appendOtherTargets(self,alltargets,newtargets):
-			for target in alltargets:
-				if target['type'] != type and target['status'] not in ('done','aborted'):
-					newtarget = data.AcquisitionImageTargetData(initializer=target)
-					newtarget['delta row'] = target['delta row']
-					newtarget['delta column'] = target['delta column']
-					newtargets.append(newtarget)
-			return newtargets
+		filteredtype = self.settings['target type']
+		for target in alltargets:
+			if target['type'] != filteredtype and target['status'] not in ('done','aborted'):
+				newtarget = data.AcquisitionImageTargetData(initializer=target)
+				newtarget['delta row'] = target['delta row']
+				newtarget['delta column'] = target['delta column']
+				newtargets.append(newtarget)
+		return newtargets
 		
 	def displayTargets(self,targets,oldtargetlistdata):
 		done = []
