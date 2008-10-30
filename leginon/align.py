@@ -3,7 +3,7 @@ import numpy
 import pyami.quietscipy
 import scipy.ndimage
 import numextension
-from pyami import mrc
+from pyami import peakfinder, mrc
 
 def swapQuadrants(image):
 	rows, columns = image.shape
@@ -32,6 +32,13 @@ def findMax(image):
 	return row, column, image.ravel()[i]
 
 def findPeak(image):
+	pyamipeakfinder = peakfinder.PeakFinder()
+	limit = image.shape
+	subpixelpeak = pyamipeakfinder.subpixelPeak(newimage=image, guess=(0.5,0.5), limit=limit)
+	res = pyamipeakfinder.getResults()
+	return (res['subpixel peak'], res['subpixel peak value'])
+'''	
+def findPeak(image):
 	i, j, value = findMax(image)
 	if (i,j) == (0,0):
 		image[(0,0)]=image.min()
@@ -41,7 +48,7 @@ def findPeak(image):
 	if j > image.shape[1]/2.0:
 		j -= image.shape[1]
 	return (i, j), value
-
+'''
 def findRotationScale(image1, image2, window=None, highpass=None):
 	if image1.shape != image2.shape:
 		raise ValueError
@@ -75,6 +82,7 @@ def findRotationScale(image1, image2, window=None, highpass=None):
 	#mrc.write(image2, 'lp2.mrc')
 
 	pc = phaseCorrelate(image1, image2)
+	#mrc.write(pc, 'pc.mrc')
 	peak, value = findPeak(pc)
 	logrho, theta = peak
 	rotation = math.degrees(theta/phiscale)
