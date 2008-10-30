@@ -477,21 +477,26 @@ class FocusSizer(wx.StaticBoxSizer):
 		self.parameters = {
 			'Focus': FloatEntry(self.parent, -1, chars=9, allownone=True),
 			'Defocus': FloatEntry(self.parent, -1, chars=9, allownone=True),
-			'Reset Defocus': wx.Button(self.parent, -1, 'Reset Defocus'),
 		}
+		resetdefoc = wx.Button(self.parent, -1, 'Reset Defocus')
+		resetdefoc.Bind(wx.EVT_BUTTON, self.onResetDefocus)
 
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p)
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
 
-		self.sz.Add(self.parameters['Reset Defocus'], (i+1, 1), (1, 1),
+		self.sz.Add(resetdefoc, (i+1, 1), (1, 1),
 								wx.ALIGN_CENTER)
 
 		for p in self.parameters.values():
 			p.Enable(False)
 
 		self.sz.AddGrowableCol(1)
+
+	def onResetDefocus(self, evt):
+		name = self.parent.GetParent().choice.GetStringSelection()
+		self.parent.GetParent().node.resetDefocus(name)
 
 class MainSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Main'):
@@ -859,7 +864,6 @@ class TEMPanel(wx.Panel, ParameterMixin):
 			'ExternalShutter': self.szfilm.parameters['External shutter'],
 			'Focus': self.szfocus.parameters['Focus'],
 			'Defocus': self.szfocus.parameters['Defocus'],
-			'resetDefocus': self.szfocus.parameters['Reset Defocus'],
 			'ScreenCurrent': self.szscreen.parameters['Current'],
 			'MainScreenPositions': self.szscreen.parameters['Main'],
 			'MainScreenPosition': self.szscreen.parameters['Main'],
@@ -887,11 +891,9 @@ class TEMPanel(wx.Panel, ParameterMixin):
 
 	def setParameters(self, parameters, parametermap=None):
 		ParameterMixin.setParameters(self, parameters, parametermap)
-		self.parametermap['resetDefocus'].Enable(True)
 
 	def clearParameters(self, parametermap=None):
 		ParameterMixin.clearParameters(self, parametermap)
-		self.parametermap['resetDefocus'].Enable(False)
 
 class CCDCameraPanel(wx.Panel, ParameterMixin):
 	def __init__(self, *args, **kwargs):

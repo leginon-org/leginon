@@ -159,6 +159,10 @@ class EM(node.Node):
 		self.logger.info('Magnifications saved.')
 		self.panel.onGetMagnificationsDone()
 
+	def resetDefocus(self, name):
+		print 'EM resetDefocus', name
+		self.instruments[name]._execute(self.name, 'resetDefocus', 'method', (True,))
+
 	def refresh(self, name, attributes):
 		# hack
 		self.logger.info('Refreshing parameters for %s...' % name)
