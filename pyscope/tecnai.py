@@ -494,14 +494,9 @@ class Tecnai(tem.TEM):
 		
 		self.tecnai.Projection.Defocus = defocus
 	
-	def resetDefocus(self, value):
-		if not value:
-			return
+	def resetDefocus(self):
 		self.tecnai.Projection.ResetDefocus()
 
-	def getResetDefocus(self):
-		return False
-	
 	def getMagnification(self, index=None):
 		if index is None:
 			return int(round(self.tecnai.Projection.Magnification))
