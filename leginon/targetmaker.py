@@ -183,14 +183,17 @@ class MosaicTargetMaker(TargetMaker):
 			# generated from external event
 			grid = evt['grid']
 			parts = []
+			gridname = ''
 			if 'emgrid' in grid and grid['emgrid'] is not None and grid['emgrid']['name']:
 				# new, shorter style with grid name
-				gridname = grid['emgrid']['name'].replace(' ','_')
+				if grid['emgrid']['project'] is not None:
+					gridname = ('Prj%03d'% grid['emgrid']['project'])+'_'
+				gridname = (gridname + grid['emgrid']['name']).replace(' ','_')
 				leadlabels = ['','i']
 			else:
 				# old style
-				gridname = '05d' % (grid['grid ID'])
-				leadlabels = ['GridID','Insertion']
+				gridname = '%05d' % grid['grid ID']
+				leadlabels = ['Grid','Insertion']
 			grididstr = leadlabels[0]+gridname
 			parts.append(grididstr)
 			if 'insertion' in grid and grid['insertion'] is not None:
