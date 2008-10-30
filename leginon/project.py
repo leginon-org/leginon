@@ -29,7 +29,8 @@ class GridBox(sqldict.ObjectBuilder):
 class Grid(sqldict.ObjectBuilder):
 	table = 'grids'
 #	columns = ['gridId', 'label', 'specimenId', 'number', 'boxId','preparation','concentration','fraction','note','sort']
-	columns = ['gridId', 'label', 'specimenId', 'number', 'boxId']
+	columns = ['gridId', 'label', 'boxId', 'projectId','prepdate','specimen', 
+				'number', 'concentration','fraction','note']
 
 class GridLocation(sqldict.ObjectBuilder):
 	table = 'gridlocations'
@@ -64,6 +65,16 @@ class ProjectData:
 	def getProjectExperiments(self):
 		return self.projectexperiments
 
+	def getProjectId(self,sessiondata):
+		projectexperiments = self.getProjectExperiments()
+		allprojectexperiments = projectexperiments.getall()
+		sessionname = sessiondata['name']
+		for experiment in allprojectexperiments:
+			if sessionname == experiment['name']:
+				projectsession = experiment
+				return int(projectsession['projectId'])
+		return None	
+
 	def getGridBoxes(self):
 		return self.gridboxes
 
@@ -71,7 +82,7 @@ class ProjectData:
 		return self.grids
 
 	def newGrid(self, label, specimenId, number, boxId, location):
-		gridId = self.grids.insert([{'label': label, 'specimenId': specimenId,
+		gridId = self.grids.insert([{'label': label, 'specimen': specimenId,
 																	'number': number, 'boxId': boxId}])
 		self.gridlocations.insert([{'gridboxId': boxId, 'gridId': gridId,
 																'location': location}])
@@ -80,6 +91,23 @@ class ProjectData:
 	def getGridLocations(self):
 		return self.gridlocations
 
+	def getPojectFromGridId(self, gridid):
+		gridsindex = self.grids.Index(['gridId'])
+		grid = gridsindex[gridid].fetchone()
+		if grid is None:
+			return None
+		try:
+			return grid['projectId']
+		except KeyError:
+			return None
+
+	def getGridInfo(self, gridid):
+		gridsindex = self.grids.Index(['gridId'])
+		grid = gridsindex[gridid].fetchone()
+		if grid is None:
+			return None
+		return grid
+				
 	def getGridLabel(self, gridid):
 		gridsindex = self.grids.Index(['gridId'])
 		grid = gridsindex[gridid].fetchone()
@@ -97,7 +125,7 @@ class ProjectData:
 			return None
 		try:
 			return int(grid['number'])
-		except KeyError:
+		except:
 			return None
 
 ########################################
