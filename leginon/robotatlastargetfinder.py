@@ -852,15 +852,33 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		self.publish(imagedata2, pubevent=True, database=True)
 
+	
 		return imagedata2
 
 	def setImageFilename(self, imagedata):
 		sessionstr = self.session['name']
-		grididstr = 'GridID%05d' % (imagedata['grid']['grid ID'],)
-		insertionstr = 'Insertion%03d' % (imagedata['grid']['insertion'],)
-		targetstr = '%05d%s' % (imagedata['target']['number'],
-														imagedata['preset']['name'])
-		parts = (sessionstr, grididstr, insertionstr, targetstr)
+		grid = imagedata['grid']
+		parts = [sessionstr,]
+		gridname = ''
+		if grid is not None:
+			gridname = ''
+			if 'emgrid' in grid and grid['emgrid'] is not None and grid['emgrid']['name']:
+				# new, shorter style with grid name
+				if grid['emgrid']['project'] is not None:
+					gridname = ('Prj%03d'% grid['emgrid']['project'])+'_'
+				gridname = (gridname + grid['emgrid']['name']).replace(' ','_')
+				leadlabels = ['','i']
+			else:
+				# old style
+				gridname = '%05d' % grid['grid ID']
+				leadlabels = ['Grid','Insertion']
+			grididstr = leadlabels[0]+gridname
+			parts.append(grididstr)
+			if 'insertion' in grid and grid['insertion'] is not None:
+				insertionstr = '%s%03d' % (leadlabels[1],grid['insertion'])
+				parts.append(insertionstr)
+		targetstr = '%05d%s' % (imagedata['target']['number'],imagedata['preset']['name'])
+		parts.append(targetstr)
 		sep = '_'
 		filename = sep.join(parts)
 		imagedata['filename'] = filename
