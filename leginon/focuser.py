@@ -675,7 +675,7 @@ class Focuser(acquisition.Acquisition):
 	def resetDefocus(self):
 		errstr = 'Reset defocus failed: %s'
 		try:
-			self.instrument.tem.resetDefocus(True)
+			self.instrument.tem.resetDefocus()
 		except:
 			self.logger.error(errstr % 'unable to access instrument')
 

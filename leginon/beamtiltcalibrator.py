@@ -330,7 +330,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def resetDefocus(self):
 		try:
-			self.instrument.tem.resetDefocus(True)
+			self.instrument.tem.resetDefocus()
 		except Exception, e:
 			self.logger.error('Reset defocus failed: %s' % e)
 		else:
