@@ -113,6 +113,7 @@ class Frame(wx.Frame):
 		self.SetStatusBar(self.statusbar)
 
 		self.panel = Panel(self, launcher)
+		self.Bind(wx.EVT_SIZE, self.onSize)
 
 	def onExit(self, evt):
 		self.Close()
@@ -121,6 +122,10 @@ class Frame(wx.Frame):
 		dialog = gui.wx.Logging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
+
+	def onSize(self, evt):
+		self.panel.SetSize(self.GetClientSize())
+		evt.Skip()
 
 class ListCtrlPanel(wx.Panel):
 	def __init__(self, *args, **kwargs):
