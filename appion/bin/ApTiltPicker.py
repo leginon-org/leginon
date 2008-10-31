@@ -73,7 +73,7 @@ class PickerApp(wx.App):
 	def __init__(self, mode='default', 
 	 pickshape="cross", pshapesize=16, 
 	 alignshape="circle", ashapesize=16,
-	 errorshape="square", eshapesize=18):
+	 errorshape="square", eshapesize=18, doinit=True):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -674,21 +674,23 @@ class PickerApp(wx.App):
 		tiltdiff = self.data['theta']
 		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
 
-		origin, newpart, snr = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
+		origin, newpart, snr, ang = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
 
 		self.panel1.setTargets('Picked', [origin])
 		self.panel2.setTargets('Picked', [newpart])
 		self.shift.SetBackgroundColour(self.deselectcolor)
 
 		# snr > than arbitrary value run some other stuff
-		if snr > 2.3 and len(self.picks1) > 10 and len(self.picks2) > 10:
+		if snr > 2.0 and len(self.picks1) > 10 and len(self.picks2) > 10:
 			#self.onMaskRegion(None)
 			self.onImportPicks(None, msg=False)
 			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
+			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
 			self.onImportPicks(None, msg=False)
 			self.onAutoOptim(None)
+			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
 		else:
