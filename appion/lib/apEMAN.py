@@ -109,8 +109,8 @@ def writeBlankImage(outfile,boxsize,place,type=None):
 	a=EMAN.EMData()
 	a.setSize(boxsize,boxsize)
 	a.zero()
-	if type:
-		a.writeImage(outfile,place,type)
+	if type == 'spider':
+		a.writeImage(outfile,place,EMAN.EMData.SINGLE_SPIDER)
 	else:
 		a.writeImage(outfile,place)
 	return

@@ -123,13 +123,15 @@ if __name__== '__main__':
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
 				spidercmd = alignment.runCoranClass(params,cls)
-				procfile=('spider.%i.csh' % tasknum)
-				f=open(procfile, 'w')
-				f.write("#!/bin/csh\n\n")
-				f.write("cd "+os.path.abspath('.')+"\n");
-				f.write(spidercmd)
-				f.write("exit\n")
-				f.close()
+				## if enough particles, run spider
+				if spidercmd is not None:
+					procfile=('spider.%i.csh' % tasknum)
+					f=open(procfile, 'w')
+					f.write("#!/bin/csh\n\n")
+					f.write("cd "+os.path.abspath('.')+"\n");
+					f.write(spidercmd)
+					f.write("exit\n")
+					f.close()
 				spnum+=1
 			os.system('pbsdsh -v '+coranscript)
 			time.sleep(2)

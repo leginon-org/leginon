@@ -108,7 +108,6 @@ def runCoranClass(params,cls):
 
 	#set up cls dir
 	clsdir=cls.split('.')[0]+'.dir'
-#	os.mkdir(clsdir)
 	
 	clscmd='clstoaligned.py ' + cls
 	## if multiprocessor, don't run clstoaligned yet
@@ -126,12 +125,14 @@ def runCoranClass(params,cls):
 	params['nptcls']=apEMAN.getNPtcls(cls)
 	# if no particles, create an empty class average
 	if params['nptcls'] == 0:
-		apEMAN.writeBlankImage('classes_avg.spi',params['boxsize'],0,EMAN.EMData.SINGLE_SPIDER)
+		os.mkdir(clsdir)
+		apEMAN.writeBlankImage(os.path.join(clsdir,'classes_avg.spi'),params['boxsize'],0,'spider')
 		print "WARNING!! no particles in class"
 			
 	# if only 3 particles or less, turn particles into the class averages
 	elif params['nptcls'] < 4:
 #this is an ugly hack, just average the particles together, no ref-free
+		os.mkdir(clsdir)
 		avgcmd=("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
 		if params['proc']==1:
 			os.system(avgcmd)
