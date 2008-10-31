@@ -613,6 +613,8 @@ class AppionLoop(object):
 		if self.params['shuffle'] is True:
 			self.imgtree = self._shuffleTree(self.imgtree)
 			apDisplay.printMsg("shuffling images")
+		else:
+			self.imgtree.sort(self._reverseSortImgTree)
 
 		### LIMIT NUMBER
 		if self.params['limit'] is not None:
@@ -623,6 +625,11 @@ class AppionLoop(object):
 			self.params['nowait'] = True
 			
 		self.stats['imagecount'] = len(self.imgtree)
+
+	def _reverseSortImgTree(self, a, b):
+		if a.dbid > b.dbid:
+			return 1
+		return -1
 
 	def _alreadyProcessed(self, imgdata):
 		""" 
