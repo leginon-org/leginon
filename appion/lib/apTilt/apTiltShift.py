@@ -15,7 +15,7 @@ from pyami import correlator
 
 #================================
 #================================
-def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
+def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -75,7 +75,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 	print "origin=",origin
 	print "newpart=",newpart
 
-	return origin, newpart, snr
+	return origin, newpart, snr, bestangle
 
 	while newpart[0] < 10:
 		newpart += numpy.asarray((20,0))

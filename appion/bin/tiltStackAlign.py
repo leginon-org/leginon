@@ -61,11 +61,17 @@ class tiltStackAlign(appionScript.AppionScript):
 		query1 = self.queryParticles(swap=False)
 		self.cursor.execute(query1)
 		results1 = self.cursor.fetchall()
+		print "Found "+str(len(results1))+" particle pairs in forward order"
+		#if len(results1) < 2:
+		#	apDisplay.printError("Failed to find any particles")
 
 		#swap particle1 and particle2 in ApTiltParticlePairData
 		query2 = self.queryParticles(swap=True)
 		self.cursor.execute(query2)
 		results2 = self.cursor.fetchall()
+		print "Found "+str(len(results2))+" particle pairs in reverse order"
+		#if len(results2) < 2:
+		#	apDisplay.printError("Failed to find any particles")
 
 		parttree = self.parseResults(results1, results2)
 
@@ -78,6 +84,10 @@ class tiltStackAlign(appionScript.AppionScript):
 			line = operations.spiderOutLine(count, (emannotnum,emantiltnum))
 			f.write(line)
 		f.close()
+
+		print "Found "+str(len(parttree))+" particle pairs"
+		if len(parttree) < 2:
+			apDisplay.printError("Failed to find any particle pairs")
 
 		return parttree
 

@@ -148,6 +148,9 @@ def setPointsFromArrays(a1, a2, data):
 			+ numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
 		data['point2b'] = ( numpy.asarray(a2[0,:], dtype=numpy.float32) 
 			- numpy.array([data['shiftx'], data['shifty']], dtype=numpy.float32) )
+	else:
+		print a1, a2
+		print "FAILED"
 	return
 
 #================================
