@@ -160,8 +160,7 @@ class EM(node.Node):
 		self.panel.onGetMagnificationsDone()
 
 	def resetDefocus(self, name):
-		print 'EM resetDefocus', name
-		self.instruments[name]._execute(self.name, 'resetDefocus', 'method', (True,))
+		self.instruments[name]._execute(self.name, 'resetDefocus', 'method')
 
 	def refresh(self, name, attributes):
 		# hack
@@ -176,13 +175,6 @@ class EM(node.Node):
 		try:
 			if isinstance(attributes, list):
 				for attribute in attributes:
-					if attribute is 'resetDefocus':
-						try:
-							value = instrument._execute(self.name, attribute, 'method')
-						except:
-							pass
-						else:
-							continue
 					try:
 						value = instrument._execute(self.name, attribute, 'r')
 						if isinstance(value, Exception):
