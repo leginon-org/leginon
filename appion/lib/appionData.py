@@ -323,6 +323,8 @@ class ApStackParticlesData(Data):
 			('stack', ApStackData),
 			('stackRun', ApStackRunData),
 			('particle', ApParticleData),
+			('mean', float),
+			('stdev', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackParticlesData = ApStackParticlesData
@@ -566,6 +568,7 @@ class Ap3dDensityData(Data):
 			('md5sum', str),
 			('pdbid', str),
 			('emdbid', str),
+			('eman', str),
 			('rctrun', ApRctRunData),
 		)
 	typemap = classmethod(typemap)
