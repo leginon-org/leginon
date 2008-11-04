@@ -1187,6 +1187,14 @@ class particledata {
 		return $r;
 	}
 
+	function getStackParticles ($stackId) {
+		$q= "SELECT * "
+			."FROM `ApStackParticlesData` "
+			."WHERE `REF|ApStackData|stack` = '$stackId'";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}	
+
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(DEF_id) as num "
 			."FROM `ApStackParticlesData` "
