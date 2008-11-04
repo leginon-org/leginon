@@ -33,19 +33,19 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
 		bestsnr = 0
 		bestangle = None
 		for angle in [-10, -5, 0, 5, 10]:
-			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle)
+			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
 		print "best=", bestsnr, bestangle
 		for angle in [bestangle-2, bestangle-1, bestangle+1, bestangle+2]:
-			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle)
+			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
-		print "best=", snr, bestangle
+		print "best=", bestsnr, bestangle
 		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle)
-		print "best=", snr, bestangle
+		print "best=", bestsnr, bestangle
 	else:
 		bestangle = -4
 		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle)
@@ -94,7 +94,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
 
 #================================
 #================================
-def getTiltedShift(img1, img2, tiltdiff):
+def getTiltedShift(img1, img2, tiltdiff, msg=True):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -117,12 +117,14 @@ def getTiltedShift(img1, img2, tiltdiff):
 	# go from max tilt to half tilt
 	stretchFactor = math.cos(halftiltrad) / math.cos(abs(tiltdiff)/180.0*math.pi)
 	if tiltdiff > 0: 
-		apDisplay.printMsg("compress image 1")
+		if msg is True:
+			apDisplay.printMsg("compress image 1")
 		untilt1 = transformImage(img1, compressFactor)
 		untilt2 = transformImage(img2, stretchFactor)
 		xfactor = compressFactor
 	else:
-		apDisplay.printMsg("stretch image 1")
+		if msg is True:
+			apDisplay.printMsg("stretch image 1")
 		untilt1 = transformImage(img1, stretchFactor)
 		untilt2 = transformImage(img2, compressFactor)
 		xfactor = stretchFactor
@@ -154,29 +156,31 @@ def getTiltedShift(img1, img2, tiltdiff):
 	#import pprint
 	#pprint.pprint(peak)
 	pixpeak = peakdict['subpixel peak']
-	apImage.arrayToJpegPlusPeak(cc, "guess-cross.jpg", pixpeak)
+	if msg is True:
+		apImage.arrayToJpegPlusPeak(cc, "guess-cross.jpg", pixpeak)
 
 	rawpeak = numpy.array([pixpeak[1], pixpeak[0]]) #swap coord
 	shift = numpy.asarray(correlator.wrap_coord(rawpeak, cc.shape))*bin
 	adjshift = numpy.array([shift[0]*xfactor, shift[1]])
 
-	apDisplay.printMsg("Guessed xy-shift btw two images"
-		+";\n\t SNR= "+str(round(peakdict['snr'],2))
-		+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
-		+";\n\t compressFactor= "+str(round(compressFactor, 3))
-		+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
-		+";\n\t xFactor= "+str(round(xfactor, 3))
-		+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
-		+";\n\t shift= "+str(numpy.around(shift, 1))
-		+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
-	)
+	if msg is True:
+		apDisplay.printMsg("Guessed xy-shift btw two images"
+			+";\n\t SNR= "+str(round(peakdict['snr'],2))
+			+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
+			+";\n\t compressFactor= "+str(round(compressFactor, 3))
+			+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
+			+";\n\t xFactor= "+str(round(xfactor, 3))
+			+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
+			+";\n\t shift= "+str(numpy.around(shift, 1))
+			+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
+		)
 
 	return shift, xfactor, peakdict['snr']
 
 
 #================================
 #================================
-def getTiltedRotateShift(img1, img2, tiltdiff, angle=0):
+def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, msg=True):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -198,13 +202,15 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0):
 	compressFactor = math.cos(halftiltrad)
 	# go from max tilt to half tilt
 	stretchFactor = math.cos(halftiltrad) / math.cos(abs(tiltdiff)/180.0*math.pi)
-	if tiltdiff > 0: 
-		apDisplay.printMsg("compress image 1")
+	if tiltdiff > 0:
+		if msg is True:
+			apDisplay.printMsg("compress image 1")
 		untilt1 = transformImage(img1, compressFactor, angle)
 		untilt2 = transformImage(img2, stretchFactor, angle)
 		xfactor = compressFactor
 	else:
-		apDisplay.printMsg("stretch image 1")
+		if msg is True:
+			apDisplay.printMsg("stretch image 1")
 		untilt1 = transformImage(img1, stretchFactor, angle)
 		untilt2 = transformImage(img2, compressFactor, angle)
 		xfactor = stretchFactor
@@ -236,22 +242,24 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0):
 	#import pprint
 	#pprint.pprint(peak)
 	pixpeak = peakdict['subpixel peak']
-	apImage.arrayToJpegPlusPeak(cc, "guess-cross-ang"+str(abs(angle))+".jpg", pixpeak)
+	if msg is True:
+		apImage.arrayToJpegPlusPeak(cc, "guess-cross-ang"+str(abs(angle))+".jpg", pixpeak)
 
 	rawpeak = numpy.array([pixpeak[1], pixpeak[0]]) #swap coord
 	shift = numpy.asarray(correlator.wrap_coord(rawpeak, cc.shape))*bin
 	adjshift = numpy.array([shift[0]*xfactor, shift[1]])
 
-	apDisplay.printMsg("Guessed xy-shift btw two images"
-		+";\n\t SNR= "+str(round(peakdict['snr'],2))
-		+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
-		+";\n\t compressFactor= "+str(round(compressFactor, 3))
-		+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
-		+";\n\t xFactor= "+str(round(xfactor, 3))
-		+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
-		+";\n\t shift= "+str(numpy.around(shift, 1))
-		+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
-	)
+	if msg is True:
+		apDisplay.printMsg("Guessed xy-shift btw two images"
+			+";\n\t SNR= "+str(round(peakdict['snr'],2))
+			+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
+			+";\n\t compressFactor= "+str(round(compressFactor, 3))
+			+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
+			+";\n\t xFactor= "+str(round(xfactor, 3))
+			+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
+			+";\n\t shift= "+str(numpy.around(shift, 1))
+			+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
+		)
 
 	return shift, xfactor, peakdict['snr']
 
