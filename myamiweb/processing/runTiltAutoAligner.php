@@ -17,15 +17,15 @@ require "inc/appionloop.inc";
   
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-  runTiltAligner();
+  runTiltAutoAligner();
 }
 // CREATE FORM PAGE
 else {
-  createTiltAlignerForm();
+  createTiltAutoAlignerForm();
 }
 
 
-function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $heading='Tilt Aligner Particle Selection and Editing') {
+function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launcher', $heading='Tilt Auto Aligner') {
 
   // check if coming directly from a session
    $expId = $_GET['expId'];
@@ -167,19 +167,19 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
   <?
 }
 
-function runTiltAligner() {
+function runTiltAutoAligner() {
 
-  $command.="tiltaligner.py ";
+  $command.="tiltAutoAligner.py ";
   $apcommand = parseAppionLoopParams($_POST);
   if ($apcommand[0] == "<") {
-    createTiltAlignerForm($apcommand);
+    createTiltAutoAlignerForm($apcommand);
     exit;
   }
   $command .= $apcommand;
 
   $partcommand = parseParticleLoopParams("manual", $_POST);
   if ($partcommand[0] == "<") {
-    createTiltAlignerForm($partcommand);
+    createTiltAutoAlignerForm($partcommand);
     exit;
   }
   $command .= $partcommand;
@@ -212,12 +212,12 @@ function runTiltAligner() {
     $user = $_POST['user'];
     $password = $_POST['password'];
     if (!($user && $password)) {
-      createTiltAlignerForm("<B>ERROR:</B> Enter a user name and password");
+      createTiltAutoAlignerForm("<B>ERROR:</B> Enter a user name and password");
       exit;
     }
     $prefix =  "source /ami/sw/ami.csh;";
     $prefix .= "source /ami/sw/share/python/usepython.csh cvs32;";
-    $cmd = "$prefix $command > tiltalignerlog.txt";
+    $cmd = "$prefix $command > tiltAutoAlignerlog.txt";
     $result=exec_over_ssh($host, $user, $password, $cmd, True);
   }
 
@@ -227,14 +227,14 @@ function runTiltAligner() {
     $runid = $_POST[runid];
     $outdir = $_POST[outdir];
     if (substr($outdir,-1,1)!='/') $outdir.='/';
-    echo "<B>TiltAligner Command:</B><BR>$command";
+    echo "<B>TiltAutoAligner Command:</B><BR>$command";
     $testjpg=ereg_replace(".mrc","",$testimage);
     $jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
     $ccclist=array();
     //$cccimg=$outdir.$runid."/manualmaps/".$testjpg.".manualmap1.jpg";
     //$ccclist[]=$cccimg;
     $images=writeTestResults($jpgimg,$ccclist);
-    createTiltAlignerForm($images,'Particle Selection Test Results','');
+    createTiltAutoAlignerForm($images,'Particle Selection Test Results','');
     exit;
   }
 
