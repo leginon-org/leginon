@@ -1201,6 +1201,7 @@ class PresetsManager(node.Node):
 					new_camdim = fullcamdim/new_bin
 					if new_camdim >= imagelength:
 						new_camdim = imagelength
+						new_bin = fullcamdim[axis] / new_camdim
 				extrabin = float(new_bin) / camdata0['binning'][axis]
 				camdata1['offset'][axis] = (fullcamdim / new_bin - new_camdim) / 2
 				camdata1['dimension'][axis] = new_camdim
