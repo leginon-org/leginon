@@ -317,7 +317,7 @@ class createModelScript(appionScript.AppionScript):
 		### upload it
 		self.uploadDensity(modelpath)
 		
-		#call uploadModel
+#		#call uploadModel
 #		upload = ("uploadModel.py --file=%s --session=%s --apix=%.3f --res=%i --symmetry=%i --contour=1.5 --zoom=1.5 --description=\"%s\"" %
 #			(modelpath, self.params['session'], self.params['apix'], 
 #			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )	
