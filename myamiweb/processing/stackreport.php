@@ -37,6 +37,7 @@ $particle = new particledata();
 
 	echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
 
+	$stackparts = $particle->getStackParticles($stackid);
 
 	$stackavg = $s['path']."/average.mrc";
 	if (file_exists($stackavg)) {
@@ -44,7 +45,14 @@ $particle = new particledata();
 		echo "<tr><td rowspan='15' align='center'>";
 		echo "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
 		echo "<i>averaged stack image</i><br/>\n";
-		echo "</td></tr></table>\n\n";
+		echo "</td>";
+		
+		if (!is_null($stackparts[0]['mean'])) {
+			echo "<td><a href='stack_mean_stdev.php?sId=$stackid'>";
+			echo "<img border='0' src='stack_mean_stdev.php?w=256&sId=$stackid'></td>";
+		
+		}
+		echo"</tr></table>\n\n";
 	} #endif
 
 	$stackfile=$s['path']."/".$s['name'];
