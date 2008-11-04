@@ -14,6 +14,7 @@ import apDisplay
 import apEMAN
 import apFile
 from apSpider import operations
+from apTilt import apTiltPair
 import sinedon
 
 class tiltStackAlign(appionScript.AppionScript):
@@ -78,7 +79,7 @@ class tiltStackAlign(appionScript.AppionScript):
 		f = open("partalign-"+self.timestamp+".dat", "w")
 		count = 0
 		for partdict in parttree:
-			count+=1
+			count += 1
 			emannotnum = partdict['not']-1
 			emantiltnum = partdict['tilt']-1		
 			line = operations.spiderOutLine(count, (emannotnum,emantiltnum))
@@ -142,6 +143,35 @@ class tiltStackAlign(appionScript.AppionScript):
 		return query
 
 	#=====================
+	def makeEulerDoc(self, parttree):
+		count = 0
+		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
+		eulerf = open(eulerfile, "w")
+		apDisplay.printMsg("creating Euler doc file")
+		starttime = time.time()
+		for partdict in parttree:
+			stackpartdata = apStack.getStackParticle(self.params['tiltstackid'], partdict['tilt'])
+			count += 1
+			if count%100 == 0:
+				sys.stderr.write(".")
+				eulerf.flush()
+			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			line = operations.spiderOutLine(count, [phi, tiltangle, -1.0*gamma])
+			eulerf.write(line)
+		eulerf.close()
+		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		return eulerfile
+
+	#=====================
+	def appendEulerDoc(self, eulerfile, tiltpartnum, count):
+		eulerf = open(eulerfile, "a")
+		stackpartdata = apStack.getStackParticle(self.params['tiltstackid'], tiltpartnum)
+		gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+		line = operations.spiderOutLine(count, [phi, tiltangle, -1.0*gamma])
+		eulerf.write(line)
+		eulerf.close()
+
+	#=====================
 	def makeNewStacks(self, parttree):
 		### untilted stack
 		self.notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
@@ -158,14 +188,24 @@ class tiltStackAlign(appionScript.AppionScript):
 		if os.path.isfile(newtiltstack):
 			apFile.removeStack(newtiltstack)
 
+		### make doc file of Euler angles
+		#eulerfile = self.makeEulerDoc(parttree)
+		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
+		if os.path.isfile(eulerfile):
+			apFile.removeFile(eulerfile)
+
 		count = 0
 		for partdict in parttree:
 			count += 1
 			if count % 20 == 0:
-				print count,"particles"
+				backs = "\b\b\b\b\b\b\b\b"
+				sys.stderr.write(backs+backs+backs+backs)
+				sys.stderr.write(str(count)+" particles of "+str(len(parttree)))
 			### get particle numbers
 			emannotnum = partdict['not']-1
 			emantiltnum = partdict['tilt']-1
+			### write to Euler doc
+			self.appendEulerDoc(eulerfile, partdict['tilt'], count)
 			### untilted stack		
 			emancmd = "proc2d %s %s first=%d last=%d "%(notstackfile,newnotstack,emannotnum,emannotnum)
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
