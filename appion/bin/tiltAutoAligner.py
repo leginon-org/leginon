@@ -329,8 +329,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 			lastiter[2] = lastiter[1]
 			lastiter[1] = lastiter[0]
 			lastiter[0] = lsfit['iter']
-			apDisplay.printMsg(str(count)+": iter="+str(lastiter[0])
-				+"  rmsd="+str(round(lsfit['rmsd'],4)))
+		apDisplay.printMsg(str(count)+": iter="+str(lastiter[0]+lastiter[1]+lastiter[2])
+			+"  rmsd="+str(round(lsfit['rmsd'],4)))
 		return
 
 	#---------------------------------------
@@ -487,6 +487,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
 		# 3. particle errors are copied to self.peakerrors by app
 		# 4. assessment status is  copied to self.assess
+		print self.data
 		self.peaktree1 = apPeaks.convertListToPeaks(self.currentpicks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.currentpicks2, self.params)
 		self.peakerrors = self.getRmsdArray()
