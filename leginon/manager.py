@@ -831,7 +831,7 @@ class Manager(node.Node):
 					sortclasses['Pipeline'].append(s)
 
 		nodeorder = []
-		for sortcls in ['Pipeline', 'Calibrations', 'Utility']:
+		for sortcls in ['Priority', 'Pipeline', 'Calibrations', 'Utility']:
 			try:
 				nodeorder += sortclasses[sortcls]
 				del sortclasses[sortcls]

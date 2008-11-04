@@ -8,7 +8,7 @@ type: Utility
 
 [PresetsManager]
 module: presets
-type: Utility
+type: Priority
 
 [DriftManager]
 module: driftmanager
@@ -24,7 +24,7 @@ type: Utility
 
 [RobotAtlasTargetFinder]
 module: robotatlastargetfinder
-type: Utility
+type: Pipeline
 
 [IntensityMonitor]
 module: intensitymonitor
