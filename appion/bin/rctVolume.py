@@ -256,6 +256,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			psi = -1.0*(gamma + inplane)
 			while psi < 0:
 				psi += 360.0
+			### this is the original eman part num; count is new part num
 			partnum = stackpartdata['particleNumber']-1
 			line = operations.spiderOutLine(count, [phi, tiltangle, psi, partnum])
 			eulerf.write(line)
