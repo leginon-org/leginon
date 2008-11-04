@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import math
+import time
 from numpy import *
 #appion
 import appionLoop
@@ -15,11 +16,13 @@ import apDatabase
 import apParticle
 import apCtf
 import apStack
+import apDefocalPairs
 import appionData
 import apPeaks
 import apParticle
 import apDog
 import apEMAN
+import leginondata
 #legacy
 #import selexonFunctions  as sf1
 
@@ -43,9 +46,9 @@ class makestack (appionLoop.AppionLoop):
 	
 		self.checkPixelSize()
 
-		# Not completely tested yet
+		# get defocus pair images from database if defocpair option is selected
 		if self.params['defocpair']:
-			self.imgtree = apDatabase.getDefocPairFromSelexonId(self.params['selexonId'])
+			self.imgtree = self.getImgsDefocPairFromSelexonId()
 
 		# remove existing stack
 		if self.params['nocontinue']:
@@ -57,8 +60,6 @@ class makestack (appionLoop.AppionLoop):
 		if self.params['partlimit'] is not None and self.params['partlimit'] <= self.totpart:
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
 		
-		
-			
 	############################################################
 	## Check pixel size
 	############################################################
@@ -102,6 +103,49 @@ class makestack (appionLoop.AppionLoop):
 		
 		return int(self.params['particle'])
 		
+	############################################################
+	## get defocus pair of images
+	############################################################	
+	def getImgsDefocPairFromSelexonId(self):
+		startt = time.time()
+		apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(self.params['selexonId']))
+
+		# get selection run id
+		selexonrun=apdb.direct_query(appionData.ApSelectionRunData,self.params['selexonId'])
+		if not (selexonrun):
+			apDisplay.printError("specified runId '"+str(self.params['selexonId'])+"' not in database")
+		
+		# from id get the session
+		self.params['sessionid']=selexonrun['session']
+
+		# get all images from session
+		dbimgq=leginondata.AcquisitionImageData(session=self.params['sessionid'])
+		dbimginfo=db.query(dbimgq,readimages=False)
+
+		if not (dbimginfo):
+			apDisplay.printError("no images associated with this runId")
+
+		apDisplay.printMsg("Find corresponding image entry in the particle database")
+		# for every image, find corresponding image entry in the particle database
+		dbimglist=[]
+		self.params['sibpairs']={}
+		for imgdata in dbimginfo:
+			pimgq=appionData.ApParticleData()
+			pimgq['image']=imgdata
+			pimgq['selectionrun']=selexonrun
+			pimg=apdb.query(pimgq, results=1)
+			if pimg:
+				siblingimage = apDefocalPairs.getTransformedDefocPair(imgdata,1)
+				if siblingimage:
+					#create a dictionary for keeping the dbids of image pairs so we don't have to query later
+					self.params['sibpairs'][siblingimage.dbid] = imgdata.dbid
+					dbimglist.append(siblingimage)
+				else:
+					apDisplay.printWarning("no shift data for "+apDisplay.short(imgdata['filename']))
+		apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
+		return (dbimglist)
+
+		
 ############################################################
 ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## Process Image 
@@ -109,9 +153,6 @@ class makestack (appionLoop.AppionLoop):
 ############################################################
 
 	def processImage(self, imgdata):
-		# get defocus pair image from database if defocpair option is selected
-		if self.params['defocpair']:
-			imgdata = getImgDefocPairFromSelexonId(params) ## need work on this function
 
 		imgname = imgdata['filename']
 		# first remove any existing boxed files
@@ -905,6 +946,8 @@ class makestack (appionLoop.AppionLoop):
 				self.params['ctftilt']=True
 			elif (elements[0]=='partlimit'):
 				self.params['partlimit']=int(elements[1])
+			elif (elements[0]=='defocpair'):
+				self.params['defocpair']=True
 			else:
 				apDisplay.printError(str(elements[0])+" is not recognized as a parameter")
 
