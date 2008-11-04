@@ -288,7 +288,7 @@ class ParticleLoop(appionLoop.AppionLoop):
 			elif (elements[0]=='hp'):
 				self.params['hp']= abs(float(elements[1]))
 			elif (elements[0]=='maxsize'):
-				self.params['maxsize']= abs(int(elements[1]))
+				self.params['maxsize']= abs(float(elements[1]))
 			elif (elements[0]=='maxthresh'):
 				self.params['maxthresh']= abs(float(elements[1]))
 			elif (elements[0]=='overlapmult'):
