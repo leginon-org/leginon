@@ -14,10 +14,9 @@ import gui.wx.ClickTargetTransformer
 #import dbdatakeeper
 import threading
 import caltransformer
-
 import gui.wx.ClickTargetTransformer
-
 import leginondata
+import time
 
 class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.ClickTargetTransformer.Panel
@@ -35,10 +34,20 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.currentindex = None
 
 		self.presetsclient = presets.PresetsClient(self)
-		self.childpreset = self.settings['child preset']
 		self.ancestorpreset = self.settings['ancestor preset']
-		self.targetnames = ['acquisition','focus']
-		self.displayedtargetnames = self.targetnames+['transformed']
+		self.ancestortargetnames = ['acquisition','focus']
+		self.targetrelation2display = {
+			'acquisition':'c_acquisition',
+			'focus':'c_focus',
+			'transformed':'transformed',
+		}
+		self.targetrelation2original = {
+			'c_acquisition':'acquisition',
+			'c_focus':'focus',
+			'transformed':'transformed',
+		}
+		self.childtargetnames = self.targetrelation2original.keys()
+		self.displayedtargetnames = self.ancestortargetnames+self.childtargetnames
 		self.imageids = None
 
 		self.start()
@@ -82,44 +91,33 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		return self.getAncestor(parentimagedata)
 
 	def transformTargets(self,im1,im2,targets):
+		newtargets = []
 		shape = {}
-
-		lastnumber = self.lastTargetNumber(image=im1,
-																				session=self.session)
-		number = lastnumber + 1
-		for type in self.targetnames:
-			for targetdata in targets:
-				if targetdata['type'] == type:
-					drow = targetdata['delta row']
-					dcol = targetdata['delta column']
-
-					targetdata = self.newTargetForImage(im1, drow, dcol, type='transformed', list=self.childtargetlist, number=number)
-					self.publish(targetdata, database=True)
-					number += 1
-
 		shape['im1'] = im1['image'].shape		
+		shape['im2'] = im2['image'].shape
 		im1scope = im1['scope']
 		im1camera = im1['camera']
 		im1trans = caltransformer.getTransformer(im1scope['tem'], im1camera['ccdcamera'], im1scope['high tension'], im1scope['magnification'], im1.timestamp)
-		
 		im2scope = im2['scope']
 		im2camera = im2['camera']
 		im2trans = caltransformer.getTransformer(im2scope['tem'], im2camera['ccdcamera'], im2scope['high tension'], im2scope['magnification'], im2.timestamp)
 
-		newtargets = []
-		shape['im2'] = im2['image'].shape
-		lastnumber = self.lastTargetNumber(image=im2,
+		c_lastnumber = self.lastTargetNumber(image=im1,
 																				session=self.session)
-		newtargets = []
-		number = lastnumber + 1
+		c_number = c_lastnumber + 1
+		a_lastnumber = self.lastTargetNumber(image=im2,
+																				session=self.session)
+		a_number = a_lastnumber + 1
 
-		for type in self.targetnames:
+		for type in self.childtargetnames:
 			for targetdata in targets:
 				if targetdata['type'] == type:
 					drow = targetdata['delta row']
 					dcol = targetdata['delta column']
+
+					transformed_targetdata = self.newTargetForImage(im1, drow, dcol, type='transformed', list=self.childtargetlist, number=c_number)
+					self.publish(transformed_targetdata, database=True)
 					pixvect = {'row':drow,'col':dcol}
-					
 					## get stage position of target on first image
 					bin = im1camera['binning']
 					stage0 = im1scope['stage position']
@@ -132,11 +130,15 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 					drow =  pix['row']
 					dcol =  pix['col']
-
-					targetdata = self.newTargetForImage(im2, drow, dcol, type=type, list=self.targetlist, number=number)
-					self.publish(targetdata, database=True)
-					newtargets.append(targetdata)
-					number += 1
+					if type == 'c_focus':
+						type = 'focus'
+					if type == 'c_acquisition':
+						type = 'acquisition'
+					a_targetdata = self.newTargetForImage(im2, drow, dcol, type=type, list=self.targetlist, number=a_number, fromtarget=transformed_targetdata)
+					self.publish(a_targetdata, database=True)
+					newtargets.append(a_targetdata)
+					c_number += 1
+					a_number += 1
 
 		return newtargets
 
@@ -165,30 +167,69 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		for target in childtargets:
 			drowchild = target['delta row']
 			dcolchild = target['delta column']
-
 			childshape = self.childimagedata['image'].shape
 			ancestorshape = self.ancestorimagedata['image'].shape
 			drowancestor = target['delta row'] + childshape[0]/2 - ancestorshape[0]/2
 			dcolancestor = target['delta column'] + childshape[1]/2 - ancestorshape[1]/2
-			targetdata = self.newTargetForImage(self.ancestorimagedata, drowancestor, dcolancestor, type='transformed', list=None, number=1)
+			targetdata = self.newTargetForImage(self.ancestorimagedata, drowancestor, dcolancestor, type='transformed', list=None, number=1, status = target['status'])
 			childtargetsonancestor.append(targetdata)
 		return childtargetsonancestor
-	
+
+	def removeDeletedTransformedTargets(self):
+		deltapositions = []
+		donetargets = []
+		currenttargets = self.getTargets(self.childimagedata,'transformed',None)
+		for i,target in enumerate(currenttargets):
+			deltapositions.append((target['delta column'],target['delta row']))	
+		for i,target in enumerate(self.childprevioustargets):
+			if (target['delta column'],target['delta row']) not in deltapositions:
+				#find the ancestor target made from transformed target and remove it
+				targetq = leginondata.AcquisitionImageTargetData(fromtarget=self.childprevioustargets[i])
+				donetargets = targetq.query()
+				for j in donetargets:	
+					done_target = leginondata.AcquisitionImageTargetData(initializer=donetargets[0], status='done')
+					self.publish(done_target, database=True)
+				#mark transformed target done, too
+				done_target = leginondata.AcquisitionImageTargetData(initializer=self.childprevioustargets[i], status='done')
+				self.publish(done_target, database=True)
+
 	def onTransform(self):
+		if self.childimagedata is None:
+			self.logger.error('need image displayed to transform targets')
+			return
 		childtargets = []
-		for typename in self.targetnames:
-			childtargets.extend(self.getTargets(self.childimagedata, typename,None))
-		newtargets = self.transformTargets(self.childimagedata,self.ancestorimagedata,childtargets)
+		for typename in self.childtargetnames:
+			if typename != 'transformed':
+				childtargets.extend(self.getTargets(self.childimagedata, typename,None))
+		# transform the targets to proper type on ancestor and publish
+		self.transformTargets(self.childimagedata,self.ancestorimagedata,childtargets)
+		# Remove the ancestor targets if the child "tansformed" targets are removed by the user
+		self.removeDeletedTransformedTargets()
+		self.updateTargetDisplay()
 
+	def updateTargetDisplay(self):
+		#query the updated targets on ancestor
+		ancestortargets = []
+		for targettype in self.ancestortargetnames:
+			ancestortargets.extend(self.researchTargets(image=self.ancestorimagedata, type=targettype))
+		#query the updated targets on child
+		childtargets = []
+		for targettype in self.childtargetnames:
+			childtargets.extend(self.researchTargets(image=self.childimagedata, type=targettype))
+		# all target positions need to be scaled to the same image to display
 		childtargetsonancestor = self.childTargetsOnAncestor(childtargets)
-					
-		alltargets = newtargets	+ childtargetsonancestor
-			
+		alltargets = ancestortargets	+ childtargetsonancestor
+		self.childprevioustargets = childtargets + childtargetsonancestor
 		self.displayTargets(self.ancestorimagedata,alltargets,self.displayedtargetnames)
-
+		
 	def onClear(self):
-		targets2keep = self.getTargets(self.ancestorimagedata,'transformed',None)
-		self.displayTargets(self.ancestorimagedata,targets2keep,self.displayedtargetnames)
+		for targettype in self.childtargetnames:
+			self.clearTargets(targettype)
+		# Fix me: Can not delete the transformed targets automatically this way.
+		# The targets won't disappear if the following lines are uncommented.
+		#
+		#self.removeDeletedTransformedTargets()
+		#self.updateTargetDisplay()
 		
 	def onBegin(self):
 		self.currentindex = -1
@@ -263,16 +304,18 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		# check if there is already a target list for this image
 		# exclude sublists (like rejected target lists)
 		#Ancestor
-		previoustargets = []
-		for targettype in self.targetnames:
-			previoustargets.extend(self.researchTargets(image=imagedata, type=targettype))
+		#previoustargets = []
+		#for targettype in self.ancestortargetnames:
+	#		previoustargets.extend(self.researchTargets(image=imagedata, type=targettype))
 			
 		#Child
-		previoustransformedtargets = []
-		previoustransformedtargets.extend(self.researchTargets(image=self.childimagedata, type='transformed'))
-		previoustargets.extend(self.childTargetsOnAncestor(previoustransformedtargets))
-			
-		self.displayTargets(imagedata,previoustargets, self.displayedtargetnames)
+#		previoustransformedtargets = []
+#		previoustransformedtargets.extend(self.researchTargets(image=self.childimagedata, type='transformed'))
+#		print "ancestor",imagedata.dbid," child",self.childimagedata.dbid
+#		self.previoustargets = previoustransformedtargets
+#		previoustargets.extend(self.childTargetsOnAncestor(previoustransformedtargets))
+#		self.displayTargets(imagedata,previoustargets, self.displayedtargetnames)
+		self.updateTargetDisplay()
 
 		# create new target list
 		self.targetlist = self.newTargetList(image=imagedata, queue=False)
@@ -339,6 +382,6 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		child,ancestor = self.imageids[self.currentindex]
 		self.childimagedata = self.researchDBID(leginondata.AcquisitionImageData, child)
 		self.ancestorimagedata = self.researchDBID(leginondata.AcquisitionImageData, ancestor)
-		self.displayImage(self.childimagedata,'Image')
+		self.displayImage(self.childimagedata,'Child Image')
 		self.displayImage(self.ancestorimagedata,'Ancestor')
 		self.processImageData(self.ancestorimagedata)
