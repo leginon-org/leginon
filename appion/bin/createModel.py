@@ -11,7 +11,10 @@ import shutil
 import appionScript
 import apEMAN
 import apDisplay
+import apRecon
+import apStack
 import apUpload
+import apFile
 import apParam
 import apDatabase
 import appionData
@@ -80,6 +83,9 @@ class createModelScript(appionScript.AppionScript):
 		# make sure the necessary parameters are set
 		if self.params['session'] is None:
 			apDisplay.printError("enter a session ID")
+		else:
+			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+			
 		if self.params['description'] is None:
 			apDisplay.printError("enter a template description")
 		if self.params['norefclass'] is None:
@@ -95,7 +101,7 @@ class createModelScript(appionScript.AppionScript):
 		if self.params['method'] != 'startAny' and self.params['method'] != 'startCSym' and self.params['method'] != 'startOct' and self.params['method'] != 'startIcos':
 			apDisplay.printError("enter a correct EMAN commonline method: startAny, startCSym, startOct, startIcos")
 
-		if self.params['method'] == 'startAny' and (self.params['lp'] is None or self.params['mask'] is None or self.params['rounds'] is None or self.params['symm'] is None):
+		if self.params['method'] == 'startAny' and (self.params['lp'] is None or self.params['symm'] is None):
 			apDisplay.printError("Make sure options lp, mask, rounds and symm are provided")
 
 		if self.params['method'] == 'startCSym'and (self.params['partnum'] is None or self.params['symm'] is None):
@@ -104,17 +110,18 @@ class createModelScript(appionScript.AppionScript):
 		if self.params['method'] == 'startIcos' and (self.params['partnum'] is None):
 			apDisplay.printError("Make sure options partnum is provided")
 
-		# split self.params['symm'] into its id and name
-		try:
-			symlist = self.params['symm'].split(",")
-			print len(symlist), str(symlist)
-			self.params['symm_id']   = int(symlist[0])
-			self.params['symm_name'] = symlist[1].lower()
-			apDisplay.printMsg("Selected symmetry: "+str(self.params['symm_id'])+" named: "+self.params['symm_name'])
-		except:
-			apUpload.printSymmetries()
-			apDisplay.printError("Could not parse symmetry, should be of the form"
-				+" --symm=4,c3 NOT --symm="+str( self.params['symm']))
+		if self.params['method'] == 'startAny' or self.params['method'] == 'startCSym':
+			# split self.params['symm'] into its id and name
+			try:
+				symlist = self.params['symm'].split(",")
+				print len(symlist), str(symlist)
+				self.params['symm_id']   = int(symlist[0])
+				self.params['symm_name'] = symlist[1].lower()
+				apDisplay.printMsg("Selected symmetry: "+str(self.params['symm_id'])+" named: "+self.params['symm_name'])
+			except:
+				apUpload.printSymmetries()
+				apDisplay.printError("Could not parse symmetry, should be of the form"
+					+" --symm=4,c3 NOT --symm="+str( self.params['symm']))
 
 	#=====================
 	def cleanup(self, norefpath, norefclassid, method):
@@ -167,7 +174,7 @@ class createModelScript(appionScript.AppionScript):
 	#=====================
 	def setOutDir(self):
 		#auto set the output directory
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
@@ -203,12 +210,37 @@ class createModelScript(appionScript.AppionScript):
 		return newclassfile
 
 	#=====================
+	def uploadDensity(self, volfile):
+		### insert 3d volume density
+		densq = appionData.Ap3dDensityData()
+		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq['name'] = os.path.basename(volfile)
+		densq['hidden'] = False
+		densq['norm'] = True
+		#densq['symmetry'] = self.appiondb.direct_query(appionData.ApSymmetryData, 25)
+		densq['pixelsize'] = self.params['apix']
+		densq['boxsize'] = self.params['box']
+		densq['lowpass'] = self.params['lp']
+		#densq['highpass'] = self.params['highpasspart']
+		#densq['mask'] = self.params['radius']
+		densq['description'] = self.params['description']
+		densq['resolution'] = self.params['lp']
+		densq['session'] = self.sessiondata
+		densq['md5sum'] = apFile.md5sumfile(volfile)
+		densq['eman'] = self.params['method']
+		if self.params['commit'] is True:
+			densq.insert()
+		return 
+
+	#=====================
 	def start(self):
 
 	 	norefClassdata=appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclass'])
 
 		#Get class average file path through ApNoRefRunData
 		norefpath = norefClassdata['norefRun']['path']['path']
+
+		self.params['box'] = apStack.getStackBoxsize((norefClassdata['norefRun']['stack']).dbid)
 
 		#Get class average file name
 		norefClassFile = norefClassdata['classFile']
@@ -269,28 +301,34 @@ class createModelScript(appionScript.AppionScript):
 			if self.params['imask'] is not None: 
 				startCmd +=" imask="+self.params['imask']
 			
-		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of startAny")
+		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of"+self.params['method']+"")
 		print startCmd
-		apEMAN.executeEmanCmd(startCmd, verbose=True)
+		apEMAN.executeEmanCmd(startCmd, verbose=False)
 
 		#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
 		modelpath = self.cleanup(norefpath, self.params['norefclass'], self.params['method'])
 		#change its apix back to be the same as the class average file
 		self.changeapix(modelpath, self.params['apix'])
 
+		### chimera imaging
+		apRecon.renderSnapshots(modelpath, self.params['lp'], None, 
+			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
+
+		### upload it
+		self.uploadDensity(modelpath)
 		
 		#call uploadModel
-		upload = ("uploadModel.py --file=%s --session=%s --apix=%.3f --res=%i --symmetry=%i --contour=1.5 --zoom=1.5 --description=\"%s\"" %
-			(modelpath, self.params['session'], self.params['apix'], 
-			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )	
+#		upload = ("uploadModel.py --file=%s --session=%s --apix=%.3f --res=%i --symmetry=%i --contour=1.5 --zoom=1.5 --description=\"%s\"" %
+#			(modelpath, self.params['session'], self.params['apix'], 
+#			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )	
 
-		print "\n############################################"
-		print "\nReady to upload model "+modelpath+" into the database...\n"
-		if not self.params['commit']:
-			apDisplay.printWarning("Commit flag is not turned on... Model will not be uploaded!") 
-		time.sleep(10)
-		if self.params['commit']:	
-			apEMAN.executeEmanCmd(upload, verbose=True)
+#		print "\n############################################"
+#		print "\nReady to upload model "+modelpath+" into the database...\n"
+#		if not self.params['commit']:
+#			apDisplay.printWarning("Commit flag is not turned on... Model will not be uploaded!") 
+#		time.sleep(10)
+#		if self.params['commit']:	
+#			apEMAN.executeEmanCmd(upload, verbose=True)
 
 
 #=====================
