@@ -279,6 +279,11 @@ if ($expId) {
 				'name'=>"<a href='makestack.php?expId=$sessionId'>Stack creation >></a>",
 				'result'=>$sresults,
 				);
+
+		$nruns[]=array (
+				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation 2.0 >></a>",
+				'result'=>$s2results,
+				);
 		
 		$data[]=array(
 			      'action'=>array($action, $celloption),
