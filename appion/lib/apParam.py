@@ -233,6 +233,11 @@ def resetVirtualFrameBuffer():
 	time.sleep(2)
 	logf.close()
 
+def killVirtualFrameBuffer():
+	xvfbcmd = "killall Xvfb\n"
+	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.wait()
+
 def getFontPath(msg=True):
 	pathlist = [
 		"/usr/share/X11/fonts/misc",

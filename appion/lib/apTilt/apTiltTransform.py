@@ -481,6 +481,8 @@ def alignPicks(picks1, picks2, data, limit=20.0):
 		" particles to "+str(len(nlist2))+" of "+str(len(picks2)))
 	return nlist1, nlist2
 
+
+
 #================================
 #================================
 def findClosestPick(origpick, picks):
@@ -492,6 +494,66 @@ def findClosestPick(origpick, picks):
 			picked = newpick
 			bestdist = dist
 	return picked,bestdist
+
+#================================
+#================================
+def alignPicks2(picks1, picks2, data, limit=20.0):
+	### create distance dictionary
+	alignpicks2 = a2Toa1Data(picks2, data)
+	sortedDict2 = {}
+	index = 0
+	while index < len(alignpicks2):
+		p2 = alignpicks2[index]
+		key = "%d,%d"%(p2[0]/limit, p2[1]/limit,)
+		if not key in sortedDict2:
+			sortedDict2[key] = [index,]
+		else:
+			sortedDict2[key].append(index)
+		index+=1
+
+	### find matching picks
+	filled = {}
+	list1 = []
+	alignlist2 = []
+	for p1 in picks1:
+		closepick, dist = findClosestPick2(p1, alignpicks2, sortedDict2, limit)
+		if dist < limit: 
+			key = str(closepick)
+			if not key in filled:
+				list1.append(p1)
+				alignlist2.append(closepick)
+				filled[key] = True
+	#convert lists
+	nlist1 = numpy.array(list1, dtype=numpy.int32)
+	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int32)
+	#transform back
+	nlist2 = a1Toa2Data(nalignlist2, data)
+	apDisplay.printMsg("Aligned "+str(len(nlist1))+" of "+str(len(picks1))+\
+		" particles to "+str(len(nlist2))+" of "+str(len(picks2)))
+	return nlist1, nlist2
+
+
+#================================
+#================================
+def findClosestPick2(origpick, picks, sdict, limit):
+	picked = None
+	bestdist = 512.0
+	x = int(origpick[0]/limit)
+	y = int(origpick[1]/limit)
+	indpicks = []
+	for i in range(x-1,x+2):
+		for j in range(y-1,y+2):
+			key = "%d,%d"%(i,j)
+			if key in sdict:
+				indpicks.extend(sdict[key])
+	for index in indpicks:
+		#print index, len(picks)
+		newpick = picks[index]
+		dist = pickDist(origpick, newpick)
+		if dist < bestdist:
+			picked = newpick
+			bestdist = dist
+	return picked, bestdist
 
 #================================
 #================================

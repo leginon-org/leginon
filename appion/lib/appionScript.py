@@ -85,6 +85,7 @@ class AppionScript(object):
 		if self.quiet is False:
 			apDisplay.printMsg("outdir:\n "+self.params['outdir'])
 			apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
+		apParam.killVirtualFrameBuffer()
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####

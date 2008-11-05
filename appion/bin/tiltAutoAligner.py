@@ -177,6 +177,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		### insert the transform
 		transdata = apTiltPair.insertTiltTransform(imgdata, tiltdata, self.data, self.params)
 		### insert the particles
+
 		self.insertParticlePeakPairs(imgdata, tiltdata, transdata)
 		### insert image assessment
 
@@ -189,8 +190,10 @@ class tiltAligner(particleLoop.ParticleLoop):
 	#---------------------------------------
 	def insertParticlePeakPairs(self, imgdata, tiltdata, transdata):
 		if transdata is not None:
+			apDisplay.printMsg("insertParticlePeakPairs")
 			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, 
 				imgdata, tiltdata, transdata, self.params)
+			apDisplay.printMsg("done")
 
 	#---------------------------------------
 	#---------------------------------------
@@ -272,6 +275,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 	#---------------------------------------
 	#---------------------------------------
 	def importPicks(self, picks1, picks2, tight=False):
+		t0 = time.time()
+		apDisplay.printMsg("import picks")
 		#print picks1
 		#print self.currentpicks1
 		curpicks1 = numpy.asarray(self.currentpicks1)
@@ -284,7 +289,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		if tight is True:
 			pixdiam /= 4.0
 		#print self.data, pixdiam
-		list1, list2 = apTiltTransform.alignPicks(picks1, picks2, self.data, limit=pixdiam)
+		list1, list2 = apTiltTransform.alignPicks2(picks1, picks2, self.data, limit=pixdiam)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
 			apDisplay.printWarning("No new picks were found")
 
@@ -296,13 +301,15 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.currentpicks1 = newpicks1
 		self.currentpicks2 = newpicks2
 
-		apDisplay.printMsg("Inserted "+str(newparts)+" new particles")
+		apDisplay.printMsg("Inserted "+str(newparts)+" new particles in "+apDisplay.timeString(time.time()-t0))
 
 		return True
 
 	#---------------------------------------
 	#---------------------------------------
 	def optimizeAngles(self):
+		apDisplay.printMsg("optimize angles")
+		t0 = time.time()
 		if len(self.currentpicks1) < 5 or len(self.currentpicks2) < 5:
 			apDisplay.printWarning("Not enough particles ot run program on image pair")
 			return
@@ -314,23 +321,24 @@ class tiltAligner(particleLoop.ParticleLoop):
 			theta = fittheta['wtheta']
 			thetadev = fittheta['wthetadev']
 			thetastr = ("%3.3f +/- %2.2f" % (theta, thetadev))
-			apDisplay.printMsg(thetastr)
 			tristr = apDisplay.orderOfMag(fittheta['numtri'])+" of "+apDisplay.orderOfMag(fittheta['tottri'])
 			percent = str("%")
 			tristr = (" (%3.1f " % (100.0 * fittheta['numtri'] / float(fittheta['tottri'])))+"%) "
-			apDisplay.printMsg(tristr)
+			apDisplay.printMsg("Tilt angle "+thetastr+tristr)
 			self.data['theta'] = fittheta['wtheta']
 		### run optimize angles
 		lastiter = [80,80,80]
 		count = 0
+		totaliter = 0
 		while (max(lastiter) > 75):
 			count += 1
 			lsfit = self.runLeastSquares()
 			lastiter[2] = lastiter[1]
 			lastiter[1] = lastiter[0]
 			lastiter[0] = lsfit['iter']
-		apDisplay.printMsg(str(count)+": iter="+str(lastiter[0]+lastiter[1]+lastiter[2])
-			+"  rmsd="+str(round(lsfit['rmsd'],4)))
+			totaliter += lsfit['iter']
+		apDisplay.printMsg("Least Squares: "+str(count)+" rounds, "+str(totaliter)
+			+" iters, rmsd of "+str(round(lsfit['rmsd'],4))+" pixels in "+apDisplay.timeString(time.time()-t0))
 		return
 
 	#---------------------------------------
@@ -391,9 +399,12 @@ class tiltAligner(particleLoop.ParticleLoop):
 	#---------------------------------------
 	#---------------------------------------
 	def clearBadPicks(self):
+		apDisplay.printMsg("clear bad picks")
 		a1 = self.currentpicks1
 		a2 = self.currentpicks2
+		origpicks = max(len(a1), len(a2))
 		if len(a1) != len(a2):
+			apDisplay.printMsg("uneven arrays, get rid of extra")
 			#uneven arrays, get rid of extra
 			self.currentpicks1 = a1[0:len(a2),:]
 			self.currentpicks2 = a2[0:len(a1),:]
@@ -419,14 +430,20 @@ class tiltAligner(particleLoop.ParticleLoop):
 				a2c.append(a2[i,:])
 		a1d = numpy.asarray(a1c)
 		a2d = numpy.asarray(a2c)
-		return (a1d, a2d)
+		self.currentpicks1 = a1d
+		self.currentpicks2 = a2d
+		newpicks = len(a1d)
+		apDisplay.printMsg("removed "+str(origpicks-newpicks)+" particles")
+		return
 
 	#---------------------------------------
 	#---------------------------------------
 	def getOverlap(self, image1, image2):
+		t0 = time.time()
+		apDisplay.printMsg("get overlap")
 		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
 		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
-		apDisplay.printMsg(overlapStr)
+		apDisplay.printMsg("found "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
 		self.data['overlap'] = bestOverlap
 
 	#---------------------------------------
@@ -459,7 +476,8 @@ class tiltAligner(particleLoop.ParticleLoop):
 		img2 = apImage.mrcToArray(tiltpath)
 
 		#guess the shift
-		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, theta, picks1, angsearch=True)
+		t0 = time.time()
+		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, theta, picks1, angsearch=False)
 		self.data['gamma'] = float(bestang)
 		self.data['phi'] = float(bestang)
 		if snr < 2.0:
@@ -470,7 +488,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 		## need to reimplement these functions in this script
 		
-		self.importPicks(picks1, picks2)
+		self.importPicks(picks1, picks2, tight=True)
 		self.optimizeAngles()
 		self.clearBadPicks()
 		self.clearBadPicks()
@@ -487,6 +505,9 @@ class tiltAligner(particleLoop.ParticleLoop):
 		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
 		# 3. particle errors are copied to self.peakerrors by app
 		# 4. assessment status is  copied to self.assess
+		apDisplay.printMsg("completed alignment of "+str(len(self.currentpicks1))
+			+" particle pairs in "+apDisplay.timeString(time.time()-t0))
+
 		print self.data
 		self.peaktree1 = apPeaks.convertListToPeaks(self.currentpicks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.currentpicks2, self.params)

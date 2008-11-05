@@ -898,7 +898,7 @@ class PickerApp(wx.App):
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
 		if pixdiam is None:
 			pixdiam = 20.0
-		list1, list2 = apTiltTransform.alignPicks(self.picks1, self.picks2, self.data, limit=pixdiam)
+		list1, list2 = apTiltTransform.alignPicks2(self.picks1, self.picks2, self.data, limit=pixdiam)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
 			dialog = wx.MessageDialog(self.frame, 
 				"No new picks were found", 

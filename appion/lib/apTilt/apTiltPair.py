@@ -144,9 +144,10 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	transq['overlap'] = round(bestOverlap,5)
 	"""
 
-	apDisplay.printMsg("Inserting transform beteween "+apDisplay.short(imgdata1['filename'])+\
+	apDisplay.printMsg("Inserting transform between "+apDisplay.short(imgdata1['filename'])+\
 		" and "+apDisplay.short(imgdata2['filename'])+" into database")
 	transq.insert()
+	apDisplay.printMsg("done")
 	return transq
 
 #===============================

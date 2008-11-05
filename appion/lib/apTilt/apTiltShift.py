@@ -1,5 +1,6 @@
 import math
 import sys
+import time
 #PIL
 import ImageDraw
 #scipy
@@ -28,17 +29,17 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
 		positive, img2 is more compressed (tilted)
 	picks1, list of particles picks for image 1
 	"""
-
+	t0 = time.time()
 	if angsearch is True:
 		bestsnr = 0
 		bestangle = None
-		for angle in [-10, -5, 0, 5, 10]:
+		for angle in [-6, -4, -2,]:
 			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
 		print "best=", bestsnr, bestangle
-		for angle in [bestangle-2, bestangle-1, bestangle+1, bestangle+2]:
+		for angle in [bestangle-1, bestangle-0.5, bestangle+0.5, bestangle+1]:
 			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
@@ -72,8 +73,8 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
 				origin = pick
 
 	newpart = numpy.array([(origin[0]*xfactor-shift[0])*xfactor, origin[1]-shift[1]])
-	print "origin=",origin
-	print "newpart=",newpart
+	print "origin=",origin, "; newpart=",newpart
+	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-t0))
 
 	return origin, newpart, snr, bestangle
 
@@ -250,7 +251,7 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, msg=True):
 	adjshift = numpy.array([shift[0]*xfactor, shift[1]])
 
 	if msg is True:
-		apDisplay.printMsg("Guessed xy-shift btw two images"
+		apDisplay.printMsg("Found xy-shift btw two images"
 			+";\n\t SNR= "+str(round(peakdict['snr'],2))
 			+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
 			+";\n\t compressFactor= "+str(round(compressFactor, 3))
