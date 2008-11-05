@@ -443,7 +443,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		apDisplay.printMsg("get overlap")
 		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
 		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
-		apDisplay.printMsg("found "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("found overlaps of "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
 		self.data['overlap'] = bestOverlap
 
 	#---------------------------------------
@@ -486,8 +486,6 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.currentpicks1 = [origin]
 		self.currentpicks2 = [newpart]
 
-		## need to reimplement these functions in this script
-		
 		self.importPicks(picks1, picks2, tight=True)
 		self.optimizeAngles()
 		self.clearBadPicks()
@@ -501,14 +499,14 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.importPicks(picks1, picks2, tight=True)
 		self.optimizeAngles()
 		self.getOverlap(img1,img2)
-		# 1. tilt data are copied to self.tiltparams by app
-		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
-		# 3. particle errors are copied to self.peakerrors by app
-		# 4. assessment status is  copied to self.assess
 		apDisplay.printMsg("completed alignment of "+str(len(self.currentpicks1))
 			+" particle pairs in "+apDisplay.timeString(time.time()-t0))
 
 		print self.data
+		# 1. tilt data are copied to self.tiltparams by app
+		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
+		# 3. particle errors are copied to self.peakerrors by app
+		# 4. assessment status is  copied to self.assess
 		self.peaktree1 = apPeaks.convertListToPeaks(self.currentpicks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.currentpicks2, self.params)
 		self.peakerrors = self.getRmsdArray()
