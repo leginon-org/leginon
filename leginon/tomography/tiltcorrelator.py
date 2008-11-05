@@ -75,8 +75,7 @@ class Correlator(object):
         except correlator.MissingImageError:
             return
 
-        #peak = self.peakfinder.subpixelPeak(newimage=pc)
-        peak = self.peakfinder.pixelPeak(newimage=pc)
+        peak = self.peakfinder.subpixelPeak(newimage=pc)
         rows, columns = self.peak2shift(peak, pc.shape)
 
 
