@@ -198,7 +198,8 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 			count+=1
 			appiondb.insert(partpairq)
 
-	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree1))+" peaks into database")
+	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
+		+" in "+apDisplay.timeString(time.time()-t0))
 	return
 
 def insertParticlePeaks(peaktree, imgdata, params):
@@ -220,6 +221,7 @@ def insertParticlePeaks(peaktree, imgdata, params):
 
 	### WRITE PARTICLES TO DATABASE
 	count = 0
+	t0 = time.time()
 	for peakdict in peaktree:
 		particlesq = appionData.ApParticleData()
 		particlesq['selectionrun'] = runids[0]
