@@ -244,7 +244,7 @@ function parseAppionLoopParams () {
 	if ($background) $command.=" background";
 	if ($shuffle) $command.=" shuffle";
 	if ($limit) $command.=" limit=$limit";
-	if ($tiltangle) $command.=" tiltangle=$tiltangle";
+	if ($tiltangle != '') $command.=" tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" nocontinue";
 	else $command.=" continue";
 
