@@ -534,7 +534,7 @@ function runMakestack() {
 	if ($norejects) $command.="norejects ";
 	if ($massessname) $command.="maskassess=$massessname ";
 	if ($commit) $command.="commit ";
-	if ($tiltangle) $command.="tiltangle=$tiltangle ";
+	if ($tiltangle != '') $command.="tiltangle=$tiltangle ";
 	$command.="boxsize=$boxsize ";
 	if ($bin) $command.="bin=$bin ";
 	if ($ace) $command.="ace=$ace ";
