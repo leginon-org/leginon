@@ -436,7 +436,7 @@ function runMakestack() {
 	$outdir = $_POST['outdir'];
 	$ctftilt =$_POST['ctftilt'];
 
-	$command.="makestack.py ";
+	$command.="makestack2.py ";
 
 	$single=$_POST['single'];
 	//make sure a session was selected
