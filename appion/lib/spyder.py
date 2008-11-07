@@ -34,6 +34,11 @@ There are 2 streams:
  - get register values from Spider w/ sp.getreg("[var]")
 """
 
+def fileFilter(fname, dataext=".spi"):
+	if dataext in fname:
+		fname = fname[:-4]
+	fname = os.path.basename(fname)
+	return fname
 
 class SpiderSession:
 	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True):
