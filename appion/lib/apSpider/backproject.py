@@ -50,13 +50,14 @@ def backprojectCG(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".s
 	"""
 	### setup
 	starttime = time.time()
-	if dataext in stackfile:
-		stackfile = stackfile[:-4]
-	if dataext in eulerdocfile:
-		eulerdocfile = eulerdocfile[:-4]
-	if dataext in volfile:
-		volfile = volfile[:-4]
-	apFile.removeFile(volfile+".spi")
+	stackfile = spyder.fileFilter(stackfile)
+	eulerdocfile = spyder.fileFilter(eulerdocfile)
+	volfile = spyder.fileFilter(volfile)
+	if not os.path.isfile(stackfile+dataext):
+		apDisplay.printError("stack file not found: "+stackfile+dataext)
+	if not os.path.isfile(eulerdocfile+dataext):
+		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
+	apFile.removeFile(volfile+dataext)
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("BP CG", 
@@ -85,13 +86,14 @@ def backproject3F(stackfile, eulerdocfile, volfile, numpart, dataext=".spi"):
 	"""
 	### setup
 	starttime = time.time()
-	if dataext in stackfile:
-		stackfile = stackfile[:-4]
-	if dataext in eulerdocfile:
-		eulerdocfile = eulerdocfile[:-4]
-	if dataext in volfile:
-		volfile = volfile[:-4]
-	apFile.removeFile(volfile+".spi")
+	stackfile = spyder.fileFilter(stackfile)
+	eulerdocfile = spyder.fileFilter(eulerdocfile)
+	volfile = spyder.fileFilter(volfile)
+	if not os.path.isfile(stackfile+dataext):
+		apDisplay.printError("stack file not found: "+stackfile+dataext)
+	if not os.path.isfile(eulerdocfile+dataext):
+		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
+	apFile.removeFile(volfile+dataext)
 
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("BP 3F", 
@@ -111,12 +113,13 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 	project 3D volumes using given Euler angles
 	"""
 	starttime = time.time()
-	if dataext in volfile:
-		volfile = volfile[:-4]
-	if dataext in eulerdocfile:
-		eulerdocfile = eulerdocfile[:-4]
-	if dataext in projstackfile:
-		projstackfile = projstackfile[:-4]
+	volfile = spyder.fileFilter(volfile)
+	eulerdocfile = spyder.fileFilter(eulerdocfile)
+	projstackfile = spyder.fileFilter(projstackfile)
+	if not os.path.isfile(volfile+dataext):
+		apDisplay.printError("volume file not found: "+volfile+dataext)
+	if not os.path.isfile(eulerdocfile+dataext):
+		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
 
 	apFile.removeFile(projstackfile)
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
@@ -134,14 +137,16 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 #===============================
 def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, dataext=".spi"):
 	### rewriten to do the whole thing in memory in SPIDER, it should be faster
-	if dataext in infile:
-		infile = infile[:-4]
-	if dataext in reffile:
-		reffile = reffile[:-4]
-	if dataext in alignfile:
-		alignfile = alignfile[:-4]
+	infile = spyder.fileFilter(infile)
+	reffile = spyder.fileFilter(reffile)
+	alignfile = spyder.fileFilter(alignfile)
 	ccmap = "_5"
 	windccmap = "_6"
+	if not os.path.isfile(infile+dataext):
+		apDisplay.printError("input stack file not found: "+infile+dataext)
+	if not os.path.isfile(reffile+dataext):
+		apDisplay.printError("reference stack file not found: "+reffile+dataext)
+
 
 	### cross correlate images; reversed order to avoid -1*shift
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
@@ -212,6 +217,9 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
 			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
 		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
+
+	if not os.path.isfile(alignstackfile):
+		apDisplay.printError("aligned stack file not found: "+alignstackfile)
 	apDisplay.printColor("finished correlations in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return alignstackfile
 
