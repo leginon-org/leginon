@@ -463,6 +463,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		picks2 = self.getParticlePicks(tiltdata)
 		if len(picks1) < 10 or len(picks2) < 10:
 			apDisplay.printWarning("Not enough particles ot run program on image pair")
+			self.params['badprocess'] = True
 			return
 
 		#open image file 1
@@ -477,11 +478,12 @@ class tiltAligner(particleLoop.ParticleLoop):
 
 		#guess the shift
 		t0 = time.time()
-		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, theta, picks1, angsearch=False)
+		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, theta, picks1, angsearch=True)
 		self.data['gamma'] = float(bestang)
 		self.data['phi'] = float(bestang)
 		if snr < 2.0:
 			apDisplay.printWarning("Low confidence in initial shift")
+			self.params['badprocess'] = True
 			return
 		self.currentpicks1 = [origin]
 		self.currentpicks2 = [newpart]
