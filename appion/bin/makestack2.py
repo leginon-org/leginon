@@ -184,6 +184,7 @@ class makestack (appionLoop.AppionLoop):
 		if self.params['single']:
 			self.singleStack(imgdata)
 
+		self.stats['lastpeaks'] = numpart
 		self.totpart = self.totpart + numpart
 				
 		expectedptcles = str(int(float(self.totpart)/float(self.stats['count'])*self.stats['imagecount']))
@@ -195,6 +196,8 @@ class makestack (appionLoop.AppionLoop):
 			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+"; now stopping")
 			self.imgtree = []
 			self.notdone = False
+
+
 
 		self.removeTmpBoxFile(imgdata)
 
