@@ -163,8 +163,8 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	t0 = time.time()
 	apDisplay.printMsg("looping over "+str(len(peaktree1))+" particles")
 	for i in range(len(peaktree1)):
-		if count % 50 == 0:
-			sys.stderr.write("."+str(count))
+		if (len(peaktree1)-count) % 50 == 0:
+			sys.stderr.write("<"+str(len(peaktree1)-count))
 		peakdict1 = peaktree1[i]
 		peakdict2 = peaktree2[i]
 		error = peakerrors[i]
@@ -198,7 +198,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 			count+=1
 			appiondb.insert(partpairq)
 
-	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
+	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree1))+" peaks into database"
 		+" in "+apDisplay.timeString(time.time()-t0))
 	return
 
