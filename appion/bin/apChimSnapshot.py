@@ -47,14 +47,14 @@ def message(m):
 # -----------------------------------------------------------------------------
 #
 def color_surface_radially(surf):
-
+	writeMessageToLog("Color radially")
 	from SurfaceColor import color_surface, Radial_Color, Color_Map
 	rc = Radial_Color()
 	rc.origin = [0,0,0]
 	vertices, triangles = surf.surfacePieces[0].geometry
 	rmin, rmax = rc.value_range(vertices, vertex_xform = None)
 	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
-
+	writeMessageToLog("%.3f,%.3f"%(rmin,rmax))
 	#key: red,green,blue,opacity
 	#order: red, yellow, green, cyan, blue
 	colors = [(0.933,0.067,0.067,1), (0.933,0.933,0.067,1), (0.067,0.933,0.067,1), (0.067,0.933,0.933,1), (0.067,0.067,0.933,1)]  
@@ -62,18 +62,41 @@ def color_surface_radially(surf):
 	rc.colormap = Color_Map(data_values, colors)
 	color_surface(surf, rc, caps_only = False, auto_update = False)
 
+# -----------------------------------------------------------------------------
+#
+def color_surface_height(surf):
+	writeMessageToLog("Color by height")
+	from SurfaceColor import color_surface, Height_Color, Color_Map
+	hc = Height_Color()
+	hc.origin = [0,0,0]
+	vertices, triangles = surf.surfacePieces[0].geometry
+	hmin, hmax = hc.value_range(vertices, vertex_xform = None)
+	hrange = hmax-hmin
+	data_values = (.125*hrange+hmin, .25*hrange+hmin, .5*hrange+hmin, .75*hrange+hmin, .875*hrange+hmin)
+	writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
+	#key: red,green,blue,opacity
+	#order: red, yellow, green, cyan, blue
+	colors = [(0.750,0.375,0.067,1), (0.750,0.750,0.067,1), (0.375,0.750,0.067,1), (0.067,0.750,0.067,1), (0.067,0.750,0.750,1)]  
+
+	hc.colormap = Color_Map(data_values, colors)
+	color_surface(surf, hc, caps_only = False, auto_update = False)
+
+# -----------------------------------------------------------------------------
+#
 def color_surface_cylinder(surf):
+	writeMessageToLog("Color cylindrically")
 	from SurfaceColor import color_surface, Cylinder_Color, Color_Map
 	cc = Cylinder_Color()
-	cc.origin = [0,0,0]
 	vertices, triangles = surf.surfacePieces[0].geometry
-	rmin, rmax = cc.value_range(vertices, vertex_xform = None)
-	if rmin is None:
-		rmin = 0
-	if rmax is None:
-		rmax = 1.0	
-	data_values = (.5*rmax, .625*rmax, .75*rmax, .875*rmax, rmax)
-
+	cmin, cmax = cc.value_range(vertices, vertex_xform = None)
+	if cmin is None:
+		cmin = 0
+	if cmax is None:
+		cmax = 1.0
+	crange = cmax - cmin
+	cc.origin = [0,0,0]
+	data_values = (cmin, .625*crange+cmin, .75*crange+cmin, .875*crange+cmin, cmax)
+	writeMessageToLog("%.3f,%.3f"%(cmin,cmax))
 	#key: red,green,blue,opacity
 	#order: orange, yellow, green, cyan, blue
 	colors = [(0.750,0.375,0.067,1), (0.750,0.750,0.067,1), (0.375,0.750,0.067,1), (0.067,0.750,0.067,1), (0.067,0.750,0.750,1)]  
@@ -115,7 +138,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	image2 = vol_path+'.2.png'
 	image3 = vol_path+'.3.png'
 
-	if sym[:4] == 'Icos':
+	if sym[:4].lower() == 'icos':
 		for s in surfs:
 			color_surface_radially(s)
 
@@ -148,9 +171,12 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 		save_image(image6, format=imgFormat)
 
 	else:
-		if sym!='C1':
+		if sym.lower() != 'c1':
 			for s in surfs:
 				color_surface_cylinder(s)
+		else:
+			for s in surfs:
+				color_surface_height(s)
 		writeMessageToLog("turn: get top view")
 		runChimCommand('turn x 180')
 		save_image(image1, format=imgFormat)
