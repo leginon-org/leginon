@@ -220,6 +220,7 @@ class makestack (appionLoop.AppionLoop):
 
 		if self.params['tiltangle'] is not None:
 			tiltangle = apDatabase.getTiltAngleDeg(imgdata)
+			apDisplay.printMsg("image tilt angle: "+str(tiltangle))
 			# only want negatively tilted images
 			if self.params['tiltangle'] == -1.0:
 				if tiltangle > -3:
