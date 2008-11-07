@@ -143,7 +143,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : ''; 		 
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$tiltangle = $_POST['tiltangle'];
 	$boxszval = $_POST['boxsize'];
 	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$plimit = $_POST['plimit'];
@@ -455,7 +454,6 @@ function runMakestack() {
 	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$tiltangle = $_POST['tiltangle'];
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
 	$boxfiles = ($_POST['boxfiles']=='on') ? 'boxfiles' : '';
 
@@ -529,7 +527,6 @@ function runMakestack() {
 	if ($inspected) $command.="inspected ";
 	if ($norejects) $command.="norejects ";
 	if ($massessname) $command.="maskassess=$massessname ";
-	if ($tiltangle != '') $command.="tiltangle=$tiltangle ";
 	$command.="boxsize=$boxsize ";
 	if ($bin) $command.="bin=$bin ";
 	if ($ace) $command.="ace=$ace ";
