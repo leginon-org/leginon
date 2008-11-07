@@ -80,6 +80,7 @@ class AppionLoop(object):
 		self.preLoopFunctions()
 		### start the loop
 		self.notdone=True
+		self.params['badprocess'] = False
 		while self.notdone:
 			apDisplay.printColor("\nBeginning Main Loop", "green")
 			imgnum = 0
@@ -95,14 +96,18 @@ class AppionLoop(object):
 				results = self.processImage(imgdata)
 
 				### WRITE db data
- 				if self.params['commit'] is True:
-					self.commitToDatabase(imgdata)
-					self.commitResultsToDatabase(imgdata, results)
+				if self.params['badprocess'] is False:
+	 				if self.params['commit'] is True:
+						self.commitToDatabase(imgdata)
+						self.commitResultsToDatabase(imgdata, results)
+					else:
+						apDisplay.printWarning("not committing results to database, all data will be lost")
+						apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
+						self.writeResultsToFiles(imgdata, results)
 				else:
-					apDisplay.printWarning("not committing results to database, all data will be lost")
-					apDisplay.printMsg("to preserve data start script over and add 'commit' flag")
-					self.writeResultsToFiles(imgdata, results)
-				
+					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
+					self.params['badprocess'] = False
+
 				### FINISH with custom functions
 
 	 			self._writeDoneDict(imgdata['filename'])
