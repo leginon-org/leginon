@@ -85,7 +85,7 @@ class Collection(object):
 			correlation_bin = self.calcBinning(maxsize, 256, 512)
 		else:
 			correlation_bin = 1
-		self.correlator = tiltcorrelator.Correlator(self.theta, correlation_bin, lpf)
+		self.correlator = tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
 
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
@@ -123,9 +123,12 @@ class Collection(object):
 				self.node.player.wait()
 				self.node.logger.info('Continuing')
 				self.node.setStatus('processing')
-			self.node.initGoodPredictionInfo(tiltgroup=2)
-			self.prediction.newTiltGroup()
-			self.loop(self.tilts[1], self.exposures[1], True)
+			try:
+				self.node.initGoodPredictionInfo(tiltgroup=2)
+				self.prediction.newTiltGroup()
+				self.loop(self.tilts[1], self.exposures[1], True)
+			except:
+				return
 		else:
 			raise RuntimeError('too many tilt angle groups')
 
@@ -228,7 +231,11 @@ class Collection(object):
 			time.sleep(self.settings['tilt pause time'])
 
 			# TODO: error checking
-			image_data = self.tiltimagedata[self.group][i]
+			try:
+				image_data = self.tiltimagedata[self.group][i]
+			except IndexError:
+				#image not acquired
+				break
 			channel = image_data['correction channel']
 			self.logger.info('Image acquired.')
 
@@ -259,7 +266,7 @@ class Collection(object):
 			#self.correlator.setTiltAxis(predicted_position['phi'])
 			while True:
 				try:
-					correlation_image = self.correlator.correlate(image, tilt, channel=channel, wiener=self.settings['use wiener'])
+					correlation_image = self.correlator.correlate(image_data, self.settings['use tilt'], channel=channel, wiener=self.settings['use wiener'])
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
