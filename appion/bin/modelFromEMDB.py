@@ -66,7 +66,7 @@ class modelFromEMDB(appionScript.AppionScript):
 	#=====================
 	def setNewFileName(self, unique=False):
 		# set apix, box, and foldname
-		self.params['name'] = self.params['emdbid']+"-"
+		self.params['name'] = str(self.params['emdbid'])+"-"
 		self.params['name'] += str(self.params['apix'])+"-"
 		self.params['name'] += str(self.params['res'])+"-"
 		self.params['name'] += str(self.params['box'])+".mrc"
@@ -90,7 +90,9 @@ class modelFromEMDB(appionScript.AppionScript):
 			if a:
 				apix = float(a.groups()[0])
 				break
-		apDisplay.printMsg("file has a pixel size of "+str(round(apix/1024.0,1))+" A/pix")
+		apDisplay.printMsg("file has a pixel size of "+str(round(apix,2))+" A/pix")
+		if apix < 0.3:
+			apDisplay.printError("could not get appropriate pixel size")
 		return apix
 
 	#=====================
