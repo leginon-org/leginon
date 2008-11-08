@@ -1551,7 +1551,17 @@ class CalibratorSettingsData(SettingsData):
 	typemap = classmethod(typemap)
 
 class PixelSizeCalibratorSettingsData(CalibratorSettingsData):
-	pass
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('lattice a', float),
+			('lattice b', float),
+			('lattice gamma', float),
+			('h1', int),
+			('k1', int),
+			('h2', int),
+			('k2', int),
+			('distance', float),
+		)
 
 class MagCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
@@ -1740,6 +1750,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('fixed model', bool),
 			('use lpf', bool),
 			('use wiener', bool),
+			('use tilt', bool),
 			('wiener max tilt', float),
 		)
 	typemap = classmethod(typemap)
@@ -1757,6 +1768,7 @@ class TomographySimuSettingsData(AcquisitionSettingsData):
 			('fixed model', bool),
 			('use lpf', bool),
 			('use wiener', bool),
+			('use tilt', bool),
 		)
 	typemap = classmethod(typemap)
 
