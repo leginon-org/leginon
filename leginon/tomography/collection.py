@@ -91,8 +91,7 @@ class Collection(object):
 			correlation_bin = self.calcBinning(maxsize, 256, 512)
 		else:
 			correlation_bin = 1
-		self.correlator = tiltcorrelator.Correlator(self.theta, correlation_bin, lpf)
-
+		self.correlator = tiltcorrelator.Correlator(self.node, self.theta, correlation_bin, lpf)
 		if self.settings['run buffer cycle']:
 			self.runBufferCycle()
 
@@ -318,7 +317,7 @@ class Collection(object):
 							w = True
 						else:
 							self.logger.info('wiener filter disabled for this tilt')
-					correlation_image = self.correlator.correlate(image, tilt, channel=channel, wiener=w)
+					correlation_image = self.correlator.correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=self.settings['use wiener'])
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
