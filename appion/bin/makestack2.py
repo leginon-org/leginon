@@ -20,6 +20,7 @@ import apDefocalPairs
 import appionData
 import apPeaks
 import apParticle
+import apStackMeanPlot
 import apDog
 import apEMAN
 import leginondata
@@ -296,7 +297,10 @@ class makestack (appionLoop.AppionLoop):
 
 	def postLoopFunctions(self):
 		### Averaging completed stack
-		apStack.averageStack(stack=os.path.join(self.params['rundir'], "start.hed"))
+		stackpath = os.path.join(self.params['rundir'], "start.hed")
+		apStack.averageStack(stack=stackpath)
+		stackid = apStack.getStackIdFromPath(stackpath)
+		apStackMeanPlot.makeStackMeanPlot(stackid)
 
 ############################################################
 ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

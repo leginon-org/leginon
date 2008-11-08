@@ -327,6 +327,24 @@ def getStackParticleTilt(stpartid):
 	tilt = stpartdata['particle']['image']['scope']['stage position']['a']*180.0/math.pi
 	return abs(tilt)
 
+#===============
+def getStackIdFromPath(stackpath):
+	"""
+	For a given stack part dbid return tilt angle
+	"""
+	path = os.path.dirname(stackpath)
+	name = os.path.basename(stackpath)
+	pathq = appionData.ApStackData()
+	pathq['path'] = path
+	stackq = appionData.ApStackData()
+	stackq['name'] = name
+	stackq['path'] = pathq
+	stackdatas = stackq.query()
+	if len(stackdatas) > 1:
+		apDisplay.printError("More than one stack has path: "+stackpath)
+	return stackdatas[0].dbid
+
+
 #########################################################
 # Imagic I/O
 #########################################################
