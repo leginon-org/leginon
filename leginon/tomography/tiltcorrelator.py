@@ -2,6 +2,9 @@ import math
 from pyami import correlator, peakfinder, imagefun
 import numpy
 import scipy.ndimage
+import leginondata
+import tiltcorrector
+import node
 
 def hanning(size):
 	border = size >> 5
@@ -14,9 +17,11 @@ def hanning(size):
 	return numpy.fromfunction(function, (size, size))
 
 class Correlator(object):
-	def __init__(self, tilt_axis, correlation_binning=1,lpf=None):
+	def __init__(self, node, tilt_axis, correlation_binning=1,lpf=None):
 		self.correlation = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder(lpf)
+		self.node = node
+		self.tiltcorrector = tiltcorrector.VirtualStageTilter(self.node)
 		self.reset()
 		self.setCorrelationBinning(correlation_binning)
 		self.hanning = None
@@ -54,29 +59,36 @@ class Correlator(object):
 	def swapQuadrants(self, image):
 		return imagefun.swap_quadrants(image)
 
-	def correlate(self, image, tilt, channel=None,wiener=False):
+	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False):
+		image = imagedata['image']
 		if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
 			raise ValueError
 
 		if self.correlation_binning != 1:
 			image = imagefun.bin(image, int(self.correlation_binning))
-
+		# create new imagedata according to the additional bin
+		camdata = leginondata.CameraEMData(initializer =imagedata['camera'])
+		camdata['binning'] = {'x':camdata['binning']['x']*self.correlation_binning, 'y':camdata['binning']['y']*self.correlation_binning}
+		newimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
+		newimagedata['camera']=camdata
 		mean = image.mean()
 		image -= mean
 
 		if self.hanning is None or image.shape[0] != self.hanning.shape[0]:
 			self.hanning = hanning(image.shape[0])
 		image *= self.hanning
-
-		self.correlation.insertImage(image)
+		newimagedata['image'] = image
+		if tiltcorrection:
+			# stage tilt corrector stretchs and updates the image in imagedata according to its stage matrix calibration
+			self.tiltcorrector.undo_tilt(newimagedata)
+		self.correlation.insertImage(newimagedata['image'])
 		self.channel = channel
 		try:
 			pc = self.correlation.phaseCorrelate(wiener=wiener)
 		except correlator.MissingImageError:
 			return
 
-		#peak = self.peakfinder.subpixelPeak(newimage=pc)
-		peak = self.peakfinder.pixelPeak(newimage=pc)
+		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows, columns = self.peak2shift(peak, pc.shape)
 
 
