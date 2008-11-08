@@ -334,6 +334,10 @@ class VirtualStageTilter(object):
 
 		#im2 = self.filter.convolve(im2)
 		imagedata['image'] = im2
-		self.node.logger.info('image stretched to reverse alpha tilt')
+		try:
+			self.node.logger.info('image stretched to reverse alpha tilt')
+		except:
+			# print the same when GUI not exists
+			print 'image stretched to reverse alpha tilt'
 		return True
 
