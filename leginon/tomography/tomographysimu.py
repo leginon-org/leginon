@@ -47,6 +47,7 @@ class TomographySimu(acquisition.Acquisition):
 		'fixed model': False,
 		'use lpf': True,
 		'use wiener': False,
+		'use tilt': True,
 		'simu tilt series': '1',
 	}
 
@@ -89,7 +90,14 @@ class TomographySimu(acquisition.Acquisition):
 		self.start()
 
 	def getTiltSeries(self):
-		qseries = leginondata.TiltSeriesData(session=self.session,number=self.simuseries)
+		if self.simuseries is None:
+			self.simuseries = 1
+		allseries_num = self.getTiltSeriesNumbers()
+		if self.simuseries not in allseries_num:
+			self.simuseries = allseries_num[0]
+			self.logger.warning('previously chosen series invalid, reset to %d' % self.simuseries)
+		series_num = self.simuseries
+		qseries = leginondata.TiltSeriesData(session=self.session,number=series_num)
 		result = qseries.query()
 		if result:
 			seriesdata = result[0]
@@ -546,6 +554,7 @@ class TomographySimu(acquisition.Acquisition):
 		query_data = leginondata.TomographyPredictionData(initializer=initializer)
 		results = self.research(query_data)
 		results.reverse()
+		first_tilt_series_number = 1
 
 		for result in results:
 			image = result.special_getitem('image', True, readimages=False)
@@ -553,7 +562,7 @@ class TomographySimu(acquisition.Acquisition):
 			image_pixel_sizes[tilt_series.dbid] = result['pixel size']
 			tilt = image['scope']['stage position']['a']
 			position = result['position']
-			if tilt_series.dbid >= self.simuseriesdata.dbid:
+			if tilt_series.dbid >= self.simuseriesdata.dbid or tilt_series['number'] < first_tilt_series_number:
 				pass
 			else:	
 				positions[tilt_series.dbid].append((tilt, position))
@@ -573,7 +582,7 @@ class TomographySimu(acquisition.Acquisition):
 		for tilt_series in self.prediction.tilt_series_list:
 			for tilt_group in tilt_series.tilt_groups:
 				n_points += len(tilt_group)
-		m = 'Loaded %d points from %d previous series' % (n_points, n_groups)
+		m = 'Loaded %d points from %d previous series' % (n_points, n_groups-1)
 		self.logger.info(m)
 
 	def alignZeroLossPeak(self, preset_name):
