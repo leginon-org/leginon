@@ -334,7 +334,7 @@ def getStackIdFromPath(stackpath):
 	"""
 	path = os.path.dirname(stackpath)
 	name = os.path.basename(stackpath)
-	pathq = appionData.ApStackData()
+	pathq = appionData.ApPathData()
 	pathq['path'] = path
 	stackq = appionData.ApStackData()
 	stackq['name'] = name
