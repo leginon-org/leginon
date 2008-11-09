@@ -18,7 +18,9 @@ require "inc/processing.inc";
 if ($_POST['process']) {
 	runSubStack();
 }
-
+elseif ($_POST['testmean']){
+	createSubStackForm();
+}
 // Create the form page
 else {
 	createSubStackForm();
@@ -30,11 +32,13 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$projectId=getProjectFromExpId($expId);
 	$stackId = $_GET['sId'];
 	$exclude = $_GET['exclude'];
+	$mean = $_GET['mean'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&sId=$stackId" : "";
 	$formAction.=($exclude) ? "&exclude=$exclude" : "";
+	$formAction.=($mean) ? "&mean=$mean" : "";
 	
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
@@ -50,6 +54,11 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$lastp = ($_POST['lastp']) ? $_POST['lastp'] : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 			
+
+	$minx = ($_POST['minx']) ? $_POST['minx'] : '';	
+	$maxx = ($_POST['maxx']) ? $_POST['maxx'] : '';
+	$miny = ($_POST['miny']) ? $_POST['miny'] : '';
+	$maxy = ($_POST['maxy']) ? $_POST['maxy'] : '';
 
 	// get outdir path
 	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
@@ -93,9 +102,10 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	
 
 	# get stack name
-	$stackp = $particle->getStackParams($stackId);
+	$stackParams = $particle->getStackParams($stackId);
+	$stackParts = $particle->getStackParticles($stackId);
 	$nump=$particle->getNumStackParticles($stackId);
-	$filename = $stackp['path'].'/'.$stackp['name'];
+	$filename = $stackParams['path'].'/'.$stackParams['name'];
 
 	echo"
 	<TABLE BORDER=3 CLASS=tableborder>";
@@ -121,7 +131,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo "<b>Description:</b><br />\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br />\n";
-	if (!$exclude) { 
+	if (!$exclude and !$mean) { 
 		echo openRoundBorder();
 		echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'><tr><td width='50%' valign='top'>\n";
 		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"sub\")' value='sub' $subcheck>\n";
@@ -137,6 +147,18 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<input type='text' name='split' value='$split' size='3' $splitdisable> sets\n";
 		echo "</td></tr></table>\n";
 		echo closeRoundBorder();
+	} elseif ($mean) {
+		if ($minx and $maxx and $miny and $maxy) {
+			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy'><br>\n";
+		} else {
+			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId'><br>\n";
+		}
+		echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'>";
+		echo "<tr><td width='50%' valign='top'><input type='text' name='minx' value='$minx' size='7'> minimum X<br />\n</td>";
+		echo "<td> <input type='text' name='maxx' value='$maxx' size='7'> maximum X<br />\n </td></tr>\n";
+		echo "<tr><td width='50%' valign='top'><input type='text' name='miny' value='$miny' size='7'> minimum Y<br />\n</td>";
+		echo "<td> <input type='text' name='maxy' value='$maxy' size='7'> maximum Y<br />\n </td></tr>";
+		echo "<tr><input type='SUBMIT' NAME='testmean' VALUE='Test selected points'></tr></table>\n";
 	}
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
@@ -171,8 +193,21 @@ function runSubStack() {
 	$lastp = $_POST['lastp'];
 	$split = $_POST['split'];
 	
-	$command.="subStack.py ";
+	$minx = ($_POST['minx']) ? $_POST['minx'] : '';	
+	$maxx = ($_POST['maxx']) ? $_POST['maxx'] : '';
+	$miny = ($_POST['miny']) ? $_POST['miny'] : '';
+	$maxy = ($_POST['maxy']) ? $_POST['maxy'] : '';
 
+	if ($minx and (!$maxx or !$miny or !$maxy)){
+		createSubStackForm("<b>ERROR:</b> Specify all four coordinates");
+	}
+
+	if ($minx and $maxx and $miny and $maxy) {
+		$command.="stackFilter.py ";
+	} else {
+		$command.="subStack.py ";
+	}
+	
 	//make sure a description is provided
 	$description=$_POST['description'];
 	if (!$runid) createSubStackForm("<b>ERROR:</b> Specify a runid");
@@ -183,7 +218,7 @@ function runSubStack() {
 	$procdir = $outdir.$runid;
 
 	// check sub stack particle numbers
-	if (!$exclude) {
+	if (!$exclude and !$minx) {
 		if ($subsplit == 'sub') {
 			if (!$firstp) createSubStackForm("<b>ERROR:</b> Enter a starting particle");
 			if (!$lastp) createSubStackForm("<b>ERROR:</b> Enter an end particle");
@@ -197,13 +232,18 @@ function runSubStack() {
 	$command.="-s $stackId ";
 	$command.="-n $runid ";
 	$command.="-d \"$description\" ";
-	if (!$exclude) {
+	if (!$exclude and !$minx) {
 		if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
 		elseif ($split) $command.="--split=$split ";
-	} else {
+	} elseif (!$minx) {
 		$command.="--exclude=".$exclude." ";
+	} else {
+		$command.="--minx=".$minx." --maxx=".$maxx." --miny=".$miny." --maxy=".$maxy." ";
 	}
+	
+	
 	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+
 
 	// submit job to cluster
 	if ($_POST['process']=="Create SubStack") {
@@ -212,7 +252,7 @@ function runSubStack() {
 
 		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'substack');
 		// if errors:
 		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
 		exit();
@@ -223,14 +263,22 @@ function runSubStack() {
 	//rest of the page
 	echo"
 	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<b>centerParticleStack.py command:</b><br />
-	$command
+	<tr><td colspan='2'>";
+	if ($minx) {
+		echo "<b>stackFilter.py command:</b><br />";
+	} else {
+		echo "<b>subStack.py command:</b><br />";
+	}
+	echo "$command
 	</td></tr>\n";
 	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
+	echo "<tr><td>minX</td><td>$minx</td></tr>\n";
+	echo "<tr><td>maxX</td><td>$maxx</td></tr>\n";
+	echo "<tr><td>minY</td><td>$miny</td></tr>\n";
+	echo "<tr><td>maxY</td><td>$maxy</td></tr>\n";
 	echo"</table>\n";
 	processing_footer();
 }
