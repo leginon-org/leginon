@@ -13,6 +13,18 @@ require "../inc/image.inc";
 
 $stackid = ($_GET['sId']);
 
+$minx = ($_GET['minx']);
+$miny = ($_GET['miny']);
+$maxx = ($_GET['maxx']);
+$maxy = ($_GET['maxy']);
+
+if (!is_null($minx)) {
+	$linex[] = $minx;
+	$linex[] = $maxx;
+	$liney[] = $miny;
+	$liney[] = $maxy;
+}
+
 $particle = new particledata();
 
 $stackparts = $particle->getStackParticles($stackid);
@@ -49,6 +61,12 @@ if (is_null($datax[0])) {
 	$sp1->mark->SetColor('blue');
 	$sp1->mark->SetWidth(2);
 	$graph->Add($sp1);
+
+	if (!is_null($liney[0])) {
+		$p1 = new LinePlot($liney,$linex);
+		$p1->SetColor("green");
+		$graph->Add($p1);
+	}
 
 	$source = $graph->Stroke(_IMG_HANDLER);
 	
