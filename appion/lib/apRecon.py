@@ -378,11 +378,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 		badres = True
 	### set any unknown params
 	if sym is None:
-		syms = initmodel['symmetry']['symmetry'].split()
-		sym = syms[0]
-		# strip digits from symmetry
-		replace=re.compile('\d')
-		sym=replace.sub('',sym)
+		sym = initmodel['symmetry']['eman_name']
 	if apix is None:
 		apix = initmodel['pixelsize']
 	if box is None:
