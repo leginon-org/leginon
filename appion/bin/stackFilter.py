@@ -15,13 +15,13 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --old-stack-id=ID --keep-file=FILE [options]")
 		self.parser.add_option("-s", "--old-stack-id", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
-		self.parser.add_option("--minX", dest="minX", type="float",
+		self.parser.add_option("--minx", dest="minx", type="float",
 			help="minimum X value")
-		self.parser.add_option("--maxX", dest="maxX", type="float",
+		self.parser.add_option("--maxx", dest="maxx", type="float",
 			help="maximum X value")
-		self.parser.add_option("--minY", dest="minY", type="float",
+		self.parser.add_option("--miny", dest="miny", type="float",
 			help="minimum Y value")
-		self.parser.add_option("--maxY", dest="maxY", type="float",
+		self.parser.add_option("--maxy", dest="maxy", type="float",
 			help="maximum Y value")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
@@ -42,8 +42,8 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("substack description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
-		if self.params['minX'] is None or self.params['minY'] is None or self.params['maxX'] is None or self.params['maxY'] is None:
-			apDisplay.printError("Please define all minX, minY, maxX, maxY")
+		if self.params['minx'] is None or self.params['miny'] is None or self.params['maxx'] is None or self.params['maxy'] is None:
+			apDisplay.printError("Please define all minx, miny, maxx, maxy")
 		if self.params['outdir'] is None:
 			self.setOutDir()
 			
@@ -64,13 +64,12 @@ class subStackScript(appionScript.AppionScript):
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
 		newstack = os.path.join(self.params['outdir'], newname)
 
-	
-		slope = (self.params['maxY'] - self.params['minY']) / (self.params['maxX'] - self.params['minX'])
-			
-		intercept = self.params['minY'] - (slope*self.params['minX'])
+		# calculate slop and intercept from the four points given	
+		slope = (self.params['maxy'] - self.params['miny']) / (self.params['maxx'] - self.params['minx'])
+		intercept = self.params['miny'] - (slope*self.params['minx'])
 		
-		print slope
-		print intercept
+#		print slope
+#		print intercept
 		
 		numparticles = 0
 		
@@ -79,10 +78,10 @@ class subStackScript(appionScript.AppionScript):
 		
 		for stackpart in stackparts:
 			#print str(stackpart['particleNumber'])+","+ str(stackpart['mean'])+","+str(stackpart['stdev'])
-			if stackpart['mean'] > self.params['minX'] and stackpart['mean'] < self.params['maxX']:
+			if stackpart['mean'] > self.params['minx'] and stackpart['mean'] < self.params['maxx']:
 				#print str(stackpart['particleNumber'])+","+ str(stackpart['mean'])+","+str(stackpart['stdev'])
 				calcY = slope*stackpart['mean']+intercept 
-				if calcY > stackpart['stdev']:
+				if calcY >= stackpart['stdev']:
 					emanpartnum = stackpart['particleNumber']-1
 					f.write('%i\n' % emanpartnum)
 					numparticles+=1
