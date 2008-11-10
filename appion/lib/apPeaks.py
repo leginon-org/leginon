@@ -117,7 +117,22 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 
 
 def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0, msg=True):
-	image = apImage.arrayToImage(ccmap)
+	### drop all values below zero
+	ccmap = numpy.where(ccmap<0, 0.0, ccmap)
+
+	### create bar at bottom
+	ccshape = (ccmap.shape[0]+50, ccmap.shape[1])
+	bigmap = numpy.resize(ccmap, ccshape)
+	bigmap[ccshape[0]+1:,:] = 0
+	minval = ccmap.min()
+	maxval = ccmap.max()
+
+	print minval,maxval
+	grad = numpy.linspace(minval, maxval, bigmap.shape[1])
+	bigmap[ccmap.shape[0]:bigmap.shape[0],:] = grad
+	print ccmap.shape, "-->",  bigmap.shape
+
+	image = apImage.arrayToImage(bigmap, stdevLimit=5.0)
 	image = image.convert("RGB")
 
 	### color stuff below threshold
@@ -130,13 +145,65 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 
 	### color peaks in map
 	image2 = image.copy()
-	draw = ImageDraw.Draw(image2)
-	drawPeaks(peaktree, draw, bin, pixrad, fill=True)
-	image = Image.blend(image, image2, 0.3) 
-	
+	peakdraw = ImageDraw.Draw(image2)
+	drawPeaks(peaktree, peakdraw, bin, pixrad, fill=True)
+	### add text
+	image3 = image.copy()
+	textdraw = ImageDraw.Draw(image3)
+	addMinMaxTextToMap(textdraw, bigmap.shape[1], minval, maxval)
+	### merge
+	image = Image.blend(image, image2, 0.3)
+	image = Image.blend(image, image3, 0.9)
+
 	if msg is True:
 		apDisplay.printMsg("writing summary JPEG: "+imgname)
 	image.save(imgname, "JPEG", quality=80)
+
+
+def addMinMaxTextToMap(draw, imgdim, minval, maxval):
+	### add text
+	print "adding text"
+	midval = (maxval + minval)/2.0
+	midlval = (maxval + minval)/4.0
+	midrval = 3.0*(maxval + minval)/4.0
+	crad = 10
+	start = 2*crad
+	midl = imgdim/4
+	mid = imgdim/2
+	midr = 3*imgdim/4
+	end = imgdim - 2*crad
+	### left
+	txt = str(round(minval,3))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (start-shiftx, end+40)
+	draw.text(coord, txt, fill="white")
+	### mid left
+	txt = str(round(midlval,3))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (midl-shiftx, end+40)
+	draw.text(coord, txt, fill="blue")
+	### mid
+	txt = str(round(midval,3))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (mid-shiftx, end+40)
+	draw.text(coord, txt, fill="blue")
+	### mid right
+	txt = str(round(midrval,3))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (midr-shiftx, end+40)
+	draw.text(coord, txt, fill="blue")
+	### right
+	txt = str(round(maxval,3))
+	shiftx = draw.textsize(txt)[0]/2.0
+	shifty = draw.textsize(txt)[1]/2.0
+	coord = (end-shiftx, end+40)
+	draw.text(coord, txt, fill="black")
+	return
+
 
 def maxThreshPeaks(peaktree, maxthresh):
 	newpeaktree = []

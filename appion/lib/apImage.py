@@ -75,9 +75,9 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 			apDisplay.printWarning("'median' is not defined in preProcessImage()")
 	#LOW PASS FILTER
 	if lowpass is None:
-		if 'lowpass' in params:
+		if 'lowpass' in params and params['lowpass'] is not None:
 			lowpass = params['lowpass']
-		elif 'lp' in params:
+		elif 'lp' in params and params['lp'] is not None:
 			lowpass = params['lp']
 		else:
 			lowpass = 0
@@ -455,13 +455,13 @@ def _arrayToImage(a):
 	else:
 		raise ValueError, "unsupported image mode"
 
-def arrayToImage(numer,normalize=True):
+def arrayToImage(numer, normalize=True, stdevLimit=3.0):
 	"""
 	takes a numpy and writes a JPEG
 	best for micrographs and photographs
 	"""
 	if normalize:
-		numer = _maxNormalizeImage(numer)
+		numer = _maxNormalizeImage(numer, stdevLimit)
 	else:
 		numer = numer*255
 	image = _arrayToImage(numer)
@@ -566,14 +566,15 @@ def _maxNormalizeImage(a, stdevLimit=3.0):
 	Normalizes numpy to fit into an image format,
 	but maximizes the contrast
 	"""
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 25.0,maxlevel=230.0,trim=0.1)
+	return _normalizeImage(a, stdevLimit, minlevel= 20.0, maxlevel=240.0, trim=0.1)
 
 def _blackNormalizeImage(a, stdevLimit=3.0):
 	"""	
 	Normalizes numpy to fit into an image format,
 	but makes it a darker than normal
 	"""
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)	
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)
+	
 def _whiteNormalizeImage(a, stdevLimit=3.0):
 	"""	
 	Normalizes numpy to fit into an image format,
@@ -601,7 +602,7 @@ def cutEdges(img, trim=0.1):
 
 	return mid
 
-def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
+def _normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0):
 	"""	
 	Normalizes numpy to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
@@ -612,11 +613,12 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 
 	#GET IMAGE STATS
 	avg1,stdev1,min1,max1 = getImageInfo(mid)
+	#print avg1, stdev1, min1, max1
 
 	#IF MIN/MAX are too high set them to smaller values
-	if(min1 < avg1-stdevLimit*stdev1):
+	if (min1 < avg1-stdevLimit*stdev1):
 		min1 = avg1-stdevLimit*stdev1
-	if(max1 > avg1+stdevLimit*stdev1):
+	if (max1 > avg1+stdevLimit*stdev1):
 		max1 = avg1+stdevLimit*stdev1
 
 	if min1 == max1:
@@ -626,10 +628,12 @@ def _normalizeImage(img,stdevLimit=3.0,minlevel=0.0,maxlevel=255.0,trim=0.0):
 	if abs(min1) < 0.01 and abs(max1 - 1.0) < 0.01:
 		#we have a mask-like object
 		return img * 255
+	#print min1, max1
+
 
 	img = (img - min1)/(max1 - min1)*imrange + minlevel
-	img = numpy.where(img > maxlevel,255.0,img)
-	img = numpy.where(img < minlevel,0.0,  img)
+	img = numpy.where(img > maxlevel, 255.0, img)
+	img = numpy.where(img < minlevel,   0.0, img)
 	
 	return img
 
