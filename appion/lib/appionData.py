@@ -898,3 +898,20 @@ class ApRctRunData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApImagicReclassifyData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('norefclass', ApNoRefClassRunData),
+			('lowpass', float),
+			('highpass', float),
+			('maskradius', float),
+			('maskdropoff', float),
+			('numiter', int),
+			('numaverages', int),
+			('description', str),
+			('path', ApPathData),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
