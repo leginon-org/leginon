@@ -736,14 +736,16 @@ class AppionLoop(object):
 			if(self.stats['lastpeaks'] != None):
 				self.stats['peaksum'] += self.stats['lastpeaks']
 				self.stats['peaksumsq'] += self.stats['lastpeaks']**2
-				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks"
+				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks of ",self.stats['peaksum']
 				if(count > 1):
 					peaksum   = self.stats['peaksum']
 					peaksumsq = self.stats['peaksumsq']
 					peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
-					print "\tAVG PEAKS:\t",round(float(peaksum)/float(count),1),"+/-",\
+					peakavg = float(peaksum)/float(count)
+					print "\tAVG PEAKS:\t",round(peakavg,1),"+/-",\
 						round(peakstdev,1),"peaks"
-					print "\t(- TOTAL:",peaksum,"peaks for",count,"images -)"
+					estpeaks = round((peakavg-0.5*peakstdev)*self.stats['imagesleft'],0)
+					print "\t(- ESTIMATE:",estpeaks,"total peaks -)"
 				self._printLine()
 	
 			print "\tTIME:     \t",apDisplay.timeString(tdiff)
