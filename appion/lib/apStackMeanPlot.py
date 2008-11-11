@@ -86,7 +86,7 @@ def averageSubStack(partlist, stackfile, filename):
 
 #===============
 def assemblePngs(pngfiles, tag):
-	montagecmd = "montage "
+	montagecmd = "montage -geometry +4+4 "
 	for pngf in pngfiles:
 		montagecmd += pngf+".png "
 	montagefile = "montage"+tag+".png"
@@ -123,7 +123,11 @@ def meanStdevToKey(mean, stdev, limits, gridpoints):
 #===============
 #===============
 if __name__ == "__main__":
-	#makeStackMeanPlot(1279)
-	makeStackMeanPlot(1291)
+	if len(sys.argv) > 1:
+		stackid = int(sys.argv[1])
+	else:
+		#stackid=1279
+		stackid=1291
+	makeStackMeanPlot(stackid)
 
 
