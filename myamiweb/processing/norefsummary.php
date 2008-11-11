@@ -147,6 +147,7 @@ function norefEntry($norefid, $particle, $hidden=False) {
 			$noreftable.= "norefId=$norefid[DEF_id]&norefClassId=$classid[DEF_id]'>[variance]</a>";
 			$noreftable.= "</font>";
 		}
+		$noreftable.= "<font size=-2>&nbsp;&nbsp;(factor list: ".$classid[factor_list].")</font>";;	
 		$noreftable.="</td></tr>";
 	}
 	$noreftable.="</table>\n";
