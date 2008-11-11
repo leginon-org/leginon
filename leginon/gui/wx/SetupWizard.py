@@ -373,8 +373,20 @@ class SessionNamePage(WizardPage):
 		self.SetSizerAndFit(pagesizer)
 
 	def onValidateName(self, evt):
-		if self.GetParent().setup.existsSessionName(evt.GetString()):
+		name = evt.GetString()
+		safename = name.replace(' ','_')
+		if safename != name:
+			self.nameAutoChangeDialog()
+		if self.GetParent().setup.existsSessionName(safename):
 			self.nameExistsDialog()
+
+	def nameAutoChangeDialog(self):
+		dlg = wx.MessageDialog(self,
+											'"_" has replaced " " in the name\nfor easier file managemnet',
+											'Changed Session Name', wx.OK|wx.ICON_WARNING)
+		dlg.ShowModal()
+		dlg.Destroy()
+
 
 	def nameExistsDialog(self):
 		dlg = wx.MessageDialog(self,
@@ -650,7 +662,11 @@ class SetupWizard(wx.wizard.Wizard):
 		page = evt.GetPage()
 		if page is self.namepage:
 			name = self.namepage.nametextctrl.GetValue()
-			if self.setup.existsSessionName(name):
+			safename = name.replace(' ','_')
+			if safename != name:
+				self.namepage.nameAutoChangeDialog()
+				self.namepage.nametextctrl.SetValue(safename)
+			if self.setup.existsSessionName(safename):
 				evt.Veto()
 				self.namepage.nameExistsDialog()
 		elif page is self.sessionselectpage:
