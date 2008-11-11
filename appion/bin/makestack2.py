@@ -954,6 +954,12 @@ class makestack (appionLoop.AppionLoop):
 				self.params['ctftilt']=True
 			elif (elements[0]=='partlimit'):
 				self.params['partlimit']=int(elements[1])
+			elif (elements[0]=='hp' or elements[0]=='highpass'):
+				self.params['highpass']=int(elements[1])
+			elif (elements[0]=='lp' or elements[0]=='lowpass'):
+				self.params['lowpass']=float(elements[1])
+			elif (elements[0]=='bin'):
+				self.params['bin']=int(elements[1])
 			elif (elements[0]=='defocpair'):
 				self.params['defocpair']=True
 			else:
