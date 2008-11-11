@@ -39,21 +39,30 @@ $particle = new particledata();
 
 	$stackparts = $particle->getStackParticles($stackid);
 
+	echo "<table border='0'><tr>\n";
 	$stackavg = $s['path']."/average.mrc";
 	if (file_exists($stackavg)) {
-		echo "<table border='0'>\n";
-		echo "<tr><td rowspan='15' align='center'>";
+		echo "<td align='center'>\n";
 		echo "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
-		echo "<i>averaged stack image</i><br/>\n";
-		echo "</td>";
-		
-		if (!is_null($stackparts[0]['mean'])) {
-			echo "<td rowspan='15' align='center'><a href='stack_mean_stdev.php?sId=$stackid'>";
-			echo "<img border='0' src='stack_mean_stdev.php?w=256&sId=$stackid'><br/>\n";
-			echo "<i><a href='subStack.php?expId=$expId&sId=$stackid&mean=1'>Filter Stack</a></i><br/>\n</td>";
-		}
-		echo"</tr></table>\n\n";
-	} #endif
+		echo "<i>averaged stack image</i>\n";
+		echo "</td>\n";
+	}	
+	if (!is_null($stackparts[0]['mean'])) {
+		echo "<td align='center'>\n";
+		echo "<a href='stack_mean_stdev.php?sId=$stackid'>\n";
+		echo "<img border='0' src='stack_mean_stdev.php?w=256&sId=$stackid'><br/>\n";
+		echo "<i><a href='subStack.php?expId=$expId&sId=$stackid&mean=1'>Filter Stack by Mean & Stdev</a></i>\n";
+		echo "</td>\n";
+	}
+	$montage = $s['path']."/montage$stackid.png";
+	if (file_exists($montage)) {
+		echo "<td align='center'>\n";
+		echo "<a href='loadimg.php?filename=$montage'>";
+		echo "<img border='0' src='loadimg.php?filename=$montage' height='150'></a><br/>\n";
+		echo "<i>Mean & Stdev Montage</i>\n";
+		echo "</td>\n";
+	}
+	echo"</tr></table>\n\n";
 
 	$stackfile=$s['path']."/".$s['name'];
 	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><BR>\n";

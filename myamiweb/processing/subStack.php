@@ -149,9 +149,17 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo closeRoundBorder();
 	} elseif ($mean) {
 		if ($minx and $maxx and $miny and $maxy) {
-			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy'><br>\n";
+			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy'><br/>\n";
 		} else {
 			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId'><br>\n";
+		}
+		$montage = $stackParams['path']."/montage$stackId.png";
+		if (file_exists($montage)) {
+			echo "<td align='center'>\n";
+			echo "<a href='loadimg.php?filename=$montage'>";
+			echo "<img border='0' src='loadimg.php?filename=$montage' height='450'></a><br/>\n";
+			echo "<i>Mean & Stdev Montage</i>\n";
+			echo "</td>\n";
 		}
 		echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'>";
 		echo "<tr><td width='50%' valign='top'><input type='text' name='minx' value='$minx' size='7'> minimum X<br />\n</td>";
