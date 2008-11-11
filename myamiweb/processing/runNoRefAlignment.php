@@ -38,7 +38,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$particle = new particledata();
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
-	$norefIds = $particle->getNoRefIds($sessionId);
+	$norefIds = $particle->getNoRefIds($sessionId, True);
 	$norefruns=count($norefIds);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
