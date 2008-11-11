@@ -700,7 +700,9 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	print ""
 
 	### create class averages
+	sys.stderr.write("create class averages")
 	for i in range(classes):
+		sys.stderr.write(".")
 		classnum = i+1
 		mySpider.toSpiderQuiet(
 			"AS R",
@@ -711,6 +713,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 			(classvar+"@%04d" % (classnum)),
 		)
 	mySpider.close()
+	print ""
 
 	### convert to IMAGIC
 	emancmd = "proc2d "+classavg+".spi "+classavg+".hed"
