@@ -736,7 +736,7 @@ class AppionLoop(object):
 			if(self.stats['lastpeaks'] != None):
 				self.stats['peaksum'] += self.stats['lastpeaks']
 				self.stats['peaksumsq'] += self.stats['lastpeaks']**2
-				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks of ",self.stats['peaksum']
+				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks of",self.stats['peaksum']
 				if(count > 1):
 					peaksum   = self.stats['peaksum']
 					peaksumsq = self.stats['peaksumsq']
@@ -744,8 +744,8 @@ class AppionLoop(object):
 					peakavg = float(peaksum)/float(count)
 					print "\tAVG PEAKS:\t",round(peakavg,1),"+/-",\
 						round(peakstdev,1),"peaks"
-					lowestpeaks = int((peakavg-peakstdev)*self.stats['imagesleft'])
-					highestpeaks = int((peakavg+peakstdev)*self.stats['imagesleft'])
+					lowestpeaks = int((peakavg-peakstdev*0.5)*self.stats['imagesleft'])+peaksum
+					highestpeaks = int((peakavg+peakstdev*0.5)*self.stats['imagesleft'])+peaksum
 					print "\t(- ESTIMATE:",lowestpeaks,"to",highestpeaks,"total peaks -)"
 				self._printLine()
 	
