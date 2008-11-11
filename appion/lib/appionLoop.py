@@ -744,8 +744,9 @@ class AppionLoop(object):
 					peakavg = float(peaksum)/float(count)
 					print "\tAVG PEAKS:\t",round(peakavg,1),"+/-",\
 						round(peakstdev,1),"peaks"
-					estpeaks = round((peakavg-0.5*peakstdev)*self.stats['imagesleft'],0)
-					print "\t(- ESTIMATE:",estpeaks,"total peaks -)"
+					lowestpeaks = int((peakavg-peakstdev)*self.stats['imagesleft'])
+					highestpeaks = int((peakavg+peakstdev)*self.stats['imagesleft'])
+					print "\t(- ESTIMATE:",lowestpeaks,"to",highestpeaks,"total peaks -)"
 				self._printLine()
 	
 			print "\tTIME:     \t",apDisplay.timeString(tdiff)

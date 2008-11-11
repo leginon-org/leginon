@@ -6,7 +6,10 @@ import sys
 import re
 import math
 import time
-from numpy import *
+import glob
+## never, ever, ever import *
+#from numpy import *
+import numpy
 #appion
 import appionLoop
 import apImage
@@ -23,6 +26,7 @@ import apParticle
 import apStackMeanPlot
 import apDog
 import apEMAN
+import apFile
 import leginondata
 #legacy
 #import selexonFunctions  as sf1
@@ -54,9 +58,9 @@ class makestack (appionLoop.AppionLoop):
 		# remove existing stack
 		if self.params['nocontinue']:
 			self.removeExistingStack()
-			self.totpart=0
+			self.totpart = 0
 		else:
-			self.totpart=self.setExistingStackInfo()
+			self.totpart = self.setExistingStackInfo()
 			
 		if self.params['partlimit'] is not None and self.params['partlimit'] <= self.totpart:
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
@@ -89,7 +93,7 @@ class makestack (appionLoop.AppionLoop):
 		if (os.path.isfile(stackfile+".img")):
 			os.remove(stackfile+".img")
 
-		self.params['particle']=0
+		self.params['numpart'] = 0
 		
 	############################################################
 	## Retrive existing stack info
@@ -97,12 +101,11 @@ class makestack (appionLoop.AppionLoop):
 	def setExistingStackInfo(self):
 		stackfile=os.path.join(self.params['rundir'], os.path.splitext(self.params['single'])[0])
 		if (os.path.isfile(stackfile+".hed")):
-			imagic = apStack.readImagic(stackfile+".hed")
-			self.params['particle']=len(imagic['images'])
+			self.params['numpart'] = apFile.numImagesInStack(stackfile+".hed")
 		else:
-			self.params['particle']=0
+			self.params['numpart'] = 0
 		
-		return int(self.params['particle'])
+		return int(self.params['numpart'])
 		
 	############################################################
 	## get defocus pair of images
@@ -154,20 +157,23 @@ class makestack (appionLoop.AppionLoop):
 ############################################################
 
 	def processImage(self, imgdata):
-
 		imgname = imgdata['filename']
-		# first remove any existing boxed files
-		stackfile = os.path.join(self.params['rundir'], imgname)
-		for ext in (".hed", ".img", "-temp.hed", "-temp.img", ".ctf.hed", ".ctf.img", "-temp-ctf.hed", "-temp-ctf.img"):
-			if os.path.isfile(stackfile+ext):
-				os.remove(stackfile+ext)
+		shortname = apDisplay.short(imgdata['filename'])
+
+		### first remove any existing boxed files
+		shortfile = os.path.join(self.params['rundir'], shortname)
+		rmfiles = glob.glob(shortfile+"*")
+		for rmfile in rmfiles:
+			apFile.removeFile(rmfile)
 
 		# check to see if image is rejected by other criteria
 		if self.rejectImage(imgdata) is False:
+			self.params['badprocess'] = True
 			return
 
 		# get CTF parameters for image and skip if criteria is not met
 		if self.getCtfParams(imgdata) is False:
+			self.params['badprocess'] = True
 			return
 
 		# run batchboxer
@@ -176,9 +182,12 @@ class makestack (appionLoop.AppionLoop):
 		else:
 			numpart = self.batchBox(imgdata)
 
-		# check to see if a temporary stack of boxed particles was formed			
-		if not os.path.isfile(os.path.join(self.params['rundir'], imgname+".hed")) and not os.path.isfile(os.path.join(self.params['rundir'], imgname+".ctf.hed")):
-			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
+		# check to see if a temporary stack of boxed particles was formed
+		normstack = os.path.join(self.params['rundir'], shortname+".hed")
+		ctfstack = os.path.join(self.params['rundir'], shortname+".ctf.hed")
+		if not os.path.isfile(normstack) and not os.path.isfile(ctfstack):
+			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
+			self.params['badprocess'] = True
 			return
 			
 		# add boxed particles to a single stack
@@ -187,29 +196,17 @@ class makestack (appionLoop.AppionLoop):
 
 		self.stats['lastpeaks'] = numpart
 		self.totpart = self.totpart + numpart
-				
-		expectedptcles = str(int(float(self.totpart)/float(self.stats['count'])*self.stats['imagecount']))
-		apDisplay.printMsg(str(self.totpart)+" total particles so far ("+str(self.stats['imagesleft'])+" images remain; expect "+\
-			expectedptcles+" particles)\n")
-		
+
 		# check if particle limit is met
 		if self.params['partlimit'] is not None and self.totpart > self.params['partlimit']:
 			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+"; now stopping")
 			self.imgtree = []
 			self.notdone = False
 
-
-
-		self.removeTmpBoxFile(imgdata)
-
-	############################################################
-	##  remove box file	
-	############################################################
-	def removeTmpBoxFile(self, imgdata):
-		tmpboxfile = os.path.join(self.params['rundir'], imgdata['filename']+".eman.box")
-		if os.path.isfile(tmpboxfile):
-			os.remove(tmpboxfile)
-
+		### last remove any existing boxed files
+		rmfiles = glob.glob(shortfile+"*")
+		for rmfile in rmfiles:
+			apFile.removeFile(rmfile)
 
 	############################################################
 	##  skip image if additional criteria is not met	
@@ -218,7 +215,7 @@ class makestack (appionLoop.AppionLoop):
 		shortname = apDisplay.short(imgdata['filename'])
 
 		if self.params['mag']:
-			if not apDatabase.checkMag(imgdata, selfparams['mag']):
+			if not apDatabase.checkMag(imgdata, self.params['mag']):
 				apDisplay.printColor(shortname+".mrc was not at the specific magnification","cyan")
 				return False
 
@@ -255,7 +252,7 @@ class makestack (appionLoop.AppionLoop):
 			ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
 
 			if ctfvalue is not None:
-				apCtf.ctfValuesToParams(ctfvalue, self.params)
+				apCtf.ctfValuesToParams(ctfvalue, self.ctfparams)
 			else:
 				apDisplay.printColor(shortname+".mrc was rejected because it has no CTFtilt values\n","cyan")
 				return False
@@ -271,20 +268,20 @@ class makestack (appionLoop.AppionLoop):
 					apDisplay.printWarning(shortname+".mrc has no ACE values")
 
 	 		if ctfvalue is not None:
-				apCtf.ctfValuesToParams(ctfvalue, self.params)
+				apCtf.ctfValuesToParams(ctfvalue, self.ctfparams)
 
 				### check that ACE estimation is above confidence threshold
-				if self.params['aceCutoff'] and conf < self.params['aceCutoff']:
+				if self.ctfparams['aceCutoff'] and conf < self.ctfparams['aceCutoff']:
 					apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 					return False
 
 				### skip micrograph that have defocus above or below min & max defocus levels
-				if self.params['minDefocus'] and self.params['df'] > self.params['minDefocus']:
-					apDisplay.printColor(shortname+".mrc defocus ("+str(round(self.params['df'],3))+\
+				if self.params['minDefocus'] and self.ctfparams['df'] > self.params['minDefocus']:
+					apDisplay.printColor(shortname+".mrc defocus ("+str(round(self.ctfparams['df'],3))+\
 						") is less than mindefocus ("+str(self.params['minDefocus'])+")\n","cyan")
 					return False
-				if self.params['maxDefocus'] and self.params['df'] < self.params['maxDefocus']:
-					apDisplay.printColor(shortname+".mrc defocus ("+str(round(self.params['df'],3))+\
+				if self.params['maxDefocus'] and self.ctfparams['df'] < self.params['maxDefocus']:
+					apDisplay.printColor(shortname+".mrc defocus ("+str(round(self.ctfparams['df'],3))+\
 						") is greater than maxdefocus ("+str(self.params['maxDefocus'])+")\n","cyan")
 					return False
 		return True
@@ -314,31 +311,30 @@ class makestack (appionLoop.AppionLoop):
 	def ctfTiltBatchBox(self, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
-		self.params['filepath'] = imgdata['session']['image path']
-		print "processing:",apDisplay.short(imgname)
+		print "processing:",shortname
 		if self.params['uncorrected']:
 			tmpname='temporaryCorrectedImage.mrc'
-			imgarray = apImage.correctImage(imgdata, self.params)
+			imgarray = apImage.correctImage(imgdata, self.ctfparams)
 			imgpath = os.path.join(self.params['rundir'],tmpname)
 			apImage.arrayToMrc(imgarray,imgpath)
 			print "processing", imgpath		
 		elif self.params['stig']:
-			apMatlab.runAceCorrect(imgdata,self.params)	
+			apMatlab.runAceCorrect(imgdata, self.ctfparams)	
 			tmpname = imgdata['filename']
 			imgpath = os.path.join(self.params['rundir'],tmpname)
 		else:
-			imgpath = os.path.join(self.params['filepath'], imgname+".mrc")
-		output = os.path.join(self.params['rundir'], imgname+".hed")
-		outputctf = os.path.join(self.params['rundir'], imgname+".ctf.hed")
-		outputtemp = os.path.join(self.params['rundir'], imgname+"-temp.hed")
-		outputtempimg = os.path.join(self.params['rundir'], imgname+"-temp.img")
-		outputtempctf = os.path.join(self.params['rundir'], imgname+"-temp-ctf.hed")
-		outputtempimgctf = os.path.join(self.params['rundir'], imgname+"-temp-ctf.img")
+			imgpath = os.path.join(imgdata['session']['image path'], imgname+".mrc")
+		output = os.path.join(self.params['rundir'], shortname+".hed")
+		outputctf = os.path.join(self.params['rundir'], shortname+".ctf.hed")
+		outputtemp = os.path.join(self.params['rundir'], shortname+"-temp.hed")
+		outputtempimg = os.path.join(self.params['rundir'], shortname+"-temp.img")
+		outputtempctf = os.path.join(self.params['rundir'], shortname+"-temp-ctf.hed")
+		outputtempimgctf = os.path.join(self.params['rundir'], shortname+"-temp-ctf.img")
 
 		# if getting particles from database, a temporary
 		# box file will be created
 		if self.params['selexonId']:
-			dbbox=os.path.join(self.params['rundir'], imgname+".eman.box")
+			dbbox=os.path.join(self.params['rundir'], shortname+".eman.box")
 			if self.params['defocpair']:
 				particles,shift = apParticle.getDefocPairParticles(imgdata,self.params)
 			else:
@@ -358,7 +354,8 @@ class makestack (appionLoop.AppionLoop):
 					hasparticles=True
 					thrownout = 0
 					#for each individual particle
-					for i,part in enumerate(particles):
+					for i in range(len(particles)):
+						part = particles[i]
 						dbparts = self.saveIndvParticles(part,shift,dbbox,imgdata)
 						f=open(dbbox,'r')
 						lines=f.readlines()
@@ -369,10 +366,10 @@ class makestack (appionLoop.AppionLoop):
 							apEMAN.executeEmanCmd(cmd)
 							
 							imagic = apStack.readImagic(output)
-			
-							for j,part in enumerate(imagic['images']):
-								dbparts[j]['mean'] = mean(part)
-								dbparts[j]['stdev'] = std(part)
+							for j in range(len(imagic['images'])):
+								part = imagic['images'][i]
+								dbparts[j]['mean'] = part.mean()
+								dbparts[j]['stdev'] = part.std()
 								#inserting stack particles into the database
 								if self.params['commit'] is True:
 									dbparts[j].insert()
@@ -386,17 +383,15 @@ class makestack (appionLoop.AppionLoop):
 								appendcmd="proc2d %s %s" %(outputtempctf, outputctf)
 								apEMAN.executeEmanCmd(appendcmd)
 								#remove temp particle
-								rmtempcmd="rm %s %s %s %s" %(outputtemp, outputtempimg, outputtempctf, outputtempimgctf)
-								f=os.popen(rmtempcmd)
-								f.close()
+								for tmpfile in (outputtemp, outputtempimg, outputtempctf, outputtempimgctf):
+									apFile.removeFile(tmpfile)
 							else:
 								#move temp particle to growing stack						
 								appendcmd="proc2d %s %s" %(outputtemp, output)
 								apEMAN.executeEmanCmd(appendcmd)
 								#remove temp particle
-								rmtempcmd="rm %s %s" %(outputtemp, outputtempimg)
-								f=os.popen(rmtempcmd)
-								f.close()
+								for tmpfile in (outputtemp, outputtempimg):
+									apFile.removeFile(tmpfile)
 						else:
 							thrownout+=1
 					#number of particles for the micrograph
@@ -416,11 +411,10 @@ class makestack (appionLoop.AppionLoop):
 	############################################################
 	## Saving Individual Particles
 	############################################################
-	def saveIndvParticles(self,particle,shift,dbbox,imgdata):
-		imgname = imgdata['filename']
+	def saveIndvParticles(self, particle, shift, dbbox, imgdata):
 		plist=[]
 		box=self.params['boxSize']
-		imgxy=imgdata['camera']['dimension']
+		imgxy = imgdata['camera']['dimension']
 		eliminated=0
 		dbparts=[]
 	
@@ -445,25 +439,24 @@ class makestack (appionLoop.AppionLoop):
 	############################################################
 	## Applying CTFtilt correction
 	############################################################
-	def ctftiltPhaseFlip(self,particle, tempinfile, tempoutfile, imgdata):
+	def ctftiltPhaseFlip(self, particle, tempinfile, tempoutfile, imgdata):
 
 		### calculate defocus at given position
 		CX = 2048
 		CY = 2048
 	
-		N1 = -math.sin(self.params['tilt_axis_angle']* math.pi / 180)
-		N2 = math.cos(self.params['tilt_axis_angle']* math.pi / 180)
+		N1 = -math.sin(self.ctfparams['tilt_axis_angle']* math.pi / 180)
+		N2 = math.cos(self.ctfparams['tilt_axis_angle']* math.pi / 180)
 		PSIZE = self.params['apix']
 		DX = CX - particle['xcoord']
 		DY = CY - particle['ycoord']
 		
- 		DF = (N1*DX+N2*DY)*PSIZE*math.tan(self.params['tilt_angle']* math.pi / 180)
-		DFL1 = self.params['df1']*-1e4 + DF
-		DFL2 = self.params['df2']*-1e4 + DF		
+ 		DF = (N1*DX+N2*DY)*PSIZE*math.tan(self.ctfparams['tilt_angle']* math.pi / 180)
+		DFL1 = self.ctfparams['df1']*-1e4 + DF
+		DFL2 = self.ctfparams['df2']*-1e4 + DF		
 		DF_final = (DFL1+DFL2)/2
 
 		### create input file and output file
-		imgname = imgdata['filename']
 		infile  = tempinfile
 		outfile = tempoutfile	
 
@@ -476,6 +469,9 @@ class makestack (appionLoop.AppionLoop):
 		defocus = DF_final*-1.0e-4
 
 		self.checkDefocus(defocus, shortname)
+
+		emancmd = "applyctf %s %s parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
+	  		outfile, defocus, ampconst, voltage, self.params['apix'])
 
 		cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
 		  outfile, defocus, voltage, self.params['apix'])
@@ -494,31 +490,30 @@ class makestack (appionLoop.AppionLoop):
 	def batchBox(self,imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
-		self.params['filepath'] = imgdata['session']['image path']
-		print "processing:",apDisplay.short(imgname)
+		print "processing:",shortname
 		if self.params['uncorrected']:
 			tmpname='temporaryCorrectedImage.mrc'
-			imgarray = apImage.correctImage(imgdata, self.params)
+			imgarray = apImage.correctImage(imgdata, self.ctfparams)
 			imgpath = os.path.join(self.params['rundir'],tmpname)
 			apImage.arrayToMrc(imgarray,imgpath)
-			print "processing", imgpath		
+			print "processing", imgpath
 		elif self.params['stig']:
-			apMatlab.runAceCorrect(imgdata,self.params)	
+			apMatlab.runAceCorrect(imgdata,self.ctfparams)	
 			tmpname = imgdata['filename']
 			imgpath = os.path.join(self.params['rundir'],tmpname)
 		else:
-			imgpath = os.path.join(self.params['filepath'], imgname+".mrc")
-		output = os.path.join(self.params['rundir'], imgname+".hed")
-		outputctf = os.path.join(self.params['rundir'], imgname+".ctf.hed")
-		outputtemp = os.path.join(self.params['rundir'], imgname+"-temp.hed")
-		outputtempimg = os.path.join(self.params['rundir'], imgname+"-temp.img")
-		outputtempctf = os.path.join(self.params['rundir'], imgname+"-temp-ctf.hed")
-		outputtempimgctf = os.path.join(self.params['rundir'], imgname+"-temp-ctf.img")
+			imgpath = os.path.join(imgdata['session']['image path'], imgname+".mrc")
+		output = os.path.join(self.params['rundir'], shortname+".hed")
+		outputctf = os.path.join(self.params['rundir'], shortname+".ctf.hed")
+		outputtemp = os.path.join(self.params['rundir'], shortname+"-temp.hed")
+		outputtempimg = os.path.join(self.params['rundir'], shortname+"-temp.img")
+		outputtempctf = os.path.join(self.params['rundir'], shortname+"-temp-ctf.hed")
+		outputtempimgctf = os.path.join(self.params['rundir'], shortname+"-temp-ctf.img")
 
 		# if getting particles from database, a temporary
 		# box file will be created
 		if self.params['selexonId']:
-			dbbox=os.path.join(self.params['rundir'], imgname+".eman.box")
+			dbbox=os.path.join(self.params['rundir'], shortname+".eman.box")
 			if self.params['defocpair']:
 				particles,shift = apParticle.getDefocPairParticles(imgdata,self.params)
 			else:
@@ -545,7 +540,7 @@ class makestack (appionLoop.AppionLoop):
 				hasparticles=False
 				apDisplay.printColor(shortname+".mrc had no particles and has been rejected\n","cyan")
 		else:
-			dbbox=imgname+".box"
+			dbbox=shortname+".box"
 			hasparticles=True
 		
 		if self.params['boxfiles']:
@@ -569,10 +564,10 @@ class makestack (appionLoop.AppionLoop):
 			apEMAN.executeEmanCmd(cmd)
 			
 			imagic = apStack.readImagic(output)
-			
-			for i,part in enumerate(imagic['images']):
-				dbparts[i]['mean'] = mean(part)
-				dbparts[i]['stdev'] = std(part)
+			for i in range(len(imagic['images'])):
+				part = imagic['images'][i]
+				dbparts[i]['mean'] = part.mean()
+				dbparts[i]['stdev'] = part.std()
 				#inserting stack particles into the database
 				if self.params['commit'] is True:
 					dbparts[i].insert()	
@@ -593,19 +588,19 @@ class makestack (appionLoop.AppionLoop):
 	## Saving Particles on single micrograph
 	############################################################			
 	def saveParticles(self,particles,shift,dbbox,imgdata):
-		imgname = imgdata['filename']
 		plist=[]
 		box=self.params['boxSize']
 		imgxy=imgdata['camera']['dimension']
 		eliminated=0
 		dbparts=[]
-		for i,prtl in enumerate(particles):
-			xcoord=int(math.floor(shift['scale']*(prtl['xcoord']-shift['shiftx'])-(box/2)+0.5))
-			ycoord=int(math.floor(shift['scale']*(prtl['ycoord']-shift['shifty'])-(box/2)+0.5))
+		for i in range(len(particles)):
+			part = particles[i]
+			xcoord=int(math.floor(shift['scale']*(part['xcoord']-shift['shiftx'])-(box/2)+0.5))
+			ycoord=int(math.floor(shift['scale']*(part['ycoord']-shift['shifty'])-(box/2)+0.5))
 
 			if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 				plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-				dbparts.append(self.createStackParticle(prtl))
+				dbparts.append(self.createStackParticle(part))
 				# save the particles to the database
 				
 			else:
@@ -624,8 +619,8 @@ class makestack (appionLoop.AppionLoop):
 	def phaseFlip(self, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
-		infile  = os.path.join(self.params['rundir'], imgname+".hed")
-		outfile = os.path.join(self.params['rundir'], imgname+".ctf.hed")
+		infile  = os.path.join(self.params['rundir'], shortname+".hed")
+		outfile = os.path.join(self.params['rundir'], shortname+".ctf.hed")
 		
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
 		if imgdata['scope']['tem']['name'] == "CM":
@@ -633,14 +628,14 @@ class makestack (appionLoop.AppionLoop):
 		else:
 			voltage = (imgdata['scope']['high tension'])/1000
 
-		defocus = 1.0e6 * apCtf.getBestDefocusForImage(imgdata)
-
+		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata)
+		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 
-		cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
-	  		outfile, defocus, voltage, self.params['apix'])
+		emancmd = "applyctf %s %s parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
+	  		outfile, defocus, ampconst, voltage, self.params['apix'])
 		apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
-		apEMAN.executeEmanCmd(cmd)	
+		apEMAN.executeEmanCmd(emancmd)	
 
 ############################################################
 ## Shared function for tilted and untilted CTF correction
@@ -703,10 +698,11 @@ class makestack (appionLoop.AppionLoop):
 	############################################################
 	def singleStack(self,imgdata):
 		imgname = imgdata['filename']
+		shortname = apDisplay.short(imgname)
  		if self.params['phaseFlipped'] is True:
-			imgpath = os.path.join(self.params['rundir'], imgname+'.ctf.hed')
+			imgpath = os.path.join(self.params['rundir'], shortname+'.ctf.hed')
 		else:
-			imgpath = os.path.join(self.params['rundir'], imgname+'.hed')
+			imgpath = os.path.join(self.params['rundir'], shortname+'.hed')
 		output = os.path.join(self.params['rundir'], self.params['single'])
 
 		cmd="proc2d %s %s" %(imgpath, output)
@@ -747,25 +743,22 @@ class makestack (appionLoop.AppionLoop):
 				count=int(words[-2])	
 
 		# create particle log file
-		partlogfile = os.path.join(self.params['rundir'], ".particlelog")
+		partlogfile = os.path.join(self.params['rundir'], "particles.info")
 		f = open(partlogfile, 'a')
-		for n in range(count-self.params['particle']):
-			particlenum=str(1+n+self.params['particle'])
-			line = str(particlenum)+'\t'+os.path.join(self.params['filepath'], imgname+".mrc")
+		for n in range(count-self.params['numpart']):
+			particlenum = str(1+n+self.params['numpart'])
+			line = str(particlenum)+'\t'+os.path.join(imgdata['session']['image path'], imgname+".mrc")
 			f.write(line+"\n")
 		f.close()
-		self.params['particle'] = count
+
+		self.params['numpart'] = count
 		try:
-			os.remove(os.path.join(self.params['rundir'], imgname+".hed"))
-			os.remove(os.path.join(self.params['rundir'], imgname+".img"))
+			os.remove(os.path.join(self.params['rundir'], shortname+".hed"))
+			os.remove(os.path.join(self.params['rundir'], shortname+".img"))
 		except:
-			apDisplay.printWarning(os.path.join(self.params['rundir'], imgname+".hed")+" does not exist!")
+			apDisplay.printWarning(os.path.join(self.params['rundir'], shortname+".hed")+" does not exist!")
 		if self.params['phaseFlipped'] is True:
-			try:
-				os.remove(os.path.join(self.params['rundir'], imgname+".ctf.hed"))
-				os.remove(os.path.join(self.params['rundir'], imgname+".ctf.img"))
-			except:
-				apDisplay.printWarning(os.path.join(self.params['rundir'], imgname+".ctf.hed")+" does not exist!")
+			apFile.removeStack(os.path.join(self.params['rundir'], shortname+".ctf.hed"))
 
 
 ############################################################
