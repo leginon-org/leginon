@@ -284,7 +284,13 @@ if ($expId) {
 				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation 2.0 >></a>",
 				'result'=>$s2results,
 				);
-		
+
+		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
+		$nruns[]=array (
+			'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>Reclassify Class Sums >></a>",
+			'result'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>$numreresults complete</a>";,
+		);
+
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array($totresult),

@@ -2379,6 +2379,29 @@ class particledata {
 		return $r[0];
 	}
 
+	function getImagicReclassFromSessionId($sessionId) {
+		$q="SELECT "
+			."  reclass.*, "
+			."  path.`path` AS path "
+			."FROM ApImagicReclassifyData as reclass "
+			."LEFT JOIN ApPathData AS path "
+			."  ON reclass.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApNoRefClassRunData AS norefclass "
+			."  ON reclass.`REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
+			."LEFT JOIN ApNoRefRunData AS norefrun "
+			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
+			."LEFT JOIN ApStackData AS stack "
+			."  ON norefrun.`REF|ApStackData|stack` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 
 }
 
