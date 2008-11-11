@@ -71,7 +71,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 
   // Set any existing parameters in form
   $particle=new particleData;
-  $prtlrunIds = $particle->getParticleRunIds($sessionId);
+  $prtlrunIds = $particle->getParticleRunIds($sessionId, True);
   $prtlruns = count($prtlrunIds);
   $defrunid = ($_POST['runid']) ? $_POST['runid'] : 'tiltrun'.($prtlruns+1);
   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';

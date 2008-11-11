@@ -190,7 +190,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$templateCheck='';
 
 	$particle=new particleData;
-	$prtlruns = count($particle->getParticleRunIds($sessionId));
+	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
 
 	for ($i=1; $i<=$numtemplates; $i++) {
 		$templateimg="template".$i;

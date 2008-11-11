@@ -44,7 +44,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctftiltdata = $particle->hasCtfTiltData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
-	$stackruns = count($particle->getStackIds($sessionId));
+	$stackruns = count($particle->getStackIds($sessionId, True));
 
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
