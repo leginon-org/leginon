@@ -186,7 +186,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 #	echo "<br />\n";
 #	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 
-	createAppionLoopTable($sessiondata, $defrunid, "stacks");
+	createAppionLoopTable($sessiondata, $runidval, "stacks");
 
 
 	echo "</td>\n";
