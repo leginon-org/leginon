@@ -14,6 +14,7 @@ import pprint
 #appion
 import apImage
 import apFile
+import apParam
 import apDisplay
 import apDatabase
 import apDB
@@ -140,15 +141,21 @@ def findTemplates(params):
 
 	return(params)
 
-def copyTemplatesToOutdir(params):
+def copyTemplatesToOutdir(params, timestamp=None):
 	newlist = []
 	for tmpl in params['templatelist']:
 		base = os.path.basename(tmpl)
 		old = os.path.abspath(tmpl)
 		
+		### Rename file for new location
+		if timestamp is None:
+			timestamp = apParam.makeTimestamp()
 		#append the name of the directory to the filename
-		basedir = os.path.split(os.path.dirname(old))[1]
-		base = basedir+"_"+base
+		#basedir = os.path.split(os.path.dirname(old))[1]
+		#base = basedir+"_"+base
+		name,ext = os.path.splitext(base)
+		base = name+"-"+timestamp+ext
+
 		new = os.path.join(params['outdir'], base)
 		if os.path.isfile(new):
 			mdnew = apFile.md5sumfile(new)
