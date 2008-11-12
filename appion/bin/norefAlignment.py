@@ -120,7 +120,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		uniquerun = runq.query(results=1)
 		if uniquerun and insert is True:
 			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
-				str(params['stackid'])+"\nis already in the database")
+				str(self.params['stackid'])+"\nis already in the database")
 
 		# ... continue filling non-unique variables:
 		runq['name'] = self.params['runname']
@@ -147,15 +147,16 @@ class NoRefAlignScript(appionScript.AppionScript):
 			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 			imgname = ("eigenimg%02d.png" % (factnum))
 			eigenq['image_name'] = imgname
-			if not os.path.isfile(os.path.join(path, imgname)):
-				apDisplay.printWarning(imgname+" does not exist")
-				continue
-			eigenq['percent_contrib'] = self.contriblist[i]
 			if insert is True:
+				if not os.path.isfile(os.path.join(path, imgname)):
+					apDisplay.printWarning(imgname+" does not exist")
+					continue
+				eigenq['percent_contrib'] = self.contriblist[i]
 				eigenq.insert()
 
 		### particle align data
-		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		if insert is True:
+			apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		count = 0
 		for partdict in self.partlist:
 			count += 1
@@ -281,6 +282,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 		newpath = os.path.join(self.params['outdir'], "template.mrc")
 		shutil.copy(templatepath, newpath)
 
+		### needs to scale template by old apix to new apix
+
 		templatefile = self.processTemplate("template.mrc")
 
 		return templatefile
@@ -320,12 +323,16 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.appiondb.dbd.ping()
+		self.runtime = 0
+		self.partlist = []
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+
+		self.insertNoRefRun(insert=False)
 
 		### convert stack to spider
 		spiderstack = self.createSpiderFile()
