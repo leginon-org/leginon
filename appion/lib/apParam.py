@@ -6,6 +6,7 @@ import socket
 import time
 import random
 import subprocess
+from string import lowercase
 #appion
 import apDisplay
 import math
@@ -36,6 +37,16 @@ def getAppionDirectory():
 
 	apDisplay.printError("environmental variable, APPIONDIR, is not defined.\n"+
 		"Did you source useappion.sh?")
+
+
+def makeTimestamp():
+	datestamp = time.strftime("%y%b%d").lower()
+	hourstamp = lowercase[time.localtime()[3]%26]
+	#mins = time.localtime()[3]*12 + time.localtime()[4]
+	#minstamp = lowercase[mins%26]
+	minstamp = "%02d"%(time.localtime()[4])
+	timestamp = datestamp+hourstamp+minstamp
+	return timestamp
 
 def getFunctionName(arg=None):
 	"""

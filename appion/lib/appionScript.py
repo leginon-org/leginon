@@ -10,7 +10,6 @@ import time
 import math
 import random
 import cPickle
-from string import lowercase
 from optparse import OptionParser
 #appion
 import apDisplay
@@ -32,11 +31,8 @@ class AppionScript(object):
 		sys.stderr.write("\n\n")
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
-		datestamp = time.strftime("%y%b%d").lower()
-		hourstamp = lowercase[time.localtime()[3]%26]
-		mins = time.localtime()[3]*12 + time.localtime()[4]
-		minstamp = lowercase[mins%26]
-		self.timestamp = datestamp+hourstamp+minstamp
+
+		self.timestamp = apParam.makeTimestamp()
 		self.functionname = apParam.getFunctionName(sys.argv[0])
 		self.appiondir = apParam.getAppionDirectory()
 		apParam.setUmask()
