@@ -173,7 +173,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		time.sleep(2)
 
 		# copy templates to final location
-		apTemplate.copyTemplatesToOutdir(self.params)
+		apTemplate.copyTemplatesToOutdir(self.params, self.timestamp)
 
 		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
 
