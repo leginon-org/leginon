@@ -536,7 +536,8 @@ def phaseFlip(imgdata, params):
 	else:
 		voltage = (imgdata['scope']['high tension'])/1000
 
-	defocus = 1.0e6 * apCtf.getBestDefocusForImage(imgdata)
+	defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata)
+	defocus *= 1.0e6
 
 	if defocus > 0:
 		apDisplay.printError("defocus is positive "+str(defocus)+" for image "+shortname)
@@ -545,8 +546,8 @@ def phaseFlip(imgdata, params):
 	elif defocus > -1.0e-3:
 		apDisplay.printError("defocus is very small "+str(defocus)+" for image "+shortname)
 
-	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
-	  outfile, defocus, voltage, params['apix'])
+	cmd="applyctf %s %s parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
+	  outfile, defocus, ampconst, voltage, params['apix'])
 	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 	apEMAN.executeEmanCmd(cmd)
 
