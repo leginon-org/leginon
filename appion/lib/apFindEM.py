@@ -215,9 +215,13 @@ def processAndSaveImage(imgdata, params):
 		imgarray = apImage.correctImage(imgdata, params)
 	else:
 		imgarray = imgdata['image']
+	#print "filtering image"
 	imgarray = apImage.preProcessImage(imgarray, params=params, msg=False)
+	#print "done filtering image"
 	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
+	#print "saving small image"
 	apImage.arrayToMrc(imgarray, imgpath, msg=False)
+	#print "done saving small image"
 	return
 
 #===========
