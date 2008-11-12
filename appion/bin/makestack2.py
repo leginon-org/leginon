@@ -246,7 +246,8 @@ class makestack (appionLoop.AppionLoop):
 	############################################################
 	def getCtfParams(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-	
+		self.ctfparams = {}
+		
 		if self.params['ctftilt']:
 			### Get tilted CTF values
 			ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
@@ -271,7 +272,7 @@ class makestack (appionLoop.AppionLoop):
 				apCtf.ctfValuesToParams(ctfvalue, self.ctfparams)
 
 				### check that ACE estimation is above confidence threshold
-				if self.ctfparams['aceCutoff'] and conf < self.ctfparams['aceCutoff']:
+				if self.params['aceCutoff'] and conf < self.params['aceCutoff']:
 					apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 					return False
 
