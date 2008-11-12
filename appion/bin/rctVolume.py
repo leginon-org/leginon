@@ -21,15 +21,15 @@ from apSpider import operations, backproject
 class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnum=# [options]")
+		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnums=#,#,# [options]")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit RCT run to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit RCT run to database")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
-		self.parser.add_option("--classnum", dest="classnum", type="int",
-			help="Class number to use for rct volume, e.g. 0,1,2", metavar="#")
+		self.parser.add_option("--classnum", "--classnums", dest="classnums", type="str",
+			help="Class numbers to use for rct volume, e.g. 0,1,2", metavar="#")
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
 		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
@@ -49,8 +49,15 @@ class rctVolumeScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['classnum'] is None:
+		if self.params['classnums'] is None:
 			apDisplay.printError("class number was not defined")
+		rawclasslist = self.params['classnums'].split(",")
+		self.classlist = []	
+		for cnum in rawclasslist:
+			try:
+				self.classlist.append(int(cnum))
+			except:
+				apDisplay.printError("could not parse: "+cnum)
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
 		if self.params['norefclassid'] is None:
@@ -77,8 +84,13 @@ class rctVolumeScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(self.params['tiltstackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
+		tempstr = ""
+		for cnum in self.classlist:
+			tempstr += str(cnum)+"-"
+		classliststr = tempstr[:-1]
+
 		self.params['outdir'] = os.path.join(uppath, "rctvolume", 
-			self.params['runname'], "class%03d"%(self.params['classnum']) )
+			self.params['runname'], "class"+str(classliststr) )
 
 		### check if path exists in db already
 		rctrunq = appionData.ApRctRunData()
@@ -143,7 +155,13 @@ class rctVolumeScript(appionScript.AppionScript):
 		### insert rct run data
 		rctrunq = appionData.ApRctRunData()
 		rctrunq['runname']    = self.params['runname']
-		rctrunq['classnum']   = self.params['classnum']
+		tempstr = ""
+		for cnum in self.classlist:
+			tempstr += str(cnum)+","
+		classliststr = tempstr[:-1]
+		rctrunq['classnums']  = classliststr
+		if len(self.classlist) == 1:
+			rctrunq['classnum']  = self.classlist[0]
 		rctrunq['numiter']    = self.params['numiters']
 		rctrunq['maskrad']    = self.params['radius']
 		rctrunq['lowpassvol'] = self.params['lowpassvol']
@@ -218,7 +236,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		for classpart in classpartdatas:
 			#write to text file
 			classnum = classpart['classNumber']-1
-			if classnum == self.params['classnum']:
+			if classnum in self.classlist:
 				notstackpartnum = classpart['noref_particle']['particle']['particleNumber']
 				tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
 					notstackpartnum, self.params['tiltstackid'])
