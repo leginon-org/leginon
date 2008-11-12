@@ -7,6 +7,7 @@ import shutil
 import appionScript
 import apStack
 import apDisplay
+import apStackMeanPlot
 
 class subStackScript(appionScript.AppionScript):
 	#=====================
@@ -189,6 +190,8 @@ class subStackScript(appionScript.AppionScript):
 				apDisplay.printError("No stack was created")
 			apStack.commitSubStack(self.params, newname)
 			apStack.averageStack(stack=newstack)
+			newstackid = apStack.getStackIdFromPath(newstack)
+			apStackMeanPlot.makeStackMeanPlot(newstackid)
 
 #=====================
 if __name__ == "__main__":

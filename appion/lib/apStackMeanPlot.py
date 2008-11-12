@@ -8,12 +8,13 @@ import apFile
 import apDisplay
 import apStack
 
+
 #===============
 def makeStackMeanPlot(stackid, gridpoints=20):
 	t0 = time.time()
-	stackdata = apStack.getOnlyStackData(stackid)
+	stackdata = apStack.getOnlyStackData(stackid, msg=False)
 	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
-	partdatas = apStack.getStackParticlesFromId(stackid, msg=True)
+	partdatas = apStack.getStackParticlesFromId(stackid, msg=False)
 	#check only first 100 particles for now
 	#partdatas = partdatas[:500]
 	apFile.removeFile("montage"+str(stackid)+".png")
@@ -21,6 +22,8 @@ def makeStackMeanPlot(stackid, gridpoints=20):
 	### find limits
 	limits = {'minmean': 1e12, 'maxmean': -1e12, 'minstdev': 1e12, 'maxstdev': -1e12,}
 	for partdata in partdatas:
+		if partdata['mean'] is None:
+			continue
 		mean = partdata['mean']
 		stdev = partdata['stdev']
 		if mean < limits['minmean']:
@@ -31,6 +34,9 @@ def makeStackMeanPlot(stackid, gridpoints=20):
 			limits['minstdev'] = stdev
 		if stdev > limits['maxstdev']:
 			limits['maxstdev'] = stdev
+	if limits['minmean'] > 1e11:
+		apDisplay.printWarning("particles have no mean values in database")
+		return
 	print limits
 
 	### create particle bins
