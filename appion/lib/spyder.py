@@ -37,7 +37,8 @@ There are 2 streams:
 def fileFilter(fname, dataext=".spi"):
 	if dataext in fname:
 		fname = fname[:-4]
-	fname = os.path.basename(fname)
+	fname = re.sub(os.getcwd()+"/", "", os.path.abspath(fname))
+	#fname = os.path.basename(fname)
 	return fname
 
 class SpiderSession:
