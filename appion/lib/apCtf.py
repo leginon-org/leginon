@@ -157,7 +157,7 @@ def getBestDefocusForImage(imgdata, display=False):
 
 	if ctfvalue['acerun']['aceparams']['stig'] == 1:
 		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
-				       " and average defocus estimate may be incorrect")
+				       " and average defocus estimate may be less than ideal")
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		return -avgdf
 
@@ -168,7 +168,30 @@ def getBestDefocusForImage(imgdata, display=False):
 
 	return -ctfvalue['defocus1']
 
-def getBestCtfValueForImage(imgdata, ctfavg=False):
+def getBestDefocusAndAmpConstForImage(imgdata, display=False):
+	"""
+	takes an image and get the best defocus for that image
+	"""
+
+	ctfvalue, conf = getBestCtfValueForImage(imgdata)
+	if ctfvalue is None:
+		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
+		return imgdata['scope']['defocus'], 0.1
+
+	if ctfvalue['acerun']['aceparams']['stig'] == 1:
+		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
+				       " and average defocus estimate may be less than ideal")
+		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		return -avgdf, ctfvalue['amplitude_contrast']
+
+	if display is True:
+		print "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+\
+			str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+\
+			" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr'])
+
+	return -ctfvalue['defocus1'], ctfvalue['amplitude_contrast']
+
+def getBestCtfValueForImage(imgdata, ctfavg=True):
 	"""
 	takes an image and get the best ctfvalues for that image
 	"""
@@ -224,7 +247,7 @@ def ctfValuesToParams(ctfvalue, params):
 	if ctfvalue['acerun'] is not None:
 		if ctfvalue['acerun']['aceparams']['stig'] == 1:
 			apDisplay.printWarning("astigmatism was estimated for this image"+\
-			 " and average defocus estimate may be incorrect")
+			 " and average defocus estimate may be less than ideal")
 			params['hasace'] = True
 			avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 			params['df']     = avgdf*-1.0e6
