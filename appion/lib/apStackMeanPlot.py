@@ -60,6 +60,7 @@ def makeStackMeanPlot(stackid, gridpoints=20):
 		averageSubStack(partlists[key], stackfile, key+".png")
 	print ""
 	assemblePngs(keys, str(stackid))
+	print "mv montage"+str(stackid)+".png "+stackdata['path']['path']
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
@@ -100,10 +101,11 @@ def assemblePngs(pngfiles, tag):
 #===============
 def printPlot(partlists, gridpoints):
 	for i in range(gridpoints):
-		outstr = str(i)+": "
+		outstr = "%02d: "%(i)
 		for j in range(gridpoints):
-			key = ("%02dx%02d"%(i,j))
-			outstr += "% 6d "%(len(partlists[key]))
+			if j % 2 == 0:
+				key = ("%02dx%02d"%(i,j))
+				outstr += "% 5d "%(len(partlists[key]))
 		print outstr
 
 #===============
