@@ -887,6 +887,7 @@ class ApRctRunData(Data):
 		return Data.typemap() + (
 			('runname', str),
 			('classnum', int),
+			('classnums', str),
 			('numiter', int),
 			('maskrad', int),
 			('lowpassvol', float),
