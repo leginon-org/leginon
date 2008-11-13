@@ -913,6 +913,29 @@ class ApImagicReclassifyData(Data):
 			('description', str),
 			('path', ApPathData),
 			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApImagic3d0Data(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('norefclass', ApNoRefClassRunData),
+			('reclass', ApImagicReclassifyData),
+			('euler_ang_inc', int),
+			('num_classums', int),
+			('ham_win', float),
+			('obj_size', float),
+			('repalignments', int),
+			('amask_dim', float),
+			('amask_lp', float),
+			('amask_sharp', float),
+			('amask_thresh', float),
+			('mra_ang_inc', int),
+			('forw_ang_inc', int),
+			('description', str),
+			('path', ApPathData),
+			('hidden', bool),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
