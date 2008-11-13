@@ -55,25 +55,6 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 			esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
 			apDisplay.printMsg("new directory: '"+curdir+"' at particle "+str(i)+" of "+str(numpart)
 				+", "+apDisplay.timeString(esttime)+" remain")
-				
-		"""
-		### using EMAN, 16 hours for 9000 particles
-		### pull out particle
-		emancmd = ("proc2d "+stackfile+" badpart spiderswap-single first=%d last=%d"%(i,i))
-		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
-
-		### rename particle and add to doc file
-		if i == 0:
-			singlefile = "badpart"
-		else:
-			singlefile = "badpart"+str(i)+".spi"
-		if os.path.isfile(singlefile):	
-			goodfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
-			shutil.move(singlefile, goodfile)
-			f.write(os.path.abspath(goodfile)+" 1\n")
-		else:
-			apDisplay.printWarning("missing particle "+str(i)+" of "+str(numpart))
-		"""
 
 		### Scott's imagic reader and Neil's spidersingle writer, 38 sec for 9000 particles
 		partfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
