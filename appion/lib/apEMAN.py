@@ -218,6 +218,7 @@ def writeImageToImage(instack, inn, outstack, outn=-1, particles=0):
 def numberParticlesInStack(stackname, startnum=0, verbose=True):
 	# store the particle number in the stack header
 	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
+	t0 = time.time()
 	apDisplay.printMsg("saving particle numbers to stack header")
 	n=EMAN.fileCount(stackname)[0]
 	im=EMAN.EMData()
@@ -231,7 +232,7 @@ def numberParticlesInStack(stackname, startnum=0, verbose=True):
 		if verbose is True and i%100 == 0:
 			sys.stderr.write(back+back+back+str(j)+" of "+str(n))
 		i+=1
-	sys.stderr.write(back+back+back+back+back+"done")
+	sys.stderr.write(back+back+back+back+back+"finished in "+apDisplay.timeString(time.time()-t0))
 	return
 
 #=====================
