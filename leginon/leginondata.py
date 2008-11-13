@@ -1562,6 +1562,7 @@ class PixelSizeCalibratorSettingsData(CalibratorSettingsData):
 			('k2', int),
 			('distance', float),
 		)
+	typemap = classmethod(typemap)
 
 class MagCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
