@@ -16,7 +16,16 @@ require_once('thumbnails.php');
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
 $tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
 $showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
-
+# Only set deletionstatus if markdelete changed from the last submission
+if ($_POST['markdelete']=='on'&& $_POST['lastdeletestatus']=='') {
+	$tomography->setTiltSeriesDeletionStatus($tiltSeriesId,'marked');
+} else {
+	if (!$_POST['markdelete'] && $_POST['lastdeletestatus']=='CHECKED') {
+		$tomography->setTiltSeriesDeletionStatus($tiltSeriesId,'');
+	}
+}
+$deletestatus = $tomography->getTiltSeriesDeletionStatus($tiltSeriesId);
+$markdelete = ($deletestatus== 'marked') ? 'CHECKED' : '';
 $sessions = $tomography->getTiltSeriesSessions();
 
 if ($sessionId == NULL) {
@@ -70,46 +79,54 @@ function init() {
 </script>
 
 <div class="header">
-<table><tr><td>
-<a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
-</td><td width=200 align=right>
-	<B>show model parameters:</B>
-	<input type='checkbox' name='showmodel' <?=$showmodel?> onClick="submit(this.form)">
-</td></tr>
+<table>
+	<tr><td>
+		<a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
+		</td><td width=200 align=right>
+		<b>show model parameters:</b>
+		<input type='checkbox' name='showmodel' <?=$showmodel?> onClick="submit(this.form)">
+	</td></tr>
+</table>
 </div>
 
 <div class="body">
 <table>
-<tr><td colspan=2>Session <?php echo $sessionSelector; ?></td>
-</tr>
-<tr>
-<td rowspan=10 valign=top>Tilt Series
-<br>
+	<tr><td colspan=2>Session <?php echo $sessionSelector; ?></td>
+	</tr><tr>
+		<td rowspan=10 valign=top>Tilt Series
+			<br>
 <?php
 echo $tiltSeriesSelector.'<br>';
 if($tiltSeriesId != NULL) {
-    echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download MRC stack</a><br>";
-}
-?>
-<?php
-if($tiltSeriesId != NULL) {
-	echo '<tr><td>';
+	echo "<a href=stack.php?tiltSeriesId=$tiltSeriesId&tiltSeriesNumber=$tiltSeriesNumber>Download MRC stack</a><br>";
+	echo '</td><td>';
 	echo '<table><tr><td colspan=2>';
 	thumbnails($tiltSeriesId, $tomography);
 	echo '</td></tr><tr><td>';
 	echo $tiltSeriesName; 
+	echo '</td><td>';
+	if ($deletestatus == 'deleted') {
+		echo "<b> --- Images in this series are deleted ---</b>";
+	} else {
+		echo "<input type='hidden' name='lastdeletestatus' value='$markdelete'>\n";
+		?>
+		<input type='checkbox' name='markdelete' <?=$markdelete?> onClick="submit(this.form)">
+		<b>OK to delete the images in this series</b>
+		<?
+	} 
 	echo '</td></tr></table>';
 	echo '</td></tr>';
 }
 ?>
-<tr><td><?php echo $images[0]; ?></td></tr>
-<tr><td><?php echo $images[1]; ?></td></tr>
-<tr><td><?php echo $images[2]; ?></td></tr>
-<? if ($showmodel) {
+	<tr><td><?php echo $images[0]; ?></td></tr>
+	<tr><td><?php echo $images[1]; ?></td></tr>
+	<tr><td><?php echo $images[2]; ?></td></tr>
+<? 
+if ($showmodel) {
 ?>
-<tr><td><?php echo $images[3]; ?></td></tr>
-<tr><td><?php echo $images[4]; ?></td></tr>
-<tr><td><?php echo $images[5]; ?></td></tr>
+	<tr><td><?php echo $images[3]; ?></td></tr>
+	<tr><td><?php echo $images[4]; ?></td></tr>
+	<tr><td><?php echo $images[5]; ?></td></tr>
 <? } ?>
 <!--- <tr><td><?php echo $images[6]; ?></td></tr> --->
 <?php

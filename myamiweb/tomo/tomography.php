@@ -299,6 +299,83 @@ class Tomography {
 		return $results;
 	}
 
+	function getTiltSeriesDeletionStatus($tilt_series_id) {
+		if($tilt_series_id == NULL)
+			return;
+		$query = 'SELECT v.status from viewer_del_image v '
+			.'LEFT JOIN `AcquisitionImageData` a '
+			.'ON v.imageId = a.`DEF_id` '
+			.'WHERE a.`REF|TiltSeriesData|tilt series`='.$tilt_series_id.' '
+			.'GROUP BY v.`status`;';
+		$results = $this->mysql->getSQLResult($query);
+		if ($results) 
+			return $results[0]['status'];
+		return;
+	}
+
+	function setTiltSeriesDeletionStatus($tilt_series_id,$status) {
+		if($tilt_series_id == NULL)
+			return array();
+		$query = 'SELECT DEF_id as imageId, `REF|SessionData|session` as sessionId '
+			.'from `AcquisitionImageData` '
+			.'WHERE `REF|TiltSeriesData|tilt series`='.$tilt_series_id.' '
+			.'';
+		$results = $this->mysql->getSQLResult($query);
+		if ($results) {
+			foreach ($results as $r) {
+				$this->setImageDeletionStatus($r['imageId'],$r['sessionId'],
+					$status);
+			}
+		}
+		return;
+	}
+
+	function setImageDeletionStatus($imageId,$sessionId, $newstatus) {
+		$query = 'SELECT status from viewer_del_image '
+			.'WHERE `imageId`='.$imageId.' ';
+		$results = $this->mysql->getSQLResult($query);
+		if ($results) {
+			$status = $results[0]['status'];
+			if ($staus == 'deleted')
+				return;
+			$q="delete from `viewer_del_image` where imageId=$imageId ;";
+			$this->mysql->SQLQuery($q);
+		}
+		if ($newstatus != '') {
+			//$data['username']=$username;
+			$data['imageId']=$imageId;
+			$data['sessionId']=$sessionId;
+			$data['status']=$newstatus;
+			$table='viewer_del_image';
+			$this->mysql->SQLInsertIfnotExists($table, $data);
+		}
+	}
+
+	function getDeletionList($status=1) {
+		$query = 'SELECT a.filename, '
+			.'s.`image path` as path, '
+			.'v.* '
+			.' from `AcquisitionImageData` a '
+			.'LEFT JOIN `SessionData` s ON a.`REF|SessionData|session`=s.`DEF_id` '
+			.'LEFT JOIN `viewer_del_image` v ON v.`imageId`=a.`DEF_id` '
+			.'WHERE v.`status`=CONVERT( _utf8 "marked" USING latin1 ) COLLATE latin1_swedish_ci ';
+		$results = $this->mysql->getSQLResult($query);
+		$filearray = array();
+		if ($results) {
+			foreach ($results as $r) {
+				$filepath = $r['path'].'/'.$r['filename'].'.mrc';
+				$r['filepath']=$filepath;
+				if (file_exists($filepath) && $status==1) {
+					$filearray[] = $r;
+				} else {
+					if (!file_exists($filepath) && $status==0) 
+						$filearray[] = $r;
+				}
+			}
+		}
+		return $filearray;
+	}	
+		
 	function getDose($session_id, $preset_name) {
 		if($session_id == NULL or $preset_name == NULL)
 			return array();
