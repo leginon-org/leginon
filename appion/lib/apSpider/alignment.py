@@ -279,15 +279,20 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 			'yshift': float(data[6]),
 		}
 		oldpartdict = oldpartlist[newpartdict['num']-1]
+		### this is wrong because the shifts are not additive without a back rotation
 		if newpartdict['num'] == oldpartdict['num']:
+			adjxshift = ( newpartdict['xshift']*math.cos(math.radians(oldpartdict['rot'])) 
+				- newpartdict['yshift']*math.sin(math.radians(oldpartdict['rot'])) )
+			adjyshift = ( newpartdict['xshift']*math.sin(math.radians(oldpartdict['rot'])) 
+				+ newpartdict['yshift']*math.cos(math.radians(oldpartdict['rot'])) )
 			partdict = {
 				'num': newpartdict['num'],
 				'template': newpartdict['template'],
 				'score': newpartdict['score'],
 				'mirror': bool(oldpartdict['mirror']-newpartdict['mirror']),
 				'rot': wrap360(oldpartdict['rot']+newpartdict['rot']),
-				'xshift': oldpartdict['xshift']+newpartdict['xshift'],
-				'yshift': oldpartdict['yshift']+newpartdict['yshift'],
+				'xshift': oldpartdict['xshift'] + adjxshift,
+				'yshift': oldpartdict['yshift'] + adjyshift,
 			}
 		else:
 			print oldpartdict
