@@ -15,6 +15,7 @@ require "inc/processing.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
+$reclassId=$_GET['reclassId'];
 $norefId=$_GET['norefId'];
 $norefClassId=$_GET['norefClassId'];
 $stackId=$_GET['stackId'];
@@ -97,6 +98,7 @@ var filename="<?=$filename?>"
 var norefId="<?=$norefId?>"
 var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
+var reclassId="<?=$reclassId?>"
 <?php
 if ($norefClassId) {
 	$c=array();
@@ -104,6 +106,8 @@ if ($norefClassId) {
 		$c[]=$cn['number'];
 	}
 echo 'var stackinfo=['.implode(',',$c).']'."\n";
+}
+if ($norefClassId || $reclassId) {
 echo 'var addselectfn=selectextra'."\n";
 
 }
@@ -114,6 +118,19 @@ function selectextra() {
 	if (o=$('templateId')) {
 		getSelectImages()
 		o.value=getLastSelectedImage()
+	}
+	if (o=$('projectionId')) {
+		o.value= getSelectImages()
+	}
+}
+
+function create3d0() {
+	var projections=$('projectionId').value
+	if (norefId!="") {
+		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&norefId="+norefId,"width=400,height=200")
+	}
+	if (reclassId!="") {
+		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&reclassId="+reclassId,"width=400,height=200")
 	}
 }
 
@@ -185,8 +202,12 @@ quality: <select id="quality">
 <span>selection mode: </span><input id="mode" style="font-size: 12px; border: 1px solid #F00" type="button" value="exclude" onclick="setMode()">
 </p>
 <?
+
 if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
         <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
+        <br />\n";
+if ($norefId || $reclassId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
+        <input id='3d0button' type='button' alt='Create 3D0' value='Create 3D0' onclick='create3d0();'>
         <br />\n";
 
 if ($norefId) {
