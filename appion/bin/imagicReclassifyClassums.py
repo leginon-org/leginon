@@ -106,15 +106,15 @@ class reclassifyScript(appionScript.AppionScript):
 	def uploadreclassification(self, classumfile):
 		reclassq = appionData.ApImagicReclassifyData()
 		reclassq['runname'] = self.params['runid']
-		reclassq['norefclass'] = self.params['classid']
+		reclassq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
 		reclassq['lowpass'] = self.params['lp']
 		reclassq['highpass'] = self.params['hp']
 		reclassq['maskradius'] = self.params['mask']
 		reclassq['maskdropoff'] = self.params['mask_d']
-		reclassq['numiter'] = self.params['numiter']
+		reclassq['numiter'] = self.params['niter']
 		reclassq['numaverages'] = self.params['numaverages']
-		reclassq['path'] = self.params['outdir']
-		reclassq['boxsize'] = self.params['boxsize']
+		reclassq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['outdir'])))
+		#reclassq['boxsize'] = self.params['boxsize']
 		reclassq['hidden'] = False
 		if self.params['commit'] is True:
 			reclassq.insert()
