@@ -288,7 +288,7 @@ if ($expId) {
 		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
 		$nruns[]=array (
 			'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>Reclassify Class Sums >></a>",
-			'result'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>$numreresults complete</a>",
+			'result'=>"<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>",
 		);
 
 		$data[]=array(
