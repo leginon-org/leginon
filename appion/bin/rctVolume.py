@@ -276,7 +276,7 @@ class rctVolumeScript(appionScript.AppionScript):
 				psi += 360.0
 			### this is the original eman part num; count is new part num
 			partnum = stackpartdata['particleNumber']-1
-			line = operations.spiderOutLine(count, [phi, tiltangle, psi, partnum])
+			line = operations.spiderOutLine(count, [phi, tiltangle, psi])
 			eulerf.write(line)
 		eulerf.close()
 		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
