@@ -127,7 +127,7 @@ function selectextra() {
 function create3d0() {
 	var projections=$('projectionId').value
 	if (norefClassId!="") {
-		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&norefId="+norefId+"norefClassId="+norefClassId,"width=400,height=200")
+		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&norefId="+norefId+"&norefClassId="+norefClassId,"width=400,height=200")
 	}
 	if (reclassId!="") {
 		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&reclassId="+reclassId,"width=400,height=200")
