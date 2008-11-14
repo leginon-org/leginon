@@ -49,7 +49,7 @@ class reclassifyScript(appionScript.AppionScript):
 			help="number of translational alignment iterations", metavar="INT")
 		self.parser.add_option("--numaverages", dest="numaverages", type="int",
 			help="number of new class averages", metavar="INT")
-		self.parser.add_option("--classid", dest="classid", type="int",
+		self.parser.add_option("--norefclassid", dest="classid", type="int",
 			help="reference free class id", metavar="INT")	
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Location to which output file will be saved", metavar="PATH")
