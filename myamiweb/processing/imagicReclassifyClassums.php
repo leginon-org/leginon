@@ -193,7 +193,7 @@ function generateProcessedClasses() {
 		
 	$text = "";
 	$text .= "imagicReclassifyClassums.py";
-	$text .= " --classid=$classid --runid=$runid --oldstack=$filename --lp=$lpfilt";
+	$text .= " --norefclassid=$classid --runid=$runid --oldstack=$filename --lp=$lpfilt";
 	$text .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter --numaverages=$new_classums";
 
 	/*// generate the jobfile that will call the imagic batch file
