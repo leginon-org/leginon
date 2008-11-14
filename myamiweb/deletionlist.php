@@ -11,10 +11,8 @@ require_once 'inc/leginon.inc';
 	<form name="deletionlist" method="POST" action="deletionlist.php">
 		<table>
 			<tr><td>
+	<?echo divtitle("Files marked for deletion but still exist");?>
 			<table class='tableborder' border='1' cellspacing='1' cellpadding='5' width=100%>
-				<tr><td>
-					<b>Files marked for deletion but still exist:</b>
-				</td></tr>
 				<tr><td>
 <?php
 $filecount = 0;
@@ -31,14 +29,13 @@ if ($filecount == 0)
 		</table>
 		<br>
 		</td></tr><tr><td>
+	<?echo divtitle("Files marked for deletion that are removed");?>
 <table class='tableborder' border='1' cellspacing='1' cellpadding='5' width=100%>
-<tr><td>
-<b>Files marked for deletion that are removed:</b>
-</td></tr>
 <tr><td>
 <?php
 $filearray = $leginondata->getDeletionList(0);
 $filecount = 0;
+$status = 'Mark as Deleted';
 foreach ($filearray as $file) {
 	if ($_POST['markasdeleted']=='Mark as Deleted') {
 		$imageId = $file['imageId'];
@@ -58,7 +55,7 @@ if ($filecount > 0) {
 ?>
 </td></tr>
 <tr><td>
-	<input type="submit" name="markasdeleted" value = "<?$status?>" >
+	<input type="submit" name="markasdeleted" value = "<?echo $status?>" >
 <?
 } else {
 echo 'NONE';
