@@ -360,7 +360,7 @@ def readImagic(filename):
 	Currently reads header information for only first image in stack
 	"""
 	t0 = time.time()
-	apDisplay.printMsg("reading stack into memory")
+	apDisplay.printMsg("reading stack into memory: "+filename)
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
@@ -398,8 +398,15 @@ def readImagicHeader(headerfilename):
 
 #===============	
 def readImagicData(datafilename, headerdict):
+	shape = (headerdict['nimg'], headerdict['rows'], headerdict['lines'])
 	images = numpy.fromfile(file=datafilename, dtype=numpy.float32)
-	images = images.reshape(headerdict['nimg'], headerdict['rows'], headerdict['lines'])
+	try:
+		images = images.reshape(headerdict['nimg'], headerdict['rows'], headerdict['lines'])
+		images = numpy.fliplr(images)
+	except:
+		mult = headerdict['nimg']*headerdict['rows']*headerdict['lines']
+		print mult, images.shape, headerdict['nimg'], headerdict['rows'], headerdict['lines']
+		apDisplay.printError("could not read image stack")
 	return images
 
 
