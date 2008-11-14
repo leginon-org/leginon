@@ -22,7 +22,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 	apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
 
 	starttime = time.time()
-	filesperdir = 892
+	filesperdir = 4096
 	numpart = apFile.numImagesInStack(stackfile)
 	apParam.createDirectory(partdir)
 	if numpart > filesperdir:
@@ -30,7 +30,6 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 		filesperdir = int(math.ceil(numpart/float(numdir)))
 		apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(numdir)+" folders with "
 			+str(filesperdir)+" particles per folder")
-		
 		subdir = 1
 	else:
 		subdir = "."

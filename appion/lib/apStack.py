@@ -359,12 +359,15 @@ def readImagic(filename):
 	Currently  only reads image data as floats
 	Currently reads header information for only first image in stack
 	"""
+	t0 = time.time()
+	apDisplay.printMsg("reading stack into memory")
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
 	stack={}
 	stack['header'] = readImagicHeader(headerfilename)
 	stack['images'] = readImagicData(datafilename, stack['header'])
+	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
 	return stack
 
 #===============	

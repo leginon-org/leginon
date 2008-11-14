@@ -14,6 +14,7 @@ import apFile
 import apTemplate
 import apStack
 import apEMAN
+import apXmipp
 from apSpider import alignment
 import appionData
 
@@ -37,7 +38,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
-		self.parser.add_option("--num-iter", dest="numiter", type="int",
+		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
 		self.parser.add_option("--num-classes", dest="numclasses", type="int",
 			help="Number of classes to create", metavar="#")
@@ -48,6 +49,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			action="store_true", help="Commit stack to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit stack to database")
+
+		self.parser.add_option("-F", "--fast", dest="fast", default=True,
+			action="store_true", help="Use fast method")
+		self.parser.add_option("--no-fast", dest="fast", default=True,
+			action="store_false", help="Do NOT use fast method")
+
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
 		self.parser.add_option("-d", "--description", dest="description",
@@ -59,8 +66,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
-		if self.params['description'] is None:
-			apDisplay.printError("run description was not defined")
+		#if self.params['description'] is None:
+		#	apDisplay.printError("run description was not defined")
 		if self.params['numclasses'] is None:
 			apDisplay.printError("a number of classes was not provided")
 		if self.params['runname'] is None:
@@ -83,49 +90,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.params['outdir'] = os.path.join(uppath, "maxlike", self.params['runname'])
 
 	#=====================
-	def createXmippParticleFiles(self):
-		"""
-		takes the stack file and creates a spider file ready for processing
-		"""
-		starttime = time.time()
-		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
-
-		if not os.path.isfile(self.stack['file']):
-			apDisplay.printError("stackfile does not exist: "+self.stack['file'])
-
-		### make particle files
-		f = open("partlist.doc", "w")
-		i = 0
-		partdir = os.path.join(self.params['outdir'], "partfiles")
-		while i < numpart:
-			if i % 100 == 0:
-				apDisplay.printMsg("particle "+str(i)+" of "+str(numpart))
-			emancmd = ("proc2d "+self.stack['file']+" "+partdir+"/badpart spiderswap-single first=%d last=%d"%(i,i))
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
-
-			if i == 0:
-				newfile = "badpart"
-			else:
-				newfile = "badpart"+str(i)+".spi"
-			if os.path.isfile(newfile):	
-				goodfile = "part%05d.spi"%(i)
-				shutil.move(newfile, goodfile)
-				f.write(os.path.abspath(goodfile)+" 1\n")
-		f.close()
-
-		#emancmd += "apix="+str(self.stack['apix'])+" "
-		#if self.params['lowpass'] > 0:
-		#	emancmd += "lp="+str(self.params['lowpass'])+" "
-		#emancmd += "last="+str(self.params['numpart']-1)+" "
-		#emancmd += "shrink="+str(self.params['bin'])+" "
-		#clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
-		#emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
-		#emancmd += "spiderswap edgenorm"
-
-		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
-		return spiderstack
-
-	#=====================
 	def start(self):
 		self.appiondb.dbd.ping()
 		self.stack = {}
@@ -135,50 +99,48 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
-		### convert stack to spider
-		spiderstack = self.createXmippParticleFiles()
-
-		maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
-		esttime = apAlignment.estimateTime(self.params['numpart'], maskpixrad)
-		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
-			apDisplay.timeString(esttime),"cyan")
+		### convert stack into single spider files
+		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.stack['file'])
 
 		### run the alignment
 		self.appiondb.dbd.ping()
 		aligntime = time.time()
-		pixrad = int(round(self.params['partrad']/self.stack['apix']/self.params['bin']))
-		#alignedstack, self.partlist = alignment.refFreeAlignParticles(
-		#	spiderstack, templatefile, 
-		#	self.params['numpart'], pixrad,
-		#	self.params['firstring'], self.params['lastring'])
+		xmippcmd = ( "xmipp_ml_align2d "
+			+" -i "+partlistdocfile
+			+" -nref "+str(self.params['numclasses'])
+			+" -iter "+str(self.params['maxiter'])
+		)
+		if self.params['fast'] is True:
+			xmippcmd += " -fast "
+		apEMAN.executeEmanCmd(xmippcmd, verbose=True)
 		self.appiondb.dbd.ping()
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 		### remove large, worthless stack
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
-		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
-		apFile.removeFile(spiderstack, warn=False)
+		#spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		#apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
+		#apFile.removeFile(spiderstack, warn=False)
 
 		### do correspondence analysis
 		corantime = time.time()
-		if not self.params['skipcoran']:
-			maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
-			boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
-			self.appiondb.dbd.ping()
+		#if not self.params['skipcoran']:
+		#	maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
+		#	boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
+		#	self.appiondb.dbd.ping()
 		#	self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
 		#		boxsize=boxsize, maskpixrad=maskpixrad, 
 		#		numpart=self.params['numpart'], numfactors=self.params['numfactors'])
-			self.appiondb.dbd.ping()
-			### make dendrogram
-			alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
+		#	self.appiondb.dbd.ping()
+		#	### make dendrogram
+		#	alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
 			self.runtime = corantime + aligntime
-			self.insertMaxLikeRun(insert=True)
+			#self.insertMaxLikeRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
