@@ -126,8 +126,8 @@ function selectextra() {
 
 function create3d0() {
 	var projections=$('projectionId').value
-	if (norefId!="") {
-		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&norefId="+norefId,"width=400,height=200")
+	if (norefClassId!="") {
+		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&norefClassId="+norefClassId,"width=400,height=200")
 	}
 	if (reclassId!="") {
 		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&reclassId="+reclassId,"width=400,height=200")
@@ -206,7 +206,7 @@ quality: <select id="quality">
 if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
         <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
         <br />\n";
-if ($norefId || $reclassId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
+if ($norefClassId || $reclassId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
         <input id='3d0button' type='button' alt='Create 3D0' value='Create 3D0' onclick='create3d0();'>
         <br />\n";
 
