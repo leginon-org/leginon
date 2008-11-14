@@ -7,7 +7,7 @@ require_once "inc/leginon.inc";
 class Tomography {
 	function Tomography($mysql) {
 		$this->mysql = $mysql;
-		$this->leginon = $leginondata;
+		$this->leginon = new leginondata;
 	}
 
 	function getTiltSeriesSessions() {
