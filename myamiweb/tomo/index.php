@@ -1,6 +1,8 @@
 <?php
-require_once('tomography.php');
-require_once('thumbnails.php');
+require_once 'tomography.php';
+require_once 'thumbnails.php';
+
+print_r($_POST);
 ?>
 <html>
 
@@ -16,16 +18,14 @@ require_once('thumbnails.php');
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $sessionId;
 $tiltSeriesId = ($_POST['tiltSeriesId']) ? $_POST['tiltSeriesId'] : $tiltSeriesId;
 $showmodel = ($_POST['showmodel']== 'on') ? 'CHECKED' : '';
-# Only set deletionstatus if markdelete changed from the last submission
-if ($_POST['markdelete']=='on'&& $_POST['lastdeletestatus']=='') {
+if ($_POST['action']=='Mark for Deletion') {
 	$tomography->setTiltSeriesDeletionStatus($tiltSeriesId,'marked');
 } else {
-	if (!$_POST['markdelete'] && $_POST['lastdeletestatus']=='CHECKED') {
+	if ($_POST['action']=='Remove from Deletion List') {
 		$tomography->setTiltSeriesDeletionStatus($tiltSeriesId,'');
 	}
 }
 $deletestatus = $tomography->getTiltSeriesDeletionStatus($tiltSeriesId);
-$markdelete = ($deletestatus== 'marked') ? 'CHECKED' : '';
 $sessions = $tomography->getTiltSeriesSessions();
 
 if ($sessionId == NULL) {
@@ -68,7 +68,7 @@ $images[] = '<img src="graphmean.php?'
 ?>
 
 
-<script language="JavaScript">
+<script language="text/javascript">
 function submit() {
 	document.tomography.submit();
 }
@@ -84,7 +84,7 @@ function init() {
 		<a href="summary.php?sessionId=<?php echo $sessionId; ?>">Summary</a>
 		</td><td width=200 align=right>
 		<b>show model parameters:</b>
-		<input type='checkbox' name='showmodel' <?=$showmodel?> onClick="submit(this.form)">
+		<input type='checkbox' name='showmodel' <?=$showmodel?> onClick="submit()">
 	</td></tr>
 </table>
 </div>
@@ -108,10 +108,9 @@ if($tiltSeriesId != NULL) {
 	if ($deletestatus == 'deleted') {
 		echo "<b> --- Images in this series are deleted ---</b>";
 	} else {
-		echo "<input type='hidden' name='lastdeletestatus' value='$markdelete'>\n";
+		$state = ($deletestatus== 'marked') ? 'Remove from Deletion List' : 'Mark for Deletion';
 		?>
-		<input type='checkbox' name='markdelete' <?=$markdelete?> onClick="submit(this.form)">
-		<b>OK to delete the images in this series</b>
+		<input type="submit" name="action" value="<?=$state?>">
 		<?
 	} 
 	echo '</td></tr></table>';

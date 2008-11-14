@@ -1,10 +1,13 @@
 <?php
+$paths = array('.', '..', get_include_path());
+set_include_path(implode(PATH_SEPARATOR, $paths));
 require_once "../config.php";
-require_once "inc/mysql.inc";
+require_once "inc/leginon.inc";
 
 class Tomography {
 	function Tomography($mysql) {
 		$this->mysql = $mysql;
+		$this->leginon = $leginondata;
 	}
 
 	function getTiltSeriesSessions() {
@@ -323,59 +326,13 @@ class Tomography {
 		$results = $this->mysql->getSQLResult($query);
 		if ($results) {
 			foreach ($results as $r) {
-				$this->setImageDeletionStatus($r['imageId'],$r['sessionId'],
+				$this->leginon->setImageDeletionStatus($r['imageId'],$r['sessionId'],
 					$status);
 			}
 		}
 		return;
 	}
 
-	function setImageDeletionStatus($imageId,$sessionId, $newstatus) {
-		$query = 'SELECT status from viewer_del_image '
-			.'WHERE `imageId`='.$imageId.' ';
-		$results = $this->mysql->getSQLResult($query);
-		if ($results) {
-			$status = $results[0]['status'];
-			if ($staus == 'deleted')
-				return;
-			$q="delete from `viewer_del_image` where imageId=$imageId ;";
-			$this->mysql->SQLQuery($q);
-		}
-		if ($newstatus != '') {
-			//$data['username']=$username;
-			$data['imageId']=$imageId;
-			$data['sessionId']=$sessionId;
-			$data['status']=$newstatus;
-			$table='viewer_del_image';
-			$this->mysql->SQLInsertIfnotExists($table, $data);
-		}
-	}
-
-	function getDeletionList($status=1) {
-		$query = 'SELECT a.filename, '
-			.'s.`image path` as path, '
-			.'v.* '
-			.' from `AcquisitionImageData` a '
-			.'LEFT JOIN `SessionData` s ON a.`REF|SessionData|session`=s.`DEF_id` '
-			.'LEFT JOIN `viewer_del_image` v ON v.`imageId`=a.`DEF_id` '
-			.'WHERE v.`status`=CONVERT( _utf8 "marked" USING latin1 ) COLLATE latin1_swedish_ci ';
-		$results = $this->mysql->getSQLResult($query);
-		$filearray = array();
-		if ($results) {
-			foreach ($results as $r) {
-				$filepath = $r['path'].'/'.$r['filename'].'.mrc';
-				$r['filepath']=$filepath;
-				if (file_exists($filepath) && $status==1) {
-					$filearray[] = $r;
-				} else {
-					if (!file_exists($filepath) && $status==0) 
-						$filearray[] = $r;
-				}
-			}
-		}
-		return $filearray;
-	}	
-		
 	function getDose($session_id, $preset_name) {
 		if($session_id == NULL or $preset_name == NULL)
 			return array();

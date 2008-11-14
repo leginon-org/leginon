@@ -1,6 +1,4 @@
 <?php
-$paths = array('.', '..', get_include_path());
-set_include_path(implode(PATH_SEPARATOR, $paths));
 require_once "config.php";
 require_once "inc/image.inc";
 require_once "tomo/tomography.php";
