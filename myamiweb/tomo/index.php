@@ -1,8 +1,6 @@
 <?php
 require_once 'tomography.php';
 require_once 'thumbnails.php';
-
-print_r($_POST);
 ?>
 <html>
 
