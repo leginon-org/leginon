@@ -919,6 +919,7 @@ class ApImagicReclassifyData(Data):
 class ApImagic3d0Data(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('name', str),
 			('runname', str),
 			('norefclass', ApNoRefClassRunData),
 			('reclass', ApImagicReclassifyData),
