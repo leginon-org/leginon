@@ -937,7 +937,6 @@ class ApImagic3d0Data(Data):
 			('description', str),
 			('path', ApPathData),
 			('hidden', bool),
-			('description', str),
 		)
 	typemap = classmethod(typemap)
 
