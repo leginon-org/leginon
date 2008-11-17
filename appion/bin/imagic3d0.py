@@ -242,7 +242,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		mrcname = self.params['outdir']+"/masked_3d0_ordered0_repaligned.mrc"
 
 		### create chimera slices
-		apRecon.renderSnapshots(mrcname, res=30, None, 
+		apRecon.renderSnapshots(mrcname, 30, None, 
 			1.5, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		### upload density
