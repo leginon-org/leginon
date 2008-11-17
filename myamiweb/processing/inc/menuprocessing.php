@@ -207,7 +207,7 @@ if ($expId) {
 			 );
 	$nruns[] = array(
 			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation >></a>",
-			'result'=>$mresults,
+			'result'=>$ctftiltresults,
 			);
 
 	$data[]=array(
@@ -216,43 +216,6 @@ if ($expId) {
 		'newrun'=>array($nruns, $celloption),
 	);
 
-	$action = "Img Assessment";
-
-	$result='';
-	if ($assessedimgs <= $totimgs && $totimgs!=0) {
-		$result = "<a href='assesssummary.php?expId=$sessionId'>";
-		$result .= "$assessedimgs/$totimgs"; 
-		$result .= "</a>";
-	}
-
-	$nrun = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment >></a>";
-	$nruns=array();
-	$nruns[]=$nrun;
-	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector >></a>";
-
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nruns, $celloption),
-	);
-
-	$action = "Region Mask Creation";
-	$result = ($maskruns==0) ? "" :
-			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
-	$nruns=array();
-	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding >></a>";
-	$nruns[]=$nrun;
-	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
-	$nrun .= "Manual Masking >>";
-	$nrun .= "</a>";
-	$nruns[]=$nrun;
-
-	$data[]=array(
-		'action'=>array($action, $celloption),
-		'result'=>array($result),
-		'newrun'=>array($nruns, $celloption),
-	);
-	
 	// display the stack menu only if have particles picked
 	if ($prtlruns > 0) {
 		$action = "Stacks";
@@ -279,16 +242,16 @@ if ($expId) {
 				'name'=>"<a href='makestack.php?expId=$sessionId'>Stack creation >></a>",
 				'result'=>$sresults,
 				);
-
 		$nruns[]=array (
 				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation 2.0 >></a>",
-				'result'=>$s2results,
+			       	'result'=>$s2results,
 				);
 
 		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
+		$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>"; 
 		$nruns[]=array (
 			'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>Reclassify Class Sums >></a>",
-			'result'=>"<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>",
+			'result'=>$sreresults,
 		);
 
 		$data[]=array(
@@ -444,8 +407,8 @@ if ($expId) {
 					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>",
 					 'result'=>$reconresults,
 					 );
-			$nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
 			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Reconstruction</a>" ;
+//			$nruns[] = "<a href='uploadrecon.php?expId=$sessionId'>Upload Reconstruction</a>";
 		} else {
 			$nruns[] = "<font color='888888'><i>please login first</i></font>";
 		}
@@ -516,6 +479,44 @@ if ($expId) {
 		      'newrun'=>array($nruns, $celloption),
 		      );
 
+	// image assessment and contamination finding
+	$action = "Img Assessment";
+
+	$result='';
+	if ($assessedimgs <= $totimgs && $totimgs!=0) {
+		$result = "<a href='assesssummary.php?expId=$sessionId'>";
+		$result .= "$assessedimgs/$totimgs"; 
+		$result .= "</a>";
+	}
+
+	$nrun = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment >></a>";
+	$nruns=array();
+	$nruns[]=$nrun;
+	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector >></a>";
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result),
+		'newrun'=>array($nruns, $celloption),
+	);
+
+	$action = "Region Mask Creation";
+	$result = ($maskruns==0) ? "" :
+			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
+	$nruns=array();
+	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding >></a>";
+	$nruns[]=$nrun;
+	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
+	$nrun .= "Manual Masking >>";
+	$nrun .= "</a>";
+	$nruns[]=$nrun;
+
+	$data[]=array(
+		'action'=>array($action, $celloption),
+		'result'=>array($result),
+		'newrun'=>array($nruns, $celloption),
+	);
+	
 }
 
 $menujs='<script type="text/javascript">
