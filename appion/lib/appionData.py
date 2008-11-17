@@ -923,6 +923,7 @@ class ApImagic3d0Data(Data):
 			('runname', str),
 			('norefclass', ApNoRefClassRunData),
 			('reclass', ApImagicReclassifyData),
+			('symmetry', ApSymmetryData),
 			('projections', str),
 			('euler_ang_inc', int),
 			('num_classums', int),
