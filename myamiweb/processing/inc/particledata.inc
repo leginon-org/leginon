@@ -1640,6 +1640,21 @@ class particledata {
 		return $r;
 	}
 
+	function getMaxLikeIds ($sessionId, $showHidden=False) {
+		$q = "SELECT nr.* "
+		  ."FROM ApNoRefRunData AS nr "
+		  ."LEFT JOIN ApRunsInStackData AS sd ON "
+		  ."(nr.`REF|ApStackData|stack` = sd.`REF|ApStackData|stack`) "
+		  ."LEFT JOIN ApStackRunData AS sr ON "
+		  ."(sd.`REF|ApStackRunData|stackRun` = sr.`DEF_id`) "
+		  ."WHERE "
+		  ."  sr.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden) $q.= "AND ( nr.`hidden` = 0 OR nr.`hidden` IS NULL ) ";
+		$q.= "ORDER BY nr.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	#---------RECONSTRUCTION FUNCTIONS---------------#
 
 	function getSymmetries() {

@@ -324,8 +324,19 @@ if ($expId) {
 		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
+		// get ref-based alignment stats:
+		$maxlikealiresults=array();	
+		$maxlikealidone = count($subclusterjobs['maxlikeali']['done']);
+		$maxlikealirun = count($subclusterjobs['maxlikeali']['running']);
+		$maxlikealiq = count($subclusterjobs['maxlikeali']['queued']);
+
+		$norbaseddone = ($maxlikealiruns > $maxlikealidone) ? $maxlikealiruns : $maxlikealidone;
+		$maxlikealiresults[] = ($maxlikealidone==0) ? "" : "<a href='maxlikesummary.php?expId=$sessionId'>$maxlikealidone complete</a>";
+		$maxlikealiresults[] = ($maxlikealirun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikealirun running</a>";
+		$maxlikealiresults[] = ($maxlikealiq==0) ? "" : "$maxlikealiq queued";
+
 		// stacks being created and stacks completed
-		$totnoref = $norefdone+$norefrun+$norefq;
+		$totmaxlikeali = $maxlikealidone+$maxlikealirun+$maxlikealiq;
 
 
 		// get ref-based alignment stats:
@@ -354,7 +365,10 @@ if ($expId) {
 				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>Ref-based Alignment >></a>",
 				 'result'=>$refbasedresults,
 				 );
-
+		$nruns[] = array(
+				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp ML Alignment >></a>",
+				 'result'=>$maxlikeresults,
+				 );
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array($totresult),
