@@ -185,34 +185,43 @@ class imagic3d0Script(appionScript.AppionScript):
 		# get reference-free classification and reclassification parameters
 		if self.params['norefClassId'] is not None:
 			norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
-			self.params['apix'] = norefclassdata['norefRun']['stack']['pixelsize']
 			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
 			binning = norefclassdata['norefRun']['norefParams']['bin']
 			self.params['boxsize'] = stack_box_size / binning
+			self.params['apix'] = stackpixelsize * binning
 			orig_path = norefclassdata['norefRun']['path']['path']
 			orig_file = norefclassdata['classFile']
 			linkingfile = orig_path+"/"+orig_file
 		elif self.params['reclassId'] is not None:
 			reclassdata = appiondb.direct_query(appionData.ApImagicReclassifyData, self.params['reclassId'])
-			self.params['apix'] = reclassdata['norefclass']['norefRun']['stack']['pixelsize']
 			self.params['stackid'] = reclassdata['norefclass']['norefRun']['stack'].dbid
+			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
 			binning = reclassdata['norefclass']['norefRun']['norefParams']['bin']
 			self.params['boxsize'] = stack_box_size / binning
+			self.params['apix'] = stackpixelsize * binning
 			orig_path = reclassdata['path']['path']
 			orig_runname = reclassdata['runname']
 			orig_file = "reclassified_classums_sorted"
 			linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
 		else:
 			apDisplay.printError("class averages not in the database")
-		
+
+
+		print "... class average stack pixel size: "+str(self.params['apix'])
+		print "... class average stack box size: "+str(self.params['boxsize'])	
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3d0.log for details")
+	
 		filename = "imagicCreate3d0.batch"
 		f = open(filename, 'w')
 		
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("cd "+str(self.params['outdir'])+"/\n")		f.write("rm ordered0.*\n")		f.write("rm sino_ordered0.*\n")
+		f.write("cd "+str(self.params['outdir'])+"/\n")
+		f.write("rm ordered0.*\n")
+		f.write("rm sino_ordered0.*\n")
 		f.write("ln -s "+linkingfile+".img start_stack.img\n") 
 		f.write("ln -s "+linkingfile+".hed start_stack.hed\n")
 		if self.params['norefClassId'] is not None:
@@ -240,10 +249,17 @@ class imagic3d0Script(appionScript.AppionScript):
 		os.system('./imagicCreate3d0.batch')
 
 		mrcname = self.params['outdir']+"/masked_3d0_ordered0_repaligned.mrc"
+		mrcnamerot = self.params['outdir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
 
-		### create chimera slices
+		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
+		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
+		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+
+		### create chimera slices of densities
 		apRecon.renderSnapshots(mrcname, 30, None, 
-			1.5, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+		apRecon.renderSnapshots(mrcnamerot, 30, None, 
+			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		### upload density
 		self.upload3d0(mrcname)
