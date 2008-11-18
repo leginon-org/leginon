@@ -46,7 +46,7 @@ function appioninfopopup(infoname){
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0) {
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
-	$nowait = ($_POST[nowait]=="" && $_POST[runid] != "") ? "" : "CHECKED";
+	$nowait = ($_POST[nowait]=="") ? "" : "CHECKED";
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
 	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
@@ -459,12 +459,12 @@ function parseParticleLoopParams ($type) {
 	}
 	if ($defocpair) $command.=" defocpair";
 	if ($invert) $command.=" invert";
-	if ($median) $command.=" median=$median";
-	if ($lp) $command.=" lp=$lp";
-	if ($hp) $command.=" hp=$hp";
+	if ($median != '') $command.=" median=$median";
+	if ($lp != '') $command.=" lp=$lp";
+	if ($hp != '') $command.=" hp=$hp";
 	if ($bin) $command.=" bin=$bin";
 	if ($diam) $command.=" diam=$diam";
-	if ($pixlimit) $command.=" pixlimit=$pixlimit";
+	if ($pixlimit != '') $command.=" pixlimit=$pixlimit";
 	if ($nojpegs) $command.=" nojpegs";
 
 	return $command;
