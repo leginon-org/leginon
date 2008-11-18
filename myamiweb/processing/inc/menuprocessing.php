@@ -367,6 +367,13 @@ if ($expId) {
 		);
 	}
 
+	/* IMAGIC Common Lines */
+	if ($norefdone >= 1) {
+		$nruns[]=array(
+			'name'=>"<a href='imagic3d0Summary.php?expId=$sessionId'>IMAGIC Common Lines</a>"
+		);
+	}
+
 	/* 3d Density Volumes */
 	$threedvols = $particle->get3dDensitysFromSession($sessionId);
 	$num3dvols = count($threedvols);
