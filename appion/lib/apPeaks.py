@@ -116,7 +116,7 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 	return peaktree
 
 
-def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0, msg=True):
+def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bin=1.0, msg=True, masxthresh=None):
 	### drop all values below zero
 	ccmap = numpy.where(ccmap<0, 0.0, ccmap)
 
@@ -132,7 +132,7 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 	bigmap[ccmap.shape[0]:bigmap.shape[0],:] = grad
 	print ccmap.shape, "-->",  bigmap.shape
 
-	image = apImage.arrayToImage(bigmap, stdevLimit=5.0)
+	image = apImage.arrayToImage(bigmap, stdevLimit=8.0)
 	image = image.convert("RGB")
 
 	### color stuff below threshold
@@ -152,8 +152,8 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 	textdraw = ImageDraw.Draw(image3)
 	addMinMaxTextToMap(textdraw, bigmap.shape[1], minval, maxval)
 	### merge
-	image = Image.blend(image, image2, 0.3)
 	image = Image.blend(image, image3, 0.9)
+	image = Image.blend(image, image2, 0.2)
 
 	if msg is True:
 		apDisplay.printMsg("writing summary JPEG: "+imgname)
