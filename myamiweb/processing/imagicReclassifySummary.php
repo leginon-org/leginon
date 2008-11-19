@@ -35,19 +35,39 @@ function createReclassifySummary() {
 
 	if ($reclassData) {
 		$shown = array();
+		$hidden = array();
 		foreach($reclassData as $reclassinfo) { 
 			if (is_array($reclassinfo)) {
-				$shown[]=$reclassinfo;
+				$reclassId = $reclassinfo['DEF_id'];
+				// first update hide value
+				if ($_POST['hidereclass'.$reclassId]) {
+					$particle->updateHide('ApImagicReclassifyData',$reclassId,1);
+					$reclassinfo['hidden']=1;
+				}
+				elseif ($_POST['unhidereclass'.$reclassId]) {
+					$particle->updateHide('ApImagicReclassifyData',$reclassId,0);
+					$reclassinfo['hidden']='';
+				}
+				if ($reclassinfo['hidden']==1) $hidden[]=$reclassinfo;
+				else $shown[]=$reclassinfo;
 			}
 		}
 		$reclasstable="<form name='reclassform' method='post' action='$formAction'>\n";
-		foreach ($shown as $r) {
-			$reclasstable.=reclassEntry($r,$particle);
+		foreach ($shown as $r) $reclasstable.=reclassEntry($r,$particle);
+
+		// show hidden reclassifications
+		if ($_GET['showHidden'] && $hidden) {
+			if ($shown) $reclasstable.="<hr />\n";
+			$reclasstable.="<b>Hidden Norefs</b> ";
+			$reclasstable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
+			foreach ($hidden as $r) $reclasstable.= reclassEntry($r,$particle,True);
 		}
 		$reclasstable.="</form>\n";
 	}
 
-	if ($shown) echo $reclasstable;
+	if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Alignments]</a><br />\n";
+
+	if ($shown || $hidden) echo $reclasstable;
 	else echo "<B>Project does not contain any Reclassifications.</B>\n";
 	processing_footer();
 	exit;
@@ -71,7 +91,8 @@ function reclassEntry($reclassId, $particle, $hidden=False) {
 	$j = "Ref-free Run: <font class='aptitle'>";
 	$j.= $i['runname'];
 	$j.= "</font> (ID: <font class='aptitle'>$reclassnum</font>)";
-	$j.= " <input class='edit' type='submit' name='hideReclassification".$reclassnum."' value='hide'>";
+	if ($hidden) $j.= " <input class='edit' type='submit' name='unhidereclass".$reclassnum."' value='unhide'>";
+	else $j.= " <input class='edit' type='submit' name='hidereclass".$reclassnum."' value='hide'>";
 	$reclasstable.= apdivtitle($j);
 	$reclasstable.= "<table border='0' width='600'>\n";
 	$reclasstable.= "<tr><td colspan='2' bgcolor='#bbffbb'>";
