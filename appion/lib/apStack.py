@@ -161,7 +161,7 @@ def averageStack(stack="start.hed", outfile="average.mrc", msg=True):
 	return True
 
 #===============
-def centerParticles(stack, mask=False, maxshift=False):
+def centerParticles(stack, mask=None, maxshift=None):
 	apDisplay.printMsg("centering stack: "+stack)
 	ext=stack.split('.')[-1]
 	fsize = os.stat(stack)[6]
@@ -175,9 +175,9 @@ def centerParticles(stack, mask=False, maxshift=False):
 		emancmd = "cenalignint "+stack
 		if frac > 1:
 			emancmd += " frac="+str(i)+"/"+str(frac)
-		if mask is not False:
+		if mask is not None:
 			emancmd += " mask="+str(mask)
-		if maxshift is not False:
+		if maxshift is not None:
 			emancmd += " maxshift="+str(maxshift)
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
