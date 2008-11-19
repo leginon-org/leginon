@@ -44,3 +44,19 @@ def spiderOutLine(num, floatlist):
 	line += "\n"
 	return line
 
+
+#===============================
+def spiderInLine(line):
+	bits = line.strip().split()
+	rownum = int(bits[0])
+	numfloats = int(bits[1])
+	floatlist = []
+	for i in range(numfloats):
+		floatlist.append(float(bits[i+2]))
+	spidict = {
+		'row': rownum,
+		'count': numfloats,
+		'floatlist': floatlist,
+	}
+	return spidict
+
