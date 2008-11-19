@@ -6,6 +6,7 @@ import sys
 import random
 import math
 import shutil
+import cPickle
 #appion
 import appionScript
 import apDisplay
@@ -33,8 +34,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### radii
 		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
-		self.parser.add_option("--lowpass", dest="lowpass", type="int",
+		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
+		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int",
+			help="High pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
@@ -54,6 +57,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			action="store_true", help="Use fast method")
 		self.parser.add_option("--no-fast", dest="fast", default=True,
 			action="store_false", help="Do NOT use fast method")
+
+		self.parser.add_option("-M", "--mirror", dest="mirror", default=True,
+			action="store_true", help="Use mirror method")
+		self.parser.add_option("--no-mirror", dest="mirror", default=True,
+			action="store_false", help="Do NOT use mirror method")
 
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
@@ -81,6 +89,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
+		if self.params['numpart'] is None:
+			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 
 	#=====================
 	def setOutDir(self):
@@ -88,6 +98,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['outdir'] = os.path.join(uppath, "maxlike", self.params['runname'])
+
+	#=====================
+	def dumpParameters(self):
+		self.params['runtime'] = time.time() - self.t0
+		paramfile = "maxlike-params.pickle"
+		pf = open(paramfile, "w")
+		cPickle.dump(pf, self.params)
+		pf.close()
 
 	#=====================
 	def start(self):
@@ -98,9 +116,21 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		self.dumpParameters()
+
+		### process stack to local file
+		localstack = os.path.join(self.params['outdir'], self.timestamp+".hed")
+		proccmd = "proc2d "+self.stack['file']+" "+localstack+" apix="+str(self.stack['apix'])
+		if self.params['bin'] > 1:
+			proccmd += " shrink="+str(self.params['bin'])
+		if self.params['highpass'] > 1:
+			proccmd += " hp="+str(self.params['highpass'])
+		if self.params['lowpass'] > 1:
+			proccmd += " lp="+str(self.params['lowpass'])
+		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### convert stack into single spider files
-		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.stack['file'])
+		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(localstack)
 
 		### run the alignment
 		self.appiondb.dbd.ping()
@@ -109,9 +139,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -i "+partlistdocfile
 			+" -nref "+str(self.params['numclasses'])
 			+" -iter "+str(self.params['maxiter'])
+			+" -o "+os.path.join(self.params['outdir'], self.timestamp)
 		)
 		if self.params['fast'] is True:
 			xmippcmd += " -fast "
+		if self.params['mirror'] is True:
+			xmippcmd += " -mirror "
 		apEMAN.executeEmanCmd(xmippcmd, verbose=True)
 		self.appiondb.dbd.ping()
 		aligntime = time.time() - aligntime
@@ -144,6 +177,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
+
+		self.dumpParameters()
 
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
