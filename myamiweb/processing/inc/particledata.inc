@@ -1578,6 +1578,28 @@ class particledata {
 		return $r[0];
 	}
 
+	function getImagicReclassParamsFrom3d0 ($imagic3d0Id) {
+		$q = "SELECT reclass.*, pd.path "
+			."FROM ApImagic3d0Data as model "
+			."LEFT JOIN ApImagicReclassifyData as reclass "
+			."  ON model.`REF|ApImagicReclassifyData|reclass`=reclass.`DEF_id` "
+			."LEFT JOIN ApPathData AS pd "
+			."  ON reclass.`REF|ApPathData|path`=pd.`DEF_id` "
+			."WHERE model.`DEF_id` = '$imagic3d0Id' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getNoRefClassRunParamsFrom3d0 ($imagic3d0Id) {
+		$q = "SELECT norefclass.* "
+			."FROM ApImagic3d0Data as model "
+			."LEFT JOIN ApNoRefClassRunData as norefclass "
+			."  ON model.`REF|ApNoRefClassRunData|norefclass`=norefclass.`DEF_id` "
+			."WHERE model.`DEF_id` = '$imagic3d0Id' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 	function getRefAliParams ($refaliId) {
 		$q = "SELECT	par.*, run.*, path.path "
 			."FROM ApRefRunData as run "
@@ -2403,6 +2425,54 @@ class particledata {
 			."  ON reclass.`REF|ApPathData|path` = path.`DEF_id` "
 			."LEFT JOIN ApNoRefClassRunData AS norefclass "
 			."  ON reclass.`REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
+			."LEFT JOIN ApNoRefRunData AS norefrun "
+			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
+			."LEFT JOIN ApStackData AS stack "
+			."  ON norefrun.`REF|ApStackData|stack` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getImagic3d0ReclassifiedModelsFromSessionId($sessionId) {
+		$q="SELECT "
+			."  model.*, "
+			."  path.`path` AS path "
+			."FROM ApImagic3d0Data as model "
+			."LEFT JOIN ApPathData AS path "
+			."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApImagicReclassifyData as reclass "
+			."  ON model. `REF|ApImagicReclassifyData|reclass` = reclass.`DEF_id` "
+			."LEFT JOIN ApNoRefClassRunData AS norefclass "
+			."  ON reclass.`REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
+			."LEFT JOIN ApNoRefRunData AS norefrun "
+			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
+			."LEFT JOIN ApStackData AS stack "
+			."  ON norefrun.`REF|ApStackData|stack` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+	
+	function getImagic3d0NoRefModelsFromSessionId($sessionId) {
+		$q="SELECT "
+			."  model.*, "
+			."  path.`path` AS path "
+			."FROM ApImagic3d0Data as model "
+			."LEFT JOIN ApPathData AS path "
+			."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApNoRefClassRunData AS norefclass "
+			."  ON model. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "	
 			."LEFT JOIN ApNoRefRunData AS norefrun "
 			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
 			."LEFT JOIN ApStackData AS stack "
