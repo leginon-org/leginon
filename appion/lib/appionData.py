@@ -481,6 +481,41 @@ class ApRefIterationData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApRefIterationData=ApRefIterationData
 
+### Maximum likelihood tables
+
+class ApMaxLikeRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('stack', ApStackData), #Redundant
+			('path', ApPathData),
+			('mask_diam', float),
+			('lp_filt', int),
+			('hp_filt', int),
+			('num_particles', int),
+			('bin', int),
+			('fast', bool),
+			('mirror', bool),
+			('hidden', bool),
+			('run_seconds', int),
+			('description', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApMaxLikeRunData=ApMaxLikeRunData
+
+
+class ApMaxLikeAlignParticlesData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('maxLikeRun', ApMaxLikeRunData),
+			('particle', ApStackParticlesData),
+			('shift_x', float),
+			('shift_y', float),
+			('rotation', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApMaxLikeAlignParticlesData=ApMaxLikeAlignParticlesData
+
 ### Reconstruction tables ###
 
 class ApClusterJobData(Data):
