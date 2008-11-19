@@ -5,7 +5,7 @@
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
  *
- *      Create an Eman Job for submission to a cluster
+ *      Create an IMAGIC Reclassification Job initiating a 3d0 model generation
  */
 
 require "inc/particledata.inc";
@@ -55,14 +55,12 @@ function jobForm($extra=false) {
 		$outdir=$sessioninfo['Image path'];
 		$outdir=ereg_replace("leginon","appion",$outdir);
 		$outdir=ereg_replace("rawdata","clsavgstacks",$outdir);
-		$outdir=ereg_replace("data..","data00",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 
 	// fill in default parameters
 	$classums = ($_POST[classums]) ? $_POST[classums] : "classums";
-	$indir = ($_POST[indir]) ? $_POST[indir] : "/ami/data00/appion";
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $outdir;
 	$runid = ($_POST[runid]) ? $_POST[runid] : "reclass".$newrun;
 	$lpfilt = ($_POST[lpfilt]) ? $_POST[lpfilt] : "0.8";
@@ -76,6 +74,7 @@ function jobForm($extra=false) {
 	$filenames = array();
 	$norefData = $particle->getNoRefIds($expId, True);
 	$norefruns=count($norefData);
+
 	// get parameters for each noref entry
 	foreach ($norefData as $norefid) {
 		$norefnum = $norefid['DEF_id'];
@@ -101,16 +100,7 @@ function jobForm($extra=false) {
 			echo "<option value='$opvals'>$name; ID=$id; $description; $num_classes classes; $number_particles particles in stack; $method </option>\n";
 		}
 	}
-
-	//echo "<TABLE BORDER=0 table width='100' CLASS=tableborder CELLPADDING=15>";
-	echo "</select>\n";
-	echo "<br /><br />";
-	
-
-
-
-
-
+	echo "</select><BR/><BR/>\n";
 
 
 	// javascript documentation in help.js
@@ -128,8 +118,6 @@ function jobForm($extra=false) {
 	echo "<tr><td>";
 	echo openRoundBorder();
 	echo 	"<br />\n $doc_runname &nbsp <input type='text' name='runid' value='$runid'><br /><br />\n";
-	//echo docpop('classums', 'class averages:');
-	//echo "<input type='text' name='classums' value='$classums' size='50'>\n<br />\n";
 	echo 	"$doc_outdir &nbsp <input type='text' name='outdir' value='$outdir' size='50'><br /><br />\n";
 	echo closeRoundBorder();
 	echo 	"</td></tr></table></center>";
@@ -163,20 +151,21 @@ function jobForm($extra=false) {
 
 function generateProcessedClasses() {		
 
+	// get posted values
 	$expId = $_GET['expId'];
 	$lpfilt = ($_POST['lpfilt']) ? $_POST['lpfilt'] : '1';
 	$hpfilt = ($_POST['hpfilt']) ? $_POST['hpfilt'] : '0';
 	$mask_radius = ($_POST['mask_radius']) ? $_POST['mask_radius'] : '1';
 	$mask_dropoff = ($_POST['mask_dropoff']) ? $_POST['mask_dropoff'] : '0';
 	$niter = $_POST['transalign_iter'];
-	//$classums = $_POST['classums'];
 	$new_classums = $_POST['new_classums'];
 	$outdir = $_POST['outdir'];
 	$runid = $_POST['runid'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
-	$command = "csh $outdir/$runid/{$runid}_imagicReclassifyClassums.job";
+	$command = "$outdir/$runid/{$runid}_imagicReclassifyClassums.job";
 
+	// get stack values
 	$stackinfo = explode('|--|', $_POST['opvals']);
 	$stack_box_size = $stackinfo[0];
 	$filename = $stackinfo[2];
@@ -189,140 +178,24 @@ function generateProcessedClasses() {
 	$bin = is_numeric($stackinfo[4]) ? $stackinfo[4] : "1";
 	$box_size = $stack_box_size / $bin;
 	
-	
-		
+	// create python command for executing imagic job file	
 	$text = "";
 	$text .= "imagicReclassifyClassums.py";
 	$text .= " --norefclassid=$classid --runid=$runid --oldstack=$filename --lp=$lpfilt";
 	$text .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter --numaverages=$new_classums";
-
-	/*// generate the jobfile that will call the imagic batch file
-	$jobtext = "";
-	$jobtext.= "#PBS -l nodes=1:ppn=1\n";
-	$jobtext.= "#PBS -l walltime=240:00:00\n";
-	$jobtext.= "#PBS -l cput=240:00:00\n";
-	$jobtext.= "#PBS -m e\n";
-	$jobtext.= "#PBS -r n\n\n";
-	$jobtext.= "cd $outdir/$runid\n";
-	$jobtext.= "chmod 755 imagicReclassifyClassums.batch\n";
-	$jobtext.= "./imagicReclassifyClassums.batch\n";
-	*/
-
-	/*
-	// output the actual batch file that will be inputted into IMAGIC
-	$text = "";
-	$text .= "#!/bin/csh -f\n";	
-	$text .= "setenv IMAGIC_BATCH 1\n";
-	$text .= "cd $outdir/$runid\n";
-	if (substr($indir,-1,1)!='/') {
-		$indir.='/';
-	}
-	if (substr($filename,-4,4)==".img") {
-		$filename = ereg_replace(".img","",$filename); 
-	}
-	if (substr($filename,-4,4)==".hed") {
-		$filename = ereg_replace(".hed","",$filename); 
-	}
-	$text .= "ln -s $filename.img start_stack.img\n";
-	$text .= "ln -s $filename.hed start_stack.hed\n";
-	$text .= "/usr/local/IMAGIC/stand/copyim.e <<EOF > imagicReclassifyClassums.log\n";
-	$text .= "start_stack\n";
-	$text .= "classums\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/stand/headers.e <<EOF >> imagicReclassifyClassums.log\n";
-	$text .= "classums\n";
-	$text .= "write\n";
-	$text .= "wipe\n";
-	$text .= "all\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/incore/incprep.e <<EOF >> imagicReclassifyClassums.log\n"; 
-	$text .= "NO\n";
-	$text .= "classums\n";
-	$text .= "classums_filt\n";
-	$text .= "$hpfilt\n";
-	$text .= "0.0\n";
-	$text .= "$lpfilt\n";
-	$text .= "$mask_radius,$mask_dropoff\n";
-	$text .= "10.0\n";
-	$text .= "NO\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/align/alimass.e <<EOF >> imagicReclassifyClassums.log\n"; 
-	$text .= "NO\n";
-	$text .= "classums_filt\n";
-	$text .= "classums_filt_cent\n";
-	$text .= "TOTSUM\n";
-	$text .= "CCF\n";
-	$text .= "0.2\n";
-	$text .= "$niter\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/stand/testim.e <<EOF >> imagicReclassifyClassums.log\n";
-	$text .= "msamask\n";
-	$text .= "$box_size,$box_size\n";
-	$text .= "Real\n";
-	$text .= "disc\n";
-	$text .= "$mask_radius\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicReclassifyClassums.log\n";
-	$text .= "fresh_msa\n";
-	$text .= "modulation\n";
-	$text .= "classums_filt_cent\n";
-	$text .= "NO\n";
-	$text .= "msamask\n";
-	$text .= "eigenimages\n";
-	$text .= "pixel_coordinates\n";
-	$text .= "eigen_pixels\n";
-	$text .= "50\n";
-	$text .= "69\n";
-	$text .= "0.8\n";
-	$text .= "msa\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/msa/classify.e <<EOF >> imagicReclassifyClassums.log\n";
-	$text .= "images/volumes\n";
-	$text .= "classums_filt_cent\n";
-	$text .= "0\n";
-	$text .= "69\n";
-	$text .= "yes\n";
-	$text .= "$new_classums\n";
-	$text .= "classification\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/msa/classum.e <<EOF >> imagicReclassifyClassums.log\n";
-	$text .= "classums_filt_cent\n";
-	$text .= "classification\n";
-	$text .= "reclassified_classums\n";
-	$text .= "no\n";
-	$text .= "none\n";
-	$text .= "0\n";
-	$text .= "EOF\n";
-	$text .= "/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagicReclassifyClassums.log\n";
-	$text .= "sort\n";
-	$text .= "reclassified_classums\n";
-	$text .= "reclassified_classums_sorted\n";
-	$text .= "index\n";
-	$text .= "114\n";
-	$text .= "down\n";
-	$text .= "0\n";
-	$text .= "EOF\n\n";
-	$text .= "rm reclassified_classums.*\n";
-	$text .= "rm classums.*\n";
-	*/
 
 	// write to jobfile
 	$jobfile = "{$runid}_imagicReclassifyClassums.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	$f = fopen($tmpjobfile,'w');
 	fwrite($f,$text);
-	fclose($f);
+	fclose($f);	
 
-	/*// write batchfile
-	$batchfile = "imagicReclassifyClassums.batch";
-	$tmpbatchfile = "/tmp/$batchfile";
-	$f = fopen($tmpbatchfile, 'w');
-	fwrite($f,$text);
-	fclose($f);
-	*/
 	// create appion directory & copy job & batch files
-	$cmd = "mkdir -p $outdir/$runid;\n";
-	$cmd.= "cp $tmpjobfile $outdir/$runid/$jobfile;\n";
+	$cmd = "mkdir -p $outdir/$runid\n";
+	$cmd.= "cp $tmpjobfile $outdir/$runid/$jobfile\n";
+	$cmd.= "cd $outdir/$runid\n";
+	$cmd.= "chmod 755 $jobfile\n";
 	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
 
 	if ($_POST['process']=="run imagic") {
@@ -343,36 +216,4 @@ function generateProcessedClasses() {
 	exit;
 }
 
-/*function generateAnchorSet() {		// use 3 class averages to generate a model and an anchor-set of projections
-					// also, this can be merged together with the processClasses() function
-
-}
-
-function generateBatchRefinement() {
-	$expId = $_GET['expId'];
-	processing_header("IMAGIC Job Generator","IMAGIC Job Generator",$javafunc);
-
-	$header.= "#PBS -l nodes=1:ppn=1\n";
-	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
-	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -m e\n";
-	$header.= "#PBS -r n\n\n";
-	$clusterjob = "# stackId: $stackidval\n";
-	$stackId=$_POST['stackId']; // need to specify classes, manual picking should probably be employed prior to reconstruction
-	echo "your classes are $classes";
-	// change directory to working directory
-	// call the first file to be executed
-	// call the second file to be executed
-	// ... etc. 
-	processing_footer();
-	exit;
-}
-
-function generateIteration() {
-	// #!/bin/csh -f
-	// setenv IMAGIC_BATCH 1
-	// set i=$startIteration
-	// while (i<$endIteration_1
-}
-*/
 ?>
