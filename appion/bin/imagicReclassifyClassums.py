@@ -128,12 +128,17 @@ class reclassifyScript(appionScript.AppionScript):
 		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
 		if norefclassdata is None: 
 			apDisplay.printError("class ID not in the database")
-		self.params['apix'] = norefclassdata['norefRun']['stack']['pixelsize']
 		self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+		stack_pixel_size = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
 		binning = norefclassdata['norefRun']['norefParams']['bin']
+		self.params['apix'] = stack_pixel_size * binning
 		self.params['boxsize'] = stack_box_size / binning
 		
+		print "... class average stack pixel size: "+str(self.params['apix'])
+		print "... class average stack box size: "+str(self.params['boxsize'])	
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreateNewClassums.log for details")
+
 		filename = "imagicCreateNewClassums.batch"
 		f = open(filename, 'w')
 		
