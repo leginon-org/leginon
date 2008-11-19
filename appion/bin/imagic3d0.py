@@ -151,13 +151,13 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	def upload3d0(self, mrcmodel):
 		reclassq = appionData.ApImagic3d0Data()
-		#reclassq['name'] = model
+		reclassq['name'] = "masked_3d0_ordered0_repaligned.mrc"
 		reclassq['runname'] = self.params['runId']
 		if self.params['norefClassId'] is not None:
 			reclassq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
 		elif self.params['reclassId'] is not None:
 			reclassq['reclass'] = appiondb.direct_query(appionData.ApImagicReclassifyData, self.params['reclassId'])
-		#reclassq['projections'] = self.params['projections']
+		reclassq['projections'] = self.params['projections']
 		reclassq['euler_ang_inc'] = self.params['euler_ang_inc']
 		reclassq['ham_win'] = self.params['ham_win']
 		reclassq['obj_size'] = self.params['object_size']
