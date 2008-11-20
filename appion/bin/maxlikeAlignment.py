@@ -26,7 +26,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
-		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
+		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
@@ -43,7 +43,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
-		self.parser.add_option("--num-classes", dest="numclasses", type="int",
+		self.parser.add_option("--num-ref", dest="numrefs", type="int",
 			help="Number of classes to create", metavar="#")
 		#self.parser.add_option("--templates", dest="templateids",
 		#	help="Template Id for template init method", metavar="1,56,34")
@@ -76,7 +76,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		#if self.params['description'] is None:
 		#	apDisplay.printError("run description was not defined")
-		if self.params['numclasses'] is None:
+		if self.params['numrefs'] is None:
 			apDisplay.printError("a number of classes was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
@@ -104,7 +104,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.params['runtime'] = time.time() - self.t0
 		paramfile = "maxlike-params.pickle"
 		pf = open(paramfile, "w")
-		cPickle.dump(pf, self.params)
+		cPickle.dump(self.params, pf)
 		pf.close()
 
 	#=====================
@@ -137,7 +137,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		aligntime = time.time()
 		xmippcmd = ( "xmipp_ml_align2d "
 			+" -i "+partlistdocfile
-			+" -nref "+str(self.params['numclasses'])
+			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['outdir'], self.timestamp)
 		)
@@ -150,39 +150,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
-		### remove large, worthless stack
-		#spiderstack = os.path.join(self.params['outdir'], "start.spi")
-		#apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
-		#apFile.removeFile(spiderstack, warn=False)
-
-		### do correspondence analysis
-		corantime = time.time()
-		#if not self.params['skipcoran']:
-		#	maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
-		#	boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
-		#	self.appiondb.dbd.ping()
-		#	self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
-		#		boxsize=boxsize, maskpixrad=maskpixrad, 
-		#		numpart=self.params['numpart'], numfactors=self.params['numfactors'])
-		#	self.appiondb.dbd.ping()
-		#	### make dendrogram
-		#	alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
-		corantime = time.time() - corantime
-
-
-		inserttime = time.time()
-		if self.params['commit'] is True:
-			self.runtime = corantime + aligntime
-			#self.insertMaxLikeRun(insert=True)
-		else:
-			apDisplay.printWarning("not committing results to DB")
-		inserttime = time.time() - inserttime
-
 		self.dumpParameters()
-
-		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
-		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
-		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
 #=====================
 if __name__ == "__main__":
