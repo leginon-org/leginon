@@ -2487,6 +2487,19 @@ class particledata {
 		return $r;
 	}
 
+	function getImagic3d0Data ($imagic3d0Id) {
+		$q = "SELECT  "
+			."  3d0run.*, "
+			."  path.`path` AS path "
+			."FROM ApImagic3d0Data as 3d0run "
+			."LEFT JOIN ApPathData AS path "
+			."  ON 3d0run.`REF|ApPathData|path` = path.`DEF_id` "
+			."WHERE 3d0run.`DEF_id` = '$imagic3d0Id' ";
+		//echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 
 }
 
