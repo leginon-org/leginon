@@ -21,23 +21,152 @@ import gui.wx.ToolBar
 class Panel(gui.wx.Calibrator.Panel):
 	icon = 'pixelsize'
 	def initialize(self):
-		gui.wx.Calibrator.Panel.initialize(self)
-
-		self.toolbar.Realize()
-		self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
+		# image
+		self.imagepanel = self.imageclass(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.addTypeTool('Power', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Power', True)
+		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(0)
+		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_MEASURE, 'ruler', shortHelpString='Measure')
 		self.measurement = None
-		self.Bind(gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
+		self.oldmag = None
+		self.measuredialog = MeasureSettingsDialog(self)
+		#self.Bind(gui.wx.ImagePanelTools.EVT_MEASUREMENT, self.onMeasurement)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool, id=gui.wx.ToolBar.ID_MEASURE)
+		self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.Realize()
 
-	def onMeasurement(self, evt):
-		self.measurement = evt.measurement
+	def onAcquisitionDone(self, evt):
+		self._acquisitionEnable(True)
+		if self.node.mag != self.oldmag:
+			self.measuredialog.measurements.setMeasurements([])
+		if self.node.imagepixelsize is not None:
+			pixellabel = 'x was '+str(self.node.imagepixelsize)+' m'
+		else:
+			pixellabel = 'x does not exist'
+		label = 'pixel size at '+str(self.node.mag)+pixellabel
+		self.measuredialog.currentimagepixelsize.SetLabel(label)
+		self.oldmag = self.node.mag
+
+	#def onMeasurement(self, evt):
+	#	self.measurement = evt.measurement
+
+	def onMeasureTool(self, evt):
+#		self.measurement = evt.measurement
+		self.measuredialog.Show(True)
 
 	def onCalibrateTool(self, evt):
 		dialog = PixelSizeCalibrationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
+
+class MeasureSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+		sb = wx.StaticBox(self, -1, 'Pixel Size Measurement')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbl = wx.StaticBox(self, -1, 'Lattice Parameters')
+		sblsz = wx.StaticBoxSizer(sbl, wx.VERTICAL)
+		sbm = wx.StaticBox(self, -1, 'Distance Measured Between reflections')
+		sbmsz = wx.StaticBoxSizer(sbm, wx.VERTICAL)
+		sbp = wx.StaticBox(self, -1, 'Pixel Size Results')
+		sbpsz = wx.StaticBoxSizer(sbp, wx.VERTICAL)
+
+		self.calculate = wx.Button(self, -1, 'Calculate Pixel Size')
+		self.measurements = MeasurementListCtrl(self, -1)
+		self.save = wx.Button(self, -1, 'Save Averaged Pixel Size From Selected')
+
+
+		self.widgets['lattice a'] = FloatEntry(self, -1, chars=9)
+		self.widgets['lattice b'] = FloatEntry(self, -1, chars=9)
+		self.widgets['lattice gamma'] = FloatEntry(self, -1, chars=9)
+		self.widgets['distance'] = FloatEntry(self, -1, chars=9)
+		self.widgets['h1'] = IntEntry(self, -1, chars=9)
+		self.widgets['k1'] = IntEntry(self, -1, chars=9)
+		self.widgets['h2'] = IntEntry(self, -1, chars=9)
+		self.widgets['k2'] = IntEntry(self, -1, chars=9)
+
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'a:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['lattice a'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Angstrum')
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'b:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['lattice b'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Angstrum')
+		sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'gamma')
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['lattice gamma'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'deg')
+		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sblsz.Add(sz, 0, wx.ALIGN_CENTER_VERTICAL)
+
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Between Index h:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['h1'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'k:')
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['k1'], (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'and Index h:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['h2'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'k:')
+		sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['k2'], (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
+		sbmsz.Add(sz, 0, wx.ALIGN_CENTER)
+		sbmsz.AddSpacer((20,20))
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Measured Distance on Power Spectrum:')
+		sz.Add(label, (0, 0), (2, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sz.Add(self.widgets['distance'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, '(pixels)')
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.calculate, (2, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
+		sbmsz.Add(sz, 0, wx.ALIGN_CENTER)
+
+		label = ' need image to find saved pixel size'
+		self.currentimagepixelsize = wx.StaticText(self, -1, label)
+		sbpsz.Add(self.currentimagepixelsize, 0, wx.ALIGN_CENTER|wx.EXPAND)
+		sbpsz.SetItemMinSize(self.measurements, self.measurements.getBestSize())
+		sbpsz.Add(self.measurements, 1, wx.EXPAND)
+		sbpsz.Add(self.save, 0, wx.ALIGN_CENTER)
+
+		sbsz.Add(sblsz, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sbsz.Add(sbmsz, 0, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sbsz.Add(sbpsz, 1, wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		self.Bind(wx.EVT_BUTTON, self.onCalculateButton, self.calculate)
+		self.Bind(wx.EVT_BUTTON, self.onSaveButton, self.save)
+
+		return [sbsz]
+
+	def onCalculateButton(self, evt):
+		self.setNodeSettings()
+		pixelsize = self.node.calculatePixelSize()
+		if pixelsize is not None:
+			self.measurements.addMeasurement(pixelsize)
+
+	def onSaveButton(self, evt):
+		measurements = self.measurements.getMeasurements(wx.LIST_STATE_SELECTED)
+		average = self.node.averagePixelSizes(measurements)
+		if average is not None:
+			pixellabel = 'x is now '+str(self.node.imagepixelsize)+' m'
+			label = 'pixel size at '+str(self.node.mag)+pixellabel
+		else:
+			label = 'Select at least one measurement for Averaging'
+		self.currentimagepixelsize.SetLabel(label)
 
 class ExtrapolateDialog(wx.Dialog):
 	def __init__(self, parent, fromps, tops):
@@ -182,101 +311,6 @@ class EditDialog(wx.Dialog):
 		else:
 			evt.Skip()
 
-class MeasureDialog(wx.Dialog):
-	def __init__(self, parent, mag, bin):
-		self.node = parent.node
-
-		wx.Dialog.__init__(self, parent, -1, 'Measure Pixel Size')
-		sb = wx.StaticBox(self, -1, 'Measure')
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-
-		self.pixeldistance = parent.measurement['magnitude']
-
-		self.stmag = wx.StaticText(self, -1, str(mag))
-		self.stpd = wx.StaticText(self, -1, str(self.pixeldistance))
-		self.stbinning = wx.StaticText(self, -1, str(bin))
-		self.stps = wx.StaticText(self, -1, '')
-		self.fedistance = FloatEntry(self, -1, chars=6)
-		self.tccomment = wx.TextCtrl(self, -1, 'Measured',
-																	style=wx.TE_MULTILINE)
-
-		szedit = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Magnification:')
-		szedit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.stmag, (0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-
-		label = wx.StaticText(self, -1, 'Measured distance:')
-		szedit.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.stpd, (1, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'pixels')
-		szedit.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Binning:')
-		szedit.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.stbinning, (2, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-
-		label = wx.StaticText(self, -1, 'Distance:')
-		szedit.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.fedistance, (3, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'm')
-		szedit.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Pixel size:')
-		szedit.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.stps, (4, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'm/pixel')
-		szedit.Add(label, (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Comment:')
-		szedit.Add(label, (5, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.tccomment, (6, 0), (1, 3), wx.EXPAND)
-
-		szedit.AddGrowableRow(3)
-		szedit.AddGrowableCol(1)
-
-		sbsz.Add(szedit, 1, wx.EXPAND|wx.ALL, 5)
-
-		self.bmeasure = wx.Button(self, -1, 'Calculate')
-		self.bsave = wx.Button(self, wx.ID_OK, 'Save')
-		self.bsave.Enable(False)
-		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
-
-		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(self.bmeasure, (0, 0), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		szbutton.Add(self.bsave, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		szbutton.Add(self.bcancel, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		szbutton.AddGrowableCol(0)
-
-		self.sz = wx.GridBagSizer(5, 5)
-		self.sz.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		self.SetSizerAndFit(self.sz)
-
-		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.bmeasure)
-
-	def onMeasureButton(self, evt):
-		distance = self.fedistance.GetValue()
-		if distance is None:
-			dialog = wx.MessageDialog(self, 'No distance entered',
-																'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-			return
-		else:
-			evt.Skip()
-
-		self.ps = self.node.calculateMeasured(self.pixeldistance, distance)
-		self.stps.SetLabel(str(self.ps))
-		self.sz.Layout()
-
-		self.bsave.Enable(True)
-
 class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 	def __init__(self, parent, id):
 		wx.ListCtrl.__init__(self, parent, id,
@@ -357,37 +391,23 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 			self.bedit.Enable(False)
 			self.bextrapolate.Enable(False)
 
-		self.bmeasure = wx.Button(self, -1, 'Measure...')
-		if None in [self.node.mag, self.node.bin, self.measurement]:
-			self.bmeasure.Enable(False)
-
 		self.bdone = wx.Button(self, wx.ID_OK, 'Done')
 
 		szps = wx.GridBagSizer(5, 5)
-		#szlc.SetItemMinSize(self.lcpixelsize, self.lcpixelsize.getBestSize())
 		szps.Add(self.lcpixelsize, (0, 0), (1, 1),wx.EXPAND )
-		#szps.Add(szlc, (0, 0), (1, 1), wx.EXPAND)
 		szpsopt = wx.GridBagSizer(5, 5)
 		szpsopt.Add(self.bedit, (0, 0), (1, 1), wx.ALIGN_LEFT)
 		szpsopt.Add(self.bextrapolate, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		szpsopt.Add(self.bmeasure, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		szps.Add(szpsopt, (1, 0), (1, 1), wx.EXPAND)
 		szps.AddGrowableRow(0)
 		szps.AddGrowableCol(0)
-		#szps.AddGrowableCol(2)
 
 		sbszps.Add(szps, 1, wx.EXPAND|wx.ALL, 5)
-
-		#szbutton = wx.GridBagSizer(5, 5)
-		#szbutton.Add(self.bdone, (0, 0), (1, 1),
-		#								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		#szbutton.AddGrowableCol(0)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(sbszps, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 		sz.Add(self.bdone, (1, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
-		#sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 		sz.AddGrowableRow(0)
 		sz.AddGrowableCol(0)
 
@@ -395,7 +415,6 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditButton, self.bedit)
 		self.Bind(wx.EVT_BUTTON, self.onExtrapolateButton, self.bextrapolate)
-		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.bmeasure)
 
 	def onEditButton(self, evt):
 		selected = self.lcpixelsize.getPixelSizes(wx.LIST_STATE_SELECTED)
@@ -442,16 +461,52 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 					self.lcpixelsize.addPixelSize(*pixelsize)
 		dialog.Destroy()
 
-	def onMeasureButton(self, evt):
-		mag = self.node.mag
-		bin = self.node.bin
-		dialog = MeasureDialog(self, mag, bin)
-		if dialog.ShowModal() == wx.ID_OK:
-			ps = dialog.ps
-			comment = dialog.tccomment.GetValue()
-			self.node._store(mag, ps, comment)
-			self.lcpixelsize.addPixelSize(mag, ps, comment)
-		dialog.Destroy()
+class MeasurementListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
+	def __init__(self, parent, id):
+		wx.ListCtrl.__init__(self, parent, id, style=wx.LC_REPORT)
+		self.InsertColumn(0, 'Pixel Size')
+
+		self.itemDataMap = {}
+		ListCtrlAutoWidthMixin.__init__(self)
+
+	def getBestSize(self):
+		count = self.GetColumnCount()
+		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		height = self.GetSize().height * 3
+		return width, height
+
+	def addMeasurement(self, pixelsize):
+		index = self.GetItemCount()
+		self.InsertStringItem(index, '%e' % pixelsize) 
+		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+
+	def getMeasurements(self, state=None):
+		selected = []
+		for i in range(self.GetItemCount()):
+			if state is not None and not self.GetItemState(i, state):
+				continue
+			pixelsize = float(self.GetItem(i, 0).GetText())
+			selected.append(pixelsize)
+		return selected
+
+	def GetListCtrl(self):
+		return self
+
+	def setMeasurements(self, measurements):
+		self.DeleteAllItems()
+		self.itemDataMap = {}
+		measurements.reverse()
+		for i, measurement in enumerate(measurements):
+			pixelsize = measurement['pixelsize']
+			index = self.InsertStringItem(0, pixelsize)
+			self.SetItemData(index, i)
+			self.itemDataMap[i] = (pixelsize)
+		measurements.reverse()
+		if len(measurements) == 0:
+			self.SetColumnWidth(0, wx.FIXED_MINSIZE)
+		else:
+			self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+
 
 if __name__ == '__main__':
 	class App(wx.App):
@@ -459,10 +514,10 @@ if __name__ == '__main__':
 			frame = wx.Frame(None, -1, 'Pixel Size Calibration Test')
 			panel = wx.Panel(frame, -1)
 			frame.node = None
-			dialog = ExtrapolateDialog(frame, [], [])
+			dialog = MeasureSettingsDialog(frame, 'test')
 			frame.Fit()
 			self.SetTopWindow(frame)
-			dialog.Show()
+			dialog.Show(True)
 			frame.Show()
 			return True
 
