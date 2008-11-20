@@ -163,9 +163,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		# image
 		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
-		self.imagepanel.addTargetTool('Bad Pixels', wx.Color(255, 0, 0), target=True, shape='.')
-		self.imagepanel.selectiontool.setDisplayed('Bad Pixels', True)
-		self.imagepanel.setTargets('Bad Pixels', [])
+		self.imagepanel.addTargetTool('Bad_Pixels', wx.Color(255, 0, 0), target=True, shape='.')
+		self.imagepanel.selectiontool.setDisplayed('Bad_Pixels', True)
+		self.imagepanel.setTargets('Bad_Pixels', [])
 		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, shape='polygon', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Regions', True)
 		self.imagepanel.setTargets('Regions', [])
@@ -239,13 +239,13 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if not hasattr(self, 'plan'):
 			self.plan = {}
 		if plan is None or plan is {}:
-			self.imagepanel.setTargets('Bad Pixels', [])
+			self.imagepanel.setTargets('Bad_Pixels', [])
 			self.stbadrowscount.SetLabel('0')
 			self.stbadcolumnscount.SetLabel('0')
 			self.stbadpixelscount.SetLabel('0')
 		else:
 			self.plan.update(plan)
-			self.imagepanel.setTargets('Bad Pixels', self.plan['pixels'])
+			self.imagepanel.setTargets('Bad_Pixels', self.plan['pixels'])
 			self.stbadrowscount.SetLabel(str(len(self.plan['rows']))+' Bad rows')
 			self.stbadcolumnscount.SetLabel(str(len(self.plan['columns']))+' Bad columns')
 			self.stbadpixelscount.SetLabel(str(len(self.plan['pixels']))+' Bad pixels')
@@ -259,7 +259,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		dialog.Destroy()
 
 	def onGrabPixels(self, evt):
-		pixels = self.imagepanel.getTargetPositions('Bad Pixels')
+		pixels = self.imagepanel.getTargetPositions('Bad_Pixels')
 		self.setPlan({'pixels':pixels})
 		threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
 
