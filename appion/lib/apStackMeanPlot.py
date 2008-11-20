@@ -101,7 +101,7 @@ def assemblePngs(pngfiles, tag):
 	apEMAN.executeEmanCmd(montagecmd, verbose=True)
 	#rotatecmd = "mogrify -rotate 180 -flop "+montagefile
 	#apEMAN.executeEmanCmd(rotatecmd, verbose=False)
-	if os.path.isfile("montagefile"):
+	if os.path.isfile(montagefile):
 		for pngf in pngfiles:
 			apFile.removeFile(pngf+".png")
 	else:
