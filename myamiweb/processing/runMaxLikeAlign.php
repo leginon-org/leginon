@@ -266,7 +266,7 @@ function runMaxLikeAlign($runjob=false) {
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
 	if ($highpass != '') $command.="--highpass=$highpass ";
 	$command.="--num-part=$numpart ";
-	$command.="--num-ref=$numfactors ";
+	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
