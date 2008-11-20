@@ -59,13 +59,15 @@ def makeStackMeanPlot(stackid, gridpoints=20):
 	keys.sort()
 	count = 0
 	backs = "\b\b\b\b\b\b\b\b\b\b\b"
+	montagestack = "montage.hed"
+	apFile.removeStack(montagestack)
 	for key in keys:
 		count += 1
 		sys.stderr.write(backs+backs+backs+backs)
 		sys.stderr.write("% 3d of % 3d, %s: % 6d"%(count, len(keys), key, len(partlists[key])))
-		averageSubStack(partlists[key], stackfile, key+".png")
+		averageSubStack(partlists[key], stackfile, montagestack)
 	print ""
-	assemblePngs(keys, str(stackid))
+	assemblePngs(keys, str(stackid), montagestack)
 	print "mv montage"+str(stackid)+".png "+stackdata['path']['path']
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
@@ -92,19 +94,25 @@ def averageSubStack(partlist, stackfile, filename):
 	return True
 
 #===============
-def assemblePngs(pngfiles, tag):
+def assemblePngs(keys, tag, montagestack):
+	apDisplay.printMsg("assembling pngs into montage")
 	montagecmd = "montage -geometry +4+4 "
-	for pngf in pngfiles:
-		montagecmd += pngf+".png "
+	for i,key in enumerate(keys):
+		if i % 20 == 0:
+			sys.stderr.write(".")
+		pngfile = key+".png"
+		proccmd = "proc2d "+montagestack+" "+pngfile+" first="+str(i)+" last="+str(i)
+		apEMAN.executeEmanCmd(proccmd, verbose=False, showcmd=False)
+		montagecmd += pngfile+" "
+	apDisplay.printMsg("montaging")
 	montagefile = "montage"+tag+".png"
 	montagecmd += montagefile
 	apEMAN.executeEmanCmd(montagecmd, verbose=True)
 	#rotatecmd = "mogrify -rotate 180 -flop "+montagefile
 	#apEMAN.executeEmanCmd(rotatecmd, verbose=False)
-	if os.path.isfile(montagefile):
-		for pngf in pngfiles:
-			apFile.removeFile(pngf+".png")
-	else:
+	for key in keys:
+		apFile.removeFile(key+".png")
+	if not os.path.isfile(montagefile):
 		apDisplay.printWarning("failed to create montage file")
 
 #===============
