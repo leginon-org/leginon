@@ -116,7 +116,7 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
 		echo "</TD><TD>";
 		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='corankeepplotfile'>"
-			."<IMG SRC='loadimg.php?filename=$corankeepplotfile' HEIGHT='180'><BR/>\nCoran Keep Plot</A>";
+			."<IMG SRC='loadimg.php?filename=$corankeepplotfile&s=180' HEIGHT='180'><BR/>\nCoran Keep Plot</A>";
 		echo "</TD></TR></TABLE>";
 	} else {
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
@@ -157,7 +157,7 @@ foreach ($display_keys as $p) {
 		foreach ($initpngs as $snapshot) {
 			$snapfile = $initmodel['path'].'/'.$snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
-				."<IMG SRC='loadimg.php?scale=0.2&filename=$snapfile' HEIGHT='80'></A>\n";
+				."<IMG SRC='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></A>\n";
 		}
 	}
 	$html .= "</TD>";
@@ -321,7 +321,7 @@ foreach ($iterations as $iteration){
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
 			$snapfile = $refinerun['path'].'/'.$snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
-				."<IMG SRC='loadimg.php?scale=0.2&filename=$snapfile' HEIGHT='80'></a>\n";
+				."<IMG SRC='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
 		}
 	}
 	"</td></tr>\n";
