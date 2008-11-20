@@ -98,11 +98,14 @@ def assemblePngs(pngfiles, tag):
 		montagecmd += pngf+".png "
 	montagefile = "montage"+tag+".png"
 	montagecmd += montagefile
-	apEMAN.executeEmanCmd(montagecmd, verbose=False)
-	rotatecmd = "mogrify -rotate 180 -flop "+montagefile
+	apEMAN.executeEmanCmd(montagecmd, verbose=True)
+	#rotatecmd = "mogrify -rotate 180 -flop "+montagefile
 	#apEMAN.executeEmanCmd(rotatecmd, verbose=False)
-	for pngf in pngfiles:
-		apFile.removeFile(pngf+".png")
+	if os.path.isfile("montagefile"):
+		for pngf in pngfiles:
+			apFile.removeFile(pngf+".png")
+	else:
+		apDisplay.printWarning("failed to create montage file")
 
 #===============
 def printPlot(partlists, gridpoints):
