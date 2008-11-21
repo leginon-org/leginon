@@ -247,13 +247,6 @@ if ($expId) {
 			       	'result'=>$s2results,
 				);
 
-		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
-		$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>"; 
-		$nruns[]=array (
-			'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>Reclassify Class Sums >></a>",
-			'result'=>$sreresults,
-		);
-
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array($totresult),
@@ -313,6 +306,10 @@ if ($expId) {
 		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
 		$refbasedresults[] = ($refbasedq==0) ? "" : "$refbasedq queued";
 
+		// get imagic reclassifications
+		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
+		$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>"; 
+
 		// stacks being created and stacks completed
 		$totrefbased = $refbaseddone+$refbasedrun+$refbasedq;
 
@@ -331,6 +328,12 @@ if ($expId) {
 		$nruns[] = array(
 				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp ML Alignment >></a>",
 				 'result'=>$maxlikeresults,
+				 );
+
+		// imagic reclassifications
+		$nruns[] = array (
+			'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>Reclassify Class Sums >></a>",
+			'result'=>$sreresults,
 				 );
 		$data[]=array(
 			      'action'=>array($action, $celloption),
@@ -370,7 +373,7 @@ if ($expId) {
 	/* IMAGIC Common Lines */
 	if ($norefdone >= 1) {
 		$nruns[]=array(
-			'name'=>"<a href='imagic3d0Summary.php?expId=$sessionId'>IMAGIC Common Lines</a>"
+			'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Common Lines</a>"
 		);
 	}
 
