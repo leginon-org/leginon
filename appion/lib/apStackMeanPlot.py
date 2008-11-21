@@ -10,8 +10,15 @@ import apStack
 
 
 #===============
-def makeStackMeanPlot(stackid, gridpoints=20):
+def makeStackMeanPlot(stackid, gridpoints=16):
+	apDisplay.printMsg("creating Stack Mean Plot montage for stackid: "+str(stackid))
 	t0 = time.time()
+	### big stacks are too slow
+	boxsize = apStack.getStackBoxsize(stackid)
+	bin = 1
+	while boxsize/bin > 128:
+		bin+=1
+	apDisplay.printMsg("binning stack by "+str(bin))
 	stackdata = apStack.getOnlyStackData(stackid, msg=False)
 	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
 	partdatas = apStack.getStackParticlesFromId(stackid, msg=False)
@@ -65,16 +72,16 @@ def makeStackMeanPlot(stackid, gridpoints=20):
 		count += 1
 		sys.stderr.write(backs+backs+backs+backs)
 		sys.stderr.write("% 3d of % 3d, %s: % 6d"%(count, len(keys), key, len(partlists[key])))
-		averageSubStack(partlists[key], stackfile, montagestack)
+		averageSubStack(partlists[key], stackfile, montagestack, bin)
 	print ""
 	assemblePngs(keys, str(stackid), montagestack)
 	print "mv montage"+str(stackid)+".png "+stackdata['path']['path']
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
-def averageSubStack(partlist, stackfile, filename):
+def averageSubStack(partlist, stackfile, filename, bin=1):
 	if len(partlist) == 0:
-		emancmd = ( "proc2d "+stackfile+" "+filename+" first=0 last=0 mask=1" )
+		emancmd = ( "proc2d "+stackfile+" "+filename+" first=0 last=0 mask=1 shrink="+str(bin) )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		return False
 	if not os.path.isfile(stackfile):
@@ -89,7 +96,7 @@ def averageSubStack(partlist, stackfile, filename):
 		count += 1
 		f.write(str(partnum)+"\n")
 	f.close()
-	emancmd = ( "proc2d "+stackfile+" "+filename+" list="+listfile+" average" )
+	emancmd = ( "proc2d "+stackfile+" "+filename+" list="+listfile+" average shrink="+str(bin) )
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 	return True
 

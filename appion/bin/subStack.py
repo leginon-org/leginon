@@ -191,6 +191,7 @@ class subStackScript(appionScript.AppionScript):
 			apStack.commitSubStack(self.params, newname)
 			apStack.averageStack(stack=newstack)
 			newstackid = apStack.getStackIdFromPath(newstack)
+			apDisplay.printMsg("creating Stack Mean Plot montage for stackid")
 			apStackMeanPlot.makeStackMeanPlot(newstackid)
 
 #=====================
