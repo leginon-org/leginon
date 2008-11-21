@@ -311,6 +311,17 @@ def setUmask():
 		os.umask(000)
 
 
+def getExecPath(exefile):
+	proc = subprocess.Popen("which "+exefile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out = proc.stdout
+	proc.wait()
+	path = out.readline().strip()
+	if len(path) < 1:
+		return None
+	return path
+
+
+
 
 
 
