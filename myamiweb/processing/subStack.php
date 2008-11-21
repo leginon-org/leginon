@@ -157,7 +157,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		if (file_exists($montage)) {
 			echo "<td align='center'>\n";
 			echo "<a href='loadimg.php?filename=$montage'>";
-			echo "<img border='0' src='loadimg.php?filename=$montage' height='450'></a><br/>\n";
+			echo "<img border='0' src='loadimg.php?filename=$montage&s=450' height='450'></a><br/>\n";
 			echo "<i>Mean & Stdev Montage</i>\n";
 			echo "</td>\n";
 		}
