@@ -180,7 +180,7 @@ echo "stack: $file_hed";
 echo "<br \>";
 echo "#images: $n_images";
 echo "<br \>";
-$defendimg = ($_GET['endimg']) ? $_GET['endimg'] : (($n_images > 200) ? 200 : $n_images-1);
+$defendimg = ($_GET['endimg']) ? $_GET['endimg'] : (($n_images > 40) ? 40 : $n_images-1);
 $lastimg=($_POST['endimg']) ? $_POST['endimg'] : $defendimg;
 ?>
 
