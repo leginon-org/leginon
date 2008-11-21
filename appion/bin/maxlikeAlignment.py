@@ -14,6 +14,7 @@ import apAlignment
 import apFile
 import apTemplate
 import apStack
+import apParam
 import apEMAN
 import apXmipp
 from apSpider import alignment
@@ -45,6 +46,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Maximum number of iterations", metavar="#")
 		self.parser.add_option("--num-ref", dest="numrefs", type="int",
 			help="Number of classes to create", metavar="#")
+		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
+			help="In-plane rotation sampling interval (degrees)", metavar="#")
 		#self.parser.add_option("--templates", dest="templateids",
 		#	help="Template Id for template init method", metavar="1,56,34")
 
@@ -132,21 +135,33 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### convert stack into single spider files
 		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(localstack)
 
-		### run the alignment
-		self.appiondb.dbd.ping()
+		### setup Xmipp command
 		aligntime = time.time()
-		xmippcmd = ( "xmipp_ml_align2d "
-			+" -i "+partlistdocfile
+		
+		xmippopts = ( " "
+			+" -i "+os.path.join(self.params['outdir'], partlistdocfile)
 			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['outdir'], self.timestamp)
+			+" -psi_step "+str(self.params['psistep'])
+			+" -eps 5e-4 "
 		)
 		if self.params['fast'] is True:
-			xmippcmd += " -fast "
+			xmippopts += " -fast "
 		if self.params['mirror'] is True:
-			xmippcmd += " -mirror "
-		apEMAN.executeEmanCmd(xmippcmd, verbose=True)
-		self.appiondb.dbd.ping()
+			xmippopts += " -mirror "
+
+		nproc = apParam.getNumProcessors()
+		mpirun = apParam.getExecPath("mpirun")
+		if nproc > 3 and mpirun is not None:
+			### use multi-processor
+			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d")
+			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
+			apEMAN.executeEmanCmd(mpiruncmd, verbose=True)
+		else:
+			### use single processor
+			xmippexe = apParam.getExecPath("xmipp_ml_align2d")
+			apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
