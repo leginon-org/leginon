@@ -66,7 +66,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	keys.sort()
 	count = 0
 	backs = "\b\b\b\b\b\b\b\b\b\b\b"
-	montagestack = "montage.hed"
+	montagestack = "montage"+str(stackid)+".hed"
 	apFile.removeStack(montagestack)
 	for key in keys:
 		count += 1
@@ -75,13 +75,13 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 		averageSubStack(partlists[key], stackfile, montagestack, bin)
 	print ""
 	assemblePngs(keys, str(stackid), montagestack)
-	print "mv montage"+str(stackid)+".png "+stackdata['path']['path']
+	print "mv montage"+str(stackid)+".??? "+stackdata['path']['path']
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
 def averageSubStack(partlist, stackfile, filename, bin=1):
 	if len(partlist) == 0:
-		emancmd = ( "proc2d "+stackfile+" "+filename+" first=0 last=0 mask=1 shrink="+str(bin) )
+		emancmd = ( "proc2d "+stackfile+" "+filename+" first=0 last=0 mask="+str(bin+1)+" shrink="+str(bin) )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		return False
 	if not os.path.isfile(stackfile):
@@ -98,6 +98,7 @@ def averageSubStack(partlist, stackfile, filename, bin=1):
 	f.close()
 	emancmd = ( "proc2d "+stackfile+" "+filename+" list="+listfile+" average shrink="+str(bin) )
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+	apFile.removeFile(listfile)
 	return True
 
 #===============
