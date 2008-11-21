@@ -81,7 +81,7 @@ function modelEntry($model,$particle,$hidden=False) {
 	foreach ($pngfiles as $snapshot) {
 		$snapfile = $model['path'].'/'.$snapshot;
 		$modeltable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
-		$modeltable.= "<img src='loadimg.php?filename=$snapfile' height='80'></a>\n";
+		$modeltable.= "<img src='loadimg.php?filename=$snapfile&s=80' height='80'></a>\n";
 	}
 	$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 

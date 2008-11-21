@@ -74,7 +74,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	if(file_exists($dendrofile)) {
 		echo docpop('dendrogram','<b>Dendrogram:</b>');
 		echo "<a href='loadimg.php?filename=$dendrofile'><font size='-2'>(click to enlarge)</font><br />"
-			."<img src='loadimg.php?filename=$dendrofile' width='256' border='0'></a><br/><br/>\n";
+			."<img src='loadimg.php?filename=$dendrofile&s=256' width='256' border='0'></a><br/><br/>\n";
 	}
 
 	echo "<hr />\n";
@@ -121,7 +121,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 			$level = dechex($contrib/$eigendata[0]['contrib']*239 + 16);
 			echo "<td>\n";
 			echo "<a href='loadimg.php?filename=$efile' target='eigenimage'>\n"
-				."<img src='loadimg.php?filename=$efile' width='128' height='128' border='0'></a><br />\n";
+				."<img src='loadimg.php?filename=$efile&s=128' width='128' height='128' border='0'></a><br />\n";
 			$imgname = 'eigenimg'.$index;
 			echo "<center>$index <input type='checkbox' name='$imgname' ";
 			// when first loading page select first 3

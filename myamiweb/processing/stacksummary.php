@@ -90,23 +90,32 @@ function stackEntry($stack, $particle, $hidden=False) {
 	$stacktable.= "<table border='0' width='600'>\n";
 	$stackavg = $s['path']."/average.mrc";
 	$badstackavg = $s['path']."/badaverage.mrc";
+	$montage = $s['path']."/montage".$s['DEF_id'].".png";
+	echo $montage;
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
-		$stacktable.= "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
+		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
 		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
 			$stacktable.= "<td rowspan='15' align='center' valign='top'>";
-			$stacktable.= "<img src='loadimg.php?filename=$badstackavg' height='150'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$badstackavg&s=150' height='150'><br/>\n";
 			$stacktable.= "<i>averaged bad stack</i><br/>\n";
+			$stacktable.= "</td>\n";
+		}
+		if (!$centered && file_exists($montage)) {
+			$stacktable.= "<td rowspan='15' align='center' valign='top'>";
+			$stacktable.= "<a href='loadimg.php?filename=$montage'>\n";
+			$stacktable.= "<img border=0 src='loadimg.php?filename=$montage&s=150' height='150'></a><br/>\n";
+			$stacktable.= "<i>mean/stdev montage</i><br/>\n";
+			$stacktable.= "<a href='subStack.php?expId=$expId&sId=$stackid&mean=1'>[Filter by Mean/Stdev]</a>\n";
 			$stacktable.= "</td>\n";
 		}
 		$stacktable.= "</tr>\n\n";
 	} #endif
-
 	# get pixel size of stack
 	$mpix=($particle->getStackPixelSizeFromStackId($stackid));
 	$apix=format_angstrom_number($mpix)."/pixel";

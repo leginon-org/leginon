@@ -43,7 +43,7 @@ $particle = new particledata();
 	$stackavg = $s['path']."/average.mrc";
 	if (file_exists($stackavg)) {
 		echo "<td align='center'>\n";
-		echo "<img src='loadimg.php?filename=$stackavg' height='150'><br/>\n";
+		echo "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		echo "<i>averaged stack image</i>\n";
 		echo "</td>\n";
 	}	

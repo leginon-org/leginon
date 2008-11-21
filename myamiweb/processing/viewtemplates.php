@@ -85,7 +85,7 @@ function templateEntry($templateinfo, $hidden=False){
 	$templatetable.= apdivtitle($j);
 	$templatetable.="<table border='0' cellpadding='5'>\n";
 	$templatetable.="<tr><td valign='top'>\n";
-	$templatetable.="<img src='loadimg.php?filename=$filename&rescale=True' width='100'></td>\n";
+	$templatetable.="<img src='loadimg.php?filename=$filename&s=100' width='100'></td>\n";
 	$templatetable.="<td>\n";
 	$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<BR/>\n";
 	$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<BR/>\n";

@@ -358,7 +358,7 @@ foreach ($iterations as $iteration){
 			  	if (eregi($p['name'],$s)) {
 					$sfile = $p['path'].'/'.$s;
 					$html .= "<a href='loadimg.php?filename=$sfile' target='snapshot'>"
-						."<img src='loadimg.php?scale=0.2&filename=$sfile' height='80'></a>\n";
+						."<img src='loadimg.php?s=80&filename=$sfile' height='80'></a>\n";
 				}
 			}
 			$html .= "</td>\n";

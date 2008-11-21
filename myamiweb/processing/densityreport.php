@@ -37,7 +37,7 @@ $densitytable = apdivtitle($j);
 foreach ($pngfiles as $snapshot) {
 	$snapfile = $density['path'].'/'.$snapshot;
 	$densitytable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
-	$densitytable.= "<img src='loadimg.php?scale=0.2&filename=$snapfile' height='120'></a>\n";
+	$densitytable.= "<img src='loadimg.php?s=120&filename=$snapfile' height='120'></a>\n";
 }
 $sym=$particle->getSymInfo($density['REF|ApSymmetryData|symmetry']);
 
