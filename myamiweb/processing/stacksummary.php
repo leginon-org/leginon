@@ -91,7 +91,6 @@ function stackEntry($stack, $particle, $hidden=False) {
 	$stackavg = $s['path']."/average.mrc";
 	$badstackavg = $s['path']."/badaverage.mrc";
 	$montage = $s['path']."/montage".$s['DEF_id'].".png";
-	echo $montage;
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
