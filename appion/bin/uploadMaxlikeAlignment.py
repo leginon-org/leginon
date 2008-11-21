@@ -99,10 +99,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			'yshift': spidict['floatlist'][4],
 			'refnum': spidict['floatlist'][5],
 			'mirror': spidict['floatlist'][6],
-			'prob_spread': spidict['floatlist'][7],
+			'spread': spidict['floatlist'][7],
 		}
 		return partdict
-
 
 	#=====================
 	def readRunParameters(self):
@@ -113,14 +112,17 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return runparams
 
 	#=====================
-	def insertRunIntoDatabase(self, runparams):
+	def insertRunIntoDatabase(self, runparams, lastiter):
+		### setup max like run
 		maxlikeq = appionData.ApMaxLikeRunData()
 		maxlikeq['name'] = runparams['runname']
-		maxlikeq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
 		maxlikeq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		uniquerun = maxlikeq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
+
 		maxlikeq['description'] = runparams['description']
 		maxlikeq['run_seconds'] = runparams['runtime']
-		maxlikeq['hidden'] =  False
 		maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
 		maxlikeq['lp_filt'] = runparams['lowpass']
 		maxlikeq['hp_filt'] = runparams['highpass']
@@ -129,19 +131,77 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		maxlikeq['fast'] = runparams['fast']
 		maxlikeq['mirror'] = runparams['mirror']
 
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['maxlikerun'] = maxlikeq
+		alignrunq['hidden'] =  False
+
+		### setup alignment stack
+		alignstackq = appionData.ApAlignStackData()
+$$$		alignstackq['imagicfile', str),
+$$$		alignstackq['spiderfile', str),
+		alignstackq['iteration'] = lastiter
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		### check to make sure files exist
+		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find stack file: "+imagicfile)
+		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		if not os.path.isfile(spiderfile):
+			apDisplay.printError("could not find stack file: "+spiderfile)
+		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
+		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(runparams['stackid'])/self.params['bin'])
+		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*self.params['bin']
+		alignstackq['description'] = runparams['description']
+		alignstackq['hidden'] =  False
+
+		### insert
 		if self.params['commit'] is True:
-			maxlikeq.insert()
+			alignstackq.insert()
+		self.alignstackdata = alignstackq
 
 		return
 
 	#=====================
-	def insertParticlesIntoDatabase(self, partlist):
+	def insertParticlesIntoDatabase(self, stackid, partlist, lastiter):
+		count = 0
 		for partdict in partlist:
-			mlpartq = appionData.ApMaxLikeAlignParticlesData()
+			count += 1
+			if count % 100 == 0:
+				sys.stderr.write(".")
 
+			### setup reference
+			refq = appionData.ApAlignReferenceData()
+			refq['refnum'] = partdict['refnum']
+			refq['iteration'] = lastiter
+			refbase = self.timestamp+"_it%06d_ref%06d.mrc"%(lastiter,partdict['refnum'])
+			refq['mrcfile'] = refname+".mrc"
+			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+			reffile = os.path.join(self.params['outdir'], refq['mrcfile'])
+			if not os.path.isfile(reffile):
+				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
+				apEMAN.executeEmanCmd(emancmd, verbose=False)
+			if not os.path.isfile(reffile):
+				apDisplay.printError("could not find reference file: "+reffile)
 
+			### setup particle
+			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq['partnum'] = partdict['partnum']
+			alignpartq['alignstack'] = self.alignstackdata
+			stackpartdata = apStack.getStackParticle(stackid, partdict['partnum'])
+			alignpartq['stackpart'] = stackpartdata
+			alignpartq['xshift'] = partdict['xshift']
+			alignpartq['yshift'] = partdict['yshift']
+			alignpartq['rotation'] = partdict['inplane']
+			alignpartq['mirror'] = partdict['mirror']
+			alignpartq['ref'] = refq
+			alignpartq['spread'] = partdict['spread']
+
+			### insert
 			if self.params['commit'] is True:
-				mlpartq.insert()
+				alignpartq.insert()
+
+		apDisplay.printColor("\ninserted "+str(count)+" particles into the database", "cyan")
 
 		return
 
@@ -156,8 +216,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		partlist = self.readDocFile(lastiter)
 
 		### insert into databse
-		self.insertRunIntoDatabase(runparams)
-		self.insertRunIntoDatabase(partlist)
+		self.insertRunIntoDatabase(runparams, lastiter)
+		self.insertRunIntoDatabase(runparams['stackid'], partlist, lastiter)
 
 #=====================
 if __name__ == "__main__":
