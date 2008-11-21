@@ -70,7 +70,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	# copy template to memory
 	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9") 
 	mySpider.toSpider("AP SR", 
-		stackfile+"@******", "1-"+str(numpart), 
+		spyder.fileFilter(stackfile)+"@******", "1-"+str(numpart), 
 		str(int(pixrad)), str(int(firstring))+","+str(int(lastring)), 
 		"_9", rundir+"/avgimg**", rundir+"/paramdoc**")
 	mySpider.close()
@@ -217,11 +217,11 @@ def refBasedAlignParticles(stackfile, templatestack,
 	### perform alignment
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("AP MQ", 
-		templatestack+"@**",                        # reference image series
+		spyder.fileFilter(templatestack)+"@**",     # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
 		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
 		str(int(firstring))+","+str(int(lastring)), # first and last ring for rotational correlation
-		stackfile+"@******",                        # unaligned image series
+		spyder.fileFilter(stackfile)+"@******",     # unaligned image series
 		"1-"+str(numpart),                          # enter number of particles of doc file
 		rundir+("/paramdoc%02d" % (iternum)),       # output angles document file
 	)
@@ -437,7 +437,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	apDisplay.printMsg("Performing correspondence analysis (long wait)")
 	mySpider.toSpider(
 		"CA S",
-		alignedstack+"@******", "1-"+str(numpart),
+		spyder.fileFilter(alignedstack)+"@******", "1-"+str(numpart),
 		"_9", str(numfactors), "C", "10",
 		rundir+"/corandata")
 	mySpider.close()
@@ -711,7 +711,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		classnum = i+1
 		mySpider.toSpiderQuiet(
 			"AS R",
-			alignedstack+"@******",
+			spyder.fileFilter(alignedstack)+"@******",
 			rundir+("/classdoc%04d" % (classnum)),
 			"A",
 			(classavg+"@%04d" % (classnum)),
@@ -792,7 +792,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		classnum = i+1
 		mySpider.toSpiderQuiet(
 			"AS R",
-			alignedstack+"@******",
+			spyder.fileFilter(alignedstack)+"@******",
 			rundir+("/classdoc%04d" % (classnum)),
 			"A",
 			(classavg+"@%04d" % (classnum)),
