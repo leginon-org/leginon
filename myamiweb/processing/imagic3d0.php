@@ -8,15 +8,7 @@
 
 
 */
-###########################################################
-/*
 
-
-MAY NEED TO CHANGE "norefId" to "classId" -- double check
-
-
-*/
-###########################################################
 
 require "inc/particledata.inc";
 require "inc/processing.inc";
@@ -173,6 +165,7 @@ function jobform($extra=false) {
 	// define documentation
 	$doc_runname = docpop('runid', '<t><b>Run Name:</b>');
 	$doc_outdir = docpop('outdir', '<b>Output Directory:</b>');
+	$doc_description = docpop('descr', '<b>Description of 3d Refinement:</b>');
 	$doc_projections = docpop('choose_projections', 'Choose 3 projections:');
 	$doc_symmetry = docpop('symmetry', 'Symmetry');
 	$doc_num_classaverages = docpop('num_classaverages', 'Number of class averages to use');
@@ -180,8 +173,9 @@ function jobform($extra=false) {
 	// form for output directory & runid
 	echo "<TABLE cellspacing='10' cellpadding='10'><tr><td>";
 	echo openRoundBorder();
-	echo "<BR/><b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='75'><br /><br />\n
-		   <b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n";
+	echo "	<b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='50'><br /><br />\n
+		<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
+		<b> $doc_description</b><BR/><textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
 	echo closeRoundBorder();
 	echo "</td></tr></TABLE><br />";
 
@@ -288,6 +282,7 @@ function create3d0() {
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	$command = "$outdir/$runid/{$runid}_imagic3d0.job";
+	$description = $_POST['description'];
 
 	// create python command that will launch job
 	$text = "";
@@ -304,7 +299,7 @@ function create3d0() {
 	$text.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 	$text.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
 	$text.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
-	$text.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc";
+	$text.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"\n";
 
 	$jobfile = "{$runid}_imagic3d0.job";
 	$tmpjobfile = "/tmp/$jobfile";
@@ -327,7 +322,7 @@ function create3d0() {
 		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
 
-	processing_header("IMAGIC Job Generator","IMAGIC Job Generator",$javafunc);
+	processing_header("IMAGIC 3d0 Job Generator","IMAGIC 3d0 Job Generator",$javafunc);
 
 	echo "<pre>";
 	echo htmlspecialchars($text);
