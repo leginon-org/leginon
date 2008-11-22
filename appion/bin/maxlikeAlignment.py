@@ -106,7 +106,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def dumpParameters(self):
 		self.params['runtime'] = time.time() - self.t0
 		self.params['timestamp'] = self.timestamp
-		paramfile = "maxlike-params.pickle"
+		paramfile = "maxlike-"+self.timestamp+"-params.pickle"
 		pf = open(paramfile, "w")
 		cPickle.dump(self.params, pf)
 		pf.close()

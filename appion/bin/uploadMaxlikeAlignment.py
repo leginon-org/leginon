@@ -32,6 +32,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			help="Maximum likelihood jobid", metavar="#")
 		self.parser.add_option("-o", "--outdir", dest="outdir",
 			help="Output directory", metavar="PATH")
+		self.parser.add_option("-t", "--timestamp", dest="timestamp",
+			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
+
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
@@ -39,14 +42,19 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		if self.params['timestamp'] is None:
+			apDisplay.printError("Please enter the job timestamp, e.g. 08nov02b35")
 		return
 
 	#=====================
 	def setOutDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		path = self.stackdata['path']['path']
-		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "maxlike", self.params['runname'])
+		if self.params["jobid"] is not None:
+			self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+			path = self.stackdata['path']['path']
+			uppath = os.path.abspath(os.path.join(path, "../.."))
+			self.params['outdir'] = os.path.join(uppath, "maxlike", self.params['runname'])
+		else:
+			self.params['outdir'] = os.path.abspath(".")
 
 	#=====================
 	def findLastIterNumber(self):
@@ -105,25 +113,28 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def readRunParameters(self):
-		paramfile = "maxlike-params.pickle"
+		paramfile = "maxlike-"+self.params['timestamp']+"-params.pickle"
 		if not os.path.isfile(paramfile):
-			apDisplay.printError("Could not find run parameters file")
-		runparams = cPickle.load(paramfile)
+			apDisplay.printError("Could not find run parameters file: "+paramfile)
+		f = open(paramfile, "r")
+		runparams = cPickle.load(f)
 		return runparams
 
 	#=====================
 	def insertRunIntoDatabase(self, runparams, lastiter):
+		apDisplay.printMsg("Inserting MaxLike Run into DB")
+
 		### setup max like run
 		maxlikeq = appionData.ApMaxLikeRunData()
 		maxlikeq['name'] = runparams['runname']
 		maxlikeq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		uniquerun = maxlikeq.query(results=1)
 		if uniquerun:
-			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
+			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 		maxlikeq['description'] = runparams['description']
 		maxlikeq['run_seconds'] = runparams['runtime']
-		maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
+		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
 		maxlikeq['lp_filt'] = runparams['lowpass']
 		maxlikeq['hp_filt'] = runparams['highpass']
 		maxlikeq['num_particles'] =  runparams['numpart']
@@ -138,20 +149,21 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### setup alignment stack
 		alignstackq = appionData.ApAlignStackData()
-$$$		alignstackq['imagicfile', str),
-$$$		alignstackq['spiderfile', str),
+#$$$		alignstackq['imagicfile', str),
+#$$$		alignstackq['spiderfile', str),
 		alignstackq['iteration'] = lastiter
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignstackq['alignrun'] = alignrunq
 		### check to make sure files exist
-		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
-		if not os.path.isfile(imagicfile):
-			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
-		if not os.path.isfile(spiderfile):
-			apDisplay.printError("could not find stack file: "+spiderfile)
+		#imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		#if not os.path.isfile(imagicfile):
+		#	apDisplay.printError("could not find stack file: "+imagicfile)
+		#spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		#if not os.path.isfile(spiderfile):
+		#	apDisplay.printError("could not find stack file: "+spiderfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
-		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(runparams['stackid'])/self.params['bin'])
-		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*self.params['bin']
+		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(runparams['stackid'])/runparams['bin'])
+		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
 
@@ -165,6 +177,8 @@ $$$		alignstackq['spiderfile', str),
 	#=====================
 	def insertParticlesIntoDatabase(self, stackid, partlist, lastiter):
 		count = 0
+		t0 = time.time()
+		apDisplay.printMsg("Inserting MaxLike Particles into DB")
 		for partdict in partlist:
 			count += 1
 			if count % 100 == 0:
@@ -174,9 +188,10 @@ $$$		alignstackq['spiderfile', str),
 			refq = appionData.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = lastiter
-			refbase = self.timestamp+"_it%06d_ref%06d.mrc"%(lastiter,partdict['refnum'])
-			refq['mrcfile'] = refname+".mrc"
+			refbase = self.params['timestamp']+"_it%06d_ref%06d"%(lastiter,partdict['refnum'])
+			refq['mrcfile'] = refbase+".mrc"
 			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+			refq['alignrun'] = self.alignstackdata['alignrun']
 			reffile = os.path.join(self.params['outdir'], refq['mrcfile'])
 			if not os.path.isfile(reffile):
 				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
@@ -201,7 +216,8 @@ $$$		alignstackq['spiderfile', str),
 			if self.params['commit'] is True:
 				alignpartq.insert()
 
-		apDisplay.printColor("\ninserted "+str(count)+" particles into the database", "cyan")
+		apDisplay.printColor("\ninserted "+str(count)+" particles into the database in "
+			+apDisplay.timeString(time.time()-t0), "cyan")
 
 		return
 
@@ -217,7 +233,7 @@ $$$		alignstackq['spiderfile', str),
 
 		### insert into databse
 		self.insertRunIntoDatabase(runparams, lastiter)
-		self.insertRunIntoDatabase(runparams['stackid'], partlist, lastiter)
+		self.insertParticlesIntoDatabase(runparams['stackid'], partlist, lastiter)
 
 #=====================
 if __name__ == "__main__":

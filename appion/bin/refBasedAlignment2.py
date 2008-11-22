@@ -4,6 +4,8 @@
 import os
 import time
 import random
+import math
+import shutil
 #appion
 import appionScript
 import apDisplay
@@ -36,6 +38,10 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			help="XY step distance (in pixels)", metavar="#")
 		self.parser.add_option("--lowpass", dest="lowpass", type="int", default=0,
 			help="Low pass filter radius (in Angstroms)", metavar="#")
+		self.parser.add_option("--bin", dest="bin", type="int", default=0,
+			help="Binning of the particles", metavar="#")
+		self.parser.add_option("--highpass", dest="highpass", type="int", default=0,
+			help="High pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--template-list", dest="templatelist",
 			help="List of template ids to use, e.g. 1,2", metavar="2,5,6")
 		self.parser.add_option("--invert-templates", dest="inverttemplates", default=False,
@@ -92,56 +98,91 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['outdir'] = os.path.join(uppath, "refbased", self.params['runname'])
 
+
 	#=====================
-	def insertRefBasedRun(self, partlist, insert=False):
-		# create a refParam object
-		paramq = appionData.ApRefParamsData()
-		paramq['num_particles'] = self.params['numpart']
-		paramq['lp'] = self.params['lowpass']
-		paramq['xysearch'] = self.params['xysearch']
-		paramq['xystep'] = self.params['xystep']
-		paramq['first_ring'] = self.params['firstring']
-		paramq['last_ring'] = self.params['lastring']
-		paramq['num_iter'] = self.params['numiter']
-		paramq['num_templs'] = self.params['numtemplate']
-		paramq['invert_templs'] = self.params['inverttemplates']
-		paramsdata = paramq.query(results=1)
-
-		### create a refRun object
-		runq = appionData.ApRefRunData()
-		runq['name'] = self.params['runname']
-		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		runq['stack'] = self.stack['data']
-		### stackId, runname and refPath make the refRun unique:
-		uniquerun = runq.query(results=1)
-		### continue filling non-unique variables:
-		runq['description'] = self.params['description']
-		runq['run_seconds'] = self.params['runtime']
-
-		if paramsdata:
-			runq['refParams'] = paramsdata[0]
-		else:
-			runq['refParams'] = paramq
-		# ... check if params associated with unique refBasedRun are consistent:
+	def checkDuplicateRefBasedRun(self):
+		### setup ref based run
+		refrunq = appionData.ApRefBasedRunData()
+		refrunq['name'] = self.params['runname']
+		refrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		uniquerun = refrunq.query(results=1)
 		if uniquerun:
-			for i in runq:
-				if uniquerun[0][i] != runq[i]:
-					apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
-						str(self.params['stackid'])+"\nis already in the database with different parameter: "+str(i))
-		if insert is True:
-			runq.insert()
+			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
+		return
 
-		### insert template data
-		reftempllist = []
-		for templateid in self.templatelist:
-			templatedata = apTemplate.getTemplateFromId(templateid)
-			reftemplq = appionData.ApRefTemplateRunData()
-			reftemplq['refRun'] = runq
-			reftemplq['refTemplate'] = templatedata
-			reftempllist.append(reftemplq)
-			reftempldata = reftemplq.query(results=1)
-			if not reftempldata and insert is True:
-				reftemplq.insert()
+	#=====================
+	def insertRefBasedRun(self, partlist, alignedstack, imagicstack, insert=False):
+		### setup ref based run
+		refrunq = appionData.ApRefBasedRunData()
+		refrunq['name'] = self.params['runname']
+		refrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		refrunq['bin'] = self.params['bin']
+		refrunq['hp_filt'] = self.params['highpass']
+		refrunq['lp_filt'] = self.params['lowpass']
+		refrunq['xysearch'] = self.params['xysearch']
+		refrunq['xystep'] = self.params['xystep']
+		refrunq['first_ring'] = self.params['firstring']
+		refrunq['last_ring'] = self.params['lastring']
+		refrunq['num_iter'] = self.params['numiter']
+		refrunq['invert_templs'] = self.params['inverttemplates']
+		refrunq['num_templs'] = self.params['numtemplate']
+		#refrunq['csym', int),
+		refrunq['num_particles'] = self.params['numpart']
+		refrunq['run_seconds'] = self.params['runtime']
+		refrunq['description'] = self.params['description']
+
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['refbasedrun'] = refrunq
+		alignrunq['hidden'] =  False
+
+		### setup alignment stack
+		alignstackq = appionData.ApAlignStackData()
+		alignstackq['alignrun'] = alignrunq
+		alignstackq['imagicfile'] = imagicstack
+		alignstackq['spiderfile'] = alignedstack
+		alignstackq['alignrun'] = alignrunq
+		alignstackq['iteration'] = self.params['numiter']
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		### check to make sure files exist
+		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find stack file: "+imagicfile)
+		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		if not os.path.isfile(spiderfile):
+			apDisplay.printError("could not find stack file: "+spiderfile)
+		alignstackq['stack'] = self.stack['data']
+		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
+		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
+		alignstackq['description'] = self.params['description']
+		alignstackq['hidden'] = False
+
+		if insert is True:
+			alignstackq.insert()
+
+		### insert reference data
+		reflist = []
+
+
+		for j in range(self.params['numiter']):
+			iternum = j+1
+			for i in range(len(self.templatelist)):
+				refnum = i+1
+				templateid = self.templatelist[i]
+				refq = appionData.ApAlignReferenceData()
+				refq['refnum'] = refnum
+				refq['iteration'] = iternum
+				refq['template'] = apTemplate.getTemplateFromId(templateid)
+				refq['mrcfile'] = ("templateavg%02d-%02d.mrc"%(iternum,refnum))
+				refpath = os.path.abspath(os.path.join(self.params['outdir'], "templates"))
+				refq['path'] = appionData.ApPathData(path=refpath)
+				refq['alignrun'] = alignrunq
+				if insert is True:
+					refq.insert()
+				if iternum == self.params['numiter']:
+					reflist.append(refq)
+		#refq['varmrcfile', str),
+		#refq['frc_resolution', float),
 
 		### insert particle data
 		for partdict in partlist:
@@ -157,23 +198,19 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			'yshift': float(data[6]),
 			"""
 
-			alignpartq = appionData.ApRefAlignParticlesData()
-			#template data
-			reftempldata = reftempllist[partdict['template']-1]
-			alignpartq['refTemplate'] = reftempldata
-			#stack particle
-			stackpart = apStack.getStackParticle(self.params['stackid'], partdict['num'])
-			alignpartq['particle'] = stackpart
-			#direct info
-			alignpartq['reference'] = partdict['template']
-			alignpartq['x_shift'] = partdict['xshift']
-			alignpartq['y_shift'] = partdict['yshift']
+			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq['ref'] = reflist[partdict['template']-1]
+			alignpartq['partnum'] = partdict['num']
+			alignpartq['alignstack'] = alignstackq
+			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['num'])
+			alignpartq['stackpart'] = stackpartdata
+			alignpartq['xshift'] = partdict['xshift']
+			alignpartq['yshift'] = partdict['yshift']
 			alignpartq['rotation'] = partdict['rot']
-			alignpartq['correlation'] = partdict['score']
+			alignpartq['score'] = partdict['score']
 			alignpartq['mirror'] = partdict['mirror']
 
-			alignpartdata = alignpartq.query(results=1)
-			if not alignpartdata and insert is True:
+			if insert is True:
 				alignpartq.insert()
 		return
 
@@ -194,6 +231,12 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		emancmd += "apix="+str(self.stack['apix'])+" "
 		if self.params['lowpass'] > 0:
 			emancmd += "lp="+str(self.params['lowpass'])+" "
+		if self.params['highpass'] > 0:
+			emancmd += "hp="+str(self.params['highpass'])+" "
+		if self.params['bin'] > 1:
+			clipboxsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+			emancmd += "shrink="+str(self.params['bin'])+" "
+			emancmd += "clip="+str(clipboxsize)+","+str(clipboxsize)+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
 		emancmd += "spiderswap edgenorm"
 		starttime = time.time()
@@ -216,7 +259,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		templateparams['apix'] = self.stack['apix']
 		templateparams['rundir'] = os.path.join(self.params['outdir'], "templates")
 		templateparams['templateIds'] = self.templatelist
-		templateparams['bin'] = 1
+		templateparams['bin'] = self.params['bin']
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
@@ -224,9 +267,10 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apParam.createDirectory(os.path.join(self.params['outdir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
+		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
-				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
+				+" clip="+str(newboxsize)+","+str(newboxsize)
 				+" edgenorm spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
@@ -311,10 +355,11 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			filelist.append(mrcfile)
 
+		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 		### create new template stack
 		for mrcfile in filelist:
 			emancmd  = ("proc2d "+mrcfile+" "+templatestack
-				+" clip="+str(self.stack['boxsize'])+","+str(self.stack['boxsize'])
+				+" clip="+str(newboxsize)+","+str(newboxsize)
 				+" edgenorm norm=0,1 spiderswap ")
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
@@ -331,7 +376,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 		### test insert to make sure data is not overwritten
 		self.params['runtime'] = 0
-		self.insertRefBasedRun([], insert=False)
+		#self.checkDuplicateRefBasedRun()
 
 		#convert stack to spider
 		spiderstack = self.createSpiderFile()
@@ -346,12 +391,14 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		for i in range(self.params['numiter']):
 			iternum = i+1
 			apDisplay.printColor("\n\nITERATION "+str(iternum), "green")
+			self.appiondb.dbd.ping()
 			alignedstack, partlist = alignment.refBasedAlignParticles(
 				usestack, templatestack, spiderstack,
 				self.params['xysearch'], self.params['xystep'],
 				self.params['numpart'], self.params['numtemplate'],
 				self.params['firstring'], self.params['lastring'], 
 				iternum=iternum, oldpartlist=oldpartlist)
+			self.appiondb.dbd.ping()
 			oldpartlist = partlist
 			usestack = alignedstack
 			templatestack = self.updateTemplateStack(alignedstack, partlist, iternum)
@@ -363,10 +410,18 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=True)
 
+		#convert aligned stack to imagic
+		finalspistack = "aligned.spi"
+		shutil.copy(alignedstack, finalspistack)
+		imagicstack = "aligned.hed"
+		apFile.removeStack(imagicstack)
+		emancmd = "proc2d "+finalspistack+" "+imagicstack
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+
 		if self.params['commit'] is True:
 			apDisplay.printMsg("committing results to DB")
 			self.params['runtime'] = aligntime
-			self.insertRefBasedRun(partlist, insert=True)
+			self.insertRefBasedRun(partlist, finalspistack, imagicstack, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 

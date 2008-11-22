@@ -412,37 +412,35 @@ class ApNoRefClassParticlesData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApNoRefClassParticlesData=ApNoRefClassParticlesData
 
-### Reference-based Alignment tables ###
+### Improved alignment run tables
 
-class ApRefRunData(Data):
+class ApMaxLikeRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
-			('stack', ApStackData),
-			('refParams', ApRefParamsData),
+			('bin', int),
+			('mirror', bool),
+			('lp_filt', int),
+			('hp_filt', int),
+			('mask_diam', int),
+			('init_method', str),
+			('fast', bool),
+			('num_particles', int),
+			('run_seconds', int),
 			('path', ApPathData),
 			('description', str),
-			('hidden', bool),
-			('run_seconds', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApRefRunData=ApRefRunData
+leginondata.ApMaxLikeRunData=ApMaxLikeRunData
 
-class ApRefTemplateRunData(Data):
+class ApRefBasedRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('refRun', ApRefRunData),
-			('refTemplate', ApTemplateImageData),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApRefRunData=ApRefRunData
-
-class ApRefParamsData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
+			('name', str),
 			('mask_diam', int),
-			('imask_diam', int),
-			('lp', int),
+			('bin', int),
+			('hp_filt', int),
+			('lp_filt', int),
 			('xysearch', int),
 			('xystep', int),
 			('first_ring', int),
@@ -452,69 +450,96 @@ class ApRefParamsData(Data):
 			('num_templs', int),
 			('csym', int),
 			('num_particles', int),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApRefParamsData=ApRefParamsData
-
-class ApRefAlignParticlesData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('refTemplate', ApRefTemplateRunData),
-			('particle', ApStackParticlesData),
-			('reference', int),
-			('x_shift', float),
-			('y_shift', float),
-			('rotation', float),
-			('correlation', float),
-			('mirror', bool),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApRefAlignParticlesData=ApRefAlignParticlesData
-
-class ApRefIterationData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('refRun', ApRefRunData),
-			('iteration', int),
-			('name', str),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApRefIterationData=ApRefIterationData
-
-### Maximum likelihood tables
-
-class ApMaxLikeRunData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('name', str),
-			('stack', ApStackData), #Redundant
-			('path', ApPathData),
-			('mask_diam', float),
-			('lp_filt', int),
-			('hp_filt', int),
-			('num_particles', int),
-			('bin', int),
-			('fast', bool),
-			('mirror', bool),
-			('hidden', bool),
 			('run_seconds', int),
+			('path', ApPathData),
 			('description', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApMaxLikeRunData=ApMaxLikeRunData
+leginondata.ApRefBasedRunData=ApRefBasedRunData
 
-
-class ApMaxLikeAlignParticlesData(Data):
+class ApSingleNoRefRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('maxLikeRun', ApMaxLikeRunData),
-			('particle', ApStackParticlesData),
-			('shift_x', float),
-			('shift_y', float),
-			('rotation', float),
+			('name', str),
+			('mask_diam', int),
+			('bin', int),
+			('hp_filt', int),
+			('lp_filt', int),
+			('particle_diam', float),
+			('first_ring', int),
+			('last_ring', int),
+			('num_particles', int),
+			('run_seconds', int),
+			('path', ApPathData),
+			('description', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApMaxLikeAlignParticlesData=ApMaxLikeAlignParticlesData
+leginondata.ApSingleNoRefRunData=ApSingleNoRefRunData
+
+### Improved alignment data tables
+
+class ApAlignRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('norefrun', ApSingleNoRefRunData),
+			('refbasedrun', ApRefBasedRunData),
+			('maxlikerun', ApMaxLikeRunData),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignRunData=ApAlignRunData
+
+class ApAlignStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('imagicfile', str),
+			('spiderfile', str),
+			('iteration', int),
+			('path', ApPathData),
+			('stack', ApStackData),
+			('alignrun', ApAlignRunData),
+			('boxsize', int),
+			('pixelsize', float),
+			('description', str),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignStackData=ApAlignStackData
+
+class ApAlignParticlesData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('partnum', int),
+			('alignstack', ApAlignStackData),
+			('stackpart', ApStackParticlesData),
+			('xshift', float),
+			('yshift', float),
+			('rotation', float),
+			('mirror', bool),
+			('spread', float),
+			('correlation', float),
+			('score', float),
+			('ref', ApAlignReferenceData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignParticlesData=ApAlignParticlesData
+
+
+class ApAlignReferenceData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refnum', int),
+			('iteration', int),
+			('mrcfile', str),
+			('varmrcfile', str),
+			('frc_resolution', float),
+			('alignrun', ApAlignRunData),
+			('path', ApPathData),
+			('template', ApTemplateImageData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignReferenceData=ApAlignReferenceData
+
 
 ### Reconstruction tables ###
 
