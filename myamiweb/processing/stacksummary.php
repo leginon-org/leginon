@@ -133,7 +133,13 @@ function stackEntry($stack, $particle, $hidden=False) {
 		$display_keys['# bad prtls']=commafy($oldnump-$nump);
 	}
 	else $display_keys['# prtls']=commafy($nump);
-	
+
+	if (substr($s['name'], -4) == ".hed")
+		$stackimgfile = $s['path']."/".substr($s['name'], 0, -4).".img";
+	else
+		$stackimgfile = $s['path']."/".$s['name'];
+	$display_keys['file size'] = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
+
 	$stackfile = $s['path']."/".$s['name'];
 	$display_keys['path']=$s['path'];
 	$display_keys['name']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>".$s['name']."</A>";
