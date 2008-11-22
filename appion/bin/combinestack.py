@@ -84,7 +84,7 @@ class combineStackScript(appionScript.AppionScript):
 		stackq = appionData.ApStackData()
 		stackq['name'] = self.params['stackfilename']
 		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		stackq['description'] = self.params['description']
+		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
 		stackq['hidden'] = False
 
@@ -107,7 +107,7 @@ class combineStackScript(appionScript.AppionScript):
 			self.partnum += 1
 			if self.partnum % 1000 == 0:
 				sys.stderr.write(".")
-			sys.stderr.write("\n")
+		sys.stderr.write("\n")
 		
 		apDisplay.printMsg("commited particles "+str(startpart)+"-"+str(self.partnum))
 
