@@ -979,3 +979,41 @@ class ApImagic3d0Data(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApImagic3dRefineRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('imagic3d0run', ApImagic3d0Data),
+			('boxsize', int),
+			('pixelsize', float),
+			('description', str),
+			('path', ApPathData),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
+class ApImagic3dRefineIterationData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refinement_run', ApImagic3dRefineRunData),
+			('iteration', int),
+			('name', str),
+			('symmetry', ApSymmetryData),
+			('max_shift_orig', float),
+			('max_shift_this', float),
+			('sampling_parameter', int),
+			('euler_ang_inc', int),
+			('num_classums', int),
+			('ham_win', float),
+			('obj_size', float),
+			('repalignments', int),
+			('amask_dim', float),
+			('amask_lp', float),
+			('amask_sharp', float),
+			('amask_thresh', float),
+			('mra_ang_inc', int),
+			('forw_ang_inc', int),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+
