@@ -86,7 +86,8 @@ var help = {
 
 /******* IMAGIC terms ********/
 
-	'classums' : 'This input will be used as the default filename for your class averages and in all subsequent files in which the name occurs',	
+	'lpfilt' : 'This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty well.<BR/><BR/> NOTE: Imagic uses filtering values between 0 and 1. This parameter will be converted in the python script to between 0-1 for use in Imagic.',
+	'hpfilt' : 'This removes any darkness gradients in the image. Typically you could disable this by setting it equal to zero, otherwise 200 works pretty well for IMAGIC.<BR/><BR/> NOTE: Imagic uses filtering values between 0 and 1. This parameter will be converted in the python script to between 0-1 for use in Imagic.',	
 	'mask_radius' :'The mask radius is used during masking / filtering of the stack AND during the creation of eigenimages. The output images will be normalized inside a circular mask with this radius. The radius should be chosen such that no part of the molecules are cut off by the resulting mask. This value may be specified as a fraction of the inner radius of the image or in pixels. Radius = 1 means that the whole image is used for normalization.',
 	'mask_dropoff' : 'If you specify a drop-off the mask will be a soft mask. The drop-off parameter determines the width of the soft edge (halfwidth of soft-edge Gaussian drop-off) by which the circular mask is smoothed. A value of 0 specifies a hard mask.',
 	'transalign_iter' : 'Translational alignment in imagic has 3 basic steps. 1) A total sum of your images is created, 2) The total sum is rotationally averaged, 3) boxed particles are translationally (X-Y) aligned to the rotationally averaged sum. In the imagic log file you will be able to see how the translational alignment converges with each iteration. Generally this happens after ~5 iterations.',
