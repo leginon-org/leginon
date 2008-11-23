@@ -55,6 +55,8 @@ class reclassifyScript(appionScript.AppionScript):
 			help="Location to which output file will be saved", metavar="PATH")
 		self.parser.add_option("-r", "--runid", dest="runid",
 			help="Name assigned to this reclassification", metavar="TEXT")
+		self.parser.add_option("--description", dest="description", type="str",
+			help="description of run", metavar="STR")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit template to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
@@ -91,19 +93,14 @@ class reclassifyScript(appionScript.AppionScript):
 		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
 		if norefclassdata is None: 
 			apDisplay.printError("class ID not in the database")
-		self.params['apix'] = norefclassdata['norefRun']['stack']['pixelsize']
-		self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
-		self.params['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		path = norefclassdata['norefRun']['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		position = uppath.find("data")
-		uppath = uppath[:position] + 'data00' + uppath[(position+6):]
 		self.params['outdir'] = os.path.join(uppath, "clsavgstacks", self.params['runid'])
 		return
 
 
 
-	def uploadreclassification(self, classumfile):
+	def uploadreclassification(self):
 		reclassq = appionData.ApImagicReclassifyData()
 		reclassq['runname'] = self.params['runid']
 		reclassq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
@@ -114,7 +111,7 @@ class reclassifyScript(appionScript.AppionScript):
 		reclassq['numiter'] = self.params['niter']
 		reclassq['numaverages'] = self.params['numaverages']
 		reclassq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['outdir'])))
-		#reclassq['boxsize'] = self.params['boxsize']
+		reclassq['description'] = self.params['description']
 		reclassq['hidden'] = False
 		if self.params['commit'] is True:
 			reclassq.insert()
@@ -132,8 +129,17 @@ class reclassifyScript(appionScript.AppionScript):
 		stack_pixel_size = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
 		binning = norefclassdata['norefRun']['norefParams']['bin']
+		if binning is None:
+			binning = 1
 		self.params['apix'] = stack_pixel_size * binning
 		self.params['boxsize'] = stack_box_size / binning
+
+		### NEED TO CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
+		self.params['lp'] = 2 * float(self.params['apix']) / int(self.params['lp'])
+		if float(self.params['lp']) > 1:
+			self.params['lp'] = 1
+		self.params['hp'] = 2 * float(self.params['apix']) / int(self.params['hp'])
+
 		
 		print "... class average stack pixel size: "+str(self.params['apix'])
 		print "... class average stack box size: "+str(self.params['boxsize'])	
@@ -234,7 +240,7 @@ class reclassifyScript(appionScript.AppionScript):
 
 		reclassified_classums = str(self.params['outdir'])+"/reclassified_classums.img"
 		# upload it
-		self.uploadreclassification(reclassified_classums)
+		self.uploadreclassification()
 
 	
 	
