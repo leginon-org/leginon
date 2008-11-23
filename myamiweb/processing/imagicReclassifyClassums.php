@@ -17,12 +17,21 @@ require "inc/project.inc";
 
 // check for errors in submission form
 if ($_POST['process']) {
+	$stackinfo = explode('|--|', $_POST['opvals']);
+	$num_classes = $stackinfo[5];
 	if (!is_numeric($_POST['lpfilt'])) jobform("error: no high-frequency cut-off specified");
 	if (!is_numeric($_POST['hpfilt'])) jobform("error: no low-frequency cut-off specified");
 	if (!is_numeric($_POST['mask_radius'])) jobform("error: no mask radius specified");
 	if (!is_numeric($_POST['mask_dropoff'])) jobform("error: no mask drop-off specified");
 	if (!is_numeric($_POST['transalign_iter'])) jobform("error: number of iterations not specified for translational alignment");
-	// if (!is_numeric($_POST['box_size'])) jobform("error: box dimensions not specified");
+	if (!is_numeric($_POST['new_classums'])) jobform("error: number of new class averages not specified");
+	if ($_POST['new_classums'] > $num_classes) {
+		echo "greater than";
+		jobform("error: number of new class averages specified exceeds the number of old averages");
+	}
+
+	
+
 	generateProcessedClasses();
 }
 
@@ -59,12 +68,14 @@ function jobForm($extra=false) {
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 
+	// set commit on by default when first loading page, else set
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// fill in default parameters
-	$classums = ($_POST[classums]) ? $_POST[classums] : "classums";
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $outdir;
 	$runid = ($_POST[runid]) ? $_POST[runid] : "reclass".$newrun;
-	$lpfilt = ($_POST[lpfilt]) ? $_POST[lpfilt] : "0.8";
-	$hpfilt = ($_POST[hpfilt]) ? $_POST[hpfilt] : "0.05";
+	$description = ($_POST[description]) ? $_POST[description] : "";
+	$lpfilt = ($_POST[lpfilt]) ? $_POST[lpfilt] : "5";
+	$hpfilt = ($_POST[hpfilt]) ? $_POST[hpfilt] : "200";
 	$mask_radius = ($_POST[mask_radius]) ? $_POST[mask_radius] : "0.8";
 	$mask_dropoff = ($_POST[mask_dropoff]) ? $_POST[mask_dropoff] : "0";
 	$niter = ($_POST[transalign_iter]) ? $_POST[transalign_iter] : "5";
@@ -96,7 +107,7 @@ function jobForm($extra=false) {
 			$method = $classId['method'];	
 			$nump=commafy($particle->getNumStackParticles($classId['stackid']));
 			$stackparams = $particle->getStackParams($stackid);
-			$opvals = "$stackparams[boxSize]|--|$id|--|$filename|--|$number_particles|--|$noref_binning";
+			$opvals = "$stackparams[boxSize]|--|$id|--|$filename|--|$number_particles|--|$noref_binning|--|$num_classes";
 			echo "<option value='$opvals'>$name; ID=$id; $description; $num_classes classes; $number_particles particles in stack; $method </option>\n";
 		}
 	}
@@ -104,47 +115,117 @@ function jobForm($extra=false) {
 
 
 	// javascript documentation in help.js
-	$doc_runname = docpop('runid', '<t><b>Run Name:</b>');
+	$doc_runname = docpop('runid', '<b>Reclassification Run Name:</b>');
 	$doc_outdir = docpop('outdir', '<b>Output Directory:</b>');
-	$doc_lpfilt = ""; // need something here
-	$doc_hpfilt = ""; // need something here
-	$doc_maskr = docpop('mask_radius', 'mask radius:');
-	$doc_maskd = docpop('mask_dropoff', 'mask drop-off:');
+	$doc_lpfilt = docpop('lpfilt', 'low-pass filter class averages before reclassifying'); 
+	$doc_hpfilt = docpop('hpfilt', 'high-pass filter class averages before reclassifying'); 
+	$doc_maskr = docpop('mask_radius', 'mask radius');
+	$doc_maskd = docpop('mask_dropoff', 'mask drop-off');
 	$doc_transiter = docpop('transalign_iter', 'translational alignment iterations');
 	$doc_newclassums = docpop('new_classums', 'new classums');
 
-	// fill in actual job form
-	echo "<center><TABLE cellspacing='10' cellpadding='10'>";
-	echo "<tr><td>";
-	echo openRoundBorder();
-	echo 	"<br />\n $doc_runname &nbsp <input type='text' name='runid' value='$runid'><br /><br />\n";
-	echo 	"$doc_outdir &nbsp <input type='text' name='outdir' value='$outdir' size='50'><br /><br />\n";
-	echo closeRoundBorder();
-	echo 	"</td></tr></table></center>";
+###################################
 
-	// should either specify the filtering parameters or write some funtion to convert
-	
-	echo 	"<center><br /><TABLE border=1 class=table cellspacing='10' cellpadding='10'><tr><td valign='top'>";
-	echo 	"<br /><b> Filtering & Masking Parameters </b><br /><br />\n";
+
+	echo"
+	<table border='0' class='tableborder'>
+	<tr>
+		<td valign='top'>\n";
+	echo "<table border='0' cellpadding='5'>\n";
+	echo "<tr><td>\n";
 	echo openRoundBorder();
-	echo "	<input type='text' name='lpfilt' value='$lpfilt' size='5'>&nbsp&nbsp high-frequency cut-off:\n<br />\n 
-		<input type='text' name='hpfilt' value='$hpfilt' size='5'>&nbsp&nbsp low-frequency cut-off:\n<br /><br />\n 
-		<input type='text' name='mask_radius' value='$mask_radius' size='5'>&nbsp&nbsp\n $doc_maskr <br />
-		<input type='text' name='mask_dropoff' value='$mask_dropoff' size='5'>&nbsp&nbsp\n $doc_maskd";
+	echo $doc_runname;
+	echo "<input type='text' name='runid' value='$runid'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo $doc_outdir;
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('descr','<b>Description of Reclassification:</b>');
+	echo "<br />\n";
+	echo "<textarea name='description' rows='3' cols='36'>$description</textarea>\n";
 	echo closeRoundBorder();
-	echo 	"</td>";
-	echo 	"<td><br /><b> Particle Centering </b><br /><br />\n";
-	echo openRoundBorder();
-	echo 	"<input type='text' name='transalign_iter' value='$niter' size='5'>&nbsp&nbsp\n number of $doc_transiter"; 
-	echo closeRoundBorder();	
-	echo 	"<br /><b> Reclassification </b><br /><br />\n";
-	echo openRoundBorder();
-	echo 	"<input type='text' name='new_classums' size='5'>&nbsp&nbsp\n How many $doc_newclassums do you want?";
-	echo closeRoundBorder();
-	echo 	"</td></tr></table></center><br /><br />\n";
-	echo 	"<center";
-	echo getSubmitForm("run imagic");
-	echo 	"</center></form>\n";
+	echo "</td>
+		</tr>\n";
+	echo "<tr>
+			<td>\n";
+
+
+	echo "</TD></TR><TR>\n";
+	echo "<TD VALIGN='TOP'>\n";
+
+	echo "</TD></TR>\n";
+	echo "<TR>\n";
+	echo "<TD VALIGN='TOP'>\n";
+	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo docpop('commit','<B>Commit to Database</B>');
+	echo "";
+	echo "<BR></TD></TR>\n</TABLE>\n";
+	echo "</TD>\n";
+	echo "<TD CLASS='tablebg'>\n";
+	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
+	echo "  <TR><TD VALIGN='TOP'>\n";
+
+	// filtering and masking parameters
+	echo "<b>Filtering and Masking Parameters</b>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+
+	echo "<INPUT TYPE='text' NAME='lpfilt' SIZE='4' VALUE='$lpfilt'>\n";
+	echo $doc_lpfilt;
+	echo "<font size='-2'> (&Aring;ngstroms)</font>\n";
+	echo "<br />\n";
+
+	echo "<INPUT TYPE='text' NAME='hpfilt' SIZE='4' VALUE='$hpfilt'>\n";
+	echo $doc_hpfilt;
+	echo "<font size='-2'> (&Aring;ngstroms)</font>\n";
+	echo "<br />\n";
+
+	echo "<INPUT TYPE='text' NAME='mask_radius' VALUE='$mask_radius' SIZE='4'>\n";
+	echo $doc_maskr;
+	echo "<br />\n";
+
+	echo "<INPUT TYPE='text' NAME='mask_dropoff' VALUE='$mask_dropoff' SIZE='4'>\n";
+	echo $doc_maskd;
+	echo "<BR>\n";
+	echo "<BR>\n";
+
+	// particle centering
+	echo "<b>Particle Centering</b>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+
+	echo "<INPUT TYPE='text' NAME='transalign_iter' VALUE='$niter' SIZE='4'>\n";
+	echo "number of $doc_transiter";
+	echo "<BR>\n";
+	echo "<BR>\n";
+
+	// Reclassification
+	echo "<b>Reclassification</b>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+
+	echo "<INPUT TYPE='text' NAME='new_classums' SIZE='4'>\n";
+	echo "How many $doc_newclassums do you want?";
+	echo "<BR>\n";
+
+	echo "  </td>\n";
+	echo "  </tr>\n";
+	echo "</table>\n";
+	echo "</TD>\n";
+	echo "</TR>\n";
+	echo "<TR>\n";
+	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
+	echo "	<hr />\n";
+	echo getSubmitForm("Run Imagic");
+	echo "  </td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+
+
+
 	processing_footer();
 	exit;
 }
@@ -161,9 +242,12 @@ function generateProcessedClasses() {
 	$new_classums = $_POST['new_classums'];
 	$outdir = $_POST['outdir'];
 	$runid = $_POST['runid'];
+	$description = $_POST['description'];
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	$command = "$outdir/$runid/{$runid}_imagicReclassifyClassums.job";
+
 
 	// get stack values
 	$stackinfo = explode('|--|', $_POST['opvals']);
@@ -182,7 +266,10 @@ function generateProcessedClasses() {
 	$text = "";
 	$text .= "imagicReclassifyClassums.py";
 	$text .= " --norefclassid=$classid --runid=$runid --oldstack=$filename --lp=$lpfilt";
-	$text .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter --numaverages=$new_classums";
+	$text .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter";
+	$text .= " --numaverages=$new_classums --description=\"$description\"";
+	if ($commit) $text .= " --commit\n";
+	else $text.=" --no-commit\n";
 
 	// write to jobfile
 	$jobfile = "{$runid}_imagicReclassifyClassums.job";
