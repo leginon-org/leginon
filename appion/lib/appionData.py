@@ -956,6 +956,7 @@ class ApRctRunData(Data):
 			('path', ApPathData),
 			('tiltstack', ApStackData),
 			('norefclass', ApNoRefClassRunData),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 
