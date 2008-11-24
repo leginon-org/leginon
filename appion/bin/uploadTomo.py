@@ -14,6 +14,7 @@ import apDisplay
 import apDatabase
 import apRecon
 import apVolume
+import apProject
 
 #=====================
 #=====================
@@ -136,7 +137,7 @@ class UploadTomoScript(appionScript.AppionScript):
 				shutil.copyfile(self.params['image'], self.params['outdir']+'/snapshot.png')			
 
 		### upload Initial Tomo
-		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
+		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 		
 		### inserting tomogram
 		apUpload.insertTomo(self.params)

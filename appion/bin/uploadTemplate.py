@@ -17,6 +17,7 @@ import apDatabase
 import appionData
 import apDB
 import apEMAN
+import apProject
 
 
 appiondb = apDB.apdb
@@ -175,7 +176,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		# copy templates to final location
 		apTemplate.copyTemplatesToOutdir(self.params, self.timestamp)
 
-		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
+		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		# insert templates to database
 		apTemplate.insertTemplateImage(self.params)

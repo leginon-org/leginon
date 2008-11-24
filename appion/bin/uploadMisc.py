@@ -12,6 +12,7 @@ import apDisplay
 import apUpload
 import appionData
 import apFile
+import apProject
 
 #=====================
 #=====================
@@ -60,11 +61,11 @@ class UploadMiscScript(appionScript.AppionScript):
 			miscq['refinementRun'] = self.recondata
 			sessiondata = apRecon.getSessionDataFromReconId(self.params['reconid'])
 			miscq['session'] = sessiondata
-			projectid = apDatabase.getProjectIdFromSessionName(sessiondata['name'])
+			projectid = apProject.getProjectIdFromSessionName(sessiondata['name'])
 			miscq['project|projects|project'] = projectid
 		elif self.params['session'] is not None:
 			miscq['session'] = self.sessiondata
-			projectid = apDatabase.getProjectIdFromSessionName(self.params['session'])
+			projectid = apProject.getProjectIdFromSessionName(self.params['session'])
 			miscq['project|projects|project'] = projectid
 		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		miscq['name'] = self.filename
@@ -86,7 +87,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			print "Associated with",self.recondata['name'],":",self.recondata['path']
 		if self.params['session'] is not None:
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-			self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
+			self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		self.filename = os.path.basename(self.params['file'])
 		self.newfile = os.path.join(self.params['outdir'], self.filename)

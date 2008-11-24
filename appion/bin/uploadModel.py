@@ -14,6 +14,7 @@ import apDisplay
 import apDatabase
 import apRecon
 import apVolume
+import apProject
 
 #=====================
 #=====================
@@ -235,7 +236,7 @@ class UploadModelScript(appionScript.AppionScript):
 			shutil.copyfile(origmodelpath, newmodelpath)
 
 		### upload Initial Model
-		self.params['projectId'] = apDatabase.getProjectIdFromSessionName(self.params['session'])
+		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
 		initmodel={}

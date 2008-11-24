@@ -11,7 +11,6 @@ import sinedon
 import sinedon.data as data
 #leginon
 import leginondata
-import project
 #appion
 import apDB
 import apDisplay
@@ -478,17 +477,6 @@ def queryDirectory(path):
 	pathq['path'] = os.path.abspath(path)
 	pathdata = pathq.query()
 	return pathdata
-
-def getProjectIdFromSessionName(sessionname):
-	projectdata = project.ProjectData()
-	projects = projectdata.getProjectExperiments()
-	for i in projects.getall():
-		if i['name'] == sessionname:
-			projectid = i['projectId']
-	if not projectid:
-		apDisplay.printError("no project associated with session "+sessionname)
-	apDisplay.printMsg("Found project id="+str(projectid)+" for session "+sessionname)
-	return projectid
 
 
 if __name__ == '__main__':
