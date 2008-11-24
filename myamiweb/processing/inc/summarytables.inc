@@ -15,29 +15,47 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
 function stacksummarytable($stackid) {
+	$particle = new particledata();
+	$expId = $_GET['expId'];
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$stacktable .= "<form name='stackform' method='post' action='$formAction'>\n";
+
 	if ($_POST['updateDesc'.$stackid])
 		updateDescription('ApStackData', $stackid, $_POST['newdescription'.$stackid]);
-	$s=$particle->getStackParams($stackid);
-	# get list of stack parameters from database
-	$nump=$particle->getNumStackParticles($stackid);
-	if ($nump == 0) return;
-	$j = "Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
-		.$s['shownstackname']."</a> (ID: $stackid)";
-	if ($hidden) $j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>";
-	else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>";
 
-	// if particles were centered, find out info about original stack
-	if ($s['name'] == 'ali.hed' || $s['name'] == 'ali.img') {
-		$centered=True;
-		$oldnump=$particle->getNumStackParticles($s[0]['stackId']);
+	if ($_POST['hideStack'.$stackid]) {
+		$particle->updateHide('ApStackData',$stackid,1);
+		$stack['hidden']=1;
+	} elseif ($_POST['unhideStack'.$stackid]) {
+		$particle->updateHide('ApStackData',$stackid,0);
+		$stack['hidden']='';
 	}
+
+	// get list of stack parameters from database
+	$stackdata = $particle->getStackParams($stackid);
+
+	$numpart = $particle->getNumStackParticles($stackid);
+	if ($numpart == 0) return;
+
+	$j = "Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
+		.$stackdata['shownstackname']."</a> (ID: $stackid)";
+	if ($stackdata['hidden'] == 1) {
+		$j.= " <font color='#cc0000'>HIDDEN</font>";
+		$j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+	} else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>";
 
 	$stacktable.= apdivtitle($j);
 
-	$stacktable.= "<table border='0' width='600'>\n";
-	$stackavg = $s['path']."/average.mrc";
-	$badstackavg = $s['path']."/badaverage.mrc";
-	$montage = $s['path']."/montage".$s['DEF_id'].".png";
+	// if particles were centered, set centered variable
+	if ($stackdata['centered'] == 1) {
+		$centered = True;
+	}
+
+	$stacktable.= "<table border='0' width='700'>\n";
+	$stackavg = $stackdata['path']."/average.mrc";
+	$badstackavg = $stackdata['path']."/badaverage.mrc";
+	$montage = $stackdata['path']."/montage".$stackdata['DEF_id'].".png";
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
@@ -61,63 +79,69 @@ function stacksummarytable($stackid) {
 		}
 		$stacktable.= "</tr>\n\n";
 	} #endif
-	# get pixel size of stack
+
+	// get pixel size of stack
 	$mpix=($particle->getStackPixelSizeFromStackId($stackid));
 	$apix=format_angstrom_number($mpix)."/pixel";
 
-	# get box size
-	$boxsz=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+	// get box size
+	$boxsz=($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
 	$boxsz.=" pixels";
 	
-	# add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($stackid,$s['description']) : $s['description'];
+	// add edit button to description if logged in
+	$descDiv = ($_SESSION['username']) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
 
 	$display_keys['description']=$descDiv;
 
+	// Show number of particles
 	if ($centered) {
-		$display_keys['# good prtls']=commafy($nump);
-		$display_keys['# bad prtls']=commafy($oldnump-$nump);
-	}
-	else $display_keys['# prtls']=commafy($nump);
+		$oldnumpart = $particle->getNumStackParticles($stackdata['REF|ApStackData|oldstack']);
+		$display_keys['# good prtls']=commafy($numpart);
+		$display_keys['# bad prtls']=commafy($oldnumpart-$numpart);
+	} else 
+		$display_keys['# prtls']=commafy($numpart);
 
-	if (substr($s['name'], -4) == ".hed")
-		$stackimgfile = $s['path']."/".substr($s['name'], 0, -4).".img";
+	// Get filesize
+	if (substr($stackdata['name'], -4) == ".hed")
+		$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
 	else
-		$stackimgfile = $s['path']."/".$s['name'];
-	$display_keys['file size'] = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
+		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
+	if (filesize($stackimgfile) > 1073741824)
+		$display_keys['file size'] = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
+	else
+		$display_keys['file size'] = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
 
-	$stackfile = $s['path']."/".$s['name'];
-	$display_keys['path']=$s['path'];
+	$stackfile = $stackdata['path']."/".$stackdata['name'];
+	$display_keys['path']=$stackdata['path'];
 	$display_keys['name']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>"
-		.$s['name']."</A>";
+		.$stackdata['name']."</A>";
 	# if stack was created by cenalignint, also view avg & bad stacks
 	if ($centered) {
-		$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$s['path']
+		$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
 			."/avg.hed&expId=$expId'>avg.hed</A>";
-		$display_keys['bad particles']="<a target='stackview' HREF='viewstack.php?file=".$s['path']
+		$display_keys['bad particles']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
 			."/bad.hed&expId=$expId'>bad.hed</A>";
 	}
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;
 
 	# use values from first of the combined run, if any for now	
-	$s = $s[0];
-	$pflip = ($s['phaseFlipped']==1) ? "Yes" : "No";
-	if ($s['aceCutoff']) $pflip.=" (ACE > $s[aceCutoff])";
+	$pflip = ($stackdata['phaseFlipped']==1) ? "Yes" : "No";
+	if ($stackdata['aceCutoff']) $pflip.=" (ACE > $stackdata[aceCutoff])";
 	
 	$display_keys['phase flipped']=$pflip;
-	if ($s['correlationMin']) $display_keys['correlation min']=$s['correlationMin'];
-	if ($s['correlationMax']) $display_keys['correlation max']=$s['correlationMax'];
-	if ($s['minDefocus']) $display_keys['min defocus']=$s['minDefocus'];
-	if ($s['maxDefocus']) $display_keys['max defocus']=$s['maxDefocus'];
-	$display_keys['density']=($s['inverted']==1) ? 'light on dark background':'dark on light background';
-	$display_keys['normalization']=($s['normalized']==1) ? 'On':'Off';
-	$display_keys['file type']=$s['fileType'];
+	if ($stackdata['correlationMin']) $display_keys['correlation min']=$stackdata['correlationMin'];
+	if ($stackdata['correlationMax']) $display_keys['correlation max']=$stackdata['correlationMax'];
+	if ($stackdata['minDefocus']) $display_keys['min defocus']=$stackdata['minDefocus'];
+	if ($stackdata['maxDefocus']) $display_keys['max defocus']=$stackdata['maxDefocus'];
+	$display_keys['density']=($stackdata['inverted']==1) ? 'Inverted':'Not inverted';
+	$display_keys['normalization']=($stackdata['normalized']==1) ? 'On':'Off';
+	//$display_keys['file type']=$stackdata['fileType'];
 	foreach($display_keys as $k=>$v) {
 	        $stacktable.= formatHtmlRow($k,$v);
 	}
 	$stacktable.= "</table>\n";
-	$stacktable.= "<p>\n";
+	$stacktable.= "</form><p>\n";
 	return $stacktable;
 }
 
