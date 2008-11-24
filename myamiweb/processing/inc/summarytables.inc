@@ -37,7 +37,7 @@ function stacksummarytable($stackid) {
 	$numpart = $particle->getNumStackParticles($stackid);
 	if ($numpart == 0) return;
 
-	$j = "Stack: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
+	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
 		.$stackdata['shownstackname']."</a> (ID: $stackid)";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>";
@@ -96,10 +96,9 @@ function stacksummarytable($stackid) {
 	// Show number of particles
 	if ($centered) {
 		$oldnumpart = $particle->getNumStackParticles($stackdata['REF|ApStackData|oldstack']);
-		$display_keys['# good prtls']=commafy($numpart);
-		$display_keys['# bad prtls']=commafy($oldnumpart-$numpart);
+		$display_keys['# particles']= commafy($numpart)." (".commafy($oldnumpart-$numpart)." bad)";
 	} else 
-		$display_keys['# prtls']=commafy($numpart);
+		$display_keys['# particles']=commafy($numpart);
 
 	// Get filesize
 	if (substr($stackdata['name'], -4) == ".hed")
@@ -113,14 +112,14 @@ function stacksummarytable($stackid) {
 
 	$stackfile = $stackdata['path']."/".$stackdata['name'];
 	$display_keys['path']=$stackdata['path'];
-	$display_keys['name']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>"
+	$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>"
 		.$stackdata['name']."</A>";
 	# if stack was created by cenalignint, also view avg & bad stacks
 	if ($centered) {
 		$display_keys['iterative avgs']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
 			."/avg.hed&expId=$expId'>avg.hed</A>";
-		$display_keys['bad particles']="<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
-			."/bad.hed&expId=$expId'>bad.hed</A>";
+		$display_keys['stack file'].=" &nbsp;(<a target='stackview' HREF='viewstack.php?file=".$stackdata['path']
+			."/bad.hed&expId=$expId'>bad.hed</A>)";
 	}
 	$display_keys['box size']=$boxsz;
 	$display_keys['pixel size']=$apix;

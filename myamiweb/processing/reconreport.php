@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
   
 // check if reconstruction is specified
 if (!$reconId = $_GET['reconId'])
@@ -125,7 +126,8 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 	$particle->displayParameters($title,$reconinfo,array(),$expId);
 }
 
-$stackparticles = showStackInfo($stackId, $stackparams, $apix, $expId, $particle);
+// use summarytables.inc
+echo stacksummarytable($stackId);
 
 $initmodelname = showModelInfo($initmodel, $expId, $particle);
 
