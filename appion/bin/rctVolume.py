@@ -15,6 +15,7 @@ import appionData
 import apEMAN
 import apFile
 import apRecon
+import apProject
 from apTilt import apTiltPair
 from apSpider import operations, backproject
 
@@ -167,6 +168,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['lowpassvol'] = self.params['lowpassvol']
 		rctrunq['highpasspart'] = self.params['highpasspart']
 		rctrunq['description'] = self.params['description']
+		rctrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['tiltstackid'])
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		rctrunq['norefclass'] = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
