@@ -2540,6 +2540,29 @@ class particledata {
 		return $r[0];
 	}
 
+	function getImagic3dRefinementRunsFromSessionId($sessionId) {
+		$q="SELECT "
+			."  refinement.*, "
+			."  path.`path` AS path "
+			."FROM ApImagic3dRefineRunData as refinement "
+			."LEFT JOIN ApPathData AS path "
+			."  ON refinement.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApNoRefClassRunData AS norefclass "
+			."  ON refinement. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "	
+			."LEFT JOIN ApNoRefRunData AS norefrun "
+			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
+			."LEFT JOIN ApStackData AS stack "
+			."  ON norefrun.`REF|ApStackData|stack` = stack.`DEF_id` "
+			."LEFT JOIN ApRunsInStackData AS runsinstack "
+			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS stackrun "
+			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+			."WHERE "
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 
 }
 
