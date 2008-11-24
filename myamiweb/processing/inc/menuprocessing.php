@@ -373,13 +373,17 @@ if ($expId) {
 			'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
 		);
 	}
-
+	
 	/* IMAGIC Common Lines */
+	$numimagicrefinements = count($particle->getImagic3dRefinementRunsFromSessionId($sessionId));
+	$refineresults = ($numimagicrefinements==0) ? "" : "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$numimagicrefinements complete</a>"; 
 	if ($norefdone >= 1) {
 		$nruns[]=array(
-			'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Common Lines</a>"
+			'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Common Lines</a>",
+			'result'=>$refineresults,
 		);
 	}
+
 
 	/* 3d Density Volumes */
 	$threedvols = $particle->get3dDensitysFromSession($sessionId);
