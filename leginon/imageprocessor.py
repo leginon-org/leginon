@@ -17,7 +17,7 @@ class ImageProcessor(node.Node):
 	panelclass = gui.wx.ImageProcessor.Panel
 	settingsclass = leginondata.ImageProcessorSettingsData
 	defaultsettings = {
-		'process': True,
+		'process': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
