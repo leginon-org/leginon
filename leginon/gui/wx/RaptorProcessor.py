@@ -48,10 +48,13 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sb = wx.StaticBox(self, -1, 'Raptor Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
+		self.widgets['process'] = wx.CheckBox(self, -1,
+																			'Process images when event received')
 		self.widgets['path'] = Entry(self, -1)
 		self.widgets['time'] = IntEntry(self, -1)
 		self.widgets['binning'] = IntEntry(self, -1)
 
+		sbsz.Add(self.widgets['process'])
 		sbsz.Add(self.widgets['path'])
 		sbsz.Add(self.widgets['time'])
 		sbsz.Add(self.widgets['binning'])
@@ -61,7 +64,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'FFT Maker Test')
+			frame = wx.Frame(None, -1, 'Raptor Processor Test')
 			panel = Panel(frame, 'Test')
 			frame.Fit()
 			self.SetTopWindow(frame)
