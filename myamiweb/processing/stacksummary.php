@@ -22,13 +22,10 @@ if ($_GET['showHidden']) $formAction.="&showHidden=True";
 
 $javascript.= editTextJava();
 
-processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascript, False);
+processing_header("Stack Report","Stack Summary Page", $javascript, False);
 
 // --- Get Stack Data --- //
 $particle = new particledata();
-
-// find each stack entry in database
-//$stackIds = $particle->getAlignStackIds($expId, True);
 if (!$_GET['showHidden']) {
 	$stackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, False);
 	$hidestackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, True);
@@ -43,10 +40,12 @@ if (count($stackdatas) != count($hidestackdatas) && !$_GET['showHidden']) {
 }
 
 if ($stackdatas) {
+	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	foreach ($stackdatas as $stackdata) {
 		$stackid = $stackdata['stackid'];
 		echo stacksummarytable($stackid);
 	}
+	echo "</form>";
 } else {
 	echo "<B>Session does not contain any stacks.</B>\n";
 }

@@ -17,33 +17,32 @@ require_once "inc/processing.inc";
 function stacksummarytable($stackid) {
 	$particle = new particledata();
 	$expId = $_GET['expId'];
-	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	$stacktable .= "<form name='stackform' method='post' action='$formAction'>\n";
+	//$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	//$stacktable .= "<form name='stackform' method='post' action='$formAction'>\n";
+	// get list of stack parameters from database
+	$stackdata = $particle->getStackParams($stackid);
 
 	if ($_POST['updateDesc'.$stackid])
 		updateDescription('ApStackData', $stackid, $_POST['newdescription'.$stackid]);
 
-	if ($_POST['hideStack'.$stackid]) {
-		$particle->updateHide('ApStackData',$stackid,1);
-		$stack['hidden']=1;
-	} elseif ($_POST['unhideStack'.$stackid]) {
-		$particle->updateHide('ApStackData',$stackid,0);
-		$stack['hidden']='';
+	if ($_POST['hideStack'.$stackid] == 'hide') {
+		$particle->updateHide('ApStackData', $stackid, '1');
+		$stackdata['hidden']=1;
+	} elseif ($_POST['unhideStack'.$stackid] == 'unhide') {
+		$particle->updateHide('ApStackData', $stackid, '0');
+		$stackdata['hidden']='0';
 	}
-
-	// get list of stack parameters from database
-	$stackdata = $particle->getStackParams($stackid);
 
 	$numpart = $particle->getNumStackParticles($stackid);
 	if ($numpart == 0) return;
 
 	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
-		.$stackdata['shownstackname']."</a> (ID: $stackid)";
+		.$stackdata['shownstackname']."</a> (ID: $stackid)\n";
 	if ($stackdata['hidden'] == 1) {
-		$j.= " <font color='#cc0000'>HIDDEN</font>";
-		$j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>";
+		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+		$j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
-	} else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>";
+	} else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
 
@@ -65,12 +64,12 @@ function stacksummarytable($stackid) {
 		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
-			$stacktable.= "<td rowspan='15' align='center' valign='top'>";
+			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 			$stacktable.= "<img src='loadimg.php?filename=$badstackavg&s=150' height='150'><br/>\n";
 			$stacktable.= "<i>averaged bad stack</i><br/>\n";
 			$stacktable.= "</td>\n";
 		} elseif (file_exists($montage)) {
-			$stacktable.= "<td rowspan='15' align='center' valign='top'>";
+			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 			$stacktable.= "<a href='loadimg.php?filename=$montage'>\n";
 			$stacktable.= "<img border=0 src='loadimg.php?filename=$montage&s=150' height='150'></a><br/>\n";
 			$stacktable.= "<i>mean/stdev montage</i><br/>\n";
@@ -140,7 +139,7 @@ function stacksummarytable($stackid) {
 	        $stacktable.= formatHtmlRow($k,$v);
 	}
 	$stacktable.= "</table>\n";
-	$stacktable.= "</form><p>\n";
+	$stacktable.= "<p>\n";
 	return $stacktable;
 }
 
