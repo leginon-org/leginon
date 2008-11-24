@@ -8,6 +8,7 @@
  */
 
 require_once "config_processing.php";
+//require_once "inc/project.inc";
 require_once "inc/mysql.inc";
 
 define(PARTICLE_DB_HOST, $PARTICLE_DB_HOST);
@@ -1085,7 +1086,46 @@ class particledata {
 		  ."LEFT JOIN ApStackData as st ON "
 		  ."(r.`REF|ApStackData|stack` = st.`DEF_id`) "
 		  ."WHERE s.`REF|leginondata|SessionData|session` = '$sessionId' ";
-		if (!$showHidden) $q.= " AND (st.`hidden` IS NULL OR st.`hidden` = 0) ";
+		if (!$showHidden)
+			$q.= " AND st.`hidden` != 1 ";
+		$q.= "ORDER BY stackid DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getStackIdsWithProjectId ($sessionId, $projectId, $showHidden=False) {
+		// this function is really slow
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT r.`REF|ApStackData|stack` as stackid , st.* "
+		  ."FROM ApRunsInStackData as r "
+		  ."LEFT JOIN ApStackRunData as s ON "
+		  ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		  ."LEFT JOIN ApStackData as st ON "
+		  ."(r.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."WHERE "
+		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ." AND "
+		  ."  r.`project|projects|project` = '$projectId' "
+		  ." AND "
+		  ."  st.`project|projects|project` = '$projectId' ";
+		if (!$showHidden)
+			$q.= " AND st.`hidden` != 1 ";
+		$q.= "ORDER BY stackid DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getAlignStackIds ($sessionId, $showHidden=False) {
+		// this function is really slow
+		$q = "SELECT r.`REF|ApStackData|stack` as stackid , st.* "
+		  ."FROM ApRunsInStackData as r "
+		  ."LEFT JOIN ApStackRunData as s ON "
+		  ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		  ."LEFT JOIN ApStackData as st ON "
+		  ."(r.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."WHERE s.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden)
+			$q.= " AND st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
