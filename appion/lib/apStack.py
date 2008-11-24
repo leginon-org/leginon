@@ -216,7 +216,8 @@ def commitSubStack(params, newname=False, centered=False):
 	stackq['substackname'] = params['runname']
 	stackq['description'] = params['description']
 	stackq['pixelsize'] = oldstackdata['pixelsize']
-	if centered is not False:
+	stackq['project|projects|project'] = oldstackdata['project|projects|project']
+	if centered is True:
 		stackq['centered'] = True
 		if params['mask']:
 			stackq['mask'] = params['mask']
