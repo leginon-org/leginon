@@ -239,12 +239,11 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-				'name'=>"<a href='makestack.php?expId=$sessionId'>Stack creation</a>",
+				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation</a>",
 				'result'=>$sresults,
 				);
 		$nruns[]=array (
-				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation 2.0</a>",
-			       	'result'=>$s2results,
+				'name'=>"<a href='makestack.php?expId=$sessionId'>Old stack creation</a>",
 				);
 
 		$data[]=array(
