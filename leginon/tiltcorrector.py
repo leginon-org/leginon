@@ -268,7 +268,32 @@ class VirtualStageTilter(object):
 			raise RuntimeError(excstr)
 
 	def getStageMatrix(self, tem, cam, ht, mag):
-		return self.getMatrix(tem, cam, ht, mag, 'stage position')
+		try:
+			matrix = self.getMatrix(tem, cam, ht, mag, 'stage position')
+		except RuntimeError, estr:
+			try:
+				self.node.logger.warning(estr)
+			except:
+				print estr
+			matrix = self.makeFakeStageMatrix(tem, cam, mag)
+		return matrix	
+
+	def makeFakeStageMatrix(self, tem, cam, mag):
+		q = data.PixelSizeCalibrationData(tem=tem, ccdcamera=cam, magnification=mag)
+		results = q.query(results=1)
+		if results:
+			pixelsize=results[0]['pixelsize']
+		else:
+			pixelsize= 1.0/mag
+		matrixlist = map((lambda x:x*pixelsize), [1,0,0,1])
+		stagematrix = numpy.array(matrixlist)
+		stagematrix = stagematrix.reshape((2,2))
+		estr = 'Use fake stage position matrix to stretch the image'
+		try:
+			self.node.logger.warning(estr)
+		except:
+			print estr
+		return stagematrix
 	
 	def getImageShiftMatrix(self, tem, cam, ht, mag):
 		return self.getMatrix(tem, cam, ht, mag, 'image shift')
@@ -317,9 +342,7 @@ class VirtualStageTilter(object):
 
 		if abs(alpha) < self.alpha_threshold:
 			return False
-	
 		stagematrix = self.getStageMatrix(tem, cam, ht, mag)
-
 		mat = self.affine_transform_matrix(stagematrix, alpha)
 		scope = imagedata['scope']
 		camera = imagedata['camera']
