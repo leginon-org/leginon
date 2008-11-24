@@ -156,22 +156,22 @@ if ($expId) {
 
 	$nrun=array();
 	$nrun[] = array(
-			'name'=>"<a href='runPySelexon.php?expId=$sessionId'>Template Picking >></a>",
+			'name'=>"<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>",
 			'result'=>$tresults,
 			);
 	$nrun[] = array(
-			'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking >></a>",
+			'name'=>"<a href='runDogPicker.php?expId=$sessionId'>DoG Picking</a>",
 			'result'=>$dresults,
 			);
 	$nrun[] = array(
-			'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking >></a>",
+			'name'=>"<a href='runManualPicker.php?expId=$sessionId'>Manual Picking</a>",
 			'result'=>$mresults,
 			);
 
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
 	if ($maxangle > 5) {
-		$nrun[] ="<a href='tiltAligner.php?expId=$sessionId'>Align and Edit Tilt Pairs >></a>";
-		$nrun[] ="<a href='runTiltAutoAligner.php?expId=$sessionId'>Auto Align Tilt Pairs >></a>";
+		$nrun[] ="<a href='tiltAligner.php?expId=$sessionId'>Align and Edit Tilt Pairs</a>";
+		$nrun[] ="<a href='runTiltAutoAligner.php?expId=$sessionId'>Auto Align Tilt Pairs</a>";
 	}
 
 	$data[]=array(
@@ -202,11 +202,11 @@ if ($expId) {
 
 	$nruns = array();
 	$nruns[] = array(
-			 'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation >></a>",
+			 'name'=>"<a href='runPyAce.php?expId=$sessionId'>ACE Estimation</a>",
 			 'result'=>$ctfresults,
 			 );
 	$nruns[] = array(
-			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation >></a>",
+			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation</a>",
 			'result'=>$ctftiltresults,
 			);
 
@@ -239,11 +239,11 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-				'name'=>"<a href='makestack.php?expId=$sessionId'>Stack creation >></a>",
+				'name'=>"<a href='makestack.php?expId=$sessionId'>Stack creation</a>",
 				'result'=>$sresults,
 				);
 		$nruns[]=array (
-				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation 2.0 >></a>",
+				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation 2.0</a>",
 			       	'result'=>$s2results,
 				);
 
@@ -314,17 +314,17 @@ if ($expId) {
 
 		// spider alignment
 		$nruns[]=array(
-			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>SPIDER Ref-free >></a>",
+			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>SPIDER Ref-free</a>",
 			       'result'=>$norefresults,
 				 );
 		$nruns[] = array(
-				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>SPIDER Ref-based >></a>",
+				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>SPIDER Ref-based</a>",
 				 'result'=>$refbasedresults,
 				 );
 
 		// xmipp max likelihood
 		$nruns[] = array(
-				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp Max Likelihood >></a>",
+				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp Max Likelihood</a>",
 				 'result'=>$maxlikeresults,
 				 );
 
@@ -333,7 +333,7 @@ if ($expId) {
 		if ($totresult > 0) {
 			// imagic reclassifications
 			$nruns[] = array (
-					  'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>IMAGIC Reclassify >></a>",
+					  'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>IMAGIC Reclassify</a>",
 					  'result'=>$sreresults,
 					  );
 		}
@@ -457,7 +457,7 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload Tomogram >></a>",
+				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload Tomogram</a>",
 				'result'=>$sresults,
 				);
 		
@@ -476,7 +476,7 @@ if ($expId) {
 
 	$nruns=array();
 	$nruns[]=array(
-		       'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template >></a>",
+		       'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
 		       'result'=>$result,
 		       );
 
@@ -484,7 +484,7 @@ if ($expId) {
 	  "<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
 
 	$nruns[]=array(
-		       'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model >></a>",
+		       'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
 		       'result'=>$result,
 		       );
 
@@ -504,10 +504,10 @@ if ($expId) {
 		$result .= "</a>";
 	}
 
-	$nrun = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment >></a>";
+	$nrun = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment</a>";
 	$nruns=array();
 	$nruns[]=$nrun;
-	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector >></a>";
+	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector</a>";
 
 	$data[]=array(
 		'action'=>array($action, $celloption),
@@ -519,10 +519,10 @@ if ($expId) {
 	$result = ($maskruns==0) ? "" :
 			"<a href='maskreport.php?expId=$sessionId'>$maskruns</a>";
 	$nruns=array();
-	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding >></a>";
+	$nrun = "<a href='runMaskMaker.php?expId=$sessionId'>Crud Finding</a>";
 	$nruns[]=$nrun;
 	$nrun = "<a href='manualMaskMaker.php?expId=$sessionId'>";
-	$nrun .= "Manual Masking >>";
+	$nrun .= "Manual Masking";
 	$nrun .= "</a>";
 	$nruns[]=$nrun;
 
