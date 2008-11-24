@@ -278,6 +278,7 @@ class ApRunsInStackData(Data):
 		return Data.typemap() + (
 			('stack', ApStackData),
 			('stackRun' , ApStackRunData),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRunsInStackData=ApRunsInStackData

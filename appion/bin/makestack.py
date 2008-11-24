@@ -25,6 +25,7 @@ import apXml
 import apImage
 import apDefocalPairs
 import apStack
+import apProject
 import apEMAN
 try:
 	import apMatlab
@@ -435,7 +436,7 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 			# save the particles to the database
 			if params['commit']:
 				stackpq=appionData.ApStackParticlesData()
-				stackpq['stack']=params['stackId']
+				stackpq['stack']=params['stackdata']
 				stackpq['stackRun']=params['stackRun']
 				stackpq['particle']=prtl
 				params['particleNumber'] += 1
@@ -466,7 +467,7 @@ def saveIndvParticles(particle,shift,dbbox,params,imgdict):
 		# save the particles to the database
 		if params['commit']:
 			stackpq=appionData.ApStackParticlesData()
-			stackpq['stack']=params['stackId']
+			stackpq['stack']=params['stackdata']
 			stackpq['stackRun']=params['stackRun']
 			stackpq['particle']=particle
 			params['particleNumber'] += 1
@@ -739,8 +740,8 @@ def insertStackRun(params):
 	stackq['hidden'] = False
 	stackq['pixelsize'] = params['apix']*params['bin']*1e-10
 	
-	params['stackId']=stackq
-
+	params['stackdata']
+	
 	runids = apdb.query(runq, results=1)
 	# recreate a stackRun object
 	runq = appionData.ApStackRunData()
@@ -757,13 +758,14 @@ def insertStackRun(params):
 	rinstackq = appionData.ApRunsInStackData()
 
 	rinstackq['stackRun']=params['stackRun']
-	rinstackq['stack']=params['stackId']
+	rinstackq['stack'] = stackq
+	rinstackq['project|projects|project'] = apProject.getProjectIdFromSessionName(params['sessionid']['name'])
 
 	# if not in the database, make sure run doesn't already exist
 	if not stacks:
 		if not runids:
 			print "Inserting stack parameters into DB"
-			apdb.insert(rinstackq)
+			rinstackq.insert()
 		else:
 			apDisplay.printError("Run name '"+params['runid']+"' already in the database")
 	
@@ -779,7 +781,7 @@ def insertStackRun(params):
 		## if no runinstack found, find out which parameters are wrong:
 		if not rinstack:
 			rinstackq = appionData.ApRunsInStackData()
-			rinstackq['stack'] = apdb.query(params['stackId'])[0]
+			rinstackq['stack'] = stackq.query()[0]
 			correct_rinstack=apdb.query(rinstackq)
 			for i in correct_rinstack[0]['stackRun']['stackParams']:
 				if correct_rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:

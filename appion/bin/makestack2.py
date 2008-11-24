@@ -26,6 +26,7 @@ import apParticle
 import apStackMeanPlot
 import apDog
 import apEMAN
+import apProject
 import apFile
 import leginondata
 #legacy
@@ -644,7 +645,7 @@ class makestack (appionLoop.AppionLoop):
 
 	def createStackParticle(self,prtl):
 		stackpq=appionData.ApStackParticlesData()
-		stackpq['stack']=self.params['stackId']
+		stackpq['stack']=self.stackdata
 		stackpq['stackRun']=self.params['stackRun']
 		stackpq['particle']=prtl
 		self.params['particleNumber'] += 1
@@ -808,7 +809,7 @@ class makestack (appionLoop.AppionLoop):
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*self.params['bin']*1e-10
 	
-		self.params['stackId']=stackq
+		self.stackdata = stackq
 
 		runids = apdb.query(runq, results=1)
 		# recreate a stackRun object
@@ -826,7 +827,8 @@ class makestack (appionLoop.AppionLoop):
 		rinstackq = appionData.ApRunsInStackData()
 
 		rinstackq['stackRun']=self.params['stackRun']
-		rinstackq['stack']=self.params['stackId']
+		rinstackq['stack'] = stackq
+		rinstackq['project|projects|project'] = apProject.getProjectIdFromSessionName(self.params['session']['name'])
 
 		#print stacks[0]['path']
 
@@ -852,7 +854,7 @@ class makestack (appionLoop.AppionLoop):
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
 				rinstackq = appionData.ApRunsInStackData()
-				rinstackq['stack'] = apdb.query(self.params['stackId'])[0]
+				rinstackq['stack'] = stackq.query()[0]
 				correct_rinstack=apdb.query(rinstackq)
 				for i in correct_rinstack[0]['stackRun']['stackParams']:
 					if correct_rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
@@ -907,7 +909,6 @@ class makestack (appionLoop.AppionLoop):
 		self.params['ctftilt']=False
 		self.params['highpass']=None
 		self.params['boxfiles']=False
-		self.params['stackId']=None
 		self.params['stackRun']=None
 
 	def specialParseParams(self,args):
