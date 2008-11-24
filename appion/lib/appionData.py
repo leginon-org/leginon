@@ -269,6 +269,7 @@ class ApStackData(Data):
 			('centered', bool),
 			('mask', int),
 			('maxshift', int),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackData=ApStackData

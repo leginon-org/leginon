@@ -808,7 +808,8 @@ class makestack (appionLoop.AppionLoop):
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*self.params['bin']*1e-10
-	
+		stackq['project|projects|project'] = apProject.getProjectIdFromSessionName(self.params['session']['name'])
+
 		self.stackdata = stackq
 
 		runids = apdb.query(runq, results=1)

@@ -739,7 +739,8 @@ def insertStackRun(params):
 	stackq['description'] = params['description']
 	stackq['hidden'] = False
 	stackq['pixelsize'] = params['apix']*params['bin']*1e-10
-	
+	stackq['project|projects|project'] = apProject.getProjectIdFromSessionName(params['sessionid']['name'])
+
 	params['stackdata']
 	
 	runids = apdb.query(runq, results=1)
