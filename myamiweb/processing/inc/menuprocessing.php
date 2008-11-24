@@ -265,6 +265,7 @@ if ($expId) {
 		$norefq = count($subclusterjobs['norefali']['queued']);
 
 		$norefdone = ($norefruns > $norefdone) ? $norefruns : $norefdone;
+
 		// get ref-free alignment stats:
 		$norefclresults=array();	
 		$norefcldone = count($subclusterjobs['norefclass']['done']);
@@ -281,21 +282,6 @@ if ($expId) {
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
 		// get ref-based alignment stats:
-		$maxlikealiresults=array();	
-		$maxlikealidone = count($subclusterjobs['maxlikeali']['done']);
-		$maxlikealirun = count($subclusterjobs['maxlikeali']['running']);
-		$maxlikealiq = count($subclusterjobs['maxlikeali']['queued']);
-
-		$norbaseddone = ($maxlikealiruns > $maxlikealidone) ? $maxlikealiruns : $maxlikealidone;
-		$maxlikealiresults[] = ($maxlikealidone==0) ? "" : "<a href='maxlikesummary.php?expId=$sessionId'>$maxlikealidone complete</a>";
-		$maxlikealiresults[] = ($maxlikealirun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikealirun running</a>";
-		$maxlikealiresults[] = ($maxlikealiq==0) ? "" : "$maxlikealiq queued";
-
-		// stacks being created and stacks completed
-		$totmaxlikeali = $maxlikealidone+$maxlikealirun+$maxlikealiq;
-
-
-		// get ref-based alignment stats:
 		$refbasedresults=array();	
 		$refbaseddone = count($subclusterjobs['refbasedali']['done']);
 		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
@@ -306,35 +292,52 @@ if ($expId) {
 		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
 		$refbasedresults[] = ($refbasedq==0) ? "" : "$refbasedq queued";
 
+		// get max-likelihood alignment stats:
+		$maxlikealiresults=array();	
+		$maxlikealidone = count($subclusterjobs['maxlikeali']['done']);
+		$maxlikealirun = count($subclusterjobs['maxlikeali']['running']);
+		$maxlikealiq = count($subclusterjobs['maxlikeali']['queued']);
+
+		$norbaseddone = ($maxlikealiruns > $maxlikealidone) ? $maxlikealiruns : $maxlikealidone;
+		$maxlikealiresults[] = ($maxlikealidone==0) ? "" : "<a href='maxlikesummary.php?expId=$sessionId'>$maxlikealidone complete</a>";
+		$maxlikealiresults[] = ($maxlikealirun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikealirun running</a>";
+		$maxlikealiresults[] = ($maxlikealiq==0) ? "" : "$maxlikealiq queued";
+
+
 		// get imagic reclassifications
 		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
 		$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>"; 
 
-		// stacks being created and stacks completed
-		$totrefbased = $refbaseddone+$refbasedrun+$refbasedq;
-
-		$totresult = $totnoref+$totrefbased;
+		$totresult = $norefdone+$refbaseddone+$maxlikealidone;
 
 		$nruns=array();
 
+		// spider alignment
 		$nruns[]=array(
-			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>Ref-free Alignment >></a>",
+			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>SPIDER Ref-free >></a>",
 			       'result'=>$norefresults,
 				 );
 		$nruns[] = array(
-				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>Ref-based Alignment >></a>",
+				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>SPIDER Ref-based >></a>",
 				 'result'=>$refbasedresults,
 				 );
+
+		// xmipp max likelihood
 		$nruns[] = array(
-				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp ML Alignment >></a>",
+				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp Max Likelihood >></a>",
 				 'result'=>$maxlikeresults,
 				 );
 
-		// imagic reclassifications
-		$nruns[] = array (
-			'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>Reclassify Class Sums >></a>",
-			'result'=>$sreresults,
-				 );
+		// only give option of reclassification if ref-free
+		// stacks exist
+		if ($totresult > 0) {
+			// imagic reclassifications
+			$nruns[] = array (
+					  'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>IMAGIC Reclassify >></a>",
+					  'result'=>$sreresults,
+					  );
+		}
+
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array($totresult),
@@ -357,10 +360,12 @@ if ($expId) {
 
 	/* RCT Volumes */
 	$numrctvols = $particle->getNumberOfRctRuns($sessionId);
+	$nrct = ($numrctfvols > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>" : '';
+
 	if ($norefdone >= 1 && $stackruns >= 2) {
 		$nruns[]=array(
 			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
-			'result'=>"<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>",
+			'result'=>$nrct,
 		);
 	}
 
