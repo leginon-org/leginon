@@ -965,6 +965,7 @@ class ApRctRunData(Data):
 class ApImagicReclassifyData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('project|projects|project', int),
 			('runname', str),
 			('norefclass', ApNoRefClassRunData),
 			('lowpass', float),
@@ -982,6 +983,7 @@ class ApImagicReclassifyData(Data):
 class ApImagic3d0Data(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('project|projects|project', int),
 			('name', str),
 			('runname', str),
 			('norefclass', ApNoRefClassRunData),
@@ -1010,7 +1012,9 @@ class ApImagic3d0Data(Data):
 class ApImagic3dRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('project|projects|project', int),
 			('runname', str),
+			('norefclass', ApNoRefClassRunData),
 			('imagic3d0run', ApImagic3d0Data),
 			('boxsize', int),
 			('pixelsize', float),
