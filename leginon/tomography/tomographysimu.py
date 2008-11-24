@@ -169,10 +169,15 @@ class TomographySimu(acquisition.Acquisition):
 				seriesnumbers.append(result['number'])
 		return seriesnumbers
 
+	def getTiltSeriesTargetList(self):
+		self.targetlist = self.tiltimagedata[0][0]['target']['list']
+		self.reportTargetListDone(self.targetlist,'done')
+
 	def update(self):
 		try:
 			self.getTiltSeries()
 			self.getTiltImagedata()
+			self.getTiltSeriesTargetList()
 			self.tilts.update(equally_sloped=self.settings['equally sloped'],
 							  min=math.radians(self.settings['tilt min']),
 							  max=math.radians(self.settings['tilt max']),
