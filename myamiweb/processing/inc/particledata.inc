@@ -1115,15 +1115,21 @@ class particledata {
 		return $r;
 	}
 
-	function getAlignStackIds ($sessionId, $showHidden=False) {
+	function getAlignStackIds ($sessionId, $projectId, $showHidden=False) {
 		// this function is really slow
-		$q = "SELECT r.`REF|ApStackData|stack` as stackid , st.* "
-		  ."FROM ApRunsInStackData as r "
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT ast.`DEF_id` as alignstackid"
+		  ."FROM ApAlignStackData as ast "
 		  ."LEFT JOIN ApStackRunData as s ON "
 		  ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
 		  ."LEFT JOIN ApStackData as st ON "
 		  ."(r.`REF|ApStackData|stack` = st.`DEF_id`) "
-		  ."WHERE s.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		  ."WHERE "
+		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ." AND "
+		  ."  r.`project|projects|project` = '$projectId' "
+		  ." AND "
+		  ."  st.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
