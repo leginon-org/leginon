@@ -24,3 +24,4 @@ do
         fi
 done
 
+echo "rsync -vaPCn lib/ /ami/sw/packages/pyappion/lib/"
