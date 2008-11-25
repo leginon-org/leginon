@@ -8,6 +8,7 @@ import math
 import shutil
 import re
 import glob
+import numpy
 import cPickle
 #appion
 import appionScript
@@ -241,6 +242,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		i = 0
 		t0 = time.time()
 		apDisplay.printMsg("rotating and shifting particles at "+time.asctime())
+		alignstack = []
 		while i < len(partlist):
 			partimg = imagesdict['images'][i]
 			partdict = partlist[i]
@@ -250,18 +252,18 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
 			xyshift = (partdict['xshift'], partdict['yshift'])
 			alignpartimg = apImage.rotateThenShift(partimg, rot=partdict['inplane'], shift=xyshift)
-			partfile = "partimg%06d.spi"%(partnum)
-			spider.write(alignpartimg, partfile)
-			operations.addParticleToStack(partnum, partfile, spiderstackfile)
-			apFile.removeFile(partfile)
+			alignstack.append(alignpartimg)
+			#partfile = "partimg%06d.spi"%(partnum)
+			#spider.write(alignpartimg, partfile)
+			#operations.addParticleToStack(partnum, partfile, spiderstackfile)
+			#apFile.removeFile(partfile)
 			i += 1
-			if i%25 == 0:
+			if i%250 == 0:
 				avgtime = apDisplay.timeString((time.time()-t0)/float(i))
 				remain = apDisplay.timeString((time.time()-t0)*(len(partlist)-i)/i)
 				apDisplay.printMsg("part num: %6d of %6d, avg/remain time: %s/%s"%(i,len(partlist),avgtime,remain))
-			if i > 1400:
-				sys.exit(1)
-	
+		alignstackarray = numpy.asarray(alignstack)
+		apImagicFile.writeImagic(alignstackarray, "alignstack.hed")
 
 	#=====================
 	def start(self):
