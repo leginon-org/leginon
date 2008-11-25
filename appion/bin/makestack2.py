@@ -28,6 +28,7 @@ import apDog
 import apEMAN
 import apProject
 import apFile
+import apImagicFile
 import leginondata
 #legacy
 #import selexonFunctions  as sf1
@@ -366,7 +367,7 @@ class makestack (appionLoop.AppionLoop):
 							cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, outputtemp, self.params['boxSize'])
 							apEMAN.executeEmanCmd(cmd)
 							
-							imagic = apStack.readImagic(output)
+							imagic = apImagicFile.readImagic(output)
 							for j in range(len(imagic['images'])):
 								part = imagic['images'][i]
 								dbparts[j]['mean'] = part.mean()
@@ -564,7 +565,7 @@ class makestack (appionLoop.AppionLoop):
 			apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 			apEMAN.executeEmanCmd(cmd)
 			
-			imagic = apStack.readImagic(output)
+			imagic = apImagicFile.readImagic(output)
 			for i in range(len(imagic['images'])):
 				part = imagic['images'][i]
 				dbparts[i]['mean'] = part.mean()

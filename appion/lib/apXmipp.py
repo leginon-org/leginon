@@ -12,7 +12,7 @@ import apFile
 import apParam
 import apEMAN
 import apTemplate
-import apStack
+import apImagicFile
 from pyami import spider
 
 def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
@@ -43,7 +43,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 	i = 0
 
 	curdir = os.path.join(partdir,str(subdir))
-	stackimages = apStack.readImagic(stackfile)
+	stackimages = apImagicFile.readImagic(stackfile)
 
 	t0 = time.time()
 	while i < numpart:

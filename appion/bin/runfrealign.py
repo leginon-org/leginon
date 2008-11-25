@@ -10,6 +10,7 @@ import apCtf
 from pyami import mrc
 import threading
 import glob
+import apImagicFile
 
 apdb=apDB.apdb
 workingstackname="start.hed"
@@ -229,7 +230,7 @@ This may only be necessary on 64-bit machine
 	return h
 
 def imagicToMrc(stackname,mrcname):
-	stackdict=apStack.readImagic(stackname)
+	stackdict=apImagicFile.readImagic(stackname)
 	#force machine stamp integer
 	print "forcing machine stamp"
 	h=forceMrcHeader(array=stackdict['images'])
