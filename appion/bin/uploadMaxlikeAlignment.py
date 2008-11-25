@@ -12,16 +12,16 @@ import cPickle
 #appion
 import appionScript
 import apDisplay
-import apAlignment
 import apFile
 import apParam
-import apTemplate
 import apStack
+import apImage
 import apEMAN
-import apXmipp
+import apImagicFile
 from apSpider import operations
 import appionData
 import apProject
+from pyami import spider
 
 #=====================
 #=====================
@@ -90,12 +90,17 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printError("could not find doc file to read angles")
 		docfile = files[0]
 		f = open(docfile, "r")
+		mininplane = 180.0
 		for line in f:
 			if line[:2] == ' ;':
 				continue
 			spidict = operations.spiderInLine(line)
 			partdict = self.spidict2partdict(spidict)
+			if partdict['inplane'] < mininplane:
+				mininplane = partdict['inplane']
 			partlist.append(partdict)
+		for partdict in partlist:
+			partdict['inplane'] = partdict['inplane']-mininplane
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
 		return partlist
 
@@ -226,6 +231,39 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
+	def createAlignedStacks(self, stackid, partlist):
+		stackdata = apStack.getOnlyStackData(stackid)
+		origstackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
+		imagesdict = apImagicFile.readImagic(origstackfile)
+		spiderstackfile = os.path.join(self.params['outdir'], "alignstack.spi")
+		apFile.removeFile(spiderstackfile)
+
+		i = 0
+		t0 = time.time()
+		apDisplay.printMsg("rotating and shifting particles at "+time.asctime())
+		while i < len(partlist):
+			partimg = imagesdict['images'][i]
+			partdict = partlist[i]
+			partnum = i+1
+			#print partnum, partdict, partimg.shape
+			if partdict['partnum'] != partnum:
+				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
+			xyshift = (partdict['xshift'], partdict['yshift'])
+			alignpartimg = apImage.rotateThenShift(partimg, rot=partdict['inplane'], shift=xyshift)
+			partfile = "partimg%06d.spi"%(partnum)
+			spider.write(alignpartimg, partfile)
+			operations.addParticleToStack(partnum, partfile, spiderstackfile)
+			apFile.removeFile(partfile)
+			i += 1
+			if i%25 == 0:
+				avgtime = apDisplay.timeString((time.time()-t0)/float(i))
+				remain = apDisplay.timeString((time.time()-t0)*(len(partlist)-i)/i)
+				apDisplay.printMsg("part num: %6d of %6d, avg/remain time: %s/%s"%(i,len(partlist),avgtime,remain))
+			if i > 1400:
+				sys.exit(1)
+	
+
+	#=====================
 	def start(self):
 		### load parameters
 		runparams = self.readRunParameters()
@@ -234,6 +272,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		lastiter = self.findLastIterNumber()
 		self.sortFolder(lastiter)
 		partlist = self.readDocFile(lastiter)
+
+		### create aligned stacks
+		stackfile = self.createAlignedStacks(runparams['stackid'], partlist)
 
 		### insert into databse
 		self.insertRunIntoDatabase(runparams, lastiter)
