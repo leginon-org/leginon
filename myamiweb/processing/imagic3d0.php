@@ -63,8 +63,6 @@ function jobform($extra=false) {
 		echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
 	}
 
-############################
-
 	// get reclassification parameters from reclassId & expId
 	$particle = new particledata();
 	$reclassData = $particle->getImagicReclassFromSessionId($expId);
@@ -156,6 +154,8 @@ function jobform($extra=false) {
 	$numrun+= count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
 	$newrun = $numrun + 1;
 
+	// set commit on by default when first loading page, else set
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// define default variables
 	$outdir = ($_POST[output_directory]) ? $_POST[output_directory] : $outdir;
 	$runid = ($_POST[runid]) ? $_POST[runid] : "model".$newrun;
@@ -177,9 +177,9 @@ function jobform($extra=false) {
 		<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
 		<b> $doc_description</b><BR/><textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
 	echo closeRoundBorder();
-	echo "</td></tr></TABLE><br />";
+	echo "</td></tr></TABLE>";
 
-	echo "<input type='text' name='choose_projections' value='$newprojections' size='10'> $nbsp $doc_projections <br />\n";
+	echo "<input type='text' name='choose_projections' value='$newprojections' size='10'> $nbsp $doc_projections\n";
 	echo "<input type='hidden' name='fileorig' value=$noreffile>";
 	echo "<input type='hidden' name='norefid' value=$norefId>";
 	echo "<input type='hidden' name='norefClassId' value=$norefClassId>";
@@ -230,7 +230,7 @@ function jobform($extra=false) {
 	// print form with user input for all values
 	echo "<tr>
       		<td bgcolor='$rcol'><b>0</b></td>
-			<td bgcolor='$rcol'><input type='text' NAME='symmetryn' SIZE='4' VALUE='$symmetry'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='symmetryn' SIZE='4' VALUE='$symmetry'></td>
        		<td bgcolor='$rcol'><input type='text' NAME='euler_ang_incn' SIZE='4' VALUE='$euler_ang_inc'></td>
        		<td bgcolor='$rcol'><input type='text' NAME='num_classumsn' SIZE='4' VALUE='$num_classums'></td>
         	<td bgcolor='$rcol'><input type='text' NAME='hamming_windown' SIZE='4' VALUE='$hamming_window'></td>
@@ -239,20 +239,17 @@ function jobform($extra=false) {
         	<td bgcolor='$rcol'><input type='text' NAME='amask_dimn' SIZE='4' value='$amask_dim'>
         	<td bgcolor='$rcol'><input type='text' NAME='amask_lpn' SIZE='4' VALUE='$amask_lp'></td>
         	<td bgcolor='$rcol'><input type='text' NAME='amask_sharpn' SIZE='4' value='$amask_sharp'>
-			<td bgcolor='$rcol'><input type='text' NAME='amask_threshn' SIZE='4' VALUE='$amask_thresh'>
+		<td bgcolor='$rcol'><input type='text' NAME='amask_threshn' SIZE='4' VALUE='$amask_thresh'>
         	<td bgcolor='$rcol'><input type='text' NAME='mrarefs_ang_incn' SIZE='4' VALUE='$mrarefs_ang_inc'></td>
         	<td bgcolor='$rcol'><input type='text' NAME='forw_ang_incn' SIZE='4' VALUE='$forw_ang_inc'></td>
-     	  </tr>\n";
-	echo "</table><BR/><BR/>";
+     	     </tr>\n";
+	echo "</table><BR/>";
 	
-	
-	
+	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo docpop('commit','<B>Commit to Database</B>');
+	echo "<BR/><BR/>";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
-
-
-
-
 
 	processing_footer();
 	exit;
@@ -279,10 +276,11 @@ function create3d0() {
 	$amask_thresh = $_POST['amask_threshn'];
 	$mrarefs_ang_inc = $_POST['mrarefs_ang_incn'];
 	$forw_ang_inc = $_POST['forw_ang_incn'];
+	$description = $_POST['description'];
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	$command = "$outdir/$runid/{$runid}_imagic3d0.job";
-	$description = $_POST['description'];
 
 	// create python command that will launch job
 	$text = "";
@@ -299,7 +297,9 @@ function create3d0() {
 	$text.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 	$text.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
 	$text.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
-	$text.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"\n";
+	$text.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"";
+	if ($commit) $text.= " --commit\n\n";
+	else $text.=" --no-commit\n\n";
 
 	$jobfile = "{$runid}_imagic3d0.job";
 	$tmpjobfile = "/tmp/$jobfile";
