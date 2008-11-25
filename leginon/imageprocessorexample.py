@@ -4,6 +4,7 @@ import os
 class FileNames(imageprocessor.ImageProcessor):
 
 	def processImageList(self, imagelist):
+		self.logger.info('printing filenames as an example')
 		mrc_files = []
 		imagepath = self.session['image path']
 		for imagedata in imagelist:
