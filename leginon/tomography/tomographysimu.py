@@ -64,9 +64,10 @@ class TomographySimu(acquisition.Acquisition):
 		self.prediction = prediction.Prediction()
 		self.simuseries = int(self.settings['simu tilt series'])
 		self.simuseriesdata = self.getTiltSeries()
-		self.getTiltImagedata(self.session,self.simuseriesdata)
-		self.presetdata = self.getTiltSeriesPreset()
-		self.loadPredictionInfo()
+		if self.simuseriesdata is not None:
+			self.getTiltImagedata(self.session,self.simuseriesdata)
+			self.presetdata = self.getTiltSeriesPreset()
+			self.loadPredictionInfo()
 		self.first_tilt_direction = 1
 		fake_settings = {
 		'equally sloped': False,
@@ -93,6 +94,9 @@ class TomographySimu(acquisition.Acquisition):
 		if self.simuseries is None:
 			self.simuseries = 1
 		allseries_num = self.getTiltSeriesNumbers()
+		if len(allseries_num) == 0:
+			self.logger.error('No tilt series in this session')
+			return None
 		if self.simuseries not in allseries_num:
 			self.simuseries = allseries_num[0]
 			self.logger.warning('previously chosen series invalid, reset to %d' % self.simuseries)
@@ -171,7 +175,10 @@ class TomographySimu(acquisition.Acquisition):
 
 	def getTiltSeriesTargetList(self):
 		self.targetlist = self.tiltimagedata[0][0]['target']['list']
-		self.reportTargetListDone(self.targetlist,'done')
+		if self.targetlist is not None:
+			self.reportTargetListDone(self.targetlist,'done')
+		else:
+			self.logger.warning('Tilt Series has no TargetList')
 
 	def update(self):
 		try:
