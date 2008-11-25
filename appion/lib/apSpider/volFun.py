@@ -35,13 +35,21 @@ file with some data:
 
 
 #===============================
-def pdb2vol(pdbfile, apix, box, outfile, dataext="spi"):
+def pdb2vol(pdbfile, apix, box, outfile, dataext=".spi"):
 	### create volume density file from PDB
-	import spyder
-	spider_exe = os.popen("which spider").read().strip()
-	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext, logo=False)
+	if not os.path.exists(pdbfile):
+		apDisplay.printError("Can not find PDB file for conversion")
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	### command request: infile, apix, center (y/n), atoms/temperature, boxsize, outfile 
-	boxsize = "%i %i %i" %(box, box, box)
-	mySpider.toSpider("CP FROM PDB", pdbfile, apix, "Y", "A", boxsize, outfile)
+	boxsize = "%i, %i, %i" %(box, box, box)
+	mySpider.toSpider("CP FROM PDB", 
+		spyder.fileFilter(pdbfile), 
+		str(round(apix,5)), 
+		"Y", "A", 
+		boxsize, 
+		spyder.fileFilter(outfile))
 	mySpider.close()
+	if not os.path.exists(outfile+dataext):
+		apDisplay.printError("SPIDER could not create density file: "+outfile+dataext)
+
 	return

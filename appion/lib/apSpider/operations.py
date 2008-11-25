@@ -60,3 +60,28 @@ def spiderInLine(line):
 	}
 	return spidict
 
+#===============================
+def addParticleToStack(partnum, partfile, stackfile):
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpiderQuiet("CP", 
+		partfile, #particle file
+		stackfile+"@%06d"%(partnum), #stack file
+	)
+	mySpider.close()
+	return spidict
+
+#===============================
+def addParticleToStack(stackfile, numpart, avgfile, varfile):
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("AS R", 
+		partfile, #particle file
+		stackfile+"@%06d"%(partnum), #stack file
+	)
+	mySpider.close()
+	return spidict
+
+
+
+
+
+

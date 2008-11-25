@@ -75,7 +75,7 @@ class modelFromPDB(appionScript.AppionScript):
 		self.params['name'] += str(self.params['res'])+"-"
 		self.params['name'] += str(self.params['box'])+".mrc"
 
-	def fetchPDB(self):
+	def fetchPDB(self, tmpname):
 		# retrieve pdb from web based on pdb id
 		pdbid = self.params['pdbid']+'.pdb'
 		# set filename if getting biological unit
@@ -84,7 +84,7 @@ class modelFromPDB(appionScript.AppionScript):
 		url = "http://www.rcsb.org/pdb/files/%s.gz" % pdbid
 		apDisplay.printMsg("retrieving pdb file: %s" %url)
 		# uncompress file & save
-		outfile = self.params['tmpname']+".pdb"
+		outfile = tmpname+".pdb"
 		data = urllib.urlretrieve(url)[0]
 		g = gzip.open(data,'r').read()
 		
@@ -128,28 +128,28 @@ class modelFromPDB(appionScript.AppionScript):
 
 		self.params['basename']=os.path.splitext(newmodelpath)[0]
 		### remove '.' from basename for spider
-		self.params['tmpname'] = re.sub("\.", "_", self.params['basename'])
+		tmpname = re.sub("\.", "_", self.params['basename'])
 
 		### get pdb from web
-		pdbfile = self.fetchPDB()
+		pdbfile = self.fetchPDB(tmpname)
 
-		if not os.path.exists(self.params['tmpname']+'.pdb'):
+		if not os.path.exists(pdbfile):
 			apDisplay.printError("Could not retrieve PDB file")
 
 		### create density from pdb
-		volFun.pdb2vol(pdbfile,self.params['apix'],self.params['box'],self.params['tmpname'])
+		volFun.pdb2vol(pdbfile,self.params['apix'],self.params['box'], tmpname)
 		
-		if not os.path.exists(self.params['tmpname']+'.spi'):
-			os.remove(self.params['tmpname']+".pdb")
-			apDisplay.printError("SPIDER could not create density file")
-			
+		if not os.path.exists(tmpname+".spi"):
+			apFile.removeFile(tmpname+".pdb")
+			apDisplay.printError("SPIDER could not create density file: "+tmpname+".spi")
+
 		### convert spider to mrc format
 		apDisplay.printMsg("converting spider file to mrc")
-		emancmd='proc3d %s.spi %s apix=%f lp=%f norm' % (self.params['tmpname'], mrcname,
+		emancmd='proc3d %s.spi %s apix=%f lp=%f norm' % (tmpname, mrcname,
 			self.params['apix'], self.params['res'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
-		apFile.removeFile(self.params['tmpname']+".pdb")
-		apFile.removeFile(self.params['tmpname']+".spi")
+		apFile.removeFile(tmpname+".pdb")
+		apFile.removeFile(tmpname+".spi")
 
 		### chimera imaging
 		apRecon.renderSnapshots(mrcname, self.params['res'], None, 
