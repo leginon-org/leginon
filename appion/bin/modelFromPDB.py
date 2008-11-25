@@ -124,7 +124,7 @@ class modelFromPDB(appionScript.AppionScript):
 		apDisplay.printColor("Naming pdb model: "+self.params['name'], "cyan")
 
 		newmodelpath = os.path.join(self.params['outdir'], self.params['name'])
-		mrcname = newmodelpath+".mrc"		
+		mrcname = newmodelpath	
 
 		self.params['basename']=os.path.splitext(newmodelpath)[0]
 		### remove '.' from basename for spider
@@ -145,7 +145,7 @@ class modelFromPDB(appionScript.AppionScript):
 			
 		### convert spider to mrc format
 		apDisplay.printMsg("converting spider file to mrc")
-		emancmd='proc3d %s.spi %s.mrc apix=%f lp=%f norm' % (self.params['tmpname'], mrcname,
+		emancmd='proc3d %s.spi %s apix=%f lp=%f norm' % (self.params['tmpname'], mrcname,
 			self.params['apix'], self.params['res'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 		apFile.removeFile(self.params['tmpname']+".pdb")
