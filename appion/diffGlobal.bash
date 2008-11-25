@@ -25,3 +25,4 @@ do
 done
 
 echo "rsync -vaPCn lib/ /ami/sw/packages/pyappion/lib/"
+echo "rsync -vaPCn bin/ /ami/sw/packages/pyappion/bin/"
