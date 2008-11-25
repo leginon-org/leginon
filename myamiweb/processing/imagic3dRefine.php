@@ -144,131 +144,139 @@ function create3d0SummaryForm($extra=False) {
 
 function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)	{
 
-			$imagic3d0Id = $model['DEF_id'];
+	$imagic3d0Id = $model['DEF_id'];
 
-			// check to see if initial model was created from reference-free classification or reclassification
-			if ($model['REF|ApImagicReclassifyData|reclass'])  {
-				$modelparams = $particle->getImagicReclassParamsFrom3d0($imagic3d0Id);
-				$reclassnum = $modelparams['DEF_id'];
-				$norefClassId = $modelparams['REF|ApNoRefClassRunData|norefclass'];
-				$clsavgpath = $modelparams['path']."/".$modelparams['runname'];
-				$classimgfile = $clsavgpath."/reclassified_classums_sorted.img";
-				$classhedfile = $clsavgpath."/reclassified_classums_sorted.hed";
-			}
+	// check to see if initial model was created from reference-free classification or reclassification
+	if ($model['REF|ApImagicReclassifyData|reclass'])  {
+		$modelparams = $particle->getImagicReclassParamsFrom3d0($imagic3d0Id);
+		$reclassnum = $modelparams['DEF_id'];
+		$norefClassId = $modelparams['REF|ApNoRefClassRunData|norefclass'];
+		$clsavgpath = $modelparams['path']."/".$modelparams['runname'];
+		$classimgfile = $clsavgpath."/reclassified_classums_sorted.img";
+		$classhedfile = $clsavgpath."/reclassified_classums_sorted.hed";
+	}
 
-			if ($model['REF|ApNoRefClassRunData|norefclass']) {
-				$modelparams = $particle->getNoRefClassRunParamsFrom3d0($imagic3d0Id);
-				$norefClassId = $modelparams['DEF_id'];
-				$norefId = $modelparams['REF|ApNoRefRunData|norefRun'];
-				$norefparams = $particle->getNoRefParams($norefId);
-				$clsavgpath = $norefparams['path']."/".$modelparams['classFile'];
-				$classimgfile = $clsavgpath.".img";
-				$classhedfile = $clsavgpath.".hed";
-			}
-		
+	if ($model['REF|ApNoRefClassRunData|norefclass']) {
+		$modelparams = $particle->getNoRefClassRunParamsFrom3d0($imagic3d0Id);
+		$norefClassId = $modelparams['DEF_id'];
+		$norefId = $modelparams['REF|ApNoRefRunData|norefRun'];
+		$norefparams = $particle->getNoRefParams($norefId);
+		$clsavgpath = $norefparams['path']."/".$modelparams['classFile'];
+		$classimgfile = $clsavgpath.".img";
+		$classhedfile = $clsavgpath.".hed";
+	}
 
-			// get 3 initial projections for angular reconstitution associated with model		
-			$projections = $model['projections'];
-			$projections = explode(";", $projections);
-			$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'><tr>\n";
-			$modeltable.= "<td colspan='3'><b> 3 Initial Projections Used in Angular Reconstitution </b></td></tr><tr>";
-			foreach ($projections as $key => $projection) {
-				$num = $key + 1;
-				$image = $projection - 1; // Imagic numbering system starts with 1 instead of 0
-				$modeltable.= "<td colspan='1' align='center' valign='top'>";
-				$modeltable.= "<img src='getstackimg.php?hed=$classhedfile
-					&img=$classimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
-				$modeltable.= "<i>projection $num</i></td>\n";
-			}
-			$modeltable.= "</tr><tr><td colspan='3' bgcolor='#bbffbb'>";
-			if ($sum_specific_params) {
-				// view class averages used for 3d0 in summary page (both norefs and reclassifications)
-				$modeltable.= "<a href='viewstack.php?file=$classimgfile&expId=$expId&reclassId=$reclassnum'>";
-				$modeltable.= "View all class averages used to create model</a>";
-			}
-			else {
-				// note that ALL class averages will be used for refinement, NOT the reclassifications
-				$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
-				$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
-				$norefparams = $particle->getNoRefParams($norefId);
-				$norefclassimgfile = $norefparams['path']."/".$norefclassdata['classFile'].".img";
-				$modeltable.= "<a href='viewstack.php?file=$norefclassimgfile&expId=$expId'>";
-				$modeltable.= "View all class averages used for THIS refinement</a>";
-			}
-			$modeltable.= "</td></tr></table>\n<BR/>";
 
-			$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
+	// get 3 initial projections for angular reconstitution associated with model		
+	$projections = $model['projections'];
+	$projections = explode(";", $projections);
+	$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'><tr>\n";
+	$modeltable.= "<td colspan='3'><b> 3 Initial Projections Used in Angular Reconstitution </b></td></tr><tr>";
+	foreach ($projections as $key => $projection) {
+		$num = $key + 1;
+		$image = $projection - 1; // Imagic numbering system starts with 1 instead of 0
+		$modeltable.= "<td colspan='1' align='center' valign='top'>";
+		$modeltable.= "<img src='getstackimg.php?hed=$classhedfile
+			&img=$classimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
+		$modeltable.= "<i>projection $num</i></td>\n";
+	}
+	$modeltable.= "</tr><tr><td colspan='3' bgcolor='#bbffbb'>";
+	if ($sum_specific_params) {
+		// view class averages used for 3d0 in summary page (both norefs and reclassifications)
+		$modeltable.= "<a href='viewstack.php?file=$classimgfile&expId=$expId&reclassId=$reclassnum'>";
+		$modeltable.= "View all class averages used to create model</a>";
+	}
+	else {
+		// note that ALL class averages will be used for refinement, NOT the reclassifications
+		$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
+		$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
+		$norefparams = $particle->getNoRefParams($norefId);
+		$norefclassimgfile = $norefparams['path']."/".$norefclassdata['classFile'].".img";
+		$modeltable.= "<a href='viewstack.php?file=$norefclassimgfile&expId=$expId'>";
+		$modeltable.= "View all class averages used for THIS refinement</a>";
+	}
+	$modeltable.= "</td></tr></table>\n<BR/>";
+	$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 
-			// get list of png files in directory
-			$pngfiles = array();
-			$modeldir = opendir($model['path']."/".$model['runname']);
-			while ($f = readdir($modeldir)) {
-				if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
+	// get list of png files in directory
+	$pngfiles = array();
+	$modeldir = opendir($model['path']."/".$model['runname']);
+	while ($f = readdir($modeldir)) {
+		if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
 
-			}
-			sort($pngfiles);
+	}
+	sort($pngfiles);
 
 			
-			// display starting models
-			$modeltable.= "<tr><TD COLSPAN=8>\n";
-			//$modelkeys="DEF_id|--|path|--|name|--|boxsize|--|symmetry";
-			//$modelvals="$model[DEF_id]|--|$model[path]/$model[runname]|--|$model[name]|--|$model[boxsize]|--|$model[symmetry]";
-			if ($sum_specific_params) {			
-				$modeltable.= "<input type='RADIO' NAME='model' VALUE='$model[DEF_id]' ";
+	// display starting models
+	$modeltable.= "<tr><TD COLSPAN=8>\n";
+	//$modelkeys="DEF_id|--|path|--|name|--|boxsize|--|symmetry";
+	//$modelvals="$model[DEF_id]|--|$model[path]/$model[runname]|--|$model[name]|--|$model[boxsize]|--|$model[symmetry]";
+	if ($sum_specific_params) {			
+		$modeltable.= "<input type='RADIO' NAME='model' VALUE='$model[DEF_id]' ";
+	
+		// check if model was selected
+		if ($model['DEF_id']==$minf[0]) echo " CHECKED";
+		$modeltable.= ">\n";
+	}		
 			
-				// check if model was selected
-				if ($model['DEF_id']==$minf[0]) echo " CHECKED";
-				$modeltable.= ">\n";
-			}		
-			
 
-			if ($sum_specific_params) $modeltable.="Use ";
-			$modeltable.="Model ID: <b>$model[DEF_id]</b>\n";
+	if ($sum_specific_params) $modeltable.="Use ";
+	$modeltable.="Model ID: <b>$model[DEF_id]</b>\n";
 
-		/*	$modeltable.= "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.
-			     location='uploadmodel.php?expId=$expId&rescale=TRUE&imagic3d0id=$model[DEF_id]'\"><BR>\n";
-		*/
-			if ($sum_specific_params) {			
-				if ($hidden) $modeltable.= " <input class='edit' type='submit' name='unhidemodel".$imagic3d0Id."' value='unhide'>";
-				else $modeltable.= " <input class='edit' type='submit' name='hidemodel".$imagic3d0Id."' value='hide'>";
-			}
+/*	$modeltable.= "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.
+	     location='uploadmodel.php?expId=$expId&rescale=TRUE&imagic3d0id=$model[DEF_id]'\"><BR>\n";
+*/
+	if ($sum_specific_params) {			
+		if ($hidden) $modeltable.= " <input class='edit' type='submit' name='unhidemodel".$imagic3d0Id."' value='unhide'>";
+		else $modeltable.= " <input class='edit' type='submit' name='hidemodel".$imagic3d0Id."' value='hide'>";
+	}
 
-			// display all .png files in model directory
-			$modeltable.= "<tr>";
-			foreach ($pngfiles as $snapshot) {
-				$snapfile = $model['path'].'/'.$model['runname'].'/'.$snapshot;
-				$modeltable.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-					<IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
-			}
+	// display all .png files in model directory
+	$modeltable.= "<tr>";
+	foreach ($pngfiles as $snapshot) {
+		$snapfile = $model['path'].'/'.$model['runname'].'/'.$snapshot;
+		$modeltable.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
+			<IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+	}
 
-			// display info about each model run
-			$modeltable.= "</tr>\n";
-			$modeltable.="<tr><TD COLSPAN=8>description: $model[description]</td></tr>\n";
-			$modeltable.="<tr><TD COLSPAN=8>path: $model[path]/$model[runname]/$model[name]</td></tr>\n";
-			if ($sum_specific_params) {
-				$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
-			   		      <td>box size:</td><td><b>$model[boxsize]</b></td>
-			   		      <td>symmetry:</td><td><b>$model[symmetry]</b></td>
-			   		      <td># class averages used:</td><td><b>$model[num_classums]</b></td></tr>\n";
-			}
-			else {
-				$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
-			   		      <td>box size:</td><td><b>$model[boxsize]</b></td>
-			   		      <td>symmetry:</td><td><b>$model[symmetry]</b></td>
-			   		      <td># <b>ORIGINAL</b> class averages in noref run:</td><td><b>$norefclassdata[num_classes]</b></td></tr>\n";
-			}
-			$modeltable.="<tr><td>Automask dimension parameter:</td><td><b>$model[amask_dim]</b></td>
-			     <td>Automask low-pass parameter:</td><td><b>$model[amask_lp]</b></td>
-			     <td>Automask sharpness parameter:</td><td><b>$model[amask_sharp]</b></td>
-			     <td>Automask thresholding parameter:</td><td><b>$model[amask_thresh]</b></td></tr>\n";
-			$modeltable.="<tr><td>Increment euler angle search:</td><td><b>$model[euler_ang_inc]</b></td>
-			     <td>Increment forward projections:</td><td><b>$model[forw_ang_inc]</b></td>
-			     <td>Hamming window:</td><td><b>$model[ham_win]</b></td>
-			     <td>Object size as fraction of image size:</td><td><b>$model[obj_size]</b></td></tr>\n";
-			$modeltable.= "</TABLE><BR/><BR/>\n";
-			$modeltable.= "<P>\n";
+	// display info about each model run
+	$modeltable.= "</tr>\n";
+	$modeltable.="<tr><TD COLSPAN=8>description: $model[description]</td></tr>\n";
+	$modeltable.="<tr><TD COLSPAN=8>path: $model[path]/$model[runname]/$model[name]</td></tr>\n";
+	if ($sum_specific_params) {
+		$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
+	   		          <td>box size:</td><td><b>$model[boxsize]</b></td>
+	   		          <td>symmetry:</td><td><b>$model[symmetry]</b></td>
+	   		          <td># class averages used:</td><td><b>$model[num_classums]</b></td></tr>\n";
+	}
+	else {
+		$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
+	         		  <td>box size:</td><td><b>$model[boxsize]</b></td>
+			          <td>symmetry:</td><td><b>$model[symmetry]</b></td>
+			          <td># <b>ORIGINAL</b> class averages in noref run:</td><td><b>$norefclassdata[num_classes]</b></td></tr>\n";
+	}
+	$modeltable.="<tr><td>Automask dimension parameter:</td><td><b>$model[amask_dim]</b></td>
+			  <td>Automask low-pass parameter:</td><td><b>$model[amask_lp]</b></td>
+			  <td>Automask sharpness parameter:</td><td><b>$model[amask_sharp]</b></td>
+			  <td>Automask thresholding parameter:</td><td><b>$model[amask_thresh]</b></td></tr>\n";
+	$modeltable.="<tr><td>Increment euler angle search:</td><td><b>$model[euler_ang_inc]</b></td>
+			  <td>Increment forward projections:</td><td><b>$model[forw_ang_inc]</b></td>
+			  <td>Hamming window:</td><td><b>$model[ham_win]</b></td>
+			  <td>Object size as fraction of image size:</td><td><b>$model[obj_size]</b></td></tr>\n";
+	$modeltable.= "</TABLE><BR/><BR/>\n";
+	$modeltable.= "<P>\n";
 
-return $modeltable;
+
+	if ($sum_specific_params) {
+		return $modeltable;
+	}
+	else {
+		$returnvalues = array();
+		$returnvalues[] = $modeltable;
+		$returnvalues[] = $norefClassId;
+		return $returnvalues;
+	}
 	
 }
 
@@ -303,6 +311,8 @@ function jobform($modelid, $extra=false) {
 
 	echo "<form name='imagic3dRefine' method='post' action='$formaction'><br />\n";
 
+	// set commit on by default when first loading page, else set
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// define default variables for directory and runid
 	$outdir = ($_POST[output_directory]) ? $_POST[output_directory] : $modeldata['path']."/".$modeldata['runname'];
 	$runid = ($_POST[runid]) ? $_POST[runid] : "refine1";
@@ -311,8 +321,9 @@ function jobform($modelid, $extra=false) {
 	$doc_outdir = docpop('outdir', '<b>Output Directory:</b>');
 	$doc_description = docpop('descr', '<b>Description of 3d Refinement:</b>');
 
-	$showselectedmodel = modelEntry($modeldata,$particle,False,True);
-	echo $showselectedmodel;
+	$modelvalues = modelEntry($modeldata,$particle,False,True);
+	echo $modelvalues[0];
+	$norefClassId = $modelvalues[1];
 
 	// form for output directory & runid
 	echo "<TABLE cellspacing='10' cellpadding='10'><tr><td>";
@@ -434,8 +445,12 @@ function jobform($modelid, $extra=false) {
 	}
 	echo "</table>";
 
+	echo "<BR/><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo docpop('commit','<B>Commit to Database</B>');
+
   	echo "<input type='hidden' NAME='numiters' VALUE='$numiters'><P>";
 	echo "<input type='hidden' NAME='modelid' VALUE='$modelid'><P>";
+	echo "<input type='hidden' NAME='norefClassId' VALUE='$norefClassId'><P>";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
 
@@ -456,9 +471,11 @@ function imagic3dRefine() {
 	$outdir = $_POST['output_directory'];
 	$runid = $_POST['runid'];
 	$modelid = $_POST['modelid'];
+	$norefClassId = $_POST['norefClassId'];
 	$command = "$outdir/$runid/{$runid}_imagic3dRefine.job";
 	$numiters = $_POST['numiters'];
 	$description = $_POST['description'];
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	$jobtext = "";
 
@@ -484,13 +501,16 @@ function imagic3dRefine() {
 		// update actual job file that calls on the execution of each iteration
 
 		$jobtext.= "imagic3dRefine.py";
-		$jobtext.= " --itn=$i --imagic3d0Id=$modelid --runid=$runid --outdir=$outdir/$runid --symmetry=$symmetry";
+		$jobtext.= " --imagic3d0Id=$modelid --norefClassId=$norefClassId --runid=$runid";
+		$jobtext.= " --outdir=$outdir/$runid --symmetry=$symmetry --numiters=$numiters --itn=$i";
 		$jobtext.= " --max_shift_orig=$max_shift_orig --max_shift_this=$max_shift_this --samp_param=$samp_param";
 		$jobtext.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 		$jobtext.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
 		$jobtext.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
 		$jobtext.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc";
-		$jobtext.= " --numiters=$numiters --description=\"$description\"\n\n\n";
+		$jobtext.= " --description=\"$description\"";
+		if ($commit) $jobtext.= " --commit\n\n";
+		else $jobtext.=" --no-commit\n\n";
 	}
 
 	// write job file
