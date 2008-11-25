@@ -22,30 +22,33 @@ if ($_GET['showHidden']) $formAction.="&showHidden=True";
 
 $javascript.= editTextJava();
 
-processing_header("Stack Report","Stack Summary Page", $javascript, False);
+processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascript, True);
 
 // --- Get Stack Data --- //
 $particle = new particledata();
+
+// find each stack entry in database
+//$stackIds = $particle->getAlignStackIds($expId, True);
 if (!$_GET['showHidden']) {
-	$stackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, False);
-	$hidestackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, True);
+	$stackdatas = $particle->getAlignStackIds($expId, $projectId, False);
+	$hidestackdatas = $particle->getAlignStackIds($expId, $projectId, True);
 } else {
-	$stackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, True);
+	$stackdatas = $particle->getAlignStackIds($expId, $projectId, True);
 	$hidestackdatas = $stackdatas;
 }
 
 if (count($stackdatas) != count($hidestackdatas) && !$_GET['showHidden']) {
 	$numhidden = count($hidestackdatas) - count($stackdatas);
-	echo "<a href='".$formAction."&showHidden=True'>[Show ".$numhidden." hidden stacks]</a><br/><br/>\n";
+	echo "<a href='".$formAction."&showHidden=True'>[Show ".$numhidden." hidden aligned stacks]</a><br/><br/>\n";
 }
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	foreach ($stackdatas as $stackdata) {
-		$stackid = $stackdata['stackid'];
-		echo stacksummarytable($stackid);
+		$alignstackid = $stackdata['alignstackid'];
+		echo alignstacksummarytable($alignstackid);
 	}
-	echo "</form>";
+	echo "</form>\n";
 } else {
 	echo "<B>Session does not contain any stacks.</B>\n";
 }
