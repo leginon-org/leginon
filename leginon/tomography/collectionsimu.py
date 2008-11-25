@@ -160,7 +160,8 @@ class Collection(object):
 	def getPredictionInfo(self,imagedata):
 		q = leginondata.TomographyPredictionData(image=imagedata)
 		results = q.query(results=1)
-		return results[0]
+		if len(results) > 0:
+			return results[0]
 
 	def _loop(self, tilts, exposures):
 		image_pixel_size = self.pixel_size*self.preset['binning']['x']
@@ -168,6 +169,9 @@ class Collection(object):
 		tilt0 = tilts[0]
 		imagedata = self.tiltimagedata[self.group][0]
 		prediction0 = self.getPredictionInfo(imagedata)
+		if prediction0 is None:
+			self.logger.warning('no prediction information')
+			return
 		position0 = prediction0['position']
 		defocus0 = imagedata['scope']['defocus']
 
@@ -306,19 +310,23 @@ class Collection(object):
 			self.checkAbort()
 
 			saved_prediction = self.getPredictionInfo(image_data)
-			args = (
-				saved_prediction['predicted position'],
-				predicted_position,
-				predicted_shift,
-				position,
-				correlation,
-				saved_prediction['correlation'],
-				image_pixel_size,
-				image_data['filename'],
-				measured_defocus,
-				measured_fit,
-			)
-			self.showPredictionInfo(*args)
+			if saved_prediction is None:
+				self.logger.warning('No prediction information')
+				abort_loop = True
+			else:
+				args = (
+					saved_prediction['predicted position'],
+					predicted_position,
+					predicted_shift,
+					position,
+					correlation,
+					saved_prediction['correlation'],
+					image_pixel_size,
+					image_data['filename'],
+					measured_defocus,
+					measured_fit,
+				)
+				self.showPredictionInfo(*args)
 
 			self.checkAbort()
 
