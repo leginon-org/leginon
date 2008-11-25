@@ -42,13 +42,14 @@ if ($refineruns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'defid', 'run name', 'class averages', 'num cls avgs (original)', 'pixel size', 'box size', 'description');
+	$display_keys = array ( 'defid', 'run name', 'class averages', 'num cls avgs (original)', 'num iters', 'pixel size', 'box size', 'description');
 	foreach($display_keys as $key) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
 	foreach ($refineruns as $refinerun) {
 		$refineid = $refinerun['DEF_id'];
+		$numiters = count($particle->getImagic3dRefinementParamsFromRefineId($refineid));
 
 		// update description
 		if ($_POST['updateDesc'.$refineid]) {
@@ -73,6 +74,7 @@ if ($refineruns) {
 		$html .= "<TD><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
 			  $norefClassId'>View Class Averages</A></TD>\n";
 		$html .= "<TD>$norefclassdata[num_classes]</TD>\n";
+		$html .= "<TD>$numiters</TD>\n";
 		$html .= "<TD>$refinerun[pixelsize]</TD>\n";
 		$html .= "<TD>$refinerun[boxsize]</TD>\n";
 	
