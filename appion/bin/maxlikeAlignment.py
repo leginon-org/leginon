@@ -131,6 +131,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
+		proccmd += " last="+str(self.params['numpart'])
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### convert stack into single spider files
