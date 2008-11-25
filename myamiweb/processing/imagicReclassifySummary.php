@@ -58,7 +58,7 @@ function createReclassifySummary() {
 		// show hidden reclassifications
 		if ($_GET['showHidden'] && $hidden) {
 			if ($shown) $reclasstable.="<hr />\n";
-			$reclasstable.="<b>Hidden Norefs</b> ";
+			$reclasstable.="<b>Hidden Reclassifications</b> ";
 			$reclasstable.="<a href='".$_SERVER['PHP_SELF']."?expId=$expId'>[hide]</a><br />\n";
 			foreach ($hidden as $r) $reclasstable.= reclassEntry($r,$particle,True);
 		}
@@ -66,7 +66,6 @@ function createReclassifySummary() {
 	}
 
 	if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Alignments]</a><br />\n";
-
 	if ($shown || $hidden) echo $reclasstable;
 	else echo "<B>Project does not contain any Reclassifications.</B>\n";
 	processing_footer();
