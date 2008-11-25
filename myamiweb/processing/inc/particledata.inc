@@ -1118,22 +1118,26 @@ class particledata {
 	function getAlignStackIds ($sessionId, $projectId, $showHidden=False) {
 		// this function is really slow
 		//$projectId = (int) getProjectFromExpId($expId);
-		$q = "SELECT ast.`DEF_id` as alignstackid"
-		  ."FROM ApAlignStackData as ast "
-		  ."LEFT JOIN ApStackRunData as s ON "
-		  ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
-		  ."LEFT JOIN ApStackData as st ON "
-		  ."(r.`REF|ApStackData|stack` = st.`DEF_id`) "
+		$q = "SELECT ast.`DEF_id` AS alignstackid "
+		  ."FROM ApAlignStackData AS ast "
+		  ."LEFT JOIN ApStackData AS st ON "
+		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApRunsInStackData as runsin ON "
+		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApStackRunData as strun ON "
+		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
 		  ."WHERE "
-		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
 		  ." AND "
-		  ."  r.`project|projects|project` = '$projectId' "
+		  ."  runsin.`project|projects|project` = '$projectId' "
 		  ." AND "
-		  ."  st.`project|projects|project` = '$projectId' ";
+		  ."  ast.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
-			$q.= " AND st.`hidden` != 1 ";
-		$q.= "ORDER BY stackid DESC";
+			$q.= " AND ast.`hidden` != 1 ";
+		$q.= "ORDER BY alignstackid DESC";
+		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
@@ -1201,6 +1205,21 @@ class particledata {
 		return $r;
 	}
 
+
+	function getAlignStackParams ($alignstackid) {
+		$q = "SELECT ast.*, ar.runname AS runname, pd.`path` AS path "
+			."FROM ApAlignStackData as ast "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(ast.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."LEFT JOIN ApAlignRunData AS ar ON "
+			."(ast.`REF|ApAlignRunData|alignrun` = ar.`DEF_id`) "
+			."WHERE ast.`DEF_id` = '$alignstackid'";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+
 	function getOriginalStackFromStackRun($stackrunId) {
 	//get the original stack when a stackrun is also used in combined stacks
 		$q = "SELECT rs.`REF|ApStackData|stack` as stackId from `ApRunsInStackData` rs"
@@ -1245,6 +1264,15 @@ class particledata {
 		$q= "SELECT count(DEF_id) as num "
 			."FROM `ApStackParticlesData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}		
+
+	function getNumAlignStackParticles ($alignstackid) {
+		$q= "SELECT count(DEF_id) as num "
+			."FROM `ApAlignParticlesData` "
+			."WHERE `REF|ApAlignStackData|alignstack` = '$alignstackid'";
+		//echo $q."<br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
 	}		

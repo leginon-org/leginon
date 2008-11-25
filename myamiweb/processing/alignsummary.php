@@ -44,6 +44,7 @@ if (count($stackdatas) != count($hidestackdatas) && !$_GET['showHidden']) {
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
+	//echo print_r($stackdatas)."<br/>\n";
 	foreach ($stackdatas as $stackdata) {
 		$alignstackid = $stackdata['alignstackid'];
 		echo alignstacksummarytable($alignstackid);
