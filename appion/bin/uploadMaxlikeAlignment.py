@@ -21,6 +21,7 @@ import apEMAN
 import apXmipp
 from apSpider import operations
 import appionData
+import apProject
 
 #=====================
 #=====================
@@ -146,6 +147,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['maxlikerun'] = maxlikeq
 		alignrunq['hidden'] =  False
+		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### setup alignment stack
 		alignstackq = appionData.ApAlignStackData()
@@ -166,6 +168,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
+		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### insert
 		if self.params['commit'] is True:

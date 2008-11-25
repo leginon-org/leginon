@@ -487,6 +487,7 @@ class ApAlignRunData(Data):
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
 			('hidden', bool),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAlignRunData=ApAlignRunData
@@ -504,6 +505,7 @@ class ApAlignStackData(Data):
 			('pixelsize', float),
 			('description', str),
 			('hidden', bool),
+			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAlignStackData=ApAlignStackData

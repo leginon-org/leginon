@@ -135,6 +135,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['refbasedrun'] = refrunq
 		alignrunq['hidden'] =  False
+		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup alignment stack
 		alignstackq = appionData.ApAlignStackData()
@@ -156,6 +157,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] = False
+		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		if insert is True:
 			alignstackq.insert()
