@@ -18,6 +18,7 @@ from apSpider import filters
 ## pyami
 from pyami import mrc
 
+#=========================
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
 		planeReg=True, median=0, invert=False, pixlimit=0, msg=True):
 	"""
@@ -39,7 +40,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	simgarray = 255.0*(normRange(simgarray)+1.0e-7)
 	return simgarray
 
-
+#=========================
 def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False, 
 		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=None, 
 		params={}):
@@ -111,6 +112,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 		apDisplay.printMsg("filtered image in "+apDisplay.timeString(time.time()-startt))
 	return result
 
+#=========================
 def binImg(imgarray, bin=1):
 	"""
 	returns a binned image of a 2D image
@@ -131,6 +133,7 @@ def binImg(imgarray, bin=1):
 	binned = numpy.sum(numpy.sum(numpy.reshape(imgarray, tmpshape), 1), 2) / f
 	return binned
 
+#=========================
 def oldBinImg(imgarray,bin=1):
 	"""
 	returns a binned image
@@ -147,17 +150,19 @@ def oldBinImg(imgarray,bin=1):
 	else:
 		return imgarray
 
+#=========================
 def invertImage(imgarray):
 	"""
 	returns a contrast inverted image
 	"""
 	return -1.0*imgarray
 
+#=========================
 def filterImg(imgarray,apix=1.0,rad=0.0,bin=1):
 	#TEMPORARY ALIAS FOR lowPassFilter
 	return lowPassFilter(imgarray,apix=apix,bin=1,radius=rad)
 
-
+#=========================
 def pixelLimitFilter(imgarray, pixlimit=0):
 	if pixlimit < 0.1:
 		return imgarray
@@ -173,6 +178,7 @@ def pixelLimitFilter(imgarray, pixlimit=0):
 #	print imgarray2
 	return imgarray2
 
+#=========================
 def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	low pass filter image to radius resolution
@@ -184,6 +190,7 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	sigma=float(radius/apix/float(bin))
 	return ndimage.gaussian_filter(imgarray, sigma=sigma/3.0)
 
+#=========================
 def fermiHighPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	Fermi high pass filter image to radius resolution
@@ -196,6 +203,7 @@ def fermiHighPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	filtimg = filters.fermiHighPassFilter(imgarray, pixrad)
 	return filtimg
 
+#=========================
 def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	Fermi low pass filter image to radius resolution
@@ -211,6 +219,7 @@ def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	filtimg = filters.fermiLowPassFilter(imgarray, pixrad)
 	return filtimg
 
+#=========================
 def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
 	high pass filter image to radius resolution
@@ -231,6 +240,7 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 		return imgarray
 	return filtimg
 
+#=========================
 def planeRegression(imgarray):
 	"""
 	performs a two-dimensional linear regression and subtracts it from an image
@@ -245,7 +255,7 @@ def planeRegression(imgarray):
 	def retx(y,x):
 		return x
 	def rety(y,x):
-		return y	
+		return y
 	xarray = numpy.fromfunction(retx, imgarray.shape)
 	yarray = numpy.fromfunction(rety, imgarray.shape)
 	xsum = float(xarray.sum())
@@ -268,6 +278,7 @@ def planeRegression(imgarray):
 	del imgarray,xarray,yarray,resvec
 	return newarray
 
+#=========================
 def normRange(imgarray):
 	"""
 	normalize the range of an image between 0 and 1
@@ -278,6 +289,7 @@ def normRange(imgarray):
 		return imgarray - min1
 	return (imgarray - min1)/(max1 - min1)
 
+#=========================
 def normRangeMed(imgarray, size=5):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
@@ -289,6 +301,7 @@ def normRangeMed(imgarray, size=5):
 		return imgarray - min1
 	return (imgarray - min1)/(max1 - min1)
 
+#=========================
 def normStdev(imgarray):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
@@ -299,6 +312,7 @@ def normStdev(imgarray):
 		return imgarray - avg1
 	return (imgarray - avg1)/std1
 
+#=========================
 def normStdevMed(imgarray, size=3):
 	"""
 	normalize an image to mean = 0 and stddev = 1.0
@@ -310,6 +324,7 @@ def normStdevMed(imgarray, size=3):
 		return imgarray - avg1
 	return (imgarray - avg1)/std1
 
+#=========================
 def normStdevMask(img,mask):
 	"""
 	normalize an image with mean = 0 and stddev = 1.0 only inside a mask
@@ -324,6 +339,7 @@ def normStdevMask(img,mask):
 	std2   = ndimage.standard_deviation(img)
 	return (img - avg1) / std1
 
+#=========================
 def scaleImage(imgdata, scale):
 	"""
 	scale an image
@@ -332,6 +348,7 @@ def scaleImage(imgdata, scale):
 		return imgdata
 	return ndimage.zoom(imgdata, scale, order=1)
 
+#=========================
 def meanEdgeValue(imgdata, w=0):
 	"""
 	get the average values for the edges of width = w pixels
@@ -345,16 +362,18 @@ def meanEdgeValue(imgdata, w=0):
 	edgeAvg       = (leftEdgeAvg + rightEdgeAvg + topEdgeAvg + bottomEdgeAvg)/4.0
 	return edgeAvg
 
+#=========================
 def centralMean(imgarray, trim=0.1):
 	"""
 	get the average values for the edges of trim = x percent
-	"""	
+	"""
 	a = cutEdges(imgarray,trim=trim)
 	return ndimage.mean(a)
 
 
 #########################################################
 
+#=========================
 def correlationCoefficient(x,y,mask=None):
 	"""
 	calcualate the correlation coefficient of two numpys
@@ -379,9 +398,11 @@ def correlationCoefficient(x,y,mask=None):
 	sm  = ndimage.sum(z)
 	return sm/tot
 
+#=========================
 def rmsd(x,y,mask=None):
 	return math.sqrt(msd(x,y,mask=mask))
 
+#=========================
 def msd(x,y,mask=None):
 	if mask != None:
 		tot = float(ndimage.sum(mask))
@@ -403,6 +424,7 @@ def msd(x,y,mask=None):
 # PIL to numpy conversions
 #########################################################
 
+#=========================
 def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	"""
 	Convert PIL image to numpy array
@@ -424,10 +446,11 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	if convertType == 'float32':
 		a = a.astype(numpy.float32)
 	if dtype is not None:
-		a = a.astype(dtype)	
+		a = a.astype(dtype)
 
 	return a
 
+#=========================
 def _arrayToImage(a):
 	"""
 	Converts array object (numpy) to image object (PIL).
@@ -455,6 +478,7 @@ def _arrayToImage(a):
 	else:
 		raise ValueError, "unsupported image mode"
 
+#=========================
 def arrayToImage(numer, normalize=True, stdevLimit=3.0):
 	"""
 	takes a numpy and writes a JPEG
@@ -467,6 +491,7 @@ def arrayToImage(numer, normalize=True, stdevLimit=3.0):
 	image = _arrayToImage(numer)
 	return image
 
+#=========================
 def mrcToArray(filename, msg=True):
 	"""
 	takes a numpy and writes a Mrc
@@ -477,6 +502,7 @@ def mrcToArray(filename, msg=True):
 			" size:"+str(numer.shape)+" dtype:"+str(numer.dtype))
 	return numer
 
+#=========================
 def arrayToMrc(numer, filename, msg=True):
 	"""
 	takes a numpy and writes a Mrc
@@ -488,6 +514,7 @@ def arrayToMrc(numer, filename, msg=True):
 	mrc.write(numer, filename)
 	return
 
+#=========================
 def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	"""
 	takes a numpy and writes a JPEG
@@ -503,6 +530,7 @@ def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	image.save(filename, "JPEG", quality=85)
 	return
 
+#=========================
 def arrayToPng(numer,filename,normalize=True, msg=True):
 	"""
 	takes a numpy and writes a PNG
@@ -518,6 +546,7 @@ def arrayToPng(numer,filename,normalize=True, msg=True):
 	image.save(filename, "PNG")
 	return
 
+#=========================
 def arrayMaskToPng(numer, filename, msg=True):
 	"""
 	takes a numpy and writes a PNG
@@ -531,6 +560,7 @@ def arrayMaskToPng(numer, filename, msg=True):
 	image.save(filename, "PNG")
 	return
 
+#=========================
 def arrayMaskToPngAlpha(numer,filename, msg=True):
 	""" 
 	Create PNG file of a binary mask (array with only 0 and 1) 
@@ -540,7 +570,7 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 	numera = numer*alpha
 	numerones=numpy.ones(numpy.shape(numer))*255
 	imagedummy = _arrayToImage(numerones)
-	
+
 	alphachannel = _arrayToImage(numera)
 
 	image = imagedummy.convert('RGBA')
@@ -549,7 +579,8 @@ def arrayMaskToPngAlpha(numer,filename, msg=True):
 		apDisplay.printMsg("writing alpha channel PNG mask: "+apDisplay.short(filename))
 	image.save(filename, "PNG")
 	return
-	
+
+#=========================
 def PngAlphaToBinarryArray(filename):
 	RGBAarray = readPNG(filename)
 	alphaarray = RGBAarray[:,:,3]
@@ -561,27 +592,31 @@ def PngAlphaToBinarryArray(filename):
 # statistics of images
 #########################################################
 
+#=========================
 def _maxNormalizeImage(a, stdevLimit=3.0):
-	"""	
+	"""
 	Normalizes numpy to fit into an image format,
 	but maximizes the contrast
 	"""
 	return _normalizeImage(a, stdevLimit, minlevel= 20.0, maxlevel=240.0, trim=0.1)
 
+#=========================
 def _blackNormalizeImage(a, stdevLimit=3.0):
-	"""	
+	"""
 	Normalizes numpy to fit into an image format,
 	but makes it a darker than normal
 	"""
 	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel= 0.0,maxlevel=200.0)
-	
+
+#=========================
 def _whiteNormalizeImage(a, stdevLimit=3.0):
-	"""	
+	"""
 	Normalizes numpy to fit into an image format,
 	but makes it a lighter than normal
 	"""
-	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)	
+	return _normalizeImage(a,stdevLimit=stdevLimit,minlevel=55.0,maxlevel=255.0,trim=0.0)
 
+#=========================
 def cutEdges(img, trim=0.1):
 	"""
 	cut the edges of an image off by trim percent
@@ -602,8 +637,9 @@ def cutEdges(img, trim=0.1):
 
 	return mid
 
+#=========================
 def _normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0):
-	"""	
+	"""
 	Normalizes numpy to fit into an image format
 	that is values between 0 (minlevel) and 255 (maxlevel).
 	"""
@@ -634,10 +670,10 @@ def _normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0)
 	img = (img - min1)/(max1 - min1)*imrange + minlevel
 	img = numpy.where(img > maxlevel, 255.0, img)
 	img = numpy.where(img < minlevel,   0.0, img)
-	
+
 	return img
 
-
+#=========================
 def maskImageStats(mimage):
 	n=ma.count(mimage)
 	mimagesq=mimage*mimage
@@ -652,6 +688,7 @@ def maskImageStats(mimage):
 		stdev=2e20
 	return n,avg,stdev
 
+#=========================
 def getImageInfo(im):
 	"""
 	prints out image information good for debugging
@@ -663,6 +700,7 @@ def getImageInfo(im):
 
 	return avg1,stdev1,min1,max1
 
+#=========================
 def printImageInfo(im):
 	"""
 	prints out image information good for debugging
@@ -676,6 +714,7 @@ def printImageInfo(im):
 
 	return avg1,stdev1,min1,max1
 
+#=========================
 def arrayToJpegPlusPeak(numer, outfile, peak=None, normalize=True):
 	"""
 	takes a numpy and writes a JPEG
@@ -703,8 +742,9 @@ def arrayToJpegPlusPeak(numer, outfile, peak=None, normalize=True):
 
 	return
 
+#=========================
 def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="circle"):
-	"""	
+	"""
 	Draws a shape around a peak
 	"""
 
@@ -738,21 +778,25 @@ def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="ci
 	draw.line(leftright,fill=mycolors['blue'])
 	return
 
+#=========================
 def readMRC(filename):
 	return mrc.read(filename)
 
+#=========================
 def readJPG(filename):
 	i = Image.open(filename)
 	i.load()
 	i = imageToArray(i)
 	return i
 
+#=========================
 def readPNG(filename):
 	i = Image.open(filename)
 	i.load()
 	i = imageToArray(i)
 	return i
 
+#=========================
 def correctImage(rawimgdata, params):
 	"""
 	Correct an image using the old method:
@@ -765,6 +809,7 @@ def correctImage(rawimgdata, params):
 	correctedimgarray = normarray * (rawimgarray - darkarray)
 	return correctedimgarray
 
+#=========================
 def frame_cut(a, newshape):
 	mindimx = int( (a.shape[0] / 2.0) - (newshape[0] / 2.0) )
 	maxdimx = int( (a.shape[0] / 2.0) + (newshape[0] / 2.0) )
@@ -772,6 +817,7 @@ def frame_cut(a, newshape):
 	maxdimy = int( (a.shape[1] / 2.0) + (newshape[1] / 2.0) )
 	return a[mindimx:maxdimx, mindimy:maxdimy]
 
+#=========================
 def frame_constant(a, shape, cval=0):
 	"""
 	frame_nearest creates an oversized copy of 'a' with new 'shape'
@@ -791,14 +837,14 @@ def frame_constant(a, shape, cval=0):
 		   [42, 42, 42, 42, 42, 42, 42, 42]])
 
 	"""
-	
+
 	b = numpy.zeros(shape, dtype=a.dtype)
 	delta = (numpy.array(b.shape) - numpy.array(a.shape))
 	dy = delta[0] // 2
 	dx = delta[1] // 2
 	my = a.shape[0] + dy
 	mx = a.shape[1] + dx
-	
+
 	b[dy:my, dx:mx] = a			 # center
 	b[:dy,dx:mx]  = cval			 # top
 	b[my:,dx:mx]  = cval			 # bottom
@@ -809,4 +855,18 @@ def frame_constant(a, shape, cval=0):
 	b[my:, :dx]   = cval			 # bottomleft
 	b[my:, mx:]   = cval			 # bottomright
 	return b
+
+#=========================
+def rotateThenShift(a, rot=0, shift=(0,0), order=2):
+	"""
+	rotates (in degrees) then shifts (in pixels) an array, just like SPIDER
+	"""
+	#rad = rot*math.pi/180.0
+	b = ndimage.rotate(a, angle=rot, reshape=False, mode='reflect', order=order)
+	c = ndimage.shift(b, shift=shift, mode='reflect', order=order)
+	return c
+
+
+
+
 
