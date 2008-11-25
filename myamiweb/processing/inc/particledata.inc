@@ -2597,6 +2597,19 @@ class particledata {
 		return $r;
 	}
 
+	function getImagic3dRefinementParamsFromRefineId ($refineId) {
+		$q = "SELECT param.*, run.*, pd.path "
+			."FROM ApImagic3dRefineRunData as run "
+			."LEFT JOIN ApImagic3dRefineIterationData as param "
+			."ON (param.`REF|ApImagic3dRefineRunData|refinement_run`=run.`DEF_id`) "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(run.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."WHERE run.`DEF_id` = '$refineId'";
+		$r = $this->mysql->getSQLResult($q);
+
+		return $r;
+	}
+
 
 }
 
