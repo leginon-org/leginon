@@ -498,6 +498,7 @@ class ApAlignStackData(Data):
 		return Data.typemap() + (
 			('imagicfile', str),
 			('spiderfile', str),
+			('avgmrcfile', str),
 			('iteration', int),
 			('path', ApPathData),
 			('stack', ApStackData),

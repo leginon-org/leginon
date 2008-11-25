@@ -158,18 +158,22 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### setup alignment stack
 		alignstackq = appionData.ApAlignStackData()
-#$$$		alignstackq['imagicfile', str),
-#$$$		alignstackq['spiderfile', str),
+		alignstackq['imagicfile'] = "alignstack.hed"
+		alignstackq['spiderfile'] = "alignstack.spi"
+		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['iteration'] = lastiter
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		alignstackq['alignrun'] = alignrunq
 		### check to make sure files exist
-		#imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
-		#if not os.path.isfile(imagicfile):
-		#	apDisplay.printError("could not find stack file: "+imagicfile)
-		#spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
-		#if not os.path.isfile(spiderfile):
-		#	apDisplay.printError("could not find stack file: "+spiderfile)
+		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find stack file: "+imagicfile)
+		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		if not os.path.isfile(spiderfile):
+			apDisplay.printError("could not find stack file: "+spiderfile)
+		averagefile = os.path.join(self.params['outdir'], alignstackq['averagefile'])
+		if not os.path.isfile(averagefile):
+			apDisplay.printError("could not find average stack file: "+averagefile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
 		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(runparams['stackid'])/runparams['bin'])
 		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
@@ -187,6 +191,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def insertParticlesIntoDatabase(self, stackid, partlist, lastiter):
 		count = 0
+		inserted = 0
 		t0 = time.time()
 		apDisplay.printMsg("Inserting MaxLike Particles into DB")
 		for partdict in partlist:
@@ -224,11 +229,32 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 			### insert
 			if self.params['commit'] is True:
+				inserted += 1
 				alignpartq.insert()
 
-		apDisplay.printColor("\ninserted "+str(count)+" particles into the database in "
+		apDisplay.printColor("\ninserted "+str(inserted)+" of "+str(count)+" particles into the database in "
 			+apDisplay.timeString(time.time()-t0), "cyan")
 
+		return
+
+	#=====================
+	def convertStackToSpider(self, imagicstack, spiderstack):
+		"""
+		takes the stack file and creates a spider file ready for processing
+		"""
+		if not os.path.isfile(imagicstack):
+			apDisplay.printError("stackfile does not exist: "+imagicstack)
+
+		### convert imagic stack to spider
+		emancmd  = "proc2d "
+		emancmd += imagicstack+" "
+		apFile.removeFile(spiderstack, warn=True)
+		emancmd += spiderstack+" "
+		emancmd += "spiderswap"
+		starttime = time.time()
+		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return
 
 	#=====================
@@ -258,12 +284,13 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			#operations.addParticleToStack(partnum, partfile, spiderstackfile)
 			#apFile.removeFile(partfile)
 			i += 1
-			if i%250 == 0:
-				avgtime = apDisplay.timeString((time.time()-t0)/float(i))
-				remain = apDisplay.timeString((time.time()-t0)*(len(partlist)-i)/i)
-				apDisplay.printMsg("part num: %6d of %6d, avg/remain time: %s/%s"%(i,len(partlist),avgtime,remain))
+		apDisplay.printMsg("rotate then shift %d particles in %s"%(i,apDisplay.timeString(time.time()-t0)))
 		alignstackarray = numpy.asarray(alignstack)
-		apImagicFile.writeImagic(alignstackarray, "alignstack.hed")
+		self.alignimagicfile = "alignstack.hed"
+		self.alignspiderfile = "alignstack.spi"
+		apImagicFile.writeImagic(alignstackarray, self.alignimagicfile)
+		self.convertStackToSpider(self.alignimagicfile, self.alignspiderfile)
+		apStack.averageStack(self.alignimagicfile)
 
 	#=====================
 	def start(self):
