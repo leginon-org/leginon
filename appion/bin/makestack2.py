@@ -47,8 +47,7 @@ class makestack (appionLoop.AppionLoop):
 		if self.params['selexonId'] is None and self.params['sessionname'] is not None:
 			self.params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
 	
-		if self.params['commit']:
-			self.insertStackRun()
+		self.insertStackRun()
 	
 		self.checkPixelSize()
 
@@ -643,10 +642,10 @@ class makestack (appionLoop.AppionLoop):
 ## Shared function for tilted and untilted CTF correction
 ############################################################
 
-	def createStackParticle(self,prtl):
+	def createStackParticle(self, prtl):
 		stackpq=appionData.ApStackParticlesData()
-		stackpq['stack']=self.stackdata
-		stackpq['stackRun']=self.params['stackRun']
+		stackpq['stack'] = self.stackdata
+		stackpq['stackRun'] = self.stackrundata
 		stackpq['particle']=prtl
 		self.params['particleNumber'] += 1
 		stackpq['particleNumber']=self.params['particleNumber']
@@ -822,12 +821,12 @@ class makestack (appionLoop.AppionLoop):
 		else:
 			runq['stackParams'] = stparamq
 
-		self.params['stackRun']=runq
+		self.stackrundata = runq
 
 		# create runinstack object
 		rinstackq = appionData.ApRunsInStackData()
 
-		rinstackq['stackRun']=self.params['stackRun']
+		rinstackq['stackRun'] = runq
 		rinstackq['stack'] = stackq
 		rinstackq['project|projects|project'] = apProject.getProjectIdFromSessionName(self.params['session']['name'])
 
@@ -910,7 +909,6 @@ class makestack (appionLoop.AppionLoop):
 		self.params['ctftilt']=False
 		self.params['highpass']=None
 		self.params['boxfiles']=False
-		self.params['stackRun']=None
 
 	def specialParseParams(self,args):
 		for arg in args:
