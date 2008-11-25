@@ -146,7 +146,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['maxlikerun'] = maxlikeq
-		alignrunq['hidden'] =  False
+		alignrunq['hidden'] = False
+		alignrunq['runname'] = runparams['runname']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### setup alignment stack

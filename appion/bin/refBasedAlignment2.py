@@ -134,7 +134,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['refbasedrun'] = refrunq
-		alignrunq['hidden'] =  False
+		alignrunq['hidden'] = False
+		alignrunq['runname'] = self.params['runname']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup alignment stack

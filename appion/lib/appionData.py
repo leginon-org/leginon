@@ -483,6 +483,7 @@ leginondata.ApSingleNoRefRunData=ApSingleNoRefRunData
 class ApAlignRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('runname', str),
 			('norefrun', ApSingleNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
