@@ -173,7 +173,7 @@ class TomographySimu(acquisition.Acquisition):
 				seriesnumbers.append(result['number'])
 		return seriesnumbers
 
-	def getTiltSeriesTargetList(self):
+	def reportTiltSeriesTargetListDone(self):
 		self.targetlist = self.tiltimagedata[0][0]['target']['list']
 		if self.targetlist is not None:
 			self.reportTargetListDone(self.targetlist,'done')
@@ -184,7 +184,6 @@ class TomographySimu(acquisition.Acquisition):
 		try:
 			self.getTiltSeries()
 			self.getTiltImagedata()
-			self.getTiltSeriesTargetList()
 			self.tilts.update(equally_sloped=self.settings['equally sloped'],
 							  min=math.radians(self.settings['tilt min']),
 							  max=math.radians(self.settings['tilt max']),
@@ -257,6 +256,7 @@ class TomographySimu(acquisition.Acquisition):
 		self.logger.info('Pixel size: %g meters.' % pixel_size)
 
 		# TODO: error check
+		self.simuseries = int(self.settings['simu tilt series'])
 		self.update()
 		tilts = self.tilts.getTilts()
 		exposures = self.exposure.getExposures()
@@ -295,6 +295,7 @@ class TomographySimu(acquisition.Acquisition):
 		# ignoring wait for process
 		#self.publishDisplayWait(imagedata)
 
+		self.reportTiltSeriesTargetListDone()
 		return 'ok'
 
 	def getPixelPosition(self, move_type, position=None):
@@ -374,6 +375,8 @@ class TomographySimu(acquisition.Acquisition):
 		self.loadPredictionInfo()
 		self.update()
 		self.initGoodPredictionInfo()
+		# For testing
+		self.reportTiltSeriesTargetListDone()
 
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')
