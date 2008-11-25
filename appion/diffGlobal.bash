@@ -24,5 +24,5 @@ do
         fi
 done
 
-echo "rsync -vaPCn lib/ /ami/sw/packages/pyappion/lib/"
-echo "rsync -vaPCn bin/ /ami/sw/packages/pyappion/bin/"
+echo "rsync -rltouvPCn lib/ /ami/sw/packages/pyappion/lib/"
+echo "rsync -rltouvPCn bin/ /ami/sw/packages/pyappion/bin/"
