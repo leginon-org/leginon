@@ -4,6 +4,7 @@ import time
 import os
 ## appion
 import apDisplay
+import spyder
 
 """
 A large collection of SPIDER functions
@@ -61,24 +62,27 @@ def spiderInLine(line):
 	return spidict
 
 #===============================
-def addParticleToStack(partnum, partfile, stackfile):
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+def addParticleToStack(partnum, partfile, stackfile, dataext=".spi"):
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("CP", 
-		partfile, #particle file
-		stackfile+"@%06d"%(partnum), #stack file
+		spyder.fileFilter(partfile), #particle file
+		spyder.fileFilter(stackfile)+"@%06d"%(partnum), #stack file
 	)
 	mySpider.close()
-	return spidict
+	return
 
 #===============================
-def addParticleToStack(stackfile, numpart, avgfile, varfile):
+def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("AS R", 
-		partfile, #particle file
-		stackfile+"@%06d"%(partnum), #stack file
+		spyder.fileFilter(stackfile)+"@******", #stack file
+		"1-%6d"%(numpart), #num of particles
+		"A", #use all particles
+		spyder.fileFilter(avgfile), #average file
+		spyder.fileFilter(varfile), #variance file
 	)
 	mySpider.close()
-	return spidict
+	return
 
 
 
