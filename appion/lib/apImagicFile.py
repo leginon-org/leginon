@@ -25,6 +25,14 @@ def readImagic(filename):
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
+
+	### check file size, no more than 2 GB is possible 
+	### it takes double memory on machine to read stack
+	stacksize = apFile.fileSize(datafilename)/1024.0/1024.0
+	if stacksize > 2000:
+		apDisplay.printError("Stack is too large to read "+str(round(stacksize,1))+" MB")
+
+	### read stack
 	stack={}
 	stack['header'] = readImagicHeader(headerfilename)
 	stack['images'] = readImagicData(datafilename, stack['header'])
