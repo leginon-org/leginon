@@ -90,58 +90,42 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		}
 	
 		### make standard input for ctftilt
-		commandline = ace2exe + " -i " + str(inputparams['input']) + " -b " + str(inputparams['binby']) + " -c " + str(inputparams['cs']) + " -k " + str(inputparams['kv'])  + " -a " + str(inputparams['apix']) + "\n"
+		
+		print "Using ACE2 at:"+self.ace2exe
+		commandline = self.ace2exe + " -i " + str(inputparams['input']) + " -b " + str(inputparams['binby']) + " -c " + str(inputparams['cs']) + " -k " + str(inputparams['kv'])  + " -a " + str(inputparams['apix']) + "\n"
 		
 		t0 = time.time()
 		
 		apDisplay.printMsg("running ace2 at "+time.asctime())
 		
-		ctftiltlog = os.path.join(self.logdir,imgdata['filename']+".mrc"+".ctf.txt")
-		logf = open(ctftiltlog, "w")
-		
-		ctftiltproc = subprocess.Popen(self.commandline, shell=True, stdin=subprocess.PIPE, stdout=logf)	
+		ctftiltproc = subprocess.Popen(commandline, shell=True)	
 		ctftiltproc.wait()
-		
-		logf.close()
 
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
-
-		### parse ctftilt output
+		
 		self.ctfvalues = {}
-		logf = open(ctftiltlog, "r")
+		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
+		logf = open(imagelog, "r")
 		lines = logf.readlines()
-		
-		re.search("Defocus: %f",params['defocus'],)
-		
+
 		for line in lines:
 			sline = line.strip()
 			if re.search("Defocus:", sline):
-				float(sline)
-
-
-		### write to log file
-		f = open("ctfvalues.log", "a")
-		f.write("=== "+imgdata['filename']+" ===\n")
-		tiltang = apDatabase.getTiltAngleDeg(imgdata)
-		line1 = ("nominal=%.1e, bestdef=%.1e, tilt=%.1f,\n" % 
-			( self.ctfvalues['nominal'], self.ctfvalues['defocusinit'], tiltang))
-		self.ctfvalues['origtiltang'] = tiltang
-		print line1
-		f.write(line1)
-		line2 = ("def_1=%.1e, def_2=%.1e, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.3f,\n" % 
-			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'], 
-				self.ctfvalues['tilt_angle'], self.ctfvalues['tilt_axis_angle'], self.ctfvalues['cross_correlation'] ))
-		print line2
-		f.write(line2)
-		f.close()
-
-		#convert powerspectra to JPEG
-		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
-		self.lastjpg = os.path.join("powerspectra", outputjpgbase)
-		outputjpg = os.path.join(self.params['rundir'], self.lastjpg)
-		powspec = apImage.mrcToArray(inputparams['output'])
-		apImage.arrayToJpeg(powspec, outputjpg)
-		shutil.move(inputparams['output'], "powerspectra/"+inputparams['output'])
+				parts = sline.split()
+				self.ctfvalues['defocus1'] = float(parts[1])
+				self.ctfvalues['defocus2'] = float(parts[2])
+				self.ctfvalues['angle_astigmatism'] = float(parts[3])
+			elif re.search("Amplitude Contrast:",sline):
+				parts = sline.split()
+				self.ctfvalues['amplitude_contrast'] = float(parts[2])
+			elif re.search("Confidence:",sline):
+				parts = sline.split()
+				self.ctfvalues['confidence'] = float(parts[1])
+				self.ctfvalues['confidence_d'] = float(parts[1])
+		
+		logf.close()
+		
+		print self.ctfvalues
 		
 		return
 
