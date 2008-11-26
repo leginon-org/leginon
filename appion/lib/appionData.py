@@ -884,8 +884,8 @@ class ApCtfData(Data):
 			('graph1', str),
 			('graph2', str),
 			('mat_file', str),
-			('cross_correlation', float)
-			('ctfvalues_file', str)
+			('cross_correlation', float),
+			('ctfvalues_file', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCtfData=ApCtfData
