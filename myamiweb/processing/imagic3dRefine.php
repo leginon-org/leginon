@@ -42,7 +42,6 @@ if ($_POST['process'])  {
 	}
 }
 
-
 elseif ($_POST['refinemodel'])  {
 	if (!$_POST['model']) create3d0SummaryForm("Error: No model selected");
 	else {
@@ -54,6 +53,7 @@ elseif ($_POST['refinemodel'])  {
 		jobform($modelid);
 	} 
 }
+
 elseif ($_POST['duplicate'])  {
 	$postdata = explode('|--|', $_POST['duplicate']);
 	$modelid = $postdata[1];
@@ -107,6 +107,7 @@ function create3d0SummaryForm($extra=False) {
 			}
 			if ($model['hidden']==1) $hidden[]=$model;
 			else $shown[]=$model;
+
 		}
 
 		$modeltable="<form name='3d0summaryform' method='post' action='$formAction'>\n";
@@ -242,7 +243,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 
 	// display info about each model run
 	$modeltable.= "</tr>\n";
-	$modeltable.="<tr><TD COLSPAN=8>description: $model[description]</td></tr>\n";
+	$modeltable.="<tr><TD COLSPAN=8>description: $model[description]</td>\n";
 	$modeltable.="<tr><TD COLSPAN=8>path: $model[path]/$model[runname]/$model[name]</td></tr>\n";
 	if ($sum_specific_params) {
 		$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
