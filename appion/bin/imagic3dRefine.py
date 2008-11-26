@@ -29,6 +29,7 @@ import apFile
 import apUpload
 import apDatabase
 import apStack
+import apProject
 appiondb = apDB.apdb
 
 #=====================
@@ -41,6 +42,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		self.parser.add_option("--imagic3d0Id", dest="imagic3d0Id",
 			help="ID of 3d0 used to initiate refinement", metavar="int")
+		self.parser.add_option("--norefClassId", dest="norefClassId",
+			help="ID of noref class averages used in refinement", metavar="int")	
 		self.parser.add_option("--numiters", dest="numiters", type="int",
 			help="total number of iterations", metavar="int")
 		self.parser.add_option("--itn", dest="itn", type="int",
@@ -94,8 +97,6 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			apDisplay.printError("enter a run ID")
 		if self.params['itn'] is None:
 			apDisplay.printError("enter iteration number")
-		if self.params['numiters'] is None:
-			apDisplay.printError("enter total number of iterations")
 		if self.params['symmetry'] is None:
 			apDisplay.printError("enter object symmetry")
 		if self.params['max_shift_orig'] is None:
@@ -143,7 +144,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	def upload3dRunData(self):
 		refineq = appionData.ApImagic3dRefineRunData()
+		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runId']
+		refineq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
 		refineq['imagic3d0run'] = appiondb.direct_query(appionData.ApImagic3d0Data, self.params['imagic3d0Id'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
@@ -195,10 +198,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid	
 		if modeldata['norefclass'] is not None:
 			norefclassdata = modeldata['norefclass']
+			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
 		elif modeldata['reclass'] is not None:
 			reclassid = modeldata['reclass'].dbid
 			reclassdata = appiondb.direct_query(appionData.ApImagicReclassifyData, reclassid)
-			norefclassdata = reclassdata['norefclass']			
+			norefclassdata = reclassdata['norefclass']
+			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid			
 		else:
 			apDisplay.printError("no class averages associated with model in the database")
 		
@@ -233,7 +238,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		print "... class average pixel size: "+str(self.params['apix'])
 		print "... class average box size: "+str(self.params['boxsize'])	
-		apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3Refine_"+str(self.params['itn'])+".log for details")
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
 	
 		filename = "imagicCreate3dRefine_"+str(self.params['itn'])+".batch"
 		f = open(filename, 'w')
