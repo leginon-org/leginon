@@ -820,33 +820,15 @@ leginondata.ApAceParamsData=ApAceParamsData
 class ApAce2RunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('aceparams', ApAce2ParamsData),
 			('session', leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
+			('bin', int),
+			('reprocess', float),
+			('cs', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAce2RunData=ApAce2RunData
-
-class ApAce2ParamsData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('display', int),
-			('stig', int),
-			('medium', str),
-			('df_override', float),
-			('edgethcarbon', float),
-			('edgethice', float),
-			('pfcarbon', float),
-			('pfice', float),
-			('overlap', int),
-			('fieldsize', int),
-			('resamplefr', float),
-			('drange', int),
-			('reprocess', float),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApAce2ParamsData=ApAce2ParamsData
 
 class ApCtfTiltRunData(Data):
 	def typemap(cls):
@@ -903,6 +885,7 @@ class ApCtfData(Data):
 			('graph2', str),
 			('mat_file', str),
 			('cross_correlation', float)
+			('ctfvalues_file', str)
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCtfData=ApCtfData
