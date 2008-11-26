@@ -23,6 +23,7 @@ import apFile
 import apUpload
 import apDatabase
 import apStack
+import apProject
 appiondb = apDB.apdb
 
 #=====================
@@ -102,6 +103,7 @@ class reclassifyScript(appionScript.AppionScript):
 
 	def uploadreclassification(self):
 		reclassq = appionData.ApImagicReclassifyData()
+		reclassq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		reclassq['runname'] = self.params['runid']
 		reclassq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
 		reclassq['lowpass'] = self.params['lp']
