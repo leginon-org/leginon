@@ -24,6 +24,7 @@ import apFile
 import apUpload
 import apDatabase
 import apStack
+import apProject
 appiondb = apDB.apdb
 
 #=====================
@@ -137,6 +138,7 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	def upload3d0(self):
 		modelq = appionData.ApImagic3d0Data()
+		modelq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		modelq['name'] = "masked_3d0_ordered0_repaligned.mrc"
 		modelq['runname'] = self.params['runId']
 		if self.params['norefClassId'] is not None:
@@ -160,6 +162,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['boxsize'] = self.params['boxsize']
 		modelq['symmetry'] = appiondb.direct_query(appionData.ApSymmetryData, self.params['symmetry'])
 		modelq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['outdir'])))
+	
 		modelq['hidden'] = False
 		if self.params['commit'] is True:
 			modelq.insert()
