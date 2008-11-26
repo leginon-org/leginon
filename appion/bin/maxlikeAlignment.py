@@ -112,6 +112,64 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		pf.close()
 
 	#=====================
+	def writeGaribaldiJobFile(self):
+		nproc = 128
+		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
+		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_align2d"
+		newoutdir = "$PBSREMOTEDIR/"
+		xmippopts = ( ""
+			+" -i $PBSREMOTEDIR/partlist2.doc \\\n"
+			+" -o $PBSREMOTEDIR/"+self.timestamp+" \\\n"
+			+" -nref "+str(self.params['numrefs'])
+			+" -iter "+str(self.params['maxiter'])
+			+" -psi_step "+str(self.params['psistep'])
+			+" -eps 5e-4"
+		)
+		if self.params['fast'] is True:
+			xmippopts += " -fast"
+		if self.params['mirror'] is True:
+			xmippopts += " -mirror"
+
+		### write to file
+		jobfile = "xmipp-"+self.timestamp+".job"
+		results = rundir+"/"+self.params['runname']+"-results.tgz"
+		f = open(jobfile, "w")
+		f.write("#PBS -l nodes="+str(nproc/4)+":ppn=4\n")
+		f.write("#PBS -l walltime=240:00:00\n")
+		f.write("#PBS -l cput=240:00:00\n")
+		f.write("#PBS -r n\n")
+		f.write("\n")
+		f.write("## outdir: "+self.params['outdir']+"\n")
+		f.write("\n")
+		f.write("cd "+rundir+"\n")
+		f.write("rm -fv pbstempdir "+results+"\n")
+		f.write("ln -s $PBSREMOTEDIR pbstempdir\n")
+		f.write("cd $PBSREMOTEDIR\n")
+		f.write("tar xzf "+rundir+"/particles.tgz\n")
+		f.write("\n")
+		f.write("foreach line ( `cat partlist.doc | cut -f1 -d' '` )\n")
+		f.write("  echo $PBSREMOTEDIR/`echo $line | sed 's/^.*partfiles/partfiles/'` 1 >> partlist2.doc\n")
+		f.write("end\n")
+		f.write("\n")
+		f.write("setenv MPI_HOME /garibaldi/people-b/applications/openmpi-1.2.2/\n")
+		f.write("setenv XMIPP_HOME /garibaldi/people-a/vossman/Xmipp-2.2-x64/\n")
+		f.write("set path = ( $MPI_HOME/bin $path )\n")
+		f.write("setenv LD_LIBRARY_PATH $MPI_HOME/lib:$XMIPP_HOME/lib:/usr/lib:/lib\n")
+		f.write("\n")
+		f.write("mpirun -np "+str(nproc)+" "+xmippexe+" \\\n")
+		f.write(xmippopts+"\n")
+		f.write("\n")
+		f.write("tar zcf "+results+" *.???\n")
+		f.write("\n")
+		f.write("exit\n")
+		f.close()
+
+		apDisplay.printMsg("tar zcf particles.tgz partlist.doc partfiles/")
+		apDisplay.printMsg("rsync -vaP "+jobfile+" garibaldi:"+rundir+"/")
+		apDisplay.printMsg("rsync -vaP particles.tgz garibaldi:"+rundir+"/")
+		#sys.exit(1)
+
+	#=====================
 	def start(self):
 		self.appiondb.dbd.ping()
 		self.stack = {}
@@ -135,13 +193,16 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### convert stack into single spider files
-		partlistdocfile = apXmipp.breakupStackIntoSingleFiles(localstack)
+		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(localstack)
+
+		### write garibaldi job file
+		self.writeGaribaldiJobFile()
 
 		### setup Xmipp command
 		aligntime = time.time()
 		
 		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['outdir'], partlistdocfile)
+			+" -i "+os.path.join(self.params['outdir'], self.partlistdocfile)
 			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['outdir'], self.timestamp)
