@@ -205,7 +205,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -i "+os.path.join(self.params['outdir'], self.partlistdocfile)
 			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
-			+" -o "+os.path.join(self.params['outdir'], self.timestamp)
+			+" -o "+os.path.join(self.params['outdir'], "part"+self.timestamp)
 			+" -psi_step "+str(self.params['psistep'])
 			+" -eps 5e-4 "
 		)
@@ -216,7 +216,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		nproc = apParam.getNumProcessors()
 		mpirun = apParam.getExecPath("mpirun")
-		if nproc > 3 and mpirun is not None:
+		if False and nproc > 3 and mpirun is not None:
 			### use multi-processor
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d")
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
@@ -227,6 +227,18 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
+
+		### align references
+		refdocfile = "part"+self.timestamp+".sel"
+		xmippopts = ( " "
+			+" -i "+os.path.join(self.params['outdir'], "part"+self.timestamp)
+			+" -nref 1 "
+			+" -iter "+str(self.params['maxiter'])
+			+" -o "+os.path.join(self.params['outdir'], "ref"+self.timestamp)
+			+" -psi_step 0.5 "
+			+" -eps 5e-3 "
+		)
+
 
 		self.dumpParameters()
 
