@@ -10,11 +10,7 @@ import shutil
 import appionData
 import apParam
 import apDisplay
-import apDB
 import apDatabase
-
-appiondb = apDB.apdb
-leginondb = apDB.db
 
 def commitCtfValueToDatabase(imgdict, matlab, ctfvalue, params):
 	imgname = imgdict['filename']
@@ -92,7 +88,7 @@ def insertAceParams(imgdata, params):
 	runq['session']=imgdata['session'];
 
 	# see if acerun already exists in the database
-	runids = appiondb.query(runq, results=1)
+	runids = runq.query(results=1)
 
 	if (runids):
 		if not (runids[0]['aceparams'] == aceparamq):
@@ -108,7 +104,7 @@ def insertAceParams(imgdata, params):
 
 	# if no run entry exists, insert new run entry into db
 	runq['aceparams']=aceparamq
-	appiondb.insert(runq)
+	runq.insert()
 
 	return True
 
@@ -117,7 +113,7 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 	runq['name']=params['runid']
 	runq['session']=imgdata['session']
 
-	acerun=appiondb.query(runq,results=1)
+	acerun=runq.query(results=1)
 
 
 	print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
@@ -138,7 +134,7 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 		for i in range(len(ctfvaluelist)):
 			ctfq[ ctfvaluelist[i] ] = ctfvalue[i]
 
-	appiondb.insert(ctfq)
+	ctfq.insert()
 	
 	return
 
@@ -155,16 +151,21 @@ def getBestDefocusForImage(imgdata, display=False):
 		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
 		return imgdata['scope']['defocus']
 
-	if ctfvalue['acerun']['aceparams']['stig'] == 1:
+	if ctfvalue['defocus1'] != ctfvalue['defocus2']:
 		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
 				       " and average defocus estimate may be less than ideal")
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		return -avgdf
 
 	if display is True:
-		print "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+\
-			str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+\
-			" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr'])
+		if ctfvalue['acerun'] is not None:
+			print ( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
+				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
+				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
+		else:
+			print ( "Best CTF run info: confidence="+
+				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
+				" microns" )
 
 	return -ctfvalue['defocus1']
 
@@ -178,16 +179,21 @@ def getBestDefocusAndAmpConstForImage(imgdata, display=False):
 		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
 		return imgdata['scope']['defocus'], 0.1
 
-	if ctfvalue['acerun']['aceparams']['stig'] == 1:
+	if ctfvalue['defocus1'] != ctfvalue['defocus2']:
 		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
 				       " and average defocus estimate may be less than ideal")
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		return -avgdf, ctfvalue['amplitude_contrast']
 
 	if display is True:
-		print "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+\
-			str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+\
-			" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr'])
+		if ctfvalue['acerun'] is not None:
+			print ( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
+				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
+				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
+		else:
+			print ( "Best CTF run info: confidence="+
+				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
+				" microns" )
 
 	return -ctfvalue['defocus1'], ctfvalue['amplitude_contrast']
 
@@ -198,7 +204,7 @@ def getBestCtfValueForImage(imgdata, ctfavg=True):
 	### get all ctf values
 	ctfq = appionData.ApCtfData()
 	ctfq['image'] = imgdata
-	ctfvalues = appiondb.query(ctfq)
+	ctfvalues = ctfq.query()
 
 	### check if it has values
 	if ctfvalues is None:
@@ -226,7 +232,7 @@ def getBestTiltCtfValueForImage(imgdata):
 	### get all ctf values
 	ctfq = appionData.ApCtfData()
 	ctfq['image'] = imgdata
-	ctfvalues = appiondb.query(ctfq)
+	ctfvalues = ctfq.query()
 	
 	bestctftiltvalue = None
 	cross_correlation = 0.0
@@ -292,7 +298,7 @@ def printCtfSummary(params):
 
 		ctfq = appionData.ApCtfData()
 		ctfq['image'] = imgdata
-		ctfvalues = appiondb.query(ctfq)
+		ctfvalues = ctfq.query()
 
 		### check if it has values
 		if ctfvalues is None:
