@@ -285,10 +285,10 @@ function generateProcessedClasses() {
 	$cmd.= "chmod 755 $jobfile\n";
 	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
 
-	if ($_POST['process']=="run imagic") {
+	if ($_POST['process']=="Run Imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'generateNewClassums');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'generateProcessedClasses');
 		// if errors:
 		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
