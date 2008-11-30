@@ -127,7 +127,7 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 }
 
 // use summarytables.inc
-echo stacksummarytable($stackId);
+echo ministacksummarytable($stackId);
 
 $initmodelname = showModelInfo($initmodel, $expId, $particle);
 
