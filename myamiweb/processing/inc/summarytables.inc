@@ -53,19 +53,19 @@ function stacksummarytable($stackid) {
 	$montage = $stackdata['path']."/montage".$stackdata['DEF_id'].".png";
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
-		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+		$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		if (!$centered) $stacktable.= "<br /><a href='centerStack.php?expId=$expId&sId=$stackid'>[Center Particles]</a>\n";
 		$stacktable.= "<br /><a href='subStack.php?expId=$expId&sId=$stackid'>[Create Substack]</a>\n";
 		$stacktable.= "</td>\n";
 		if ($centered && file_exists($badstackavg)) {
-			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+			$stacktable.= "<td  align='left' rowspan='30' align='center' valign='top'>";
 			$stacktable.= "<img src='loadimg.php?filename=$badstackavg&s=150' height='150'><br/>\n";
 			$stacktable.= "<i>averaged bad stack</i><br/>\n";
 			$stacktable.= "</td>\n";
 		} elseif (file_exists($montage)) {
-			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+			$stacktable.= "<td align='left' rowspan='30' align='center' valign='top'>";
 			$stacktable.= "<a href='loadimg.php?filename=$montage'>\n";
 			$stacktable.= "<img border=0 src='loadimg.php?filename=$montage&s=150' height='150'></a><br/>\n";
 			$stacktable.= "<i>mean/stdev montage</i><br/>\n";
@@ -83,8 +83,15 @@ function stacksummarytable($stackid) {
 	$boxsz=($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
 	$boxsz.=" pixels";
 
-	//$display_keys['date time'] = $stackdata['DEF_timestamp'];
-	
+	$display_keys['date time'] = $stackdata['DEF_timestamp'];
+	for($i=0; $i<=10; $i++) {
+		if ($stackdata[$i]['sessionid']) {
+			$sessiondata = $particle->getSessionData($stackdata[$i]['sessionid']);
+			$display_keys['session id'].="<a href='index.php?expId=".$stackdata['sessionid']."'>"
+				.$sessiondata['name']."</a>&nbsp;\n";
+		}
+	}
+
 	// add edit button to description if logged in
 	$descDiv = ($_SESSION['username']) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
 	$display_keys['description']=$descDiv;
@@ -97,14 +104,7 @@ function stacksummarytable($stackid) {
 		$display_keys['# particles']=commafy($numpart);
 
 	// Get filesize
-	if (substr($stackdata['name'], -4) == ".hed")
-		$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
-	else
-		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
-	if (filesize($stackimgfile) > 1073741824)
-		$display_keys['file size'] = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
-	else
-		$display_keys['file size'] = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
+	$display_keys['file size'] = getStackSize($stackdata);
 
 	$stackfile = $stackdata['path']."/".$stackdata['name'];
 	$display_keys['path']=$stackdata['path'];
@@ -139,6 +139,75 @@ function stacksummarytable($stackid) {
 	$stacktable.= "<p>\n";
 	return $stacktable;
 }
+
+function ministacksummarytable($stackid) {
+	$particle = new particledata();
+	$stackdata = $particle->getStackParams($stackid);
+
+	$numpart = $particle->getNumStackParticles($stackid);
+	if ($numpart == 0) return;
+
+	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
+		.$stackdata['shownstackname']."</a> (ID: $stackid)\n";
+
+	$stacktable.= apdivtitle($j);
+
+	// if particles were centered, set centered variable
+	if ($stackdata['centered'] == 1) {
+		$centered = True;
+	}
+
+	$stacktable.= "<table border='0'>\n";
+	$stackavg = $stackdata['path']."/average.mrc";
+	$badstackavg = $stackdata['path']."/badaverage.mrc";
+	$montage = $stackdata['path']."/montage".$stackdata['DEF_id'].".png";
+	if (file_exists($stackavg)) {
+		$stacktable.= "<tr >\n";
+		$stacktable.= "<td align='left' rowspan='30' align='center' valign='top'>";
+		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
+		$stacktable.= "<i>average</i>\n";
+		$stacktable.= "</td></tr>\n\n";
+	} #endif
+
+	// get pixel size of stack
+	$mpix=($particle->getStackPixelSizeFromStackId($stackid));
+	$apix=format_angstrom_number($mpix)."/pixel";
+
+	// get box size
+	$boxsz=($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
+	$boxsz.=" pixels";
+
+	$display_keys['date time'] = $stackdata['DEF_timestamp'];
+	for($i=0; $i<=10; $i++) {
+		if ($stackdata[$i]['sessionid']) {
+			$sessiondata = $particle->getSessionData($stackdata[$i]['sessionid']);
+			$display_keys['session id'].="<a href='index.php?expId=".$stackdata[$i]['sessionid']."'>"
+				.$sessiondata['name']."</a>&nbsp;\n";
+		}
+	}
+
+	// add edit button to description if logged in
+	$display_keys['description']="<font size=-2>".$stackdata['description']."</font>\n";
+
+	// Show size
+	$display_keys['size']=commafy($numpart)." parts / ".getStackSize($stackdata);
+
+	$stackfile = $stackdata['path']."/".$stackdata['name'];
+	$display_keys['path']="<font size=-2>".$stackdata['path']."</font>\n";;
+	$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>"
+		.$stackdata['name']."</A>";
+	# if stack was created by cenalignint, also view avg & bad stacks
+	$display_keys['pixel / box size']=$boxsz." / ".$apix;
+
+	//$display_keys['file type']=$stackdata['fileType'];
+	foreach($display_keys as $k=>$v) {
+	        $stacktable.= formatHtmlRow($k,$v);
+	}
+	$stacktable.= "</table>\n";
+	$stacktable.= "<p>\n";
+	return $stacktable;
+}
+
 
 
 function alignstacksummarytable($alignstackid) {
