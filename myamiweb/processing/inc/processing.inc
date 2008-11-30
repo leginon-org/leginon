@@ -17,12 +17,12 @@ require_once "inc/session.inc";
 // --- add to config file later --- //
 define(PROCESSING_HOST, 'garibaldi');
 
-define(DONE_PIC,'img/green_circle.gif');
-define(NONE_PIC,'img/red_circle.gif');
-define(PROG_PIC,'img/blue_circle.gif');
-//define(DONE_PIC,'img/icon-check.png');
-//define(NONE_PIC,'img/icon-cross.png');
-//define(PROG_PIC,'img/icon-bluestar.png');
+//define(DONE_PIC,'img/green_circle.gif');
+//define(NONE_PIC,'img/red_circle.gif');
+//define(PROG_PIC,'img/blue_circle.gif');
+define(DONE_PIC,'img/icon-check.png');
+define(NONE_PIC,'img/icon-cross.png');
+define(PROG_PIC,'img/icon-bluestar.png');
 
 define(NONE_COLOR,'#FFFFCC');
 define(PROG_COLOR,'#CCFFFF');
@@ -84,6 +84,18 @@ function getSubmitForm($name="Run", $displayhost=true, $warning=false) {
 // write popup function 'a href'
 function docpop($key,$text) {
 	return "<a href='#' id='l".$key."' onMouseOver='popLayer(\"".$key."\",\"l".$key."\")' onMouseOut='hideLayer()'>$text</a>\n";
+}
+
+function getStackSize($stackdata) {
+	if (substr($stackdata['name'], -4) == ".hed")
+		$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
+	else
+		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
+	if (filesize($stackimgfile) > 1073741824)
+		$size = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
+	else
+		$size = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
+	return $size;
 }
 
 function apdivtitle($title) {
