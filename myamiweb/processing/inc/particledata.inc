@@ -29,6 +29,21 @@ class particledata {
 					PARTICLE_DB);
 	}
 
+	function getSessionData ($sessionId) {
+		// this function is really slow
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT "
+		  ."s.* "
+		  ."FROM dbemdata.SessionData as s "
+		  ."WHERE "
+		  ."  s.`DEF_id` = '$sessionId' ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r[0];
+	}
+
+
 	//------ General DB summary functions ---------//
 
 	function getTotalAceStats(){
@@ -1096,7 +1111,10 @@ class particledata {
 	function getStackIdsWithProjectId ($sessionId, $projectId, $showHidden=False) {
 		// this function is really slow
 		//$projectId = (int) getProjectFromExpId($expId);
-		$q = "SELECT r.`REF|ApStackData|stack` as stackid , st.* "
+		$q = "SELECT "
+		  ."r.`REF|ApStackData|stack` as stackid , "
+		  ."st.*, "
+		  ."s.`REF|leginondata|SessionData|session` AS sessionid "
 		  ."FROM ApRunsInStackData as r "
 		  ."LEFT JOIN ApStackRunData as s ON "
 		  ."(r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
@@ -1112,6 +1130,23 @@ class particledata {
 			$q.= " AND st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getStackIdsForProject ($projectId, $showHidden=False) {
+		// this function is really slow
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT "
+		  ."  st.`DEF_id` as stackid "
+		  ."FROM ApStackData as st "
+		  ."WHERE "
+		  ."  st.`project|projects|project` = '$projectId' ";
+		if (!$showHidden)
+			$q.= " AND st.`hidden` != 1 ";
+		$q.= "ORDER BY stackid DESC";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
@@ -1172,7 +1207,8 @@ class particledata {
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
 			$childstackId = $rstack['stackId'];
 			//Get Parameters
-			$q = "SELECT sd.`DEF_id` as stackId, s.`DEF_id` as runid, s.*, p.*,sd.*"
+			$q = "SELECT sd.`DEF_id` as stackId, s.`DEF_id` as runid, s.*, p.*,sd.*,"
+				."s.`REF|leginondata|SessionData|session` AS sessionid "
 				."FROM ApRunsInStackData as r "
 				."LEFT JOIN ApStackRunData as s "
 				."ON (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
