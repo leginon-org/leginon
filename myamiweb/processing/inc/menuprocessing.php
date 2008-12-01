@@ -336,7 +336,7 @@ if ($expId) {
 
 		// only give option of reclassification if ref-free
 		// stacks exist
-		if ($totresult > 0) {
+		if ($alignruns > 0) {
 			// imagic reclassifications
 			$nruns[] = array (
 					  'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>IMAGIC Reclassify</a>",
