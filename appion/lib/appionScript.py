@@ -16,6 +16,7 @@ import apDisplay
 import apDatabase
 import apParam
 import apDB
+import apFile
 #leginon
 from pyami import mem
 
@@ -27,6 +28,7 @@ class AppionScript(object):
 		self.quiet = False
 		self.appiondb  = apDB.apdb
 		self.leginondb = apDB.db
+		self.startmem = mem.active()
 		### clean up any preliminary warnings
 		sys.stderr.write("\n\n")
 		#set the name of the function; needed for param setup
@@ -78,10 +80,13 @@ class AppionScript(object):
 	def close(self):
 		self.onClose()
 		apParam.closeFunctionLog(params=self.params, logfile=self.logfile, msg=(not self.quiet))
+		apFile.removeFile("spider.log")
 		if self.quiet is False:
+			apDisplay.printMsg("memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
 			apDisplay.printMsg("outdir:\n "+self.params['outdir'])
 			apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 		apParam.killVirtualFrameBuffer()
+
 
 	#######################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
