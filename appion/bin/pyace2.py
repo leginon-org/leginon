@@ -114,11 +114,11 @@ class Ace2Loop(appionLoop.AppionLoop):
 
 		for line in lines:
 			sline = line.strip()
-			if re.search("Defocus:", sline):
+			if re.search("Final Defocus:", sline):
 				parts = sline.split()
-				self.ctfvalues['defocus1'] = float(parts[1])
-				self.ctfvalues['defocus2'] = float(parts[2])
-				self.ctfvalues['angle_astigmatism'] = float(parts[3])
+				self.ctfvalues['defocus1'] = float(parts[2])
+				self.ctfvalues['defocus2'] = float(parts[3])
+				self.ctfvalues['angle_astigmatism'] = float(parts[4])
 			elif re.search("Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
