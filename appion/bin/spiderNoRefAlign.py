@@ -28,8 +28,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
 			help="Number of particles to use", metavar="#")
-		self.parser.add_option("--num-factors", dest="numfactors", type="int", default=8,
-			help="Number of factors to use in classification", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 
@@ -40,15 +38,13 @@ class NoRefAlignScript(appionScript.AppionScript):
 			help="Last ring radius for correlation (in pixels)", metavar="#")
 		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
-		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
-			help="Mask radius for particle coran (in Angstoms)", metavar="#")
-		self.parser.add_option("--lowpass", dest="lowpass", type="int",
+		self.parser.add_option("--hp", "--highpass", dest="highpass", type="int",
+			help="High pass filter radius (in Angstroms)", metavar="#")
+		self.parser.add_option("--lp", "--lowpass", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
-		self.parser.add_option("--skip-coran", dest="skipcoran", default=False,
-			action="store_true", help="Skip correspondence analysis")
 		self.parser.add_option("--init-method", dest="initmethod", default="allaverage",
 			help="Initialization method: "+str(self.initmethods), metavar="#")
 		self.parser.add_option("--templateid", dest="templateid", type="int",
@@ -71,8 +67,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("run description was not defined")
-		if self.params['maskrad'] is None:
-			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
 		maxparticles = 150000
@@ -81,8 +75,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		if self.params['initmethod'] not in self.initmethods:
 			apDisplay.printError("unknown initialization method defined: "
 				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
-		if self.params['numfactors'] > 20:
-			apDisplay.printError("too many factors defined: "+str(self.params['numfactors']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
@@ -98,84 +90,99 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 
 	#=====================
-	def insertNoRefRun(self, insert=False):
+	def insertNoRefRun(self, spiderstack, imagicstack, insert=False):
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		uniquerun = alignrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
+
 		# create a norefParam object
-		paramq = appionData.ApNoRefParamsData()
-		paramq['num_particles'] = self.params['numpart']
-		paramq['num_factors'] = self.params['numfactors']
-		paramq['particle_diam'] = 2.0*self.params['partrad']
-		paramq['mask_diam'] = 2.0*self.params['maskrad']
-		paramq['lp_filt'] = self.params['lowpass']
-		paramq['first_ring'] = self.params['firstring']
-		paramq['last_ring'] = self.params['lastring']
-		paramq['skip_coran'] = self.params['skipcoran']
-		paramq['init_method'] = self.params['initmethod']
-		paramq['bin'] = self.params['bin']
-		paramsdata = paramq.query(results=1)
+		norefq = appionData.ApSpiderNoRefRunData()
+		norefq['runname'] = self.params['runname']
+		norefq['particle_diam'] = 2.0*self.params['partrad']
+		norefq['first_ring'] = self.params['firstring']
+		norefq['last_ring'] = self.params['lastring']
+		norefq['init_method'] = self.params['initmethod']
+		norefq['run_seconds'] = self.runtime
 
-		### create a norefRun object
-		runq = appionData.ApNoRefRunData()
-		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		# ... path makes the run unique:
-		uniquerun = runq.query(results=1)
-		if uniquerun and insert is True:
-			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
-				str(self.params['stackid'])+"\nis already in the database")
+		### finish alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['norefrun'] = norefq
+		alignrunq['hidden'] = False
+		alignrunq['bin'] = self.params['bin']
+		alignrunq['hp_filt'] = self.params['highpass']
+		alignrunq['lp_filt'] = self.params['lowpass']
+		alignrunq['num_particles'] = self.params['numpart']
+		alignrunq['description'] = self.params['description']
+		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
-		# ... continue filling non-unique variables:
-		runq['name'] = self.params['runname']
-		runq['stack'] = self.stack['data']
-		runq['description'] = self.params['description']
-		runq['hidden'] = False
-		if paramsdata:
-			runq['norefParams'] = paramsdata[0]
-		else:
-			runq['norefParams'] = paramq
-		runq['run_seconds'] = self.runtime
+		# STOP HERE
 
-		apDisplay.printMsg("inserting run parameters into database")
+		### setup alignment stack
+		alignstackq = appionData.ApAlignStackData()
+		alignstackq['alignrun'] = alignrunq
+		alignstackq['imagicfile'] = os.path.basename(imagicstack)
+		alignstackq['spiderfile'] = os.path.basename(alignedstack)
+		alignstackq['alignrun'] = alignrunq
+		alignstackq['iteration'] = 0
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		### check to make sure files exist
+		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find stack file: "+imagicfile)
+		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		if not os.path.isfile(spiderfile):
+			apDisplay.printError("could not find stack file: "+spiderfile)
+		alignstackq['stack'] = self.stack['data']
+		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
+		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
+		alignstackq['description'] = self.params['description']
+		alignstackq['hidden'] = False
+		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+
 		if insert is True:
-			runq.insert()
+			alignstackq.insert()
 
-		### eigen data
-		for i in range(self.params['numfactors']):
-			factnum = i+1
-			eigenq = appionData.ApCoranEigenImageData()
-			eigenq['norefRun'] = runq
-			eigenq['factor_num'] = factnum
-			path = os.path.join(self.params['outdir'], "coran")
-			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
-			imgname = ("eigenimg%02d.png" % (factnum))
-			eigenq['image_name'] = imgname
-			if insert is True:
-				if not os.path.isfile(os.path.join(path, imgname)):
-					apDisplay.printWarning(imgname+" does not exist")
-					continue
-				eigenq['percent_contrib'] = self.contriblist[i]
-				eigenq.insert()
+		### create reference
+		refq = appionData.ApAlignReferenceData()
+		refq['refnum'] = 0
+		refq['iteration'] = 0
+		refq['mrcfile'] = ("templateavg%02d-%02d.mrc"%(iternum,refnum))
+		#refpath = os.path.abspath(os.path.join(self.params['outdir'], "alignment"))
+		#refq['path'] = appionData.ApPathData(path=refpath)
+		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		refq['alignrun'] = alignrunq
 
-		### particle align data
-		if insert is True:
-			apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
-		count = 0
-		for partdict in self.partlist:
-			count += 1
-			if count % 100 == 0:
-				if insert is True:
-					sys.stderr.write(".")
-				else:
-					sys.stderr.write("x")
-			partq = appionData.ApNoRefAlignParticlesData()
-			partq['norefRun'] = runq
-			# I can only assume this gets the correct particle:
-			stackpart = apStack.getStackParticle(self.params['stackid'], partdict['num'])
-			partq['particle'] = stackpart
-			# actual parameters
-			partq['shift_x'] = partdict['xshift']
-			partq['shift_y'] = partdict['yshift']
-			partq['rotation'] = partdict['rot']
+		### insert particle data
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		for partdict in partlist:
+			### see apSpider.alignment.alignStack() for more info
+			"""
+			partdict.keys()
+			'num': int(data[0]), #SPIDER NUMBERING: 1,2,3,...
+			'template': int(abs(templatenum)), #SPIDER NUMBERING: 1,2,3,...
+			'mirror': checkMirror(templatenum),
+			'score': float(data[3]),
+			'rot': float(data[4]),
+			'xshift': float(data[5]),
+			'yshift': float(data[6]),
+			"""
+
+			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq['ref'] = refq
+			alignpartq['partnum'] = partdict['num']
+			alignpartq['alignstack'] = alignstackq
+			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['num'])
+			alignpartq['stackpart'] = stackpartdata
+			alignpartq['xshift'] = partdict['xshift']
+			alignpartq['yshift'] = partdict['yshift']
+			alignpartq['rotation'] = partdict['rot']
+
 			if insert is True:
-				partq.insert()
+				alignpartq.insert()
 
 		return
 
@@ -206,6 +213,26 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return spiderstack
+
+	#=====================
+	def convertSpiderStack(self, spiderstack):
+		"""
+		takes the stack file and creates a spider file ready for processing
+		"""
+		emancmd  = "proc2d "
+		if not os.path.isfile(spiderstack):
+			apDisplay.printError("stackfile does not exist: "+spiderstack)
+		emancmd += spiderstack+" "
+
+		imagicstack = os.path.join(self.params['outdir'], "alignstack.hed")
+		apFile.removeFile(imagicstack, warn=True)
+		emancmd += imagicstack+" "
+
+		starttime = time.time()
+		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		return imagicstack
 
 	#=====================
 	def averageTemplate(self):
@@ -350,10 +377,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("unknown initialization method defined: "
 				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
 
-		maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
-		esttime = apAlignment.estimateTime(self.params['numpart'], maskpixrad)
-		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
-			apDisplay.timeString(esttime),"cyan")
+		apDisplay.printColor("Running spider this can take awhile","cyan")
 
 		### run the alignment
 		self.appiondb.dbd.ping()
@@ -372,31 +396,18 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
 
-		### do correspondence analysis
-		corantime = time.time()
-		if not self.params['skipcoran']:
-			maskpixrad = self.params['maskrad']/self.stack['apix']/self.params['bin']
-			boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
-			self.appiondb.dbd.ping()
-			self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
-				boxsize=boxsize, maskpixrad=maskpixrad, 
-				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
-			self.appiondb.dbd.ping()
-			### make dendrogram
-			alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
-		corantime = time.time() - corantime
-
+		### convert stack to imagic
+		imagicstack = self.convertSpiderStack(alignedstack)
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
-			self.runtime = corantime + aligntime
-			self.insertNoRefRun(insert=True)
+			self.runtime = aligntime
+			self.insertNoRefRun(alignedstack, imagicstack, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
 
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
-		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
 		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
 #=====================
