@@ -458,7 +458,7 @@ class ApSpiderNoRefRunData(Data):
 			('init_method', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApSingleNoRefRunData=ApSingleNoRefRunData
+leginondata.ApSpiderNoRefRunData=ApSpiderNoRefRunData
 
 ### Improved alignment data tables
 
@@ -470,7 +470,7 @@ class ApAlignRunData(Data):
 			('hp_filt', int),
 			('lp_filt', int),
 			('description', str),
-			('norefrun', ApSingleNoRefRunData),
+			('norefrun', ApSpiderNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
 			('hidden', bool),
