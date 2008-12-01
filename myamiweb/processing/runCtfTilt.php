@@ -140,7 +140,7 @@ function createCtfTiltForm($extra=false) {
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","ctftilt/",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","ctf",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
 	$ctf = new particledata();
@@ -151,7 +151,7 @@ function createCtfTiltForm($extra=false) {
 	<TR>
 	  <TD VALIGN='TOP'>";
 
-	createAppionLoopTable($sessiondata, $defrunid, "ctftilt");
+	createAppionLoopTable($sessiondata, $defrunid, "ctf");
 	echo"
 	  </TD>
 	  <TD CLASS='tablebg'>

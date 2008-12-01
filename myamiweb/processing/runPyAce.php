@@ -240,7 +240,7 @@ function createPyAceForm($extra=false) {
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","pyAce/",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","ctf",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
 	$ctf = new particledata();
@@ -251,7 +251,7 @@ function createPyAceForm($extra=false) {
 	<TR>
 	  <TD VALIGN='TOP'>";
 
-	createAppionLoopTable($sessiondata, $defrunid, "pyAce");
+	createAppionLoopTable($sessiondata, $defrunid, "ctf");
 	echo"
 	  </TD>
 	  <TD CLASS='tablebg'>
