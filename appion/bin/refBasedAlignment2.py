@@ -112,13 +112,18 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def insertRefBasedRun(self, partlist, alignedstack, imagicstack, insert=False):
+
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		uniquerun = alignrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
+
 		### setup ref based run
 		refrunq = appionData.ApRefBasedRunData()
-		refrunq['name'] = self.params['runname']
-		refrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		refrunq['bin'] = self.params['bin']
-		refrunq['hp_filt'] = self.params['highpass']
-		refrunq['lp_filt'] = self.params['lowpass']
+		refrunq['runname'] = self.params['runname']
 		refrunq['xysearch'] = self.params['xysearch']
 		refrunq['xystep'] = self.params['xystep']
 		refrunq['first_ring'] = self.params['firstring']
@@ -127,15 +132,18 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		refrunq['invert_templs'] = self.params['inverttemplates']
 		refrunq['num_templs'] = self.params['numtemplate']
 		#refrunq['csym', int),
-		refrunq['num_particles'] = self.params['numpart']
 		refrunq['run_seconds'] = self.params['runtime']
-		refrunq['description'] = self.params['description']
 
-		### setup alignment run
+		### finish alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['refbasedrun'] = refrunq
 		alignrunq['hidden'] = False
+		alignrunq['bin'] = self.params['bin']
+		alignrunq['hp_filt'] = self.params['highpass']
+		alignrunq['lp_filt'] = self.params['lowpass']
 		alignrunq['runname'] = self.params['runname']
+		alignrunq['num_particles'] = self.params['numpart']
+		alignrunq['description'] = self.params['description']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		### setup alignment stack
@@ -166,7 +174,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		### insert reference data
 		reflist = []
 
-
 		for j in range(self.params['numiter']):
 			iternum = j+1
 			for i in range(len(self.templatelist)):
@@ -188,6 +195,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		#refq['frc_resolution', float),
 
 		### insert particle data
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		for partdict in partlist:
 			### see apSpider.alignment.alignStack() for more info
 			"""
