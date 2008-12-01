@@ -256,7 +256,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 	#======================
 	def insertCtfTiltRun(self, imgdata):
-		if isinstance(self.ctfrun, appionData.ApCtfTiltRunData):
+		if isinstance(self.ctfrun, appionData.ApAceRunData):
 			return False
 
 		# first create an aceparam object
@@ -267,7 +267,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 				paramq[p] = self.params[p]
 
 		# create an acerun object
-		runq = appionData.ApCtfTiltRunData()
+		runq = appionData.ApAceRunData()
 		runq['name'] = self.params['runid']
 		runq['session'] = imgdata['session'];
 
@@ -301,7 +301,7 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		print "Committing ctf parameters for",apDisplay.short(imgdata['filename']), "to database."
 		ctfq = appionData.ApCtfData()
-		ctfq['ctftiltrun'] = self.ctfrun
+		ctfq['acerun'] = self.ctfrun
 		ctfq['image']      = imgdata
 		ctfq['graph1']     = self.lastjpg
 

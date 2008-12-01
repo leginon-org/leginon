@@ -777,6 +777,8 @@ class ApAceRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('aceparams', ApAceParamsData),
+			('ctftilt_params', ApCtfTiltParamsData),
+			('ace2_params', ApAce2ParamsData),
 			('session', leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
@@ -805,12 +807,9 @@ class ApAceParamsData(Data):
 leginondata.ApAceParamsData=ApAceParamsData
 
 
-class ApAce2RunData(Data):
+class ApAce2ParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
-			('path', ApPathData),
-			('name', str),
 			('bin', int),
 			('reprocess', float),
 			('cs', float),
@@ -818,16 +817,6 @@ class ApAce2RunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApAce2RunData=ApAce2RunData
 
-class ApCtfTiltRunData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('name', str),
-			('path', ApPathData),
-			('ctftilt_params', ApCtfTiltParamsData),
-			('session', leginondata.SessionData),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApCtfTiltRunData=ApCtfTiltRunData
 
 class ApCtfTiltParamsData(Data):
 	def typemap(cls):
@@ -846,8 +835,6 @@ class ApCtfData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('acerun', ApAceRunData),
-			('ace2run', ApAce2RunData),
-			('ctftiltrun', ApCtfTiltRunData),
 			('image', leginondata.AcquisitionImageData),
 			('defocus1', float),
 			('defocus2', float),

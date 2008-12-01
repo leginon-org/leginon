@@ -142,16 +142,27 @@ class Ace2Loop(appionLoop.AppionLoop):
 		apDisplay.printMsg("Committing ctf parameters for "
 			+apDisplay.short(imgdata['filename'])+" to database")
 
-		runq=appionData.ApAce2RunData()
+			('aceparams', ApAceParamsData),
+			('ctftilt_params', ApCtfTiltParamsData),
+			('ace2_params', ApAce2ParamsData),
+			('session', leginondata.SessionData),
+			('path', ApPathData),
+			('name', str),
+		)
+
+		paramq = appionData.ApAce2ParamsData()
+		paramq['bin']     = self.params['bin']
+		paramq['reprocess'] = self.params['reprocess']
+		paramq['cs']      = self.params['cs']
+
+		runq=appionData.ApAceRunData()
 		runq['name']    = self.params['runid']
 		runq['session'] = imgdata['session']
 		runq['path']    = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		runq['bin']     = self.params['bin']
-		runq['reprocess'] = self.params['reprocess']
-		runq['cs']      = self.params['cs']
+		runq['ace2_params'] = paramq
 
 		ctfq = appionData.ApCtfData()
-		ctfq['ace2run'] = runq
+		ctfq['acerun'] = runq
 		ctfq['image']      = imgdata
 		ctfq['mat_file'] = imgdata['filename']+".mrc.ctf.txt"
 		ctfq['ctfvalues_file'] = imgdata['filename']+".mrc.norm.txt"
