@@ -138,7 +138,7 @@ function createAce2Form($extra=false) {
 	  </TD>
 	  <TD CLASS='tablebg'>\n";
 
-	echo "<INPUT TYPE='text' NAME='binval' VALUE='1' SIZE='4'>\n";
+	echo "<INPUT TYPE='text' NAME='binval' VALUE='2' SIZE='4'>\n";
 	echo docpop('binval','Binning');
 	echo "<br/><br/>\n";
 
