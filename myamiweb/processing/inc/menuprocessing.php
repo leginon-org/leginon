@@ -294,28 +294,25 @@ if ($expId) {
 		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
-		// get ref-based alignment stats:
-		$refbasedresults=array();	
-		$refbaseddone = count($subclusterjobs['refbasedali']['done']);
+		// get alignment stats:
+		$alignresults=array();	
+		$aligndone  = count($subclusterjobs['maxlikeali']['done']) 
+			+ count($subclusterjobs['refbasedali']['done']) 
+			+ count($subclusterjobs['norefali']['done']);
+		$norefrun = count($subclusterjobs['maxlikeali']['running']);
 		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
-		$refbasedq = count($subclusterjobs['refbasedali']['queued']);
+		$maxlikerun = count($subclusterjobs['maxlikeali']['running']);
+		$alignrun   = $norefrun+$refbasedrun+$maxlikerun;
+		$alignqueue  = count($subclusterjobs['maxlikeali']['queued']) 
+			+ count($subclusterjobs['refbasedali']['queued']) 
+			+ count($subclusterjobs['norefali']['queued']);
+		$norbaseddone = ($alignrun > $aligndone) ? $alignrun : $aligndone;
 
-		$norbaseddone = ($refbasedruns > $refbaseddone) ? $refbasedruns : $refbaseddone;
-		$refbasedresults[] = ($refbaseddone==0) ? "" : "<a href='refbasedsummary.php?expId=$sessionId'>$refbaseddone complete</a>";
-		$refbasedresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
-		$refbasedresults[] = ($refbasedq==0) ? "" : "$refbasedq queued";
-
-		// get max-likelihood alignment stats:
-		$maxlikealiresults=array();	
-		$maxlikealidone = count($subclusterjobs['maxlikeali']['done']);
-		$maxlikealirun = count($subclusterjobs['maxlikeali']['running']);
-		$maxlikealiq = count($subclusterjobs['maxlikeali']['queued']);
-
-		$norbaseddone = ($maxlikealiruns > $maxlikealidone) ? $maxlikealiruns : $maxlikealidone;
-		$maxlikealiresults[] = ($maxlikealidone==0) ? "" : "<a href='maxlikesummary.php?expId=$sessionId'>$maxlikealidone complete</a>";
-		$maxlikealiresults[] = ($maxlikealirun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikealirun running</a>";
-		$maxlikealiresults[] = ($maxlikealiq==0) ? "" : "$maxlikealiq queued";
-
+		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$aligndone complete</a>";
+		$alignresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
+		$alignresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
+		$alignresults[] = ($maxlikerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikerun running</a>";
+		$alignresults[] = ($alignqueue==0) ? "" : "$alignqueue queued";
 
 		// get imagic reclassifications
 		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
@@ -325,20 +322,15 @@ if ($expId) {
 
 		$nruns=array();
 
-		// spider alignment
-		$nruns[]=array(
-			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>SPIDER Ref-free</a>",
-			       'result'=>$norefresults,
-				 );
 		$nruns[] = array(
-				 'name'=>"<a href='runRefBasedAlignment.php?expId=$sessionId'>SPIDER Ref-based</a>",
-				 'result'=>$refbasedresults,
+				 'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
+				 'result'=>$alignresults,
 				 );
 
-		// xmipp max likelihood
-		$nruns[] = array(
-				 'name'=>"<a href='runMaxLikeAlign.php?expId=$sessionId'>Xmipp Max Likelihood</a>",
-				 'result'=>$maxlikeresults,
+		// spider alignment
+		$nruns[]=array(
+			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>Old Spider Ref-free</a>",
+			       'result'=>$norefresults,
 				 );
 
 		// only give option of reclassification if ref-free

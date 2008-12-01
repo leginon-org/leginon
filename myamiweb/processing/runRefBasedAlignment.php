@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-  runAlignment();
+  runAlignment(($_POST['process']=="Run Ref-Based Alignment") ? true : false);
 }
 
  // Create the form page
@@ -154,7 +154,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   }
   
   // Set any existing parameters in form
-  $runidval = ($_POST['runid']) ? $_POST['runid'] : 'refbased'.($refbasedruns+1);
+  $runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($refbasedruns+1);
   $rundescrval = $_POST['description'];
   $stackidval =$_POST['stackid'];
   $lp = $_POST['lp'];
@@ -210,7 +210,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		<TR>
 			<TD VALIGN='TOP'>
 			<B>Alignment Run Name:</B>
-			<INPUT TYPE='text' NAME='runid' VALUE='$runidval'>
+			<INPUT TYPE='text' NAME='runname' VALUE='$runnameval'>
 			</TD>
 		</TR>\n";
 		echo"<TR>
@@ -328,10 +328,9 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo"
 	  </select><BR>*/
 	  echo"
-          <INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>
-	  <input type='submit' name='process' value='Show multi-reference alignment command'><BR>
-	  <FONT class='apcomment'>Submission will NOT start alignment<BR/>
-		only output a command that you can copy and paste into a unix shell</FONT>
+          <INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>";
+	echo getSubmitForm("Run Ref-Based Alignment");
+	echo "
 	  </TD>
 	</TR>
 	</TABLE>
@@ -345,11 +344,11 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	exit;
 }
 
-function runAlignment() {
+function runAlignment($runjob=false) {
 	$host = $_POST['host'];
 	$user = $_POST['user'];
 
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackid=$_POST['stackid'];
 	$maskdiam=$_POST['maskdiam'];
@@ -372,17 +371,18 @@ function runAlignment() {
 	$stackid=$_POST['stackid'];
 	if (!$stackid) createAlignmentForm("<B>ERROR:</B> No stack selected");
 
-	// make sure outdir ends with '/'
+	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-
-
+	$rundir = $outdir.$runname;
 
 	// alignment
 	$numpart=$_POST['numpart'];
-	if ($numpart < 1) createAlignmentForm("<B>ERROR:</B> Number of particles must be at least 1");
+	if ($numpart < 1) 
+		createAlignmentForm("<B>ERROR:</B> Number of particles must be at least 1");
 	$particle = new particledata();
 	$totprtls=$particle->getNumStackParticles($stackid);
-	if ($numpart > $totprtls) createAlignmentForm("<B>ERROR:</B> Number of particles to aligne ($numpart) must be less than the number of particles in the stack ($totprtls)");
+	if ($numpart > $totprtls) 
+		createAlignmentForm("<B>ERROR:</B> Number of particles to aligne ($numpart) must be less than the number of particles in the stack ($totprtls)");
 
 	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
@@ -391,12 +391,12 @@ function runAlignment() {
 //	$command.="source /home/$user/pyappion/useappion.csh;";
 	$command.="refBasedAlignment2.py ";
 	$command.="--template-list=".templateCommand()." ";
-	$command.="--runname=$runid ";
+	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
 
 	if ($maskdiam) $command.="--last-ring=$maskdiam ";
 	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
-	$command.="--outdir=".$outdir.$runid."/ ";
+	$command.="--outdir=".$rundir." ";
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lp ";
 	#if ($csym > 1) $command.="--csym=$csym ";
@@ -412,28 +412,41 @@ function runAlignment() {
 	$cmd = "exec ssh $user@$host '$command > refBasedAlignmentlog.txt &'";
 //	exec($cmd ,$result);
 
-	processing_header("Alignment Run","Alignment Params");
+	// submit job to cluster
+	if ($runjob) {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 
-	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>Alignment Command:</B><BR>
-	$command
-	</TD></TR>
-	<TR><TD>runname</TD><TD>$runid</TD></TR>
-	<TR><TD>stackid</TD><TD>$stackid</TD></TR>
-	<TR><TD>refids</TD><TD>".templateCommand()."</TD></TR>
-	<TR><TD>iter</TD><TD>$iters</TD></TR>
-	<TR><TD>numpart</TD><TD>$numpart</TD></TR>
-	<TR><TD>last ring</TD><TD>$maskdiam</TD></TR>
-	<TR><TD>first ring</TD><TD>$imaskdiam</TD></TR>
-	<TR><TD>outdir</TD><TD>$outdir</TD></TR>
-	<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
-	<TR><TD>xystep</TD><TD>$xystep</TD></TR>
-	<TR><TD>lowpass</TD><TD>$lp</TD></TR>";
-	if ($csym > 1) echo"	<TR><TD>c-symmetry</TD><TD>$csym</TD></TR>";
-	echo"	</TABLE>\n";
-	processing_footer();
+		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
+
+		$sub = submitAppionJob($command,$rundir,$runname,$expId,'rctvolume');
+		// if errors:
+		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
+		exit;
+	} else {
+		processing_header("Alignment Run","Alignment Params");
+
+		echo"
+		<TABLE WIDTH='600' BORDER='1'>
+		<TR><TD COLSPAN='2'>
+		<B>Alignment Command:</B><BR>
+		$command
+		</TD></TR>
+		<TR><TD>runname</TD><TD>$runname</TD></TR>
+		<TR><TD>stackid</TD><TD>$stackid</TD></TR>
+		<TR><TD>refids</TD><TD>".templateCommand()."</TD></TR>
+		<TR><TD>iter</TD><TD>$iters</TD></TR>
+		<TR><TD>numpart</TD><TD>$numpart</TD></TR>
+		<TR><TD>last ring</TD><TD>$maskdiam</TD></TR>
+		<TR><TD>first ring</TD><TD>$imaskdiam</TD></TR>
+		<TR><TD>outdir</TD><TD>$outdir</TD></TR>
+		<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
+		<TR><TD>xystep</TD><TD>$xystep</TD></TR>
+		<TR><TD>lowpass</TD><TD>$lp</TD></TR>";
+		if ($csym > 1) echo"	<TR><TD>c-symmetry</TD><TD>$csym</TD></TR>";
+		echo"	</TABLE>\n";
+		processing_footer();
+	}
 }
 
 /*
