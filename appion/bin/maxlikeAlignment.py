@@ -138,6 +138,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("#PBS -l walltime=240:00:00\n")
 		f.write("#PBS -l cput=240:00:00\n")
 		f.write("#PBS -r n\n")
+		f.write("#PBS -k oe\n")
 		f.write("\n")
 		f.write("## outdir: "+self.params['outdir']+"\n")
 		f.write("\n")
