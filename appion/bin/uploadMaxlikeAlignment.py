@@ -131,29 +131,31 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	def insertRunIntoDatabase(self, runparams, lastiter):
 		apDisplay.printMsg("Inserting MaxLike Run into DB")
 
-		### setup max like run
-		maxlikeq = appionData.ApMaxLikeRunData()
-		maxlikeq['name'] = runparams['runname']
-		maxlikeq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		uniquerun = maxlikeq.query(results=1)
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['runname'] = runparams['runname']
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
-		maxlikeq['description'] = runparams['description']
+		### setup max like run
+		maxlikeq = appionData.ApMaxLikeRunData()
+		maxlikeq['runname'] = runparams['runname']
 		maxlikeq['run_seconds'] = runparams['runtime']
 		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
-		maxlikeq['lp_filt'] = runparams['lowpass']
-		maxlikeq['hp_filt'] = runparams['highpass']
-		maxlikeq['num_particles'] =  runparams['numpart']
-		maxlikeq['bin'] = runparams['bin']
 		maxlikeq['fast'] = runparams['fast']
 		maxlikeq['mirror'] = runparams['mirror']
 
-		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
+		### finish alignment run
 		alignrunq['maxlikerun'] = maxlikeq
 		alignrunq['hidden'] = False
 		alignrunq['runname'] = runparams['runname']
+		alignrunq['description'] = runparams['description']
+		alignrunq['lp_filt'] = runparams['lowpass']
+		alignrunq['hp_filt'] = runparams['highpass']
+		alignrunq['num_particles'] =  runparams['numpart']
+		alignrunq['bin'] = runparams['bin']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### setup alignment stack
@@ -193,7 +195,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		count = 0
 		inserted = 0
 		t0 = time.time()
-		apDisplay.printMsg("Inserting MaxLike Particles into DB")
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
 		for partdict in partlist:
 			count += 1
 			if count % 100 == 0:
