@@ -90,7 +90,7 @@ function runCombineStack($runjob=false) {
 
 	//make sure a session was selected
 	$description=$_POST['description'];
-	if (!$description) createCombineStackForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+	if (!$description) createCombineStackForm("<B>ERROR:</B> Enter a brief description");
 
 	$particle = new particledata();
 	$stackids = $particle->getStackIdsForProject($projectId, False);
@@ -113,8 +113,8 @@ function runCombineStack($runjob=false) {
 	if ($outdir) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$procdir = $outdir.$runname;
-		$command.="--outdir=$procdir ";
+		$rundir = $outdir.$runname;
+		$command.="--outdir=$rundir ";
 	}
 	$command.="--name=$runname ";
 	$command.="--stacks=$stacklist ";
@@ -128,25 +128,24 @@ function runCombineStack($runjob=false) {
 
 		if (!($user && $password)) createCombineStackForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$procdir,$runname,$expId,'maxlikeali');
+		$sub = submitAppionJob($command,$rundir,$runname,$expId,'combinestack');
 		// if errors:
 		if ($sub) createCombineStackForm("<b>ERROR:</b> $sub");
 		exit;
-	}
-	else {
+	} else {
 		processing_header("Combine Stack Params","Combine Stack  Params");
 		echo"
-	<table width='600' class='tableborder' border='1'>
-	<tr><td colspan='2'>
-	<b>Combine Stack Command:</b><br />
-	$command
-	</td></tr>
-	<tr><td>run id</td><td>$runname</td></tr>
-	<tr><td>run id</td><td>$description</td></tr>
-	<tr><td>stack ids</td><td>$stackids</td></tr>
-	<tr><td>out dir</td><td>$procdir</td></tr>
-	<tr><td>commit</td><td>$commit</td></tr>
-	</table>\n";
+		<table width='600' class='tableborder' border='1'>
+		<tr><td colspan='2'>
+		<b>Combine Stack Command:</b><br />
+		$command
+		</td></tr>
+		<tr><td>run id</td><td>$runname</td></tr>
+		<tr><td>run id</td><td>$description</td></tr>
+		<tr><td>stack ids</td><td>$stackids</td></tr>
+		<tr><td>out dir</td><td>$rundir</td></tr>
+		<tr><td>commit</td><td>$commit</td></tr>
+		</table>\n";
 		processing_footer();
 	}
 	exit;

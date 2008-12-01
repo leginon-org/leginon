@@ -17,7 +17,7 @@ require "inc/processing.inc";
 
 if ($_POST['process']) {
 	// If values submitted, evaluate data
-	runRctVolume();
+	runRctVolume(($_POST['process']=="Rct Volume") ? true : false);
 } else {
 	// Create the form page
 	createRctVolumeForm();
@@ -54,6 +54,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	// Set any existing parameters in form
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'rct1';
+	$description = $_POST['description'];
 	$tiltstack = ($_POST['tiltstack']) ? $_POST['tiltstack'] : '';
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '15';
@@ -86,7 +87,10 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	//Rct Run Name
 	echo docpop('runid','Rct Volume Run Name:<br/>');
-	echo "<INPUT type='text' name='runname' value='$runname'>\n<br/>\n<br/>\n";
+	echo "<input type='text' name='runname' value='$runname'>\n<br/>\n<br/>\n";
+	echo docpop('descr','<b>Description of Rct run:</b>');
+	echo "<br />\n";
+	echo "<textarea name='description' rows='3' cols='36'>$description</textarea>\n";
 
 	//NoRef Class Drop Down Menu
 	echo docpop('norefclass','NoRef Class Id:<br/>');
@@ -177,7 +181,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 **
 */
 
-function runRctVolume() {
+function runRctVolume($runjob=false) {
+	$expId=$_GET['expId'];
 	$runname = $_POST['runname'];
 	$tiltstack = $_POST['tiltstack'];
 	$maskrad = $_POST['maskrad'];
@@ -185,8 +190,23 @@ function runRctVolume() {
 	$numiter = $_POST['numiter'];
 	$classnum = $_POST['classnum'];
 	$norefclass = $_POST['norefclass'];
+	$description=$_POST['description'];
 
 	$command.="rctVolume.py ";
+
+	$particle = new particledata();
+	$stackparam = $particle->getStackParams($tiltstack);
+	$outdir = dirname(dirname($stackparam['path']));
+	if ($outdir) {
+		// make sure outdir ends with '/' and append run name
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$rundir = $outdir.$runname;
+	}
+
+
+	if (!$description)
+		createRctVolumeForm("<B>ERROR:</B> Enter a brief description of the rct volume");
+
 
 	if (!$maskrad)
 		createRctVolumeForm("<B>ERROR:</B> Enter a mask radius");
@@ -202,28 +222,43 @@ function runRctVolume() {
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
 	$command.="--lowpassvol=$lowpassvol ";
+	$command.="--outdir=$rundir ";
+	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 
-	processing_header("Rct Volume Command", "Rct Volume Command");
+	// submit job to cluster
+	if ($runjob) {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
 
-	echo"
-	<table width='600' border='1'>
-	<tr><td colspan='2'>
-	<font size='+1'>
-	<B>Rct Volume Command:</B><BR>
-	$command
-	</font>
-	</TD></TR>
-	<TR><TD>run name</TD><TD>$runname</TD></TR>
-	<TR><TD>norefclass</TD><TD>$norefclass</TD></TR>
-	<TR><TD>classnum</TD><TD>$classnum</TD></TR>
-	<TR><TD>tiltstack</TD><TD>$tiltstack</TD></TR>
-	<TR><TD>numiter</TD><TD>$numiter</TD></TR>
-	<TR><TD>volume lowpass</TD><TD>$lowpassvol</TD></TR>
-	<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>";
+		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
 
-	echo"</TABLE>\n";
-	processing_footer();
+		$sub = submitAppionJob($command,$rundir,$runname,$expId,'rctvolume');
+		// if errors:
+		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
+		exit;
+	} else {
+		processing_header("Rct Volume Command", "Rct Volume Command");
+
+		echo"
+		<table width='600' border='1'>
+		<tr><td colspan='2'>
+		<font size='+1'>
+		<B>Rct Volume Command:</B><BR>
+		$command
+		</font>
+		</TD></TR>
+		<TR><TD>run name</TD><TD>$runname</TD></TR>
+		<TR><TD>norefclass</TD><TD>$norefclass</TD></TR>
+		<TR><TD>classnum</TD><TD>$classnum</TD></TR>
+		<TR><TD>tiltstack</TD><TD>$tiltstack</TD></TR>
+		<TR><TD>numiter</TD><TD>$numiter</TD></TR>
+		<TR><TD>volume lowpass</TD><TD>$lowpassvol</TD></TR>
+		<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>";
+
+		echo"</TABLE>\n";
+		processing_footer();
+	}
 }
 
 ?>
