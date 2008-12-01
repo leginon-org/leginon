@@ -193,6 +193,15 @@ if ($expId) {
 	$ctfresults[] = ($ctfrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace'>$ctfrun running</a>";
 	$ctfresults[] = ($ctfq==0) ? "" : "$ctfq queued";
 
+	$ace2done = count($subclusterjobs['ace2']['done']);
+	$ace2run = count($subclusterjobs['ace2']['running']);
+	$ace2q = count($subclusterjobs['ace2']['queued']);
+
+	$ace2results[] = ($ace2done==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$ace2done complete</a>";
+	$ace2results[] = ($ace2run==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=ace2'>$ace2run running</a>";
+	$ace2results[] = ($ace2q==0) ? "" : "$ace2q queued";
+
+
 	// number running and number finished:
 	$totruns=$ctfdone+$ctfrun+$ctfq;
 	
@@ -206,9 +215,14 @@ if ($expId) {
 			 'result'=>$ctfresults,
 			 );
 	$nruns[] = array(
+			'name'=>"<a href='runAce2.php?expId=$sessionId'>ACE 2 Estimation</a>",
+			'result'=>$ace2results,
+			);
+	$nruns[] = array(
 			'name'=>"<a href='runCtfTilt.php?expId=$sessionId'>CtfTilt Estimation</a>",
 			'result'=>$ctftiltresults,
 			);
+
 
 	$data[]=array(
 		'action'=>array($action, $celloption),
