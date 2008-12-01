@@ -86,8 +86,9 @@ function stacksummarytable($stackid) {
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
 	for($i=0; $i<=10; $i++) {
 		if ($stackdata[$i]['sessionid']) {
-			$sessiondata = $particle->getSessionData($stackdata[$i]['sessionid']);
-			$display_keys['session id'].="<a href='index.php?expId=".$stackdata['sessionid']."'>"
+			$sessionid = $stackdata[$i]['sessionid'];
+			$sessiondata = $particle->getSessionData($sessionid);
+			$display_keys['session id'].="<a href='index.php?expId=".$sessiondata['DEF_id']."'>"
 				.$sessiondata['name']."</a>&nbsp;\n";
 		}
 	}
@@ -180,8 +181,9 @@ function ministacksummarytable($stackid) {
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
 	for($i=0; $i<=10; $i++) {
 		if ($stackdata[$i]['sessionid']) {
-			$sessiondata = $particle->getSessionData($stackdata[$i]['sessionid']);
-			$display_keys['session id'].="<a href='index.php?expId=".$stackdata[$i]['sessionid']."'>"
+			$sessionid = $stackdata[$i]['sessionid'];
+			$sessiondata = $particle->getSessionData($sessionid);
+			$display_keys['session id'].="<a href='index.php?expId=".$sessiondata['DEF_id']."'>"
 				.$sessiondata['name']."</a>&nbsp;\n";
 		}
 	}
