@@ -51,7 +51,7 @@ if ($stackdatas) {
 	}
 	echo "</form>\n";
 } else {
-	echo "<B>Session does not contain any stacks.</B>\n";
+	echo "<B>Session does not contain any aligned stacks.</B>\n";
 }
 
 if (count($stackdatas) != count($hidestackdatas) && !$_GET['showHidden']) {
