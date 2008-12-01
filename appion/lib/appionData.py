@@ -419,18 +419,12 @@ leginondata.ApNoRefClassParticlesData=ApNoRefClassParticlesData
 class ApMaxLikeRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('name', str),
-			('bin', int),
+			('runname', str),
 			('mirror', bool),
-			('lp_filt', int),
-			('hp_filt', int),
 			('mask_diam', int),
 			('init_method', str),
 			('fast', bool),
-			('num_particles', int),
 			('run_seconds', int),
-			('path', ApPathData),
-			('description', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApMaxLikeRunData=ApMaxLikeRunData
@@ -438,11 +432,8 @@ leginondata.ApMaxLikeRunData=ApMaxLikeRunData
 class ApRefBasedRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('name', str),
+			('runname', str),
 			('mask_diam', int),
-			('bin', int),
-			('hp_filt', int),
-			('lp_filt', int),
 			('xysearch', int),
 			('xystep', int),
 			('first_ring', int),
@@ -451,29 +442,20 @@ class ApRefBasedRunData(Data):
 			('invert_templs', bool),
 			('num_templs', int),
 			('csym', int),
-			('num_particles', int),
 			('run_seconds', int),
-			('path', ApPathData),
-			('description', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefBasedRunData=ApRefBasedRunData
 
-class ApSingleNoRefRunData(Data):
+class ApSpiderNoRefRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('name', str),
-			('mask_diam', int),
-			('bin', int),
-			('hp_filt', int),
-			('lp_filt', int),
+			('runname', str),
 			('particle_diam', float),
 			('first_ring', int),
 			('last_ring', int),
-			('num_particles', int),
 			('run_seconds', int),
-			('path', ApPathData),
-			('description', str),
+			('init_method', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApSingleNoRefRunData=ApSingleNoRefRunData
@@ -484,11 +466,17 @@ class ApAlignRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
+			('bin', int),
+			('hp_filt', int),
+			('lp_filt', int),
+			('description', str),
 			('norefrun', ApSingleNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
 			('hidden', bool),
 			('project|projects|project', int),
+			('path', ApPathData),
+			('num_particles', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAlignRunData=ApAlignRunData
