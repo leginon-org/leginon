@@ -469,7 +469,7 @@ class otrVolumeScript(appionScript.AppionScript):
 	 	return corrSelect
 	 
 	#=====================
-	def splitOddEven(self, select):
+	def splitOddEven(self, classnum, select):
 	
 		if (os.path.isfile(select) is False):
 			apDisplay.printError("File "+ select +" does not exist!")
@@ -477,10 +477,10 @@ class otrVolumeScript(appionScript.AppionScript):
 		selectFile = open(select, "r")
 		selectFilename = os.path.splitext(os.path.basename(select))[0]
 		
-		selectOdd = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Odd%s.spi"%(timestamp))
+		selectOdd = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Odd%s.spi"%(self.timestamp))
 		selectOddFile = open(selectOdd, "w")
 		
-		selectEven = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Even%s.spi"%(timestamp))
+		selectEven = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Even%s.spi"%(self.timestamp))
 		selectEvenFile = open(selectEven, "w")
 		
 		for line in selectFile.readlines():
@@ -708,9 +708,9 @@ class otrVolumeScript(appionScript.AppionScript):
 			self.cccAPSH(APSHout, cnum)
 	
 			factor=0.1
-			self.makecccAPSHselectFile(APSHout, factor, cnum)
+			corrSelect = self.makecccAPSHselectFile(APSHout, factor, cnum)
 			
-			#self.splitOddEven
+			self.splitOddEven(cnum, corrSelect)
 
 			#run BPRP on selected particles
 			
