@@ -74,7 +74,7 @@ if ($expId) {
 	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
 	
 	// --- Get Stack Data
-	if ($stackIds = $particle->getStackIds($sessionId))
+	if ($stackIds = $particle->getStackIdsWithProjectId($sessionId, $projectId))
 		$stackruns=count($stackIds);
 
 	// --- Get NoRef Data
@@ -86,13 +86,13 @@ if ($expId) {
 		$norefruns=0;
 	};
 
-	// --- Get Ref-based Alignment Data
+	// --- Get Alignment Data
 	if ($stackruns>0) {
-		$refbasedIds = $particle->getRefAliIds($sessionId);
-		$refbasedruns=count($refbasedIds);
+		$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
+		$alignruns=count($alignIds);
 	} 
 	else {
-		$refbasedruns=0;
+		$alignruns=0;
 	}
 	
 	// --- Get Reconstruction Data
@@ -318,7 +318,8 @@ if ($expId) {
 		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
 		$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>"; 
 
-		$totresult = $norefdone+$refbaseddone+$maxlikealidone;
+		$totresult = ($alignruns==0) ? "" :
+			"<a href='alignsummary.php?expId=$sessionId'>$alignruns</a>";
 
 		$nruns=array();
 
