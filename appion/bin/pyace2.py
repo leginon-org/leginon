@@ -142,14 +142,6 @@ class Ace2Loop(appionLoop.AppionLoop):
 		apDisplay.printMsg("Committing ctf parameters for "
 			+apDisplay.short(imgdata['filename'])+" to database")
 
-			('aceparams', ApAceParamsData),
-			('ctftilt_params', ApCtfTiltParamsData),
-			('ace2_params', ApAce2ParamsData),
-			('session', leginondata.SessionData),
-			('path', ApPathData),
-			('name', str),
-		)
-
 		paramq = appionData.ApAce2ParamsData()
 		paramq['bin']     = self.params['bin']
 		paramq['reprocess'] = self.params['reprocess']

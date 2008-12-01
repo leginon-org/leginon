@@ -815,7 +815,7 @@ class ApAce2ParamsData(Data):
 			('cs', float),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAce2RunData=ApAce2RunData
+leginondata.ApAce2ParamsData=ApAce2ParamsData
 
 
 class ApCtfTiltParamsData(Data):
