@@ -18,7 +18,10 @@ except ImportError:
 	import convolver
 import Image
 import ImageDraw
-import numextension
+try:
+	import numextension
+except:
+	pass
 import polygon
 import libCVwrapper
 
