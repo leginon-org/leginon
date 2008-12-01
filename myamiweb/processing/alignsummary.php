@@ -34,6 +34,7 @@ if (!$_GET['showHidden']) {
 	$hidestackdatas = $particle->getAlignStackIds($expId, $projectId, True);
 } else {
 	$stackdatas = $particle->getAlignStackIds($expId, $projectId, True);
+	print_r($stackdatas);
 	$hidestackdatas = $stackdatas;
 }
 
