@@ -1415,6 +1415,36 @@ class particledata {
 		return $r;
 	}
 
+	function getAlignStackIdsWithCoran ($sessionId, $projectId) {
+		// this function is really slow
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
+		  ."FROM ApAlignStackData AS ast "
+		  ."LEFT JOIN ApCoranRunData AS coran ON "
+		  ."  (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+		  ."LEFT JOIN ApStackData AS st ON "
+		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApRunsInStackData as runsin ON "
+		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApStackRunData as strun ON "
+		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+		  ."WHERE "
+		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ."AND "
+		  ."  runsin.`project|projects|project` = '$projectId' "
+		  ."AND "
+		  ."  ast.`project|projects|project` = '$projectId' "
+		  ."AND "
+		  ."  ast.`hidden` != 1 "
+		  ."AND "
+		  ."  coran.`DEF_id` IS NOT NULL "
+		  ."ORDER BY alignstackid DESC";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+
 	function getAlignStackParams ($alignstackid) {
 		$q = "SELECT ast.*, ar.runname AS runname, pd.`path` AS path "
 			."FROM ApAlignStackData as ast "
@@ -1439,22 +1469,36 @@ class particledata {
 
 	function getCoranRuns ($sessionId, $projectId) {
 		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
-		  ."FROM ApCoranRunData AS coran "
-		  ."LEFT JOIN ApAlignStackData AS ast ON "
-		  ."  (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
-		  ."LEFT JOIN ApStackData AS st ON "
-		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
-		  ."LEFT JOIN ApRunsInStackData as runsin ON "
-		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
-		  ."LEFT JOIN ApStackRunData as strun ON "
-		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
-		  ."WHERE "
-		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-		  ." AND "
-		  ."  runsin.`project|projects|project` = '$projectId' "
-		  ." AND "
-		  ."  coran.`project|projects|project` = '$projectId' ";
-		$q.= "ORDER BY coranid DESC";
+			."FROM ApCoranRunData AS coran "
+			."LEFT JOIN ApAlignStackData AS ast ON "
+			." (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			."LEFT JOIN ApStackData AS st ON "
+			." (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApRunsInStackData as runsin ON "
+			." (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApStackRunData as strun ON "
+			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."WHERE "
+			." strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND "
+			." runsin.`project|projects|project` = '$projectId' "
+			." AND "
+			." coran.`project|projects|project` = '$projectId' "
+			."ORDER BY coranid DESC ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	} 
+
+	function getCoranRunForAlignStack ($alignstackId, $projectId) {
+		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
+			."FROM ApCoranRunData AS coran "
+			."WHERE "
+			."  coran.`REF|ApAlignStackData|alignstack` = $alignstackId "
+			."AND "
+			."  coran.`project|projects|project` = '$projectId' "
+			."ORDER BY coranid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
