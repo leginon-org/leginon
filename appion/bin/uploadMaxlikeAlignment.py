@@ -138,7 +138,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		for partdict in partlist:
 			floatlist = []
 			for key in dlist:
-				floatlist.append(partdict['key'])
+				floatlist.append(partdict[key])
 			line = operations.spiderOutLine(partdict['partnum'], floatlist)
 			f.write(line)
 		f.write(" ; partnum ... "+str(dlist)+"\n")
