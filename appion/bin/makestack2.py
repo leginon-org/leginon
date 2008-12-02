@@ -74,6 +74,8 @@ class makestack (appionLoop.AppionLoop):
 		# first get pixel size of first image:
 		apDisplay.printMsg("Making sure all images are of the same pixel size...")
 		
+		if len(self.imgtree) == 0:
+			return
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		for imgdata in self.imgtree:
 			# get pixel size
@@ -263,7 +265,7 @@ class makestack (appionLoop.AppionLoop):
 			ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 	
 	 		if ctfvalue is None:
-				if self.params['aceCutoff'] or self.params['minDefocus'] or self.params['maxDefocus'] or self.params['phaseFlipped']:
+				if self.params['acecutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']:
 					apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
 					return False
 				else:
@@ -273,18 +275,18 @@ class makestack (appionLoop.AppionLoop):
 				apCtf.ctfValuesToParams(ctfvalue, self.ctfparams)
 
 				### check that ACE estimation is above confidence threshold
-				if self.params['aceCutoff'] and conf < self.params['aceCutoff']:
+				if self.params['acecutoff'] and conf < self.params['acecutoff']:
 					apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 					return False
 
 				### skip micrograph that have defocus above or below min & max defocus levels
-				if self.params['minDefocus'] and self.ctfparams['df'] > self.params['minDefocus']:
+				if self.params['mindefocus'] and self.ctfparams['df'] > self.params['mindefocus']*1e6:
 					apDisplay.printColor(shortname+".mrc defocus ("+str(round(self.ctfparams['df'],3))+\
-						") is less than mindefocus ("+str(self.params['minDefocus'])+")\n","cyan")
+						" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
 					return False
-				if self.params['maxDefocus'] and self.ctfparams['df'] < self.params['maxDefocus']:
+				if self.params['maxdefocus'] and self.ctfparams['df'] < self.params['maxdefocus']*1e6:
 					apDisplay.printColor(shortname+".mrc defocus ("+str(round(self.ctfparams['df'],3))+\
-						") is greater than maxdefocus ("+str(self.params['maxDefocus'])+")\n","cyan")
+						" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
 					return False
 		return True
 
@@ -344,11 +346,11 @@ class makestack (appionLoop.AppionLoop):
 				shift = {'shiftx':0, 'shifty':0,'scale':1}
 			if len(particles) > 0:			
 				###apply limits
-				if self.params['correlationMin'] or self.params['correlationMax']:
+				if self.params['correlationmin'] or self.params['correlationmax']:
 					particles = self.eliminateMinMaxCCParticles(particles)
 				
 				###apply masks
-				if self.params['checkMask']:
+				if self.params['checkmask']:
 					particles = self.eliminateMaskedParticles(particles,imgdata)
 
 				###if there is still particles				
@@ -364,7 +366,7 @@ class makestack (appionLoop.AppionLoop):
 						f.close()
 						nptcls=len(lines)
 						if self.params['selexonId'] and nptcls > 0:
-							cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, outputtemp, self.params['boxSize'])
+							cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, outputtemp, self.params['boxsize'])
 							apEMAN.executeEmanCmd(cmd)
 							
 							imagic = apImagicFile.readImagic(output)
@@ -377,7 +379,7 @@ class makestack (appionLoop.AppionLoop):
 									dbparts[j].insert()
 							
 							#if ctf correction is selected
-							if self.params['phaseFlipped'] is True:
+							if self.params['phaseflipped'] is True:
 								#ctf correct using ctftilt parameters
 								self.ctftiltPhaseFlip(part, outputtemp, outputtempctf, imgdata)	
 
@@ -415,7 +417,7 @@ class makestack (appionLoop.AppionLoop):
 	############################################################
 	def saveIndvParticles(self, particle, shift, dbbox, imgdata):
 		plist=[]
-		box=self.params['boxSize']
+		box=self.params['boxsize']
 		imgxy = imgdata['camera']['dimension']
 		eliminated=0
 		dbparts=[]
@@ -523,11 +525,11 @@ class makestack (appionLoop.AppionLoop):
 				shift = {'shiftx':0, 'shifty':0,'scale':1}
 			if len(particles) > 0:			
 				###apply limits
-				if self.params['correlationMin'] or self.params['correlationMax']:
+				if self.params['correlationmin'] or self.params['correlationmax']:
 					particles=eliminateMinMaxCCParticles(particles)
 				
 				###apply masks
-				if self.params['checkMask']:
+				if self.params['checkmask']:
 					particles = eliminateMaskedParticles(particles,imgdata)
 				
 				###save particles
@@ -556,9 +558,9 @@ class makestack (appionLoop.AppionLoop):
 			nptcls=len(lines)
 			# write batchboxer command
 			if self.params['selexonId']:
-				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, self.params['boxSize'])
-			elif self.params['boxSize']:
-				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, self.params['boxSize'])
+				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, self.params['boxsize'])
+			elif self.params['boxsize']:
+				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, self.params['boxsize'])
 			else: 
 		 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
 
@@ -577,7 +579,7 @@ class makestack (appionLoop.AppionLoop):
 			if self.params['stig']:
 				os.remove(os.path.join(self.params['rundir'],tmpname))
 						
-			if self.params['phaseFlipped'] is True:
+			if self.params['phaseflipped'] is True:
 				self.phaseFlip(imgdata)
 
 			return(nptcls)		
@@ -591,7 +593,7 @@ class makestack (appionLoop.AppionLoop):
 	############################################################			
 	def saveParticles(self,particles,shift,dbbox,imgdata):
 		plist=[]
-		box=self.params['boxSize']
+		box=self.params['boxsize']
 		imgxy=imgdata['camera']['dimension']
 		eliminated=0
 		dbparts=[]
@@ -664,9 +666,9 @@ class makestack (appionLoop.AppionLoop):
 		newparticles = []
 		eliminated = 0
 		for prtl in particles:
-			if self.params['correlationMin'] and prtl['correlation'] < self.params['correlationMin']:
+			if self.params['correlationmin'] and prtl['correlation'] < self.params['correlationmin']:
 				eliminated += 1
-			elif self.params['correlationMax'] and prtl['correlation'] > self.params['correlationMax']:
+			elif self.params['correlationmax'] and prtl['correlation'] > self.params['correlationmax']:
 				eliminated += 1
 			else:
 				newparticles.append(prtl)
@@ -681,7 +683,7 @@ class makestack (appionLoop.AppionLoop):
 		if self.params['defocpair']:
 			imgdata = apDefocalPairs.getTransformedDefocPair(imgdata,2)
 	#		print imgdata.dbid
-		maskimg,maskbin = apMask.makeInspectedMask(sessiondata,self.params['checkMask'],imgdata)
+		maskimg,maskbin = apMask.makeInspectedMask(sessiondata,self.params['checkmask'],imgdata)
 		if maskimg is not None:
 			for prtl in particles:
 				binnedcoord = (int(prtl['ycoord']/maskbin),int(prtl['xcoord']/maskbin))
@@ -701,7 +703,7 @@ class makestack (appionLoop.AppionLoop):
 	def singleStack(self,imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
- 		if self.params['phaseFlipped'] is True:
+ 		if self.params['phaseflipped'] is True:
 			imgpath = os.path.join(self.params['rundir'], shortname+'.ctf.hed')
 		else:
 			imgpath = os.path.join(self.params['rundir'], shortname+'.hed')
@@ -759,7 +761,7 @@ class makestack (appionLoop.AppionLoop):
 			os.remove(os.path.join(self.params['rundir'], shortname+".img"))
 		except:
 			apDisplay.printWarning(os.path.join(self.params['rundir'], shortname+".hed")+" does not exist!")
-		if self.params['phaseFlipped'] is True:
+		if self.params['phaseflipped'] is True:
 			apFile.removeStack(os.path.join(self.params['rundir'], shortname+".ctf.hed"))
 
 
@@ -770,7 +772,7 @@ class makestack (appionLoop.AppionLoop):
 	def insertStackRun(self):
 		stparamq=appionData.ApStackParamsData()
 		paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-			'checkMask','checkImage','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass','norejects')	
+			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass','norejects')
 
 		for p in paramlist:
 			if p in self.params:
@@ -782,7 +784,7 @@ class makestack (appionLoop.AppionLoop):
 		for plist in paramslist:
 			notgood=None
 			for p in paramlist:
-				if plist[p] != self.params[p]:
+				if plist[p] != self.params[p.lower()]:
 					notgood=True
 			if notgood is None:
 				goodplist=plist
@@ -877,27 +879,25 @@ class makestack (appionLoop.AppionLoop):
 		
 	def specialDefaultParams(self):
 		self.params['single']=None
-		self.params['aceCutoff']=None
-		self.params['boxSize']=None
-#		self.params['checkImage']=None
+		self.params['acecutoff']=None
+		self.params['boxsize']=None
 #		self.params['inspectfile']=None
 		self.params['mag']=None
-		self.params['phaseFlipped']=False
+		self.params['phaseflipped']=False
 		self.params['apix']=0.0
 		self.params['kv']=0
 		self.params['tiltangle']=None
 		self.params['inverted']=True
 		self.params['spider']=False
 		self.params['df']=0.0
-		self.params['correlationMin']=None
-		self.params['correlationMax']=None
-		self.params['minDefocus']=None
-		self.params['maxDefocus']=None	
+		self.params['correlationmin']=None
+		self.params['correlationmax']=None
+		self.params['mindefocus']=None
+		self.params['maxdefocus']=None	
 		self.params['selexonId']=None
 		self.params['medium']=None
 		self.params['normalized']=True
-		self.params['checkMask']=None
-		self.params['checkImage']=None
+		self.params['checkmask']=None
 		self.params['particleNumber']=0
 		self.params['bin']=1
 		self.params['partlimit']=None
@@ -905,7 +905,7 @@ class makestack (appionLoop.AppionLoop):
 		self.params['uncorrected']=False
 		self.params['stig']=False
 		self.params['matlab']=None
-		self.params['fileType']='imagic'
+		self.params['filetype']='imagic'
 		self.params['lowpass']=None
 		self.params['ctftilt']=False
 		self.params['highpass']=None
@@ -922,11 +922,11 @@ class makestack (appionLoop.AppionLoop):
 			elif (elements[0]=='single'):
 				self.params['single']=elements[1]
 			elif (elements[0]=='ace'):
-				self.params['aceCutoff']=float(elements[1])
+				self.params['acecutoff']=float(elements[1])
 			elif (elements[0]=='boxsize'):
-				self.params['boxSize']=int(elements[1])
+				self.params['boxsize']=int(elements[1])
 			elif (elements[0]=='phaseflip'):
-				self.params['phaseFlipped']=True
+				self.params['phaseflipped']=True
 			elif (elements[0]=='apix'):
 				self.params['apix']=float(elements[1])
 			elif (elements[0]=='tiltangle'):
@@ -938,9 +938,13 @@ class makestack (appionLoop.AppionLoop):
 			elif (elements[0]=='prtlrunid'):
 				self.params['selexonId']=int(elements[1])
 			elif (elements[0]=='selexonmin'):
-				self.params['correlationMin']=float(elements[1])
+				self.params['correlationmin']=float(elements[1])
 			elif (elements[0]=='selexonmax'):
-				self.params['correlationMax']=float(elements[1])
+				self.params['correlationmax']=float(elements[1])
+			elif (elements[0]=='mindefocus'):
+				self.params['mindefocus']=float(elements[1])
+			elif (elements[0]=='maxdefocus'):
+				self.params['maxdefocus']=float(elements[1])
 			elif (elements[0]=='nonorm'):
 				self.params['normalized']=False
 			elif (elements[0]=='description'):
