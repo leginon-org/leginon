@@ -236,9 +236,9 @@ function alignstacksummarytable($alignstackid) {
 		.$stackdata['runname']."</a> (ID: $alignstackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>\n";
+		$j.= " <input class='edit' type='submit' name='unhideStack".$alignstackid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
-	} else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>\n";
+	} else $j.= " <input class='edit' type='submit' name='hideStack".$alignstackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
 	//echo $j."<br/>\n";
@@ -255,7 +255,7 @@ function alignstacksummarytable($alignstackid) {
 	} #endif
 
 	// add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($stackid,$stackdata['description']) : $stackdata['description'];
+	$descDiv = ($_SESSION['username']) ? editButton($alignstackid, $stackdata['description']) : $stackdata['description'];
 
 	$display_keys['date time'] = $stackdata['DEF_timestamp'];
 	$display_keys['description']=$descDiv;
@@ -273,7 +273,7 @@ function alignstacksummarytable($alignstackid) {
 
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 	$display_keys['path']=$stackdata['path'];
-	$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid'>"
+	$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId'>"
 		.$stackdata['imagicfile']."</A>";
 	// get box size
 	$display_keys['box size']=$stackdata['boxsize']." pixels";
