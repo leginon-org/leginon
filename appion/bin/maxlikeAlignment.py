@@ -238,7 +238,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -psi_step 1 "
 			+" -eps 5e-4 "
 		)
-
+		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
+		apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True)
 
 		self.dumpParameters()
 
