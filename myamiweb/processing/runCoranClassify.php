@@ -16,12 +16,12 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runSpiderNoRefAlign(($_POST['process']=="Run Spider NoRef Alignment") ? true : false);
+	runSpiderCoranClassify(($_POST['process']=="Run Spider Coran Classify") ? true : false);
 } else {
-	createSpiderNoRefAlignForm();
+	createSpiderCoranClassifyForm();
 }
 
-function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py Launcher', $heading='Spider Reference Free Alignment') {
+function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py Launcher', $heading='Spider Coran Classification') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -40,6 +40,8 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	$stackIds = $particle->getStackIdsWithProjectId($sessionId, $projectId);
 	$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
 	$alignruns=count($alignIds);
+	//$coranIds = $particle->getCoranRuns($sessionId, $projectId);
+
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
@@ -83,7 +85,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'noref'.($alignruns+1);
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'coran'.($alignruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
@@ -102,7 +104,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
 	echo openRoundBorder();
-	echo docpop('runid','<b>Spider NoRef Run Name:</b>');
+	echo docpop('runid','<b>Spider Coran Classify Run Name:</b>');
 	echo "<input type='text' name='runname' value='$runnameval'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
@@ -111,7 +113,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
-	echo docpop('descr','<b>Description of Spider NoRef Alignment:</b>');
+	echo docpop('descr','<b>Description of Spider Coran Classify:</b>');
 	echo "<br />\n";
 	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
 	echo closeRoundBorder();
@@ -122,29 +124,31 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 
 	$prtlruns=count($prtlrunIds);
 
-	if (!$stackIds) {
+	if (!$alignIds) {
 		echo"
-		<FONT COLOR='RED'><B>No Stacks for this Session</B></FONT>\n";
+		<FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
 	}
 	else {
 		echo "
 		Particles:<BR>
 		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
-		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack[stackid]);
+		foreach ($alignIds as $alignid) {
+			$alignstack = $particle->getAlignStackParams($alignid);
+			echo print_r($alignstack);
+			//$stackparams=$particle->getAlignStackParams($alignstack[stackid]);
 
 			// get pixel size and box size
-			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
-			if ($mpix) {
-				$apix = $mpix*1E10;
+			$apix = $alignstack['pixelsize'];
+			if ($apix) {
+				$mpix = $apix/1E10;
 				$apixtxt=format_angstrom_number($mpix)."/pixel";
 			}
-			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+			$boxsz = $alignstack['boxsize'];
 
 			//handle multiple runs in stack
-			$runname=$stackparams[shownstackname];
-			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
-			$stackid = $stack['stackid'];
+			$runname=$alignstack['runname'];
+			$totprtls=commafy($particle->getNumAlignStackParticles($alignid));
+			$stackid = $alignstack['stackid'];
 			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
@@ -240,7 +244,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
-	echo getSubmitForm("Run Spider NoRef Alignment");
+	echo getSubmitForm("Run Spider Coran Classify");
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
@@ -253,12 +257,12 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	exit;
 }
 
-function runSpiderNoRefAlign($runjob=false) {
+function runSpiderCoranClassify($runjob=false) {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 
-	$command.="spiderNoRefAlignment.py ";
+	$command.="coranClassify.py ";
 
 	$stackvars=$_POST['stackid'];
 	$partrad=$_POST['partrad'];
@@ -276,33 +280,33 @@ function runSpiderNoRefAlign($runjob=false) {
 
 	//make sure a session was selected
 	$description=$_POST['description'];
-	if (!$description) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+	if (!$description) createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
 	//$stackid=$_POST['stackid'];
-	if (!$stackid) createSpiderNoRefAlignForm("<B>ERROR:</B> No stack selected");
+	if (!$stackid) createSpiderCoranClassifyForm("<B>ERROR:</B> No stack selected");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
-	if ($numpart < 10) createSpiderNoRefAlignForm("<B>ERROR:</B> Must have more than 10 particles");
+	if ($numpart < 10) createSpiderCoranClassifyForm("<B>ERROR:</B> Must have more than 10 particles");
 
 	$particle = new particledata();
 
 	// check num of particles
 	$totprtls=$particle->getNumStackParticles($stackid);
-	if ($numpart > $totprtls) createSpiderNoRefAlignForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls)");
+	if ($numpart > $totprtls) createSpiderCoranClassifyForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls)");
 
 	$stackparams=$particle->getStackParams($stackid);
 
 	// check first & last ring radii
-	if ($firstring > (($boxsz/2)-2)) createSpiderNoRefAlignForm("<b>ERROR:</b> First Ring Radius too large!");
-	if ($lastring > (($boxsz/2)-2)) createSpiderNoRefAlignForm("<b>ERROR:</b> Last Ring Radius too large!");
+	if ($firstring > (($boxsz/2)-2)) createSpiderCoranClassifyForm("<b>ERROR:</b> First Ring Radius too large!");
+	if ($lastring > (($boxsz/2)-2)) createSpiderCoranClassifyForm("<b>ERROR:</b> Last Ring Radius too large!");
 
 	// check particle radii
 	if ($apix) {
 		$boxrad = $apix * $boxsz;
-		if ($partrad > $boxrad) createSpiderNoRefAlignForm("<b>ERROR:</b> Particle radius too large!");
+		if ($partrad > $boxrad) createSpiderCoranClassifyForm("<b>ERROR:</b> Particle radius too large!");
 	}
 	
 	if ($outdir) {
@@ -331,11 +335,11 @@ function runSpiderNoRefAlign($runjob=false) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'norefali');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'coranclass');
 		// if errors:
-		if ($sub) createSpiderNoRefAlignForm("<b>ERROR:</b> $sub");
+		if ($sub) createSpiderCoranClassifyForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	else {
@@ -343,7 +347,7 @@ function runSpiderNoRefAlign($runjob=false) {
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>
-		<b>Spider NoRef Alignment Command:</b><br />
+		<b>Spider Coran Classify Command:</b><br />
 		$command
 		</td></tr>
 		<tr><td>run id</td><td>$runname</td></tr>

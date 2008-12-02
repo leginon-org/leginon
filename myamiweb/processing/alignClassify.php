@@ -19,18 +19,21 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 processing_header("Alignment Classify Run","Alignment Classify  Run Page", $javascript,False);
 
-echo "<table border='1' class='tableborder'>";
+echo "<table border='1' class='tableborder' width='600'>";
 
 #echo "<tr><td>";
 #echo "  <h3>Just run an alignment, I don't care how</h3>";
 #echo "</td></tr>";
 
 echo "<tr><td>";
-echo "  <h3><a href='runCoranClassify.php?expId=$expId'>Correspondence Analysis Classification</a></h3>";
+echo "  <h3><a href='runCoranClassify.php?expId=$expId'>Spider Coran Classification</a></h3>";
 echo "  this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>Spider CA S</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." for correspondence analysis to classify your aligned particles";
+	." to run correspondence analysis (coran) "
+	.", a form of <a href='http://en.wikipedia.org/wiki/Principal_components_analysis'>"
+	."Principal components analysis</a>&nbsp;<img src='img/external.png'>, "
+	."and classify your aligned particles";
 echo "</td></tr>";
 
 
