@@ -136,6 +136,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = os.path.basename(imagicstack)
 		alignstackq['spiderfile'] = os.path.basename(spiderstack)
+		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = 0
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
@@ -146,6 +147,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
+		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average file: "+avgmrcfile)
 		alignstackq['stack'] = self.stack['data']
 		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
@@ -350,7 +354,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		return templatefile	
 
-
 	#=====================
 	def start(self):
 		self.appiondb.dbd.ping()
@@ -390,7 +393,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignedstack, self.partlist = alignment.refFreeAlignParticles(
 			spiderstack, templatefile, 
 			self.params['numpart'], pixrad,
-			self.params['firstring'], self.params['lastring'])
+			self.params['firstring'], self.params['lastring'],
+			rundir = ".")
 		self.appiondb.dbd.ping()
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
