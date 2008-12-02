@@ -1,7 +1,7 @@
 <?php
 
 /**
- *	The Leginon software is Copyright 2003 
+ *	The Leginon software is Copyright 2003
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
  *	see	http://ami.scripps.edu/software/leginon-license
@@ -42,7 +42,6 @@ class particledata {
 		//echo print_r($r)."<br/>\n";
 		return $r[0];
 	}
-
 
 	//------ General DB summary functions ---------//
 
@@ -158,7 +157,7 @@ class particledata {
 	}
 
 	//------ Tomo functions ---------//
-	
+
 	function getTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
 			."t.name as name, "
@@ -229,7 +228,7 @@ class particledata {
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId;
 		return $this->mysql->getSQLResult($q);
-	}	
+	}
 	function getTiltSeriesInfo($tiltseriesId){
 		// get image bin and the most recent pixel calibration
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
@@ -251,7 +250,7 @@ class particledata {
 			."pc.`DEF_timestamp`<	a.`DEF_timestamp` "
 			."ORDER BY pc.`DEF_timestamp` DESC ";
 		return $this->mysql->getSQLResult($q);
-	}	
+	}
 
 	// ------CTF data functions -------//
 	function hasCtfData($sessionId) {
@@ -295,7 +294,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return end($r);
 	}
-	
+
 	function getCtfInfoWithNominal($sessionId, $runId=false) {
 		$q =	"select "
 			."c.`REF|leginondata|AcquisitionImageData|image`, "
@@ -491,7 +490,7 @@ class particledata {
 					. "avg(ctfdata.`$field`) as `avg`, "
 					. "stddev(ctfdata.`$field`) as `stddev` ";
 		}
-		
+
 		if (!is_array($selects))
 			return False;
 		$stats = array();
@@ -551,7 +550,7 @@ class particledata {
 			$q =	"select ".$select." "
 			."from ctf c left join ".DB.".AcquisitionImageData i"
 			."on (c.`REF|leginondata|AcquisitionImageData|image`=i.`DEF_id`) "
-			."left join ".DB.".ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) " 
+			."left join ".DB.".ScopeEMData s on (s.`DEF_id` = i.`REF|ScopeEMData|scope`) "
 			."where i.`REF|SessionData|session`='$sessionId' ";
 			if ($runId)
 				$q .= "and c.`REF|ApAceRunData|acerun`='$runId' ";
@@ -631,7 +630,7 @@ class particledata {
 		}
 		echo "</table>\n";
 	}
-		
+
 	function getTemplatesFromProject ($projectId, $getHidden=False) {
 		$q="SELECT temp.*, path.path "
 			."FROM `ApTemplateImageData` AS temp "
@@ -680,7 +679,7 @@ class particledata {
 		$q = "select max(DEF_id) as runId "
 			." from ApAssessmentRunData where `REF|leginondata|SessionData|session` = '$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r[runId]; 
+		return $r[runId];
 	}
 
 	function getAssessmentRunIds ($sessionId) {
@@ -714,7 +713,7 @@ class particledata {
 			$data = array('selectionkeep'=>$value);
 			$where = array('REF|leginondata|AcquisitionImageData|image'=>$imageId);
 			$where['REF|ApAssessmentRunData|assessmentrun']=$runId;
-			$this->mysql->SQLUpdate('ApAssessmentData',$data,$where);			 
+			$this->mysql->SQLUpdate('ApAssessmentData',$data,$where);
 		}
 		else {
 			$data['selectionkeep']=$value;
@@ -732,14 +731,14 @@ class particledata {
 			."where a.`REF|ApAssessmentRunData|assessmentrun` = '$runId' ";
 		//echo "$q";
 		$r=$this->mysql->getSQLResult($q);
-		return $r;	
+		return $r;
 	}
 
 	function getSelectionParams ($runId, $returntype=False) {
 		$q = "select * from ApSelectionRunData "
 			." where `DEF_id` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
-		
+
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
 		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
@@ -768,7 +767,7 @@ class particledata {
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApTiltAlignParamsData|tiltparams`) ";
 			$type = "Tilt Picker";
 		}
-		
+
 		if ($returntype) return $type;
 
 		$q .= "where r.`DEF_id` = '$runId' ";
@@ -798,11 +797,11 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
-		
+
 	function getParticles ($runId) {
 		$q="select p.DEF_id, p.xcoord, p.ycoord, p.correlation "
 			."from ApParticleData p "
-			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "; 
+			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -823,7 +822,7 @@ class particledata {
 			."avg(p.correlation) as `avg`, "
 			."stddev(p.correlation) as `stddev` "
 			."from ApParticleData p ";
-		// use the latest inspection value. This should be changed later 
+		// use the latest inspection value. This should be changed later
 		if ($inspect) {
 				$q.= "left join ApAssessmentData ad "
 				."on (ad.`REF|leginondata|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image`) ";
@@ -837,7 +836,7 @@ class particledata {
 		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
-			
+
 	}
 
 	function getNumImgs ($runId){
@@ -1059,7 +1058,6 @@ class particledata {
 
 	#--------- MAKE STACK FUNCTIONS---------------#
 
-
 	function getParticleRunsFromStack($stackid) {
 		// return all the particle runs contributing to a stack,
 		// accounting for multiple runs in 1 stack (combinestack)
@@ -1150,32 +1148,6 @@ class particledata {
 		return $r;
 	}
 
-	function getAlignStackIds ($sessionId, $projectId, $showHidden=False) {
-		// this function is really slow
-		//$projectId = (int) getProjectFromExpId($expId);
-		$q = "SELECT ast.`DEF_id` AS alignstackid "
-		  ."FROM ApAlignStackData AS ast "
-		  ."LEFT JOIN ApStackData AS st ON "
-		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
-		  ."LEFT JOIN ApRunsInStackData as runsin ON "
-		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
-		  ."LEFT JOIN ApStackRunData as strun ON "
-		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
-		  ."WHERE "
-		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-		  ." AND "
-		  ."  runsin.`project|projects|project` = '$projectId' "
-		  ." AND "
-		  ."  ast.`project|projects|project` = '$projectId' ";
-		if (!$showHidden)
-			$q.= " AND ast.`hidden` != 1 ";
-		$q.= "ORDER BY alignstackid DESC";
-		//echo $q."<br/>\n";
-		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
-		return $r;
-	}
-
 	function getStackIdsOld ($sessionId) {
 		$q = "select spar.stackid "
 		."from ("
@@ -1203,7 +1175,7 @@ class particledata {
 		$stackrunIds = $this->mysql->getSQLResult($q);
 		// Parameters of original stack of the runs in stack
 		foreach ($stackrunIds as $runid) {
-			$stackrunId = $runid[runid];	
+			$stackrunId = $runid[runid];
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
 			$childstackId = $rstack['stackId'];
 			//Get Parameters
@@ -1236,25 +1208,10 @@ class particledata {
 		//use first run parameters for basic stack info
 		$runarray['boxSize']=$params[0]['boxSize'];
 		$runarray['bin']=$params[0]['bin'];
-		$runarray = array_merge($runarray,$stack_primary_array);	
+		$runarray = array_merge($runarray,$stack_primary_array);
 		$r = array_merge($params,$runarray);
 		return $r;
 	}
-
-
-	function getAlignStackParams ($alignstackid) {
-		$q = "SELECT ast.*, ar.runname AS runname, pd.`path` AS path "
-			."FROM ApAlignStackData as ast "
-			."LEFT JOIN ApPathData AS pd ON "
-			."(ast.`REF|ApPathData|path` = pd.`DEF_id`) "
-			."LEFT JOIN ApAlignRunData AS ar ON "
-			."(ast.`REF|ApAlignRunData|alignrun` = ar.`DEF_id`) "
-			."WHERE ast.`DEF_id` = '$alignstackid'";
-		//echo $q."<br/>\n";
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
-	}
-
 
 	function getOriginalStackFromStackRun($stackrunId) {
 	//get the original stack when a stackrun is also used in combined stacks
@@ -1294,7 +1251,7 @@ class particledata {
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
-	}	
+	}
 
 	function getNumStackParticles ($stackId) {
 		$q= "SELECT count(DEF_id) as num "
@@ -1302,16 +1259,9 @@ class particledata {
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['num'];
-	}		
+	}
 
-	function getNumAlignStackParticles ($alignstackid) {
-		$q= "SELECT count(DEF_id) as num "
-			."FROM `ApAlignParticlesData` "
-			."WHERE `REF|ApAlignStackData|alignstack` = '$alignstackid'";
-		//echo $q."<br/>\n";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
-	}		
+
 
 	//////// fix me ////////
 	function getStackIdFromReconId ($reconId) {
@@ -1320,7 +1270,7 @@ class particledata {
 			."WHERE `DEF_id` = '$reconId'";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r['REF|ApStackData|stack'];
-	}		
+	}
 
 	function getStackPixelSizeFromStackId ($stackId) {
 		// first see if it's stored in the ApStackData Table (easiest)
@@ -1437,6 +1387,56 @@ class particledata {
 		return $html;
 	}
 
+	#--------- ALIGN STACK FUNCTIONS ---------------#
+
+	function getAlignStackIds ($sessionId, $projectId, $showHidden=False) {
+		// this function is really slow
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT ast.`DEF_id` AS alignstackid "
+		  ."FROM ApAlignStackData AS ast "
+		  ."LEFT JOIN ApStackData AS st ON "
+		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApRunsInStackData as runsin ON "
+		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApStackRunData as strun ON "
+		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+		  ."WHERE "
+		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ." AND "
+		  ."  runsin.`project|projects|project` = '$projectId' "
+		  ." AND "
+		  ."  ast.`project|projects|project` = '$projectId' ";
+		if (!$showHidden)
+			$q.= " AND ast.`hidden` != 1 ";
+		$q.= "ORDER BY alignstackid DESC";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+
+	function getAlignStackParams ($alignstackid) {
+		$q = "SELECT ast.*, ar.runname AS runname, pd.`path` AS path "
+			."FROM ApAlignStackData as ast "
+			."LEFT JOIN ApPathData AS pd ON "
+			."(ast.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."LEFT JOIN ApAlignRunData AS ar ON "
+			."(ast.`REF|ApAlignRunData|alignrun` = ar.`DEF_id`) "
+			."WHERE ast.`DEF_id` = '$alignstackid'";
+		echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
+	function getNumAlignStackParticles ($alignstackid) {
+		$q= "SELECT count(DEF_id) as num "
+			."FROM `ApAlignParticlesData` "
+			."WHERE `REF|ApAlignStackData|alignstack` = '$alignstackid'";
+		//echo $q."<br/>\n";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
 	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
@@ -1469,7 +1469,7 @@ class particledata {
 		$q = "select * from ApMaskMakerRunData "
 			." where `DEF_id` = '$runId' ";
 		list($r)=$this->mysql->getSQLResult($q);
-		
+
 		//print_r ($r);
 		//echo $r['REF|ApMaskMakerParamsData|params'];
 		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
@@ -1481,7 +1481,7 @@ class particledata {
 				."LEFT JOIN ApPathData AS p ON "
 				."(r.`REF|ApPathData|path`= p.`DEF_id`) ";
 		}
-		
+
 		$q .= "where r.`DEF_id` = '$runId' ";
 		//echo $q;
 		$r=$this->mysql->getSQLResult($q);
@@ -1503,7 +1503,7 @@ class particledata {
 			."avg(r.mean) as `Imean`, "
 			."avg(r.stdev) as `Istddev` "
 						."from ApMaskRegionData r ";
-		// use the latest inspection value. This should be changed later 
+		// use the latest inspection value. This should be changed later
 		if ($inspect) {
 						$q.= "left join ApAssessmentData ad "
 				."on (ad.`REF|leginondata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
@@ -1516,7 +1516,7 @@ class particledata {
 		$q.="r.`REF|ApMaskMakerRunData|maskrun` = '$runId' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
-			
+
 	}
 
 	function displayMaskRegionStats ($expId,$particleruns, $display_keys, $inspect=False, $selexval=False) {
@@ -1569,7 +1569,7 @@ class particledata {
 	function getMaskAssessNames ($sessionId){
 		$q = "select `name` "
 			."from `ApMaskAssessmentRunData` "
-			."where `REF|leginondata|SessionData|session` = '$sessionId' "	
+			."where `REF|leginondata|SessionData|session` = '$sessionId' "
 			." group by `name` ";
 		$r = $this->mysql->getSQLResult($q);
 		if ($r) {
@@ -1585,7 +1585,7 @@ class particledata {
 						."from ApMaskAssessmentData m "
 			."left join ApMaskRegionData r "
 			." on m.`REF|ApMaskRegionData|region` = r.`DEF_id` ";
-		// use the latest inspection value. This should be changed later 
+		// use the latest inspection value. This should be changed later
 		if ($inspect) {
 						$q.= "left join ApAssessmentData ad "
 				."on (ad.`REF|leginondata|AcquisitionImageData|image` = r.`REF|leginondata|AcquisitionImageData|image`) ";
@@ -1599,7 +1599,7 @@ class particledata {
 			."m.`keep` = 1 ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
-			
+
 	}
 
 	#--------- REF-FREE ALIGNMENT FUNCTIONS---------------#
@@ -1819,7 +1819,7 @@ class particledata {
 			$where = array('DEF_id'=>$id);
 			$this->mysql->SQLUpdate($table,$data,$where);
 		}
-	}			 
+	}
 
 	function getMiscInfoFromProject ($projectId) {
 		$q="SELECT i.*, p.path "
@@ -1948,7 +1948,7 @@ class particledata {
 			$where = array('DEF_id'=>$id);
 			$this->mysql->SQLUpdate($table,$data,$where);
 		}
-	}			 
+	}
 
 	function updateHide($table, $id, $value) {
 		$q = "SELECT hidden "
@@ -1961,20 +1961,20 @@ class particledata {
 			$where = array('DEF_id'=>$id);
 			$this->mysql->SQLUpdate($table,$data,$where);
 		}
-	}			 
+	}
 
 	function updateClusterQueue($jobid,$queueid,$status) {
 		$data = array('clusterjobid'=>$queueid);
 		$data['status']=$status;
 		$where = array('DEF_id'=>$jobid);
-		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
+		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);
 	}
 
 	function abortClusterJob($jobid,$user=NULL) {
 		$data = array('status'=>'A');
 		$where = array('DEF_id'=>$jobid);
 		if (!is_null($user)) $where['user'] = $user;
-		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);			 
+		$this->mysql->SQLUpdate('ApClusterJobData',$data,$where);
 	}
 
 	function getSubmittedJobs($expId) {
@@ -1985,7 +1985,7 @@ class particledata {
 		return $r;
 	}
 
-  
+
 	function getReconIdFromClusterJobId ($jobid) {
 		$q="SELECT * "
 		  ."FROM `ApRefinementRunData` "
@@ -2008,7 +2008,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
 		return $r;
-	} 
+	}
 
 	function getExemplarReconsFromSession ($sessionId, $showHidden=False) {
 		$q = "SELECT refdata.`DEF_id` as refdataid, "
@@ -2031,7 +2031,7 @@ class particledata {
 		$q.= " ORDER BY refrun.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
-	} 
+	}
 
 	function getReconIds ($stackId, $showHidden=False) {
 		$q = "SELECT * "
@@ -2045,7 +2045,7 @@ class particledata {
 		$q.= "ORDER BY r.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
-	} 
+	}
 
 	function getRefinementRunInfo($refinementRun) {
 		$q="select r.*, p.path "
@@ -2103,7 +2103,7 @@ class particledata {
 	}
 
 	function getHighestResForRecon ($reconid) {
-		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas " 
+		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas "
 				."FROM `ApRefinementData` AS ref "
 				."LEFT JOIN `ApResolutionData` AS res "
 				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
@@ -2117,7 +2117,7 @@ class particledata {
 	}
 
 	function getHighestRMeasureForRecon ($reconid) {
-		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas " 
+		$q = "SELECT ref.iteration AS iter, res.half AS half, rmeas.rMeasure AS rmeas "
 				."FROM `ApRefinementData` AS ref "
 				."LEFT JOIN `ApResolutionData` AS res "
 				." ON (ref.`REF|ApResolutionData|resolution` = res.`DEF_id`) "
@@ -2192,7 +2192,7 @@ class particledata {
 			case 'SpiCoran':
 				if ($subset=='bad') $q.="AND `coran_keep` = 0 ";
 				elseif ($subset=='good') $q.="AND `coran_keep` = 1 ";
-			  break; 	 
+			  break;
 			case 'MsgP':
 				if ($subset=='bad') $q.="AND `msgp_keep` = 0 ";
 				elseif ($subset=='good') $q.="AND `msgp_keep` = 1 ";
@@ -2209,9 +2209,9 @@ class particledata {
 		  ."p.`xcoord` , p.`ycoord` "
 		  ."FROM  `ApStackParticlesData` sp "
 		  ."LEFT JOIN ApParticleData p ON "
-		  ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) " 
+		  ."( sp.`REF|ApParticleData|particle` = p.`DEF_id` ) "
 		  ."LEFT JOIN dbemdata.AcquisitionImageData db ON "
-		  ."( p.`REF|leginondata|AcquisitionImageData|image` = db.`DEF_id` ) " 
+		  ."( p.`REF|leginondata|AcquisitionImageData|image` = db.`DEF_id` ) "
 		  ."WHERE sp.`REF|ApStackData|stack`=$stackId";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -2258,7 +2258,6 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
-
 
 	function getParticleEuler ($refinementDataId) {
 		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
@@ -2369,7 +2368,7 @@ class particledata {
 		."WHERE m.`REF|ApRefinementRunData|refinementRun` = $reconid";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
-	}		
+	}
 
 	function getEulerStats($reconId, $iterId1, $iterId2) {
 		$q = "SELECT difference, eulers,	mean from `ApProcEulerData` "
@@ -2391,7 +2390,7 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r[0];
 	}
-	
+
 	function insertEulerStats($stats) {
 		$mean = $stats->myMean;
 		$errors = $stats->myData;
@@ -2402,7 +2401,6 @@ class particledata {
 		$min = $stats->myMin;
 		$max = $stats->myMax;
 		$stdev = $stats->myStandardDeviation;
-
 
 		$euler = array_map('simplify',$eulers);
 
@@ -2426,7 +2424,7 @@ class particledata {
 					}
 			//--- }
 		return $r;
-		
+
 	}
 
 	function getNoRefClassParticleNumber($runId) {
@@ -2438,7 +2436,6 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
-
 
 	function getNumberOfRctRuns($sessionId) {
 		$q="SELECT count(rctrun.`DEF_id`) AS number "
@@ -2548,7 +2545,7 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
-	
+
 	function getImagic3d0ReclassifiedModelsFromSessionId($sessionId) {
 		$q="SELECT "
 			."  model.*, "
@@ -2573,7 +2570,7 @@ class particledata {
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
-	
+
 	function getImagic3d0NoRefModelsFromSessionId($sessionId) {
 		$q="SELECT "
 			."  model.*, "
@@ -2582,7 +2579,7 @@ class particledata {
 			."LEFT JOIN ApPathData AS path "
 			."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
 			."LEFT JOIN ApNoRefClassRunData AS norefclass "
-			."  ON model. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "	
+			."  ON model. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
 			."LEFT JOIN ApNoRefRunData AS norefrun "
 			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
 			."LEFT JOIN ApStackData AS stack "
@@ -2618,7 +2615,7 @@ class particledata {
 			."LEFT JOIN ApPathData AS path "
 			."  ON refinement.`REF|ApPathData|path` = path.`DEF_id` "
 			."LEFT JOIN ApNoRefClassRunData AS norefclass "
-			."  ON refinement. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "	
+			."  ON refinement. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
 			."LEFT JOIN ApNoRefRunData AS norefrun "
 			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
 			."LEFT JOIN ApStackData AS stack "
@@ -2645,7 +2642,7 @@ class particledata {
 
 		return $r;
 	}
-	
+
 	function getImagic3dRefinementRunsFrom3d0 ($imagic3d0Id) {
 		$q = "SELECT "
 			."  refinement.*, "
@@ -2661,7 +2658,6 @@ class particledata {
 
 		return $r;
 	}
-
 
 }
 
