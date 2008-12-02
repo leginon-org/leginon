@@ -135,13 +135,13 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def spidict2partdict(self, spidict):
 		partdict = {
-			'partnum': spidict['row'],
-			'inplane': spidict['floatlist'][2],
-			'xshift': spidict['floatlist'][3],
-			'yshift': spidict['floatlist'][4],
-			'refnum': spidict['floatlist'][5],
-			'mirror': spidict['floatlist'][6],
-			'spread': spidict['floatlist'][7],
+			'partnum': int(spidict['row']),
+			'inplane': float(spidict['floatlist'][2]),
+			'xshift': float(spidict['floatlist'][3]),
+			'yshift': float(spidict['floatlist'][4]),
+			'refnum': int(spidict['floatlist'][5]),
+			'mirror': bool(spidict['floatlist'][6]),
+			'spread': float(spidict['floatlist'][7]),
 		}
 		return partdict
 
