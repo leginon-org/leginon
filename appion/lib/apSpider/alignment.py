@@ -431,7 +431,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 
 	### make template in memory
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
-	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskpixrad*2))
+	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskpixrad*2.0))
 
 	### performing correspondence analysis
 	apDisplay.printMsg("Performing correspondence analysis (long wait)")
