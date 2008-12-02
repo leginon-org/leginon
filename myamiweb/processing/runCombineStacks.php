@@ -128,7 +128,7 @@ function runCombineStack($runjob=false) {
 
 		if (!($user && $password)) createCombineStackForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,'combinestack');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'combinestack');
 		// if errors:
 		if ($sub) createCombineStackForm("<b>ERROR:</b> $sub");
 		exit;

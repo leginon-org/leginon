@@ -246,7 +246,7 @@ function runSpiderCoranClassify($runjob=false) {
 
 		if (!($user && $password)) createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,'coranclass');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'coranclass');
 		// if errors:
 		if ($sub) createSpiderCoranClassifyForm("<b>ERROR:</b> $sub");
 		exit;
