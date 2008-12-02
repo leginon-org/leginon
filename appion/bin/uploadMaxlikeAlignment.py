@@ -147,7 +147,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def adjustPartDict(self, origpartdict, reflist):
-		refdict = reflist[origpartdict['refnum']]
+		refdict = reflist[origpartdict['refnum']-1]
 		if refdict['partnum'] != origpartdict['refnum']:
 			apDisplay.printError("sorting error in reflist, see neil")
 		newpartdict = {
