@@ -37,7 +37,7 @@ neil
 
 #===============================
 def refFreeAlignParticles(stackfile, template, numpart, pixrad,
-		firstring=2, lastring=100, dataext=".spi"):
+		firstring=2, lastring=100, dataext=".spi", rundir = "alignment"):
 	"""
 	inputs:
 		stack
@@ -53,7 +53,6 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	if dataext in stackfile:
 		stackfile = stackfile[:-4]
 	t0 = time.time()
-	rundir = "alignment"
 	apParam.createDirectory(rundir)
 
 	### remove previous iterations
@@ -85,7 +84,12 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 		numiter += 1
 	if numiter == 0:
-		apDisplay.printError("alignment failed")
+		apDisplay.printError("alignment failed, no iterations were found")
+	emancmd = ("proc2d "
+		+" "+rundir+"/avgimg"+("%02d%s" % (numiter, dataext))
+		+" "+rundir+"/average.mrc"
+	)
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)	
 	apDisplay.printMsg(str(numiter)+" alignment iterations were run by spider")
 
 	### convert spider rotation, shift data to python
@@ -214,7 +218,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	### remove previous iterations
 	apFile.removeFile(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
-	### perform alignment
+	### perform alignment, should I use 'AP SH' instead?
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("AP MQ", 
 		spyder.fileFilter(templatestack)+"@**",     # reference image series
