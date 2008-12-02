@@ -243,7 +243,7 @@ function alignstacksummarytable($alignstackid) {
 	$stacktable.= apdivtitle($j);
 	//echo $j."<br/>\n";
 
-	$stacktable.= "<table border='0' width='700'>\n";
+	$stacktable.= "<table border='0'>\n";
 	$stackavg = $stackdata['path']."/average.mrc";
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
