@@ -90,7 +90,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "<input type='text' name='runname' value='$runname'>\n<br/>\n<br/>\n";
 	echo docpop('descr','<b>Description of Rct run:</b>');
 	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='36'>$description</textarea>\n";
+	echo "<textarea name='description' rows='3' cols='60'>$description</textarea><br/><br/>\n";
 
 	//NoRef Class Drop Down Menu
 	echo docpop('norefclass','NoRef Class Id:<br/>');
