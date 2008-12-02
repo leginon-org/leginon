@@ -73,6 +73,8 @@ def getOneParticleFromStackId(stackid, msg=True):
 	stackq=appionData.ApStackParticlesData()
 	stackq['stack'] = stackdata
 	stackparticledata=appiondb.query(stackq, results=1)
+	if len(stackparticledata) == 0:
+		return None
 	return stackparticledata[0]
 
 #===============
@@ -314,6 +316,8 @@ def getStackBoxsize(stackId):
 	Not tested on defocal pairs
 	"""
 	stackpart = getOneParticleFromStackId(stackId, msg=False)
+	if stackpart is None:
+		return None
 	rawboxsize = stackpart['stackRun']['stackParams']['boxSize']
 	runsindata = getRunsInStack(stackId)
 	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
