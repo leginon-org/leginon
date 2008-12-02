@@ -230,14 +230,13 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 		### align references
-		refdocfile = "part"+self.timestamp+".sel"
 		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['outdir'], "part"+self.timestamp)
+			+" -i "+os.path.join(self.params['outdir'], "part"+self.timestamp+".sel")
 			+" -nref 1 "
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['outdir'], "ref"+self.timestamp)
-			+" -psi_step 0.5 "
-			+" -eps 5e-3 "
+			+" -psi_step 1 "
+			+" -eps 5e-4 "
 		)
 
 
