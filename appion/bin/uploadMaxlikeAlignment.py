@@ -252,7 +252,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			refq = appionData.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = lastiter
-			refbase = self.params['timestamp']+"_ref%06d"%(partdict['refnum'])
+			refbase = "part"+self.params['timestamp']+"_ref%06d"%(partdict['refnum'])
 			refq['mrcfile'] = refbase+".mrc"
 			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
