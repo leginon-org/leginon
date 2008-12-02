@@ -223,7 +223,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
-		averagefile = os.path.join(self.params['outdir'], alignstackq['averagefile'])
+		averagefile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(averagefile):
 			apDisplay.printError("could not find average stack file: "+averagefile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
