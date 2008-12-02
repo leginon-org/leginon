@@ -49,6 +49,7 @@ if ($stackdatas) {
 	foreach ($stackdatas as $stackdata) {
 		$alignstackid = $stackdata['alignstackid'];
 		echo alignstacksummarytable($alignstackid);
+		echo "<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>Run Coran On Align Stack Id $alignstackid</a><br/>\n";
 	}
 	echo "</form>\n";
 } else {

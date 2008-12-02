@@ -308,8 +308,8 @@ function runSpiderNoRefAlign($runjob=false) {
 	if ($outdir) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$procdir = $outdir.$runname;
-		$command.="--outdir=$procdir ";
+		$rundir = $outdir.$runname;
+		$command.="--outdir=$rundir ";
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
@@ -333,7 +333,7 @@ function runSpiderNoRefAlign($runjob=false) {
 
 		if (!($user && $password)) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'norefali');
+		$sub = submitAppionJob($command,$rundir,$runname,$expId,'norefali');
 		// if errors:
 		if ($sub) createSpiderNoRefAlignForm("<b>ERROR:</b> $sub");
 		exit;
