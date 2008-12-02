@@ -130,6 +130,23 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return partlist
 
 	#=====================
+	def writePartDocFile(self, partlist):
+		docfile = "finalshifts_"+self.params['timestamp']+".doc"
+		f = open(docfile, "w")
+		dlist = ['inplane', 'xshift', 'yshift', 'refnum', 'mirror', 'spread']
+		f.write(" ; partnum ... "+str(dlist)+"\n")
+		for partdict in partlist:
+			floatlist = []
+			for key in dlist:
+				floatlist.append(partdict['key'])
+			line = operations.spiderOutLine(partdict['partnum'], floatlist)
+			f.write(line)
+		f.write(" ; partnum ... "+str(dlist)+"\n")
+		f.close()
+		apDisplay.printMsg("wrote rotation and shift parameters to "+docfile+" for "+str(len(partlist))+" particles")
+		return
+
+	#=====================
 	def spidict2partdict(self, spidict):
 		partdict = {
 			'partnum': int(spidict['row']),
@@ -352,6 +369,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			self.sortFolder(lastiter)
 		reflist = self.readRefDocFile(lastiter)
 		partlist = self.readPartDocFile(lastiter, reflist)
+		self.writePartDocFile(partlist)
 
 		### create aligned stacks
 		stackfile = self.createAlignedStacks(runparams['stackid'], partlist)
