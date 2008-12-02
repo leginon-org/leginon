@@ -15,6 +15,7 @@ import apEMAN
 import apTemplate
 import apParam
 import appionData
+import apProject
 from apSpider import alignment
 
 #=====================
@@ -38,7 +39,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			help="XY step distance (in pixels)", metavar="#")
 		self.parser.add_option("--lowpass", dest="lowpass", type="int", default=0,
 			help="Low pass filter radius (in Angstroms)", metavar="#")
-		self.parser.add_option("--bin", dest="bin", type="int", default=0,
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Binning of the particles", metavar="#")
 		self.parser.add_option("--highpass", dest="highpass", type="int", default=0,
 			help="High pass filter radius (in Angstroms)", metavar="#")
@@ -151,6 +152,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = imagicstack
 		alignstackq['spiderfile'] = alignedstack
+		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
@@ -161,6 +163,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
+		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
 		alignstackq['stack'] = self.stack['data']
 		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
@@ -427,6 +432,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		imagicstack = "aligned.hed"
 		apFile.removeStack(imagicstack)
 		emancmd = "proc2d "+finalspistack+" "+imagicstack
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		emancmd = "proc2d "+imagicstack+" average.mrc average"
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		if self.params['commit'] is True:
