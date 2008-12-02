@@ -170,10 +170,16 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			'xshift': origpartdict['xshift']+refdict['xshift'],
 			'yshift': origpartdict['yshift']+refdict['yshift'],
 			'refnum': origpartdict['refnum'],
-			'mirror': origpartdict['mirror']*refdict['mirror'],
+			'mirror': xor(origpartdict['mirror'],refdict['mirror']),
 			'spread': origpartdict['spread'],
 		}
 		return newpartdict
+
+	#=====================
+	def xor(self, a ,b):
+		xor = (a and not b) or (b and not a)
+		return bool(xor)
+
 
 	#=====================
 	def wrap360(self, theta):
