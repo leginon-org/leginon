@@ -10,7 +10,9 @@ import apDB
 import leginondata
 import apStack
 import project
+import appionData
 
+appiondb = apDB.apdb
 leginondb = apDB.db
 
 #========================
@@ -43,6 +45,14 @@ def getProjectIdFromStackId(stackid):
 	sessionname = sessiondata['name']
 	projectid = getProjectIdFromSessionName(sessionname)	
 	return projectid
+
+#========================
+def getProjectIdFromAlignStackId(alignstackid):
+	alignstackdata = appiondb.direct_query(appionData.ApAlignStackData, self.params['alignstackid'])
+	stackid = alignstackdata['stack'].dbid
+	projectid = getProjectIdFromStackId(stackid)	
+	return projectid
+
 
 
 

@@ -365,18 +365,6 @@ class ApNoRefParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApNoRefParamsData=ApNoRefParamsData
 
-class ApCoranEigenImageData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('norefRun', ApNoRefRunData),
-			('factor_num', int),
-			('percent_contrib', float),
-			('image_name', str),
-			('path', ApPathData),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApCoranEigenImageData = ApCoranEigenImageData
-
 class ApNoRefAlignParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -518,7 +506,6 @@ class ApAlignParticlesData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApAlignParticlesData=ApAlignParticlesData
 
-
 class ApAlignReferenceData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -534,6 +521,33 @@ class ApAlignReferenceData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApAlignReferenceData=ApAlignReferenceData
 
+class ApCoranRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('mask_diam', float),
+			('run_seconds', int),
+			('num_factors', int),
+			('description', str),
+			('path', ApPathData),
+			('alignstack', ApAlignStackData),
+			('project|projects|project', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApCoranRunData=ApCoranRunData
+
+class ApCoranEigenImageData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('norefRun', ApNoRefRunData),
+			('coranRun', ApCoranRunData),
+			('factor_num', int),
+			('percent_contrib', float),
+			('image_name', str),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApCoranEigenImageData = ApCoranEigenImageData
 
 ### Reconstruction tables ###
 

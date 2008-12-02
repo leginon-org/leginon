@@ -14,6 +14,7 @@ import apFile
 import apTemplate
 import apStack
 import apEMAN
+import apProject
 from apSpider import alignment
 import appionData
 
@@ -88,6 +89,15 @@ class NoRefAlignScript(appionScript.AppionScript):
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['outdir'] = os.path.join(uppath, "noref", self.params['runname'])
 
+	#=====================
+	def checkNoRefRun(self):
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		uniquerun = alignrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 	#=====================
 	def insertNoRefRun(self, spiderstack, imagicstack, insert=False):
@@ -125,7 +135,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignstackq = appionData.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = os.path.basename(imagicstack)
-		alignstackq['spiderfile'] = os.path.basename(alignedstack)
+		alignstackq['spiderfile'] = os.path.basename(spiderstack)
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = 0
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
@@ -150,7 +160,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		refq = appionData.ApAlignReferenceData()
 		refq['refnum'] = 0
 		refq['iteration'] = 0
-		refq['mrcfile'] = ("templateavg%02d-%02d.mrc"%(iternum,refnum))
+		refq['mrcfile'] = "template.mrc"
 		#refpath = os.path.abspath(os.path.join(self.params['outdir'], "alignment"))
 		#refq['path'] = appionData.ApPathData(path=refpath)
 		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
@@ -158,7 +168,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		### insert particle data
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
-		for partdict in partlist:
+		for partdict in self.partlist:
 			### see apSpider.alignment.alignStack() for more info
 			"""
 			partdict.keys()
@@ -237,7 +247,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def averageTemplate(self):
 		"""
-		takes the spider file and creates an average template of all particles and masks it
+		takes the spider file and creates an average template of all particles
 		"""
 		emancmd  = "proc2d "+self.stack['file']+" template.mrc average edgenorm"
 		apEMAN.executeEmanCmd(emancmd)
@@ -249,7 +259,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def selectRandomParticles(self):
 		"""
-		takes the spider file and creates an average template of all particles and masks it
+		takes the spider file and creates an average template of all particles
 		"""
 		### create random keep list
 		numrandpart = int(self.params['numpart']/100)+2
@@ -280,7 +290,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def pickRandomParticle(self):
 		"""
-		takes the spider file and creates an average template of all particles and masks it
+		takes the spider file and creates an average template of all particles
 		"""
 		### create random keep list
 		f = open("randkeep.lst", "w")
@@ -299,7 +309,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 	#=====================
 	def getTemplate(self):
 		"""
-		takes the spider file and creates an average template of all particles and masks it
+		takes the spider file and creates an average template of all particles
 		"""
 		### create random keep list
 		templatedata = apTemplate.getTemplateFromId(self.params['templateid'])
@@ -317,12 +327,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def processTemplate(self, mrcfile):
-		### mask
-		apDisplay.printMsg("Masking template by radius of "+str(self.params['maskrad'])+" Angstroms")
-		emancmd  = ( "proc2d "+mrcfile+" "+mrcfile+" apix="+str(self.stack['apix'])
-			+" mask="+str(self.params['maskrad']) )
-		apEMAN.executeEmanCmd(emancmd)
-
 		### shrink
 		apDisplay.printMsg("Binning template by a factor of "+str(self.params['bin']))
 		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
@@ -359,7 +363,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
-		self.insertNoRefRun(insert=False)
+		self.checkNoRefRun()
 
 		### convert stack to spider
 		spiderstack = self.createSpiderFile()
