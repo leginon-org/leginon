@@ -20,7 +20,7 @@ import appionData
 
 #=====================
 #=====================
-class NoRefAlignScript(appionScript.AppionScript):
+class CoranClassifyScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
@@ -96,7 +96,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		coranq['num_factors'] = self.params['numfactors']
 		coranq['mask_diam'] = 2.0*self.params['maskrad']
 		coranq['run_seconds'] = self.runtime
-		coranq['project'] = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
+		coranq['project|projects|project'] = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 
 		apDisplay.printMsg("inserting coran parameters into database")
 		if insert is True:
@@ -160,16 +160,16 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.timeString(esttime),"cyan")
 
 		### do correspondence analysis
-		corantime = time.time()
 		self.appiondb.dbd.ping()
+		corantime = time.time()
 		self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
 			boxsize=boxsize, maskpixrad=maskpixrad, 
 			numpart=numpart, numfactors=self.params['numfactors'])
+		corantime = time.time() - corantime
 		self.appiondb.dbd.ping()
 
 		### make dendrogram
 		alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
-		corantime = time.time() - corantime
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
@@ -184,7 +184,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	noRefAlign = NoRefAlignScript()
-	noRefAlign.start()
-	noRefAlign.close()
+	coranClass = CoranClassifyScript()
+	coranClass.start()
+	coranClass.close()
 
