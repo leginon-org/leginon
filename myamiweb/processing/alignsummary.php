@@ -29,12 +29,14 @@ $particle = new particledata();
 
 // find each stack entry in database
 //$stackIds = $particle->getAlignStackIds($expId, True);
-if (!$_GET['showHidden']) {
+if ($_GET['coran']) {
+	$stackdatas = $particle->getAlignStackIdsWithCoran($expId, $projectId);
+	$hidestackdatas = $stackdatas;
+} elseif (!$_GET['showHidden']) {
 	$stackdatas = $particle->getAlignStackIds($expId, $projectId, False);
 	$hidestackdatas = $particle->getAlignStackIds($expId, $projectId, True);
 } else {
 	$stackdatas = $particle->getAlignStackIds($expId, $projectId, True);
-	print_r($stackdatas);
 	$hidestackdatas = $stackdatas;
 }
 
@@ -49,7 +51,24 @@ if ($stackdatas) {
 	foreach ($stackdatas as $stackdata) {
 		$alignstackid = $stackdata['alignstackid'];
 		echo alignstacksummarytable($alignstackid);
-		echo "<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>Run Coran On Align Stack Id $alignstackid</a><br/>\n";
+		$corandatas = $particle->getCoranRunForAlignStack($alignstackid, $projectId);
+		if ($corandatas) {
+			//print_r($corandatas);
+			foreach ($corandatas as $corandata) {
+				//echo print_r($corandata)."<br/>\n";;
+				$coranid = $corandata['DEF_id'];
+				echo "<span style='background-color:#dddd44;'>&nbsp;"
+					."<a href='runParticleCluster.php?expId=6143&coranId=$coranid'>"
+					."Run Particle Clustering On Coran Id $coranid</a>&nbsp;</span><br/>\n";
+			}
+			echo "<span style='background-color:#dddddd;'>&nbsp;"
+				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
+				."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";		
+		} else {
+			echo "<span style='background-color:#ddbbdd;'>&nbsp;"
+				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
+				."Run Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+		}
 	}
 	echo "</form>\n";
 } else {
