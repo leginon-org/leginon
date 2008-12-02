@@ -40,7 +40,6 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 
 	// connect to particle database
 	$particle = new particledata();
-	$stackIds = $particle->getStackIdsWithProjectId($sessionId, $projectId);
 	$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
 	$alignruns=count($alignIds);
 	//$coranIds = $particle->getCoranRuns($sessionId, $projectId);
@@ -88,7 +87,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$rundescrval = $_POST['description'];
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '200';
+	$defaultmaskrad = 100;
 
 	echo"
 	<table border='0' class='tableborder'>
@@ -118,15 +117,15 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	if ($selectAlignId) {
 		echo "<input type='hidden' name='stackid' value='$selectAlignId'>\n";
 		echo alignstacksummarytable($selectAlignId);
-	} elseif (!$alignIds) {
+		$alignstack = $particle->getAlignStackParams($selectAlignId);
+		$defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
+	} elseif ($alignIds) {
 		echo "
 		Aligned Stack:<BR>
 		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($alignIds as $alignarray) {
 			$alignid = $alignarray['alignstackid'];
 			$alignstack = $particle->getAlignStackParams($alignid);
-			echo print_r($alignstack);
-			//$stackparams=$particle->getAlignStackParams($alignstack[stackid]);
 
 			// get pixel size and box size
 			$apix = $alignstack['pixelsize'];
@@ -138,10 +137,9 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 			//handle multiple runs in stack
 			$runname=$alignstack['runname'];
 			$totprtls=commafy($particle->getNumAlignStackParticles($alignid));
-			$stackid = $alignstack['stackid'];
-			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+			echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
-			if ($stackidval==$stackid) echo " SELECTED";
+			if ($stackidval==$alignid) echo " SELECTED";
 			echo ">$runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</OPTION>\n";
@@ -159,7 +157,8 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
 
-	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$partrad'>\n";
+	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : (int) $defaultmaskrad;
+	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$maskrad'>\n";
 	echo docpop('maskrad','Mask Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
@@ -201,28 +200,28 @@ function runSpiderCoranClassify($runjob=false) {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-	$stackid=$_POST['stackid'];
+	$stackvars=$_POST['stackid'];
+	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	$maskrad=$_POST['maskrad'];
 	$numfactors=$_POST['numfactors'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
-	if (!$description) createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+	if (!$description)
+		createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
-	//$stackid=$_POST['stackid'];
-	if (!$stackid) createSpiderCoranClassifyForm("<B>ERROR:</B> No stack selected");
+	if (!$stackid)
+		createSpiderCoranClassifyForm("<B>ERROR:</B> No stack selected");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
+	// check particle radii
 	$particle = new particledata();
 	$stackparams=$particle->getAlignStackParams($stackid);
-
-	// check particle radii
-	$stackparams['boxsize']
 	$boxrad = $stackparams['pixelsize'] * $stackparams['boxsize'];
 	if ($maskrad > $boxrad)
-		createSpiderCoranClassifyForm("<b>ERROR:</b> Mask radius too large!");
+		createSpiderCoranClassifyForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
 
 	$command.="coranClassify.py ";
 
@@ -230,7 +229,7 @@ function runSpiderCoranClassify($runjob=false) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$rundir = $outdir.$runname;
-		$command.="--outdir=$procdir ";
+		$command.="--outdir=$rundir ";
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
@@ -262,14 +261,7 @@ function runSpiderCoranClassify($runjob=false) {
 		</td></tr>
 		<tr><td>run id</td><td>$runname</td></tr>
 		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>part rad</td><td>$partrad</td></tr>
-		<tr><td>low pass</td><td>$lowpass</td></tr>
-		<tr><td>high pass</td><td>$highpass</td></tr>
-		<tr><td>first ring</td><td>$firstring</td></tr>
-		<tr><td>last ring</td><td>$lastring</td></tr>
-		<tr><td>num part</td><td>$numpart</td></tr>
-		<tr><td>binning</td><td>$bin</td></tr>
-		<tr><td>init method</td><td>$initmethod</td></tr>
+		<tr><td>num factors</td><td>$numfactors</td></tr>
 		<tr><td>out dir</td><td>$outdir</td></tr>
 		<tr><td>commit</td><td>$commit</td></tr>
 		</table>\n";
