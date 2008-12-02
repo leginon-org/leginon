@@ -37,6 +37,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
 
+		self.parser.add_option("--no-sort", dest="sort", default=True,
+			action="store_false", help="Do not sort files into nice folders")
+
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit stack to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
@@ -83,12 +86,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def readDocFile(self, iternum):
-		partlist = []
-		wildcard = "*_it%06d.doc"%(iternum)
+	def readRefDocFile(self, iternum):
+		reflist = []
+		wildcard = "ref*_it%06d.doc"%(iternum)
 		files = glob.glob(wildcard)
 		if len(files) != 1:
-			apDisplay.printError("could not find doc file to read angles")
+			apDisplay.printError("could not find doc file to read reference angles")
 		docfile = files[0]
 		f = open(docfile, "r")
 		mininplane = 180.0
@@ -96,7 +99,31 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			if line[:2] == ' ;':
 				continue
 			spidict = operations.spiderInLine(line)
-			partdict = self.spidict2partdict(spidict)
+			refdict = self.spidict2partdict(spidict)
+			if refdict['inplane'] < mininplane:
+				mininplane = refdict['inplane']
+			reflist.append(refdict)
+		for refdict in reflist:
+			refdict['inplane'] = refdict['inplane']-mininplane
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
+		return reflist
+
+	#=====================
+	def readPartDocFile(self, iternum, reflist):
+		partlist = []
+		wildcard = "part*_it%06d.doc"%(iternum)
+		files = glob.glob(wildcard)
+		if len(files) != 1:
+			apDisplay.printError("could not find doc file to read particle angles")
+		docfile = files[0]
+		f = open(docfile, "r")
+		mininplane = 180.0
+		for line in f:
+			if line[:2] == ' ;':
+				continue
+			spidict = operations.spiderInLine(line)
+			origpartdict = self.spidict2partdict(spidict)
+			partdict = self.adjustPartDict(origpartdict, reflist)
 			if partdict['inplane'] < mininplane:
 				mininplane = partdict['inplane']
 			partlist.append(partdict)
@@ -117,6 +144,29 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			'spread': spidict['floatlist'][7],
 		}
 		return partdict
+
+	#=====================
+	def adjustPartDict(self, origpartdict, reflist):
+		refdict = reflist[origpartdict['refnum']]
+		if refdict['partnum'] != origpartdict['refnum']:
+			apDisplay.printError("sorting error in reflist, see neil")
+		newpartdict = {
+			'partnum': origpartdict['partnum'],
+			'inplane': self.wrap360(origpartdict['inplane']+refdict['inplane']),
+			'xshift': origpartdict['xshift']+refdict['xshift'],
+			'yshift': origpartdict['yshift']+refdict['yshift'],
+			'refnum': origpartdict['refnum'],
+			'mirror': origpartdict['mirror']*refdict['mirror'],
+			'spread': origpartdict['spread'],
+		}
+		return newpartdict
+
+	#=====================
+	def wrap360(self, theta):
+		f = theta % 360
+		if f > 180:
+			f = f - 360.0
+		return f
 
 	#=====================
 	def readRunParameters(self):
@@ -301,8 +351,10 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### read particles
 		lastiter = self.findLastIterNumber()
-		self.sortFolder(lastiter)
-		partlist = self.readDocFile(lastiter)
+		if self.params['sort'] is True:
+			self.sortFolder(lastiter)
+		reflist = self.readRefDocFile(lastiter)
+		partlist = self.readPartDocFile(lastiter, reflist)
 
 		### create aligned stacks
 		stackfile = self.createAlignedStacks(runparams['stackid'], partlist)
