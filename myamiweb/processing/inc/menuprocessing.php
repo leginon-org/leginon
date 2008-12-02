@@ -1,6 +1,6 @@
 <?php
 /**
- *  The Leginon software is Copyright 2003 
+ *  The Leginon software is Copyright 2003
  *  The Scripps Research Institute, La Jolla, CA
  *  For terms of the license agreement
  *  see  http://ami.scripps.edu/software/leginon-license
@@ -24,7 +24,7 @@ if ($expId){
 
 else {
 	$sessionId=$_POST['sessionId'];
-	$formAction=$_SERVER['PHP_SELF'];  
+	$formAction=$_SERVER['PHP_SELF'];
 }
 
 // Collect session info from database
@@ -72,7 +72,7 @@ if ($expId) {
 	// --- Get Micrograph Assessment Data
 	$totimgs = $particle->getNumImgsFromSessionId($sessionId);
 	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
-	
+
 	// --- Get Stack Data
 	if ($stackIds = $particle->getStackIdsWithProjectId($sessionId, $projectId))
 		$stackruns=count($stackIds);
@@ -90,11 +90,11 @@ if ($expId) {
 	if ($stackruns>0) {
 		$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
 		$alignruns=count($alignIds);
-	} 
+	}
 	else {
 		$alignruns=0;
 	}
-	
+
 	// --- Get Reconstruction Data
 	if ($stackruns>0) {
 		foreach ((array)$stackIds as $stackid) {
@@ -103,7 +103,7 @@ if ($expId) {
 		}
 		// get number of jobs submitted
 		$subjobs = $particle->getSubmittedJobs($sessionId);
-		
+
 		// get num of jubs queued, submitted or done
 		$jobqueue=count($subclusterjobs['recon']['queued']);
 		$jobrun=count($subclusterjobs['recon']['running']);
@@ -150,7 +150,7 @@ if ($expId) {
 	// in case weren't submitted by web:
 	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq;
 	if  ($prtlruns > $totruns) $totruns = $prtlruns;
-	
+
 	$result = ($prtlruns==0) ? "" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns</a>\n";
 
@@ -184,7 +184,7 @@ if ($expId) {
 	$action = "CTF Estimation";
 
 	// get ctf estimation stats:
-	$ctfresults=array();	
+	$ctfresults=array();
 	$ctfdone = count($subclusterjobs['ace']['done']);
 	$ctfrun = count($subclusterjobs['ace']['running']);
 	$ctfq = count($subclusterjobs['ace']['queued']);
@@ -204,7 +204,7 @@ if ($expId) {
 
 	// number running and number finished:
 	$totruns=$ctfdone+$ctfrun+$ctfq;
-	
+
 	// in case weren't submitted by web:
 	if  ($ctfruns > $totruns) $totruns = $ctfruns;
 	$totresult = ($totruns==0) ? "" : "<a href='ctfreport.php?expId=$sessionId'>$totruns</a>";
@@ -235,7 +235,7 @@ if ($expId) {
 		$action = "Stacks";
 
 		// get ctf estimation stats:
-		$sresults=array();	
+		$sresults=array();
 		$sdone = count($subclusterjobs['makestack']['done']);
 		$srun = count($subclusterjobs['makestack']['running']);
 		$sq = count($subclusterjobs['makestack']['queued']);
@@ -272,7 +272,7 @@ if ($expId) {
 		$action = "Particle Alignment";
 
 		// get ref-free alignment stats:
-		$norefresults=array();	
+		$norefresults=array();
 		$norefdone = count($subclusterjobs['norefali']['done']);
 		$norefrun = count($subclusterjobs['norefali']['running']);
 		$norefq = count($subclusterjobs['norefali']['queued']);
@@ -280,7 +280,7 @@ if ($expId) {
 		$norefdone = ($norefruns > $norefdone) ? $norefruns : $norefdone;
 
 		// get ref-free alignment stats:
-		$norefclresults=array();	
+		$norefclresults=array();
 		$norefcldone = count($subclusterjobs['norefclass']['done']);
 		$norefclrun = count($subclusterjobs['norefclass']['running']);
 		$norefclq = count($subclusterjobs['norefclass']['queued']);
@@ -295,44 +295,44 @@ if ($expId) {
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
 		// get alignment stats:
-		$alignresults=array();	
-		$aligndone  = count($subclusterjobs['maxlikeali']['done']) 
-			+ count($subclusterjobs['refbasedali']['done']) 
+		$alignresults=array();
+		$aligndone  = count($subclusterjobs['maxlikeali']['done'])
+			+ count($subclusterjobs['refbasedali']['done'])
 			+ count($subclusterjobs['norefali']['done']);
 		$norefrun = count($subclusterjobs['maxlikeali']['running']);
 		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
 		$maxlikerun = count($subclusterjobs['maxlikeali']['running']);
 		$alignrun   = $norefrun+$refbasedrun+$maxlikerun;
-		$alignqueue  = count($subclusterjobs['maxlikeali']['queued']) 
-			+ count($subclusterjobs['refbasedali']['queued']) 
+		$alignqueue  = count($subclusterjobs['maxlikeali']['queued'])
+			+ count($subclusterjobs['refbasedali']['queued'])
 			+ count($subclusterjobs['norefali']['queued']);
 		$norbaseddone = ($alignrun > $aligndone) ? $alignrun : $aligndone;
 
-		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$aligndone complete</a>";
+		$alignresults[] = ($alignruns==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
 		$alignresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
 		$alignresults[] = ($maxlikerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikerun running</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "$alignqueue queued";
 
-		// get imagic reclassifications
-		$numreresults = count($particle->getImagicReclassFromSessionId($expId));
-		$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>"; 
-
-		$totresult = ($alignruns==0) ? "" :
-			"<a href='alignsummary.php?expId=$sessionId'>$alignruns</a>";
-
 		$nruns=array();
 
 		$nruns[] = array(
-				 'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
-				 'result'=>$alignresults,
-				 );
+			'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
+			'result'=>$alignresults,
+		);
 		if ($alignruns > 0) {
 			// alignment classifications
+			$coranresults=array();
+			$corandone  = count($particle->getCoranRuns($expId, $projectId));
+			$coranrun  = count($subclusterjobs['coranclass']['running']);
+			$coranqueue  = count($subclusterjobs['coranclass']['queued']);
+			$coranresults[] = ($corandone==0) ? "" : "<a href='coransummary.php?expId=$sessionId'>$corandone complete</a>";
+			$coranresults[] = ($coranrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=coranclass'>$coranrun running</a>";
+			$coranresults[] = ($coranqueue==0) ? "" : "$coranqueue queued";
 			$nruns[] = array (
-					  'name'=>"<a href='alignClassify.php?expId=$sessionId'>Run Classification</a>",
-					  'result'=>$sreresults,
-					  );
+				'name'=>"<a href='alignClassify.php?expId=$sessionId'>Run Classification</a>",
+				'result'=>$coranresults,
+			);
 		}
 
 		// old spider alignment
@@ -341,10 +341,11 @@ if ($expId) {
 			       'result'=>$norefresults,
 				 );
 
-
 		// only give option of reclassification if ref-free
 		// stacks exist
-		if ($alignruns > 0) {
+		if ($norefresults) {
+			$numreresults = count($particle->getImagicReclassFromSessionId($expId));
+			$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>";
 			// imagic reclassifications
 			$nruns[] = array (
 					  'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>IMAGIC Reclassify</a>",
@@ -354,7 +355,7 @@ if ($expId) {
 
 		$data[]=array(
 			      'action'=>array($action, $celloption),
-			      'result'=>array($totresult),
+			      'result'=>array(""),
 			      'newrun'=>array($nruns, $celloption),
 			      );
 
@@ -388,10 +389,10 @@ if ($expId) {
 			'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
 		);
 	}
-	
+
 	/* IMAGIC Common Lines */
 	$numimagicrefinements = count($particle->getImagic3dRefinementRunsFromSessionId($sessionId));
-	$refineresults = ($numimagicrefinements==0) ? "" : "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$numimagicrefinements complete</a>"; 
+	$refineresults = ($numimagicrefinements==0) ? "" : "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$numimagicrefinements complete</a>";
 	if ($norefdone >= 1) {
 		$nruns[]=array(
 			'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Common Lines</a>",
@@ -423,7 +424,7 @@ if ($expId) {
 		$jobincomp = $jobdone-$reconruns; //incomplete
 
 		$action = "Reconstructions";
-		
+
 		$reconresults = array();
 
 		$reconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
@@ -457,7 +458,7 @@ if ($expId) {
 		$action = "Tomography";
 
 		// get ctf estimation stats:
-		$sresults=array();	
+		$sresults=array();
 		$sdone = count($subclusterjobs['uploadtomo']['done']);
 		$srun = count($subclusterjobs['uploadtomo']['running']);
 		$sq = count($subclusterjobs['uploadtomo']['queued']);
@@ -478,7 +479,7 @@ if ($expId) {
 				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload Tomogram</a>",
 				'result'=>$sresults,
 				);
-		
+
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array($totresult),
@@ -518,7 +519,7 @@ if ($expId) {
 	$result='';
 	if ($assessedimgs <= $totimgs && $totimgs!=0) {
 		$result = "<a href='assesssummary.php?expId=$sessionId'>";
-		$result .= "$assessedimgs/$totimgs"; 
+		$result .= "$assessedimgs/$totimgs";
 		$result .= "</a>";
 	}
 
@@ -549,7 +550,7 @@ if ($expId) {
 		'result'=>array($result),
 		'newrun'=>array($nruns, $celloption),
 	);
-	
+
 }
 
 $menujs='<script type="text/javascript">
@@ -595,9 +596,9 @@ $menulink='<span class="expandcontract"><a id="hidelk" href="javascript:m_hideal
 
 $menuprocessing="";
 	foreach((array)$data as $menu) {
-		$action=$menu['action'][0]; 
+		$action=$menu['action'][0];
 		$result=$action;
-		if ($menu['result'][0]) $result .= ' : '.$menu['result'][0]; 
+		if ($menu['result'][0]) $result .= ' : '.$menu['result'][0];
 		$menuprocesing.=addMenu($result);
 		$menuprocesing.=addSubmenu($menu['newrun'][0]);
 	}
