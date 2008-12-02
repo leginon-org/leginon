@@ -88,7 +88,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def readRefDocFile(self, iternum):
 		reflist = []
-		wildcard = "ref*_it%06d.doc"%(iternum)
+		wildcard = "ref"+self.params['timestamp']+".doc"
 		files = glob.glob(wildcard)
 		if len(files) != 1:
 			apDisplay.printError("could not find doc file to read reference angles")
