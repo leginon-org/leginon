@@ -862,10 +862,13 @@ def rotateThenShift(a, rot=0, shift=(0,0), mirror=False, order=2):
 	rotates (in degrees) then shifts (in pixels) an array, just like SPIDER
 	"""
 	#rad = rot*math.pi/180.0
-	b = numpy.fliplr(a)
-	c = ndimage.rotate(b, angle=rot, reshape=False, mode='reflect', order=order)
-	d = ndimage.shift(c, shift=shift, mode='reflect', order=order)
-	return c
+	# rotate the image
+	b = ndimage.rotate(a, angle=rot, reshape=False, mode='reflect', order=order)
+	# shift the image
+	c = ndimage.shift(b, shift=shift, mode='reflect', order=order)
+	# mirror the image about the y-axis, i.e. flip left-right
+	d = numpy.fliplr(c)
+	return d
 
 
 
