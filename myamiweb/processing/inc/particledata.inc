@@ -1423,7 +1423,7 @@ class particledata {
 			."LEFT JOIN ApAlignRunData AS ar ON "
 			."(ast.`REF|ApAlignRunData|alignrun` = ar.`DEF_id`) "
 			."WHERE ast.`DEF_id` = '$alignstackid'";
-		echo $q."<br/>\n";
+		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
