@@ -326,7 +326,7 @@ if ($expId) {
 			$corandone  = count($particle->getCoranRuns($expId, $projectId));
 			$coranrun  = count($subclusterjobs['coranclass']['running']);
 			$coranqueue  = count($subclusterjobs['coranclass']['queued']);
-			$coranresults[] = ($corandone==0) ? "" : "<a href='coransummary.php?expId=$sessionId'>$corandone complete</a>";
+			$coranresults[] = ($corandone==0) ? "" : "<a href='alignsummary.php?coran=1&expId=$sessionId'>$corandone complete</a>";
 			$coranresults[] = ($coranrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=coranclass'>$coranrun running</a>";
 			$coranresults[] = ($coranqueue==0) ? "" : "$coranqueue queued";
 			$nruns[] = array (
