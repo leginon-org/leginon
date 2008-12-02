@@ -88,13 +88,11 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def readRefDocFile(self, iternum):
 		reflist = []
-		wildcard = "ref"+self.params['timestamp']+".doc"
-		files = glob.glob(wildcard)
-		if len(files) != 1:
+		docfile = "ref"+self.params['timestamp']+".doc"
+		if os.path.isfile(docfile):
 			apDisplay.printError("could not find doc file to read reference angles")
-		docfile = files[0]
 		f = open(docfile, "r")
-		mininplane = 180.0
+		mininplane = 360.0
 		for line in f:
 			if line[:2] == ' ;':
 				continue
@@ -111,13 +109,11 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def readPartDocFile(self, iternum, reflist):
 		partlist = []
-		wildcard = "part*_it%06d.doc"%(iternum)
-		files = glob.glob(wildcard)
-		if len(files) != 1:
+		docfile = "part"+self.params['timestamp']+".doc"
+		if os.path.isfile(docfile):
 			apDisplay.printError("could not find doc file to read particle angles")
-		docfile = files[0]
 		f = open(docfile, "r")
-		mininplane = 180.0
+		mininplane = 360.0
 		for line in f:
 			if line[:2] == ' ;':
 				continue
@@ -127,6 +123,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			if partdict['inplane'] < mininplane:
 				mininplane = partdict['inplane']
 			partlist.append(partdict)
+		apDisplay.printMsg("minimum inplane: "+str(mininplane))
 		for partdict in partlist:
 			partdict['inplane'] = partdict['inplane']-mininplane
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
@@ -255,7 +252,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			refq = appionData.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = lastiter
-			refbase = self.params['timestamp']+"_it%06d_ref%06d"%(lastiter,partdict['refnum'])
+			refbase = self.params['timestamp']+"_ref%06d"%(partdict['refnum'])
 			refq['mrcfile'] = refbase+".mrc"
 			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
