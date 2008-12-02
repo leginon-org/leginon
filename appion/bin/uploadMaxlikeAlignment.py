@@ -170,7 +170,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			'xshift': origpartdict['xshift']+refdict['xshift'],
 			'yshift': origpartdict['yshift']+refdict['yshift'],
 			'refnum': origpartdict['refnum'],
-			'mirror': xor(origpartdict['mirror'],refdict['mirror']),
+			'mirror': self.xor(origpartdict['mirror'],refdict['mirror']),
 			'spread': origpartdict['spread'],
 		}
 		return newpartdict
