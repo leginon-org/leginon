@@ -89,7 +89,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	def readRefDocFile(self, iternum):
 		reflist = []
 		docfile = "ref"+self.params['timestamp']+".doc"
-		if os.path.isfile(docfile):
+		if not os.path.isfile(docfile):
 			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
 		f = open(docfile, "r")
 		mininplane = 360.0
@@ -110,7 +110,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	def readPartDocFile(self, iternum, reflist):
 		partlist = []
 		docfile = "part"+self.params['timestamp']+".doc"
-		if os.path.isfile(docfile):
+		if not os.path.isfile(docfile):
 			apDisplay.printError("could not find doc file "+docfile+" to read particle angles")
 		f = open(docfile, "r")
 		mininplane = 360.0
