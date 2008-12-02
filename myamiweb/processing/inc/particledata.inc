@@ -1437,6 +1437,30 @@ class particledata {
 		return $r['num'];
 	}
 
+	function getCoranRuns ($sessionId, $projectId) {
+		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
+		  ."FROM ApCoranRunData AS coran "
+		  ."LEFT JOIN ApAlignStackData AS ast ON "
+		  ."  (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+		  ."LEFT JOIN ApStackData AS st ON "
+		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApRunsInStackData as runsin ON "
+		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApStackRunData as strun ON "
+		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+		  ."WHERE "
+		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ." AND "
+		  ."  runsin.`project|projects|project` = '$projectId' "
+		  ." AND "
+		  ."  coran.`project|projects|project` = '$projectId' ";
+		$q.= "ORDER BY coranid DESC";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+
 	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
