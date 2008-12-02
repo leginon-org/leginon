@@ -857,13 +857,14 @@ def frame_constant(a, shape, cval=0):
 	return b
 
 #=========================
-def rotateThenShift(a, rot=0, shift=(0,0), order=2):
+def rotateThenShift(a, rot=0, shift=(0,0), mirror=False, order=2):
 	"""
 	rotates (in degrees) then shifts (in pixels) an array, just like SPIDER
 	"""
 	#rad = rot*math.pi/180.0
-	b = ndimage.rotate(a, angle=rot, reshape=False, mode='reflect', order=order)
-	c = ndimage.shift(b, shift=shift, mode='reflect', order=order)
+	b = numpy.fliplr(a)
+	c = ndimage.rotate(b, angle=rot, reshape=False, mode='reflect', order=order)
+	d = ndimage.shift(c, shift=shift, mode='reflect', order=order)
 	return c
 
 
