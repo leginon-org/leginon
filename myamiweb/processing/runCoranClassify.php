@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
@@ -132,7 +133,8 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		echo "
 		Particles:<BR>
 		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
-		foreach ($alignIds as $alignid) {
+		foreach ($alignIds as $alignarray) {
+			$alignid = $alignarray['alignstackid'];
 			$alignstack = $particle->getAlignStackParams($alignid);
 			echo print_r($alignstack);
 			//$stackparams=$particle->getAlignStackParams($alignstack[stackid]);
