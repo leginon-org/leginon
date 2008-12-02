@@ -533,8 +533,8 @@ function runMakestack() {
 	if ($defocpair) $command.="defocpair ";
 	if ($selexonmin) $command.="selexonmin=$selexonmin ";
 	if ($selexonmax) $command.="selexonmax=$selexonmax ";
-	if ($dfmin) $command.="mindefocus=$dfmin ";
-	if ($dfmax) $command.="maxdefocus=$dfmax ";
+	if ($dfmin) $command.="minDefocus=$dfmin ";
+	if ($dfmax) $command.="maxDefocus=$dfmax ";
 	if ($fileformat) $command.="spider ";
 	if ($limit) $command.="partlimit=$limit ";
 	if ($boxfiles) $command.="boxfiles ";
