@@ -30,7 +30,6 @@ def getProjectIdFromSessionName(sessionname):
 		+" in "+apDisplay.timeString(time.time()-t0))
 	return projectid
 
-
 #========================
 def getProjectIdFromSessionId(sessionid):
 	sessiondata = leginondb.direct_query(leginondata.SessionData, sessionid)
@@ -48,7 +47,7 @@ def getProjectIdFromStackId(stackid):
 
 #========================
 def getProjectIdFromAlignStackId(alignstackid):
-	alignstackdata = appiondb.direct_query(appionData.ApAlignStackData, self.params['alignstackid'])
+	alignstackdata = appiondb.direct_query(appionData.ApAlignStackData, alignstackid)
 	stackid = alignstackdata['stack'].dbid
 	projectid = getProjectIdFromStackId(stackid)	
 	return projectid
