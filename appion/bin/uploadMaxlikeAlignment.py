@@ -76,7 +76,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def sortFolder(self, lastiter):
 		### move files for all iterations except last iter
-		for i in range(lastiter):
+		for i in range(lastiter+1):
 			iterdir = "iter%03d"%(i)
 			apParam.createDirectory(iterdir, warning=False)
 			wildcard = "*_it%06d*.*"%(i)
@@ -90,7 +90,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		reflist = []
 		docfile = "ref"+self.params['timestamp']+".doc"
 		if os.path.isfile(docfile):
-			apDisplay.printError("could not find doc file to read reference angles")
+			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
 		f = open(docfile, "r")
 		mininplane = 360.0
 		for line in f:
@@ -111,7 +111,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		partlist = []
 		docfile = "part"+self.params['timestamp']+".doc"
 		if os.path.isfile(docfile):
-			apDisplay.printError("could not find doc file to read particle angles")
+			apDisplay.printError("could not find doc file "+docfile+" to read particle angles")
 		f = open(docfile, "r")
 		mininplane = 360.0
 		for line in f:
