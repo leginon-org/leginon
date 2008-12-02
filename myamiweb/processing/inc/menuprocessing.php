@@ -327,12 +327,20 @@ if ($expId) {
 				 'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
 				 'result'=>$alignresults,
 				 );
+		if ($alignruns > 0) {
+			// alignment classifications
+			$nruns[] = array (
+					  'name'=>"<a href='alignClassify.php?expId=$sessionId'>Run Classification</a>",
+					  'result'=>$sreresults,
+					  );
+		}
 
-		// spider alignment
+		// old spider alignment
 		$nruns[]=array(
 			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>Old Spider Ref-free</a>",
 			       'result'=>$norefresults,
 				 );
+
 
 		// only give option of reclassification if ref-free
 		// stacks exist
