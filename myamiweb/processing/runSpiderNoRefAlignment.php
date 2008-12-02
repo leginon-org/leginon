@@ -258,7 +258,7 @@ function runSpiderNoRefAlign($runjob=false) {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 
-	$command.="spiderNoRefAlignment.py ";
+	$command.="spiderNoRefAlign.py ";
 
 	$stackvars=$_POST['stackid'];
 	$partrad=$_POST['partrad'];
