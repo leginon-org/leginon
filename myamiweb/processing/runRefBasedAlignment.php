@@ -133,7 +133,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   $particle = new particledata();
   $templateid = $_POST['templateid'];
   $templateinfo = $particle->getTemplatesFromId($templateid);
-  $prtlrunIds = $particle->getParticleRunIds($sessionId);
   $stackIds = $particle->getStackIds($sessionId);
   $refbasedIds = $particle->getRefAliIds($sessionId);
   $refbasedruns=count($refbasedIds);
@@ -227,8 +226,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		</TR>
 		<TR>
 			<TD>\n";
-
-	$prtlruns=count($prtlrunIds);
 
 	if (!$stackIds) {
 		echo"
@@ -419,7 +416,7 @@ function runAlignment($runjob=false) {
 
 		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,'rctvolume');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'rctvolume');
 		// if errors:
 		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
 		exit;

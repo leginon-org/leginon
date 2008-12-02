@@ -36,7 +36,6 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 
 	// connect to particle database
 	$particle = new particledata();
-	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
 	$maxlikeIds = $particle->getMaxLikeIds($sessionId, True);
 	$maxlikeruns=count($maxlikeIds);
@@ -81,7 +80,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'maxlike'.($maxlikeruns+1);
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($maxlikeruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
@@ -97,8 +96,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
 	echo openRoundBorder();
-	echo docpop('runid','<b>MaxLike Run Name:</b>');
-	echo "<input type='text' name='runid' value='$runidval'>\n";
+	echo docpop('runname','<b>MaxLike Run Name:</b>');
+	echo "<input type='text' name='runname' value='$runnameval'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
 	echo docpop('outdir','<b>Output Directory:</b>');
@@ -114,8 +113,6 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		</tr>\n";
 	echo "<tr>
 			<td>\n";
-
-	$prtlruns=count($prtlrunIds);
 
 	if (!$stackIds) {
 		echo"
@@ -217,7 +214,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 
 function runMaxLikeAlign($runjob=false) {
 	$expId=$_GET['expId'];
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 
 	$command.="maxlikeAlignment.py ";
@@ -257,11 +254,11 @@ function runMaxLikeAlign($runjob=false) {
 	if ($outdir) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$procdir = $outdir.$runid;
-		$command.="--outdir=$procdir ";
+		$rundir = $outdir.$runname;
+		$command.="--outdir=$rundir ";
 	}
 	$command.="--description=\"$description\" ";
-	$command.="--runname=$runid ";
+	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
 	if ($lowpass != '') $command.="--lowpass=$lowpass ";
 	if ($highpass != '') $command.="--highpass=$highpass ";
@@ -278,7 +275,7 @@ function runMaxLikeAlign($runjob=false) {
 
 		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'maxlikeali');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'maxlikeali');
 		// if errors:
 		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
 		exit;
@@ -291,7 +288,7 @@ function runMaxLikeAlign($runjob=false) {
 	<b>MaxLike Alignment Command:</b><br />
 	$command
 	</td></tr>
-	<tr><td>run id</td><td>$runid</td></tr>
+	<tr><td>run id</td><td>$runname</td></tr>
 	<tr><td>stack id</td><td>$stackid</td></tr>
 	<tr><td>low pass</td><td>$lowpass</td></tr>
 	<tr><td>low pass</td><td>$highpass</td></tr>
