@@ -1446,7 +1446,7 @@ class particledata {
 	}
 
 	function getAlignStackParams ($alignstackid) {
-		$q = "SELECT ast.*, ar.runname AS runname, pd.`path` AS path "
+		$q = "SELECT ar.*, ast.*, ar.runname AS runname,  pd.`path` AS path "
 			."FROM ApAlignStackData as ast "
 			."LEFT JOIN ApPathData AS pd ON "
 			."(ast.`REF|ApPathData|path` = pd.`DEF_id`) "
@@ -1467,7 +1467,7 @@ class particledata {
 		return $r['num'];
 	}
 
-	function getCoranRuns ($sessionId, $projectId) {
+	function getCoranRuns ($sessionId, $projectId, $showHidden=False) {
 		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
 			."FROM ApCoranRunData AS coran "
 			."LEFT JOIN ApAlignStackData AS ast ON "
@@ -1483,22 +1483,70 @@ class particledata {
 			." AND "
 			." runsin.`project|projects|project` = '$projectId' "
 			." AND "
-			." coran.`project|projects|project` = '$projectId' "
-			."ORDER BY coranid DESC ";
+			." coran.`project|projects|project` = '$projectId' ";
+		if (!$showHidden)
+			$q.= " AND coran.`hidden` != 1 AND ast.`hidden` != 1 ";
+		$q .= "ORDER BY coranid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	} 
 
-	function getCoranRunForAlignStack ($alignstackId, $projectId) {
+	function getCoranRunForAlignStack ($alignstackId, $projectId, $showHidden=False) {
 		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
 			."FROM ApCoranRunData AS coran "
 			."WHERE "
-			."  coran.`REF|ApAlignStackData|alignstack` = $alignstackId "
-			."AND "
+			."  coran.`REF|ApAlignStackData|alignstack` = $alignstackId ";
+		if (!$showHidden)
+			$q.= " AND coran.`hidden` != 1 ";
+		$q .= "AND "
 			."  coran.`project|projects|project` = '$projectId' "
 			."ORDER BY coranid DESC ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r;
+	}
+
+	function getCoranParams ($coranid) {
+		$q = "SELECT coran.`DEF_id` AS coranid, coran.*, path.path AS path "
+			."FROM ApCoranRunData AS coran "
+			."LEFT JOIN ApAlignStackData AS ast ON "
+			." (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			."LEFT JOIN ApPathData AS path ON "
+			." (coran.`REF|ApPathData|path` = path.`DEF_id`) "
+			."WHERE "
+			."  coran.`DEF_id` = $coranid "
+			."LIMIT 1 ";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r[0];
+	}
+
+	function getMaxLikeRuns ($sessionId, $projectId) {
+		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
+			."FROM ApMaxLikeRunData AS maxlike "
+			."LEFT JOIN ApAlignRunData AS arun ON "
+			." (arun.`REF|ApMaxLikeRunData|maxlikerun` = maxlike.`DEF_id`) "
+			."LEFT JOIN ApAlignStackData AS ast ON "
+			." (ast.`REF|ApAlignRunData|alignrun` = arun.`DEF_id`) "
+			."LEFT JOIN ApStackData AS st ON "
+			."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApRunsInStackData as runsin ON "
+			."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApStackRunData as strun ON "
+			."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."WHERE "
+			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND "
+			."  runsin.`project|projects|project` = '$projectId' "
+			." AND "
+			."  arun.`project|projects|project` = '$projectId' "
+			." AND "
+			."  ast.`project|projects|project` = '$projectId' "
+			."ORDER BY alignstackid DESC";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
