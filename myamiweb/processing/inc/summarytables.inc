@@ -214,7 +214,7 @@ function ministacksummarytable($stackid) {
 
 
 
-function alignstacksummarytable($alignstackid) {
+function alignstacksummarytable($alignstackid, $mini=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$stackdata = $particle->getAlignStackParams($alignstackid);
@@ -251,7 +251,10 @@ function alignstacksummarytable($alignstackid) {
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
-		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
+		if ($mini)
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
+		else
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		$stacktable.= "</td>\n";
 		$stacktable.= "</tr>\n\n";
@@ -264,24 +267,37 @@ function alignstacksummarytable($alignstackid) {
 	$display_keys['description']=$descDiv;
 
 	// Show number of particles
-	$display_keys['# particles']=commafy($numpart);
+
 
 	// Get filesize
 	if (substr($stackdata['imagicfile'], -4) == ".hed")
 		$stackimgfile = $stackdata['path']."/".substr($stackdata['imagicfile'], 0, -4).".img";
 	if (filesize($stackimgfile) > 1073741824)
-		$display_keys['file size'] = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
+		$filesize = sprintf("%.2f GB", filesize($stackimgfile)/1073741824);
 	else
-		$display_keys['file size'] = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
+		$filesize = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
+
+	if ($mini)
+		$display_keys['size']=commafy($numpart)."&nbsp; (".$filesize.")";
+	else {
+		$display_keys['# particles']=commafy($numpart);
+		$display_keys['file size'] = $filesize;
+	}
 
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 	$display_keys['path']=$stackdata['path'];
 	$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId'>"
 		.$stackdata['imagicfile']."</A>";
-	// get box size
-	$display_keys['box size']=$stackdata['boxsize']." pixels";
-	// get pixel size of stack
-	$display_keys['pixel size']=round($stackdata['pixelsize'],2)." &Aring;/pixel";
+	if ($mini)
+		$display_keys['pixel/box size']=round($stackdata['pixelsize'],2)." &Aring;/pixel &nbsp; ".$stackdata['boxsize']." pixels";
+	else {
+		// get box size
+		$display_keys['box size']=$stackdata['boxsize']." pixels";
+		// get pixel size of stack
+		$display_keys['pixel size']=round($stackdata['pixelsize'],2)." &Aring;/pixel";
+		$display_keys['filter']=$stackdata['lp_filt']." and ".$stackdata['hp_filt']." &Aring;";
+		//$display_keys['run time']=round($stackdata['run_seconds']/60.0,2)." minutes";
+	}
 
 	//$display_keys['file type']=$stackdata['fileType'];
 	foreach($display_keys as $k=>$v) {
@@ -292,6 +308,61 @@ function alignstacksummarytable($alignstackid) {
 	return $stacktable;
 }
 
+function coransummarytable($coranid) {
+	$expId = $_GET['expId'];
+	$particle = new particledata();
+	$corandata = $particle->getCoranParams($coranid);
+	//echo print_r($corandata)."<br/>\n";
 
+	if ($_POST['updateDesc'.$coranid])
+		updateDescription('ApCoranRunData', $coranid, $_POST['newdescription'.$coranid]);
+
+	if ($_POST['hideCoran'.$coranid] == 'hide') {
+		$particle->updateHide('ApCoranRunData', $coranid, '1');
+		$corandata['hidden']='1';
+	} elseif ($_POST['unhideCoran'.$coranid] == 'unhide') {
+		$particle->updateHide('ApCoranRunData', $coranid, '0');
+		$corandata['hidden']='0';
+	}
+
+	$j = "Coran Info: ".$corandata['runname']." (ID: $coranid)\n";
+	if ($corandata['hidden'] == 1) {
+		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+		$j.= " <input class='edit' type='submit' name='unhideCoran".$coranid."' value='unhide'>\n";
+		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
+	} else $j.= " <input class='edit' type='submit' name='hideCoran".$coranid."' value='hide'>\n";
+
+	$corantable.= apdivtitle($j);
+	//echo $j."<br/>\n";
+
+	$corantable.= "<table border='0'>\n";
+	$dendrogram = $corandata['path']."/dendrogram.png";
+	if (file_exists($dendrogram)) {
+		$corantable.= "<tr>\n";
+		$corantable.= "<td rowspan='30' align='center' valign='top'>";
+		$corantable.= "<a href='loadimg.php?filename=$dendrogram'><br/>\n";
+		$corantable.= "<img src='loadimg.php?filename=$dendrogram&s=80' height='80' border='1'></a><br/>\n";
+		$corantable.= "<i>dendrogram</i>\n";
+		$corantable.= "</td>\n";
+		$corantable.= "</tr>\n\n";
+	} #endif
+
+	// add edit button to description if logged in
+	$descDiv = ($_SESSION['username']) ? editButton($coranid, $corandata['description']) : $corandata['description'];
+
+	$display_keys['date time'] = $corandata['DEF_timestamp'];
+	$display_keys['description']=$descDiv;
+	$display_keys['path']=$corandata['path'];
+	$display_keys['number of factors']=$corandata['num_factors'];
+	$display_keys['run time']=round($corandata['run_seconds']/60.0,2)." minutes";
+	$display_keys['mask diam']=$corandata['mask_diam']." &Aring;ngstroms";
+
+	foreach($display_keys as $k=>$v) {
+	        $corantable.= formatHtmlRow($k,$v);
+	}
+	$corantable.= "</table>\n";
+	$corantable.= "<p>\n";
+	return $corantable;
+}
 
 ?>
