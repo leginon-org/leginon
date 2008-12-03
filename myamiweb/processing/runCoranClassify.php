@@ -40,10 +40,12 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 
 	// connect to particle database
 	$particle = new particledata();
-	$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
+	$alignIds = $particle->getAlignStackIds($sessionId, $projectId, true);
 	$alignruns=count($alignIds);
-	//$coranIds = $particle->getCoranRuns($sessionId, $projectId);
-
+	$coranIds = $particle->getCoranRuns($sessionId, $projectId, true);
+	//foreach ($coranIds as $coranid)
+	//	echo print_r($coranid)."<br/><br/>\n";
+	$coranruns=count($coranIds);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
@@ -83,7 +85,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'coran'.($alignruns+1);
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'coran'.($coranruns+1);
 	$rundescrval = $_POST['description'];
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
@@ -116,7 +118,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 
 	if ($selectAlignId) {
 		echo "<input type='hidden' name='stackid' value='$selectAlignId'>\n";
-		echo alignstacksummarytable($selectAlignId);
+		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
 		$defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
 	} elseif ($alignIds) {
