@@ -158,7 +158,7 @@ def getBestDefocusForImage(imgdata, display=False):
 		return -avgdf
 
 	if display is True:
-		if ctfvalue['acerun'] is not None:
+		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
 			print ( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
 				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
 				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
@@ -186,7 +186,7 @@ def getBestDefocusAndAmpConstForImage(imgdata, display=False):
 		return -avgdf, ctfvalue['amplitude_contrast']
 
 	if display is True:
-		if ctfvalue['acerun'] is not None:
+		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
 			print ( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
 				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
 				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
