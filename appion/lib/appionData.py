@@ -404,6 +404,18 @@ leginondata.ApNoRefClassParticlesData=ApNoRefClassParticlesData
 
 ### Improved alignment run tables
 
+class ApMaxLikeJobData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('timestamp', str),
+			('path', ApPathData),
+			('project|projects|project', int),
+			('uploaded', bool),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApMaxLikeJobData=ApMaxLikeJobData
+
 class ApMaxLikeRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -522,18 +534,26 @@ class ApAlignReferenceData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApAlignReferenceData=ApAlignReferenceData
 
-class ApCoranRunData(Data):
+class ApAlignAnalysisRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
-			('mask_diam', float),
-			('run_seconds', int),
-			('num_factors', int),
 			('description', str),
 			('hidden', bool),
 			('path', ApPathData),
+			('coranrun', ApCoranRunData)
 			('alignstack', ApAlignStackData),
 			('project|projects|project', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignAnalysisRunData=ApAlignAnalysisRunData
+
+class ApCoranRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('mask_diam', float),
+			('run_seconds', int),
+			('num_factors', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCoranRunData=ApCoranRunData
