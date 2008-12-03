@@ -48,7 +48,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def checkConflicts(self):
 		if self.params['timestamp'] is None:
-			apDisplay.printError("Please enter the job timestamp, e.g. 08nov02b35")
+			self.params['timestamp'] = self.getTimestamp()
 		return
 
 	#=====================
@@ -74,15 +74,35 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return lastiter
 
 	#=====================
+	def getTimestamp(self):
+		wildcard = "part*_*.*"
+		files = glob.glob(wildcard)
+		reg = re.match("part([0-9a-z]*)_", files[0])
+		if len(reg.groups()) == 0:
+			apDisplay.printError("Could not determine timestamp\n"
+				+"please provide it, e.g. -t 08nov27e54")
+		timestamp = reg.groups()[0]
+		apDisplay.printMsg("Found timestamp = '"+timestamp+"'")
+		return timestamp
+
+	#=====================
 	def sortFolder(self, lastiter):
-		### move files for all iterations except last iter
+		apDisplay.printMsg("Sorting files into clean folders")
+		### move files for all particle iterations
 		for i in range(lastiter+1):
 			iterdir = "iter%03d"%(i)
 			apParam.createDirectory(iterdir, warning=False)
-			wildcard = "*_it%06d*.*"%(i)
+			wildcard = "part*_it%06d*.*"%(i)
 			files = glob.glob(wildcard)
 			for filename in files:
 				shutil.move(filename,iterdir)
+		### move files for all reference iterations
+		refdir = "refalign"
+		apParam.createDirectory(refdir, warning=False)
+		wildcard = "ref*_it*.*"
+		files = glob.glob(wildcard)
+		for filename in files:
+			shutil.move(filename, refdir)
 		return
 
 	#=====================
@@ -349,7 +369,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			if partdict['partnum'] != partnum:
 				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
 			xyshift = (partdict['xshift'], partdict['yshift'])
-			alignpartimg = apImage.rotateThenShift(partimg, rot=partdict['inplane'], shift=xyshift, mirror=partdict['mirror'])
+			alignpartimg = apImage.rotateThenShift(partimg, rot=partdict['inplane'], 
+				shift=xyshift, mirror=partdict['mirror'])
 			alignstack.append(alignpartimg)
 			#partfile = "partimg%06d.spi"%(partnum)
 			#spider.write(alignpartimg, partfile)
