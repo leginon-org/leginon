@@ -16,8 +16,9 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	### big stacks are too slow
 	boxsize = apStack.getStackBoxsize(stackid)
 	bin = 1
-	while boxsize/bin > 128:
-		bin+=1
+	if boxsize is not None:
+		while boxsize/bin > 128:
+			bin+=1
 	apDisplay.printMsg("binning stack by "+str(bin))
 	stackdata = apStack.getOnlyStackData(stackid, msg=False)
 	stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -75,7 +76,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 		averageSubStack(partlists[key], stackfile, montagestack, bin)
 	print ""
 	assemblePngs(keys, str(stackid), montagestack)
-	print "mv montage"+str(stackid)+".??? "+stackdata['path']['path']
+	print "mv -v montage"+str(stackid)+".??? "+stackdata['path']['path']
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
