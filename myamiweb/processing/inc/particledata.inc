@@ -1127,7 +1127,9 @@ class particledata {
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
+		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
@@ -1261,7 +1263,17 @@ class particledata {
 		return $r['num'];
 	}
 
-
+	function getNumStackImages ($stackId) {
+		$q= "SELECT DISTINCT im.`DEF_id` AS imgid "
+			."FROM ApStackParticlesData AS stpart "
+			."LEFT JOIN ApParticleData AS part "
+			."ON stpart.`REF|ApParticleData|particle` = part.`DEF_id` "
+			."LEFT JOIN dbemdata.`AcquisitionImageData` AS im "
+			."ON part.`REF|leginondata|AcquisitionImageData|image` = im.`DEF_id` "
+			."WHERE `REF|ApStackData|stack` = '$stackId'";
+		$r = $this->mysql->getSQLResult($q);
+		return count($r);
+	}
 
 	//////// fix me ////////
 	function getStackIdFromReconId ($reconId) {
