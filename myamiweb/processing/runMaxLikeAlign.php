@@ -277,6 +277,9 @@ function runMaxLikeAlign($runjob=false) {
 	if ($calctime > 6.0*3600.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 6 hours<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
+	elseif (!$fast && $calctime > 1800.0)
+		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 30 minutes without fast mode<br/>"
+			."<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
