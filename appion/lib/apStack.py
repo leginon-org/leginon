@@ -278,6 +278,7 @@ def commitSubStack(params, newname=False, centered=False):
 		newrunsq = appionData.ApRunsInStackData()
 		newrunsq['stack'] = stackq
 		newrunsq['stackRun'] = run['stackRun']
+		newrunsq['project|projects|project'] = run['project|projects|project']
 		if params['commit'] is True:
 			appiondb.insert(newrunsq)
 		else:
