@@ -18,7 +18,10 @@ $expId = $_GET['expId'];
 $projectId = (int) getProjectFromExpId($expId);
 //echo "Project ID: ".$projectId." <br/>\n";
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-if ($_GET['showHidden']) $formAction.="&showHidden=True";
+if($_GET['coran'])
+	$formAction.="&coran=1";
+if ($_GET['showHidden'])
+	$formAction.="&showHidden=True";
 
 $javascript.= editTextJava();
 
@@ -49,26 +52,44 @@ if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	//echo print_r($stackdatas)."<br/>\n";
 	foreach ($stackdatas as $stackdata) {
+		echo openRoundBorder();
+		echo "<table cellspacing='8' cellpading='5' border='0'>\n";
 		$alignstackid = $stackdata['alignstackid'];
-		echo alignstacksummarytable($alignstackid);
-		$corandatas = $particle->getCoranRunForAlignStack($alignstackid, $projectId);
+		if ($_GET['showHidden'])
+			$corandatas = $particle->getCoranRunForAlignStack($alignstackid, $projectId, true);
+		else
+			$corandatas = $particle->getCoranRunForAlignStack($alignstackid, $projectId, false);
 		if ($corandatas) {
+			// print coran table
+			echo "<tr><td>\n";
+			echo alignstacksummarytable($alignstackid, true);
+			echo "<span style='border: 1px'>&nbsp;"
+				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
+				."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+			echo "</td></tr>\n";
 			//print_r($corandatas);
 			foreach ($corandatas as $corandata) {
+				echo "<tr><td>\n";
 				//echo print_r($corandata)."<br/>\n";;
 				$coranid = $corandata['DEF_id'];
-				echo "<span style='background-color:#dddd44;'>&nbsp;"
+				echo coransummarytable($coranid);
+				echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
 					."<a href='runParticleCluster.php?expId=6143&coranId=$coranid'>"
 					."Run Particle Clustering On Coran Id $coranid</a>&nbsp;</span><br/>\n";
+				echo "</td></tr>\n";
 			}
-			echo "<span style='background-color:#dddddd;'>&nbsp;"
-				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
-				."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";		
 		} else {
-			echo "<span style='background-color:#ddbbdd;'>&nbsp;"
+			// print alignment table
+			echo "<tr><td>\n";
+			echo alignstacksummarytable($alignstackid);
+			echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
 				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
-				."Run Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+				."Run Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
+			echo "</td></tr>\n";
 		}
+		echo "</table>\n";
+		echo closeRoundBorder();
+		echo "<br/>\n";
 	}
 	echo "</form>\n";
 } else {
