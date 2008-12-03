@@ -66,8 +66,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			."is still in the experimental phases</font><br/><br/>\n";
 	}
   
-	echo"
-       <FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -93,10 +92,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
 
-	echo"
-	<table border='0' class='tableborder'>
-	<tr>
-		<td valign='top'>\n";
+	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
 	echo openRoundBorder();
@@ -111,7 +107,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<br />\n";
 	echo docpop('descr','<b>Description of Max Like Alignment:</b>');
 	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
+	echo "<textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
 	echo closeRoundBorder();
 	echo "</td>
 		</tr>\n";
@@ -119,13 +115,10 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			<td>\n";
 
 	if (!$stackIds) {
-		echo"
-		<FONT COLOR='RED'><B>No Stacks for this Session</B></FONT>\n";
-	}
-	else {
-		echo "
-		Particles:<BR>
-		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
+		echo "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
+	} else {
+		echo docpop('stack','<b>Select a stack of particles to use</b>');
+		echo "<br/>\n<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackparams=$particle->getStackParams($stack[stackid]);
 
@@ -141,16 +134,15 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			$runname=$stackparams[shownstackname];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
-			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+			echo "<option value='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
-			if ($stackidval==$stackid) echo " SELECTED";
+			if ($stackidval==$stackid) echo " selected";
 			echo ">$runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
-			echo " $boxsz pixels)</OPTION>\n";
+			echo " $boxsz pixels)</option>\n";
 		}
-		echo "</SELECT>\n";
+		echo "</SELECT><br/>\n";
 	}
-	echo"</SELECT><BR>\n";
 	echo "</TD></TR><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
@@ -163,7 +155,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<BR></TD></TR>\n</TABLE>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
-	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
+	echo "  <TABLE cellpading='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
 	//echo "<B>Particle Params:</B></A><BR>\n";
 
@@ -174,17 +166,17 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
 	}
 	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>\n";
-	echo docpop('lpval','Low Pass Filter Radius');
+	echo docpop('lpstackval','Low Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$highpass'>\n";
-	echo docpop('hpval','High Pass Filter Radius');
+	echo docpop('hpstackval','High Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
-	echo docpop('bin','Particle binning');
+	echo docpop('binval','Particle binning');
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>\n";
@@ -196,11 +188,11 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='angle' VALUE='$angle' SIZE='4'>\n";
-	echo docpop('angle','Angular Increment');
+	echo docpop('angleinc','Angular Increment');
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='fast' $fast>\n";
-	echo docpop('fast','Use Fast Mode');
+	echo docpop('fastmode','Use Fast Mode');
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='mirror' $mirror>\n";
@@ -316,16 +308,20 @@ function runMaxLikeAlign($runjob=false) {
 	}
 	else {
 		processing_header("Max Like Align Run Params","Max Like Align Params");
-		echo"<table width='600' class='tableborder' border='1'>";
-		echo"<tr><td colspan='2'><br/>\n";
+		echo "<table width='600' class='tableborder' border='1'>";
+		echo "<tr><td colspan='2'><br/>\n";
 		if ($calctime < 60)
-			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> ".round($calctime,2)." seconds\n";
+			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
+				.round($calctime,2)." seconds\n";
 		elseif ($calctime < 3600)
-			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n";
+			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
+				.round($calctime/60.0,2)." minutes\n";
 		else
-			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n";
-		echo"per iteration</span><br/><br/></td></tr>\n";
-		echo"
+			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
+				.round($calctime/3600.0,2)." hours\n";
+		echo "for the first iteration</span><br/>"
+			."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr>\n";
+		echo "
 			<tr><td colspan='2'>
 			<b>MaxLike Alignment Command:</b><br />
 			$command
