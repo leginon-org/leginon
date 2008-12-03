@@ -60,7 +60,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#dd0000'>$extra</FONT><br />\n";
+		echo "<span style='font-size: larger; color:#bb3333;'>$extra</span><br />\n";
 	} else {
 		echo "<font color='#bb8800' size='+1'>WARNING: Xmipp Maximum Likelihood Alignment "
 			."is still in the experimental phases</font><br/><br/>\n";
@@ -256,25 +256,33 @@ function runMaxLikeAlign($runjob=false) {
 	if (!$stackid)
 		createMaxLikeAlignForm("<B>ERROR:</B> No stack selected");
 
-
-
 	// classification
-	if ($numpart < 10) createMaxLikeAlignForm("<B>ERROR:</B> Must have more than 10 particles");
-
-	$particle = new particledata();
+	if ($numpart < 10)
+		createMaxLikeAlignForm("<B>ERROR:</B> Must have more than 10 particles");
 
 	// check num of particles
+	$particle = new particledata();
 	$totprtls=$particle->getNumStackParticles($stackid);
 	if ($numpart > $totprtls)
 		createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart)"
 			." must be less than the number of particles in the stack ($totprtls)");
 
-	$stackparams=$particle->getStackParams($stackid);
+	// determine calc time
+	$stackdata = $particle->getStackParams($stackid);
+	$boxsize = ($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
+	$secperiter = 0.12037;
+	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter;
+	if ($mirror) $calctime *= 2.0;
+	// kill if longer than 6 hours
+	if ($calctime > 6.0*3600.0)
+		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 6 hours<br/>"
+			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
+	// setup command
 	$command.="maxlikeAlignment.py ";
 	$command.="--outdir=$rundir ";
 	$command.="--description=\"$description\" ";
@@ -292,7 +300,7 @@ function runMaxLikeAlign($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if (false && $runjob) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -305,22 +313,33 @@ function runMaxLikeAlign($runjob=false) {
 	}
 	else {
 		processing_header("Max Like Align Run Params","Max Like Align Params");
+		echo"<table width='600' class='tableborder' border='1'>";
+		echo"<tr><td colspan='2'><br/>\n";
+		if ($calctime < 60)
+			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> ".round($calctime,2)." seconds\n";
+		elseif ($calctime < 3600)
+			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n";
+		else
+			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n";
+		echo"per iteration</span><br/><br/></td></tr>\n";
 		echo"
-	<table width='600' class='tableborder' border='1'>
-	<tr><td colspan='2'>
-	<b>MaxLike Alignment Command:</b><br />
-	$command
-	</td></tr>
-	<tr><td>run id</td><td>$runname</td></tr>
-	<tr><td>stack id</td><td>$stackid</td></tr>
-	<tr><td>low pass</td><td>$lowpass</td></tr>
-	<tr><td>low pass</td><td>$highpass</td></tr>
-	<tr><td>num part</td><td>$numpart</td></tr>
-	<tr><td>num factors</td><td>$numref</td></tr>
-	<tr><td>binning</td><td>$bin</td></tr>
-	<tr><td>out dir</td><td>$outdir</td></tr>
-	<tr><td>commit</td><td>$commit</td></tr>
-	</table>\n";
+			<tr><td colspan='2'>
+			<b>MaxLike Alignment Command:</b><br />
+			$command
+			</td></tr>
+			<tr><td>run id</td><td>$runname</td></tr>
+			<tr><td>stack id</td><td>$stackid</td></tr>
+			<tr><td>low pass</td><td>$lowpass</td></tr>
+			<tr><td>high pass</td><td>$highpass</td></tr>
+			<tr><td>num part</td><td>$numpart</td></tr>
+			<tr><td>num ref</td><td>$numref</td></tr>
+			<tr><td>angle increment</td><td>$angle</td></tr>
+			<tr><td>binning</td><td>$bin</td></tr>
+			<tr><td>fast</td><td>$fast</td></tr>
+			<tr><td>mirror</td><td>$mirror</td></tr>
+			<tr><td>out dir</td><td>$outdir</td></tr>
+			<tr><td>commit</td><td>$commit</td></tr>
+			</table>\n";
 		processing_footer();
 	}
 }
