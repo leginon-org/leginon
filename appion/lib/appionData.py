@@ -530,6 +530,7 @@ class ApCoranRunData(Data):
 			('run_seconds', int),
 			('num_factors', int),
 			('description', str),
+			('hidden', bool),
 			('path', ApPathData),
 			('alignstack', ApAlignStackData),
 			('project|projects|project', int),
