@@ -632,7 +632,7 @@ class makestack (appionLoop.AppionLoop):
 		else:
 			voltage = (imgdata['scope']['high tension'])/1000
 
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata)
+		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, display=True)
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 
@@ -772,12 +772,17 @@ class makestack (appionLoop.AppionLoop):
 	def insertStackRun(self):
 		stparamq=appionData.ApStackParamsData()
 		paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
-			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair','lowpass','highpass','norejects')
+			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair',
+			'lowpass','highpass','norejects')
 
 		for p in paramlist:
-			if p in self.params:
-				stparamq[p] = self.params[p]
+			if p.lower() in self.params:
+				stparamq[p] = self.params[p.lower()]
 		paramslist = stparamq.query()	
+
+		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
+			print stparamq
+			apDisplay.printError("problem in database insert")
 
 		# make sure that NULL values were not filled in during query
 		goodplist=None
@@ -789,6 +794,8 @@ class makestack (appionLoop.AppionLoop):
 			if notgood is None:
 				goodplist=plist
 				continue
+
+
 
 		# create a stack object
 		stackq = appionData.ApStackData()
@@ -965,8 +972,12 @@ class makestack (appionLoop.AppionLoop):
 				apDisplay.printError(str(elements[0])+" is not recognized as a parameter")
 
 	def specialParamConflicts(self):
+		if self.params['boxsize'] is None:
+			apDisplay.printError("A boxsize has to be specified")
 		if self.params['description'] is None:
 			apDisplay.printError("A description has to be specified")
+
+
 
 if __name__ == '__main__':
 	imgLoop = makestack()
