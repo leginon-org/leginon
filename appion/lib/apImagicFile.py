@@ -11,9 +11,10 @@ import apDisplay
 import apFile
 import apImage
 import numpy
+from pyami import mrc
 
 #===============
-def readImagic(filename):
+def readImagic(filename, first=None, last=None):
 	"""
 	Rudimentary Imagic stack reader
 	Could be improved with more sophisticated error testing and header parsing
@@ -29,13 +30,14 @@ def readImagic(filename):
 	### check file size, no more than 2 GB is possible 
 	### it takes double memory on machine to read stack
 	stacksize = apFile.fileSize(datafilename)/1024.0/1024.0
-	if stacksize > 2000:
-		apDisplay.printError("Stack is too large to read "+str(round(stacksize,1))+" MB")
+	if stacksize > 1200:
+		apDisplay.printWarning("Stack is too large to read "+str(round(stacksize,1))+" MB")
+		return None
 
 	### read stack
 	stack={}
 	stack['header'] = readImagicHeader(headerfilename)
-	stack['images'] = readImagicData(datafilename, stack['header'])
+	stack['images'] = readImagicData(datafilename, stack['header'], first, last)
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
 	return stack
 
@@ -67,7 +69,7 @@ def readImagicHeader(headerfilename):
 	return header
 
 #===============	
-def readImagicData(datafilename, headerdict):
+def readImagicData(datafilename, headerdict, first=None, last=None):
 	shape = (headerdict['nimg'], headerdict['rows'], headerdict['lines'])
 	images = numpy.fromfile(file=datafilename, dtype=numpy.float32)
 	try:
@@ -237,4 +239,13 @@ def writeImagicData(array):
 		print mult, images.shape, headerdict['nimg'], headerdict['rows'], headerdict['lines']
 		apDisplay.printError("could not read image stack")
 	return images
+
+#===============	
+def writeVarianceImage(imagicfile, varmrcfile):
+	imgdict = readImagic(imagicfile)
+	if imgdict is None:
+		return
+	vararray = imgdict['images'].std(0)
+	mrc.write(vararray, varmrcfile)
+	return vararray
 
