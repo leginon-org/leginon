@@ -461,6 +461,7 @@ class ApAlignRunData(Data):
 			('norefrun', ApSpiderNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
+			('imagicnorefrun', ApImagicNoRefRunData),
 			('hidden', bool),
 			('project|projects|project', int),
 			('path', ApPathData),
@@ -1056,4 +1057,16 @@ class ApImagic3dRefineIterationData(Data):
 			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
+
+class ApImagicNoRefRunData(Data):
+        def typemap(cls):
+                return Data.typemap() + (
+                        ('runname', str),
+                        ('mask_radius', float),
+                        ('mask_dropoff', float),
+                        ('numiters', int),
+                        ('overcorrection', float),
+                        ('MSAmethod', str),
+                )
+        typemap = classmethod(typemap)
 
