@@ -603,9 +603,9 @@ class Corrector(node.Node):
 		for channel in range(0,self.settings['channels']):
 			## use reference image from database
 			flat = self.corclient.queryCorrectionImage(scopedata, camdata, 'flat', channel)
-			if ref:
+			if flat:
 				## make it float to do float math later
-				flat = numpy.asarray(ref['image'], numpy.float32)
+				flat = numpy.asarray(flat['image'], numpy.float32)
 			else:
 				self.logger.warning('No flat image for modifications')
 				return
