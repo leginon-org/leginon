@@ -44,7 +44,7 @@ function jobform($extra=false)	{
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","norefImagic/",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","norefImagic",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
 
@@ -68,9 +68,10 @@ function jobform($extra=false)	{
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
-	$lpfilt = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
-	$hpfilt = ($_POST['highpass']) ? $_POST['highpass'] : '400';
+	$lpfilt = ($_POST['lowpass']) ? $_POST['lowpass'] : '4';
+	$hpfilt = ($_POST['highpass']) ? $_POST['highpass'] : '200';
 	$mask_radius = ($_POST['mask_radius']) ? $_POST['mask_radius'] : '0.9';	
+	$mask_dropoff = ($_POST['mask_dropoff']) ? $_POST['mask_dropoff'] : '0.1';
 	$MSAmethod = ($_POST['MSAmethod']) ? $_POST['MSAmethod'] : 'modulation';
 	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : '50';
 	$overcorrection = ($_POST['overcorrection']) ? $_POST['overcorrection'] : '0.8';
@@ -165,7 +166,11 @@ function jobform($extra=false)	{
 	echo "<INPUT TYPE='text' NAME='mask_radius' VALUE='$mask_radius' SIZE='4'>\n";
 	echo docpop('mask_radius', 'Mask Radius');
 	echo "<BR/>\n";
-	echo "<BR/>\n";
+
+        echo "<INPUT TYPE='text' NAME='mask_dropoff' VALUE='$mask_dropoff' SIZE='4'>\n";
+        echo docpop('mask_dropoff', 'Mask Drop-off');
+        echo "<BR/>\n";
+        echo "<BR/>\n";
 	
 	echo "<b>Multivariate Statistical Analysis Parameters</b>\n";
 	echo "<BR/>\n";
@@ -221,6 +226,7 @@ function runImagicReferenceFreeAlignment($extra=false)	{
 	$lowpass=$_POST['lowpass'];
 	$bin=$_POST['bin'];
 	$mask_radius=$_POST['mask_radius'];
+	$mask_dropoff=$_POST['mask_dropoff'];
 	$numiters=$_POST['numiters'];
 	$MSAmethod=$_POST['MSAmethod'];
 	$overcorrection=$_POST['overcorrection'];
@@ -235,8 +241,8 @@ function runImagicReferenceFreeAlignment($extra=false)	{
 	// create python command for executing imagic job file	
 	$pythoncmd = "";
 	$pythoncmd = "imagicReferenceFreeAlignment.py";
-	$pythoncmd.= " --stackid=$stackid --runid=$runid outdir=$outdir --lpfilt=$lowpass";
-	$pythoncmd.= " --hpfilt=$highpass --mask_radius=$mask_radius --bin=$bin";
+	$pythoncmd.= " --stackid=$stackid --runid=$runid --outdir=$outdir/$runid --lpfilt=$lowpass";
+	$pythoncmd.= " --hpfilt=$highpass --mask_radius=$mask_radius --mask_dropoff=$mask_dropoff --bin=$bin";
 	$pythoncmd.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$pythoncmd.= " --description=\"$description\"";
 	if ($commit) $pythoncmd.= " --commit\n";
