@@ -19,6 +19,7 @@ import apEMAN
 import apXmipp
 from apSpider import alignment
 import appionData
+import apProject
 
 #=====================
 #=====================
@@ -112,6 +113,25 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		pf.close()
 
 	#=====================
+	def insertMaxLikeJob(self):
+		maxjobq = appionData.ApMaxLikeJobData()
+		maxjobq['runname'] = self.params['runname']
+		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		maxjobdata = maxjobq.query()
+		if maxjobdata:
+			alignrunq = appionData.ApAlignRunData()
+			alignrunq['runname'] = self.params['runname']
+			alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+			alignrundata = alignrunq.query()
+			if alignrundata:
+				apDisplay.printError("This run name already exists in the database, please change the runname")
+			apDisplay.printWarning("This job already exists in the database, please change the runname unless rerunning")
+		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		maxjobq['timestamp'] = self.timestamp
+		maxjobq.insert()
+		return
+
+	#=====================
 	def writeGaribaldiJobFile(self):
 		nproc = 128
 		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
@@ -172,6 +192,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		self.insertMaxLikeJob()
 		self.appiondb.dbd.ping()
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
