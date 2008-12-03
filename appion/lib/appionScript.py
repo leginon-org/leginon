@@ -64,6 +64,7 @@ class AppionScript(object):
 
 		### any custom init functions go here
 		self.onInit()
+		self.appiondb.dbd.ping()
 
 	#=====================
 	def setupOutputDirectory(self):
