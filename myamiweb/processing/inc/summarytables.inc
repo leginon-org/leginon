@@ -15,6 +15,7 @@ require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
 function stacksummarytable($stackid) {
+	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$stackdata = $particle->getStackParams($stackid);
 
@@ -142,6 +143,7 @@ function stacksummarytable($stackid) {
 }
 
 function ministacksummarytable($stackid) {
+	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$stackdata = $particle->getStackParams($stackid);
 
@@ -213,6 +215,7 @@ function ministacksummarytable($stackid) {
 
 
 function alignstacksummarytable($alignstackid) {
+	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$stackdata = $particle->getAlignStackParams($alignstackid);
 	//echo print_r($stackdata)."<br/>\n";
