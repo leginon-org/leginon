@@ -74,7 +74,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		coranq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		# ... path makes the run unique:
 		uniquerun = coranq.query(results=1)
-		if uniquerun and insert is True:
+		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
 				str(self.params['alignstackid'])+"\nis already in the database")
 
@@ -96,6 +96,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		coranq['num_factors'] = self.params['numfactors']
 		coranq['mask_diam'] = 2.0*self.params['maskrad']
 		coranq['run_seconds'] = self.runtime
+		coranq['hidden'] = False
 		coranq['project|projects|project'] = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 
 		apDisplay.printMsg("inserting coran parameters into database")
