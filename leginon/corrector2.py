@@ -46,10 +46,11 @@ class CorrectorClient(object):
 	def __init__(self, node):
 		self.node = node
 		self.channel = 0
-		self.ref_cache = {}
+		self.cache = {}
 		self.ccdcorrector = ccd.Corrector()
 
-	def queryCorrectionSet(self, scopedata, camdata, channel, type=None):
+	def queryCorrectionImage(self, scopedata, camdata, type, channel):
+
 
 		# only query based on instrument and high tension
 		scope = data.ScopeEMData()
@@ -64,114 +65,85 @@ class CorrectorClient(object):
 		camera['offset'] = camdata['offset']
 
 		## first try requested channel, then try any channel
+		corimg = None
 		for channel in (channel, None):
-			imageset = data.CorrectionImageSet(scope=scope, camera=camera, channel=channel)
-			qimage = data.CorrectionImageData(set=imageset, type=type)
-
+			## try cache
 			try:
-				ref = qimage.query(results=1)
-			except Exception, e:
-				self.node.logger.warning('Loading reference image failed: %s' % (e,))
-				ref = None
-			if ref:
-			ref = ref[0]
-		else:
-			# check if no results because no ref of requested channel
-			# try to get ref of any channel
-			imagetemp['channel'] = None
-			ref = self.node.research(datainstance=imagetemp, results=1)
-			if ref:
-				ref = ref[0]
-				self.node.logger.warning('channel requested: %s, channel available: %s' % (channel, ref['channel']))
+				key = self.getkey(scopedata, camdata, type, channel)
+				return self.cache[key]
+			except KeyError:
+				pass
+			self.node.logger.info('Loading %s...' % self.formatKey(key))
+			qimage = data.CorrectionImageData(scope=scope, camera=camera, type=type, channel=channel)
+			try:
+				corimg = qimage.query(results=1)
+				corimg = corimg[0]
+				break
+			except:
+				pass
+
+				self.node.logger.warning('requested correction channel %s not available, using channel: %s' % (channel, corimg['channel']))
 			else:
-				self.node.logger.error('No reference image in database')
-				ref = None
+				self.node.logger.error('No correction image in database')
+				corimg = None
 
-		if ref is not None:
-			self.node.logger.info('Reference image loaded: %s' % (ref['filename'],))
-
-		return ref
+		if corimg is not None:
+			self.node.logger.info('Correction image loaded: %s' % (corimg['filename'],))
+			## make it float to do float math later
+			image = numpy.asarray(corimg['image'], numpy.float32)
+			key = self.getkey(corimg['scope'], corimg['camera'], corimg['type'], corimg['channel'])
+			self.cache[key] = image
+		else:
+			image = None
+		return image
 
 	def formatKey(self, key):
-		try:
-			if key[6] == 'dark':
-				exptype = 'dark reference image'
-			elif key[6] == 'bright':
-				exptype = 'bright reference image'
-			elif key[6] == 'norm':
-				exptype = 'normalization image'
-			elif key[6] == 'bias':
-				exptype = 'bias image'
-			else:
-				exptype = key[6]
-		except IndexError:
-			exptype = 'unknown image'
 		s = '%s, %dV, size %dx%d, bin %dx%d, offset (%d,%d), channel %d'
-		try:
-			return s % (exptype, key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
-		except IndexError:
-			return str(key)
+		return s % (key[6], key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
 
-	def refKey(self, camstate, type, ccdcameraname, scopedata, channel):
+	def getkey(self, scope, camera, type, channel):
 		mylist = []
 		for param in ('dimension', 'binning', 'offset'):
-			values = camstate[param]
+			values = camera[param]
 			if values is None:
 				valuetuple = (None,None)
 			else:
 				valuetuple = (values['x'],values['y'])
 			mylist.extend( valuetuple )
 		mylist.append(type)
-		mylist.append(ccdcameraname)
-		mylist.append(scopedata['high tension'])
+		mylist.append(camera['ccdcamera'])
+		mylist.append(scope['high tension'])
 		mylist.append(channel)
 		return tuple(mylist)
 
-	def retrieveRef(self, camstate, type, ccdcameraname, scopedata, channel):
-		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
-		## another way to do the cache would be to use the local
-		##   data keeper
-
-		## try to use reference image from cache
-		try:
-			return self.ref_cache[key]
-		except KeyError:
-			self.node.logger.info('Loading %s...' % self.formatKey(key))
-
-		## use reference image from database
-		ref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel)
-		if ref:
-			## make it float to do float math later
-			image = numpy.asarray(ref['image'], numpy.float32)
-			self.ref_cache[key] = image
-		else:
-			image = None
-		return image
-
-	def normalize(self, raw, camstate, ccdcameraname, scopedata, exposuretime):
+	def normalize(self, imagedata):
 		channel = self.channel
-		bias = self.retrieveRef(camstate, 'bias', ccdcameraname, scopedata, channel)
-		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata, channel)
-		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
-		if dark is not None and norm is not None and bias is not None:
+		
+		scopedata = imagedata['scope']
+		camdata = imagedata['camera']
+		raw = imagedata['image']
+		exposuretime = camdata['exposure time']
+		bias = self.queryCorrectionImage(scopedata, camdata, 'bias', channel)
+		dark = self.queryCorrectionImage(scopedata, camdata, 'dark', channel)
+		flat = self.queryCorrectionImage(scopedata, camdata, 'flat', channel)
+		if dark is not None and flat is not None and bias is not None:
 			## load images into ccd corrector
 			self.ccdcorrector.setBias(bias)
 			self.ccdcorrector.setDark(dark)
-			self.ccdcorrector.setFlat(norm)
+			self.ccdcorrector.setFlat(flat)
 			corrected = self.ccdcorrector.correctBiasDarkFlat(raw, exposuretime)
 			return corrected
 		else:
 			self.node.logger.warning('Cannot find references, image will not be normalized')
 			return raw
 
-	def correct(self, ccdcamera, original, camstate, scopedata, exposuretime, despike=False, despikesize=None, despikethresh=None, clip=None):
+	def correct(self, imagedata, despike=False, despikesize=None, despikethresh=None, clip=None):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if type(camstate) is dict:
-			camstate = data.CorrectorCamstateData(initializer=camstate)
-		normalized = self.normalize(original, camstate, ccdcamera['name'], scopedataexposuretime)
-		plan = self.retrievePlan(ccdcamera, camstate)
+		
+		normalized = self.normalize(imagedata)
+		plan = self.retrievePlan(imagedata)
 		if plan is not None:
 			self.fixBadPixels(normalized, plan)
 
@@ -190,11 +162,14 @@ class CorrectorClient(object):
 		final = numpy.asarray(clipped, numpy.float32)
 		return final
 
-	def retrievePlan(self, ccdcamera, corstate):
-		qplan = data.CorrectorPlanData()
-		qplan['camstate'] = corstate
-		qplan['ccdcamera'] = ccdcamera
-		plandatalist = self.node.research(datainstance=qplan)
+	def retrievePlan(self, camdata):
+		qcam = data.CameraEMData()
+		qcam['ccdcamera'] = camdata['ccdcamera']
+		qcam['dimension'] = camdata['dimension']
+		qcam['offset'] = camdata['offset']
+		qcam['binning'] = camdata['binning']
+		qplan = data.CorrectionPlanData(camera=qcam)
+		plandatalist = qplan.query(results=1)
 		if plandatalist:
 			plandata = plandatalist[0]
 			result = {}
@@ -288,14 +263,14 @@ class CorrectorClient(object):
 		ht = scopedata['high tension']
 		## store in cache
 		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
-		self.ref_cache[key] = numdata
+		self.cache[key] = numdata
 
 		## store in database
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
 			imagetemp = data.BrightImageData()
-		elif type == 'norm':
+		elif type == 'flat':
 			imagetemp = data.NormImageData()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
@@ -369,13 +344,13 @@ class Corrector(node.Node):
 	def getPlan(self):
 		ccdcamera = self.instrument.getCCDCameraData()
 
-		newcamstate = data.CorrectorCamstateData()
+		newcam = data.CameraEMData(ccdcamera=ccdcamera)
 		if self.settings['camera settings'] is None:
 			plan = None
 		else:
 			for i in ['dimension', 'offset', 'binning']:
-				newcamstate[i] = dict(self.settings['camera settings'][i])
-			plan = self.corclient.retrievePlan(ccdcamera, newcamstate)
+				newcam[i] = dict(self.settings['camera settings'][i])
+			plan = self.corclient.retrievePlan(newcam)
 		return plan
 
 	def acquireDark(self):
@@ -444,13 +419,11 @@ class Corrector(node.Node):
 		try:
 			camdata = self.settings['camera settings']
 			scopedata = self.instrument.getData(data.ScopeEMData)
-			ccdcameraname = self.instrument.getCCDCameraName()
-			corstate = data.CorrectorCamstateData()
-			corstate['dimension'] = camdata['dimension']
-			corstate['offset'] = camdata['offset']
-			corstate['binning'] = camdata['binning']
-
-			self.modifyByMask(self.maskimg, ccdcameraname, corstate, scopedata)
+			newcamdata = data.CameraEMData()
+			newcamdata['ccdcamera'] = self.instrument.getCCDCamera()
+			for key in ('dimension','offset','binning'):
+				newcamdata[key] = camdata[key]
+			self.modifyByMask(self.maskimg, newcamdata, scopedata)
 		except Exception, e:
 			self.logger.exception('Modify normalization image failed: %s' % e)
 		self.stopTimer('modifyNorm')
@@ -575,7 +548,7 @@ class Corrector(node.Node):
 		# so make sure there are no zeros in norm
 		norm = numpy.clip(norm, 0.001, sys.maxint)
 		norm = normavg / norm
-		self.corclient.storeRef('norm', norm, corstate, scopedata, channel)
+		self.corclient.storeRef('flat', norm, corstate, scopedata, channel)
 
 	def acquireCorrectedImageData(self, ccdcameraname=None):
 		self.setTargets([], 'Regions', block=False)
@@ -615,7 +588,6 @@ class Corrector(node.Node):
 		clipmax = self.settings['clip max']
 		dsize = self.settings['despike size']
 		dthresh = self.settings['despike threshold']
-		#corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
 		corrected = self.corclient.correct(ccdcamera, numimage, corstate, scopedata, despike=despike, despikesize=dsize, despikethresh=dthresh, clip=(clipmin,clipmax), exposuretime=exptime)
 		self.stopTimer('correct')
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
@@ -630,31 +602,31 @@ class Corrector(node.Node):
 	def modifyByMask(self,mask, ccdcameraname, camstate, scopedata):
 		for channel in range(0,self.settings['channels']):
 			## use reference image from database
-			ref = self.corclient.researchRef(camstate, 'norm', ccdcameraname, scopedata, channel)
+			flat = self.corclient.queryCorrectionImage(scopedata, camdata, 'flat', channel)
 			if ref:
 				## make it float to do float math later
-				norm = numpy.asarray(ref['image'], numpy.float32)
+				flat = numpy.asarray(ref['image'], numpy.float32)
 			else:
-				self.logger.warning('No normalized image for modifications')
+				self.logger.warning('No flat image for modifications')
 				return
 
 			if mask is not None:
-				if norm.shape != mask.shape:
+				if flat.shape != mask.shape:
 					self.logger.warning('Wrong mask dimension for channel %d' %channel)
 					return
 				else:
-					maskednorm=ma.masked_array(norm,mask=mask)
-					nmean = maskednorm.mean()
-					nstd = maskednorm.std()
-					nmax = maskednorm.max()
-					nmin = maskednorm.min()
+					maskedflat=ma.masked_array(flat,mask=mask)
+					nmean = maskedflat.mean()
+					nstd = maskedflat.std()
+					nmax = maskedflat.max()
+					nmin = maskedflat.min()
 					sigma = 100
 					ntop = nmean+sigma * nstd
 					if nmax < ntop:
 						ntop = nmax
 			else:
-				nmax = norm.max()
-				nmin = norm.min()
+				nmax = flat.max()
+				nmin = flat.min()
 				ntop = nmax
 				nbottom = nmin
 			self.logger.info('Unmasked region normalization is between %e and %e'% (nmax,nmin))	
@@ -662,11 +634,11 @@ class Corrector(node.Node):
 			if ntop > 20:
 				ntop = 20
 			nbottom = 1 / ntop
-			newnorm = numpy.clip(norm, nbottom, ntop) 
+			newflat = numpy.clip(flat, nbottom, ntop) 
 			self.logger.info('Clipped normalization to between %e and %e'% (ntop,nbottom))	
 			try:
-				self.corclient.storeRef('norm', newnorm, camstate, scopedata, channel)
-				self.logger.info('Saved modified norm image for channel %d' %channel)
+				self.corclient.storeRef('flat', newflat, camstate, scopedata, channel)
+				self.logger.info('Saved modified flat image for channel %d' %channel)
 			except:
 				pass
 		return
