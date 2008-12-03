@@ -35,6 +35,13 @@ echo "  this method is the most robust, but takes some time to complete."
 echo "</td></tr>";
 
 echo "<tr><td>";
+echo "  <h3><a href='imagicReferenceFreeAlignment.php?expId=$expId'>IMAGIC Reference-free Alignment</a></h3>";
+echo "  this method uses the "
+        ."<a href='http://www.imagescience.de/imagic/index.htm'>Imagic MSA-run</a>"
+        ."&nbsp;<img src='img/external.png'>"        ." command to align your particles, with the choice of one of three distance criteria for determining eigenimages";
+echo "</td></tr>";
+
+echo "<tr><td>";
 echo "  <h3><a href='runSpiderNoRefAlignment.php?expId=$expId'>Spider Reference-free Alignment</a></h3>";
 echo "  this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
