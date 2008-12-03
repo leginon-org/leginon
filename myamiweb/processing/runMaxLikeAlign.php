@@ -89,6 +89,10 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
 	$highpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '400';
 	$numref = ($_POST['numref']) ? $_POST['numref'] : '2';
+	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
+	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
+	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
+
 	echo"
 	<table border='0' class='tableborder'>
 	<tr>
@@ -172,24 +176,36 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>\n";
 	echo docpop('lpval','Low Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
-	echo "<br />\n";
+	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$highpass'>\n";
 	echo docpop('hpval','High Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
-	echo "<br />\n";
+	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
 	echo docpop('bin','Particle binning');
-	echo "<br />\n";
+	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>\n";
 	echo docpop('numpart','Number of Particles');
-	echo " to Use<BR>\n";
+	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numref' VALUE='$numref' SIZE='4'>\n";
 	echo docpop('numref','Number of References');
-	echo " to Use<BR>\n";
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='angle' VALUE='$angle' SIZE='4'>\n";
+	echo docpop('angle','Angular Increment');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='fast' $fast>\n";
+	echo docpop('fast','Use Fast Mode');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='mirror' $mirror>\n";
+	echo docpop('mirror','Use Mirrors in Alignment');
+	echo "<br/>\n";
 
 	echo "  </td>\n";
 	echo "  </tr>\n";
@@ -216,47 +232,51 @@ function runMaxLikeAlign($runjob=false) {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-
-	$command.="maxlikeAlignment.py ";
-
 	$stackvars=$_POST['stackid'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
 	$numpart=$_POST['numpart'];
 	$numref=$_POST['numref'];
+	$angle=$_POST['angle'];
 	$bin=$_POST['bin'];
+	$description=$_POST['description'];
+	$fast = ($_POST['fast']=="on") ? true : false;
+	$mirror = ($_POST['mirror']=="on") ? true : false;
+	$commit = ($_POST['commit']=="on") ? true : false;
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 
 	//make sure a session was selected
-	$description=$_POST['description'];
-	if (!$description) createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+
+	if (!$description)
+		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
-	//$stackid=$_POST['stackid'];
-	if (!$stackid) createMaxLikeAlignForm("<B>ERROR:</B> No stack selected");
+	if (!$stackid)
+		createMaxLikeAlignForm("<B>ERROR:</B> No stack selected");
 
-	$commit = ($_POST['commit']=="on") ? '--commit' : '';
+
 
 	// classification
 	if ($numpart < 10) createMaxLikeAlignForm("<B>ERROR:</B> Must have more than 10 particles");
-	if ($numref < 2) createMaxLikeAlignForm("<B>ERROR:</B> Must have at least 2 factors");
 
 	$particle = new particledata();
 
 	// check num of particles
 	$totprtls=$particle->getNumStackParticles($stackid);
-	if ($numpart > $totprtls) createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls)");
+	if ($numpart > $totprtls)
+		createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart)"
+			." must be less than the number of particles in the stack ($totprtls)");
 
 	$stackparams=$particle->getStackParams($stackid);
 
-	if ($outdir) {
-		// make sure outdir ends with '/' and append run name
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$rundir = $outdir.$runname;
-		$command.="--outdir=$rundir ";
-	}
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
+
+	$command.="maxlikeAlignment.py ";
+	$command.="--outdir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
@@ -265,6 +285,9 @@ function runMaxLikeAlign($runjob=false) {
 	$command.="--num-part=$numpart ";
 	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
+	$command.="--angle-interval=$angle ";
+	if ($fast) $command.="--fast ";
+	if ($mirror) $command.="--mirror ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
