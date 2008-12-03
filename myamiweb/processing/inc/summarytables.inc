@@ -99,11 +99,12 @@ function stacksummarytable($stackid) {
 	$display_keys['description']=$descDiv;
 
 	// Show number of particles
-	if ($centered) {
-		$oldnumpart = $particle->getNumStackParticles($stackdata['REF|ApStackData|oldstack']);
+	$oldnumpart = $particle->getNumStackParticles($stackdata['REF|ApStackData|oldstack']);
+	if ($oldnumpart > $numpart) {
 		$display_keys['# particles']= commafy($numpart)." (".commafy($oldnumpart-$numpart)." bad)";
 	} else 
 		$display_keys['# particles']=commafy($numpart);
+	$display_keys['# images used']=$particle->getNumStackImages($stackid);
 
 	// Get filesize
 	$display_keys['file size'] = getStackSize($stackdata);
@@ -127,6 +128,7 @@ function stacksummarytable($stackid) {
 	if ($stackdata['aceCutoff']) $pflip.=" (ACE > $stackdata[aceCutoff])";
 	
 	$display_keys['phase flipped']=$pflip;
+
 	if ($stackdata['correlationMin']) $display_keys['correlation min']=$stackdata['correlationMin'];
 	if ($stackdata['correlationMax']) $display_keys['correlation max']=$stackdata['correlationMax'];
 	if ($stackdata['minDefocus']) $display_keys['min defocus']=$stackdata['minDefocus'];
