@@ -341,7 +341,7 @@ function coransummarytable($coranid) {
 		$corantable.= "<tr>\n";
 		$corantable.= "<td rowspan='30' align='center' valign='top'>";
 		$corantable.= "<a href='loadimg.php?filename=$dendrogram'><br/>\n";
-		$corantable.= "<img src='loadimg.php?filename=$dendrogram&s=80' height='80' border='1'></a><br/>\n";
+		$corantable.= "<img src='loadimg.php?filename=$dendrogram&s=100' height='100' border='1'></a><br/>\n";
 		$corantable.= "<i>dendrogram</i>\n";
 		$corantable.= "</td>\n";
 		$corantable.= "</tr>\n\n";
