@@ -324,15 +324,15 @@ if ($expId) {
 		);
 		if ($alignruns > 0) {
 			// alignment classifications
-			$coranresults=array();
-			$corandone  = count($particle->getCoranRuns($expId, $projectId));
+			$analysisresults=array();
+			$analysisdone  = count($particle->getAnalysisRuns($expId, $projectId));
 			$coranrun  = count($subclusterjobs['coranclass']['running']);
 			$coranqueue  = count($subclusterjobs['coranclass']['queued']);
-			$coranresults[] = ($corandone==0) ? "" : "<a href='alignsummary.php?coran=1&expId=$sessionId'>$corandone complete</a>";
+			$coranresults[] = ($analysisdone==0) ? "" : "<a href='alignsummary.php?analysis=1&expId=$sessionId'>$analysisdone complete</a>";
 			$coranresults[] = ($coranrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=coranclass'>$coranrun running</a>";
 			$coranresults[] = ($coranqueue==0) ? "" : "$coranqueue queued";
 			$nruns[] = array (
-				'name'=>"<a href='alignClassify.php?expId=$sessionId'>Run Classification</a>",
+				'name'=>"<a href='alignClassify.php?expId=$sessionId'>Run Align Analysis</a>",
 				'result'=>$coranresults,
 			);
 		}
