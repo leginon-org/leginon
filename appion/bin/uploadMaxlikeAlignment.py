@@ -92,7 +92,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		for i in range(lastiter+1):
 			iterdir = "iter%03d"%(i)
 			apParam.createDirectory(iterdir, warning=False)
-			wildcard = "part*_it%06d*.*"%(i)
+			wildcard = "part*_it*%03d*.*"%(i)
 			files = glob.glob(wildcard)
 			for filename in files:
 				shutil.move(filename,iterdir)
@@ -310,7 +310,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			refq = appionData.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
 			refq['iteration'] = lastiter
-			refbase = "part"+self.params['timestamp']+"_ref%06d"%(partdict['refnum'])
+			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
+			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
 			refq['mrcfile'] = refbase+".mrc"
 			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
@@ -386,7 +387,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			alignpartimg = apImage.rotateThenShift(partimg, rot=partdict['inplane'], 
 				shift=xyshift, mirror=partdict['mirror'])
 			alignstack.append(alignpartimg)
-			#partfile = "partimg%06d.spi"%(partnum)
+			#partfile = "partimg*%03d.spi"%(partnum)
 			#spider.write(alignpartimg, partfile)
 			#operations.addParticleToStack(partnum, partfile, spiderstackfile)
 			#apFile.removeFile(partfile)
