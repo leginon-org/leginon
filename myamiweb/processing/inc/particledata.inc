@@ -30,7 +30,6 @@ class particledata {
 	}
 
 	function getSessionData ($sessionId) {
-		// this function is really slow
 		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT "
 		  ."s.* "
@@ -1107,7 +1106,6 @@ class particledata {
 	}
 
 	function getStackIdsWithProjectId ($sessionId, $projectId, $showHidden=False) {
-		// this function is really slow
 		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT "
 		  ."r.`REF|ApStackData|stack` as stackid , "
@@ -1134,7 +1132,6 @@ class particledata {
 	}
 
 	function getStackIdsForProject ($projectId, $showHidden=False) {
-		// this function is really slow
 		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT "
 		  ."  st.`DEF_id` as stackid "
@@ -1402,7 +1399,6 @@ class particledata {
 	#--------- ALIGN STACK FUNCTIONS ---------------#
 
 	function getAlignStackIds ($sessionId, $projectId, $showHidden=False) {
-		// this function is really slow
 		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT ast.`DEF_id` AS alignstackid "
 		  ."FROM ApAlignStackData AS ast "
@@ -1427,13 +1423,12 @@ class particledata {
 		return $r;
 	}
 
-	function getAlignStackIdsWithCoran ($sessionId, $projectId) {
-		// this function is really slow
+	function getAlignStackIdsWithAnalysis ($sessionId, $projectId) {
 		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
 		  ."FROM ApAlignStackData AS ast "
-		  ."LEFT JOIN ApCoranRunData AS coran ON "
-		  ."  (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+		  ."LEFT JOIN ApAlignAnalysisRunData AS analysis ON "
+		  ."  (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 		  ."LEFT JOIN ApStackData AS st ON "
 		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
 		  ."LEFT JOIN ApRunsInStackData as runsin ON "
@@ -1449,11 +1444,11 @@ class particledata {
 		  ."AND "
 		  ."  ast.`hidden` != 1 "
 		  ."AND "
-		  ."  coran.`DEF_id` IS NOT NULL "
+		  ."  analysis.`DEF_id` IS NOT NULL "
 		  ."ORDER BY alignstackid DESC";
-		//echo $q."<br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
@@ -1479,11 +1474,13 @@ class particledata {
 		return $r['num'];
 	}
 
-	function getCoranRuns ($sessionId, $projectId, $showHidden=False) {
-		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
-			."FROM ApCoranRunData AS coran "
+	function getAnalysisRuns ($sessionId, $projectId, $showHidden=False) {
+		$q = "SELECT analysis.`DEF_id` AS analysisid, coran.*, analysis.* "
+			."FROM ApAlignAnalysisRunData AS analysis "
+			."LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) "
 			."LEFT JOIN ApAlignStackData AS ast ON "
-			." (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			." (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApStackData AS st ON "
 			." (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApRunsInStackData as runsin ON "
@@ -1495,41 +1492,45 @@ class particledata {
 			." AND "
 			." runsin.`project|projects|project` = '$projectId' "
 			." AND "
-			." coran.`project|projects|project` = '$projectId' ";
+			." analysis.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
-			$q.= " AND coran.`hidden` != 1 AND ast.`hidden` != 1 ";
-		$q .= "ORDER BY coranid DESC ";
-		//echo $q."<br/>\n";
+			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
+		$q .= "ORDER BY analysisid DESC ";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	} 
 
-	function getCoranRunForAlignStack ($alignstackId, $projectId, $showHidden=False) {
-		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
-			."FROM ApCoranRunData AS coran "
+	function getAnalysisRunForAlignStack ($alignstackId, $projectId, $showHidden=False) {
+		$q = "SELECT analysis.`DEF_id` AS analysisid, coran.*, analysis.* "
+			."FROM ApAlignAnalysisRunData AS analysis "
+			."LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) "
 			."WHERE "
-			."  coran.`REF|ApAlignStackData|alignstack` = $alignstackId ";
+			."  analysis.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
-			$q.= " AND coran.`hidden` != 1 ";
+			$q.= " AND analysis.`hidden` != 1 ";
 		$q .= "AND "
-			."  coran.`project|projects|project` = '$projectId' "
-			."ORDER BY coranid DESC ";
+			."  analysis.`project|projects|project` = '$projectId' "
+			."ORDER BY analysisid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
-	function getCoranParams ($coranid) {
-		$q = "SELECT coran.`DEF_id` AS coranid, coran.*, path.path AS path "
-			."FROM ApCoranRunData AS coran "
+	function getAnalysisParams ($analysisid) {
+		$q = "SELECT analysis.`DEF_id` AS analysisid, coran.*, analysis.*, path.path AS path "
+			."FROM ApAlignAnalysisRunData AS analysis "
+			."LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) "
 			."LEFT JOIN ApAlignStackData AS ast ON "
-			." (coran.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			." (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApPathData AS path ON "
-			." (coran.`REF|ApPathData|path` = path.`DEF_id`) "
+			." (analysis.`REF|ApPathData|path` = path.`DEF_id`) "
 			."WHERE "
-			."  coran.`DEF_id` = $coranid "
+			."  analysis.`DEF_id` = $analysisid "
 			."LIMIT 1 ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
