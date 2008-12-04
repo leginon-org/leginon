@@ -542,7 +542,7 @@ class ApAlignAnalysisRunData(Data):
 			('description', str),
 			('hidden', bool),
 			('path', ApPathData),
-			('coranrun', ApCoranRunData)
+			('coranrun', ApCoranRunData),
 			('alignstack', ApAlignStackData),
 			('project|projects|project', int),
 		)
