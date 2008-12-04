@@ -311,13 +311,15 @@ def setUmask():
 		os.umask(000)
 
 
-def getExecPath(exefile):
+def getExecPath(exefile, die=False):
 	proc = subprocess.Popen("which "+exefile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out = proc.stdout
 	proc.wait()
 	path = out.readline().strip()
 	if len(path) < 1:
-		return None
+		if die is False:
+			return None
+		apDisplay.printError("Cound not find "+exefile+" in your PATH")
 	return path
 
 
