@@ -87,7 +87,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "noref", self.params['runname'])
+		self.params['outdir'] = os.path.join(uppath, "align", self.params['runname'])
 
 	#=====================
 	def checkNoRefRun(self):
