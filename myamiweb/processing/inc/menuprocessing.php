@@ -302,7 +302,7 @@ if ($expId) {
 		$norefrun = count($subclusterjobs['maxlikeali']['running']);
 		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
 		$maxlikerun = count($subclusterjobs['maxlikeali']['running']);
-		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($expId, $projectId));
+		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($projectId));
 		$alignrun   = $norefrun+$refbasedrun+$maxlikerun;
 		$alignqueue  = count($subclusterjobs['maxlikeali']['queued'])
 			+ count($subclusterjobs['refbasedali']['queued'])
