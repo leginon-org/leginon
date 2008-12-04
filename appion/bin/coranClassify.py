@@ -69,39 +69,42 @@ class CoranClassifyScript(appionScript.AppionScript):
 	#=====================
 	def checkCoranRun(self):
 		# create a norefParam object
-		coranq = appionData.ApCoranRunData()
-		coranq['runname'] = self.params['runname']
-		coranq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq['runname'] = self.params['runname']
+		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		# ... path makes the run unique:
-		uniquerun = coranq.query(results=1)
+		uniquerun = analysisq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
 				str(self.params['alignstackid'])+"\nis already in the database")
 
-
 	#=====================
 	def insertCoranRun(self, insert=False):
-		# create a norefParam object
-		coranq = appionData.ApCoranRunData()
-		coranq['runname'] = self.params['runname']
-		coranq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		# create a AlignAnalysisRun object
+		analysisq = appionData.ApAlignAnalysisRunData()
+		analysisq['runname'] = self.params['runname']
+		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		# ... path makes the run unique:
-		uniquerun = coranq.query(results=1)
+		uniquerun = analysisq.query(results=1)
 		if uniquerun and insert is True:
-			apDisplay.printError("Run name '"+self.params['runname']+"' for stackid="+\
+			apDisplay.printError("Run name '"+self.params['runname']+"' for align stack id="+\
 				str(self.params['alignstackid'])+"\nis already in the database")
 
-		coranq['description'] = self.params['description']
-		coranq['alignstack'] = self.alignstackdata
+		coranq = appionData.ApCoranRunData()
 		coranq['num_factors'] = self.params['numfactors']
 		coranq['mask_diam'] = 2.0*self.params['maskrad']
 		coranq['run_seconds'] = self.runtime
-		coranq['hidden'] = False
-		coranq['project|projects|project'] = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
 
-		apDisplay.printMsg("inserting coran parameters into database")
+		# finish AlignAnalysisRun object	
+		analysisq['description'] = self.params['description']
+		analysisq['alignstack'] = self.alignstackdata
+		analysisq['hidden'] = False
+		analysisq['project|projects|project'] = apProject.getProjectIdFromAlignStackId(self.params['alignstackid'])
+		analysisq['coranrun'] = coranq
+
+		apDisplay.printMsg("inserting Align Analysis Run parameters into database")
 		if insert is True:
-			coranq.insert()
+			analysisq.insert()
 
 		### eigen data
 		for i in range(self.params['numfactors']):
