@@ -15,9 +15,9 @@ from optparse import OptionParser
 import apDisplay
 import apDatabase
 import apParam
-import apDB
 import apFile
 #leginon
+import sinedon
 from pyami import mem
 
 
@@ -26,14 +26,11 @@ class AppionScript(object):
 	#=====================
 	def __init__(self):
 		self.quiet = False
-		self.appiondb  = apDB.apdb
-		self.leginondb = apDB.db
 		self.startmem = mem.active()
 		### clean up any preliminary warnings
 		sys.stderr.write("\n\n")
 		#set the name of the function; needed for param setup
 		self.t0 = time.time()
-
 		self.timestamp = apParam.makeTimestamp()
 		self.functionname = apParam.getFunctionName(sys.argv[0])
 		apDisplay.printMsg("Function name: "+self.functionname)
@@ -46,6 +43,12 @@ class AppionScript(object):
 		self._setupGlobalParserOptions()
 		self.setupParserOptions()
 		self.params = apParam.convertParserToParams(self.parser)
+
+		### setup correct database
+		if self.params['projectid'] is not None:
+			# use a project database
+			newapdb = "ap"+str(self.params['projectid'])
+			sinedon.setConfig('appionData', db=newapdb)
 
 		### check if user wants to print help message
 		if 'commit' in self.params:
@@ -67,7 +70,6 @@ class AppionScript(object):
 
 		### any custom init functions go here
 		self.onInit()
-		self.appiondb.dbd.ping()
 
 	#=====================
 	def setupOutputDirectory(self):
@@ -101,7 +103,7 @@ class AppionScript(object):
 			help="Name for processing run, e.g. --runname=run1", metavar="NAME")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Description of the processing run (must be in quotes)", metavar="TEXT")
-		self.parser.add_option("-p", "--projectid", dest="session", type="int",
+		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
 			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
 		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
 			help="Run directory for storing output, e.g. --rundir=/ami/data00/appion/runs/run1", metavar="PATH")

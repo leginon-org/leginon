@@ -143,7 +143,6 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.appiondb.dbd.ping()
 		self.runtime = 0
 
 		self.checkCoranRun()
@@ -165,13 +164,11 @@ class CoranClassifyScript(appionScript.AppionScript):
 			apDisplay.timeString(esttime),"cyan")
 
 		### do correspondence analysis
-		self.appiondb.dbd.ping()
 		corantime = time.time()
 		self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
 			boxsize=clippixdiam, maskpixrad=maskpixrad, 
 			numpart=numpart, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
-		self.appiondb.dbd.ping()
 
 		### make dendrogram
 		alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])

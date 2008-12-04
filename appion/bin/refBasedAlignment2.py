@@ -407,14 +407,12 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		for i in range(self.params['numiter']):
 			iternum = i+1
 			apDisplay.printColor("\n\nITERATION "+str(iternum), "green")
-			self.appiondb.dbd.ping()
 			alignedstack, partlist = alignment.refBasedAlignParticles(
 				usestack, templatestack, spiderstack,
 				self.params['xysearch'], self.params['xystep'],
 				self.params['numpart'], self.params['numtemplate'],
 				self.params['firstring'], self.params['lastring'], 
 				iternum=iternum, oldpartlist=oldpartlist)
-			self.appiondb.dbd.ping()
 			oldpartlist = partlist
 			usestack = alignedstack
 			templatestack = self.updateTemplateStack(alignedstack, partlist, iternum)

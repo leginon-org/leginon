@@ -356,7 +356,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.appiondb.dbd.ping()
 		self.runtime = 0
 		self.partlist = []
 		self.stack = {}
@@ -387,7 +386,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printColor("Running spider this can take awhile","cyan")
 
 		### run the alignment
-		self.appiondb.dbd.ping()
 		aligntime = time.time()
 		pixrad = int(round(self.params['partrad']/self.stack['apix']/self.params['bin']))
 		alignedstack, self.partlist = alignment.refFreeAlignParticles(
@@ -395,7 +393,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 			self.params['numpart'], pixrad,
 			self.params['firstring'], self.params['lastring'],
 			rundir = ".")
-		self.appiondb.dbd.ping()
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 

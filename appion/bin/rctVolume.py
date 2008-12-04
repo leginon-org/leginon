@@ -330,7 +330,6 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		for i in range(self.params['numiters']):
 			iternum = i+1
-			self.appiondb.dbd.ping()
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 

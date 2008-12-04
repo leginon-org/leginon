@@ -140,7 +140,6 @@ class NoRefClassScript(appionScript.AppionScript):
 		if len(factorlist) > self.norefdata['norefParams']['num_factors']:
 			apDisplay.printError("Requested factor list is longer than available factors")
 
-		self.appiondb.dbd.ping()
 		#run the classification
 		if self.params['method'] == "kmeans":
 			apDisplay.printMsg("Using the k-means clustering method")
@@ -150,7 +149,6 @@ class NoRefClassScript(appionScript.AppionScript):
 			apDisplay.printMsg("Using the hierarch clustering method")
 			classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
 				timestamp=self.timestamp, factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
-		self.appiondb.dbd.ping()
 
 
 		if self.params['commit'] is True:

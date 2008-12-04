@@ -674,7 +674,6 @@ class otrVolumeScript(appionScript.AppionScript):
 
 			for i in range(5):
 				iternum = i+1
-				self.appiondb.dbd.ping()
 				apDisplay.printMsg("running backprojection iteration "+str(iternum))
 				### xy-shift particles to volume projections
 				alignstack = backproject.otrParticleShift(volfile, alignstack, eulerfile, iternum, 

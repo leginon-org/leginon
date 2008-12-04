@@ -13,7 +13,6 @@ import cPickle
 #appion
 import apDisplay
 import apDatabase
-import apDB
 import apImage
 import apXml
 import apParam
@@ -29,13 +28,9 @@ class AppionLoop(appionScript.AppionScript):
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		### clean up any preliminary warnings
-		sys.stderr.write("\n\n")
-
 		### setup some expected values
+		sys.stderr.write("\n\n")
 		self.quiet = False
-		self.appiondb  = apDB.apdb
-		self.leginondb = apDB.db
 		self.startmem = mem.active()
 		self.t0 = time.time()
 		self._createDefaultStats()
@@ -72,7 +67,6 @@ class AppionLoop(appionScript.AppionScript):
 
 		### any custom init functions go here
 		self.onInit()
-		self.appiondb.dbd.ping()
 
 	#=====================
 	def run(self):
