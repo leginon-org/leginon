@@ -20,6 +20,8 @@ import apXmipp
 from apSpider import alignment
 import appionData
 import apProject
+import dbconfig
+import MySQLdb
 
 #=====================
 #=====================
@@ -117,19 +119,51 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		maxjobq = appionData.ApMaxLikeJobData()
 		maxjobq['runname'] = self.params['runname']
 		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		maxjobdata = maxjobq.query()
-		if maxjobdata:
+		maxjobdatas = maxjobq.query(results=1)
+		if maxjobdatas:
 			alignrunq = appionData.ApAlignRunData()
 			alignrunq['runname'] = self.params['runname']
 			alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-			alignrundata = alignrunq.query()
-			if alignrundata:
-				apDisplay.printError("This run name already exists in the database, please change the runname")
-			apDisplay.printWarning("This job already exists in the database, please change the runname unless rerunning")
+			alignrundata = alignrunq.query(results=1)
+			if maxjobdatas[0]['finished'] is True or alignrundata:
+				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
 		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		maxjobq['timestamp'] = self.timestamp
+		maxjobq['finished'] = False
+		maxjobq['hidden'] = False
 		maxjobq.insert()
+		self.params['maxlikejobid'] = maxjobq.dbid
+		print "self.params['maxlikejobid']",self.params['maxlikejobid']
 		return
+
+	#=====================
+	def readyUploadFlag(self):	
+		config = dbconfig.getConfig('appionData')
+		dbc = MySQLdb.Connect(**config)
+		cursor = dbc.cursor()
+		query = (
+			"  UPDATE ApMaxLikeJobData "
+			+" SET `finished` = '1' "
+			+" WHERE `DEF_id` = '"+str(self.params['maxlikejobid'])+"'"
+		)
+		cursor.execute(query)
+		cursor.close()
+		dbc.close()
+
+	#=====================
+	def estimateIterTime(self):
+		secperiter = 0.12037
+		calctime = (
+			(self.params['numpart']/1000.0)
+			*self.params['numrefs']
+			*(self.stack['boxsize']/self.params['bin'])**2
+			/self.params['psistep']
+			*secperiter
+		)
+		if self.params['mirror'] is True:
+			calctime *= 2.0
+		self.params['estimatedtime'] = calctime
+		apDisplay.printColor("Estimated first iteration time: "+apDisplay.timeString(calctime), "purple")
 
 	#=====================
 	def writeGaribaldiJobFile(self):
@@ -193,18 +227,18 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.insertMaxLikeJob()
-		self.appiondb.dbd.ping()
 		self.stack = {}
 		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		self.estimateIterTime()
 		self.dumpParameters()
 
 		### process stack to local file
-		localstack = os.path.join(self.params['outdir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+localstack+" apix="+str(self.stack['apix'])
+		self.params['localstack'] = os.path.join(self.params['outdir'], self.timestamp+".hed")
+		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1:
 			proccmd += " shrink="+str(self.params['bin'])
 		if self.params['highpass'] > 1:
@@ -215,7 +249,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### convert stack into single spider files
-		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(localstack)
+		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
 
 		### write garibaldi job file
 		self.writeGaribaldiJobFile()
@@ -262,6 +296,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
 		apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True)
 
+		### create a quick mrc
+		emancmd = "proc2d ref"+self.timestamp+"_ref000001.xmp average.mrc"
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
+
+		self.readyUploadFlag()
 		self.dumpParameters()
 
 #=====================
