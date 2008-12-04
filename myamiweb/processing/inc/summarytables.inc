@@ -310,61 +310,61 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	return $stacktable;
 }
 
-function coransummarytable($coranid) {
+function analysissummarytable($analysisid) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
-	$corandata = $particle->getCoranParams($coranid);
-	//echo print_r($corandata)."<br/>\n";
+	$analysisdata = $particle->getAnalysisParams($analysisid);
+	//echo print_r($analysisdata)."<br/>\n";
 
-	if ($_POST['updateDesc'.$coranid])
-		updateDescription('ApCoranRunData', $coranid, $_POST['newdescription'.$coranid]);
+	if ($_POST['updateDesc'.$analysisid])
+		updateDescription('ApAlignAnalysisRunData', $analysisid, $_POST['newdescription'.$analysisid]);
 
-	if ($_POST['hideCoran'.$coranid] == 'hide') {
-		$particle->updateHide('ApCoranRunData', $coranid, '1');
-		$corandata['hidden']='1';
-	} elseif ($_POST['unhideCoran'.$coranid] == 'unhide') {
-		$particle->updateHide('ApCoranRunData', $coranid, '0');
-		$corandata['hidden']='0';
+	if ($_POST['hideAnalysis'.$analysisid] == 'hide') {
+		$particle->updateHide('ApAlignAnalysisRunData', $analysisid, '1');
+		$analysisdata['hidden']='1';
+	} elseif ($_POST['unhideAnalysis'.$analysisid] == 'unhide') {
+		$particle->updateHide('ApAlignAnalysisRunData', $analysisid, '0');
+		$analysisdata['hidden']='0';
 	}
 
-	$j = "Coran Info: ".$corandata['runname']." (ID: $coranid)\n";
-	if ($corandata['hidden'] == 1) {
+	$j = "Analysis Info: ".$analysisdata['runname']." (ID: $analysisid)\n";
+	if ($analysisdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-		$j.= " <input class='edit' type='submit' name='unhideCoran".$coranid."' value='unhide'>\n";
+		$j.= " <input class='edit' type='submit' name='unhideAnalysis".$analysisid."' value='unhide'>\n";
 		$display_keys['hidden']="<font color='#cc0000'>HIDDEN</font>";
-	} else $j.= " <input class='edit' type='submit' name='hideCoran".$coranid."' value='hide'>\n";
+	} else $j.= " <input class='edit' type='submit' name='hideAnalysis".$analysisid."' value='hide'>\n";
 
-	$corantable.= apdivtitle($j);
+	$analysistable.= apdivtitle($j);
 	//echo $j."<br/>\n";
 
-	$corantable.= "<table border='0'>\n";
-	$dendrogram = $corandata['path']."/dendrogram.png";
+	$analysistable.= "<table border='0'>\n";
+	$dendrogram = $analysisdata['path']."/dendrogram.png";
 	if (file_exists($dendrogram)) {
-		$corantable.= "<tr>\n";
-		$corantable.= "<td rowspan='30' align='center' valign='top'>";
-		$corantable.= "<a href='loadimg.php?filename=$dendrogram'><br/>\n";
-		$corantable.= "<img src='loadimg.php?filename=$dendrogram&s=100' height='100' border='1'></a><br/>\n";
-		$corantable.= "<i>dendrogram</i>\n";
-		$corantable.= "</td>\n";
-		$corantable.= "</tr>\n\n";
+		$analysistable.= "<tr>\n";
+		$analysistable.= "<td rowspan='30' align='center' valign='top'>";
+		$analysistable.= "<a href='loadimg.php?filename=$dendrogram'>\n";
+		$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=160' height='160' border='1'></a><br/>\n";
+		$analysistable.= "<i>dendrogram</i>\n";
+		$analysistable.= "</td>\n";
+		$analysistable.= "</tr>\n\n";
 	} #endif
 
 	// add edit button to description if logged in
-	$descDiv = ($_SESSION['username']) ? editButton($coranid, $corandata['description']) : $corandata['description'];
+	$descDiv = ($_SESSION['username']) ? editButton($analysisid, $analysisdata['description']) : $analysisdata['description'];
 
-	$display_keys['date time'] = $corandata['DEF_timestamp'];
+	$display_keys['date time'] = $analysisdata['DEF_timestamp'];
 	$display_keys['description']=$descDiv;
-	$display_keys['path']=$corandata['path'];
-	$display_keys['number of factors']=$corandata['num_factors'];
-	$display_keys['run time']=round($corandata['run_seconds']/60.0,2)." minutes";
-	$display_keys['mask diam']=$corandata['mask_diam']." &Aring;ngstroms";
+	$display_keys['path']=$analysisdata['path'];
+	$display_keys['number of factors']=$analysisdata['num_factors'];
+	$display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
+	$display_keys['mask diam']=$analysisdata['mask_diam']." &Aring;ngstroms";
 
 	foreach($display_keys as $k=>$v) {
-	        $corantable.= formatHtmlRow($k,$v);
+	        $analysistable.= formatHtmlRow($k,$v);
 	}
-	$corantable.= "</table>\n";
-	$corantable.= "<p>\n";
-	return $corantable;
+	$analysistable.= "</table>\n";
+	$analysistable.= "<p>\n";
+	return $analysistable;
 }
 
 ?>
