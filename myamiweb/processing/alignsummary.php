@@ -64,7 +64,7 @@ if ($stackdatas) {
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid, true);
 			echo "<span style='border: 1px'>&nbsp;"
-				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
+				."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 			echo "</td></tr>\n";
 			//print_r($analysisdatas);
@@ -74,7 +74,7 @@ if ($stackdatas) {
 				$analysisid = $analysisdata['DEF_id'];
 				echo analysissummarytable($analysisid);
 				echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-					."<a href='runCoranCluster.php?expId=6143&analysisId=$analysisid'>"
+					."<a href='runCoranCluster.php?expId=$expId&analysisId=$analysisid'>"
 					."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
 				echo "</td></tr>\n";
 			}
@@ -83,7 +83,7 @@ if ($stackdatas) {
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid);
 			echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
+				."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
 			echo "</td></tr>\n";
 		}
