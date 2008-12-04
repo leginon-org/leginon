@@ -18,8 +18,8 @@ $expId = $_GET['expId'];
 $projectId = (int) getProjectFromExpId($expId);
 //echo "Project ID: ".$projectId." <br/>\n";
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-if($_GET['coran'])
-	$formAction.="&coran=1";
+if($_GET['analysis'])
+	$formAction.="&analysis=1";
 if ($_GET['showHidden'])
 	$formAction.="&showHidden=True";
 
@@ -32,8 +32,8 @@ $particle = new particledata();
 
 // find each stack entry in database
 //$stackIds = $particle->getAlignStackIds($expId, True);
-if ($_GET['coran']) {
-	$stackdatas = $particle->getAlignStackIdsWithCoran($expId, $projectId);
+if ($_GET['analysis']) {
+	$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 	$hidestackdatas = $stackdatas;
 } elseif (!$_GET['showHidden']) {
 	$stackdatas = $particle->getAlignStackIds($expId, $projectId, False);
@@ -56,26 +56,26 @@ if ($stackdatas) {
 		echo "<table cellspacing='8' cellpading='5' border='0'>\n";
 		$alignstackid = $stackdata['alignstackid'];
 		if ($_GET['showHidden'])
-			$corandatas = $particle->getCoranRunForAlignStack($alignstackid, $projectId, true);
+			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, true);
 		else
-			$corandatas = $particle->getCoranRunForAlignStack($alignstackid, $projectId, false);
-		if ($corandatas) {
-			// print coran table
+			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
+		if ($analysisdatas) {
+			// print analysis table
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid, true);
 			echo "<span style='border: 1px'>&nbsp;"
 				."<a href='runCoranClassify.php?expId=6143&alignId=$alignstackid'>"
 				."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 			echo "</td></tr>\n";
-			//print_r($corandatas);
-			foreach ($corandatas as $corandata) {
+			//print_r($analysisdatas);
+			foreach ($analysisdatas as $analysisdata) {
 				echo "<tr><td>\n";
-				//echo print_r($corandata)."<br/>\n";;
-				$coranid = $corandata['DEF_id'];
-				echo coransummarytable($coranid);
+				//echo print_r($analysisdata)."<br/>\n";;
+				$analysisid = $analysisdata['DEF_id'];
+				echo analysissummarytable($analysisid);
 				echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-					."<a href='runParticleCluster.php?expId=6143&coranId=$coranid'>"
-					."Run Particle Clustering On Coran Id $coranid</a>&nbsp;</span><br/>\n";
+					."<a href='runParticleCluster.php?expId=6143&analysisId=$analysisid'>"
+					."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
 				echo "</td></tr>\n";
 			}
 		} else {
@@ -98,7 +98,7 @@ if ($stackdatas) {
 
 if (count($stackdatas) != count($hidestackdatas) && !$_GET['showHidden']) {
 	$numhidden = count($hidestackdatas) - count($stackdatas);
-	echo "<br/><a href='".$formAction."&showHidden=True'>[Show ".$numhidden." hidden stacks]</a><br/>\n";
+	echo "<a href='".$formAction."&showHidden=True'>[Show ".$numhidden." hidden aligned stacks]</a><br/><br/>\n";
 }
 
 processing_footer();
