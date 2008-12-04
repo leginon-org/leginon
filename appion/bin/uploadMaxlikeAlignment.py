@@ -87,22 +87,36 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def sortFolder(self, lastiter):
+		numsort = 0
 		apDisplay.printMsg("Sorting files into clean folders")
 		### move files for all particle iterations
+		files = []
 		for i in range(lastiter+1):
 			iterdir = "iter%03d"%(i)
 			apParam.createDirectory(iterdir, warning=False)
-			wildcard = "part*_it*%03d*.*"%(i)
-			files = glob.glob(wildcard)
+			wildcard = "part*_it*%03d_*.*"%(i)
+			files.extend(glob.glob(wildcard))
+			wildcard = "part*_it*%03d.*"%(i)
+			files.extend(glob.glob(wildcard))
 			for filename in files:
-				shutil.move(filename,iterdir)
+				if os.path.isfile(filename):
+					numsort += 1
+					shutil.move(filename,iterdir)
+		if numsort < 3:
+			apDisplay.printError("Problem in iteration file sorting")
+		apDisplay.printMsg("Sorted "+str(numsort)+" iteration files")
 		### move files for all reference iterations
+		refsort = 0
 		refdir = "refalign"
 		apParam.createDirectory(refdir, warning=False)
 		wildcard = "ref*_it*.*"
 		files = glob.glob(wildcard)
 		for filename in files:
+			refsort += 1
 			shutil.move(filename, refdir)
+		#if refsort < 5:
+		#	apDisplay.printError("Problem in reference file sorting")
+		apDisplay.printMsg("Sorted "+str(refsort)+" reference files")
 		return
 
 	#=====================
@@ -250,6 +264,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
 		maxlikeq['fast'] = runparams['fast']
 		maxlikeq['mirror'] = runparams['mirror']
+		maxlikeq['init_method'] = "xmipp default"
 		maxlikeq['job'] = self.getMaxLikeJob(runparams)
 
 		### finish alignment run
