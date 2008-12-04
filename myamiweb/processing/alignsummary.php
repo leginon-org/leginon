@@ -74,7 +74,7 @@ if ($stackdatas) {
 				$analysisid = $analysisdata['DEF_id'];
 				echo analysissummarytable($analysisid);
 				echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-					."<a href='runParticleCluster.php?expId=6143&analysisId=$analysisid'>"
+					."<a href='runCoranCluster.php?expId=6143&analysisId=$analysisid'>"
 					."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
 				echo "</td></tr>\n";
 			}
