@@ -58,11 +58,16 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		q = leginondata.AcquisitionImageData(session=self.session,preset=childpresetq)
 		images = self.research(datainstance=q, readimages=False)
 		self.imageids = []
+		nongrid = 0
 		for image in images:
-			anc = self.getAncestor(image)
-			if anc is not None:
-				self.imageids.append((image.dbid,anc.dbid))
-
+			if image['grid'] is None:
+				nongrid += 1
+			else:
+				anc = self.getAncestor(image)
+				if anc is not None:
+					self.imageids.append((image.dbid,anc.dbid))
+		if nongrid > 0:
+			self.logger.warning('%d images are not from grids loaded by a robot' % nongrid)
 		if not self.imageids:
 			self.logger.error('No %s images in session' % (self.childpreset,))
 
