@@ -35,10 +35,14 @@ class DBDataKeeper(object):
 			self.dbd = sqldict.SQLDict(**kwargs)
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
+		self.mysqldb = self.dbd.db
 		self.lock = threading.RLock()
 
 	def connect_kwargs(self):
 		return self.dbd.connect_kwargs()
+
+	def ping(self):
+		self.mysqldb.ping()
 
 	def direct_query(self, dataclass, id, readimages=True):
 		dummy = dataclass()
