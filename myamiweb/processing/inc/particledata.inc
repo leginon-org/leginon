@@ -1565,15 +1565,22 @@ class particledata {
 		return $r;
 	}
 
-	function getFinishedMaxLikeJobs ($sessionId, $projectId) {
-		$q = "SELECT maxjob.* "
+	function getFinishedMaxLikeJobs ($projectId) {
+		$q = "SELECT maxjob.*, path.path "
 			."FROM ApMaxLikeJobData AS maxjob "
+			."LEFT JOIN ApPathData as path ON "
+			."  maxjob.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApMaxLikeRunData as maxrun ON "
+			."  maxrun.`REF|ApMaxLikeJobData|job` = maxjob.`DEF_id` "
 			."WHERE "
 			."  maxjob.`project|projects|project` = '$projectId' "
 			." AND "
 			."  maxjob.`finished` = '1' "
 			." AND "
-			."  maxjob.`hidden` != '1' ";
+			."  maxjob.`hidden` != '1' "
+			." AND "
+			."  maxrun.`REF|ApMaxLikeJobData|job` IS NULL "
+			." ORDER BY maxjob.`DEF_id` DESC ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
