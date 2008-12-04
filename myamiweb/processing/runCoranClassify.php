@@ -42,7 +42,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$particle = new particledata();
 	$alignIds = $particle->getAlignStackIds($sessionId, $projectId, true);
 	$alignruns=count($alignIds);
-	$coranIds = $particle->getCoranRuns($sessionId, $projectId, true);
+	$coranIds = $particle->getAnalysisRuns($sessionId, $projectId, true);
 	//foreach ($coranIds as $coranid)
 	//	echo print_r($coranid)."<br/><br/>\n";
 	$coranruns=count($coranIds);
@@ -254,7 +254,7 @@ function runSpiderCoranClassify($runjob=false) {
 		exit;
 	}
 	else {
-		processing_header("No Ref Align Run Params","No Ref Align Params");
+		processing_header("Spider Coran Classification","Spider Coran Classification");
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>
