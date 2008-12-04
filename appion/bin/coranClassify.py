@@ -151,12 +151,13 @@ class CoranClassifyScript(appionScript.AppionScript):
 		### convert stack to spider
 		self.alignstackdata = self.getAlignedStack()
 		maskpixrad = self.params['maskrad']/self.alignstackdata['pixelsize']
+		clippixdiam = int(math.ceil(maskpixrad)+1)*2
 		apDisplay.printMsg("Pixel mask radius="+str(maskpixrad)) 
 
-		boxsize = self.alignstackdata['boxsize']
 		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['spiderfile'])
 		alignedstack = os.path.join(self.params['outdir'], self.alignstackdata['spiderfile'])
-		shutil.copy(oldalignedstack, alignedstack)
+		emancmd = "proc2d "+oldalignedstack+" "+alignedstack+" clip="+str(clippixdiam)+","+str(clippixdiam)
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		numpart = self.getNumAlignedParticles()
 
 		esttime = apAlignment.estimateTime(numpart, maskpixrad)
@@ -167,7 +168,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		self.appiondb.dbd.ping()
 		corantime = time.time()
 		self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
-			boxsize=boxsize, maskpixrad=maskpixrad, 
+			boxsize=clippixdiam, maskpixrad=maskpixrad, 
 			numpart=numpart, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 		self.appiondb.dbd.ping()
