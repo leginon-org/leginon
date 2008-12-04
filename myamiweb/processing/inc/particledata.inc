@@ -1125,9 +1125,9 @@ class particledata {
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
-		//echo $q."<br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
