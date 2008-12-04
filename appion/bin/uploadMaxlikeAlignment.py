@@ -215,7 +215,21 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			apDisplay.printError("Could not find run parameters file: "+paramfile)
 		f = open(paramfile, "r")
 		runparams = cPickle.load(f)
+		if not 'localstack' in runparams:
+			runparams['localstack'] = self.params['timestamp']+".hed"
 		return runparams
+
+	#=====================
+	def getMaxLikeJob(self, runparams):
+		maxjobq = appionData.ApMaxLikeJobData()
+		maxjobq['runname'] = runparams['runname']
+		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(runparams['outdir']))
+		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
+		maxjobq['timestamp'] = runparams['timestamp']
+		maxjobdata = maxjobq.query(results=1)
+		if not maxjobdata:
+			return None
+		return maxjobdata[0]
 
 	#=====================
 	def insertRunIntoDatabase(self, runparams, lastiter):
@@ -236,6 +250,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		#maxlikeq['mask_diam'] = 2.0*runparams['maskrad']
 		maxlikeq['fast'] = runparams['fast']
 		maxlikeq['mirror'] = runparams['mirror']
+		maxlikeq['job'] = self.getMaxLikeJob(runparams)
 
 		### finish alignment run
 		alignrunq['maxlikerun'] = maxlikeq
@@ -350,9 +365,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def createAlignedStacks(self, stackid, partlist):
+	def createAlignedStacks(self, stackid, partlist, origstackfile):
 		stackdata = apStack.getOnlyStackData(stackid)
-		origstackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
 		imagesdict = apImagicFile.readImagic(origstackfile)
 		spiderstackfile = os.path.join(self.params['outdir'], "alignstack.spi")
 		apFile.removeFile(spiderstackfile)
@@ -399,7 +413,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.writePartDocFile(partlist)
 
 		### create aligned stacks
-		stackfile = self.createAlignedStacks(runparams['stackid'], partlist)
+		stackfile = self.createAlignedStacks(runparams['stackid'], partlist, runparams['localstack'])
 
 		### insert into databse
 		self.insertRunIntoDatabase(runparams, lastiter)
