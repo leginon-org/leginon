@@ -120,7 +120,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo docpop('stack','<b>Select a stack of particles to use</b>');
 		echo "<br/>\n<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack[stackid]);
+			$stackparams=$particle->getStackParams($stack['stackid']);
 
 			// get pixel size and box size
 			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
@@ -137,7 +137,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			echo "<option value='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " selected";
-			echo ">$runname ($totprtls prtls,";
+			echo ">".$stack['stackid'].": $runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</option>\n";
 		}
