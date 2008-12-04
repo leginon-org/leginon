@@ -1539,7 +1539,7 @@ class particledata {
 
 	function getMaxLikeRuns ($sessionId, $projectId) {
 		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
-			."FROM ApMaxLikeRunData AS maxlike "
+			."FROM ApMaxLikeJobData AS maxlike "
 			."LEFT JOIN ApAlignRunData AS arun ON "
 			." (arun.`REF|ApMaxLikeRunData|maxlikerun` = maxlike.`DEF_id`) "
 			."LEFT JOIN ApAlignStackData AS ast ON "
@@ -1559,9 +1559,24 @@ class particledata {
 			." AND "
 			."  ast.`project|projects|project` = '$projectId' "
 			."ORDER BY alignstackid DESC";
-		//echo $q."<br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getFinishedMaxLikeJobs ($sessionId, $projectId) {
+		$q = "SELECT maxjob.* "
+			."FROM ApMaxLikeJobData AS maxjob "
+			."WHERE "
+			."  maxjob.`project|projects|project` = '$projectId' "
+			." AND "
+			."  maxjob.`finished` = '1' "
+			." AND "
+			."  maxjob.`hidden` != '1' ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 

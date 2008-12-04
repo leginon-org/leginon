@@ -302,6 +302,7 @@ if ($expId) {
 		$norefrun = count($subclusterjobs['maxlikeali']['running']);
 		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
 		$maxlikerun = count($subclusterjobs['maxlikeali']['running']);
+		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($expId, $projectId));
 		$alignrun   = $norefrun+$refbasedrun+$maxlikerun;
 		$alignqueue  = count($subclusterjobs['maxlikeali']['queued'])
 			+ count($subclusterjobs['refbasedali']['queued'])
@@ -311,7 +312,8 @@ if ($expId) {
 		$alignresults[] = ($alignruns==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
 		$alignresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
-		$alignresults[] = ($maxlikerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikerun running</a>";
+		$alignresults[] = ($maxlikerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikejobs running</a>";
+		$alignresults[] = ($maxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$maxlikejobs ready to upload</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "$alignqueue queued";
 
 		$nruns=array();
