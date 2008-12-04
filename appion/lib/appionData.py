@@ -412,6 +412,7 @@ class ApMaxLikeJobData(Data):
 			('path', ApPathData),
 			('project|projects|project', int),
 			('finished', bool),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApMaxLikeJobData=ApMaxLikeJobData
