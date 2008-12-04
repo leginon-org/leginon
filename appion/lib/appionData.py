@@ -411,7 +411,7 @@ class ApMaxLikeJobData(Data):
 			('timestamp', str),
 			('path', ApPathData),
 			('project|projects|project', int),
-			('uploaded', bool),
+			('finished', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApMaxLikeJobData=ApMaxLikeJobData
@@ -425,6 +425,7 @@ class ApMaxLikeRunData(Data):
 			('init_method', str),
 			('fast', bool),
 			('run_seconds', int),
+			('job', ApMaxLikeJobData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApMaxLikeRunData=ApMaxLikeRunData
