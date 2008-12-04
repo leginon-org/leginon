@@ -6,19 +6,23 @@ import sys
 import random
 import math
 import shutil
+import glob
 import cPickle
 #appion
 import appionScript
 import apDisplay
 import apAlignment
 import apFile
+import numpy
 import apTemplate
 import apStack
 import apParam
 import apEMAN
 import apXmipp
 from apSpider import alignment
+from pyami import spider
 import appionData
+import apImagicFile
 import apProject
 import dbconfig
 import MySQLdb
@@ -103,7 +107,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "maxlike", self.params['runname'])
+		self.params['outdir'] = os.path.join(uppath, "align", self.params['runname'])
 
 	#=====================
 	def dumpParameters(self):
@@ -164,6 +168,20 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			calctime *= 2.0
 		self.params['estimatedtime'] = calctime
 		apDisplay.printColor("Estimated first iteration time: "+apDisplay.timeString(calctime), "purple")
+
+	#=====================
+	def createAverageStack(self):
+		searchstr = "part"+self.timestamp+"_ref0*.xmp"
+		files = glob.glob(searchstr)
+		files.sort()
+		stack = []
+		for fname in files:
+			refarray = spider.read(fname)
+			stack.append(refarray)
+		stackarray = numpy.asarray(stack, dtype=numpy.float32)
+		print stackarray.shape
+		apImagicFile.writeImagic(stackarray, "part"+self.timestamp+"_average.hed")
+		return
 
 	#=====================
 	def writeGaribaldiJobFile(self):
@@ -299,6 +317,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### create a quick mrc
 		emancmd = "proc2d ref"+self.timestamp+"_ref000001.xmp average.mrc"
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
+
+		self.createAverageStack()
 
 		self.readyUploadFlag()
 		self.dumpParameters()
