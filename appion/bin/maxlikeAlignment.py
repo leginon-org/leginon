@@ -274,12 +274,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		mpirun = apParam.getExecPath("mpirun")
 		if False and nproc > 3 and mpirun is not None:
 			### use multi-processor
-			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d")
+			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
 			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 		else:
 			### use single processor
-			xmippexe = apParam.getExecPath("xmipp_ml_align2d")
+			xmippexe = apParam.getExecPath("xmipp_ml_align2d", die=True)
 			apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True, showcmd=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
