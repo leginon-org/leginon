@@ -283,6 +283,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignstackq['imagicfile'] = "alignstack.hed"
 		alignstackq['spiderfile'] = "alignstack.spi"
 		alignstackq['avgmrcfile'] = "average.mrc"
+		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
 		alignstackq['iteration'] = lastiter
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		alignstackq['alignrun'] = alignrunq
@@ -293,9 +294,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
-		averagefile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
-		if not os.path.isfile(averagefile):
-			apDisplay.printError("could not find average stack file: "+averagefile)
+		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+		refstackfile = os.path.join(self.params['outdir'], alignstackq['refstackfile'])
+		if not os.path.isfile(refstackfile):
+			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
 		alignstackq['boxsize'] = math.floor(apStack.getStackBoxsize(runparams['stackid'])/runparams['bin'])
 		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']

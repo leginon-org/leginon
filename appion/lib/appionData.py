@@ -490,6 +490,7 @@ class ApAlignStackData(Data):
 			('imagicfile', str),
 			('spiderfile', str),
 			('avgmrcfile', str),
+			('refstackfile', str),
 			('iteration', int),
 			('path', ApPathData),
 			('stack', ApStackData),
