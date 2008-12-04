@@ -135,7 +135,7 @@ function runMaxLikeAlign($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if (false & $runjob != "no") {
+	if ($runjob) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
