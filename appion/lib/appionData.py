@@ -537,6 +537,8 @@ class ApAlignReferenceData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApAlignReferenceData=ApAlignReferenceData
 
+### Analysis data tables
+
 class ApAlignAnalysisRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -573,6 +575,65 @@ class ApCoranEigenImageData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCoranEigenImageData = ApCoranEigenImageData
+
+### Improved cluster class data tables
+
+class ApSpiderClassParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('num_classes', int),
+			('factor_list', str),
+			('method', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApSpiderClusterParamsData=ApSpiderClusterParamsData
+
+class ApClassRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('num_classes', int),
+			('description', str),
+			('hidden', bool),
+			('boxsize', int),
+			('pixelsize', float),
+			('num_particles', int),
+			('avg_imagicfile', str),
+			('var_imagicfile', str),
+			('path', ApPathData),
+			('alignrun', ApAlignRunData),
+			('analysisrun', ApAlignAnalysisRunData),
+			('spiderparams', ApSpiderClassParamsData),
+			('project|projects|project', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApClusterRunData=ApClusterRunData
+
+class ApClassParticlesData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('partnum', int),
+			('refnum', int),
+			('classreference', ApClassReferenceData),
+			('classrun', ApClassRunData),
+			('alignparticle', ApAlignParticlesData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignParticlesData=ApAlignParticlesData
+
+class ApClassReferenceData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refnum', int),
+			('avg_mrcfile', str),
+			('var_mrcfile', str),
+			('frc_resolution', float),
+			('num_particles', int),
+			('classrun', ApClassRunData),
+			('path', ApPathData),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApAlignReferenceData=ApAlignReferenceData
 
 ### Reconstruction tables ###
 

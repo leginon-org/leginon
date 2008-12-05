@@ -73,20 +73,15 @@ class NoRefClassScript(appionScript.AppionScript):
 		return partlist
 
 	#=====================
-	def getNoRefPart(self, partnum):
-		### broken
-		sys.exit(1)
+	def getAlignParticlesData(self, partnum):
 		alignpartq = appionData.ApAlignParticlesData()
-		alignpartq['alignstack'] = self.norefdata
-		stackid = self.norefdata['stack'].dbid
-		stackpart = apStack.getStackParticle(stackid, partnum)
-		norefpartq['particle'] = stackpart
-		norefparts = norefpartq.query(results=1)
-
-		return norefparts[0]
+		alignpartq['alignstack'] = self.analysisdata['alignstack']
+		alignpartq['partnum'] = partnum
+		alignparts = alignpartq.query(results=1)
+		return alignparts[0]
 
 	#=====================
-	def insertCluster(self, classavg=None, classvar=None, insert=False):
+	def insertClusterRun(self, classavg=None, classvar=None, insert=False):
 		### broken
 		sys.exit(1)
 		# create a norefParam object
@@ -135,27 +130,29 @@ class NoRefClassScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-
+		### get database information
 		alignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], self.analysisdata['alignstack']['spiderstack'])
-		numpart = analysisdata['alignstack']['num_particles']
+		numpart = self.analysisdata['alignstack']['num_particles']
+		corandata = os.path.join(self.analysisdata['path']['path'],"coran/corandata")
+
+		### parse factor list
 		factorlist = self.params['factorstr'].split(",")
 		apDisplay.printMsg("using factorlist "+str(factorlist))
-		if len(factorlist) > self.norefdata['norefParams']['num_factors']:
+		if len(factorlist) > self.analysisdata['coranrun']['num_factors']:
 			apDisplay.printError("Requested factor list is longer than available factors")
 
 		#run the classification
 		if self.params['method'] == "kmeans":
 			apDisplay.printMsg("Using the k-means clustering method")
 			classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
-				timestamp=self.timestamp, factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
+				timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 		else:
 			apDisplay.printMsg("Using the hierarch clustering method")
 			classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
-				timestamp=self.timestamp, factorlist=factorlist, corandata="coran/corandata", dataext=".spi")
-
+				timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 
 		if self.params['commit'] is True:
-			self.insertNoRefClass(classavg, classvar, insert=True)
+			self.insertClusterRun(classavg, classvar, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 
