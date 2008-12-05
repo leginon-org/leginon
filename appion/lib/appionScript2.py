@@ -47,8 +47,8 @@ class AppionScript(object):
 		### setup correct database
 		if self.params['projectid'] is not None:
 			# use a project database
-			newapdb = "ap"+str(self.params['projectid'])
-			sinedon.setConfig('appionData', db=newapdb)
+			newdbname = "ap"+str(self.params['projectid'])
+			sinedon.setConfig('appionData', db=newdbname)
 
 		### check if user wants to print help message
 		if 'commit' in self.params:
