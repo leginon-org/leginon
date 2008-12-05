@@ -80,7 +80,7 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 
 		# get reference-free classification and reclassification parameters
 		if self.params['stackid'] is not None:
@@ -90,7 +90,7 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 			apDisplay.printError("stack not in the database")
 
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "norefImagic", self.params['runId'])
+		self.params['rundir'] = os.path.join(uppath, "norefImagic", self.params['runId'])
 
 
 	def insertAlignment(self, imagicstack, insert=False):

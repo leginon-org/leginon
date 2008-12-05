@@ -38,8 +38,8 @@ class testScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setOutDir(self):
-		self.params['outdir'] = os.path.join(os.getcwd(), self.timestamp)
+	def setRunDir(self):
+		self.params['rundir'] = os.path.join(os.getcwd(), self.timestamp)
 		return
 
 	#=====================

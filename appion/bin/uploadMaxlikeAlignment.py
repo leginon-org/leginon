@@ -52,14 +52,14 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		if self.params["jobid"] is not None:
 			self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 			path = self.stackdata['path']['path']
 			uppath = os.path.abspath(os.path.join(path, "../.."))
-			self.params['outdir'] = os.path.join(uppath, "maxlike", self.params['runname'])
+			self.params['rundir'] = os.path.join(uppath, "maxlike", self.params['runname'])
 		else:
-			self.params['outdir'] = os.path.abspath(".")
+			self.params['rundir'] = os.path.abspath(".")
 
 	#=====================
 	def findLastIterNumber(self):

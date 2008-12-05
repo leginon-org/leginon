@@ -131,7 +131,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 	
 		if self.params['imagic3d0Id'] is not None:
 			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
@@ -139,7 +139,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else:
 			apDisplay.printError("3d0 initial model not in database")
 
-		self.params['outdir'] = os.path.join(path, self.params['runid'])
+		self.params['rundir'] = os.path.join(path, self.params['runid'])
 
 
 	def upload3dRunData(self):

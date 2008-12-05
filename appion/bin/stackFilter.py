@@ -44,15 +44,13 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("new stack name was not defined")
 		if self.params['minx'] is None or self.params['miny'] is None or self.params['maxx'] is None or self.params['maxy'] is None:
 			apDisplay.printError("Please define all minx, miny, maxx, maxy")
-		if self.params['outdir'] is None:
-			self.setOutDir()
 			
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
-		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 
 	#=====================
 	def start(self):

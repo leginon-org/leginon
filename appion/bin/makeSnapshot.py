@@ -39,8 +39,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 		self.params['file'] = os.path.abspath(self.params['file'])
 
 	#=====================
-	def setOutDir(self):
-		self.params['outdir'] = os.getcwd()
+	def setRunDir(self):
+		self.params['rundir'] = os.getcwd()
 
 	#=====================
 	def start(self):

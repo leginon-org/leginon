@@ -232,12 +232,12 @@ class fakeStackScript(appionScript.AppionScript):
 		self.processdirname = self.functionname
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		#auto set the output directory
 		stackdata = apStack.getOnlyStackData(self.params['stack1'], msg=False)
 		path = os.path.abspath(stackdata['path']['path'])
 		path = os.path.dirname(path)
-		self.params['outdir'] = os.path.join(path, "faketwostack", self.params['runid'])
+		self.params['rundir'] = os.path.join(path, "faketwostack", self.params['runid'])
 
 	#=====================
 	def checksizes(self):

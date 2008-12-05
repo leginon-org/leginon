@@ -21,7 +21,7 @@ class UploadReconScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --runid=<name> --stackid=<int> --modelid=<int>\n\t "
 			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
-			+"--contour=<contour> --outdir=/path/ --commit ]")
+			+"--contour=<contour> --rundir=/path/ --commit ]")
 		self.parser.add_option("-r", "--runid", dest="runid", 
 			help="Name assigned to this reconstruction", metavar="TEXT")
 		self.parser.add_option("-i", "--oneiter", dest="oneiter", type="int",
@@ -36,7 +36,7 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Jobfile id in the database", metavar="INT")
 		self.parser.add_option("-p", "--package", dest="package", default="EMAN",
 			help="Reconstruction package used (EMAN by default)", metavar="TEXT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
+		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
 			help="Location of reconstruction files", metavar="PATH")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit reconstruction to database")
@@ -78,11 +78,13 @@ class UploadReconScript(appionScript.AppionScript):
 			self.params['jobinfo'] = None
 		if self.params['chimeraonly'] is True:
 			self.params['commit'] = False
+		if not os.path.exists(self.params['rundir']):
+			apDisplay.printError("upload directory does not exist: "+self.params['rundir'])
 
 	def tryToGetJobID(self):
 		jobname = self.params['runid'] + '.job'
 		jobtype = 'recon'
-		jobpath = self.params['outdir']
+		jobpath = self.params['rundir']
 		qpath = appionData.ApPathData(path=jobpath)
 		q = appionData.ApClusterJobData(name=jobname, jobtype=jobtype, path=qpath)
 		results = q.query()
@@ -100,18 +102,17 @@ class UploadReconScript(appionScript.AppionScript):
 			return ''
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		if self.params['jobinfo']:
-			self.params['outdir'] = self.params['jobinfo']['path']['path']
+			self.params['rundir'] = self.params['jobinfo']['path']['path']
 		else:
 			apDisplay.printError("please specify an output directory")
-		if not os.path.exists(self.params['outdir']):
-			apDisplay.printError("upload directory does not exist: "+self.params['outdir'])
+
 
 	#=====================
 	def start(self):
 		### create temp directory for extracting data
-		self.params['tmpdir'] = os.path.join(self.params['outdir'], "temp")
+		self.params['tmpdir'] = os.path.join(self.params['rundir'], "temp")
 		apParam.createDirectory(self.params['tmpdir'], warning=True)
 
 		### make sure that the stack & model IDs exist in database

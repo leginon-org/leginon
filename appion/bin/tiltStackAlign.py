@@ -51,10 +51,10 @@ class tiltStackAlign(appionScript.AppionScript):
 			apDisplay.printError("Enter run name")
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		self.tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
 		stackpath = self.tiltstackdata['path']['path']
-		self.params['outdir'] = os.path.abspath(os.path.join(stackpath, "../alignedstacks", self.params['runname']))
+		self.params['rundir'] = os.path.abspath(os.path.join(stackpath, "../alignedstacks", self.params['runname']))
 
 	#=====================
 	def getPartcileLists(self):

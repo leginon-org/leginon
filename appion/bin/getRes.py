@@ -33,8 +33,8 @@ class getResScript(appionScript.AppionScript):
 			apDisplay.printError("Angstroms per pixels was not defined")
 
 	#=====================
-	def setOutDir(self):
-		self.params['outdir'] = os.getcwd()
+	def setRunDir(self):
+		self.params['rundir'] = os.getcwd()
 
 	#=====================
 	def start(self):

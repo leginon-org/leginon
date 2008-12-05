@@ -60,11 +60,11 @@ class CoranClassifyScript(appionScript.AppionScript):
 			apDisplay.printError("too many factors defined: "+str(self.params['numfactors']))
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "coran", self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, "coran", self.params['runname'])
 
 	#=====================
 	def checkCoranRun(self):

@@ -81,7 +81,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("particle radius is too big for stack boxsize")	
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['tiltstackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
@@ -90,15 +90,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			tempstr += str(cnum)+"-"
 		classliststr = tempstr[:-1]
 
-		self.params['outdir'] = os.path.join(uppath, "rctvolume", 
+		self.params['rundir'] = os.path.join(uppath, "rctvolume", 
 			self.params['runname'], "class"+str(classliststr) )
-
-		### check if path exists in db already
-		rctrunq = appionData.ApRctRunData()
-		rctrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		rctdata = rctrunq.query()
-		if rctdata:
-			apDisplay.printError("rct data already exists in database")
 
 	#=====================
 	def getParticleNoRefInPlaneRotation(self, stackpartdata):

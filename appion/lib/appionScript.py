@@ -202,7 +202,7 @@ class AppionScript(object):
 		self.processdirname = self.functionname
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""

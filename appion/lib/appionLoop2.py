@@ -27,50 +27,12 @@ class AppionLoop(appionScript.AppionScript):
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		### setup some expected values
-		sys.stderr.write("\n\n")
-		self.quiet = False
-		self.startmem = mem.active()
-		self.t0 = time.time()
-		self._createDefaultStats()
-		self.timestamp = apParam.makeTimestamp()
-		self.functionname = apParam.getFunctionName(sys.argv[0])
-		apDisplay.printMsg("Function name: "+self.functionname)
-		self.appiondir = apParam.getAppionDirectory()
-		apParam.setUmask()
-
-		### setup default parser: output directory, etc.
-		self.parser = OptionParser()
-		self._setupGlobalParserOptions()
-		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
-		self._addDefaultParams()
-
-		### setup correct database
-		if self.params['projectid'] is not None:
-			# use a project database
-			newdbname = "ap"+str(self.params['projectid'])
-			sinedon.setConfig('appionData', db=newdbname)
-
-		### check if user wants to print help message
-		if self.params['commit'] is False:
-			apDisplay.printWarning("Not committing data to database")
-		else:
-			apDisplay.printMsg("Committing data to database")
-		self.checkConflicts()
-
-		### setup output directory
-		self.setProcessingDirName()
-		self.setupRunDirectory()
-		self.params['rundir'] = self.params['rundir']
-		if apDatabase.queryDirectory(self.params['rundir']):
-			self.preExistingDirectoryError()
-
-		### write function log
-		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
-
-		### any custom init functions go here
-		self.onInit()
+		appionScript.__init__()
+		### extra appionLoop functions:
+		self.setFunctionResultKeys()
+		self._setRunAndParameters(self.params)
+		self._createOutputDirs()
+		self._readDoneDict()
 
 	#=====================
 	def run(self):

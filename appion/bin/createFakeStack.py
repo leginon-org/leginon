@@ -192,13 +192,13 @@ class fakeStackScript(appionScript.AppionScript):
 		self.processdirname = self.functionname
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		#auto set the output directory
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = os.path.abspath(stackdata['path']['path'])
 		path = os.path.dirname(path)
 		time.sleep(1)
-		self.params['outdir'] = os.path.join(path, "fakestack")
+		self.params['rundir'] = os.path.join(path, "fakestack")
 
 	#=====================
 	def start(self):

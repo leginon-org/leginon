@@ -68,13 +68,13 @@ class uploadTemplateScript(appionScript.AppionScript):
 			apDisplay.printError("enter a template description")
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		#auto set the output directory
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['outdir'] = os.path.join(path,"templates")
+		self.params['rundir'] = os.path.join(path,"templates")
 
 	#=====================
 	def useStackForTemplate(self):

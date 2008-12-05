@@ -87,14 +87,14 @@ class reclassifyScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 	
 		norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['classid'])
 		if norefclassdata is None: 
 			apDisplay.printError("class ID not in the database")
 		path = norefclassdata['norefRun']['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "clsavgstacks", self.params['runid'])
+		self.params['rundir'] = os.path.join(uppath, "clsavgstacks", self.params['runid'])
 		return
 
 

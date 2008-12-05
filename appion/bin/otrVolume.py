@@ -82,7 +82,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("particle radius is too big for stack boxsize")	
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['tiltstackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
@@ -91,7 +91,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			tempstr += str(cnum)+"-"
 		classliststr = tempstr[:-1]
 
-		self.params['outdir'] = os.path.join(uppath, "otrvolume", 
+		self.params['rundir'] = os.path.join(uppath, "otrvolume", 
 			self.params['runname'], "class"+str(classliststr) )
 			
 		

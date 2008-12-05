@@ -52,8 +52,8 @@ class NoRefClassScript(appionScript.AppionScript):
 		self.norefdata = appionData.ApNoRefRunData.direct_query(self.params['norefid'])
 
 	#=====================
-	def setOutDir(self):
-		self.params['outdir'] = self.norefdata['path']['path']
+	def setRunDir(self):
+		self.params['rundir'] = self.norefdata['path']['path']
 
 	#=====================
 	def readClassDocFile(self, docfile):

@@ -68,7 +68,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			apDisplay.printError("Please provide a tomogram .mrc to upload")
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		path = os.path.abspath(sessiondata['image path'])
@@ -77,7 +77,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		tiltseriespath = "tiltseries" +  self.params['tiltseriesnumber']
 		tomovolumepath = self.params['volume']
 		intermediatepath = os.path.join(tiltseriespath,tomovolumepath)
-		self.params['outdir'] = os.path.join(path,intermediatepath)
+		self.params['rundir'] = os.path.join(path,intermediatepath)
 
 	#=====================
 	def setNewFileName(self, unique=False):

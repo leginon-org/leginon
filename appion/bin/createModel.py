@@ -169,13 +169,13 @@ class createModelScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(cmd, verbose=True)
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		#auto set the output directory
 		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['outdir'] = os.path.join(path, "createmodel", self.timestamp)
+		self.params['rundir'] = os.path.join(path, "createmodel", self.timestamp)
 
 	#=====================
 	def excludedClasses(self, origclassfile, norefpath):

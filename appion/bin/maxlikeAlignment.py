@@ -103,11 +103,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "align", self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
 
 	#=====================
 	def dumpParameters(self):

@@ -260,12 +260,12 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		reconid = self.params['reconid']
 		refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
-		self.params['outdir'] = os.path.join(refinerundata['path']['path'], 'eulers')
+		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'eulers')
 
 	#=====================
 	def start(self):

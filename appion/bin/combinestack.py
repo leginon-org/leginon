@@ -50,12 +50,12 @@ class combineStackScript(appionScript.AppionScript):
 			apDisplay.printError("enter a stack description")
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		stackid = int(self.params['stackids'][-1])
 		stackdata = apStack.getOnlyStackData(stackid, msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
-		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 
 	#=====================
 	def appendToStack(self, stackdata):

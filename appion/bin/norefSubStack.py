@@ -56,11 +56,11 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("both include and exclude were defined, only one is allowed")
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
-		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 
 	#=====================
 	def start(self):

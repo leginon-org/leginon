@@ -60,12 +60,12 @@ class modelFromPDB(appionScript.AppionScript):
 			apDisplay.printError("specify a box size")
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['outdir'] = os.path.join(path,"models")
+		self.params['rundir'] = os.path.join(path,"models")
 
 	#=====================
 	def setNewFileName(self, unique=False):

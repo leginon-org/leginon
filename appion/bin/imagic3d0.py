@@ -120,7 +120,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 
 		# get reference-free classification and reclassification parameters
 		if self.params['norefClassId'] is not None:
@@ -133,7 +133,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			apDisplay.printError("class averages not in the database")
 
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['outdir'] = os.path.join(uppath, "init_models", self.params['runId'])
+		self.params['rundir'] = os.path.join(uppath, "init_models", self.params['runId'])
 
 
 	def upload3d0(self):

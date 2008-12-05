@@ -41,7 +41,7 @@ class centerStackScript(appionScript.AppionScript):
 		
 
 	#=====================
-	def setOutDir(self):
+	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
@@ -50,7 +50,7 @@ class centerStackScript(appionScript.AppionScript):
 			self.params['runname'] = self.params['runname']+"_"+str(self.params['mask'])
 		if self.params['maxshift'] is not None:
 			self.params['runname'] = self.params['runname']+"_"+str(self.params['maxshift'])
-		self.params['outdir'] = os.path.join(uppath, self.params['runname'])
+		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
 		
 
 	#=====================
