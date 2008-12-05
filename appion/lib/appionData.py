@@ -578,7 +578,7 @@ leginondata.ApCoranEigenImageData = ApCoranEigenImageData
 
 ### Improved cluster class data tables
 
-class ApSpiderClassParamsData(Data):
+class ApSpiderClusteringParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('num_classes', int),
@@ -586,9 +586,9 @@ class ApSpiderClassParamsData(Data):
 			('method', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApSpiderClassParamsData=ApSpiderClassParamsData
+leginondata.ApSpiderClusteringParamsData=ApSpiderClusteringParamsData
 
-class ApClassRunData(Data):
+class ApClusteringRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
@@ -603,25 +603,25 @@ class ApClassRunData(Data):
 			('path', ApPathData),
 			('alignrun', ApAlignRunData),
 			('analysisrun', ApAlignAnalysisRunData),
-			('spiderparams', ApSpiderClassParamsData),
+			('spiderparams', ApSpiderClusteringParamsData),
 			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApClassRunData=ApClassRunData
+leginondata.ApClusteringRunData=ApClusteringRunData
 
-class ApClassParticlesData(Data):
+class ApClusteringParticlesData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('partnum', int),
 			('refnum', int),
-			('classreference', ApClassReferenceData),
-			('classrun', ApClassRunData),
+			('classreference', ApClusteringReferenceData),
+			('classrun', ApClusteringRunData),
 			('alignparticle', ApAlignParticlesData),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApClassParticlesData=ApClassParticlesData
+leginondata.ApClusteringParticlesData=ApClusteringParticlesData
 
-class ApClassReferenceData(Data):
+class ApClusteringReferenceData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('refnum', int),
@@ -629,11 +629,11 @@ class ApClassReferenceData(Data):
 			('var_mrcfile', str),
 			('frc_resolution', float),
 			('num_particles', int),
-			('classrun', ApClassRunData),
+			('classrun', ApClusteringRunData),
 			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApClassReferenceData=ApClassReferenceData
+leginondata.ApClusteringReferenceData=ApClusteringReferenceData
 
 ### Reconstruction tables ###
 
