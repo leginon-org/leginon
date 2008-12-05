@@ -15,31 +15,21 @@ import appionData
 
 #=====================
 #=====================
-class NoRefClassScript(appionScript.AppionScript):
+class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --noref=ID [ --num-part=# ]")
-
-		#required
+		self.parser.set_usage("Usage: %prog --analysisid=ID --alignstackid=ID [ --factor-list=# --num-class=# ]")
 		self.parser.add_option("-a",  "--analysisid", dest="analysisid", type="int",
 			help="Coran database id", metavar="ID#")
-
-		#with defaults
+		self.parser.add_option("-s",  "--alignstackid", dest="alignstackid", type="int",
+			help="Coran database id", metavar="ID#")
 		self.parser.add_option("-f", "--factor-list", dest="factorstr", type="str", default="1,2,3",
 			help="List of factors to use in classification", metavar="#")
 		self.parser.add_option("-N", "--num-class", dest="numclass", type="int", default=40,
 			help="Number of classes to make", metavar="#")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit noref class to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit noref class to database")
 		self.parser.add_option("--method", dest="method", default="hierarch",
 			help="Method to use for classification: 'hierarch' or 'kmeans'")
-
-
-		self.parser.add_option("-o", "--rundir", dest="rundir",
-			help="Run directory", metavar="PATH")
 
 	#=====================
 	def checkConflicts(self):
@@ -49,7 +39,7 @@ class NoRefClassScript(appionScript.AppionScript):
 			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
 		if self.params['method'] not in ['hierarch','kmeans']:
 			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
-		self.analysisdata = appionData.ApAlignAnalysisData.direct_query(self.params['analysisid'])
+		self.analysisdata = appionData.ApAlignAnalysisRunData.direct_query(self.params['analysisid'])
 
 	#=====================
 	def setRunDir(self):
@@ -131,7 +121,7 @@ class NoRefClassScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		### get database information
-		alignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], self.analysisdata['alignstack']['spiderstack'])
+		alignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], self.analysisdata['alignstack']['spiderfile'])
 		numpart = self.analysisdata['alignstack']['num_particles']
 		corandata = os.path.join(self.analysisdata['path']['path'],"coran/corandata")
 
@@ -158,7 +148,7 @@ class NoRefClassScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	noRefClass = NoRefClassScript()
-	noRefClass.start()
-	noRefClass.close()
+	clusterCoran = ClusterCoranScript(useglobalparams=True)
+	clusterCoran.start()
+	clusterCoran.close()
 
