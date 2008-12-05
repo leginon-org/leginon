@@ -75,6 +75,54 @@ def backprojectCG(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".s
 	apDisplay.printColor("finished backprojection in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return
 
+#=============================== 	
+def backprojectRP(stackfile, eulerdocfile, volfile, pixrad, classnum, lambDa, numpart=None, selfile=None, dataext=".spi"):
+	"""
+	inputs:
+		stack, in spider format
+		eulerdocfile
+	outputs:
+		volume
+	"""
+	### setup
+	starttime = time.time()
+	stackfile = spyder.fileFilter(stackfile)
+	eulerdocfile = spyder.fileFilter(eulerdocfile)
+	if selfile is not None:
+		selfile = spyder.fileFilter(selfile)
+	volfile = spyder.fileFilter(volfile)
+	counter = spyder.fileFilter("numiter")
+	if not os.path.isfile(stackfile+dataext):
+		apDisplay.printError("stack file not found: "+stackfile+dataext)
+	if not os.path.isfile(eulerdocfile+dataext):
+		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
+	apFile.removeFile(volfile+dataext)
+
+	if (numpart is not None):
+		selection = "1-"+str(numpart)
+	elif (selfile is not None):
+		selection = selfile
+	else:
+		apDisplay.printError("Partilce selection is invalid for BP RP. Please make sure either numpart or selfile is specified in the function backprojectRP!")
+
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("BP RP x11", 
+		stackfile+"@*****", #stack file
+		selection, #selection file or particle range 
+		str(pixrad), #particle radius
+		eulerdocfile, #angle doc file
+		"*", #has symmetry?, does not work
+		volfile, #filename for volume
+ 		"%.1e,%.1f" % (lambDa, 0.0), #lambda, correction
+ 		"%d,%d" % (50,1), #iteration limit, mode
+ 		"%d,%d" % (0,0), #minimum, maximum
+ 		"%.5f" % ((1/(1+6*lambDa))*0.999), #smoothing constant = (1/(1+6*lambda))*0.999
+	)
+	mySpider.toSpider("SD 1,x11", str(classnum)+"/"+str(counter)) 
+	mySpider.close()
+	apDisplay.printColor("finished backprojection in "+apDisplay.timeString(time.time()-starttime), "cyan")
+	return
+	
 #===============================
 def backproject3F(stackfile, eulerdocfile, volfile, numpart, dataext=".spi"):
 	"""
@@ -187,7 +235,7 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, datae
 	)
 	mySpider.close()
 	return
-
+	
 #===============================
 def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pixrad, timestamp, dataext=".spi"):
 	"""
@@ -223,5 +271,326 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	apDisplay.printColor("finished correlations in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return alignstackfile
 
+###########################################
+#														#
+#	OTR functions									#
+#														#
+###########################################
+#===============================
+def otrParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pixrad, timestamp, dataext=".spi", classnum=None):
+	"""
+	inputs:
+		volume
+		stack, in spider format
+		eulerdocfile
+	outputs:
+		volume
+	"""
+	### create corresponding projections
+	if classnum is not None:
+		projstackfile = str(classnum)+"/"+"projstack%s-%03d.spi"%(timestamp, iternum)
+	else:
+		projstackfile = "projstack%s-%03d.spi"%(timestamp, iternum)
+	projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext)
 
+	### clean up files
+	if classnum is not None:
+		ccdocfile = str(classnum)+"/"+"ccdocfile%s-%03d.spi"%(timestamp, iternum)
+	else:
+		ccdocfile = "ccdocfile%s-%03d.spi"%(timestamp, iternum)
+	apFile.removeFile(ccdocfile)
+	
+	if classnum is not None:
+		alignstackfile = str(classnum)+"/"+"alignstack%s-%03d.spi"%(timestamp, iternum)
+	else:
+		alignstackfile = "alignstack%s-%03d.spi"%(timestamp, iternum)
+	apFile.removeFile(alignstackfile)
+
+	### align particles to projection
+	apDisplay.printMsg("Shifting particles")
+	starttime = time.time()
+	partnum = 0
+	while partnum < numpart:
+		partnum+=1
+		if partnum%25 == 0:
+			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
+			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
+		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
+
+	if not os.path.isfile(alignstackfile):
+		apDisplay.printError("aligned stack file not found: "+alignstackfile)
+	apDisplay.printColor("finished correlations in "+apDisplay.timeString(time.time()-starttime), "cyan")
+	return alignstackfile
+
+#===============================
+def alignAPSH(volfile, origstackfile, eulerdocfile, classnum, boxsize, numpart, pixrad, timestamp, iternum, dataext=".spi"):
+	
+	apshAngularFile = str(classnum)+"/"+"apshAngularFile%s-%03d.spi"%(timestamp, iternum)
+	if os.path.isfile(apshAngularFile):
+		os.remove(apshAngularFile)
+		apDisplay.printColor("File exist! Removing file "+apshAngularFile, "cyan")
+	apshAngularFile = spyder.fileFilter(apshAngularFile)
+	
+	apshListFile = str(classnum)+"/"+"apshListFile%s-%03d.spi"%(timestamp, iternum)
+	if os.path.isfile(apshListFile):
+		os.remove(apshListFile)
+		apDisplay.printColor("File exist! Removing file "+apshListFile, "cyan")
+	apshListFile = spyder.fileFilter(apshListFile)
+	
+	apshOutFile = str(classnum)+"/"+"apshOut%s-%03d.spi"%(timestamp, iternum)
+	if os.path.isfile(apshOutFile):
+		os.remove(apshOutFile)
+		apDisplay.printColor("File exist! Removing file "+apshOut, "cyan")
+	apshOut = spyder.fileFilter(apshOutFile)
+	
+	apshStack = str(classnum)+"/"+"apshStack%s-%03d.spi"%(timestamp, iternum)
+	if os.path.isfile(apshStack):
+		os.remove(apshStack)
+		apDisplay.printColor("File exist! Removing file "+apshStack, "cyan")
+	apshStack = spyder.fileFilter(apshStack)
+	
+	origstackfile = spyder.fileFilter(origstackfile)
+	volfile = spyder.fileFilter(volfile)
+	
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("VO EA,x53",
+		"5", #angular increment
+		"0,90.0", #Range of Theta
+		"0,359.9", #Range of Phi
+		apshAngularFile, #Angular file name
+	)
+	mySpider.toSpider("DOC CREATE",
+		apshListFile, #List file name
+		"1",
+		"1-x53"
+	)
+	mySpider.toSpider("MS",
+		"_9@", #reference projections
+		str(boxsize),str(boxsize),"1", #boxsize
+		"x53",
+	)
+	mySpider.toSpider("PJ 3Q", 
+		volfile, #input vol file
+		str(pixrad), #pixel radius
+		apshListFile, #number of particles		
+		apshAngularFile, #Euler DOC file
+		apshStack+"@*****", #output projections
+	)
+	mySpider.toSpider("AP SH",
+		apshStack+"@*****", #reference projections
+		"1-x53", #reference numbers
+		"69,3", #translational search range, step size
+		"1,24", #first and last ring
+		apshAngularFile,
+		origstackfile+"@*****",
+		"1-%d"%(numpart),
+		"*",
+		"(0.0)", # no restrictions for alignment
+		"1", # mirror check?
+		apshOut, # output 
+	)
+	
+	mySpider.close()
+	return apshOutFile
+
+#===============================
+def centerVolume(volfile, outvolfile, dataext=".spi"):
+	volfile = spyder.fileFilter(volfile)
+	outvolfile = spyder.fileFilter(outvolfile)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("CG PH x11,x12,x13,x21,x22,x23", 
+		volfile, #volume
+	)
+	mySpider.toSpider("SH F", 
+		volfile, #volume
+		outvolfile, #output volume
+		"-x21,-x22,-x23", #shifts in x y z
+	)
+	mySpider.close()
+	return
+	
+#===============================
+def calcFSC(volfile1, volfile2, fscout, dataext=".spi"):
+	volfile1 = spyder.fileFilter(volfile1)
+	volfile2 = spyder.fileFilter(volfile2)
+	fscout = spyder.fileFilter(fscout)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("RF 3", 
+		volfile1, #volume 1
+		volfile2, #volume 2
+		"0.5", # ring width for RF 3
+		"0.5", # scale factor - lower
+		"1.5", # scale factor - upper
+		"C", # use 'C' for missing cone and 'W' for missing wedge
+		"90", # maximum tilt angle in data for OTR
+		"3", # factor for noise comparison ("sigma")
+		fscout, # fsc curve output
+	)
+	mySpider.close()
+	return
+
+#===============================
+def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, timestamp, classnum=None, dataext=".spi"):
+
+	origstack = spyder.fileFilter(origstackfile)
+	
+	if classnum is not None:
+		apshstackfile = str(classnum)+"/"+"apshstack%s.spi"%(timestamp)
+	else:
+		apshstackfile = "apshstack%s.spi"%(timestamp)
+	
+	apshstack = spyder.fileFilter(apshstackfile)
+		
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("RT SQ",
+		origstack+"@"+str(partnum), #stack and particle number
+		apshstack+"@"+str(partnum), #output stack and particle
+		"("+str(rotation)+")", #rotation
+		"("+str(Xshift)+","+str(Yshift)+")", #shift parameters
+	)
+	mySpider.close()
+	return apshstackfile
+
+#=============================== NOT WORKING CORRECTLY
+def rotshiftStack(origstackfile, rotShiftFile, timestamp, classnum=None, dataext=".spi"):
+
+	origstackfile = spyder.fileFilter(origstackfile)
+	
+	if classnum is not None:
+		apshstackfile = str(classnum)+"/"+"apshstack%s.spi"%(timestamp)
+	else:
+		apshstackfile = "apshstack%s.spi"%(timestamp)
+	
+	apshstackfile = spyder.fileFilter(apshstackfile)
+		
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("RT SQ",
+		origstackfile+"@*****", #stack and particle number
+		apshstackfile+"@*****", #output stack and particle
+		"("+str(rotation)+")", #rotation
+		"("+str(Xshift)+","+str(Yshift)+")", #shift parameters
+	)
+	mySpider.close()
+	return
+
+###########################################
+#														#
+#	Spider filtering functions					#
+#														#
+###########################################
+		
+#===============================
+def butterworthLP(volfile, pixelsize, dataext=".spi"):
+	"""
+	inputs:
+		volume
+	outputs:
+		volume
+	"""
+	### setup
+	starttime = time.time()
+	volfile = spyder.fileFilter(volfile)
+	if not os.path.isfile(volfile+dataext):
+		apDisplay.printError("volume file not found: "+volfile+dataext)
+		
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("FQ", 
+		volfile, #filename for volume
+		"_1",
+#		volfile+"_filtered", #filename for output volume
+		"(7)",
+		"(%.5f,%.5f)" % (pixelsize/25,pixelsize/15), #pass-band and stop-band
+	)
+	mySpider.close()
+	apDisplay.printColor("finished filtering the volume "+apDisplay.timeString(time.time()-starttime), "cyan")
+	return
+	
+#===============================
+def butterworthFscLP(volfile, fscout, dataext=".spi"):
+	"""
+	inputs:
+		volume
+		fsc output file
+	outputs:
+		volume
+	"""
+	### setup
+	starttime = time.time()
+	volfile = spyder.fileFilter(volfile)
+	if not os.path.isfile(volfile+dataext):
+		apDisplay.printError("volume file not found: "+volfile+dataext)
+	
+	if not os.path.isfile(fscout):
+		apDisplay.printError("fsc output file not found: "+fscout+dataext)
+		
+	fscfile = open(fscout, "r")
+	for line in fscfile.readlines():
+		value = line.split() 
+		try:
+			int(value[0])
+		except:
+			#apDisplay.printMsg(line)
+			continue
+		
+		if float(value[4]) < 0.5:
+			if prevValue is None:
+				passband = float(value[2])
+				stopband = float(value[2])+0.1
+			else:
+				passband = prevValue
+				stopband = prevValue + 0.1
+			break
+		prevValue = float(value[2])
+		
+	fscfile.close()
+
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider.toSpider("FQ", 
+		volfile, #filename for volume
+		volfile+"_filtered", #filename for output volume
+		"(7)",
+		"(%.5f,%.5f)" % (passband, stopband), #pass-band and stop-band
+	)
+	mySpider.close()
+	apDisplay.printColor("finished filtering the volume "+apDisplay.timeString(time.time()-starttime), "cyan")
+	return
+
+#===============================
+def normalizeVol(volfile, dataext=".spi"):
+	"""
+	inputs:
+		volume
+	outputs:
+		volume
+	"""
+	### setup
+	starttime = time.time()
+	volfile = spyder.fileFilter(volfile)
+	if not os.path.isfile(volfile+dataext):
+		apDisplay.printError("volume file not found: "+volfile+dataext)
+		
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	### read out the statistics of the volume
+	mySpider.toSpider("FS x11,x12", 
+		volfile, #filename for volume
+	)
+	mySpider.toSpider("IF(x12.LT.0.0)x12=-x12")
+	### set all values to positive
+	mySpider.toSpider("AR",
+		volfile, #filename for volume
+		"_1",
+		"(P1+x12)",
+	)
+	### save file
+	mySpider.toSpider("CP",
+		"_1",
+		volfile, #filename for volume
+	)
+	
+	mySpider.close()
+	apDisplay.printColor("finished normalizing the volume to set all values to be positive"+apDisplay.timeString(time.time()-starttime), "cyan")
+	return	
+	 
+	
+	
 
