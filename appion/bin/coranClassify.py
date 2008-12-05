@@ -61,10 +61,11 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "coran", self.params['runname'])
+		self.params['outdir'] = self.params['rundir']
 
 	#=====================
 	def checkCoranRun(self):
@@ -133,8 +134,8 @@ class CoranClassifyScript(appionScript.AppionScript):
 	def getNumAlignedParticles(self):
 		t0 = time.time()
 		partq = appionData.ApAlignParticlesData()
-		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
-		partq['alignstack'] = alignstackdata
+		self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
+		partq['alignstack'] = self.alignstackdata
 		partdata = partq.query()
 		numpart = len(partdata)
 		del partdata
