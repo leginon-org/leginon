@@ -586,7 +586,7 @@ class ApSpiderClassParamsData(Data):
 			('method', str),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApSpiderClusterParamsData=ApSpiderClusterParamsData
+leginondata.ApSpiderClassParamsData=ApSpiderClassParamsData
 
 class ApClassRunData(Data):
 	def typemap(cls):
@@ -607,7 +607,7 @@ class ApClassRunData(Data):
 			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApClusterRunData=ApClusterRunData
+leginondata.ApClassRunData=ApClassRunData
 
 class ApClassParticlesData(Data):
 	def typemap(cls):
@@ -619,7 +619,7 @@ class ApClassParticlesData(Data):
 			('alignparticle', ApAlignParticlesData),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAlignParticlesData=ApAlignParticlesData
+leginondata.ApClassParticlesData=ApClassParticlesData
 
 class ApClassReferenceData(Data):
 	def typemap(cls):
@@ -633,7 +633,7 @@ class ApClassReferenceData(Data):
 			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApAlignReferenceData=ApAlignReferenceData
+leginondata.ApClassReferenceData=ApClassReferenceData
 
 ### Reconstruction tables ###
 
