@@ -1538,6 +1538,26 @@ class particledata {
 		return $r[0];
 	}
 
+	function getCoranEigenDataFromAnalysis ($analysisid) {
+		$q = "SELECT "
+			."ce.factor_num AS num, "
+			."ce.image_name AS name, "
+			."ce.percent_contrib AS contrib, "
+			."p.path AS path "
+			."FROM ApCoranEigenImageData AS ce "
+			."LEFT JOIN ApPathData AS p "
+			."  ON (ce.`REF|ApPathData|path` = p.`DEF_id`) "
+			."LEFT JOIN ApCoranRunData AS cr "
+			."  ON (ce.`REF|ApCoranRunData|coranRun` = cr.`DEF_id`) "
+			."LEFT JOIN ApAlignAnalysisRunData AS a "
+			."  ON (a.`REF|ApCoranRunData|coranRun` = cr.`DEF_id`) "
+			."WHERE "
+			."  a.`DEF_id` = '$analysisid' "
+			."ORDER BY ce.`factor_num` ASC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getMaxLikeRuns ($sessionId, $projectId) {
 		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
 			."FROM ApMaxLikeJobData AS maxlike "
