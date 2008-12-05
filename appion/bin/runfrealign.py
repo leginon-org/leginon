@@ -3,7 +3,6 @@ import sys, os, glob
 import shutil
 import apParam
 from optparse import OptionParser
-import apDB
 import apStack
 import apVolume
 import apCtf
@@ -12,7 +11,6 @@ import threading
 import glob
 import apImagicFile
 
-apdb=apDB.apdb
 workingstackname="start.hed"
 
 def createMultipleJobs (params):

@@ -10,7 +10,7 @@
 
 
 import os
-import apDB
+
 import sys
 import re
 import appionScript
@@ -25,7 +25,7 @@ import apUpload
 import apDatabase
 import apStack
 import apProject
-appiondb = apDB.apdb
+
 
 #=====================
 #=====================
@@ -124,10 +124,10 @@ class imagic3d0Script(appionScript.AppionScript):
 
 		# get reference-free classification and reclassification parameters
 		if self.params['norefClassId'] is not None:
-			norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
+			norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 			path = norefclassdata['norefRun']['path']['path']
 		elif self.params['reclassId'] is not None:
-			reclassdata = appiondb.direct_query(appionData.ApImagicReclassifyData, self.params['reclassId'])
+			reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 			path = reclassdata['path']['path']
 		else:
 			apDisplay.printError("class averages not in the database")
@@ -142,9 +142,9 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['name'] = "masked_3d0_ordered0_repaligned.mrc"
 		modelq['runname'] = self.params['runId']
 		if self.params['norefClassId'] is not None:
-			modelq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
+			modelq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 		elif self.params['reclassId'] is not None:
-			modelq['reclass'] = appiondb.direct_query(appionData.ApImagicReclassifyData, self.params['reclassId'])
+			modelq['reclass'] = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 		modelq['projections'] = self.params['projections']
 		modelq['euler_ang_inc'] = self.params['euler_ang_inc']
 		modelq['ham_win'] = self.params['ham_win']
@@ -160,7 +160,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['num_classums'] = self.params['num_classums']
 		modelq['pixelsize'] = self.params['apix']
 		modelq['boxsize'] = self.params['boxsize']
-		modelq['symmetry'] = appiondb.direct_query(appionData.ApSymmetryData, self.params['symmetry'])
+		modelq['symmetry'] = appionData.ApSymmetryData.direct_query(self.params['symmetry'])
 		modelq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['outdir'])))
 	
 		modelq['hidden'] = False
@@ -176,7 +176,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		
 		# get reference-free classification and reclassification parameters
 		if self.params['norefClassId'] is not None:
-			norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
+			norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
 			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
@@ -187,7 +187,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			orig_file = norefclassdata['classFile']
 			linkingfile = orig_path+"/"+orig_file
 		elif self.params['reclassId'] is not None:
-			reclassdata = appiondb.direct_query(appionData.ApImagicReclassifyData, self.params['reclassId'])
+			reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 			self.params['stackid'] = reclassdata['norefclass']['norefRun']['stack'].dbid
 			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])

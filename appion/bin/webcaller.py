@@ -8,6 +8,9 @@ import os
 ## use this function to launch from the web so that
 ## stdout & sterr will be saved to a file
 if __name__ == '__main__':
+	if len(sys.argv) < 3:
+		print "Usage: webcaller.py <command> <outfile>"
+		sys.exit(1)
 	cmd = sys.argv[1]
 	outf = sys.argv[2]
 	PIPE = subprocess.PIPE

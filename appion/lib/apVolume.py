@@ -18,15 +18,12 @@ import appionData
 import apAlignment
 import apParam
 import apEMAN
-import apDB
 import shutil
 #pyami
 from pyami import mrc
 from pyami import imagefun
 from pyami import convolver
 from random import choice
-
-appiondb = apDB.apdb
 
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
@@ -37,7 +34,7 @@ def getModelDimensions(mrcfile):
 	return x
 
 def getModelFromId(modelid):
-	return appiondb.direct_query(appionData.ApInitialModelData, modelid)
+	return appionData.ApInitialModelData.direct_query(modelid)
 	
 def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
 	# scale an existing model - provide an input model & output (strings)

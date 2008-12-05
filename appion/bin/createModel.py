@@ -18,9 +18,6 @@ import apFile
 import apParam
 import apDatabase
 import appionData
-import apDB
-
-appiondb = apDB.apdb
 
 #=====================
 #=====================
@@ -217,7 +214,7 @@ class createModelScript(appionScript.AppionScript):
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
-		#densq['symmetry'] = self.appiondb.direct_query(appionData.ApSymmetryData, 25)
+		#densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
 		densq['pixelsize'] = self.params['apix']
 		densq['boxsize'] = self.params['box']
 		densq['lowpass'] = self.params['lp']
@@ -235,7 +232,7 @@ class createModelScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 
-	 	norefClassdata=appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclass'])
+	 	norefClassdata=appionData.ApNoRefClassRunData.direct_query(self.params['norefclass'])
 
 		#Get class average file path through ApNoRefRunData
 		norefpath = norefClassdata['norefRun']['path']['path']

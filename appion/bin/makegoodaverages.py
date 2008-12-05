@@ -16,19 +16,17 @@ import sinedon
 import MySQLdb
 #appion
 import appionScript
-import apDB
 import appionData
 import apDisplay
 import apStack
 import apEulerCalc
 import apEulerJump
-apdb=apDB.apdb
 
 def getParticleInfo(reconid, iteration):
 	"""
 	Get all particle data for given recon and iteration
 	"""
-	refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
+	refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
 	if not refinerundata:
 		apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
 
@@ -264,7 +262,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 	#=====================
 	def setOutDir(self):
 		reconid = self.params['reconid']
-		refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
+		refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
 		self.params['outdir'] = os.path.join(refinerundata['path']['path'], 'eulers')

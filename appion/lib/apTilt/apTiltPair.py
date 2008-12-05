@@ -5,7 +5,6 @@ import numpy
 import leginondata
 #appion
 import appionData
-import apDB
 import apImage
 import apDisplay
 import apStack
@@ -30,7 +29,7 @@ $q="select "
 	imgquery = leginondata.AcquisitionImageData()
 	imgquery['preset']  = presetq
 	imgquery['session'] = sessionq
-	imgtree = leginondb.query(imgquery, readimages=False)
+	imgtree = imgquery.query(readimages=False)
 """
 
 #===============================

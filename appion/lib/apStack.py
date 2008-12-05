@@ -3,7 +3,6 @@
 import os, sys, re
 import time
 import math
-import apDB
 import apDatabase
 import apEMAN
 import apDisplay
@@ -11,7 +10,6 @@ import appionData
 import apFile
 import numpy
 
-appiondb = apDB.apdb
 
 #===============
 def makeNewStack(oldstack, newstack, listfile):
@@ -35,7 +33,7 @@ def getStackParticlesFromId(stackid, msg=True):
 	t0 = time.time()
 	if msg is True:
 		apDisplay.printMsg("querying stack particles from stackid="+str(stackid)+" at "+time.asctime())
-	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
+	stackdata = appionData.ApStackData.direct_query(stackid)
 	stackq = appionData.ApStackParticlesData()
 	stackq['stack'] = stackdata
 	stackpartdata = stackq.query()
@@ -52,7 +50,7 @@ def getStackParticlesFromId(stackid, msg=True):
 #===============
 def getNumberStackParticlesFromId(stackid, msg=True):
 	t0 = time.time()
-	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
+	stackdata = appionData.ApStackData.direct_query(stackid)
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
 	numpart = apFile.numImagesInStack(stackpath)
 	return numpart
@@ -69,10 +67,10 @@ def sortStackParts(a, b):
 def getOneParticleFromStackId(stackid, msg=True):
 	if msg is True:
 		apDisplay.printMsg("querying one stack particle from stackid="+str(stackid)+" on "+time.asctime())
-	stackdata=appiondb.direct_query(appionData.ApStackData, stackid)
+	stackdata=appionData.ApStackData.direct_query(stackid)
 	stackq=appionData.ApStackParticlesData()
 	stackq['stack'] = stackdata
-	stackparticledata=appiondb.query(stackq, results=1)
+	stackparticledata=stackq.query(results=1)
 	if len(stackparticledata) == 0:
 		return None
 	return stackparticledata[0]
@@ -81,7 +79,7 @@ def getOneParticleFromStackId(stackid, msg=True):
 def getOnlyStackData(stackid, msg=True):
 	if msg is True:
 		apDisplay.printMsg("Getting stack data for stackid="+str(stackid))
-	stackdata = appiondb.direct_query(appionData.ApStackData,stackid)
+	stackdata = appionData.ApStackData.direct_query(stackid)
 	if not stackdata:
 		apDisplay.printError("Stack ID: "+str(stackid)+" does not exist in the database")
 	stackpath = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -95,7 +93,7 @@ def getOnlyStackData(stackid, msg=True):
 #===============
 def getStackParticle(stackid, partnum):
 	stackparticleq = appionData.ApStackParticlesData()
-	stackparticleq['stack'] = appiondb.direct_query(appionData.ApStackData, stackid)
+	stackparticleq['stack'] = appionData.ApStackData.direct_query(stackid)
 	stackparticleq['particleNumber'] = partnum
 	stackparticledata = stackparticleq.query()
 	if not stackparticledata:
@@ -106,10 +104,10 @@ def getStackParticle(stackid, partnum):
 
 #===============
 def getRunsInStack(stackid):
-	stackdata = appiondb.direct_query(appionData.ApStackData, stackid)
+	stackdata = appionData.ApStackData.direct_query(stackid)
 	runsinstackq = appionData.ApRunsInStackData()
 	runsinstackq['stack'] = stackdata
-	runsinstackdata = appiondb.query(runsinstackq)
+	runsinstackdata = runsinstackq.query()
 	return runsinstackdata
 
 #===============
@@ -133,14 +131,14 @@ def checkForPreviousStack(stackname, stackpath=None):
 	stackq = appionData.ApStackData()
 	stackq['path'] = appionData.ApPathData(path=spath)
 	stackq['name'] = os.path.basename(stackname)
-	stackdata = appiondb.query(stackq, results=1)
+	stackdata = stackq.query(results=1)
 	if stackdata:
 		apDisplay.printError("A stack with name "+stackname+" and path "+spath+" already exists!")
 	return
 
 #===============
 def getStackIdFromRecon(reconrunid, msg=True):
-	reconrundata = appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
+	reconrundata = appionData.ApRefinementRunData.direct_query(reconrunid)
 	if not reconrundata:
 		apDisplay.printWarning("Could not find stack id for Recon Run="+str(reconrunid))
 		return None
@@ -208,7 +206,7 @@ def commitSubStack(params, newname=False, centered=False):
 	if newname:
 		stackq['name'] = newname
 
-	stackdata=appiondb.query(stackq, results=1)
+	stackdata=stackq.query(results=1)
 
 	if stackdata:
 		apDisplay.printWarning("A stack with these parameters already exists")
@@ -264,7 +262,7 @@ def commitSubStack(params, newname=False, centered=False):
 		newstackq['mean'] = oldstackpartdata['mean']
 		newstackq['stdev'] = oldstackpartdata['stdev']
 		if params['commit'] is True:
-			appiondb.insert(newstackq)
+			newstackq.insert()
 		newpartnum += 1
 	sys.stderr.write("\n")
 	if newpartnum == 0:
@@ -280,7 +278,7 @@ def commitSubStack(params, newname=False, centered=False):
 		newrunsq['stackRun'] = run['stackRun']
 		newrunsq['project|projects|project'] = run['project|projects|project']
 		if params['commit'] is True:
-			appiondb.insert(newrunsq)
+			newrunsq.insert()
 		else:
 			apDisplay.printWarning("Not commiting to the database")
 
@@ -331,7 +329,7 @@ def getStackParticleTilt(stpartid):
 	"""
 	For a given stack part dbid return tilt angle
 	"""
-	stpartdata = appiondb.direct_query(appionData.ApStackParticlesData, stpartid)
+	stpartdata = appionData.ApStackParticlesData.direct_query(stpartid)
 	tilt = stpartdata['particle']['image']['scope']['stage position']['a']*180.0/math.pi
 	return abs(tilt)
 

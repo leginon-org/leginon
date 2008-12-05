@@ -6,15 +6,11 @@ import pyami.peakfinder as peakfinder
 import pyami.correlator as correlator
 #leginon
 import leginondata
-
 #appion
 import appionData
-import apDB
 import apImage
 import apDisplay
 
-leginondb = apDB.db
-appiondb  = apDB.apdb
 
 def getShiftFromImage(imgdata, params):
 	sibling = getDefocusPair(imgdata)
@@ -35,7 +31,7 @@ def getDefocusPair(imgdata):
 	qtarget['number'] = target['number']
 	qsibling=leginondata.AcquisitionImageData(target=qtarget)
 	origid=imgdata.dbid
-	allsiblings = leginondb.query(qsibling, readimages=False)	
+	allsiblings = qsibling.query(readimages=False)	
 	defocpair=None
 	if len(allsiblings) > 1:
 		#could be multiple siblings but we are taking only the most recent
@@ -92,7 +88,7 @@ def insertShift(imgdata,siblingdata,peak):
 		return False
 	shiftq=appionData.ApImageTransformationData()
 	shiftq['image1']=imgdata
-	shiftdata=appiondb.query(shiftq)
+	shiftdata=shiftq.query()
 	if shiftdata:
 		apDisplay.printWarning("Shift values already in database")
 		return False
@@ -103,7 +99,7 @@ def insertShift(imgdata,siblingdata,peak):
 	shiftq['correlation']=peak['subpixel peak value']
 	apDisplay.printMsg("Inserting shift beteween "+apDisplay.short(imgdata['filename'])+\
 		" and "+apDisplay.short(siblingdata['filename'])+" into database")
-	appiondb.insert(shiftq)
+	shiftq.insert()
 	return True
 
 def getTransformedDefocPair(imgdata,direction):
@@ -117,10 +113,10 @@ def getTransformedDefocPair(imgdata,direction):
 		sfrom = base+ '1'
 		sto = base+ '2'
 	simgq[sfrom]=imgdata
-	simgresults=appiondb.query(simgq,readimages=False)
+	simgresults=simgq.query(readimages=False)
 	if simgresults:
 		sbimgref = simgresults[0].special_getitem(sto,dereference = False)
-		sbimgdata = leginondb.direct_query(leginondata.AcquisitionImageData,sbimgref.dbid, readimages = False)
+		sbimgdata = leginondata.AcquisitionImageData.direct_query(sbimgref.dbid, readimages = False)
 	else:
 		return None
 	return sbimgdata

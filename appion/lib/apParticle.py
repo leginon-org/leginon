@@ -17,29 +17,24 @@ try:
 except ImportError:
 	import data as leginondata
 #appion
-import apDB
 import appionData
 import apImage
 import apDatabase
 import apDisplay
-
-appiondb = apDB.apdb
-leginondb = apDB.db
-
 
 def guessParticlesForSession(expid=None, sessionname=None):
 	if expid is None and sessionname is not None:
 		sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 	else: 
 		if expid:
-			seesiondata = leginondb.direct_query(leginondata.SessionData,expid)
+			seesiondata = leginondata.SessionData.direct_query(expid)
 	if sessiondata is None:
 		apDisplay.printError("Unknown expId in guessParticlesForSession")
 	apDisplay.printMsg("getting most complete particle picking run from DB for session "+sessionname)
 
 	selectionq = appionData.ApSelectionRunData()
 	selectionq['session'] = sessiondata
-	selectiondata = appiondb.query(selectionq)
+	selectiondata = selectionq.query()
 	if len(selectiondata) == 1:
 		apDisplay.printMsg("automatically selected only particle run: '"+selectiondata[0]['name']+"'")
 		return selectiondata[0].dbid
@@ -56,11 +51,11 @@ def getParticles(imgdata, selectionRunId):
 	returns paticles (as a list of dicts) for a given image
 	ex: particles[0]['xcoord'] is the xcoord of particle 0
 	"""
-	selexonrun = appiondb.direct_query(appionData.ApSelectionRunData, selectionRunId)
+	selexonrun = appionData.ApSelectionRunData.direct_query(selectionRunId)
 	prtlq = appionData.ApParticleData()
 	prtlq['image'] = imgdata
 	prtlq['selectionrun'] = selexonrun
-	particles = appiondb.query(prtlq)
+	particles = prtlq.query()
 
 	return particles
 
@@ -86,32 +81,32 @@ def getParticlesForImageFromRunName(imgdata,runname):
 	ptclq['image'] = imgdata
 	ptclq['selectionrun']=srunq
 	
-	particles = appiondb.query(ptclq)
+	particles = ptclq.query()
 	return particles
 	
 def getSelectionRunDataFromID(selectionRunId):
-	return appiondb.direct_query(appionData.ApSelectionRunData, selectionRunId) 
+	return appionData.ApSelectionRunData.direct_query(selectionRunId) 
 
 def getSelectionRunDataFromName(imgdata, runname):
 	srunq=appionData.ApSelectionRunData()
 	srunq['name'] = runname
 	srunq['session'] = imgdata['session']
-	selectionrundata = appiondb.query(srunq)
+	selectionrundata = srunq.query()
 	return selectionrundata[0]
 
 def getDefocPairParticles(imgdata, params):
 	print "finding pair for", apDisplay.short(imgdata['filename'])
-	selexonrun=appiondb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
+	selexonrun=appionData.ApSelectionRunData.direct_query(params['selexonId'])
 	prtlq=appionData.ApParticleData()
-	prtlq['image'] = leginondb.direct_query(
-		leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid], readimages = False)
+	prtlq['image'] = leginondata.AcquisitionImageData.direct_query(
+		params['sibpairs'][imgdata.dbid], readimages = False)
 	prtlq['selectionrun'] = selexonrun
-	particles=appiondb.query(prtlq)
+	particles=prtlq.query()
 	
 	shiftq=appionData.ApImageTransformationData()
-	shiftq['image1'] = leginondb.direct_query(
-		leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid], readimages = False)
-	shiftdata=appiondb.query(shiftq,readimages=False)[0]
+	shiftq['image1'] = leginondata.AcquisitionImageData.direct_query(
+		params['sibpairs'][imgdata.dbid], readimages = False)
+	shiftdata=shiftq.query(readimages=False)[0]
 	shiftx=shiftdata['shiftx']
 	shifty=shiftdata['shifty']
 	shift={}
@@ -145,7 +140,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	runq=appionData.ApSelectionRunData()
 	runq['name'] = params['runid']
 	runq['session'] = sessiondata
-	runids=appiondb.query(runq, results=1)
+	runids=runq.query(results=1)
 	if not runids:
 		apDisplay.printError("could not find runid in database")
 
@@ -154,7 +149,7 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 	transq['image1'] = imgdata1
 	transq['image2'] = imgdata2
 	transq['tiltrun'] = runids[0]
-	transids = appiondb.query(transq, results=1)
+	transids = transq.query(results=1)
 	if not transids:
 		apDisplay.printError("could not find transform id in database")
 
@@ -193,10 +188,10 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 		#NEED TO CALCULATE ERROR, ALWAYS POSITIVE
 		partpairq['error'] = error
 
-		presult = appiondb.query(partpairq)
+		presult = partpairq.query()
 		if not presult:
 			count+=1
-			appiondb.insert(partpairq)
+			partpairq.insert()
 
 	apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree1))+" peaks into database"
 		+" in "+apDisplay.timeString(time.time()-t0))
@@ -214,7 +209,7 @@ def insertParticlePeaks(peaktree, imgdata, params):
 	runq=appionData.ApSelectionRunData()
 	runq['name'] = params['runid']
 	runq['session'] = sessiondata
-	runids=appiondb.query(runq, results=1)
+	runids=runq.query(results=1)
 
 	if not runids:
 		apDisplay.printError("could not find runid in database")
@@ -228,7 +223,7 @@ def insertParticlePeaks(peaktree, imgdata, params):
 		particlesq['image'] = imgdata
 
 		if 'template' in peakdict and peakdict['template'] is not None:
-			particlesq['template'] = appiondb.direct_query(appionData.ApTemplateImageData, peakdict['template'])
+			particlesq['template'] = appionData.ApTemplateImageData.direct_query(peakdict['template'])
 
 		for key in 'xcoord','ycoord','correlation','peakmoment','peakstddev','peakarea', 'diameter':
 			if key in peakdict and peakdict[key] is not None:
@@ -245,10 +240,10 @@ def insertParticlePeaks(peaktree, imgdata, params):
 
 		### INSERT VALUES
 		if peakhasarea is True:
-			presult = appiondb.query(particlesq)
+			presult = particlesq.query()
 			if not presult:
 				count+=1
-				appiondb.insert(particlesq)
+				particlesq.insert()
 	if params['background'] is False:
 		apDisplay.printMsg("inserted "+str(count)+" of "+str(len(peaktree))+" peaks into database"
 			+" in "+apDisplay.timeString(time.time()-t0))
@@ -262,7 +257,7 @@ def insertParticlePicks(params,imgdata,manual=False):
 	runq=appionData.ApSelectionRunData()
 	runq['name'] = params['runid']
 	runq['session'] = imgdata['session']
-	runids=appiondb.query(runq, results=1)
+	runids=runq.query(results=1)
 
 	# WRITE PARTICLES TO DATABASE
 	apDisplay.printMsg("Inserting particles from pik file into database for "+apDisplay.shortenImageName(imgname))
@@ -292,9 +287,9 @@ def insertParticlePicks(params,imgdata,manual=False):
 			particlesq['ycoord']=ycenter
 			particlesq['correlation']=corr
 
-			presult=appiondb.query(particlesq)
+			presult=particlesq.query()
 			if not (presult):
-				appiondb.insert(particlesq)
+				particlesq.insert()
 	pfile.close()
 	
 	return 

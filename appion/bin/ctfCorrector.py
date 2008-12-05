@@ -13,7 +13,7 @@ import apDisplay
 import apDatabase
 import apCtf
 try:
-	import pymat
+	import mlabraw as pymat
 except:
 	apDisplay.environmentError()
 	raise

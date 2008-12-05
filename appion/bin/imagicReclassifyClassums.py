@@ -10,7 +10,6 @@
 
 
 import os
-import apDB
 import sys
 import re
 import appionScript
@@ -24,7 +23,6 @@ import apUpload
 import apDatabase
 import apStack
 import apProject
-appiondb = apDB.apdb
 
 #=====================
 #=====================
@@ -91,7 +89,7 @@ class reclassifyScript(appionScript.AppionScript):
 	#=====================
 	def setOutDir(self):
 	
-		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
+		norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['classid'])
 		if norefclassdata is None: 
 			apDisplay.printError("class ID not in the database")
 		path = norefclassdata['norefRun']['path']['path']
@@ -105,7 +103,7 @@ class reclassifyScript(appionScript.AppionScript):
 		reclassq = appionData.ApImagicReclassifyData()
 		reclassq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		reclassq['runname'] = self.params['runid']
-		reclassq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
+		reclassq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['classid'])
 		reclassq['lowpass'] = self.params['lp']
 		reclassq['highpass'] = self.params['hp']
 		reclassq['maskradius'] = self.params['mask']
@@ -124,7 +122,7 @@ class reclassifyScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		print self.params
-		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['classid'])
+		norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['classid'])
 		if norefclassdata is None: 
 			apDisplay.printError("class ID not in the database")
 		self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid

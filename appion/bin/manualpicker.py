@@ -429,6 +429,7 @@ class manualPicker(particleLoop.ParticleLoop):
 		return peak
 
 	def deleteOldPicks(self, imgdata):
+		apDisplay.printError("This is a dead function")
 		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runid'])
 		count=0
 		if particles:
@@ -437,7 +438,7 @@ class manualPicker(particleLoop.ParticleLoop):
 				#print particle
 				count+=1
 				#print count,
-				self.appiondb.remove(particle)
+				particle.remove()
 		return
 
 if __name__ == '__main__':

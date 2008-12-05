@@ -3,9 +3,6 @@
 import os, sys
 import appionData
 import apStack
-import apDB
-
-apdb=apDB.apdb
 
 def scaleStack(stackdata,params):
 	origpath=os.path.join(stackdata[0]['stack']['path']['path'],stackdata[0]['stack']['name'])
@@ -34,7 +31,7 @@ def commitScaledStack(stackdata,params):
 	newstackq['path'] = appionData.ApPathData(path=os.path.abspath(params['newstackpath']))
 	newstackq['name']=params['newstackname']
 	newstackq['description']=params['description']
-	newstackdata=apdb.query(newstackq)
+	newstackdata=newstackq.query()
 	
 	if newstackdata:
 		print "A stack with these parameters already exists"
@@ -45,7 +42,7 @@ def commitScaledStack(stackdata,params):
 	#first check that run name doesn't already exist
 	newstackrunq=appionData.ApStackRunData()
 	newstackrunq['stackRunName'] = os.path.basename(os.getcwd()) #use cwd for run name
-	newstackrundata=apdb.query(newstackrunq)
+	newstackrundata=newstackrunq.query()
 	if newstackrundata:
 		print "A stack run with this name (the current directory name) already exists. Exiting"
 		sys.exit()
@@ -60,7 +57,7 @@ def commitScaledStack(stackdata,params):
 	newrisq=appionData.ApRunsInStackData()
 	newrisq['stack']=newstackq
 	newrisq['stackRun']=newstackrunq
-	apdb.insert(newrisq)
+	newrisq.insert()
 	
 	#loop in reverse order so that order of ptcls in db is like that of orig
 	for particle in range(len(stackdata)-1,-1,-1):
@@ -70,7 +67,7 @@ def commitScaledStack(stackdata,params):
 		stackparticleq['stackRun']=newstackrunq
 		stackparticleq['particle']=stackdata[particle]['particle']
 		#print stackparticleq
-		apdb.insert(stackparticleq)
+		stackparticleq.insert()
 	return
 	
 

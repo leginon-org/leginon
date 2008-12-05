@@ -12,7 +12,6 @@
 import os
 import shutil
 import time
-import apDB
 import sys
 import re
 import appionScript
@@ -27,7 +26,6 @@ import apUpload
 import apDatabase
 import apStack
 import apProject
-appiondb = apDB.apdb
 
 #=====================
 #=====================
@@ -86,7 +84,7 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 
 		# get reference-free classification and reclassification parameters
 		if self.params['stackid'] is not None:
-			stackdata = appiondb.direct_query(appionData.ApStackData, self.params['stackid'])
+			stackdata = appionData.ApStackData.direct_query(self.params['stackid'])
 			path = stackdata['path']['path']
 		else:
 			apDisplay.printError("stack not in the database")
@@ -164,7 +162,7 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 				
 		# get stack parameters
 		if self.params['stackid'] is not None:
-			stackdata = appiondb.direct_query(appionData.ApStackData, self.params['stackid'])
+			stackdata = appionData.ApStackData.direct_query(self.params['stackid'])
 			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
 			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
 			self.params['boxsize'] = stack_box_size / int(self.params['bin'])

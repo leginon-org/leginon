@@ -9,7 +9,6 @@ import shutil
 import subprocess
 #appion
 import appionData
-import apDB
 import apDatabase
 import apParam
 import apDisplay
@@ -23,9 +22,6 @@ try:
 except:
 	pass
 import tarfile
-
-#leginondb = apDB.db
-appiondb = apDB.apdb
 
 def createDefaults():
 	# create default values for parameters
@@ -150,7 +146,7 @@ def parseInput(args,params):
 			sys.exit(1)
 
 def getModelData(modelid):
-	modeldata = appiondb.direct_query(appionData.ApInitialModelData, modelid)
+	modeldata = appionData.ApInitialModelDatadirect_query(modelid)
 	if not modeldata:
 		apDisplay.printError("Initial model ID: "+str(modelid)+" does not exist in the database")
 	apDisplay.printMsg("Selected initial model: "+os.path.join(modeldata['path']['path'], modeldata['name']))
@@ -449,7 +445,7 @@ def insertRefinementRun(params):
 	runq['stack']=params['stack']
 
 	#Recon upload can be continued
-	earlyresult=appiondb.query(runq, results=1)
+	earlyresult=runq.query(results=1)
 	if earlyresult:
 		apDisplay.printWarning("Run already exists in the database.\nIdentical data will not be reinserted")
 
@@ -460,7 +456,7 @@ def insertRefinementRun(params):
 	runq['description']=params['description']
 	runq['initialModel']=params['model']
 
-	result=appiondb.query(runq, results=1)
+	result=runq.query(results=1)
 
 	if earlyresult and not result:
 		if params['commit'] is True:
@@ -474,7 +470,6 @@ def insertRefinementRun(params):
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
 		runq.insert()
-		#appiondb.insert(runq)
 	else:
 		apDisplay.printWarning("not committing results to database")
 
@@ -491,7 +486,7 @@ def insertRefinementRun(params):
 	runq['package']=params['package']
 	runq['initialModel']=params['model']
 
-	result = appiondb.query(runq, results=1)
+	result = runq.query(results=1)
 
 	# save run entry in the parameters
 	if result:
@@ -524,7 +519,7 @@ def insertResolutionData(params,iteration):
 
 		apDisplay.printMsg("inserting FSC resolution data into database")
 		if params['commit'] is True:
-			appiondb.insert(resq)
+			resq.insert()
 		else:
 			apDisplay.printWarning("not committing results to database")
 
@@ -549,7 +544,7 @@ def insertRMeasureData(params, iteration):
 
 	apDisplay.printMsg("inserting R Measure Data into database")
 	if params['commit'] is True:
-		appiondb.insert(resq)
+		resq.insert()
 	else:
 		apDisplay.printWarning("not committing results to database")
 
@@ -639,7 +634,7 @@ def insertIteration(iteration, params):
 		refineq['SpiCoranGoodClassAvg'] = coranclassavg
 	apDisplay.printMsg("inserting Refinement Data into database")
 	if params['commit'] is True:
-		appiondb.insert(refineq)
+		refineq.insert()
 	else:
 		apDisplay.printWarning("not committing results to database")
 
@@ -790,7 +785,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 
 			#apDisplay.printMsg("inserting Particle Classification Data into database")
 			if params['commit'] is True:
-				appiondb.insert(prtlaliq)
+				prtlaliq.insert()
 
 	f.close()
 	return
@@ -841,7 +836,7 @@ def insertFSC(fscfile, refineData, commit=True):
 
 		numinserts+=1
 		if commit is True:
-			appiondb.insert(fscq)
+			fscq.insert()
 	apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
 	f.close()
 
@@ -907,10 +902,10 @@ def runRMeasure(apix, volpath, imask=0):
 	return resolution
 
 def getRefineRunDataFromID(refinerunid):
-	return appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
+	return appionData.ApRefinementRunData.direct_query(refinerunid) 
 
 def getNumIterationsFromRefineRunID(refinerunid):
-	refrundata = appiondb.direct_query(appionData.ApRefinementRunData, refinerunid) 
+	refrundata = appionData.ApRefinementRunData.direct_query(refinerunid) 
 	refq = appionData.ApRefinementData()
 	refq['refinementRun'] = refrundata
 	refdatas = refq.query()
@@ -924,12 +919,12 @@ def getNumIterationsFromRefineRunID(refinerunid):
 	return maxiter
 
 def getClusterJobDataFromID(jobid):
-	return appiondb.direct_query(appionData.ApClusterJobData, jobid)
+	return appionData.ApClusterJobData.direct_query(jobid)
 
 def getRefinementsFromRun(refinerundata):
 	refineitq=appionData.ApRefinementData()
 	refineitq['refinementRun'] = refinerundata
-	return appiondb.query(refineitq)
+	return refineitq.query()
 
 def getResolutionFromFSCFile(fscfile, boxsize, apix):
 	if not os.path.isfile(fscfile):

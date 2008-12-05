@@ -13,7 +13,6 @@ import cPickle
 #appion
 import apDisplay
 import apDatabase
-import apDB
 import apImage
 import apXml
 import apParam
@@ -22,8 +21,6 @@ from pyami import mem
 import leginondata
 
 class AppionLoop(object):
-	appiondb  = apDB.apdb
-	leginondb = apDB.db
 
 	def __init__(self):
 		"""
@@ -459,7 +456,7 @@ class AppionLoop(object):
 				self.params['continue']=True 
 
 		sessionq=leginondata.SessionData(name=self.params['sessionname'])
-		self.params['session']=self.leginondb.query(sessionq)[0]
+		self.params['session']=sessionq.query()[0]
 
 		if len(newargs) > 0:
 			if self.params['background'] is False:
@@ -515,7 +512,7 @@ class AppionLoop(object):
 		if idata is None:
 			return
 		for q in idata:
-			self.appiondb.insert(q)
+			q.insert()
 		return
 		
 	def _writeDataToFile(self,idata,resultkeys,path,imgname, filename):

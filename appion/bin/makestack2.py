@@ -14,7 +14,6 @@ import numpy
 import appionLoop
 import apImage
 import apDisplay
-import apDB
 import apDatabase
 import apParticle
 import apCtf
@@ -32,9 +31,6 @@ import apImagicFile
 import leginondata
 #legacy
 #import selexonFunctions  as sf1
-
-db   = apDB.db
-apdb = apDB.apdb
 
 class makestack (appionLoop.AppionLoop):
 
@@ -118,7 +114,7 @@ class makestack (appionLoop.AppionLoop):
 		apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(self.params['selexonId']))
 
 		# get selection run id
-		selexonrun=apdb.direct_query(appionData.ApSelectionRunData,self.params['selexonId'])
+		selexonrun = appionData.ApSelectionRunData.direct_query(self.params['selexonId'])
 		if not (selexonrun):
 			apDisplay.printError("specified runId '"+str(self.params['selexonId'])+"' not in database")
 		
@@ -127,7 +123,7 @@ class makestack (appionLoop.AppionLoop):
 
 		# get all images from session
 		dbimgq=leginondata.AcquisitionImageData(session=self.params['sessionid'])
-		dbimginfo=db.query(dbimgq,readimages=False)
+		dbimginfo=dbimgq.query(readimages=False)
 
 		if not (dbimginfo):
 			apDisplay.printError("no images associated with this runId")
@@ -140,7 +136,7 @@ class makestack (appionLoop.AppionLoop):
 			pimgq=appionData.ApParticleData()
 			pimgq['image']=imgdata
 			pimgq['selectionrun']=selexonrun
-			pimg=apdb.query(pimgq, results=1)
+			pimg=pimgq.query(results=1)
 			if pimg:
 				siblingimage = apDefocalPairs.getTransformedDefocPair(imgdata,1)
 				if siblingimage:
@@ -808,7 +804,7 @@ class makestack (appionLoop.AppionLoop):
 		runq['session'] = self.params['session']	
 
       # see if stack already exists in the database (just checking path)
-		stacks = apdb.query(stackq, results=1)
+		stacks = stackq.query(results=1)
 
 		# recreate stack object
 		stackq = appionData.ApStackData()
@@ -821,7 +817,7 @@ class makestack (appionLoop.AppionLoop):
 
 		self.stackdata = stackq
 
-		runids = apdb.query(runq, results=1)
+		runids = runq.query(results=1)
 		# recreate a stackRun object
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runid']
@@ -859,13 +855,13 @@ class makestack (appionLoop.AppionLoop):
 			if stacks[0]['description']!=self.params['description']:
 				apDisplay.printError("Stack description is not the same!")
 				# make sure the the run is the same:
-			rinstack = apdb.query(rinstackq, results=1)
+			rinstack = rinstackq.query(results=1)
 		
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
 				rinstackq = appionData.ApRunsInStackData()
 				rinstackq['stack'] = stackq.query()[0]
-				correct_rinstack=apdb.query(rinstackq)
+				correct_rinstack=rinstackq.query()
 				for i in correct_rinstack[0]['stackRun']['stackParams']:
 					if correct_rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")

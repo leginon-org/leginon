@@ -6,15 +6,10 @@ import apDisplay
 import appionData
 import apDatabase
 import leginondata
-import apDB
 import string
 import apFile
-try:
-	import pyami.mrc as mrc
-except:
-	import Mrc as mrc
+from pyami import mrc
 
-appiondb = apDB.apdb
 
 def printPrtlUploadHelp():
 	print "\nUsage:\nuploadParticles.py <boxfiles> scale=<n>\n"
@@ -99,7 +94,7 @@ def findSymmetry(symtext):
 	return symdata[0]
 	
 def getSymmetryData(symid, msg=True):
-	symdata = appiondb.direct_query(appionData.ApSymmetryData, symid)
+	symdata = appionData.ApSymmetryData.direct_query(symid)
 	if not symdata:
 		printSymmetries()
 		apDisplay.printError("no symmetry associated with this id: "+str(symid))
@@ -116,7 +111,7 @@ def compSymm(a, b):
 
 def printSymmetries():
 	symq = appionData.ApSymmetryData()
-	syms = appiondb.query(symq)
+	syms = symq.query()
 	sys.stderr.write("ID   NAME         DESCRIPTION\n")
 	sys.stderr.write("--   ----         -----------\n")
 	syms.sort(compSymm)
@@ -131,7 +126,7 @@ def printSymmetries():
 
 def insertModel(params):
 	apDisplay.printMsg("commiting model to database")
-	symdata=appiondb.direct_query(appionData.ApSymmetryData, params['sym'])
+	symdata=appionData.ApSymmetryData.direct_query(params['sym'])
 	if not symdata:
 		apDisplay.printError("no symmetry associated with this id\n")		
 	params['syminfo'] = symdata
@@ -148,13 +143,13 @@ def insertModel(params):
 	modq['md5sum'] = apFile.md5sumfile(filepath)
 	modq['description'] = params['description']
 	if params['commit'] is True:
-		appiondb.insert(modq)
+		modq.insert()
 	else:
 		apDisplay.printWarning("not commiting model to database")
 
 def insert3dDensity(params):
 	apDisplay.printMsg("commiting density to database")
-	symdata=appiondb.direct_query(appionData.ApSymmetryData, params['sym'])
+	symdata=appionData.ApSymmetryData.direct_query(params['sym'])
 	if not symdata:
 		apDisplay.printError("no symmetry associated with this id\n")		
 	params['syminfo'] = symdata
@@ -173,7 +168,7 @@ def insert3dDensity(params):
 	modq['mask'] = params['mask']
 	modq['imask'] = params['imask']
 	if params['reconid'] is not None:
-		iterdata = appiondb.direct_query(appionData.ApRefinementData, params['reconid'])
+		iterdata = appionData.ApRefinementData.direct_query(params['reconid'])
 		if not iterdata:
 			apDisplay.printError("this iteration was not found in the database\n")
 		modq['iterid'] = iterdata
@@ -190,7 +185,7 @@ def insert3dDensity(params):
 	filepath = os.path.join(params['outdir'], params['name'])
 	modq['md5sum'] = apFile.md5sumfile(filepath)
 	if params['commit'] is True:
-		appiondb.insert(modq)
+		modq.insert()
 	else:
 		apDisplay.printWarning("not commiting model to database")
 
@@ -208,14 +203,14 @@ def insertTomo(params):
 	tomoq['md5sum'] = apFile.md5sumfile(filepath)
 	tomoq['description'] = params['description']
 	if params['commit'] is True:
-		appiondb.insert(tomoq)
+		tomoq.insert()
 	else:
 		apDisplay.printWarning("not commiting tomogram to database")
 
 
 
 def insertManualParams(params, expid):
-	sessiondata = appiondb.direct_query(leginondata.SessionData, expid)
+	sessiondata = leginondata.SessionData.direct_query(expid)
 	runq=appionData.ApSelectionRunData()
 	runq['name']=params['runid']
 	runq['session']=sessiondata
@@ -224,14 +219,14 @@ def insertManualParams(params, expid):
 	manparams=appionData.ApSelectionParamsData()
 	manparams['diam']=params['diam']
 
-	runids=appiondb.query(runq, results=1)
+	runids=runq.query(results=1)
 
 	# if no run entry exists, insert new run entry into run.dbparticledata
 	# then create a new selexonParam entry
 	if not runids:
 		print "inserting manual runId into database"
 		runq['params']=manparams
-		appiondb.insert(runq)
+		runq.insert()
 	elif runids[0]['params'] != manparams:
 		apDisplay.printError("upload parameters not the same as last run - check diameter")
 

@@ -11,8 +11,7 @@ import apStack
 import apEMAN
 from apSpider import alignment
 import appionData
-import apDB
-appiondb = apDB.apdb
+
 
 #=====================
 #=====================
@@ -50,7 +49,7 @@ class NoRefClassScript(appionScript.AppionScript):
 			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
 		if self.params['method'] not in ['hierarch','kmeans']:
 			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
-		self.norefdata = self.appiondb.direct_query(appionData.ApNoRefRunData, self.params['norefid'])
+		self.norefdata = appionData.ApNoRefRunData.direct_query(self.params['norefid'])
 
 	#=====================
 	def setOutDir(self):

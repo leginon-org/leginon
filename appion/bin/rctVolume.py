@@ -71,7 +71,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("enter a description")
 		
 		#get the stack ID from the noref class ID
-		self.norefclassdata = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
+		self.norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
 		norefRun = self.norefclassdata['norefRun']
 		self.params['notstackid'] = norefRun['stack'].dbid
 		if self.params['notstackid'] is None:
@@ -170,7 +170,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['description'] = self.params['description']
 		rctrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['tiltstackid'])
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		rctrunq['norefclass'] = self.appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
+		rctrunq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
 		if self.params['commit'] is True:
 			rctrunq.insert()
@@ -182,7 +182,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
-		densq['symmetry'] = self.appiondb.direct_query(appionData.ApSymmetryData, 25)
+		densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
 		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
 		densq['boxsize'] = apStack.getStackBoxsize(self.params['tiltstackid'])
 		densq['lowpass'] = self.params['lowpassvol']

@@ -7,15 +7,15 @@ import math
 import time
 import Image
 import ImageDraw
-import Mrc
-import imagefun
-import convolver
-import numarray
-import numarray.nd_image as nd_image
-import numarray.convolve as convolve
-import numarray.fft as fft
-import numarray.random_array as random_array
-import numarray.linear_algebra as linear_algebra
+from pyami import mrc
+from pyami import imagefun
+from pyami import convolver
+import numpy
+import scipy.ndimage as ndimage
+#import numarray.convolve as convolve
+#import numarray.fft as fft
+import numpy.random as random_array
+#import numpy.la as linear_algebra
 import apDatabase
 import apImage
 #import selexonFunctions as sf1
@@ -141,7 +141,7 @@ def getCrossCorrPeaks(image,file,templfile,classavg,strt,end,incr,params):
 		#print " ... rotation:",i,"of",totalrots,"  \tangle =",ang
 		sys.stderr.write(".")
 		#ROTATE
-		template2   = nd_image.rotate(template,ang,reshape=False,mode="wrap").copy()
+		template2   = ndimage.rotate(template,ang,reshape=False,mode="wrap").copy()
 		#MASK
 		template2   = template2*tmplmask
 		#BIN
@@ -221,7 +221,7 @@ def normStdev2(map,n):
 	normalizes mean and stdev of image inside mask only
 	"""
 	lsum  = map.sum()
-	mean  = nd_image.mean(map)
+	mean  = ndimage.mean(map)
 	sumsq = (map*map).sum()
 	a = n*sumsq
 	b = lsum*lsum
@@ -273,7 +273,7 @@ def removeCrud(image,imagefile,stdev,params):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
 	fp = numarray.where(fp < rad**2,1.0,0.0)
-	imagemed = nd_image.minimum_filter(imagemed, \
+	imagemed = ndimage.minimum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=stdev)
 	#SHRINK
 	print " ... ... shrink filter"
@@ -282,7 +282,7 @@ def removeCrud(image,imagefile,stdev,params):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
 	fp = numarray.where(fp < rad**2,1.0,0.0)
-	imagemed = nd_image.maximum_filter(imagemed, \
+	imagemed = ndimage.maximum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=0.0)
 	#GROW
 	print " ... ... grow filter"
@@ -291,7 +291,7 @@ def removeCrud(image,imagefile,stdev,params):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
 	fp = numarray.where(fp < rad**2,1.0,0.0)
-	imagemed = nd_image.minimum_filter(imagemed, \
+	imagemed = ndimage.minimum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=stdev)
 
 	#SHRINK
@@ -301,7 +301,7 @@ def removeCrud(image,imagefile,stdev,params):
 		return (x-rad)**2 + (y-rad)**2
 	fp = numarray.fromfunction(distsq, (rad*2,rad*2))
 	fp = numarray.where(fp < rad**2,1.0,0.0)
-	imagemed = nd_image.maximum_filter(imagemed, \
+	imagemed = ndimage.maximum_filter(imagemed, \
 		footprint=fp,mode="constant",cval=0.0)
 
 	imagemed = normStdev(imagemed)
@@ -584,7 +584,7 @@ def calc_corrcoeffs(blobs,imfile,bin,template,tmplmask,anglemap):
 		if(x > tx and y > ty and x < ix and y < iy):
 			smimage = image[ x-tx:x+tx, y-ty:y+ty ]
 			angle = anglemap[x/bin,y/bin]
-			template2 = nd_image.rotate(template, angle, reshape=False, mode="wrap")
+			template2 = ndimage.rotate(template, angle, reshape=False, mode="wrap")
 			template2 = bin_img(template2,2)
 			rho = corr_coeff(smimage,template2,tmplmask)
 			blob.stats['corrcoeff'] = rho
@@ -885,15 +885,15 @@ def whiteNormalizeImage(a):
 	devlimit=5.0
  	imrange = maxlevel - minlevel
 
-	avg1=nd_image.mean(a)
+	avg1=ndimage.mean(a)
 
-	stdev1=nd_image.standard_deviation(a)
+	stdev1=ndimage.standard_deviation(a)
 
-	min1=nd_image.minimum(a)
+	min1=ndimage.minimum(a)
 	if(min1 < avg1-devlimit*stdev1):
 		min1 = avg1-devlimit*stdev1
 
-	max1=nd_image.maximum(a)
+	max1=ndimage.maximum(a)
 	if(max1 > avg1+devlimit*stdev1):
 		max1 = avg1+devlimit*stdev1
 
@@ -918,15 +918,15 @@ def blackNormalizeImage(a):
 	devlimit=5.0
  	imrange = maxlevel - minlevel
 
-	avg1=nd_image.mean(a)
+	avg1=ndimage.mean(a)
 
-	stdev1=nd_image.standard_deviation(a)
+	stdev1=ndimage.standard_deviation(a)
 
-	min1=nd_image.minimum(a)
+	min1=ndimage.minimum(a)
 	if(min1 < avg1-devlimit*stdev1):
 		min1 = avg1-devlimit*stdev1
 
-	max1=nd_image.maximum(a)
+	max1=ndimage.maximum(a)
 	if(max1 > avg1+devlimit*stdev1):
 		max1 = avg1+devlimit*stdev1
 
@@ -951,15 +951,15 @@ def normalizeImage(a):
 	devlimit=5.0
  	imrange = maxlevel - minlevel
 
-	avg1=nd_image.mean(a)
+	avg1=ndimage.mean(a)
 
-	stdev1=nd_image.standard_deviation(a)
+	stdev1=ndimage.standard_deviation(a)
 
-	min1=nd_image.minimum(a)
+	min1=ndimage.minimum(a)
 	if(min1 < avg1-devlimit*stdev1):
 		min1 = avg1-devlimit*stdev1
 
-	max1=nd_image.maximum(a)
+	max1=ndimage.maximum(a)
 	if(max1 > avg1+devlimit*stdev1):
 		max1 = avg1+devlimit*stdev1
 
@@ -1021,15 +1021,15 @@ def numeric_to_jpg2(numer,file):
 #########################################################
 
 def normRange(im):
-	min1=nd_image.minimum(im)
-	max1=nd_image.maximum(im)
+	min1=ndimage.minimum(im)
+	max1=ndimage.maximum(im)
 	return (im - min1)/(max1 - min1)
 
 #########################################################
 
 def normStdev(im):
-	avg1=nd_image.mean(im)
-	std1=nd_image.standard_deviation(im)
+	avg1=ndimage.mean(im)
+	std1=ndimage.standard_deviation(im)
 	return (im - avg1)/std1
 
 #########################################################
@@ -1038,12 +1038,12 @@ def imageinfo(im):
 	#print " ... size: ",im.shape
 	#print " ... sum:  ",im.sum()
 
-	avg1=nd_image.mean(im)
-	stdev1=nd_image.standard_deviation(im)
+	avg1=ndimage.mean(im)
+	stdev1=ndimage.standard_deviation(im)
 	print " ... avg:  ",round(avg1,6),"+-",round(stdev1,6)
 
-	min1=nd_image.minimum(im)
-	max1=nd_image.maximum(im)
+	min1=ndimage.minimum(im)
+	max1=ndimage.maximum(im)
 	print " ... range:",round(min1,6),"<>",round(max1,6)
 
 	return
@@ -1107,7 +1107,7 @@ def calc_templatefft(template, oversized):
 
 def calc_imagefft(image, oversized):
 	#EXPAND IMAGE TO BIGGER SIZE
-	avg=nd_image.mean(image)
+	avg=ndimage.mean(image)
 	image2 = convolve.iraf_frame.frame(image, oversized, mode="constant", cval=avg)
 
 	#CALCULATE FOURIER TRANSFORMS
@@ -1146,7 +1146,7 @@ def cross_correlate_fft(imagefft, templatefft, imshape, tmplshape):
 	corr = numarray.ravel(corr)
 	corr = numarray.reshape(corr[(corr.shape)[0]::-1],corrshape)
 
-	corr = nd_image.shift(corr, tmplshape[0], mode='wrap', order=0)
+	corr = ndimage.shift(corr, tmplshape[0], mode='wrap', order=0)
 
 	#print " ... ... rot time %.2f sec" % float(time.time()-t1)
 
@@ -1166,7 +1166,7 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	#imageinfo(tmplmask)
 	#numeric_to_jpg(tmplmask,"tmplmask.jpg")
 
-	if(nd_image.minimum(image) < 0.0 or nd_image.minimum(tmplmask) < 0.0):
+	if(ndimage.minimum(image) < 0.0 or ndimage.minimum(tmplmask) < 0.0):
 		print " !!! WARNING image or mask is less than zero"
 
 	tmplsize = (tmplmask.shape)[1]
@@ -1175,7 +1175,7 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	imshape  = image.shape
 
 	shift = int(-1*tmplsize/2.0)
-	#tmplmask2 = nd_image.shift(tmplmask, shift, mode='wrap', order=0)
+	#tmplmask2 = ndimage.shift(tmplmask, shift, mode='wrap', order=0)
 	#tmplmask2 = tmplmask
 
 	err = 0.000001
@@ -1190,7 +1190,7 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	cnv2 = cnv2 + err
 	del imagesqfft
 	#SHIFTING CAN BE SLOW
-	#cnv2 = nd_image.shift(cnv2, shift, mode='wrap', order=0)
+	#cnv2 = ndimage.shift(cnv2, shift, mode='wrap', order=0)
 	#imageinfo(cnv2)
 	#print cnv2[499,499],cnv2[500,500],cnv2[501,501]
 	#numeric_to_jpg(cnv2,"cnv2.jpg")
@@ -1200,7 +1200,7 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	cnv1 = cnv1 + err
 	del tmplmaskfft
 	#SHIFTING CAN BE SLOW
-	cnv1 = nd_image.shift(cnv1, shift, mode='wrap', order=0)
+	cnv1 = ndimage.shift(cnv1, shift, mode='wrap', order=0)
 	#imageinfo(cnv1)
 	#print cnv1[499,499],cnv1[500,500],cnv1[501,501]
 	#numeric_to_jpg(cnv1*cnv1,"cnv1.jpg")
@@ -1224,13 +1224,13 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	#print numarray.argmax(numarray.ravel(cross))
 	#cross = normRange(cross)
 	#cross = numarray.where(cross > 0.8,cross,0.7)
-	#cross = nd_image.shift(cross, (cross.shape)[0]/2, mode='wrap', order=0)
+	#cross = ndimage.shift(cross, (cross.shape)[0]/2, mode='wrap', order=0)
 	#numeric_to_jpg(cross,"cross.jpg")
 	#phase = phase_correlate(a1[128:896,128:896],b1[128:896,128:896])
 	#print numarray.argmax(numarray.ravel(phase))
 	#phase = normRange(phase)
 	#phase = numarray.where(phase > 0.7,phase,0.6)
-	#phase = nd_image.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
+	#phase = ndimage.shift(phase, (phase.shape)[0]/2, mode='wrap', order=0)
 	#numeric_to_jpg(phase,"phase.jpg")
 
 	v2= (a1 - b1)
@@ -1247,19 +1247,19 @@ def calc_normconvmap(image, imagefft, tmplmask, oversized, pixrad):
 	xn = (v2.shape)[0]/2
 	#IMPORTANT TO CHECK FOR ERROR
 	if(v2[xn-1,xn-1] > 1.0 or v2[xn,xn] > 1.0 or v2[xn+1,xn+1] > 1.0 \
-		or nd_image.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) > 1.0):
+		or ndimage.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) > 1.0):
 		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values > 1)"
 		imageinfo(v2)
-		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],ndimage.mean(v2)
 		numeric_to_jpg(a1,"a1.jpg")
 		numeric_to_jpg(b1,"b1.jpg")
 		numeric_to_jpg(b1,"v2.jpg")
 		sys.exit(1)
 	if(v2[xn-1,xn-1] < 0.0 or v2[xn,xn] < 0.0 or v2[xn+1,xn+1] < 0.0 \
-		or nd_image.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) < 0.0):
+		or ndimage.mean(v2[xn/2:3*xn/2,xn/2:3*xn/2]) < 0.0):
 		print " !!! MAJOR ERROR IN NORMALIZATION CALCUATION (values < 0)"
 		imageinfo(v2)
-		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],nd_image.mean(v2)
+		print " ... VALUES: ",v2[xn-1,xn-1],v2[xn,xn],v2[xn+1,xn+1],ndimage.mean(v2)
 		numeric_to_jpg(a1,"a1.jpg")
 		numeric_to_jpg(b1,"b1.jpg")
 		numeric_to_jpg(b1,"v2.jpg")
@@ -1308,7 +1308,7 @@ def phase_correlate(image, template):
 	oversized = (numarray.array(shape) + numarray.array(kshape))
 
 	#EXPAND IMAGE TO BIGGER SIZE
-	avg=nd_image.mean(image)
+	avg=ndimage.mean(image)
 	image2 = convolve.iraf_frame.frame(image, oversized, mode="wrap", cval=avg)
 
 	#CALCULATE FOURIER TRANSFORMS
@@ -1339,7 +1339,7 @@ def phase_correlate(image, template):
 
 def bin_img(image,bin):
 	""" zoom does a bad job of binning """
-	#return nd_image.zoom(img,1.0/float(binning),order=1)
+	#return ndimage.zoom(img,1.0/float(binning),order=1)
 	""" numextension used to cause mem leaks """
 	#return imagefun.bin(image,bin)
 	return imagefun.bin(image,bin)

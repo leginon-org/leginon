@@ -10,7 +10,6 @@ import shutil
 import appionData
 import apParam
 import apDisplay
-import apDB
 import apCtf
 import apImage
 import apDatabase
@@ -24,8 +23,6 @@ except:
 """
 
 import mlabraw as pymat
-
-appiondb = apDB.apdb
 
 def runAce(matlab, imgdata, params, showprev=True):
 	imgname = imgdata['filename']

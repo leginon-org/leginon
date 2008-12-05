@@ -14,7 +14,6 @@ import cPickle
 import apDisplay
 import apDatabase
 import apImage
-import apXml
 import apParam
 #leginon
 import appionScript
@@ -47,12 +46,17 @@ class AppionLoop(appionScript.AppionScript):
 		self.params = apParam.convertParserToParams(self.parser)
 		self._addDefaultParams()
 
+		### setup correct database
+		if self.params['projectid'] is not None:
+			# use a project database
+			newapdb = "ap"+str(self.params['projectid'])
+			sinedon.setConfig('appionData', db=newapdb)
+
 		### check if user wants to print help message
-		if 'commit' in self.params:
-			if self.params['commit'] is False:
-				apDisplay.printWarning("Not committing data to database")
-			else:
-				apDisplay.printMsg("Committing data to database")
+		if self.params['commit'] is False:
+			apDisplay.printWarning("Not committing data to database")
+		else:
+			apDisplay.printMsg("Committing data to database")
 		self.checkConflicts()
 
 		### setup output directory
@@ -401,22 +405,6 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['memlist'] = [mem.active()]
 
 	#=====================
-	def _checkForHelpCall(self, args):
-		if len(args) < 1:
-			self._runHelp()
-		for arg in args:
-			if ('help' in arg and not '=' in arg) or arg == 'h' or arg == '-h':
-				self._runHelp()
-
-	#=====================
-	def _runHelp(self):
-		allxml  = os.path.join(self.params['appiondir'],"xml/allAppion.xml")
-		funcxml = os.path.join(self.params['appiondir'],"xml",self.functionname+".xml")
-		xmldict = apXml.readTwoXmlFiles(allxml, funcxml)
-		apXml.printHelp(xmldict)
-		sys.exit(1)
-
-	#=====================
 	def _checkForDuplicateCommandLineInputs(self, args):
 		argdict = {}
 		for arg in args:
@@ -462,7 +450,7 @@ class AppionLoop(appionScript.AppionScript):
 				self.params['continue']=True 
 
 		sessionq=leginondata.SessionData(name=self.params['sessionname'])
-		self.params['session']=self.leginondb.query(sessionq)[0]
+		self.params['session']=sessionq.query()[0]
 
 		if len(newargs) > 0:
 			if self.params['background'] is False:
@@ -522,7 +510,7 @@ class AppionLoop(appionScript.AppionScript):
 		if idata is None:
 			return
 		for q in idata:
-			self.appiondb.insert(q)
+			q.insert()
 		return
 
 	#=====================		
@@ -610,7 +598,7 @@ class AppionLoop(appionScript.AppionScript):
 		if self.params['mrclist'] is not None:
 			self.imgtree = apDatabase.getSpecificImagesFromDB(self.params["mrclist"])
 		elif self.params['sessionname'] is not None:
-			if self.params['preset'] is not None
+			if self.params['preset'] is not None:
 				self.imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
 			else:
 				self.imgtree = apDatabase.getAllImagesFromDB(self.params['sessionname'])

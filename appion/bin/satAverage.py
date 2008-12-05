@@ -17,14 +17,12 @@ import sinedon
 import MySQLdb
 #appion
 import appionScript
-import apDB
 import appionData
 import apDisplay
 import apStack
 import apRecon
 import apEMAN
 import apFile
-apdb=apDB.apdb
 
 
 
@@ -78,7 +76,7 @@ class satAverageScript(appionScript.AppionScript):
 			refineparticledata = cPickle.load(f)
 			f.close()
 		else:
-			refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
+			refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
 			if not refinerundata:
 				apDisplay.printError("Could not find refinerundata for reconrun id="+str(reconid))
 
@@ -246,7 +244,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def setOutDir(self):
 		reconid = self.params['reconid']
-		refinerundata = apdb.direct_query(appionData.ApRefinementRunData, reconid)
+		refinerundata = appionData.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
 		self.params['outdir'] = os.path.join(refinerundata['path']['path'], 'satavg')

@@ -14,7 +14,7 @@
 
 
 import os
-import apDB
+
 import sys
 import re
 import shutil
@@ -30,7 +30,7 @@ import apUpload
 import apDatabase
 import apStack
 import apProject
-appiondb = apDB.apdb
+
 
 #=====================
 #=====================
@@ -134,7 +134,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	def setOutDir(self):
 	
 		if self.params['imagic3d0Id'] is not None:
-			modeldata = appiondb.direct_query(appionData.ApImagic3d0Data, self.params['imagic3d0Id'])
+			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
 			path = os.path.join(modeldata['path']['path'], modeldata['runname'])
 		else:
 			apDisplay.printError("3d0 initial model not in database")
@@ -146,8 +146,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		refineq = appionData.ApImagic3dRefineRunData()
 		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runId']
-		refineq['norefclass'] = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefClassId'])
-		refineq['imagic3d0run'] = appiondb.direct_query(appionData.ApImagic3d0Data, self.params['imagic3d0Id'])
+		refineq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
 		refineq['boxsize'] = self.params['boxsize']
@@ -177,7 +177,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq['mra_ang_inc'] = self.params['mrarefs_ang_inc']
 		itnq['forw_ang_inc'] = self.params['forw_ang_inc']
 		itnq['num_classums'] = self.params['num_classums']
-		itnq['symmetry'] = appiondb.direct_query(appionData.ApSymmetryData, self.params['symmetry'])
+		itnq['symmetry'] = appionData.ApSymmetryData.direct_query(self.params['symmetry'])
 		if self.params['commit'] is True:
 			itnq.insert()
 		return
@@ -188,7 +188,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		print self.params
 		
 		if self.params['imagic3d0Id'] is not None:
-			modeldata = appiondb.direct_query(appionData.ApImagic3d0Data, self.params['imagic3d0Id'])
+			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
 			self.params['boxsize'] = modeldata['boxsize']
 			self.params['apix'] = modeldata['pixelsize']
 		else: 
@@ -201,7 +201,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
 		elif modeldata['reclass'] is not None:
 			reclassid = modeldata['reclass'].dbid
-			reclassdata = appiondb.direct_query(appionData.ApImagicReclassifyData, reclassid)
+			reclassdata = appionData.ApImagicReclassifyData.direct_query(reclassid)
 			norefclassdata = reclassdata['norefclass']
 			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid			
 		else:

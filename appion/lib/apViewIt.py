@@ -3,16 +3,9 @@
 #pythonlib
 import os
 import tempfile
-#leginon
-import imagefun
-import Mrc
 #pyami
-try:
-	import pyami.mrc as mrc
-	import pyami.imagefun as imagefun
-except:
-	import Mrc as mrc
-	import imagefun
+from pyami import mrc
+from pyami import imagefun
 #appion
 import apDatabase
 

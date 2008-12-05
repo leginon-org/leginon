@@ -15,12 +15,9 @@ import apStack
 import apDisplay
 import apDatabase
 import appionData
-import apDB
 import apEMAN
 import apProject
 
-
-appiondb = apDB.apdb
 #=====================
 class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
@@ -122,7 +119,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 	#=====================
 	def useRefFreeForTemplate(self):
 		apDisplay.printMsg("Using reference-free class to make template")
-		norefClassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefid'])
+		norefClassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefid'])
 		
 		#Get class average file path through ApNoRefRunData
 		norefRun=norefClassdata['norefRun']

@@ -15,7 +15,6 @@ from optparse import OptionParser
 import apDisplay
 import apDatabase
 import apParam
-import apDB
 import apFile
 #leginon
 from pyami import mem
@@ -26,8 +25,6 @@ class AppionScript(object):
 	#=====================
 	def __init__(self):
 		self.quiet = False
-		self.appiondb  = apDB.apdb
-		self.leginondb = apDB.db
 		self.startmem = mem.active()
 		### clean up any preliminary warnings
 		sys.stderr.write("\n\n")

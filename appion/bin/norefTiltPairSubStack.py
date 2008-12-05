@@ -9,13 +9,11 @@ import numpy
 import appionScript
 import apStack
 import apDisplay
-import apDB
 import appionData
 import apEMAN
 import apTilt
 from apTilt import apTiltPair
 
-appiondb = apDB.apdb
 
 class subStackScript(appionScript.AppionScript):
 	#=====================
@@ -48,7 +46,7 @@ class subStackScript(appionScript.AppionScript):
 			apDisplay.printError("noref class ID was not defined")
 		
 		#get the stack ID from the noref class ID
-		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
+		norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
 		norefRun=norefclassdata['norefRun']
 		self.params['stackid'] = norefRun['stack'].dbid
 
@@ -91,7 +89,7 @@ class subStackScript(appionScript.AppionScript):
 		apDisplay.printMsg("Include list: "+str(includelist))
 
 		#get particles from noref class run
-		norefclassdata = appiondb.direct_query(appionData.ApNoRefClassRunData, self.params['norefclassid'])
+		norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
 		classpartq = appionData.ApNoRefClassParticlesData()
 		classpartq['classRun'] = norefclassdata
 		classpartdatas = classpartq.query()

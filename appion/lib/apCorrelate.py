@@ -1,11 +1,11 @@
 #Future home of cross-correlation functions
 
-import numarray
-import numarray.nd_image as nd_image
-import numarray.convolve as convolve
-import numarray.fft as fft
-import numarray.random_array as random_array
-import numarray.linear_algebra as linear_algebra
+import numpy
+import scipy.ndimage as nd_image
+#import numpy.convolve as convolve
+#import numpy.fft as fft
+import numpy.random as random_array
+#import numpy.linear_algebra as linear_algebra
 
 def runCrossCorr(params,file):
 	# Run Neil's version of FindEM

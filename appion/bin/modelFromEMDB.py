@@ -123,7 +123,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
-		#densq['symmetry'] = self.appiondb.direct_query(appionData.ApSymmetryData, 25)
+		#densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
 		densq['pixelsize'] = self.params['apix']
 		densq['boxsize'] = self.params['box']
 		densq['lowpass'] = self.params['res']

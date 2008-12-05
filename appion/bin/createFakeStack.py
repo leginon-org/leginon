@@ -9,6 +9,7 @@ import MySQLdb
 import sinedon
 import apEMAN
 import apDisplay
+import appionScript
 
 
 dbconf = sinedon.getConfig('appionData')
@@ -196,7 +197,7 @@ class fakeStackScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = os.path.abspath(stackdata['path']['path'])
 		path = os.path.dirname(path)
-		time.
+		time.sleep(1)
 		self.params['outdir'] = os.path.join(path, "fakestack")
 
 	#=====================

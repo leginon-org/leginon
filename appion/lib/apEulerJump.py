@@ -15,7 +15,6 @@ import apDisplay
 import apStack
 import apEulerCalc
 import appionData
-import apDB
 
 class ApEulerJump(object):
 	#=====================
@@ -30,7 +29,6 @@ class ApEulerJump(object):
 		### create a cursor
 		self.cursor = self.db.cursor()
 		### keep sinedon version too
-		self.appiondb = apDB.apdb
 
 	#=====================
 	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None, sym=None):
@@ -99,10 +97,10 @@ class ApEulerJump(object):
 
 	#=====================
 	def insertJumpIntoDB(self, stackpartid, reconrunid, jumpdata):
-		#refinerundata=apdb.direct_query(appionData.ApRefinementRunData, reconid)
+		#refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
 		ejumpq = appionData.ApEulerJumpData()
-		ejumpq['particle'] = self.appiondb.direct_query(appionData.ApStackParticlesData, stackpartid)
-		ejumpq['refRun'] = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
+		ejumpq['particle'] = appionData.ApStackParticlesData.direct_query(stackpartid)
+		ejumpq['refRun'] = appionData.ApRefinementRunData.direct_query(reconrunid)
 		for key in ('median', 'mean', 'stdev', 'min', 'max'):
 			ejumpq[key] = jumpdata[key]
 		ejumpq.insert()
@@ -111,8 +109,8 @@ class ApEulerJump(object):
 	#=====================
 	def getJumpDataFromDB(self, stackpartid, reconrunid):
 		jumpq = appionData.ApEulerJumpData()
-		jumpq['particle'] = self.appiondb.direct_query(appionData.ApStackParticlesData, stackpartid)
-		jumpq['refRun'] = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
+		jumpq['particle'] = appionData.ApStackParticlesData.direct_query(stackpartid)
+		jumpq['refRun'] = appionData.ApRefinementRunDatadirect_query(reconrunid)
 		jumpdatas = jumpq.query(results=1)
 		if not jumpdatas:
 			return None
@@ -125,7 +123,7 @@ class ApEulerJump(object):
 			stackid = apStack.getStackIdFromRecon(reconrunid, msg=False)
 
 		stackpartq = appionData.ApStackParticlesData()
-		stackpartq['stack'] = self.appiondb.direct_query(appionData.ApStackData, stackid)
+		stackpartq['stack'] = appionData.ApStackData.direct_query(stackid)
 		stackpartq['particleNumber'] = stackpartnum
 		stackpartdata = stackpartq.query(results=1)
 		
@@ -167,7 +165,7 @@ class ApEulerJump(object):
 		"""
 		get the symmetry from the last iteration of a refinement
 		"""
-		refrundata = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
+		refrundata = appionData.ApRefinementRunData.direct_query(reconrunid)
 		refdataq = appionData.ApRefinementData()
 		refdataq['refinementRun'] = refrundata
 		refdata = refdataq.query()
@@ -190,8 +188,8 @@ class ApEulerJump(object):
 		"""
 		returns all classdata for a particular particle and refinement
 		"""
-		refrundata = self.appiondb.direct_query(appionData.ApRefinementRunData, reconrunid)
-		stackpartdata = self.appiondb.direct_query(appionData.ApStackParticlesData, stackpartid)
+		refrundata = appionData.ApRefinementRunData.direct_query(reconrunid)
+		stackpartdata = appionData.ApStackParticlesData.direct_query(stackpartid)
 		
 		refmentq = appionData.ApRefinementData()
 		refmentq['refinementRun'] = refrundata

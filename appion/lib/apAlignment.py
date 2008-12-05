@@ -11,15 +11,12 @@ import leginondata
 import apXml
 import apParam
 import apDisplay
-import apDB
 import apDatabase
 import apStack
 import apImage
 import appionData
 import apTemplate
 import apEMAN
-leginondb = apDB.db
-appiondb = apDB.apdb
 
 def defaults():
 	params = {}
@@ -118,9 +115,9 @@ def overridecmd(params):
 	runq = appionData.ApNoRefRunData()
 	runq['name'] = params['runid']
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
-	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
 	# ... stackId, runId and norefPath make the norefRun unique:
-	uniquerun = appiondb.query(runq, results=1)[0]
+	uniquerun = runq.query(results=1)[0]
 	# ... continue filling non-unique variables:
 	uniqueparams = uniquerun['norefParams']
 
@@ -190,7 +187,7 @@ def getStackInfo(params):
 
 	#get image params of the particle (dereference keep image from loading as would partdata['image'])
 	imageref = partdata.special_getitem('image', dereference = False)
-	imgdata = leginondb.direct_query(leginondata.AcquisitionImageData,imageref.dbid, readimages = False)
+	imgdata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
 
 	#apXml.fancyPrintDict(stackrundata)
 	#apXml.fancyPrintDict(stackparamdata)
@@ -657,15 +654,15 @@ def insertNoRefRun(params, insert=False):
 	paramq['particle_diam'] = params['diam']
 	paramq['mask_diam'] = params['mask']
 	paramq['lp_filt'] = params['imask']
-	paramsdata = appiondb.query(paramq, results=1)
+	paramsdata = paramq.query(results=1)
 
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
 	runq['name'] = params['runid']
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
-	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
 	# ... stackId, runId and norefPath make the norefRun unique:
-	uniquerun = appiondb.query(runq, results=1)
+	uniquerun = runq.query(results=1)
 	# ... continue filling non-unique variables:
 	runq['description'] = params['description']
 
@@ -686,7 +683,7 @@ def insertNoRefRun(params, insert=False):
 	### create a classRun object
 	classq = appionData.ApNoRefClassRunData()
 	classq['num_classes'] = params['numclasses']
-	norefrun = appiondb.query(runq, results=1)
+	norefrun = runq.query(results=1)
 	if params['classonly']:
 		classq['norefRun'] = uniquerun[0]
 	elif norefrun:
@@ -697,7 +694,7 @@ def insertNoRefRun(params, insert=False):
 		apDisplay.printError("parameters have changed for run name '"+params['runid']+\
 			"', specify 'classonly' to re-average classes")
 	# ... numclasses and norefRun make the class unique:
-	uniqueclass = appiondb.query(classq, results=1)
+	uniqueclass = classq.query(results=1)
 	# ... continue filling non-unique variables:
 	classq['classFile'] = params['classfile']
 	classq['varFile'] = params['varfile']
@@ -710,13 +707,13 @@ def insertNoRefRun(params, insert=False):
 				apDisplay.printError("NoRefRun name '"+params['runid']+"' for numclasses="+\
 					str(params['numclasses'])+"\nis already in the database with different parameter: "+str(i))
 
-	classdata = appiondb.query(classq, results=1)
+	classdata = classq.query(results=1)
 
-	norefrun = appiondb.query(runq, results=1)
+	norefrun = runq.query(results=1)
 	if not classdata and insert is True:
 		# ideal case nothing pre-exists
 		apDisplay.printMsg("inserting noref run parameters into database")
-		appiondb.insert(classq)
+		classq.insert()
 
 	return
 
@@ -733,10 +730,10 @@ def insertRefRun(params, insert=False):
 	### create a refRun object
 	runq = appionData.ApRefRunData()
 	runq['name'] = params['runid']
-	runq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 	# ... stackId, runId and refPath make the refRun unique:
-	uniquerun = appiondb.query(runq, results=1)
+	uniquerun = runq.query(results=1)
 	# ... continue filling non-unique variables:
 	runq['refParams'] = paramq
 	runq['description'] = params['description']
@@ -754,11 +751,11 @@ def insertRefRun(params, insert=False):
 		# ideal case nothing pre-exists
 		apDisplay.printMsg("inserting ref run parameters into database")
 		params['runq']=runq
-		appiondb.insert(runq)
+		runq.insert()
 
 	for refid in params['refids']:
 		reftempq = appionData.ApRefTemplateRunData()
-		reftempq['refTemplate'] = appiondb.direct_query(appionData.ApTemplateImageData, refid)
+		reftempq['refTemplate'] = appionData.ApTemplateImageData.direct_query(refid)
 		reftempq['refRun'] = runq
 		if insert is True:
 			reftempq.insert()
@@ -777,5 +774,7 @@ def insertIterRun(params, iternum, itername, insert=False):
 	if insert is True:
 		# ideal case nothing pre-exists
 		apDisplay.printMsg("inserting ref iterations parameters into database")
-		appiondb.insert(iterq)
+		iterq.insert()
 	return
+
+

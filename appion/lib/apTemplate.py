@@ -17,11 +17,7 @@ import apFile
 import apParam
 import apDisplay
 import apDatabase
-import apDB
 import appionData
-
-appiondb = apDB.apdb
-
 
 def getTemplates(params):
 	"""
@@ -46,7 +42,7 @@ def getTemplates(params):
 		index = i+1
 		templateid = int(templateid)
 		#QUERY DB FOR TEMPLATE INFO
-		templatedata = appiondb.direct_query(appionData.ApTemplateImageData, templateid)
+		templatedata = appionData.ApTemplateImageData.direct_query(templateid)
 		if not (templatedata):
 			apDisplay.printError("Template Id "+str(templateid)+" was not found in database.")
 
@@ -92,7 +88,7 @@ def getTemplates(params):
 
 
 def getTemplateFromId(templateid):
-	return appiondb.direct_query(appionData.ApTemplateImageData, templateid)
+	return appionData.ApTemplateImageData.direct_query(templateid)
 
 def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 
@@ -182,7 +178,7 @@ def copyTemplatesToOutdir(params, timestamp=None):
 		
 def insertTemplateRun(params,runq,templatenum):
 	tid=params['templateIds'][templatenum]
-	templateimagedata=appiondb.direct_query(appionData.ApTemplateImageData,tid)
+	templateimagedata=appionData.ApTemplateImageData.direct_query(tid)
 	# if no templates in the database, exit
 	if not (templateimagedata):
 		apDisplay.printError("Template '"+tid+"' not found in database. Use uploadTemplates.py")
@@ -203,7 +199,7 @@ def insertTemplateRun(params,runq,templatenum):
 	templaterunq['range_end']=float(end)
 	templaterunq['range_incr']=float(incr)
 	if params['commit'] is True:
-		appiondb.insert(templaterunq)
+		templaterunq.insert()
 	return
 
 def insertTemplateImage(params):
@@ -215,7 +211,7 @@ def insertTemplateImage(params):
 		templateq=appionData.ApTemplateImageData()
 		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
 		templateq['templatename']=name
-		templateId = appiondb.query(templateq, results=1)
+		templateId = templateq.query(results=1)
 		if templateId:
 			apDisplay.printWarning("template already in database.\nNot reinserting")
 			continue
@@ -225,7 +221,7 @@ def insertTemplateImage(params):
 		md5sum = apFile.md5sumfile(temppath)
 		templateq2=appionData.ApTemplateImageData()
 		templateq2['md5sum']=md5sum
-		templateId = appiondb.query(templateq2, results=1)
+		templateId = templateq2.query(results=1)
 		if templateId:
 			apDisplay.printWarning("template with the same check sum already exists in database.\nNot reinserting")
 			continue
@@ -236,9 +232,9 @@ def insertTemplateImage(params):
 		templateq['diam']=params['diam']
 		templateq['md5sum']=md5sum 
 		if params['norefid'] is not None:
-			templateq['noref'] = appiondb.direct_query(appionData.ApNoRefClassRunData, params['norefid'])
+			templateq['noref'] = appionData.ApNoRefClassRunData.direct_query(params['norefid'])
 		if params['stackid'] is not None:
-			templateq['stack'] = appiondb.direct_query(appionData.ApStackData, params['stackid'])
+			templateq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
 		if params['stackimgnum'] is not None:
 			templateq['stack_image_number']=int(params['stackimgnum'])
 		templateq['description']=params['description']
@@ -247,14 +243,14 @@ def insertTemplateImage(params):
 		templateq['hidden'] = False
 		if params['commit'] is True:
 			time.sleep(2)
-			appiondb.insert(templateq)
+			templateq.insert()
 		else:
 			apDisplay.printWarning("Not commiting template to DB")
 	return
 
 def checkTemplateParams(runq, params):
 	templaterunq = appionData.ApTemplateRunData(selectionrun=runq)
-	templaterundata = appiondb.query(templaterunq)
+	templaterundata = templaterunq.query()
 	if not templaterundata:
 		return True
 	#make sure of using same number of templates
@@ -268,11 +264,11 @@ def checkTemplateParams(runq, params):
 			strt=params["startang"+str(n+1)]
 			end=params["endang"+str(n+1)]
 			incr=params["incrang"+str(n+1)]
-			tmpltimagedata=appiondb.direct_query(appionData.ApTemplateImageData,params['templateIds'][n])
+			tmpltimagedata=appionData.ApTemplateImageData.direct_query(params['templateIds'][n])
 			tmpltrunq=appionData.ApTemplateRunData()
 			tmpltrunq['selectionrun']=runq
 			tmpltrunq['template']=tmpltimagedata
-			tmpltrundata=appiondb.query(tmpltrunq,results=1)
+			tmpltrundata=tmpltrunq.query(results=1)
 			if (tmpltrundata[0]['range_start']!=strt or
 				tmpltrundata[0]['range_end']!=end or
 				tmpltrundata[0]['range_incr']!=incr):

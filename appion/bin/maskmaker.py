@@ -78,7 +78,7 @@ class MaskMaker(appionLoop.AppionLoop):
 		maskPdata['convex hull']=not params['no_hull']
 		maskPdata['libcv']=params['cv']
 
-		self.appiondb.insert(maskPdata)
+		maskPdata.insert()
 		
 		return maskPdata
 
@@ -134,7 +134,7 @@ class MaskMaker(appionLoop.AppionLoop):
 			
 		paramdata =self.insertFunctionParams(params)
 		maskRdata=apMask.createMaskMakerRun(sessiondata,params['rundir'],params['runid'],paramdata)
-		self.appiondb.insert(maskRdata)
+		maskRdata.insert()
 
 		return maskRdata
 		

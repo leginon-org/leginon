@@ -12,14 +12,11 @@ import sinedon.data as data
 #leginon
 import leginondata
 #appion
-import apDB
 import apDisplay
 import appionData
 import apDefocalPairs
 
 data.holdImages(False)
-leginondb = apDB.db
-appiondb = apDB.apdb
 
 def getAllImages(stats, params):
 	startt = time.time()
@@ -46,7 +43,7 @@ def getSpecificImagesFromDB(imglist):
 	imgtree=[]
 	for imgname in imglist:
 		imgquery = leginondata.AcquisitionImageData(filename=imgname)
-		imgres   = leginondb.query(imgquery, readimages=False, results=1)
+		imgres   = imgquery.query(readimages=False, results=1)
 		imgtree.append(imgres[0])
 	return imgtree
 
@@ -60,7 +57,7 @@ def getImagesFromDB(session, preset):
 	imgquery = leginondata.AcquisitionImageData()
 	imgquery['preset']  = presetq
 	imgquery['session'] = sessionq
-	imgtree = leginondb.query(imgquery, readimages=False)
+	imgtree = imgquery.query(readimages=False)
 	"""
 	loop through images and make data.holdimages false 	 
 	this makes it so that data.py doesn't hold images in memory 	 
@@ -78,13 +75,13 @@ def getAllImagesFromDB(session):
 	sessionq= leginondata.SessionData(name=session)
 	imgquery = leginondata.AcquisitionImageData()
 	imgquery['session'] = sessionq
-	imgtree = leginondb.query(imgquery, readimages=False)
+	imgtree = imgquery.query(readimages=False)
 	return imgtree
 
 def getExpIdFromSessionName(sessionname):
 	apDisplay.printMsg("looking up session, "+sessionname)
 	sessionq = leginondata.SessionData(name=sessionname)
-	sessioninfo = leginondb.query(sessionq, readimages=False, results=1)
+	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
 		return sessioninfo[0].dbid
 	else:
@@ -93,7 +90,7 @@ def getExpIdFromSessionName(sessionname):
 def getSessionDataFromSessionName(sessionname):
 	apDisplay.printMsg("looking up session, "+sessionname)
 	sessionq = leginondata.SessionData(name=sessionname)
-	sessioninfo = leginondb.query(sessionq, readimages=False, results=1)
+	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
 		return sessioninfo[0]
 	else:
@@ -103,7 +100,7 @@ def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
         apDisplay.printMsg("looking up session, "+ str(sessiondata.dbid)); 
         tiltq = leginondata.TiltSeriesData()
         tiltseriesq = leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
-        tiltseriesdata = leginondb.query(tiltseriesq, readimages=False,results=1)
+        tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
         if tiltseriesdata:
                 return tiltseriesdata[0]
         else:
@@ -114,7 +111,7 @@ def getImageData(imgname):
 	get image data object from database
 	"""
 	imgquery = leginondata.AcquisitionImageData(filename=imgname)
-	imgtree  = leginondb.query(imgquery, results=1, readimages=False)
+	imgtree  = imgquery.query(results=1, readimages=False)
 	if imgtree:
 		#imgtree[0].holdimages=False
 		return imgtree[0]
@@ -123,7 +120,7 @@ def getImageData(imgname):
 
 def getImgDir(sessionname):
 	sessionq = leginondata.SessionData(name=sessionname)
-	sessiondata = leginondb.query(sessionq)
+	sessiondata = sessionq.query()
 	imgdir = os.path.abspath(sessiondata[0]['image path'])
 	return imgdir
 
@@ -132,7 +129,7 @@ def getSessionName(imgname):
 	get session name from database
 	"""
 	imgquery = leginondata.AcquisitionImageData(filename=imgname)
-	imgtree  = leginondb.query(imgquery, results=1, readimages=False)
+	imgtree  = imgquery.query(results=1, readimages=False)
 	if 'session' in imgtree[0]:
 		return imgtree[0]['session']['name']
 	else:
@@ -154,7 +151,7 @@ def getPixelSize(imgdata):
 	pixelsizeq['magnification'] = imgdata['scope']['magnification']
 	pixelsizeq['tem'] = imgdata['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdata['camera']['ccdcamera']
-	pixelsizedata=leginondb.query(pixelsizeq, results=1)
+	pixelsizedata=pixelsizeq.query(results=1)
 	binning = imgdata['camera']['binning']['x']
 	pixelsize = pixelsizedata[0]['pixelsize'] * binning
 	return(pixelsize*1e10)
@@ -166,7 +163,7 @@ def getImgSize(imgdict):
 	fname = imgdict['filename']
 	# get image size (in pixels) of the given mrc file
 	imageq=leginondata.AcquisitionImageData(filename=fname)
-	imagedata=leginondb.query(imageq, results=1, readimages=False)
+	imagedata=imageq.query(results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])
 		return(size)
@@ -178,7 +175,7 @@ def getApixFromStackData(stackdata):
 	# pixel size is obtained from the first image in the stack
 	stkptclq = appionData.ApStackParticlesData()
 	stkptclq['stack'] = stackdata
-	stkptclresults = appiondb.query(stkptclq, results=1)
+	stkptclresults = stkptclq.query(results=1)
 	if not stkptclresults:
 		apDisplay.printError("Stack not found")
 	stackbin = stkptclresults[0]['stackRun']['stackParams']['bin']
@@ -187,7 +184,7 @@ def getApixFromStackData(stackdata):
 
 	### what is this next line???
 	imageref = stkptclresults[0]['particle'].special_getitem('image', dereference = False)
-	imagedata = leginondb.direct_query(leginondata.AcquisitionImageData, imageref.dbid, readimages = False)
+	imagedata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages = False)
 
 	if 'defocpair' in stkptclresults[0]['stackRun']['stackParams']:
 		defocpair = stkptclresults[0]['stackRun']['stackParams']['defocpair']
@@ -200,7 +197,7 @@ def getApixFromStackData(stackdata):
 		else:
 			apDisplay.printWarning("apDefocalPairs.getTransformedDefocPair() failed")
 
-	#imagedata=leginondb.direct_query(leginondata.AcquisitionImageData,imageid)
+	#imagedata=leginondata.AcquisitionImageData.direct_query(imageid)
 		
 	if not imagedata:
 		apDisplay.printError("imagedata not found for stackid="+str(stackdata.dbid)
@@ -214,7 +211,7 @@ def getApixFromStackData(stackdata):
 def getImgSizeFromName(imgname):
 	# get image size (in pixels) of the given mrc file
 	imageq=leginondata.AcquisitionImageData(filename=imgname)
-	imagedata=leginondb.query(imageq, results=1, readimages=False)
+	imagedata=imageq.query(results=1, readimages=False)
 	if imagedata:
 		size=int(imagedata[0]['camera']['dimension']['y'])
 		return(size)
@@ -296,7 +293,7 @@ def getImgAssessmentStatus(imgdata):
 		return None
 	assessquery = appionData.ApAssessmentData()
 	assessquery['image'] = imgdata
-	assessdata = appiondb.query(assessquery)
+	assessdata = assessquery.query()
 
 	if assessdata:
 		#check results of only most recent run
@@ -334,10 +331,10 @@ def getDarkNorm(sessionname, cameraconfig):
 	darkquery = leginondata.DarkImageData(session=sessionquery, camstate=camquery)
 	#print 'DARKQUERY', darkquery
 	normquery = leginondata.NormImageData(session=sessionquery, camstate=camquery)
-	darkdata = leginondb.query(darkquery, results=1)
+	darkdata = darkquery.query(results=1)
 	dark = darkdata[0]['image']
 	#print darkdata[0]
-	normdata = leginondb.query(normquery, results=1)
+	normdata = normquery.query(results=1)
 	norm = normdata[0]['image']
 	result = dark,norm
 	cache[key] = result
@@ -480,8 +477,8 @@ def queryDirectory(path):
 
 
 if __name__ == '__main__':
-	id = 442
-	stackdata = appiondb.direct_query(appionData.ApStackData,id)
+	stackid = 442
+	stackdata = appionData.ApStackData.direct_query(stackid)
 	stackapix = getApixFromStackData(stackdata)
 	print stackapix
 

@@ -17,7 +17,6 @@ import appionData
 import apDisplay
 import apParticle
 import apParam
-import apDB
 import apDatabase
 import apCtf
 import apMask
@@ -31,9 +30,6 @@ try:
 	import apMatlab
 except:
 	pass
-
-db   = apDB.db
-apdb = apDB.apdb
 
 def printHelp():
 	print "\nUsage:\nmakestack.py <boxfile> [single=<stackfile>] [outdir=<path>] [ace=<n>] [boxsize=<n>] [inspected or inspectfile=<file>] [bin=<n>] [phaseflip] [noinvert] [spider] mindefocus=<n> maxdefocus=<n> [partlimit=<n>] [defocpair=<preset>] [lp=<n>] [hp=<n>]\n"
@@ -241,7 +237,7 @@ def checkInspectFile(imgdict):
 
 
 def checkPairInspectDB(imgdata,params):
-	#sibimagedata = db.direct_query(leginondata.AcquisitionImageData,params['sibpairs'][imgdata.dbid])
+	#sibimagedata = leginondata.AcquisitionImageData.direct_query(params['sibpairs'][imgdata.dbid])
 	sibimagedata = apDefocalPairs.getDefocusPair(imgdata)
 	return apDatabase.checkInspectDB(sibimagedata)
 
@@ -441,7 +437,7 @@ def saveParticles(particles,shift,dbbox,params,imgdict):
 				stackpq['particle']=prtl
 				params['particleNumber'] += 1
 				stackpq['particleNumber']=params['particleNumber']
-				apdb.insert(stackpq)
+				stackpq.insert()
 		else:
 			eliminated+=1
 	if eliminated > 0:
@@ -472,7 +468,7 @@ def saveIndvParticles(particle,shift,dbbox,params,imgdict):
 			stackpq['particle']=particle
 			params['particleNumber'] += 1
 			stackpq['particleNumber']=params['particleNumber']
-			apdb.insert(stackpq)
+			stackpq.insert()
 	else:
 		eliminated+=1
 	if eliminated > 0:
@@ -625,7 +621,7 @@ def getImgsFromSelexonId(params):
 	apDisplay.printMsg("Finding images that have particles for selection run: id="+str(params['selexonId']))
 
 	# get selection run id
-	selexonrun = apdb.direct_query(appionData.ApSelectionRunData, params['selexonId'])
+	selexonrun = appionData.ApSelectionRunData.direct_query(params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
 	
@@ -635,7 +631,7 @@ def getImgsFromSelexonId(params):
 	# get all images from session
 	apDisplay.printMsg("Getting images")
 	dbimgq = leginondata.AcquisitionImageData(session=params['sessionid'])
-	allimgtree = db.query(dbimgq, readimages=False)
+	allimgtree = dbimgq.query(readimages=False)
 
 	if not (allimgtree):
 		apDisplay.printError("no images associated with this runId")
@@ -648,7 +644,7 @@ def getImgsFromSelexonId(params):
 		pimgq = appionData.ApParticleData()
 		pimgq['image'] = imgdata
 		pimgq['selectionrun'] = selexonrun
-		pimg = apdb.query(pimgq, results=1)
+		pimg = pimgq.query(results=1)
 		if pimg:
 			partimgtree.append(imgdata)
 	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-startt))
@@ -664,7 +660,7 @@ def getImgsDefocPairFromSelexonId(params):
 	apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(params['selexonId']))
 
 	# get selection run id
-	selexonrun=apdb.direct_query(appionData.ApSelectionRunData,params['selexonId'])
+	selexonrun = appionData.ApSelectionRunData.direct_query(params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
 	
@@ -673,7 +669,7 @@ def getImgsDefocPairFromSelexonId(params):
 
 	# get all images from session
 	dbimgq=leginondata.AcquisitionImageData(session=params['sessionid'])
-	dbimginfo=db.query(dbimgq,readimages=False)
+	dbimginfo=dbimgq.query(readimages=False)
 
 	if not (dbimginfo):
 		apDisplay.printError("no images associated with this runId")
@@ -686,7 +682,7 @@ def getImgsDefocPairFromSelexonId(params):
 		pimgq=appionData.ApParticleData()
 		pimgq['image']=imgdata
 		pimgq['selectionrun']=selexonrun
-		pimg=apdb.query(pimgq, results=1)
+		pimg=pimgq.query(results=1)
 		if pimg:
 			siblingimage = apDefocalPairs.getTransformedDefocPair(imgdata,1)
 			if siblingimage:
@@ -706,7 +702,7 @@ def insertStackRun(params):
 	for p in paramlist:
 		if p in params:
 			stparamq[p] = params[p]
-	paramslist=apdb.query(stparamq)
+	paramslist=stparamq.query()
 
 	# make sure that NULL values were not filled in during query
 	goodplist=None
@@ -730,7 +726,7 @@ def insertStackRun(params):
 	runq['session'] = params['sessionid']
 
         # see if stack already exists in the database (just checking path)
-	stacks = apdb.query(stackq, results=1)
+	stacks = stackq.query(results=1)
 
 	# recreate stack object
 	stackq = appionData.ApStackData()
@@ -743,7 +739,7 @@ def insertStackRun(params):
 
 	params['stackdata']
 	
-	runids = apdb.query(runq, results=1)
+	runids = runq.query(results=1)
 	# recreate a stackRun object
 	runq = appionData.ApStackRunData()
 	runq['stackRunName'] = params['runid']
@@ -777,13 +773,13 @@ def insertStackRun(params):
 		if stacks[0]['description']!=params['description']:
 			apDisplay.printError("Stack description is not the same!")
 		# make sure the the run is the same:
-		rinstack = apdb.query(rinstackq, results=1)
+		rinstack = rinstackq.query(results=1)
 		
 		## if no runinstack found, find out which parameters are wrong:
 		if not rinstack:
 			rinstackq = appionData.ApRunsInStackData()
 			rinstackq['stack'] = stackq.query()[0]
-			correct_rinstack=apdb.query(rinstackq)
+			correct_rinstack=rinstackq.query()
 			for i in correct_rinstack[0]['stackRun']['stackParams']:
 				if correct_rinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
 					apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
@@ -883,7 +879,7 @@ def getStackId(params):
 	stackq['name'] = params['single']
 
 	try:
-		stackdata = apdb.query(stackq, results=1)[0]
+		stackdata = stackq.query(results=1)[0]
 		apDisplay.printMsg("created stack with stackdbid="+str(stackdata.dbid))
 	except:
 		apDisplay.printMsg("created stack has no stackdbid")
@@ -972,7 +968,7 @@ if __name__ == '__main__':
 		images=[]
 		for img in imglist:
 			imageq = leginondata.AcquisitionImageData(filename=img)
-			imageresult = db.query(imageq, readimages=False)
+			imageresult = imageq.query(readimages=False)
 			images += imageresult
 
 		params['session']=images[0]['session']['name']
