@@ -13,24 +13,26 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runNoRefClassify(($_POST['process']=="Run NoRef Classify") ? true : false);
+	runCoranCluster(($_POST['process']=="Run Coran Cluster") ? true : false);
 } else {
-	createNoRefClassifyForm();
+	createCoranClusterForm();
 }
 
-function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher', $heading='Reference Free Classify') {
-	$norefid=$_GET['norefId'];
+function createCoranClusterForm($extra=false, $title='clusterCoran.py Launcher', $heading='Reference Free Classify') {
+	$alignid=$_GET['alignId'];
+	$analysisid=$_GET['analysisId'];
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
 		$projectId=getProjectFromExpId($expId);
-		$formAction=$_SERVER['PHP_SELF']."?expId=$expId&norefId=$norefid";
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId&alignId=$alignid&analysisId=$analysisId";
 	} else {
 		$sessionId=$_POST['sessionId'];
-		$formAction=$_SERVER['PHP_SELF']."?norefId=$norefId";
+		$formAction=$_SERVER['PHP_SELF']."?alignId=$alignid&analysisId=$analysisId";
 	}
 	$projectId=$_POST['projectId'];
 
@@ -43,15 +45,17 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr>\n";
+		echo "<font color='red'>$extra</font>\n<hr/><br/>\n";
 	}
   
-	echo"
-       <form name='viewerform' method='post' action='$formAction'>\n";
+	echo"<form name='viewerform' method='post' action='$formAction'>\n";
 	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
 
-	$norefparams = $particle->getNoRefParams($norefid);
-	//print_r($norefparams);
+	$alignparams = $particle->getAlignStackParams($alignid);
+	echo print_r($alignparams)."<br/><br/>\n";
+	$analysisparams = $particle->getAnalysisParams($analysisid);
+	echo print_r($analysisparams)."<br/><br/>\n";
+
 	
 	// Set any existing parameters in form
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -60,17 +64,20 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	$factorlist = ($_POST['factorlist']) ? $_POST['factorlist'] : "1,2,3";
 	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : 40;
 
-	echo "<input type='hidden' name='norefid' value=$norefid>";
+	echo "<input type='hidden' name='alignid' value=$alignid>";
 
-	echo"
-	<table border='0' class='tableborder'>
-	<tr>
-		<td valign='top'>
-		<table cellpadding='10' border='0'>
-		<tr>";
-	echo "<td valign='top'>";
+	echo "<table border='0' class='tableborder'>\n";
+	echo "<tr><td colspan='2' valign='top'>\n";
+	echo openRoundBorder();
+	echo alignstacksummarytable($alignid, true);
+	echo closeRoundBorder();
+	echo "</td></tr>";
+	echo "<tr><td valign='top'>\n";
+	echo "<table cellpadding='10' border='0'>\n";
+	echo "<tr><td valign='top'>\n";
 
-	$dendrofile = $norefparams['path']."/dendrogram.png";
+
+	$dendrofile = $analysisparams['path']."/dendrogram.png";
 	if(file_exists($dendrofile)) {
 		echo docpop('dendrogram','<b>Dendrogram:</b>');
 		echo "<a href='loadimg.php?filename=$dendrofile'><font size='-2'>(click to enlarge)</font><br />"
@@ -80,7 +87,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<hr />\n";
 	echo "<input type='text' name='numclass' size='3' value='$numclass'> ";
 	echo docpop('numclass','Number of Classes');
-	echo "<br /><br />";
+	echo "<br/><br/>";
 
 	echo docpop('classmethod','<B>Particle classification method:</B>');
 	echo "<br/>";
@@ -103,12 +110,12 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<table cellpadding='5' border='0'>";
 	echo "<tr><td valign='TOP'>\n";
 	echo docpop('factorlist','<b>Eigen Images</b>');
-	echo "<br />\n";
+	echo "<br/>\n";
 	echo "Choose factors to use: ";
 	echo "<font size='-2'>(Click on the image to view)</font>\n";
-	echo "<br />\n";
+	echo "<b />\n";
 
-	$eigendata = $particle->getCoranEigenData($norefid);
+	$eigendata = $particle->getCoranEigenDataFromAnalysis($analysisid);
 	//print_r($eigendata[0]);
 
 	if($eigendata) {
@@ -144,7 +151,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	echo "<tr>";
 	echo "	<td colspan='2' align='center'>";
 	echo "	<hr />";
-	echo getSubmitForm("Run NoRef Classify");
+	echo getSubmitForm("Run Coran Cluster");
 	echo "  </td>";
 	echo "</tr>";
 	echo "</table>";
@@ -153,13 +160,14 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	exit;
 }
 
-function runNoRefClassify($runjob=False) {
+function runCoranCluster($runjob=False) {
 	$expId = $_GET['expId'];
-	$norefId = $_GET['norefId'];
-	$command.="norefClassify.py ";
+	$alignid = $_GET['alignId'];
+	$analysisid=$_GET['analysisId'];
+	$command.="clusterCoran.py ";
 
 	$numclass = $_POST['numclass'];
-	$norefid = $_POST['norefid'];
+	$alignid = $_POST['alignid'];
 	$numeigenimgs = $_POST['numeigenimgs'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$classmethod=$_POST['classmethod'];
@@ -175,20 +183,23 @@ function runNoRefClassify($runjob=False) {
 
 	// make sure eigenimgs were selected
 	if (!$factorlist) 
-		createNoRefClassifyForm('<b>ERROR:</b> No eigenimages selected');
+		createCoranClusterForm('<b>ERROR:</b> No eigenimages selected');
 
 	//make sure a stack was selected
-	if (!$norefid) 
-		createNoRefClassifyForm("<b>ERROR:</b> No NoRef Alignment selected, norefId=$norefid");
+	if (!$alignid) 
+		createCoranClusterForm("<b>ERROR:</b> No Alignment selected, alignid=$alignid");
 
- 
+	if (!$analysisid) 
+		createCoranClusterForm("<b>ERROR:</b> No Analysis selected, analysisid=$analysisid");
+
 	// classification
 	if ($numclass > 999 || $numclass < 2) 
-		createNoRefClassifyForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
+		createCoranClusterForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
 	$particle = new particledata();
 
-	$command.="--norefid=$norefId ";
+	$command.="--alignid=$alignid ";
+	$command.="--analysisid=$analysisid ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
 	if ($classmethod && $classmethod != 'hierarch') $command.="--method=$classmethod ";
@@ -200,12 +211,12 @@ function runNoRefClassify($runjob=False) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createNoRefClassifyForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createCoranClusterForm("<B>ERROR:</B> Enter a user name and password");
 
 		// get the output directory (already contains runid)
-		$norefparams = $particle->getNoRefParams($norefid);
-		$outdir = $norefparams['path'];
-		$runid = $norefparams['name'];
+		$alignparams = $particle->getAlignStackParams($alignid);
+		$outdir = $alignparams['path'];
+		$runid = $alignparams['name'];
 		// take runid off of outdir
 		$outdir = ereg_replace($runid,'',$outdir);
 		// in case there are more than 1 '/' at the end
@@ -216,10 +227,10 @@ function runNoRefClassify($runjob=False) {
 		$uniqId=implode('',$factorlistAR);
 		$uniqId.=".$numclass";
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'norefclass',False,False,$uniqId);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignclass',False,False,$uniqId);
 
 		// if errors:
-		if ($sub) createNoRefClassifyForm("<b>ERROR:</b> $sub");
+		if ($sub) createCoranClusterForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	processing_header("No Ref Classify Run Params","No Ref Classify Params");
@@ -227,7 +238,7 @@ function runNoRefClassify($runjob=False) {
 	echo"
 	<table width='600' class='tableborder' border='1'>
 	<tr><td colspan='2'>
-	<b>NoRef Classify Command:</b><br />
+	<b>Coran Cluster Command:</b><br />
 	$command
 	</td></tr>
 	<tr><td>numclass</td><td>$numclass</td></tr>
