@@ -27,7 +27,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 	apParam.createDirectory(partdir)
 	if numpart > filesperdir:
 		numdir = createSubFolders(partdir, numpart, filesperdir)
-		filesperdir = int(math.ceil(numpart/float(numdir)))
+		filesperdir = int(math.ceil(numpart/float(numdir)+2))
 		apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(numdir)+" folders with "
 			+str(filesperdir)+" particles per folder")
 		subdir = 1
