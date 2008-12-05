@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runMaxLikeAlign(($_POST['process']=="Run MaxLike Alignment") ? true : false);
+	runMaxLikeAlign(($_POST['process']=="Run Max Like Alignment") ? true : false);
 } else {
 	createMaxLikeAlignForm();
 }
