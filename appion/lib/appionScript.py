@@ -19,10 +19,14 @@ import apFile
 #leginon
 from pyami import mem
 
-
+#=====================
+#=====================
 class AppionScript(object):
 	#=====================
 	def __init__(self):
+		"""
+		Starts a new function and gets all the parameters
+		"""
 		### setup some expected values
 		sys.stderr.write("\n\n")
 		self.quiet = False
@@ -107,13 +111,15 @@ class AppionScript(object):
 	#=====================
 	def setupRunDirectory(self):
 		#IF NO RUNDIR IS SET
-		if self.params['outdir'] is None:
-			self.setOutDir()
+		if self.params['rundir'] is None:
+			self.setProcessingDirName()
+			self.setRunDir()
+			self.params['rundir'] = self.params['outdir']
 		#create the run directory, if needed
 		if self.quiet is False:
-			apDisplay.printMsg("Run directory: "+self.params['outdir'])
-		apParam.createDirectory(self.params['outdir'], warning=(not self.quiet))
-		os.chdir(self.params['outdir'])
+			apDisplay.printMsg("Run directory: "+self.params['rundir'])
+		apParam.createDirectory(self.params['rundir'], warning=(not self.quiet))
+		os.chdir(self.params['rundir'])
 
 	#=====================
 	def close(self):
@@ -121,10 +127,29 @@ class AppionScript(object):
 		apParam.closeFunctionLog(params=self.params, logfile=self.logfile, msg=(not self.quiet))
 		apFile.removeFile("spider.log")
 		if self.quiet is False:
+			apDisplay.printMsg("ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))
 			apDisplay.printMsg("memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
-			apDisplay.printMsg("outdir:\n "+self.params['outdir'])
+			apDisplay.printMsg("rundir:\n "+self.params['rundir'])
 			apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 		apParam.killVirtualFrameBuffer()
+
+	#=====================
+	def setupGlobalParserOptions(self):
+		"""
+		set the input parameters
+		"""
+		self.parser.add_option("-r", "--runname", dest="runname", default=self.timestamp,
+			help="Name for processing run, e.g. --runname=run1", metavar="NAME")
+		self.parser.add_option("-d", "--description", dest="description",
+			help="Description of the processing run (must be in quotes)", metavar="TEXT")
+		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
+			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
+		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
+			help="Run directory for storing output, e.g. --rundir=/ami/data00/appion/runs/run1", metavar="PATH")
+		self.parser.add_option("-C", "--commit", dest="commit", default=True,
+			action="store_true", help="Commit processing run to database")
+		self.parser.add_option("--no-commit", dest="commit", default=True,
+			action="store_false", help="Do not commit processing run to database")
 
 	#=====================
 	def parsePythonPath(self):
@@ -156,22 +181,11 @@ class AppionScript(object):
 	def setupParserOptions(self):
 		"""
 		set the input parameters
+		this function should be rewritten in each program
 		"""
-		self.parser.set_usage("Usage: %prog --session=<session> --commit --description='<text>' [options]")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the template (must be in quotes)", metavar="TEXT")
-		self.parser.add_option("-s", "--session", dest="session",
-			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
+		self.parser.set_usage("Usage: %prog --commit --description='<text>' [options]")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
-		self.parser.add_option("--runid", "-r", dest="runid", default=self.timestamp,
-			help="Run ID name, e.g. --runid=run1", metavar="NAME")
 
 	#=====================
 	def checkConflicts(self):
@@ -189,8 +203,11 @@ class AppionScript(object):
 
 	#=====================
 	def setOutDir(self):
+		"""
+		this function only runs if no rundir is defined at the command line
+		"""
 		import apStack
-		if ( self.params['outdir'] is None 
+		if ( self.params['rundir'] is None 
 		and 'session' in self.params 
 		and self.params['session'] is not None ):
 			#auto set the run directory
@@ -199,12 +216,12 @@ class AppionScript(object):
 			path = re.sub("leginon","appion",path)
 			path = re.sub("/rawdata","",path)
 			path = os.path.join(path, self.processdirname)
-			self.params['outdir'] = path
-		if ( self.params['outdir'] is None 
+			self.params['rundir'] = path
+		if ( self.params['rundir'] is None 
 		and 'reconid' in self.params 
 		and self.params['reconid'] is not None ):
 			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if ( self.params['outdir'] is None 
+		if ( self.params['rundir'] is None 
 		and 'stackid' in self.params
 		and self.params['stackid'] is not None ):
 			#auto set the run directory
@@ -212,7 +229,8 @@ class AppionScript(object):
 			path = os.path.abspath(stackdata['path']['path'])
 			path = os.path.dirname(path)
 			path = os.path.dirname(path)
-			self.params['outdir'] = os.path.join(path, self.processdirname)
+			self.params['rundir'] = os.path.join(path, self.processdirname)
+		self.params['outdir'] = self.params['rundir']
 
 	#=====================
 	def start(self):
