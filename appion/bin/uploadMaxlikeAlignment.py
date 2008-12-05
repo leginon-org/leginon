@@ -274,7 +274,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignrunq['description'] = runparams['description']
 		alignrunq['lp_filt'] = runparams['lowpass']
 		alignrunq['hp_filt'] = runparams['highpass']
-		alignrunq['num_particles'] =  runparams['numpart']
 		alignrunq['bin'] = runparams['bin']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
@@ -305,6 +304,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignstackq['pixelsize'] = apStack.getStackPixelSizeFromStackId(runparams['stackid'])*runparams['bin']
 		alignstackq['description'] = runparams['description']
 		alignstackq['hidden'] =  False
+		alignstackq['num_particles'] =  runparams['numpart']
 		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 
 		### insert

@@ -125,7 +125,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignrunq['bin'] = self.params['bin']
 		alignrunq['hp_filt'] = self.params['highpass']
 		alignrunq['lp_filt'] = self.params['lowpass']
-		alignrunq['num_particles'] = self.params['numpart']
 		alignrunq['description'] = self.params['description']
 		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
@@ -155,6 +154,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] = False
+		alignstackq['num_particles'] = self.params['numpart']
 		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		if insert is True:

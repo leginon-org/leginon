@@ -479,7 +479,6 @@ class ApAlignRunData(Data):
 			('hidden', bool),
 			('project|projects|project', int),
 			('path', ApPathData),
-			('num_particles', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAlignRunData=ApAlignRunData
@@ -499,6 +498,7 @@ class ApAlignStackData(Data):
 			('pixelsize', float),
 			('description', str),
 			('hidden', bool),
+			('num_particles', int),
 			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
