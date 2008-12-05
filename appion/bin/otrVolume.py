@@ -257,7 +257,6 @@ class otrVolumeScript(appionScript.AppionScript):
 			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
 		if len(includeParticle) < 1:
 			apDisplay.printError("No particles were kept")
-		#print includeParticle
 		return includeParticle, tiltParticlesData
 
 	#=====================
@@ -286,21 +285,63 @@ class otrVolumeScript(appionScript.AppionScript):
 		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return eulerfile
 
-	#=====================
-	def projMatchRefine(self, classnum, volfile, alignstack, eulerfile, boxsize, numpart, pixrad):
+	#===================== 
+	def initialBPRP(self, classnum, volfile, spiderstack, eulerfile, numpart, pixrad):
+	
+		# file that stores the number of iteration for BPRP
+		BPRPcount = os.path.join(self.params['outdir'], str(classnum), "numiter.spi")
+			
+		if (os.path.isfile(BPRPcount)):
+			apDisplay.printMsg("BP RP counter file exists: "+BPRPcount+"! File will be deleted.")
+			apFile.removeFile(BPRPcount)
+
+		BPRPlambda=2e-5
+		backproject.backprojectRP(spiderstack, eulerfile, volfile,
+			pixrad=pixrad, classnum=classnum, lambDa=BPRPlambda, numpart=numpart)
+					
+		count = 0
+		rounds = 0
 		
-		backproject.alignAPSH(volfile, alignstack, eulerfile, classnum, boxsize, numpart, pixrad, self.timestamp)
+		### repeat BPRP for 100 times with different values of lambda or until BPRP manages to do 50 iterations
+		while count < 50 and rounds < 100:
+			if (os.path.isfile(BPRPcount)):
+				bc = open(BPRPcount, "r")
+				for line in bc.readlines():
+					value = line.split() 
+					if value[0]=="1":
+						count = int(float(value[2]))
+						if count < 50:
+							apDisplay.printMsg("BPRP iteration is "+str(count)+" (less than 50)... redoing BPRP")
+							bc.close()
+							apFile.removeFile(BPRPcount)
+							BPRPlambda = BPRPlambda/2
+							backproject.backprojectRP(spiderstack, eulerfile, volfile,
+								pixrad=pixrad, classnum=classnum, lambDa=BPRPlambda, numpart=numpart)
+			else: 
+				apDisplay.printWarning("numiter is missing")
+				continue
+			rounds+=1
+		
+		### print warning if BPRP reaches 100 rounds
+		if rounds >=100:
+			apDisplay.printWarning("BPRP attempted 100 times but iteration is still less than 50. Check BPRP params.")
+
+		return
+
+	#===================== Andres script #1 --- p.align_APSH.spi
+	def projMatchRefine(self, classnum, volfile, alignstack, eulerfile, boxsize, numpart, pixrad, iternum):
+		
+		APSHout = backproject.alignAPSH(volfile, alignstack, eulerfile, classnum, boxsize, numpart, pixrad, self.timestamp, iternum)
 	
 		### check APSH output
-		APSHout = os.path.join(self.params['outdir'], str(classnum), "APSHout%s.spi"%(self.timestamp))
 		if (os.path.isfile(APSHout) is False):
 			apDisplay.printError("AP SH alignment did not generate a valid output file. Please check parameters and rerun!")
 		
 		apsh = open(APSHout, "r")
 		
-		neweulerdoc = os.path.join(self.params['outdir'], str(classnum),"newEulersdoc%s.spi"%(self.timestamp))
+		neweulerdoc = os.path.join(self.params['outdir'], str(classnum),"newEulersdoc%s-%03d.spi"%(self.timestamp, iternum))
 		neweulerfile = open(neweulerdoc, "w")
-		rotshiftdoc = os.path.join(self.params['outdir'], str(classnum),"roShiftdoc%s.spi"%(self.timestamp))
+		rotshiftdoc = os.path.join(self.params['outdir'], str(classnum),"rotShiftdoc%s-%03d.spi"%(self.timestamp, iternum))
 		rotshiftfile = open(rotshiftdoc, "w")
 		
 		for line in apsh.readlines():
@@ -319,7 +360,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			phi = float(value[4])
 			
 			### rotate and shift particle
-			backproject.rotshiftParticle(alignstack, key, rot, cumX, cumY, self.timestamp, str(classnum))
+			APSHstack = backproject.rotshiftParticle(alignstack, key, rot, cumX, cumY, self.timestamp, str(classnum))
 			
 			### write out new euler file
 			eulerline = operations.spiderOutLine(key, [phi, theta, psi])
@@ -330,14 +371,16 @@ class otrVolumeScript(appionScript.AppionScript):
 			
 		neweulerfile.close()
 		rotshiftfile.close()
-		return
+		return APSHout, APSHstack, neweulerdoc
 
-	#=====================
-	def cccAPSH(self, APSHout, classnum):	
+	#===================== Andres script #2 --- p.weighted_CCC_APSH.spi
+	def cccAPSH(self, APSHout, classnum, iternum):	
 		### Calculate absolute shifts
 		absshifts=[]
 		
-		APSHout = os.path.join(self.params['outdir'], str(classnum), "APSHout%s.spi"%(self.timestamp))
+		if not os.path.isfile(APSHout):
+			apDisplay.printError("APSH output file not found: "+APSHout)	
+			
 		apsh = open(APSHout, "r")
 		
 		for line in apsh.readlines():
@@ -378,7 +421,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			probs.append(prob)
 			
 		### output file for APSH with weighted CC values 
-		APSHout_weighted = os.path.join(self.params['outdir'], str(classnum), "APSHout_weighted.spi")
+		APSHout_weighted = os.path.join(self.params['outdir'], str(classnum), "APSHout_weighted%s-%03d.spi"%(self.timestamp, iternum))
 		
 		apsh = open(APSHout, "r")
 		apshCCC = open(APSHout_weighted, "w")
@@ -422,8 +465,8 @@ class otrVolumeScript(appionScript.AppionScript):
 		
 		return APSHout_weighted
 
-	#=====================
-	def makecccAPSHselectFile(self, APSHout, factor, classnum):
+	#===================== Andres script #3 --- p.make_wCCC_Selfile_APSH.spi
+	def makecccAPSHselectFile(self, APSHout, classnum, iternum, factor):
 
 		if (os.path.isfile(APSHout) is False):
 			apDisplay.printError("File "+ APSHout +" does not exist!")
@@ -453,7 +496,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		count = 1
 		part = 1
 
-		corrSelect = os.path.join(self.params['outdir'], str(classnum), "APSHcorrSelect.spi")
+		corrSelect = os.path.join(self.params['outdir'], str(classnum), "APSHcorrSelect%s-%03d.spi"%(self.timestamp, iternum))
 		corrSelectFile = open(corrSelect, "w")
 		 
 
@@ -468,8 +511,8 @@ class otrVolumeScript(appionScript.AppionScript):
 	 	
 	 	return corrSelect
 	 
-	#=====================
-	def splitOddEven(self, classnum, select):
+	#===================== Andres script #4 --- p.makeselect_APSH.spi
+	def splitOddEven(self, classnum, select, iternum):
 	
 		if (os.path.isfile(select) is False):
 			apDisplay.printError("File "+ select +" does not exist!")
@@ -477,11 +520,14 @@ class otrVolumeScript(appionScript.AppionScript):
 		selectFile = open(select, "r")
 		selectFilename = os.path.splitext(os.path.basename(select))[0]
 		
-		selectOdd = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Odd%s.spi"%(self.timestamp))
+		selectOdd = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Odd%s-%03d.spi"%(self.timestamp, iternum))
 		selectOddFile = open(selectOdd, "w")
 		
-		selectEven = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Even%s.spi"%(self.timestamp))
+		selectEven = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Even%s-%03d.spi"%(self.timestamp, iternum))
 		selectEvenFile = open(selectEven, "w")
+		
+		countOdd=1
+		countEven=1
 		
 		for line in selectFile.readlines():
 			value = line.split()
@@ -493,66 +539,60 @@ class otrVolumeScript(appionScript.AppionScript):
 				continue
 			
 			if float(value[0])%2.0 == 1.0:
-				sline = operations.spiderOutLine(count, [value[0]])
+				sline = operations.spiderOutLine(countOdd, [int(value[0])])
 				selectOddFile.write(line)
+				countOdd+=1
 			else:
-				sline = operations.spiderOutLine(count, [value[0]])
+				sline = operations.spiderOutLine(countEven, [int(value[0])])
 				selectEvenFile.write(line)
+				countEven+=1
 
 		selectOddFile.close()
 		selectEvenFile.close()
 		
-		return
+		return selectOdd, selectEven
 		
-	#=====================NEEDS LOTS OF WORK
-	def APSHbackProject(self, cnum, selectFile):
-		"""
-			# file that stores the number of iteration for BPRP
-			BPRPcount = os.path.join(self.params['outdir'], str(cnum), "numiter.spi")
-			
+	#===================== Andres script #5 --- p.BPRP_APSH.spi
+	def APSHbackProject(self, spiderstack, eulerfile, volfile, classnum, selectFile):
+
+		# file that stores the number of iteration for BPRP
+		BPRPcount = os.path.join(self.params['outdir'], str(classnum), "numiter.spi")
+		
+		if (os.path.isfile(BPRPcount)):
+			apDisplay.printMsg("BP RP counter file exists: "+BPRPcount+"! File will be deleted.")
+			apFile.removeFile(BPRPcount)
+
+		BPRPlambda=2e-5
+		backproject.backprojectRP(spiderstack, eulerfile, volfile,
+			pixrad=self.params['radius'], classnum=classnum, lambDa=BPRPlambda, selfile=selectFile)
+					
+		count = 0
+		rounds = 0
+		
+		### repeat BPRP for 100 times with different values of lambda or until BPRP manages to do 50 iterations
+		while count < 50 and rounds < 100:
 			if (os.path.isfile(BPRPcount)):
-				apDisplay.printMsg("BP RP counter file exists: "+BPRPcount+"! File will be deleted.")
-				apFile.removeFile(BPRPcount)
-
-			BPRPlambda=2e-5
-			backproject.backprojectRP(spiderstack, eulerfile, volfile,
-				pixrad=self.params['radius'], classnum=cnum, lambDa=BPRPlambda, selfile=selectFile)
-						
-			count = 0
-			rounds = 0
-			
-			### repeat BPRP for 100 times with different values of lambda or until BPRP manages to do 50 iterations
-			while count < 50 and rounds < 100:
-				if (os.path.isfile(BPRPcount)):
-					bc = open(BPRPcount, "r")
-					for line in bc.readlines():
-						value = line.split() 
-						if value[0]=="1":
-							count = int(float(value[2]))
-							if count < 50:
-								apDisplay.printMsg("BPRP iteration is "+str(count)+" (less than 50)... redoing BPRP")
-								bc.close()
-								apFile.removeFile(BPRPcount)
-								BPRPlambda = BPRPlambda/2
-								backproject.backprojectRP(spiderstack, eulerfile, volfile,
-									pixrad=self.params['radius'], classnum=cnum, lambDa=BPRPlambda, numpart=len(includeParticle))
-				else: 
-					apDisplay.printWarning("numiter is missing")
-					continue
-				rounds+=1
-			
-			### print warning if BPRP reaches 100 rounds
-			if rounds >=100:
-				apDisplay.printWarning("BPRP attempted 100 times but iteration is still less than 50. Check BPRP params.")
-			
-
+				bc = open(BPRPcount, "r")
+				for line in bc.readlines():
+					value = line.split() 
+					if value[0]=="1":
+						count = int(float(value[2]))
+						if count < 50:
+							apDisplay.printMsg("BPRP iteration is "+str(count)+" (less than 50)... redoing BPRP")
+							bc.close()
+							apFile.removeFile(BPRPcount)
+							BPRPlambda = BPRPlambda/2
+							backproject.backprojectRP(spiderstack, eulerfile, volfile,
+								pixrad=self.params['radius'], classnum=classnum, lambDa=BPRPlambda, selfile=selectFile)
+			else: 
+				apDisplay.printWarning("numiter is missing")
+				continue
+			rounds+=1
 		
-			backproject.backprojectRP(spiderstack, eulerfile, volfile,
-				pixrad=self.params['radius'], classnum=cnum, lambDa=BPRPlambda, selfile=)
-			
-			# file that stores the number of iteration for BPRP
-			BPRPcount = os.path.join(self.params['outdir'], str(cnum), "numiter.spi")
-		"""
+		### print warning if BPRP reaches 100 rounds
+		if rounds >=100:
+			apDisplay.printWarning("BPRP attempted 100 times but iteration is still less than 50. Check BPRP params.")
+		
 		return
 
 	#=====================
@@ -608,63 +648,24 @@ class otrVolumeScript(appionScript.AppionScript):
 			### make new stack of tilted particle from that run
 			tiltstackfile = os.path.join(tiltstackdata['path']['path'], tiltstackdata['name'])
 			otrstackfile = os.path.join(self.params['outdir'], str(cnum), "otrstack"+self.timestamp+".hed")
-			#otrstackfile = os.path.join(self.params['outdir'], str(cnum), "otrstack08nov12p40.hed")
 			apFile.removeStack(otrstackfile)
 			apStack.makeNewStack(tiltstackfile, otrstackfile, self.params['keepfile'])
 			spiderstack = self.convertStackToSpider(otrstackfile, cnum)
-			#spiderstack = os.path.join(self.params['outdir'], str(cnum), "otrstack08nov12p40.spi")
 
 			### make doc file of Euler angles
 			eulerfile = self.makeEulerDoc(tiltParticlesData, cnum)
-			#eulerfile = "/ami/data15/appion/08aug02a/otrvolume/otr1/class0-1/0/eulersdoc08nov12p40.spi"
 			
 			### iterations over volume creation
 			looptime = time.time()
-			### back project particles into filter volume
+			
+			### back project particles into volume
 			volfile = os.path.join(self.params['outdir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, 0))
-
-			# file that stores the number of iteration for BPRP
-			BPRPcount = os.path.join(self.params['outdir'], str(cnum), "numiter.spi")
-			
-			if (os.path.isfile(BPRPcount)):
-				apDisplay.printMsg("BP RP counter file exists: "+BPRPcount+"! File will be deleted.")
-				apFile.removeFile(BPRPcount)
-
-			BPRPlambda=2e-5
-			backproject.backprojectRP(spiderstack, eulerfile, volfile,
-				pixrad=self.params['radius'], classnum=cnum, lambDa=BPRPlambda, numpart=len(includeParticle))
-						
-			count = 0
-			rounds = 0
-			
-			### repeat BPRP for 100 times with different values of lambda or until BPRP manages to do 50 iterations
-			while count < 50 and rounds < 100:
-				if (os.path.isfile(BPRPcount)):
-					bc = open(BPRPcount, "r")
-					for line in bc.readlines():
-						value = line.split() 
-						if value[0]=="1":
-							count = int(float(value[2]))
-							if count < 50:
-								apDisplay.printMsg("BPRP iteration is "+str(count)+" (less than 50)... redoing BPRP")
-								bc.close()
-								apFile.removeFile(BPRPcount)
-								BPRPlambda = BPRPlambda/2
-								backproject.backprojectRP(spiderstack, eulerfile, volfile,
-									pixrad=self.params['radius'], classnum=cnum, lambDa=BPRPlambda, numpart=len(includeParticle))
-				else: 
-					apDisplay.printWarning("numiter is missing")
-					continue
-				rounds+=1
-			
-			### print warning if BPRP reaches 100 rounds
-			if rounds >=100:
-				apDisplay.printWarning("BPRP attempted 100 times but iteration is still less than 50. Check BPRP params.")
+			self.initialBPRP(cnum, volfile, spiderstack, eulerfile, len(includeParticle), self.params['radius'])
 			
 			### filter the volume (low-pass Butterworth)
 			backproject.butterworthLP(volfile, pixelsize)
 			
-			### need work... filtered volume has a different name
+			### need work... filtered volume overwrites on the existing volume
 			backproject.normalizeVol(volfile)
 			
 			alignstack = spiderstack
@@ -695,28 +696,60 @@ class otrVolumeScript(appionScript.AppionScript):
 				### center/convert the volume file
 				emanvolfile = self.processVolume(volfile, cnum, iternum)
 			
-			#volfile = "/ami/data15/appion/08aug02a/otrvolume/otr2/class0-1/0/volume08nov17f42-005.spi"
-			#alignstack = "/ami/data15/appion/08aug02a/otrvolume/otr2/class0-1/0/alignstack08nov17f42-005.spi"
-			#eulerfile =  "/ami/data15/appion/08aug02a/otrvolume/otr2/class0-1/0/eulersdoc08nov17f42.spi"
+			###############################
+			#									 	#
+			# Andres's refinement steps	#
+			#										#
+			###############################
+			
+			for j in range(5):
+				iternum = j+1
+				self.appiondb.dbd.ping()
+				apDisplay.printMsg("projection-matching refinement/XMIPP iteration "+str(iternum))
 				
-			### projection-matching refinement/XMIPP
-			self.projMatchRefine(cnum, volfile, alignstack, eulerfile, boxsize, len(includeParticle), self.params['radius'])
-					
-			APSHout = os.path.join(self.params['outdir'], str(cnum), "APSHout%s.spi"%(self.timestamp))
+				### projection-matching refinement/XMIPP
+				apshout, apshstack, apsheuler = self.projMatchRefine(cnum, volfile, alignstack, eulerfile, boxsize, len(includeParticle), self.params['radius'], iternum)
 
-			self.cccAPSH(APSHout, cnum)
-	
-			factor=0.1
-			corrSelect = self.makecccAPSHselectFile(APSHout, factor, cnum)
-			
-			self.splitOddEven(cnum, corrSelect)
+				### calculation of weighted cross-correlation coefficients
+				apshout_weighted = self.cccAPSH(apshout, cnum, iternum)
 
-			#run BPRP on selected particles
-			
-			#calculate FSC
-			
-			
-			
+				### create select files based on calculated weighted-cross-correlation
+				corrSelect = self.makecccAPSHselectFile(apshout_weighted, cnum, iternum, factor=0.1)
+				
+				### generate odd and even select files for FSC calculation
+				corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
+
+				### create volume file names
+				apshVolfile = os.path.join(self.params['outdir'], str(cnum), "apshVolume%s-%03d.spi"%(self.timestamp, iternum))
+				apshOddVolfile = os.path.join(self.params['outdir'], str(cnum), "apshVolume_Odd%s-%03d.spi"%(self.timestamp, iternum))
+				apshEvenVolfile = os.path.join(self.params['outdir'], str(cnum), "apshVolume_Even%s-%03d.spi"%(self.timestamp, iternum))
+				
+				apshVols = []
+				apshVols.append(apshVolfile)
+				apshVols.append(apshOddVolfile)
+				apshVols.append(apshEvenVolfile)
+				
+				### run BPRP on selected particles
+				self.APSHbackProject(apshstack, apsheuler, apshVolfile, cnum, corrSelect)
+				self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
+				self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
+				
+				apshCenteredVols = []
+				### center volume
+				for apshVol in apshVols:
+					filename = os.path.splitext(apshVol)[0]
+					apshOutVol = filename+"_centered%s-%03d.spi"%(self.timestamp, iternum)
+					apshCenteredVols.append(apshOutVol)
+					backproject.centerVolume(apshVol, apshOutVol)
+				
+				### calculate FSC
+				fscout = os.path.join(self.params['outdir'], str(cnum), "FSCout%s-%03d.spi"%(self.timestamp, iternum))
+	 			backproject.calcFSC(apshCenteredVols[1], apshCenteredVols[2], fscout)
+	 			
+	 			### filter volume
+	 			backproject.butterworthFscLP(apshVolfile, fscout)
+
+		
 		sys.exit(1)
 
 
@@ -727,11 +760,6 @@ class otrVolumeScript(appionScript.AppionScript):
 			#get a list of all unique combinations of volumes
 			pairlist = self.computeClassVolPair()	
 			
-
-
-		### optimize Euler angles
-		#NOT IMPLEMENTED YET
-
 		### insert volumes into DB
 		self.insertOtrRun(emanvolfile)
 
