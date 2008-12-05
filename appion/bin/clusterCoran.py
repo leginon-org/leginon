@@ -22,8 +22,8 @@ class NoRefClassScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --noref=ID [ --num-part=# ]")
 
 		#required
-		self.parser.add_option("-i",  "--norefid", dest="norefid", type="int",
-			help="No ref database id", metavar="ID#")
+		self.parser.add_option("-a",  "--analysisid", dest="analysisid", type="int",
+			help="Coran database id", metavar="ID#")
 
 		#with defaults
 		self.parser.add_option("-f", "--factor-list", dest="factorstr", type="str", default="1,2,3",
@@ -38,22 +38,22 @@ class NoRefClassScript(appionScript.AppionScript):
 			help="Method to use for classification: 'hierarch' or 'kmeans'")
 
 
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
+		self.parser.add_option("-o", "--rundir", dest="rundir",
+			help="Run directory", metavar="PATH")
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['norefid'] is None:
-			apDisplay.printError("No ref id was not defined")
+		if self.params['analysisid'] is None:
+			apDisplay.printError("analysis id was not defined")
 		if self.params['numclass'] > 900:
 			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
 		if self.params['method'] not in ['hierarch','kmeans']:
 			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
-		self.norefdata = appionData.ApNoRefRunData.direct_query(self.params['norefid'])
+		self.analysisdata = appionData.ApAlignAnalysisData.direct_query(self.params['analysisid'])
 
 	#=====================
 	def setRunDir(self):
-		self.params['rundir'] = self.norefdata['path']['path']
+		self.params['rundir'] = self.analysisdata['path']['path']
 
 	#=====================
 	def readClassDocFile(self, docfile):
@@ -74,8 +74,10 @@ class NoRefClassScript(appionScript.AppionScript):
 
 	#=====================
 	def getNoRefPart(self, partnum):
-		norefpartq = appionData.ApNoRefAlignParticlesData()
-		norefpartq['norefRun'] = self.norefdata
+		### broken
+		sys.exit(1)
+		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq['alignstack'] = self.norefdata
 		stackid = self.norefdata['stack'].dbid
 		stackpart = apStack.getStackParticle(stackid, partnum)
 		norefpartq['particle'] = stackpart
@@ -84,7 +86,9 @@ class NoRefClassScript(appionScript.AppionScript):
 		return norefparts[0]
 
 	#=====================
-	def insertNoRefClass(self, classavg=None, classvar=None, insert=False):
+	def insertCluster(self, classavg=None, classvar=None, insert=False):
+		### broken
+		sys.exit(1)
 		# create a norefParam object
 		classq = appionData.ApNoRefClassRunData()
 		classq['num_classes'] = self.params['numclass']
@@ -132,8 +136,8 @@ class NoRefClassScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 
-		alignedstack = os.path.join(self.norefdata['path']['path'], "alignedstack")
-		numpart = self.norefdata['norefParams']['num_particles']
+		alignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], self.analysisdata['alignstack']['spiderstack'])
+		numpart = analysisdata['alignstack']['num_particles']
 		factorlist = self.params['factorstr'].split(",")
 		apDisplay.printMsg("using factorlist "+str(factorlist))
 		if len(factorlist) > self.norefdata['norefParams']['num_factors']:
