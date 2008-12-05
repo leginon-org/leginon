@@ -16,7 +16,7 @@ from numpy import ma
 import apDisplay
 from apSpider import filters
 ## pyami
-from pyami import mrc
+from pyami import mrc, imagefun
 
 #=========================
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
@@ -138,7 +138,6 @@ def oldBinImg(imgarray,bin=1):
 	"""
 	returns a binned image
 	"""
-	from pyami import imagefun
 	if bin > 1:
 		#newarray = imagefun.bin(imgarray, bin)
 		newarray = imagefun.bin2(imgarray, bin)
@@ -855,6 +854,17 @@ def frame_constant(a, shape, cval=0):
 	b[my:, :dx]   = cval			 # bottomleft
 	b[my:, mx:]   = cval			 # bottomright
 	return b
+
+def writeMrcStack(path, stackname, mrc_files, binning=1):
+	stackname = os.path.join(path, stackname)
+	im = mrc.read(mrc_files[0])
+	image = imagefun.bin(im, binning)
+	mrc.write(image,stackname)
+	del mrc_files[0]
+	for mrcfile in mrc_files:
+		im = mrc.read(mrcfile)
+		image = imagefun.bin(im, binning)
+		mrc.append(image, stackname)
 
 #=========================
 def rotateThenShift(a, rot=0, shift=(0,0), mirror=False, order=2):
