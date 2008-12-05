@@ -17,12 +17,12 @@ require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runCoranCluster(($_POST['process']=="Run Coran Cluster") ? true : false);
+	runClusterCoran(($_POST['process']=="Run Cluster Coran") ? true : false);
 } else {
-	createCoranClusterForm();
+	createClusterCoranForm();
 }
 
-function createCoranClusterForm($extra=false, $title='clusterCoran.py Launcher', $heading='Reference Free Classify') {
+function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher', $heading='Reference Free Classify') {
 	$alignid=$_GET['alignId'];
 	$analysisid=$_GET['analysisId'];
 	$expId=$_GET['expId'];
@@ -151,7 +151,7 @@ function createCoranClusterForm($extra=false, $title='clusterCoran.py Launcher',
 	echo "<tr>";
 	echo "	<td colspan='2' align='center'>";
 	echo "	<hr />";
-	echo getSubmitForm("Run Coran Cluster");
+	echo getSubmitForm("Run Cluster Coran");
 	echo "  </td>";
 	echo "</tr>";
 	echo "</table>";
@@ -160,7 +160,7 @@ function createCoranClusterForm($extra=false, $title='clusterCoran.py Launcher',
 	exit;
 }
 
-function runCoranCluster($runjob=False) {
+function runClusterCoran($runjob=False) {
 	$expId = $_GET['expId'];
 	$alignid = $_GET['alignId'];
 	$analysisid=$_GET['analysisId'];
@@ -183,18 +183,18 @@ function runCoranCluster($runjob=False) {
 
 	// make sure eigenimgs were selected
 	if (!$factorlist) 
-		createCoranClusterForm('<b>ERROR:</b> No eigenimages selected');
+		createClusterCoranForm('<b>ERROR:</b> No eigenimages selected');
 
 	//make sure a stack was selected
 	if (!$alignid) 
-		createCoranClusterForm("<b>ERROR:</b> No Alignment selected, alignid=$alignid");
+		createClusterCoranForm("<b>ERROR:</b> No Alignment selected, alignid=$alignid");
 
 	if (!$analysisid) 
-		createCoranClusterForm("<b>ERROR:</b> No Analysis selected, analysisid=$analysisid");
+		createClusterCoranForm("<b>ERROR:</b> No Analysis selected, analysisid=$analysisid");
 
 	// classification
 	if ($numclass > 999 || $numclass < 2) 
-		createCoranClusterForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
+		createClusterCoranForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
 	$particle = new particledata();
 
@@ -211,7 +211,7 @@ function runCoranCluster($runjob=False) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createCoranClusterForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createClusterCoranForm("<B>ERROR:</B> Enter a user name and password");
 
 		// get the output directory (already contains runid)
 		$alignparams = $particle->getAlignStackParams($alignid);
@@ -230,7 +230,7 @@ function runCoranCluster($runjob=False) {
 		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignclass',False,False,$uniqId);
 
 		// if errors:
-		if ($sub) createCoranClusterForm("<b>ERROR:</b> $sub");
+		if ($sub) createClusterCoranForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	processing_header("No Ref Classify Run Params","No Ref Classify Params");
@@ -238,7 +238,7 @@ function runCoranCluster($runjob=False) {
 	echo"
 	<table width='600' class='tableborder' border='1'>
 	<tr><td colspan='2'>
-	<b>Coran Cluster Command:</b><br />
+	<b>Cluster Coran Command:</b><br />
 	$command
 	</td></tr>
 	<tr><td>numclass</td><td>$numclass</td></tr>
