@@ -11,6 +11,8 @@ import apStack
 
 #===============
 def makeStackMeanPlot(stackid, gridpoints=16):
+	if gridpoints > 30:
+		apDisplay.printError("Too large of a grid")
 	apDisplay.printMsg("creating Stack Mean Plot montage for stackid: "+str(stackid))
 	t0 = time.time()
 	### big stacks are too slow
@@ -156,6 +158,10 @@ if __name__ == "__main__":
 	else:
 		#stackid=1279
 		stackid=1291
-	makeStackMeanPlot(stackid)
+	if len(sys.argv) > 2:
+		gridpoints = int(sys.argv[2])
+	else:
+		gridpoints=16
+	makeStackMeanPlot(stackid, gridpoints)
 
 
