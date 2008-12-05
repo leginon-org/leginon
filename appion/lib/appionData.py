@@ -665,13 +665,54 @@ class ApRefinementRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApRefinementRunData=ApRefinementRunData
 
+class ApImodXcorrParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('RotationAngle', float),
+			('FilterSigma1', float),
+			('FilterRadius2', float),
+			('FilterSigma2', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApImodXcorrParamsData=ApImodXcorrParamsData
+
+class ApTomoAlignmentRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginondata.SessionData),
+			('tiltseries', leginondata.TiltSeriesData),
+			('coarseLeginonParams', leginondata.TomographySettingsData),
+			('coarseImodParams', ApImodXcorrParamsData),
+			('bin', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApTomoAlignmentRunData=ApTomoAlignmentRunData
+
+class ApFullTomogramData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginondata.SessionData),
+			('tiltseries', leginondata.TiltSeriesData),
+			('alignment', ApTomoAlignmentRunData),
+			('path', ApPathData),
+			('name', str),
+			('description', str),
+			('md5sum', str),			
+		)
+	typemap = classmethod(typemap)
+leginondata.ApFullTomogramData=ApFullTomogramData
+
 class ApTomogramData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
+			('fulltomogram', ApFullTomogramData),
+			('center', ApParticleData),
+			('dimension', dict),
 			('path', ApPathData),
 			('name', str),
+			('number', int),
 			('pixelsize', float),
 			('description', str),
 			('md5sum', str),			
