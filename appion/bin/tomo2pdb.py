@@ -34,9 +34,9 @@ def scipyblobs(im,mask):
 	return blobs
 
 # input parameters
-scale_factor = 15 #scale the map so that the we can pretend the atom sphere as a gold bead
-threshold = -70 #map intensity threshold to generate blobs
-minsize = 50 #minimal blob size to be considered as a gold cluster
+scale_factor = 60.0 #scale the map so that the we can pretend the atom sphere as a gold bead
+threshold = -6172+float((14509+6172)*(170))/256 #map intensity threshold to generate blobs
+minsize = 5 #minimal blob size to be considered as a gold cluster
 # end of input variables
 
 input1 = raw_input('Enter the .mrc for pdb conversion: ') 
@@ -48,7 +48,7 @@ out.write(line)
 shape = image.shape
 print shape
 
-scale = scale_factor/min(shape)
+scale = float(scale_factor)/min(shape)
 lattice = [shape[0]*scale,shape[1]*scale,shape[2]*scale]
 
 lattice.extend([90.0,90.0,90.0])
@@ -64,14 +64,19 @@ out.write(line)
 
 maskimg = numpy.where(image>=threshold,1,0)
 blobs = scipyblobs(image,maskimg)
+print "total blobs of any size=",len(blobs)
 i = 0
-for blob in blobs:
-	if blob['n'] > minsize:
-		i = i+1
-		center = blob['center']*scale
-		# this line output each blob center as a Chloride ion in pdb format
-		line = "HETATM%5d  CL   CL  %4d%12.3f%8.3f%8.3f  1.00  0.00           AU\n" %(i,i,center[0],center[1],center[2])
-		out.write(line)
-print i
-out.write('END\n')
-out.close()
+if len(blobs) > 1:
+	for blob in blobs:
+		if blob['n'] > minsize:
+			i = i+1
+			center = blob['center']*scale
+			# this line output each blob center as a Chloride ion in pdb format
+			line = "HETATM%5d  CL   CL  %4d%12.3f%8.3f%8.3f  1.00  0.00           AU\n" %(i,i,center[0],center[1],center[2])
+			out.write(line)
+	out.write('END\n')
+	out.close()
+	print i
+else:
+	print blobs
+	print "too few blobs"
