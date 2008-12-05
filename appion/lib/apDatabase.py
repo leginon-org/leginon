@@ -369,7 +369,7 @@ def getImgViewerStatus(imgdata):
 		return None
 	if result['status']=='hidden':
 		return False
-	if result['status']=='examplar':
+	if result['status']=='exemplar':
 		return True
 	return None
 
