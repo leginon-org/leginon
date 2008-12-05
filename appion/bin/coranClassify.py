@@ -20,7 +20,7 @@ import appionData
 
 #=====================
 #=====================
-class CoranClassifyScript(appionScript.AppionScript):
+class CoranCluserScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
@@ -186,7 +186,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	coranClass = CoranClassifyScript()
-	coranClass.start()
-	coranClass.close()
+	coranCluster = CoranCluserScript()
+	coranCluster.start()
+	coranCluster.close()
 
