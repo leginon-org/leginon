@@ -260,7 +260,7 @@ function runSubStack() {
 
 		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'substack');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
 		// if errors:
 		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
 		exit();
