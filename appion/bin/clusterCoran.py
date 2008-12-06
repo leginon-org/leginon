@@ -3,6 +3,7 @@
 import os
 import time
 import sys
+import re
 import appionScript
 import apDisplay
 import apAlignment
@@ -19,14 +20,12 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --analysisid=ID --alignstackid=ID [ --factor-list=# --num-class=# ]")
+		self.parser.set_usage("Usage: %prog --analysisid=ID [ --factor-list=# --num-class=# ]")
 		self.parser.add_option("-a",  "--analysisid", dest="analysisid", type="int",
-			help="Coran database id", metavar="ID#")
-		self.parser.add_option("-s",  "--alignstackid", dest="alignstackid", type="int",
-			help="Coran database id", metavar="ID#")
+			help="Analysis database id", metavar="ID#")
 		self.parser.add_option("-f", "--factor-list", dest="factorstr", type="str", default="1,2,3",
 			help="List of factors to use in classification", metavar="#")
-		self.parser.add_option("-N", "--num-class", dest="numclass", type="int", default=40,
+		self.parser.add_option("-N", "--num-class-list", dest="numclasslist", type="str", default="4,16,64",
 			help="Number of classes to make", metavar="#")
 		self.parser.add_option("--method", dest="method", default="hierarch",
 			help="Method to use for classification: 'hierarch' or 'kmeans'")
@@ -35,8 +34,6 @@ class ClusterCoranScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['analysisid'] is None:
 			apDisplay.printError("analysis id was not defined")
-		if self.params['numclass'] > 900:
-			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
 		if self.params['method'] not in ['hierarch','kmeans']:
 			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
 		self.analysisdata = appionData.ApAlignAnalysisRunData.direct_query(self.params['analysisid'])
@@ -63,7 +60,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 		return partlist
 
 	#=====================
-	def getAlignParticlesData(self, partnum):
+	def getAlignParticleData(self, partnum):
 		alignpartq = appionData.ApAlignParticlesData()
 		alignpartq['alignstack'] = self.analysisdata['alignstack']
 		alignpartq['partnum'] = partnum
@@ -71,50 +68,83 @@ class ClusterCoranScript(appionScript.AppionScript):
 		return alignparts[0]
 
 	#=====================
-	def insertClusterRun(self, classavg=None, classvar=None, insert=False):
+	def insertClusterRun(self, insert=False):
 		### broken
 		sys.exit(1)
-		# create a norefParam object
-		classq = appionData.ApNoRefClassRunData()
-		classq['num_classes'] = self.params['numclass']
-		classq['norefRun'] = self.norefdata
-		uniqueclass = classq.query(results=1)
-		if uniqueclass:
-			apDisplay.printWarning("Classification of "+str(classq['num_classes'])+" classes for norefid="+\
-				str(self.params['norefid'])+"\nis already in the database")
 
-		classq['factor_list'] = self.params['factorstr']
-		if classavg is None:
-			classq['classFile'] = ("cluster/classavgstack%03d_%s" % (self.params['numclass'], self.timestamp))
-		else:
-			classq['classFile'] = classavg
-		if classvar is None:
-			classq['varFile'] = ("cluster/classvarstack%03d_%s" % (self.params['numclass'], self.timestamp))
-		else:
-			classq['varFile'] = classvar
+		# Spider Clustering Params
+		spiclusterq = appionData.ApSpiderClusteringParamsData()
+		spiclusterq['factor_list'] = self.params['factorstr']
+		spiclusterq['method'] = self.params['method']
 
-		classq['method'] = self.params['method']
+		# create a Clustering Run object
+		clusterrunq = appionData.ApClusteringRunData()
+		clusterrunq['runname'] = self.params['runname']
+		clusterrunq['description'] = self.params['description']
+		clusterrunq['spiderparams'] = spiclusterq
+		clusterrunq['boxsize'] = self.analysisdata['alignstack']['boxsize']
+		clusterrunq['pixelsize'] = self.analysisdata['alignstack']['pixelsize']
+		clusterrunq['num_particles'] = self.analysisdata['alignstack']['num_particles']
+		clusterrunq['alignstack'] = self.analysisdata['alignstack']
+		clusterrunq['analysisrun'] = self.analysisdata
+		clusterrunq['project|projects|project'] = self.analysisdata['project|projects|project']
 
-		apDisplay.printMsg("inserting classification parameters into database")
+		apDisplay.printMsg("inserting clustering parameters into database")
 		if insert is True:
-			classq.insert()
+			clusterrunq.insert()
+		self.clusterrun = clusterrunq
+
+
+	def insertClusterStack(self, classavg=None, classvar=None, numclass=None, insert=False):
+		clusterstackq = appionData.ApClusteringStackData()
+		clusterstackq['avg_imagicfile'] = classavg
+		clusterstackq['var_imagicfile'] = classvar
+		clusterstackq['num_classes'] = numclass
+		clusterstackq['clusterrun'] = self.clusterrun
+		clusterstackq['path'] = self.params['rundir']
+		clusterstackq['hidden'] = False
+
+		apDisplay.printMsg("inserting clustering stack into database")
+		if insert is True:
+			clusterstackq.insert()
 
 		### particle class data
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
-		for i in range(self.params['numclass']):
+		for i in range(numclass):
 			classnum = i+1
-			classdocfile = os.path.join(self.params['outdir'], "cluster/classdoc%04d.spi" % (classnum))
+			classdocfile = os.path.join(self.params['outdir'], 
+				"cluster/classdoc%s-%04d.spi" % (self.timestamp, classnum))
 			partlist = self.readClassDocFile(classdocfile)
 			sys.stderr.write(".")
 			for partnum in partlist:
-				norefpart = self.getNoRefPart(partnum)
-				cpartq = appionData.ApNoRefClassParticlesData()
-				cpartq['classRun'] = classq
-				cpartq['noref_particle'] = norefpart
-				cpartq['classNumber'] = classnum
+				alignpartdata = self.getAlignPart(partnum)
+				cpartq = appionData.ApClusteringParticlesData()
+				cpartq['clusterstack'] = clusterstackq
+				cpartq['alignparticle'] = alignpartdata
+				cpartq['refnum'] = classnum
+				cpartq['classreference'] = None
 				# actual parameters
 				if insert is True:
 					cpartq.insert()
+		"""
+			('partnum', int),
+			('refnum', int),
+			('classreference', ApClusteringReferenceData),
+			('classrun', ApClusteringRunData),
+			('alignparticle', ApAlignParticlesData),
+
+
+class ApClusteringReferenceData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('refnum', int),
+			('avg_mrcfile', str),
+			('var_mrcfile', str),
+			('frc_resolution', float),
+			('num_particles', int),
+			('classrun', ApClusteringRunData),
+			('path', ApPathData),
+		"""
 
 		return
 
@@ -131,20 +161,33 @@ class ClusterCoranScript(appionScript.AppionScript):
 		if len(factorlist) > self.analysisdata['coranrun']['num_factors']:
 			apDisplay.printError("Requested factor list is longer than available factors")
 
-		#run the classification
-		if self.params['method'] == "kmeans":
-			apDisplay.printMsg("Using the k-means clustering method")
-			classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
-				timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
-		else:
-			apDisplay.printMsg("Using the hierarch clustering method")
-			classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=self.params['numclass'], 
-				timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
-
 		if self.params['commit'] is True:
-			self.insertClusterRun(classavg, classvar, insert=True)
+			self.insertClusterRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
+
+		numclasslist = self.params['numclasslist'].split(",")
+		for item in  numclasslist:
+			if not item or not re.match("^[0-9]+$", item):
+				continue
+			numclass = int(item)
+			apDisplay.printColor("\n==============\nprocessing class averages for "
+				+str(numclass)+" classes\n==============\n", "green")
+
+			#run the classification
+			if self.params['method'] == "kmeans":
+				apDisplay.printMsg("Using the k-means clustering method")
+				classavg,classvar = alignment.kmeansCluster(alignedstack, numpart, numclasses=numclass, 
+					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
+			else:
+				apDisplay.printMsg("Using the hierarch clustering method")
+				classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass, 
+					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
+
+			if self.params['commit'] is True:
+				self.insertClusterStack(classavg, classvar, numclass, insert=True)
+			else:
+				apDisplay.printWarning("not committing results to DB")
 
 #=====================
 if __name__ == "__main__":
