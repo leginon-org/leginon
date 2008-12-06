@@ -726,7 +726,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 	classavg = rundir+"/"+("classavgstack_%s_%03d" %  (timestamp, numclasses))
 	classvar = rundir+"/"+("classvarstack_%s_%03d" %  (timestamp, numclasses))
 
-	thresh, classes = findThreshold(numclasses, rundir, dataext)
+	thresh, classes = findThreshold(numclasses, dendrogramfile, rundir, dataext)
 
 	### create class doc files
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
@@ -883,9 +883,9 @@ def ClCla(alignedstack, numpart=None, numclasses=40,
 	mySpider.close()
 
 #===============================
-def findThreshold(numclasses, rundir, dataext):
-	if not os.path.isfile(rundir+"/dendrogramdoc"+dataext):
-		apDisplay.printError("dendrogram creation (CL CLA) failed")
+def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
+	if not os.path.isfile(dendrogramdocfile):
+		apDisplay.printError("dendrogram doc file does not exist")
 
 	### determining threshold cutoff for number of classes
 	minthresh = 0.0
@@ -907,7 +907,7 @@ def findThreshold(numclasses, rundir, dataext):
 		mySpider.toSpiderQuiet(
 			"CL HD",
 			thresh, #threshold
-			rundir+"/dendrogramdoc", # dendrogram doc file 
+			spyder.fileFilter(dendrogramdocfile), # dendrogram doc file 
 			classfile
 		)
 		mySpider.close()
