@@ -219,6 +219,7 @@ function jobform($extra=false)	{
 
 function runImagicMSA($extra=false)	{
 	$expId=$_GET['expId'];
+	$projectId=getProjectFromExpId($expId);
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
 	$stackvalues=$_POST['stackid'];
@@ -241,7 +242,7 @@ function runImagicMSA($extra=false)	{
 	// create python command for executing imagic job file	
 	$pythoncmd = "";
 	$pythoncmd = "imagicMSA.py";
-	$pythoncmd.= " --stackid=$stackid --runid=$runid --outdir=$outdir/$runid --lpfilt=$lowpass";
+	$pythoncmd.= " projectId=$projectId --stackid=$stackid --runid=$runid --rundir=$outdir/$runid --lpfilt=$lowpass";
 	$pythoncmd.= " --hpfilt=$highpass --mask_radius=$mask_radius --mask_dropoff=$mask_dropoff --bin=$bin";
 	$pythoncmd.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$pythoncmd.= " --description=\"$description\"";
