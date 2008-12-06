@@ -113,6 +113,8 @@ class AppionScript(object):
 	#=====================
 	def setupRunDirectory(self):
 		#IF NO RUNDIR IS SET
+		if not 'rundir' in self.params:
+			self.params['rundir'] = self.params['outdir']
 		if self.params['rundir'] is None:
 			self.setProcessingDirName()
 			self.setRunDir()
