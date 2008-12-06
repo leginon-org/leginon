@@ -248,6 +248,7 @@ function jobform($extra=false) {
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "<BR/><BR/>";
+	echo "<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
 
@@ -257,6 +258,7 @@ function jobform($extra=false) {
 
 function create3d0() {
 	$expId = $_GET['expid'];
+	$projectId = $_GET['projectId'];
 	$fileorig = $_POST['fileorig'];
 	$norefId = $_POST['norefid'];
 	$norefClassId = $_POST['norefClassId'];
@@ -284,7 +286,7 @@ function create3d0() {
 
 	// create python command that will launch job
 	$text = "";
-	$text.= "imagic3d0.py";
+	$text.= "imagic3d0.py --projectId=$projectId";
 	//$text.= " --fileorig=$fileorig";
 	if ($reclassId) {
 		$text.=" --reclassId=$reclassId";
@@ -293,7 +295,7 @@ function create3d0() {
 		$text.=" --norefClassId=$norefClassId";
 	}
 	else jobform("error: there are no class average runs for the initial model determination");
-	$text.= " --runid=$runid --outdir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
+	$text.= " --runid=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
 	$text.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 	$text.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
 	$text.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
