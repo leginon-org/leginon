@@ -234,6 +234,7 @@ function generateProcessedClasses() {
 
 	// get posted values
 	$expId = $_GET['expId'];
+	$projectId=getProjectFromExpId($expId);
 	$lpfilt = ($_POST['lpfilt']) ? $_POST['lpfilt'] : '1';
 	$hpfilt = ($_POST['hpfilt']) ? $_POST['hpfilt'] : '0';
 	$mask_radius = ($_POST['mask_radius']) ? $_POST['mask_radius'] : '1';
@@ -265,7 +266,7 @@ function generateProcessedClasses() {
 	// create python command for executing imagic job file	
 	$text = "";
 	$text .= "imagicReclassifyClassums.py";
-	$text .= " --norefclassid=$classid --runid=$runid --oldstack=$filename --lp=$lpfilt";
+	$text .= " projectId=$projectId --norefclassid=$classid --runid=$runid --rundir=$outdir/$runid --oldstack=$filename --lp=$lpfilt";
 	$text .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter";
 	$text .= " --numaverages=$new_classums --description=\"$description\"";
 	if ($commit) $text .= " --commit\n";
