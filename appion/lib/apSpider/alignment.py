@@ -698,7 +698,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		"CL HE",
 		thresh,
 		rundir+"/dendrogramdoc", # dendrogram doc file 
-		rundir+"/classdoc****", # class doc file
+		rundir+"/classdoc_"+timestamp+"_****", # class doc file
 	)
 
 	### delete existing files
@@ -716,7 +716,7 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		mySpider.toSpiderQuiet(
 			"AS R",
 			spyder.fileFilter(alignedstack)+"@******",
-			rundir+("/classdoc%04d" % (classnum)),
+			rundir+("/classdoc_"+timestamp+"_%04d" % (classnum)),
 			"A",
 			(classavg+"@%04d" % (classnum)),
 			(classvar+"@%04d" % (classnum)),
@@ -777,7 +777,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	randnum = (int(random.random()*1000) + 1)
 	mySpider.toSpider(
 		str(randnum),
-		rundir+"/classdoc****",	#clusterdoc file
+		rundir+"/classdoc_"+timestamp+"_****", # class doc file
 		rundir+("/allclassesdoc%04d" % (numclasses)),	#clusterdoc file
 	)
 	mySpider.close()
@@ -797,7 +797,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		mySpider.toSpiderQuiet(
 			"AS R",
 			spyder.fileFilter(alignedstack)+"@******",
-			rundir+("/classdoc%04d" % (classnum)),
+			rundir+("/classdoc_"+timestamp+"_%04d" % (classnum)),
 			"A",
 			(classavg+"@%04d" % (classnum)),
 			(classvar+"@%04d" % (classnum)),
