@@ -289,8 +289,14 @@ function runMaxLikeAlign($runjob=false) {
 	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
 	$command.="--angle-interval=$angle ";
-	if ($fast) $command.="--fast ";
-	if ($mirror) $command.="--mirror ";
+	if ($fast)
+		$command.="--fast ";
+	else
+		$command.="--no-fast ";
+	if ($mirror)
+		$command.="--mirror ";
+	else
+		$command.="--no-mirror ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
