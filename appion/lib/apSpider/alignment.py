@@ -649,9 +649,9 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	rundir = "cluster"
 	apParam.createDirectory(rundir)
 	### step 1: use coran data to create hierarchy
-	hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext)
+	dendrogramfile = hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext)
 	### step 2: asssign particles to groups based on hierarchy
-	classavg,classvar = hierarchClusterClassify(alignedstack, numclasses, timestamp, rundir, dataext)
+	classavg,classvar = hierarchClusterClassify(alignedstack, dendrogramfile, numclasses, timestamp, rundir, dataext)
 	return classavg,classvar
 
 #===============================
@@ -665,15 +665,24 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 		output directory
 	output:
 		dendrogram doc file
+		factorkey
 	"""
-	apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
+	#apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
 
 	### make list of factors 	 
-	factorstr = "" 	 
+	factorstr = ""
+	factorkey = ""	 
 	for fact in factorlist: 	 
 		factorstr += str(fact)+","
+		factorkey += "_"+str(fact)
 	factorstr = factorstr[:-1]
 
+	dendrogramfile = rundir+"/dendrogramdoc"+factorkey+dataext
+	if os.path.isfile(dendrogramfile):
+		apDisplay.printMsg("Dendrogram file already exists, skipping processing "+dendrogramfile)
+		return dendrogramfile
+
+	apDisplay.printMsg("Creating dendrogram file: "+dendrogramfile)
 	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpider(
@@ -688,18 +697,18 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 	mySpider.toSpider(
 		"5",         #use Ward's method
 		"T", minclasssize, rundir+"/dendrogram.ps", #dendrogram image file
-		"Y", rundir+"/dendrogramdoc", #dendrogram doc file
+		"Y", spyder.fileFilter(dendrogramfile), #dendrogram doc file
 	)
 	mySpider.close()
 
-	if not os.path.isfile(rundir+"/dendrogramdoc"+dataext):
+	if not os.path.isfile(dendrogramfile):
 		apDisplay.printError("dendrogram creation (CL HC) failed")
 	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
 
-	return
+	return dendrogramfile
 
 #===============================
-def hierarchClusterClassify(alignedstack, numclasses=40, timestamp=None, rundir=".", dataext=".spi"):
+def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timestamp=None, rundir=".", dataext=".spi"):
 	"""
 	inputs:
 		aligned particle stack
@@ -724,7 +733,7 @@ def hierarchClusterClassify(alignedstack, numclasses=40, timestamp=None, rundir=
 	mySpider.toSpider(
 		"CL HE",
 		thresh,
-		rundir+"/dendrogramdoc", # dendrogram doc file 
+		spyder.fileFilter(dendrogramfile), # dendrogram doc file 
 		rundir+"/classdoc_"+timestamp+"_****", # class doc file
 	)
 

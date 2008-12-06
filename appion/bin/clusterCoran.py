@@ -150,7 +150,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 			rundir = "cluster"
 			apParam.createDirectory(rundir)
 			### step 1: use coran data to create hierarchy
-			alignment.hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext=".spi")
+			dendrogramfile = alignment.hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext=".spi")
 			### step 2: asssign particles to groups based on hierarchy
 
 		for item in  numclasslist:
@@ -168,7 +168,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			else:
 				apDisplay.printMsg("Using the hierarch clustering method")
-				classavg,classvar = alignment.hierarchClusterClassify(alignedstack, numclass, 
+				classavg,classvar = alignment.hierarchClusterClassify(alignedstack, dendrogramfile, numclass, 
 					self.timestamp, rundir, dataext=".spi")
 				#classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass, 
 				#	timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
