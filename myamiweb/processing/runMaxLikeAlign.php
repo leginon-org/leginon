@@ -86,7 +86,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
-	$highpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '400';
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : '400';
 	$numref = ($_POST['numref']) ? $_POST['numref'] : '2';
 	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
