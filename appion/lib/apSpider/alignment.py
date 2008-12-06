@@ -645,22 +645,27 @@ def convertPostscriptToPng(psfile, pngfile, size=1024):
 #===============================
 def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
-	"""
-	inputs:
-
-	outputs:
-
-	"""
-	if timestamp is None:
-		timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
-
-	if alignedstack[-4:] == dataext:
-		alignedstack = alignedstack[:-4]
 
 	rundir = "cluster"
-	classavg = rundir+"/"+("classavgstack_%s_%03d" %  (timestamp, numclasses))
-	classvar = rundir+"/"+("classvarstack_%s_%03d" %  (timestamp, numclasses))
 	apParam.createDirectory(rundir)
+	### step 1: use coran data to create hierarchy
+	hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext)
+	### step 2: asssign particles to groups based on hierarchy
+	classavg,classvar = hierarchClusterClassify(alignedstack, numclasses, timestamp, rundir, dataext)
+	return classavg,classvar
+
+#===============================
+def hierarchClusterProcess(numpart=None, factorlist=range(1,5), 
+		corandata="coran/corandata", rundir=".", dataext=".spi"):
+	"""
+	inputs:
+		coran data
+		number of particles
+		factor list
+		output directory
+	output:
+		dendrogram doc file
+	"""
 	apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
 
 	### make list of factors 	 
@@ -673,13 +678,13 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpider(
 		"CL HC",
-		corandata+"_IMC", # path to coran data
+		spyder.fileFilter(corandata)+"_IMC", # path to coran data
 		factorstr, # factor string
 	)
 	## weight for each factor
 	for fact in factorlist:
 		mySpider.toSpiderQuiet("1.0")	
-	minclasssize = "%.4f" % (numpart*0.001+2.0)
+	minclasssize = "%.4f" % (numpart*0.0001+2.0)
 	mySpider.toSpider(
 		"5",         #use Ward's method
 		"T", minclasssize, rundir+"/dendrogram.ps", #dendrogram image file
@@ -689,6 +694,28 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 
 	if not os.path.isfile(rundir+"/dendrogramdoc"+dataext):
 		apDisplay.printError("dendrogram creation (CL HC) failed")
+	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
+
+	return
+
+#===============================
+def hierarchClusterClassify(alignedstack, numclasses=40, timestamp=None, rundir=".", dataext=".spi"):
+	"""
+	inputs:
+		aligned particle stack
+		number of classes
+		timestamp
+		output directory
+	output:
+		class averages
+		class variances
+		dendrogram.png
+	"""
+	if timestamp is None:
+		timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
+
+	classavg = rundir+"/"+("classavgstack_%s_%03d" %  (timestamp, numclasses))
+	classvar = rundir+"/"+("classvarstack_%s_%03d" %  (timestamp, numclasses))
 
 	thresh, classes = findThreshold(numclasses, rundir, dataext)
 
@@ -730,9 +757,8 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	emancmd = "proc2d "+classvar+".spi "+classvar+".hed"
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
-	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
-
 	return classavg,classvar
+
 
 #===============================
 def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,

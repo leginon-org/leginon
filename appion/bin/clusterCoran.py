@@ -10,6 +10,7 @@ import apAlignment
 import apFile
 import apStack
 import apEMAN
+import apParam
 from apSpider import alignment
 import appionData
 
@@ -167,12 +168,20 @@ class ApClusteringReferenceData(Data):
 			apDisplay.printWarning("not committing results to DB")
 
 		numclasslist = self.params['numclasslist'].split(",")
+		if self.params['method'] != "kmeans":
+			rundir = "cluster"
+			apParam.createDirectory(rundir)
+			### step 1: use coran data to create hierarchy
+			alignment.hierarchClusterProcess(numpart, factorlist, corandata, rundir, dataext=".spi")
+			### step 2: asssign particles to groups based on hierarchy
+
 		for item in  numclasslist:
+			t0 = time.time()
 			if not item or not re.match("^[0-9]+$", item):
 				continue
 			numclass = int(item)
-			apDisplay.printColor("\n==============\nprocessing class averages for "
-				+str(numclass)+" classes\n==============\n", "green")
+			apDisplay.printColor("\n============================\nprocessing class averages for "
+				+str(numclass)+" classes\n============================\n", "green")
 
 			#run the classification
 			if self.params['method'] == "kmeans":
@@ -181,13 +190,16 @@ class ApClusteringReferenceData(Data):
 					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			else:
 				apDisplay.printMsg("Using the hierarch clustering method")
-				classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass, 
-					timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
-
+				classavg,classvar = alignment.hierarchClusterClassify(alignedstack, numclass, 
+					self.timestamp, rundir, dataext=".spi")
+				#classavg,classvar = alignment.hierarchCluster(alignedstack, numpart, numclasses=numclass, 
+				#	timestamp=self.timestamp, factorlist=factorlist, corandata=corandata, dataext=".spi")
 			if self.params['commit'] is True:
 				self.insertClusterStack(classavg, classvar, numclass, insert=True)
 			else:
 				apDisplay.printWarning("not committing results to DB")
+
+			apDisplay.printMsg("Completed "+str(numclass)+" classes in "+apDisplay.timeString(time.time()-t0))
 
 #=====================
 if __name__ == "__main__":
