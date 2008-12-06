@@ -15,7 +15,7 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
-if ($_POST) {
+if ($_POST['process']) {
 	runMaxLikeAlign((substr($_POST['process'],0,11)=="Upload Job ") ? true : false);
 } else {
 	createMaxLikeAlignForm();
@@ -35,6 +35,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 	}
 
 	$javascript .= writeJavaPopupFunctions('appion');	
+	$javascript .= editTextJava();
 	processing_header($title,$heading,$javascript);
 
 	// write out errors, if any came up:
@@ -54,14 +55,29 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 		foreach ($maxlikejobs as $maxlikejob) {
 			$jobid = $maxlikejob['DEF_id'];
 			echo "<form name='viewerform' method='POST' action='$formAction&jobid=$jobid'>\n";
+
+			if ($_POST['hideJob'.$jobid] == 'hide') {
+				$particle->updateHide('ApMaxLikeJobData', $jobid, '1');
+				$maxlikejob['hidden']='1';
+			} elseif ($_POST['hideUndoJob'.$jobid] == 'unhide') {
+				$particle->updateHide('ApMaxLikeJobData', $jobid, '0');
+				$maxlikejob['hidden']='0';
+			}
+
 			echo openRoundBorder();
 			echo "<table cellspacing='8' cellpading='2' border='0'>\n";
 
 			echo "<tr><td colspan='5'>\n";
-			$nameline = "<span style='font-size: larger; color:#111111;'>";
-			$nameline .= "Job Id: $jobid &nbsp;";
+			$nameline = "<span style='font-size: larger; color:#111111;'>\n";
+			$nameline .= "Job Id: $jobid &nbsp;\n";
 			$nameline .= " ".$maxlikejob['runname'];
-			$nameline .= "</span>";
+			$nameline .= "</span>\n";
+			if ($maxlikejob['hidden'] == 1) {
+				$nameline.= " <font color='#cc0000'>HIDDEN</font>\n";
+				$nameline.= " <input class='edit' type='submit' name='hideUndoJob".$jobid."' value='unhide'>\n";
+				$display_keys['hidden'] = "<font color='#cc0000'>HIDDEN</font>";
+			} else $nameline.= " <input class='edit' type='submit' name='hideJob".$jobid."' value='hide'>\n";
+
 			echo apdivtitle($nameline);
 			echo "</td></tr>\n";
 
