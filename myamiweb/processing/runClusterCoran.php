@@ -248,7 +248,7 @@ function runClusterCoran($runjob=False) {
 		$uniqId=implode('',$factorlistAR);
 		$uniqId.=".$numclass";
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignclass',False,False,$uniqId);
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'coranclust',False,False,$uniqId);
 
 		// if errors:
 		if ($sub) createClusterCoranForm("<b>ERROR:</b> $sub");
