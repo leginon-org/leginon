@@ -469,6 +469,7 @@ function jobform($modelid, $extra=false) {
 
 function imagic3dRefine() {
 	$expId = $_GET['expid'];
+	$projectId=getProjectFromExpId($expId);
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	$outdir = $_POST['output_directory'];
@@ -504,8 +505,8 @@ function imagic3dRefine() {
 		// update actual job file that calls on the execution of each iteration
 
 		$jobtext.= "imagic3dRefine.py";
-		$jobtext.= " --imagic3d0Id=$modelid --norefClassId=$norefClassId --runid=$runid";
-		$jobtext.= " --outdir=$outdir/$runid --symmetry=$symmetry --numiters=$numiters --itn=$i";
+		$jobtext.= " --projectId=$projectId --imagic3d0Id=$modelid --norefClassId=$norefClassId --runid=$runid";
+		$jobtext.= " --rundir=$outdir/$runid --symmetry=$symmetry --numiters=$numiters --itn=$i";
 		$jobtext.= " --max_shift_orig=$max_shift_orig --max_shift_this=$max_shift_this --samp_param=$samp_param";
 		$jobtext.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 		$jobtext.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
