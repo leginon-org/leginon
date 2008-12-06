@@ -591,19 +591,27 @@ class ApClusteringRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
-			('num_classes', int),
 			('description', str),
-			('hidden', bool),
 			('boxsize', int),
 			('pixelsize', float),
 			('num_particles', int),
-			('avg_imagicfile', str),
-			('var_imagicfile', str),
-			('path', ApPathData),
 			('alignstack', ApAlignStackData),
 			('analysisrun', ApAlignAnalysisRunData),
 			('spiderparams', ApSpiderClusteringParamsData),
 			('project|projects|project', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApClusteringRunData=ApClusteringRunData
+
+class ApClusteringStackData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('num_classes', int),
+			('hidden', bool),
+			('avg_imagicfile', str),
+			('var_imagicfile', str),
+			('path', ApPathData),
+			('clusterrun', ApClusteringRunData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApClusteringRunData=ApClusteringRunData
@@ -614,7 +622,7 @@ class ApClusteringParticlesData(Data):
 			('partnum', int),
 			('refnum', int),
 			('classreference', ApClusteringReferenceData),
-			('classrun', ApClusteringRunData),
+			('classstack', ApClusteringStackData),
 			('alignparticle', ApAlignParticlesData),
 		)
 	typemap = classmethod(typemap)
