@@ -70,9 +70,6 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def insertClusterRun(self, insert=False):
-		### broken
-		sys.exit(1)
-
 		# Spider Clustering Params
 		spiclusterq = appionData.ApSpiderClusteringParamsData()
 		spiclusterq['factor_list'] = self.params['factorstr']
@@ -94,15 +91,16 @@ class ClusterCoranScript(appionScript.AppionScript):
 		if insert is True:
 			clusterrunq.insert()
 		self.clusterrun = clusterrunq
+		return
 
-
+	#=====================
 	def insertClusterStack(self, classavg=None, classvar=None, numclass=None, insert=False):
 		clusterstackq = appionData.ApClusteringStackData()
 		clusterstackq['avg_imagicfile'] = classavg
 		clusterstackq['var_imagicfile'] = classvar
 		clusterstackq['num_classes'] = numclass
 		clusterstackq['clusterrun'] = self.clusterrun
-		clusterstackq['path'] = self.params['rundir']
+		clusterstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['hidden'] = False
 
 		apDisplay.printMsg("inserting clustering stack into database")
@@ -113,40 +111,20 @@ class ClusterCoranScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 		for i in range(numclass):
 			classnum = i+1
-			classdocfile = os.path.join(self.params['outdir'], 
-				"cluster/classdoc%s-%04d.spi" % (self.timestamp, classnum))
+			classdocfile = os.path.join(self.params['rundir'], 
+				"cluster/classdoc_%s_%04d.spi" % (self.timestamp, classnum))
 			partlist = self.readClassDocFile(classdocfile)
 			sys.stderr.write(".")
 			for partnum in partlist:
-				alignpartdata = self.getAlignPart(partnum)
+				alignpartdata = self.getAlignParticleData(partnum)
 				cpartq = appionData.ApClusteringParticlesData()
 				cpartq['clusterstack'] = clusterstackq
 				cpartq['alignparticle'] = alignpartdata
 				cpartq['refnum'] = classnum
-				cpartq['classreference'] = None
+				cpartq['clusterreference'] = None
 				# actual parameters
 				if insert is True:
 					cpartq.insert()
-		"""
-			('partnum', int),
-			('refnum', int),
-			('classreference', ApClusteringReferenceData),
-			('classrun', ApClusteringRunData),
-			('alignparticle', ApAlignParticlesData),
-
-
-class ApClusteringReferenceData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('refnum', int),
-			('avg_mrcfile', str),
-			('var_mrcfile', str),
-			('frc_resolution', float),
-			('num_particles', int),
-			('classrun', ApClusteringRunData),
-			('path', ApPathData),
-		"""
-
 		return
 
 	#=====================

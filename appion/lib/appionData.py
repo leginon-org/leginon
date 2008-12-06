@@ -621,8 +621,8 @@ class ApClusteringParticlesData(Data):
 		return Data.typemap() + (
 			('partnum', int),
 			('refnum', int),
-			('classreference', ApClusteringReferenceData),
-			('classstack', ApClusteringStackData),
+			('clusterreference', ApClusteringReferenceData),
+			('clusterstack', ApClusteringStackData),
 			('alignparticle', ApAlignParticlesData),
 		)
 	typemap = classmethod(typemap)
@@ -636,7 +636,7 @@ class ApClusteringReferenceData(Data):
 			('var_mrcfile', str),
 			('frc_resolution', float),
 			('num_particles', int),
-			('classrun', ApClusteringRunData),
+			('clusterrun', ApClusteringRunData),
 			('path', ApPathData),
 		)
 	typemap = classmethod(typemap)
