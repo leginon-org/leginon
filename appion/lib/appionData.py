@@ -581,7 +581,6 @@ leginondata.ApCoranEigenImageData = ApCoranEigenImageData
 class ApSpiderClusteringParamsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('num_classes', int),
 			('factor_list', str),
 			('method', str),
 		)
@@ -601,7 +600,7 @@ class ApClusteringRunData(Data):
 			('avg_imagicfile', str),
 			('var_imagicfile', str),
 			('path', ApPathData),
-			('alignrun', ApAlignRunData),
+			('alignstack', ApAlignStackData),
 			('analysisrun', ApAlignAnalysisRunData),
 			('spiderparams', ApSpiderClusteringParamsData),
 			('project|projects|project', int),
