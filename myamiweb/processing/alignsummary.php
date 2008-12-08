@@ -86,14 +86,17 @@ if ($stackdatas) {
 				}
 				echo "<tr><td><ul>\n";
 				foreach ($clusterdatas as $clusterdata) {
-
-					//echo print_r($analysisdata)."<br/>\n";;
+					//echo print_r($clusterdata)."<br/>\n";;
 					$clusterid = $clusterdata['clusterid'];
 					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
-					echo "<li><span style='background-color:#eeccee;'>&nbsp;"
+					echo "<li><span>"
 						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-						."View Class Average $clusterid with ".$clusterdata['num_classes']."</a>&nbsp;</span></li>\n";
+						."View Class Average $clusterid with ".$clusterdata['num_classes']." classes </a>&nbsp;"
+						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
+						."[variance]</a>&nbsp;"
+						//."factor list=".$clusterdata['factorlist']
+						."</span></li>\n";
 				}
 				echo "</ul></td></tr>\n";
 			} else {
