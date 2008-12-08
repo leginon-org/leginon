@@ -72,7 +72,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","maxlike/",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
 

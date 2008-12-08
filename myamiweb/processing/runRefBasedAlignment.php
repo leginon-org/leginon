@@ -148,7 +148,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   if (!empty($sessioninfo)) {
     $sessionpath=$sessioninfo['Image path'];
     $sessionpath=ereg_replace("leginon","appion",$sessionpath);
-    $sessionpath=ereg_replace("rawdata","refbased/",$sessionpath);
+    $sessionpath=ereg_replace("rawdata","align/",$sessionpath);
     $sessionname=$sessioninfo['Name'];
   }
   
