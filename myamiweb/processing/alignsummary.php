@@ -63,6 +63,11 @@ if ($stackdatas) {
 		else
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
 		if ($analysisdatas) {
+			if ($_GET['showHidden'])
+				$analysisdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, true);
+			else
+				$analysisdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, false);
+
 			// print analysis table
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid, true);

@@ -1630,9 +1630,9 @@ class particledata {
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY clusterid DESC ";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."<br/><br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	} 
 
@@ -1659,9 +1659,29 @@ class particledata {
 		  ."AND "
 		  ."  clusterrun.`DEF_id` IS NOT NULL "
 		  ."ORDER BY alignstackid DESC";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."<br/><br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getClusteringStacksForAlignStack ($alignstackId, $projectId, $showHidden=false) {
+		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.* "
+			."FROM ApClusteringStackData AS cluster "
+			."LEFT JOIN ApClusteringRunData as clusterrun ON "
+			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
+			."LEFT JOIN ApPathData as path ON "
+			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
+			."WHERE "
+			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId ";
+		if (!$showHidden)
+			$q.= " AND cluster.`hidden` != 1 ";
+		$q .= "AND "
+			."  clusterrun.`project|projects|project` = '$projectId' "
+			."ORDER BY clusterid DESC ";
+		echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
