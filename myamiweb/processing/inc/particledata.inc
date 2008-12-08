@@ -1626,7 +1626,7 @@ class particledata {
 			." AND "
 			." runsin.`project|projects|project` = '$projectId' "
 			." AND "
-			." cluster.`project|projects|project` = '$projectId' ";
+			." clusterrun.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY analysisid DESC ";
