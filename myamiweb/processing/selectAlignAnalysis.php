@@ -15,7 +15,7 @@ require "inc/processing.inc";
 #require "inc/displaytables.inc";
 
 $expId = $_GET['expId'];
-$alignId = $_GET['$alignId'];
+$alignId = $_GET['alignId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&alignId=$alignId";
 
 processing_header("Alignment Classify Run","Alignment Classify  Run Page", $javascript,False);
