@@ -1679,9 +1679,9 @@ class particledata {
 		$q .= "AND "
 			."  clusterrun.`project|projects|project` = '$projectId' "
 			."ORDER BY clusterid DESC ";
-		echo $q."<br/>\n";
+		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."<br/>\n";
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 

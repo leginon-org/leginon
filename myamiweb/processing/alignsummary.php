@@ -80,9 +80,8 @@ if ($stackdatas) {
 					//echo print_r($analysisdata)."<br/>\n";;
 					$analysisid = $analysisdata['analysisid'];
 					echo analysissummarytable($analysisid, true);
-					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-						."<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
-						."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+					echo "<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 					echo "</td></tr>\n";
 				}
 				foreach ($clusterdatas as $clusterdata) {
@@ -91,7 +90,7 @@ if ($stackdatas) {
 					$clusterid = $clusterdata['clusterid'];
 					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
-					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+					echo "<span style='background-color:#eeccee;'>&nbsp;"
 						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 						."View Class Average $clusterid with ".$clusterdata['num_classes']."</a>&nbsp;</span><br/>\n";
 					echo "</td></tr>\n";
