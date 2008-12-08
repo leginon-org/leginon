@@ -972,7 +972,12 @@ class makestack (appionLoop.AppionLoop):
 			apDisplay.printError("A boxsize has to be specified")
 		if self.params['description'] is None:
 			apDisplay.printError("A description has to be specified")
-
+		if self.params['mindefocus'] is not None and 
+				(self.params['mindefocus'] > -1e-3 or self.params['mindefocus'] < -1e-9):
+			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=-1.5e-6")
+		if self.params['maxdefocus'] is not None and 
+				(self.params['maxdefocus'] > -1e-3 or self.params['maxdefocus'] < -1e-9):
+			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
 
 
 if __name__ == '__main__':
