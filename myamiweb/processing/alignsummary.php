@@ -32,7 +32,10 @@ $particle = new particledata();
 
 // find each stack entry in database
 //$stackIds = $particle->getAlignStackIds($expId, True);
-if ($_GET['analysis']) {
+if ($_GET['cluster']) {
+	$stackdatas = $particle->getAlignStackIdsWithCluster($expId, $projectId);
+	$hidestackdatas = $stackdatas;
+} elseif ($_GET['analysis']) {
 	$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 	$hidestackdatas = $stackdatas;
 } elseif (!$_GET['showHidden']) {

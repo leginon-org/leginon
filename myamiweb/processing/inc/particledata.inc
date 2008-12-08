@@ -1611,8 +1611,10 @@ class particledata {
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
 		$q = "SELECT cluster.`DEF_id` AS analysisid, coran.*, analysis.* "
 			."FROM ApClusteringStackData AS cluster "
+			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
+			." (cluster.`REF|ApClusteringRunData|clusterrun` = clusterrun.`DEF_id`) "
 			."LEFT JOIN ApAlignStackData AS ast ON "
-			." (cluster.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			." (clusterrun.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApStackData AS st ON "
 			." (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApRunsInStackData as runsin ON "
@@ -1628,11 +1630,40 @@ class particledata {
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY analysisid DESC ";
+		echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		echo print_r($r)."<br/><br/>\n";
+		return $r;
+	} 
+
+	function getAlignStackIdsWithCluster ($sessionId, $projectId) {
+		//$projectId = (int) getProjectFromExpId($expId);
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
+		  ."FROM ApAlignStackData AS ast "
+		  ."LEFT JOIN ApClusteringRunData AS clusterrun ON "
+		  ."  (clusterrun.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+		  ."LEFT JOIN ApStackData AS st ON "
+		  ."  (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApRunsInStackData as runsin ON "
+		  ."  (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."LEFT JOIN ApStackRunData as strun ON "
+		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+		  ."WHERE "
+		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ."AND "
+		  ."  runsin.`project|projects|project` = '$projectId' "
+		  ."AND "
+		  ."  ast.`project|projects|project` = '$projectId' "
+		  ."AND "
+		  ."  ast.`hidden` != 1 "
+		  ."AND "
+		  ."  analysis.`DEF_id` IS NOT NULL "
+		  ."ORDER BY alignstackid DESC";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
-	} 
+	}
 
 
 	#--------- MAKE MASK FUNCTIONS---------------#
