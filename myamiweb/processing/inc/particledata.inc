@@ -1666,12 +1666,14 @@ class particledata {
 	}
 
 	function getClusteringStacksForAlignStack ($alignstackId, $projectId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, clusterrun.*, cluster.* "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,clusterrun.*, cluster.* "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
 			."LEFT JOIN ApPathData as path ON "
 			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
+			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
+			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
 			."WHERE "
 			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
