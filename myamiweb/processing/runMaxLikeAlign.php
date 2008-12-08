@@ -38,7 +38,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$particle = new particledata();
 	$stackIds = $particle->getStackIds($sessionId);
 	$maxlikeIds = $particle->getMaxLikeIds($sessionId, True);
-	$maxlikeruns=count($maxlikeIds);
+	$alignruns = count($particle->getAlignStackIds($sessionId, $projectId));
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
@@ -79,10 +79,12 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($maxlikeruns+1);
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while (file_exists($sessionpathval.'maxlike'.($alignruns+1)))
+		$alignruns += 1;
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
-	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';

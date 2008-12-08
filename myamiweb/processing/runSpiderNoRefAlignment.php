@@ -83,10 +83,12 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'noref'.($alignruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while (file_exists($sessionpathval.'noref'.($alignruns+1)))
+		$alignruns += 1;
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'noref'.($alignruns+1);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';

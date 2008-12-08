@@ -118,59 +118,61 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
   // check if coming directly from a session
 	//echo print_r($_POST);
 
-  $expId=$_GET['expId'];
-  if ($expId){
-    $sessionId=$expId;
-    $projectId=getProjectFromExpId($expId);
-    $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-  } else {
-    $sessionId=$_POST['sessionId'];
-    $formAction=$_SERVER['PHP_SELF'];
-  }
-  $projectId=$_POST['projectId'];
+	$expId=$_GET['expId'];
+	if ($expId){
+		$sessionId=$expId;
+		$projectId=getProjectFromExpId($expId);
+		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	} else {
+		$sessionId=$_POST['sessionId'];
+		$formAction=$_SERVER['PHP_SELF'];
+	}
+	$projectId=$_POST['projectId'];
 
-  // connect to particle info
-  $particle = new particledata();
-  $templateid = $_POST['templateid'];
-  $templateinfo = $particle->getTemplatesFromId($templateid);
-  $stackIds = $particle->getStackIds($sessionId);
-  $refbasedIds = $particle->getRefAliIds($sessionId);
-  $refbasedruns=count($refbasedIds);
+	// connect to particle info
+	$particle = new particledata();
+	$templateid = $_POST['templateid'];
+	$templateinfo = $particle->getTemplatesFromId($templateid);
+	$stackIds = $particle->getStackIds($sessionId);
+	$refbasedIds = $particle->getRefAliIds($sessionId);
+	$alignruns = count($particle->getAlignStackIds($sessionId, $projectId));
 
-  processing_header($title,$heading,"");
-  // write out errors, if any came up:
-  if ($extra) {
-    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-  }
-  echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-  $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
-  $sessioninfo=$sessiondata['info'];
-  if (!empty($sessioninfo)) {
-    $sessionpath=$sessioninfo['Image path'];
-    $sessionpath=ereg_replace("leginon","appion",$sessionpath);
-    $sessionpath=ereg_replace("rawdata","align/",$sessionpath);
-    $sessionname=$sessioninfo['Name'];
-  }
+	processing_header($title,$heading,"");
+	// write out errors, if any came up:
+	if ($extra) {
+		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+	}
+	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	if (!empty($sessioninfo)) {
+		$sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
+		$sessionname=$sessioninfo['Name'];
+	}
   
   // Set any existing parameters in form
-  $runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($refbasedruns+1);
-  $rundescrval = $_POST['description'];
-  $stackidval =$_POST['stackid'];
-  $lp = $_POST['lp'];
-  $csym = $_POST['csym'];
-  $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-  $commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
-  $staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
-  // alignment params
-  $numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
-  $iters = ($_POST['iters']) ? $_POST['iters'] : 5;
-  $lp = ($_POST['lp']) ? $_POST['lp'] : 10;
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while (file_exists($sessionpathval.'refbased'.($alignruns+1)))
+		$alignruns += 1;
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
+	$rundescrval = $_POST['description'];
+	$stackidval =$_POST['stackid'];
+	$lp = $_POST['lp'];
+	$csym = $_POST['csym'];
+	$commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
+	$staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
+	// alignment params
+	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
+	$iters = ($_POST['iters']) ? $_POST['iters'] : 5;
+	$lp = ($_POST['lp']) ? $_POST['lp'] : 10;
 	$diam = $_POST['diam'] ? $_POST['diam'] : 160;
-  $xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '3';
-  $xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
-  $csym = 1;
-  $maskdiam = ($_POST['maskdiam']) ? $_POST['maskdiam'] : $diam;
-  $imaskdiam = ($_POST['imaskdiam']) ? $_POST['imaskdiam'] : '2';
+	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '3';
+	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
+	$csym = 1;
+	$maskdiam = ($_POST['maskdiam']) ? $_POST['maskdiam'] : $diam;
+	$imaskdiam = ($_POST['imaskdiam']) ? $_POST['imaskdiam'] : '2';
 
 
 	$templateCheck='';

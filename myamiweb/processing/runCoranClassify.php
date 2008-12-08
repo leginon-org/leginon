@@ -85,10 +85,13 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while (file_exists($sessionpathval.'coran'.($coranruns+1)))
+		$coranruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'coran'.($coranruns+1);
 	$rundescrval = $_POST['description'];
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
-	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+
 	$defaultmaskrad = 100;
 
 	echo"
