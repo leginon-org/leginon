@@ -85,8 +85,11 @@ if ($stackdatas) {
 					echo "</td></tr>\n";
 				}
 				echo "<tr><td><ul>\n";
+				$numclusters = count($particle->getClusteringStacks($expId, $projectId));
+				echo apdivtitle("Clustering Info: ".$numclusters." clusters\n");
 				foreach ($clusterdatas as $clusterdata) {
 					//echo print_r($clusterdata)."<br/>\n";;
+
 					$clusterid = $clusterdata['clusterid'];
 					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
