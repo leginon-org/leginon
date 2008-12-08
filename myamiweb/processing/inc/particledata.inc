@@ -1666,7 +1666,7 @@ class particledata {
 	}
 
 	function getClusteringStacksForAlignStack ($alignstackId, $projectId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.* "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, clusterrun.*, cluster.* "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "

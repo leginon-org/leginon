@@ -64,30 +64,61 @@ if ($stackdatas) {
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
 		if ($analysisdatas) {
 			if ($_GET['showHidden'])
-				$analysisdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, true);
+				$clusterdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, true);
 			else
-				$analysisdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, false);
-
-			// print analysis table
-			echo "<tr><td>\n";
-			echo alignstacksummarytable($alignstackid, true);
-			echo "<span style='border: 1px'>&nbsp;"
-				."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
-				."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
-			echo "</td></tr>\n";
-			//print_r($analysisdatas);
-			foreach ($analysisdatas as $analysisdata) {
+				$clusterdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, false);
+			if ($clusterdatas) {
+				// Stack with analysis and clustering
 				echo "<tr><td>\n";
-				//echo print_r($analysisdata)."<br/>\n";;
-				$analysisid = $analysisdata['DEF_id'];
-				echo analysissummarytable($analysisid);
-				echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-					."<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
-					."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+				echo alignstacksummarytable($alignstackid, true);
+				echo "<span style='border: 1px'>&nbsp;"
+					."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
+					."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
+				foreach ($analysisdatas as $analysisdata) {
+					echo "<tr><td>\n";
+					//echo print_r($analysisdata)."<br/>\n";;
+					$analysisid = $analysisdata['analysisid'];
+					echo analysissummarytable($analysisid, true);
+					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+						."<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+					echo "</td></tr>\n";
+				}
+				foreach ($clusterdatas as $clusterdata) {
+					echo "<tr><td>\n";
+					//echo print_r($analysisdata)."<br/>\n";;
+					$clusterid = $clusterdata['clusterid'];
+					$numclass = 
+					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile']
+					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile']
+					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+						."View Class Average $clusterid with ".$clusterdata['num_classes']."</a>&nbsp;</span><br/>\n";
+					echo "</td></tr>\n";
+				}
+			} else {
+				// Stack with analysis
+				echo "<tr><td>\n";
+				echo alignstacksummarytable($alignstackid, true);
+				echo "<span style='border: 1px'>&nbsp;"
+					."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
+					."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+				echo "</td></tr>\n";
+				//print_r($analysisdatas);
+				foreach ($analysisdatas as $analysisdata) {
+					echo "<tr><td>\n";
+					//echo print_r($analysisdata)."<br/>\n";;
+					$analysisid = $analysisdata['DEF_id'];
+					echo analysissummarytable($analysisid);
+					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+						."<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+					echo "</td></tr>\n";
+				}
 			}
 		} else {
-			// print alignment table
+				// Stack with nothing
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid);
 			echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"

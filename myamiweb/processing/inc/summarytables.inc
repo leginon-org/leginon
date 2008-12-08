@@ -310,7 +310,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	return $stacktable;
 }
 
-function analysissummarytable($analysisid) {
+function analysissummarytable($analysisid, $mini=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$analysisdata = $particle->getAnalysisParams($analysisid);
@@ -343,7 +343,10 @@ function analysissummarytable($analysisid) {
 		$analysistable.= "<tr>\n";
 		$analysistable.= "<td rowspan='30' align='center' valign='top'>";
 		$analysistable.= "<a href='loadimg.php?filename=$dendrogram'>\n";
-		$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=160' height='160' border='1'></a><br/>\n";
+		if ($mini)
+			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=160' height='160' border='1'></a><br/>\n";
+		else
+			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=60' height='60' border='1'></a><br/>\n";
 		$analysistable.= "<i>dendrogram</i>\n";
 		$analysistable.= "</td>\n";
 		$analysistable.= "</tr>\n\n";
