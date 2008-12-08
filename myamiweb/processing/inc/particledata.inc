@@ -1671,9 +1671,9 @@ class particledata {
 		  ."AND "
 		  ."  clusterrun.`DEF_id` IS NOT NULL "
 		  ."ORDER BY alignstackid DESC";
-		echo $q."<br/><br/>\n";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		echo print_r($r)."<br/><br/>\n";
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
