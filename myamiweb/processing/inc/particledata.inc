@@ -1608,6 +1608,35 @@ class particledata {
 		return $r;
 	}
 
+	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
+		$q = "SELECT cluster.`DEF_id` AS analysisid, coran.*, analysis.* "
+			."FROM ApClusteringStackData AS cluster "
+			."LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) "
+			."LEFT JOIN ApAlignStackData AS ast ON "
+			." (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			."LEFT JOIN ApStackData AS st ON "
+			." (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApRunsInStackData as runsin ON "
+			." (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
+			."LEFT JOIN ApStackRunData as strun ON "
+			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
+			."WHERE "
+			." strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+			." AND "
+			." runsin.`project|projects|project` = '$projectId' "
+			." AND "
+			." analysis.`project|projects|project` = '$projectId' ";
+		if (!$showHidden)
+			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
+		$q .= "ORDER BY analysisid DESC ";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	} 
+
+
 	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
