@@ -256,7 +256,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		if ($mini)
 			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
 		else
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=180' height='180'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		$stacktable.= "</td>\n";
 		$stacktable.= "</tr>\n\n";
@@ -280,25 +280,28 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$filesize = sprintf("%.1f MB", filesize($stackimgfile)/1048576);
 
 	if ($mini)
-		$display_keys['size']=commafy($numpart)."&nbsp; (".$filesize.")";
+		$display_keys['size']=commafy($numpart)." particles (".$filesize.")";
 	else {
 		$display_keys['# particles']=commafy($numpart);
 		$display_keys['file size'] = $filesize;
 	}
 
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
-	$display_keys['path']=$stackdata['path'];
-	$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId'>"
-		.$stackdata['imagicfile']."</A>";
-	if ($mini)
-		$display_keys['pixel/box size']=round($stackdata['pixelsize'],2)." &Aring;/pixel &nbsp; ".$stackdata['boxsize']." pixels";
-	else {
+
+	if ($mini) {
+		$display_keys['pixel / box size']=round($stackdata['pixelsize'],2)." &Aring;/pixel and ".$stackdata['boxsize']." pixels";
+		$display_keys['stack file']=$stackdata['path']."/<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId'>"
+			.$stackdata['imagicfile']."</A>";
+	} else {
 		// get box size
 		$display_keys['box size']=$stackdata['boxsize']." pixels";
 		// get pixel size of stack
 		$display_keys['pixel size']=round($stackdata['pixelsize'],2)." &Aring;/pixel";
 		$display_keys['filter']=$stackdata['lp_filt']." and ".$stackdata['hp_filt']." &Aring;";
 		//$display_keys['run time']=round($stackdata['run_seconds']/60.0,2)." minutes";
+		$display_keys['path']=$stackdata['path'];
+		$display_keys['stack file']="<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId'>"
+			.$stackdata['imagicfile']."</A>";
 	}
 
 	//$display_keys['file type']=$stackdata['fileType'];
@@ -344,9 +347,9 @@ function analysissummarytable($analysisid, $mini=false) {
 		$analysistable.= "<td rowspan='30' align='center' valign='top'>";
 		$analysistable.= "<a href='loadimg.php?filename=$dendrogram'>\n";
 		if ($mini)
-			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=160' height='160' border='1'></a><br/>\n";
-		else
 			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=60' height='60' border='1'></a><br/>\n";
+		else
+			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=160' height='160' border='1'></a><br/>\n";
 		$analysistable.= "<i>dendrogram</i>\n";
 		$analysistable.= "</td>\n";
 		$analysistable.= "</tr>\n\n";
@@ -358,9 +361,12 @@ function analysissummarytable($analysisid, $mini=false) {
 	$display_keys['date time'] = $analysisdata['DEF_timestamp'];
 	$display_keys['description']=$descDiv;
 	$display_keys['path']=$analysisdata['path'];
-	$display_keys['number of factors']=$analysisdata['num_factors'];
-	$display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
-	$display_keys['mask diam']=$analysisdata['mask_diam']." &Aring;ngstroms";
+	if (!$mini)
+		$display_keys['number of factors']=$analysisdata['num_factors'];
+	if (!$mini)
+		$display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
+	if (!$mini)
+		$display_keys['mask diam']=$analysisdata['mask_diam']." &Aring;ngstroms";
 
 	foreach($display_keys as $k=>$v) {
 	        $analysistable.= formatHtmlRow($k,$v);
