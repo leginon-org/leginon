@@ -89,9 +89,8 @@ if ($stackdatas) {
 					echo "<tr><td>\n";
 					//echo print_r($analysisdata)."<br/>\n";;
 					$clusterid = $clusterdata['clusterid'];
-					$numclass = 
-					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile']
-					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile']
+					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
+					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
 						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 						."View Class Average $clusterid with ".$clusterdata['num_classes']."</a>&nbsp;</span><br/>\n";
