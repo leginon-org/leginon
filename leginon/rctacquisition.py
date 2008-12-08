@@ -322,8 +322,8 @@ class RCTAcquisition(acquisition.Acquisition):
 					### reduce minsize and try again
 					self.settings['minsize'] *= 0.95
 					if i == len(tilts)-1:
-						### maybe the tilt angle is too high, reduce max angle by 2 degrees
-						tilts[len(tilts)-1] = tilt - sign(tilt)*radians(2.0)
+						### maybe the tilt angle is too high, reduce max angle by 5 percent
+						tilts[len(tilts)-1] *= 0.95
 					i -= 1
 				else:
 					retries = 0
