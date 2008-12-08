@@ -271,6 +271,61 @@ if ($expId) {
 	if ($stackruns > 0) {
 		$action = "Particle Alignment";
 
+		// get alignment stats:
+		$alignresults=array();
+		//$aligndone  = count($subclusterjobs['partalign']['done']);
+		$aligndone = count($particle->getAlignStackIds($expId, $projectId));
+		$alignrun = count($subclusterjobs['partalign']['running']);
+		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($projectId));
+		$alignqueue  = count($subclusterjobs['partalign']['queued']);
+		$norbaseddone = ($alignrun > $aligndone) ? $alignrun : $aligndone;
+
+		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
+		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
+		$alignresults[] = ($maxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$maxlikejobs ready to upload</a>";
+		$alignresults[] = ($alignqueue==0) ? "" : "$alignqueue queued";
+
+		$nruns=array();
+
+		$nruns[] = array(
+			'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
+			'result'=>$alignresults,
+		);
+		if ($alignruns > 0) {
+			// alignment analysis
+			$analysisresults=array();
+			$analysisdone  = count($particle->getAnalysisRuns($expId, $projectId));
+			$analysisrun  = count($subclusterjobs['alignanalysis']['running']);
+			$analysisqueue  = count($subclusterjobs['alignanalysis']['queued']);
+			$analysisresults[] = ($analysisdone==0) ? "" : "<a href='alignsummary.php?analysis=1&expId=$sessionId'>$analysisdone complete</a>";
+			$analysisresults[] = ($analysisrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisrun running</a>";
+			$analysisresults[] = ($analysisqueue==0) ? "" : "$analysisqueue queued";
+			$nruns[] = array (
+				'name'=>"<a href='alignsummary.php?analysis=1&expId=$sessionId'>Run Align Analysis</a>",
+				'result'=>$analysisresults,
+			);
+
+			if ($analysisrun > 0) {
+				// particle clustering
+				$clusterresults=array();
+				$clusterdone  = count($particle->getClusteringRuns($expId, $projectId));
+				$clusterrun  = count($subclusterjobs['partcluster']['running']);
+				$clusterqueue  = count($subclusterjobs['partcluster']['queued']);
+				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='alignsummary.php?cluster=1&expId=$sessionId'>$clusterdone complete</a>";
+				$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
+				$clusterresults[] = ($clusterqueue==0) ? "" : "$clusterqueue queued";
+				$nruns[] = array (
+					'name'=>"<a href='alignsummary.php?cluster=1&expId=$sessionId'>Run Particle Clustering</a>",
+					'result'=>$clusterresults,
+				);
+			}
+
+		}
+
+		// =======================
+		// old spider alignment
+		// =======================
+
 		// get ref-free alignment stats:
 		$norefresults=array();
 		$norefdone = count($subclusterjobs['norefali']['done']);
@@ -294,50 +349,6 @@ if ($expId) {
 		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
-		// get alignment stats:
-		$alignresults=array();
-		$aligndone  = count($subclusterjobs['maxlikeali']['done'])
-			+ count($subclusterjobs['refbasedali']['done'])
-			+ count($subclusterjobs['norefali']['done']);
-		$norefrun = count($subclusterjobs['maxlikeali']['running']);
-		$refbasedrun = count($subclusterjobs['refbasedali']['running']);
-		$maxlikerun = count($subclusterjobs['maxlikeali']['running']);
-		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($projectId));
-		$alignrun   = $norefrun+$refbasedrun+$maxlikerun;
-		$alignqueue  = count($subclusterjobs['maxlikeali']['queued'])
-			+ count($subclusterjobs['refbasedali']['queued'])
-			+ count($subclusterjobs['norefali']['queued']);
-		$norbaseddone = ($alignrun > $aligndone) ? $alignrun : $aligndone;
-
-		$alignresults[] = ($alignruns==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
-		$alignresults[] = ($norefrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=norefali'>$norefrun running</a>";
-		$alignresults[] = ($refbasedrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=refbasedali'>$refbasedrun running</a>";
-		$alignresults[] = ($maxlikerun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=maxlikeali'>$maxlikejobs running</a>";
-		$alignresults[] = ($maxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$maxlikejobs ready to upload</a>";
-		$alignresults[] = ($alignqueue==0) ? "" : "$alignqueue queued";
-
-		$nruns=array();
-
-		$nruns[] = array(
-			'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
-			'result'=>$alignresults,
-		);
-		if ($alignruns > 0) {
-			// alignment classifications
-			$analysisresults=array();
-			$analysisdone  = count($particle->getAnalysisRuns($expId, $projectId));
-			$coranrun  = count($subclusterjobs['coranclass']['running']);
-			$coranqueue  = count($subclusterjobs['coranclass']['queued']);
-			$coranresults[] = ($analysisdone==0) ? "" : "<a href='alignsummary.php?analysis=1&expId=$sessionId'>$analysisdone complete</a>";
-			$coranresults[] = ($coranrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=coranclass'>$coranrun running</a>";
-			$coranresults[] = ($coranqueue==0) ? "" : "$coranqueue queued";
-			$nruns[] = array (
-				'name'=>"<a href='alignClassify.php?expId=$sessionId'>Run Align Analysis</a>",
-				'result'=>$coranresults,
-			);
-		}
-
-		// old spider alignment
 		$nruns[]=array(
 			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>Old Spider Ref-free</a>",
 			       'result'=>$norefresults,
