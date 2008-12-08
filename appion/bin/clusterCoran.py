@@ -96,12 +96,19 @@ class ClusterCoranScript(appionScript.AppionScript):
 	#=====================
 	def insertClusterStack(self, classavg=None, classvar=None, numclass=None, insert=False):
 		clusterstackq = appionData.ApClusteringStackData()
-		clusterstackq['avg_imagicfile'] = classavg
-		clusterstackq['var_imagicfile'] = classvar
+		clusterstackq['avg_imagicfile'] = classavg+".hed"
+		clusterstackq['var_imagicfile'] = classvar+".hed"
 		clusterstackq['num_classes'] = numclass
 		clusterstackq['clusterrun'] = self.clusterrun
 		clusterstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['hidden'] = False
+
+		imagicfile = os.path.join(self.params['rundir'], clusterstackq['avg_imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find average stack file: "+imagicfile)
+		imagicfile = os.path.join(self.params['rundir'], clusterstackq['var_imagicfile'])
+		if not os.path.isfile(imagicfile):
+			apDisplay.printError("could not find variance stack file: "+imagicfile)
 
 		apDisplay.printMsg("inserting clustering stack into database")
 		if insert is True:
