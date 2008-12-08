@@ -84,17 +84,18 @@ if ($stackdatas) {
 						."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 					echo "</td></tr>\n";
 				}
+				echo "<tr><td><ul>\n";
 				foreach ($clusterdatas as $clusterdata) {
-					echo "<tr><td>\n";
+
 					//echo print_r($analysisdata)."<br/>\n";;
 					$clusterid = $clusterdata['clusterid'];
 					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
-					echo "<span style='background-color:#eeccee;'>&nbsp;"
+					echo "<li><span style='background-color:#eeccee;'>&nbsp;"
 						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-						."View Class Average $clusterid with ".$clusterdata['num_classes']."</a>&nbsp;</span><br/>\n";
-					echo "</td></tr>\n";
+						."View Class Average $clusterid with ".$clusterdata['num_classes']."</a>&nbsp;</span></li>\n";
 				}
+				echo "</ul></td></tr>\n";
 			} else {
 				// Stack with analysis
 				echo "<tr><td>\n";
