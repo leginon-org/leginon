@@ -858,7 +858,9 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	$logfile = "$runid.appionsub.log";
 
 	// create appion command
-	$apcmd = "webcaller.py '$command' $procdir/$logfile";
+	$filtcommand = ereg_replace("\'","", $command);
+	//$filtcommand = preg_replace("/[\n\r]/", " -- ", $filtcommand);
+	$apcmd = "webcaller.py '".$filtcommand."' $procdir/$logfile";
 
 	$cmd = "mkdir -p $procdir;";
 	if ($testimg){
@@ -915,6 +917,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		$particle->updateClusterQueue($jobid,$jobnum,'Q');
 
 		echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
+		echo "<tr><td>Command</td><td><font size='-3'>$filtcommand</font></td></tr>\n";
 		echo "</table>\n";
 
 		// check jobs that are running on the cluster
