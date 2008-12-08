@@ -55,14 +55,14 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	//echo print_r($alignparams)."<br/><br/>\n";
 	$analysisparams = $particle->getAnalysisParams($analysisid);
 	//echo print_r($analysisparams)."<br/><br/>\n";
-	// get the output directory (already contains runid)
-	$alignparams = $particle->getAlignStackParams($alignid);
-	$outdir = $alignparams['path'];
-	$runname = $alignparams['name'];
-	// take runid off of outdir
-	$defoutdir = ereg_replace($runname,'',$outdir);
+	// get the output directory (already contains runname)
+	$oldoutdir = $alignparams['path'];
+	//echo "<font size=+4>OUTDIR=$outdir</font></br>";
+	$runname = $alignparams['runname'];
+	// take runname off of outdir
+	$defoutdir = ereg_replace($runname,'',$oldoutdir);
 	// in case there are more than 1 '/' at the end
-	if (substr($outdir,-1,1)=='/') $outdir=substr($outdir,0,-1);
+	if (substr($defoutdir,-1,1)=='/') $defoutdir=substr($defoutdir,0,-1);
 	
 	// Set any existing parameters in form
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -70,7 +70,8 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	// classifier params
 	$factorlist = ($_POST['factorlist']) ? $_POST['factorlist'] : "1,2,3";
 	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : "4,16,64";
-	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $defoutdir;
+	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $defoutdir;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : "class1";
 
 	echo "<input type='hidden' name='alignid' value=$alignid>";
 
@@ -163,11 +164,16 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	echo "</tr>";
 	echo "<tr>";
 	echo "	<td colspan='2' align='center'>";
-
 	echo "<br/>\n";
-	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+
+	echo docpop('runname','<b>Run Name:</b>');
+	echo "<input type='text' name='runname' value='$runname' size='10'>\n";
 	echo "<br/><br/>\n";
+
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
+	echo "<br/><br/>\n";
+
 	echo "	<hr />";
 	echo getSubmitForm("Run Cluster Coran");
 	echo "<br/><br/>\n";
@@ -183,6 +189,7 @@ function runClusterCoran($runjob=False) {
 	$expId = $_GET['expId'];
 	$alignid = $_GET['alignId'];
 	$analysisid=$_GET['analysisId'];
+
 	$command.="clusterCoran.py ";
 
 	$numclass = $_POST['numclass'];
@@ -190,15 +197,11 @@ function runClusterCoran($runjob=False) {
 	$numeigenimgs = $_POST['numeigenimgs'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$classmethod=$_POST['classmethod'];
+	$runname=$_POST['runname'];
+	$outdir=$_POST['outdir'];
 
-	// get the output directory (already contains runid)
-	$alignparams = $particle->getAlignStackParams($alignid);
-	$outdir = $alignparams['path'];
-	$runid = $alignparams['name'];
-	// take runid off of outdir
-	$outdir = ereg_replace($runid,'',$outdir);
 	// in case there are more than 1 '/' at the end
-	if (substr($outdir,-1,1)=='/') $outdir=substr($outdir,0,-1);
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
 	// get selected eigenimgs
 	$factorlistAR=array();
@@ -224,8 +227,6 @@ function runClusterCoran($runjob=False) {
 	//if ($numclass > 999 || $numclass < 2) 
 	//	createClusterCoranForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
-	$particle = new particledata();
-
 	//$command.="--alignstackid=$alignid ";
 	$command.="--analysisid=$analysisid ";
 	$command.="--num-class-list=$numclass ";
@@ -236,7 +237,7 @@ function runClusterCoran($runjob=False) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if (false && $runjob) {
+	if ($runjob) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -245,10 +246,8 @@ function runClusterCoran($runjob=False) {
 
 		// create unique id for the job, since multiple may be
 		// submitted - id is the factor list and num classes
-		$uniqId=implode('',$factorlistAR);
-		$uniqId.=".$numclass";
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'coranclust',False,False,$uniqId);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'coranclust');
 
 		// if errors:
 		if ($sub) createClusterCoranForm("<b>ERROR:</b> $sub");
