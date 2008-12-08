@@ -64,16 +64,18 @@ if ($stackdatas) {
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
 		if ($analysisdatas) {
 			if ($_GET['showHidden'])
-				$clusterdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, true);
+				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, $projectId, true);
 			else
-				$clusterdatas = $particle->getClusteringStacksForAlignStack($alignstackid, $projectId, false);
-			if ($clusterdatas) {
+				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, $projectId, false);
+			if ($clusterruns) {
+				// --------------------------
 				// Stack with analysis and clustering
+				// --------------------------
 				echo "<tr><td>\n";
 				echo alignstacksummarytable($alignstackid, true);
 				echo "<span style='border: 1px'>&nbsp;"
-					."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
-					."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+					."<a href='selectAlignAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
 				foreach ($analysisdatas as $analysisdata) {
 					echo "<tr><td>\n";
@@ -87,29 +89,41 @@ if ($stackdatas) {
 				echo "<tr><td>\n";
 				$numclusters = count($particle->getClusteringStacks($expId, $projectId));
 				echo apdivtitle("Clustering Info: ".$numclusters." clusters\n");
-				echo "<ul>\n";
-				foreach ($clusterdatas as $clusterdata) {
-					//echo print_r($clusterdata)."<br/>\n";;
 
-					$clusterid = $clusterdata['clusterid'];
-					$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-					$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
-					echo "<li><span>"
-						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-						."View Class Average $clusterid with ".$clusterdata['num_classes']." classes </a>&nbsp;"
-						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
-						."[variance]</a>&nbsp;"
-						."factor list=".$clusterdata['factor_list']
-						."</span></li>\n";
+				foreach ($clusterruns as $clusterrun) {
+					$clusterrunid = $clusterrun['clusterrunid'];
+					$clusterdatas = $particle->getClusteringStacksForClusteringRun ($clusterrunid, $projectId);
+					if ($clusterdatas) {
+						echo "<b>Cluster Run ".$clusterrunid."</b>"
+							.", method='<i>".$clusterrun['method']
+							."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
+						echo "<ul>\n";
+						foreach ($clusterdatas as $clusterdata) {
+							//echo print_r($clusterdata)."<br/>\n";
+							$clusterid = $clusterdata['clusterid'];
+							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
+							$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
+							echo "<li><span>"
+								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+								.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
+								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
+								."[variance]</a>&nbsp;(ID $clusterid) "
+
+								."</span></li>\n";
+						}
+						echo "</ul>\n";
+					}
 				}
-				echo "</ul></td></tr>\n";
+				echo "</td></tr>\n";
 			} else {
+				// --------------------------
 				// Stack with analysis
+				// --------------------------
 				echo "<tr><td>\n";
 				echo alignstacksummarytable($alignstackid, true);
 				echo "<span style='border: 1px'>&nbsp;"
-					."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
-					."Run Another Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+					."<a href='selectAlignAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
 				//print_r($analysisdatas);
 				foreach ($analysisdatas as $analysisdata) {
@@ -124,12 +138,14 @@ if ($stackdatas) {
 				}
 			}
 		} else {
-				// Stack with nothing
+			// --------------------------
+			// Just a stack with nothing
+			// --------------------------
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid);
 			echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-				."<a href='runCoranClassify.php?expId=$expId&alignId=$alignstackid'>"
-				."Run Coran Classify On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
+				."<a href='selectAlignAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+				."Run Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
 			echo "</td></tr>\n";
 		}
 		echo "</table>\n";
