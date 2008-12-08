@@ -248,6 +248,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$stacktable.= apdivtitle($j);
 	//echo $j."<br/>\n";
 
+
+
 	$stacktable.= "<table border='0'>\n";
 	$stackavg = $stackdata['path']."/average.mrc";
 	if (file_exists($stackavg)) {
@@ -286,12 +288,17 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$display_keys['file size'] = $filesize;
 	}
 
+	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
+	if ($stackdata['refstackfile'] && file_exists($refstack))
+		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
+			."file=$refstack&expId=$expId'>".$stackdata['refstackfile']."</a>";
+
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 
 	if ($mini) {
 		$display_keys['pixel / box size']=round($stackdata['pixelsize'],2)." &Aring;/pixel and ".$stackdata['boxsize']." pixels";
 		$display_keys['stack file']=$stackdata['path']."/<a target='stackview' HREF='viewstack.php?file=$stackfile&expId=$expId'>"
-			.$stackdata['imagicfile']."</A>";
+			.$stackdata['imagicfile']."</a>";
 	} else {
 		// get box size
 		$display_keys['box size']=$stackdata['boxsize']." pixels";
