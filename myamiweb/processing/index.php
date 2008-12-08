@@ -13,6 +13,7 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
+require "inc/summarytables.inc";
 
 $leginondata = new leginondata();
 
@@ -110,7 +111,8 @@ foreach ($reconRuns as $recon) {
 	$boxsz=($stackparams[0]['bin']) ? $stackparams[0]['boxSize']/$stackparams[0]['bin'] : $stackparams[0]['boxSize'];
 
 	// stack info
-	$stackparticles = showStackInfo($stackid, $stackparams, $apix, $expId, $particle);
+	$stackparticles = $particle->getNumStackParticles($stackId);
+	echo ministacksummarytable($stackid);
 	// initial model info
 	showModelInfo($initmodel, $expId, $particle);
 
