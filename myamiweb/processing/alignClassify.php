@@ -15,7 +15,8 @@ require "inc/processing.inc";
 #require "inc/displaytables.inc";
 
 $expId = $_GET['expId'];
-$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+$alignId = $_GET['$alignId'];
+$formAction=$_SERVER['PHP_SELF']."?expId=$expId&alignId=$alignId";
 
 processing_header("Alignment Classify Run","Alignment Classify  Run Page", $javascript,False);
 
@@ -26,7 +27,7 @@ echo "<table border='1' class='tableborder' width='600'>";
 #echo "</td></tr>";
 
 echo "<tr><td>";
-echo "  <h3><a href='runCoranClassify.php?expId=$expId'>Spider Coran Classification</a></h3>";
+echo "  <h3><a href='runCoranClassify.php?expId=$expId&alignId=$alignId'>Spider Coran Classification</a></h3>";
 echo "  this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>Spider CA S</a>"
 	."&nbsp;<img src='img/external.png'>"
