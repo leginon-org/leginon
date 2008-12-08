@@ -244,7 +244,7 @@ function runClusterCoran($runjob=False) {
 			.sprintf("%c", $today['hours']+97)
 			.sprintf("%02u", $today['minutes']);
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'coranclust',false,false,$timestamp);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partcluster',false,false,$timestamp);
 
 		// if errors:
 		if ($sub) createClusterCoranForm("<b>ERROR:</b> $sub");
