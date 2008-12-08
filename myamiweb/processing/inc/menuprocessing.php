@@ -287,7 +287,7 @@ if ($expId) {
 		$nruns=array();
 
 		$nruns[] = array(
-			'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
+			'name'=>"<a href='selectParticleAlignment.php?expId=$sessionId'>Run Alignment</a>",
 			'result'=>$alignresults,
 		);
 		if ($aligndone > 0) {
