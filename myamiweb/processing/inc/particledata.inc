@@ -1611,10 +1611,8 @@ class particledata {
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
 		$q = "SELECT cluster.`DEF_id` AS analysisid, coran.*, analysis.* "
 			."FROM ApClusteringStackData AS cluster "
-			."LEFT JOIN ApCoranRunData as coran ON "
-			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) "
 			."LEFT JOIN ApAlignStackData AS ast ON "
-			." (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+			." (cluster.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApStackData AS st ON "
 			." (ast.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApRunsInStackData as runsin ON "
@@ -1626,7 +1624,7 @@ class particledata {
 			." AND "
 			." runsin.`project|projects|project` = '$projectId' "
 			." AND "
-			." analysis.`project|projects|project` = '$projectId' ";
+			." cluster.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
 		$q .= "ORDER BY analysisid DESC ";
