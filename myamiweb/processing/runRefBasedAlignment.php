@@ -406,19 +406,18 @@ function runAlignment($runjob=false) {
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
-	$cmd = "exec ssh $user@$host '$command > refBasedAlignmentlog.txt &'";
-//	exec($cmd ,$result);
-
 	// submit job to cluster
 	if ($runjob) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password))
+			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'rctvolume');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign');
 		// if errors:
-		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
+		if ($sub)
+			createAlignmentForm("<b>ERROR:</b> $sub");
 		exit;
 	} else {
 		processing_header("Alignment Run","Alignment Params");

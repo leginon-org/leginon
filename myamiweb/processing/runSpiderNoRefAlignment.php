@@ -333,7 +333,7 @@ function runSpiderNoRefAlign($runjob=false) {
 
 		if (!($user && $password)) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'norefali');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign');
 		// if errors:
 		if ($sub) createSpiderNoRefAlignForm("<b>ERROR:</b> $sub");
 		exit;

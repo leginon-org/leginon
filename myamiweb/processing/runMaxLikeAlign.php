@@ -307,7 +307,7 @@ function runMaxLikeAlign($runjob=false) {
 
 		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'maxlikeali');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign');
 		// if errors:
 		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
 		exit;
