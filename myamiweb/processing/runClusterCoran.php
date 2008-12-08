@@ -55,14 +55,6 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	//echo print_r($alignparams)."<br/><br/>\n";
 	$analysisparams = $particle->getAnalysisParams($analysisid);
 	//echo print_r($analysisparams)."<br/><br/>\n";
-	// get the output directory (already contains runname)
-	$oldoutdir = $alignparams['path'];
-	//echo "<font size=+4>OUTDIR=$outdir</font></br>";
-	$runname = $alignparams['runname'];
-	// take runname off of outdir
-	$defoutdir = ereg_replace($runname,'',$oldoutdir);
-	// in case there are more than 1 '/' at the end
-	if (substr($defoutdir,-1,1)=='/') $defoutdir=substr($defoutdir,0,-1);
 	
 	// Set any existing parameters in form
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -70,8 +62,6 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	// classifier params
 	$factorlist = ($_POST['factorlist']) ? $_POST['factorlist'] : "1,2,3";
 	$numclass = ($_POST['numclass']) ? $_POST['numclass'] : "4,16,64";
-	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $defoutdir;
-	$runname = ($_POST['runname']) ? $_POST['runname'] : "class1";
 
 	echo "<input type='hidden' name='alignid' value=$alignid>";
 
@@ -166,14 +156,6 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	echo "	<td colspan='2' align='center'>";
 	echo "<br/>\n";
 
-	echo docpop('runname','<b>Run Name:</b>');
-	echo "<input type='text' name='runname' value='$runname' size='10'>\n";
-	echo "<br/><br/>\n";
-
-	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
-	echo "<br/><br/>\n";
-
 	echo "	<hr />";
 	echo getSubmitForm("Run Cluster Coran");
 	echo "<br/><br/>\n";
@@ -197,8 +179,16 @@ function runClusterCoran($runjob=False) {
 	$numeigenimgs = $_POST['numeigenimgs'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$classmethod=$_POST['classmethod'];
-	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
+
+
+
+	$particle = new particledata();
+	$analysisparams = $particle->getAnalysisParams($analysisid);
+	//echo print_r($analysisparams)."<br/><br/>\n";
+	$rundir = $analysisparams['path'];
+	$runname = $analysisparams['runname'];
+	$outdir = ereg_replace($runname,'',$rundir);
 
 	// in case there are more than 1 '/' at the end
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -247,7 +237,14 @@ function runClusterCoran($runjob=False) {
 		// create unique id for the job, since multiple may be
 		// submitted - id is the factor list and num classes
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'coranclust');
+		$today = getdate();
+		$timestamp = substr($today['year'],2,2)
+			.strtolower(substr($today['month'],0,3))
+			.sprintf("%02u", $today['mday'])
+			.sprintf("%c", $today['hours']+97)
+			.sprintf("%02u", $today['minutes']);
+
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'coranclust',false,false,$timestamp);
 
 		// if errors:
 		if ($sub) createClusterCoranForm("<b>ERROR:</b> $sub");
