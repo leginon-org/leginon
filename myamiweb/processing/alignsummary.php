@@ -95,7 +95,7 @@ if ($stackdatas) {
 						."View Class Average $clusterid with ".$clusterdata['num_classes']." classes </a>&nbsp;"
 						."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
 						."[variance]</a>&nbsp;"
-						//."factor list=".$clusterdata['factorlist']
+						."factor list=".$clusterdata['factor_list']
 						."</span></li>\n";
 				}
 				echo "</ul></td></tr>\n";
