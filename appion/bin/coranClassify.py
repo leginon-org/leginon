@@ -172,7 +172,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		corantime = time.time() - corantime
 
 		### make dendrogram
-		alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
+		alignment.makeDendrogram(alignedstack, numfactors=min(3,self.params['numfactors']))
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
