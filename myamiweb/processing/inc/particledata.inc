@@ -1609,7 +1609,7 @@ class particledata {
 	}
 
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
-		$q = "SELECT cluster.`DEF_id` AS analysisid, coran.*, analysis.* "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.* "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun` = clusterrun.`DEF_id`) "
@@ -1628,7 +1628,7 @@ class particledata {
 			." AND "
 			." cluster.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
-			$q.= " AND analysis.`hidden` != 1 AND ast.`hidden` != 1 ";
+			$q.= " AND cluster.`hidden` != 1 AND ast.`hidden` != 1 ";
 		//$q .= "ORDER BY analysisid DESC ";
 		echo $q."<br/><br/>\n";
 		//$r = $this->mysql->getSQLResult($q);
@@ -1657,7 +1657,7 @@ class particledata {
 		  ."AND "
 		  ."  ast.`hidden` != 1 "
 		  ."AND "
-		  ."  analysis.`DEF_id` IS NOT NULL "
+		  ."  clusterrun.`DEF_id` IS NOT NULL "
 		  ."ORDER BY alignstackid DESC";
 		echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
