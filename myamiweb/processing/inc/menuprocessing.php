@@ -318,7 +318,6 @@ if ($expId) {
 					'result'=>$clusterresults,
 				);
 			}
-
 		}
 
 		// =======================
