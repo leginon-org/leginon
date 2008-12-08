@@ -307,7 +307,7 @@ if ($expId) {
 			if ($analysisdone > 0) {
 				// particle clustering
 				$clusterresults=array();
-				$clusterdone  = count($particle->getAlignStackIdsWithCluster($expId, $projectId));
+				$clusterdone  = count($particle->getClusteringStacks($expId, $projectId));
 				$clusterrun  = count($subclusterjobs['partcluster']['running']);
 				$clusterqueue  = count($subclusterjobs['partcluster']['queued']);
 				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='alignsummary.php?cluster=1&expId=$sessionId'>$clusterdone complete</a>";
