@@ -84,9 +84,10 @@ if ($stackdatas) {
 						."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 					echo "</td></tr>\n";
 				}
-				echo "<tr><td><ul>\n";
+				echo "<tr><td>\n";
 				$numclusters = count($particle->getClusteringStacks($expId, $projectId));
 				echo apdivtitle("Clustering Info: ".$numclusters." clusters\n");
+				echo "<ul>\n";
 				foreach ($clusterdatas as $clusterdata) {
 					//echo print_r($clusterdata)."<br/>\n";;
 
