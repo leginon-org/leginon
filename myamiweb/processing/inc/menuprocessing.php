@@ -278,7 +278,6 @@ if ($expId) {
 		$alignrun = count($subclusterjobs['partalign']['running']);
 		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($projectId));
 		$alignqueue  = count($subclusterjobs['partalign']['queued']);
-		$norbaseddone = ($alignrun > $aligndone) ? $alignrun : $aligndone;
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
@@ -291,7 +290,7 @@ if ($expId) {
 			'name'=>"<a href='particleAlignment.php?expId=$sessionId'>Run Alignment</a>",
 			'result'=>$alignresults,
 		);
-		if ($alignruns > 0) {
+		if ($aligndone > 0) {
 			// alignment analysis
 			$analysisresults=array();
 			$analysisdone  = count($particle->getAnalysisRuns($expId, $projectId));
@@ -305,7 +304,7 @@ if ($expId) {
 				'result'=>$analysisresults,
 			);
 
-			if ($analysisrun > 0) {
+			if ($analysisdone > 0) {
 				// particle clustering
 				$clusterresults=array();
 				$clusterdone  = count($particle->getClusteringRuns($expId, $projectId));
