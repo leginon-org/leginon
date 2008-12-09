@@ -22,15 +22,16 @@ import leginondata
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================
-	def __init__(self):
+	def __init__(self, useglobalparams=True):
 		"""
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		appionScript.__init__()
+		appionScript.AppionScript.__init__(self, useglobalparams)
 		### extra appionLoop functions:
+		self._addDefaultParams()
 		self.setFunctionResultKeys()
-		self._setRunAndParameters(self.params)
+		self._setRunAndParameters()
 		self._createOutputDirs()
 		self._readDoneDict()
 
@@ -91,38 +92,22 @@ class AppionLoop(appionScript.AppionScript):
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
-		self._finishLoop()
+		appionScript.AppionScript.close(self)
 
 	#######################################################
-	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
+	#### ITEMS BELOW SHOULD BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
 
 	#=====================
 	def setRunDir(self):
-		import apStack
-		if ( self.params['rundir'] is None 
-		and 'session' in self.params 
-		and self.params['session'] is not None ):
+		if self.params['sessionname'] is not None:
 			#auto set the output directory
-			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 			path = os.path.abspath(sessiondata['image path'])
 			path = re.sub("leginon","appion",path)
 			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname)
+			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
-		if ( self.params['rundir'] is None 
-		and 'reconid' in self.params 
-		and self.params['reconid'] is not None ):
-			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if ( self.params['rundir'] is None 
-		and 'stackid' in self.params
-		and self.params['stackid'] is not None ):
-			#auto set the output directory
-			stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-			path = os.path.abspath(stackdata['path']['path'])
-			path = os.path.dirname(path)
-			path = os.path.dirname(path)
-			self.params['rundir'] = os.path.join(path, self.processdirname)
 
 	#=====================
 	def commitToDatabase(self, imgdata):
@@ -161,36 +146,6 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		raise NotImplementedError()
 
-	#=====================
-	def specialDefaultParams(self):
-		"""
-		put in any additional default parameters
-		"""
-		return
-
-	#=====================
-	def specialParseParams(self, args):
-		"""
-		put in any additional parameters to parse
-		"""
-		for arg in args:
-			elements = arg.split('=')
-			elements[0] = elements[0].lower()
-			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
-
-	#=====================
-	def specialParamConflicts(self):
-		"""
-		put in any additional conflicting parameters
-		"""
-		return
-
-	#=====================
-	def specialCreateOutputDirs(self):
-		"""
-		put in any additional directories to create
-		"""
-		return	
 
 	#=====================
 	def setFunctionResultKeys(self):
@@ -248,42 +203,37 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		create rundir
 		"""
-		if not self._createDirectory(self.params['rundir']) and self.params['continue']==False:
+		if self.params['background'] is False:
+			apDisplay.printMsg("creating run directories")
+		if not apParam.createDirectory(self.params['rundir']) and self.params['continue']==False:
 			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
 			time.sleep(10)
 
 		self.result_dirs={}
-		if self.params['background'] is False:
-			apDisplay.printMsg("creating special output directories")
-		self.specialCreateOutputDirs()
+
 
 	#=====================
-	def _checkParamConflicts(self):
+	def checkGlobalConflicts(self):
 		"""
 		put in any conflicting parameters
 		"""
-		if len(self.params['mrcfileroot']) > 0 and self.params['dbimages']==True:
-			apDisplay.printError("dbimages can not be specified if particular images have been specified")
-		if self.params['alldbimages'] and self.params['dbimages']==True:
-			apDisplay.printError("dbimages and alldbimages can not be specified at the same time")
-		if self.params['runid'] is None:
+		appionScript.AppionScript.checkGlobalConflicts(self)
+
+		if self.params['runname'] is None:
 			apDisplay.printError("please enter a runid, example: 'runid=run1'")
-		if self.params['runid'] == 'templates':
+		if self.params['runname'] == 'templates':
 			apDisplay.printError("templates is a reserved runid, please use another runid")
-		if self.params['runid'] == 'models':
+		if self.params['runname'] == 'models':
 			apDisplay.printError("models is a reserved runid, please use another runid")
-		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
-			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
-		if self.params['background'] is False:
-			apDisplay.printMsg("checking special param conflicts")
-		self.specialParamConflicts()
+		if self.params['mrcnames'] and self.params['preset']:
+			apDisplay.printError("preset can not be specified if particular images have been specified")
 
 	#=====================
-	def _setupGlobalParserOptions(self):
+	def setupGlobalParserOptions(self):
 		"""
 		set the input parameters
 		"""
-		self.tiltoptions = ["notilt", "hightilt", "lowtilt", "minustilt", "plustilt"]
+		self.tiltoptions = ["notilt", "hightilt", "lowtilt", "minustilt", "plustilt", "all"]
 
 		### Set usage
 		self.parser.set_usage("Usage: %prog --projectid=## --runname=<runname> --session=<session> "
@@ -302,12 +252,12 @@ class AppionLoop(appionScript.AppionScript):
 		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
 			help="Run directory for storing output, e.g. --rundir=/ami/data00/appion/runs/run1", metavar="PATH")
 		self.parser.add_option("-m", "--mrclist", dest="mrcnames",
-			help="List of mrc files to process, e.g. --mrclist=..003en,..002en,..006en", metavar="SESSION")
+			help="List of mrc files to process, e.g. --mrclist=..003en,..002en,..006en", metavar="MRCNAME")
 		self.parser.add_option("--reprocess", dest="reprocess", type="float",
 			help="Only process images that pass this reprocess criteria")
 		self.parser.add_option("--limit", dest="limit", type="int",
 			help="Only process <limit> number of images")
-		self.parser.add_option("--tiltangle", dest="tiltangle",
+		self.parser.add_option("--tiltangle", dest="tiltangle", default="all",
 			help="Only process images with specific tilt angles, options: "+str(self.tiltoptions))
 		### True / False options
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
@@ -339,88 +289,11 @@ class AppionLoop(appionScript.AppionScript):
 		self.params['functionname'] = self.functionname
 		self.params['appiondir'] = apParam.getAppionDirectory()
 		### classic methods
-		self.params['mrcfileroot']=[]
-		self.params['sessiondata']=leginondata.SessionData(name=self.params['sessionname'])
-		self.params['apix']=None
 		self.params['outdir']=self.params['rundir']
-		self.params['doneDictName']=None
 		self.params['functionLog']=None
 
 	#=====================
-	def _createDefaultStats(self):
-		self.stats = {}
-		self.stats['startTime']=time.time()
-		self.stats['count'] = 1
-		self.stats['lastcount'] = 0
-		self.stats['startmem'] = mem.active()
-		self.stats['memleak'] = False
-		self.stats['peaksum'] = 0
-		self.stats['lastpeaks'] = None
-		self.stats['imagesleft'] = 1
-		self.stats['peaksumsq'] = 0
-		self.stats['timesum'] = 0
-		self.stats['timesumsq'] = 0
-		self.stats['skipcount'] = 0
-		self.stats['waittime'] = 0
-		self.stats['lastimageskipped'] = False
-		self.stats['notpair'] = 0
-		self.stats['memlist'] = [mem.active()]
-
-	#=====================
-	def _checkForDuplicateCommandLineInputs(self, args):
-		argdict = {}
-		for arg in args:
-			elements=arg.split('=')
-			opt = elements[0].lower()
-			if opt in argdict:
-				apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
-			else:
-				argdict[opt] = True
-
-	#=====================
 	def _parseCommandLineInput(self, args):
-		mrcfileroot = []
-		self.params['functionname'] = self.functionname
-		i = 0
-		while i < len(args):
-			arg = args[i]
-			if '.mrc' in arg and not '=' in arg:
-				# add file to mrc file list minus the '.mrc' part
-				mrcfile = os.path.splitext(os.path.basename(arg))[0]
-				mrcfileroot.append(mrcfile)
-				# remove file from list of args and backup in loop
-				del args[i]
-				i -= 1
-			i += 1
-
-		self.params['mrcfileroot']=mrcfileroot
-		if(len(self.params['mrcfileroot']) > 0):
-			imgname = self.params['mrcfileroot'][0]
-			sessionname = apDatabase.getSessionName(imgname)
-			#sessionname = re.sub("^(?P<ses>[0-9]+[a-z]+[0-9]+[^_]+)_.+$", "\g<ses>", imgname)
-			self.params['sessionname'] = sessionname
-			apDisplay.printMsg("SESSIONNAME:\t'"+self.params['sessionname']+"'")
-
-		newargs = []
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-
-		if self.params['nocontinue'] is not True:
-			if self.params['alldbimages'] is True or self.params['dbimages'] is True:
-				# continue should be on for dbimages option
-				self.params['continue']=True 
-
-		sessionq=leginondata.SessionData(name=self.params['sessionname'])
-		self.params['session']=sessionq.query()[0]
-
-		if len(newargs) > 0:
-			if self.params['background'] is False:
-				apDisplay.printMsg("parsing special parameters")
-			self.specialParseParams(newargs)
-
-		self.params['imgdir'] = apDatabase.getImgDir(self.params['sessionname'])
-
 		if self.params['rundir']:
 			pass
 		else:
@@ -439,7 +312,7 @@ class AppionLoop(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(self.params['rundir'], self.params['runid'])
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
 
-		self.params['doneDictName'] = os.path.join(self.params['rundir'] , "."+self.functionname+"donedict")
+
 
 	#=====================
 	def _shuffleTree(self, tree):
@@ -457,11 +330,10 @@ class AppionLoop(appionScript.AppionScript):
 		apParam.writeFunctionLog(args, logfile=self.params['functionLog'])
 
 	#=====================
-	def _setRunAndParameters(self,params):
-		if params['commit'] is True:
+	def _setRunAndParameters(self):
+		if self.params['commit'] is True:
 			rundata = self.insertFunctionRun()
-			self.insertPreLoopFunctionRun(rundata,params)
-		
+			self.insertPreLoopFunctionRun(rundata,self.params)
 		else:
 			rundata = self.insertFunctionRun()
 			self.insertPreLoopFunctionRun(rundata,self.defaultparams)
@@ -515,6 +387,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		reads or creates a done dictionary
 		"""
+		self.params['doneDictName'] = os.path.join(self.params['rundir'] , self.functionname+".donedict")
 		doneDictName = self.params['doneDictName']
 		if os.path.isfile(doneDictName) and self.params['continue'] == True:
 			apDisplay.printMsg("reading old done dictionary:\n"+doneDictName)
@@ -551,14 +424,11 @@ class AppionLoop(appionScript.AppionScript):
 		f.close()
 
 	#=====================
-	def _createDirectory(self, path, warning=True, mode=0777):
-		return apParam.createDirectory(path, warning=warning, mode=mode)
-
-	#=====================
 	def _getAllImages(self):
 		startt = time.time()
-		if self.params['mrclist'] is not None:
-			self.imgtree = apDatabase.getSpecificImagesFromDB(self.params["mrclist"])
+		if self.params['mrcnames'] is not None:
+			mrcfileroot = self.params['mrcnames'].split(",")
+			self.imgtree = apDatabase.getSpecificImagesFromDB(mrcfileroot)
 		elif self.params['sessionname'] is not None:
 			if self.params['preset'] is not None:
 				self.imgtree = apDatabase.getImagesFromDB(self.params['sessionname'], self.params['preset'])
@@ -568,8 +438,6 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printMsg("MRC List: "+str(len(self.params['mrclist']))+" : "+str(self.params['mrclist']))
 			apDisplay.printMsg("Session: "+self.params['sessionname']+" : "+self.params['preset'])
 			apDisplay.printError("no files specified")
-		self.params['sessiondata'] = self.imgtree[0]['session']
-		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		precount = len(self.imgtree)
 		apDisplay.printMsg("found "+str(precount)+" in "+apDisplay.timeString(time.time()-startt))
 
@@ -649,21 +517,15 @@ class AppionLoop(appionScript.AppionScript):
 			self.stats['lastcount'] = self.stats['count']
 			self._checkMemLeak()
 
-		# get the next image pixel size:
-		self.params['apix'] = apDatabase.getPixelSize(imgdata)
-		if self.params['apix'] != None and ('diam' in self.params and self.params['diam'] > 0):
-			self.params['pixdiam']    = self.params['diam']/self.params['apix']
-			self.params['binpixdiam'] = self.params['diam']/self.params['apix']/float(self.params['bin'])
-		
 		# skip if image doesn't exist:
-		imgpath = os.path.join(self.params['imgdir'], imgdata['filename']+'.mrc')
+		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+'.mrc')
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
 			return False
 		
 		# check to see if image has already been processed
-		#if self._alreadyProcessed(imgdata):
-		#	return False
+		if self._alreadyProcessed(imgdata):
+			return False
 		if imgdata['filename'] in self.donedict:
 			return False
 		
@@ -778,6 +640,7 @@ class AppionLoop(appionScript.AppionScript):
 		donecount = 0
 		reproccount = 0
 		rejectcount = 0
+		tiltcount = 0
 		self.stats['skipcount'] = 0
 		newimgtree = []
 		for imgdata in self.imgtree:
@@ -793,21 +656,33 @@ class AppionLoop(appionScript.AppionScript):
 				reproccount += 1
 				skip = True
 
-			elif self.params['norejects'] is True and apDatabase.checkInspectDB(imgdata) is False:
+			elif self.params['norejects'] is True and apDatabase.getImgCompleteStatus(imgdata) is False:
 				self._writeDoneDict(imgname)
 				rejectcount += 1
 				skip = True
 
-			elif self.params['bestimages'] is True and apDatabase.checkInspectDB(imgdata) is None:
+			elif self.params['bestimages'] is True and apDatabase.getImgCompleteStatus(imgdata) is not True:
 				self._writeDoneDict(imgname)
 				rejectcount += 1
 				skip = True
 
-			elif self.params['tiltangle'] is not None:
+			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
 				tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
-				if abs(self.params['tiltangle'] - tiltangle) > 2.0:
+				tiltskip = False
+				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 2.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) > 25.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'minustilt' and tiltangle > 2.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'plustilt' and tiltangle < -2.0 ):
+					tiltskip = True
+				### skip this tilt?
+				if tiltskip is True:
 					self._writeDoneDict(imgname)
-					rejectcount += 1
+					tiltcount += 1
 					skip = True
 
 			if skip is True:
@@ -824,8 +699,10 @@ class AppionLoop(appionScript.AppionScript):
 			self.imgtree = newimgtree
 			sys.stderr.write("\n")
 			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
-			apDisplay.printMsg("( "+str(reproccount)+" pass reprocess criteria | "+str(rejectcount)+\
-				" rejected | "+str(donecount)+" in donedict )")
+			apDisplay.printMsg("( "+str(reproccount)+" no reprocess "
+				+" | "+str(rejectcount)+" rejected "
+				+" | "+str(tiltcount)+" wrong tilt "
+				+" | "+str(donecount)+" in donedict )")
 
 	#=====================
 	def _printLine(self):
@@ -846,7 +723,7 @@ class AppionLoop(appionScript.AppionScript):
 		#SHOULD IT WAIT?
 		if self.params['nowait'] is True:
 			return False
-		if len(self.params["mrcfileroot"]) > 0:
+		if self.params["mrclist"] is not None:
 			return False
 
 		#WAIT
