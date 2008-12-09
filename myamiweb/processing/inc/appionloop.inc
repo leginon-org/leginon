@@ -50,7 +50,7 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
 	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
-	$tiltangle = $_POST[tiltangle];
+	$tiltangle = $_POST['tiltangle'];
 	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
 	$apcontinue = $_POST[apcontinue];
 	// continue is checkmarked by default
@@ -133,16 +133,30 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 	echo "<input type='checkbox' name='nowait' $nowait>\n";
 	echo docpop('nowait','Wait for more images after finishing');
 	echo "<br />\n";
+
 	echo "<input type='checkbox' name='background' $background>\n";
 	echo docpop('background','Run in background mode');
 	echo "<br />\n";
+
 	echo "<input type='checkbox' name='shuffle' $shuffle>\n";
 	echo docpop('shuffle','Shuffle the images');
 	echo "<br />\n";
+
 	echo docpop('limit','Limit: ');
-	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images<br />\n";
+	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images\n";
+	echo "<br />\n";
+
 	echo docpop('tiltangle','Tilt Angle:');
-	echo "&nbsp; <input type='text' name='tiltangle' VALUE='$tiltangle' size='4'>&nbsp; degrees<br />\n";
+	echo "<select name='tiltangle'>\n";
+	echo "  <option value='all'>all tilt angles</option>\n";
+	echo "  <option value='notilt'>zero tilt angles only</option>\n";
+	echo "  <option value='hightilt'>large tilt angles only</option>\n";
+	echo "  <option value='lowtilt'>small tilt angles only</option>\n";
+	echo "  <option value='minustilt'>negative tilt angles only</option>\n";
+	echo "  <option value='plustilt'>positive tilt angles only</option>\n";
+	echo "</select>";
+	echo "<br />\n";
+
 	echo docpop('cont','<i>Continuation:</i>'); 
 	echo "<br />\n";
 	echo "<input type='radio' name='apcontinue' VALUE='1' $apcontinuecheck>\n";
@@ -171,7 +185,7 @@ function appionLoopSummaryTable () {
 	$background = ($_POST[background]=="on") ? "1" : "0";
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
 	$limit = $_POST[limit];
-	$tiltangle = $_POST[tiltangle];
+	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST[apcontinue];
 	$commit = ($_POST[commit]=="on") ? "1" : "0";
 	$runid = $_POST[runid];
@@ -218,7 +232,7 @@ function parseAppionLoopParams () {
 	$background = ($_POST[background]=="on") ? "1" : "0";
 	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
 	$limit = $_POST[limit];
-	$tiltangle = $_POST[tiltangle];
+	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST[apcontinue];
 	$commit = ($_POST[commit]=="on") ? "1" : "0";
 	$runid = $_POST[runid];
@@ -244,9 +258,69 @@ function parseAppionLoopParams () {
 	if ($background) $command.=" background";
 	if ($shuffle) $command.=" shuffle";
 	if ($limit) $command.=" limit=$limit";
-	if ($tiltangle != '') $command.=" tiltangle=$tiltangle";
+	if ($tiltangle != '' && $tiltangle != 'all') $command.=" tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" nocontinue";
 	else $command.=" continue";
+
+	return $command;
+}
+
+function parseAppionLoop2Params () {
+	// CHECK FOR ERRORS
+	$error = checkAppionErrors();
+	if ($error[0] != false) {
+		return $error;
+		exit;
+	}
+
+	// CONVERT DATA
+	if ($_POST[checkimage]=="non-rejected") {
+		$norejects = 1;
+	} elseif ($_POST[checkimage]=="best") {
+		$norejects = 1;
+		$bestimages = 1;
+	} else {
+		$norejects = 0;
+		$bestimages = 0;
+	}
+	$nowait = ($_POST['nowait']=="on") ? "0" : "1";
+	$background = ($_POST['background']=="on") ? "1" : "0";
+	$shuffle = ($_POST['shuffle']=="on") ? "1" : "0";
+	$limit = $_POST['limit'];
+	$tiltangle = $_POST['tiltangle'];
+	$apcontinue = $_POST['apcontinue'];
+	$commit = ($_POST['commit']=="on") ? "1" : "0";
+	$runname = $_POST['runid'];
+	$outdir = $_POST['outdir'];
+	
+	if ($outdir) {
+		// make sure outdir ends with '/' and append run name
+		if (substr($outdir,-1,1)!='/') $outdir.='/';
+		$rundir = $outdir.$runname;
+	}
+
+	if ($_POST['testimage']=="on") {
+		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
+		$testimage = ereg_replace(" ",",", $testimage);
+		$apcontinue = false;
+	}
+
+	// CREATE COMMAND
+	if ($testimage) $command.=" --mrclist=$testimage";
+	elseif ($_POST['preset']) $command.=" --preset=".$_POST['preset'];
+	$command.=" --session=".$_POST['sessionname'];
+	$command.=" --runname=$runname";
+	if ($outdir) $command.=" --rundir=$rundir";
+	if ($norejects) $command.=" --no-rejects";
+	if ($bestimages) $command.=" --best-images";
+	if ($nowait) $command.=" --no-wait";
+	if ($commit) $command.=" --commit";
+	if ($background) $command.=" --background";
+	if ($shuffle) $command.=" --shuffle";
+	if ($limit) $command.=" --limit=$limit";
+	if ($tiltangle != '' && $tiltangle != 'all') $command.=" --tiltangle=$tiltangle";
+	if (!$apcontinue) $command.=" --no-continue";
+	else $command.=" --continue";
 
 	return $command;
 }
