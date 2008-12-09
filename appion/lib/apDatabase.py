@@ -20,13 +20,17 @@ data.holdImages(False)
 
 def getAllImages(stats, params):
 	startt = time.time()
-	if 'dbimages' in params and params['dbimages']==True:
+	if 'sessionname' in params and params['preset'] is not None:
 		imgtree = getImagesFromDB(params['sessionname'],params['preset'])
-	elif 'alldbimages' in params and  params['alldbimages']==True:
-		imgtree = getAllImagesFromDB(params['sessionname'])
 	elif 'mrcfileroot' in params and len(params['mrcfileroot']) > 0:
 		imgtree = getSpecificImagesFromDB(params["mrcfileroot"])
 		params['sessionname']=imgtree[0]['session']['name']
+	elif 'mrclist' in params and params['mrclist'] is not None:
+		mrcfileroot = self.params['mrcnames'].split(",")
+		imgtree = getSpecificImagesFromDB(mrcfileroot)
+		params['sessionname']=imgtree[0]['session']['name']
+	elif 'sessionname' in params and params['preset'] is not None:
+		imgtree = getAllImagesFromDB(params['sessionname'])
 	else:
 		print len(params['mrcfileroot']),params['alldbimages'],params['dbimages'],params['mrcfileroot']
 		apDisplay.printError("no files specified")
