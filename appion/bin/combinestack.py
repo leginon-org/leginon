@@ -9,6 +9,7 @@ import apStack
 import apDisplay
 import appionData
 import apEMAN
+import apProject
 import apFile
 
 #=====================
@@ -86,6 +87,7 @@ class combineStackScript(appionScript.AppionScript):
 		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
+		stackq['project|projects|project'] = apProject.getProjectIdFromStackId(stackid)
 		stackq['hidden'] = False
 
 		rinstackdata = apStack.getRunsInStack(stackid)
@@ -93,6 +95,7 @@ class combineStackScript(appionScript.AppionScript):
 			rinstackq = appionData.ApRunsInStackData()
 			rinstackq['stack']    = stackq
 			rinstackq['stackRun'] = run['stackRun']
+			rinstackq['project|projects|project'] = run['project|projects|project']
 			rinstackq.insert()
 				
 		stpartsdata = apStack.getStackParticlesFromId(stackid)
