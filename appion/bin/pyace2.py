@@ -10,7 +10,7 @@ import time
 import subprocess
 import shutil
 #appion
-import appionLoop
+import appionLoop2
 import appionData
 import apImage
 import apDisplay
@@ -19,7 +19,7 @@ import apCtf
 import apParam
 import apFile
 
-class Ace2Loop(appionLoop.AppionLoop):
+class Ace2Loop(appionLoop2.AppionLoop):
 	
 	"""
 	appion Loop function that 
@@ -29,10 +29,12 @@ class Ace2Loop(appionLoop.AppionLoop):
 
 	#======================
 	def setProcessingDirName(self):
-		self.processdirname = "ace2"
+		self.processdirname = "ctf"
 
 	#======================
 	def preLoopFunctions(self):
+		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
+		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.ace2exe = self.getACE2Path()
 		return
 
@@ -79,17 +81,14 @@ class Ace2Loop(appionLoop.AppionLoop):
 
 		bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
 		inputparams = {
-		
 			'input': os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc"),
 			'cs': self.params['cs'],
 			'kv': imgdata['scope']['high tension']/1000.0,
 			'apix': apDatabase.getPixelSize(imgdata),
 			'binby': self.params['bin'],
-
 		}
 
-		### make standard input for ctftilt
-		
+		### make standard input for ACE 2
 		print "Using ACE2 at:"+self.ace2exe
 		commandline = ( self.ace2exe 
 			+ " -i " + str(inputparams['input']) 
@@ -102,8 +101,8 @@ class Ace2Loop(appionLoop.AppionLoop):
 		
 		apDisplay.printMsg("running ace2 at "+time.asctime())
 		
-		ctftiltproc = subprocess.Popen(commandline, shell=True)	
-		ctftiltproc.wait()
+		ace2proc = subprocess.Popen(commandline, shell=True)	
+		ace2proc.wait()
 
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
 		
@@ -148,7 +147,7 @@ class Ace2Loop(appionLoop.AppionLoop):
 		paramq['cs']      = self.params['cs']
 
 		runq=appionData.ApAceRunData()
-		runq['name']    = self.params['runid']
+		runq['name']    = self.params['runname']
 		runq['session'] = imgdata['session']
 		runq['path']    = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['ace2_params'] = paramq
@@ -167,43 +166,20 @@ class Ace2Loop(appionLoop.AppionLoop):
 		return True
 
 	#======================
-	def specialDefaultParams(self):
-		self.ctfrun = None
-		self.params['bin'] =1
-		self.params['cs'] = 2.0
-		self.params['refine2d'] = False
-		#self.params['refineapix'] = False
+	def setupParserOptions(self):
+		### values
+		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
+			help="Binning of the image before FFT", metavar="#")
+		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
+			help="Spherical aberation of the microscope", metavar="#")
+		### true/false
+		self.parser.add_option("--refine2d", dest="refine2d", default=False,
+			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
+		#self.parser.add_option("--refineapix", dest="refineapix", default=False,
+		#	action="store_true", help="Refine the pixel size")
 
 	#======================
-	def specialCreateOutputDirs(self):
-		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
-		apParam.createDirectory(self.powerspecdir, warning=False)
-		#self.logdir = os.path.join(self.params['rundir'], "logfiles")
-		#apParam.createDirectory(self.logdir, warning=False)
-		return
-
-	#======================
-	def specialParseParams(self,args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			#print elements
-			if (elements[0]=='help' or elements[0]=='--help' \
-				or elements[0]=='-h' or elements[0]=='-help'):
-				sys.exit(1)
-			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
-			elif (elements[0]=='cs'):
-				self.params['cs']=float(elements[1])
-			elif (arg=='refine2d'):
-				self.params['refine2d']=True
-			#elif (arg=='refineapix'):
-			#	self.params['refineapix']=True
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
-
-	#======================
-	def specialParamConflicts(self):
+	def checkConflicts(self):
 		if self.params['bin'] < 1:
 			apDisplay.printError("bin must be positive")
 		return
