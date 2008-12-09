@@ -5,7 +5,6 @@ import appionData
 import node
 import apDisplay
 import apFile
-import apDB
 
 def getFilename(tiltseriesdata):
 	# determine param filename
