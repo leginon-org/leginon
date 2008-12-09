@@ -243,6 +243,13 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		#sys.exit(1)
 
 	#=====================
+	def writeXmippLog(self, text):
+		f = open("xmipp.log", "a")
+		f.write(apParam.getLogHeader())
+		f.write(text+"\n")
+		f.close()
+
+	#=====================
 	def start(self):
 		self.insertMaxLikeJob()
 		self.stack = {}
@@ -294,11 +301,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			### use multi-processor
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
+			writeXmippLog(xmippcmd)
 			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 		else:
 			### use single processor
 			xmippexe = apParam.getExecPath("xmipp_ml_align2d", die=True)
-			apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True, showcmd=True)
+			xmippcmd = xmippexe+" "+xmippopts
+			writeXmippLog(xmippcmd)
+			apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
@@ -312,7 +322,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -eps 5e-4 "
 		)
 		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
-		apEMAN.executeEmanCmd(xmippexe+" "+xmippopts, verbose=True)
+		xmippcmd = xmippexe+" "+xmippopts
+		writeXmippLog(xmippcmd)
+		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
+
 
 		### create a quick mrc
 		emancmd = "proc2d ref"+self.timestamp+"_ref000001.xmp average.mrc"

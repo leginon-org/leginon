@@ -59,6 +59,19 @@ def getFunctionName(arg=None):
 	functionname = os.path.splitext(functionname)[0]
 	return functionname
 
+def getLogHeader():
+	#WRITE INFO
+	try:
+		user = os.getlogin() #os.environ.get('USER')
+	except:
+		user = "user.unknown"
+	try:
+		host = socket.gethostname()
+	except:
+		host = "host.unknown"
+	logheader = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
+	return logheader
+
 def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
 	"""
 	Used by appionLoop
@@ -71,16 +84,7 @@ def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
 		logfile = getFunctionName(sys.argv[0])+".log"
 	if msg is True:
 		apDisplay.printMsg("writing function log to: "+logfile)
-	#WRITE INFO
-	try:
-		user = os.getlogin() #os.environ.get('USER')
-	except:
-		user = "user.unknown"
-	try:
-		host = socket.gethostname()
-	except:
-		host = "host.unknown"
-	timestamp = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
+	timestamp = getLogHeader()
 	out=""
 	f=open(logfile,'a')
 	f.write(timestamp)
