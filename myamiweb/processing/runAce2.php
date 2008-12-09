@@ -39,11 +39,11 @@ function runAce2() {
 	$binval=$_POST['binval'];
 	$cs=$_POST['cs'];
 
-	if($refine2d) $command.="refine2d ";
-	$command.="cs=$cs ";
-	$command.="bin=$binval ";
+	if($refine2d) $command.="--refine2d ";
+	$command.="--cs=$cs ";
+	$command.="--bin=$binval ";
 
-	$apcommand = parseAppionLoopParams($_POST);
+	$apcommand = parseAppionLoop2Params($_POST);
 	if ($apcommand[0] == "<") {
 		createAce2Form($apcommand);
 		exit;
