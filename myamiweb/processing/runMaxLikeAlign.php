@@ -267,9 +267,9 @@ function runMaxLikeAlign($runjob=false) {
 	$secperiter = 0.12037;
 	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter;
 	if ($mirror) $calctime *= 2.0;
-	// kill if longer than 6 hours
-	if ($calctime > 6.0*3600.0)
-		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 6 hours<br/>"
+	// kill if longer than 10 hours
+	if ($calctime > 10.0*3600.0)
+		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 	elseif (!$fast && $calctime > 1800.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 30 minutes without fast mode<br/>"
