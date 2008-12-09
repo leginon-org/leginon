@@ -132,9 +132,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	// Set any existing parameters in form
 	$single = ($_POST['single']) ? $_POST['single'] : 'start.hed';
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'stack'.($stackruns+1);
 	$rundescrval = $_POST['description'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
+		$stackruns += 1;
+	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'stack'.($stackruns+1);
 	$prtlrunval = $_POST['prtlrunId'];
 	$massessval = $_POST['massessname'];
 	// set phaseflip on by default
