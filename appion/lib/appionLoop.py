@@ -264,6 +264,7 @@ class AppionLoop(object):
 		"""
 		put in any conflicting parameters
 		"""
+		self.tiltoptions = ["notilt", "hightilt", "lowtilt", "minustilt", "plustilt", "all"]
 		if len(self.params['mrcfileroot']) > 0 and self.params['dbimages']==True:
 			apDisplay.printError("dbimages can not be specified if particular images have been specified")
 		if self.params['alldbimages'] and self.params['dbimages']==True:
@@ -276,6 +277,8 @@ class AppionLoop(object):
 			apDisplay.printError("models is a reserved runid, please use another runid")
 		if len(self.params['mrcfileroot']) > 0 and self.params['alldbimages']:
 			apDisplay.printError("alldbimages can not be specified if particular images have been specified")
+		if self.params['tiltangle'] is not None and self.params['tiltangle'] not in self.tiltoptions:
+			apDisplay.printError("unknown tiltangle setting: "+self.params['tiltangle'])
 		if self.params['background'] is False:
 			apDisplay.printMsg("checking special param conflicts")
 		self.specialParamConflicts()
@@ -416,7 +419,7 @@ class AppionLoop(object):
 			elif arg=='nowait':
 				self.params['nowait']=True
 			elif elements[0]=='tiltangle':
-				self.params['tiltangle']=float(elements[1])
+				self.params['tiltangle']=elements[1]
 			elif arg=='norejects':
 				self.params['norejects']=True
 			elif arg=='bestimages':
@@ -806,6 +809,7 @@ class AppionLoop(object):
 		donecount = 0
 		reproccount = 0
 		rejectcount = 0
+		tiltcount = 0
 		self.stats['skipcount'] = 0
 		newimgtree = []
 		for imgdata in self.imgtree:
@@ -831,11 +835,23 @@ class AppionLoop(object):
 				rejectcount += 1
 				skip = True
 
-			elif self.params['tiltangle'] is not None:
+			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
 				tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
-				if abs(self.params['tiltangle'] - tiltangle) > 2.0:
+				tiltskip = False
+				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 2.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'lowtilt' and abs(tiltangle) > 25.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'minustilt' and tiltangle > 2.0 ):
+					tiltskip = True
+				elif (self.params['tiltangle'] == 'plustilt' and tiltangle < -2.0 ):
+					tiltskip = True
+				### skip this tilt?
+				if tiltskip is True:
 					self._writeDoneDict(imgname)
-					rejectcount += 1
+					tiltcount += 1
 					skip = True
 
 			if skip is True:
@@ -852,8 +868,10 @@ class AppionLoop(object):
 			self.imgtree = newimgtree
 			sys.stderr.write("\n")
 			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
-			apDisplay.printMsg("( "+str(reproccount)+" pass reprocess criteria | "+str(rejectcount)+\
-				" rejected | "+str(donecount)+" in donedict )")
+			apDisplay.printMsg("( "+str(reproccount)+" no reprocess "
+				+" | "+str(rejectcount)+" rejected "
+				+" | "+str(tiltcount)+" wrong tilt "
+				+" | "+str(donecount)+" in donedict )")
 
 	def _printLine(self):
 		print "\t------------------------------------------"
