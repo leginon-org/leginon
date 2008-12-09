@@ -64,6 +64,8 @@ class AppionScript(object):
 			apDisplay.printWarning("Not committing data to database")
 		else:
 			apDisplay.printMsg("Committing data to database")
+		if useglobalparams is True:
+			self.checkGlobalConflicts()
 		self.checkConflicts()
 
 		### setup run directory
@@ -157,6 +159,18 @@ class AppionScript(object):
 			action="store_false", help="Do not commit processing run to database")
 
 	#=====================
+	def checkGlobalConflicts(self):
+		"""
+		make sure the necessary parameters are set correctly
+		"""
+		if self.params['runname'] is None:
+			apDisplay.printError("enter a runname, e.g. --runname=run1")
+		#if self.params['rundir'] is None:
+		#	apDisplay.printError("enter a run directory, e.g. --rundir=/path/to/data")
+		#if self.params['projectid'] is None:
+		#	apDisplay.printError("enter a project id, e.g. --projectid=159")
+
+	#=====================
 	def parsePythonPath(self):
 		pythonpath = os.environ.get("PYTHONPATH")
 		paths = pythonpath.split(":")
@@ -220,7 +234,7 @@ class AppionScript(object):
 			path = os.path.abspath(sessiondata['image path'])
 			path = re.sub("leginon","appion",path)
 			path = re.sub("/rawdata","",path)
-			path = os.path.join(path, self.processdirname)
+			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
 		if ( self.params['rundir'] is None 
 		and 'reconid' in self.params 
@@ -234,7 +248,7 @@ class AppionScript(object):
 			path = os.path.abspath(stackdata['path']['path'])
 			path = os.path.dirname(path)
 			path = os.path.dirname(path)
-			self.params['rundir'] = os.path.join(path, self.processdirname)
+			self.params['rundir'] = os.path.join(path, self.processdirname, self.params['runname'])
 		self.params['outdir'] = self.params['rundir']
 
 	#=====================
