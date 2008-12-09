@@ -296,8 +296,9 @@ class makestack (appionLoop.AppionLoop):
 		### Averaging completed stack
 		stackpath = os.path.join(self.params['rundir'], "start.hed")
 		apStack.averageStack(stack=stackpath)
-		stackid = apStack.getStackIdFromPath(stackpath)
-		apStackMeanPlot.makeStackMeanPlot(stackid)
+		if self.params['commit'] is True:
+			stackid = apStack.getStackIdFromPath(stackpath)
+			apStackMeanPlot.makeStackMeanPlot(stackid)
 
 ############################################################
 ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -522,7 +523,7 @@ class makestack (appionLoop.AppionLoop):
 			if len(particles) > 0:			
 				###apply limits
 				if self.params['correlationmin'] or self.params['correlationmax']:
-					particles=eliminateMinMaxCCParticles(particles)
+					particles=self.eliminateMinMaxCCParticles(particles)
 				
 				###apply masks
 				if self.params['checkmask']:
@@ -658,7 +659,7 @@ class makestack (appionLoop.AppionLoop):
 		elif defocus > -1.0e-3:
 			apDisplay.printError("defocus is very small "+str(defocus)+" for image "+shortname)
 
-	def eliminateMinMaxCCParticles(particles):
+	def eliminateMinMaxCCParticles(self, particles):
 		newparticles = []
 		eliminated = 0
 		for prtl in particles:
