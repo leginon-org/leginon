@@ -90,7 +90,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		$coranruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'coran'.($coranruns+1);
 	$rundescrval = $_POST['description'];
-	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
+	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '20';
 
 	$defaultmaskrad = 100;
 
