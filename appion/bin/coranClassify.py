@@ -34,18 +34,6 @@ class CoranClassifyScript(appionScript.AppionScript):
 		self.parser.add_option("-m", "--mask", "--maskrad", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 
-		### common params
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of run", metavar="'TEXT'")
-		self.parser.add_option("-n", "--runname", dest="runname",
-			help="Name for this run", metavar="STR")
-
 	#=====================
 	def checkConflicts(self):
 		if self.params['alignstackid'] is None:
@@ -65,14 +53,13 @@ class CoranClassifyScript(appionScript.AppionScript):
 		path = self.alignstackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "coran", self.params['runname'])
-		self.params['outdir'] = self.params['rundir']
 
 	#=====================
 	def checkCoranRun(self):
 		# create a norefParam object
 		analysisq = appionData.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
-		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		# ... path makes the run unique:
 		uniquerun = analysisq.query(results=1)
 		if uniquerun:
@@ -84,7 +71,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		# create a AlignAnalysisRun object
 		analysisq = appionData.ApAlignAnalysisRunData()
 		analysisq['runname'] = self.params['runname']
-		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		analysisq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		# ... path makes the run unique:
 		uniquerun = analysisq.query(results=1)
 		if uniquerun and insert is True:
@@ -113,7 +100,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 			eigenq = appionData.ApCoranEigenImageData()
 			eigenq['coranRun'] = coranq
 			eigenq['factor_num'] = factnum
-			path = os.path.join(self.params['outdir'], "coran")
+			path = os.path.join(self.params['rundir'], "coran")
 			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 			imgname = ("eigenimg%02d.png" % (factnum))
 			eigenq['image_name'] = imgname
@@ -155,7 +142,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 		apDisplay.printMsg("Pixel mask radius="+str(maskpixrad)) 
 
 		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['spiderfile'])
-		alignedstack = os.path.join(self.params['outdir'], self.alignstackdata['spiderfile'])
+		alignedstack = os.path.join(self.params['rundir'], self.alignstackdata['spiderfile'])
 		emancmd = "proc2d "+oldalignedstack+" "+alignedstack+" clip="+str(clippixdiam)+","+str(clippixdiam)
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		numpart = self.getNumAlignedParticles()
@@ -187,7 +174,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	coranClass = CoranClassifyScript()
+	coranClass = CoranClassifyScript(True)
 	coranClass.start()
 	coranClass.close()
 
