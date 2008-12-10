@@ -553,6 +553,10 @@ class makestack (appionLoop.AppionLoop):
 			lines=f.readlines()
 			f.close()
 			nptcls=len(lines)
+			
+			if nptcls == 0:
+				return(0)
+			
 			# write batchboxer command
 			if self.params['selexonId']:
 				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, self.params['boxsize'])
