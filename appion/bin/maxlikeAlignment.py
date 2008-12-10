@@ -8,6 +8,7 @@ import math
 import shutil
 import glob
 import cPickle
+import subprocess
 #appion
 import appionScript
 import apDisplay
@@ -58,11 +59,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		#self.parser.add_option("--templates", dest="templateids",
 		#	help="Template Id for template init method", metavar="1,56,34")
 
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-
 		self.parser.add_option("-F", "--fast", dest="fast", default=True,
 			action="store_true", help="Use fast method")
 		self.parser.add_option("--no-fast", dest="fast", default=True,
@@ -73,12 +69,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="Do NOT use mirror method")
 
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of run", metavar="'TEXT'")
-		self.parser.add_option("-n", "--runname", dest="runname",
-			help="Name for this run", metavar="STR")
 
 	#=====================
 	def checkConflicts(self):
@@ -122,12 +112,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def insertMaxLikeJob(self):
 		maxjobq = appionData.ApMaxLikeJobData()
 		maxjobq['runname'] = self.params['runname']
-		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		maxjobdatas = maxjobq.query(results=1)
 		if maxjobdatas:
 			alignrunq = appionData.ApAlignRunData()
 			alignrunq['runname'] = self.params['runname']
-			alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+			alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
@@ -135,13 +125,16 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		maxjobq['timestamp'] = self.timestamp
 		maxjobq['finished'] = False
 		maxjobq['hidden'] = False
-		maxjobq.insert()
+		if self.params['commit'] is True:
+			maxjobq.insert()
 		self.params['maxlikejobid'] = maxjobq.dbid
 		print "self.params['maxlikejobid']",self.params['maxlikejobid']
 		return
 
 	#=====================
-	def readyUploadFlag(self):	
+	def readyUploadFlag(self):
+		if self.params['commit'] is False:
+			return
 		config = dbconfig.getConfig('appionData')
 		dbc = MySQLdb.Connect(**config)
 		cursor = dbc.cursor()
@@ -184,11 +177,27 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		return
 
 	#=====================
+	def checkMPI(self):
+		mpiexe = apParam.getExecPath("mpirun")
+		if mpiexe is None:
+			return None
+		xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d")
+		if xmippexe is None:
+			return None
+		lddcmd = "ldd "+xmippexe+" | grep mpi"
+		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
+		proc.wait()
+		lines = proc.stdout.readlines()
+		print "lines=", lines
+		if lines and len(lines) > 0:
+			return mpiexe
+
+	#=====================
 	def writeGaribaldiJobFile(self):
 		nproc = 128
 		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
 		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_align2d"
-		newoutdir = "$PBSREMOTEDIR/"
+		newrundir = "$PBSREMOTEDIR/"
 		xmippopts = ( ""
 			+" -i $PBSREMOTEDIR/partlist2.doc \\\n"
 			+" -o $PBSREMOTEDIR/"+self.timestamp+" \\\n"
@@ -212,7 +221,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("#PBS -r n\n")
 		f.write("#PBS -k oe\n")
 		f.write("\n")
-		f.write("## outdir: "+self.params['outdir']+"\n")
+		f.write("## rundir: "+self.params['rundir']+"\n")
 		f.write("\n")
 		f.write("cd "+rundir+"\n")
 		f.write("rm -fv pbstempdir "+results+"\n")
@@ -262,7 +271,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.dumpParameters()
 
 		### process stack to local file
-		self.params['localstack'] = os.path.join(self.params['outdir'], self.timestamp+".hed")
+		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1:
 			proccmd += " shrink="+str(self.params['bin'])
@@ -283,10 +292,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		aligntime = time.time()
 		
 		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['outdir'], self.partlistdocfile)
+			+" -i "+os.path.join(self.params['rundir'], self.partlistdocfile)
 			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
-			+" -o "+os.path.join(self.params['outdir'], "part"+self.timestamp)
+			+" -o "+os.path.join(self.params['rundir'], "part"+self.timestamp)
 			+" -psi_step "+str(self.params['psistep'])
 			+" -eps 5e-4 "
 		)
@@ -296,36 +305,36 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			xmippopts += " -mirror "
 
 		nproc = apParam.getNumProcessors()
-		mpirun = apParam.getExecPath("mpirun")
-		if False and nproc > 3 and mpirun is not None:
+		mpirun = self.checkMPI()
+		if nproc > 2 and mpirun is not None:
 			### use multi-processor
+			apDisplay.printColor("Using "+str(nproc-1)+" processors!", "green")
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
-			writeXmippLog(xmippcmd)
+			self.writeXmippLog(xmippcmd)
 			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 		else:
 			### use single processor
 			xmippexe = apParam.getExecPath("xmipp_ml_align2d", die=True)
 			xmippcmd = xmippexe+" "+xmippopts
-			writeXmippLog(xmippcmd)
+			self.writeXmippLog(xmippcmd)
 			apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 		### align references
 		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['outdir'], "part"+self.timestamp+".sel")
+			+" -i "+os.path.join(self.params['rundir'], "part"+self.timestamp+".sel")
 			+" -nref 1 "
 			+" -iter "+str(self.params['maxiter'])
-			+" -o "+os.path.join(self.params['outdir'], "ref"+self.timestamp)
+			+" -o "+os.path.join(self.params['rundir'], "ref"+self.timestamp)
 			+" -psi_step 1 "
 			+" -eps 5e-4 "
 		)
 		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
 		xmippcmd = xmippexe+" "+xmippopts
-		writeXmippLog(xmippcmd)
+		self.writeXmippLog(xmippcmd)
 		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
-
 
 		### create a quick mrc
 		emancmd = "proc2d ref"+self.timestamp+"_ref000001.xmp average.mrc"
@@ -338,7 +347,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = MaximumLikelihoodScript()
+	maxLike = MaximumLikelihoodScript(True)
 	maxLike.start()
 	maxLike.close()
 
