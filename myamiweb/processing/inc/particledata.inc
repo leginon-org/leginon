@@ -1556,7 +1556,9 @@ class particledata {
 			."WHERE "
 			."  a.`DEF_id` = '$analysisid' "
 			."ORDER BY ce.`factor_num` ASC";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
