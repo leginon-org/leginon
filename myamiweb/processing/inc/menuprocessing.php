@@ -300,7 +300,7 @@ if ($expId) {
 			$analysisresults[] = ($analysisrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisrun running</a>";
 			$analysisresults[] = ($analysisqueue==0) ? "" : "$analysisqueue queued";
 			$nruns[] = array (
-				'name'=>"<a href='alignsummary.php?analysis=1&expId=$sessionId'>Run Align Analysis</a>",
+				'name'=>"<a href='selectAlignAnalysis.php&expId=$sessionId'>Run Align Analysis</a>",
 				'result'=>$analysisresults,
 			);
 
@@ -314,7 +314,7 @@ if ($expId) {
 				$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
 				$clusterresults[] = ($clusterqueue==0) ? "" : "$clusterqueue queued";
 				$nruns[] = array (
-					'name'=>"<a href='alignsummary.php?cluster=1&expId=$sessionId'>Run Particle Clustering</a>",
+					'name'=>"<a href='alignsummary.php?analysis=1&expId=$sessionId'>Run Particle Clustering</a>",
 					'result'=>$clusterresults,
 				);
 			}
