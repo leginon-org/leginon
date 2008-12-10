@@ -35,15 +35,17 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.ancestorpreset = self.settings['ancestor preset']
-		self.ancestortargetnames = ['acquisition','focus']
+# Focus target disabled for now
+#		self.ancestortargetnames = ['acquisition','focus']
+		self.ancestortargetnames = ['acquisition']
 		self.targetrelation2display = {
 			'acquisition':'c_acquisition',
-			'focus':'c_focus',
+#			'focus':'c_focus',
 			'transformed':'transformed',
 		}
 		self.targetrelation2original = {
 			'c_acquisition':'acquisition',
-			'c_focus':'focus',
+#			'c_focus':'focus',
 			'transformed':'transformed',
 		}
 		self.childtargetnames = self.targetrelation2original.keys()
@@ -371,7 +373,8 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 		self.setTargets(donetargets,'done')
 
 		n = 0
-		for type in ('acquisition','focus'):
+#		for type in ('acquisition','focus'):
+		for type in ('acquisition',):
 			n += len(targets[type])
 		if 'transformed' in targets.keys():
 			ntransformed = len(targets['transformed'])
