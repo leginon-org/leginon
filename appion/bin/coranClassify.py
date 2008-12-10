@@ -117,10 +117,10 @@ class CoranClassifyScript(appionScript.AppionScript):
 			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 			imgname = ("eigenimg%02d.png" % (factnum))
 			eigenq['image_name'] = imgname
+			if not os.path.isfile(os.path.join(path, imgname)):
+				apDisplay.printWarning(imgname+" does not exist")
+				continue
 			if insert is True:
-				if not os.path.isfile(os.path.join(path, imgname)):
-					apDisplay.printWarning(imgname+" does not exist")
-					continue
 				eigenq['percent_contrib'] = self.contriblist[i]
 				eigenq.insert()
 
