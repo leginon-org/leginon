@@ -238,13 +238,19 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		Particles:<BR>
 		<SELECT NAME='stackid'>\n";
 		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack[stackid]);
+			$stackid = $stack['stackid'];
+			$stackparams=$particle->getStackParams($stackid);
+			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+			$mpix=$particle->getStackPixelSizeFromStackId($stackid);
+			$apixtxt=format_angstrom_number($mpix)."/pixel";
 			$runname=$stackparams['shownstackname'];
-			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
-			echo "<OPTION VALUE='$stack[stackid]'";
+			$totprtls=commafy($particle->getNumStackParticles($stackid));
+			echo "<OPTION VALUE='$stackid'";
 			// select previously set prtl on resubmit
 			if ($stackidval == $stackid) echo " SELECTED";
-			echo">$runname ($totprtls prtls)</OPTION>\n";
+			echo ">$stackid: $runname ($totprtls prtls,";
+			if ($mpix) echo " $apixtxt,";
+			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 	}

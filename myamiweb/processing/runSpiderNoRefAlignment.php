@@ -150,7 +150,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
-			echo ">$runname ($totprtls prtls,";
+			echo ">$stackid: $runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</OPTION>\n";
 		}
