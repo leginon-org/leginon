@@ -97,7 +97,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 					numsort += 1
 					shutil.move(filename,iterdir)
 		if numsort < 3:
-			apDisplay.printError("Problem in iteration file sorting")
+			apDisplay.printWarning("Problem in iteration file sorting")
 		apDisplay.printMsg("Sorted "+str(numsort)+" iteration files")
 		### move files for all reference iterations
 		refsort = 0
