@@ -92,12 +92,6 @@ class aceLoop(appionLoop2.AppionLoop):
 		return
 
 	#======================
-	def specialDefaultParams(self):
-		self.params['nowait'] = True
-		self.params['background'] = True
-		return
-
-	#======================
 	def preLoopFunctions(self):
 		self.params['opimage1'] = os.path.join(self.params['rundir'],"opimages1")
 		self.params['opimage2'] = os.path.join(self.params['rundir'],"opimages2")
