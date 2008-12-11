@@ -11,12 +11,6 @@
  *	
  */
 
-echo "<br/><br/><center><h1><font color='#bb0000'>"
-	."The pipeline is down today, 12/12/08<br/>"
-	."go home and get some sleep<br/>"
-	."</font></h1></center>";
-exit;
-
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
@@ -839,12 +833,13 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
-	// first check that the user has sinedon.cfg & leginon.cfg
-	// files in their guppy home directory
-	$filecheck = exec_over_ssh($host,$user,$pass,'ls leginon.cfg',True);
-	if (trim($filecheck)!='leginon.cfg') return "You are missing the leginon.cfg file on the cluster";
-	$filecheck = exec_over_ssh($host,$user,$pass,'ls sinedon.cfg',True);
-	if (trim($filecheck)!='sinedon.cfg') return "You are missing the sinedon.cfg file on the cluster";
+	// check if database is configured on processing host
+	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"leginondata\")'";
+	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
+	if (trim($dbcheck)=='') return "sinedon is not configure for leginondata";
+	$cmd = "python -c 'import sinedon; print sinedon.getConfig(\"appionData\")'";
+	$dbcheck = exec_over_ssh($host,$user,$pass,$cmd,True);
+	if (trim($dbcheck)=='') return "sinedon is not configure for appionData";
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
