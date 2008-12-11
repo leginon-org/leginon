@@ -22,7 +22,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 	threadJpeg = True
 
 	#######################################################
-	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM ####
+	#### ITEMS BELOW MUST BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
 	# see also appionScript.py, appionLoop2.py and filterLoop.py
 
@@ -32,7 +32,6 @@ class ParticleLoop(filterLoop.FilterLoop):
 		"""
 		apDisplay.printError("you did not create a 'getParticleParamsData' function in your script")
 		raise NotImplementedError()
-		return
 
 	########################################################################
 	#### ITEMS BELOW CAN BE SPECIFIED IN A NEW PROGRAM FROM APPION LOOP ####
