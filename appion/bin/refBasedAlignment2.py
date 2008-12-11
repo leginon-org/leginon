@@ -152,6 +152,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['imagicfile'] = imagicstack
 		alignstackq['spiderfile'] = alignedstack
 		alignstackq['avgmrcfile'] = "average.mrc"
+		alignstackq['refstackfile'] = ("templatestack%02d.spi"%(self.params['numiter']))
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
@@ -165,6 +166,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+		refstackfile = os.path.join(self.params['outdir'], alignstackq['refstackfile'])
+		if not os.path.isfile(refstackfile):
+			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = self.stack['data']
 		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
