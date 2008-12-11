@@ -202,18 +202,10 @@ class fakeStackScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stackid=<session> --commit [options]")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
 		self.parser.add_option("--stack1", dest="stack1", type="int",
 			help="ID for untilted particle stack", metavar="INT")
 		self.parser.add_option("--stack2", dest="stack2", type="int",
 			help="ID for tilted particle stack", metavar="INT")
-		self.parser.add_option("--runid", "-r", dest="runid", default=self.timestamp,
-			help="Run ID name, e.g. --runid=run1", metavar="NAME")
 		self.parser.add_option("--density", "-d", dest="density", 
 			default="/ami/data13/appion/06jul12a/refine/logsplit2/run55351/threed.20a.mrc",
 			help="density file, e.g. --density=groel.mrc", metavar="NAME")
@@ -224,8 +216,8 @@ class fakeStackScript(appionScript.AppionScript):
 			apDisplay.printError("enter a untilted stack ID, e.g. --stack1=773")
 		if self.params['stack2'] is None:
 			apDisplay.printError("enter a tilted stack ID, e.g. --stack2=774")
-		if self.params['runid'] is None:
-			apDisplay.printError("enter a run ID, e.g. --runid=run1")
+		if self.params['runname'] is None:
+			apDisplay.printError("enter a run ID, e.g. --runname=run1")
 
 	#=====================
 	def setProcessingDirName(self):
@@ -237,7 +229,7 @@ class fakeStackScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(self.params['stack1'], msg=False)
 		path = os.path.abspath(stackdata['path']['path'])
 		path = os.path.dirname(path)
-		self.params['rundir'] = os.path.join(path, "faketwostack", self.params['runid'])
+		self.params['rundir'] = os.path.join(path, "faketwostack", self.params['runname'])
 
 	#=====================
 	def checksizes(self):
@@ -321,8 +313,8 @@ class fakeStackScript(appionScript.AppionScript):
 		this is the main component of the script
 		where all the processing is done
 		"""
-		self.params['notstack'] = os.path.join(self.params['outdir'], "notstack-"+self.timestamp+".hed")
-		self.params['tiltstack'] = os.path.join(self.params['outdir'], "tiltstack-"+self.timestamp+".hed")
+		self.params['notstack'] = os.path.join(self.params['rundir'], "notstack-"+self.timestamp+".hed")
+		self.params['tiltstack'] = os.path.join(self.params['rundir'], "tiltstack-"+self.timestamp+".hed")
 
 		apFile.removeStack(self.params['notstack'])
 		apFile.removeStack(self.params['tiltstack'])

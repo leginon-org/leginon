@@ -68,7 +68,7 @@ class satAverageScript(appionScript.AppionScript):
 		Get all particle data for given recon and iteration
 		"""
 		t0 = time.time()
-		cachefile = os.path.join(self.params['outdir'], 
+		cachefile = os.path.join(self.params['rundir'], 
 			"refineparticledata-r"+str(reconid)+"-i"+str(iteration)+".cache")
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("loading refineparticledata from cache file", "cyan")
@@ -178,7 +178,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def getClassData(self, reconid, iternum):
 		t0 = time.time()
-		cachefile = os.path.join(self.params['outdir'], 
+		cachefile = os.path.join(self.params['rundir'], 
 			"partclassdata-r"+str(reconid)+"-i"+str(iternum)+".cache")
 		if os.path.isfile(cachefile):
 			apDisplay.printColor("loading particle class data from cache file", "cyan")
@@ -216,8 +216,6 @@ class satAverageScript(appionScript.AppionScript):
 			help="Name of the stack to write the averages", metavar="file.hed")
 		self.parser.add_option("--keep-list", dest="keeplist",
 			help="Keep particles in the specified text file, EMAN style 0,1,...", metavar="TEXT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location of new class files", metavar="PATH")
 		self.parser.add_option("--eotest", dest="eotest", default=False,
 			action="store_true", help="Perform even/odd test")
 
@@ -252,7 +250,7 @@ class satAverageScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.rootname = self.params['stackname'].split(".")[0]
-		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
+		self.params['outputstack'] = os.path.join(self.params['rundir'], self.params['stackname'])
 		
 		if os.path.isfile(self.params['outputstack']):
 			apFile.removeStack(self.params['outputstack'])
@@ -324,18 +322,18 @@ class satAverageScript(appionScript.AppionScript):
 		reconstr = str(self.params['reconid'])
 
 		### recon 3d volumes
-		threedname = os.path.join(self.params['outdir'], self.rootname+"."+str(self.params['iter'])+"a.mrc")
+		threedname = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"a.mrc")
 		emancmd = ( "make3d "+self.params['outputstack']+" out="
 			+threedname+" hard=25 sym=d7 pad=240 mask="+str(self.params['mask'])+"; echo ''" )
 		#print emancmd
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
-		threednameb = os.path.join(self.params['outdir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
+		threednameb = os.path.join(self.params['rundir'], self.rootname+"."+str(self.params['iter'])+"b.mrc")
 		emancmd = ( "proc3d "+threedname+" "+threednameb
 			+" apix=1.63 norm=0,1 lp=6 origin=0,0,0 mask="+str(self.params['mask'])+"; echo '' " )
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=self.rootname+"-eman.log")
 		if self.params['eotest'] is True:
 			# even 
-			evenname = os.path.join(self.params['outdir'], self.rootname+"-even."+str(self.params['iter'])+"a.mrc")
+			evenname = os.path.join(self.params['rundir'], self.rootname+"-even."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['evenstack']):
 				evenemancmd = ( "make3d "+self.params['evenstack']+" out="
 					+evenname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
@@ -345,7 +343,7 @@ class satAverageScript(appionScript.AppionScript):
 				apDisplay.printWarning("file "+self.params['evenstack']+" does not exist")
 
 			# odd
-			oddname = os.path.join(self.params['outdir'], self.rootname+"-odd."+str(self.params['iter'])+"a.mrc")
+			oddname = os.path.join(self.params['rundir'], self.rootname+"-odd."+str(self.params['iter'])+"a.mrc")
 			if os.path.isfile(self.params['oddstack']):
 				oddemancmd = ( "make3d "+self.params['oddstack']+" out="
 					+oddname+" hard=25 sym=d7 pad=240 mask=70; echo ''" )
@@ -355,7 +353,7 @@ class satAverageScript(appionScript.AppionScript):
 				apDisplay.printWarning("file "+self.params['oddstack']+" does not exist")
 
 			#eotest
-			fscout = os.path.join(self.params['outdir'], self.rootname+"-fsc.eotest")
+			fscout = os.path.join(self.params['rundir'], self.rootname+"-fsc.eotest")
 			if os.path.isfile(oddname) and os.path.isfile(evenname):
 				eotestcmd = "proc3d "+oddname+" "+evenname+" fsc="+fscout
 				apEMAN.executeEmanCmd(eotestcmd, verbose=True, showcmd=True)

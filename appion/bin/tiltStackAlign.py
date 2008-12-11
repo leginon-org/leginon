@@ -32,14 +32,10 @@ class tiltStackAlign(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --notstackid=1239 --tiltstackid=1240")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("-t", "--tiltstackid", dest="tiltstackid",
 			help="Tilted stack id", metavar="ID")
 		self.parser.add_option("-n", "--notstackid", dest="notstackid",
 			help="Untilted stack id", metavar="ID")
-		self.parser.add_option("-r", "--runname", dest="runname",
-			help="Name for aligned stack run", metavar="STR")
 
 	#=====================
 	def checkConflicts(self):
@@ -145,7 +141,7 @@ class tiltStackAlign(appionScript.AppionScript):
 	#=====================
 	def makeEulerDoc(self, parttree):
 		count = 0
-		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
+		eulerfile = os.path.join(self.params['rundir'], "eulersdoc"+self.timestamp+".spi")
 		eulerf = open(eulerfile, "w")
 		apDisplay.printMsg("creating Euler doc file")
 		starttime = time.time()
@@ -176,7 +172,7 @@ class tiltStackAlign(appionScript.AppionScript):
 		### untilted stack
 		self.notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
 		notstackfile = os.path.join(self.notstackdata['path']['path'], self.notstackdata['name'])
-		newnotstack = os.path.join(self.params['outdir'], "notstack.hed")
+		newnotstack = os.path.join(self.params['rundir'], "notstack.hed")
 		if os.path.isfile(newnotstack):
 			apFile.removeStack(newnotstack)
 
@@ -184,13 +180,13 @@ class tiltStackAlign(appionScript.AppionScript):
 		if not self.tiltstackdata:
 			self.tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
 		tiltstackfile = os.path.join(self.tiltstackdata['path']['path'], self.tiltstackdata['name'])
-		newtiltstack = os.path.join(self.params['outdir'], "tiltstack.hed")
+		newtiltstack = os.path.join(self.params['rundir'], "tiltstack.hed")
 		if os.path.isfile(newtiltstack):
 			apFile.removeStack(newtiltstack)
 
 		### make doc file of Euler angles
 		#eulerfile = self.makeEulerDoc(parttree)
-		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
+		eulerfile = os.path.join(self.params['rundir'], "eulersdoc"+self.timestamp+".spi")
 		if os.path.isfile(eulerfile):
 			apFile.removeFile(eulerfile)
 

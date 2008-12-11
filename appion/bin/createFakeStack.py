@@ -171,16 +171,8 @@ class fakeStackScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stackid=<session> --commit [options]")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
-		self.parser.add_option("--runid", "-r", dest="runid", default=self.timestamp,
-			help="Run ID name, e.g. --runid=run1", metavar="NAME")
 
 	#=====================
 	def checkConflicts(self):

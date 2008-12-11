@@ -23,20 +23,12 @@ class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnums=#,#,# [options]")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit RCT run to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit RCT run to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("--classnum", "--classnums", dest="classnums", type="str",
 			help="Class numbers to use for rct volume, e.g. 0,1,2", metavar="#")
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
 		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
 			help="Noref class id", metavar="ID")
-		self.parser.add_option("--runname", dest="runname",
-			help="Run name", metavar="ID")
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
@@ -45,8 +37,6 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
-		self.parser.add_option("--description", dest="description", type="str",
-			help="Description of RCT run", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -127,7 +117,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		### convert imagic stack to spider
 		emancmd  = "proc2d "
 		emancmd += emanstackfile+" "
-		spiderstack = os.path.join(self.params['outdir'], "rctstack"+self.timestamp+".spi")
+		spiderstack = os.path.join(self.params['rundir'], "rctstack"+self.timestamp+".spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 
@@ -162,7 +152,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['highpasspart'] = self.params['highpasspart']
 		rctrunq['description'] = self.params['description']
 		rctrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['tiltstackid'])
-		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		rctrunq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
 		if self.params['commit'] is True:
@@ -196,8 +186,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		### set values
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
 		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
-		rawspifile = os.path.join(self.params['outdir'], "rawvolume%s-%03d.spi"%(self.timestamp, iternum))
-		emanvolfile = os.path.join(self.params['outdir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
+		rawspifile = os.path.join(self.params['rundir'], "rawvolume%s-%03d.spi"%(self.timestamp, iternum))
+		emanvolfile = os.path.join(self.params['rundir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
 		lowpass = self.params['lowpassvol']
 		### copy original to raw file
 		shutil.copy(spivolfile, rawspifile)
@@ -254,7 +244,7 @@ class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def makeEulerDoc(self, tiltParticlesData):
 		count = 0
-		eulerfile = os.path.join(self.params['outdir'], "eulersdoc"+self.timestamp+".spi")
+		eulerfile = os.path.join(self.params['rundir'], "eulersdoc"+self.timestamp+".spi")
 		eulerf = open(eulerfile, "w")
 		apDisplay.printMsg("creating Euler doc file")
 		starttime = time.time()
@@ -293,7 +283,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		includeParticle, tiltParticlesData = self.getGoodParticles(classpartdatas)
 
 		### write kept particles to file
-		self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile"+self.timestamp+".lst")
+		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile"+self.timestamp+".lst")
 		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
 		kf = open(self.params['keepfile'], "w")
 		for partnum in includeParticle:
@@ -302,7 +292,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### make new stack of tilted particle from that run
 		tiltstackfile = os.path.join(tiltstackdata['path']['path'], tiltstackdata['name'])
-		rctstackfile = os.path.join(self.params['outdir'], "rctstack"+self.timestamp+".hed")
+		rctstackfile = os.path.join(self.params['rundir'], "rctstack"+self.timestamp+".hed")
 		apFile.removeStack(rctstackfile)
 		apStack.makeNewStack(tiltstackfile, rctstackfile, self.params['keepfile'])
 		spiderstack = self.convertStackToSpider(rctstackfile)
@@ -313,7 +303,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		### iterations over volume creation
 		looptime = time.time()
 		### back project particles into filter volume
-		volfile = os.path.join(self.params['outdir'], "volume%s-%03d.spi"%(self.timestamp, 0))
+		volfile = os.path.join(self.params['rundir'], "volume%s-%03d.spi"%(self.timestamp, 0))
 		backproject.backprojectCG(spiderstack, eulerfile, volfile,
 			numpart=len(includeParticle), pixrad=self.params['radius'])
 		alignstack = spiderstack
@@ -331,7 +321,7 @@ class rctVolumeScript(appionScript.AppionScript):
 				+apDisplay.timeString(time.time()-looptime), "cyan")
 
 			### back project particles into better volume
-			volfile = os.path.join(self.params['outdir'], "volume%s-%03d.spi"%(self.timestamp, iternum))
+			volfile = os.path.join(self.params['rundir'], "volume%s-%03d.spi"%(self.timestamp, iternum))
 			backproject.backproject3F(alignstack, eulerfile, volfile,
 				numpart=len(includeParticle))
 

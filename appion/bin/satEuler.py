@@ -579,7 +579,7 @@ class satEulerScript(appionScript.AppionScript):
 
 	#=====================
 	def subStackCmd(self):
-		keepfile = os.path.join(self.params['outdir'], "keeplist-tot"+self.datastr+".lst")
+		keepfile = os.path.join(self.params['rundir'], "keeplist-tot"+self.datastr+".lst")
 		stackdata = apStack.getRunsInStack(self.params['stackid'])
 
 		cmd = ( "subStack.py "
@@ -597,7 +597,7 @@ class satEulerScript(appionScript.AppionScript):
 
 	#=====================
 	def satAverageCmd(self):
-		keepfile = os.path.join(self.params['outdir'], "keeplist-tot"+self.datastr+".lst")
+		keepfile = os.path.join(self.params['rundir'], "keeplist-tot"+self.datastr+".lst")
 		newname = "recon%d_cut%d_iter%d.hed" % (self.params['reconid'], self.params['cutrange']*10, self.params['iternum'])
 		cmd = ( "satAverage.py "
 			+" --reconid="+str(self.params['reconid'])
@@ -627,16 +627,10 @@ class satEulerScript(appionScript.AppionScript):
 			help="Reconstruction Run ID", metavar="INT")
 		self.parser.add_option("-i", "--iternum", dest="iternum", type='int',
 			help="Reconstruction Iteration Number, defaults to last iteration", metavar="INT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the templates to", metavar="PATH")
 		self.parser.add_option("--tiltrunid", dest="tiltrunid", type='int',
 			help="Automatically set", metavar="INT")
 		self.parser.add_option("--stackid", dest="stackid", type='int',
 			help="Automatically set", metavar="INT")
-		self.parser.add_option("-C", "--commit", dest="commit", default=False,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=False,
-			action="store_false", help="Do not commit template to database")
 		self.parser.add_option("-s", "--stepsize", dest="stepsize", type='float', default=1.0,
 			help="Histogram step size in degrees, default=1.0", metavar="FLOAT")
 		self.parser.add_option("-c", "--cutrange", dest="cutrange", type='float', default=5.0,
