@@ -17,6 +17,7 @@ import apDatabase
 import apParam
 import apFile
 #leginon
+import sinedon
 from pyami import mem
 
 #=====================
@@ -124,7 +125,7 @@ class AppionScript(object):
 			#	self.params['rundir'] = self.params['outdir']
 		#create the run directory, if needed
 		if self.quiet is False:
-			apDisplay.printMsg("Run directory: "+self.params['rundir'])
+			apDisplay.printMsg("Run directory: "+str(self.params['rundir']))
 		apParam.createDirectory(self.params['rundir'], warning=(not self.quiet))
 		os.chdir(self.params['rundir'])
 

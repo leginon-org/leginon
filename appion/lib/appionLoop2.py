@@ -233,24 +233,18 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		set the input parameters
 		"""
+		appionScript.AppionScript.setupGlobalParserOptions(self)
+
 		self.tiltoptions = ["notilt", "hightilt", "lowtilt", "minustilt", "plustilt", "all"]
 
 		### Set usage
 		self.parser.set_usage("Usage: %prog --projectid=## --runname=<runname> --session=<session> "
 			+"--preset=<preset> --description='<text>' --commit [options]")
 		### Input value options
-		self.parser.add_option("-r", "--runname", dest="runname", default=self.timestamp,
-			help="Name for processing run, e.g. --runname=run1", metavar="NAME")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the processing run (must be in quotes)", metavar="TEXT")
-		self.parser.add_option("-p", "--projectid", dest="session", type="int",
-			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
 		self.parser.add_option("-s", "--session", dest="sessionname",
 			help="Session name associated with processing run, e.g. --session=06mar12a", metavar="SESSION")
 		self.parser.add_option("--preset", dest="preset",
 			help="Image preset associated with processing run, e.g. --preset=en", metavar="PRESET")
-		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
-			help="Run directory for storing output, e.g. --rundir=/ami/data00/appion/runs/run1", metavar="PATH")
 		self.parser.add_option("-m", "--mrclist", dest="mrcnames",
 			help="List of mrc files to process, e.g. --mrclist=..003en,..002en,..006en", metavar="MRCNAME")
 		self.parser.add_option("--reprocess", dest="reprocess", type="float",
@@ -260,10 +254,6 @@ class AppionLoop(appionScript.AppionScript):
 		self.parser.add_option("--tiltangle", dest="tiltangle", default="all",
 			help="Only process images with specific tilt angles, options: "+str(self.tiltoptions))
 		### True / False options
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit processing run to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit processing run to database")
 		self.parser.add_option("--continue", dest="continue", default=True,
 			action="store_true", help="Continue processing run from last image")
 		self.parser.add_option("--no-continue", dest="continue", default=True,
@@ -751,7 +741,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		apDisplay.printColor("COMPLETE LOOP:\t"+apDisplay.timeString(ttotal)+
 			" for "+str(self.stats["count"]-1)+" images","green")
-		appionScript.close()
+		appionScript.AppionScript.close(self)
 
 
 #=====================
