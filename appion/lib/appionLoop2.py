@@ -32,7 +32,7 @@ class AppionLoop(appionScript.AppionScript):
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
 		self._setRunAndParameters()
-		self.specialCreateOutputDirs()
+		#self.specialCreateOutputDirs()
 		self._readDoneDict()
 		self.result_dirs={}
 
@@ -212,13 +212,15 @@ class AppionLoop(appionScript.AppionScript):
 		appionScript.AppionScript.checkGlobalConflicts(self)
 
 		if self.params['runname'] is None:
-			apDisplay.printError("please enter a runid, example: 'runid=run1'")
+			apDisplay.printError("please enter a runname, example: 'runname=run1'")
 		if self.params['runname'] == 'templates':
-			apDisplay.printError("templates is a reserved runid, please use another runid")
+			apDisplay.printError("templates is a reserved runname, please use another runname")
 		if self.params['runname'] == 'models':
-			apDisplay.printError("models is a reserved runid, please use another runid")
+			apDisplay.printError("models is a reserved runname, please use another runname")
 		if self.params['mrcnames'] and self.params['preset']:
 			apDisplay.printError("preset can not be specified if particular images have been specified")
+		if self.params['sessionname'] is None and self.params['mrcnames'] is None:
+			apDisplay.printError("please specify an mrc name or session")
 
 	#=====================
 	def setupGlobalParserOptions(self):
@@ -709,6 +711,7 @@ class AppionLoop(appionScript.AppionScript):
 			return False
 
 		### CHECK FOR IMAGES, IF MORE THAN 10 JUST GO AHEAD
+		apDisplay.printMsg("\nfinished all images, checking for more")
 		self._getAllImages()
 		### reset counts
 		self.stats['imagecount'] = len(self.imgtree)

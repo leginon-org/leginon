@@ -207,6 +207,7 @@ class AppionScript(object):
 		set the input parameters
 		this function should be rewritten in each program
 		"""
+		apDisplay.printError("you did not create a 'setupParserOptions' function in your script")
 		self.parser.set_usage("Usage: %prog --commit --description='<text>' [options]")
 		self.parser.add_option("--stackid", dest="stackid", type="int",
 			help="ID for particle stack (optional)", metavar="INT")
@@ -216,8 +217,9 @@ class AppionScript(object):
 		"""
 		make sure the necessary parameters are set correctly
 		"""
-		if self.params['session'] is None:
-			apDisplay.printError("enter a session ID, e.g. --session=07jun06a")
+		apDisplay.printError("you did not create a 'checkConflicts' function in your script")
+		if self.params['runname'] is None:
+			apDisplay.printError("enter a run name ID, e.g. --runname=run1")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 

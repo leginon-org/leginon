@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import appionLoop
+import appionLoop2
 import apDatabase
 from apTilt import apTiltPair
 import apDisplay
@@ -12,25 +12,30 @@ import apDisplay
 ##
 ##################################
 
-class rejectUnpairedTilts(appionLoop.AppionLoop):
+class rejectUnpairedTilts(appionLoop2.AppionLoop):
 
 	#####################################################
 	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
 	#####################################################
 
-	def specialDefaultParams(self):
-		"""
-		put in any additional default parameters
-		"""
-		self.params['nowait'] = True
-		self.params['background'] = True
+	def processImage(self, imgdata):
+		time.sleep(0.01)
 		return
 
-	def processImage(self, imgdata):
-		time.sleep(0.1)
+	def setupParserOptions(self):
+		return
+
+	def checkConflicts(self):
 		return
 
 	def preLoopFunctions(self):
+		"""
+		do something before starting the loop
+		"""
+		self.reject = 0
+		return
+
+	def checkConflicts(self):
 		"""
 		do something before starting the loop
 		"""
