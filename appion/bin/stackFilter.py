@@ -23,14 +23,6 @@ class subStackScript(appionScript.AppionScript):
 			help="minimum Y value")
 		self.parser.add_option("--maxy", dest="maxy", type="float",
 			help="maximum Y value")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description", default="",
-			help="Stack description", metavar="TEXT")
 		self.parser.add_option("-n", "--new-stack-name", dest="runname",
 			help="Run id name", metavar="STR")
 		
@@ -60,7 +52,7 @@ class subStackScript(appionScript.AppionScript):
 		newname = stackdata['name']
 		
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
-		newstack = os.path.join(self.params['outdir'], newname)
+		newstack = os.path.join(self.params['rundir'], newname)
 
 		# calculate slop and intercept from the four points given	
 		slope = (self.params['maxy'] - self.params['miny']) / (self.params['maxx'] - self.params['minx'])
@@ -71,7 +63,7 @@ class subStackScript(appionScript.AppionScript):
 		
 		numparticles = 0
 		
-		self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
+		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
 		f=open(self.params['keepfile'],'w')
 		
 		for stackpart in stackparts:
