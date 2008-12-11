@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import appionLoop
+import appionLoop2
 import apDatabase
 import apParticle
 import apCtf
@@ -14,49 +14,31 @@ import apDisplay
 ##
 ##################################
 
-class ImageRejector(appionLoop.AppionLoop):
+class ImageRejector(appionLoop2.AppionLoop):
 
 	#####################################################
 	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
 	#####################################################
 
 	### ==================================
-	def specialDefaultParams(self):
-		"""
-		put in any additional default parameters
-		"""
-		#default overrides
-		self.params['nowait'] = True
-		self.params['background'] = True
-		#new params
-		self.params['mindefocus'] = None
-		self.params['maxdefocus'] = None
-		self.params['acecutoff'] = None
-		self.params['noace'] = False
-		self.params['nopicks'] = False
-		self.params['notiltpairs'] = False
-		return
-
-	### ==================================
-	def specialParseParams(self, args):
-		for arg in args:
-			elements = arg.split('=')
-			elements[0] = elements[0].lower()
-			if (arg == 'notiltpairs'):
-				self.params['notiltpairs']=True
-			elif (arg == 'noace'):
-				self.params['noace']=True
-			elif (arg == 'nopicks'):
-				self.params['nopicks']=True
-			elif (elements[0]=='mindefocus'):
-				self.params['mindefocus']=float(elements[1])
-			elif (elements[0]=='maxdefocus'):
-				self.params['maxdefocus']=float(elements[1])
-			elif (elements[0]=='acecutoff'):
-				self.params['acecutoff']=float(elements[1])
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
-
+	def setupParserOptions(self):
+		self.parser.add_option("--mindefocus", dest="mindefocus", default=None,
+			help="mindefocus", metavar="#")
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", default=None,
+			help="maxdefocus", metavar="#")
+		self.parser.add_option("--acecutoff", dest="acecutoff", default=None,
+			help="acecutoff", metavar="#")
+		self.parser.add_option("--noace", dest="noace", default=False,
+			action="store_true", help="noace")
+		self.parser.add_option("--nopicks", dest="nopicks", default=False,
+			action="store_true", help="nopicks")
+		self.parser.add_option("--notiltpairs", dest="notiltpairs", default=False,
+			action="store_true", help="notiltpairs")	
+			
+	#======================
+	def checkConflicts(self):
+		return	
+			
 	### ==================================
 	def processImage(self, imgdata):
 		### reset global value
@@ -121,7 +103,7 @@ class ImageRejector(appionLoop.AppionLoop):
 		### insert False values
 		if self.imgassess is False:
 			self.reject += 1
-			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], False, msg=True)
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runname'], False, msg=True)
 			f = open("imageRejectList.txt", "a")
 			f.write(imgdata['filename']+"\n")
 			f.close()
