@@ -80,7 +80,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("a number of classes was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		maxparticles = 15000
+		maxparticles = 150000
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: " 
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
