@@ -11,7 +11,10 @@
  *	
  */
 
-echo "<h1><font color='#bb0000'>The pipeline is down today, 12/11/08</font></h1>";
+echo "<br/><br/><center><h1><font color='#bb0000'>"
+	."The pipeline is down today, 12/11/08<br/>"
+	."go home and get some sleep<br/>"
+	."</font></h1></center>";
 exit;
 
 require_once "inc/ssh.inc";
