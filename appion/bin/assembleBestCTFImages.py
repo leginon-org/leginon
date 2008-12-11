@@ -9,21 +9,24 @@ import cPickle
 import time
 import shutil
 #appion
-import appionLoop
+import appionLoop2
 import apImage
 import apDisplay
 import apDatabase
 import apCtf
 import apParam
 
-class aceLoop(appionLoop.AppionLoop):
+class aceLoop(appionLoop2.AppionLoop):
+
+	#======================
 	def setProcessingDirName(self):
 		self.processdirname = "bestace"
 		
-
+	#======================
 	def postLoopFunctions(self):
 		apCtf.printCtfSummary(self.params)
 
+	#======================
 	def reprocessImage(self, imgdata):
 		"""
 		Returns 
@@ -43,6 +46,7 @@ class aceLoop(appionLoop.AppionLoop):
 		else:
 			return True
 
+	#======================
 	def processImage(self, imgdata):
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 		if ctfvalue is None:
@@ -83,34 +87,39 @@ class aceLoop(appionLoop.AppionLoop):
 		else:
 			apDisplay.printWarning("could not find opimage: "+opfile)
 
+	#======================
 	def commitToDatabase(self, imgdata):
 		return
 
+	#======================
 	def specialDefaultParams(self):
 		self.params['nowait'] = True
 		self.params['background'] = True
 		return
 
-	def specialCreateOutputDirs(self):
+	#======================
+	def preLoopFunctions(self):
 		self.params['opimage1'] = os.path.join(self.params['rundir'],"opimages1")
 		self.params['opimage2'] = os.path.join(self.params['rundir'],"opimages2")
+		self.params['tempdir'] = os.path.join(self.params['rundir'],"tempdir")
 		apParam.createDirectory(self.params['opimage1'], warning=False)
 		apParam.createDirectory(self.params['opimage2'], warning=False)
+		apParam.createDirectory(self.params['tempdir'], warning=False)
 		for p in ("doubtful", "questionable", "probable", "all"):
 			path = os.path.join(self.params['opimage1'], p)
 			apParam.createDirectory(path, warning=False)
 			path = os.path.join(self.params['opimage2'], p)
 			apParam.createDirectory(path, warning=False)
 
-	def specialParseParams(self,args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			if (elements[0]=='tempdir'):
-				self.params['tempdir']=os.path.abspath(elements[1]+"/")
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+	#======================
+	def setupParserOptions(self):		
+		return
 
+	#======================
+	def checkConflicts(self):
+		return
+
+	#======================
 	def specialParamConflicts(self):
 		return
 
