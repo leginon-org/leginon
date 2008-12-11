@@ -121,7 +121,7 @@ def runAceCorrect(imgdict,params):
 	ctfvalues, conf = apCtf.getBestCtfValueForImage(imgdict)
 
 	ctdimname = imgname
-	ctdimpath = os.path.join(params['outdir'],ctdimname)
+	ctdimpath = os.path.join(params['rundir'],ctdimname)
 	print "Corrected Image written to " + ctdimpath
 
 	#pdb.set_trace()	

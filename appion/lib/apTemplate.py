@@ -152,7 +152,7 @@ def copyTemplatesToOutdir(params, timestamp=None):
 		name,ext = os.path.splitext(base)
 		base = name+"-"+timestamp+ext
 
-		new = os.path.join(params['outdir'], base)
+		new = os.path.join(params['rundir'], base)
 		if os.path.isfile(new):
 			mdnew = apFile.md5sumfile(new)
 			mdold = apFile.md5sumfile(old)
@@ -209,7 +209,7 @@ def insertTemplateImage(params):
 
 		#check if template exists
 		templateq=appionData.ApTemplateImageData()
-		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+		templateq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 		templateq['templatename']=name
 		templateId = templateq.query(results=1)
 		if templateId:
@@ -217,7 +217,7 @@ def insertTemplateImage(params):
 			continue
 
 		#check if duplicate template exists
-		temppath = os.path.join(params['outdir'], name)
+		temppath = os.path.join(params['rundir'], name)
 		md5sum = apFile.md5sumfile(temppath)
 		templateq2=appionData.ApTemplateImageData()
 		templateq2['md5sum']=md5sum

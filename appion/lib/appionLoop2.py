@@ -289,7 +289,6 @@ class AppionLoop(appionScript.AppionScript):
 		self.params['functionname'] = self.functionname
 		self.params['appiondir'] = apParam.getAppionDirectory()
 		### classic methods
-		self.params['outdir']=self.params['rundir']
 		self.params['functionLog']=None
 
 	#=====================

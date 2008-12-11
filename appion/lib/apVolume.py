@@ -53,10 +53,10 @@ def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
 	emancmd += "clip=%i,%i,%i edgenorm" % (newbox, newbox, newbox)
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 
-def MRCtoSPI(infile,outdir):
+def MRCtoSPI(infile,rundir):
 	# convert file to spider file
 	tmpspifile = randomfilename(8)+".spi"
-	tmpspifile=os.path.join(outdir,tmpspifile)
+	tmpspifile=os.path.join(rundir,tmpspifile)
 	emancmd = "proc3d %s %s spidersingle" %(infile,tmpspifile)
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return tmpspifile
@@ -72,7 +72,7 @@ def createAmpcorBatchFile(infile,params):
 	inf = open(scriptfile, "r")
 
 	tmpfile="out"+randomfilename(8)+".spi"
-	tmpfile=os.path.join(params['outdir'], tmpfile)
+	tmpfile=os.path.join(params['rundir'], tmpfile)
 	
 	outfile = "enhance_edit.bat"
 	if os.path.isfile(outfile):

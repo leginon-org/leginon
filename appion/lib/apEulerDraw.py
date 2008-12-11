@@ -15,11 +15,6 @@ import pprint
 import apDisplay
 import sinedon
 
-# connect
-dbconf = sinedon.getConfig('appionData')
-db = MySQLdb.connect(**dbconf)
-# create a cursor
-cursor = db.cursor()
 
 #===========
 def getEulersForIteration(reconid, iteration=1):
@@ -30,6 +25,13 @@ def getEulersForIteration(reconid, iteration=1):
 	from taking < 1 min for this method
 	to taking several hours with sinedon
 	"""
+	# connect
+	dbconf = sinedon.getConfig('appionData')
+	db = MySQLdb.connect(**dbconf)
+	# create a cursor
+	cursor = db.cursor()
+
+
 	t0 = time.time()
 	query = (
 		"SELECT e.euler1, e.euler2, pc.`thrown_out`, pc.`coran_keep`"

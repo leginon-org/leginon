@@ -138,17 +138,17 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 
 	#GET RUN DATA
 	runq=appionData.ApSelectionRunData()
-	runq['name'] = params['runid']
+	runq['name'] = params['runname']
 	runq['session'] = sessiondata
-	runids=runq.query(results=1)
-	if not runids:
-		apDisplay.printError("could not find runid in database")
+	selectionruns=runq.query(results=1)
+	if not selectionruns:
+		apDisplay.printError("could not find selection run in database")
 
 	#GET TRANSFORM DATA
 	transq = appionData.ApImageTiltTransformData()
 	transq['image1'] = imgdata1
 	transq['image2'] = imgdata2
-	transq['tiltrun'] = runids[0]
+	transq['tiltrun'] = selectionruns[0]
 	transids = transq.query(results=1)
 	if not transids:
 		apDisplay.printError("could not find transform id in database")
@@ -165,14 +165,14 @@ def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2
 		error = peakerrors[i]
 
 		partq1 = appionData.ApParticleData()
-		partq1['selectionrun'] = runids[0]
+		partq1['selectionrun'] = selectionruns[0]
 		partq1['image'] = imgdata1
 		partq1['xcoord'] = peakdict1['xcoord']
 		partq1['ycoord'] = peakdict1['ycoord']
 		partq1['peakarea'] = 1
 
 		partq2 = appionData.ApParticleData()
-		partq2['selectionrun'] = runids[0]
+		partq2['selectionrun'] = selectionruns[0]
 		partq2['image'] = imgdata2
 		partq2['xcoord'] = peakdict2['xcoord']
 		partq2['ycoord'] = peakdict2['ycoord']
@@ -205,21 +205,21 @@ def insertParticlePeaks(peaktree, imgdata, params):
 	sessiondata = imgdata['session']
 	imgname=imgdata['filename']
 
-	#GET RUNID
+	#GET RUN DATA
 	runq=appionData.ApSelectionRunData()
-	runq['name'] = params['runid']
+	runq['name'] = params['runname']
 	runq['session'] = sessiondata
-	runids=runq.query(results=1)
+	selectionruns=runq.query(results=1)
 
-	if not runids:
-		apDisplay.printError("could not find runid in database")
+	if not selectionruns:
+		apDisplay.printError("could not find selection run in database")
 
 	### WRITE PARTICLES TO DATABASE
 	count = 0
 	t0 = time.time()
 	for peakdict in peaktree:
 		particlesq = appionData.ApParticleData()
-		particlesq['selectionrun'] = runids[0]
+		particlesq['selectionrun'] = selectionruns[0]
 		particlesq['image'] = imgdata
 
 		if 'template' in peakdict and peakdict['template'] is not None:
@@ -253,11 +253,11 @@ def insertParticlePicks(params,imgdata,manual=False):
 	#INFO
 	imgname=imgdata['filename'] 
 
-	#GET RUNID
+	#GET RUN DATA
 	runq=appionData.ApSelectionRunData()
-	runq['name'] = params['runid']
+	runq['name'] = params['runname']
 	runq['session'] = imgdata['session']
-	runids=runq.query(results=1)
+	selectionruns=runq.query(results=1)
 
 	# WRITE PARTICLES TO DATABASE
 	apDisplay.printMsg("Inserting particles from pik file into database for "+apDisplay.shortenImageName(imgname))
@@ -281,7 +281,7 @@ def insertParticlePicks(params,imgdata,manual=False):
 			corr=float(elements[3])
 
 			particlesq=appionData.ApParticleData()
-			particlesq['selectionrun']=runids[0]
+			particlesq['selectionrun']=selectionruns[0]
 			particlesq['image']=imgdata
 			particlesq['xcoord']=xcenter
 			particlesq['ycoord']=ycenter

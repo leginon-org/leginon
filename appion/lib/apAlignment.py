@@ -29,9 +29,9 @@ def defaults():
 	params['bin']=1
 	params['imask']=0
 	params['lp']=0
-	params['outdir']=None
+	params['rundir']=None
 	params['mask']=None
-	params['runid']=None
+	params['runname']=None
 	params['description']=None
 	params['commit']=False
 	params['classonly']=False
@@ -84,10 +84,10 @@ def cmdline(args, params):
 			params['mask'] = int(elem[1])
 		elif elem[0] == "diam":
 			params['diam'] = float(elem[1])
-		elif elem[0] == "runid":
-			params['runid'] = elem[1]
-		elif elem[0] == "outdir":
-			params['outdir'] = elem[1]
+		elif elem[0] == "runname":
+			params['runname'] = elem[1]
+		elif elem[0] == "rundir":
+			params['rundir'] = elem[1]
 		elif arg == "commit":
 			params['commit'] = True
 		elif arg == "staticref":
@@ -113,10 +113,10 @@ def cmdline(args, params):
 def overridecmd(params):
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
-	runq['name'] = params['runid']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	runq['name'] = params['runname']
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
-	# ... stackId, runId and norefPath make the norefRun unique:
+	# ... stackId, runname and norefPath make the norefRun unique:
 	uniquerun = runq.query(results=1)[0]
 	# ... continue filling non-unique variables:
 	uniqueparams = uniquerun['norefParams']
@@ -131,8 +131,8 @@ def overridecmd(params):
 	params['description'] = uniquerun['description']
 
 def conflicts(params):
-	if params['runid'] is None:
-		apDisplay.printError("Please provide a runid, example: runid=run1")
+	if params['runname'] is None:
+		apDisplay.printError("Please provide a runname, example: runname=run1")
 	if params['stackid'] is None:
 		apDisplay.printError("Please provide a stackid from database, example: stackid=15")
 	if params['numclasses'] > 999:
@@ -203,8 +203,8 @@ def getStackInfo(params):
 		params['bin']     = stackparamdata['bin']
 	params['apix']      = apDatabase.getPixelSize(imgdata)*params['bin']
 	params['stackpath'] = os.path.abspath(stackdata['path']['path'])
-	if params['outdir'] is None:
-		params['outdir']  = params['stackpath']
+	if params['rundir'] is None:
+		params['rundir']  = params['stackpath']
 	params['stackfile'] = os.path.join(params['stackpath'],stackdata['name'])
 	params['stacktype'] = stackparamdata['fileType']
 	params['boxsize']   = int(stackparamdata['boxSize']/params['bin'])
@@ -326,7 +326,7 @@ def averageTemplate(params):
 	return
 
 def createOutDir(params):
-	params['rundir'] = os.path.join(params['outdir'], params['runid'])
+	params['rundir'] = os.path.join(params['outdir'], params['runname'])
 	apDisplay.printMsg("creating run directory: "+params['rundir'])
 	apParam.createDirectory(params['rundir'])
 	apParam.writeFunctionLog(sys.argv, logfile=os.path.join(params['rundir'],"classifier.log"))
@@ -658,10 +658,10 @@ def insertNoRefRun(params, insert=False):
 
 	### create a norefRun object
 	runq = appionData.ApNoRefRunData()
-	runq['name'] = params['runid']
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	runq['name'] = params['runname']
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
-	# ... stackId, runId and norefPath make the norefRun unique:
+	# ... stackId, runname and norefPath make the norefRun unique:
 	uniquerun = runq.query(results=1)
 	# ... continue filling non-unique variables:
 	runq['description'] = params['description']
@@ -674,10 +674,10 @@ def insertNoRefRun(params, insert=False):
 	if uniquerun and not params['classonly']:
 		for i in runq:
 			if uniquerun[0][i] != runq[i]:
-				apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
+				apDisplay.printError("Run name '"+params['runname']+"' for stackid="+\
 					str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
 	#else:
-	#	apDisplay.printWarning("Run name '"+params['runid']+"' already exists in database")
+	#	apDisplay.printWarning("Run name '"+params['runname']+"' already exists in database")
 	runq['run_seconds'] = params['runtime']
 
 	### create a classRun object
@@ -691,7 +691,7 @@ def insertNoRefRun(params, insert=False):
 	elif not params['classonly']:
 		classq['norefRun'] = runq
 	else:
-		apDisplay.printError("parameters have changed for run name '"+params['runid']+\
+		apDisplay.printError("parameters have changed for run name '"+params['runname']+\
 			"', specify 'classonly' to re-average classes")
 	# ... numclasses and norefRun make the class unique:
 	uniqueclass = classq.query(results=1)
@@ -704,7 +704,7 @@ def insertNoRefRun(params, insert=False):
 			apXml.fancyPrintDict(uniqueclass[0])
 			apXml.fancyPrintDict(classq)
 			if uniqueclass[0][i] != classq[i]:
-				apDisplay.printError("NoRefRun name '"+params['runid']+"' for numclasses="+\
+				apDisplay.printError("NoRefRun name '"+params['runname']+"' for numclasses="+\
 					str(params['numclasses'])+"\nis already in the database with different parameter: "+str(i))
 
 	classdata = classq.query(results=1)
@@ -729,10 +729,10 @@ def insertRefRun(params, insert=False):
 
 	### create a refRun object
 	runq = appionData.ApRefRunData()
-	runq['name'] = params['runid']
+	runq['name'] = params['runname']
 	runq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
-	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
-	# ... stackId, runId and refPath make the refRun unique:
+	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	# ... stackId, runname and refPath make the refRun unique:
 	uniquerun = runq.query(results=1)
 	# ... continue filling non-unique variables:
 	runq['refParams'] = paramq
@@ -742,10 +742,10 @@ def insertRefRun(params, insert=False):
 	if uniquerun:
 		for i in runq:
 			if uniquerun[0][i] != runq[i]:
-				apDisplay.printError("Run name '"+params['runid']+"' for stackid="+\
+				apDisplay.printError("Run name '"+params['runname']+"' for stackid="+\
 					str(params['stackid'])+"\nis already in the database with different parameter: "+str(i))
 	else:
-		apDisplay.printWarning("Run name '"+params['runid']+"' already exists in database")
+		apDisplay.printWarning("Run name '"+params['runname']+"' already exists in database")
 
 	if insert is True:
 		# ideal case nothing pre-exists

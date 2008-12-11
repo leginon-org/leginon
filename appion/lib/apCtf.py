@@ -83,17 +83,17 @@ def insertAceParams(imgdata, params):
 	
 	# create an acerun object
 	runq=appionData.ApAceRunData()
-	runq['name']=params['runid']
+	runq['name']=params['runname']
 	
 	runq['session']=imgdata['session'];
 
 	# see if acerun already exists in the database
-	runids = runq.query(results=1)
+	acerundatas = runq.query(results=1)
 
-	if (runids):
-		if not (runids[0]['aceparams'] == aceparamq):
-			for i in runids[0]['aceparams']:
-				if runids[0]['aceparams'][i] != aceparamq[i]:
+	if (acerundatas):
+		if not (acerundatas[0]['aceparams'] == aceparamq):
+			for i in acerundatas[0]['aceparams']:
+				if acerundatas[0]['aceparams'][i] != aceparamq[i]:
 					apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
 			apDisplay.printError("All parameters for a single ACE run must be identical! \n"+\
 					     "please check your parameter settings.")
@@ -110,7 +110,7 @@ def insertAceParams(imgdata, params):
 
 def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 	runq=appionData.ApAceRunData()
-	runq['name']=params['runid']
+	runq['name']=params['runname']
 	runq['session']=imgdata['session']
 
 	acerun=runq.query(results=1)

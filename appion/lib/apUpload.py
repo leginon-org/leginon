@@ -15,7 +15,7 @@ def printPrtlUploadHelp():
 	print "\nUsage:\nuploadParticles.py <boxfiles> scale=<n>\n"
 	print "selexon *.box scale=2\n"
 	print "<boxfiles>            : EMAN box file(s) containing picked particle coordinates"
-	print "runid=<runid>         : name associated with these picked particles (default is 'manual1')"
+	print "runname=<runname>         : name associated with these picked particles (default is 'manual1')"
 	print "scale=<n>             : If particles were picked on binned images, enter the binning factor"
 	print "\n"
 	sys.exit(1)
@@ -49,8 +49,8 @@ def parsePrtlUploadInput(args,params):
 		elements=arg.split('=')
 		if (elements[0]=='scale'):
 			params['scale']=int(elements[1])
-		elif (elements[0]=='runid'):
-			params['runid']=elements[1]
+		elif (elements[0]=='runname'):
+			params['runname']=elements[1]
 		elif (elements[0]=='diam'):
 			params['diam']=int(elements[1])
 		else:
@@ -64,11 +64,11 @@ def createDefaults():
 	params['description']=None
 	params['template']=None
 	params['session']=None
-	params['runid']=None
+	params['runname']=None
 	params['imgs']=None
 	params['rundir']=os.path.abspath('.')
 	params['abspath']=os.path.abspath('.')
-	params['outdir']=None
+	params['rundir']=None
 	params['scale']=None
 	params['commit']=True
 	params['sym']=None
@@ -132,14 +132,14 @@ def insertModel(params):
 	params['syminfo'] = symdata
 	modq=appionData.ApInitialModelData()
 	modq['project|projects|project'] = params['projectId']
-	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	modq['name'] = params['name']
 	modq['symmetry'] = symdata
 	modq['pixelsize'] = params['newapix']
 	modq['boxsize'] = params['newbox']
 	modq['resolution'] = params['res']
 	modq['hidden'] = False
-	filepath = os.path.join(params['outdir'], params['name'])
+	filepath = os.path.join(params['rundir'], params['name'])
 	modq['md5sum'] = apFile.md5sumfile(filepath)
 	modq['description'] = params['description']
 	if params['commit'] is True:
@@ -156,7 +156,7 @@ def insert3dDensity(params):
 	modq=appionData.Ap3dDensityData()
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	modq['session'] = sessiondata
-	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	modq['name'] = params['name']
 	modq['resolution'] = params['res']
 	modq['symmetry'] = symdata
@@ -182,7 +182,7 @@ def insert3dDensity(params):
 	modq['norm'] = params['norm']
 	modq['invert'] = params['invert']
 	modq['hidden'] = False
-	filepath = os.path.join(params['outdir'], params['name'])
+	filepath = os.path.join(params['rundir'], params['name'])
 	modq['md5sum'] = apFile.md5sumfile(filepath)
 	if params['commit'] is True:
 		modq.insert()
@@ -197,9 +197,9 @@ def insertTomo(params):
 	tomoq['session'] = sessiondata
 	tomoq['tiltseries'] = tiltdata
 	tomoq['pixelsize'] = params['apix']
-	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['outdir']))
+	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	tomoq['name'] = params['name']
-	filepath = os.path.join(params['outdir'], params['name']+".mrc")
+	filepath = os.path.join(params['rundir'], params['name']+".mrc")
 	tomoq['md5sum'] = apFile.md5sumfile(filepath)
 	tomoq['description'] = params['description']
 	if params['commit'] is True:
@@ -212,22 +212,22 @@ def insertTomo(params):
 def insertManualParams(params, expid):
 	sessiondata = leginondata.SessionData.direct_query(expid)
 	runq=appionData.ApSelectionRunData()
-	runq['name']=params['runid']
+	runq['name']=params['runname']
 	runq['session']=sessiondata
 	#runq['path'] = appionData.ApPathData(path=os.path.abspath(????????))
 
 	manparams=appionData.ApSelectionParamsData()
 	manparams['diam']=params['diam']
 
-	runids=runq.query(results=1)
+	selectionruns=runq.query(results=1)
 
 	# if no run entry exists, insert new run entry into run.dbparticledata
 	# then create a new selexonParam entry
-	if not runids:
-		print "inserting manual runId into database"
+	if not selectionruns:
+		print "inserting manual selection run into database"
 		runq['params']=manparams
 		runq.insert()
-	elif runids[0]['params'] != manparams:
+	elif selectionruns[0]['params'] != manparams:
 		apDisplay.printError("upload parameters not the same as last run - check diameter")
 
 

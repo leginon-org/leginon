@@ -26,14 +26,14 @@ import tarfile
 def createDefaults():
 	# create default values for parameters
 	params={}
-	params['runid']='recon1'
+	params['runname']='recon1'
 	params['stackid']=None
 	params['modelid']=None
 	params['jobid']=None
 	params['jobinfo']=None
 	params['chimeraonly']=False
 	params['path']=os.path.abspath('.')
-	params['outdir']=os.path.abspath('.')
+	params['rundir']=os.path.abspath('.')
 	params['volumes']=[]
 	params['classavgs']=[]
 	params['classvars']=[]
@@ -57,7 +57,7 @@ def createModelDefaults():
 	params['boxsize']=None
 	params['description']=None
 	params['path']=None
-	params['outdir']=None
+	params['rundir']=None
 	params['name']=None
 
 def defineIteration():
@@ -89,7 +89,7 @@ def defineIteration():
 def printHelp():
 	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [jobid=<cluster job id>] [package=<packagename>] [dir=/path/to/directory] [tmpdir=/path/to/dir] [contour=<n>] [zoom=<n>]\n"
 	print "Example: uploadRecon.py stackid=23 modelid=20 package=EMAN\n"
-	print "runid=<name>         : name assigned to this reconstruction"
+	print "runname=<name>         : name assigned to this reconstruction"
 	print "stackid=<n>          : stack Id in the database"
 	print "modelid=<n>          : starting model id in the database"
 	print "package=<package>    : reconstruction package used (EMAN by default)"
@@ -115,8 +115,8 @@ def parseInput(args,params):
 	# save the input parameters into the "params" dictionary
 	for arg in args[1:]:
 		elements=arg.split('=')
-		if (elements[0]=='runid'):
-			params['runid']=elements[1]
+		if (elements[0]=='runname'):
+			params['runname']=elements[1]
 		elif (elements[0]=='stackid'):
 			params['stackid']=int(elements[1])
 		elif (arg=='nocommit'):
@@ -127,7 +127,7 @@ def parseInput(args,params):
 			params['package']=elements[1]
 		elif (elements[0]=='dir'):
 			params['path']=os.path.abspath(elements[1])
-			params['outdir']=os.path.abspath(elements[1])
+			params['rundir']=os.path.abspath(elements[1])
 		elif (elements[0]=='jobid'):
 			params['jobid']=int(elements[1])
 		elif (elements[0]=='contour'):
@@ -441,7 +441,7 @@ def runChimeraScript(chimscript):
 def insertRefinementRun(params):
 	runq=appionData.ApRefinementRunData()
 	#first two must be unique
-	runq['name']=params['runid']
+	runq['name']=params['runname']
 	runq['stack']=params['stack']
 
 	#Recon upload can be continued
@@ -476,7 +476,7 @@ def insertRefinementRun(params):
 	#if we insert runq then this returns no results !!!
 	# this is a workaround (annoying & bad)
 	runq=appionData.ApRefinementRunData()
-	runq['name']=params['runid']
+	runq['name']=params['runname']
 	runq['stack']=params['stack']
 	runq['jobfile']=params['jobinfo']
 	runq['initialModel']=params['model']
