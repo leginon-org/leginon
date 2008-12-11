@@ -41,7 +41,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	return simgarray
 
 #=========================
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False, 
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None, 
 		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=None, 
 		params={}):
 	"""
@@ -61,6 +61,12 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=False,
 		else:
 			apDisplay.printWarning("'bin' is not defined in preProcessImage()")
 			bin = 1
+	#PLANE REGRESSION
+	if planeReg is None:
+		if 'planereg' in params:
+			planeReg = params['planereg']
+		else:
+			planeReg = False
 	#ANGSTROMS PER PIXEL
 	if apix is None:
 		if 'apix' in params:

@@ -60,12 +60,12 @@ class AppionLoop(appionScript.AppionScript):
 					continue
 
 				### START any custom functions HERE:
-				results = self.processImage(imgdata)
+				results = self.loopProcessImage(imgdata)
 
 				### WRITE db data
 				if self.params['badprocess'] is False:
 	 				if self.params['commit'] is True:
-						self.commitToDatabase(imgdata)
+						self.loopCommitToDatabase(imgdata)
 						self.commitResultsToDatabase(imgdata, results)
 					else:
 						apDisplay.printWarning("not committing results to database, all data will be lost")
@@ -95,13 +95,23 @@ class AppionLoop(appionScript.AppionScript):
 		self.postLoopFunctions()
 		appionScript.AppionScript.close(self)
 
+	#=====================
+	def loopProcessImage(self, imgdata):
+		"""
+		setup like this to override things
+		"""
+		return self.processImage(imgdata)
+
+	#=====================
+	def loopCommitToDatabase(self, imgdata):
+		"""
+		setup like this to override things
+		"""
+		return self.commitToDatabase(imgdata)
+
 	#######################################################
 	#### ITEMS BELOW SHOULD BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
-
-	#=====================
-	def specialCreateOutputDirs(self):
-		return
 
 	#=====================
 	def setRunDir(self):
@@ -114,9 +124,21 @@ class AppionLoop(appionScript.AppionScript):
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
 
-	#=====================
-	def commitToDatabase(self, imgdata):
-		return
+	#=====================			
+	def setupParserOptions(self):
+		"""
+		put in any additional parser options
+		"""
+		apDisplay.printError("you did not create a 'setupParserOptions' function in your script")
+		raise NotImplementedError()
+
+	#=====================			
+	def checkConflicts(self):
+		"""
+		put in any additional conflicting parameters
+		"""
+		apDisplay.printError("you did not create a 'checkConflicts' function in your script")
+		raise NotImplementedError()
 
 	#=====================			
 	def reprocessImage(self, imgdata):
@@ -137,11 +159,11 @@ class AppionLoop(appionScript.AppionScript):
 		return
 
 	#=====================
-	def postLoopFunctions(self):
+	def insertPreLoopFunctionRun(self,rundata,params):
 		"""
-		do something after finishing the loop
+		put in run and param insertion to db here
 		"""
-		return
+		return	
 
 	#=====================
 	def processImage(self, imgdata):
@@ -149,8 +171,16 @@ class AppionLoop(appionScript.AppionScript):
 		this is the main component of the script
 		where all the processing is done
 		"""
+		apDisplay.printError("you did not create a 'processImage' function in your script")
 		raise NotImplementedError()
 
+	#=====================
+	def commitToDatabase(self, imgdata):
+		"""
+		put in any additional commit parameters
+		"""
+		apDisplay.printError("you did not create a 'commitToDatabase' function in your script")
+		raise NotImplementedError()
 
 	#=====================
 	def setFunctionResultKeys(self):
@@ -165,11 +195,12 @@ class AppionLoop(appionScript.AppionScript):
 		return	
 
 	#=====================
-	def insertPreLoopFunctionRun(self,rundata,params):
+	def postLoopFunctions(self):
 		"""
-		put in run and param insertion to db here
+		do something after finishing the loop
 		"""
-		return	
+		return
+
 
 	#################################################
 	#### ITEMS BELOW ARE NOT USUALLY OVERWRITTEN ####

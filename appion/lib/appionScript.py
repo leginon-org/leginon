@@ -66,9 +66,9 @@ class AppionScript(object):
 			apDisplay.printWarning("Not committing data to database")
 		else:
 			apDisplay.printMsg("Committing data to database")
+		self.checkConflicts()
 		if useglobalparams is True:
 			self.checkGlobalConflicts()
-		self.checkConflicts()
 
 		### setup run directory
 		self.setProcessingDirName()

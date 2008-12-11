@@ -6,6 +6,7 @@ import sys
 import Image
 import ImageDraw
 #appion
+import appionScript
 import apImage
 import apDog
 import apPeaks
@@ -13,22 +14,7 @@ import apDisplay
 import apParam
 import math
 
-class DogPicker(object):
-	def __init__(self):
-		#set the name of the function; needed for param setup
-		self.functionname = apParam.getFunctionName(sys.argv[0])
-
-		### setup default parser: output directory, etc.
-		self.parser = OptionParser()
-		self.setupParserOptions()
-		self.params = apParam.convertParserToParams(self.parser)
-
-		### check if user wants to print help message
-		self.checkConflicts()
-
-		### write function log
-		apParam.writeFunctionLog(sys.argv)
-
+class DogPicker(appionScript.AppionScript):
 	def setupParserOptions(self):
 		"""
 		set the input parameters
@@ -99,5 +85,8 @@ class DogPicker(object):
 		self.writeTextFile(peaktree)
 
 if __name__ == '__main__':
-	dogpicker = DogPicker()
+	dogpicker = DogPicker(False)
 	dogpicker.start()
+	dogpicker.close()
+
+
