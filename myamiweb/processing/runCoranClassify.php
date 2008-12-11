@@ -145,7 +145,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 			echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$alignid) echo " SELECTED";
-			echo ">$runname ($totprtls prtls,";
+			echo ">$alignid: $runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</OPTION>\n";
 		}
