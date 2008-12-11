@@ -51,17 +51,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.add_option("--templateid", dest="templateid", type="int",
 			help="Template Id for template init method", metavar="#")
 
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of run", metavar="'TEXT'")
-		self.parser.add_option("-n", "--runname", dest="runname",
-			help="Name for this run", metavar="STR")
-
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
@@ -94,7 +83,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
@@ -104,7 +93,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
@@ -119,7 +108,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		norefq['run_seconds'] = self.runtime
 
 		### finish alignment run
-		alignrunq = appionData.ApAlignRunData()
 		alignrunq['norefrun'] = norefq
 		alignrunq['hidden'] = False
 		alignrunq['bin'] = self.params['bin']
@@ -138,15 +126,15 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = 0
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		### check to make sure files exist
-		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
-		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average file: "+avgmrcfile)
 		alignstackq['stack'] = self.stack['data']
@@ -165,9 +153,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 		refq['refnum'] = 0
 		refq['iteration'] = 0
 		refq['mrcfile'] = "template.mrc"
-		#refpath = os.path.abspath(os.path.join(self.params['outdir'], "alignment"))
+		#refpath = os.path.abspath(os.path.join(self.params['rundir'], "alignment"))
 		#refq['path'] = appionData.ApPathData(path=refpath)
-		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		refq['alignrun'] = alignrunq
 
 		### insert particle data
@@ -210,7 +198,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stackfile does not exist: "+self.stack['file'])
 		emancmd += self.stack['file']+" "
 
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 		
@@ -238,7 +226,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stackfile does not exist: "+spiderstack)
 		emancmd += spiderstack+" "
 
-		imagicstack = os.path.join(self.params['outdir'], "alignstack.hed")
+		imagicstack = os.path.join(self.params['rundir'], "alignstack.hed")
 		apFile.removeFile(imagicstack, warn=True)
 		emancmd += imagicstack+" "
 
@@ -320,7 +308,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		templatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
 		if not os.path.isfile(templatepath):
 			apDisplay.printError("Could not find template: "+templatepath)
-		newpath = os.path.join(self.params['outdir'], "template.mrc")
+		newpath = os.path.join(self.params['rundir'], "template.mrc")
 		shutil.copy(templatepath, newpath)
 
 		### needs to scale template by old apix to new apix
@@ -397,7 +385,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 		### remove large, worthless stack
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
 
@@ -417,7 +405,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	noRefAlign = NoRefAlignScript()
+	noRefAlign = NoRefAlignScript(True)
 	noRefAlign.start()
 	noRefAlign.close()
 
