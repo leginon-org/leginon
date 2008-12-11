@@ -288,6 +288,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$display_keys['file size'] = $filesize;
 	}
 
+	$origstackid = $stackdata['REF|ApStackData|stack'];
+	$display_keys['original stack'] = "<a href='stackreport.php?expId=$expId&sId=$origstackid'>$origstackid</a>";
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
