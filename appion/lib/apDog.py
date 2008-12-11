@@ -64,7 +64,7 @@ def diffOfGaussParam(imgarray, params):
 	if diam == 0:
 		apDisplay.printError("difference of Gaussian; radius = 0")
 	pixrad = float(diam/apix/float(bin)/2.0)
-	if numslices is None and numslices < 2:
+	if numslices is None or numslices < 2:
 		dogarray = diffOfGauss(imgarray, pixrad, k=k)
 		dogarray = apImage.normStdev(dogarray)/4.0
 		return [dogarray]
@@ -90,14 +90,16 @@ def diffOfGauss(imgarray0, pixrad, k=1.2):
 	sigmaprime = sigma1 * math.sqrt(k*k-1.0)
 	#determine pixel range
 	pixrange = pixrad * (k - 1.0) / math.sqrt(k)
-	apDisplay.printMsg("selecting particles of size "+str(pixrad)+" +/- "
+	apDisplay.printMsg("filtering particles of size "+str(pixrad)+" +/- "
 		+str(round(pixrange,1))+" pixels")
 	#do the blurring
 	imgarray1 = ndimage.gaussian_filter(imgarray0, sigma=sigma1)
 	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime)
 	#apImage.arrayToJpeg(imgarray1, "imgarray1.jpg")
 	#apImage.arrayToJpeg(imgarray2, "imgarray2.jpg")
-	return imgarray1-imgarray2
+	dogmap = imgarray1-imgarray2
+	apImage.arrayToJpeg(dogmap, "dogmap.jpg")
+	return dogmap
 
 def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 	if writeImg is True:

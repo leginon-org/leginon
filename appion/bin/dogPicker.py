@@ -47,6 +47,7 @@ class dogPicker(particleLoop2.ParticleLoop):
 	def processImage(self, imgdata, filtarray):
 		imgarray = imgdata['image']
 		dogarrays = apDog.diffOfGaussParam(filtarray, self.params)
+		apDisplay.printMsg("finished DoG filter")
 		peaktree  = apPeaks.findPeaks(imgdata, dogarrays, self.params, maptype="dogmap")
 		return peaktree
 

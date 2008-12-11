@@ -45,24 +45,31 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 			mapdiam = params['diamarray'][count-1]
 
 		#find peaks
+		apDisplay.printMsg("step 1")
 		peaktree = findPeaksInMap(imgmap, thresh, pixdiam, count, olapmult, 
 			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin)
 
 		#remove border peaks
+		apDisplay.printMsg("step 2")
 		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
 
 		#write map to jpeg with highlighted peaks
+		apDisplay.printMsg("step 3")
 		outfile = os.path.join(mapdir, imgname+"."+maptype+str(count)+".jpg")
 		createPeakMapImage(peaktree, imgmap, outfile, pixrad, bin, msg)
 
 		#write pikfile
+		apDisplay.printMsg("step 4")
 		peakTreeToPikFile(peaktree, imgname, count, params['rundir'])
 
 		#append to complete list of peaks
+		apDisplay.printMsg("step 5")
 		peaktreelist.append(peaktree)
 
+	apDisplay.printMsg("step 6")
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
 
+	apDisplay.printMsg("step 7 done")
 	return peaktree
 
 def printPeakTree(peaktree):
@@ -81,12 +88,15 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 
 	#VARY PEAKS FROM STATS
 	if msg is True:
+		apDisplay.printMsg("step 1a")
 		varyThreshold(imgmap, thresh, maxsize)
 
 	#GET FINAL PEAKS
+	apDisplay.printMsg("step 1b")
 	blobtree, percentcov = findBlobs(imgmap, thresh, maxsize=maxsize,
 		maxpeaks=maxpeaks, summary=msg)
 	#convert
+	apDisplay.printMsg("step 1c")
 	peaktree = convertBlobsToPeaks(blobtree, bin, tmpldbid, count, mapdiam)
 
 	#warnings
@@ -310,12 +320,16 @@ def peakDistSq(a,b):
 	return (row1-row2)**2 + (col1-col2)**2
 
 def varyThreshold(ccmap, threshold, maxsize):
+	apDisplay.printMsg("step 1a1")
 	for i in numpy.array([-0.05,-0.02,0.00,0.02,0.05]):
 		thresh      = threshold + float(i)
+		apDisplay.printMsg("step 1a2")
 		blobtree, percentcov = findBlobs(ccmap, thresh, maxsize=maxsize)
+		apDisplay.printMsg("step 1a3")
 		tstr  = "%.2f" % thresh
 		lbstr = "%4d" % len(blobtree)
 		pcstr = "%.2f" % percentcov
+		apDisplay.printMsg("step 1a4")
 		if(thresh == threshold):
 			print " ... *** selected threshold: "+tstr+" gives "+lbstr+" peaks ("+\
 				pcstr+"% coverage ) ***"
@@ -359,19 +373,26 @@ def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10,
 	"""
 	calls leginon's find_blobs
 	"""
+	apDisplay.printMsg("step 1a2a")
 	totalarea = (ccmap.shape)[0]*(ccmap.shape)[1]
+	apDisplay.printMsg("step 1a2b")
 	ccthreshmap = threshold(ccmap, thresh)
+	apDisplay.printMsg("step 1a2c")
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
 	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
 	if percentcov > 15:
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
+	apDisplay.printMsg("step 1a2d")
+	apImage.arrayToJpeg(ccmap, "dogmap2.jpg")
+	apImage.arrayToJpeg(ccthreshmap, "threshmap2.jpg")
 	try:
 		blobtree = find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
 		  maxsize, minsize, maxmoment, elim, summary)
 	except:
 		blobtree = find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
 		  maxsize, minsize, maxmoment, elim)
+	apDisplay.printMsg("step 1a2e")
 	return blobtree, percentcov
 
 def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
