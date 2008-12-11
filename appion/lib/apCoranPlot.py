@@ -13,12 +13,13 @@ import subprocess
 import MySQLdb
 import apDisplay
 
-dbconf = sinedon.getConfig('appionData')
-db     = MySQLdb.connect(**dbconf)
-cursor = db.cursor()
+
 
 #==================
 def getTotalNumParticles(reconid, numiter):
+	dbconf = sinedon.getConfig('appionData')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
 		+" FROM `ApParticleClassificationData` AS reconpart "
 		+" LEFT JOIN `ApStackParticlesData` AS stackpart "
@@ -29,10 +30,14 @@ def getTotalNumParticles(reconid, numiter):
 		+"   AND refdat.`iteration` = '"+str(numiter)+"' " )
 	cursor.execute(query)
 	numpart = int(cursor.rowcount)
+	db.close()
 	return numpart
 
 #==================
 def getParticlesForIter(reconid, iternum):
+	dbconf = sinedon.getConfig('appionData')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
 		+" FROM `ApParticleClassificationData` AS reconpart "
 		+" LEFT JOIN `ApStackParticlesData` AS stackpart "
@@ -45,16 +50,21 @@ def getParticlesForIter(reconid, iternum):
 		+"   AND refdat.`iteration` = '"+str(iternum)+"' " )
 	cursor.execute(query)
 	results = cursor.fetchall()
+	db.close()
 	return results
 
 #==================
 def getAllCoranRecons():
+	dbconf = sinedon.getConfig('appionData')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
 	query = ( " SELECT DISTINCT refdat.`REF|ApRefinementRunData|refinementRun` AS reconid "
 		+" FROM `ApRefinementData` AS refdat "
 		+" WHERE refdat.`SpiCoranGoodClassAvg` IS NOT NULL "
 		+"   AND refdat.`iteration` > '7' " )
 	cursor.execute(query)
 	results = cursor.fetchall()
+	db.close()
 	reconids = []
 	for row in results:
 		reconids.append(int(row[0]))
