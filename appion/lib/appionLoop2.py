@@ -22,7 +22,7 @@ import leginondata
 
 class AppionLoop(appionScript.AppionScript):
 	#=====================
-	def __init__(self, useglobalparams=True):
+	def __init__(self):
 		"""
 		Starts a new function and gets all the parameters
 		overrides appionScript

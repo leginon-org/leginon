@@ -86,15 +86,23 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		setup like this to override things
 		"""
-		filtarray = apImage.preProcessImage(imgdata, self.params)
-		return self.processImage(imgdata, filtarray)
+
+		self.filtimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
+		if os.path.isfile(self.filtimgpath):
+			apDisplay.printMsg("reading filtered image from mrc file")
+			self.filtarray = apImage.mrcToArray(self.filtimgpath, msg=False)
+		else:
+			self.filtarray = apImage.preProcessImage(imgdata, self.params)
+			apImage.arrayToMrc(self.filtarray, self.filtimgpath)
+
+		return self.processImage(imgdata, self.filtarray)
 
 	#=====================
 	def setupGlobalParserOptions(self):
 		"""
 		set the input parameters
 		"""
-		appionLoop2.AppionLoop2.setupGlobalParserOptions(self)
+		appionLoop2.AppionLoop.setupGlobalParserOptions(self)
 		### Input value options
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="float",
 			help="Low pass filter radius in Angstroms", metavar="FLOAT")
@@ -111,6 +119,14 @@ class FilterLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Invert image density before processing")
 		self.parser.add_option("--planereg", dest="planereg", default=False,
 			action="store_true", help="Fit a 2d plane regression to the data and subtract")
+
+	#=====================
+	def checkGlobalConflicts(self):
+		"""
+		put in any conflicting parameters
+		"""
+		appionLoop2.AppionLoop.checkGlobalConflicts(self)
+		return
 
 #=====================
 #=====================
