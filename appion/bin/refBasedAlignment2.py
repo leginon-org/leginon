@@ -152,7 +152,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['imagicfile'] = imagicstack
 		alignstackq['spiderfile'] = alignedstack
 		alignstackq['avgmrcfile'] = "average.mrc"
-		alignstackq['refstackfile'] = ("templatestack%02d.spi"%(self.params['numiter']))
+		emancmd = "proc2d templatestack%02d.spi templatestack%02d.hed"%(self.params['numiter'],self.params['numiter'])
+		apEMAN.executeEmanCmd(emancmd)
+		alignstackq['refstackfile'] = ("templatestack%02d.hed"%(self.params['numiter']))
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
