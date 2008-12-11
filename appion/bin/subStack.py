@@ -17,16 +17,6 @@ class subStackScript(appionScript.AppionScript):
 			help="Stack database id", metavar="ID")
 		self.parser.add_option("-k", "--keep-file", dest="keepfile",
 			help="File listing which particles to keep, EMAN style 0,1,...", metavar="FILE")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description", default="",
-			help="Stack description", metavar="TEXT")
-		self.parser.add_option("-n", "--new-stack-name", dest="runname",
-			help="Run id name", metavar="STR")
 		self.parser.add_option("--first", dest="first", type="int",
 			help="First Particle to include")
 		self.parser.add_option("--last", dest="last", type="int",
@@ -76,7 +66,7 @@ class subStackScript(appionScript.AppionScript):
 				stp = str(self.params['first'])
 				enp = str(self.params['last'])
 				fname = 'sub'+str(self.params['stackid'])+'_'+stp+'-'+enp+'.lst'
-				self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+				self.params['keepfile'] = os.path.join(self.params['rundir'],fname)
 				apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
 				f=open(self.params['keepfile'],'w')
 				for i in range(self.params['first'],self.params['last']+1):
@@ -87,7 +77,7 @@ class subStackScript(appionScript.AppionScript):
 				num = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 				for i in range(self.params['split']):
 					fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
-					self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+					self.params['keepfile'] = os.path.join(self.params['rundir'],fname)
 					apDisplay.printMsg("Creating keep list: "+self.params['keepfile'])
 					f = open(self.params['keepfile'],'w')
 					for p in range(num):
@@ -143,7 +133,7 @@ class subStackScript(appionScript.AppionScript):
 			includeParticle.sort()
 		
 			### write kept particles to file
-			self.params['keepfile'] = os.path.join(self.params['outdir'], "keepfile-"+self.timestamp+".list")
+			self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
 			apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
 			kf = open(self.params['keepfile'], "w")
 			for partnum in includeParticle:
@@ -166,9 +156,9 @@ class subStackScript(appionScript.AppionScript):
 				newname = sb[0]+'.'+str(self.params['first'])+'-'+str(self.params['last'])+sb[-1]
 			elif self.params['split'] > 1:
 				fname = 'sub'+str(self.params['stackid'])+'.'+str(i+1)+'.lst'
-				self.params['keepfile'] = os.path.join(self.params['outdir'],fname)
+				self.params['keepfile'] = os.path.join(self.params['rundir'],fname)
 				newname = sb[0]+'.'+str(i+1)+'of'+str(self.params['split'])+sb[-1]
-			newstack = os.path.join(self.params['outdir'], newname)
+			newstack = os.path.join(self.params['rundir'], newname)
 			apStack.checkForPreviousStack(newstack)
 
 			#get number of particles
