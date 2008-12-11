@@ -35,12 +35,13 @@ class NoRefClassScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['norefid'] is None:
-			apDisplay.printError("No ref id was not defined, use --norefid=#")
 		if self.params['numclass'] > 900:
 			apDisplay.printError("too many classes defined: "+str(self.params['numclass']))
 		if self.params['method'] not in ['hierarch','kmeans']:
 			apDisplay.printError("--method must be either 'hierarch' or 'kmeans', e.g. --method=hierarch")
+		### no ref id
+		if self.params['norefid'] is None:
+			apDisplay.printError("No ref id was not defined, use --norefid=#")
 		self.norefdata = appionData.ApNoRefRunData.direct_query(self.params['norefid'])
 		if self.norefdata is None:
 			apDisplay.printError("noref id '"+str(self.params['norefid'])+"' was not found")
