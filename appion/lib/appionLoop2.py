@@ -789,6 +789,12 @@ class AppionLoop(appionScript.AppionScript):
 #=====================
 #=====================
 class BinLoop(AppionLoop):
+	def setupParserOptions(self):
+		return
+	def checkConflicts(self):
+		return
+	def commitToDatabase(self):
+		return
 	def processImage(self, imgdict):
 		from pyami import mrc
 		outimg = apImage.binImg(imgdict['image'], 2)

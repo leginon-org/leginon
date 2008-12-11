@@ -50,17 +50,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.parser.add_option("-i", "--num-iter", dest="numiter", type="int", default=1,
 			help="Number of iterations", metavar="#")
 
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of run", metavar="'TEXT'")
-		self.parser.add_option("-n", "--runname", dest="runname",
-			help="Name for this run", metavar="STR")
-
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:

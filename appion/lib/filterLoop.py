@@ -134,6 +134,12 @@ class FilterLoop(appionLoop2.AppionLoop):
 #=====================
 #=====================
 class MiniFilterLoop(FilterLoop):
+	def setupParserOptions(self):
+		return
+	def checkConflicts(self):
+		return
+	def commitToDatabase(self):
+		return
 	def processImage(self, imgdict, filtarray):
 		from pyami import mrc
 		mrc.write(filtarray, apDisplay.short(imgdict['filename'])+"_sm.mrc")

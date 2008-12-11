@@ -6,8 +6,7 @@ import time
 import wx
 import numpy
 import threading
-import appionLoop
-import particleLoop
+import particleLoop2
 import apFindEM
 import appionData
 import apDatabase
@@ -15,6 +14,7 @@ import apDisplay
 import apParticle
 import apPeaks
 import apImage
+import apParam
 import ApTiltPicker
 from apTilt import apTiltTransform
 from apTilt import apTiltPair
@@ -23,7 +23,7 @@ from apTilt import apTiltPair
 ##
 ##################################
 
-class tiltAligner(particleLoop.ParticleLoop):
+class tiltAligner(particleLoop2.ParticleLoop):
 	#####################################################
 	##### START PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	#####################################################
@@ -32,11 +32,13 @@ class tiltAligner(particleLoop.ParticleLoop):
 		self.processdirname = "tiltalign"
 
 	def preLoopFunctions(self):
-		if self.params['dbimages'] or self.params['alldbimages']:
+		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
 		self.app = ApTiltPicker.PickerApp(mode='loop')
 		self.app.appionloop = self
 		self.theta = 0.0
+		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
+		apParam.createDirectory(self.params['pickdatadir'], warning=False)
 
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
@@ -45,52 +47,25 @@ class tiltAligner(particleLoop.ParticleLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
-	def particleDefaultParams(self):
-		"""
-		put in any additional default parameters
-		"""
-		self.params['mapdir']="tiltalignmaps"
-		self.params['outtype'] = 'spider'
-		self.params['outtypeindex'] = None
-		self.params['pickrunname'] = None
-		self.params['pickrunid'] = None
-		self.params['bin'] = 2
-		self.assess = None
+	def setupParserOptions(self):
+		### Input value options
+		self.outtypes = ['text','xml','spider','pickle']
+		self.parser.add_option("--outtype", dest="outtype", default="spider",
+			help="file output type: "+str(self.outtypes), metavar="TYPE")
+		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
+			help="selection run id for previous automated picking run", metavar="#")
+		self.parser.add_option("--pickrunname", dest="pickrunname", type="int",
+			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
 
-	def particleParseParams(self, args):
-		"""
-		put in any additional parameters to parse
-		"""
-		for arg in args:
-			elements = arg.split('=')
-			elements[0] = elements[0].lower()
-			if elements[0] == 'outtype':
-				self.params['outtype'] = elements[1]
-			elif (elements[0]=='pickrunid'):
-				self.params['pickrunid']=int(elements[1])
-			elif (elements[0]=='pickrunname'):
-				self.params['pickrunname']=str(elements[1])
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
-
-	def particleParamConflicts(self):
+	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
 		"""
-		for i,v in enumerate(('text','xml','spider','pickle')):
+		for i,v in enumerate(self.outtypes):
 			if self.params['outtype'] == v:
 				self.params['outtypeindex'] = i
 		if self.params['outtypeindex'] is None:
-			apDisplay.printError("outtype must be one of: text, xml, pickle or spider; NOT "+str(self.params['outtype']))
-		return
-
-	def particleCreateOutputDirs(self):
-		"""
-		put in any additional directories to create
-		"""
-		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
-		self._createDirectory(self.params['pickdatadir'], warning=False)
-	
+			apDisplay.printError("outtype must be one of: "+str(self.outtypes)+"; NOT "+str(self.params['outtype']))
 		return
 
 	def getParticleParamsData(self):
@@ -104,13 +79,16 @@ class tiltAligner(particleLoop.ParticleLoop):
 	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
 	#####################################################
 
-	def processImage(self, imgdata):
+	def loopProcessImage(self, imgdata):
+		"""
+		Over-writes the particleLoop processImage and uses the appionLoop processImage
+		"""
 		#GET THE TILT PAIR
 		tiltdata = apTiltPair.getTiltPair(imgdata)
 		if tiltdata is None:
 			return
 
-		if not self.params['dbimages'] and not self.params['alldbimages']:
+		if self.params['sessionname'] is None:
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
 			apFindEM.processAndSaveImage(tiltdata, params=self.params)
 
@@ -141,7 +119,7 @@ class tiltAligner(particleLoop.ParticleLoop):
 		#EXTRA DONE DICT CALL
 	 	self._writeDoneDict(tiltdata['filename'])
 
-	def commitToDatabase(self, imgdata):
+	def loopCommitToDatabase(self, imgdata):
 		"""
 		Over-writes the particleLoop commit and uses the appionLoop commit
 		"""

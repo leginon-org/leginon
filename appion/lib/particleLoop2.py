@@ -86,8 +86,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		"""
 		put in any additional commit parameters
 		"""
-		apDisplay.printError("you did not create a 'commitToDatabase' function in your script")
-		raise NotImplementedError()
+		return
 
 	#=====================
 	def postLoopFunctions(self):
@@ -285,6 +284,12 @@ class ParticleLoop(filterLoop.FilterLoop):
 #=====================
 #=====================
 class MiniParticleLoop(ParticleLoop):
+	def setupParserOptions(self):
+		return
+	def checkConflicts(self):
+		return
+	def getParticleParamsData(self):
+		return None
 	def processImage(self, imgdict, filtarray):
 		return [[10,10]]
 
