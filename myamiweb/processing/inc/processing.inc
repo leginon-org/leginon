@@ -20,9 +20,6 @@ exit;
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
-// --- add to config file later --- //
-define(PROCESSING_HOST, 'garibaldi');
-
 //define(DONE_PIC,'img/green_circle.gif');
 //define(NONE_PIC,'img/red_circle.gif');
 //define(PROG_PIC,'img/blue_circle.gif');
