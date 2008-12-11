@@ -5,7 +5,7 @@ import os
 import sys
 import re
 #appion
-import appionLoop
+import appionLoop2
 import apFindEM
 import apImage
 import apDisplay
@@ -17,26 +17,29 @@ import apDefocalPairs
 #import apViewIt
 #import selexonFunctions  as sf1
 
-class AlignDefocLoop(appionLoop.AppionLoop):
+class AlignDefocLoop(appionLoop2.AppionLoop):
+
+	#======================
 	def processImage(self, imgdata):
 		self.sibling, self.shiftpeak = apDefocalPairs.getShiftFromImage(imgdata, self.params)
 
+	#======================
 	def setProcessingDirName(self):
 		self.processdirname = "defocalpairs"
 
+	#======================
 	def commitToDatabase(self, imgdata):
 		apDefocalPairs.insertShift(imgdata, self.sibling, self.shiftpeak)
 
-	def specialDefaultParams(self):
-		self.params['lp']=30
+	#======================
+	def checkConflicts(self):
+		return
 
-	def specialParseParams(self,args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			#print elements
-			if (elements[0]=='lp'):
-				self.params['lp']=float(elements[1])
+	#======================
+	def setupParserOptions(self):
+		self.parser.add_option("--lp", dest="lp", type="int", default=30,
+			help="Low pass filter value, default=30", metavar="#")
+	
 
 if __name__ == '__main__':
 	imgLoop = AlignDefocLoop()
