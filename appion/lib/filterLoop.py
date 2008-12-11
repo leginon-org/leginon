@@ -112,8 +112,18 @@ class FilterLoop(appionLoop2.AppionLoop):
 		self.parser.add_option("--planereg", dest="planereg", default=False,
 			action="store_true", help="Fit a 2d plane regression to the data and subtract")
 
+#=====================
+#=====================
+#=====================
+class MiniFilterLoop(FilterLoop):
+	def processImage(self, imgdict, filtarray):
+		from pyami import mrc
+		mrc.write(filtarray, apDisplay.short(imgdict['filename'])+"_sm.mrc")
 
+#=====================
+#=====================
+#=====================
 if __name__ == '__main__':
-	imgLoop = basicDogPicker()
-	imgLoop.run()
+	miniLoop = MiniFilterLoop()
+	miniLoop.run()
 
