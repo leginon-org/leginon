@@ -24,20 +24,12 @@ class otrVolumeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnums=#,#,# [options]")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit OTR run to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit OTR run to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("--classnum", "--classnums", dest="classnums", type="str",
 			help="Class numbers to use for otr volume, e.g. 0,1,2", metavar="#")
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
 		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
 			help="Noref class id", metavar="ID")
-		self.parser.add_option("--runname", dest="runname",
-			help="Run name", metavar="ID")
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
@@ -46,8 +38,6 @@ class otrVolumeScript(appionScript.AppionScript):
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
-		self.parser.add_option("--description", dest="description", type="str",
-			help="Description of OTR run", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -98,7 +88,7 @@ class otrVolumeScript(appionScript.AppionScript):
 
 		### check if path exists in db already
 		otrrunq = appionData.ApOtrRunData()
-		otrrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		otrrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		otrdata = otrrunq.query()
 		if otrdata:
 			apDisplay.printError("otr data already exists in database")
@@ -137,7 +127,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		### convert imagic stack to spider
 		emancmd  = "proc2d "
 		emancmd += emanstackfile+" "
-		spiderstack = os.path.join(self.params['outdir'], str(classnum), "otrstack"+self.timestamp+".spi")
+		spiderstack = os.path.join(self.params['rundir'], str(classnum), "otrstack"+self.timestamp+".spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 
@@ -171,7 +161,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		otrrunq['lowpassvol'] = self.params['lowpassvol']
 		otrrunq['highpasspart'] = self.params['highpasspart']
 		otrrunq['description'] = self.params['description']
-		otrrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		otrrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		otrrunq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
 		otrrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
 		if self.params['commit'] is True:
@@ -205,8 +195,8 @@ class otrVolumeScript(appionScript.AppionScript):
 		### set values
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
 		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
-		rawspifile = os.path.join(self.params['outdir'], str(cnum),"rawvolume%s-%03d.spi"%(self.timestamp, iternum))
-		emanvolfile = os.path.join(self.params['outdir'], str(cnum), "volume%s-%03d.mrc"%(self.timestamp, iternum))
+		rawspifile = os.path.join(self.params['rundir'], str(cnum),"rawvolume%s-%03d.spi"%(self.timestamp, iternum))
+		emanvolfile = os.path.join(self.params['rundir'], str(cnum), "volume%s-%03d.mrc"%(self.timestamp, iternum))
 		lowpass = self.params['lowpassvol']
 		### copy original to raw file
 		shutil.copy(spivolfile, rawspifile)
@@ -262,7 +252,7 @@ class otrVolumeScript(appionScript.AppionScript):
 	#=====================
 	def makeEulerDoc(self, tiltParticlesData, classnum):
 		count = 0
-		eulerfile = os.path.join(self.params['outdir'], str(classnum), "eulersdoc"+self.timestamp+".spi")
+		eulerfile = os.path.join(self.params['rundir'], str(classnum), "eulersdoc"+self.timestamp+".spi")
 		eulerf = open(eulerfile, "w")
 		apDisplay.printMsg("creating Euler doc file")
 		starttime = time.time()
@@ -289,7 +279,7 @@ class otrVolumeScript(appionScript.AppionScript):
 	def initialBPRP(self, classnum, volfile, spiderstack, eulerfile, numpart, pixrad):
 	
 		# file that stores the number of iteration for BPRP
-		BPRPcount = os.path.join(self.params['outdir'], str(classnum), "numiter.spi")
+		BPRPcount = os.path.join(self.params['rundir'], str(classnum), "numiter.spi")
 			
 		if (os.path.isfile(BPRPcount)):
 			apDisplay.printMsg("BP RP counter file exists: "+BPRPcount+"! File will be deleted.")
@@ -339,9 +329,9 @@ class otrVolumeScript(appionScript.AppionScript):
 		
 		apsh = open(APSHout, "r")
 		
-		neweulerdoc = os.path.join(self.params['outdir'], str(classnum),"newEulersdoc%s-%03d.spi"%(self.timestamp, iternum))
+		neweulerdoc = os.path.join(self.params['rundir'], str(classnum),"newEulersdoc%s-%03d.spi"%(self.timestamp, iternum))
 		neweulerfile = open(neweulerdoc, "w")
-		rotshiftdoc = os.path.join(self.params['outdir'], str(classnum),"rotShiftdoc%s-%03d.spi"%(self.timestamp, iternum))
+		rotshiftdoc = os.path.join(self.params['rundir'], str(classnum),"rotShiftdoc%s-%03d.spi"%(self.timestamp, iternum))
 		rotshiftfile = open(rotshiftdoc, "w")
 		
 		for line in apsh.readlines():
@@ -421,7 +411,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			probs.append(prob)
 			
 		### output file for APSH with weighted CC values 
-		APSHout_weighted = os.path.join(self.params['outdir'], str(classnum), "APSHout_weighted%s-%03d.spi"%(self.timestamp, iternum))
+		APSHout_weighted = os.path.join(self.params['rundir'], str(classnum), "APSHout_weighted%s-%03d.spi"%(self.timestamp, iternum))
 		
 		apsh = open(APSHout, "r")
 		apshCCC = open(APSHout_weighted, "w")
@@ -496,7 +486,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		count = 1
 		part = 1
 
-		corrSelect = os.path.join(self.params['outdir'], str(classnum), "APSHcorrSelect%s-%03d.spi"%(self.timestamp, iternum))
+		corrSelect = os.path.join(self.params['rundir'], str(classnum), "APSHcorrSelect%s-%03d.spi"%(self.timestamp, iternum))
 		corrSelectFile = open(corrSelect, "w")
 		 
 
@@ -520,10 +510,10 @@ class otrVolumeScript(appionScript.AppionScript):
 		selectFile = open(select, "r")
 		selectFilename = os.path.splitext(os.path.basename(select))[0]
 		
-		selectOdd = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Odd%s-%03d.spi"%(self.timestamp, iternum))
+		selectOdd = os.path.join(self.params['rundir'], str(classnum), selectFilename+"Odd%s-%03d.spi"%(self.timestamp, iternum))
 		selectOddFile = open(selectOdd, "w")
 		
-		selectEven = os.path.join(self.params['outdir'], str(classnum), selectFilename+"Even%s-%03d.spi"%(self.timestamp, iternum))
+		selectEven = os.path.join(self.params['rundir'], str(classnum), selectFilename+"Even%s-%03d.spi"%(self.timestamp, iternum))
 		selectEvenFile = open(selectEven, "w")
 		
 		countOdd=1
@@ -556,7 +546,7 @@ class otrVolumeScript(appionScript.AppionScript):
 	def APSHbackProject(self, spiderstack, eulerfile, volfile, classnum, selectFile):
 
 		# file that stores the number of iteration for BPRP
-		BPRPcount = os.path.join(self.params['outdir'], str(classnum), "numiter.spi")
+		BPRPcount = os.path.join(self.params['rundir'], str(classnum), "numiter.spi")
 		
 		if (os.path.isfile(BPRPcount)):
 			apDisplay.printMsg("BP RP counter file exists: "+BPRPcount+"! File will be deleted.")
@@ -637,8 +627,8 @@ class otrVolumeScript(appionScript.AppionScript):
 			includeParticle, tiltParticlesData = self.getGoodParticles(classpartdatas, cnum)
 			
 			### write kept particles to file
-			apParam.createDirectory(os.path.join(self.params['outdir'], str(cnum)))
-			self.params['keepfile'] = os.path.join(self.params['outdir'], str(cnum), "keepfile"+self.timestamp+".lst")
+			apParam.createDirectory(os.path.join(self.params['rundir'], str(cnum)))
+			self.params['keepfile'] = os.path.join(self.params['rundir'], str(cnum), "keepfile"+self.timestamp+".lst")
 			apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
 			kf = open(self.params['keepfile'], "w")
 			for partnum in includeParticle:
@@ -647,7 +637,7 @@ class otrVolumeScript(appionScript.AppionScript):
 
 			### make new stack of tilted particle from that run
 			tiltstackfile = os.path.join(tiltstackdata['path']['path'], tiltstackdata['name'])
-			otrstackfile = os.path.join(self.params['outdir'], str(cnum), "otrstack"+self.timestamp+".hed")
+			otrstackfile = os.path.join(self.params['rundir'], str(cnum), "otrstack"+self.timestamp+".hed")
 			apFile.removeStack(otrstackfile)
 			apStack.makeNewStack(tiltstackfile, otrstackfile, self.params['keepfile'])
 			spiderstack = self.convertStackToSpider(otrstackfile, cnum)
@@ -659,7 +649,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			looptime = time.time()
 			
 			### back project particles into volume
-			volfile = os.path.join(self.params['outdir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, 0))
+			volfile = os.path.join(self.params['rundir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, 0))
 			self.initialBPRP(cnum, volfile, spiderstack, eulerfile, len(includeParticle), self.params['radius'])
 			
 			### filter the volume (low-pass Butterworth)
@@ -683,7 +673,7 @@ class otrVolumeScript(appionScript.AppionScript):
 					+apDisplay.timeString(time.time()-looptime), "cyan")
 					
 				### back project particles into better volume
-				volfile = os.path.join(self.params['outdir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, iternum))
+				volfile = os.path.join(self.params['rundir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, iternum))
 				backproject.backproject3F(alignstack, eulerfile, volfile,
 					numpart=len(includeParticle))
 
@@ -720,9 +710,9 @@ class otrVolumeScript(appionScript.AppionScript):
 				corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
 
 				### create volume file names
-				apshVolfile = os.path.join(self.params['outdir'], str(cnum), "apshVolume%s-%03d.spi"%(self.timestamp, iternum))
-				apshOddVolfile = os.path.join(self.params['outdir'], str(cnum), "apshVolume_Odd%s-%03d.spi"%(self.timestamp, iternum))
-				apshEvenVolfile = os.path.join(self.params['outdir'], str(cnum), "apshVolume_Even%s-%03d.spi"%(self.timestamp, iternum))
+				apshVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume%s-%03d.spi"%(self.timestamp, iternum))
+				apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd%s-%03d.spi"%(self.timestamp, iternum))
+				apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even%s-%03d.spi"%(self.timestamp, iternum))
 				
 				apshVols = []
 				apshVols.append(apshVolfile)
@@ -743,7 +733,7 @@ class otrVolumeScript(appionScript.AppionScript):
 					backproject.centerVolume(apshVol, apshOutVol)
 				
 				### calculate FSC
-				fscout = os.path.join(self.params['outdir'], str(cnum), "FSCout%s-%03d.spi"%(self.timestamp, iternum))
+				fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout%s-%03d.spi"%(self.timestamp, iternum))
 	 			backproject.calcFSC(apshCenteredVols[1], apshCenteredVols[2], fscout)
 	 			
 	 			### filter volume
