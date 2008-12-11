@@ -53,6 +53,7 @@ def getEulersForIteration(reconid, iteration=1):
 
 	# sort eulers into classes
 	alldict, eulerdict, corandict = calcDictNative(result)
+	db.close()
 
 	return alldict, eulerdict, corandict
 
