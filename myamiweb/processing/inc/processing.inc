@@ -844,6 +844,8 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runid;
+
+	// AMI SPECIFIC
 	// if not data00 or data15, write to data00
 	if (!ereg("/ami/data(00|15)",$procdir)) $procdir = ereg_replace("/ami/data..","/ami/data00",$procdir);
 
