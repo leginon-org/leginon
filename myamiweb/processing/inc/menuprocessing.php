@@ -97,9 +97,15 @@ if ($expId) {
 
 	// --- Get Reconstruction Data
 	if ($stackruns>0) {
+		$reconswithjob = 0;
 		foreach ((array)$stackIds as $stackid) {
 			$reconIds = $particle->getReconIds($stackid['stackid']);
 			if ($reconIds) $reconruns+=count($reconIds);
+			foreach ($reconIds as $reconId) {
+				if ($reconId['REF|ApClusterJobData|jobfile']) {
+					$reconswithjob++;
+				}
+			}
 		}
 		// get number of jobs submitted
 		$subjobs = $particle->getSubmittedJobs($sessionId);
@@ -432,7 +438,7 @@ if ($expId) {
 	if ($stackruns > 0) {
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0
-		$jobincomp = $jobdone-$reconruns; //incomplete
+		$jobincomp = $jobdone-$reconswithjob; //incomplete
 
 		$action = "Reconstructions";
 
