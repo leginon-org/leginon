@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import appionLoop
+import appionLoop2
 import apDatabase
 import apParticle
 import apCtf
@@ -14,26 +14,15 @@ import apDisplay
 ##
 ##################################
 
-class ImageRejector(appionLoop.AppionLoop):
+class ImageRejector(appionLoop2.AppionLoop):
 
 	#####################################################
 	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
 	#####################################################
 
 	### ==================================
-	def specialDefaultParams(self):
-		"""
-		put in any additional default parameters
-		"""
-		#default overrides
-		self.params['nowait'] = True
-		self.params['background'] = True
+	def setupParserOptions(self):
 		return
-
-	### ==================================
-	def specialParseParams(self, args):
-		for arg in args:
-			apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
 
 	### ==================================
 	def processImage(self, imgdata):
@@ -69,6 +58,10 @@ class ImageRejector(appionLoop.AppionLoop):
 			f = open("imageRejectList.txt", "a")
 			f.write(imgdata['filename']+"\n")
 			f.close()
+
+	#======================
+	def checkConflicts(self):
+		return
 
 	##########################################
 	##### END PRE-DEFINED LOOP FUNCTIONS #####
