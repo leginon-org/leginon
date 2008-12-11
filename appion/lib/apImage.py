@@ -224,7 +224,7 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
 	high pass filter image to radius resolution
 	"""
-	if radius == 0 or imgarray.shape[0] < 256:
+	if radius < 1 or imgarray.shape[0] < 256:
 		if msg is True:
 			apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)

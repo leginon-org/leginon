@@ -97,7 +97,7 @@ def diffOfGauss(imgarray0, pixrad, k=1.2):
 	imgarray2 = ndimage.gaussian_filter(imgarray1, sigma=sigmaprime)
 	#apImage.arrayToJpeg(imgarray1, "imgarray1.jpg")
 	#apImage.arrayToJpeg(imgarray2, "imgarray2.jpg")
-	return imgarray2-imgarray1
+	return imgarray1-imgarray2
 
 def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 	if writeImg is True:
@@ -164,7 +164,7 @@ def diffOfGaussLevels(imgarray, r0, N, dr, writeImg=False, apix=1):
 		pixrad = r0 * k**(float(i) - float(N-1) / 2.0)
 		pixradlist.append(pixrad)
 		# subtract blurs to get dog maps
-		dogarray = gaussmaps[i+1] - gaussmaps[i]
+		dogarray = gaussmaps[i] - gaussmaps[i+1]
 		dogarray = apImage.normStdev(dogarray)/4.0
 		dogarrays.append(dogarray)
 

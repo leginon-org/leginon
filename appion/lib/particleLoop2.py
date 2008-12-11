@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python
 
 #pythonlib
 import os
@@ -6,17 +6,15 @@ import sys
 import re
 #appion
 import filterLoop
-import apImage
+import appionLoop2
 import apDisplay
 import apDatabase
 import apPeaks
 import appionData
 import apParticle
 import apDefocalPairs
-import apXml
 import threading
-#legacy
-#import selexonFunctions  as sf1
+import apParam
 
 class ParticleLoop(filterLoop.FilterLoop):
 	threadJpeg = True

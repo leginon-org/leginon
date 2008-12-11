@@ -150,7 +150,7 @@ class AppionScript(object):
 		"""
 		set the input parameters
 		"""
-		self.parser.add_option("-r", "--runname", dest="runname", default=self.timestamp,
+		self.parser.add_option("-r", "--runname", dest="runname", #default=self.timestamp,
 			help="Name for processing run, e.g. --runname=run1", metavar="NAME")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Description of the processing run (must be in quotes)", metavar="TEXT")

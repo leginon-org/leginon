@@ -19,8 +19,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	count = 0
 
 	imgname = imgdict['filename']
-	mapdir = os.path.join(params['rundir'],maptype+"s")
-	apParam.createDirectory(mapdir, warning=False)
+	mapdir = os.path.join(params['rundir'], "maps")
 	thresh =    float(params["thresh"])
 	bin =       int(params["bin"])
 	diam =      float(params["diam"])
