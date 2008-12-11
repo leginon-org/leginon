@@ -666,7 +666,9 @@ class particledata {
 
 	function getParticlesFromImageId ($runId, $imageId){
 		$q = "select p.DEF_id as id, "
-			."p.xcoord, p.ycoord, p.correlation "
+			."p.xcoord, p.ycoord, p.correlation, "
+			."p.`REF|ApTemplateImageData|template` as templateId, "
+			."p.diameter "
 			."from ApParticleData p "
 			."where p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
 			."and p.`REF|leginondata|AcquisitionImageData|image` = '$imageId' ";
@@ -2097,6 +2099,13 @@ class particledata {
 		return $r;
 	}
 
+	function getSymmetryInfo($id) {
+		$q="SELECT * "
+			."FROM `ApSymmetryData` WHERE DEF_id = $id";
+		list($r)=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getModelsFromProject ($projectId, $getHidden=False) {
 		$q="SELECT i.*, p.path "
 			."FROM `ApInitialModelData` i "
@@ -2503,6 +2512,15 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		if ($count) return $r[0]['p'];
 		return $r;
+	}
+	function getNumBadParticles ($refinementDataId, $refinetype='EMAN' ) {
+		$r = $this->getSubsetParticlesInStack($refinementDataId, 'bad',$refinetype);
+		return count($r);
+	}
+
+	function getNumGoodParticles ($refinementDataId, $refinetype='EMAN' ) {
+		$r = $this->getSubsetParticlesInStack($refinementDataId, 'good',$refinetype);
+		return count($r);
 	}
 
 	function listAllStackParticles ($stackId) {
