@@ -59,6 +59,7 @@ class AppionScript(object):
 			# use a project database
 			newdbname = "ap"+str(self.params['projectid'])
 			sinedon.setConfig('appionData', db=newdbname)
+			apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 		### check if user wants to print help message
 		if self.params['commit'] is False:
