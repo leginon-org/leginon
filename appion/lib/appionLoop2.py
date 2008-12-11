@@ -32,8 +32,9 @@ class AppionLoop(appionScript.AppionScript):
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
 		self._setRunAndParameters()
-		self._createOutputDirs()
+		self.specialCreateOutputDirs()
 		self._readDoneDict()
+		self.result_dirs={}
 
 	#=====================
 	def run(self):
@@ -97,6 +98,10 @@ class AppionLoop(appionScript.AppionScript):
 	#######################################################
 	#### ITEMS BELOW SHOULD BE SPECIFIED IN A NEW PROGRAM ####
 	#######################################################
+
+	#=====================
+	def specialCreateOutputDirs(self):
+		return
 
 	#=====================
 	def setRunDir(self):
@@ -198,19 +203,6 @@ class AppionLoop(appionScript.AppionScript):
 				filename = imgname+"_"+resulttype+".db"
 				self._writeDataToFile(result,resultkeys,path,imgname,filename)
 
-	#=====================
-	def _createOutputDirs(self):
-		"""
-		create rundir
-		"""
-		if self.params['background'] is False:
-			apDisplay.printMsg("creating run directories")
-		if not apParam.createDirectory(self.params['rundir']) and self.params['continue']==False:
-			apDisplay.printWarning("continue option is OFF. you WILL overwrite previous run.")
-			time.sleep(10)
-
-		self.result_dirs={}
-
 
 	#=====================
 	def checkGlobalConflicts(self):
@@ -300,7 +292,6 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printError("please enter a runid, example: 'runid=run1'")
 		self.params['rundir'] = os.path.join(self.params['rundir'], self.params['runid'])
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
-
 
 
 	#=====================
@@ -424,8 +415,9 @@ class AppionLoop(appionScript.AppionScript):
 			else:
 				self.imgtree = apDatabase.getAllImagesFromDB(self.params['sessionname'])
 		else:
-			apDisplay.printMsg("MRC List: "+str(len(self.params['mrclist']))+" : "+str(self.params['mrclist']))
-			apDisplay.printMsg("Session: "+self.params['sessionname']+" : "+self.params['preset'])
+			if self.params['mrcnames'] is not None:
+				apDisplay.printMsg("MRC List: "+str(len(self.params['mrcnames']))+" : "+str(self.params['mrcnames']))
+			apDisplay.printMsg("Session: "+str(self.params['sessionname'])+" : "+str(self.params['preset']))
 			apDisplay.printError("no files specified")
 		precount = len(self.imgtree)
 		apDisplay.printMsg("found "+str(precount)+" in "+apDisplay.timeString(time.time()-startt))
@@ -451,7 +443,6 @@ class AppionLoop(appionScript.AppionScript):
 			if len(self.imgtree) > lim:
 				apDisplay.printMsg("limiting number of images to "+str(lim))
 				self.imgtree = self.imgtree[:lim]
-			self.params['nowait'] = True
 			
 		self.stats['imagecount'] = len(self.imgtree)
 
@@ -658,7 +649,7 @@ class AppionLoop(appionScript.AppionScript):
 			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
 				tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
 				tiltskip = False
-				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 2.0 ):
+				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) < 3.0 ):
 					tiltskip = True
 				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
 					tiltskip = True
@@ -702,22 +693,32 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		pauses 10 mins and then checks for more images to process
 		"""
-		#SKIP MESSAGE
+		### SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
 			apDisplay.printWarning("Images already processed and were therefore skipped (total "+\
 				str(self.stats['skipcount'])+" skipped).")
 			apDisplay.printMsg("to process them again, remove \'continue\' option and run "+self.functionname+" again.")
 			self.stats['skipcount'] = 0
 
-		#SHOULD IT WAIT?
-		if self.params['nowait'] is True:
+		### SHOULD IT WAIT?
+		if self.params['wait'] is False:
 			return False
-		if self.params["mrclist"] is not None:
+		if self.params["mrcnames"] is not None:
+			return False
+		if self.params["limit"] is not None:
 			return False
 
-		#WAIT
-		if(self.stats['waittime'] > 120):
-			apDisplay.printWarning("waited longer than two hours for new images with no results, so I am quitting")
+		### CHECK FOR IMAGES, IF MORE THAN 10 JUST GO AHEAD
+		self._getAllImages()
+		### reset counts
+		self.stats['imagecount'] = len(self.imgtree)
+		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
+		if self.stats['imagesleft'] > 10:
+			return True
+
+		### WAIT
+		if(self.stats['waittime'] > 180):
+			apDisplay.printWarning("waited longer than three hours for new images with no results, so I am quitting")
 			return False
 		apParam.closeFunctionLog(params=self.params, msg=False, stats=self.stats)
 		print "\nAll images processed. Waiting ten minutes for new images (waited",\
@@ -730,8 +731,11 @@ class AppionLoop(appionScript.AppionScript):
 		self.stats['waittime'] += round((time.time()-twait0)/60.0,2)
 		print ""
 
-		#GET NEW IMAGES
+		### GET NEW IMAGES
 		self._getAllImages()
+		### reset counts
+		self.stats['imagecount'] = len(self.imgtree)
+		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
 		return True
 
 	#=====================

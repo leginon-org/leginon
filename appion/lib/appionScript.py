@@ -124,8 +124,11 @@ class AppionScript(object):
 			#if 'outdir' in self.params and self.params['outdir'] is not None:
 			#	self.params['rundir'] = self.params['outdir']
 		#create the run directory, if needed
+		if self.params['rundir'] is None:
+			apDisplay.printError("No run directory was set")
+
 		if self.quiet is False:
-			apDisplay.printMsg("Run directory: "+str(self.params['rundir']))
+			apDisplay.printMsg("Run directory: "+self.params['rundir'])
 		apParam.createDirectory(self.params['rundir'], warning=(not self.quiet))
 		os.chdir(self.params['rundir'])
 
