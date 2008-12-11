@@ -472,7 +472,7 @@ function checkLogin() {
   if (!$_SESSION['username']) {
     if (!$_POST['username'] || !$_POST['password']) return("ERROR: enter your user name and password");
     // authenticate username & password
-    if (!check_ssh($_SERVER['HTTP_HOST'],$_POST['username'],$_POST['password'])) return("ERROR: authentication failed");
+    if (!check_ssh($_SERVER['SERVER_ADDR'],$_POST['username'],$_POST['password'])) return("ERROR: authentication failed");
     ## save username and password to the session
     $_SESSION['username']=$_POST['username'];
     $_SESSION['password']=$_POST['password'];
@@ -567,10 +567,10 @@ function checkRequiredFileError($path,$filename) {
 		if (filesize($file) > 0) {
 			return false;
 		} else {
-			return '<B>ERROR:</B> empty '.$filename;
+			return '<B>ERROR:</B> empty '.$file;
 		}
 	} else {
-		return '<B>ERROR:</B> '.$filename.' not exist';
+		return '<B>ERROR:</B> '.$file.' not exist';
 	}
 }
 
@@ -901,7 +901,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 
 		// copy file to run directory
 		$cmd .= "cp $tmpfile $procdir/$jobfile;\n";
-		exec_over_ssh($_SERVER['HTTP_HOST'],$user,$pass,$cmd, True);
+		exec_over_ssh($_SERVER['SERVER_ADDR'],$user,$pass,$cmd, True);
 
 		processing_header("Appion Job Submission","Appion Job Submission");
 		echo "<table width='600'>\n";
