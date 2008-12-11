@@ -8,7 +8,7 @@ import math
 import cPickle
 import time
 #appion
-import appionLoop
+import appionLoop2
 import apImage
 import apDisplay
 import apDatabase
@@ -26,11 +26,21 @@ except:
 
 import mlabraw as pymat
 
-class aceLoop(appionLoop.AppionLoop):
+class aceLoop(appionLoop2.AppionLoop):
 	def setProcessingDirName(self):
 		self.processdirname = "ace"
 
 	def preLoopFunctions(self):
+		self.params['matdir']         = os.path.join(self.params['rundir'],"matfiles")
+		self.params['opimagedir']     = os.path.join(self.params['rundir'],"opimages")
+		self.params['tempdir']    = os.path.join(self.params['rundir'],"temp")
+		apParam.createDirectory(os.path.join(self.params['matdir']), warning=False)
+		apParam.createDirectory(os.path.join(self.params['opimagedir']), warning=False)
+		apParam.createDirectory(os.path.join(self.params['tempdir']), warning=False)
+
+		if self.params['sessionname'] is not None:
+			self.params['outtextfile']=os.path.join(self.params['rundir'], self.params['sessionname']+".txt")
+	
 		apParam.resetVirtualFrameBuffer()
 		apMatlab.checkMatlabPath(self.params)
 		acepath = os.path.join(os.getcwd(), self.functionname+".py")
@@ -46,9 +56,6 @@ class aceLoop(appionLoop.AppionLoop):
 		except:
 			apDisplay.environmentError()
 			raise
-		if self.params['tempdir'] is None:
-			self.params['tempdir'] = os.path.join(self.params['rundir'],"temp")
-		apCtf.mkTempDir(self.params['tempdir'])
 		apMatlab.setAceConfig(self.matlab, self.params)
 
 	def postLoopFunctions(self):
@@ -102,96 +109,49 @@ class aceLoop(appionLoop.AppionLoop):
 		apCtf.insertAceParams(imgdata, self.params)
 		apCtf.commitCtfValueToDatabase(imgdata, self.matlab, self.ctfvalue, self.params)
 
-	def specialDefaultParams(self):
-		self.params['edgethcarbon']=0.8
-		self.params['edgethice']=0.6
-		self.params['pfcarbon']=0.9
-		self.params['pfice']=0.3
-		self.params['overlap']=2
-		self.params['fieldsize']=512
-		self.params['resamplefr']=1
-		self.params['drange']=0
-		self.params['tempdir']=None
-		self.params['medium']="carbon"
-		self.params['cs']=2.0
-		self.params['display']=1
-		self.params['stig']=0
-		self.params['nominal']=None
-		self.params['matdir']=None
-		self.params['opimagedir']=None
-		self.params['newnominal']=False
-		self.params['xvfb']=False
+	def setupParserOptions(self):
+		self.parser.add_option("--edgethcarbon", dest="edgethcarbon", type="float", default=0.8,
+			help="edge carbon, default=0.8", metavar="#")
+		self.parser.add_option("--edgethice", dest="edgethice", type="float", default=0.6,
+			help="edge ice, default=0.6", metavar="#")
+		self.parser.add_option("--pfcarbon", dest="pfcarbon", type="float", default=0.9,
+			help="pfcarbon, default=0.9", metavar="#")
+		self.parser.add_option("--pfice", dest="pfice", type="float", default=0.3,
+			help="pfice, default=0.3", metavar="#")
+		self.parser.add_option("--overlap", dest="overlap", type="int", default=2,
+			help="overlap, default=2", metavar="#")	
+		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=512,
+			help="fieldsize, default=512", metavar="#")
+		self.parser.add_option("--resamplefr", dest="resamplefr", type="int", default=1,
+			help="resamplefr, default=1", metavar="#")
+		self.parser.add_option("--drange", dest="drange", type="int", default=0,
+			help="drange, default=0", metavar="#")
+		self.parser.add_option("--medium", dest="medium", default="carbon",
+			help="sample medium, default=carbon", metavar="MEDIUM")
+		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
+			help="cs, default=2.0", metavar="#")
+		self.parser.add_option("--display", dest="display", type="int", default=1,
+			help="display, default=1", metavar="#")
+		self.parser.add_option("--stig", dest="stig", type="int", default=0,
+			help="stig, default=0", metavar="#")
+		self.parser.add_option("--nominal", dest="nominal", 
+			help="nominal")
+		self.parser.add_option("--newnominal", dest="newnominal", default=False,
+			action="store_true", help="newnominal")
+		self.parser.add_option("--xvfb", dest="xvfb", default=False,
+			action="store_true", help="xvfb")
 
-	def specialCreateOutputDirs(self):
-		self.params['matdir']         = os.path.join(self.params['rundir'],"matfiles")
-		self.params['opimagedir']     = os.path.join(self.params['rundir'],"opimages")
-		self._createDirectory(os.path.join(self.params['matdir']), warning=False)
-		self._createDirectory(os.path.join(self.params['opimagedir']), warning=False)
-		if self.params['sessionname'] is not None:
-			self.params['outtextfile']=os.path.join(self.params['rundir'], self.params['sessionname']+".txt")
-
-	def specialParseParams(self,args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			#print elements
-			if (elements[0]=='help' or elements[0]=='--help' \
-				or elements[0]=='-h' or elements[0]=='-help'):
-				sys.exit(1)
-			elif (elements[0]=='edgethcarbon'):
-				self.params['edgethcarbon']=float(elements[1])
-			elif (elements[0]=='edgethice'):
-				self.params['edgethice']=float(elements[1])
-			elif (elements[0]=='pfcarbon'):
-				self.params['pfcarbon']=float(elements[1])
-			elif (elements[0]=='pfice'):
-				self.params['pfice']=float(elements[1])
-			elif (elements[0]=='overlap'):
-				self.params['overlap']=int(elements[1])
-			elif (elements[0]=='fieldsize'):
-				self.params['fieldsize']=int(elements[1])
-			elif (elements[0]=='resamplefr'):
-				self.params['resamplefr']=float(elements[1])
-			elif (elements[0]=='drange'):
-				drange=int(elements[1])
-				if drange == 1 or drange== 0:
-					self.params['drange']=drange
-				else:
-					apDisplay.printError("drange should only be 0 or 1")
-			elif (elements[0]=='tempdir'):
-				self.params['tempdir']=os.path.abspath(elements[1]+"/")
-			elif (elements[0]=='medium'):
-				medium=elements[1]
-				if medium=='carbon' or medium=='ice':
-					self.params['medium']=medium
-				else:
-					apDisplay.printError("medium can only be 'carbon' or 'ice'")
-			elif (elements[0]=='cs'):
-				self.params['cs']=float(elements[1])
-			elif (elements[0]=='display'):
-				display=int(elements[1])
-				if display==0 or display==1:
-					self.params['display']=display
-				else:
-					apDisplay.printError("display must be 0 or 1")	
-			elif (elements[0]=='stig'):
-				stig=int(elements[1])
-				if stig==0 or stig==1:
-					self.params['stig']=stig
-				else:
-					apDisplay.printError("stig must be 0 or 1")
-			elif (elements[0]=='nominal'):
-				self.params['nominal']=float(elements[1])
-			elif (elements[0]=='newnominal'):
-				self.params['newnominal']=True
-			elif arg == 'xvfb':
-				self.params['xvfb']=True
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
-
-	def specialParamConflicts(self):
+	def checkConflicts(self):		
 		if self.params['nominal'] is not None and (self.params['nominal'] > 0 or self.params['nominal'] < -15e-6):
 			apDisplay.printError("Nominal should be of the form nominal=-1.2e-6 for -1.2 microns")
+		if not (self.params['drange'] == 1 or self.params['drange']== 0):
+			apDisplay.printError("drange should only be 0 or 1")
+		if not (self.params['medium'] == 'carbon' or self.params['medium'] == 'ice'):
+			apDisplay.printError("medium can only be 'carbon' or 'ice'")
+		if not (self.params['display'] == 0 or self.params['display'] == 1):
+			apDisplay.printError("display must be 0 or 1")
+		if not (self.params['stig'] == 0 or self.params['stig'] == 1):
+			apDisplay.printError("stig must be 0 or 1")
 		return
 
 
