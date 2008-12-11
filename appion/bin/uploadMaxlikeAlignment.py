@@ -32,18 +32,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --jobid=ID [ --commit ]")
 		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
 			help="Maximum likelihood jobid", metavar="#")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("-t", "--timestamp", dest="timestamp",
 			help="Timestamp of files, e.g. 08nov02b35", metavar="CODE")
 
 		self.parser.add_option("--no-sort", dest="sort", default=True,
 			action="store_false", help="Do not sort files into nice folders")
 
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
 
 	#=====================
 	def checkConflicts(self):
@@ -237,7 +231,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	def getMaxLikeJob(self, runparams):
 		maxjobq = appionData.ApMaxLikeJobData()
 		maxjobq['runname'] = runparams['runname']
-		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(runparams['outdir']))
+		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(runparams['rundir']))
 		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
 		maxjobq['timestamp'] = runparams['timestamp']
 		maxjobdata = maxjobq.query(results=1)
@@ -252,7 +246,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = runparams['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
@@ -284,19 +278,19 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
 		alignstackq['iteration'] = lastiter
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq
 		### check to make sure files exist
-		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
-		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
-		refstackfile = os.path.join(self.params['outdir'], alignstackq['refstackfile'])
+		refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile'])
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(runparams['stackid'])
@@ -332,9 +326,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
 			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
 			refq['mrcfile'] = refbase+".mrc"
-			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+			refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 			refq['alignrun'] = self.alignstackdata['alignrun']
-			reffile = os.path.join(self.params['outdir'], refq['mrcfile'])
+			reffile = os.path.join(self.params['rundir'], refq['mrcfile'])
 			if not os.path.isfile(reffile):
 				emancmd = "proc2d "+refbase+".xmp "+refbase+".mrc"
 				apEMAN.executeEmanCmd(emancmd, verbose=False)
@@ -388,7 +382,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	def createAlignedStacks(self, stackid, partlist, origstackfile):
 		stackdata = apStack.getOnlyStackData(stackid)
 		imagesdict = apImagicFile.readImagic(origstackfile)
-		spiderstackfile = os.path.join(self.params['outdir'], "alignstack.spi")
+		spiderstackfile = os.path.join(self.params['rundir'], "alignstack.spi")
 		apFile.removeFile(spiderstackfile)
 
 		i = 0
@@ -441,7 +435,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	maxLike = UploadMaxLikeScript()
+	maxLike = UploadMaxLikeScript(True)
 	maxLike.start()
 	maxLike.close()
 
