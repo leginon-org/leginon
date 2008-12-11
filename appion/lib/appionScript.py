@@ -150,13 +150,13 @@ class AppionScript(object):
 		"""
 		set the input parameters
 		"""
-		self.parser.add_option("-r", "--runname", dest="runname", #default=self.timestamp,
+		self.parser.add_option("-n", "--runname", dest="runname", #default=self.timestamp,
 			help="Name for processing run, e.g. --runname=run1", metavar="NAME")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Description of the processing run (must be in quotes)", metavar="TEXT")
 		self.parser.add_option("-p", "--projectid", dest="projectid", type="int",
 			help="Project id associated with processing run, e.g. --projectid=159", metavar="#")
-		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
+		self.parser.add_option("-R", "--rundir", "--outdir", dest="rundir",
 			help="Run directory for storing output, e.g. --rundir=/ami/data00/appion/runs/run1", metavar="PATH")
 		self.parser.add_option("-C", "--commit", dest="commit", default=True,
 			action="store_true", help="Commit processing run to database")
