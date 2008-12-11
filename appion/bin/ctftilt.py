@@ -10,7 +10,7 @@ import time
 import subprocess
 import shutil
 #appion
-import appionLoop
+import appionLoop2
 import appionData
 import apImage
 import apDisplay
@@ -19,7 +19,7 @@ import apCtf
 import apParam
 import apFile
 
-class ctfTiltLoop(appionLoop.AppionLoop):
+class ctfTiltLoop(appionLoop2.AppionLoop):
 	"""
 	appion Loop function that 
 	runs Nico's CTFTILT program
@@ -32,6 +32,10 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 	#======================
 	def preLoopFunctions(self):
+		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
+		apParam.createDirectory(self.powerspecdir, warning=False)
+		self.logdir = os.path.join(self.params['rundir'], "logfiles")
+		apParam.createDirectory(self.logdir, warning=False)
 		self.ctftiltexe = self.getCtfTiltPath()
 		return
 
@@ -268,20 +272,20 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 
 		# create an acerun object
 		runq = appionData.ApAceRunData()
-		runq['name'] = self.params['runid']
+		runq['name'] = self.params['runname']
 		runq['session'] = imgdata['session'];
 
 		# see if acerun already exists in the database
-		runids = runq.query(results=1)
+		runnames = runq.query(results=1)
 
-		if (runids):
-			if not (runids[0]['ctftilt_params'] == paramq):
-				for i in runids[0]['ctftilt_params']:
-					if runids[0]['ctftilt_params'][i] != paramq[i]:
+		if (runnames):
+			if not (runnames[0]['ctftilt_params'] == paramq):
+				for i in runnames[0]['ctftilt_params']:
+					if runnames[0]['ctftilt_params'][i] != paramq[i]:
 						apDisplay.printWarning("the value for parameter '"+str(i)+"' is different from before")
 				apDisplay.printError("All parameters for a single CtfTilt run must be identical! \n"+\
 						     "please check your parameter settings.")
-			self.ctfrun = runids[0]
+			self.ctfrun = runnames[0]
 			return False
 
 		#create path
@@ -313,66 +317,30 @@ class ctfTiltLoop(appionLoop.AppionLoop):
 		ctfq.insert()
 		return True
 
+	#======================
+	def setupParserOptions(self):
+		self.parser.add_option("--ampcarbon", dest="ampcarbon", type="float", default=0.07,
+			help="ampcarbon, default=0.07", metavar="#")
+		self.parser.add_option("--ampice", dest="ampice", type="float", default=0.15,
+			help="ampice, default=0.15", metavar="#")
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="bin, default=1", metavar="#")
+		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=512,
+			help="fieldsize, default=512", metavar="#")
+		self.parser.add_option("--medium", dest="medium", default="carbon",
+			help="sample medium, default=carbon", metavar="MEDIUM")
+		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
+			help="cs, default=2.0", metavar="#")
+		self.parser.add_option("--nominal", dest="nominal", 
+			help="nominal")
+		self.parser.add_option("--newnominal", dest="newnominal", default=False,
+			action="store_true", help="newnominal")
 
 	#======================
-	def specialDefaultParams(self):
-		self.ctfrun = None
-		self.params['ampcarbon']=0.07
-		self.params['ampice']=0.15
-		self.params['bin']=1
-		self.params['fieldsize']=512
-		self.params['medium']="carbon"
-		self.params['cs']=2.0
-		self.params['nominal']=None
-		self.params['newnominal']=False
-
-	#======================
-	def specialCreateOutputDirs(self):
-		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
-		apParam.createDirectory(self.powerspecdir, warning=False)
-		self.logdir = os.path.join(self.params['rundir'], "logfiles")
-		apParam.createDirectory(self.logdir, warning=False)
-
-	#======================
-	def specialParseParams(self,args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			#print elements
-			if (elements[0]=='help' or elements[0]=='--help' \
-				or elements[0]=='-h' or elements[0]=='-help'):
-				sys.exit(1)
-			elif (elements[0]=='ampcarbon'):
-				self.params['ampcarbon']=float(elements[1])
-			elif (elements[0]=='ampice'):
-				self.params['ampice']=float(elements[1])
-			elif (elements[0]=='overlap'):
-				self.params['overlap']=int(elements[1])
-			elif (elements[0]=='fieldsize'):
-				self.params['fieldsize']=int(elements[1])
-			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
-			elif (elements[0]=='medium'):
-				medium=elements[1]
-				if medium == 'carbon' or medium == 'ice':
-					self.params['medium']=medium
-				else:
-					apDisplay.printError("medium can only be 'carbon' or 'ice', NOT "+medium)
-			elif (elements[0]=='cs'):
-				self.params['cs']=float(elements[1])
-			elif (elements[0]=='nominal'):
-				self.params['nominal']=float(elements[1])
-			elif (elements[0]=='newnominal'):
-				self.params['newnominal']=True
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
-
-	#======================
-	def specialParamConflicts(self):
-		if self.params['nominal'] is not None and (self.params['nominal'] > 0 or self.params['nominal'] < -15e-6):
-			apDisplay.printError("Nominal should be of the form nominal=-1.2e-6 for -1.2 microns")
+	def checkConflicts(self):
+		if not (self.params['medium'] == 'carbon' or self.params['medium'] == 'ice'):
+			apDisplay.printError("medium can only be 'carbon' or 'ice'")
 		return
-
 
 if __name__ == '__main__':
 	imgLoop = ctfTiltLoop()
