@@ -23,7 +23,7 @@ from pyami import mem
 #=====================
 class AppionScript(object):
 	#=====================
-	def __init__(self, useglobalparams=False):
+	def __init__(self, useglobalparams=True):
 		"""
 		Starts a new function and gets all the parameters
 		"""
@@ -49,11 +49,11 @@ class AppionScript(object):
 		self.setupParserOptions()
 		self.params = apParam.convertParserToParams(self.parser)
 		self.checkForDuplicateCommandLineInputs()
-		if 'outdir' in self.params and self.params['outdir'] is not None:
-			self.params['rundir'] = self.params['outdir']
+		#if 'outdir' in self.params and self.params['outdir'] is not None:
+		#	self.params['rundir'] = self.params['outdir']
 
 		### setup correct database after we have read the project id
-		if False and self.params['projectid'] is not None:
+		if self.params['projectid'] is not None:
 			apDisplay.printWarning("Using split database")
 			# use a project database
 			newdbname = "ap"+str(self.params['projectid'])
@@ -115,13 +115,13 @@ class AppionScript(object):
 	#=====================
 	def setupRunDirectory(self):
 		#IF NO RUNDIR IS SET
-		if not 'rundir' in self.params:
-			self.params['rundir'] = self.params['outdir']
+		#if not 'rundir' in self.params:
+		#	self.params['rundir'] = self.params['outdir']
 		if self.params['rundir'] is None:
 			self.setProcessingDirName()
 			self.setRunDir()
-			if 'outdir' in self.params and self.params['outdir'] is not None:
-				self.params['rundir'] = self.params['outdir']
+			#if 'outdir' in self.params and self.params['outdir'] is not None:
+			#	self.params['rundir'] = self.params['outdir']
 		#create the run directory, if needed
 		if self.quiet is False:
 			apDisplay.printMsg("Run directory: "+self.params['rundir'])

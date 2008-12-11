@@ -30,16 +30,8 @@ class NoRefClassScript(appionScript.AppionScript):
 			help="List of factors to use in classification", metavar="#")
 		self.parser.add_option("-N", "--num-class", dest="numclass", type="int", default=40,
 			help="Number of classes to make", metavar="#")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit noref class to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit noref class to database")
 		self.parser.add_option("--method", dest="method", default="hierarch",
 			help="Method to use for classification: 'hierarch' or 'kmeans'")
-
-
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 
 	#=====================
 	def checkConflicts(self):
@@ -114,7 +106,7 @@ class NoRefClassScript(appionScript.AppionScript):
 		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
 		for i in range(self.params['numclass']):
 			classnum = i+1
-			classdocfile = os.path.join(self.params['outdir'], "cluster/classdoc%04d.spi" % (classnum))
+			classdocfile = os.path.join(self.params['rundir'], "cluster/classdoc%04d.spi" % (classnum))
 			partlist = self.readClassDocFile(classdocfile)
 			sys.stderr.write(".")
 			for partnum in partlist:
@@ -157,7 +149,7 @@ class NoRefClassScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	noRefClass = NoRefClassScript()
+	noRefClass = NoRefClassScript(True)
 	noRefClass.start()
 	noRefClass.close()
 
