@@ -27,7 +27,7 @@ class AppionLoop(appionScript.AppionScript):
 		Starts a new function and gets all the parameters
 		overrides appionScript
 		"""
-		appionScript.AppionScript.__init__(self, useglobalparams)
+		appionScript.AppionScript.__init__(self, True)
 		### extra appionLoop functions:
 		self._addDefaultParams()
 		self.setFunctionResultKeys()
