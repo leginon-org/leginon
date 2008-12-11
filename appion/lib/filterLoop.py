@@ -86,13 +86,13 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		setup like this to override things
 		"""
-
 		self.filtimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
 		if os.path.isfile(self.filtimgpath):
 			apDisplay.printMsg("reading filtered image from mrc file")
 			self.filtarray = apImage.mrcToArray(self.filtimgpath, msg=False)
 		else:
-			self.filtarray = apImage.preProcessImage(imgdata, self.params)
+			apix = apDatabase.getPixelSize(imgdata)
+			self.filtarray = apImage.preProcessImage(imgdata['image'], apix=apix, params=self.params)
 			apImage.arrayToMrc(self.filtarray, self.filtimgpath)
 
 		return self.processImage(imgdata, self.filtarray)

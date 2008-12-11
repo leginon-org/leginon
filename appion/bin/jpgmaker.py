@@ -12,6 +12,9 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 	def checkConflicts(self):
 		return
 
+	def commitToDatabase(self):
+		return
+
 	def setupParserOptions(self):
 		"""
 		Writes a maximal 512x512 jpg image

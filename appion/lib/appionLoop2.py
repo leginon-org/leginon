@@ -36,6 +36,7 @@ class AppionLoop(appionScript.AppionScript):
 		self._readDoneDict()
 		self.result_dirs={}
 
+
 	#=====================
 	def run(self):
 		"""
@@ -305,6 +306,7 @@ class AppionLoop(appionScript.AppionScript):
 		self.params['appiondir'] = apParam.getAppionDirectory()
 		### classic methods
 		self.params['functionLog']=None
+		self.defaultparams = {}
 
 	#=====================
 	def _parseCommandLineInput(self, args):

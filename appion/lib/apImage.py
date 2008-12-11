@@ -59,7 +59,6 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
 		if 'bin' in params:
 			bin = params['bin']
 		else:
-			apDisplay.printWarning("'bin' is not defined in preProcessImage()")
 			bin = 1
 	#PLANE REGRESSION
 	if planeReg is None:
@@ -79,7 +78,6 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
 			median = params['median']
 		else:
 			median = 0
-			apDisplay.printWarning("'median' is not defined in preProcessImage()")
 	#LOW PASS FILTER
 	if lowpass is None:
 		if 'lowpass' in params and params['lowpass'] is not None:
@@ -88,7 +86,6 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
 			lowpass = params['lp']
 		else:
 			lowpass = 0
-			apDisplay.printWarning("'lowpass' is not defined in preProcessImage()")
 	#INVERT IMAGE
 	if invert is None:
 		if 'invert' in params:
@@ -104,14 +101,12 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
 			highpass = params['hp']
 		else:
 			highpass = 0
-			apDisplay.printWarning("'highpass' is not defined in preProcessImage()")
 	#PIXEL LIMITATION FILTER
 	if pixlimit is None:
 		if 'pixlimit' in params:
 			pixlimit = params['pixlimit']
 		else:
 			pixlimit = 0
-			apDisplay.printWarning("'pixlimit' is not defined in preProcessImage()")
 	#HIGH PASS FILTER => PLANE REGRESSION
 	result = _processImage(imgarray, bin, apix, lowpass, highpass, planeReg, median, invert, pixlimit, msg)
 	if msg is True:
