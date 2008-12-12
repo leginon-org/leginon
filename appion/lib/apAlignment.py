@@ -41,7 +41,7 @@ def defaults():
 	params['csym']=1
 	params['staticref']=False
 	params['runtime']=None
-	
+
 	return params
 
 def getAppionDir(params):
@@ -147,15 +147,15 @@ def refconflicts(params):
 		apDisplay.printError("Please provide a template reference id, example: refids=28")
 	if params['description'] is None:
 		apDisplay.printError("Please provide a description")
-		
+
 def getStackId(params):
 	if params['stackid'] is not None:
 		return params['stackid']
 	if params['session'] is None and params['stackname'] is None:
 		apDisplay.printError("stack and session name undefined, please provide stack and session name."+\
-			"\nexample: stackname=stack1 session=07jun05a")		
+			"\nexample: stackname=stack1 session=07jun05a")
 	if params['session'] is None:
-		apDisplay.printError("session name undefined, please provide session name.\nexample: session=07jun05a")		
+		apDisplay.printError("session name undefined, please provide session name.\nexample: session=07jun05a")
 	if params['stackname'] is None:
 		apDisplay.printError("stack name undefined, please provide stack name.\nexample: stackname=stack1")
 
@@ -197,7 +197,7 @@ def getStackInfo(params):
 	#apXml.fancyPrintDict(imgdata)
 	#sys.exit(1)
 
-	#set the parameters	
+	#set the parameters
 	params['session']   = imgdata['session']
 	if stackparamdata['bin'] is not None:
 		params['bin']     = stackparamdata['bin']
@@ -259,7 +259,7 @@ def createSpiderFile(params):
 
 def createSpiderRefFile(params):
 	"""
-	takes the reference template file and 
+	takes the reference template file and
 	creates a spider file with same pixel size and box size
 	"""
 	for i,refid in enumerate(params['refids']):
@@ -271,7 +271,7 @@ def createSpiderRefFile(params):
 		scaleRefArray = apTemplate.scaleTemplate(refarray, scalefactor, params['boxsize'])
 
 		#write to file
-	 	tmpreffile = os.path.join(params['rundir'], "tempref%03d.spi" % (i+1))		
+		tmpreffile = os.path.join(params['rundir'], "tempref%03d.spi" % (i+1))
 		if os.path.isfile(tmpreffile):
 			apDisplay.printWarning(tmpreffile+" already exists; removing it")
 			time.sleep(2)
@@ -279,7 +279,7 @@ def createSpiderRefFile(params):
 		apImage.arrayToMrc(scaleRefArray, tmpreffile)
 
 		#set outfile name
-		outfile = os.path.join(params['rundir'], "reference%03d.spi" % (i+1))		
+		outfile = os.path.join(params['rundir'], "reference%03d.spi" % (i+1))
 		if os.path.isfile(outfile):
 			apDisplay.printWarning(outfile+" already exists; removing it")
 			time.sleep(2)
@@ -357,10 +357,10 @@ def createNoRefSpiderBatchFile(params):
 				outf.write(spiderline(98,params['boxsize'],"box size"))
 			elif thr == "x97":
 				pixdiam = int(float(params['diam'])/params['apix'])
-				outf.write(spiderline(97,pixdiam,"expected diameter of particle (in pixels)"))		
+				outf.write(spiderline(97,pixdiam,"expected diameter of particle (in pixels)"))
 			elif thr == "x96":
 				firstring = int(float(params['imask'])/params['apix'])
-				if firstring == 0: 
+				if firstring == 0:
 					firstring = 2
 				outf.write(spiderline(96,firstring,"first ring radii"))
 			elif thr == "x95":
@@ -400,7 +400,7 @@ def createRefSpiderBatchFile(params,iteration):
 			thr = line[:3]
 			if re.search("^x99",line):
 				outf.write(spiderline(99,params['numparticles'],"number of particles in stack"))
- 			elif re.search("^x98",line):
+			elif re.search("^x98",line):
 				outf.write(spiderline(98,len(params['refids']),"number of reference images"))
 			elif re.search("^x97",line):
 				outf.write(spiderline(97,imaskpixrad,"first ring radii"))
@@ -426,7 +426,7 @@ def createRefSpiderBatchFile(params,iteration):
 					previtername = 'refine%d' %previter
 					previterdir = os.path.join(params['rundir'],previtername)
 					outf.write(spiderline("alistack",os.path.join(previterdir,'aligned')))
-			elif re.search("^\[prevaliparams\]",line): 
+			elif re.search("^\[prevaliparams\]",line):
 				# get alignment parameters from previous iteration
 				previter = iteration - 1
 				previtername = 'refine%d' %previter
@@ -470,7 +470,7 @@ def estimateTime(numparts, maskpixrad=None):
 	#min time 60 sec vs. 289 from model
 	#linear time 0 sec vs. -1.1587 from model
 	"""
-	esttime = ( 60.0 
+	esttime = ( 60.0
 		+ 0.0 * numparts
 		+ 1.6642e-3 * numparts**2
 		+ 5.6333e-7 * numparts**3
@@ -540,7 +540,7 @@ def makeRefImagic(params):
 		convertStackToIMAGIC(params['iterdir'],'varali_nosym.spi')
 		convertStackToMrcs(params['iterdir'],'refali_nosym.spi', len(params['refids']))
 		convertStackToMrcs(params['iterdir'],'varali_nosym.spi', len(params['refids']))
-	
+
 def classHistogram(params):
 	search = os.path.join(params['rundir'], "classes/clhc*.spi")
 	files = glob.glob(search)

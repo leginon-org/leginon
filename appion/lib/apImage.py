@@ -19,7 +19,7 @@ from apSpider import filters
 from pyami import mrc, imagefun
 
 #=========================
-def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0, 
+def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 		planeReg=True, median=0, invert=False, pixlimit=0, msg=True):
 	"""
 	standard processing for an image
@@ -41,8 +41,8 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	return simgarray
 
 #=========================
-def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None, 
-		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=None, 
+def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
+		median=None, highpass=None, correct=False, invert=None, pixlimit=None, msg=None,
 		params={}):
 	"""
 	standard processing for an image
@@ -214,7 +214,7 @@ def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 		return imgarray
 	pixrad = float(radius/apix/float(bin))
 	if pixrad < 2.0:
-		apDisplay.printWarning("low pass filter radius "+str(round(pixrad,2))+" is less than 2 pixels; skipping filter") 
+		apDisplay.printWarning("low pass filter radius "+str(round(pixrad,2))+" is less than 2 pixels; skipping filter")
 		return imgarray
 	filtimg = filters.fermiLowPassFilter(imgarray, pixrad)
 	return filtimg
@@ -562,8 +562,8 @@ def arrayMaskToPng(numer, filename, msg=True):
 
 #=========================
 def arrayMaskToPngAlpha(numer,filename, msg=True):
-	""" 
-	Create PNG file of a binary mask (array with only 0 and 1) 
+	"""
+	Create PNG file of a binary mask (array with only 0 and 1)
 	that uses the values in the alpha channel for transparency
 	"""
 	alpha=int(0.4*255)
@@ -645,7 +645,7 @@ def _normalizeImage(img, stdevLimit=3.0, minlevel=0.0, maxlevel=255.0, trim=0.0)
 	"""
 	mid = cutEdges(img,trim)
 
- 	imrange = maxlevel - minlevel
+	imrange = maxlevel - minlevel
 
 	#GET IMAGE STATS
 	avg1,stdev1,min1,max1 = getImageInfo(mid)
@@ -748,7 +748,7 @@ def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="ci
 	Draws a shape around a peak
 	"""
 
-	mycolors = { 
+	mycolors = {
 		"red":		"#ff4040",
 		"green":	"#3df23d",
 		"blue":		"#3d3df2",
@@ -760,7 +760,7 @@ def drawPeak(peak, draw, imshape, rad=10.0, color0="red", numshapes=4, shape="ci
 		"purple":	"#973df2",
 		"lime":		"#97f23d",
 		"skyblue":	"#3d97f2",
-		"pink":		"#f23d97", 
+		"pink":		"#f23d97",
 	}
 	row1=float(peak[1])
 	col1=float(peak[0])

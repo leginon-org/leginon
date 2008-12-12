@@ -15,7 +15,7 @@ import apFile
 #===========
 def runSpectralFindEM(imgdict, params, thread=False):
 	"""
-	runs a separate thread of findem.exe for each template 
+	runs a separate thread of findem.exe for each template
 	to get cross-correlation maps
 	"""
 	imgname = imgdict['filename']
@@ -36,7 +36,7 @@ def runSpectralFindEM(imgdict, params, thread=False):
 		numstr = "%03d" % (100+classavg)
 		ccmapfile1 = "cccmaxmap"+numstr+".mrc"
 		apFile.removeFile(ccmapfile1)
-		params["startang"+str(100+classavg)] = params["startang"+str(classavg)] 
+		params["startang"+str(100+classavg)] = params["startang"+str(classavg)]
 		params["endang"+str(100+classavg)] = params["endang"+str(classavg)]
 		params["incrang"+str(100+classavg)] = params["incrang"+str(classavg)]
 		feed = findEMString(100+classavg, templatename, dwnimgname, ccmapfile1, params)
@@ -46,7 +46,7 @@ def runSpectralFindEM(imgdict, params, thread=False):
 		numstr = "%03d" % (200+classavg)
 		ccmapfile2 = "cccmaxmap"+numstr+".mrc"
 		apFile.removeFile(ccmapfile2)
-		params["startang"+str(200+classavg)] = params["startang"+str(classavg)] 
+		params["startang"+str(200+classavg)] = params["startang"+str(classavg)]
 		params["endang"+str(200+classavg)] = params["endang"+str(classavg)]
 		params["incrang"+str(200+classavg)] = params["incrang"+str(classavg)]
 		feed = findEMString(200+classavg, templatename, templatename, ccmapfile2, params)
@@ -60,7 +60,7 @@ def runSpectralFindEM(imgdict, params, thread=False):
 		params["endang"+str(300+classavg)] = 10
 		params["incrang"+str(300+classavg)] = 20
 		feed = findEMString(300+classavg, ccmapfile2, ccmapfile1, ccmapfile3, params)
-		execFindEM(feed)		
+		execFindEM(feed)
 
 		#READ OUTPUT FILE
 		if not os.path.isfile(ccmapfile3):
@@ -78,7 +78,7 @@ def runSpectralFindEM(imgdict, params, thread=False):
 #===========
 def runFindEM(imgdict, params, thread=False):
 	"""
-	runs a separate thread of findem.exe for each template 
+	runs a separate thread of findem.exe for each template
 	to get cross-correlation maps
 	"""
 	imgname = imgdict['filename']
@@ -131,11 +131,11 @@ class findemjob(threading.Thread):
 	def __init__ (self, feed):
 		threading.Thread.__init__(self)
 		self.feed = feed
-   	def run(self):
+	def run(self):
 			findemexe = getFindEMPath()
 			apDisplay.printMsg("threading "+os.path.basename(findemexe))
 			logf = open("findem.log", "a")
-			proc = subprocess.Popen( findemexe, shell=True, 
+			proc = subprocess.Popen( findemexe, shell=True,
 				stdin=subprocess.PIPE, stdout=logf, stderr=logf)
 			fin = proc.stdin
 			fin.write(self.feed)
@@ -148,7 +148,7 @@ def execFindEM(feed):
 	findemexe = getFindEMPath()
 	apDisplay.printMsg("running "+os.path.basename(findemexe))
 	logf = open("findem.log", "a")
-	proc = subprocess.Popen( findemexe, shell=True, 
+	proc = subprocess.Popen( findemexe, shell=True,
 		stdin=subprocess.PIPE, stdout=logf, stderr=logf)
 	fin = proc.stdin
 	fin.write(feed)
@@ -232,9 +232,9 @@ def getFindEMPath():
 	else:
 		exename = 'findem32.exe'
 	findempath = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
- 	if not os.path.isfile(findempath):
+	if not os.path.isfile(findempath):
 		findempath = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
- 	if not os.path.isfile(findempath):
+	if not os.path.isfile(findempath):
 		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 	return findempath
 

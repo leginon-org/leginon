@@ -46,25 +46,25 @@ def combineSpiParticleList(infiles, outfile):
 		f.close()
 	out.close()
 	return
-		
+
 def makeClassAverages(lst, outputstack,e,mask):
-        #align images in class
+	#align images in class
 	print "creating class average from",lst,"to",outputstack
-        images=EMAN.readImages(lst,-1,-1,0)
-        for image in images:
-                image.rotateAndTranslate()
-                if image.isFlipped():
-                        image.hFlip()
+	images=EMAN.readImages(lst,-1,-1,0)
+	for image in images:
+		image.rotateAndTranslate()
+		if image.isFlipped():
+			image.hFlip()
 
-        #make class average
-        avg=EMAN.EMData()
-        avg.makeMedian(images)
+	#make class average
+	avg=EMAN.EMData()
+	avg.makeMedian(images)
 
-        #write class average
-        avg.setRAlign(e)
-        avg.setNImg(len(images))
-        avg.applyMask(mask,0)
-        avg.writeImage(outputstack,-1)
+	#write class average
+	avg.setRAlign(e)
+	avg.setNImg(len(images))
+	avg.applyMask(mask,0)
+	avg.writeImage(outputstack,-1)
 
 def convertSpiderToEMAN(spifile, origlst):
 	fileroot = os.path.splitext(spifile)[0]
@@ -104,7 +104,7 @@ def parseSpiderPtcl(line):
 		words = line.split()
 		ptcl = int(float(words[2]))
 	return ptcl
-	
+
 def writeBlankImage(outfile,boxsize,place,type=None):
 	a=EMAN.EMData()
 	a.setSize(boxsize,boxsize)
@@ -142,12 +142,12 @@ def flagGoodParticleInClassLst(clsfile, goodclsfile):
 			keep='0'
 		newptext = ptext[i].split('\n')[0]+','+keep+'\n'
 		pretext.append(newptext)
-	new_clsfile = clsfile+'.new'	
+	new_clsfile = clsfile+'.new'
 	f1 = open(new_clsfile, 'w')
 	for l in pretext:
 		f1.write(l)
 	f1.close()
-	os.rename(new_clsfile,clsfile)	
+	os.rename(new_clsfile,clsfile)
 
 #=====================
 def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
@@ -205,7 +205,7 @@ def checkStackNumbering(stackname):
 		apDisplay.printWarning("Original stack is not numbered! numbering now...")
 		numberParticlesInStack(stackname, startnum=0, verbose=True)
 	return
-	
+
 def writeImageToImage(instack, inn, outstack, outn=-1, particles=0):
 	# copy an image from an input stack to another one
 	img = EMAN.EMData()
@@ -213,7 +213,7 @@ def writeImageToImage(instack, inn, outstack, outn=-1, particles=0):
 	img.setNImg(particles)
 	img.writeImage(outstack,outn)
 	return
-	
+
 #=====================
 def numberParticlesInStack(stackname, startnum=0, verbose=True):
 	# store the particle number in the stack header
@@ -259,15 +259,15 @@ def getEMANPcmp(ref,img):
 #=====================
 def getCC(ref,img):
 	"""returns straight up correlation coefficient"""
- 	npix=ref.xSize()*ref.ySize()
+	npix=ref.xSize()*ref.ySize()
 	avg1=ref.Mean()
 	avg2=img.Mean()
-	
+
 	var1=ref.Sigma()
 	var1=var1*var1
 	var2=img.Sigma()
 	var2=var2*var2
-	
+
 	cc=ref.dot(img)
 	cc=cc/npix
 	cc=cc-(avg1*avg2)
