@@ -5,44 +5,6 @@
  *	The Scripps Research Institute, La Jolla, CA
  */
 
-function appionLoopJavaCommands () {
-	$javafunc = "
-<script LANGUAGE='JavaScript'>
-function appioninfopopup(infoname){
-	var newwindow=window.open('','name','height=250, width=400');
-	newwindow.document.write('<html><BODY>');
-	if (infoname=='checkimages'){
-		newwindow.document.write('Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXAMPLOR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.');
-	}
-	if (infoname=='runid'){
-		newwindow.document.write('Specifies the name associated with the processing results unique to the specified session and parameters. An attempt to use the same run name for a session using different processing parameters will result in an error.');
-	}
-	if (infoname=='nowait'){
-		newwindow.document.write('By default the program will check to see if Leginon has collected more images after finishing for 2 hours. If this is unchecked then when the program finishes it will immediately stop.');
-	}
-	if (infoname=='background'){
-		newwindow.document.write('This a feature the turns off some of the fancy output used when the program runs');
-	}
-	if (infoname=='shuffle'){
-		newwindow.document.write('The shuffle feature shuffles the order of the images before the processing begins that way you do not always start from the beginning.');
-	}
-	if (infoname=='limit'){
-		newwindow.document.write('If you do not want to process all the images, enter a number and the program will only process this number of images. Good for testing a few images before committing the results to the database.');
-	}
-	if (infoname=='continue'){
-		newwindow.document.write('By default you ALWAYS want to continue, unless you are NOT committing to the database yet and you want to reprocess an image.');
-	}
-	if (infoname=='commit'){
-		newwindow.document.write('This is the main checkbox of the program. When testing do NOT commit, but once you are happy with the results. Start commiting the data otherwise all information will be lost.');
-	}
-	newwindow.document.write('</BODY></html>');
-	newwindow.document.close();
-}
-</script>\n";
-	return $javafunc;
-
-}
-
 function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0) {
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
@@ -272,7 +234,8 @@ function parseAppionLoop2Params () {
 		return $error;
 		exit;
 	}
-
+	$expId = $_GET['expId'];
+	$projectId = (int) getProjectFromExpId($expId);
 	// CONVERT DATA
 	if ($_POST[checkimage]=="non-rejected") {
 		$norejects = 1;
@@ -318,6 +281,7 @@ function parseAppionLoop2Params () {
 	if ($background) $command.=" --background";
 	if ($shuffle) $command.=" --shuffle";
 	if ($limit) $command.=" --limit=$limit";
+	if ($projectId) $command.=" --projectid=$projectId";
 	if ($tiltangle != '' && $tiltangle != 'all') $command.=" --tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" --no-continue";
 	else $command.=" --continue";
@@ -364,69 +328,6 @@ function prettytable2 () {
 **
 **
 */
-
-function particleLoopJavaCommands () {
-	$javafunc = "
-<script LANGUAGE='JavaScript'>
-function particleinfopopup(infoname){
-	var newwindow=window.open('','name','height=250, width=400');
-	newwindow.document.write('<html><BODY>');
-	if (infoname=='thresh'){
-		newwindow.document.write('Threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are considered particles.<br/>For template correlation, this should be between 0.0 and 1.0, typically 0.4 to 0.6 is used.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 0.4 to 3.0 with typical values falling between 0.7 and 1.0');
-	}
-	if (infoname=='maxthresh'){
-		newwindow.document.write('Maximum threshold for particle picking from the cross-correlation or dogpicker map. Any values above this threshold are rejected.<br/>For template correlation, you probably do not need this, but typical values would be between 0.7 and 0.8.<br/>For dogPicker, the values is in terms of standard deviations from the mean divided by four. Reasonable range from 1.0 to 5.0 with typical values falling between 1.5 and 2.5');
-	}
-	if (infoname=='maxpeaks'){
-		newwindow.document.write('This a feature limits the number of particles allowed in an image. By default it is set to 1500, but if you want no more than 50 particles an image fill in this value');
-	}
-	if (infoname=='lp'){
-		newwindow.document.write('Low pass filtering of the image before picking. This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty good');
-	}
-	if (infoname=='hp'){
-		newwindow.document.write('High pass filtering of the image before picking. This removes any darkness gradients in the image. Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good. Warning this feature typically normalizes the crud so more particles get picked from crud.');
-	}
-	if (infoname=='median'){
-		newwindow.document.write('Median filtering of the image before picking. This helps remove any noise spikes in the image. Typical values are 2, 3, or 5. The bigger the number the more information is thrown away.');
-	}
-	if (infoname=='bin'){
-		newwindow.document.write('Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Typically you want to use 4 or 8 depending on the quality of you templates.');
-	}
-	if (infoname=='defocpair'){
-		newwindow.document.write('If defocal pairs were collected you want to use this. This feature takes both of the en and ef images and aligns them, so you can use makestack later.');
-	}
-	if (infoname=='maxsize'){
-		newwindow.document.write('Max size multiple of the particle peak. When the peak is found in the thresholded image it has a size in pixels. Now if that size is greater than maxsize*particle diameter then the peak is rejected.');
-	}
-	if (infoname=='overlapmult'){
-		newwindow.document.write('The overlap multiple specifies the minimum distance allowed between two peaks. If two peaks are closer than overlapmult*particle diameter the only the larger of the two peaks is retained.');
-	}
-	if (infoname=='pixlimit'){
-		newwindow.document.write('Limit the values of the pixels to within this number of standard deviations from the mean. 0.0 turns this feature off.');
-	}
-	if (infoname=='kfactor'){
-		newwindow.document.write('The k-factor for dogpicker defines the slopiness in diameter of the picked particles. A k-factor of 1.00001 gives only the exact diameter (1.0 is not allowed), but a k-factor of 5.0 will pick a wide range of sizes. Cannot be used with multi-scale dogpicker: numslices or sizerange');
-	}
-	if (infoname=='numslices'){
-		newwindow.document.write('Defines the number of different sizes (or slices) to break up the size range into for separating particles of different size.');
-	}
-	if (infoname=='sizerange'){
-		newwindow.document.write('Defines the range of sizes for separating particles of different size.');
-	}
-	if (infoname=='invert'){
-		newwindow.document.write('Sometimes the template is inverted to the images or dogPicker needs inverted images in this case use the invert flag.');
-	}
-	if (infoname=='nojpegs'){
-		newwindow.document.write('Do NOT write out the summary jpegs for image assessor.');
-	}
-	newwindow.document.write('</BODY></html>');
-	newwindow.document.close();
-}
-</script>\n";
-
-	return $javafunc;
-}
-
 
 function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<!-- BEGIN Particle Loop Param -->\n";
@@ -525,21 +426,21 @@ function parseParticleLoopParams ($type) {
 
 	// CREATE COMMAND
 	if ($type != "manual") {
-		if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" maxsize=$maxsize";
-		if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" overlapmult=$overlapmult";
-		if ($maxthresh && $maxthresh > 0) $command.=" maxthresh=$maxthresh";
-		if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" maxpeaks=$maxpeaks";
-		if ($thresh) $command.=" thresh=$thresh";
+		if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" --maxsize=$maxsize";
+		if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" --overlapmult=$overlapmult";
+		if ($maxthresh && $maxthresh > 0) $command.=" --maxthresh=$maxthresh";
+		if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" --maxpeaks=$maxpeaks";
+		if ($thresh) $command.=" --thresh=$thresh";
 	}
-	if ($defocpair) $command.=" defocpair";
-	if ($invert) $command.=" invert";
-	if ($median != '') $command.=" median=$median";
-	if ($lp != '') $command.=" lp=$lp";
-	if ($hp != '') $command.=" hp=$hp";
-	if ($bin) $command.=" bin=$bin";
-	if ($diam) $command.=" diam=$diam";
-	if ($pixlimit != '') $command.=" pixlimit=$pixlimit";
-	if ($nojpegs) $command.=" nojpegs";
+	if ($defocpair) $command.=" --defocpair";
+	if ($invert) $command.=" --invert";
+	if ($median != '') $command.=" --median=$median";
+	if ($lp != '') $command.=" --lowpass=$lp";
+	if ($hp != '') $command.=" --highpass=$hp";
+	if ($bin) $command.=" --bin=$bin";
+	if ($diam) $command.=" --diam=$diam";
+	if ($pixlimit != '') $command.=" --pixlimit=$pixlimit";
+	if ($nojpegs) $command.=" --nojpegs";
 
 	return $command;
 }
