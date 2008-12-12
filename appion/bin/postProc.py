@@ -20,8 +20,6 @@ import apRecon
 class PostProcScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --outdir=<dir> "
-			+"[options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with density (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("-f", "--file", dest="file",
@@ -42,8 +40,6 @@ class PostProcScript(appionScript.AppionScript):
 			help="filter limit to which data will adjusted (in Angstroms)", metavar="FLOAT")
 		self.parser.add_option("--res", dest="res", type="float",
 			help="resolution of the reconstruction (in Angstroms)", metavar="FLOAT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to which output file will be saved", metavar="PATH")
 		self.parser.add_option("-y", "--yflip", dest="yflip", default=False,
 			action="store_true", help="Flip the handedness of the density")
 		self.parser.add_option("-i", "--invert", dest="invert", default=False,
@@ -54,18 +50,13 @@ class PostProcScript(appionScript.AppionScript):
 			action="store_true", help="Normalize the final density such that mean=0, sigma=1")
 		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym", type="int",
 			help="Symmetry id in the database", metavar="INT")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the density (must be in quotes)", metavar="'TEXT'")
 		self.parser.add_option("--reconid", dest="reconid",
 			help="RefinementData Id for this iteration (not the recon id)", metavar="INT")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
 			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
+		
 		return 
 
 	#=====================
@@ -117,7 +108,7 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['ampfile'] is not None:
 			### run amplitude correction
 			self.params['box'] = apVolume.getModelDimensions(self.params['file'])
-			spifile = apVolume.MRCtoSPI(self.params['file'], self.params['outdir'])
+			spifile = apVolume.MRCtoSPI(self.params['file'], self.params['rundir'])
 			tmpfile = apVolume.createAmpcorBatchFile(spifile, self.params)
 			apVolume.runAmpcor()
 
@@ -172,7 +163,7 @@ class PostProcScript(appionScript.AppionScript):
 		fileroot += ".mrc"
 		self.params['name'] = fileroot
 		
-		outfile = os.path.join(self.params['outdir'], fileroot)
+		outfile = os.path.join(self.params['rundir'], fileroot)
 		emancmd = re.sub(" apix=",(" %s apix=" % outfile), emancmd)
 
 		apEMAN.executeEmanCmd(emancmd)
