@@ -44,7 +44,17 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctftiltdata = $particle->hasCtfTiltData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
-	$stackruns = count($particle->getStackIds($sessionId, True));
+
+	// --- get stack number from existing stack run names --- //
+	// --- instead of counting stackIds !!! --- //
+	$stacknumber=0;
+	foreach($particle->getStackIds($sessionId) as $i) {
+		$stackid=$i['stackid'];
+		list($s)=$particle->getStackParams($stackid);
+		ereg("([0-9]{1,})", $s['stackRunName'], $regs);
+		$stacknumber=($regs[0]>$stacknumber) ? $regs[0]: $stacknumber;
+	}
+	$stackruns = $stacknumber+1;
 
 	// --- make list of file formats
 	$fileformats=array('imagic','spider');
@@ -373,7 +383,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>\n";
 		echo docpop('partcutoff','Particle Correlation Cutoff');
 		echo "<br />\n";
-		echo "(between 0.0 - 1.0)<br />
+		echo "(between 0.0 - 6.0)<br />
 		Use Values Above:<input type='text' name='selexonmin' $selexdisable value='$selexminval' size='4'><br />
 		Use Values Below:<input type='text' name='selexonmax' $selexdisable value='$selexmaxval' size='4'><br />
 		<br />\n";
@@ -500,8 +510,8 @@ function runMakestack() {
 	if ($_POST['selexcheck']=='on') {
 		$selexonmin=$_POST['selexonmin'];
 		$selexonmax=$_POST['selexonmax'];
-		if ($selexonmin > 1 || $selexonmin < 0) createMakestackForm("<b>ERROR:</b> Selexon Min cutoff must be between 0 & 1");
-		if ($selexonmax > 1 || $selexonmax < 0) createMakestackForm("<b>ERROR:</b> Selexon Max cutoff must be between 0 & 1");
+		if ($selexonmin > 6 || $selexonmin < 0) createMakestackForm("<b>ERROR:</b> Selexon Min cutoff must be between 0 & 6");
+		if ($selexonmax > 6 || $selexonmax < 0) createMakestackForm("<b>ERROR:</b> Selexon Max cutoff must be between 0 & 6");
 	}
 
 	// check defocus cutoffs
