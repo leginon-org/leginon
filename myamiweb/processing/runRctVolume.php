@@ -192,8 +192,6 @@ function runRctVolume($runjob=false) {
 	$norefclass = $_POST['norefclass'];
 	$description=$_POST['description'];
 
-	$command.="rctVolume.py ";
-
 	$particle = new particledata();
 	$stackparam = $particle->getStackParams($tiltstack);
 	$outdir = dirname(dirname($stackparam['path']));
@@ -215,6 +213,8 @@ function runRctVolume($runjob=false) {
 		createRctVolumeForm("<B>ERROR:</B> Enter a unique run name");
 
 	//putting together command
+	$command ="rctVolume.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runname ";
 	$command.="--norefclass=$norefclass ";
 	$command.="--classnum=$classnum ";

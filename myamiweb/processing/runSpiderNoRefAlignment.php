@@ -260,7 +260,7 @@ function runSpiderNoRefAlign($runjob=false) {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 
-	$command.="spiderNoRefAlign.py ";
+
 
 	$stackvars=$_POST['stackid'];
 	$partrad=$_POST['partrad'];
@@ -311,8 +311,12 @@ function runSpiderNoRefAlign($runjob=false) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$rundir = $outdir.$runname;
-		$command.="--outdir=$rundir ";
+
 	}
+
+	$command="spiderNoRefAlign.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--outdir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";

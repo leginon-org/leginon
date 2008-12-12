@@ -228,14 +228,13 @@ function runSpiderCoranClassify($runjob=false) {
 	if ($maskrad > $boxrad)
 		createSpiderCoranClassifyForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
 
-	$command.="coranClassify.py ";
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
 
-	if ($outdir) {
-		// make sure outdir ends with '/' and append run name
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$rundir = $outdir.$runname;
-		$command.="--outdir=$rundir ";
-	}
+	$command ="coranClassify.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--outdir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--alignstack=$stackid ";

@@ -172,16 +172,12 @@ function runClusterCoran($runjob=False) {
 	$alignid = $_GET['alignId'];
 	$analysisid=$_GET['analysisId'];
 
-	$command.="clusterCoran.py ";
-
 	$numclass = $_POST['numclass'];
 	$alignid = $_POST['alignid'];
 	$numeigenimgs = $_POST['numeigenimgs'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$classmethod=$_POST['classmethod'];
 	$outdir=$_POST['outdir'];
-
-
 
 	$particle = new particledata();
 	$analysisparams = $particle->getAnalysisParams($analysisid);
@@ -217,12 +213,12 @@ function runClusterCoran($runjob=False) {
 	//if ($numclass > 999 || $numclass < 2) 
 	//	createClusterCoranForm("<b>ERROR:</b> Number of classes must be between 2 and 999");
 
-	//$command.="--alignstackid=$alignid ";
+	$command ="clusterCoran.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--analysisid=$analysisid ";
 	$command.="--num-class-list=$numclass ";
 	$command.="--factor-list=$factorlist ";
 	$command.="--rundir=".$outdir.$runname." ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
 	if ($classmethod && $classmethod != 'hierarch') $command.="--method=$classmethod ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";

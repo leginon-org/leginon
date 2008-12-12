@@ -144,11 +144,12 @@ function runMaxLikeAlign($runjob=false) {
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 
 	// setup command
-	$command.="uploadMaxlikeAlignment.py ";
+	$command="uploadMaxlikeAlignment.py ";
 	$command.="--outdir=$rundir ";
 	if ($timestamp) $command.="-t $timestamp ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	// submit job to cluster
 	if ($runjob) {

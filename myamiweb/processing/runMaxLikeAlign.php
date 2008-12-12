@@ -280,7 +280,8 @@ function runMaxLikeAlign($runjob=false) {
 	$rundir = $outdir.$runname;
 
 	// setup command
-	$command.="maxlikeAlignment.py ";
+	$command ="maxlikeAlignment.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--outdir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";

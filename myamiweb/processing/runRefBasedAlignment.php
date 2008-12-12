@@ -394,7 +394,8 @@ function runAlignment($runjob=false) {
 //	$command ="source /ami/sw/ami.csh;";
 //	$command.="source /ami/sw/share/python/usepython.csh common32;";
 //	$command.="source /home/$user/pyappion/useappion.csh;";
-	$command.="refBasedAlignment2.py ";
+	$command="refBasedAlignment2.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--template-list=".templateCommand()." ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
