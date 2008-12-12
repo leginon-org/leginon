@@ -48,7 +48,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	// --- get stack number from existing stack run names --- //
 	// --- instead of counting stackIds !!! --- //
 	$stacknumber=0;
-	foreach($particle->getStackIds($sessionId) as $i) {
+	foreach($particle->getStackIds($sessionId, True) as $i) {
 		$stackid=$i['stackid'];
 		list($s)=$particle->getStackParams($stackid);
 		ereg("([0-9]{1,})", $s['stackRunName'], $regs);
