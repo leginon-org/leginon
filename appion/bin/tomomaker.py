@@ -10,7 +10,6 @@
 
 
 import os
-import apDB
 import sys
 import re
 #leginon
@@ -30,8 +29,6 @@ import apFile
 import apUpload
 import apDatabase
 import apParticle
-appiondb = apDB.apdb
-db   = apDB.db
 
 #=====================
 #=====================

@@ -5,18 +5,20 @@ import MySQLdb
 import dbconfig
 import sys
 
-# connect
-c=dbconfig.getConfig('appionData')
-dbc=MySQLdb.Connect(**c)
+if __name__ == "__main__":
+	# connect
+	c=dbconfig.getConfig('appionData')
+	dbc=MySQLdb.Connect(**c)
 
-# create a cursor
-cursor = dbc.cursor()
+	# create a cursor
+	cursor = dbc.cursor()
 
-jobid = sys.argv[1]
-status = sys.argv[2]
+	jobid = sys.argv[1]
+	status = sys.argv[2]
 
-q="UPDATE ApClusterJobData SET `status` = '%s' WHERE `DEF_id` = '%s'" %(status,jobid)
- 
-cursor.execute(q)
-cursor.close()
-dbc.close()
+	q="UPDATE ApClusterJobData SET `status` = '%s' WHERE `DEF_id` = '%s'" %(status,jobid)
+	 
+	cursor.execute(q)
+	cursor.close()
+	dbc.close()
+
