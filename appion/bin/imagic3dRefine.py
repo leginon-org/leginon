@@ -37,7 +37,7 @@ import apProject
 class imagic3dRefineScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --outdir=<dir> "
+		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --rundir=<dir> "
 			+"[options]")
 
 		self.parser.add_option("--imagic3d0Id", dest="imagic3d0Id",
@@ -78,9 +78,9 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="angular increment of reprojections for MRA", metavar="INT")
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int",	#default=25
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
+		self.parser.add_option("-o", "--rundir", dest="rundir",
 			help="Location to which output file will be saved", metavar="PATH")
-		self.parser.add_option("-r", "--runid", dest="runId",
+		self.parser.add_option("-r", "--runname", dest="runname",
 			help="Name assigned to this reclassification", metavar="TEXT")
 		self.parser.add_option("--description", dest="description", type="str",
 			help="description of run", metavar="STR")
@@ -93,7 +93,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['runId'] is None:
+		if self.params['runname'] is None:
 			apDisplay.printError("enter a run ID")
 		if self.params['itn'] is None:
 			apDisplay.printError("enter iteration number")
@@ -139,19 +139,19 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else:
 			apDisplay.printError("3d0 initial model not in database")
 
-		self.params['rundir'] = os.path.join(path, self.params['runid'])
+		self.params['rundir'] = os.path.join(path, self.params['runname'])
 
 
 	def upload3dRunData(self):
 		refineq = appionData.ApImagic3dRefineRunData()
 		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
-		refineq['runname'] = self.params['runId']
+		refineq['runname'] = self.params['runname']
 		refineq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
 		refineq['boxsize'] = self.params['boxsize']
-		refineq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['outdir'])))
+		refineq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
 		refineq['hidden'] = False
 		if self.params['commit'] is True and self.params['itn'] == 1:
 			refineq.insert()
@@ -221,18 +221,18 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		mrarefshed = "mrarefs_masked_3d0.hed"
 		forwimg = "masked_3d0_ordered0_repaligned_forward.img"
 		forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
-		if os.path.isfile(str(self.params['outdir'])+"/start_stack.img") is False:
-			shutil.copyfile(clsavgfile+".img", str(self.params['outdir'])+"/start_stack.img")
-		if os.path.isfile(str(self.params['outdir'])+"/start_stack.hed") is False:
-			shutil.copyfile(clsavgfile+".hed", str(self.params['outdir'])+"/start_stack.hed")
-		if os.path.isfile(str(self.params['outdir'])+"/mrarefs_masked_3d.img") is False:
-			shutil.copyfile(orig_path+"/"+mrarefsimg, str(self.params['outdir'])+"/mrarefs_masked_3d.img")
-		if os.path.isfile(str(self.params['outdir'])+"/mrarefs_masked_3d.hed") is False:
-			shutil.copyfile(orig_path+"/"+mrarefshed, str(self.params['outdir'])+"/mrarefs_masked_3d.hed")
-		if os.path.isfile(str(self.params['outdir'])+"/masked_3d_ordered_repaligned_forward.img") is False:
-			shutil.copyfile(orig_path+"/"+forwimg, str(self.params['outdir'])+"/masked_3d_ordered_repaligned_forward.img")
-		if os.path.isfile(str(self.params['outdir'])+"/masked_3d_ordered_repaligned_forward.hed") is False:
-			shutil.copyfile(orig_path+"/"+forwhed, str(self.params['outdir'])+"/masked_3d_ordered_repaligned_forward.hed")
+		if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
+			shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")
+		if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
+			shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
+		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
+			shutil.copyfile(orig_path+"/"+mrarefsimg, str(self.params['rundir'])+"/mrarefs_masked_3d.img")
+		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.hed") is False:
+			shutil.copyfile(orig_path+"/"+mrarefshed, str(self.params['rundir'])+"/mrarefs_masked_3d.hed")
+		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img") is False:
+			shutil.copyfile(orig_path+"/"+forwimg, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img")
+		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed") is False:
+			shutil.copyfile(orig_path+"/"+forwhed, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed")
 	
 
 
@@ -250,7 +250,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		f.write("#!/bin/csh -f\n")	
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("cd "+str(self.params['outdir'])+"\n")
+		f.write("cd "+str(self.params['rundir'])+"\n")
 		f.write("rm -f ordered0.*\n") 		
 		f.write("rm -f sino_ordered0.*\n")	
 		f.write("/usr/local/IMAGIC/stand/headers.e <<EOF > imagic3dRefine_"+str(self.params['itn'])+".log\n")
@@ -536,25 +536,25 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("rm fsc_err.*\n") 
 		f.close()
 
-		os.chdir(str(self.params['outdir']))
-		os.system("chmod 755 "+str(self.params['outdir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-		os.system(str(self.params['outdir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+		os.chdir(str(self.params['rundir']))
+		os.system("chmod 755 "+str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+		os.system(str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
 
-		mrcname = self.params['outdir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-		mrcnamerot = self.params['outdir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
 
 		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
 
 		### create chimera slices of densities ******* .log file has caused problems if not removed
-		if os.path.isfile(str(self.params['outdir'])+"/chimera.log") is not False:
-			os.remove(str(self.params['outdir'])+"/chimera.log")
+		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
+			os.remove(str(self.params['rundir'])+"/chimera.log")
 		apRecon.renderSnapshots(mrcname, 30, None, 
 			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
-		if os.path.isfile(str(self.params['outdir'])+"/chimera.log") is not False:
-			os.remove(str(self.params['outdir'])+"/chimera.log")
+		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
+			os.remove(str(self.params['rundir'])+"/chimera.log")
 		apRecon.renderSnapshots(mrcnamerot, 30, None, 
 			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
