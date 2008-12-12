@@ -408,7 +408,10 @@ function runCreateModel() {
 	$command.="--description=\"$description\" ";
 	$command.="--lp=$lp ";
 	$command.="--apix=$apix ";
-	if ($exclude) $command.="--exclude=$exclude ";
+	if ($exclude != "") {
+		$exclude=ereg_replace(" ","",$exclude);
+		$command.="--exclude=$exclude ";
+	}
 	if ($symmetry) $command.="--symm=$symmetry,$symm_name ";
 	if ($particleNum) $command.="--partnum=$particleNum ";
 	if ($mask) $command.="--mask=$mask ";
