@@ -7,16 +7,18 @@
 import sys
 from EMAN import *
 
-if len(sys.argv) < 2:
-    print "usage: renumber.py [filename]"
-    sys.exit()
+if __name__ == "__main__":
 
-filename=sys.argv[1]
+	if len(sys.argv) < 2:
+	    print "usage: renumber.py [filename]"
+	    sys.exit()
 
-n=fileCount(filename)[0]
-im=EMData()
-for i in range(n):
-    im.readImage(filename,i)
-    im.setNImg(i)
-    im.writeImage(filename,i)
-    print i
+	filename=sys.argv[1]
+
+	n=fileCount(filename)[0]
+	im=EMData()
+	for i in range(n):
+	    im.readImage(filename,i)
+	    im.setNImg(i)
+	    im.writeImage(filename,i)
+	    print i
