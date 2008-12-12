@@ -54,27 +54,12 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.add_option("--templateid", dest="templateid", type="int",
 			help="Template Id for template init method", metavar="#")
 
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--rundir", dest="rundir",
-			help="Output directory", metavar="PATH")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of run", metavar="'TEXT'")
-		self.parser.add_option("-n", "--runname", dest="runname",
-			help="Name for this run", metavar="STR")
-
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
-		if self.params['description'] is None:
-			apDisplay.printError("run description was not defined")
 		if self.params['maskrad'] is None:
 			apDisplay.printError("a mask radius was not provided")
-		if self.params['runname'] is None:
-			apDisplay.printError("run name was not defined")
 		maxparticles = 150000
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: " + str(maxparticles) + " requested: " + str(self.params['numpart']))
@@ -95,7 +80,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "noref", self.params['runname'])
-
 
 	#=====================
 	def insertNoRefRun(self, insert=False):
