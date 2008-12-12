@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	apAlignment.conflicts(params)
 	
 	apAlignment.getStackInfo(params)
-	apAlignment.createOutDir(params)
+	apAlignment.createRunDir(params)
 
 	if params['commit']is True:
 		apAlignment.insertNoRefRun(params, insert=False)
