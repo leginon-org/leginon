@@ -233,8 +233,8 @@ class AppionScript(object):
 		this function only runs if no rundir is defined at the command line
 		"""
 		import apStack
-		if ( self.params['rundir'] is None 
-		and 'session' in self.params 
+		if ( self.params['rundir'] is None
+		and 'session' in self.params
 		and self.params['session'] is not None ):
 			#auto set the run directory
 			sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
@@ -243,11 +243,11 @@ class AppionScript(object):
 			path = re.sub("/rawdata","",path)
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
-		if ( self.params['rundir'] is None 
-		and 'reconid' in self.params 
+		if ( self.params['rundir'] is None
+		and 'reconid' in self.params
 		and self.params['reconid'] is not None ):
 			self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'], msg=False)
-		if ( self.params['rundir'] is None 
+		if ( self.params['rundir'] is None
 		and 'stackid' in self.params
 		and self.params['stackid'] is not None ):
 			#auto set the run directory
@@ -285,6 +285,6 @@ if __name__ == '__main__':
 	testscript.start()
 	print "close"
 	testscript.close()
-	
+
 
 

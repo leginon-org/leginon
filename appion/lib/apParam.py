@@ -25,13 +25,13 @@ def getAppionDirectory():
 	libdir = os.path.dirname(__file__)
 	libdir = os.path.abspath(libdir)
 	trypath = os.path.dirname(libdir)
- 	if os.path.isdir(trypath):
+	if os.path.isdir(trypath):
 		appiondir = trypath
 		return appiondir
 
 	user = os.getlogin() #os.environ.get('USER')
 	trypath = "/home/"+user+"/pyappion"
- 	if os.path.isdir(trypath):
+	if os.path.isdir(trypath):
 		appiondir = trypath
 		return appiondir
 
@@ -115,14 +115,14 @@ def parseWrappedLines(lines):
 			newline = newline+line
 		else:
 			newline = line
-		
+
 		if line.count('\\') ==0:
 			add=False
 		goodlines.append(newline)
 		newline=''
-		
-	return goodlines		
-			
+
+	return goodlines
+
 def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
 	"""
 	Used by appionLoop

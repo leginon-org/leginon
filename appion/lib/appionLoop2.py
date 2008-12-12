@@ -55,7 +55,7 @@ class AppionLoop(appionScript.AppionScript):
 			while imgnum < len(self.imgtree) and self.notdone is True:
 				imgdata = self.imgtree[imgnum]
 				imgnum += 1
-			
+
 				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
 					continue
@@ -66,7 +66,7 @@ class AppionLoop(appionScript.AppionScript):
 				### WRITE db data
 				if self.params['badprocess'] is False:
 	 				if self.params['commit'] is True:
-						apDisplay.printColor("Committing data to database", "blue")				
+						apDisplay.printColor("Committing data to database", "blue")
 						self.loopCommitToDatabase(imgdata)
 						self.commitResultsToDatabase(imgdata, results)
 					else:
@@ -126,7 +126,7 @@ class AppionLoop(appionScript.AppionScript):
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
 
-	#=====================			
+	#=====================
 	def setupParserOptions(self):
 		"""
 		put in any additional parser options
@@ -134,7 +134,7 @@ class AppionLoop(appionScript.AppionScript):
 		apDisplay.printError("you did not create a 'setupParserOptions' function in your script")
 		raise NotImplementedError()
 
-	#=====================			
+	#=====================
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
@@ -142,13 +142,13 @@ class AppionLoop(appionScript.AppionScript):
 		apDisplay.printError("you did not create a 'checkConflicts' function in your script")
 		raise NotImplementedError()
 
-	#=====================			
+	#=====================
 	def reprocessImage(self, imgdata):
 		"""
-		Returns 
+		Returns
 		True, if an image should be reprocessed
 		False, if an image was processed and should NOT be reprocessed
-		None, if image has not yet been processed 
+		None, if image has not yet been processed
 		e.g. a confidence less than 80%
 		"""
 		return None
@@ -165,7 +165,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		put in run and param insertion to db here
 		"""
-		return	
+		return
 
 	#=====================
 	def processImage(self, imgdata):
@@ -194,7 +194,7 @@ class AppionLoop(appionScript.AppionScript):
 		put in run and param insertion to db here
 		"""
 		self.rundata = {}
-		return	
+		return
 
 	#=====================
 	def postLoopFunctions(self):
@@ -355,7 +355,7 @@ class AppionLoop(appionScript.AppionScript):
 			self.insertPreLoopFunctionRun(rundata,self.defaultparams)
 		self.rundata = rundata
 
-	#=====================	
+	#=====================
 	def _writeDataToDB(self,idata):
 		if idata is None:
 			return
@@ -363,7 +363,7 @@ class AppionLoop(appionScript.AppionScript):
 			q.insert()
 		return
 
-	#=====================		
+	#=====================
 	def _writeDataToFile(self,idata,resultkeys,path,imgname, filename):
 		"""
 		This is used to write a list of db data that normally goes into thedatabase
@@ -398,7 +398,7 @@ class AppionLoop(appionScript.AppionScript):
 		resultfile.write(resultlinestxt)
 		resultfile.close()
 
-	#=====================	
+	#=====================
 	def _readDoneDict(self):
 		"""
 		reads or creates a done dictionary
@@ -414,7 +414,7 @@ class AppionLoop(appionScript.AppionScript):
 			if 'commit' in self.donedict:
 				if self.donedict['commit'] is True and self.params['commit'] is not True:
 					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runid")
- 				elif self.donedict['commit'] != self.params['commit']:
+				elif self.donedict['commit'] != self.params['commit']:
 					apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
 					self.donedict = {}
 					self.donedict['commit'] = self.params['commit']
@@ -479,7 +479,7 @@ class AppionLoop(appionScript.AppionScript):
 			if len(self.imgtree) > lim:
 				apDisplay.printMsg("limiting number of images to "+str(lim))
 				self.imgtree = self.imgtree[:lim]
-			
+
 		self.stats['imagecount'] = len(self.imgtree)
 
 	#=====================
@@ -490,7 +490,7 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def _alreadyProcessed(self, imgdata):
-		""" 
+		"""
 		checks to see if image (imgname) has been done already
 		"""
 		imgname = imgdata['filename']
@@ -538,16 +538,16 @@ class AppionLoop(appionScript.AppionScript):
 		if not os.path.isfile(imgpath):
 			apDisplay.printWarning(imgpath+" not found, skipping")
 			return False
-		
+
 		# check to see if image has already been processed
 		if self._alreadyProcessed(imgdata):
 			return False
 		if imgdata['filename'] in self.donedict:
 			return False
-		
+
 		self.stats['startloop'] = time.time()
 		self.stats['waittime'] = 0
-		
+
 		if self.reprocessImage(imgdata) is True:
 			if self.params['background'] is True:
 				sys.stderr.write(",")
@@ -593,7 +593,7 @@ class AppionLoop(appionScript.AppionScript):
 					highestpeaks = int((peakavg+peakstdev*0.5)*self.stats['imagesleft'])+peaksum
 					print "\t(- ESTIMATE:",lowestpeaks,"to",highestpeaks,"total peaks -)"
 				self._printLine()
-	
+
 			print "\tTIME:     \t",apDisplay.timeString(tdiff)
 			self.stats['timesum'] = self.stats['timesum'] + tdiff
 			self.stats['timesumsq'] = self.stats['timesumsq'] + (tdiff**2)
@@ -623,7 +623,7 @@ class AppionLoop(appionScript.AppionScript):
 		minavailmem = 64*1024; # 64 MB, size of one image
 		if(memfree < minavailmem):
 			apDisplay.printError("Memory is low ("+str(int(memfree/1024))+"MB): there is probably a memory leak")
-	
+
 		if(self.stats['count'] > 15):
 			memlist = self.stats['memlist'][-15:]
 			n       = len(memlist)
@@ -643,7 +643,7 @@ class AppionLoop(appionScript.AppionScript):
 			slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
 			memleak = rho*slope
 			###
-			if(self.stats['memleak'] and slope > 0 and memleak > 128 and gain > 256): 
+			if(self.stats['memleak'] and slope > 0 and memleak > 128 and gain > 256):
 				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
 				self.stats['memleak'] = True

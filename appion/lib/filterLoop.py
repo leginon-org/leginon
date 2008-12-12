@@ -27,7 +27,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
 
-	#=====================			
+	#=====================
 	def setupParserOptions(self):
 		"""
 		put in any additional parser options
@@ -35,7 +35,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		apDisplay.printError("you did not create a 'setupParserOptions' function in your script")
 		raise NotImplementedError()
 
-	#=====================			
+	#=====================
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters

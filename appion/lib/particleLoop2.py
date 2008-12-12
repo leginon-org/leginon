@@ -46,7 +46,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 			path = os.path.join(path, self.processdirname, self.params['runname'])
 			self.params['rundir'] = path
 
-	#=====================			
+	#=====================
 	def setupParserOptions(self):
 		"""
 		put in any additional parser options
@@ -54,7 +54,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		apDisplay.printError("you did not create a 'setupParserOptions' function in your script")
 		raise NotImplementedError()
 
-	#=====================			
+	#=====================
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
@@ -173,8 +173,8 @@ class ParticleLoop(filterLoop.FilterLoop):
 
 		#insert common parameters
 		for pkey,dbkey in dbmap.items():
-			if (dbkey in paramQuery 
-			 and pkey in self.params 
+			if (dbkey in paramQuery
+			 and pkey in self.params
 			 and self.params[pkey] is not None):
 				paramQuery[dbkey] = self.params[pkey]
 
@@ -182,7 +182,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		runq['name'] = self.params['runid']
 		runq['session'] = sessiondata
 		runids = runq.query(results=1)
-		
+
 
 		if runids:
 			#get previous params
@@ -202,7 +202,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 				apDisplay.printError("No parameters\n")
 			else:
 				for key in paramQuery:
-	
+
 					if paramData[key] != paramQuery[key] and paramData[key] is not None:
 						try:
 							data_dbid=paramData[key].dbid
