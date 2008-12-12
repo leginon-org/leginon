@@ -20,7 +20,10 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId&jobId=$jobId";
 
-	$host = $_SESSION['processinghost'];
+	// For now, assume that logged in user,password
+	// will work. Potential problem here if logged in
+	// user,password not same as user,password who
+	// started the job.  Maybe should verify this.
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
@@ -29,6 +32,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$display_keys['name'] = $jobinfo['name'];
 	$display_keys['appion path'] = $jobinfo['appath'];
 	$clusterjobid = $jobinfo['clusterjobid'];
+	$host = $jobinfo['cluster'];
 
 	// kill the job if requested
 	if ($_POST['killjob']) {
