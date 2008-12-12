@@ -222,6 +222,7 @@ function runClusterCoran($runjob=False) {
 	$command.="--num-class-list=$numclass ";
 	$command.="--factor-list=$factorlist ";
 	$command.="--rundir=".$outdir.$runname." ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	if ($classmethod && $classmethod != 'hierarch') $command.="--method=$classmethod ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
