@@ -15,19 +15,11 @@ class centerStackScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --stack-id=ID [options]")
 		self.parser.add_option("-s", "--stack-id", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("-m", "--mask", dest="mask", type="int",
 			help="Outer mask")
 		self.parser.add_option("-x", "--maxshift", dest="maxshift", type="int",
 			help="Maximum shift")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Stack description", metavar="TEXT")
-		self.parser.add_option("-n", "--new-stack-name", dest="runname",
+		self.parser.add_option("--new-stack-name", dest="runname",
 			help="Run id name", metavar="STR")
 
 	#=====================

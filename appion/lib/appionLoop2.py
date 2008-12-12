@@ -65,7 +65,7 @@ class AppionLoop(appionScript.AppionScript):
 
 				### WRITE db data
 				if self.params['badprocess'] is False:
-	 				if self.params['commit'] is True:
+					if self.params['commit'] is True:
 						apDisplay.printColor("Committing data to database", "blue")
 						self.loopCommitToDatabase(imgdata)
 						self.commitResultsToDatabase(imgdata, results)
@@ -79,7 +79,7 @@ class AppionLoop(appionScript.AppionScript):
 
 				### FINISH with custom functions
 
-	 			self._writeDoneDict(imgdata['filename'])
+				self._writeDoneDict(imgdata['filename'])
 
 				if os.getloadavg()[0] > 2.0:
 					apDisplay.printMsg("load average is high "+str(round(os.getloadavg()[0],2)))

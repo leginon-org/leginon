@@ -29,7 +29,7 @@ class AppionScript(object):
 		Starts a new function and gets all the parameters
 		"""
 		### setup some expected values
-		sys.stderr.write("\n\n")
+		sys.stdout.write("\n\n")
 		self.quiet = False
 		self.startmem = mem.active()
 		self.t0 = time.time()
