@@ -13,12 +13,14 @@ import appionScript
 
 class UploadParticles(appionScript.AppionScript):
 	def setupParserOptions(self):
+		""" NEED TO COPY PARAM SETTING FROM apUpload.py """
+
 		# create params dictionary & set defaults
 		params = apUpload.createDefaults()
 		params['runname'] = "manual1"
 
 		# parse command line input
-		apUpload.parsePrtlUploadInput(sys.argv,params)
+		#apUpload.parsePrtlUploadInput(sys.argv,params)
 
 
 	def checkConflicts(self):

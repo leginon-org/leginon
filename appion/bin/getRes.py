@@ -13,8 +13,6 @@ class getResScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --fscfile=FILE --boxsize=INT --apix=FLOAT")
 		self.parser.add_option("-f", "--fscfile", dest="fscfile",
 			help="FSC file from EMAN", metavar="FILE")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("-b", "--boxsize", dest="boxsize", type="int",
 			help="Box size in pixels", metavar="INT")
 		self.parser.add_option("-a", "--apix", dest="apix", type="float",

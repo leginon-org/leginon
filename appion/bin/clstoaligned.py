@@ -8,6 +8,10 @@ from sys import argv
 import os
 
 if __name__ == "__main__":
+	if argv[1] == "-h":
+		print "this should be passed a list of cls files as arguments. It will take each raw"
+		print "particle, apply the predetermined 2D alignment to it and write it to a common"
+		print "output file using the Eulers take from the reference projection\n\n"
 	for fsp in argv[1:]:
 		n=fileCount(fsp)[0]
 
