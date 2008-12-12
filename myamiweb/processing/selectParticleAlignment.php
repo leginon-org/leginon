@@ -19,7 +19,7 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 processing_header("Particle Alignment Run","Particle Alignment Run Page", $javascript,False);
 
-echo "<table border='1' class='tableborder'>";
+echo "<table border='1' class='tableborder' width='600'>";
 
 #echo "<tr><td>";
 #echo "  <h3>Just run an alignment, I don't care how</h3>";
@@ -31,7 +31,8 @@ echo "  this method is the most robust, but takes some time to complete."
 	." It uses the "
 	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." program to perform alignments";
+	." program to perform alignments"
+	."<br/><br/>";
 echo "</td></tr>";
 
 echo "<tr><td>";
@@ -39,7 +40,8 @@ echo "  <h3><a href='runSpiderNoRefAlignment.php?expId=$expId'>Spider Reference-
 echo "  this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles";
+	." command to align your particles"
+	."<br/><br/>";
 echo "</td></tr>";
 
 echo "<tr><td>";
@@ -47,7 +49,8 @@ echo "  <h3><a href='runRefBasedAlignment.php?expId=$expId'>Spider Reference-bas
 echo "  first you select template and then this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html'>Spider AP MQ</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles to the selected templates";
+	." command to align your particles to the selected templates"
+	."<br/><br/>";
 echo "</td></tr>";
 
 echo "</table>";

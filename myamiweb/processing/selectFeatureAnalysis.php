@@ -34,9 +34,17 @@ echo "  this method uses the "
 	." to run correspondence analysis (coran) "
 	.", a form of <a href='http://en.wikipedia.org/wiki/Principal_components_analysis'>"
 	."Principal components analysis</a>&nbsp;<img src='img/external.png'>, "
-	."and classify your aligned particles";
+	."and classify your aligned particles"
+	."<br/><br/>";
 echo "</td></tr>";
 
+echo "<tr><td>";
+echo "  <h3><!--<a href='runKerdenSOM.php?expId=$expId&alignId=$alignId'>-->Xmipp Kerden Self-Organizing Map<!--</a>--></h3>";
+echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organizing Map'. "
+	."It maps a set of high dimensional input vectors into a two-dimensional grid. "
+	."For more information, please see the following "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/KerDenSOM'>Xmipp webpage</a>. "
+	."<br/><br/>";
 
 echo "</table>";
 processing_footer();
