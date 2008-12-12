@@ -38,8 +38,13 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$particle = new particledata();
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
-	$norefIds = $particle->getNoRefIds($sessionId, True);
-	$norefruns=count($norefIds);
+	$norefruns=0;
+	foreach($particle->getNoRefIds($sessionId, True) as $norefr) {
+		$runname=$norefr['name'];
+		ereg("([0-9]{1,})", $runname, $regs);
+		$norefruns=($regs[0]>$norefruns) ? $regs[0]: $norefruns;
+	}
+	$defrunid = 'noref'.($norefruns+1);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
@@ -85,7 +90,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'noref'.($norefruns+1);
+	$runidval = ($_POST['runid']) ? $_POST['runid'] : $defrunid;
 	$rundescrval = $_POST['description'];
 	$stackidval = $_POST['stackid'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
