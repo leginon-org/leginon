@@ -275,6 +275,12 @@ class AppionScript(object):
 		return
 
 class TestScript(AppionScript):
+	def setupParserOptions(self):
+		apDisplay.printMsg("parser options")
+	def checkConflicts(self):
+		apDisplay.printMsg("conflicts")
+	def setRunDir(self):
+		self.params['rundir'] = os.getcwd()
 	def start(self):
 		apDisplay.printMsg("Hey this works")
 
