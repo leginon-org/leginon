@@ -317,7 +317,7 @@ if ($expId) {
 			$analysisresults[] = ($analysisrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisrun running</a>";
 			$analysisresults[] = ($analysisqueue==0) ? "" : "$analysisqueue queued";
 			$nruns[] = array (
-				'name'=>"<a href='selectAlignAnalysis.php?expId=$sessionId'>Run Feature Analysis</a>",
+				'name'=>"<a href='selectFeatureAnalysis.php?expId=$sessionId'>Run Feature Analysis</a>",
 				'result'=>$analysisresults,
 			);
 

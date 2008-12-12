@@ -74,7 +74,7 @@ if ($stackdatas) {
 				echo "<tr><td>\n";
 				echo alignstacksummarytable($alignstackid, true);
 				echo "<span style='border: 1px'>&nbsp;"
-					."<a href='selectAlignAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+					."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
 				foreach ($analysisdatas as $analysisdata) {
@@ -122,7 +122,7 @@ if ($stackdatas) {
 				echo "<tr><td>\n";
 				echo alignstacksummarytable($alignstackid, true);
 				echo "<span style='border: 1px'>&nbsp;"
-					."<a href='selectAlignAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+					."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
 				//print_r($analysisdatas);
@@ -144,7 +144,7 @@ if ($stackdatas) {
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid);
 			echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-				."<a href='selectAlignAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+				."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
 			echo "</td></tr>\n";
 		}
