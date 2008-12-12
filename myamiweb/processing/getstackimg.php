@@ -36,14 +36,25 @@ if ($info) {
   $text.=", $info";
 }
 
+$imgh=imagesy($img);
+$fontsize=2;
+$yfont=14;
+$xfont=6;
+
+if ($imgh<128) {
+  $fontsize=1;
+  $yfont=8;
+  $xfont=5;
+}
+
 $color=imagecolorallocate($img,128,0,128);
 $w=imagecolorallocate($img,255,255,255);
 $x1=0;
-$y1=imagesy($img)-15;
-$x2=strlen($text)*6;
-$y2=imagesy($img);
+$y1=$imgh-$yfont;
+$x2=strlen($text)*$xfont+1;
+$y2=$imgh;
 imagefilledrectangle ($img, $x1, $y1, $x2, $y2, $color );
-imagestring($img, 2, 1, $y1, $text, $w);
+imagestring($img, $fontsize, 1, $y1, $text, $w);
 
 $filename="image$img_num.$ext";
 header( "Content-type: $type ");
