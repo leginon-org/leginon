@@ -17,7 +17,7 @@ def createDefaults():
 	params['commit']=True
 	params['stackname']='start.hed'
 	params['description']=''
-	params['outdir'] = None
+	params['rundir'] = None
 	return params
 
 def parseParams(args,params):
@@ -37,8 +37,8 @@ def parseParams(args,params):
 			params['logsplit']=True
 			params['logstart']=int(subelements[0])
 			params['logdivisions']=int(subelements[1])
-		elif elements[0]=='outdir':
-			params['outdir']=elements[1]
+		elif elements[0]=='rundir':
+			params['rundir']=elements[1]
 		elif arg=='nocommit':
 			params['commit']=False
 		elif arg=='commit':
@@ -60,7 +60,7 @@ def checkParams(params):
 
 def printHelp():
 	print "Usage:"
-	print "splitstack.py stackid=<DEF_id> [nptcls=<n> logsplit=<start>,<divisions>] stackname=<stackfile> [commit] outdir=<path>"
+	print "splitstack.py stackid=<DEF_id> [nptcls=<n> logsplit=<start>,<divisions>] stackname=<stackfile> [commit] rundir=<path>"
 	sys.exit()
 	
 def makeRandomLst(nptcls,stackdata,params):
@@ -130,11 +130,11 @@ if __name__=='__main__':
 	oldstackdata = apStack.getOnlyStackData(params['stackid'])
 	oldstack = os.path.join(oldstackdata['path']['path'], oldstackdata['name'])
 	#create run directory
-	if params['outdir'] is None:
+	if params['rundir'] is None:
 		path = oldstackdata['path']['path']
 		path = os.path.split(os.path.abspath(path))[0]
-		params['outdir'] = path
-	apDisplay.printMsg("Out directory: "+params['outdir'])
+		params['rundir'] = path
+	apDisplay.printMsg("Out directory: "+params['rundir'])
 
 	origdescription=params['description']	
 	for stack in stacklist:
@@ -143,13 +143,13 @@ if __name__=='__main__':
 			(" ... split %d particles from original stackid=%d" 
 			% (stack, params['stackid']))
 		)
-		workingdir = os.path.join(params['outdir'], str(stack))
+		workingdir = os.path.join(params['rundir'], str(stack))
 
 		#check for previously commited stacks
 		newstack = os.path.join(workingdir ,params['stackname'])
 		apStack.checkForPreviousStack(newstack)
 		
-		#create outdir and change to that directory
+		#create rundir and change to that directory
 		apDisplay.printMsg("Run directory: "+workingdir)
 		apParam.createDirectory(workingdir)
 		os.chdir(workingdir)
