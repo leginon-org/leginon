@@ -32,7 +32,7 @@ import apProject
 class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --outdir=<dir> "
+		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --rundir=<dir> "
 			+"[options]")
 
 		self.parser.add_option("--stackid", dest="stackid",
@@ -53,16 +53,6 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 			help="overcorrection factor for MSA program (determines its convergence speed)", metavar="FLOAT")
 		self.parser.add_option("--MSAmethod", dest="MSAmethod", type="str",
 			help="distance criteria that will be used in MSA", metavar="STR")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to which output file will be saved", metavar="PATH")
-		self.parser.add_option("-r", "--runid", dest="runId",
-			help="Name assigned to this reclassification", metavar="TEXT")
-		self.parser.add_option("--description", dest="description", type="str",
-			help="description of run", metavar="STR")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
 
 		return 
 
@@ -70,8 +60,6 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("There is no stack ID specified")
-		if self.params['runId'] is None:
-			apDisplay.printError("enter a run ID")
 		if self.params['overcorrection'] is None:
 			apDisplay.printError("enter value for the overcorrection factor")
 		if self.params['MSAmethod'] is None:
@@ -90,20 +78,20 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 			apDisplay.printError("stack not in the database")
 
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['rundir'] = os.path.join(uppath, "norefImagic", self.params['runId'])
+		self.params['rundir'] = os.path.join(uppath, "norefImagic", self.params['runname'])
 
 
 	def insertAlignment(self, imagicstack, insert=False):
 #		alignrunq = appionData.ApAlignRunData()
-#		alignrunq['runname'] = self.params['runId']
-#		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+#		alignrunq['runname'] = self.params['runname']
+#		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 #		uniquerun = alignrunq.query(results=1)
 #		if uniquerun:
-#			apDisplay.printError("Run name '"+str(self.params['runId'])+"' and path already exist in database")
+#			apDisplay.printError("Run name '"+str(self.params['runname'])+"' and path already exist in database")
 		
 		### create norefParam object
 		norefq = appionData.ApImagicNoRefRunData()
-		norefq['runname'] = self.params['runId']
+		norefq['runname'] = self.params['runname']
 		norefq['mask_radius'] = self.params['mask_radius']
 		norefq['mask_dropoff'] = self.params['mask_dropoff']
 		norefq['numiters'] = self.params['numiters']
@@ -112,8 +100,8 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 
 		### finish alignment run
 		alignrunq = appionData.ApAlignRunData()
-		alignrunq['runname'] = self.params['runId']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignrunq['imagicnorefrun'] = norefq
 		alignrunq['hidden'] = False
 		alignrunq['bin'] = self.params['bin']
@@ -130,8 +118,8 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 		alignstackq['imagicfile'] = os.path.basename(imagicstack)
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['iteration'] = 0
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
-		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
 		alignstackq['stack'] = apStack.getOnlyStackData(self.params['stackid'])
@@ -149,7 +137,7 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 		refq['refnum'] = 0
 		refq['iteration'] = 0
 		refq['mrcfile'] = "template.mrc"
-		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		refq['alignrun'] = alignrunq
 
 #		insert particle alignment (shift, rotate, etc.)
@@ -178,15 +166,15 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 		if not os.path.isfile(linkingfile+".hed"):
 			apDisplay.printError("stackfile does not exist: "+linkingfile+".img")
 		else:
-			shutil.copyfile(linkingfile+".img", str(self.params['outdir'])+"/start.img")
-			shutil.copyfile(linkingfile+".hed", str(self.params['outdir'])+"/start.hed")
+			shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
+			shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
 	
 
 
 		# EMAN command to filter input images and bin by specified number	
 	#	emancmd  = "proc2d "
 	#	emancmd += linkingfile+".img "
-	#	emancmd += os.path.join(str(self.params['outdir']), "start.img")+" "
+	#	emancmd += os.path.join(str(self.params['rundir']), "start.img")+" "
 	#	orig_apix = float(self.params['apix']) / int(self.params['bin'])
 	#	emancmd += "apix="+str(orig_apix)+" "
 	#	if self.params['lpfilt'] > 0:
@@ -301,14 +289,14 @@ class imagicReferenceFreeAlignmentScript(appionScript.AppionScript):
 
 		### execute batch file that was created
 		aligntime = time.time()
-		os.chdir(str(self.params['outdir']))
+		os.chdir(str(self.params['rundir']))
 		os.system('chmod 755 imagicReferenceFreeAlignment.batch')
 		os.system('./imagicReferenceFreeAlignment.batch')
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime), "cyan")
 		aligntime = time.time() - aligntime
 	
 		### upload alignment
-		imagicstack = os.path.join(self.params['outdir'], "start.hed")
+		imagicstack = os.path.join(self.params['rundir'], "start.hed")
 		inserttime = time.time()
 		if self.params['commit'] is True:
 			self.insertAlignment(imagicstack, insert=True)
