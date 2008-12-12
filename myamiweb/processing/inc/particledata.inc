@@ -283,12 +283,21 @@ class particledata {
 		return $r;
 	}
 
-	function getAceParams($runId) {
-		$q = "select *, r.`DEF_id` as acerun "
-			."from ApAceParamsData p "
-			."left join ApAceRunData r on (p.`DEF_id` = r.`REF|ApAceParamsData|aceparams`) "
-			."where r.`DEF_id` = '$runId'";
+	function getAceParams($acerunId) {
+		$q = "SELECT *, path.`path` as path, acerun.`DEF_id` as acerun "
+			."FROM ApAceRunData AS acerun "
+			."LEFT JOIN ApAceParamsData AS aceparams "
+			."  ON (aceparams.`DEF_id` = acerun.`REF|ApAceParamsData|aceparams`) "
+			."LEFT JOIN ApCtfTiltParamsData AS ctftilt "
+			."  ON (ctftilt.`DEF_id` = acerun.`REF|ApCtfTiltParamsData|ctftilt_params`) "
+			."LEFT JOIN ApAce2ParamsData AS ace2params "
+			."  ON (ace2params.`DEF_id` = acerun.`REF|ApAce2ParamsData|ace2_params`) "
+			."LEFT JOIN ApPathData AS path "
+			."  ON (path.`DEF_id` = acerun.`REF|ApPathData|path`) "
+			."where acerun.`DEF_id` = '$acerunId'";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return end($r);
 	}
 
@@ -460,8 +469,10 @@ class particledata {
 			else
 				$q .= "and c.`DEF_id`=(select max(c2.`DEF_id`) from ApCtfData c2 where c2.`REF|leginondata|AcquisitionImageData|image` = c.`REF|leginondata|AcquisitionImageData|image`)";
 			$q .= "group by p.`name`";
+			//echo $q."<br/><br/>\n";
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
+			//echo print_r($r)."<br/><br/>\n";
 		}
 		return $stats;
 	}

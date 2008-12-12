@@ -10,12 +10,21 @@ require "inc/appionloop.inc";
 $ctf = new particledata();
 
 $sessionId = $_GET['expId'];
-$ace_params_fields = array ('acerun', 'display', 'stig', 'medium', 'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon', 'pfice', 'overlap', 'fieldsize', 'resamplefr', 'drange', 'reprocess' );
+$aceparamsfields = array (
+	'acerun', 'display', 'stig', 'medium',
+	'df_override', 'edgethcarbon', 'edgethice', 'pfcarbon',
+	'pfice', 'overlap', 'fieldsize', 'resamplefr',
+	'drange', 'reprocess', 'path',
+);
+
+// *********************
+// SETUP JAVA SCRIPT
+// *********************
 
 $javafunctions="
 <script LANGUAGE='JavaScript'>
 	function infopopup(";
-foreach ($ace_params_fields as $param) {
+foreach ($aceparamsfields as $param) {
 	if (ereg("\|", $param)) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
@@ -31,7 +40,7 @@ $javafunctions.="){
 		newwindow.document.write('<TITLE>Ace Parameters</TITLE>');
 		newwindow.document.write(\"</HEAD><BODY><TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\");";
 
-foreach ($ace_params_fields as $param) {
+foreach ($aceparamsfields as $param) {
 	if (ereg("\|", $param)) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
@@ -43,6 +52,10 @@ $javafunctions.= "newwindow.document.write('</TABLE></BODY></HTML>');\n";
 $javafunctions.= "newwindow.document.close();\n";
 $javafunctions.= "}\n";
 $javafunctions.= "</script>\n";
+
+// *********************
+// FORMAT HTML
+// *********************
 
 processing_header('CTF report','CTF Report',$javafunctions);
 
@@ -60,6 +73,7 @@ foreach ($runIds as $runId) {
 	$stats = $ctf->getCTFStats($fields, $sessionId, $rId);
 	$display_ctf=false;
 	foreach($stats as  $field=>$data) {
+			//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
 			foreach($data as $k=>$v) {
 				$display_ctf=true;
 				$imageId = $stats[$field][$k]['id'];
@@ -72,24 +86,39 @@ foreach ($runIds as $runId) {
 	}
 	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 	if ($display_ctf) {
-		echo "<table>";
+		$popupstr = "<a href=\"javascript:infopopup(";
+		foreach ($aceparamsfields as $param) {
+			$popupstr .= "'".$ace_params[$param]."',";
+		}
+		$popupstr = rtrim($popupstr,',');	
+		$popupstr .=  ")\">\n";
+
+		echo "\n\n<br/>\n\n";
+		echo openRoundBorder();
+		echo "<table cellspacing='3'>";
+
 		echo "<tr>";
-			echo "<td>";
-			echo "Run: ";
-			$acestring2='';
-			echo "<A HREF=\"javascript:infopopup(";
-			foreach ($ace_params_fields as $param) {
-				$acestring2 .= "'$ace_params[$param]',";
-			}
-			$acestring2=rtrim($acestring2,',');	
-			echo $acestring2;
-			echo ")\"><B>$rName</B></A>";
-			echo "</td>";
+			echo "<td>\n";
+			echo apdivtitle("Ctf Run: ".$popupstr."<b>".$rName."</b></a>\n");
+			echo "</td>\n";
 		echo "</tr>\n";
-		echo displayCTFstats($stats, $display_keys);
+
+		echo "<tr bgcolor='#ffffff'>\n";
+			echo "<td>Path:&nbsp;<i>".$ace_params['path']."</i></td>\n";
+		echo "</tr>\n";
+
+		echo "<tr bgcolor='#ffffff'>\n";
+			echo "<td>Resample Freq:&nbsp;".$ace_params['resamplefr']."</td>\n";
+		echo "</tr>\n";
+
+		echo "<tr><td colspan='10'>\n";
+			echo displayCTFstats($stats, $display_keys);
+		echo "</td></tr>\n";
 		echo "</table>";
-		echo "<br>";	
-	} else echo "no CTF information available <br/>";
+		echo closeRoundBorder();
+
+	} else
+		echo "no CTF information available <br/>";
 }
 
 processing_footer();
