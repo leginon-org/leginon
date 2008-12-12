@@ -4,7 +4,7 @@ import os
 import sys
 import wx
 import time
-import particleLoop
+import particleLoop2
 import apImage
 #import subprocess
 import apFindEM
@@ -228,10 +228,11 @@ class PickerApp(wx.App):
 ##################################
 ##################################
 
-class manualPicker(particleLoop.ParticleLoop):
+class manualPicker(particleLoop2.ParticleLoop):
 	def preLoopFunctions(self):
-		if self.params['dbimages'] or self.params['alldbimages']:
+		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
+
 		self.app = PickerApp(
 			shape = self.params['shape'], 
 			size =  self.params['shapesize'], )
@@ -245,8 +246,8 @@ class manualPicker(particleLoop.ParticleLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
-	def particleProcessImage(self, imgdata):
-		if not self.params['dbimages'] and not self.params['alldbimages']:
+	def processImage(self, imgdata, filtarray):
+		if self.params['sessionname'] is None:
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
 		peaktree = self.runManualPicker(imgdata)
 		#peaktree = self.runManualPickerOld(imgdata)
@@ -264,30 +265,36 @@ class manualPicker(particleLoop.ParticleLoop):
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
 		return
 
-	def particleDefaultParams(self):
-		self.params['mapdir']="manualmaps"
-		self.params['pickrunname'] = None
-		self.params['pickrunid'] = None
-		self.params['shape'] = '+'
-		self.params['shapesize'] = 16
-
 	def particleCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
 
-	def particleParseParams(self, args):
-		for arg in args:
-			elements = arg.split('=')
-			elements[0] = elements[0].lower()
-			if (elements[0]=='pickrunid'):
-				self.params['pickrunid']=int(elements[1])
-			elif (elements[0]=='pickrunname'):
-				self.params['pickrunname']=str(elements[1])
-			elif (elements[0]=='shape'):
-				self.params['shape']=self.canonicalShape(elements[1])
-			elif (elements[0]=='shapesize'):
-				self.params['shapesize']=int(elements[1])
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+	def setupParserOptions(self):
+		### Input value options
+		self.outtypes = ['text','xml','spider','pickle']
+		self.parser.add_option("--outtype", dest="outtype", default="spider",
+			help="file output type: "+str(self.outtypes), metavar="TYPE")
+		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
+			help="selection run id for previous automated picking run", metavar="#")
+		self.parser.add_option("--pickrunname", dest="pickrunname", type="int",
+			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
+		self.parser.add_option("--shape", dest="shape", default='+',
+			help="pick shape")	
+		self.parser.add_option("--shapesize", dest="shapesize", type="int", default=16,
+			help="shape size")
+		self.parser.add_option("--mask", dest="checkMask", default=False,
+			action="store_true", help="check mask")
+
+	def checkConflicts(self):
+		"""
+		put in any additional conflicting parameters
+		"""
+		for i,v in enumerate(self.outtypes):
+			if self.params['outtype'] == v:
+				self.params['outtypeindex'] = i
+		if self.params['outtypeindex'] is None:
+			apDisplay.printError("outtype must be one of: "+str(self.outtypes)+"; NOT "+str(self.params['outtype']))
+		return
+	
 
 	###################################################
 	##### END PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
@@ -430,7 +437,7 @@ class manualPicker(particleLoop.ParticleLoop):
 
 	def deleteOldPicks(self, imgdata):
 		apDisplay.printError("This is a dead function")
-		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runid'])
+		particles=apParticle.getParticlesForImageFromRunName(imgdata, self.params['runname'])
 		count=0
 		if particles:
 			print "Deleting old picks"
