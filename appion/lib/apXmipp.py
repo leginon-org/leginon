@@ -2,19 +2,46 @@
 #
 import os
 import time
-import sys
-import random
 import math
-import shutil
 #appion
 import apDisplay
 import apFile
 import apParam
-import apEMAN
-import apTemplate
 import apImagicFile
 from pyami import spider
 
+#======================
+#======================
+def convertStackToXmippData(instack, outdata, maskpixrad):
+	"""
+	From http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Img2Data
+
+	This program applies a mask to a set of images. 
+	This set is given by a selfile. 
+	After applying the mask the result is storaged as a vector in the following format:
+		The first line indicates the dimension of the vectors and the number of vectors.
+		The rest of the lines are the feature vectors. 
+		Each line is a vector and each column is a vectors' component (pixels values inside the mask). 
+	"""
+	convertcmd = "xmipp_convert_img2data "
+
+#======================
+#======================
+def convertXmippDataToStack(indata, outstack, maskpixrad):
+	"""
+	From http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Img2Data
+
+	This program applies a mask to a set of images. 
+	This set is given by a selfile. 
+	After applying the mask the result is storaged as a vector in the following format:
+		The first line indicates the dimension of the vectors and the number of vectors.
+		The rest of the lines are the feature vectors. 
+		Each line is a vector and each column is a vectors' component (pixels values inside the mask). 
+	"""
+	convertcmd = "xmipp_convert_data2img "
+
+#======================
+#======================
 def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 	"""
 	takes the stack file and creates single spider files ready for processing
@@ -67,7 +94,8 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 	apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
 	return partlistdocfile
 
-
+#======================
+#======================
 def createSubFolders(partdir, numpart, filesperdir):
 	i = 0
 	dirnum = 0
