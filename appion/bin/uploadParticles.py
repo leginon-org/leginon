@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
 	# create params dictionary & set defaults
 	params = apUpload.createDefaults()
-	params['runid'] = "manual1"
+	params['runname'] = "manual1"
 
 	# parse command line input
 	apUpload.parsePrtlUploadInput(sys.argv,params)
