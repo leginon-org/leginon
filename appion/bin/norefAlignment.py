@@ -58,7 +58,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			action="store_true", help="Commit stack to database")
 		self.parser.add_option("--no-commit", dest="commit", default=True,
 			action="store_false", help="Do not commit stack to database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
+		self.parser.add_option("-o", "--rundir", dest="rundir",
 			help="Output directory", metavar="PATH")
 		self.parser.add_option("-d", "--description", dest="description",
 			help="Description of run", metavar="'TEXT'")
@@ -115,7 +115,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		### create a norefRun object
 		runq = appionData.ApNoRefRunData()
-		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		# ... path makes the run unique:
 		uniquerun = runq.query(results=1)
 		if uniquerun and insert is True:
@@ -143,7 +143,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			eigenq = appionData.ApCoranEigenImageData()
 			eigenq['norefRun'] = runq
 			eigenq['factor_num'] = factnum
-			path = os.path.join(self.params['outdir'], "coran")
+			path = os.path.join(self.params['rundir'], "coran")
 			eigenq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 			imgname = ("eigenimg%02d.png" % (factnum))
 			eigenq['image_name'] = imgname
@@ -189,7 +189,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stackfile does not exist: "+self.stack['file'])
 		emancmd += self.stack['file']+" "
 
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 		
@@ -279,7 +279,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		templatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
 		if not os.path.isfile(templatepath):
 			apDisplay.printError("Could not find template: "+templatepath)
-		newpath = os.path.join(self.params['outdir'], "template.mrc")
+		newpath = os.path.join(self.params['rundir'], "template.mrc")
 		shutil.copy(templatepath, newpath)
 
 		### needs to scale template by old apix to new apix
@@ -365,7 +365,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 		### remove large, worthless stack
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
 
