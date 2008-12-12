@@ -10,10 +10,10 @@
 
 
 // --- Processing database --- //
-$PROCESSING_DB_HOST = "cronus4";
-$PROCESSING_DB_USER = "usr_object";
+$PROCESSING_DB_HOST = "";
+$PROCESSING_DB_USER = "";
 $PROCESSING_DB_PASS = "";
-$PROCESSING_DB = "";
+$PROCESSING_DB = ""; //--- leave empty,  set by projectdb
 
 
 // --- Add as many processing hosts as you like --- //
