@@ -9,8 +9,10 @@ pi = numpy.pi
 
 try:
 	import libCV
+	#print "libCV found"
 except:
 	pass
+	#print "libCV not found"
 
 #-----------------------
 def radians(degrees):
@@ -148,17 +150,20 @@ def checkLibCVResult(self, result):
 	"""
 	Tests whether the libCV resulting affine matrix is reasonable for tilting
 	"""
-	if result[0][0] < 0.5 or result[1][1] < 0.5:
+	if result[0][0] < 0.4 or result[1][1] < 0.4:
 		#max tilt angle of 60 degrees
 		self.logger.warning("Bad libCV result: bad tilt in matrix: "+affineToText(result))
+		print ("Bad libCV result: bad tilt in matrix: "+affineToText(result))
 		return False
-	elif result[0][0] > 1.1 or result[1][1] > 1.1:
+	elif result[0][0] > 1.2 or result[1][1] > 1.2:
 		#only allow 25 degrees of expansion
 		self.logger.warning("Bad libCV result: image expansion: "+affineToText(result))
+		print ("Bad libCV result: image expansion: "+affineToText(result))
 		return False
-	elif abs(result[0][1]) > 0.4 or abs(result[1][0]) > 0.4:
-		#max rotation angle of 25 degrees
+	elif abs(result[0][1]) > 0.7071 or abs(result[1][0]) > 0.7071:
+		#max rotation angle of 45 degrees
 		self.logger.warning("Bad libCV result: too much rotation: "+affineToText(result))
+		print ("Bad libCV result: too much rotation: "+affineToText(result))
 		return False
 	return True
 
@@ -169,11 +174,11 @@ def affineToText(matrix):
 	"""
 	tiltv = matrix[0,0] * matrix[1,1]
 	rotv = (matrix[0,1] - matrix[1,0]) / 2.0
-	if tiltv > 1:
+	if abs(tiltv) > 1:
 		tilt = degrees(math.acos(1.0/tiltv))
 	else:
 		tilt = degrees(math.acos(tiltv))
-	if rotv < 1:
+	if abs(rotv) < 1:
 		rot = degrees(math.asin(rotv))
 	else:
 		rot = 180.0
