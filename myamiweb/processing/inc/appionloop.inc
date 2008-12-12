@@ -46,8 +46,6 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 		}
 		$sessionname=$sessioninfo['Name'];
 	}
-	$projectId = (int) getProjectFromExpId($expId);
-	echo "<input type='hidden' name='projectId' value='$projectId'>\n";
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
 	echo docpop('outdir','<b>Output Directory:</b>');
@@ -182,7 +180,6 @@ function parseAppionLoopParams () {
 		exit;
 	}
 	$expId = $_GET['expId'];
-	$projectId = (int) getProjectFromExpId($expId);
 	// CONVERT DATA
 	if ($_POST[checkimage]=="non-rejected") {
 		$norejects = 1;
@@ -228,7 +225,7 @@ function parseAppionLoopParams () {
 	if ($background) $command.=" --background";
 	if ($shuffle) $command.=" --shuffle";
 	if ($limit) $command.=" --limit=$limit";
-	if ($projectId) $command.=" --projectid=$projectId";
+	$command.=" --projectid=".$_SESSION['projectId']." ";
 	if ($tiltangle != '' && $tiltangle != 'all') $command.=" --tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" --no-continue";
 	else $command.=" --continue";
