@@ -212,7 +212,7 @@ class satAverageScript(appionScript.AppionScript):
 			help="Mask radius in pixels", metavar="INT")
 		self.parser.add_option("-i", "--iter", dest="iter", type="int",
 			help="Final eulers applied to particles will come from this iteration", metavar="INT")
-		self.parser.add_option("-n", "--stackname", dest="stackname", default="goodavgs.hed",
+		self.parser.add_option("--stackname", dest="stackname", default="goodavgs.hed",
 			help="Name of the stack to write the averages", metavar="file.hed")
 		self.parser.add_option("--keep-list", dest="keeplist",
 			help="Keep particles in the specified text file, EMAN style 0,1,...", metavar="TEXT")

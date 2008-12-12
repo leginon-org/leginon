@@ -21,7 +21,7 @@ import apFile
 
 class ctfTiltLoop(appionLoop2.AppionLoop):
 	"""
-	appion Loop function that 
+	appion Loop function that
 	runs Nico's CTFTILT program
 	to estimate the CTF in tilted images
 	"""
@@ -47,9 +47,9 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 		else:
 			exename = 'ctftilt32.exe'
 		ctftiltexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-	 	if not os.path.isfile(ctftiltexe):
+		if not os.path.isfile(ctftiltexe):
 			ctftiltexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
-	 	if not os.path.isfile(ctftiltexe):
+		if not os.path.isfile(ctftiltexe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 		return ctftiltexe
 
@@ -60,10 +60,10 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 	#======================
 	def reprocessImage(self, imgdata):
 		"""
-		Returns 
+		Returns
 		True, if an image should be reprocessed
 		False, if an image was processed and should NOT be reprocessed
-		None, if image has not yet been processed 
+		None, if image has not yet been processed
 		e.g. a confidence less than 80%
 		"""
 		if self.params['reprocess'] is None:
@@ -88,7 +88,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 
 		CTFTILT - determines defocus, astigmatism tilt axis and tilt angle
 		for images of arbitrary size (MRC format). Astigmatic angle is measured
-		from x axis (same conventions as in the MRC 2D image processing 
+		from x axis (same conventions as in the MRC 2D image processing
 		programs).
 
 		CARD 1: Input file name for image
@@ -112,16 +112,16 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 
 		Box: Tile size. The program divides the image into square
 			tiles and calculates the average power spectrum. Tiles
-			with a significantly higher or lower variance are 
+			with a significantly higher or lower variance are
 			excluded; these are parts of the image which are unlikely
-			to contain useful information (beam edge, film number 
+			to contain useful information (beam edge, film number
 			etc). IMPORTANT: Box must have a even pixel dimensions.
 		ResMin: Low resolution end of data to be fitted.
 		ResMaX: High resolution end of data to be fitted.
-		dFMin: Starting defocus value for grid search in Angstrom. 
+		dFMin: Starting defocus value for grid search in Angstrom.
 			Positive values represent an underfocus. The program
-			performs a systematic grid search of defocus values 
-			and astigmatism before fitting a CTF to machine 
+			performs a systematic grid search of defocus values
+			and astigmatism before fitting a CTF to machine
 			precision.
 		dFMax: End defocus value for grid search in Angstrom.
 		FStep: Step width for grid search in Angstrom.
@@ -156,7 +156,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 			cmd = "ln -s "+inputparams['orig']+" "+inputparams['input']+"\n"
 			proc = subprocess.Popen(cmd, shell=True)
 			proc.wait()
-	
+
 		### make standard input for ctftilt
 		line1cmd = inputparams['input']+"\n"
 		line2cmd = inputparams['output']+"\n"
@@ -225,13 +225,13 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 		f = open("ctfvalues.log", "a")
 		f.write("=== "+imgdata['filename']+" ===\n")
 		tiltang = apDatabase.getTiltAngleDeg(imgdata)
-		line1 = ("nominal=%.1e, bestdef=%.1e, tilt=%.1f,\n" % 
+		line1 = ("nominal=%.1e, bestdef=%.1e, tilt=%.1f,\n" %
 			( self.ctfvalues['nominal'], self.ctfvalues['defocusinit'], tiltang))
 		self.ctfvalues['origtiltang'] = tiltang
 		print line1
 		f.write(line1)
-		line2 = ("def_1=%.1e, def_2=%.1e, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.3f,\n" % 
-			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'], 
+		line2 = ("def_1=%.1e, def_2=%.1e, astig_angle=%.1f,\ntilt_angle=%.1f, tilt_axis_angle=%.1f, cross_corr=%.3f,\n" %
+			( self.ctfvalues['defocus1'], self.ctfvalues['defocus2'], self.ctfvalues['angle_astigmatism'],
 				self.ctfvalues['tilt_angle'], self.ctfvalues['tilt_axis_angle'], self.ctfvalues['cross_correlation'] ))
 		print line2
 		f.write(line2)
@@ -331,7 +331,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 			help="sample medium, default=carbon", metavar="MEDIUM")
 		self.parser.add_option("--cs", dest="cs", type="float", default=2.0,
 			help="cs, default=2.0", metavar="#")
-		self.parser.add_option("--nominal", dest="nominal", 
+		self.parser.add_option("--nominal", dest="nominal",
 			help="nominal")
 		self.parser.add_option("--newnominal", dest="newnominal", default=False,
 			action="store_true", help="newnominal")

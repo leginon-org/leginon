@@ -23,8 +23,6 @@ class subStackScript(appionScript.AppionScript):
 			help="minimum Y value")
 		self.parser.add_option("--maxy", dest="maxy", type="float",
 			help="maximum Y value")
-		self.parser.add_option("-n", "--new-stack-name", dest="runname",
-			help="Run id name", metavar="STR")
 		
 	#=====================
 	def checkConflicts(self):

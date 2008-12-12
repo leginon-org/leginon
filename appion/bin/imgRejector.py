@@ -33,12 +33,12 @@ class ImageRejector(appionLoop2.AppionLoop):
 		self.parser.add_option("--nopicks", dest="nopicks", default=False,
 			action="store_true", help="nopicks")
 		self.parser.add_option("--notiltpairs", dest="notiltpairs", default=False,
-			action="store_true", help="notiltpairs")	
-			
+			action="store_true", help="notiltpairs")
+
 	#======================
 	def checkConflicts(self):
-		return	
-			
+		return
+
 	### ==================================
 	def processImage(self, imgdata):
 		### reset global value
@@ -128,7 +128,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 	def rejectAceInfo(self, imgdata):
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 
- 		if ctfvalue is None:
+		if ctfvalue is None:
 			if self.params['noace'] is True:
 				apDisplay.printColor("\nrejecting no ACE values: "+apDisplay.short(imgdata['filename']), "yellow")
 				return False

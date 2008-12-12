@@ -129,7 +129,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				procimg1, procimg2)
 
 		#EXTRA DONE DICT CALL
-	 	self._writeDoneDict(tiltdata['filename'])
+		self._writeDoneDict(tiltdata['filename'])
 
 	#---------------------------------------
 	#---------------------------------------
@@ -166,7 +166,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	def insertParticlePeakPairs(self, imgdata, tiltdata, transdata):
 		if transdata is not None:
 			apDisplay.printMsg("insertParticlePeakPairs")
-			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, 
+			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors,
 				imgdata, tiltdata, transdata, self.params)
 			apDisplay.printMsg("done")
 
@@ -432,7 +432,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.data['shiftx'] = 0.0
 		self.data['shifty'] = 0.0
 		self.data['scale'] = 1.0
-		
+
 		#pre-load particle picks
 		picks1 = self.getParticlePicks(imgdata)
 		picks2 = self.getParticlePicks(tiltdata)

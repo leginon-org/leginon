@@ -4,7 +4,7 @@
 #pythonlib
 import os
 import re
-import sys 
+import sys
 import math
 import string
 import time
@@ -184,7 +184,7 @@ def parseInput(args):
 		elif (elements[0]=='maxdefocus'):
 			maxdf=float(elements[1])
 			if maxdf > 0:
-				print "maxdefocus must be negative and specified in meters" 
+				print "maxdefocus must be negative and specified in meters"
 				sys.exit(1)
 			else:
 				params['maxDefocus']=maxdf*1e6
@@ -200,7 +200,7 @@ def parseInput(args):
 			params['uncorrected']=True
 		elif arg=='stig':
 			params['stig']=True
-			params['phaseFlipped']=False	
+			params['phaseFlipped']=False
 		elif arg=='boxfiles':
 			params['boxfiles']=True
 		else:
@@ -250,9 +250,9 @@ def batchBox(params, imgdict):
 		imgarray = apImage.correctImage(imgdict, params)
 		imgpath = os.path.join(params['outdir'],tmpname)
 		apImage.arrayToMrc(imgarray,imgpath)
-		print "processing", imgpath		
+		print "processing", imgpath
 	elif params['stig']:
-		apMatlab.runAceCorrect(imgdict,params)	
+		apMatlab.runAceCorrect(imgdict,params)
 		tmpname = imgdict['filename']
 		imgpath = os.path.join(params['outdir'],tmpname)
 	else:
@@ -273,22 +273,22 @@ def batchBox(params, imgdict):
 		else:
 			particles = apParticle.getParticles(imgdict, params['selexonId'])
 			shift = {'shiftx':0, 'shifty':0,'scale':1}
-		if len(particles) > 0:			
+		if len(particles) > 0:
 			###apply limits
 			if params['correlationMin'] or params['correlationMax']:
 				particles=eliminateMinMaxCCParticles(particles,params)
-			
+
 			###apply masks
 			if params['checkMask']:
 				particles = eliminateMaskedParticles(particles,params,imgdict)
-			
+
 			###save particles
 			### for untilted data set
 			if len(particles) > 0 and not params['ctftilt']:
 				hasparticles=True
 				saveParticles(particles,shift,dbbox,params,imgdict)
 			### for tilted data set (ctf correction is done here)
-			elif len(particles) > 0 and params['ctftilt']: 
+			elif len(particles) > 0 and params['ctftilt']:
 				hasparticles=True
 				thrownout = 0
 				#for each individual particle
@@ -306,7 +306,7 @@ def batchBox(params, imgdict):
 							#ctf correct using ctftilt parameters
 							ctftiltPhaseFlip(part, outputtemp, outputtempctf, params, imgdict)
 
-							#move temp particle to growing stack						
+							#move temp particle to growing stack
 							appendcmd="proc2d %s %s" %(outputtempctf, outputctf)
 							apEMAN.executeEmanCmd(appendcmd)
 							#remove temp particle
@@ -314,7 +314,7 @@ def batchBox(params, imgdict):
 							f=os.popen(rmtempcmd)
 							f.close()
 						else:
-							#move temp particle to growing stack						
+							#move temp particle to growing stack
 							appendcmd="proc2d %s %s" %(outputtemp, output)
 							apEMAN.executeEmanCmd(appendcmd)
 							#remove temp particle
@@ -334,7 +334,7 @@ def batchBox(params, imgdict):
 	else:
 		dbbox=imgname+".box"
 		hasparticles=True
-	
+
 	if params['boxfiles']:
 		return(0)
 
@@ -351,9 +351,9 @@ def batchBox(params, imgdict):
 				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, params['boxSize'])
 			elif params['boxSize']:
 				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, params['boxSize'])
-			else: 
-		 		cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
-	
+			else:
+				cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
+
 			apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 			apEMAN.executeEmanCmd(cmd)
 			if params['stig']:
@@ -367,7 +367,7 @@ def batchBox(params, imgdict):
 	else:
 		apDisplay.printMsg("number of particles in this micrograph is " + str(numpart))
 		return(numpart)
-		
+
 def eliminateMaskedParticles(particles,params,imgdata):
 	newparticles = []
 	eliminated = 0
@@ -454,7 +454,7 @@ def saveIndvParticles(particle,shift,dbbox,params,imgdict):
 	box=params['boxSize']
 	imgxy=imgdict['camera']['dimension']
 	eliminated=0
-	
+
 	xcoord=int(math.floor(shift['scale']*(particle['xcoord']-shift['shiftx'])-(box/2)+0.5))
 	ycoord=int(math.floor(shift['scale']*(particle['ycoord']-shift['shifty'])-(box/2)+0.5))
 
@@ -478,22 +478,22 @@ def saveIndvParticles(particle,shift,dbbox,params,imgdict):
 	boxfile.writelines(plist)
 	boxfile.close()
 
-# tilted CTF correction  
+# tilted CTF correction
 def ctftiltPhaseFlip(particle, tempinfile, tempoutfile, params, imgdict):
 
 	### calculate defocus at given position
 	CX = 2048
 	CY = 2048
-	
+
 	N1 = -math.sin(params['tilt_axis_angle']* math.pi / 180)
 	N2 = math.cos(params['tilt_axis_angle']* math.pi / 180)
 	PSIZE = params['apix']
 	DX = CX - particle['xcoord']
 	DY = CY - particle['ycoord']
-	
- 	DF = (N1*DX+N2*DY)*PSIZE*math.tan(params['tilt_angle']* math.pi / 180)
+
+	DF = (N1*DX+N2*DY)*PSIZE*math.tan(params['tilt_angle']* math.pi / 180)
 	DFL1 = params['df1']*-1e4 + DF
-	DFL2 = params['df2']*-1e4 + DF		
+	DFL2 = params['df2']*-1e4 + DF
 	DF_final = (DFL1+DFL2)/2
 
 	### create input file and output file
@@ -521,12 +521,12 @@ def ctftiltPhaseFlip(particle, tempinfile, tempoutfile, params, imgdict):
 	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 	apEMAN.executeEmanCmd(cmd)
 
-# untilted CTF correction	
+# untilted CTF correction
 def phaseFlip(imgdata, params):
 	imgname = imgdata['filename']
 	infile  = os.path.join(params['outdir'], imgname+".hed")
 	outfile = os.path.join(params['outdir'], imgname+".ctf.hed")
-	
+
 	### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
 	if imgdata['scope']['tem']['name'] == "CM":
 		voltage = imgdata['scope']['high tension']
@@ -550,7 +550,7 @@ def phaseFlip(imgdata, params):
 
 def singleStack(params,imgdict):
 	imgname = imgdict['filename']
- 	if params['phaseFlipped'] is True:
+	if params['phaseFlipped'] is True:
 		imgpath = os.path.join(params['outdir'], imgname+'.ctf.hed')
 	else:
 		imgpath = os.path.join(params['outdir'], imgname+'.hed')
@@ -569,11 +569,11 @@ def singleStack(params,imgdict):
 			cmd += " hp=%s" % params['highpass']
 		if params['lowpass']:
 			cmd += " lp=%s" % params['lowpass']
-			
+
 	# bin images if specified
 	if params['bin'] != 1:
 		cmd += " shrink="+str(params['bin'])
-		
+
 	# unless specified, invert the images
 	if params['inverted'] is True:
 		cmd += " invert"
@@ -582,11 +582,11 @@ def singleStack(params,imgdict):
 	if params['spider'] is True:
 		cmd += " spiderswap"
 
- 	apDisplay.printMsg("appending particles to stack: "+output)
+	apDisplay.printMsg("appending particles to stack: "+output)
 	# run proc2d & get number of particles
 	f=os.popen(cmd)
 	#apEMAN.executeEmanCmd(cmd)
- 	lines=f.readlines()
+	lines=f.readlines()
 	f.close()
 	for n in lines:
 		words=n.split()
@@ -624,7 +624,7 @@ def getImgsFromSelexonId(params):
 	selexonrun = appionData.ApSelectionRunData.direct_query(params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' is not in database")
-	
+
 	# from id get the session
 	params['sessionid'] = selexonrun['session']
 
@@ -663,7 +663,7 @@ def getImgsDefocPairFromSelexonId(params):
 	selexonrun = appionData.ApSelectionRunData.direct_query(params['selexonId'])
 	if not (selexonrun):
 		apDisplay.printError("specified runId '"+str(params['selexonId'])+"' not in database")
-	
+
 	# from id get the session
 	params['sessionid']=selexonrun['session']
 
@@ -738,7 +738,7 @@ def insertStackRun(params):
 	stackq['project|projects|project'] = apProject.getProjectIdFromSessionName(params['sessionid']['name'])
 
 	params['stackdata']
-	
+
 	runids = runq.query(results=1)
 	# recreate a stackRun object
 	runq = appionData.ApStackRunData()
@@ -765,7 +765,7 @@ def insertStackRun(params):
 			rinstackq.insert()
 		else:
 			apDisplay.printError("Run name '"+params['runid']+"' already in the database")
-	
+
 	# if it's in the database, make sure that all other
 	# parameters are the same, since stack will be re-written
 	else:
@@ -774,7 +774,7 @@ def insertStackRun(params):
 			apDisplay.printError("Stack description is not the same!")
 		# make sure the the run is the same:
 		rinstack = rinstackq.query(results=1)
-		
+
 		## if no runinstack found, find out which parameters are wrong:
 		if not rinstack:
 			rinstackq = appionData.ApRunsInStackData()
@@ -844,15 +844,15 @@ def rejectImage(imgdata, params):
 	else:
 		### Get CTF values
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
-	
- 		if ctfvalue is None:
+
+		if ctfvalue is None:
 			if params['aceCutoff'] or params['minDefocus'] or params['maxDefocus'] or params['phaseFlipped']:
 				apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
 				return False
 			else:
 				apDisplay.printWarning(shortname+".mrc has no ACE values")
 
- 		if ctfvalue is not None:
+		if ctfvalue is not None:
 			apCtf.ctfValuesToParams(ctfvalue, params)
 
 			### check that ACE estimation is above confidence threshold
@@ -903,7 +903,7 @@ if __name__ == '__main__':
 	# stack must have a description
 	if not params['description']:
 		apDisplay.printError("Stack must have a description")
-		
+
 	if params['selexonId'] is None and params['sessionname'] is not None:
 		params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
 
@@ -922,7 +922,7 @@ if __name__ == '__main__':
 			# get pixel size
 			if apDatabase.getPixelSize(imgdict) != params['apix']:
 				apDisplay.printWarning("This particle selection run contains images of varying pixelsizes, a stack cannot be created")
-		
+
 	# if a runId is specified, outdir will have a subdirectory named runId
 	if params['runid']:
 		if params['outdir'] is None:
@@ -952,14 +952,14 @@ if __name__ == '__main__':
 			os.remove(stackfile+".hed")
 		if (os.path.isfile(stackfile+".img")):
 			os.remove(stackfile+".img")
-			
+
 		# set up counter for particle log
 		p_logfile=os.path.join(params['outdir'], ".particlelog")
 
- 		if (os.path.isfile(p_logfile)):
+		if (os.path.isfile(p_logfile)):
 			os.remove(p_logfile)
 		params['particle']=0
-		
+
 	# get list of input images, since wildcards are supported
 	else:
 		if not params['imgs']:
@@ -973,7 +973,7 @@ if __name__ == '__main__':
 
 		params['session']=images[0]['session']['name']
 		params['sessionname']=images[0]['session']['name']
-			
+
 	# box particles
 	# if any restrictions are set, check the image
 	totptcls=0
@@ -981,7 +981,7 @@ if __name__ == '__main__':
 	#while images:
 	for imgdict in images:
 		count += 1
- 		# get session ID
+		# get session ID
 		params['session'] = images[0]['session']['name']
 		params['sessionname'] = imgdict['session']['name']
 		params['filepath'] = imgdict['session']['image path']
@@ -999,27 +999,27 @@ if __name__ == '__main__':
 		# box the particles
 		prevptcls = totptcls
 		totptcls += batchBox(params,imgdict)
-		
+
 		if params['boxfiles']:
 			continue
-		
+
 		if not os.path.isfile(os.path.join(params['outdir'], imgname+".hed")) and not os.path.isfile(os.path.join(params['outdir'], imgname+".ctf.hed")):
 			apDisplay.printWarning("no particles were boxed from "+apDisplay.short(imgname)+"\n")
 			continue
 
 		# store particle numbers to the header
 		apEMAN.numberParticlesInStack(os.path.join(params['outdir'],imgname+".hed"),prevptcls)
-		
+
 		# phase flip boxed particles if requested (Only for untilted dataset -- ctf correction for tilted dataset is taken care of in BatchBoxer)
 		if params['phaseFlipped'] and not params['ctftilt']:
 			phaseFlip(imgdict, params) # phase flip stack file
 		elif params['phaseFlipped'] and params['ctftilt']:
 			print "ctf tilt phase correction is done"
-		
+
 		# add boxed particles to a single stack
 		if params['single']:
 			singleStack(params, imgdict)
-		
+
 		# warn if not committing
 		if not params['commit']:
 			apDisplay.printWarning("not committing results to database, all data will be lost")
@@ -1039,5 +1039,5 @@ if __name__ == '__main__':
 
 	apStack.averageStack(stack=os.path.join(params['outdir'], "start.hed"))
 	getStackId(params)
-	
+
 	print "Done!"

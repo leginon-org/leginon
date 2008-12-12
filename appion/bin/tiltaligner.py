@@ -117,7 +117,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				procimg1, procimg2)
 
 		#EXTRA DONE DICT CALL
-	 	self._writeDoneDict(tiltdata['filename'])
+		self._writeDoneDict(tiltdata['filename'])
 
 	def loopCommitToDatabase(self, imgdata):
 		"""
@@ -270,7 +270,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 		self.app.panel1.openImageFile(None)
 		self.app.panel2.openImageFile(None)
-		
+
 		# 1. tilt data are copied to self.tiltparams by app
 		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
 		# 3. particle errors are copied to self.peakerrors by app

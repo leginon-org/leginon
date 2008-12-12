@@ -20,9 +20,9 @@ import apParam
 import apFile
 
 class Ace2Loop(appionLoop2.AppionLoop):
-	
+
 	"""
-	appion Loop function that 
+	appion Loop function that
 	runs Craig's ace2 program
 	to estimate the CTF in images
 	"""
@@ -46,9 +46,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		else:
 			exename = 'ace2_32'
 		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
-	 	if not os.path.isfile(ace2exe):
+		if not os.path.isfile(ace2exe):
 			ace2exe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
-	 	if not os.path.isfile(ace2exe):
+		if not os.path.isfile(ace2exe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 		return ace2exe
 
@@ -59,10 +59,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	#======================
 	def reprocessImage(self, imgdata):
 		"""
-		Returns 
+		Returns
 		True, if an image should be reprocessed
 		False, if an image was processed and should NOT be reprocessed
-		None, if image has not yet been processed 
+		None, if image has not yet been processed
 		e.g. a confidence less than 80%
 		"""
 		if self.params['reprocess'] is None:
@@ -76,7 +76,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			return True
 
 	#======================
-	
+
 	def processImage(self, imgdata):
 
 		bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
@@ -90,22 +90,22 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		### make standard input for ACE 2
 		print "Using ACE2 at:"+self.ace2exe
-		commandline = ( self.ace2exe 
-			+ " -i " + str(inputparams['input']) 
-			+ " -b " + str(inputparams['binby']) 
-			+ " -c " + str(inputparams['cs']) 
-			+ " -k " + str(inputparams['kv'])  
+		commandline = ( self.ace2exe
+			+ " -i " + str(inputparams['input'])
+			+ " -b " + str(inputparams['binby'])
+			+ " -c " + str(inputparams['cs'])
+			+ " -k " + str(inputparams['kv'])
 			+ " -a " + str(inputparams['apix']) + "\n" )
-		
+
 		t0 = time.time()
-		
+
 		apDisplay.printMsg("running ace2 at "+time.asctime())
-		
-		ace2proc = subprocess.Popen(commandline, shell=True)	
+
+		ace2proc = subprocess.Popen(commandline, shell=True)
 		ace2proc.wait()
 
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
-		
+
 		self.ctfvalues = {}
 		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
 		logf = open(imagelog, "r")
@@ -125,11 +125,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 				parts = sline.split()
 				self.ctfvalues['confidence'] = float(parts[1])
 				self.ctfvalues['confidence_d'] = float(parts[1])
-		
+
 		logf.close()
-		
+
 		print self.ctfvalues
-		
+
 		return
 
 	#======================

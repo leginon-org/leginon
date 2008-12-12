@@ -54,7 +54,7 @@ class createModelScript(appionScript.AppionScript):
 			help="startAny: Lowpass filter radius in Fourier pixels", metavar="INT")
 		self.parser.add_option("--rounds", dest="rounds", type="int",
 			help="startAny: Rounds of Euler angle determination to use", metavar="INT")
-		
+
 		#===================
 		#StartCSym Parameters
 		#===================
@@ -74,7 +74,7 @@ class createModelScript(appionScript.AppionScript):
 			apDisplay.printError("enter a session ID")
 		else:
 			self.sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
-			
+
 		if self.params['description'] is None:
 			apDisplay.printError("enter a template description")
 		if self.params['norefclass'] is None:
@@ -136,7 +136,7 @@ class createModelScript(appionScript.AppionScript):
 				shutil.copy(oldexcludepath, newexcludepath)
 		else:
 			modelpath = os.path.join(norefpath, method+"-"+str(norefclassid)+".mrc")
-		
+
 			apDisplay.printWarning("Moving threed.0a.mrc to "+norefpath+" and renaming it "+method+"-"
 				+str(norefclassid)+".mrc")
 			shutil.copy("threed.0a.mrc", modelpath)
@@ -152,7 +152,7 @@ class createModelScript(appionScript.AppionScript):
 	#=====================
 	def changeapix(self, mrcpath, apix):
 		"""
-		this doesn't do anything, but copy the file, 
+		this doesn't do anything, but copy the file,
 		you need to use shrink=## to change pixel size
 			--neil
 		"""
@@ -172,19 +172,19 @@ class createModelScript(appionScript.AppionScript):
 	#=====================
 	def excludedClasses(self, origclassfile, norefpath):
 		excludelist = self.params['exclude'].split(",")
-		 
+
 		apDisplay.printMsg( "Creating exclude.lst: "+norefpath )
 
 		excludefile = os.path.join(norefpath,"exclude.lst")
-		if os.path.isfile(excludefile): 
+		if os.path.isfile(excludefile):
 			apDisplay.printWarning("Removing the file 'exclude.lst' from: "+norefpath)
 			os.remove(excludefile)
-		
+
 		f = open(excludefile, "w")
 		for excludeitem in excludelist:
 			f.write(str(excludeitem)+"\n")
 		f.close()
-		
+
 		newclassfile = origclassfile+"-new"
 		# old file need to be removed or the images will be appended
 		if os.path.isfile(newclassfile):
@@ -219,12 +219,12 @@ class createModelScript(appionScript.AppionScript):
 		densq['eman'] = self.params['method']
 		if self.params['commit'] is True:
 			densq.insert()
-		return 
+		return
 
 	#=====================
 	def start(self):
 
-	 	norefClassdata=appionData.ApNoRefClassRunData.direct_query(self.params['norefclass'])
+		norefClassdata=appionData.ApNoRefClassRunData.direct_query(self.params['norefclass'])
 
 		#Get class average file path through ApNoRefRunData
 		norefpath = norefClassdata['norefRun']['path']['path']
@@ -245,51 +245,51 @@ class createModelScript(appionScript.AppionScript):
 			shutil.copy(origclassfile+".hed", classfile+".hed")
 			shutil.copy(origclassfile+".img", classfile+".img")
 
-		#warn if the number of particles to use for each view is more than 10% of the total number of particles 		
+		#warn if the number of particles to use for each view is more than 10% of the total number of particles
 		if self.params['exclude'] is not None:
 			numclass = norefClassdata['num_classes'] - len(self.params['exclude'].split(","))
 		else:
 			numclass = norefClassdata['num_classes']
-		
-		if self.params['partnum'] is not None and numclass/10 < int(self.params['partnum']):
-			apDisplay.printWarning("particle number of "+ self.params['partnum'] + " is greater than 10% of the number of selected classes") 
 
-		
+		if self.params['partnum'] is not None and numclass/10 < int(self.params['partnum']):
+			apDisplay.printWarning("particle number of "+ self.params['partnum'] + " is greater than 10% of the number of selected classes")
+
+
 		nproc = apParam.getNumProcessors()
 
 		#construct command for each of the EMAN commonline method
 		if self.params['method']=='startAny':
 			startCmd = "startAny "+classfile+".hed proc="+str(nproc)
-			if self.params['symm_name'] is not None: 
+			if self.params['symm_name'] is not None:
 				startCmd +=" sym="+self.params['symm_name']
-			if self.params['mask'] is not None: 
+			if self.params['mask'] is not None:
 				startCmd +=" mask="+str(self.params['mask'])
-			if self.params['lp'] is not None: 
+			if self.params['lp'] is not None:
 				startCmd +=" lp="+str(self.params['lp'])
-			if self.params['rounds'] is not None: 
+			if self.params['rounds'] is not None:
 				startCmd +=" rounds="+str(self.params['rounds'])
-			
+
 		elif self.params['method']=='startCSym':
 			startCmd = "startcsym "+classfile+".hed "
 			if self.params['partnum'] is not None:
 				startCmd +=" "+self.params['partnum']
-			if self.params['symm_name'] is not None: 
+			if self.params['symm_name'] is not None:
 				startCmd +=" sym="+self.params['symm_name']
-			if self.params['imask'] is not None: 
+			if self.params['imask'] is not None:
 				startCmd +=" imask="+self.params['imask']
-		
+
 		elif self.params['method']=='startOct':
 			startCmd = "startoct "+classfile+".hed "
-			if self.params['partnum'] is not None: 
+			if self.params['partnum'] is not None:
 				startCmd +=" "+self.params['partnum']
-			
+
 		elif self.params['method']=='startIcos':
 			startCmd = "starticos "+classfile+".hed "
-			if self.params['partnum'] is not None: 
+			if self.params['partnum'] is not None:
 				startCmd +=" "+self.params['partnum']
-			if self.params['imask'] is not None: 
+			if self.params['imask'] is not None:
 				startCmd +=" imask="+self.params['imask']
-			
+
 		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of"+self.params['method']+"")
 		print startCmd
 		apEMAN.executeEmanCmd(startCmd, verbose=False)
@@ -300,23 +300,23 @@ class createModelScript(appionScript.AppionScript):
 		self.changeapix(modelpath, self.params['apix'])
 
 		### chimera imaging
-		apRecon.renderSnapshots(modelpath, self.params['lp'], None, 
+		apRecon.renderSnapshots(modelpath, self.params['lp'], None,
 			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
 
 		### upload it
 		self.uploadDensity(modelpath)
-		
+
 #		#call uploadModel
 #		upload = ("uploadModel.py --file=%s --session=%s --apix=%.3f --res=%i --symmetry=%i --contour=1.5 --zoom=1.5 --description=\"%s\"" %
-#			(modelpath, self.params['session'], self.params['apix'], 
-#			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )	
+#			(modelpath, self.params['session'], self.params['apix'],
+#			int(self.params['lp']), int(self.params['symm_id']), self.params['description']) )
 
 #		print "\n############################################"
 #		print "\nReady to upload model "+modelpath+" into the database...\n"
 #		if not self.params['commit']:
-#			apDisplay.printWarning("Commit flag is not turned on... Model will not be uploaded!") 
+#			apDisplay.printWarning("Commit flag is not turned on... Model will not be uploaded!")
 #		time.sleep(10)
-#		if self.params['commit']:	
+#		if self.params['commit']:
 #			apEMAN.executeEmanCmd(upload, verbose=True)
 
 

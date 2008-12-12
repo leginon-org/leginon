@@ -85,7 +85,7 @@ def defineIteration():
 	iteration['msgpasskeep']=None
 	iteration['msgpassminp']=None
 	return iteration
-	
+
 def printHelp():
 	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [jobid=<cluster job id>] [package=<packagename>] [dir=/path/to/directory] [tmpdir=/path/to/dir] [contour=<n>] [zoom=<n>]\n"
 	print "Example: uploadRecon.py stackid=23 modelid=20 package=EMAN\n"
@@ -218,10 +218,10 @@ def convertClassAvgFiles(params):
 				oldf = f.replace('.img',ext)
 				newf = oldf.replace('classes','classes_eman')
 				os.rename(oldf,newf)
-		
+
 # Parse MsgPassing params through EMAN jobfile
 def parseMsgPassingParams(params):
-	emanJobFile = os.path.join(params['rundir'], params['jobinfo']['name']) 
+	emanJobFile = os.path.join(params['rundir'], params['jobinfo']['name'])
 	if os.path.isfile(emanJobFile):
 		lines=open(emanJobFile,'r')
 		j=0
@@ -321,12 +321,12 @@ def parseLogFile(params):
 					iteration['perturb']=True
 			params['iterations'].append(iteration)
 		if re.search("coran_for_cls.py \d+ ", line):
-				params['package']='EMAN/SpiCoran'	
+				params['package']='EMAN/SpiCoran'
 		if re.search("msgPassing_subClassification.py \d+ ", line):
-				params['package']='EMAN/MsgP'	
+				params['package']='EMAN/MsgP'
 	apDisplay.printColor("Found "+str(len(params['iterations']))+" iterations", "green")
 	lines.close()
-				
+
 def getEulersFromProj(params,iter):
 	# get Eulers from the projection file
 	eulers=[]
@@ -343,7 +343,7 @@ def getEulersFromProj(params,iter):
 		eulers.append(angles)
 	f.close()
 	return eulers
-	
+
 def getClassInfo(classes):
 	# read a classes.*.img file, get # of images
 	imgnum, imgtype = EMAN.fileCount(classes)
@@ -363,10 +363,10 @@ def getClassInfo(classes):
 			projeulers.append(eulers)
 	return projeulers
 
-def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0, 
+def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 		apix=None, sym=None, box=None, lpfilter=True):
 	### if eotest failed, filter to 30
-	badres = False 
+	badres = False
 	if not res:
 		res=30
 	elif str(res) == 'nan':
@@ -414,7 +414,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 	apEMAN.executeEmanCmd(slicecmd)
 	apFile.removeStack(tmphed, warn=False)
 	return badres
-	
+
 
 def runChimeraScript(chimscript):
 	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
@@ -493,7 +493,7 @@ def insertRefinementRun(params):
 		params['refinementRun'] = result[0]
 	elif params['commit'] is True:
 		apDisplay.printWarning("Refinement Run was not found, setting to inserted values")
-		params['refinementRun'] = runq		
+		params['refinementRun'] = runq
 	else:
 		apDisplay.printWarning("Refinement Run was not found, setting to 'None'")
 		params['refinementRun'] = None
@@ -505,14 +505,14 @@ def insertResolutionData(params,iteration):
 
 	if not os.path.isfile(fscfile):
 		apDisplay.printWarning("Could not find FSC file: "+fscfile)
- 
+
 	iteration['fscfile'] = fscfile
 	if fsc in params['fscs']:
 		resq=appionData.ApResolutionData()
 
 		# calculate the resolution:
 		halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
-		
+
 		# save to database
 		resq['half'] = halfres
 		resq['fscfile'] = fsc
@@ -580,7 +580,7 @@ def insertIteration(iteration, params):
 	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	volDensPath = os.path.join(params['rundir'], volumeDensity)
-	badres = renderSnapshots(volDensPath, halfres, params['model'], 
+	badres = renderSnapshots(volDensPath, halfres, params['model'],
 		params['contour'], params['zoom'], params['apix'])
 
 	## uncommment this for chimera image only runs...
@@ -592,11 +592,11 @@ def insertIteration(iteration, params):
 		resData = insertResolutionData(params, iteration)
 	else:
 		apDisplay.printWarning("resolution reported as nan, not committing results to database")
-		return	
+		return
 	RmeasureData = insertRMeasureData(params, iteration)
 
 	classavg='classes.'+iteration['num']+'.img'
-	
+
 	if params['package']== 'EMAN':
 		emanclassavg='classes_eman.'+iteration['num']+'.img'
 		coranclassavg=None
@@ -611,7 +611,7 @@ def insertIteration(iteration, params):
 		msgpassclassavg='classes_msgp.'+iteration['num']+'.img'
 	else:
 		apDisplay.printError("Refinement Package Not Valid")
-	
+
 	# insert refinement results
 	refineq = appionData.ApRefinementData()
 	refineq['refinementRun'] = params['refinementRun']
@@ -645,8 +645,8 @@ def insertIteration(iteration, params):
 	apDisplay.printColor("FSC 0.5 Resolution: "+str(halfres), "cyan")
 
 	# get projections eulers for iteration:
-	eulers = getEulersFromProj(params,iteration['num'])	
-	
+	eulers = getEulersFromProj(params,iteration['num'])
+
 	# get # of class averages and # kept
 	#params['eulers']=getClassInfo(os.path.join(params['rundir'],classavg))
 
@@ -750,7 +750,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			shy=float(other[2])
 			if (other[3]=='1') :
 				prtlaliq['mirror']=True
-				
+
 			# SPIDER coran kept particle
 			if params['package']== 'EMAN/SpiCoran':
 				corank=bool(int(other[4]))
@@ -771,7 +771,7 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			if not stackpartdatas:
 				apDisplay.printError("particle "+str(prtlnum)+" not in stack id="+str(params['stack'].dbid))
 			stackp = stackpartdatas[0]
-				
+
 			# insert classification info
 			prtlaliq['refinement']=refineq
 			prtlaliq['particle']=stackp
@@ -812,7 +812,7 @@ def calcRes(fscfile, boxsize, apix):
 				distfsc=(0.5-y)/diffy
 			        #get interpolated spatial frequency
 				intfsc=x-(distfsc*(x-lastx))
-			
+
 				res=boxsize*apix/intfsc
 				return res
 	f.close()
@@ -849,15 +849,15 @@ def getRMeasurePath():
 	else:
 		exename = 'rmeasure32.exe'
 	rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
- 	if not os.path.isfile(rmeasexe):
+	if not os.path.isfile(rmeasexe):
 		rmeasexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
- 	if not os.path.isfile(rmeasexe):
+	if not os.path.isfile(rmeasexe):
 		exename = "rmeasure.exe"
 		rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
- 	if not os.path.isfile(rmeasexe):
+	if not os.path.isfile(rmeasexe):
 		exename = "rmeasure"
 		rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
- 	if not os.path.isfile(rmeasexe):
+	if not os.path.isfile(rmeasexe):
 		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 	return rmeasexe
 
@@ -883,7 +883,7 @@ def runRMeasure(apix, volpath, imask=0):
 
 	if output is None:
 		apDisplay.printWarning("R Measure, FAILED: no output found")
-		return None		
+		return None
 
 	resolution = None
 	key = "Resolution at FSC = 0.5:"
@@ -902,10 +902,10 @@ def runRMeasure(apix, volpath, imask=0):
 	return resolution
 
 def getRefineRunDataFromID(refinerunid):
-	return appionData.ApRefinementRunData.direct_query(refinerunid) 
+	return appionData.ApRefinementRunData.direct_query(refinerunid)
 
 def getNumIterationsFromRefineRunID(refinerunid):
-	refrundata = appionData.ApRefinementRunData.direct_query(refinerunid) 
+	refrundata = appionData.ApRefinementRunData.direct_query(refinerunid)
 	refq = appionData.ApRefinementData()
 	refq['refinementRun'] = refrundata
 	refdatas = refq.query()

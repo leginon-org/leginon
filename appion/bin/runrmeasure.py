@@ -13,9 +13,9 @@ def getRMeasurePath():
 	else:
 		exename = 'rmeasure32.exe'
 	rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
- 	if not os.path.isfile(rmeasexe):
+	if not os.path.isfile(rmeasexe):
 		rmeasexe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
- 	if not os.path.isfile(rmeasexe):
+	if not os.path.isfile(rmeasexe):
 		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 	return rmeasexe
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 		fin.write(vol+'\n')
 		fin.write(apix+'\n')
 		output = fout.read()
-		
+
 		resolution = None
 		words=output.split()
 		for n in range(0,len(words)):

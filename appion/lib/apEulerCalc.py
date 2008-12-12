@@ -28,7 +28,7 @@ def eulerCalculateDistanceSym(e1, e2, sym='d7', inplane=False):
 	given two euler as dicts in degrees
 	calculate distance between euler values
 	value in degrees
-	
+
 	euler1 = alt
 	euler2 = az
 	euler3 = in plane rotation
@@ -81,22 +81,22 @@ def calculateEquivSym(euler, sym='d7', symout=False, inplane=False):
 	# if D symmetry, combine each rotations with x axis rotation
 	if sym[0] == 'd':
 		x1 = calcYRot(math.pi)
-		for i in range(numrot):	
+		for i in range(numrot):
 			symMats.append( numpy.dot(x1, symMats[i]) )
 
 	#calculate new euler matices
 	eulerMat = getEmanEulerMatrix(euler, inplane=inplane)
 	equivMats=[]
-	for symMat in symMats:	
+	for symMat in symMats:
 		equivMats.append(numpy.dot(eulerMat, symMat))
 
 	if symout is True:
 		f=open('matrices.txt','w')
- 		for n,e in enumerate(equivMats):
- 			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[0,0], e[0,1], e[0,2]))
- 			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[1,0], e[1,1], e[1,2]))
- 			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[2,0], e[2,1], e[2,2]))
- 		f.close()
+		for n,e in enumerate(equivMats):
+			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[0,0], e[0,1], e[0,2]))
+			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[1,0], e[1,1], e[1,2]))
+			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[2,0], e[2,1], e[2,2]))
+		f.close()
 	return equivMats
 
 #==================
@@ -116,7 +116,7 @@ def calculateEquivIcos(euler, symout=False, inplane=False):
 		symMats.append( calcZRot(2.0*math.pi*float(i)/float(5)) )
 	### second 5 are rotated 180 out of phase
 	x1 = calcYRot(math.pi)
-	for i in range(5):	
+	for i in range(5):
 		symMats.append( numpy.dot(x1, symMats[i]) )
 	### next 25 include a y rotation duplicated 5 times with another z rotation
 	y1 = calcYRot(296.56505*math.pi/180.0)
@@ -138,16 +138,16 @@ def calculateEquivIcos(euler, symout=False, inplane=False):
 	#calculate new euler matices
 	eulerMat = getEmanEulerMatrix(euler, inplane=inplane)
 	equivMats=[]
-	for symMat in symMats:	
+	for symMat in symMats:
 		equivMats.append(numpy.dot(eulerMat, symMat))
 
 	if symout is True:
 		f=open('matrices.txt','w')
- 		for n,e in enumerate(equivMats):
- 			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[0,0], e[0,1], e[0,2]))
- 			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[1,0], e[1,1], e[1,2]))
- 			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[2,0], e[2,1], e[2,2]))
- 		f.close()
+		for n,e in enumerate(equivMats):
+			f.write('REMARK 290    SMTRY1  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[0,0], e[0,1], e[0,2]))
+			f.write('REMARK 290    SMTRY2  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[1,0], e[1,1], e[1,2]))
+			f.write('REMARK 290    SMTRY3  %2d   %5.2f %5.2f %5.2f     0.0\n' % (n+1, e[2,0], e[2,1], e[2,2]))
+		f.close()
 	return equivMats
 
 #==================
@@ -180,30 +180,30 @@ def getMatrix2(eulerdata):
 	alpham=numpy.zeros((3,3))
 	betam=numpy.zeros((3,3))
 	gammam=numpy.zeros((3,3))
-	
+
 	gammam[0,0]=math.cos(gamma)
 	gammam[0,1]=math.sin(gamma)
 	gammam[1,0]=-math.sin(gamma)
 	gammam[1,1]=math.cos(gamma)
 	gammam[2,2]=1.0
-	
+
 	betam[0,0]=1.0
 	betam[1,1]=math.cos(beta)
 	betam[1,2]=math.sin(beta)
 	betam[2,1]=-math.sin(beta)
 	betam[2,2]=math.cos(beta)
-	
+
 	alpham[0,0]=math.cos(alpha)
 	alpham[0,1]=math.sin(alpha)
 	alpham[1,0]=-math.sin(alpha)
 	alpham[1,1]=math.cos(alpha)
 	alpham[2,2]=1.0
-	
+
 	m=numpy.dot(gammam,betam)
 	m=numpy.dot(m,alpham)
 	m2=numpy.dot(alpham,betam)
 	m2=numpy.dot(m2,gammam)
-	
+
 	return(m)
 
 #==================
@@ -260,7 +260,7 @@ def computeDistance(m1,m2):
 	s = (trace-1.0)/2.0
 	if int(round(abs(s),7)) == 1:
 		"""
-		Either: 
+		Either:
 		 (1) Vectors are the same , i.e. 0 degrees
 		 (2) Vectors are opposite, i.e. 180 degrees
 		"""
@@ -274,7 +274,7 @@ def computeDistance(m1,m2):
 		theta = math.acos(s)
 		#print 'theta',theta
 		t1 = abs(theta/(2*math.sin(theta)))
-		#print 't1',t1 
+		#print 't1',t1
 		t2 = math.sqrt(pow(r[0,1]-r[1,0],2)+pow(r[0,2]-r[2,0],2)+pow(r[1,2]-r[2,1],2))
 		#print 't2',t2, t2*180/math.pi
 		dist = t1 * t2
