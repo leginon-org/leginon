@@ -16,7 +16,7 @@ import apDatabase
 import apDisplay
 import apParam
 
-class MaskMaker(appionLoop.AppionLoop):
+class MaskMaker(appionLoop2.AppionLoop):
 	def setProcessingDirName(self):
 		self.processdirname = "makemask"
 
@@ -42,6 +42,8 @@ class MaskMaker(appionLoop.AppionLoop):
 		self.params['diam']=0
 
 	def specialParamConflicts(self):
+		if self.params['test']==True:
+			self.params['commit']=False
 		if self.params['masktype']=='crud':
 			self.params['convolve']=0.0
 			self.params['no_hull']=False
@@ -82,46 +84,38 @@ class MaskMaker(appionLoop.AppionLoop):
 		
 		return maskPdata
 
-	def specialParseParams(self, args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			if (elements[0]=='masktype'):
-				self.params['masktype']=elements[1]
-			elif (elements[0]=='diam'):
-				self.params['diam']=float(elements[1])
-			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
-			elif (elements[0]=='diam'):
-				self.params['diam']=float(elements[1])
-			elif (elements[0]=='cruddiam'):
-				self.params['cdiam']=float(elements[1])
-			elif (elements[0]=='crudblur'):
-				self.params['cblur']=float(elements[1])
-			elif (elements[0]=='crudlo'):
-				self.params['clo']=float(elements[1])
-			elif (elements[0]=='crudhi'):
-				self.params['chi']=float(elements[1])
-			elif (elements[0]=='crudschi'):
-				self.params['cschi']=float(elements[1])
-			elif (elements[0]=='crudsclo'):
-				self.params['csclo']=float(elements[1])
-			elif (elements[0]=='convolve'):
-				self.params['convolve']=float(elements[1])
-			elif (elements[0]=='stdev'):
-				self.params['stdev']=float(elements[1])
-			elif (arg=='no_hull'):
-				self.params['no_hull']=True
-			elif (arg=='cv'):
-				self.params['cv']=True
-				self.params['no_hull']=True
-			elif (arg=='no_length_prune'):
-				self.params['no_length_prune']=True
-			elif (arg=='test'):
-				self.params['test']=True
-		if self.params['test']==True:
-			self.params['commit']=False
-	
+	def setupParserOptions(self):
+		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
+			help="Binning of the image", metavar="#")
+		self.parser.add_option("--masktype", dest="masktype", type="string", default='custom',
+			help="Type of masking: crud, edge, aggr, or custom ", metavar="#")
+		self.parser.add_option("--diam", dest="diam", type="float", default=0.0,
+			help="Particle diameter", metavar="#")
+		self.parser.add_option("--cruddiam", dest="cdiam", type="float", default=0.0,
+			help="Mask region diameter", metavar="#")
+		self.parser.add_option("--crudblur", dest="cblur", type="float", default=3.5,
+			help="Gaussian bluring for edge detection", metavar="#")
+		self.parser.add_option("--crudhi", dest="chi", type="float", default=0.95,
+			help="High threshold for the start of edge detection", metavar="#")
+		self.parser.add_option("--crudlo", dest="clo", type="float", default=0.6,
+			help="Low threshold for edge extension", metavar="#")
+		self.parser.add_option("--crudschi", dest="cschi", type="float", default=1.0,
+			help="High threshold for the acceptable standard deviation within the crud", metavar="#")
+		self.parser.add_option("--crudsclo", dest="csclo", type="float", default=0.0,
+			help="Low threshold for the acceptable standard deviation within the crud", metavar="#")
+		self.parser.add_option("--convolve", dest="convolve", type="float", default=0.0,
+			help="Threshold for blob detection on edge image convolved with particle size, 0.0 means skip the convolution", metavar="#")
+		self.parser.add_option("--no_hull", dest="no_hull", default=False,
+			action="store_false", help="Flag for skipping covex hull creation")
+		self.parser.add_option("--cv", dest="cv", default=False,
+			action="store_false", help="Flag for using libCV region finder; False= Use canny edge detection as in Selexon")
+		self.parser.add_option("--stdev", dest="stdev", type="float", default=0.0,
+			help="Low threshold for the acceptable standard deviation within the crud", metavar="#")
+		self.parser.add_option("--no_length_prune", dest="no_length_prune", default=False,
+			action="store_false", help="Flag for not eliminating blobs by perimeter to save time")
+		self.parser.add_option("--test", dest="test", default=False,
+			action="store_false", help="Flag for saving intermediate-step images and not to commit to database")
+
 	def insertFunctionRun(self):
 		if self.params is None:
 			params = self.defaultparams.copy()
@@ -133,7 +127,7 @@ class MaskMaker(appionLoop.AppionLoop):
 			sessiondata = None
 			
 		paramdata =self.insertFunctionParams(params)
-		maskRdata=apMask.createMaskMakerRun(sessiondata,params['rundir'],params['runid'],paramdata)
+		maskRdata=apMask.createMaskMakerRun(sessiondata,params['rundir'],params['runname'],paramdata)
 		maskRdata.insert()
 
 		return maskRdata

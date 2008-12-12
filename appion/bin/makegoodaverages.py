@@ -242,8 +242,6 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			help="Throw away ptcls in the specified text file. DB style 1,2,...", metavar="TEXT")
 		self.parser.add_option("-n", "--stackname", dest="stackname", default="goodavgs.hed",
 			help="Name of the stack to write the averages", metavar="TEXT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location of new class files", metavar="PATH")
 		self.parser.add_option("--eotest", dest="eotest", default=False,
 			action="store_true", help="make even and odd averages")
 		self.parser.add_option("--skip-avg", dest="skipavg", default=False,
@@ -269,7 +267,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.params['outputstack'] = os.path.join(self.params['outdir'], self.params['stackname'])
+		self.params['outputstack'] = os.path.join(self.params['rundir'], self.params['stackname'])
 		particles = getParticleInfo(self.params['reconid'], self.params['iter'])
 		stackdata = particles[0]['particle']['stack']
 		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
@@ -343,7 +341,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		reconstr = str(self.params['reconid'])
 		apDisplay.printColor("Make a new stack with only non-jumpers:\n"
 			+"subStack.py -s "+stackstr+" \\\n "
-			+" -k "+os.path.join(self.params['outdir'],"keep.lst")+" \\\n "
+			+" -k "+os.path.join(self.params['rundir'],"keep.lst")+" \\\n "
 			+" -d 'recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
 
 #=====================

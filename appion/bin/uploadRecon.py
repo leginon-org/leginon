@@ -19,11 +19,9 @@ class UploadReconScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --runid=<name> --stackid=<int> --modelid=<int>\n\t "
+		self.parser.set_usage("Usage: %prog --runname=<name> --stackid=<int> --modelid=<int>\n\t "
 			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
 			+"--contour=<contour> --rundir=/path/ --commit ]")
-		self.parser.add_option("-r", "--runid", dest="runid", 
-			help="Name assigned to this reconstruction", metavar="TEXT")
 		self.parser.add_option("-i", "--oneiter", dest="oneiter", type="int",
 			help="Only upload one iteration", metavar="INT")
 		self.parser.add_option("--startiter", dest="startiter", type="int",
@@ -36,14 +34,6 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Jobfile id in the database", metavar="INT")
 		self.parser.add_option("-p", "--package", dest="package", default="EMAN",
 			help="Reconstruction package used (EMAN by default)", metavar="TEXT")
-		self.parser.add_option("-o", "--rundir", "--outdir", dest="rundir",
-			help="Location of reconstruction files", metavar="PATH")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit reconstruction to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit reconstruction to database")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the reconstruction (must be in quotes)", metavar="TEXT")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
@@ -67,8 +57,8 @@ class UploadReconScript(appionScript.AppionScript):
 			apDisplay.printError("please enter a starting model id, e.g. --modelid=34")
 		if self.params['description'] is None:
 			apDisplay.printError("please enter a recon description, e.g. --description='my fav recon'")
-		if self.params['runid'] is None:
-			apDisplay.printError("please enter a recon runid, e.g. --runid=recon11")
+		if self.params['runname'] is None:
+			apDisplay.printError("please enter a recon run name, e.g. --runname=recon11")
 		if self.params['jobid']:
 			# if jobid is supplied, get the job info from the database
 			self.params['jobinfo'] = apRecon.getClusterJobDataFromID(self.params['jobid'])
@@ -82,7 +72,7 @@ class UploadReconScript(appionScript.AppionScript):
 			apDisplay.printError("upload directory does not exist: "+self.params['rundir'])
 
 	def tryToGetJobID(self):
-		jobname = self.params['runid'] + '.job'
+		jobname = self.params['runname'] + '.job'
 		jobtype = 'recon'
 		jobpath = self.params['rundir']
 		qpath = appionData.ApPathData(path=jobpath)

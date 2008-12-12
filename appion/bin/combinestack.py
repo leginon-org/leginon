@@ -20,20 +20,8 @@ class combineStackScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --name=<name> --stacks=<int>,<int>,<int>  "
 			+"--description='<text>' --commit [options]")
-
-		self.parser.add_option("--name", dest="runname",
-			help="Name of stack, e.g. combinestack1", metavar="NAME")
-		self.parser.add_option("--description", dest="description",
-			help="Description of the model (must be in quotes)", metavar="TEXT")
 		self.parser.add_option("--stacks", dest="stacks",
 			help="list of stack ids to combine, e.g. --stackids=11,14,7", metavar="LIST")
-		self.parser.add_option("--commit", "-C", dest="commit", default=True,
-			action="store_true", help="Commit stack to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit stack to database")
-
-		self.parser.add_option("--outdir", dest="outdir",
-			help="Location to copy the model to", metavar="PATH")
 		self.parser.add_option("--stack-filename", dest="stackfilename", default="start.hed",
 			help="Name of stack file name, e.g. start.hed", metavar="start.hed")
 
@@ -84,7 +72,7 @@ class combineStackScript(appionScript.AppionScript):
 
 		stackq = appionData.ApStackData()
 		stackq['name'] = self.params['stackfilename']
-		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		stackq['description'] = self.params['description']+" ... combined stack ids "+str(self.params['stacks'])
 		stackq['substackname'] = self.params['runname']
 		stackq['project|projects|project'] = apProject.getProjectIdFromStackId(stackid)
@@ -122,10 +110,10 @@ class combineStackScript(appionScript.AppionScript):
 		self.partnum = 1
 
 		### final stack file
-		self.combinefile = os.path.join( self.params['outdir'], self.params['stackfilename'] )
+		self.combinefile = os.path.join( self.params['rundir'], self.params['stackfilename'] )
 		if os.path.isfile(self.combinefile):
 			apDisplay.printError("A stack with name "+self.params['stackfilename']+" and path "
-				+self.params['outdir']+" already exists.")
+				+self.params['rundir']+" already exists.")
 
 		### loop through stacks
 		for stackstr in self.params['stackids']:

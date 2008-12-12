@@ -27,8 +27,6 @@ class modelFromPDB(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --pdbid=1ohg --resolution=15 --apix=1.63 --box=300 [options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("-n", "--modelname", dest="name",
 			help="Model name", metavar="STR")
 		self.parser.add_option("-p", "--pdbid", dest="pdbid",
@@ -41,10 +39,6 @@ class modelFromPDB(appionScript.AppionScript):
 			help="Box size of model (in Pixels)")
 		self.parser.add_option("-u", "--biolunit", dest="bunit", default=False,
 			action="store_true", help="Download the biological unit")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit EMDB volume to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit EMDB volume to database")
 
 	#=====================
 	def checkConflicts(self):
@@ -123,7 +117,7 @@ class modelFromPDB(appionScript.AppionScript):
 			self.setNewFileName()
 		apDisplay.printColor("Naming pdb model: "+self.params['name'], "cyan")
 
-		newmodelpath = os.path.join(self.params['outdir'], self.params['name'])
+		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
 		mrcname = newmodelpath	
 
 		self.params['basename']=os.path.splitext(newmodelpath)[0]

@@ -180,7 +180,7 @@ class MaskApp(manualpicker.PickerApp):
 ##################################
 ##################################
 
-class manualPicker(particleLoop.ParticleLoop):
+class manualPicker(particleLoop2.ParticleLoop):
 	def preLoopFunctions(self):
 		if self.params['dbimages'] or self.params['alldbimages']:
 			self.processAndSaveAllImages()
@@ -203,7 +203,7 @@ class manualPicker(particleLoop.ParticleLoop):
 	def commitToDatabase(self,imgdata):		
 		sessiondata = imgdata['session']
 		rundir = self.params['rundir']
-		maskname = self.params['runid']
+		maskname = self.params['runname']
 		assessname = self.params['assessname']
 		bin = self.params['bin']
 		maskdir=os.path.join(rundir,"masks")	
@@ -243,37 +243,22 @@ class manualPicker(particleLoop.ParticleLoop):
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
 		return
 
-	def particleDefaultParams(self):
-#		self.params['shape'] = '+'
-#		self.params['shapesize'] = 16
-		self.params['assessname'] = None
-		self.params['diam'] = 1000	#dummy number so that particle loop can be used
-
 	def specialCreateOutputDirs(self):
 		self._createDirectory(os.path.join(self.params['rundir'], "masks"),warning=False)
 
-	def particleParseParams(self, args):
-		for arg in args:
-			elements = arg.split('=')
-			elements[0] = elements[0].lower()
-			if (elements[0]=='assess'):
-				self.params['assessname']=str(elements[1])
-			elif (elements[0]=='pickrunid'):
-				self.params['pickrunid']=int(elements[1])
-			elif (elements[0]=='pickrunname'):
-				self.params['pickrunname']=str(elements[1])
-#			elif (elements[0]=='shape'):
-#				self.params['shape']=self.canonicalShape(elements[1])
-#			elif (elements[0]=='shapesize'):
-#				self.params['shapesize']=int(elements[1])
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a valid parameter")
+	def setupParserOptions(self):
+		self.parser.add_option("--assess", dest="assessname", type="string", default=None,
+			help="New mask assessment run name", metavar="#")
+		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
+			help="id of the particle pick to be displayed", metavar="#")
+		self.parser.add_option("--pickrunname", dest="pickrunname", type="string",
+			help="Name of the particle pick to be displayed", metavar="#")
 
 	def specialParamConflicts(self):
 	
 		if self.params['commit'] and self.params['continue']==False:
 			sessiondata = self.params['session']
-			maskname = self.params['runid']
+			maskname = self.params['runname']
 			maskrundata,maskparamsdata = apMask.getMaskParamsByRunName(maskname,sessiondata)
 			if maskrundata:
 				apDisplay.printWarning("Overwrite commited maskrun is not allowed")

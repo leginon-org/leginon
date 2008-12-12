@@ -20,7 +20,7 @@ class centerStackScript(appionScript.AppionScript):
 		self.parser.add_option("-x", "--maxshift", dest="maxshift", type="int",
 			help="Maximum shift")
 		self.parser.add_option("--new-stack-name", dest="runname",
-			help="Run id name", metavar="STR")
+			help="Run name", metavar="STR")
 
 	#=====================
 	def checkConflicts(self):
@@ -37,7 +37,7 @@ class centerStackScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.abspath(path))
-		# add mask & maxshift to outdir if specifie
+		# add mask & maxshift to rundir if specifie
 		if self.params['mask'] is not None:
 			self.params['runname'] = self.params['runname']+"_"+str(self.params['mask'])
 		if self.params['maxshift'] is not None:
@@ -54,13 +54,13 @@ class centerStackScript(appionScript.AppionScript):
 		#make sure that old stack is numbered
 		apEMAN.checkStackNumbering(oldstack)
 
-		alignedstack = os.path.join(self.params['outdir'], 'ali.img')
-		badstack = os.path.join(self.params['outdir'], 'bad.img')
+		alignedstack = os.path.join(self.params['rundir'], 'ali.img')
+		badstack = os.path.join(self.params['rundir'], 'bad.img')
 		apStack.checkForPreviousStack(alignedstack)
 
 		#run centering algorithm
 		apStack.centerParticles(oldstack, self.params['mask'], self.params['maxshift'])
-		self.params['keepfile'] = os.path.join(self.params['outdir'],'keepfile.txt')
+		self.params['keepfile'] = os.path.join(self.params['rundir'],'keepfile.txt')
 		apEMAN.writeStackParticlesToFile(alignedstack, self.params['keepfile'])
 		if not os.path.isfile(alignedstack, ):
 			apDisplay.printError("No stack was created")

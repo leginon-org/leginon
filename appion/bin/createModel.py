@@ -28,20 +28,12 @@ class createModelScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --template=<name> --apix=<pixel> --session=<session> --diam=<int> "
 			+"--description='<text>' [options]")
 
-		self.parser.add_option("--description", dest="description",
-			help="Description of the model (must be in quotes)", metavar="TEXT")
 		self.parser.add_option("--session", dest="session",
 			help="Session name associated with model (e.g. 06mar12a)", metavar="TEXT")
-		self.parser.add_option("--outdir", dest="outdir",
-			help="Location to copy the model to", metavar="PATH")
 		self.parser.add_option("--norefClass", dest="norefclass", type="int",
 			help="ID for the classes of the reference-free alignment", metavar="INT")
 		self.parser.add_option("--exclude", dest="exclude",
 			help="Class indices to be excluded e.g. 1,0,10", metavar="TEXT")
-		self.parser.add_option("--commit", dest="commit", default=True,
-			action="store_true", help="Commit model to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit model to database")
 		self.parser.add_option("--method", dest="method",
 			help="EMAN method for commonline backprojection: startIcos, startCSym, startAny, startOct", metavar="TEXT")
 		self.parser.add_option("--apix", dest="apix", type="float",

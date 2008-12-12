@@ -35,22 +35,12 @@ import apParticle
 class tomoMaker(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --file=<name> --outdir=<dir> "
+		self.parser.set_usage( "Usage: %prog --file=<name> --rundir=<dir> "
 			+"[options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber",
 			help="tilt series number in the session", metavar="int")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the run (must be in quotes)", metavar="TEXT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
-		self.parser.add_option("--run", "-r", dest="run", default=self.timestamp,
-			help="Run ID name, e.g. --run=run1", metavar="NAME")
 		self.parser.add_option("--bin", "-b", dest="bin", default=self.timestamp,
 			help="Extra binning, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--selexonId", dest="selexonId", default=None,
@@ -68,7 +58,7 @@ class tomoMaker(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['tiltseriesnumber'] is None :
 			apDisplay.printError("There is no tilt series specified")
-		if self.params['run'] is None:
+		if self.params['runname'] is None:
 			apDisplay.printError("enter a run name")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
@@ -79,16 +69,16 @@ class tomoMaker(appionScript.AppionScript):
 			if int(self.params['sizex']) < 1 or int(self.params['sizey']) < 1:
 				apDisplay.printError("must enter non-zero subvolume size")
 
-	def setOutDir(self):
+	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries" +  self.params['tiltseriesnumber']
-		tomorunpath = self.params['run']
+		tomorunpath = self.params['runname']
 		intermediatepath = os.path.join(tiltseriespath,tomorunpath)
-		self.params['outdir'] = os.path.join(path,intermediatepath)
+		self.params['rundir'] = os.path.join(path,intermediatepath)
 		self.params['tiltseries'] = tiltdata
 	#=====================
 	def start(self):
@@ -103,7 +93,7 @@ class tomoMaker(appionScript.AppionScript):
 		imagelist = apTomo.getImageList(tiltseriesdata)
 		print "getting pixelsize"
 		pixelsize = apTomo.getTomoPixelSize(imagelist[0])
-		processpath = self.params['outdir']
+		processpath = self.params['rundir']
 		seriesname = apTomo.getFilename(tiltseriesdata)
 		stackname = seriesname+".st"
 		tilts,ordered_imagelist,mrc_files = apTomo.orderImageList(imagelist)
@@ -113,7 +103,7 @@ class tomoMaker(appionScript.AppionScript):
 			gcorrfilepath = os.path.join(processpath, seriesname+".prexg")
 			gcorrpeaks = apImod.readShifts(gcorrfilepath)
 		else:
-			apImage.writeMrcStack(self.params['outdir'],stackname,mrc_files, bin)
+			apImage.writeMrcStack(self.params['rundir'],stackname,mrc_files, bin)
 			apImod.writeRawtltFile(processpath,seriesname,tilts)
 			corrpeaks = apTomo.writeOrderedImageListCorrelation(imagelist, bin)
 			if use_original_peaks:

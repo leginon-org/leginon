@@ -25,8 +25,6 @@ class modelFromEMDB(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --emdbid=1122 --resolution=15 --apix=1.63 --box=300 [options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Output directory", metavar="PATH")
 		self.parser.add_option("-n", "--modelname", dest="name",
 			help="Model name", metavar="STR")
 		self.parser.add_option("-e", "--emdbid", dest="emdbid", type="int",
@@ -37,10 +35,6 @@ class modelFromEMDB(appionScript.AppionScript):
 			help="Pixel size of model (in Angstroms)")
 		self.parser.add_option("-b", "--box", dest="box", type='int', default=None,
 			help="Box size of model (in Pixels)")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit EMDB volume to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit EMDB volume to database")
 
 	#=====================
 	def checkConflicts(self):
@@ -144,7 +138,7 @@ class modelFromEMDB(appionScript.AppionScript):
 			self.setNewFileName()
 		apDisplay.printColor("Naming emdb model: "+self.params['name'], "cyan")
 
-		newmodelpath = os.path.join(self.params['outdir'], self.params['name'])
+		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
 		
 		ccp4name = newmodelpath+".ccp4"
 		mrcname = newmodelpath+".mrc"

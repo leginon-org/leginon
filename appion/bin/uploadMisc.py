@@ -27,14 +27,6 @@ class UploadMiscScript(appionScript.AppionScript):
 			help="Session name associated with file (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("-r", "--reconid", dest="reconid", type='int', default=None,
 			help="ReconID associated with file (e.g. --reconid=311)", metavar="RECONID")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the file (must be in quotes)", metavar="'TEXT'")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit file to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit file database")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the file to", metavar="PATH")
 
 	#=====================
 	def checkConflicts(self):
@@ -67,7 +59,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			miscq['session'] = self.sessiondata
 			projectid = apProject.getProjectIdFromSessionName(self.params['session'])
 			miscq['project|projects|project'] = projectid
-		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		miscq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		miscq['name'] = self.filename
 		miscq['description'] = self.params['description']
 		miscq['md5sum'] = apFile.md5sumfile(self.newfile)
@@ -90,9 +82,9 @@ class UploadMiscScript(appionScript.AppionScript):
 			self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		self.filename = os.path.basename(self.params['file'])
-		self.newfile = os.path.join(self.params['outdir'], self.filename)
+		self.newfile = os.path.join(self.params['rundir'], self.filename)
 		if os.path.isfile(self.newfile):
-			apDisplay.printError("File "+self.filename+" already exists in dir "+self.params['outdir'])
+			apDisplay.printError("File "+self.filename+" already exists in dir "+self.params['rundir'])
 		shutil.copy(self.oldfile, self.newfile)
 
 		# insert the info

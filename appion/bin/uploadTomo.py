@@ -31,14 +31,6 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the reconstruction (must be in quotes)", metavar="'TEXT'")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True, action="store_true", 
-			help="Commit reconstruction to database", metavar="COMMIT")
-		self.parser.add_option("--no-commit", dest="commit", default=True, action="store_false", 
-			help="Do not commit reconstruction to database", metavar="COMMIT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to store uploaded model", metavar="PATH")
 		self.parser.add_option("-n", "--name", dest="name",
 			help="File name for new model, automatically set")
 		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber",
@@ -93,7 +85,7 @@ class UploadTomoScript(appionScript.AppionScript):
 
 	#=====================
 	def checkExistingFile(self):
-		newtomopath = os.path.join(self.params['outdir'], self.params['name']+".mrc")
+		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".mrc")
 		origtomopath = self.params['file']
 		apDisplay.printWarning("A Tomogram by the same filename already exists: '"+newtomopath+"'")
 		### a model by the same name already exists
@@ -123,7 +115,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			self.setNewFileName()
 		apDisplay.printColor("Naming tomogram as: "+self.params['name'], "cyan")
 
-		newtomopath = os.path.join(self.params['outdir'], self.params['name']+".mrc")
+		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".mrc")
 		print newtomopath
 		origtomopath = self.params['file']
 		if os.path.isfile(newtomopath):
@@ -134,7 +126,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			apDisplay.printMsg("Copying original tomogram to a new location: "+newtomopath)
 			shutil.copyfile(origtomopath, newtomopath)
 			if self.params['image']:
-				shutil.copyfile(self.params['image'], self.params['outdir']+'/snapshot.png')			
+				shutil.copyfile(self.params['image'], self.params['rundir']+'/snapshot.png')			
 
 		### upload Initial Tomo
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])

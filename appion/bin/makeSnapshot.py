@@ -18,8 +18,6 @@ class MakeSnapshotScript(appionScript.AppionScript):
 
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="3d MRC file to snapshot", metavar="FILE")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to store snapshots (default=current dir)", metavar="PATH")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
 			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="#")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=2.0,

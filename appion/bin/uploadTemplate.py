@@ -30,16 +30,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 			help="Approximate diameter of particle (in Angstroms)", metavar="INT")
 		self.parser.add_option("-t", "--template", dest="template",
 			help="Filename of the template (wild cards accepted)", metavar="FILE")
-		self.parser.add_option("--description", dest="description",
-			help="Description of the template (must be in quotes)", metavar="TEXT")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="INT")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
-			help="Location to copy the templates to", metavar="PATH")
-		self.parser.add_option("--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
 		self.parser.add_option("--norefid", dest="norefid", type="int",
 			help="ID for reference-free alignment (optional)", metavar="INT")
 		self.parser.add_option("--stackid", dest="stackid", type="int",

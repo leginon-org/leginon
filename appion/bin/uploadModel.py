@@ -21,36 +21,6 @@ import apProject
 class UploadModelScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		"""
-		self.params['rundir']=os.path.abspath('.')
-		self.params['abspath']=os.path.abspath('.')
-		self.params['outdir']=None
-		self.params['scale']=None
-		self.params['rescale']=False
-		if (elements[0]=='outdir'):
-			self.params['outdir']=elements[1]
-		elif (arg=='chimeraonly'):
-			self.params['chimeraonly']=True
-			self.params['commit']=False
-		elif (elements[0]=='rescale'):
-			modinfo=elements[1].split(',')
-			if len(modinfo) == 2:
-				self.params['origmodel']=modinfo[0]
-				self.params['newapix']=float(modinfo[1])
-				self.params['rescale']=True
-			else:
-				apDisplay.printError("rescale must include both the original model id and a scale factor")
-
-		# if not rescaling, make sure that the input model exists
-		if (os.path.isfile(mrcfile) or self.params['rescale'] is True):
-			(self.params['path'], self.params['name']) = os.path.split(mrcfile)
-			self.params['path'] = os.path.abspath(self.params['path'])
-			if not self.params['path']:
-				self.params['path']=self.params['abspath']
-		else:
-			apDisplay.printError("file '"+mrcfile+"' does not exist\n")
-		"""
-
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> --apix=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
 			+" [--rescale=<model ID,scale factor> --boxsize=<#>] ")
@@ -78,7 +48,7 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Do not commit reconstruction to database")
 		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False, action="store_true",
 			help="Do not do any reconstruction calculations only run chimera")
-		self.parser.add_option("-o", "--outdir", dest="outdir",
+		self.parser.add_option("-o", "--rundir", dest="rundir",
 			help="Location to store uploaded model", metavar="PATH")
 		self.parser.add_option("-b", "--boxsize", "--newbox", dest="newbox", type="int",
 			help="Boxsize of new model", metavar="INT")
@@ -177,7 +147,7 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def checkExistingFile(self):
-		newmodelpath = os.path.join(self.params['outdir'], self.params['name'])
+		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
 		origmodelpath = self.params['file']
 		apDisplay.printWarning("a model by the same filename already exists: '"+newmodelpath+"'")
 		### a model by the same name already exists
@@ -217,7 +187,7 @@ class UploadModelScript(appionScript.AppionScript):
 			self.setNewFileName()
 		apDisplay.printColor("Naming initial model as: "+self.params['name'], "cyan")
 
-		newmodelpath = os.path.join(self.params['outdir'], self.params['name'])
+		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
 		origmodelpath = self.params['file']
 		if os.path.isfile(newmodelpath):
 			### rescale old model to a new size
