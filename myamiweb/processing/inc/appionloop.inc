@@ -5,7 +5,7 @@
  *	The Scripps Research Institute, La Jolla, CA
  */
 
-function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0) {
+function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon=0) {
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="") ? "" : "CHECKED";
@@ -25,10 +25,10 @@ function createAppionLoopTable ($sessiondata, $defrunid, $outdirname, $leginon=0
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
-	$runid = ($_POST[runid]) ? $_POST[runid] : $defrunid;
+	$runname = ($_POST[runname]) ? $_POST[runname] : $defrunname;
 	echo openRoundBorder();
-	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' VALUE='$runid'><BR/><BR/>\n";
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' VALUE='$runname'><BR/><BR/>\n";
 	
 	//check for output directory [appion = 0, leginon = 1]
 	$leg_check = $leginon;
@@ -150,7 +150,7 @@ function appionLoopSummaryTable () {
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST[apcontinue];
 	$commit = ($_POST[commit]=="on") ? "1" : "0";
-	$runid = $_POST[runid];
+	$runname = $_POST[runname];
 	$outdir = $_POST[outdir];
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
@@ -159,7 +159,7 @@ function appionLoopSummaryTable () {
 		$testimage = ereg_replace(" ","\ ", $testimage);
 	}
 
-	echo "<TR><TD>runid</TD><TD>$runid</TD></TR>\n";
+	echo "<TR><TD>runname</TD><TD>$runname</TD></TR>\n";
 	echo "<TR><TD>outdir</TD><TD>$outdir</TD></TR>\n";
 	echo "<TR><TD>norejects</TD><TD>$norejects</TD></TR>\n";
 	echo "<TR><TD>bestimages</TD><TD>$bestimages</TD></TR>\n";
@@ -198,7 +198,7 @@ function parseAppionLoopParams () {
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST['apcontinue'];
 	$commit = ($_POST['commit']=="on") ? "1" : "0";
-	$runname = $_POST['runid'];
+	$runname = $_POST['runname'];
 	$outdir = $_POST['outdir'];
 	
 	if ($outdir) {
