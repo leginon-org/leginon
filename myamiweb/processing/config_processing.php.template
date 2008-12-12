@@ -27,12 +27,14 @@ $RECON_DB_USER = "";
 $RECON_DB_PASS = "";
 $RECON_DB = "";
 
-// --- Processing hosts --- //
-//$PROCESSING_HOSTS[]="amibox01";
-//$PROCESSING_HOSTS[]="amibox02";
-//$PROCESSING_HOSTS[]="amibox03";
-//$PROCESSING_HOSTS[]="amibox04";
-$PROCESSING_HOSTS[]="guppy";
+// --- Add as many processing hosts as you like --- //
+$PROCESSING_HOSTS[]="";
+$PROCESSING_HOSTS[]="";
+$PROCESSING_HOSTS[]="";
+
+// Better if Cs came out of DB, but for now...
+$DEFAULTCS = "";
+
 // --- path to dbem main --- //
 set_include_path(get_include_path().PATH_SEPARATOR."..");
 ?>
