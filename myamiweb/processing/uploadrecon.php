@@ -314,7 +314,7 @@ function runUploadRecon() {
 	$command.="--stackid=$stack ";
 	$command.="--modelid=$model ";
 	$command.="--package=$package ";
-	if (!$jobId) $command.="--outdir=$runpath ";
+	if (!$jobId) $command.="--rundir=$runpath ";
 	if ($jobId) $command.="--jobid=$jobId ";
 	if ($contour) $command.="--contour=$contour ";
 	if ($zoom) $command.="--zoom=$zoom ";

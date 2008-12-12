@@ -114,7 +114,7 @@ function runCombineStack($runjob=false) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$rundir = $outdir.$runname;
-		$command.="--outdir=$rundir ";
+		$command.="--rundir=$rundir ";
 	}
 	$command.="--name=$runname ";
 	$command.="--stacks=$stacklist ";

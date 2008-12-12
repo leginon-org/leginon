@@ -419,7 +419,7 @@ function runCreateModel() {
 	if ($rounds) $command.="--rounds=$rounds ";
 	
 
-	if ($outdir) $command.="--outdir=$procdir ";
+	if ($outdir) $command.="--rundir=$procdir ";
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	// submit job to cluster

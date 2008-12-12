@@ -323,7 +323,7 @@ function runNoRefAlign($runjob=false) {
 		// make sure outdir ends with '/' and append run name
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$procdir = $outdir.$runid;
-		$command.="--outdir=$procdir ";
+		$command.="--rundir=$procdir ";
 	}
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runid ";
