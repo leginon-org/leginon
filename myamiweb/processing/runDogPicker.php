@@ -135,7 +135,7 @@ function runDogPicker() {
 	$runid = $_POST['runid'];
 	$outdir = $_POST['outdir'];
 
-	$command .="dogPicker.py ";
+	$command ="dogPicker.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -158,11 +158,11 @@ function runDogPicker() {
 		if($numslices < 2) createDogPickerForm("<B>ERROR:</B> numslices must be more than 1");
 		if(!$sizerange) createDogPickerForm("<B>ERROR:</B> sizerange was not defined");
 		if($sizerange < 2.0) createDogPickerForm("<B>ERROR:</B> sizerange must be more than 2.0");
-		$command .= " numslices=".$numslices;
-		$command .= " sizerange=".$sizerange;
+		$command .= " --numslices=".$numslices;
+		$command .= " --sizerange=".$sizerange;
 	} elseif($kfactor) {
 		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
-		$command .= " kfactor=".$kfactor;
+		$command .= " --kfactor=".$kfactor;
 	}
 
 	if ($_POST['testimage']=="on") {
@@ -198,20 +198,21 @@ function runDogPicker() {
 			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
 		}
 		exit;
+	} else {
+		processing_header("Particle Selection Results","DogPicker Command");
+
+		echo"
+			<TABLE WIDTH='600'>
+			<tr><td COLSPAN='2'>
+			<B>Dog Picker Command:</B><br />
+			$command<hr>
+			</td></tr>";
+		appionLoopSummaryTable();
+		particleLoopSummaryTable();
+		echo"</TABLE>\n";
+		processing_footer(True, True);
+		exit;
 	}
-
-	else processing_header("Particle Selection Results","DogPicker Command");
-
-	echo"
-		<TABLE WIDTH='600'>
-		<tr><td COLSPAN='2'>
-		<B>Dog Picker Command:</B><br />
-		$command<hr>
-		</td></tr>";
-	appionLoopSummaryTable();
-	particleLoopSummaryTable();
-	echo"</TABLE>\n";
-	processing_footer(True, True);
 }
 
 

@@ -213,6 +213,8 @@ function parseAppionLoopParams () {
 	}
 
 	// CREATE COMMAND
+	$command="";
+	$command .= " --projectid=".$_SESSION['projectId']." ";
 	if ($testimage) $command.=" --mrclist=$testimage";
 	elseif ($_POST['preset']) $command.=" --preset=".$_POST['preset'];
 	$command.=" --session=".$_POST['sessionname'];
@@ -225,7 +227,7 @@ function parseAppionLoopParams () {
 	if ($background) $command.=" --background";
 	if ($shuffle) $command.=" --shuffle";
 	if ($limit) $command.=" --limit=$limit";
-	$command.=" --projectid=".$_SESSION['projectId']." ";
+
 	if ($tiltangle != '' && $tiltangle != 'all') $command.=" --tiltangle=$tiltangle";
 	if (!$apcontinue) $command.=" --no-continue";
 	else $command.=" --continue";

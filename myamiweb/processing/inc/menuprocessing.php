@@ -141,6 +141,10 @@ if ($expId) {
 	$mrun = count($subclusterjobs['manualpicker']['running']);
 	$mq = count($subclusterjobs['manualpicker']['queued']);
 
+	$tiltdone = count($subclusterjobs['tiltalign']['done']);
+	$tiltrun = count($subclusterjobs['tiltalign']['running']);
+	$tiltqueue = count($subclusterjobs['tiltalign']['queued']);
+
 	$tresults[] = ($tdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tdone complete</a>";
 	$tresults[] = ($trun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatepicker'>$trun running</a>";
 	$tresults[] = ($tq==0) ? "" : "$tq queued";
@@ -152,6 +156,10 @@ if ($expId) {
 	$mresults[] = ($mdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$mdone complete</a>";
 	$mresults[] = ($mrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$mrun running</a>";
 	$mresults[] = ($mq==0) ? "" : "$mq queued";
+
+	$tiltresults[] = ($tiltdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tiltdone complete</a>";
+	$tiltresults[] = ($tiltrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$tiltrun running</a>";
+	$tiltresults[] = ($tiltqueue==0) ? "" : "$tiltqueue queued";
 
 	// in case weren't submitted by web:
 	$totruns = $tdone+$trun+$tq+$ddone+$drun+$dq+$mdone+$mrun+$mq;
@@ -176,8 +184,11 @@ if ($expId) {
 
 	$maxangle = $particle->getMaxTiltAngle($sessionId);
 	if ($maxangle > 5) {
-		$nrun[] ="<a href='tiltAligner.php?expId=$sessionId'>Align and Edit Tilt Pairs</a>";
-		$nrun[] ="<a href='runTiltAutoAligner.php?expId=$sessionId'>Auto Align Tilt Pairs</a>";
+		$nrun[] ="<a href='runTiltAligner.php?expId=$sessionId'>Align and Edit Tilt Pairs</a>";
+		$nrun[] = array(
+			'name'=>"<a href='runTiltAutoAligner.php?expId=$sessionId'>Auto Align Tilt Pairs</a>",
+			'result'=>$tiltresults,
+		);
 	}
 
 	$data[]=array(

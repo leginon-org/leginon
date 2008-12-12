@@ -32,7 +32,7 @@ function runCtfTilt() {
 	$runid = $_POST['runid'];
 	$outdir=$_POST['outdir'];
 
-	$command.= "ctftilt.py ";
+	$command = "ctftilt.py ";
 
 	// parse params
 	$ampcarbon=$_POST['ampcarbon'];
@@ -45,12 +45,12 @@ function runCtfTilt() {
 	//$reprocess=$_POST['reprocess'];
 	$proc = $_POST['processor'];
 
-	$command.="ampcarbon=$ampcarbon ";
-	$command.="ampice=$ampice ";
-	$command.="fieldsize=$fieldsize ";
-	$command.="medium=$medium ";
-	$command.="cs=$cs ";
-	$command.="bin=$binval ";
+	$command.="--ampcarbon=$ampcarbon ";
+	$command.="--ampice=$ampice ";
+	$command.="--fieldsize=$fieldsize ";
+	$command.="--medium=$medium ";
+	$command.="--cs=$cs ";
+	$command.="--bin=$binval ";
 	//if ($nominal) $command.=" nominal=$nominal";
 	//if ($reprocess) $command.=" reprocess=$reprocess";
 	$apcommand = parseAppionLoopParams($_POST);

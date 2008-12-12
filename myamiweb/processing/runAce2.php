@@ -26,60 +26,7 @@ else {
 	createAce2Form();
 }
 
-// --- parse data and process on submit
-function runAce2() {
-	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
-	$outdir=$_POST['outdir'];
 
-	$command.= "pyace2.py ";
-
-	// parse params
-	$refine2d=$_POST['refine2d'];
-	$binval=$_POST['binval'];
-	$cs=$_POST['cs'];
-
-	if($refine2d) $command.="--refine2d ";
-	$command.="--cs=$cs ";
-	$command.="--bin=$binval ";
-
-	$apcommand = parseAppionLoopParams($_POST);
-	if ($apcommand[0] == "<") {
-		createAce2Form($apcommand);
-		exit;
-	}
-	$command .= $apcommand;
-
-	// submit job to cluster
-	if ($_POST['process'] == "Run Ace2") {
-		$user = $_SESSION['username'];
-		$password = $_SESSION['password'];
-
-		if (!($user && $password)) createAce2Form("<b>ERROR:</b> Enter a user name and password");
-
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'ace2',False,True);
-		// if errors:
-		if ($sub) createAce2Form("<b>ERROR:</b> $sub");
-		exit;
-	} else {
-
-		processing_header("Ace2 Results","Ace2 Results");
-
-		echo"
-		<TABLE WIDTH='600'>
-		<TR><TD COLSPAN='2'>
-		<B>ACE Command:</B><br/>
-		$command<HR>
-		</TD></TR>";
-		appionLoopSummaryTable();
-		echo"
-		<TR><TD>refine 2d</TD><TD>$refine2d</TD></TR>
-		<TR><TD>bin</TD><TD>$binval</TD></TR>
-		<TR><TD>cs</TD><TD>$cs</TD></TR>\n";
-		echo "</TABLE>\n";
-		processing_footer(True, True);
-	}
-}
 
 /*
 **
@@ -162,5 +109,70 @@ function createAce2Form($extra=false) {
 	</form>\n";
 	processing_footer();
 }
+
+/*
+**
+**
+** Ace 2 COMMAND
+**
+**
+*/
+
+
+// --- parse data and process on submit
+function runAce2() {
+	$expId = $_GET['expId'];
+	$runid = $_POST['runid'];
+	$outdir=$_POST['outdir'];
+
+	$command.= "pyace2.py ";
+
+	// parse params
+	$refine2d=$_POST['refine2d'];
+	$binval=$_POST['binval'];
+	$cs=$_POST['cs'];
+
+	if($refine2d) $command.="--refine2d ";
+	$command.="--cs=$cs ";
+	$command.="--bin=$binval ";
+
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createAce2Form($apcommand);
+		exit;
+	}
+	$command .= $apcommand;
+
+	// submit job to cluster
+	if ($_POST['process'] == "Run Ace2") {
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		if (!($user && $password)) createAce2Form("<b>ERROR:</b> Enter a user name and password");
+
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'ace2',False,True);
+		// if errors:
+		if ($sub) createAce2Form("<b>ERROR:</b> $sub");
+		exit;
+	} else {
+
+		processing_header("Ace2 Results","Ace2 Results");
+
+		echo"
+		<TABLE WIDTH='600'>
+		<TR><TD COLSPAN='2'>
+		<B>ACE Command:</B><br/>
+		$command<HR>
+		</TD></TR>";
+		appionLoopSummaryTable();
+		echo"
+		<TR><TD>refine 2d</TD><TD>$refine2d</TD></TR>
+		<TR><TD>bin</TD><TD>$binval</TD></TR>
+		<TR><TD>cs</TD><TD>$cs</TD></TR>\n";
+		echo "</TABLE>\n";
+		processing_footer(True, True);
+	}
+}
+
 
 ?>
