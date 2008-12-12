@@ -138,15 +138,14 @@ class ClickTargetTransformer(targetfinder.ClickTargetFinder):
 					drow =  pix['row']
 					dcol =  pix['col']
 					if type == 'c_focus':
-						type = 'focus'
+						a_type = 'focus'
 					if type == 'c_acquisition':
-						type = 'acquisition'
-					a_targetdata = self.newTargetForImage(im2, drow, dcol, type=type, list=self.targetlist, number=a_number, fromtarget=transformed_targetdata)
+						a_type = 'acquisition'
+					a_targetdata = self.newTargetForImage(im2, drow, dcol, type=a_type, list=self.targetlist, number=a_number, fromtarget=transformed_targetdata)
 					self.publish(a_targetdata, database=True)
 					newtargets.append(a_targetdata)
 					c_number += 1
 					a_number += 1
-
 		return newtargets
 
 	def getTargets(self, imagedata, typename, targetlist):
