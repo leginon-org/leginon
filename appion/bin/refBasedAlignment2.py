@@ -49,6 +49,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			action="store_true", help="Invert the density of all the templates")
 		self.parser.add_option("-i", "--num-iter", dest="numiter", type="int", default=1,
 			help="Number of iterations", metavar="#")
+	
 
 	#=====================
 	def checkConflicts(self):
@@ -94,7 +95,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		### setup ref based run
 		refrunq = appionData.ApRefBasedRunData()
 		refrunq['name'] = self.params['runname']
-		refrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		refrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = refrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
@@ -106,7 +107,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
@@ -146,18 +147,18 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq['refstackfile'] = ("templatestack%02d.hed"%(self.params['numiter']))
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = self.params['numiter']
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['outdir']))
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		### check to make sure files exist
-		imagicfile = os.path.join(self.params['outdir'], alignstackq['imagicfile'])
+		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['outdir'], alignstackq['spiderfile'])
+		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
 		if not os.path.isfile(spiderfile):
 			apDisplay.printError("could not find stack file: "+spiderfile)
-		avgmrcfile = os.path.join(self.params['outdir'], alignstackq['avgmrcfile'])
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
-		refstackfile = os.path.join(self.params['outdir'], alignstackq['refstackfile'])
+		refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile'])
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = self.stack['data']
@@ -184,7 +185,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				refq['iteration'] = iternum
 				refq['template'] = apTemplate.getTemplateFromId(templateid)
 				refq['mrcfile'] = ("templateavg%02d-%02d.mrc"%(iternum,refnum))
-				refpath = os.path.abspath(os.path.join(self.params['outdir'], "templates"))
+				refpath = os.path.abspath(os.path.join(self.params['rundir'], "templates"))
 				refq['path'] = appionData.ApPathData(path=refpath)
 				refq['alignrun'] = alignrunq
 				if insert is True:
@@ -235,7 +236,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 			apDisplay.printError("stackfile does not exist: "+self.stack['file'])
 		emancmd += self.stack['file']+" "
 
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
 
@@ -262,20 +263,20 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		takes the spider file and creates an average template of all particles
 		"""
 
-		templatestack = os.path.join(self.params['outdir'], "templatestack00.spi")
+		templatestack = os.path.join(self.params['rundir'], "templatestack00.spi")
 		apFile.removeFile(templatestack, warn=True)
 
 		### hack to use standard filtering library
 		templateparams = {}
 		templateparams['apix'] = self.stack['apix']
-		templateparams['rundir'] = os.path.join(self.params['outdir'], "templates")
+		templateparams['rundir'] = os.path.join(self.params['rundir'], "templates")
 		templateparams['templateIds'] = self.templatelist
 		templateparams['bin'] = self.params['bin']
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
 		print templateparams
-		apParam.createDirectory(os.path.join(self.params['outdir'], "templates"))
+		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
 		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
@@ -295,11 +296,11 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		Function to Average particles that match template to create new templates
 		"""
 
-		#templatestr = os.path.join(self.params['outdir'], "templates/filt*.mrc")
+		#templatestr = os.path.join(self.params['rundir'], "templates/filt*.mrc")
 		#oldfilelist = glob.glob(templatestr)
 
 		### clear old stacks
-		templatestack = os.path.join(self.params['outdir'], ("templatestack%02d.spi" % iternum))
+		templatestack = os.path.join(self.params['rundir'], ("templatestack%02d.spi" % iternum))
 		apFile.removeFile(templatestack, warn=True)
 
 		### calculate correlation stats
@@ -415,7 +416,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
 		#remove large, worthless stack
-		spiderstack = os.path.join(self.params['outdir'], "start.spi")
+		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=True)
 
