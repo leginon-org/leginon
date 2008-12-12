@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	apAlignment.conflicts(params)
 	apAlignment.refconflicts(params)
 	apAlignment.getStackInfo(params)
-	apAlignment.createOutDir(params)
+	apAlignment.createrundir(params)
 	
 	if params['commit'] is True:
 		#check to see if run exist already
