@@ -46,6 +46,8 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 		}
 		$sessionname=$sessioninfo['Name'];
 	}
+	$projectId = (int) getProjectFromExpId($expId);
+	echo "<input type='hidden' name='projectId' value='$projectId'>\n";
 
 	$outdir = ($_POST[outdir]) ? $_POST[outdir] : $sessionpath;
 	echo docpop('outdir','<b>Output Directory:</b>');
