@@ -29,7 +29,7 @@ import apProject
 class reclassifyScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --outdir=<dir> "
+		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --rundir=<dir> "
 			+"[options]")
 
 		self.parser.add_option("--oldstack", dest="oldstack",
@@ -50,9 +50,9 @@ class reclassifyScript(appionScript.AppionScript):
 			help="number of new class averages", metavar="INT")
 		self.parser.add_option("--norefclassid", dest="classid", type="int",
 			help="reference free class id", metavar="INT")	
-		self.parser.add_option("-o", "--outdir", dest="outdir",
+		self.parser.add_option("-o", "--rundir", dest="rundir",
 			help="Location to which output file will be saved", metavar="PATH")
-		self.parser.add_option("-r", "--runid", dest="runid",
+		self.parser.add_option("-r", "--runname", dest="runname",
 			help="Name assigned to this reclassification", metavar="TEXT")
 		self.parser.add_option("--description", dest="description", type="str",
 			help="description of run", metavar="STR")
@@ -68,7 +68,7 @@ class reclassifyScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['classid'] is None:
 			apDisplay.printError("enter a class ID")
-		if self.params['runid'] is None:
+		if self.params['runname'] is None:
 			apDisplay.printError("enter a run ID")
 		if self.params['oldstack'] is None:
 			apDisplay.printError("no reference free classification specified")
@@ -94,7 +94,7 @@ class reclassifyScript(appionScript.AppionScript):
 			apDisplay.printError("class ID not in the database")
 		path = norefclassdata['norefRun']['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
-		self.params['rundir'] = os.path.join(uppath, "clsavgstacks", self.params['runid'])
+		self.params['rundir'] = os.path.join(uppath, "clsavgstacks", self.params['runname'])
 		return
 
 
@@ -102,7 +102,7 @@ class reclassifyScript(appionScript.AppionScript):
 	def uploadreclassification(self):
 		reclassq = appionData.ApImagicReclassifyData()
 		reclassq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
-		reclassq['runname'] = self.params['runid']
+		reclassq['runname'] = self.params['runname']
 		reclassq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['classid'])
 		reclassq['lowpass'] = self.params['lp']
 		reclassq['highpass'] = self.params['hp']
@@ -110,7 +110,7 @@ class reclassifyScript(appionScript.AppionScript):
 		reclassq['maskdropoff'] = self.params['mask_d']
 		reclassq['numiter'] = self.params['niter']
 		reclassq['numaverages'] = self.params['numaverages']
-		reclassq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['outdir'])))
+		reclassq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
 		reclassq['description'] = self.params['description']
 		reclassq['hidden'] = False
 		if self.params['commit'] is True:
@@ -151,7 +151,7 @@ class reclassifyScript(appionScript.AppionScript):
 		
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("cd "+str(self.params['outdir'])+"/\n")
+		f.write("cd "+str(self.params['rundir'])+"/\n")
 		f.write("ln -s "+str(self.params['oldstack'])+".img start_stack.img\n")
 		f.write("ln -s "+str(self.params['oldstack'])+".hed start_stack.hed\n")
 		f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF > imagicCreateNewClassums.log\n")
@@ -234,11 +234,11 @@ class reclassifyScript(appionScript.AppionScript):
 		f.write("rm reclassified_classums.*\n")
 		#f.write("rm classums.*\n")
 		f.close()
-		os.chdir(str(self.params['outdir']))
+		os.chdir(str(self.params['rundir']))
 		os.system('chmod 755 imagicCreateNewClassums.batch')
 		os.system('./imagicCreateNewClassums.batch')
 
-		reclassified_classums = str(self.params['outdir'])+"/reclassified_classums.img"
+		reclassified_classums = str(self.params['rundir'])+"/reclassified_classums.img"
 		# upload it
 		self.uploadreclassification()
 
