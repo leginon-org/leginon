@@ -127,6 +127,13 @@ function runAce2() {
 
 	$command.= "pyace2.py ";
 
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createAce2Form($apcommand);
+		exit;
+	}
+	$command .= $apcommand;
+
 	// parse params
 	$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
@@ -135,13 +142,6 @@ function runAce2() {
 	if($refine2d) $command.="--refine2d ";
 	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
-
-	$apcommand = parseAppionLoopParams($_POST);
-	if ($apcommand[0] == "<") {
-		createAce2Form($apcommand);
-		exit;
-	}
-	$command .= $apcommand;
 
 	// submit job to cluster
 	if ($_POST['process'] == "Run Ace2") {

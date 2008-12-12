@@ -282,7 +282,7 @@ function runMaxLikeAlign($runjob=false) {
 	// setup command
 	$command ="maxlikeAlignment.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--outdir=$rundir ";
+	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
@@ -345,7 +345,7 @@ function runMaxLikeAlign($runjob=false) {
 			<tr><td>binning</td><td>$bin</td></tr>
 			<tr><td>fast</td><td>$fast</td></tr>
 			<tr><td>mirror</td><td>$mirror</td></tr>
-			<tr><td>out dir</td><td>$outdir</td></tr>
+			<tr><td>run dir</td><td>$rundir</td></tr>
 			<tr><td>commit</td><td>$commit</td></tr>
 			</table>\n";
 		processing_footer();

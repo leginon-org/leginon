@@ -34,6 +34,13 @@ function runCtfTilt() {
 
 	$command = "ctftilt.py ";
 
+	$apcommand = parseAppionLoopParams($_POST);
+	if ($apcommand[0] == "<") {
+		createCtfTiltForm($apcommand);
+		exit;
+	}
+	$command .= $apcommand;
+
 	// parse params
 	$ampcarbon=$_POST['ampcarbon'];
 	$ampice=$_POST['ampice'];
@@ -53,12 +60,6 @@ function runCtfTilt() {
 	$command.="--bin=$binval ";
 	//if ($nominal) $command.=" nominal=$nominal";
 	//if ($reprocess) $command.=" reprocess=$reprocess";
-	$apcommand = parseAppionLoopParams($_POST);
-	if ($apcommand[0] == "<") {
-		createCtfTiltForm($apcommand);
-		exit;
-	}
-	$command .= $apcommand;
 
 	// submit job to cluster
 	if ($_POST['process'] == "Run CtfTilt") {

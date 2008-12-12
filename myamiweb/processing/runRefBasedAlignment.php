@@ -402,7 +402,7 @@ function runAlignment($runjob=false) {
 
 	if ($maskdiam) $command.="--last-ring=$maskdiam ";
 	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
-	$command.="--outdir=".$rundir." ";
+	$command.="--rundir=".$rundir." ";
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lp ";
 	#if ($csym > 1) $command.="--csym=$csym ";
@@ -444,7 +444,7 @@ function runAlignment($runjob=false) {
 		<TR><TD>numpart</TD><TD>$numpart</TD></TR>
 		<TR><TD>last ring</TD><TD>$maskdiam</TD></TR>
 		<TR><TD>first ring</TD><TD>$imaskdiam</TD></TR>
-		<TR><TD>outdir</TD><TD>$outdir</TD></TR>
+		<TR><TD>rundir</TD><TD>$rundir</TD></TR>
 		<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
 		<TR><TD>xystep</TD><TD>$xystep</TD></TR>
 		<TR><TD>lowpass</TD><TD>$lp</TD></TR>";

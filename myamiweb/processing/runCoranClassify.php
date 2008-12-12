@@ -234,7 +234,7 @@ function runSpiderCoranClassify($runjob=false) {
 
 	$command ="coranClassify.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--outdir=$rundir ";
+	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--alignstack=$stackid ";
@@ -266,7 +266,7 @@ function runSpiderCoranClassify($runjob=false) {
 		<tr><td>run id</td><td>$runname</td></tr>
 		<tr><td>stack id</td><td>$stackid</td></tr>
 		<tr><td>num factors</td><td>$numfactors</td></tr>
-		<tr><td>out dir</td><td>$outdir</td></tr>
+		<tr><td>run dir</td><td>$rundir</td></tr>
 		<tr><td>commit</td><td>$commit</td></tr>
 		</table>\n";
 		processing_footer();

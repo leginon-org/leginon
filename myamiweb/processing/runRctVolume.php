@@ -222,7 +222,7 @@ function runRctVolume($runjob=false) {
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
 	$command.="--lowpassvol=$lowpassvol ";
-	$command.="--outdir=$rundir ";
+	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
 

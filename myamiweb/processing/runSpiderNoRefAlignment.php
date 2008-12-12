@@ -316,7 +316,7 @@ function runSpiderNoRefAlign($runjob=false) {
 
 	$command="spiderNoRefAlign.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--outdir=$rundir ";
+	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
@@ -362,7 +362,7 @@ function runSpiderNoRefAlign($runjob=false) {
 		<tr><td>num part</td><td>$numpart</td></tr>
 		<tr><td>binning</td><td>$bin</td></tr>
 		<tr><td>init method</td><td>$initmethod</td></tr>
-		<tr><td>out dir</td><td>$outdir</td></tr>
+		<tr><td>run dir</td><td>$rundir</td></tr>
 		<tr><td>commit</td><td>$commit</td></tr>
 		</table>\n";
 		processing_footer();

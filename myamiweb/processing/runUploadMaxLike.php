@@ -145,7 +145,7 @@ function runMaxLikeAlign($runjob=false) {
 
 	// setup command
 	$command="uploadMaxlikeAlignment.py ";
-	$command.="--outdir=$rundir ";
+	$command.="--rundir=$rundir ";
 	if ($timestamp) $command.="-t $timestamp ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
@@ -175,7 +175,7 @@ function runMaxLikeAlign($runjob=false) {
 			<tr><td>jobid</td><td>$_GET[jobid]</td></tr>
 			<tr><td>timestamp</td><td>$timestamp</td></tr>
 			<tr><td>run name</td><td>$runname</td></tr>
-			<tr><td>output directory</td><td>$outdir</td></tr>
+			<tr><td>run directory</td><td>$rundir</td></tr>
 			<tr><td>commit</td><td>$commit</td></tr>
 			<tr><td>runjob</td><td>$runjob</td></tr>
 			</table>\n";
