@@ -46,6 +46,8 @@ def getSpecificImagesFromDB(imglist):
 	print "Querying database for "+str(len(imglist))+" specific images ... "
 	imgtree=[]
 	for imgname in imglist:
+		if imgname[-4:] == ".mrc":
+			imgname = imgname[:-4]
 		imgquery = leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = imgquery.query(readimages=False, results=1)
 		imgtree.append(imgres[0])
