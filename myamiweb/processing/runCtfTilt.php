@@ -121,7 +121,6 @@ function createCtfTiltForm($extra=false) {
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions = "";
-	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header("CtfTilt Launcher", "CTF Estimation by CtfTilt", $javafunctions);
 

@@ -55,9 +55,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
                          }
                  }
         </SCRIPT>\n";
-  $javafunctions .= appionLoopJavaCommands();
   $javafunctions .= writeJavaPopupFunctions('appion');
-  $javafunctions .= particleLoopJavaCommands();
   processing_header("Manual Picker Launcher","Manual Particle Selection and Editing",$javafunctions);
 
   if ($extra) {

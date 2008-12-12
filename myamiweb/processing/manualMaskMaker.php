@@ -216,7 +216,6 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 			 newwindow.document.close();
 		 }
 	</SCRIPT>\n";
-	$javascript.=appionLoopJavaCommands();
 	$javascript.=maskMakerJavaCommands();
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:

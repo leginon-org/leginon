@@ -77,7 +77,6 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 
 	</SCRIPT>\n";
 	echo $javascript;
-	$javascript.=appionLoopJavaCommands();
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {

@@ -245,9 +245,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			 }
 		 }
 	</SCRIPT>\n";
-	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
-	$javafunctions .= particleLoopJavaCommands();
 	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
 	if ($extra) {

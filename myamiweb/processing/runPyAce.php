@@ -227,7 +227,6 @@ function createPyAceForm($extra=false) {
 		}
 
 	</SCRIPT>\n";
-	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header("PyACE Launcher","Automated CTF Estimation With PyACE",$javafunctions);
 

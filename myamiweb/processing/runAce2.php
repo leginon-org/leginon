@@ -106,7 +106,6 @@ function createAce2Form($extra=false) {
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions = "";
-	$javafunctions .= appionLoopJavaCommands();
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header("Ace 2 Launcher", "CTF Estimation by Ace 2", $javafunctions);
 
