@@ -325,8 +325,7 @@ def averageTemplate(params):
 	time.sleep(2)
 	return
 
-def createOutDir(params):
-	params['rundir'] = os.path.join(params['outdir'], params['runname'])
+def createRunDir(params):
 	apDisplay.printMsg("creating run directory: "+params['rundir'])
 	apParam.createDirectory(params['rundir'])
 	apParam.writeFunctionLog(sys.argv, logfile=os.path.join(params['rundir'],"classifier.log"))
