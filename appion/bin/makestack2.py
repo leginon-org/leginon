@@ -11,7 +11,7 @@ import glob
 #from numpy import *
 import numpy
 #appion
-import appionLoop
+import appionLoop2
 import apImage
 import apDisplay
 import apDatabase
@@ -32,7 +32,7 @@ import leginondata
 #legacy
 #import selexonFunctions  as sf1
 
-class makestack (appionLoop.AppionLoop):
+class makestack (appionLoop2.AppionLoop):
 
 ############################################################
 ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -42,7 +42,7 @@ class makestack (appionLoop.AppionLoop):
 
 	def preLoopFunctions(self):
 		if self.params['selexonId'] is None and self.params['sessionname'] is not None:
-			self.params['selexonId'] = apParticle.guessParticlesForSession(sessionname=params['sessionname'])
+			self.params['selexonId'] = apParticle.guessParticlesForSession(sessionname=self.params['sessionname'])
 	
 		self.insertStackRun()
 	
@@ -116,7 +116,7 @@ class makestack (appionLoop.AppionLoop):
 		# get selection run id
 		selexonrun = appionData.ApSelectionRunData.direct_query(self.params['selexonId'])
 		if not (selexonrun):
-			apDisplay.printError("specified runId '"+str(self.params['selexonId'])+"' not in database")
+			apDisplay.printError("specified selexon Id '"+str(self.params['selexonId'])+"' not in database")
 		
 		# from id get the session
 		self.params['sessionid']=selexonrun['session']
@@ -126,7 +126,7 @@ class makestack (appionLoop.AppionLoop):
 		dbimginfo=dbimgq.query(readimages=False)
 
 		if not (dbimginfo):
-			apDisplay.printError("no images associated with this runId")
+			apDisplay.printError("no images associated with this session")
 
 		apDisplay.printMsg("Find corresponding image entry in the particle database")
 		# for every image, find corresponding image entry in the particle database
@@ -805,7 +805,7 @@ class makestack (appionLoop.AppionLoop):
 
 		# create a stackRun object
 		runq = appionData.ApStackRunData()
-		runq['stackRunName'] = self.params['runid']
+		runq['stackRunName'] = self.params['runname']
 		runq['session'] = self.params['session']	
 
       # see if stack already exists in the database (just checking path)
@@ -822,10 +822,10 @@ class makestack (appionLoop.AppionLoop):
 
 		self.stackdata = stackq
 
-		runids = runq.query(results=1)
+		runnames = runq.query(results=1)
 		# recreate a stackRun object
 		runq = appionData.ApStackRunData()
-		runq['stackRunName'] = self.params['runid']
+		runq['stackRunName'] = self.params['runname']
 		runq['session'] = self.params['session']
 		if goodplist:
 			runq['stackParams'] = goodplist
@@ -845,13 +845,13 @@ class makestack (appionLoop.AppionLoop):
 
 		# if not in the database, make sure run doesn't already exist
 		if not stacks:
-			if not runids:
+			if not runnames:
 				print "Inserting stack parameters into DB"
 				if self.params['commit'] is True:
 					self.removeExistingStack()
 					rinstackq.insert()
 			else:
-				apDisplay.printError("Run name '"+self.params['runid']+"' already in the database")
+				apDisplay.printError("Run name '"+self.params['runname']+"' already in the database")
 		
 		# if it's in the database, make sure that all other
 		# parameters are the same, since stack will be re-written
@@ -884,95 +884,71 @@ class makestack (appionLoop.AppionLoop):
 ## Additional parameters
 ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ############################################################
+
+	def setupParserOptions(self):
+		### values
+		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
+			help="Binning of the image before FFT", metavar="#")
+		self.parser.add_option("--single", dest="single", default=None,
+			help="create a single stack")
+		self.parser.add_option("--acecutoff", dest="acecutoff", default=None,
+			help="ACE cut off")
+		self.parser.add_option("--boxsize", dest="boxsize", default=None,
+			help="particle box size in pixel")
+		self.parser.add_option("--mag", dest="mag", default=None,
+			help="magnification")
+		self.parser.add_option("--apix", dest="apix", type="float", default=0.0,
+			help="apix")
+		self.parser.add_option("--kv", dest="kv", type="int", default=0,
+			help="kv")
+		self.parser.add_option("--df", dest="df", type="float", default=0.0,
+			help="defocus")	
+		self.parser.add_option("--correlationmin", dest="correlationmin", default=None,
+			help="particle correlation mininum")
+		self.parser.add_option("--correlationmax", dest="correlationmax", default=None,
+			help="particle correlation maximum")
+		self.parser.add_option("--mindefocus", dest="mindefocus", default=None,
+			help="minimum defocus")
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", default=None,
+			help="maximum defocus")
+		self.parser.add_option("--selexonId", dest="selexonId", default=None,
+			help="particle picking runid")
+		self.parser.add_option("--medium", dest="medium", default=None,
+			help="medium")
+		self.parser.add_option("--checkmask", dest="checkmaskmedium", default=None,
+			help="check mask")
+		self.parser.add_option("--particleNumber", dest="particleNumber", type="int", default=0,
+			help="particle number (no need to specify)")
+		self.parser.add_option("--partlimit", dest="partlimit", default=None,
+			help="particle limit")
+		self.parser.add_option("--matlab", dest="matlab", default=None,
+			help="matlab")		
+		self.parser.add_option("--filetype", dest="filetype", default='imagic',
+			help="filetype, default=imagic")
+		self.parser.add_option("--lowpass", dest="lowpass", default=None,
+			help="low pass filter")
+		self.parser.add_option("--highpass", dest="highpass", default=None,
+			help="high pass filter")					
 		
-	def specialDefaultParams(self):
-		self.params['single']=None
-		self.params['acecutoff']=None
-		self.params['boxsize']=None
-#		self.params['inspectfile']=None
-		self.params['mag']=None
-		self.params['phaseflipped']=False
-		self.params['apix']=0.0
-		self.params['kv']=0
-		self.params['tiltangle']=None
-		self.params['inverted']=True
-		self.params['spider']=False
-		self.params['df']=0.0
-		self.params['correlationmin']=None
-		self.params['correlationmax']=None
-		self.params['mindefocus']=None
-		self.params['maxdefocus']=None	
-		self.params['selexonId']=None
-		self.params['medium']=None
-		self.params['normalized']=True
-		self.params['checkmask']=None
-		self.params['particleNumber']=0
-		self.params['bin']=1
-		self.params['partlimit']=None
-		self.params['defocpair']=False
-		self.params['uncorrected']=False
-		self.params['stig']=False
-		self.params['matlab']=None
-		self.params['filetype']='imagic'
-		self.params['lowpass']=None
-		self.params['ctftilt']=False
-		self.params['highpass']=None
-		self.params['boxfiles']=False
+		### true/false
+		self.parser.add_option("--phaseflipped", dest="phaseflipped", default=False,
+			action="store_true", help="perform CTF correction on the boxed images")
+		self.parser.add_option("--inverted", dest="inverted", default=True,
+			action="store_true", help="tilt angle of the micrographs")	
+		self.parser.add_option("--spider", dest="spider", default=False,
+			action="store_true", help="create a spider stack")
+		self.parser.add_option("--normalized", dest="normalized", default=True,
+			action="store_true", help="normalize the entire stack")
+		self.parser.add_option("--defocpair", dest="defocpair", default=False,
+			action="store_true", help="select defocal pair")	
+		self.parser.add_option("--stig", dest="stig", default=False,
+			action="store_true", help="stigmatism correction")
+		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
+			action="store_true", help="using ctftilt estimation for CTF correction")		
+		self.parser.add_option("--boxfiles", dest="boxfiles", default=False,
+			action="store_true", help="boxfiles")
 
-	def specialParseParams(self,args):
-		for arg in args:
-			elements=arg.split('=')
-			elements[0] = elements[0].lower()
-			#print elements
-			if (elements[0]=='help' or elements[0]=='--help' \
-				or elements[0]=='-h' or elements[0]=='-help'):
-				sys.exit(1)
-			elif (elements[0]=='single'):
-				self.params['single']=elements[1]
-			elif (elements[0]=='ace'):
-				self.params['acecutoff']=float(elements[1])
-			elif (elements[0]=='boxsize'):
-				self.params['boxsize']=int(elements[1])
-			elif (elements[0]=='phaseflip'):
-				self.params['phaseflipped']=True
-			elif (elements[0]=='apix'):
-				self.params['apix']=float(elements[1])
-			elif (elements[0]=='tiltangle'):
-				self.params['tiltangle']=float(elements[1])
-			elif (elements[0]=='noinvert'):
-				self.params['inverted']=False
-			elif (elements[0]=='spider'):
-				self.params['spider']=True
-			elif (elements[0]=='prtlrunid'):
-				self.params['selexonId']=int(elements[1])
-			elif (elements[0]=='selexonmin'):
-				self.params['correlationmin']=float(elements[1])
-			elif (elements[0]=='selexonmax'):
-				self.params['correlationmax']=float(elements[1])
-			elif (elements[0]=='mindefocus'):
-				self.params['mindefocus']=float(elements[1])
-			elif (elements[0]=='maxdefocus'):
-				self.params['maxdefocus']=float(elements[1])
-			elif (elements[0]=='nonorm'):
-				self.params['normalized']=False
-			elif (elements[0]=='description'):
-				self.params['description']=elements[1]
-			elif (elements[0]=='ctftilt'):
-				self.params['ctftilt']=True
-			elif (elements[0]=='partlimit'):
-				self.params['partlimit']=int(elements[1])
-			elif (elements[0]=='hp' or elements[0]=='highpass'):
-				self.params['highpass']=int(elements[1])
-			elif (elements[0]=='lp' or elements[0]=='lowpass'):
-				self.params['lowpass']=float(elements[1])
-			elif (elements[0]=='bin'):
-				self.params['bin']=int(elements[1])
-			elif (elements[0]=='defocpair'):
-				self.params['defocpair']=True
-			else:
-				apDisplay.printError(str(elements[0])+" is not recognized as a parameter")
-
-	def specialParamConflicts(self):
+	def checkConflicts(self):
 		if self.params['boxsize'] is None:
 			apDisplay.printError("A boxsize has to be specified")
 		if self.params['description'] is None:
