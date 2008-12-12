@@ -26,8 +26,6 @@ class subStackScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['description'] is None:
-			apDisplay.printError("substack description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
 		if self.params['norefclassid'] is None:
@@ -57,7 +55,7 @@ class subStackScript(appionScript.AppionScript):
 		#new stack path
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
-		newstack = os.path.join(self.params['outdir'], stackdata['name'])
+		newstack = os.path.join(self.params['rundir'], stackdata['name'])
 		apStack.checkForPreviousStack(newstack)
 
 		### list of classes to be excluded
