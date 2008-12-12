@@ -179,61 +179,6 @@ function parseAppionLoopParams () {
 		return $error;
 		exit;
 	}
-
-	// CONVERT DATA
-	if ($_POST[checkimage]=="non-rejected") {
-		$norejects = 1;
-	} elseif ($_POST[checkimage]=="best") {
-		$norejects = 1;
-		$bestimages = 1;
-	} else {
-		$norejects = 0;
-		$bestimages = 0;
-	}
-	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
-	$background = ($_POST[background]=="on") ? "1" : "0";
-	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
-	$limit = $_POST[limit];
-	$tiltangle = $_POST['tiltangle'];
-	$apcontinue = $_POST[apcontinue];
-	$commit = ($_POST[commit]=="on") ? "1" : "0";
-	$runid = $_POST[runid];
-	$outdir = $_POST[outdir];
-	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
-	else $alldbimages = $_POST[sessionname];
-	if ($_POST['testimage']=="on") {
-		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		$testimage = ereg_replace(" ","\ ", $testimage);
-		$apcontinue = false;
-	}
-
-	// CREATE COMMAND
-	if ($testimage) $command.=" $testimage";
-	elseif ($dbimages) $command.=" dbimages=$dbimages";
-	else $command.=" alldbimages=$_POST[sessionname]";
-	if ($runid) $command.=" runid=$runid";
-	if ($outdir) $command.=" outdir=$outdir";
-	if ($norejects) $command.=" norejects";
-	if ($bestimages) $command.=" bestimages";
-	if ($nowait) $command.=" nowait";
-	if ($commit) $command.=" commit";
-	if ($background) $command.=" background";
-	if ($shuffle) $command.=" shuffle";
-	if ($limit) $command.=" limit=$limit";
-	if ($tiltangle != '' && $tiltangle != 'all') $command.=" tiltangle=$tiltangle";
-	if (!$apcontinue) $command.=" nocontinue";
-	else $command.=" continue";
-
-	return $command;
-}
-
-function parseAppionLoop2Params () {
-	// CHECK FOR ERRORS
-	$error = checkAppionErrors();
-	if ($error[0] != false) {
-		return $error;
-		exit;
-	}
 	$expId = $_GET['expId'];
 	$projectId = (int) getProjectFromExpId($expId);
 	// CONVERT DATA

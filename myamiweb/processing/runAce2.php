@@ -43,7 +43,7 @@ function runAce2() {
 	$command.="--cs=$cs ";
 	$command.="--bin=$binval ";
 
-	$apcommand = parseAppionLoop2Params($_POST);
+	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createAce2Form($apcommand);
 		exit;
