@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#	   The Leginon software is Copyright 2003
+#	   The Scripps Research Institute, La Jolla, CA
+#	   For terms of the license agreement
+#	   see  http://ami.scripps.edu/software/leginon-license
 #
 
 import cPickle as pickle
@@ -17,52 +17,52 @@ import datatransport
 # Hideous fix to counteract http://python.org/sf/1092502
 # (which should have been fixed ages ago.)
 def _fixed_socket_read(self, size=-1):
-        data = self._rbuf
-        if size < 0:
-            # Read until EOF
-            buffers = []
-            if data:
-                buffers.append(data)
-            self._rbuf = ""
-            if self._rbufsize <= 1:
-                recv_size = self.default_bufsize
-            else:
-                recv_size = self._rbufsize
-            while True:
-                data = self._sock.recv(recv_size)
-                if not data:
-                    break
-                buffers.append(data)
-            return "".join(buffers)
-        else:
-            # Read until size bytes or EOF seen, whichever comes first
-            buf_len = len(data)
-            if buf_len >= size:
-                self._rbuf = data[size:]
-                return data[:size]
-            buffers = []
-            if data:
-                buffers.append(data)
-            self._rbuf = ""
-            while True:
-                left = size - buf_len
-                recv_size = min(self._rbufsize, left)
-                data = self._sock.recv(recv_size)
-                if not data:
-                    break
-                buffers.append(data)
-                n = len(data)
-                if n >= left:
-                    self._rbuf = data[left:]
-                    buffers[-1] = data[:left]
-                    break
-                buf_len += n
-            return "".join(buffers)
-#        while True:
-#                left = size - buf_len
-#                recv_size = min(self._rbufsize, left) # this is the actual fix
-#                data = self._sock.recv(recv_size)
-#        return "".join(buffers)
+	data = self._rbuf
+	if size < 0:
+		# Read until EOF
+		buffers = []
+		if data:
+			buffers.append(data)
+		self._rbuf = ""
+		if self._rbufsize <= 1:
+			recv_size = self.default_bufsize
+		else:
+			recv_size = self._rbufsize
+		while True:
+			data = self._sock.recv(recv_size)
+			if not data:
+				break
+			buffers.append(data)
+		return "".join(buffers)
+	else:
+		# Read until size bytes or EOF seen, whichever comes first
+		buf_len = len(data)
+		if buf_len >= size:
+			self._rbuf = data[size:]
+			return data[:size]
+		buffers = []
+		if data:
+			buffers.append(data)
+		self._rbuf = ""
+		while True:
+			left = size - buf_len
+			recv_size = min(self._rbufsize, left)
+			data = self._sock.recv(recv_size)
+			if not data:
+				break
+			buffers.append(data)
+			n = len(data)
+			if n >= left:
+				self._rbuf = data[left:]
+				buffers[-1] = data[:left]
+				break
+			buf_len += n
+		return "".join(buffers)
+#		while True:
+#				left = size - buf_len
+#				recv_size = min(self._rbufsize, left) # this is the actual fix
+#				data = self._sock.recv(recv_size)
+#		return "".join(buffers)
 
 # patch the method at runtime
 socket._fileobject.read = _fixed_socket_read
@@ -164,7 +164,6 @@ class Client(object):
 		try:
 			result = pickle.load(sfile)
 		except Exception, e:
-                        raise
 			raise TransportError('error unpickling response, %s' % e)
 
 		try:
