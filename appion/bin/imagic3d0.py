@@ -68,31 +68,12 @@ class imagic3d0Script(appionScript.AppionScript):
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int",	#default=25
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
 
-<<<<<<< .mine
-=======
-		self.parser.add_option("-o", "--rundir", dest="rundir",
-			help="Location to which output file will be saved", metavar="PATH")
-		self.parser.add_option("-r", "--runname", dest="runname",
-			help="Name assigned to this reclassification", metavar="TEXT")
-		self.parser.add_option("--description", dest="description", type="str",
-			help="description of run", metavar="STR")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
-
->>>>>>> .r2504
 		return 
 
 	#=====================
 	def checkConflicts(self):
 		if (self.params['reclassId'] is None and self.params['norefClassId'] is None) :
 			apDisplay.printError("There is no reclassification or noref-classification ID specified")
-<<<<<<< .mine
-=======
-		if self.params['runname'] is None:
-			apDisplay.printError("enter a run ID")
->>>>>>> .r2504
 		if self.params['projections'] is None:
 			apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
 		if self.params['symmetry'] is None:
