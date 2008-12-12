@@ -115,6 +115,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$leginondata = new leginondata();
 	$particle = new particledata();
 	$projectId=getProjectFromExpId($expId);
+	$_SESSION['projectId'] = $projectId;
 
 	// Collect session info from database
 	$sessiondata=getSessionList($projectId,$expId);
