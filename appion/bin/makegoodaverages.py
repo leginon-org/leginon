@@ -229,19 +229,19 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			+"[ --stackname=<name> "
 			+" --avgjump=<avg> --sigma=<sigma> --eotest ]")
 		self.parser.add_option("-r", "--reconid", dest="reconid", type="int",
-			help="reconstruction run id", metavar="INT")
+			help="reconstruction run id", metavar="#")
 		self.parser.add_option("-m", "--mask", dest="mask", type="int",
 			help="Mask radius in pixels", metavar="INT")
 		self.parser.add_option("-i", "--iter", dest="iter", type="int",
-			help="Final eulers applied to particles will come from this iteration", metavar="INT")
+			help="Final eulers applied to particles will come from this iteration", metavar="#")
 		self.parser.add_option("-s", "--sigma", dest="sigma", type="float",
 			help="Number of std devs greater than the mean quality factor to include", metavar="FLOAT")
 		self.parser.add_option("-j", "--avgjump", dest="avgjump", type="float",
 			help="Throw away ptcls with median euler jumps greater than this", metavar="FLOAT")
 		self.parser.add_option("--rejectlst", dest="rejectlst",
-			help="Throw away ptcls in the specified text file. DB style 1,2,...", metavar="TEXT")
-		self.parser.add_option("-n", "--stackname", dest="stackname", default="goodavgs.hed",
-			help="Name of the stack to write the averages", metavar="TEXT")
+			help="Throw away ptcls in the specified text file. DB style 1,2,...", metavar="LIST")
+		self.parser.add_option("--stackname", dest="stackname", default="goodavgs.hed",
+			help="Name of the stack to write the averages", metavar="NAME")
 		self.parser.add_option("--eotest", dest="eotest", default=False,
 			action="store_true", help="make even and odd averages")
 		self.parser.add_option("--skip-avg", dest="skipavg", default=False,
@@ -255,6 +255,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			apDisplay.printError("enter a mask radius")
 		if self.params['iter'] is None:
 			apDisplay.printError("enter an iteration for the final Eulers")
+		print "reconid",self.params['reconid']
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 
 	#=====================

@@ -32,7 +32,7 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Initial model id in the database", metavar="INT")
 		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
 			help="Jobfile id in the database", metavar="INT")
-		self.parser.add_option("-p", "--package", dest="package", default="EMAN",
+		self.parser.add_option("-k", "--package", dest="package", default="EMAN",
 			help="Reconstruction package used (EMAN by default)", metavar="TEXT")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")

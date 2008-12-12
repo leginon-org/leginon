@@ -7,7 +7,7 @@ import shutil
 import numpy
 ma = numpy.ma
 #appion
-import appionLoop
+import appionLoop2
 import apImage
 import apCrud
 import apMask
@@ -88,7 +88,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Binning of the image", metavar="#")
 		self.parser.add_option("--masktype", dest="masktype", type="string", default='custom',
-			help="Type of masking: crud, edge, aggr, or custom ", metavar="#")
+			help="Type of masking: crud, edge, aggr, or custom ", metavar="TYPE")
 		self.parser.add_option("--diam", dest="diam", type="float", default=0.0,
 			help="Particle diameter", metavar="#")
 		self.parser.add_option("--cruddiam", dest="cdiam", type="float", default=0.0,
@@ -106,15 +106,15 @@ class MaskMaker(appionLoop2.AppionLoop):
 		self.parser.add_option("--convolve", dest="convolve", type="float", default=0.0,
 			help="Threshold for blob detection on edge image convolved with particle size, 0.0 means skip the convolution", metavar="#")
 		self.parser.add_option("--no_hull", dest="no_hull", default=False,
-			action="store_false", help="Flag for skipping covex hull creation")
+			action="store_true", help="Flag for skipping covex hull creation")
 		self.parser.add_option("--cv", dest="cv", default=False,
-			action="store_false", help="Flag for using libCV region finder; False= Use canny edge detection as in Selexon")
+			action="store_true", help="Flag for using libCV region finder; False= Use canny edge detection as in Selexon")
 		self.parser.add_option("--stdev", dest="stdev", type="float", default=0.0,
 			help="Low threshold for the acceptable standard deviation within the crud", metavar="#")
 		self.parser.add_option("--no_length_prune", dest="no_length_prune", default=False,
-			action="store_false", help="Flag for not eliminating blobs by perimeter to save time")
+			action="store_true", help="Flag for not eliminating blobs by perimeter to save time")
 		self.parser.add_option("--test", dest="test", default=False,
-			action="store_false", help="Flag for saving intermediate-step images and not to commit to database")
+			action="store_true", help="Flag for saving intermediate-step images and not to commit to database")
 
 	def insertFunctionRun(self):
 		if self.params is None:

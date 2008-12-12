@@ -275,7 +275,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 			help="file output type: "+str(self.outtypes), metavar="TYPE")
 		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
 			help="selection run id for previous automated picking run", metavar="#")
-		self.parser.add_option("--pickrunname", dest="pickrunname", type="int",
+		self.parser.add_option("--pickrunname", dest="pickrunname", type="str",
 			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
 		self.parser.add_option("--shape", dest="shape", default='+',
 			help="pick shape")	

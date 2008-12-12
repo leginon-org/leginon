@@ -27,9 +27,9 @@ class modelFromPDB(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --pdbid=1ohg --resolution=15 --apix=1.63 --box=300 [options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-n", "--modelname", dest="name",
+		self.parser.add_option("--modelname", dest="name",
 			help="Model name", metavar="STR")
-		self.parser.add_option("-p", "--pdbid", dest="pdbid",
+		self.parser.add_option("--pdbid", dest="pdbid",
 			help="PDB ID", metavar="STR")
 		self.parser.add_option("-r", "--resolution", dest="res", type='float', default=None,
 			help="Resolution of resulting model (in Angstroms)")

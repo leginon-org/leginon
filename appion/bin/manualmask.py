@@ -4,7 +4,7 @@ import os
 import sys
 import wx
 import time
-import particleLoop
+import particleLoop2
 import apImage
 import manualpicker
 #import subprocess
@@ -247,12 +247,13 @@ class manualPicker(particleLoop2.ParticleLoop):
 		self._createDirectory(os.path.join(self.params['rundir'], "masks"),warning=False)
 
 	def setupParserOptions(self):
+		self.parser.set_usage("Usage: %prog --session <session name> --runame <new or maskrunname> [--pickrunid <id>]  \n\t ")
 		self.parser.add_option("--assess", dest="assessname", type="string", default=None,
-			help="New mask assessment run name", metavar="#")
+			help="New mask assessment run name", metavar="NAME")
 		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
 			help="id of the particle pick to be displayed", metavar="#")
 		self.parser.add_option("--pickrunname", dest="pickrunname", type="string",
-			help="Name of the particle pick to be displayed", metavar="#")
+			help="Name of the particle pick to be displayed", metavar="NAME")
 
 	def specialParamConflicts(self):
 	

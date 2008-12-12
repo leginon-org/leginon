@@ -36,25 +36,17 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Pixel size in Angstroms", metavar="FLOAT")
 		self.parser.add_option("--res", "--resolution", dest="res", type="float",
 			help="Map resolution in Angstroms", metavar="FLOAT")
-		self.parser.add_option("-d", "--description", dest="description",
-			help="Description of the reconstruction (must be in quotes)", metavar="'TEXT'")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True, action="store_true", 
-			help="Commit reconstruction to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True, action="store_false", 
-			help="Do not commit reconstruction to database")
 		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False, action="store_true",
 			help="Do not do any reconstruction calculations only run chimera")
-		self.parser.add_option("-o", "--rundir", dest="rundir",
-			help="Location to store uploaded model", metavar="PATH")
 		self.parser.add_option("-b", "--boxsize", "--newbox", dest="newbox", type="int",
 			help="Boxsize of new model", metavar="INT")
 		self.parser.add_option("-m", "--modelid", "--old-model-id", dest="oldmodelid", type="int",
 			help="Initial model id in the database to rescale", metavar="INT")
-		self.parser.add_option("-n", "--name", dest="name",
+		self.parser.add_option("--name", dest="name",
 			help="File name for new model, automatically set")
 
 	#=====================

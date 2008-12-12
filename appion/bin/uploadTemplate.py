@@ -26,7 +26,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			+"--description='<text>' [options]")
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="Template pixel size in Angstroms per pixel", metavar="FLOAT")
-		self.parser.add_option("-d", "--diam", dest="diam", type="int",
+		self.parser.add_option("--diam", dest="diam", type="int",
 			help="Approximate diameter of particle (in Angstroms)", metavar="INT")
 		self.parser.add_option("-t", "--template", dest="template",
 			help="Filename of the template (wild cards accepted)", metavar="FILE")

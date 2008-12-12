@@ -25,7 +25,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --emdbid=1122 --resolution=15 --apix=1.63 --box=300 [options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-n", "--modelname", dest="name",
+		self.parser.add_option("--modelname", dest="name",
 			help="Model name", metavar="STR")
 		self.parser.add_option("-e", "--emdbid", dest="emdbid", type="int",
 			help="EMDB ID", metavar="#")

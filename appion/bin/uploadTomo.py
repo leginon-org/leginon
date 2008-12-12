@@ -31,12 +31,10 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-n", "--name", dest="name",
-			help="File name for new model, automatically set")
+		self.parser.add_option("--name", dest="name",
+			help="File name for new tomogram, automatically set")
 		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber",
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
-		self.parser.add_option("-a", "--pixelsize", dest="apix",
-			help="Pixel Size in Angstroms of Images", metavar="APIX")
 		self.parser.add_option("-v", "--volume", dest="volume",
 			help="Subvolume from original voxel volume", metavar="VOLUME")
 
