@@ -13,6 +13,21 @@ define('PROJECT_DB_USER', $PROJECT_DB_USER);
 define('PROJECT_DB_PASS', $PROJECT_DB_PASS);
 define('PROJECT_DB', $PROJECT_DB);
 
+function setDatabase() {
+	$expId=$_GET['expId'];
+	$p=new project();
+	$r=$p->getProjectfromSessionId($expId);
+	$projectId=$r['projectId'];
+	$db="ap".$projectId;
+	return $db;
+}
+
+if (!$PROCESSING_DB) {
+	$PROCESSING_DB=setDatabase();
+}
+
+define(PARTICLE_DB, $PROCESSING_DB);
+
 class project {
 
 	function project(){

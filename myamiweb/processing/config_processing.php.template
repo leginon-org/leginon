@@ -9,23 +9,12 @@
  */
 
 
-// --- Particle database
-$PARTICLE_DB_HOST = "";
-$PARTICLE_DB_USER = "";
-$PARTICLE_DB_PASS = "";
-$PARTICLE_DB = "";
-
-// --- CTF database --- //
-$PROCESSING_DB_HOST = "";
-$PROCESSING_DB_USER = "";
+// --- Processing database --- //
+$PROCESSING_DB_HOST = "cronus4";
+$PROCESSING_DB_USER = "usr_object";
 $PROCESSING_DB_PASS = "";
 $PROCESSING_DB = "";
 
-// --- Reconstruction Database --- //
-$RECON_DB_HOST = "";
-$RECON_DB_USER = "";
-$RECON_DB_PASS = "";
-$RECON_DB = "";
 
 // --- Add as many processing hosts as you like --- //
 $PROCESSING_HOSTS[]="";
