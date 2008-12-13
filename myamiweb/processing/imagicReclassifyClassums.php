@@ -247,8 +247,6 @@ function generateProcessedClasses() {
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
-	$command = "$outdir/$runid/{$runid}_imagicReclassifyClassums.job";
-
 
 	// get stack values
 	$stackinfo = explode('|--|', $_POST['opvals']);
@@ -264,19 +262,19 @@ function generateProcessedClasses() {
 	$box_size = $stack_box_size / $bin;
 	
 	// create python command for executing imagic job file	
-	$text = "";
-	$text .= "imagicReclassifyClassums.py";
-	$text .= " projectId=$projectId --norefclassid=$classid --runid=$runid --rundir=$outdir/$runid --oldstack=$filename --lp=$lpfilt";
-	$text .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter";
-	$text .= " --numaverages=$new_classums --description=\"$description\"";
-	if ($commit) $text .= " --commit\n";
-	else $text.=" --no-commit\n";
-
+	$command .= "imagicReclassifyClassums.py";
+	$command .= " --projectid=".$_SESSION['projectId'];	
+	$command .= " --norefclassid=$classid --runname=$runid --rundir=$outdir/$runid --oldstack=$filename --lp=$lpfilt";
+	$command .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter";
+	$command .= " --numaverages=$new_classums --description=\"$description\"";
+	if ($commit) $command .= " --commit\n";
+	else $command.=" --no-commit\n";
+/*
 	// write to jobfile
 	$jobfile = "{$runid}_imagicReclassifyClassums.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	$f = fopen($tmpjobfile,'w');
-	fwrite($f,$text);
+	fwrite($f,$command);
 	fclose($f);	
 
 	// create appion directory & copy job & batch files
@@ -285,7 +283,7 @@ function generateProcessedClasses() {
 	$cmd.= "cd $outdir/$runid\n";
 	$cmd.= "chmod 755 $jobfile\n";
 	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-
+*/
 	if ($_POST['process']=="Run Imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
@@ -297,7 +295,7 @@ function generateProcessedClasses() {
 	processing_header("IMAGIC Job Generator","IMAGIC Job Generator",$javafunc);
 
 	echo "<pre>";
-	echo htmlspecialchars($text);
+	echo htmlspecialchars($command);
 	echo "</pre>";
 
 	processing_footer();
