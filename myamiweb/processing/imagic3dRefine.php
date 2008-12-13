@@ -476,12 +476,9 @@ function imagic3dRefine() {
 	$runid = $_POST['runid'];
 	$modelid = $_POST['modelid'];
 	$norefClassId = $_POST['norefClassId'];
-	$command = "$outdir/$runid/{$runid}_imagic3dRefine.job";
 	$numiters = $_POST['numiters'];
 	$description = $_POST['description'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
-
-	$jobtext = "";
 
 	// create batch files for each iteration, put them into working directory
 	for ($i=1; $i<=$numiters; $i++) {
@@ -504,24 +501,25 @@ function imagic3dRefine() {
 
 		// update actual job file that calls on the execution of each iteration
 
-		$jobtext.= "imagic3dRefine.py";
-		$jobtext.= " --projectId=$projectId --imagic3d0Id=$modelid --norefClassId=$norefClassId --runid=$runid";
-		$jobtext.= " --rundir=$outdir/$runid --symmetry=$symmetry --numiters=$numiters --itn=$i";
-		$jobtext.= " --max_shift_orig=$max_shift_orig --max_shift_this=$max_shift_this --samp_param=$samp_param";
-		$jobtext.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
-		$jobtext.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
-		$jobtext.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
-		$jobtext.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc";
-		$jobtext.= " --description=\"$description\"";
-		if ($commit) $jobtext.= " --commit\n\n";
-		else $jobtext.=" --no-commit\n\n";
+		$command.= "imagic3dRefine.py";
+		$command.= " --projectid=".$_SESSION['projectId'];
+		$command.= " --imagic3d0Id=$modelid --norefClassId=$norefClassId --runname=$runid";
+		$command.= " --rundir=$outdir/$runid --symmetry=$symmetry --numiters=$numiters --itn=$i";
+		$command.= " --max_shift_orig=$max_shift_orig --max_shift_this=$max_shift_this --samp_param=$samp_param";
+		$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
+		$command.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
+		$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
+		$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc";
+		$command.= " --description=\"$description\"";
+		if ($commit) $command.= " --commit\n\n";
+		else $command.=" --no-commit\n\n";
 	}
-
+/*
 	// write job file
 	$jobfile = "{$runid}_imagic3dRefine.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	$f = fopen($tmpjobfile,'w');
-	fwrite($f,$jobtext);
+	fwrite($f,$command);
 	fclose($f);
 
 	// create appion directory & copy job file
@@ -529,7 +527,7 @@ function imagic3dRefine() {
 	$cmd.= "cp $tmpjobfile $outdir/$runid/$jobfile\n";
 	$cmd.= "chmod 755 $outdir/$runid/$jobfile\n";
 	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-
+*/
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform($modelid, "<B>ERROR:</B> Enter a user name and password");
 
@@ -541,7 +539,7 @@ function imagic3dRefine() {
 	processing_header("IMAGIC 3d Refinement Job Generator","IMAGIC 3d Refinement Job Generator",$javafunc);
 
 	echo "<pre>";
-	echo htmlspecialchars($jobtext);
+	echo htmlspecialchars($command);
 	echo "</pre>";
 
 	processing_footer();
