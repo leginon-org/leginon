@@ -401,6 +401,7 @@ function runCreateModel() {
 	$procdir = $outdir.$runid;
  
 	//putting together command
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--method=$method ";
 	$command.="--session=$session ";
 	$command.="--noref=$norefId ";
