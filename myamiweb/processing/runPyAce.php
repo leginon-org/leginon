@@ -66,6 +66,7 @@ function runPyAce() {
 	$outdir=$_POST['outdir'];
 
 	$command.= "pyace.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	// parse params
 	$edgethcarbon=$_POST[edgethcarbon];
@@ -87,21 +88,21 @@ function runPyAce() {
 	$commit = ($_POST[commit]=="on") ? "1" : '0';
 	$proc = $_POST[processor];
 
-	$command.="edgethcarbon=$edgethcarbon ";
-	$command.="edgethice=$edgethice ";
-	$command.="pfcarbon=$pfcarbon ";
-	$command.="pfice=$pfice ";
-	$command.="overlap=$overlap ";
-	$command.="fieldsize=$fieldsize ";
-	$command.="resamplefr=$resamplefr ";
-	$command.="medium=$medium ";
-	$command.="cs=$cs ";
-	$command.="drange=$drange ";
-	$command.="display=$display ";
-	$command.="stig=$stig";
-	if ($nominal) $command.=" nominal=$nominal";
-	if ($reprocess) $command.=" reprocess=$reprocess";
-	if ($newnominal) $command.=" newnominal";
+	$command.="--edgethcarbon=$edgethcarbon ";
+	$command.="--edgethice=$edgethice ";
+	$command.="--pfcarbon=$pfcarbon ";
+	$command.="--pfice=$pfice ";
+	$command.="--overlap=$overlap ";
+	$command.="--fieldsize=$fieldsize ";
+	$command.="--resamplefr=$resamplefr ";
+	$command.="--medium=$medium ";
+	$command.="--cs=$cs ";
+	$command.="--drange=$drange ";
+	$command.="--display=$display ";
+	$command.="--stig=$stig";
+	if ($nominal) $command.=" --nominal=$nominal";
+	if ($reprocess) $command.=" --reprocess=$reprocess";
+	if ($newnominal) $command.=" --newnominal";
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createPyAceForm($apcommand);
