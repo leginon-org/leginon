@@ -237,6 +237,7 @@ function runSubStack() {
 	}
 
 	//putting together command
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="-s $stackId ";
 	$command.="-n $runid ";
 	$command.="-d \"$description\" ";
