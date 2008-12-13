@@ -157,6 +157,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 function runManualPicker() {
 
   $command.="manualpicker.py ";
+  $command.="--projectid=".$_SESSION['projectId']." ";
   $apcommand = parseAppionLoopParams($_POST);
   if ($apcommand[0] == "<") {
     createManualPickerForm($apcommand);
@@ -172,17 +173,17 @@ function runManualPicker() {
   $command .= $partcommand;
   $pickrunid=$_POST['pickrunid'];
   if ($pickrunid != 'None') {
-    $command .= " pickrunid=$pickrunid";
+    $command .= " --pickrunid=$pickrunid";
   }
 
   $shape=$_POST['shape'];
   if($shape) {
-    $command .= " shape=$shape";
+    $command .= " --shape=$shape";
   }
 
   $shapesize = (int) $_POST['shapesize'];
   if($shapesize && is_int($shapesize)) {
-    $command .= " shapesize=$shapesize";
+    $command .= " --shapesize=$shapesize";
   } 
 
   if ($_POST['testimage']=="on") {
