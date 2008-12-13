@@ -270,6 +270,7 @@ function runNoRefAlign($runjob=false) {
 	$outdir=$_POST['outdir'];
 
 	$command.="norefAlignment.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	$stackvars=$_POST['stackid'];
 	$partrad=$_POST['partrad'];
