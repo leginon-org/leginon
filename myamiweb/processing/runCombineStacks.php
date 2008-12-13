@@ -87,7 +87,8 @@ function runCombineStack($runjob=false) {
 	$outdir=$_POST['outdir'];
 
 	$command.="combinestack.py ";
-
+	$command.="--projectid=".$_SESSION['projectId']." ";
+	
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description) createCombineStackForm("<B>ERROR:</B> Enter a brief description");
@@ -116,7 +117,7 @@ function runCombineStack($runjob=false) {
 		$rundir = $outdir.$runname;
 		$command.="--rundir=$rundir ";
 	}
-	$command.="--name=$runname ";
+	$command.="--runname=$runname ";
 	$command.="--stacks=$stacklist ";
 	$command.="--description=\"$description\" ";
 	$command.="--commit ";
