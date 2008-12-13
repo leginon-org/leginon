@@ -50,17 +50,6 @@ class reclassifyScript(appionScript.AppionScript):
 			help="number of new class averages", metavar="INT")
 		self.parser.add_option("--norefclassid", dest="classid", type="int",
 			help="reference free class id", metavar="INT")	
-		self.parser.add_option("-o", "--rundir", dest="rundir",
-			help="Location to which output file will be saved", metavar="PATH")
-		self.parser.add_option("-r", "--runname", dest="runname",
-			help="Name assigned to this reclassification", metavar="TEXT")
-		self.parser.add_option("--description", dest="description", type="str",
-			help="description of run", metavar="STR")
-		self.parser.add_option("-C", "--commit", dest="commit", default=True,
-			action="store_true", help="Commit template to database")
-		self.parser.add_option("--no-commit", dest="commit", default=True,
-			action="store_false", help="Do not commit template to database")
-
 
 		return 
 
@@ -68,8 +57,6 @@ class reclassifyScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['classid'] is None:
 			apDisplay.printError("enter a class ID")
-		if self.params['runname'] is None:
-			apDisplay.printError("enter a run ID")
 		if self.params['oldstack'] is None:
 			apDisplay.printError("no reference free classification specified")
 		if self.params['lp'] is None:
