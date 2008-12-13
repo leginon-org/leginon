@@ -28,15 +28,12 @@ class particledata {
 	}
 
 	function getSessionData ($sessionId) {
-		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT "
 		  ."s.* "
 		  ."FROM dbemdata.SessionData as s "
 		  ."WHERE "
 		  ."  s.`DEF_id` = '$sessionId' ";
-		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
 		return $r[0];
 	}
 
@@ -1117,7 +1114,6 @@ class particledata {
 	}
 
 	function getStackIdsWithProjectId ($sessionId, $projectId, $showHidden=False) {
-		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT "
 		  ."r.`REF|ApStackData|stack` as stackid , "
 		  ."st.*, "
@@ -1143,7 +1139,6 @@ class particledata {
 	}
 
 	function getStackIdsForProject ($projectId, $showHidden=False) {
-		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT "
 		  ."  st.`DEF_id` as stackid "
 		  ."FROM ApStackData as st "
@@ -1654,7 +1649,6 @@ class particledata {
 	} 
 
 	function getAlignStackIdsWithCluster ($sessionId, $projectId) {
-		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
 		  ."FROM ApAlignStackData AS ast "
 		  ."LEFT JOIN ApClusteringRunData AS clusterrun ON "
