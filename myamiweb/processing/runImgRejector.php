@@ -236,17 +236,18 @@ function runImgRejector() {
 	$dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']>$_POST['dbmin']) ? '' : $_POST['dfmin'];
 	$dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
 
-	$command.="runid=$runid ";
-	$command.="outdir=$outdir ";
-	if ($dbimages) $command.=" dbimages=$dbimages ";
-	else $command.=" alldbimages=$_POST[sessionname] ";
-	if ($_POST['commit']=='on') $command.="commit ";
-	if ($_POST['notiltpairs']=='on') $command.="notiltpairs ";
-	if ($_POST['nopicks']=='on') $command.="nopicks ";
-	if ($_POST['noace']=='on') $command.="noace ";
-	if ($acecutoff) $command.="acecutoff=$acecutoff ";
-	if ($dfmin) $command.="mindefocus=$dfmin ";
-	if ($dfmax) $command.="maxdefocus=$dfmax ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--runname=$runid ";
+	$command.="--rundir=$outdir ";
+	if ($dbimages) $command.="--dbimages=$dbimages ";
+	else $command.="--alldbimages=$_POST[sessionname] ";
+	if ($_POST['commit']=='on') $command.="--commit ";
+	if ($_POST['notiltpairs']=='on') $command.="--notiltpairs ";
+	if ($_POST['nopicks']=='on') $command.="--nopicks ";
+	if ($_POST['noace']=='on') $command.="--noace ";
+	if ($acecutoff) $command.="--acecutoff=$acecutoff ";
+	if ($dfmin) $command.="--mindefocus=$dfmin ";
+	if ($dfmax) $command.="--maxdefocus=$dfmax ";
 	elseif ($_POST['sessionname']) {
 		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
 		elseif(!$_POST['alldbimages']) {
