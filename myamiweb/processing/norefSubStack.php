@@ -148,6 +148,7 @@ function runSubStack() {
 	$procdir = $outdir.$runid;
 
 	//putting together command
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="-n $runid ";
 	$command.="--norefclass=$norefClassId ";
 	$command.="-d \"$description\" ";
