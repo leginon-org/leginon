@@ -449,6 +449,7 @@ function runMakestack() {
 	$ctftilt =$_POST['ctftilt'];
 
 	$command.="makestack.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	$single=$_POST['single'];
 	//make sure a session was selected
@@ -530,34 +531,34 @@ function runMakestack() {
 		if (!is_numeric($limit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	}
 
-	$command.="single=$single ";
-	$command.="runid=$runid ";
-	$command.="outdir=$outdir ";
-	$command.="prtlrunId=$prtlrunId ";
-	if ($lp) $command.="lp=$lp ";
-	if ($hp) $command.="hp=$hp ";
-	if ($invert) $command.="noinvert ";
-	if ($normalize) $command.="nonorm ";
-	if ($phaseflip) $command.="phaseflip ";
-	if ($stig) $command.="stig ";
-	if ($inspected) $command.="inspected ";
-	if ($norejects) $command.="norejects ";
-	if ($massessname) $command.="maskassess=$massessname ";
-	if ($commit) $command.="commit ";
-	if ($tiltangle != '') $command.="tiltangle=$tiltangle ";
-	$command.="boxsize=$boxsize ";
-	if ($bin) $command.="bin=$bin ";
-	if ($ace) $command.="ace=$ace ";
-	if ($defocpair) $command.="defocpair ";
-	if ($selexonmin) $command.="selexonmin=$selexonmin ";
-	if ($selexonmax) $command.="selexonmax=$selexonmax ";
-	if ($dfmin) $command.="mindefocus=$dfmin ";
-	if ($dfmax) $command.="maxdefocus=$dfmax ";
-	if ($fileformat) $command.="spider ";
-	if ($limit) $command.="partlimit=$limit ";
-	if ($boxfiles) $command.="boxfiles ";
-	$command.="description=\"$description\" ";
-	if ($ctftilt) $command.="ctftilt ";
+	$command.="--single=$single ";
+	$command.="--runname=$runid ";
+	$command.="--rundir=$outdir ";
+	$command.="--prtlrunId=$prtlrunId ";
+	if ($lp) $command.="--lp=$lp ";
+	if ($hp) $command.="--hp=$hp ";
+	if ($invert) $command.="--noinvert ";
+	if ($normalize) $command.="--nonorm ";
+	if ($phaseflip) $command.="--phaseflip ";
+	if ($stig) $command.="--stig ";
+	if ($inspected) $command.="--inspected ";
+	if ($norejects) $command.="--norejects ";
+	if ($massessname) $command.="--maskassess=$massessname ";
+	if ($commit) $command.="--commit ";
+	if ($tiltangle != '') $command.="--tiltangle=$tiltangle ";
+	$command.="--boxsize=$boxsize ";
+	if ($bin) $command.="--bin=$bin ";
+	if ($ace) $command.="--ace=$ace ";
+	if ($defocpair) $command.="--defocpair ";
+	if ($selexonmin) $command.="--selexonmin=$selexonmin ";
+	if ($selexonmax) $command.="--selexonmax=$selexonmax ";
+	if ($dfmin) $command.="--mindefocus=$dfmin ";
+	if ($dfmax) $command.="--maxdefocus=$dfmax ";
+	if ($fileformat) $command.="--spider ";
+	if ($limit) $command.="--partlimit=$limit ";
+	if ($boxfiles) $command.="--boxfiles ";
+	$command.="--description=\"$description\" ";
+	if ($ctftilt) $command.="--ctftilt ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Make Stack") {
