@@ -508,6 +508,7 @@ function getSessionList($projectId,$sessionId){
 
 // --- Display forms to get a project & session
 function displayExperimentForm($projectId,$sessionId,$expId){
+	echo "Retired function----You should redirect this call to getSessionList($projectId,$sessionId)!!!!!";
 	global $PROJECT_URL;
 	// Collect session info from database
 	$sessiondata=getSessionList($projectId,$sessionId);
