@@ -327,6 +327,7 @@ function runTemplateCorrelator() {
 	$outdir = $_POST['outdir'];
 
 	$command .="templateCorrelator.py ";
+	$command .="--projectid=".$_SESSION['projectId']." ";
 	$command .= templateCommand();
 
 	$apcommand = parseAppionLoopParams($_POST);
@@ -439,9 +440,9 @@ function templateCommand () {
 	}
 	$templateIds=substr($templateIds,0,-1);
 
-	$command.="templateIds=$templateIds ";
+	$command.="--templateIds=$templateIds ";
 	foreach ($ranges as $rangenum=>$rangevals) {
-		$command.="$rangenum=$rangevals ";
+		$command.="--$rangenum=$rangevals ";
 	}
 
 	return $command;
