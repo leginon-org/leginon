@@ -437,7 +437,8 @@ function runMakestack() {
 	$outdir = $_POST['outdir'];
 	$ctftilt =$_POST['ctftilt'];
 
-	$command.="makestack2.py ";
+	$command.="makestack2.py"." ";
+	$command.="--projectid=".$_SESSION['projectId']." ";	
 
 	$single=$_POST['single'];
 	//make sure a session was selected
@@ -518,30 +519,30 @@ function runMakestack() {
 		if (!is_numeric($limit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	}
 
-	$command.="single=$single ";
-	$command.="prtlrunId=$prtlrunId ";
-	if ($lp) $command.="lp=$lp ";
-	if ($hp) $command.="hp=$hp ";
-	if ($invert) $command.="noinvert ";
-	if ($normalize) $command.="nonorm ";
-	if ($phaseflip) $command.="phaseflip ";
-	if ($stig) $command.="stig ";
-	if ($inspected) $command.="inspected ";
-	if ($norejects) $command.="norejects ";
-	if ($massessname) $command.="maskassess=$massessname ";
-	$command.="boxsize=$boxsize ";
-	if ($bin) $command.="bin=$bin ";
-	if ($ace) $command.="ace=$ace ";
-	if ($defocpair) $command.="defocpair ";
-	if ($selexonmin) $command.="selexonmin=$selexonmin ";
-	if ($selexonmax) $command.="selexonmax=$selexonmax ";
-	if ($dfmin) $command.="minDefocus=$dfmin ";
-	if ($dfmax) $command.="maxDefocus=$dfmax ";
-	if ($fileformat) $command.="spider ";
-	if ($limit) $command.="partlimit=$limit ";
-	if ($boxfiles) $command.="boxfiles ";
-	$command.="description=\"$description\" ";
-	if ($ctftilt) $command.="ctftilt ";
+	$command.="--single=$single ";
+	$command.="--prtlrunId=$prtlrunId ";
+	if ($lp) $command.="--lp=$lp ";
+	if ($hp) $command.="--hp=$hp ";
+	if ($invert) $command.="--noinvert ";
+	if ($normalize) $command.="--nonorm ";
+	if ($phaseflip) $command.="--phaseflip ";
+	if ($stig) $command.="--stig ";
+	if ($inspected) $command.="--inspected ";
+	if ($norejects) $command.="--norejects ";
+	if ($massessname) $command.="--maskassess=$massessname ";
+	$command.="--boxsize=$boxsize ";
+	if ($bin) $command.="--bin=$bin ";
+	if ($ace) $command.="--ace=$ace ";
+	if ($defocpair) $command.="--defocpair ";
+	if ($selexonmin) $command.="--selexonmin=$selexonmin ";
+	if ($selexonmax) $command.="--selexonmax=$selexonmax ";
+	if ($dfmin) $command.="--minDefocus=$dfmin ";
+	if ($dfmax) $command.="--maxDefocus=$dfmax ";
+	if ($fileformat) $command.="--spider ";
+	if ($limit) $command.="--partlimit=$limit ";
+	if ($boxfiles) $command.="--boxfiles ";
+	$command.="--description=\"$description\" ";
+	if ($ctftilt) $command.="--ctftilt ";
 	
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
