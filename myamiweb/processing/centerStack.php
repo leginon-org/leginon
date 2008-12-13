@@ -140,6 +140,7 @@ function runCenterParticles() {
 	$procdir = $outdir.$runid;
 
 	//putting together command
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="-n $runid ";
 	$command.="-s $stackId ";
 	if ($mask) $command.="-m ".$mask." ";
