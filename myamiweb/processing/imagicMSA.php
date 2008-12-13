@@ -234,26 +234,25 @@ function runImagicMSA($extra=false)	{
 	$description=$_POST['description'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
-	$command = "$outdir/$runid/{$runid}_imagicMSA.job";
 	
 	// get stack id, apix, box size, and total particles from input
 	list($stackid,$apix,$boxsize,$totpartls) = split('\|--\|',$stackvalues);
 
 	// create python command for executing imagic job file	
-	$pythoncmd = "";
-	$pythoncmd = "imagicMSA.py";
-	$pythoncmd.= " projectId=$projectId --stackid=$stackid --runid=$runid --rundir=$outdir/$runid --lpfilt=$lowpass";
-	$pythoncmd.= " --hpfilt=$highpass --mask_radius=$mask_radius --mask_dropoff=$mask_dropoff --bin=$bin";
-	$pythoncmd.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
-	$pythoncmd.= " --description=\"$description\"";
-	if ($commit) $pythoncmd.= " --commit\n";
-	else $pythoncmd.=" --no-commit\n";
-
+	$command = "imagicMSA.py";
+	$command.= " --projectid=".$_SESSION['projectId'];
+	$command.= " --stackid=$stackid --runname=$runid --rundir=$outdir/$runid --lpfilt=$lowpass";
+	$command.= " --hpfilt=$highpass --mask_radius=$mask_radius --mask_dropoff=$mask_dropoff --bin=$bin";
+	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
+	$command.= " --description=\"$description\"";
+	if ($commit) $command.= " --commit\n";
+	else $command.=" --no-commit\n";
+/*
 	// write to jobfile
 	$jobfile = "{$runid}_imagicMSA.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	$f = fopen($tmpjobfile,'w');
-	fwrite($f,$pythoncmd);
+	fwrite($f,$command);
 	fclose($f);	
 
 	// create appion directory & copy job & batch files
@@ -262,7 +261,7 @@ function runImagicMSA($extra=false)	{
 	$cmd.= "cd $outdir/$runid\n";
 	$cmd.= "chmod 777 $jobfile\n";
 	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-
+*/
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
@@ -274,7 +273,7 @@ function runImagicMSA($extra=false)	{
 	processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA)",$javafunc);
 
 	echo "<pre>";
-	echo htmlspecialchars($pythoncmd);
+	echo htmlspecialchars($command);
 	echo "</pre>";
 
 	processing_footer();
