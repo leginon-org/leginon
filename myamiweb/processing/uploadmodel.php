@@ -174,6 +174,7 @@ function runUploadModel() {
 	$outdir = $_POST['outdir'];
 
 	$command = "uploadModel.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	$contour=$_POST['contour'];
 	$zoom=$_POST['zoom'];
