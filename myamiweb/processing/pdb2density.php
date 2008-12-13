@@ -118,6 +118,7 @@ function runUploadModel() {
 	// filename will be the runid if running on cluster
 	$runid = $filename.'.upload';
 
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="-p $pdbid ";
 	$command.="-s $session ";
 	$command.="-a $apix ";
