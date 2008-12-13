@@ -282,31 +282,29 @@ function create3d0() {
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
-	$command = "$outdir/$runid/{$runid}_imagic3d0.job";
 
 	// create python command that will launch job
-	$text = "";
-	$text.= "imagic3d0.py --projectId=$projectId";
-	//$text.= " --fileorig=$fileorig";
+	$command = "imagic3d0.py ";
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	if ($reclassId) {
-		$text.=" --reclassId=$reclassId";
+		$command.=" --reclassId=$reclassId";
 	}
 	elseif ($norefClassId) {
-		$text.=" --norefClassId=$norefClassId";
+		$command.=" --norefClassId=$norefClassId";
 	}
 	else jobform("error: there are no class average runs for the initial model determination");
-	$text.= " --runid=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
-	$text.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
-	$text.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
-	$text.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
-	$text.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"";
-	if ($commit) $text.= " --commit\n\n";
-	else $text.=" --no-commit\n\n";
+	$command.= " --runid=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
+	$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
+	$command.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
+	$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
+	$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"";
+	if ($commit) $command.= " --commit\n\n";
+	else $command.=" --no-commit\n\n";
 
-	$jobfile = "{$runid}_imagic3d0.job";
+/*	$jobfile = "{$runid}_imagic3d0.job";
 	$tmpjobfile = "/tmp/$jobfile";
 	$f = fopen($tmpjobfile,'w');
-	fwrite($f,$text);
+	fwrite($f,$command);
 	fclose($f);
 
 	// create appion directory & copy job file
@@ -315,7 +313,7 @@ function create3d0() {
 	$cmd.= "cd $outdir/$runid\n";
 	$cmd.= "chmod 755 $jobfile\n";
 	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-
+*/
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
@@ -327,7 +325,7 @@ function create3d0() {
 	processing_header("IMAGIC 3d0 Job Generator","IMAGIC 3d0 Job Generator",$javafunc);
 
 	echo "<pre>";
-	echo htmlspecialchars($text);
+	echo htmlspecialchars($command);
 	echo "</pre>";
 
 	processing_footer();
