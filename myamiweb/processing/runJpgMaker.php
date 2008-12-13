@@ -37,10 +37,8 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=$_SESSION['projectId'];
 
-
-	$particle=new particleData;
 	$javascript="
 	<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
@@ -58,7 +56,7 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 		 function infopopup(infoname){
 			var newwindow=window.open('','name','height=150,width=300');
 			newwindow.document.write('<HTML><BODY>');
-			if (infoname=='runid'){
+			if (infoname=='runname'){
 				 newwindow.document.write('The files will be saved under a subdirectory of Output Directory named after Run Name.  Best not to change this.');
 			}
 			if (infoname=='scale'){
@@ -80,14 +78,14 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
+		echo "<font color='#DD0000' size=+2>$extra</font>\n<hr>\n";
 	}
 	if ($results) echo "$results<hr />\n";
 
 	echo"
-	<form name='viewerform' method='POST' ACTION='$formAction'>
-	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	<form name='viewerform' method='POST' ACTION='$formAction'>";
+	#<input type='HIDDEN' name='lastSessionId' value='$sessionId'>\n";
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
@@ -106,77 +104,74 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	$_POST['commit']='on';
 	echo"
-	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
-	<TR>
-	  <TD VALIGN='TOP'>";
+	<table border=0 class=tableborder cellpadding=15>
+	<tr>
+	  <td valign='top'>";
 	    createAppionLoopTable($sessiondata, 'jpgs', "", 1);
 	echo"
-	  </TD>
-	  <TD CLASS='tablebg'>
+	  </td>
+	  <td class='tablebg'>
 
-	    <A HREF=\"javascript:infopopup('scale')\">
-	      <B>Instensity Scale:</B></A><br/>
-	    <INPUT TYPE='radio' NAME='scale' VALUE='meanstdv' $scalechecks[0]>&nbsp;mean +/- 3 * stdv&nbsp;&nbsp;<br/>
-	    <INPUT TYPE='radio' NAME='scale' VALUE='autominmax' $scalechecks[1]>&nbsp;min and max of the image<br/>
-	    <INPUT TYPE='radio' NAME='scale' VALUE='fixed' $scalechecks[2]>&nbsp;Fixed min and max<br/>
+	    <a href=\"javascript:infopopup('scale')\">
+	      <b>Instensity Scale:</b></a><br/>
+	    <input type='radio' name='scale' value='meanstdv' $scalechecks[0]>&nbsp;mean +/- 3 * stdv&nbsp;&nbsp;<br/>
+	    <input type='radio' name='scale' value='autominmax' $scalechecks[1]>&nbsp;min and max of the image<br/>
+	    <input type='radio' name='scale' value='fixed' $scalechecks[2]>&nbsp;Fixed min and max<br/>
 
-	    <TABLE CELLSPACING=0 CELLPADDING=2><TR>
-	      <TD VALIGN='TOP' WIDTH = 20></TD>
-	      <TD VALIGN='TOP'>
-	        <INPUT TYPE='text' NAME='min' VALUE=$min SIZE='8'>Min<br/>
-	        <INPUT TYPE='text' NAME='max' VALUE=$max SIZE='8'>Max
-	      </TD></TR>
-	    </TABLE><br/>
-	    <A HREF=\"javascript:infopopup('quality')\">
-	      <B>JPEG Quality: </B></A><br/>
-	        <INPUT TYPE='text' NAME='quality' VALUE=$quality SIZE='4'> (1-100)<br/><br/>
-	    <A HREF=\"javascript:infopopup('size')\">
-	      <B>Maximal Image Size: </B></A><br/>
-	        <INPUT TYPE='text' NAME='imgsize' VALUE=$imgsize SIZE='4'> pixels<br/>
+	    <table cellspacing=0 cellpadding=2><tr>
+	      <td valign='TOP' width = 20></td>
+	      <td valign='TOP'>
+	        <input type='text' name='min' value=$min size='8'>Min<br/>
+	        <input type='text' name='max' value=$max size='8'>Max
+	      </td></tr>
+	    </table><br/>
+	    <a href=\"javascript:infopopup('quality')\">
+	      <b>JPEG Quality: </b></a><br/>
+	        <input type='text' name='quality' value=$quality size='4'> (1-100)<br/><br/>
+	    <a href=\"javascript:infopopup('size')\">
+	      <b>Maximal Image Size: </b></a><br/>
+	        <input type='text' name='imgsize' value=$imgsize size='4'> pixels<br/>
 
-	  </TD>";
+	  </td>";
 	echo"
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>
-		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
+	</tr>
+	<tr>
+		<td colspan='2' ALIGN='CENTER'>
+		<hr>
+		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these settings on image:
-		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
+		<input type='text' name='testfilename' $testdisabled value='$testvalue' size='45'>
 
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-	<br />
-	User: <INPUT TYPE='text' name='user' value=".$_POST['user'].">
-	Password: <INPUT TYPE='password' name='password' value=".$_POST['password'].">\n";
-	echo"
-		<br />
+		</td>
+	</tr>
+	<tr>
+		<td colspan='2' align='center'>
 	";
 	echo getSubmitForm("Run JPEG Maker", true, true);
 	echo "
 		<br />
-		</TD>
-	</TR>
-	</TABLE>
-	</TD>
-	</TR> 
-	</TABLE>\n";
+		</td>
+	</tr>
+	</table>
+	</td>
+	</tr> 
+	</table>\n";
 	?>
 
-	</CENTER>
-	</FORM>
+	</center>
+	</form>
 	<?
 	processing_footer();
 	exit;
 }
 
 function runjpgmaker() {
+	$expId = $_GET['expId'];
 	$process = $_POST['process'];
-
 	$outdir = $_POST['outdir'];
-	$runid = $_POST['runid'];
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$runname = $_POST['runname'];
+	$rundir=$outdir.$runname."/";
 	$alldbimages = $_POST['alldbimages'];
 	$dbimages = $_POST[sessionname].",".$_POST[preset];
 	$norejects = ($_POST[norejects]=="on") ? "0" : "1";
@@ -201,85 +196,50 @@ function runjpgmaker() {
 
 	$command="jpgmaker.py ";
 
-	if ($runid) $apcommand.=" runid=$runid";
-	if ($outdir) $apcommand.=" outdir=$outdir";
-	if ($testimage) $apcommand.=" $testimage";
-	else {
-		if ($alldbimages) {
-			$apcommand.=" alldbimages=$_POST[sessionname]";
-		} else {
-			if ($dbimages) $apcommand.=" dbimages=$dbimages";
-		}
-	}
-	if ($norejects) $apcommand.=" norejects";
-	if ($nowait) $apcommand.=" nowait";
-	if ($commit) $apcommand.=" commit";
-	if (!$apcontinue) $apcommand.=" nocontinue";
-	else $apcommand.=" continue";
-
+	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
 		createJMForm($apcommand);
 		exit;
 	}
 	$command .= $apcommand;
-
-	if ($scale == "autominmax") $command.=" min=100 max=50";
-	if ($scale == "fixed") $command.=" min=".$min." max=".$max;
-	if ($quality != 80) $command.=" quality=".$quality;
-	if ($imgsize != 512) $command.=" imgsize=".$imgsize;
+	if ($scale == "autominmax") $command.=" --min=100 --max=50";
+	if ($scale == "fixed") $command.=" --min=".$min." --max=".$max;
+	if ($quality != 80) $command.=" --quality=".$quality;
+	if ($imgsize != 512) $command.=" --imgsize=".$imgsize;
 
 	if ($testimage && $_POST['process']=="Run JPEG Maker") {
-		$host = $_POST['processinghost'];
-		$user = $_POST['user'];
-		$password = $_POST['password'];
-		if (!($user && $password)) {
-			createJMForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
-		$command="source /ami/sw/ami.csh;".$command;
-		$command="source /ami/sw/share/python/usepython.csh cvs32;".$command;
-		$cmd = "$command > JpgMakerLog.txt";
-		$result=exec_over_ssh($host, $user, $password, $cmd, True);
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+		if (!($user && $password)) createJMForm("<b>ERROR:</b> Enter a user name and password"); 
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'jpgmaker',False,True);
+		// if errors:
+		if ($sub) createJMForm("<b>ERROR:</b> $sub");
+		exit;
 	}
 
 	if ($testimage) {
-		$runid = $_POST[runid];
-		$outdir = $_POST[outdir];
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$images = "<center><table width='600' border='0'>\n";
   		$images.= "<tr><td>";
 		$images.= "<b>JPEG Maker Command:</b><br />$command";
 		$images.= "</td></tr></table>\n";
 		$images.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgdir=$outdir.$runid."/";
 		$jpgimg=$testjpg.".jpg";
-		$images.= writeTestResults($jpgdir,array($jpgimg));
+		$images.= writeTestResults($rundir,array($jpgimg));
 		createJMForm(false,'JPG File Maker Test Results','JPEG Maker Results',$images);
+	} else {
+		processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
+		echo"
+			<table width='600'>
+			<tr><td colspan='2'>
+			<b>JPEG Maker Command:</b><br>
+			$command
+			<hr>
+			</td></tr>";
+		echo 'expid'.$expId;
+		appionLoopSummaryTable();
+		echo"</table>\n";
+		processing_footer();
 	}
-
-	else processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
-
-	echo"
-  <TABLE WIDTH='600'>
-  <TR><TD COLSPAN='2'>
-  <B>JPEG Maker Command:</B><BR>
-  $command<HR>
-  </TD></TR>
-  <TR><TD>outdir</TD><TD>$outdir</TD></TR>
-  <TR><TD>runname</TD><TD>$runid</TD></TR>
-  <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-  <TR><TD>norejects</TD><TD>$norejects</TD></TR>
-  <TR><TD>nowait</TD><TD>$nowait</TD></TR>
-  <TR><TD>commit</TD><TD>$commit (always)</TD></TR>
-  <TR><TD>continue</TD><TD>$apcontinue</TD></TR>
-  ";
-
-  
-	//appionLoopSummaryTable();
-	echo"</TABLE>\n";
-	processing_footer();
 }
-
-
 ?>

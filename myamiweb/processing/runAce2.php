@@ -49,7 +49,7 @@ function createAce2Form($extra=false) {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=$_SESSION['projectId'];
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$javafunctions = "";
@@ -62,7 +62,7 @@ function createAce2Form($extra=false) {
 
 	echo"
 	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {
@@ -73,13 +73,13 @@ function createAce2Form($extra=false) {
 	}
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
-	$defrunid = 'acetwo'.($ctfruns+1);
+	$defrunname = 'acetwo'.($ctfruns+1);
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 	  <TD VALIGN='TOP'>";
 
-	createAppionLoopTable($sessiondata, $defrunid, "ctf");
+	createAppionLoopTable($sessiondata, $defrunname, "ctf");
 	echo"
 	  </TD>
 	  <TD CLASS='tablebg'>\n";
@@ -122,7 +122,7 @@ function createAce2Form($extra=false) {
 // --- parse data and process on submit
 function runAce2() {
 	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
+	$runname = $_POST['runname'];
 	$outdir=$_POST['outdir'];
 
 	$command.= "pyace2.py ";
@@ -150,7 +150,7 @@ function runAce2() {
 
 		if (!($user && $password)) createAce2Form("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'ace2',False,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'ace2',False,True);
 		// if errors:
 		if ($sub) createAce2Form("<b>ERROR:</b> $sub");
 		exit;
