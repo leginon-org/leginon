@@ -188,6 +188,7 @@ function runNoRefClassify($runjob=False) {
 
 	$particle = new particledata();
 
+	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--norefid=$norefId ";
 	$command.="--num-class=$numclass ";
 	$command.="--factor-list=$factorlist ";
