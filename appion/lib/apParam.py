@@ -6,10 +6,10 @@ import socket
 import time
 import random
 import subprocess
-from string import lowercase
-#appion
-import apDisplay
 import math
+from string import lowercase
+## appion
+import apDisplay
 
 def getAppionDirectory():
 	"""
@@ -310,10 +310,12 @@ def getNumProcessors(msg=True):
 
 def setUmask():
 	if os.getgid() == 773:
+		prev = os.umask(002)
 		os.umask(002)
 	else:
+		prev = os.umask(000)
 		os.umask(000)
-
+	apDisplay.printMsg("Umask changed from "+str(prev)+" to 002")
 
 def getExecPath(exefile, die=False):
 	proc = subprocess.Popen("which "+exefile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
