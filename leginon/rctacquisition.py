@@ -329,7 +329,7 @@ class RCTAcquisition(acquisition.Acquisition):
 					retries = 0
 					print 'Tilt libCV FAILED'
 					self.logger.error("libCV failed: giving up")
-					self.reportTargetListDone(tilt0targetlist, 'failure')
+					self.reportTargetListDone(tilt0targets, 'failure')
 				continue
 			else:
 				retries = 0			
