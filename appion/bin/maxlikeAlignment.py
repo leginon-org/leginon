@@ -311,7 +311,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printColor("Using "+str(nproc-1)+" processors!", "green")
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
-			self.writeXmippLog(xmippcmd)
+			self.writeXmippLog(mpiruncmd)
 			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 		else:
 			### use single processor
