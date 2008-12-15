@@ -5,6 +5,7 @@ import os
 import sys
 import math
 import re
+import time
 import glob
 #appion
 import appionLoop2
@@ -173,21 +174,40 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+imgstackfile)
 		apEMAN.executeEmanCmd(emancmd)
 
+		### read mean and stdev
+		partmeantree = []
+		imagicdata = apImagicFile.readImagic(imgstackfile)
+		### loop over the particles and read data
+		for i in range(len(boxedpartdatas)):
+			partdata = boxedpartdatas[i]
+			partarray = imagicdata['images'][i]
+			partmeandict = {
+				'partdata': partdata,
+				'mean': partarray.mean(),
+				'stdev': partarray.std(),
+				'min': partarray.min(),
+				'max': partarray.max(),
+			}
+			partmeantree.append(partmeandict)
+
+		### phase flipping
 		if self.params['phaseflipped'] is True:
-			if self.params['wholeimage'] is False:
-				pass
+			if self.params['wholeimage'] is True:
+				apDisplay.printMsg("phase flipped whole image already")
 			elif self.params['tiltedflip'] is True:
 				imgstackfile = self.tiltedPhaseFlip(imgdata, imgstackfile, boxedpartdatas)
 			else:
-				imgstackfile = self.phaseFlip(imgdata)
-		
+				imgstackfile = self.phaseFlip(imgdata, imgstackfile)
+		else:
+			apDisplay.printMsg("not phase flipping particles")
+
 		numpart = apFile.numImagesInStack(imgstackfile)
 		apDisplay.printMsg(str(numpart)+" particles were boxed out from "+shortname)
 
 		if len(boxedpartdatas) != numpart:
 			apDisplay.printError("There is a mismatch in the number of particles expected and that were boxed")
 
-		return boxedpartdatas, imgstackfile
+		return boxedpartdatas, imgstackfile, partmeantree
 
 	#=======================
 	def writeParticlesToBoxFile(self, partdatas, shiftdata, imgdata):
@@ -234,8 +254,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		CX = imgdata['camera']['dimension']['x']
 		CY = imgdata['camera']['dimension']['y']
 
-		N1 = -1.0 * math.sin( math.radians(ctfvalue['tilt_axis_angle']) )
-		N2 = math.cos( math.radians(ctfvalue['tilt_axis_angle']) )
+		if ctfvalue['tilt_axis_angle'] is not None:
+			N1 = -1.0 * math.sin( math.radians(ctfvalue['tilt_axis_angle']) )
+			N2 = math.cos( math.radians(ctfvalue['tilt_axis_angle']) )
+		else:
+			N1 = 0.0
+			N2 = 1.0
 		PSIZE = apix
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
@@ -268,7 +292,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 			parmstr = ("parm=%f,200,1,%.3f,0,17.4,9,1.53,%i,2,%f" %(defocus, ampconst, voltage, apix))
 			emancmd = ("applyctf %s %s %s setparm flipphase" % (prepartmrc, postpartmrc, parmstr))
-			apEMAN.executeEmanCmd(emancmd)
+			apEMAN.executeEmanCmd(emancmd, showcmd=True)
 
 			ctfpartarray = apImage.mrcToArray(postpartmrc)
 			ctfpartstack.append(ctfpartarray)
@@ -296,7 +320,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (imgstackfile, ctfimgstackfile, parmstr))
 
 		apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
-		apEMAN.executeEmanCmd(emancmd)
+		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		return ctfimgstackfile
 
 	#=======================
@@ -320,7 +344,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		emancmd = ("applyctf %s %s %s setparm flipphase" % (inimgpath, outimgpath, parmstr))
 
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
-		apEMAN.executeEmanCmd(emancmd)
+		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		return outimgpath
 
 ############################################################
@@ -535,7 +559,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="process only images of magification, mag")
 
 		### true/false
-		self.parser.add_option("--phaseflipped", dest="phaseflipped", default=False,
+		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
 			action="store_true", help="perform CTF correction on the boxed images")
 		self.parser.add_option("--invert", dest="inverted", default=False,
 			action="store_true", help="tilt angle of the micrographs")
@@ -626,13 +650,16 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apFile.removeFile(rmfile)
 
 		### run batchboxer
-		self.boxedpartdatas, self.imgstackfile = self.boxParticlesFromImage(imgdata)
+		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata)
 		self.stats['lastpeaks'] = len(self.boxedpartdatas)
 
 		if not self.boxedpartdatas:
 			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
 			self.params['badprocess'] = True
 			return
+
+		apDisplay.printMsg("do not break function now otherwise it will corrupt run")
+		time.sleep(1.0)
 
 		### merge image particles into big stack
 		totalpart = self.mergeImageStackIntoBigStack(self.imgstackfile, imgdata)
@@ -655,12 +682,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def commitToDatabase(self, imgdata):
-		imagicdata = apImagicFile.readImagic(self.imgstackfile)
-
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
-			partarray = imagicdata['images'][i]
+			partmeandict = self.partmeantree[i]
 
 			self.particleNumber += 1
 			stpartq = appionData.ApStackParticlesData()
@@ -674,8 +699,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				apDisplay.printError("trying to insert a duplicate particle")
 
 			stpartq['particle'] = partdata
-			stpartq['mean'] = partarray.mean()
-			stpartq['stdev'] = partarray.std()
+			stpartq['mean'] = partmeandict['mean']
+			stpartq['stdev'] = partmeandict['stdev']
 			if self.params['commit'] is True:
 				stpartq.insert()
 

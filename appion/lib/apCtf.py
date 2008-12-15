@@ -151,10 +151,10 @@ def getBestDefocusForImage(imgdata, display=False):
 		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
 		return imgdata['scope']['defocus']
 
-	if ctfvalue['defocus1'] != ctfvalue['defocus2']:
-		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
-				       " and average defocus estimate may be less than ideal")
+	if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
+			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
 		return -avgdf
 
 	if display is True:
@@ -179,10 +179,10 @@ def getBestDefocusAndAmpConstForImage(imgdata, display=False):
 		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
 		return imgdata['scope']['defocus'], 0.1
 
-	if ctfvalue['defocus1'] != ctfvalue['defocus2']:
-		apDisplay.printWarning("astigmatism was estimated for "+apDisplay.short(imgdata['filename'])+\
-				       " and average defocus estimate may be less than ideal")
+	if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
+			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
 		return -avgdf, ctfvalue['amplitude_contrast']
 
 	if display is True:
@@ -251,11 +251,11 @@ def getBestTiltCtfValueForImage(imgdata):
 
 def ctfValuesToParams(ctfvalue, params):
 	if ctfvalue['acerun'] is not None:
-		if ctfvalue['acerun']['aceparams']['stig'] == 1:
-			apDisplay.printWarning("astigmatism was estimated for this image"+\
-			 " and average defocus estimate may be less than ideal")
+		if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 			params['hasace'] = True
 			avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+			apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
+				%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
 			params['df']     = avgdf*-1.0e6
 			params['conf_d'] = ctfvalue['confidence_d']
 			params['conf']   = ctfvalue['confidence']
