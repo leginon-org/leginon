@@ -12,9 +12,6 @@ import random
 import EMAN
 #scipy
 import numpy
-#db
-import sinedon
-import MySQLdb
 #appion
 import appionScript
 import appionData
