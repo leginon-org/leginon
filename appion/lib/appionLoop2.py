@@ -66,7 +66,7 @@ class AppionLoop(appionScript.AppionScript):
 				### WRITE db data
 				if self.params['badprocess'] is False:
 					if self.params['commit'] is True:
-						apDisplay.printColor("Committing data to database", "blue")
+						apDisplay.printColor(" ==== Committing data to database ==== ", "blue")
 						self.loopCommitToDatabase(imgdata)
 						self.commitResultsToDatabase(imgdata, results)
 					else:
