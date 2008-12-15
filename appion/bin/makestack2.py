@@ -48,25 +48,21 @@ class makestack (appionLoop2.AppionLoop):
 		self.params['kv'] = 0
 		self.params['df'] = None
 
-		### global particle number counter
-		self.particleNumber = 0
-
 		self.insertStackRun()
-
 		self.checkPixelSize()
 
 		# get defocus pair images from database if defocpair option is selected
 		if self.params['defocpair']:
 			self.imgtree = self.getImgsDefocPairFromSelectionId()
 
-		# remove existing stack
-		if self.params['nocontinue']:
+		# remove existing stack & set global particle number counter
+		if self.params['continue'] is False:
 			self.removeExistingStack()
-			self.totpart = 0
+			self.particleNumber = 0
 		else:
-			self.totpart = self.setExistingStackInfo()
+			self.particleNumber = self.setExistingStackInfo()
 
-		if self.params['partlimit'] is not None and self.params['partlimit'] <= self.totpart:
+		if self.params['partlimit'] is not None and self.params['partlimit'] <= self.particleNumber:
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
 
 	############################################################
@@ -105,13 +101,14 @@ class makestack (appionLoop2.AppionLoop):
 	## Retrive existing stack info
 	############################################################
 	def setExistingStackInfo(self):
-		stackfile=os.path.join(self.params['rundir'], os.path.splitext(self.params['single'])[0])
-		if (os.path.isfile(stackfile+".hed")):
-			self.params['numpart'] = apFile.numImagesInStack(stackfile+".hed")
+		stackfile=os.path.join(self.params['rundir'], self.params['single'])
+		if os.path.isfile(stackfile):
+			numpart = apFile.numImagesInStack(stackfile)
 		else:
-			self.params['numpart'] = 0
+			numpart = 0
+		apDisplay.printMsg("Starting at particle number: "+str(numpart))
 
-		return int(self.params['numpart'])
+		return numpart
 
 	############################################################
 	## get defocus pair of images
@@ -199,10 +196,9 @@ class makestack (appionLoop2.AppionLoop):
 			self.singleStack(imgdata)
 
 		self.stats['lastpeaks'] = numpart
-		self.totpart = self.totpart + numpart
 
 		# check if particle limit is met
-		if self.params['partlimit'] is not None and self.totpart > self.params['partlimit']:
+		if self.params['partlimit'] is not None and self.particleNumber > self.params['partlimit']:
 			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+"; now stopping")
 			self.imgtree = []
 			self.notdone = False
@@ -223,26 +219,6 @@ class makestack (appionLoop2.AppionLoop):
 				apDisplay.printColor(shortname+".mrc was not at the specific magnification","cyan")
 				return False
 
-		if self.params['tiltangle'] is not None:
-			tiltangle = apDatabase.getTiltAngleDeg(imgdata)
-			apDisplay.printMsg("image tilt angle: "+str(tiltangle))
-			# only want negatively tilted images
-			if self.params['tiltangle'] == -1.0:
-				if tiltangle > -3:
-					apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
-						" != "+str(round(self.params['tiltangle'],1))+"\n","cyan")
-					return False
-			# only want positively tilted images
-			elif self.params['tiltangle'] == 1.0:
-				if tiltangle < 3:
-					apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
-						" != "+str(round(self.params['tiltangle'],1))+"\n","cyan")
-					return False
-			# only want a specified tiltangle within a two-degree range
-			elif abs(abs(self.params['tiltangle']) - abs(tiltangle)) > 2.0:
-				apDisplay.printColor(shortname+".mrc has been rejected tiltangle: "+str(round(tiltangle,1))+\
-					" != "+str(round(self.params['tiltangle'],1))+"\n","cyan")
-				return False
 		return True
 
 	############################################################
@@ -330,7 +306,7 @@ class makestack (appionLoop2.AppionLoop):
 			imgpath = os.path.join(self.params['rundir'],tmpname)
 		else:
 			imgpath = os.path.join(imgdata['session']['image path'], imgname+".mrc")
-		output = os.path.join(self.params['rundir'], shortname+".hed")
+		self.output = os.path.join(self.params['rundir'], shortname+".hed")
 		outputctf = os.path.join(self.params['rundir'], shortname+".ctf.hed")
 		outputtemp = os.path.join(self.params['rundir'], shortname+"-temp.hed")
 		outputtempimg = os.path.join(self.params['rundir'], shortname+"-temp.img")
@@ -357,7 +333,7 @@ class makestack (appionLoop2.AppionLoop):
 
 				###if there is still particles
 				if len(particles) > 0:
-					hasparticles=True
+					self.hasparticles=True
 					thrownout = 0
 					#for each individual particle
 					for i in range(len(particles)):
@@ -371,7 +347,7 @@ class makestack (appionLoop2.AppionLoop):
 							cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, outputtemp, self.params['boxsize'])
 							apEMAN.executeEmanCmd(cmd)
 
-							imagic = apImagicFile.readImagic(output)
+							imagic = apImagicFile.readImagic(self.output)
 							for j in range(len(imagic['images'])):
 								part = imagic['images'][i]
 								dbparts[j]['mean'] = part.mean()
@@ -393,7 +369,7 @@ class makestack (appionLoop2.AppionLoop):
 									apFile.removeFile(tmpfile)
 							else:
 								#move temp particle to growing stack
-								appendcmd="proc2d %s %s" %(outputtemp, output)
+								appendcmd="proc2d %s %s" %(outputtemp, self.output)
 								apEMAN.executeEmanCmd(appendcmd)
 								#remove temp particle
 								for tmpfile in (outputtemp, outputtempimg):
@@ -403,10 +379,10 @@ class makestack (appionLoop2.AppionLoop):
 					#number of particles for the micrograph
 					numpart = i-thrownout+1
 				else:
-					hasparticles=False
+					self.hasparticles=False
 					apDisplay.printColor(shortname+".mrc had no unmasked particles and has been rejected\n","cyan")
 			else:
-				hasparticles=False
+				self.hasparticles=False
 				apDisplay.printColor(shortname+".mrc had no particles and has been rejected\n","cyan")
 		else:
 			apDisplay.printWarning("CTFtilt correction requires a selection id!")
@@ -429,7 +405,7 @@ class makestack (appionLoop2.AppionLoop):
 
 		if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 			plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-			dbparts.append(self.createStackParticle(prtl))
+			dbparts.append(self.createStackParticle(particle))
 			# save the particles to the database
 		else:
 			eliminated+=1
@@ -509,7 +485,7 @@ class makestack (appionLoop2.AppionLoop):
 			imgpath = os.path.join(self.params['rundir'],tmpname)
 		else:
 			imgpath = os.path.join(imgdata['session']['image path'], imgname+".mrc")
-		output = os.path.join(self.params['rundir'], shortname+".hed")
+		self.output = os.path.join(self.params['rundir'], shortname+".hed")
 		outputctf = os.path.join(self.params['rundir'], shortname+".ctf.hed")
 		outputtemp = os.path.join(self.params['rundir'], shortname+"-temp.hed")
 		outputtempimg = os.path.join(self.params['rundir'], shortname+"-temp.img")
@@ -518,41 +494,38 @@ class makestack (appionLoop2.AppionLoop):
 
 		# if getting particles from database, a temporary
 		# box file will be created
-		if self.params['selectionId']:
-			dbbox=os.path.join(self.params['rundir'], shortname+".eman.box")
-			if self.params['defocpair']:
-				particles,shift = apParticle.getDefocPairParticles(imgdata,self.params)
-			else:
-				particles = apParticle.getParticles(imgdata, self.params['selectionId'])
-				shift = {'shiftx':0, 'shifty':0,'scale':1}
-			if len(particles) > 0:
-				###apply limits
-				if self.params['correlationmin'] or self.params['correlationmax']:
-					particles=self.eliminateMinMaxCCParticles(particles)
-
-				###apply masks
-				if self.params['checkmask']:
-					particles = eliminateMaskedParticles(particles,imgdata)
-
-				###save particles
-				### for untilted data set
-				if len(particles) > 0:
-					hasparticles=True
-					dbparts = self.saveParticles(particles,shift,dbbox,imgdata)
-				else:
-					hasparticles=False
-					apDisplay.printColor(shortname+".mrc had no unmasked particles and has been rejected\n","cyan")
-			else:
-				hasparticles=False
-				apDisplay.printColor(shortname+".mrc had no particles and has been rejected\n","cyan")
+		self.dbparts = None
+		dbbox=os.path.join(self.params['rundir'], shortname+".eman.box")
+		if self.params['defocpair']:
+			particles,shift = apParticle.getDefocPairParticles(imgdata,self.params)
 		else:
-			dbbox=shortname+".box"
-			hasparticles=True
+			particles = apParticle.getParticles(imgdata, self.params['selectionId'])
+			shift = {'shiftx':0, 'shifty':0,'scale':1}
+		if len(particles) > 0:
+			###apply limits
+			if self.params['correlationmin'] or self.params['correlationmax']:
+				particles=self.eliminateMinMaxCCParticles(particles)
+
+			###apply masks
+			if self.params['checkmask']:
+				particles = eliminateMaskedParticles(particles,imgdata)
+
+			###save particles
+			### for untilted data set
+			if len(particles) > 0:
+				self.hasparticles = True
+				self.saveParticles(particles,shift,dbbox,imgdata)
+			else:
+				self.hasparticles = False
+				apDisplay.printColor(shortname+".mrc had no unmasked particles and has been rejected\n","cyan")
+		else:
+			self.hasparticles=False
+			apDisplay.printColor(shortname+".mrc had no particles and has been rejected\n","cyan")
 
 		if self.params['boxfiles']:
 			return(0)
 
-		if hasparticles:
+		if self.hasparticles:
 			#count number of particles in box file
 			f=open(dbbox,'r')
 			lines=f.readlines()
@@ -564,23 +537,14 @@ class makestack (appionLoop2.AppionLoop):
 
 			# write batchboxer command
 			if self.params['selectionId']:
-				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, self.params['boxsize'])
+				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, self.output, self.params['boxsize'])
 			elif self.params['boxsize']:
-				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, self.params['boxsize'])
+				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, self.output, self.params['boxsize'])
 			else:
-				cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, output)
+				cmd="batchboxer input=%s dbbox=%s output=%s insideonly" %(imgpath, dbbox, self.output)
 
 			apDisplay.printMsg("boxing "+str(nptcls)+" particles")
 			apEMAN.executeEmanCmd(cmd)
-
-			imagic = apImagicFile.readImagic(output)
-			for i in range(len(imagic['images'])):
-				part = imagic['images'][i]
-				dbparts[i]['mean'] = part.mean()
-				dbparts[i]['stdev'] = part.std()
-				#inserting stack particles into the database
-				if self.params['commit'] is True:
-					dbparts[i].insert()
 
 			if self.params['stig']:
 				os.remove(os.path.join(self.params['rundir'],tmpname))
@@ -594,6 +558,22 @@ class makestack (appionLoop2.AppionLoop):
 				os.remove(os.path.join(self.params['rundir'],tmpname))
 			return(0)
 
+	def commitToDatabase(self, imgdata):
+		if self.hasparticles is False:
+			return
+		imagic = apImagicFile.readImagic(self.output)
+		for i in range(len(imagic['images'])):
+			part = imagic['images'][i]
+			self.dbparts[i]['mean'] = part.mean()
+			self.dbparts[i]['stdev'] = part.std()
+			#inserting stack particles into the database
+			if self.params['commit'] is True:
+				self.dbparts[i].insert()
+
+		apFile.removeStack(os.path.join(self.params['rundir'], shortname+".hed"))
+		if self.params['phaseflipped'] is True:
+			apFile.removeStack(os.path.join(self.params['rundir'], shortname+".ctf.hed"))
+
 	############################################################
 	## Saving Particles on single micrograph
 	############################################################
@@ -602,7 +582,7 @@ class makestack (appionLoop2.AppionLoop):
 		box=self.params['boxsize']
 		imgxy=imgdata['camera']['dimension']
 		eliminated=0
-		dbparts=[]
+		self.dbparts=[]
 		for i in range(len(particles)):
 			part = particles[i]
 			xcoord=int(math.floor(shift['scale']*(part['xcoord']-shift['shiftx'])-(box/2)+0.5))
@@ -610,7 +590,7 @@ class makestack (appionLoop2.AppionLoop):
 
 			if (xcoord>0 and xcoord+box <= imgxy['x'] and ycoord>0 and ycoord+box <= imgxy['y']):
 				plist.append(str(xcoord)+"\t"+str(ycoord)+"\t"+str(box)+"\t"+str(box)+"\t-3\n")
-				dbparts.append(self.createStackParticle(part))
+				self.dbparts.append(self.createStackParticle(part))
 				# save the particles to the database
 
 			else:
@@ -621,7 +601,7 @@ class makestack (appionLoop2.AppionLoop):
 		boxfile=open(dbbox,'w')
 		boxfile.writelines(plist)
 		boxfile.close()
-		return dbparts
+		return
 
 	############################################################
 	## Applying CTF correction to untilted micrograph
@@ -651,13 +631,17 @@ class makestack (appionLoop2.AppionLoop):
 ## Shared function for tilted and untilted CTF correction
 ############################################################
 
-	def createStackParticle(self, prtl):
+	def createStackParticle(self, particledata):
 		stackpq=appionData.ApStackParticlesData()
 		stackpq['stack'] = self.stackdata
 		stackpq['stackRun'] = self.stackrundata
-		stackpq['particle']=prtl
 		self.particleNumber += 1
 		stackpq['particleNumber'] = self.particleNumber
+		stpartdata = stackpq.query(results=1)
+		if stpartdata:
+			apDisplay.printError("trying to insert a duplicate particle")
+		stackpq['particle'] = particledata
+
 		return stackpq
 
 	def checkDefocus(self, defocus, shortname):
@@ -755,20 +739,13 @@ class makestack (appionLoop2.AppionLoop):
 		# create particle log file
 		partlogfile = os.path.join(self.params['rundir'], "particles.info")
 		f = open(partlogfile, 'a')
-		for n in range(count-self.params['numpart']):
-			particlenum = str(1+n+self.params['numpart'])
+		for n in range(count-self.particleNumber):
+			particlenum = str(1+n+self.particleNumber)
 			line = str(particlenum)+'\t'+os.path.join(imgdata['session']['image path'], imgname+".mrc")
 			f.write(line+"\n")
 		f.close()
 
 		self.params['numpart'] = count
-		try:
-			os.remove(os.path.join(self.params['rundir'], shortname+".hed"))
-			os.remove(os.path.join(self.params['rundir'], shortname+".img"))
-		except:
-			apDisplay.printWarning(os.path.join(self.params['rundir'], shortname+".hed")+" does not exist!")
-		if self.params['phaseflipped'] is True:
-			apFile.removeStack(os.path.join(self.params['rundir'], shortname+".ctf.hed"))
 
 
 ############################################################
@@ -877,10 +854,10 @@ class makestack (appionLoop2.AppionLoop):
 				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 							     "please check your parameter settings.")
 
-			if self.params['nocontinue']:
-				apDisplay.printWarning("Stack already exist in database! 'nocontinue' option chosen -- existing stack will be overwritten")
+			if self.params['continue'] is False:
+				apDisplay.printError("Stack already exists in database! create a new stack id")
 			else:
-				apDisplay.printWarning("Stack already exist in database! Appending new particles to stack")
+				apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
 
 
 ############################################################
@@ -891,37 +868,31 @@ class makestack (appionLoop2.AppionLoop):
 
 	def setupParserOptions(self):
 		### values
-
-
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin the particles after boxing", metavar="#")
-		self.parser.add_option("--single", dest="single", default=None,
+		self.parser.add_option("--single", dest="single",
 			help="create a single stack")
-		self.parser.add_option("--acecutoff", dest="acecutoff", default=None,
+		self.parser.add_option("--acecutoff", dest="acecutoff", type="float",
 			help="ACE cut off")
-		self.parser.add_option("--boxsize", dest="boxsize", default=None,
+		self.parser.add_option("--boxsize", dest="boxsize", type="int",
 			help="particle box size in pixel")
-		self.parser.add_option("--mincc", dest="correlationmin", default=None,
+		self.parser.add_option("--mincc", dest="correlationmin", type="float",
 			help="particle correlation mininum")
-		self.parser.add_option("--maxcc", dest="correlationmax", default=None,
+		self.parser.add_option("--maxcc", dest="correlationmax", type="float",
 			help="particle correlation maximum")
-		self.parser.add_option("--mindef", dest="mindefocus", default=None,
+		self.parser.add_option("--mindef", dest="mindefocus", type="float",
 			help="minimum defocus")
-		self.parser.add_option("--maxdef", dest="maxdefocus", default=None,
+		self.parser.add_option("--maxdef", dest="maxdefocus", type="float",
 			help="maximum defocus")
-		self.parser.add_option("--selectionid", dest="selectionId", default=None,
+		self.parser.add_option("--selectionid", dest="selectionId", type="int",
 			help="particle picking runid")
-		self.parser.add_option("--medium", dest="medium", default=None,
-			help="medium")
-		self.parser.add_option("--checkmask", dest="checkmaskmedium", default=None,
-			help="check mask")
-		self.parser.add_option("--partlimit", dest="partlimit", default=None,
+		self.parser.add_option("--partlimit", dest="partlimit",
 			help="particle limit")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
 			help="filetype, default=imagic")
-		self.parser.add_option("--lp", "--lowpass", dest="lowpass", default=None,
+		self.parser.add_option("--lp", "--lowpass", dest="lowpass", type="float",
 			help="low pass filter")
-		self.parser.add_option("--hp", "--highpass", dest="highpass", default=None,
+		self.parser.add_option("--hp", "--highpass", dest="highpass", type="float",
 			help="high pass filter")
 
 		### true/false
@@ -942,7 +913,9 @@ class makestack (appionLoop2.AppionLoop):
 		self.parser.add_option("--ctftilt", dest="ctftilt", default=False,
 			action="store_true", help="using ctftilt estimation for CTF correction")
 		self.parser.add_option("--boxfiles", dest="boxfiles", default=False,
-			action="store_true", help="boxfiles")
+			action="store_true", help="create only boxfiles, no stack")
+		self.parser.add_option("--checkmask", dest="checkmask", default=False,
+			action="store_true", help="Check masks")
 
 	def checkConflicts(self):
 		if self.params['boxsize'] is None:
