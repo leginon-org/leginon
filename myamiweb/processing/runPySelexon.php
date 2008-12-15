@@ -327,7 +327,6 @@ function runTemplateCorrelator() {
 	$outdir = $_POST['outdir'];
 
 	$command .="templateCorrelator.py ";
-	$command .="--projectid=".$_SESSION['projectId']." ";
 	$command .= templateCommand();
 
 	$apcommand = parseAppionLoopParams($_POST);
