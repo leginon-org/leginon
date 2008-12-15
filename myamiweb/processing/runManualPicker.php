@@ -157,7 +157,6 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 function runManualPicker() {
 
   $command.="manualpicker.py ";
-  $command.="--projectid=".$_SESSION['projectId']." ";
   $apcommand = parseAppionLoopParams($_POST);
   if ($apcommand[0] == "<") {
     createManualPickerForm($apcommand);
