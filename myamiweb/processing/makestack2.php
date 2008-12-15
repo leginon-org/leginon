@@ -98,16 +98,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	function enableselex(){
 		if (document.viewerform.selexcheck.checked){
-	      document.viewerform.selexonmin.disabled=false;
-	      document.viewerform.selexonmin.value='0.5';
-	      document.viewerform.selexonmax.disabled=false;
-	      document.viewerform.selexonmax.value='1.0';
+	      document.viewerform.correlationmin.disabled=false;
+	      document.viewerform.correlationmin.value='0.5';
+	      document.viewerform.correlationmax.disabled=false;
+	      document.viewerform.correlationmax.value='1.0';
 	    }
 	    else {
-	      document.viewerform.selexonmin.disabled=true;
-				document.viewerform.selexonmin.value='0.5';
-	      document.viewerform.selexonmax.disabled=true;
-	      document.viewerform.selexonmax.value='1.0';
+	      document.viewerform.correlationmin.disabled=true;
+				document.viewerform.correlationmin.value='0.5';
+	      document.viewerform.correlationmax.disabled=true;
+	      document.viewerform.correlationmax.value='1.0';
 	    }
 	  }
 	</SCRIPT>\n";
@@ -160,9 +160,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$aceval = ($_POST['acecheck']=='on') ? $_POST['ace'] : '0.8';
 	//ctftilt check params
 	$ctftiltcheck = ($_POST['ctftiltcheck']=='on') ? 'CHECKED' : '';
-	// selexon check params
-	$selexminval = ($_POST['selexcheck']=='on') ? $_POST['selexonmin'] : '0.5';
-	$selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['selexonmax'] : '1.0';
+	// correlation check params
+	$selexminval = ($_POST['selexcheck']=='on') ? $_POST['correlationmin'] : '0.5';
+	$selexmaxval = ($_POST['selexcheck']=='on') ? $_POST['correlationmax'] : '1.0';
 	$selexcheck = ($_POST['selexcheck']=='on') ? 'CHECKED' : '';
 	$selexdisable = ($_POST['selexcheck']=='on') ? '' : 'DISABLED';
 	// density check (checked by default)
@@ -373,8 +373,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo docpop('partcutoff','Particle Correlation Cutoff');
 		echo "<br />\n";
 		echo "(between 0.0 - 1.0)<br />
-		Use Values Above:<input type='text' name='selexonmin' $selexdisable value='$selexminval' size='4'><br />
-		Use Values Below:<input type='text' name='selexonmax' $selexdisable value='$selexmaxval' size='4'><br />
+		Use Values Above:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br />
+		Use Values Below:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br />
 		<br />\n";
 		echo "<b>Defocal pairs:</b>\n";
 		echo "<br />\n";
@@ -448,7 +448,7 @@ function runMakestack() {
 	//make sure a session was selected
 	if (!$outdir) createMakestackForm("<b>ERROR:</b> Select an experiment session");
 
-	// get selexon runId
+	// get correlation runId
 	$prtlrunId=$_POST['prtlrunId'];
 	if (!$prtlrunId) createMakestackForm("<b>ERROR:</b> No particle coordinates in the database");
 	
@@ -495,12 +495,12 @@ function runMakestack() {
 		if ($ace > 1 || $ace < 0 || !$ace) createMakestackForm("<b>ERROR:</b> Ace cutoff must be between 0 & 1");
 	}
 
-	// selexon cutoff
+	// correlation cutoff
 	if ($_POST['selexcheck']=='on') {
-		$selexonmin=$_POST['selexonmin'];
-		$selexonmax=$_POST['selexonmax'];
-		if ($selexonmin > 1 || $selexonmin < 0) createMakestackForm("<b>ERROR:</b> Selexon Min cutoff must be between 0 & 1");
-		if ($selexonmax > 1 || $selexonmax < 0) createMakestackForm("<b>ERROR:</b> Selexon Max cutoff must be between 0 & 1");
+		$correlationmin=$_POST['correlationmin'];
+		$correlationmax=$_POST['correlationmax'];
+		if ($correlationmin > 1 || $correlationmin < 0) createMakestackForm("<b>ERROR:</b> correlation Min cutoff must be between 0 & 1");
+		if ($correlationmax > 1 || $correlationmax < 0) createMakestackForm("<b>ERROR:</b> correlation Max cutoff must be between 0 & 1");
 	}
 
 	// check defocus cutoffs
@@ -520,9 +520,9 @@ function runMakestack() {
 	}
 
 	$command.="--single=$single ";
-	$command.="--prtlrunId=$prtlrunId ";
-	if ($lp) $command.="--lp=$lp ";
-	if ($hp) $command.="--hp=$hp ";
+	$command.="--selectionid=$prtlrunId ";
+	if ($lp) $command.="--lowpass=$lp ";
+	if ($hp) $command.="--highpass=$hp ";
 	if ($invert) $command.="--noinvert ";
 	if ($normalize) $command.="--nonorm ";
 	if ($phaseflip) $command.="--phaseflip ";
@@ -534,10 +534,10 @@ function runMakestack() {
 	if ($bin) $command.="--bin=$bin ";
 	if ($ace) $command.="--ace=$ace ";
 	if ($defocpair) $command.="--defocpair ";
-	if ($selexonmin) $command.="--selexonmin=$selexonmin ";
-	if ($selexonmax) $command.="--selexonmax=$selexonmax ";
-	if ($dfmin) $command.="--minDefocus=$dfmin ";
-	if ($dfmax) $command.="--maxDefocus=$dfmax ";
+	if ($correlationmin) $command.="--mincc=$correlationmin ";
+	if ($correlationmax) $command.="--maxcc=$correlationmax ";
+	if ($dfmin) $command.="--mindef=$dfmin ";
+	if ($dfmax) $command.="--maxdef=$dfmax ";
 	if ($fileformat) $command.="--spider ";
 	if ($limit) $command.="--partlimit=$limit ";
 	if ($boxfiles) $command.="--boxfiles ";
@@ -579,7 +579,7 @@ function runMakestack() {
 	<tr><td>runid</td><td>$runid</td></tr>
 	<tr><td>outdir</td><td>$outdir</td></tr>
 	<tr><td>description</td><td>$description</td></tr>
-	<tr><td>selexonId</td><td>$prtlrunId</td></tr>
+	<tr><td>Selection Id</td><td>$prtlrunId</td></tr>
 	<tr><td>tilt angle</td><td>$tiltangle</td></tr>
 	<tr><td>invert</td><td>$invert</td></tr>
 	<tr><td>nonorm</td><td>$nonorm</td></tr>
@@ -592,8 +592,8 @@ function runMakestack() {
 	<tr><td>box size</td><td>$boxsize</td></tr>
 	<tr><td>binning</td><td>$bin</td></tr>
 	<tr><td>ace cutoff</td><td>$ace</td></tr>
-	<tr><td>selexonmin cutoff</td><td>$selexonmin</td></tr>
-	<tr><td>selexonmax cutoff</td><td>$selexonmax</td></tr>
+	<tr><td>correlationmin cutoff</td><td>$correlationmin</td></tr>
+	<tr><td>correlationmax cutoff</td><td>$correlationmax</td></tr>
 	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
 	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
 	<tr><td>particle limit</td><td>$limit</td></tr>
