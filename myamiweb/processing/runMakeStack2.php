@@ -136,7 +136,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
 		$stackruns += 1;
-	$runidval = ($_POST['runid']) ? $_POST['runid'] : 'stack'.($stackruns+1);
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
 	$prtlrunval = $_POST['prtlrunId'];
 	$massessval = $_POST['massessname'];
 	// set phaseflip on by default
@@ -180,15 +180,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<input type='hidden' name='single' value='start.hed'>\n";
 #	echo "<br />\n";
 #	echo "<br />\n";
-#	echo docpop('runid','<b>Stack Run Name:</b>');
-#	echo "<input type='text' name='runid' value='$runidval'>\n";
-#	echo "<br />\n";
-#	echo "<br />\n";
-#	echo docpop('outdir','<b>Output Directory:</b>');
-#	echo "<br />\n";
-#	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 
-	createAppionLoopTable($sessiondata, $runidval, "stacks");
+	createAppionLoopTable($sessiondata, $runnameval, "stacks");
 
 
 	echo "</td>\n";
@@ -433,7 +426,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 function runMakestack() {
 	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
+	$runname = $_POST['runname'];
 	$outdir = $_POST['outdir'];
 	$ctftilt =$_POST['ctftilt'];
 
@@ -558,7 +551,7 @@ function runMakestack() {
 
 		if (!($user && $password)) createMakestackForm("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack',$testimage);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack',$testimage);
 		// if errors:
 		if ($sub) createMakestackForm("<b>ERROR:</b> $sub");
 		exit;
@@ -576,7 +569,7 @@ function runMakestack() {
 	$command
 	</td></tr>
 	<tr><td>stack name</td><td>$single</td></tr>
-	<tr><td>runid</td><td>$runid</td></tr>
+	<tr><td>runname</td><td>$runname</td></tr>
 	<tr><td>outdir</td><td>$outdir</td></tr>
 	<tr><td>description</td><td>$description</td></tr>
 	<tr><td>Selection Id</td><td>$prtlrunId</td></tr>
