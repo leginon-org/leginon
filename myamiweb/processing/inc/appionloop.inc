@@ -10,7 +10,8 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
 	$nowait = ($_POST[nowait]=="") ? "" : "CHECKED";
 	$background = ($_POST[background]=="on") ? "CHECKED" : "";
-	$shuffle = ($_POST[shuffle]=="on") ? "CHECKED" : "";
+	$shuffle = ($_POST['shuffle']=="on") ? "CHECKED" : "";
+	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
 	$tiltangle = $_POST['tiltangle'];
 	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
@@ -104,6 +105,10 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo docpop('shuffle','Shuffle the images');
 	echo "<br />\n";
 
+	echo "<input type='checkbox' name='reverse' $reverse>\n";
+	echo docpop('reverse','Process new images first');
+	echo "<br />\n";
+
 	echo docpop('limit','Limit: ');
 	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images\n";
 	echo "<br />\n";
@@ -143,14 +148,16 @@ function appionLoopSummaryTable () {
 		$norejects = 0;
 		$bestimages = 0;
 	}
-	$nowait = ($_POST[nowait]=="on") ? "0" : "1";
-	$background = ($_POST[background]=="on") ? "1" : "0";
-	$shuffle = ($_POST[shuffle]=="on") ? "1" : "0";
+	$nowait = ($_POST[nowait]=="on") ? false : true;
+	$background = ($_POST[background]=="on") ? true : false;
+	$shuffle = ($_POST['shuffle']=="on") ? true : false;
+	$reverse = ($_POST['reverse']=="on") ? true : false;
 	$limit = $_POST[limit];
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST[apcontinue];
-	$commit = ($_POST[commit]=="on") ? "1" : "0";
+	$commit = ($_POST[commit]=="on") ? true : false;
 	$runname = $_POST[runname];
+	$reverse = ($_POST['reverse']=="on") ? true : false;
 	$outdir = $_POST[outdir];
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
@@ -160,16 +167,17 @@ function appionLoopSummaryTable () {
 	}
 
 	echo "<TR><TD>runname</TD><TD>$runname</TD></TR>\n";
-	echo "<TR><TD>outdir</TD><TD>$outdir</TD></TR>\n";
-	echo "<TR><TD>norejects</TD><TD>$norejects</TD></TR>\n";
-	echo "<TR><TD>bestimages</TD><TD>$bestimages</TD></TR>\n";
-	echo "<TR><TD>nowait</TD><TD>$nowait</TD></TR>\n";
-	echo "<TR><TD>commit</TD><TD>$commit</TD></TR>\n";
+	echo "<TR><TD>output directory</TD><TD>$outdir</TD></TR>\n";
+	echo "<TR><TD>no rejects</TD><TD>$norejects</TD></TR>\n";
+	echo "<TR><TD>only best images</TD><TD>$bestimages</TD></TR>\n";
+	echo "<TR><TD>do not wait for more images</TD><TD>$nowait</TD></TR>\n";
+	echo "<TR><TD>commit to database</TD><TD>$commit</TD></TR>\n";
 	echo "<TR><TD>background</TD><TD>$background</TD></TR>\n";
-	echo "<TR><TD>shuffle</TD><TD>$shuffle</TD></TR>\n";
-	echo "<TR><TD>limit</TD><TD>$limit</TD></TR>\n";
-	echo "<TR><TD>tilt angle</TD><TD>$tiltangle</TD></TR>\n";
-	echo "<TR><TD>continue</TD><TD>$apcontinue</TD></TR>\n";
+	echo "<TR><TD>shuffle images</TD><TD>$shuffle</TD></TR>\n";
+	echo "<TR><TD>process new images first</TD><TD>$reverse</TD></TR>\n";
+	echo "<TR><TD>image limit</TD><TD>$limit</TD></TR>\n";
+	echo "<TR><TD>tilt angle restriction</TD><TD>$tiltangle</TD></TR>\n";
+	echo "<TR><TD>continue from last image</TD><TD>$apcontinue</TD></TR>\n";
 }
 
 function parseAppionLoopParams () {
@@ -190,13 +198,14 @@ function parseAppionLoopParams () {
 		$norejects = 0;
 		$bestimages = 0;
 	}
-	$nowait = ($_POST['nowait']=="on") ? "0" : "1";
-	$background = ($_POST['background']=="on") ? "1" : "0";
-	$shuffle = ($_POST['shuffle']=="on") ? "1" : "0";
+	$nowait = ($_POST['nowait']=="on") ? false : true;
+	$background = ($_POST['background']=="on") ? true : false;
+	$shuffle = ($_POST['shuffle']=="on") ? true : false;
+	$reverse = ($_POST['reverse']=="on") ? true : false;
 	$limit = $_POST['limit'];
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST['apcontinue'];
-	$commit = ($_POST['commit']=="on") ? "1" : "0";
+	$commit = ($_POST['commit']=="on") ? true : false;
 	$runname = $_POST['runname'];
 	$outdir = $_POST['outdir'];
 	
@@ -225,6 +234,7 @@ function parseAppionLoopParams () {
 	if ($nowait) $command.=" --no-wait";
 	if ($commit) $command.=" --commit";
 	if ($background) $command.=" --background";
+	if ($reverse) $command.=" --reverse";
 	if ($shuffle) $command.=" --shuffle";
 	if ($limit) $command.=" --limit=$limit";
 
