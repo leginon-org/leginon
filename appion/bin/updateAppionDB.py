@@ -2,23 +2,32 @@
 # update the status of the reconstruction in the appion database 
 
 import MySQLdb
-import dbconfig
+import sinedon
 import sys
 
 if __name__ == "__main__":
-	# connect
-	c=dbconfig.getConfig('appionData')
-	dbc=MySQLdb.Connect(**c)
-
-	# create a cursor
-	cursor = dbc.cursor()
-
+	# parse options
+	projectid = None	
 	jobid = sys.argv[1]
 	status = sys.argv[2]
+	if len(sys.argv) > 3:
+		projectid = sys.argv[3]
 
-	q="UPDATE ApClusterJobData SET `status` = '%s' WHERE `DEF_id` = '%s'" %(status,jobid)
-	 
+	# set new db
+	if projectid is not None:
+		newdbname = "ap"+projectid
+		sinedon.setConfig('appionData', db=newdbname)
+
+	# connect to database
+	c = sinedon.getConfig('appionData')
+	dbc = MySQLdb.Connect(**c)
+	cursor = dbc.cursor()
+
+	# execute update
+	q="UPDATE ApClusterJobData SET `status` = '%s' WHERE `DEF_id` = '%s'" %(status,jobid)	 
 	cursor.execute(q)
+
+	# close
 	cursor.close()
 	dbc.close()
 
