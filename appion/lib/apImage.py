@@ -797,15 +797,15 @@ def readPNG(filename):
 	return i
 
 #=========================
-def correctImage(rawimgdata, params):
+def correctImage(imgdata, sessionname):
 	"""
 	Correct an image using the old method:
 	- no bias correction
 	- dark correction is not time dependent
 	"""
-	rawimgarray = rawimgdata['image']
+	rawimgarray = imgdata['image']
 	import apDatabase
-	darkarray, normarray = apDatabase.getDarkNorm(params['sessionname'], imgdata['camera'])
+	darkarray, normarray = apDatabase.getDarkNorm(sessionname, imgdata['camera'])
 	correctedimgarray = normarray * (rawimgarray - darkarray)
 	return correctedimgarray
 
