@@ -438,7 +438,6 @@ function runMakestack() {
 	$ctftilt =$_POST['ctftilt'];
 
 	$command.="makestack2.py"." ";
-	$command.="--projectid=".$_SESSION['projectId']." ";	
 
 	$single=$_POST['single'];
 	//make sure a session was selected
@@ -452,7 +451,7 @@ function runMakestack() {
 	$prtlrunId=$_POST['prtlrunId'];
 	if (!$prtlrunId) createMakestackForm("<b>ERROR:</b> No particle coordinates in the database");
 	
-	$invert = ($_POST['density']=='invert') ? '' : 'noinvert';
+	$invert = ($_POST['density']=='invert') ? 'yes' : 'no';
 	$normalize = ($_POST['normalize']=='on') ? '' : 'nonorm';
 	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
@@ -523,7 +522,8 @@ function runMakestack() {
 	$command.="--selectionid=$prtlrunId ";
 	if ($lp) $command.="--lowpass=$lp ";
 	if ($hp) $command.="--highpass=$hp ";
-	if ($invert) $command.="--noinvert ";
+	if ($invert == "yes") $command.="--invert ";
+	if ($invert == "no") $command.="--no-invert ";
 	if ($normalize) $command.="--nonorm ";
 	if ($phaseflip) $command.="--phaseflip ";
 	if ($stig) $command.="--stig ";
