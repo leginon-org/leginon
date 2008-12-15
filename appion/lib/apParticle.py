@@ -12,15 +12,13 @@ try:
 except:
 	pass
 #leginon
-try:
-	import leginondata
-except ImportError:
-	import data as leginondata
+import leginondata
 #appion
 import appionData
 import apImage
 import apDatabase
 import apDisplay
+import apDefocalPairs
 
 def guessParticlesForSession(expid=None, sessionname=None):
 	if expid is None and sessionname is not None:
@@ -115,6 +113,21 @@ def getDefocPairParticles(imgdata, params):
 	shift['scale']=shiftdata['scale']
 	print "shifting particles by", shiftx, shifty,shiftdata['scale']
 	return(particles,shift)
+
+def getDefocPairParticles2(imgdata, selectionid):
+	apDisplay.printMsg("finding defocus pair for "+apDisplay.short(imgdata['filename']))
+	partq = appionData.ApParticleData()
+	defimgdata = apDefocalPairs.getTransformedDefocPair(imgdata, 1)
+	partq['image'] = defimgdata
+	partq['selectionrun'] = appionData.ApSelectionRunData.direct_query(selectionid)
+	partdatas = partq.query()
+	
+	shiftq = appionData.ApImageTransformationData()
+	shiftq['image1'] = defimgdata
+	shiftdata = shiftq.query()[0]
+	apDisplay.printMsg("shifting particles by %.1f,%.1f (%d X)"
+		%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
+	return (partdatas, shiftdata)
 
 
 def insertParticlePeakPairs(peaktree1, peaktree2, peakerrors, imgdata1, imgdata2, transdata, params):
