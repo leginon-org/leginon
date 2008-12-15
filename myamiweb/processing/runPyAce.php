@@ -66,7 +66,6 @@ function runPyAce() {
 	$outdir=$_POST['outdir'];
 
 	$command.= "pyace.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	// parse params
 	$edgethcarbon=$_POST[edgethcarbon];
