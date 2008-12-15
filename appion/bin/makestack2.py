@@ -930,11 +930,13 @@ class makestack (appionLoop2.AppionLoop):
 		### true/false
 		self.parser.add_option("--phaseflipped", dest="phaseflipped", default=False,
 			action="store_true", help="perform CTF correction on the boxed images")
-		self.parser.add_option("--invert", dest="inverted", default=True,
+		self.parser.add_option("--invert", dest="inverted", default=False,
 			action="store_true", help="tilt angle of the micrographs")
+		self.parser.add_option("--no-invert", dest="inverted", default=False,
+			action="store_false", help="tilt angle of the micrographs")
 		self.parser.add_option("--spider", dest="spider", default=False,
 			action="store_true", help="create a spider stack")
-		self.parser.add_option("--normalized", dest="normalized", default=True,
+		self.parser.add_option("--normalized", dest="normalized", default=False,
 			action="store_true", help="normalize the entire stack")
 		self.parser.add_option("--defocpair", dest="defocpair", default=False,
 			action="store_true", help="select defocal pair")
