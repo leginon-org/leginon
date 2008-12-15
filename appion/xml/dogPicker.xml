@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="us-ascii"?>
-<dogpicker>
- <invert>
-	<name>invert dogmaps</name>
-	<description>Inverts the dogmap for reverse contrast images</description>
-	<type>boolean</type>
-	<default>False</default>
- </invert>
-</dogpicker>
