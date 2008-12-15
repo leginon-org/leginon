@@ -76,7 +76,7 @@ void CreateAffineTransform( FArray PO, double **TR ) {
 	else FatalError("CreateAffineTransform: Least Squares fitting not yet implimented.\n");
 }
 
-int TransformGood( double **TR );
+//int TransformGood( double **TR );
 int TransformGood( double **TR ) {
 	
 	/* This verifies that tranform does not compress everything
@@ -98,20 +98,32 @@ int TransformGood( double **TR ) {
 	if ( TR[2][1] != TR[2][1] ) return FALSE;
 	if ( TR[2][2] != TR[2][2] ) return FALSE;
 	
+	/* Neil extra testing */
+	//max tilt angle of 66 degrees
+	if (TR[0][0] < 0.4) return FALSE; 
+	if (TR[1][1] < 0.4) return FALSE;
+	//only allow 25 degrees of expansion
+	if (TR[0][0] > 1.1) return FALSE; 
+	if (TR[1][1] > 1.1) return FALSE;
+	// max rotation angle of 45 degrees
+	if (fabs(TR[0][1]) > 0.7071) return FALSE; 
+	if (fabs(TR[1][0]) > 0.7071) return FALSE; 
+
 	/* We have a reasonable tranform */
 	
 	return TRUE;
 	
 }
-	
+
 void ScreenMatches( PStack matches, double **transform ) {
 	
 	float pgood = 0.95;
 	float pfail = 0.001;
 	int points  = 3;
-	float treshold = 1;
+	float treshold = 2;
 	int largest  = 1;
-	int j, goodpoints;
+	int j;
+	int goodpoints;
 	unsigned long i, max, L;
 	FArray fr = NewFArray(0,0,2,3);
 
@@ -123,10 +135,11 @@ void ScreenMatches( PStack matches, double **transform ) {
 	}
 	
 	double **tbest = AllocDMatrix(3,3,0,0);
-	
+
 	L = (long) ceil((log(pfail))/(log(1-(pow(pgood,points)))));
 	max = (long) ceil((log(pfail))/(log(1-(pow(((float)points/numberofmatches),points)))));
-	
+	//fprintf(stderr,"Max RANSAC iters %ld\n",max);
+
 	for (i=1; i != max; i++) {
 		
 		ResizeFArray(fr,0,0,2,3);
@@ -161,9 +174,11 @@ void ScreenMatches( PStack matches, double **transform ) {
 			float dist = (row2-row1)*(row2-row1)+(col2-col1)*(col2-col1);
 			
 			if ( dist < treshold ) goodpoints++;
+			//if ( dist < treshold ) goodpoints+=1.0/(dist*dist+1.0);
 			
 		}
-		
+				
+
 		if ( goodpoints > largest ) {
 			largest = goodpoints;
 			CopyDMatrix(transform,tbest,0,0,2,2);
