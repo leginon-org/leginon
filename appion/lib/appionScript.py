@@ -120,6 +120,7 @@ class AppionScript(object):
 		#if not 'rundir' in self.params:
 		#	self.params['rundir'] = self.params['outdir']
 		if self.params['rundir'] is None:
+			apDisplay.printWarning("run directory not defined, automatically setting it")
 			self.setProcessingDirName()
 			self.setRunDir()
 			#if 'outdir' in self.params and self.params['outdir'] is not None:
