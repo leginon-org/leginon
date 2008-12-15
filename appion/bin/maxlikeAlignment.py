@@ -25,7 +25,7 @@ from pyami import spider
 import appionData
 import apImagicFile
 import apProject
-import dbconfig
+import sinedon
 import MySQLdb
 
 #=====================
@@ -135,7 +135,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def readyUploadFlag(self):
 		if self.params['commit'] is False:
 			return
-		config = dbconfig.getConfig('appionData')
+		config = sinedon.getConfig('appionData')
 		dbc = MySQLdb.Connect(**config)
 		cursor = dbc.cursor()
 		query = (
