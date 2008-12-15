@@ -102,7 +102,7 @@ def insertShift(imgdata,siblingdata,peak):
 	shiftq.insert()
 	return True
 
-def getTransformedDefocPair(imgdata,direction):
+def getTransformedDefocPair(imgdata, direction):
 	simgq=appionData.ApImageTransformationData()
 	base = 'image'
 	direction = str(direction)
