@@ -502,7 +502,7 @@ function runMakestack() {
 	if ($dfmin) $command.="--mindef=$dfmin ";
 	if ($dfmax) $command.="--maxdef=$dfmax ";
 	if ($fileformat) $command.="--spider ";
-	if ($partlimit) $command.="--partlimit=$partlimit ";
+	if ($partlimit != "none") $command.="--partlimit=$partlimit ";
 	$command.="--description=\"$description\" ";
 
 	$apcommand = parseAppionLoopParams($_POST);
