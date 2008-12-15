@@ -29,8 +29,6 @@ import apProject
 import apFile
 import apImagicFile
 import leginondata
-#legacy
-#import selexonFunctions  as sf1
 
 class makestack (appionLoop2.AppionLoop):
 
@@ -41,8 +39,17 @@ class makestack (appionLoop2.AppionLoop):
 ############################################################
 
 	def preLoopFunctions(self):
-		if self.params['selexonId'] is None and self.params['sessionname'] is not None:
-			self.params['selexonId'] = apParticle.guessParticlesForSession(sessionname=self.params['sessionname'])
+		if self.params['selectionId'] is None and self.params['sessionname'] is not None:
+			self.params['selectionId'] = apParticle.guessParticlesForSession(sessionname=self.params['sessionname'])
+
+		### extra parameters we need to do a better job of keeping track of things
+		self.params['apix'] = 0.0
+		self.params['mag'] = None
+		self.params['kv'] = 0
+		self.params['df'] = None
+
+		### global particle number counter
+		self.particleNumber = 0
 
 		self.insertStackRun()
 
@@ -50,7 +57,7 @@ class makestack (appionLoop2.AppionLoop):
 
 		# get defocus pair images from database if defocpair option is selected
 		if self.params['defocpair']:
-			self.imgtree = self.getImgsDefocPairFromSelexonId()
+			self.imgtree = self.getImgsDefocPairFromSelectionId()
 
 		# remove existing stack
 		if self.params['nocontinue']:
@@ -109,17 +116,17 @@ class makestack (appionLoop2.AppionLoop):
 	############################################################
 	## get defocus pair of images
 	############################################################
-	def getImgsDefocPairFromSelexonId(self):
+	def getImgsDefocPairFromSelectionId(self):
 		startt = time.time()
-		apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(self.params['selexonId']))
+		apDisplay.printMsg("Finding defoc pair images that have particles for selection run: id="+str(self.params['selectionId']))
 
 		# get selection run id
-		selexonrun = appionData.ApSelectionRunData.direct_query(self.params['selexonId'])
-		if not (selexonrun):
-			apDisplay.printError("specified selexon Id '"+str(self.params['selexonId'])+"' not in database")
+		selectionrun = appionData.ApSelectionRunData.direct_query(self.params['selectionId'])
+		if not (selectionrun):
+			apDisplay.printError("specified selection Id '"+str(self.params['selectionId'])+"' not in database")
 
 		# from id get the session
-		self.params['sessionid']=selexonrun['session']
+		self.params['sessionid']=selectionrun['session']
 
 		# get all images from session
 		dbimgq=leginondata.AcquisitionImageData(session=self.params['sessionid'])
@@ -135,7 +142,7 @@ class makestack (appionLoop2.AppionLoop):
 		for imgdata in dbimginfo:
 			pimgq=appionData.ApParticleData()
 			pimgq['image']=imgdata
-			pimgq['selectionrun']=selexonrun
+			pimgq['selectionrun']=selectionrun
 			pimg=pimgq.query(results=1)
 			if pimg:
 				siblingimage = apDefocalPairs.getTransformedDefocPair(imgdata,1)
@@ -334,12 +341,12 @@ class makestack (appionLoop2.AppionLoop):
 
 		# if getting particles from database, a temporary
 		# box file will be created
-		if self.params['selexonId']:
+		if self.params['selectionId']:
 			dbbox=os.path.join(self.params['rundir'], shortname+".eman.box")
 			if self.params['defocpair']:
 				particles,shift = apParticle.getDefocPairParticles(imgdata,self.params)
 			else:
-				particles = apParticle.getParticles(imgdata, self.params['selexonId'])
+				particles = apParticle.getParticles(imgdata, self.params['selectionId'])
 				shift = {'shiftx':0, 'shifty':0,'scale':1}
 			if len(particles) > 0:
 				###apply limits
@@ -362,7 +369,7 @@ class makestack (appionLoop2.AppionLoop):
 						lines=f.readlines()
 						f.close()
 						nptcls=len(lines)
-						if self.params['selexonId'] and nptcls > 0:
+						if self.params['selectionId'] and nptcls > 0:
 							cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, outputtemp, self.params['boxsize'])
 							apEMAN.executeEmanCmd(cmd)
 
@@ -404,7 +411,7 @@ class makestack (appionLoop2.AppionLoop):
 				hasparticles=False
 				apDisplay.printColor(shortname+".mrc had no particles and has been rejected\n","cyan")
 		else:
-			apDisplay.printWarning("CTFtilt correction requires a selexon id!")
+			apDisplay.printWarning("CTFtilt correction requires a selection id!")
 
 		apDisplay.printMsg("number of particles in this micrograph is " + str(numpart))
 		return(numpart)
@@ -513,12 +520,12 @@ class makestack (appionLoop2.AppionLoop):
 
 		# if getting particles from database, a temporary
 		# box file will be created
-		if self.params['selexonId']:
+		if self.params['selectionId']:
 			dbbox=os.path.join(self.params['rundir'], shortname+".eman.box")
 			if self.params['defocpair']:
 				particles,shift = apParticle.getDefocPairParticles(imgdata,self.params)
 			else:
-				particles = apParticle.getParticles(imgdata, self.params['selexonId'])
+				particles = apParticle.getParticles(imgdata, self.params['selectionId'])
 				shift = {'shiftx':0, 'shifty':0,'scale':1}
 			if len(particles) > 0:
 				###apply limits
@@ -558,7 +565,7 @@ class makestack (appionLoop2.AppionLoop):
 				return(0)
 
 			# write batchboxer command
-			if self.params['selexonId']:
+			if self.params['selectionId']:
 				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, dbbox, output, self.params['boxsize'])
 			elif self.params['boxsize']:
 				cmd="batchboxer input=%s dbbox=%s output=%s newsize=%i insideonly" %(imgpath, dbbox, output, self.params['boxsize'])
@@ -651,8 +658,8 @@ class makestack (appionLoop2.AppionLoop):
 		stackpq['stack'] = self.stackdata
 		stackpq['stackRun'] = self.stackrundata
 		stackpq['particle']=prtl
-		self.params['particleNumber'] += 1
-		stackpq['particleNumber']=self.params['particleNumber']
+		self.particleNumber += 1
+		stackpq['particleNumber'] = self.particleNumber
 		return stackpq
 
 	def checkDefocus(self, defocus, shortname):
@@ -887,47 +894,37 @@ class makestack (appionLoop2.AppionLoop):
 
 	def setupParserOptions(self):
 		### values
-		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
-			help="Binning of the image before FFT", metavar="#")
+
+
+		self.parser.add_option("--bin", dest="bin", type="int", default=1,
+			help="Bin the particles after boxing", metavar="#")
 		self.parser.add_option("--single", dest="single", default=None,
 			help="create a single stack")
 		self.parser.add_option("--acecutoff", dest="acecutoff", default=None,
 			help="ACE cut off")
 		self.parser.add_option("--boxsize", dest="boxsize", default=None,
 			help="particle box size in pixel")
-		self.parser.add_option("--mag", dest="mag", default=None,
-			help="magnification")
-		self.parser.add_option("--apix", dest="apix", type="float", default=0.0,
-			help="apix")
-		self.parser.add_option("--kv", dest="kv", type="int", default=0,
-			help="kv")
-		self.parser.add_option("--df", dest="df", type="float", default=0.0,
-			help="defocus")
-		self.parser.add_option("--correlationmin", dest="correlationmin", default=None,
+		self.parser.add_option("--mincc", dest="correlationmin", default=None,
 			help="particle correlation mininum")
-		self.parser.add_option("--correlationmax", dest="correlationmax", default=None,
+		self.parser.add_option("--maxcc", dest="correlationmax", default=None,
 			help="particle correlation maximum")
-		self.parser.add_option("--mindefocus", dest="mindefocus", default=None,
+		self.parser.add_option("--mindef", dest="mindefocus", default=None,
 			help="minimum defocus")
-		self.parser.add_option("--maxdefocus", dest="maxdefocus", default=None,
+		self.parser.add_option("--maxdef", dest="maxdefocus", default=None,
 			help="maximum defocus")
-		self.parser.add_option("--selexonId", dest="selexonId", default=None,
+		self.parser.add_option("--selectionid", dest="selectionId", default=None,
 			help="particle picking runid")
 		self.parser.add_option("--medium", dest="medium", default=None,
 			help="medium")
 		self.parser.add_option("--checkmask", dest="checkmaskmedium", default=None,
 			help="check mask")
-		self.parser.add_option("--particleNumber", dest="particleNumber", type="int", default=0,
-			help="particle number (no need to specify)")
 		self.parser.add_option("--partlimit", dest="partlimit", default=None,
 			help="particle limit")
-		self.parser.add_option("--matlab", dest="matlab", default=None,
-			help="matlab")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
 			help="filetype, default=imagic")
-		self.parser.add_option("--lowpass", dest="lowpass", default=None,
+		self.parser.add_option("--lp", "--lowpass", dest="lowpass", default=None,
 			help="low pass filter")
-		self.parser.add_option("--highpass", dest="highpass", default=None,
+		self.parser.add_option("--hp", "--highpass", dest="highpass", default=None,
 			help="high pass filter")
 
 		### true/false
