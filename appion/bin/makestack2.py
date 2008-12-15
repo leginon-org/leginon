@@ -125,11 +125,9 @@ class makestack (appionLoop2.AppionLoop):
 		if not (selectionrun):
 			apDisplay.printError("specified selection Id '"+str(self.params['selectionId'])+"' not in database")
 
-		# from id get the session
-		self.params['sessionid']=selectionrun['session']
-
 		# get all images from session
-		dbimgq=leginondata.AcquisitionImageData(session=self.params['sessionid'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		dbimgq=leginondata.AcquisitionImageData(session=sessiondata)
 		dbimginfo=dbimgq.query(readimages=False)
 
 		if not (dbimginfo):
@@ -687,7 +685,7 @@ class makestack (appionLoop2.AppionLoop):
 	def eliminateMaskedParticles(particles,imgdata):
 		newparticles = []
 		eliminated = 0
-		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		if self.params['defocpair']:
 			imgdata = apDefocalPairs.getTransformedDefocPair(imgdata,2)
 	#		print imgdata.dbid
@@ -778,6 +776,9 @@ class makestack (appionLoop2.AppionLoop):
 ############################################################
 
 	def insertStackRun(self):
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		projectdata = apProject.getProjectIdFromSessionName(self.params['sessionname'])
+
 		stparamq=appionData.ApStackParamsData()
 		paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
 			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair',
@@ -803,8 +804,6 @@ class makestack (appionLoop2.AppionLoop):
 				goodplist=plist
 				continue
 
-
-
 		# create a stack object
 		stackq = appionData.ApStackData()
 		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
@@ -813,7 +812,7 @@ class makestack (appionLoop2.AppionLoop):
 		# create a stackRun object
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
-		runq['session'] = self.params['session']
+		runq['session'] = sessiondata
 
       # see if stack already exists in the database (just checking path)
 		stacks = stackq.query(results=1)
@@ -825,15 +824,13 @@ class makestack (appionLoop2.AppionLoop):
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = False
 		stackq['pixelsize'] = self.params['apix']*self.params['bin']*1e-10
-		stackq['project|projects|project'] = apProject.getProjectIdFromSessionName(self.params['session']['name'])
+		stackq['project|projects|project'] = projectdata
 
 		self.stackdata = stackq
 
 		runnames = runq.query(results=1)
-		# recreate a stackRun object
-		runq = appionData.ApStackRunData()
-		runq['stackRunName'] = self.params['runname']
-		runq['session'] = self.params['session']
+
+		# finish stackRun object
 		if goodplist:
 			runq['stackParams'] = goodplist
 		else:
@@ -846,7 +843,7 @@ class makestack (appionLoop2.AppionLoop):
 
 		rinstackq['stackRun'] = runq
 		rinstackq['stack'] = stackq
-		rinstackq['project|projects|project'] = apProject.getProjectIdFromSessionName(self.params['session']['name'])
+		rinstackq['project|projects|project'] = projectdata
 
 		#print stacks[0]['path']
 
