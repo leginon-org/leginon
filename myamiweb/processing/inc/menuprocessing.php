@@ -270,7 +270,7 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-				'name'=>"<a href='makestack2.php?expId=$sessionId'>Stack creation</a>",
+				'name'=>"<a href='runMakeStack2.php?expId=$sessionId'>Stack creation</a>",
 				'result'=>$sresults,
 				);
 		$nruns[]=array (

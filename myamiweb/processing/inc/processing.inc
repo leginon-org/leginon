@@ -880,12 +880,13 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		$jobtext .= "#PBS -l walltime=240:00:00\n";
 		$jobtext .= "#PBS -l cput=240:00:00\n";
 		$jobtext .= "#PBS -r n\n\n";
-		$jobtext .= "updateAppionDB.py $jobid R\n\n";
+		$projectid = $_SESSION['projectId'] ? $_SESSION['projectId'] : "";
+		$jobtext .= "updateAppionDB.py $jobid R $projectid\n\n";
 
 		// create virtual window for matlab images
 		if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
 		$jobtext .= "$apcmd\n";
-		$jobtext .= "\nupdateAppionDB.py $jobid D\n\n";
+		$jobtext .= "\nupdateAppionDB.py $jobid D $projectid\n\n";
 		$jobtext .= "exit\n"; 
 	
 		// write jobfile to tmp dir on cronus3

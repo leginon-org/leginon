@@ -22,7 +22,7 @@ processing_header("More Stack Tools","More Stack Tools Page", $javascript,False)
 echo "<table border='1' class='tableborder'>";
 
 echo "<tr><td>";
-echo "  <h3><a href='makestack2.php?expId=$expId'>Make a New Stack</a></h3>";
+echo "  <h3><a href='runMakeStack2.php?expId=$expId'>Make a New Stack</a></h3>";
 echo "  create a stack from a particle picking run ";
 echo "</td></tr>";
 
