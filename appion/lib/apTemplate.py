@@ -176,32 +176,6 @@ def copyTemplatesToOutdir(params, timestamp=None):
 	pprint.pprint(params['templatelist'])
 	return
 		
-def insertTemplateRun(params,runq,templatenum):
-	tid=params['templateIds'][templatenum]
-	templateimagedata=appionData.ApTemplateImageData.direct_query(tid)
-	# if no templates in the database, exit
-	if not (templateimagedata):
-		apDisplay.printError("Template '"+tid+"' not found in database. Use uploadTemplates.py")
-
-	if params['multiple_range']:
-		strt=params["startang"+str(templatenum+1)]
-		end=params["endang"+str(templatenum+1)]
-		incr=params["incrang"+str(templatenum+1)]
-	else:
-		strt=params['startang']
-		end=params['endang']
-		incr=params['incrang']
-	
-	templaterunq=appionData.ApTemplateRunData()
-	templaterunq['selectionrun']=runq	
-	templaterunq['template']=templateimagedata
-	templaterunq['range_start']=float(strt)
-	templaterunq['range_end']=float(end)
-	templaterunq['range_incr']=float(incr)
-	if params['commit'] is True:
-		templaterunq.insert()
-	return
-
 def insertTemplateImage(params):
 	for name in params['templatelist']:
 		if os.path.basename(name) != name:
@@ -248,36 +222,3 @@ def insertTemplateImage(params):
 			apDisplay.printWarning("Not commiting template to DB")
 	return
 
-def checkTemplateParams(runq, params):
-	templaterunq = appionData.ApTemplateRunData(selectionrun=runq)
-	templaterundata = templaterunq.query()
-	if not templaterundata:
-		return True
-	#make sure of using same number of templates
-	if len(params['templateIds']) != len(templaterundata):
-		apDisplay.printError("All parameters for a selexon run must be identical!\n"+\
-			"You do not have the same number of templates as your last run")
-	# check all templates
-
-	if params['multiple_range']:
-		for n in range(0,len(params['templateIds'])):
-			strt=params["startang"+str(n+1)]
-			end=params["endang"+str(n+1)]
-			incr=params["incrang"+str(n+1)]
-			tmpltimagedata=appionData.ApTemplateImageData.direct_query(params['templateIds'][n])
-			tmpltrunq=appionData.ApTemplateRunData()
-			tmpltrunq['selectionrun']=runq
-			tmpltrunq['template']=tmpltimagedata
-			tmpltrundata=tmpltrunq.query(results=1)
-			if (tmpltrundata[0]['range_start']!=strt or
-				tmpltrundata[0]['range_end']!=end or
-				tmpltrundata[0]['range_incr']!=incr):
-				apDisplay.printError("All parameters for a selexon run must be identical!"+\
-					"Template search ranges are not the same as your last run")
-	else:
-		if (templaterundata[0]['range_start']!=params['startang'] or
-			templaterundata[0]['range_end']!=params['endang'] or
-			templaterundata[0]['range_incr']!=params['incrang']):
-			apDisplay.printError("All parameters for a selexon run must be identical!"+\
-				"Template search ranges are not the same as your last run")
-	return
