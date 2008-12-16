@@ -192,14 +192,10 @@ def findEMString(classavg, templatename, dwnimgname, ccmapfile, params):
 	feed += numstr
 
 	#ROTATION PARAMETERS
-	if params['multiple_range'] == True:
-		strt = str(params["startang"+str(classavg)])
-		end  = str(params["endang"+str(classavg)])
-		incr = str(params["incrang"+str(classavg)])
-	else:
-		strt = str(params["startang"])
-		end  = str(params["endang"])
-		incr = str(params["incrang"])
+	strt = str(params["startang"+str(classavg)])
+	end  = str(params["endang"+str(classavg)])
+	incr = str(params["incrang"+str(classavg)])
+
 	feed += strt+','+end+','+incr+"\n"
 
 	#BORDER WIDTH
@@ -210,19 +206,19 @@ def findEMString(classavg, templatename, dwnimgname, ccmapfile, params):
 
 #===========
 def processAndSaveImage(imgdata, params):
+	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
+	if os.path.isfile(imgpath):
+		return False
+
 	#downsize and filter leginon image
 	if params['uncorrected']:
 		imgarray = apImage.correctImage(imgdata, params)
 	else:
 		imgarray = imgdata['image']
-	#print "filtering image"
 	imgarray = apImage.preProcessImage(imgarray, params=params, msg=False)
-	#print "done filtering image"
-	imgpath = os.path.join(params['rundir'], imgdata['filename']+".dwn.mrc")
-	#print "saving small image"
 	apImage.arrayToMrc(imgarray, imgpath, msg=False)
-	#print "done saving small image"
-	return
+
+	return True
 
 #===========
 def getFindEMPath():
