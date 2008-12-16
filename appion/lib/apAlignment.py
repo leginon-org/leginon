@@ -50,9 +50,10 @@ def getAppionDir(params):
 
 def runHelp(params):
 	functionname = os.path.basename(sys.argv[0]).split(".")[0]
-	funcxml = os.path.join(params['appiondir'],"xml",functionname+".xml")
-	xmldict = apXml.readOneXmlFile(funcxml)
-	apXml.printHelp(xmldict)
+	#funcxml = os.path.join(params['appiondir'],"xml",functionname+".xml")
+	#xmldict = apXml.readOneXmlFile(funcxml)
+	#apXml.printHelp(xmldict)
+	print "no help for ",functionname
 	sys.exit(1)
 
 def checkForHelpCall(args, params):
