@@ -24,7 +24,8 @@ if ($_POST['run']) {
 	$sigma=$_POST['sigma'];
 	$avgjump=$_POST['avgjump'];
 	$stackname=$_POST['avgname'];
-	$outdir=$_POST['outdir'];
+	$runname=$_POST['runname'];
+	$rundir=$_POST['outdir']."/".$runname;
 	$eotest=$_POST['eotest'];
 
 	if (!$stackname) createform('<B>ERROR:</B> Enter a name for new class average stack file');
@@ -32,16 +33,19 @@ if ($_POST['run']) {
 	if ($avgjump=='') createform('<B>ERROR:</B> Enter a median euler jump');
 
 	$command = "makegoodaverages.py ";
-	$command.= "-r $reconId ";
-	$command.= "-i $iter ";
-	$command.= "-m $mask ";
-	$command.= "-n $stackname ";
-	$command.= "-o $outdir ";
-	if ($avgjump != '') $command.= "-j $avgjump ";
-	if ($sigma) $command.= "-s $sigma ";
+	$command.= "--projectid=".$_SESSION['projectId']." ";
+	$command.= "--reconid=$reconId ";
+	$command.= "--iter=$iter ";
+	$command.= "--mask=$mask ";
+	$command.= "--stackname=$stackname ";
+	$command.= "--runname=$runname ";
+	$command.= "--rundir=$rundir ";
+	if ($avgjump != '') $command.= "--avgjump=$avgjump ";
+	if ($sigma) $command.= "--sigma=$sigma ";
 	if ($eotest=='on') $command.="--eotest ";
 
 	processing_header("Create New Class Averages","Create New Class Averages");
+	print_r($_POST);
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
@@ -85,6 +89,7 @@ function createform($extra=False) {
 	$sigma=($_POST['sigma']) ? $_POST['sigma'] : '';
 	$avgjump=($_POST['avgjump']) ? $_POST['avgjump'] : '0';
 	$avgname=($_POST['avgname']) ? $_POST['avgname'] : 'goodavgs.hed';
+	$runname=($_POST['runname']) ? $_POST['runname'] : 'goodstack1';
 	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
 	$eocheck=($_POST['eotest']=='on' || !$_POST['run']) ? 'checked' : '';
 
@@ -92,6 +97,10 @@ function createform($extra=False) {
 	echo "<TABLE cellpadding='5' BORDER=3 CLASS=tableborder>\n";
 	echo "<TR>\n";
 	echo "  <TD VALIGN='TOP'>\n";
+	echo docpop('runname','Run Name:');
+	echo "<br />\n";
+	echo "  <input type='text' name='runname' size='25' value='$runname'>\n";
+	echo "	<br />\n";
 	echo "	New classes stack file name:<br />\n";
 	echo "  <input type='text' name='avgname' size='25' value='$avgname'>\n";
 	echo "	<br />\n";
