@@ -170,7 +170,7 @@ if ($expId) {
 
 	$nrun=array();
 	$nrun[] = array(
-			'name'=>"<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>",
+			'name'=>"<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>",
 			'result'=>$tresults,
 			);
 	$nrun[] = array(

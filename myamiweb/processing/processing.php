@@ -214,7 +214,7 @@ if ($sessionId) {
   $result = ($prtlruns==0) ? "none" :
 		"<a href='prtlreport.php?expId=$sessionId'>$prtlruns completed</a>\n";
 
-  $nrun = "<a href='runPySelexon.php?expId=$sessionId'>Template Picking</a>";
+  $nrun = "<a href='runTemplateCorrelator.php?expId=$sessionId'>Template Picking</a>";
 	$nrun .= "<br />";
 	$nrun .= "<a href='runDogPicker.php?expId=$sessionId'>";
   $nrun .= "DoG Picking";
