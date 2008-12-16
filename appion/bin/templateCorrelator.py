@@ -7,14 +7,13 @@ import re
 #appion
 import particleLoop2
 import apFindEM
-import apImage
 import apDisplay
 import apTemplate
 import apDatabase
 import appionData
 import apPeaks
-import apParticle
 import apParam
+import apImage
 
 class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
@@ -22,7 +21,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		### check if we have a previous selection run
 		selectrunq = appionData.ApSelectionRunData()
 		selectrunq['name'] = self.params['runname']
-		selectrunq['session'] = self.params['sessionname']
+		selectrunq['session'] = sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		rundatas = selectrunq.query(results=1)
 		if not rundatas:
 			return True
@@ -111,10 +110,11 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 	##=======================
 	def preLoopFunctions(self):
+		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		# CREATES TEMPLATES
 		# SETS params['templatelist'] AND self.params['templateapix']
 		apTemplate.getTemplates(self.params)
-		self.checkTemplateParams()
+		self.checkPreviousTemplateRun()
 
 	##=======================
 	def processImage(self, imgdata, filtarray):
@@ -127,7 +127,12 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			#peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 			sys.exit(1)
 		else:
-			ccmaplist = apFindEM.runFindEM(imgdata, filtarray, self.params)
+			### save filter image to .dwn.mrc
+			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
+			apImage.arrayToMrc(filtarray, imgpath, msg=False)
+			### run FindEM
+			ccmaplist = apFindEM.runFindEM(imgdata, self.params)	
+			### find peaks in map
 			peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 		return peaktree
 
