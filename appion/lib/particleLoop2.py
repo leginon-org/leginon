@@ -137,10 +137,10 @@ class ParticleLoop(filterLoop.FilterLoop):
 	def loopCommitToDatabase(self, imgdata):
 		### commit the run
 		sessiondata = imgdata['session']
-		self.commitRunToDatabase(sessiondata, True)
+		rundata = self.commitRunToDatabase(sessiondata, True)
 
 		### commit custom picker specific params
-		value = self.commitToDatabase(imgdata)
+		value = self.commitToDatabase(imgdata, rundata)
 
 		### commit the particles
 		apParticle.insertParticlePeaks(self.peaktree, imgdata, self.params)
@@ -181,19 +181,18 @@ class ParticleLoop(filterLoop.FilterLoop):
 		runq=appionData.ApSelectionRunData()
 		runq['name'] = self.params['runname']
 		runq['session'] = sessiondata
-		runids = runq.query(results=1)
+		rundatas = runq.query(results=1)
 
-
-		if runids:
+		if rundatas:
 			#get previous params
 			if isinstance(paramQuery, appionData.ApSelectionParamsData):
-				paramData = runids[0]['params']
+				paramData = rundatas[0]['params']
 			elif isinstance(paramQuery, appionData.ApDogParamsData):
-				paramData = runids[0]['dogparams']
+				paramData = rundatas[0]['dogparams']
 			elif isinstance(paramQuery, appionData.ApManualParamsData):
-				paramData = runids[0]['manparams']
+				paramData = rundatas[0]['manparams']
 			elif isinstance(paramQuery, appionData.ApTiltAlignParamsData):
-				paramData = runids[0]['tiltparams']
+				paramData = rundatas[0]['tiltparams']
 			else:
 				apDisplay.printError("selection run does not have valid parameter data\n")
 
@@ -210,13 +209,11 @@ class ParticleLoop(filterLoop.FilterLoop):
 							if data_dbid != query_dbid:
 								apDisplay.printWarning(str(key)+":"+str(paramQuery[key].dbid)+" not equal to "+str(paramData[key].dbid))
 								apDisplay.printError("All parameters for a picker run name must be identical\n")
-								return False
 						except:
 							apDisplay.printWarning(str(key)+":"+str(paramQuery[key])+" not equal to "+str(paramData[key]))
 							apDisplay.printError("All parameters for a picker run name must be identical\n")
-							return False
 			#if I made it here all parameters are the same, so it isn't necessary to commit
-			return False
+			return rundatas[0]
 
 		#set params for run
 		if isinstance(paramQuery, appionData.ApSelectionParamsData):
@@ -236,7 +233,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		if insert is True:
 			runq.insert()
 
-		return True
+		return runq
 
 	#=====================
 	def setProcessingDirName(self):
