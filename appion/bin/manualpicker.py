@@ -13,6 +13,8 @@ import apParticle
 import apDatabase
 import apDisplay
 import apMask
+import apImage
+import apParam
 
 #Leginon
 import polygon
@@ -229,7 +231,9 @@ class PickerApp(wx.App):
 ##################################
 
 class manualPicker(particleLoop2.ParticleLoop):
+	##=======================
 	def preLoopFunctions(self):
+		apParam.createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
 
@@ -239,6 +243,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		self.app.appionloop = self
 		self.threadJpeg = True
 
+	##=======================
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
 		apDisplay.printMsg("Finishing up")
@@ -246,28 +251,29 @@ class manualPicker(particleLoop2.ParticleLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
+	##=======================
 	def processImage(self, imgdata, filtarray):
-		if self.params['sessionname'] is None:
-			apFindEM.processAndSaveImage(imgdata, params=self.params)
+		filtfile = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
+		if not os.path.isfile(filtfile):
+			apImage.arrayToMrc(filtarray, filtfile, msg=False)
 		peaktree = self.runManualPicker(imgdata)
-		#peaktree = self.runManualPickerOld(imgdata)
 		return peaktree
 
+	##=======================
 	def getParticleParamsData(self):
 		manparamsq=appionData.ApManualParamsData()
 		if self.params['pickrunid'] is not None:
 			manparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
 		return manparamsq
 
-	def particleCommitToDatabase(self, imgdata):
+	##=======================
+	def commitToDatabase(self, imgdata, rundata):
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
 		return
 
-	def particleCreateOutputDirs(self):
-		self._createDirectory(os.path.join(self.params['rundir'], "pikfiles"),warning=False)
-
+	##=======================
 	def setupParserOptions(self):
 		### Input value options
 		self.outtypes = ['text','xml','spider','pickle']
@@ -284,6 +290,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		self.parser.add_option("--mask", dest="checkMask", default=False,
 			action="store_true", help="check mask")
 
+	##=======================
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
