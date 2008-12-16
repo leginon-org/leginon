@@ -200,7 +200,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
 		self.runManualPicker(imgdata)
 
-	def commitToDatabase(self,imgdata):		
+	def commitToDatabase(self,imgdata,rundata):		
 		sessiondata = imgdata['session']
 		rundir = self.params['rundir']
 		maskname = self.params['runname']
@@ -235,9 +235,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		allregiondata = apMask.getMaskRegions(maskrundata,imgdata)
 		for regiondata in allregiondata:
 			apMask.insertMaskAssessment(massessrundata,regiondata,1)
-		self.particleCommitToDatabase(imgdata)			
 
-	def particleCommitToDatabase(self, imgdata):
 		if self.assess != self.assessold and self.assess is not None:
 			#imageaccessor run is always named run1
 			apDatabase.insertImgAssessmentStatus(imgdata, 'run1', self.assess)
