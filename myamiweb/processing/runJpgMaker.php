@@ -224,8 +224,8 @@ function runjpgmaker() {
 		$images.= "</td></tr></table>\n";
 		$images.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$testimage);
-		$jpgimg=$testjpg.".jpg";
-		$images.= writeTestResults($rundir,array($jpgimg));
+		$jpgimg=$rundir.$testjpg.".jpg";
+		$images.= writeTestResults($jpgimg,array(),1);
 		createJMForm(false,'JPG File Maker Test Results','JPEG Maker Results',$images);
 	} else {
 		processing_header("JPEG Maker Results","JPEG Maker Results",$javascript);
@@ -236,7 +236,6 @@ function runjpgmaker() {
 			$command
 			<hr>
 			</td></tr>";
-		echo 'expid'.$expId;
 		appionLoopSummaryTable();
 		echo"</table>\n";
 		processing_footer();
