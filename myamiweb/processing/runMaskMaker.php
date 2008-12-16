@@ -155,7 +155,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 					document.viewerform.autopik.value='100';
 				}
 			}
-d			function infopopup(infoname){
+			function infopopup(infoname){
 				var newwindow=window.open('','name','height=150,width=300');
 				newwindow.document.write('<HTML><BODY>');
 			 newwindow.document.write('</BODY></HTML>');
@@ -217,7 +217,7 @@ d			function infopopup(infoname){
 					<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
 						Test these setting on image:
 					<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-					<HR>
+					<HR/>
 				</td>
 			</tr>
 			<tr>
@@ -313,9 +313,9 @@ function runMaskMaker() {
 
 		createMMForm($images,'Particle Selection Results','');
 		exit;
+	} else {
+		processing_header("Create Mask","Create Reusable Image Mask",$javafunctions,True);
 	}
-
-
 	echo"
 		<TABLE WIDTH='600'>
 			<tr>
