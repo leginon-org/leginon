@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./clean.sh
+
 echo "Trying to import all libraries"
 echo "----------------"
 rm -f importer.py
@@ -20,6 +22,7 @@ echo "SUCCESS"
 echo ""
 echo ""
 
+sleep 1
 
 echo "Trying to import all binaries"
 echo "----------------"
@@ -37,12 +40,14 @@ echo "import sys" >> importer.py
 echo "sys.exit(1)" >> importer.py
 chmod 775 importer.py
 ./importer.py
+cd ..
 echo "----------------"
 echo "SUCCESS"
 echo ""
 echo ""
 
-
+sleep 1
+rm -fv bin/importer.py importer.py
 exit;
 
 echo "Trying to run all binaries"
@@ -60,3 +65,6 @@ echo "----------------"
 echo "SUCCESS"
 echo ""
 echo ""
+
+sleep 1
+rm -fv runninglog.txt *.log bin/importer.py importer.py
