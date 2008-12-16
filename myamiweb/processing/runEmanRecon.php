@@ -293,6 +293,252 @@ function stackModelForm($extra=False) {
 	exit;
 }
 
+function emanForm($extra=false) {
+	// get stack data
+	$stackinfo = explode('|--|',$_POST['stackval']);
+	$box=$stackinfo[2];
+
+	// get model data
+	$modelinfo = explode('|--|',$_POST['model']);
+	$syminfo = explode(' ',$modelinfo[4]);
+	$modsym=$syminfo[0];
+	if ($modsym == 'Icosahedral') $modsym='icos';
+
+	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
+	if ($_POST['duplicate']) {
+		$numiters+=1;
+		$j=$_POST['duplicate'];
+	}
+	else $j=$numiters;
+
+	$javafunc .= defaultReconValues($box);
+	$javafunc .= writeJavaPopupFunctions('eman');
+
+	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
+	// write out errors, if any came up:
+	if ($extra) {
+		echo "<font color='red'>$extra</font>\n<hr />\n";
+	}
+
+	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
+	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
+	echo "<tr><td>\n";
+	echo openRoundBorder();
+	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
+	echo "<tr><td><B>Job Run Name:</B></td>
+    <td><input type='text' NAME='jobname' VALUE='$jobname' SIZE=20></td></tr>
+  <tr><td><B>Output Directory:</B></td>
+    <td><input type='text' NAME='outdir' VALUE='$outdir' SIZE=50></td></tr>
+  </table>\n";
+
+	echo closeRoundBorder();
+	echo "</td></tr>\n";
+	echo "</table>\n";
+	echo "<p>\n";
+	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
+	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+
+	$bgcolor="#E8E8E8";
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
+	echo"
+  <br />
+  <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
+  <hr />
+	";
+
+	// import values from previous uploaded reconstruction
+	$projectId=getProjectFromExpId($expId);
+	$sessions = $leginondata->getSessions("",$projectId);
+	if (is_array($sessions)) {
+	  	$ropt = "";
+		foreach ($sessions as $s) {
+			$recons = $particle->getReconIdsFromSession($s['id']);
+			if (is_array($recons)) {
+				foreach ($recons as $r) {
+					$ropt.= "<option value='".$r['DEF_id']."'>";
+					$ropt.= $s['name']." : ";
+					$ropt.= $r['name']." - ".$r['description'];
+					$ropt.= "</option>\n";
+				}
+			}
+		}
+	}
+	
+	echo "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults for Iteration 1'>\n";
+	echo "<select name='import' onChange='emanjob.submit()'>\n";
+	echo "<option>Import parameters</option>\n";
+	echo "<option value=''>------------------------------</option>\n";
+	echo $ropt;
+	echo "</select>\n";
+	echo "<br />
+  <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
+    <tr>\n";
+	foreach ($display_keys as $k=>$key) {
+		$id="l$k";
+		echo"<td align='center' bgcolor='$bgcolor'><font class='sf'><a href='#' id=\"$id\" onMouseOver='popLayer(\"$key\", \"$id\")' onMouseOut='hideLayer()'>$key</a></font></td>\n";
+	}
+	echo"  </tr>\n";
+
+	// set number of iterations if importing:
+	if (is_numeric($_POST['import'])) {
+		$iterinfo = $particle->getIterationInfo($_POST['import']);
+		// get initial model info
+		$refinfo = $particle->getRefinementRunInfo($_POST['import']);
+		$initmodel = $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
+		// get scaling factor for box sizes
+		$boxscale = $box / $initmodel['boxsize'];
+		$numiters = count($iterinfo);
+	}
+
+	// otherwise use previously set values
+	for ($i=1; $i<=$numiters; $i++) {
+		$angn="ang".$i;
+		$maskn="mask".$i;
+		$imaskn="imask".$i;
+		$amask1n="amask1".$i;
+		$amask2n="amask2".$i;
+		$amask3n="amask3".$i;
+		$symn="sym".$i;
+		$hardn="hard".$i;
+		$classkeepn="classkeep".$i;
+		$classitern="classiter".$i;
+		$filt3dn="filt3d".$i;
+		$shrinkn="shrink".$i;
+		$euler2n="euler2".$i;
+		$xfilesn="xfiles".$i;
+		$perturbn="perturb".$i;
+		$treen="tree".$i;
+		$mediann="median".$i;
+		$phaseclsn="phasecls".$i;
+		$fsclsn="fscls".$i;
+		$refinen="refine".$i;
+		$goodbadn="goodbad".$i;
+		$eotestn="eotest".$i;
+		$corann="coran".$i;
+		$msgpn="msgp".$i;
+		$msgp_corcutoffn="msgp_corcutoff".$i;
+		$msgp_minptclsn="msgp_minptcls".$i;
+
+		// if importing values, set them here
+		if (is_numeric($_POST['import'])) {
+			foreach ($iterinfo as $iter) {
+				if ($iter['iteration'] == $i) {
+					$ang=$iter['ang'];
+					$mask=ceil($boxscale*$iter['mask']);
+					$imask=$iter['imask'];
+					$amask1=$iter['EMAN_amask1'];
+					$amask2=$iter['EMAN_amask2'];
+					$amask3=$iter['EMAN_amask3'];
+					$hard=$iter['EMAN_hard'];
+					$classiter=$iter['EMAN_classiter'];
+					$classkeep=$iter['EMAN_classkeep'];
+					$filt3d=$iter['EMAN_filt3d'];
+					$shrink=$iter['EMAN_shrink'];
+					$euler2=$iter['EMAN_euler2'];
+					$xfiles=$iter['EMAN_xfiles'];
+					$median = ($iter['EMAN_median']) ? 'CHECKED' : '';
+					$phasecls = ($iter['EMAN_phasecls']) ? 'CHECKED' : '';
+					$fscls = ($iter['EMAN_fscls']) ? 'CHECKED' : '';
+					$refine = ($iter['EMAN_refine']) ? 'CHECKED' : '';
+					$goodbad = ($iter['EMAN_goodbad']) ? 'CHECKED' : '';
+					$coran = ($iter['SpiCoranGoodClassAvg']) ? 'CHECKED' : '';
+					$perturb = ($iter['EMAN_perturb']) ? 'CHECKED' : '';
+					$eotest = ($iter['REF|ApResolutionData|resolution']) ? 'CHECKED' : '';
+					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
+					if (!is_array($symmetry)) $sym=$modsym;
+					else $sym = $symmetry['eman_name'];
+					continue;
+				}
+			}
+		}
+		else {
+			$ang=($i>$j) ? $_POST["ang".($i-1)] : $_POST[$angn];
+			$mask=($i>$j) ? $_POST["mask".($i-1)] : $_POST[$maskn];
+			$imask=($i>$j) ? $_POST["imask".($i-1)] : $_POST[$imaskn];
+			$amask1=($i>$j) ? $_POST["amask1".($i-1)] : $_POST[$amask1n];
+			$amask2=($i>$j) ? $_POST["amask2".($i-1)] : $_POST[$amask2n];
+			$amask3=($i>$j) ? $_POST["amask3".($i-1)] : $_POST[$amask3n];
+			$sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
+			$hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
+			$classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
+			$classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
+			$filt3d=($i>$j) ? $_POST["filt3d".($i-1)] : $_POST[$filt3dn];
+			$shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
+			$euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
+			$xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
+			$msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
+			$msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
+			// use symmetry of model by default, but you can change it
+			if ($i==1 && !$_POST['duplicate']) $sym=$modsym;
+			
+			if ($i>$j) {
+				$median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
+				$phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
+				$fscls=($_POST["fscls".($i-1)]=='on') ? 'CHECKED' : '';
+				$refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
+				$goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
+				$eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
+				$coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
+				$perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
+				$msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
+				$treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
+				$treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
+			}
+			else {
+				$median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
+				$phasecls=($_POST[$phaseclsn]=='on') ? 'CHECKED' : '';
+				$fscls=($_POST[$fsclsn]=='on') ? 'CHECKED' : '';
+				$refine=($_POST[$refinen]=='on') ? 'CHECKED' : '';
+				$goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
+				$eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
+				$coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
+				$perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
+				$msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
+				$treetwo=($_POST[$treen]=='2') ? 'selected' : '';
+				$treethree=($_POST[$treen]=='3') ? 'selected' : '';
+			}
+		}
+		$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
+		echo"
+      <tr>
+        <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
+        <td bgcolor='$rcol'><b>$i</b></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$angn' SIZE='3' VALUE='$ang'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$maskn' SIZE='4' VALUE='$mask'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$imaskn' SIZE='4' VALUE='$imask'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$amask1n' SIZE='3' VALUE='$amask1'>
+                            <input type='text' NAME='$amask2n' SIZE='2' VALUE='$amask2'>
+                            <input type='text' NAME='$amask3n' SIZE='2' VALUE='$amask3'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
+        <td bgcolor='$rcol'><input type='text' NAME='$filt3dn' SIZE='4' VALUE='$filt3d'></td>
+        <td bgcolor='$rcol'><input type='text' size='5' name='$xfilesn' value='$xfiles'>
+        <td bgcolor='$rcol'><input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
+        <td bgcolor='$rcol'><input type='text' size='2' name='$euler2n' value='$euler2'>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$mediann' $median></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$phaseclsn' $phasecls></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$fsclsn' $fscls></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$refinen' $refine></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>
+        <td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>
+        <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
+      </tr>\n";
+	}
+	echo"
+  </TABLE>
+  <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
+  <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
+  </FORM>\n";
+	if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
+	processing_footer();
+	exit;
+}
+
 function jobForm($extra=false) {
 	$expId = $_GET['expId'];
 
