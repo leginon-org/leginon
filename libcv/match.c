@@ -78,36 +78,48 @@ void CreateAffineTransform( FArray PO, double **TR ) {
 
 //int TransformGood( double **TR );
 int TransformGood( double **TR ) {
-	
+	//return TRUE;
 	/* This verifies that tranform does not compress everything
 		into a single line. */
 		
-	if ( TR[0][0] == 0.0 && TR[1][0] == 0.0 ) return FALSE;
-	if ( TR[1][0] == 0.0 && TR[1][1] == 0.0 ) return FALSE;
+	//if ( TR[0][0] == 0.0 && TR[1][0] == 0.0 ) return FALSE;
+	//if ( TR[1][0] == 0.0 && TR[1][1] == 0.0 ) return FALSE;
 	
 	/* This verifies that the tranform does not contain NaN values
 		since a property of NaN is NaN != NaN */
 		
 	if ( TR[0][0] != TR[0][0] ) return FALSE;
-	if ( TR[0][1] != TR[0][1] ) return FALSE;
-	if ( TR[0][2] != TR[0][2] ) return FALSE;
-	if ( TR[1][0] != TR[1][0] ) return FALSE;
-	if ( TR[1][1] != TR[1][1] ) return FALSE;
-	if ( TR[1][2] != TR[1][2] ) return FALSE;
-	if ( TR[2][0] != TR[2][0] ) return FALSE;
-	if ( TR[2][1] != TR[2][1] ) return FALSE;
-	if ( TR[2][2] != TR[2][2] ) return FALSE;
+	//if ( TR[0][1] != TR[0][1] ) return FALSE;
+	//if ( TR[0][2] != TR[0][2] ) return FALSE;
+	//if ( TR[1][0] != TR[1][0] ) return FALSE;
+	//if ( TR[1][1] != TR[1][1] ) return FALSE;
+	//if ( TR[1][2] != TR[1][2] ) return FALSE;
+	//if ( TR[2][0] != TR[2][0] ) return FALSE;
+	//if ( TR[2][1] != TR[2][1] ) return FALSE;
+	//if ( TR[2][2] != TR[2][2] ) return FALSE;
 	
 	/* Neil extra testing */
-	//max tilt angle of 66 degrees
-	if (TR[0][0] < 0.4) return FALSE; 
-	if (TR[1][1] < 0.4) return FALSE;
-	//only allow 25 degrees of expansion
-	if (TR[0][0] > 1.1) return FALSE; 
-	if (TR[1][1] > 1.1) return FALSE;
-	// max rotation angle of 45 degrees
-	if (fabs(TR[0][1]) > 0.7071) return FALSE; 
-	if (fabs(TR[1][0]) > 0.7071) return FALSE; 
+	//max tilt angle of 73 degrees, ang ~= arccos(t)
+	if (fabs(TR[0][0]) < 0.5) return FALSE; 
+	if (fabs(TR[1][1]) < 0.5) return FALSE;
+	//only allow 71 degrees of expansion, ang ~= arccos(1/t)
+	if (fabs(TR[0][0]) > 1.4) return FALSE; 
+	if (fabs(TR[1][1]) > 1.4) return FALSE;
+	// max rotation angle of 65 degrees, ang ~= arcsin(t)
+	if (fabs(TR[0][1]) > 0.8) return FALSE; 
+	if (fabs(TR[1][0]) > 0.8) return FALSE; 
+
+	/* FORM of MATRIX
+		[	math.cos(radangle)**2 + math.sin(radangle)**2/math.cos(raddifftilt),
+			(1.0-1.0/math.cos(raddifftilt)) * math.cos(radangle)*math.sin(radangle), 
+			0.0
+		], 
+		[	(1.0-1.0/math.cos(raddifftilt)) * math.cos(radangle)*math.sin(radangle), 
+			math.sin(radangle)**2 + math.cos(radangle)**2/math.cos(raddifftilt),
+			0.0
+		], 
+		[shift[0], shift[1], 0.0]], 
+	*/
 
 	/* We have a reasonable tranform */
 	
