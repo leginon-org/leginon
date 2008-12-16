@@ -33,9 +33,8 @@ class AppionLoop(appionScript.AppionScript):
 		self.setFunctionResultKeys()
 		self._setRunAndParameters()
 		#self.specialCreateOutputDirs()
-		self._readDoneDict()
+		self._initializeDoneDict()
 		self.result_dirs={}
-
 
 	#=====================
 	def run(self):
@@ -394,16 +393,15 @@ class AppionLoop(appionScript.AppionScript):
 		resultfile.close()
 
 	#=====================
-	def _readDoneDict(self):
+	def _initializeDoneDict(self):
 		"""
 		reads or creates a done dictionary
 		"""
-		self.params['doneDictName'] = os.path.join(self.params['rundir'] , self.functionname+".donedict")
-		doneDictName = self.params['doneDictName']
-		if os.path.isfile(doneDictName) and self.params['continue'] == True:
-			apDisplay.printMsg("reading old done dictionary:\n"+doneDictName)
+		self.donedictfile = os.path.join(self.params['rundir'] , self.functionname+".donedict")
+		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
+			apDisplay.printMsg("reading old done dictionary:\n"+self.donedictfile)
 			# unpickle previously modified dictionary
-			f = open(doneDictName,'r')
+			f = open(self.donedictfile,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
 			if 'commit' in self.donedict:
@@ -419,18 +417,34 @@ class AppionLoop(appionScript.AppionScript):
 			#set up dictionary
 			self.donedict = {}
 			self.donedict['commit'] = self.params['commit']
-			apDisplay.printMsg("creating new done dictionary:\n"+doneDictName)
+			apDisplay.printMsg("creating new done dictionary:\n"+self.donedictfile)
+
+	#=====================
+	def _reloadDoneDict(self):
+		"""
+		reloads done dictionary
+		"""
+		f = open(self.donedictfile,'r')
+		self.donedict = cPickle.load(f)
+		f.close()
 
 	#=====================
 	def _writeDoneDict(self, imgname=None):
 		"""
 		write finished image (imgname) to done dictionary
 		"""
+		### reload donedict from file just in case two runs are running
+		f = open(self.donedictfile,'r')
+		self.donedict = cPickle.load(f)
+		f.close()
+
+		### set new parameters
 		if imgname != None:
 			self.donedict[imgname] = True
 		self.donedict['commit'] = self.params['commit']
-		doneDictName = self.params['doneDictName']
-		f = open(doneDictName, 'w', 0666)
+
+		### write donedict to file
+		f = open(self.donedictfile, 'w', 0666)
 		cPickle.dump(self.donedict, f)
 		f.close()
 
@@ -489,6 +503,7 @@ class AppionLoop(appionScript.AppionScript):
 		checks to see if image (imgname) has been done already
 		"""
 		imgname = imgdata['filename']
+		self._reloadDoneDict()
 		if imgname in self.donedict:
 			if not self.stats['lastimageskipped']:
 				sys.stderr.write("skipping images\n")
@@ -536,8 +551,6 @@ class AppionLoop(appionScript.AppionScript):
 
 		# check to see if image has already been processed
 		if self._alreadyProcessed(imgdata):
-			return False
-		if imgdata['filename'] in self.donedict:
 			return False
 
 		self.stats['startloop'] = time.time()
