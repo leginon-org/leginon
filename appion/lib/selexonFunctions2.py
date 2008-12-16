@@ -41,14 +41,9 @@ def runCrossCorr(params,file):
 			print " ... removing outfile:",outfile
 			os.remove(outfile)
 
-		if (params["multiple_range"]==True):
-			strt=float(params["startang"+str(classavg)])
-			end=float(params["endang"+str(classavg)])
-			incr=float(params["incrang"+str(classavg)])
-		else:
-			strt=float(params["startang"])
-			end=float(params["endang"])
-			incr=float(params["incrang"])
+		strt=float(params["startang"+str(classavg)])
+		end=float(params["endang"+str(classavg)])
+		incr=float(params["incrang"+str(classavg)])
 
 		if (len(params['templatelist'])==1 and not params['templateIds']):
 			templfile = tmplt+".mrc"
