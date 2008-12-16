@@ -399,25 +399,32 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		self.donedictfile = os.path.join(self.params['rundir'] , self.functionname+".donedict")
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
-			apDisplay.printMsg("reading old done dictionary:\n"+self.donedictfile)
-			# unpickle previously modified dictionary
+			### unpickle previously done dictionary
+			apDisplay.printMsg("reading old done dictionary: "+os.path.basename(self.donedictfile))
 			f = open(self.donedictfile,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
-			if 'commit' in self.donedict:
-				if self.donedict['commit'] is True and self.params['commit'] is not True:
-					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
-				elif self.donedict['commit'] != self.params['commit']:
-					apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
-					self.donedict = {}
-					self.donedict['commit'] = self.params['commit']
-			else:
+			if not 'commit' in self.donedict or self.donedict['commit'] == self.params['commit']:
+				### all is well
 				apDisplay.printMsg("found "+str(len(self.donedict))+" dictionary entries")
-		else:
-			#set up dictionary
-			self.donedict = {}
-			self.donedict['commit'] = self.params['commit']
-			apDisplay.printMsg("creating new done dictionary:\n"+self.donedictfile)
+				return
+			elif self.donedict['commit'] is True and self.params['commit'] is not True:
+				### die
+				apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
+			else:
+				### set up fresh dictionary
+				apDisplay.printWarning("'--commit' flag was changed, creating new done dictionary")
+
+		### set up fresh dictionary
+		self.donedict = {}
+		self.donedict['commit'] = self.params['commit']
+		apDisplay.printMsg("creating new done dictionary:\n"+self.donedictfile)
+
+		### write donedict to file
+		f = open(self.donedictfile, 'w', 0666)
+		cPickle.dump(self.donedict, f)
+		f.close()
+		return
 
 	#=====================
 	def _reloadDoneDict(self):

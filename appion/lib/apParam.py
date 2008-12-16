@@ -311,11 +311,11 @@ def getNumProcessors(msg=True):
 def setUmask():
 	if os.getgid() == 773:
 		prev = os.umask(002)
-		os.umask(002)
+		curr = os.umask(002)
 	else:
 		prev = os.umask(000)
-		os.umask(000)
-	apDisplay.printMsg("Umask changed from "+str(prev)+" to 002")
+		curr = os.umask(000)
+	apDisplay.printMsg("Umask changed from "+str(prev)+" to "+str(curr))
 
 def getExecPath(exefile, die=False):
 	proc = subprocess.Popen("which "+exefile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
