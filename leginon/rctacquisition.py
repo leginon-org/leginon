@@ -136,10 +136,13 @@ class RCTAcquisition(acquisition.Acquisition):
 			self.tiltnumber = i
 
 			## only make new targets if tilt is different than tilt0
-			if tilt == tilt0:
+			if abs(tilt - tilt0) < 0.5:
 				tiltedtargetlist = tilt0targetlist
 			else:
 				tiltedtargetlist = self.tiltTargets(tilt0, tilt, tilt0targetlist)
+			if tiltedtargetlist is None:
+				self.reportTargetListDone(tilt0targetlist, 'failure')
+				return
 
 			self.logger.info('doing tilt %d = %s degrees' % (i, degrees(tilt),))
 			self.instrument.tem.StagePosition = {'a': tilt}
@@ -171,6 +174,7 @@ class RCTAcquisition(acquisition.Acquisition):
 				self.focusDone(tiltedtargetlist)
 			'''
 			#self.declaredrifteachtarget = True
+			self.setTargets([], 'Peak')
 			acquisition.Acquisition.processTargetList(self, tiltedtargetlist)
 			#self.declaredrifteachtarget = False
 			focused = True
@@ -233,6 +237,8 @@ class RCTAcquisition(acquisition.Acquisition):
 		image0 = tilt0targetlist['image']
 		tilt0targets = self.researchTargets(list=tilt0targetlist, status='new')
 		matrix,tiltedimagedata = self.trackStage(image0, tilt0, tilt, tilt0targets)
+		if matrix is None:
+			return None
 
 		# create new target list adjusted for new tilt
 		self.transformTargets(matrix, tilt0targets)
@@ -258,7 +264,13 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('Returning to state of image0')
 		presetname = image0['preset']['name']
 		emtarget = image0['emtarget']
+		pausetime = self.settings['pause']
 		self.presetsclient.toScope(presetname, emtarget)
+		### reset the tilt, just in case user changed it while picking targets
+		self.instrument.tem.StagePosition = {'a': tilt0}
+		if pausetime > 0.1:
+			self.logger.info('Pausing %.1f seconds' %(pausetime,))
+			time.sleep(pausetime)
 
 		### calculate tilt steps
 		maxstepsize = radians(self.settings['stepsize'])
@@ -274,8 +286,9 @@ class RCTAcquisition(acquisition.Acquisition):
 			arrayold = ndimage.median_filter(arrayold, size=medfilt)
 		if lowfilt > 0:
 			arrayold = ndimage.gaussian_filter(arrayold, lowfilt)
+		self.setImage(arrayold, 'Image')
 		runningresult = numpy.identity(3, numpy.float32)
-		pausetime = self.settings['pause']
+		self.transformTargets(runningresult, tilt0targets)
 		retries = 0
 
 		#for tilt in tilts:
@@ -299,7 +312,6 @@ class RCTAcquisition(acquisition.Acquisition):
 			if lowfilt > 0:
 				arraynew = ndimage.gaussian_filter(arraynew, lowfilt)
 			self.setImage(arraynew, 'Image')
-			#self.setTargets([], 'Peak')
 
 			print '============ Craig stuff ============'
 
@@ -327,9 +339,9 @@ class RCTAcquisition(acquisition.Acquisition):
 					i -= 1
 				else:
 					retries = 0
-					print 'Tilt libCV FAILED'
+					print "Tilt libCV FAILED"
 					self.logger.error("libCV failed: giving up")
-					self.reportTargetListDone(tilt0targets, 'failure')
+					return None, None
 				continue
 			else:
 				retries = 0			
@@ -354,8 +366,9 @@ class RCTAcquisition(acquisition.Acquisition):
 		dim = image0['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(image0['image'].dtype)
-		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name,\
-		 target=image0['target'], list=None, emtarget=image0['emtarget'], version=0, tiltnumber=self.tiltnumber, pixels=pixels, pixeltype=pixeltype)
+		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name,
+			target=image0['target'], list=None, emtarget=image0['emtarget'], 
+			version=0, tiltnumber=self.tiltnumber, pixels=pixels, pixeltype=pixeltype)
 		self.setTargets([], 'Peak')
 		self.publishDisplayWait(imagedata)
 
@@ -436,7 +449,7 @@ class RCTAcquisition(acquisition.Acquisition):
 	#====================
 	def apTiltShiftMethod(self, arrayold, arraynew, difftilt):
 		### pre-filter images
-
+		print "difftilt=", difftilt
 		#print arrayold.shape, arraynew.shape, difftilt
 		bestsnr = 0
 		bestangle = None
@@ -446,29 +459,29 @@ class RCTAcquisition(acquisition.Acquisition):
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				#print "best tilt axis angle=", bestsnr, bestangle
-				self.logger.info('best tilt axis angle = %.2f (snr = %.2f)'%(bestangle, bestsnr))
+				print "best tilt axis angle=", bestsnr, bestangle, shift
+				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		for angle in [bestangle-5, bestangle-3, bestangle+3, bestangle+5]:
 			shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, angle, msg=False)
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				#print "best tilt axis angle=", bestsnr, bestangle
-				self.logger.info('best tilt axis angle = %.2f (snr = %.2f)'%(bestangle, bestsnr))
+				print "best tilt axis angle=", bestsnr, bestangle, shift
+				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		for angle in [bestangle-2, bestangle-1, bestangle+1, bestangle+2]:
 			shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, angle, msg=False)
 			if snr > bestsnr:
 				bestsnr = snr
 				bestangle = angle
-				#print "best tilt axis angle=", bestsnr, bestangle
-				self.logger.info('best tilt axis angle = %.2f (snr = %.2f)'%(bestangle, bestsnr))
+				print "best tilt axis angle=", bestsnr, bestangle, shift
+				self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 		shift, xfactor, snr = apTiltShift.getTiltedRotateShift(arrayold, arraynew, difftilt, bestangle, msg=True)
-		#print "best tilt axis angle=", bestsnr, bestangle
-		self.logger.info('FINAL best tilt axis angle = %.2f (snr = %.2f)'%(bestangle, bestsnr))
+		print "best tilt axis angle=", bestsnr, bestangle, shift
+		self.logger.info('best tilt axis angle = %.2f (snr = %.2f; shift = %s)'%(bestangle, bestsnr, shift))
 
 		### construct the results matrix
-		radangle = radians(bestangle)
-		raddifftilt = radians(difftilt)
+		radangle = math.radians(bestangle)
+		raddifftilt = math.radians(difftilt)	
 		### rotate by radangle, compress by raddifftilt, rotate by -radangle
 		if difftilt > 0:
 			result = numpy.array([
@@ -480,7 +493,7 @@ class RCTAcquisition(acquisition.Acquisition):
 					math.sin(radangle)**2 + math.cos(radangle)**2*math.cos(raddifftilt),
 					0.0
 				], 
-				[-shift[0], -shift[1], 0.0]], 
+				[shift[0], shift[1], 1.0]], 
 				dtype=numpy.float32)
 		else:
 			result = numpy.array([
@@ -492,7 +505,7 @@ class RCTAcquisition(acquisition.Acquisition):
 					math.sin(radangle)**2 + math.cos(radangle)**2/math.cos(raddifftilt),
 					0.0
 				], 
-				[shift[0], shift[1], 0.0]], 
+				[shift[0], shift[1], 1.0]], 
 				dtype=numpy.float32)
 		print "result=\n", numpy.asarray(result*100, dtype=numpy.int8)
 
