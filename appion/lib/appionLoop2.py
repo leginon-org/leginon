@@ -161,11 +161,11 @@ class AppionLoop(appionScript.AppionScript):
 		return
 
 	#=====================
-	def insertPreLoopFunctionRun(self,rundata,params):
-		"""
-		put in run and param insertion to db here
-		"""
-		return
+	#def insertPreLoopFunctionRun(self,rundata,params):
+	#	"""
+	#	put in run and param insertion to db here
+	#	"""
+	#	return
 
 	#=====================
 	def processImage(self, imgdata):
@@ -324,9 +324,9 @@ class AppionLoop(appionScript.AppionScript):
 			else:
 				self.params['rundir'] = os.path.join(rundir, self.functionname)
 
-		if self.params['runid'] is None:
-			apDisplay.printError("please enter a runid, example: 'runid=run1'")
-		self.params['rundir'] = os.path.join(self.params['rundir'], self.params['runid'])
+		if self.params['runname'] is None:
+			apDisplay.printError("please enter a runname, example: 'runname=run1'")
+		self.params['rundir'] = os.path.join(self.params['rundir'], self.params['runname'])
 		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
 
 
@@ -347,12 +347,7 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def _setRunAndParameters(self):
-		if self.params['commit'] is True:
-			rundata = self.insertFunctionRun()
-			self.insertPreLoopFunctionRun(rundata,self.params)
-		else:
-			rundata = self.insertFunctionRun()
-			self.insertPreLoopFunctionRun(rundata,self.defaultparams)
+		rundata = self.insertFunctionRun()
 		self.rundata = rundata
 
 	#=====================
@@ -413,7 +408,7 @@ class AppionLoop(appionScript.AppionScript):
 			f.close()
 			if 'commit' in self.donedict:
 				if self.donedict['commit'] is True and self.params['commit'] is not True:
-					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runid")
+					apDisplay.printError("Commit flag was enabled and is now disabled, create a new runname")
 				elif self.donedict['commit'] != self.params['commit']:
 					apDisplay.printWarning("'commit' flag was changed, creating new done dictionary")
 					self.donedict = {}

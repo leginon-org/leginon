@@ -179,7 +179,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 				paramQuery[dbkey] = self.params[pkey]
 
 		runq=appionData.ApSelectionRunData()
-		runq['name'] = self.params['runid']
+		runq['name'] = self.params['runname']
 		runq['session'] = sessiondata
 		runids = runq.query(results=1)
 
