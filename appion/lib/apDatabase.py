@@ -414,7 +414,6 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 		q= ( "UPDATE dbemdata.`viewer_pref_image` "
 			+"SET status = '"+statusVal
 			+ ("' WHERE imageId=%i" % (imageId,)))
-		print q
 		db.execute(q)
 
 	#check assessment
@@ -460,8 +459,6 @@ def isTomoInDB(md5sum):
 	tomoq = appionData.ApTomogramData()
 	tomoq['md5sum'] = md5sum
 	tomod = tomoq.query(results=1)
-	print tomoq
-	print tomod
 	sys.exit()
 	if tomod:
 		return True
