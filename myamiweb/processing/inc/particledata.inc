@@ -748,7 +748,7 @@ class particledata {
 
 		//print_r ($r);
 		//echo $r['REF|ApSelectionParamsData|params'];
-		$q = "select s.*, r.name, r.`REF|leginondata|SessionData|session` ";
+		$q = "select s.*, r.name, path.path AS path, r.`REF|leginondata|SessionData|session` ";
 
 		if ($r['REF|ApSelectionParamsData|params']) {
 			$selectionparamid=$r['REF|ApSelectionParamsData|params'];
@@ -774,6 +774,8 @@ class particledata {
 				."left join ApSelectionRunData r on (s.`DEF_id` = r.`REF|ApTiltAlignParamsData|tiltparams`) ";
 			$type = "Tilt Picker";
 		}
+		$q .= "LEFT JOIN ApPathData AS path "
+			." ON (path.`DEF_id` = r.`REF|ApPathData|path`) ";
 
 		if ($returntype) return $type;
 
