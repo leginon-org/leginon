@@ -12,7 +12,7 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 	def checkConflicts(self):
 		return
 
-	def commitToDatabase(self):
+	def commitToDatabase(self,imagedata):
 		return
 
 	def setupParserOptions(self):
