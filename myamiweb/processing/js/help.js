@@ -47,6 +47,7 @@ var help = {
 		'crudmaxthresh' : 'Threshold for Canny edge detector to consider as an edge in the gradient amplitude map.<BR>  The edge is then extended continuously from such places until the gradient falls below the Low threshold<BR>The value should be between 0.0 to 1.0 and should be close to 1.0',
 		'blur' : 'Gaussian filter bluring used for producing the gradient amplitude map<BR> 1.0=no bluring',
 		'crudstd' : 'Threshold to eliminate false positive regions that picks up the background<BR> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<BR> Leave it blank or as 0.0 if not considered',
+		'convolve' : 'Aggregate finding uses this threshold in determining the cutoff of the particle size convoluted edge map<BR> This value is not applicatable if use other mask types<BR> Leave it blank or as 0.0 if not considered',
 		'masktype' : 'Crud: Selexon crudfinder.  Canny edge detector and Convex Hull is used<BR>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<BR>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.',
 		'stackname' : 'name of the output stack, usually start.*',
 		'stackdescr' : 'brief description attributed to this stack',
