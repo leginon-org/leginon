@@ -14,9 +14,6 @@ require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
 
-// bin directory for appion functions
-$appionbin = '/garibaldi/people-a/bcarr/appionbin/';
-
 if ($_POST['write']) {
 	$particle = new particledata();
 	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
@@ -89,7 +86,6 @@ elseif ($_POST['submitjob']) {
 	if ($host=='garibaldi') {
 		$dmfpath=$_POST['dmfpath'].$jobname;
 	}
-	else $appionbin='';
 	$clusterpath=$_POST['clusterpath'].$jobname;
 	$jobfile="$jobname.job";
 	$tmpjobfile = "/tmp/$jobfile";
@@ -101,9 +97,9 @@ elseif ($_POST['submitjob']) {
 	$header = explode('|--|',$_POST['header']);
 	$clusterjob = "## $jobname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
-	$clusterjob.= $appionbin."updateAppionDB.py $jobid R\n\n";
+	$clusterjob.= "updateAppionDB.py $jobid R\n\n";
 	$clusterjob.= "# jobId: $jobid\n";
-	$clusterlastline.= $appionbin."updateAppionDB.py $jobid D\nexit\n\n";
+	$clusterlastline.= "updateAppionDB.py $jobid D\nexit\n\n";
 	$f = file_get_contents($tmpjobfile);
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
@@ -800,7 +796,6 @@ function writeJobFile ($extra=False) {
 		$clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
 		$clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
 		$clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
-		global $appionbin;
 	}
 	else {
 		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
@@ -872,12 +867,12 @@ function writeJobFile ($extra=False) {
 		$line.="getProjEulers.py proj.img proj.$i.txt\n";
 		// if ref-free correllation analysis
 		if ($coran=='on') {
-			$line .= $appionbin."coran_for_cls.py mask=$mask proc=$procs iter=$i";
+			$line .= "coran_for_cls.py mask=$mask proc=$procs iter=$i";
 			if ($sym) $line .= " sym=$sym";
 			if ($hard) $line .= " hard=$hard";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
-			$line.=$appionbin."getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.= "getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		// if eotest specified with coran, don't do eotest here:
 		elseif ($eotest=='on') {
@@ -892,7 +887,7 @@ function writeJobFile ($extra=False) {
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
 			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
-			$line.=$appionbin."getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.= "getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		if ($msgp=='on') {
 			$line .="msgPassing_subClassification.py mask=$mask iter=$i";
