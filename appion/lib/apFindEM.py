@@ -122,7 +122,7 @@ def runFindEM(imgdict, params, thread=False):
 		for i,job in enumerate(joblist):
 			while job.isAlive():
 				sys.stderr.write(".")
-				time.sleep(0.5)
+				time.sleep(1.5)
 		sys.stderr.write("\n")
 	apDisplay.printMsg("FindEM finished in "+apDisplay.timeString(time.time()-t0))
 
