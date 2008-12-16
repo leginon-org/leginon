@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
@@ -270,7 +272,7 @@ class MeasureTiltAxisDialog(wx.Dialog):
 		atilt = self.tiltvalue.GetValue()
 		asnr  = self.snrvalue.GetValue()
 		if asnr <= 0:
-			self.node.logger.error('SNR cannot be less than or equal to zero')	
+			self.node.logger.error('SNR cannot be less than or equal to zero')
 			return
 		amedfilt = self.medfilt.GetValue()
 		anumtilts = self.numtilts.GetValue()
@@ -342,29 +344,25 @@ class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
 		self.addButton('OK', wx.ID_OK)
 		self.addButton('Cancel', wx.ID_CANCEL)
 
-class ManualFocusDialog(wx.MiniFrame):
+class ManualFocusDialog(wx.Frame):
 	def __init__(self, parent, node, title='Manual Focus'):
-		wx.MiniFrame.__init__(self, parent, -1, title, size=(650,600),
+		wx.Frame.__init__(self, parent, -1, title, size=(650,600),
 			style=wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER)
 		self.node = node
 
 		self.toolbar = wx.ToolBar(self, -1)
 
 		bitmap = gui.wx.Icons.icon('settings')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, bitmap,
-													shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, bitmap, shortHelpString='Settings')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = gui.wx.Icons.icon('play')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, bitmap,
-													shortHelpString='Play')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, bitmap, shortHelpString='Play')
 		bitmap = gui.wx.Icons.icon('pause')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, bitmap,
-													shortHelpString='Pause')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, bitmap, shortHelpString='Pause')
 		bitmap = gui.wx.Icons.icon('stop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP, bitmap,
-													shortHelpString='Stop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP, bitmap, shortHelpString='Stop')
 
 		self.toolbar.AddSeparator()
 
@@ -373,41 +371,41 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.toolbar.AddControl(self.parameter)
 		bitmap = gui.wx.Icons.icon('plus')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS, bitmap,
-													shortHelpString='Increment up')
+			shortHelpString='Increment up')
 		bitmap = gui.wx.Icons.icon('minus')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MINUS, bitmap,
-													shortHelpString='Increment down')
+			shortHelpString='Increment down')
 
 		self.toolbar.AddSeparator()
 
 		self.value = FloatEntry(self.toolbar, -1, allownone=False, chars=6, value='0.0')
 		self.toolbar.AddControl(self.value)
-	# size is defined because some wxPython installation lack good wxDefaultSize
+		# size is defined because some wxPython installation lack good wxDefaultSize
 		self.toolbar.AddControl(wx.StaticText(self.toolbar, -1, ' m',size=(20,20)))
 		bitmap = gui.wx.Icons.icon('instrumentset')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_VALUE, bitmap,
-													shortHelpString='Set instrument')
+			shortHelpString='Set instrument')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = gui.wx.Icons.icon('instrumentsetnew')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_RESET, bitmap,
-													shortHelpString='Reset Defocus')
+			shortHelpString='Reset Defocus')
 
 		self.toolbar.AddSeparator()
 
 		bitmap = gui.wx.Icons.icon('instrumentget')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, bitmap,
-													shortHelpString='Eucentric from instrument')
+			shortHelpString='Eucentric from instrument')
 
 		bitmap = gui.wx.Icons.icon('instrumentset')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, bitmap,
-													shortHelpString='Eucentric to instrument')
+			shortHelpString='Eucentric to instrument')
 
 		self.toolbar.Realize()
 		self.SetToolBar(self.toolbar)
 
-		self.imagepanel = gui.wx.ImagePanel.ImagePanel(self, -1,imagesize=(512, 512))
+		self.imagepanel = gui.wx.ImagePanel.ImagePanel(self, -1, imagesize=(512, 512))
 
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.addTypeTool('Power', display=True)
@@ -417,10 +415,9 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.SetStatusBar(self.statusbar)
 
 		self.Fit()
-	
-		self.SetAutoLayout(True)
+		#self.SetAutoLayout(True)
 
-		self.settingsdialog = ManualFocusSettingsDialog(self,'Manual Focus Settings','Settings')
+		self.settingsdialog = ManualFocusSettingsDialog(self, 'Manual Focus Settings', 'Settings')
 
 		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
 		self.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
@@ -431,10 +428,8 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.Bind(wx.EVT_TOOL, self.onMinusTool, id=gui.wx.ToolBar.ID_MINUS)
 		self.Bind(wx.EVT_TOOL, self.onValueTool, id=gui.wx.ToolBar.ID_VALUE)
 		self.Bind(wx.EVT_TOOL, self.onResetTool, id=gui.wx.ToolBar.ID_RESET)
-		self.Bind(wx.EVT_TOOL, self.onGetInstrumentTool,
-							id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
-		self.Bind(wx.EVT_TOOL, self.onSetInstrumentTool,
-							id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
+		self.Bind(wx.EVT_TOOL, self.onGetInstrumentTool, id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
+		self.Bind(wx.EVT_TOOL, self.onSetInstrumentTool, id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
@@ -473,11 +468,11 @@ class ManualFocusDialog(wx.MiniFrame):
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
 		elif evt.state == 'pause':
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
 		elif evt.state == 'stop':
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
-			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 
 	def _manualEnable(self, enable):
@@ -527,7 +522,7 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Focuser Test')
-			dialog = ManualFocusDialog(frame,None)
+			dialog = ManualFocusDialog(frame, None)
 #			frame.Fit()
 #			self.SetTopWindow(frame)
 #			frame.Show()
