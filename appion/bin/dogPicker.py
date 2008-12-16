@@ -59,6 +59,10 @@ class dogPicker(particleLoop2.ParticleLoop):
 		dogparamq['num_slices'] = self.params['numslices']
 		return dogparamq
 
+	#================
+	def commitToDatabase(self, imgdata, rundata):
+		return
+
 if __name__ == '__main__':
 	imgLoop = dogPicker()
 	imgLoop.run()
