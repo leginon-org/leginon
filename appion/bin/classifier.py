@@ -48,3 +48,5 @@ if __name__ == "__main__":
 	if params['numclasses'] <= 80:
 		apAlignment.classHistogram(params)
 	apDisplay.printMsg("SUCCESS: classfile located at:\n"+classfile)
+
+
