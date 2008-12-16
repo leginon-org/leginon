@@ -209,6 +209,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 
 	#=====================
 	def removePtclsByQualityFactor(self, particles, rejectlst, cutoff):
+		t0 = time.time()
 		for ptcl in particles:
 			if ptcl['quality_factor'] < cutoff:
 				rejectlst.append(ptcl['particle']['particleNumber'])
@@ -278,7 +279,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		if self.params['sigma'] is not None:
 			cutoff=cstats['meanquality']+self.params['sigma']*cstats['stdquality']
 			print "Cutoff =",cutoff
-			rejectlst = self.removePtclsByQualityFactor(particles, rejectlst, cutoff, self.params)
+			rejectlst = self.removePtclsByQualityFactor(particles, rejectlst, cutoff)
 		if self.params['avgjump'] is not None:
 			rejectlst = self.removePtclsByJumps(particles, rejectlst)
 		if self.params['rejectlst']:
@@ -341,7 +342,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
 		apDisplay.printColor("Make a new stack with only non-jumpers:\n"
-			+"subStack.py -s "+stackstr+" \\\n "
+			+"subStack.py --projectid="+self.params['projectid']." -s "+stackstr+" \\\n "
 			+" -k "+os.path.join(self.params['rundir'],"keep.lst")+" \\\n "
 			+" -d 'recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
 
