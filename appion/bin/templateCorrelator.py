@@ -70,10 +70,12 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		#self.parser.add_option("--method", dest="method",
 		#	help="correlation method")
 		self.parser.add_option("--range-list", dest="rangeliststr",
-			help="List of start angle, end angle and angle increment: e.g. 0,360,10;0,180,5", metavar="#,#,#x#,#,#")	
+			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")	
 		### True / False options
 		self.parser.add_option("--keepall", dest="keepall", default=False,
-			action="store_true", help="do not delete .dwn.mrc files when finishing")
+			action="store_true", help="Do not delete .dwn.mrc files when finishing")
+		self.parser.add_option("--thread-findem", dest="threadfindem", default=False,
+			action="store_true", help="Run findem crosscorrelation in threads")
 		return
 	
 	##=======================
@@ -131,7 +133,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
 			apImage.arrayToMrc(filtarray, imgpath, msg=False)
 			### run FindEM
-			ccmaplist = apFindEM.runFindEM(imgdata, self.params)	
+			ccmaplist = apFindEM.runFindEM(imgdata, self.params, thread=self.params['threadfindem'])	
 			### find peaks in map
 			peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 		return peaktree
@@ -157,7 +159,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 	##=======================
 	def postLoopFunctions(self):
-		if not self.params['keepall']:
+		if self.params['keepall'] is False:
 			apParam.removefiles(self.params['rundir'],(self.params['sessionname'],'dwn.mrc'))
 		return
 

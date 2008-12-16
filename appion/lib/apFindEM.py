@@ -13,7 +13,7 @@ import apParam
 import apFile
 
 #===========
-def runSpectralFindEM(imgdict, params, thread=False):
+def runSpectralFindEM(imgdict, params):
 	"""
 	runs a separate thread of findem.exe for each template
 	to get cross-correlation maps
@@ -70,9 +70,6 @@ def runSpectralFindEM(imgdict, params, thread=False):
 			ccmaxmap = apImage.mrcToArray(ccmapfile3)
 			ccmaplist.append(ccmaxmap)
 
-	if thread is True:
-		for job in joblist:
-			job.join()
 	return ccmaplist
 
 #===========
@@ -81,17 +78,20 @@ def runFindEM(imgdict, params, thread=False):
 	runs a separate thread of findem.exe for each template
 	to get cross-correlation maps
 	"""
-	imgname = imgdict['filename']
-	dwnimgname = os.path.splitext(imgname)[0]+".dwn.mrc"
-	os.chdir(params['rundir'])
-	joblist = []
-	ccmaplist = []
-
+	### check image
 	processAndSaveImage(imgdict, params)
+	dwnimgname = imgdict['filename']+".dwn.mrc"
+	if not os.path.isfile(dwnimgname):
+		apDisplay.printError("cound not find image to process: "+dwnimgname)
 
+	### check template
 	if len(params['templatelist']) < 1:
 		apDisplay.printError("templatelist == 0; there are no templates")
 
+	joblist = []
+	ccmapfilelist = []
+
+	t0 = time.time()
 	for i,templatename in enumerate(params['templatelist']):
 		classavg = i + 1
 
@@ -107,23 +107,33 @@ def runFindEM(imgdict, params, thread=False):
 
 		#RUN THE PROGRAM
 		if thread is True:
-			current = findemjob(feed)
-			joblist.append(current)
-			current.start()
+			job = findemjob(feed)
+			joblist.append(job)
+			job.start()
 		else:
 			execFindEM(feed)
 
-		#READ OUTPUT FILE
-		if not os.path.isfile(ccmapfile):
-			apDisplay.printError("findem.exe did not run or crashed.\n"+
-				"Did you source useappion.sh?")
-		else:
-			ccmaxmap = apImage.mrcToArray(ccmapfile)
-			ccmaplist.append(ccmaxmap)
+		#STORE OUTPUT FILE
+		ccmapfilelist.append(ccmapfile)
 
+	### WAIT FOR THREADS TO COMPLETE
 	if thread is True:
-		for job in joblist:
-			job.join()
+		apDisplay.printMsg("waiting for "+str(len(joblist))+" findem threads to complete")
+		for i,job in enumerate(joblist):
+			while job.isAlive():
+				sys.stderr.write(".")
+				time.sleep(0.5)
+		sys.stderr.write("\n")
+	apDisplay.printMsg("FindEM finished in "+apDisplay.timeString(time.time()-t0))
+
+	### READ OUTPUT FILES
+	ccmaplist = []
+	for ccmapfile in ccmapfilelist:
+		if not os.path.isfile(ccmapfile):
+			apDisplay.printError("findem.exe did not run or crashed.\n")
+		ccmaxmap = apImage.mrcToArray(ccmapfile)
+		ccmaplist.append(ccmaxmap)
+
 	return ccmaplist
 
 #===========
@@ -132,15 +142,15 @@ class findemjob(threading.Thread):
 		threading.Thread.__init__(self)
 		self.feed = feed
 	def run(self):
-			findemexe = getFindEMPath()
-			apDisplay.printMsg("threading "+os.path.basename(findemexe))
-			logf = open("findem.log", "a")
-			proc = subprocess.Popen( findemexe, shell=True,
-				stdin=subprocess.PIPE, stdout=logf, stderr=logf)
-			fin = proc.stdin
-			fin.write(self.feed)
-			fin.flush()
-			fin.close()
+		findemexe = getFindEMPath()
+		#apDisplay.printMsg("threading "+os.path.basename(findemexe))
+		logf = open("findem.log", "a")
+		proc = subprocess.Popen( findemexe, shell=True, stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+		fin = proc.stdin
+		fin.write(self.feed)
+		fin.flush()
+		fin.close()
+		proc.wait()
 
 #===========
 def execFindEM(feed):
@@ -148,8 +158,7 @@ def execFindEM(feed):
 	findemexe = getFindEMPath()
 	apDisplay.printMsg("running "+os.path.basename(findemexe))
 	logf = open("findem.log", "a")
-	proc = subprocess.Popen( findemexe, shell=True,
-		stdin=subprocess.PIPE, stdout=logf, stderr=logf)
+	proc = subprocess.Popen( findemexe, shell=True, stdin=subprocess.PIPE, stdout=logf, stderr=logf)
 	fin = proc.stdin
 	fin.write(feed)
 	fin.flush()
