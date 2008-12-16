@@ -5,14 +5,15 @@ import numpy
 import math
 import pyami.quietscipy
 from scipy import ndimage
+from numpy import linalg
 pi = numpy.pi
 
 try:
 	import libCV
 	#print "libCV found"
 except:
-	pass
 	#print "libCV not found"
+	pass
 
 #-----------------------
 def radians(degrees):
@@ -23,7 +24,7 @@ def degrees(radians):
 	return float(radians) * 180.0 / pi
 
 #-----------------------
-def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=True, depricated=0):
+def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=False, BoW=True, depricated=0):
 	"""
 	Given an image find regions
 
@@ -47,19 +48,19 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=
 	"""
 
 	try:
-		imfloat = numpy.asarray(image, dtype=numpy.float32)
-		return  libCV.FindRegions(imfloat, minsize, maxsize, blur, sharpen, WoB, BoW)
+		scaled = scaleAndPlane(image)
+		return libCV.FindRegions(scaled, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
 		mydict = { 
 			'regionBorder': numpy.array([[0,0,0,0]],[[0,0,0,0]]),
 			'regionEllipse': (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0),
 		}
 		mytuple = ( [mydict,], None)
-		return numpy.zeros([3,3], dtype=numpy.float32)
+		return mytuple
 	print ""
 
 #-----------------------
-def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=True, BoW=True):
+def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=False, BoW=True):
 	"""
 	Given two images:
 	(1) Find regions
@@ -85,9 +86,9 @@ def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, Wo
 	"""
 
 	try:
-		imfloat1 = numpy.asarray(image1, dtype=numpy.float32)
-		imfloat2 = numpy.asarray(image2, dtype=numpy.float32)
-		return libCV.MatchImages(image1, image2, minsize, maxsize, blur, sharpen, WoB, BoW)
+		scaled1 = scaleAndPlane(image1)
+		scaled2 = scaleAndPlane(image2)
+		return libCV.MatchImages(scaled1, scaled2, minsize, maxsize, blur, sharpen, WoB, BoW)
 	except:
 		return numpy.zeros([3,3], dtype=numpy.float32)
 
@@ -150,12 +151,12 @@ def checkLibCVResult(self, result):
 	"""
 	Tests whether the libCV resulting affine matrix is reasonable for tilting
 	"""
-	if result[0][0] < 0.4 or result[1][1] < 0.4:
+	if abs(result[0][0]) < 0.5 or abs(result[1][1]) < 0.5:
 		#max tilt angle of 60 degrees
 		self.logger.warning("Bad libCV result: bad tilt in matrix: "+affineToText(result))
 		print ("Bad libCV result: bad tilt in matrix: "+affineToText(result))
 		return False
-	elif result[0][0] > 1.2 or result[1][1] > 1.2:
+	elif abs(result[0][0]) > 1.5 or abs(result[1][1]) > 1.5:
 		#only allow 25 degrees of expansion
 		self.logger.warning("Bad libCV result: image expansion: "+affineToText(result))
 		print ("Bad libCV result: image expansion: "+affineToText(result))
@@ -178,6 +179,8 @@ def affineToText(matrix):
 		tilt = degrees(math.acos(1.0/tiltv))
 	else:
 		tilt = degrees(math.acos(tiltv))
+	if tilt > 90.0:
+		tilt = tilt - 180.0
 	if abs(rotv) < 1:
 		rot = degrees(math.asin(rotv))
 	else:
@@ -185,5 +188,53 @@ def affineToText(matrix):
 	mystr = ( "tiltang = %.2f, rotation = %.2f, shift = %.2f,%.2f" %
 		(tilt, rot, matrix[2,0], matrix[2,1]) )
 	return mystr
-	
 
+
+#-----------------------
+def scaleAndPlane(imgarray):
+	try:
+		planed = planeRegression(imgarray)
+	except:
+		print "regression failed"
+		planed = imgarray
+	### libCV assumes all types are float32
+	try:
+		floating = numpy.asarray(planed - planed.min(), dtype=numpy.float32)*1.0e2
+	except:
+		print "float-ing failed"
+		floating = planed
+	return floating
+
+#-----------------------
+def planeRegression(imgarray):
+	"""
+	performs a two-dimensional linear regression and subtracts it from an image
+	essentially a fast high pass filter
+	"""
+	size = (imgarray.shape)[0]
+	count = float((imgarray.shape)[0]*(imgarray.shape)[1])
+	def retx(y,x):
+		return x
+	def rety(y,x):
+		return y
+	xarray = numpy.fromfunction(retx, imgarray.shape)
+	yarray = numpy.fromfunction(rety, imgarray.shape)
+	xsum = float(xarray.sum())
+	xsumsq = float((xarray*xarray).sum())
+	ysum = xsum
+	ysumsq = xsumsq
+	xysum = float((xarray*yarray).sum())
+	xzsum = float((xarray*imgarray).sum())
+	yzsum = float((yarray*imgarray).sum())
+	zsum = imgarray.sum()
+	zsumsq = (imgarray*imgarray).sum()
+	xarray = xarray.astype(numpy.float32)
+	yarray = yarray.astype(numpy.float32)
+	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
+	rightmat = numpy.array( [xzsum, yzsum, zsum] )
+	resvec = linalg.solve(leftmat,rightmat)
+	#print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
+	#	", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
+	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
+	#del imgarray,xarray,yarray,resvec
+	return newarray
