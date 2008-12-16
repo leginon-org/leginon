@@ -103,9 +103,9 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			angs = rangestr.split(",")
 			if not len(angs) == 3:
 				apDisplay.printError("the range is not defined correctly")
-			self.params['startang'+str(i)] = float(angs[0])
-			self.params['endang'+str(i)]   = float(angs[1])
-			self.params['incrang'+str(i)]  = float(angs[2])
+			self.params['startang'+str(i+1)] = float(angs[0])
+			self.params['endang'+str(i+1)]   = float(angs[1])
+			self.params['incrang'+str(i+1)]  = float(angs[2])
 		return
 
 	##=======================
