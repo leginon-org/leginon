@@ -81,7 +81,7 @@ class AppionLoop(appionScript.AppionScript):
 				self._writeDoneDict(imgdata['filename'])
 
 				if os.getloadavg()[0] > 2.0:
-					apDisplay.printMsg("load average is high "+str(round(os.getloadavg()[0],2)))
+					apDisplay.printMsg("Load average is high "+str(round(os.getloadavg()[0],2)))
 					time.sleep(10)
 
 				self._printSummary()
@@ -309,27 +309,6 @@ class AppionLoop(appionScript.AppionScript):
 		self.defaultparams = {}
 
 	#=====================
-	def _parseCommandLineInput(self, args):
-		if self.params['rundir']:
-			pass
-		else:
-			#go down one directory from img path i.e. remove 'rawdata'
-			rundir = os.path.split(self.params['imgdir'])[0]
-			#change leginon to appion
-			rundir = re.sub('leginon','appion',rundir)
-			#add the function name
-			if self.processdirname is not None:
-				self.params['rundir'] = os.path.join(rundir, self.processdirname)
-			else:
-				self.params['rundir'] = os.path.join(rundir, self.functionname)
-
-		if self.params['runname'] is None:
-			apDisplay.printError("please enter a runname, example: 'runname=run1'")
-		self.params['rundir'] = os.path.join(self.params['rundir'], self.params['runname'])
-		apDisplay.printMsg("RUNDIR:\t "+self.params['rundir'])
-
-
-	#=====================
 	def _shuffleTree(self, tree):
 		oldtree = tree
 		newtree = []
@@ -400,13 +379,13 @@ class AppionLoop(appionScript.AppionScript):
 		self.donedictfile = os.path.join(self.params['rundir'] , self.functionname+".donedict")
 		if os.path.isfile(self.donedictfile) and self.params['continue'] == True:
 			### unpickle previously done dictionary
-			apDisplay.printMsg("reading old done dictionary: "+os.path.basename(self.donedictfile))
+			apDisplay.printMsg("Reading old done dictionary: "+os.path.basename(self.donedictfile))
 			f = open(self.donedictfile,'r')
 			self.donedict = cPickle.load(f)
 			f.close()
 			if not 'commit' in self.donedict or self.donedict['commit'] == self.params['commit']:
 				### all is well
-				apDisplay.printMsg("found "+str(len(self.donedict))+" dictionary entries")
+				apDisplay.printMsg("Found "+str(len(self.donedict))+" done dictionary entries")
 				return
 			elif self.donedict['commit'] is True and self.params['commit'] is not True:
 				### die
@@ -418,7 +397,7 @@ class AppionLoop(appionScript.AppionScript):
 		### set up fresh dictionary
 		self.donedict = {}
 		self.donedict['commit'] = self.params['commit']
-		apDisplay.printMsg("creating new done dictionary:\n"+self.donedictfile)
+		apDisplay.printMsg("Creating new done dictionary: "+os.path.basename(self.donedictfile))
 
 		### write donedict to file
 		f = open(self.donedictfile, 'w', 0666)
@@ -472,28 +451,28 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printMsg("Session: "+str(self.params['sessionname'])+" : "+str(self.params['preset']))
 			apDisplay.printError("no files specified")
 		precount = len(self.imgtree)
-		apDisplay.printMsg("found "+str(precount)+" in "+apDisplay.timeString(time.time()-startt))
+		apDisplay.printMsg("Found "+str(precount)+" images in "+apDisplay.timeString(time.time()-startt))
 
 		### REMOVE PROCESSED IMAGES
-		apDisplay.printMsg("remove processed images")
+		apDisplay.printMsg("Remove processed images")
 		self._removeProcessedImages()
 
 		### SET IMAGE ORDER
 		if self.params['shuffle'] is True:
 			self.imgtree = self._shuffleTree(self.imgtree)
-			apDisplay.printMsg("process images shuffled")
+			apDisplay.printMsg("Process images shuffled")
 		elif self.params['reverse'] is True:
-			apDisplay.printMsg("process images new to old")
+			apDisplay.printMsg("Process images new to old")
 		else:
 			# by default images are new to old
-			apDisplay.printMsg("process images old to new")
+			apDisplay.printMsg("Process images old to new")
 			self.imgtree.sort(self._reverseSortImgTree)
 
 		### LIMIT NUMBER
 		if self.params['limit'] is not None:
 			lim = self.params['limit']
 			if len(self.imgtree) > lim:
-				apDisplay.printMsg("limiting number of images to "+str(lim))
+				apDisplay.printMsg("Limiting number of images to "+str(lim))
 				self.imgtree = self.imgtree[:lim]
 
 		self.stats['imagecount'] = len(self.imgtree)
@@ -730,10 +709,10 @@ class AppionLoop(appionScript.AppionScript):
 			self.imgtree = newimgtree
 			sys.stderr.write("\n")
 			apDisplay.printWarning("skipped "+str(self.stats['skipcount'])+" of "+str(startlen)+" images")
-			apDisplay.printMsg("( "+str(reproccount)+" no reprocess "
+			apDisplay.printMsg("[[ "+str(reproccount)+" no reprocess "
 				+" | "+str(rejectcount)+" rejected "
 				+" | "+str(tiltcount)+" wrong tilt "
-				+" | "+str(donecount)+" in donedict )")
+				+" | "+str(donecount)+" in donedict ]]")
 
 	#=====================
 	def _printLine(self):
@@ -760,7 +739,7 @@ class AppionLoop(appionScript.AppionScript):
 			return False
 
 		### CHECK FOR IMAGES, IF MORE THAN 10 JUST GO AHEAD
-		apDisplay.printMsg("\nfinished all images, checking for more")
+		apDisplay.printMsg("Finished all images, checking for more\n")
 		self._getAllImages()
 		### reset counts
 		self.stats['imagecount'] = len(self.imgtree)

@@ -140,10 +140,10 @@ class AppionScript(object):
 		apParam.closeFunctionLog(params=self.params, logfile=self.logfile, msg=(not self.quiet))
 		apFile.removeFile("spider.log")
 		if self.quiet is False:
-			apDisplay.printMsg("ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))
-			apDisplay.printMsg("memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
-			apDisplay.printMsg("rundir:\n "+self.params['rundir'])
-			apDisplay.printColor("COMPLETE SCRIPT:\t"+apDisplay.timeString(time.time()-self.t0),"green")
+			apDisplay.printMsg("Ended at "+time.strftime("%a, %d %b %Y %H:%M:%S"))
+			apDisplay.printMsg("Memory increase during run: %.3f MB"%((mem.active()-self.startmem)/1024.0))
+			apDisplay.printMsg("Run directory:\n "+self.params['rundir'])
+			apDisplay.printColor("Total run time:\t"+apDisplay.timeString(time.time()-self.t0),"green")
 		apParam.killVirtualFrameBuffer()
 
 	#=====================
@@ -277,9 +277,9 @@ class AppionScript(object):
 
 class TestScript(AppionScript):
 	def setupParserOptions(self):
-		apDisplay.printMsg("parser options")
+		apDisplay.printMsg("Parser options")
 	def checkConflicts(self):
-		apDisplay.printMsg("conflicts")
+		apDisplay.printMsg("Conflicts")
 	def setRunDir(self):
 		self.params['rundir'] = os.getcwd()
 	def start(self):
