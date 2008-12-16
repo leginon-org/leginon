@@ -19,7 +19,6 @@ require "inc/appionloop.inc";
 if ($_POST['process']) {
 	runMaskMaker();
 }
-
 // CREATE FORM PAGE
 else {
 	createMMForm();
@@ -28,7 +27,7 @@ else {
 function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 	echo "<!-- BEGIN Mask Maker Param -->";
 //	prettytable2();
-//	<TR><TD BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></TD></TR>
+//	<TR><td BGCOLOR=#660000 ALIGN=CENTER><FONT COLOR=#DDDDDD>Appion Loop Params</FONT></td></tr>
 	$blur = ($_POST['blur']) ? $_POST['blur'] : '3.5';
 	$minthresh = ($_POST['minthresh']) ? $_POST['minthresh'] : $cannyminthresh;
 	$maxthresh = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $cannymaxthresh;
@@ -41,18 +40,16 @@ function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 	$masktype = $masktypeval;
 	echo docpop('masktype','<b>Mask Type : </b>');
 	echo "\n<SELECT NAME='masktype'>\n";
-		foreach ($masktypes as $masktype) {
-			echo "<OPTION VALUE='$masktype' ";
-			// make crud selected by default
-			if ($masktype==$masktypeval) echo "SELECTED";
-			echo ">$masktype</OPTION>\n";
-		}
-		echo"</SELECT><BR><BR>\n";
+	foreach ($masktypes as $masktype) {
+		echo "<OPTION VALUE='$masktype' ";
+		// make crud selected by default
+		if ($masktype==$masktypeval) echo "SELECTED";
+		echo ">$masktype</OPTION>\n";
+	}
+	echo"</SELECT><BR><BR>\n";
 	echo "
-
-<B>Canny Edge thresholds:</B><BR>
-
-<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>\n";
+		<B>Canny Edge thresholds:</B><BR>
+		<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>\n";
 	echo docpop('blur','Gradient bluring');
 	echo "<br />\n";
 	echo "<INPUT TYPE='text' NAME='maxthresh' VALUE='$maxthresh' SIZE='4'>\n";
@@ -72,10 +69,13 @@ function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 	echo "<INPUT TYPE='text' NAME='convolve' VALUE='$convolve' SIZE='4'>\n";
 	echo docpop('convolve','Convoluted map threshold for aggregate mask (0.0-1.0)');
 	echo "<br />\n";
+
 	echo "<!-- END Mask Maker Param -->";
 };
 
 function parseMaskMakerParams () {
+	$diam = $_POST[diam];
+	$cdiam = $_POST[cdiam];
 	$minthresh = $_POST[minthresh];
 	$maxthresh = $_POST[maxthresh];
 	$blur = $_POST[blur];
@@ -84,15 +84,17 @@ function parseMaskMakerParams () {
 	$crudstd = $_POST[crudstd];
 	$convolve = $_POST[convolve];
 
-	if ($maxthresh && $maxthresh > 0) $command.=" crudhi=$maxthresh";
-	if ($blur && $blur > 0.01) $command.=" crudblur=$blur";
-	if ($minthresh && $minthresh > 0) $command.=" crudlo=$minthresh";
-	if ($crudstd && $crudstd > 0.01 && $crudstd != '') $command.=" crudstd=$crudstd";
-	if ($masktype) $command.=" masktype=$masktype";
-	if ($convolve && $convolve > 0.01 && $convolve != '') $command.=" convolve=$convolve";
-	if ($bin && $bin > 0) $command.=" bin=$bin";
+	$command .=" --diam=$diam";
+	$command .=" --cruddiam=$cdiam";
+	if ($maxthresh && $maxthresh > 0) $command.=" --crudhi=$maxthresh";
+	if ($blur && $blur > 0.01) $command.=" --crudblur=$blur";
+	if ($minthresh && $minthresh > 0) $command.=" --crudlo=$minthresh";
+	if ($crudstd && $crudstd > 0.01 && $crudstd != '') $command.=" --crudstd=$crudstd";
+	if ($masktype) $command.=" --masktype=$masktype";
+	if ($convolve && $convolve > 0.01 && $convolve != '') $command.=" --convolve=$convolve";
+	if ($bin && $bin > 0) $command.=" --bin=$bin";
 
-   return $command;
+	return $command;
 }
 
 
@@ -105,13 +107,13 @@ function maskMakerSummaryTable () {
 	$crudstd = $_POST[crudstd];
 	$convolve = $_POST[convolve];
 
-	echo "<TR><TD>mask type</TD><TD>$masktype</TD></TR>\n";
-	echo "<TR><TD>minthresh</TD><TD>$minthresh</TD></TR>\n";
-	echo "<TR><TD>maxthresh</TD><TD>$maxthresh</TD></TR>\n";
-	echo "<TR><TD>bin</TD><TD>$bin</TD></TR>\n";
-	echo "<TR><TD>blur</TD><TD>$blur</TD></TR>\n";
-	echo "<TR><TD>crudstd</TD><TD>$crudstd</TD></TR>\n";
-	echo "<TR><TD>convolve</TD><TD>$convolve</TD></TR>\n";
+	echo "<tr><td>mask type</td><td>$masktype</td></tr>\n";
+	echo "<tr><td>minthresh</td><td>$minthresh</td></tr>\n";
+	echo "<tr><td>maxthresh</td><td>$maxthresh</td></tr>\n";
+	echo "<tr><td>bin</td><td>$bin</td></tr>\n";
+	echo "<tr><td>blur</td><td>$blur</td></tr>\n";
+	echo "<tr><td>crudstd</td><td>$crudstd</td></tr>\n";
+	echo "<tr><td>convolve</td><td>$convolve</td></tr>\n";
 }
 
 
@@ -121,64 +123,63 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	if ($expId) {
 		$sessionId=$expId;
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
-	}
-	else {
+	}	else {
 		$sessionId=$_POST['sessionId'];
 		$formAction=$_SERVER['PHP_SELF'];	
 	}
-	$projectId=$_POST['projectId'];
+	$projectId=$_SESSION['projectId'];
 
-
-	$particle=new particleData;
-	$javascript="
-	<script src='../js/viewer.js'></script>
-	<script LANGUAGE='JavaScript'>
-		 function enabledtest(){
-			 if (document.viewerform.testimage.checked){
-				 document.viewerform.testfilename.disabled=false;
-				 document.viewerform.testfilename.value='';
-			 }	
-			 else {
-				 document.viewerform.testfilename.disabled=true;
-				 document.viewerform.testfilename.value='mrc file name';
-			 }
-		 }
-		 function enable(thresh){
-			 if (thresh=='auto') {
-				 document.viewerform.autopik.disabled=false;
-				 document.viewerform.autopik.value='';
-				 document.viewerform.thresh.disabled=true;
-				 document.viewerform.thresh.value='0.4';
-			 }
-			 if (thresh=='manual') {
-				 document.viewerform.thresh.disabled=false;
-				 document.viewerform.thresh.value='';
-				 document.viewerform.autopik.disabled=true;
-				 document.viewerform.autopik.value='100';
-			 }
-		 }
-		 function infopopup(infoname){
-			 var newwindow=window.open('','name','height=150,width=300');
-			 newwindow.document.write('<HTML><BODY>');
-			 if (infoname=='runid'){
-				 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.	An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
-			 }
+	$javafunctions="
+		<script src='../js/viewer.js'></script>
+		<script LANGUAGE='JavaScript'>
+			function enabledtest(){
+				if (document.viewerform.testimage.checked){
+					document.viewerform.testfilename.disabled=false;
+					document.viewerform.testfilename.value='';
+				}	else {
+					document.viewerform.testfilename.disabled=true;
+					document.viewerform.testfilename.value='mrc file name';
+				}
+			}
+			function enable(thresh){
+				if (thresh=='auto') {
+					document.viewerform.autopik.disabled=false;
+					document.viewerform.autopik.value='';
+					document.viewerform.thresh.disabled=true;
+					document.viewerform.thresh.value='0.4';
+				 }
+				if (thresh=='manual') {
+					document.viewerform.thresh.disabled=false;
+					document.viewerform.thresh.value='';
+					document.viewerform.autopik.disabled=true;
+					document.viewerform.autopik.value='100';
+				}
+			}
+d			function infopopup(infoname){
+				var newwindow=window.open('','name','height=150,width=300');
+				newwindow.document.write('<HTML><BODY>');
 			 newwindow.document.write('</BODY></HTML>');
 			 newwindow.document.close();
 		 }
-	</SCRIPT>\n";
-	$javascript.=writeJavaPopupFunctions('appion');
+		</script>\n";
+	$javafunctions.=writeJavaPopupFunctions('appion');
 
-	processing_header($title,$heading,$javascript);
+	processing_header($title,$heading,$javafunctions,True);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='#DD0000' SIZE=+2>$extra</FONT>\n<HR>\n";
 	}
+	if ($results) echo "$results<hr>\n";
 	echo"
-	<form name='viewerform' method='POST' ACTION='$formAction'>
-	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+		<form name='viewerform' method='POST' ACTION='$formAction'>
+		<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+
+	// Set any existing parameters in form
+	$particle=new particleData;
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
+	$maskruns=count($particle->getMaskMakerRunIds($sessionId));
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'maskrun'.($maskruns+1);
 
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
@@ -188,49 +189,47 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	$cdiam = ($_POST['cdiam']) ? $_POST['cdiam'] :'';
 	$process = ($_POST['process']) ? $_POST['process'] :'';
 	echo"
-	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
-	<TR>
-		<TD VALIGN='TOP'>";
-	$maskruns=count($particle->getMaskMakerRunIds($sessionId));
-	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'maskrun'.($maskruns+1);
-	createAppionLoopTable($sessiondata, $defrunid, "mask");
+		<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
+			<tr>
+				<td VALIGN='TOP'>";
+	createAppionLoopTable($sessiondata, $defrunname, "mask");
 	echo"
-		</TD>
-		<TD CLASS='tablebg'>
-			<B>Particle Diameter:</B><BR>
-			<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
+				</td>
+				<td CLASS='tablebg'>
+					<B>Particle Diameter:</B><BR>
+					<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
 	echo docpop('pdiam','Particle diameter as reference for template');
-	echo "<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
-	echo "<br /><br />";
+	echo "	<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
+	echo "	<br /><br />";
 	echo"
-			<B>Minimal Mask Region Diameter:</B><BR>
-			<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>&nbsp;
-			Mask Region diameter as lower area/perimeter threshold <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-			<BR><BR>";
+					<B>Minimal Mask Region Diameter:</B><BR>
+					<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>&nbsp;
+						Mask Region diameter as lower area/perimeter threshold <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
+					<BR><BR>";
 
-		createMaskMakerTable(0.6,0.95);
-		echo "
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>
-		<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
-		Test these setting on image:
-		<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-		<HR>
-		</TD>
-	</TR>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
+	createMaskMakerTable(0.6,0.95);
+	echo "
+				</td>
+			</tr>
+			<tr>
+				<td COLSPAN='2' ALIGN='CENTER'>
+					<HR>
+					<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
+						Test these setting on image:
+					<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
+					<HR>
+				</td>
+			</tr>
+			<tr>
+				<td COLSPAN='2' ALIGN='CENTER'>
 	";
 	echo getSubmitForm("Run MaskMaker");
 	echo "
-		</TD>
-	</TR>
-	</TABLE>
-	</TD>
-	</TR>
+				</td>
+			</tr>
+		</TABLE>
+	</td>
+	</tr>
 	</TABLE>\n";
 	?>
 
@@ -267,45 +266,39 @@ function runMaskMaker() {
 		exit;
 	}
 	$command .= $apcommand;
-	$command .=" diam=$diam";
-	$command .=" cruddiam=$cdiam";
 	$command .= parseMaskMakerParams($_POST);
 	if ($_POST['testimage']=="on") {
-		$command .= " test";
+		$command .= " --test";
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
 
 	if ($testimage && $_POST['process']=="Run MaskMaker") {
-		$host = $_POST['processinghost'];
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
-		if (!($user && $password)) {
-			createMMForm("<B>ERROR:</B> Enter a user name and password");
-			exit;
-		}
-		$prefix = "source /ami/sw/ami.csh;";
-		$prefix.= "source /ami/sw/share/python/usepython.csh cvs32;";
-		$cmd = "$prefix webcaller.py '$command' maskMakerLog.txt";
-		$result=exec_over_ssh($host, $user, $password, $cmd, True);
+		if (!($user && $password)) createMMForm("<b>ERROR:</b> Enter a user name and password"); 
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'maskmaker',False,True);
+		// if errors:
+		if ($sub) createMMForm("<b>ERROR:</b> $sub");
+		exit;
 	}
 
-	processing_header("Bad Region Detection Results","Bad Region Detection Results",$javascript);
+	#processing_header("Bad Region Detection Results","Bad Region Detection Results",$javascript);
 
 	if ($testimage) {
 		$outdir=$_POST[outdir];
 		// make sure outdir ends with '/'
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$runid=$_POST[runid];
+		$runname=$_POST[runname];
 		echo  " <B>MaskMaker Command:</B><BR>$command<HR>";
 		$testjpg=ereg_replace(".mrc","",$testimage);
-		$testdir=$outdir.$runid."/tests/";
-        	if (file_exists($testdir)) {
-                	// open image directory
-                	$pathdir=opendir($testdir);
+		$testdir=$outdir.$runname."/tests/";
+    if (file_exists($testdir)) {
+     	// open image directory
+     	$pathdir=opendir($testdir);
 			// get all files in directory
 			$ext='jpg';
 			while ($filename=readdir($pathdir)) {
-		        	if ($filename == '.' || $filename == '..') continue;
+		   	if ($filename == '.' || $filename == '..') continue;
 				if (preg_match('`\.'.$ext.'$`i',$filename)) $files[]=$filename;
 			}
 			closedir($pathdir);
@@ -314,24 +307,40 @@ function runMaskMaker() {
 		if (count($files) > 0) 	{
 			$images=displayTestResults($testimage,$testdir,$files);
 		} else {
-			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><BR>";
-			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><BR>";
+			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><BR></FONT>";
+			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><BR></FONT>";
 		}
+
 		createMMForm($images,'Particle Selection Results','');
 		exit;
 	}
 
 
 	echo"
-  <TABLE WIDTH='600'>
-  <TR><TD COLSPAN='2'>
-  <B>Mask Maker Command:</B><BR>
-  $command<HR>
-  </TD></TR>
-  <TR><TD>outdir</TD><TD>$outdir</TD></TR>";
-	echo"<TR><TD>runname</TD><TD>$runid</TD></TR>
-  <TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-  <TR><TD>diameter</TD><TD>$diam</TD></TR>";
+		<TABLE WIDTH='600'>
+			<tr>
+				<td COLSPAN='2'>
+					<B>Mask Maker Command:</B><BR>
+					$command<HR>
+				</td>
+			</tr>
+			<tr>
+				<td>outdir</td>
+				<td>$outdir</td>
+			</tr>";
+	echo"
+			<tr>
+				<td>runname</td>
+				<td>$runname</td>
+			</tr>
+			<tr>
+				<td>dbimages</td>
+				<td>$dbimages</td>
+			</tr>
+			<tr>
+				<td>diameter</td>
+				<td>$diam</td>
+			</tr>";
 	appionLoopSummaryTable();
 	maskMakerSummaryTable();
 	echo"</TABLE>\n";
@@ -341,78 +350,36 @@ function runMaskMaker() {
 
 function displayTestResults($testimage,$imgdir,$files){
 	echo "<CENTER>\n";
-	echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
-
-        $numfiles=count($files);
+  $numfiles=count($files);
 	$prefix = '';
 	$n = 0;
-
 	sort($files);
-
-	$imlst=($_POST['imagelist']) ? $_POST['imagelist'] : 'First';
-        $imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
-	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.25; 
-	$process= ($_POST['process']) ? $_POST['process'] : '';
-	// go directly to a particular image number
-	if ($_POST['imgjump']) {
-	        $imgindx=$_POST['imgjump']-1;
-		// make sure it's within range
-		if ($imgindx < 0) $imgindx=0;
-		elseif ($imgindx > $numfiles-1) $imgindx=$numfiles-1;
-		$imgname=$files[$imgindx];
-	}
-	// otherwise, increment or decrement the displayed image
-	else {
-	        if ($imlst=='Back') {
-				$imgindx--;
-				if ($imgindx < 0) {
-				        echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
-					$imgindx=0;
-					$imgname=$files[$imgindx];
-				}
-				$imgname=$files[$imgindx];
-		}
-		elseif ($imlst=='Next') {
-			        $imgindx++;
-				if ($imgindx > $numfiles-1) {
-					$imgindx=$numfiles-1;
-					$imgname=$files[$imgindx];
-				        echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
-				}
-				$imgname=$files[$imgindx];
-		}
-		else {
-		        if ($imlst=='First') $imgindx=0;
-			elseif ($imlst=='Last') $imgindx=$numfiles-1;
-			$imgname=$files[$imgindx];
-		}
-	}
-
-	$thisnum=$imgindx+1;
-
+	
 	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
-	echo"<TR><TD ALIGN='LEFT'>\n";
-        echo"<B>$testimage</B>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
-        echo"Scale Factor:<INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
-	echo"</TD></TR></TABLE>";
-
-	$imgfull=$imgdir.$imgname;
-	echo"<INPUT TYPE='HIDDEN' NAME='imgindex' VALUE='$imgindx'>\n";
-	echo"<HR>\n";
-	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><TR><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/firstbutton.jpg' ALT='First' NAME='imagelist' VALUE='First'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/backbutton.jpg' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' SRC='img/nextbutton.jpg' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD><TD>\n";
-	echo"<INPUT TYPE='IMAGE' WIDTH='30' SRC='img/lastbutton.jpg' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
-	echo"</TD></TR></TR></TABLE>\n";
-	echo"<B>$imgname</B>\n<P>";
-	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'><P>\n";
+	echo"<tr><td ALIGN='LEFT'>\n";
+  echo"<B>$testimage</B>\n";
+	echo"</td></tr></TABLE>";
+	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><tr>\n";
+	$col = 0;
+	$row = 0;
+	$colcount = 4;
+	while ($col+$colcount*$row < count($files)) {
+		if ($col > $colcount-1) {
+			$col = 0;
+			$row = $row + 1;
+			echo "</tr><tr>";
+		}
+		echo "<td>";	
+		$imgindx = $col+$colcount*$row;
+		$imgname=$files[$imgindx];
+		$imgfull=$imgdir.$imgname;
+		echo"<B>$imgname</B>\n<P>";
+		echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=0.25'><P>\n";
+		echo "</td>";
+		$col = $col + 1;
+	}	
+	echo"</tr></TABLE>\n";
 	echo "</CENTER>\n";
-	echo"<INPUT TYPE='HIDDEN' NAME='process' VALUE=$process>\n";
 }
 ?>
