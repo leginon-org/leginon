@@ -18,30 +18,16 @@ import apParam
 
 class MaskMaker(appionLoop2.AppionLoop):
 	def setProcessingDirName(self):
-		self.processdirname = "makemask"
+		self.processdirname = "mask"
 
 	def setFunctionResultKeys(self):
 		self.resultkeys = {'region':['image', 'maskrun', 'x', 'y',
 			 'area', 'perimeter', 'mean', 'stdev', 'label' ],}
 		
-	def specialDefaultParams(self):
-		self.params['masktype']='custom'
-		self.params['cdiam']=0
-		self.params['cblur']=3.5
-		self.params['clo']=0.6
-		self.params['chi']=0.95
-		self.params['cschi']=1.0
-		self.params['csclo']=0.0
-		self.params['convolve']=0.0
-		self.params['no_hull']=False
-		self.params['cv']=False
-		self.params['no_length_prune']=False
-		self.params['stdev']=0.0
-		self.params['test']=False
-		self.params['bin']=4
-		self.params['diam']=0
-
-	def specialParamConflicts(self):
+	#======================
+	def checkConflicts(self):
+		if self.params['bin'] < 1:
+			apDisplay.printError("bin must be positive")
 		if self.params['test']==True:
 			self.params['commit']=False
 		if self.params['masktype']=='crud':
@@ -63,7 +49,6 @@ class MaskMaker(appionLoop2.AppionLoop):
 			self.params['no_hull']=True
 			self.params['cv']=True
 			self.params['no_length_prune']=False
-
 
 	def insertFunctionParams(self,params):
 		maskPdata=appionData.ApMaskMakerParamsData()
@@ -119,16 +104,15 @@ class MaskMaker(appionLoop2.AppionLoop):
 	def insertFunctionRun(self):
 		if self.params is None:
 			params = self.defaultparams.copy()
-		if self.params['commit']:
-			params = self.params.copy()
-			sessiondata = params['session']
-		else:
-			params = self.defaultparams.copy()
-			sessiondata = None
+		if self.params['commit']==True:
+			sessionname = self.params['sessionname']
+			sessiondata = apDatabase.getSessionDataFromSessionName(sessionname)
 			
-		paramdata =self.insertFunctionParams(params)
-		maskRdata=apMask.createMaskMakerRun(sessiondata,params['rundir'],params['runname'],paramdata)
-		maskRdata.insert()
+			paramdata =self.insertFunctionParams(self.params)
+			maskRdata=apMask.createMaskMakerRun(sessiondata,self.params['rundir'],self.params['runname'],paramdata)
+			maskRdata.insert()
+		else:
+			maskRdata = apMask.createMaskMakerRun(None,None,None,None)
 
 		return maskRdata
 		
@@ -154,21 +138,26 @@ class MaskMaker(appionLoop2.AppionLoop):
 			qs.append(q)
 		return qs
 
-	def specialCreateOutputDirs(self):
-		self._createDirectory(os.path.join(self.params['rundir'],"masks"),warning=False)
+	def loopCommitToDatabase(self, imgdata):
+		# Use CommitResultsToDatabase instead
+		pass
+	
+	def preLoopFunctions(self):
+		apParam.createDirectory(os.path.join(self.params['rundir'],"masks"),warning=False)
 		regionpath = os.path.join(self.params['rundir'],"regions")
-		self._createDirectory(regionpath,warning=False)
+		apParam.createDirectory(regionpath,warning=False)
 		self.result_dirs = {'region':regionpath}
 
 	def processImage(self,imgdata):
 		image = self.getImage(imgdata,self.params['bin'])
 		results=self.function(self.rundata, imgdata, image)
 		mask = results.pop('mask')
+		pngpath = os.path.join(self.params['rundir'],"masks")
+		apParam.createDirectory(pngpath,warning=False)
 		filepathname = os.path.join(self.params['rundir'],"masks",imgdata['filename']+"_mask.png")
 		if mask is not None:
 			apImage.arrayMaskToPngAlpha(mask, filepathname)
 		return results
-		
 
 	def prepImage(self,imgarray,cutoff=5.0):
 		shape=numpy.shape(imgarray)
@@ -189,6 +178,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 		return imgarray	
 	
 	def function(self,rundata, imgdata, binnedimgarray):
+		self.params['apix'] =  apDatabase.getPixelSize(imgdata)
 		regions,maskarray = apCrud.makeMask(self.params, binnedimgarray)
 		regionTree = self.getResults(rundata, imgdata, regions)
 		return {'region':regionTree,'mask':maskarray}
