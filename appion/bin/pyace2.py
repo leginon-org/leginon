@@ -79,7 +79,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 	def processImage(self, imgdata):
 
-		bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
+		#bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
 		inputparams = {
 			'input': os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc"),
 			'cs': self.params['cs'],
@@ -89,7 +89,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		}
 
 		### make standard input for ACE 2
-		print "Using ACE2 at:"+self.ace2exe
+		apDisplay.printMsg("Ace2 executable: "+self.ace2exe)
 		commandline = ( self.ace2exe
 			+ " -i " + str(inputparams['input'])
 			+ " -b " + str(inputparams['binby'])
@@ -97,27 +97,34 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -k " + str(inputparams['kv'])
 			+ " -a " + str(inputparams['apix']) + "\n" )
 
-		t0 = time.time()
-
+		### run ace2
 		apDisplay.printMsg("running ace2 at "+time.asctime())
-
-		ace2proc = subprocess.Popen(commandline, shell=True)
+		apDisplay.printColor(commandline, "purple")
+		aceoutf = open("ace2.out", "a")
+		aceerrf = open("ace2.err", "a")
+		t0 = time.time()
+		ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
 		ace2proc.wait()
+		aceoutf.close()
+		aceerrf.close()
 
+		### check if ace2 worked
+		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
+		if not os.path.isfile(imagelog):
+			apDisplay.printError("ace2 did not run")
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
 
+		### parse log file
 		self.ctfvalues = {}
-		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
 		logf = open(imagelog, "r")
-		lines = logf.readlines()
-
-		for line in lines:
+		for line in logf:
 			sline = line.strip()
 			if re.search("Final Defocus:", sline):
 				parts = sline.split()
 				self.ctfvalues['defocus1'] = float(parts[2])
 				self.ctfvalues['defocus2'] = float(parts[3])
-				self.ctfvalues['angle_astigmatism'] = float(parts[4])
+				### convert to degrees
+				self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
 			elif re.search("Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
@@ -125,10 +132,19 @@ class Ace2Loop(appionLoop2.AppionLoop):
 				parts = sline.split()
 				self.ctfvalues['confidence'] = float(parts[1])
 				self.ctfvalues['confidence_d'] = float(parts[1])
-
 		logf.close()
 
-		print self.ctfvalues
+		### summary stats
+		apDisplay.printMsg("============")
+		pererror = ( 200.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) 
+			/ (self.ctfvalues['defocus1']+self.ctfvalues['defocus2']) )
+		apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent error)"%
+			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
+		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
+		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(100.0*self.ctfvalues['amplitude_contrast']))
+		apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
+
+		#print self.ctfvalues
 
 		return
 
