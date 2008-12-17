@@ -126,10 +126,10 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 	minval = ccmap.min()
 	maxval = ccmap.max()
 
-	print minval,maxval
+	#print minval,maxval
 	grad = numpy.linspace(minval, maxval, bigmap.shape[1])
 	bigmap[ccmap.shape[0]:bigmap.shape[0],:] = grad
-	print ccmap.shape, "-->",  bigmap.shape
+	#print ccmap.shape, "-->",  bigmap.shape
 
 	image = apImage.arrayToImage(bigmap, stdevLimit=8.0)
 	image = image.convert("RGB")
@@ -161,7 +161,7 @@ def createPeakMapImage(peaktree, ccmap, imgname="peakmap.jpg", pixrad="10.0", bi
 
 def addMinMaxTextToMap(draw, imgdim, minval, maxval):
 	### add text
-	print "adding text"
+	#print "adding text"
 	midval = (maxval + minval)/2.0
 	midlval = (maxval + minval)/4.0
 	midrval = 3.0*(maxval + minval)/4.0
