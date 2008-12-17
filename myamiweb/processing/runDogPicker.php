@@ -76,15 +76,17 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
+	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "";
+	$numslices = ($_POST['numslices']) ? $_POST['numslices'] : "";
+	$sizerange = ($_POST['sizerange']) ? $_POST['sizerange'] : "";
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<tr>
 		<td VALIGN='TOP'>";
 	srand(time());
-	if ((rand()%2) == 1) {
-		echo"
-	<center><IMG SRC='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
+	if ((rand()%2) < 3) {
+		echo"<center><IMG SRC='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
 	}
 	createAppionLoopTable($sessiondata, $defrunid, "extract");
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
@@ -95,18 +97,18 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
 	echo "<br /><br />\n";
 	createParticleLoopTable(0.7, 1.5);
-	$kfactor = ($_POST['kfactor']) ? $_POST['kfactor'] : "";
-	$numslices = ($_POST['numslices']) ? $_POST['numslices'] : "";
-	$sizerange = ($_POST['sizerange']) ? $_POST['sizerange'] : "";
+
 	echo "<input type='text' name='kfactor' value='$kfactor' size='6'>\n";
 	echo docpop('kfactor',' K-factor');
 	echo " <font size=-2><i>(sloppiness)</i></font>\n";
 	echo "<br /><br />\n";
+
 	echo "<b>Multi-scale dogpicker:</b><br />\n";
 	echo "<input type='text' name='numslices' value='$numslices' size='3'>\n";
 	echo docpop('numslices',' Number of Slices');
 	echo " <font size=-2><i>(number of sizes)</i></font>\n";
 	echo "<br />\n";
+
 	echo "<input type='text' name='sizerange' value='$sizerange' size='3'>\n";
 	echo docpop('sizerange',' Size Range');
 	echo " <font size=-2><i>(in &Aring;ngstroms)</i></font>\n";

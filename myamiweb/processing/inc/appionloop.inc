@@ -140,30 +140,32 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 
 function appionLoopSummaryTable () {
 	if ($_POST[checkimage]=="non-rejected") {
-		$norejects = 1;
+		$norejects = "<font color='green'>true</font>";
+		$bestimages = "<font color='red'>false</font>";
 	} elseif ($_POST[checkimage]=="best") {
-		$norejects = 1;
-		$bestimages = 1;
+		$norejects = "<font color='green'>true</font>";
+		$bestimages = "<font color='green'>true</font>";
 	} else {
-		$norejects = 0;
-		$bestimages = 0;
+		$norejects = "<font color='red'>false</font>";
+		$bestimages = "<font color='red'>false</font>";
 	}
-	$nowait = ($_POST[nowait]=="on") ? false : true;
-	$background = ($_POST[background]=="on") ? true : false;
-	$shuffle = ($_POST['shuffle']=="on") ? true : false;
-	$reverse = ($_POST['reverse']=="on") ? true : false;
-	$limit = $_POST[limit];
+	$nowait = ($_POST[nowait]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
+	$background = ($_POST[background]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$shuffle = ($_POST['shuffle']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$reverse = ($_POST['reverse']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$limit = ($_POST[limit]) ? $_POST[limit] : "all";
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST[apcontinue];
-	$commit = ($_POST[commit]=="on") ? true : false;
+	$commit = ($_POST[commit]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$runname = $_POST[runname];
-	$reverse = ($_POST['reverse']=="on") ? true : false;
+	$reverse = ($_POST['reverse']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$outdir = $_POST[outdir];
 	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
 	else $alldbimages = $_POST[sessionname];
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		$testimage = ereg_replace(" ","\ ", $testimage);
+		$testimage = ereg_replace(" ",",,", $testimage);
+		$testimage = ereg_replace(",,",",",$testimage);
 	}
 
 	echo "<TR><TD>runname</TD><TD>$runname</TD></TR>\n";
@@ -218,6 +220,7 @@ function parseAppionLoopParams () {
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 		$testimage = ereg_replace(" ",",", $testimage);
+		$testimage = ereg_replace(",,",",", $testimage);
 		$apcontinue = false;
 	}
 
@@ -427,14 +430,15 @@ function particleLoopSummaryTable () {
 	$hp = $_POST[hp];
 	$median = $_POST[median];
 	$bin = $_POST[bin];
-	$defocpair = ($_POST[defocpair]=="on") ? "0" : "1";
+	$defocpair = ($_POST[defocpair]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
 	$maxsize = $_POST[maxsize];
 	$overlapmult = $_POST[overlapmult];
-	$invert = ($_POST[invert]=="on") ? "1" : "0";
+	$invert = ($_POST[invert]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$diam = $_POST[diam];
 
 	echo "<TR><TD>thresh</TD><TD>$thresh</TD></TR>\n";
-	echo "<TR><TD>maxthresh</TD><TD>$maxthresh</TD></TR>\n";
-	echo "<TR><TD>maxpeaks</TD><TD>$maxpeaks</TD></TR>\n";
+	echo "<TR><TD>max thresh</TD><TD>$maxthresh</TD></TR>\n";
+	echo "<TR><TD>max peaks</TD><TD>$maxpeaks</TD></TR>\n";
 	echo "<TR><TD>lp</TD><TD>$lp</TD></TR>\n";
 	echo "<TR><TD>hp</TD><TD>$hp</TD></TR>\n";
 	echo "<TR><TD>median</TD><TD>$median</TD></TR>\n";
@@ -443,6 +447,7 @@ function particleLoopSummaryTable () {
 	echo "<TR><TD>maxsize</TD><TD>$maxsize</TD></TR>\n";
 	echo "<TR><TD>overlapmult</TD><TD>$overlapmult</TD></TR>\n";
 	echo "<TR><TD>invert</TD><TD>$invert</TD></TR>\n";
+	echo "<TR><TD>diameter</TD><TD>$diam</TD></TR>\n";
 }
 
 ?>

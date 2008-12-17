@@ -64,7 +64,7 @@ function createTemplateForm($extra=False) {
 		$i=1;
 		$javafunctions="<SCRIPT LANGUAGE='JavaScript'>\n";
 		$templatetable="<TABLE CLASS='tableborder' BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
-		$numtemplates=count($templateData);
+		$numtemplates = count($templateData);
 
 		foreach($templateData as $templateinfo) { 
 			if (is_array($templateinfo)) {
@@ -75,11 +75,10 @@ function createTemplateForm($extra=False) {
 				$startval = (int) $templaterundata[range_start];
 				$endval = (int) $templaterundata[range_end];
 				$incrval = (int) $templaterundata[range_incr];
-				if ($startval==0 && $endval==10 && $incrval==20) {
-				  $startval='';
-				  $endval='';
-				  $incrval='';
-				}
+				if ($startval==0) $startval='';
+				if ($endval==0 || $endval==10) $endval='';
+				if ($incrval==0 || $incrval==20) $incrval='';
+
 				// create the javascript functions to enable the templates
 				$javafunctions.="function enable".$checkboxname."() {
 						 if (document.viewerform.$checkboxname.checked){
@@ -192,9 +191,11 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$particle=new particleData;
 	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
 
+	$numtemplatesused = 0;
 	for ($i=1; $i<=$numtemplates; $i++) {
 		$templateimg="template".$i;
 		if ($_POST[$templateimg]){
+			$numtemplatesused++;
 			$templateIdName="templateId".$i;
 			$tmpltstrt=$templateimg."strt";
 			$tmpltend=$templateimg."end";
@@ -255,7 +256,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 
 	// Set any existing parameters in form
@@ -263,21 +264,36 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
+	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
+	$threadcheck = ($_POST['threadfindem']=='on') ? 'CHECKED' : '';
+	$keepallcheck = ($_POST['keepall']=='on') ? 'CHECKED' : '';
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
 	createAppionLoopTable($sessiondata, $defrunid, "extract");
-	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
-	echo"
-		</TD>
-		<TD CLASS='tablebg'>
-			<B>Mask Diameter:</B><BR>
-			<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;
-			Mask diameter for template(s) <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-			<BR><BR>";
+
+	if ($numtemplatesused > 1) {
+		echo "<input type='checkbox' name='threadfindem' $threadcheck>\n";
+		echo "Use multi-processor threading\n";
+		echo "<br />\n";
+	} else {
+		echo "<input type='hidden' name='threadfindem' value='off'>";
+	}
+
+	echo "<input type='checkbox' name='keepall' $keepallcheck>\n";
+	echo "Do not delete .dwn.mrc files after finishing\n";
+	echo "<br />\n";
+
+	echo "</TD><TD CLASS='tablebg'>\n";
+	echo "<B>Mask Diameter:</B><BR>\n";
+	echo "<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;\n";
+	echo "Mask diameter for template(s) <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
+	echo "<BR/><BR/>\n";
+
 	createParticleLoopTable(0.5,"",$_POST);
+
 	echo "
 		</TD>
 	</TR>
@@ -323,11 +339,14 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 
 function runTemplateCorrelator() {
 	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
 	$outdir = $_POST['outdir'];
+	$runname = $_POST['runname'];
+	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
-	$command .="templateCorrelator.py ";
-	$command .= templateCommand();
+	// START MAKE COMMAND
+
+	$command ="templateCorrelator.py ";
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
@@ -343,9 +362,47 @@ function runTemplateCorrelator() {
 	}
 	$command .= $partcommand;
 
+	// get the list of templates
+	$i=1;
+	$templateList = $_POST['templateList'];
+	$templates=split(",", $templateList);
+	$templateliststr = "";
+	$rangeliststr = "";
+	foreach ($templates as $template) {
+		list($num, $templateid) = split(":",$template);
+		$templateliststr .= $templateid.",";
+		$start = "template".$num."strt";
+		$end   = "template".$num."end";
+		$incr  = "template".$num."incr";
+		// check for invalid range
+		if ($_POST[$start]!='' && $_POST[$end]!='0' && $_POST[$incr]!='0') {
+			// use user supplied values
+			$rangestr = $_POST[$start].",".$_POST[$end].",".$_POST[$incr];
+		} else {
+			// no rotation
+			$rangestr = "0,10,20";
+		}
+		$rangeliststr .= $rangestr."x";
+		$i++;
+	}
+	// remove extra commas and x's
+	$templateliststr = substr($templateliststr,0,-1);
+	$rangeliststr    = substr($rangeliststr,0,-1);
+
+	$command.="--template-list=$templateliststr ";
+	$command.="--range-list=$rangeliststr ";
+
+	if ($_POST['threadfindem']=='on')
+		$command.="--thread-findem ";
+	if ($_POST['keepall']=='on')
+		$command.="--keep-all ";
+
+	// END MAKE COMMAND
+
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
-		$testimage = ereg_replace(" ","\ ",$testimage);
+		$testimage = ereg_replace(" ",",",$testimage);
+		$testimage = ereg_replace(",,",",",$testimage);
 	}
 
 	if ($_POST['process']=="Run Correlator") {
@@ -354,7 +411,7 @@ function runTemplateCorrelator() {
 
 		if (!($user && $password)) createTCForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'templatepicker',$testimage);
+		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatepicker', $testimage);
 		// if errors:
 		if ($sub) createTCForm("<b>ERROR:</b> $sub");
 		if (!$testimage) exit;
@@ -381,70 +438,39 @@ function runTemplateCorrelator() {
 		$results.= writeTestResults($jpgimg,$ccclist,$bin=$_POST['bin']);
 		createTCForm($false,'Particle Selection Results','Particle Selection Results',$results);
 		exit;
+	} else {
+		processing_header("Particle Selection Results","Particle Selection Results");
+
+		echo"
+			<TABLE WIDTH='600'>
+			<TR><TD COLSPAN='2'>
+			<font size='+1'>
+			<B>Template Correlation Picker Command:</B><BR>
+			$command</font><HR>
+			</TD></TR>";
+		$i = 0;
+		foreach ( split(",", $templateliststr) as $templateid ) {
+			$i++;
+			echo"<TR><TD>template $i id</TD><TD>$templateid</TD></TR>";
+		}
+		echo"<TR><TD>template list</TD><TD>$templateliststr</TD></TR>";
+		$i = 0;
+		foreach ( split("x", $rangeliststr) as $rangestr ) {
+			$i++;
+			echo"<TR><TD>template $i range</TD><TD>$rangestr</TD></TR>";
+		}
+		echo"<TR><TD>range list string</TD><TD>$rangeliststr</TD></TR>";
+		echo"<TR><TD>testimage</TD><TD>$testimage</TD></TR>";
+		echo"<TR><TD>thread findem</TD><TD>$thread</TD></TR>";
+		echo"<TR><TD>keep all .dwn.mrc</TD><TD>$thread</TD></TR>";
+		appionLoopSummaryTable($_POST);
+		particleLoopSummaryTable($_POST);
+
+		echo"</TABLE>\n";
+		processing_footer(True, True);
 	}
 
-	else processing_header("Particle Selection Results","Particle Selection Results");
-
-	echo"
-		<TABLE WIDTH='600'>
-		<TR><TD COLSPAN='2'>
-		<B>Template Correlation Picker Command:</B><BR>
-		$command<HR>
-		</TD></TR>";
-	echo"
-		<TR><TD>templateIds</TD><TD>$templateIds</TD></TR>";
-/*
-	foreach ($ranges as $rangenum=>$rangevals) {
-		echo "<TR><TD>$rangenum</TD><TD>$rangevals</TD></TR>\n";
-	}
-*/
-	echo"<TR><TD>runid</TD><TD>$runid</TD></TR>
-		<TR><TD>testimage</TD><TD>$testimage</TD></TR>
-		<TR><TD>dbimages</TD><TD>$dbimages</TD></TR>
-		<TR><TD>diameter</TD><TD>$diam</TD></TR>";
-	appionLoopSummaryTable($_POST);
-	particleLoopSummaryTable($_POST);
-	echo"</TABLE>\n";
-	processing_footer(True, True);
-}
-
-/*
-**
-**
-** GENERATE COMMANDLINE INFO FOR TEMPLATES
-**
-**
-*/
-
-function templateCommand () {
-	$command = "";
-	// get the list of templates
-	$i=1;
-	$templateList=$_POST['templateList'];
-	$templates=split(",", $templateList);
-	foreach ($templates as $tmplt) {
-		list($tmpltNum,$tmpltId)=split(":",$tmplt);
-		$templateIds.="$tmpltId,";
-		$tmpltstrt="template".$tmpltNum."strt";
-		$tmpltend="template".$tmpltNum."end";
-		$tmpltincr="template".$tmpltNum."incr";
-		// set the ranges specified
-		$rangenum="range".$i;
-		if ($_POST[$tmpltstrt]!='' && ($_POST[$tmpltstrt]!='0' || $_POST[$tmpltend]!='0' || $_POST[$tmpltincr]!='0'))
-			$range=$_POST[$tmpltstrt].",".$_POST[$tmpltend].",".$_POST[$tmpltincr];
-		// if no rotation
-		else $range="0,10,20";
-		$ranges[$rangenum]=$range;
-		$i++;
-	}
-	$templateIds=substr($templateIds,0,-1);
-
-	$command.="--templateIds=$templateIds ";
-	foreach ($ranges as $rangenum=>$rangevals) {
-		$command.="--$rangenum=$rangevals ";
-	}
-
-	return $command;
+	exit;
 }
 
 ?>
