@@ -34,6 +34,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
+		self.fastmodes = [ "normal", "narrow", "wide" ]
+
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
@@ -56,6 +58,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Number of classes to create", metavar="#")
 		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
+		self.parser.add_option("--fast-mode", dest="fastmode", default="normal",
+			help="Search space reduction cutoff criteria, options: "+str(self.fastmodes), metavar="#")
+
 		#self.parser.add_option("--templates", dest="templateids",
 		#	help="Template Id for template init method", metavar="1,56,34")
 
@@ -80,6 +85,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("a number of classes was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
+		if not self.params['fastmode'] in self.fastmodes:
+			apDisplay.printError("fast mode must be on of: "+str(self.fastmodes))
 		maxparticles = 150000
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: " 
@@ -301,6 +308,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		)
 		if self.params['fast'] is True:
 			xmippopts += " -fast "
+			if self.params['fastmode'] == "narrow":
+				xmippopts += " -C 1e-10 "
+			elif self.params['fastmode'] == "wide":
+				xmippopts += " -C 1e-14 "
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
 
@@ -329,6 +340,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "ref"+self.timestamp)
 			+" -psi_step 1 "
+			+" -C 1e-15 "
 			+" -eps 5e-4 "
 		)
 		xmippexe = apParam.getExecPath("xmipp_ml_align2d")

@@ -425,6 +425,7 @@ class ApMaxLikeRunData(Data):
 			('mask_diam', int),
 			('init_method', str),
 			('fast', bool),
+			('fastmode', str),
 			('run_seconds', int),
 			('job', ApMaxLikeJobData),
 		)
