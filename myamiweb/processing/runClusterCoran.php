@@ -235,12 +235,7 @@ function runClusterCoran() {
 		// create unique id for the job, since multiple may be
 		// submitted - id is the factor list and num classes
 
-		$today = getdate();
-		$timestamp = substr($today['year'],2,2)
-			.strtolower(substr($today['month'],0,3))
-			.sprintf("%02u", $today['mday'])
-			.sprintf("%c", $today['hours']+97)
-			.sprintf("%02u", $today['minutes']);
+		$timestamp = getTimestring();
 
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partcluster',false,false,$timestamp);
 

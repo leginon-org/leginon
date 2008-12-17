@@ -825,7 +825,17 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	return $javascript; 
 }
 
-function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,$xvfb=False,$xtra=False) {
+function getNumberOfProcsPerNode() {
+	return 8;
+}
+
+function getNumberOfRequiredNodes($nproc, $ppn) {
+	$numnodes = (int) round($nproc/$ppn);
+	$ppn = (int) round($nproc/$numnodes);
+	return array($numnodes, $ppn); 
+}
+
+function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,$xvfb=False,$xtra=False,$nproc=1) {
 	$particle=new particleData();
 
 	if ($_POST['processinghost']) {
@@ -871,14 +881,17 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		if ($xvfb) $cmd = "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &; $cmd; kill %1;";
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		return;
-	}
+	} else {
+		// get proper node numbers
+		$ppn = getNumberOfProcsPerNode();
+		list($numnodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
 
-	else {
 		// create job file
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
-		$jobtext .= "#PBS -l nodes=1:ppn=1\n";
+		$jobtext .= "#PBS -l nodes=$numnodes:ppn=$ppn\n";
 		$jobtext .= "#PBS -l walltime=240:00:00\n";
 		$jobtext .= "#PBS -l cput=240:00:00\n";
+		$jobtext .= "#PBS -k oe\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$projectid = $_SESSION['projectId'] ? $_SESSION['projectId'] : "";
 		$jobtext .= "updateAppionDB.py $jobid R $projectid\n\n";
@@ -954,6 +967,16 @@ function randomString($length) {
 	$i = 32-$length;
 	$randstring=substr($s,rand(0,$i),$length);
 	return $randstring;
+}
+
+function getTimestring($length) {
+	$today = getdate();
+	$timestring = substr($today['year'],2,2)
+		.strtolower(substr($today['month'],0,3))
+		.sprintf("%02u", $today['mday'])
+		.sprintf("%c", $today['hours']+97)
+		.sprintf("%02u", $today['minutes']);
+	return $timestring
 }
 
 function bashcolor2html($str) {
