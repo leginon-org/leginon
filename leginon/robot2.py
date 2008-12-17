@@ -73,7 +73,7 @@ def seconds2str(seconds):
 	return string
 
 ## these are the names of the robot attributes
-robotattrs = ['Signal' + str(i) for i in range(1,13)]
+robotattrs = ['Signal' + str(i) for i in range(0,13)]
 robotattrs.append('gridNumber')
 
 class TestCommunication(object):
@@ -261,8 +261,8 @@ class Robot2(node.Node):
 		self.extractcondition.notify()
 		self.extractcondition.release()
 
-	def getCommunication(self, simulate=False):
-		if simulate:
+	def getCommunication(self):
+		if self.settings['simulate']:
 			self.simulate = True
 			return TestCommunication()
 		try:
@@ -276,7 +276,7 @@ class Robot2(node.Node):
 	def _queueHandler(self):
 		self.logger.info('_queueHandler '+str(self.simulate)+' setting'+str(self.settings['simulate']))
 
-		self.communication = self.getCommunication(self.simulate)
+		self.communication = self.getCommunication()
 
 		request = None
 
@@ -316,7 +316,7 @@ class Robot2(node.Node):
 					self.outputEvent(evt)
 					return
 
-				self.communication = self.getCommunication(self.settings['simulate'])
+				self.communication = self.getCommunication()
 
 				self.setStatus('processing')
 				self.selectGrid(gridnumber)
@@ -360,7 +360,7 @@ class Robot2(node.Node):
 								or self.extractinfo != (request.gridid, request.node)):
 					self.extractcondition.wait()
 
-				self.communication = self.getCommunication(self.settings['simulate'])
+				self.communication = self.getCommunication()
 
 				self.setStatus('processing')
 				self.extractinfo = None
