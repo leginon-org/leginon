@@ -17,7 +17,7 @@ require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runSpiderCoranClassify(($_POST['process']=="Run Spider Coran Classify") ? true : false);
+	runSpiderCoranClassify();
 } else {
 	createSpiderCoranClassifyForm();
 }
@@ -201,7 +201,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	exit;
 }
 
-function runSpiderCoranClassify($runjob=false) {
+function runSpiderCoranClassify() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -244,7 +244,7 @@ function runSpiderCoranClassify($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run Spider Coran Classify") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

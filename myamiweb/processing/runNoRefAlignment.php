@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runNoRefAlign(($_POST['process']=="Run NoRef Alignment") ? true : false);
+	runNoRefAlign();
 } else {
 	createNoRefAlignForm();
 }
@@ -264,7 +264,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	exit;
 }
 
-function runNoRefAlign($runjob=false) {
+function runNoRefAlign() {
 	$expId=$_GET['expId'];
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
@@ -343,7 +343,7 @@ function runNoRefAlign($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run NoRef Alignment") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runNoRefClassify(($_POST['process']=="Run NoRef Classify") ? true : false);
+	runNoRefClassify();
 } else {
 	createNoRefClassifyForm();
 }
@@ -153,7 +153,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
 	exit;
 }
 
-function runNoRefClassify($runjob=False) {
+function runNoRefClassify() {
 	$expId = $_GET['expId'];
 	$norefId = $_GET['norefId'];
 	$command.="norefClassify.py ";
@@ -197,7 +197,7 @@ function runNoRefClassify($runjob=False) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run NoRef Classify") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runMaxLikeAlign(($_POST['process']=="Run Max Like Alignment") ? true : false);
+	runMaxLikeAlign();
 } else {
 	createMaxLikeAlignForm();
 }
@@ -222,7 +222,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	exit;
 }
 
-function runMaxLikeAlign($runjob=false) {
+function runMaxLikeAlign() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -304,7 +304,7 @@ function runMaxLikeAlign($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run Max Like Alignment") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

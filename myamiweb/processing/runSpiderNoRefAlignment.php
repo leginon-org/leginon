@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runSpiderNoRefAlign(($_POST['process']=="Run Spider NoRef Alignment") ? true : false);
+	runSpiderNoRefAlign();
 } else {
 	createSpiderNoRefAlignForm();
 }
@@ -255,7 +255,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	exit;
 }
 
-function runSpiderNoRefAlign($runjob=false) {
+function runSpiderNoRefAlign() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
@@ -333,7 +333,7 @@ function runSpiderNoRefAlign($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process'] == "Run Spider NoRef Alignment") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

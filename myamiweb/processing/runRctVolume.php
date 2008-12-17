@@ -17,7 +17,7 @@ require "inc/processing.inc";
 
 if ($_POST['process']) {
 	// If values submitted, evaluate data
-	runRctVolume(($_POST['process']=="Rct Volume") ? true : false);
+	runRctVolume();
 } else {
 	// Create the form page
 	createRctVolumeForm();
@@ -181,7 +181,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 **
 */
 
-function runRctVolume($runjob=false) {
+function runRctVolume() {
 	$expId=$_GET['expId'];
 	$runname = $_POST['runname'];
 	$tiltstack = $_POST['tiltstack'];
@@ -227,7 +227,7 @@ function runRctVolume($runjob=false) {
 	$command.="--commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if (($_POST['process']=="Rct Volume")) {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

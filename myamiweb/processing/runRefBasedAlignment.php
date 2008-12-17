@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-  runAlignment(($_POST['process']=="Run Ref-Based Alignment") ? true : false);
+  runAlignment();
 }
 
  // Create the form page
@@ -349,7 +349,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	exit;
 }
 
-function runAlignment($runjob=false) {
+function runAlignment() {
 	$host = $_POST['host'];
 	$user = $_POST['user'];
 
@@ -416,7 +416,7 @@ function runAlignment($runjob=false) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run Ref-Based Alignment") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

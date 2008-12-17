@@ -152,7 +152,7 @@ function runMaxLikeAlign() {
 	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	// submit job to cluster
-	if ((substr($_POST['process'],0,11)=="Upload Job ") {
+	if (substr($_POST['process'],0,11)=="Upload Job ") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

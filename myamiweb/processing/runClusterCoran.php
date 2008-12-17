@@ -17,7 +17,7 @@ require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runClusterCoran(($_POST['process']=="Run Cluster Coran") ? true : false);
+	runClusterCoran();
 } else {
 	createClusterCoranForm();
 }
@@ -167,7 +167,7 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	exit;
 }
 
-function runClusterCoran($runjob=False) {
+function runClusterCoran() {
 	$expId = $_GET['expId'];
 	$alignid = $_GET['alignId'];
 	$analysisid=$_GET['analysisId'];
@@ -224,7 +224,7 @@ function runClusterCoran($runjob=False) {
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run Cluster Coran") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 

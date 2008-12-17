@@ -16,7 +16,7 @@ require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runCombineStack(($_POST['process']=="Run Combine Stack") ? true : false);
+	runCombineStack();
 } else {
 	createCombineStackForm();
 }
@@ -80,7 +80,7 @@ function createCombineStackForm($extra=false, $title='combinestack.py Launcher',
 	exit;
 }
 
-function runCombineStack($runjob=false) {
+function runCombineStack() {
 	$expId = $_GET['expId'];
 	$projectId = (int) getProjectFromExpId($expId);
 	$runname=$_POST['runname'];
@@ -123,7 +123,7 @@ function runCombineStack($runjob=false) {
 	$command.="--commit ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ($_POST['process']=="Run Combine Stack") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
