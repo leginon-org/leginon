@@ -39,6 +39,11 @@ if ($_POST['process']) {
 	$densitypath=$path."/".$file;
 	$outdir=$path."/postproc";
 	$densityname = $_POST['densityname'];
+	// runname is generated from density
+	$timestr = getTimestring();
+	$densityroot = substr($densityname, 0, -4);
+	$runname = $timestr;
+
 	// make sure that an amplitude curve was selected
 	if (!$ampcor) createform('<B>ERROR:</B> Select an amplitude adjustment curve');
 	list($ampfile, $maxfilt) = explode('|~~|',$ampcor);
@@ -48,7 +53,9 @@ if ($_POST['process']) {
 	$sessname = $sessioninfo['Name'];
 
 	$command = "postProc.py ";
+	$command.= "--projectid=".$_SESSION['projectId']." ";
 	$command.= "-s $sessname ";
+	$command.= "--runname $runname ";
 	$command.= "-f $densitypath ";
 	$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
 	$command.= "--maxfilt=$maxfilt ";
@@ -57,7 +64,7 @@ if ($_POST['process']) {
 	$command.= "--sym=$sym ";
 	$command.= "--reconid=$refId ";
 	$command.= "-z $zoom ";
-	$command.= "-c $contour ";
+	$command.= "--contour=$contour ";
 	if ($mask) $command.="--mask=$mask ";
 	if ($imask) $command.="--imask=$imask ";
 	if ($lp) $command.="--lp=$lp ";
@@ -66,22 +73,19 @@ if ($_POST['process']) {
 	if ($invert=='on') $command.="--invert ";
 	if ($viper=='on') $command.="--viper ";
 
-	// filename will be the runid if running on cluster
-	$randstr = randomString(5);
-	$runid = "$densityname.$randstr.upload";
 
 	// submit job to cluster
 	if ($_POST['process']=='Post Process') {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploaddensity',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploaddensity',True);
 		// if errors:
-		if ($sub) createUploadModelForm("<b>ERROR:</b> $sub");
+		if ($sub) createform("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
-		$status = "Model was uploaded";
+		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
+		$status = "Filtered and amplitude-corrected density uploaded";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
 			$jfnum = count($jf);
@@ -105,6 +109,7 @@ if ($_POST['process']) {
 	<B>PostProc Command:</B><BR>
 	$command
 	</td></tr>
+        <tr><td>runname</td><td>$runname</td></tr>
         <tr><td>file</td><td>$densitypath</td></tr>
         <tr><td>ampcor curve</td><td>$ampfile</td></tr>
         <tr><td>max filt</td><td>$maxfilt</td></tr>
@@ -112,7 +117,6 @@ if ($_POST['process']) {
         <tr><td>imask</td><td>$imask</td></tr>
         <tr><td>norm</td><td>$norm</td></tr>
         <tr><td>apix</td><td>$apix</td></tr>
-        <tr><td>outdir</td><td>$path/postproc</td></tr>
         <tr><td>lp</td><td>$lp</td></tr>
         <tr><td>yflip</td><td>$yflip</td></tr>
         <tr><td>invert</td><td>$invert</td></tr>
