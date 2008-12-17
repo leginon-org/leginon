@@ -474,7 +474,8 @@ class AppionLoop(appionScript.AppionScript):
 			if len(self.imgtree) > lim:
 				apDisplay.printMsg("Limiting number of images to "+str(lim))
 				self.imgtree = self.imgtree[:lim]
-
+		if len(self.imgtree) > 0:
+			self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		self.stats['imagecount'] = len(self.imgtree)
 
 	#=====================
