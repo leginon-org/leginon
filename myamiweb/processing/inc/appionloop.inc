@@ -128,7 +128,8 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 		echo "  <option value='plustilt'>positive tilt angles only</option>\n";
 		echo "</select>";
 		echo "<br />\n";
-	}
+	} else
+		echo "<input type='hidden' name='tiltangle' value='all'>\n";
 
 	echo docpop('cont','<i>Continuation:</i>'); 
 	echo "<br />\n";
