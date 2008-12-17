@@ -399,8 +399,8 @@ class DogPickerDialog(wx.Dialog):
 
 	def partContrast(self, evt):
 		if self.whitePart.GetValue() is True:
-			return True
-		return False
+			return False
+		return True
 
 	def onRunDogPicker(self, evt):
 		apDisplay.printColor("===============\nRunning experimental DoGPicker","cyan")
