@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-	runMaxLikeAlign((substr($_POST['process'],0,11)=="Upload Job ") ? true : false);
+	runMaxLikeAlign();
 } else {
 	createMaxLikeAlignForm();
 }
@@ -127,7 +127,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 	exit;
 }
 
-function runMaxLikeAlign($runjob=false) {
+function runMaxLikeAlign() {
 	$expId=$_GET['expId'];
 	$jobid = $_GET['jobid'];
 	$timestamp=$_POST['timestamp'.$jobid];
@@ -152,7 +152,7 @@ function runMaxLikeAlign($runjob=false) {
 	$command.="--projectid=".$_SESSION['projectId']." ";
 
 	// submit job to cluster
-	if ($runjob) {
+	if ((substr($_POST['process'],0,11)=="Upload Job ") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -177,7 +177,6 @@ function runMaxLikeAlign($runjob=false) {
 			<tr><td>run name</td><td>$runname</td></tr>
 			<tr><td>run directory</td><td>$rundir</td></tr>
 			<tr><td>commit</td><td>$commit</td></tr>
-			<tr><td>runjob</td><td>$runjob</td></tr>
 			</table>\n";
 		processing_footer();
 	}
