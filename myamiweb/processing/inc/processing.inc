@@ -976,7 +976,7 @@ function getTimestring($length) {
 		.sprintf("%02u", $today['mday'])
 		.sprintf("%c", $today['hours']+97)
 		.sprintf("%02u", $today['minutes']);
-	return $timestring
+	return $timestring;
 }
 
 function bashcolor2html($str) {
