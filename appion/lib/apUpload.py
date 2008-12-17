@@ -194,9 +194,13 @@ def insertTomo(params):
 	tomoq = appionData.ApTomogramData()
 	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
 	tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(params['tiltseriesnumber'],sessiondata)
+	imageq = leginondata.AcquisitionImageData()
+	imageq['tilt series'] = tiltdata
+	images = imageq.query()
+	apix = apDatabase.getPixelSize(images[0])
 	tomoq['session'] = sessiondata
 	tomoq['tiltseries'] = tiltdata
-	tomoq['pixelsize'] = params['apix']
+	tomoq['pixelsize'] = apix * params['bin']
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	tomoq['name'] = params['name']
 	filepath = os.path.join(params['rundir'], params['name']+".mrc")
