@@ -74,7 +74,7 @@ if ($expId) {
 	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
 
 	// --- Get Stack Data
-	if ($stackIds = $particle->getStackIdsWithProjectId($sessionId, $projectId))
+	if ($stackIds = $particle->getStackIds($sessionId))
 		$stackruns=count($stackIds);
 
 	// --- Get NoRef Data

@@ -27,10 +27,10 @@ processing_header("Stack Report","Stack Summary Page", $javascript, False);
 // --- Get Stack Data --- //
 $particle = new particledata();
 if (!$_GET['showHidden']) {
-	$stackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, False);
-	$hidestackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, True);
+	$stackdatas = $particle->getStackIds($expId, False);
+	$hidestackdatas = $particle->getStackIds($expId, True);
 } else {
-	$stackdatas = $particle->getStackIdsWithProjectId($expId, $projectId, True);
+	$stackdatas = $particle->getStackIds($expId, True);
 	$hidestackdatas = $stackdatas;
 }
 

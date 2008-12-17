@@ -37,7 +37,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	// connect to particle database
 	$particle = new particledata();
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
-	$stackIds = $particle->getStackIdsWithProjectId($sessionId, $projectId);
+	$stackIds = $particle->getStackIds($sessionId);
 	$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
 	$alignruns=count($alignIds);
 
