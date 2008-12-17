@@ -28,9 +28,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 
-	$particle = new particledata();
-
-	$projectId=getProjectFromExpId($expId);
+	$projectId=$_SESSION['projectId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
   
 	$javafunctions = writeJavaPopupFunctions('appion');
