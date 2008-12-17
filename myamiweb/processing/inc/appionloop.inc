@@ -5,6 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  */
 
+require_once "inc/particledata.inc";
+
 function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon=0) {
 	echo "<!-- BEGIN Appion Loop Param -->\n";
 	$norejects = ($_POST[norejects]=="on") ? "CHECKED" : "";
@@ -113,16 +115,20 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo "only process&nbsp; <input type='texlt' name='limit' VALUE='$limit' size='4'>&nbsp; images\n";
 	echo "<br />\n";
 
-	echo docpop('tiltangle','Tilt Angle:');
-	echo "<select name='tiltangle'>\n";
-	echo "  <option value='all'>all tilt angles</option>\n";
-	echo "  <option value='notilt'>zero tilt angles only</option>\n";
-	echo "  <option value='hightilt'>large tilt angles only</option>\n";
-	echo "  <option value='lowtilt'>small tilt angles only</option>\n";
-	echo "  <option value='minustilt'>negative tilt angles only</option>\n";
-	echo "  <option value='plustilt'>positive tilt angles only</option>\n";
-	echo "</select>";
-	echo "<br />\n";
+	$particle = new particledata();
+	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
+	if ($maxang > 5) {
+		echo docpop('tiltangle','Tilt Angle:');
+		echo "<select name='tiltangle'>\n";
+		echo "  <option value='all'>all tilt angles</option>\n";
+		echo "  <option value='notilt'>zero tilt angles only</option>\n";
+		echo "  <option value='hightilt'>large tilt angles only</option>\n";
+		echo "  <option value='lowtilt'>small tilt angles only</option>\n";
+		echo "  <option value='minustilt'>negative tilt angles only</option>\n";
+		echo "  <option value='plustilt'>positive tilt angles only</option>\n";
+		echo "</select>";
+		echo "<br />\n";
+	}
 
 	echo docpop('cont','<i>Continuation:</i>'); 
 	echo "<br />\n";
@@ -189,7 +195,6 @@ function parseAppionLoopParams () {
 		return $error;
 		exit;
 	}
-	$expId = $_GET['expId'];
 	// CONVERT DATA
 	if ($_POST[checkimage]=="non-rejected") {
 		$norejects = 1;
@@ -225,7 +230,7 @@ function parseAppionLoopParams () {
 	}
 
 	// CREATE COMMAND
-	$command="";
+	$command=" ";
 	$command .= " --projectid=".$_SESSION['projectId']." ";
 	if ($testimage) $command.=" --mrclist=$testimage";
 	elseif ($_POST['preset']) $command.=" --preset=".$_POST['preset'];
@@ -245,7 +250,7 @@ function parseAppionLoopParams () {
 	if (!$apcontinue) $command.=" --no-continue";
 	else $command.=" --continue";
 
-	return $command;
+	return $command." ";
 }
 
 function checkAppionErrors () {
@@ -384,6 +389,7 @@ function parseParticleLoopParams ($type) {
 	$invert = ($_POST[invert]=="on") ? "1" : "0";
 
 	// CREATE COMMAND
+	$command = " ";
 	if ($type != "manual") {
 		if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" --maxsize=$maxsize";
 		if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" --overlapmult=$overlapmult";
@@ -401,7 +407,7 @@ function parseParticleLoopParams ($type) {
 	if ($pixlimit != '') $command.=" --pixlimit=$pixlimit";
 	if ($nojpegs) $command.=" --nojpegs";
 
-	return $command;
+	return $command." ";
 }
 
 function checkParticleErrors ($type) {
