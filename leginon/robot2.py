@@ -73,7 +73,7 @@ def seconds2str(seconds):
 	return string
 
 ## these are the names of the robot attributes
-robotattrs = ['Signal' + str(i) for i in range(1,12)]
+robotattrs = ['Signal' + str(i) for i in range(1,13)]
 robotattrs.append('gridNumber')
 
 class TestCommunication(object):
@@ -261,11 +261,25 @@ class Robot2(node.Node):
 		self.extractcondition.notify()
 		self.extractcondition.release()
 
+	def getCommunication(self, simulate=False):
+		if simulate:
+			self.simulate = True
+			return TestCommunication()
+		try:
+			com = DatabaseCommunication()
+			self.simulate = False
+		except:
+			com = TestCommunication()
+			self.simulate = True
+		return com
+
 	def _queueHandler(self):
 		self.logger.info('_queueHandler '+str(self.simulate)+' setting'+str(self.settings['simulate']))
 
-		self.communication = DatabaseCommunication()
+		self.communication = self.getCommunication(self.simulate)
+
 		request = None
+
 		self.communication.Signal11 = int(self.settings['grid clear wait'])
 
 		while True:
@@ -278,7 +292,6 @@ class Robot2(node.Node):
 				break
 
 			while True:
-
 
 				try:
 					request = self.queue.get(block=False)
@@ -303,11 +316,8 @@ class Robot2(node.Node):
 					self.outputEvent(evt)
 					return
 
-				if self.settings['simulate']:
-					self.communication = TestCommunication()
-				else:
-					self.communication = communication_good
-					
+				self.communication = self.getCommunication(self.settings['simulate'])
+
 				self.setStatus('processing')
 				self.selectGrid(gridnumber)
 				self.logger.info('grid selected')
@@ -349,11 +359,9 @@ class Robot2(node.Node):
 				while (self.extractinfo is None
 								or self.extractinfo != (request.gridid, request.node)):
 					self.extractcondition.wait()
-				if self.settings['simulate']:
-					self.communication = TestCommunication()
-				else:
-					self.communication = communication_good
-					
+
+				self.communication = self.getCommunication(self.settings['simulate'])
+
 				self.setStatus('processing')
 				self.extractinfo = None
 				self.extractcondition.release()
