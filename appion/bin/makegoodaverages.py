@@ -265,7 +265,6 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
-		self.params['runname'] = self.timestamp
 		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'eulers')
 
 	#=====================
