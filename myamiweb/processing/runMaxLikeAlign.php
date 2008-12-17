@@ -53,6 +53,14 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
 	// set particle & mask radius and lp
 	$javascript .= "}\n";
+	$javascript .= "
+		function enablefastmode() {
+			if (document.viewerform.fast.checked){
+				document.viewerform.fastmode.disabled=false;
+			} else {
+				document.viewerform.fastmode.disabled=true;
+			}
+		}\n";
 	$javascript .= "</script>\n";
 
 	$javascript .= writeJavaPopupFunctions('appion');	
@@ -61,13 +69,10 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<span style='font-size: larger; color:#bb3333;'>$extra</span><br />\n";
-	} else {
-		echo "<font color='#bb8800' size='+1'>WARNING: Xmipp Maximum Likelihood Alignment "
-			."is still in the experimental phases</font><br/><br/>\n";
 	}
   
 	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
@@ -193,12 +198,27 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo docpop('angleinc','Angular Increment');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='fast' $fast>\n";
-	echo docpop('fastmode','Use Fast Mode');
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='mirror' $mirror>\n";
 	echo docpop('mirror','Use Mirrors in Alignment');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='fast' onclick='enablefastmode(this)' $fast>\n";
+	echo docpop('fastmode','Use Fast Mode');
+	echo "<br/>\n";
+
+	echo "Search space reduction cutoff criteria";
+	echo "<br/>\n";
+	echo "&nbsp;&nbsp;<select name='fastmode' ";
+	if (!$fast) echo " disabled";
+	echo ">\n";
+	echo "<option value='normal'>Normal search</option>\n";
+	echo "<option value='narrow'>Faster, narrower search</option>\n";
+	echo "<option value='wide'>Slower, wider search</option>\n";
+	echo "</select>\n";
+	echo "<br/>\n";
+
 	echo "<br/>\n";
 
 	echo "  </td>\n";
@@ -235,6 +255,7 @@ function runMaxLikeAlign() {
 	$bin=$_POST['bin'];
 	$description=$_POST['description'];
 	$fast = ($_POST['fast']=="on") ? true : false;
+	$fastmode = $_POST['fastmode'];
 	$mirror = ($_POST['mirror']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
 
@@ -268,7 +289,7 @@ function runMaxLikeAlign() {
 	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter;
 	if ($mirror) $calctime *= 2.0;
 	// kill if longer than 10 hours
-	if ($calctime > 10.0*3600.0)
+	if ($calctime > 14.0*3600.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 	elseif (!$fast && $calctime > 1800.0)
@@ -292,9 +313,10 @@ function runMaxLikeAlign() {
 	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
 	$command.="--angle-interval=$angle ";
-	if ($fast)
+	if ($fast) {
 		$command.="--fast ";
-	else
+		$command.="--fast-mode=$fastmode ";
+	} else
 		$command.="--no-fast ";
 	if ($mirror)
 		$command.="--mirror ";
