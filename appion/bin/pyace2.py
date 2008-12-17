@@ -136,13 +136,18 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		### summary stats
 		apDisplay.printMsg("============")
-		pererror = ( 200.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) 
-			/ (self.ctfvalues['defocus1']+self.ctfvalues['defocus2']) )
+		avgdf = (self.ctfvalues['defocus1']+self.ctfvalues['defocus2'])/2.0
+		pererror = 100.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) / avgdf
 		apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent error)"%
 			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(100.0*self.ctfvalues['amplitude_contrast']))
 		apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
+
+
+		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
+			apDisplay.printWarning("bad defocus estimate, not committing values to database")
+			self.params['badprocess'] = True
 
 		#print self.ctfvalues
 
@@ -188,6 +193,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			help="Binning of the image before FFT", metavar="#")
 		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
 			help="Spherical aberation of the microscope", metavar="#")
+		self.parser.add_option("--mindefocus", dest="mindefocus", type="float", default=-0.1e-6,
+			help="Minimal acceptable defocus (in meters)", metavar="#")
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
+			help="Maximal acceptable defocus (in meters)", metavar="#")
 		### true/false
 		self.parser.add_option("--refine2d", dest="refine2d", default=False,
 			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
@@ -198,6 +207,13 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	def checkConflicts(self):
 		if self.params['bin'] < 1:
 			apDisplay.printError("bin must be positive")
+		if (self.params['mindefocus'] is not None and
+				(self.params['mindefocus'] < -1e-3 or self.params['mindefocus'] > 1e-9)):
+			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=-1.5e-6")
+		if (self.params['maxdefocus'] is not None and
+				(self.params['maxdefocus'] < -1e-3 or self.params['maxdefocus'] > -1e-9)):
+			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
+
 		return
 
 
