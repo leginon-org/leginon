@@ -45,17 +45,16 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."For more information, please see the following "
 	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/KerDenSOM'>Xmipp webpage</a>. "
 	."<br/><br/>";
-
-echo "</table>";
+echo "</td></tr>";
 
 echo "<tr><td>";
-echo "  <h3><!--<a href='imagicMSA.php?expId=$expId&alignId=$alignId'>-->IMAGIC Multivariate Statistical Analysis (MSA)<!--</a>--></h3>";
-echo "  IMAGIC multivariate statistical analysis is geared at extracting the essential information "
-        ."from your dataset, reducing the number of particles in your stack to a specified number of "
-        ."class averages. It gives you the option of using one of 3 distance criteria for determining "
+echo "  <h3><a href='imagicMSA.php?expId=$expId&alignId=$alignId'>IMAGIC Multivariate Statistical Analysis (MSA)</a></h3>";
+echo "  IMAGIC multivariate statistical analysis "
+        ."gives you the option of using one of 3 distance criteria for determining "
 	."a set of eigenimages, and can remove  poor particles and class averages. For more information, visit "
         ."<a href='http://www.imagescience.de/imagic/index.htm'>IMAGIC webpage</a>. "
         ."<br/><br/>";
+echo "</td></tr>";
 
 echo "</table>";
 
