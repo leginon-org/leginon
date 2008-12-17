@@ -110,7 +110,7 @@ class ApEulerJump(object):
 	def getJumpDataFromDB(self, stackpartid, reconrunid):
 		jumpq = appionData.ApEulerJumpData()
 		jumpq['particle'] = appionData.ApStackParticlesData.direct_query(stackpartid)
-		jumpq['refRun'] = appionData.ApRefinementRunDatadirect_query(reconrunid)
+		jumpq['refRun'] = appionData.ApRefinementRunData.direct_query(reconrunid)
 		jumpdatas = jumpq.query(results=1)
 		if not jumpdatas:
 			return None
@@ -170,11 +170,17 @@ class ApEulerJump(object):
 		refdataq['refinementRun'] = refrundata
 		refdata = refdataq.query()
 		uniqsym = refdata[0]['refinementParams']['symmetry']
-		for data in refdata:
-			if uniqsym != data['refinementParams']['symmetry']:
-				apDisplay.printWarning("symmetry is not consistent throughout reconstruction!")
-				apDisplay.printWarning("using symmetry of last iteration")
-			uniqsym = data['refinementParams']['symmetry']
+		if uniqsym is None:
+			apDisplay.printWarning("symmetry is not saved during reconstruction!")
+			apDisplay.printWarning("Using the symmetry of the initial model")
+			modeldata = refrundata['initialModel']
+			uniqsym = modeldata['symmetry']
+		else:
+			for data in refdata:
+				if uniqsym != data['refinementParams']['symmetry']:
+					apDisplay.printWarning("symmetry is not consistent throughout reconstruction!")
+					apDisplay.printWarning("Using symmetry of last iteration")
+				uniqsym = data['refinementParams']['symmetry']
 		symmname = uniqsym['eman_name']
 		if msg is True:
 			apDisplay.printMsg("selected symmetry group: "
