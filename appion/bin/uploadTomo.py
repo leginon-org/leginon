@@ -21,22 +21,23 @@ import apProject
 class UploadTomoScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
-			+" [--rescale=<model ID,scale factor> --boxsize=<#>] ")
-		self.parser.add_option("-i", "--image", dest="image", 
+			+" [--rescale=<model ID,scale factor> --bin=<#>] ")
+		self.parser.add_option("-i", "--image", dest="image", type="string",
 			help="snapshot image file to upload", metavar="IMAGE")
-		self.parser.add_option("-f", "--file", dest="file", 
+		self.parser.add_option("-f", "--file", dest="file", type="string",
 			help="MRC file to upload", metavar="FILE")
-		self.parser.add_option("-s", "--session", dest="session",
-			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("--name", dest="name",
+		self.parser.add_option("-s", "--session", dest="session", type="string",
+			help="Session name (e.g. 06mar12a)", metavar="SESSION")
+		self.parser.add_option("--name", dest="name", type="string",
 			help="File name for new tomogram, automatically set")
-		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber",
+		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber", type="int",
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
-		self.parser.add_option("-v", "--volume", dest="volume",
-			help="Subvolume from original voxel volume", metavar="VOLUME")
+		self.parser.add_option("-v", "--volume", dest="volume", type="string",
+			help="Subvolume from original voxel volume", default='volume1', metavar="VOLUME")
+		self.parser.add_option("-b", "--bin", dest="bin", type="int",
+			help="Extra Binning from tiltseries image", default=1, metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -51,8 +52,6 @@ class UploadTomoScript(appionScript.AppionScript):
 		elif self.params['file'] is not None:
 			if not os.path.isfile(self.params['file']):
 				apDisplay.printError("could not find file: "+self.params['file'])
-			if self.params['file'][-4:] != ".mrc":
-				apDisplay.printError("uploadModel.py only supports MRC files")
 			self.params['file'] = os.path.abspath(self.params['file'])
 		else:
 			apDisplay.printError("Please provide a tomogram .mrc to upload")
@@ -62,11 +61,11 @@ class UploadTomoScript(appionScript.AppionScript):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		path = os.path.abspath(sessiondata['image path'])
-		path = re.sub("leginon","appion",path)
+		path = re.sub("/leginon/","/appion/",path)
 		path = re.sub("/rawdata","/tomo",path)
-		tiltseriespath = "tiltseries" +  self.params['tiltseriesnumber']
+		tiltseriespath = "tiltseries%d" % self.params['tiltseriesnumber']
 		tomovolumepath = self.params['volume']
-		intermediatepath = os.path.join(tiltseriespath,tomovolumepath)
+		intermediatepath = os.path.join(tiltseriespath,self.params['runname'],tomovolumepath)
 		self.params['rundir'] = os.path.join(path,intermediatepath)
 
 	#=====================
@@ -112,9 +111,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		if self.params['name'] is None:
 			self.setNewFileName()
 		apDisplay.printColor("Naming tomogram as: "+self.params['name'], "cyan")
-
 		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".mrc")
-		print newtomopath
 		origtomopath = self.params['file']
 		if os.path.isfile(newtomopath):
 			if self.checkExistingFile():
@@ -124,11 +121,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			apDisplay.printMsg("Copying original tomogram to a new location: "+newtomopath)
 			shutil.copyfile(origtomopath, newtomopath)
 			if self.params['image']:
-				shutil.copyfile(self.params['image'], self.params['rundir']+'/snapshot.png')			
-
-		### upload Initial Tomo
-		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
-		
+				shutil.copyfile(self.params['image'], self.params['rundir']+'/snapshot.png')
 		### inserting tomogram
 		apUpload.insertTomo(self.params)
 
