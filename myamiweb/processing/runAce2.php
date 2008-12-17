@@ -144,7 +144,7 @@ function runAce2() {
 	$command.="--bin=$binval ";
 
 	// submit job to cluster
-	if ($_POST['process'] == "Run Ace2") {
+	if ($_POST['process'] == "Run Ace 2") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
