@@ -830,12 +830,15 @@ function getNumberOfProcsPerNode() {
 }
 
 function getNumberOfRequiredNodes($nproc, $ppn) {
-	$numnodes = (int) round($nproc/$ppn);
-	$ppn = (int) round($nproc/$numnodes);
-	return array($numnodes, $ppn); 
+	if ($nproc < $ppn)
+		return array(1, $nproc);
+	$nodes = (int) ceil($nproc/$ppn);
+	$ppn = (int) ceil($nproc/$nodes);
+	return array($nodes, $ppn);
 }
 
-function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,$xvfb=False,$xtra=False,$nproc=1) {
+function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,
+		$testimg=False, $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0) {
 	$particle=new particleData();
 
 	if ($_POST['processinghost']) {
@@ -883,12 +886,14 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,$testimg=False,
 		return;
 	} else {
 		// get proper node numbers
-		$ppn = getNumberOfProcsPerNode();
-		list($numnodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
+		if ($ppn < 1)
+			$ppn = getNumberOfProcsPerNode();
+		if ($nodes < 1)
+			list($nodes, $ppn) = getNumberOfRequiredNodes($nproc, $ppn);
 
 		// create job file
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
-		$jobtext .= "#PBS -l nodes=$numnodes:ppn=$ppn\n";
+		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 		$jobtext .= "#PBS -l walltime=240:00:00\n";
 		$jobtext .= "#PBS -l cput=240:00:00\n";
 		$jobtext .= "#PBS -k oe\n";
