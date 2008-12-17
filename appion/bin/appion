@@ -47,10 +47,12 @@ fi
  
 ## End site dependent crap
 
+
 app=`/bin/basename $0`
 
 if [ ! "$APPION" -o ! -x "$APPION/bin/appion" ]
 then
+   origDir=`pwd`
 	cd `/usr/bin/dirname $0`
 	if [ -h $app ]; then
 		tmp=`ls -l $app |sed 's/.* -> //'`
@@ -59,6 +61,7 @@ then
 	fi
 	cd ..
 	APPION=`pwd -P`		
+	cd $origDir
 fi  
 
 if [ $PYTHONPATH ]; then
