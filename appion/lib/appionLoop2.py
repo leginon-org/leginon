@@ -678,9 +678,9 @@ class AppionLoop(appionScript.AppionScript):
 				skip = True
 
 			elif ( self.params['tiltangle'] is not None or self.params['tiltangle'] != 'all' ):
-				tiltangle = abs(apDatabase.getTiltAngleDeg(imgdata))
+				tiltangle = apDatabase.getTiltAngleDeg(imgdata)
 				tiltskip = False
-				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) < 3.0 ):
+				if (self.params['tiltangle'] == 'notilt' and abs(tiltangle) > 3.0 ):
 					tiltskip = True
 				elif (self.params['tiltangle'] == 'hightilt' and abs(tiltangle) < 30.0 ):
 					tiltskip = True
@@ -692,6 +692,7 @@ class AppionLoop(appionScript.AppionScript):
 					tiltskip = True
 				### skip this tilt?
 				if tiltskip is True:
+					#print "reject:", tiltangle
 					self._writeDoneDict(imgname)
 					tiltcount += 1
 					skip = True
