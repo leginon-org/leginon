@@ -73,6 +73,7 @@ var help = {
 		'tiltseries': 'Select the tilt series number of the session that corresponds to the tomogram to be uploaded.',
 		'session': 'Session name as created at leginon startup on the date of image capture.',
 		'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
+		'tomorunname' : 'Specifies the name associated with the full tomogram processing results unique to the specified tilt series and parameters.  An attempt to use the same run name for a tiltseries using different processing parameters will result in an error.',
 		'volume': 'a bounded subvolume (often a specific structure) of the full tomogram.  default is to number sequentially',
 		'mask' : 'Radius of external mask (in pixels)',
 		'maxshift' : 'Maximum distance a particle can be translated',
