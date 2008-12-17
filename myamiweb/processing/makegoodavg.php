@@ -45,7 +45,6 @@ if ($_POST['run']) {
 	if ($eotest=='on') $command.="--eotest ";
 
 	processing_header("Create New Class Averages","Create New Class Averages");
-	print_r($_POST);
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
