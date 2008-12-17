@@ -2,6 +2,7 @@ import md5
 import os
 import sys
 import time
+import glob
 import apDisplay
 
 def md5sumfile(fname):
@@ -20,6 +21,19 @@ def md5sumfile(fname):
 	f.close()
 	return m.hexdigest()
 
+def removeFile(filename, warn=False):
+	f = os.path.abspath(filename)
+	if os.path.isfile(f):
+		if warn is True:
+			apDisplay.printWarning("removing file:"+f)
+			time.sleep(1)
+		try:
+			os.remove(f)
+			return True
+		except:
+			apDisplay.printWarning('%s could not be removed' % f)
+	return False
+
 def removeStack(filename, warn=True):
 	rootname = os.path.splitext(filename)[0]
 	for f in (rootname+".hed", rootname+".img"):
@@ -32,21 +46,23 @@ def removeStack(filename, warn=True):
 			except:
 				apDisplay.printWarning('%s could not be removed' % f)
 
+def removeFilePattern(pattern):
+	files = glob.glob(pattern)
+	apDisplay.printWarning("%d files with the patterns '%s' will be removed" 
+		% (len(files), pattern))
+	removed = 0
+	time.sleep(3)
+	for fname in files:
+		fullpath = os.path.abspath(fname)
+		if removeFile(fullpath):
+			removed+=1
+	apDisplay.printMsg("Removed %d of %d files"%(removed, len(files)))
+	return
+
 def fileSize(filename, msg=False):
 	stats = os.stat(filename)
 	size = stats[6]
 	return size
-
-def removeFile(filename, warn=False):
-	f = os.path.abspath(filename)
-	if os.path.isfile(f):
-		if warn is True:
-			apDisplay.printWarning("removing file:"+f)
-			time.sleep(1)
-		try:
-			os.remove(f)
-		except:
-			apDisplay.printWarning('%s could not be removed' % f)
 
 def numImagesInStack(imgfile, boxsize=None):
 	"""

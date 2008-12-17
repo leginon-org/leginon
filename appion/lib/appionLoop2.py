@@ -99,7 +99,7 @@ class AppionLoop(appionScript.AppionScript):
 				self.notdone = self._waitForMoreImages()
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
-		appionScript.AppionScript.close(self)
+		self.close()
 
 	#=====================
 	def loopProcessImage(self, imgdata):

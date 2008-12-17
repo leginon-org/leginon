@@ -85,7 +85,7 @@ def getAllImagesFromDB(session):
 	return imgtree
 
 def getExpIdFromSessionName(sessionname):
-	apDisplay.printMsg("looking up session, "+sessionname)
+	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginondata.SessionData(name=sessionname)
 	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
@@ -94,7 +94,7 @@ def getExpIdFromSessionName(sessionname):
 		apDisplay.printError("could not find session, "+sessionname)
 
 def getSessionDataFromSessionName(sessionname):
-	apDisplay.printMsg("looking up session, "+sessionname)
+	apDisplay.printMsg("Looking up session, "+sessionname)
 	sessionq = leginondata.SessionData(name=sessionname)
 	sessioninfo = sessionq.query(readimages=False, results=1)
 	if sessioninfo:
@@ -103,14 +103,14 @@ def getSessionDataFromSessionName(sessionname):
 		apDisplay.printError("could not find session, "+sessionname)
 
 def getTiltSeriesDataFromTiltNumAndSessionId(tiltseries,sessiondata):
-        apDisplay.printMsg("looking up session, "+ str(sessiondata.dbid)); 
-        tiltq = leginondata.TiltSeriesData()
-        tiltseriesq = leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
-        tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
-        if tiltseriesdata:
-                return tiltseriesdata[0]
-        else:
-                apDisplay.printError("could not find tilt series, "+sessionname)
+	apDisplay.printMsg("Looking up session, "+ str(sessiondata.dbid)); 
+	tiltq = leginondata.TiltSeriesData()
+	tiltseriesq = leginondata.TiltSeriesData(session=sessiondata,number=tiltseries)
+	tiltseriesdata = tiltseriesq.query(readimages=False,results=1)
+	if tiltseriesdata:
+		return tiltseriesdata[0]
+	else:
+		apDisplay.printError("could not find tilt series, "+sessionname)
 
 def getImageData(imgname):
 	"""
@@ -268,7 +268,7 @@ def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True
 			astr = apDisplay.colorString("reject", "red")
 		elif finalassess is None:
 			astr = apDisplay.colorString("none", "yellow")
-		apDisplay.printMsg("final image assessment: "+astr+" ("+imgname+")")
+		apDisplay.printMsg("Final image assessment: "+astr+" ("+imgname+")")
 
 	return True
 
@@ -426,7 +426,7 @@ def setImgViewerStatus(imgdata, status=None, msg=True):
 			astr = apDisplay.colorString("hidden", "red")
 		elif finalassess is None:
 			astr = apDisplay.colorString("none", "yellow")
-		apDisplay.printMsg("final image assessment: "+astr+" ("+imgname+")")
+		apDisplay.printMsg("Final image assessment: "+astr+" ("+imgname+")")
 
 	return None
 

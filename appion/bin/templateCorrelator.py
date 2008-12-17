@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import time
 #appion
 import particleLoop2
 import apFindEM
@@ -14,6 +15,7 @@ import appionData
 import apPeaks
 import apParam
 import apImage
+
 
 class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
@@ -72,8 +74,6 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		self.parser.add_option("--range-list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")	
 		### True / False options
-		self.parser.add_option("--keepall", dest="keepall", default=False,
-			action="store_true", help="Do not delete .dwn.mrc files when finishing")
 		self.parser.add_option("--thread-findem", dest="threadfindem", default=False,
 			action="store_true", help="Run findem crosscorrelation in threads")
 		return
@@ -133,7 +133,18 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+".dwn.mrc")
 			apImage.arrayToMrc(filtarray, imgpath, msg=False)
 			### run FindEM
+			
+
+			looptdiff = time.time()-self.proct0
+			self.proct0 = time.time()
 			ccmaplist = apFindEM.runFindEM(imgdata, self.params, thread=self.params['threadfindem'])	
+			proctdiff = time.time()-self.proct0
+			f = open("template_image_timing.dat", "a")
+			datstr = "%d\t%.5f\t%.5f\n"%(self.stats['count'], proctdiff, looptdiff)
+			f.write(datstr)
+			f.close()
+
+
 			### find peaks in map
 			peaktree  = apPeaks.findPeaks(imgdata, ccmaplist, self.params)
 		return peaktree
@@ -155,12 +166,6 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			templaterunq['range_incr']   = self.params["incrang"+str(i+1)]
 			if self.params['commit'] is True:
 				templaterunq.insert()
-		return
-
-	##=======================
-	def postLoopFunctions(self):
-		if self.params['keepall'] is False:
-			apParam.removefiles(self.params['rundir'],(self.params['sessionname'],'dwn.mrc'))
 		return
 
 

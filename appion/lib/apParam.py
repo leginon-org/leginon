@@ -83,7 +83,7 @@ def writeFunctionLog(cmdlist, params=None, logfile=None, msg=True):
 	else:
 		logfile = getFunctionName(sys.argv[0])+".log"
 	if msg is True:
-		apDisplay.printMsg("writing function log to: "+logfile)
+		apDisplay.printMsg("Writing function log to: "+logfile)
 	timestamp = getLogHeader()
 	out=""
 	f=open(logfile,'a')
@@ -134,7 +134,7 @@ def closeFunctionLog(params=None, logfile=None, msg=True, stats=None):
 	else:
 		logfile = "function.log"
 	if msg is True:
-		apDisplay.printMsg("closing out function log: "+logfile)
+		apDisplay.printMsg("Closing out function log: "+logfile)
 	if stats is not None and stats['count'] > 3:
 		timesum = stats['timesum']
 		timesumsq = stats['timesumsq']
@@ -190,20 +190,6 @@ def makedirs(name, mode=0777):
 		os.chmod(name, mode)
 	return
 
-def removefiles(path,patterns):
-	allfiles = os.listdir(path)
-	files = allfiles[:]
-	for pattern in patterns:
-		files = filter((lambda x: x.find(pattern)>=0),files)
-	patterns_line = ('","'.join(patterns))
-	apDisplay.printWarning('%d files with the patterns ("%s") will be removed in %s' % (len(files),patterns_line,path))
-	for file in files:
-		fullpath = os.path.join(path,file)
-		try:
-			os.remove(fullpath)
-		except:
-			apDisplay.printError('%s can not be removed' % fullpath)
-
 def convertParserToParams(parser):
 	parser.disable_interspersed_args()
 	(options, args) = parser.parse_args()
@@ -233,7 +219,7 @@ def resetVirtualFrameBuffer():
 		port = int(random.random()*90+2)
 	#port = str("5")
 	portstr = str(port)
-	apDisplay.printMsg("opening Xvfb port "+portstr)
+	apDisplay.printMsg("Opening Xvfb port "+portstr)
 	xvfbcmd = (
 		"Xvfb :"+portstr
 		+" -ac -pn -screen 0 800x800x8 "
@@ -308,14 +294,15 @@ def getNumProcessors(msg=True):
 		apDisplay.printMsg("Found "+str(nproc)+" processors on this machine")
 	return nproc
 
-def setUmask():
+def setUmask(msg=False):
 	if os.getgid() == 773:
 		prev = os.umask(002)
 		curr = os.umask(002)
 	else:
 		prev = os.umask(000)
 		curr = os.umask(000)
-	apDisplay.printMsg("Umask changed from "+str(prev)+" to "+str(curr))
+	if msg is True:
+		apDisplay.printMsg("Umask changed from "+str(prev)+" to "+str(curr))
 
 def getExecPath(exefile, die=False):
 	proc = subprocess.Popen("which "+exefile, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

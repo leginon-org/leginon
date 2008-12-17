@@ -7,7 +7,9 @@ import re
 import time
 #appion
 import appionLoop2
+import appionScript
 import apImage
+import apFile
 import apDisplay
 import apDatabase
 
@@ -122,6 +124,8 @@ class FilterLoop(appionLoop2.AppionLoop):
 			action="store_true", help="Invert image density before processing")
 		self.parser.add_option("--planereg", dest="planereg", default=False,
 			action="store_true", help="Fit a 2d plane regression to the data and subtract")
+		self.parser.add_option("--keepall", dest="keepall", default=False,
+			action="store_true", help="Do not delete .dwn.mrc files when finishing")
 
 	#=====================
 	def checkGlobalConflicts(self):
@@ -131,6 +135,16 @@ class FilterLoop(appionLoop2.AppionLoop):
 		self.proct0 = time.time()
 		appionLoop2.AppionLoop.checkGlobalConflicts(self)
 		return
+
+	#=====================
+	def close(self):
+		"""
+		hack to override appionScript close
+		"""
+		if self.params['keepall'] is False:
+			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.dwn.mrc')
+			apFile.removeFilePattern(pattern)
+		appionScript.AppionScript.close(self)
 
 #=====================
 #=====================
