@@ -96,15 +96,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 			self.filtarray = apImage.preProcessImage(imgdata['image'], apix=self.params['apix'], params=self.params)
 			apImage.arrayToMrc(self.filtarray, self.filtimgpath)
 
-		### neil hack to time picking
-		looptdiff = time.time()-self.proct0
-		self.proct0 = time.time()
 		peaktree = self.processImage(imgdata, self.filtarray)
-		proctdiff = time.time()-self.proct0
-		f = open("process_image_timing.dat", "a")
-		datstr = "%d\t%.5f\t%.5f\n"%(self.stats['count'], proctdiff, looptdiff)
-		f.write(datstr)
-		f.close()
 
 		return peaktree
 
