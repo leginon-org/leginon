@@ -655,7 +655,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		if not self.boxedpartdatas:
 			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
-			self.params['badprocess'] = True
+			self.badprocess = True
 			return
 
 		apDisplay.printMsg("do not break function now otherwise it will corrupt run")

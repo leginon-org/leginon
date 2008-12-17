@@ -4,6 +4,7 @@
 import os
 import sys
 import re
+import time
 #appion
 import appionLoop2
 import apImage
@@ -87,9 +88,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		setup like this to override things
 		"""
 		self.filtimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-		self.params['apix'] = apDatabase.getPixelSize(imgdata)
-		if not self.params['background']:
-			apDisplay.printMsg("Pixel size: "+str(self.params['apix']))
+
 		if os.path.isfile(self.filtimgpath):
 			apDisplay.printMsg("reading filtered image from mrc file")
 			self.filtarray = apImage.mrcToArray(self.filtimgpath, msg=False)
@@ -97,7 +96,17 @@ class FilterLoop(appionLoop2.AppionLoop):
 			self.filtarray = apImage.preProcessImage(imgdata['image'], apix=self.params['apix'], params=self.params)
 			apImage.arrayToMrc(self.filtarray, self.filtimgpath)
 
-		return self.processImage(imgdata, self.filtarray)
+		### neil hack to time picking
+		looptdiff = time.time()-self.proct0
+		self.proct0 = time.time()
+		peaktree = self.processImage(imgdata, self.filtarray)
+		proctdiff = time.time()-self.proct0
+		f = open("process_image_timing.dat", "a")
+		datstr = "%d\t%.5f\t%.5f\n"%(self.stats['count'], proctdiff, looptdiff)
+		f.write(datstr)
+		f.close()
+
+		return peaktree
 
 	#=====================
 	def setupGlobalParserOptions(self):
@@ -127,6 +136,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		put in any conflicting parameters
 		"""
+		self.proct0 = time.time()
 		appionLoop2.AppionLoop.checkGlobalConflicts(self)
 		return
 

@@ -47,7 +47,7 @@ class AppionLoop(appionScript.AppionScript):
 		self.preLoopFunctions()
 		### start the loop
 		self.notdone=True
-		self.params['badprocess'] = False
+		self.badprocess = False
 		while self.notdone:
 			apDisplay.printColor("\nBeginning Main Loop", "green")
 			imgnum = 0
@@ -55,15 +55,20 @@ class AppionLoop(appionScript.AppionScript):
 				imgdata = self.imgtree[imgnum]
 				imgnum += 1
 
-				#CHECK IF IT IS OKAY TO START PROCESSING IMAGE
+				### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
 				if not self._startLoop(imgdata):
 					continue
+
+				### set the pixel size
+				self.params['apix'] = apDatabase.getPixelSize(imgdata)
+				if not self.params['background']:
+					apDisplay.printMsg("Pixel size: "+str(self.params['apix']))
 
 				### START any custom functions HERE:
 				results = self.loopProcessImage(imgdata)
 
 				### WRITE db data
-				if self.params['badprocess'] is False:
+				if self.badprocess is False:
 					if self.params['commit'] is True:
 						apDisplay.printColor(" ==== Committing data to database ==== ", "blue")
 						self.loopCommitToDatabase(imgdata)
@@ -74,7 +79,7 @@ class AppionLoop(appionScript.AppionScript):
 						self.writeResultsToFiles(imgdata, results)
 				else:
 					apDisplay.printWarning("IMAGE FAILED; nothing inserted into database")
-					self.params['badprocess'] = False
+					self.badprocess = False
 
 				### FINISH with custom functions
 
@@ -235,7 +240,6 @@ class AppionLoop(appionScript.AppionScript):
 				filename = imgname+"_"+resulttype+".db"
 				self._writeDataToFile(result,resultkeys,path,imgname,filename)
 
-
 	#=====================
 	def checkGlobalConflicts(self):
 		"""
@@ -249,6 +253,9 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printError("templates is a reserved runname, please use another runname")
 		if self.params['runname'] == 'models':
 			apDisplay.printError("models is a reserved runname, please use another runname")
+		if self.params['rundir']is not None and self.params['runname'] != os.path.basename(self.params['rundir']):
+			apDisplay.printError("runname and rundir basename are different: "
+				+self.params['runname']+" vs. "+os.path.basename(self.params['rundir']))
 		if self.params['mrcnames'] and self.params['preset']:
 			apDisplay.printError("preset can not be specified if particular images have been specified")
 		if self.params['sessionname'] is None and self.params['mrcnames'] is None:

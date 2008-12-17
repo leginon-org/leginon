@@ -438,7 +438,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		picks2 = self.getParticlePicks(tiltdata)
 		if len(picks1) < 10 or len(picks2) < 10:
 			apDisplay.printWarning("Not enough particles ot run program on image pair")
-			self.params['badprocess'] = True
+			self.badprocess = True
 			return
 
 		#open image file 1
@@ -458,7 +458,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.data['phi'] = float(bestang)
 		if snr < 2.0:
 			apDisplay.printWarning("Low confidence in initial shift")
-			self.params['badprocess'] = True
+			self.badprocess = True
 			return
 		self.currentpicks1 = [origin]
 		self.currentpicks2 = [newpart]

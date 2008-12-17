@@ -42,9 +42,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	def getACE2Path(self):
 		unames = os.uname()
 		if unames[-1].find('64') >= 0:
-			exename = 'ace2_64'
+			exename = 'ace2_64.exe'
 		else:
-			exename = 'ace2_32'
+			exename = 'ace2_32.exe'
 		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ace2exe):
 			ace2exe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
@@ -147,7 +147,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
-			self.params['badprocess'] = True
+			self.badprocess = True
 
 		#print self.ctfvalues
 
