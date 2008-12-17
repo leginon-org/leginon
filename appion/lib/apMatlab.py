@@ -14,15 +14,10 @@ import apCtf
 import apImage
 import apDatabase
 
-"""
 try:
-	import pymat
+	import mlabraw as pymat
 except:
-	apDisplay.environmentError()
-	raise
-"""
-
-import mlabraw as pymat
+	apDisplay.printWarning("Matlab module did not get imported")
 
 def runAce(matlab, imgdata, params, showprev=True):
 	imgname = imgdata['filename']

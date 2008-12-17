@@ -1,7 +1,14 @@
 #!/bin/bash
 
-./clean.sh
+rm -f `find . -name "*~"`
+rm -f `find . -name ".#*"`
+rm -f `find . -name "*.pyo"`
+rm -f `find . -name "*.pyc"`
+rm -f `find . -name "*.out"`
+rm -f `find . -name ".DS_Store"`
+rm -f `find . -name "svn-commit.tmp"`
 
+echo ""
 echo "Trying to import all libraries"
 echo "----------------"
 rm -f importer.py
