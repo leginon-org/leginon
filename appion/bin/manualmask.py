@@ -4,17 +4,18 @@ import os
 import sys
 import wx
 import time
-import particleLoop2
 import apImage
 import manualpicker
 #import subprocess
 import appionData
 import apParticle
 import apDatabase
+import apParam
 import apDisplay
 import apMask
 import apCrud
 import apFindEM
+import filterLoop
 
 #Leginon
 import polygon
@@ -180,9 +181,10 @@ class MaskApp(manualpicker.PickerApp):
 ##################################
 ##################################
 
-class manualPicker(particleLoop2.ParticleLoop):
+class manualPicker(filterLoop.FilterLoop):
 	def preLoopFunctions(self):
-		if self.params['dbimages'] or self.params['alldbimages']:
+		apParam.createDirectory(os.path.join(self.params['rundir'], "masks"),warning=False)
+		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
 		self.app = MaskApp()
 		self.app.appionloop = self
@@ -195,12 +197,12 @@ class manualPicker(particleLoop2.ParticleLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
-	def processImage(self, imgdata):
-		if not self.params['dbimages'] and not self.params['alldbimages']:
+	def processImage(self, imgdata,filterarray):
+		if self.params['sessionname'] is not None:
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
 		self.runManualPicker(imgdata)
 
-	def commitToDatabase(self,imgdata,rundata):		
+	def commitToDatabase(self,imgdata):		
 		sessiondata = imgdata['session']
 		rundir = self.params['rundir']
 		maskname = self.params['runname']
@@ -216,7 +218,6 @@ class manualPicker(particleLoop2.ParticleLoop):
 			except:
 				apDisplay.printWarning('can not create mask directory')
 		massessrundata,exist = apMask.insertMaskAssessmentRun(sessiondata,maskrundata,assessname)
-		print self.params
 		mask = self.maskimg
 		image = self.image
 		labeled_regions,clabels=nd.label(mask)
@@ -252,9 +253,10 @@ class manualPicker(particleLoop2.ParticleLoop):
 			help="id of the particle pick to be displayed", metavar="#")
 		self.parser.add_option("--pickrunname", dest="pickrunname", type="string",
 			help="Name of the particle pick to be displayed", metavar="NAME")
+		self.parser.add_option("--checkmask", "--maskassess", dest="checkmask", default=False,
+			action="store_true", help="Check mask")
 
-	def specialParamConflicts(self):
-	
+	def checkConflicts(self):
 		if self.params['commit'] and self.params['continue']==False:
 			sessiondata = self.params['session']
 			maskname = self.params['runname']
@@ -303,7 +305,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 		#open new file
 		imgname = imgdata['filename']+'.dwn.mrc'
 		imgpath = os.path.join(self.params['rundir'],imgname)
-		if not self.params['checkMask']:
+		if not self.params['checkmask']:
 			self.app.panel.openImageFile(imgpath)
 		else:
 			self.showAssessedMask(imgpath,imgdata)
