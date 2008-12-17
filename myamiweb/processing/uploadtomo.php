@@ -30,7 +30,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 
 	$particle = new particledata();
 
-	$projectId=getProjectFromExpId($expId);
+	$projectId=$_SESSION['projectId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	
 	$javafunctions .= writeJavaPopupFunctions('appion');  
@@ -42,7 +42,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {
@@ -57,11 +57,12 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	// Set any existing parameters in form
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'upload1';
 	$volume = ($_POST['volume']) ? $_POST['volume'] : 'volume1';
-	$tomoname = ($_POST['tomoname']) ? $_POST['tomoname'] : '';
+	$tomofilename = ($_POST['tomofilename']) ? $_POST['tomofilename'] : '';
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
 	$description = $_POST['description'];
-	$outdir .= $tomoname.'mrc';
+	$outdir .= $tomofilename.'mrc';
 
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
@@ -73,13 +74,13 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
     <TD VALIGN='TOP'>\n";
 	
   echo"
-	<B>Tomogram file name with path:</B><BR/>
-      <INPUT TYPE='text' NAME='tomoname' VALUE='$tomoname' SIZE='50'><br />\n
-	<B>Snapshot file name with path:</B><BR/>
+	<B>Original Subvolume Tomogram file name with path:</B><BR/>
+      <INPUT TYPE='text' NAME='tomofilename' VALUE='$tomofilename' SIZE='50'><br />\n
+	<B>Original Snapshot file name with path:</B><BR/>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 	
 	echo"<P>
-      <B>Tomogram Description:</B><BR/>
+      <B>Subvolume Tomogram Description:</B><BR/>
       <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
       </TD>
     </TR>
@@ -95,8 +96,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
       <INPUT TYPE='text' NAME='extrabin' SIZE='5' VALUE='$extrabin'>\n";
 		echo docpop('extrabin','Binning');
 		echo "<FONT>(additional binning in tomogram)</FONT>
-		
-		<BR>";
+		<p><br />";
 		echo $seriesselector_array[0];
   #    <INPUT TYPE='text' NAME='tiltseries' VALUE='$tiltseries' SIZE='5'>\n";
 		echo docpop('tiltseries', 'Tilt Series');
@@ -110,10 +110,15 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 		echo "<FONT> (leginon session name)</FONT>";
 	}
 		echo "	  		
-		<BR>
+		<p><br />
+      <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='5'>\n";
+		echo docpop('tomorunname', 'Runname');
+   	echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
+		echo "	  		
+		<p><br />
       <INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='5'>\n";
 		echo docpop('volume', 'Volume');
-   	echo "<FONT>(subvolume name of the full tomogram)</FONT>     
+   	echo "<FONT>(subvolume name)</FONT>     
 
 		<P>
       </TD>
@@ -140,13 +145,15 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 
 function runUploadTomogram() {
 
+	$projectId=$_SESSION['projectId'];
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
 	$command = "uploadTomo.py ";
 
-	$tomoname=$_POST['tomoname'];
+	$tomofilename=$_POST['tomofilename'];
 	$tiltseriesId=$_POST['tiltseriesId'];
+	$runname=$_POST['runname'];
 	$volume=$_POST['volume'];
 	$sessionname=$_POST['sessionname'];
 	$extrabin=$_POST['extrabin'];
@@ -155,7 +162,7 @@ function runUploadTomogram() {
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createUploadTomogramForm("<B>ERROR:</B> Select the tilt series");
 //make sure a model root was entered
-	if ($_POST['tomoname']) $model=$_POST['tomoname'];
+	if ($_POST['tomofilename']) $model=$_POST['tomofilename'];
 	if (!$model) createUploadTomogramForm("<B>ERROR:</B> Enter a root name of the model");
 	//make sure a description was provided
 	$description=$_POST['description'];
@@ -166,14 +173,12 @@ function runUploadTomogram() {
 	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
 	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 
-	// filename will be the runid if running on cluster
-	$runid = basename($model);
-	$runid = $runid.'.upload';
-
-	if (!$_GET['modelid']) $command.="-f $tomoname ";
+	if (!$_GET['modelid']) $command.="-f $tomofilename ";
 	$command.="-s $sessionname ";
-	$command.="-a $apix ";
+	$command.="-b $extrabin ";
 	$command.="-t $tiltseriesnumber ";
+	$command.="--projectid=$projectId ";
+	$command.="--runname $runname ";
 	$command.="-v $volume ";
 	$command.="-d \"$description\" ";
   if ($snapshot) 
@@ -186,13 +191,13 @@ function runUploadTomogram() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createUploadTomogramForm("<B>ERROR:</B> You must be logged in to submit");
-
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadtomo',True,True);
+		$uploaddir = $outdir.'/'.$runname;
+		$sub = submitAppionJob($command,$uploaddir,$volume,$expId,'uploadtomo',True,True);
 		// if errors:
 		if ($sub) createUploadTomogramForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$jobf = $uploaddir.'/'.$volume.'/'.$volume.'.appionsub.log';
 		$status = "Tomogram was uploaded";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
@@ -222,6 +227,7 @@ function runUploadTomogram() {
 	<TR><TD>tomo name</TD><TD>$model</TD></TR>
 	<TR><TD>apix</TD><TD>$apix</TD></TR>
 	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
+	<TR><TD>runname</TD><TD>$runname</TD></TR>
 	<TR><TD>volume</TD><TD>$volume</TD></TR>
 	<TR><TD>session</TD><TD>$sessionname</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>

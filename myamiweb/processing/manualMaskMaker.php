@@ -131,14 +131,14 @@ function parseManualMaskMakerParams () {
 	$assessname = getAssessname();
 	$bin = $_POST[bin];
 
-	$command.=" assess=$assessname";
-	if ($bin && $bin > 0) $command.=" bin=$bin";
+	$command.=" --assess=$assessname";
+	if ($bin && $bin > 0) $command.=" --bin=$bin";
 
    return $command;
 }
 
 function getAssessname () {
-	$runname = $_POST[runid];
+	$runname = $_POST[runname];
 	$assess = $_POST[assess];
 	switch ($assess) {
 	case 0:
@@ -209,7 +209,7 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 		 function infopopup(infoname){
 			 var newwindow=window.open('','name','height=150,width=300');
 			 newwindow.document.write('<HTML><BODY>');
-			 if (infoname=='runid'){
+			 if (infoname=='runname'){
 				 newwindow.document.write('Specifies the name associated with the Template Correlator results unique to the specified session and parameters.	An attempt to use the same run name for a session using different Template Correlator parameters will result in an error.');
 			 }
 			 newwindow.document.write('</BODY></HTML>');
@@ -225,7 +225,7 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 
 
@@ -235,8 +235,8 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 	<TR>
 		<TD VALIGN='TOP'>";
 	$maskruns=count($particle->getMaskMakerRunIds($sessionId));
-	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'manualrun'.($maskruns+1);
-	createAppionLoopTable($sessiondata, $defrunid, "mask");
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manualrun'.($maskruns+1);
+	createAppionLoopTable($sessiondata, $defrunname, "mask");
 	echo"
 		</TD>
 		<TD CLASS='tablebg'>
