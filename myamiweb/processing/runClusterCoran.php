@@ -218,6 +218,7 @@ function runClusterCoran() {
 	$command.="--analysisid=$analysisid ";
 	$command.="--num-class-list=$numclass ";
 	$command.="--factor-list=$factorlist ";
+	$command.="--runname=".$runname." ";
 	$command.="--rundir=".$outdir.$runname." ";
 	if ($classmethod && $classmethod != 'hierarch') $command.="--method=$classmethod ";
 	if ($commit) $command.="--commit ";
