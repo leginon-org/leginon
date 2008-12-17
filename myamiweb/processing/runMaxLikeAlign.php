@@ -267,7 +267,7 @@ function runMaxLikeAlign() {
 	$fastmode = $_POST['fastmode'];
 	$mirror = ($_POST['mirror']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
-	$nproc = $_POST['nproc'];
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
@@ -276,6 +276,9 @@ function runMaxLikeAlign() {
 
 	if (!$description)
 		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+
+	if ($nproc > 16)
+		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
 
 	//make sure a stack was selected
 	if (!$stackid)
@@ -296,10 +299,10 @@ function runMaxLikeAlign() {
 	$stackdata = $particle->getStackParams($stackid);
 	$boxsize = ($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
 	$secperiter = 0.12037;
-	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter;
+	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter/$nproc;
 	if ($mirror) $calctime *= 2.0;
 	// kill if longer than 10 hours
-	if ($calctime > 24.0*3600.0)
+	if ($calctime > 10.0*3600.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 	elseif (!$fast && $calctime > 1800.0)
