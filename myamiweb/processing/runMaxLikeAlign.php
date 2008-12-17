@@ -87,14 +87,16 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'maxlike'.($alignruns+1)))
 		$alignruns += 1;
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
-	$rundescrval = $_POST['description'];
-	$stackidval = $_POST['stackid'];
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
+	$description = $_POST['description'];
+	$stackidstr = $_POST['stackid'];
+	list($stackidval) = split('\|~~\|',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : '400';
 	$numref = ($_POST['numref']) ? $_POST['numref'] : '2';
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
 	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
@@ -104,7 +106,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<tr><td>\n";
 	echo openRoundBorder();
 	echo docpop('runname','<b>MaxLike Run Name:</b>');
-	echo "<input type='text' name='runname' value='$runnameval'>\n";
+	echo "<input type='text' name='runname' value='$runname'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
 	echo docpop('outdir','<b>Output Directory:</b>');
@@ -114,7 +116,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<br />\n";
 	echo docpop('descr','<b>Description of Max Like Alignment:</b>');
 	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
+	echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
 	echo closeRoundBorder();
 	echo "</td>
 		</tr>\n";
@@ -127,10 +129,11 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo docpop('stack','<b>Select a stack of particles to use</b>');
 		echo "<br/>\n<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack['stackid']);
+			$stackid = $stack['stackid'];
+			$stackparams=$particle->getStackParams($stackid);
 
 			// get pixel size and box size
-			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
+			$mpix=$particle->getStackPixelSizeFromStackId($stackid);
 			if ($mpix) {
 				$apix = $mpix*1E10;
 				$apixtxt=format_angstrom_number($mpix)."/pixel";
@@ -159,7 +162,13 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
-	echo "<BR></TD></TR>\n</TABLE>\n";
+	echo "<BR/>";
+
+	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
+	echo "Number of Processors";
+	echo "<br/>\n";
+
+	echo "</TD></TR>\n</TABLE>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE cellpading='5' BORDER='0'>\n";
@@ -258,6 +267,7 @@ function runMaxLikeAlign() {
 	$fastmode = $_POST['fastmode'];
 	$mirror = ($_POST['mirror']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
+	$nproc = $_POST['nproc'];
 
 	// get stack id, apix, & box size from input
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
@@ -289,7 +299,7 @@ function runMaxLikeAlign() {
 	$calctime = ($numpart/1000.0)*$numref*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter;
 	if ($mirror) $calctime *= 2.0;
 	// kill if longer than 10 hours
-	if ($calctime > 14.0*3600.0)
+	if ($calctime > 24.0*3600.0)
 		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
 			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
 	elseif (!$fast && $calctime > 1800.0)
@@ -313,6 +323,8 @@ function runMaxLikeAlign() {
 	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
 	$command.="--angle-interval=$angle ";
+	if ($nproc && $nproc>1)
+		$command.="--nproc=$nproc ";
 	if ($fast) {
 		$command.="--fast ";
 		$command.="--fast-mode=$fastmode ";
@@ -332,7 +344,7 @@ function runMaxLikeAlign() {
 
 		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,$nproc);
 		// if errors:
 		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
 		exit;
