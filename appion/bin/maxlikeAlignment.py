@@ -42,7 +42,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
 
-		### radii
+		self.parser.add_option("--nproc", dest="nproc", type="int",
+			help="Number of processor to use", metavar="ID#")
+
 		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
@@ -64,6 +66,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		#self.parser.add_option("--templates", dest="templateids",
 		#	help="Template Id for template init method", metavar="1,56,34")
 
+		### true/false
 		self.parser.add_option("-F", "--fast", dest="fast", default=True,
 			action="store_true", help="Use fast method")
 		self.parser.add_option("--no-fast", dest="fast", default=True,
@@ -201,7 +204,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def writeGaribaldiJobFile(self):
-		nproc = 128
+		if self.params['nproc'] is None:
+			nproc = 128
+		else:
+			nproc = self.params['nproc']
+
 		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
 		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_align2d"
 		newrundir = "$PBSREMOTEDIR/"
@@ -315,7 +322,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
 
-		nproc = apParam.getNumProcessors()
+		if self.params['nproc'] is None:
+			nproc = nproc = apParam.getNumProcessors()
+		else:
+			nproc = self.params['nproc']
 		mpirun = self.checkMPI()
 		if nproc > 2 and mpirun is not None:
 			### use multi-processor
