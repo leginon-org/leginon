@@ -974,7 +974,7 @@ function randomString($length) {
 	return $randstring;
 }
 
-function getTimestring($length) {
+function getTimestring() {
 	$today = getdate();
 	$timestring = substr($today['year'],2,2)
 		.strtolower(substr($today['month'],0,3))
