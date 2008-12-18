@@ -274,9 +274,10 @@ class particledata {
 	function getCtfRunIds($sessionId, $showHidden=False) {
 		$q = "SELECT * "
 			."FROM `ApAceRunData` AS a "
-			."WHERE `REF|leginondata|SessionData|session` = '$sessionId' ";
+			."WHERE "
+			."  `REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden )
-			$q .= " AND a.`hidden` != 1 ";
+			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
 		$q .= "ORDER BY a.`DEF_id` DESC ";
 		//echo $q;
 		$r = $this->mysql->getSQLResult($q);
