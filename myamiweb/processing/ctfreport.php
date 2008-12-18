@@ -64,11 +64,12 @@ foreach ($runIds as $runId) {
 	$rId=$runId['DEF_id'];
 	$rName=$runId['name'];
 	$ace_params= $ctf->getAceParams($rId);
-	if ($ace_params['stig']==0) {
-		$fields = array('defocus1', 'confidence', 'confidence_d');
+	//echo "ace_params".print_r($ace_params);
+	if ($ace_params['stig']!=1 && $ace_params!=0) {
+		$fields = array('defocus1', 'confidence', 'confidence_d', 'amplitude_contrast');
 	}
 	else {
-		$fields = array('defocus1', 'defocus2', 'confidence', 'confidence_d');
+		$fields = array('defocus1', 'defocus2', 'confidence', 'angle_astigmatism', 'amplitude_contrast');
 	}
 	$stats = $ctf->getCTFStats($fields, $sessionId, $rId);
 	$display_ctf=false;
