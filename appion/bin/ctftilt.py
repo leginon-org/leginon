@@ -290,7 +290,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 
 		#create path
 		runq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-
+		runq['hidden'] = False
 		# if no run entry exists, insert new run entry into db
 		runq['ctftilt_params'] = paramq
 		runq.insert()

@@ -103,11 +103,17 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		t0 = time.time()
 		ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
 		ace2proc.wait()
+
 		aceoutf.close()
 		aceerrf.close()
 
 		### check if ace2 worked
 		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
+		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
+			### ace2 always crashes on first image??? .fft_wisdom file??
+			time.sleep(1)
+			ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
+			ace2proc.wait()
 		if not os.path.isfile(imagelog):
 			apDisplay.printError("ace2 did not run")
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
@@ -155,7 +161,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			ps = (ps-ps.mean())/ps.std()
 			cutoff = -2.0*ps.min()
 			ps = numpy.where(ps < cutoff, ps, cutoff)
-			apImage.arrayToJpeg(ps)
+			apImage.arrayToJpeg(ps, jpegfile)
 
 		#print self.ctfvalues
 
@@ -179,6 +185,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		runq=appionData.ApAceRunData()
 		runq['name']    = self.params['runname']
 		runq['session'] = imgdata['session']
+		runq['hidden']  = False
 		runq['path']    = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		runq['ace2_params'] = paramq
 

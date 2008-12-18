@@ -84,8 +84,7 @@ def insertAceParams(imgdata, params):
 	# create an acerun object
 	runq=appionData.ApAceRunData()
 	runq['name']=params['runname']
-	
-	runq['session']=imgdata['session'];
+	runq['session']=imgdata['session']
 
 	# see if acerun already exists in the database
 	acerundatas = runq.query(results=1)
@@ -101,7 +100,7 @@ def insertAceParams(imgdata, params):
 
 	#create path
 	runq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
-
+	runq['hidden']=False
 	# if no run entry exists, insert new run entry into db
 	runq['aceparams']=aceparamq
 	runq.insert()
