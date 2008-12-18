@@ -66,7 +66,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<input type='HIDDEN' NAME='lastSessionId' value='$sessionId'>\n";
 
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$sessionId,$expId);
 
 	// Set any existing parameters in form
 	$particle=new particleData;
