@@ -137,7 +137,7 @@ class leginondata {
 			// --- project database information
 			$project = &new project;
 			$db  = &$project->mysql;
-			$q = "select p.name from project.projectexperiments p where p.projectId='$projectId'";
+			$q = "select p.name from ".PROJECT_DB.".projectexperiments p where p.projectId='$projectId'";
 			$psessions = $db->getSQLResult($q);
 			foreach ($psessions as $psession) {
 				$ps[$psession['name']] = $psession['name'];
