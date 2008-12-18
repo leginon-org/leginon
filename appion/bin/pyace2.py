@@ -5,10 +5,9 @@ import os
 import sys
 import re
 import math
-import cPickle
 import time
 import subprocess
-import shutil
+import numpy
 #appion
 import appionLoop2
 import appionData
@@ -17,7 +16,6 @@ import apDisplay
 import apDatabase
 import apCtf
 import apParam
-import apFile
 
 class Ace2Loop(appionLoop2.AppionLoop):
 
@@ -144,10 +142,20 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(100.0*self.ctfvalues['amplitude_contrast']))
 		apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
 
-
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
+
+		## create power spectra jpeg
+		mrcfile = imgdata['filename']+".mrc.edge.mrc"
+		if os.path.isfile(mrcfile):
+			apDisplay.printMsg("Creating powerspectra jpeg")
+			jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
+			ps = apImage.mrcToArray(mrcfile)
+			ps = (ps-ps.mean())/ps.std()
+			cutoff = -2.0*ps.min()
+			ps = numpy.where(ps < cutoff, ps, cutoff)
+			apImage.arrayToJpeg(ps)
 
 		#print self.ctfvalues
 
@@ -178,6 +186,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		ctfq['acerun'] = runq
 		ctfq['image']      = imgdata
 		ctfq['mat_file'] = imgdata['filename']+".mrc.ctf.txt"
+		jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
+		if os.path.isfile(jpegfile):
+			ctfq['graph1'] = imgdata['filename']+".jpg"
 		ctfq['ctfvalues_file'] = imgdata['filename']+".mrc.norm.txt"
 		ctfvaluelist = ('defocus1','defocus2','amplitude_contrast','angle_astigmatism','confidence','confidence_d')
 		for i in range(len(ctfvaluelist)):
