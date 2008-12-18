@@ -241,7 +241,10 @@ function parseAppionLoopParams () {
 	if ($norejects) $command.=" --no-rejects";
 	if ($bestimages) $command.=" --best-images";
 	if ($nowait) $command.=" --no-wait";
-	if ($commit) $command.=" --commit";
+	if ($commit)
+		$command.=" --commit";
+	else
+		$command.=" --no-commit";
 	if ($background) $command.=" --background";
 	if ($reverse) $command.=" --reverse";
 	if ($shuffle) $command.=" --shuffle";
