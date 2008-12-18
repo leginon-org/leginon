@@ -783,6 +783,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		program has finished print final stats
 		"""
+		ttotal = time.time() - self.stats['startloop'] - self.stats['waittime']
 		apDisplay.printColor("COMPLETE LOOP:\t"+apDisplay.timeString(ttotal)+
 			" for "+str(self.stats["count"]-1)+" images","green")
 		appionScript.AppionScript.close(self)
