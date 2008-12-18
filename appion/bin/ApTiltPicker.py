@@ -120,7 +120,7 @@ class PickerApp(wx.App):
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
 
-		self.panel1.addTargetTool('Worst', color=wx.Color(215, 215, 32), 
+		self.panel1.addTargetTool('Worst', color=wx.Color(250, 160, 32), 
 			shape=self.eshape, size=self.eshapesize)
 		self.panel1.setTargets('Worst', [])
 		self.panel1.selectiontool.setDisplayed('Worst', True)
@@ -147,7 +147,7 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
 
-		self.panel2.addTargetTool('Worst', color=wx.Color(215, 215, 32), 
+		self.panel2.addTargetTool('Worst', color=wx.Color(250, 160, 32), 
 			shape=self.eshape, size=self.eshapesize)
 		self.panel2.setTargets('Worst', [])
 		self.panel2.selectiontool.setDisplayed('Worst', True)
