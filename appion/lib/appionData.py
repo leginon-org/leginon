@@ -931,6 +931,7 @@ class ApAceRunData(Data):
 			('session', leginondata.SessionData),
 			('path', ApPathData),
 			('name', str),
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAceRunData=ApAceRunData
