@@ -962,6 +962,7 @@ class ApAce2ParamsData(Data):
 			('bin', int),
 			('reprocess', float),
 			('cs', float),
+			('stig', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAce2ParamsData=ApAce2ParamsData

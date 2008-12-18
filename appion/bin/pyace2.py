@@ -166,6 +166,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		paramq['bin']     = self.params['bin']
 		paramq['reprocess'] = self.params['reprocess']
 		paramq['cs']      = self.params['cs']
+		paramq['stig']    = True
 
 		runq=appionData.ApAceRunData()
 		runq['name']    = self.params['runname']
