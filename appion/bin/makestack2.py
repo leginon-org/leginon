@@ -324,7 +324,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		return ctfimgstackfile
 
 	#=======================
-	def phaseFlipWholeImage(inimgpath, imgdata):
+	def phaseFlipWholeImage(self, inimgpath, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
 		os.path.join(self.params['rundir'], shortname+"-ctfcorrect.mrc")
