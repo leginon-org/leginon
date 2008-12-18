@@ -172,7 +172,7 @@ class TargetImagePanel(gui.wx.ImagePanel.ImagePanel):
 
 	#--------------------
 	def drawPolygon(self, dc, color, targets):
-		dc.SetPen(wx.Pen(color, 1))
+		dc.SetPen(wx.Pen(color, 3))
 		dc.SetBrush(wx.Brush(color, 1))
 		#if self.scaleImage():
 		if False:
