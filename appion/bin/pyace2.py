@@ -104,9 +104,6 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
 		ace2proc.wait()
 
-		aceoutf.close()
-		aceerrf.close()
-
 		### check if ace2 worked
 		imagelog = imgdata['filename']+".mrc"+".ctf.txt"
 		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
@@ -114,6 +111,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			time.sleep(1)
 			ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
 			ace2proc.wait()
+		aceoutf.close()
+		aceerrf.close()
 		if not os.path.isfile(imagelog):
 			apDisplay.printError("ace2 did not run")
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
