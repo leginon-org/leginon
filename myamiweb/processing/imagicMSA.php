@@ -13,6 +13,7 @@ require "inc/processing.inc";
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
+require "inc/summarytables.inc";
 
 // check for errors in submission form
 if ($_POST['process']) {
@@ -39,20 +40,21 @@ function jobform($extra=false)	{
 	echo "<form name='viewerform' method='POST' action='$formaction'>\n";
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$alignId=$_GET['alignId'];
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
-		$sessionpath=ereg_replace("rawdata","norefImagic",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
 
 	// connect to particle database
-	$prtlrunIds = $particle->getParticleRunIds($expId);
-	$stackIds = $particle->getStackIds($expId);
-//	$imagicnorefids = $particle->getImagicNoRefIds($expId, True);
-//	$imagicnorefruns=count($imagicnorefids);
+        $particle = new particledata();
+        $alignIds = $particle->getAlignStackIds($expId, $projectId, true);
+        $analysisIds = $particle->getAnalysisRuns($expId, $projectId, true);
+        $analysisruns=count($analysisIds);
 	
 	processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA)",$javafunc);
 
@@ -62,9 +64,12 @@ function jobform($extra=false)	{
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
-	$runid = ($_POST['runid']) ? $_POST['runid'] : 'classification'.($imagicnorefruns+1);
+        $sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while ((file_exists($sessionpathval.'coran'.($analysisruns+1))) || (file_exists($sessionpathval.'imagicmsa'.($analysisruns+1))))
+                $analysisruns += 1;
+	$runid = ($_POST['runid']) ? $_POST['runid'] : 'imagicmsa'.($analysisruns+1);
 	$description = $_POST['description'];
-	$stackidval = $_POST['stackid'];
+//	$alignidval = $_POST['alignid'];
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
@@ -98,18 +103,18 @@ function jobform($extra=false)	{
 	echo closeRoundBorder();
 	echo "</TD></TR><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
-	if (!$stackIds) {
+/*	if (!$stackIds) {
 		echo"
 		<FONT COLOR='RED'><B>No Stacks for this Session</B></FONT>\n";
 	}
 	else {
 		echo "
-		<select name='stackid'>\n";
+		<select name='alignid'>\n";
 		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack[stackid]);
+			$stackparams=$particle->getStackParams($stack[alignid]);
 
 			// get pixel size and box size
-			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
+			$mpix=$particle->getStackPixelSizeFromStackId($stack['alignid']);
 			if ($mpix) {
 				$apix = $mpix*1E10;
 				$apixtxt=format_angstrom_number($mpix)."/pixel";
@@ -118,17 +123,56 @@ function jobform($extra=false)	{
 
 			//handle multiple runs in stack
 			$runname=$stackparams[shownstackname];
-			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
-			$stackid = $stack['stackid'];
-			echo "<OPTION VALUE='$stackid|--|$apix|--|$boxsize|--|$totprtls'";
+			$totprtls=commafy($particle->getNumStackParticles($stack[alignid]));
+			$alignid = $stack['alignid'];
+			echo "<OPTION VALUE='$alignid|--|$apix|--|$boxsize|--|$totprtls'";
 			// select previously set prtl on resubmit
-			if ($stackidval==$stackid) echo " SELECTED";
+			if ($alignidval==$alignid) echo " SELECTED";
 			echo ">$runname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsize pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 	}
+*/	
+
+        if ($alignId) {
+                echo "<input type='hidden' name='alignid' value='$alignId'>\n";
+                echo alignstacksummarytable($alignId, true);
+                $alignstack = $particle->getAlignStackParams($alignId);
+                $defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
+        } elseif ($alignIds) {
+                echo "
+                Aligned Stack:<BR>
+                <select name='alignid' onchange='switchDefaults(this.value)'>\n";
+                foreach ($alignIds as $alignarray) {
+                        $alignid = $alignarray['alignstackid'];
+                        $alignstack = $particle->getAlignStackParams($alignid);
+
+                        // get pixel size and box size
+                        $apix = $alignstack['pixelsize'];
+                        if ($apix) {
+                                $mpix = $apix/1E10;
+                                $apixtxt=format_angstrom_number($mpix)."/pixel";
+                        }
+                        $boxsz = $alignstack['boxsize'];
+                        //handle multiple runs in stack
+                        $runname=$alignstack['runname'];
+                        $totprtls=commafy($particle->getNumAlignStackParticles($alignid));
+                        echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+                        // select previously set prtl on resubmit
+                        if ($alignidval==$alignid) echo " SELECTED";
+                        echo ">$alignid: $runname ($totprtls prtls,";
+                        if ($mpix) echo " $apixtxt,";
+                        echo " $boxsz pixels)</OPTION>\n";
+                }
+                echo "</SELECT>\n";
+        } else {
+                echo"
+                <FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
+        }
+
+
 	echo "</TD></TR><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
@@ -222,7 +266,7 @@ function runImagicMSA($extra=false)	{
 	$projectId=getProjectFromExpId($expId);
 	$runid=$_POST['runid'];
 	$outdir=$_POST['outdir'];
-	$stackvalues=$_POST['stackid'];
+	$stackvalues=$_POST['alignid'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
 	$bin=$_POST['bin'];
@@ -236,32 +280,18 @@ function runImagicMSA($extra=false)	{
 	$pass = $_SESSION['password'];
 	
 	// get stack id, apix, box size, and total particles from input
-	list($stackid,$apix,$boxsize,$totpartls) = split('\|--\|',$stackvalues);
+	list($alignid,$apix,$boxsize,$totpartls) = split('\|~~\|',$stackvalues);
 
 	// create python command for executing imagic job file	
 	$command = "imagicMSA.py";
 	$command.= " --projectid=".$_SESSION['projectId'];
-	$command.= " --stackid=$stackid --runname=$runid --rundir=$outdir/$runid --lpfilt=$lowpass";
+	$command.= " --alignid=$alignid --runname=$runid --rundir=$outdir$runid --lpfilt=$lowpass";
 	$command.= " --hpfilt=$highpass --mask_radius=$mask_radius --mask_dropoff=$mask_dropoff --bin=$bin";
 	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
 	if ($commit) $command.= " --commit\n";
 	else $command.=" --no-commit\n";
-/*
-	// write to jobfile
-	$jobfile = "{$runid}_imagicMSA.job";
-	$tmpjobfile = "/tmp/$jobfile";
-	$f = fopen($tmpjobfile,'w');
-	fwrite($f,$command);
-	fclose($f);	
 
-	// create appion directory & copy job & batch files
-	$cmd = "mkdir -p $outdir/$runid\n";
-	$cmd.= "cp $tmpjobfile $outdir/$runid/$jobfile\n";
-	$cmd.= "cd $outdir/$runid\n";
-	$cmd.= "chmod 777 $jobfile\n";
-	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-*/
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
