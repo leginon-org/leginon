@@ -191,7 +191,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		analysisrunq = appionData.ApAlignAnalysisData()
 		analysisrunq['runname'] = self.params['runname']
 		analysisrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		analysisrunq['imagicMSA'] = msaq
+		analysisrunq['imagicMSArun'] = msaq
 		analysisrunq['alignstack'] = self.alignstackdata
 		analysisrunq['hidden'] = False
                 analysisrunq['description'] = self.params['description']
