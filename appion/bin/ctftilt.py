@@ -32,7 +32,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 
 	#======================
 	def preLoopFunctions(self):
-		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
+		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
 		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.logdir = os.path.join(self.params['rundir'], "logfiles")
 		apParam.createDirectory(self.logdir, warning=False)
@@ -239,7 +239,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 
 		#convert powerspectra to JPEG
 		outputjpgbase = os.path.basename(os.path.splitext(inputparams['output'])[0]+".jpg")
-		self.lastjpg = os.path.join("powerspectra", outputjpgbase)
+		self.lastjpg = outputjpgbase
 		outputjpg = os.path.join(self.params['rundir'], self.lastjpg)
 		powspec = apImage.mrcToArray(inputparams['output'])
 		apImage.arrayToJpeg(powspec, outputjpg)
