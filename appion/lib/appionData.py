@@ -548,6 +548,7 @@ class ApAlignAnalysisRunData(Data):
 			('hidden', bool),
 			('path', ApPathData),
 			('coranrun', ApCoranRunData),
+			('imagicMSArun', ApImagicAlignAnalysisData),
 			('alignstack', ApAlignStackData),
 			('project|projects|project', int),
 		)
@@ -576,6 +577,23 @@ class ApCoranEigenImageData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApCoranEigenImageData = ApCoranEigenImageData
+
+class ApImagicAlignAnalysisData(Data):
+        def typemap(cls):
+                return Data.typemap() + (
+                        ('runname', str),
+                        ('run_seconds', int),
+                        ('bin', int),
+			('highpass', int),
+			('lowpass', int),
+			('mask_radius', float),
+			('mask_dropoff', float),
+			('numiters', int),
+			('overcorrection', float),
+			('MSAmethod', str),
+			('eigenimages', str),
+                )
+        typemap = classmethod(typemap)
 
 ### Improved cluster class data tables
 
