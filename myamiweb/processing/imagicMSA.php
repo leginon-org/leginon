@@ -17,10 +17,7 @@ require "inc/summarytables.inc";
 
 // check for errors in submission form
 if ($_POST['process']) {
-	if (!is_numeric($_POST['lowpass'])) jobform("error: no high-frequency cut-off specified");
-	if (!is_numeric($_POST['highpass'])) jobform("error: no low-frequency cut-off specified");
-	if (!is_numeric($_POST['mask_radius'])) jobform("error: no mask radius specified");
-	if (!is_numeric($_POST['bin'])) jobform("error: no binning not specified");
+	if (!$_POST['alignid']) jobform("error: no aligned stack specified");
 	if (!is_numeric($_POST['numiters'])) jobform("error: number of MSA iterations not specified");
 	if (!is_numeric($_POST['overcorrection'])) jobform("error: MSA overcorrection factor not specified");
 	if (!$_POST['MSAmethod']) jobform("error: method of calculating MSA distance not specified");
@@ -285,8 +282,12 @@ function runImagicMSA($extra=false)	{
 	// create python command for executing imagic job file	
 	$command = "imagicMSA.py";
 	$command.= " --projectid=".$_SESSION['projectId'];
-	$command.= " --alignid=$alignid --runname=$runid --rundir=$outdir$runid --lpfilt=$lowpass";
-	$command.= " --hpfilt=$highpass --mask_radius=$mask_radius --mask_dropoff=$mask_dropoff --bin=$bin";
+	$command.= " --alignid=$alignid --runname=$runid --rundir=$outdir$runid";
+	if ($lowpass) $command.= " --lpfilt=$lowpass";
+	if ($highpass) $command.= " --hpfilt=$highpass";
+	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
+	if ($mask_dropoff) $command.= " --mask_dropoff=$mask_dropoff";
+	if ($bin) $command.= "--bin=$bin ";
 	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
 	if ($commit) $command.= " --commit\n";
