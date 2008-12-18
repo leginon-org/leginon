@@ -31,7 +31,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 	#======================
 	def preLoopFunctions(self):
-		self.powerspecdir = os.path.join(self.params['rundir'], "powerspectra")
+		self.powerspecdir = os.path.join(self.params['rundir'], "opimages")
 		apParam.createDirectory(self.powerspecdir, warning=False)
 		self.ace2exe = self.getACE2Path()
 		return
