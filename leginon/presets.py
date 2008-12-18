@@ -946,7 +946,8 @@ class PresetsManager(node.Node):
 
 	def _acquireDoseImage(self, preset, display=True):
 		acquirestr = 'dose'
-		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=512)
+		binning = preset['binning']
+		imagedata =  self._acquireSpecialImage(preset, acquirestr, mode='center', imagelength=512, binning=binning)
 		
 		if imagedata is None:
 			return
@@ -1085,8 +1086,9 @@ class PresetsManager(node.Node):
 			highmag = magdict[keys[1]]
 			lowmag = magdict[keys[0]]
 			reverse = True
-		# fix me: This only works for equal dimension power of 2 camera
-		fullcamdim = self.instrument.camerasizes[camname]['x']
+		# This restrict the image to imagelength in x only
+		# and works only for camera dimension at power of 2 
+		fullcamdim = min(self.instrument.camerasizes[camname]['x'],self.instrument.camerasizes[camname]['y'])
 
 		#assume highmag imag is binning of full camera to imagelength
 		maxbin = fullcamdim / imagelength
@@ -1095,11 +1097,12 @@ class PresetsManager(node.Node):
 		lowbin = int(math.pow(2,round(math.log(lowmag / highmaglook) / math.log(2))))
 		if lowbin < 1:
 			lowbin = 1
-		 
+		highbins = {'x':highbin,'y':highbin}
+		lowbins = {'x':lowbin,'y':lowbin}
 		if reverse == False:
-			return {keys[0]:highbin, keys[1]:lowbin}
+			return {keys[0]:highbins, keys[1]:lowbins},{keys[0]:'bin', keys[1]:'center'}
 		else:
-			return {keys[1]:highbin, keys[0]:lowbin}
+			return {keys[1]:highbins, keys[0]:lowbins},{keys[1]:'bin', keys[0]:'center'}
 		
 	def acquireAlignImages(self, leftpreset=None, rightpreset=None):
 		if leftpreset is None or rightpreset is None:
@@ -1134,8 +1137,9 @@ class PresetsManager(node.Node):
 				preset = self.presetByName(presetname)
 				alignmags[label] = preset['magnification']
 				camname = preset['ccdcamera']['name']
-			acquirebin = self.getSimilarLook(camname,alignmags)
+			acquirebin,acquiremode = self.getSimilarLook(camname,alignmags)
 		else:
+				acquiremode={'right':'bin','left':'bin'}
 				acquirebin['right'] = None
 				acquirebin['left'] = None
 		self.alignimages = {}
@@ -1158,7 +1162,8 @@ class PresetsManager(node.Node):
 			if label == 'park':
 				self.logger.info('Parked at preset "%s"' % (presetname,))
 			else:
-				imagedata = self._acquireAlignImage(self.currentpreset, mode = 'bin', bin = acquirebin[label])
+				imagedata = self._acquireAlignImage(self.currentpreset, 
+						mode = acquiremode[label], binning = acquirebin[label])
 				self.alignimages[label] = imagedata
 				self.panel.setAlignImage(imagedata['image'], label)
  
@@ -1167,48 +1172,43 @@ class PresetsManager(node.Node):
 
 #		self.outputEvent(event.AlignImagesAcquiredEvent())
 
-	def _acquireAlignImage(self, preset, mode='bin', bin=None):
+	def _acquireAlignImage(self, preset, mode='bin', binning=None):
 		acquirestr = 'align'
-		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=512, bin=bin)
+		return self._acquireSpecialImage(preset, acquirestr, mode=mode, imagelength=512, binning=binning)
 
-	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, bin=None):
+	def _acquireSpecialImage(self, preset, acquirestr='', mode='', imagelength=None, binning=None):
 		errstr = 'Acquire %s image failed: ' %(acquirestr) +'%s'
 		self.logger.info('Acquiring %s image' %(acquirestr))
 		camdata0 = leginondata.CameraEMData()
 		camdata0.friendly_update(preset)
 
 		camdata1 = copy.copy(camdata0)
+		fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']]
 
 		if mode == 'center':
+			## center of the preset without exposure adjustment
 			## figure out if we want to cut down to imagelength x imagelength
 			for axis in ('x','y'):
-				change = camdata0['dimension'][axis] - imagelength
+				change = camdata0['dimension'][axis]*camdata0['binning'][axis] - imagelength*binning[axis]
 				if change > 0:
 					camdata1['dimension'][axis] = imagelength
-					camdata1['offset'][axis] += (change / 2)
+					camdata1['offset'][axis] = (camdata0['offset'][axis]*camdata0['binning'][axis]+(change / 2))/binning[axis]
+					camdata1['binning'][axis] = binning[axis]
+					camdata1['exposure time'] = camdata1['exposure time']*camdata0['binning'][axis]/camdata1['binning'][axis]
 		if mode == 'bin':
-			## bin the full camera to at most imagelength x imagelength
+			## bin the as much camera as possible to at most imagelength x imagelength
+			## with exposure time adjustment
+			new_bin = min((fullcamdim['x']/imagelength,fullcamdim['y']/imagelength))
 			for axis in ('x','y'):
-				fullcamdim = self.instrument.camerasizes[camdata1['ccdcamera']['name']][axis]
-				new_camdim = fullcamdim
-				new_bin = 1
-				if bin is None:
-					while new_camdim > imagelength:
-						new_camdim = new_camdim / 2
-						new_bin = new_bin * 2
-				else:
-					new_bin = bin
-					new_camdim = fullcamdim/new_bin
-					if new_camdim >= imagelength:
-						new_camdim = imagelength
-						new_bin = fullcamdim / new_camdim
+				new_camdim = imagelength
 				extrabin = float(new_bin) / camdata0['binning'][axis]
-				camdata1['offset'][axis] = (fullcamdim / new_bin - new_camdim) / 2
+				camdata1['offset'][axis] = (fullcamdim[axis] / new_bin - new_camdim) / 2
 				camdata1['dimension'][axis] = new_camdim
 				camdata1['binning'][axis] = new_bin
 				camdata1['exposure time'] = camdata1['exposure time'] / extrabin
 				if camdata1['exposure time']< 5.0:
 					camdata1['exposure time'] = 5.0
+
 		try:
 			self.instrument.setData(camdata1)
 		except:
@@ -1231,7 +1231,6 @@ class PresetsManager(node.Node):
 		if imagedata is None:
 			self.logger.error(errstr % 'unable to get corrected image')
 			return
-
 		return imagedata
 
 	def targetToScope(self, newpresetname, emtargetdata):
