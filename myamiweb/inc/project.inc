@@ -7,14 +7,25 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require_once "inc/session.inc";
+
 define('DEFAULT_PROJECT', 'all'); 
 define('PROJECT_DB_HOST', $PROJECT_DB_HOST);
 define('PROJECT_DB_USER', $PROJECT_DB_USER);
 define('PROJECT_DB_PASS', $PROJECT_DB_PASS);
 define('PROJECT_DB', $PROJECT_DB);
 
+
 function setDatabase() {
-	$expId=$_GET['expId'];
+	$expId= ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+	if (!$expId) {
+		if ($_GET['session']) {
+			$expId=$_GET['session'];
+		} else {
+			$leginondata=&new leginondata;
+			$expId=$leginondata->getLastSessionId();
+		}
+	}
 	$p=new project();
 	$r=$p->getProjectfromSessionId($expId);
 	$projectId=$r['projectId'];

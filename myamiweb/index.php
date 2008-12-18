@@ -10,6 +10,8 @@
 require "inc/leginon.inc";
 require "inc/viewer.inc";
 
+$baseurl = "/dbem/";
+
 $link = new iconlink();
 $link->setImagePath('img/');
 $link->cols = 3;

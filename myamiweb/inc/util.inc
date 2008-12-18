@@ -656,13 +656,14 @@ function array_stats($a) {
 	return $results;
 }
 	
-function from_POST($args=array()) {
+function from_POST() {
   $r = array();
   $keys=array_keys($_POST);
-  foreach($args as $arg) {
-    if (in_array($arg,$keys))
-      $r[$arg]=$_POST[$arg];
-  }
+	foreach(func_get_args() as $arg) {
+		if (in_array($arg,$keys)) {
+			$r[]=trim($_POST[$arg]);
+		}
+	}
   return $r;
 }
 

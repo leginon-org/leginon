@@ -13,6 +13,9 @@ require_once "inc/mysql.inc";
 require_once "inc/button.inc";
 require_once "inc/dbemauth.php";
 require_once "inc/pref.inc";
+require_once "inc/session.inc";
+
+setsession();
 
 $VIEWNB=0;
 
