@@ -287,7 +287,7 @@ function runImagicMSA($extra=false)	{
 	if ($highpass) $command.= " --hpfilt=$highpass";
 	if ($mask_radius) $command.= " --mask_radius=$mask_radius";
 	if ($mask_dropoff) $command.= " --mask_dropoff=$mask_dropoff";
-	if ($bin) $command.= "--bin=$bin ";
+	if ($bin) $command.= " --bin=$bin";
 	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
 	if ($commit) $command.= " --commit\n";
