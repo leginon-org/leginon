@@ -173,13 +173,14 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		return filename	
 
 	#=========================
-	def insertAnalysis(self, imagicstack, insert=False):
+	def insertAnalysis(self, imagicstack, runtime, insert=False):
 		### create MSAParam object
 		msaq = appionData.ApImagicAlignAnalysisData()
 		msaq['runname'] = self.params['runname']
+		msaq['run_seconds'] = runtime
                 msaq['bin'] = self.params['bin']
-                msaq['hp_filt'] = self.params['hpfilt']
-                msaq['lp_filt'] = self.params['lpfilt']
+                msaq['highpass'] = self.params['hpfilt']
+                msaq['lowpass'] = self.params['lpfilt']
 		msaq['mask_radius'] = self.params['mask_radius']
 		msaq['mask_dropoff'] = self.params['mask_dropoff']
 		msaq['numiters'] = self.params['numiters']
@@ -188,7 +189,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		msaq['eigenimages'] = "eigenimages"
 
 		### finish analysis run
-		analysisrunq = appionData.ApAlignAnalysisData()
+		analysisrunq = appionData.ApAlignAnalysisRunData()
 		analysisrunq['runname'] = self.params['runname']
 		analysisrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		analysisrunq['imagicMSArun'] = msaq
@@ -261,7 +262,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		imagicstack = os.path.join(self.params['rundir'], "start.hed")
                 inserttime = time.time()
                 if self.params['commit'] is True:
-                        self.insertAlignment(imagicstack, insert=True)
+                        self.insertAlignment(imagicstack, runtime=aligntime, insert=True)
                 else:
                         apDisplay.printWarning("not committing results to DB")
                 inserttime = time.time() - inserttime
