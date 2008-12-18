@@ -327,7 +327,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def phaseFlipWholeImage(self, inimgpath, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
-		os.path.join(self.params['rundir'], shortname+"-ctfcorrect.mrc")
+		outimgpath = os.path.join(self.params['rundir'], shortname+"-ctfcorrect.mrc")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
 		if imgdata['scope']['tem']['name'] == "CM":
