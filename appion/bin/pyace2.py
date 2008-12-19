@@ -16,6 +16,7 @@ import apDisplay
 import apDatabase
 import apCtf
 import apParam
+import apFile
 
 class Ace2Loop(appionLoop2.AppionLoop):
 
@@ -140,15 +141,20 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### summary stats
 		apDisplay.printMsg("============")
 		avgdf = (self.ctfvalues['defocus1']+self.ctfvalues['defocus2'])/2.0
+		ampconst = 100.0*self.ctfvalues['amplitude_contrast']
 		pererror = 100.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) / avgdf
 		apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent error)"%
 			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
-		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(100.0*self.ctfvalues['amplitude_contrast']))
+		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
 		apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
 
+		### double check that the values are reasonable 
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
+			self.badprocess = True
+		if ampconst < 1.0 or ampconst > 80.0:
+			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
 
 		## create power spectra jpeg
@@ -161,6 +167,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			cutoff = -2.0*ps.min()
 			ps = numpy.where(ps < cutoff, ps, cutoff)
 			apImage.arrayToJpeg(ps, jpegfile)
+			apFile.removeFile(mrcfile)
 
 		#print self.ctfvalues
 
