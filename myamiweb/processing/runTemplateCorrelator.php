@@ -272,6 +272,11 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
+	srand(time());
+	if ((rand()%2) < 3) {
+		echo"<center><IMG SRC='img/findem.png' WIDTH='300'></center><br />\n";
+	}
+
 	createAppionLoopTable($sessiondata, $defrunid, "extract");
 
 	if ($numtemplatesused > 1) {

@@ -69,6 +69,11 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 	<TR>
 		<TD VALIGN='TOP'>";
 
+	srand(time());
+	if ((rand()%2) < 3) {
+		echo"<center><IMG SRC='img/autotiltpicker.png' WIDTH='300'></center><br />\n";
+	}
+
 	createAppionLoopTable($sessiondata, $defrunid, "tiltalign");
 
 	if (!$prtlrunIds) {
