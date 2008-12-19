@@ -70,6 +70,11 @@ if (!$_GET['showHidden']) {
 	$hidectfrundatas = $ctfrundatas;
 }
 
+if (!$ctfrundatas && $hidectfrundatas) {
+	$ctfrundatas = $ctf->getCtfRunIds($sessionId, True);
+	$hidectfrundatas = $ctfrundatas;
+}
+
 if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 	$numhidden = count($hidectfrundatas) - count($ctfrundatas);
 	echo "<a href='".$formAction."&showHidden=1'>[Show ".$numhidden." hidden ctf runs]</a><br/><br/>\n";
