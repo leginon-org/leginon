@@ -74,96 +74,101 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 	$numhidden = count($hidectfrundatas) - count($ctfrundatas);
 	echo "<a href='".$formAction."&showHidden=1'>[Show ".$numhidden." hidden ctf runs]</a><br/><br/>\n";
 	echo "<form name='ctfform' method='post' action='$formAction'>\n";
-} else {
+} elseif($_GET['showHidden']) {
 	echo "<a href='".$formAction."'>[Hide hidden ctf runs]</a><br/>\n";
 	echo "<form name='ctfform' method='post' action='$formAction&showHidden=1'>\n";
 }
 
+if ($ctfrundatas) {
+	foreach ($ctfrundatas as $ctfrundata) {
+		$ctfrunid=$ctfrundata['DEF_id'];
+		$rName=$ctfrundata['name'];
 
-foreach ($ctfrundatas as $ctfrundata) {
-	$ctfrunid=$ctfrundata['DEF_id'];
-	$rName=$ctfrundata['name'];
+		$ctfdata= $ctf->getAceParams($ctfrunid);
 
-	$ctfdata= $ctf->getAceParams($ctfrunid);
-
-	if ($_POST['hideRun'.$ctfrunid] == 'hide') {
-		$ctf->updateHide('ApAceRunData', $ctfrunid, '1');
-		$ctfdata['hidden']='1';
-	} elseif ($_POST['unhideRun'.$ctfrunid] == 'unhide') {
-		$ctf->updateHide('ApAceRunData', $ctfrunid, '0');
-		$ctfdata['hidden']='0';
-	}
-
-	//echo "ctfdata".print_r($ctfdata);
-	if ($ctfdata['stig']!=1 && $ctfdata!=0) {
-		$fields = array('defocus1', 'confidence', 'confidence_d', 'amplitude_contrast');
-	}
-	else {
-		$fields = array('defocus1', 'defocus2', 'confidence', 'angle_astigmatism', 'amplitude_contrast');
-	}
-	$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
-	$display_ctf=false;
-	foreach($stats as  $field=>$data) {
-			//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
-			foreach($data as $k=>$v) {
-				$display_ctf=true;
-				$imageId = $stats[$field][$k]['id'];
-				$p = $leginondata->getPresetFromImageId($imageId);
-				$stats[$field][$k]['preset'] = $p['name'];
-				$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
-					.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
-				$stats[$field][$k]['img'] = $cdf;
-			}
-	}
-	$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
-	if ($display_ctf) {
-		$popupstr = "<a href=\"javascript:infopopup(";
-		foreach ($aceparamsfields as $param) {
-			$popupstr .= "'".$ctfdata[$param]."',";
+		if ($_POST['hideRun'.$ctfrunid] == 'hide') {
+			$ctf->updateHide('ApAceRunData', $ctfrunid, '1');
+			$ctfdata['hidden']='1';
+		} elseif ($_POST['unhideRun'.$ctfrunid] == 'unhide') {
+			$ctf->updateHide('ApAceRunData', $ctfrunid, '0');
+			$ctfdata['hidden']='0';
 		}
-		$popupstr = rtrim($popupstr,',');	
-		$popupstr .=  ")\">\n";
 
-		echo "\n\n<br/>\n\n";
-		echo openRoundBorder();
-		echo "<table cellspacing='3'>";
+		//echo "ctfdata".print_r($ctfdata);
+		if ($ctfdata['stig']!=1 && $ctfdata!=0) {
+			$fields = array('defocus1', 'confidence', 'confidence_d', 'amplitude_contrast');
+		}
+		else {
+			$fields = array('defocus1', 'defocus2', 'confidence', 'angle_astigmatism', 'amplitude_contrast');
+		}
+		$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
+		$display_ctf=false;
+		foreach($stats as  $field=>$data) {
+				//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
+				foreach($data as $k=>$v) {
+					$display_ctf=true;
+					$imageId = $stats[$field][$k]['id'];
+					$p = $leginondata->getPresetFromImageId($imageId);
+					$stats[$field][$k]['preset'] = $p['name'];
+					$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+						.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+					$stats[$field][$k]['img'] = $cdf;
+				}
+		}
+		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
+		if ($display_ctf) {
+			$popupstr = "<a href=\"javascript:infopopup(";
+			foreach ($aceparamsfields as $param) {
+				$popupstr .= "'".$ctfdata[$param]."',";
+			}
+			$popupstr = rtrim($popupstr,',');	
+			$popupstr .=  ")\">\n";
 
-		echo "<tr>";
-			echo "<td>\n";
-			$j = "";
-			if ($ctfdata['hidden'] == 1) {
-				$j.= " <font color='#cc0000'>HIDDEN</font>\n";
-				$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
-			} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
-			echo apdivtitle("Ctf Run: ".$popupstr."<b>".$rName."</b></a>$j\n");
+			echo "\n\n<br/>\n\n";
+			echo openRoundBorder();
+			echo "<table cellspacing='3'>";
 
-			echo "</td>\n";
-		echo "</tr>\n";
+			echo "<tr>";
+				echo "<td>\n";
+				$j = "";
+				if ($ctfdata['hidden'] == 1) {
+					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
+					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
+				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
+				echo apdivtitle("Ctf Run: ".$popupstr."<b>".$rName."</b></a>$j\n");
 
-		echo "<tr bgcolor='#ffffff'>\n";
-			echo "<td>Path:&nbsp;<i>".$ctfdata['path']."</i></td>\n";
-		echo "</tr>\n";
+				echo "</td>\n";
+			echo "</tr>\n";
 
-		echo "<tr bgcolor='#ffffff'>\n";
-			echo "<td>Resample Freq:&nbsp;".$ctfdata['resamplefr']."</td>\n";
-		echo "</tr>\n";
+			echo "<tr bgcolor='#ffffff'>\n";
+				echo "<td>Path:&nbsp;<i>".$ctfdata['path']."</i></td>\n";
+			echo "</tr>\n";
 
-		echo "<tr><td colspan='10'>\n";
-			echo displayCTFstats($stats, $display_keys);
-		echo "</td></tr>\n";
-		echo "</table>";
-		echo closeRoundBorder();
+			echo "<tr bgcolor='#ffffff'>\n";
+				echo "<td>Resample Freq:&nbsp;".$ctfdata['resamplefr']."</td>\n";
+			echo "</tr>\n";
 
-	} else
-		echo "no CTF information available <br/>";
+			echo "<tr><td colspan='10'>\n";
+				echo displayCTFstats($stats, $display_keys);
+			echo "</td></tr>\n";
+			echo "</table>";
+			echo closeRoundBorder();
+
+		} else
+			echo "no CTF information available <br/>";
+	}
+	echo "</form><br/>\n";
+} else {
+	echo "no CTF information available <br/>";
 }
-echo "</form><br/>\n";
 
 if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 	$numhidden = count($hidectfrundatas) - count($ctfrundatas);
-	echo "<a href='".$formAction."&showHidden=True'>[Show ".$numhidden." hidden ctf runs]</a><br/><br/>\n";
-} else {
-	echo "<a href='".$formAction."'>[Hide hidden ctf runs]</a><br/><br/>\n";
+	echo "<a href='".$formAction."&showHidden=1'>[Show ".$numhidden." hidden ctf runs]</a><br/><br/>\n";
+	echo "<form name='ctfform' method='post' action='$formAction'>\n";
+} elseif($_GET['showHidden']) {
+	echo "<a href='".$formAction."'>[Hide hidden ctf runs]</a><br/>\n";
+	echo "<form name='ctfform' method='post' action='$formAction&showHidden=1'>\n";
 }
 
 processing_footer();
