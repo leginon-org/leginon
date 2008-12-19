@@ -10,7 +10,7 @@
 
 
 import os
-
+import time
 import sys
 import re
 import appionScript
@@ -20,6 +20,7 @@ import apParam
 import apRecon
 import apDisplay
 import apEMAN
+import apIMAGIC
 import apFile
 import apUpload
 import apDatabase
@@ -41,6 +42,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="ID for reference-free alignment", metavar="int")
 		self.parser.add_option("--norefClassId", dest="norefClassId", type="int",
 			help="reference free class id", metavar="INT")
+                self.parser.add_option("--clusterId", dest="clusterId", type="int",
+                        help="new class average id from alignment pipeline", metavar="INT")
 		self.parser.add_option("--3_projections", dest="projections", type="str",
 			help="3 initial projections for angular reconstitution", metavar="STR")
 		self.parser.add_option("--symmetry", dest="symmetry", type="str",
@@ -72,8 +75,8 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if (self.params['reclassId'] is None and self.params['norefClassId'] is None) :
-			apDisplay.printError("There is no reclassification or noref-classification ID specified")
+		if (self.params['reclassId'] is None and self.params['norefClassId'] is None and self.params['clusterId'] is None) :
+			apDisplay.printError("There is no class average ID specified")
 		if self.params['projections'] is None:
 			apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
 		if self.params['symmetry'] is None:
@@ -113,13 +116,191 @@ class imagic3d0Script(appionScript.AppionScript):
 		elif self.params['reclassId'] is not None:
 			reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 			path = reclassdata['path']['path']
+		elif self.params['clusterId'] is not None:
+			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			path = clusterdata['path']['path']
 		else:
 			apDisplay.printError("class averages not in the database")
 
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "init_models", self.params['runname'])
 
+	#=====================
+	def createImagicBatchFile(self, linkingfile):
+		# IMAGIC batch file creation
+		filename = os.path.join(self.params['rundir'], "imagicCreate3d0.batch")
+		f = open(filename, 'w')
+		f.write("#!/bin/csh -f\n")
+		f.write("setenv IMAGIC_BATCH 1\n")
+		f.write("cd "+str(self.params['rundir'])+"/\n")
+		f.write("cp "+linkingfile+".img start_stack.img\n") 
+		f.write("cp "+linkingfile+".hed start_stack.hed\n")
+		if self.params['norefClassId'] is not None or self.params['clusterId'] is not None:
+			# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER 
+			# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
+			f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF > imagicCreate3d0.log\n")
+			f.write("start_stack\n")
+			f.write("start_stack_copy\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/headers.e <<EOF >> imagicCreate3d0.log\n")
+			f.write("start_stack_copy\n")
+			f.write("write\n")
+			f.write("wipe\n")
+			f.write("all\n")
+			f.write("EOF\n")
+			f.write("rm start_stack.*\n")
+			f.write("mv start_stack_copy.img start_stack.img\n") 
+			f.write("mv start_stack_copy.hed start_stack.hed\n")
+		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF > imagicCreate3d0.log\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		lowercase = self.params['symmetry'].lower()
+		if lowercase != "c1":
+			f.write("0\n")
+		f.write("new\n")
+		f.write("fresh\n")
+		f.write("start_stack\n")
+		f.write(str(self.params['projections'])+"\n")
+		f.write("ordered0\n") 
+		f.write("sino_ordered0\n")
+		f.write("yes\n")
+		f.write(".9\n")
+		f.write("my_sine\n")
+		f.write(str(self.params['euler_ang_inc'])+"\n")
+		f.write("30\n")
+		f.write("no\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		f.write("new\n")
+		f.write("add\n")
+		f.write("start_stack\n")
+		f.write("1-"+str(self.params['num_classums'])+"\n")
+		f.write("ordered0\n")
+		f.write("sino_ordered0\n")
+		f.write("yes\n")
+		f.write("0.9\n")
+		f.write("my_sine\n")
+		f.write("5.0\n")
+		f.write("yes\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("no\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		f.write("yes\n")
+		f.write("ordered0\n")
+		f.write("ANGREC_HEADER_VALUES\n")
+		f.write("3d0_ordered0\n")
+		f.write("rep0_ordered0\n")
+		f.write("err0_ordered0\n")
+		f.write("no\n")
+		f.write("0.8\n")
+		f.write("0.8\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("all\n")
+		f.write("ccf\n")
+		f.write("ordered0\n")
+		f.write("ordered0_repaligned\n")
+		f.write("rep0_ordered0\n")
+		f.write("0.2\n")
+		f.write("-180,180\n")
+		f.write("5\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("no\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		f.write("yes\n")
+		f.write("ordered0_repaligned\n")
+		f.write("ANGREC_HEADER_VALUES\n")
+		f.write("3d0_ordered0_repaligned\n")
+		f.write("rep0_ordered0_repaligned\n")
+		f.write("err0_ordered0_repaligned\n")
+		f.write("no\n")
+		f.write("0.8\n")
+		f.write("0.8\n")
+		f.write("EOF\n\n")
+		f.write("set j=1\n")
+		f.write("while ($j<"+str(self.params['repalignments'])+")\n")
+		f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("ordered0_repaligned\n")
+		f.write("to_be_aligned\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("all\n")
+		f.write("ccf\n")
+		f.write("to_be_aligned\n")
+		f.write("ordered0_repaligned\n")
+		f.write("rep0_ordered0_repaligned\n")
+		f.write("0.2\n")
+		f.write("-180,180\n")
+		f.write("5\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("no\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		f.write("yes\n")
+		f.write("ordered0_repaligned\n")
+		f.write("ANGREC_HEADER_VALUES\n")
+		f.write("3d0_ordered0_repaligned\n")
+		f.write("rep0_ordered0_repaligned\n")
+		f.write("err0_ordered0_repaligned\n")
+		f.write("no\n")
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
+		f.write("EOF\n")
+		f.write("@ j++\n")
+		f.write("end\n\n")
+		f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("DO_IT_ALL\n")
+		f.write("3d0_ordered0_repaligned\n")
+		f.write("3d0_ordered0_repaligned_modvar\n")
+		f.write("yes\n")
+		f.write(str(self.params['amask_dim'])+","+str(self.params['amask_lp'])+"\n")
+		f.write(str(self.params['amask_sharp'])+"\n")
+		f.write("AUTOMATIC\n")
+		f.write(str(self.params['amask_thresh'])+"\n")
+		f.write("mask_3d0_ordered0_repaligned\n")
+		f.write("masked_3d0_ordered0_repaligned\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("IMAGIC\n")
+		f.write("MRC\n")
+		f.write("3d\n")
+		f.write("multiple\n")
+		f.write("masked_3d0_ordered0_repaligned\n")
+		f.write("masked_3d0_ordered0_repaligned.mrc\n")
+		f.write("yes\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/threed/forward.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("masked_3d0_ordered0_repaligned\n")
+		f.write("-99999\n")
+		f.write("projections\n")
+		f.write("widening\n")
+		f.write("mrarefs_masked_3d0\n")
+		f.write("asym_triangle\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		f.write("equidist\n")
+		f.write("zero\n")
+		f.write(str(self.params['mrarefs_ang_inc'])+"\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/threed/forward.e <<EOF >> imagicCreate3d0.log\n")
+		f.write("masked_3d0_ordered0_repaligned\n")
+		f.write("-99999\n")
+		f.write("projections\n")
+		f.write("widening\n")
+		f.write("masked_3d0_ordered0_repaligned_forward\n")
+		f.write("asym_triangle\n")
+		f.write(str(self.params['symmetry'])+"\n")
+		f.write("equidist\n")
+		f.write("zero\n")
+		f.write(str(self.params['forw_ang_inc'])+"\n")
+		f.write("EOF\n\n")
+		f.write("rm to_be_aligned.*\n") 
+		f.close()
+		
+		return filename
 
+	#=====================
 	def upload3d0(self):
 		modelq = appionData.ApImagic3d0Data()
 		modelq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
@@ -129,6 +310,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			modelq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 		elif self.params['reclassId'] is not None:
 			modelq['reclass'] = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
+		elif self.params['clusterId'] is not None:
+			modelq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
 		modelq['projections'] = self.params['projections']
 		modelq['euler_ang_inc'] = self.params['euler_ang_inc']
 		modelq['ham_win'] = self.params['ham_win']
@@ -150,6 +333,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['hidden'] = False
 		if self.params['commit'] is True:
 			modelq.insert()
+                else:
+                        apDisplay.printWarning("not committing results to DB")
 		return 
 
 
@@ -182,6 +367,15 @@ class imagic3d0Script(appionScript.AppionScript):
 			orig_runname = reclassdata['runname']
 			orig_file = "reclassified_classums_sorted"
 			linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
+		elif self.params['clusterId'] is not None:
+			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
+ 			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
+			orig_path = clusterdata['path']['path']
+			orig_file = clusterdata['avg_imagicfile']
+			if orig_file[-4:] == ".img" or orig_file[-4:] == ".hed":
+				orig_file = orig_file[:-4]
+			linkingfile = os.path.join(orig_path, orig_file)
 		else:
 			apDisplay.printError("class averages not in the database")
 
@@ -190,39 +384,25 @@ class imagic3d0Script(appionScript.AppionScript):
 		print "... class average stack box size: "+str(self.params['boxsize'])	
 		apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3d0.log for details")
 	
-		filename = "imagicCreate3d0.batch"
-		f = open(filename, 'w')
+		### create batch file for execution with IMAGIC
+		filename = self.createImagicBatchFile(linkingfile)
 		
-		f.write("#!/bin/csh -f\n")
-		f.write("setenv IMAGIC_BATCH 1\n")
-		f.write("cd "+str(self.params['rundir'])+"/\n")
-		f.write("rm ordered0.*\n")
-		f.write("rm sino_ordered0.*\n")
-		f.write("ln -s "+linkingfile+".img start_stack.img\n") 
-		f.write("ln -s "+linkingfile+".hed start_stack.hed\n")
-		if self.params['norefClassId'] is not None:
-			# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER 
-			# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
-			f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF > imagicCreate3d0.log\n")
-			f.write("start_stack\n")
-			f.write("start_stack_copy\n")
-			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/headers.e <<EOF >> imagicCreate3d0.log\n")
-			f.write("start_stack_copy\n")
-			f.write("write\n")
-			f.write("wipe\n")
-			f.write("all\n")
-			f.write("EOF\n")
-			f.write("rm start_stack.*\n")
-			f.write("ln -s start_stack_copy.img start_stack.img\n") 
-			f.write("ln -s start_stack_copy.hed start_stack.hed\n")
-		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF > imagicCreate3d0.log\n")		f.write(str(self.params['symmetry'])+"\n")
-		f.write("new\n")
-		f.write("fresh\n")		f.write("start_stack\n")		f.write(str(self.params['projections'])+"\n")		f.write("ordered0\n") 		f.write("sino_ordered0\n")		f.write("yes\n")		f.write(".9\n")		f.write("my_sine\n")		f.write(str(self.params['euler_ang_inc'])+"\n")		f.write("30\n")		f.write("no\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")		f.write(str(self.params['symmetry'])+"\n")		f.write("new\n")		f.write("add\n")		f.write("start_stack\n")		f.write("1-"+str(self.params['num_classums'])+"\n")		f.write("ordered0\n")		f.write("sino_ordered0\n")		f.write("yes\n")		f.write("0.9\n")		f.write("my_sine\n")		f.write("5.0\n")		f.write("yes\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")		f.write("no\n")		f.write(str(self.params['symmetry'])+"\n")		f.write("yes\n")		f.write("ordered0\n")		f.write("ANGREC_HEADER_VALUES\n")		f.write("3d0_ordered0\n")		f.write("rep0_ordered0\n")		f.write("err0_ordered0\n")		f.write("no\n")		f.write("0.8\n")		f.write("0.8\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")		f.write("all\n")		f.write("ccf\n")		f.write("ordered0\n")		f.write("ordered0_repaligned\n")		f.write("rep0_ordered0\n")		f.write("0.2\n")		f.write("-180,180\n")		f.write("5\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")		f.write("no\n")		f.write(str(self.params['symmetry'])+"\n")		f.write("yes\n")		f.write("ordered0_repaligned\n")		f.write("ANGREC_HEADER_VALUES\n")		f.write("3d0_ordered0_repaligned\n")		f.write("rep0_ordered0_repaligned\n")		f.write("err0_ordered0_repaligned\n")		f.write("no\n")		f.write("0.8\n")		f.write("0.8\n")		f.write("EOF\n\n")		f.write("set j=1\n")		f.write("while ($j<"+str(self.params['repalignments'])+")\n")		f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicCreate3d0.log\n")		f.write("ordered0_repaligned\n")		f.write("to_be_aligned\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")		f.write("all\n")		f.write("ccf\n")		f.write("to_be_aligned\n")		f.write("ordered0_repaligned\n")		f.write("rep0_ordered0_repaligned\n")		f.write("0.2\n")		f.write("-180,180\n")		f.write("5\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")		f.write("no\n")		f.write(str(self.params['symmetry'])+"\n")		f.write("yes\n")		f.write("ordered0_repaligned\n")		f.write("ANGREC_HEADER_VALUES\n")		f.write("3d0_ordered0_repaligned\n")		f.write("rep0_ordered0_repaligned\n")		f.write("err0_ordered0_repaligned\n")		f.write("no\n")		f.write(str(self.params['ham_win'])+"\n")		f.write(str(self.params['object_size'])+"\n")		f.write("EOF\n")		f.write("@ j++\n")		f.write("end\n\n")		f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagicCreate3d0.log\n")		f.write("DO_IT_ALL\n")		f.write("3d0_ordered0_repaligned\n")		f.write("3d0_ordered0_repaligned_modvar\n")		f.write("yes\n")		f.write(str(self.params['amask_dim'])+","+str(self.params['amask_lp'])+"\n")		f.write(str(self.params['amask_sharp'])+"\n")		f.write("AUTOMATIC\n")		f.write(str(self.params['amask_thresh'])+"\n")		f.write("mask_3d0_ordered0_repaligned\n")		f.write("masked_3d0_ordered0_repaligned\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> imagicCreate3d0.log\n")		f.write("IMAGIC\n")		f.write("MRC\n")		f.write("3d\n")		f.write("multiple\n")		f.write("masked_3d0_ordered0_repaligned\n")		f.write("masked_3d0_ordered0_repaligned.mrc\n")		f.write("yes\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/threed/forward.e <<EOF >> imagicCreate3d0.log\n")		f.write("masked_3d0_ordered0_repaligned\n")		f.write("-99999\n")		f.write("projections\n")		f.write("widening\n")		f.write("mrarefs_masked_3d0\n")		f.write("asym_triangle\n")		f.write(str(self.params['symmetry'])+"\n")		f.write("equidist\n")		f.write("zero\n")		f.write(str(self.params['mrarefs_ang_inc'])+"\n")		f.write("EOF\n")		f.write("/usr/local/IMAGIC/threed/forward.e <<EOF >> imagicCreate3d0.log\n")		f.write("masked_3d0_ordered0_repaligned\n")		f.write("-99999\n")		f.write("projections\n")		f.write("widening\n")		f.write("masked_3d0_ordered0_repaligned_forward\n")		f.write("asym_triangle\n")		f.write(str(self.params['symmetry'])+"\n")		f.write("equidist\n")		f.write("zero\n")		f.write(str(self.params['forw_ang_inc'])+"\n")		f.write("EOF\n\n")		f.write("rm to_be_aligned.*\n") 
-		f.close()
-		os.chdir(str(self.params['rundir']))
-		os.system('chmod 755 imagicCreate3d0.batch')
-		os.system('./imagicCreate3d0.batch')
+		### these files interfere with IMAGIC program
+                if os.path.isfile(str(self.params['rundir'])+"/ordered0.img") is True:
+			os.remove(str(self.params['rundir'])+"/ordered0.img")
+                if os.path.isfile(str(self.params['rundir'])+"/ordered0.hed") is True:
+			os.remove(str(self.params['rundir'])+"/ordered0.hed")
+                if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.img") is True:
+                        os.remove(str(self.params['rundir'])+"/sino_ordered0.img")
+		if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.hed") is True:
+			os.remove(str(self.params['rundir'])+"/sino_ordered0.hed")
+
+                ### execute batch file that was created
+		time3d0 = time.time()
+                os.system('chmod 755 '+filename)
+                apIMAGIC.executeImagicBatchFile(filename)
+                apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
+                time3d0 = time.time() - time3d0
 
 		mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
 		mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
