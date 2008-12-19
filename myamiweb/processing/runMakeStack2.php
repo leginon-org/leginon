@@ -151,33 +151,22 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 	createAppionLoopTable($sessiondata, $runnameval, "stacks");
 
+	echo "<b>Density modifications:</b><br/>";
 
-	echo "</td>\n";
-	echo "</tr>\n";
-	echo "
-	<tr>
-		<td valign='TOP'>
-		<b>Density:</b><br />
-		<input type='checkbox' name='density' $invcheck value='invert'>\n";
+	echo "<input type='checkbox' name='density' $invcheck value='invert'>\n";
 	echo docpop('stackinv','Invert image density');
-	echo "<br />
-		</td>
-	</tr>
-	<tr>
-		<td>";
+	echo "<br/>\n";
 
 	echo "<input type='checkbox' name='normalize' $normcheck>\n";
 	echo docpop('stacknorm','Normalize Stack Particles');
 	echo "<br/>\n";
 
 	if ($ctfdata) {
-		echo "<br/>\n";
 		echo"<input type='checkbox' name='phaseflip' onclick='enablefliptype(this)' $phasecheck>\n";
 		echo docpop('phaseflip','Phaseflip Particle Images');
 		echo "<br/>\n";
 
-		echo docpop('phaseflip','Method to Phaseflip particles');
-		echo "<br/>\n";
+		echo "Phaseflipping Method:\n";
 		echo "&nbsp;&nbsp;<select name='fliptype' ";
 			if (!$phasecheck) echo " disabled";
 			echo ">\n";
@@ -188,18 +177,21 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "<br/>\n";
 	}
 
+	echo "<i>File format:</i>";
+	echo "<br/>\n";
 
-	echo "<br />\n";
-	echo "</td>
-	</tr>
-	<tr>
-		<td valign='TOP'>
-		<b>File Format:</b><br />
-		<SELECT name='fileformat'>\n";
-	foreach($fileformats as $format) {
-		$s = ($_POST['fileformat']==$format) ? 'SELECTED' : '';
-		echo "<OPTION $s >$format</option>\n";
-	}
+	echo "&nbsp;<input type='radio' name='fileformat' value='imagic' ";
+	if ($_POST['fileformat'] == 'imagic' || !$_POST['checkimage']) echo "checked";
+	echo ">\n";
+	echo "Imagic: start.hed/.img <font size='-2'><i>(default)</i></font><br/>\n";
+
+	echo "&nbsp;<input type='radio' name='fileformat' value='spider' ";
+	if ($_POST['fileformat'] == 'spider') echo "checked";
+	echo ">\n";
+	echo "Spider: start.spi <font size='-2'><i>(must be less than 18,000 particles)</i></font> <br/>\n";
+
+
+
 	echo"
 		</SELECT>
 		</td>

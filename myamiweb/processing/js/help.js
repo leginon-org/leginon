@@ -12,7 +12,7 @@ var help = {
 		'checkimages' : 'Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXEMPLAR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.',
 		'nowait' : 'After processing all the images collected for this sessiont, this will continue to check if new images have been acquired every 10 minutes.  If after 2 hours, no new images have been acquired, this job will terminate.',
 		'background' : 'Minimizes the output when the program runs',
-		'shuffle' : 'Shuffles the order of the images before the processing begins, so that processing does not necessarily start from the beginning.',
+		'imgorder' : 'Change the order in which the images are process, shuffle: process in random order, reverse: process newest images first, normal: process oldest images first',
 		'limit' : 'If you do not want to process all the images, enter a number and the program will only process this number of images.  Good for testing a few images before committing the results to the database.',
 		'cont' : 'By default you ALWAYS want to continue, unless you are NOT committing to the database yet and you want to reprocess an image.',
 		'commit' : 'Stores results to the database.  When testing do NOT commit, but once you are happy with the results start commiting the data, otherwise all information will be lost.',
