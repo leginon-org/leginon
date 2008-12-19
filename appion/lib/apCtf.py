@@ -142,59 +142,69 @@ def mkTempDir(temppath):
 
 def getBestDefocusForImage(imgdata, display=False):
 	"""
-	takes an image and get the best defocus for that image
+	takes an image and get the best defocus (in negative meters) for that image
 	"""
 
 	ctfvalue, conf = getBestCtfValueForImage(imgdata)
 	if ctfvalue is None:
-		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
-		return imgdata['scope']['defocus']
-
-	if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
-		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		bestdf = imgdata['scope']['defocus']
+		apDisplay.printWarning("no acceptable ctf values found, using nominal defocus")
+	elif abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
+		bestdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
-			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
-		return -avgdf
+			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, bestdf*1e6) )
+	else:
+		bestdf = ctfvalue['defocus1']
 
+	### make sure value is negative
+	bestdf = -1.0*abs(bestdf)
+
+	### print msg
 	if display is True:
 		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
-			print ( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
-				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
+			apDisplay.printMsg( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
+				str(round(conf,4))+", defocus="+str(round(bestdf*1.0e6,4))+
 				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
 		else:
-			print ( "Best CTF run info: confidence="+
-				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
-				" microns" )
+			apDisplay.printMsg( "Best CTF run info: confidence="+str(round(conf,4))
+				+", defocus="+str(round(-1.0*abs(bestdf*1.0e6),4))+" um" )
 
-	return -ctfvalue['defocus1']
+	return bestdf
 
 def getBestDefocusAndAmpConstForImage(imgdata, display=False):
 	"""
-	takes an image and get the best defocus for that image
+	takes an image and get the best defocus (in negative meters) for that image
 	"""
 
 	ctfvalue, conf = getBestCtfValueForImage(imgdata)
 	if ctfvalue is None:
-		apDisplay.printWarning("both confidence values for previous run were 0, using nominal defocus")
-		return imgdata['scope']['defocus'], 0.1
-
-	if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
-		avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		bestdf = imgdata['scope']['defocus']
+		bestamp = 0.1
+		apDisplay.printWarning("no acceptable ctf values found, using nominal defocus")
+	elif abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
+		bestdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		bestamp = ctfvalue['amplitude_contrast']
 		apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
-			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
-		return -avgdf, ctfvalue['amplitude_contrast']
+			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, bestdf*1e6) )
+	else:
+		bestdf = ctfvalue['defocus1']
+		bestamp = ctfvalue['amplitude_contrast']
 
+	### make sure value is negative
+	bestdf = -1.0*abs(bestdf)
+
+	### print msg
 	if display is True:
 		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
-			print ( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
-				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
+			apDisplay.printMsg( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
+				str(round(conf,4))+", defocus="+str(round(bestdf*1.0e6,4))+
 				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
 		else:
-			print ( "Best CTF run info: confidence="+
-				str(round(conf,4))+", defocus="+str(round(-1.0*abs(ctfvalue['defocus1']*1.0e6),4))+
-				" microns" )
+			apDisplay.printMsg( "Best CTF run info: confidence="+str(round(conf,4))
+				+", defocus="+str(round(-1.0*abs(bestdf*1.0e6),4))+" um" )
 
-	return -ctfvalue['defocus1'], ctfvalue['amplitude_contrast']
+
+	return bestdf, bestamp
 
 def getBestCtfValueForImage(imgdata, ctfavg=True):
 	"""
