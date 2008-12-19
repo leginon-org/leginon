@@ -38,6 +38,26 @@ else jobform();
 
 
 function jobform($extra=false) {
+        // get session info and experiment info
+        $expId=$_GET['expId'];
+        $reclassId=$_GET['reclassId'];
+        $norefId=$_GET['norefId'];
+        $norefClassId=$_GET['norefClassId'];
+        $clusterId=$_GET['clusterId'];
+        $projectId=getProjectFromExpId($expId);
+        $sessiondata=getSessionList($projectId,$expId);
+        $sessioninfo=$sessiondata['info'];
+        if (!empty($sessioninfo)) {
+                $outdir=$sessioninfo['Image path'];
+                $outdir=ereg_replace("leginon","appion",$outdir);
+                $outdir=ereg_replace("rawdata","init_models",$outdir);
+                $sessionname=$sessioninfo['Name'];
+                echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
+        }
+
+        if ($expId){
+                $formaction=$_SERVER['PHP_SELF']."?expId=$expId";
+	}
 
 	$javafunc .= writeJavaPopupFunctions('appion');
 	processing_header("IMAGIC 3d0 Model Generator","IMAGIC 3d0 Model Generator",$javafunc);
@@ -86,7 +106,18 @@ function jobform($extra=false) {
 			}
 		}
 	}
-
+	// get reference-free classification parameters from the clusterId
+	$clusterdata = $particle->getClusteringStacks($expId,"$projectId","False");
+	//print_r($clusterdata);
+	foreach ($clusterdata as $key => $clusterinfo) {
+                if ($clusterinfo[DEF_id] == $clusterId) {
+                        $position = $key;
+                        $clusterparams = array();
+                        foreach ($clusterdata[$position] as $key => $param) {
+                                $clusterparams[$key] = $param;
+                        }
+                }
+        }
 
 	// IMAGIC begins projections with [1] instead of [0]
 	$projections=$_GET['projections'];
@@ -148,11 +179,43 @@ function jobform($extra=false) {
 			echo formatHtmlRow($k,$v);
 		}
 	}
+        // if coming from new alignment pipeline using clusterId 
+        elseif ($clusterId) {
+                $clusterpath = $clusterparams['path'];
+                $clusterclassfile = $clusterparams['avg_imagicfile'];
+                if (ereg(".img", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
+		if (ereg(".hed", $clusterclassfile)) $clusterclassfile = str_replace(".hed", "", $clusterclassfile);
+		$clusterclassimgfile = $clusterpath."/".$clusterclassfile.".img";
+                $clusterclasshedfile = $clusterpath."/".$clusterclassfile.".hed";
+		$projectiontable.= "<table border='0', width='50'>";
+                //$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
+                $projectiontable.= "<tr>\n";
+                foreach ($projections as $key => $image) {
+                        $num = $key + 1;
+                        $projectiontable.= "<td rowspan='30' align='center' valign='top'>";
+                        $projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
+                        $projectiontable.= "<i>projection $num</i></td>\n";
+                }
+                $projectiontable.= "</tr></table>\n<BR/>";
+                echo $projectiontable;
+                $display_keys = array();
+                //$display_keys['description']=$norefclassparams['description'];
+                $display_keys['# class averages']=$clusterparams['num_classes'];
+                foreach($display_keys as $k=>$v) {
+                        echo formatHtmlRow($k,$v);
+                }
+        }
 	else echo "error: there are no class average runs for the initial model determination";
-
+	$default_num_classes = $display_keys['# class averages'];
 	$numrun = count($particle->getImagic3d0NoRefModelsFromSessionId($expId));
 	$numrun+= count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
+//	$numrun+= count($particle->getImagic3d0ClusterModelsFromSessionId($expId));
 	$newrun = $numrun + 1;
+// need to figure this out
+//$something = count($particle->getImagic3d0ClusterModelsFromSessionId($expId));
+//echo $something;
+//$test = count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
+//echo $test;
 
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -160,7 +223,6 @@ function jobform($extra=false) {
 	$outdir = ($_POST[output_directory]) ? $_POST[output_directory] : $outdir;
 	$runid = ($_POST[runid]) ? $_POST[runid] : "model".$newrun;
 	$symmetry = ($_POST[symmetry]) ? $_POST[symmetry] : "c1";
-	$num_classums = ($_POST[num_classums]) ? $_POST[num_classums] : "1-100";
 
 	// define documentation
 	$doc_runname = docpop('runid', '<t><b>Run Name:</b>');
@@ -184,7 +246,8 @@ function jobform($extra=false) {
 	echo "<input type='hidden' name='norefid' value=$norefId>";
 	echo "<input type='hidden' name='norefClassId' value=$norefClassId>";
 	echo "<input type='hidden' name='reclassid' value=$reclassId>";
-	
+	echo "<input type='hidden' name='clusterId' value=$clusterId>";	
+
 	// keys and documentation for user input values
 	$display_keys = array('itn', 
 				'symmetry', 
@@ -212,12 +275,11 @@ function jobform($extra=false) {
 	}
 	echo"  </tr><BR/>\n";
 
-	
 	// define default parameters for 0 iteration
 	$symmetry = ($_POST['symmetryn']) ? $_POST['symmetryn'] : "";
 	$euler_ang_inc = ($_POST['euler_ang_incn']) ? $_POST['euler_ang_incn'] : "10";
-	$num_classums = ($_POST['num_classumsn']) ? $_POST['num_classumsn'] : "";
-	$hamming_window = ($_POST['hamming_windown']) ? $_POST['hamming_windown'] : "0.8";
+	$num_classums = ($_POST['num_classumsn']) ?  $_POST['num_classumsn'] : $default_num_classes;
+	$hamming_window = ($_POST['hamming_windown']) ?$_POST['hamming_windown'] : "0.8";
 	$obj_size = ($_POST['obj_sizen']) ? $_POST['obj_sizen'] : "0.8";
 	$repalignments = ($_POST['repalignmentsn']) ? $_POST['repalignmentsn'] : "15";
 	$amask_dim = ($_POST['amask_dimn']) ? $_POST['amask_dimn'] : "0.04";
@@ -262,6 +324,7 @@ function create3d0() {
 	$fileorig = $_POST['fileorig'];
 	$norefId = $_POST['norefid'];
 	$norefClassId = $_POST['norefClassId'];
+	$clusterId = $_POST['clusterId'];
 	$reclassId = $_POST['reclassid'];
 	$outdir = $_POST['output_directory'];
 	$runid = $_POST['runid'];
@@ -285,21 +348,24 @@ function create3d0() {
 
 	// create python command that will launch job
 	$command = "imagic3d0.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".$_SESSION['projectId'];
 	if ($reclassId) {
 		$command.=" --reclassId=$reclassId";
 	}
 	elseif ($norefClassId) {
 		$command.=" --norefClassId=$norefClassId";
 	}
+	elseif ($clusterId) {
+		$command.=" --clusterId=$clusterId";
+	}
 	else jobform("error: there are no class average runs for the initial model determination");
-	$command.= " --runid=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
+	$command.= " --runname=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
 	$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 	$command.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
 	$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
 	$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"";
-	if ($commit) $command.= " --commit\n\n";
-	else $command.=" --no-commit\n\n";
+	if ($commit) $command.= " --commit";
+	else $command.=" --no-commit";
 
 /*	$jobfile = "{$runid}_imagic3d0.job";
 	$tmpjobfile = "/tmp/$jobfile";
