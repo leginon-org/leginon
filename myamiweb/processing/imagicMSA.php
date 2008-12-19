@@ -290,8 +290,8 @@ function runImagicMSA($extra=false)	{
 	if ($bin) $command.= " --bin=$bin";
 	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
-	if ($commit) $command.= " --commit\n";
-	else $command.=" --no-commit\n";
+	if ($commit) $command.= " --commit";
+	else $command.=" --no-commit";
 
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
