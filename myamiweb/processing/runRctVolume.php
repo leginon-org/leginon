@@ -71,7 +71,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	if (!empty($sessioninfo)) {

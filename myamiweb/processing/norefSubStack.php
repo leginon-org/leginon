@@ -50,7 +50,7 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	
 
 	// get outdir path
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission

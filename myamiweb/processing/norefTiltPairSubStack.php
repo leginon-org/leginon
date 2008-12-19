@@ -50,7 +50,7 @@ function createTiltPairSubStackForm($extra=false, $title='norefTiltPairSubStack.
 	
 
 	// get outdir path
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission

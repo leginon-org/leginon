@@ -51,7 +51,7 @@ function jobForm($extra=false) {
 	echo "<form name='imagicReclassifyClassums' method='post' action='$formaction'><br />\n";
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	// get number of reclassification runs

@@ -42,7 +42,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {

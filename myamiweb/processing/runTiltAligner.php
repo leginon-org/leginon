@@ -51,7 +51,7 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 
 	// Set any existing parameters in form
 	$particle=new particleData;

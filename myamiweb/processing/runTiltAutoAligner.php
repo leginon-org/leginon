@@ -51,7 +51,7 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 	<form name='viewerform' method='POST' ACTION='$formAction'>
 	<INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 
 	// Set any existing parameters in form
 	$particle=new particleData;

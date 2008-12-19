@@ -61,7 +61,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$maxy = ($_POST['maxy']) ? $_POST['maxy'] : '';
 
 	// get outdir path
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission

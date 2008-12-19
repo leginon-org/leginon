@@ -73,7 +73,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   }
   
   echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-  $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+  $sessiondata=getSessionList($projectId,$expId);
   $sessioninfo=$sessiondata['info'];
   
   if (!empty($sessioninfo) && !$jobId) {

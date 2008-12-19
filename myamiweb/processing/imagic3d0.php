@@ -53,7 +53,7 @@ function jobform($extra=false) {
 	$norefId=$_GET['norefId'];
 	$norefClassId=$_GET['norefClassId'];
 	$projectId=getProjectFromExpId($expId);
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$outdir=$sessioninfo['Image path'];

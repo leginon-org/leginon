@@ -40,7 +40,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {

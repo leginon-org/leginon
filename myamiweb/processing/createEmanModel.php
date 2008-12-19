@@ -53,7 +53,7 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 	$startcsymcheck = ($_POST['method']=='startcsym') ? 'CHECKED' : '';
 
 	// get outdir path
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	$javafunctions .= writeJavaPopupFunctions('appion');
@@ -194,7 +194,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 
 	// get outdir path
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	$javafunctions .= writeJavaPopupFunctions('appion');

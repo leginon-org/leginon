@@ -32,7 +32,7 @@ processing_header("Assessment Summary","Assessment Summary Page", $javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>
 <INPUT TYPE='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
-$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+$sessiondata=getSessionList($projectId,$sessionId);
 
 // --- Get Stack Data
 $particle = new particledata();

@@ -66,7 +66,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   <form name='viewerform' method='POST' ACTION='$formAction'>
   <input type='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
 
-  $sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+  $sessiondata=getSessionList($projectId,$expId);
 
   // Set any existing parameters in form
   $particle=new particleData;

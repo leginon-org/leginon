@@ -55,7 +55,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	
 	if (!empty($sessioninfo)) {

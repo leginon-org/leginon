@@ -99,7 +99,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission

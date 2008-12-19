@@ -48,7 +48,7 @@ function createNoRefClassifyForm($extra=false, $title='norefClassify.py Launcher
   
 	echo"
        <form name='viewerform' method='post' action='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 
 	$norefparams = $particle->getNoRefParams($norefid);
 	//print_r($norefparams);

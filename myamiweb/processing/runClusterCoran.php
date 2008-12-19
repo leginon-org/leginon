@@ -49,7 +49,7 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 	}
   
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 
 	$alignparams = $particle->getAlignStackParams($alignid);
 	//echo print_r($alignparams)."<br/><br/>\n";

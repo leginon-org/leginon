@@ -294,7 +294,7 @@ function jobform($modelid, $extra=false) {
 	// get experiment & model info
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$modeldata = $particle->getImagic3d0Data($modelid);
 
 	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;

@@ -45,7 +45,7 @@ function createCenterForm($extra=false, $title='centerParticleStack.py Launcher'
 	if (!$stackId) $stackId = $_POST['stackId'];
 
 	// get outdir path
-	$sessiondata=displayExperimentForm($projectId,$expId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 
 	// get path for submission

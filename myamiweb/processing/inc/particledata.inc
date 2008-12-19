@@ -375,16 +375,6 @@ class particledata {
 			."c.`defocusinit`, "
 			."c.`amplitude_contrast`, "
 			."c.`angle_astigmatism`, "
-			."c.`noise1`, "
-			."c.`noise2`, "
-			."c.`noise3`, "
-			."c.`noise4`, "
-			."c.`envelope1`, "
-			."c.`envelope2`, "
-			."c.`envelope3`, "
-			."c.`envelope4`, "
-			."c.`lowercutoff`, "
-			."c.`uppercutoff`, "
 			."c.`confidence` , "
 			."c.`confidence_d` , "
 			."c.`snr` , "
@@ -399,11 +389,13 @@ class particledata {
 			."on (c.`REF|leginondata|AcquisitionImageData|image` = i.`DEF_id`) "
 			."left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 			."where c.`REF|leginondata|AcquisitionImageData|image`='$imageId' ";
+		$q .= " AND c.`graph1` IS NOT NULL ";
 		$q .= "ORDER BY (c.`confidence`*c.`confidence_d`) DESC";
 		if ($order) {
 			$fields = $order['fields'];
 			$q .= " order by ".join(", ",$fields);
 		}
+		//echo $q;
 		return $this->mysql->getSQLResult($q);
 	}
 

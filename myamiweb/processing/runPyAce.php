@@ -235,7 +235,7 @@ function createPyAceForm($extra=false) {
 	}
 	echo"
 	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
 	if (!empty($sessioninfo)) {

@@ -50,7 +50,7 @@ $javascript="<script src='../js/viewer.js'></script>\n";
 processing_header("Leginon Image Assessor","Image Assessor",$javascript);
 echo"<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 
-$sessiondata=displayExperimentForm($projectId, $sessionId, $expId);
+$sessiondata=getSessionList($projectId,$expId);
 $sessioninfo=$sessiondata['info'];
 $presets=$sessiondata['presets'];
 

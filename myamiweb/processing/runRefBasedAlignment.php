@@ -143,7 +143,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	}
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=displayExperimentForm($projectId,$sessionId,$expId);
+	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
