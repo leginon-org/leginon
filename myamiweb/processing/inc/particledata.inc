@@ -1603,7 +1603,7 @@ class particledata {
 	}
 
 	function getClusteringStacks ($sessionId, $projectId, $showHidden=False) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.* "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, clusterrun.*, cluster.*, pd.`path` "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun` = clusterrun.`DEF_id`) "
@@ -1617,6 +1617,8 @@ class particledata {
 			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
 		  ."LEFT JOIN ApAlignAnalysisRunData AS analysis ON "
 		  ."  (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+		  ."LEFT JOIN ApPathData AS pd ON "
+		  ."  (cluster.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."WHERE "
 			." strun.`REF|leginondata|SessionData|session` = '$sessionId' "
 			." AND "
@@ -1630,7 +1632,7 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
-	} 
+	}
 
 	function getAlignStackIdsWithCluster ($sessionId, $projectId) {
 		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
