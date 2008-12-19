@@ -511,8 +511,8 @@ function imagic3dRefine() {
 		$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
 		$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc";
 		$command.= " --description=\"$description\"";
-		if ($commit) $command.= " --commit\n\n";
-		else $command.=" --no-commit\n\n";
+		if ($commit) $command.= " --commit";
+		else $command.=" --no-commit";
 	}
 /*
 	// write job file
