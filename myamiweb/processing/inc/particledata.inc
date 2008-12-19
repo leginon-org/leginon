@@ -260,7 +260,9 @@ class particledata {
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
+		//echo $q."<br/><br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r[runId];
 	}
 
@@ -1229,7 +1231,9 @@ class particledata {
 		$q= "SELECT * "
 			."FROM `ApStackParticlesData` "
 			."WHERE `REF|ApStackData|stack` = '$stackId'";
+		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r[0])."<br/><br/>\n";
 		return $r;
 	}
 
