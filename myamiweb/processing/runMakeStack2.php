@@ -192,33 +192,20 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 
 
-	echo"
-		</SELECT>
-		</td>
-	</tr>
-	</table>
-	</td>
-	<td class='tablebg'>
-	<table cellpadding='5' border='0'>
-	<tr>
-		<td valign='TOP'>";
+	//echo "</td></tr></table>";
+	echo "</td><td class='tablebg'>";
+	//echo "<table cellpadding='5' border='0'><tr><td valign='TOP'>";
 
 	echo docpop('stackdescr','<b>Stack Description:</b>');
-	echo "<br />\n";
+	echo "<br/>\n";
 	echo "<textarea name='description' rows='3' cols='36'>$rundescrval</textarea>\n";
-
-	echo "
-
-		</td>
-	</tr>";
-
-	echo "<tr>\n";
-	echo "<td>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
 
 	$prtlruns=count($prtlrunIds);
 
 	if (!$prtlrunIds) {
-		echo"<font COLOR='RED'><b>No Particles for this Session</b></font>\n";
+		echo"<font class='apcomment' size='+2'><b>No Particles for this Session</b></font>\n";
 	}
 	else {
 		echo docpop('stackparticles','Particles:');
@@ -235,18 +222,15 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 		echo "</SELECT>\n";
 	}
-	echo"
-		</td>
-	</tr>
-	<tr>
-		<td>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
 
 	$massessruns=count($massessrunIds);
 	$massessname = '';
 	$massessnames= $particle->getMaskAssessNames($sessionId);
 
 	if (!$massessnames) {
-		echo"<font class='apcomment'><b>No Mask Assessed for this Session</b></font>\n";
+		echo"<font class='apcomment' size='-2'><i>No Mask Assessed for this Session</i></font>\n";
 	}
 	else {
 		echo "Mask Assessment:
@@ -269,109 +253,92 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 		echo "</SELECT>\n";
 	}
-	echo"
-		</td>
-	</tr>
+	echo "<br/>\n";
+	echo "<br/>\n";
 
-
-	<tr>
-		<td>
-
-
-		<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
+	echo "<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
 	echo docpop('boxsize','Box Size');
 	echo "(Unbinned, in pixels)<br />\n";
-	echo "		</td>
-	</tr>
-	<tr>
-		<td valign='TOP'>
-		<b>Filter Values:</b></A><br />
-		<input type='text' name='lp' value='$lpval' size='4'>\n";
+	echo "<br/>\n";
+
+	echo "<b>Filter Values:</b><br/>";
+
+	echo "<input type='text' name='lp' value='$lpval' size='4'>\n";
 	echo docpop('lpstackval', 'Low Pass');
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
-	echo "<br />\n";
+	echo "<br/>\n";
+
 	echo "<input type='text' name='hp' value='$hpval' size='4'>\n";
 	echo docpop('hpstackval', 'High Pass');
 	echo "<font size=-2><i>(in &Aring;ngstroms)</i></font>\n";
-	echo "<br />\n";
+	echo "<br/>\n";
+
 	echo "<input type='text' name='bin' value='$binval' size='4'>\n";
 	echo docpop('stackbin','Binning');
-	echo "<br />
-	</tr>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
 
 	// commented out for now, since not implemented
-//	<tr>
-//		<td>
 //		<input type='checkbox' name='icecheck' onclick='enableice(this)' $icecheck>
 //		Ice Thickness Cutoff<br />
 //		Use Ice Thinner Than:<input type='text' name='ice' $icedisable value='$iceval' size='4'>
-//		(between 0.0 - 1.0)
-//		</td>
-//	</tr>\n";
+//		(between 0.0 - 1.0)\n";
+
 	if ($ctfdata) {
-		echo"
-	<tr>
-		<td>
-		<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>\n";
+		echo"<input type='checkbox' name='acecheck' onclick='enableace(this)' $acecheck>\n";
 		echo docpop('aceconf','ACE Confidence Cutoff');
 		echo "<br />\n";
 		echo "Use Values Above:<input type='text' name='ace' $acedisable value='$aceval' size='4'>
-		(between 0.0 - 1.0)
-		</td>
-	</tr>\n";
+		(between 0.0 - 1.0)\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
 	}
-	if ($prtlrunIds) {
-		echo"
-	<tr>
-		<td>
-		<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>\n";
-		echo docpop('partcutoff','Particle Correlation Cutoff');
-		echo "<br />\n";
-		echo "(between 0.0 - 1.0)<br />
-		Use Values Above:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br />
-		Use Values Below:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br />
-		<br />\n";
-		echo "<b>Defocal pairs:</b>\n";
-		echo "<br />\n";
-		echo "<input type='checkbox' name='defocpair' $defocpair>\n";
-		echo docpop('stackdfpair','Calculate shifts for defocal pairs');
-		echo "<br />
-		</td>
-	</tr>\n";
-	}
+
+
+	echo"<input type='checkbox' name='selexcheck' onclick='enableselex(this)' $selexcheck>\n";
+	echo docpop('partcutoff','Particle Correlation Cutoff');
+	echo "<br />\n";
+	echo "Use Values Above:<input type='text' name='correlationmin' $selexdisable value='$selexminval' size='4'><br/>\n";
+	echo "Use Values Below:<input type='text' name='correlationmax' $selexdisable value='$selexmaxval' size='4'><br/>\n";
+	echo "<br/>\n";
+
+	echo "<b>Defocal pairs:</b>\n";
+	echo "<br/>\n";
+	echo "<input type='checkbox' name='defocpair' $defocpair>\n";
+	echo docpop('stackdfpair','Calculate shifts for defocal pairs');
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	//if there is CTF data, show min & max defocus range
 	if ($ctfdata) {
 		$fields = array('defocus1', 'defocus2');
 		$bestctf = $particle->getBestStats($fields, $sessionId);
-		$min="-".$bestctf['defocus1'][0]['min'];
-		$max="-".$bestctf['defocus1'][0]['max'];
+		$min=-1*abs($bestctf['defocus1'][0]['min']);
+		$max=-1*abs($bestctf['defocus1'][0]['max']);
+		//echo $min."<br/>\n";
+		//echo $max."<br/>\n";
 		// check if user has changed values on submit
 		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
 		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
 		$sessionpath=ereg_replace("E","e",$sessionpath);
 		$minval = ereg_replace("E","e",round($minval,8));
 		$maxval = ereg_replace("E","e",round($maxval,8));
-		echo"
-		<tr>
-			<td valign='TOP'>
-			<b>Defocus Limits</b><br />
+		echo"<b>Defocus Limits</b><br />
 			<input type='text' name='dfmin' value='$minval' size='25'>
 			<input type='hidden' name='dbmin' value='$minval'>
 			Minimum<br />
 			<input type='text' name='dfmax' value='$maxval' size='25'>
 			<input type='hidden' name='dbmax' value='$maxval'>
-			Maximum
-			</td>
-		</tr>\n";
+			Maximum\n";
+		echo "<br/>\n";
+		echo "<br/>\n";
 	}
 
-	echo "<tr><td>\n";
 
 	echo docpop('stacklim','Limit # of particles to: ');
 	echo "<input type='text' name='partlimit' value='$partlimit' size='8'>\n";
+	echo "<br/>\n";
 
-	echo "</td></tr>\n";
-	echo "</table>\n";
 	echo "</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
