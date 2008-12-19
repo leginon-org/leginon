@@ -46,9 +46,6 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
 	$stackruns = count($particle->getStackIds($sessionId, True));
 
-	// --- make list of file formats
-	$fileformats=array('imagic','spider');
-
 	$javascript="<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 
@@ -393,8 +390,6 @@ function runMakestack() {
 	if ($bin) {
 		if (!is_numeric($bin)) createMakestackForm("<b>ERROR:</b> Binning amount must be an integer");
 	}
-	// don't bother with bin if it's just 1
-	if ($bin == 1) $bin='';
 
 	// box size
 	$boxsize = $_POST['boxsize'];
@@ -427,8 +422,6 @@ function runMakestack() {
 	$dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']>$_POST['dbmin']) ? '' : $_POST['dfmin'];
 	$dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
 
-	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
-
 	// mask assessment
 	$massessname=$_POST['massessname'];
 
@@ -453,14 +446,14 @@ function runMakestack() {
 	}
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
-	if ($bin) $command.="--bin=$bin ";
+	if ($bin > 1) $command.="--bin=$bin ";
 	if ($ace) $command.="--ace=$ace ";
 	if ($defocpair) $command.="--defocpair ";
 	if ($correlationmin) $command.="--mincc=$correlationmin ";
 	if ($correlationmax) $command.="--maxcc=$correlationmax ";
 	if ($dfmin) $command.="--mindef=$dfmin ";
 	if ($dfmax) $command.="--maxdef=$dfmax ";
-	if ($fileformat) $command.="--spider ";
+	if ($_POST['fileformat']=='spider') $command.="--spider ";
 	if ($partlimit != "none") $command.="--partlimit=$partlimit ";
 	$command.="--description=\"$description\" ";
 
@@ -504,7 +497,6 @@ function runMakestack() {
 	<tr><td>phase flip</td><td>$phaseflip</td></tr>
 	<tr><td>flip type</td><td>$fliptype</td></tr>
 	<tr><td>mask assessment</td><td>$massessname</td></tr>
-	<tr><td>commit</td><td>$commit</td></tr>
 	<tr><td>box size</td><td>$boxsize</td></tr>
 	<tr><td>binning</td><td>$bin</td></tr>
 	<tr><td>ace cutoff</td><td>$ace</td></tr>
@@ -513,7 +505,7 @@ function runMakestack() {
 	<tr><td>minimum defocus</td><td>$dfmin</td></tr>
 	<tr><td>maximum defocus</td><td>$dfmax</td></tr>
 	<tr><td>particle limit</td><td>$partlimit</td></tr>
-	<tr><td>spider</td><td>$fileformat</td></tr>";
+	<tr><td>spider</td><td>$_POST[fileformat]</td></tr>";
 
 	echo "</table>\n";
 	processing_footer(True,True);
