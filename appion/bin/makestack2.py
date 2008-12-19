@@ -89,31 +89,33 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### check if we have values and if we care
 		if ctfvalue is None:
 			if self.params['acecutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']:
-				apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
+				#apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
 				return False
 			else:
 				#apDisplay.printWarning(shortname+".mrc has no ACE values")
 				return True
 
+		### check that ACE estimation is above confidence threshold
+		if self.params['acecutoff'] and conf < self.params['acecutoff']:
+			#apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
+			return False
+
 		### get best defocus value
+		### defocus should be in negative meters
 		if ctfvalue['defocus2'] is not None and ctfvalue['defocus1'] != ctfvalue['defocus2']:
 			defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		else:
 			defocus = ctfvalue['defocus1']
-
-		### check that ACE estimation is above confidence threshold
-		if self.params['acecutoff'] and conf < self.params['acecutoff']:
-			apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
-			return False
+		defocus = -1.0*abs(defocus)
 
 		### skip micrograph that have defocus above or below min & max defocus levels
-		if self.params['mindefocus'] and defocus > self.params['mindefocus']*1e6:
-			apDisplay.printColor(shortname+".mrc defocus ("+str(round(defocus,3))+\
-				" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
+		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
+			#apDisplay.printColor(shortname+".mrc defocus ("+str(round(defocus*1e6,2))+\
+			#	" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
 			return False
-		if self.params['maxdefocus'] and defocus < self.params['maxdefocus']*1e6:
-			apDisplay.printColor(shortname+".mrc defocus ("+str(round(defocus,3))+\
-				" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
+		if self.params['maxdefocus'] and defocus < self.params['maxdefocus']:
+			#apDisplay.printColor(shortname+".mrc defocus ("+str(round(defocus*1e6,2))+\
+			#	" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
 			return False
 
 		return True
@@ -506,17 +508,43 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
 		else:
-			print uniqstackdatas
-			print uniqrundatas
+			#print uniqstackdatas
+			#print uniqrundatas
 			rinstack = rinstackq.query(results=1)
+			#print rinstack
+			prevrinstackq = appionData.ApRunsInStackData()
+			prevrinstackq['stackRun'] = uniqrundatas[0]
+			prevrinstackq['stack'] = uniqstackdatas[0]
+			prevrinstackq['project|projects|project'] = projectnum
+			prevrinstack = prevrinstackq.query(results=1)
+			#print prevrinstack
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
-				rinstackq = appionData.ApRunsInStackData()
-				rinstackq['stack'] = uniqstackdatas[0]
-				prevrinstack = rinstackq.query(results=1)
-				for i in prevrinstack[0]['stackRun']['stackParams']:
-					if prevrinstack[0]['stackRun']['stackParams'][i] != stparamq[i]:
+				for i in uniqrundatas[0]:
+					print "r =======",i,"========"
+					if uniqrundatas[0][i] != runq[i]:
 						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i,uniqrundatas[0][i],runq[i]
+				for i in uniqrundatas[0]['stackParams']:
+					print "p =======",i,"========"
+					if uniqrundatas[0]['stackParams'][i] != stparamq[i]:
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i, uniqrundatas[0]['stackParams'][i], stparamq[i]
+				for i in uniqstackdatas[0]:
+					print "s =======",i,"========"
+					if uniqstackdatas[0][i] != stackq[i]:
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i,uniqstackdatas[0][i],stackq[i]
+				for i in prevrinstack[0]:
+					print "rin =======",i,"========"
+					if prevrinstack[0][i] != rinstackq[i]:
+						print i,prevrinstack[0][i],rinstackq[i]
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i,prevrinstack[0][i],rinstackq[i]
 				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
 							     "please check your parameter settings.")
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
