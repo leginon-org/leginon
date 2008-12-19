@@ -48,7 +48,7 @@ if ($expId) {
 	}
 
 	// ---  Get CTF Data
-	if ($ctfrunIds = $particle->getCtfRunIds($expId)) {
+	if ($ctfrunIds = $particle->getCtfRunIds($expId, False)) {
 		$ctfruns=count($ctfrunIds);
 	}
 
