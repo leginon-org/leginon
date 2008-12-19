@@ -486,8 +486,8 @@ class particledata {
 		foreach ($fields as $field) {
 			$selects[$field] =  " ctfdata.name , "
 					. "count(ctfdata.`$field`) as `nb`, "
-					. "min(ctfdata.`$field`) as `min`, "
-					. "max(ctfdata.`$field`) as `max`, "
+					. "min(abs(ctfdata.`$field`)) as `min`, "
+					. "max(abs(ctfdata.`$field`)) as `max`, "
 					. "avg(ctfdata.`$field`) as `avg`, "
 					. "stddev(ctfdata.`$field`) as `stddev` ";
 		}
@@ -508,17 +508,15 @@ class particledata {
 				."			p.`name`, "
 				."			s.`defocus`, "
 				."			c.`defocus1`, c.`defocus2`, c.`defocusinit`, c.`angle_astigmatism`, "
-				."			c.`noise1`, c.`noise2`, c.`noise3`, c.`noise4`, "
-				."			c.`envelope1`, c.`envelope2`, c.`envelope3`, c.`envelope4`, c.`lowercutoff`, c.`uppercutoff`, c.`snr`, "
 				."			c.`confidence`,c.`confidence_d` , "
-				."(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
+				."			(c.`defocus1`+c.`defocus2`)/2+s.`defocus` as difference "
 				."		from `ApCtfData` c "
 				."		left join ".DB.".`AcquisitionImageData` i on (i.DEF_id=c.`REF|leginondata|AcquisitionImageData|image`) "
 				."		left join ".DB.".`PresetData` p on (p.DEF_id=i.`REF|PresetData|preset`) "
-				."		left join ".DB.".ScopeEMData s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
+				."		left join ".DB.".`ScopeEMData` s on (i.`REF|ScopeEMData|scope` = s.`DEF_id`) "
 				."		where "
 				."		c.`REF|leginondata|AcquisitionImageData|image` in  "
-				."		( "
+				."			( "
 				."			select a.`DEF_id` from ".DB.".`AcquisitionImageData` a  "
 				."			where a.`REF|SessionData|session`='$sessionId'  "
 				."			)  "
@@ -530,7 +528,8 @@ class particledata {
 				if ($limit){
 					$q .= " where sqrt(ctfdata.confidence * ctfdata.confidence_d) > $limit ";
 				}
-				$q .= " group by ctfdata.name ";
+				$q .= " group by ctfdata.name; ";
+				//echo $q;
 			$r = $this->mysql->getSQLResult($q);
 			$stats[$k] = $r;
 		}
