@@ -267,8 +267,8 @@ function generateProcessedClasses() {
 	$command .= " --norefclassid=$classid --runname=$runid --rundir=$outdir/$runid --oldstack=$filename --lp=$lpfilt";
 	$command .= " --hp=$hpfilt --mask=$mask_radius --mask_d=$mask_dropoff --niter=$niter";
 	$command .= " --numaverages=$new_classums --description=\"$description\"";
-	if ($commit) $command .= " --commit\n";
-	else $command.=" --no-commit\n";
+	if ($commit) $command .= " --commit";
+	else $command.=" --no-commit";
 /*
 	// write to jobfile
 	$jobfile = "{$runid}_imagicReclassifyClassums.job";
