@@ -222,9 +222,9 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "&nbsp;&nbsp;<select name='fastmode' ";
 	if (!$fast) echo " disabled";
 	echo ">\n";
-	echo "<option value='normal'>Normal search</option>\n";
-	echo "<option value='narrow'>Faster, narrower search</option>\n";
-	echo "<option value='wide'>Slower, wider search</option>\n";
+	echo " <option value='normal'>Normal search</option>\n";
+	echo " <option value='narrow'>Faster, narrower search</option>\n";
+	echo " <option value='wide'>Slower, wider search</option>\n";
 	echo "</select>\n";
 	echo "<br/>\n";
 
