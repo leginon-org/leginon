@@ -147,7 +147,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### check if we have particles
 		if len(partdatas) == 0:
 			apDisplay.printColor(shortname+".mrc has no particles and has been rejected\n","cyan")
-			return 0
+			return None, None, None
 
 		### apply correlation limits
 		if self.params['correlationmin'] or self.params['correlationmax']:
@@ -160,7 +160,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### check if we have particles
 		if len(partdatas) == 0:
 			apDisplay.printColor(shortname+".mrc has no remaining particles and has been rejected\n","cyan")
-			return 0
+			return None, None, None
 
 		### save particle coordinates to box file
 		boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata)
@@ -168,7 +168,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### count number of particles in box file
 		if len(boxedpartdatas) == 0:
 			apDisplay.printColor(shortname+".mrc has no remaining particles and has been rejected\n","cyan")
-			return 0
+			return None, None, None
 
 		### run batchboxer command
 		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
@@ -679,12 +679,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### run batchboxer
 		self.boxedpartdatas, self.imgstackfile, self.partmeantree = self.boxParticlesFromImage(imgdata)
-		self.stats['lastpeaks'] = len(self.boxedpartdatas)
-
-		if not self.boxedpartdatas:
+		if self.boxedpartdatas is None:
 			apDisplay.printWarning("no particles were boxed from "+shortname+"\n")
 			self.badprocess = True
 			return
+
+		self.stats['lastpeaks'] = len(self.boxedpartdatas)
 
 		apDisplay.printMsg("do not break function now otherwise it will corrupt run")
 		time.sleep(1.0)
