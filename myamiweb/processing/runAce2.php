@@ -79,10 +79,17 @@ function createAce2Form($extra=false) {
 	<TR>
 	  <TD VALIGN='TOP'>";
 
+
 	createAppionLoopTable($sessiondata, $defrunname, "ctf");
 	echo"
 	  </TD>
-	  <TD CLASS='tablebg'>\n";
+	  <TD CLASS='tablebg' valign='top'>\n";
+
+	srand(time());
+	if ((rand()%2) < 3) {
+		echo"<center><IMG SRC='img/ace2.jpg' WIDTH='300'></center><br />\n";
+	}
+
 
 	echo "<INPUT TYPE='text' NAME='binval' VALUE='2' SIZE='4'>\n";
 	echo docpop('binval','Binning');
