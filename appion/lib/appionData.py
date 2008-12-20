@@ -759,6 +759,8 @@ class ApInitialModelData(Data):
 			('description', str),
 			('hidden', bool),
 			('md5sum', str),
+			('original density', Ap3dDensityData),
+			('original model', ApInitialModelData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApInitialModelData=ApInitialModelData

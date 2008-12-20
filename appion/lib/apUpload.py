@@ -142,6 +142,10 @@ def insertModel(params):
 	filepath = os.path.join(params['rundir'], params['name'])
 	modq['md5sum'] = apFile.md5sumfile(filepath)
 	modq['description'] = params['description']
+	if params['densityid'] is not None:
+		modq['original density'] = appionData.Ap3dDensityData.direct_query(params['densityid'])
+	if params['oldmodelid'] is not None:
+		modq['original model'] = appionData.ApInitialModelData.direct_query(params['oldmodelid'])
 	if params['commit'] is True:
 		modq.insert()
 	else:
