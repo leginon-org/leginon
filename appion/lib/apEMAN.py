@@ -156,7 +156,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 	"""
 	waited = False
 	if showcmd is True:
-		sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
+		sys.stdout.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
 	t0 = time.time()
 	try:
 		if logfile is not None:
@@ -232,7 +232,7 @@ def numberParticlesInStack(stackname, startnum=0, verbose=True):
 		if verbose is True and i%100 == 0:
 			sys.stderr.write(back+back+back+str(j)+" of "+str(n))
 		i+=1
-	sys.stderr.write(back+back+back+back+back+"finished in "+apDisplay.timeString(time.time()-t0))
+	sys.stdout.write(back+back+back+back+back+"finished in "+apDisplay.timeString(time.time()-t0))
 	return
 
 #=====================

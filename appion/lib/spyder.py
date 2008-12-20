@@ -118,7 +118,7 @@ class SpiderSession:
 		self.logf.flush()
 		f = open("spider.log", "r")
 		for i in range(7):
-			sys.stderr.write(f.readline())
+			sys.stdout.write(f.readline())
 		f.close()
 
 	def wait(self):
@@ -156,14 +156,14 @@ class SpiderSession:
 			tdiff = time.time()-self.starttime
 			if tdiff > 20:
 				tstr = self.timeString(tdiff)
-				sys.stderr.write("\nSPIDER completed in "+tstr+"\n")
+				sys.stdout.write("\nSPIDER completed in "+tstr+"\n")
 			else:
 				sys.stderr.write("\n")
 		self.spiderproc.wait()
 
 	def toSpider(self, *args):
 		" each item is a line sent to Spider"
-		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
+		sys.stdout.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
 		for item in args:
 			self.spiderin.write(str(item) + '\n')
 		self.spiderin.flush()
