@@ -19,6 +19,7 @@
 <td>
 <?php
 require "inc/leginon.inc";
+@require_once "inc/project.inc";
 require "inc/particledata.inc";
 
 $imgId=$_GET['id'];

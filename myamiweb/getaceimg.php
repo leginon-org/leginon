@@ -1,6 +1,7 @@
 <?php
 require "inc/leginon.inc";
 require "inc/image.inc";
+@require_once "inc/project.inc";
 require "inc/particledata.inc";
 
 $imgId=$_GET['id'];
