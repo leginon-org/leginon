@@ -96,10 +96,10 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 
 	### first find the runid
 	runq = appionData.ApSelectionRunData()
-	runq['name'] = params['runid']
+	runq['name'] = params['runname']
 	runq['session'] = imgdata1['session']
-	runids = runq.query(results=1)
-	if not runids:
+	rundatas = runq.query(results=1)
+	if not rundatas:
 		apDisplay.printError("could not find runid in database")
 
 	### the order is specified by 1,2; so don't change it let makestack figure it out
@@ -107,7 +107,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 		for index in ("1","2"):
 			transq = appionData.ApImageTiltTransformData()
 			transq["image"+index] = imgdata
-			transq['tiltrun'] = runids[0]
+			transq['tiltrun'] = rundatas[0]
 			transdata = transq.query()
 			if transdata:
 				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
@@ -117,7 +117,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	transq = appionData.ApImageTiltTransformData()
 	transq['image1'] = imgdata1
 	transq['image2'] = imgdata2
-	transq['tiltrun'] = runids[0]
+	transq['tiltrun'] = rundatas[0]
 	dbdict = tiltPickerToDbNames(tiltparams)
 	if dbdict is None:
 		return None
