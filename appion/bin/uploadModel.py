@@ -15,6 +15,7 @@ import apDatabase
 import apRecon
 import apVolume
 import apProject
+import appionData
 
 #=====================
 #=====================
@@ -46,8 +47,10 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Boxsize of new model", metavar="INT")
 		self.parser.add_option("-m", "--modelid", "--old-model-id", dest="oldmodelid", type="int",
 			help="Initial model id in the database to rescale", metavar="INT")
+		self.parser.add_option("--densityid", dest="densityid", type="int",
+			help="3D Density id in the database to upload as an accepted model", metavar="INT")
 		self.parser.add_option("--name", dest="name",
-			help="File name for new model, automatically set")
+			help="Prefix name for new model, automatically append res_pixelsize_box.mrc in the program")
 
 	#=====================
 	def checkConflicts(self):
@@ -63,11 +66,16 @@ class UploadModelScript(appionScript.AppionScript):
 			self.params['rescale'] = False
 		else:
 			self.params['rescale'] = True
-		### program requires either a model id  or filename
-		if self.params['oldmodelid'] is not None and self.params['file'] is not None:
-			apDisplay.printError("Either provide a modelid or file, but not both")
+		### program requires either a model id or density id or filename
+		checkvalue = int(self.params['file'] is not None)
+		checkvalue += int(self.params['oldmodelid'] is not None)
+		checkvalue += int(self.params['densityid'] is not None)
+		if checkvalue != 1:
+			apDisplay.printError("Either provide a modelid or densityid or file, but not more than one of them")
 		elif self.params['oldmodelid'] is not None and self.params['rescale'] is False:
 			apDisplay.printError("Please specify either a new boxsize or scale for your model")
+		elif self.params['densityid'] is not None:
+			self.getDensityParams()
 		elif self.params['oldmodelid'] is not None:
 			self.getModelParams()
 		elif self.params['file'] is not None:
@@ -94,30 +102,48 @@ class UploadModelScript(appionScript.AppionScript):
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['rundir'] = os.path.join(path,"models")
+		self.params['rundir'] = os.path.join(path,"models","accepted",self.params['runname'])
 
 	#=====================
 	def setNewFileName(self, unique=False):
-		#clean up old name
+		# use the part before "-" as default prefixname
 		basename = os.path.basename(self.params['file'])
-		basename = re.sub(".mrc", "", basename)
-		basename = re.sub("-[0-9]_[0-9]+(apix)?", "", basename)
-		basename = re.sub("-[0-9]+(box)?", "", basename)
-		basename = re.sub("[0-9]+", "", basename)
-		basename = re.sub("-", "", basename)
-		# set apix, box, and foldname
-		foldname = os.path.basename(os.path.dirname(self.params['file']))
+		nameparse = basename.split("-")
+		prefixname = nameparse[0]
+		# set apix, resolution, and box name
+		resname = re.sub("\.", "_", str(round(self.params['res'],2)))+"res"
 		apixname = re.sub("\.", "_", str(round(self.params['newapix'],2)))+"apix"
 		boxsizename = str(int(self.params['newbox']))+"box"
 		if unique:
 			uniqueid = '-'+str(time.time())
 		else:
 			uniqueid = ''
+		# use modelid and densityid as prefixname if specified
 		if self.params['oldmodelid'] is not None:
+			prefixname = "model%03d" % self.params['oldmodelid']
+		if self.params['densityid'] is not None:
+			prefixname = "density%03d" % self.params['densityid']
 
-			self.params['name'] = basename+"-"+apixname+"-"+boxsizename+uniqueid+".mrc"
+		self.params['name'] = prefixname+"-"+apixname+"-"+resname+"-"+boxsizename+uniqueid+".mrc"
+
+	#=====================
+	def getDensityParams(self):
+		print self.params['densityid']
+		densitydata = appionData.Ap3dDensityData.direct_query(self.params['densityid'])
+		self.params['oldapix'] = float(densitydata['pixelsize'])
+		symmetrydata = densitydata['symmetry']
+		if symmetrydata is None:
+			symmq = appionData.ApSymmetryData(symmetry = 'C1')
+			symmresult = symmq.query()
+			self.params['sym'] = symmresult[0].dbid
 		else:
-			self.params['name'] = foldname+"-"+basename+"-"+apixname+"-"+boxsizename+uniqueid+".mrc"
+			self.params['sym'] = symmetrydata.dbid
+		self.params['res'] = float(densitydata['resolution'])
+		self.params['file'] = os.path.join(densitydata['path']['path'], densitydata['name'])
+		if self.params['newapix'] is None:
+			self.params['newapix'] = self.params['oldapix']
+		if self.params['newapix'] is None:
+			self.params['newapix'] = self.params['oldapix']
 
 	#=====================
 	def getModelParams(self):

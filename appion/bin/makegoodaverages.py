@@ -265,7 +265,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		refinerundata=appionData.ApRefinementRunData.direct_query(reconid)
 		if not refinerundata:
 			apDisplay.printError("reconid "+str(reconid)+" does not exist in the database")
-		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'eulers')
+		self.params['rundir'] = os.path.join(refinerundata['path']['path'], 'eulers',self.params['runname'])
 
 	#=====================
 	def start(self):
@@ -339,10 +339,11 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		sys.stderr.write("\n")
 		reject.close()
 		keep.close()
+
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
 		apDisplay.printColor("Make a new stack with only non-jumpers:\n"
-			+"subStack.py --projectid="+self.params['projectid']." -s "+stackstr+" \\\n "
+			+"subStack.py --projectid="+str(self.params['projectid'])+" -s "+stackstr+" \\\n "
 			+" -k "+os.path.join(self.params['rundir'],"keep.lst")+" \\\n "
 			+" -d 'recon "+reconstr+" sitters' -n sitters"+reconstr+" -C ", "purple")
 

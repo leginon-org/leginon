@@ -55,7 +55,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['rundir'] = os.path.join(path,"models")
+		self.params['rundir'] = os.path.join(path,"models","emdb",self.params['runname'])
 
 	#=====================
 	def setNewFileName(self, unique=False):

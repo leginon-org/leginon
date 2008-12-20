@@ -82,7 +82,7 @@ class PostProcScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		self.params['rundir'] = os.path.join(self.params['filepath'], "postproc")
+		self.params['rundir'] = os.path.join(self.params['filepath'], "postproc",self.params['runname'])
 		return
 
 	#=====================

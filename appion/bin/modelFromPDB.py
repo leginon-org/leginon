@@ -59,7 +59,7 @@ class modelFromPDB(appionScript.AppionScript):
 		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","",path)
-		self.params['rundir'] = os.path.join(path,"models")
+		self.params['rundir'] = os.path.join(path,"models","pdb",self.params['runname'])
 
 	#=====================
 	def setNewFileName(self, unique=False):
@@ -123,7 +123,8 @@ class modelFromPDB(appionScript.AppionScript):
 		self.params['basename']=os.path.splitext(newmodelpath)[0]
 		### remove '.' from basename for spider
 		tmpname = re.sub("\.", "_", self.params['basename'])
-
+		tmpdir = os.path.dirname(tmpname)
+		tmpname = os.path.join(self.params['rundir'],tmpname)
 		### get pdb from web
 		pdbfile = self.fetchPDB(tmpname)
 
