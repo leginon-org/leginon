@@ -140,7 +140,7 @@ if ($ctfrundatas) {
 					$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 					$j.= " <input class='edit' type='submit' name='unhideRun".$ctfrunid."' value='unhide'>\n";
 				} else $j.= " <input class='edit' type='submit' name='hideRun".$ctfrunid."' value='hide'>\n";
-				echo apdivtitle("Ctf Run: ".$popupstr."<b>".$rName."</b></a>$j\n");
+				echo apdivtitle("Ctf Run: ".$ctfrunid." ".$popupstr."<b>".$rName."</b></a>$j\n");
 
 				echo "</td>\n";
 			echo "</tr>\n";
