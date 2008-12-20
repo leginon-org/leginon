@@ -111,10 +111,13 @@ function runUploadModel() {
 
 	if (!is_float($res)) $res = $res.".0";
 	$filename = $emdbid.'-'.$apix.'-'.$res.'-'.$box;
-	// filename will be the runid if running on cluster
-	$runid = $filename.'.upload';
+	// emdb id will be the runname
+	$runname = getTimestring();
+	$runname = $emdbid."_".$runname;
+	$rundir = $outdir."/".$runname;
 
 	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--runname=".$runname." ";
 	$command.="-e $emdbid ";
 	$command.="-s $session ";
 	$command.="-a $apix ";
@@ -128,12 +131,13 @@ function runUploadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadmodel',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'downloadmodel',True);
+
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
 		$status = "Model was created from EMDB";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
@@ -154,19 +158,19 @@ function runUploadModel() {
 	echo"<table class='tableborder' width='600' border='1'>\n";
 	echo "<tr><td>\n";
 	if ($status) echo "$status<hr />\n";
-	echo "<b>UploadModel Command:</b><br />\n";
+	echo "<b>DownloadModel Command:</b><br />\n";
 	echo "$command\n";
 	echo "<p>\n";
-	if (!file_exists($outdir.'/'.$filename.'.mrc')) {
+	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
 		echo "EM Density file to be created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$outdir/$filename.mrc</a></b><br />\n";
+		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
 	}
 	else {
 		echo "EM Density file created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$outdir/$filename.mrc</a></b><br />\n";
+		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
 		echo "<hr />\n";
 		$formAction="uploadmodel.php?expId=$expId";
-		$formAction.="&emdbmod=$outdir/$filename.mrc";
+		$formAction.="&emdbmod=$rundir/$filename.mrc";
 		echo "<form name='uploadmodel' method='POST' ACTION='$formAction'>\n";
 		echo "<center><input type='submit' name='goUploadModel' value='Upload This Model'></center><br />\n";
 		echo "<input type='hidden' name='description' value='density created from EMDB id: $emdbid'>\n";

@@ -19,6 +19,7 @@ require "inc/processing.inc";
 if ($_POST['process']) {
 	$leginon = new leginondata();
 
+	$runname=$_POST['runname'];
 	$expId = $_GET['expId'];
 	$refId = $_GET['refinement'];
 	$ampcor=$_POST['ampcor'];
@@ -39,10 +40,6 @@ if ($_POST['process']) {
 	$densitypath=$path."/".$file;
 	$outdir=$path."/postproc";
 	$densityname = $_POST['densityname'];
-	// runname is generated from density
-	$timestr = getTimestring();
-	$densityroot = substr($densityname, 0, -4);
-	$runname = $timestr;
 
 	// make sure that an amplitude curve was selected
 	if (!$ampcor) createform('<B>ERROR:</B> Select an amplitude adjustment curve');
@@ -160,6 +157,13 @@ function createform($extra=False) {
 
 	$amplist = array();
 
+	// runname is generated from density
+	$timestr = getTimestring();
+	$densityroot = substr($densityname, 0, -4);
+	$runname = $timestr;
+	$runname = "refine".$refId."_".$runname;
+	
+	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$lpval=($_POST['lp']) ? $_POST['lp'] : '';
 	$maskval=($_POST['mask']) ? $_POST['mask'] : '';
 	$imaskval=($_POST['imask']) ? $_POST['imask'] : '';
@@ -187,6 +191,10 @@ function createform($extra=False) {
 	$amplist[3]['src']="Experimental X-ray curve, smoothed by Dmitri Svergun";
 	echo "<form name='postproc' method='post' action='$formAction'>\n";
 	echo "<input type='hidden' name='densityname' value='".$info['volumeDensity']."'>";
+	echo docpop('runname','Run Name:');
+	echo "<br />\n";
+	echo "  <input type='text' name='runname' size='25' value='$runname'>\n";
+	echo "<br />\n";
 	echo "Density File: $densityfile<br />\n";
 	echo "Pixel Size: $apix ang/pix<br />\n";
 	echo "<b>Reported Resolution:</b><br />\n";

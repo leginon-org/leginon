@@ -82,13 +82,15 @@ function createform($extra=False) {
 	$refinfo = $particle->getRefinementRunInfo($reconId);
 	// get iteration parameters for specified iteration:
 	$paraminfo = $particle->getParamsFromRefinementDataId($refId);
+	$runname = getTimestring();
+	$runname = "refine".$refId."_".$runname;
 
 	$iter=($_POST['iter']) ? $_POST['iter'] : $iter;
 	$mask=($_POST['mask']) ? $_POST['mask'] : $paraminfo['mask'];
 	$sigma=($_POST['sigma']) ? $_POST['sigma'] : '';
 	$avgjump=($_POST['avgjump']) ? $_POST['avgjump'] : '0';
 	$avgname=($_POST['avgname']) ? $_POST['avgname'] : 'goodavgs.hed';
-	$runname=($_POST['runname']) ? $_POST['runname'] : 'goodstack1';
+	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
 	$eocheck=($_POST['eotest']=='on' || !$_POST['run']) ? 'checked' : '';
 

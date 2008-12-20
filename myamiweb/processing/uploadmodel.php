@@ -25,28 +25,37 @@ else {
 }
 
 function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $heading='Upload an Initial Model') {
+	$particle = new particledata();
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
-	if ($_GET['apix'])
-		$_POST['apix'] = $_GET['apix'];
-	if ($_GET['sym'])
-		$_POST['sym'] = $_GET['sym'];
-
 	$rescale=$_GET['rescale'];
-	$pdbmod=$_GET['pdbmod'];
-	
-	$particle = new particledata();
-
+	if ($_GET['densityId']) {
+		$densityid = $_GET['densityId'];
+		$densityinfo = $particle->get3dDensityInfo($densityid);
+		$apix = $densityinfo['pixelsize'];
+		$res = $densityinfo['resolution'];
+		$description = $densityinfo['description'];
+	} else {
 	// find out if rescaling an existing initial model
-	if ($rescale) {
-		$modelid=$_GET['modelid'];
-		$modelinfo = $particle->getInitModelInfo($modelid);
+		if ($rescale) {
+			$modelid=$_GET['modelid'];
+			$modelinfo = $particle->getInitModelInfo($modelid);
+			$_POST['apix'] = $modelinfo['pixelsize'];
+			$_POST['res'] = $modelinfo['resolution'];
+			$_POST['sym'] = $modelinfo['REF|ApSymmetryData|symmetry'];
+		} else {
+			if ($_GET['apix'])
+				$_POST['apix'] = $_GET['apix'];
+			if ($_GET['sym'])
+				$_POST['sym'] = $_GET['sym'];
+		}
 	}
+	
 
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	if ($rescale) $formAction .="&rescale=TRUE&modelid=$modelid";
-	if ($pdbmod) $formAction .="&pdbmod=$pdbmod";
+	if ($densityid) $formAction .="&densityId=$densityid";
   
 	processing_header($title,$heading,False,True);
 	// write out errors, if any came up:
@@ -62,19 +71,21 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		$outdir=$sessioninfo['Image path'];
 		$outdir=ereg_replace("leginon","appion",$outdir);
 		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=$outdir."/accepted";
 		$sessionname=$sessioninfo['Name'];
+		print_r($_POST);
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
   
 	// Set any existing parameters in form
-	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$res = ($_POST['res']) ? $_POST['res'] : '';
+	$apix = ($_POST['apix']) ? $_POST['apix'] : $apix;
+	$res = ($_POST['res']) ? $_POST['res'] : $res;
 	$contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
 	$model = ($_POST['model']) ? $_POST['model'] : '';
 	$modelname = ($_POST['modelname']) ? $_POST['modelname'] : '';
-	$description = $_POST['description'];
+	$description = ($_POST['description']) ? $_POST['description']: $description;
 	$newmodel = ($_POST['newmodel']) ? $_POST['newmodel'] : $outdir.'/rescale.mrc';
   
 	$syms = $particle->getSymmetries();
@@ -91,12 +102,12 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
       <B>New Model Name:</B><BR>
       <INPUT TYPE='text' NAME='newmodel' VALUE='$newmodel' SIZE='50'><br />\n";
 	else {
-		echo"<b>Model file name with path:</b><br />\n";
-		if ($_GET['pdbmod']) {
-			echo $_GET['pdbmod'];
-			echo "<input type='hidden' name='modelname' value='".$_GET['pdbmod']."'><br />\n";
+		if ($densityid) {
+			echo "<b> 3D density id: $densityid<b><br/>\n";
+		} else {
+			echo"<b>Model file name with path:</b><br />\n";
+			echo "<INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
 		}
-		else echo "<INPUT TYPE='text' NAME='modelname' VALUE='$modelname' SIZE='50'><br />\n";
 	}
 	echo"
       <P>
@@ -170,6 +181,8 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 
 function runUploadModel() {
 	$expId = $_GET['expId'];
+	$modelid = $_GET['modelid'];
+	$densityid = $_GET['densityId'];
 	
 	$outdir = $_POST['outdir'];
 
@@ -180,9 +193,10 @@ function runUploadModel() {
 	$zoom=$_POST['zoom'];
 	$session=$_POST['sessionname'];
 
-	//make sure a model root was entered
 	$model=$_POST['model'];
 	if ($_POST['modelname']) $model=$_POST['modelname'];
+	//make sure a model root was entered if upload an independent file
+	if (!$modelid && !$densityid) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
 
 	//make sure a apix was provided
 	$apix=$_POST['apix'];
@@ -196,8 +210,6 @@ function runUploadModel() {
 		if (!$boxsize) createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
 	}
 
-	if (!$model) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
-  
 	//make sure a description was provided
 	$description=$_POST['description'];
 	if (!$description) createUploadModelForm("<B>ERROR:</B> Enter a brief description of the model");
@@ -210,19 +222,35 @@ function runUploadModel() {
 	$sym = $_POST['sym'];
 	if (!$sym) createUploadModelForm("<B>ERROR:</B> Select a symmetry");
 
-	// filename will be the runid if running on cluster
-	$runid = basename($model);
-	$runid = $runid.'.upload';
+	// set runname according to upload type
+	$runname = getTimestring();$runname = getTimestring();
+	if ($densityid) {
+		$command.="--densityid=$densityid ";
+		$runname = density.$densityid."_".$runname;
+	} else {
+		if ($modelid) {
+			$command.="--modelid=$modelid ";
+			$runname = density.$modelid."_".$runname;
+		} else {
+			$command.="--file=$model ";	
+			$basename = basename($model);
+			$prefixnames = explode("-",$basename);
+			if (count($prefixnames) > 1) {
+				$runname = $prefixnames[0]."_".$runname;
+			} else {
+				$runname = "file"."_".$runname;
+			}
+		}
+	}
 
-	if (!$_GET['modelid']) $command.="--file=$model ";
 	$command.="--session=$session ";
+	$command.="--runname=$runname ";
 	$command.="--apix=$apix ";
 	$command.="--res=$res ";
 	$command.="--symmetry=$sym ";
 	if ($boxsize) $command.="--boxsize=$boxsize ";
 	if ($contour) $command.="--contour=$contour ";
 	if ($zoom) $command.="--zoom=$zoom ";
-	if ($_POST['newmodel']) $command.="--modelid=$_GET[modelid] ";
 	$command.="--description=\"$description\" ";
 	
 	// submit job to cluster
@@ -232,12 +260,12 @@ function runUploadModel() {
 
 		if (!($user && $password)) createUploadModelForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadmodel',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadmodel',True);
 		// if errors:
 		if ($sub) createUploadModelForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
 		$status = "Model was uploaded";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
@@ -264,6 +292,8 @@ function runUploadModel() {
 	<B>UploadModel Command:</B><BR>
 	$command
 	</TD></TR>
+	<TR><TD>old model id</TD><TD>$modelid</TD></TR>
+	<TR><TD>3dDensity id</TD><TD>$densityid</TD></TR>
 	<TR><TD>model name</TD><TD>$model</TD></TR>
 	<TR><TD>symmetry ID</TD><TD>$sym</TD></TR>
 	<TR><TD>apix</TD><TD>$apix</TD></TR>

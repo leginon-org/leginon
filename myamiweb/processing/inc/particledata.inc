@@ -2365,6 +2365,16 @@ class particledata {
 		return $r;
 	}
 
+	function get3dDensityInfo ($densityId) {
+		$q = "SELECT d.*,p.path "
+				."FROM `Ap3dDensityData` AS d "
+				."LEFT JOIN ApPathData AS p ON "
+				."(d.`REF|ApPathData|path` = p.`DEF_id`) "
+				."WHERE d.`DEF_id` = '$densityId' ";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getInitModelInfo ($modelId) {
 		$q = "SELECT d.*,p.path "
 				."FROM `ApInitialModelData` AS d "

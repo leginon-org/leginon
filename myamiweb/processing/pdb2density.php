@@ -16,7 +16,7 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-	runUploadModel();
+	runDownloadModel();
 }
 
 // Create the form page
@@ -47,6 +47,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 		$outdir=$sessioninfo['Image path'];
 		$outdir=ereg_replace("leginon","appion",$outdir);
 		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=$outdir."/pdb";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
@@ -85,7 +86,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	exit;
 }
 
-function runUploadModel() {
+function runDownloadModel() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
@@ -113,11 +114,14 @@ function runUploadModel() {
 
 	if (!is_float($res)) $res = $res.".0";
 	$filename = $pdbid.'-'.$apix.'-'.$res.'-'.$box;
-	// filename will be the runid if running on cluster
-	$runid = $filename.'.upload';
+	// pdb id will be the runname
+	$runname = getTimestring();
+	$runname = $pdbid."_".$runname;
+	$rundir = $outdir."/".$runname;
 
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-p $pdbid ";
+	$command.="--runname=".$runname." ";
+	$command.="--pdbid=$pdbid ";
 	$command.="-s $session ";
 	$command.="-a $apix ";
 	$command.="-r $res ";
@@ -131,12 +135,12 @@ function runUploadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadmodel',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadmodel',True);
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
 		$status = "Model was created from PDB";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
@@ -157,24 +161,21 @@ function runUploadModel() {
 	echo"<table class='tableborder' width='600' border='1'>\n";
 	echo "<tr><td>\n";
 	if ($status) echo "$status<hr />\n";
-	echo "<b>UploadModel Command:</b><br />\n";
+	echo "<b>DownloadModel Command:</b><br />\n";
 	echo "$command\n";
 	echo "<p>\n";
-	if (!file_exists($outdir.'/'.$filename.'.mrc')) {
+	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
 		echo "EM Density file to be created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$outdir/$filename.mrc</a></b><br />\n";
+		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
 	}
 	else {
 		echo "EM Density file created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$outdir/$filename.mrc</a></b><br />\n";
+		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
 		echo "<hr />\n";
 		$formAction="uploadmodel.php?expId=$expId";
-		$formAction.="&pdbmod=$outdir/$filename.mrc";
+		$formAction.="&densityid=$rundir/$filename.mrc";
 		echo "<form name='uploadmodel' method='POST' ACTION='$formAction'>\n";
-		echo "<center><input type='submit' name='goUploadModel' value='Upload This Model'></center><br />\n";
-		echo "<input type='hidden' name='description' value='density created from PDB id: $pdbid'>\n";
-		echo "<input type='hidden' name='res' value='$res'>\n";
-		echo "<input type='hidden' name='apix' value='$apix'>\n";
+		echo "<center><input type='submit' name='goUploadModel' value='Download This Model'></center><br />\n";
 		echo "<font class='apcomment'>Remember that PDB may not be oriented relative to any axis</font>\n";
 		echo "</form>\n";
 	}

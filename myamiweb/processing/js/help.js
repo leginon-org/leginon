@@ -5,10 +5,10 @@
 var help = {
 	'appion' : {
 		'runid' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error.',
-		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error.',
+		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error. The Default is automatically incremented',
 		'description' : 'brief description attributed with the processing results',
 		'descr' : 'brief description attributed with the processing results',
-		'outdir' : 'Output directory to which files will be stored.  If you are testing, switch \"appion\" to \"temp\".',
+		'outdir' : 'The base output directory to which files will be stored.  If you are testing, switch \"appion\" to \"temp\".  A subdirectory of the run name will be appended for actual output',
 		'checkimages' : 'Choose what images to process here.  Images can be inspected by Viewer or ImageAssessor.  BEST images include ones inspected as KEEP or as EXEMPLAR in the viewer.  NON-REJECTED images include the BEST images above-mentioned and the uninspected ones and therefore exclude only the REJECTED or HIDDEN images.',
 		'nowait' : 'After processing all the images collected for this sessiont, this will continue to check if new images have been acquired every 10 minutes.  If after 2 hours, no new images have been acquired, this job will terminate.',
 		'background' : 'Minimizes the output when the program runs',
