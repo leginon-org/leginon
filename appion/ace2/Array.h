@@ -5,7 +5,7 @@
 #include "cvtypes.h"
 #include "util.h"
 
-#define NAME_LENGTH 256
+#define NAME_LENGTH 1024
 
 // Array *FLAGS*, note there is some overlap for compatibility with cvtypes data flags, these are left as comments
 #define CV_ARRAY_THREAD_LOCKED		( 1 << 0 )		// Set if the Array data is being manipulated using threaded processes

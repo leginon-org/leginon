@@ -18,6 +18,8 @@
 
 typedef struct CTFST {
 	
+	char * imgpath;
+	
 	f64 defocus_x;
 	f64 defocus_y;
 	f64 astig_angle;

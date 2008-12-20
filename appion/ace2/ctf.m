@@ -400,7 +400,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	gsl_vector * e_steps = gsl_vector_alloc(c_ndim);
 
 	gsl_vector_set(e_steps,0,3e-7);
-	gsl_vector_set(e_steps,1,5e-2);
+	gsl_vector_set(e_steps,1,5e-1);
 	gsl_vector_set(e_steps,2,0.0);
 	gsl_vector_set(e_steps,3,0.0);
 	gsl_vector_set(e_steps,4,0.0);
@@ -605,7 +605,7 @@ void estimateDefocus( ArrayP fit_data, ArrayP ctf_params ) {
 		
 	u32 i, j, size = [fit_data sizeOfDimension:0];
 	
-	gaussian1d(values,0,size-1,1.0);
+//	gaussian1d(values,0,size-1,1.0);
 	
 	ArrayP minima = findCTFMinima(fit_data,1);
 	ArrayP maxima = findCTFMaxima(fit_data,1);

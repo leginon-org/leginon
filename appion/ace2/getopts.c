@@ -50,37 +50,51 @@ int option_index = 1;
  *  Returns: 1 - Successful
  */
 
+char * getopt_usage( struct options opt ) {
+	
+	size_t cmd_length = 15;
+	
+	if ( opt.name ) cmd_length += strlen(opt.name);
+	if ( opt.shortName ) cmd_length += strlen(opt.shortName);
+	if ( opt.description ) cmd_length += strlen(opt.description);
+	
+	char * cmd = calloc(1,sizeof(char)*cmd_length);
+	if ( cmd == NULL ) return NULL;
+	
+	if (opt.name && opt.shortName ) {
+			
+		if ( opt.args ) sprintf(cmd, "--%s,\t-%s <args>\t\t", opt.name, opt.shortName);
+		else sprintf(cmd, "--%s,\t-%s\t\t\t", opt.name, opt.shortName);
+
+	} else if ( opt.name ) {
+
+		if (opt.args) sprintf(cmd, "--%s <args>\t\t\t", opt.name);
+		else sprintf(cmd, "--%s\t\t\t", opt.name);
+			
+	} else if (opt.shortName) {
+
+		if (opt.args) sprintf(cmd, "\t\t-%s <args>\t\t", opt.shortName);
+		else sprintf(cmd, "\t\t-%s\t\t\t", opt.shortName);
+			
+	}
+		
+	if ( opt.description ) strcat(cmd,opt.description);
+	
+	return cmd;
+	
+}
+
 int getopts_usage(char *progName, struct options opts[]) {
 	
 	int count;
-	char *cmd;
+	char * cmd = NULL;
   
-	printf("Usage: %s [options]\n\n", progName);
-	printf("  --help,\t-h\t\t\tDisplays this information\n");
+	fprintf(stderr,"Usage: %s [options]\n\n", progName);
+	fprintf(stderr,"  --help,\t-h\t\t\tDisplays this information\n");
  
 	for (count = 0; opts[count].description; count++) {
-		if (opts[count].name && opts[count].shortName) {
-			
-          cmd = calloc(1, strlen(opts[count].name) + strlen(opts[count].shortName) + 15);
-
-          if ( opts[count].args ) sprintf(cmd, "--%s,\t-%s <args>\t\t", opts[count].name, opts[count].shortName);
-          else sprintf(cmd, "--%s,\t-%s\t\t\t", opts[count].name, opts[count].shortName);
-
-        } else if ( opts[count].name ) {
-
-			cmd = calloc(1, strlen(opts[count].name) + 15);
-			if (opts[count].args) sprintf(cmd, "--%s <args>\t\t\t", opts[count].name);
-			else sprintf(cmd, "--%s\t\t\t", opts[count].name);
-			
-		} else if (opts[count].shortName) {
-
-			cmd = calloc(1, strlen(opts[count].shortName) + 15);
-			if (opts[count].args) sprintf(cmd, "\t\t-%s <args>\t\t", opts[count].shortName);
-			else sprintf(cmd, "\t\t-%s\t\t\t", opts[count].shortName);
-			
-		}
-		
-		printf("  %s%s\n", cmd, opts[count].description);
+		cmd = getopt_usage(opts[count]);
+		fprintf(stderr,"  %s\n", cmd);
 		free(cmd);
 		
 	}
@@ -116,15 +130,24 @@ int getopts(int argc, char **argv, struct options opts[], char arg[] ) {
 		if ( (opts[argCounter].name && !strcmp(opts[argCounter].name,argv[option_index]+2)) || (opts[argCounter].shortName && !strcmp(opts[argCounter].shortName,argv[option_index]+1)) ) {
 			if ( opts[argCounter].args ) {
 				option_index++;
-				if (option_index >= argc) goto useage;
-						
+				if (option_index >= argc) {
+					char * cmd = getopt_usage(opts[argCounter]);
+					fprintf(stderr,"!!!! Improper use of option %s !!!!\n%s\n",opts[argCounter].shortName,cmd);
+					option_index++;
+					free(cmd);
+					return 0;
+				}		
 /* This grossness that follows is to support having a '-' in the argument. */
 
 				if (*argv[option_index] == '-') {
 					int optionSeeker;
 					for (optionSeeker = 0; opts[optionSeeker].description; optionSeeker++) {
 						if ((opts[optionSeeker].name && !strcmp(opts[optionSeeker].name, (argv[option_index]+2))) || (opts[optionSeeker].shortName && !strcmp(opts[optionSeeker].shortName, (argv[option_index]+1)))) {
-							goto useage;
+							char * cmd = getopt_usage(opts[argCounter]);
+							fprintf(stderr,"!!!! Improper use of option %s !!!!\n%s\n",opts[argCounter].shortName,cmd);
+							option_index++;
+							free(cmd);
+							return 0;
 						}
 					}
 				}
@@ -144,9 +167,9 @@ int getopts(int argc, char **argv, struct options opts[], char arg[] ) {
 			
 /** The Option doesn't exist.  We should warn them. */
 	if (*argv[option_index] == '-') {
-		sprintf(arg,"%s",argv[option_index]);
+		fprintf(stderr,"!!!! Argument %s is not understood !!!!",argv[option_index]);
 		option_index++;
-		return -2;
+		return 0;
 	}
 		
 }

@@ -37,15 +37,16 @@ extern int option_index;
 
 struct options {
 	
-  int number;			/* Number, which is returned from getopt() */
-  char *name;			/* Long name */
-  char *description;	/* Description */
-  char *shortName;		/* Short name */
-  int args;				/* Does the option take an argument? */
+	int number;				/* Number, which is returned from getopt() */
+	char * name;			/* Long name */
+	char * description;		/* Description */
+	char * shortName;		/* Short name */
+	int args;				/* Does the option take an argument? */
 
 };
 
 int getopts(int argc, char **argv, struct options opts[], char args[]);
+char * getopt_usage( struct options opt );
 int getopts_usage(char *progName, struct options opts[]);
 
 #endif 		/* __GET_OPT_H__ */
