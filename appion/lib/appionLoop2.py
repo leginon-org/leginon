@@ -270,7 +270,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		appionScript.AppionScript.setupGlobalParserOptions(self)
 
-		self.tiltoptions = ["notilt", "hightilt", "lowtilt", "minustilt", "plustilt", "all"]
+		self.tiltoptions = ("notilt", "hightilt", "lowtilt", "minustilt", "plustilt", "all")
 
 		### Set usage
 		self.parser.set_usage("Usage: %prog --projectid=## --runname=<runname> --session=<session> "
@@ -286,8 +286,10 @@ class AppionLoop(appionScript.AppionScript):
 			help="Only process images that pass this reprocess criteria")
 		self.parser.add_option("--limit", dest="limit", type="int",
 			help="Only process <limit> number of images")
-		self.parser.add_option("--tiltangle", dest="tiltangle", default="all",
+		self.parser.add_option("--tiltangle", dest="tiltangle", 
+			default="all", type="choice", choices=self.tiltoptions,
 			help="Only process images with specific tilt angles, options: "+str(self.tiltoptions))
+
 		### True / False options
 		self.parser.add_option("--continue", dest="continue", default=True,
 			action="store_true", help="Continue processing run from last image")
