@@ -126,6 +126,18 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		print "processing:",shortname
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 
+		### get the particle before image filtering
+		if self.params['defocpair'] is True:
+			partdatas, shiftdata = apParticle.getDefocPairParticles2(imgdata, self.params['selectionid'])
+		else:
+			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
+			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
+
+		### check if we have particles
+		if len(partdatas) == 0:
+			apDisplay.printColor(shortname+".mrc has no particles and has been rejected\n","cyan")
+			return None, None, None
+
 		if self.params['uncorrected']:
 			### dark/bright correct image
 			tmpname = shortname+"-darknorm.mrc"
@@ -137,17 +149,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['wholeimage'] is True and self.params['phaseflipped'] is True:
 			### ctf correct whole image
 			imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
-
-		if self.params['defocpair'] is True:
-			partdatas, shiftdata = apParticle.getDefocPairParticles2(imgdata, self.params['selectionid'])
-		else:
-			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
-			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
-
-		### check if we have particles
-		if len(partdatas) == 0:
-			apDisplay.printColor(shortname+".mrc has no particles and has been rejected\n","cyan")
-			return None, None, None
 
 		### apply correlation limits
 		if self.params['correlationmin'] or self.params['correlationmax']:
