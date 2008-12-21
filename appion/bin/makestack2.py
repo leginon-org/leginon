@@ -575,7 +575,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="maximum defocus")
 		self.parser.add_option("--selectionid", dest="selectionid", type="int",
 			help="particle picking runid")
-		self.parser.add_option("--partlimit", dest="partlimit",
+		self.parser.add_option("--partlimit", dest="partlimit", type="int",
 			help="particle limit")
 		self.parser.add_option("--filetype", dest="filetype", default='imagic',
 			help="filetype, default=imagic")
@@ -646,7 +646,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.particleNumber = self.getExistingStackInfo()
 		apDisplay.printMsg("Starting at particle number: "+str(self.particleNumber))
 
-		if self.params['partlimit'] is not None and self.params['partlimit'] <= self.particleNumber:
+		if self.params['partlimit'] is not None and self.particleNumber > self.params['partlimit']:
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
 
 	#=====================
@@ -694,7 +694,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### check if particle limit is met
 		if self.params['partlimit'] is not None and totalpart > self.params['partlimit']:
-			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+"; now stopping")
+			apDisplay.printWarning("reached particle number limit of "+str(self.params['partlimit'])+" now stopping")
 			self.imgtree = []
 			self.notdone = False
 
