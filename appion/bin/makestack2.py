@@ -314,7 +314,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, display=True)
+		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True)
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 
@@ -338,7 +338,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
-		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, display=True)
+		defocus, ampconst = apCtf.getBestDefocusAndAmpConstForImage(imgdata, msg=True)
 		defocus *= 1.0e6
 		self.checkDefocus(defocus, shortname)
 

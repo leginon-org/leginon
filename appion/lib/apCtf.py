@@ -140,7 +140,7 @@ def insertCtfValue(imgdata, params, matfile, ctfvalue, opimfile1, opimfile2):
 def mkTempDir(temppath):
 	return apParam.createDirectory(temppath)
 
-def getBestDefocusForImage(imgdata, display=False):
+def getBestDefocusForImage(imgdata, msg=False):
 	"""
 	takes an image and get the best defocus (in negative meters) for that image
 	"""
@@ -160,7 +160,7 @@ def getBestDefocusForImage(imgdata, display=False):
 	bestdf = -1.0*abs(bestdf)
 
 	### print msg
-	if display is True:
+	if msg is True:
 		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
 			apDisplay.printMsg( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
 				str(round(conf,4))+", defocus="+str(round(bestdf*1.0e6,4))+
@@ -171,7 +171,7 @@ def getBestDefocusForImage(imgdata, display=False):
 
 	return bestdf
 
-def getBestDefocusAndAmpConstForImage(imgdata, display=False):
+def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 	"""
 	takes an image and get the best defocus (in negative meters) for that image
 	"""
@@ -194,7 +194,7 @@ def getBestDefocusAndAmpConstForImage(imgdata, display=False):
 	bestdf = -1.0*abs(bestdf)
 
 	### print msg
-	if display is True:
+	if msg is True:
 		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
 			apDisplay.printMsg( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
 				str(round(conf,4))+", defocus="+str(round(bestdf*1.0e6,4))+
@@ -206,7 +206,7 @@ def getBestDefocusAndAmpConstForImage(imgdata, display=False):
 
 	return bestdf, bestamp
 
-def getBestCtfValueForImage(imgdata, ctfavg=True):
+def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
 	"""
 	takes an image and get the best ctfvalues for that image
 	"""
@@ -258,7 +258,7 @@ def getBestTiltCtfValueForImage(imgdata):
 	return bestctftiltvalue	
 
 
-def ctfValuesToParams(ctfvalue, params):
+def ctfValuesToParams(ctfvalue, params, msg=True):
 	if ctfvalue['acerun'] is not None:
 		if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 			params['hasace'] = True

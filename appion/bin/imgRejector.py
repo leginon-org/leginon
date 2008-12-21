@@ -76,6 +76,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 		### set global value
 		self.imgassess = imgassess
 
+
 		return
 
 	### ==================================
@@ -84,6 +85,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 		do something before starting the loop
 		"""
 		self.reject = 0
+		self.params['background'] = True
 		return
 
 	### ==================================
@@ -102,9 +104,10 @@ class ImageRejector(appionLoop2.AppionLoop):
 		msg = not self.params['background']
 		### insert False values
 		if self.imgassess is False:
+			time.sleep(0.5)
 			self.reject += 1
 			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runname'], False, msg=True)
-			f = open("imageRejectList.txt", "a")
+			f = open("imageRejectList-"+self.timestamp+".txt", "a")
 			f.write(imgdata['filename']+"\n")
 			f.close()
 
@@ -126,6 +129,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 
 	### ==================================
 	def rejectAceInfo(self, imgdata):
+		
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 
 		if ctfvalue is None:
@@ -141,7 +145,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 			apDisplay.printColor("\nrejecting below ACE cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
 			return False
 
-		defocus = apCtf.getBestDefocusForImage(imgdata)
+		defocus = apCtf.getBestDefocusForImage(imgdata, msg=(not self.params['background']))
 		### skip micrograph that have defocus above or below min & max defocus levels
 		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
 			apDisplay.printColor("\nrejecting below defocus cutoff: "+apDisplay.short(imgdata['filename'])+" def="+str(round(defocus,3)), "blue")

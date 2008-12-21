@@ -130,7 +130,7 @@ class ctfTiltLoop(appionLoop2.AppionLoop):
 		#get Defocus in Angstroms
 
 		defocus = imgdata['scope']['defocus']*-1.0e10
-		bestdef = apCtf.getBestDefocusForImage(imgdata, display=True)*-1.0e10
+		bestdef = apCtf.getBestDefocusForImage(imgdata, msg=True)*-1.0e10
 		inputparams = {
 			'orig': os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc"),
 			'input': apDisplay.short(imgdata['filename'])+".mrc",

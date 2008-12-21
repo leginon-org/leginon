@@ -42,7 +42,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 	if params['nominal'] is not None:
 		nominal=params['nominal']
 	elif params['newnominal'] is True:
-		nominal = apCtf.getBestDefocusForImage(imgdata, display=True)
+		nominal = apCtf.getBestDefocusForImage(imgdata, msg=True)
 	if nominal is None:
 		nominal = imgdata['scope']['defocus']
 
