@@ -151,8 +151,9 @@ def getBestDefocusForImage(imgdata, msg=False):
 		apDisplay.printWarning("no acceptable ctf values found, using nominal defocus")
 	elif abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 		bestdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
-		apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
-			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, bestdf*1e6) )
+		if msg is True:
+			apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
+				%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, bestdf*1e6) )
 	else:
 		bestdf = ctfvalue['defocus1']
 
@@ -184,8 +185,9 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 	elif abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 		bestdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		bestamp = ctfvalue['amplitude_contrast']
-		apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
-			%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, bestdf*1e6) )
+		if msg is True:
+			apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
+				%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, bestdf*1e6) )
 	else:
 		bestdf = ctfvalue['defocus1']
 		bestamp = ctfvalue['amplitude_contrast']
@@ -263,8 +265,9 @@ def ctfValuesToParams(ctfvalue, params, msg=True):
 		if abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 			params['hasace'] = True
 			avgdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
-			apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
-				%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
+			if msg is True:
+				apDisplay.printWarning("astigmatism was estimated; averaging defocus values (%.3f, %.3f => %.3f) "
+					%(ctfvalue['defocus1']*1e6, ctfvalue['defocus2']*1e6, avgdf*1e6) )
 			params['df']     = avgdf*-1.0e6
 			params['conf_d'] = ctfvalue['confidence_d']
 			params['conf']   = ctfvalue['confidence']
