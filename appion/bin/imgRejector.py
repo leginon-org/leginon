@@ -22,11 +22,11 @@ class ImageRejector(appionLoop2.AppionLoop):
 
 	### ==================================
 	def setupParserOptions(self):
-		self.parser.add_option("--mindefocus", dest="mindefocus", default=None,
+		self.parser.add_option("--mindefocus", dest="mindefocus", type="float",
 			help="mindefocus", metavar="#")
-		self.parser.add_option("--maxdefocus", dest="maxdefocus", default=None,
+		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float",
 			help="maxdefocus", metavar="#")
-		self.parser.add_option("--acecutoff", dest="acecutoff", default=None,
+		self.parser.add_option("--acecutoff", dest="acecutoff", type="float",
 			help="acecutoff", metavar="#")
 		self.parser.add_option("--noace", dest="noace", default=False,
 			action="store_true", help="noace")
