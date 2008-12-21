@@ -238,7 +238,7 @@ class manualPicker(particleLoop2.ParticleLoop):
 			self.processAndSaveAllImages()
 
 		self.app = PickerApp(
-			shape = self.params['shape'], 
+			shape = self.canonicalShape(self.params['shape']), 
 			size =  self.params['shapesize'], )
 		self.app.appionloop = self
 		self.threadJpeg = True
