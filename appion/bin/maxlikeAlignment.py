@@ -318,7 +318,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			if self.params['fastmode'] == "narrow":
 				xmippopts += " -C 1e-10 "
 			elif self.params['fastmode'] == "wide":
-				xmippopts += " -C 1e-14 "
+				xmippopts += " -C 1e-18 "
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
 
