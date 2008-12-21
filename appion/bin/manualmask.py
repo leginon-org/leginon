@@ -247,11 +247,11 @@ class manualPicker(filterLoop.FilterLoop):
 
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --session <session name> --runame <new or maskrunname> [--pickrunid <id>]  \n\t ")
-		self.parser.add_option("--assess", dest="assessname", type="string", default=None,
+		self.parser.add_option("--assess", dest="assessname",
 			help="New mask assessment run name", metavar="NAME")
 		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
 			help="id of the particle pick to be displayed", metavar="#")
-		self.parser.add_option("--pickrunname", dest="pickrunname", type="string",
+		self.parser.add_option("--pickrunname", dest="pickrunname",
 			help="Name of the particle pick to be displayed", metavar="NAME")
 		self.parser.add_option("--checkmask", "--maskassess", dest="checkmask", default=False,
 			action="store_true", help="Check mask")

@@ -39,15 +39,15 @@ class tomoMaker(appionScript.AppionScript):
 			+"[options]")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber",
+		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
 			help="tilt series number in the session", metavar="int")
-		self.parser.add_option("--bin", "-b", dest="bin", default=self.timestamp,
+		self.parser.add_option("--bin", "-b", dest="bin", , type="int",
 			help="Extra binning, e.g. --bin=2", metavar="int")
-		self.parser.add_option("--selexonId", dest="selexonId", default=None,
+		self.parser.add_option("--selexonId", dest="selexonId", type="int",
 			help="Volume selection, e.g. --selexonId=2", metavar="int")
-		self.parser.add_option("--sizex", dest="sizex", default=0,
+		self.parser.add_option("--sizex", dest="sizex", default=0, type="int",
 			help="Volume size in column, e.g. --sizex=20", metavar="int")
-		self.parser.add_option("--sizey", dest="sizey", default=0,
+		self.parser.add_option("--sizey", dest="sizey", default=0, type="int",
 			help="Volume size in row, e.g. --sizey=20", metavar="int")
 		self.parser.add_option("--subvolumeonly", dest="subvolumeonly", default=False,
 			action="store_true", help="Flag for only trim sub volume, e.g. --subvolumeonly")

@@ -31,11 +31,11 @@ class modelFromPDB(appionScript.AppionScript):
 			help="Model name", metavar="STR")
 		self.parser.add_option("--pdbid", dest="pdbid",
 			help="PDB ID", metavar="STR")
-		self.parser.add_option("-r", "--resolution", dest="res", type='float', default=None,
+		self.parser.add_option("-r", "--resolution", dest="res", type='float',
 			help="Resolution of resulting model (in Angstroms)")
-		self.parser.add_option("-a", "--apix", dest="apix", type='float', default=None,
+		self.parser.add_option("-a", "--apix", dest="apix", type='float',
 			help="Pixel size of model (in Angstroms)")
-		self.parser.add_option("-b", "--box", dest="box", type='int', default=None,
+		self.parser.add_option("-b", "--box", dest="box", type='int',
 			help="Box size of model (in Pixels)")
 		self.parser.add_option("-u", "--biolunit", dest="bunit", default=False,
 			action="store_true", help="Download the biological unit")

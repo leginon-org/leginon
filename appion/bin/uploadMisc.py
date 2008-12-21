@@ -25,7 +25,7 @@ class UploadMiscScript(appionScript.AppionScript):
 			help="File to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with file (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("-r", "--reconid", dest="reconid", type='int', default=None,
+		self.parser.add_option("-r", "--reconid", dest="reconid", type='int',
 			help="ReconID associated with file (e.g. --reconid=311)", metavar="RECONID")
 
 	#=====================

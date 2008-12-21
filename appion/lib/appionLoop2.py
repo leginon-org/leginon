@@ -48,6 +48,7 @@ class AppionLoop(appionScript.AppionScript):
 		### start the loop
 		self.notdone=True
 		self.badprocess = False
+		self.stats['startloop'] = time.time()
 		while self.notdone:
 			apDisplay.printColor("\nBeginning Main Loop", "green")
 			imgnum = 0
@@ -547,7 +548,6 @@ class AppionLoop(appionScript.AppionScript):
 		if self._alreadyProcessed(imgdata):
 			return False
 
-		self.stats['startloop'] = time.time()
 		self.stats['waittime'] = 0
 
 		if self.reprocessImage(imgdata) is True:

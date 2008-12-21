@@ -24,17 +24,17 @@ class UploadTomoScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --file=<filename> --session=<name> --symm=<#> \n\t "
 			+" --res=<#> --description='text' [--contour=<#>] [--zoom=<#>] \n\t "
 			+" [--rescale=<model ID,scale factor> --bin=<#>] ")
-		self.parser.add_option("-i", "--image", dest="image", type="string",
+		self.parser.add_option("-i", "--image", dest="image",
 			help="snapshot image file to upload", metavar="IMAGE")
-		self.parser.add_option("-f", "--file", dest="file", type="string",
+		self.parser.add_option("-f", "--file", dest="file",
 			help="MRC file to upload", metavar="FILE")
-		self.parser.add_option("-s", "--session", dest="session", type="string",
+		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("--name", dest="name", type="string",
+		self.parser.add_option("--name", dest="name",
 			help="File name for new tomogram, automatically set")
 		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber", type="int",
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
-		self.parser.add_option("-v", "--volume", dest="volume", type="string",
+		self.parser.add_option("-v", "--volume", dest="volume",
 			help="Subvolume from original voxel volume", default='volume1', metavar="VOLUME")
 		self.parser.add_option("-b", "--bin", dest="bin", type="int",
 			help="Extra Binning from tiltseries image", default=1, metavar="#")

@@ -72,7 +72,7 @@ class MaskMaker(appionLoop2.AppionLoop):
 	def setupParserOptions(self):
 		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=1,
 			help="Binning of the image", metavar="#")
-		self.parser.add_option("--masktype", dest="masktype", type="string", default='custom',
+		self.parser.add_option("--masktype", dest="masktype", default='custom',
 			help="Type of masking: crud, edge, aggr, or custom ", metavar="TYPE")
 		self.parser.add_option("--diam", dest="diam", type="float", default=0.0,
 			help="Particle diameter", metavar="#")
