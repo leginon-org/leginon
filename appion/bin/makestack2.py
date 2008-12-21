@@ -74,7 +74,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		if self.params['mag']:
 			if not apDatabase.checkMag(imgdata, self.params['mag']):
-				apDisplay.printColor(shortname+".mrc was not at the specific magnification","cyan")
+				apDisplay.printColor(shortname+" was not at the specific magnification","cyan")
 				return False
 
 		return True
@@ -89,15 +89,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### check if we have values and if we care
 		if ctfvalue is None:
 			if self.params['acecutoff'] or self.params['mindefocus'] or self.params['maxdefocus'] or self.params['phaseflipped']:
-				#apDisplay.printColor(shortname+".mrc was rejected because it has no ACE values\n","cyan")
+				#apDisplay.printColor(shortname+" was rejected because it has no ACE values\n","cyan")
 				return False
 			else:
-				#apDisplay.printWarning(shortname+".mrc has no ACE values")
+				#apDisplay.printWarning(shortname+" has no ACE values")
 				return True
 
 		### check that ACE estimation is above confidence threshold
 		if self.params['acecutoff'] and conf < self.params['acecutoff']:
-			#apDisplay.printColor(shortname+".mrc is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
+			#apDisplay.printColor(shortname+" is below ACE threshold (conf="+str(round(conf,3))+")\n","cyan")
 			return False
 
 		### get best defocus value
@@ -110,11 +110,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### skip micrograph that have defocus above or below min & max defocus levels
 		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
-			#apDisplay.printColor(shortname+".mrc defocus ("+str(round(defocus*1e6,2))+\
+			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
 			#	" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
 			return False
 		if self.params['maxdefocus'] and defocus < self.params['maxdefocus']:
-			#apDisplay.printColor(shortname+".mrc defocus ("+str(round(defocus*1e6,2))+\
+			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
 			#	" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
 			return False
 
@@ -135,12 +135,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### check if we have particles
 		if len(partdatas) == 0:
-			apDisplay.printColor(shortname+".mrc has no particles and has been rejected\n","cyan")
+			apDisplay.printColor(shortname+" has no particles and has been rejected\n","cyan")
 			return None, None, None
 
 		if self.params['uncorrected']:
 			### dark/bright correct image
-			tmpname = shortname+"-darknorm.mrc"
+			tmpname = shortname+"-darknorm.dwn.mrc"
 			imgarray = apImage.correctImage(imgdata, self.params['sessionname'])
 			imgpath = os.path.join(self.params['rundir'], tmpname)
 			apImage.arrayToMrc(imgarray,imgpath)
@@ -160,7 +160,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### check if we have particles
 		if len(partdatas) == 0:
-			apDisplay.printColor(shortname+".mrc has no remaining particles and has been rejected\n","cyan")
+			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
 
 		### save particle coordinates to box file
@@ -168,7 +168,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### count number of particles in box file
 		if len(boxedpartdatas) == 0:
-			apDisplay.printColor(shortname+".mrc has no remaining particles and has been rejected\n","cyan")
+			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
 			return None, None, None
 
 		### run batchboxer command
@@ -276,8 +276,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		for i in range(len(partdatas)):
 			partdata = partdatas[i]
 			prepartarray = imagicdata['images'][i]
-			prepartmrc = "rawpart.mrc"
-			postpartmrc = "ctfpart.mrc"
+			prepartmrc = "rawpart.dwn.mrc"
+			postpartmrc = "ctfpart.dwn.mrc"
 			apImage.arrayToMrc(partarray, prepartmrc, msg=False)
 
 			### calculate ctf based on position
@@ -330,7 +330,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def phaseFlipWholeImage(self, inimgpath, imgdata):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
-		outimgpath = os.path.join(self.params['rundir'], shortname+"-ctfcorrect.mrc")
+		outimgpath = os.path.join(self.params['rundir'], shortname+"-ctfcorrect.dwn.mrc")
 
 		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
 		if imgdata['scope']['tem']['name'] == "CM":
@@ -608,6 +608,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="create only boxfiles, no stack")
 		self.parser.add_option("--checkmask", dest="checkmask", default=False,
 			action="store_true", help="Check masks")
+		self.parser.add_option("--keepall", dest="keepall", default=False,
+			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
 
 	#=======================
 	def checkConflicts(self):
@@ -701,13 +703,19 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def postLoopFunctions(self):
+		### Delete CTF corrected images
+		if self.params['keepall'] is False:
+			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.dwn.mrc')
+			apFile.removeFilePattern(pattern)
 		### Averaging completed stack
 		stackpath = os.path.join(self.params['rundir'], "start.hed")
 		apStack.averageStack(stack=stackpath)
+		### Create Stack Mean Plot
 		if self.params['commit'] is True:
 			stackid = apStack.getStackIdFromPath(stackpath)
 			if stackid is not None:
 				apStackMeanPlot.makeStackMeanPlot(stackid)
+
 
 	#=======================
 	def commitToDatabase(self, imgdata):
