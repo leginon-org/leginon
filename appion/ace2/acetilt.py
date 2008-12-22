@@ -13,7 +13,7 @@ import apImage
 class AceTilt(object):
 	##========================
 	def __init__(self):
-		self.parser = self.setupParseOpts()
+		self.setupParseOpts()
 		self.timestamp = apParam.makeTimestamp()
 		self.params = apParam.convertParserToParams(self.parser)
 		self.getACE2Path()
