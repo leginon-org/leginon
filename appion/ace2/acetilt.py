@@ -76,7 +76,7 @@ class AceTilt(object):
 				key = "%02dx%02d"%(j,i)
 				print key, "==>", small[0]*j, ":", small[0]*(j+1)-1, ",", small[1]*i, ":", small[1]*(i+1)-1
 				imgdict[key] = imgarray[small[0]*j:small[0]*(j+1)-1, small[1]*i:small[1]*(i+1)-1]
-		
+		return imgdict
 
 	##========================
 	def processImage(self, imgarray):
@@ -161,8 +161,11 @@ class AceTilt(object):
 	##========================
 	def run(self):
 		imgarray = self.openFile()
-		self.splitImage(imgarray)
-		
+		imgdict = self.splitImage(imgarray)
+		ctfdict = {}
+		for key in imgdict.keys():
+			ctfvalues = self.processImage(imgdict[key])
+			ctfdict[key] = ctfvalues
 
 
 ##========================
