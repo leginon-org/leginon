@@ -166,8 +166,9 @@ class AceTilt(object):
 		ctfdict = {}
 		for key in imgdict.keys():
 			imgarray = imgdict[key]
-			mrc.write(imgarray, "splitimage-"+key+".dwn.mrc"
-			ctfvalues = self.processImage()
+			imgfile = "splitimage-"+key+".dwn.mrc"
+			mrc.write(imgarray, imgfile)
+			ctfvalues = self.processImage(imgfile)
 			ctfdict[key] = ctfvalues
 
 
