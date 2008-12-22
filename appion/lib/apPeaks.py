@@ -275,8 +275,7 @@ def removeOverlappingPeaks(peaktree, cutoff, msg=True, doubles=False):
 		i += 1
 
 	if doubles is True:
-		doublepeaktree.sort(_peakCompareSmallBig)
-		peaktree = doublepeaktree
+		peaktree = removeOverlappingPeaks(doublepeaktree, cutoff, False, False)
 
 	numpeaks = len(peaktree)
 	if msg is True:
