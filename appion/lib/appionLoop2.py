@@ -53,6 +53,7 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printColor("\nBeginning Main Loop", "green")
 			imgnum = 0
 			while imgnum < len(self.imgtree) and self.notdone is True:
+				self.stats['startimage'] = time.time()
 				imgdata = self.imgtree[imgnum]
 				imgnum += 1
 
@@ -577,7 +578,7 @@ class AppionLoop(appionScript.AppionScript):
 			return
 
 		### THIS NEEDS TO BECOME MUCH MORE GENERAL, e.g. Peaks
-		tdiff = time.time()-self.stats['startloop']
+		tdiff = time.time()-self.stats['startimage']
 		if not self.params['continue'] or tdiff > 0.1:
 			count = self.stats['count']
 			#if(count != self.stats['lastcount']):
