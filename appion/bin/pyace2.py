@@ -123,16 +123,16 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		logf = open(imagelog, "r")
 		for line in logf:
 			sline = line.strip()
-			if re.search("Final Defocus:", sline):
+			if re.search("^Final Defocus:", sline):
 				parts = sline.split()
 				self.ctfvalues['defocus1'] = float(parts[2])
 				self.ctfvalues['defocus2'] = float(parts[3])
 				### convert to degrees
 				self.ctfvalues['angle_astigmatism'] = math.degrees(float(parts[4]))
-			elif re.search("Amplitude Contrast:",sline):
+			elif re.search("^Amplitude Contrast:",sline):
 				parts = sline.split()
 				self.ctfvalues['amplitude_contrast'] = float(parts[2])
-			elif re.search("Confidence:",sline):
+			elif re.search("^Confidence:",sline):
 				parts = sline.split()
 				self.ctfvalues['confidence'] = float(parts[1])
 				self.ctfvalues['confidence_d'] = float(parts[1])
