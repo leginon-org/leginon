@@ -27,7 +27,7 @@ CVDEFS=
 
 # ------------------------ Rules --------------------------------
 
-all:	ace2 ace2correct testf
+all:	ace2 ace2correct
 
 ace2: ${CVOBJ1}
 	${CC} -o $@ ${CFLAGS} ${CVOBJ1} ${CVLIBS}
