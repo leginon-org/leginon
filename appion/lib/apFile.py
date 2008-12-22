@@ -46,17 +46,19 @@ def removeStack(filename, warn=True):
 			except:
 				apDisplay.printWarning('%s could not be removed' % f)
 
-def removeFilePattern(pattern):
+def removeFilePattern(pattern, warn=True):
 	files = glob.glob(pattern)
-	apDisplay.printWarning("%d files with the patterns '%s' will be removed" 
-		% (len(files), pattern))
+	if warn is True:
+		apDisplay.printWarning("%d files with the patterns '%s' will be removed" 
+			% (len(files), pattern))
+		time.sleep(3)
 	removed = 0
-	time.sleep(3)
 	for fname in files:
 		fullpath = os.path.abspath(fname)
 		if removeFile(fullpath):
 			removed+=1
-	apDisplay.printMsg("Removed %d of %d files"%(removed, len(files)))
+	if warn is True:
+		apDisplay.printMsg("Removed %d of %d files"%(removed, len(files)))
 	return
 
 def fileSize(filename, msg=False):
