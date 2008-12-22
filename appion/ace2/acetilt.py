@@ -74,8 +74,8 @@ class AceTilt(object):
 		for i in range(self.params['splits']):
 			for j in range(self.params['splits']):
 				key = "%02dx%02d"%(j,i)
-				print key, "==>", small[0]*j, ":", small[0]*(j+1), ",", small[1]*i, ":", small[1]*(i+1)
-				imgdict[key] = imgarray[small[0]*j:small[0]*(j+1), small[1]*i:small[1]*(i+1)]
+				print key, "==>", small[0]*j, ":", small[0]*(j+1)-1, ",", small[1]*i, ":", small[1]*(i+1)-1
+				imgdict[key] = imgarray[small[0]*j:small[0]*(j+1)-1, small[1]*i:small[1]*(i+1)-1]
 		
 
 	##========================
