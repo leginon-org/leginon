@@ -437,7 +437,7 @@ class DogPickerDialog(wx.Dialog):
 		#3a: threshold & find peaks image 1
 		peaktree1 = apPeaks.findPeaksInMap(dogmap1, thresh, pixdiam, maxpeaks=maxpeaks)
 		peaktree1 = apPeaks.removeBorderPeaks(peaktree1, pixdiam, 
-			dogmap1.shape[0], dogmap1.shape[1])
+			dogmap1.shape[1], dogmap1.shape[0])
 		#4a: insert into self.parent.picks1
 		self.parent.picks1 = self.peaktreeToPicks(peaktree1)
 
@@ -451,7 +451,7 @@ class DogPickerDialog(wx.Dialog):
 		#3b: threshold & find peaks image 2
 		peaktree2 = apPeaks.findPeaksInMap(dogmap2, thresh, pixdiam, olapmult=1.5, maxpeaks=maxpeaks)
 		peaktree2 = apPeaks.removeBorderPeaks(peaktree2, pixdiam, 
-			dogmap2.shape[0], dogmap2.shape[1])
+			dogmap2.shape[1], dogmap2.shape[0])
 
 		#4b: insert into self.parent.picks2
 		self.parent.picks2 = self.peaktreeToPicks(peaktree2)
