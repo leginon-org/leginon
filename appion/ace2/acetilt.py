@@ -11,6 +11,7 @@ import subprocess
 from pyami import mrc, spider
 import apParam
 import apDisplay
+import apFile
 import apImage
 
 ##========================
