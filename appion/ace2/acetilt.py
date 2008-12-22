@@ -139,7 +139,7 @@ class AceTilt(object):
 		apDisplay.printMsg("Final confidence: %.3f"%(ctfvalues['confidence']))
 
 		### double check that the values are reasonable 
-		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
+		if avgdf < -1.0e-3 or avgdf > -1.0e-9:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			return None
 		if ampconst < 1.0 or ampconst > 80.0:
