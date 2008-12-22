@@ -17,7 +17,7 @@ class AceTilt(object):
 		self.setupParseOpts()
 		self.timestamp = apParam.makeTimestamp()
 		self.params = apParam.convertParserToParams(self.parser)
-		self.getACE2Path()
+		self.ace2exe = self.getACE2Path()
 
 	##========================
 	def setupParseOpts(self):
