@@ -29,10 +29,9 @@ def getAllImages(stats, params):
 		mrcfileroot = self.params['mrcnames'].split(",")
 		imgtree = getSpecificImagesFromDB(mrcfileroot)
 		params['sessionname']=imgtree[0]['session']['name']
-	elif 'sessionname' in params and params['preset'] is not None:
+	elif 'sessionname' in params and params['preset'] is None:
 		imgtree = getAllImagesFromDB(params['sessionname'])
 	else:
-		print len(params['mrcfileroot']),params['alldbimages'],params['dbimages'],params['mrcfileroot']
 		apDisplay.printError("no files specified")
 	if imgtree is None or len(imgtree) < 1:
 		apDisplay.printError("did not find any images") 
