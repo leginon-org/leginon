@@ -150,13 +150,12 @@ class AceTilt(object):
 		## create power spectra jpeg
 		edgefile = imgfile+".edge.mrc"
 		if os.path.isfile(edgefile):
-			apDisplay.printMsg("Creating powerspectra jpeg")
 			jpegfile = imgfile+".edge.jpg"
-			ps = apImage.mrcToArray(edgefile)
+			ps = mrc.read(edgefile)
 			ps = (ps-ps.mean())/ps.std()
 			cutoff = -2.0*ps.min()
 			ps = numpy.where(ps < cutoff, ps, cutoff)
-			apImage.arrayToJpeg(ps, jpegfile)
+			apImage.arrayToJpeg(ps, jpegfile, msg=False)
 			apFile.removeFile(edgefile)
 
 		#print ctfvalues
@@ -183,7 +182,7 @@ class AceTilt(object):
 				ctf = ctfdict[key]
 				if ctf is not None:
 					avgdf = (ctf['defocus1']+ctf['defocus2'])/2.0
-					sys.stdout.write("%.3f\t"%(avgdf))
+					sys.stdout.write("%.3e\t"%(avgdf))
 			sys.stdout.write("\n")
 			
 
