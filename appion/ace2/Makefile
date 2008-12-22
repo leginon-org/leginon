@@ -10,16 +10,14 @@ CVLIBS = -lm -lobjc -lfftw3 -lgsl -lgslcblas
 #   -O for optimization
 
 CFLAGS = -O3
-
+BINPATH=../bin
 CC = gcc 
 
 # --------------------- Code modules ----------------------------
 
 # Object files
 
-CVOBJ1= ace2.o cvtypes.o Array.o MRC.o PGM.o util.o Image.o Ellipse.o geometry.o getopts.o ctf.o
-CVOBJ2= ace2correct.o cvtypes.o Array.o MRC.o PGM.o util.o Image.o Ellipse.o geometry.o getopts.o ctf.o
-CVOBJ3= testf.o cvtypes.o Array.o MRC.o PGM.o util.o Image.o Ellipse.o geometry.o getopts.o ctf.o
+CVOBJ=  cvtypes.o Array.o MRC.o PGM.o util.o Image.o Ellipse.o geometry.o getopts.o ctf.o
 
 # Definitions
 
@@ -29,15 +27,20 @@ CVDEFS=
 
 all:	ace2 ace2correct
 
-ace2: ${CVOBJ1}
-	${CC} -o $@ ${CFLAGS} ${CVOBJ1} ${CVLIBS}
+ace2: ${CVOBJ} ace2.o
+	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} ace2.o ${CVOBJ} ${CVLIBS}
 
-ace2correct: ${CVOBJ2}
-	${CC} -o $@ ${CFLAGS} ${CVOBJ2} ${CVLIBS}
+ace2correct: ${CVOBJ} ace2correct.o
+	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} ace2correct.o ${CVOBJ} ${CVLIBS}
 	
-testf: ${CVOBJ3}
-	${CC} -o $@ ${CFLAGS} ${CVOBJ3} ${CVLIBS}
+testf: ${CVOBJ} testf.o
+	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} testf.o ${CVOBJ} ${CVLIBS}
 
 # Implicit rule used by Gnu Make: $(CC) -c $(CPPFLAGS) $(CFLAGS)
 %.o : %.m
 	$(CC) -c $(CFLAGS) $< -o $@
+
+clean:
+	echo ""
+	rm -fv *~
+	rm -fv *.o *.a

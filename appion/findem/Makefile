@@ -10,11 +10,11 @@ LIBS=$(LPATH)/imlib2k.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a 
 #EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
 EXLIBS=-L/usr/lib64 -L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
 
-quick:	clean findem.f90
+findem:	clean plot2k misc im2k ifft gen findem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/findem.exe findem.f90 $(LIBS) 
 	chmod 777 $(BINPATH)/findem.exe
 
-findem:	clean plot2k misc im2k ifft gen findem.f90
+quick:	clean findem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/findem.exe findem.f90 $(LIBS) 
 	chmod 777 $(BINPATH)/findem.exe
 
@@ -22,7 +22,7 @@ old:	clean plot2k misc im2k ifft gen oldfindem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/oldfindem.exe oldfindem.f90 $(LIBS) 
 	chmod 777 $(BINPATH)/oldfindem.exe
 
-all:	clean plot2k misc im2k ifft gen findem old
+all:	clean plot2k misc im2k ifft gen findem
 
 plot2k:	clean plot2k.c
 	$(cc) $(CFLAGS) -c plot2k.c
