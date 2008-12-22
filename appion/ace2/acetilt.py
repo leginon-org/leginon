@@ -86,8 +86,7 @@ class AceTilt(object):
 	##========================
 	def processImage(self, imgfile):
 
-		### make standard input for ACE 2
-		apDisplay.printMsg("Ace2 executable: "+self.ace2exe)
+		### make command line
 		acecmd = ("%s -i %s -c %.2f -k %d -a %.6f"
 			%(self.ace2exe, imgfile, self.params['cs'], self.params['kv'], self.params['apix']))
 
@@ -105,6 +104,7 @@ class AceTilt(object):
 			ace2proc.wait()
 		aceoutf.close()
 
+		### die
 		if not os.path.isfile(imagelog):
 			apDisplay.printError("ace2 did not run")
 
@@ -177,7 +177,11 @@ class AceTilt(object):
 			mrc.write(imgarray, imgfile)
 			ctfvalues = self.processImage(imgfile)
 			ctfdict[key] = ctfvalues
-
+		for key in ctfdict.keys():
+			ctf = ctfdict[key]
+			if ctf is not None:
+				print key, (ctf['defocus1']+ctf['defocus2'])/2.0
+			
 
 ##========================
 ##========================
