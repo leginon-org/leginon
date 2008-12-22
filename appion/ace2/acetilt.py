@@ -3,6 +3,7 @@
 import os
 from optparse import OptionParser
 import numpy
+import subprocess
 from pyami import mrc, spider
 import apParam
 import apDisplay
