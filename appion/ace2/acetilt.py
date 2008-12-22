@@ -27,8 +27,8 @@ class AceTilt(object):
 			help="Name of imput mrc of spider format image", metavar="FILE")
 		self.parser.add_option("-t", "--tiltangle", dest="tiltangle", type="float",
 			help="Approximate tilt angle", metavar="#")
-		self.parser.add_option("-s", "--splits", dest="splits", type="int", default=4,
-			help="Number of divisions to divide image; -s 2 ==> 4x4 or 16 pieces", metavar="#")
+		self.parser.add_option("-s", "--splits", dest="splits", type="int", default=2,
+			help="Number of divisions to divide image; -s 4 ==> 4x4 or 16 pieces", metavar="#")
 		self.parser.add_option("-k", "--kv", dest="kv", type="int",
 			help="Voltage of microscope (in kV)", metavar="#")
 		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
@@ -79,7 +79,8 @@ class AceTilt(object):
 		return imgdict
 
 	##========================
-	def processImage(self, imgarray):
+	def processImage(self, imgfile):
+
 		### make standard input for ACE 2
 		apDisplay.printMsg("Ace2 executable: "+self.ace2exe)
 		acecmd = ("%s -i %s -c %.2f -k %d -a %.6f"
@@ -164,7 +165,9 @@ class AceTilt(object):
 		imgdict = self.splitImage(imgarray)
 		ctfdict = {}
 		for key in imgdict.keys():
-			ctfvalues = self.processImage(imgdict[key])
+			imgarray = imgdict[key]
+			mrc.write(imgarray, "splitimage-"+key+".dwn.mrc"
+			ctfvalues = self.processImage()
 			ctfdict[key] = ctfvalues
 
 
