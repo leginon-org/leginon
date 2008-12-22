@@ -93,7 +93,7 @@ class AceTilt(object):
 
 		### check if ace2 worked
 		imagelog = imgfile+".ctf.txt"
-		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
+		if not os.path.isfile(imagelog) and self.count <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
 			time.sleep(1)
 			ace2proc = subprocess.Popen(acecmd, shell=True, stdout=aceoutf, stderr=aceoutf)
@@ -164,7 +164,9 @@ class AceTilt(object):
 		imgarray = self.openFile()
 		imgdict = self.splitImage(imgarray)
 		ctfdict = {}
+		self.count = 0
 		for key in imgdict.keys():
+			self.count += 1
 			imgarray = imgdict[key]
 			imgfile = "splitimage-"+key+".dwn.mrc"
 			mrc.write(imgarray, imgfile)
