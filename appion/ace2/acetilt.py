@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+#python
 import os
 import re
 import time
@@ -7,7 +8,10 @@ import sys
 import math
 from optparse import OptionParser
 import numpy
+from numpy import linalg
 import subprocess
+import threading
+#appion
 from pyami import mrc, spider
 import apParam
 import apDisplay
@@ -84,7 +88,7 @@ class AceTilt(object):
 		return imgdict
 
 	##========================
-	def processImage(self, imgfile):
+	def processImage(self, imgfile, msg=False):
 
 		### make command line
 		acecmd = ("%s -i %s -c %.2f -k %d -a %.6f"
@@ -129,15 +133,16 @@ class AceTilt(object):
 		logf.close()
 
 		### summary stats
-		apDisplay.printMsg("============")
 		avgdf = (ctfvalues['defocus1']+ctfvalues['defocus2'])/2.0
 		ampconst = 100.0*ctfvalues['amplitude_contrast']
 		pererror = 100.0 * (ctfvalues['defocus1']-ctfvalues['defocus2']) / avgdf
-		apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent error)"%
-			(ctfvalues['defocus1']*1.0e6, ctfvalues['defocus2']*1.0e6, pererror ))
-		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(ctfvalues['angle_astigmatism']))
-		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
-		apDisplay.printMsg("Final confidence: %.3f"%(ctfvalues['confidence']))
+		if msg is True:
+			apDisplay.printMsg("============")
+			apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent error)"%
+				(ctfvalues['defocus1']*1.0e6, ctfvalues['defocus2']*1.0e6, pererror ))
+			apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(ctfvalues['angle_astigmatism']))
+			apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
+			apDisplay.printMsg("Final confidence: %.3f"%(ctfvalues['confidence']))
 
 		### double check that the values are reasonable 
 		if avgdf < -1.0e-3 or avgdf > -1.0e-9:
@@ -162,31 +167,107 @@ class AceTilt(object):
 
 		return ctfvalues
 
+	##========================
+	def fitPlaneToCtf(self, imgarray):
+		"""
+		performs a two-dimensional linear regression and subtracts it from an image
+		essentially a fast high pass filter
+		"""
+		def retx(y,x):
+			return x
+		def rety(y,x):
+			return y
+		count = float((imgarray.shape)[0]*(imgarray.shape)[1])
+		xarray = numpy.fromfunction(retx, imgarray.shape)
+		yarray = numpy.fromfunction(rety, imgarray.shape)
+		xsum = float(xarray.sum())
+		xsumsq = float((xarray*xarray).sum())
+		ysum = xsum
+		ysumsq = xsumsq
+		xysum = float((xarray*yarray).sum())
+		xzsum = float((xarray*imgarray).sum())
+		yzsum = float((yarray*imgarray).sum())
+		zsum = imgarray.sum()
+		zsumsq = (imgarray*imgarray).sum()
+		xarray = xarray.astype(numpy.float32)
+		yarray = yarray.astype(numpy.float32)
+		leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
+		rightmat = numpy.array( [xzsum, yzsum, zsum] )
+		resvec = linalg.solve(leftmat,rightmat)
+		xslope = resvec[0]
+		yslope = resvec[1]
+		print "plane_regress: "
+		print " x-slope =  %.2e m"%(xslope)
+		print " y-slope =  %.2e m"%(yslope)
+		print " xy-intercept =  %.2e m"%(resvec[2])
+
+		tiltaxis = math.degrees(math.atan2(-yslope,xslope))
+		print " tilt axis angle = %.2f degrees"%(tiltaxis)
+
+		newarray = xarray*xslope + yarray*yslope + resvec[2]
+		#print newarray
+		diffarray = imgarray - newarray
+		#print diffarray
+		rmserror = math.sqrt( (diffarray*diffarray).mean() )
+		print " rms error = %.2e m"%(rmserror)
+
+		#print " max1-slope =  %.2e m"%(xslope*math.cos(math.radians(tiltaxis)))
+		#print " max2-slope =  %.2e m"%(yslope*math.sin(math.radians(tiltaxis)))
+
+		maxslope = abs(xslope*math.cos(math.radians(tiltaxis))) + abs(yslope*math.sin(math.radians(tiltaxis)))
+		print " max-slope =  %.2e m"%(maxslope)
+		if abs(maxslope) < max(abs(xslope),abs(yslope)):
+			print "ERROR in max slope calculation"
+
+		#print " num1-pix =  %.1f pixels"%(self.imgshape[1]*math.cos(math.radians(tiltaxis)))
+		#print " num2-pix =  %.1f pixels"%(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
+		numpix = abs(self.imgshape[1]*math.cos(math.radians(tiltaxis))) + abs(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
+		#print " num-pix =  %.1f pixels"%(numpix)
+		splitpix = numpix/float(self.params['splits'])
+		#print " split-pix =  %.1f pixels"%(splitpix)
+
+		splitsize = self.params['apix']*1.0e-10*splitpix
+		#print " split-size =  %.2e m"%(splitsize)
+		
+		#if abs(maxslope) > abs(splitsize):
+		#	print "invalid tilt:", maxslope, splitsize
+		#	return
+
+		print " angle ratio =  %.2e / %.2e => %.4f "%(maxslope,splitsize,maxslope/splitsize)
+		tiltangle = math.degrees(math.atan2(maxslope, splitsize))
+		print " tilt-angle =  %.2f degrees"%(tiltangle)
+
 
 	##========================
 	def run(self):
 		imgarray = self.openFile()
+		self.imgshape = imgarray.shape
 		imgdict = self.splitImage(imgarray)
 		ctfdict = {}
 		self.count = 0
+		ctfgrid = numpy.zeros((self.params['splits'], self.params['splits']))
 		for key in imgdict.keys():
 			self.count += 1
 			imgarray = imgdict[key]
 			imgfile = "splitimage-"+key+".dwn.mrc"
 			mrc.write(imgarray, imgfile)
-			ctfvalues = self.processImage(imgfile)
+			ctfvalues = None
+			while ctfvalues is None:
+				ctfvalues = self.processImage(imgfile)
 			ctfdict[key] = ctfvalues
-		for i in range(self.params['splits']):
-			for j in range(self.params['splits']):
+			apFile.removeFilePattern(imgfile+"*", False)
+		for j in range(self.params['splits']):
+			for i in range(self.params['splits']):
 				key = "%02dx%02d"%(j,i)
 				ctf = ctfdict[key]
 				if ctf is not None:
 					avgdf = (ctf['defocus1']+ctf['defocus2'])/2.0
 					sys.stdout.write("%.3e\t"%(avgdf))
+					ctfgrid[j,i] = avgdf
 				else:
 					sys.stdout.write("%.3e\t"%(0.0))
 			sys.stdout.write("\n")
-			
+		self.fitPlaneToCtf(ctfgrid)
 
 ##========================
 ##========================
