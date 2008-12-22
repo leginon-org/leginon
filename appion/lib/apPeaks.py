@@ -62,6 +62,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 		peaktreelist.append(peaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
+	print len(peaktree)
 
 	return peaktree
 
@@ -222,6 +223,7 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 	pixrad =      diam/apix/2.0
 	binpixrad =   diam/apix/2.0/float(bin)
 	imgname =     imgdict['filename']
+	doubles =     params['doubles']
 
 	#PUT ALL THE PEAKS IN ONE ARRAY
 	mergepeaktree = []
@@ -229,7 +231,7 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 		mergepeaktree.extend(peaktree)
 	#REMOVE OVERLAPPING PEAKS
 	cutoff   = olapmult*pixrad	#1.5x particle radius in pixels
-	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff, msg)
+	mergepeaktree = removeOverlappingPeaks(mergepeaktree, cutoff, msg, doubles)
 
 	bestpeaktree = []
 	for peaktree in peaktreelist:
@@ -249,7 +251,7 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 
 	return bestpeaktree
 
-def removeOverlappingPeaks(peaktree, cutoff, msg=True):
+def removeOverlappingPeaks(peaktree, cutoff, msg=True, doubles=False):
 	#distance in pixels for two peaks to be too close together
 	if msg is True:
 		apDisplay.printMsg("overlap distance cutoff: "+str(round(cutoff,1))+" pixels")
@@ -258,20 +260,27 @@ def removeOverlappingPeaks(peaktree, cutoff, msg=True):
 	initpeaks = len(peaktree)
 	#orders peaks from smallest to biggest
 	peaktree.sort(_peakCompareSmallBig)
+	doublepeaktree = []
 	i=0
 	while i < len(peaktree):
 		j = i+1
 		while j < len(peaktree):
 			distsq = peakDistSq(peaktree[i], peaktree[j])
 			if(distsq < cutsq):
+				doublepeaktree.append(peaktree[i])
 				del peaktree[i]
 				i -= 1
 				j = len(peaktree)
 			j += 1
 		i += 1
-	postpeaks = len(peaktree)
+
+	if doubles is True:
+		doublepeaktree.sort(_peakCompareSmallBig)
+		peaktree = doublepeaktree
+
+	numpeaks = len(peaktree)
 	if msg is True:
-		apDisplay.printMsg("kept "+str(postpeaks)+" non-overlapping peaks of "
+		apDisplay.printMsg("kept "+str(numpeaks)+" non-overlapping peaks of "
 			+str(initpeaks)+" total peaks")
 
 	return peaktree

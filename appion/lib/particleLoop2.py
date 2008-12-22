@@ -265,6 +265,8 @@ class ParticleLoop(filterLoop.FilterLoop):
 			action="store_true", help="Use defocal pairs")
 		self.parser.add_option("--checkmask", "--maskassess", dest="checkmask", default=False,
 			action="store_true", help="Check mask")
+		self.parser.add_option("--doubles", dest="doubles", default=False,
+			action="store_true", help="Picks only particles picked by at least two templates")
 
 	#=====================
 	def checkGlobalConflicts(self):
