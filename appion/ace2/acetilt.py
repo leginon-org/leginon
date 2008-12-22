@@ -63,7 +63,7 @@ class AceTilt(object):
 				imgarray = spider.read(self.params['filename'])
 			except:
 				apDisplay.printError("Cound not read file "+self.params['filename'])
-		return imgarry
+		return imgarray
 
 	##========================
 	def splitImage(self, imgarray):
