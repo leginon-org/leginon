@@ -13,7 +13,7 @@ import apParam
 import apFile
 
 #===========
-def runSpectralFindEM(imgdict, params):
+def runSpectralFindEM(imgdict, params, thread=False):
 	"""
 	runs a separate thread of findem.exe for each template
 	to get cross-correlation maps
