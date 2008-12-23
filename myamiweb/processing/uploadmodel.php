@@ -74,7 +74,6 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		$outdir=ereg_replace("rawdata","models",$outdir);
 		$outdir=$outdir."/accepted";
 		$sessionname=$sessioninfo['Name'];
-		print_r($_POST);
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
@@ -95,12 +94,12 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
-	if (!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
+	if (!$densityid &&!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
 	echo"<TABLE>
     <TR>
-      <TD VALIGN='TOP'>
-      <BR/>\n";
+      <TD VALIGN='TOP'>";
 	if ($rescale) echo "
+      <BR/>\n
       <B>New Model Name:</B><BR>
       <INPUT TYPE='text' NAME='newmodel' VALUE='$newmodel' SIZE='50'><br />\n";
 	else {
