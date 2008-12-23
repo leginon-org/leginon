@@ -36,14 +36,16 @@ class AceTilt(object):
 			help="Name of imput mrc of spider format image", metavar="FILE")
 		self.parser.add_option("-t", "--tiltangle", dest="tiltangle", type="float",
 			help="Approximate tilt angle", metavar="#")
-		self.parser.add_option("-s", "--splits", dest="splits", type="int", default=2,
-			help="Number of divisions to divide image; -s 4 ==> 4x4 or 16 pieces", metavar="#")
 		self.parser.add_option("-k", "--kv", dest="kv", type="int",
 			help="Voltage of microscope (in kV)", metavar="#")
 		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
 			help="Spherical abberation of the microscope (in mm)", metavar="#")
 		self.parser.add_option("-a", "--apix", dest="apix", type="float",
 			help="Pixel size of the image (in Angstroms per pixel)", metavar="#")
+		self.parser.add_option("-s", "--split-size", dest="splitsize", type="int", default=2,
+			help="Size in pixels of areas to image", metavar="#")
+		self.parser.add_option("-n", "--num-splits", dest="numsplits", type="int", default=2,
+			help="Number of divisions to divide image; -s 4 ==> 4x4 for 16 pieces", metavar="#")
 
 	#======================
 	def getACE2Path(self):
@@ -76,15 +78,20 @@ class AceTilt(object):
 
 	##========================
 	def splitImage(self, imgarray):
-		shape = numpy.asarray(imgarray.shape)
-		small = shape/self.params['splits']
+		splitsize = self.params['splitsize']
+		numsplits = self.params['numsplits']
 
 		imgdict = {}
-		for i in range(self.params['splits']):
-			for j in range(self.params['splits']):
-				key = "%02dx%02d"%(j,i)
-				#print key, "==>", small[0]*j, ":", small[0]*(j+1)+1, ",", small[1]*i, ":", small[1]*(i+1)+1
-				imgdict[key] = imgarray[small[0]*j:small[0]*(j+1)+1, small[1]*i:small[1]*(i+1)+1]
+		for i in range(numsplits):
+			for j in range(numsplits):
+				xstart = int(self.imgshape[0]/float(numsplits)*i)
+				xend = xstart + splitsize
+				ystart = int(self.imgshape[1]/float(numsplits)*j)
+				yend = ystart + splitsize
+				if xend <= self.imgshape[0] and yend <= self.imgshape[1]:
+					key = "%04dx%04d"%(xstart+splitsize/2,ystart+splitsize/2)
+					#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
+					imgdict[key] = imgarray[xstart:xend, ystart:yend]
 		return imgdict
 
 	##========================
@@ -148,7 +155,7 @@ class AceTilt(object):
 		if avgdf < -1.0e-3 or avgdf > -1.0e-9:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			return None
-		if ampconst < 1.0 or ampconst > 80.0:
+		if ampconst < -0.01 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			return None
 
@@ -223,7 +230,7 @@ class AceTilt(object):
 		#print " num2-pix =  %.1f pixels"%(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
 		numpix = abs(self.imgshape[1]*math.cos(math.radians(tiltaxis))) + abs(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
 		#print " num-pix =  %.1f pixels"%(numpix)
-		splitpix = numpix/float(self.params['splits'])
+		splitpix = numpix/float(self.params['numsplits'])
 		#print " split-pix =  %.1f pixels"%(splitpix)
 
 		splitsize = self.params['apix']*1.0e-10*splitpix
@@ -245,7 +252,9 @@ class AceTilt(object):
 		imgdict = self.splitImage(imgarray)
 		ctfdict = {}
 		self.count = 0
-		ctfgrid = numpy.zeros((self.params['splits'], self.params['splits']))
+
+		### process image pieces
+		print "processing image pieces "+str(len(imgdict.keys()))+" total"
 		for key in imgdict.keys():
 			self.count += 1
 			imgarray = imgdict[key]
@@ -256,17 +265,33 @@ class AceTilt(object):
 				ctfvalues = self.processImage(imgfile)
 			ctfdict[key] = ctfvalues
 			apFile.removeFilePattern(imgfile+"*", False)
-		for j in range(self.params['splits']):
-			for i in range(self.params['splits']):
-				key = "%02dx%02d"%(j,i)
-				ctf = ctfdict[key]
-				if ctf is not None:
-					avgdf = (ctf['defocus1']+ctf['defocus2'])/2.0
-					sys.stdout.write("%.3e\t"%(avgdf))
-					ctfgrid[j,i] = avgdf
+			sys.stderr.write(".")
+		sys.stderr.write("\n")
+
+		## compile into grid form
+		numsplits = self.params['numsplits']
+		halfsize = self.params['splitsize']/2
+		ctfgrid = numpy.zeros((numsplits-1, numsplits-1), dtype=numpy.float32)
+		for i in range(numsplits):
+			for j in range(numsplits):
+				xavg = int(self.imgshape[0]/float(numsplits)*i) + halfsize
+				yavg = int(self.imgshape[1]/float(numsplits)*j) + halfsize
+				key = "%04dx%04d"%(xavg,yavg)
+				if key in ctfdict:
+					ctf = ctfdict[key]
+					if ctf is not None:
+						avgdf = (ctf['defocus1']+ctf['defocus2'])/2.0
+						sys.stdout.write("%.2e "%(avgdf))
+						ctfgrid[i,j] = avgdf
+					else:
+						sys.stdout.write("xxxxxxx\t")
 				else:
-					sys.stdout.write("%.3e\t"%(0.0))
+					pass
+					#print "error: ", key
 			sys.stdout.write("\n")
+		#print ctfgrid
+
+		### calculate ctf parameters
 		self.fitPlaneToCtf(ctfgrid)
 
 ##========================
