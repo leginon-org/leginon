@@ -78,11 +78,25 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 
 	if (!$prtlrunIds) {
 		echo"<FONT COLOR='RED'><B>No Particles for this Session</B></FONT>\n";
-		echo"<INPUT TYPE='HIDDEN' NAME='pickrunid' VALUE='None'>\n";
+		echo"<INPUT TYPE='HIDDEN' NAME='pickrunid1' VALUE='None'>\n";
+		echo"<INPUT TYPE='HIDDEN' NAME='pickrunid2' VALUE='None'>\n";
 	}
 	else {
-		echo "<BR/>Edit Particle Picks:
-		<SELECT NAME='pickrunid'>\n";
+		echo "<BR/>Edit Particle Picks:<br/>
+		<SELECT NAME='pickrunid1'>\n";
+		echo "<OPTION VALUE='None'>None</OPTION>";
+		foreach ($prtlrunIds as $prtlrun){
+			$prtlrunId=$prtlrun['DEF_id'];
+			$runname=$prtlrun['name'];
+			$prtlstats=$particle->getStats($prtlrunId);
+			$totprtls=commafy($prtlstats['totparticles']);
+			echo "<OPTION VALUE='$prtlrunId'";
+			// select previously set prtl on resubmit
+			if ($prtlrunval==$prtlrunId) echo " SELECTED";
+			echo">$runname ($totprtls prtls)</OPTION>\n";
+		}
+		echo "</SELECT>\n";
+		echo "<SELECT NAME='pickrunid2'>\n";
 		echo "<OPTION VALUE='None'>None</OPTION>";
 		foreach ($prtlrunIds as $prtlrun){
 			$prtlrunId=$prtlrun['DEF_id'];
@@ -165,9 +179,14 @@ function runTiltAutoAligner() {
 	}
 	$command .= $partcommand;
 
-	$pickrunid=$_POST['pickrunid'];
-	if ($pickrunid != 'None') {
-		$command .= " --pickrunid=$pickrunid";
+	$pickrunid1=$_POST['pickrunid1'];
+	$pickrunid2=$_POST['pickrunid2'];
+	if ($pickrunid1 != 'None' && $pickrunid2 != 'None') {
+		$command .= " --pickrunids=$pickrunid1,$pickrunid2";
+	} elseif ($pickrunid1 != 'None') {
+		$command .= " --pickrunids=$pickrunid1";
+	} elseif ($pickrunid2 != 'None') {
+		$command .= " --pickrunids=$pickrunid2";
 	}
 
 	$ftype=$_POST['ftype'];
