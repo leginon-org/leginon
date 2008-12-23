@@ -238,9 +238,9 @@ function runImgRejector() {
 
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--runname=$runid ";
-	$command.="--rundir=$outdir ";
-	if ($dbimages) $command.="--dbimages=$dbimages ";
-	else $command.="--alldbimages=$_POST[sessionname] ";
+	$command.="--rundir=".$outdir."/".$runid." ";
+	if ($_POST['preset']) $command.="--preset=".$_POST['preset']." ";
+	$command.="--session=".$_POST['sessionname']." ";
 	if ($_POST['commit']=='on') $command.="--commit ";
 	if ($_POST['notiltpairs']=='on') $command.="--notiltpairs ";
 	if ($_POST['nopicks']=='on') $command.="--nopicks ";
@@ -248,6 +248,7 @@ function runImgRejector() {
 	if ($acecutoff) $command.="--acecutoff=$acecutoff ";
 	if ($dfmin) $command.="--mindefocus=$dfmin ";
 	if ($dfmax) $command.="--maxdefocus=$dfmax ";
+	$command.="--no-wait ";
 	elseif ($_POST['sessionname']) {
 		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
 		elseif(!$_POST['alldbimages']) {
