@@ -1249,7 +1249,19 @@ class PickerApp(wx.App):
 			dialog.ShowModal()
 			dialog.Destroy()
 
-
+	#---------------------------------------
+	def getExtension(self):
+		if self.data['filetypeindex'] == 0:
+			self.data['extension'] = "txt"
+		elif self.data['filetypeindex'] == 1:
+			self.data['extension'] = "xml"
+		elif self.data['filetypeindex'] == 2:
+			self.data['extension'] = "spi"
+		elif self.data['filetypeindex'] == 3:
+			self.data['extension'] = "pickle"
+		else:
+			return "spi"
+		return self.data['extension'] 
 
 	#---------------------------------------
 	def onQuit(self, evt):
