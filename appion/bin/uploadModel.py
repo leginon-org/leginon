@@ -128,7 +128,6 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def getDensityParams(self):
-		print self.params['densityid']
 		densitydata = appionData.Ap3dDensityData.direct_query(self.params['densityid'])
 		self.params['oldapix'] = float(densitydata['pixelsize'])
 		symmetrydata = densitydata['symmetry']
@@ -200,7 +199,7 @@ class UploadModelScript(appionScript.AppionScript):
 			self.params['newbox'] = self.params['oldbox']
 		if self.params['oldapix'] is None:
 			self.params['oldapix'] = self.params['newapix']
-		self.params['scale'] =  self.params['oldapix']/self.params['newapix']
+		self.params['scale'] =  float(self.params['oldapix'])/self.params['newapix']
 		if self.params['name'] is None:
 			self.setNewFileName()
 		apDisplay.printColor("Naming initial model as: "+self.params['name'], "cyan")
@@ -222,14 +221,13 @@ class UploadModelScript(appionScript.AppionScript):
 			### simple upload, just copy file to models folder
 			apDisplay.printMsg("copying original model to a new location: "+newmodelpath)
 			shutil.copyfile(origmodelpath, newmodelpath)
-
 		### upload Initial Model
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
 		initmodel={}
 		initmodel['pixelsize'] = self.params['newapix']
-		initmodel['boxsize']   = self.params['oldbox']
+		initmodel['boxsize']   = self.params['newbox']
 		initmodel['symmetry']  = self.params['syminfo']
 		apRecon.renderSnapshots(newmodelpath, self.params['res'], initmodel, self.params['contour'], self.params['zoom'])
 

@@ -140,8 +140,8 @@ class modelFromEMDB(appionScript.AppionScript):
 
 		newmodelpath = os.path.join(self.params['rundir'], self.params['name'])
 		
+		mrcname = newmodelpath
 		ccp4name = newmodelpath+".ccp4"
-		mrcname = newmodelpath+".mrc"
 
 		### get emdb from web
 		emdbfile = self.fetchEMDB(self.params['emdbid'], ccp4name)
@@ -150,7 +150,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		origapix = self.getOriginalApixFromEMDB(self.params['emdbid'])
 		scale = origapix/self.params['apix']
 		emancmd = ("proc3d "+ccp4name+" "+mrcname+
-			(" scale=%f clip=%d,%d "%(scale, self.params['box'], self.params['box'])))
+			(" scale=%f clip=%d,%d,%d "%(scale, self.params['box'],self.params['box'], self.params['box'])))
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 		apFile.removeFile(ccp4name)
 
