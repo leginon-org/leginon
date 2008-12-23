@@ -2365,6 +2365,17 @@ class particledata {
 		return $r;
 	}
 
+	function getDensityIdFromFile($rundir,$filename) {
+    $q = "SELECT d.`DEF_id` "
+        ."FROM `Ap3dDensityData` AS d "
+        ."LEFT JOIN ApPathData AS p ON "
+        ."(d.`REF|ApPathData|path` = p.`DEF_id`) "
+        ."WHERE d.`name` LIKE '$filename' "
+        ."AND p.`path` LIKE '$rundir' ";
+    list($r) = $this->mysql->getSQLResult($q);
+		return $r['DEF_id'];
+	}
+
 	function get3dDensityInfo ($densityId) {
 		$q = "SELECT d.*,p.path "
 				."FROM `Ap3dDensityData` AS d "

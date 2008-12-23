@@ -76,7 +76,7 @@ else
 $densitytable.= "<br/><br/>\n";
 
 $densitytable.= "<b>Initial Model:</b><br/>\n";
-$densitytable.= "<A HREF='uploadmodel.php?expId=$expId&apix=$density[pixelsize]&sym=25"
+$densitytable.= "<A HREF='uploadmodel.php?expId=$expId&densityId=$densityId"
 	."&pdbmod=$density[path]/$density[name]'>Upload Density file as an Initial Model</A><br/>\n";
 
 echo $densitytable;

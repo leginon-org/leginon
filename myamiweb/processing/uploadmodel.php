@@ -34,6 +34,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		$densityinfo = $particle->get3dDensityInfo($densityid);
 		$apix = $densityinfo['pixelsize'];
 		$res = $densityinfo['resolution'];
+		$boxsize = $densityinfo['boxsize'];
 		$description = $densityinfo['description'];
 	} else {
 	// find out if rescaling an existing initial model
@@ -81,6 +82,7 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	// Set any existing parameters in form
 	$apix = ($_POST['apix']) ? $_POST['apix'] : $apix;
 	$res = ($_POST['res']) ? $_POST['res'] : $res;
+	$boxsize = ($_POST['boxsize']) ? $_POST['boxsize'] : $boxsize;
 	$contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
 	$model = ($_POST['model']) ? $_POST['model'] : '';
@@ -147,9 +149,14 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		echo "</select>\n";
 		echo "<P>\n";
 		echo "<INPUT TYPE='text' NAME='res' VALUE='$res' SIZE='5'> Model Resolution\n";
-      		echo "<br />\n";
-      		echo "<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n";
-      		echo "Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
+ 		echo "<br />\n";
+ 		echo "<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n";
+ 		echo "Pixel Size <FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
+		if ($densityid) {
+			echo "<br />\n";
+			echo "<INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxsize'>\n";
+			echo "Square Box Size <FONT SIZE='-2'>(in pixels)</FONT>\n";
+		}
 	}
 	echo "
       <P>
@@ -189,6 +196,7 @@ function runUploadModel() {
 	$command = "uploadModel.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 
+	$boxsize=$_POST['boxsize'];
 	$contour=$_POST['contour'];
 	$zoom=$_POST['zoom'];
 	$session=$_POST['sessionname'];
@@ -196,7 +204,7 @@ function runUploadModel() {
 	$model=$_POST['model'];
 	if ($_POST['modelname']) $model=$_POST['modelname'];
 	//make sure a model root was entered if upload an independent file
-	if (!$modelid && !$densityid) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
+	if (!$modelid && !$densityid && !$model) createUploadModelForm("<B>ERROR:</B> Enter a root name of the model");
 
 	//make sure a apix was provided
 	$apix=$_POST['apix'];
@@ -205,7 +213,6 @@ function runUploadModel() {
 	// if rescaling, make sure there is a boxsize
 	if ($_POST['newmodel']) {
 		$model=$_POST['newmodel'];
-		$boxsize=$_POST['boxsize'];
 		$origapix=$_POST['origapix'];
 		if (!$boxsize) createUploadModelForm("<B>ERROR:</B> Enter the final box size of the model");
 	}

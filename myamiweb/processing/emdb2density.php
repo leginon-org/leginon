@@ -49,6 +49,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 		$outdir=$sessioninfo['Image path'];
 		$outdir=ereg_replace("leginon","appion",$outdir);
 		$outdir=ereg_replace("rawdata","models",$outdir);
+		$outdir=$outdir."/emdb";
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
@@ -59,10 +60,12 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 	$res = ($_POST['res']) ? $_POST['res'] : '';
 	$emdbid = ($_POST['emdbid']) ? $_POST['emdbid'] : '';
 	$box = ($_POST['box']) ? $_POST['box'] : '';
+	$runtime = ($_POST['runtime']) ? $_POST['runtime'] : getTimestring();
 
 	echo "<table BORDER=3 CLASS=tableborder><tr><td valign='top'>\n";
 	echo docpop('emdbid', '<b>EMDB ID:</b>');
 	echo "<input type='text' name='emdbid' value='$emdbid' size='5'><br />\n";
+	echo "<input type='hidden' name='runtime' value='$runtime'>\n";
 	echo "</td></tr>\n";
 	echo "<tr><td valign='top' class='tablebg'>\n";
 	echo "<p>\n";
@@ -84,6 +87,7 @@ function createForm($extra=false, $title='EMDB to EM', $heading='EMDB to EM Dens
 }
 
 function runUploadModel() {
+	$particle = new particledata();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
@@ -109,10 +113,11 @@ function runUploadModel() {
 
 	// check if downloading the biological unit
 
+	if (!is_float($apix)) $apix = $apix.".0";
 	if (!is_float($res)) $res = $res.".0";
 	$filename = $emdbid.'-'.$apix.'-'.$res.'-'.$box;
 	// emdb id will be the runname
-	$runname = getTimestring();
+	$runname = $_POST['runtime'];
 	$runname = $emdbid."_".$runname;
 	$rundir = $outdir."/".$runname;
 
@@ -163,19 +168,17 @@ function runUploadModel() {
 	echo "<p>\n";
 	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
 		echo "EM Density file to be created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
+		echo "$rundir/$filename.mrc</b><br />\n";
 	}
 	else {
 		echo "EM Density file created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
+		$densityid = $particle -> getDensityIdFromFile($rundir,$filename.".mrc");
+		echo "<b><a href='densityreport.php?expId=$expId&densityId=$densityid'>$rundir/$filename.mrc</a></b><br />\n";
 		echo "<hr />\n";
 		$formAction="uploadmodel.php?expId=$expId";
-		$formAction.="&emdbmod=$rundir/$filename.mrc";
+		$formAction.="&densityId=$densityid";
 		echo "<form name='uploadmodel' method='POST' ACTION='$formAction'>\n";
 		echo "<center><input type='submit' name='goUploadModel' value='Upload This Model'></center><br />\n";
-		echo "<input type='hidden' name='description' value='density created from EMDB id: $emdbid'>\n";
-		echo "<input type='hidden' name='res' value='$res'>\n";
-		echo "<input type='hidden' name='apix' value='$apix'>\n";
 		echo "<font class='apcomment'>Remember that EMDB may not be oriented relative to any axis</font>\n";
 		echo "</form>\n";
 	}

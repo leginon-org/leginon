@@ -59,10 +59,12 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 	$pdbid = ($_POST['pdbid']) ? $_POST['pdbid'] : '';
 	$box = ($_POST['box']) ? $_POST['box'] : '';
 	$bunitcheck = ($_POST['bunit'] == 'on') ? 'checked' : '';
+	$runtime = ($_POST['runtime']) ? $_POST['runtime'] : getTimestring();
 
 	echo "<table BORDER=3 CLASS=tableborder><tr><td valign='top'>\n";
 	echo docpop('pdbid', '<b>PDB ID:</b>');
 	echo "<input type='text' name='pdbid' value='$pdbid' size='5'><br />\n";
+	echo "<input type='hidden' name='runtime' value='$runtime'>\n";
 	echo "<input type='checkbox' name='bunit' $bunitcheck>\n";
 	echo "Use the ";
 	echo docpop('biolunit', "biological unit");
@@ -87,6 +89,7 @@ function createForm($extra=false, $title='PDB to EM', $heading='PDB to EM Densit
 }
 
 function runDownloadModel() {
+	$particle = new particledata();
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
@@ -115,7 +118,7 @@ function runDownloadModel() {
 	if (!is_float($res)) $res = $res.".0";
 	$filename = $pdbid.'-'.$apix.'-'.$res.'-'.$box;
 	// pdb id will be the runname
-	$runname = getTimestring();
+	$runname = $_POST['runtime'];
 	$runname = $pdbid."_".$runname;
 	$rundir = $outdir."/".$runname;
 
@@ -166,16 +169,17 @@ function runDownloadModel() {
 	echo "<p>\n";
 	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
 		echo "EM Density file to be created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
+		echo "<b>$rundir/$filename.mrc</b><br />\n";
 	}
 	else {
 		echo "EM Density file created:<br />\n";
-		echo "<b><a href='densitysummary.php?expId=$expId'>$rundir/$filename.mrc</a></b><br />\n";
+		$densityid = $particle -> getDensityIdFromFile($rundir,$filename.".mrc");
+		echo "<b><a href='densityreport.php?expId=$expId&densityId=$densityid'>$rundir/$filename.mrc</a></b><br />\n";
 		echo "<hr />\n";
 		$formAction="uploadmodel.php?expId=$expId";
-		$formAction.="&densityid=$rundir/$filename.mrc";
+		$formAction.="&densityId=$densityid";
 		echo "<form name='uploadmodel' method='POST' ACTION='$formAction'>\n";
-		echo "<center><input type='submit' name='goUploadModel' value='Download This Model'></center><br />\n";
+		echo "<center><input type='submit' name='goUploadModel' value='Upload This Model'></center><br />\n";
 		echo "<font class='apcomment'>Remember that PDB may not be oriented relative to any axis</font>\n";
 		echo "</form>\n";
 	}
