@@ -58,8 +58,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.outtypes = ['text','xml','spider','pickle']
 		self.parser.add_option("--outtype", dest="outtype", default="spider",
 			help="file output type: "+str(self.outtypes), metavar="TYPE")
-		self.parser.add_option("--pickrunid", dest="pickrunid", type="int",
-			help="selection run id for previous automated picking run", metavar="#")
+		self.parser.add_option("--pickrunids", dest="pickrunids",
+			help="selection run ids for previous automated picking run", metavar="#,#,#")
 		self.parser.add_option("--pickrunname", dest="pickrunname", type="int",
 			help="previous selection run name, e.g. --pickrunname=dogrun1", metavar="NAME")
 
@@ -81,8 +81,9 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	def getParticleParamsData(self):
 		tiltparamsq = appionData.ApTiltAlignParamsData()
 		tiltparamsq['output_type'] = self.params['outtype']
-		if self.params['pickrunid'] is not None:
-			tiltparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunid'])
+		if self.params['pickrunids'] is not None:
+			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
+			tiltparamsq['oldselectionrun'] = apParticle.getSelectionRunDataFromID(self.params['pickrunidlist'][0])
 		return tiltparamsq
 
 	#####################################################
@@ -173,12 +174,12 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#---------------------------------------
 	#---------------------------------------
 	def getParticlePicks(self, imgdata):
-		if not self.params['pickrunid']:
-			if not self.params['pickrunname']:
-				return []
-			self.params['pickrunid'] = apParticle.getSelectionRun(imgdata, self.params['pickrunname'])
-			#particles = apParticle.getParticlesForImageFromRunName(imgdata, self.params['pickrunname'])
-		particles = apParticle.getParticles(imgdata, self.params['pickrunid'])
+		particles = []
+		if not self.params['pickrunids']:
+			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
+			for pickrunid in self.params['pickrunidlist']:
+				newparticles = apParticle.getParticles(imgdata, pickrunid)
+				particles.extend(newparticles)
 		targets = self.particlesToTargets(particles)
 		#apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
 		return targets
