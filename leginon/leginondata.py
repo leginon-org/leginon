@@ -1662,6 +1662,7 @@ class ManualImageLoaderSettingsData(SettingsData):
 			('instruments', dict),
 			('camera settings', CameraSettingsData),
 			('save image', bool),
+			('tilt group', int),
 			('batch script', str),
 		)
 	typemap = classmethod(typemap)
@@ -1753,6 +1754,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('use wiener', bool),
 			('use tilt', bool),
 			('wiener max tilt', float),
+			('fit data points', int),
 		)
 	typemap = classmethod(typemap)
 
@@ -1770,6 +1772,7 @@ class TomographySimuSettingsData(AcquisitionSettingsData):
 			('use lpf', bool),
 			('use wiener', bool),
 			('use tilt', bool),
+			('fit data points', int),
 		)
 	typemap = classmethod(typemap)
 
