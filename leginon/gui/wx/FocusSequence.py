@@ -218,7 +218,6 @@ class Dialog(gui.wx.Dialog.Dialog):
 		]
 
 		[widget.Enable(enable) for widget in widgets]
-		[label.Enable(enable) for label in self.labels]
 
 	def onInitialize(self):
 		sizer = self.sz
