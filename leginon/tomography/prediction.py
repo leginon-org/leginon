@@ -48,6 +48,7 @@ class Prediction(object):
 		self.parameters = [0, 0, 0]
 		self.image_pixel_size = 2e-9
 		self.ucenter_limit = 2e-6
+		self.fitdata = 4
 
 	def resetTiltSeriesList(self):
 		self.tilt_series_list = []
@@ -251,18 +252,18 @@ class Prediction(object):
 		r2 = ssxy * ssxy / (ssxx * ssyy)
 		return r2
 
-	def acceptableindices(self,list,min,max):
+	def acceptableindices(self,list,min,max,datalimit):
 		array = scipy.array(list)
 		larger = scipy.where(array >= min)
 		smaller = scipy.where(array <= max)
 		goodarrayindices = scipy.intersect1d(larger[0],smaller[0])
 		goodindices = goodarrayindices.tolist()
-		while len(goodindices) < 4 and len(goodindices) > 0 and len(list) >= 4:
+		# The current tilt series may need an extra index to make up the number
+		while len(goodindices) < datalimit and len(goodindices) > 0 and len(list) >= datalimit:
 			nextindex = goodindices[-1]+1
 			if nextindex not in range(0,len(list)):
 				break
 			goodindices.append(goodindices[-1]+1)
-		print "goodtilt index",goodindices
 		return goodindices
 
 	def leastSquaresModel(self, tilt_series_list):
@@ -276,10 +277,11 @@ class Prediction(object):
 		current_tilt_direction = current_tilt_group.is_plus_tilt
 		print "tilt_direction",current_tilt_direction
 		current_tilt = current_tilt_group.tilts[-1]
-		if len(current_tilt_group) >= 4:
-			previous_4tilts = current_tilt_group.tilts[-4:]
+		datalimit = self.fitdata
+		if len(current_tilt_group) >= datalimit:
+			previous_tilts = current_tilt_group.tilts[-datalimit:]
 		else:
-			previous_4tilts = current_tilt_group.tilts[:]
+			previous_tilts = current_tilt_group.tilts[:]
 		if self.fixed_model:
 			# use previous 4 tilts for fixed phi, offset fitting of z0
 			tolerance = 0.01
@@ -287,8 +289,8 @@ class Prediction(object):
 			# With all three parameters free to change, use all tilt points to stablize the fiting
 			# The result is more an average phi, offset.
 			tolerance = 1.62
-		tiltmin = min(previous_4tilts) - tolerance
-		tiltmax = max(previous_4tilts) + tolerance
+		tiltmin = min(previous_tilts) - tolerance
+		tiltmax = max(previous_tilts) + tolerance
 		for tilt_series in tilt_series_list:
 			for tilt_group in tilt_series.tilt_groups:
 				if len(tilt_group.tilts) == 0  or len(tilt_group.xs) != len(tilt_group.tilts) or len(tilt_group.ys) != len(tilt_group.tilts):
@@ -298,7 +300,7 @@ class Prediction(object):
 					continue
 				parameters.extend([0])
 				
-				acceptableindices = self.acceptableindices(tilt_group.tilts,tiltmin,tiltmax)
+				acceptableindices = self.acceptableindices(tilt_group.tilts,tiltmin,tiltmax,datalimit)
 				goodtilts = []
 				goodxs = []
 				goodys = []
@@ -306,7 +308,6 @@ class Prediction(object):
 					goodtilts.append(tilt_group.tilts[i])
 					goodxs.append(tilt_group.xs[i])
 					goodys.append(tilt_group.ys[i])
-				print 'goodtilts',goodtilts
 				tilts = scipy.array(goodtilts)
 				cos_tilts = scipy.cos(tilts)
 				sin_tilts = scipy.sin(tilts)
@@ -327,7 +328,6 @@ class Prediction(object):
 			#'ftol': 1e-12,
 			#'xtol': 1e-12,
 		}
-		print args_list[0]
 		#print 'starting residuals',self.residuals(parameters,args_list)
 		result = scipy.optimize.leastsq(self.residuals, parameters, **kwargs)
 		try:

@@ -69,6 +69,7 @@ class Collection(object):
 		self.saveInstrumentState()
 		self.logger.info('Instrument state saved.')
 
+		self.prediction.fitdata = self.settings['fit data points']
 		self.tilt_series = tiltseries.TiltSeries(self.node, self.settings,
 												 self.session, self.preset,
 												 self.target, self.emtarget)

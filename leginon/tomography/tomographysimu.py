@@ -49,6 +49,7 @@ class TomographySimu(acquisition.Acquisition):
 		'use wiener': False,
 		'use tilt': True,
 		'simu tilt series': '1',
+		'fit data points': 4,
 	}
 
 	def __init__(self, *args, **kwargs):

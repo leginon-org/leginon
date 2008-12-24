@@ -69,6 +69,7 @@ class Tomography(acquisition.Acquisition):
 		'use wiener': False,
 		'use tilt': True,
 		'wiener max tilt': 45,
+		'fit data points': 4,
 	}
 
 	def __init__(self, *args, **kwargs):
