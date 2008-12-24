@@ -249,6 +249,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         self.widgets['z0 error'] = FloatEntry(self, -1, min=0.0,
             allownone=False, chars=6, value='2e-6')
         self.widgets['fixed model'] = wx.CheckBox(self, -1, 'Keep the tilt axis parameters fixed')
+        self.widgets['fit data points'] = IntEntry(self, -1, min=4, allownone=False, chars=5, value='4')
 
         magsz = wx.GridBagSizer(5, 5)
         label = wx.StaticText(self, -1, 'Initialize with the model of')
@@ -298,11 +299,19 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         label = wx.StaticText(self, -1, 'um of z0 jump between models' )
         zsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+        fsz = wx.GridBagSizer(5, 5)
+        label = wx.StaticText(self, -1, 'Smooth' )
+        fsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        fsz.Add(self.widgets['fit data points'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+        label = wx.StaticText(self, -1, 'tilts (>=4) for defocus prediction' )
+        fsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
         modelsz = wx.GridBagSizer(5, 5)
         modelsz.Add(magsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         modelsz.Add(optbsz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         modelsz.Add(zsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
         modelsz.Add(self.widgets['fixed model'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+        modelsz.Add(fsz, (4, 0), (1, 1), wx.ALIGN_RIGHT)
 
         modelbsz.Add(modelsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
         modelsz.AddGrowableCol(0)
@@ -319,7 +328,12 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         sz.AddGrowableCol(0)
         sz.AddGrowableCol(1)
 
+        self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
         return szs + [sz]
+
+    def onFixedModel(self, evt):
+        state = evt.IsChecked()
+        self.widgets['fit data points'].Enable(state)
 
     def getMagChoices(self):
     		choices = ['this preset and lower mags', 'only this preset','custom values']
