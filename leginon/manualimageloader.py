@@ -37,6 +37,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		'instruments': {'tem': None, 'ccdcamera': None},
 		'save image': False,
 		'batch script': default_batch,
+		'tilt group': 1,
 		'camera settings': None,
 	}
 
@@ -123,12 +124,14 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		self.loopstop.clear()
 		self.logger.info('Image loading loop started')
 		self.loopStarted()
+		self.tilt = 0
 		for info in batchinfo:
 			if self.loopstop.isSet():
 				break
 			self.published_images = []
 			try:
 				self.readUploadInfo(info)
+				self.setTiltSeries()
 				self.setInfoToInstrument()
 				self.acquire()
 			except:
@@ -158,6 +161,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			raise
 		self.logger.info('save the image as %s.mrc' % filename)
 		imagedata['filename'] = filename
+		imagedata['tilt series'] = self.tiltseries
 
 	def readBatchUploadInfo(self):
 		# in this example, the batch script file should be separated by tab
@@ -180,6 +184,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		if info is None:
 			# example
 			info = ['test.mrc','2e-10','1','1','50000','-2e-6','120000']
+		self.logger.info('reading image info')
 		try:
 			self.uploadedInfo = {}
 			self.uploadedInfo['original filepath'] = os.path.abspath(info[0])
@@ -188,10 +193,12 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			self.uploadedInfo['magnification'] = int(info[4])
 			self.uploadedInfo['defocus'] = float(info[5])
 			self.uploadedInfo['high tension'] = int(info[6])
+			if len(info) > 7:
+				self.uploadedInfo['stage a'] = float(info[7])*3.14159/180.0
 			# add other items in the dictionary and set to instrument in the function
 			# setInfoToInstrument if needed
 		except:
-			self.logger.exception('Bad batch file parameters')
+			#self.logger.exception('Bad batch file parameters')
 			raise
 		try:
 			self.uploadedInfo['image'] = mrc.read(self.uploadedInfo['original filepath'])
@@ -200,6 +207,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			raise
 
 	def setInfoToInstrument(self):
+		self.logger.info('setting instrument parameters')
 		try:
 			self.instrument.setTEM(self.settings['instruments']['tem'])
 			self.instrument.setCCDCamera(self.settings['instruments']['ccdcamera'])
@@ -211,6 +219,10 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		self.instrument.tem.HighTension = self.uploadedInfo['high tension']
 		self.instrument.tem.Defocus = self.uploadedInfo['defocus']
 		self.instrument.tem.Magnification = self.uploadedInfo['magnification']
+		try:
+			self.instrument.tem.StagePosition = {'a':self.uploadedInfo['stage a']}
+		except:
+			pass
 		cam_settings = self.settings['camera settings']
 		shape = self.uploadedInfo['image'].shape
 		cam_settings['exposure time'] = 1000
@@ -222,8 +234,10 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		cam_settings['offset']['y'] = 0
 		self.uploadedInfo['camera settings'] = cam_settings
 		self.instrument.ccdcamera.Settings = cam_settings
+		self.logger.info('instrument parameters set')
 		if self.settings['save image']:
 			self.updatePixelSizeCalibration()
+		self.logger.info('setting instrument parameters')
 	
 	def updatePixelSizeCalibration(self):
 		# This updates the pixel size for the magnification on the
@@ -243,4 +257,21 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 			caldata['tem'] = temdata
 			caldata['ccdcamera'] = camdata
 			self.publish(caldata, database=True)
-			
+		time.sleep(1.0)
+
+	def setTiltSeries(self):
+		grouplimit = self.settings['tilt group']
+		if grouplimit	== 1:
+			self.tiltseries = None
+			self.logger.info('setting tilt series to None')
+		else:
+			self.logger.info('setting tilt series')
+			if self.tilt == 0:
+				self.tiltseries = data.TiltSeriesData()
+				#self.tiltseries['session'] = self.session
+				self.tiltseries['number'] = grouplimit
+				self.publish(self.tiltseries, database=True, dbforce=True)
+			if self.tilt >=	grouplimit - 1:
+				self.tilt = 0
+			else:
+				self.tilt = self.tilt + 1

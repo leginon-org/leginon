@@ -12,7 +12,7 @@
 # $Locker:  $
 
 import threading
-from gui.wx.Entry import Entry, FloatEntry
+from gui.wx.Entry import Entry, FloatEntry, IntEntry
 import gui.wx.Events
 import gui.wx.ImagePanel
 import gui.wx.Instrument
@@ -146,6 +146,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['batch script'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['batch script'].SetMinSize((500,50))
+		self.widgets['tilt group'] = IntEntry(self, -1, min=1, chars=6)
 
 		sz = wx.GridBagSizer(5, 5)
 
@@ -157,6 +158,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['batch script'], (1, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
 		sz.Add(self.widgets['save image'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['tilt group'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		sz.AddGrowableCol(1)
