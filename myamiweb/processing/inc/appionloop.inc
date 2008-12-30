@@ -165,8 +165,8 @@ function appionLoopSummaryTable () {
 	}
 	$nowait = ($_POST[nowait]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
 	$background = ($_POST[background]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$shuffle = ($_POST['shuffle']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
-	$reverse = ($_POST['reverse']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$shuffle = ($_POST['imgorder']=="shuffle") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$reverse = ($_POST['imgorder']=="reverse") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$limit = ($_POST[limit]) ? $_POST[limit] : "all";
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST[apcontinue];
@@ -215,8 +215,8 @@ function parseAppionLoopParams () {
 	}
 	$nowait = ($_POST['nowait']=="on") ? false : true;
 	$background = ($_POST['background']=="on") ? true : false;
-	$shuffle = ($_POST['shuffle']=="on") ? true : false;
-	$reverse = ($_POST['reverse']=="on") ? true : false;
+	$shuffle = ($_POST['imgorder']=="shuffle") ? true : false;
+	$reverse = ($_POST['imgorder']=="reverse") ? true : false;
 	$limit = $_POST['limit'];
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST['apcontinue'];
