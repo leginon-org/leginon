@@ -156,9 +156,15 @@ def getPixelSize(imgdata):
 	pixelsizeq['magnification'] = imgdata['scope']['magnification']
 	pixelsizeq['tem'] = imgdata['scope']['tem']
 	pixelsizeq['ccdcamera'] = imgdata['camera']['ccdcamera']
-	pixelsizedata=pixelsizeq.query(results=1)
+	pixelsizedatas = pixelsizeq.query()
+	### check to get one before image was taken
+	i = 0
+	pixelsizedata = pixelsizedatas[i]
+	while pixelsizedata.timestamp > imgdata.timestamp:
+		i += 1
+		pixelsizedata = pixelsizedatas[i]
 	binning = imgdata['camera']['binning']['x']
-	pixelsize = pixelsizedata[0]['pixelsize'] * binning
+	pixelsize = pixelsizedata['pixelsize'] * binning
 	return(pixelsize*1e10)
 
 def getImgSize(imgdict):
