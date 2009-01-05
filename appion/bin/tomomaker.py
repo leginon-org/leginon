@@ -41,7 +41,7 @@ class tomoMaker(appionScript.AppionScript):
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
 			help="tilt series number in the session", metavar="int")
-		self.parser.add_option("--bin", "-b", dest="bin", , type="int",
+		self.parser.add_option("--bin", "-b", dest="bin", type="int",
 			help="Extra binning, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--selexonId", dest="selexonId", type="int",
 			help="Volume selection, e.g. --selexonId=2", metavar="int")
