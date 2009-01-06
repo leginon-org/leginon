@@ -710,6 +710,7 @@ class ApTomoAlignmentRunData(Data):
 			('coarseLeginonParams', leginondata.TomographySettingsData),
 			('coarseImodParams', ApImodXcorrParamsData),
 			('bin', int),
+			('name', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTomoAlignmentRunData=ApTomoAlignmentRunData

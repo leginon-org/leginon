@@ -75,7 +75,7 @@ class tomoMaker(appionScript.AppionScript):
 		path = os.path.abspath(sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","/tomo",path)
-		tiltseriespath = "tiltseries" +  self.params['tiltseriesnumber']
+		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
 		tomorunpath = self.params['runname']
 		intermediatepath = os.path.join(tiltseriespath,tomorunpath)
 		self.params['rundir'] = os.path.join(path,intermediatepath)
@@ -87,7 +87,6 @@ class tomoMaker(appionScript.AppionScript):
 		sessiondata = tiltseriesdata['session']
 		description = self.params['description']
 		bin = int(self.params['bin'])
-		print self.params
 		use_original_peaks = False
 		print "getting imagelist"
 		imagelist = apTomo.getImageList(tiltseriesdata)
@@ -100,8 +99,8 @@ class tomoMaker(appionScript.AppionScript):
 		reconname = seriesname+"_full"
 		fulltomodata = apTomo.checkExistingFullTomoData(processpath,reconname)
 		if self.params['subvolumeonly'] and fulltomodata:
-			gcorrfilepath = os.path.join(processpath, seriesname+".prexg")
-			gcorrpeaks = apImod.readShifts(gcorrfilepath)
+			gcorrfilepath = os.path.join(processpath, seriesname+".xf")
+			gtransforms = apImod.readTransforms(gcorrfilepath)
 		else:
 			apImage.writeMrcStack(self.params['rundir'],stackname,mrc_files, bin)
 			apImod.writeRawtltFile(processpath,seriesname,tilts)
@@ -113,7 +112,13 @@ class tomoMaker(appionScript.AppionScript):
 			else:
 				imodxcorrdata = apImod.coarseAlignment(processpath, seriesname, commit)
 				leginonxcorrdata = None
-			gcorrpeaks = apImod.convertToGlobalAlignment(processpath, seriesname)
+			gtransforms = apImod.convertToGlobalAlignment(processpath, seriesname)
+			# Add fine alignments here ----------------
+			# use the croase global alignment as final alignment
+			origxfpath = os.path.join(processpath, seriesname+".prexg")
+			newxfpath = os.path.join(processpath, seriesname+".xf")
+			shutil.copyfile(origxfpath, newxfpath)
+
 			apImod.createAlignedStack(processpath, seriesname)
 			if commit:
 				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltseriesdata,leginonxcorrdata,imodxcorrdata,bin)
@@ -121,16 +126,20 @@ class tomoMaker(appionScript.AppionScript):
 			if commit:
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltseriesdata,alignrun,
 							processpath,reconname,description)
+		#subvolume making
 		if self.params['selexonId'] is not None:
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
 			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey'])}
 			for i,imagedata in enumerate(ordered_imagelist):
 				particles = apParticle.getParticles(imagedata, self.params['selexonId'])
 				for particle in particles:
-					center = (particle['xcoord']/bin+gcorrpeaks[i][0],particle['ycoord']/bin+gcorrpeaks[i][1])
+					center = apTomo.transformParticleCenter(particle,bin,gtransforms[i])
 					size = (dimension['x']/bin,dimension['y']/bin)
+					# Note: Currently subvolumes are in separate subdirectory.  This may not
+					# make sense in the future
 					volumename = 'volume%d'% (volumeindex,)
 					volumepath = os.path.join(processpath,volumename+'/')
+					apParam.createDirectory(volumepath)
 					apImod.trimVolume(processpath, seriesname,volumename,center,size)
 					if commit:
 						full_volumename = seriesname+'_'+volumename

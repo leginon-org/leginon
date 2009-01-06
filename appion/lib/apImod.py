@@ -80,17 +80,17 @@ $xftoxg
 			inputparams['output'],
 		]
 		writeCommandAndRun(processpath,'gcorr',commands,[inputparams['output'],'gcorr.log'])
-		return readShifts(inputparams['output'])
+		return readTrnasforms(inputparams['output'])
 
-def readShifts(filepath):
+def readTransforms(filepath):
 	file = open(filepath,'r')
 	lines = file.readlines()
-	shifts = []
+	transforms = []
 	for line in lines:
 		cleanlines = line.split('\n')
 		items = cleanlines[0].split()
-		shifts.append((float(items[-2]),float(items[-1])))
-	return shifts
+		transforms.append(map((lambda x: float(x)), items))
+	return transforms
 
 def createAlignedStack(processpath, seriesname):
 		"""

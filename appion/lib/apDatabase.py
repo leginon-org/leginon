@@ -460,11 +460,13 @@ def isModelInDB(md5sum):
 		return True
 	return False
 	
-def isTomoInDB(md5sum):
-	tomoq = appionData.ApTomogramData()
+def isTomoInDB(md5sum, full=False):
+	if not full:
+		tomoq = appionData.ApTomogramData()
+	else:
+		tomoq = appionData.ApFullTomogramData()
 	tomoq['md5sum'] = md5sum
 	tomod = tomoq.query(results=1)
-	sys.exit()
 	if tomod:
 		return True
 	return False

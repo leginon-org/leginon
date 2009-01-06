@@ -161,9 +161,9 @@ def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 			results = paramsq.query()
 			return results[0]
 
-def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bin):
+def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bin,name):
 	qalign = appionData.ApTomoAlignmentRunData(session=sessiondata,tiltseries=tiltdata,
-		coarseLeginonParams=leginoncorrdata,coarseImodParams=imodxcorrdata,bin=bin)
+		coarseLeginonParams=leginoncorrdata,coarseImodParams=imodxcorrdata,bin=bin,name=name)
 	results = qalign.query()
 	if not results:
 		qalign.insert()
@@ -204,6 +204,21 @@ def getLastVolumeIndex(fulltomodata):
 		return results[0]['number']
 	else:
 		return 0
+
+def transformParticleCenter(particle,bin,gtransform):
+	#See imod manual for definition 
+	# at http://bio3d.colorado.edu/imod/doc/serialalign.txt
+	X = particle['xcoord']/bin
+	Y = particle['ycoord']/bin
+	A11 = gtransform[0]
+	A12 = gtransform[1]
+	A21 = gtransform[2]
+	A22 = gtransform[3]
+	DX = gtransform[4]
+	DY = gtransform[5]
+	newx = A11 * X + A12 * Y + DX
+	newy = A21 * X + A22 * Y + DY
+	return (newx,newy)
 
 def insertSubTomogram(fulltomogram,center,dimension,path,name,index,pixelsize,description):
 	tomoq = appionData.ApTomogramData()

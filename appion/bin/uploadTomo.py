@@ -28,6 +28,8 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="snapshot image file to upload", metavar="IMAGE")
 		self.parser.add_option("-f", "--file", dest="file",
 			help="MRC file to upload", metavar="FILE")
+		self.parser.add_option("--xffile", dest="oldxffile",
+			help="global alignment file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--name", dest="name",
@@ -35,7 +37,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber", type="int",
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
 		self.parser.add_option("-v", "--volume", dest="volume",
-			help="Subvolume from original voxel volume", default='volume1', metavar="VOLUME")
+			help="Subvolume from original voxel volume", default='', metavar="VOLUME")
 		self.parser.add_option("-b", "--bin", dest="bin", type="int",
 			help="Extra Binning from tiltseries image", default=1, metavar="#")
 
@@ -43,8 +45,12 @@ class UploadTomoScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['tiltseriesnumber'] is None:
 			apDisplay.printError("Enter a Tilt Series")
-		if self.params['volume'] is None:
-			apDisplay.printError("Enter a Tomo Volume name")
+		if not self.params['volume']:
+			self.params['full'] = True
+			if self.params['oldxffile'] is None:
+				apDisplay.printWarning("Subvolume boxing not possible without alignment file uploading")
+		else:
+			self.params['full'] = False
 		if self.params['session'] is None:
 			apDisplay.printError("Enter a session ID")
 		if self.params['description'] is None:
@@ -64,16 +70,20 @@ class UploadTomoScript(appionScript.AppionScript):
 		path = re.sub("/leginon/","/appion/",path)
 		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries%d" % self.params['tiltseriesnumber']
-		tomovolumepath = self.params['volume']
+		if self.params['full']:
+			tomovolumepath = ""
+		else:
+			tomovolumepath = self.params['volume']
 		intermediatepath = os.path.join(tiltseriespath,self.params['runname'],tomovolumepath)
 		self.params['rundir'] = os.path.join(path,intermediatepath)
 
 	#=====================
 	def setNewFileName(self, unique=False):
-		#clean up old name
-		basename = os.path.basename(self.params['file'])
-		basename = re.sub(".mrc", "", basename)
-		self.params['name'] = basename
+		# set name to be like tomomaker
+		seriesname = "%s_%03d" % (self.params['session'],self.params['tiltseriesnumber'])
+		reconname = seriesname+"_full"
+		self.params['name'] = reconname
+		self.params['newxffile'] = seriesname+".xf"
 		
 		#clean up old name
 		if self.params['image']:
@@ -82,7 +92,7 @@ class UploadTomoScript(appionScript.AppionScript):
 
 	#=====================
 	def checkExistingFile(self):
-		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".mrc")
+		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".rec")
 		origtomopath = self.params['file']
 		apDisplay.printWarning("A Tomogram by the same filename already exists: '"+newtomopath+"'")
 		### a model by the same name already exists
@@ -95,7 +105,7 @@ class UploadTomoScript(appionScript.AppionScript):
 			# restart
 			self.start()
 			return True
-		elif apDatabase.isTomoInDB(mdnew):
+		elif apDatabase.isTomoInDB(mdnew,self.params['full']):
 			### they are the same and its in the database already
 			apDisplay.printWarning("Same Tomogram with md5sum '"+mdnew+"' already exists in the database!")
 			self.params['commit'] = False
@@ -108,11 +118,14 @@ class UploadTomoScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+		# imod needs the recon files named as .rec  It may need some fix later
 		if self.params['name'] is None:
 			self.setNewFileName()
 		apDisplay.printColor("Naming tomogram as: "+self.params['name'], "cyan")
-		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".mrc")
+		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".rec")
 		origtomopath = self.params['file']
+		origxfpath = self.params['oldxffile']
+		newxfpath = os.path.join(self.params['rundir'], self.params['newxffile'])
 		if os.path.isfile(newtomopath):
 			if self.checkExistingFile():
 				return
@@ -120,6 +133,9 @@ class UploadTomoScript(appionScript.AppionScript):
 			### simple upload, just copy file to Tomo folder
 			apDisplay.printMsg("Copying original tomogram to a new location: "+newtomopath)
 			shutil.copyfile(origtomopath, newtomopath)
+			if origxfpath and os.path.isfile(origxfpath):
+				apDisplay.printMsg("Copying original alignment to a new location: "+newxfpath)
+				shutil.copyfile(origxfpath, newxfpath)
 			if self.params['image']:
 				shutil.copyfile(self.params['image'], self.params['rundir']+'/snapshot.png')
 		### inserting tomogram
