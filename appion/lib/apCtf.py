@@ -236,6 +236,35 @@ def getBestCtfValueForImage(imgdata, ctfavg=True, msg=True):
 				bestctfvalue = ctfvalue
 	return bestctfvalue, bestconf
 
+def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
+	"""
+	takes an image and get the best ctfvalues for that image
+	"""
+	### get all ctf values
+	ctfq = appionData.ApCtfData()
+	ctfq['image'] = imgdata
+	ctfq['noise1'] = None
+	ctfvalues = ctfq.query()
+
+	### check if it has values
+	if ctfvalues is None:
+		return None, None
+
+	### find the best values
+	bestconf = 0.0
+	bestctfvalue = None
+	for ctfvalue in ctfvalues:
+		conf1 = ctfvalue['confidence']
+		conf2 = ctfvalue['confidence_d']
+		if conf1 > 0 and conf2 > 0:
+			conf = max(conf1,conf2)
+			if ctfavg is True:
+				conf = math.sqrt(conf1*conf2)
+			if conf > bestconf:
+				bestconf = conf
+				bestctfvalue = ctfvalue
+	return bestctfvalue, bestconf
+
 def getBestTiltCtfValueForImage(imgdata):
 	"""
 	takes an image and get the tilted ctf parameters for that image

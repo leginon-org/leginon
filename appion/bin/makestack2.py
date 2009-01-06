@@ -147,8 +147,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			print "processing", imgpath
 
 		if self.params['wholeimage'] is True and self.params['phaseflipped'] is True:
-			### ctf correct whole image
+			### ctf correct whole image using EMAN
 			imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
+
+		if self.params['acetwo'] is True and self.params['phaseflipped'] is True:
+			### ctf correct whole image using Ace 2
+			imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
 
 		### apply correlation limits
 		if self.params['correlationmin'] or self.params['correlationmax']:
@@ -349,6 +353,34 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		return outimgpath
+
+	#=======================
+	def phaseFlipAceTwo(self, inimgpath, imgdata):
+		imgname = imgdata['filename']
+		shortname = apDisplay.short(imgname)
+		outimgpath = os.path.join(self.params['rundir'], shortname+"-ctfcorrect.dwn.mrc")
+
+		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
+		if imgdata['scope']['tem']['name'] == "CM":
+			voltage = imgdata['scope']['high tension']
+		else:
+			voltage = (imgdata['scope']['high tension'])/1000
+
+		apix = apDatabase.getPixelSize(imgdata)
+		bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
+		defocus1 = ctfvalue['defocus1']
+		defocus2 = ctfvalue['defocus2']
+		ampconst = ctfvalue['amplitude_contrast']
+		ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
+		if not os.path.isfile(ctfvaluesfile):
+			apDisplay.printError("ctfvaluesfile does not exist")
+
+		acecmd = ("ace2correct -ctf %s -a %.3f -i %s" % (ctfvaluesfile, apix, inimgpath))
+
+		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus1,3))+" microns")
+		apEMAN.executeEmanCmd(acecmd, showcmd=True)
+		return outimgpath
+
 
 ############################################################
 ## General functions
@@ -601,7 +633,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.parser.add_option("--defocpair", dest="defocpair", default=False,
 			action="store_true", help="select defocal pair")
 		self.parser.add_option("--whole-image", dest="wholeimage", default=False,
-			action="store_true", help="whole image ctf correction")
+			action="store_true", help="whole image ctf correction with EMAN")
+		self.parser.add_option("--acetwo", dest="acetwo", default=False,
+			action="store_true", help="whole image ctf correction with Ace 2")
 		self.parser.add_option("--tiltedflip", dest="tiltedflip", default=False,
 			action="store_true", help="using tilted defocus estimation based on particle location")
 		self.parser.add_option("--boxfiles", dest="boxfiles", default=False,
