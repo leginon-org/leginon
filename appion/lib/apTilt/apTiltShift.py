@@ -16,7 +16,7 @@ from pyami import correlator
 
 #================================
 #================================
-def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
+def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -33,18 +33,28 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=False):
 	if angsearch is True:
 		bestsnr = 0
 		bestangle = None
+		### rough refine
 		for angle in [-6, -4, -2,]:
 			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
 		print "best=", bestsnr, bestangle
+		### finer refine
 		for angle in [bestangle-1, bestangle-0.5, bestangle+0.5, bestangle+1]:
 			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
 		print "best=", bestsnr, bestangle
+		### really fine refine
+		for angle in [bestangle-0.2, bestangle-0.1, bestangle+0.1, bestangle+0.2]:
+			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
+			if snr > bestsnr:	
+				bestsnr = snr
+				bestangle = angle
+		print "best=", bestsnr, bestangle
+
 		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle)
 		print "best=", bestsnr, bestangle
 	else:
@@ -273,7 +283,7 @@ def blackEdges(img, rad=None, black=None):
 	if black is None:
 		black = ndimage.minimum(img[int(rad/2.0):int(shape[0]-rad/2.0), int(rad/2.0):int(shape[1]-rad/2.0)])
 	img2 = img
-	edgesize = 8
+	edgesize = 3
 	#left edge
 	img2[0:edgesize, 0:shape[1]] = black
 	#right edge
