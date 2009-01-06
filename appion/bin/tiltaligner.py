@@ -133,8 +133,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 		if self.assess is not None:
 			#note runid is overrided to be 'run1'
-			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runid'], self.assess)
-			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runid'], self.assess)
+			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runname'], self.assess)
+			apDatabase.insertImgAssessmentStatus(tiltdata, self.params['runname'], self.assess)
 
 		if len(self.peaktree1) < 3 or len(self.peaktree1) < 3:
 			apDisplay.printWarning("Not enough particle picks; not commiting transform or particle data")
@@ -157,13 +157,15 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	def getParticlePicks(self, imgdata):
 		particles = []
-		if not self.params['pickrunids']:
+		if self.params['pickrunids'] is not None:
 			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
 			for pickrunid in self.params['pickrunidlist']:
+				#print pickrunid
 				newparticles = apParticle.getParticles(imgdata, pickrunid)
+				#apDisplay.printMsg("Found "+str(len(newparticles))+" particles for image "+apDisplay.short(imgdata['filename']))
 				particles.extend(newparticles)
 		targets = self.particlesToTargets(particles)
-		#apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
+		apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
 		return targets
 
 	def particlesToTargets(self, particles):
@@ -236,6 +238,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.app.data['filetypeindex'] = self.params['outtypeindex']
 		self.app.data['outfile'] = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.app.getExtension()
 		self.app.data['dirname'] = self.params['pickdatadir']
+		self.app.data['image1file'] = apDisplay.short(imgdata['filename'])
+		self.app.data['image2file'] = apDisplay.short(tiltdata['filename'])
 		#print "theta=",self.app.data['theta']
 
 		#pre-load particle picks
