@@ -175,7 +175,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#---------------------------------------
 	def getParticlePicks(self, imgdata):
 		particles = []
-		if not self.params['pickrunids']:
+		if self.params['pickrunids'] is not None:
 			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
 			for pickrunid in self.params['pickrunidlist']:
 				newparticles = apParticle.getParticles(imgdata, pickrunid)
