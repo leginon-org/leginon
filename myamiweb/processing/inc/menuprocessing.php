@@ -507,6 +507,11 @@ if ($expId) {
 				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload Tomogram</a>",
 				'result'=>$sresults,
 				);
+		$nruns[]=array (
+				'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create Tomogram Subvolume</a>",
+				'result'=>$sresults,
+				);
+
 
 		$data[]=array(
 			      'action'=>array($action, $celloption),

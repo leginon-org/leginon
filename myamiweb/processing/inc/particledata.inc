@@ -223,6 +223,16 @@ class particledata {
 			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId;
 		return $this->mysql->getSQLResult($q);
 	}
+
+	function checkforFullTomogram($tiltseriesId){
+		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`"
+			."FROM `ApFullTomogramData` t "
+			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` "
+			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId;
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getTiltSeriesInfo($tiltseriesId){
 		// get image bin and the most recent pixel calibration
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
