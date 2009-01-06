@@ -267,7 +267,7 @@ def removeOverlappingPeaks(peaktree, cutoff, msg=True, doubles=False):
 		while j < len(peaktree):
 			distsq = peakDistSq(peaktree[i], peaktree[j])
 			if(distsq < cutsq):
-				doublepeaktree.append(peaktree[i])
+				doublepeaktree.append(peaktree[j])
 				del peaktree[i]
 				i -= 1
 				j = len(peaktree)
