@@ -60,6 +60,7 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'upload1';
 	$volume = ($_POST['volume']) ? $_POST['volume'] : 'volume1';
 	$tomofilename = ($_POST['tomofilename']) ? $_POST['tomofilename'] : '';
+	$xffilename = ($_POST['xffilename']) ? $_POST['xffilename'] : '';
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
 	$description = $_POST['description'];
 	$outdir .= $tomofilename.'mrc';
@@ -74,13 +75,15 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
     <TD VALIGN='TOP'>\n";
 	
   echo"
-	<B>Original Subvolume Tomogram file name with path:</B><BR/>
+	<B>Original Tomogram file name with path:</B><BR/>
       <INPUT TYPE='text' NAME='tomofilename' VALUE='$tomofilename' SIZE='50'><br />\n
+	<B>Original Full Tomogram Transform file name (.xf) with path:</B><BR/>
+      <INPUT TYPE='text' NAME='xffilename' VALUE='$xffilename' SIZE='50'><br />\n
 	<B>Original Snapshot file name with path:</B><BR/>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 	
 	echo"<P>
-      <B>Subvolume Tomogram Description:</B><BR/>
+      <B>Tomogram Description:</B><BR/>
       <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
       </TD>
     </TR>
@@ -152,6 +155,7 @@ function runUploadTomogram() {
 	$command = "uploadTomo.py ";
 
 	$tomofilename=$_POST['tomofilename'];
+	$xffilename=$_POST['xffilename'];
 	$tiltseriesId=$_POST['tiltseriesId'];
 	$runname=$_POST['runname'];
 	$volume=$_POST['volume'];
@@ -161,28 +165,28 @@ function runUploadTomogram() {
 
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createUploadTomogramForm("<B>ERROR:</B> Select the tilt series");
-//make sure a model root was entered
-	if ($_POST['tomofilename']) $model=$_POST['tomofilename'];
-	if (!$model) createUploadTomogramForm("<B>ERROR:</B> Enter a root name of the model");
+//make sure a tomogram was entered
+	if (!$tomofilename) createUploadTomogramForm("<B>ERROR:</B> Enter a tomogram to be uploaded");
 	//make sure a description was provided
 	$description=$_POST['description'];
-	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the model");
+	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
 	$particle = new particledata();
 	$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
 	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 
-	if (!$_GET['modelid']) $command.="-f $tomofilename ";
-	$command.="-s $sessionname ";
-	$command.="-b $extrabin ";
-	$command.="-t $tiltseriesnumber ";
+	$command.="--file=$tomofilename ";
+	$command.="--session=$sessionname ";
+	$command.="--bin=$extrabin ";
+	$command.="--tiltseries=$tiltseriesnumber ";
 	$command.="--projectid=$projectId ";
-	$command.="--runname $runname ";
-	$command.="-v $volume ";
-	$command.="-d \"$description\" ";
+	$command.="--runname=$runname ";
+	if ($volume) $command.="--volume=$volume ";
+	if ($xffilename) $command.="--xffile=$xffilename ";
+	$command.="--description=\"$description\" ";
   if ($snapshot) 
-		$command.="-i $snapshot ";
+		$command.="--image=$snapshot ";
 
 	
 	// submit job to cluster
@@ -224,7 +228,9 @@ function runUploadTomogram() {
 	<B>UploadTomogram Command:</B><BR>
 	$command
 	</TD></TR>
-	<TR><TD>tomo name</TD><TD>$model</TD></TR>
+	<TR><TD>tomo name</TD><TD>$tomofilename</TD></TR>
+	<TR><TD>transform file</TD><TD>$xffilename</TD></TR>
+	<TR><TD>snapshot file</TD><TD>$snapshot</TD></TR>
 	<TR><TD>apix</TD><TD>$apix</TD></TR>
 	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
 	<TR><TD>runname</TD><TD>$runname</TD></TR>
