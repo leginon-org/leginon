@@ -683,9 +683,15 @@ class PickerApp(wx.App):
 			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
+			self.onClearBadPicks(None)
+			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
+			self.onClearBadPicks(None)
 			self.onImportPicks(None, msg=False)
+			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
+			self.onClearBadPicks(None)
+			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
@@ -804,6 +810,7 @@ class PickerApp(wx.App):
 				a2c.append(a2[i,:])
 		a1d = numpy.asarray(a1c)
 		a2d = numpy.asarray(a2c)
+		apDisplay.printMsg( "eliminated "+str(len(a1)-len(a1d))+" particles")
 		return (a1d, a2d)
 
 	#---------------------------------------
@@ -1166,7 +1173,6 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def saveData(self):
-
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
 		if len(targets1) < 1 or len(targets2) < 1:
@@ -1206,7 +1212,6 @@ class PickerApp(wx.App):
 			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
 			if dialog.ShowModal() == wx.ID_OK:
 				dialog.Destroy()
-
 
 	#---------------------------------------
 	def onFileOpen(self, evt):
