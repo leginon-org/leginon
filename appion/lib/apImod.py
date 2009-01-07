@@ -80,7 +80,7 @@ $xftoxg
 			inputparams['output'],
 		]
 		writeCommandAndRun(processpath,'gcorr',commands,[inputparams['output'],'gcorr.log'])
-		return readTrnasforms(inputparams['output'])
+		return readTransforms(inputparams['output'])
 
 def readTransforms(filepath):
 	file = open(filepath,'r')
@@ -174,7 +174,7 @@ DONE
 		]
 		writeCommandAndRun(processpath,'tilt',commands,[inputparams['recon'],'tilt.log'])
 
-def trimVolume(processpath, seriesname, volumename, center, size):
+def trimVolume(processpath, runname, seriesname, volumename, center, size):
 		"""
 #	Command for triming reconstructed volume
 #
@@ -183,7 +183,7 @@ trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 		"""	
 		inputparams = {
 			'recon': os.path.join(processpath, seriesname+"_full.rec"),
-			'subvolume': os.path.join(processpath, volumename+"/",seriesname+"_"+volumename+".rec"),
+			'subvolume': os.path.join(processpath, runname+"/",volumename+"/",seriesname+"_"+volumename+".rec"),
 			'xrange0': center[0] - size[0]/2,
 			'zrange0': center[1] - size[1]/2,
 		}

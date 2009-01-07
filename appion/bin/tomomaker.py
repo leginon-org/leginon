@@ -11,6 +11,7 @@
 
 import os
 import sys
+import shutil
 import re
 #leginon
 import leginondata
@@ -41,6 +42,8 @@ class tomoMaker(appionScript.AppionScript):
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
 			help="tilt series number in the session", metavar="int")
+		self.parser.add_option("--fulltomoId", dest="fulltomoId", type="int",
+			help="Full tomogram id for subvolume creation, e.g. --fulltomoId=2", metavar="int")
 		self.parser.add_option("--bin", "-b", dest="bin", type="int",
 			help="Extra binning, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--selexonId", dest="selexonId", type="int",
@@ -63,6 +66,8 @@ class tomoMaker(appionScript.AppionScript):
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 		if self.params['subvolumeonly']:
+			if self.params['fulltomoId'] is None:
+				apDisplay.printError("enter a fulltomogram run id, e.g. --fulltomoId=2")
 			if self.params['selexonId'] is None:
 				apDisplay.printError("enter a selection run id, e.g. --selexonId=2")
 		if self.params['selexonId'] is not None:
@@ -72,14 +77,26 @@ class tomoMaker(appionScript.AppionScript):
 	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
-		path = os.path.abspath(sessiondata['image path'])
-		path = re.sub("leginon","appion",path)
-		path = re.sub("/rawdata","/tomo",path)
-		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
-		tomorunpath = self.params['runname']
-		intermediatepath = os.path.join(tiltseriespath,tomorunpath)
-		self.params['rundir'] = os.path.join(path,intermediatepath)
 		self.params['tiltseries'] = tiltdata
+		if self.params['subvolumeonly']:
+			tomodata = apTomo.getFullTomoData(self.params['fulltomoId'])
+			path=tomodata['path']['path']
+			self.params['fulltomodir'] = path
+			self.params['rundir'] = os.path.join(path,self.params['runname'])
+			self.params['subrunname'] = self.params['runname']
+			self.params['subdir'] = self.params['rundir']
+		else:
+			path = os.path.abspath(sessiondata['image path'])
+			path = re.sub("leginon","appion",path)
+			path = re.sub("/rawdata","/tomo",path)
+			tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
+			tomorunpath = self.params['runname']
+			intermediatepath = os.path.join(tiltseriespath,tomorunpath)
+			self.params['rundir'] = os.path.join(path,intermediatepath)
+			self.params['fulltomodir'] = self.params['rundir']
+			subrunname = 'subtomo_%d' % self.params['selexonId']
+			self.params['subrunname'] = subrunname
+			self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
 	#=====================
 	def start(self):
 		commit = self.params['commit']
@@ -92,7 +109,7 @@ class tomoMaker(appionScript.AppionScript):
 		imagelist = apTomo.getImageList(tiltseriesdata)
 		print "getting pixelsize"
 		pixelsize = apTomo.getTomoPixelSize(imagelist[0])
-		processpath = self.params['rundir']
+		processpath = self.params['fulltomodir']
 		seriesname = apTomo.getFilename(tiltseriesdata)
 		stackname = seriesname+".st"
 		tilts,ordered_imagelist,mrc_files = apTomo.orderImageList(imagelist)
@@ -121,13 +138,14 @@ class tomoMaker(appionScript.AppionScript):
 
 			apImod.createAlignedStack(processpath, seriesname)
 			if commit:
-				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltseriesdata,leginonxcorrdata,imodxcorrdata,bin)
+				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltseriesdata,leginonxcorrdata,imodxcorrdata,bin,self.params['runname'])
 			apImod.recon3D(processpath, seriesname)
 			if commit:
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltseriesdata,alignrun,
 							processpath,reconname,description)
 		#subvolume making
 		if self.params['selexonId'] is not None:
+			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
 			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey'])}
 			for i,imagedata in enumerate(ordered_imagelist):
@@ -135,15 +153,14 @@ class tomoMaker(appionScript.AppionScript):
 				for particle in particles:
 					center = apTomo.transformParticleCenter(particle,bin,gtransforms[i])
 					size = (dimension['x']/bin,dimension['y']/bin)
-					# Note: Currently subvolumes are in separate subdirectory.  This may not
-					# make sense in the future
 					volumename = 'volume%d'% (volumeindex,)
-					volumepath = os.path.join(processpath,volumename+'/')
+					volumepath = os.path.join(processpath,subrunname+'/',volumename+'/')
 					apParam.createDirectory(volumepath)
-					apImod.trimVolume(processpath, seriesname,volumename,center,size)
+					apImod.trimVolume(processpath, subrunname,seriesname,volumename,center,size)
 					if commit:
-						full_volumename = seriesname+'_'+volumename
-						apTomo.insertSubTomogram(fulltomodata,particle,dimension,volumepath,full_volumename,volumeindex,pixelsize,description)
+						long_volumename = seriesname+'_'+volumename
+						apTomo.insertSubTomogram(fulltomodata,particle,dimension,volumepath,
+								subrunname,long_volumename,volumeindex,pixelsize,description)
 					volumeindex += 1
 #=====================
 #=====================

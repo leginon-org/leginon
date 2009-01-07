@@ -3,6 +3,7 @@
 ## pythonlib
 import math
 import time
+import os
 ## PIL
 import Image
 import ImageDraw

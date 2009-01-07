@@ -1,8 +1,12 @@
 import os
+import time
 from tomography import tiltcorrelator
 import leginondata
 import appionData
-import node
+try:
+	import node
+except:
+	pass
 import apDisplay
 import apFile
 
@@ -150,28 +154,34 @@ def getTomoPixelSize(imagedata):
 		return results[0]['pixel size']
 
 def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
-			paramsq = appionData.ApImodXcorrParamsData()		
-			paramsq['RotationAngle'] = rotation
-			paramsq['FilterSigma1'] = filtersigma1
-			paramsq['FilterRadius2'] = filterradius
-			paramsq['FilterSigma2'] = filtersigma2
-			results = paramsq.query()
-			if not results:
-				paramsq.insert()
-			results = paramsq.query()
-			return results[0]
+	paramsq = appionData.ApImodXcorrParamsData()		
+	paramsq['RotationAngle'] = rotation
+	paramsq['FilterSigma1'] = filtersigma1
+	paramsq['FilterRadius2'] = filterradius
+	paramsq['FilterSigma2'] = filtersigma2
+	results = paramsq.query()
+	if not results:
+		paramsq.insert()
+		return paramsq
+	return results[0]
 
 def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bin,name):
 	qalign = appionData.ApTomoAlignmentRunData(session=sessiondata,tiltseries=tiltdata,
-		coarseLeginonParams=leginoncorrdata,coarseImodParams=imodxcorrdata,bin=bin,name=name)
+			bin=bin,name=name)
+	if leginoncorrdata:
+		qalign['coarseLeginonParams'] = leginoncorrdata
+	elif imodxcorrdata:
+		qalign['coarseImodParams'] = imodxcorrdata
 	results = qalign.query()
 	if not results:
 		qalign.insert()
-		results = qalign.query()
+		return qalign
 	return results[0]
 
 def checkExistingFullTomoData(path,name):
 	filepath = os.path.join(path,name+".rec")
+	if not os.path.isfile(filepath):
+		return None
 	md5sum = apFile.md5sumfile(filepath)
 	tomoq = appionData.ApFullTomogramData(md5sum = md5sum)
 	results = tomoq.query()
@@ -179,6 +189,9 @@ def checkExistingFullTomoData(path,name):
 		return None
 	else:
 		return results[0]
+	
+def getFullTomoData(fulltomoId):
+	return appionData.ApFullTomogramData.direct_query(fulltomoId)
 	
 def insertFullTomogram(sessiondata,tiltdata,alignrun,path,name,description):
 	tomoq = appionData.ApFullTomogramData()
@@ -220,13 +233,14 @@ def transformParticleCenter(particle,bin,gtransform):
 	newy = A21 * X + A22 * Y + DY
 	return (newx,newy)
 
-def insertSubTomogram(fulltomogram,center,dimension,path,name,index,pixelsize,description):
+def insertSubTomogram(fulltomogram,center,dimension,path,runname,name,index,pixelsize,description):
 	tomoq = appionData.ApTomogramData()
 	tomoq['session'] = fulltomogram['session']
 	tomoq['tiltseries'] = fulltomogram['tiltseries']
 	tomoq['fulltomogram'] = fulltomogram
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 	tomoq['name'] = name
+	tomoq['runname'] = runname
 	tomoq['number'] = index
 	tomoq['center'] = center
 	tomoq['dimension'] = dimension

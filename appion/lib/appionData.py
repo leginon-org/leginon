@@ -738,6 +738,7 @@ class ApTomogramData(Data):
 			('center', ApParticleData),
 			('dimension', dict),
 			('path', ApPathData),
+			('runname', str),
 			('name', str),
 			('number', int),
 			('pixelsize', float),
