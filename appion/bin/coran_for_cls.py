@@ -13,14 +13,14 @@ from apSpider import alignment
 
 clslist=glob.glob('cls*.lst')
 
-def getPBSTasknum(outdir):
-	outfile = os.path.join(outdir,'PBSTASKNUM.txt')
-	os.system("pbsdsh -n 0 sh -c 'echo $PBS_TASKNUM > %s'" % outfile)
-	f = open(outfile)
-	tasknum=f.readlines()[0]
-	f.close()
-	print "Current PBS_TASKNUM is:",tasknum
-	return int(tasknum.strip())
+#def getPBSTasknum(outdir):
+#	outfile = os.path.join(outdir,'PBSTASKNUM.txt')
+#	os.system("pbsdsh -n 0 sh -c 'echo $PBS_TASKNUM > %s'" % outfile)
+#	f = open(outfile)
+#	tasknum=f.readlines()[0]
+#	f.close()
+#	print "Current PBS_TASKNUM is:",tasknum
+#	return int(tasknum.strip())
 	
 def parseInput(args,params):
 	for arg in args:
@@ -103,7 +103,7 @@ if __name__== '__main__':
 		### create pbsdsh script
 		cscript = open("coranscript.csh",'w')
 		cscript.write("#!/bin/csh\n")
-		spiscript = os.path.join(os.path.abspath('.'),'spider.$PBS_TASKNUM.csh')
+		spiscript = os.path.join(os.path.abspath('.'),'spider.$PBS_VNODENUM.csh')
 		cscript.write("csh "+spiscript+"\n")
 		cscript.close()
 		os.chmod("coranscript.csh",0777)
@@ -112,20 +112,20 @@ if __name__== '__main__':
 		coranscript=os.path.join(os.path.abspath('.'),'coranscript.csh')
 		while spnum < len(clslist):
 			### get the current tasknum
-			tasknum=getPBSTasknum(os.path.abspath('.'))
+#			tasknum=getPBSTasknum(os.path.abspath('.'))
 
 			### loop through number of processors
 			for n in range(params['proc']):
 				if spnum==len(clslist):
 					break
-				tasknum+=1
+#				tasknum+=1
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
 				spidercmd = alignment.runCoranClass(params,cls)
 				## if enough particles, run spider
 				if spidercmd is not None:
-					procfile=('spider.%i.csh' % tasknum)
+					procfile=('spider.%i.csh' %n)
 					f=open(procfile, 'w')
 					f.write("#!/bin/csh\n\n")
 					f.write("cd "+os.path.abspath('.')+"\n");
