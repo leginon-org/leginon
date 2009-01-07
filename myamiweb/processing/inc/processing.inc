@@ -837,7 +837,7 @@ function getNumberOfRequiredNodes($nproc, $ppn) {
 	return array($nodes, $ppn);
 }
 
-function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,
+function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 		$testimg=False, $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0) {
 	$particle=new particleData();
 
@@ -858,7 +858,7 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runid;
+	$procdir = $outdir.$runname;
 
 	// AMI SPECIFIC
 	// if not data00 or data15, write to data00
@@ -866,17 +866,16 @@ function submitAppionJob($command,$outdir,$runid,$expId,$jobtype,
 
 	// if more than one job running in the directory (like
 	// classification of ref free)
-	if ($xtra) $runid = "$runid.$xtra";
+	if ($xtra) $runname = "$runname.$xtra";
 
 	// set names of cluster job file and output log
-	$jobfile = "$runid.appionsub.job";
-	$logfile = "$runid.appionsub.log";
+	$jobfile = "$runname.appionsub.job";
+	$logfile = "$runname.appionsub.log";
 
 	// create appion command
 	$filtcommand = ereg_replace("\'","", $command);
 	//$filtcommand = preg_replace("/[\n\r]/", " -- ", $filtcommand);
 	$apcmd = "webcaller.py '".$filtcommand."' $procdir/$logfile";
-
 	$cmd = "mkdir -p $procdir;";
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
