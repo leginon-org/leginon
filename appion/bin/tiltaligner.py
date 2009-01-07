@@ -240,6 +240,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.app.data['dirname'] = self.params['pickdatadir']
 		self.app.data['image1file'] = apDisplay.short(imgdata['filename'])
 		self.app.data['image2file'] = apDisplay.short(tiltdata['filename'])
+		self.app.data['pixdiam'] = self.params['diam']/self.params['apix']/self.params['bin']
+		print "pixdiam=", self.app.data['pixdiam']
 		#print "theta=",self.app.data['theta']
 
 		#pre-load particle picks
