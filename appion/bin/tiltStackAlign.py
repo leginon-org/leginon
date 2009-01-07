@@ -22,19 +22,20 @@ class tiltStackAlign(appionScript.AppionScript):
 		"""
 		Need to connect to DB server before moving forward
 		"""
+		appionScript.AppionScript.__init__(self)
 		# connect
 		self.dbconf = sinedon.getConfig('appionData')
 		self.db     = MySQLdb.connect(**self.dbconf)
 		# create a cursor
 		self.cursor = self.db.cursor()
-		appionScript.AppionScript.__init__(self)
+
 
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --notstackid=1239 --tiltstackid=1240")
-		self.parser.add_option("-t", "--tiltstackid", dest="tiltstackid",
+		self.parser.add_option("--tiltstackid", dest="tiltstackid",
 			help="Tilted stack id", metavar="ID")
-		self.parser.add_option("-n", "--notstackid", dest="notstackid",
+		self.parser.add_option("--notstackid", dest="notstackid",
 			help="Untilted stack id", metavar="ID")
 
 	#=====================
