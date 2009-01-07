@@ -678,7 +678,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	#=======================
 	def preLoopFunctions(self):
 		self.checkPixelSize()
-		self.insertStackRun()
+		if self.params['commit'] is True:
+			self.insertStackRun()
 
 		self.particleNumber = self.getExistingStackInfo()
 		apDisplay.printMsg("Starting at particle number: "+str(self.particleNumber))
