@@ -1,0 +1,33 @@
+Steps to install Appion on a CentOS 5 machine
+
+===============================
+Pre-install:
+===============================
+
+You will need 3 servers:
+	* MySQL database
+	* Web server
+	* PBS processing machines 
+
+Fortunately, all 3 servers can run on the same machine
+
+
+===============================
+Install operating system:
+===============================
+
+1. Download ISO disk of CentOS 5 and burn to a blank DVD:
+	* ISO file is available at
+		http://mirror.centos.org/centos/5/isos/
+	* Click on i386 for 32bit machines or x86_64 for 64bit machines
+	* Pick a mirror and download 'CentOS-5.2-x86_64-bin-DVD.iso' file
+
+2. Install CentOS 5 with default packages on your machine
+
+3. Install the additional repositories to get additional packages:
+	* EPEL
+	* RPM Forge
+	* RPM Fusion
+	* Fedora 6 Extras?
+
+
