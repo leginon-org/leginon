@@ -680,8 +680,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.checkPixelSize()
 		if self.params['commit'] is True:
 			self.insertStackRun()
+			self.particleNumber = self.getExistingStackInfo()
+		else:
+			self.particleNumber = 0
+			stackfile=os.path.join(self.params['rundir'], self.params['single'])
+			apFile.removeStack(stackfile)
 
-		self.particleNumber = self.getExistingStackInfo()
 		apDisplay.printMsg("Starting at particle number: "+str(self.particleNumber))
 
 		if self.params['partlimit'] is not None and self.particleNumber > self.params['partlimit']:
