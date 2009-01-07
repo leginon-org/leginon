@@ -1,0 +1,5 @@
+Frequent questions and answers:
+
+Q1. I don't use Leginon, can I still use appion on my scanned micrographs or CCD images collected in other ways?
+
+A1. Yes, there is a web interface and Leginon node for uploading multiple images file into the database.
