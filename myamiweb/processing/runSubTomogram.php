@@ -51,18 +51,18 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 		$outdir=ereg_replace("rawdata","tomo",$outdir);
 		$sessionname=$sessioninfo['Name'];
 		echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
-		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 
 	// Set any existing parameters in form
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'upload1';
-	$prtlrunval = ($_POST['prtlrunId']) ? $_POST['prtclrunId'] : NULL;
+	$tiltseriesnumber = ($_POST['tiltseriesnumber']) ? $_POST['tiltseriesnumber'] : NULL;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'subtomo1';
+	$fulltomoval = ($_POST['fulltomoId']) ? $_POST['fulltomoId'] : NULL;
+	$prtlrunval = ($_POST['prtlrunId']) ? $_POST['prtlrunId'] : NULL;
 	$sizex = ($_POST['sizex']) ? $_POST['sizex'] : NULL;
 	$sizey = ($_POST['sizey']) ? $_POST['sizey'] : NULL;
 	$description = $_POST['description'];
-	$outdir .= $tomofilename.'mrc';
 
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$prtlrunIds = $particle->getParticleRunIds($expId);
@@ -89,17 +89,26 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 			$totprtls=commafy($prtlstats['totparticles']);
 			echo "<OPTION value='$prtlrunId'";
 			// select previously set prtl on resubmit
-			if ($prtlrunval==$prtlrunId) echo " SELECTED";
+			if ($prtlrunval==$prtlrunId) {
+				echo " SELECTED";
+				$runname = 'subtomo_pick'.$prtlrunval;
+			}
 			echo">$prtlrunname ($totprtls prtls)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
 	}
 	echo "<br/>\n";
+  echo "<P>";
+	echo docpop('subtomorunname','Runname');
+  echo "<INPUT TYPE='text' NAME='runname' SIZE='15' VALUE='$runname'>\n";
+	echo "<FONT>(subtomogram creating run name)</FONT>
+		<br/>";
 	echo "
-      <P>
+      <P>";
+	echo docpop('tomobox','Box size');
+	echo "
       <INPUT TYPE='text' NAME='sizex' SIZE='5' VALUE='$sizex'>\n
       <INPUT TYPE='text' NAME='sizey' SIZE='5' VALUE='$sizey'>\n";
-	echo docpop('tomobox','Box size');
 	echo "<FONT>(boxing size in (x,y)</FONT>
 		<br />";
 	echo"<P>
@@ -125,6 +134,10 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 		echo "<FONT> (leginon session name)</FONT>";
 	}
 	if ($tiltseriesId) {
+		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
+		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
+		$outdir .= '/tiltseries'.$tiltseriesnumber;
+		echo "<input type='hidden' name='tiltseriesnumber' value='$tiltseriesnumber'>\n";
 		$fulltomos = $particle->checkforFullTomogram($tiltseriesId); 
 		$tomoruns=count($fulltomos);
 		echo "<p><br />";
@@ -132,21 +145,23 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 			echo"<font class='apcomment' size='+2'><b>No Full Tomograms for this tilt series</b></font>\n";
 		}
 		else {
-			echo docpop('tomorunname', 'Runname');
-			echo "<select name='runname'onchange=submit()>\n";
-			foreach ($fulltomos as $tomorun){
-				$runname=$tomorun['runname'];
-				echo "<OPTION value='$runname'";
+			echo docpop('tomorunname', 'Full tomogram');
+			echo "<select name='fulltomoId'onchange=submit()>\n";
+			foreach ($fulltomos as $fulltomo){
+				$fulltomoId = $fulltomo['DEF_id'];
+				echo "<OPTION value='$fulltomoId'";
 				// select previously set prtl on resubmit
-				if ($runnameval==$runname) {
+				if ($fulltomoval==$fulltomoId) {
 					echo " SELECTED";
-					$extrabin=$tomorun['bin'];
+					$outdir .= '/'.$fulltomo['runname'];
+					$extrabin = $fulltomo['bin'];
 				}
-				echo">$runname </OPTION>\n";
+				echo ">".$fulltomo['runname']." </OPTION>\n";
 			}
 			echo "</SELECT>\n";
-			echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
+			echo "<FONT>(full tomogram reconstruction)</FONT>";     
 			echo "<input type='hidden' name='extrabin' value='$extrabin'>\n";
+			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 		}
 	}	
 	echo "	  		
@@ -163,7 +178,7 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
     <TD ALIGN='CENTER'>
       <hr>
 	";
-	echo getSubmitForm("Upload Tomogram");
+	echo getSubmitForm("Create SubTomogram");
 	echo "
         </td>
 	</tr>
@@ -184,12 +199,14 @@ function runSubTomogram() {
 
 	$xffilename=$_POST['xffilename'];
 	$tiltseriesId=$_POST['tiltseriesId'];
+	$tiltseriesnumber = $_POST['tiltseriesnumber'];
 	$runname=$_POST['runname'];
 	$prtlrunId=$_POST['prtlrunId'];
 	$sizex=$_POST['sizex'];
 	$sizey=$_POST['sizey'];
 	$sessionname=$_POST['sessionname'];
 	$extrabin=$_POST['extrabin'];
+	$fulltomoId=$_POST['fulltomoId'];
 
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createSubTomogramForm("<B>ERROR:</B> Select the tilt series");
@@ -200,14 +217,12 @@ function runSubTomogram() {
 	if (!$description) createSubTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
 	$particle = new particledata();
-	$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
-	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
-	$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 
 	$command.="--session=$sessionname ";
 	$command.="--bin=$extrabin ";
 	$command.="--tiltseries=$tiltseriesnumber ";
 	$command.="--projectid=$projectId ";
+	$command.="--fulltomoId=$fulltomoId ";
 	$command.="--runname=$runname ";
 	$command.="--selexonId=$prtlrunId ";
 	$command.="--sizex=$sizex ";
@@ -215,34 +230,33 @@ function runSubTomogram() {
 	$command.="--description=\"$description\" ";
 	$command.="--subvolumeonly ";
 
-	
 	// submit job to cluster
-	if ($_POST['process']=="Boxing Sub-Tomogram") {
+	if ($_POST['process']=="Create SubTomogram") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
 		if (!($user && $password)) createSubTomogramForm("<B>ERROR:</B> You must be logged in to submit");
-		$uploaddir = $outdir.'/'.$runname;
-		$sub = submitAppionJob($command,$uploaddir,$volume,$expId,'tomomaker',True,True);
+		$rundir = $outdir.'/'.$runname;
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomomaker',True,True);
 		// if errors:
 		if ($sub) createSubTomogramForm("<b>ERROR:</b> $sub");
 
-		// check that upload finished properly
-		$jobf = $uploaddir.'/'.$volume.'/'.$volume.'.appionsub.log';
-		$status = "Tomogram was uploaded";
+		// check that process finished properly
+		$jobf = $rundir.'/'.$runname.'.appionsub.log';
+		$status = "SubTomograms were created";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
 			$jfnum = count($jf);
 			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
 			  // if anything is red, it's not good
 				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
+					$status = "<font class='apcomment'>Error while processing, check the log file:<br />$jobf</font>";
 					continue;
 				}
 			}
 		}
 		else $status = "Job did not run, contact the appion team";
-		processing_header("Creat SubTomogram", "Create SubTomogram");
+		processing_header("Creating SubTomogram", "Create SubTomogram");
 		echo "$status\n";
 	}
 
@@ -255,9 +269,10 @@ function runSubTomogram() {
 	<B>SubTomogram Command:</B><BR>
 	$command
 	</TD></TR>
-	<TR><TD>tomo runname</TD><TD>$runname</TD></TR>
+	<TR><TD>subtomogram runname</TD><TD>$runname</TD></TR>
 	<TR><TD>particle selection id</TD><TD>$prtlrunId</TD></TR>
 	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
+	<TR><TD>fulltomogram id</TD><TD>$fulltomoId</TD></TR>
 	<TR><TD>tomogram binning</TD><TD>$extrabin</TD></TR>
 	<TR><TD>session</TD><TD>$sessionname</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
