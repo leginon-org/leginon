@@ -153,7 +153,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
-		if ampconst < 1.0 or ampconst > 80.0:
+		if ampconst < -0.001 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
 
