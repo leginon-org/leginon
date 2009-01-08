@@ -29,7 +29,6 @@ class tiltStackAlign(appionScript.AppionScript):
 		# create a cursor
 		self.cursor = self.db.cursor()
 
-
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --notstackid=1239 --tiltstackid=1240")
@@ -46,10 +45,10 @@ class tiltStackAlign(appionScript.AppionScript):
 			apDisplay.printError("Enter a untilted stack ID")
 		if self.params['runname'] is None:
 			apDisplay.printError("Enter run name")
+		self.tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
 
 	#=====================
 	def setRunDir(self):
-		self.tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
 		stackpath = self.tiltstackdata['path']['path']
 		self.params['rundir'] = os.path.abspath(os.path.join(stackpath, "../alignedstacks", self.params['runname']))
 
