@@ -560,12 +560,14 @@ class Corrector(node.Node):
 				self.logger.info('Acquiring bright references...')
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % e)
+			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
 		try:
 			series = self.acquireSeries(self.settings['n average'])
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % e)
+			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
 		combine = self.settings['combine']
@@ -575,6 +577,7 @@ class Corrector(node.Node):
 		elif combine == 'median':
 			ref = imagefun.medianSeries(series)
 		else:
+			self.instrument.ccdcamera.ExposureType = 'normal'
 			raise RuntimeError('invalid setting "%s" for combine method' % (combine,))
 
 		## make if float so we can do float math later
@@ -594,6 +597,7 @@ class Corrector(node.Node):
 			self.instrument.ccdcamera.ExposureType = exposuretype
 		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % e)
+			self.instrument.ccdcamera.ExposureType = 'normal'
 			return None
 
 		self.maskimg = numpy.zeros(ref.shape)
