@@ -149,6 +149,7 @@ def getBestDefocusForImage(imgdata, msg=False):
 	if ctfvalue is None:
 		bestdf = imgdata['scope']['defocus']
 		apDisplay.printWarning("no acceptable ctf values found, using nominal defocus")
+		return bestdf
 	elif abs(ctfvalue['defocus1'] - ctfvalue['defocus2'])*1e6 > 0.01:
 		bestdf = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
 		if msg is True:
