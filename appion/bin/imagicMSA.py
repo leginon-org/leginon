@@ -262,7 +262,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		imagicstack = os.path.join(self.params['rundir'], "start.hed")
                 inserttime = time.time()
                 if self.params['commit'] is True:
-                        self.insertAlignment(imagicstack, runtime=aligntime, insert=True)
+                        self.insertAnalysis(imagicstack, runtime=aligntime, insert=True)
                 else:
                         apDisplay.printWarning("not committing results to DB")
                 inserttime = time.time() - inserttime
