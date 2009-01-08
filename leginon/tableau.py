@@ -56,7 +56,7 @@ class Tableau(object):
 				colmin = extents['column'][0]
 			if extents['column'][1] > colmax:
 				colmax = extents['column'][1]
-		totalshape = rowmax-rowmin, colmax-colmin
+		totalshape = 2*max(rowmax,-rowmin), 2*max(colmax,-colmin)
 		finalimage = numpy.zeros(totalshape, self.images[0]['image'].dtype)
 		center = finalimage.shape[0]/2, finalimage.shape[1]/2
 		print 'CENTER', center
