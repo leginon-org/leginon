@@ -126,7 +126,10 @@ def _diffParticles(x1, initx, xscale, a1, a2):
 	diffmat = (a1 - a2b)
 	xrmsd = ndimage.mean(diffmat[:,0]**2)
 	yrmsd = ndimage.mean(diffmat[:,1]**2)
+	#xmed = numpy.median(diffmat[:,0]**2)
+	#ymed = numpy.median(diffmat[:,1]**2)
 	rmsd = math.sqrt((xrmsd + yrmsd)/float(len(a2b)))
+	#rmed = math.sqrt((xmed + ymed)/float(len(a2b)))
 	#print (x2*57.29).round(decimals=3),round(rmsd,6)
 	return rmsd
 
