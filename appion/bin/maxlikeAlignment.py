@@ -160,11 +160,18 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	#=====================
 	def estimateIterTime(self):
 		secperiter = 0.12037
+		### get num processors
+		if self.params['nproc'] is None:
+			nproc = nproc = apParam.getNumProcessors()
+		else:
+			nproc = self.params['nproc']
+
 		calctime = (
 			(self.params['numpart']/1000.0)
 			*self.params['numrefs']
 			*(self.stack['boxsize']/self.params['bin'])**2
 			/self.params['psistep']
+			/float(nproc)
 			*secperiter
 		)
 		if self.params['mirror'] is True:
