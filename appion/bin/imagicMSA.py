@@ -92,7 +92,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 	#=====================
 	def createImagicBatchFile(self):
                 # IMAGIC batch file creation    
-                filename = os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.batch")
+                append_log = False
+		filename = os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.batch")
                 f = open(filename, 'w')
                 f.write("#!/bin/csh -f\n")
                 f.write("setenv IMAGIC_BATCH 1\n")
@@ -106,12 +107,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
                         f.write("start_coarse\n")
                         f.write("start\n")
                         f.write("EOF\n")
+			append_log = True
                 if self.params['hpfilt_imagic'] and self.params['lpfilt_imagic'] is not None:
                         f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
-                        if  os.path.isfile("imagicMultivariateStatisticalAnalysis.log"):
-                                f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
+			if append_log is True:
+			        f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
                         else:
-                                f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
+				f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
                         f.write("start\n")
                         f.write("start_filt\n")
                         f.write(str(self.params['hpfilt_imagic'])+"\n")
@@ -119,17 +121,14 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
                         f.write(str(self.params['lpfilt_imagic'])+"\n")
                         f.write("NO\n")
                         f.write("EOF\n")
-                        f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF")
-                        if  os.path.isfile("imagicMultivariateStatisticalAnalysis.log"):
-                                f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
-                        else:
-                                f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
+                        f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
                         f.write("start_filt\n")
                         f.write("start\n")
                         f.write("EOF\n")
+			append_log = True
                 if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
                         f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
-                        if  os.path.isfile("imagicMultivariateStatisticalAnalysis.log"):
+			if append_log is True:
                                 f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
                         else:
                                 f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
@@ -143,9 +142,10 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
                         f.write("start_masked\n")
                         f.write("start\n")
                         f.write("EOF\n")
+			append_log = True
                 f.write("/usr/local/IMAGIC/stand/testim.e <<EOF")
-                if  os.path.isfile("imagicMultivariateStatisticalAnalysis.log"):
-                        f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
+                if append_log is True:
+			f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
                 else:
                         f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
                 f.write("msamask\n")
@@ -248,7 +248,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		print "... aligned stack pixel size: "+str(self.params['apix'])
 		print "... aligned stack box size: "+str(self.params['boxsize'])	
 		apDisplay.printColor("Running IMAGIC .batch file: See imagicMultivariateStatisticalAnalysis.log for details", "cyan")
-	
+
 		### create imagic batch file
 		filename = self.createImagicBatchFile()
 		### execute batch file that was created
