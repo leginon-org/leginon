@@ -447,7 +447,7 @@ function runMakestack() {
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
 	if ($bin > 1) $command.="--bin=$bin ";
-	if ($ace) $command.="--ace=$ace ";
+	if ($ace) $command.="--acecutoff=$ace ";
 	if ($defocpair) $command.="--defocpair ";
 	if ($correlationmin) $command.="--mincc=$correlationmin ";
 	if ($correlationmax) $command.="--maxcc=$correlationmax ";
