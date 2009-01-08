@@ -30,36 +30,51 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 	picks1, list of particles picks for image 1
 	"""
 	t0 = time.time()
+	#shrink images
+	bin = 4
+	binned1 = apImage.binImg(img1, bin)
+	binned2 = apImage.binImg(img2, bin)
+	#apImage.arrayToJpeg(binned1, "binned1.jpg")
+	#apImage.arrayToJpeg(binned2, "binned2.jpg")
+	filt1 = apImage.highPassFilter(binned1, apix=1.0, radius=20.0, localbin=4/bin)
+	filt2 = apImage.highPassFilter(binned2, apix=1.0, radius=20.0, localbin=4/bin)
+	#apImage.arrayToJpeg(filt1, "filt1.jpg")
+	#apImage.arrayToJpeg(filt2, "filt2.jpg")
+
 	if angsearch is True:
 		bestsnr = 0
 		bestangle = None
 		### rough refine
-		for angle in [-6, -4, -2,]:
-			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
-			if snr > bestsnr:	
-				bestsnr = snr
-				bestangle = angle
+		#for angle in [-6, -4, -2,]:
+		#	sys.stderr.write(".")
+		#	shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, angle, bin, msg=False)
+		#	if snr > bestsnr:	
+		#		bestsnr = snr
+		#		bestangle = angle
+		bestangle = -7.2
 		print "best=", bestsnr, bestangle
 		### finer refine
 		for angle in [bestangle-1, bestangle-0.5, bestangle+0.5, bestangle+1]:
-			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
+			sys.stderr.write(".")
+			shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, angle, bin, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
 		print "best=", bestsnr, bestangle
 		### really fine refine
 		for angle in [bestangle-0.2, bestangle-0.1, bestangle+0.1, bestangle+0.2]:
-			shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, angle, msg=False)
+			sys.stderr.write(".")
+			shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, angle, bin, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
 		print "best=", bestsnr, bestangle
 
-		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle)
+		shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, bestangle, bin)
 		print "best=", bestsnr, bestangle
 	else:
 		bestangle = -4
-		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle)
+		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle, bin)
 
 	if min(abs(shift)) < min(img1.shape)/16.0:
 		print "Warning: Overlap was too close to the edge and possibly wrong."
@@ -105,7 +120,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 
 #================================
 #================================
-def getTiltedShift(img1, img2, tiltdiff, msg=True):
+def getTiltedShift(img1, img2, tiltdiff, bin, msg=True):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -140,16 +155,9 @@ def getTiltedShift(img1, img2, tiltdiff, msg=True):
 		untilt2 = transformImage(img2, compressFactor)
 		xfactor = stretchFactor
 
-	#shrink images
-	bin = 2
-	binned1 = apImage.binImg(untilt1, bin)
-	binned2 = apImage.binImg(untilt2, bin)
-	#apImage.arrayToJpeg(binned1, "binned1.jpg")
-	#apImage.arrayToJpeg(binned2, "binned2.jpg")
-	filt1 = apImage.highPassFilter(binned1, apix=1.0, radius=20.0, localbin=2)
-	filt2 = apImage.highPassFilter(binned2, apix=1.0, radius=20.0, localbin=2)
-	#apImage.arrayToJpeg(filt1, "filt1.jpg")
-	#apImage.arrayToJpeg(filt2, "filt2.jpg")
+	### filtering was done earlier
+	filt1 = untilt1
+	filt2 = untilt2
 
 	### cross-correlate
 	cc = correlator.cross_correlate(filt1, filt2, pad=True)
@@ -191,7 +199,7 @@ def getTiltedShift(img1, img2, tiltdiff, msg=True):
 
 #================================
 #================================
-def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, msg=True):
+def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -226,16 +234,9 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, msg=True):
 		untilt2 = transformImage(img2, compressFactor, angle)
 		xfactor = stretchFactor
 
-	#shrink images
-	bin = 2
-	binned1 = apImage.binImg(untilt1, bin)
-	binned2 = apImage.binImg(untilt2, bin)
-	#apImage.arrayToJpeg(binned1, "binned1.jpg")
-	#apImage.arrayToJpeg(binned2, "binned2.jpg")
-	filt1 = apImage.highPassFilter(binned1, apix=1.0, radius=20.0, localbin=2)
-	filt2 = apImage.highPassFilter(binned2, apix=1.0, radius=20.0, localbin=2)
-	#apImage.arrayToJpeg(filt1, "filt1.jpg")
-	#apImage.arrayToJpeg(filt2, "filt2.jpg")
+	### filtering was done earlier
+	filt1 = untilt1
+	filt2 = untilt2
 
 	### cross-correlate
 	cc = correlator.cross_correlate(filt1, filt2, pad=True)
