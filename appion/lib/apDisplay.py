@@ -48,7 +48,7 @@ def printError(text):
 			f.close()
 		except:
 			print "write error"
-	raise colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
+	raise Exception, colorString("\n *** FATAL ERROR ***\n"+text+"\n\a","red")
 
 def printColor(text, colorstr):
 	"""
