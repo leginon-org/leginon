@@ -56,6 +56,7 @@ class Panel(gui.wx.Acquisition.Panel):
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
+		dialog.onTableauTypeChoice()
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -117,9 +118,24 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sizer.Add(self.widgets['beam tilt count'], (7, 1), (1, 1), wx.ALIGN_CENTER)
 
 		sbsz.Add(sizer, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5)
+		self.widgets['tableau type'].Bind(wx.EVT_CHOICE, self.onTableauTypeChoice)
 
 		return sizers + [sbsz]
 
+	def onTableauTypeChoice(self, evt=None):
+		tabtype = self.widgets['tableau type'].GetStringSelection()
+		if tabtype == 'split image':
+			self.enableTableauSplit(True)
+		else:
+			self.enableTableauSplit(False)
+
+	def enableTableauSplit(self,isenable):
+		self.widgets['tableau split'].Enable(isenable)
+		self.widgets['beam tilt'].Enable(not isenable)
+		self.widgets['sites'].Enable(not isenable)
+		self.widgets['startangle'].Enable(not isenable)
+		self.widgets['beam tilt count'].Enable(not isenable)
+		
 class AlignRotationCenterDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
