@@ -68,9 +68,8 @@ class UploadReconScript(appionScript.AppionScript):
 			self.params['jobinfo'] = None
 		if self.params['chimeraonly'] is True:
 			self.params['commit'] = False
-		if not os.path.exists(self.params['rundir']):
-			apDisplay.printError("upload directory does not exist: "+self.params['rundir'])
 
+	#=====================
 	def tryToGetJobID(self):
 		jobname = self.params['runname'] + '.job'
 		jobtype = 'recon'
@@ -93,14 +92,17 @@ class UploadReconScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
-		if self.params['jobinfo']:
-			self.params['rundir'] = self.params['jobinfo']['path']['path']
-		else:
-			apDisplay.printError("please specify an output directory")
+		jobdata = apRecon.getClusterJobDataFromID(self.params['jobid'])
+		if jobdata:
+			self.params['rundir'] = jobdata['path']['path']
 
 
 	#=====================
 	def start(self):
+		if self.params['rundir'] is None or not os.path.isdir(self.params['rundir']):
+			apDisplay.printError("upload directory does not exist: "+str(self.params['rundir']))
+
+	
 		### create temp directory for extracting data
 		self.params['tmpdir'] = os.path.join(self.params['rundir'], "temp")
 		apParam.createDirectory(self.params['tmpdir'], warning=True)
