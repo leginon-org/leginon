@@ -71,9 +71,10 @@ class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 #---------------------------------------
 class PickerApp(wx.App):
 	def __init__(self, mode='default', 
-	 pickshape="cross", pshapesize=16, 
-	 alignshape="circle", ashapesize=16,
-	 worstshape="plus", wshapesize=18, doinit=True):
+	 pickshape="circle", pshapesize=24, 
+	 alignshape="square", ashapesize=4,
+	 worstshape="square", wshapesize=28, 
+	 tiltangle=None, doinit=True):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -81,14 +82,18 @@ class PickerApp(wx.App):
 		self.ashapesize = int(ashapesize)
 		self.eshape = self.canonicalShape(worstshape)
 		self.wshapesize = int(wshapesize)
+		self.inittiltangle = tiltangle
 		wx.App.__init__(self)
 
 	def OnInit(self):
 		self.data = {}
 		self.appionloop = None
 		self.onInitParams(None)
+		self.data['pixdiam'] = 20.0
 		self.data['outfile'] = ""
 		self.data['dirname'] = ""
+		if self.inittiltangle is not None:
+			self.data['theta'] = self.inittiltangle
 		self.appionloop = None
 		self.filetypes = tiltfile.filetypes
 		self.filetypesel = tiltfile.filetypesel
@@ -224,6 +229,11 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def createMenuButtons(self):
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
+
+		if self.inittiltangle is not None:
+			self.shift = wx.Button(self.frame,-1, '&Guess Shift')
+			self.frame.Bind(wx.EVT_BUTTON, self.onGuessShift, self.shift)
+			self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear &Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
@@ -679,29 +689,36 @@ class PickerApp(wx.App):
 		# snr > than arbitrary value run some other stuff
 		if snr > 2.0 and len(self.picks1) > 10 and len(self.picks2) > 10:
 			#self.onMaskRegion(None)
-			self.onImportPicks(None, msg=False)
+			self.onImportPicks(None, msg=False, tight=False)
+			self.deleteFirstPick()
+			#self.onClearBadPicks(None)
 			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
+			self.onAutoOptim(None)
+			self.onClearBadPicks(None)
+			self.onImportPicks(None, msg=False, tight=False)
+			#self.onClearBadPicks(None)
+			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
-			self.onImportPicks(None, msg=False)
-			self.onClearBadPicks(None)
+			self.onImportPicks(None, msg=False, tight=False)
+			#self.onClearBadPicks(None)
 			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
 			self.onClearBadPicks(None)
+			self.onAutoOptim(None)
 			self.onClearBadPicks(None)
+			self.onImportPicks(None, msg=False, tight=True)
 			self.onClearBadPicks(None)
 			self.onAutoOptim(None)
 		else:
 			dialog = wx.MessageDialog(self.frame, 
 				"Unsure about initial shift", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
 			if dialog.ShowModal() == wx.ID_OK:
-				dialog.Destroy()	
-
-
+				dialog.Destroy()
 		return
 
 	#---------------------------------------
@@ -711,74 +728,39 @@ class PickerApp(wx.App):
 		errorArray2 = ndimage.minimum_filter(errorArray, size=size, mode='wrap')
 		mean = ndimage.mean(errorArray2)
 		stdev = ndimage.standard_deviation(errorArray2)
+		### this is so arbitrary
 		cut = mean + 5.0 * stdev + 2.0
+		### anything bigger than 20 pixels is too big
+		if cut > self.data['pixdiam']:
+			cut = self.data['pixdiam']
 		return cut
 
 	#---------------------------------------
-	def getBadPicks(self):
+	def deleteFirstPick(self):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
-		if len(a1) < 2 or len(a2) < 2:
-			self.statbar.PushStatusText(
-				"small arrays, no bad particles left:"+str(len(a1))+" right:"+str(len(a2))+" ", 0)
-			return ([], [])
-		if len(a1) != len(a2):
-			#a1b = self.getAlignedArray1()
-			#a2b = self.getAlignedArray2()
-			self.statbar.PushStatusText(
-				"uneven arrays, left:"+str(len(a1))+" right:"+str(len(a2))+" ", 0)
-			#uneven arrays, get rid of extra
-			if len(a1) > len(a2):
-				return (a1[len(a2):,:], [])
-				#return (a1[len(a2):,:], a2b[len(a1):,:])
-			elif len(a2) > len(a1):
-				return ([], a2[len(a1):,:])
-				#return (a1b[len(a2):,:], a2[len(a1):,:])
-		err = self.getRmsdArray()
-		cut = self.getCutoffCriteria(err)
-		a1c = range(15)
-		while len(a1c) > 10:
-			cut = int(cut+1)
-			a1c, a2c, worst1, worst2, maxerr = self._selectBadPicks(a1, a2, err, cut)
-		if len(a1c) > 0:
-			self.statbar.PushStatusText(str(len(a1c))+" particles had an RMSD greater than "
-				+str(int(cut))+ " pixels", 0)
-			a1d = numpy.asarray(a1c)
-			a2d = numpy.asarray(a2c)
-		else:
-			self.statbar.PushStatusText("no particles had an RMSD greater than "
-				+str(int(cut))+ " pixels; selected worst one with RMSD = "+str(round(maxerr,2)), 0)
-			a1d = numpy.asarray([worst1])
-			a2d = numpy.asarray([worst2])
-		if a1d[0] is None:
-			a1d = []
-		if a2d[0] is None:
-			a2d = []
-		return (a1d, a2d)
+		a1b = a1[1:]
+		a2b = a2[1:]
+		self.panel1.setTargets('Picked', a1b)
+		self.panel2.setTargets('Picked', a2b)
 
 	#---------------------------------------
-	def _selectBadPicks(self, a1, a2, err, cut):
-		a1c = []
-		a2c = []
-		maxerr = 4.0
-		worst1 = None
-		worst2 = None
-		for i,e in enumerate(err):
-			if e > maxerr:
-				maxerr = e
-				worst1 = a1[i,:]
-				worst2 = a2[i,:]
-			if e > cut:
-				#bad picks
-				a1c.append(a1[i,:])
-				a2c.append(a2[i,:])
-			elif i > 0 and e == 0:
-				#unmatched picks
-				if i < len(a1):
-					a1c.append(a1[i,:])
-				if i < len(a2):
-					a2c.append(a2[i,:])
-		return a1c, a2c, worst1, worst2, maxerr
+	def getBadPicks(self):
+		g1, g2 = self.getGoodPicks()
+		a1 = self.getArray1()
+		a2 = self.getArray2()
+		#b1 = list(set(a1).difference(set(g1)))
+		#b2 = list(set(a2).difference(set(g2)))
+		b1 = []
+		for pick in a1:
+			if not pick in g1:
+				b1.append(pick)
+		b2 = []
+		for pick in a2:
+			if not pick in g2:
+				b2.append(pick)
+		apDisplay.printMsg(str(len(b1))+" bad particles")
+		return (b1, b2)
 
 	#---------------------------------------
 	def getGoodPicks(self):
@@ -793,24 +775,41 @@ class PickerApp(wx.App):
 		cut = self.getCutoffCriteria(err)
 		a1c = []
 		a2c = []
-		maxerr = 4.0
+		minworsterr = 3.0
+		### always set 5% as bad if cutoff > max rmsd
 		worst1 = []
 		worst2 = []
+		worsterr = []
+		numbad = int(len(a1)*0.05 + 1.0)
 		for i,e in enumerate(err):
-			if i != 0 and e > maxerr:
-				if len(worst1) > 0 and maxerr < cut:
-					a1c.append(worst1)
-					a2c.append(worst2)
-				maxerr = e
-				worst1 = a1[i,:]
-				worst2 = a2[i,:]
+			if e > minworsterr:
+				### find the worst overall picks
+				if len(worst1) >= numbad and minworsterr < cut:
+					j = numpy.argmax(numpy.asarray(worsterr))
+					### take previous worst pick and make it good
+					a1c.append(worst1[j])
+					a2c.append(worst2[j])
+					worst1[j] = a1[i,:]
+					worst2[j] = a2[i,:]
+					worsterr[j] = e
+				else:
+					### add the worst pick
+					worst1.append(a1[i,:])
+					worst2.append(a2[i,:])
+					worsterr.append(e)
+				### increase the min worst err
+				if e > minworsterr:
+					minworsterr = e
 			elif e < cut and (i == 0 or e > 0):
-				#good picks
+				### this is a good pick
 				a1c.append(a1[i,:])
 				a2c.append(a2[i,:])
+		if len(a1c) == 0:
+			a1c.append(a1[0,:])
+			a2c.append(a2[0,:])
 		a1d = numpy.asarray(a1c)
 		a2d = numpy.asarray(a2c)
-		apDisplay.printMsg( "eliminated "+str(len(a1)-len(a1d))+" particles")
+
 		return (a1d, a2d)
 
 	#---------------------------------------
@@ -871,7 +870,7 @@ class PickerApp(wx.App):
 		return na
 
 	#---------------------------------------
-	def onImportPicks(self, evt, pixdiam=None, msg=True):
+	def onImportPicks(self, evt, pixdiam=None, msg=True, tight=True):
 		#a1 = numpy.array([[512,512]], dtype=numpy.float32)
 		#a2 = apTiltTransform.a1Toa2Data(a1, self.data)
 		#a1b = apTiltTransform.a2Toa1Data(a2, self.data)
@@ -900,7 +899,9 @@ class PickerApp(wx.App):
 			return False
 		apTiltTransform.setPointsFromArrays(a1, a2, self.data)
 		if pixdiam is None:
-			pixdiam = 20.0
+			pixdiam = self.data['pixdiam']
+		if tight is True:
+			pixdiam /= 2.0
 		list1, list2 = apTiltTransform.alignPicks2(self.picks1, self.picks2, self.data, limit=pixdiam)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
 			dialog = wx.MessageDialog(self.frame, 
@@ -1024,14 +1025,16 @@ class PickerApp(wx.App):
 				self.fitall_dialog.onToggleShift(None)
 		lastiter = [80,80,80]
 		count = 0
-		while (max(lastiter) > 75):
+		totaliter = 0
+		while max(lastiter) > 75 and count < 30:
 			count += 1
 			self.fitall_dialog.onRunLeastSquares(None)
 			lastiter[2] = lastiter[1]
 			lastiter[1] = lastiter[0]
 			lastiter[0] = self.fitall_dialog.lsfit['iter']
-			apDisplay.printMsg(str(count)+": iter="+str(lastiter[0])
-				+"  rmsd="+str(round(self.fitall_dialog.lsfit['rmsd'],4)))
+			totaliter += lastiter[0]
+		apDisplay.printMsg("Least squares: %d rounds, %d iterations, final rmsd %.3f"
+			%(count,totaliter,self.fitall_dialog.lsfit['rmsd']))
 		self.fitall_dialog.onApplyLeastSquares(None)
 		self.onMaskRegion(None)
 
@@ -1053,6 +1056,8 @@ class PickerApp(wx.App):
 		Remove picks with RMSD > mean + 3 * stdev
 		"""
 		a1c, a2c = self.getGoodPicks()
+		a1 = self.getArray1()
+		apDisplay.printMsg( "Eliminated "+str(len(a1)-len(a1c))+" particles")
 		self.panel1.setTargets('Worst', [] )
 		self.panel2.setTargets('Worst', [] )
 		self.panel1.setTargets('Picked', a1c )
@@ -1352,7 +1357,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def canonicalShape(self, shape):
-		if shape == '.'    or shape == 'point':
+		if shape == '.'    or shape == 'point' or shape == 'dot':
 			return '.'
 		elif shape == '+'  or shape == 'plus':
 			return '+'
@@ -1407,6 +1412,7 @@ if __name__ == '__main__':
 		pickshape=params['pickshape'],   pshapesize=params['pshapesize'],
 		alignshape=params['alignshape'], ashapesize=params['ashapesize'],
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
+		tiltangle=params['tiltangle'],
 	)
 	app.openLeftImage(params['img1file'])
 	app.openRightImage(params['img2file'])
