@@ -273,6 +273,7 @@ function runImagicMSA($extra=false)	{
 	$MSAmethod=$_POST['MSAmethod'];
 	$overcorrection=$_POST['overcorrection'];
 	$description=$_POST['description'];
+	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	
