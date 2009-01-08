@@ -89,7 +89,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		radlist.append(0)
 
 		if self.settings['sites'] == 0:
-			return tiltlist, anglelist
+			return tiltlist, anglelist, radlist
 		angleinc = 2*3.14159/self.settings['sites']
 		startangle = self.settings['startangle'] * numpy.pi / 180.0
 		for i in range(0,self.settings['sites']):
