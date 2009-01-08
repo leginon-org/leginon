@@ -306,7 +306,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		lastiter = [80,80,80]
 		count = 0
 		totaliter = 0
-		while (max(lastiter) > 75):
+		while max(lastiter) > 75 and count < 30:
 			count += 1
 			lsfit = self.runLeastSquares()
 			lastiter[2] = lastiter[1]
@@ -414,6 +414,16 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#---------------------------------------
 	#---------------------------------------
+	def deleteFirstPick(self):
+		a1 = self.currentpicks1
+		a2 = self.currentpicks2
+		a1b = a1[1:]
+		a2b = a2[1:]
+		self.currentpicks1 = a1b
+		self.currentpicks2 = a2b
+
+	#---------------------------------------
+	#---------------------------------------
 	def getOverlap(self, image1, image2):
 		t0 = time.time()
 		apDisplay.printMsg("get overlap")
@@ -464,17 +474,23 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.currentpicks1 = [origin]
 		self.currentpicks2 = [newpart]
 
+		self.importPicks(picks1, picks2, tight=False)
+		self.deleteFirstPick()
+		self.clearBadPicks()
+		self.optimizeAngles()
+		self.clearBadPicks()
+		self.clearBadPicks()
+		self.optimizeAngles()
+		self.clearBadPicks()
+		self.importPicks(picks1, picks2, tight=False)
+		self.clearBadPicks()
+		self.optimizeAngles()
+		self.clearBadPicks()
+		self.clearBadPicks()
+		self.optimizeAngles()
+		self.clearBadPicks()
 		self.importPicks(picks1, picks2, tight=True)
-		self.optimizeAngles()
 		self.clearBadPicks()
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.importPicks(picks1, picks2)
-		self.optimizeAngles()
-		self.clearBadPicks()
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.importPicks(picks1, picks2, tight=True)
 		self.optimizeAngles()
 		self.getOverlap(img1,img2)
 		apDisplay.printMsg("completed alignment of "+str(len(self.currentpicks1))
