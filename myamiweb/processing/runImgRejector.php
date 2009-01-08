@@ -249,14 +249,6 @@ function runImgRejector() {
 	if ($dfmin) $command.="--mindefocus=$dfmin ";
 	if ($dfmax) $command.="--maxdefocus=$dfmax ";
 	$command.="--no-wait ";
-	elseif ($_POST['sessionname']) {
-		if ($_POST['preset']) $dbimages=$_POST[sessionname].",".$_POST[preset];
-		elseif(!$_POST['alldbimages']) {
-			return ("<B>ERROR:</B> Select an image preset for template matching");
-			exit;
-		}
-	}
-
 
 	// submit job to cluster
 	if ($_POST['process']=="Make Stack") {
