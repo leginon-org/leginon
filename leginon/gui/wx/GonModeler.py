@@ -37,7 +37,7 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		self.widgets['model magnification'] = FloatEntry(self, -1, chars=9)
 		self.widgets['model terms'] = IntEntry(self, -1, chars=2)
 		self.widgets['model mag only'] = wx.CheckBox(self, -1,
-																									'Model magnification only')
+																									'Scale and Rotation Adjustment Only')
 
 		szmeasure = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Axis:')
@@ -112,6 +112,8 @@ class Panel(gui.wx.Calibrator.Panel):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
 											id=gui.wx.ToolBar.ID_MEASURE)
+		self.node.settings['measure label'] =  self.node.session['name']
+		self.node.setSettings(self.node.settings)
 
 	def onMeasurementDone(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, True)

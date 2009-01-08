@@ -107,6 +107,7 @@ class GonModeler(calibrator.Calibrator):
 		self.logger.info('Loop done')
 		self.threadlock.release()
 		self.panel.measurementDone()
+		self.setModelDefaults()
 
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
@@ -231,4 +232,13 @@ class GonModeler(calibrator.Calibrator):
 
 	def uiStopLoop(self):
 		self.threadstop.set()
+		self.setModelDefaults()
 		return
+
+	def setModelDefaults(self):
+		print "stopped and changed"
+		self.settings['model label'] = self.settings['measure label']
+		self.settings['model axis'] = self.settings['measure axis']
+		currentmag,allmags = self.getMagnification()
+		self.settings['model magnification'] = currentmag
+		self.setSettings(self.settings)
