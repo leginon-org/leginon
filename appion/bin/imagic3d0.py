@@ -54,9 +54,9 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="total number of classums used for 3d0 construction", metavar="INT")	
 		self.parser.add_option("--ham_win", dest="ham_win", type="float", 
 			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
-		self.parser.add_option("--object_size", dest="object_size", type="float", #default=0.8
+		self.parser.add_option("--object_size", dest="object_size", type="float", #default=0.8,
 			help="object size as fraction of image size", metavar="float")	
-		self.parser.add_option("--repalignments", dest="repalignments", type="int",
+		self.parser.add_option("--repalignments", dest="repalignments", type="int", default=2,
 			help="number of alignments to reprojections", metavar="INT")
 		self.parser.add_option("--amask_dim", dest="amask_dim", type="float",
 			help="automasking parameter determined by smallest object size", metavar="float")
@@ -66,9 +66,9 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="automasking parameter that determines sharpness of mask", metavar="float")
 		self.parser.add_option("--amask_thresh", dest="amask_thresh", type="float",
 			help="automasking parameter that determines object thresholding", metavar="float")
-		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	#default=25
+		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	#default=25,
 			help="angular increment of reprojections for MRA", metavar="INT")
-		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int",	#default=25
+		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", #default=25,
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
 
 		return 
@@ -193,8 +193,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("rep0_ordered0\n")
 		f.write("err0_ordered0\n")
 		f.write("no\n")
-		f.write("0.8\n")
-		f.write("0.8\n")
+                f.write(str(self.params['ham_win'])+"\n")
+                f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("all\n")
@@ -216,8 +216,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("rep0_ordered0_repaligned\n")
 		f.write("err0_ordered0_repaligned\n")
 		f.write("no\n")
-		f.write("0.8\n")
-		f.write("0.8\n")
+                f.write(str(self.params['ham_win'])+"\n")
+                f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n\n")
 		f.write("set j=1\n")
 		f.write("while ($j<"+str(self.params['repalignments'])+")\n")
@@ -369,6 +369,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
 		elif self.params['clusterId'] is not None:
 			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
 			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
  			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
 			orig_path = clusterdata['path']['path']
