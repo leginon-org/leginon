@@ -37,7 +37,12 @@ class ImageRejector(appionLoop2.AppionLoop):
 
 	#======================
 	def checkConflicts(self):
-		return
+		if (self.params['mindefocus'] is not None and
+				(self.params['mindefocus'] < -1e-3 or self.params['mindefocus'] > -1e-9)):
+			apDisplay.printError("min defocus is not in an acceptable range, e.g. mindefocus=-1.5e-6")
+		if (self.params['maxdefocus'] is not None and
+				(self.params['maxdefocus'] < -1e-3 or self.params['maxdefocus'] > -1e-9)):
+			apDisplay.printError("max defocus is not in an acceptable range, e.g. maxdefocus=-1.5e-6")
 
 	### ==================================
 	def processImage(self, imgdata):
@@ -104,7 +109,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 		msg = not self.params['background']
 		### insert False values
 		if self.imgassess is False:
-			time.sleep(0.5)
+			time.sleep(0.1)
 			self.reject += 1
 			apDatabase.insertImgAssessmentStatus(imgdata, self.params['runname'], False, msg=True)
 			f = open("imageRejectList-"+self.timestamp+".txt", "a")
@@ -129,7 +134,9 @@ class ImageRejector(appionLoop2.AppionLoop):
 
 	### ==================================
 	def rejectAceInfo(self, imgdata):
-		
+		shortname = apDisplay.short(imgdata['filename'])
+
+		### get best defocus value
 		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
 
 		if ctfvalue is None:
@@ -145,13 +152,22 @@ class ImageRejector(appionLoop2.AppionLoop):
 			apDisplay.printColor("\nrejecting below ACE cutoff: "+apDisplay.short(imgdata['filename'])+" conf="+str(round(conf,3)), "cyan")
 			return False
 
-		defocus = apCtf.getBestDefocusForImage(imgdata, msg=(not self.params['background']))
+
+		### defocus should be in negative meters
+		if ctfvalue['defocus2'] is not None and ctfvalue['defocus1'] != ctfvalue['defocus2']:
+			defocus = (ctfvalue['defocus1'] + ctfvalue['defocus2'])/2.0
+		else:
+			defocus = ctfvalue['defocus1']
+		defocus = -1.0*abs(defocus)
+
 		### skip micrograph that have defocus above or below min & max defocus levels
 		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
-			apDisplay.printColor("\nrejecting below defocus cutoff: "+apDisplay.short(imgdata['filename'])+" def="+str(round(defocus,3)), "blue")
+			apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
+				" um) is less than mindefocus ("+str(self.params['mindefocus']*1e6)+" um)\n","cyan")
 			return False
 		if self.params['maxdefocus'] and defocus < self.params['maxdefocus']:
-			apDisplay.printColor("\nrejecting above defocus cutoff: "+apDisplay.short(imgdata['filename'])+" def="+str(round(defocus,3)), "magenta")
+			apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
+				" um) is greater than maxdefocus ("+str(self.params['maxdefocus']*1e6)+" um)\n","cyan")
 			return False
 
 		return True
