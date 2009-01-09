@@ -516,8 +516,7 @@ def ctftiltPhaseFlip(particle, tempinfile, tempoutfile, params, imgdict):
 	elif defocus > -1.0e-3:
 		apDisplay.printError("defocus is very small "+str(defocus)+" for image "+imgname)
 
-	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,\
-	  outfile, defocus, voltage, params['apix'])
+	cmd="applyctf %s %s parm=%f,200,1,0.1,0,17.4,9,1.53,%i,2,%f setparm flipphase" % ( infile,outfile, defocus, voltage, params['apix'])
 	apDisplay.printMsg("phaseflipping particles with defocus "+str(round(defocus,3))+" microns")
 	apEMAN.executeEmanCmd(cmd)
 

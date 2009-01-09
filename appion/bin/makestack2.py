@@ -133,27 +133,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
 			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}
 
-		### check if we have particles
-		if len(partdatas) == 0:
-			apDisplay.printColor(shortname+" has no particles and has been rejected\n","cyan")
-			return None, None, None
-
-		if self.params['uncorrected']:
-			### dark/bright correct image
-			tmpname = shortname+"-darknorm.dwn.mrc"
-			imgarray = apImage.correctImage(imgdata, self.params['sessionname'])
-			imgpath = os.path.join(self.params['rundir'], tmpname)
-			apImage.arrayToMrc(imgarray,imgpath)
-			print "processing", imgpath
-
-		if self.params['wholeimage'] is True and self.params['phaseflipped'] is True:
-			### ctf correct whole image using EMAN
-			imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
-
-		if self.params['acetwo'] is True and self.params['phaseflipped'] is True:
-			### ctf correct whole image using Ace 2
-			imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
-
 		### apply correlation limits
 		if self.params['correlationmin'] or self.params['correlationmax']:
 			partdatas = self.eliminateMinMaxCCParticles(partdatas)
@@ -170,11 +149,26 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### save particle coordinates to box file
 		boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata)
 
-		### count number of particles in box file
-		if len(boxedpartdatas) == 0:
-			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
-			return None, None, None
+		if self.params['uncorrected']:
+			### dark/bright correct image
+			tmpname = shortname+"-darknorm.dwn.mrc"
+			imgarray = apImage.correctImage(imgdata, self.params['sessionname'])
+			imgpath = os.path.join(self.params['rundir'], tmpname)
+			apImage.arrayToMrc(imgarray,imgpath)
+			print "processing", imgpath
 
+		if self.params['wholeimage'] is True and self.params['phaseflipped'] is True:
+			### ctf correct whole image using EMAN
+			imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
+
+		if self.params['acetwo'] is True and self.params['phaseflipped'] is True:
+			### ctf correct whole image using Ace 2
+			apDisplay.printColor("using ace2 correction on image "+shortname,"cyan")
+			imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
+		
+		if imgpath is None:
+			return None, None, None
+		
 		### run batchboxer command
 		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
 		emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
@@ -201,6 +195,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### phase flipping
 		if self.params['phaseflipped'] is True:
 			if self.params['wholeimage'] is True:
+				apDisplay.printMsg("phase flipped whole image already")
+			elif self.params['acetwo'] is True:
 				apDisplay.printMsg("phase flipped whole image already")
 			elif self.params['tiltedflip'] is True:
 				imgstackfile = self.tiltedPhaseFlip(imgdata, imgstackfile, boxedpartdatas)
@@ -357,30 +353,47 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
-		imgname = imgdata['filename']
-		shortname = apDisplay.short(imgname)
-		outimgpath = os.path.join(self.params['rundir'], shortname+"-ctfcorrect.dwn.mrc")
-
-		### High tension on CM is given in kv instead of v so do not divide by 1000 in that case
-		if imgdata['scope']['tem']['name'] == "CM":
-			voltage = imgdata['scope']['high tension']
-		else:
-			voltage = (imgdata['scope']['high tension'])/1000
 
 		apix = apDatabase.getPixelSize(imgdata)
 		bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
-		defocus1 = ctfvalue['defocus1']
-		defocus2 = ctfvalue['defocus2']
-		ampconst = ctfvalue['amplitude_contrast']
+		defocus1 = bestctfvalue['defocus1']
+		defocus2 = bestctfvalue['defocus2']
+		ampconst = bestctfvalue['amplitude_contrast']
+
+		if bestctfvalue is None:
+			apDisplay.printWarning("No ACE2 ctf estimation for current image")
+			self.badprocess = True
+			return None
+			
+		if bestctfvalue['acerun'] is None:
+			apDisplay.printWarning("No ACE2 runid for current image")
+			self.badprocess = True
+			return None
+		
+		if bestctfvalue['ctfvalues_file'] is None:
+			apDisplay.printWarning("No ACE2 ctf file for current image")
+			self.badprocess = True
+			return None
+	
 		ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
+		
+		ctfvaluesfilesplit = os.path.splitext(ctfvaluesfile)
+		while ctfvaluesfilesplit[1] != '.mrc':
+			ctfvaluesfilesplit = os.path.splitext(ctfvaluesfilesplit[0])
+		
+		ctfvaluesfile = ctfvaluesfilesplit[0]+".mrc.ctf.txt"
+		
+		apDisplay.printMsg("using ctfvaluesfile: "+ctfvaluesfile)
+		
 		if not os.path.isfile(ctfvaluesfile):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
-		acecmd = ("ace2correct -ctf %s -a %.3f -i %s" % (ctfvaluesfile, apix, inimgpath))
+		ace2cmd = ("ace2correct.exe -ctf %s -a %.3f -i %s -wiener 0.15" % (ctfvaluesfile, apix, inimgpath))
 
-		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus1,3))+" microns")
-		apEMAN.executeEmanCmd(acecmd, showcmd=True)
-		return outimgpath
+		apDisplay.printMsg("phaseflipping entire micrograph with defoci "+str(round(defocus1,3))+" microns")
+		apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
+		
+		return os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
 
 
 ############################################################

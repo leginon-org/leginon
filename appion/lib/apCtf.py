@@ -245,6 +245,8 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 	ctfq = appionData.ApCtfData()
 	ctfq['image'] = imgdata
 	ctfq['noise1'] = None
+	ctfq['noise2'] = None
+	ctfq['graph2'] = None
 	ctfvalues = ctfq.query()
 
 	### check if it has values
@@ -308,19 +310,9 @@ def ctfValuesToParams(ctfvalue, params, msg=True):
 			params['conf_d'] = ctfvalue['confidence_d']
 			params['conf']   = ctfvalue['confidence']
 			return -ctfvalue['defocus1']
-	if ctfvalue['ctftiltrun'] is not None:
-			params['hasctftilt'] = True
-			params['df1'] = ctfvalue['defocus1']*-1.0e6
-			params['df2'] = ctfvalue['defocus2']*-1.0e6
-			params['dfinit'] = ctfvalue['defocusinit']*-1.0e6
-			params['angle_astigmatism'] = ctfvalue['angle_astigmatism']
-			params['cross_correlation'] = ctfvalue['cross_correlation']
-			params['tilt_angle'] = ctfvalue['tilt_angle']
-			params['tilt_axis_angle'] = ctfvalue['tilt_axis_angle']
-			params['confidence_d'] = ctfvalue['confidence_d']
-			return -ctfvalue['defocus1']	
 
 	return None
+
 
 
 def printCtfSummary(params):

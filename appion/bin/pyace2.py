@@ -27,7 +27,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 	"""
 
 	#======================
-	def setProcessingDirName(self):
+	def setProcessingDirName(self):	
 		self.processdirname = "ctf"
 
 	#======================
@@ -39,14 +39,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 	#======================
 	def getACE2Path(self):
-		unames = os.uname()
-		if unames[-1].find('64') >= 0:
-			exename = 'ace2_64.exe'
-		else:
-			exename = 'ace2_32.exe'
+		exename = 'ace2.exe'
 		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ace2exe):
-			ace2exe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
+			ace2exe = os.path.join(apParam.getAppionDirectory(), '/bin/', exename)
 		if not os.path.isfile(ace2exe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 		return ace2exe
@@ -150,10 +146,12 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
 
 		### double check that the values are reasonable 
+		
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
 			apDisplay.printWarning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
-		if ampconst < -0.001 or ampconst > 80.0:
+
+		if ampconst < 0.0 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
 
