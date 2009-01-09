@@ -91,7 +91,7 @@ int main (int argc, char **argv) {
 	
 	ArrayP image = nil;
 	
-	f64 ac = 0.07;
+	f64 ac = 0.3;
 	f64 apix = 1.55;
 	f64 cs = 2.0;
 	f64 kv = 120.0;
@@ -136,12 +136,10 @@ int main (int argc, char **argv) {
 		}
 		
 	}
-	
 
 	fprintf(stderr,"Processing image with %d %d pixels\n",[image sizeOfDimension:0],[image sizeOfDimension:1]);
 	fprintf(stderr,"APIX: %f  KV: %f  CS: %f  \n",apix,kv,cs);
 	
-
 	t1 = CPUTIME;
 	fprintf(stderr,"Binning image by %d pixels...",binby);
 	if ( binby != 1 && binby < 8 ) [image binBy:binby];
@@ -170,7 +168,7 @@ int main (int argc, char **argv) {
 	f64 edge_blur = 4*binby;
 	[edges gaussianBlurWithSigma:edge_blur];
 //	[edges cannyEdgesWithUpperTreshold:0.1 lowerTreshold:0.01];
-	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.1,0.001,5.0);
+	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.00015,0.0015,5.0);
 
 	fprintf(stderr,"\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 
@@ -179,8 +177,8 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Using RANSAC to find ellipse parameters...");
 	
-	f64 fit_treshold = 1.5;
-	f64 min_percent = 0.002;
+	f64 fit_treshold = 1.0;
+	f64 min_percent = 0.001;
 	f64 fit_percent = 0.99;
 	f64 max_iterations = 30000;
 	
@@ -1005,19 +1003,14 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	f64 stdv2 = 0.0;
 	
 	u32 r;
-	u32 lcut = MAX([ellipse x_axis],[ellipse y_axis])-40;
-	u32 rcut = MAX([ellipse x_axis],[ellipse y_axis])+40;
-	
-	u32 lcut1 = MIN([radial_avg1 sizeOfDimension:0],lcut);
-	u32 rcut1 = MIN([radial_avg1 sizeOfDimension:0],rcut);	
-	u32 lcut2 = MIN([radial_avg2 sizeOfDimension:0],lcut);
-	u32 rcut2 = MIN([radial_avg2 sizeOfDimension:0],rcut);
+	u32 lcut = [radial_avg1 sizeOfDimension:0]*0.01;
+	u32 rcut = [radial_avg1 sizeOfDimension:0]*0.25;
 		
-	for(r=lcut1;r<rcut1;r++) stdv1 += sqrt(stdv_values1[r]);
-	for(r=lcut2;r<rcut2;r++) stdv2 += sqrt(stdv_values2[r]);
+	for(r=lcut;r<rcut;r++) stdv1 += sqrt(stdv_values1[r]);
+	for(r=lcut;r<rcut;r++) stdv2 += sqrt(stdv_values2[r]);
 	
-	stdv1 = stdv1 / ( rcut1-lcut1+1.0);
-	stdv2 = stdv2 / ( rcut2-lcut2+1.0);
+	stdv1 = stdv1 / ( rcut-lcut+1.0);
+	stdv2 = stdv2 / ( rcut-lcut+1.0);
 	
 	f64 cutoff = 1.001;
 	
@@ -1035,8 +1028,7 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		char name[1024];
 		sprintf(name,"%s-1davg.txt",basename([image name]));
 		FILE * fp = fopen(name,"w");
-		for (r=0;r<rad;r++) fprintf(fp,"%d\t%e\t%e\t%e\t%e\t%e\t%e\n"
-									  ,r,avg_mean1[r],avg_stdv1[r],avg_cont1[r],avg_mean2[r],avg_stdv2[r],avg_cont2[r]);
+		for (r=0;r<rad;r++) fprintf(fp,"%d\t%e\t%e\t%e\t%e\t%e\t%e\nw",r,avg_mean1[r],avg_stdv1[r],avg_cont1[r],avg_mean2[r],avg_stdv2[r],avg_cont2[r]);
 		fclose(fp);
 		
 	}

@@ -9,7 +9,7 @@ CVLIBS = -lm -lobjc -lfftw3 -lgsl -lgslcblas
 #   -g to produce debug data for gdb
 #   -O for optimization
 
-CFLAGS = -O3
+CFLAGS = -O3 -m32 -m64
 BINPATH=../bin
 CC = gcc 
 
@@ -25,7 +25,7 @@ CVDEFS=
 
 # ------------------------ Rules --------------------------------
 
-all:	ace2 ace2correct
+all: ace2 ace2correct
 
 ace2: ${CVOBJ} ace2.o
 	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} ace2.o ${CVOBJ} ${CVLIBS}

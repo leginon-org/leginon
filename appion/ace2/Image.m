@@ -23,7 +23,7 @@ static int fftw_is_wise = 0;
 	
 	if ( sigma < 0.6 ) return self;
 	
-	s32 krad = sigma * 3;
+	s32 krad = sigma * 4;
 	krad = MAX(krad,1);
 	f64 *x1, *x2, *x3;	
 	
@@ -1428,7 +1428,7 @@ void gaussian1d( f64 * data, s32 minl, s32 maxl, f64 sigma ) {
 
 void restoreFFTWisdom() {
 	if ( fftw_is_wise == TRUE ) return;
-	FILE * fp = fopen(".fft_wisdom","r");
+	FILE * fp = fopen("/tmp/.fft_wisdom","r");
 	if ( fp == NULL ) return;
 	u08 status = fftw_import_wisdom_from_file(fp);
 	fclose(fp);
@@ -1436,7 +1436,7 @@ void restoreFFTWisdom() {
 }
 
 void saveFFTWisdom() {
-	FILE * fp = fopen(".fft_wisdom","w");
+	FILE * fp = fopen("/tmp/.fft_wisdom","w");
 	if ( fp == NULL ) return;
 	fftw_export_wisdom_to_file(fp);
 	fclose(fp);

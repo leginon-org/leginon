@@ -359,8 +359,8 @@ double ctf_cost( const gsl_vector * variables, void * params ) {
 	static int iter = 0;
 	f64 * p = gsl_vector_ptr((gsl_vector *)variables,0);
 
-	if ( p[1] < 0.0 ) p[1] = 0.0;
-	if ( p[1] > 1.0 ) p[1] = 1.0;
+	if ( p[1] < 0.05 ) p[1] = 0.05;
+	if ( p[1] > 0.50 ) p[1] = 0.50;
 	
 	u32 k, size = [(ArrayP)params sizeOfDimension:0];
 	f64 * values = [(ArrayP)params data];
@@ -400,7 +400,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	gsl_vector * e_steps = gsl_vector_alloc(c_ndim);
 
 	gsl_vector_set(e_steps,0,3e-7);
-	gsl_vector_set(e_steps,1,5e-1);
+	gsl_vector_set(e_steps,1,2e-1);
 	gsl_vector_set(e_steps,2,0.0);
 	gsl_vector_set(e_steps,3,0.0);
 	gsl_vector_set(e_steps,4,0.0);
