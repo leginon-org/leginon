@@ -188,9 +188,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		for i in range(len(boxedpartdatas)):
 			partdata = boxedpartdatas[i]
 			partarray = imagicdata['images'][i]
+			# take abs of mean, because ctf whole image may become negative
 			partmeandict = {
 				'partdata': partdata,
-				'mean': partarray.mean(),
+				'mean': abs(partarray.mean()),
 				'stdev': partarray.std(),
 				'min': partarray.min(),
 				'max': partarray.max(),
