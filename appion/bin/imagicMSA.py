@@ -253,7 +253,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		filename = self.createImagicBatchFile()
 		### execute batch file that was created
 		aligntime = time.time()
-		os.system('chmod 755 '+filename)
+		os.system('chmod 775 '+filename)
 		apIMAGIC.executeImagicBatchFile(filename)
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime), "cyan")
 		aligntime = time.time() - aligntime
