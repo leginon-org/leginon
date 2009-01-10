@@ -228,10 +228,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
                 if not os.path.isfile(linkingfile+".hed"):
                         apDisplay.printError("stackfile does not exist: "+linkingfile+".img")
                 else:
-			apDisplay.printMsg("copying aligned stack into working directory for operations with IMAGIC")
-                        shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
-                        shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
-	
+			if not os.path.isfile(os.path.join(str(self.params['rundir']), "start.img")):
+				apDisplay.printMsg("copying aligned stack into working directory for operations with IMAGIC")
+	                        shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
+	                        shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
+			else:	
+				apDisplay.printColor("aligned stack already exists in working directory", "green")
+
 		### NEED TO CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
                 if self.params['lpfilt'] is not None:
 			self.params['lpfilt_imagic'] = 2 * float(self.params['apix']) / int(self.params['lpfilt'])
