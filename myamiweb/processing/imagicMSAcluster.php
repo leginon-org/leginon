@@ -147,6 +147,7 @@ function runImagicMSAcluster($extra=false)	{
 	$num_classes=$_POST['num_classes'];
 	$ignore_members=$_POST['ignore_members'];
 	$description=$_POST['description'];
+        $commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	
