@@ -1735,6 +1735,22 @@ class particledata {
 		return $r;
 	}
 
+	function getImagicClusteringStacksForClusteringRun ($clusterrunId, $projectId, $showHidden=false) {
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, clusterrun.*, cluster.* "
+			."FROM ApImagicClusteringStackData AS cluster "
+			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
+			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
+			."LEFT JOIN ApPathData as path ON "
+			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
+			."WHERE "
+			." clusterrun.`DEF_id` = $clusterrunId "
+			."AND "
+                        ."  clusterrun.`project|projects|project` = '$projectId' "
+                        ."ORDER BY clusterid DESC ";
+                $r = $this->mysql->getSQLResult($q);
+                return $r;
+	}
+
 
 	#--------- MAKE MASK FUNCTIONS---------------#
 
@@ -2930,6 +2946,16 @@ class particledata {
 		return $r;
 	}
 
+/*        function getImagic3d0ClusterModelsFromSessionId($sessionId) {
+                $q="SELECT "
+                        ."  model.*, "
+                        ."  path.`path` AS path "
+                        ."WHERE "
+                        ."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+                $r=$this->mysql->getSQLResult($q);
+                return $r;
+        }
+*/
 	function getImagic3d0Data ($imagic3d0Id) {
 		$q = "SELECT  "
 			."  3d0run.*, "
