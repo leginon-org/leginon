@@ -326,7 +326,9 @@ function analysissummarytable($analysisid, $mini=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$analysisdata = $particle->getAnalysisParams($analysisid);
-	//echo print_r($analysisdata)."<br/>\n";
+	if ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
+	        $imagicrun = $particle->getImagicAnalysisParams($analysisid);
+	}
 
 	if ($_POST['updateDesc'.$analysisid])
 		updateDescription('ApAlignAnalysisRunData', $analysisid, $_POST['newdescription'.$analysisid]);
@@ -371,12 +373,30 @@ function analysissummarytable($analysisid, $mini=false) {
 	$display_keys['description']=$descDiv;
 	$display_keys['path']=$analysisdata['path'];
 	if (!$mini)
-		$display_keys['number of factors']=$analysisdata['num_factors'];
+		if ($analysisdata['REF|ApCoranRunData|coranrun']) {
+			$display_keys['number of factors']=$analysisdata['num_factors'];
+		}
+		elseif ($imagicrun) {
+			$display_keys['number of factors']="69 IMAGIC eigenimages";
+		}
 	if (!$mini)
 		$display_keys['run time']=round($analysisdata['run_seconds']/60.0,2)." minutes";
 	if (!$mini)
-		$display_keys['mask diam']=$analysisdata['mask_diam']." &Aring;ngstroms";
-
+		if ($analysisdata['REF|ApCoranRunData|coranrun']) {
+			$display_keys['mask diam']=$analysisdata['mask_diam']." &Aring;ngstroms";
+		}
+		elseif ($imagicrun) {
+			$display_keys['mask radius']=$imagicrun['mask_radius']." (fraction of inner radius)";
+		}
+	// imagic-specific parameters
+	if (!$mini && $imagicrun) {
+		$display_keys['mask dropoff'] = $imagicrun['mask_dropoff'];
+		$display_keys['hp filt'] = $imagicrun['highpass']. " &Aring;ngstroms";
+		$display_keys['lp filt'] = $imagicrun['lowpass']." &Aring;ngstroms";
+		$display_keys['bin'] = $imagicrun['bin'];
+		$display_keys['overcorrection factor'] = $imagicrun['overcorrection'];
+		$display_keys['MSA method'] = $imagicrun['MSAmethod'];
+	}
 	foreach($display_keys as $k=>$v) {
 	        $analysistable.= formatHtmlRow($k,$v);
 	}
