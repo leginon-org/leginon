@@ -82,9 +82,16 @@ if ($stackdatas) {
 					//echo print_r($analysisdata)."<br/>\n";;
 					$analysisid = $analysisdata['analysisid'];
 					echo analysissummarytable($analysisid, true);
-					echo "<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
-						."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
-					echo "</td></tr>\n";
+					if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
+						echo "<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+							."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
+						echo "</td></tr>\n";
+					}
+					elseif ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun'] != false) {
+                                                echo "<a href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+                                                        ."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
+                                                echo "</td></tr>\n";
+                                        }
 				}
 				echo "<tr><td>\n";
 				$numclusters = count($particle->getClusteringStacks($expId, $projectId));
@@ -93,13 +100,13 @@ if ($stackdatas) {
 				foreach ($clusterruns as $clusterrun) {
 					$clusterrunid = $clusterrun['clusterrunid'];
 					$clusterdatas = $particle->getClusteringStacksForClusteringRun ($clusterrunid, $projectId);
+					$clusterdatasImagic = $particle->getImagicClusteringStacksForClusteringRun ($clusterrunid, $projectId);
 					if ($clusterdatas) {
 						echo "<b>Cluster Run ".$clusterrunid."</b>"
-							.", method='<i>".$clusterrun['method']
+							.", method='<i>".$clusterrun['method']." (SPIDER) "
 							."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
 						echo "<ul>\n";
 						foreach ($clusterdatas as $clusterdata) {
-							//echo print_r($clusterdata)."<br/>\n";
 							$clusterid = $clusterdata['clusterid'];
 							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 							$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
@@ -112,6 +119,22 @@ if ($stackdatas) {
 								."</span></li>\n";
 						}
 						echo "</ul>\n";
+					}
+					elseif ($clusterdatasImagic) {
+                                                echo "<b>Cluster Run ".$clusterrunid."</b>"
+                                                        .", method='<i> Hierarchical Clustering (IMAGIC)"
+                                                        ."</i>', factor list='<i>69 Eigen Images, (eigenimages.img)</i>'\n";
+                                                echo "<ul>\n";
+                                                foreach ($clusterdatasImagic as $clusterdata) {
+                                                        $clusterid = $clusterdata['clusterid'];
+                                                        $clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'].".img";
+                                                        echo "<li><span>"
+                                                                ."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+                                                                .$clusterdata['num_classes']." Class Averages</a>&nbsp;"
+                                                                ."</span></li>\n";
+                                                }
+                                                echo "</ul>\n";
+	
 					}
 				}
 				echo "</td></tr>\n";
