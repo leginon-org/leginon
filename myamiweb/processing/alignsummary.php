@@ -129,7 +129,7 @@ if ($stackdatas) {
                                                         $clusterid = $clusterdata['clusterid'];
                                                         $clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'].".img";
                                                         echo "<li><span>"
-                                                                ."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+                                                                ."<a href='viewstack.php?expId=$expId&imagicClusterId=$clusterid&file=$clusteravgfile'>"
                                                                 .$clusterdata['num_classes']." Class Averages</a>&nbsp;"
                                                                 ."</span></li>\n";
                                                 }
