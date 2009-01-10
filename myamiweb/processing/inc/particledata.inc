@@ -1536,6 +1536,19 @@ class particledata {
 		//echo print_r($r)."<br/>\n";
 		return $r[0];
 	}
+	function getImagicAnalysisParams ($analysisid) {
+		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.*, data.*, path.path AS path "
+			."FROM ApAlignAnalysisRunData AS analysis "
+			."LEFT JOIN ApImagicAlignAnalysisData as data ON "
+			." (analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun`=data.`DEF_id`) "
+			."LEFT JOIN ApPathData AS path ON "
+			." (analysis.`REF|ApPathData|path` = path.`DEF_id`) "
+                        ."WHERE "
+                        ."  analysis.`DEF_id` = $analysisid "
+                        ."LIMIT 1 ";
+                $r = $this->mysql->getSQLResult($q);
+                return $r[0];
+	}
 
 	function getCoranEigenDataFromAnalysis ($analysisid) {
 		$q = "SELECT "
