@@ -19,6 +19,7 @@ $reclassId=$_GET['reclassId'];
 $norefId=$_GET['norefId'];
 $norefClassId=$_GET['norefClassId'];
 $clusterId=$_GET['clusterId'];
+$imagicClusterId=$_GET['imagicClusterId'];
 $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
 $refinement=$_GET['refinement'];
@@ -101,6 +102,7 @@ var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
 var reclassId="<?=$reclassId?>"
 var clusterId="<?=$clusterId?>"
+var imagicClusterId="<?=$imagicClusterId?>"
 <?php
 if ($norefClassId) {
 	$c=array();
@@ -109,7 +111,7 @@ if ($norefClassId) {
 	}
 echo 'var stackinfo=['.implode(',',$c).']'."\n";
 }
-if ($norefClassId || $reclassId || $clusterId) {
+if ($norefClassId || $reclassId || $clusterId || $imagicClusterId) {
 echo 'var addselectfn=selectextra'."\n";
 
 }
@@ -136,6 +138,9 @@ function create3d0() {
 	}
 	if (clusterId!="") {
 		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&clusterId="+clusterId,"width=400,height=200")
+	}
+	if (imagicClusterId!="") {
+		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&imagicClusterId="+imagicClusterId,"width=400,height=200")
 	}
 }
 
@@ -211,7 +216,7 @@ quality: <select id="quality">
 if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
         <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
         <br />\n";
-if ($norefClassId || $reclassId || $clusterId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
+if ($norefClassId || $reclassId || $clusterId || $imagicClusterId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
         <input id='3d0button' type='button' alt='Create 3D0' value='Create 3D0' onclick='create3d0();'>
         <br />\n";
 
