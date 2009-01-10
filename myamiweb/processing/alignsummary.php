@@ -148,16 +148,22 @@ if ($stackdatas) {
 					."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
-				//print_r($analysisdatas);
 				foreach ($analysisdatas as $analysisdata) {
 					echo "<tr><td>\n";
-					//echo print_r($analysisdata)."<br/>\n";;
 					$analysisid = $analysisdata['DEF_id'];
 					echo analysissummarytable($analysisid);
-					echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-						."<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
-						."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
-					echo "</td></tr>\n";
+					if ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
+                                                echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+                                                        ."<a href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+                                                        ."Run IMAGIC Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+                                                echo "</td></tr>\n";
+					}
+					else {
+						echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+							."<a href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+							."Run Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+						echo "</td></tr>\n";
+					}
 				}
 			}
 		} else {
