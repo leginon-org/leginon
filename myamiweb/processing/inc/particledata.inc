@@ -1764,8 +1764,23 @@ class particledata {
                 return $r;
 	}
 
+	function getImagicClusteringParamsForClusterStack ($imagicClusterId, $projectId, $showHidden=false) {
+		$q = "SELECT cluster.*, clusterrun.*, path.path AS path "
+			."FROM ApImagicClusteringStackData AS cluster "
+			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
+                        ." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
+                        ."LEFT JOIN ApPathData as path ON "
+                        ." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
+			."WHERE "
+			." cluster.`DEF_id` = $imagicClusterId "
+			."AND "
+			." clusterrun.`project|projects|project` = '$projectId' ";	
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
 
-	#--------- MAKE MASK FUNCTIONS---------------#
+
+        	#--------- MAKE MASK FUNCTIONS---------------#
 
 	function getMaskMakerRunIds ($sessionId) {
 		$q = "select * "
@@ -2959,16 +2974,56 @@ class particledata {
 		return $r;
 	}
 
-/*        function getImagic3d0ClusterModelsFromSessionId($sessionId) {
+        function get3d0ClusterModelsFromSessionId($sessionId) {
                 $q="SELECT "
                         ."  model.*, "
                         ."  path.`path` AS path "
+			."FROM ApImagic3d0Data as model "
+                        ."LEFT JOIN ApPathData AS path "
+                        ."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApClusteringStackData as cluster "
+			."  ON model.`REF|ApClusteringStackData|clusterclass` = cluster.`DEF_id` "
+			."LEFT JOIN ApClusteringRunData as run "
+			."  ON cluster.`REF|ApClusteringRunData|clusterrun` = run.`DEF_id` "
+			."LEFT JOIN ApAlignStackData as align "
+			."  ON run.`REF|ApAlignStackData|alignstack` = align.`DEF_id` "
+			."LEFT JOIN ApStackData as stack "
+			."  ON align.`REF|ApStackData|stack` = stack.`DEF_id` "
+                        ."LEFT JOIN ApRunsInStackData AS runsinstack "
+                        ."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+                        ."LEFT JOIN ApStackRunData AS stackrun "
+                        ."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
                         ."WHERE "
                         ."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
                 $r=$this->mysql->getSQLResult($q);
                 return $r;
         }
-*/
+
+        function get3d0ImagicClusterModelsFromSessionId($sessionId) {
+                $q="SELECT "
+                        ."  model.*, "
+                        ."  path.`path` AS path "
+                        ."FROM ApImagic3d0Data as model "
+                        ."LEFT JOIN ApPathData AS path "
+                        ."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+                        ."LEFT JOIN ApImagicClusteringStackData as cluster "
+                        ."  ON model.`REF|ApImagicClusteringStackData|imagicclusterclass` = cluster.`DEF_id` "
+                        ."LEFT JOIN ApClusteringRunData as run "
+                        ."  ON cluster.`REF|ApClusteringRunData|clusterrun` = run.`DEF_id` "
+                        ."LEFT JOIN ApAlignStackData as align "
+                        ."  ON run.`REF|ApAlignStackData|alignstack` = align.`DEF_id` "
+                        ."LEFT JOIN ApStackData as stack "
+                        ."  ON align.`REF|ApStackData|stack` = stack.`DEF_id` "
+                        ."LEFT JOIN ApRunsInStackData AS runsinstack "
+                        ."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
+                        ."LEFT JOIN ApStackRunData AS stackrun "
+                        ."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+                        ."WHERE "
+                        ."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+                $r=$this->mysql->getSQLResult($q);
+                return $r;
+        }
+
 	function getImagic3d0Data ($imagic3d0Id) {
 		$q = "SELECT  "
 			."  3d0run.*, "
