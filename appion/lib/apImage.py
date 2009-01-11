@@ -184,7 +184,7 @@ def lowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	low pass filter image to radius resolution
 	"""
-	if radius == 0:
+	if radius is None or radius == 0:
 		if msg is True:
 			apDisplay.printMsg("skipping low pass filter")
 		return(imgarray)
@@ -196,7 +196,7 @@ def fermiHighPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	Fermi high pass filter image to radius resolution
 	"""
-	if radius == 0:
+	if radius is None or radius == 0:
 		if msg is True:
 			apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)
@@ -209,7 +209,7 @@ def fermiLowPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, msg=True):
 	"""
 	Fermi low pass filter image to radius resolution
 	"""
-	if radius == 0:
+	if radius is None or radius == 0:
 		if msg is True:
 			apDisplay.printMsg("skipping low pass filter")
 		return imgarray
@@ -225,7 +225,7 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	"""
 	high pass filter image to radius resolution
 	"""
-	if radius < 1 or imgarray.shape[0] < 256:
+	if radius is None or radius < 1 or imgarray.shape[0] < 256:
 		if msg is True:
 			apDisplay.printMsg("skipping high pass filter")
 		return(imgarray)
