@@ -44,6 +44,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="reference free class id", metavar="INT")
                 self.parser.add_option("--clusterId", dest="clusterId", type="int",
                         help="new class average id from alignment pipeline", metavar="INT")
+                self.parser.add_option("--imagicClusterId", dest="imagicClusterId", type="int",
+                        help="new IMAGIC class average id from alignment pipeline", metavar="INT")
 		self.parser.add_option("--3_projections", dest="projections", type="str",
 			help="3 initial projections for angular reconstitution", metavar="STR")
 		self.parser.add_option("--symmetry", dest="symmetry", type="str",
@@ -75,7 +77,7 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if (self.params['reclassId'] is None and self.params['norefClassId'] is None and self.params['clusterId'] is None) :
+		if (self.params['reclassId'] is None and self.params['norefClassId'] is None and self.params['clusterId'] and self.params['imagicClusterId'] is None) :
 			apDisplay.printError("There is no class average ID specified")
 		if self.params['projections'] is None:
 			apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
@@ -118,6 +120,9 @@ class imagic3d0Script(appionScript.AppionScript):
 			path = reclassdata['path']['path']
 		elif self.params['clusterId'] is not None:
 			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+			path = clusterdata['path']['path']
+		elif self.params['imagicClusterId'] is not None:
+			clusterdata = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
 			path = clusterdata['path']['path']
 		else:
 			apDisplay.printError("class averages not in the database")
@@ -312,6 +317,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			modelq['reclass'] = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
 		elif self.params['clusterId'] is not None:
 			modelq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+                elif self.params['imagicClusterId'] is not None:
+                        modelq['imagicclusterclass'] = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
 		modelq['projections'] = self.params['projections']
 		modelq['euler_ang_inc'] = self.params['euler_ang_inc']
 		modelq['ham_win'] = self.params['ham_win']
@@ -369,6 +376,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
 		elif self.params['clusterId'] is not None:
 			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+                elif self.params['imagicClusterId'] is not None:
+                        clusterdata = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
 			self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
 			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
  			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
