@@ -77,7 +77,7 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
-		if (self.params['reclassId'] is None and self.params['norefClassId'] is None and self.params['clusterId'] and self.params['imagicClusterId'] is None) :
+		if (self.params['reclassId'] is None and self.params['norefClassId'] is None and self.params['clusterId'] is None and self.params['imagicClusterId'] is None) :
 			apDisplay.printError("There is no class average ID specified")
 		if self.params['projections'] is None:
 			apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
@@ -374,10 +374,11 @@ class imagic3d0Script(appionScript.AppionScript):
 			orig_runname = reclassdata['runname']
 			orig_file = "reclassified_classums_sorted"
 			linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
-		elif self.params['clusterId'] is not None:
-			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
-                elif self.params['imagicClusterId'] is not None:
-                        clusterdata = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
+		elif self.params['clusterId'] is not None or self.params['imagicClusterId'] is not None:
+			if self.params['clusterId'] is not None:
+				clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+            		elif self.params['imagicClusterId'] is not None:
+                        	clusterdata = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
 			self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
 			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
  			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
