@@ -44,11 +44,16 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			templaterunq  = appionData.ApTemplateRunData()
 			templaterunq['selectionrun'] = rundata
 			templaterunq['template']     = appionData.ApTemplateImageData.direct_query(templateid)
+			### this is wrong only check last template run not this run
 			templatedata = templaterunq.query(results=1)[0]
 			if ( templatedata['range_start'] != self.params["startang"+str(i+1)] or
 				 templatedata['range_end']   != self.params["endang"+str(i+1)] or
 				 templatedata['range_incr']  != self.params["incrang"+str(i+1)] ):
-				apDisplay.printError("different template search ranges from last run")
+				print i+1, templateid
+				print templatedata['range_start'], self.params["startang"+str(i+1)]
+				print templatedata['range_end'], self.params["endang"+str(i+1)]
+				print templatedata['range_incr'], self.params["incrang"+str(i+1)]
+				apDisplay.printWarning("different template search ranges from last run")
 		return True
 
 	##################################################
@@ -113,7 +118,8 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 	##=======================
 	def preLoopFunctions(self):
-		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
+		if len(self.imgtree) > 0:
+			self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		# CREATES TEMPLATES
 		# SETS params['templatelist'] AND self.params['templateapix']
 		apTemplate.getTemplates(self.params)
