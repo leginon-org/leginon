@@ -44,6 +44,7 @@ function jobform($extra=false) {
         $norefId=$_GET['norefId'];
         $norefClassId=$_GET['norefClassId'];
         $clusterId=$_GET['clusterId'];
+	$imagicClusterId=$_GET['imagicClusterId'];
         $projectId=getProjectFromExpId($expId);
         $sessiondata=getSessionList($projectId,$expId);
         $sessioninfo=$sessiondata['info'];
@@ -118,6 +119,8 @@ function jobform($extra=false) {
                         }
                 }
         }
+	// get parameters from imagicClusterId
+	$imagicClusterParams = $particle->getImagicClusteringParamsForClusterStack($imagicClusterId, $projectId);
 
 	// IMAGIC begins projections with [1] instead of [0]
 	$projections=$_GET['projections'];
@@ -205,11 +208,41 @@ function jobform($extra=false) {
                         echo formatHtmlRow($k,$v);
                 }
         }
+
+        // if coming from new alignment pipeline using imagicClusterId 
+        elseif ($imagicClusterId) {
+                $clusterpath = $imagicClusterParams['path'];
+                $clusterclassfile = $imagicClusterParams['avg_imagicfile'];
+                if (ereg(".img", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
+                if (ereg(".hed", $clusterclassfile)) $clusterclassfile = str_replace(".hed", "", $clusterclassfile);
+                $clusterclassimgfile = $clusterpath."/".$clusterclassfile.".img";
+                $clusterclasshedfile = $clusterpath."/".$clusterclassfile.".hed";
+                $projectiontable.= "<table border='0', width='50'>";
+                //$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
+                $projectiontable.= "<tr>\n";
+                foreach ($projections as $key => $image) {
+                        $num = $key + 1;
+                        $projectiontable.= "<td rowspan='30' align='center' valign='top'>";
+                        $projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
+                        $projectiontable.= "<i>projection $num</i></td>\n";
+                }
+                $projectiontable.= "</tr></table>\n<BR/>";
+                echo $projectiontable;
+                $display_keys = array();
+                //$display_keys['description']=$norefclassparams['description'];
+                $display_keys['# class averages']=$imagicClusterParams['num_classes'];
+                foreach($display_keys as $k=>$v) {
+                        echo formatHtmlRow($k,$v);
+                }
+        }
+
+
 	else echo "error: there are no class average runs for the initial model determination";
 	$default_num_classes = $display_keys['# class averages'];
 	$numrun = count($particle->getImagic3d0NoRefModelsFromSessionId($expId));
 	$numrun+= count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
-//	$numrun+= count($particle->getImagic3d0ClusterModelsFromSessionId($expId));
+	$numrun+= count($particle->get3d0ClusterModelsFromSessionId($expId));
+	$numrun+= count($particle->get3d0ImagicClusterModelsFromSessionId($expId));
 	$newrun = $numrun + 1;
 // need to figure this out
 //$something = count($particle->getImagic3d0ClusterModelsFromSessionId($expId));
@@ -246,7 +279,8 @@ function jobform($extra=false) {
 	echo "<input type='hidden' name='norefid' value=$norefId>";
 	echo "<input type='hidden' name='norefClassId' value=$norefClassId>";
 	echo "<input type='hidden' name='reclassid' value=$reclassId>";
-	echo "<input type='hidden' name='clusterId' value=$clusterId>";	
+	echo "<input type='hidden' name='clusterId' value=$clusterId>";
+	echo "<input type='hidden' name='imagicClusterId' value=$imagicClusterId>";	
 
 	// keys and documentation for user input values
 	$display_keys = array('itn', 
@@ -325,6 +359,7 @@ function create3d0() {
 	$norefId = $_POST['norefid'];
 	$norefClassId = $_POST['norefClassId'];
 	$clusterId = $_POST['clusterId'];
+	$imagicClusterId = $_POST['imagicClusterId'];
 	$reclassId = $_POST['reclassid'];
 	$outdir = $_POST['output_directory'];
 	$runid = $_POST['runid'];
@@ -358,6 +393,9 @@ function create3d0() {
 	elseif ($clusterId) {
 		$command.=" --clusterId=$clusterId";
 	}
+	elseif ($imagicClusterId) {
+		$command.=" --imagicClusterId=$imagicClusterId";
+	}
 	else jobform("error: there are no class average runs for the initial model determination");
 	$command.= " --runname=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
 	$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
@@ -367,19 +405,6 @@ function create3d0() {
 	if ($commit) $command.= " --commit";
 	else $command.=" --no-commit";
 
-/*	$jobfile = "{$runid}_imagic3d0.job";
-	$tmpjobfile = "/tmp/$jobfile";
-	$f = fopen($tmpjobfile,'w');
-	fwrite($f,$command);
-	fclose($f);
-
-	// create appion directory & copy job file
-	$cmd = "mkdir -p $outdir/$runid\n";
-	$cmd.= "cp $tmpjobfile $outdir/$runid/$jobfile\n";
-	$cmd.= "cd $outdir/$runid\n";
-	$cmd.= "chmod 755 $jobfile\n";
-	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
-*/
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
