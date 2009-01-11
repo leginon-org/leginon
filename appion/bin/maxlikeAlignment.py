@@ -295,7 +295,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1:
-			proccmd += " shrink="+str(self.params['bin'])
+			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
+			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		if self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] > 1:
