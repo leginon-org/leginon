@@ -3,11 +3,11 @@
 import sys
 import os
 import time
+import sinedon
 import apEMAN
 import apFile
 import apDisplay
 import apStack
-
 
 #===============
 def makeStackMeanPlot(stackid, gridpoints=16):
@@ -162,6 +162,18 @@ if __name__ == "__main__":
 		gridpoints = int(sys.argv[2])
 	else:
 		gridpoints=16
+	if len(sys.argv) > 3:
+		projectid = int(sys.argv[3])
+	else:
+		projectid=None
+	### setup correct database after we have read the project id
+	if projectid is not None:
+		apDisplay.printWarning("Using split database")
+		# use a project database
+		newdbname = "ap"+str(projectid)
+		sinedon.setConfig('appionData', db=newdbname)
+		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
+
 	makeStackMeanPlot(stackid, gridpoints)
 
 
