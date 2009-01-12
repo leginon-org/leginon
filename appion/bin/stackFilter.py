@@ -8,6 +8,7 @@ import sys
 import appionScript
 import apStack
 import apDisplay
+import apStackMeanPlot
 
 class subStackScript(appionScript.AppionScript):
 	#=====================
