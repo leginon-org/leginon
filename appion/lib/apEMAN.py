@@ -2,6 +2,7 @@
 import os
 import re
 import apDisplay
+import apImagicFile
 import subprocess
 import sys
 import time
@@ -216,6 +217,10 @@ def writeImageToImage(instack, inn, outstack, outn=-1, particles=0):
 
 #=====================
 def numberParticlesInStack(stackname, startnum=0, verbose=True):
+	### new faster methond
+	apImagicFile.numberStackFile(stackname, startnum=0)
+	return
+
 	# store the particle number in the stack header
 	# NOTE!!! CONFORMS TO EMAN CONVENTION, STARTS AT 0!!!
 	t0 = time.time()
