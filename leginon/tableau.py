@@ -25,7 +25,7 @@ class Tableau(object):
 	def imageExtents(self, imageinfo):
 		ang = imageinfo['angle']
 		rad = imageinfo['radius']
-		if (not ang) or (not rad):
+		if (not rad):
 			x = y = 0
 		else:
 			x = int(rad * math.cos(ang))
@@ -57,7 +57,9 @@ class Tableau(object):
 			if extents['column'][1] > colmax:
 				colmax = extents['column'][1]
 		totalshape = 2*max(rowmax,-rowmin), 2*max(colmax,-colmin)
-		finalimage = numpy.zeros(totalshape, self.images[0]['image'].dtype)
+		background = self.images[0]['image'][(0,0)]
+		finalimage = numpy.ones(totalshape, self.images[0]['image'].dtype)
+		finalimage = background * finalimage
 		center = finalimage.shape[0]/2, finalimage.shape[1]/2
 		print 'CENTER', center
 		for image in self.images:
