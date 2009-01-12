@@ -7,11 +7,93 @@ import sys
 import re
 import time
 import math
+import shutil
 import apDisplay
 import apFile
 import apImage
 import numpy
 from pyami import mrc
+
+#===============
+def compareHeader(hfile1, hfile2, numround=1):
+	"""
+	useful in debugging
+	"""
+	f1 = open(hfile1, 'rb')
+	f2 = open(hfile2, 'rb')
+	for n in range(numround):
+		print ""
+		print "round", n+1
+		data1 = f1.read(1024)
+		data2 = f2.read(1024)
+		ints1 = numpy.fromstring(data1, dtype=numpy.int32)
+		ints2 = numpy.fromstring(data2, dtype=numpy.int32)
+		for i in range(ints1.shape[0]):
+			int1 = ints1[i]
+			int2 = ints2[i]
+			if int1 != int2:
+				if -10 < int1 < 100 and -10 < int2 < 100:
+					print "%02d\t%04d ==> %04d" % (i, int1, int2)
+				else:
+					float1 = fourByteToFloat(intToFourByte(int1))
+					float2 = fourByteToFloat(intToFourByte(int2))
+					print "%02d\t%03.3e ==> %03.3e" % (i, float1, float2)
+
+#===============
+def numberStackFile(oldheadfile, startnum=0):
+	"""
+	Takes an Imagic Stack header file and numbers the particles
+
+	based on 
+		http://www.imagescience.de/formats/formats.htm
+	"""
+	apDisplay.printMsg("saving particle numbers to stack header")
+	t0 = time.time()
+	newheadfile = (os.path.splitext(oldheadfile)[0]+"-temp.hed")
+
+	numimg = apFile.numImagesInStack(oldheadfile)
+	#print numimg
+	numimg_fbyte = intToFourByte(numimg-1)
+
+	of = open(oldheadfile, 'rb')
+	nf = open(newheadfile, 'wb')
+	i = startnum
+	while i < numimg:
+		imgnum_fbyte = intToFourByte(i)
+		data = of.read(1024)
+		### start new string
+		headerstr = ""
+		### first image number
+		headerstr += intToFourByte(i)
+		### number of images, less one
+		headerstr += numimg_fbyte
+		### always 0,1 ???
+		headerstr += intToFourByte(0)
+		headerstr += intToFourByte(1)
+		### creation date: day, month, year, hour, min, sec
+		headerstr += intToFourByte(time.localtime()[2])
+		headerstr += intToFourByte(time.localtime()[1]) #eman always uses month-1?
+		headerstr += intToFourByte(time.localtime()[0])
+		headerstr += intToFourByte(time.localtime()[3])
+		headerstr += intToFourByte(time.localtime()[4])
+		headerstr += intToFourByte(time.localtime()[5])
+		### append other header info, 4 character per item
+		headerstr += data[10*4:61*4]
+		### first image number, EMAN does this
+		headerstr += intToFourByte(i)
+		### append other header info, 4 character per item
+		headerstr += data[62*4:]
+		#print ""
+		#print "old=", fourByteToInt(data[0:4]), fourByteToInt(data[4:8]), fourByteToInt(data[8:12])
+		#print "new=", fourByteToInt(headerstr[0:4]), fourByteToInt(headerstr[4:8]), fourByteToInt(headerstr[8:12])
+		nf.write(headerstr)
+		i += 1
+	if not os.path.isfile(newheadfile):
+		apDisplay.printError("failed to number particles in stack file")
+	apFile.removeFile(oldheadfile)
+	shutil.move(newheadfile, oldheadfile)
+	apDisplay.printMsg("completed %d particles in %s"%(numimg, apDisplay.timeString(time.time()-t0)))
+	return True
 
 #===============
 def readImagic(filename, first=None, last=None):
@@ -129,6 +211,10 @@ def writeImagic(array, filename):
 
 #===============
 def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
+	"""
+	based on 
+		http://www.imagescience.de/formats/formats.htm
+	"""
 	headerstr = ""
 	### first image number
 	headerstr += intToFourByte(partnum)
