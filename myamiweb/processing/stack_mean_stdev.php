@@ -3,22 +3,11 @@
 require "inc/particledata.inc";
 require "inc/leginon.inc";
 require "inc/project.inc";
-#require "inc/processing.inc";
 require "inc/jpgraph.php";
 require "inc/jpgraph_line.php";
 require "inc/jpgraph_scatter.php";
-#require "inc/image.inc";
 
-#require "inc/particledata.inc";
-#require "inc/processing.inc";
-#require "inc/leginon.inc";
-#require "../inc/jpgraph.php";
-#require "../inc/jpgraph_line.php";
-#require "../inc/jpgraph_scatter.php";
-#require "../inc/jpgraph_bar.php";
-#require "../inc/histogram.inc";
-#require "../inc/image.inc";
-
+define (PARTICLE_DB, $_SESSION['processingdb']);
 
 $stackid = ($_GET['sId']);
 $minx = ($_GET['minx']);
