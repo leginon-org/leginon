@@ -151,7 +151,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int",
 			help="Number of image per tilt series", metavar="INT")
 
-	def	getAllImages(self):
+	def getAllImages(self):
 		self.batchinfo = self.readBatchUploadInfo()
 		self.stats['imagecount'] = len(self.batchinfo)
 		
