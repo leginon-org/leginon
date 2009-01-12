@@ -180,6 +180,10 @@ type: Pipeline
 module: raptorprocessor
 type: Pipeline
 
+#[ImodProcessor]
+#module: imodprocessor
+#type: Pipeline
+
 [FileNames]
 module: imageprocessorexample
 type: Pipeline
@@ -192,6 +196,10 @@ type: Pipeline
 #[FFTAnalyzer]
 #module: fftanalyzer
 #type: Pipeline
+
+[CTFAnalyzer]
+module: fftace
+type: Pipeline
 
 [BeamTiltImager]
 module: beamtiltimager
