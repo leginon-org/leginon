@@ -49,14 +49,17 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
 
-		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
-			help="Mask radius for particle coran (in Angstoms)", metavar="#")
+		#self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
+		#	help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int",
 			help="High pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
+
+		self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
+			help="Number of volumes to create", metavar="#")
 
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
@@ -86,8 +89,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("stack id was not defined")
 		#if self.params['description'] is None:
 		#	apDisplay.printError("run description was not defined")
-		if self.params['numrefs'] is None:
-			apDisplay.printError("a number of classes was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
 		if not self.params['fastmode'] in self.fastmodes:
@@ -170,7 +171,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		calctime = (
 			(self.params['numpart']/1000.0)
-			*self.params['numrefs']
 			*(self.stack['boxsize']/self.params['bin'])**2
 			/self.params['psistep']
 			/float(nproc)
@@ -224,7 +224,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		xmippopts = ( ""
 			+" -i $PBSREMOTEDIR/partlist2.doc \\\n"
 			+" -o $PBSREMOTEDIR/"+self.timestamp+" \\\n"
-			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
 			+" -psi_step "+str(self.params['psistep'])
 			+" -eps 5e-4"
@@ -283,31 +282,38 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def createGaussianSphere(self, volfile, boxsize):
-		stdev = boxsize/3.0
-		mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
-		mySpider.toSpider("MO 3",
+		stdev = boxsize/4.0
+		halfbox = boxsize/2.0
+		#width of Gaussian
+		gaussstr = "%.3f,%.3f,%.3f"%(stdev+random.random(), stdev+random.random(), stdev+random.random())
+		apDisplay.printMsg("Creating Gaussian volume with stdev="+gaussstr)
+		mySpider = spyder.SpiderSession(logo=False)
+		mySpider.toSpiderQuiet("MO 3",
 			spyder.fileFilter(volfile),
-			"%d,%d,%d" %(boxsize,boxsize,boxsize),
+			"%d,%d,%d"%(boxsize,boxsize,boxsize),
 			"G", #G for Gaussian
-			"0,0,0", #center of Gaussian
-			"%.3f,%.3f,%.3f"%(stdev,stdev+0.1,stdev-0.1) #width of Gaussian
+			"%.3f,%.3f,%.3f"%(halfbox,halfbox,halfbox), #center of Gaussian
+			gaussstr,
 		)
 		mySpider.close()
 		return
 
 	#=====================
 	def setupVolumes(self, boxsize):
-		voldocfile = "volumelist.doc"
+		voldocfile = "volumelist"+self.timestamp+".doc"
 		f = open(voldocfile, "w")
 		for i in range(self.params['nvol']):
-			volfile = os.path.join(self.params['rundir'], "volume%06d.spi"%(i))
-			self.createGaussianSphere(volfile)
+			volfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
+			self.createGaussianSphere(volfile, boxsize)
 			f.write(volfile+" 1\n")
 		f.close()
 		return voldocfile
 
 	#=====================
 	def runrefine(self):
+		### setup Xmipp command
+		recontime = time.time()
+
 		xmippopts = ( " "
 			+" -i "+os.path.join(self.params['rundir'], self.partlistdocfile)
 			+" -vol "+os.path.join(self.params['rundir'], self.voldocfile)
@@ -344,6 +350,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			self.writeXmippLog(xmippcmd)
 			apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
 		apDisplay.printMsg("Reconstruction time: "+apDisplay.timeString(time.time() - recontime))
+
 	#=====================
 	def start(self):
 		self.insertMaxLikeJob()
@@ -379,10 +386,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### write garibaldi job file
 		self.writeGaribaldiJobFile()
 
-		### setup Xmipp command
-		recontime = time.time()
-
-
+		### run the refinement
+		self.runrefine()
 
 		self.readyUploadFlag()
 		self.dumpParameters()
