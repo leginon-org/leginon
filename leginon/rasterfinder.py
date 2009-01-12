@@ -251,6 +251,8 @@ class RasterFinder(targetfinder.TargetFinder):
 		## calculate stats around each raster point
 		goodpoints = []
 		mylist = []
+		if self.polygonrasterpoints is None:
+			self.polygonrasterpoints= []
 		for rasterpoint in self.polygonrasterpoints:
 			box_stats = self.get_box_stats(self.currentimagedata['image'], rasterpoint, boxsize)
 			t = self.icecalc.get_thickness(box_stats['mean'])
