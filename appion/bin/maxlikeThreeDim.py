@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-#
+
+#python
 import os
 import time
 import sys
@@ -9,24 +10,25 @@ import shutil
 import glob
 import cPickle
 import subprocess
+import numpy
+import MySQLdb
 #appion
 import appionScript
 import apDisplay
 import apAlignment
 import apFile
-import numpy
 import apTemplate
 import apStack
 import apParam
 import apEMAN
 import apXmipp
-from apSpider import alignment
-from pyami import spider
 import appionData
+import spyder
 import apImagicFile
 import apProject
+from apSpider import alignment
+from pyami import spider
 import sinedon
-import MySQLdb
 
 #=====================
 #=====================
@@ -41,6 +43,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
+		self.parser.add_option("-m", "--model", dest="modelid", type="int",
+			help="Initial model database id", metavar="ID#")
 
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
@@ -56,8 +60,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
-		self.parser.add_option("--num-ref", dest="numrefs", type="int",
-			help="Number of classes to create", metavar="#")
 		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
 		self.parser.add_option("--fast-mode", dest="fastmode", default="normal",
@@ -198,7 +200,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		mpiexe = apParam.getExecPath("mpirun")
 		if mpiexe is None:
 			return None
-		xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d")
+		xmippexe = apParam.getExecPath("xmipp_mpi_ml_refine3d")
 		if xmippexe is None:
 			return None
 		lddcmd = "ldd "+xmippexe+" | grep mpi"
@@ -217,7 +219,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			nproc = self.params['nproc']
 
 		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
-		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_align2d"
+		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_refine3d"
 		newrundir = "$PBSREMOTEDIR/"
 		xmippopts = ( ""
 			+" -i $PBSREMOTEDIR/partlist2.doc \\\n"
@@ -280,42 +282,35 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.close()
 
 	#=====================
-	def start(self):
-		self.insertMaxLikeJob()
-		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
-		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
-		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
-		self.estimateIterTime()
-		self.dumpParameters()
+	def createGaussianSphere(self, volfile, boxsize):
+		stdev = boxsize/3.0
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+		mySpider.toSpider("MO 3",
+			spyder.fileFilter(volfile),
+			"%d,%d,%d" %(boxsize,boxsize,boxsize),
+			"G", #G for Gaussian
+			"0,0,0", #center of Gaussian
+			"%.3f,%.3f,%.3f"%(stdev,stdev+0.1,stdev-0.1) #width of Gaussian
+		)
+		mySpider.close()
+		return
 
-		### process stack to local file
-		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1:
-			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
-			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		if self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
-		if self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
-		proccmd += " last="+str(self.params['numpart'])
-		apEMAN.executeEmanCmd(proccmd, verbose=True)
+	#=====================
+	def setupVolumes(self, boxsize):
+		voldocfile = "volumelist.doc"
+		f = open(voldocfile, "w")
+		for i in range(self.params['nvol']):
+			volfile = os.path.join(self.params['rundir'], "volume%06d.spi"%(i))
+			self.createGaussianSphere(volfile)
+			f.write(volfile+" 1\n")
+		f.close()
+		return voldocfile
 
-		### convert stack into single spider files
-		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
-
-		### write garibaldi job file
-		self.writeGaribaldiJobFile()
-
-		### setup Xmipp command
-		aligntime = time.time()
-		
+	#=====================
+	def runrefine(self):
 		xmippopts = ( " "
 			+" -i "+os.path.join(self.params['rundir'], self.partlistdocfile)
-			+" -nref "+str(self.params['numrefs'])
+			+" -vol "+os.path.join(self.params['rundir'], self.voldocfile)
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "part"+self.timestamp)
 			+" -psi_step "+str(self.params['psistep'])
@@ -338,39 +333,56 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if nproc > 2 and mpirun is not None:
 			### use multi-processor
 			apDisplay.printColor("Using "+str(nproc-1)+" processors!", "green")
-			xmippexe = apParam.getExecPath("xmipp_mpi_ml_align2d", die=True)
+			xmippexe = apParam.getExecPath("xmipp_mpi_ml_refine3d", die=True)
 			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
 			self.writeXmippLog(mpiruncmd)
 			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 		else:
 			### use single processor
-			xmippexe = apParam.getExecPath("xmipp_ml_align2d", die=True)
+			xmippexe = apParam.getExecPath("xmipp_ml_refine3d", die=True)
 			xmippcmd = xmippexe+" "+xmippopts
 			self.writeXmippLog(xmippcmd)
 			apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
-		aligntime = time.time() - aligntime
-		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
+		apDisplay.printMsg("Reconstruction time: "+apDisplay.timeString(time.time() - recontime))
+	#=====================
+	def start(self):
+		self.insertMaxLikeJob()
+		self.stack = {}
+		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
+		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
+		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
+		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		self.estimateIterTime()
+		self.dumpParameters()
 
-		### align references
-		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['rundir'], "part"+self.timestamp+".sel")
-			+" -nref 1 "
-			+" -iter "+str(self.params['maxiter'])
-			+" -o "+os.path.join(self.params['rundir'], "ref"+self.timestamp)
-			+" -psi_step 1 "
-			+" -C 1e-15 "
-			+" -eps 5e-4 "
-		)
-		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
-		xmippcmd = xmippexe+" "+xmippopts
-		self.writeXmippLog(xmippcmd)
-		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
+		### setup volumes
+		smallboxsize = int(math.floor(self.stack['boxsize']/float(self.params['bin'])))
+		self.voldocfile = self.setupVolumes(smallboxsize)
 
-		### create a quick mrc
-		emancmd = "proc2d ref"+self.timestamp+"_ref000001.xmp average.mrc"
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		### process stack to local file
+		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
+		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
+		if self.params['bin'] > 1:
+			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
+			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
+		if self.params['highpass'] > 1:
+			proccmd += " hp="+str(self.params['highpass'])
+		if self.params['lowpass'] > 1:
+			proccmd += " lp="+str(self.params['lowpass'])
+		proccmd += " last="+str(self.params['numpart'])
+		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
-		self.createAverageStack()
+		### convert stack into single spider files
+		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
+
+		### write garibaldi job file
+		self.writeGaribaldiJobFile()
+
+		### setup Xmipp command
+		recontime = time.time()
+
+
 
 		self.readyUploadFlag()
 		self.dumpParameters()
