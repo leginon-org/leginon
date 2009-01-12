@@ -49,7 +49,7 @@ $particle = new particledata();
 	}	
 	if (!is_null($stackparts[0]['mean'])) {
 		echo "<td align='center'>\n";
-		echo "<a href='stack_mean_stdev.php?sId=$stackid'>\n";
+		echo "<a href='stack_mean_stdev.php?sId=$stackid&expId=$expId'>\n";
 		echo "<img border='0' src='stack_mean_stdev.php?w=256&sId=$stackid'><br/>\n";
 		echo "<i><a href='subStack.php?expId=$expId&sId=$stackid&mean=1'>Filter Stack by Mean & Stdev</a></i>\n";
 		echo "</td>\n";
