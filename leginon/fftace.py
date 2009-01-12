@@ -21,20 +21,17 @@ import numextension
 import pyami.quietscipy
 import scipy.ndimage
 from pyami import imagefun, mrc
-import gui.wx.FFTMaker
+import gui.wx.FFTAce
 import calibrationclient
 import instrument
 
 class CTFAnalyzer(fftmaker.FFTMaker):
 	eventinputs = fftmaker.FFTMaker.eventinputs
-	panelclass = gui.wx.FFTMaker.Panel
-	settingsclass = data.FFTMakerSettingsData
+	panelclass = gui.wx.FFTAce.Panel
+	settingsclass = data.FFTAceSettingsData
 	defaultsettings = {
 		'process': False,
-		'mask radius': 1.0,
 		'label': '',
-		'reduced': True,
-		'save': False,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		fftmaker.FFTMaker.__init__(self, id, session, managerlocation, **kwargs)

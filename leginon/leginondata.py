@@ -1180,6 +1180,14 @@ class FFTAnalyzerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class FFTAceSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+			('label', str),
+		)
+	typemap = classmethod(typemap)
+
 class TargetFinderSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
