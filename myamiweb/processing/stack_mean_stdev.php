@@ -1,18 +1,26 @@
 <?php
 
 require "inc/particledata.inc";
-require "inc/processing.inc";
 require "inc/leginon.inc";
-require "../inc/jpgraph.php";
-require "../inc/jpgraph_line.php";
-require "../inc/jpgraph_scatter.php";
-require "../inc/jpgraph_bar.php";
-require "../inc/histogram.inc";
-require "../inc/image.inc";
+require "inc/project.inc";
+#require "inc/processing.inc";
+require "inc/jpgraph.php";
+require "inc/jpgraph_line.php";
+require "inc/jpgraph_scatter.php";
+#require "inc/image.inc";
+
+#require "inc/particledata.inc";
+#require "inc/processing.inc";
+#require "inc/leginon.inc";
+#require "../inc/jpgraph.php";
+#require "../inc/jpgraph_line.php";
+#require "../inc/jpgraph_scatter.php";
+#require "../inc/jpgraph_bar.php";
+#require "../inc/histogram.inc";
+#require "../inc/image.inc";
 
 
 $stackid = ($_GET['sId']);
-
 $minx = ($_GET['minx']);
 $miny = ($_GET['miny']);
 $maxx = ($_GET['maxx']);
@@ -26,8 +34,8 @@ if (!is_null($minx)) {
 }
 
 $particle = new particledata();
-
 $stackparts = $particle->getStackParticles($stackid);
+#print_r($stackparts[0])."<br/>\n";
 
 $minstdev = 100000;
 foreach ($stackparts as $part) {
@@ -51,32 +59,31 @@ if (!is_null($maxx)) {
 	$uliney[] = $maxy;
 }
 
-$width = $_GET['w'];
-$height = $_GET['h'];
+$width = $_GET['w'] ? (int) $_GET['w'] : 512 ;
+$height = $_GET['h'] ? (int) $_GET['h'] : (int) $width*0.75 ;
+//echo "$width,$height<br/>\n";
 
 if (is_null($datax[0])) {
-#	$width = 12;
-#	$height = 12;
-#	$source = blankimage($width,$height);
+	echo "FAIL<br/>\n";
+	#$width = 12;
+	#$height = 12;
+	#$source = blankimage($width,$height);
 } else {
-
-	$graph = new Graph(600,400,"auto");    
-	$graph->SetMargin(50,40,30,70);    
-
-#	$graph->title->Set('Date: '.Date('Y-m-d',$datax[0]));
+	//echo "HERE<br/>\n";
+	$graph = new Graph($width, $height, "auto");    
+	$graph->SetMargin(60,10,10,60);
 	$graph->SetAlphaBlending();
-	$graph->SetScale("intlin",0,'auto'); 
-#	$graph->xaxis->SetLabelFormatCallback('TimeCallback');
-#	$graph->xaxis->SetLabelAngle(90);
+	$graph->SetScale("intlin",'auto','auto'); 
+
 	$graph->xaxis->SetTitlemargin(30);
-	$graph->xaxis->title->Set("Mean");
-	$graph->yaxis->SetTitlemargin(35);
-	$graph->yaxis->title->Set("Standard Deviation");
+	$graph->xaxis->title->Set("Particle Mean Intensity");
+	$graph->yaxis->SetTitlemargin(30);
+	$graph->yaxis->title->Set("Standard Deviation of Particle Intensity");
 
 	$sp1 = new ScatterPlot($datay,$datax);
 	$sp1->mark->SetType(MARK_CIRCLE);
 	$sp1->mark->SetColor('blue');
-	$sp1->mark->SetWidth(2);
+	$sp1->mark->SetWidth(1);
 	$graph->Add($sp1);
 
 	if (!is_null($liney[0])) {
@@ -84,24 +91,20 @@ if (is_null($datax[0])) {
 		$p1->SetColor("green");
 		$p1->SetLineWeight(30);
 		$graph->Add($p1);
+
 		$p2 = new LinePlot($uliney,$ulinex);
-		$p2->SetLineWeight(30);
 		$p2->SetColor("green");
+		$p2->SetLineWeight(30);
 		$graph->Add($p2);
+
 		$p3 = new LinePlot($dliney,$dlinex);
 		$p3->SetColor("green");
 		$p3->SetLineWeight(30);
 		$graph->Add($p3);
 	}
-
-	$source = $graph->Stroke(_IMG_HANDLER);
-	
-	resample($source, $width, $height);
-	
+	$graph->Stroke();
 }
 
 
-
-#print_r($stackparts);
 
 ?> 
