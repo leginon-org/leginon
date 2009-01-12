@@ -117,7 +117,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			print self.session.dbid
 
 	def publish(self,data):
-		results = data.query()
+		results = data.query(readimages=False)
 		if not results:
 			data.insert()
 			return data
@@ -207,7 +207,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 	def setNewFilename(self):	
 		imgq = leginondata.AcquisitionImageData(session=self.session)
-		results = imgq.query()
+		results = imgq.query(readimages=False)
 		if results:
 			imgcount = len(results)
 		else:
@@ -233,7 +233,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			self.processcount += 1
 			residual = divide - math.floor(divide)
 			tiltq = leginondata.TiltSeriesData(session=self.session)
-			results = tiltq.query(results=1)
+			results = tiltq.query(results=1,readimages=False)
 			if residual > 0:
 				return results[0]
 			else:
