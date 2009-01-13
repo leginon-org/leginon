@@ -158,7 +158,6 @@ int main (int argc, char **argv) {
 	[image generatePowerSpectrum];
 	u32 postbin = MIN([image sizeOfDimension:0],[image sizeOfDimension:1])/1024;
 	if ( postbin > 1 ) [image binBy:postbin];
-	fprintf(stderr,"%d %d",[image sizeOfDimension:0],[image sizeOfDimension:1]);
 	fprintf(stderr,"\t\t\tDONE in %2.4f seconds\n",CPUTIME-t1);
 
 //----------------------------------------------------------------------------

@@ -25,7 +25,7 @@ CVDEFS=
 
 # ------------------------ Rules --------------------------------
 
-all: ace2 ace2correct
+all: ace2 ace2correct testf
 
 ace2: ${CVOBJ} ace2.o
 	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} ace2.o ${CVOBJ} ${CVLIBS}
@@ -34,7 +34,7 @@ ace2correct: ${CVOBJ} ace2correct.o
 	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} ace2correct.o ${CVOBJ} ${CVLIBS}
 	
 testf: ${CVOBJ} testf.o
-	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} testf.o ${CVOBJ} ${CVLIBS}
+	${CC} -o $@ ${CFLAGS} testf.o ${CVOBJ} ${CVLIBS}
 
 # Implicit rule used by Gnu Make: $(CC) -c $(CPPFLAGS) $(CFLAGS)
 %.o : %.m

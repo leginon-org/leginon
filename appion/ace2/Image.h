@@ -33,7 +33,7 @@
 
 -(void) floodFillFrom:(f64)lower to:(f64)upper usingConnectivity:(u08)n_conn;
 
--(void) generatePowerSpectrum;
+-(id) generatePowerSpectrum;
 
 -(void) boxSum;
 

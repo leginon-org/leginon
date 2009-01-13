@@ -105,7 +105,7 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	for(r=0;r<a_rad;r++) avg_mean[r] = avg_mean[r] / avg_cont[r]; 
 	for(r=0;r<a_rad;r++) avg_stdv[r] = (avg_stdv[r]/avg_cont[r])-avg_mean[r]*avg_mean[r]; 
 	for(r=0;r<a_rad;r++) if ( avg_stdv[r] < 0.0 ) fprintf(stderr,"RMSD Error\n"); 
-	for(r=0;r<a_rad;r++) avg_stdv[r] = sqrt(avg_stdv[r]); 
+	for(r=0;r<a_rad;r++) avg_stdv[r] = sqrt(ABS(avg_stdv[r])); 
 	
 	return radial_avg;
 	

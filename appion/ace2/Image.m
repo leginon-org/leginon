@@ -409,22 +409,28 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 	
 }
 
--(void) generatePowerSpectrum {
+-(id) generatePowerSpectrum {
 	
 	if ( [self type] != TYPE_F64 ) {
 		fprintf(stderr,"generatePowerSpectrum only takes arrays of type %s\n",TYPE_STRINGS[TYPE_F64]);
 		fprintf(stderr,"\tnot of type %s\n",TYPE_STRINGS[[self type]]);
-		return;
+		return self;
 	}
 	
 	[self fftc];
+	
+	if ( ![self isType:TYPE_C64] ) {
+		fprintf(stderr,"FFT function did not work\n");
+		return self;
+	}
 	
 	c64 * xi = [self data];
 	f64 * xt = NEWV(f64,size);
 	
 	if ( xi == NULL || xt == NULL ) {
 		fprintf(stderr,"generatePowerSpectrum has no memory\n");
-		return;
+		free(xt);
+		return self;
 	}
 	
 	u32 i;
