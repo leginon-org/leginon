@@ -117,6 +117,7 @@ u08 testBorder( s64 loc, BorderTesterP tester );
 
 -(char *) name;
 -(u08)	type;
+-(u08) isType:(u08)istype;
 -(void *) data;
 -(u32)	numberOfElements;
 -(u32)	elementType;
@@ -139,7 +140,7 @@ u08 testBorder( s64 loc, BorderTesterP tester );
 -(void) setMeanValue: (f32)tomean;
 -(void) setStandardDeviation: (f32)tostdv;
 -(void) setNameTo: (char *)toname;
--(void) setDataTo: (void *)todata;
+-(id) setDataTo: (void *)todata;
 -(void) setShapeTo: (const u32 *)dimensions;
 -(void) setTypeTo: (u32)totype;
 -(void)	setFlag:(u32)flag to:(bool)value;

@@ -350,6 +350,11 @@ int compare_f64( const void * a, const void * b );
 
 /* Getters */
 
+-(u08) isType:(u08)istype {
+	if ( [self type] == istype ) return TRUE;
+	else return FALSE;
+}
+
 -(char *)name {
 	return name;
 }
@@ -450,10 +455,11 @@ int compare_f64( const void * a, const void * b );
 	sprintf(name,"%s",toname);
 }
 
--(void) setDataTo: (void *)todata {
+-(id) setDataTo: (void *)todata {
 	if ( data == todata ) return;
-	if ( data != NULL ) free(data);
+	free(data);
 	data = todata;
+	return self;
 }
 
 -(void) setShapeTo: (const u32 *)dimensions {

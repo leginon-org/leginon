@@ -121,7 +121,7 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 		{ 3,	NULL,	"Microscope voltage in kilovolts",				"kv",	1 },
 		{ 4,	NULL,	"Microscope Spherical Aberration in mm",		"cs",	1 },
 		{ 5,	NULL,	"Angstroms per pixel",						  "apix",	1 },
-		{ 6,	NULL,	"Defocus: x,y,angle in um",						"df",	1 },
+		{ 6,	NULL,	"Defocus: x,y,angle in um,um,radians",			"df",	1 },
 		{ 7,	NULL,	"Correct only phase signs",	  		  		 "phase",	0 },
 		{ 8,	NULL,	"Correct using wiener filter",		 	    "wiener",	1 },		
 		{ 0,	NULL,	NULL,											NULL,	0 }

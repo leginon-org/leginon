@@ -7,6 +7,7 @@ void convolve1Ds( f32 *src, f32 *dst, u32 size, u32 cols, f32 *kernel, u32 ksize
 void rotateLong( f32 *src, f32 *dst, u32 size, u32 cols );
 
 static int fftw_is_wise = 0;
+static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 
 @implementation Array ( Image_Functions )
 
@@ -132,7 +133,7 @@ static int fftw_is_wise = 0;
 
 -(id) r2cfftc {
 	
-	if ( [self type] != TYPE_F64 ) {
+	if ( ![self isType:TYPE_F64] ) {
 		fprintf(stderr,"r2cfftc only takes arrays of type %s\n",TYPE_STRINGS[TYPE_F64]);
 		fprintf(stderr,"\tnot of type %s\n",TYPE_STRINGS[[self type]]);
 		return self;
@@ -155,16 +156,29 @@ static int fftw_is_wise = 0;
 	
 	f64 * xi = [self data];
 	c64 * xt = NEWV(c64,new_size);
-	
+
 	if ( xi == NULL || xt == NULL ) {
 		fprintf(stderr,"Function r2cfftc ran out of memory\n");
-		if ( xt != NULL ) free(xt);
+		free(xt);
 		return self;
 	}
 	
 	restoreFFTWisdom();
 	
-	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
+	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	if ( plan == NULL ) {
+		xi = NEWV(f64,size);
+		plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
+		memcpy(xi,[self data],sizeof(f64)*size);
+		[self setDataTo:xi];
+	}
+	
+	if ( plan == NULL ) {
+		fprintf(stderr,"Function r2cfftc could not create fftw plan\n");
+		free(xt);
+		return self;
+	}
+	
 	fftw_execute(plan);
 	
 	fftw_destroy_plan(plan);
@@ -182,7 +196,7 @@ static int fftw_is_wise = 0;
 
 -(id) c2rfftc {
 	
-	if ( [self type] != TYPE_C64 ) {
+	if ( ![self isType:TYPE_C64] ) {
 		fprintf(stderr,"Function c2rfftc requires array of type: %s\n",TYPE_STRINGS[TYPE_C64]);
 		fprintf(stderr,"\tbut got an array of type: %s\n",TYPE_STRINGS[[self type]]);
 		return self;
@@ -199,19 +213,35 @@ static int fftw_is_wise = 0;
 	for(i=0;i<ndim;i++) dims[i] = new_dims[ndim-1-i];
 	
 	u32 new_size = sizeFromDims(new_dims,ndim);
-	
+
+	c64 * xi = [self data];	
 	f64 * xt = NEWV(f64,new_size);
-	c64 * xi = [self data];
-	
+
 	if ( xi == NULL || xt == NULL ) {
 		fprintf(stderr,"Function c2rfftc ran out of memory\n");
-		if ( xt != NULL ) free(xt);
+		free(xt);
 		return;
 	}
 	
+	// Restore FFTW Wisdom from file, and if this is not possible create a new data array
+	// for performing the FFTW_MEASURE, otherwise the input would be destroyed.
+	
 	restoreFFTWisdom();
 
-	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE);
+	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	if ( plan == NULL ) {
+		xi = NEWV(c64,size);
+		plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE);
+		memcpy(xi,[self data],sizeof(c64)*size);
+		[self setDataTo:xi];
+	}
+	
+	if ( plan == NULL ) {
+		fprintf(stderr,"Function c2rfftc could not create fftw plan\n");
+		free(xt);
+		return self;
+	}
+	
 	fftw_execute(plan);
 	
 	fftw_destroy_plan(plan);
@@ -231,7 +261,7 @@ static int fftw_is_wise = 0;
 
 -(id) fftc {
 	
-	if ( [self type] != TYPE_F64 ) {
+	if ( ![self isType:TYPE_F64] ) {
 		fprintf(stderr,"Function fftc requires array of type: %s\n",TYPE_STRINGS[TYPE_F64]);
 		fprintf(stderr,"\tbut got an array of type: %s\n",TYPE_STRINGS[[self type]]);
 		return self;
@@ -244,7 +274,7 @@ static int fftw_is_wise = 0;
 	
 	if ( xi == NULL || xt == NULL ) {
 		fprintf(stderr,"Function fftc ran out of memory\n");
-		if ( xt != NULL ) free(xt);
+		free(xt);
 		return self;
 	}
 	
@@ -252,16 +282,31 @@ static int fftw_is_wise = 0;
 	
 	int dims[ndim];
 	for(i=0;i<ndim;i++) dims[i] = dim_size[ndim-1-i];
-	for(i=0;i<size;i++) xt[i] = xi[i];
+	
+	// Restore any previously created FFTW Wisdom (cached)
+	// In cases where appropriate wisdom does not already exist, FFTW_MEASURE destroys the input data
+	// so we don't copy the data over until after the measurement has been done, just in case.
+	// Then perform the transform, and clean-up
 	
 	restoreFFTWisdom();
 	
 	fftw_plan plan = fftw_plan_dft(ndim, dims, xt, xt, FFTW_FORWARD, FFTW_MEASURE);
+	if ( plan == NULL ) {
+		fprintf(stderr,"Could not create fftw plan in function fftc\n");
+		return self;
+	}
+	
+	for(i=0;i<size;i++) xt[i] = xi[i];
+	
 	fftw_execute(plan);
 	
 	fftw_destroy_plan(plan);
 	
 	saveFFTWisdom();
+	
+	// Delete the original array data, change the type, then set to the new data.
+	// Doing things in this order means that we do not waste time trying to convert
+	// the type on the current data.
 	
 	[self setDataTo:NULL];
 	[self setTypeTo:TYPE_C64];
@@ -273,7 +318,7 @@ static int fftw_is_wise = 0;
 
 -(id) ifftc {
 	
-	if ( [self type] != TYPE_C64 ) {
+	if ( ![self isType:TYPE_F64] ) {
 		fprintf(stderr,"Function ifftc requires array of type: %s",TYPE_STRINGS[TYPE_C64]);
 		fprintf(stderr,"\tbut got an array of type: %s\n",TYPE_STRINGS[[self type]]);
 		return self;
@@ -284,7 +329,7 @@ static int fftw_is_wise = 0;
 
 	if ( xi == NULL || xt == NULL ) {
 		fprintf(stderr,"Function fftc ran out of memory\n");
-		if ( xt != NULL ) free(xt);
+		free(xt);
 		return self;
 	}
 	
@@ -295,14 +340,27 @@ static int fftw_is_wise = 0;
 	
 	restoreFFTWisdom();
 	
-	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE);
+	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	if ( plan == NULL ) {
+		xi = NEWV(c64,size);
+		plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE);
+		memcpy(xi,[self data],sizeof(c64)*size);
+		xi = [[self setDataTo:xi] data];
+	}
+	
+	if ( plan == NULL ) {
+		fprintf(stderr,"Could not create fftw plan in function ifftc\n");
+		free(xt);
+		return self;
+	}
+	
+	for(i=0;i<size;i++) xt[i] = xi[i];
+	
 	fftw_execute(plan);
 
 	fftw_destroy_plan(plan);
 	
 	saveFFTWisdom();
-	
-	for(i=0;i<size;i++) xt[i] = xi[i];
 	
 	[self setDataTo:NULL];
 	[self setTypeTo:TYPE_F64];
@@ -1427,18 +1485,34 @@ void gaussian1d( f64 * data, s32 minl, s32 maxl, f64 sigma ) {
 }
 
 void restoreFFTWisdom() {
+
 	if ( fftw_is_wise == TRUE ) return;
-	FILE * fp = fopen("/tmp/.fft_wisdom","r");
+
+	FILE * fp = fopen(fftw_wisdom_path,"r");
 	if ( fp == NULL ) return;
-	u08 status = fftw_import_wisdom_from_file(fp);
+
+	if ( fftw_import_wisdom_from_file(fp) == TRUE ) fftw_is_wise = TRUE;
+	else {
+		fprintf(stderr,"FFTW wisdom file stored in '%s' is corrupted\n",fftw_wisdom_path);
+		if ( remove(fftw_wisdom_path) == 0 ) fprintf(stderr,"File removed\n");
+		else fprintf(stderr,"Tried to remove %s but could not... possibly a permissions error\n",fftw_wisdom_path);
+	}
+	
 	fclose(fp);
-	if ( status == TRUE ) fftw_is_wise = TRUE;
+	
 }
 
 void saveFFTWisdom() {
-	FILE * fp = fopen("/tmp/.fft_wisdom","w");
-	if ( fp == NULL ) return;
+	
+	FILE * fp = fopen(fftw_wisdom_path,"w");
+	if ( fp == NULL ) {
+		fprintf(stderr,"Could not open path %s to save fftw wisdom file.\n",fftw_wisdom_path);
+		return;
+	}
+	
 	fftw_export_wisdom_to_file(fp);
+	
 	fclose(fp);
-	fftw_is_wise = TRUE;
+
 }
+

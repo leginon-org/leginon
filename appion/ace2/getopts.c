@@ -58,7 +58,7 @@ char * getopt_usage( struct options opt ) {
 	if ( opt.shortName ) cmd_length += strlen(opt.shortName);
 	if ( opt.description ) cmd_length += strlen(opt.description);
 	
-	char * cmd = calloc(1,sizeof(char)*cmd_length);
+	char * cmd = calloc(0,sizeof(char)*cmd_length);
 	if ( cmd == NULL ) return NULL;
 	
 	if (opt.name && opt.shortName ) {

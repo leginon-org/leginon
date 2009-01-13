@@ -9,7 +9,7 @@ CVLIBS = -lm -lobjc -lfftw3 -lgsl -lgslcblas
 #   -g to produce debug data for gdb
 #   -O for optimization
 
-CFLAGS = -O3 -m32 -m64
+CFLAGS = -O3
 BINPATH=../bin
 CC = gcc 
 
