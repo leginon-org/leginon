@@ -48,8 +48,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 				info = self.readUploadInfo(self.batchinfo[imgnum])
 				imgnum += 1
 				### CHECK IF IT IS OKAY TO START PROCESSING IMAGE
-				#if not self._startLoop(imgdata):
-				#	continue
+				if not self._startLoop(info):
+					continue
 
 				### set the pixel size
 				#self.params['apix'] = info['pixel size']
@@ -101,6 +101,41 @@ class ImageLoader(appionLoop2.AppionLoop):
 	def commitToDatabase(self,imagedata):
 		return
 
+	def _startLoop(self, info):
+		"""
+		initilizes several parameters for a new image
+		and checks if it is okay to start processing image
+		"""
+		name = info['filename']
+		# check to see if image of the same name is already in leginon
+		imgq = leginondata.AcquisitionImageData(session=self.session,filename=name)
+		results = imgq.query(readimages=False)
+		if results:
+			apDisplay.printWarning("File %s.mrc exists at the destination" % name)
+			self.stats['lastimageskipped'] = True
+			self.stats['skipcount'] += 1
+			return False
+		#calc images left
+		self.stats['imagesleft'] = self.stats['imagecount'] - self.stats['count']
+		#only if an image was processed last
+		if(self.stats['lastcount'] != self.stats['count']):
+			if self.params['background'] is False:
+				apDisplay.printColor( "\nStarting image "+str(self.stats['count'])\
+					+" ( skip:"+str(self.stats['skipcount'])+", remain:"\
+					+str(self.stats['imagesleft'])+" ) file: "\
+					+apDisplay.short(name), "green")
+			elif self.stats['count'] % 80 == 0:
+				sys.stderr.write("\n")
+			self.stats['lastcount'] = self.stats['count']
+			self._checkMemLeak()
+		# check to see if image has already been processed
+		if self._alreadyProcessed(info):
+			return False
+		self.stats['waittime'] = 0
+		return True
+
+	#=====================
+	
 	def setRunDir(self):
 		if self.params['sessionname'] is not None:
 			try:
@@ -203,16 +238,26 @@ class ImageLoader(appionLoop2.AppionLoop):
 			uploadedInfo['dimension'] = {'x':shape[1],'y':shape[0]}
 		uploadedInfo['session'] = self.session
 		uploadedInfo['pixel size'] = uploadedInfo['unbinned pixelsize']*uploadedInfo['binning']['x']
+		uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
 		return uploadedInfo
 
-	def setNewFilename(self):	
-		imgq = leginondata.AcquisitionImageData(session=self.session)
-		results = imgq.query(readimages=False)
-		if results:
-			imgcount = len(results)
-		else:
-			imgcount = 0
-		name =  self.params['sessionname']+'_%05dupload' % (imgcount+1)
+	def setNewFilename(self,original_filepath):
+		keep_old_name = True
+		if keep_old_name:
+			fullname = os.path.basename(original_filepath)
+			found = fullname.rfind('.mrc')
+			if found > 0:
+				name = fullname[:found]
+			else:
+				name = fullname
+		else:	
+			imgq = leginondata.AcquisitionImageData(session=self.session)
+			results = imgq.query(readimages=False)
+			if results:
+				imgcount = len(results)
+			else:
+				imgcount = 0
+			name =  self.params['sessionname']+'_%05dupload' % (imgcount+1)
 		return name
 
 	def processImage(self, imginfo):			
@@ -249,7 +294,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.camdata = leginondata.InstrumentData.direct_query(self.params['cameraid'])
 
 	def makeImageData(self,info):
-		scopedata = leginondata.ScopeEMData(session=self.session,tem = self.temdata)
+		scopedata = leginondata.ScopeEMData(session=self.session,tem =self.temdata)
 		scopedata['defocus'] = info['defocus']
 		scopedata['magnification'] = info['magnification']
 		scopedata['high tension'] = info['high tension']
@@ -258,13 +303,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':info['stage a']}
 		else:
 			scopedata['stage position'] = {'x':0.0,'y':0.0,'z':0.0,'a':0.0}
-		cameradata = leginondata.CameraEMData(session=self.session,ccdcamera= self.camdata)
+		cameradata = leginondata.CameraEMData(session=self.session,ccdcamera=self.camdata)
 		cameradata['dimension'] = info['dimension']
 		cameradata['binning'] = info['binning']
-		imgdata = leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata)
+		presetdata = leginondata.PresetData(session=self.session,tem=self.temdata,ccdcamera= self.camdata)
+		presetdata['name'] = 'upload'
+		presetdata['magnification'] = info['magnification']
+		imgdata = leginondata.AcquisitionImageData(session=self.session,scope=scopedata,camera=cameradata,preset=presetdata)
 		imgdata['tilt series'] = self.getTiltSeries()
-		imgdata['filename'] = self.setNewFilename()
-		imgdata['label'] = 'uploaded'
+		imgdata['filename'] = info['filename']
+		imgdata['label'] = 'upload'
+		#fake image array to avoid overloading memory
 		imgdata['image'] = numpy.ones((1,1))
 		self.publish(imgdata)
 		return imgdata
