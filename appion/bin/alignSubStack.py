@@ -94,10 +94,10 @@ class subStackScript(appionScript.AppionScript):
 			alignpartq =  appionData.ApAlignParticlesData()
 			alignpartq['alignstack'] = self.alignstackdata
 			particles = alignpartq.query()
-		norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
-		classpartq = appionData.ApNoRefClassParticlesData()
-		classpartq['classRun'] = norefclassdata
-		classpartdatas = classpartq.query()
+		elif self.params['clusterid'] is not None:
+			clusterpartq = appionData.ApClusteringParticlesData()
+			clusterpartq['clusterstack'] = self.clusterstackdata
+			particles = clusterpartq.query()
 
 		### write included particles to text file
 		includeParticle = []
