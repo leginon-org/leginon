@@ -30,6 +30,7 @@ function setDatabase() {
 	$r=$p->getProjectfromSessionId($expId);
 	$projectId=$r['projectId'];
 	$db="ap".$projectId;
+	$_SESSION['processingdb']=$db;
 	return $db;
 }
 
@@ -115,6 +116,13 @@ class project {
 		# get sample name from project database
 		$sample="";
 		return $sample;
+	}
+
+	function getProjectInfo($projectId) {
+		$q='select projectId, name  from projects '
+			.'where projectId='.$projectId;
+		list($r)=$this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 }
