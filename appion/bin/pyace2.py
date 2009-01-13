@@ -42,7 +42,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		exename = 'ace2.exe'
 		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ace2exe):
-			ace2exe = os.path.join(apParam.getAppionDirectory(), '/bin/', exename)
+			ace2exe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
 		if not os.path.isfile(ace2exe):
 			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 		return ace2exe
