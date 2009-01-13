@@ -125,10 +125,7 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$sessions=$sessiondata['sessions'];
-	#$currentproject=$sessiondata['currentproject'];
 	$currentproject = $projectdata->getProjectInfo($projectId);
-	echo "p: $projectId";
-	print_r($currentproject);
 
 	// Show project & session pulldowns
 	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
