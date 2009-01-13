@@ -97,6 +97,13 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 			$display_keys['path'] = $maxlikejob['path'];
 			echo "<input type='hidden' name='path".$jobid."' value='".$maxlikejob['path']."'>\n";
 			$display_keys['file prefix'] = $maxlikejob['timestamp'];
+
+			$refstackname = "part".$maxlikejob['timestamp']."_average.hed";
+			$refstack = $maxlikejob['path']."/".$refstackname;
+			if (file_exists($refstack))
+				$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
+					."file=$refstack&expId=$expId'>".$refstackname."</a>";
+
 			echo "<input type='hidden' name='timestamp".$jobid."' value='".$maxlikejob['timestamp']."'>\n";
 			foreach($display_keys as $k=>$v) {
 			        echo formatHtmlRow($k,$v);
