@@ -11,6 +11,7 @@ import apStack
 import apDisplay
 import appionData
 import apEMAN
+import apStackMeanPlot
 
 
 class subStackScript(appionScript.AppionScript):
@@ -102,25 +103,34 @@ class subStackScript(appionScript.AppionScript):
 		### write included particles to text file
 		includeParticle = []
 		excludeParticle = 0
+		f = open("test.log", "w")
+		count = 0
 		for part in particles:
-			classnum = part['partnum']-1
+			count += 1
+			partnum = part['partnum']-1
 			if 'alignparticle' in part:
 				alignpart = part['alignparticle']
-				classnum = int(part['refnum'])
+				classnum = int(part['refnum'])-1
 			else:
 				alignpart = part
-				classnum = int(part['ref']['refnum'])
+				classnum = int(part['ref']['refnum'])-1
 			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
+
 			if includelist and classnum in includelist:
 				includeParticle.append(emanstackpartnum)
+				f.write("%d\t%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum, partnum))
 			elif excludelist and not classnum in excludelist:
 				includeParticle.append(emanstackpartnum)
+				f.write("%d\t%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum, partnum))
 			else:
 				excludeParticle += 1
+				f.write("%d\t%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum, partnum))
+
+		f.close()
 		includeParticle.sort()
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
 
-		print includeParticle
+		#print includeParticle
 
 		### write kept particles to file
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
@@ -141,13 +151,16 @@ class subStackScript(appionScript.AppionScript):
 
 		### create the new sub stack
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 
-		apStack.commitSubStack(self.params)
+		if self.params['commit'] is True:
+			apStack.commitSubStack(self.params)
+			newstackid = apStack.getStackIdFromPath(newstack)
+			apStackMeanPlot.makeStackMeanPlot(newstackid)
 		apStack.averageStack(stack=newstack)
-		newstackid = apStack.getStackIdFromPath(newstack)
-		apStackMeanPlot.makeStackMeanPlot(newstackid)
+
 
 #=====================
 if __name__ == "__main__":
