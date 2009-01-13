@@ -51,6 +51,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	// set max last ring radius
 	$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+	$javascript .= "	estimatetime();\n";
 	// set particle & mask radius and lp
 	$javascript .= "}\n";
 	$javascript .= "
@@ -59,6 +60,32 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 				document.viewerform.fastmode.disabled=false;
 			} else {
 				document.viewerform.fastmode.disabled=true;
+			}
+
+		}
+		function estimatetime() {
+			var secperiter = 0.12037;
+			var stackvars = document.viewerform.stackid.value;
+			var stackArray = stackvars.split('|~~|');
+			var numpart = stackArray[3].replace(/\,/g,'');
+			var boxsize = stackArray[2];
+			var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
+			var calctime = (numpart/1000.0) * document.viewerform.numref.value * numpix * secperiter / document.viewerform.angle.value / document.viewerform.nproc.value;
+			if (document.viewerform.mirror.checked) {
+				calctime = calctime*2.0;
+			}
+			if (calctime < 70) {
+				var time = Math.round(calctime*100.0)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' seconds';
+			} else if (calctime < 3700) {
+				var time = Math.round(calctime*0.6)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' minutes';
+			} else if (calctime < 3700*24) {
+				var time = Math.round(calctime/36.0)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' hours';
+			} else {
+				var time = Math.round(calctime/36.0/24.0)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' days';
 			}
 		}\n";
 	$javascript .= "</script>\n";
@@ -164,7 +191,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "";
 	echo "<BR/>";
 
-	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc'>\n";
+	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
 	echo "Number of Processors";
 	echo "<br/>\n";
 
@@ -181,39 +208,39 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
         	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
 	}
-	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass'>\n";
+	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass' onChange='estimatetime()'>\n";
 	echo docpop('lpstackval','Low Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$highpass'>\n";
+	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$highpass' onChange='estimatetime()'>\n";
 	echo docpop('hpstackval','High Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4' onChange='estimatetime()'>\n";
 	echo docpop('binval','Particle binning');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>\n";
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4' onChange='estimatetime()'>\n";
 	echo docpop('numpart','Number of Particles');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='numref' VALUE='$numref' SIZE='4'>\n";
+	echo "<INPUT TYPE='text' NAME='numref' VALUE='$numref' SIZE='4' onChange='estimatetime()'>\n";
 	echo docpop('numref','Number of References');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='angle' VALUE='$angle' SIZE='4'>\n";
+	echo "<INPUT TYPE='text' NAME='angle' VALUE='$angle' SIZE='4' onChange='estimatetime()'>\n";
 	echo docpop('angleinc','Angular Increment');
 	echo "<br/>\n";
 
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='mirror' $mirror>\n";
+	echo "<INPUT TYPE='checkbox' NAME='mirror' onChange='estimatetime()' $mirror>\n";
 	echo docpop('mirror','Use Mirrors in Alignment');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='fast' onclick='enablefastmode(this)' $fast>\n";
+	echo "<INPUT TYPE='checkbox' NAME='fast' onClick='estimatetime(this)' $fast>\n";
 	echo docpop('fastmode','Use Fast Mode');
 	echo "<br/>\n";
 
@@ -238,6 +265,9 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
+	echo "Time estimate for first iteration: ";
+	echo "<INPUT TYPE='text' NAME='timeestimate' SIZE='16' onFocus='this.form.elements[0].focus()'>\n";
+	echo "<br/>\n";
 	echo getSubmitForm("Run Max Like Alignment");
 	echo "  </td>\n";
 	echo "</tr>\n";
