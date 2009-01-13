@@ -33,8 +33,13 @@ function stacksummarytable($stackid) {
 	$numpart = $particle->getNumStackParticles($stackid);
 	if ($numpart == 0) return;
 
+	
+	$stackname = $stackdata['shownstackname'];
+	if ($stackdata['substackname'])
+		$stackname .= " - ".$stackdata['substackname'];
+
 	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
-		.$stackdata['shownstackname']."</a> (ID: $stackid)\n";
+		.$stackname."</a> (ID: $stackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideStack".$stackid."' value='unhide'>\n";
