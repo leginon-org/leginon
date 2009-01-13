@@ -88,7 +88,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 
 				#END LOOP OVER IMAGES
 			if self.notdone is True:
-				self.notdone = self._waitForMoreImages()
+				#self.notdone = self._waitForMoreImages()
+				self.notdone = False
 			#END NOTDONE LOOP
 		self.postLoopFunctions()
 		self.close()
@@ -106,12 +107,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 		initilizes several parameters for a new image
 		and checks if it is okay to start processing image
 		"""
+		if info is None:
+			self.stats['lastimageskipped'] = True
+			self.stats['skipcount'] += 1
+			return False
 		name = info['filename']
 		# check to see if image of the same name is already in leginon
 		imgq = leginondata.AcquisitionImageData(session=self.session,filename=name)
 		results = imgq.query(readimages=False)
 		if results:
 			apDisplay.printWarning("File %s.mrc exists at the destination" % name)
+			apDisplay.printWarning("Skip Uploading")
 			self.stats['lastimageskipped'] = True
 			self.stats['skipcount'] += 1
 			return False
@@ -231,7 +237,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 			#self.logger.exception('Bad batch file parameters')
 			raise
 		if not os.path.isfile(uploadedInfo['original filepath']):
-			apDisplay.printError("File not exist")
+			apDisplay.printWarning("Original File %s does not exist" % uploadedInfo['original filepath'])
+			apDisplay.printWarning("Skip Uploading")
+			return None
 		else:
 			tmpimage = mrc.read(uploadedInfo['original filepath'])
 			shape = tmpimage.shape
