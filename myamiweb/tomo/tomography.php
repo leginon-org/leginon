@@ -18,6 +18,7 @@ class Tomography {
 			.'LEFT JOIN TiltSeriesData t '
 			.'ON (s.`DEF_id` = t.`REF|SessionData|Session`) '
 			.'WHERE t.`REF|SessionData|Session` <> "NULL" '
+			.'AND t.`tilt step` <> "NULL" '
 			.'ORDER BY s.DEF_timestamp DESC;';
 		return $this->mysql->getSQLResult($query);
 	}
