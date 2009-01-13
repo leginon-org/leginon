@@ -57,22 +57,22 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$batch = ($_POST['batch']) ? $_POST['batch'] : $batch;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 	echo"
-  <TABLE BORDER=3 CLASS=tableborder>
-  <TR>
-    <TD VALIGN='TOP'>\n";
-	echo"<TABLE>
-    <TR>
-      <TD VALIGN='TOP'>";
+  <table border=3 class=tableborder>
+  <tr>
+    <td valign='TOP'>\n";
+	echo"<table>
+    <tr>
+      <td valign='TOP'>";
 	echo "
-    <BR/>\n
-    <B>Session Name:</B><BR>
-    <INPUT TYPE='text' NAME='sessionname' VALUE='$sessionname' SIZE='50'><br />\n";
+    <br/>\n
+    <b>Session Name:</b><br/>
+    <input type='text' name='sessionname' value='$sessionname' size='65'><br />\n";
 	echo"
-      <P>
-      <B>Session Description:</B><BR/>
-      <TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA>
-      </TD>
-    </TR>
+      <p>
+      <b>Session Description:</b><br/>
+      <textarea name='description' rows='3' cols='65'>$description</textarea>
+      </td>
+    </tr>
 		<tr>
 			<td>";
 	$leginondata = new leginondata();
@@ -82,8 +82,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		Host
 		<select name='instrumenthost' onchange=submit()>";
 	foreach($instrumenthosts as $host) {
-		$s = ($instrumentval==$host) ? 'selected' : '';
-		echo "<option value=".$host.">".$host."</option>";
+		$s = ($instrumenthostval==$host) ? 'selected' : 'not';
+		echo "<option value=".$host." ".$s.">".$host."</option>\n";
 	}
 	echo"
 		</select>";
@@ -108,14 +108,14 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	echo"
 		</select>";
 	echo "
-      <BR/>\n
-      <B>Information File Name:</B><BR>
-      <INPUT TYPE='text' NAME='batch' VALUE='$batch' SIZE='50'><br />\n";
+      <p>
+      <b>Information File Name:</b><br/>
+      <input type='text' name='batch' value='$batch' size='65'><br />\n";
 	echo "
-      </TD>
-    </TR>
-  <TR>
-    <TD ALIGN='CENTER'>
+      </td>
+    </tr>
+  <tr>
+    <td align='CENTER'>
       <hr>
 	";
 	echo getSubmitForm("Upload Image");
@@ -196,17 +196,17 @@ function runUploadImage() {
 	
 	// rest of the page
 	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>UploadImage Command:</B><BR>
+	<table width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>UploadImage Command:</b><br/>
 	$command
-	</TD></TR>
-	<TR><TD>batch file</TD><TD>$batch</TD></TR>
-	<TR><TD>tem id</TD><TD>$tem</TD></TR>
-	<TR><TD>camera id</TD><TD>$cam</TD></TR>
-	<TR><TD>session</TD><TD>$sessionname</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	</TABLE>\n";
+	</td></tr>
+	<tr><td>batch file</td><td>$batch</td></tr>
+	<tr><td>tem id</td><td>$tem</td></tr>
+	<tr><td>camera id</td><td>$cam</td></tr>
+	<tr><td>session</td><td>$sessionname</td></tr>
+	<tr><td>description</td><td>$description</td></tr>
+	</table>\n";
 	processing_footer();
 }
 ?>
