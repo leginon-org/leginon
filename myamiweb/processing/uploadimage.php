@@ -13,6 +13,11 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+if ($_POST) {
+	if ($_POST['projectId']) {
+		$_SESSION['projectId']=$_POST['projectId'];
+	}
+}
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -60,11 +65,22 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
   <table border=3 class=tableborder>
   <tr>
     <td valign='TOP'>\n";
-	echo"<table>
+	echo"<table >
     <tr>
       <td valign='TOP'>";
 	echo "
     <br/>\n
+    <b>Project:</b><br/>
+    <select name='projectId'>";
+	$projectdata=new project();
+	$projects=$projectdata->getProjects();
+	foreach ($projects as $project) {
+	$sel=($project['id']==$projectId) ? "selected" : "";
+	echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
+	}
+
+	echo "</select><br>";
+	echo "
     <b>Session Name:</b><br/>
     <input type='text' name='sessionname' value='$sessionname' size='65'><br />\n";
 	echo"

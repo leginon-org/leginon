@@ -114,14 +114,21 @@ function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=
 	
 	$leginondata = new leginondata();
 	$particle = new particledata();
+	$projectdata = new project();
 	$projectId=getProjectFromExpId($expId);
+	if ($_POST['projectId'] && empty($expId)) {
+		$projectId = $_POST['projectId'];
+	}
 	$_SESSION['projectId'] = $projectId;
 
 	// Collect session info from database
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	$sessions=$sessiondata['sessions'];
-	$currentproject=$sessiondata['currentproject'];
+	#$currentproject=$sessiondata['currentproject'];
+	$currentproject = $projectdata->getProjectInfo($projectId);
+	echo "p: $projectId";
+	print_r($currentproject);
 
 	// Show project & session pulldowns
 	$sessionDescr="<font size=+1><b>".$sessioninfo['Name']."</b></font> - ".$sessioninfo['Purpose'];
