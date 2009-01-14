@@ -163,13 +163,8 @@ def getBestDefocusForImage(imgdata, msg=False):
 
 	### print msg
 	if msg is True:
-		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
-			apDisplay.printMsg( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
-				str(round(conf,4))+", defocus="+str(round(bestdf*1.0e6,4))+
-				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
-		else:
-			apDisplay.printMsg( "Best CTF run info: confidence="+str(round(conf,4))
-				+", defocus="+str(round(-1.0*abs(bestdf*1.0e6),4))+" um" )
+		apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
+			%(ctfvalue['acerun']['name'], conf, bestdf*1.0e6) )
 
 	return bestdf
 
@@ -198,14 +193,8 @@ def getBestDefocusAndAmpConstForImage(imgdata, msg=False):
 
 	### print msg
 	if msg is True:
-		if ctfvalue['acerun'] is not None and ctfvalue['acerun']['aceparams'] is not None:
-			apDisplay.printMsg( "Best ACE run info: '"+ctfvalue['acerun']['name']+"', confidence="+
-				str(round(conf,4))+", defocus="+str(round(bestdf*1.0e6,4))+
-				" microns, resamplefr="+str(ctfvalue['acerun']['aceparams']['resamplefr']) )
-		else:
-			apDisplay.printMsg( "Best CTF run info: confidence="+str(round(conf,4))
-				+", defocus="+str(round(-1.0*abs(bestdf*1.0e6),4))+" um" )
-
+		apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
+			%(ctfvalue['acerun']['name'], conf, bestdf*1.0e6) )
 
 	return bestdf, bestamp
 
