@@ -172,6 +172,11 @@ function createNorefSubStack() {
 	window.open("norefSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 }
 
+function createAlignSubStack() {
+	var index = $('excludedIndex').value
+	window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+}
+
 function createSubStack() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
@@ -213,7 +218,7 @@ quality: <select id="quality">
 </p>
 <?
 
-if ($stackId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
+if ($stackId || $clusterId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
         <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
         <br />\n";
 if ($norefClassId || $reclassId || $clusterId || $imagicClusterId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
@@ -224,6 +229,12 @@ if ($norefId) {
   echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
 <input type='button' value='Create Model' onClick='createModel()' >
 <input type='button' value='Create SubStack' onClick='createNorefSubStack()' > 
+<input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
+}
+elseif ($clusterId) {
+  echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
+<input type='button' value='Create Model' onClick='createModel()' >
+<input type='button' value='Create SubStack' onClick='createAlignSubStack()' > 
 <input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
 }
 elseif ($stackId) {
