@@ -470,7 +470,10 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		else:
 			maxdim = None
 		self.mosaicimagescale = maxdim
-		self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
+		try:
+			self.mosaicimage = self.mosaic.getMosaicImage(maxdim)
+		except Exception, e:
+			self.logger.error('Failed Creating mosaic image: %s' % e)
 		self.mosaicimagedata = None
 
 		self.logger.info('Displaying mosaic image')
