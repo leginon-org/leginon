@@ -656,6 +656,7 @@ class ApClusteringParticlesData(Data):
 			('clusterreference', ApClusteringReferenceData),
 			('clusterstack', ApClusteringStackData),
 			('alignparticle', ApAlignParticlesData),
+			('imagic_cls_quality', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApClusteringParticlesData=ApClusteringParticlesData
