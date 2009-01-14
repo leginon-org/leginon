@@ -118,13 +118,13 @@ class subStackScript(appionScript.AppionScript):
 
 			if includelist and classnum in includelist:
 				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
 			elif excludelist and not classnum in excludelist:
 				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
 			else:
 				excludeParticle += 1
-				f.write("%d\t%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
 
 		f.close()
 		includeParticle.sort()
