@@ -148,6 +148,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		### save particle coordinates to box file
 		boxedpartdatas, emanboxfile = self.writeParticlesToBoxFile(partdatas, shiftdata, imgdata)
 
+		### check if we have particles again
+		if len(boxedpartdatas) == 0:
+			apDisplay.printColor(shortname+" has no remaining particles and has been rejected\n","cyan")
+			return None, None, None
+
 		if self.params['uncorrected']:
 			### dark/bright correct image
 			tmpname = shortname+"-darknorm.dwn.mrc"
