@@ -123,7 +123,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	#=======================
 	def boxParticlesFromImage(self, imgdata):
 		shortname = apDisplay.short(imgdata['filename'])
-		print "processing:",shortname
 		imgpath = os.path.join(imgdata['session']['image path'], imgdata['filename']+".mrc")
 
 		### get the particle before image filtering
@@ -194,9 +193,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### phase flipping
 		if self.params['phaseflipped'] is True:
-			if self.params['wholeimage'] is True:
-				apDisplay.printMsg("phase flipped whole image already")
-			elif self.params['acetwo'] is True:
+			if self.params['wholeimage'] is True or self.params['acetwo'] is True:
 				apDisplay.printMsg("phase flipped whole image already")
 			elif self.params['tiltedflip'] is True:
 				imgstackfile = self.tiltedPhaseFlip(imgdata, imgstackfile, boxedpartdatas)
@@ -390,7 +387,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		ace2cmd = ("ace2correct.exe -ctf %s -a %.3f -i %s -wiener 0.15" % (ctfvaluesfile, apix, inimgpath))
 
-		apDisplay.printMsg("phaseflipping entire micrograph with defoci "+str(round(defocus1,3))+" microns")
+		apDisplay.printMsg("phaseflipping entire micrograph with defoci "+str(round(defocus1*1.0e6,3))+" microns")
 		apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
 		
 		return os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
