@@ -229,7 +229,7 @@ function runUploadModel() {
 	if (!$sym) createUploadModelForm("<B>ERROR:</B> Select a symmetry");
 
 	// set runname according to upload type
-	$runname = getTimestring();$runname = getTimestring();
+	$runname = getTimestring();
 	if ($densityid) {
 		$command.="--densityid=$densityid ";
 		$runname = density.$densityid."_".$runname;

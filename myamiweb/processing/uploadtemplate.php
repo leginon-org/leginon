@@ -114,6 +114,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	}
 	
 	echo"<INPUT TYPE='hidden' NAME='hed' VALUE='$hed'>\n";
+	echo"<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>\n";
 	
 	//query the database for parameters
 	$particle = new particledata();
@@ -227,6 +228,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 function runUploadTemplate() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
+	$projectId = $_POST['projectId'];
 
 	$command.="uploadTemplate.py ";
 
@@ -267,13 +269,18 @@ function runUploadTemplate() {
 	} else {
 		$template_warning="File ".$template." exist. Make sure that this is the file that you want!";
 	}
+	
+	// set runname as time
+	$runname = getTimestring();
 
 	//putting together command
-	$command.="--template=$template ";
-	$command.="--session=$session ";
+	$command.="-t $template ";
+	$command.="-p $projectId ";
+	$command.="-s $session ";
 	$command.="--apix=$apix ";
 	$command.="--diam=$diam ";
-	$command.="--description=\"$description\" ";
+	$command.="-d \"$description\" ";
+	$command.="-n $runname ";
 	if ($templateId || $templateId == "0") $command.="--stackimgnum=$templateId ";
 	if ($stackId) $command.="--stackid=$stackId ";
 	if ($norefClassId) $command.="--norefid=$norefClassId ";
