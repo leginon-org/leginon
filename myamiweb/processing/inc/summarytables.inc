@@ -298,7 +298,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$refstack = $stackdata['path']."/".$stackdata['refstackfile'];
 	if ($stackdata['refstackfile'] && file_exists($refstack))
 		$display_keys['reference stack'] = "<a target='stackview' HREF='viewstack.php?"
-			."file=$refstack&expId=$expId'>".$stackdata['refstackfile']."</a>";
+			."file=$refstack&expId=$expId&alignId=$alignstackid'>".$stackdata['refstackfile']."</a>";
 
 	$stackfile = $stackdata['path']."/".$stackdata['imagicfile'];
 
