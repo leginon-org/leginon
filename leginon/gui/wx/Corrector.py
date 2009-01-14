@@ -133,8 +133,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,'play',shortHelpString='Modify Reference')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Normalization Image')
 		self.toolbar.Realize()
 
 		# settings
@@ -166,9 +167,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.imagepanel.addTargetTool('Bad_Pixels', wx.Color(255, 0, 0), target=True, shape='.')
 		self.imagepanel.selectiontool.setDisplayed('Bad_Pixels', True)
 		self.imagepanel.setTargets('Bad_Pixels', [])
-		self.imagepanel.addTargetTool('Regions', wx.Color(0, 255, 255), target=True, shape='polygon', display=True)
-		self.imagepanel.selectiontool.setDisplayed('Regions', True)
-		self.imagepanel.setTargets('Regions', [])
+		self.imagepanel.addTargetTool('Bad_Region', wx.Color(0, 255, 255), target=True, shape='polygon', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Bad_Region', True)
+		self.imagepanel.setTargets('Bad_Region', [])
 
 		self.szmain.Add(self.imagepanel, (0, 1), (2, 1), wx.EXPAND)
 
@@ -190,7 +191,10 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_PLUS)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
-											id=gui.wx.ToolBar.ID_PLAY)
+											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+
+		self.toolbar.Bind(wx.EVT_TOOL, self.onDisplayTool,
+											id=gui.wx.ToolBar.ID_REFRESH)
 
 		self.settingsdialog = SettingsDialog(self)
 
@@ -226,14 +230,17 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			method = self.node.acquireCorrected
 		threading.Thread(target=method).start()	
 
+	def onDisplayTool(self, evt):
+		self.node.displayNorm()
+
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
 
         def onAddTool(self, evt):
-                self.node.onAdd()
+                self.node.onAddRegion()
 
         def onPlayTool(self, evt):
-                self.node.modifyNorm()
+                self.node.onAddPoints()
                 
 	def setPlan(self, plan):
 		if not hasattr(self, 'plan'):
