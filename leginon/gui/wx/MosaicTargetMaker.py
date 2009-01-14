@@ -11,6 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
+import re
 import threading
 import wx
 from gui.wx.Entry import Entry, FloatEntry
@@ -95,7 +96,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		presets = self.node.presetsclient.getPresetNames()
 		self.widgets['preset'] = PresetChoice(self, -1)
 		self.widgets['preset'].setChoices(presets)
-		self.widgets['label'] = Entry(self, -1)
+		self.widgets['label'] = Entry(self, -1, allowspaces=False)
 		self.widgets['radius'] = FloatEntry(self, -1, min=0.0, chars=6)
 		#self.widgets['overlap'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['mosaic center'] = Choice(self, -1, choices=['stage center', 'current position'])

@@ -12,6 +12,7 @@
 # $Locker:  $
 
 import wx
+import re
 
 EntryEventType = wx.NewEventType()
 
@@ -30,7 +31,7 @@ class EntryEvent(wx.PyCommandEvent):
 		self.value = value
 
 class Entry(wx.TextCtrl):
-	def __init__(self, parent, id, chars=None, **kwargs):
+	def __init__(self, parent, id, chars=None, allowspaces=True, **kwargs):
 		try:
 			if not kwargs['style'] & wx.TE_MULTILINE:
 				kwargs['style'] |= wx.TE_PROCESS_ENTER
@@ -47,6 +48,7 @@ class Entry(wx.TextCtrl):
 		self.dirty = False
 		self.cleancolor = self.GetBackgroundColour()
 		self.dirtycolor = wx.Color(196, 225, 255)
+		self.allowspaces = allowspaces
 
 		stuff = wx.TextCtrl.GetValue(self)
 		if not self._setStringValue(stuff):
@@ -60,6 +62,8 @@ class Entry(wx.TextCtrl):
 		return value
 
 	def stringToValue(self, string):
+		if self.allowspaces is False:
+			string = re.sub(" ","",string)
 		return string
 
 	def _validateString(self, string):
