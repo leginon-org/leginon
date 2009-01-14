@@ -33,6 +33,11 @@ def point_inside_polygon(x, y, poly):
 		p1x,p1y = p2x,p2y
 	return inside
 
+def indicesInsidePolygon(shape, vertices):
+	points = numpy.array(numpy.transpose(numpy.indices(shape), (1,2,0)))
+	points.shape=(-1,2)
+	inside = pointsInPolygon(points, vertices)
+	return inside
 
 def filledPolygon(shape, vertices):
 	points = numpy.array(numpy.transpose(numpy.indices(shape), (1,2,0)))
