@@ -127,6 +127,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 				cpartq = appionData.ApClusteringParticlesData()
 				cpartq['clusterstack'] = clusterstackq
 				cpartq['alignparticle'] = alignpartdata
+				cpartq['partnum'] = partnum
 				cpartq['refnum'] = classnum
 				cpartq['clusterreference'] = None
 				# actual parameters
