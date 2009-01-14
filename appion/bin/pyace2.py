@@ -8,6 +8,7 @@ import math
 import time
 import subprocess
 import numpy
+import socket
 #appion
 import appionLoop2
 import appionData
@@ -91,6 +92,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -c " + str(inputparams['cs'])
 			+ " -k " + str(inputparams['kv'])
 			+ " -a " + str(inputparams['apix']) + "\n" )
+
+		### hate to do this but have to
+		hostname = socket.gethostname()
+		if hostname[:5] == "guppy":
+			commandline = "unset LD_LIBRARY_PATH; "+commandline
 
 		### run ace2
 		apDisplay.printMsg("running ace2 at "+time.asctime())
