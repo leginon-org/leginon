@@ -19,6 +19,7 @@ $reclassId=$_GET['reclassId'];
 $norefId=$_GET['norefId'];
 $norefClassId=$_GET['norefClassId'];
 $clusterId=$_GET['clusterId'];
+$alignId=$_GET['alignId'];
 $imagicClusterId=$_GET['imagicClusterId'];
 $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
@@ -102,6 +103,7 @@ var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
 var reclassId="<?=$reclassId?>"
 var clusterId="<?=$clusterId?>"
+var alignId="<?=$alignId?>"
 var imagicClusterId="<?=$imagicClusterId?>"
 <?php
 if ($norefClassId) {
@@ -174,7 +176,12 @@ function createNorefSubStack() {
 
 function createAlignSubStack() {
 	var index = $('excludedIndex').value
-	window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+	if (clusterId!="") {
+		window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+	}
+	if (alignId!="") {
+		window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&alignId="+alignId+"",'height=250,width=400');
+	}
 }
 
 function createSubStack() {
@@ -231,7 +238,7 @@ if ($norefId) {
 <input type='button' value='Create SubStack' onClick='createNorefSubStack()' > 
 <input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
 }
-elseif ($clusterId) {
+elseif ($clusterId || $alignId) {
   echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
 <input type='button' value='Create Model' onClick='createModel()' >
 <input type='button' value='Create SubStack' onClick='createAlignSubStack()' > 
