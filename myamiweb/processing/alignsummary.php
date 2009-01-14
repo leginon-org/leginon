@@ -75,7 +75,7 @@ if ($stackdatas) {
 				echo alignstacksummarytable($alignstackid, true);
 				echo "<span style='border: 1px'>&nbsp;"
 					."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
-					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+					."Run Another Feature Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
 				foreach ($analysisdatas as $analysisdata) {
 					echo "<tr><td>\n";
@@ -88,10 +88,10 @@ if ($stackdatas) {
 						echo "</td></tr>\n";
 					}
 					elseif ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun'] != false) {
-                                                echo "<a href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
-                                                        ."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
-                                                echo "</td></tr>\n";
-                                        }
+						echo "<a href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+							."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
+						echo "</td></tr>\n";
+					}
 				}
 				echo "<tr><td>\n";
 				$numclusters = count($particle->getClusteringStacks($expId, $projectId));
@@ -146,17 +146,17 @@ if ($stackdatas) {
 				echo alignstacksummarytable($alignstackid, true);
 				echo "<span style='border: 1px'>&nbsp;"
 					."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
-					."Run Another Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
+					."Run Another Feature Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";	
 				echo "</td></tr>\n";
 				foreach ($analysisdatas as $analysisdata) {
 					echo "<tr><td>\n";
 					$analysisid = $analysisdata['DEF_id'];
 					echo analysissummarytable($analysisid);
 					if ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-                                                echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
-                                                        ."<a href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
-                                                        ."Run IMAGIC Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
-                                                echo "</td></tr>\n";
+						echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
+							."<a href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+							."Run IMAGIC Particle Clustering On Analysis Id $analysisid</a>&nbsp;</span><br/>\n";
+						echo "</td></tr>\n";
 					}
 					else {
 						echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
@@ -174,7 +174,7 @@ if ($stackdatas) {
 			echo alignstacksummarytable($alignstackid);
 			echo "<span style='font-size: larger; background-color:#eeccee;'>&nbsp;"
 				."<a href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
-				."Run Alignment Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
+				."Run Feature Analysis On Align Stack Id $alignstackid</a>&nbsp;</span><br/>\n";
 			echo "</td></tr>\n";
 		}
 		echo "</table>\n";
