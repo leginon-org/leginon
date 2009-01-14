@@ -14,6 +14,7 @@ import sinedon.data
 import event
 import node
 import numpy
+import scipy.ndimage as nd
 ma = numpy.ma
 import threading
 import gui.wx.Corrector
@@ -489,23 +490,22 @@ class Corrector(node.Node):
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireCorrected')
 
-	def modifyNorm(self):
-		self.startTimer('modifyNorm')
-		try:
-			camdata = self.settings['camera settings']
+	def displayNorm(self,ccdcameraname=None):
+		self.setStatus('processing')
+		if self.instrument.getTEMName() != 'CM':
+			self.logger.info('load channel %d norm image' % self.corclient.channel)
+			cameradata = self.instrument.getData(leginondata.CameraEMData, ccdcameraname=ccdcameraname, image=False)
 			scopedata = self.instrument.getData(leginondata.ScopeEMData)
-			ccdcameraname = self.instrument.getCCDCameraName()
+			ccdcamera = cameradata['ccdcamera']
 			corstate = leginondata.CorrectorCamstateData()
-			corstate['dimension'] = camdata['dimension']
-			corstate['offset'] = camdata['offset']
-			corstate['binning'] = camdata['binning']
-
-			self.modifyByMask(self.maskimg, ccdcameraname, corstate, scopedata)
-		except Exception, e:
-			self.logger.exception('Modify normalization image failed: %s' % e)
-		self.stopTimer('modifyNorm')
-		self.maskimg = numpy.zeros(self.maskimg.shape)
-		self.displayImage(self.currentimage)
+			corstate['dimension'] = cameradata['dimension']
+			corstate['offset'] = cameradata['offset']
+			corstate['binning'] = cameradata['binning']
+			norm = self.corclient.retrieveRef(corstate, 'norm', ccdcameraname, scopedata, self.corclient.channel)
+			self.displayImage(norm)
+			self.currentimage = norm
+			self.beep()
+		self.setStatus('idle')
 
 	def displayImage(self, image):
 		self.startTimer('Corrector.displayImage')
@@ -632,7 +632,7 @@ class Corrector(node.Node):
 		self.corclient.storeRef('norm', norm, corstate, scopedata, channel)
 
 	def acquireCorrectedImageData(self, ccdcameraname=None):
-		self.setTargets([], 'Regions', block=False)
+		self.setTargets([], 'Bad_Region', block=False)
 		self.startTimer('acquireCorrectedImageData')
 		self.setStatus('processing')
 		if self.instrument.getTEMName() != 'CM':
@@ -693,50 +693,6 @@ class Corrector(node.Node):
 		self.maskimg = numpy.zeros(numimage.shape)
 		return newdata
 
-	def modifyByMask(self,mask, ccdcameraname, camstate, scopedata):
-		for channel in range(0,self.settings['channels']):
-			## use reference image from database
-			ref = self.corclient.researchRef(camstate, 'norm', ccdcameraname, scopedata, channel)
-			if ref:
-				## make it float to do float math later
-				norm = numpy.asarray(ref['image'], numpy.float32)
-			else:
-				self.logger.warning('No normalized image for modifications')
-				return
-
-			if mask is not None:
-				if norm.shape != mask.shape:
-					self.logger.warning('Wrong mask dimension for channel %d' %channel)
-					return
-				else:
-					maskednorm=ma.masked_array(norm,mask=mask)
-					nmean = maskednorm.mean()
-					nstd = maskednorm.std()
-					nmax = maskednorm.max()
-					nmin = maskednorm.min()
-					sigma = 100
-					ntop = nmean+sigma * nstd
-					if nmax < ntop:
-						ntop = nmax
-			else:
-				nmax = norm.max()
-				nmin = norm.min()
-				ntop = nmax
-				nbottom = nmin
-			self.logger.info('Unmasked region normalization is between %e and %e'% (nmax,nmin))	
-			## make it 20 if the unmask region has large norm factor
-			if ntop > 20:
-				ntop = 20
-			nbottom = 1 / ntop
-			newnorm = numpy.clip(norm, nbottom, ntop) 
-			self.logger.info('Clipped normalization to between %e and %e'% (ntop,nbottom))	
-			try:
-				self.corclient.storeRef('norm', newnorm, camstate, scopedata, channel)
-				self.logger.info('Saved modified norm image for channel %d' %channel)
-			except:
-				pass
-		return
-
 	def uiAutoAcquireReferences(self):
 		binning = self.autobinning.get()
 		autoexptime = self.autoexptime.get()
@@ -787,20 +743,47 @@ class Corrector(node.Node):
 		if i == tries-1:
 			self.logger.info('Failed to find target mean after %s tries' % (tries,))
 
-
-	def onAdd(self):
-		vertices = []
-		dir(self)
-		vertices = self.panel.imagepanel.getTargetPositions('Regions')
-		def reversexy(coord):
-			clist=list(coord)
-			clist.reverse()
-			return tuple(clist)
-		vertices = map(reversexy,vertices)
-		polygonimg = polygon.filledPolygon(self.maskimg.shape,vertices)
-		type(polygonimg)
-		self.maskimg = self.maskimg + polygonimg
-		self.maskimg = numpy.where(self.maskimg==0,0,1)
-		imageshown = self.currentimage * (numpy.ones(self.maskimg.shape)+self.maskimg*0.5)
+	def onAddPoints(self):
+		imageshown = self.currentimage
+		imagemean = imageshown.mean()
+		plan = self.getPlan()
+		badpixelcount = len(plan['pixels'])
+		newbadpixels = plan['pixels']
+		while  len(newbadpixels) <= badpixelcount+2 :
+			extrema = nd.extrema(imageshown)
+			# add points only on max or min depending on how far they are from mean
+			usemax = extrema[1] - imagemean > imagemean - extrema[0]
+			if usemax:
+				i = 3
+			else:
+				i = 2
+			currentvalue = extrema[i-2]
+			newextrema = extrema
+			while newextrema[i-2] == currentvalue:
+				if newextrema[i] not in newbadpixels:
+					newbadpixels.append(newextrema[i])
+					self.logger.info("added bad pixel point at (%d,%d)" % (newextrema[i]))
+				imageshown[newextrema[i]]=imagemean
+				newextrema=nd.extrema(imageshown)
+		plan['pixels'] = newbadpixels
 		self.displayImage(imageshown)
-		self.setTargets([], 'Regions', block=False)
+		self.storePlan(plan)
+		self.panel.setPlan(plan)
+
+	def onAddRegion(self):
+		vertices = []
+		vertices = self.panel.imagepanel.getTargetPositions('Bad_Region')
+		if len(vertices) < 3:
+			self.logger.error('Need at least 3 vertices to define the region')
+			return
+		badpixels = polygon.indicesInsidePolygon(self.maskimg.shape,vertices)
+		plan = self.getPlan()
+		oldbadpixels = plan['pixels']
+		fullbadpixelset = set()
+		fullbadpixelset = fullbadpixelset.union(oldbadpixels)
+		fullbadpixelset = fullbadpixelset.union(badpixels)
+		plan['pixels'] = list(fullbadpixelset)
+		self.storePlan(plan)
+		self.panel.setPlan(plan)
+		self.setTargets([], 'Bad_Region', block=False)
+		
