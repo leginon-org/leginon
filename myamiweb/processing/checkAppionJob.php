@@ -23,7 +23,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	// For now, assume that logged in user,password
 	// will work. Potential problem here if logged in
 	// user,password not same as user,password who
-	// started the job.  Maybe should verify this.
+	// started the job.	Maybe should verify this.
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 
@@ -85,7 +85,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$logfile = ereg_replace(".job",".log", $jobinfo['name']);
 
 	if ($_SESSION['loggedin']==True) {
-		$tail = ($_POST['tail']) ? $_POST['tail'] : '50';
+		$tail = ($_POST['tail']) ? $_POST['tail'] : '10';
 		$statinfo=checkJobStatus($host,$jobinfo['appath'],$logfile,$user,$pass,$tail);
 		if ($statinfo) {
 			echo "<table border='0' width='600' CELLPADDING='5'>\n";
@@ -113,32 +113,138 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 }
 
 function checkJobStatus($host,$jobpath,$jobfile,$user,$pass,$tail) {
-	$cmd = "tail -$tail $jobpath/$jobfile ";
-	$r = exec_over_ssh($host,$user,$pass,$cmd, True);
-	$allref = streamToArray($r);
+	$file = "$jobpath/$jobfile";
+	if (file_exists($file)) {
+		$r = tail_file($file, $tail);
+		//echo "<!-- ".print_r($r)." -->";
+		$allref = streamToArray($r);
+	} else {
+		$cmd = "tail -$tail $jobpath/$jobfile ";
+		$r = exec_over_ssh($host,$user,$pass,$cmd, True);
+		//echo "<!-- ".$r." -->";
+		$allref = streamToArray($r);
+	}
 	return $allref;
 }
 
+function tail_file($file, $lines) {
+	//global $fsize;
+	$handle = fopen($file, "r");
+	$linecounter = $lines;
+	$pos = -2;
+	$beginning = false;
+	$text = array();
+	while ($linecounter > 0) {
+		$t = " ";
+		while ($t != "\n") {
+			if(fseek($handle, $pos, SEEK_END) == -1) {
+				$beginning = true; 
+				break; 
+			}
+			$t = fgetc($handle);
+			$pos --;
+		}
+		$linecounter --;
+		if ($beginning) {
+			rewind($handle);
+		}
+		$text[$lines-$linecounter-1] = fgets($handle);
+		if ($beginning) break;
+	}
+	fclose ($handle);
+	$linearray = array_reverse($text);
+
+	$cleanlines = "";
+	foreach ($linearray as $line) {
+		$line = trim($line);
+		if (strlen($line) > 130)
+			$line = substr($line,0,130)."...";
+		$cleanlines .= $line."\n";
+	}
+
+	return $cleanlines;
+
+}
+
+
+
 function convertToColors($j) {
 	foreach ($j as $i) {
+		//$i = removebackspace($i);
 		$i = trim($i);
-		$i = ereg_replace("\[33m","<font style='color:yellow'>", $i);
-		$i = ereg_replace("\[32m","<font style='color:green'>", $i);
-		$i = ereg_replace("\[31m","<font style='color:red'>", $i);
-		$i = ereg_replace("\[34m","<font style='color:blue'>", $i);
-		$i = ereg_replace("\[35m","<font style='color:magenta'>", $i);
-		$i = ereg_replace("\[36m","<font style='color:cyan'>", $i);
-		$i = ereg_replace("\[36m","<font style='color:cyan'>", $i);
-		$i = ereg_replace("\[0m","</font>", $i);
-		$line .="$i ";
+		$i = ereg_replace("\033\[31m","<font style='color:red'>", $i);
+		$i = ereg_replace("\033\[32m","<font style='color:green'>", $i);
+		$i = ereg_replace("\033\[33m","<font style='color:yellow'>", $i);
+		$i = ereg_replace("\033\[34m","<font style='color:blue'>", $i);
+		$i = ereg_replace("\033\[35m","<font style='color:magenta'>", $i);
+		$i = ereg_replace("\033\[36m","<font style='color:cyan'>", $i);
+		$i = ereg_replace("\033\[0m","</font>", $i);
+		$line .= "$i ";
 		// make sure line doesn't get too long:
 		$linelen = $linelen + strlen($i) + 1;
-		if ($linelen > 130) {
-			$linelen=0;
+		if ($linelen > 100) {
+			$linelen = 0;
 			$line .= "\n";
 		}		
 	}
 	return $line;
 }
+
+function removebackspace($s) {
+	// modified from http://macgirvin.com/
+
+	// Map the characters which sit underneath a backspace.
+	// If you can come up with a regex to do all of the following
+	// madness - be my guest.
+	// It's not as simple as you think. We need to take something
+	// that has been backspaced over an arbitrary number of times
+	// and wrap a forward looking matching number of characters in
+	// HTML, whilst deciding if it's intended as an underline or
+	// strikeout sequence.
+
+	// Essentially we produce a string of '1' and '0' characters
+	// the same length as the source text.
+	// Any position which is marked '1' has been backspaced over.
+
+	$cursor = 0;
+	$dst = $s;
+	$bs_found = false;
+	for($x = 0; $x < strlen($s); $x ++) {
+		if( $s[$x] == "\010" && $cursor) {
+			$bs_found = true;
+			$cursor --;
+			$dst[$cursor] = '0';
+			$dst[$x] = '0';
+			$continue;
+		} else {
+			if($bs_found) {
+				$bs_found = false;
+				$cursor = $x;
+			}
+			$dst[$cursor] = '1';
+			$cursor ++;
+		}
+
+	}
+
+	$hide = '';
+	for($x = 0; $x < strlen($s); $x ++) {
+		$chr = $s[$x];
+		$hide .= sprintf("%03d ",ord($chr));
+	}
+	$add = "<!-- list ".$hide." -->";
+
+	$out = '';
+	for($x = 0; $x < strlen($s); $x++) {
+		if($dst[$x] == '1') {
+			$out .= $s[$x];
+		} else {
+			//$out .= $s[$x];
+		}
+	}
+
+	return $add.str_replace("\010","",$out);
+}
+
 
 ?>
