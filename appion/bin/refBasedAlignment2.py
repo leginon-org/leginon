@@ -74,6 +74,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		if self.params['lastring'] > boxsize/2-2:
 			apDisplay.printError("last ring radius is too big for boxsize "
 				+str(self.params['lastring'])+" > "+str(boxsize/2-2))
+		if self.params['lastring']+self.params['xysearch']> boxsize/2-2:
+			apDisplay.printError("last ring plus xysearch radius is too big for boxsize "
+				+str(self.params['lastring']+self.params['xysearch'])+" > "+str(boxsize/2-2))
 
 		### convert / check template data
 		self.templatelist = self.params['templatelist'].strip().split(",")
