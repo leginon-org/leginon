@@ -158,7 +158,7 @@ function tail_file($file, $lines) {
 	foreach ($linearray as $line) {
 		$line = trim($line);
 		if (strlen($line) > 130)
-			$line = substr($line,0,130)."...";
+			$line = substr($line,0,100)." ... ".substr($line, -25);
 		$cleanlines .= $line."\n";
 	}
 
