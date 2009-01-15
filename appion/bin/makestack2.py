@@ -161,14 +161,13 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apImage.arrayToMrc(imgarray,imgpath)
 			print "processing", imgpath
 
-		if self.params['wholeimage'] is True and self.params['phaseflipped'] is True:
-			### ctf correct whole image using EMAN
-			imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
-
-		if self.params['acetwo'] is True and self.params['phaseflipped'] is True:
-			### ctf correct whole image using Ace 2
-			apDisplay.printColor("using ace2 correction on image "+shortname,"cyan")
-			imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
+		if self.params['phaseflipped'] is True:
+			if self.params['fliptype'] == 'emanimage':
+				### ctf correct whole image using EMAN
+				imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
+			elif self.params['fliptype'] == "ace2image":
+				### ctf correct whole image using Ace 2
+				imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
 		
 		if imgpath is None:
 			return None, None, None
@@ -198,12 +197,14 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### phase flipping
 		if self.params['phaseflipped'] is True:
-			if self.params['wholeimage'] is True or self.params['acetwo'] is True:
-				apDisplay.printMsg("phase flipped whole image already")
-			elif self.params['tiltedflip'] is True:
-				imgstackfile = self.tiltedPhaseFlip(imgdata, imgstackfile, boxedpartdatas)
+			if self.params['fliptype'] == 'emantilt':
+				### ctf correct individual particles with tilt using Eman
+				imgstackfile = self.tiltPhaseFlipParticles(imgdata, imgstackfile, boxedpartdatas)
+			elif self.params['fliptype'] == 'emanpart':
+				### ctf correct individual particles using Eman
+				imgstackfile = self.phaseFlipParticles(imgdata, imgstackfile)
 			else:
-				imgstackfile = self.phaseFlip(imgdata, imgstackfile)
+				apDisplay.printMsg("phase flipped whole image already")
 		else:
 			apDisplay.printMsg("not phase flipping particles")
 
@@ -249,7 +250,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	############################################################
 
 	#=======================
-	def tiltedPhaseFlip(self, imgdata, imgstackfile, partdatas):
+	def tiltPhaseFlipParticles(self, imgdata, imgstackfile, partdatas):
 		ctfvalue = apCtf.getBestTiltCtfValueForImage(imgdata)
 		if ctfvalue is None:
 			apDisplay.printError("Failed to get ctf parameters")
@@ -306,7 +307,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		apImagicFile.writeImagic(ctfpartstack, ctfimgstackfile)
 
 	#=======================
-	def phaseFlip(self, imgdata, imgstackfile):
+	def phaseFlipParticles(self, imgdata, imgstackfile):
 		imgname = imgdata['filename']
 		shortname = apDisplay.short(imgname)
 		ctfimgstackfile = os.path.join(self.params['rundir'], apDisplay.short(imgdata['filename'])+"-ctf.hed")
@@ -361,6 +362,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		defocus1 = bestctfvalue['defocus1']
 		defocus2 = bestctfvalue['defocus2']
 		ampconst = bestctfvalue['amplitude_contrast']
+		defocus = (defocus1+defocus2)/2.0*1.0e6
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ACE2 ctf estimation for current image")
@@ -392,7 +394,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		ace2cmd = ("ace2correct.exe -ctf %s -a %.3f -i %s -wiener 0.15" % (ctfvaluesfile, apix, inimgpath))
 
-		apDisplay.printMsg("phaseflipping entire micrograph with defoci "+str(round(defocus1*1.0e6,3))+" microns")
+		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 		apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
 		
 		return os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
@@ -605,6 +607,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def setupParserOptions(self):
+		self.flipoptions = ('emanimage', 'emanpart', 'emantilt', 'ace2image')
+
 		### values
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin the particles after boxing", metavar="#")
@@ -648,18 +652,24 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="normalize the entire stack")
 		self.parser.add_option("--defocpair", dest="defocpair", default=False,
 			action="store_true", help="select defocal pair")
-		self.parser.add_option("--whole-image", dest="wholeimage", default=False,
-			action="store_true", help="whole image ctf correction with EMAN")
-		self.parser.add_option("--acetwo", dest="acetwo", default=False,
-			action="store_true", help="whole image ctf correction with Ace 2")
-		self.parser.add_option("--tiltedflip", dest="tiltedflip", default=False,
-			action="store_true", help="using tilted defocus estimation based on particle location")
+
 		self.parser.add_option("--boxfiles", dest="boxfiles", default=False,
 			action="store_true", help="create only boxfiles, no stack")
 		self.parser.add_option("--checkmask", dest="checkmask", default=False,
 			action="store_true", help="Check masks")
 		self.parser.add_option("--keepall", dest="keepall", default=False,
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
+
+		### option based
+		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,
+		#	action="store_true", help="whole image ctf correction with EMAN")
+		#self.parser.add_option("--acetwo", dest="acetwo", default=False,
+		#	action="store_true", help="whole image ctf correction with Ace 2")
+		#self.parser.add_option("--tiltedflip", dest="tiltedflip", default=False,
+		#	action="store_true", help="using tilted defocus estimation based on particle location")
+		self.parser.add_option("--flip-type", dest="fliptype",
+			help="CTF correction method", metavar="TYPE", 
+			type="choice", choices=self.flipoptions, default="emanpart" )
 
 	#=======================
 	def checkConflicts(self):
