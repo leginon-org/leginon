@@ -31,6 +31,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$jobinfo = $particle->getJobInfoFromId($jobId);
 	$display_keys['name'] = $jobinfo['name'];
 	$display_keys['appion path'] = $jobinfo['appath'];
+	$display_keys['submit time'] = $jobinfo['DEF_timestamp'];
 	$clusterjobid = $jobinfo['clusterjobid'];
 	$host = $jobinfo['cluster'];
 
