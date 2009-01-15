@@ -396,3 +396,18 @@ def threshold(a, limit):
 def pasteInto(a, b, pos):
 	'''paste image a into image b at position pos'''
 	b[pos[0]:pos[0]+a.shape[0], pos[1]:pos[1]+a.shape[1]] = a
+
+def taper(im, boundary):
+	'''
+	in place taper of image boundary
+	'''
+	im[0] = (im[0] + im[-1]) / 2.0
+	im[-1] = im[0]
+
+	im[:,0] = (im[:,0] + im[:,-1]) / 2.0
+	im[:,-1] = im[:,0]
+
+	for sign in (-1,1):
+		for i in range(1,boundary):
+			im[sign*i] = (im[sign*i] + im[sign*i-sign]) / 2.0
+			im[:,sign*i] = (im[:,sign*i] + im[:,sign*i-sign]) / 2.0
