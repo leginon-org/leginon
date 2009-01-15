@@ -167,9 +167,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		echo "&nbsp;&nbsp;<select name='fliptype' ";
 			if (!$phasecheck) echo " disabled";
 			echo ">\n";
-		echo "<option value='normal'>EMAN Flip by Stack (default)</option>\n";
-		echo "<option value='wholeimage'>EMAN Flip Whole Image</option>\n";
-		echo "<option value='tiltedflip'>EMAN Flip by CtfTilt</option>\n";
+		echo "<option value='emanpart'>EMAN Flip by Stack (default)</option>\n";
+		echo "<option value='emanimage'>EMAN Flip Whole Image</option>\n";
+		echo "<option value='emantilt'>EMAN Flip by Tilt Location</option>\n";
+		echo "<option value='ace2image'>Ace 2 Whole Image</option>\n";
 		echo "</select>\n";
 		echo "<br/>\n";
 	}
@@ -414,8 +415,8 @@ function runMakestack() {
 	if ($_POST['selexcheck']=='on') {
 		$correlationmin=$_POST['correlationmin'];
 		$correlationmax=$_POST['correlationmax'];
-		if ($correlationmin > 1 || $correlationmin < 0) createMakestackForm("<b>ERROR:</b> correlation Min cutoff must be between 0 & 1");
-		if ($correlationmax > 1 || $correlationmax < 0) createMakestackForm("<b>ERROR:</b> correlation Max cutoff must be between 0 & 1");
+		//if ($correlationmin > 1 || $correlationmin < 0) createMakestackForm("<b>ERROR:</b> correlation Min cutoff must be between 0 & 1");
+		//if ($correlationmax > 1 || $correlationmax < 0) createMakestackForm("<b>ERROR:</b> correlation Max cutoff must be between 0 & 1");
 	}
 
 	// check defocus cutoffs
@@ -440,9 +441,7 @@ function runMakestack() {
 	if ($invert == "no") $command.="--no-invert ";
 	if ($normalize == "yes") $command.="--normalized ";
 	if ($phaseflip) { 
-		$command.="--phaseflip ";
-		if ($fliptype == 'tiltedflip') $command.="--tiltedflip ";
-		if ($fliptype == 'wholeimage') $command.="--whole-image ";
+		$command.="--phaseflip --flip-type=$fliptype ";
 	}
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
