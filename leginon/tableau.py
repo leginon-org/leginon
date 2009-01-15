@@ -25,7 +25,7 @@ class Tableau(object):
 	def imageExtents(self, imageinfo):
 		ang = imageinfo['angle']
 		rad = imageinfo['radius']
-		if (not rad):
+		if (ang is None) or (not rad):
 			x = y = 0
 		else:
 			x = int(rad * math.cos(ang))
