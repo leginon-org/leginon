@@ -33,24 +33,23 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	u32 r, rows = [self sizeOfDimension:1];
 	u32 c, cols = [self sizeOfDimension:0];
 
-	// This is because the center of an FFT is at n/2+1 rather than n/2
-	f64 x_rad = cols/2.0+0.5; 
-	f64 y_rad = rows/2.0-0.5;
+	// This is because the center of an FFT is at pixel n/2+1,n/2 rather than n/2,n/2
+	f64 x_rad = cols/2.0; 
+	f64 y_rad = rows/2.0;
 	
 	f64 cs = cos(xaxis_angle);
 	f64 ss = sin(xaxis_angle);
 	
 	u32 i, a_rad = MIN(x_rad,y_rad);
-	
-	f64 x1 = x_axis*cs+x_rad, y1 = y_rad+x_axis*ss;
-	f64 x2 = x_rad-y_axis*ss, y2 = y_axis*cs+y_rad;
 
 	// Create transform to origin-centered unit circle
 	f64 TR[3][3], IT[3][3];
+	f64 x1 = x_axis*cs+x_rad, y1 = y_rad+x_axis*ss;
+	f64 x2 = x_rad-y_axis*ss, y2 = y_axis*cs+y_rad;
 	createDirectAffineTransform(x_rad,y_rad,x1,y1,x2,y2,0.0,0.0,1.0,0.0,0.0,1.0,TR,IT);
 	
 	// Allocate array for average, and stdv data
-	u32 dims[3] = { a_rad, 3, 0 };
+	u32 dims[3] = { a_rad, 4, 0 };
 	ArrayP radial_avg = [Array newWithType:TYPE_F64 andDimensions:dims];
 	[radial_avg setNameTo:[self name]];
 	
@@ -58,6 +57,7 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	f64 * avg_mean = [radial_avg getRow:0];
 	f64 * avg_stdv = [radial_avg getRow:1];
 	f64 * avg_cont = [radial_avg getRow:2];
+	f64 * avg_quon = [radial_avg getRow:3];
 	
 	if ( ori_data == NULL ) goto error;
 	if ( avg_mean == NULL ) goto error;
@@ -67,43 +67,45 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	for(r=0;r<a_rad;r++) avg_mean[r] = 0.0;
 	for(r=0;r<a_rad;r++) avg_stdv[r] = 0.0;
 	for(r=0;r<a_rad;r++) avg_cont[r] = 0.0;
+	for(r=0;r<a_rad;r++) avg_quon[r] = 0.0;
 	
 	for(i=0,r=0;r<rows;r++) {
 		for(c=0;c<cols;c++,i++) {
 			
 			f64 val = ori_data[i];
 			
-			f64 x = c;
-			f64 y = r;
+			f64 x = c*TR[0][0] + r*TR[1][0] + TR[2][0];
+			f64 y = c*TR[0][1] + r*TR[1][1] + TR[2][1];
 			
-			f64 xr = x*TR[0][0] + y*TR[1][0] + TR[2][0];
-			f64 yr = x*TR[0][1] + y*TR[1][1] + TR[2][1];
+			f64 rad = sqrt(x*x+y*y);
+			u32 irad = floor(rad);
 			
-			f64 rad = sqrt(xr*xr+yr*yr);
-	
-			put_split(avg_mean,a_rad,rad,val);
-			put_split(avg_cont,a_rad,rad,1.0);
-			put_split(avg_stdv,a_rad,rad,val*val);
+			if ( irad >= a_rad ) continue;
+		
+			f64 rw1 = rad - irad;
+			f64 rw2 = 1.0 - rw1;
+			
+			avg_cont[irad] = avg_cont[irad] + rw2;
+			avg_mean[irad] = avg_mean[irad] + val*rw2;
+			avg_stdv[irad] = avg_stdv[irad] + (val-avg_stdv[irad])*(rw2/avg_cont[irad]);
+			avg_quon[irad] = avg_quon[irad] + (rw2*(avg_cont[irad]-rw2)/avg_cont[irad])*pow(val-avg_stdv[irad],2.0);
+			
+			if ( ++irad >= a_rad ) continue;
+			
+			avg_cont[irad] = avg_cont[irad] + rw1;
+			avg_mean[irad] = avg_mean[irad] + val*rw1;
+			avg_stdv[irad] = avg_stdv[irad] + (val-avg_stdv[irad])*(rw1/avg_cont[irad]);
+			avg_quon[irad] = avg_quon[irad] + (rw1*(avg_cont[irad]-rw1)/avg_cont[irad])*pow(val-avg_stdv[irad],2.0);
 	
 		}
 	}
-	
-	// Just to be safe fill in any holes in the average with reasonable data(nearest neighbor)
-	// and set any zero counts to 1.0 to prevent division by zero
-	
-	f64 run_value = 0.0;
-	for(r=0;r<a_rad;r++) {
-		if ( avg_mean[r] != 0.0 ) run_value = avg_mean[r];
-		else avg_mean[r] = run_value;
-	}
-	
-	for(r=0;r<a_rad;r++) if ( avg_cont[r] == 0.0 ) avg_cont[r] = 1.0;
 	
 	// Calculate mean
 	// Compute RMSD
 	// Compute RMSD use ABS, because occasionally the sum is off slightly
 	for(r=0;r<a_rad;r++) avg_mean[r] = avg_mean[r] / avg_cont[r]; 
-	for(r=0;r<a_rad;r++) avg_stdv[r] = (avg_stdv[r]/avg_cont[r])-avg_mean[r]*avg_mean[r]; 
+	for(r=0;r<a_rad;r++) avg_stdv[r] = avg_quon[r] / avg_cont[r];
+	for(r=0;r<a_rad;r++) if ( isinf(avg_stdv[r]) ) fprintf(stderr,"INF Error\n"); 
 	for(r=0;r<a_rad;r++) if ( avg_stdv[r] < 0.0 ) fprintf(stderr,"RMSD Error\n"); 
 	for(r=0;r<a_rad;r++) avg_stdv[r] = sqrt(ABS(avg_stdv[r])); 
 	

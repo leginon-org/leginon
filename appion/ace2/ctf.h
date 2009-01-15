@@ -52,7 +52,7 @@ typedef struct CTFST {
 @interface Array ( CTF_Functions )
 
 -(id) correctCTFdf1:(f64)df1 df2:(f64)df2 dfr:(f64)dfr ac:(f64)ac kv:(f64)kv cs:(f64)cs ap:(f64)ap;
--(void) powerSpectrum;
+-(id) powerSpectrum;
 -(id) ellipse1DAvg:(EllipseP)ellipse;
 
 @end

@@ -47,7 +47,6 @@ fi
  
 ## End site dependent crap
 
-
 app=`/bin/basename $0`
 
 if [ ! "$APPION" -o ! -x "$APPION/bin/appion" ]
@@ -62,7 +61,7 @@ then
 	cd ..
 	APPION=`pwd -P`		
 	cd $origDir
-fi  
+fi
 
 if [ $PYTHONPATH ]; then
 	export PYTHONPATH="$APPION/lib:$ADTOPYPATH:$PYTHONPATH"

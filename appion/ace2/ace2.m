@@ -14,6 +14,8 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_multimin.h>
 
+f64 calcBackDrift( f64 values[], u32 rad, f64 mins, f64 maxs );
+
 f64 highest_res( f64 ctf_p[], f64 size, f64 apix ) {
 	
 	// Best way to solve this is too find the roots of the derivative of ctf, where
@@ -165,10 +167,10 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	ArrayP edges = [image copyArray];
-	f64 edge_blur = 4*binby;
+	f64 edge_blur = 5*binby;
 	[edges gaussianBlurWithSigma:edge_blur];
 //	[edges cannyEdgesWithUpperTreshold:0.1 lowerTreshold:0.01];
-	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.00015,0.0015,5.0);
+	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.001,0.002,5.0);
 
 	fprintf(stderr,"\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 
@@ -350,7 +352,7 @@ f64 ellipseCircumference( f64 e[] ) {
 		My = temp;
 	}
 	
-	if ( Mx > 2*My ) return 0.0/0.0;
+	if ( Mx > 3*My ) return 0.0/0.0;
 	
 	f64 circum = pow((pow(Mx,1.5)+pow(My,1.6))*0.5,1.0/1.5);
 
@@ -387,8 +389,8 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 	for(r=0;r<rows;r++) {
 		for(c=0;c<cols;c++) {
 			if ( edge_pixels[r*cols+c] >= 1.0 ) {
-				x_points[edge_count] = c - x_rad + 0.5;
-				y_points[edge_count] = y_rad - r - 0.5;
+				x_points[edge_count] = c - x_rad;
+				y_points[edge_count] = y_rad - r;
 				edge_count++;
 			}
 		}
@@ -417,7 +419,14 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 		
 		generateLSQEllipse(temp_x,temp_y,n_samples,current_ellipse);
 		f64 norm = ellipseCircumference(current_ellipse);
-		if ( isnan(norm) || isinf(norm) ) continue;
+		if ( isnan(norm) || isinf(norm) ) {
+			current_iter++;
+			continue;
+		}
+		if ( norm < 50 ) {
+			current_iter++;
+			continue;
+		}
 		
 		generateBoundEllipses(current_ellipse,e1b,e2b,fit_treshold);
 
@@ -1001,19 +1010,17 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	
 	f64 stdv1 = 0.0;
 	f64 stdv2 = 0.0;
-	
-	u32 r;
-	u32 lcut = [radial_avg1 sizeOfDimension:0]*0.01;
-	u32 rcut = [radial_avg1 sizeOfDimension:0]*0.25;
+
+	u32 r, rad = MIN([radial_avg1 sizeOfDimension:0],[radial_avg2 sizeOfDimension:0]);
 		
-	for(r=lcut;r<rcut;r++) stdv1 += sqrt(stdv_values1[r]);
-	for(r=lcut;r<rcut;r++) stdv2 += sqrt(stdv_values2[r]);
+	for(r=0;r<rad;r++) stdv1 += stdv_values1[r];
+	for(r=0;r<rad;r++) stdv2 += stdv_values2[r];
 	
-	stdv1 = stdv1 / ( rcut-lcut+1.0);
-	stdv2 = stdv2 / ( rcut-lcut+1.0);
+	stdv1 = stdv1 / rad;
+	stdv2 = stdv2 / rad;
 	
 	f64 cutoff = 1.001;
-	
+		
 	{
 		
 		f64 * avg_mean1 = [radial_avg1 getRow:0];
@@ -1023,8 +1030,6 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		f64 * avg_cont1 = [radial_avg1 getRow:2];
 		f64 * avg_cont2 = [radial_avg2 getRow:2];
 		
-		u32 rad = MIN([radial_avg1 sizeOfDimension:0],[radial_avg2 sizeOfDimension:0]);
-		
 		char name[1024];
 		sprintf(name,"%s-1davg.txt",basename([image name]));
 		FILE * fp = fopen(name,"w");
@@ -1033,16 +1038,49 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		
 	}
 	
-	if ( stdv2/stdv1 > cutoff ) {
-		fprintf(stderr,"\n\tUsing Elliptical Average\n\tstdv:stdv (%e:%e) %.4f > %.3f\n",stdv2,stdv1,stdv2/stdv1,cutoff);
+	f64 back1 = calcBackDrift([radial_avg1 getRow:0],rad,1.0,50);
+	f64 back2 = calcBackDrift([radial_avg2 getRow:0],rad,1.0,50);
+	
+	fprintf(stderr,"\n\tCalculated CTF signal for ellipse: %e and circle: %e\n",back1,back2);
+	
+	if ( back1 >= back2 ) {
+		fprintf(stderr,"\tUsing Elliptical Average\n");
 		[radial_avg2 release];
 		return radial_avg1;
 	} else {
-		fprintf(stderr,"\n\tUsing Circular Average\n\tstdv:stdv (%e:%e) %.4f < %.3f\n",stdv2,stdv1,stdv2/stdv1,cutoff);
+		fprintf(stderr,"\tUsing Circular Average\n");
 		[ellipse setX_axis:[ellipse y_axis]];
 		[radial_avg1 release];
 		return radial_avg2;
 	}
+	
+}
+
+f64 calcBackDrift( f64 values[], u32 rad, f64 mins, f64 maxs ) {
+	
+	f64 * temp = NEWV(f64,rad);
+	
+	f64 kfac = sqrt(2);
+	
+	u32 r, k;
+	
+	f64 back_drift = 0.0;
+	f64 sigma = mins;
+	
+	for(k=0;k<100;k++) {
+		memcpy(temp,values,sizeof(f64)*rad);
+		gSmooth(temp,0,rad-1,sigma);
+		f64 oldsize = back_drift;
+		for(r=0;r<rad-1;r++) if ( temp[r] < temp[r+1] ) back_drift += temp[r+1] - temp[r];
+		if ( back_drift == oldsize ) {
+			fprintf(stderr,"Last positive peak at sigma: %f, iteration: %d\n",sigma,k);
+			break;
+		}
+		sigma *= kfac;
+	}
+	
+	free(temp);
+	return back_drift;
 	
 }
 
