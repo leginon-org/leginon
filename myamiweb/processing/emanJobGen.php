@@ -277,7 +277,7 @@ function stackModelForm($extra=False) {
 			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
 			foreach ($pngfiles as $snapshot) {
 				$snapfile = $model['path'].'/'.$snapshot;
-				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'>\n";
 			}
 			echo "</td>\n";
 			echo "</tr>\n";
