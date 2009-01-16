@@ -1,29 +1,37 @@
 #
 # ChangeLog created on Jan 15, 2009 with command:
-#   svn2cl --include-rev --group-by-day --authors=AUTHORS.xml
+# %  svn2cl --include-rev --group-by-day --authors=AUTHORS.xml
 #
 # Number of days with commits by users by command:
-#   egrep "^200" ChangeLog | cut -d' ' -f3- | sort | uniq -c | sort -rn
+# %  egrep "^200" ChangeLog | sort | uniq | cut -d' ' -f3- | sort | uniq -c | sort -rn
 # ------------------
 #  days | username
 # ------------------
-#    437 Neil Voss
-#    134 Gabe Lander
-#    107 Anchi Cheng
-#     83 Scott Stagg
-#     43 Pick-wei Lau
-#     26 Dmitry Lyumkis
-#     13 Jim Pulokas
-#     11 Sunita Nayak
-#     10 Craig Yoshioka
-#      6 Christopher Irving
-#      4 Jonathan Brownell
-#      4 Denis Fellman
-#      1 Anke Mulder
-#
+    339 Neil Voss
+    120 Gabe Lander
+     92 Anchi Cheng
+     70 Scott Stagg
+     31 Pick-wei Lau
+     23 Dmitry Lyumkis
+     13 Jim Pulokas
+      9 Sunita Nayak
+      8 Craig Yoshioka
+      6 Christopher Irving
+      3 Jonathan Brownell
+      3 Denis Fellmann
+      1 Anke Mulder
+
+### Start changelog
+
+
+2009-01-16  Denis Fellmann
+
+	* [r2748] AUTHORS.xml: 2 n
 
 2009-01-15  Neil Voss
 
+	* [r2746] AUTHORS.xml: appion Authors
+	* [r2745] ChangeLog.txt: Change Log for official release
 	* [r2744] bin/ace2.exe: updated version
 
 2009-01-15  Craig Yoshioka
@@ -3200,7 +3208,7 @@
 	  option
 	* [r1357] lib/apParticle.py: MsgP subclass direct query
 
-2007-12-05  Denis Fellman
+2007-12-05  Denis Fellmann
 
 	* [r1356] bin/makestack.py: *** empty log message ***
 
@@ -3213,7 +3221,7 @@
 	* [r1354] lib/apTilt/apTiltTransform.py: fix for xy-shifting
 	* [r1353] bin/tiltaligner.py: fix tilt angle
 
-2007-12-05  Denis Fellman
+2007-12-05  Denis Fellmann
 
 	* [r1352] recon/updateAppionDB.py:
 	  ----------------------------------------------------------------------
@@ -3228,7 +3236,7 @@
 	* [r1347] bin/tiltaligner.py: theta calc fix
 	* [r1346] bin/ApTiltPicker.py: add rmsd, allow 0 theta
 
-2007-12-05  Denis Fellman
+2007-12-05  Denis Fellmann
 
 	* [r1345] lib/apDatabase.py:
 	  ----------------------------------------------------------------------
@@ -3237,7 +3245,7 @@
 	  lib/apDatabase.py
 	  ----------------------------------------------------------------------
 
-2007-11-28  Denis Fellman
+2007-11-28  Denis Fellmann
 
 	* [r1344] bin/satEuler.py, lib/apEuler.py, recon/updateAppionDB.py:
 	  ----------------------------------------------------------------------
