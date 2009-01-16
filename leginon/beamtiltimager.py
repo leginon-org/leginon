@@ -59,6 +59,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tableau_types = ['beam tilt series', 'split image']
 		self.maskradius = 1.0
 		self.increment = 5e-7
+		self.tabscale = None
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
@@ -108,11 +109,13 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.tableauimages = []
 		self.tableauangles = []
 		self.tableaurads = []
+		self.tabimage = None
 
 	def splitTableau(self, image):
 		split = self.settings['tableau split']
-		tabimage = tableau.splitTableau(image, split)
-		self.displayTableau(tabimage)
+		self.tabimage = tableau.splitTableau(image, split)
+		self.tabscale = None
+		self.displayTableau(self.tabimage)
 
 	def insertTableau(self, image, angle, rad):
 		pow = imagefun.power(image)
@@ -132,8 +135,8 @@ class BeamTiltImager(acquisition.Acquisition):
 			ang = self.tableauangles[i]
 			rad = radinc * self.tableaurads[i]
 			tab.insertImage(im, angle=ang, radius=rad)
-		tabimage = tab.render()
-		self.displayTableau(tabimage)
+		self.tabimage,self.tabscale = tab.render()
+		self.displayTableau(self.tabimage)
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None):
 		'''
@@ -301,3 +304,28 @@ class BeamTiltImager(acquisition.Acquisition):
 		corrected = self.corclient.correct(original=imarray, **self.correctargs)
 		return corrected
 
+	def navigate(self, xy):
+		clickrow = xy[1]
+		clickcol = xy[0]
+		try:
+			clickshape = self.tabimage.shape
+		except:
+			self.logger.warning('Can not navigate without a tableau image')
+			return
+		# calculate delta from image center
+		centerr = clickshape[0] / 2.0 - 0.5
+		centerc = clickshape[1] / 2.0 - 0.5
+		deltarow = clickrow - centerr
+		deltacol = clickcol - centerc
+		bt = {}
+		if self.tabscale is not None:
+			bt['x'] = deltacol * self.settings['beam tilt']/self.tabscale
+			bt['y'] = deltarow * self.settings['beam tilt']/self.tabscale
+			oldbt = self.instrument.tem.BeamTilt
+			self.logger.info('Old beam tilt: %.4f, %.4f' % (oldbt['x'],oldbt['y'],))
+			newbt = {'x': oldbt['x'] + bt['x'], 'y': oldbt['y'] + bt['y']}
+			self.instrument.tem.BeamTilt = newbt
+			self.logger.info('New beam tilt: %.4f, %.4f' % (newbt['x'],newbt['y'],))
+			self.simulateTarget()
+		else:
+			self.logger.warning('need more than one beam tilt images in tableau to navigate')

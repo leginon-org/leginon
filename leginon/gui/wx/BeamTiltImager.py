@@ -53,6 +53,8 @@ class Panel(gui.wx.Acquisition.Panel):
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAlignRotationCenter,
 						  id=gui.wx.ToolBar.ID_ALIGN)
+		self.Bind(gui.wx.ImagePanelTools.EVT_IMAGE_CLICKED, self.onImageClicked,
+							self.imagepanel)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -62,6 +64,9 @@ class Panel(gui.wx.Acquisition.Panel):
 
 	def onAlignRotationCenter(self, evt):
 		self.align_dialog.Show()
+
+	def onImageClicked(self, evt):
+		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):

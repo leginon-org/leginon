@@ -68,7 +68,14 @@ class Tableau(object):
 			print 'POS', image['image'][0,0], pos
 			imagefun.pasteInto(image['image'], finalimage, pos)
 
-		return finalimage
+		if len(self.images) > 1:
+			extents = self.imageExtents(self.images[1])
+			scalerow = (extents['row'][0]+extents['row'][1])/2
+			scalecol = (extents['column'][0]+extents['column'][1])/2
+			scale = math.sqrt(scalerow**2+scalecol**2)
+		else:
+			scale = None
+		return finalimage, scale
 
 
 
