@@ -140,6 +140,10 @@ class App(wx.App):
 			if hasattr(self.options, 'clients'):
 				if self.options.clients:
 					clients = self.options.clients.split(',')
+			prevapp = False
+			if hasattr(self.options, 'prevapp'):
+				if self.options.prevapp:
+					prevapp = True
 
 		### try to get session from setup wizard
 		if session is None:
@@ -157,7 +161,7 @@ class App(wx.App):
 			self.abort = True
 		else:
 			self.manager.frame.SetTitle('Leginon:  %s' % (session['name'],))
-			self.manager.run(session, clients)
+			self.manager.run(session, clients, prevapp)
 
 		return True
 

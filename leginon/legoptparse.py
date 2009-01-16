@@ -9,6 +9,8 @@ parser.add_option('-s', '--session', action='store', dest='session',
                   help="name of existing session to continue")
 parser.add_option('-c', '--clients', action='store', dest='clients',
                   help="comma separated list of clients")
+parser.add_option('-p', '--prevapp', action='store_true', dest='prevapp',
+                  help="restart previous application")
 
 (options, args) = parser.parse_args()
 

@@ -117,6 +117,7 @@ if __name__ == '__main__':
 		except:
 			args, kwargs = (launchername,), {}
 	l = gui.wx.Launcher.App(*args, **kwargs)
+	print kwargs
 	l.MainLoop()
 	data.datamanager.exit()
 

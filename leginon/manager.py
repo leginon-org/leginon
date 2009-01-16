@@ -109,7 +109,37 @@ class Manager(node.Node):
 
 		self.launcherdict = {}
 
-	def run(self, session, clients):
+	def waitForLaunchersReady(self, hostnames):
+		print 'Waiting for', hostnames
+		for i in range(10):
+			ready = True
+			for hostname in hostnames:
+				if hostname not in self.initializednodes:
+					ready = False
+			if ready:
+				return
+			time.sleep(1)
+		print 'Launchers not started'
+		sys.exit()
+
+	def launchPreviousApp(self):
+		names,launchers = self.getApplicationHistory()
+		prevname = names[0]
+		prevlaunchers = launchers[prevname]
+		print 'aaaaa'
+
+		hostnames = [p[1] for p in prevlaunchers]
+		self.waitForLaunchersReady(hostnames)
+
+		app = application.Application(self, prevname)
+		app.load()
+		print 'bbb'
+		for alias,hostname in prevlaunchers:
+			print alias,hostname
+			app.setLauncherAlias(alias, hostname)
+		self.runApplication(app)
+
+	def run(self, session, clients, prevapp=False):
 		self.session = session
 		self.frame.session = self.session
 
@@ -122,6 +152,9 @@ class Manager(node.Node):
 				self.addLauncher(client, 55555)
 			except Exception, e:
 				self.logger.warning('Failed to add launcher: %s' % e)
+
+		if prevapp:
+			threading.Thread(target=self.launchPreviousApp).start()
 
 	def getSessionByName(self, name):
 		qsession = data.SessionData(name=name)
