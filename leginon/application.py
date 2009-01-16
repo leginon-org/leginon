@@ -176,15 +176,15 @@ class Application(object):
 		if name is None:
 			name = self.getName()
 		instance = data.ApplicationData(name=name)
-		applicationdatalist = self.node.research(datainstance=instance)
+		applicationdatalist = instance.query()
 		try:
 			appdata = applicationdatalist[0]
 		except IndexError:
 			raise ValueError('no such application')
 		nodeinstance = data.NodeSpecData(application=appdata)
-		self.nodespecs = self.node.research(datainstance=nodeinstance)
+		self.nodespecs = nodeinstance.query()
 		bindinginstance = data.BindingSpecData(application=appdata)
-		self.bindingspecs = self.node.research(datainstance=bindinginstance)
+		self.bindingspecs = bindinginstance.query()
 		self.applicationdata = appdata
 		## create a copy so we can modify it
 		self.data = data.ApplicationData(initializer=appdata)
