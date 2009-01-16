@@ -22,10 +22,19 @@ class PlotPanel(wxmpl.PlotPanel):
 
 if __name__ == '__main__':
 	import wx
+
+	import numextension
+	from pyami import mrc
+	from pyami import imagefun
+	import sys
+	im = mrc.read(sys.argv[1])
+	pow = imagefun.power(im)
+	b = numextension.radialPower(pow, 5, 20)
+
 	app = wx.PySimpleApp()
 	frame = wx.Frame(None, -1, title='My Plot')
 	plotpanel = PlotPanel(frame, -1)
-	b = [2,3,5,4,3]
+	#b = [2,3,5,4,3]
 	plotpanel.plot(b)
 	frame.Show()
 	app.MainLoop()
