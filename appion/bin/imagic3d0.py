@@ -122,7 +122,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
 			path = clusterdata['path']['path']
 		elif self.params['imagicClusterId'] is not None:
-			clusterdata = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
+			clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 			path = clusterdata['path']['path']
 		else:
 			apDisplay.printError("class averages not in the database")
@@ -318,7 +318,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		elif self.params['clusterId'] is not None:
 			modelq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
                 elif self.params['imagicClusterId'] is not None:
-                        modelq['imagicclusterclass'] = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
+                        modelq['imagicclusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 		modelq['projections'] = self.params['projections']
 		modelq['euler_ang_inc'] = self.params['euler_ang_inc']
 		modelq['ham_win'] = self.params['ham_win']
@@ -378,7 +378,7 @@ class imagic3d0Script(appionScript.AppionScript):
 			if self.params['clusterId'] is not None:
 				clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
             		elif self.params['imagicClusterId'] is not None:
-                        	clusterdata = appionData.ApImagicClusteringStackData.direct_query(self.params['imagicClusterId'])
+                        	clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 			self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
 			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
  			self.params['apix'] = clusterdata['clusterrun']['pixelsize']

@@ -115,7 +115,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		return 
 
 	def insertClusterStack(self, clusternumber, insert=False):
-		clusterstackq = appionData.ApImagicClusteringStackData()
+		clusterstackq = appionData.ApClusteringStackData()
 		clusterstackq['num_classes'] = clusternumber
 		clusterstackq['avg_imagicfile'] = "classums_"+str(clusternumber)+"_imagesignored_"+\
 			str(self.params['ignore_images'])+"_membersignored_"+str(self.params['ignore_members'])

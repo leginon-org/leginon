@@ -635,7 +635,7 @@ class ApClusteringStackData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApClusteringRunData=ApClusteringRunData
 
-class ApImagicClusteringStackData(Data):
+class ApClusteringStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('num_classes', int),
@@ -1187,7 +1187,7 @@ class ApImagic3d0Data(Data):
 			('norefclass', ApNoRefClassRunData),
 			('reclass', ApImagicReclassifyData),
 			('clusterclass', ApClusteringStackData),
-			('imagicclusterclass', ApImagicClusteringStackData),
+			('imagicclusterclass', ApClusteringStackData),
 			('boxsize', int),
 			('pixelsize', float),
 			('symmetry', ApSymmetryData),
