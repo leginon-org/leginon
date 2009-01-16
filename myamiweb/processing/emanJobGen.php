@@ -78,7 +78,7 @@ elseif ($_POST['submitjob']) {
 	$particle = new particledata();
 
 	$expId = $_GET['expId'];
-
+	$projectId = getProjectFromExpId($expId);
 	$host =$_POST['clustername'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
@@ -101,9 +101,11 @@ elseif ($_POST['submitjob']) {
 	$header = explode('|--|',$_POST['header']);
 	$clusterjob = "## $jobname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
-	$clusterjob.= $appionbin."updateAppionDB.py $jobid R\n\n";
+
+	$clusterjob.= $appionbin."updateAppionDB.py $jobid R $projectId\n\n";
 	$clusterjob.= "# jobId: $jobid\n";
-	$clusterlastline.= $appionbin."updateAppionDB.py $jobid D\nexit\n\n";
+	$clusterjob.= "# projectId: $projectId\n";
+	$clusterlastline.= $appionbin."updateAppionDB.py $jobid D $projectId\nexit\n\n";
 	$f = file_get_contents($tmpjobfile);
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
@@ -781,8 +783,8 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
 	$header.= "#PBS -m e\n";
-	$header.= "#PBS -r n\n\n";
-	$header.= "#PBS -j oe\n";
+	$header.= "#PBS -r n\n";
+	$header.= "#PBS -j oe\n\n";
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
