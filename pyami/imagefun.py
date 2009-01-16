@@ -89,11 +89,14 @@ def power(a, mask_radius=1.0, thresh=3):
 
 	mask_radius = int(mask_radius / 100.0 * pow.shape[0])
 	if mask_radius:
-					center_mask(pow, mask_radius)
+		center_mask(pow, mask_radius)
 
+	return clip_power(pow,thresh)
+
+def clip_power(pow,thresh=3):
 	m = arraystats.mean(pow)
 	s = arraystats.std(pow)
-	minval = m-thresh*s
+	minval = m-thresh*s*0.5
 	maxval = m+thresh*s
 	pow = numpy.clip(pow, minval, maxval)
 
@@ -409,5 +412,5 @@ def taper(im, boundary):
 
 	for sign in (-1,1):
 		for i in range(1,boundary):
-			im[sign*i] = (im[sign*i] + im[sign*i-sign]) / 2.0
-			im[:,sign*i] = (im[:,sign*i] + im[:,sign*i-sign]) / 2.0
+			im[sign*i] = (im[sign*i]*0.1 + im[sign*i-sign]*0.9)
+			im[:,sign*i] = (im[:,sign*i]*0.1 + im[:,sign*i-sign]*0.9)
