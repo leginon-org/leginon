@@ -119,7 +119,7 @@ if ($stackdatas) {
 							$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 							if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 								echo "<li><span>"
-									."<a href='viewstack.php?expId=$expId&imagicClusterId=$clusterid&file=$clusteravgfile'>"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
 									."</span></li>\n";
 							}
