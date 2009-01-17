@@ -9,13 +9,13 @@
 import reference
 import leginondata
 import event
-import gui.wx.Reference
+import gui.wx.BeamFixer
 from pyami import arraystats
 
 class BeamFixer(reference.Reference):
 	# relay measure does events
 	eventinputs = reference.Reference.eventinputs + [event.FixBeamEvent]
-	panelclass = gui.wx.Reference.ReferencePanel
+	panelclass = gui.wx.BeamFixer.BeamFixerPanel
 	def __init__(self, *args, **kwargs):
 		try:
 			watch = kwargs['watchfor']
@@ -26,7 +26,7 @@ class BeamFixer(reference.Reference):
 
 	def processData(self, incoming_data):
 		reference.Reference.processData(self, incoming_data)
-		if isinstance(incoming_data, data.FixBeamData):
+		if isinstance(incoming_data, leginondata.FixBeamData):
 			self.processRequest(incoming_data)
 
 	def acquire(self):
@@ -42,21 +42,24 @@ class BeamFixer(reference.Reference):
 		original_beamshift = self.instrument.tem.BeamShift
 		bestbeamshift = original_beamshift
 		maxvalue = 0
-
-		for beamx in (-1e-6, 1e-6):
+		step = 1e-7
+		for beamx in (-step, 0,step):
 			newbeamx = original_beamshift['x'] + beamx
-			for beamy in (-1e-6, 1e-6):
+			for beamy in (-step, 0,step):
 				newbeamy = original_beamshift['y'] + beamy
 
 				# set scope parameters
 				newbeamshift = {'x': newbeamx, 'y': newbeamy}
 				self.instrument.tem.BeamShift = newbeamshift
+				self.logger.info('change beam shift to: %s' %(newbeamshift))
 
 				# acquire image
 				imagedata = self.acquire()
 
 				# check image
-				meanvalue = arraystats.mean(imagedata['image'])
+				image = imagedata['image']
+				self.setImage(image, 'Image')
+				meanvalue = arraystats.mean(image)
 				if meanvalue > maxvalue:
 					maxvalue = meanvalue
 					bestbeamshift = newbeamshift
