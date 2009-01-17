@@ -44,7 +44,7 @@ function jobform($extra=false) {
         $norefId=$_GET['norefId'];
         $norefClassId=$_GET['norefClassId'];
         $clusterId=$_GET['clusterId'];
-	$imagicClusterId=$_GET['imagicClusterId'];
+//	$imagicClusterId=$_GET['imagicClusterId'];
         $projectId=getProjectFromExpId($expId);
         $sessiondata=getSessionList($projectId,$expId);
         $sessioninfo=$sessiondata['info'];
@@ -119,8 +119,6 @@ function jobform($extra=false) {
                         }
                 }
         }
-	// get parameters from imagicClusterId
-	$imagicClusterParams = $particle->getImagicClusteringParamsForClusterStack($imagicClusterId, $projectId);
 
 	// IMAGIC begins projections with [1] instead of [0]
 	$projections=$_GET['projections'];
@@ -208,7 +206,7 @@ function jobform($extra=false) {
                         echo formatHtmlRow($k,$v);
                 }
         }
-
+/*
         // if coming from new alignment pipeline using imagicClusterId 
         elseif ($imagicClusterId) {
                 $clusterpath = $imagicClusterParams['path'];
@@ -235,7 +233,7 @@ function jobform($extra=false) {
                         echo formatHtmlRow($k,$v);
                 }
         }
-
+*/
 
 	else echo "error: there are no class average runs for the initial model determination";
 	$default_num_classes = $display_keys['# class averages'];
@@ -280,7 +278,7 @@ function jobform($extra=false) {
 	echo "<input type='hidden' name='norefClassId' value=$norefClassId>";
 	echo "<input type='hidden' name='reclassid' value=$reclassId>";
 	echo "<input type='hidden' name='clusterId' value=$clusterId>";
-	echo "<input type='hidden' name='imagicClusterId' value=$imagicClusterId>";	
+//	echo "<input type='hidden' name='imagicClusterId' value=$imagicClusterId>";	
 
 	// keys and documentation for user input values
 	$display_keys = array('itn', 
@@ -359,7 +357,7 @@ function create3d0() {
 	$norefId = $_POST['norefid'];
 	$norefClassId = $_POST['norefClassId'];
 	$clusterId = $_POST['clusterId'];
-	$imagicClusterId = $_POST['imagicClusterId'];
+//	$imagicClusterId = $_POST['imagicClusterId'];
 	$reclassId = $_POST['reclassid'];
 	$outdir = $_POST['output_directory'];
 	$runid = $_POST['runid'];
@@ -393,10 +391,10 @@ function create3d0() {
 	elseif ($clusterId) {
 		$command.=" --clusterId=$clusterId";
 	}
-	elseif ($imagicClusterId) {
+/*	elseif ($imagicClusterId) {
 		$command.=" --imagicClusterId=$imagicClusterId";
 	}
-	else jobform("error: there are no class average runs for the initial model determination");
+*/	else jobform("error: there are no class average runs for the initial model determination");
 	$command.= " --runname=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
 	$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
 	$command.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
