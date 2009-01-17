@@ -53,15 +53,21 @@ class ReferencePanel(gui.wx.Node.Panel):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Test')
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTest,
+											id=gui.wx.ToolBar.ID_PLAY)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
+
+	def onTest(self, evt):
+		self.node.execute()
 
 class MeasureDosePanel(ReferencePanel):
 	icon = 'dose'
