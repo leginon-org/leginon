@@ -100,41 +100,39 @@ if ($stackdatas) {
 				foreach ($clusterruns as $clusterrun) {
 					$clusterrunid = $clusterrun['clusterrunid'];
 					$clusterdatas = $particle->getClusteringStacksForClusteringRun ($clusterrunid, $projectId);
-					$clusterdatasImagic = $particle->getImagicClusteringStacksForClusteringRun ($clusterrunid, $projectId);
 					if ($clusterdatas) {
-						echo "<b>Cluster Run ".$clusterrunid."</b>"
-							.", method='<i>".$clusterrun['method']." (SPIDER) "
-							."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
-						echo "<ul>\n";
+						if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
+							echo "<b>Cluster Run ".$clusterrunid."</b>"
+								.", method='<i> Hierarchical Clustering (IMAGIC)"
+								."</i>', factor list='<i>69 Eigen Images, (eigenimages.img)</i>'\n";
+							echo "<ul>\n";
+						}
+						elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
+							echo "<b>Cluster Run ".$clusterrunid."</b>"
+								.", method='<i>".$clusterrun['method']." (SPIDER) "
+								."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
+							echo "<ul>\n";
+						}
 						foreach ($clusterdatas as $clusterdata) {
 							$clusterid = $clusterdata['clusterid'];
 							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 							$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
-							echo "<li><span>"
-								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-								.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
-								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
-								."[variance]</a>&nbsp;(ID $clusterid) "
-
-								."</span></li>\n";
+							if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
+								echo "<li><span>"
+									."<a href='viewstack.php?expId=$expId&imagicClusterId=$clusterid&file=$clusteravgfile'>"
+									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
+									."</span></li>\n";
+							}
+							elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
+								echo "<li><span>"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
+									."[variance]</a>&nbsp;(ID $clusterid) "
+									."</span></li>\n";
+							}
 						}
 						echo "</ul>\n";
-					}
-					elseif ($clusterdatasImagic) {
-                                                echo "<b>Cluster Run ".$clusterrunid."</b>"
-                                                        .", method='<i> Hierarchical Clustering (IMAGIC)"
-                                                        ."</i>', factor list='<i>69 Eigen Images, (eigenimages.img)</i>'\n";
-                                                echo "<ul>\n";
-                                                foreach ($clusterdatasImagic as $clusterdata) {
-                                                        $clusterid = $clusterdata['clusterid'];
-                                                        $clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'].".img";
-                                                        echo "<li><span>"
-                                                                ."<a href='viewstack.php?expId=$expId&imagicClusterId=$clusterid&file=$clusteravgfile'>"
-                                                                .$clusterdata['num_classes']." Class Averages</a>&nbsp;"
-                                                                ."</span></li>\n";
-                                                }
-                                                echo "</ul>\n";
-	
 					}
 				}
 				echo "</td></tr>\n";
