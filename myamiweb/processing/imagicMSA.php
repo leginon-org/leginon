@@ -52,7 +52,7 @@ function jobform($extra=false)	{
         $alignIds = $particle->getAlignStackIds($expId, $projectId, true);
         $analysisIds = $particle->getAnalysisRuns($expId, $projectId, true);
         $analysisruns=count($analysisIds);
-	
+
 	processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA)",$javafunc);
 
 	// write out errors, if any came up:
