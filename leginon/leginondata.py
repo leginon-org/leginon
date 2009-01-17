@@ -816,6 +816,9 @@ class ZeroLossCheckData(InSessionData):
 class MeasureDoseData(ReferenceRequestData):
 	pass
 
+class FixBeamData(ReferenceRequestData):
+	pass
+
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
@@ -1760,6 +1763,7 @@ class TomographySettingsData(AcquisitionSettingsData):
 			('fixed model', bool),
 			('use lpf', bool),
 			('use wiener', bool),
+			('taper size', int),
 			('use tilt', bool),
 			('wiener max tilt', float),
 			('fit data points', int),
@@ -1779,6 +1783,7 @@ class TomographySimuSettingsData(AcquisitionSettingsData):
 			('fixed model', bool),
 			('use lpf', bool),
 			('use wiener', bool),
+			('taper size', int),
 			('use tilt', bool),
 			('fit data points', int),
 		)
