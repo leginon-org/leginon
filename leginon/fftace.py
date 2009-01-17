@@ -61,7 +61,6 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 		tem = imagedata['scope']['tem']
 		cam = imagedata['camera']['ccdcamera']
 		pixelsize = self.calclient.getPixelSize(mag, tem, cam)
-		print "pixelsize",pixelsize
 		inputparams = {
 			'input': os.path.join(imagedata['session']['image path'],imagedata['filename']+".mrc"),
 			'cs': 2.0,
@@ -71,7 +70,6 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 		}
 
 		### make standard input for ACE 2
-		self.logger.info("Ace2 executable: "+self.ace2exe)
 		commandline = ( self.ace2exe
 			+ " -i " + str(inputparams['input'])
 			+ " -b " + str(inputparams['binby'])
@@ -80,8 +78,7 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 			+ " -a " + str(inputparams['apix']) + "\n" )
 
 		### run ace2
-		self.logger.info("running ace2 at "+time.asctime())
-		self.logger.info(commandline)
+		self.logger.info("run ace2 on %s" % (imagedata['filename']))
 		#aceoutf = open("ace2.out", "a")
 		#aceerrf = open("ace2.err", "a")
 		t0 = time.time()
@@ -126,20 +123,19 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 		avgdf = (self.ctfvalues['defocus1']+self.ctfvalues['defocus2'])/2.0
 		ampconst = 100.0*self.ctfvalues['amplitude_contrast']
 		pererror = 100.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) / avgdf
-		self.logger.info("Defocus: %.3f x %.3f um (%.2f percent error)"%
-			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
-		self.logger.info("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		self.logger.info("Amplitude contrast: %.2f percent"%(ampconst))
 		self.logger.info("Final confidence: %.3f"%(self.ctfvalues['confidence']))
+		self.logger.info("Defocus: %.3f x %.3f um, angle %.2f degress (%.2f %% astigmatism)"%
+			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, self.ctfvalues['angle_astigmatism'],pererror ))
 
 		self.params={}
 		self.params['maxdefocus']=abs(imagedata['scope']['defocus']) + 1e-5
 		self.params['mindefocus']=max(abs(imagedata['scope']['defocus']) - 1e-5,1e-8)
 		if avgdf < self.params['maxdefocus'] or avgdf > self.params['mindefocus']:
-			self.logger.warning("bad defocus estimate, not committing values to database")
+			#self.logger.warning("bad defocus estimate, not committing values to database")
 			self.badprocess = True
 		if ampconst < -0.001 or ampconst > 80.0:
-			self.logger.warning("bad amplitude contrast, not committing values to database")
+			#self.logger.warning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
 
 		## create power spectra jpeg
@@ -153,9 +149,9 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 			pow = numpy.log(pow)
 		except OverflowError:
 			pow = numpy.log(pow+1e-20)
-		mask_radius = int(self.settings['mask radius'] / 100.0 * pow.shape[0])
-		if mask_radius:
-			imagefun.center_mask(pow, mask_radius)
+		#mask_radius = int(self.settings['mask radius'] / 100.0 * pow.shape[0])
+		#if mask_radius:
+	#		imagefun.center_mask(pow, mask_radius)
 
 		return imagefun.clip_power(pow,6)
 
