@@ -466,3 +466,62 @@ class DogPickerDialog(wx.Dialog):
 		npicks = numpy.asarray(picks, dtype=numpy.float32)
 		return npicks
 
+
+
+##
+##
+## Guess Shift Dialog
+##
+##
+
+class GuessShiftDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.parent = parent
+		wx.Dialog.__init__(self, self.parent.frame, -1, "Guess Initial Shift")
+
+		inforow = wx.FlexGridSizer(3, 2, 15, 15)
+
+		gammastr = "%3.3f" % self.parent.data['gamma']
+		label = wx.StaticText(self, -1, "Tilt axis angle (degrees):  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.tiltaxis = FloatEntry(self, -1, allownone=False, chars=5, value=gammastr)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.tiltaxis, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "Vertical is 0 degrees",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		thetastr = "%3.3f" % self.parent.data['theta']
+		label = wx.StaticText(self, -1, "Tilt angle:  ", style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		self.tiltangle = FloatEntry(self, -1, allownone=False, chars=5, value=thetastr)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(self.tiltangle, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+
+		label = wx.StaticText(self, -1, "negative tilted on left,  positive tilted or right",
+			style=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add(label, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+		inforow.Add((1,1), 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+
+		self.cancelguess = wx.Button(self, wx.ID_CANCEL, '&Cancel')
+		self.runguess = wx.Button(self, wx.ID_OK, '&Run')
+		self.Bind(wx.EVT_BUTTON, self.onRunGuessShift, self.runguess)
+		buttonrow = wx.GridSizer(1,2)
+		buttonrow.Add(self.cancelguess, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+		buttonrow.Add(self.runguess, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 0)
+
+		self.sizer = wx.FlexGridSizer(2,1)
+		self.sizer.Add(inforow, 0, wx.EXPAND|wx.ALL, 10)
+		self.sizer.Add(buttonrow, 0, wx.EXPAND|wx.ALL, 5)
+		self.SetSizerAndFit(self.sizer)
+
+	def onRunGuessShift(self, evt):
+		tiltaxis  = self.tiltaxis.GetValue()
+		tiltangle = self.tiltangle.GetValue()
+		self.parent.data['theta'] = tiltangle
+		self.parent.data['gamma'] = tiltaxis
+		self.parent.data['phi']   = tiltaxis
+		self.Close()
+		self.parent.onGuessShift(evt)
+
+

@@ -6,6 +6,7 @@ import sys
 import time
 import wx
 import threading
+import numpy
 ### appion
 import particleLoop2
 import apFindEM
@@ -17,16 +18,7 @@ import apParticle
 import apPeaks
 import apImage
 import ApTiltPicker
-from apTilt import apTiltTransform, apTiltShift, apTiltPair
-try:
-	import radermacher
-except:
-	print "using slow tilt angle calculator"
-	import slowmacher as radermacher
-### numpy/scipy
-import numpy
-import pyami.quietscipy
-from scipy import ndimage, optimize
+from apTilt import apTiltTransform, apTiltShift, apTiltPair, autotilt
 
 ##################################
 ##
@@ -250,99 +242,6 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#---------------------------------------
 	#---------------------------------------
-	def importPicks(self, picks1, picks2, tight=False):
-		t0 = time.time()
-		apDisplay.printMsg("import picks")
-		#print picks1
-		#print self.currentpicks1
-		curpicks1 = numpy.asarray(self.currentpicks1)
-		curpicks2 = numpy.asarray(self.currentpicks2)
-		#print curpicks1
-
-		# get picks
-		apTiltTransform.setPointsFromArrays(curpicks1, curpicks2, self.data)
-		pixdiam = self.params['diam']/self.params['apix']/self.params['bin']
-		if tight is True:
-			pixdiam /= 4.0
-		#print self.data, pixdiam
-		list1, list2 = apTiltTransform.alignPicks2(picks1, picks2, self.data, limit=pixdiam)
-		if list1.shape[0] == 0 or list2.shape[0] == 0:
-			apDisplay.printWarning("No new picks were found")
-
-		# merge picks
-		newpicks1, newpicks2 = apTiltTransform.betterMergePicks(curpicks1, list1, curpicks2, list2)
-		newparts = newpicks1.shape[0] - curpicks1.shape[0]
-
-		# copy over picks
-		self.currentpicks1 = newpicks1
-		self.currentpicks2 = newpicks2
-
-		apDisplay.printMsg("Inserted "+str(newparts)+" new particles in "+apDisplay.timeString(time.time()-t0))
-
-		return True
-
-	#---------------------------------------
-	#---------------------------------------
-	def optimizeAngles(self):
-		apDisplay.printMsg("optimize angles")
-		t0 = time.time()
-		if len(self.currentpicks1) < 5 or len(self.currentpicks2) < 5:
-			apDisplay.printWarning("Not enough particles ot run program on image pair")
-			return
-		### run find theta
-		na1 = numpy.array(self.currentpicks1, dtype=numpy.int32)
-		na2 = numpy.array(self.currentpicks2, dtype=numpy.int32)
-		fittheta = radermacher.tiltang(na1, na2, 5000.0)
-		if fittheta and 'wtheta' in fittheta:
-			theta = fittheta['wtheta']
-			thetadev = fittheta['wthetadev']
-			thetastr = ("%3.3f +/- %2.2f" % (theta, thetadev))
-			tristr = apDisplay.orderOfMag(fittheta['numtri'])+" of "+apDisplay.orderOfMag(fittheta['tottri'])
-			percent = str("%")
-			tristr = (" (%3.1f " % (100.0 * fittheta['numtri'] / float(fittheta['tottri'])))+"%) "
-			apDisplay.printMsg("Tilt angle "+thetastr+tristr)
-			self.data['theta'] = fittheta['wtheta']
-		### run optimize angles
-		lastiter = [80,80,80]
-		count = 0
-		totaliter = 0
-		while max(lastiter) > 75 and count < 30:
-			count += 1
-			lsfit = self.runLeastSquares()
-			lastiter[2] = lastiter[1]
-			lastiter[1] = lastiter[0]
-			lastiter[0] = lsfit['iter']
-			totaliter += lsfit['iter']
-		apDisplay.printMsg("Least Squares: "+str(count)+" rounds, "+str(totaliter)
-			+" iters, rmsd of "+str(round(lsfit['rmsd'],4))+" pixels in "+apDisplay.timeString(time.time()-t0))
-		return
-
-	#---------------------------------------
-	#---------------------------------------
-	def runLeastSquares(self):
-		#SET XSCALE
-		xscale = numpy.array((1,1,1,0,1,1), dtype=numpy.float32)
-		#GET TARGETS
-		a1 = self.currentpicks1
-		a2 = self.currentpicks2
-		if len(a1) > len(a2):
-			print "shorten a1"
-			a1 = a1[0:len(a2),:]
-		elif len(a2) > len(a1):
-			print "shorten a2"
-			a2 = a2[0:len(a1),:]
-		lsfit = apTiltTransform.willsq(a1, a2, self.data['theta'], self.data['gamma'],
-			self.data['phi'], 1.0, self.data['shiftx'], self.data['shifty'], xscale)
-		if lsfit['rmsd'] < 30:
-			self.data['theta']  = lsfit['theta']
-			self.data['gamma']  = lsfit['gamma']
-			self.data['phi']    = lsfit['phi']
-			self.data['shiftx'] = lsfit['shiftx']
-			self.data['shifty']	= lsfit['shifty']
-		return lsfit
-
-	#---------------------------------------
-	#---------------------------------------
 	def getRmsdArray(self):
 		targets1 = self.currentpicks1
 		aligned1 = self.getAlignedArray2()
@@ -363,88 +262,13 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#---------------------------------------
 	#---------------------------------------
-	def getCutoffCriteria(self, errorArray):
-		#do a small minimum filter to  get rid of outliers
-		size = int(len(errorArray)**0.3)+1
-		errorArray2 = ndimage.minimum_filter(errorArray, size=size, mode='wrap')
-		mean = ndimage.mean(errorArray2)
-		stdev = ndimage.standard_deviation(errorArray2)
-		cut = mean + 4.0 * stdev + 2.0
-		return cut
-
-	#---------------------------------------
-	#---------------------------------------
-	def clearBadPicks(self):
-		apDisplay.printMsg("clear bad picks")
-		a1 = self.currentpicks1
-		a2 = self.currentpicks2
-		origpicks = max(len(a1), len(a2))
-		if len(a1) != len(a2):
-			apDisplay.printMsg("uneven arrays, get rid of extra")
-			#uneven arrays, get rid of extra
-			self.currentpicks1 = a1[0:len(a2),:]
-			self.currentpicks2 = a2[0:len(a1),:]
-			return
-		err = self.getRmsdArray()
-		cut = self.getCutoffCriteria(err)
-		a1c = []
-		a2c = []
-		maxerr = 4.0
-		worst1 = []
-		worst2 = []
-		for i,e in enumerate(err):
-			if i != 0 and e > maxerr:
-				if len(worst1) > 0 and maxerr < cut:
-					a1c.append(worst1)
-					a2c.append(worst2)
-				maxerr = e
-				worst1 = a1[i,:]
-				worst2 = a2[i,:]
-			elif e < cut and (i == 0 or e > 0):
-				#good picks
-				a1c.append(a1[i,:])
-				a2c.append(a2[i,:])
-		a1d = numpy.asarray(a1c)
-		a2d = numpy.asarray(a2c)
-		self.currentpicks1 = a1d
-		self.currentpicks2 = a2d
-		newpicks = len(a1d)
-		apDisplay.printMsg("removed "+str(origpicks-newpicks)+" particles")
-		return
-
-	#---------------------------------------
-	#---------------------------------------
-	def deleteFirstPick(self):
-		a1 = self.currentpicks1
-		a2 = self.currentpicks2
-		a1b = a1[1:]
-		a2b = a2[1:]
-		self.currentpicks1 = a1b
-		self.currentpicks2 = a2b
-
-	#---------------------------------------
-	#---------------------------------------
-	def getOverlap(self, image1, image2):
-		t0 = time.time()
-		apDisplay.printMsg("get overlap")
-		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
-		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
-		apDisplay.printMsg("found overlaps of "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
-		self.data['overlap'] = bestOverlap
-
-	#---------------------------------------
-	#---------------------------------------
 	def runTiltAligner(self, imgdata, tiltdata):
-		#set tilt
+		### set tilt
 		tilt1 = apDatabase.getTiltAngleDeg(imgdata)
 		tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
 		theta = abs(tilt2) - abs(tilt1)
-		self.data['theta'] = theta
-		self.data['shiftx'] = 0.0
-		self.data['shifty'] = 0.0
-		self.data['scale'] = 1.0
 
-		#pre-load particle picks
+		### pre-load particle picks
 		picks1 = self.getParticlePicks(imgdata)
 		picks2 = self.getParticlePicks(tiltdata)
 		if len(picks1) < 10 or len(picks2) < 10:
@@ -452,49 +276,33 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			self.badprocess = True
 			return
 
-		#open image file 1
+		### set image file 1
 		imgname  = imgdata['filename']+".dwn.mrc"
 		imgpath  = os.path.join(self.params['rundir'], imgname)
-		img1 = apImage.mrcToArray(imgpath)
 
-		#open tilt file 2
+		### set tilt file 2
 		tiltname = tiltdata['filename']+".dwn.mrc"
 		tiltpath = os.path.join(self.params['rundir'], tiltname)
-		img2 = apImage.mrcToArray(tiltpath)
 
-		#guess the shift
-		t0 = time.time()
-		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, theta, picks1, angsearch=True)
-		self.data['gamma'] = float(bestang)
-		self.data['phi'] = float(bestang)
-		if snr < 2.0:
-			apDisplay.printWarning("Low confidence in initial shift")
+		### set out file
+		outname = (imgname+"-alignment.spi")
+		outfile = os.path.join(self.params['rundir'], "align", outname)
+
+		pixdiam = self.params['diam']/self.params['apix']/self.params['bin']
+
+		### run tilt automation
+		autotilter = autotilt.autoTilt()
+		result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, theta, outfile, pixdiam)
+
+		if result is None:
+			apDisplay.printWarning("Image processing failed")
 			self.badprocess = True
 			return
-		self.currentpicks1 = [origin]
-		self.currentpicks2 = [newpart]
 
-		self.importPicks(picks1, picks2, tight=False)
-		self.deleteFirstPick()
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.clearBadPicks()
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.clearBadPicks()
-		self.importPicks(picks1, picks2, tight=False)
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.clearBadPicks()
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.clearBadPicks()
-		self.importPicks(picks1, picks2, tight=True)
-		self.clearBadPicks()
-		self.optimizeAngles()
-		self.getOverlap(img1,img2)
-		apDisplay.printMsg("completed alignment of "+str(len(self.currentpicks1))
-			+" particle pairs in "+apDisplay.timeString(time.time()-t0))
+		### read alignment results
+		self.data = tiltfile.readData(outfile)
+		self.currentpicks1 = self.data['picks1']
+		self.currentpicks2 = self.data['picks2']
 
 		print self.data
 		# 1. tilt data are copied to self.tiltparams by app

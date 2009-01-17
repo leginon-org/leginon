@@ -16,7 +16,7 @@ from pyami import correlator
 
 #================================
 #================================
-def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
+def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, inittiltaxis=-7.2):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -31,7 +31,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 	"""
 	t0 = time.time()
 	#shrink images
-	bin = 4
+	bin = 2
 	binned1 = apImage.binImg(img1, bin)
 	binned2 = apImage.binImg(img2, bin)
 	#apImage.arrayToJpeg(binned1, "binned1.jpg")
@@ -51,7 +51,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 		#	if snr > bestsnr:	
 		#		bestsnr = snr
 		#		bestangle = angle
-		bestangle = -7.2
+		bestangle = inittiltaxis
 		print "best=", bestsnr, bestangle
 		### finer refine
 		for angle in [bestangle-1, bestangle-0.5, bestangle+0.5, bestangle+1]:
@@ -73,18 +73,17 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 		shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, bestangle, bin)
 		print "best=", bestsnr, bestangle
 	else:
-		bestangle = -4
+		bestangle = 0.0
 		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle, bin)
 
 	if min(abs(shift)) < min(img1.shape)/16.0:
-		print "Warning: Overlap was too close to the edge and possibly wrong."
+		apDisplay.printWarning("Overlap was too close to the edge and possibly wrong.")
 
 	### case 1: find tilted center of first image
-	origin = numpy.asarray(img1.shape)/2.0
-	origin2 = numpy.array([(origin[0]/xfactor+shift[0])/xfactor, origin[1]+shift[1]])
-	#print "origin=",origin
-	#print "origin2=",origin2
-	halfsh = (origin + origin2)/2.0
+	center = numpy.asarray(img1.shape)/2.0
+	newpoint = translatePoint(center, center, shift, bestangle, xfactor)
+	print "newpoint=", newpoint
+	halfsh = (center + newpoint)/2.0
 	origin = halfsh
 
 	### case 2: using a list of picks
@@ -97,12 +96,16 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 				dmin = da
 				origin = pick
 
-	newpart = numpy.array([(origin[0]*xfactor-shift[0])*xfactor, origin[1]-shift[1]])
-	print "origin=",origin, "; newpart=",newpart
+	# origin is pick from image 1
+	# newpart is pick from image 2
+	newpart = translatePoint(origin, center, shift, bestangle, xfactor)
+	newpart2 = numpy.array([(origin[0]*xfactor-shift[0])*xfactor, origin[1]-shift[1]])
+	print "origin=",origin, "; newpart=",newpart, "; newpart2=",newpart2
 	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-t0))
 
 	return origin, newpart, snr, bestangle
 
+	### check to make sure points are not off the edge
 	while newpart[0] < 10:
 		newpart += numpy.asarray((20,0))
 		origin += numpy.asarray((20,0))
@@ -120,82 +123,18 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True):
 
 #================================
 #================================
-def getTiltedShift(img1, img2, tiltdiff, bin, msg=True):
-	"""
-	takes two images tilted 
-	with respect to one another 
-	and tries to find overlap
-	
-	img1 (as numpy array)
-	img2 (as numpy array)
-	tiltdiff (in degrees)
-		negative, img1 is more compressed (tilted)
-		positive, img2 is more compressed (tilted)
-	"""
-
-	### untilt images by stretching and compressing
-	# choose angle s/t compressFactor = 1/stretchFactor
-	# this only works if one image is untilted (RCT) of both images are opposite tilt (OTR)
-	#halftilt = abs(tiltdiff)/2.0
-	halftiltrad = math.acos(math.sqrt(math.cos(abs(tiltdiff)/180.0*math.pi)))
-	# go from zero tilt to half tilt
-	compressFactor = math.cos(halftiltrad)
-	# go from max tilt to half tilt
-	stretchFactor = math.cos(halftiltrad) / math.cos(abs(tiltdiff)/180.0*math.pi)
-	if tiltdiff > 0: 
-		if msg is True:
-			apDisplay.printMsg("compress image 1")
-		untilt1 = transformImage(img1, compressFactor)
-		untilt2 = transformImage(img2, stretchFactor)
-		xfactor = compressFactor
-	else:
-		if msg is True:
-			apDisplay.printMsg("stretch image 1")
-		untilt1 = transformImage(img1, stretchFactor)
-		untilt2 = transformImage(img2, compressFactor)
-		xfactor = stretchFactor
-
-	### filtering was done earlier
-	filt1 = untilt1
-	filt2 = untilt2
-
-	### cross-correlate
-	cc = correlator.cross_correlate(filt1, filt2, pad=True)
-	rad = min(cc.shape)/20.0
-	cc = apImage.highPassFilter(cc, radius=rad)
-	cc = apImage.normRange(cc)
-	cc = blackEdges(cc)
-	cc = apImage.normRange(cc)
-	cc = blackEdges(cc)
-	cc = apImage.normRange(cc)
-	cc = apImage.lowPassFilter(cc, radius=10.0)
-
-	#find peak
-	peakdict = peakfinder.findSubpixelPeak(cc, lpf=0)
-	#import pprint
-	#pprint.pprint(peak)
-	pixpeak = peakdict['subpixel peak']
-	if msg is True:
-		apImage.arrayToJpegPlusPeak(cc, "guess-cross.jpg", pixpeak)
-
-	rawpeak = numpy.array([pixpeak[1], pixpeak[0]]) #swap coord
-	shift = numpy.asarray(correlator.wrap_coord(rawpeak, cc.shape))*bin
-	adjshift = numpy.array([shift[0]*xfactor, shift[1]])
-
-	if msg is True:
-		apDisplay.printMsg("Guessed xy-shift btw two images"
-			+";\n\t SNR= "+str(round(peakdict['snr'],2))
-			+";\n\t halftilt= "+str(round(halftiltrad*180/math.pi, 3))
-			+";\n\t compressFactor= "+str(round(compressFactor, 3))
-			+";\n\t stretchFactor= "+str(round(stretchFactor, 3))
-			+";\n\t xFactor= "+str(round(xfactor, 3))
-			+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
-			+";\n\t shift= "+str(numpy.around(shift, 1))
-			+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
-		)
-
-	return shift, xfactor, peakdict['snr']
-
+def translatePoint(point, center, shift, tiltaxis, xf):
+	(a, b) = point
+	(hx, hy) = center
+	(sx, sy) = shift
+	ang = tiltaxis*math.pi/180.0
+	p1 = ( ((hy-b)*math.cos(ang)*math.sin(ang) + (a-hx)*math.cos(ang)**2 + hx*math.cos(ang))*xf**2 
+			- math.cos(ang)*sx*xf - math.sin(ang)*sy + (a - hx)*math.sin(ang)**2 
+			+ (b - hy)*math.cos(ang)*math.sin(ang) - hx*math.cos(ang) + hx )
+	p2 = ( ((b - hy)*math.sin(ang)**2 + ((hx - a)*math.cos(ang) - hx)*math.sin(ang))*xf**2 
+			+ math.sin(ang)*sx*xf - math.cos(ang)*sy + ((a - hx)*math.cos(ang) + hx)*math.sin(ang) 
+			+ (b - hy)*math.cos(ang)**2 + hy )
+	return (p1,p2)
 
 #================================
 #================================
@@ -255,11 +194,11 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 	#pprint.pprint(peak)
 	pixpeak = peakdict['subpixel peak']
 	if msg is True:
+		print pixpeak
 		apImage.arrayToJpegPlusPeak(cc, "guess-cross-ang"+str(abs(angle))+".jpg", pixpeak)
 
 	rawpeak = numpy.array([pixpeak[1], pixpeak[0]]) #swap coord
 	shift = numpy.asarray(correlator.wrap_coord(rawpeak, cc.shape))*bin
-	adjshift = numpy.array([shift[0]*xfactor, shift[1]])
 
 	if msg is True:
 		apDisplay.printMsg("Found xy-shift btw two images"
@@ -270,7 +209,6 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 			+";\n\t xFactor= "+str(round(xfactor, 3))
 			+";\n\t rawpeak= "+str(numpy.around(rawpeak*bin, 1))
 			+";\n\t shift= "+str(numpy.around(shift, 1))
-			+";\n\t adjshift= "+str(numpy.around(adjshift, 1))
 		)
 
 	return shift, xfactor, peakdict['snr']
@@ -284,7 +222,7 @@ def blackEdges(img, rad=None, black=None):
 	if black is None:
 		black = ndimage.minimum(img[int(rad/2.0):int(shape[0]-rad/2.0), int(rad/2.0):int(shape[1]-rad/2.0)])
 	img2 = img
-	edgesize = 3
+	edgesize = 2
 	#left edge
 	img2[0:edgesize, 0:shape[1]] = black
 	#right edge
@@ -311,22 +249,29 @@ def blackEdges(img, rad=None, black=None):
 #================================
 def transformImage(img, xfactor, angle=0, msg=False):
 	"""
-	stretches or compresses an image only along the x-axis
+	rotates then stretches or compresses an image only along the x-axis
 	"""
+	if xfactor > 1.0:
+		mystr = "_S"
+	else:
+		mystr = "_C"
+
 	if msg is True:
 		if xfactor > 1:
 			apDisplay.printMsg("stretching image by "+str(round(xfactor,3)))
 		else:
 			apDisplay.printMsg("compressing image by "+str(round(xfactor,3)))
+	### image has swapped coordinates (y,x) from particles
 	transMat = numpy.array([[ 1.0, 0.0 ], [ 0.0, 1.0/xfactor ]])
 	#print "transMat\n",transMat
+	#apImage.arrayToJpeg(img, "img"+mystr+".jpg")
 
 	stepimg  = ndimage.rotate(img, -1.0*angle, mode='reflect')
 	stepimg = apImage.frame_cut(stepimg, img.shape)
-	#apImage.arrayToJpeg(stepimg, "rotate.jpg")
+	#apImage.arrayToJpeg(stepimg, "rotate"+mystr+".jpg")
 
 	newimg  = ndimage.affine_transform(stepimg, transMat, mode='reflect')
-	#apImage.arrayToJpeg(newimg, "last_transform.jpg")
+	#apImage.arrayToJpeg(newimg, "last_transform"+mystr+".jpg")
 
 	return newimg
 

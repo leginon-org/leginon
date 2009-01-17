@@ -103,8 +103,8 @@ def saveToTextFile(savedata, filename):
 	f.write( "theta:\t%.5f\n" % ( savedata['theta'], ))
 	f.write( "gamma:\t%.5f\n" % ( savedata['gamma'], ))
 	f.write( "phi:  \t%.5f\n" % ( savedata['phi'], ))
-	f.write( "shiftx:  \t%.5f\n" % ( savedata['phi'], ))
-	f.write( "shifty:  \t%.5f\n" % ( savedata['phi'], ))
+	f.write( "shiftx:  \t%.5f\n" % ( savedata['shiftx'], ))
+	f.write( "shifty:  \t%.5f\n" % ( savedata['shifty'], ))
 	#IMAGE 1
 	f.write( "image 1: \t%s\n"  % ( savedata['image1name'], ))
 	for i in range(len(savedata['picks1'])):

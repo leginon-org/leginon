@@ -48,7 +48,10 @@ def spiderOutLine(num, floatlist):
 
 #===============================
 def spiderInLine(line):
-	bits = line.strip().split()
+	sline = line.strip()
+	if sline[0] == ";":
+		return None
+	bits = sline.split()
 	rownum = int(bits[0])
 	numfloats = int(bits[1])
 	floatlist = []

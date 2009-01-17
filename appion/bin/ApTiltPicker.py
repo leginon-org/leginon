@@ -18,7 +18,7 @@ import apXml
 import apImage
 import apDisplay
 import apParam
-from apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile
+from apTilt import tiltDialog, apTiltTransform, apTiltShift, tiltfile, autotilt
 ## leginon
 import polygon
 import gui.wx.TargetPanel
@@ -59,6 +59,9 @@ class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 		self.filename = filename
 		if filename is None:
 			self.setImage(None)
+		elif filename[-4:] == '.spi':
+			image = apImage.spiderToArray(filename, msg=False)
+			self.setImage(image.astype(numpy.float32))
 		elif filename[-4:] == '.mrc':
 			image = apImage.mrcToArray(filename, msg=False)
 			self.setImage(image.astype(numpy.float32))
@@ -230,10 +233,10 @@ class PickerApp(wx.App):
 	def createMenuButtons(self):
 		self.buttonrow.Add((40,10), 0, wx.ALL, 1)
 
-		if self.inittiltangle is not None:
-			self.shift = wx.Button(self.frame,-1, '&Guess Shift')
-			self.frame.Bind(wx.EVT_BUTTON, self.onGuessShift, self.shift)
-			self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
+		self.shift_dialog = tiltDialog.GuessShiftDialog(self)
+		self.shift = wx.Button(self.frame,-1, '&Guess Shift')
+		self.frame.Bind(wx.EVT_BUTTON, self.onCheckGuessShift, self.shift)
+		self.buttonrow.Add(self.shift, 0, wx.ALL, 1)
 
 		self.clear = wx.Button(self.frame, wx.ID_CLEAR, 'Clear &Worst Picks')
 		self.frame.Bind(wx.EVT_BUTTON, self.onClearBadPicks, self.clear)
@@ -662,6 +665,16 @@ class PickerApp(wx.App):
 		self.panel2.setTargets('Picked', a2b )
 
 	#---------------------------------------
+	def onCheckGuessShift(self, evt):
+		if ( self.data['theta'] == 0.0 
+		 or self.data['gamma'] == 0.0 
+		 or self.data['phi'] == 0.0 ):
+			self.shift_dialog.Show()
+		else:
+			self.onGuessShift(evt)
+		return
+
+	#---------------------------------------
 	def onGuessShift(self, evt):
 		targets1 = self.panel1.getTargets('Picked')
 		targets2 = self.panel2.getTargets('Picked')
@@ -674,51 +687,38 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return False
 
-		self.shift.SetBackgroundColour(wx.Color(200,0,0))
 		#cross-corrlate to get shift
 		img1 = numpy.asarray(self.panel1.imagedata, dtype=numpy.float32)
 		tiltdiff = self.data['theta']
 		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
-
-		origin, newpart, snr, ang = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1)
-
-		self.panel1.setTargets('Picked', [origin])
-		self.panel2.setTargets('Picked', [newpart])
-		self.shift.SetBackgroundColour(self.deselectcolor)
+		tiltaxis = (self.data['phi'] + self.data['gamma'])/2.0
 
 		# snr > than arbitrary value run some other stuff
-		if snr > 2.0 and len(self.picks1) > 10 and len(self.picks2) > 10:
-			#self.onMaskRegion(None)
-			self.onImportPicks(None, msg=False, tight=False)
-			self.deleteFirstPick()
-			#self.onClearBadPicks(None)
-			self.onAutoOptim(None)
-			self.onClearBadPicks(None)
-			self.onClearBadPicks(None)
-			self.onAutoOptim(None)
-			self.onClearBadPicks(None)
-			self.onImportPicks(None, msg=False, tight=False)
-			#self.onClearBadPicks(None)
-			self.onAutoOptim(None)
-			self.onClearBadPicks(None)
-			self.onClearBadPicks(None)
-			self.onAutoOptim(None)
-			self.onClearBadPicks(None)
-			self.onImportPicks(None, msg=False, tight=False)
-			#self.onClearBadPicks(None)
-			self.onAutoOptim(None)
-			self.onClearBadPicks(None)
-			self.onClearBadPicks(None)
-			self.onAutoOptim(None)
-			self.onClearBadPicks(None)
-			self.onImportPicks(None, msg=False, tight=True)
-			self.onClearBadPicks(None)
-			self.onAutoOptim(None)
+		if len(self.picks1) > 10 and len(self.picks2) > 10:
+			### PIPELINE MODE
+
+			### set important parameters
+			imgfile1 = self.panel1.filename
+			imgfile2 = self.panel2.filename
+			outfile = self.data['outfile']
+			pixdiam = self.data['pixdiam']
+
+			### run tilt automation
+			autotilter = autotilt.autoTilt()
+			result = autotilter.processTiltPair(imgfile1, imgfile2, self.picks1, self.picks2, tiltdiff, outfile, pixdiam, tiltaxis)
+
 		else:
-			dialog = wx.MessageDialog(self.frame, 
-				"Unsure about initial shift", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
-			if dialog.ShowModal() == wx.ID_OK:
-				dialog.Destroy()
+			### STAND ALONE MODE
+			#dialog = wx.MessageDialog(self.frame, 
+			#	"Unsure about initial shift", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
+			#if dialog.ShowModal() == wx.ID_OK:
+			#	dialog.Destroy()
+			origin, newpart, snr, ang = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1, True, tiltaxis)
+
+			self.panel1.setTargets('Picked', [origin])
+			self.panel2.setTargets('Picked', [newpart])
+			self.shift.SetBackgroundColour(self.deselectcolor)
+
 		return
 
 	#---------------------------------------
