@@ -181,6 +181,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 #        self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
         self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
         self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
+        self.widgets['taper size'] = IntEntry(self, -1, min=0, allownone=False, chars=3, value='10')
 
         wienersz = wx.GridBagSizer(5,5)
         self.widgets['use wiener'] = wx.CheckBox(self, -1, 'Use Wiener filter phase correlation for tilt <')
@@ -189,6 +190,13 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         wienersz.Add(self.widgets['wiener max tilt'], (0,1), (1,1))
         lab = wx.StaticText(self, -1, 'degrees')
         wienersz.Add(lab, (0,2), (1,1))
+
+        tapersz = wx.GridBagSizer(5,5)
+        lab = wx.StaticText(self, -1, 'edge tapered upto')
+        tapersz.Add(lab, (0,0), (1,1))
+        tapersz.Add(self.widgets['taper size'], (0,1), (1,1))
+        lab = wx.StaticText(self, -1, '% image length')
+        tapersz.Add(lab, (0,2), (1,1))
 
         intsz = wx.GridBagSizer(5, 5)
         intsz.Add(self.widgets['integer'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -228,6 +236,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
         miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.Add(wienersz, (6, 0), (1, 1), wx.ALIGN_CENTER)
+        miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
         #miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
