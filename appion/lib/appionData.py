@@ -631,22 +631,11 @@ class ApClusteringStackData(Data):
 			('var_imagicfile', str),
 			('path', ApPathData),
 			('clusterrun', ApClusteringRunData),
+			('ignore_images', int),
+			('ignore_members', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApClusteringRunData=ApClusteringRunData
-
-class ApClusteringStackData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('num_classes', int),
-			('avg_imagicfile', str),
-			('ignore_images', int),
-			('ignore_members', int),
-			('path', ApPathData),
-			('hidden', bool),
-			('clusterrun', ApClusteringRunData),
-		)
-	typemap = classmethod(typemap)
 
 class ApClusteringParticlesData(Data):
 	def typemap(cls):
