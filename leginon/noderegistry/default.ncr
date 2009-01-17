@@ -144,6 +144,10 @@ type: Utility
 module: reference
 type: Utility
 
+[BeamFixer]
+module: beamfixer
+type: Utility
+
 [RegionFinder]
 module: regionfinder
 type: Pipeline
