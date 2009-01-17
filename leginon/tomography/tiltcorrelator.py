@@ -59,7 +59,7 @@ class Correlator(object):
 	def swapQuadrants(self, image):
 		return imagefun.swap_quadrants(image)
 
-	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False):
+	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False,taper=0):
 		image = imagedata['image']
 		if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
 			raise ValueError
@@ -81,7 +81,11 @@ class Correlator(object):
 		if tiltcorrection:
 			# stage tilt corrector stretchs and updates the image in imagedata according to its stage matrix calibration
 			self.tiltcorrector.undo_tilt(newimagedata)
-		self.correlation.insertImage(newimagedata['image'])
+		image = newimagedata['image']
+		if taper > 0:
+			taperboundary = int((image.shape)[0]*taper*0.01)
+			imagefun.taper(image,taperboundary)
+		self.correlation.insertImage(image)
 		self.channel = channel
 		try:
 			pc = self.correlation.phaseCorrelate(wiener=wiener)

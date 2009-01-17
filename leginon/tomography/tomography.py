@@ -67,6 +67,7 @@ class Tomography(acquisition.Acquisition):
 		'fixed model': False,
 		'use lpf': True,
 		'use wiener': False,
+		'taper size': 10,
 		'use tilt': True,
 		'wiener max tilt': 45,
 		'fit data points': 4,

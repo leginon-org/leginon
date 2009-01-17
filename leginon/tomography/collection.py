@@ -318,7 +318,7 @@ class Collection(object):
 							w = True
 						else:
 							self.logger.info('wiener filter disabled for this tilt')
-					correlation_image = self.correlator.correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=self.settings['use wiener'])
+					correlation_image = self.correlator.correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=self.settings['use wiener'], taper=self.settings['taper size'])
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
