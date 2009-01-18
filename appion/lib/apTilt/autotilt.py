@@ -15,7 +15,7 @@ import apDisplay
 import apPeaks
 import apImage
 import apParam
-from apTilt import apTiltTransform, apTiltShift, apTiltPair, tiltfile
+from apTilt import apTiltTransform, apTiltShift, tiltfile
 try:
 	import radermacher
 except:
