@@ -131,6 +131,14 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 #================================
 #================================
 def translatePoint(point, center, shift, tiltaxis, xf):
+	### take a point in image1 space;
+	#p1 : x[206,444];
+	### translate point to cc-space: rotate about center then compress;
+	#tp1 : tran[xf] . ( rot[-phi] . (p1 - half) + half );
+	### apply xy shift;
+	#tp2 : tp1 - xyshift;
+	### translate point to image2 space: expand then rotate about center;
+	#p2 : rot[phi] . (tran[xf] . tp2  - half) + half;
 	(a, b) = point
 	(hx, hy) = center
 	(sx, sy) = shift
