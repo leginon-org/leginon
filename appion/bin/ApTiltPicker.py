@@ -75,7 +75,7 @@ class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 class PickerApp(wx.App):
 	def __init__(self, mode='default', 
 	 pickshape="circle", pshapesize=24, 
-	 alignshape="square", ashapesize=4,
+	 alignshape="square", ashapesize=6,
 	 worstshape="square", wshapesize=28, 
 	 tiltangle=None, doinit=True):
 		self.mode = mode
@@ -692,6 +692,8 @@ class PickerApp(wx.App):
 		tiltdiff = self.data['theta']
 		img2 = numpy.asarray(self.panel2.imagedata, dtype=numpy.float32)
 		tiltaxis = (self.data['phi'] + self.data['gamma'])/2.0
+		if tiltaxis == 0.0:
+			tiltaxis = -7.2
 
 		# snr > than arbitrary value run some other stuff
 		if len(self.picks1) > 10 and len(self.picks2) > 10:
@@ -706,7 +708,8 @@ class PickerApp(wx.App):
 			### run tilt automation
 			autotilter = autotilt.autoTilt()
 			result = autotilter.processTiltPair(imgfile1, imgfile2, self.picks1, self.picks2, tiltdiff, outfile, pixdiam, tiltaxis)
-
+			if result is True:
+				self.readData(outfile)
 		else:
 			### STAND ALONE MODE
 			#dialog = wx.MessageDialog(self.frame, 

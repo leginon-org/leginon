@@ -16,7 +16,7 @@ from pyami import correlator
 
 #================================
 #================================
-def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, inittiltaxis=-7.2):
+def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, inittiltaxis=-7.2, msg=True):
 	"""
 	takes two images tilted 
 	with respect to one another 
@@ -52,37 +52,43 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 		#		bestsnr = snr
 		#		bestangle = angle
 		bestangle = inittiltaxis
-		print "best=", bestsnr, bestangle
+		if msg is True:
+			print "best=", bestsnr, bestangle
 		### finer refine
 		for angle in [bestangle-1, bestangle-0.5, bestangle+0.5, bestangle+1]:
-			sys.stderr.write(".")
+			if msg is True:
+				sys.stderr.write(".")
 			shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, angle, bin, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
-		print "best=", bestsnr, bestangle
+		if msg is True:
+			print "best=", bestsnr, bestangle
 		### really fine refine
 		for angle in [bestangle-0.2, bestangle-0.1, bestangle+0.1, bestangle+0.2]:
-			sys.stderr.write(".")
+			if msg is True:
+				sys.stderr.write(".")
 			shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, angle, bin, msg=False)
 			if snr > bestsnr:	
 				bestsnr = snr
 				bestangle = angle
-		print "best=", bestsnr, bestangle
+		if msg is True:
+			print "best=", bestsnr, bestangle
 
-		shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, bestangle, bin)
-		print "best=", bestsnr, bestangle
+		shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, bestangle, bin, msg=msg)
+		if msg is True:
+			print "best=", bestsnr, bestangle
 	else:
 		bestangle = 0.0
 		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle, bin)
 
-	if min(abs(shift)) < min(img1.shape)/16.0:
+	if msg and min(abs(shift)) < min(img1.shape)/16.0:
 		apDisplay.printWarning("Overlap was too close to the edge and possibly wrong.")
 
 	### case 1: find tilted center of first image
 	center = numpy.asarray(img1.shape)/2.0
 	newpoint = translatePoint(center, center, shift, bestangle, xfactor)
-	print "newpoint=", newpoint
+	#print "newpoint=", newpoint
 	halfsh = (center + newpoint)/2.0
 	origin = halfsh
 
@@ -100,8 +106,9 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 	# newpart is pick from image 2
 	newpart = translatePoint(origin, center, shift, bestangle, xfactor)
 	newpart2 = numpy.array([(origin[0]*xfactor-shift[0])*xfactor, origin[1]-shift[1]])
-	print "origin=",origin, "; newpart=",newpart, "; newpart2=",newpart2
-	apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-t0))
+	if msg is True:
+		print "origin=",origin, "; newpart=",newpart, "; newpart2=",newpart2
+		apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-t0))
 
 	return origin, newpart, snr, bestangle
 

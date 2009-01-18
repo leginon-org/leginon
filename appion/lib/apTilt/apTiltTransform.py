@@ -500,7 +500,7 @@ def findClosestPick(origpick, picks):
 
 #================================
 #================================
-def alignPicks2(picks1, picks2, data, limit=20.0):
+def alignPicks2(picks1, picks2, data, limit=20.0, msg=True):
 	### create distance dictionary
 	alignpicks2 = a2Toa1Data(picks2, data)
 	sortedDict2 = {}
@@ -531,8 +531,9 @@ def alignPicks2(picks1, picks2, data, limit=20.0):
 	nalignlist2 = numpy.array(alignlist2, dtype=numpy.int32)
 	#transform back
 	nlist2 = a1Toa2Data(nalignlist2, data)
-	apDisplay.printMsg("Aligned "+str(len(nlist1))+" of "+str(len(picks1))+\
-		" particles to "+str(len(nlist2))+" of "+str(len(picks2)))
+	if msg is True:
+		apDisplay.printMsg("Aligned "+str(len(nlist1))+" of "+str(len(picks1))+\
+			" particles to "+str(len(nlist2))+" of "+str(len(picks2)))
 	return nlist1, nlist2
 
 

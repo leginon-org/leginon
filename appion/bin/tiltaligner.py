@@ -16,8 +16,7 @@ import apPeaks
 import apImage
 import apParam
 import ApTiltPicker
-from apTilt import apTiltTransform
-from apTilt import apTiltPair
+from apTilt import apTiltTransform, apTiltPair, autotilt
 
 ##################################
 ##
@@ -28,9 +27,11 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	##### START PRE-DEFINED PARTICLE LOOP FUNCTIONS #####
 	#####################################################
 
+	#=======================================
 	def setProcessingDirName(self):
 		self.processdirname = "tiltalign"
 
+	#=======================================
 	def preLoopFunctions(self):
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
@@ -40,6 +41,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
 		apParam.createDirectory(self.params['pickdatadir'], warning=False)
 
+	#=======================================
 	def postLoopFunctions(self):
 		self.app.frame.Destroy()
 		apDisplay.printMsg("Finishing up")
@@ -47,6 +49,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		apDisplay.printMsg("finished")
 		wx.Exit()
 
+	#=======================================
 	def setupParserOptions(self):
 		### Input value options
 		self.outtypes = ('text','xml','spider','pickle')
@@ -56,6 +59,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.parser.add_option("--pickrunids", dest="pickrunids",
 			help="selection run ids for previous automated picking run", metavar="#,#,#")
 
+	#=======================================
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
@@ -67,6 +71,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			apDisplay.printError("outtype must be one of: "+str(self.outtypes)+"; NOT "+str(self.params['outtype']))
 		return
 
+	#=======================================
 	def getParticleParamsData(self):
 		tiltparamsq = appionData.ApTiltAlignParamsData()
 		tiltparamsq['output_type'] = self.params['outtype']
@@ -79,6 +84,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	##### START PRE-DEFINED APPION LOOP FUNCTIONS #####
 	#####################################################
 
+	#=======================================
 	def loopProcessImage(self, imgdata):
 		"""
 		Over-writes the particleLoop processImage and uses the appionLoop processImage
@@ -119,6 +125,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		#EXTRA DONE DICT CALL
 		self._writeDoneDict(tiltdata['filename'])
 
+	#=======================================
 	def loopCommitToDatabase(self, imgdata):
 		"""
 		Over-writes the particleLoop commit and uses the appionLoop commit
@@ -151,11 +158,13 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	##### END PRE-DEFINED LOOP FUNCTIONS #####
 	##########################################
 
+	#=======================================
 	def insertParticlePeakPairs(self, imgdata, tiltdata, transdata):
 		if transdata is not None:
 			apParticle.insertParticlePeakPairs(self.peaktree1, self.peaktree2, self.peakerrors, imgdata, tiltdata, transdata, self.params)
 
-	def getParticlePicks(self, imgdata):
+	#=======================================
+	def getParticlePicks(self, imgdata, msg=True):
 		particles = []
 		if self.params['pickrunids'] is not None:
 			self.params['pickrunidlist'] = self.params['pickrunids'].split(",")
@@ -165,9 +174,11 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				#apDisplay.printMsg("Found "+str(len(newparticles))+" particles for image "+apDisplay.short(imgdata['filename']))
 				particles.extend(newparticles)
 		targets = self.particlesToTargets(particles)
-		apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
+		if msg is True:
+			apDisplay.printMsg("Found "+str(len(targets))+" particles for image "+apDisplay.short(imgdata['filename']))
 		return targets
 
+	#=======================================
 	def particlesToTargets(self, particles):
 		targets = []
 		for p in particles:
@@ -175,11 +186,24 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		ntargets = numpy.array(targets, dtype=numpy.int32)
 		return ntargets
 
+	#=======================================
 	def parseTiltParams(self):
 		theta = self.tiltparams['theta']
 		gamma = self.tiltparams['gamma']
 		phi   = self.tiltparams['phi']
 
+	#=======================================
+	def getExtension(self):
+		if self.params['outtype'] == "text":
+			return "txt"
+		elif self.params['outtype'] == "xml":
+			return "xml"
+		elif self.params['outtype'] == "pickle":
+			return "pickle"
+		else:
+			return "spi"
+
+	#=======================================
 	def processAndSaveAllImages(self):
 		print "Pre-processing images before picking\nNow is a good time to go get a candy bar"
 		count = 0
@@ -215,6 +239,26 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			if count % 30 == 0:
 				sys.stderr.write(" %d left\n" % (total-count))
 
+			### check if automation was already run
+			outfile = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+			if os.path.isfile(outfile):
+				sys.stderr.write(",")
+			else:
+				### set important parameters
+				picks1 =  self.getParticlePicks(imgdata, False)
+				picks2 =  self.getParticlePicks(tiltdata, False)
+				pixdiam = self.params['diam']/self.params['apix']/self.params['bin']
+				tilt1 = apDatabase.getTiltAngleDeg(imgdata)
+				tilt2 = apDatabase.getTiltAngleDeg(tiltdata)
+				tiltdiff = abs(tilt2) - abs(tilt1)
+				tiltaxis = -7.2
+				### run tilt automation
+				autotilter = autotilt.autoTilt()
+				result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, tiltdiff, outfile, pixdiam, tiltaxis, msg=False)
+				sys.stderr.write("%")
+		return
+
+	#=======================================
 	def getTiltAssess(self, imgdata, tiltdata):
 		ass1 = apDatabase.getImgCompleteStatus(imgdata)
 		ass2 = apDatabase.getImgCompleteStatus(tiltdata)
@@ -224,6 +268,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			return True
 		return None
 
+	#=======================================
 	def runTiltAligner(self, imgdata, tiltdata):
 		#reset targets
 		self.app.onClearPicks(None)
@@ -264,7 +309,11 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.app.panel2.openImageFile(tiltpath)
 
 		#guess the shift
-		self.app.onGuessShift(None)
+		outfile = self.app.data['outfile']
+		if not os.path.isfile(outfile):
+			self.app.onGuessShift(None)
+		else:
+			self.app.readData(outfile)
 		time.sleep(1)
 
 		#run the picker

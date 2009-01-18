@@ -31,7 +31,7 @@ class autoTilt(object):
 
 	#---------------------------------------
 	#---------------------------------------
-	def importPicks(self, picks1, picks2, tight=False):
+	def importPicks(self, picks1, picks2, tight=False, msg=True):
 		t0 = time.time()
 		#print picks1
 		#print self.currentpicks1
@@ -45,25 +45,26 @@ class autoTilt(object):
 		if tight is True:
 			pixdiam /= 4.0
 		#print self.data, pixdiam
-		list1, list2 = apTiltTransform.alignPicks2(picks1, picks2, self.data, limit=pixdiam)
+		list1, list2 = apTiltTransform.alignPicks2(picks1, picks2, self.data, limit=pixdiam, msg=msg)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
 			apDisplay.printWarning("No new picks were found")
 
 		# merge picks
-		newpicks1, newpicks2 = apTiltTransform.betterMergePicks(curpicks1, list1, curpicks2, list2)
+		newpicks1, newpicks2 = apTiltTransform.betterMergePicks(curpicks1, list1, curpicks2, list2, msg=msg)
 		newparts = newpicks1.shape[0] - curpicks1.shape[0]
 
 		# copy over picks
 		self.currentpicks1 = newpicks1
 		self.currentpicks2 = newpicks2
 
-		apDisplay.printMsg("Inserted "+str(newparts)+" new particles in "+apDisplay.timeString(time.time()-t0))
+		if msg is True:
+			apDisplay.printMsg("Inserted "+str(newparts)+" new particles in "+apDisplay.timeString(time.time()-t0))
 
 		return True
 
 	#---------------------------------------
 	#---------------------------------------
-	def optimizeAngles(self):
+	def optimizeAngles(self, msg=True):
 		t0 = time.time()
 		### run find theta
 		na1 = numpy.array(self.currentpicks1, dtype=numpy.int32)
@@ -72,11 +73,11 @@ class autoTilt(object):
 		if fittheta and 'wtheta' in fittheta:
 			theta = fittheta['wtheta']
 			thetadev = fittheta['wthetadev']
-			thetastr = ("%3.3f +/- %2.2f" % (theta, thetadev))
-			tristr = apDisplay.orderOfMag(fittheta['numtri'])+" of "+apDisplay.orderOfMag(fittheta['tottri'])
-			percent = str("%")
-			tristr = (" (%3.1f " % (100.0 * fittheta['numtri'] / float(fittheta['tottri'])))+"%) "
-			apDisplay.printMsg("Tilt angle "+thetastr+tristr)
+			if msg is True:
+				thetastr = ("%3.3f +/- %2.2f" % (theta, thetadev))
+				tristr = apDisplay.orderOfMag(fittheta['numtri'])+" of "+apDisplay.orderOfMag(fittheta['tottri'])
+				tristr = (" (%3.1f " % (100.0 * fittheta['numtri'] / float(fittheta['tottri'])))+"%) "
+				apDisplay.printMsg("Tilt angle "+thetastr+tristr)
 			self.data['theta'] = fittheta['wtheta']
 		### run optimize angles
 		lastiter = [80,80,80]
@@ -89,8 +90,9 @@ class autoTilt(object):
 			lastiter[1] = lastiter[0]
 			lastiter[0] = lsfit['iter']
 			totaliter += lsfit['iter']
-		apDisplay.printMsg("Least Squares: "+str(count)+" rounds, "+str(totaliter)
-			+" iters, rmsd of "+str(round(lsfit['rmsd'],4))+" pixels in "+apDisplay.timeString(time.time()-t0))
+			if msg is True:
+				apDisplay.printMsg("Least Squares: "+str(count)+" rounds, "+str(totaliter)
+				+" iters, rmsd of "+str(round(lsfit['rmsd'],4))+" pixels in "+apDisplay.timeString(time.time()-t0))
 		return
 
 	#---------------------------------------
@@ -162,12 +164,13 @@ class autoTilt(object):
 
 	#---------------------------------------
 	#---------------------------------------
-	def clearBadPicks(self):
+	def clearBadPicks(self, msg=True):
 		a1 = self.currentpicks1
 		a2 = self.currentpicks2
 		origpicks = max(len(a1), len(a2))
 		if len(a1) != len(a2):
-			apDisplay.printMsg("uneven arrays, get rid of extra")
+			if msg is True:
+				apDisplay.printMsg("uneven arrays, get rid of extra")
 			self.currentpicks1 = a1[0:len(a2),:]
 			self.currentpicks2 = a2[0:len(a1),:]
 			return (a1b, a2b)
@@ -212,7 +215,8 @@ class autoTilt(object):
 		self.currentpicks1 = a1d
 		self.currentpicks2 = a2d
 		newpicks = len(a1d)
-		apDisplay.printMsg("Removed "+str(origpicks-newpicks)+" bad particles")
+		if msg is True:
+			apDisplay.printMsg("Removed "+str(origpicks-newpicks)+" bad particles")
 		return
 
 	#---------------------------------------
@@ -227,11 +231,12 @@ class autoTilt(object):
 
 	#---------------------------------------
 	#---------------------------------------
-	def getOverlap(self, image1, image2):
+	def getOverlap(self, image1, image2, msg=True):
 		t0 = time.time()
 		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
 		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
-		apDisplay.printMsg("Found overlaps of "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
+		if msg is True:
+			apDisplay.printMsg("Found overlaps of "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
 		self.data['overlap'] = bestOverlap
 
 	#---------------------------------------
@@ -271,7 +276,9 @@ class autoTilt(object):
 
 	#---------------------------------------
 	#---------------------------------------
-	def printData(self):
+	def printData(self, msg):
+		if msg is False:
+			return
 		mystr = ( "theta=%.3f, gamma=%.3f, phi=%.3f, rmsd=%.4f, shifts=%.1f,%.1f, numpoints=%d,%d"
 			%(self.data['theta'],self.data['gamma'],self.data['phi'],self.getRmsdArray().mean(),
 			self.data['shiftx'],self.data['shifty'],len(self.currentpicks1),len(self.currentpicks2),
@@ -280,7 +287,7 @@ class autoTilt(object):
 
 	#---------------------------------------
 	#---------------------------------------
-	def processTiltPair(self, imgfile1, imgfile2, picks1, picks2, tiltangle, outfile, pixdiam=20.0, tiltaxis=-7.0):
+	def processTiltPair(self, imgfile1, imgfile2, picks1, picks2, tiltangle, outfile, pixdiam=20.0, tiltaxis=-7.0, msg=True):
 		"""
 		Inputs:
 			imgfile1
@@ -298,7 +305,8 @@ class autoTilt(object):
 
 		### pre-load particle picks
 		if len(picks1) < 10 or len(picks2) < 10:
-			apDisplay.printWarning("Not enough particles ot run program on image pair")
+			if msg is True:
+				apDisplay.printWarning("Not enough particles ot run program on image pair")
 			return None
 
 		### setup tilt data
@@ -324,53 +332,58 @@ class autoTilt(object):
 
 		### guess the shift
 		t0 = time.time()
-		apDisplay.printMsg("Refining tilt axis angles")
-		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, tiltangle, picks1, True, tiltaxis)
+		if msg is True:
+			apDisplay.printMsg("Refining tilt axis angles")
+		origin, newpart, snr, bestang = apTiltShift.getTiltedCoordinates(img1, img2, tiltangle, picks1, True, tiltaxis, msg=msg)
 		self.data['gamma'] = float(bestang)
 		self.data['phi'] = float(bestang)
 		if snr < 2.0:
-			apDisplay.printWarning("Low confidence in initial shift")
+			if msg is True:
+				apDisplay.printWarning("Low confidence in initial shift")
 			return None
 		self.currentpicks1 = [origin]
 		self.currentpicks2 = [newpart]
 
 		### search for the correct particles
-		self.importPicks(picks1, picks2, tight=False)
+		self.importPicks(picks1, picks2, tight=False, msg=msg)
 		if len(self.currentpicks1) < 4:
 			apDisplay.printWarning("Failed to find any particle matches")
 			return None		
 		self.deleteFirstPick()
-		self.printData()
+		self.printData(msg)
 		for i in range(3):
-			self.clearBadPicks()
+			self.clearBadPicks(msg)
 			if len(self.currentpicks1) < 5 or len(self.currentpicks2) < 5:
-				apDisplay.printWarning("Not enough particles to optimize angles")
+				if msg is True:
+					apDisplay.printWarning("Not enough particles to optimize angles")
 				return None
-
-			self.optimizeAngles()
-			self.printData()
-			self.clearBadPicks()
-			self.clearBadPicks()
+			self.optimizeAngles(msg)
+			self.printData(msg)
+			self.clearBadPicks(msg)
+			self.clearBadPicks(msg)
 			if len(self.currentpicks1) < 5 or len(self.currentpicks2) < 5:
-				apDisplay.printWarning("Not enough particles to optimize angles")
+				if msg is True:
+					apDisplay.printWarning("Not enough particles to optimize angles")
 				return None
-			self.optimizeAngles()
-			self.printData()
-			self.clearBadPicks()
-			self.importPicks(picks1, picks2, tight=False)
-		self.clearBadPicks()
-		self.printData()
+			self.optimizeAngles(msg)
+			self.printData(msg)
+			self.clearBadPicks(msg)
+			self.importPicks(picks1, picks2, tight=False, msg=msg)
+		self.clearBadPicks(msg)
+		self.printData(msg)
 		if len(self.currentpicks1) < 5 or len(self.currentpicks2) < 5:
-			apDisplay.printWarning("Not enough particles to optimize angles")
+			if msg is True:
+				apDisplay.printWarning("Not enough particles to optimize angles")
 			return None
-		self.optimizeAngles()
-		self.printData()
-		self.getOverlap(img1,img2)
-		apDisplay.printMsg("Completed alignment of "+str(len(self.currentpicks1))
-			+" particle pairs in "+apDisplay.timeString(time.time()-t0))
+		self.optimizeAngles(msg)
+		self.printData(msg)
+		self.getOverlap(img1,img2,msg)
+		if msg is True:
+			apDisplay.printMsg("Completed alignment of "+str(len(self.currentpicks1))
+				+" particle pairs in "+apDisplay.timeString(time.time()-t0))
 
 		self.saveData(imgfile1, imgfile2, outfile)
-		self.printData()
+		self.printData(msg)
 
 		return True
 
