@@ -141,7 +141,7 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		hack to override appionScript close
 		"""
-		if self.params['keepall'] is False:
+		if self.params['keepall'] is False and self.params['limit'] is None:
 			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.dwn.mrc')
 			apFile.removeFilePattern(pattern)
 		appionScript.AppionScript.close(self)
