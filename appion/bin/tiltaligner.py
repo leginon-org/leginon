@@ -315,7 +315,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		else:
 			self.app.readData(outfile)
 			self.app.onAutoOptim(None)
-		time.sleep(1)
+		time.sleep(0.1)
 
 		#run the picker
 		self.app.MainLoop()
