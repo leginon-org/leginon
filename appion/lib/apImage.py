@@ -17,7 +17,7 @@ from numpy import ma
 import apDisplay
 from apSpider import filters
 ## pyami
-from pyami import mrc, imagefun
+from pyami import mrc, imagefun, spider
 
 #=========================
 def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
@@ -513,6 +513,29 @@ def arrayToMrc(numer, filename, msg=True):
 		apDisplay.printMsg("writing MRC: "+apDisplay.short(filename)+\
 			" size:"+str(numer.shape)+" dtype:"+str(numer.dtype))
 	mrc.write(numer, filename)
+	return
+
+#=========================
+def spiderToArray(filename, msg=True):
+	"""
+	takes a numpy and writes a SPIDER image
+	"""
+	numer = spider.read(filename)
+	if msg is True:
+		apDisplay.printMsg("reading SPIDER image: "+apDisplay.short(filename)+\
+			" size:"+str(numer.shape)+" dtype:"+str(numer.dtype))
+	return numer
+
+#=========================
+def arrayToSpider(numer, filename, msg=True):
+	"""
+	takes a numpy and writes a SPIDER imag
+	"""
+	#numer = numpy.asarray(numer, dtype=numpy.float32)
+	if msg is True:
+		apDisplay.printMsg("writing SPIDER image: "+apDisplay.short(filename)+\
+			" size:"+str(numer.shape)+" dtype:"+str(numer.dtype))
+	spider.write(numer, filename)
 	return
 
 #=========================
