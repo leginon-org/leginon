@@ -126,3 +126,4 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	}
 	
 }
+
