@@ -188,6 +188,8 @@ function runTiltAutoAligner() {
 	} elseif ($pickrunid2 != 'None') {
 		$command .= " --pickrunids=$pickrunid2";
 	}
+	$outdir=$_POST['outdir'];
+	$runname=$_POST['runname'];
 
 	$ftype=$_POST['ftype'];
 	$command .= " --outtype=$ftype";
