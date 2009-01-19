@@ -11,11 +11,11 @@ import apXml
 import apDisplay
 from apSpider import operations
 
-filetypes = ['text', 'xml', 'spider', 'pickle', 'box', 'pik',]
+filetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
 filetypesel = (
-	"Text Files (*.txt)|*.txt" 
+	"|Spider Files (*.spi)|*.spi" 
+	+"Text Files (*.txt)|*.txt" 
 	+ "|XML Files (*.xml)|*.xml"
-	+ "|Spider Files (*.spi)|*.spi" 
 	+ "|Python Pickle File (*.pickle)|*.pickle" )
 #	+ "|EMAN Box File (*.box)|*.box" )
 #	+ "|Pik File (*.pik)|*.pik" )
