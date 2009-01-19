@@ -8,12 +8,14 @@
  */
 
 require "inc/particledata.inc";
+require "inc/leginon.inc";
+require "inc/project.inc";
 require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
 require "inc/jpgraph_bar.php";
 require "inc/histogram.inc";
 require "inc/image.inc";
+
+define (PARTICLE_DB, $_SESSION['processingdb']);
 
 $reconRunId= $_GET['recon'];
 $viewdata = ($_GET['vd']==1) ? true : false;
