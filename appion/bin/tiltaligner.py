@@ -52,7 +52,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#=======================================
 	def setupParserOptions(self):
 		### Input value options
-		self.outtypes = ('text','xml','spider','pickle')
+		self.outtypes = ('spider','text','pickle','xml')
 		self.parser.add_option("--outtype", dest="outtype",
 			default="spider", type="choice", choices=self.outtypes,
 			help="file output type: "+str(self.outtypes), metavar="TYPE")
@@ -314,6 +314,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			self.app.onGuessShift(None)
 		else:
 			self.app.readData(outfile)
+			self.app.onAutoOptim(None)
 		time.sleep(1)
 
 		#run the picker
