@@ -13,8 +13,8 @@ from apSpider import operations
 
 filetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
 filetypesel = (
-	"|Spider Files (*.spi)|*.spi" 
-	+"Text Files (*.txt)|*.txt" 
+	"Spider Files (*.spi)|*.spi" 
+	+ "|Text Files (*.txt)|*.txt" 
 	+ "|XML Files (*.xml)|*.xml"
 	+ "|Python Pickle File (*.pickle)|*.pickle" )
 #	+ "|EMAN Box File (*.box)|*.box" )
