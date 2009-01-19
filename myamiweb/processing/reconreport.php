@@ -92,7 +92,7 @@ $stackfile=$stackparams['path']."/".$stackparams['name'];
 $res = $particle->getHighestResForRecon($refinerun['DEF_id']);
 $avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
 if ($avgmedjump['count'] > 0) {
-	$avgmedjumpstr .= "<A HREF='eulergraph.php?hg=1&recon=$refinerun[DEF_id]'>";
+	$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$refinerun[DEF_id]'>";
 	$avgmedjumpstr .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
 } else
 	$avgmedjumpstr = NULL;

@@ -61,7 +61,7 @@ foreach ($reconRuns as $recon) {
 	$symdata=$particle->getSymInfo($initmodel['REF|ApSymmetryData|symmetry']);
 	$avgmedjump = $particle->getAverageMedianJump($reconrunid);
 	if ($avgmedjump['count'] > 0) {
-		$avgmedjumpstr .= "<A HREF='eulergraph.php?hg=1&recon=$reconrunid'>";
+		$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$reconrunid'>";
 		$avgmedjumpstr .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
 	} else $avgmedjumpstr = NULL;
 
