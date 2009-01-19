@@ -4,7 +4,6 @@
 import os
 import sys
 import time
-import wx
 import numpy
 import threading
 import Image
