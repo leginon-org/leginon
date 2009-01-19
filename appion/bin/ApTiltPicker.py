@@ -1237,7 +1237,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def readData(self, filename=None):
-		print filename
+
 		if True: #try:
 
 			filetype = None
@@ -1247,7 +1247,7 @@ class PickerApp(wx.App):
 			if filename is None:
 				filename = os.path.join(self.data['dirname'],self.data['outfile'])
 
-			print filename
+			print "Reading file: %s of type %s"%(filename,filetype)
 			saveddata = tiltfile.readData(filename, filetype)
 
 			if len(saveddata['picks1']) > 2 and len(saveddata['picks2']) > 2:
@@ -1265,13 +1265,13 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def getExtension(self):
 		if self.data['filetypeindex'] == 0:
-			self.data['extension'] = "txt"
-		elif self.data['filetypeindex'] == 1:
-			self.data['extension'] = "xml"
-		elif self.data['filetypeindex'] == 2:
 			self.data['extension'] = "spi"
-		elif self.data['filetypeindex'] == 3:
+		elif self.data['filetypeindex'] == 1:
+			self.data['extension'] = "txt"
+		elif self.data['filetypeindex'] == 2:
 			self.data['extension'] = "pickle"
+		elif self.data['filetypeindex'] == 3:
+			self.data['extension'] = "xml"
 		else:
 			return "spi"
 		return self.data['extension'] 
