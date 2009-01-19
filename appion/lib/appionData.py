@@ -1176,7 +1176,7 @@ class ApImagic3d0Data(Data):
 			('norefclass', ApNoRefClassRunData),
 			('reclass', ApImagicReclassifyData),
 			('clusterclass', ApClusteringStackData),
-			('imagicclusterclass', ApClusteringStackData),
+			#('imagicclusterclass', ApClusteringStackData),
 			('boxsize', int),
 			('pixelsize', float),
 			('symmetry', ApSymmetryData),
@@ -1195,6 +1195,7 @@ class ApImagic3d0Data(Data):
 			('description', str),
 			('path', ApPathData),
 			('hidden', bool),
+			('density', Ap3dDensityData),
 		)
 	typemap = classmethod(typemap)
 
