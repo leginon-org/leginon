@@ -34,8 +34,10 @@ class ApEulerJump(object):
 	def calculateEulerJumpsForEntireRecon(self, reconrunid, stackid=None, sym=None):
 		if sym is None:
 			sym = self.getSymmetry(reconrunid)
+		if re.match("^icos", sym.lower()):
+			apDisplay.printWarning("Processing Icos symmetry "+sym)
 		if not re.match("^[cd][0-9]+$", sym.lower()) and not re.match("^icos", sym.lower()):
-			apDisplay.printWarning("Cannot calculate euler jumps for symmetry: "+sym)
+			apDisplay.printError("Cannot calculate euler jumps for symmetry: "+sym)
 			return
 		### get stack particles
 		if stackid is None:
