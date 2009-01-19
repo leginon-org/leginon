@@ -15,10 +15,11 @@ filetypes = ['spider', 'text', 'xml', 'pickle', 'box', 'pik',]
 filetypesel = (
 	"Spider Files (*.spi)|*.spi" 
 	+ "|Text Files (*.txt)|*.txt" 
+	+ "|Python Pickle File (*.pickle)|*.pickle" 
 	+ "|XML Files (*.xml)|*.xml"
-	+ "|Python Pickle File (*.pickle)|*.pickle" )
-#	+ "|EMAN Box File (*.box)|*.box" )
-#	+ "|Pik File (*.pik)|*.pik" )
+#	+ "|EMAN Box File (*.box)|*.box" 
+#	+ "|Pik File (*.pik)|*.pik" 
+	)
 
 #---------------------------------------	
 """
