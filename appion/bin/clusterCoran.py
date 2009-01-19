@@ -6,7 +6,6 @@ import sys
 import re
 import appionScript
 import apDisplay
-import apAlignment
 import apFile
 import apStack
 import apEMAN

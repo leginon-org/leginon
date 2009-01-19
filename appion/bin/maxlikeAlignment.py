@@ -12,7 +12,6 @@ import subprocess
 #appion
 import appionScript
 import apDisplay
-import apAlignment
 import apFile
 import numpy
 import apTemplate

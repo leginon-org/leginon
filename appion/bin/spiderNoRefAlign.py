@@ -9,7 +9,6 @@ import shutil
 #appion
 import appionScript
 import apDisplay
-import apAlignment
 import apFile
 import apTemplate
 import apStack
