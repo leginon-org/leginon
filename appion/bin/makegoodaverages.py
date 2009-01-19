@@ -157,8 +157,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 
 		### check symmetry
 		symmetry = eulerjump.getSymmetry(self.params['reconid'], msg=True)
-		if not re.match("^[cd][0-9]+$", symmetry.lower()):
-			apDisplay.printWarning("Cannot calculate euler jumps for symmetry: "+symmetry)
+		if not re.match("^[cd][0-9]+$", symmetry.lower()) and not re.match("^icos", symmetry.lower()):
+			apDisplay.printError("Cannot calculate euler jumps for symmetry: "+symmetry)
 			return
 
 		### prepare file
