@@ -1411,16 +1411,18 @@ if __name__ == '__main__':
 
 	params = apParam.convertParserToParams(parser)
 
+	curdir = os.getcwd()
+
 	app = PickerApp(
 		pickshape=params['pickshape'],   pshapesize=params['pshapesize'],
 		alignshape=params['alignshape'], ashapesize=params['ashapesize'],
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
 		tiltangle=params['tiltangle'],
 	)
-	app.openLeftImage(params['img1file'])
-	app.openRightImage(params['img2file'])
+	app.openLeftImage(os.path.join(curdir, params['img1file']))
+	app.openRightImage(os.path.join(curdir, params['img2file']))
 	if params['pickfile'] is not None:
-		app.readData(params['pickfile'])
+		app.readData(os.path.join(curdir, params['pickfile']))
 
 	app.MainLoop()
 
