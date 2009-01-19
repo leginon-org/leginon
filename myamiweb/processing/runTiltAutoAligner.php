@@ -57,7 +57,7 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 	$particle=new particleData;
 	$prtlrunIds = $particle->getParticleRunIds($sessionId, True);
 	$prtlruns = count($prtlrunIds);
-	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'tiltrun'.($prtlruns+1);
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'tiltrun'.($prtlruns+1);
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
@@ -74,7 +74,7 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 		echo"<center><IMG SRC='img/autotiltpicker.png' WIDTH='300'></center><br />\n";
 	}
 
-	createAppionLoopTable($sessiondata, $defrunid, "tiltalign");
+	createAppionLoopTable($sessiondata, $defrunname, "tiltalign");
 
 	if (!$prtlrunIds) {
 		echo"<FONT COLOR='RED'><B>No Particles for this Session</B></FONT>\n";
@@ -162,6 +162,9 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 }
 
 function runTiltAutoAligner() {
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 
 	$command ="tiltAutoAligner.py ";
 
@@ -188,8 +191,7 @@ function runTiltAutoAligner() {
 	} elseif ($pickrunid2 != 'None') {
 		$command .= " --pickrunids=$pickrunid2";
 	}
-	$outdir=$_POST['outdir'];
-	$runname=$_POST['runname'];
+
 
 	$ftype=$_POST['ftype'];
 	$command .= " --outtype=$ftype";
@@ -201,7 +203,7 @@ function runTiltAutoAligner() {
 		if (!($user && $password))
 			createTiltAutoAlignerForm("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'tiltalign',False,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tiltalign',False,True);
 		// if errors:
 		if ($sub)
 			createTiltAutoAlignerForm("<b>ERROR:</b> $sub");

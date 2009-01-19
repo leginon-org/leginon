@@ -72,7 +72,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   $particle=new particleData;
   $prtlrunIds = $particle->getParticleRunIds($sessionId, True);
   $prtlruns = count($prtlrunIds);
-  $defrunid = ($_POST['runid']) ? $_POST['runid'] : 'manrun'.($prtlruns+1);
+  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manrun'.($prtlruns+1);
   $presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
   $prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
   $testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
@@ -84,7 +84,7 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   <TR>
     <TD VALIGN='TOP'>";
 
-  createAppionLoopTable($sessiondata, $defrunid, "extract");
+  createAppionLoopTable($sessiondata, $defrunname, "extract");
 
   if (!$prtlrunIds) {
     echo"<font COLOR='RED'><B>No Particles for this Session</B></font>\n";
@@ -155,6 +155,9 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
 }
 
 function runManualPicker() {
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 
   $command.="manualpicker.py ";
   $apcommand = parseAppionLoopParams($_POST);
@@ -197,7 +200,7 @@ function runManualPicker() {
   }
 
   if ($testimage) {
-  	$runid = $_POST[runid];
+  	$runname = $_POST['runname'];
     	$outdir = $_POST[outdir];
     	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$images = "<table width='600' border='0'>\n";
@@ -206,7 +209,7 @@ function runManualPicker() {
 	$results.= "</td></tr></table>\n";
 	$results.= "<br />\n";
     	$testjpg=ereg_replace(".mrc","",$testimage);
-	$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
+	$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 	$ccclist=array();
 	$images.= writeTestResults($jpgimg,$ccclist);
 	createManualPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$images);

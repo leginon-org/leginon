@@ -128,9 +128,9 @@ function createAce2Form($extra=false) {
 
 // --- parse data and process on submit
 function runAce2() {
-	$expId = $_GET['expId'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-	$outdir=$_POST['outdir'];
 
 	$command.= "pyace2.py ";
 

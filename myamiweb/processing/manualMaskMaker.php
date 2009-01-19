@@ -264,6 +264,9 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 }
 function runMaskMaker() {
 	$process = $_POST['process'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 
 	$assess = $_POST[assess];
 	$newassess= $_POST[newassessname];

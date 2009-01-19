@@ -239,6 +239,9 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	processing_footer();
 }
 function runMaskMaker() {
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 	$process = $_POST['process'];
 
 	$diam = $_POST[diam];

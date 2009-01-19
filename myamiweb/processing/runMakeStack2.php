@@ -352,9 +352,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 }
 
 function runMakestack() {
-	$expId = $_GET['expId'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
-	$outdir = $_POST['outdir'];
 
 	$command.="makestack2.py"." ";
 

@@ -260,7 +260,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$sessioninfo=$sessiondata['info'];
 
 	// Set any existing parameters in form
-	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'tmplrun'.($prtlruns+1);
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'tmplrun'.($prtlruns+1);
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
@@ -277,7 +277,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		echo"<center><IMG SRC='img/findem.png' WIDTH='300'></center><br />\n";
 	}
 
-	createAppionLoopTable($sessiondata, $defrunid, "extract");
+	createAppionLoopTable($sessiondata, $defrunname, "extract");
 
 	if ($numtemplatesused > 1) {
 		echo "<input type='checkbox' name='threadfindem' $threadcheck>\n";
@@ -343,9 +343,10 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 */
 
 function runTemplateCorrelator() {
-	$expId = $_GET['expId'];
-	$outdir = $_POST['outdir'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
+
 	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
@@ -430,13 +431,13 @@ function runTemplateCorrelator() {
 		$results.= "</td></tr></table>\n";
 		$results.= "<br />\n";
 		$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
-		$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
+		$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 		$ccclist=array();
 		$i=1;
 		$templateList=$_POST['templateList'];
 		$templates=split(",", $templateList);
 		foreach ($templates as $tmplt) {
-   			$cccimg=$outdir.$runid."/ccmaxmaps/".$testjpg.".ccmaxmap".$i.".jpg";
+   			$cccimg=$outdir.$runname."/ccmaxmaps/".$testjpg.".ccmaxmap".$i.".jpg";
 			$ccclist[]=$cccimg;
 			$i++;
 		}

@@ -71,7 +71,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	// Set any existing parameters in form
 	$particle=new particleData;
 	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
-	$defrunid = ($_POST['runid']) ? $_POST['runid'] : 'dogrun'.($prtlruns+1);
+	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'dogrun'.($prtlruns+1);
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
@@ -88,7 +88,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 	if ((rand()%2) < 3) {
 		echo"<center><IMG SRC='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
 	}
-	createAppionLoopTable($sessiondata, $defrunid, "extract");
+	createAppionLoopTable($sessiondata, $defrunname, "extract");
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
 	echo "<td class='tablebg'>\n";
 	echo "<b>Particle Diameter:</b><br />\n";
@@ -133,9 +133,9 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 }
 
 function runDogPicker() {
-	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
-	$outdir = $_POST['outdir'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 
 	$command ="dogPicker.py ";
 
@@ -180,7 +180,7 @@ function runDogPicker() {
 
 		if (!($user && $password)) createDogPickerForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'dogpicker',$testimage);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'dogpicker',$testimage);
 		// if errors:
 		if ($sub) createDogPickerForm("<b>ERROR:</b> $sub");
 
@@ -192,9 +192,9 @@ function runDogPicker() {
 			$results.= "</td></tr></table>\n";
 			$results.= "<br />\n";
 			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
-			$jpgimg=$outdir.$runid."/jpgs/".$testjpg.".prtl.jpg";
+			$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
 			$ccclist=array();
-			$cccimg=$outdir.$runid."/dogmaps/".$testjpg.".dogmap1.jpg";
+			$cccimg=$outdir.$runname."/dogmaps/".$testjpg.".dogmap1.jpg";
 			$ccclist[]=$cccimg;
 			$results.=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
 			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);

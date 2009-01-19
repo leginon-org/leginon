@@ -166,9 +166,11 @@ function createJMForm($extra=false, $title='JPEG Maker', $heading='Automated JPE
 }
 
 function runjpgmaker() {
-	$expId = $_GET['expId'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
+
 	$process = $_POST['process'];
-	$outdir = $_POST['outdir'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$runname = $_POST['runname'];
 	$rundir=$outdir.$runname."/";

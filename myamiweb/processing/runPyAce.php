@@ -61,9 +61,9 @@ if (!empty($sessioninfo)) {
 
 // --- parse data and process on submit
 function runPyAce() {
-	$expId = $_GET['expId'];
-	$runid = $_POST['runid'];
-	$outdir=$_POST['outdir'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 
 	$command.= "pyace.py ";
 
@@ -116,7 +116,7 @@ function runPyAce() {
 
 		if (!($user && $password)) createPyAceForm("<b>ERROR:</b> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'ace',False,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'ace',False,True);
 		// if errors:
 		if ($sub) createPyAceForm("<b>ERROR:</b> $sub");
 		exit;
@@ -246,13 +246,13 @@ function createPyAceForm($extra=false) {
 	}
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
-	$defrunid = 'acerun'.($ctfruns+1);
+	$defrunname = 'acerun'.($ctfruns+1);
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 	  <TD VALIGN='TOP'>";
 
-	createAppionLoopTable($sessiondata, $defrunid, "ctf");
+	createAppionLoopTable($sessiondata, $defrunname, "ctf");
 	echo"
 	  </TD>
 	  <TD CLASS='tablebg'>
