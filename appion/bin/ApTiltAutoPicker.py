@@ -66,15 +66,14 @@ if __name__ == '__main__':
 	params = apParam.convertParserToParams(parser)
 	checkConflicts(params)
 
-	curdir = os.getcwd()
 
 	### set important parameters
-	imgfile1 = os.path.join(curdir, params['imgfile1'])
-	imgfile2 = os.path.join(curdir, params['imgfile2'])
-	picks1 = readPickFile(os.path.join(curdir, params['pickfile1']))
-	picks2 = readPickFile(os.path.join(curdir, params['pickfile2']))
+	imgfile1 = params['imgfile1']
+	imgfile2 = params['imgfile2']
+	picks1 = readPickFile(params['pickfile1'])
+	picks2 = readPickFile(params['pickfile2'])
 	theta = params['tiltangle']
-	outfile = os.path.join(curdir, params['outfile'])
+	outfile = params['outfile']
 	pixdiam = params['pixdiam']
 	tiltaxis = params['tiltaxis']
 

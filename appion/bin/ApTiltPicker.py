@@ -1207,8 +1207,8 @@ class PickerApp(wx.App):
 				'shifty': self.data['shifty'],
 				'picks1': self.getArray1(),
 				'picks2': self.getArray2(),
-				'align1': self.getAlignedArray1(),
-				'align2': self.getAlignedArray2(),
+				'align1': self.getAlignedArray2(),
+				'align2': self.getAlignedArray1(),
 				'rmsd': self.getRmsdArray(),
 			}
 			tiltfile.saveData(savedata, filename, filetype)
@@ -1411,7 +1411,6 @@ if __name__ == '__main__':
 
 	params = apParam.convertParserToParams(parser)
 
-	curdir = os.getcwd()
 
 	app = PickerApp(
 		pickshape=params['pickshape'],   pshapesize=params['pshapesize'],
@@ -1419,10 +1418,10 @@ if __name__ == '__main__':
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
 		tiltangle=params['tiltangle'],
 	)
-	app.openLeftImage(os.path.join(curdir, params['img1file']))
-	app.openRightImage(os.path.join(curdir, params['img2file']))
+	app.openLeftImage(params['img1file'])
+	app.openRightImage(params['img2file'])
 	if params['pickfile'] is not None:
-		app.readData(os.path.join(curdir, params['pickfile']))
+		app.readData(params['pickfile'])
 
 	app.MainLoop()
 
