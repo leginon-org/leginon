@@ -300,7 +300,10 @@ def parseLogFile(params):
 				elif elements[0]=='euler2':
 					iteration['euler2']=int(float(elements[1]))
 				elif elements[0]=='xfiles':
-					iteration['xfiles']=float(elements[1])
+					## trying to extract "xfiles" as entered into emanJobGen.php
+					values = elements[1]
+					apix,mass,alito = values.split(',')
+					iteration['xfiles']=float(mass)
 				elif elements[0]=='amask1':
 					iteration['amask1']=float(elements[1])
 				elif elements[0]=='amask2':
