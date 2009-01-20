@@ -245,9 +245,9 @@ foreach ($iterations as $iteration){
 	$html .=")\">$iteration[iteration]</A></TD>\n";
 	$html .= "<TD bgcolor='$bg'>$iteration[ang]&deg;</TD>\n";
 	if ($halfres!='None' && $fscid)
-		$html .= "<td bgcolor='$bg'><a href='fscplot.php?fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscid=$fscid&width=100&height=80&nomargin=TRUE'></a><br />\n";
+		$html .= "<td bgcolor='$bg'><a href='fscplot.php?expId=$expId&fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?expId=$expId&fscid=$fscid&width=100&height=80&nomargin=TRUE'></a><br />\n";
 	elseif ($halfres!='None' && $fscfile) 
-		$html .= "<td bgcolor='$bg'><a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
+		$html .= "<td bgcolor='$bg'><a href='fscplot.php?expId=$expId&fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?expId=$expId&fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a><br />\n";
 	else $html .= "<td bgcolor='$bg'>\n";
 	$html .= "<I>FSC 0.5:</I><br />$halfres<br />\n";
   

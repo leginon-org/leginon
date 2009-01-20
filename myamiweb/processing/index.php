@@ -168,9 +168,9 @@ foreach ($reconRuns as $recon) {
 	// gather resolution/fsc info
 	$reshtml="<table border='0' cellpadding='3' cellspacing='0'><tr><td>\n";
 	if ($halfres!='None' && $fscid)
-		$reshtml .= "<a href='fscplot.php?fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscid=$fscid&width=100&height=80&nomargin=TRUE'></a></td><td>";
+		$reshtml .= "<a href='fscplot.php?expId=$expId&fscid=$fscid&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?expId=$expId&fscid=$fscid&width=100&height=80&nomargin=TRUE'></a></td><td>";
 	elseif ($halfres!='None' && $fscfile) 
-		$reshtml .= "<a href='fscplot.php?fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a></td><td>";
+		$reshtml .= "<a href='fscplot.php?expId=$expId&fscfile=$fscfile&width=800&height=600&apix=$apix&box=$boxsz' target='snapshot'><img src='fscplot.php?expId=$expId&fscfile=$fscfile&width=100&height=80&nomargin=TRUE'></a></td><td>";
 	$reshtml .= "<i>FSC 0.5:</i> $halfres\n";
   	if ($rmeasureres!='None')
 		$reshtml .= "<br /><i>Rmeas:</i> $rmeasureres\n";

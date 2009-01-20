@@ -13,6 +13,9 @@ include ("inc/jpgraph_utils.inc");
 include ("inc/jpgraph_line.php");
 include ("inc/jpgraph_scatter.php");
 require ("inc/leginon.inc");
+require "inc/project.inc";
+
+define (PARTICLE_DB, $_SESSION['processingdb']);
 
 $fsc=$_GET['fscfile'];
 $width=$_GET['width'];
