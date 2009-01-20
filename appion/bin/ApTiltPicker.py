@@ -1033,8 +1033,8 @@ class PickerApp(wx.App):
 			lastiter[1] = lastiter[0]
 			lastiter[0] = self.fitall_dialog.lsfit['iter']
 			totaliter += lastiter[0]
-		apDisplay.printMsg("Least squares: %d rounds, %d iterations, final rmsd %.3f"
-			%(count,totaliter,self.fitall_dialog.lsfit['rmsd']))
+			apDisplay.printMsg("Least squares: %d rounds, %d iterations, final rmsd %.3f"
+				%(count,totaliter,self.fitall_dialog.lsfit['rmsd']))
 		self.fitall_dialog.onApplyLeastSquares(None)
 		self.onMaskRegion(None)
 
