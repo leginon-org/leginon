@@ -57,7 +57,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.presets_client = presets.PresetsClient(self)
 
 		self.lock = threading.RLock()
-		self.reference_target = self.getReferenceTarget()
+		self.reference_target = None
 
 		self.last_processed = None
 
@@ -154,6 +154,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.last_processed = time.time()
 
 	def processRequest(self, request_data):
+		self.reference_target = self.getReferenceTarget()
 		self.lock.acquire()
 		self.setStatus('processing')
 		try:
