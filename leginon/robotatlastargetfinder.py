@@ -696,7 +696,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 																		newcenterimagedata, griddata)
 				if insertion == self.insertion:
 					self.updateAtlasViewTargets()
-
+				if image == targetimages[0]:
+					self.updateReferenceTarget(targets[0])
 				targetlist = self.newTargetList(image=image.data)
 				self.publish(targetlist, database=True, dbforce=True)
 				targetdatalist = []
@@ -883,3 +884,16 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		filename = sep.join(parts)
 		imagedata['filename'] = filename
 
+	def updateReferenceTarget(self, target):
+		imagedata = target[2]
+		row,column = target[1]
+		rows, columns = imagedata['image'].shape
+		delta_row = row - rows/2
+		delta_column = column - columns/2
+		reference_target = self.newReferenceTarget(imagedata, delta_row, delta_column)
+		try:
+			self.publish(reference_target, database=True, pubevent=True)
+		except node.PublishError, e:
+			self.logger.error('Submitting reference target failed')
+		else:
+			self.logger.info('Reference target submitted')
