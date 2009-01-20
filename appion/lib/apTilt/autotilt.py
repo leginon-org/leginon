@@ -163,7 +163,7 @@ class autoTilt(object):
 
 	#---------------------------------------
 	#---------------------------------------
-	def getGoodPicks(self):
+	def getGoodPicks(self, msg):
 		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
 		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
 		numpoints = max(a1.shape[0], a2.shape[0])
@@ -173,15 +173,15 @@ class autoTilt(object):
 			good[len(a2):] = True
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
-		minworsterr = 3.0
-		### always set 5% as bad if cutoff > max rmsd
+		minworsterr = 1.0
 		worstindex = []
 		worsterr = []
-		numbad = int(len(a1)*0.05 + 1.0)
+		### always set 3% as bad if cutoff > max rmsd
+		numbad = int(len(a1)*0.03 + 1.0)
 		for i,e in enumerate(err):
 			if e > minworsterr:
 				### find the worst overall picks
-				if len(worstindex) >= numbad and minworsterr < cut:
+				if len(worstindex) >= numbad:
 					j = numpy.argmin(numpy.asarray(worsterr))
 					### take previous worst pick and make it good
 					k = worstindex[j]
@@ -202,12 +202,16 @@ class autoTilt(object):
 		if good.sum() == 0:
 			good[0] = True
 		#print good
+		if msg is True:
+			sumstr = ("%d of %d good (%d bad) particles; min worst error=%.3f"
+				%(good.sum(),numpoints,numpoints-good.sum(),minworsterr))
+			apDisplay.printMsg(sumstr)
 		return good
 
 	#---------------------------------------
 	#---------------------------------------
 	def clearBadPicks(self, msg=True):
-		good = self.getGoodPicks()
+		good = self.getGoodPicks(msg)
 		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
 		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
 		numpoints = max(a1.shape[0], a2.shape[0])
@@ -219,8 +223,6 @@ class autoTilt(object):
 			if bool(v) is True:
 				b1.append(a1[i])
 				b2.append(a2[i])
-		if msg is True:
-			apDisplay.printMsg("Removed %d,%d of %d particles"%(len(a1)-len(b1), len(a2)-len(b2), numpoints))
 		self.currentpicks1 = numpy.asarray(b1, dtype=numpy.float32)
 		self.currentpicks2 = numpy.asarray(b2, dtype=numpy.float32)
 		return

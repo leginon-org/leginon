@@ -764,8 +764,6 @@ class PickerApp(wx.App):
 			if bool(v) is False:
 				b1.append(a1[i])
 				b2.append(a2[i])
-		apDisplay.printMsg("%d,%d bad particles"%(len(b1),len(b2)))
-		self.statbar.PushStatusText("%d,%d bad particles"%(len(b1),len(b2)), 0)
 		return (b1, b2)
 
 	#---------------------------------------
@@ -779,16 +777,16 @@ class PickerApp(wx.App):
 			good[len(a2):] = True
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
+
 		minworsterr = 1.0
-		### always set 5% as bad if cutoff > max rmsd
 		worstindex = []
 		worsterr = []
-		numbad = int(numpoints*0.03 + 1.0)
-		print numbad
+		### always set 3% as bad if cutoff > max rmsd
+		numbad = int(len(a1)*0.03 + 1.0)
 		for i,e in enumerate(err):
 			if e > minworsterr:
 				### find the worst overall picks
-				if len(worstindex) >= numbad and minworsterr < cut:
+				if len(worstindex) >= numbad:
 					j = numpy.argmin(numpy.asarray(worsterr))
 					### take previous worst pick and make it good
 					k = worstindex[j]
@@ -806,9 +804,12 @@ class PickerApp(wx.App):
 			elif e < cut and (i == 0 or e > 0):
 				### this is a good pick
 				good[i] = True
-		print worstindex, minworsterr
 		if good.sum() == 0:
 			good[0] = True
+		sumstr = ("%d of %d good (%d bad) particles; min worst error=%.3f"
+			%(good.sum(),numpoints,numpoints-good.sum(),minworsterr))
+		apDisplay.printMsg(sumstr)
+		self.statbar.PushStatusText(sumstr, 0)
 		return good
 
 	#---------------------------------------
