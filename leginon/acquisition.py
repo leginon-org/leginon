@@ -118,6 +118,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'save image': True,
 		'wait for process': False,
 		'wait for rejects': False,
+		'wait for reference': False,
 		#'duplicate targets': False,
 		#'duplicate target type': 'focus',
 		'iterations': 1,
@@ -143,6 +144,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftMonitorRequestEvent, 
+											event.FixBeamEvent,
 											event.ImageListPublishEvent, event.ReferenceTargetPublishEvent] \
 											+ navigator.NavigatorClient.eventoutputs
 
@@ -211,6 +213,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.processTargetListQueue(newdata)
 			return
 		self.logger.info('Acquisition.processData')
+		preset_name = self.settings['preset order'][-1]
+		if self.settings['wait for reference']:
+			self.processReferenceTarget(preset_name)
 		self.imagelistdata = data.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
@@ -849,3 +854,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imageid == self.requested_drift:
 			self.requested_drift = driftdata
 			self.received_image_drift.set()
+
+	def processReferenceTarget(self,preset_name):
+		refq = data.ReferenceTargetData(session=self.session)
+		results = refq.query()
+		if not results:
+			return
+		request_data = data.FixBeamData()
+		request_data['session'] = self.session
+		request_data['preset'] = preset_name
+		self.publish(request_data, database=True, pubevent=True, wait=True)

@@ -78,6 +78,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
+		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
+																				'Publish and wait for the reference target')
 		self.widgets['adjust for drift'] = wx.CheckBox(self, -1,
 																				'Adjust targets for drift')
 		self.widgets['drift between'] = wx.CheckBox(self, -1,
@@ -163,9 +165,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['wait for rejects'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['adjust for drift'], (3, 0), (1, 1),
+		sz_misc.Add(self.widgets['wait for reference'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['drift between'], (4, 0), (1, 1),
+		sz_misc.Add(self.widgets['adjust for drift'], (4, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sbszsim, (3,0), (4,1), wx.ALIGN_BOTTOM)
