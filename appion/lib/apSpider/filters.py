@@ -9,7 +9,6 @@ import numpy
 import spyder
 ## appion
 #from apSpider import operations ### fails
-import apImage
 import apParam
 import apDisplay
 try:
