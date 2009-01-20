@@ -9,9 +9,11 @@ CVLIBS = -lm -lobjc -lfftw3 -lgsl -lgslcblas
 #   -g to produce debug data for gdb
 #   -O for optimization
 
-CFLAGS = -O3
 BINPATH=../bin
 CC = gcc 
+SVNDEF := -D'SVN_REV="$(shell svnversion -n .)"'
+CFLAGS := -O3 ${SVNDEF}
+
 
 # --------------------- Code modules ----------------------------
 

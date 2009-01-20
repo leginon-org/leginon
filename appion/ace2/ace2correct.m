@@ -194,7 +194,8 @@ void printFinalCTFParams( CTFParams p, char path[] ) {
 }
 
 int main (int argc, char **argv) {
-	
+	COMPILE_INFO;
+
 	srand((unsigned)time(NULL));
 	
 	CTFParams ctfp = parseACE2CorrectOptions(argc,argv);

@@ -75,7 +75,8 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_params );
 f64 ellipseCircumference( f64 e[] );
 
 int main (int argc, char **argv) {
-	
+	COMPILE_INFO;
+
 	srand((unsigned)time(NULL));
 	
 	struct options opts[] = {

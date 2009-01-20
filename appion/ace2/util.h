@@ -16,6 +16,18 @@
 #include <limits.h>
 #include "cvtypes.h"
 
+# define COMPILE_INFO \
+  fprintf(stderr,\
+ "Program: %s in source %s, Subversion revision %s,\n which was compiled on %s at %s.\n\n",\
+ argv[0],__FILE__,SVN_REV,__DATE__,__TIME__)
+
+# define CITATION \
+  fprintf(stderr,\
+ "Citation: %s.\nE-mail: C Yoshioka <%s>.\n\n",\
+ "Ace 2",\
+ "None",\
+ "craigyk@scripps.edu")
+
 #define ABS(x)			( (x) >  0  ? (x) : -(x) )
 #define MAX(x,y)		( (x) > (y) ? (x) :  (y) )
 #define MIN(x,y)		( (x) < (y) ? (x) :  (y) )
