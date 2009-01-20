@@ -31,7 +31,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 	"""
 	t0 = time.time()
 	#shrink images
-	bin = 2
+	bin = 1
 	binned1 = apImage.binImg(img1, bin)
 	binned2 = apImage.binImg(img2, bin)
 	#apImage.arrayToJpeg(binned1, "binned1.jpg")
@@ -191,6 +191,12 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 	### filtering was done earlier
 	filt1 = untilt1
 	filt2 = untilt2
+
+	if filt1.shape != filt2.shape:
+		newshape = ( max(filt1.shape[0],filt2.shape[0]), max(filt1.shape[1],filt2.shape[1]) )
+		print "Resizing images to: ",newshape
+		filt1 = apImage.frame_constant(filt1, newshape, filt1.mean())
+		filt2 = apImage.frame_constant(filt2, newshape, filt2.mean())
 
 	### cross-correlate
 	cc = correlator.cross_correlate(filt1, filt2, pad=True)
