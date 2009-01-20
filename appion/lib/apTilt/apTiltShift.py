@@ -31,7 +31,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 	"""
 	t0 = time.time()
 	#shrink images
-	bin = 1
+	bin = 2
 	binned1 = apImage.binImg(img1, bin)
 	binned2 = apImage.binImg(img2, bin)
 	#apImage.arrayToJpeg(binned1, "binned1.jpg")
