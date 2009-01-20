@@ -61,7 +61,7 @@ if __name__ == '__main__':
 		help="Particle picks and tilt parameters output file", metavar="FILE")
 	parser.add_option("-d", "--diam", "--pixdiam", dest="pixdiam", type="float",
 		help="Approximate diameter of particle in pixels", metavar="#")
-	parser.add_option("-a", "--tiltaxis", dest="tiltaxis", type="float",
+	parser.add_option("-x", "--tiltaxis", dest="tiltaxis", type="float",
 		help="Approximate tilt axis angle", metavar="#")
 	params = apParam.convertParserToParams(parser)
 	checkConflicts(params)
