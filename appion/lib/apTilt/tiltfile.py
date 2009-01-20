@@ -79,9 +79,6 @@ def saveData(savedata, filename, filetype=None):
 	savedata['filetype'] = filetype
 	savedata['filename'] = os.path.basename(filename)
 
-	if len(savedata['picks1']) != len(savedata['picks2']):
-		return False
-
 	if filetype == 'text':
 		saveToTextFile(savedata, filename)
 	elif filetype == 'xml':
