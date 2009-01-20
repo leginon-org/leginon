@@ -100,8 +100,8 @@ class autoTilt(object):
 		#SET XSCALE
 		xscale = numpy.array((1,1,1,0,1,1), dtype=numpy.float32)
 		#GET TARGETS
-		a1 = self.currentpicks1
-		a2 = self.currentpicks2
+		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
+		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
 		if len(a1) > len(a2):
 			print "shorten a1"
 			a1 = a1[0:len(a2),:]
@@ -136,7 +136,8 @@ class autoTilt(object):
 	def getAlignedArray2(self):
 		apTiltTransform.setPointsFromArrays(self.currentpicks1, self.currentpicks2, self.data)
 		a2b = apTiltTransform.a2Toa1Data(self.currentpicks2, self.data)
-		return a2b
+		a2c = numpy.asarray(a2b, dtype=numpy.float32)
+		return a2c
 
 	#---------------------------------------
 	#---------------------------------------
@@ -160,62 +161,68 @@ class autoTilt(object):
 			cut = self.data['pixdiam']
 		return cut
 
-
 	#---------------------------------------
 	#---------------------------------------
-	def clearBadPicks(self, msg=True):
-		a1 = self.currentpicks1
-		a2 = self.currentpicks2
-		origpicks = max(len(a1), len(a2))
+	def getGoodPicks(self):
+		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
+		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
+		numpoints = max(a1.shape[0], a2.shape[0])
+		good = numpy.zeros((numpoints), dtype=numpy.bool)
 		if len(a1) != len(a2):
-			if msg is True:
-				apDisplay.printMsg("uneven arrays, get rid of extra")
-			self.currentpicks1 = a1[0:len(a2),:]
-			self.currentpicks2 = a2[0:len(a1),:]
-			return (a1b, a2b)
+			good[len(a1):] = True
+			good[len(a2):] = True
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
-		a1c = []
-		a2c = []
 		minworsterr = 3.0
 		### always set 5% as bad if cutoff > max rmsd
-		worst1 = []
-		worst2 = []
+		worstindex = []
 		worsterr = []
 		numbad = int(len(a1)*0.05 + 1.0)
 		for i,e in enumerate(err):
 			if e > minworsterr:
 				### find the worst overall picks
-				if len(worst1) >= numbad and minworsterr < cut:
-					j = numpy.argmax(numpy.asarray(worsterr))
+				if len(worstindex) >= numbad and minworsterr < cut:
+					j = numpy.argmin(numpy.asarray(worsterr))
 					### take previous worst pick and make it good
-					a1c.append(worst1[j])
-					a2c.append(worst2[j])
-					worst1[j] = a1[i,:]
-					worst2[j] = a2[i,:]
+					k = worstindex[j]
+					good[k] = True
+					good[i] = False
+					worstindex[j] = i
 					worsterr[j] = e
+					### increase the min worst err
+					minworsterr = numpy.asarray(worsterr).min()
 				else:
 					### add the worst pick
-					worst1.append(a1[i,:])
-					worst2.append(a2[i,:])
+					good[i] = False
+					worstindex.append(i)
 					worsterr.append(e)
-				### increase the min worst err
-				if e > minworsterr:
-					minworsterr = e
 			elif e < cut and (i == 0 or e > 0):
 				### this is a good pick
-				a1c.append(a1[i,:])
-				a2c.append(a2[i,:])
-		if len(a1c) == 0:
-			a1c.append(a1[0,:])
-			a2c.append(a2[0,:])
-		a1d = numpy.asarray(a1c)
-		a2d = numpy.asarray(a2c)
-		self.currentpicks1 = a1d
-		self.currentpicks2 = a2d
-		newpicks = len(a1d)
+				good[i] = True
+		if good.sum() == 0:
+			good[0] = True
+		#print good
+		return good
+
+	#---------------------------------------
+	#---------------------------------------
+	def clearBadPicks(self, msg=True):
+		good = self.getGoodPicks()
+		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
+		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
+		numpoints = max(a1.shape[0], a2.shape[0])
+		if good.sum() < 2:
+			return
+		b1 = []
+		b2 = []
+		for i,v in enumerate(good):
+			if bool(v) is True:
+				b1.append(a1[i])
+				b2.append(a2[i])
 		if msg is True:
-			apDisplay.printMsg("Removed "+str(origpicks-newpicks)+" bad particles")
+			apDisplay.printMsg("Removed %d,%d of %d particles"%(len(a1)-len(b1), len(a2)-len(b2), numpoints))
+		self.currentpicks1 = numpy.asarray(b1, dtype=numpy.float32)
+		self.currentpicks2 = numpy.asarray(b2, dtype=numpy.float32)
 		return
 
 	#---------------------------------------
@@ -282,7 +289,7 @@ class autoTilt(object):
 			%(self.data['theta'],self.data['gamma'],self.data['phi'],self.getRmsdArray().mean(),
 			self.data['shiftx'],self.data['shifty'],len(self.currentpicks1),len(self.currentpicks2),
 			))
-		apDisplay.printColor(mystr, "green") 
+		apDisplay.printColor(mystr, "green")
 
 	#---------------------------------------
 	#---------------------------------------
@@ -347,7 +354,7 @@ class autoTilt(object):
 		self.importPicks(picks1, picks2, tight=False, msg=msg)
 		if len(self.currentpicks1) < 4:
 			apDisplay.printWarning("Failed to find any particle matches")
-			return None		
+			return None
 		self.deleteFirstPick()
 		self.printData(msg)
 		for i in range(3):
