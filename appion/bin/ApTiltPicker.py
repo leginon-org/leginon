@@ -77,7 +77,7 @@ class PickerApp(wx.App):
 	 pickshape="circle", pshapesize=24, 
 	 alignshape="square", ashapesize=6,
 	 worstshape="square", wshapesize=28, 
-	 tiltangle=None, doinit=True):
+	 tiltangle=None, tiltaxis=None, doinit=True):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
 		self.pshapesize = int(pshapesize)
@@ -86,6 +86,7 @@ class PickerApp(wx.App):
 		self.eshape = self.canonicalShape(worstshape)
 		self.wshapesize = int(wshapesize)
 		self.inittiltangle = tiltangle
+		self.inittiltaxis = tiltaxis
 		wx.App.__init__(self)
 
 	def OnInit(self):
@@ -97,6 +98,9 @@ class PickerApp(wx.App):
 		self.data['dirname'] = ""
 		if self.inittiltangle is not None:
 			self.data['theta'] = self.inittiltangle
+		if self.inittiltaxis is not None:
+			self.data['gamma'] = self.inittiltaxis
+			self.data['phi'] = self.inittiltaxis
 		self.appionloop = None
 		self.filetypes = tiltfile.filetypes
 		self.filetypesel = tiltfile.filetypesel
@@ -749,71 +753,61 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def getBadPicks(self):
-		g1, g2 = self.getGoodPicks()
+		good = self.getGoodPicks()
 		a1 = self.getArray1()
 		a2 = self.getArray2()
-		#b1 = list(set(a1).difference(set(g1)))
-		#b2 = list(set(a2).difference(set(g2)))
+		if good.sum() < 2:
+			return ([],[])
 		b1 = []
-		for pick in a1:
-			if not pick in g1:
-				b1.append(pick)
 		b2 = []
-		for pick in a2:
-			if not pick in g2:
-				b2.append(pick)
-		apDisplay.printMsg(str(len(b1))+" bad particles")
+		for i,v in enumerate(good):
+			if bool(v) is False:
+				b1.append(a1[i])
+				b2.append(a2[i])
+		apDisplay.printMsg("%d,%d bad particles"%(len(b1),len(b2)))
 		return (b1, b2)
 
 	#---------------------------------------
 	def getGoodPicks(self):
 		a1 = self.getArray1()
 		a2 = self.getArray2()
+		numpoints = max(a1.shape[0], a2.shape[0])
+		good = numpy.zeros((numpoints), dtype=numpy.bool)
 		if len(a1) != len(a2):
-			#uneven arrays, get rid of extra
-			a1b = a1[0:len(a2),:]
-			a2b = a2[0:len(a1),:]
-			return (a1b, a2b)
+			good[len(a1):] = True
+			good[len(a2):] = True
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
-		a1c = []
-		a2c = []
 		minworsterr = 3.0
 		### always set 5% as bad if cutoff > max rmsd
-		worst1 = []
-		worst2 = []
+		worstindex = []
 		worsterr = []
 		numbad = int(len(a1)*0.05 + 1.0)
 		for i,e in enumerate(err):
 			if e > minworsterr:
 				### find the worst overall picks
-				if len(worst1) >= numbad and minworsterr < cut:
-					j = numpy.argmax(numpy.asarray(worsterr))
+				if len(worstindex) >= numbad and minworsterr < cut:
+					j = numpy.argmin(numpy.asarray(worsterr))
 					### take previous worst pick and make it good
-					a1c.append(worst1[j])
-					a2c.append(worst2[j])
-					worst1[j] = a1[i,:]
-					worst2[j] = a2[i,:]
+					k = worstindex[j]
+					good[k] = True
+					good[i] = False
+					worstindex[j] = i
 					worsterr[j] = e
+					### increase the min worst err
+					minworsterr = numpy.asarray(worsterr).min()
 				else:
 					### add the worst pick
-					worst1.append(a1[i,:])
-					worst2.append(a2[i,:])
+					good[i] = False
+					worstindex.append(i)
 					worsterr.append(e)
-				### increase the min worst err
-				if e > minworsterr:
-					minworsterr = e
 			elif e < cut and (i == 0 or e > 0):
 				### this is a good pick
-				a1c.append(a1[i,:])
-				a2c.append(a2[i,:])
-		if len(a1c) == 0:
-			a1c.append(a1[0,:])
-			a2c.append(a2[0,:])
-		a1d = numpy.asarray(a1c)
-		a2d = numpy.asarray(a2c)
-
-		return (a1d, a2d)
+				good[i] = True
+		
+		if good.sum() == 0:
+			good[0] = True
+		return good
 
 	#---------------------------------------
 	def getArray1(self):
@@ -1058,13 +1052,22 @@ class PickerApp(wx.App):
 		"""
 		Remove picks with RMSD > mean + 3 * stdev
 		"""
-		a1c, a2c = self.getGoodPicks()
+		good = self.getGoodPicks()
 		a1 = self.getArray1()
-		apDisplay.printMsg( "Eliminated "+str(len(a1)-len(a1c))+" particles")
+		a2 = self.getArray2()
+		if good.sum() < 2:
+			return
+		g1 = []
+		g2 = []
+		for i,v in enumerate(good):
+			if bool(v) is True:
+				g1.append(a1[i])
+				g2.append(a2[i])
+		apDisplay.printMsg( "Eliminated "+str(len(a1)-len(g1))+" particles")
 		self.panel1.setTargets('Worst', [] )
 		self.panel2.setTargets('Worst', [] )
-		self.panel1.setTargets('Picked', a1c )
-		self.panel2.setTargets('Picked', a2c )
+		self.panel1.setTargets('Picked', g1 )
+		self.panel2.setTargets('Picked', g2 )
 		self.onUpdate(None)
 
 	#---------------------------------------
@@ -1389,6 +1392,8 @@ if __name__ == '__main__':
 		help="Particle pick file", metavar="FILE")
 	parser.add_option("-t", "--tiltangle", dest="tiltangle", type="float",
 		help="Initial tilt angle", metavar="#")
+	parser.add_option("-x", "--tiltaxis", dest="tiltaxis", type="float",
+		help="Initial tilt axis angle", metavar="#")
 
 	parser.add_option("-s", "--pick-shape", dest="pickshape",
 		help="Particle picking shape", metavar="SHAPE", 
@@ -1416,7 +1421,7 @@ if __name__ == '__main__':
 		pickshape=params['pickshape'],   pshapesize=params['pshapesize'],
 		alignshape=params['alignshape'], ashapesize=params['ashapesize'],
 		worstshape=params['worstshape'], wshapesize=params['wshapesize'],
-		tiltangle=params['tiltangle'],
+		tiltangle=params['tiltangle'], tiltaxis=params['tiltaxis'],
 	)
 	app.openLeftImage(params['img1file'])
 	app.openRightImage(params['img2file'])
