@@ -1,4 +1,4 @@
-re<?php
+<?php
 /**
  *      The Leginon software is Copyright 2003 
  *      The Scripps Research Institute, La Jolla, CA
