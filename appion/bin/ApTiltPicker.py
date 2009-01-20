@@ -765,6 +765,7 @@ class PickerApp(wx.App):
 				b1.append(a1[i])
 				b2.append(a2[i])
 		apDisplay.printMsg("%d,%d bad particles"%(len(b1),len(b2)))
+		self.statbar.PushStatusText("%d,%d bad particles"%(len(b1),len(b2)), 0)
 		return (b1, b2)
 
 	#---------------------------------------
@@ -778,11 +779,12 @@ class PickerApp(wx.App):
 			good[len(a2):] = True
 		err = self.getRmsdArray()
 		cut = self.getCutoffCriteria(err)
-		minworsterr = 3.0
+		minworsterr = 1.0
 		### always set 5% as bad if cutoff > max rmsd
 		worstindex = []
 		worsterr = []
-		numbad = int(len(a1)*0.05 + 1.0)
+		numbad = int(numpoints*0.03 + 1.0)
+		print numbad
 		for i,e in enumerate(err):
 			if e > minworsterr:
 				### find the worst overall picks
@@ -804,7 +806,7 @@ class PickerApp(wx.App):
 			elif e < cut and (i == 0 or e > 0):
 				### this is a good pick
 				good[i] = True
-		
+		print worstindex, minworsterr
 		if good.sum() == 0:
 			good[0] = True
 		return good
@@ -1069,6 +1071,7 @@ class PickerApp(wx.App):
 		self.panel1.setTargets('Picked', g1 )
 		self.panel2.setTargets('Picked', g2 )
 		self.onUpdate(None)
+		self.statbar.PushStatusText("Removed "+str(len(a1)-len(g1))+" particles", 0)
 
 	#---------------------------------------
 	def onAutoDogPick(self, evt):
@@ -1095,9 +1098,6 @@ class PickerApp(wx.App):
 			dialog.Destroy()
 			return
 		self.dogpick_dialog.Show()
-
-		
-
 
 	#---------------------------------------
 	def onInitParams(self, evt):
@@ -1158,7 +1158,7 @@ class PickerApp(wx.App):
 		except:
 			pass
 		self.onClearPicks(None)
-
+		self.statbar.PushStatusText("Reset all parameters", 0)
 
 	#---------------------------------------
 	def onFileSave(self, evt):
@@ -1194,35 +1194,27 @@ class PickerApp(wx.App):
 				dialog.ShowModal()
 				dialog.Destroy()
 			return False
-
-		if True: #try:
-			filetype = None
-			if self.data['filetypeindex'] is not None:
-				filetype = self.filetypes[self.data['filetypeindex']]
-			filename = os.path.join(self.data['dirname'], self.data['outfile'])
-			savedata = {
-				'image1name': self.data['image1file'],
-				'image2name': self.data['image2file'],
-				'gamma': self.data['gamma'],
-				'theta': self.data['theta'],
-				'phi': self.data['phi'],
-				'shiftx': self.data['shiftx'],
-				'shifty': self.data['shifty'],
-				'picks1': self.getArray1(),
-				'picks2': self.getArray2(),
-				'align1': self.getAlignedArray2(),
-				'align2': self.getAlignedArray1(),
-				'rmsd': self.getRmsdArray(),
-			}
-			tiltfile.saveData(savedata, filename, filetype)
-			self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+self.data['outfile'], 0)
-			return True
-
-		elif False: #except:
-			self.statbar.PushStatusText("ERROR: Saving to file '"+self.data['outfile']+"' failed", 0)
-			dialog = wx.MessageDialog(self.frame, "Saving to file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
-			if dialog.ShowModal() == wx.ID_OK:
-				dialog.Destroy()
+		filetype = None
+		if self.data['filetypeindex'] is not None:
+			filetype = self.filetypes[self.data['filetypeindex']]
+		filename = os.path.join(self.data['dirname'], self.data['outfile'])
+		savedata = {
+			'image1name': self.data['image1file'],
+			'image2name': self.data['image2file'],
+			'gamma': self.data['gamma'],
+			'theta': self.data['theta'],
+			'phi': self.data['phi'],
+			'shiftx': self.data['shiftx'],
+			'shifty': self.data['shifty'],
+			'picks1': self.getArray1(),
+			'picks2': self.getArray2(),
+			'align1': self.getAlignedArray2(),
+			'align2': self.getAlignedArray1(),
+			'rmsd': self.getRmsdArray(),
+		}
+		tiltfile.saveData(savedata, filename, filetype)
+		self.statbar.PushStatusText("Saved "+str(len(targets1))+" particles to "+self.data['outfile'], 0)
+		return True
 
 	#---------------------------------------
 	def onFileOpen(self, evt):
@@ -1240,30 +1232,21 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def readData(self, filename=None):
+		filetype = None
+		if self.data['filetypeindex'] is not None:
+			filetype = self.filetypes[self.data['filetypeindex']]
 
-		if True: #try:
+		if filename is None:
+			filename = os.path.join(self.data['dirname'], self.data['outfile'])
 
-			filetype = None
-			if self.data['filetypeindex'] is not None:
-				filetype = self.filetypes[self.data['filetypeindex']]
+		print "Reading file: %s of type %s"%(filename,filetype)
+		saveddata = tiltfile.readData(filename, filetype)
 
-			if filename is None:
-				filename = os.path.join(self.data['dirname'],self.data['outfile'])
-
-			print "Reading file: %s of type %s"%(filename,filetype)
-			saveddata = tiltfile.readData(filename, filetype)
-
-			if len(saveddata['picks1']) > 2 and len(saveddata['picks2']) > 2:
-				self.panel1.setTargets('Picked', saveddata['picks1'])
-				self.panel2.setTargets('Picked', saveddata['picks2'])
-				self.data.update(saveddata)
-			self.statbar.PushStatusText("Read "+str(len(saveddata['picks1']))+" particles and parameters from file "+filename, 0)
-
-		if False: #except:
-			self.statbar.PushStatusText("ERROR: Opening file '"+self.data['outfile']+"' failed", 0)
-			dialog = wx.MessageDialog(self.frame, "Opening file '"+self.data['outfile']+"' failed", 'Error', wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
+		if len(saveddata['picks1']) > 2 and len(saveddata['picks2']) > 2:
+			self.panel1.setTargets('Picked', saveddata['picks1'])
+			self.panel2.setTargets('Picked', saveddata['picks2'])
+			self.data.update(saveddata)
+		self.statbar.PushStatusText("Read "+str(len(saveddata['picks1']))+" particles and parameters from file "+filename, 0)
 
 	#---------------------------------------
 	def getExtension(self):
