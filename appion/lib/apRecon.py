@@ -388,7 +388,10 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 	tmpf = density+'.tmp.mrc'
 	if lpfilter is True:
 		filtres = 0.6*res
-		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
+		if box > 250:
+			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=2 origin=0,0,0' % (density, tmpf, apix, filtres))
+		else:
+			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
 		apDisplay.printMsg("Low pass filtering model for images")
 		apEMAN.executeEmanCmd(lpcmd)
 	else:
