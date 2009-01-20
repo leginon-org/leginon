@@ -1195,6 +1195,9 @@ class PickerApp(wx.App):
 				dialog.ShowModal()
 				dialog.Destroy()
 			return False
+
+		if len(targets1) != len(targets2):
+			return False
 		filetype = None
 		if self.data['filetypeindex'] is not None:
 			filetype = self.filetypes[self.data['filetypeindex']]
@@ -1241,13 +1244,13 @@ class PickerApp(wx.App):
 			filename = os.path.join(self.data['dirname'], self.data['outfile'])
 
 		print "Reading file: %s of type %s"%(filename,filetype)
-		saveddata = tiltfile.readData(filename, filetype)
+		savedata = tiltfile.readData(filename, filetype)
 
-		if len(saveddata['picks1']) > 2 and len(saveddata['picks2']) > 2:
-			self.panel1.setTargets('Picked', saveddata['picks1'])
-			self.panel2.setTargets('Picked', saveddata['picks2'])
-			self.data.update(saveddata)
-		self.statbar.PushStatusText("Read "+str(len(saveddata['picks1']))+" particles and parameters from file "+filename, 0)
+		if len(savedata['picks1']) > 2 and len(savedata['picks2']) > 2:
+			self.panel1.setTargets('Picked', savedata['picks1'])
+			self.panel2.setTargets('Picked', savedata['picks2'])
+			self.data.update(savedata)
+		self.statbar.PushStatusText("Read "+str(len(savedata['picks1']))+" particles and parameters from file "+filename, 0)
 
 	#---------------------------------------
 	def getExtension(self):
