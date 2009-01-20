@@ -23,19 +23,17 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.initmethods = ('allaverage', 'selectrand', 'randpart', 'template')
+		self.initmethods = ('allaverage', 'selectrand', 'randpart', 'template', 'blob')
 
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
 			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
+		self.parser.add_option("--numrounds", dest="numrounds", type="int",
+			help="Number of AP SR rounds", metavar="#")
 
 		### radii
-		self.parser.add_option("-f", "--first-ring", dest="firstring", type="int", default=2,
-			help="First ring radius for correlation (in pixels)", metavar="#")
-		self.parser.add_option("-l", "--last-ring", dest="lastring", type="int",
-			help="Last ring radius for correlation (in pixels)", metavar="#")
 		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
 			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
 		self.parser.add_option("--hp", "--highpass", dest="highpass", type="int",
@@ -366,6 +364,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			templatefile = self.pickRandomParticle()
 		elif self.params['initmethod'] == 'template':
 			templatefile = self.getTemplate()
+		elif self.params['initmethod'] == 'blob':
+			templatefile = "*"
 		else:
 			apDisplay.printError("unknown initialization method defined: "
 				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
@@ -373,15 +373,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printColor("Running spider this can take awhile","cyan")
 
 		### run the alignment
-		aligntime = time.time()
-		pixrad = int(round(self.params['partrad']/self.stack['apix']/self.params['bin']))
-		alignedstack, self.partlist = alignment.refFreeAlignParticles(
-			spiderstack, templatefile, 
-			self.params['numpart'], pixrad,
-			self.params['firstring'], self.params['lastring'],
-			rundir = ".")
-		aligntime = time.time() - aligntime
-		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
+    create batch file
+    run spider
 
 		### remove large, worthless stack
 		spiderstack = os.path.join(self.params['rundir'], "start.spi")
@@ -394,7 +387,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		inserttime = time.time()
 		if self.params['commit'] is True:
 			self.runtime = aligntime
-			self.insertNoRefRun(alignedstack, imagicstack, insert=True)
+			#self.insertNoRefRun(alignedstack, imagicstack, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
