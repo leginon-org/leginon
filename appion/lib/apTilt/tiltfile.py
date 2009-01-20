@@ -79,6 +79,9 @@ def saveData(savedata, filename, filetype=None):
 	savedata['filetype'] = filetype
 	savedata['filename'] = os.path.basename(filename)
 
+	if len(savedata['picks1']) != len(savedata['picks2']):
+		return False
+
 	if filetype == 'text':
 		saveToTextFile(savedata, filename)
 	elif filetype == 'xml':
@@ -161,19 +164,29 @@ def saveToSpiderFile(savedata, filename):
 	#IMAGE 1
 	f.write( " ; LEFT IMAGE 1: "+savedata['image1name']+" columns: num pickx picky alignx aligny rmsd\n" )
 	for i in range(len(savedata['picks1'])):
-		line = operations.spiderOutputLine(i+1, 6, i+1, 
-			savedata['picks1'][i][0], savedata['picks1'][i][1], 
-			savedata['align1'][i][0], savedata['align1'][i][1],
-			savedata['rmsd'][i])
+		if i < len(savedata['align1']):
+			line = operations.spiderOutputLine(i+1, 6, i+1, 
+				savedata['picks1'][i][0], savedata['picks1'][i][1], 
+				savedata['align1'][i][0], savedata['align1'][i][1],
+				savedata['rmsd'][i])
+		else:
+			line = operations.spiderOutputLine(i+1, 6, i+1, 
+				savedata['picks1'][i][0], savedata['picks1'][i][1], 
+				0.0, 0.0, 0.0)
 		f.write(line)
 
 	#IMAGE 2
 	f.write( " ; RIGHT IMAGE 2: "+savedata['image2name']+" columns: num pickx picky alignx aligny rmsd\n" )
 	for i in range(len(savedata['picks2'])):
-		line = operations.spiderOutputLine(i+1, 6, i+1, 
-			savedata['picks2'][i][0], savedata['picks2'][i][1], 
-			savedata['align2'][i][0], savedata['align2'][i][1],
-			savedata['rmsd'][i])
+		if i < len(savedata['align2']):
+			line = operations.spiderOutputLine(i+1, 6, i+1, 
+				savedata['picks2'][i][0], savedata['picks2'][i][1], 
+				savedata['align2'][i][0], savedata['align2'][i][1],
+				savedata['rmsd'][i])
+		else:
+			line = operations.spiderOutputLine(i+1, 6, i+1, 
+				savedata['picks2'][i][0], savedata['picks2'][i][1], 
+				0.0, 0.0, 0.0)
 		f.write(line)
 
 	f.close()
