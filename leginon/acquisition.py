@@ -857,7 +857,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def processReferenceTarget(self,preset_name):
 		refq = data.ReferenceTargetData(session=self.session)
-		results = refq.query()
+		results = refq.query(results=1, readimages=False)
 		if not results:
 			return
 		request_data = data.FixBeamData()
