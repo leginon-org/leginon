@@ -24,7 +24,7 @@ def printWarning(text):
 			print "write error"
 	sys.stderr.write(colorString("!!! WARNING: "+text,"brown")+"\n")
 
-def printMsg(text,colorstr="black"):
+def printMsg(text, colorstr=None):
 	"""
 	standardized log message
 	"""
@@ -267,7 +267,7 @@ def colorProb(num,red=0.50,green=0.80):
 def color(text, fg, bg=None):
 	return colorString(text, fg, bg)
 
-def colorString(text, fg, bg=None):
+def colorString(text, fg=None, bg=None):
 	"""Return colored text.
 	Uses terminal color codes; set avk_util.enable_color to 0 to
 	return plain un-colored text. If fg is a tuple, it's assumed to
@@ -292,7 +292,8 @@ def colorString(text, fg, bg=None):
 		"lcyan" :"1;36",
 		"white" :"1;37"
 	}
-
+	if fg is None:
+		return text
 	if type(fg) in (types.TupleType, types.ListType):
 		fg, bg = fg
 	if not fg:
