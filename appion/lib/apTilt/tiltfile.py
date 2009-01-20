@@ -334,9 +334,12 @@ def readFromSpiderFile(filename):
 				pass
 			elif int(bits[0]) == 4:
 				#print bits
-				savedata['theta'] = float(bits[2])
-				savedata['gamma'] = float(bits[3])
-				savedata['phi']   = float(bits[4])
+				if float(bits[2]) != 0.0:
+					savedata['theta'] = float(bits[2])
+				if float(bits[3]) != 0.0:
+					savedata['gamma'] = float(bits[3])
+				if float(bits[4]) != 0.0:
+					savedata['phi']   = float(bits[4])
 		elif mode == "picks":
 			bits = sline.split()
 			pick = [int(float(bits[3])), int(float(bits[4]))]
