@@ -62,11 +62,14 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		e.g. a confidence less than 80%
 		"""
 		if self.params['reprocess'] is None:
-			return None
-		ctfvalue, conf = apCtf.getBestCtfValueForImage(imgdata)
+			return True
+			
+		ctfvalue, conf = apCtf.getBestAceTwoValueForImage(imgdata,msg=False)
+		
 		if ctfvalue is None:
-			return None
-		if conf > self.params['reprocess']:
+			return True
+			
+		if conf > self.params['reprocess'] and ctfvalue['defocus1'] != ctfvalue['defocus2']:
 			return False
 		else:
 			return True
@@ -75,7 +78,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 	def processImage(self, imgdata):
 
-		bestdef = apCtf.getBestDefocusForImage(imgdata, msg=True)
+		bestdef, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
+				
 		inputparams = {
 			'input': os.path.join(imgdata['session']['image path'],imgdata['filename']+".mrc"),
 			'cs': self.params['cs'],
@@ -104,7 +108,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		aceoutf = open("ace2.out", "a")
 		aceerrf = open("ace2.err", "a")
 		t0 = time.time()
-		ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
+		ace2proc = subprocess.Popen(commandline, shell=True)
 		ace2proc.wait()
 
 		### check if ace2 worked
@@ -112,7 +116,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
 			time.sleep(1)
-			ace2proc = subprocess.Popen(commandline, shell=True, stdout=aceoutf, stderr=aceerrf)
+			ace2proc = subprocess.Popen(commandline, shell=True)
 			ace2proc.wait()
 		aceoutf.close()
 		aceerrf.close()
@@ -145,11 +149,18 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		avgdf = (self.ctfvalues['defocus1']+self.ctfvalues['defocus2'])/2.0
 		ampconst = 100.0*self.ctfvalues['amplitude_contrast']
 		pererror = 100.0 * (self.ctfvalues['defocus1']-self.ctfvalues['defocus2']) / avgdf
-		apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent error)"%
+		apDisplay.printMsg("Defocus: %.3f x %.3f um (%.2f percent astigmatism)"%
 			(self.ctfvalues['defocus1']*1.0e6, self.ctfvalues['defocus2']*1.0e6, pererror ))
 		apDisplay.printMsg("Angle astigmatism: %.2f degrees"%(self.ctfvalues['angle_astigmatism']))
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
-		apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
+		
+		if bestconf is None:
+			apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']),'black')
+		else:
+			if self.ctfvalues['confidence'] > bestconf: 
+				apDisplay.printMsg("Final (reprocessed) confidence: %.3f > %.3f"%(self.ctfvalues['confidence'],bestconf),'green')
+			else:
+				apDisplay.printMsg("Final (reprocessed) confidence: %.3f < %.3f"%(self.ctfvalues['confidence'],bestconf),'red')
 
 		### double check that the values are reasonable 
 		
@@ -160,17 +171,20 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if ampconst < 0.0 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
-
+		
+		if bestconf is not None and self.ctfvalues['confidence'] <= bestconf:
+			self.badprocess = True
+		
+		
 		## create power spectra jpeg
 		mrcfile = imgdata['filename']+".mrc.edge.mrc"
 		if os.path.isfile(mrcfile):
-			apDisplay.printMsg("Creating powerspectra jpeg")
 			jpegfile = os.path.join(self.powerspecdir, imgdata['filename']+".jpg")
-			ps = apImage.mrcToArray(mrcfile)
+			ps = apImage.mrcToArray(mrcfile,msg=False)
 			ps = (ps-ps.mean())/ps.std()
 			cutoff = -2.0*ps.min()
 			ps = numpy.where(ps < cutoff, ps, cutoff)
-			apImage.arrayToJpeg(ps, jpegfile)
+			apImage.arrayToJpeg(ps, jpegfile,msg=False)
 			apFile.removeFile(mrcfile)
 
 		#print self.ctfvalues

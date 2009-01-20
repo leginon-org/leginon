@@ -24,7 +24,7 @@ def printWarning(text):
 			print "write error"
 	sys.stderr.write(colorString("!!! WARNING: "+text,"brown")+"\n")
 
-def printMsg(text):
+def printMsg(text,colorstr="black"):
 	"""
 	standardized log message
 	"""
@@ -35,8 +35,8 @@ def printMsg(text):
 			f.close()
 		except:
 			print "write error"
-	print " ... "+text
-
+	print " ... "+colorString(text, colorstr)
+	
 def printError(text):
 	"""
 	standardized error message

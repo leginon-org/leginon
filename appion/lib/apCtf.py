@@ -233,9 +233,6 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 	### get all ctf values
 	ctfq = appionData.ApCtfData()
 	ctfq['image'] = imgdata
-	ctfq['noise1'] = None
-	ctfq['noise2'] = None
-	ctfq['graph2'] = None
 	ctfvalues = ctfq.query()
 
 	### check if it has values
@@ -246,6 +243,8 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 	bestconf = 0.0
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
+		if ctfvalue['ctfvalues_file'] == None:
+			continue
 		conf1 = ctfvalue['confidence']
 		conf2 = ctfvalue['confidence_d']
 		if conf1 > 0 and conf2 > 0:
@@ -255,6 +254,14 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 			if conf > bestconf:
 				bestconf = conf
 				bestctfvalue = ctfvalue
+				
+	if bestctfvalue == None:
+		return None, None
+	
+	if msg is True:
+		apDisplay.printMsg( "Best CTF run info: runname='%s', confidence=%.3f, defocus=%.3f um"
+			%(bestctfvalue['acerun']['name'], bestconf, bestctfvalue['defocus1']*1.0e6) )			
+	
 	return bestctfvalue, bestconf
 
 def getBestTiltCtfValueForImage(imgdata):

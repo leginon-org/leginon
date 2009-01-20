@@ -692,8 +692,7 @@ class AppionLoop(object):
 			return False
 		
 		# check to see if image has already been processed
-		#if self._alreadyProcessed(imgdata):
-		#	return False
+
 		if imgdata['filename'] in self.donedict:
 			return False
 		

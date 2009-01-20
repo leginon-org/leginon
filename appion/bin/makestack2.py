@@ -22,6 +22,7 @@ import apEMAN
 import apProject
 import apFile
 import apImagicFile
+import subprocess
 
 class Makestack2Loop(appionLoop2.AppionLoop):
 
@@ -359,10 +360,6 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		apix = apDatabase.getPixelSize(imgdata)
 		bestctfvalue, bestconf = apCtf.getBestAceTwoValueForImage(imgdata, msg=True)
-		defocus1 = bestctfvalue['defocus1']
-		defocus2 = bestctfvalue['defocus2']
-		ampconst = bestctfvalue['amplitude_contrast']
-		defocus = (defocus1+defocus2)/2.0*1.0e6
 
 		if bestctfvalue is None:
 			apDisplay.printWarning("No ACE2 ctf estimation for current image")
@@ -378,7 +375,12 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("No ACE2 ctf file for current image")
 			self.badprocess = True
 			return None
-	
+		
+		defocus1 = bestctfvalue['defocus1']
+		defocus2 = bestctfvalue['defocus2']
+		ampconst = bestctfvalue['amplitude_contrast']
+		defocus = (defocus1+defocus2)/2.0*1.0e6
+		
 		ctfvaluesfile = os.path.join(bestctfvalue['acerun']['path']['path'], bestctfvalue['ctfvalues_file'])
 		
 		ctfvaluesfilesplit = os.path.splitext(ctfvaluesfile)
@@ -392,10 +394,13 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if not os.path.isfile(ctfvaluesfile):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
-		ace2cmd = ("ace2correct.exe -ctf %s -a %.3f -i %s -wiener 0.15" % (ctfvaluesfile, apix, inimgpath))
-
+		ace2cmd = ("ace2correct.exe -ctf %s -apix %.3f -img %s -wiener 0.1" % (ctfvaluesfile, apix, inimgpath))
+		apDisplay.printMsg("phaseflipping entire micrograph: "+ace2cmd)
+		
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
-		apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
+#		apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
+		ace2proc = subprocess.Popen(ace2cmd, shell=True)
+		ace2proc.wait()
 		
 		return os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
 
@@ -515,16 +520,22 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				stparamq[p] = self.params[p.lower()]
 		paramslist = stparamq.query()
 
-		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
-			print stparamq
-			apDisplay.printError("problem in database insert")
+#		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
+#			print stparamq
+#			apDisplay.printError("problem in database insert")
 
 		### create a stack object
 		stackq = appionData.ApStackData()
 		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
       	### see if stack already exists in the database (just checking path & name)
 		uniqstackdatas = stackq.query(results=1)
-
+		
+		print "HERE HERE"
+		print uniqstackdatas
+		print "HERE HERE"
+		print "HERE HERE"
+		print "HERE HERE"
+		
 		### create a stackRun object
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
@@ -547,28 +558,28 @@ class Makestack2Loop(appionLoop2.AppionLoop):
       	### create runinstack object
 		rinstackq = appionData.ApRunsInStackData()
 		rinstackq['stackRun'] = runq
-		rinstackq['stack'] = stackq
+#		rinstackq['stack'] = stackq
 		rinstackq['project|projects|project'] = projectnum
 
       	### if not in the database, make sure run doesn't already exist
 		if not uniqstackdatas and not uniqrundatas:
 			apDisplay.printColor("Inserting stack parameters into database", "cyan")
 			if self.params['commit'] is True:
+				rinstackq['stack'] = stackq
 				rinstackq.insert()
 			return
 		elif uniqrundatas and not uniqstackdatas:
 			apDisplay.printError("Weird, run data without stack already in the database")
 		else:
-			#print uniqstackdatas
-			#print uniqrundatas
+
 			rinstack = rinstackq.query(results=1)
-			#print rinstack
+
 			prevrinstackq = appionData.ApRunsInStackData()
 			prevrinstackq['stackRun'] = uniqrundatas[0]
 			prevrinstackq['stack'] = uniqstackdatas[0]
 			prevrinstackq['project|projects|project'] = projectnum
 			prevrinstack = prevrinstackq.query(results=1)
-			#print prevrinstack
+
 			## if no runinstack found, find out which parameters are wrong:
 			if not rinstack:
 				for i in uniqrundatas[0]:
