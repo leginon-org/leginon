@@ -359,7 +359,7 @@ class autoTilt(object):
 			return None
 		self.deleteFirstPick()
 		self.printData(msg)
-		for i in range(3):
+		for i in range(4):
 			self.clearBadPicks(msg)
 			if len(self.currentpicks1) < 5 or len(self.currentpicks2) < 5:
 				if msg is True:
