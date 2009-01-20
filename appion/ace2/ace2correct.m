@@ -264,7 +264,7 @@ int main (int argc, char **argv) {
 	f64 * cp = [ctf data];
 	c64 * ip = [image data];
 	u32 i, size = [image numberOfElements];
-	
+		
 	t1 = CPUTIME;
 	
 	if ( cty & CORRECT_PHASE ) {
@@ -277,7 +277,7 @@ int main (int argc, char **argv) {
 	}
 	
 	fprintf(stderr,"\tDONE in %2.2f secs\n",CPUTIME-t1);
-
+	
 //---------Perform inverse FFT using FFTW c2r transform-----------------------------------------		
 	
 	t1 = CPUTIME;	

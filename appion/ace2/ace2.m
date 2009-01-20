@@ -167,10 +167,11 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	ArrayP edges = [image copyArray];
-	f64 edge_blur = 5*binby;
+	f64 edge_blur = 6;
 	[edges gaussianBlurWithSigma:edge_blur];
 //	[edges cannyEdgesWithUpperTreshold:0.1 lowerTreshold:0.01];
-	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.001,0.002,5.0);
+	ArrayP edge_copy = [edges deepCopy];
+	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.0001,0.001,5.0);
 
 	fprintf(stderr,"\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 
@@ -179,17 +180,17 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Using RANSAC to find ellipse parameters...");
 	
-	f64 fit_treshold = 1.0;
-	f64 min_percent = 0.001;
+	f64 fit_treshold = 0.5;
+	f64 min_percent = 0.02;
 	f64 fit_percent = 0.99;
-	f64 max_iterations = 30000;
+	f64 max_iterations = 100000;
 	
 	EllipseP ellipse = ellipseRANSAC(edges,fit_treshold,min_percent,fit_percent,max_iterations);
 	
 	if ( CPUTIME-t1 > 0.0 ) {
 		char name[256];
 		[edges multiplyBy:1e9];
-		[edges addImage:image];
+		[edges addImage:edge_copy];
 		[ellipse drawInArray:edges];
 		sprintf(name,"%s.edge.mrc",basename([image name]));
 		if ( [edges writeMRCFile:name] == FALSE ) fprintf(stderr,"\tWrite Failed\n");
@@ -1038,12 +1039,12 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		
 	}
 	
-	f64 back1 = calcBackDrift([radial_avg1 getRow:0],rad,1.0,50);
-	f64 back2 = calcBackDrift([radial_avg2 getRow:0],rad,1.0,50);
+	f64 back1 = calcBackDrift([radial_avg1 getRow:0],rad,1.0,100.0);
+	f64 back2 = calcBackDrift([radial_avg2 getRow:0],rad,1.0,100.0);
 	
-	fprintf(stderr,"\n\tCalculated CTF signal for ellipse: %e and circle: %e\n",back1,back2);
+	fprintf(stderr,"\n\tCalculated CTF signal for ellipse: %e, circle: %e, ratio: %e\n",back1,back2,back1/back2);
 	
-	if ( back1 >= back2 ) {
+	if ( back1/back2 >= 0.90 ) {
 		fprintf(stderr,"\tUsing Elliptical Average\n");
 		[radial_avg2 release];
 		return radial_avg1;
@@ -1060,22 +1061,19 @@ f64 calcBackDrift( f64 values[], u32 rad, f64 mins, f64 maxs ) {
 	
 	f64 * temp = NEWV(f64,rad);
 	
-	f64 kfac = sqrt(2);
+	f64 kfac = sqrt(4);
 	
 	u32 r, k;
 	
 	f64 back_drift = 0.0;
 	f64 sigma = mins;
 	
-	for(k=0;k<100;k++) {
+	while ( sigma < maxs ) {
 		memcpy(temp,values,sizeof(f64)*rad);
 		gSmooth(temp,0,rad-1,sigma);
 		f64 oldsize = back_drift;
-		for(r=0;r<rad-1;r++) if ( temp[r] < temp[r+1] ) back_drift += temp[r+1] - temp[r];
-		if ( back_drift == oldsize ) {
-			fprintf(stderr,"Last positive peak at sigma: %f, iteration: %d\n",sigma,k);
-			break;
-		}
+		for(r=rad*0.05;r<rad-1;r++) if ( temp[r] < temp[r+1] ) back_drift += temp[r+1] - temp[r];
+		if ( back_drift == oldsize ) break;
 		sigma *= kfac;
 	}
 	

@@ -361,8 +361,8 @@ double ctf_cost( const gsl_vector * variables, void * params ) {
 	static int iter = 0;
 	f64 * p = gsl_vector_ptr((gsl_vector *)variables,0);
 
-	if ( p[1] < 0.05 ) p[1] = 0.05;
-	if ( p[1] > 0.50 ) p[1] = 0.50;
+	if ( p[1] < 0.05 ) p[1] = randomNumber(0.05,0.50);
+	if ( p[1] > 0.50 ) p[1] = randomNumber(0.05,0.50);
 	
 	u32 k, size = [(ArrayP)params sizeOfDimension:0];
 	f64 * values = [(ArrayP)params data];
@@ -401,8 +401,8 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	gsl_vector * e_start = gsl_vector_alloc(c_ndim);
 	gsl_vector * e_steps = gsl_vector_alloc(c_ndim);
 
-	gsl_vector_set(e_steps,0,3e-7);
-	gsl_vector_set(e_steps,1,2e-1);
+	gsl_vector_set(e_steps,0,1e-7);
+	gsl_vector_set(e_steps,1,1e-1);
 	gsl_vector_set(e_steps,2,0.0);
 	gsl_vector_set(e_steps,3,0.0);
 	gsl_vector_set(e_steps,4,0.0);
@@ -424,10 +424,11 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	for(i=0;i<c_ndim;i++) ctf_params[i] = 0.0;
 	
 	u32 trials = 20;
+	f64 tolerance = 1e-12;
 	
 	for(i=0;i<trials;i++) {
 		gsl_multimin_fminimizer_set(e_min, &e_function, e_start, e_steps);
-		status1 += run_minimizer(e_min,10000,1e-8);
+		status1 += run_minimizer(e_min,10000,tolerance);
 		gsl_vector * minimum = gsl_multimin_fminimizer_x(e_min);
 		for(k=0;k<c_ndim;k++) ctf_params[k] += gsl_vector_get(minimum,k);
 		gsl_vector_memcpy(e_start,minimum);
@@ -435,7 +436,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	
 	for(i=0;i<c_ndim;i++) ctf_params[i] /= trials;
 	
-	fprintf(stderr,"\n\tMinimizer used %d iterations\n",status1);
+	fprintf(stderr,"\n\tMinimizer used %d iterations of max (%e)\n",status1,status1/(trials*10000));
 
     gsl_multimin_fminimizer_free(e_min);	
 	gsl_vector_free(e_start);
