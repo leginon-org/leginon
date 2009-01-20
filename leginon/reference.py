@@ -155,9 +155,11 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 
 	def processRequest(self, request_data):
 		self.lock.acquire()
+		self.setStatus('processing')
 		try:
 			self._processRequest(request_data)
 		finally:
+			self.setStatus('idle')
 			self.lock.release()
 
 	def execute(self, request_data):
