@@ -712,7 +712,7 @@ class PickerApp(wx.App):
 			### run tilt automation
 			autotilter = autotilt.autoTilt()
 			result = autotilter.processTiltPair(imgfile1, imgfile2, self.picks1, self.picks2, tiltdiff, outfile, pixdiam, tiltaxis)
-			if result is True:
+			if result is not None:
 				self.readData(outfile)
 		else:
 			### STAND ALONE MODE
