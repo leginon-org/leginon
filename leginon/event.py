@@ -438,6 +438,14 @@ class DeviceConfirmationEvent(ConfirmationEvent):
 		)
 	typemap = classmethod(typemap)
 
+class UpdatePresetEvent(Event):
+	def typemap(cls):
+		return Event.typemap() + (
+			('name', str),
+			('params', dict),
+		)
+	typemap = classmethod(typemap)
+
 # generate the mapping of data class to publish event class
 publish_events = {}
 event_classes = eventClasses()

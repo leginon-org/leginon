@@ -122,6 +122,14 @@ class PresetsClient(object):
 		self.node.outputEvent(unlockevent, wait=True)
 		self.havelock = False
 
+	def updatePreset(self, presetname, params):
+		evt = event.UpdatePresetEvent()
+		evt['name'] = presetname
+		evt['params'] = params
+		self.node.logger.info('Sending updated preset params: %s' % (presetname,))
+		self.node.outputEvent(evt, wait=True)
+		self.node.logger.info('Preset update done')
+
 	def toScope(self, presetname, emtarget=None, keep_shift=False):
 		'''
 		send the named preset to the scope
@@ -1667,3 +1675,11 @@ class PresetsManager(node.Node):
 			if preset['magnification'] == mag:
 				self.updatePreset(preset['name'], newbeamshift)
 
+	def handleUpdatePresetEvent(self, evt):
+		presetname = evt['name']
+		params = evt['params']
+		node = evt['node']
+		self.logger.info('%s requested update to %s' % (node, presetname))
+		self.updatePreset(presetname, params)
+		self.logger.info('completed update to %s' % (presetname,))
+		self.confirmEvent(evt)
