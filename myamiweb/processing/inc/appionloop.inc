@@ -316,6 +316,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$maxpeaksv = (int) ($_POST['maxpeaks']) ? $_POST['maxpeaks'] : '1500';
 	$maxsizev = ($_POST['maxsize']) ? $_POST['maxsize'] : '1.0';
 	$overlapmultv = ($_POST['overlapmult']) ? $_POST['overlapmult'] : '1.5';
+	$centerofmasscheck = ($_POST['peaktype'] && $_POST['peaktype']!='centerofmass') ? '' : 'CHECKED';
+	$maximumcheck = ($_POST['peaktype']=='maximum') ? 'CHECKED' : '';
 	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
 	$nojpegsv = ($_POST['nojpegs']=="on") ? "CHECKED" : "";
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
@@ -363,8 +365,14 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 		echo "<input type='text' name='overlapmult' VALUE='$overlapmultv' size='4'>\n";
 		echo docpop('overlapmult',' Minimum peak overlap distance multiple');
 		echo "<br />\n";
-	}
-	else {
+
+		echo docpop('peaktype',' Peak extraction type');
+		echo "<br />\n";
+		echo "&nbsp;<input type='radio' name='peaktype' value='centerofmass' $centerofmasscheck>\n";
+		echo "Center of mass <font size=-2><i>(default)</i></font><br/>\n";
+		echo "&nbsp;<input type='radio' name='peaktype' value='maximum' $maximumcheck>\n";
+		echo "Maximum position<br/>\n";
+	} else {
 		echo "<input type='checkbox' name='nojpegs' $nojpegsv>\n";
 		echo docpop('nojpegs',' Do NOT create summary peak jpegs');
 		echo "<br />\n";
@@ -384,26 +392,28 @@ function parseParticleLoopParams ($type) {
 	}
 
 	// CONVERT DATA
-	$thresh = $_POST[thresh];
-	$maxthresh = $_POST[maxthresh];
-	$maxpeaks = $_POST[maxpeaks];
-	$lp = $_POST[lp];
-	$hp = $_POST[hp];
-	$median = $_POST[median];
-	$pixlimit = $_POST[pixlimit];
-	$bin = $_POST[bin];
-	$diam = $_POST[diam];
-	$defocpair = ($_POST[defocpair]=="on") ? "1" : "0";
-	$nojpegs = ($_POST[nojpegs]=="on") ? "1" : "0";
-	$maxsize = $_POST[maxsize];
-	$overlapmult = $_POST[overlapmult];
-	$invert = ($_POST[invert]=="on") ? "1" : "0";
+	$thresh = $_POST['thresh'];
+	$maxthresh = $_POST['maxthresh'];
+	$maxpeaks = $_POST['maxpeaks'];
+	$lp = $_POST['lp'];
+	$hp = $_POST['hp'];
+	$median = $_POST['median'];
+	$pixlimit = $_POST['pixlimit'];
+	$bin = $_POST['bin'];
+	$diam = $_POST['diam'];
+	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
+	$nojpegs = ($_POST['nojpegs']=="on") ? "1" : "0";
+	$maxsize = $_POST['maxsize'];
+	$overlapmult = $_POST['overlapmult'];
+	$peaktype = $_POST['peaktype'];
+	$invert = ($_POST['invert']=="on") ? "1" : "0";
 
 	// CREATE COMMAND
 	$command = " ";
 	if ($type != "manual") {
 		if ($maxsize && $maxsize > 0 && $maxsize != 1.0) $command.=" --maxsize=$maxsize";
 		if ($overlapmult && $overlapmult > 0 && $overlapmult != 1.5) $command.=" --overlapmult=$overlapmult";
+		if ($peaktype) $command.=" --peaktype=$peaktype";
 		if ($maxthresh && $maxthresh > 0) $command.=" --maxthresh=$maxthresh";
 		if ($maxpeaks && $maxpeaks > 0 && $maxpeaks != 1500) $command.=" --maxpeaks=$maxpeaks";
 		if ($thresh) $command.=" --thresh=$thresh";
@@ -450,6 +460,7 @@ function particleLoopSummaryTable () {
 	$defocpair = ($_POST[defocpair]=="on") ? "<font color='red'>false</font>" : "<font color='green'>true</font>";
 	$maxsize = $_POST[maxsize];
 	$overlapmult = $_POST[overlapmult];
+	$peaktype = $_POST['peaktype'];
 	$invert = ($_POST[invert]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$diam = $_POST[diam];
 
@@ -460,9 +471,10 @@ function particleLoopSummaryTable () {
 	echo "<TR><TD>hp</TD><TD>$hp</TD></TR>\n";
 	echo "<TR><TD>median</TD><TD>$median</TD></TR>\n";
 	echo "<TR><TD>bin</TD><TD>$bin</TD></TR>\n";
-	echo "<TR><TD>defocpair</TD><TD>$defocpair</TD></TR>\n";
-	echo "<TR><TD>maxsize</TD><TD>$maxsize</TD></TR>\n";
-	echo "<TR><TD>overlapmult</TD><TD>$overlapmult</TD></TR>\n";
+	echo "<TR><TD>defocal pairs</TD><TD>$defocpair</TD></TR>\n";
+	echo "<TR><TD>max size</TD><TD>$maxsize</TD></TR>\n";
+	echo "<TR><TD>overlap multiple</TD><TD>$overlapmult</TD></TR>\n";
+	echo "<TR><TD>peak type</TD><TD>$peaktype</TD></TR>\n";
 	echo "<TR><TD>invert</TD><TD>$invert</TD></TR>\n";
 	echo "<TR><TD>diameter</TD><TD>$diam</TD></TR>\n";
 }
