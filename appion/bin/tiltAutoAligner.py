@@ -280,6 +280,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		diffmat1 = (targets1 - aligned1)
 		sqsum1 = diffmat1[:,0]**2 + diffmat1[:,1]**2
 		rmsd1 = numpy.sqrt(sqsum1)
+		self.data['rmsd'] = rmsd1.mean()
 		return rmsd1
 
 	#---------------------------------------
@@ -332,7 +333,6 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.data = tiltfile.readData(outfile)
 		self.currentpicks1 = numpy.asarray(self.data['picks1'])
 		self.currentpicks2 = numpy.asarray(self.data['picks2'])
-		self.getOverlap(imgpath, tiltpath)
 
 		#print self.data
 		# 1. tilt data are copied to self.tiltparams by app
@@ -342,7 +342,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.peaktree1 = apPeaks.convertListToPeaks(self.currentpicks1, self.params)
 		self.peaktree2 = apPeaks.convertListToPeaks(self.currentpicks2, self.params)
 		self.peakerrors = self.getRmsdArray()
-
+		self.getOverlap(imgpath, tiltpath)
 
 #---------------------------------------
 #---------------------------------------
