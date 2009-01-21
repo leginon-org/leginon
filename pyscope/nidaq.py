@@ -9,7 +9,7 @@
 This python module is for controlling Gatan dual axis holder using
 National Instrument USB-6008 Data Acquisition module.
 
-sets Beta angle
+set/get Beta angle
 '''
 
 import ctypes
@@ -38,7 +38,7 @@ DAQmx_Val_GroupByChannel = 0
 DAQmx_Val_ChanForAllLines = 1
 
 ### bit 1 & 2 of Port0 are used to 
-### connect the DC Motor driver
+### connect to the DC Motor driver
 ROTATE_CLOCK_WISE = 0x1
 ROTATE_COUNTERCLOCK_WISE = 0x2
 
@@ -46,7 +46,7 @@ ROTATE_COUNTERCLOCK_WISE = 0x2
 MIN_V_MEASURE = -2.95
 MAX_V_MEASURE = 2.88
 
-### constant to convert Volt in degre
+### constant to convert Volt in degree
 ### for now...
 k_av = 100 / 2.6290938190967497
 
@@ -79,14 +79,14 @@ def _get_analog_input():
 	'''read and return a voltage from chosen analog input'''
 	CHK(nidaq.DAQmxCreateTask("", ctypes.byref(taskHandle)))
 	CHK(nidaq.DAQmxCreateAIVoltageChan(taskHandle, analoginput, "",
-									DAQmx_Val_Cfg_Default,
-									amin, amax,
-									DAQmx_Val_Volts, None))
+							DAQmx_Val_Cfg_Default,
+							amin, amax,
+							DAQmx_Val_Volts, None))
 
 	CHK(nidaq.DAQmxStartTask(taskHandle))
 	CHK(nidaq.DAQmxReadAnalogF64(taskHandle, pointsToRead, timeout,
 							DAQmx_Val_GroupByChannel, ctypes.byref(aval),
-							samplesPerChan, ctypes.byref(read),None))
+							samplesPerChan, ctypes.byref(read), None))
 
 	if taskHandle.value != 0:
 		nidaq.DAQmxStopTask(taskHandle)
@@ -107,26 +107,28 @@ def _set_digital_output(val):
 def _rotate_counterclock_wise(v):
 	'''rotates counterclock wise until analog input reads v'''
 	cur_v = _get_analog_input()
-
-	while cur_v > v:
-		_set_digital_output(ROTATE_COUNTERCLOCK_WISE)
-		cur_v = _get_analog_input()
-		if cur_v <= MIN_V_MEASURE:
-			break
-	_set_digital_output(0)
+	try:
+		while cur_v > v:
+			_set_digital_output(ROTATE_COUNTERCLOCK_WISE)
+			cur_v = _get_analog_input()
+			if cur_v <= MIN_V_MEASURE:
+				break
+	finally:
+		_set_digital_output(0)
 	
 	return cur_v
 
 def _rotate_clock_wise(v):
 	'''rotates clock wise until analog input reads v'''
 	cur_v = _get_analog_input()
-
-	while cur_v < v:
-		_set_digital_output(ROTATE_CLOCK_WISE)
-		cur_v = _get_analog_input()
-		if cur_v >= MAX_V_MEASURE:
-			break
-	_set_digital_output(0)
+	try:
+		while cur_v < v:
+			_set_digital_output(ROTATE_CLOCK_WISE)
+			cur_v = _get_analog_input()
+			if cur_v >= MAX_V_MEASURE:
+				break
+	finally:
+		_set_digital_output(0)
 	
 	return cur_v
 
