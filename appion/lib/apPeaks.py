@@ -12,7 +12,7 @@ import apImage
 import apDisplay
 import apParam
 #leginon
-from pyami import imagefun import threshold, find_blobs
+from pyami import imagefun
 
 def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	peaktreelist = []
