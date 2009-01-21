@@ -300,10 +300,10 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 		### read alignment results
 		self.data = tiltfile.readData(outfile)
-		self.currentpicks1 = self.data['picks1']
-		self.currentpicks2 = self.data['picks2']
+		self.currentpicks1 = numpy.asarray(self.data['picks1'])
+		self.currentpicks2 = numpy.asarray(self.data['picks2'])
 
-		print self.data
+		#print self.data
 		# 1. tilt data are copied to self.tiltparams by app
 		# 2. particles picks are copied to self.peaks1 and self.peaks2 by app
 		# 3. particle errors are copied to self.peakerrors by app
