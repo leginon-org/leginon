@@ -402,7 +402,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		ace2proc = subprocess.Popen(ace2cmd, shell=True)
 		ace2proc.wait()
 		
-		return os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
+		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
+		return outfile
 
 
 ############################################################
