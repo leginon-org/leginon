@@ -12,7 +12,7 @@ import apImage
 import apDisplay
 import apParam
 #leginon
-from pyami.imagefun import threshold, find_blobs
+from pyami import imagefun import threshold, find_blobs
 
 def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	peaktreelist = []
@@ -338,8 +338,8 @@ def convertListToPeaks(peaks, params):
 	peaktree = []
 	peak = {}
 	for i in range(peaks.shape[0]):
-		peak['xcoord'] = peaks[i,0] * bin
-		peak['ycoord'] = peaks[i,1] * bin
+		peak['xcoord'] = peaks[i,0] * float(bin)
+		peak['ycoord'] = peaks[i,1] * float(bin)
 		peak['peakarea'] = 1
 		peaktree.append(peak.copy())
 	return peaktree
@@ -350,8 +350,8 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None)
 	#	print "TEMPLATE DBID:",tmpldbid
 	for blobclass in blobtree:
 		peakdict = {}
-		peakdict['ycoord']      = float(blobclass.stats['center'][0]*float(bin))
-		peakdict['xcoord']      = float(blobclass.stats['center'][1]*float(bin))
+		peakdict['ycoord']      = float(blobclass.stats['center'][0])*float(bin)
+		peakdict['xcoord']      = float(blobclass.stats['center'][1])*float(bin)
 		peakdict['correlation'] = blobclass.stats['mean']
 		peakdict['peakmoment']  = blobclass.stats['moment']
 		peakdict['peakstddev']  = blobclass.stats['stddev']
@@ -365,23 +365,19 @@ def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None)
 def findBlobs(ccmap, thresh, maxsize=500, minsize=1, maxpeaks=1500, border=10, 
 	  maxmoment=6.0, elim= "highest", summary=False):
 	"""
-	calls leginon's find_blobs
+	calls leginon's imagefun.find_blobs
 	"""
 	totalarea = (ccmap.shape)[0]*(ccmap.shape)[1]
-	ccthreshmap = threshold(ccmap, thresh)
+	ccthreshmap = imagefun.threshold(ccmap, thresh)
 	percentcov  =  round(100.0*float(ccthreshmap.sum())/float(totalarea),2)
-	#find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
+	#imagefun.find_blobs(image,mask,border,maxblobs,maxblobsize,minblobsize,maxmoment,method)
 	if percentcov > 15:
 		apDisplay.printWarning("too much coverage in threshold: "+str(percentcov))
 		return [],percentcov
 	#apImage.arrayToJpeg(ccmap, "dogmap2.jpg")
 	#apImage.arrayToJpeg(ccthreshmap, "threshmap2.jpg")
-	try:
-		blobtree = find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
-		  maxsize, minsize, maxmoment, elim, summary)
-	except:
-		blobtree = find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
-		  maxsize, minsize, maxmoment, elim)
+	blobtree = imagefun.find_blobs(ccmap, ccthreshmap, border, maxpeaks*4,
+	  maxsize, minsize, maxmoment, elim, summary)
 	return blobtree, percentcov
 
 def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
