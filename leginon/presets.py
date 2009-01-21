@@ -251,6 +251,7 @@ class PresetsManager(node.Node):
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventInput(event.MeasureDoseEvent, self.measureDose)
+		self.addEventInput(event.UpdatePresetEvent, self.handleUpdatePresetEvent)
 		self.addEventInput(event.PresetLockEvent, self.handleLock)
 		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
 
@@ -923,7 +924,7 @@ class PresetsManager(node.Node):
 			self.updateDose(oldpreset, newpreset)
 
 		## if this preset selected, refresh display
-		if self.currentselection['name'] == newpreset['name']:
+		if self.currentselection and self.currentselection['name'] == newpreset['name']:
 			self.selectPreset(newpreset['name'])
 		self.presetToDB(newpreset)
 		return newpreset
