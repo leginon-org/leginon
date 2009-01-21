@@ -19,6 +19,10 @@ import numpy
 ### C:\WINDOWS\SYSTEM32\nicaiu.dll
 nidaq = ctypes.windll.nicaiu
 
+### NI device: default is Dev1 ###
+### update if you have more than 1 NI device attachec
+nidevice = "Dev1"
+
 ###################################
 # Setup some typedefs and constants
 
@@ -50,15 +54,14 @@ MAX_V_MEASURE = 2.88
 ### for now...
 k_av = 100 / 2.6290938190967497
 
-
 ### initialize variables
-analoginput = "Dev1/ai0"
+analoginput = nidevice+"/ai0"
 timeout = float64(10.0)
 amin = float64(-3.0)
 amax = float64(3.0)
 aval = float64()
 
-digitalchannel = "Dev1/port0"
+digitalchannel = nidevice+"/port0"
 w_data = numpy.zeros(1,dtype=numpy.uint32)
 written = int32()
 
