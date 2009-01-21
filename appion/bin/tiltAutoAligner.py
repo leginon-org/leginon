@@ -17,7 +17,7 @@ import apParticle
 import apPeaks
 import apImage
 import ApTiltPicker
-from apTilt import apTiltTransform, apTiltShift, apTiltPair, autotilt
+from apTilt import apTiltTransform, apTiltPair, autotilt, tiltfile
 
 ##################################
 ##
