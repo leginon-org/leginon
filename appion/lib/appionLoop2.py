@@ -91,7 +91,8 @@ class AppionLoop(appionScript.AppionScript):
 				loadavg = os.getloadavg()[0]
 				if loadavg > 2.0:
 					apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
-					time.sleep(loadavg)
+					loadsquared = loadavg*loadavg
+					time.sleep(loadsquared)
 
 				self._printSummary()
 
