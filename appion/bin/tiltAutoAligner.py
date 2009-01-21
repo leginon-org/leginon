@@ -241,6 +241,36 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#---------------------------------------
 	#---------------------------------------
+	def openImageFile(self, filename):
+		self.filename = filename
+		if filename[-4:] == '.spi':
+			array = apImage.spiderToArray(filename, msg=False)
+			return array
+		elif filename[-4:] == '.mrc':
+			array = apImage.mrcToArray(filename, msg=False)
+			return array
+		else:
+			image = Image.open(filename)
+			array = apImage.imageToArray(image, msg=False)
+			array = array.astype(numpy.float32)
+			return array
+		return None
+
+	#---------------------------------------
+	#---------------------------------------
+	def getOverlap(self, imgfile1, imgfile2, msg=True):
+		t0 = time.time()
+		image1 = self.openImageFile(imgfile1)
+		image2 = self.openImageFile(imgfile2)
+		bestOverlap, tiltOverlap = apTiltTransform.getOverlapPercent(image1, image2, self.data)
+		overlapStr = str(round(100*bestOverlap,2))+"% and "+str(round(100*tiltOverlap,2))+"%"
+		if msg is True:
+			apDisplay.printMsg("Found overlaps of "+overlapStr+" in "+apDisplay.timeString(time.time()-t0))
+		self.data['overlap'] = bestOverlap
+		return
+
+	#---------------------------------------
+	#---------------------------------------
 	def getRmsdArray(self):
 		targets1 = self.currentpicks1
 		aligned1 = self.getAlignedArray2()
@@ -302,6 +332,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.data = tiltfile.readData(outfile)
 		self.currentpicks1 = numpy.asarray(self.data['picks1'])
 		self.currentpicks2 = numpy.asarray(self.data['picks2'])
+		self.getOverlap(imgpath, tiltpath)
 
 		#print self.data
 		# 1. tilt data are copied to self.tiltparams by app
