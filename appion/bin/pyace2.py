@@ -155,12 +155,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
 		
 		if bestconf is None:
-			apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']),'black')
+			apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
+		elif self.ctfvalues['confidence'] > bestconf: 
+			apDisplay.printMsg("Final (reprocessed) confidence: %.3f > %.3f"%(self.ctfvalues['confidence'],bestconf),'green')
 		else:
-			if self.ctfvalues['confidence'] > bestconf: 
-				apDisplay.printMsg("Final (reprocessed) confidence: %.3f > %.3f"%(self.ctfvalues['confidence'],bestconf),'green')
-			else:
-				apDisplay.printMsg("Final (reprocessed) confidence: %.3f < %.3f"%(self.ctfvalues['confidence'],bestconf),'red')
+			apDisplay.printMsg("Final (reprocessed) confidence: %.3f < %.3f"%(self.ctfvalues['confidence'],bestconf),'red')
 
 		### double check that the values are reasonable 
 		
@@ -171,11 +170,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if ampconst < 0.0 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			self.badprocess = True
-		
-		if bestconf is not None and self.ctfvalues['confidence'] <= bestconf:
-			self.badprocess = True
-		
-		
+
 		## create power spectra jpeg
 		mrcfile = imgdata['filename']+".mrc.edge.mrc"
 		if os.path.isfile(mrcfile):
