@@ -10,9 +10,13 @@ import numpy
 import quietscipy
 import scipy.ndimage
 import fftengine
-import numextension
+try:
+	import numextension
+except:
+	pass
 import math
 import arraystats
+from scipy import stats
 
 ffteng = fftengine.fftEngine()
 
@@ -255,7 +259,7 @@ def scipyblobs(im,mask):
 
 	blobs = []
 	for i in range(n):
-		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos})
+		blobs.append({'center':centers[i], 'n':sizes[i], 'mean':means[i],'stddev':stds[i],'moment':moments[i], 'maximum_position':maxpos[i]})
 	return blobs
 
 def moment_of_inertia(input, labels, index = None):
@@ -372,6 +376,7 @@ def bin2(a, factor):
 	tmpshape = (newshape[0], factor, newshape[1], factor)
 	f = factor * factor
 	binned = numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2) / f
+	#binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
 
 def crop_at(im, center, shape, mode='wrap', cval=None):
