@@ -105,10 +105,14 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### run ace2
 		apDisplay.printMsg("running ace2 at "+time.asctime())
 		apDisplay.printColor(commandline, "purple")
-		aceoutf = open("ace2.out", "a")
-		aceerrf = open("ace2.err", "a")
+
 		t0 = time.time()
-		ace2proc = subprocess.Popen(commandline, shell=True)
+		if self.params['verbose'] is True:
+			ace2proc = subprocess.Popen(commandline, shell=True)
+		else:
+			aceoutf = open("ace2.out", "a")
+			aceerrf = open("ace2.err", "a")
+			ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
 		ace2proc.wait()
 
 		### check if ace2 worked
@@ -116,10 +120,17 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
 			time.sleep(1)
-			ace2proc = subprocess.Popen(commandline, shell=True)
+			if self.params['verbose'] is True:
+				ace2proc = subprocess.Popen(commandline, shell=True)
+			else:
+				aceoutf = open("ace2.out", "a")
+				aceerrf = open("ace2.err", "a")
+				ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
 			ace2proc.wait()
-		aceoutf.close()
-		aceerrf.close()
+
+		if self.params['verbose'] is False:	
+			aceoutf.close()
+			aceerrf.close()
 		if not os.path.isfile(imagelog):
 			apDisplay.printError("ace2 did not run")
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
@@ -238,6 +249,8 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		### true/false
 		self.parser.add_option("--refine2d", dest="refine2d", default=False,
 			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
+		self.parser.add_option("--verbose", dest="verbose", default=False,
+			action="store_true", help="Show all ace2 messages")
 		#self.parser.add_option("--refineapix", dest="refineapix", default=False,
 		#	action="store_true", help="Refine the pixel size")
 
