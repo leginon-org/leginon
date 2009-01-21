@@ -696,6 +696,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 																		newcenterimagedata, griddata)
 				if insertion == self.insertion:
 					self.updateAtlasViewTargets()
+				# use first transformed target as the reference target
 				if image == targetimages[0]:
 					self.updateReferenceTarget(targets[0])
 				targetlist = self.newTargetList(image=image.data)
@@ -886,10 +887,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 	def updateReferenceTarget(self, target):
 		imagedata = target[2]
-		row,column = target[1]
-		rows, columns = imagedata['image'].shape
-		delta_row = row - rows/2
-		delta_column = column - columns/2
+		delta_row,delta_column = target[1]
 		reference_target = self.newReferenceTarget(imagedata, delta_row, delta_column)
 		try:
 			self.publish(reference_target, database=True, pubevent=True)
