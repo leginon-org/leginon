@@ -15,6 +15,7 @@ from pyami import arraystats
 class BeamFixer(reference.Reference):
 	# relay measure does events
 	eventinputs = reference.Reference.eventinputs + [event.FixBeamEvent]
+	eventoutputs = reference.Reference.eventoutputs + [event.UpdatePresetEvent]
 	panelclass = gui.wx.BeamFixer.BeamFixerPanel
 	def __init__(self, *args, **kwargs):
 		try:
@@ -63,8 +64,10 @@ class BeamFixer(reference.Reference):
 				if meanvalue > maxvalue:
 					maxvalue = meanvalue
 					bestbeamshift = newbeamshift
-
 		# set to the best beam shift
 		self.instrument.tem.BeamShift = bestbeamshift
-			
 		self.logger.info('Best Beam Shift: %s' % (bestbeamshift,))
+		# update the preset beam shift
+		presetname = request_data['preset']
+		params = {'beam shift':bestbeamshift}
+		self.presets_client.updatePreset(presetname, params)
