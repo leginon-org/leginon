@@ -127,6 +127,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 			apDisplay.printError("Key: "+key+" was not found in transformation data")
 
 	for key,val in dbdict.items():
+		#print key
 		if re.match("image[12]_[xy]", key):
 			transq[key] = round(val*bin,2)
 		else:
