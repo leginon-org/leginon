@@ -514,6 +514,7 @@ class AppionLoop(appionScript.AppionScript):
 				sys.stderr.write(".")
 			self.stats['lastimageskipped'] = True
 			self.stats['skipcount'] += 1
+			self.stats['count'] += 1
 			return True
 		else:
 			self.stats['waittime'] = 0
