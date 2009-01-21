@@ -247,7 +247,8 @@ def readData(filename, filetype=None):
 
 	savedata['filename'] = os.path.basename(filename)
 	savedata['loadtime'] = time.asctime()+" "+time.tzname[time.daylight]
-
+	savedata['shiftx'] = 0.0
+	savedata['shifty'] = 0.0
 	return savedata
 
 #---------------------------------------
