@@ -267,6 +267,11 @@ class ParticleLoop(filterLoop.FilterLoop):
 			action="store_true", help="Check mask")
 		self.parser.add_option("--doubles", dest="doubles", default=False,
 			action="store_true", help="Picks only particles picked by at least two templates")
+		### Choices
+		peaktypechoices = ("maximum", "centerofmass")
+		self.parser.add_option("--peaktype", dest="peaktype",
+			help="Peak extraction type", metavar="TYPE", 
+			type="choice", choices=peaktypechoices, default="centerofmass" )
 
 	#=====================
 	def checkGlobalConflicts(self):

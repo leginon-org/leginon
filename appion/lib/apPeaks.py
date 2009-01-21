@@ -28,6 +28,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	maxpeaks =  int(params["maxpeaks"])
 	maxthresh = float(params["maxthresh"])
 	maxsizemult = float(params["maxsize"])
+	peaktype =  params["peaktype"]
 	msg =       not params['background']
 	pixdiam =   diam/apix/float(bin)
 	pixrad =    diam/apix/2.0/float(bin)
@@ -46,7 +47,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 
 		#find peaks
 		peaktree = findPeaksInMap(imgmap, thresh, pixdiam, count, olapmult, 
-			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin)
+			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin, peaktype=peaktype)
 
 		#remove border peaks
 		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
@@ -72,7 +73,7 @@ def printPeakTree(peaktree):
 		print "  ",i,":",int(p['xcoord']),int(p['ycoord'])
 
 def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
-		maxsizemult=1.0, maxthresh=None, msg=True, tmpldbid=None, mapdiam=None, bin=1):
+		maxsizemult=1.0, maxthresh=None, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum"):
 
 	pixrad = pixdiam/2.0
 
@@ -88,7 +89,7 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 	blobtree, percentcov = findBlobs(imgmap, thresh, maxsize=maxsize,
 		maxpeaks=maxpeaks, summary=msg)
 	#convert
-	peaktree = convertBlobsToPeaks(blobtree, bin, tmpldbid, count, mapdiam)
+	peaktree = convertBlobsToPeaks(blobtree, bin, tmpldbid, count, mapdiam, peaktype)
 
 	#warnings
 	if msg is True:
@@ -292,8 +293,8 @@ def removeBorderPeaks(peaktree, diam, xdim, ydim):
 	ymax=ydim-r
 	newpeaktree=[]
 	for peak in peaktree:
-		x=peak['xcoord']
-		y=peak['ycoord']
+		x = peak['xcoord']
+		y = peak['ycoord']
 		if x>xymin and y>xymin and x<xmax and y<ymax:
 			newpeaktree.append(peak)
 	return newpeaktree
@@ -338,20 +339,24 @@ def convertListToPeaks(peaks, params):
 	peaktree = []
 	peak = {}
 	for i in range(peaks.shape[0]):
-		peak['xcoord'] = peaks[i,0] * float(bin)
-		peak['ycoord'] = peaks[i,1] * float(bin)
+		peak['xcoord'] = int(round( float(peaks[i,0]) * float(bin) ))
+		peak['ycoord'] = int(round( float(peaks[i,1]) * float(bin) ))
 		peak['peakarea'] = 1
 		peaktree.append(peak.copy())
 	return peaktree
 
-def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None):
+def convertBlobsToPeaks(blobtree, bin=1, tmpldbid=None, tmplnum=None, diam=None, peaktype="maximum"):
 	peaktree = []
 	#if tmpldbid is not None:
 	#	print "TEMPLATE DBID:",tmpldbid
 	for blobclass in blobtree:
 		peakdict = {}
-		peakdict['ycoord']      = float(blobclass.stats['center'][0])*float(bin)
-		peakdict['xcoord']      = float(blobclass.stats['center'][1])*float(bin)
+		if peaktype == "maximum":
+			peakdict['ycoord']      = int(round( float(blobclass.stats['maximum_position'][0])*float(bin) ))
+			peakdict['xcoord']      = int(round( float(blobclass.stats['maximum_position'][1])*float(bin) ))
+		else:
+			peakdict['ycoord']      = int(round( float(blobclass.stats['center'][0])*float(bin) ))
+			peakdict['xcoord']      = int(round( float(blobclass.stats['center'][1])*float(bin) ))
 		peakdict['correlation'] = blobclass.stats['mean']
 		peakdict['peakmoment']  = blobclass.stats['moment']
 		peakdict['peakstddev']  = blobclass.stats['stddev']
