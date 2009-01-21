@@ -39,7 +39,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.data = {}
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
-		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
+		self.params['pickdatadir'] = os.path.join(self.params['rundir'], "outfiles")
 		apParam.createDirectory(self.params['pickdatadir'], warning=False)
 
 	#---------------------------------------
@@ -285,7 +285,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 		### set out file
 		outname = (imgname+"-alignment.spi")
-		outfile = os.path.join(self.params['rundir'], "align", outname)
+		outfile = os.path.join(self.params['pickdatadir'], outname)
 
 		pixdiam = self.params['diam']/self.params['apix']/self.params['bin']
 
