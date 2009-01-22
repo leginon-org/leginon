@@ -83,6 +83,7 @@ int main (int argc, char **argv) {
 		{ 4,	"kv",		"Voltage of microscope in kv",					"k", 1 },
 		{ 5,	"binby",	"Ammount to bin input image",					"b", 1 },
 		{ 6,	"amp",		"Initial Amplitude Contrast",					"m", 1 },
+		{ 7,	"edge",		"Edge Parameters",								"e", 1 },
 		{ 0,	NULL,		NULL,										   NULL, 0 }
 	};
 	
@@ -96,6 +97,10 @@ int main (int argc, char **argv) {
 	f64 cs = 2.0;
 	f64 kv = 120.0;
 	u32 binby = 2;
+	
+	f64 edge_blur = 6.0;
+	f64 edge_mint = 0.00001;
+	f64 edge_maxt = 0.0008;
 	
 	f32 t0 = CPUTIME;	
 	f32 t1 = CPUTIME;
@@ -129,12 +134,15 @@ int main (int argc, char **argv) {
 				sscanf(arg,"%d",&binby);
 				break;
 			case  6:
-				sscanf(arg,"%f",&ac);
+				sscanf(arg,"%lf",&ac);
 				break;
+			case  7:
+				sscanf(arg,"%lf,%lf",&edge_blur,&edge_maxt);
+				edge_mint = 0.1*edge_maxt;
+				break;	
 			default:
 				break;
 		}
-		
 	}
 
 	fprintf(stderr,"Processing image with %d %d pixels\n",[image sizeOfDimension:0],[image sizeOfDimension:1]);
@@ -165,10 +173,8 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	ArrayP edges = [image copyArray];
-	
-	f64 edge_blur = 6.0;
 	[edges gaussianBlurWithSigma:edge_blur];
-	u32 edge_count = cannyedges2d([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.00001,0.0008,5.0);
+	u32 edge_count = cannyedges2d([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],edge_mint,edge_maxt,5.0);
 
 	fprintf(stderr,"\t\tDONE in %2.2f seconds (%d edges)\n",CPUTIME-t1,edge_count);
 
@@ -177,12 +183,26 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Using RANSAC to find ellipse parameters...");
 	
-	f64 fit_treshold = 2.0;
-	f64 min_percent = 0.02;
+
+	f64 fit_treshold = 0.5;
+	f64 min_percent = 0.001;
 	f64 fit_percent = 0.99;
 	f64 max_iterations = 100000;
-	
+
 	EllipseP ellipse = ellipseRANSAC(edges,fit_treshold,min_percent,fit_percent,max_iterations);
+	
+	if ( CPUTIME-t1 > 0.0 ) {
+		char name[256];
+		ArrayP image_copy = [image deepCopy];
+		[image_copy gaussianBlurWithSigma:edge_blur];
+		[[image_copy ln] scaleFrom:0.0 to:1.0];
+		[ellipse drawInArray:image_copy];
+		[edges scaleFrom:0.0 to:2.0];
+		[edges addImage:image_copy];
+		sprintf(name,"%s.edge.mrc",basename([image name]));
+		if ( [edges writeMRCFile:name] == FALSE ) fprintf(stderr,"\tWrite Failed\n");
+		[image_copy release];
+	}
 	
 	fprintf(stderr,"\t\t\t\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 	
@@ -192,17 +212,6 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"Creating 1D radial average...");
 	ArrayP radial_average = createRadialAverage(image,ellipse);
 	fprintf(stderr,"\t\t\t\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
-	
-	if ( CPUTIME-t1 > 0.0 ) {
-		char name[256];
-		[[image ln] scaleFrom:0.0 to:1.0];
-		[ellipse drawInArray:image];
-		[edges multiplyBy:2.0];
-		[edges addImage:image];
-		sprintf(name,"%s.edge.mrc",basename([image name]));
-		if ( [edges writeMRCFile:name] == FALSE ) fprintf(stderr,"\tWrite Failed\n");
-	}
-	
 	
 //----------------------------------------------------------------------------
 	
