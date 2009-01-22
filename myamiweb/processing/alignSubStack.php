@@ -30,23 +30,42 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-	$clusterId=$_GET['clusterId'];
-	$alignId=$_GET['alignId'];
-	
+	$clusterId = $_GET['clusterId'];
+	$alignId   = $_GET['alignId'];
+	if (!$clusterId) $clusterId = $_POST['clusterId'];
+	if (!$alignId)   $alignId   = $_POST['alignId'];
+
+	if ($alignId) {
+		$defrunname = 'alignsub'.$alignId;
+		$formAction .= "&alignId=$alignId";
+	} elseif ($clusterId) {
+		$defrunname = 'clustersub'.$clusterId;
+		$formAction .= "&clusterId=$clusterId";
+	} else
+		$defrunname = 'substack1';
+
 	$classfile=$_GET['file'];
-	
+
 	$exclude=$_GET['exclude'];
-	
+	$include=$_GET['include'];	
+
 	// save other params to url formaction
-	$formAction.=($stackId) ? "&sId=$stackId" : "";
+	if ($classfile)
+		$formAction .= "&file=$classfile";
+	if ($stackId)
+		$formAction .= "&sId=$stackId";
+	if ($exclude)
+		$formAction .= "&exclude=$exclude";
+	if ($include)
+		$formAction .= "&include=$include";
 
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
-	$runid = ($_POST['runid']) ? $_POST['runid'] : '';
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
-	if (!$clusterId) $clusterId = $_POST['clusterId'];
-	if (!$alignId) $alignId = $_POST['alignId'];
+
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
+	if (!strlen($include)) $include = $_POST['include'];
 
 	// get outdir path
 	$sessiondata=getSessionList($projectId,$expId);
@@ -75,41 +94,54 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	<TR>
 		<TD VALIGN='TOP'>\n";
 
+	$basename = basename($classfile);
 	if ($clusterId) {
-		echo"
-					<b>Clustering Run Information:</b> <br />
-					Name & Path: $classfile <br />
-					Cluster Stack ID: $clusterId<br />
-							<input type='hidden' name='clusterId' value='$clusterId'>
-					<br />\n";
+		$clusterlink = "viewstack.php?clusterId=$clusterId&expId=$expId&file=$classfile";
+		echo"<b>Clustering Run Information:</b> <ul>\n"
+			."<li>Stackfile: <a href='$clusterlink'>$basename</a>\n"
+			."<li>Cluster Stack ID: $clusterId\n"
+			."<input type='hidden' name='clusterId' value='$clusterId'>\n"
+			."</ul>\n";
+	} else if ($alignId) {
+		$alignlink = "viewstack.php?alignId=$alignId&expId=$expId&file=$classfile";
+		echo"<b>Alignment Run Information:</b> <ul>\n"
+			."<li>Stackfile: <a href='$alignlink'>$basename</a>\n"
+			."<li>Align Stack ID: $alignId\n"
+			."<input type='hidden' name='alignId' value='$alignId'>\n"
+			."</ul>\n";
 	}
-	
-	if ($alignId) {
-		echo"
-					<b>Clustering Run Information:</b> <br />
-					Name & Path: $classfile <br />
-					Align Stack ID: $alignId<br />
-							<input type='hidden' name='alignId' value='$alignId'>
-					<br />\n";
-	}
-	
-	
-	
-	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' value='$runid'><br />\n";
-	echo docpop('test','<b>Excluded Classes:</b> ');
-	echo "<input type='text' name='exclude' value='$exclude' size='38'><br />\n";
+
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' value='$runname' size='15'><br/><br/>\n";
+
+	// exclude and include
+	if (!$_GET['include']) {
+		echo docpop('test','<b>Excluded Classes:</b> ');
+		echo "<br/>\n<input type='text' name='exclude' value='$exclude' size='38'><br />\n";
+	} else
+		echo "<input type='hidden' name='exclude' value=''>\n";
+	if (!$_GET['exclude']) {
+		echo docpop('test','<b>Included Classes:</b> ');
+		echo "<br/>\n<input type='text' name='include' value='$include' size='38'><br />\n";
+	} else
+		echo "<input type='hidden' name='include' value=''>\n";
+
+	echo "<br/>\n";
+
 	echo "<b>Description:</b><br />\n";
-	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
-	echo "<br />\n";
+	echo "<textarea name='description' rows='2' cols='60'>$description</textarea>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit','<b>Commit stack to database');
-	echo "<br />\n";
+	echo "<br/>\n";
 	echo "</td>
   </tr>
   <tr>
     <td align='center'>
 	";
+	echo "<br/>\n";
 	echo getSubmitForm("Create SubStack");
 	echo "
 	</td>
@@ -124,24 +156,30 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 function runSubStack() {
 	$expId = $_GET['expId'];
 
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$clusterId=$_POST['clusterId'];
 	$alignId=$_POST['alignId'];
 	$commit=$_POST['commit'];
 	$exclude=$_POST['exclude'];
+	$include=$_POST['include'];
 
 	$command.="alignSubStack.py ";
 
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createNorefSubStackForm("<b>ERROR:</b> Specify a runid");
+	if (!$runname) createNorefSubStackForm("<b>ERROR:</b> Specify a runname");
 	if (!$description) createNorefSubStackForm("<B>ERROR:</B> Enter a brief description");
+	if ($include && $exclude) createNorefSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
+	if (!$include && !$exclude) createNorefSubStackForm("<B>ERROR:</B> You must one of either included and excluded classes");
 
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="-n $runid ";
-	$command.="-d \"$description\" ";
-	$command.="--class-list-drop=$exclude ";
+	$command.="--runname=$runname ";
+	$command.="--description=\"$description\" ";
+	if ($exclude)
+		$command.="--class-list-drop=$exclude ";
+	elseif ($include)
+		$command.="--class-list-keep=$include ";
 	if ($clusterId) {
 		$command.="--cluster-id=$clusterId ";
 	} elseif ($alignId) {
@@ -150,7 +188,7 @@ function runSubStack() {
 		createNorefSubStackForm("<b>ERROR:</b> You need either a cluster Id or align ID");
 	}
 	
-	$command.= ($commit=='on') ? "-C " : "--no-commit ";
+	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Create SubStack") {
@@ -159,7 +197,7 @@ function runSubStack() {
 
 		if (!($user && $password)) createNorefSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
 		if ($sub) createNorefSubStackForm("<b>ERROR:</b> $sub");
 		exit();
@@ -174,7 +212,7 @@ function runSubStack() {
 	<b>alignSubStack.py command:</b><br />
 	$command
 	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
+	echo "<tr><td>run id</td><td>$runname</td></tr>\n";
 	echo "<tr><td>cluster id</td><td>$clusterId</td></tr>\n";
 	echo "<tr><td>align id</td><td>$alignId</td></tr>\n";
 	echo "<tr><td>excluded classes</td><td>$exclude</td></tr>\n";
