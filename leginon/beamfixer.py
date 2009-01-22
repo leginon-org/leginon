@@ -68,6 +68,7 @@ class BeamFixer(reference.Reference):
 		self.instrument.tem.BeamShift = bestbeamshift
 		self.logger.info('Best Beam Shift: %s' % (bestbeamshift,))
 		# update the preset beam shift
-		presetname = request_data['preset']
-		params = {'beam shift':bestbeamshift}
-		self.presets_client.updatePreset(presetname, params)
+		if request_data:
+			presetname = request_data['preset']
+			params = {'beam shift':bestbeamshift}
+			self.presets_client.updatePreset(presetname, params)
