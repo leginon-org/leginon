@@ -85,6 +85,10 @@ if (count($ctfrundatas) != count($hidectfrundatas) && !$_GET['showHidden']) {
 }
 
 if ($ctfrundatas) {
+	echo "<a href='ctfgraph.php?hg=1&expId=$sessionId&s=1&f=confidence'>\n";
+	echo "<img border='0' width='400' src='ctfgraph.php?w=400&hg=1&expId=$sessionId&s=1&f=confidence'></a>\n";
+	echo "<br/>\n";
+
 	foreach ($ctfrundatas as $ctfrundata) {
 		$ctfrunid=$ctfrundata['DEF_id'];
 		$rName=$ctfrundata['name'];
@@ -108,17 +112,17 @@ if ($ctfrundatas) {
 		}
 		$stats = $ctf->getCTFStats($fields, $sessionId, $ctfrunid);
 		$display_ctf=false;
-		foreach($stats as  $field=>$data) {
-				//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
-				foreach($data as $k=>$v) {
-					$display_ctf=true;
-					$imageId = $stats[$field][$k]['id'];
-					$p = $leginondata->getPresetFromImageId($imageId);
-					$stats[$field][$k]['preset'] = $p['name'];
-					$cdf = '<a href="ctfgraph.php?&hg=1&Id='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
-						.'<img border="0" src="ctfgraph.php?w=150&hg=1&Id='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
-					$stats[$field][$k]['img'] = $cdf;
-				}
+		foreach($stats as $field=>$data) {
+			//echo $field."&nbsp;=>&nbsp;".$data."<br/>\n";
+			foreach($data as $k=>$v) {
+				$display_ctf=true;
+				$imageId = $stats[$field][$k]['id'];
+				$p = $leginondata->getPresetFromImageId($imageId);
+				$stats[$field][$k]['preset'] = $p['name'];
+				$cdf = '<a href="ctfgraph.php?hg=1&expId='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'">'
+					.'<img border="0" src="ctfgraph.php?w=100&hg=1&expId='.$sessionId.'&rId='.$ctfrunid.'&f='.$field.'&preset='.$p['name'].'"></a>';
+				$stats[$field][$k]['img'] = $cdf;
+			}
 		}
 		$display_keys = array ( 'preset', 'nb', 'min', 'max', 'avg', 'stddev', 'img');
 		if ($display_ctf) {

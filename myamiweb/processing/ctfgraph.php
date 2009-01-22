@@ -9,21 +9,22 @@
 
 require "inc/particledata.inc";
 require "inc/leginon.inc";
+require "inc/project.inc";
+
 require "inc/jpgraph.php";
-require "inc/jpgraph_line.php";
-require "inc/jpgraph_scatter.php";
 require "inc/jpgraph_bar.php";
 require "inc/histogram.inc";
 require "inc/image.inc";
 
-$defaultId= 1766;
-$sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
+define (PARTICLE_DB, $_SESSION['processingdb']);
+
+$sessionId = $_GET['expId'];
 $viewdata = ($_GET['vd']==1) ? true : false;
-$histogram = ($_GET[hg]==1) ? true : false;
-$f = $_GET[f];
-$preset=$_GET['preset'];
-$summary = ($_GET[s]==1 ) ? true : false;
-$minimum = $_GET[mconf];
+$histogram = ($_GET['hg']==1) ? true : false;
+$f = $_GET['f'];
+$preset= ($_GET['preset']) ? $_GET['preset'] : '';
+$summary = ($_GET['s']==1 ) ? true : false;
+$minimum = ($_GET['mconf']) ? $_GET['mconf'] : 0.0;
 
 $ctf = new particledata();
 
@@ -46,7 +47,7 @@ function TimeCallback($aVal) {
 foreach($ctfinfo as $t) {
 	$id = $t['REF|leginondata|AcquisitionImageData|image'];
 	$p = $leginondata->getPresetFromImageId($id);
-	if ($p['name']!=$preset) {
+	if ($preset && $p['name']!=$preset) {
 		continue;
 	}
 	$data[$id] = $t[$f];
@@ -93,7 +94,7 @@ if (!$data) {
 		$bplot = new BarPlot($rdatay, $rdatax);
 		$graph->Add($bplot);
 
-		$graph->title->Set("Histogram $f : $preset ");
+		$graph->title->Set("Histogram $f ");
 		$graph->xaxis->title->Set("$f");
 		$graph->xaxis->SetTextLabelInterval(3);
 		$graph->xaxis->SetLabelFormatCallback('scicallback');
@@ -109,7 +110,7 @@ if (!$data) {
 		$graph->xaxis->title->Set("time");
 		$graph->yaxis->SetTitlemargin(35);
 		$graph->yaxis->SetLabelFormatCallback('scicallback');
-		$graph->title->Set("$f : $preset ");
+		$graph->title->Set("$f ");
 
 		$sp1 = new ScatterPlot($datay,$datax);
 		$sp1->mark->SetType(MARK_CIRCLE);
