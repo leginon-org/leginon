@@ -96,7 +96,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -c " + str(inputparams['cs'])
 			+ " -k " + str(inputparams['kv'])
 			+ " -a " + str(inputparams['apix'])
-			+ " -e " + str(inputparams['edge_b'])+","+str(inputparams['edge_t']) 
+			+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t']) 
 			+ "\n" )
 
 		### hate to do this but have to
