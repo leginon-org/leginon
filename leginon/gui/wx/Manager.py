@@ -132,6 +132,7 @@ class App(wx.App):
 		clients = ()
 
 		### try to get session from command line
+		prevapp = False
 		if self.options is not None:
 			if hasattr(self.options, 'session'):
 				if self.options.session:
@@ -140,7 +141,6 @@ class App(wx.App):
 			if hasattr(self.options, 'clients'):
 				if self.options.clients:
 					clients = self.options.clients.split(',')
-			prevapp = False
 			if hasattr(self.options, 'prevapp'):
 				if self.options.prevapp:
 					prevapp = True
