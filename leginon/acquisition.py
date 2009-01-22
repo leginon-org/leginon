@@ -213,12 +213,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.processTargetListQueue(newdata)
 			return
 		self.logger.info('Acquisition.processData')
-		preset_name = self.settings['preset order'][-1]
-		if self.settings['wait for reference']:
-			self.processReferenceTarget(preset_name)
 		self.imagelistdata = data.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
+		#print "newdata",newdata
+		#preset_name = self.settings['preset order'][-1]
+		#if self.settings['wait for reference']:
+		#	self.processReferenceTarget(preset_name)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.presetsclient.unlock()

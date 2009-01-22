@@ -132,6 +132,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		if goodtargets:
+			preset_name = self.settings['preset order'][-1]
+			if self.settings['wait for reference']:
+				self.processReferenceTarget(preset_name)
 			self.logger.info('Processing %d targets...' % len(goodtargets))
 
 		# republish the rejects and wait for them to complete
@@ -307,4 +310,5 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		if infostr:
 			self.logger.info(infostr)
 		self.panel.playerEvent(state)
-
+	def processReferenceTarget(self,presetname):
+		raise NotImplementedError()
