@@ -95,7 +95,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -b " + str(inputparams['binby'])
 			+ " -c " + str(inputparams['cs'])
 			+ " -k " + str(inputparams['kv'])
-			+ " -a " + str(inputparams['apix']) + "\n" )
+			+ " -a " + str(inputparams['apix'])
+			+ " -e " + str(inputparams['edge_b'])+","+str(inputparams['edge_t']) 
+			+ "\n" )
 
 		### hate to do this but have to
 		hostname = socket.gethostname()
@@ -246,11 +248,16 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			help="Minimal acceptable defocus (in meters)", metavar="#")
 		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
 			help="Maximal acceptable defocus (in meters)", metavar="#")
+		self.parser.add_option("--edge1", dest="edge_b", type="float", default=6.0,
+			help="Canny edge parameters Blur Sigma", metavar="#")
+		self.parser.add_option("--edge2", dest="edge_t", type="float", default=0.001,
+			help="Canny edge parameters Edge Treshold(0.0-1.0)", metavar="#")
 		### true/false
 		self.parser.add_option("--refine2d", dest="refine2d", default=False,
 			action="store_true", help="Refine the defocus after initial ACE with 2d cross-correlation")
 		self.parser.add_option("--verbose", dest="verbose", default=False,
 			action="store_true", help="Show all ace2 messages")
+
 		#self.parser.add_option("--refineapix", dest="refineapix", default=False,
 		#	action="store_true", help="Refine the pixel size")
 
