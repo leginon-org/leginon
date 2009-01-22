@@ -319,21 +319,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
 		<HR>";
-		/*Host: <select name='host'>\n";
-	foreach($hosts as $host) {
-		$s = ($_POST['host']==$host) ? 'selected' : '';
-		echo "<option $s >$host</option>\n";
-	}
-	echo "</select>
-	User: <select name='user'>\n";
-	foreach($users as $user) {
-		$s = ($_POST['user']==$user) ? 'selected' : '';
-		echo "<option $s >$user</option>\n";
-	}
-	echo"
-	  </select><BR>*/
-	  echo"
-          <INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>";
+	echo"<INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>";
 	echo getSubmitForm("Run Ref-Based Alignment");
 	echo "
 	  </TD>
@@ -350,11 +336,10 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 }
 
 function runAlignment() {
-	$host = $_POST['host'];
-	$user = $_POST['user'];
+	$expId   = $_GET['expId'];
+	$outdir  = $_POST['outdir'];
+	$runname = $_POST['runname'];
 
-	$runname=$_POST['runname'];
-	$outdir=$_POST['outdir'];
 	$stackid=$_POST['stackid'];
 	$maskdiam=$_POST['maskdiam'];
 	$imaskdiam=$_POST['imaskdiam'];
