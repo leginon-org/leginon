@@ -38,6 +38,7 @@ class RobotServer(object):
 
 	def mainloop(self):
 		while True:
+			### check for changes from DB
 			newattrs = getAttributesFromDB()
 			oldattrs = self.attrs_from_db
 			for key,value in newattrs.items():
@@ -52,12 +53,19 @@ class RobotServer(object):
 						## no handler method, do nothing
 						pass
 			self.attrs_from_db = newattrs
+			# check for changes in robot status
+			changed = self.checkRobot()
+			for name,value in changed:
+				setAttributeToDB(name, value)
 			time.sleep(1)
 
 	def handle_Signal11(self, value):
 		'Handles a change in the value of Signal11'
 		print 'I got Signal11 = ', value
 
+	def checkRobot(self):
+		return []
+		
 if __name__ == '__main__':
 	rs = RobotServer()
 	rs.mainloop()
