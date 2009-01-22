@@ -22,13 +22,17 @@ from apSpider import operations, backproject
 class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnums=#,#,# [options]")
-		self.parser.add_option("--classnum", "--classnums", dest="classnums", type="str",
+		self.parser.set_usage("Usage: %prog --cluster-id=ID --tilt-stack=# --classnums=#,#,# [options]")
+		self.parser.add_option("--classnums", dest="classnums", type="str",
 			help="Class numbers to use for rct volume, e.g. 0,1,2", metavar="#")
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
-		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
-			help="Noref class id", metavar="ID")
+
+		self.parser.add_option("--cluster-id", dest="clusterid", type="int",
+			help="clustering stack id", metavar="ID")
+		self.parser.add_option("--align-id", dest="alignid", type="int",
+			help="alignment stack id", metavar="ID")
+
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
@@ -40,6 +44,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		### parse class list
 		if self.params['classnums'] is None:
 			apDisplay.printError("class number was not defined")
 		rawclasslist = self.params['classnums'].split(",")
@@ -49,10 +54,26 @@ class rctVolumeScript(appionScript.AppionScript):
 				self.classlist.append(int(cnum))
 			except:
 				apDisplay.printError("could not parse: "+cnum)
-		if self.params['runname'] is None:
-			apDisplay.printError("new stack name was not defined")
-		if self.params['norefclassid'] is None:
-			apDisplay.printError("noref class ID was not defined")
+
+		### check for missing and duplicate entries
+		if self.params['alignid'] is None and self.params['clusterid'] is None:
+			apDisplay.printError("Please provide either --cluster-id or --align-id")
+		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
+			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
+
+		### get the stack ID from the other IDs
+		if self.params['alignid'] is not None:
+			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.params['notstackid'] = self.alignstackdata['stack'].dbid
+		elif self.params['clusterid'] is not None:
+			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			self.alignstackdata = clusterstackdata['clusterrun']['alignstack']
+			self.params['notstackid'] = self.alignstackdata['stack'].dbid
+
+		### check and make sure we got the stack id
+		if self.params['notstackid'] is None:
+			apDisplay.printError("untilted stackid was not found")
+
 		if self.params['tiltstackid'] is None:
 			apDisplay.printError("tilt stack ID was not defined")
 		if self.params['radius'] is None:
@@ -60,12 +81,6 @@ class rctVolumeScript(appionScript.AppionScript):
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description")
 		
-		#get the stack ID from the noref class ID
-		self.norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
-		norefRun = self.norefclassdata['norefRun']
-		self.params['notstackid'] = norefRun['stack'].dbid
-		if self.params['notstackid'] is None:
-			apDisplay.printError("untilted stackid was not defined")
 		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
 		if self.params['radius']*2 > boxsize-2:
 			apDisplay.printError("particle radius is too big for stack boxsize")	
@@ -84,18 +99,17 @@ class rctVolumeScript(appionScript.AppionScript):
 			self.params['runname'], "class"+str(classliststr) )
 
 	#=====================
-	def getParticleNoRefInPlaneRotation(self, stackpartdata):
+	def getParticleInPlaneRotation(self, tiltstackpartdata):
 		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'], 
-			stackpartdata['particleNumber'], self.params['notstackid'])
-		classpartq = appionData.ApNoRefClassParticlesData()
-		classpartq['classRun'] = self.norefclassdata
-		norefpartq = appionData.ApNoRefAlignParticlesData()
-		norefpartq['particle'] = notstackpartdata
-		classpartq['noref_particle'] = norefpartq
-		classpartdatas = classpartq.query(results=1)
-		if not classpartdatas or len(classpartdatas) != 1:
-			apDisplay.printError("could not get inplane rotation")
-		inplane = classpartdatas[0]['noref_particle']['rotation']
+			tiltstackpartdata['particleNumber'], self.params['notstackid'])
+
+		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq['stackpart'] = notstackpartdata
+		alignpartq['alignstack'] = self.alignstackdata
+		alignpartdatas = alignpartq.query()
+		if not alignpartdatas or len(alignpartdatas) != 1:
+			apDisplay.printError("could not get inplane rotation for particle %d"%(tiltstackpartdata['particleNumber']))
+		inplane = alignpartdatas[0]['rotation']
 		return inplane
 
 	#=====================
@@ -153,7 +167,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['description'] = self.params['description']
 		rctrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['tiltstackid'])
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		rctrunq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
+		rctrunq['alignstack'] = self.alignstackdata
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
 		if self.params['commit'] is True:
 			rctrunq.insert()
@@ -211,42 +225,14 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		return emanvolfile
 
-	#=====================
-	def getGoodParticles(self, classpartdatas):
-		includeParticle = []
-		tiltParticlesData = []
-		nopairParticle = 0
-		excludeParticle = 0
-		apDisplay.printMsg("sorting particles")
-		for classpart in classpartdatas:
-			#write to text file
-			classnum = classpart['classNumber']-1
-			if classnum in self.classlist:
-				notstackpartnum = classpart['noref_particle']['particle']['particleNumber']
-				tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
-					notstackpartnum, self.params['tiltstackid'])
-				if tiltstackpartdata is None:
-					nopairParticle += 1
-				else:
-					emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
-					includeParticle.append(emantiltstackpartnum)
-					tiltParticlesData.append(tiltstackpartdata)
-			else:
-				excludeParticle += 1
-		includeParticle.sort()
-		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
-			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
-		if len(includeParticle) < 1:
-			apDisplay.printError("No particles were kept")
-		#print includeParticle
-		return includeParticle, tiltParticlesData
+
 
 	#=====================
 	def makeEulerDoc(self, tiltParticlesData):
 		count = 0
 		eulerfile = os.path.join(self.params['rundir'], "eulersdoc"+self.timestamp+".spi")
 		eulerf = open(eulerfile, "w")
-		apDisplay.printMsg("creating Euler doc file")
+		apDisplay.printMsg("Creating Euler angles doc file")
 		starttime = time.time()
 		tiltParticlesData.sort(self.sortTiltParticlesData)
 		for stackpartdata in tiltParticlesData:
@@ -255,7 +241,7 @@ class rctVolumeScript(appionScript.AppionScript):
 				sys.stderr.write(".")
 				eulerf.flush()
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
-			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
+			inplane = self.getParticleInPlaneRotation(stackpartdata)
 			psi = -1.0*(gamma + inplane)
 			while psi < 0:
 				psi += 360.0
@@ -264,8 +250,68 @@ class rctVolumeScript(appionScript.AppionScript):
 			line = operations.spiderOutLine(count, [phi, tiltangle, psi])
 			eulerf.write(line)
 		eulerf.close()
-		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		apDisplay.printColor("Finished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return eulerfile
+
+	#=====================
+	def getGoodAlignParticles(self):
+		includeParticle = []
+		tiltParticlesData = []
+		nopairParticle = 0
+		excludeParticle = 0
+		apDisplay.printMsg("Sorting particles from classes")
+
+		if self.params['clusterid'] is not None:
+			### method 1: get particles from clustering data
+			clusterpartq = appionData.ApClusteringParticlesData()
+			clusterpartq['clusterstack'] = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			clusterpartdatas = clusterpartq.query()
+			apDisplay.printMsg("Found "+str(len(clusterpartdatas))+" clustered particles")
+
+			for clustpart in clusterpartdatas:
+				#write to text file
+				clustnum = clustpart['refnum']-1
+				if clustnum in self.classlist:
+					notstackpartnum = clustpart['alignparticle']['stackpart']['particleNumber']
+					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+						notstackpartnum, self.params['tiltstackid'])
+					if tiltstackpartdata is None:
+						nopairParticle += 1
+					else:
+						emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+						includeParticle.append(emantiltstackpartnum)
+						tiltParticlesData.append(tiltstackpartdata)
+				else:
+					excludeParticle += 1
+		else:
+			### method 2: get particles from alignment data
+			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq['alignstack'] = self.alignstackdata
+			alignpartdatas = alignpartq.query()
+			apDisplay.printMsg("Found "+str(len(alignpartdatas))+" aligned particles")
+
+			for alignpart in alignpartdatas:
+				#write to text file
+				alignnum = alignpart['ref']['refnum']-1
+				if alignnum in self.classlist:
+					notstackpartnum = alignpart['stackpart']['particleNumber']
+					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+						notstackpartnum, self.params['tiltstackid'])
+					if tiltstackpartdata is None:
+						nopairParticle += 1
+					else:
+						emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+						includeParticle.append(emantiltstackpartnum)
+						tiltParticlesData.append(tiltstackpartdata)
+				else:
+					excludeParticle += 1
+
+		includeParticle.sort()
+		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
+			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
+		if len(includeParticle) < 1:
+			apDisplay.printError("No particles were kept")
+		return includeParticle, tiltParticlesData
 
 	#=====================
 	def start(self):
@@ -273,14 +319,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
 		tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
 
-		### get particles from noref class run
-		classpartq = appionData.ApNoRefClassParticlesData()
-		classpartq['classRun'] = self.norefclassdata
-		classpartdatas = classpartq.query()
-		apDisplay.printMsg("Found "+str(len(classpartdatas))+" particles in the norefRun")
-
 		### get good particle numbers
-		includeParticle, tiltParticlesData = self.getGoodParticles(classpartdatas)
+		includeParticle, tiltParticlesData = self.getGoodAlignParticles()
 
 		### write kept particles to file
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile"+self.timestamp+".lst")

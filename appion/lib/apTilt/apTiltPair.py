@@ -207,6 +207,7 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 #===============================
 def getParticleTiltRotationAngles(stackpartdata):
 	partdata = stackpartdata['particle']
+
 	#if first particle
 	tiltpartq1 = appionData.ApTiltParticlePairData()
 	tiltpartq1['particle1'] = partdata
