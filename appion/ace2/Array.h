@@ -156,7 +156,7 @@ u08 testBorder( s64 loc, BorderTesterP tester );
 
 
 -(void) sqrt;
--(void) ln;
+-(id) ln;
 -(void) exp;
 -(void) qsort;
 -(void) add:(id)a;

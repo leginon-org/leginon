@@ -608,8 +608,6 @@ void estimateDefocus( ArrayP fit_data, ArrayP ctf_params ) {
 		
 	u32 i, j, size = [fit_data sizeOfDimension:0];
 	
-//	gaussian1d(values,0,size-1,1.0);
-	
 	ArrayP minima = findCTFMinima(fit_data,1);
 	ArrayP maxima = findCTFMaxima(fit_data,1);
 	

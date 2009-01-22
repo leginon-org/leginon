@@ -227,7 +227,7 @@
 			f64 x = col;
 			f64 y = row;
 			f64 vx = A1*x*x + B1*x*y + C1*y*y + D1*x + E1*y + F1;
-			if ( vx <= 0.0 ) image[row*(maxcol+1)+col] *= 2;
+			if ( vx <= 0.0 ) image[row*(maxcol+1)+col] *= 1.5;
 	}}
 	
 }

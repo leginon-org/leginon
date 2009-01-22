@@ -47,7 +47,14 @@ int main (int argc, char **argv) {
 	
 	for(i=0;i<size;i++) v[i] = v[i] + randomNumber(min,max*2);
 	
-	[testimage writeMRCFile:"test.mrc"];
+	ArrayP te1 = [testimage deepCopy];
+	ArrayP te2 = [testimage deepCopy];
+	
+	[te1 gaussianBlurFFTWithSigma:10];
+	[te2 gaussianBlurWithSigma:10];
+	
+	[te1 writeMRCFile:"te1.mrc"];
+	[te2 writeMRCFile:"te2.mrc"];
 	
 	f64 t1 = CPUTIME;
 	ArrayP avg1d = createRadialAverage(testimage,e3);

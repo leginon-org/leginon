@@ -13,7 +13,7 @@
 
 -(id) gaussianBlurWithSigma:(f64)sigma ;
 
--(void) gaussianBlurWithSigmaR:(f64)sigma;
+-(id) gaussianBlurFFTWithSigma:(f64)sigma;
 
 -(void) binBy: (u32)bin ;
 
@@ -71,8 +71,10 @@
 void boxSum( f64 xi[], const u32 s_ndim, const u32 s_dims[], const u32 s_stps[] );
 u08 * floodFill( f64 src[], u32 s_ndim, u32 s_dims[], u32 s_stps[], f64 lt, f64 ut, u08 n_conn );
 void boxBlur( f64 xi[], const u32 s_ndim, const u32 s_dims[], const u32 s_stps[], u32 s );
-f64 interpolate( f64 *image, f64 row, f64 col, u32 rows, u32 cols );
-void gaussian1d( f64 * data, s32 minl, s32 maxl, f64 sigma );
+f64 interpolate2d( f64 image[], f64 row, f64 col, u32 rows, u32 cols );
+void vecbin1d( f64 src[], f64 dst[], u32 bin, u32 dstsize );
+void gaussian1d( f64 data[], s32 minl, s32 maxl, f64 sigma );
+s64 cannyedges2d( f64 pixels[], u32 rows, u32 cols, f64 min_t, f64 max_t, f64 sigma );
 
 void restoreFFTWisdom();
 void saveFFTWisdom();

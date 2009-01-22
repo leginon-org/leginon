@@ -51,19 +51,16 @@ f64 highest_res( f64 ctf_p[], f64 size, f64 apix ) {
 	
 }
 
-void cannyEdges( f64 pixels[], u32 rows, u32 cols, f64 min_t, f64 max_t, f64 sigma );
 ArrayP ctfNormalize( ArrayP fit_data, ArrayP ctf_params );
 ArrayP createCTFParams( f64 defocus, f64 apix, f64 size, f64 ac, f64 kv, f64 cs );
 void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold );
 ArrayP createRadialAverage( ArrayP image, EllipseP ellipse );
 void generate1DCTF( f64 df, u32 size, f64 apix, f64 cs, f64 kv, f64 dfs[] );
 u32 peakReduce( f64 * data, s32 size, f64 sigma, s32 min_peaks, s32 max_peaks );
-void gSmooth( f64 * data, s32 minl, s32 maxl, f64 sigma );
 void peakCount( f64 * data, s32 size, s32 * min_peaks, s32 * max_peaks );
 f64 detectMirrors( f64 * image, u32 rows, u32 cols, u32 ang_search, f64 ang_spacing );
 ArrayP minMaxPeakFind( ArrayP image );
 ArrayP generate2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix, f64 cs, f64 kv, f64 ac );
-f64 interpolate( f64 *image, f64 row, f64 col, u32 rows, u32 cols );
 void normalizeValues( f64 values[], u32 size );
 u32 minPosition( f64 values[], u32 size );
 u32 maxPosition( f64 values[], u32 size );
@@ -146,13 +143,13 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	fprintf(stderr,"Binning image by %d pixels...",binby);
 	if ( binby != 1 && binby < 8 ) [image binBy:binby];
-	fprintf(stderr,"\t\t\tDONE in %2.4f seconds\n",CPUTIME-t1);
+	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 	
 	t1 = CPUTIME;
 	u32 off = 100;
 	fprintf(stderr,"Blurring %d edge pixels...",off);
 	[image edgeBlur:off];
-	fprintf(stderr,"\t\t\tDONE in %2.4f seconds\n",CPUTIME-t1);
+	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 
 //----------------------------------------------------------------------------
 	
@@ -161,41 +158,31 @@ int main (int argc, char **argv) {
 	[image generatePowerSpectrum];
 	u32 postbin = MIN([image sizeOfDimension:0],[image sizeOfDimension:1])/1024;
 	if ( postbin > 1 ) [image binBy:postbin];
-	fprintf(stderr,"\t\t\tDONE in %2.4f seconds\n",CPUTIME-t1);
+	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 
 //----------------------------------------------------------------------------
 	
 	t1 = CPUTIME;
 	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	ArrayP edges = [image copyArray];
-	f64 edge_blur = 6;
+	
+	f64 edge_blur = 6.0;
 	[edges gaussianBlurWithSigma:edge_blur];
-//	[edges cannyEdgesWithUpperTreshold:0.1 lowerTreshold:0.01];
-	ArrayP edge_copy = [edges deepCopy];
-	cannyEdges([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.0001,0.001,5.0);
+	u32 edge_count = cannyedges2d([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],0.00001,0.0008,5.0);
 
-	fprintf(stderr,"\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
+	fprintf(stderr,"\t\tDONE in %2.2f seconds (%d edges)\n",CPUTIME-t1,edge_count);
 
 //----------------------------------------------------------------------------
 
 	t1 = CPUTIME;
 	fprintf(stderr,"Using RANSAC to find ellipse parameters...");
 	
-	f64 fit_treshold = 0.5;
+	f64 fit_treshold = 2.0;
 	f64 min_percent = 0.02;
 	f64 fit_percent = 0.99;
 	f64 max_iterations = 100000;
 	
 	EllipseP ellipse = ellipseRANSAC(edges,fit_treshold,min_percent,fit_percent,max_iterations);
-	
-	if ( CPUTIME-t1 > 0.0 ) {
-		char name[256];
-		[edges multiplyBy:1e9];
-		[edges addImage:edge_copy];
-		[ellipse drawInArray:edges];
-		sprintf(name,"%s.edge.mrc",basename([image name]));
-		if ( [edges writeMRCFile:name] == FALSE ) fprintf(stderr,"\tWrite Failed\n");
-	}
 	
 	fprintf(stderr,"\t\t\t\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
 	
@@ -205,6 +192,17 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"Creating 1D radial average...");
 	ArrayP radial_average = createRadialAverage(image,ellipse);
 	fprintf(stderr,"\t\t\t\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
+	
+	if ( CPUTIME-t1 > 0.0 ) {
+		char name[256];
+		[[image ln] scaleFrom:0.0 to:1.0];
+		[ellipse drawInArray:image];
+		[edges multiplyBy:2.0];
+		[edges addImage:image];
+		sprintf(name,"%s.edge.mrc",basename([image name]));
+		if ( [edges writeMRCFile:name] == FALSE ) fprintf(stderr,"\tWrite Failed\n");
+	}
+	
 	
 //----------------------------------------------------------------------------
 	
@@ -689,8 +687,8 @@ f64 detectMirrors( f64 * image, u32 rows, u32 cols, u32 ang_search, f64 ang_spac
 				ry1 =  x1*sine + y1c;
 				ry2 = -x1*sine + y1c;
 
-				f64 p1 = interpolate(image,ry1,rx1,rows,cols);
-				f64 p2 = interpolate(image,ry2,rx2,rows,cols);
+				f64 p1 = interpolate2d(image,ry1,rx1,rows,cols);
+				f64 p2 = interpolate2d(image,ry2,rx2,rows,cols);
 						
 				corr_score[rot] += p2*p1;
 				diff_score[rot] += (p2-p1)*(p2-p1);	
@@ -754,7 +752,7 @@ u32 peakReduce( f64 * data, s32 size, f64 sigma, s32 min_peaks, s32 max_peaks ) 
 	s32 iterations = 0;
 	
 	while ( c_min_peaks > min_peaks && c_max_peaks > max_peaks ) {
-		gSmooth(data,0,size-1,sigma);
+		gaussian1d(data,0,size-1,sigma);
 		peakCount(data,size,&c_min_peaks,&c_max_peaks);
 		iterations++;
 	}
@@ -763,39 +761,6 @@ u32 peakReduce( f64 * data, s32 size, f64 sigma, s32 min_peaks, s32 max_peaks ) 
 	
 	return iterations;
 	
-}
-
-void gSmooth( f64 * data, s32 minl, s32 maxl, f64 sigma ) {
-		
-	s32 krad = sigma * 6;
-	krad = MAX(krad,1);	
-	
-	f64 *kernel = NEWV(f64,krad);
-	f64 * xt = NEWV(f64,maxl+1);
-	if ( kernel == NULL || xt == NULL) return;
-	f64 two_s2  = 1.0 / ( sigma * sigma * 2 );
-	f64 norm    = 1.0 / ( sigma * sqrt(2*PI) );
-	s32 i, r;
-	
-	for (i=0;i<krad;i++) kernel[i] = norm * exp( -i*i*two_s2 );
-	
-	for(r=minl;r<=maxl;r++) {
-		f64 sum = data[r] * kernel[0];
-		for(i=1;i<krad;i++) {
-			s32 pos1 = r - i;
-			s32 pos2 = r + i;
-			if ( pos1 < minl ) pos1 = minl;
-			if ( pos2 > maxl ) pos2 = maxl;
-			sum += ( data[pos1] + data[pos2] ) * kernel[i];
-		}
-		xt[r] = sum;
-	}
-	
-	for(i=minl;i<=maxl;i++) data[i] = xt[i];
-	
-	free(kernel);
-	free(xt);
-		
 }
 
 void peakCount( f64 * data, s32 size, s32 * min_peaks, s32 * max_peaks ) {
@@ -853,8 +818,8 @@ void findDefoci( f64 * data, u32 rows, u32 cols, f64 ang, f64 defoci[] ) {
 			ry1 =  y*c1 + x*s1 + y_rad;
 			ry2 =  y*c1 - x*s1 + y_rad;
 			
-			p1 = interpolate(data,ry1,rx1,rows,cols);
-			p2 = interpolate(data,ry2,rx2,rows,cols);
+			p1 = interpolate2d(data,ry1,rx1,rows,cols);
+			p2 = interpolate2d(data,ry2,rx2,rows,cols);
 	
 			df1_v[r] += p1+p2;
 			
@@ -863,8 +828,8 @@ void findDefoci( f64 * data, u32 rows, u32 cols, f64 ang, f64 defoci[] ) {
 			ry1 =  y*c2 + x*s2 + y_rad;
 			ry2 =  y*c2 - x*s2 + y_rad;
 			
-			p1 = interpolate(data,ry1,rx1,rows,cols);
-			p2 = interpolate(data,ry2,rx2,rows,cols);
+			p1 = interpolate2d(data,ry1,rx1,rows,cols);
+			p2 = interpolate2d(data,ry2,rx2,rows,cols);
 			
 			df2_v[r] += p1+p2;
 			
@@ -924,10 +889,10 @@ void radialGradients( f64 * data, u32 rows, u32 cols, u32 ang_search, f64 ang_sp
 			f64 x = x_rad - r*sine;
 			f64 y = y_rad + r*cine;
 			
-			f64 p1 = interpolate(data,y,x+3,rows,cols);
-			f64 p2 = interpolate(data,y,x-3,rows,cols);
-			f64 p3 = interpolate(data,y+3,x,rows,cols);
-			f64 p4 = interpolate(data,y-3,x,rows,cols);
+			f64 p1 = interpolate2d(data,y,x+3,rows,cols);
+			f64 p2 = interpolate2d(data,y,x-3,rows,cols);
+			f64 p3 = interpolate2d(data,y+3,x,rows,cols);
+			f64 p4 = interpolate2d(data,y-3,x,rows,cols);
 			
 			f64 angle = (atan((p1-p2)/(p3-p4))+rot*ang_spacing*RAD)*DEG;
 			if ( angle < 0 ) angle = angle + 360.0;
@@ -1071,7 +1036,7 @@ f64 calcBackDrift( f64 values[], u32 rad, f64 mins, f64 maxs ) {
 	
 	while ( sigma < maxs ) {
 		memcpy(temp,values,sizeof(f64)*rad);
-		gSmooth(temp,0,rad-1,sigma);
+		gaussian1d(temp,0,rad-1,sigma);
 		f64 oldsize = back_drift;
 		for(r=rad*0.05;r<rad-1;r++) if ( temp[r] < temp[r+1] ) back_drift += temp[r+1] - temp[r];
 		if ( back_drift == oldsize ) break;
@@ -1105,114 +1070,4 @@ void generate1DCTF( f64 df, u32 size, f64 apix, f64 cs, f64 kv, f64 dfs[] ) {
 		dfs[r] = z*z;
 	}
 	
-}
-
-f64 interpolate2d( f64 *image, f64 row, f64 col, u32 rows, u32 cols );
-void cannyEdges( f64 pixels[], u32 rows, u32 cols, f64 min_t, f64 max_t, f64 sigma ) {
-	
-	if ( min_t < 0.0 ) min_t = 0.0;
-	if ( max_t > 1.0 ) max_t = 1.0;
-	if ( min_t > max_t ) min_t = max_t;
-	
-	u32 r, c, size = rows*cols;
-	
-	f64 * m_pixels = NEWV(f64,size);
-	f64 * a_pixels = NEWV(f64,size);
-	
-	for(r=1;r<rows-1;r++) {
-		for(c=1;c<cols-1;c++) {
-			u32 p = r*cols+c;
-			f64 dx = pixels[p+1] - pixels[p-1];
-			f64 dy = pixels[p-cols] - pixels[p+cols];
-			m_pixels[p] = sqrt(dx*dx+dy*dy);
-			a_pixels[p] = atan2(dy,dx);
-		}
-	}
-	
-	for(r=0;r<size;r++) pixels[r] = -1.0;
-	
-	f64 minv = m_pixels[2*cols+2];
-	f64 maxv = m_pixels[2*cols+2];
-	
-	for(r=2;r<rows-2;r++) {
-		for(c=2;c<cols-2;c++) {
-			u32 p = r*cols+c;
-			f64 cine = cos(a_pixels[p]);
-			f64 sine = sin(a_pixels[p]);
-			f64 p1 = interpolate2d(m_pixels,r-sine,c+cine,rows,cols);
-			f64 p2 = interpolate2d(m_pixels,r+sine,c-cine,rows,cols); 
-			if ( p1 < m_pixels[p] && p2 < m_pixels[p] ) {
-				if ( minv > m_pixels[p] ) minv = m_pixels[p];
-				if ( maxv < m_pixels[p] ) maxv = m_pixels[p];
-				pixels[p] = m_pixels[p];
-			}
-		}
-	}
-	
-	u32 * stack = NEWV(u32,size);
-	u32 s_size = 0;
-	
-	for(r=3;r<rows-3;r++) {
-		for(c=3;c<cols-3;c++) {
-			u32 p = r*cols+c;
-			pixels[p] = (pixels[p]-minv)/(maxv-minv);
-			if ( pixels[p] >= max_t ) {
-				stack[s_size++] = p;
-				pixels[p] = -2.0;
-			}
-		}
-	}
-	
-	for(r=0;r<s_size;r++) {
-		u32 n, p = stack[r];
-		n = p - 1;
-		if ( pixels[n] >= min_t ) {
-			stack[s_size++] = n;
-			pixels[n] = -2.0;
-		}
-		n = p + 1;
-		if ( pixels[n] >= min_t ) {
-			stack[s_size++] = n;
-			pixels[n] = -2.0;
-		}
-		n = p - cols;
-		if ( pixels[n] >= min_t ) {
-			stack[s_size++] = n;
-			pixels[n] = -2.0;
-		}
-		n = p + cols;
-		if ( pixels[n] >= min_t ) {
-			stack[s_size++] = n;
-			pixels[n] = -2.0;
-		}
-	}
-	
-	fprintf(stderr,"Found %d edge pixels\n",s_size);
-	
-	for(r=0;r<size;r++) {
-		if ( pixels[r] == -2.0 ) pixels[r] = 1.0;
-		else pixels[r] = 0.0;
-	}
-	
-	free(m_pixels);
-	free(a_pixels);
-	free(stack);
-	
-}
-
-f64 interpolate2d( f64 *image, f64 row, f64 col, u32 rows, u32 cols ) {
-	u32 maxrow = rows-1;
-	u32 maxcol = cols-1;
-	u32 irow = row;
-	u32 icol = col;
-	image = image+(irow*cols+icol);
-	f64 a = *(image);
-	f64 b = *(image+=1);
-	f64 c = *(image+=maxcol);
-	f64 d = *(image+=1);
-	f64 rw2 = row - irow;
-	f64 rw1 = 1.0 - rw2;
-	f64 cw2 = col - icol;
-	f64 cw1 = 1.0 - cw2;
-	return a*rw1*cw1+b*rw1*cw2+c*rw2*cw1+d*rw2*cw2;
 }

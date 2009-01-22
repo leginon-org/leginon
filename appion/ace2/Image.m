@@ -2,7 +2,6 @@
 #include <math.h>
 
 void unionFindAB( u32 *roots, u32 *sizes, u32 a, u32 b );
-void vecBin( f64 *src, f64 *dst, u32 bin, u32 dstsize );
 void convolve1Ds( f32 *src, f32 *dst, u32 size, u32 cols, f32 *kernel, u32 ksize );
 void rotateLong( f32 *src, f32 *dst, u32 size, u32 cols );
 
@@ -87,47 +86,57 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 	
 }
 
--(void) gaussianBlurWithSigmaR:(f64)sigma {
+-(id) gaussianBlurFFTWithSigma:(f64)sigma {
 	
-	[self setTypeTo: TYPE_F64];
+	if ( ![self isType: TYPE_F64] ) return nil;
 
-	int r, c, i, k;
-	f64 * x1 = [self data];
-	c64 * x3 = fftw_malloc(sizeof(c64)*size);
-
-	for(i=0;i<size;i++) x3[i] = x1[i];
+	int d, i;
 	
-	int dim[ndim+1];
-
-	for (i=0;i<ndim;i++) dim[i] = dim_size[i];
+	f64 ori_size[ndim];
+	for(d=0;d<ndim;d++) ori_size[d] = dim_size[d];
 	
-	fftw_plan plan1 = fftw_plan_dft(ndim, dim, x3, x3, FFTW_FORWARD, FFTW_ESTIMATE);
-	fftw_execute(plan1);
+	[self r2cfftc];
 	
-	f64 x_rad = dim[0]/2.0;
-	f64 y_rad = dim[1]/2.0;
+	fprintf(stderr,"FFT done\n");
+	
+	u32 curpos[ndim];
+	f64 cenpos[ndim];
+	
+	cenpos[0] = dim_size[0]-1;
+	for(d=1;d<ndim;d++) cenpos[d] = (f64)(dim_size[d])/2;
+	for(d=0;d<ndim;d++) curpos[d] = 0;
+	
+	for(d=0;d<ndim;d++) fprintf(stderr,"Dim: %d is %d\n",d,dim_size[d]);
 		
-	for(r=0,i=0;r<dim[0];r++) {
-		for(c=0;c<dim[1];c++,i++) {
-			f64 x = c;
-			f64 y = r;
-			if ( x > x_rad ) x = dim[0] - x;
-			if ( y > y_rad ) y = dim[1] - y;
-			x = x * ( 2.0 / dim[0] );
-			y = y * ( 2.0 / dim[1] );
-			f64 rad = x*x+y*y;
-			x3[i] = exp(-rad*sigma*sigma*2.0)*x3[i];			
+	c64 * pixels = [self data];
+	
+	ArrayP test = [Array newWithType:TYPE_F64 andDimensions:dim_size];
+	f64 * pixes = [test data];
+	
+	f64 norm = sqrt(PI*2*sigma*sigma)/pow(2*PI*sigma*sigma,(f64)ndim/2.0);
+	f64 fact = -0.5*sigma*sigma;
+	
+	for(i=0;i<size;i++) {
+		
+		f64 dist = 0.0;
+		
+		for(d=0;curpos[d]>=dim_size[d]&&d<ndim-1;d++) {
+			curpos[d] = 0;
+			curpos[d+1]++;
 		}
+		
+		for(d=0;d<ndim;d++) dist += pow((curpos[d]-cenpos[d])/cenpos[d],2.0);
+		pixels[i] = pixels[i] * exp(dist*fact);
+		pixes[i] = 1000.0*exp(dist*fact);
+		
+		curpos[0]++;
+		
 	}
 	
-	fftw_plan plan2 = fftw_plan_dft(ndim, dim, x3, x3, FFTW_BACKWARD, FFTW_ESTIMATE);
-	fftw_execute(plan2);
+	[test writeMRCFile:"temp.mrc"];
 	
-	for(i=0;i<size;i++) x1[i] = x3[i]/size;
-	
-	fftw_destroy_plan(plan1);
-	fftw_destroy_plan(plan2);
-	free(x3);
+	[self c2rfftc];
+	[self divideBy:size];
 	
 }
 
@@ -480,7 +489,7 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 
 		for(d=1;d<ndim;d++)	offset += curDim[d] / bin * newStp[d];
 
-		vecBin(xi,xt+offset,bin,newDim[0]);
+		vecbin1d(xi,xt+offset,bin,newDim[0]);
 		
 		curDim[1]++;
 		xi+=dim_step[1];
@@ -780,8 +789,8 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 			u32 p = r*dim_size[0]+c;
 			f64 cine = cos(angs[p]);
 			f64 sine = sin(angs[p]);
-			f64 p1 = interpolate(mags,r-sine,c+cine,dim_size[1],dim_size[0]);
-			f64 p2 = interpolate(mags,r+sine,c-cine,dim_size[1],dim_size[0]); 
+			f64 p1 = interpolate2d(mags,r-sine,c+cine,dim_size[1],dim_size[0]);
+			f64 p2 = interpolate2d(mags,r+sine,c-cine,dim_size[1],dim_size[0]); 
 			if ( p1 < mags[p] && p2 < mags[p] ) {
 				minval = MIN(mags[p],minval);
 				maxval = MAX(mags[p],maxval);
@@ -1210,7 +1219,7 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 
 @end
 
-void vecBin( f64 * src, f64 * dst, u32 bin, u32 dstsize ) {
+void vecbin1d( f64 * src, f64 * dst, u32 bin, u32 dstsize ) {
 	u32 k, i;
 	for(k=0;k<dstsize;k++,dst++) for(i=0;i<bin;i++,src++) *dst += *src;
 }
@@ -1441,29 +1450,199 @@ void boxBlur( f64 xi[], const u32 s_ndim, const u32 s_dims[], const u32 s_stps[]
 	
 }
 
-f64 interpolate( f64 *image, f64 row, f64 col, u32 rows, u32 cols ) {
-	u32 maxrow = rows-1;
-	u32 maxcol = cols-1;
+s64 cannyedges2d( f64 pixels[], u32 rows, u32 cols, f64 min_t, f64 max_t, f64 sigma ) {
+	
+	if ( min_t < 0.0 ) min_t = 0.0;
+	if ( max_t > 1.0 ) max_t = 1.0;
+	if ( min_t > max_t ) min_t = max_t;
+	
+	if ( rows < 3 || cols < 3 ) {
+//		fprintf(stderr,"Must have at least 3 X 3 pixels to perform canny-edge detection\n");
+		return -1;
+	}
+	
+	u32 r, c, size = rows*cols;
+	
+	//  Arrays for the magnitude and direction of the vector field
+	f64 * m_pixels = NEWV(f64,size);
+	u32 * a_pixels = NEWV(u32,size);
+	
+	f64 * cos_cache = NEWV(f64,360);
+	f64 * sin_cache = NEWV(f64,360);
+	
+	if ( m_pixels == NULL || a_pixels == NULL || cos_cache == NULL || sin_cache == NULL ) {
+//		fprintf(stderr,"Not enough memory to perform canny-edge detection\n");
+		if ( m_pixels != NULL ) free(m_pixels);
+		if ( a_pixels != NULL ) free(a_pixels);
+		if ( cos_cache != NULL ) free(cos_cache);
+		if ( sin_cache != NULL ) free(sin_cache);
+		return -2;
+	}
+	
+	for(r=0;r<360;r++) cos_cache[r] = cos(r*RAD);
+	for(r=0;r<360;r++) sin_cache[r] = sin(r*RAD);
+	
+	// Calculate the vector field, ignore the border pixels since they do not have neighbors
+	for(r=1;r<rows-1;r++) {
+		for(c=1;c<cols-1;c++) {
+			
+			u32 p = r*cols+c;
+			
+			f64 dx = pixels[p+1] - pixels[p-1];
+			f64 dy = pixels[p-cols] - pixels[p+cols];
+			
+			m_pixels[p] = sqrt(dx*dx+dy*dy);
+			f64 angle = atan2(dy,dx)*DEG;
+			if ( angle < 0.0 ) angle += 360.0;
+			a_pixels[p] = angle;
+			
+		}
+	}
+	
+	for(r=0;r<size;r++) pixels[r] = -1.0;
+	
+	// Get starting values for the min and max that are within the domain
+	f64 minv = m_pixels[size/2];
+	f64 maxv = m_pixels[size/2];
+	
+	// Perform non-maximum supression by testing that each vector is truly a maximum along it's direction
+	// Ignore the second set of border pixels since they do not have vector neighbors
+	
+	for(r=2;r<rows-2;r++) {
+		for(c=2;c<cols-2;c++) {
+			u32 p = r*cols+c;
+			f64 cine = cos_cache[a_pixels[p]];
+			f64 sine = sin_cache[a_pixels[p]];
+			f64 p1 = interpolate2d(m_pixels,r-sine,c+cine,rows,cols);
+			f64 p2 = interpolate2d(m_pixels,r+sine,c-cine,rows,cols); 
+			if ( p1 < m_pixels[p] && p2 < m_pixels[p] ) {
+				if ( minv > m_pixels[p] ) minv = m_pixels[p];
+				else if ( maxv < m_pixels[p] ) maxv = m_pixels[p];
+				pixels[p] = m_pixels[p];
+			}
+		}
+	}
+	
+	max_t = (maxv-minv)*max_t;
+	min_t = (maxv-minv)*min_t;
+	
+	u32 * stack = NEWV(u32,size);
+	u32 s_size = 0;
+	
+	if ( stack == NULL ) {
+		fprintf(stderr,"Not enough memory to perform canny-edge detection\n");
+		free(m_pixels);
+		free(a_pixels);
+		free(cos_cache);
+		free(sin_cache);
+		return -2;
+	}
+	
+	for(r=3;r<rows-3;r++) {
+		for(c=3;c<cols-3;c++) {
+			u32 p = r*cols+c;
+			if ( pixels[p] >= max_t ) {
+				stack[s_size++] = p;
+				pixels[p] = -2.0;
+			}
+		}
+	}
+	
+	for(r=0;r<s_size;r++) {
+		u32 n, p = stack[r];
+		n = p - 1;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p + 1;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p - cols;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p + cols;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p - 1 - cols;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p + 1 - cols;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p - cols + 1;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+		n = p + cols - 1;
+		if ( pixels[n] >= min_t ) {
+			stack[s_size++] = n;
+			pixels[n] = -2.0;
+		}
+	}
+
+	for(r=0;r<size;r++) {
+		if ( pixels[r] == -2.0 ) pixels[r] = 1.0;
+		else pixels[r] = 0.0;
+	}
+	
+	free(cos_cache);
+	free(sin_cache);
+	free(m_pixels);
+	free(a_pixels);
+	free(stack);
+	
+	return s_size;
+	
+}
+
+f64 interpolate2d( f64 image[], f64 row, f64 col, u32 rows, u32 cols ) {
+	
 	u32 irow = row;
 	u32 icol = col;
-	image = image+(irow*cols+icol);
-	f64 a = *(image);
-	f64 b = *(image+=1);
-	f64 c = *(image+=maxcol);
-	f64 d = *(image+=1);
+	
+	u32 pos = irow*cols+icol;
+	
 	f64 rw2 = row - irow;
 	f64 rw1 = 1.0 - rw2;
 	f64 cw2 = col - icol;
 	f64 cw1 = 1.0 - cw2;
+	
+	f64 val = 0.0;
+	 
+	u32 ir1 = MAX(0,MIN(irow,rows-1));
+	u32 ir2 = MAX(0,MIN(irow+1,rows-1));
+	u32 ic1 = MAX(0,MIN(icol,cols-1));
+	u32 ic2 = MAX(0,MIN(icol+1,cols-1));
+	
+	f64 a = image[ir1*cols+ic1];
+	f64 b = image[ir1*cols+ic2];
+	f64 c = image[ir2*cols+ic1];
+	f64 d = image[ir2*cols+ic2];
+
 	return a*rw1*cw1+b*rw1*cw2+c*rw2*cw1+d*rw2*cw2;
+	
 }
 
-void gaussian1d( f64 * data, s32 minl, s32 maxl, f64 sigma ) {
+void gaussian1d( f64 data[], s32 minl, s32 maxl, f64 sigma ) {
+	
+	if ( data == NULL ) return;
 		
 	s32 krad = sigma * 6;
 	krad = MAX(krad,1);	
 	
-	f64 *kernel = NEWV(f64,krad);
+	f64 * kernel = NEWV(f64,krad);
 	f64 * xt = NEWV(f64,maxl-minl+1);
 	if ( kernel == NULL || xt == NULL) return;
 	f64 two_s2  = 1.0 / ( sigma * sigma * 2 );

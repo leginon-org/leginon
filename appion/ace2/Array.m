@@ -468,8 +468,8 @@ int compare_f64( const void * a, const void * b );
 	
 	for(ndim=0;dimensions[ndim]!=0;ndim++);
 	
-	dim_size = realloc(dim_size,sizeof(u32)*ndim);
-	dim_step = realloc(dim_step,sizeof(u32)*ndim);
+	dim_size = realloc(dim_size,sizeof(u32)*(ndim+1));
+	dim_step = realloc(dim_step,sizeof(u32)*(ndim+1));
 	
 	if ( dim_size == NULL ) goto error;
 	if ( dim_step == NULL ) goto error;
@@ -479,7 +479,10 @@ int compare_f64( const void * a, const void * b );
 		dim_step[k] = total_size;
 		total_size *= dim_size[k];
 	}
-
+	
+	dim_size[ndim] = 0;
+	dim_step[ndim] = 0;
+	
 	size = total_size;
 	memory = esize * size;
 	
@@ -649,7 +652,7 @@ int compare_f64( const void * a, const void * b );
 	
 }
 
--(void) ln {
+-(id) ln {
 	
 	if ( type != TYPE_F64 ) return;
 	
@@ -658,6 +661,8 @@ int compare_f64( const void * a, const void * b );
 	if ( values == NULL || size == 0 ) return;
 	
 	for(i=0;i<size;i++) values[i] = log(values[i]);
+	
+	return self;
 	
 }
 
