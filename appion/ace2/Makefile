@@ -36,7 +36,7 @@ ace2correct: ${CVOBJ} ace2correct.o
 	${CC} -o $(BINPATH)/$@.exe ${CFLAGS} ace2correct.o ${CVOBJ} ${CVLIBS}
 	
 testf: ${CVOBJ} testf.o
-	${CC} -o $@ ${CFLAGS} testf.o ${CVOBJ} ${CVLIBS}
+	${CC} -o $@.exe ${CFLAGS} testf.o ${CVOBJ} ${CVLIBS}
 
 # Implicit rule used by Gnu Make: $(CC) -c $(CPPFLAGS) $(CFLAGS)
 %.o : %.m
