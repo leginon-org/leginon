@@ -177,7 +177,7 @@ def copyTemplatesToOutdir(params, timestamp=None):
 	return
 		
 def insertTemplateImage(params):
-	for name in params['templatelist']:
+	for i,name in enumerate(params['templatelist']):
 		if os.path.basename(name) != name:
 			apDisplay.printError("please contact an appion developer, because the database insert is wrong")
 
@@ -205,12 +205,15 @@ def insertTemplateImage(params):
 		templateq['apix']=params['apix']
 		templateq['diam']=params['diam']
 		templateq['md5sum']=md5sum 
-		if params['norefid'] is not None:
-			templateq['noref'] = appionData.ApNoRefClassRunData.direct_query(params['norefid'])
-		if params['stackid'] is not None:
+		if 'alignid' in params and params['alignid'] is not None:
+			templateq['alignstack'] = appionData.ApAlignStackData.direct_query(params['alignid'])
+		if 'clusterid' in params and params['clusterid'] is not None:
+			templateq['clusterstack'] = appionData.ApClusteringStackData.direct_query(params['clusterid'])
+		if 'stackid' in params and params['stackid'] is not None:
 			templateq['stack'] = appionData.ApStackData.direct_query(params['stackid'])
-		if params['stackimgnum'] is not None:
-			templateq['stack_image_number']=int(params['stackimgnum'])
+		if 'imgnums' in params and params['imgnums'] is not None:
+			imgnums = params['imgnums'].split(",")
+			templateq['stack_image_number']=int(imgnums[i])
 		templateq['description']=params['description']
 		templateq['project|projects|project']=params['projectId']
 		## PHP web tools expect 'hidden' field, set it to False initially
