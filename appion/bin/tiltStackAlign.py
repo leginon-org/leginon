@@ -152,7 +152,7 @@ class tiltStackAlign(appionScript.AppionScript):
 				sys.stderr.write(".")
 				eulerf.flush()
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
-			line = operations.spiderOutLine(count, [phi, tiltangle, -1.0*gamma])
+			line = operations.spiderOutLine(count, [phi, tiltangle, gamma])
 			eulerf.write(line)
 		eulerf.close()
 		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
