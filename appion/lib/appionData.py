@@ -142,6 +142,8 @@ class ApTemplateImageData(Data):
 			('md5sum', str),
 			('stack', ApStackData),
 			('noref', ApNoRefClassRunData),
+			('alignstack', ApAlignStackData),
+			('clusterstack', ApClusteringStackData),
 			#('ref', ApRefRunData),
 			('stack_image_number', int),
 			('hidden', bool),
