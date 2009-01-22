@@ -105,6 +105,7 @@ var reclassId="<?=$reclassId?>"
 var clusterId="<?=$clusterId?>"
 var alignId="<?=$alignId?>"
 var imagicClusterId="<?=$imagicClusterId?>"
+
 <?php
 if ($norefClassId) {
 	$c=array();
@@ -146,14 +147,17 @@ function create3d0() {
 	}
 }
 
-function upload() {
-	var templateId=$('templateId').value
-	if (templateId!=""&& templateId <= n_images-1 && templateId >=0 ) {
+function uploadTemplate() {
+	var templateId=$('selectedIndex').value
+	if (templateId!="") {
 		if (stackId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
-		}
-		if (norefId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateId="+templateId+"&norefId="+norefId+"&norefClassId="+norefClassId+"&file="+filename+"","width=400,height=200") 
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
+		} else if (norefId!="") {
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&norefId="+norefId+"&norefClassId="+norefClassId+"&file="+filename+"","width=400,height=200") 
+		} else if (alignId!="") {
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&alignId="+alignId+"&file="+filename+"","width=400,height=200") 
+		} else if (clusterId!="") {
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&clusterId="+clusterId+"&file="+filename+"","width=400,height=200") 
 		}
 	}
 }
@@ -164,23 +168,27 @@ function uploadavg() {
   }
 }
 
-function createModel() {
-	var index = $('excludedIndex').value
+function runCommonLines() {
+	var index = $('selectedIndex').value
 	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
-}
-	
-function createNorefSubStack() {
-	var index = $('excludedIndex').value
-	window.open("norefSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 }
 
 function createAlignSubStack() {
+	var index = $('selectedIndex').value
+	if (index!="") {
+		if (clusterId!="") {
+			window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&include="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+		} else if (alignId!="") {
+			window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&include="+index+"&alignId="+alignId+"",'height=250,width=400');
+		}
+	} 
 	var index = $('excludedIndex').value
-	if (clusterId!="") {
-		window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
-	}
-	if (alignId!="") {
-		window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&alignId="+alignId+"",'height=250,width=400');
+	if (index!="") {
+		if (clusterId!="") {
+			window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+		} else if (alignId!="") {
+			window.open("alignSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&alignId="+alignId+"",'height=250,width=400');
+		}
 	}
 }
 
@@ -188,11 +196,6 @@ function createSubStack() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
 }
-
-function createTiltPairSubStack() {
-	var index = $('excludedIndex').value
-	window.open("norefTiltPairSubStack.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
-}	
 
 </script>
 </head>
@@ -215,44 +218,49 @@ binning: <select id="binning">
 		<option value="8">8</option>
 	</select>
 quality: <select id="quality">
+		<option value="50">jpeg 50</option>
 		<option value="80">jpeg 80</option>
 		<option value="90">jpeg 90</option>
 		<option value="png">png</option>
 	</select>
 <input id="loadbutton" type="button" alt="Load" value="Load" onclick="load();">
-<p style="margin-top: 2px; margin-bottom: 4px">
-<span>selection mode: </span><input id="mode" style="font-size: 12px; border: 1px solid #F00" type="button" value="exclude" onclick="setMode()">
-</p>
 <?
 
-if ($stackId || $clusterId || $norefId) echo "Upload as Template:<input id='templateId' type='text' alt='Upload' value='' size='5'>
-        <input id='uploadbutton' type='button' alt='upload' value='upload' onclick='upload();'>
-        <br />\n";
-if ($norefClassId || $reclassId || $clusterId || $imagicClusterId) echo "Imagic 3D0 generator (choose 3 projections):<input id='projectionId' type='text' alt='projection' value='' size='10'>
-        <input id='3d0button' type='button' alt='Create 3D0' value='Create 3D0' onclick='create3d0();'>
-        <br />\n";
 
-if ($norefId) {
-  echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
-<input type='button' value='Create Model' onClick='createModel()' >
-<input type='button' value='Create SubStack' onClick='createNorefSubStack()' > 
-<input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
+//Buttons for exclusion
+$excludebuttons = "";
+if ($stackId)
+	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStack()' >\n";
+if ($clusterId || $alignId)
+	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
+
+//Buttons for inclusion
+$includebuttons = "";
+// Upload Template
+if ($stackId || $clusterId || $alignId)
+	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";
+// Imagic 3d0
+if ($norefClassId || $reclassId || $clusterId || $imagicClusterId)
+	$includebuttons .= "<input id='3d0button' type='button' alt='Create 3D0' value='Run Imagic 3d0' onclick='create3d0();'>\n";
+if ($clusterId || $alignId) {
+	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
+	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 }
-elseif ($clusterId || $alignId) {
-  echo "Create initial model using these class averages <br /> exclude these classes (e.g. 0,1,5): <input type='text' id='excludedIndex' value=''>
-<input type='button' value='Create Model' onClick='createModel()' >
-<input type='button' value='Create SubStack' onClick='createAlignSubStack()' > 
-<input type='button' value='Create Tilt Pair SubStack' onClick='createTiltPairSubStack()'>\n";
-}
-elseif ($stackId) {
+
+echo "<table border='0' cellpading='6' cellspacing='10'><tr><td>\n";
+echo "  <span>Selection mode:</span>\n";
+echo "  <input id='mode' style='font-size: 12px; border: 1px solid #F00' type='button' value='exclude' onclick='setMode()'>\n";
+echo "</td></tr><tr><td>\n";
+echo "  <font color='#aa3333'>Excluded images:</font>\n <input type='text' id='excludedIndex' value=''>\n";
+echo $excludebuttons."\n";
+echo "</td></tr><tr><td>\n";
+echo "  <font color='#33aa33'>Selected images:</font>\n <input type='text' id='selectedIndex' value=''>\n";
+echo $includebuttons."\n";
+echo "</td></tr></table>\n";
+
+
+if ($stackId)
 	echo "<input id='uploadavg' type='button' alt='upload average' value='Average images as template' onclick='uploadavg();'>\n";
-  	echo "<br />\n";
-
-	echo "Remove particles from stack: <input type='text' id='excludedIndex' value=''>
-		<input type='button' value='Create SubStack' onClick='createSubStack()' >\n";
-
-  	
-}
 
 ?>
 
