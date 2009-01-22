@@ -16,7 +16,6 @@ import apDisplay
 import apParticle
 import apPeaks
 import apImage
-import ApTiltPicker
 from apTilt import apTiltTransform, apTiltPair, autotilt, tiltfile
 
 ##################################
