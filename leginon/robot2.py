@@ -242,6 +242,12 @@ class Robot2(node.Node):
 		# insert all the grids before handling them
 		for gridid in ievent['grid IDs']:
 			number = self.getGridNumber(gridid)
+			while number is None:
+				self.logger.info('Waiting for user to switch tray')
+				self.setStatus('user input')
+				self.startevent.clear()
+				self.startevent.wait()
+				number = self.getGridNumber(gridid, silent=True)
 			request = GridRequest(number, gridid, nodename)
 			self.queue.put(request)
 		self.startnowait = True
