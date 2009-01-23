@@ -134,6 +134,9 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			aceoutf.close()
 			aceerrf.close()
 		if not os.path.isfile(imagelog):
+			lddcmd = "ldd "+self.ace2exe
+			lddproc = subprocess.Popen(lddcmd, shell=True)
+			lddproc.wait()
 			apDisplay.printError("ace2 did not run")
 		apDisplay.printMsg("ace2 completed in " + apDisplay.timeString(time.time()-t0))
 
