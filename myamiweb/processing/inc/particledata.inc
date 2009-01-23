@@ -1712,8 +1712,8 @@ class particledata {
 		return $r;
 	}
 
-	function getClusteringRunsForAlignStack ($alignstackId, $projectId, $showHidden=false) {
-		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, spider.*,clusterrun.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
+	function getClusteringRunsForAlignStack ($alignstackId, $showHidden=false) {
+		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, spider.*,clusterrun.* "
 			."FROM ApClusteringRunData AS clusterrun "
 			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
 			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
@@ -1721,8 +1721,6 @@ class particledata {
                         ." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
 			."WHERE "
 			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId "
-			." AND "
-			."  clusterrun.`project|projects|project` = '$projectId' "
 			."ORDER BY clusterrunid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
@@ -1730,21 +1728,19 @@ class particledata {
 		return $r;
 	}
 
-	function getClusteringStacksForClusteringRun ($clusterrunId, $projectId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,clusterrun.*, cluster.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
+	function getClusteringStacksForClusteringRun ($clusterrunId, $showHidden=false) {
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,clusterrun.*, cluster.*"
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
-                        ."LEFT JOIN ApAlignAnalysisRunData as analysis ON "
-                        ." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
+			."LEFT JOIN ApAlignAnalysisRunData as analysis ON "
+			." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
 			."LEFT JOIN ApPathData as path ON "
 			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
 			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
 			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
 			."WHERE "
 			."  clusterrun.`DEF_id` = $clusterrunId "
-			." AND "
-			."  clusterrun.`project|projects|project` = '$projectId' "
 			."ORDER BY clusterid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
