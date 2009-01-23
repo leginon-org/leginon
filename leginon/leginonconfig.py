@@ -94,7 +94,8 @@ if not IMAGE_PATH:
 try:
 	mkdirs(mapPath(IMAGE_PATH))
 except:
-	print 'Error accessing image path: %s' % (IMAGE_PATH,)
+	if not os.path.isdir(IMAGE_PATH):
+		print 'Error accessing image path: %s' % (IMAGE_PATH,)
 
 # user
 USERNAME = configparser.get('User', 'fullname')
