@@ -215,11 +215,13 @@ class Robot2(node.Node):
 	def traysFromDB(self):
 		# if label is same, kinda screwed
 		self.gridtrayids = {}
+		self.gridtraylabels = {}
 		try:
 			projectdata = project.ProjectData()
 			gridboxes = projectdata.getGridBoxes()
 			for i in gridboxes.getall():
 				self.gridtrayids[i['label']] = i['gridboxId']
+				self.gridtraylabels[i['gridboxId']] = i['label']
 		except Exception, e:
 			self.logger.error('Failed to connect to the project database: %s' % e)
 
@@ -243,11 +245,13 @@ class Robot2(node.Node):
 		for gridid in ievent['grid IDs']:
 			number = self.getGridNumber(gridid)
 			while number is None:
+				self.setStatus('idle')
 				self.logger.info('Waiting for user to switch tray')
 				self.setStatus('user input')
+				self.panel.onWaitForTrayChanged()
 				self.startevent.clear()
 				self.startevent.wait()
-				number = self.getGridNumber(gridid, silent=True)
+				number = self.getGridNumber(gridid)
 			request = GridRequest(number, gridid, nodename)
 			self.queue.put(request)
 		self.startnowait = True
@@ -688,17 +692,20 @@ class Robot2(node.Node):
 		if grid is None:
 			self.logger.error('Failed to find grid information: %s' % e)
 			return None
+		gridlabel = grid['label']
 		if grid['boxId'] != self.gridtrayid:
-			self.logger.error('Grid ID #%s is not in selected grid tray' % gridid)
+			boxlabel = self.gridtraylabels[grid['boxId']]
+			self.logger.error('Grid "%s" is not in selected grid tray, but in "%s"' % (gridlabel,boxlabel))
 			return None
 		gridlocations = projectdata.getGridLocations()
 		gridlocationsindex = gridlocations.Index(['gridId'])
 		gridlocation = gridlocationsindex[gridid].fetchone()
 		if gridlocation is None:
-			self.logger.error('Failed to find grid number for grid ID #%s' % (gridid))
+			self.logger.error('Failed to find grid number for grid "%s"' % (gridlabel))
 			return None
 		if gridlocation['gridboxId'] != self.gridtrayid:
-			self.logger.error('Last location for grid ID #%s does not match selected tray' % (gridid))
+			boxlabel = self.gridtraylabels[gridlocation['gridboxId']]
+			self.logger.error('Last location for grid "%s" does not match selected tray, but "%s"' % (gridlabel,boxlabel))
 			return None
 		return int(gridlocation['location'])
 
