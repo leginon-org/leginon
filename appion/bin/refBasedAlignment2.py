@@ -106,6 +106,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def insertRefBasedRun(self, partlist, alignedstack, imagicstack, insert=False):
+		apDisplay.printMsg("committing results to DB")
 
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
