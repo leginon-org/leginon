@@ -715,6 +715,8 @@ class _createSQLTable:
 		def create(self):
 			q = sqlexpr.CreateTable(self.table, self.definition).sqlRepr()
 			c = self._cursor()
+			if debug:
+				print q
 			c.execute(q)
 			c.close()
 			self._checkTable()
@@ -765,6 +767,8 @@ class _createSQLTable:
 					queries.append(q)
 				try:
 					for q in queries:
+						if debug:
+							print q
 						c.execute(q)
 				except MySQLdb.OperationalError, e:
 					pass
@@ -1351,10 +1355,10 @@ def _sqltype(t):
 		return "TEXT"
 	elif issubclass(t, float):
 		return "DOUBLE"
-	elif issubclass(t, (int,long)):
-		return "INT(20)"
 	elif t is bool:
 		return "TINYINT(1)"
+	elif issubclass(t, (int,long)):
+		return "INT(20)"
 	else:
 		return None
 
