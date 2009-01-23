@@ -134,7 +134,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		if goodtargets:
 			preset_name = self.settings['preset order'][-1]
 			if self.settings['wait for reference']:
+				self.setStatus('waiting')
 				self.processReferenceTarget(preset_name)
+				self.setStatus('processing')
 			self.logger.info('Processing %d targets...' % len(goodtargets))
 
 		# republish the rejects and wait for them to complete

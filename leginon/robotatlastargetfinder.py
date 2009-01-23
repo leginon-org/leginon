@@ -669,6 +669,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		return targets
 
 	def processGridData(self, griddata):
+		self.setStatus('processing')
 		self.updateAtlasTargets()
 		grid = self.grids.getGridByID(griddata['grid ID'])
 		for insertion in grid.insertions:
@@ -690,6 +691,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 			self.abortevent.clear()
 			for image in targetimages:
+				self.setStatus('processing')
 				# get the targets adjusted for error in the initial transform
 				targets = self.getTargets(image, center,
 																		imatrix, rotation, scale, shift,
@@ -714,8 +716,10 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				self.makeTargetListEvent(targetlist)
 				self.publish(targetlist, pubevent=True)
 
+				self.setStatus('waiting')
 				self.waitForTargetListDone()
 
+				self.setStatus('processing')
 				for originaltargetdata, targetdata in targetdatalist:
 					targetquery = targetdata.__class__(initializer=targetdata)
 					targetquery['status'] = None
@@ -736,6 +740,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				if self.abortevent.isSet():
 					break
 
+		self.setStatus('idle')
 		self.unloadGrid(grid)
 
 	def abortInsertion(self):
@@ -770,7 +775,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				return False
 			else:
 				return None
-
+	
 		targetdata = data.AcquisitionImageTargetData(initializer=imagedata['target'])
 		emtargetdata = data.EMTargetData(initializer=imagedata['emtarget'])
 
@@ -830,6 +835,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
 
+		self.setStatus('waiting')
 		self.presetsclient.toScope(presetname, emtargetdata)
 
 		errorstring = 'Image acqisition failed: %s'
@@ -838,6 +844,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		except:
 			imagedata2 = None
 			self.logger.error(errorstring % 'cannot acquire image')
+		self.setStatus('processing')
 		if imagedata2 is None:
 			return None
 		# Jim says: store to DB to prevent referencing errors
