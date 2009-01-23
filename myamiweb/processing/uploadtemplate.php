@@ -186,6 +186,7 @@ function runUploadTemplate() {
 	$description=$_POST['description'];
 	$apix=$_POST['apix'];
 	$template=$_POST['template'];
+	$commit=$_POST['commit'];
 
 	//make sure a description is provided
 	if (!$description) createUploadTemplateForm("<B>ERROR:</B> Enter a brief description of the template");
