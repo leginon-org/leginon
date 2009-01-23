@@ -168,13 +168,16 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 			//handle multiple runs in stack
-			$runname=$stackparams[shownstackname];
+			$stackname = $stackparams['shownstackname'];
+			if ($stackparams['substackname'])
+				$stackname .= "-".$stackparams['substackname'];
+
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
 			echo "<option value='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " selected";
-			echo ">".$stack['stackid'].": $runname ($totprtls prtls,";
+			echo ">".$stack['stackid'].": $stackname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</option>\n";
 		}

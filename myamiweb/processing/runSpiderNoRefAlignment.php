@@ -144,13 +144,16 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 			//handle multiple runs in stack
-			$runname=$stackparams[shownstackname];
+			$stackname = $stackparams['shownstackname'];
+			if ($stackparams['substackname'])
+				$stackname .= "-".$stackparams['substackname'];
+
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
 			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
-			echo ">$stackid: $runname ($totprtls prtls,";
+			echo ">$stackid: $stackname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</OPTION>\n";
 		}

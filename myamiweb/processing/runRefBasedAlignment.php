@@ -243,12 +243,14 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 			$mpix=$particle->getStackPixelSizeFromStackId($stackid);
 			$apixtxt=format_angstrom_number($mpix)."/pixel";
-			$runname=$stackparams['shownstackname'];
+			$stackname = $stackparams['shownstackname'];
+			if ($stackparams['substackname'])
+				$stackname .= "-".$stackparams['substackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stackid));
 			echo "<OPTION VALUE='$stackid'";
 			// select previously set prtl on resubmit
 			if ($stackidval == $stackid) echo " SELECTED";
-			echo ">$stackid: $runname ($totprtls prtls,";
+			echo ">$stackid: $stackname ($totprtls prtls,";
 			if ($mpix) echo " $apixtxt,";
 			echo " $boxsz pixels)</OPTION>\n";
 		}
