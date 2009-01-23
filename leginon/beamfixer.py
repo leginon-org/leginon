@@ -56,7 +56,9 @@ class BeamFixer(reference.Reference):
 
 				# acquire image
 				imagedata = self.acquire()
-
+				if imagedata is None:
+					self.logger.error('Failed to Fix Beam Shift')
+					return
 				# check image
 				image = imagedata['image']
 				self.setImage(image, 'Image')
