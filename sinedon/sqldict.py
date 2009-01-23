@@ -156,8 +156,9 @@ import re
 import numpy
 import MySQLdb.cursors
 from types import *
-import data
 import newdict
+import data
+import sinedon
 import pyami.mrc
 import os
 import dbconfig
@@ -1438,7 +1439,7 @@ def dataSQLColumns(data_instance):
 		try:
 			value_type = type_dict[key]
 		except KeyError:
-			raise ValueError
+			raise ValueError, value_type.__name__
 
 		result = type2column(key, value, value_type, data_instance)
 		if result is not None:
@@ -1452,7 +1453,7 @@ def dataSQLColumns(data_instance):
 			row.update(result[1])
 			continue
 
-		raise ValueError
+		raise ValueError, value_type.__name__
 	return columns, row
 
 def type2column(key, value, value_type, parentdata):
@@ -1466,7 +1467,7 @@ def type2column(key, value, value_type, parentdata):
 		row[key] = value
 	else:
 		try:
-			if issubclass(value_type, (data.Data, data.DataReference)):
+			if issubclass(value_type, (sinedon.data.Data, sinedon.data.DataReference)):
 				# data.Data reference
 				tableclass = parentdata.__class__
 				field = refFieldName(tableclass, value_type, key)
