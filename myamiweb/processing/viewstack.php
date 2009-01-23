@@ -167,7 +167,7 @@ function uploadavg() {
 }
 
 function runCommonLines() {
-	var index = $('selectedIndex').value
+	var index = $('excludedIndex').value
 	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
 }
 
