@@ -581,11 +581,11 @@ class ApCoranEigenImageData(Data):
 leginondata.ApCoranEigenImageData = ApCoranEigenImageData
 
 class ApImagicAlignAnalysisData(Data):
-        def typemap(cls):
-                return Data.typemap() + (
-                        ('runname', str),
-                        ('run_seconds', int),
-                        ('bin', int),
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('run_seconds', int),
+			('bin', int),
 			('highpass', int),
 			('lowpass', int),
 			('mask_radius', float),
@@ -594,8 +594,8 @@ class ApImagicAlignAnalysisData(Data):
 			('overcorrection', float),
 			('MSAmethod', str),
 			('eigenimages', str),
-                )
-        typemap = classmethod(typemap)
+		)
+	typemap = classmethod(typemap)
 
 ### Improved cluster class data tables
 
@@ -1242,14 +1242,14 @@ class ApImagic3dRefineIterationData(Data):
 	typemap = classmethod(typemap)
 
 class ApImagicNoRefRunData(Data):
-        def typemap(cls):
-                return Data.typemap() + (
-                        ('runname', str),
-                        ('mask_radius', float),
-                        ('mask_dropoff', float),
-                        ('numiters', int),
-                        ('overcorrection', float),
-                        ('MSAmethod', str),
-                )
-        typemap = classmethod(typemap)
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('mask_radius', float),
+			('mask_dropoff', float),
+			('numiters', int),
+			('overcorrection', float),
+			('MSAmethod', str),
+		)
+	typemap = classmethod(typemap)
 
