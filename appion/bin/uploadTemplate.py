@@ -7,6 +7,7 @@ import sys
 import re
 import pprint
 import time
+import shutil
 #appion
 import appionScript
 import apUpload
@@ -119,9 +120,14 @@ class uploadTemplateScript(appionScript.AppionScript):
 			### averaging all particles together
 			apDisplay.printMsg("Averaging all images in stack")
 			templatename = "stack%d-average.mrc"%(self.params['stackid'])
+			oldtemplatepath = os.path.join(stackdata['path']['path'], "average.mrc")
 			abstemplatepath = os.path.join(stackdata['path']['path'], templatename)
-			### average all images using proc2d
-			emancmd = "proc2d %s %s average" % (stackfile, abstemplatepath)
+			if os.path.isfile(oldtemplatepath):
+				shutil.copy(oldtemplatepath, abstemplatepath)
+			else:
+				### average all images using proc2d
+				emancmd = "proc2d %s %s average" % (stackfile, abstemplatepath)
+				apEMAN.executeEmanCmd(emancmd)
 			if os.path.isfile(abstemplatepath):
 				self.params['templatelist'] = [abstemplatepath]
 
