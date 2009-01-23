@@ -35,7 +35,7 @@ class DBDataKeeper(object):
 			self.dbd = sqldict.SQLDict(**kwargs)
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
-		self.mysqldb = self.dbd.db
+		#self.mysqldb = self.dbd.db
 		self.lock = threading.RLock()
 
 	def connect_kwargs(self):

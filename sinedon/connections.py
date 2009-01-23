@@ -18,10 +18,10 @@ def getConnection(modulename):
 			connectedconf = None
 		else:
 			connectedconf = connections[modulename]['config']
-			try:
-				connections[modulename]['connection'].ping()
-			except:
-				connectedconf = None
+			#try:
+			#	connections[modulename]['connection'].ping()
+			#except:
+			#	connectedconf = None
 		dbconf = dbconfig.getConfig(modulename)
 	
 		if dbconf != connectedconf:
