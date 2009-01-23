@@ -161,7 +161,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$stackidval =$_POST['stackid'];
 	$lp = $_POST['lp'];
 	$csym = $_POST['csym'];
-	$commitcheck = ($_POST['commit']=='on') ? 'CHECKED' : '';
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
