@@ -151,20 +151,18 @@ function uploadTemplate() {
 	var templateId=$('selectedIndex').value
 	if (templateId!="") {
 		if (stackId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&stackId="+stackId+"&file="+filename+"","width=400,height=200")
-		} else if (norefId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&norefId="+norefId+"&norefClassId="+norefClassId+"&file="+filename+"","width=400,height=200") 
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&stackId="+stackId,"width=400,height=200")
 		} else if (alignId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&alignId="+alignId+"&file="+filename+"","width=400,height=200") 
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&alignId="+alignId,"width=400,height=200") 
 		} else if (clusterId!="") {
-			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&clusterId="+clusterId+"&file="+filename+"","width=400,height=200") 
+			window.open("uploadtemplate.php?expId="+expId+"&templateIds="+templateId+"&clusterId="+clusterId,"width=400,height=200") 
 		}
 	}
 }
 
 function uploadavg() {
   if (stackId!="") {
-    window.open("uploadtemplate.php?expId="+expId+"&stackId="+stackId+"&file="+filename+"&avg=True","width=400,height=200")
+    window.open("uploadtemplate.php?expId="+expId+"&stackId="+stackId+"&avg=True","width=400,height=200")
   }
 }
 
