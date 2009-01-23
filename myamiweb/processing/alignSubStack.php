@@ -76,6 +76,7 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$outdir=ereg_replace("leginon","appion",$outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
+
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -113,6 +114,10 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname' size='15'><br/><br/>\n";
+
+	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
+	echo "Output directory:<i>$outdir</i><br/>\n";
+	echo "<br/>\n";
 
 	// exclude and include
 	if (!$_GET['include']) {
@@ -155,8 +160,9 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 
 function runSubStack() {
 	$expId = $_GET['expId'];
-
 	$runname=$_POST['runname'];
+	$outdir=$_POST['outdir'];
+
 	$clusterId=$_POST['clusterId'];
 	$alignId=$_POST['alignId'];
 	$commit=$_POST['commit'];
