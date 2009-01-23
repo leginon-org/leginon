@@ -131,6 +131,9 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.node.startevent.set()
 
+	def onWaitForTrayChanged(self):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+
 	def onPauseTool(self, evt):
 		self.node.userContinue()
 
