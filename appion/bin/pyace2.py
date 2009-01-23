@@ -99,9 +99,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			+ " -e " + str(self.params['edge_b'])+","+str(self.params['edge_t']) 
 			+ "\n" )
 
-		### hate to do this but have to
+		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
 		hostname = socket.gethostname()
-		if hostname[:5] == "guppy":
+		user = os.getlogin()
+		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
 			commandline = "unset LD_LIBRARY_PATH; "+commandline
 
 		### run ace2
