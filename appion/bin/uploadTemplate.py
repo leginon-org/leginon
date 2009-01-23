@@ -154,7 +154,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		apDisplay.printMsg("Using alignment stack to make templates")
 		alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
 		self.params['apix'] = alignstackdata['pixelsize']
-		stackfile = os.path.join(alignstackdata['path']['path'], alignstackdata['imagicfile'])
+		stackfile = os.path.join(alignstackdata['path']['path'], alignstackdata['refstackfile'])
 		self.params['templatelist'] = []
 		stackid = alignstackdata['stack'].dbid
 		sessiondata = apStack.getSessionDataFromStackId(stackid)
