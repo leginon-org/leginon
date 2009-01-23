@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -31,49 +32,27 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-	$file=$_GET['file'];
-	$templateId=$_GET['templateId'];
-	$norefId=$_GET['norefId'];
-	$norefClassId=$_GET['norefClassId'];
+	$templateIds=$_GET['templateIds'];
+	$alignId=$_GET['alignId'];
+	$clusterId=$_GET['clusterId'];
 	$stackId=$_GET['stackId'];
 	$avg=$_GET['avg'];
 
 	// save other params to url formaction
 	$formAction.=($stackId) ? "&stackId=$stackId" : "";
-	$formAction.=($file) ? "&file=$file" : "";
-	$formAction.=($norefId) ? "&norefId=$norefId" : "";
-	$formAction.=($norefClassId) ? "&norefClassId=$norefClassId" : "";
+	$formAction.=($clusterId) ? "&clusterId=$clusterId" : "";
+	$formAction.=($alignId) ? "&alignId=$alignId" : "";
 	$formAction.=($avg) ? "&avg=True" : "";
-	$formAction.=($templateId) ? "&templateId=$templateId" : "";
+	$formAction.=($templateIds) ? "&templateIds=$templateIds" : "";
 
 	// Set any existing parameters in form
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
 	$template = ($_POST['template']) ? $_POST['template'] : '';
-	$hed = ($_POST['hed']) ? $_POST['hed'] : '';
 	$description = $_POST['description'];
-	if (!$templateId && $templateId != "0") $templateId = $_POST['templateId'];
+	if (!$templateIds) $templateIds = $_POST['templateIds'];
 	if (!$stackId) $stackId = $_POST['stackId'];
-	if (!$norefId) $norefId = $_POST['norefId'];
-	if (!$norefClassId) $norefClassId = $_POST['norefClassId'];
-
-	// Set template path
-	if  ($file) {
-		if ( preg_match("/\.(img|hed)/", $file) ) {
-			$template=preg_replace("/\/\w+\.(hed|img)/","",$file);
-			$template=($avg) ? $template."/template".$stackId."avg.mrc" : $template."/template$templateId.mrc";
-		}
-	}
-
-	//get the class average file
-	if (!$hed) {
-		if (!$file) {
-		} else {
-			$hed = substr($file, 0, -3);
-			$hed = $hed."hed";
-		}
-	}
-
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	$javafunctions="
 	<script src='../js/viewer.js'></script>
@@ -81,7 +60,6 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 		function infopopup(infoname){
 			var newwindow=window.open('','name','height=250,width=400');
 			newwindow.document.write('<HTML><BODY>');
-			
 			if (infoname=='classpath'){
 				newwindow.document.write('This is the path of the class average or stack used for extracting the MRC file. Leave this blank if the template file specified by template path above already exist');
 			}
@@ -113,114 +91,83 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
 	
-	echo"<INPUT TYPE='hidden' NAME='hed' VALUE='$hed'>\n";
 	echo"<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>\n";
 	
 	//query the database for parameters
 	$particle = new particledata();
-	$norefparams=$particle->getNoRefParams($norefId);	
-	
-	//set diameter
-	if (!$diam) {
-		$diam=$norefparams[particle_diam];
-	}
-	
-	//get stack id in order to get apix
-	if (!$stackId) {
-		$stackId=$norefparams["REF|ApStackData|stack"];
-	}
-	
-	//get apix from stack 
-	if (!$apix) {
-		$apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
-	}
-	
-	echo"
-	<TABLE BORDER=3 CLASS=tableborder>";
-	echo"
-	<TR>
-		<TD VALIGN='TOP'>
-			<TABLE> \n";
-	
+
+	echo"<table border='3' class='tableborder'>";
+	echo"<tr><td valign='top'>\n";
+	echo"<table border='0' cellpading='5' cellspacing='5'><tr><td valign='top'>\n";
+
 	//if neither a refId or stackId exist
-	if (!$norefId && !$stackId) {
-	echo "
-			<TR>
-				<TD VALIGN='TOP'>
-					<BR/>
-					<B>Template Name with path:</B> <BR/> 
-					<INPUT TYPE='text' NAME='template' VALUE='$template' SIZE='63'/>
-					<BR/>\n";
-					
+	if (!$stackId && !$alignId && !$clusterId) {
+		echo "<BR/>\n";
+		echo "Template Name with path <i>(wild cards are acceptable)</i>: <BR/> \n";
+		echo "<INPUT TYPE='text' NAME='template' VALUE='$template' SIZE='55'/>\n";
+		echo "<BR/>\n";			
 	} 
 
-	//if either a refId or stackId exist
-	if ($norefId || $stackId) {
-	  $label=($norefId) ? "NoRef Class" : "Stack";
-	  echo"<INPUT TYPE='hidden' NAME='template' VALUE='$template'>\n";
-	  echo"
-			<TR>
-				<TD VALIGN='TOP'>
-					<BR/>
-					<B>$label information:</B> <BR/>
-					<A HREF=\"javascript:infopopup('classpath')\">name & path</A>: $hed <BR/>	
-					ID: "; 
-	  if ($norefId) {
-	    echo "$norefClassId<BR/>
-                  <INPUT TYPE='hidden' NAME='norefClassId' VALUE='$norefClassId'>
-                  <INPUT TYPE='hidden' NAME='norefId' VALUE='$norefId'>\n";
-	  } 
-	
-	  elseif ($stackId){
-	    echo "$stackId<BR/> <INPUT TYPE='hidden' NAME='stackId' VALUE='$stackId'>\n";
-	    if ($avg) {
-	      echo "<input type='hidden' name='avgstack' value='avg'>\n";
-	    }
-	  }
-
-	//rest of the page
-	  if ($norefId) echo"Image Number: $templateId<BR/>
-                             <INPUT TYPE='hidden' NAME='templateId' VALUE='$templateId'>\n";
-	  elseif ($avg) echo"Stack images will be averaged to create a template<br />\n";
+	if ($stackId) {
+		echo openRoundBorder();
+		echo ministacksummarytable($stackId);
+	    echo "<input type='hidden' name='stackId' value='$stackId'>\n";
+		echo closeRoundBorder();
+		echo "<br/>\n";
+	} elseif($alignId) {
+		echo openRoundBorder();
+		echo alignstacksummarytable($alignId, true);
+	    echo "<input type='hidden' name='alignId' value='$alignId'>\n";
+		echo closeRoundBorder();
+		echo "<br/>\n";
+	} elseif($clusterId) {
+		echo openRoundBorder();
+		echo "Cluster Id: $clusterId\n";
+	    echo "<input type='hidden' name='clusterId' value='$clusterId'>\n";
+		echo closeRoundBorder();
+		echo "<br/>\n";
 	}
-	
-	echo "
-					<BR/>
-					<B>Template Description:</B><BR/>
-					<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>
-					<BR/>
-					<BR/>
-				</TD>
-			</TR>
-			<TR>
-				<TD VALIGN='TOP' CLASS='tablebg'>
-					<BR/>
-					Particle Diameter:<BR/>
-					<INPUT TYPE='text' NAME='diam' SIZE='5' VALUE='$diam'>
-					<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><BR>
-					<BR/>
-					Pixel Size:<BR/>
-					<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>
-					<FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>
-					<BR/>
-					<BR/>
-				</TD>
-		  	</TR>
-			
-		  </TABLE>
-		</TD>
-  </TR>
-  <TR>
-    <TD ALIGN='CENTER'>
-      <hr />
-	";
-	echo getSubmitForm("Upload Template");
-	echo "
-	</td>
-	</tr>
-  </table>
-  </form>\n";
 
+	if ($avg) {
+		echo "<input type='hidden' name='avgstack' value='avg'>\n";
+	  	echo"<font size='+1'><i>Stack images will be averaged to create a template</i></font>\n";
+		echo "<br/>\n";
+	} elseif ($templateIds) {
+		echo"<font size='+1'>Selected Image Numbers: <i>$templateIds</i></font>\n";
+		echo "<input type='hidden' name='templateIds' value='$templateIds'>\n";
+		echo "<br/>\n";
+	}
+
+	echo "<br/>\n";
+
+	echo "Template Description:<BR/>";
+	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
+
+	echo "</TD></TR><TR><TD VALIGN='TOP'>";
+
+	echo "Particle Diameter:<BR/>\n"
+			."<INPUT TYPE='text' NAME='diam' SIZE='5' VALUE='$diam'>\n"
+			."<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
+		echo "<br/>\n";
+
+	if (!$stackId && !$alignId && !$clusterId) {
+		echo "Pixel Size:<BR/>\n"
+			."<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n"
+			."<FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
+		echo "<br/>\n";
+	}
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo docpop('commit','<B>Commit to Database</B>');
+	echo "";
+	echo "<br/>\n";
+
+
+	echo "<br/>\n";
+	echo "</td></tr></table></td></tr><tr><td align='center'><hr/>";
+	echo getSubmitForm("Upload Template");
+	echo "</td></tr></table></form>\n";
 	processing_footer();
 	exit;
 }
@@ -229,62 +176,66 @@ function runUploadTemplate() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 	$projectId = $_POST['projectId'];
-
-	$command.="uploadTemplate.py ";
-
-	//make sure a template root or a class/stack root was entered
+	$templateIds=$_POST['templateIds'];
+	$stackId=$_POST['stackId'];
+	$alignId=$_POST['alignId'];
+	$clusterId=$_POST['clusterId'];
+	$avgstack=$_POST['avgstack'];
+	$diam=$_POST['diam'];
+	$session=$_POST['sessionname'];
+	$description=$_POST['description'];
+	$apix=$_POST['apix'];
 	$template=$_POST['template'];
-	$hed=$_POST['hed'];
-	if (!$template && !$hed) createUploadTemplateForm("<B>ERROR:</B> Enter a the root name of the template or stack/noref class");
 
 	//make sure a description is provided
-	$description=$_POST['description'];
 	if (!$description) createUploadTemplateForm("<B>ERROR:</B> Enter a brief description of the template");
 
 	//make sure a session was selected
-	$session=$_POST['sessionname'];
 	if (!$session) createUploadTemplateForm("<B>ERROR:</B> Select an experiment session");
 
 	//make sure a diam was provided
-	$diam=$_POST['diam'];
 	if (!$diam) createUploadTemplateForm("<B>ERROR:</B> Enter the particle diameter");
 
 	//make sure a apix was provided
-	$apix=$_POST['apix'];
-	if (!$apix) createUploadTemplateForm("<B>ERROR:</B> Enter the pixel size");
-
-	// filename will be the runid if running on cluster
-	$runid = basename($template);
-	$runid = $runid.'.upload';
-
-	$templateId=$_POST['templateId'];
-	$stackId=$_POST['stackId'];
-	$norefId=$_POST['norefId'];
-	$avgstack=$_POST['avgstack'];
-	$norefClassId=$_POST['norefClassId'];
-
-	//check if the template is an existing file (wild type is not searched)
-	if (!file_exists($template)) {
-		$template_warning="File ".$template." does not exist. This is OK if you are uploading more than one template"; 
-	} else {
-		$template_warning="File ".$template." exist. Make sure that this is the file that you want!";
+	if (!$stackId && !$alignId && !$clusterId) {
+		if (!$apix) createUploadTemplateForm("<B>ERROR:</B> Enter the pixel size");
+		if (!$template) createUploadTemplateForm("<B>ERROR:</B> Enter a the root name of the template or stack/alignment/cluster");
+		//check if the template is an existing file (wild type is not searched)
+		if (!file_exists($template)) {
+			$template_warning="File ".$template." does not exist. This is OK if you are uploading more than one template"; 
+		} else {
+			$template_warning="File ".$template." exist. Make sure that this is the file that you want!";
+		}
 	}
-	
+
+
+
 	// set runname as time
-	$runname = getTimestring();
+	$runname = "template".getTimestring();
 
 	//putting together command
-	$command.="-t $template ";
-	$command.="-p $projectId ";
-	$command.="-s $session ";
-	$command.="--apix=$apix ";
+	$command = "uploadTemplate.py ";
+	if ($stackId)
+		$command.="--stackid=$stackId ";
+	elseif ($alignId)
+		$command.="--alignid=$alignId ";
+	elseif ($clusterId)
+		$command.="--clusterid=$clusterId ";
+	else 
+		$command.="--template=$template ";
+
+	$command.="--projectid=$projectId ";
+	$command.="--session=$session ";
+	if ($apix)
+		$command.="--apix=$apix ";
 	$command.="--diam=$diam ";
-	$command.="-d \"$description\" ";
-	$command.="-n $runname ";
-	if ($templateId || $templateId == "0") $command.="--stackimgnum=$templateId ";
-	if ($stackId) $command.="--stackid=$stackId ";
-	if ($norefClassId) $command.="--norefid=$norefClassId ";
+	$command.="--description=\"$description\" ";
+	$command.="--runname=$runname ";
+	if ($templateIds) $command.="--imgnums=$templateIds ";
 	if ($avgstack) $command.="--avgstack ";
+	if ($commit) $command.="--commit ";
+	else $command.="--no-commit ";
+
 
 	// submit job to cluster
 	if ($_POST['process']=="Upload Template") {
@@ -293,12 +244,12 @@ function runUploadTemplate() {
 
 		if (!($user && $password)) createUploadTemplateForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'uploadtemplate',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadtemplate',True);
 		// if errors:
 		if ($sub) createUploadTemplateForm("<b>ERROR:</b> $sub");
 
 		// check that upload finished properly
-		$jobf = $outdir.'/'.$runid.'/'.$runid.'.appionsub.log';
+		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
 		$status = "Template was uploaded";
 		if (file_exists($jobf)) {
 			$jf = file($jobf);
@@ -318,10 +269,7 @@ function runUploadTemplate() {
 
 	else {
 		processing_header("UploadTemplate Command", "UploadTemplate Command");
-
-		//display this line if there's a norefId or stackId
-		if ($norefId || $stackId) echo"<font class='apcomment'><b>This command will create a new MRC file called:</b><br />$template</font><br /><br />";
-		else echo"$template_warning<br />";
+		if ($template_warning) echo"$template_warning<br />";
 	}
 	//rest of the page
 	echo"
@@ -335,10 +283,11 @@ function runUploadTemplate() {
 	<TR><TD>apix</TD><TD>$apix</TD></TR>
 	<TR><TD>diam</TD><TD>$diam</TD></TR>
 	<TR><TD>session</TD><TD>$session</TD></TR>
+	<tr><td>commit</td><td>$commit</td></tr>
 	<TR><TD>description</TD><TD>$description</TD></TR>";
-	if ($templateId || $templateId == 0) echo"<TR><TD>stack image number</TD><TD>$templateId</TD></TR>";
+
+	if ($templateIds) echo"<TR><TD>image numbers</TD><TD>$templateIds</TD></TR>";
 	if ($stackId) echo"<TR><TD>stack id</TD><TD>$stackId</TD></TR>";
-	if ($norefId) echo"<TR><TD>noref id</TD><TD>$norefId</TD></TR>";
 	echo"
 	</TABLE>\n";
 	processing_footer();
