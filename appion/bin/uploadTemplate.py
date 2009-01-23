@@ -181,8 +181,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 	def useClusterForTemplate(self):
 		apDisplay.printMsg("Using clustering stack to make templates")
 		clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
-		self.params['apix'] = clusterstackdata['pixelsize']
-		stackfile = os.path.join(clusterstackdata['path']['path'], clusterstackdata['imagicfile'])
+		self.params['apix'] = clusterstackdata['clusterrun']['alignstack']['pixelsize']
+		stackfile = os.path.join(clusterstackdata['path']['path'], clusterstackdata['avg_imagicfile'])
 		self.params['templatelist'] = []
 		stackid = clusterstackdata['clusterrun']['alignstack']['stack'].dbid
 		sessiondata = apStack.getSessionDataFromStackId(stackid)
