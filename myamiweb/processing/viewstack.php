@@ -229,8 +229,10 @@ quality: <select id="quality">
 $excludebuttons = "";
 if ($stackId)
 	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStack()' >\n";
-if ($clusterId || $alignId)
+if ($clusterId || $alignId) {
 	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
+	$excludebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
+}
 
 //Buttons for inclusion
 $includebuttons = "";
@@ -241,7 +243,6 @@ if ($stackId || $clusterId || $alignId)
 if ($norefClassId || $reclassId || $clusterId || $imagicClusterId)
 	$includebuttons .= "<input id='3d0button' type='button' alt='Create 3D0' value='Run Imagic 3d0' onclick='create3d0();'>\n";
 if ($clusterId || $alignId) {
-	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
 	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 }
 
