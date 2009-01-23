@@ -171,7 +171,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '3';
 	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
 	$csym = 1;
-	$maskdiam = ($_POST['maskdiam']) ? $_POST['maskdiam'] : $diam;
+	$maskdiam = ($_POST['maskdiam']) ? $_POST['maskdiam'] : $diam/2.0 - 6.0;
 	$imaskdiam = ($_POST['imaskdiam']) ? $_POST['imaskdiam'] : '2';
 
 
