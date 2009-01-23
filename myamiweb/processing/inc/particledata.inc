@@ -1713,7 +1713,8 @@ class particledata {
 	}
 
 	function getClusteringRunsForAlignStack ($alignstackId, $showHidden=false) {
-		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, spider.*,clusterrun.* "
+		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, spider.*,"
+			."  clusterrun.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
 			."FROM ApClusteringRunData AS clusterrun "
 			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
 			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
@@ -1729,7 +1730,8 @@ class particledata {
 	}
 
 	function getClusteringStacksForClusteringRun ($clusterrunId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,clusterrun.*, cluster.*"
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,"
+			."  clusterrun.*, cluster.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun`"
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
