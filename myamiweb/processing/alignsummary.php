@@ -64,9 +64,9 @@ if ($stackdatas) {
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, false);
 		if ($analysisdatas) {
 			if ($_GET['showHidden'])
-				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, $projectId, true);
+				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, true);
 			else
-				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, $projectId, false);
+				$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
 			if ($clusterruns) {
 				// --------------------------
 				// Stack with analysis and clustering
@@ -99,7 +99,10 @@ if ($stackdatas) {
 
 				foreach ($clusterruns as $clusterrun) {
 					$clusterrunid = $clusterrun['clusterrunid'];
-					$clusterdatas = $particle->getClusteringStacksForClusteringRun ($clusterrunid, $projectId);
+					if ($_GET['showHidden'])
+						$clusterdatas = $particle->getClusteringStacksForClusteringRun($alignstackid, true);
+					else
+						$clusterdatas = $particle->getClusteringStacksForClusteringRun($alignstackid, false);
 					if ($clusterdatas) {
 						if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 							echo "<b>Cluster Run ".$clusterrunid."</b>"
