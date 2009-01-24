@@ -155,24 +155,43 @@ class particledata {
 	function getTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
 			."t.name as name, "
-			."t.snapshot as snapshot, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			."tilt.`number` as tiltnumber, "
+			."prtl.xcoord as centerx, "
+			."prtl.ycoord as centery, "
+			."prtl.`REF|leginondata|AcquisitionImageData|image` as prtlimage, "
 			." p.`path` "
 			."FROM `ApTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."LEFT JOIN ".DB.".`TiltSeriesData` tilt ON t.`REF|leginonData|TiltSeriesData|tiltseries` = tilt.`DEF_id` "
+			."LEFT JOIN `ApParticleData` prtl ON t.`REF|ApParticleData|center` = prtl.`DEF_id` "
 			."WHERE t.`DEF_id` = " .$tomogramId;
-		return $this->mysql->getSQLResult($q);
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getTomoCenter($centerx,$centery,$image1id,$tiltseriesid){
+		$q = "SELECT "
+			.$centerx." + p1.`SUBD|predicted shift|x` - p0.`SUBD|predicted shift|x` as x, "
+			.$centery." + p1.`SUBD|predicted shift|y` - p0.`SUBD|predicted shift|y` as y "
+			."FROM ".DB.".`TomographyPredictionData` p0 "
+			."LEFT JOIN "
+			. "(SELECT * "
+			."FROM ".DB.".`AcquisitionImageData` image0 "
+			."WHERE image0.`REF|TiltSeriesData|tilt series` = ".$tiltseriesid." "
+			."ORDER BY image0.`DEF_timestamp` ASC limit 1 ) image0 "
+			."ON p0.`REF|AcquisitionImageData|image` = image0.`DEF_id` "
+			.", ".DB.".`TomographyPredictionData` p1 "
+			."WHERE p1.`REF|AcquisitionImageData|image`=$image1id "
+			."";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
 	}
 
 	function getTomogramsFromSession($sessionId){
-		$q =  "SELECT t.`DEF_id` as DEF_id, "
-			."t.name as name, "
-			."t.description as description, "
-			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
-			." p.`path` "
+		$q =  "SELECT t.`DEF_id` as DEF_id "
 			."FROM `ApTomogramData` t "
-			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId;
 		return $this->mysql->getSQLResult($q);
 	}
@@ -407,7 +426,6 @@ class particledata {
 			$fields = $order['fields'];
 			$q .= " order by ".join(", ",$fields);
 		}
-		//echo $q;
 		return $this->mysql->getSQLResult($q);
 	}
 
