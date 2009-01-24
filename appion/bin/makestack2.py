@@ -22,6 +22,7 @@ import apStackMeanPlot
 import apEMAN
 import apProject
 import apFile
+import apParam
 import apImagicFile
 import subprocess
 
@@ -356,6 +357,16 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		apEMAN.executeEmanCmd(emancmd, showcmd=True)
 		return outimgpath
 
+	#======================
+	def getACE2Path(self):
+		exename = 'ace2correct.exe'
+		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+		if not os.path.isfile(ace2exe):
+			ace2exe = os.path.join(apParam.getAppionDirectory(), 'bin', exename)
+		if not os.path.isfile(ace2exe):
+			apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
+		return ace2exe
+
 	#=======================
 	def phaseFlipAceTwo(self, inimgpath, imgdata):
 
@@ -395,7 +406,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if not os.path.isfile(ctfvaluesfile):
 			apDisplay.printError("ctfvaluesfile does not exist")
 
-		ace2cmd = ("ace2correct.exe -ctf %s -apix %.3f -img %s -wiener 0.1" % (ctfvaluesfile, apix, inimgpath))
+		ace2exe = self.getACE2Path()
+		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -wiener 0.1" % (ctfvaluesfile, apix, inimgpath))
 		apDisplay.printMsg("phaseflipping entire micrograph: "+ace2cmd)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 
