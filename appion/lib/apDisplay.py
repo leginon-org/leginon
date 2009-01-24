@@ -231,9 +231,9 @@ def colorType(val):
 	if val is None:
 		return colorString("None","red")
 	elif val is True:
-		return colorString("True","purple")
+		return colorString("True","green")
 	elif val is False:
-		return colorString("False","purple")
+		return colorString("False","red")
 	elif type(val) == type(0.33):
 		return colorString(val,"cyan")
 	elif type(val) == type(512):
@@ -266,6 +266,12 @@ def colorProb(num,red=0.50,green=0.80):
 
 def color(text, fg, bg=None):
 	return colorString(text, fg, bg)
+
+def clearColor():
+	opencol = "\033["
+	closecol = "m"
+	clear = opencol + "0" + closecol
+	return clear	
 
 def colorString(text, fg=None, bg=None):
 	"""Return colored text.
