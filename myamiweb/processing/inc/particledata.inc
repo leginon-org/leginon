@@ -154,9 +154,14 @@ class particledata {
 
 	function getTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
+			."t.`REF|ApFullTomogramData|fulltomogram` as full, "
 			."t.name as name, "
+			."t.number as number, "
+			."t.pixelsize, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			."t.`SUBD|dimension|x` as dx, "
+			."t.`SUBD|dimension|y` as dy, "
 			."tilt.`number` as tiltnumber, "
 			."prtl.xcoord as centerx, "
 			."prtl.ycoord as centery, "
