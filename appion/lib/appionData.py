@@ -40,13 +40,14 @@ leginondata.ApParticleData=ApParticleData
 class ApSelectionRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
+			('name', str),
+			('hidden', bool),
 			('path', ApPathData),
 			('session', leginondata.SessionData),
 			('params', ApSelectionParamsData),
 			('dogparams', ApDogParamsData),
 			('manparams', ApManualParamsData),
 			('tiltparams', ApTiltAlignParamsData),
-			('name', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApSelectionRunData=ApSelectionRunData
@@ -671,13 +672,17 @@ leginondata.ApClusteringReferenceData=ApClusteringReferenceData
 class ApClusterJobData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('path', ApPathData),
 			('name', str),
+			('cluster', str),
+			('jobtype', str),
+			('status', str),
+			('user', str),
+			('clusterjobid', int),
+			('path', ApPathData),
 			('session', leginondata.SessionData),
 			('dmfpath', ApPathData),
 			('clusterpath', ApPathData),
-			('cluster', str),
-			('jobtype', str),
+
 		)
 	typemap = classmethod(typemap)
 leginondata.ApClusterJobData=ApClusterJobData
