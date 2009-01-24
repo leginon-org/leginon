@@ -396,9 +396,15 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		ace2cmd = ("ace2correct.exe -ctf %s -apix %.3f -img %s -wiener 0.1" % (ctfvaluesfile, apix, inimgpath))
 		apDisplay.printMsg("phaseflipping entire micrograph: "+ace2cmd)
-		
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
-#		apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
+
+		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
+		hostname = socket.gethostname()
+		user = os.getlogin()
+		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
+			ace2cmd = "unset LD_LIBRARY_PATH; "+ace2cmd
+
+		#apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
 		ace2proc = subprocess.Popen(ace2cmd, shell=True)
 		ace2proc.wait()
 		
