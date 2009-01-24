@@ -7,6 +7,7 @@ import math
 import re
 import time
 import glob
+import socket
 #appion
 import appionLoop2
 import apImage
