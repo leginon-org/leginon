@@ -470,7 +470,7 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 			fprintf(stderr,"\n\tRANSAC FAILED: NOT ENOUGH INLIERS...");
 			break;
 		}
-		
+		fprintf(stderr,"Current iter:%f\n");
 		if ( current_iter >= max_iterations ) {
 			fprintf(stderr,"\n\tRANSAC GAVE UP... Could not find a model better than %f of %d (%2.2f)\n",most_inliers,edge_count,most_inliers/edge_count);
 			break;

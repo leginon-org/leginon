@@ -381,6 +381,8 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 	[self setDataTo:xt];
 	[self fftshift];
 	
+	[self divideBy:[self numberOfElements]];
+	
 	return self;
 	
 }
