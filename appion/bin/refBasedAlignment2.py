@@ -16,6 +16,7 @@ import apTemplate
 import apParam
 import appionData
 import apProject
+import apImage
 from apSpider import alignment
 
 #=====================
@@ -365,7 +366,13 @@ class RefBasedAlignScript(appionScript.AppionScript):
 					apDisplay.printWarning("Using random particle as new template")
 				else:
 					apDisplay.printWarning("Using worst 10% of particles as new template")
-				emancmd  = ("proc2d "+junkmrcfile+" "+mrcfile
+				lasttemplate = "templates/templateavg%02d-%02d.mrc" % (iternum-1, templatenum)
+				if not os.path.isfile(lasttemplate):
+					lasttemplate = "templates/scaledTemplate%d.mrc" % (templatenum)
+				lastdata = apImage._maxNormalizeImage(apImage.mrcToArray(lasttemplate))
+				junkdata = apImage._maxNormalizeImage(apImage.mrcToArray(junkmrcfile))
+				apImage.arrayToMrc((lastdata+3.0*junkdata), "temp.mrc")
+				emancmd  = ("proc2d temp.mrc "+mrcfile
 					+" addnoise=1.5 "
 					+" edgenorm norm=0,1 ")
 				apEMAN.executeEmanCmd(emancmd, showcmd=False)
