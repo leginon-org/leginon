@@ -233,7 +233,7 @@ int main (int argc, char **argv) {
 	
 	u32 i, size = [radial_average_norm sizeOfDimension:0];
 	f64 * v_data = [radial_average_norm getRow:0];
-	gaussian1d(v_data,0,size-1,2.0);
+	gaussian1d(v_data,0,size-1,4.0);
 	
 	fitCTF(radial_average_norm,ctf_params);
 
@@ -973,6 +973,68 @@ ArrayP minMaxPeakFind( ArrayP image ) {
 	
 }
 
+double a_cost( const gsl_vector * variables, void * image ) {
+		
+	f64 * p = gsl_vector_ptr((gsl_vector *)variables,0);
+	
+	f64 xc = [(id)image sizeOfDimension:0]/2;
+	f64 yc = [(id)image sizeOfDimension:1]/2;
+	f64 ar = p[2];
+	
+	p[0] = ABS(p[0]);
+	p[1] = ABS(p[1]);
+	
+	f64 xa = p[0];
+	f64 ya = p[1];
+	
+	EllipseP ellipse = [Ellipse newAtX:xc andY:yc withXAxis:xa andYAxis:ya rotatedBy:ar];
+	ArrayP advg1d = [(id)image ellipse1DAvg:ellipse];
+	
+	f64 cost = calcBackDrift([advg1d getRow:0],[advg1d sizeOfDimension:0],1.0,100.0);
+	
+//	fprintf(stderr,"Cost: %lf\n",cost);
+	
+	return -cost;
+	
+}
+u32 run_minimizer( gsl_multimin_fminimizer * minimizer, u64 max_iter, f64 treshold );
+void fitEllipseAstig( ArrayP image, EllipseP ellipse ) {
+	
+	u32 i;
+	
+	u32 a_ndim = 3;
+	
+	gsl_multimin_fminimizer * a_min = gsl_multimin_fminimizer_alloc(gsl_multimin_fminimizer_nmsimplex, a_ndim);
+	gsl_vector * a_start = gsl_vector_alloc(a_ndim);
+	gsl_vector * a_steps = gsl_vector_alloc(a_ndim);
+	
+	gsl_vector_set(a_steps,0,ABS([ellipse x_axis]*0.1));
+	gsl_vector_set(a_steps,1,ABS([ellipse y_axis]*0.1));
+	gsl_vector_set(a_steps,2,ABS([ellipse rotation]*0.1));
+	
+	gsl_vector_set(a_start,0,[ellipse x_axis]);
+	gsl_vector_set(a_start,1,[ellipse y_axis]);
+	gsl_vector_set(a_start,2,[ellipse rotation]);
+	
+	gsl_multimin_function a_function;
+
+	a_function.n = a_ndim;
+	a_function.f = &a_cost;
+	a_function.params = image;
+	
+	gsl_multimin_fminimizer_set (a_min, &a_function, a_start, a_steps);
+	u32 status = run_minimizer(a_min,100,1e-1);
+
+	[ellipse setX_axis:gsl_vector_get(a_min->x,0)];
+	[ellipse setY_axis:gsl_vector_get(a_min->x,1)];
+	[ellipse setRotation:gsl_vector_get(a_min->x,2)];
+	
+	gsl_multimin_fminimizer_free(a_min);	
+	gsl_vector_free(a_start);
+	gsl_vector_free(a_steps);
+	
+}
+
 ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	
 	ArrayP radial_avg2 = [image ellipse1DAvg:nil];
@@ -980,7 +1042,7 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	
 	ArrayP radial_avg1 = [image ellipse1DAvg:ellipse];	
 	if ( radial_avg1 == nil ) return nil;
-	
+		
 	f64 * stdv_values1 = [radial_avg1 getRow:1];
 	f64 * stdv_values2 = [radial_avg2 getRow:1];
 	
@@ -1001,15 +1063,13 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		
 		f64 * avg_mean1 = [radial_avg1 getRow:0];
 		f64 * avg_mean2 = [radial_avg2 getRow:0];
-		f64 * avg_stdv1 = [radial_avg1 getRow:1];
-		f64 * avg_stdv2 = [radial_avg2 getRow:1];
-		f64 * avg_cont1 = [radial_avg1 getRow:2];
-		f64 * avg_cont2 = [radial_avg2 getRow:2];
+		f64 * avg_cont1 = [radial_avg1 getRow:1];
+		f64 * avg_cont2 = [radial_avg2 getRow:1];
 		
 		char name[1024];
-		sprintf(name,"%s-1davg.txt",basename([image name]));
+		sprintf(name,"%s.1davg.txt",basename([image name]));
 		FILE * fp = fopen(name,"w");
-		for (r=0;r<rad;r++) fprintf(fp,"%d\t%e\t%e\t%e\t%e\t%e\t%e\nw",r,avg_mean1[r],avg_stdv1[r],avg_cont1[r],avg_mean2[r],avg_stdv2[r],avg_cont2[r]);
+		for (r=0;r<rad;r++) fprintf(fp,"%d\t%e\t%e\t%e\t%e\nw",r,avg_mean1[r],avg_cont1[r],avg_mean2[r],avg_cont2[r]);
 		fclose(fp);
 		
 	}
@@ -1019,6 +1079,16 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	
 	fprintf(stderr,"\n\tCalculated CTF signal for ellipse: %e, circle: %e, ratio: %e\n",back1,back2,back1/back2);
 	
+	[ellipse printInfoTo:stderr];
+	
+	fitEllipseAstig(image,ellipse);
+	ArrayP radial_avg3 = [image ellipse1DAvg:ellipse];
+	f64 back3 = calcBackDrift([radial_avg3 getRow:0],rad,1.0,100.0);
+	
+	[ellipse printInfoTo:stderr];
+	
+	fprintf(stderr,"BACK DRIFT FOR AVG3:%e, %e\n",back3,back3/back2);
+	
 	if ( back1/back2 >= 0.90 ) {
 		fprintf(stderr,"\tUsing Elliptical Average\n");
 		[radial_avg2 release];
@@ -1027,7 +1097,7 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		fprintf(stderr,"\tUsing Circular Average\n");
 		[ellipse setX_axis:[ellipse y_axis]];
 		[radial_avg1 release];
-		return radial_avg2;
+		return radial_avg3;
 	}
 	
 }

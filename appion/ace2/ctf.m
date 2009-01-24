@@ -49,25 +49,25 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	createDirectAffineTransform(x_rad,y_rad,x1,y1,x2,y2,0.0,0.0,1.0,0.0,0.0,1.0,TR,IT);
 	
 	// Allocate array for average, and stdv data
-	u32 dims[3] = { a_rad, 4, 0 };
+	u32 dims[3] = { a_rad, 2, 0 };
 	ArrayP radial_avg = [Array newWithType:TYPE_F64 andDimensions:dims];
 	[radial_avg setNameTo:[self name]];
 	
 	f64 * ori_data = [self data];
 	f64 * avg_mean = [radial_avg getRow:0];
-	f64 * avg_stdv = [radial_avg getRow:1];
-	f64 * avg_cont = [radial_avg getRow:2];
-	f64 * avg_quon = [radial_avg getRow:3];
+	f64 * avg_cont = [radial_avg getRow:1];
+//	f64 * avg_cont = [radial_avg getRow:2];
+//	f64 * avg_quon = [radial_avg getRow:3];
 	
 	if ( ori_data == NULL ) goto error;
 	if ( avg_mean == NULL ) goto error;
-	if ( avg_stdv == NULL ) goto error;
 	if ( avg_cont == NULL ) goto error;
+//	if ( avg_cont == NULL ) goto error;
 	
 	for(r=0;r<a_rad;r++) avg_mean[r] = 0.0;
-	for(r=0;r<a_rad;r++) avg_stdv[r] = 0.0;
 	for(r=0;r<a_rad;r++) avg_cont[r] = 0.0;
-	for(r=0;r<a_rad;r++) avg_quon[r] = 0.0;
+//	for(r=0;r<a_rad;r++) avg_cont[r] = 0.0;
+//	for(r=0;r<a_rad;r++) avg_quon[r] = 0.0;
 	
 	for(i=0,r=0;r<rows;r++) {
 		for(c=0;c<cols;c++,i++) {
@@ -87,15 +87,15 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 			
 			avg_cont[irad] = avg_cont[irad] + rw2;
 			avg_mean[irad] = avg_mean[irad] + val*rw2;
-			avg_stdv[irad] = avg_stdv[irad] + (val-avg_stdv[irad])*(rw2/avg_cont[irad]);
-			avg_quon[irad] = avg_quon[irad] + (rw2*(avg_cont[irad]-rw2)/avg_cont[irad])*pow(val-avg_stdv[irad],2.0);
+//			avg_stdv[irad] = avg_stdv[irad] + (val-avg_stdv[irad])*(rw2/avg_cont[irad]);
+//			avg_quon[irad] = avg_quon[irad] + (rw2*(avg_cont[irad]-rw2)/avg_cont[irad])*pow(val-avg_stdv[irad],2.0);
 			
 			if ( ++irad >= a_rad ) continue;
 			
 			avg_cont[irad] = avg_cont[irad] + rw1;
 			avg_mean[irad] = avg_mean[irad] + val*rw1;
-			avg_stdv[irad] = avg_stdv[irad] + (val-avg_stdv[irad])*(rw1/avg_cont[irad]);
-			avg_quon[irad] = avg_quon[irad] + (rw1*(avg_cont[irad]-rw1)/avg_cont[irad])*pow(val-avg_stdv[irad],2.0);
+//			avg_stdv[irad] = avg_stdv[irad] + (val-avg_stdv[irad])*(rw1/avg_cont[irad]);
+//			avg_quon[irad] = avg_quon[irad] + (rw1*(avg_cont[irad]-rw1)/avg_cont[irad])*pow(val-avg_stdv[irad],2.0);
 	
 		}
 	}
@@ -104,10 +104,10 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	// Compute RMSD
 	// Compute RMSD use ABS, because occasionally the sum is off slightly
 	for(r=0;r<a_rad;r++) avg_mean[r] = avg_mean[r] / avg_cont[r]; 
-	for(r=0;r<a_rad;r++) avg_stdv[r] = avg_quon[r] / avg_cont[r];
-	for(r=0;r<a_rad;r++) if ( isinf(avg_stdv[r]) ) fprintf(stderr,"INF Error\n"); 
-	for(r=0;r<a_rad;r++) if ( avg_stdv[r] < 0.0 ) fprintf(stderr,"RMSD Error\n"); 
-	for(r=0;r<a_rad;r++) avg_stdv[r] = sqrt(ABS(avg_stdv[r])); 
+//	for(r=0;r<a_rad;r++) avg_stdv[r] = avg_quon[r] / avg_cont[r];
+//	for(r=0;r<a_rad;r++) if ( isinf(avg_stdv[r]) ) fprintf(stderr,"INF Error\n"); 
+//	for(r=0;r<a_rad;r++) if ( avg_stdv[r] < 0.0 ) fprintf(stderr,"RMSD Error\n"); 
+//	for(r=0;r<a_rad;r++) avg_stdv[r] = sqrt(ABS(avg_stdv[r])); 
 	
 	return radial_avg;
 	
@@ -146,8 +146,6 @@ u32 run_minimizer( gsl_multimin_fminimizer * minimizer, u64 max_iter, f64 tresho
 		status = gsl_multimin_test_size(score,treshold);
 		
 		if (status == GSL_SUCCESS) break;
-		else if ( status == GSL_CONTINUE ) continue;
-		else break;
 		
 	}
 
@@ -401,8 +399,8 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	gsl_vector * e_start = gsl_vector_alloc(c_ndim);
 	gsl_vector * e_steps = gsl_vector_alloc(c_ndim);
 
-	gsl_vector_set(e_steps,0,1e-7);
-	gsl_vector_set(e_steps,1,1e-1);
+	gsl_vector_set(e_steps,0,3e-7);
+	gsl_vector_set(e_steps,1,3e-1);
 	gsl_vector_set(e_steps,2,0.0);
 	gsl_vector_set(e_steps,3,0.0);
 	gsl_vector_set(e_steps,4,0.0);
@@ -424,7 +422,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	for(i=0;i<c_ndim;i++) ctf_params[i] = 0.0;
 	
 	u32 trials = 20;
-	f64 tolerance = 1e-12;
+	f64 tolerance = 1e-10;
 	
 	for(i=0;i<trials;i++) {
 		gsl_multimin_fminimizer_set(e_min, &e_function, e_start, e_steps);
@@ -436,7 +434,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	
 	for(i=0;i<c_ndim;i++) ctf_params[i] /= trials;
 	
-	fprintf(stderr,"\n\tMinimizer used %d iterations of max (%e)\n",status1,status1/(trials*10000));
+	fprintf(stderr,"\n\tMinimizer used %d iterations (%.2lf%%)\n",status1,status1/(trials*10000.0));
 
     gsl_multimin_fminimizer_free(e_min);	
 	gsl_vector_free(e_start);
