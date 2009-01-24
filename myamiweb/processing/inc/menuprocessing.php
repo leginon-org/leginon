@@ -59,6 +59,7 @@ if ($expId) {
 
 	// --- retrieve template info from database for this project
 	$projectId=getProjectFromExpId($expId);
+	//echo "PROJECT ID: ".$projectId."<br/>\n";
 
 	if ($projectId) {
 		if ($templatesData=$particle->getTemplatesFromProject($projectId)) $templates = count($templatesData);
@@ -100,10 +101,12 @@ if ($expId) {
 		$reconswithjob = 0;
 		foreach ((array)$stackIds as $stackid) {
 			$reconIds = $particle->getReconIds($stackid['stackid']);
-			if ($reconIds) $reconruns+=count($reconIds);
-			foreach ($reconIds as $reconId) {
-				if ($reconId['REF|ApClusterJobData|jobfile']) {
-					$reconswithjob++;
+			if ($reconIds) {
+				$reconruns+=count($reconIds);
+				foreach ($reconIds as $reconId) {
+					if ($reconId['REF|ApClusterJobData|jobfile']) {
+						$reconswithjob++;
+					}
 				}
 			}
 		}
