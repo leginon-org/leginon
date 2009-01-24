@@ -13,8 +13,10 @@ if __name__ == '__main__':
 		sys.exit(1)
 	cmd = sys.argv[1]
 	outf = sys.argv[2]
-	PIPE = subprocess.PIPE
-	f=open(outf,"w")
-	sub = subprocess.Popen(cmd, shell=True, stdout=f, stderr=subprocess.STDOUT)
-	out = sub.wait()
+	#PIPE = subprocess.PIPE
+	f = open(outf, "a")
+	proc = subprocess.Popen(cmd, shell=True, stdout=f, stderr=f)
+	#proc.stderr
+	#proc.stdout
+	proc.wait()
 	f.close()
