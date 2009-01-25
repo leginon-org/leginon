@@ -101,7 +101,10 @@ class Ace2Loop(appionLoop2.AppionLoop):
 
 		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
 		hostname = socket.gethostname()
-		user = os.getlogin()
+		try:
+			user = os.getlogin()
+		except:
+			user = None
 		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
 			commandline = "unset LD_LIBRARY_PATH; "+commandline
 
