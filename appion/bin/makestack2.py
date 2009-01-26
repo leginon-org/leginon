@@ -408,7 +408,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		ace2exe = self.getACE2Path()
 		ace2cmd = (ace2exe+" -ctf %s -apix %.3f -img %s -wiener 0.1" % (ctfvaluesfile, apix, inimgpath))
-		apDisplay.printMsg("phaseflipping entire micrograph: "+ace2cmd)
+		apDisplay.printMsg("ace2 command: "+ace2cmd)
 		apDisplay.printMsg("phaseflipping entire micrograph with defocus "+str(round(defocus,3))+" microns")
 
 		### hate to do this but have to, MATLAB's bad fftw3 library gets linked otherwise
@@ -418,9 +418,28 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			ace2cmd = "unset LD_LIBRARY_PATH; "+ace2cmd
 
 		#apEMAN.executeEmanCmd(ace2cmd, showcmd=True)
-		ace2proc = subprocess.Popen(ace2cmd, shell=True)
+		if self.params['verbose'] is True:
+			ace2proc = subprocess.Popen(ace2cmd, shell=True)
+		else:
+			aceoutf = open("ace2.out", "a")
+			aceerrf = open("ace2.err", "a")
+			ace2proc = subprocess.Popen(ace2cmd, shell=True, stderr=aceerrf, stdout=aceoutf)	
 		ace2proc.wait()
+		if self.stats['count'] <= 1:
+			### ace2 always crashes on first image??? .fft_wisdom file??
+			time.sleep(1)
+			if self.params['verbose'] is True:
+				ace2proc = subprocess.Popen(ace2cmd, shell=True)
+			else:
+				aceoutf = open("ace2.out", "a")
+				aceerrf = open("ace2.err", "a")
+				ace2proc = subprocess.Popen(ace2cmd, shell=True, stderr=aceerrf, stdout=aceoutf)	
+			ace2proc.wait()
 		
+		if self.params['verbose'] is False:	
+			aceoutf.close()
+			aceerrf.close()
+
 		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
 		return outfile
 
@@ -690,6 +709,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			action="store_true", help="Check masks")
 		self.parser.add_option("--keepall", dest="keepall", default=False,
 			action="store_true", help="Do not delete CTF corrected MRC files when finishing")
+		self.parser.add_option("--verbose", dest="verbose", default=False,
+			action="store_true", help="Show extra ace2 information while running")
 
 		### option based
 		#self.parser.add_option("--whole-image", dest="wholeimage", default=False,
