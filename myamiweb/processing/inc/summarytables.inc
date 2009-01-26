@@ -130,9 +130,11 @@ function stacksummarytable($stackid) {
 
 	# use values from first of the combined run, if any for now	
 	$pflip = ($stackdata['phaseFlipped']==1) ? "Yes" : "No";
+	if ($stackdata['fliptype']) $pflip.= ", ".$stackdata['fliptype'];
 	if ($stackdata['aceCutoff']) $pflip.=" (ACE > $stackdata[aceCutoff])";
 	
 	$display_keys['phase flipped']=$pflip;
+	$display_keys['raw data'] = print_r($stackdata);
 
 	if ($stackdata['correlationMin']) $display_keys['correlation min']=$stackdata['correlationMin'];
 	if ($stackdata['correlationMax']) $display_keys['correlation max']=$stackdata['correlationMax'];
