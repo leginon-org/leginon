@@ -39,10 +39,10 @@ if ($_GET['cluster']) {
 	$stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 	$hidestackdatas = $stackdatas;
 } elseif (!$_GET['showHidden']) {
-	$stackdatas = $particle->getAlignStackIds($expId, $projectId, False);
-	$hidestackdatas = $particle->getAlignStackIds($expId, $projectId, True);
+	$stackdatas = $particle->getAlignStackIds($expId, False);
+	$hidestackdatas = $particle->getAlignStackIds($expId, True);
 } else {
-	$stackdatas = $particle->getAlignStackIds($expId, $projectId, True);
+	$stackdatas = $particle->getAlignStackIds($expId, True);
 	$hidestackdatas = $stackdatas;
 }
 

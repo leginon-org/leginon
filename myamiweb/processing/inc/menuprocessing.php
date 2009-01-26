@@ -89,7 +89,7 @@ if ($expId) {
 
 	// --- Get Alignment Data
 	if ($stackruns>0) {
-		$alignIds = $particle->getAlignStackIds($sessionId, $projectId);
+		$alignIds = $particle->getAlignStackIds($sessionId);
 		$alignruns=count($alignIds);
 	}
 	else {
@@ -294,7 +294,7 @@ if ($expId) {
 		// get alignment stats:
 		$alignresults=array();
 		//$aligndone  = count($subclusterjobs['partalign']['done']);
-		$aligndone = count($particle->getAlignStackIds($expId, $projectId));
+		$aligndone = count($particle->getAlignStackIds($expId));
 		$alignrun = count($subclusterjobs['partalign']['running']);
 		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($projectId));
 		$alignqueue  = count($subclusterjobs['partalign']['queued']);

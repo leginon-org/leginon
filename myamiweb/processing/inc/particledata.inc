@@ -1091,7 +1091,9 @@ class particledata {
 		  ."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden) $q.= " AND (r.`hidden` IS NULL OR r.`hidden` = 0) ";
 		$q.= "ORDER BY r.`DEF_id` DESC ";
+		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
 
@@ -1418,7 +1420,7 @@ class particledata {
 
 	#--------- ALIGN STACK FUNCTIONS ---------------#
 
-	function getAlignStackIds ($sessionId, $projectId, $showHidden=False) {
+	function getAlignStackIds ($sessionId, $showHidden=False) {
 		//$projectId = (int) getProjectFromExpId($expId);
 		$q = "SELECT ast.`DEF_id` AS alignstackid "
 		  ."FROM ApAlignStackData AS ast "
@@ -1430,10 +1432,6 @@ class particledata {
 		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
 		  ."WHERE "
 		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-		  ." AND "
-		  ."  runsin.`project|projects|project` = '$projectId' "
-		  ." AND "
-		  ."  ast.`project|projects|project` = '$projectId' ";
 		if (!$showHidden)
 			$q.= " AND ast.`hidden` != 1 ";
 		$q.= "ORDER BY alignstackid DESC";
@@ -1713,7 +1711,7 @@ class particledata {
 		return $r;
 	}
 
-	function getClusteringStacksForAlignStack ($alignstackId, $projectId, $showHidden=false) {
+	function getClusteringStacksForAlignStack ($alignstackId, $showHidden=false) {
 		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,clusterrun.*, cluster.* "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
@@ -1735,14 +1733,27 @@ class particledata {
 		return $r;
 	}
 
+	function getClusteringStackParams ($clusterstackid) {
+		$q = "SELECT clustrun.*, cluststack.*, path.`path` AS path "
+			."FROM ApClusteringStackData AS cluststack "
+			."LEFT JOIN ApPathData AS path ON "
+			."  (cluststack.`REF|ApPathData|path` = path.`DEF_id`) "
+			."LEFT JOIN ApClusteringRunData AS clustrun ON "
+			."  (cluststack.`REF|ApClusteringRunData|clusterrun` = clustrun.`DEF_id`) "
+			."WHERE cluststack.`DEF_id` = '$clusterstackid'";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 	function getClusteringRunsForAlignStack ($alignstackId, $showHidden=false) {
 		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, spider.*,"
 			."  clusterrun.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
 			."FROM ApClusteringRunData AS clusterrun "
 			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
 			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
-                        ."LEFT JOIN ApAlignAnalysisRunData as analysis ON "
-                        ." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
+			."LEFT JOIN ApAlignAnalysisRunData as analysis ON "
+			." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
 			."WHERE "
 			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId "
 			."ORDER BY clusterrunid DESC ";

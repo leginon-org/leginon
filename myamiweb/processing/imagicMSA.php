@@ -49,7 +49,7 @@ function jobform($extra=false)	{
 
 	// connect to particle database
         $particle = new particledata();
-        $alignIds = $particle->getAlignStackIds($expId, $projectId, true);
+        $alignIds = $particle->getAlignStackIds($expId, true);
         $analysisIds = $particle->getAnalysisRuns($expId, $projectId, true);
         $analysisruns=count($analysisIds);
 

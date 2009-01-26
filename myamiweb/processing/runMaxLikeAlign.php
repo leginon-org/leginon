@@ -38,7 +38,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$particle = new particledata();
 	$stackIds = $particle->getStackIds($sessionId);
 	$maxlikeIds = $particle->getMaxLikeIds($sessionId, True);
-	$alignruns = count($particle->getAlignStackIds($sessionId, $projectId));
+	$alignruns = count($particle->getAlignStackIds($sessionId));
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack

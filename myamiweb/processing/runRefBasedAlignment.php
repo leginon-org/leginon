@@ -135,7 +135,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$templateinfo = $particle->getTemplatesFromId($templateid);
 	$stackIds = $particle->getStackIds($sessionId);
 	$refbasedIds = $particle->getRefAliIds($sessionId);
-	$alignruns = count($particle->getAlignStackIds($sessionId, $projectId));
+	$alignruns = count($particle->getAlignStackIds($sessionId));
 
 	processing_header($title,$heading,"");
 	// write out errors, if any came up:
