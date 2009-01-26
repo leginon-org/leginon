@@ -1223,10 +1223,10 @@ class particledata {
 		$runarray['shownstackname'] = $runname;
 		$runarray['count'] = count($stackrunIds);
 		//use first run parameters for basic stack info
-		$runarray['boxSize']=$params[0]['boxSize'];
-		$runarray['bin']=$params[0]['bin'];
+		//$runarray['boxSize']       = $params[0]['boxSize'];
+		//$runarray['bin']           = $params[0]['bin'];
 		$runarray = array_merge($runarray,$stack_primary_array);
-		$r = array_merge($params,$runarray);
+		$r = array_merge($params[0],$runarray);
 		return $r;
 	}
 
@@ -1482,6 +1482,7 @@ class particledata {
 			."WHERE ast.`DEF_id` = '$alignstackid'";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r[0];
 	}
 
@@ -1489,8 +1490,23 @@ class particledata {
 		$q= "SELECT count(DEF_id) as num "
 			."FROM `ApAlignParticlesData` "
 			."WHERE `REF|ApAlignStackData|alignstack` = '$alignstackid'";
+
 		//echo $q."<br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
+		return $r['num'];
+	}
+
+	function getNumAlignStackReferences ($alignstackid) {
+		$q= "SELECT count(aref.`DEF_id`) as num "
+			."FROM `ApAlignReferenceData` AS aref "
+			."LEFT JOIN ApAlignStackData AS astack ON "
+			." (astack.`REF|ApAlignRunData|alignrun` = aref.`REF|ApAlignRunData|alignrun`) "
+			."WHERE astack.`DEF_id` = '$alignstackid'"
+			." AND "
+			." astack.`iteration` = aref.`iteration` ";
+		//echo $q."<br/>\n";
+		list($r) = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r['num'];
 	}
 
@@ -1712,7 +1728,7 @@ class particledata {
 	}
 
 	function getClusteringStacksForAlignStack ($alignstackId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,clusterrun.*, cluster.* "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*, clusterrun.*, cluster.* "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
@@ -1724,9 +1740,7 @@ class particledata {
 			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 ";
-		$q .= "AND "
-			."  clusterrun.`project|projects|project` = '$projectId' "
-			."ORDER BY clusterid DESC ";
+		$q .= "ORDER BY clusterid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
@@ -1743,6 +1757,7 @@ class particledata {
 			."WHERE cluststack.`DEF_id` = '$clusterstackid'";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
 		return $r[0];
 	}
 
