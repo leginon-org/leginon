@@ -1431,7 +1431,7 @@ class particledata {
 		  ."LEFT JOIN ApStackRunData as strun ON "
 		  ."  (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
 		  ."WHERE "
-		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden)
 			$q.= " AND ast.`hidden` != 1 ";
 		$q.= "ORDER BY alignstackid DESC";
