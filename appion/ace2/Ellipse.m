@@ -198,6 +198,11 @@
 	
 }
 
+-(id) release {
+	[super release];
+	return nil;
+}
+
 -(void) drawInArray:(ArrayP)array {
 
 	u32 maxrow = [array sizeOfDimension: 1] - 1;
@@ -513,6 +518,30 @@
 	fprintf(fp,"A: %e B: %e C: %e D: %e E: %e F: %e\n",general[AX],general[BX],general[CX],general[DX],general[EX],general[FX]);
 	fprintf(fp,"Xc: %e Yc: %e Ax: %e Ay: %e phi: %2.2f\n",x_center,y_center,x_axis,y_axis,rotation*DEG);
 	fprintf(fp,"Axis ratio: %e\n",MAX(x_axis,y_axis)/MIN(x_axis,y_axis));
+}
+
+-(u08) isValid {
+	
+	if ( !isfinite(general[AX]) ) return FALSE;
+	if ( !isfinite(general[BX]) ) return FALSE;
+	if ( !isfinite(general[CX]) ) return FALSE;
+	if ( !isfinite(general[DX]) ) return FALSE;
+	if ( !isfinite(general[EX]) ) return FALSE;
+	if ( !isfinite(general[FX]) ) return FALSE;
+	
+	if ( !isfinite(x_axis) ) return FALSE;
+	if ( !isfinite(y_axis) ) return FALSE;
+	if ( !isfinite(x_center) ) return FALSE;
+	if ( !isfinite(y_center) ) return FALSE;
+	if ( !isfinite(rotation) ) return FALSE;
+	
+	if ( !isfinite(bounds[XHI]) ) return FALSE;
+	if ( !isfinite(bounds[XLO]) ) return FALSE;
+	if ( !isfinite(bounds[YHI]) ) return FALSE;
+	if ( !isfinite(bounds[YLO]) ) return FALSE;
+	
+	return TRUE;
+	
 }
 
 @end

@@ -75,6 +75,9 @@
 
 -(void) printInfoTo:(FILE *)fp;
 
+-(u08) isValid;
+-(id) release;
+
 @end
 
 enum ellipseindices {

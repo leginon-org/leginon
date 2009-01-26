@@ -383,9 +383,9 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 	f64 * temp_x = NEWV(f64,size);
 	f64 * temp_y = NEWV(f64,size);
 	f64 * edge_pixels =[edges data];
-
+	
 	if ( x_points == NULL || y_points == NULL || temp_x == NULL || temp_y == NULL || edge_pixels == NULL ) {
-		fprintf(stderr,"Not enough memory\n");
+		fprintf(stderr,"Memory error in %s in file %s at line %d\n",__FUNCTION__,__FILE__,__LINE__);
 		goto error;
 	}
 	
@@ -404,7 +404,7 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 			}
 		}
 	}
-	
+
 	if ( edge_count <= n_samples ) {
 		fprintf(stderr,"Not enough data points\n");
 		goto error;
@@ -428,15 +428,36 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 		
 		generateLSQEllipse(temp_x,temp_y,n_samples,current_ellipse);
 		f64 norm = ellipseCircumference(current_ellipse);
+
+		f64 current_p = pow(1.0-exp(log(1.0-certainty_probability)/current_iter),1.0/n_samples);
+		
+		if ( most_inliers > current_p*edge_count ) {
+			f64 current_p = most_inliers/edge_count;
+			f64 success_p = 1.0 - exp(current_iter*log(1.0-pow(current_p,n_samples)));
+			fprintf(stderr,"\n\tRANSAC SUCCESS, %.0f/%d (%2.2f%%-%2.2f%%)\n",most_inliers,edge_count,current_p*100,success_p*100);
+			break;
+		}
+		
+		if ( current_p < min_percent_inliers ) {
+			fprintf(stderr,"\n\tRANSAC FAILED: NOT ENOUGH INLIERS...");
+			break;
+		}
+		
+		if ( current_iter >= max_iterations ) {
+			fprintf(stderr,"\n\tRANSAC GAVE UP... Could not find a model better than %f of %d (%2.2f)\n",most_inliers,edge_count,most_inliers/edge_count);
+			break;
+		}
+
 		if ( isnan(norm) || isinf(norm) ) {
 			current_iter++;
 			continue;
 		}
+		
 		if ( norm < 50 ) {
 			current_iter++;
 			continue;
 		}
-		
+
 		generateBoundEllipses(current_ellipse,e1b,e2b,fit_treshold);
 
 		f64 number_of_inliers = 0;
@@ -456,26 +477,7 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 			most_inliers = number_of_inliers;
 			memcpy(best_ellipse,current_ellipse,sizeof(f64)*6);
 		}
-	
-		f64 current_p = pow(1.0-exp(log(1.0-certainty_probability)/current_iter),1.0/n_samples);
-		
-		if ( most_inliers > current_p*edge_count ) {
-			f64 current_p = most_inliers/edge_count;
-			f64 success_p = 1.0 - exp(current_iter*log(1.0-pow(current_p,n_samples)));
-			fprintf(stderr,"\n\tRANSAC SUCCESS, %.0f/%d (%2.2f%%-%2.2f%%)\n",most_inliers,edge_count,current_p*100,success_p*100);
-			break;
-		}
-		
-		if ( current_p < min_percent_inliers ) {
-			fprintf(stderr,"\n\tRANSAC FAILED: NOT ENOUGH INLIERS...");
-			break;
-		}
-		fprintf(stderr,"Current iter:%f\n");
-		if ( current_iter >= max_iterations ) {
-			fprintf(stderr,"\n\tRANSAC GAVE UP... Could not find a model better than %f of %d (%2.2f)\n",most_inliers,edge_count,most_inliers/edge_count);
-			break;
-		}
-		
+
 		current_iter++;
 		
 	}
@@ -508,9 +510,19 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 	[ellipse setX_center:x_rad];
 	[ellipse setY_center:y_rad];
 	
+	if ( [ellipse isValid] ) return ellipse;
+	else {
+		[ellipse free];
+		goto error;
+	}
+	
 	return ellipse;
 	
 	error:
+	if ( temp_x != NULL ) free(temp_x);
+	if ( temp_y != NULL ) free(temp_y);
+	if ( x_points != NULL ) free(x_points);
+	if ( y_points != NULL ) free(y_points);
 	return NULL;
 	
 }

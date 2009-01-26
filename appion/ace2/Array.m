@@ -789,6 +789,52 @@ int compare_f64( const void * a, const void * b );
 	
 }
 
+-(id) removeNonFiniteUsing:(char [])filt_string {
+	
+	if ( ![self isType:TYPE_F64] ) {
+		fprintf(stderr,"Type Error in function %s in file %s at line %d\n",__FUNCTION__,__FILE__,__LINE__);
+		return self;
+	}
+	 
+	f64 * s_data = [self data];
+
+	if ( s_data == NULL ) {
+		fprintf(stderr,"Memory Error in function %s in file %s at line %d\n",__FUNCTION__,__FILE__,__LINE__);
+		return self;
+	}
+	
+	
+	u08 filt_type = 0;
+	f64 filt_value = 0;
+	if ( strcmp(filt_string,"array average") == 0 ) {
+		filt_type = 0;
+	} else if ( strncmp(filt_string,"set to:",7) == 0 ) {
+		filt_type = 1;
+		sscanf(filt_string,"set to: %le",&filt_value);
+	} else {
+		fprintf(stderr,"%s is not a valid parameter for function %s in file %s at line %d\n",filt_string,__FUNCTION__,__FILE__,__LINE__);
+		return self;
+	}
+	
+	u32 i;
+	for(i=0;i<size;i++) {
+		if ( !isfinite(s_data[i]) ) {
+			switch (filt_type) {
+				case 0:
+					s_data[i] = [self meanValue];
+					break;
+				case 1:
+					s_data[i] = filt_value;
+					break;
+			}
+		}
+	}
+	
+	return self;
+	
+}
+	
+
 @end
 
 int compare_f64( const void * a, const void * b ) {
