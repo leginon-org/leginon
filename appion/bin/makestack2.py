@@ -441,6 +441,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			aceerrf.close()
 
 		outfile = os.path.join(os.getcwd(),imgdata['filename']+".mrc.corrected.mrc")
+
+		if not os.path.isfile(outfile):
+			apDisplay.printError("ACE 2 failed to create image file")
+
 		return outfile
 
 
@@ -549,7 +553,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		projectnum = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 
 		stparamq=appionData.ApStackParamsData()
-		paramlist = ('boxSize','bin','phaseFlipped','aceCutoff','correlationMin','correlationMax',
+		paramlist = ('boxSize','bin','aceCutoff','correlationMin','correlationMax',
 			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair',
 			'lowpass','highpass','norejects')
 
@@ -557,24 +561,23 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		for p in paramlist:
 			if p.lower() in self.params:
 				stparamq[p] = self.params[p.lower()]
+			else:
+				print "missing", p.lower()
+		if self.params['phaseflipped'] is True:
+			stparamq['phaseFlipped'] = True
+			stparamq['fliptype'] = self.params['fliptype']
 		paramslist = stparamq.query()
 
-#		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
-#			print stparamq
-#			apDisplay.printError("problem in database insert")
+		if not 'boxSize' in stparamq or stparamq['boxSize'] is None:
+			print stparamq
+			apDisplay.printError("problem in database insert")
 
 		### create a stack object
 		stackq = appionData.ApStackData()
 		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
       	### see if stack already exists in the database (just checking path & name)
 		uniqstackdatas = stackq.query(results=1)
-		
-		print "HERE HERE"
-		print uniqstackdatas
-		print "HERE HERE"
-		print "HERE HERE"
-		print "HERE HERE"
-		
+
 		### create a stackRun object
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']

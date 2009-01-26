@@ -303,6 +303,7 @@ class ApStackParamsData(Data):
 			('boxSize', int),
 			('bin', int),
 			('phaseFlipped', bool),
+			('fliptype', str),
 			('aceCutoff', float),
 			('correlationMin', float),
 			('correlationMax', float),
