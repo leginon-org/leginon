@@ -40,7 +40,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 
 	// connect to particle database
 	$particle = new particledata();
-	$alignIds = $particle->getAlignStackIds($sessionId, $projectId, true);
+	$alignIds = $particle->getAlignStackIds($sessionId, true);
 	$alignruns=count($alignIds);
 	$coranIds = $particle->getAnalysisRuns($sessionId, $projectId, true);
 	//foreach ($coranIds as $coranid)
