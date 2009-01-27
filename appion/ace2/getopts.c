@@ -54,9 +54,9 @@ char * getopt_usage( struct options opt ) {
 	
 	size_t cmd_length = 30;
 	
-	if ( opt.name ) cmd_length += strlen(opt.name);
-	if ( opt.shortName ) cmd_length += strlen(opt.shortName);
-	if ( opt.description ) cmd_length += strlen(opt.description);
+	if ( opt.name ) cmd_length += strlen(opt.name)+1;
+	if ( opt.shortName ) cmd_length += strlen(opt.shortName)+1;
+	if ( opt.description ) cmd_length += strlen(opt.description)+1;
 	
 	char * cmd = calloc(0,sizeof(char)*cmd_length);
 	if ( cmd == NULL ) return NULL;
@@ -95,7 +95,7 @@ int getopts_usage(char *progName, struct options opts[]) {
 	for (count = 0; opts[count].description; count++) {
 		cmd = getopt_usage(opts[count]);
 		fprintf(stderr,"  %s\n", cmd);
-		free(cmd);
+//		free(cmd);
 	}
 	
 	return 1;
