@@ -90,23 +90,27 @@ if ($tomogram['centerx']) {
 echo "<table><tr><td colspan=2>\n";
 $particle->displayParameters($title,$tomograminfo,array(),$expId);
 echo "</td></tr>";
+echo "<tr>";
 //SnapShot
 $snapshotfile = $tomogram['path']."/snapshot.png";
 if (file_exists($snapshotfile)) {
-	echo "<tr><td>";
+	echo "<td>";
 	echo "<a href='loadimg.php?filename=$snapshotfile' target='snapshotfile'>"
 		."<img src='loadimg.php?filename=$snapshotfile&s=180' height='180'><br/>\nSnap Shot</a>";
 	echo "</td>";
 }
 //FlashMovie
-$moviefile = $tomogram['path']."/minitomo.flv";
+$moviefile = $tomogram['path']."/minitomo.swf";
 if (file_exists($moviefile)) {
 	echo "<td>";
-	echo "<a href='loadimg.php?filename=$moviefile' target='snapshotfile'>"
-		."<img src='loadimg.php?filename=$moviefile&s=180' height='180'><br/>\nMovie</a>";
-	echo "</td></tr>";
+	echo "<object>"
+		."<param name='movie' value=$moviefile>"
+		."<embed src=$moviefile type='application/x-shockwave-flash'>"
+		."</embed>"
+		."</object>";
+	echo "</td>";
 }
-
+echo "</tr>";
 echo "</table>";
 echo $html;
 
