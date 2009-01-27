@@ -405,19 +405,16 @@ if ($expId) {
 	);
 
 	/* RCT Volumes */
-	if ($maxangle > 5) {
+	if ($maxangle > 5 && $aligndone >= 1 && $stackruns >= 2 ) {
 		$numrctvols = $particle->getNumberOfRctRuns($sessionId);
 		$nrct = ($numrctfvols > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>" : '';
-
-		if ($norefdone >= 1 && $stackruns >= 2) {
-			$nruns[]=array(
-				'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
-				'result'=>$nrct,
-			);
-		}
+		$nruns[]=array(
+			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
+			'result'=>$nrct,
+		);
 	}
 
-	if ($norefdone >= 1 ) {
+	if ($aligndone >= 1 || $norefdone >= 1 ) {
 		$nruns[]=array(
 			'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
 		);
@@ -426,7 +423,7 @@ if ($expId) {
 	/* IMAGIC Common Lines */
 	$numimagicrefinements = count($particle->getImagic3dRefinementRunsFromSessionId($sessionId));
 	$refineresults = ($numimagicrefinements==0) ? "" : "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$numimagicrefinements complete</a>";
-	if ($norefdone >= 1) {
+	if ($aligndone >= 1 || $norefdone >= 1) {
 		$nruns[]=array(
 			'name'=>"<a href='imagic3dRefine.php?expId=$sessionId'>IMAGIC Common Lines</a>",
 			'result'=>$refineresults,
