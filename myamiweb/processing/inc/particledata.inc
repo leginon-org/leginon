@@ -2889,6 +2889,32 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r;
 	}
 
+	function getAlignParticleNumber($alignId) {
+		$q="SELECT ref.`refnum` AS classNumber, count(part.`DEF_id`) as number "
+			."FROM ApAlignParticlesData AS part "
+			."LEFT JOIN ApAlignReferenceData AS ref "
+			."  ON (part.`REF|ApAlignReferenceData|ref` = ref.`DEF_id`) "
+			."WHERE part.`REF|ApAlignStackData|alignstack` = '$alignId' "
+			."GROUP BY ref.`refnum` "
+			."ORDER BY ref.`refnum` ";
+		//echo $q."<br/><br/>\n";
+		$r=$this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
+	function getClusteringParticleNumber($clusterId) {
+		$q="SELECT part.`refnum` AS classNumber, count(part.`DEF_id`) as number "
+			."FROM ApClusteringParticlesData AS part "
+			."WHERE part.`REF|ApClusteringStackData|clusterstack` = '$clusterId' "
+			."GROUP BY part.`refnum` "
+			."ORDER BY part.`refnum` ";
+		//echo $q."<br/><br/>\n";
+		$r=$this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r;
+	}
+
 	function getNumberOfRctRuns($sessionId) {
 		$q="SELECT count(rctrun.`DEF_id`) AS number "
 			."FROM ApRunsInStackData as runsin "
