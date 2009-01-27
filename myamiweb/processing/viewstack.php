@@ -250,6 +250,7 @@ $includebuttons = "";
 // Substack
 if ($clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
+if (($clusterId || $alignId) && $maxangle > 5)
 	$includebuttons .= "<input type='button' value='Create RCT Volume' onClick='createRctVolume()'>\n";
 // Upload Template
 if ($stackId || $clusterId || $alignId)
