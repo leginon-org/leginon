@@ -1150,6 +1150,26 @@ class particledata {
 		return $r;
 	}
 
+
+	function getTiltedStackIds ($sessionId, $showHidden=False) {
+		$q = "SELECT "
+			."  stack.`DEF_id` as stackid "
+			."FROM ApRunsInStackData as runs "
+			."LEFT JOIN ApStackRunData as stackrun ON "
+			."  (runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id`) "
+			."LEFT JOIN ApStackData as stack ON "
+			."  (runs.`REF|ApStackData|stack` = stack.`DEF_id`) "
+			."WHERE "
+			."  stack.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND "
+			."  ( stackrun.`tiltangle` != 'notilt' AND stackrun.`tiltangle` != 'all' )";
+		if (!$showHidden)
+			$q.= " AND st.`hidden` != 1 ";
+		$q.= "ORDER BY stackid DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getStackIdsForProject ($projectId, $showHidden=False) {
 		$q = "SELECT "
 		  ."  st.`DEF_id` as stackid "
