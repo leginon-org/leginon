@@ -3,7 +3,7 @@
 #include "MRC.h"
 #include "PGM.h"
 #include "Image.h"
-#include "Ellipse.h"
+#import "Ellipse.h"
 #include "util.h"
 #include "getopts.h"
 #include "ctf.h"

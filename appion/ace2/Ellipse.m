@@ -198,8 +198,8 @@
 	
 }
 
--(id) release {
-	[super release];
+-(id) free {
+	[super free];
 	return nil;
 }
 

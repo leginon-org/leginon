@@ -96,8 +96,8 @@ u08 testBorder( s64 loc, BorderTesterP tester );
 +(id) newWithType:(u32)totype andDimensions:(u32 *)dimensions;
 +(id) newWithType:(u32)totype andSize:(u32)tosize;
 -(void)  writeToFile:(FILE *)fp;
+-(id) copy;
 -(id) deepCopy;
--(id) copyArray;
 -(id) init;
 
 -(void *)getRow:(u64)row;
@@ -109,6 +109,7 @@ u08 testBorder( s64 loc, BorderTesterP tester );
 -(void)	rotate;
 -(void)	printInfoTo:(FILE *)fp;
 -(void)	release;
+-(void) retain;
 
 -(void)	calculateStats;
 -(u32)	compareDimensions:(id)array;

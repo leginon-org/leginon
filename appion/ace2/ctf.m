@@ -382,7 +382,7 @@ void fitCTF( ArrayP fit_data, ArrayP ctf_p ) {
 	
 	u32 size = [fit_data sizeOfDimension:0];
 	
-	ArrayP normalized = [fit_data copyArray];
+	ArrayP normalized = [fit_data deepCopy];
 	
 	f64 * ctf_params = [ctf_p data];
 	f64 * fit_norm = [normalized data];	

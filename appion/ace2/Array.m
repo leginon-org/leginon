@@ -72,23 +72,48 @@ int compare_f64( const void * a, const void * b );
 
 }
 
--(id) copyArray {
+-(id) copy {
 	
-	return [self deepCopy];
+	ArrayP new = [[Array alloc] init];
+	
+	if ( new == nil ) return new;
+	
+	new->dim_size = COPYV(dim_size,sizeof(u32)*(ndim+1));
+	new->dim_step = COPYV(dim_size,sizeof(u32)*(ndim+1));
+	
+	sprintf(new->name,"%s",name);
+	
+	new->ndim = ndim;
+	new->type = type;
+	new->size = size;
+	new->esize = esize;
+	new->memory = memory;
+	
+	new->ref_count = 1;
+	
+	new->flags = flags;
+	[new setFlag:CV_ARRAY_REFERS_DATA to:TRUE];
+	
+	new->data = data;
+	new->original = self;
+	
+	[self retain];
+	
+	return new;
 	
 }
 
 -(id) deepCopy {
 	
-	ArrayP new_array = [super copy];
+	ArrayP new = [self copy];
 	
-	if ( new_array == nil ) return new_array;
+	if ( new == nil ) return new;
 	
-	new_array->dim_size = COPYV(dim_size,sizeof(u32)*ndim);
-	new_array->dim_step = COPYV(dim_step,sizeof(u32)*ndim);
-	new_array->data = COPYV(data,esize*size);
-	sprintf(new_array->name,"%s",name);
-	return new_array;
+	[new setFlag:CV_ARRAY_REFERS_DATA to:FALSE];
+	new->data = COPYV(data,memory);	
+	new->original = nil;
+	
+	return new;
 	
 }
 

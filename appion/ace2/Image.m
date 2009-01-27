@@ -133,8 +133,6 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 		
 	}
 	
-	[test writeMRCFile:"temp.mrc"];
-	
 	[self c2rfftc];
 	[self divideBy:size];
 	
@@ -634,7 +632,7 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 	ArrayP dog_space = [Array newWithType: TYPE_F64 andDimensions: dim_size];
 	f64 *x3 = [dog_space  data];
 	
-	ArrayP blurImage1 = [self copyArray];
+	ArrayP blurImage1 = [self deepCopy];
 	[blurImage1 gaussianBlurWithSigma: fsigma];
 
 	for(k=0;k<samples;k++) {
@@ -644,7 +642,7 @@ static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
 		
 		fprintf(stderr,"Building sample %d with sigma %f (%f)\n",k,fsigma,next_sigma);
 		
-		ArrayP blurImage2 = [blurImage1 copyArray];
+		ArrayP blurImage2 = [blurImage1 deepCopy];
 		[blurImage2 gaussianBlurWithSigma: next_sigma];
 		
 		f64 *x1 = [blurImage1 data];

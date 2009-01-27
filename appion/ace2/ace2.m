@@ -172,7 +172,7 @@ int main (int argc, char **argv) {
 	
 	t1 = CPUTIME;
 	fprintf(stderr,"Finding edges for ellipse fitting...");	
-	ArrayP edges = [image copyArray];
+	ArrayP edges = [image deepCopy];
 	[edges gaussianBlurWithSigma:edge_blur];
 	u32 edge_count = cannyedges2d([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],edge_mint,edge_maxt,5.0);
 
@@ -967,7 +967,7 @@ ArrayP minMaxPeakFind( ArrayP image ) {
 	u32 cols = [image sizeOfDimension:0];
 	u32 rows = [image sizeOfDimension:1];
 	
-	ArrayP peaks = [image copyArray];
+	ArrayP peaks = [image deepCopy];
 	
 	f64 * imp = [peaks data];
 	f64 * imi = [image data];

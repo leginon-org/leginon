@@ -238,9 +238,7 @@ int main (int argc, char **argv) {
 	
 	[image setFlag:CV_ARRAY_DATA_SCALES to: TRUE];
 	[image setTypeTo: TYPE_F64];
-	
-	[image removeNonFiniteUsing:"set to:0.0"];
-	
+		
 	fprintf(stderr,"\t\t\tDONE in %2.2f secs\n",CPUTIME-t1);
 
 //---------Create CTF of image using fftw r2c transform----------------------------------------

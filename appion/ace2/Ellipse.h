@@ -76,7 +76,7 @@
 -(void) printInfoTo:(FILE *)fp;
 
 -(u08) isValid;
--(id) release;
+-(id) free;
 
 @end
 
