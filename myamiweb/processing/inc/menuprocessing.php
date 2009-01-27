@@ -405,14 +405,16 @@ if ($expId) {
 	);
 
 	/* RCT Volumes */
-	$numrctvols = $particle->getNumberOfRctRuns($sessionId);
-	$nrct = ($numrctfvols > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>" : '';
+	if ($maxangle > 5) {
+		$numrctvols = $particle->getNumberOfRctRuns($sessionId);
+		$nrct = ($numrctfvols > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>" : '';
 
-	if ($norefdone >= 1 && $stackruns >= 2) {
-		$nruns[]=array(
-			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
-			'result'=>$nrct,
-		);
+		if ($norefdone >= 1 && $stackruns >= 2) {
+			$nruns[]=array(
+				'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
+				'result'=>$nrct,
+			);
+		}
 	}
 
 	if ($norefdone >= 1 ) {
