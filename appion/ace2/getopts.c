@@ -52,7 +52,7 @@ int option_index = 1;
 
 char * getopt_usage( struct options opt ) {
 	
-	size_t cmd_length = 15;
+	size_t cmd_length = 30;
 	
 	if ( opt.name ) cmd_length += strlen(opt.name);
 	if ( opt.shortName ) cmd_length += strlen(opt.shortName);
