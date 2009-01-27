@@ -108,7 +108,7 @@ foreach ($reconRuns as $recon) {
 	// stack information
 	// get pixel size
 	$apix=($particle->getStackPixelSizeFromStackId($stackid))*1e10;
-	$boxsz=($stackparams[0]['bin']) ? $stackparams[0]['boxSize']/$stackparams[0]['bin'] : $stackparams[0]['boxSize'];
+	$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 	// stack info
 	$stackparticles = $particle->getNumStackParticles($stackId);
@@ -280,13 +280,13 @@ foreach ($reconRuns as $recon) {
 	else $m .= "manually selected from the micrographs \n";
 	$m .= "and extracted at a box size of ".$stackparams['boxSize']." pixels. \n";
 	if ($hasCTF) {
-		$acecutoff=($stackparams[0]['aceCutoff']) ? $stackparams[0]['aceCutoff']*100 : '' ;
+		$acecutoff=($stackparams['aceCutoff']) ? $stackparams['aceCutoff']*100 : '' ;
 		if ($acecutoff)
 			$m .= "Only particles whose CTF estimation had an ACE confidence of ".$acecutoff."% or better were extracted. \n";
-		if ($stackparams[0]['phaseFlipped']==1)
-			$m .= "Phase correction of the single particles was carried out within EMAN during creation of the particle stack. \n";
+		if ($stackparams['phaseFlipped']==1)
+			$m .= "Phase correction of the single particles was carried out by ".$stackparams['fliptype']." during creation of the particle stack. \n";
 	}
-	if ($stackparams[0]['bin']) $m .= "Stacked particles were binned by a factor of ".$stackparams[0]['bin']." for the final reconstruction. \n";
+	if ($stackparams['bin']) $m .= "Stacked particles were binned by a factor of ".$stackparams['bin']." for the final reconstruction. \n";
 	$m .= "The final stack contained ".commafy($stackparticles)." particles. \n";
 	if ($clsavgs['SpiCoran']) {
 	  $m .= "The 3D reconstruction was carried out using a combination of both the SPIDER and EMAN reconstruction packages (Frank 1996, Ludtke 1999). \n";
