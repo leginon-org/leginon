@@ -191,6 +191,8 @@ int main (int argc, char **argv) {
 
 	EllipseP ellipse = ellipseRANSAC(edges,fit_treshold,min_percent,fit_percent,max_iterations);
 	
+	if ( ellipse == nil ) fprintf(stderr,"NO ELLIPSE FITTING DONE!!!!!!!!!!");
+	
 	if ( CPUTIME-t1 > 0.0 ) {
 		char name[256];
 		ArrayP image_copy = [image deepCopy];
@@ -503,27 +505,28 @@ EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers,
 		
 	generateLSQEllipse(temp_x,temp_y,number_of_inliers,best_ellipse);
 
-	free(temp_x);
-	free(temp_y);
+	free(temp_x); temp_x = NULL;
+	free(temp_y); temp_y = NULL;
+	free(x_points); x_points = NULL;
+	free(y_points); y_points = NULL;
 	
 	EllipseP ellipse = [Ellipse newWithA:best_ellipse[0] b:best_ellipse[1] c:best_ellipse[2] d:best_ellipse[3] e:best_ellipse[4] f:best_ellipse[5]];
 	[ellipse setX_center:x_rad];
 	[ellipse setY_center:y_rad];
 	
-	if ( [ellipse isValid] ) return ellipse;
-	else {
-		[ellipse free];
+	if ( ![ellipse isValid] ) {
+		fprintf(stderr,"Bad elllipse\n");
 		goto error;
 	}
 	
 	return ellipse;
 	
 	error:
-	if ( temp_x != NULL ) free(temp_x);
-	if ( temp_y != NULL ) free(temp_y);
-	if ( x_points != NULL ) free(x_points);
-	if ( y_points != NULL ) free(y_points);
-	return NULL;
+	free(x_points);
+	free(y_points);
+	free(temp_x);
+	free(temp_y);
+	return nil;
 	
 }
 
@@ -1090,17 +1093,7 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 	f64 back2 = calcBackDrift([radial_avg2 getRow:0],rad,1.0,100.0);
 	
 	fprintf(stderr,"\n\tCalculated CTF signal for ellipse: %e, circle: %e, ratio: %e\n",back1,back2,back1/back2);
-	
-	[ellipse printInfoTo:stderr];
-	
-	fitEllipseAstig(image,ellipse);
-	ArrayP radial_avg3 = [image ellipse1DAvg:ellipse];
-	f64 back3 = calcBackDrift([radial_avg3 getRow:0],rad,1.0,100.0);
-	
-	[ellipse printInfoTo:stderr];
-	
-	fprintf(stderr,"BACK DRIFT FOR AVG3:%e, %e\n",back3,back3/back2);
-	
+		
 	if ( back1/back2 >= 0.90 ) {
 		fprintf(stderr,"\tUsing Elliptical Average\n");
 		[radial_avg2 release];
@@ -1109,7 +1102,7 @@ ArrayP createRadialAverage( ArrayP image, EllipseP ellipse ) {
 		fprintf(stderr,"\tUsing Circular Average\n");
 		[ellipse setX_axis:[ellipse y_axis]];
 		[radial_avg1 release];
-		return radial_avg3;
+		return radial_avg2;
 	}
 	
 }

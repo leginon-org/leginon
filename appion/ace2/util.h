@@ -31,6 +31,7 @@
 #define ABS(x)			( (x) >  0  ? (x) : -(x) )
 #define MAX(x,y)		( (x) > (y) ? (x) :  (y) )
 #define MIN(x,y)		( (x) < (y) ? (x) :  (y) )
+#define ISFINITE(x)		( !isnan(x) && !isinf(x) )
 #define BOUND(x,y,z)	( MAX((x),MIN((y),(z))) )
 #define SIGN(a,b)		( (b) >= 0.0 ? ABS(a) : -ABS(a) )
 

@@ -522,23 +522,18 @@
 
 -(u08) isValid {
 	
-	if ( !isfinite(general[AX]) ) return FALSE;
-	if ( !isfinite(general[BX]) ) return FALSE;
-	if ( !isfinite(general[CX]) ) return FALSE;
-	if ( !isfinite(general[DX]) ) return FALSE;
-	if ( !isfinite(general[EX]) ) return FALSE;
-	if ( !isfinite(general[FX]) ) return FALSE;
+//	if ( !ISFINITE(general[AX]) ) return FALSE;
+//	if ( !ISFINITE(general[BX]) ) return FALSE;
+//	if ( !ISFINITE(general[CX]) ) return FALSE;
+//	if ( !ISFINITE(general[DX]) ) return FALSE;
+//	if ( !ISFINITE(general[EX]) ) return FALSE;
+//	if ( !ISFINITE(general[FX]) ) return FALSE;
 	
-	if ( !isfinite(x_axis) ) return FALSE;
-	if ( !isfinite(y_axis) ) return FALSE;
-	if ( !isfinite(x_center) ) return FALSE;
-	if ( !isfinite(y_center) ) return FALSE;
-	if ( !isfinite(rotation) ) return FALSE;
-	
-	if ( !isfinite(bounds[XHI]) ) return FALSE;
-	if ( !isfinite(bounds[XLO]) ) return FALSE;
-	if ( !isfinite(bounds[YHI]) ) return FALSE;
-	if ( !isfinite(bounds[YLO]) ) return FALSE;
+	if ( !ISFINITE(x_axis) ) return FALSE;
+	if ( !ISFINITE(y_axis) ) return FALSE;
+	if ( !ISFINITE(x_center) ) return FALSE;
+	if ( !ISFINITE(y_center) ) return FALSE;
+	if ( !ISFINITE(rotation) ) return FALSE;
 	
 	return TRUE;
 	

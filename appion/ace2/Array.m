@@ -843,7 +843,7 @@ int compare_f64( const void * a, const void * b );
 	
 	u32 i;
 	for(i=0;i<size;i++) {
-		if ( !isfinite(s_data[i]) ) {
+		if ( !ISFINITE(s_data[i]) ) {
 			switch (filt_type) {
 				case 0:
 					s_data[i] = [self meanValue];
