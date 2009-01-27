@@ -5,6 +5,7 @@
 #include "cvtypes.h"
 #include "util.h"
 #include "Array.h"
+#include "math.h"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_blas.h>
