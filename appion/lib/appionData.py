@@ -318,6 +318,7 @@ class ApStackParamsData(Data):
 			('defocpair', bool),
 			('lowpass', float),
 			('highpass', float),
+			('tiltangle', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackParamsData=ApStackParamsData

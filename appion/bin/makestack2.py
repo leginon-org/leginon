@@ -555,7 +555,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		stparamq=appionData.ApStackParamsData()
 		paramlist = ('boxSize','bin','aceCutoff','correlationMin','correlationMax',
 			'checkMask','minDefocus','maxDefocus','fileType','inverted','normalized', 'defocpair',
-			'lowpass','highpass','norejects')
+			'lowpass','highpass','norejects', 'tiltangle')
 
 		### fill stack parameters
 		for p in paramlist:
