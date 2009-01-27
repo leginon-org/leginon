@@ -435,7 +435,7 @@ class particledata {
 	}
 
 	function getBestCtfInfoForSessionId($sessionId, $limit=false) {
-			$q = "select  ctfdata.* "
+		$q = "select  ctfdata.* "
 			."from "
 			."	( "
 			."	select  "
@@ -458,6 +458,8 @@ class particledata {
 			."	( "
 			."		select a.`DEF_id` from ".DB.".`AcquisitionImageData` a  "
 			."		where a.`REF|SessionData|session`='$sessionId'  "
+			."		  AND  "
+			."		 ABS(s.`SUBD|stage position|a`) < 0.9  "
 			."		)  "
 			."		order by (if(confidence_d>confidence, confidence_d, confidence)) desc  "
 			."	) ctfdata ";
@@ -466,6 +468,7 @@ class particledata {
 				$q .= " where ctfdata.confidence > $limit || ctfdata.confidence_d > $limit ";
 			}
 			$q .= " group by ctfdata.DEF_id ";
+		//echo $q."<br/><br/>\n";
 		return $this->mysql->getSQLResult($q);
 	}
 
