@@ -37,8 +37,8 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	f64 x_rad = cols/2.0; 
 	f64 y_rad = rows/2.0;
 	
-	f64 cs = cos(xaxis_angle);
-	f64 ss = sin(xaxis_angle);
+	f64 cs = cos(-xaxis_angle);
+	f64 ss = sin(-xaxis_angle);
 	
 	u32 i, a_rad = MIN(x_rad,y_rad);
 
@@ -56,17 +56,17 @@ void ctf_norm2( f64 fit_data[], f64 ctf_p[], f64 ctf[], f64 norm[], u32 size );
 	f64 * ori_data = [self data];
 	f64 * avg_mean = [radial_avg getRow:0];
 	f64 * avg_cont = [radial_avg getRow:1];
-//	f64 * avg_cont = [radial_avg getRow:2];
+//	f64 * avg_stdv = [radial_avg getRow:2];
 //	f64 * avg_quon = [radial_avg getRow:3];
 	
 	if ( ori_data == NULL ) goto error;
 	if ( avg_mean == NULL ) goto error;
 	if ( avg_cont == NULL ) goto error;
-//	if ( avg_cont == NULL ) goto error;
+//	if ( avg_stdv == NULL ) goto error;
 	
 	for(r=0;r<a_rad;r++) avg_mean[r] = 0.0;
 	for(r=0;r<a_rad;r++) avg_cont[r] = 0.0;
-//	for(r=0;r<a_rad;r++) avg_cont[r] = 0.0;
+//	for(r=0;r<a_rad;r++) avg_stdv[r] = 0.0;
 //	for(r=0;r<a_rad;r++) avg_quon[r] = 0.0;
 	
 	for(i=0,r=0;r<rows;r++) {

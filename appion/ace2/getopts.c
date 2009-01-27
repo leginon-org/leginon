@@ -96,7 +96,6 @@ int getopts_usage(char *progName, struct options opts[]) {
 		cmd = getopt_usage(opts[count]);
 		fprintf(stderr,"  %s\n", cmd);
 		free(cmd);
-		
 	}
 	
 	return 1;

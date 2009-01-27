@@ -15,6 +15,10 @@
 #include <gsl/gsl_multimin.h>
 
 ArrayP createRadialAverage( ArrayP image, EllipseP ellipse );
+EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers, f64 certainty_probability, u64 max_iterations );
+void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold );
+void ellipseNorm( f64 e[], f64 TR[3][3] );
+f64 ellipseCircumference( f64 e[] );
 
 int main (int argc, char **argv) {
 	
@@ -38,6 +42,12 @@ int main (int argc, char **argv) {
 	EllipseP e3 = [Ellipse newAtX:x_c andY:y_c withXAxis:200 andYAxis:200*1.5 rotatedBy:45*RAD];
 	EllipseP e4 = [Ellipse newAtX:x_c andY:y_c withXAxis:200 andYAxis:300 rotatedBy:-25*RAD];
 	
+	[e1 toGeneralConic];
+	[e1 toGeneralEllipse];
+	[e2 toGeneralConic];
+	[e3 toGeneralEllipse];
+	[e3 toGeneralConic];
+	
 	[e1 drawInArray:testimage];
 	[e2 drawInArray:testimage];
 	[e3 drawInArray:testimage];
@@ -55,10 +65,30 @@ int main (int argc, char **argv) {
 	
 	[te1 writeMRCFile:"te1.mrc"];
 	[te2 writeMRCFile:"te2.mrc"];
+	[testimage writeMRCFile:"te3.mrc"];
 	
-	f64 t1 = CPUTIME;
-	ArrayP avg1d = createRadialAverage(testimage,e3);
-	fprintf(stderr,"Time: %2.2f\n",CPUTIME-t1);
+	f64 edge_maxt = 0.9;
+	f64 edge_mint = edge_maxt*0.1;
+	u32 edge_count = cannyedges2d([te2 data],[te2 sizeOfDimension:1],[te2 sizeOfDimension:0],edge_mint,edge_maxt,5.0);
+	
+	fprintf(stderr,"Found %d edges!!\n",edge_count);
+	
+	f64 fit_treshold = 0.5;
+	f64 min_percent = 0.001;
+	f64 fit_percent = 0.99;
+	f64 max_iterations = 100000;
+	EllipseP e5 = ellipseRANSAC(te2,fit_treshold,min_percent,fit_percent,max_iterations);	
+	
+	ArrayP image_copy = [testimage deepCopy];
+	[image_copy gaussianBlurWithSigma:10];
+	[image_copy scaleFrom:0.0 to:1.0];
+	[e5 drawInArray:image_copy];
+	[te2 scaleFrom:0.0 to:2.0];
+	[te2 addImage:image_copy];
+	[te2 writeMRCFile:"te4.mrc"];
+	[image_copy release];
+
+	ArrayP avg1d = [testimage ellipse1DAvg:e5];
 	
 	u32 a_size = [avg1d sizeOfDimension:0];
 	f64 * avg = [avg1d getRow:0];

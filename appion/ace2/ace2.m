@@ -53,7 +53,6 @@ f64 highest_res( f64 ctf_p[], f64 size, f64 apix ) {
 
 ArrayP ctfNormalize( ArrayP fit_data, ArrayP ctf_params );
 ArrayP createCTFParams( f64 defocus, f64 apix, f64 size, f64 ac, f64 kv, f64 cs );
-void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold );
 ArrayP createRadialAverage( ArrayP image, EllipseP ellipse );
 void generate1DCTF( f64 df, u32 size, f64 apix, f64 cs, f64 kv, f64 dfs[] );
 u32 peakReduce( f64 * data, s32 size, f64 sigma, s32 min_peaks, s32 max_peaks );
@@ -64,27 +63,24 @@ ArrayP generate2DCTF( f64 df1, f64 df2, f64 theta, u32 rows, u32 cols, f64 apix,
 void normalizeValues( f64 values[], u32 size );
 u32 minPosition( f64 values[], u32 size );
 u32 maxPosition( f64 values[], u32 size );
-EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers, f64 certainty_probability, u64 max_iterations );
 void ctfFromParams( ArrayP ctf_params, ArrayP curve );
-void generateLSQEllipse( f64 xs[], f64 ys[], u64 size, f64 ellipse[] );
-void ellipseNorm( f64 e[], f64 TR[3][3] );
 void fitCTF( ArrayP fit_data, ArrayP ctf_params );
-f64 ellipseCircumference( f64 e[] );
 
 int main (int argc, char **argv) {
+	
 	COMPILE_INFO;
 
 	srand((unsigned)time(NULL));
 	
 	struct options opts[] = {
-		{ 1,	"image",	"Pathname to MRC image file", 					"i", 1 },
-		{ 2,	"apix",		"Angstroms per pixel of input image", 			"a", 1 },
-		{ 3,	"cs",		"Spherical Aberation of microcope in mm",		"c", 1 },
-		{ 4,	"kv",		"Voltage of microscope in kv",					"k", 1 },
-		{ 5,	"binby",	"Ammount to bin input image",					"b", 1 },
-		{ 6,	"amp",		"Initial Amplitude Contrast",					"m", 1 },
-		{ 7,	"edge",		"Edge Parameters",								"e", 1 },
-		{ 0,	NULL,		NULL,										   NULL, 0 }
+		{ 1, "image",	"Pathname to MRC image file", 					"i", 1 },
+		{ 2, "apix",	"Angstroms per pixel of input image", 			"a", 1 },
+		{ 3, "sabr",	"Spherical Aberation of microcope in mm",		"c", 1 },
+		{ 4, "kvolts",	"Voltage of microscope in kv",					"k", 1 },
+		{ 5, "binby",	"Ammount to bin input image",					"b", 1 },
+		{ 6, "amp",		"Initial Amplitude Contrast",					"m", 1 },
+		{ 7, "edge",	"Edge Parameters",								"e", 1 },
+		{ 0, NULL,		NULL,										   NULL, 0 }
 	};
 	
 	char arg[256];
@@ -338,310 +334,6 @@ void ctfFromParams( ArrayP ctf_params, ArrayP curve ) {
 	u64 size = [curve sizeOfDimension:0];
 	
 	for(k=0;k<size;k++) values[k] = pow(ctf_calc(params,k),2.0);
-
-}
-
-f64 ellipseCircumference( f64 e[] ) {
-		
-	f64 phi = atan(e[1]/(e[2]-e[0]))/2;
-	
-	f64 c = cos(phi);
-	f64 s = sin(phi);
-		
-	f64 Ad = e[0]*c*c - e[1]*c*s + e[2]*s*s;
-	f64 Cd = e[0]*s*s + e[1]*s*c + e[2]*c*c;
-
-	f64 Mx = sqrt(-e[5]/Ad);
-	f64 My = sqrt(-e[5]/Cd);
-	
-	if ( isnan(Mx) || isinf(Mx) ) return Mx;
-	if ( isnan(My) || isinf(My) ) return My;
-	
-	if ( Mx < My ) { 
-		f64 temp = Mx;
-		Mx = My;
-		My = temp;
-	}
-	
-	if ( Mx > 3*My ) return 0.0/0.0;
-	
-	f64 circum = pow((pow(Mx,1.5)+pow(My,1.6))*0.5,1.0/1.5);
-
-	return circum;
-	
-}
-
-EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers, f64 certainty_probability, u64 max_iterations ) {
-		
-	u32 k, r, c;
-	
-	u32 rows = [edges sizeOfDimension:1];
-	u32 cols = [edges sizeOfDimension:0];
-	
-	u32 size = rows*cols;
-	
-	f64 * x_points = NEWV(f64,size);
-	f64 * y_points = NEWV(f64,size);
-	f64 * temp_x = NEWV(f64,size);
-	f64 * temp_y = NEWV(f64,size);
-	f64 * edge_pixels =[edges data];
-	
-	if ( x_points == NULL || y_points == NULL || temp_x == NULL || temp_y == NULL || edge_pixels == NULL ) {
-		fprintf(stderr,"Memory error in %s in file %s at line %d\n",__FUNCTION__,__FILE__,__LINE__);
-		goto error;
-	}
-	
-	u32 n_samples = 3;
-
-	f64 x_rad = cols / 2.0;
-	f64 y_rad = rows / 2.0;
-	
-	u32 edge_count = 0;
-	for(r=0;r<rows;r++) {
-		for(c=0;c<cols;c++) {
-			if ( edge_pixels[r*cols+c] >= 1.0 ) {
-				x_points[edge_count] = c - x_rad;
-				y_points[edge_count] = y_rad - r;
-				edge_count++;
-			}
-		}
-	}
-
-	if ( edge_count <= n_samples ) {
-		fprintf(stderr,"Not enough data points\n");
-		goto error;
-	}
-	
-	f64 current_ellipse[6], best_ellipse[6];
-	f64 e1b[6], e2b[6];
-	
-	f64 most_inliers = 0;
-	f64 current_iter = 0;
-		
-	f64 TR[3][3];
-	
-	while ( TRUE ) {
-				
-		for(k=0;k<n_samples;k++) {
-			u32 rand_point = randomNumber(0,edge_count-1);
-			temp_x[k] = x_points[rand_point];
-			temp_y[k] = y_points[rand_point];
-		}
-		
-		generateLSQEllipse(temp_x,temp_y,n_samples,current_ellipse);
-		f64 norm = ellipseCircumference(current_ellipse);
-
-		f64 current_p = pow(1.0-exp(log(1.0-certainty_probability)/current_iter),1.0/n_samples);
-		
-		if ( most_inliers > current_p*edge_count ) {
-			f64 current_p = most_inliers/edge_count;
-			f64 success_p = 1.0 - exp(current_iter*log(1.0-pow(current_p,n_samples)));
-			fprintf(stderr,"\n\tRANSAC SUCCESS, %.0f/%d (%2.2f%%-%2.2f%%)\n",most_inliers,edge_count,current_p*100,success_p*100);
-			break;
-		}
-		
-		if ( current_p < min_percent_inliers ) {
-			fprintf(stderr,"\n\tRANSAC FAILED: NOT ENOUGH INLIERS...");
-			break;
-		}
-		
-		if ( current_iter >= max_iterations ) {
-			fprintf(stderr,"\n\tRANSAC GAVE UP... Could not find a model better than %f of %d (%2.2f)\n",most_inliers,edge_count,most_inliers/edge_count);
-			break;
-		}
-
-		if ( isnan(norm) || isinf(norm) ) {
-			current_iter++;
-			continue;
-		}
-		
-		if ( norm < 50 ) {
-			current_iter++;
-			continue;
-		}
-
-		generateBoundEllipses(current_ellipse,e1b,e2b,fit_treshold);
-
-		f64 number_of_inliers = 0;
-		for(k=0;k<edge_count;k++) {
-			f64 Axx1 = x_points[k]*x_points[k]*e1b[0];
-			f64 Bxy1 = x_points[k]*y_points[k]*e1b[1];
-			f64 Cyy1 = y_points[k]*y_points[k]*e1b[2];
-			f64 Axx2 = x_points[k]*x_points[k]*e2b[0];
-			f64 Bxy2 = x_points[k]*y_points[k]*e2b[1];
-			f64 Cyy2 = y_points[k]*y_points[k]*e2b[2];
-			f64 F1 = Axx1 + Bxy1 + Cyy1 + e1b[5];
-			f64 F2 = Axx2 + Bxy2 + Cyy2 + e2b[5];
-			if ( F1 <= 0.0 && F2 >= 0.0 ) number_of_inliers += 1.0;
-		}
-
-		if ( number_of_inliers > most_inliers ) {
-			most_inliers = number_of_inliers;
-			memcpy(best_ellipse,current_ellipse,sizeof(f64)*6);
-		}
-
-		current_iter++;
-		
-	}
-	
-	u32 number_of_inliers = 0;
-	generateBoundEllipses(best_ellipse,e1b,e2b,fit_treshold);
-		
-	for(k=0;k<edge_count;k++) {
-		f64 Axx1 = x_points[k]*x_points[k]*e1b[0];
-		f64 Bxy1 = x_points[k]*y_points[k]*e1b[1];
-		f64 Cyy1 = y_points[k]*y_points[k]*e1b[2];
-		f64 Axx2 = x_points[k]*x_points[k]*e2b[0];
-		f64 Bxy2 = x_points[k]*y_points[k]*e2b[1];
-		f64 Cyy2 = y_points[k]*y_points[k]*e2b[2];
-		f64 F1 = Axx1 + Bxy1 + Cyy1 + e1b[5];
-		f64 F2 = Axx2 + Bxy2 + Cyy2 + e2b[5];
-		if ( F1 <= 0.0 && F2 >= 0.0 ) {
-			temp_x[number_of_inliers] = x_points[k];
-			temp_y[number_of_inliers] = y_points[k];
-			number_of_inliers++;
-		}
-	}
-		
-	generateLSQEllipse(temp_x,temp_y,number_of_inliers,best_ellipse);
-
-	free(temp_x); temp_x = NULL;
-	free(temp_y); temp_y = NULL;
-	free(x_points); x_points = NULL;
-	free(y_points); y_points = NULL;
-	
-	EllipseP ellipse = [Ellipse newWithA:best_ellipse[0] b:best_ellipse[1] c:best_ellipse[2] d:best_ellipse[3] e:best_ellipse[4] f:best_ellipse[5]];
-	[ellipse setX_center:x_rad];
-	[ellipse setY_center:y_rad];
-	
-	if ( ![ellipse isValid] ) {
-		fprintf(stderr,"Bad elllipse\n");
-		goto error;
-	}
-	
-	return ellipse;
-	
-	error:
-	free(x_points);
-	free(y_points);
-	free(temp_x);
-	free(temp_y);
-	return nil;
-	
-}
-
-void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold ) {
-		
-	f64 Ax = e[0];
-	f64 Bx = e[1];
-	f64 Cx = e[2];
-
-	f64 phi = atan(Bx/(Cx-Ax))/2;
-	
-	f64 c = cos(phi);
-	f64 s = sin(phi);
-		
-	f64 Ad = Ax*c*c - Bx*c*s + Cx*s*s;
-	f64 Cd = Ax*s*s + Bx*s*c + Cx*c*c;
-
-	f64 Mx = sqrt(-e[5]/Ad);
-	f64 My = sqrt(-e[5]/Cd);
-	
-	f64 A1 = 1.0/((Mx+treshold)*(Mx+treshold));
-	f64 C1 = 1.0/((My+treshold)*(My+treshold));
-	f64 A2 = 1.0/((Mx-treshold)*(Mx-treshold));
-	f64 C2 = 1.0/((My-treshold)*(My-treshold));	
-
-	c = cos(-phi);
-	s = sin(-phi);
-	
-	b1[0] = A1*c*c + C1*s*s;
-	b1[1] = 2.0*c*s*(A1-C1);
-	b1[2] = A1*s*s + C1*c*c;
-	b1[3] = 0.0;
-	b1[4] = 0.0;
-	b1[5] = -1.0;
-	
-	b2[0] = A2*c*c + C2*s*s;
-	b2[1] = 2.0*c*s*(A2-C2);
-	b2[2] = A2*s*s + C2*c*c;
-	b2[3] = 0.0;
-	b2[4] = 0.0;
-	b2[5] = -1.0;	
-
-}
-
-void generateLSQEllipse( f64 xs[], f64 ys[], u64 size, f64 ellipse[] ) {
-			
-		// Direct least-squares solution to determining the a, b, and c coefficients of the general conic equation
-		// from the running sums....  Neil provided the derived equations, the d, e, and f coeeficients are ignored
-		// so this function only works for ellipses centered on the origin.
-		
-		u32 k;
-
-		f64 Sx2   = 0.0;
-		f64 Sxy   = 0.0;
-		f64 Sy2   = 0.0;
-		f64 Sx4   = 0.0;
-		f64 Sx3y  = 0.0;
-		f64 Sx2y2 = 0.0;		
-		f64 Sxy3  = 0.0;
-		f64 Sy4   = 0.0;
-		
-		for (k=0;k<size;k++) {
-			
-			f64 xx = xs[k] * xs[k];
-			f64 yy = ys[k] * ys[k];
-			f64 xy = xs[k] * ys[k];
-			
-			Sx2   += xx;
-			Sxy   += xy;
-			Sy2   += yy;
-			Sx4   += xx * xx;
-			Sx3y  += xx * xy;
-			Sx2y2 += xx * yy;
-			Sxy3  += xy * yy;
-			Sy4   += yy * yy;
-			
-		}
-		
-		f64 a = (Sx3y*(Sxy3*Sy2-Sxy*Sy4)+Sx2y2*(Sx2*Sy4+Sxy*Sxy3)-pow(Sx2y2,2.0)*Sy2-Sx2*pow(Sxy3,2.0))/(Sx4*(Sx2y2*Sy4-pow(Sxy3,2.0))-pow(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-pow(Sx2y2,3.0));
-		f64 b = -(Sx4*(Sxy3*Sy2-Sxy*Sy4)+Sx3y*(Sx2*Sy4-Sx2y2*Sy2)-Sx2*Sx2y2*Sxy3+pow(Sx2y2,2.0)*Sxy)/(Sx4*(Sx2y2*Sy4-pow(Sxy3,2.0))-pow(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-pow(Sx2y2,3.0));
-		f64 c = (Sx4*(Sx2y2*Sy2-Sxy*Sxy3)-pow(Sx3y,2.0)*Sy2+Sx3y*(Sx2*Sxy3+Sx2y2*Sxy)-Sx2*pow(Sx2y2,2.0))/(Sx4*(Sx2y2*Sy4-pow(Sxy3,2.0))-pow(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-pow(Sx2y2,3.0));
-			
-		ellipse[0] =    a;
-		ellipse[1] =    b;
-		ellipse[2] =    c;
-		ellipse[3] =  0.0;
-		ellipse[4] =  0.0;
-		ellipse[5] = -1.0;
-		
-}
-
-void ellipseNorm( f64 e[], f64 TR[3][3] ) {
-		
-	f64 x1 = e[0];
-	f64 y1 = e[1];
-	
-	f64 x2 = e[2]*cos(e[4]) + e[0];
-	f64 y2 = e[2]*sin(e[4]) + e[1];
-	
-	f64 x3 = e[0] - e[3]*sin(e[4]);
-	f64 y3 = e[1] + e[3]*cos(e[4]);
-	
-	f64 rad = MAX(e[2],e[3]);
-	
-	f64 u1 = e[0];
-	f64 v1 = e[1];
-	
-	f64 u2 = rad + e[0];
-	f64 v2 = e[1];
-	
-	f64 u3 = e[0];
-	f64 v3 = rad + e[1];
-	
-		
-	createDirectAffineTransform(x1,y1,x2,y2,x3,y3,u1,v1,u2,v2,u3,v3,TR,NULL);
 
 }
 

@@ -99,4 +99,9 @@ enum ellipsebounds {
 
 typedef Ellipse * EllipseP;
 
+void originCenteredLSQEllipse( f64 x_values[], f64 y_values[], u64 number_of_points, f64 ellipse[] );
+void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold );
+f64 ellipseCircumference( f64 e[] );
+EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers, f64 certainty_probability, u64 max_iterations );
+
 #endif

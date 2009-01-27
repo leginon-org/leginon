@@ -12,7 +12,6 @@
 	*/
 
 	EllipseP new_ellipse = [[Ellipse alloc] init];
-	if ( new_ellipse == nil ) return nil;
 	[new_ellipse setX_axis:xa y_axis:ya x_center:xc y_center:yc rotation:phi];
 	return new_ellipse;
 	
@@ -20,9 +19,7 @@
 
 +(id) newWithA:(f64)a b:(f64)b c:(f64)c d:(f64)d e:(f64)e f:(f64)f {
 	
-	
 	EllipseP new_ellipse = [[Ellipse alloc] init];
-	if ( new_ellipse == nil ) return nil;
 	[new_ellipse setGeneralA:a B:b C:c D:d E:e F:f];
 	return new_ellipse;
 	
@@ -214,15 +211,10 @@
 	f64 E1 = general[EX];
 	f64 F1 = general[FX];
 	
-	u32 minr = 0;
-	u32 maxr = maxrow;
-	u32 minc = 0;
-	u32 maxc = maxcol;
-
-	minr = BOUND(0,minr,maxrow);
-	maxr = BOUND(0,maxr,maxrow);
-	minc = BOUND(0,minc,maxcol);
-	maxc = BOUND(0,maxc,maxcol);
+	u32 minr = BOUND(0,bounds[YLO]-1.0,maxrow);
+	u32 maxr = BOUND(0,bounds[YHI]+1.0,maxrow);
+	u32 minc = BOUND(0,bounds[XLO]-1.0,maxcol);
+	u32 maxc = BOUND(0,bounds[XHI]+1.0,maxcol);
 	
 	f64 * image = [array data];
 	
@@ -241,14 +233,14 @@
 	
 	f64 A = 1.0/(x_axis*x_axis);
 	f64 C = 1.0/(y_axis*y_axis);
-	f64 c = cos(rotation);
-	f64 s = sin(rotation);
+	f64 c = cos(-rotation);
+	f64 s = sin(-rotation);
 
 	/* These equations convert the standard ellipse parameters (given)
 
 		(cos(phi)*(x-Xc))^2     (-sin(phi)*(y-Yc))^2
 		-------------------  +  --------------------   = 0
-		       Ma^2                     Mi^2
+		       A^2                     C^2
 
 		to the general conic equation parameters
 
@@ -269,7 +261,7 @@
 	general[DX] = D1;
 	general[EX] = E1;
 	general[FX] = F1;
-	
+
 }
 
 -(void) toGeneralEllipse {
@@ -323,30 +315,32 @@
 	
 	/* We now compute the ellipse limits (may be useful later) by finding
 		the roots of two quadriatic equations based on the general conic equation
+		These limits are computed by finding when the derivative of the ellipse function
+		for both dy/dx and dx/dy are equal to zero.  These result in quadriatic equations
+		whose roots are the high and low values of the boundary along both axis.
 	*/
 
-	f64 A = bounds[AX];
-	f64 B = bounds[BX];
-	f64 C = bounds[CX];
-	f64 D = bounds[DX];
-	f64 E = bounds[EX];
-	f64 F = bounds[FX];
+	f64 A = general[AX];
+	f64 B = general[BX];
+	f64 C = general[CX];
+	f64 D = general[DX];
+	f64 E = general[EX];
+	f64 F = general[FX];
 	
-	f64 Qr, Rr;
-	f64 Pr = 4*A*C - B*B;
-
 	/* Top and Bottom (row) coordinates */
-	Qr = 4*C*D - 2*E*B;
-	Rr = 4*C*F - E*E;
-	bounds[YHI] = (-Qr+sqrt(Qr*Qr-4*Pr*Rr))/(2*Pr);
-	bounds[YLO] = (-Qr-sqrt(Qr*Qr-4*Pr*Rr))/(2*Pr);	
+	f64 Ax = 4*A*C - B*B;
+	f64 Bx = 4*C*D - 2*E*B;
+	f64 Cx = 4*C*F - E*E;
+	bounds[YHI] = (-Bx+sqrt(Bx*Bx-4*Ax*Cx))/(2*Ax);
+	bounds[YLO] = (-Bx-sqrt(Bx*Bx-4*Ax*Cx))/(2*Ax);	
 
 	/* Left and Right (col) coordinates */
-	Qr = 4*A*E - 2*D*B;
-	Rr = 4*A*F - D*D;
-	bounds[XHI] = (-Qr+sqrt(Qr*Qr-4*Pr*Rr))/(2*Pr);
-	bounds[XLO] = (-Qr-sqrt(Qr*Qr-4*Pr*Rr))/(2*Pr);
-	
+	f64 Ay = 4*A*C - B*B;
+	f64 By = 4*A*E - 2*D*B;
+	f64 Cy = 4*A*F - D*D;
+	bounds[XHI] = (-By+sqrt(By*By-4*Ay*Cy))/(2*Ay);
+	bounds[XLO] = (-By-sqrt(By*By-4*Ay*Cy))/(2*Ay);
+		
 }
 
 // Get and set general ellipse parameters
@@ -462,8 +456,7 @@
 }
 
 -(f64 *) general {
-	f64 * gn = NEWV(f64,6);
-	memcpy(gn,general,sizeof(f64)*6);
+	f64 * gn = memcpy(NEWV(f64,6),general,sizeof(f64)*6);
 	return gn;
 } 
 
@@ -515,19 +508,20 @@
 }
 
 -(void) printInfoTo:(FILE *)fp {
-	fprintf(fp,"A: %e B: %e C: %e D: %e E: %e F: %e\n",general[AX],general[BX],general[CX],general[DX],general[EX],general[FX]);
+	fprintf(fp,"A: %le B: %le C: %le D: %le E: %le F: %le\n",general[AX],general[BX],general[CX],general[DX],general[EX],general[FX]);
 	fprintf(fp,"Xc: %e Yc: %e Ax: %e Ay: %e phi: %2.2f\n",x_center,y_center,x_axis,y_axis,rotation*DEG);
 	fprintf(fp,"Axis ratio: %e\n",MAX(x_axis,y_axis)/MIN(x_axis,y_axis));
+	fprintf(fp,"Rectangular Bounds: X: %e - %e  Y: %e - %e\n",bounds[XLO],bounds[XHI],bounds[YLO],bounds[YHI]);
 }
 
 -(u08) isValid {
 	
-//	if ( !ISFINITE(general[AX]) ) return FALSE;
-//	if ( !ISFINITE(general[BX]) ) return FALSE;
-//	if ( !ISFINITE(general[CX]) ) return FALSE;
-//	if ( !ISFINITE(general[DX]) ) return FALSE;
-//	if ( !ISFINITE(general[EX]) ) return FALSE;
-//	if ( !ISFINITE(general[FX]) ) return FALSE;
+	if ( !ISFINITE(general[AX]) ) return FALSE;
+	if ( !ISFINITE(general[BX]) ) return FALSE;
+	if ( !ISFINITE(general[CX]) ) return FALSE;
+	if ( !ISFINITE(general[DX]) ) return FALSE;
+	if ( !ISFINITE(general[EX]) ) return FALSE;
+	if ( !ISFINITE(general[FX]) ) return FALSE;
 	
 	if ( !ISFINITE(x_axis) ) return FALSE;
 	if ( !ISFINITE(y_axis) ) return FALSE;
@@ -535,8 +529,286 @@
 	if ( !ISFINITE(y_center) ) return FALSE;
 	if ( !ISFINITE(rotation) ) return FALSE;
 	
+	if ( !ISFINITE(bounds[XLO]) ) return FALSE;
+	if ( !ISFINITE(bounds[XHI]) ) return FALSE;
+	if ( !ISFINITE(bounds[YLO]) ) return FALSE;
+	if ( !ISFINITE(bounds[YHI]) ) return FALSE;
+	
 	return TRUE;
 	
 }
 
+-(f64) circumference {
+	return ellipseCircumference(general);
+}
+
 @end
+
+void originCenteredLSQEllipse( f64 x_values[], f64 y_values[], u64 number_of_points, f64 ellipse[] ) {
+			
+		// Direct least-squares solution to determining the a, b, and c coefficients of the general conic equation
+		// from running sums....  Neil provided the derived equations, the d, e, and f coeeficients are ignored
+		// so this function only returns ellipses centered on the origin.
+		
+		u64 k;
+
+		f64 Sx2   = 0.0;
+		f64 Sxy   = 0.0;
+		f64 Sy2   = 0.0;
+		f64 Sx4   = 0.0;
+		f64 Sx3y  = 0.0;
+		f64 Sx2y2 = 0.0;		
+		f64 Sxy3  = 0.0;
+		f64 Sy4   = 0.0;
+		
+		for (k=0;k<number_of_points;k++) {
+			
+			f64 xx = x_values[k] * x_values[k];
+			f64 yy = y_values[k] * y_values[k];
+			f64 xy = x_values[k] * y_values[k];
+			
+			Sx2   += xx;
+			Sxy   += xy;
+			Sy2   += yy;
+			Sx4   += xx * xx;
+			Sx3y  += xx * xy;
+			Sx2y2 += xx * yy;
+			Sxy3  += xy * yy;
+			Sy4   += yy * yy;
+			
+		}
+		
+		f64 A = (Sx3y*(Sxy3*Sy2-Sxy*Sy4)+Sx2y2*(Sx2*Sy4+Sxy*Sxy3)-pow(Sx2y2,2.0)*Sy2-Sx2*pow(Sxy3,2.0))/(Sx4*(Sx2y2*Sy4-pow(Sxy3,2.0))-pow(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-pow(Sx2y2,3.0));
+		f64 B = -(Sx4*(Sxy3*Sy2-Sxy*Sy4)+Sx3y*(Sx2*Sy4-Sx2y2*Sy2)-Sx2*Sx2y2*Sxy3+pow(Sx2y2,2.0)*Sxy)/(Sx4*(Sx2y2*Sy4-pow(Sxy3,2.0))-pow(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-pow(Sx2y2,3.0));
+		f64 C = (Sx4*(Sx2y2*Sy2-Sxy*Sxy3)-pow(Sx3y,2.0)*Sy2+Sx3y*(Sx2*Sxy3+Sx2y2*Sxy)-Sx2*pow(Sx2y2,2.0))/(Sx4*(Sx2y2*Sy4-pow(Sxy3,2.0))-pow(Sx3y,2.0)*Sy4+2.0*Sx2y2*Sx3y*Sxy3-pow(Sx2y2,3.0));
+			
+		ellipse[0] =    A;
+		ellipse[1] =    B;
+		ellipse[2] =    C;
+		ellipse[3] =  0.0;
+		ellipse[4] =  0.0;
+		ellipse[5] = -1.0;
+		
+}
+
+void generateBoundEllipses( f64 e[], f64 b1[], f64 b2[], f64 treshold ) {
+		
+	f64 Ax = e[0];
+	f64 Bx = e[1];
+	f64 Cx = e[2];
+
+	f64 phi = atan(Bx/(Cx-Ax))/2;
+	
+	f64 c = cos(phi);
+	f64 s = sin(phi);
+		
+	f64 Ad = Ax*c*c - Bx*c*s + Cx*s*s;
+	f64 Cd = Ax*s*s + Bx*s*c + Cx*c*c;
+
+	f64 Mx = sqrt(-e[5]/Ad);
+	f64 My = sqrt(-e[5]/Cd);
+	
+	f64 A1 = 1.0/((Mx+treshold)*(Mx+treshold));
+	f64 C1 = 1.0/((My+treshold)*(My+treshold));
+	
+	f64 A2 = 1.0/((Mx-treshold)*(Mx-treshold));
+	f64 C2 = 1.0/((My-treshold)*(My-treshold));	
+
+	c = cos(-phi);
+	s = sin(-phi);
+	
+	b1[0] = A1*c*c + C1*s*s;
+	b1[1] = 2.0*c*s*(A1-C1);
+	b1[2] = A1*s*s + C1*c*c;
+	b1[3] = 0.0;
+	b1[4] = 0.0;
+	b1[5] = -1.0;
+	
+	b2[0] = A2*c*c + C2*s*s;
+	b2[1] = 2.0*c*s*(A2-C2);
+	b2[2] = A2*s*s + C2*c*c;
+	b2[3] = 0.0;
+	b2[4] = 0.0;
+	b2[5] = -1.0;	
+
+}
+
+f64 ellipseCircumference( f64 e[] ) {
+		
+	f64 phi = atan(e[1]/(e[2]-e[0]))/2;
+	
+	f64 c = cos(phi);
+	f64 s = sin(phi);
+		
+	f64 Ad = e[0]*c*c - e[1]*c*s + e[2]*s*s;
+	f64 Cd = e[0]*s*s + e[1]*s*c + e[2]*c*c;
+
+	f64 Mx = sqrt(-e[5]/Ad)/2.0;
+	f64 My = sqrt(-e[5]/Cd)/2.0;
+	f64 Mz = pow((Mx-My)/(Mx+My),2.0);
+
+	f64 circum = PI*(Mx+My)*(1.0+((3.0*Mz)/(10.0+sqrt(4.0-3*Mz))));
+
+	return circum;
+	
+}
+
+EllipseP ellipseRANSAC( ArrayP edges, f64 fit_treshold, f64 min_percent_inliers, f64 certainty_probability, u64 max_iterations ) {
+		
+	u32 k, r, c;
+	
+	u32 rows = [edges sizeOfDimension:1];
+	u32 cols = [edges sizeOfDimension:0];
+	
+	u32 size = rows*cols;
+	
+	f64 * x_points = NEWV(f64,size);
+	f64 * y_points = NEWV(f64,size);
+	f64 * temp_x = NEWV(f64,size);
+	f64 * temp_y = NEWV(f64,size);
+	f64 * edge_pixels =[edges data];
+	
+	if ( x_points == NULL || y_points == NULL || temp_x == NULL || temp_y == NULL || edge_pixels == NULL ) {
+		fprintf(stderr,"Memory error in %s in file %s at line %d\n",__FUNCTION__,__FILE__,__LINE__);
+		goto error;
+	}
+	
+	u32 n_samples = 3;
+
+	f64 x_rad = cols / 2.0;
+	f64 y_rad = rows / 2.0;
+	
+	u32 edge_count = 0;
+	for(r=0;r<rows;r++) {
+		for(c=0;c<cols;c++) {
+			if ( edge_pixels[r*cols+c] >= 1.0 ) {
+				x_points[edge_count] = c - x_rad;
+				y_points[edge_count] = r - y_rad;
+				edge_count++;
+			}
+		}
+	}
+
+	if ( edge_count <= n_samples ) {
+		fprintf(stderr,"Not enough data points\n");
+		goto error;
+	}
+	
+	f64 current_ellipse[6], best_ellipse[6];
+	f64 e1b[6], e2b[6];
+	
+	f64 most_inliers = 0;
+	f64 current_iter = 0;
+		
+	f64 TR[3][3];
+	
+	while ( TRUE ) {
+				
+		for(k=0;k<n_samples;k++) {
+			u32 rand_point = randomNumber(0,edge_count-1);
+			temp_x[k] = x_points[rand_point];
+			temp_y[k] = y_points[rand_point];
+		}
+		
+		originCenteredLSQEllipse(temp_x,temp_y,n_samples,current_ellipse);
+		f64 norm = ellipseCircumference(current_ellipse);
+
+		f64 current_p = pow(1.0-exp(log(1.0-certainty_probability)/current_iter),1.0/n_samples);
+		
+		if ( most_inliers > current_p*edge_count ) {
+			f64 current_p = most_inliers/edge_count;
+			f64 success_p = 1.0 - exp(current_iter*log(1.0-pow(current_p,n_samples)));
+			fprintf(stderr,"\n\tRANSAC SUCCESS, %.0f/%d (%2.2f%%-%2.2f%%)\n",most_inliers,edge_count,current_p*100,success_p*100);
+			break;
+		}
+		
+		if ( current_p < min_percent_inliers ) {
+			fprintf(stderr,"\n\tRANSAC FAILED: NOT ENOUGH INLIERS...");
+			break;
+		}
+		
+		if ( current_iter >= max_iterations ) {
+			fprintf(stderr,"\n\tRANSAC GAVE UP... Could not find a model better than %f of %d (%2.2f)\n",most_inliers,edge_count,most_inliers/edge_count);
+			break;
+		}
+
+		if ( isnan(norm) || isinf(norm) ) {
+			current_iter++;
+			continue;
+		}
+		
+		if ( norm < 50 ) {
+			current_iter++;
+			continue;
+		}
+
+		generateBoundEllipses(current_ellipse,e1b,e2b,fit_treshold);
+
+		f64 number_of_inliers = 0;
+		for(k=0;k<edge_count;k++) {
+			f64 Axx1 = x_points[k]*x_points[k]*e1b[0];
+			f64 Bxy1 = x_points[k]*y_points[k]*e1b[1];
+			f64 Cyy1 = y_points[k]*y_points[k]*e1b[2];
+			f64 Axx2 = x_points[k]*x_points[k]*e2b[0];
+			f64 Bxy2 = x_points[k]*y_points[k]*e2b[1];
+			f64 Cyy2 = y_points[k]*y_points[k]*e2b[2];
+			f64 F1 = Axx1 + Bxy1 + Cyy1 + e1b[5];
+			f64 F2 = Axx2 + Bxy2 + Cyy2 + e2b[5];
+			if ( F1 <= 0.0 && F2 >= 0.0 ) number_of_inliers += 1.0;
+		}
+
+		if ( number_of_inliers > most_inliers ) {
+			most_inliers = number_of_inliers;
+			memcpy(best_ellipse,current_ellipse,sizeof(f64)*6);
+		}
+
+		current_iter++;
+		
+	}
+	
+	u32 number_of_inliers = 0;
+	generateBoundEllipses(best_ellipse,e1b,e2b,fit_treshold);
+		
+	for(k=0;k<edge_count;k++) {
+		f64 Axx1 = x_points[k]*x_points[k]*e1b[0];
+		f64 Bxy1 = x_points[k]*y_points[k]*e1b[1];
+		f64 Cyy1 = y_points[k]*y_points[k]*e1b[2];
+		f64 Axx2 = x_points[k]*x_points[k]*e2b[0];
+		f64 Bxy2 = x_points[k]*y_points[k]*e2b[1];
+		f64 Cyy2 = y_points[k]*y_points[k]*e2b[2];
+		f64 F1 = Axx1 + Bxy1 + Cyy1 + e1b[5];
+		f64 F2 = Axx2 + Bxy2 + Cyy2 + e2b[5];
+		if ( F1 <= 0.0 && F2 >= 0.0 ) {
+			temp_x[number_of_inliers] = x_points[k];
+			temp_y[number_of_inliers] = y_points[k];
+			number_of_inliers++;
+		}
+	}
+		
+	originCenteredLSQEllipse(temp_x,temp_y,number_of_inliers,best_ellipse);
+	
+	EllipseP ellipse = [Ellipse newWithA:best_ellipse[0] b:best_ellipse[1] c:best_ellipse[2] d:best_ellipse[3] e:best_ellipse[4] f:best_ellipse[5]];
+	[ellipse setX_center:x_rad];
+	[ellipse setY_center:y_rad];
+	
+	if ( ![ellipse isValid] ) goto error;
+	
+	free(temp_x);
+	free(temp_y);
+	free(x_points);
+	free(y_points);
+	
+	return ellipse;
+	
+	error:
+	[ellipse free];
+	free(x_points);
+	free(y_points);
+	free(temp_x);
+	free(temp_y);
+	return nil;
+	
+}
+
+
+
