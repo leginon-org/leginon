@@ -13,7 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
-
+require "inc/summarytables.inc";
 
 if ($_POST['process']) {
 	// If values submitted, evaluate data
@@ -32,25 +32,11 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
 
-	if ($_GET['norefClass']) {
-		$norefClass=$_GET['norefClass'];
-	} elseif ($_POST['norefClass']) {
-		$norefClass=$_POST['norefClass'];
-	} else {
-		$norefClass=0;
-	}
-	if ($_GET['classnum']) {
-		$classnum=$_GET['classnum'];
-	} elseif ($_POST['classnum']) {
-		$classnum=$_POST['classnum'];
-	} else {
-		$classnum=-1;
-	}
-
 	// save other params to url formaction
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	$formAction.=($classnum) ? "&classnum=$classnum" : "";
-	$formAction.=($norefClass) ? "&norefClass=$norefClass" : "";
+	$formAction.=($alignid) ? "&alignid=$alignid" : "";
+	$formAction.=($clusterid) ? "&clusterid=$clusterid" : "";
 
 	// Set any existing parameters in form
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'rct1';
@@ -86,45 +72,73 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo"<TR><TD VALIGN='TOP'>\n";
 
 	//Rct Run Name
+	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
 	echo docpop('runid','Rct Volume Run Name:<br/>');
 	echo "<input type='text' name='runname' value='$runname'>\n<br/>\n<br/>\n";
 	echo docpop('descr','<b>Description of Rct run:</b>');
 	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='60'>$description</textarea><br/><br/>\n";
+	echo "<textarea name='description' rows='3' cols='60'>$description</textarea>\n";
+	echo "</td></tr></table>\n";
 
-	//NoRef Class Drop Down Menu
-	echo docpop('norefclass','NoRef Class Id:<br/>');
-	if ($norefClass == 0) {
-		$norefclassruns = $particle->getAllNoRefClassRuns($expId);
-		echo "<SELECT name='norefclass'>\n";
-		foreach ($norefclassruns as $class){
-			$classid  = $class['DEF_id'];
-			$runname  = $class['name'];
-			$numclass = $class['num_classes'];
-			$descript = substr($class['description'],0,40);
-			echo "<OPTION value='$classid'";
-			if ($classid == $norefclassrun) echo " SELECTED";
-			echo">$classid: $runname ($numclass classes) $descript...</OPTION>\n";
-		}
-		echo "</SELECT>\n<br/>\n<br/>\n";
+	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
+
+	if ($_GET['alignid']) {
+		//Case 1: Align Id Selected
+		echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
+		echo openRoundBorder();
+		echo alignstacksummarytable($_GET['alignid'], $mini=true);
+		echo closeRoundBorder();
+		echo "<INPUT type='hidden' name='stack' value='align".$_GET['alignid']."'>\n";
+		echo "</td></tr></table>\n";
+	} elseif ($_GET['clusterid']) {
+		//Case 2: Cluster Id Selected
+		//echo clusterstacksummarytable($_GET['clusterid']);
+		echo "<INPUT type='hidden' name='stack' value='clust".$_GET['clusterid']."'>\n";
 	} else {
-		$norefclassrun = $particle->getNoRefClassRunData($norefClass);
-		echo "<INPUT type='hidden' name='norefclass' value='$norefClass'>\n";
-		echo "<FONT SIZE='+1'>Selected NoRef ClassId '<b>$norefClass</b>' with "
-			.$norefclassrun['num_classes']." classes</FONT>";
-		echo "\n<br/>\n<br/>\n";
+		//Case 3: Drop Down Menus
+		$alignids = $particle->getAlignStackIds($expId);
+		if ($alignids) {
+			echo "<SELECT name='stack'>\n";
+			foreach ($alignids as $aligniddata){
+				$alignid = $aligniddata['alignstackid'];
+				$aligndata = $particle->getAlignStackParams($alignid);
+				$runname  = $aligndata['name'];
+				$numclass = $particle->getNumAlignStackReferences($alignid);
+				$descript = substr($aligndata['description'],0,40);
+				echo "<OPTION value='align$alignid'";
+				if ($alignid == $_POST['alignid']) echo " SELECTED";
+				echo">Align $alignid: $runname ";
+				if ($numclass > 0)
+					echo "($numclass refs) ";
+				echo "$descript...</OPTION>\n";
+				$clusterids = $particle->getClusteringStacksForAlignStack($alignid);
+				if ($clusterids) {
+					foreach ($clusterids as $clusteriddata){
+						$clusterid = $clusteriddata['clusterid'];
+						$clusterdata = $particle->getClusteringStackParams($clusterid);
+						$runname  = $clusterdata['name'];
+						$numclass = $clusterdata['num_classes'];
+						$descript = substr($clusterdata['description'],0,40);
+						echo "<OPTION value='clust$clusterid'";
+						if ($clusterid == $_POST['clusterid']) echo " SELECTED";
+						echo"> -&gt; Cluster $clusterid: $runname ($numclass classes) $descript...</OPTION>\n";
+					}
+				}
+			}
+			echo "</SELECT>\n<br/>\n<br/>\n";
+		}
 	}
 
-	//NoRef Class Number
-	echo docpop('classnum','NoRef Class Number');
+	//Class Numbers
+	echo docpop('classnum','Class Numbers');
 	echo " to generate volume:<br/>";
-	if ($classnum == -1) {
+	if ($classnum == "") {
 		$classnum = 0;
 		echo "<INPUT type='text' name='classnum' size='5' value='$classnum'>";
 		echo "&nbsp;(starts at 0,1,2,...)\n<br/>\n<br/>\n";
 	} else {
 		echo "<INPUT type='hidden' name='classnum' value='$classnum'>\n";
-		echo "<FONT SIZE='+1'>Selected class number '<b>$classnum</b>'</FONT> ";
+		echo "<FONT SIZE='+1'>Selected class numbers '<b>$classnum</b>'</FONT> ";
 		echo "\n<br/>\n<br/>\n";
 	}
 
@@ -136,18 +150,27 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 		//print_r($stackdata);
 		$stackid = $stackdata['DEF_id'];
 		$stackparams = $particle->getStackParams($stackid);
-		$runname  = $stackparams[0]['stackRunName'];
-		$descript  = substr($stackdata['description'],0,40);
-		$numpart = $particle->getNumStackParticles($stackid);
-		//print_r($stackparams[0]);
-		echo "<OPTION value='$stackid'";
-		if ($stackid == $tiltstack) echo " SELECTED";
-		echo">$stackid: $runname ($numpart parts) $descript...</OPTION>\n";
+		if (!$stackparams['tiltangle'] ||
+		 ($stackparams['tiltangle'] != "notilt" && $stackparams['tiltangle'] != "all")) {
+			$descript  = substr($stackdata['description'],0,40);
+			$numpart = commafy($particle->getNumStackParticles($stackid));
+			//handle multiple runs in stack
+			$stackname = $stackparams['shownstackname'];
+			if ($stackparams['substackname'])
+				$stackname .= "-".$stackparams['substackname'];
+			//print_r($stackparams[0]);
+			echo "<OPTION value='$stackid'";
+			if ($stackid == $tiltstack) echo " SELECTED";
+			echo">$stackid: $stackname ($numpart parts) $descript...</OPTION>\n";
+		}
 	}
-	echo "</SELECT>\n<br/>\n<br/>\n";
+	echo "</SELECT>\n";
+	echo "</td></tr></table>\n";
 
 	//Second half of the table
 	echo "</TD></TR>\n<TR><TD VALIGN='TOP' CLASS='tablebg' WIDTH='100%'>\n";
+
+	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
 
 	//Mask radius
 	echo docpop('mask','Mask Radius:<br/>');
@@ -164,7 +187,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	//Number of iterations
 	echo docpop('numiter','Number of Particle centering iterations:<br/>');
 	echo "<INPUT TYPE='text' NAME='numiter' SIZE='2' VALUE='$numiter'>\n";
-	echo "\n<br/>\n<br/>\n";
+
+	echo "</td></tr></table>\n";
 
 	//Finish up
 	echo "</TD></TR><TR><TD ALIGN='CENTER'><hr/>\n";
@@ -189,8 +213,34 @@ function runRctVolume() {
 	$lowpassvol = $_POST['lowpassvol'];
 	$numiter = $_POST['numiter'];
 	$classnum = $_POST['classnum'];
-	$norefclass = $_POST['norefclass'];
 	$description=$_POST['description'];
+	$stack=$_POST['stack'];
+
+	if (!$tiltstack)
+		createRctVolumeForm("<B>ERROR:</B> No tilted stack selected");
+
+	if (!$stack)
+		createRctVolumeForm("<B>ERROR:</B> No align or cluster stack selected");
+
+	if (!$classnum)
+		createRctVolumeForm("<B>ERROR:</B> Class numbers were not provided");
+
+	if (!$description)
+		createRctVolumeForm("<B>ERROR:</B> Enter a brief description of the rct volume");
+
+	if (!$maskrad)
+		createRctVolumeForm("<B>ERROR:</B> Enter a mask radius");
+
+	if (!$runname)
+		createRctVolumeForm("<B>ERROR:</B> Enter a unique run name");
+
+	if (!$stack)
+		createRctVolumeForm("<B>ERROR:</B> No alignment selected");
+
+	if (substr($stack,0,5) == "align")
+		$alignid = (int) substr($stack,5);
+	elseif (substr($stack,0,5) == "clust")
+		$clusterid = (int) substr($stack,5);
 
 	$particle = new particledata();
 	$stackparam = $particle->getStackParams($tiltstack);
@@ -201,29 +251,22 @@ function runRctVolume() {
 		$rundir = $outdir.$runname;
 	}
 
-
-	if (!$description)
-		createRctVolumeForm("<B>ERROR:</B> Enter a brief description of the rct volume");
-
-
-	if (!$maskrad)
-		createRctVolumeForm("<B>ERROR:</B> Enter a mask radius");
-
-	if (!$runname)
-		createRctVolumeForm("<B>ERROR:</B> Enter a unique run name");
-
 	//putting together command
 	$command ="rctVolume.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--description=\"$description\" ";
+	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
-	$command.="--norefclass=$norefclass ";
-	$command.="--classnum=$classnum ";
+	if ($alignid)
+		$command.="--align-id=$alignid ";
+	elseif ($clusterid)
+		$command.="--cluster-id=$clusterid ";
+	$command.="--classnums=$classnum ";
 	$command.="--tilt-stack=$tiltstack ";
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
 	$command.="--lowpassvol=$lowpassvol ";
-	$command.="--rundir=$rundir ";
-	$command.="--description=\"$description\" ";
+
 	$command.="--commit ";
 
 	// submit job to cluster
@@ -249,10 +292,11 @@ function runRctVolume() {
 		</font>
 		</TD></TR>
 		<TR><TD>run name</TD><TD>$runname</TD></TR>
-		<TR><TD>norefclass</TD><TD>$norefclass</TD></TR>
-		<TR><TD>classnum</TD><TD>$classnum</TD></TR>
-		<TR><TD>tiltstack</TD><TD>$tiltstack</TD></TR>
-		<TR><TD>numiter</TD><TD>$numiter</TD></TR>
+		<TR><TD>align id</TD><TD>$alignid</TD></TR>
+		<TR><TD>cluster id</TD><TD>$clusterid</TD></TR>
+		<TR><TD>class nums</TD><TD>$classnum</TD></TR>
+		<TR><TD>tilt stack</TD><TD>$tiltstack</TD></TR>
+		<TR><TD>num iter</TD><TD>$numiter</TD></TR>
 		<TR><TD>volume lowpass</TD><TD>$lowpassvol</TD></TR>
 		<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>";
 
