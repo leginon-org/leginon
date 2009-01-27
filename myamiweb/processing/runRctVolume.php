@@ -32,6 +32,10 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
 
+	$alignid = $_GET['alignid'];
+	$clusterid = $_GET['clusterid'];
+	$classnum = $_GET['classnum'];
+
 	// save other params to url formaction
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	$formAction.=($classnum) ? "&classnum=$classnum" : "";
@@ -45,6 +49,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '15';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '4';
+
 
 	$javascript  = "";
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -138,7 +143,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 		echo "&nbsp;(starts at 0,1,2,...)\n<br/>\n<br/>\n";
 	} else {
 		echo "<INPUT type='hidden' name='classnum' value='$classnum'>\n";
-		echo "<FONT SIZE='+1'>Selected class numbers '<b>$classnum</b>'</FONT> ";
+		echo "<FONT SIZE='+1'>&nbsp;Selected class numbers '<b>$classnum</b>'</FONT> ";
 		echo "\n<br/>\n<br/>\n";
 	}
 

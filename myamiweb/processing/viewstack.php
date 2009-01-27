@@ -193,9 +193,9 @@ function createRctVolume() {
 	var index = $('selectedIndex').value
 	if (index!="") {
 		if (clusterId!="") {
-			window.open("runRctVolume.php?expId="+expId+"&clusterId="+clusterId+"&classnum="+index+"",'height=250,width=400');
+			window.open("runRctVolume.php?expId="+expId+"&clusterid="+clusterId+"&classnum="+index+"",'height=250,width=400');
 		} else if (alignId!="") {
-			window.open("runRctVolume.php?expId="+expId+"&alignId="+alignId+"&classnum="+index+"",'height=250,width=400');
+			window.open("runRctVolume.php?expId="+expId+"&alignid="+alignId+"&classnum="+index+"",'height=250,width=400');
 		}
 	}
 }
@@ -242,7 +242,7 @@ if ($stackId)
 if ($clusterId || $alignId) {
 	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 	$excludebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
-	$excludebuttons .= "<input type='button' value='Create RCT Volume' onClick='runCommonLines()'>\n";
+
 }
 
 //Buttons for inclusion
@@ -250,6 +250,7 @@ $includebuttons = "";
 // Substack
 if ($clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
+	$includebuttons .= "<input type='button' value='Create RCT Volume' onClick='createRctVolume()'>\n";
 // Upload Template
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";
