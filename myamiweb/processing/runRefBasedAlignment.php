@@ -53,38 +53,37 @@ function createTemplateForm() {
 	// extract template info
 	if ($templateData) {
 		$i=1;
-		$templatetable="<TABLE CLASS='tableborder' BORDER='1' CELLPADDING='5' WIDTH='600'>\n";
+		$templatetable="<br/>\n<TABLE CLASS='tableborder' BORDER='1' CELLPADDING='3'>\n";
 		$numtemplates=count($templateData);
-
-		foreach($templateData as $templateinfo) { 
+		foreach($templateData as $templateinfo) {
+			if ($i%2 == 1)
+				$templatetable.="<TR><TD>\n";
+			else
+				$templatetable.="<TD>\n";
 			if (is_array($templateinfo)) {
 				$filename = $templateinfo[path] ."/".$templateinfo[templatename];
 				$checkboxname='template'.$i;
 				// create the image template table
-				$templatetable.="<TR><TD>\n";
-				$templatetable.="<IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></TD>\n";
-				$templatetable.="<TD>\n";
+				$templatetable.="<IMG SRC='loadimg.php?filename=$filename&s=90' WIDTH='90'>\n";
+				$templatetable.="</TD><TD>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='templateId".$i."' VALUE='$templateinfo[DEF_id]'>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='diam' VALUE='$templateinfo[diam]'>\n";
 				$templatetable.="<INPUT TYPE='checkbox' NAME='$checkboxname'>\n";
-				$templatetable.="<B>Use This Template</B><BR/>\n";
-				$templatetable.="<B>Template ID:</B>  $templateinfo[DEF_id]<BR/>\n";
-				$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<BR/>\n";
-				$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<BR/>\n";
-				$templatetable.="<B>File:</B><BR/>";
-				$templatetable.="<TABLE CLASS='tableborder' BORDER='1'><TR><TD CLASS='tablebg'>\n";
-				$templatetable.=$filename;
-				$templatetable.="</TD></TR></TABLE>\n";
-				$templatetable.="<B>Description:</B><BR/>";
-				$templatetable.="<TABLE CLASS='tableborder' BORDER='1'><TR><TD CLASS='tablebg'>\n";
-				$templatetable.=$templateinfo[description];
-				$templatetable.="</TD></TR></TABLE>\n";
-				$templatetable.="</TD></TR>\n";
-
+				$templatetable.="<B>Use Template ID:</B>  $templateinfo[DEF_id]<BR/>\n";
+				$templatetable.="Diameter:  $templateinfo[diam]<BR/>\n";
+				$templatetable.="Pixel Size: $templateinfo[apix]<BR/>\n";
+				$templatetable.="File:&nbsp;<I>\n";
+				$templatetable.=$templateinfo[templatename]."</I><br/>\n";
+				$templatetable.="Description:&nbsp;<I>\n";
+				$templatetable.=$templateinfo[description]."</I>\n";
 				$i++;
 			}
+			if ($i%2 == 1)
+				$templatetable.="</TD></TR>\n";
+			else
+				$templatetable.="</TD>\n";
 		}
-		$templatetable.="</TABLE>\n";
+		$templatetable.="</TABLE>\n<br/>\n";
 	}
 
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator","");
