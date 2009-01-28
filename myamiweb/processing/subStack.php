@@ -42,7 +42,13 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	
 	// Set any existing parameters in form
 	if (!$description) $description = $_POST['description'];
-	$runid = ($_POST['runid']) ? $_POST['runid'] : 'sub'.$stackId;
+
+	// set sub-stack name
+	if ($mean)
+		$defrunid = 'meanfilt'.$stackId;
+	else
+		$defrunid = 'sub'.$stackId;
+	$runid = ($_POST['runid']) ? $_POST['runid'] : $defrunid;
 
 	$subcheck = ($_POST['subsplit']=='sub' || !$_POST['process']) ? 'checked' : '';		
 	$firstpdisable = ($subcheck) ? '' : 'disabled';		
