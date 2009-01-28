@@ -95,6 +95,7 @@ var help = {
 		'angleinc' : 'angular increment for alignment, the smaller the increment the longer it takes to run, default 5, rough run use 10 degrees',
 		'fastmode' : 'fast mode is a setting in Xmipp that reduces the time for an iteration after the first round, if off all iterations take a long time, if on then if the the iteration time will drop 90% after the first round, e.g.  60 min after round 1 to 4 min for each iteration after',
 		'stack' : 'Input particles to be classified',
+		'doubles' : 'Each particle must be picked twice. Picked by more than one template or DoG slice',
 
 /******* IMAGIC terms ********/
 

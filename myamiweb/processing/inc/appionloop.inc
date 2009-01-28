@@ -321,6 +321,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
 	$nojpegsv = ($_POST['nojpegs']=="on") ? "CHECKED" : "";
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
+	$doublesv = ($_POST['doubles']=="on") ? "CHECKED" : "";
+
 	if ($defthresh != -1) {
 		echo "<B>Peak thresholds:</B><br/>\n";
 		echo "<input type='text' name='thresh' VALUE='$threshv' size='4'>\n";
@@ -361,17 +363,24 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	if ($defthresh != -1) {
 		echo "<input type='text' name='maxsize' VALUE='$maxsizev' size='4'>\n";
 		echo docpop('maxsize','Maximum peak area multiple');
-		echo "<br />\n";
+		echo "<br/>\n";
+
 		echo "<input type='text' name='overlapmult' VALUE='$overlapmultv' size='4'>\n";
 		echo docpop('overlapmult',' Minimum peak overlap distance multiple');
-		echo "<br />\n";
+		echo "<br/>\n";
 
 		echo docpop('peaktype',' Peak extraction type');
-		echo "<br />\n";
+		echo "<br/>\n";
 		echo "&nbsp;<input type='radio' name='peaktype' value='centerofmass' $centerofmasscheck>\n";
 		echo "Center of mass <font size=-2><i>(default)</i></font><br/>\n";
 		echo "&nbsp;<input type='radio' name='peaktype' value='maximum' $maximumcheck>\n";
-		echo "Maximum position<br/>\n";
+		echo "Maximum position";
+		echo "<br/>\n";
+
+		echo "<input type='checkbox' name='doubles' $doublesv>\n";
+		echo docpop('doubles','Pick only doubles');
+		echo "<br/>\n";
+
 	} else {
 		echo "<input type='checkbox' name='nojpegs' $nojpegsv>\n";
 		echo docpop('nojpegs',' Do NOT create summary peak jpegs');
@@ -401,12 +410,14 @@ function parseParticleLoopParams ($type) {
 	$pixlimit = $_POST['pixlimit'];
 	$bin = $_POST['bin'];
 	$diam = $_POST['diam'];
-	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
-	$nojpegs = ($_POST['nojpegs']=="on") ? "1" : "0";
 	$maxsize = $_POST['maxsize'];
 	$overlapmult = $_POST['overlapmult'];
 	$peaktype = $_POST['peaktype'];
-	$invert = ($_POST['invert']=="on") ? "1" : "0";
+	// check boxes
+	$defocpair = ($_POST['defocpair']=="on") ? true : false;
+	$nojpegs = ($_POST['nojpegs']=="on") ? true : false;
+	$invert = ($_POST['invert']=="on") ? true : false;
+	$doubles = ($_POST['doubles']=="on") ? true : false;
 
 	// CREATE COMMAND
 	$command = " ";
@@ -427,6 +438,7 @@ function parseParticleLoopParams ($type) {
 	if ($diam) $command.=" --diam=$diam";
 	if ($pixlimit != '') $command.=" --pixlimit=$pixlimit";
 	if ($nojpegs) $command.=" --nojpegs";
+	if ($doubles) $command.=" --doubles";
 
 	return $command." ";
 }
