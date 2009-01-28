@@ -43,6 +43,7 @@ class ScrippsRobotServer(robotserver.RobotServer):
 for attr in robotattrs:
 	# localattr allows a value of attr now to be used in the function
 	# not the value of attr later
+	# maybe try using new.instancemethod here
 	def newmethod(self, value, localattr=attr):
 		print 'handling %s set to %s' % (localattr, value)
 		setattr(self.communication, localattr, value)
