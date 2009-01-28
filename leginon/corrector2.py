@@ -9,7 +9,7 @@
 #
 
 import copy
-import data
+import leginondata
 import event
 import node
 import numpy
@@ -21,15 +21,6 @@ import instrument
 import sys
 from pyami import arraystats, imagefun, ccd
 import polygon
-
-class CameraError(Exception):
-	pass
-
-class FindExposureTimeError(Exception):
-	pass
-
-class AbortError(Exception):
-	pass
 
 class ImageCorrection(remotecall.Object):
 	def __init__(self, node):
@@ -53,12 +44,12 @@ class CorrectorClient(object):
 
 
 		# only query based on instrument and high tension
-		scope = data.ScopeEMData()
+		scope = leginondata.ScopeEMData()
 		scope['tem'] = scopedata['tem']
 		scope['high tension'] = scopedata['high tension']
 
 		# only query based on instrument, dimension, binning, offset
-		camera = data.CameraEMData()
+		camera = leginondata.CameraEMData()
 		camera['ccdcamera'] = camdata['ccdcamera']
 		camera['dimension'] = camdata['dimenion']
 		camera['binning'] = camdata['binning']
@@ -74,7 +65,7 @@ class CorrectorClient(object):
 			except KeyError:
 				pass
 			self.node.logger.info('Loading %s...' % self.formatKey(key))
-			qimage = data.CorrectionImageData(scope=scope, camera=camera, type=type, channel=channel)
+			qimage = leginondata.CorrectionImageData(scope=scope, camera=camera, type=type, channel=channel)
 			try:
 				corimg = qimage.query(results=1)
 				corimg = corimg[0]
@@ -163,12 +154,12 @@ class CorrectorClient(object):
 		return final
 
 	def retrievePlan(self, camdata):
-		qcam = data.CameraEMData()
+		qcam = leginondata.CameraEMData()
 		qcam['ccdcamera'] = camdata['ccdcamera']
 		qcam['dimension'] = camdata['dimension']
 		qcam['offset'] = camdata['offset']
 		qcam['binning'] = camdata['binning']
-		qplan = data.CorrectionPlanData(camera=qcam)
+		qplan = leginondata.CorrectionPlanData(camera=qcam)
 		plandatalist = qplan.query(results=1)
 		if plandatalist:
 			plandata = plandatalist[0]
@@ -267,11 +258,11 @@ class CorrectorClient(object):
 
 		## store in database
 		if type == 'dark':
-			imagetemp = data.DarkImageData()
+			imagetemp = leginondata.DarkImageData()
 		elif type == 'bright':
-			imagetemp = data.BrightImageData()
+			imagetemp = leginondata.BrightImageData()
 		elif type == 'flat':
-			imagetemp = data.NormImageData()
+			imagetemp = leginondata.NormImageData()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
@@ -309,7 +300,7 @@ class Corrector(node.Node):
 	  in the corrections directory.
 	'''
 	panelclass = gui.wx.Corrector.Panel
-	settingsclass = data.CorrectorSettingsData
+	settingsclass = leginondata.CorrectorSettingsData
 	defaultsettings = {
 		'instruments': {'tem':None, 'ccdcamera':None},
 		'n average': 3,
@@ -344,7 +335,7 @@ class Corrector(node.Node):
 	def getPlan(self):
 		ccdcamera = self.instrument.getCCDCameraData()
 
-		newcam = data.CameraEMData(ccdcamera=ccdcamera)
+		newcam = leginondata.CameraEMData(ccdcamera=ccdcamera)
 		if self.settings['camera settings'] is None:
 			plan = None
 		else:
@@ -418,8 +409,8 @@ class Corrector(node.Node):
 		self.startTimer('modifyNorm')
 		try:
 			camdata = self.settings['camera settings']
-			scopedata = self.instrument.getData(data.ScopeEMData)
-			newcamdata = data.CameraEMData()
+			scopedata = self.instrument.getData(leginondata.ScopeEMData)
+			newcamdata = leginondata.CameraEMData()
 			newcamdata['ccdcamera'] = self.instrument.getCCDCamera()
 			for key in ('dimension','offset','binning'):
 				newcamdata[key] = camdata[key]
@@ -439,7 +430,7 @@ class Corrector(node.Node):
 		self.stopTimer('Corrector.displayImage')
 
 	def storePlan(self, plan):
-		newcamstate = data.CorrectorCamstateData()
+		newcamstate = leginondata.CorrectorCamstateData()
 		newcamstate['session'] = self.session
 		if self.instrument is None or self.instrument.ccdcamera is None:
 			self.logger.error('Plan not saved: no camera to associate it with')
@@ -450,7 +441,7 @@ class Corrector(node.Node):
 		except Exception, e:
 			self.logger.error('Plan not saved: %s' % e)
 			return
-		plandata = data.CorrectorPlanData()
+		plandata = leginondata.CorrectorPlanData()
 		plandata['session'] = self.session
 		plandata['camstate'] = newcamstate
 		plandata['bad_rows'] = plan['rows']
@@ -503,10 +494,10 @@ class Corrector(node.Node):
 		## make if float so we can do float math later
 		ref = numpy.asarray(ref, numpy.float32)
 
-		corstate = data.CorrectorCamstateData()
+		corstate = leginondata.CorrectorCamstateData()
 		geometry = self.instrument.ccdcamera.Geometry
 		corstate.friendly_update(geometry)
-		scopedata = self.instrument.getData(data.ScopeEMData)
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 
 		refimagedata = self.corclient.storeRef(typekey, ref, corstate, scopedata, channel)
 		if refimagedata is not None:
@@ -525,13 +516,13 @@ class Corrector(node.Node):
 	def calc_norm(self, corimagedata, ccdcameraname, scopedata):
 		corstate = corimagedata['camstate']
 		channel = corimagedata['channel']
-		if isinstance(corimagedata, data.DarkImageData):
+		if isinstance(corimagedata, leginondata.DarkImageData):
 			dark = corimagedata['image']
 			bright = self.corclient.retrieveRef(corstate, 'bright', ccdcameraname, scopedata, channel)
 			if bright is None:
 				self.logger.warning('No bright reference image for normalization calculations')
 				return
-		if isinstance(corimagedata, data.BrightImageData):
+		if isinstance(corimagedata, leginondata.BrightImageData):
 			bright = corimagedata['image']
 			dark = self.corclient.retrieveRef(corstate, 'dark', ccdcameraname, scopedata, channel)
 			if dark is None:
@@ -560,7 +551,7 @@ class Corrector(node.Node):
 		for i in range(tries):
 			try:
 				self.startTimer('instument.getData')
-				imagedata = self.instrument.getData(data.CameraImageData, ccdcameraname=ccdcameraname)
+				imagedata = self.instrument.getData(leginondata.CameraImageData, ccdcameraname=ccdcameraname)
 				self.stopTimer('instument.getData')
 				success = True
 				break
@@ -577,7 +568,7 @@ class Corrector(node.Node):
 		camdata = imagedata['camera']
 		scopedata = imagedata['scope']
 		ccdcamera = camdata['ccdcamera']
-		corstate = data.CorrectorCamstateData()
+		corstate = leginondata.CorrectorCamstateData()
 		corstate['dimension'] = camdata['dimension']
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
@@ -590,7 +581,7 @@ class Corrector(node.Node):
 		dthresh = self.settings['despike threshold']
 		corrected = self.corclient.correct(ccdcamera, numimage, corstate, scopedata, despike=despike, despikesize=dsize, despikethresh=dthresh, clip=(clipmin,clipmax), exposuretime=exptime)
 		self.stopTimer('correct')
-		newdata = data.CorrectedCameraImageData(initializer=imagedata,
+		newdata = leginondata.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
 		newdata['correction channel'] = self.corclient.channel
 		self.setStatus('idle')
