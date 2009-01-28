@@ -11,7 +11,7 @@ CVLIBS = -lm -lobjc -lfftw3 -lgsl -lgslcblas
 
 BINPATH=.
 CC = gcc 
-SVNDEF := -D'SVN_REV="$(shell svnversion -n .)"'
+SVNDEF := -D'VERSION="svn revision $(shell svnversion -n .)"'
 CFLAGS := -O3 ${SVNDEF}
 
 

@@ -18,8 +18,8 @@
 
 # define COMPILE_INFO \
   fprintf(stderr,\
- "Program: %s in source %s, Subversion revision %s,\n which was compiled on %s at %s.\n\n",\
- argv[0],__FILE__,SVN_REV,__DATE__,__TIME__)
+ "Program: %s in source %s, %s,\n which was compiled on %s at %s.\n\n",\
+ argv[0],__FILE__,VERSION,__DATE__,__TIME__)
 
 # define CITATION \
   fprintf(stderr,\
