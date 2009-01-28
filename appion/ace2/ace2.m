@@ -180,7 +180,7 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"Using RANSAC to find ellipse parameters...");
 	
 
-	f64 fit_treshold = 0.5;
+	f64 fit_treshold = 0.75;
 	f64 min_percent = 0.001;
 	f64 fit_percent = 0.99;
 	f64 max_iterations = 100000;

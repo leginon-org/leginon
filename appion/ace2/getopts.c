@@ -54,22 +54,22 @@ char * getopt_usage( struct options opt ) {
 	
 	size_t cmd_length = 30;
 	
-	if ( opt.name ) cmd_length += strlen(opt.name)+1;
-	if ( opt.shortName ) cmd_length += strlen(opt.shortName)+1;
-	if ( opt.description ) cmd_length += strlen(opt.description)+1;
-	
-	char * cmd = calloc(0,sizeof(char)*cmd_length);
+	if ( opt.name ) cmd_length += strlen(opt.name)+5;
+	if ( opt.shortName ) cmd_length += strlen(opt.shortName)+5;
+	if ( opt.description ) cmd_length += strlen(opt.description)+5;
+		
+	char * cmd = calloc(1,sizeof(char)*cmd_length);
 	if ( cmd == NULL ) return NULL;
 	
 	if (opt.name && opt.shortName ) {
 			
 		if ( opt.args ) sprintf(cmd, "--%s,\t-%s <args>\t\t", opt.name, opt.shortName);
-		else sprintf(cmd, "--%s,\t-%s\t\t\t", opt.name, opt.shortName);
+		else sprintf(cmd, "--%s,\t-%s\t\t\t\0", opt.name, opt.shortName);
 
 	} else if ( opt.name ) {
 
 		if (opt.args) sprintf(cmd, "--%s <args>\t\t\t", opt.name);
-		else sprintf(cmd, "--%s\t\t\t", opt.name);
+		else sprintf(cmd, "--%s\t\t\t\0", opt.name);
 			
 	} else if (opt.shortName) {
 
@@ -95,7 +95,7 @@ int getopts_usage(char *progName, struct options opts[]) {
 	for (count = 0; opts[count].description; count++) {
 		cmd = getopt_usage(opts[count]);
 		fprintf(stderr,"  %s\n", cmd);
-//		free(cmd);
+		free(cmd);
 	}
 	
 	return 1;
