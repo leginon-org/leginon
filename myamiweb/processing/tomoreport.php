@@ -14,6 +14,8 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/summarytables.inc";
+
+echo FLASHPLAYER_URL;
   
 // check if reconstruction is specified
 if (!$tomoId = $_GET['tomoId'])
@@ -91,7 +93,7 @@ echo "<table><tr><td colspan=2>\n";
 $particle->displayParameters($title,$tomograminfo,array(),$expId);
 echo "</td></tr>";
 echo "<tr>";
-//SnapShot
+// --- SnapShot --- //
 $snapshotfile = $tomogram['path']."/snapshot.png";
 if (file_exists($snapshotfile)) {
 	echo "<td>";
@@ -99,15 +101,36 @@ if (file_exists($snapshotfile)) {
 		."<img src='loadimg.php?filename=$snapshotfile&s=180' height='180'><br/>\nSnap Shot</a>";
 	echo "</td>";
 }
-//FlashMovie
-$moviefile = $tomogram['path']."/minitomo.swf";
-if (file_exists($moviefile)) {
+// --- Display Flash Movie from flv --- //
+$flvfile = $tomogram['path']."/minitomo.flv";
+$flvwidth = 400;
+$flvheight = 400;
+if (!defined('FLASHPLAYER_URL')) {
+	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
+}
+$swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
+
+if (file_exists($flvfile)) {
 	echo "<td>";
-	echo "<object>"
-		."<param name='movie' value=$moviefile>"
-		."<embed src=$moviefile type='application/x-shockwave-flash'>"
-		."</embed>"
-		."</object>";
+	echo '<object type="application/x-shockwave-flash" data="'
+		.$swfstyle.'" width="'.$flvwidth.'" height="'.$flvheight.'" >
+  <param name="allowScriptAccess" value="sameDomain" />
+  <param name="movie" value="'.$swfstyle.'" />
+  <param name="quality" value="high" />
+  <param name="scale" value="noScale" />
+  <param name="wmode" value="transparent" />
+  <param name="allowNetworking" value="all" />
+  <param name="flashvars" value="config={ 
+    autoPlay: true, 
+    loop: true, 
+    initialScale: \'orig\',
+    videoFile: \'getflv.php?file='.$flvfile.'\',
+    hideControls: true,
+    showPlayList: false,
+    showPlayListButtons: false,
+    }" />
+</object>';
+	
 	echo "</td>";
 }
 echo "</tr>";
