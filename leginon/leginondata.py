@@ -1931,6 +1931,15 @@ class ReferenceSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class BeamFixerSettingsData(ReferenceSettingsData):
+	def typemap(cls):
+		return ReferenceSettingsData.typemap() + (
+			('override preset', bool),
+			('instruments', dict),
+			('camera settings', CameraSettingsData),
+		)
+	typemap = classmethod(typemap)
+
 class AlignZLPSettingsData(ReferenceSettingsData):
 	def typemap(cls):
 		return ReferenceSettingsData.typemap() + (
