@@ -190,6 +190,10 @@ class SQLDict(object):
 			self.sqlexception = e
 			raise
 
+	def ping(self):
+		if self.db.stat() == 'MySQL server has gone away':
+			self.db = sqldb.connect(**self.db.kwargs)
+
 	def connect_kwargs(self):
 		return self.db.kwargs
 

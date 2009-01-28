@@ -42,7 +42,7 @@ class DBDataKeeper(object):
 		return self.dbd.connect_kwargs()
 
 	def ping(self):
-		self.mysqldb.ping()
+		self.dbd.ping()
 
 	def direct_query(self, dataclass, id, readimages=True):
 		dummy = dataclass()
@@ -92,6 +92,7 @@ class DBDataKeeper(object):
 		# idata: instance of a Data class 
 		# results: number of rows wanted
 		queryinfo = self.queryInfo(idata, timelimit=timelimit, limit=limit)
+		self.dbd.ping()
 		try:
 			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
 		except _mysql_exceptions.OperationalError, e:
@@ -273,6 +274,7 @@ class DBDataKeeper(object):
 
 	def _insert(self, newdata, force=False):
 		#self.flatInsert(newdata)
+		self.dbd.ping()
 		try:
 			return self.recursiveInsert(newdata, force=force)
 		except _mysql_exceptions.OperationalError, e:
