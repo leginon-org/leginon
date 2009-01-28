@@ -12,6 +12,7 @@ from gui.wx.Entry import FloatEntry
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import threading
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -67,7 +68,7 @@ class ReferencePanel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onTest(self, evt):
-		self.node.execute()
+		threading.Thread(target=self.node.execute).start()
 
 class MeasureDosePanel(ReferencePanel):
 	icon = 'dose'
