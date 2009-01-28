@@ -1,0 +1,131 @@
+2009-01-28  Craig Yoshioka
+
+	* [r2860] ace2.m, getopts.c: Fixed stupid error in get_opts
+
+2009-01-27  Craig Yoshioka
+
+	* [r2859] getopts.c: c
+	* [r2858] getopts.c:
+	* [r2857] Ellipse.h, Ellipse.m, ace2.m, ctf.m, ctfparm.txt,
+	  getopts.c, testf.m: More improvements, mostly to code
+	  orginization and readability
+	* [r2856] Array.m, Ellipse.m, ace2.m, util.h: temp fix for stupid
+	  headers on amiboxes not having isfinite() function
+	* [r2855] Ellipse.h: more vug fixes...
+	* [r2854] Array.h, Array.m, Ellipse.h, Ellipse.m, Image.m, ace2.m,
+	  ace2correct.m, ctf.h, ctf.m, geometry.h, geometry.m, testf.m: Bug
+	  fixes...
+
+2009-01-26  Craig Yoshioka
+
+	* [r2851] Array.m, Ellipse.h, Ellipse.m, ace2.m, ace2correct.m:
+	  Added fix for RANSAC inifnite loop, added fix for NaN and Inf
+	  numbers.
+
+2009-01-24  Craig Yoshioka
+
+	* [r2847] Image.m, ace2.m: aa
+	* [r2845] Image.m, ace2.m, ctf.m: Changed ace2 c2rfft to scale back
+	  the values correctly
+
+2009-01-22  Neil Voss
+
+	* [r2827] Makefile: exe
+
+2009-01-22  Craig Yoshioka
+
+	* [r2822] ace2.m: Added parameters for edge detection from
+	  commandline
+	* [r2821] Array.h, Array.m, Ellipse.m, Image.h, Image.m, ace2.m,
+	  ctf.m, testf.m: Test changes to ACE2, do not use ACE2 in this
+	  version
+
+2009-01-20  Neil Voss
+
+	* [r2791] Makefile, ace2.m, ace2correct.m, util.h: compile flags
+	  and info
+
+2009-01-20  Craig Yoshioka
+
+	* [r2789] ace2.m, ace2correct.m, ctf.m: ACE2 is certainly better
+	  now at switching to circular averages when eliptical fails
+
+2009-01-19  Neil Voss
+
+	* [r2768] testf.m: newline at end of file
+	* [r2767] Array.m: newline at end of file
+
+2009-01-15  Craig Yoshioka
+
+	* [r2743] Image.m: Changed ace2 fftw back for compat
+	* [r2742] testf.m: Changed ace2 fftw behaviour back so that it'll
+	  run with older fftw library
+	* [r2740] ace2.m, ctf.h, ctf.m: Hopefully made ace2 better at
+	  determining when to use the elliptical or circular average
+
+2009-01-13  Craig Yoshioka
+
+	* [r2725] Image.h, Image.m, Makefile, ace2.m, ctf.m: Compiles on
+	  guppy?
+	* [r2720] Array.h, Array.m, Image.m, Makefile, ace2correct.m,
+	  getopts.c: Added fixes to the way ace2 saves and restores fftw
+	  wisdom. Ace2 should no longer crash when performing an fft of a
+	  specific size for the first time.
+
+2009-01-12  Anchi Cheng
+
+	* [r2711] ace2.m: Craig's changes for small images
+
+2009-01-09  Craig Yoshioka
+
+	* [r2693] Image.m, Makefile, ace2.m, ctf.m: Made changes to the way
+	  ace2 calculates edges for RANSAC fitting
+
+2008-12-23  Neil Voss
+
+	* [r2655] acetilt.py: better cutting methods
+
+2008-12-22  Neil Voss
+
+	* [r2651] acetilt.py: not ready for pipeline, but it works
+	* [r2643] Makefile: clean up Makefiles for distribution
+	* [r2642] Makefile: by default don't make testf
+	* [r2640] acetilt.py: minor
+	* [r2639] acetilt.py: minor
+	* [r2638] acetilt.py: minor
+	* [r2637] acetilt.py: minor
+	* [r2636] acetilt.py: minor
+	* [r2635] acetilt.py: minor
+	* [r2634] acetilt.py: minor
+	* [r2633] acetilt.py: minor
+	* [r2632] acetilt.py: minor
+	* [r2631] acetilt.py: minor
+	* [r2630] acetilt.py: minor
+	* [r2629] acetilt.py: minor
+	* [r2628] acetilt.py: temp
+	* [r2627] acetilt.py: temp
+	* [r2626] acetilt.py: temp
+	* [r2625] acetilt.py: temp
+	* [r2624] acetilt.py: temp
+	* [r2623] acetilt.py: minor
+	* [r2622] acetilt.py: fun time
+
+2008-12-20  Craig Yoshioka
+
+	* [r2605] Array.h, ace2correct.m, ctf.h, ctf.m, getopts.c,
+	  getopts.h: Added more command line options to ace2correct
+
+2008-12-17  Neil Voss
+
+	* [r2570] ace2, ace2correct, fake_ctf.mrc, final.mrc: delete these
+	  files
+
+2008-12-17  Craig Yoshioka
+
+	* [r2569] ., Array.h, Array.m, Ellipse.h, Ellipse.m, Image.h,
+	  Image.m, MRC.h, MRC.m, Makefile, PGM.h, PGM.m, PNG.h, PNG.m,
+	  TIFF.h, TIFF.m, ace2, ace2.m, ace2correct, ace2correct.m, ctf.h,
+	  ctf.m, ctfparm.txt, cvtypes.h, cvtypes.m, fake_ctf.mrc,
+	  final.mrc, functions.c, geometry.h, geometry.m, getopts.c,
+	  getopts.h, ransac.h, util.c, util.h: Added ace2 to pyappion
+
