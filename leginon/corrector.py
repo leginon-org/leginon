@@ -24,15 +24,6 @@ import sys
 from pyami import arraystats, imagefun
 import polygon
 
-class CameraError(Exception):
-	pass
-
-class FindExposureTimeError(Exception):
-	pass
-
-class AbortError(Exception):
-	pass
-
 class ImageCorrection(remotecall.Object):
 	def __init__(self, node):
 		self.node = node
