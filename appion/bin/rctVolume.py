@@ -6,6 +6,7 @@ import os
 import shutil
 import numpy
 import time
+import math
 import threading
 #appion
 import appionScript
@@ -110,7 +111,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		if not alignpartdatas or len(alignpartdatas) != 1:
 			apDisplay.printError("could not get inplane rotation for particle %d"%(tiltstackpartdata['particleNumber']))
 		inplane = alignpartdatas[0]['rotation']
-		return inplane
+		mirror = alignpartdatas[0]['mirror']
+		return inplane, mirror
 
 	#=====================
 	def convertStackToSpider(self, emanstackfile):
@@ -224,8 +226,6 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		return emanvolfile
 
-
-
 	#=====================
 	def makeEulerDoc(self, tiltParticlesData):
 		count = 0
@@ -240,7 +240,14 @@ class rctVolumeScript(appionScript.AppionScript):
 				sys.stderr.write(".")
 				eulerf.flush()
 			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
-			inplane = self.getParticleInPlaneRotation(stackpartdata)
+			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
+			if mirror is True:
+				#theta flips to the back
+				tiltangle = 360.0 - tiltangle
+				#phi is rotated 180 degrees
+				phi += 180.0
+				while phi > 360:
+					phi -= 360.0
 			psi = -1.0*(gamma + inplane)
 			while psi < 0:
 				psi += 360.0
