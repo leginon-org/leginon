@@ -114,7 +114,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def readRefDocFile(self, iternum):
+	def readRefDocFile(self):
 		reflist = []
 		docfile = "ref"+self.params['timestamp']+".doc"
 		if not os.path.isfile(docfile):
@@ -135,7 +135,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return reflist
 
 	#=====================
-	def readPartDocFile(self, iternum, reflist):
+	def readPartDocFile(self, reflist):
 		partlist = []
 		docfile = "part"+self.params['timestamp']+".doc"
 		if not os.path.isfile(docfile):
@@ -423,8 +423,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		lastiter = self.findLastIterNumber()
 		if self.params['sort'] is True:
 			self.sortFolder(lastiter)
-		reflist = self.readRefDocFile(lastiter)
-		partlist = self.readPartDocFile(lastiter, reflist)
+		reflist = self.readRefDocFile()
+		partlist = self.readPartDocFile(reflist)
 		self.writePartDocFile(partlist)
 
 		### create aligned stacks
