@@ -599,6 +599,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## set the 'filename' value
 		self.setImageFilename(imagedata)
 
+		## set pixel size so mrc file will have it in header
+		imagedata.attachPixelSize()
+
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
 		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
@@ -698,7 +701,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			try:
 				self.validatePresets()
 			except InvalidPresetsSequence:
-				self.logger.error('Configure at least one preset in the settings for this node.' % (ret,))
+				self.logger.error('Configure at least one preset in the settings for this node.')
 				return
 			presetnames = self.settings['preset order']
 			currentpreset = self.presetsclient.getPresetByName(presetnames[0])

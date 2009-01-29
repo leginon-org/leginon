@@ -8,6 +8,7 @@ import leginonconfig
 import sinedon.newdict
 import sinedon.data
 import os
+from pyami import weakattr
 
 Data = sinedon.data.Data
 
@@ -559,6 +560,31 @@ class CameraImageData(ImageData):
 			('correction channel', int),
 		)
 	typemap = classmethod(typemap)
+
+	def attachPixelSize(self):
+		## get info for query from scope,camera
+		scope = self['scope']
+		camera = self['camera']
+		tem = scope['tem']
+		ccd = camera['ccdcamera']
+		binningx = camera['binning']['x']
+		binningy = camera['binning']['y']
+		mag = scope['magnification']
+
+		## do query
+		q = PixelSizeCalibrationData()
+		q['tem'] = tem
+		q['ccdcamera'] = ccd
+		q['magnification'] = mag
+		results = q.query(results=1)
+		if not results:
+			return
+		psize = results[0]['pixelsize']
+
+		## attach pixel size to numpy array
+		psizex = binningx * psize * 1e10
+		psizey = binningy * psize * 1e10
+		weakattr.set(self['image'], 'pixelsize', {'x':psizex,'y':psizey})
 
 class CameraImageStatsData(InSessionData):
 	def typemap(cls):
