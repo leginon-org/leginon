@@ -87,7 +87,19 @@ def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
 	mySpider.close()
 	return
 
-
+#===============================
+def createMask(maskfile, maskdiam, boxsize, dataext=".spi"):
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpiderQuiet("MO", 
+		spyder.fileFilter(maskfile), 
+		"%d,%d" % (boxsize, boxsize), 
+		"C", 
+		str(maskdiam),
+	)
+	mySpider.close()
+	if not os.path.isfile(maskfile):
+		apDisplay.printError("Failed to create mask file")
+	return
 
 
 
