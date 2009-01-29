@@ -5,6 +5,7 @@ import time
 import glob
 import apDisplay
 
+#===============
 def md5sumfile(fname):
 	"""
 	Returns an md5 hash for file fname
@@ -21,6 +22,7 @@ def md5sumfile(fname):
 	f.close()
 	return m.hexdigest()
 
+#===============
 def removeFile(filename, warn=False):
 	f = os.path.abspath(filename)
 	if os.path.isfile(f):
@@ -34,6 +36,7 @@ def removeFile(filename, warn=False):
 			apDisplay.printWarning('%s could not be removed' % f)
 	return False
 
+#===============
 def removeStack(filename, warn=True):
 	rootname = os.path.splitext(filename)[0]
 	for f in (rootname+".hed", rootname+".img"):
@@ -46,6 +49,7 @@ def removeStack(filename, warn=True):
 			except:
 				apDisplay.printWarning('%s could not be removed' % f)
 
+#===============
 def removeFilePattern(pattern, warn=True):
 	files = glob.glob(pattern)
 	if warn is True:
@@ -61,11 +65,13 @@ def removeFilePattern(pattern, warn=True):
 		apDisplay.printMsg("Removed %d of %d files"%(removed, len(files)))
 	return
 
+#===============
 def fileSize(filename, msg=False):
 	stats = os.stat(filename)
 	size = stats[6]
 	return size
 
+#===============
 def numImagesInStack(imgfile, boxsize=None):
 	"""
 	Find the number of images in an 
