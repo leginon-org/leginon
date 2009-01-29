@@ -112,6 +112,12 @@ class Correlator(object):
 			shift = self.shift.copy()
 		return shift
 
+	def tiltShift(self,tilt,shift):
+		# FIX ME: this is a simplified shift correction assuming the the
+		# the tilt axis is parrallel to y
+		shift['x'] = shift['x']*math.cos(tilt)
+		return shift
+
 if __name__ == '__main__':
 	import numpy.random
 	_correlator = Correlator(None, 2,1.5)
