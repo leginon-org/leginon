@@ -13,6 +13,7 @@ import apXmipp
 import apDisplay
 import appionData
 import apEMAN
+import apFile
 
 
 #======================
@@ -28,6 +29,12 @@ class kerdenSOMScript(appionScript.AppionScript):
 			help="X dimension", metavar="#")
 		self.parser.add_option("-y", "--ydim", dest="ydim", type="int", 
 			help="Y dimension", metavar="#")
+		self.parser.add_option("--numpart", dest="numpart", type="int", 
+			help="Number of particles, default all in stack", metavar="#")
+		self.convergemodes = ( "normal", "fast", "slow" )
+		self.parser.add_option("--converge", dest="converge",
+			help="Convergence criteria mode", metavar="MODE", 
+			type="choice", choices=self.convergemodes, default="normal" )
 
 	#======================
 	def checkConflicts(self):
@@ -48,9 +55,17 @@ class kerdenSOMScript(appionScript.AppionScript):
 		"""
 		apDisplay.printMsg("Running KerDen SOM")
 		outstamp = os.path.join(self.params['rundir'], self.timestamp)
-		kerdencmd = ( "xmipp_classify_kerdensom -i %s -o %s -xdim %d -ydim %d -saveclusters "%
+		kerdencmd = ( "xmipp_classify_kerdensom -i %s -o %s -xdim %d -ydim %d -saveclusters -verb 1 "%
 			(indata, outstamp, self.params['xdim'], self.params['ydim'])
 		)
+		### convergence criteria
+		if self.params['converge'] == "fast":
+			kerdencmd += " -eps 1e-5 "
+		elif self.params['converge'] == "slow":
+			kerdencmd += " -eps 1e-9 "
+		else:
+			kerdencmd += " -eps 1e-7 "
+
 		proc = subprocess.Popen(kerdencmd, shell=True)
 		proc.wait()
 
@@ -72,11 +87,26 @@ class kerdenSOMScript(appionScript.AppionScript):
 		files = glob.glob(self.timestamp+".[0-9]*")
 		files.sort(self.sortFile)
 		montagecmd = ("montage -geometry +4+4 -tile %dx%d "%(self.params['xdim'], self.params['ydim']))
-		for fname in files:
-			emancmd = ("proc2d %s %s list=%s average"%
-				(self.instack, fname+".png", fname))
-			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=False)
-			montagecmd += fname+".png "
+		stackname = "kerden.hed"
+		count = 0
+		for listname in files:
+			if not os.path.isfile(listname) or apFile.fileSize(listname) < 1:
+				### create a ghost particle
+				emancmd = ( "proc2d "+self.instack+" "+stackname+" first=0 last=0 mask=1" )
+				apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
+				return False
+			else:
+				### average particles
+				emancmd = ("proc2d %s %s list=%s average"%
+					(self.instack, stackname, listname))
+				apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=False)
+
+			### create png
+			emancmd = ("proc2d %s %s first=%d last=%d"%
+				(stackname, listname+".png", count, count))
+			apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+			montagecmd += listname+".png "
+			count +=1
 		montagecmd += "montage.png"
 		apEMAN.executeEmanCmd(montagecmd, showcmd=True, verbose=False)
 
@@ -90,7 +120,8 @@ class kerdenSOMScript(appionScript.AppionScript):
 		self.instack = os.path.join(aligndata['path']['path'], aligndata['imagicfile'])
 		outdata = "stack.data"
 
-		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad, boxsize, numpart=None)
+		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad, 
+			boxsize, numpart=self.params['numpart'])
 		self.runKerdenSOM(outdata)
 		self.convertfiles()
 
