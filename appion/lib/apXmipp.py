@@ -3,16 +3,18 @@
 import os
 import time
 import math
+import subprocess
 #appion
 import apDisplay
 import apFile
 import apParam
 import apImagicFile
 from pyami import spider
+from apSpider import operations
 
 #======================
 #======================
-def convertStackToXmippData(instack, outdata, maskpixrad):
+def convertStackToXmippData(instack, outdata, maskpixrad, boxsize, numpart=None):
 	"""
 	From http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/Img2Data
 
@@ -23,7 +25,14 @@ def convertStackToXmippData(instack, outdata, maskpixrad):
 		The rest of the lines are the feature vectors. 
 		Each line is a vector and each column is a vectors' component (pixels values inside the mask). 
 	"""
-	convertcmd = "xmipp_convert_img2data "
+	apDisplay.printMsg("Convert stack file to Xmipp data file")
+	maskfile = "circlemask.spi"
+	operations.createMask(maskfile, maskpixrad*2.0, boxsize)
+	partlistdocfile = breakupStackIntoSingleFiles(instack, numpart=numpart)
+	convertcmd = "xmipp_convert_img2data -i %s -mask %s -o %s"%(partlistdocfile, maskfile, outdata)
+	proc = subprocess.Popen(convertcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
+	proc.wait()
+	return outdata
 
 #======================
 #======================
@@ -42,7 +51,7 @@ def convertXmippDataToStack(indata, outstack, maskpixrad):
 
 #======================
 #======================
-def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
+def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	"""
 	takes the stack file and creates single spider files ready for processing
 	"""
@@ -50,7 +59,8 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles"):
 
 	starttime = time.time()
 	filesperdir = 4096
-	numpart = apFile.numImagesInStack(stackfile)
+	if numpart is None:
+		numpart = apFile.numImagesInStack(stackfile)
 	apParam.createDirectory(partdir)
 	if numpart > filesperdir:
 		numdir = createSubFolders(partdir, numpart, filesperdir)
