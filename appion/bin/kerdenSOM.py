@@ -21,9 +21,13 @@ class kerdenSOMScript(appionScript.AppionScript):
 	#======================
 	def setupParserOptions(self):
 		self.parser.add_option("-a", "--alignid", dest="alignstackid", type="int", 
-			help="Alignment stack id", metavar="##")
+			help="Alignment stack id", metavar="#")
 		self.parser.add_option("-m", "--maskrad", dest="maskrad", type="float", 
-			help="Mask radius in Angstroms", metavar="##")
+			help="Mask radius in Angstroms", metavar="#")
+		self.parser.add_option("-x", "--xdim", dest="xdim", type="int", 
+			help="X dimension", metavar="#")
+		self.parser.add_option("-y", "--ydim", dest="ydim", type="int", 
+			help="Y dimension", metavar="#")
 
 	#======================
 	def checkConflicts(self):
@@ -44,31 +48,37 @@ class kerdenSOMScript(appionScript.AppionScript):
 		"""
 		apDisplay.printMsg("Running KerDen SOM")
 		outstamp = os.path.join(self.params['rundir'], self.timestamp)
-		kerdencmd = ( "xmipp_classify_kerdensom -i %s -o %s -xdim 3 -ydim 3 -saveclusters "%
-			(indata, outstamp, )
+		kerdencmd = ( "xmipp_classify_kerdensom -i %s -o %s -xdim %d -ydim %d -saveclusters "%
+			(indata, outstamp, self.params['xdim'], self.params['ydim'])
 		)
 		proc = subprocess.Popen(kerdencmd, shell=True)
 		proc.wait()
 
 	#======================
+	def fileId(self, fname):
+		ext = os.path.splitext(fname)[1]
+		num = int(ext[1:])
+		return num
+
+	#======================
+	def sortFile(self, a, b):
+		if self.fileId(a) > self.fileId(b):
+			return 1
+		return -1
+
+	#======================
 	def convertfiles(self):
 		apDisplay.printMsg("Converting files")
 		files = glob.glob(self.timestamp+".[0-9]*")
-		files.sort()
+		files.sort(self.sortFile)
+		montagecmd = "montage "
 		for fname in files:
-			flist = []
-			f = open(fname, "r")
-			emanlist = fname+".lst"
-			g = open(emanlist, "w")
-			for line in f:
-				num = int(line.strip())-1
-				g.write("%d\n"%(num))
-			f.close()
-			g.close()
 			emancmd = ("proc2d %s %s list=%s average"%
-				(self.instack, fname+".mrc", emanlist))
+				(self.instack, fname+".png", fname))
 			apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=False)
-			print fname
+			montagecmd += fname+".png "
+		montagecmd += "montage.png"
+		apEMAN.executeEmanCmd(montagecmd, showcmd=True, verbose=False)
 
 	#======================
 	def start(self):
