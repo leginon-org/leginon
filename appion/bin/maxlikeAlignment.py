@@ -19,7 +19,8 @@ import apStack
 import apParam
 import apEMAN
 import apXmipp
-from apSpider import alignment
+import apImage
+from apSpider import alignment, operations
 from pyami import spider
 import appionData
 import apImagicFile
@@ -188,13 +189,56 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apDisplay.printColor("Estimated first iteration time: "+apDisplay.timeString(calctime), "purple")
 
 	#=====================
+	def spidict2partdict(self, spidict):
+		partdict = {
+			'partnum': int(spidict['row']),
+			'inplane': float(spidict['floatlist'][2]),
+			'xshift': float(spidict['floatlist'][3]),
+			'yshift': float(spidict['floatlist'][4]),
+			'refnum': int(spidict['floatlist'][5]),
+			'mirror': bool(spidict['floatlist'][6]),
+			'spread': float(spidict['floatlist'][7]),
+		}
+		return partdict
+
+	#=====================
+	def readRefDocFile(self):
+		reflist = []
+		docfile = "ref"+self.timestamp+".doc"
+		if not os.path.isfile(docfile):
+			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
+		f = open(docfile, "r")
+		mininplane = 360.0
+		for line in f:
+			if line[:2] == ' ;':
+				continue
+			spidict = operations.spiderInLine(line)
+			refdict = self.spidict2partdict(spidict)
+			if refdict['inplane'] < mininplane:
+				mininplane = refdict['inplane']
+			reflist.append(refdict)
+		for refdict in reflist:
+			refdict['inplane'] = refdict['inplane']-mininplane
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
+		return reflist
+
+	#=====================
 	def createAverageStack(self):
 		searchstr = "part"+self.timestamp+"_ref0*.xmp"
 		files = glob.glob(searchstr)
 		files.sort()
 		stack = []
-		for fname in files:
+		reflist = self.readRefDocFile()
+		for i in range(len(files)):
+			fname = files[i]
+			refdict = reflist[i]
+			if refdict['partnum'] != i+1:
+				print i, refdict['partnum']
+				apDisplay.printError("sorting error in reflist, see neil")
 			refarray = spider.read(fname)
+			xyshift = (refdict['xshift'], refdict['yshift'])
+			alignrefarray = apImage.rotateThenShift(refarray, rot=refdict['inplane'], 
+				shift=xyshift, mirror=refdict['mirror'])
 			stack.append(refarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
 		print stackarray.shape
@@ -375,9 +419,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "ref"+self.timestamp)
 			+" -psi_step 1 "
-			+" -C 1e-15 "
-			+" -eps 5e-4 "
+			+" -C 1e-16 "
+			+" -eps 5e-6 "
 		)
+		if self.params['mirror'] is True:
+			xmippopts += " -mirror "
 		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
 		xmippcmd = xmippexe+" "+xmippopts
 		self.writeXmippLog(xmippcmd)
