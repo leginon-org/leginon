@@ -303,9 +303,17 @@ def updateHeaderUsingArray(header, a):
 	header['mx'] = nx
 	header['my'] = ny
 	header['mz'] = nz
-	header['xlen'] = nx
-	header['ylen'] = ny
-	header['zlen'] = nz
+
+	try:
+		psize = weakattr.get(a, 'pixelsize')
+	except AttributeError:
+		header['xlen'] = nx
+		header['ylen'] = ny
+		header['zlen'] = nz
+	else:
+		header['xlen'] = nx * psize['x']
+		header['ylen'] = ny * psize['y']
+		header['zlen'] = nz * psize['x']
 
 	stats = arraystats.all(a)
 	header['amin'] = stats['min']
