@@ -173,6 +173,8 @@ class DriftManager(watcher.Watcher):
 		else:
 			acquisition.setImageFilename(newimagedata)
 
+		newimagedata.attachPixelSize()
+
 		self.logger.info('Publishing new version of image...')
 		self.publish(newimagedata, database=True, dbforce=True)
 		return newimagedata

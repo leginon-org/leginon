@@ -266,6 +266,7 @@ class ManualAcquisition(node.Node):
 			acquisitionimagedata['label'] = self.settings['image label']
 	
 			self.setImageFilename(acquisitionimagedata)
+			acquisitionimagedata.attachPixelSize()
 	
 			try:
 				self.publish(imagedata['scope'], database=True)

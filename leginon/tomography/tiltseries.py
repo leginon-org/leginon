@@ -65,6 +65,8 @@ class TiltSeries(object):
 		# HACK: fix me
 		tilt_series_image_data['filename'] += '_%03d' % (self.image_counter + 1)
 
+		tilt_series_image_data.attachPixelSize()
+
 		self.node.publish(tilt_series_image_data, database=True)
 		self.node.publishStats(tilt_series_image_data)
 
