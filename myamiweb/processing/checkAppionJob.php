@@ -31,9 +31,9 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 	$jobinfo = $particle->getJobInfoFromId($jobId);
 	$display_keys['name'] = $jobinfo['name'];
 	if ($user == $jobinfo['user'])
-		$display_keys['user'] = "<font color='#33cc33'>".$jobinfo['user']."</font>";
+		$display_keys['user'] = "<font color='#339933'>".$jobinfo['user']."</font>";
 	else
-		$display_keys['user'] = "<font color='#cc3333'>".$jobinfo['user']."</font>";
+		$display_keys['user'] = "<font color='#993333'>".$jobinfo['user']."</font>";
 	$display_keys['appion path'] = $jobinfo['appath'];
 	$display_keys['submit time'] = $jobinfo['DEF_timestamp'];
 	$clusterjobid = $jobinfo['clusterjobid'];
