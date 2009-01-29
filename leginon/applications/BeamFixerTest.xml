@@ -4,8 +4,8 @@
 - http://ami.scripps.edu/ 
 -
 - Application :BeamFixerTest (1.6)
-- Version     :0
-- Date : 01/16/2009
+- Version     :1
+- Date : 01/28/2009
 -
 -->
 
@@ -22,6 +22,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="name" 
@@ -45,6 +46,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="event class string" 
@@ -77,6 +79,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="class string" 
@@ -102,38 +105,6 @@
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
   </sqltable>
-  <sqltable name="bindingspecdata" >
-    <field 
-      name="DEF_id" 
-      type="int(16)" 
-      null="NOT NULL" 
-      extra="auto_increment" 
-    />
-    <field 
-      name="DEF_timestamp" 
-      type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
-    />
-    <field 
-      name="event class string" 
-      type="text" 
-    />
-    <field 
-      name="from node alias" 
-      type="text" 
-    />
-    <field 
-      name="to node alias" 
-      type="text" 
-    />
-    <field 
-      name="REF|ApplicationData|application" 
-      type="int(20)" 
-    />
-    <key>PRIMARY KEY (`DEF_id`)</key>
-    <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
-    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-  </sqltable>
   <sqltable name="launchedapplicationdata" >
     <field 
       name="DEF_id" 
@@ -145,6 +116,7 @@
       name="DEF_timestamp" 
       type="timestamp" 
       default="DEFAULT 'CURRENT_TIMESTAMP'" 
+      null="NOT NULL" 
     />
     <field 
       name="REF|ApplicationData|application" 
@@ -163,142 +135,103 @@
     <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
   </sqltable>
-  <sqltable name="nodespecdata" >
-    <field 
-      name="DEF_id" 
-      type="int(16)" 
-      null="NOT NULL" 
-      extra="auto_increment" 
-    />
-    <field 
-      name="DEF_timestamp" 
-      type="timestamp" 
-      default="DEFAULT 'CURRENT_TIMESTAMP'" 
-    />
-    <field 
-      name="class string" 
-      type="text" 
-    />
-    <field 
-      name="alias" 
-      type="text" 
-    />
-    <field 
-      name="launcher alias" 
-      type="text" 
-    />
-    <field 
-      name="SEQ|args" 
-      type="text" 
-    />
-    <field 
-      name="new process flag" 
-      type="int(20)" 
-    />
-    <field 
-      name="SEQ|dependencies" 
-      type="text" 
-    />
-    <field 
-      name="REF|ApplicationData|application" 
-      type="int(20)" 
-    />
-    <key>PRIMARY KEY (`DEF_id`)</key>
-    <key>KEY `REF|ApplicationData|application` (`REF|ApplicationData|application`)</key>
-    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
-  </sqltable>
 
  </definition>
  <data>
   <!-- ApplicationData -->
     <sqltable name="ApplicationData" >
-        <field name="DEF_id" >613</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
+        <field name="DEF_id" >15</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
         <field name="name" >BeamFixerTest (1.6)</field>
-        <field name="version" >0</field>
+        <field name="version" >1</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
-        <field name="DEF_id" >15294</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="event class string" >MoveToTargetEvent</field>
-        <field name="from node alias" >Presets Manager</field>
-        <field name="to node alias" >Navigation</field>
-        <field name="REF|ApplicationData|application" >613</field>
-    </sqltable>
-    <sqltable name="BindingSpecData" >
-        <field name="DEF_id" >15295</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="event class string" >PresetChangedEvent</field>
-        <field name="from node alias" >Presets Manager</field>
-        <field name="to node alias" >Navigation</field>
-        <field name="REF|ApplicationData|application" >613</field>
-    </sqltable>
-    <sqltable name="BindingSpecData" >
-        <field name="DEF_id" >15296</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
+        <field name="DEF_id" >421</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
         <field name="event class string" >MoveToTargetDoneEvent</field>
         <field name="from node alias" >Navigation</field>
         <field name="to node alias" >Presets Manager</field>
-        <field name="REF|ApplicationData|application" >613</field>
+        <field name="REF|ApplicationData|application" >15</field>
     </sqltable>
     <sqltable name="BindingSpecData" >
-        <field name="DEF_id" >15297</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="event class string" >ChangePresetEvent</field>
-        <field name="from node alias" >Beam Fixer</field>
+        <field name="DEF_id" >422</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="event class string" >PresetChangedEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Navigation</field>
+        <field name="REF|ApplicationData|application" >15</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >423</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="event class string" >MoveToTargetEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Navigation</field>
+        <field name="REF|ApplicationData|application" >15</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >424</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="event class string" >PresetChangedEvent</field>
+        <field name="from node alias" >Presets Manager</field>
         <field name="to node alias" >Beam Fixer</field>
-        <field name="REF|ApplicationData|application" >613</field>
+        <field name="REF|ApplicationData|application" >15</field>
     </sqltable>
   <!-- NodeSpecData -->
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6454</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="class string" >EM</field>
-        <field name="alias" >Instrument</field>
-        <field name="launcher alias" >scope</field>
-        <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >613</field>
-    </sqltable>
-    <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6455</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="class string" >Corrector</field>
-        <field name="alias" >Correction</field>
-        <field name="launcher alias" >main</field>
-        <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >613</field>
-    </sqltable>
-    <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6456</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="class string" >PresetsManager</field>
-        <field name="alias" >Presets Manager</field>
-        <field name="launcher alias" >main</field>
-        <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >613</field>
-    </sqltable>
-    <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6457</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
-        <field name="class string" >Navigator</field>
-        <field name="alias" >Navigation</field>
-        <field name="launcher alias" >main</field>
-        <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >613</field>
-    </sqltable>
-    <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6458</field>
-        <field name="DEF_timestamp" >2009-01-16 17:51:04</field>
+        <field name="DEF_id" >150</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
         <field name="class string" >BeamFixer</field>
         <field name="alias" >Beam Fixer</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >613</field>
+        <field name="REF|ApplicationData|application" >15</field>
     </sqltable>
-  <!-- bindingspecdata -->
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >151</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="class string" >Navigator</field>
+        <field name="alias" >Navigation</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >15</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >152</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="class string" >PresetsManager</field>
+        <field name="alias" >Presets Manager</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >15</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >153</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="class string" >Corrector</field>
+        <field name="alias" >Correction</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >15</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >154</field>
+        <field name="DEF_timestamp" >2009-01-28 22:15:51</field>
+        <field name="class string" >EM</field>
+        <field name="alias" >Instrument</field>
+        <field name="launcher alias" >scope</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >15</field>
+    </sqltable>
   <!-- launchedapplicationdata -->
-  <!-- nodespecdata -->
+    <sqltable name="launchedapplicationdata" >
+        <field name="DEF_id" >146</field>
+        <field name="DEF_timestamp" >2009-01-28 22:16:21</field>
+        <field name="REF|ApplicationData|application" >15</field>
+        <field name="SEQ|launchers" >[('scope', u'anchi2.local'), ('main', u'anchi2.local')]</field>
+        <field name="REF|SessionData|session" >6</field>
+    </sqltable>
 
  </data>
 </applicationdump>
