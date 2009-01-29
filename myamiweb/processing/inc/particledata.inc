@@ -1802,8 +1802,8 @@ class particledata {
 	}
 
 	function getClusteringStacksForClusteringRun ($clusterrunId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*,"
-			."  clusterrun.*, cluster.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun`"
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*, "
+			."  clusterrun.*, cluster.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
 			."FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "

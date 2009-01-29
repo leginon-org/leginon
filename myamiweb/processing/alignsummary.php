@@ -100,17 +100,16 @@ if ($stackdatas) {
 				foreach ($clusterruns as $clusterrun) {
 					$clusterrunid = $clusterrun['clusterrunid'];
 					if ($_GET['showHidden'])
-						$clusterdatas = $particle->getClusteringStacksForClusteringRun($alignstackid, true);
+						$clusterdatas = $particle->getClusteringStacksForClusteringRun($clusterrunid, true);
 					else
-						$clusterdatas = $particle->getClusteringStacksForClusteringRun($alignstackid, false);
+						$clusterdatas = $particle->getClusteringStacksForClusteringRun($clusterrunid, false);
 					if ($clusterdatas) {
 						if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 							echo "<b>Cluster Run ".$clusterrunid."</b>"
 								.", method='<i> Hierarchical Clustering (IMAGIC)"
 								."</i>', factor list='<i>69 Eigen Images, (eigenimages.img)</i>'\n";
 							echo "<ul>\n";
-						}
-						elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
+						} elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
 							echo "<b>Cluster Run ".$clusterrunid."</b>"
 								.", method='<i>".$clusterrun['method']." (SPIDER) "
 								."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
