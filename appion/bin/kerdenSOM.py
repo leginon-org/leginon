@@ -71,7 +71,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		apDisplay.printMsg("Converting files")
 		files = glob.glob(self.timestamp+".[0-9]*")
 		files.sort(self.sortFile)
-		montagecmd = "montage "
+		montagecmd = ("montage -geometry +4+4 -tile %dx%d "%(self.params['xdim'], self.params['ydim']))
 		for fname in files:
 			emancmd = ("proc2d %s %s list=%s average"%
 				(self.instack, fname+".png", fname))
