@@ -2,7 +2,7 @@
 
 from optparse import OptionParser
 import sys
-import mrc
+from pyami import mrc
 import numpy
 
 usage = '''
