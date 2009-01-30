@@ -1,13 +1,17 @@
 import os
 import time
+import subprocess
+import numpy
 from tomography import tiltcorrelator
 import leginondata
+from pyami import arraystats, mrc, imagefun, numpil
 import appionData
 try:
 	import node
 except:
 	pass
 import apDisplay
+import apImage
 import apFile
 
 def getFilename(tiltseriesdata):
@@ -193,6 +197,9 @@ def checkExistingFullTomoData(path,name):
 def getFullTomoData(fulltomoId):
 	return appionData.ApFullTomogramData.direct_query(fulltomoId)
 	
+def getTomogramData(tomoId):
+	return appionData.ApTomogramData.direct_query(tomoId)
+	
 def insertFullTomogram(sessiondata,tiltdata,alignrun,path,name,description):
 	tomoq = appionData.ApFullTomogramData()
 	tomoq['session'] = sessiondata
@@ -253,3 +260,45 @@ def insertSubTomogram(fulltomogram,center,dimension,path,runname,name,index,pixe
 		tomoq.insert()
 		return tomoq
 	return results[0]
+
+def array2jpg(pictpath,im,imin=None,imax=None,size=512):
+	jpgpath = pictpath+'.jpg'
+	imshape = im.shape
+	scale = float(size)/max((imshape[0],imshape[1]))
+	im = apImage.scaleImage(im,scale)	
+	stats = arraystats.all(im)
+	if imin is not None and imax is not None:
+		range = (imin,imax)
+	else:
+		range = stats['mean']-3*stats['std'],stats['mean']+3*stats['std']
+	numpil.write(im,jpgpath, format = 'JPEG', limits=range)
+
+def makeMovie(filename,moviesize):
+	mrcpath = filename
+	splitnames =  os.path.splitext(mrcpath)
+	rootpath = splitnames[0]
+	array = mrc.read(mrcpath)
+	stats = arraystats.all(array)
+	print stats
+	dims = array.shape
+	#dimz = dims[0]
+	for axis in (0,1):
+		dimz = dims[axis]
+		#generate a sequence of jpg images, each is an average of 5 slices	
+		for i in range(0, dimz):   
+			pictpath = rootpath+'_avg%05d' % i
+			ll = max(0,i - 2)
+			hh = min(dimz,i + 3)
+			if axis == 0:
+				axisname = 'z'
+				slice = numpy.sum(array[ll:hh,:,:],axis=axis)/(hh-ll)
+			else:
+				axisname = 'y'
+				slice = numpy.sum(array[:,ll:hh,:],axis=axis)/(hh-ll)
+			# adjust and shrink each image
+			array2jpg(pictpath,slice,stats['mean']-3*stats['std'],stats['mean']+3*stats['std'],moviesize)
+			#array2jpg(pictpath,slice,size=moviesize)
+		cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o minitomo'+axisname+'.flv "mf://'+rootpath+'_avg*.jpg"'
+		proc = subprocess.Popen(cmd, shell=True)
+		proc.wait()
+		os.system('rm '+rootpath+'_avg*.jpg')
