@@ -101,17 +101,20 @@ if (file_exists($snapshotfile)) {
 		."<img src='loadimg.php?filename=$snapshotfile&s=180' height='180'><br/>\nSnap Shot</a>";
 	echo "</td>";
 }
+echo "<td><table>\n";
 // --- Display Flash Movie from flv --- //
-$flvfile = $tomogram['path']."/minitomo.flv";
+$axes = array(0=>'y',1=>'z');
+foreach ($axes as $axis) {
+$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
 $flvwidth = 400;
-$flvheight = 400;
+$flvheight = 180;
 if (!defined('FLASHPLAYER_URL')) {
 	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
 }
 $swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
 
 if (file_exists($flvfile)) {
-	echo "<td>";
+	echo "<tr><td>";
 	echo '<object type="application/x-shockwave-flash" data="'
 		.$swfstyle.'" width="'.$flvwidth.'" height="'.$flvheight.'" >
   <param name="allowScriptAccess" value="sameDomain" />
@@ -131,8 +134,10 @@ if (file_exists($flvfile)) {
     }" />
 </object>';
 	
-	echo "</td>";
+	echo "</td></td>";
 }
+}
+echo "</table></td>";
 echo "</tr>";
 echo "</table>";
 echo $html;
