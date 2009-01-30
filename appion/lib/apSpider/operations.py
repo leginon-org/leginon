@@ -4,6 +4,7 @@ import time
 import os
 ## appion
 import apDisplay
+import apFile
 import spyder
 
 """
@@ -88,16 +89,17 @@ def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
 	return
 
 #===============================
-def createMask(maskfile, maskdiam, boxsize, dataext=".spi"):
+def createMask(maskfile, maskrad, boxsize, dataext=".spi"):
+	apDisplay.printMsg("Creating mask with diameter %.1f and boxsize %d"%(maskrad*2.0,boxsize))
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpiderQuiet("MO", 
 		spyder.fileFilter(maskfile), 
 		"%d,%d" % (boxsize, boxsize), 
 		"C", 
-		str(maskdiam),
+		str(maskrad),
 	)
 	mySpider.close()
-	if not os.path.isfile(maskfile):
+	if not os.path.isfile(maskfile) or apFile.fileSize(maskfile) < 2:
 		apDisplay.printError("Failed to create mask file")
 	return
 

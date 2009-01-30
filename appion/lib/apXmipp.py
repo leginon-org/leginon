@@ -27,11 +27,16 @@ def convertStackToXmippData(instack, outdata, maskpixrad, boxsize, numpart=None)
 	"""
 	apDisplay.printMsg("Convert stack file to Xmipp data file")
 	maskfile = "circlemask.spi"
-	operations.createMask(maskfile, maskpixrad*2.0, boxsize)
+	operations.createMask(maskfile, maskpixrad, boxsize)
 	partlistdocfile = breakupStackIntoSingleFiles(instack, numpart=numpart)
 	convertcmd = "xmipp_convert_img2data -i %s -mask %s -o %s"%(partlistdocfile, maskfile, outdata)
 	proc = subprocess.Popen(convertcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
 	proc.wait()
+	outfilesize = apFile.fileSize(outdata)
+	partfilesize = apFile.fileSize(partlistdocfile)
+	if outfilesize < 2*partfilesize:
+		apDisplay.printError("Outdata conversion did not work, data file smaller than docfile, %d < %d bytes"%(outfilesize, partfilesize))
+
 	return outdata
 
 #======================

@@ -5,8 +5,11 @@ Kernel Probability Density Estimator Self-Organizing Map
 """
 # python
 import os
+import sys
 import subprocess
 import glob
+import time
+import shutil
 # appion
 import appionScript
 import apXmipp
@@ -55,7 +58,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		"""
 		apDisplay.printMsg("Running KerDen SOM")
 		outstamp = os.path.join(self.params['rundir'], self.timestamp)
-		kerdencmd = ( "xmipp_classify_kerdensom -i %s -o %s -xdim %d -ydim %d -saveclusters -verb 1 "%
+		kerdencmd = ( "xmipp_classify_kerdensom -i %s -o %s -xdim %d -ydim %d -saveclusters "%
 			(indata, outstamp, self.params['xdim'], self.params['ydim'])
 		)
 		### convergence criteria
@@ -66,8 +69,11 @@ class kerdenSOMScript(appionScript.AppionScript):
 		else:
 			kerdencmd += " -eps 1e-7 "
 
+		apDisplay.printColor(kerdencmd, "cyan")
 		proc = subprocess.Popen(kerdencmd, shell=True)
 		proc.wait()
+		time.sleep(1)
+		return
 
 	#======================
 	def fileId(self, fname):
@@ -84,6 +90,13 @@ class kerdenSOMScript(appionScript.AppionScript):
 	#======================
 	def convertfiles(self):
 		apDisplay.printMsg("Converting files")
+
+		### create crappy files
+		emancmd = ( "proc2d "+self.instack+" crap.mrc first=0 last=0 mask=1" )
+		apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+		emancmd = ( "proc2d crap.mrc crap.png" )
+		apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+
 		files = glob.glob(self.timestamp+".[0-9]*")
 		files.sort(self.sortFile)
 		montagecmd = ("montage -geometry +4+4 -tile %dx%d "%(self.params['xdim'], self.params['ydim']))
@@ -92,19 +105,20 @@ class kerdenSOMScript(appionScript.AppionScript):
 		for listname in files:
 			if not os.path.isfile(listname) or apFile.fileSize(listname) < 1:
 				### create a ghost particle
-				emancmd = ( "proc2d "+self.instack+" "+stackname+" first=0 last=0 mask=1" )
-				apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
-				return False
+				emancmd = ( "proc2d crap.mrc "+stackname+" " )
+				sys.stderr.write("skipping "+listname+"\n")
+				apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+				### create png
+				shutil.copy("crap.png", listname+".png")
 			else:
 				### average particles
 				emancmd = ("proc2d %s %s list=%s average"%
 					(self.instack, stackname, listname))
 				apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=False)
-
-			### create png
-			emancmd = ("proc2d %s %s first=%d last=%d"%
-				(stackname, listname+".png", count, count))
-			apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+				### create png
+				emancmd = ("proc2d %s %s first=%d last=%d"%
+					(stackname, listname+".png", count, count))
+				apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
 			montagecmd += listname+".png "
 			count +=1
 		montagecmd += "montage.png"
@@ -117,11 +131,15 @@ class kerdenSOMScript(appionScript.AppionScript):
 		boxsize = aligndata['boxsize']
 		apix = aligndata['pixelsize']
 		maskpixrad = self.params['maskrad']/apix
+		if maskpixrad*2 > boxsize-2:
+			apDisplay.printError("Mask radius is too big for boxsize: %d > %d"%(maskpixrad*2,boxsize-2))
+		apDisplay.printMsg("Mask radius and boxsize: %.1f < %d"%(maskpixrad*2,boxsize-2))
 		self.instack = os.path.join(aligndata['path']['path'], aligndata['imagicfile'])
 		outdata = "stack.data"
 
 		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad, 
 			boxsize, numpart=self.params['numpart'])
+
 		self.runKerdenSOM(outdata)
 		self.convertfiles()
 
