@@ -379,6 +379,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### insert volumes into DB
 		self.insertRctRun(emanvolfile)
+		time.sleep(30)
 
 #=====================
 if __name__ == "__main__":
