@@ -227,7 +227,7 @@ function runRctVolume() {
 	if (!$stack)
 		createRctVolumeForm("<B>ERROR:</B> No align or cluster stack selected");
 
-	if (!$classnum)
+	if (!$classnum && $classnum!='0')
 		createRctVolumeForm("<B>ERROR:</B> Class numbers were not provided");
 
 	if (!$description)
