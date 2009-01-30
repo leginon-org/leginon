@@ -196,6 +196,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				'min': partarray.min(),
 				'max': partarray.max(),
 			}
+			if partmeandict['mean'] > 1.0e7:
+				partmeandict['mean'] /= 1.0e7
+			if partmeandict['stdev'] > 1.0e7:
+				partmeandict['stdev'] /= 1.0e7
 			partmeantree.append(partmeandict)
 
 		### phase flipping
