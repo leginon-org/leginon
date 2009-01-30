@@ -39,7 +39,7 @@ echo "  this method uses the "
 echo "</td></tr>";
 
 echo "<tr><td>";
-echo "  <h3><!--<a href='runKerdenSOM.php?expId=$expId&alignId=$alignId'>-->Xmipp Kerden Self-Organizing Map<!--</a>--></h3>";
+echo "  <h3><a href='runKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Kerden Self-Organizing Map<!--</a>--></h3>";
 echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organizing Map'. "
 	."It maps a set of high dimensional input vectors into a two-dimensional grid. "
 	."For more information, please see the following "
