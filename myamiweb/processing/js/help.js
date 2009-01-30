@@ -96,6 +96,7 @@ var help = {
 		'fastmode' : 'fast mode is a setting in Xmipp that reduces the time for an iteration after the first round, if off all iterations take a long time, if on then if the the iteration time will drop 90% after the first round, e.g.  60 min after round 1 to 4 min for each iteration after',
 		'stack' : 'Input particles to be classified',
 		'doubles' : 'Each particle must be picked twice. Picked by more than one template or DoG slice',
+		'griddim' : 'Self-organizing maps create a large two grid and each grid point is a class average. E.g., 4x3 grid gives 12 class averages',
 
 /******* IMAGIC terms ********/
 
@@ -125,11 +126,9 @@ var help = {
 		'mra_ang_inc' : 'The angular increment for forward projectsions of your masked and filtered 3d used for multi-reference alignment.  You do not need many references here, so setting this paramter to 25 should suffice',
 		'forw_ang_inc' : 'The angular increment for forward projections of your masked and filtered 3d used for euler angle refinement (an anchor set).  This value can vary, decreasing as you increase the iterations.  <BR/><BR/>For a C1 structure, choosing 10 should probably be set as the limit, as this creates ~1000 projections which, in combination with an euler angle increment of 2, will take an entire day to perform euler angle assignments for a single iteration',
 		'symmetry' : 'imposes symmetry on the model.  Used for multi-reference alignment (MRA), angular reconstitution, threed reconstruction, etc.  e.g.  C1, C2, D7, icosahedral, etc.',
-	'numiters' : 'Number of Iterations for multivariate statistical alignment. Typically the eigenimages converge very quickly, within a few iterations, but a large number is set as default to make sure that spikes do not occur later on during convergence.',
-	'overcorrection' : 'The overcorrection factor is a very important parameter in the MSA program. It determines the convergence speed of the Eigenvector Eigenvalue algorithm. However, if a too large overcorrection is chosen, the algorithm may start oscillating. Oscillations of the algorithm may be observed in the plot of the sum of the eigenvalues versus iteration number which is part of the output of this program. Divergence may thus only be detected a posteriori. The accepted values for OVER_CORRECTION lie between 0 and 0.9',
-	'norefbin' : 'Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Binning would be useful if, for example, the reference-free averages are to be used for initial model creation. Otherwise IMAGIC MSA runs are quite fast. For example, on a stack of 10,000 particles with a boxsize of 192, the algorithm takes ~15-30 minutes to run, so bining is not necessary.',
-
-
+		'numiters' : 'Number of Iterations for multivariate statistical alignment. Typically the eigenimages converge very quickly, within a few iterations, but a large number is set as default to make sure that spikes do not occur later on during convergence.',
+		'overcorrection' : 'The overcorrection factor is a very important parameter in the MSA program. It determines the convergence speed of the Eigenvector Eigenvalue algorithm. However, if a too large overcorrection is chosen, the algorithm may start oscillating. Oscillations of the algorithm may be observed in the plot of the sum of the eigenvalues versus iteration number which is part of the output of this program. Divergence may thus only be detected a posteriori. The accepted values for OVER_CORRECTION lie between 0 and 0.9',
+		'norefbin' : 'Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Binning would be useful if, for example, the reference-free averages are to be used for initial model creation. Otherwise IMAGIC MSA runs are quite fast. For example, on a stack of 10,000 particles with a boxsize of 192, the algorithm takes ~15-30 minutes to run, so bining is not necessary.',
 	},
 
 	'eman' : {

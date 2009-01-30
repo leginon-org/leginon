@@ -17,12 +17,13 @@ require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runSpiderCoranClassify();
+	runKerDenSOM();
 } else {
-	createSpiderCoranClassifyForm();
+	createKerDenSOMForm();
 }
 
-function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py Launcher', $heading='Spider Coran Classification') {
+function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher', 
+ $heading='Kernel Probability Density Estimator Self-Organizing Map') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	$selectAlignId=$_GET['alignId'];
@@ -42,10 +43,10 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$particle = new particledata();
 	$alignIds = $particle->getAlignStackIds($sessionId, true);
 	$alignruns=count($alignIds);
-	$coranIds = $particle->getAnalysisRuns($sessionId, $projectId, true);
-	//foreach ($coranIds as $coranid)
-	//	echo print_r($coranid)."<br/><br/>\n";
-	$coranruns=count($coranIds);
+	$analysisIds = $particle->getAnalysisRuns($sessionId, $projectId, true);
+	//foreach ($analysisIds as $analysisId)
+	//	echo print_r($analysisId)."<br/><br/>\n";
+	$analysisruns=count($analysisIds);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
@@ -86,11 +87,12 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	while (file_exists($sessionpathval.'coran'.($coranruns+1)))
-		$coranruns += 1;
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'coran'.($coranruns+1);
+	while (file_exists($sessionpathval.'kerden'.($analysisruns+1)))
+		$analysisruns += 1;
+	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'kerden'.($analysisruns+1);
 	$rundescrval = $_POST['description'];
-	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '20';
+	$xdim = ($_POST['xdim']) ? $_POST['xdim'] : '5';
+	$ydim = ($_POST['ydim']) ? $_POST['ydim'] : '4';
 
 	$defaultmaskrad = 100;
 
@@ -101,7 +103,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
 	echo openRoundBorder();
-	echo docpop('runid','<b>Spider Coran Classify Run Name:</b>');
+	echo docpop('runid','<b>KerDen SOM Run Name:</b>');
 	echo "<input type='text' name='runname' value='$runnameval'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
@@ -110,7 +112,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
-	echo docpop('descr','<b>Description of Spider Coran Classify:</b>');
+	echo docpop('descr','<b>Description of KerDen SOM:</b>');
 	echo "<br />\n";
 	echo "<textarea name='description' rows='3' cols='60'>$rundescrval</textarea>\n";
 	echo closeRoundBorder();
@@ -169,9 +171,20 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "<br/>\n";
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='numfactors' VALUE='$numfactors' SIZE='4'>\n";
-	echo docpop('numfactor','Number of Factors');
-	echo " to Use\n";
+
+	echo docpop('griddim','Grid Dimensions:');
+	echo "<br/>\n";
+	echo "<table border='0'><tr><td>\n";
+	echo "<INPUT TYPE='text' NAME='xdim' VALUE='$xdim' SIZE='1'>\n";
+	echo "</td><td>\n";
+	echo "<font size='+2'>X</font>\n";
+	echo "</td><td>\n";
+	echo "<INPUT TYPE='text' NAME='ydim' VALUE='$ydim' SIZE='1'>\n";
+	echo "</td></tr></table>\n";
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='5'>\n";
+	echo docpop('numpart','Number of particles to use');
 	echo "<br/>\n";
 	echo "<br/>\n";
 
@@ -188,7 +201,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";
-	echo getSubmitForm("Run Spider Coran Classify");
+	echo getSubmitForm("Run KerDen SOM");
 	echo "  </td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
@@ -201,23 +214,29 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	exit;
 }
 
-function runSpiderCoranClassify() {
+function runKerDenSOM() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackvars=$_POST['stackid'];
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	$maskrad=$_POST['maskrad'];
-	$numfactors=$_POST['numfactors'];
+	$xdim=$_POST['xdim'];
+	$ydim=$_POST['ydim'];
+	$numpart=$_POST['numpart'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description)
-		createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+		createKerDenSOMForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
 	if (!$stackid)
-		createSpiderCoranClassifyForm("<B>ERROR:</B> No stack selected");
+		createKerDenSOMForm("<B>ERROR:</B> No stack selected");
+
+	// classification
+	if ($numpart < 10)
+		createKerDenSOMForm("<B>ERROR:</B> Must have more than 10 particles");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
@@ -226,46 +245,50 @@ function runSpiderCoranClassify() {
 	$stackparams=$particle->getAlignStackParams($stackid);
 	$boxrad = $stackparams['pixelsize'] * $stackparams['boxsize'];
 	if ($maskrad > $boxrad)
-		createSpiderCoranClassifyForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
+		createKerDenSOMForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
-	$command ="coranClassify.py ";
+	$command ="kerdenSOM.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
-	$command.="--alignstack=$stackid ";
+	$command.="--alignid=$stackid ";
 	$command.="--maskrad=$maskrad ";
-	$command.="--num-factors=$numfactors ";
+	$command.="--xdim=$xdim ";
+	$command.="--ydim=$ydim ";
+	$command.="--numpart=$numpart ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($_POST['process']=="Run Spider Coran Classify") {
+	if ($_POST['process']=="Run KerDen SOM") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createSpiderCoranClassifyForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createKerDenSOMForm("<B>ERROR:</B> Enter a user name and password");
 
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis');
 		// if errors:
-		if ($sub) createSpiderCoranClassifyForm("<b>ERROR:</b> $sub");
+		if ($sub) createKerDenSOMForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	else {
-		processing_header("Spider Coran Classification","Spider Coran Classification");
+		processing_header("Kernel Probability Density Estimator Self-Organizing Map","Kernel Probability Density Estimator Self-Organizing Map");
 		echo"
 		<table width='600' class='tableborder' border='1'>
 		<tr><td colspan='2'>
-		<b>Spider Coran Classify Command:</b><br />
+		<b>KerDen SOM Command:</b><br />
 		$command
 		</td></tr>
 		<tr><td>run id</td><td>$runname</td></tr>
 		<tr><td>stack id</td><td>$stackid</td></tr>
-		<tr><td>num factors</td><td>$numfactors</td></tr>
+		<tr><td>x dimension</td><td>$xdim</td></tr>
+		<tr><td>y dimension</td><td>$xdim</td></tr>
+		<tr><td>num part</td><td>$numpart</td></tr>
 		<tr><td>run dir</td><td>$rundir</td></tr>
 		<tr><td>commit</td><td>$commit</td></tr>
 		</table>\n";
