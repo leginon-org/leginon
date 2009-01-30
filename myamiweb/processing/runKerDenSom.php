@@ -93,6 +93,10 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	$rundescrval = $_POST['description'];
 	$xdim = ($_POST['xdim']) ? $_POST['xdim'] : '5';
 	$ydim = ($_POST['ydim']) ? $_POST['ydim'] : '4';
+	if ($selectAlignId)
+		$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $particle->getNumAlignStackParticles($selectAlignId);
+	else
+		$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 0;
 
 	$defaultmaskrad = 100;
 
@@ -122,7 +126,18 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 			<td>\n";
 
 	if ($selectAlignId) {
-		echo "<input type='hidden' name='stackid' value='$selectAlignId'>\n";
+		$alignstack = $particle->getAlignStackParams($selectAlignId);
+		// get pixel size and box size
+		$apix = $alignstack['pixelsize'];
+		if ($apix) {
+			$mpix = $apix/1E10;
+			$apixtxt=format_angstrom_number($mpix)."/pixel";
+		}
+		$boxsz = $alignstack['boxsize'];
+		$totprtls=commafy($particle->getNumAlignStackParticles($selectAlignId));
+		$stackval = "$selectAlignId|~~|$apix|~~|$boxsz|~~|$totprtls";
+		//echo $stackval;
+		echo "<input type='hidden' name='stackid' value='$stackval'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
 		$defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
@@ -219,7 +234,7 @@ function runKerDenSOM() {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackvars=$_POST['stackid'];
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	list($stackid,$apix,$boxsz,$totpart) = split('\|~~\|',$stackvars);
 	$maskrad=$_POST['maskrad'];
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];
