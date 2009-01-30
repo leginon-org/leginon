@@ -406,11 +406,15 @@ if ($expId) {
 
 	/* RCT Volumes */
 	if ($maxangle > 5 && $aligndone >= 1 && $stackruns >= 2 ) {
-		$numrctvols = $particle->getNumberOfRctRuns($sessionId);
-		$nrct = ($numrctfvols > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$numrctvols complete</a>" : '';
+		$rctdone = $particle->getNumberOfRctRuns($sessionId);
+		$rctrun = count($subclusterjobs['rctvolume']['running']);
+		$rctqueue = count($subclusterjobs['rctvolume']['queued']);
+		$rctresults[] = ($rctdone > 0) ? "<a href='rctsummary.php?expId=$sessionId'>$rctdone complete</a>" : '';
+		$rctresults[] = ($rctrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=rctvolume'>$rctrun running</a>";
+		$rctresults[] = ($rctqueue==0) ? "" : "$rctqueue queued";
 		$nruns[]=array(
 			'name'=>"<a href='runRctVolume.php?expId=$sessionId'>RCT Volume</a>",
-			'result'=>$nrct,
+			'result'=>$rctresults,
 		);
 	}
 

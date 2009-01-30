@@ -137,8 +137,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	//Class Numbers
 	echo docpop('classnum','Class Numbers');
 	echo " to generate volume:<br/>";
-	if ($classnum == "") {
-		$classnum = 0;
+	if (!$classnum && $classnum != '0') {
+		$classnum = '0,1';
 		echo "<INPUT type='text' name='classnum' size='5' value='$classnum'>";
 		echo "&nbsp;(starts at 0,1,2,...)\n<br/>\n<br/>\n";
 	} else {
@@ -157,7 +157,9 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 		$stackparams = $particle->getStackParams($stackid);
 		if (!$stackparams['tiltangle'] ||
 		 ($stackparams['tiltangle'] != "notilt" && $stackparams['tiltangle'] != "all")) {
-			$descript  = substr($stackdata['description'],0,40);
+			$descript  = substr($stackparams['description'],0,40);
+			#print_r($stackparams);
+			$box  = $stackparams['boxSize'];
 			$numpart = commafy($particle->getNumStackParticles($stackid));
 			//handle multiple runs in stack
 			$stackname = $stackparams['shownstackname'];
@@ -166,7 +168,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 			//print_r($stackparams[0]);
 			echo "<OPTION value='$stackid'";
 			if ($stackid == $tiltstack) echo " SELECTED";
-			echo">$stackid: $stackname ($numpart parts) $descript...</OPTION>\n";
+			echo">$stackid: $stackname ($box boxsize, $numpart parts) $descript...</OPTION>\n";
 		}
 	}
 	echo "</SELECT>\n";

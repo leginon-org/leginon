@@ -2926,7 +2926,9 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."LEFT JOIN ApRctRunData AS rctrun "
 			."  ON rctrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
 			."WHERE strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		//echo $q."<br/><br/>\n";
 		$r=$this->mysql->getSQLResult($q);
+		//echo $r[0]['number']."<br/><br/>\n";
 		return $r[0]['number'];
 	}
 
