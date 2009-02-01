@@ -220,7 +220,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 		### image with chimera
 		chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-			args=(emanvolfile, 30, None, 1.5, 0.9, apix, 'c1', boxsize, False))
+			args=(emanvolfile, 30, None, 2.5, 0.9, apix, 'c1', boxsize, False))
 		chimerathread.setDaemon(1)
 		chimerathread.start()
 
@@ -265,6 +265,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		tiltParticlesData = []
 		nopairParticle = 0
 		excludeParticle = 0
+		badmirror = 0
 		apDisplay.printMsg("Sorting particles from classes")
 
 		if self.params['clusterid'] is not None:
@@ -306,15 +307,20 @@ class rctVolumeScript(appionScript.AppionScript):
 					if tiltstackpartdata is None:
 						nopairParticle += 1
 					else:
+						#inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
+						#if mirror is True:
 						emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
 						includeParticle.append(emantiltstackpartnum)
 						tiltParticlesData.append(tiltstackpartdata)
+						#else:
+						#badmirror += 1
 				else:
 					excludeParticle += 1
 
 		includeParticle.sort()
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
 			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
+		apDisplay.printColor("Bad mirrors: %d"%(badmirror), "cyan")
 		if len(includeParticle) < 1:
 			apDisplay.printError("No particles were kept")
 		return includeParticle, tiltParticlesData
@@ -379,7 +385,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### insert volumes into DB
 		self.insertRctRun(emanvolfile)
-		time.sleep(30)
+		time.sleep(60)
 
 #=====================
 if __name__ == "__main__":
