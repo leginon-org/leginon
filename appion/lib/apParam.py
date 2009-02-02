@@ -205,6 +205,28 @@ def convertParserToParams(parser):
 			params[i.dest] = getattr(options, i.dest)
 	return params
 
+def getXversion():
+	xcmd = "X -version"
+	proc = subprocess.Popen(xcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.wait()
+	for line in proc.stderr:
+		if re.match("Build ID:", line):
+			sline = re.sub("Build ID:", "", line).strip()
+			m = re.search("\s([0-9\.]+)", sline)
+			if m:
+				version = m.groups()[0]
+				return versionToNumber(version)	
+	return None
+
+
+def versionToNumber(version):
+	num = 0
+	nums = version.split(".")
+	if nums:
+		for i,val in enumerate(nums):
+			num += float(val)/(100**i)
+	return num
+
 def resetVirtualFrameBuffer():
 	logf = open("xvfb.log", "a")
 	xvfbcmd = "killall Xvfb\n"
@@ -281,6 +303,9 @@ def getRgbFile(msg=True):
 		"/usr/X11R6/lib64/X11/rgb",
 		"/usr/X11R6/lib/X11/rgb",
 	]
+	xversion = getXversion()
+	if xversion > 1.02:
+		return " "
 	for rgbfile in filelist:
 		if os.path.isfile(rgbfile+".txt"):
 			return " -co "+rgbfile
