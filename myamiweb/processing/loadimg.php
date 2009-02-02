@@ -4,6 +4,8 @@ $filename=$_GET['filename'];
 $scale = ($_GET['scale']);
 $rescale = ($_GET['rescale']);
 $s = $_GET['s'];
+$w = $_GET['w'];
+$h = $_GET['h'];
 
 if (preg_match('`\.mrc$`i',$filename)) {
 	$src_mrc = mrcread($filename);
@@ -37,7 +39,31 @@ if ($scale){
 	imagecopyresampled($image_p, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
 }
 
+elseif ($w) {
+	// set width, maintain height ratio
+	$width=imagesx($image);
+	$height=imagesy($image);
+
+	$new_width = $w;
+	$new_height = $height * $w / $width;
+	$image_p = imagecreatetruecolor($new_width, $new_height);
+	imagecopyresampled($image_p, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+}
+
+elseif ($h) {
+	// set height, maintain width ratio
+	$width=imagesx($image);
+	$height=imagesy($image);
+
+	$new_height = $h;
+	$new_width = $width * $h / $height;
+
+	$image_p = imagecreatetruecolor($new_width, $new_height);
+	imagecopyresampled($image_p, $image, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+}
+
 elseif ($s) {
+	// set width and height, force image to be square
 	$width=imagesx($image);
 	$height=imagesy($image);
 
