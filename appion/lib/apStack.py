@@ -298,7 +298,7 @@ def getStackPixelSizeFromStackId(stackId):
 		stackapix = stackdata['pixelsize']*1e10
 		apDisplay.printMsg("Stack "+str(stackId)+" pixel size: "+str(round(stackapix,3)))
 		return stackapix
-	apDisplay.printWarning("Getting stack pixel size from DB, not tested on defocal pairs")
+	apDisplay.printWarning("Getting stack pixel size from leginon DB, not tested on defocal pairs")
 	stackpart = getOneParticleFromStackId(stackId, msg=False)
 	imgapix = apDatabase.getPixelSize(stackpart['particle']['image'])
 	runsindata = getRunsInStack(stackId)
