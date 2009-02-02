@@ -293,9 +293,15 @@ class rctVolumeScript(appionScript.AppionScript):
 					if tiltstackpartdata is None:
 						nopairParticle += 1
 					else:
-						emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
-						includeParticle.append(emantiltstackpartnum)
-						tiltParticlesData.append(tiltstackpartdata)
+						inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
+						if ( self.params['mirror'] == "all"
+						 or (self.params['mirror'] == "no" and mirror is False)
+						 or (self.params['mirror'] == "yes" and mirror is True) ):
+							emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+							includeParticle.append(emantiltstackpartnum)
+							tiltParticlesData.append(tiltstackpartdata)
+						else:
+							badmirror += 1
 				else:
 					excludeParticle += 1
 		else:
