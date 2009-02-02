@@ -43,13 +43,21 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$formAction.=($clusterid) ? "&clusterid=$clusterid" : "";
 
 	// Set any existing parameters in form
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'rct1';
 	$description = $_POST['description'];
 	$tiltstack = ($_POST['tiltstack']) ? $_POST['tiltstack'] : '';
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '15';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '4';
 
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	if (!empty($sessioninfo)) {
+		$sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
+		$sessionpath=ereg_replace("rawdata","rctvolume/",$sessionpath);
+		$sessionname=$sessioninfo['Name'];
+	}
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 
 	$javascript  = "";
 	$javascript .= writeJavaPopupFunctions('appion');
@@ -72,17 +80,32 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	//query the database for parameters
 	$particle = new particledata();
+	$numRctRuns = $particle->getNumberOfRctRuns($sessionId, True);
+	while (file_exists($sessionpathval.'rct'.($numRctRuns+1)))
+		$numRctRuns += 1;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'rct'.($numRctRuns+1);
 
 	echo"<TABLE BORDER=3 CLASS=tableborder>";
 	echo"<TR><TD VALIGN='TOP'>\n";
 
 	//Rct Run Name
 	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
-	echo docpop('runid','Rct Volume Run Name:<br/>');
-	echo "<input type='text' name='runname' value='$runname'>\n<br/>\n<br/>\n";
-	echo docpop('descr','<b>Description of Rct run:</b>');
+
+	echo openRoundBorder();
+	echo docpop('runname','<b>Rct Volume Run Name:</b>');
+	echo "<input type='text' name='runname' value='$runname'>\n";
 	echo "<br />\n";
-	echo "<textarea name='description' rows='3' cols='60'>$description</textarea>\n";
+	echo "<br />\n";
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('descr','<b>Description of Rct Volume run:</b>');
+	echo "<br />\n";
+	echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
+	echo closeRoundBorder();
+
 	echo "</td></tr></table>\n";
 
 	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
@@ -214,7 +237,9 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 function runRctVolume() {
 	$expId=$_GET['expId'];
-	$runname = $_POST['runname'];
+	$runname=$_POST['runname'];
+	$outdir=$_POST['outdir'];
+
 	$tiltstack = $_POST['tiltstack'];
 	$maskrad = $_POST['maskrad'];
 	$lowpassvol = $_POST['lowpassvol'];
@@ -251,12 +276,9 @@ function runRctVolume() {
 
 	$particle = new particledata();
 	$stackparam = $particle->getStackParams($tiltstack);
-	$outdir = dirname(dirname($stackparam['path']));
-	if ($outdir) {
-		// make sure outdir ends with '/' and append run name
-		if (substr($outdir,-1,1)!='/') $outdir.='/';
-		$rundir = $outdir.$runname;
-	}
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
 
 	//putting together command
 	$command ="rctVolume.py ";
