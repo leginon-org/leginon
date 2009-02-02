@@ -15,8 +15,6 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/summarytables.inc";
 
-echo FLASHPLAYER_URL;
-  
 // check if reconstruction is specified
 if (!$tomoId = $_GET['tomoId'])
 	$tomoId=false;
@@ -103,13 +101,30 @@ if (file_exists($snapshotfile)) {
 }
 echo "<td><table>\n";
 // --- Display Flash Movie from flv --- //
+
+// --- try to get size --- //
+@require_once('getid3/getid3.php');
+function getflvsize($filename) {
+	if (!class_exists('getID3')) {
+		return false;
+	}
+	$getID3 = new getID3;
+	$i = $getID3->analyze($filename);
+	$w = $i['meta']['onMetaData']['width'];
+	$h = $i['meta']['onMetaData']['height'];
+	return array($w, $h);
+}
+
 $axes = array(0=>'y',1=>'z');
-foreach ($axes as $axis) {
-$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
 $flvwidth = 400;
 $flvheight = 180;
 if (!defined('FLASHPLAYER_URL')) {
 	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
+}
+foreach ($axes as $axis) {
+$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
+if ($size=getflvsize($flvfile)) {
+	list($flvwidth, $flvheight)=$size;
 }
 $swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
 
