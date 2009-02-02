@@ -43,6 +43,11 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
 
+		self.mirrormodes = ( "all", "yes", "no" )
+		self.parser.add_option("--mirror", dest="mirror",
+			help="Mirror mode", metavar="MODE", 
+			type="choice", choices=self.mirrormodes, default="all" )
+
 	#=====================
 	def checkConflicts(self):
 		### parse class list
@@ -68,7 +73,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			self.params['notstackid'] = self.alignstackdata['stack'].dbid
 		elif self.params['clusterid'] is not None:
 			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
-			self.alignstackdata = clusterstackdata['clusterrun']['alignstack']
+			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['notstackid'] = self.alignstackdata['stack'].dbid
 
 		### check and make sure we got the stack id
@@ -97,7 +102,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		classliststr = tempstr[:-1]
 
 		self.params['rundir'] = os.path.join(uppath, "rctvolume", 
-			self.params['runname'], "class"+str(classliststr) )
+			self.params['runname'] )
 
 	#=====================
 	def getParticleInPlaneRotation(self, tiltstackpartdata):
@@ -248,6 +253,9 @@ class rctVolumeScript(appionScript.AppionScript):
 				phi += 180.0
 				while phi > 360:
 					phi -= 360.0
+				inplane += 180.0
+				while inplane > 360:
+					inplane -= 360.0
 			psi = -1.0*(gamma + inplane)
 			while psi < 0:
 				psi += 360.0
@@ -307,13 +315,15 @@ class rctVolumeScript(appionScript.AppionScript):
 					if tiltstackpartdata is None:
 						nopairParticle += 1
 					else:
-						#inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
-						#if mirror is True:
-						emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
-						includeParticle.append(emantiltstackpartnum)
-						tiltParticlesData.append(tiltstackpartdata)
-						#else:
-						#badmirror += 1
+						inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
+						if ( self.params['mirror'] == "all"
+						 or (self.params['mirror'] == "no" and mirror is False)
+						 or (self.params['mirror'] == "yes" and mirror is True) ):
+							emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+							includeParticle.append(emantiltstackpartnum)
+							tiltParticlesData.append(tiltstackpartdata)
+						else:
+							badmirror += 1
 				else:
 					excludeParticle += 1
 
