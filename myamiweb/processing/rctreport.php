@@ -60,7 +60,7 @@ for ($i = 0; $i <= $numiter; $i++) {
 		if (eregi($searchstr, $snapshot)) {
 			$snapfile = $rctrun['path'].'/'.$snapshot;
 			$rcttable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
-			$rcttable.= "<img src='loadimg.php?s=120&filename=$snapfile' height='120'></a>\n";
+			$rcttable.= "<img src='loadimg.php?s=120&filename=$snapfile' width='120'></a>\n";
 		}
 	}
 	$rcttable.= "<br/>\n";
