@@ -243,7 +243,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo docpop('mirror','Use Mirrors in Alignment');
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='fast' onClick='estimatetime(this)' $fast disabled>\n";
+	echo "<INPUT TYPE='checkbox' NAME='fast' onClick='estimatetime(this)' checked disabled>\n";
 	echo docpop('fastmode','Use Fast Mode');
 	echo "<br/>\n";
 
@@ -296,7 +296,8 @@ function runMaxLikeAlign() {
 	$angle=$_POST['angle'];
 	$bin=$_POST['bin'];
 	$description=$_POST['description'];
-	$fast = ($_POST['fast']=="on") ? true : false;
+	//$fast = ($_POST['fast']=="on") ? true : false;
+	$fast = true;
 	$fastmode = $_POST['fastmode'];
 	$mirror = ($_POST['mirror']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
