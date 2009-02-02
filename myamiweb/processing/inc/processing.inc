@@ -553,8 +553,8 @@ function displayExperimentForm($projectId,$sessionId,$expId){
 
 function checkClusterJobs($host, $user, $pass) {
 	$cmd='qstat -a | grep '.$user;
-  $subjobs = exec_over_ssh($host,$user,$pass,$cmd,true);
-  return $subjobs;
+	$subjobs = exec_over_ssh($host,$user,$pass,$cmd,true);
+	return $subjobs;
 }
 
 function checkRequiredFileError($path,$filename) {
@@ -884,6 +884,7 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
 		$cmd .= "cd $procdir; $apcmd; exit;";
+		// this shouldn't be necessary -- neil, it is done in python
 		if ($xvfb) $cmd = "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &; $cmd; kill %1;";
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		return;
@@ -898,8 +899,8 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 		$jobtext .= "#PBS -l walltime=240:00:00\n";
-		$jobtext .= "#PBS -l cput=240:00:00\n";
-		$jobtext .= "#PBS -k oe\n";
+		$jobtext .= "#PBS -l cput=480:00:00\n";
+		#$jobtext .= "#PBS -k oe\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$projectid = $_SESSION['projectId'] ? $_SESSION['projectId'] : "";
 		$jobtext .= "updateAppionDB.py $jobid R $projectid\n\n";
@@ -1178,7 +1179,7 @@ function showStackInfo($stackId, $stackparams, $apix, $expId, $particle) {
 	//print_r($stackparams);
 	$stackinfo = array(
 	'id'=>"<a href='stackreport.php?expId=$expId&sId=$stackId'>$stackId</A>",
-	'runid'=>$stackparams[0]['stackRunName'],
+	'runid'=>$stackparams['stackRunName'],
 	'description'=>$stackparams['description'],
 	'name'=>"<a target='stackview' href='viewstack.php?expId=$expId&stackId=$stackId&file=$stackfile'>$stackparams[name]</A>",
 	'path'=>$stackparams['path'],
