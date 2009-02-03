@@ -272,29 +272,25 @@ class rctVolumeScript(appionScript.AppionScript):
 		tiltParticlesData.sort(self.sortTiltParticlesData)
 		for stackpartdata in tiltParticlesData:
 			count += 1
-			if count%100 == 0:
+			if count%20 == 0:
 				sys.stderr.write(".")
 				eulerf.flush()
-			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
+			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
 				#theta flips to the back
-				tiltangle = -1.0 * tiltangle
-				#phi is rotated 180 degrees
-				phi = -1.0 * phi
-				gamma = -1.0 * gamma
-				#gamma is rotated 180 degrees
-				#while gamma > 360:
-				#	gamma -= 360.0
-			psi = -1.0*(gamma + inplane)
-			while psi < 0:
-				psi += 360.0
+				tiltangle = tiltangle + 180.0
+				totrot = -1.0 * totrot - 180.0
+				tiltrot = -1.0 * tiltrot + 180.0
+			while totrot < 0:
+				totrot += 360.0
 			### this is the original eman part num; count is new part num
 			partnum = stackpartdata['particleNumber']-1
-			line = operations.spiderOutLine(count, [phi, tiltangle, psi])
+			line = operations.spiderOutLine(count, [tiltrot, tiltangle, totrot])
 			eulerf.write(line)
 		eulerf.close()
-		apDisplay.printColor("Finished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		apDisplay.printColor("\nFinished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return eulerfile
 
 	#=====================
@@ -305,7 +301,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		excludeParticle = 0
 		badmirror = 0
 		apDisplay.printMsg("Sorting particles from classes")
+		count = 0
 
+		t0 = time.time()
 		if self.params['clusterid'] is not None:
 			### method 1: get particles from clustering data
 			clusterpartq = appionData.ApClusteringParticlesData()
@@ -314,6 +312,9 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("Found "+str(len(clusterpartdatas))+" clustered particles")
 
 			for clustpart in clusterpartdatas:
+				count += 1
+				if count%50 == 0:
+					sys.stderr.write(".")
 				#write to text file
 				clustnum = clustpart['refnum']-1
 				if clustnum in self.classlist:
@@ -342,6 +343,9 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("Found "+str(len(alignpartdatas))+" aligned particles")
 
 			for alignpart in alignpartdatas:
+				count += 1
+				if count%50 == 0:
+					sys.stderr.write(".")
 				#write to text file
 				alignnum = alignpart['ref']['refnum']-1
 				if alignnum in self.classlist:
@@ -364,6 +368,8 @@ class rctVolumeScript(appionScript.AppionScript):
 					excludeParticle += 1
 
 		includeParticle.sort()
+		if time.time()-t0 > 1.0:
+			apDisplay.printMsg("\nSorting time: "+apDisplay.timeString(time.time()-t0))
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
 			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
 		apDisplay.printColor("Bad mirrors: %d"%(badmirror), "cyan")
@@ -374,7 +380,7 @@ class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def mirrorParticles(self, partdatas, spiderstack):
 		partnum = 0
-		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+		mySpider = spyder.SpiderSession(dataext=".spi", logo=False)
 		for stackpartdata in partdatas:
 			partnum += 1
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
@@ -403,6 +409,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		### get good particle numbers
 		includeParticle, tiltParticlesData = self.getGoodAlignParticles()
 
+		### make doc file of Euler angles
+		eulerfile = self.makeEulerDoc(tiltParticlesData)
+
 		### write kept particles to file
 		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile"+self.timestamp+".lst")
 		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
@@ -417,10 +426,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		apFile.removeStack(rctstackfile)
 		apStack.makeNewStack(tiltstackfile, rctstackfile, self.params['keepfile'])
 		spiderstack = self.convertStackToSpider(rctstackfile)
-
-		### make doc file of Euler angles
-		eulerfile = self.makeEulerDoc(tiltParticlesData)
-		self.mirrorParticles(tiltParticlesData, spiderstack)
+		#self.mirrorParticles(tiltParticlesData, spiderstack)
 
 		### iterations over volume creation
 		looptime = time.time()
