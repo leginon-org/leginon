@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import watcher
+import node
 import event
 import leginondata
 from pyami import correlator, peakfinder
@@ -29,6 +29,12 @@ class TargetTransformer(object):
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = image['session']
 		results = matrixquery.query()
+		if not results:
+			newmatrix = leginondata.TransformMatrixData()
+			newmatrix['session'] = self.session
+			newmatrix['matrix'] = numpy.identity(2)
+			newmatrix.insert()
+			results = [newmatrix]
 	
 		initialmatrix = None
 		mymatrix = None
@@ -81,7 +87,7 @@ class TransformManager(node.Node, TargetTransformer):
 		'threshold': 3e-10,
 		'pause time': 2.5,
 		'camera settings':
-			data.CameraSettingsData(
+			leginondata.CameraSettingsData(
 				initializer={
 					'dimension': {
 						'x': 1024,
@@ -99,8 +105,8 @@ class TransformManager(node.Node, TargetTransformer):
 				}
 			),
 	}
-	eventinputs = node.Node.eventinputs + [event.TransformTargetEvent]
-	eventoutputs = node.Node.eventoutputs + [event.TransformTargetDoneEvent]
+	eventinputs = node.Node.eventinputs + presets.PresetsClient.eventinputs + [event.TransformTargetEvent]
+	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.TransformTargetDoneEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
@@ -126,13 +132,13 @@ class TransformManager(node.Node, TargetTransformer):
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		targetdata = emtarget['target']
 		self.instrument.setCorrectionChannel(channel)
-		dataclass = data.CorrectedCameraImageData
+		dataclass = leginondata.CorrectedCameraImageData
 		imagedata = self.instrument.getData(dataclass)
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, corrected=correctimage, pixels=pixels, pixeltype=pixeltype)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, corrected=correctimage, pixels=pixels, pixeltype=pixeltype)
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)

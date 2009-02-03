@@ -415,6 +415,20 @@ class DevicePublishEvent(PublishEvent):
 		)
 	typemap = classmethod(typemap)
 
+class TransformTargetEvent(Event):
+	def typemap(cls):
+		return Event.typemap() + (
+			('target', leginondata.AcquisitionImageTargetData),
+		)
+	typemap = classmethod(typemap)
+
+class TransformTargetDoneEvent(Event):
+	def typemap(cls):
+		return Event.typemap() + (
+			('target', leginondata.AcquisitionImageTargetData),
+		)
+	typemap = classmethod(typemap)
+
 '''
 class DeviceGetEvent(Event):
 	def typemap(cls):

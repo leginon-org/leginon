@@ -2058,3 +2058,11 @@ class RaptorProcessorSettingsData(ImageProcessorSettingsData):
 			('binning', int),
 		)
 	typemap = classmethod(typemap)
+
+class TransformMatrixData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('matrix', sinedon.newdict.DatabaseArrayType),
+		)
+	typemap = classmethod(typemap)
