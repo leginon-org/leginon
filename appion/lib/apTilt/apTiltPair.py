@@ -167,12 +167,8 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 		tiltstackid = stackid
 
 	t0 = time.time()
-
 	stackpartdata1 = apStack.getStackParticle(stackid, partnum)
-
 	partdata = stackpartdata1['particle']
-
-	#print partdata
 
 	### figure out if its particle 1 or 2
 	tiltpartq1 = appionData.ApTiltParticlePairData()
@@ -273,47 +269,6 @@ def getParticleTiltRotationAngles(stackpartdata):
 		return notrot, -1.0*theta, tiltrot, -1.0*tiltangle
 	return tiltrot, theta, notrot, tiltangle
 
-#===============================
-def getTiltAngleDeg(imgid, imgnum):
-	t0 = time.time()
-	#return imgdata['scope']['stage position']['a']*180.0/math.pi
-	imgdata = leginondata.AcquisitionImageData.direct_query(imgid, readimages=False)
-
-	#results = sinedon.directq.complexMysqlQuery('leginondata',q)
-	result = cursor.fetchone()
-	radians = float(result[0])
-	degrees = radians*180.0/math.pi
-	if time.time()-t0 > 0.3:
-		print query
-		print imgnum, partid, "angle query", apDisplay.timeString(time.time()-t0)
-	return degrees
-
-#===============================
-def getTiltAngleDeg2(imgid, imgnum):
-	t0 = time.time()
-	#return imgdata['scope']['stage position']['a']*180.0/math.pi
-	dbconf = sinedon.getConfig('leginondata')
-	db     = MySQLdb.connect(**dbconf)
-	cursor = db.cursor()
-	query = (
-		"SELECT \n"
-		+"  scope.`SUBD|stage position|a` AS angle  \n"
-		+"FROM `AcquisitionImageData` as img \n"
-		+"LEFT JOIN ScopeEMData AS scope \n"
-		+"  ON scope.`DEF_id` = img.`REF|ScopeEMData|scope` \n" 
-		+"WHERE \n"
-		+"  img.`DEF_id` = "+str(imgid)+" \n" 
-		+"LIMIT 1 \n"
-	)
-	cursor.execute(query)
-	#results = sinedon.directq.complexMysqlQuery('leginondata',q)
-	result = cursor.fetchone()
-	radians = float(result[0])
-	degrees = radians*180.0/math.pi
-	if time.time()-t0 > 0.3:
-		print query
-		print imgnum, partid, "angle query", apDisplay.timeString(time.time()-t0)
-	return degrees
 
 #===============================
 def getTransformImageIds(transformdata):
