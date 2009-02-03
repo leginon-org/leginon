@@ -143,6 +143,21 @@ def getSessionName(imgname):
 def getTiltAngleDeg(imgdata):
 	return imgdata['scope']['stage position']['a']*180.0/math.pi
 
+def getTiltAngleDegFromParticle(partdata):
+	imageref = partdata.special_getitem('image', dereference=False)
+	imgdata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
+	degrees = imgdata['scope']['stage position']['a']*180.0/math.pi
+	return degrees
+
+def getTiltAnglesDegFromTransform(transformdata):
+	imageref1 = transformdata.special_getitem('image1', dereference=False)
+	imgdata1 = leginondata.AcquisitionImageData.direct_query(imageref1.dbid, readimages=False)
+	degrees1 = imgdata1['scope']['stage position']['a']*180.0/math.pi
+	imageref2 = transformdata.special_getitem('image2', dereference=False)
+	imgdata2 = leginondata.AcquisitionImageData.direct_query(imageref2.dbid, readimages=False)
+	degrees2 = imgdata2['scope']['stage position']['a']*180.0/math.pi
+	return degrees1, degrees2
+
 def getTiltAngleRad(imgdata):
 	return imgdata['scope']['stage position']['a']
 
