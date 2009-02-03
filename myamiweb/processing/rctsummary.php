@@ -67,6 +67,7 @@ if ($rctRuns) {
 		$html .= "<TD><A HREF='rctreport.php?expId=$expId&rctId=$rctrun[DEF_id]'>$rctrun[runname]</A></TD>\n";
 
 		# sample image
+		$pngfile = "";
 		$rctrundir= opendir($rctrun['path']);
 		while ($f = readdir($rctrundir)) {
 			if (eregi('^volume.*'.$rctrun['numiter'].'\.mrc\.1\.png$', $f))
