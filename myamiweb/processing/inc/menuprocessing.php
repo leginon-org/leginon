@@ -374,7 +374,7 @@ if ($expId) {
 
 		// only give option of reclassification if ref-free
 		// stacks exist
-		if ($norefresults) {
+/*		if ($norefresults) {
 			$numreresults = count($particle->getImagicReclassFromSessionId($expId));
 			$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>";
 			// imagic reclassifications
@@ -383,7 +383,7 @@ if ($expId) {
 					  'result'=>$sreresults,
 					  );
 		}
-
+*/
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array(""),
