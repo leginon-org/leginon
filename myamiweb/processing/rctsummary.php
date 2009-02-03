@@ -74,7 +74,7 @@ if ($rctRuns) {
 				$pngfile = $rctrun['path']."/".$f;
 		}
 		if (file_exists($pngfile))
-			$html .= "<TD><IMG SRC='loadimg.php?scale=0.07&filename=$pngfile' HEIGHT=71></TD>\n";
+			$html .= "<TD><IMG SRC='loadimg.php?h=80&filename=$pngfile' height='80'></TD>\n";
 		else
 			$html .= "<TD>$pngfile</TD>\n";
 
