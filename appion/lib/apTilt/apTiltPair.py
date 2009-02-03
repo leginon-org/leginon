@@ -247,12 +247,9 @@ def getTiltTransformFromParticle(partdata):
 def getParticleTiltRotationAngles(stackpartdata):
 	partdata = stackpartdata['particle']
 	imgnum, transformdata, otherpartdata = getTiltTransformFromParticle(partdata)
+
 	t0 = time.time()
-	imgid1, imgid2 = getTransformImageIds(transformdata)
-	if time.time()-t0 > 0.3:
-		print partid, "db queries", apDisplay.timeString(time.time()-t0)
-	tiltangle1 = getTiltAngleDeg(imgid1, 1)
-	tiltangle2 = getTiltAngleDeg(imgid2, 2)
+	tiltangle1, tiltangle2 = apDatabase.getTiltAnglesDegFromTransform(transformdata)
 	if time.time()-t0 > 0.3:
 		print partid, "angle queries", apDisplay.timeString(time.time()-t0)
 
@@ -278,6 +275,21 @@ def getParticleTiltRotationAngles(stackpartdata):
 
 #===============================
 def getTiltAngleDeg(imgid, imgnum):
+	t0 = time.time()
+	#return imgdata['scope']['stage position']['a']*180.0/math.pi
+	imgdata = leginondata.AcquisitionImageData.direct_query(imgid, readimages=False)
+
+	#results = sinedon.directq.complexMysqlQuery('leginondata',q)
+	result = cursor.fetchone()
+	radians = float(result[0])
+	degrees = radians*180.0/math.pi
+	if time.time()-t0 > 0.3:
+		print query
+		print imgnum, partid, "angle query", apDisplay.timeString(time.time()-t0)
+	return degrees
+
+#===============================
+def getTiltAngleDeg2(imgid, imgnum):
 	t0 = time.time()
 	#return imgdata['scope']['stage position']['a']*180.0/math.pi
 	dbconf = sinedon.getConfig('leginondata')
