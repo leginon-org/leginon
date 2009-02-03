@@ -1,6 +1,8 @@
 #python
 import re
 import numpy
+import time
+import math
 #leginon
 import leginondata
 #appion
@@ -10,6 +12,8 @@ import apDisplay
 import apStack
 import apDatabase
 import apTiltTransform
+import sinedon
+import MySQLdb
 
 """
 Denis's query
@@ -162,6 +166,8 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	if tiltstackid is None:
 		tiltstackid = stackid
 
+	t0 = time.time()
+
 	stackpartdata1 = apStack.getStackParticle(stackid, partnum)
 
 	partdata = stackpartdata1['particle']
@@ -202,52 +208,195 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	stackpartdata = stackpartdatas2[0]
 
 	#print partnum,"-->",stackpartnum
+	if time.time()-t0 > 0.7:
+		print "getStackParticleTiltPair1", apDisplay.timeString(time.time()-t0)
 	return stackpartdata
+
+#===============================
+def getTiltTransformFromParticleId(partid):
+	dbconf = sinedon.getConfig('appionData')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
+
+	query = (
+		"SELECT \n"
+		+"  tiltpair.`REF|ApImageTiltTransformData|transform` AS transformid,  \n"
+		+"  tiltpair.`REF|ApParticleData|particle1` AS part1,  \n"
+		+"  tiltpair.`REF|ApParticleData|particle2` AS part2  \n"
+		+"FROM `ApTiltParticlePairData` as tiltpair \n"
+		+"WHERE "
+		+"  tiltpair.`REF|ApParticleData|particle1` = "+str(partid)+" \n" 
+		+"OR \n"
+		+"  tiltpair.`REF|ApParticleData|particle2` = "+str(partid)+" \n" 
+		+"LIMIT 1 \n"
+	)
+	t0 = time.time()
+	cursor.execute(query)
+	result = cursor.fetchone()
+	if time.time()-t0 > 0.3:
+		print partid, "trans query", apDisplay.timeString(time.time()-t0)
+	if not result:
+		apDisplay.printError("Transform data not found")
+	if len(result) < 3:
+		apDisplay.printError("Transform data not found")	
+	#print partid, result
+	transid = int(result[0])
+	partid1 = int(result[1])
+	partid2 = int(result[2])
+	if partid1 == partid:
+		imgnum = 1
+		otherpartid = partid2
+	elif  partid2 == partid:
+		imgnum = 2
+		otherpartid = partid1
+	else:
+		apDisplay.printError("Transform data not found")
+	t0 = time.time()
+	transformdata = appionData.ApImageTiltTransformData.direct_query(transid)
+	if time.time()-t0 > 0.3:
+		print partid, "data conversion", apDisplay.timeString(time.time()-t0)
+	if not transformdata:
+		apDisplay.printError("Transform data not found")
+	return imgnum, transformdata, otherpartid
+
 
 #===============================
 def getParticleTiltRotationAngles(stackpartdata):
 	partdata = stackpartdata['particle']
+	partid = partdata.dbid
+	imgnum, transformdata, otherpartid = getTiltTransformFromParticleId(partid)
+	t0 = time.time()
+	imgid1, imgid2 = getTransformImageIds(transformdata)
+	if time.time()-t0 > 0.3:
+		print partid, "db queries", apDisplay.timeString(time.time()-t0)
+	tiltangle1 = getTiltAngleDeg(imgid1, 1)
+	tiltangle2 = getTiltAngleDeg(imgid2, 2)
+	if time.time()-t0 > 0.3:
+		print partid, "angle queries", apDisplay.timeString(time.time()-t0)
 
-	#if first particle
-	tiltpartq1 = appionData.ApTiltParticlePairData()
-	tiltpartq1['particle1'] = partdata
-	tiltpartdatas1 = tiltpartq1.query(results=1)
-
-	#if second particle
-	tiltpartq2 = appionData.ApTiltParticlePairData()
-	tiltpartq2['particle2'] = partdata
-	tiltpartdatas2 = tiltpartq2.query(results=1)
-
-	if tiltpartdatas1 and not tiltpartdatas2:
-		#if first particle ApTiltParticlePairData
-		transformdata = tiltpartdatas1[0]['transform']
-		gamma = transformdata['image1_rotation']
+	if imgnum == 1:
+		tiltrot = transformdata['image1_rotation']
 		theta = transformdata['tilt_angle']
-		phi   = transformdata['image2_rotation']
-		tiltangle1 = apDatabase.getTiltAngleDeg(transformdata['image1'])
-		tiltangle2 = apDatabase.getTiltAngleDeg(transformdata['image2'])
+		notrot   = transformdata['image2_rotation']
 		tiltangle = tiltangle1 - tiltangle2
-
-	elif not tiltpartdatas1 and tiltpartdatas2:
-		#if second particle ApTiltParticlePairData
-		transformdata = tiltpartdatas2[0]['transform']
-		gamma = transformdata['image2_rotation']
+	elif imgnum == 2:
+		tiltrot = transformdata['image2_rotation']
 		theta = transformdata['tilt_angle']
-		phi   = transformdata['image1_rotation']
-		tiltangle1 = apDatabase.getTiltAngleDeg(transformdata['image1'])
-		tiltangle2 = apDatabase.getTiltAngleDeg(transformdata['image2'])
+		notrot   = transformdata['image1_rotation']
 		tiltangle = tiltangle2 - tiltangle1
 	else:
 		#no particle pair info was found
 		print partdata
-		print tiltpartdatas1
-		print tiltpartdatas2
 		apDisplay.printError("failed to get tilt pair data")
 
 	if tiltangle < 0:
 		#swap angles
-		return phi, -1.0*theta, gamma, -1.0*tiltangle
-	return gamma, theta, phi, tiltangle
+		return notrot, -1.0*theta, tiltrot, -1.0*tiltangle
+	return tiltrot, theta, notrot, tiltangle
 
 
+#===============================
+def getTiltAngleDeg(imgid, imgnum):
+	t0 = time.time()
+	#return imgdata['scope']['stage position']['a']*180.0/math.pi
+	dbconf = sinedon.getConfig('leginondata')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
+	query = (
+		"SELECT \n"
+		+"  scope.`SUBD|stage position|a` AS angle  \n"
+		+"FROM `AcquisitionImageData` as img \n"
+		+"LEFT JOIN ScopeEMData AS scope \n"
+		+"  ON scope.`DEF_id` = img.`REF|ScopeEMData|scope` \n" 
+		+"WHERE \n"
+		+"  img.`DEF_id` = "+str(imgid)+" \n" 
+		+"LIMIT 1 \n"
+	)
+	cursor.execute(query)
+	#results = sinedon.directq.complexMysqlQuery('leginondata',q)
+	result = cursor.fetchone()
+	radians = float(result[0])
+	degrees = radians*180.0/math.pi
+	if time.time()-t0 > 0.3:
+		print query
+		print imgnum, partid, "angle query", apDisplay.timeString(time.time()-t0)
+	return degrees
+
+
+#===============================
+def getTransformImageIds2(transformid):
+	t0 = time.time()
+	#return imgdata['scope']['stage position']['a']*180.0/math.pi
+	dbconf = sinedon.getConfig('appionData')
+	db     = MySQLdb.connect(**dbconf)
+	cursor = db.cursor()
+	query = (
+		"SELECT \n"
+		+"  trans.`REF|leginondata|AcquisitionImageData|image1` AS img1,  \n"
+		+"  trans.`REF|leginondata|AcquisitionImageData|image2` AS img2  \n"
+		+"FROM `ApImageTiltTransformData` as trans \n"
+		+"WHERE \n"
+		+"  trans.`DEF_id` = "+str(transformid)+" \n" 
+		+"LIMIT 1 \n"
+	)
+	cursor.execute(query)
+	result = cursor.fetchone()
+	img1 = int(result[0])
+	img2 = int(result[1])
+	if time.time()-t0 > 0.3:
+		print query
+		print transformid, "image query", apDisplay.timeString(time.time()-t0)
+	return img1, img2
+
+
+#===============================
+def getTransformImageIds(transformdata):
+	t0 = time.time()
+	img1 = transformdata.special_getitem('image1', dereference=False).dbid
+	img2 = transformdata.special_getitem('image2', dereference=False).dbid
+	if time.time()-t0 > 0.3:
+		print "image query", apDisplay.timeString(time.time()-t0)
+	return img1, img2
+
+#===============================
+def getStackParticleTiltPair2(stackid, partnum, tiltstackid=None):
+	"""
+	takes a stack id and particle number (1+) spider-style
+	returns the stack particle number for the tilt pair
+	"""
+	#print stackid, partnum
+	if tiltstackid is None:
+		tiltstackid = stackid
+
+	t0 = time.time()
+	#dbconf = sinedon.getConfig('appionData')
+	#db     = MySQLdb.connect(**dbconf)
+	#cursor = db.cursor()
+
+	stackpartdata1 = apStack.getStackParticle(stackid, partnum)
+	partdata = stackpartdata1['particle']
+	partid = partdata.dbid
+	if time.time()-t0 > 0.3:
+		print "sinedon", apDisplay.timeString(time.time()-t0)
+
+	imgnum, transformdata, otherpartid = getTiltTransformFromParticleId(partid)
+	otherpartdata = appionData.ApParticleData.direct_query(otherpartid)
+
+	### get tilt stack particle
+	tiltstackdata = apStack.getOnlyStackData(tiltstackid, msg=False)
+	stackpartq = appionData.ApStackParticlesData()
+	stackpartq['stack'] = tiltstackdata
+	stackpartq['particle'] = otherpartdata
+	stackpartdatas2 = stackpartq.query(results=1)
+	if not stackpartdatas2:
+		#print otherpart.dbid
+		#apDisplay.printError("particle "+str(partnum)+" has no tilt pair in stackid="+str(tiltstackid))
+		return None
+	stackpartdata = stackpartdatas2[0]
+
+	#print partnum,"-->",stackpartnum
+	if time.time()-t0 > 0.7:
+		print "getStackParticleTiltPair2", apDisplay.timeString(time.time()-t0)
+
+	return stackpartdata
 
