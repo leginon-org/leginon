@@ -34,10 +34,12 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.parser.add_option("--align-id", dest="alignid", type="int",
 			help="alignment stack id", metavar="ID")
 
-		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6, 
+		self.parser.add_option("--num-iters", dest="numiters", type="int", default=4, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
 			help="Particle mask radius (in pixels)", metavar="ID")
+		self.parser.add_option("--tilt-bin", dest="tiltbin", type="int", default=1,
+			help="Binning of the tilted image", metavar="ID")
 		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float", default=10.0,
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
@@ -87,7 +89,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description")
 		
-		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
+		boxsize = self.getBoxSize()
 		if self.params['radius']*2 > boxsize-2:
 			apDisplay.printError("particle radius is too big for stack boxsize")	
 
@@ -120,6 +122,14 @@ class rctVolumeScript(appionScript.AppionScript):
 		return inplane, mirror
 
 	#=====================
+	def getBoxSize(self):
+		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
+		if self.params['tiltbin'] == 1:
+			return boxsize
+		newbox = int( math.floor( boxsize / float(self.params['tiltbin']) / 2.0)* 2.0 )
+		return newbox
+
+	#=====================
 	def convertStackToSpider(self, emanstackfile):
 		"""
 		takes the stack file and creates a spider file ready for processing
@@ -127,17 +137,23 @@ class rctVolumeScript(appionScript.AppionScript):
 		if not os.path.isfile(emanstackfile):
 			apDisplay.printError("stackfile does not exist: "+emanstackfile)
 
+		tempstack = os.path.join(self.params['rundir'], "filter"+self.timestamp+".hed")
+
 		### first high pass filter particles
 		apDisplay.printMsg("pre-filtering particles")
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		emancmd = ("proc2d "+emanstackfile+" "+emanstackfile
+		boxsize = self.getBoxSize()
+		emancmd = ("proc2d "+emanstackfile+" "+tempstack
 			+" apix="+str(apix)+" hp="+str(self.params['highpasspart'])
-			+" inplace")
+			+" ")
+		if self.params['tiltbin'] > 1:
+			clipsize = boxsize*self.params['tiltbin']
+			emancmd += " shrink=%d clip=%d,%d "%(self.params['tiltbin'], clipsize, clipsize)
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		### convert imagic stack to spider
 		emancmd  = "proc2d "
-		emancmd += emanstackfile+" "
+		emancmd += tempstack+" "
 		spiderstack = os.path.join(self.params['rundir'], "rctstack"+self.timestamp+".spi")
 		apFile.removeFile(spiderstack, warn=True)
 		emancmd += spiderstack+" "
@@ -147,6 +163,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
+
+		apFile.removeStack(tempstack)
+		apFile.removeStack(emanstackfile)
 		return spiderstack
 
 	#=====================
@@ -186,8 +205,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		densq['hidden'] = False
 		densq['norm'] = True
 		densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
-		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		densq['boxsize'] = apStack.getStackBoxsize(self.params['tiltstackid'])
+		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		densq['boxsize'] = self.getBoxSize()
 		densq['lowpass'] = self.params['lowpassvol']
 		densq['highpass'] = self.params['highpasspart']
 		densq['mask'] = self.params['radius']
@@ -204,8 +223,8 @@ class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def processVolume(self, spivolfile, iternum=0):
 		### set values
-		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		boxsize = self.getBoxSize()
 		rawspifile = os.path.join(self.params['rundir'], "rawvolume%s-%03d.spi"%(self.timestamp, iternum))
 		emanvolfile = os.path.join(self.params['rundir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
 		lowpass = self.params['lowpassvol']
@@ -248,14 +267,13 @@ class rctVolumeScript(appionScript.AppionScript):
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			if mirror is True:
 				#theta flips to the back
-				tiltangle = 360.0 - tiltangle
+				tiltangle = -1.0 * tiltangle
 				#phi is rotated 180 degrees
-				phi += 180.0
-				while phi > 360:
-					phi -= 360.0
-				inplane += 180.0
-				while inplane > 360:
-					inplane -= 360.0
+				phi = -1.0 * phi
+				gamma = -1.0 * gamma
+				#gamma is rotated 180 degrees
+				#while gamma > 360:
+				#	gamma -= 360.0
 			psi = -1.0*(gamma + inplane)
 			while psi < 0:
 				psi += 360.0
