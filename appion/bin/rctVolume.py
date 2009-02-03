@@ -17,10 +17,15 @@ import apEMAN
 import apFile
 import apRecon
 import apProject
+import spyder
 from apTilt import apTiltPair
 from apSpider import operations, backproject
 
 class rctVolumeScript(appionScript.AppionScript):
+	#=====================
+	def onInit(self):
+		self.rotmirrorcache = {}
+
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --cluster-id=ID --tilt-stack=# --classnums=#,#,# [options]")
@@ -108,8 +113,14 @@ class rctVolumeScript(appionScript.AppionScript):
 
 	#=====================
 	def getParticleInPlaneRotation(self, tiltstackpartdata):
+		partid = tiltstackpartdata.dbid
+		if partid in self.rotmirrorcache:
+			### use cached value
+			return self.rotmirrorcache[partid] 
+
+		partnum = tiltstackpartdata['particleNumber']
 		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'], 
-			tiltstackpartdata['particleNumber'], self.params['notstackid'])
+			partnum, self.params['notstackid'])
 
 		alignpartq = appionData.ApAlignParticlesData()
 		alignpartq['stackpart'] = notstackpartdata
@@ -119,6 +130,7 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("could not get inplane rotation for particle %d"%(tiltstackpartdata['particleNumber']))
 		inplane = alignpartdatas[0]['rotation']
 		mirror = alignpartdatas[0]['mirror']
+		self.rotmirrorcache[partid] = (inplane, mirror)
 		return inplane, mirror
 
 	#=====================
@@ -360,6 +372,29 @@ class rctVolumeScript(appionScript.AppionScript):
 		return includeParticle, tiltParticlesData
 
 	#=====================
+	def mirrorParticles(self, partdatas, spiderstack):
+		partnum = 0
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+		for stackpartdata in partdatas:
+			partnum += 1
+			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
+			if mirror is True:
+				sys.stderr.write("m")
+				mySpider.toSpiderQuiet("MR", 
+					spyder.fileFilter(spiderstack)+("@%05d"%(partnum)), 
+					"_9", 
+					"Y", 
+				)
+				mySpider.toSpiderQuiet("CP", 
+					"_9", 
+					spyder.fileFilter(spiderstack)+("@%05d"%(partnum)), 
+				)
+			else:
+				sys.stderr.write(".")
+		sys.stderr.write("\n")
+		mySpider.close()
+
+	#=====================
 	def start(self):
 		### get stack data
 		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
@@ -385,6 +420,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### make doc file of Euler angles
 		eulerfile = self.makeEulerDoc(tiltParticlesData)
+		self.mirrorParticles(tiltParticlesData, spiderstack)
 
 		### iterations over volume creation
 		looptime = time.time()
