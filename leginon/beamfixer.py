@@ -40,6 +40,8 @@ class BeamFixer(reference.Reference):
 					'exposure time': 200.0,
 				}
 			),
+		'shift step': 25.0,
+		'correction presets': [],
 	})
 	def __init__(self, *args, **kwargs):
 		try:
@@ -85,15 +87,34 @@ class BeamFixer(reference.Reference):
 			return
 		return imagedata
 
+	def getBeamShiftStep(self):
+		#acquire an image to get scope and camera
+		camera = self.instrument.getData(leginondata.CameraEMData, image=False)
+		scope = self.instrument.getData(leginondata.ScopeEMData)
+		beamshiftcal = self.calibration_clients['beam shift']
+		shiftstep = 0.01 * self.settings['shift step']
+		camdimension = camera['dimension']
+		pixelshift = {}
+		pixelshift['col'] = camdimension['x'] * shiftstep
+		pixelshift['row'] = camdimension['y'] * shiftstep
+		try:
+			shift = beamshiftcal.transform(pixelshift,scope,camera)
+			beamshift = shift['beam shift']
+		except Exception, e:
+			self.logger.warning(e)
+			beamshift = {'x':1e-07, 'y':1e-07}
+		self.logger.info('Calculated Beam Shift Step: %s' %(beamshift))
+		return beamshift
+
 	def execute(self, request_data=None):
 		# get current beam shift
 		original_beamshift = self.instrument.tem.BeamShift
 		bestbeamshift = original_beamshift
 		maxvalue = 0
-		step = 1e-7
-		for beamx in (-step, 0,step):
+		step = self.getBeamShiftStep()
+		for beamx in (-step['x'], 0,step['x']):
 			newbeamx = original_beamshift['x'] + beamx
-			for beamy in (-step, 0,step):
+			for beamy in (-step['y'], 0,step['y']):
 				newbeamy = original_beamshift['y'] + beamy
 
 				# set scope parameters
@@ -117,7 +138,10 @@ class BeamFixer(reference.Reference):
 		self.instrument.tem.BeamShift = bestbeamshift
 		self.logger.info('Best Beam Shift: %s' % (bestbeamshift,))
 		# update the preset beam shift
+		correction_presets = self.settings['correction presets']
 		if request_data:
-			presetname = request_data['preset']
-			params = {'beam shift':bestbeamshift}
-			self.presets_client.updatePreset(presetname, params)
+			if request_data['preset'] not in correction_presets:
+				correction_presets.append(request_data['preset'])
+			for presetname in correction_presets:
+				params = {'beam shift':bestbeamshift}
+				self.presets_client.updatePreset(presetname, params)

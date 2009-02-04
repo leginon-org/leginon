@@ -1496,6 +1496,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('wait for process', bool),
 			('wait for rejects', bool),
 			('wait for reference', bool),
+			('wait for transform', bool),
 			#('duplicate targets', bool),
 			#('duplicate target type', str),
 			('wait time', float),
@@ -1963,6 +1964,8 @@ class BeamFixerSettingsData(ReferenceSettingsData):
 			('override preset', bool),
 			('instruments', dict),
 			('camera settings', CameraSettingsData),
+			('correction presets', list),
+			('shift step', float),
 		)
 	typemap = classmethod(typemap)
 

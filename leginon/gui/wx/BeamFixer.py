@@ -9,6 +9,7 @@
 import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry
+from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import gui.wx.Reference
 import gui.wx.Settings
 import gui.wx.ToolBar
@@ -47,6 +48,11 @@ class SettingsDialog(gui.wx.Reference.SettingsDialog):
 		sb = wx.StaticBox(self, -1, 'Beam Fixer')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
+		self.widgets['shift step'] = FloatEntry(self, -1, min=0.0, chars=6)
+		presets = self.node.presets_client.getPresetNames()
+		self.widgets['correction presets'] = EditPresetOrder(self, -1)
+		self.widgets['correction presets'].setChoices(presets)
+
 		# override preset
 		overridebox = wx.StaticBox(self, -1, "Override Preset")
 		overridesz = wx.StaticBoxSizer(overridebox, wx.VERTICAL)
@@ -64,6 +70,17 @@ class SettingsDialog(gui.wx.Reference.SettingsDialog):
 		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
 		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
+		sz = wx.GridBagSizer(5, 5)
+		szshift = wx.GridBagSizer(5,5)
+		label = wx.StaticText(self, -1, 'Shift Beam by ')
+		szshift.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szshift.Add(self.widgets['shift step'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '% of the image ')
+		szshift.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szshift, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['correction presets'], (0, 1), (1, 1), wx.ALIGN_CENTER)
+		sbsz.Add(sz)
 		sbsz.Add(overridesz)
 
 		return refsizers + [sbsz]
