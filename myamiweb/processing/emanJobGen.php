@@ -15,7 +15,7 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 
 // bin directory for appion functions
-$appionbin = '/garibaldi/people-a/bcarr/appionbin/';
+$appionbin = '~bcarr/appionbin/';
 
 if ($_POST['write']) {
 	$particle = new particledata();
