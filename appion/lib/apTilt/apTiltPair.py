@@ -236,7 +236,7 @@ def getTiltTransformFromParticle(partdata):
 		apDisplay.printError("failed to get tilt pair data")
 
 	if time.time()-t0 > 0.3:
-		print partid, "getTiltTransformFromParticle1", apDisplay.timeString(time.time()-t0)
+		print "getTiltTransformFromParticle1", apDisplay.timeString(time.time()-t0)
 	return imgnum, transformdata, otherpartdata
 
 #===============================
