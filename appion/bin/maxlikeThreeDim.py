@@ -29,6 +29,12 @@ from apSpider import alignment
 from pyami import spider
 import sinedon
 
+"""
+USE 
+http://www.wadsworth.org/spider_doc/spider/docs/man/sy.html
+to create SYMMETRY DOC files
+"""
+
 #=====================
 #=====================
 class MaximumLikelihoodScript(appionScript.AppionScript):
