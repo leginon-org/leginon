@@ -8,15 +8,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import copy
 import leginondata
-import sinedon.data
 import event
 import node
 import numpy
 import scipy.ndimage as nd
-ma = numpy.ma
-import threading
 import gui.wx.Corrector
 import remotecall
 import instrument
