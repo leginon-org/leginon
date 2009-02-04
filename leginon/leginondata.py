@@ -1189,6 +1189,7 @@ class DriftManagerSettingsData(SettingsData):
 			('threshold', float),
 			('pause time', float),
 			('camera settings', CameraSettingsData),
+			('timeout', int),
 		)
 	typemap = classmethod(typemap)
 

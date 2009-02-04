@@ -236,6 +236,9 @@ class Focuser(acquisition.Acquisition):
 			if driftresult['status'] == 'drifted':
 				self.logger.info('Drift was detected so target will be repeated')
 				return 'repeat'
+			if driftresult['status'] == 'timeout':
+				self.logger.warning('still drifting after timeout')
+				return 'aborted'
 			lastdrift = driftresult['final']
 			lastdriftimage = self.driftimage
 			self.logger.info('using final drift image in focuser')

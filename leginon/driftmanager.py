@@ -29,6 +29,7 @@ class DriftManager(watcher.Watcher):
 	defaultsettings = {
 		'threshold': 3e-10,
 		'pause time': 2.5,
+		'timeout': 30,
 		'camera settings':
 			data.CameraSettingsData(
 				initializer={
@@ -221,7 +222,7 @@ class DriftManager(watcher.Watcher):
 		self.abortevent.clear()
 		time.sleep(self.settings['pause time']/2.0)	
 		status,final,im = self.acquireLoop(target, threshold=threshold)
-		if status == 'drifted':
+		if status in ('drifted', 'timeout'):
 			## declare drift above threshold
 			self.declareDrift('threshold')
 
@@ -284,6 +285,8 @@ class DriftManager(watcher.Watcher):
 		current_drift = 1.0e-3
 		lastdrift1 = 1.0e-3
 		lastdrift2 = 1.0e-3
+		minutes = self.settings['timeout']
+		timeout = time.time() + 60 * minutes
 		while 1:
 			# make sure we have waited at least "pause time" before acquire
 			t1 = self.instrument.tem.SystemTime
@@ -359,6 +362,11 @@ class DriftManager(watcher.Watcher):
 			## check for abort
 			if self.abortevent.isSet():
 				return 'aborted', d, imagedata
+
+			## check for timeout
+			t = time.time()
+			if t > timeout:
+				return 'timeout', d, imagedata
 
 	def abort(self):
 		self.abortevent.set()
