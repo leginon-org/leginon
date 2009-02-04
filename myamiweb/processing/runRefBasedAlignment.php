@@ -158,14 +158,14 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval =$_POST['stackid'];
-	$lp = $_POST['lp'];
 	$csym = $_POST['csym'];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 5;
-	$lp = ($_POST['lp']) ? $_POST['lp'] : 10;
+	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
 	$diam = $_POST['diam'] ? $_POST['diam'] : 160;
 	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '3';
 	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
@@ -281,8 +281,11 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		<INPUT TYPE='text' NAME='imaskdiam' SIZE='5' VALUE='$imaskdiam'>
 		First Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
 	echo"
-		<INPUT TYPE='text' NAME='lp' SIZE='5' VALUE='$lp'>
+		<INPUT TYPE='text' NAME='lowpass' SIZE='5' VALUE='$lowpass'>
 		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+	echo"
+		<INPUT TYPE='text' NAME='highpass' SIZE='5' VALUE='$highpass'>
+		High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
 	echo"
 		</TD>
 	</TR>
@@ -344,7 +347,8 @@ function runAlignment() {
 	$stackid=$_POST['stackid'];
 	$maskdiam=$_POST['maskdiam'];
 	$imaskdiam=$_POST['imaskdiam'];
-	$lp=$_POST['lp'];
+	$lowpass=$_POST['lowpass'];
+	$highpass=$_POST['highpass'];
 	$csym=$_POST['csym'];
 	$xysearch=$_POST['xysearch'];
 	$xystep=$_POST['xystep'];
@@ -390,7 +394,8 @@ function runAlignment() {
 	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
 	$command.="--rundir=".$rundir." ";
 	$command.="--description=\"$description\" ";
-	$command.="--lowpass=$lp ";
+	$command.="--lowpass=$lowpass ";
+	$command.="--highpass=$highpass ";
 	#if ($csym > 1) $command.="--csym=$csym ";
 	$command.="--xy-search=$xysearch ";
 	$command.="--xy-step=$xystep ";
@@ -433,7 +438,8 @@ function runAlignment() {
 		<TR><TD>rundir</TD><TD>$rundir</TD></TR>
 		<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
 		<TR><TD>xystep</TD><TD>$xystep</TD></TR>
-		<TR><TD>lowpass</TD><TD>$lp</TD></TR>";
+		<TR><TD>low pass</TD><TD>$lowpass</TD></TR>l
+		<TR><TD>high pass</TD><TD>$highpass</TD></TR>";
 		if ($csym > 1) echo"	<TR><TD>c-symmetry</TD><TD>$csym</TD></TR>";
 		echo"	</TABLE>\n";
 		processing_footer();
