@@ -52,6 +52,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self),
 			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient(self),
+			'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
 		}
 
 		self.presets_client = presets.PresetsClient(self)
