@@ -47,8 +47,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$tiltstack = ($_POST['tiltstack']) ? $_POST['tiltstack'] : '';
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '15';
+	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '400';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '4';
-
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -81,9 +81,18 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	//query the database for parameters
 	$particle = new particledata();
 	$numRctRuns = $particle->getNumberOfRctRuns($sessionId, True);
-	while (file_exists($sessionpathval.'rct'.($numRctRuns+1)))
+	while (glob($sessionpathval.'rct'.($numRctRuns+1)."*"))
 		$numRctRuns += 1;
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'rct'.($numRctRuns+1);
+	$defrctname = 'rct'.($numRctRuns+1);
+	if ($alignid)
+		$defrctname .= "align".$alignid;
+	if ($clusterid)
+		$defrctname .= "clust".$clusterid;
+	if ($classnum) {
+		$classstr = ereg_replace(",","",$classnum);
+		$defrctname .= "class".$classstr;
+	}
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrctname;
 
 	echo"<TABLE BORDER=3 CLASS=tableborder>";
 	echo"<TR><TD VALIGN='TOP'>\n";
@@ -214,6 +223,12 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
 
+	//High pass filter of particles
+	echo docpop('hpval','High Pass Particle Filter:<br/>');
+	echo "<INPUT TYPE='text' NAME='highpasspart' SIZE='5' VALUE='$highpasspart'>\n";
+	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
+	echo "\n<br/>\n<br/>\n";
+
 	//Number of iterations
 	echo docpop('numiter','Number of Particle centering iterations:<br/>');
 	echo "<INPUT TYPE='text' NAME='numiter' SIZE='2' VALUE='$numiter'>\n";
@@ -243,6 +258,7 @@ function runRctVolume() {
 	$tiltstack = $_POST['tiltstack'];
 	$maskrad = $_POST['maskrad'];
 	$lowpassvol = $_POST['lowpassvol'];
+	$highpasspart = $_POST['highpasspart'];
 	$numiter = $_POST['numiter'];
 	$classnum = $_POST['classnum'];
 	$description=$_POST['description'];
@@ -295,6 +311,7 @@ function runRctVolume() {
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
 	$command.="--lowpassvol=$lowpassvol ";
+	$command.="--highpasspart=$highpasspart ";
 
 	$command.="--commit ";
 
@@ -327,6 +344,7 @@ function runRctVolume() {
 		<TR><TD>tilt stack</TD><TD>$tiltstack</TD></TR>
 		<TR><TD>num iter</TD><TD>$numiter</TD></TR>
 		<TR><TD>volume lowpass</TD><TD>$lowpassvol</TD></TR>
+		<TR><TD>particle highpass</TD><TD>$highpasspart</TD></TR>
 		<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>";
 
 		echo"</TABLE>\n";
