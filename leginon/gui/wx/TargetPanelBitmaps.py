@@ -49,7 +49,6 @@ def targetIcon(color, shape):
 		elif shape == '+':
 			dc.DrawLine(8, 1, 8, 14)
 			dc.DrawLine(1, 8, 14, 8)
-			dc.DrawPoint(1, 7)
 		elif shape == '[]':
 			dc.DrawRectangle(1, 1, 14, 14)
 			#dc.DrawLine(1, 1, 1, 14)
@@ -65,13 +64,11 @@ def targetIcon(color, shape):
 		elif shape == 'x':
 			dc.DrawLine(1, 1, 13, 13)
 			dc.DrawLine(1, 13, 13, 1)
-			dc.DrawPoint(1, 7)
 		elif shape == '*':
 			dc.DrawLine(1, 1, 13, 13)
 			dc.DrawLine(1, 13, 13, 1)
 			dc.DrawLine(8, 1, 8, 14)
 			dc.DrawLine(1, 8, 14, 8)
-			dc.DrawPoint(1, 7)
 		elif shape == 'o':
 			dc.DrawCircle(7, 7, 7)
 		elif shape == 'numbers':
