@@ -16,6 +16,8 @@ import apDisplay
 import appionData
 import apDefocalPairs
 
+splitdb = True
+
 data.holdImages(False)
 
 def getAllImages(stats, params):

@@ -54,7 +54,7 @@ class AppionScript(object):
 		#	self.params['rundir'] = self.params['outdir']
 
 		### setup correct database after we have read the project id
-		if self.params['projectid'] is not None:
+		if apDatabase.splitdb and self.params['projectid'] is not None:
 			apDisplay.printWarning("Using split database")
 			# use a project database
 			newdbname = "ap"+str(self.params['projectid'])

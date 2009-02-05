@@ -8,6 +8,7 @@ import apEMAN
 import apFile
 import apDisplay
 import apStack
+import apDatabase
 
 #===============
 def makeStackMeanPlot(stackid, gridpoints=16):
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 	else:
 		projectid=None
 	### setup correct database after we have read the project id
-	if projectid is not None:
+	if apDatabase.splitdb and pprojectid is not None:
 		apDisplay.printWarning("Using split database")
 		# use a project database
 		newdbname = "ap"+str(projectid)
