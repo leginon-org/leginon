@@ -40,7 +40,7 @@ neil
 
 #===============================
 def commonLines(stackfile, maskdiam=None, minfreq=0, maxfreq=0.25, 
-	ang=5.0, numiter=200, outdocfile=None numpart=None, dataext=".spi"):
+	ang=5.0, numiter=200, outdocfile=None, numpart=None, dataext=".spi"):
 	"""
 	performs common lines on a input spider stack
 	"""
