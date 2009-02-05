@@ -237,7 +237,8 @@ def numberParticlesInStack(stackname, startnum=0, verbose=True):
 		if verbose is True and i%100 == 0:
 			sys.stderr.write(back+back+back+str(j)+" of "+str(n))
 		i+=1
-	sys.stdout.write(back+back+back+back+back+"finished in "+apDisplay.timeString(time.time()-t0))
+	sys.stderr.write("\n")
+	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 	return
 
 #=====================
