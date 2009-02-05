@@ -88,8 +88,9 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 
 	// get log file from name of job
 	$logfile = ereg_replace(".job",".log", $jobinfo['name']);
-
-	if ($_SESSION['loggedin']==True) {
+	$logpath = $jobinfo['appath']."/".$logfile;
+	
+	if ($_SESSION['loggedin']==True && file_exists($logpath)) {
 		$tail = ($_POST['tail']) ? $_POST['tail'] : '10';
 		$statinfo=checkJobStatus($host,$jobinfo['appath'],$logfile,$user,$pass,$tail);
 		if ($statinfo) {
