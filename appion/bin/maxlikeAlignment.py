@@ -45,8 +45,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
 
-		self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
-			help="Mask radius for particle coran (in Angstoms)", metavar="#")
+		self.parser.add_option("--clip", dest="clipsize", type="int",
+			help="Clip size in pixels (reduced box size)", metavar="#")
 		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
 			help="Low pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int",
@@ -108,6 +108,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
+
+		if self.params['clipsize'] is not None:
+			boxsize = apStack.getStackBoxsize(self.params['stackid'])
+			self.clipsize = int(math.floor(boxsize/float(self.params['bin'])))
+			if self.params['clipsize'] >= self.clipsize:
+				apDisplay.printError("requested clipsize is too big %d > %d"
+					%(self.params['clipsize'],self.clipsize))
+			self.clipsize = self.params['clipsize']
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 
@@ -346,8 +354,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### process stack to local file
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1:
-			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
+		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
+			clipsize = int(self.clipsize*self.params['bin'])
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		if self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
