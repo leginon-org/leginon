@@ -256,7 +256,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 		### image with chimera
 		chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-			args=(emanvolfile, 30, None, 2.5, 0.9, apix, 'c1', boxsize, False))
+			args=(emanvolfile, 30, None, 3.5, 0.9, apix, 'c1', boxsize, False))
 		chimerathread.setDaemon(1)
 		chimerathread.start()
 
