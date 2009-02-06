@@ -28,6 +28,10 @@ def makeNewStack(oldstack, newstack, listfile):
 	apEMAN.executeEmanCmd(command, verbose=True)
 	return
 
+def checkDefocPairFromId(stackId):
+	runsindata = getRunsInStack(stackId)
+	print runsindata
+	
 #===============
 def getStackParticlesFromId(stackid, msg=True):
 	t0 = time.time()
