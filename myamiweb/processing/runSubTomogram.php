@@ -54,7 +54,6 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 	}
 
 	// Set any existing parameters in form
-	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 	$tiltseriesnumber = ($_POST['tiltseriesnumber']) ? $_POST['tiltseriesnumber'] : NULL;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'subtomo1';
@@ -138,7 +137,7 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
 		$outdir .= '/tiltseries'.$tiltseriesnumber;
 		echo "<input type='hidden' name='tiltseriesnumber' value='$tiltseriesnumber'>\n";
-		$fulltomos = $particle->checkforFullTomogram($tiltseriesId); 
+		$fulltomos = $particle->checkforFullTomogram($tiltseriesId);
 		$tomoruns=count($fulltomos);
 		echo "<p><br />";
 		if (!$fulltomos) {
@@ -154,13 +153,11 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 				if ($fulltomoval==$fulltomoId) {
 					echo " SELECTED";
 					$outdir .= '/'.$fulltomo['runname'];
-					$extrabin = $fulltomo['bin'];
 				}
 				echo ">".$fulltomo['runname']." </OPTION>\n";
 			}
 			echo "</SELECT>\n";
 			echo "<FONT>(full tomogram reconstruction)</FONT>";     
-			echo "<input type='hidden' name='extrabin' value='$extrabin'>\n";
 			echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 		}
 	}	
@@ -205,7 +202,6 @@ function runSubTomogram() {
 	$sizex=$_POST['sizex'];
 	$sizey=$_POST['sizey'];
 	$sessionname=$_POST['sessionname'];
-	$extrabin=$_POST['extrabin'];
 	$fulltomoId=$_POST['fulltomoId'];
 
 	//make sure a tilt series was provided
@@ -219,7 +215,6 @@ function runSubTomogram() {
 	$particle = new particledata();
 
 	$command.="--session=$sessionname ";
-	$command.="--bin=$extrabin ";
 	$command.="--tiltseries=$tiltseriesnumber ";
 	$command.="--projectid=$projectId ";
 	$command.="--fulltomoId=$fulltomoId ";
@@ -273,7 +268,6 @@ function runSubTomogram() {
 	<TR><TD>particle selection id</TD><TD>$prtlrunId</TD></TR>
 	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
 	<TR><TD>fulltomogram id</TD><TD>$fulltomoId</TD></TR>
-	<TR><TD>tomogram binning</TD><TD>$extrabin</TD></TR>
 	<TR><TD>session</TD><TD>$sessionname</TD></TR>
 	<TR><TD>description</TD><TD>$description</TD></TR>
 	</TABLE>\n";
