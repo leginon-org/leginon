@@ -72,6 +72,8 @@ if ($tomograms) {
 		$html .= "<TD><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint</A></TD>\n";
 		$html .= "<td>";
     $snapfile = $tomogram['path'].'/snapshot.png';
+		if (!file_exists($snapshotfile)) 
+			$snapfile = $tomogram['path'].'/projectiona.jpg';
     $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 		$html .= "</td>\n";
 
@@ -79,7 +81,7 @@ if ($tomograms) {
 		$descDiv = ($_SESSION['username']) ? editButton($tomogramid,$tomogram['description']) : $tomogram['description'];
 
 		$html .= "<td>$descDiv</td>\n";
-$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
+#		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
 #		$html .= "<td>$downloadDiv</td>\n";
 		$html .= "</TR>\n";
 	}
