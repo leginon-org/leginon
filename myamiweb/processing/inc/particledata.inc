@@ -2119,14 +2119,28 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	}
 
 	function getNoRefClassRunParamsFrom3d0 ($imagic3d0Id) {
-		$q = "SELECT norefclass.* "
+		$q = "SELECT norefclass.*, clusterclass.* "
 			."FROM ApImagic3d0Data as model "
 			."LEFT JOIN ApNoRefClassRunData as norefclass "
 			."  ON model.`REF|ApNoRefClassRunData|norefclass`=norefclass.`DEF_id` "
+			."LEFT JOIN ApClusteringStackData as clusterclass "
+			."  ON model.`REF|ApClusteringStackData|clusterclass`=clusterclass.`DEF_id` "
 			."WHERE model.`DEF_id` = '$imagic3d0Id' ";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
 	}
+
+        function getClusteringStackParamsFrom3d0 ($imagic3d0Id) {
+                $q = "SELECT clusterclass.*, path.path "
+                        ."FROM ApImagic3d0Data as model "
+                        ."LEFT JOIN ApClusteringStackData as clusterclass "
+                        ."  ON model.`REF|ApClusteringStackData|clusterclass`=clusterclass.`DEF_id` "
+                        ."LEFT JOIN ApPathData as path "
+                        ."  ON clusterclass.`REF|ApPathData|path`=path.`DEF_id` "
+                        ."WHERE model.`DEF_id` = '$imagic3d0Id' ";
+                $r = $this->mysql->getSQLResult($q);
+                return $r[0];
+        }
 
 	function getRefAliParams ($refaliId) {
 		$q = "SELECT	par.*, run.*, path.path "
