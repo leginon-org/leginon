@@ -99,10 +99,8 @@ if (file_exists($snapshotfile)) {
 		."<img src='loadimg.php?filename=$snapshotfile&s=180' height='180'><br/>\nSnap Shot</a>";
 	echo "</td>";
 }
-echo "<td><table>\n";
+echo "<td>";
 // --- Display Flash Movie from flv --- //
-
-// --- try to get size --- //
 @require_once('getid3/getid3.php');
 function getflvsize($filename) {
 	if (!class_exists('getID3')) {
@@ -115,44 +113,53 @@ function getflvsize($filename) {
 	return array($w, $h);
 }
 
-$axes = array(0=>'y',1=>'z');
-$flvwidth = 400;
-$flvheight = 180;
 if (!defined('FLASHPLAYER_URL')) {
 	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
 }
-foreach ($axes as $axis) {
-$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
-if ($size=getflvsize($flvfile)) {
-	list($flvwidth, $flvheight)=$size;
-}
 $swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
-
-if (file_exists($flvfile)) {
-	echo "<tr><td>";
-	echo '<object type="application/x-shockwave-flash" data="'
-		.$swfstyle.'" width="'.$flvwidth.'" height="'.$flvheight.'" >
-  <param name="allowScriptAccess" value="sameDomain" />
-  <param name="movie" value="'.$swfstyle.'" />
-  <param name="quality" value="high" />
-  <param name="scale" value="noScale" />
-  <param name="wmode" value="transparent" />
-  <param name="allowNetworking" value="all" />
-  <param name="flashvars" value="config={ 
-    autoPlay: true, 
-    loop: true, 
-    initialScale: \'orig\',
-    videoFile: \'getflv.php?file='.$flvfile.'\',
-    hideControls: true,
-    showPlayList: false,
-    showPlayListButtons: false,
-    }" />
-</object>';
-	
-	echo "</td></td>";
+$axes = array(0=>'a',1=>'b');
+foreach ($axes as $axis) {
+	$flvfile = $tomogram['path']."/minitomo".$axes[0].".flv";
+	if (file_exists($flvfile)) {
+		echo "<table><tr><td>Projection</td><td>Slicing Through</td></tr>";
+		foreach ($axes as $axis) {
+			$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
+			$projfile = $tomogram['path']."/projection".$axis.".jpg";
+			if (file_exists($flvfile)) {
+				if ($size=getflvsize($flvfile)) {
+					list($flvwidth, $flvheight)=$size;
+				}
+				$colwidth = 180;
+				echo "<tr><td>";
+				$imagesizes = getimagesize($projfile);
+				$rowheight = $colwidth * $flvheight / $flvwidth;
+				echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' width='".$colwidth."'>";
+				echo "</td><td>";
+				echo '<object type="application/x-shockwave-flash" data="'
+					.$swfstyle.'" width="'.$colwidth.'" height="'.$rowheight.'" >
+				<param name="allowScriptAccess" value="sameDomain" />
+				<param name="movie" value="'.$swfstyle.'" />
+				<param name="quality" value="high" />
+				<param name="scale" value="noScale" />
+				<param name="wmode" value="transparent" />
+				<param name="allowNetworking" value="all" />
+				<param name="flashvars" value="config={ 
+					autoPlay: true, 
+					loop: true, 
+					initialScale: \'orig\',
+					videoFile: \'getflv.php?file='.$flvfile.'\',
+					hideControls: true,
+					showPlayList: false,
+					showPlayListButtons: false,
+					}" />
+				</object>';
+				echo "</td></tr>";	
+			}
+		}
+	}
+	echo "</table>";
 }
-}
-echo "</table></td>";
+echo "</td>";
 echo "</tr>";
 echo "</table>";
 echo $html;
