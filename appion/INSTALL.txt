@@ -30,4 +30,9 @@ Install operating system:
 	* RPM Fusion
 	* Fedora 6 Extras?
 
+4. You'll need to install a PBS system for job submission, such as TORQUE or 
+openPBS. I know Torque comes with Fedora 10.
+
+http://en.wikipedia.org/wiki/Portable_Batch_System
+http://en.wikipedia.org/wiki/TORQUE_Resource_Manager
 
