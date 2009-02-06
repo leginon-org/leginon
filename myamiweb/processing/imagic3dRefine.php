@@ -80,7 +80,8 @@ function create3d0SummaryForm($extra=False) {
 	
 	$reclassifieddata = $particle->getImagic3d0ReclassifiedModelsFromSessionId($expId);
 	$norefdata= $particle->getImagic3d0NoRefModelsFromSessionId($expId);
-	$models = array_merge($reclassifieddata, $norefdata);
+	$clusterdata = $particle->get3d0ClusterModelsFromSessionId($expId);
+	$models = array_merge($reclassifieddata, $norefdata, $clusterdata);
 	$nummodels = count($models);
 	
 	$javafunc="<script src='../js/viewer.js'></script>\n";
@@ -167,6 +168,13 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 		$classhedfile = $clsavgpath.".hed";
 	}
 
+	if ($model['REF|ApClusteringStackData|clusterclass']) {
+		$modelparams = $particle->getClusteringStackParamsFrom3d0($imagic3d0Id);
+		$clusterId = $modelparams['DEF_id'];
+		$clsavgpath = $modelparams['path'];
+		$classhedfile = $clsavgpath."/".$modelparams['avg_imagicfile'];
+		$classimgfile = str_replace(".hed", ".img", $classhedfile);
+	}
 
 	// get 3 initial projections for angular reconstitution associated with model		
 	$projections = $model['projections'];
