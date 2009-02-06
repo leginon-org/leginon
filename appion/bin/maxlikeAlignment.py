@@ -109,9 +109,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
+		boxsize = apStack.getStackBoxsize(self.params['stackid'])
+		self.clipsize = int(math.floor(boxsize/float(self.params['bin'])))
 		if self.params['clipsize'] is not None:
-			boxsize = apStack.getStackBoxsize(self.params['stackid'])
-			self.clipsize = int(math.floor(boxsize/float(self.params['bin'])))
 			if self.params['clipsize'] >= self.clipsize:
 				apDisplay.printError("requested clipsize is too big %d > %d"
 					%(self.params['clipsize'],self.clipsize))
