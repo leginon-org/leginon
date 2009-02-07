@@ -28,9 +28,12 @@ def makeNewStack(oldstack, newstack, listfile):
 	apEMAN.executeEmanCmd(command, verbose=True)
 	return
 
-def checkDefocPairFromId(stackId):
+#===============
+def checkDefocPairFromStackId(stackId):
+	# returns True if stack was made with defocal pairs
 	runsindata = getRunsInStack(stackId)
-	print runsindata
+	return runsindata[0]['stackRun']['stackParams']['defocpair']
+	
 	
 #===============
 def getStackParticlesFromId(stackid, msg=True):
