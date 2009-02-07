@@ -243,7 +243,7 @@ def getBestAceTwoValueForImage(imgdata, ctfavg=True, msg=True):
 	bestconf = 0.0
 	bestctfvalue = None
 	for ctfvalue in ctfvalues:
-		if ctfvalue['ctfvalues_file'] == None:
+		if ctfvalue['ctfvalues_file'] is None:
 			continue
 		conf1 = ctfvalue['confidence']
 		conf2 = ctfvalue['confidence_d']
