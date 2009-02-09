@@ -260,7 +260,7 @@ class DTFinder(targetfinder.TargetFinder):
 		self.images['original'] = imdata['image']
 		self.currentimagedata = imdata
 		self.correlator.setImage(1, self.images['original'])
-		self.setImage(imdata['image'], 'original')
+		self.setImage(imdata['image'], 'Original')
 		if not self.settings['skip']:
 			autofailed = False
 			try:
