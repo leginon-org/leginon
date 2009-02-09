@@ -74,6 +74,7 @@ $apix=($particle->getStackPixelSizeFromStackId($stackId))*1e10;
 // don't think we need to calculate the binned pixel size
 //$apix=($stackparams['bin']) ? $apix*$stackparams['bin'] : $apix;
 $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
+$stackparticles= $particle->getNumStackParticles($stackId);
 
 $html .= "<form name='iterations' method='post' action='$formAction'>\n";
 $html .= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
