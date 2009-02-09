@@ -41,7 +41,10 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 
 	def readImage(self, filename):
 		image = mrc.read(filename)
-		self.setImage(image, 'Image')
+		if image:
+			self.setImage(image, 'Image')
+		else:
+			self.logger.error('Can not load image')
 
 	def matlabFindTargets(self):
 		pymat.put(self.handle, 'focus', [])
