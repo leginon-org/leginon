@@ -14,7 +14,6 @@
 
 
 import os
-
 import sys
 import re
 import shutil
@@ -44,6 +43,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="ID of 3d0 used to initiate refinement", metavar="int")
 		self.parser.add_option("--norefClassId", dest="norefClassId",
 			help="ID of noref class averages used in refinement", metavar="int")	
+		self.parser.add_option("--clusterId", dest="clusterId",
+			help="ID of class averages from new alignment pipeline", metavar="int")
 		self.parser.add_option("--numiters", dest="numiters", type="int",
 			help="total number of iterations", metavar="int")
 		self.parser.add_option("--itn", dest="itn", type="int",
@@ -135,6 +136,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		refineq['runname'] = self.params['runname']
 		refineq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+		refineq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
 		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
@@ -187,16 +189,25 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if modeldata['norefclass'] is not None:
 			norefclassdata = modeldata['norefclass']
 			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+	                norefpath = norefclassdata['norefRun']['path']['path']
+	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
 		elif modeldata['reclass'] is not None:
 			reclassid = modeldata['reclass'].dbid
 			reclassdata = appionData.ApImagicReclassifyData.direct_query(reclassid)
 			norefclassdata = reclassdata['norefclass']
-			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid			
+			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+	                norefpath = norefclassdata['norefRun']['path']['path']
+	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
+		elif modeldata['clusterclass'] is not None:
+			clusterid = modeldata['clusterclass'].dbid			
+			clusterdata = appionData.ApClusteringStackData.direct_query(clusterid)
+			self.params['stackid'] = clusterdata['clusterrun']['alignstack'].dbid
+			clusterpath = clusterdata['path']['path']
+			clsavgfile = os.path.join(clusterpath, clusterdata['avg_imagicfile'])
+			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
+				clsavgfile = clsavgfile[:-4]
 		else:
 			apDisplay.printError("no class averages associated with model in the database")
-		
-		norefpath = norefclassdata['norefRun']['path']['path']
-		clsavgfile = norefpath+"/"+norefclassdata['classFile']
 		
 		
 ################ 		NEED TO SPECIFY THE NUMBER OF CLASS AVERAGES IN ORIGINAL NOREF FILE 	###################
