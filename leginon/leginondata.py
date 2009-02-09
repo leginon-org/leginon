@@ -2066,7 +2066,8 @@ class RaptorProcessorSettingsData(ImageProcessorSettingsData):
 class TransformMatrixData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('image', AcquisitionImageData),
+			('image1', AcquisitionImageData),
+			('image2', AcquisitionImageData),
 			('matrix', sinedon.newdict.DatabaseArrayType),
 		)
 	typemap = classmethod(typemap)

@@ -24,6 +24,11 @@ import gui.wx.DriftManager
 import instrument
 import acquisition
 import rctacquisition
+import libCVwrapper
+import align
+
+class InvalidStagePosition(Exception):
+	pass
 
 class TargetTransformer(object):
 	def lookupMatrix(self, image):
@@ -33,14 +38,14 @@ class TargetTransformer(object):
 		if not results:
 			newmatrix = leginondata.TransformMatrixData()
 			newmatrix['session'] = self.session
-			newmatrix['matrix'] = numpy.identity(2)
+			newmatrix['matrix'] = numpy.identity(3)
 			newmatrix.insert()
 			results = [newmatrix]
 	
 		initialmatrix = None
 		mymatrix = None
 		for matrix in results:
-			resultimage = matrix.special_getitem('image', dereference=False)
+			resultimage = matrix.special_getitem('image1', dereference=False)
 			if resultimage is None:
 				initialmatrix = matrix['matrix']
 				break
@@ -53,15 +58,52 @@ class TargetTransformer(object):
 			return mymatrix
 	
 	def calculateMatrix(self, image1, image2):
-		matrix = numpy.identity(2)
+		array1 = image1['image']
+		array2 = image2['image']
+		print image1['filename']
+		print image2['filename']
+		self.logger.info('Calculating main transform...')
+		if image1['scope']['magnification'] < 2000:
+			for minsize in (160,40,10):
+				shape = array1.shape
+				minsize = minsize * 4096 / shape[0]
+				print minsize
+				resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
+				if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
+					break
+			matrix = resultmatrix
+		else:
+			result = align.findRotationScaleTranslation(array1, array2)
+			rotation, scale, shift, rsvalue, value = result
+			matrix = numpy.array([1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0])
+			matrix = matrix.reshape((3,3))
+			matrix[0,0] = scale*math.cos(rotation)
+			matrix[0,1] = -scale*math.sin(rotation)
+			matrix[1,0] = scale*math.sin(rotation)
+			matrix[1,1] = scale*math.cos(rotation)
+			matrix[2,0] = shift[0]
+			matrix[2,1] = shift[1]
+		print matrix
+		matrixquery = leginondata.TransformMatrixData()
+		matrixquery['session'] = self.session
+		results = matrixquery.query()
+		if not results:
+			newmatrix = leginondata.TransformMatrixData()
+			newmatrix['session'] = self.session
+			newmatrix['image1'] = image1
+			newmatrix['image2'] = image2
+			newmatrix['matrix'] = matrix
+			newmatrix.insert()
+			results = [newmatrix]
+	
 		return matrix
 	
 	def matrixTransform(self, target, matrix,newimage=None):
 			row = target['delta row']
 			col = target['delta column']
-			print newimage
-			row,col = numpy.dot((row,col), matrix)
+			row,col,one = numpy.dot((row,col,1), matrix)
 			newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
+			# Fix here about version
 			newtarget['version'] = 0
 			newtarget['image'] = newimage
 			newtarget['delta row'] = row
@@ -79,7 +121,10 @@ class TargetTransformer(object):
 			parenttarget = parentimage['target']
 			newparenttarget = self.transformTarget(parenttarget)
 			newparentimage = self.reacquire(newparenttarget)
+			if newparentimage is None:
+				return None
 			matrix = self.calculateMatrix(parentimage, newparentimage)
+		print parentimage.dbid,newparentimage.dbid
 		newtarget = self.matrixTransform(target, matrix,newparentimage)
 		return newtarget
 
@@ -176,7 +221,7 @@ class TransformManager(node.Node, TargetTransformer):
 				deltacol = -targetdeltacolumn
 		
 				pixelshift = {'row':deltarow, 'col':deltacol}
-		
+				print "target pixel shift, ,movetype",pixelshift,movetype
 				## figure out scope state that gets to the target
 				calclient = self.calclients[movetype]
 				try:
@@ -209,6 +254,8 @@ class TransformManager(node.Node, TargetTransformer):
 			emtargetdata['beam shift'] = dict(newscope['beam shift'])
 			emtargetdata['stage position'] = dict(newscope['stage position'])
 			emtargetdata['delta z'] = zdiff
+		
+		print	'stage position', emtargetdata['stage position']
 
 		emtargetdata['target'] = targetdata
 
@@ -226,7 +273,11 @@ class TransformManager(node.Node, TargetTransformer):
 		oldimage = results[0]
 		oldemtarget = oldimage['emtarget']
 		movetype = oldemtarget['movetype']
-		emtarget = self.targetToEMTargetData(targetdata,movetype)
+		try:
+			emtarget = self.targetToEMTargetData(targetdata,movetype)
+		except InvalidStagePosition:
+			self.logger.error('Invalid new emtarget')
+			return None
 		presetdata = oldimage['preset']
 		presetname = presetdata['name']
 		channel = int(oldimage['correction channel']==0)
@@ -246,17 +297,18 @@ class TransformManager(node.Node, TargetTransformer):
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
+		self.logger.info('Publishing new transformed image...')
+		self.publish(imagedata, database=True)
 		return imagedata
 
 	def handleTransformTargetEvent(self, ev):
 		self.setStatus('processing')
-
 		oldtarget = ev['target']
-
 		newtarget = self.transformTarget(oldtarget)
-
+		evt = event.TransformTargetDoneEvent()
+		evt['target'] = newtarget
+		self.outputEvent(evt)
 		self.setStatus('idle')
-		self.confirmEvent(ev)
 
 	## much of the following method was stolen from acquisition.py
 	def newImageVersion(self, oldimagedata, newimagedata, correct):
@@ -353,9 +405,9 @@ class TransformManager(node.Node, TargetTransformer):
 		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
 		if correct:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		else:
-			imagedata = self.instrument.getData(data.CameraImageData)
+			imagedata = self.instrument.getData(leginondata.CameraImageData)
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')

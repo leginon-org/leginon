@@ -12,11 +12,26 @@ class TargetHandler(object):
 	'''
 	############# DATABASE INTERACTION #################
 
-	eventinputs = [event.QueuePublishEvent]
-	eventoutputs = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
+	eventinputs = [event.QueuePublishEvent, event.TransformTargetDoneEvent]
+	eventoutputs = [event.ImageTargetListPublishEvent, event.QueuePublishEvent, event.TransformTargetEvent]
 
 	def __init__(self):
 		self.queueupdate = threading.Event()
+		self.addEventInput(event.TransformTargetDoneEvent, self.handleTransformTargetDoneEvent)
+		self.transformtargetevent = threading.Event()
+
+	def handleTransformTargetDoneEvent(self, evt):
+		newtarget = evt['target']
+		self.transformtargetevent.set()
+		self.logger.info('got back a transformed target')
+
+	def requestTransformTarget(self, targetdata):
+		evt = event.TransformTargetEvent()
+		evt['target'] = targetdata
+		self.transformtargetevent.clear()
+		self.logger.info('requesting transformed target')
+		self.outputEvent(evt)
+		self.transformtargetevent.wait()
 
 	def transpose_points(self, points):
 		newpoints = []

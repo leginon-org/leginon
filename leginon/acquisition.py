@@ -119,6 +119,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for process': False,
 		'wait for rejects': False,
 		'wait for reference': False,
+		'wait for transform': False,
 		#'duplicate targets': False,
 		#'duplicate target type': 'focus',
 		'iterations': 1,
@@ -303,6 +304,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 				break
 			if ret == 'repeat':
 				return repeat
+
+		## This is a test
+		if self.settings['wait for transform']:
+			self.setStatus('waiting')
+			self.requestTransformTarget(targetdata)
+			self.setStatus('processing')
+			self.logger.info('New target id  %d' % (targetdata.dbid))
 
 		self.reportStatus('processing', 'Processing complete')
 
