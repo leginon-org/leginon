@@ -17,7 +17,11 @@ import gui.wx.Reference
 
 class SettingsDialog(gui.wx.Reference.SettingsDialog):
 	def initialize(self):
-		szr = gui.wx.Reference.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
+	def initialize(self):
+		szr = gui.wx.Reference.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Check Zero Loss Peak Shift')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

@@ -55,7 +55,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onImageSettings(self, evt):
 		if evt.name == 'Image':
-			dialog = OriginalSettingsDialog(self)
+			dialog = OriginalSettingsDialog(self,'Image')
 			if dialog.ShowModal() == wx.ID_OK:
 				filename = self.node.settings['test image']
 				if filename:
@@ -96,14 +96,18 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return OriginalScrolledSettings(self,self.scrsize,False)
+
+class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'test image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
 								labelText='Test Image:', fileMask='*.mrc')
 		self.widgets['test image'].SetMinSize((500,50))
-		self.bok.SetLabel('&Load')
+		self.dialog.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['test image'], (0, 0), (1, 1),
@@ -115,7 +119,11 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+	def initialize(self):
+		tfsbsz = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Matlab Module')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		#gui.wx.Settings.Dialog.initialize(self)

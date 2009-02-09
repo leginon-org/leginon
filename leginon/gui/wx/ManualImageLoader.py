@@ -134,12 +134,16 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Loading')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
+		self.panel.setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['save image'] = wx.CheckBox(self, -1,
 																							'Save image to the database')

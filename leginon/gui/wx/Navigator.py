@@ -274,7 +274,11 @@ class StageLocationsDialog(wx.Dialog):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Navigation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		overridebox = wx.StaticBox(self, -1, "Override Preset")
@@ -317,7 +321,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
+		self.panel.setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 

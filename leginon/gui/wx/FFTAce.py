@@ -32,7 +32,11 @@ class Panel(gui.wx.FFTMaker.Panel):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'ACE')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Images in Database')

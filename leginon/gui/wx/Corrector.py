@@ -276,7 +276,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Clipping')
@@ -287,7 +291,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszref = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
+		self.panel.setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
 		self.widgets['channels'] = IntEntry(self, -1, min=1, max=99, chars=2)

@@ -58,7 +58,7 @@ class Panel(gui.wx.Acquisition.Panel):
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
-		dialog.onTableauTypeChoice()
+		dialog.scrsettings.onTableauTypeChoice()
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -70,7 +70,11 @@ class Panel(gui.wx.Acquisition.Panel):
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		sizers = gui.wx.Acquisition.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+	def initialize(self):
+		sizers = gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Tilt Imaging and Correlation')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

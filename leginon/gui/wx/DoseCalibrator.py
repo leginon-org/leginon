@@ -35,7 +35,11 @@ class Panel(gui.wx.Calibrator.Panel):
 
 class DoseCalibrationDialog(gui.wx.Settings.Dialog):
     def initialize(self):
-        gui.wx.Settings.Dialog.initialize(self)
+        return DoseScrolledSettings(self,self.scrsize,False)
+
+class DoseScrolledSettings(gui.wx.Settings.ScrolledDialog):
+    def initialize(self):
+        gui.wx.Settings.ScrolledDialog.initialize(self)
         sb = wx.StaticBox(self, -1, 'Main Screen')
         sbszscreen = wx.StaticBoxSizer(sb, wx.VERTICAL)
         sb = wx.StaticBox(self, -1, 'Dose Measurement')

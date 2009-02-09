@@ -77,13 +77,17 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return OriginalScrolledSettings(self,self.scrsize,False)
+
+class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Original Image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['image filename'].SetMinSize((500,50))
-		self.bok.SetLabel('&Load')
+		self.dialog.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
@@ -94,7 +98,11 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return TemplateScrolledSettings(self,self.scrsize,False)
+
+class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Template Correlation')
@@ -158,12 +166,16 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsztemplate, sbszlpf, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
 
 class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ThresholdScrolledSettings(self,self.scrsize,False)
+
+class ThresholdScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Threshold')
 		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -193,12 +205,16 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszthreshold, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.threshold()
 
 class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return BlobsScrolledSettings(self,self.scrsize,False)
+
+class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Blob finding')
 		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -244,12 +260,16 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszblobs, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.findBlobs()
 
 class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return LatticeScrolledSettings(self,self.scrsize,False)
+
+class LatticeScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Lattice Fitting')
 		sbszlattice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Hole Statistics')
@@ -297,12 +317,16 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszlattice, sbszstats, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.fitLattice()
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return FinalScrolledSettings(self,self.scrsize,False)
+
+class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Template Thickness')
@@ -397,17 +421,21 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszice, sbsztt, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
 
 	def onClearButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+	def initialize(self):
+		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Hole Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

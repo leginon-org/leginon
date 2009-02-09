@@ -114,10 +114,18 @@ class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 	def __init__(self, parent, parameter, parametername):
 		self.parameter = parameter
 		self.parametername = parametername
-		gui.wx.Settings.Dialog.__init__(self, parent)
+		gui.wx.Settings.Dialog.__init__(self,parent)
+	def initialize(self):
+		return MatrixScrolledSettings(self,self.scrsize,False,self.parameter,self.parametername)
+
+class MatrixScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def __init__(self, parent, size=(200,200), scrolling=False, parameter=None, parametername=None):
+		self.parameter = parameter
+		self.parametername = parametername
+		gui.wx.Settings.ScrolledDialog.__init__(self,parent,size,scrolling)
 
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		self.sb = wx.StaticBox(self, -1, '%s calibration' % self.parametername)
 		sbsz = wx.StaticBoxSizer(self.sb, wx.VERTICAL)
 

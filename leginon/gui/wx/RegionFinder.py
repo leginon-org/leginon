@@ -77,13 +77,17 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return OriginalScrolledSettings(self,self.scrsize,False)
+
+class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Original Image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['image filename'].SetMinSize((500,50))
-		self.bok.SetLabel('&Load')
+		self.dialog.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
@@ -95,6 +99,11 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 class PerimeterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
+		return PerimeterScrolledSettings(self,self.scrsize,False)
+
+class PerimeterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		gui.wx.Settings.Dialog.initialize(self)
 
 		szoptions = wx.GridBagSizer(5, 5)
@@ -125,12 +134,16 @@ class PerimeterSettingsDialog(gui.wx.Settings.Dialog):
 		return [szoptions, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.testFindRegions()
 
 class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return RasterScrolledSettings(self,self.scrsize,False)
+
+class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		szoptions = wx.GridBagSizer(5, 5)
 
@@ -155,13 +168,17 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		return [szoptions, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.testMakeRaster()
 
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return FinalScrolledSettings(self,self.scrsize,False)
+
+class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -249,7 +266,7 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszice, szt, szbutton]
 
 	def onAnalyzeIceButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
 
 

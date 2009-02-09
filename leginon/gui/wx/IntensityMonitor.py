@@ -59,14 +59,18 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Loop')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		self.panel.setInstrumentSelection(self.instrumentselection)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 

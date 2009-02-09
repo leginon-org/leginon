@@ -12,6 +12,7 @@
 # $Locker:  $
 
 import wx
+import wx.lib.scrolledpanel as scrolledpanel
 from gui.wx.Choice import Choice
 import gui.wx.Camera
 import gui.wx.Entry
@@ -50,6 +51,44 @@ attributes = {
 	gui.wx.Instrument.SelectionPanel: ('GetValue', 'SetValue', None),
 }
 
+class ScrolledDialog(scrolledpanel.ScrolledPanel):
+	def __init__(self, parent, size=(200,200),scrolling=False):
+		self.node = parent.node
+		self.panel = parent.GetParent()
+		self.dialog = parent
+		scrolledpanel.ScrolledPanel.__init__(self,parent,size=size,style=wx.TAB_TRAVERSAL)
+		if scrolling:
+			self.SetupScrolling(scroll_x=True, scroll_y=True)
+		else:
+			self.SetupScrolling(scroll_x=False, scroll_y=False)
+
+		self.widgets = {}
+
+		self.growrows = None
+		sz = self.initialize()
+		szsp = wx.GridBagSizer(5, 5)
+		for i, s in enumerate(sz):
+			szsp.Add(s, (i, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+			if self.growrows is not None and self.growrows[i] is True:
+				szsp.AddGrowableRow(i)
+		szsp.Layout()
+		if scrolling:
+			self.SetSizer(szsp)
+		else:
+			self.SetSizerAndFit(szsp)
+		self.Layout()
+		virtualsize = self.GetVirtualSize()
+		self.Fit()
+		parent.widgets = self.widgets
+
+	def initialize(self):
+		return []
+###
+#	ScrolledDialog is placed inside Dialog for SettingsDialog so that
+#	it can be fit on 12" laptop.  As a result, some of the functions are
+#	only availabe at dialog lever and another level called scrsettings
+#	is included as a child of the dialog where settings sizers are difined.
+###
 class Dialog(wx.Dialog):
 	def __init__(self, parent, title=None):
 		self.node = parent.node
@@ -71,14 +110,15 @@ class Dialog(wx.Dialog):
 		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
 
 		self.growrows = None
-		sz = self.initialize()
 
 		szmain = wx.GridBagSizer(5, 5)
-		for i, s in enumerate(sz):
-			szmain.Add(s, (i, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-			if self.growrows is not None and self.growrows[i] is True:
-				szmain.AddGrowableRow(i)
-		szmain.Add(szbuttons, (i+1, 0), (1, 1),
+		# leave some room around the display but not expand if on large screen
+		display = wx.DisplaySize()
+		self.scrsize = (min(1050,display[0])-150,min(900,display[1])-150)
+		self.scrsettings = self.initialize()
+		szmain.Add(self.scrsettings, (0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 10)
+		szmain.Add(szbuttons, (1, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 		szmain.AddGrowableCol(0)
 
@@ -116,7 +156,8 @@ class Dialog(wx.Dialog):
 				self.Bind(attributes[widget.__class__][2], self.onModified)
 
 	def initialize(self):
-		return []
+		scr = ScrolledSettings(self,self.scrsize,False)
+		return scr
 
 	def onModified(self, evt):
 		if self.getSettings(self.widgets) == self.settings:

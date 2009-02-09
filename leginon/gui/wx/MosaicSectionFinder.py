@@ -71,7 +71,11 @@ class Panel(gui.wx.MosaicClickTargetFinder.Panel):
 
 class RegionSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return RegionScrolledSettings(self,self.scrsize,False)
+
+class RegionScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		szoptions = wx.GridBagSizer(5, 5)
 
@@ -149,16 +153,20 @@ class RegionSettingsDialog(gui.wx.Settings.Dialog):
 		return [szoptions, szsections, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.findRegions).start()
 		
 	def onClearButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.clearRegions()
 
 class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return RasterScrolledSettings(self,self.scrsize,False)
+
+class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
 		sbszauto = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -220,22 +228,26 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		return [szoptions, szbutton]
 
 	def onAutoButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		s,a = self.node.autoSpacingAngle()
 		self.widgets['raster spacing'].SetValue(s)
 		self.widgets['raster angle'].SetValue(a)
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.makeRaster).start()
 
 	def onClearButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.clearTargets('acquisition')
 
 class FocusSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return FocusScrolledSettings(self,self.scrsize,False)
+
+class FocusScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -248,7 +260,7 @@ class FocusSettingsDialog(gui.wx.Settings.Dialog):
 		return [szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.makeFocusTarget).start()
 
 

@@ -28,7 +28,11 @@ class Panel(gui.wx.TargetFilter.Panel):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sbr = wx.StaticBox(self, -1, 'Target Raster')
 		sbszr = wx.StaticBoxSizer(sbr, wx.VERTICAL)
 		sbcalc = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
@@ -138,11 +142,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		return [sz]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.onTest).start()
 
 	def onAutoButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		s,a = self.node.autoSpacingAngle()
 		self.widgets['raster spacing'].SetValue(s)
 		self.widgets['raster angle'].SetValue(a)

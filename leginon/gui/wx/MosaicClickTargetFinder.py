@@ -155,8 +155,12 @@ class TilesDialog(wx.Dialog):
 class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 	def __init__(self, parent):
 		gui.wx.Settings.Dialog.__init__(self, parent, 'Mosaic Settings')
-
 	def initialize(self):
+		return MosaicScrolledSettings(self,self.scrsize,False)
+
+class MosaicScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Mosaics')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -212,15 +216,20 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 	def onCreateButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.createMosaicImage()
-		self.bsave.Enable(self.node.hasMosaicImage())
+		self.dialog.scrsettings.bsave.Enable(self.node.hasMosaicImage())
 
 	def onSaveButton(self, evt):
 		self.node.publishMosaicImage()
 
 class LPFSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
+		return LPFScrolledSettings(self,self.scrsize,False)
+
+class LPFScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['lpf'] = {}
@@ -245,6 +254,11 @@ class LPFSettingsDialog(gui.wx.Settings.Dialog):
 
 class BlobSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
+		return BlobsScrolledSettings(self,self.scrsize,False)
+
+class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Blob Finding')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0, chars=6)

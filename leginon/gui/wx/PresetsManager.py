@@ -934,7 +934,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Preset Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

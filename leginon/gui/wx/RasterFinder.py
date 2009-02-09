@@ -79,13 +79,17 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return OriginalScrolledSettings(self,self.scrsize,False)
+
+class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Original Image')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['image filename'].SetMinSize((500,50))
-		self.bok.SetLabel('&Load')
+		self.dialog.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['image filename'], (0, 0), (1, 1),
@@ -97,7 +101,11 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 class RasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return RasterScrolledSettings(self,self.scrsize,False)
+
+class RasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Raster')
 		sbszraster = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Spacing/Angle Calculator')
@@ -214,7 +222,7 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		return
 
 	def onAutoButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		s,a = self.node.autoSpacingAngle()
 		if s is not None:
 			self.widgets['raster spacing'].SetValue(s)
@@ -230,12 +238,16 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 			self.widgets['raster center y'].Enable(True)
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.createRaster()
 
 class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return PolygonScrolledSettings(self,self.scrsize,False)
+
+class PolygonScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Polygon')
 		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets['select polygon'] = wx.CheckBox(self, -1, 'Wait for polygon selection')
@@ -258,19 +270,27 @@ class PolygonSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszpolygon, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.setPolygon()
 
 class PolygonRasterSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return PolygonRasterScrolledSettings(self,self.scrsize,False)
+
+class PolygonRasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Polygon Raster (No Settings)')
 		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		return [sbszpolygon,]
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return FinalScrolledSettings(self,self.scrsize,False)
+
+class FinalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Ice Analysis')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -360,17 +380,21 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszice, szt, szbutton]
 
 	def onAnalyzeIceButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.ice).start()
 
 	def onClearButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.clearTargets('acquisition')
 		self.node.clearTargets('focus')
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+	def initialize(self):
+		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Raster Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

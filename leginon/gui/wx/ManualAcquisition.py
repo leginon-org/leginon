@@ -301,7 +301,11 @@ class GridDialog(wx.Dialog):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Main Screen')
@@ -312,7 +316,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszdefocus = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		self.panel.setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)

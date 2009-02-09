@@ -44,7 +44,7 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
 		if self.node.mag != self.oldmag:
-			self.measuredialog.measurements.setMeasurements([])
+			self.measuredialog.scrsettings.measurements.setMeasurements([])
 		if self.node.imagepixelsize is not None:
 			pixellabel = 'x was '+str(self.node.imagepixelsize)+' m'
 		else:
@@ -67,7 +67,11 @@ class Panel(gui.wx.Calibrator.Panel):
 
 class MeasureSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return MeasureScrolledSettings(self,self.scrsize,False)
+
+class MeasureScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Pixel Size Measurement')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbl = wx.StaticBox(self, -1, 'Lattice Parameters')
@@ -153,7 +157,7 @@ class MeasureSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 	def onCalculateButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		pixelsize = self.node.calculatePixelSize()
 		if pixelsize is not None:
 			self.measurements.addMeasurement(pixelsize)

@@ -97,7 +97,11 @@ class Panel(gui.wx.Node.Panel):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'General Target Finder Settings ')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -132,7 +136,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 	def onQueueCheckbox(self, evt):
 		state = evt.IsChecked()
-		parent = self.GetParent()
+		parent = self.panel
 		parent.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE, state)
 		evt.Skip()
 

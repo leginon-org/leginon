@@ -104,15 +104,19 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
-		sb = wx.StaticBox(self, -1, imagetype)
-		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		parent = self.GetParent()
+		return OriginalScrolledSettings(self,self.scrsize,False)
+
+class OriginalScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		parent = self.panel
 		parameter = parent.cparameter.GetStringSelection()
 		imagetype=str(parameter)+' filename'
+		gui.wx.Settings.ScrolledDialog.initialize(self)
+		sb = wx.StaticBox(self, -1, imagetype)
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		self.widgets[imagetype] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets[imagetype].SetMinSize((500,50))
-		self.bok.SetLabel('&Load')
+		self.dialog.bok.SetLabel('&Load')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets[imagetype], (0, 0), (1, 1),
@@ -124,7 +128,11 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return TemplateScrolledSettings(self,self.scrsize,False)
+
+class TemplateScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Tilt Axis')
@@ -184,12 +192,16 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsztemplate, sbszlpf, sbszta, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.correlateTemplate()
 
 class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return EdgeScrolledSettings(self,self.scrsize,False)
+
+class EdgeScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Edge Finding')
@@ -250,12 +262,16 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszlpf, sbszedge, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.findEdges()
 
 class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ThresholdScrolledSettings(self,self.scrsize,False)
+
+class ThresholdScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Threshold')
 		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -281,12 +297,16 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszthreshold, szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.threshold()
 
 class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return BlobsScrolledSettings(self,self.scrsize,False)
+
+class BlobsScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Blob finding')
 		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -330,13 +350,13 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszblobs,szbuttonpick,szbutton]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		self.node.findBlobs()
 		self.node.getHoleDepth()
 
 	def onPickedBlobButton(self, evt):
-		self.setNodeSettings()
-		parent = self.GetParent()
+		self.dialog.setNodeSettings()
+		parent = self.panel
                 pixels=parent.imagepanel.getTargetPositions('Blobs')
 		if (len(pixels)==2):
 			self.node.makeBlobs(pixels)
@@ -344,7 +364,11 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 
 class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return PickHoleScrolledSettings(self,self.scrsize,False)
+
+class PickHoleScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Hole Statistics')
 		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -382,22 +406,26 @@ class PickHoleSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszstats, szbuttonshift,szbutton]
 
 	def onShiftButton(self, evt):
-		self.setNodeSettings()
-		parent = self.GetParent()
+		self.dialog.setNodeSettings()
+		parent = self.panel
                 pixels=parent.imagepanel.getTargetPositions('PickHoles')
 		shift=self.node.correlate_I_I0()
 		newtargets=self.node.applyPickTargetShift(pixels,shift)
 		parent.imagepanel.setTargets('PickHoles', newtargets['PickHoles'])
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
-		parent = self.GetParent()
+		self.dialog.setNodeSettings()
+		parent = self.panel
                 pixels=parent.imagepanel.getTargetPositions('PickHoles')
 		self.node.getPickHoleStats(pixels)
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
-		tfsd = gui.wx.TargetFinder.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.TargetFinder.ScrolledSettings):
+	def initialize(self):
+		tfsd = gui.wx.TargetFinder.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Hole Depth Finder Settings')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

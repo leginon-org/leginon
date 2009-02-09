@@ -51,7 +51,11 @@ class Panel(gui.wx.Acquisition.Panel):
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
-		sizers = gui.wx.Acquisition.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+	def initialize(self):
+		sizers = gui.wx.Acquisition.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'RCT Options')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

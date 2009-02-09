@@ -24,7 +24,11 @@ class Panel(gui.wx.TargetFilter.Panel):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Target Filter')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 

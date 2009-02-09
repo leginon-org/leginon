@@ -20,7 +20,11 @@ import gui.wx.ToolBar
 
 class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
-		szcal = gui.wx.Calibrator.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Calibrator.ScrolledSettings):
+	def initialize(self):
+		szcal = gui.wx.Calibrator.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Measurement')
 		sbszmeasure = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sb = wx.StaticBox(self, -1, 'Modeling')

@@ -44,7 +44,11 @@ class BeamFixerPanel(gui.wx.Reference.ReferencePanel, gui.wx.Instrument.Selectio
 
 class SettingsDialog(gui.wx.Reference.SettingsDialog):
 	def initialize(self):
-		refsizers = gui.wx.Reference.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Reference.ScrolledSettings):
+	def initialize(self):
+		refsizers = gui.wx.Reference.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Beam Fixer')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -59,7 +63,7 @@ class SettingsDialog(gui.wx.Reference.SettingsDialog):
 		self.widgets['override preset'] = wx.CheckBox(self, -1,
 																								'Override Preset')
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
+		self.panel.setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 

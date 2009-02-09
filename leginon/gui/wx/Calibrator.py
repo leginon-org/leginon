@@ -24,14 +24,19 @@ import gui.wx.Instrument
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		scr = ScrolledSettings(self,self.scrsize,False)
+		return scr
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['correlation type'] = Choice(self, -1, choices=self.node.cortypes)
 		self.widgets['override preset'] = wx.CheckBox(self, -1, 'Override Preset')
 		self.widgets['instruments'] = gui.wx.Instrument.SelectionPanel(self)
-		self.GetParent().setInstrumentSelection(self.widgets['instruments'])
+		self.panel.setInstrumentSelection(self.widgets['instruments'])
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 

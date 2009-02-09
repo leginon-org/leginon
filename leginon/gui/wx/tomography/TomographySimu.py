@@ -29,7 +29,11 @@ class ImagePanel(object):
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
     def initialize(self):
-        szs = gui.wx.Acquisition.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,True)
+
+class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
+    def initialize(self):
+        szs = gui.wx.Acquisition.ScrolledSettings.initialize(self)
         simusb = wx.StaticBox(self, -1, 'Simulation')
         simusbsz = wx.StaticBoxSizer(simusb, wx.VERTICAL)
         miscsb = wx.StaticBox(self, -1, 'Misc.')

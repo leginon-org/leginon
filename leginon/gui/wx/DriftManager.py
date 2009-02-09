@@ -92,14 +92,18 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Drift Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.GetParent().setInstrumentSelection(self.instrumentselection)
+		self.panel.setInstrumentSelection(self.instrumentselection)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 

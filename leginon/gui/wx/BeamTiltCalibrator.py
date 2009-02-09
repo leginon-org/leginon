@@ -23,7 +23,11 @@ import gui.wx.ToolBar
 
 class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
-		sizers = gui.wx.Calibrator.SettingsDialog.initialize(self)
+		return ScrolledSettings(self,self.scrsize,False)
+
+class ScrolledSettings(gui.wx.Calibrator.ScrolledSettings):
+	def initialize(self):
+		sizers = gui.wx.Calibrator.ScrolledSettings.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Beam Tilt')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -113,11 +117,11 @@ class Panel(gui.wx.Calibrator.Panel):
 		for tool in tools:
 			self.toolbar.EnableTool(tool, enable)
 
-		self.measure_dialog.measure.Enable(enable)
+		self.measure_dialog.scrsettings.measure.Enable(enable)
 		if self.node.measurement:
-			self.measure_dialog.correctdefocus.Enable(enable)
-			self.measure_dialog.correctstig.Enable(enable)
-		self.measure_dialog.resetdefocus.Enable(enable)
+			self.measure_dialog.scrsettings.correctdefocus.Enable(enable)
+			self.measure_dialog.scrsettings.correctstig.Enable(enable)
+		self.measure_dialog.scrsettings.resetdefocus.Enable(enable)
 
 	def _acquisitionEnable(self, enable):
 		self.instrumentEnable(enable)
@@ -142,17 +146,17 @@ class Panel(gui.wx.Calibrator.Panel):
 			label = '(Not measured)'
 		else:
 			label = '%g' % evt.defocus
-		self.measure_dialog.labels['defocus'].SetLabel(label)
+		self.measure_dialog.scrsettings.labels['defocus'].SetLabel(label)
 
 		for axis, value in evt.stig.items():
 			if value is None:
 				label = '(Not measured)'
 			else:
 				label = '%g' % value
-			self.measure_dialog.labels['stigmator'][axis].SetLabel(label)
+			self.measure_dialog.scrsettings.labels['stigmator'][axis].SetLabel(label)
 
-		self.measure_dialog.Layout()
-		self.measure_dialog.Fit()
+		self.measure_dialog.scrsettings.Layout()
+		self.measure_dialog.scrsettings.Fit()
 
 	def measurementDone(self, defocus, stig):
 		evt = gui.wx.Events.MeasurementDoneEvent()
@@ -229,7 +233,11 @@ class Panel(gui.wx.Calibrator.Panel):
 
 class DefocusSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return DefocusScrolledSettings(self,self.scrsize,False)
+
+class DefocusScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Defocus Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -254,7 +262,11 @@ class DefocusSettingsDialog(gui.wx.Settings.Dialog):
 
 class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return StigmatorScrolledSettings(self,self.scrsize,False)
+
+class StigmatorScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Stigmator Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -264,12 +276,12 @@ class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 
 		label = wx.StaticText(self, -1, 'Beam tilt (+/-)')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['stig beam tilt'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['stig beam tilt'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		label = wx.StaticText(self, -1, 'Delta stig')
-		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['stig delta'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['stig delta'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -277,7 +289,11 @@ class StigmatorSettingsDialog(gui.wx.Settings.Dialog):
 
 class ComafreeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		gui.wx.Settings.Dialog.initialize(self)
+		return ComafreeScrolledSettings(self,self.scrsize,False)
+
+class ComafreeScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Coma-free Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -365,8 +381,12 @@ class AlignRotationCenterDialog(wx.Dialog):
 
 class MeasureDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
+		return MeasureScrolledSettings(self,self.scrsize,False)
 
-		gui.wx.Settings.Dialog.initialize(self)
+class MeasureScrolledSettings(gui.wx.Settings.ScrolledDialog):
+	def initialize(self):
+
+		gui.wx.Settings.ScrolledDialog.initialize(self)
 		sb = wx.StaticBox(self, -1, 'Parameters')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
@@ -425,20 +445,20 @@ class MeasureDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 	def onMeasureButton(self, evt):
-		self.setNodeSettings()
-		self.GetParent()._calibrationEnable(False)
+		self.dialog.setNodeSettings()
+		self.panel._calibrationEnable(False)
 		threading.Thread(target=self.node.measure).start()
 
 	def onCorrectDefocusButton(self, evt):
-		self.GetParent().instrumentEnable(False)
+		self.panel.instrumentEnable(False)
 		threading.Thread(target=self.node.correctDefocus).start()
 
 	def onCorrectStigButton(self, evt):
-		self.GetParent().instrumentEnable(False)
+		self.panel.instrumentEnable(False)
 		threading.Thread(target=self.node.correctStigmator).start()
 
 	def onResetDefocusButton(self, evt):
-		self.GetParent().instrumentEnable(False)
+		self.panel.instrumentEnable(False)
 		threading.Thread(target=self.node.resetDefocus).start()
 
 class EditFocusCalibrationDialog(gui.wx.MatrixCalibrator.EditMatrixDialog):
