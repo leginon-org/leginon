@@ -95,7 +95,7 @@ class TomographySimu(acquisition.Acquisition):
 		if self.simuseries is None:
 			self.simuseries = 1
 		allseries_num = self.getTiltSeriesNumbers()
-		if len(allseries_num) == 0 or allseries_num[1] is None:
+		if len(allseries_num) == 0 or len(allseries_num) < 1 or allseries_num[0] is None:
 			self.logger.error('No tomography tilt series in this session')
 			return None
 		if self.simuseries not in allseries_num:
