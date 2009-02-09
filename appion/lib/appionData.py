@@ -1214,6 +1214,7 @@ class ApImagic3dRefineRunData(Data):
 			('project|projects|project', int),
 			('runname', str),
 			('norefclass', ApNoRefClassRunData),
+			('clusterclass', ApClusteringStackData),
 			('imagic3d0run', ApImagic3d0Data),
 			('boxsize', int),
 			('pixelsize', float),
