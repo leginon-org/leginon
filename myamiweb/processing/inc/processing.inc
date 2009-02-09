@@ -876,10 +876,20 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 	$jobfile = "$runname.appionsub.job";
 	$logfile = "$runname.appionsub.log";
 
-	// create appion command
-	$filtcommand = ereg_replace("\'","", $command);
-	//$filtcommand = preg_replace("/[\n\r]/", " -- ", $filtcommand);
-	$apcmd = "webcaller.py '".$filtcommand."' $procdir/$logfile";
+	if (is_array($command)) {
+		$apcmd = array();
+		foreach ($command as $cmd) {
+        		$filtcommand = ereg_replace("\'","", $cmd);;
+			$apcmd[] = "webcaller.py '".$filtcommand."' $procdir/$logfile"."\n";
+		}
+	}
+	else {
+	        // create appion command
+	        $filtcommand = ereg_replace("\'","", $command);
+	        //$filtcommand = preg_replace("/[\n\r]/", " -- ", $filtcommand);
+		$apcmd = "webcaller.py '".$filtcommand."' $procdir/$logfile";
+	}
+
 	$cmd = "mkdir -p $procdir;";
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
@@ -907,7 +917,12 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 
 		// create virtual window for matlab images
 		if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
-		$jobtext .= "$apcmd\n";
+		if (is_array($command)) {
+			foreach ($apcmd as $cmd) {
+				$jobtext .= "$cmd\n";
+			}
+		}
+		else $jobtext .= "$apcmd\n";
 		$jobtext .= "\nupdateAppionDB.py $jobid D $projectid\n\n";
 		$jobtext .= "exit\n"; 
 	
