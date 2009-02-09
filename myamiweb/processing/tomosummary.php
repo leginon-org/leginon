@@ -52,11 +52,18 @@ if ($tomograms) {
 			$number = $tomogram['number'];
 			$center0 = $particle->getTomoCenter($tomogram['centerx'],
 					$tomogram['centery'],$tomogram['prtlimage'],$tomogram['tiltseries']);
+			$center0['x'] = floor($center0['x']);
+			$center0['y'] = floor($center0['y']);
 		} else {
-			$number = '';
-			$center0 = Null;
+			if ($tomogram['full']) {
+				$number = $tomogram['number'];
+				$center0 = array('x'=>'?','y'=>'?');
+			} else {
+				$number = '';
+				$center0 = Null;
+			}
 		}
-		$centerprint = ($center0) ? '('.floor($center0['x']).','.floor($center0['y']).')' : 'Full';
+		$centerprint = ($tomogram['full']) ? '('.$center0['x'].','.$center0['y'].')' : 'Full';
 		// update description
 		if ($_POST['updateDesc'.$tomogramid]) {
 			updateDescription('ApTomogramData', $tomogramid, $_POST['newdescription'.$tomogramid]);

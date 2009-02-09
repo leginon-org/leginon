@@ -122,16 +122,16 @@ foreach ($axes as $axis) {
 	$flvfile = $tomogram['path']."/minitomo".$axes[0].".flv";
 	if (file_exists($flvfile)) {
 		echo "<table><tr><td>Projection</td><td>Slicing Through</td></tr>";
-		foreach ($axes as $axis) {
 			$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
 			$projfile = $tomogram['path']."/projection".$axis.".jpg";
 			if (file_exists($flvfile)) {
 				if ($size=getflvsize($flvfile)) {
 					list($flvwidth, $flvheight)=$size;
 				}
-				$colwidth = 180;
+				$maxcolwidth = 400;
 				echo "<tr><td>";
 				$imagesizes = getimagesize($projfile);
+				$colwidth = ($maxcolwidth < $flvwidth) ? $maxcolwidth : $flvwidth;
 				$rowheight = $colwidth * $flvheight / $flvwidth;
 				echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' width='".$colwidth."'>";
 				echo "</td><td>";
@@ -154,7 +154,6 @@ foreach ($axes as $axis) {
 					}" />
 				</object>';
 				echo "</td></tr>";	
-			}
 		}
 	}
 	echo "</table>";
