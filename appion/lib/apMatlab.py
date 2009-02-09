@@ -27,7 +27,7 @@ def runAce(matlab, imgdata, params, showprev=True):
 		if bestctfvalue:
 			print ( "Prev best: '"+bestctfvalue['acerun']['name']+"', conf="+
 				apDisplay.colorProb(bestconf)+", defocus="+str(round(-1.0*abs(bestctfvalue['defocus1']*1.0e6),2))+
-				" microns, resamplefr="+str(bestctfvalue['acerun']['aceparams']['resamplefr']) )
+				" microns" )
 
 	if params['uncorrected']:
 		tmpname='temporaryCorrectedImage.mrc'
