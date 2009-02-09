@@ -122,7 +122,7 @@ class aceLoop(appionLoop2.AppionLoop):
 			help="overlap, default=2", metavar="#")	
 		self.parser.add_option("--fieldsize", dest="fieldsize", type="int", default=512,
 			help="fieldsize, default=512", metavar="#")
-		self.parser.add_option("--resamplefr", dest="resamplefr", type="int", default=1,
+		self.parser.add_option("--resamplefr", dest="resamplefr", type="float", default=1.5,
 			help="resamplefr, default=1", metavar="#")
 		self.parser.add_option("--drange", dest="drange", type="int", default=0,
 			help="drange, default=0", metavar="#")
