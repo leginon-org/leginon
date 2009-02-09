@@ -146,6 +146,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 }
 
 function runUploadImage() {
+	$projectId = $_SESSION['projectId'];
 	$expId = $_POST['expId'];
 	$sessionname = $_POST['sessionname'];
 	$batch = $_POST['batch'];
@@ -155,14 +156,27 @@ function runUploadImage() {
 	$outdir = $_POST['outdir'];
 
 	$command = "uploadimage.py ";
-	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--projectid=".$projectId." ";
 
 	//make sure a session name was entered if upload an independent file
 	if (!$sessionname) createUploadImageForm("<B>ERROR:</B> Enter a session name of the image");
-
+	$leginon = new leginondata();
+	$has_session = $leginon->getSessions('',false,$sessionname);
+	$session_in_project = $leginon->getSessions('',$projectId,$sessionname);
+	if ($has_session && !$session_in_project) createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
+	if ($session_in_project) $warning = ("<B>Warning:</B>  Will append to an existing session");
 	//make sure a information batch file was provided
-	if (!$batch) createUploadImageForm("<B>ERROR:</B> Enter a batch file with path");
-  
+	if (!$batch or !file_exists($batch)) createUploadImageForm("<B>ERROR:</B> Enter a batch file with path");
+	//make sure  the batch file contains 7 or 8 fields separated by tab at each line
+	$bf = file($batch);
+	foreach ($bf as $line) {
+		$items = explode("\t",$line);
+		if (count($items)!=7  && count($items)!=8) {
+			$badbatch = true;
+			break;
+		}
+	}
+	if ($badbatch) createUploadImageForm("<B>ERROR:</B> Invalid format in the batch file");
 	// make sure there are valid instrument
 	if (!$tem) createUploadImageForm("<B>ERROR:</B> Choose a tem where the images are acquired");
 	if (!$cam) createUploadImageForm("<B>ERROR:</B> Choose a camera where the images are acquired");
@@ -211,6 +225,7 @@ function runUploadImage() {
 	else processing_header("UploadImage Command","UploadImage Command");
 	
 	// rest of the page
+	echo"<font class='apcomment'>".$warning."</font>";
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
