@@ -70,7 +70,7 @@ class centerStackScript(appionScript.AppionScript):
 		numparticles = len(f.readlines())
 		f.close()
 		self.params['description'] += (
-			(" ... %d centered particle substack of stackid %d" 
+			(" ... %d eman centered substack id %d" 
 			% (numparticles, self.params['stackid']))
 		)
 		
