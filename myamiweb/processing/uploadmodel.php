@@ -284,7 +284,7 @@ function runUploadModel() {
 				}
 			}
 		}
-		else $status = "Job did not run, contact the appion team";
+		else $status = "Job did not run, contact the appion team: $jobf";
 		processing_header("Model Upload", "Model Upload");
 		echo "$status\n";
 	}
@@ -293,22 +293,22 @@ function runUploadModel() {
 	
 	// rest of the page
 	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
+	<table class='tableborder' width='600' border='1'>
+	<tr><td colspan='2'>
 	<B>UploadModel Command:</B><BR>
 	$command
-	</TD></TR>
-	<TR><TD>old model id</TD><TD>$modelid</TD></TR>
-	<TR><TD>3dDensity id</TD><TD>$densityid</TD></TR>
-	<TR><TD>model name</TD><TD>$model</TD></TR>
-	<TR><TD>symmetry ID</TD><TD>$sym</TD></TR>
-	<TR><TD>apix</TD><TD>$apix</TD></TR>
-	<TR><TD>res</TD><TD>$res</TD></TR>
-	<TR><TD>contour</TD><TD>$contour</TD></TR>
-	<TR><TD>zoom</TD><TD>$contour</TD></TR>
-	<TR><TD>session</TD><TD>$session</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	</TABLE>\n";
+	</td></tr>
+	<tr><td>old model id</td><td>$modelid</td></tr>
+	<tr><td>3dDensity id</td><td>$densityid</td></tr>
+	<tr><td>model name</td><td>$model</td></tr>
+	<tr><td>symmetry ID</td><td>$sym</td></tr>
+	<tr><td>apix</td><td>$apix</td></tr>
+	<tr><td>res</td><td>$res</td></tr>
+	<tr><td>contour</td><td>$contour</td></tr>
+	<tr><td>zoom</td><td>$contour</td></tr>
+	<tr><td>session</td><td>$session</td></tr>
+	<tr><td>description</td><td>$description</td></tr>
+	</table>\n";
 	processing_footer();
 }
 ?>
