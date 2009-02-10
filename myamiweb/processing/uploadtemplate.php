@@ -274,7 +274,7 @@ function runUploadTemplate() {
 	}
 	//rest of the page
 	echo"
-	<table width='600' border='1'>
+	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>
 	$template_command 
 	<B>UploadTemplate Command:</B><BR>
