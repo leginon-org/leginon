@@ -26,6 +26,7 @@ from wx import PyDeadObjectError
 import gui.wx.Manager
 import nodeclassreg
 import remotecall
+import time
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
