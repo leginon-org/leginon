@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 import Image
+import ImageDraw
 import numpy
 import imagefun
 import arraystats
@@ -19,6 +21,30 @@ pilformats = [
 	'XBM',
 ]
 
+def im2numpy(im):
+	width,height = im.size
+	if im.mode == 'F':
+		s = im.tostring()
+		a = numpy.fromstring(s, numpy.float32)
+	else:
+		im = im.convert('L')
+		s = im.tostring()
+		a = numpy.fromstring(s, numpy.uint8)
+
+	a.shape = height,width
+	return a
+
+def textArray(text):
+	im = Image.new('1', (1,1))
+	draw = ImageDraw.Draw(im)
+	cols,rows = draw.textsize(text)
+	im = Image.new('1', (cols,rows))
+	draw = ImageDraw.Draw(im)
+	draw.text((0,0), text, fill=1)
+	a = im2numpy(im)
+	a = numpy.where(a,1,0)
+	return a
+
 def read(imfile):
 	'''
 	Read imagefile using PIL.  If it is in PIL mode 'F', then convert to a
@@ -26,16 +52,7 @@ def read(imfile):
 	uint8 numpy array.
 	'''
 	im = Image.open(imfile)
-	width,height = im.size
-	if im.mode == 'F':
-		s = im.tostring()
-		im = numpy.fromstring(s, numpy.float32)
-	else:
-		im = im.convert('L')
-		s = im.tostring()
-		im = numpy.fromstring(s, numpy.uint8)
-
-	im.shape = height,width
+	im = im2numpy(im)
 	return im
 
 def write(a, imfile=None, format=None, limits=None, float=False):
@@ -75,3 +92,7 @@ def write(a, imfile=None, format=None, limits=None, float=False):
 	except KeyError:
 		## bad file format
 		sys.stderr.write('Bad PIL image format.  Try one of these: %s\n' % (pilformats,))
+
+if __name__ == '__main__':
+	a = textArray('Hello')
+	write(a, 'hello.png')
