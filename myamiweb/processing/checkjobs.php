@@ -212,7 +212,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$steps['clsbymra']['duration'] = getduration($lasttime,$t['timestamp']);
 
 							// get the number of classes
-							$cmd = "ls cls*.lst | wc -l";
+							$cmd = "ls $reconpath/cls*.lst | wc -l";
 							$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$cls = trim($cls);
 							// get the number of classes that have been aligned
