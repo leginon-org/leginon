@@ -67,6 +67,9 @@ def removeFilePattern(pattern, warn=True):
 
 #===============
 def fileSize(filename, msg=False):
+	"""
+	return file size in bytes
+	"""
 	stats = os.stat(filename)
 	size = stats[6]
 	return size
