@@ -304,6 +304,7 @@ function jobform($modelid, $extra=false) {
 	$projectId=getProjectFromExpId($expId);
 	$sessiondata=getSessionList($projectId,$expId);
 	$modeldata = $particle->getImagic3d0Data($modelid);
+	$clusterId = $modeldata['REF|ApClusteringStackData|clusterclass'];
 
 	$numiters = ($_POST['numiters']) ? $_POST['numiters'] : 1;
 	if ($_POST['duplicate']) {
@@ -462,9 +463,9 @@ function jobform($modelid, $extra=false) {
   	echo "<input type='hidden' NAME='numiters' VALUE='$numiters'><P>";
 	echo "<input type='hidden' NAME='modelid' VALUE='$modelid'><P>";
 	echo "<input type='hidden' NAME='norefClassId' VALUE='$norefClassId'><P>";
+	echo "<input type='hidden' NAME='clusterId' VALUE='$clusterId'><P>";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
-
 	processing_footer();
 	exit;
 }
@@ -484,11 +485,13 @@ function imagic3dRefine() {
 	$runid = $_POST['runid'];
 	$modelid = $_POST['modelid'];
 	$norefClassId = $_POST['norefClassId'];
+	$clusterId = $_POST['clusterId'];
 	$numiters = $_POST['numiters'];
 	$description = $_POST['description'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
-
+	
 	// create batch files for each iteration, put them into working directory
+	$command_array = array(); 	// separate command per iteration
 	for ($i=1; $i<=$numiters; $i++) {
 
 		$symmetry = $_POST['symmetry'.$i];
@@ -509,9 +512,12 @@ function imagic3dRefine() {
 
 		// update actual job file that calls on the execution of each iteration
 
-		$command.= "imagic3dRefine.py";
+		$command = "imagic3dRefine.py";
 		$command.= " --projectid=".$_SESSION['projectId'];
-		$command.= " --imagic3d0Id=$modelid --norefClassId=$norefClassId --runname=$runid";
+		$command.= " --imagic3d0Id=$modelid";
+		if ($norefClassId) $command .= " --norefClassId=$norefClassId";
+		elseif ($clusterId) $command .= " --clusterId=$clusterId";
+		$command.= " --runname=$runid";
 		$command.= " --rundir=$outdir/$runid --symmetry=$symmetry --numiters=$numiters --itn=$i";
 		$command.= " --max_shift_orig=$max_shift_orig --max_shift_this=$max_shift_this --samp_param=$samp_param";
 		$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
@@ -521,7 +527,9 @@ function imagic3dRefine() {
 		$command.= " --description=\"$description\"";
 		if ($commit) $command.= " --commit";
 		else $command.=" --no-commit";
+		$command_array[] = $command;
 	}
+
 /*
 	// write job file
 	$jobfile = "{$runid}_imagic3dRefine.job";
@@ -539,7 +547,7 @@ function imagic3dRefine() {
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform($modelid, "<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'imagic3dRefine');
+		$sub = submitAppionJob($command_array,$outdir,$runid,$expId,'imagic3dRefine');
 		// if errors:
 		if ($sub) jobform($modelid, "<b>ERROR:</b> $sub");
 	}
