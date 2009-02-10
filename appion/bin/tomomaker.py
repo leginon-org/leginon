@@ -13,20 +13,18 @@ import os
 import sys
 import shutil
 import re
+#pyami
+from pyami import mrc
 #leginon
 import leginondata
 #appion
 import appionScript
 import appionData
-
 import apTomo
 import apImod
 import apImage
 import apParam
-import apRecon
 import apDisplay
-import apEMAN
-import apFile
 import apUpload
 import apDatabase
 import apParticle
@@ -44,7 +42,7 @@ class tomoMaker(appionScript.AppionScript):
 			help="tilt series number in the session", metavar="int")
 		self.parser.add_option("--fulltomoId", dest="fulltomoId", type="int",
 			help="Full tomogram id for subvolume creation, e.g. --fulltomoId=2", metavar="int")
-		self.parser.add_option("--bin", "-b", dest="bin", type="int",
+		self.parser.add_option("--bin", "-b", dest="bin", default=1, type="int",
 			help="Extra binning, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--selexonId", dest="selexonId", type="int",
 			help="Volume selection, e.g. --selexonId=2", metavar="int")
@@ -94,9 +92,10 @@ class tomoMaker(appionScript.AppionScript):
 			intermediatepath = os.path.join(tiltseriespath,tomorunpath)
 			self.params['rundir'] = os.path.join(path,intermediatepath)
 			self.params['fulltomodir'] = self.params['rundir']
-			subrunname = 'subtomo_%d' % self.params['selexonId']
-			self.params['subrunname'] = subrunname
-			self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
+			if self.params['selexonId']:
+				subrunname = 'subtomo_%d' % self.params['selexonId']
+				self.params['subrunname'] = subrunname
+				self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
 	#=====================
 	def start(self):
 		commit = self.params['commit']
@@ -105,6 +104,7 @@ class tomoMaker(appionScript.AppionScript):
 		description = self.params['description']
 		bin = int(self.params['bin'])
 		use_original_peaks = False
+		use_imod = True 
 		print "getting imagelist"
 		imagelist = apTomo.getImageList(tiltseriesdata)
 		print "getting pixelsize"
@@ -119,32 +119,55 @@ class tomoMaker(appionScript.AppionScript):
 			gcorrfilepath = os.path.join(processpath, seriesname+".xf")
 			gtransforms = apImod.readTransforms(gcorrfilepath)
 		else:
-			apImage.writeMrcStack(self.params['rundir'],stackname,mrc_files, bin)
-			apImod.writeRawtltFile(processpath,seriesname,tilts)
-			corrpeaks = apTomo.writeOrderedImageListCorrelation(imagelist, bin)
-			if use_original_peaks:
-				apImod.writePrexfFile(processpath,seriesname,corrpeaks)
-				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltdata)
-				imodxcorrdata = None
+			# Write tilt series stack images and tilt angles
+			stackpath = os.path.join(self.params['rundir'], stackname)
+			if os.path.exists(stackpath):
+				stheader = mrc.readHeaderFromFile(stackpath)
+				stshape = stheader['shape']
+				imageheader = mrc.readHeaderFromFile(mrc_files[0])
+				imageshape = imageheader['shape']
+				if stshape[1:] == imageshape:
+					print "no need to get new stack of the tilt series"
+				else:
+					apImage.writeMrcStack(self.params['rundir'],stackname,mrc_files, bin)
 			else:
+				apImage.writeMrcStack(self.params['rundir'],stackname,mrc_files, bin)
+			apImod.writeRawtltFile(processpath,seriesname,tilts)
+			if use_original_peaks:
+				# Correlation by tiltcorrelator
+				corrpeaks = apTomo.getOrderedImageListCorrelation(imagelist, bin)
+				apImod.writeShiftPrexfFile(processpath,seriesname,corrpeaks)
+				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
+				imodxcorrdata = None
+			elif use_imod:
+				# Correlation by Coarse correlation in IMOD
 				imodxcorrdata = apImod.coarseAlignment(processpath, seriesname, commit)
 				leginonxcorrdata = None
-			gtransforms = apImod.convertToGlobalAlignment(processpath, seriesname)
+			else:
+				# Correlation with rotation by Feature Matching
+				transforms = apTomo.getOrderedImageListTransform(ordered_imagelist, bin)
+				apImod.writeTransformPrexfFile(processpath,seriesname,transforms)
+				# pretend to be gotten from tomogram until fixed
+				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
+				imodxcorrdata = None
+			#gtransforms = apImod.convertToGlobalAlignment(processpath, seriesname)
 			# Add fine alignments here ----------------
 			# use the croase global alignment as final alignment
 			origxfpath = os.path.join(processpath, seriesname+".prexg")
 			newxfpath = os.path.join(processpath, seriesname+".xf")
 			shutil.copyfile(origxfpath, newxfpath)
-
+			# Create Aligned Stack
 			apImod.createAlignedStack(processpath, seriesname)
 			if commit:
 				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltseriesdata,leginonxcorrdata,imodxcorrdata,bin,self.params['runname'])
+			# Reconstruction
 			apImod.recon3D(processpath, seriesname)
 			if commit:
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltseriesdata,alignrun,
 							processpath,reconname,description)
 		#subvolume making
 		if self.params['selexonId'] is not None:
+			bin = fulltomodata['alignment']['bin']
 			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
 			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey'])}
@@ -159,8 +182,12 @@ class tomoMaker(appionScript.AppionScript):
 					apImod.trimVolume(processpath, subrunname,seriesname,volumename,center,size)
 					if commit:
 						long_volumename = seriesname+'_'+volumename
-						apTomo.insertSubTomogram(fulltomodata,particle,dimension,volumepath,
-								subrunname,long_volumename,volumeindex,pixelsize,description)
+						subtomodata = apTomo.insertSubTomogram(fulltomodata,particle,dimension,
+								volumepath, subrunname,long_volumename,volumeindex,pixelsize
+								,description)
+						tomogramfile = subtomodata['path']['path']+'/'+subtomodata['name']+'.rec'
+						apTomo.makeMovie(tomogramfile)
+						apTomo.makeProjection(tomogramfile)
 					volumeindex += 1
 #=====================
 #=====================
