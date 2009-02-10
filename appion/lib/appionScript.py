@@ -42,6 +42,9 @@ class AppionScript(object):
 		apDisplay.printMsg("Appion directory: "+self.appiondir)
 		apParam.setUmask()
 		self.parsePythonPath()
+		loadavg = os.getloadavg()[0]
+		if loadavg > 2.0:
+			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 
 		### setup default parser: run directory, etc.
 		self.parser = OptionParser()
