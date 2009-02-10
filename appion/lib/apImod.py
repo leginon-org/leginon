@@ -4,6 +4,7 @@ import apDisplay
 import apFile
 import time
 import apTomo
+from pyami import mrc
 
 def writeRawtltFile(path,seriesname,tilts):
 	rawtltname = os.path.join(path,seriesname+'.rawtlt')
@@ -12,7 +13,7 @@ def writeRawtltFile(path,seriesname,tilts):
 		f.write('%6.2f\n' % (tilt,))
 	f.close()
 
-def writePrexfFile(path, seriesname,xpeaks):
+def writeShiftPrexfFile(path, seriesname,xpeaks):
 	rawtltname = os.path.join(path,seriesname+'.prexf')
 	f = open(rawtltname, 'w')
 	tilts = xpeaks.keys()
@@ -21,6 +22,17 @@ def writePrexfFile(path, seriesname,xpeaks):
 	for tilt in tilts:
 		if xpeaks[tilt] is not None:
 			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (1.0,0.0,0.0,1.0,xpeaks[tilt][0],xpeaks[tilt][1]))
+	f.close()
+
+def writeTransformPrexfFile(path, seriesname,transforms):
+	xfname = os.path.join(path,seriesname+'.prexf')
+	f = open(xfname, 'w')
+	for transform in transforms:
+		if transform is not None:
+			f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
+					transform[0,0],transform[0,1],
+					transform[1,0],transform[1,1],
+					transform[2,0],transform[2,1]))
 	f.close()
 
 def coarseAlignment(processpath, seriesname, commit=False):
@@ -122,7 +134,7 @@ $mrctaper 08aug14f_008.ali
 		writeCommandAndRun(processpath,'newst',commands,[inputparams['alignedstack'],'newst.log'])
 
 
-def recon3D(processpath, seriesname,invert=False):
+def recon3D(processpath, seriesname,thickness=100,invert=False):
 		"""
 # Command file to run Tilt
 #
@@ -154,6 +166,7 @@ DONE
 			'tilts': os.path.join(processpath, seriesname+".rawtlt"),
 			'recon': os.path.join(processpath, seriesname+"_full.rec"),
 			'scale': 500.0,
+			'thickness': thickness,
 		}
 		if invert:
 			inputparams['scale'] = -inputparams['scale']
@@ -168,7 +181,7 @@ DONE
 			"RADIAL 0.35 0.05",
 			"SCALE 1.39 -500.0",
 			"SUBSETSTART 0 0",
-			"THICKNESS 100",
+			"THICKNESS "+inputparams['thickness'],
 			"TILTFILE "+inputparams['tilts'],
 			"XAXISTILT 0.0",
 		]
@@ -184,11 +197,14 @@ trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 		inputparams = {
 			'recon': os.path.join(processpath, seriesname+"_full.rec"),
 			'subvolume': os.path.join(processpath, runname+"/",volumename+"/",seriesname+"_"+volumename+".rec"),
-			'xrange0': center[0] - size[0]/2,
-			'zrange0': center[1] - size[1]/2,
+			'xrange0': max(1,1+center[0] - size[0]/2),
+			'zrange0': max(1,1+center[1] - size[1]/2),
 		}
-		inputparams['xrange1'] = inputparams['xrange0'] + size[0]
-		inputparams['zrange1'] = inputparams['zrange0'] + size[1]
+		fulltomo = mrc.read(inputparams['recon'])
+		fullshape = fulltomo.shape
+		inputparams['xrange1'] = min(fullshape[2],1+inputparams['xrange0'] + size[0])
+		# y and z can be flip so use x dimension as limit
+		inputparams['zrange1'] = min(fullshape[0],1+inputparams['zrange0'] + size[1])
 
 		commands = [
 			"$trimvol -x %d,%d -z %d,%d -yz %s %s"
