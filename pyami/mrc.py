@@ -523,6 +523,12 @@ a numpy ndarray object wrapped around the memory mapped file.
 	setHeader(mrcdata, headerdict)
 	return mrcdata
 
+def readHeaderFromFile(filename):
+	f = open(filename)
+	h = f.read(1024)
+	f.close()
+	h = parseHeader(h)
+	return h
 
 if __name__ == '__main__':
 	infilename = sys.argv[1]
