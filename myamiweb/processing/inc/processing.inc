@@ -918,8 +918,8 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 		// create virtual window for matlab images
 		if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
 		if (is_array($command)) {
-			foreach ($apcmd as $cmd) {
-				$jobtext .= "$cmd\n";
+			foreach ($apcmd as $iteration) {
+				$jobtext .= "$iteration\n";
 			}
 		}
 		else $jobtext .= "$apcmd\n";
