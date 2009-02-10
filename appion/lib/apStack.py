@@ -226,8 +226,9 @@ def commitSubStack(params, newname=False, centered=False):
 	stackq['project|projects|project'] = oldstackdata['project|projects|project']
 	if centered is True:
 		stackq['centered'] = True
-		if params['mask']:
+		if 'mask' in params:
 			stackq['mask'] = params['mask']
+		if 'maxshift' in params:
 			stackq['maxshift'] = params['maxshift']
 
 	partinserted = 0
