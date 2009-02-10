@@ -309,6 +309,9 @@ function jobform($extra=false) {
 
 	// define default parameters for 0 iteration
 	$symmetry = ($_POST['symmetryn']) ? $_POST['symmetryn'] : "";
+
+	$syms = $particle->getSymmetries();
+
 	$euler_ang_inc = ($_POST['euler_ang_incn']) ? $_POST['euler_ang_incn'] : "10";
 	$num_classums = ($_POST['num_classumsn']) ?  $_POST['num_classumsn'] : $default_num_classes;
 	$hamming_window = ($_POST['hamming_windown']) ?$_POST['hamming_windown'] : "0.8";
@@ -324,7 +327,15 @@ function jobform($extra=false) {
 	// print form with user input for all values
 	echo "<tr>
       		<td bgcolor='$rcol'><b>0</b></td>
-		<td bgcolor='$rcol'><input type='text' NAME='symmetryn' SIZE='4' VALUE='$symmetry'></td>
+		<td bgcolor='$rcol'><SELECT NAME='symmetryn'><OPTION VALUE=''>Select One</OPTION>\n";
+                foreach ($syms as $sym) {
+                        echo "<OPTION VALUE='$sym[DEF_id]'";
+                        if ($sym['DEF_id']==$_POST['symmetry']) echo " SELECTED";
+                        echo ">$sym[symmetry]";
+                        if ($sym['symmetry']=='C1') echo " (no symmetry)";
+                        echo "</OPTION>\n";
+                }
+		echo "</td>
        		<td bgcolor='$rcol'><input type='text' NAME='euler_ang_incn' SIZE='4' VALUE='$euler_ang_inc'></td>
        		<td bgcolor='$rcol'><input type='text' NAME='num_classumsn' SIZE='4' VALUE='$num_classums'></td>
         	<td bgcolor='$rcol'><input type='text' NAME='hamming_windown' SIZE='4' VALUE='$hamming_window'></td>
