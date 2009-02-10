@@ -6,6 +6,7 @@ import sys
 import time
 import re
 import shutil
+from pyami import mrc
 import appionScript
 import apUpload
 import apParam
@@ -15,7 +16,7 @@ import apDatabase
 import apRecon
 import apVolume
 import apProject
-
+import apTomo
 #=====================
 #=====================
 class UploadTomoScript(appionScript.AppionScript):
@@ -81,7 +82,10 @@ class UploadTomoScript(appionScript.AppionScript):
 	def setNewFileName(self, unique=False):
 		# set name to be like tomomaker
 		seriesname = "%s_%03d" % (self.params['session'],self.params['tiltseriesnumber'])
-		reconname = seriesname+"_full"
+		if self.params['full']:
+			reconname = seriesname+"_full"
+		else:
+			reconname = seriesname+"_"+self.params['volume']
 		self.params['name'] = reconname
 		self.params['newxffile'] = seriesname+".xf"
 		
@@ -139,7 +143,11 @@ class UploadTomoScript(appionScript.AppionScript):
 			if self.params['image']:
 				shutil.copyfile(self.params['image'], self.params['rundir']+'/snapshot.png')
 		### inserting tomogram
+		tomoheader = mrc.readHeaderFromFile(newtomopath)
+		self.params['shape'] = tomoheader['shape']
 		apUpload.insertTomo(self.params)
+		apTomo.makeMovie(newtomopath)
+		apTomo.makeProjection(newtomopath)
 
 #=====================
 #=====================
