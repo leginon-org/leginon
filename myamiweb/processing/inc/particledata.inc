@@ -3161,18 +3161,26 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."FROM ApImagic3dRefineRunData as refinement "
 			."LEFT JOIN ApPathData AS path "
 			."  ON refinement.`REF|ApPathData|path` = path.`DEF_id` "
-			."LEFT JOIN ApNoRefClassRunData AS norefclass "
-			."  ON refinement. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
-			."LEFT JOIN ApNoRefRunData AS norefrun "
-			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
-			."LEFT JOIN ApStackData AS stack "
-			."  ON norefrun.`REF|ApStackData|stack` = stack.`DEF_id` "
+//			."LEFT JOIN ApNoRefClassRunData AS norefclass "
+//			."  ON refinement. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
+//			."LEFT JOIN ApNoRefRunData AS norefrun "
+//			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "	
+			."LEFT JOIN ApClusteringStackData as clusterclass "
+			."  ON refinement. `REF|ApClusteringStackData|clusterclass` = clusterclass.`DEF_id` "
+			."LEFT JOIN ApClusteringRunData as clusterrun "
+			."  ON clusterclass. `REF|ApClusteringRunData|clusterrun` = clusterrun.`DEF_id` "
+			."LEFT JOIN ApAlignStackData as alignstack "
+			."  ON clusterrun. `REF|ApAlignStackData|alignstack` = alignstack.`DEF_id` "
+			."LEFT JOIN ApStackData as stack "
+			."  ON alignstack.`REF|ApStackData|stack` = stack.`DEF_id` "  
+//			."LEFT JOIN ApStackData AS stack "
+//			."  ON norefrun.`REF|ApStackData|stack` = stack.`DEF_id` "
 			."LEFT JOIN ApRunsInStackData AS runsinstack "
 			."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
 			."LEFT JOIN ApStackRunData AS stackrun "
 			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
 			."WHERE "
-			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";	
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
