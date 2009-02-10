@@ -114,6 +114,17 @@ if ($stackdatas) {
 								.", method='<i>".$clusterrun['method']." (SPIDER) "
 								."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
 							echo "<ul>\n";
+						} elseif ($clusterrun['REF|ApKerDenSOMParamsData|kerdenparams']) {
+							// KerDen only has one cluster data
+							$clusterdata = $clusterdatas[0];
+							echo "<b>Cluster Run ".$clusterrunid.":</b>"
+								."<i>KerDen Self-Organizing Map (Xmipp)</i><br/>\n";
+							$montagefile = $clusterdata['path']."/"."montage.png";
+							echo "<a href='loadimg.php?filename=$montagefile'>\n"
+								."<img src='loadimg.php?h=80&filename=$montagefile' height='80'><br/>View Montage</a>\n";
+							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
+							echo "&nbsp;<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+								." View as Stack</a>&nbsp;\n";
 						}
 						foreach ($clusterdatas as $clusterdata) {
 							$clusterid = $clusterdata['clusterid'];
@@ -124,8 +135,7 @@ if ($stackdatas) {
 									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
 									."</span></li>\n";
-							}
-							elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
+							} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
 								echo "<li><span>"
 									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
