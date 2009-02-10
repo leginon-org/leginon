@@ -249,9 +249,11 @@ function runKerDenSOM() {
 	if (!$stackid)
 		createKerDenSOMForm("<B>ERROR:</B> No stack selected");
 
-	// classification
 	if ($numpart < 10)
 		createKerDenSOMForm("<B>ERROR:</B> Must have more than 10 particles");
+
+	if ($xdim > 14 || $ydim > 14)
+		createKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 15");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
