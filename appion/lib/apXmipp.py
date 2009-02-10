@@ -36,6 +36,7 @@ def convertStackToXmippData(instack, outdata, maskpixrad, boxsize, numpart=None)
 	partfilesize = apFile.fileSize(partlistdocfile)
 	if outfilesize < 2*partfilesize:
 		apDisplay.printError("Outdata conversion did not work, data file smaller than docfile, %d < %d bytes"%(outfilesize, partfilesize))
+	apFile.removeFilePattern("partfiles/*")
 
 	return outdata
 

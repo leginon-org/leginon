@@ -611,6 +611,18 @@ class ApSpiderClusteringParamsData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApSpiderClusteringParamsData=ApSpiderClusteringParamsData
 
+class ApKerDenSOMParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('mask_diam', float),
+			('x_dimension', int),
+			('y_dimension', int),
+			('convergence', str),
+			('run_seconds', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApKerDenSOMParamsData=ApKerDenSOMParamsData
+
 class ApClusteringRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -622,6 +634,7 @@ class ApClusteringRunData(Data):
 			('alignstack', ApAlignStackData),
 			('analysisrun', ApAlignAnalysisRunData),
 			('spiderparams', ApSpiderClusteringParamsData),
+			('kerdenparams', ApKerDenSOMParamsData),
 			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
