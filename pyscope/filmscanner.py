@@ -8,7 +8,7 @@ class FilmScanner(ccdcamera.CCDCamera):
     name = 'FilmScanner'
     def __init__(self):
         ccdcamera.CCDCamera.__init__(self)
-        self.camera_size = {'x': 8192, 'y': 8192}
+        self.camera_size = {'x': 20000, 'y': 20000}
         self.binning_values = {'x': [1, 2, 4, 8,16], 'y': [1, 2, 4, 8,16]}
         self.pixel_size = {'x': 7e-6, 'y': 7e-6}
         self.exposure_types = ['normal', 'dark']
