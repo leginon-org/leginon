@@ -48,8 +48,8 @@ class imagic3d0Script(appionScript.AppionScript):
                         help="new IMAGIC class average id from alignment pipeline", metavar="INT")
 		self.parser.add_option("--3_projections", dest="projections", type="str",
 			help="3 initial projections for angular reconstitution", metavar="STR")
-		self.parser.add_option("--symmetry", dest="symmetry", type="str",
-			help="symmetry of the object", metavar="STR")
+		self.parser.add_option("--symmetry", dest="symmetry", type="int",
+			help="symmetry of the object", metavar="INT")
 		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", #default=10,
 			help="angular increment for euler angle search", metavar="INT")
 		self.parser.add_option("--num_classums", dest="num_classums", type="int",
@@ -133,6 +133,8 @@ class imagic3d0Script(appionScript.AppionScript):
 	#=====================
 	def createImagicBatchFile(self, linkingfile):
 		# IMAGIC batch file creation
+		syminfo = apUpload.getSymmetryData(self.params['symmetry'])
+		symmetry = syminfo['symmetry']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3d0.batch")
 		f = open(filename, 'w')
 		f.write("#!/bin/csh -f\n")
@@ -157,8 +159,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			f.write("mv start_stack_copy.img start_stack.img\n") 
 			f.write("mv start_stack_copy.hed start_stack.hed\n")
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF > imagicCreate3d0.log\n")
-		f.write(str(self.params['symmetry'])+"\n")
-		lowercase = self.params['symmetry'].lower()
+		f.write(symmetry+"\n")
+		lowercase = str(symmetry).lower()
 		if lowercase != "c1":
 			f.write("0\n")
 		f.write("new\n")
@@ -175,7 +177,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("no\n")
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")
-		f.write(str(self.params['symmetry'])+"\n")
+		f.write(symmetry+"\n")
 		f.write("new\n")
 		f.write("add\n")
 		f.write("start_stack\n")
@@ -190,7 +192,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("no\n")
-		f.write(str(self.params['symmetry'])+"\n")
+		f.write(symmetry+"\n")
 		f.write("yes\n")
 		f.write("ordered0\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -213,7 +215,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("no\n")
-		f.write(str(self.params['symmetry'])+"\n")
+		f.write(symmetry+"\n")
 		f.write("yes\n")
 		f.write("ordered0_repaligned\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -242,7 +244,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("no\n")
-		f.write(str(self.params['symmetry'])+"\n")
+		f.write(symmetry+"\n")
 		f.write("yes\n")
 		f.write("ordered0_repaligned\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -283,7 +285,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("widening\n")
 		f.write("mrarefs_masked_3d0\n")
 		f.write("asym_triangle\n")
-		f.write(str(self.params['symmetry'])+"\n")
+		f.write(symmetry+"\n")
 		f.write("equidist\n")
 		f.write("zero\n")
 		f.write(str(self.params['mrarefs_ang_inc'])+"\n")
@@ -295,7 +297,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("widening\n")
 		f.write("masked_3d0_ordered0_repaligned_forward\n")
 		f.write("asym_triangle\n")
-		f.write(str(self.params['symmetry'])+"\n")
+		f.write(symmetry+"\n")
 		f.write("equidist\n")
 		f.write("zero\n")
 		f.write(str(self.params['forw_ang_inc'])+"\n")
