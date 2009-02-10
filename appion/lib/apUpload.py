@@ -203,15 +203,26 @@ def insertTomo(params):
 	apix = apDatabase.getPixelSize(images[0])
 	if not params['full']:
 		tomoq = appionData.ApTomogramData()
+		tomoq['session'] = sessiondata
+		tomoq['tiltseries'] = tiltdata
+		results = tomoq.query()
+		tomoq['number'] = len(results)+1
 		tomoq['pixelsize'] = apix * params['bin']
+		alignq = appionData.ApTomoAlignmentRunData(name=params['runname'])
+		fulltomoq = appionData.ApFullTomogramData()
+		fulltomoq['alignment'] = alignq
+		results = fulltomoq.query(results=1,readimages=False)
+		tomoq['fulltomogram'] = results[0]
+		tomoq['runname'] = params['volume']
+		tomoq['dimension'] = {'x':params['shape'][2],'y':params['shape'][1], 'z':params['shape'][0]}
 	else:
 		alignq = appionData.ApTomoAlignmentRunData()
 		alignq['bin'] = params['bin']
 		alignq['name'] = params['runname']
 		tomoq = appionData.ApFullTomogramData()
 		tomoq['alignment'] = alignq
-	tomoq['session'] = sessiondata
-	tomoq['tiltseries'] = tiltdata
+		tomoq['session'] = sessiondata
+		tomoq['tiltseries'] = tiltdata
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	tomoq['name'] = params['name']
 	filepath = os.path.join(params['rundir'], params['name']+".rec")
@@ -220,6 +231,7 @@ def insertTomo(params):
 		
 	if params['commit'] is True:
 		tomoq.insert()
+		return tomoq
 	else:
 		apDisplay.printWarning("not commiting tomogram to database")
 
