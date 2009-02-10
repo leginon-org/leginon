@@ -2,10 +2,12 @@ import os
 import time
 import subprocess
 import numpy
+import scipy.ndimage as nd
 from tomography import tiltcorrelator
 import leginondata
 from pyami import arraystats, mrc, imagefun, numpil
 import appionData
+import libCVwrapper
 try:
 	import node
 except:
@@ -34,22 +36,19 @@ def getImageList(tiltseriesdata):
 	
 def orderImageList(imagelist):
 	if not imagelist:
-		apDisplay.warning('No images in image list.')
+		apDisplay.printWarning('No images in image list.')
 		return
 	mrc_files = []
 	imagepath = imagelist[0]['session']['image path']
 	tiltseries = imagelist[0]['tilt series']
 	tiltangledict = {}
-	second_group = False 
-	for imagedata in imagelist:
+	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
 		if tilt < tiltseries['tilt start']+0.01 and tilt > tiltseries['tilt start']-0.01:
-			if second_group:
-				direction=-tiltseries['tilt step']
-			else:
-				direction= tiltseries['tilt step']
-				# switch group in getCorrelationPeak not here
-				second_group = False
+			nextimagedata = imagelist[i+1]
+			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
+			direction = (nexttilt - tilt)
+			# switch group in getCorrelationPeak not here
 			tilt = tilt+0.001*direction
 		tiltangledict[tilt] = imagedata
 	tiltkeys = tiltangledict.keys()
@@ -63,7 +62,7 @@ def orderImageList(imagelist):
 		ordered_imagelist.append(imagedata)
 	return tiltkeys,ordered_imagelist,mrc_files
 
-def writeOrderedImageListCorrelation(imagelist, bin):
+def getOrderedImageListCorrelation(imagelist, bin):
 	fakenode = node.Node('fake',imagelist[0]['session'])
 	correlator = tiltcorrelator.Correlator(fakenode, 0, 4,lpf=1.5)
 	allpeaks = [{'x':0.0,'y':0.0}]
@@ -71,14 +70,14 @@ def writeOrderedImageListCorrelation(imagelist, bin):
 	tiltangledict = {}
 	correlationpeak = {}
 	second_group = False 
-	for imagedata in imagelist:
+	for i,imagedata in enumerate(imagelist):
 		tilt = imagedata['scope']['stage position']['a']*180/3.14159
 		if tilt < tiltseries['tilt start']+0.01 and tilt > tiltseries['tilt start']-0.01:
-			if second_group:
-				direction=-tiltseries['tilt step']
-			else:
-				direction= tiltseries['tilt step']
+			nextimagedata = imagelist[i+1]
+			nexttilt = nextimagedata['scope']['stage position']['a']*180/3.14159
+			direction = (nexttilt - tilt)
 				# switch group in getCorrelationPeak not here
+			if i == 0:
 				second_group = False
 			tilt = tilt+0.001*direction
 		try:
@@ -89,6 +88,37 @@ def writeOrderedImageListCorrelation(imagelist, bin):
 	fakenode.die()
 	return correlationpeak
 
+def getOrderedImageListTransform(ordered_imagelist, bin):
+	transformlist = []
+	shape = ordered_imagelist[0]['image'].shape
+	minsize = 40
+	for i,imagedata in enumerate(ordered_imagelist):
+		if i == 0:
+			array1 = imagedata['image']
+		array2 = imagedata['image']
+		print imagedata['filename'],minsize
+		resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
+		if abs(resultmatrix[0,0]) < 0.01 and abs(resultmatrix[0,1] < 0.01):
+			resultmatrix[0,0]=1.0
+			resultmatrix[1,0]=0.0
+			resultmatrix[0,1]=0.0
+			resultmatrix[0,0]=1.0
+			resultmatrix[2,0]=0.0
+			resultmatrix[2,1]=0.0
+			resultmatrix[2,2]=1.0
+		matrix = transform
+		matrix[0,0] = transform[1,1]
+		matrix[0,1] = transform[1,]
+		matrix[0,0] = transform[1,1]
+		matrix[0,1] = -transform[1,0]
+		matrix[1,0] = transform[0,1]
+		matrix[1,1] = transform[0,0]
+		matrix[2,0] = -transform[2,1]/bin
+		matrix[2,1] = -transform[2,0]/bin
+		transformlist.append(resultmatrix)
+		array1 = imagedata['image']
+	return transformlist
+	
 def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,second_group):
 	q = leginondata.TomographyPredictionData(image=imagedata)
 	results = q.query()
@@ -123,32 +153,35 @@ def getTomographySettings(sessiondata,tiltdata):
 	timestamp = tiltdata.timestamp
 	qtomo = leginondata.TomographySettingsData(session=sessiondata)
 	tomosettingslist = qtomo.query()
-	settingsdata = None
+	settingsid = None
 	for settings in tomosettingslist:
 		if settings.timestamp < timestamp:
-			settingsdata = dict(settings)
+			settingid = settings.dbid
 			break
-	if settingsdata is None:
+	if settingsid is None:
 		sessionq = leginondata.SessionData(user=sessiondata['user'])
 		qtomo = leginondata.TomographySettingsData(session=sessiondata)
 		tomosettingslist = qtomo.query()
 		for settings in tomosettingslist:
 			if settings.timestamp < timestamp:
-				settingsdata = dict(settings)
+				settingsid = settings.dbid
 				break
-	if settingsdata is None:
+	if settingsid is None:
 		qtomo = leginondata.TomographySettingsData(isdefault=True)
 		tomosettingslist = qtomo.query()
 		for settings in tomosettingslist:
 			if settings.timestamp < timestamp:
-				settingsdata = dict(settings)
+				settingsid = settings.dbid
 				break
-	if settingsdata is None:
+	if settingsid is None:
 		if tomosettingslist:
-			settingsdata = dict(tomosettingslist[0])
+			settingsid = tomosettingslist[0].dbid
 		else:
-			settingsdata = None
-	return settingsdata
+			settingsid = None
+	if settingsid:
+		print settingsid
+		qtomo = leginondata.TomographySettingsData()
+		return qtomo.direct_query(settingsid)
 
 def getTomoPixelSize(imagedata):
 	predq = leginondata.TomographyPredictionData(image=imagedata)
@@ -183,6 +216,10 @@ def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bi
 	return results[0]
 
 def checkExistingFullTomoData(path,name):
+	tomoq = appionData.ApFullTomogramData(name = name)
+	results = tomoq.query()
+	if not results:
+		return None
 	filepath = os.path.join(path,name+".rec")
 	if not os.path.isfile(filepath):
 		return None
@@ -264,7 +301,7 @@ def insertSubTomogram(fulltomogram,center,dimension,path,runname,name,index,pixe
 def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 	jpgpath = pictpath+'.jpg'
 	imshape = im.shape
-	scale = float(size)/max((imshape[0],imshape[1]))
+	scale = float(size)/imshape[1]
 	im = apImage.scaleImage(im,scale)	
 	stats = arraystats.all(im)
 	if imin is not None and imax is not None:
@@ -273,32 +310,69 @@ def array2jpg(pictpath,im,imin=None,imax=None,size=512):
 		range = stats['mean']-3*stats['std'],stats['mean']+3*stats['std']
 	numpil.write(im,jpgpath, format = 'JPEG', limits=range)
 
-def makeMovie(filename,moviesize):
+def makeMovie(filename,xsize=512):
+	apDisplay.printMsg('Making movie','blue')
 	mrcpath = filename
+	dirpath = os.path.dirname(mrcpath)
 	splitnames =  os.path.splitext(mrcpath)
 	rootpath = splitnames[0]
+	apDisplay.printMsg('Reading 3D recon %s' % mrcpath)
 	array = mrc.read(mrcpath)
-	stats = arraystats.all(array)
-	print stats
-	dims = array.shape
-	#dimz = dims[0]
-	for axis in (0,1):
-		dimz = dims[axis]
+	print "image read"
+	shape = array.shape
+	xsize = min(xsize,shape[2])
+	stats = {}
+	# speed up stats calculation by projecting to axis 0 to reduce array dimension
+	apDisplay.printMsg('Calculating stats...')
+	slice = numpy.sum(array[:,:,:],axis=0)/shape[0]
+	stats['std'] = slice.std()
+	stats['mean'] = slice.mean()
+	if shape[0] > shape[1]:
+		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'}}
+	else:
+		renders = {'a':{'axis':1,'axisname':'y'},'b':{'axis':0,'axisname':'z'}}
+	keys = renders.keys()
+	keys.sort()
+	for key in keys:
+		axis = renders[key]['axis']
+		dimz = shape[axis]
 		#generate a sequence of jpg images, each is an average of 5 slices	
+		apDisplay.printMsg('Making smoothed slices...')
 		for i in range(0, dimz):   
 			pictpath = rootpath+'_avg%05d' % i
 			ll = max(0,i - 2)
 			hh = min(dimz,i + 3)
 			if axis == 0:
-				axisname = 'z'
 				slice = numpy.sum(array[ll:hh,:,:],axis=axis)/(hh-ll)
 			else:
-				axisname = 'y'
 				slice = numpy.sum(array[:,ll:hh,:],axis=axis)/(hh-ll)
 			# adjust and shrink each image
-			array2jpg(pictpath,slice,stats['mean']-3*stats['std'],stats['mean']+3*stats['std'],moviesize)
-			#array2jpg(pictpath,slice,size=moviesize)
-		cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o minitomo'+axisname+'.flv "mf://'+rootpath+'_avg*.jpg"'
+			array2jpg(pictpath,slice,stats['mean']-8*stats['std'],stats['mean']+8*stats['std'],xsize)
+		apDisplay.printMsg('Putting the jpg files together to flash video...')
+		moviename = dirpath+'/minitomo%s'%key+'.flv'
+		cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o '+moviename+' "mf://'+rootpath+'_avg*.jpg"'
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
 		os.system('rm '+rootpath+'_avg*.jpg')
+
+def makeProjection(filename,xsize=512):
+	mrcpath = filename
+	dirpath = os.path.dirname(mrcpath)
+	apDisplay.printMsg('Reading 3D recon %s' % mrcpath)
+	array = mrc.read(mrcpath)
+	shape = array.shape
+	xsize = min(xsize,shape[2])
+	if shape[0] > shape[1]:
+		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'}}
+	else:
+		renders = {'a':{'axis':1,'axisname':'y'},'b':{'axis':0,'axisname':'z'}}
+	keys = renders.keys()
+	keys.sort()
+	for key in keys:
+		apDisplay.printMsg('project to axis %s' % renders[key]['axisname'])
+		pictpath = dirpath+'/projection'+key
+		axis = renders[key]['axis']
+		slice = numpy.sum(array[:,:,:],axis=axis)/(shape[axis])
+		print "sum done"
+		# adjust and shrink each image
+		array2jpg(pictpath,slice,size=xsize)
