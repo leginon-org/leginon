@@ -97,6 +97,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 	#=====================
 	
 	def checkConflicts(self):
+		#This really is not conflict checking but to set up new session.
+		# There is no place in Appion script for this special case
+		if self.params['sessionname'] is not None:
+			try:
+				directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+			except AttributeError:
+				directory = ''
+			name = self.params['sessionname']
+			sessiondata = self.createSession(None,name,self.params['description'],directory)
+			self.linkSessionProject(sessiondata,self.params['projectid']) 
+			self.session = sessiondata
 		return
 
 	def commitToDatabase(self,imagedata):
@@ -143,19 +154,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 	#=====================
 	
 	def setRunDir(self):
-		if self.params['sessionname'] is not None:
-			try:
-				directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
-			except AttributeError:
-				directory = ''
-			print "directory",directory
-			name = self.params['sessionname']
-			sessiondata = self.createSession(None,name,'test',directory) 
-			self.linkSessionProject(sessiondata,self.params['projectid']) 
-			#auto set the output directory
-			self.params['rundir'] = sessiondata['image path']
-			self.session = sessiondata
-			print self.session.dbid
+				self.params['rundir'] = self.session['image path']
 
 	def publish(self,data):
 		results = data.query(readimages=False)
