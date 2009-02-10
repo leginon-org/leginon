@@ -71,6 +71,7 @@ class tomoMovieMaker(appionScript.AppionScript):
 			if not os.path.isfile(tomogram):
 					apDisplay.printError("tomogram not exist")
 		apTomo.makeMovie(tomogram,self.params['maxsize'])
+		apTomo.makeProjection(tomogram,self.params['maxsize'])
 				
 			
 #=====================
