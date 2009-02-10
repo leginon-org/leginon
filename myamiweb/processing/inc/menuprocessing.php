@@ -546,6 +546,10 @@ if ($expId) {
 		       'result'=>$result,
 		       );
 
+	$nruns[]=array(
+		       'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
+		       );
+
 	$data[]=array(
 		      'action'=>array($action, $celloption),
 		      'result'=>array(),

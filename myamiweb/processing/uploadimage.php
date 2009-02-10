@@ -36,8 +36,11 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 
 	$projectId= $_SESSION['projectId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+
+	$javafunctions .= writeJavaPopupFunctions('appion');  
   
-	processing_header($title,$heading,False,True);
+	processing_header($title,$heading,$javafunctions);
+	#processing_header($title,$heading,False,True);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -60,6 +63,7 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$camval = ($_POST['cam']) ? $_POST['cam'] : $cam;
 	$sessionname = ($_POST['sessionname']) ? $_POST['sessionname'] : $sessionname;
 	$batch = ($_POST['batch']) ? $_POST['batch'] : $batch;
+	$tiltgroup = ($_POST['tiltgroup']) ? $_POST['tiltgroup'] : $tiltgroup;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
 	echo"
   <table border=3 class=tableborder>
@@ -80,8 +84,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	}
 
 	echo "</select><br>";
-	echo "
-    <b>Session Name:</b><br/>
+	echo docpop('uploadsession', 'Session Name:');
+	echo "<br>
     <input type='text' name='sessionname' value='$sessionname' size='65'><br />\n";
 	echo"
       <p>
@@ -94,8 +98,8 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$leginondata = new leginondata();
 	$instrumenthosts = $leginondata->getInstrumentHosts();
 	$instrumenthostval = ($_POST[instrumenthost]) ? $_POST[instrumenthost] : $instrumenthosts[0];
-	echo "
-		Host
+	echo docpop('host', 'Host:');
+	echo "<br>
 		<select name='instrumenthost' onchange=submit()>";
 	foreach($instrumenthosts as $host) {
 		$s = ($instrumenthostval==$host) ? 'selected' : 'not';
@@ -105,16 +109,16 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		</select>";
 	$scopes = $leginondata->getScopes($instrumenthostval);
 	$cameras = $leginondata->getCameras($instrumenthostval);
+	echo docpop('scope', 'Scope:');
 	echo "
-		Scope
 		<select name='tem' onchange=submit()>";
 	foreach($scopes as $sc) {
 		$s = ($temval==$sc['id']) ? 'selected' : '';
 		echo "<option value=".$sc['id']." ".$s." >".$sc['name']."</option>";
 	}
-	echo"
-		</select>
-		Camera
+	echo" </select>";
+	echo docpop('camera', 'Camera:');
+	echo "
 		<select name='cam' onchange=submit()>";
 	foreach($cameras as $c) {
 		echo $c['id'];
@@ -123,9 +127,13 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	}
 	echo"
 		</select>";
-	echo "
-      <p>
-      <b>Information File Name:</b><br/>
+	echo " <p>";
+	echo docpop('images_in_group', 'Number of images in each tilt series if any:');
+	echo "<br>
+      <input type='text' name='tiltgroup' value='$tiltgroup' size='5'><br />\n";
+	echo " <p>";
+	echo docpop('batchfile', 'Information File for the images:');
+	echo "<br>
       <input type='text' name='batch' value='$batch' size='65'><br />\n";
 	echo "
       </td>
@@ -150,12 +158,13 @@ function runUploadImage() {
 	$expId = $_POST['expId'];
 	$sessionname = $_POST['sessionname'];
 	$batch = $_POST['batch'];
+	$tiltgroup = $_POST['tiltgroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
 	
 	$outdir = $_POST['outdir'];
 
-	$command = "uploadimage.py ";
+	$command = "imageloader.py ";
 	$command.="--projectid=".$projectId." ";
 
 	//make sure a session name was entered if upload an independent file
@@ -171,7 +180,7 @@ function runUploadImage() {
 	$bf = file($batch);
 	foreach ($bf as $line) {
 		$items = explode("\t",$line);
-		if (count($items)!=7  && count($items)!=8) {
+		if (count($items)!=7  && (count($items)!=8 && $tiltgroup > 1)) {
 			$badbatch = true;
 			break;
 		}
@@ -187,10 +196,12 @@ function runUploadImage() {
 
 
 	$command.="--session=$sessionname ";
-	$command.="--batch=$batch ";	
-	$command.="--tem=$tem ";	
-	$command.="--cam=$cam ";	
+	$command.="--batchparams=$batch ";	
+	$command.="--scopeid=$tem ";	
+	$command.="--cameraid=$cam ";	
 	$command.="--description=\"$description\" ";
+	if ($tiltgroup >= 2)
+		$command.="--tiltgroup=$tiltgroup ";
 	
 	// submit job to cluster
 	if ($_POST['process']=="Upload Images") {

@@ -97,6 +97,13 @@ var help = {
 		'stack' : 'Input particles to be classified',
 		'doubles' : 'Each particle must be picked twice. Picked by more than one template or DoG slice',
 		'griddim' : 'Self-organizing maps create a large two grid and each grid point is a class average. E.g., 4x3 grid gives 12 class averages',
+		'uploadproject' : 'Project to which the uploading session belongs to.  If the session exists, the project must match correctly',
+		'uploadsession' : 'Images can be uploaded to an existing session or a new one.  Only images with unique names can be uploaded into the same session',
+		'host' : 'Instrument host as defined in Leginon where particular combinations of scope and camera are available',
+		'scope' : 'Type of mircoscope used in data collection',
+		'camera' : 'Type of camera used in data collection. Gatan refers to any models of Gatan camera interfaced through Gatan Digital Micrograph software.  Use Film Scanner type for arbitrary dimension and pixel size image upload',
+		'images_in_group' : 'Number of images per tilt series.  Enter 1 or leave it blank if not a tilt series. This will divide all images to be upload in groups of the defined number.  It is therefore not advisable to mix images belonging to a tilt series with ones that are not in the same upload. if the number is larger than 1, Field 8 (stage alpha tilt) must exist in the information file',
+		'batchfile' : 'A text file that contains information of each mrc image to be uploaded. The file has no title line.  Each line has the following fields of the image separated by tabs (examples are shown in []): <p>(1) complete image path ended with extension mrc; [/yourhome/yourimage.mrc]<p>(2) pixel size in meters; [1.5e-10]<p>(3) binning in x; [1]<p>(4) binning in y; [1]<p>(5) nominal scope magnification; [50000]<p>(6) intended defocus in meters, [-2e-6]<p>(7) high tension in volts; [200000]<p>(8) (optional) stage alpha tilt in degrees if loading tilt group.[55.0] See help on number of image pertilt series.<p>Note that (3) and (4) are only relavent for CCD camera, use 1 for scanned film with arbitrary scan step.',
 
 /******* IMAGIC terms ********/
 
