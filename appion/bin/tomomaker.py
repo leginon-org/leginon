@@ -40,16 +40,18 @@ class tomoMaker(appionScript.AppionScript):
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
 			help="tilt series number in the session", metavar="int")
+		self.parser.add_option("--sizez", dest="sizez", default=0, type="int",
+			help="Full tomo reconstruction thickness before binning, e.g. --sizez=200", metavar="int")
 		self.parser.add_option("--fulltomoId", dest="fulltomoId", type="int",
 			help="Full tomogram id for subvolume creation, e.g. --fulltomoId=2", metavar="int")
 		self.parser.add_option("--bin", "-b", dest="bin", default=1, type="int",
-			help="Extra binning, e.g. --bin=2", metavar="int")
+			help="Extra binning from original images, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--selexonId", dest="selexonId", type="int",
 			help="Volume selection, e.g. --selexonId=2", metavar="int")
 		self.parser.add_option("--sizex", dest="sizex", default=0, type="int",
-			help="Volume size in column, e.g. --sizex=20", metavar="int")
+			help="Volume size in column before binning, e.g. --sizex=20", metavar="int")
 		self.parser.add_option("--sizey", dest="sizey", default=0, type="int",
-			help="Volume size in row, e.g. --sizey=20", metavar="int")
+			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
 		self.parser.add_option("--subvolumeonly", dest="subvolumeonly", default=False,
 			action="store_true", help="Flag for only trim sub volume, e.g. --subvolumeonly")
 
@@ -161,7 +163,8 @@ class tomoMaker(appionScript.AppionScript):
 			if commit:
 				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltseriesdata,leginonxcorrdata,imodxcorrdata,bin,self.params['runname'])
 			# Reconstruction
-			apImod.recon3D(processpath, seriesname)
+			thickness = self.params['sizez']/bin
+			apImod.recon3D(processpath, seriesname,thickness)
 			if commit:
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltseriesdata,alignrun,
 							processpath,reconname,description)
