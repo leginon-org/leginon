@@ -1814,8 +1814,10 @@ class particledata {
 			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
 			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
 			."WHERE "
-			."  clusterrun.`DEF_id` = $clusterrunId "
-			."ORDER BY clusterid DESC ";
+			."  clusterrun.`DEF_id` = $clusterrunId ";
+		if (!$showHidden)
+			$q.= " AND cluster.`hidden` != 1 ";
+		$q .= "ORDER BY clusterid DESC ";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/>\n";
