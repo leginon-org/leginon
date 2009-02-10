@@ -46,9 +46,9 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	}
 	$defrunid = 'noref'.($norefruns+1);
 
-	$javascript = "<script src='../js/viewer.js'></script>\n";
+	$javascript = '<script type="text/javascript" src="../js/viewer.js"></script>'."\n";
 	// javascript to switch the defaults based on the stack
-	$javascript .= "<script>\n";
+	$javascript .= '<script type="text/javascript">'."\n";
 	$javascript .= "function switchDefaults(stackvars) {\n";
 	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
 	// remove commas from number
