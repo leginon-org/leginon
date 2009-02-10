@@ -124,7 +124,7 @@ if ($stackdatas) {
 								."<img src='loadimg.php?h=80&filename=$montagefile' height='80'><br/>View Montage</a>\n";
 							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 							echo "&nbsp;<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-								." View as Stack</a>&nbsp;\n";
+								." View as Stack</a><br/>\n";
 						}
 						foreach ($clusterdatas as $clusterdata) {
 							$clusterid = $clusterdata['clusterid'];
