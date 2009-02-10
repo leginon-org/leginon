@@ -58,6 +58,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			help="file output type: "+str(self.outtypes), metavar="TYPE")
 		self.parser.add_option("--pickrunids", dest="pickrunids",
 			help="selection run ids for previous automated picking run", metavar="#,#,#")
+		self.parser.add_option("--no-autopick", dest="autopick", default=True,
+			action="store_false", help="Do NOT auto pick images")
 
 	#=======================================
 	def checkConflicts(self):
@@ -253,9 +255,11 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				tiltdiff = abs(tilt2) - abs(tilt1)
 				tiltaxis = -7.2
 				### run tilt automation
-				autotilter = autotilt.autoTilt()
-				result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, tiltdiff, outfile, pixdiam, tiltaxis, msg=False)
+				if len(picks1) > 0 and len(picks2) > 0 and self.params['autopick'] is True:
+					autotilter = autotilt.autoTilt()
+					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, tiltdiff, outfile, pixdiam, tiltaxis, msg=False)
 				sys.stderr.write("%")
+			apDisplay.printMsg("done") 
 		return
 
 	#=======================================
@@ -311,7 +315,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		#guess the shift
 		outfile = self.app.data['outfile']
 		if not os.path.isfile(outfile):
-			self.app.onGuessShift(None)
+			if len(self.app.picks1) > 0 and len(self.app.picks2) > 0 and self.params['autopick'] is True:
+				self.app.onGuessShift(None)
 		else:
 			self.app.readData(outfile)
 			self.app.onAutoOptim(None)
