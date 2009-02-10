@@ -54,6 +54,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 			bits = line.split()
 			partnum = int(float(bits[2]))
 			partlist.append(partnum)
+		f.close()
 		if not partlist:
 			apDisplay.printError("reading class doc file did not work: "+docfile)
 		partlist.sort()
