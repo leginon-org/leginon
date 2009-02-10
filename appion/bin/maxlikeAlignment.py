@@ -387,7 +387,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 				xmippopts += " -C 1e-10 "
 			elif self.params['fastmode'] == "wide":
 				xmippopts += " -C 1e-18 "
-
 		### convergence criteria
 		if self.params['converge'] == "fast":
 			xmippopts += " -eps 5e-3 "
@@ -395,10 +394,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			xmippopts += " -eps 5e-8 "
 		else:
 			xmippopts += " -eps 5e-5 "
-
+		### mirrors
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
-
+		### find number of processors
 		if self.params['nproc'] is None:
 			nproc = nproc = apParam.getNumProcessors()
 		else:
