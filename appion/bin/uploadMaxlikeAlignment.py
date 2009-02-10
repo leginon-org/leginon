@@ -434,6 +434,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.insertRunIntoDatabase(runparams, lastiter)
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist, lastiter)
 
+		apFile.removeStack(runparams['localstack'])
+		apFile.removeFilePattern("partfiles/*")
+
 #=====================
 if __name__ == "__main__":
 	maxLike = UploadMaxLikeScript(True)
