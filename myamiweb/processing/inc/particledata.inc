@@ -152,6 +152,37 @@ class particledata {
 
 	//------ Tomo functions ---------//
 
+	function getTomoAlignmentInfo($alignrunId){
+		$q =  "SELECT a.`DEF_id` as DEF_id, "
+			."a.name as name, "
+			."a.bin as bin, "
+			."a.`REF|ApImodXcorrParamsData|coarseImodParams` as imodid, "
+			."a.`REF|leginondata|TomographySettingsData|coarseLeginonParams` as xleginonid, "
+			."imod.`FilterSigma1` as sigma1, "
+			."imod.`FilterSigma2` as sigma2, "
+			."imod.`FilterRadius2` as radius2 "
+			."FROM `ApTomoAlignmentRunData` a "
+			."LEFT JOIN `ApImodXcorrParamsData` imod "
+			."ON a.`REF|ApImodXcorrParamsData|coarseImodParams` = imod.`DEF_id` "
+			."WHERE a.`DEF_id` = " .$alignrunId;
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getFullTomogramInfo($tomogramId){
+		$q =  "SELECT t.`DEF_id` as DEF_id, "
+			."t.`REF|ApTomoAlignmentRunData|alignment` as alignment, "
+			."t.name as name, "
+			."t.description as description, "
+			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			." p.`path` "
+			."FROM `ApFullTomogramData` t "
+			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
+			."WHERE t.`DEF_id` = " .$tomogramId;
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getTomogramInfo($tomogramId){
 		$q =  "SELECT t.`DEF_id` as DEF_id, "
 			."t.`REF|ApFullTomogramData|fulltomogram` as full, "
@@ -249,7 +280,7 @@ class particledata {
 	}
 
 	function checkforFullTomogram($tiltseriesId){
-		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`"
+		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description` "
 			."FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` "

@@ -36,10 +36,51 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 // --- Get Stack Data
 $particle = new particledata();
 
-// --- Get Reconstruction Data
+// --- Get Fulltomograms
+$tiltseries = $particle->getTiltSeries($sessionId);
+$html = "<h4>Full Tomograms</h4>";
+$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html .= "<TR>\n";
+$display_keys = array ( 'tiltseries','id','runname','description');
+foreach($display_keys as $key) {
+	$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+}
+foreach ($tiltseries as $t) {
+	$fulltomos = $particle->checkforFulltomogram($t['id']);
+	foreach ($fulltomos as $fulltomo) {
+		$fulltomoid = $fulltomo['DEF_id'];
+			// update description
+		if ($_POST['updateDesc'.$fulltomoid]) {
+			updateDescription('ApFullTomogramData', $fulltomoid, $_POST['newdescription'.$fulltomoid]);
+
+			$fulltomo['description']=$_POST['newdescription'.$fulltomoid];
+
+		}
+		$tiltseriesnumber = $t['number'];
+		// PRINT INFO
+		$html .= "<TR>\n";
+		$html .= "<TD>$tiltseriesnumber</TD>\n";
+		$html .= "<TD><A HREF='fulltomoreport.php?expId=$expId&tomoId=$fulltomoid'>$fulltomoid</A></TD>\n";
+		$html .= "<TD>".$fulltomo['runname']."</TD>\n";
+
+		# add edit button to description if logged in
+		$descDiv = ($_SESSION['username']) ? editButton($fulltomoid,$fulltomo['description']) : $fulltomo['description'];
+
+		$html .= "<td>$descDiv</td>\n";
+#		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
+#		$html .= "<td>$downloadDiv</td>\n";
+		$html .= "</TR>\n";
+	}
+}
+$html .= "</table>\n";
+$html .= "<br>\n";
+echo $html;
+
+// --- Get Subvolume Tomograms
 $tomograms = $particle->getTomogramsFromSession($sessionId);
 if ($tomograms) {
-	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+	$html = "<h4>Subvolume tomograms</h4>";
+	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
 	$display_keys = array ( 'tiltseries','full','volume','snapshot','description');
 	foreach($display_keys as $key) {
@@ -94,9 +135,8 @@ if ($tomograms) {
 	}
 	$html .= "</table>\n";
 	echo $html;
-//	echo $particle->displayParticleStats($particleruns, $display_keys, $inspectcheck, $mselexval);
 } else {
-	echo "no tomograms available";
+	echo "no subvolume tomograms available";
 }
 
 

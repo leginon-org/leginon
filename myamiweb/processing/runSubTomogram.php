@@ -61,6 +61,8 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 	$prtlrunval = ($_POST['prtlrunId']) ? $_POST['prtlrunId'] : NULL;
 	$sizex = ($_POST['sizex']) ? $_POST['sizex'] : NULL;
 	$sizey = ($_POST['sizey']) ? $_POST['sizey'] : NULL;
+	$sizez = ($_POST['sizez']) ? $_POST['sizez'] : 100;
+	$offsetz = ($_POST['offsetz']) ? $_POST['offsetz'] : 0;
 	$description = $_POST['description'];
 
 	$alltiltseries = $particle->getTiltSeries($expId);
@@ -107,8 +109,16 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 	echo docpop('tomobox','Box size');
 	echo "
       <INPUT TYPE='text' NAME='sizex' SIZE='5' VALUE='$sizex'>\n
-      <INPUT TYPE='text' NAME='sizey' SIZE='5' VALUE='$sizey'>\n";
-	echo "<FONT>(boxing size in (x,y)</FONT>
+      <INPUT TYPE='text' NAME='sizey' SIZE='5' VALUE='$sizey'>\n
+      <INPUT TYPE='text' NAME='sizez' SIZE='5' VALUE='$sizez'>\n";
+	echo "<FONT>(boxing size in (x,y,z)</FONT>
+		<br />";
+	echo "
+      <P>";
+	echo docpop('zoffset','Box center in z');
+	echo "
+      <INPUT TYPE='text' NAME='offsetz' SIZE='5' VALUE='$offsetz'>\n";
+	echo "<FONT>(pixels on full tomogram)</FONT>
 		<br />";
 	echo"<P>
 			<B> Sub-Tomogram Description:</B><BR/>
@@ -201,6 +211,8 @@ function runSubTomogram() {
 	$prtlrunId=$_POST['prtlrunId'];
 	$sizex=$_POST['sizex'];
 	$sizey=$_POST['sizey'];
+	$sizez=$_POST['sizez'];
+	$offsetz=$_POST['offsetz'];
 	$sessionname=$_POST['sessionname'];
 	$fulltomoId=$_POST['fulltomoId'];
 
@@ -222,6 +234,9 @@ function runSubTomogram() {
 	$command.="--selexonId=$prtlrunId ";
 	$command.="--sizex=$sizex ";
 	$command.="--sizey=$sizey ";
+	if ($sizez > 0)
+		$command.="--sizez=$sizez ";
+	$command.="--offsetz=$offsetz ";
 	$command.="--description=\"$description\" ";
 	$command.="--subvolumeonly ";
 
