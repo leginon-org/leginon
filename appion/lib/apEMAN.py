@@ -1,13 +1,14 @@
-
 import os
 import re
-import apDisplay
-import apImagicFile
 import subprocess
 import sys
 import time
 import math
-
+import apDisplay
+try:
+	import apImagicFile
+except:
+	print "You must be running on Garibaldi"
 try:
 	import EMAN
 except ImportError:
@@ -15,7 +16,6 @@ except ImportError:
 	pass
 
 #=====================
-
 def writeEMANTime(filename, cmd):
 	### write the cmd and time to the filename
 	lc=time.strftime("%a %b %d %H:%M:%S %Y", time.localtime())
@@ -24,6 +24,7 @@ def writeEMANTime(filename, cmd):
 	f.write(out)
 	f.close()
 
+#=====================
 def getNPtcls(filename,spider=False):
 	### get number of particles from cls file
 	f=open(filename,'r')
@@ -34,6 +35,7 @@ def getNPtcls(filename,spider=False):
 		return (nlines-1)
 	return(nlines-2)
 
+#=====================
 def combineSpiParticleList(infiles, outfile):
 	out = open(outfile,'w')
 	n=0 # particle number
@@ -48,6 +50,7 @@ def combineSpiParticleList(infiles, outfile):
 	out.close()
 	return
 
+#=====================
 def makeClassAverages(lst, outputstack,e,mask):
 	#align images in class
 	print "creating class average from",lst,"to",outputstack
@@ -67,6 +70,7 @@ def makeClassAverages(lst, outputstack,e,mask):
 	avg.applyMask(mask,0)
 	avg.writeImage(outputstack,-1)
 
+#=====================
 def convertSpiderToEMAN(spifile, origlst):
 	fileroot = os.path.splitext(spifile)[0]
 	outfile = fileroot+".lst"
@@ -100,12 +104,14 @@ def convertSpiderToEMAN(spifile, origlst):
 	f.close()
 	return outfile
 
+#=====================
 def parseSpiderPtcl(line):
 	if line.strip()[0]!=';':
 		words = line.split()
 		ptcl = int(float(words[2]))
 	return ptcl
 
+#=====================
 def writeBlankImage(outfile,boxsize,place,type=None):
 	a=EMAN.EMData()
 	a.setSize(boxsize,boxsize)
@@ -116,6 +122,7 @@ def writeBlankImage(outfile,boxsize,place,type=None):
 		a.writeImage(outfile,place)
 	return
 
+#=====================
 def flagGoodParticleInClassLst(clsfile, goodclsfile):
 	# read original class list file
 	old_clsfile = open(clsfile,'r')
