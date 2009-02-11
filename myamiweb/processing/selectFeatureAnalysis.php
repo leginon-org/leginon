@@ -26,19 +26,23 @@ echo "<table border='1' class='tableborder' width='600'>";
 #echo "  <h3>Just run an alignment, I don't care how</h3>";
 #echo "</td></tr>";
 
-echo "<tr><td>";
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/spider_logo.png' width='64'>\n";
+echo "</td><td>\n";
 echo "  <h3><a href='runCoranClassify.php?expId=$expId&alignId=$alignId'>Spider Coran Classification</a></h3>";
 echo "  this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>Spider CA S</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." to run correspondence analysis (coran) "
-	.", a form of <a href='http://en.wikipedia.org/wiki/Principal_components_analysis'>"
+	." to run correspondence analysis (coran), "
+	." a form of <a href='http://en.wikipedia.org/wiki/Principal_components_analysis'>"
 	."Principal components analysis</a>&nbsp;<img src='img/external.png'>, "
 	."and classify your aligned particles"
 	."<br/><br/>";
 echo "</td></tr>";
 
-echo "<tr><td>";
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
 echo "  <h3><a href='runKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Kerden Self-Organizing Map</a></h3>";
 echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organizing Map'. "
 	."It maps a set of high dimensional input vectors into a two-dimensional grid. "
@@ -47,7 +51,9 @@ echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organiz
 	."<br/><br/>";
 echo "</td></tr>";
 
-echo "<tr><td>";
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/imagic_logo.png' width='64'>\n";
+echo "</td><td>\n";
 echo "  <h3><a href='imagicMSA.php?expId=$expId&alignId=$alignId'>IMAGIC Multivariate Statistical Analysis (MSA)</a></h3>";
 echo "  IMAGIC multivariate statistical analysis "
         ."gives you the option of using one of 3 distance criteria for determining "
