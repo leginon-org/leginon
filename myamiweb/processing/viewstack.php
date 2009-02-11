@@ -41,7 +41,8 @@ if ($reconId) {
   $filename=$stack['path'].'/'.$stack['name'];
 	$arrayall=array(array());
 	for ($i=$iter1;$i<=$iter2;$i++) {
-		$refine[$i] = $particle->getRefinementData($reconId,$i);
+		$ref = $particle->getRefinementData($reconId,$i);
+		$refine[$i] = $ref[0];
 		$refineId = $refine[$i][DEF_id];
 		// get all bad particles in stack
 		$subprtlsarray[$i]=$particle->getSubsetParticlesInStack($refineId,$substack,$refinetype);

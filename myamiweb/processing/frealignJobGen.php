@@ -32,7 +32,7 @@ if ($_POST['write']) {
 	writeJobFile();
 }
 
-elseif ($_POST['submitstackmodel'] || $_POST['import']) {
+elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
 	## make sure a stack and model were selected
 	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
 	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
@@ -319,6 +319,13 @@ function jobForm($extra=false) {
 	$lp=$_POST['lp'];
 	$bfactor=$_POST['bfactor'];
 	$sym = ($_POST['sym']) ? $_POST['sym'] : $modsym;
+
+	// if importing reconstruction eulers
+	if ($_POST['importrecon'] && $_POST['importrecon']!='None'){
+		$_POST['initorientmethod']='importrecon';
+		$_POST['write']='True';
+		$importcheck='checked';
+	}
 	$angcheck = ($_POST['initorientmethod']=='projmatch' || !$_POST['write']) ? 'checked' : '';
 	$inparfilecheck = ($_POST['initorientmethod']=='inparfile') ? 'checked' : '';
 
@@ -332,6 +339,49 @@ function jobForm($extra=false) {
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr><td>\n";
 	echo "<b>Initial Orientations</b><br />\n";
+	echo "<input type='radio' name='initorientmethod' value='importrecon' $importcheck>\n";
+	echo docpop('import','Import from reconstruction iteration:');
+	echo " <select name='importrecon' onchange='this.form.submit()'>\n";
+	$ropt = "<option value='None'>Select Reconstruction</option>\n";
+
+	// import values from previous reconstruction
+	$sessions = $leginondata->getSessions('',$projectId);
+	if (is_array($sessions)) {
+		foreach ($sessions as $s) {
+			$recons=$particle->getReconIdsFromSession($s['id']);
+			if (is_array($recons)) {
+			  	foreach ($recons as $r) {
+					$ropt.= "<option value='".$r['DEF_id']."' ";
+					$ropt.= ($_POST['importrecon']==$r['DEF_id']) ? 'selected':'';
+					$ropt.= ">";
+					$ropt.= $s['name']." : ";
+					$ropt.= $r['name']." - ".$r['description'];
+					$ropt.= "</option>\n";
+				}
+			}
+		}
+	}
+	echo "$ropt";
+	echo "</select>\n";
+	echo "<br />\n";
+
+	// if a reconstruction has been selected, show iterations & resolutions
+	echo "&nbsp;&nbsp;&nbsp; Iteration:\n";
+	$iterinfo = $particle->getRefinementData($_POST['importrecon']);
+	print_r($iterinfo);
+	echo "<select name='importiter'>\n";
+	if (is_array($iterinfo)) {
+		foreach ($iterinfo as $iter){
+			$iopt.="<option value='".$iter['DEF_id']."' ";
+			$iopt.= ($_POST['importiter']==$iter['DEF_id']) ? 'selected':'';
+			$iopt.= ">";
+			$iopt.= print_r($iter);
+			$iopt.= "</option>\n";
+		}
+	}
+	echo $iopt;
+	echo "</select>\n";
+	echo "<br />\n";
 	echo "<input type='radio' name='initorientmethod' value='projmatch' $angcheck>\n";
 	echo docpop('ang',"Determine with Frealign - Ang incr:");
 	echo " <input type='type' name='ang' value='$ang' size='4'>\n";

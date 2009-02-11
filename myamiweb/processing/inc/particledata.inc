@@ -2643,7 +2643,7 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		  ."WHERE `REF|ApRefinementRunData|refinementRun` = $refinementRun ";
 		if ($iteration) $q.="AND `iteration` = $iteration";
 		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
+		return $r;
 	}
 
 	function getParamsFromRefinementDataId ($refinementId) {

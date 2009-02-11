@@ -30,8 +30,10 @@ if (!$_REQUEST) {
 
 // --- Get Reconstruction Data
 $particle = new particledata();
-$refine1 = $particle->getRefinementData($reconId,$iter1);
-$refine2 = $particle->getRefinementData($reconId,$iter2);
+$ref = $particle->getRefinementData($reconId,$iter1);
+$refine1=$ref[0];
+$ref = $particle->getRefinementData($reconId,$iter2);
+$refine2=$ref[0];
 $commonprtls = $particle->getCommonParticles($refine1['DEF_id'], $refine2['DEF_id']);
 $sep=" ";
 $nl="\n";

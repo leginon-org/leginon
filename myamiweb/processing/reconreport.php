@@ -171,7 +171,8 @@ $html .= "</TR>\n";
 //sort($iterations);
 
 foreach ($iterations as $iteration){
-	$refinementData=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
+	$ref=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
+	$refinementData=$ref[0];
 	// set as exemplar if submitted
 	if ($_POST['exemplar'.$refinementData['DEF_id']]) {
 		$particle->updateExemplar('ApRefinementData',$refinementData['DEF_id'],1);

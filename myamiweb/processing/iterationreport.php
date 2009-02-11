@@ -22,19 +22,20 @@ $particle = new particledata();
 
 processing_header('Refine Iteration Report','Refine Iteration Report');
 
-	$itrinfo=$particle->getRefinementData($runId,$itr);
-	$paraminfo=$particle->getIterationInfo($runId,$itr);
+$itr=$particle->getRefinementData($runId,$itr);
+$itrinfo=$itr[0];
+$paraminfo=$particle->getIterationInfo($runId,$itr);
 
-	$report_title = 'Report for Iteration';
-	$report_spec = $itrinfo['DEF_id'];
-	echo apdivtitle($report_title."<FONT class='aptitle'>
+$report_title = 'Report for Iteration';
+$report_spec = $itrinfo['DEF_id'];
+echo apdivtitle($report_title."<FONT class='aptitle'>
 		</FONT> (ID: <FONT class='aptitle'>".$report_spec."</FONT>)");
-	echo "<table><tr><td>";
-	$datainfo=$paraminfo;
-	$exclude_fields = array('DEF_id','DEF_timestamp','REF|ApPathData|path');
-	$title = "refinement parameters";
-	$particle->displayParameters($title,$datainfo,$exclude_fields,$expId);
-	echo "</td><td>";
-	echo "</td><tr></table>";
+echo "<table><tr><td>";
+$datainfo=$paraminfo;
+$exclude_fields = array('DEF_id','DEF_timestamp','REF|ApPathData|path');
+$title = "refinement parameters";
+$particle->displayParameters($title,$datainfo,$exclude_fields,$expId);
+echo "</td><td>";
+echo "</td><tr></table>";
 
 processing_footer();
