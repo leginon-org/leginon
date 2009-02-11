@@ -10,7 +10,6 @@ import math
 import shutil
 import apDisplay
 import apFile
-import apImage
 import numpy
 from pyami import mrc
 
@@ -194,7 +193,7 @@ def writeImagic(array, filename):
 	datafile = open(datafilename, 'wb')
 	while i < array.shape[0]:
 		partimg = array[i]
-		avg1,stdev1,min1,max1 = apImage.getImageInfo(partimg)
+		avg1,stdev1,min1,max1 = getImageInfo(partimg)
 		partnum = i+1
 		headerstr = makeHeaderStr(partnum, array.shape, avg1, stdev1, min1, max1)
 		headfile.write(headerstr)
@@ -208,6 +207,18 @@ def writeImagic(array, filename):
 
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
 	return
+
+#=========================
+def getImageInfo(im):
+	"""
+	prints out image information good for debugging
+	"""
+	avg1=ndimage.mean(im)
+	stdev1=ndimage.standard_deviation(im)
+	min1=ndimage.minimum(im)
+	max1=ndimage.maximum(im)
+
+	return avg1,stdev1,min1,max1
 
 #===============
 def makeHeaderStr(partnum, shape, avg, stdev, maxval, minval):
