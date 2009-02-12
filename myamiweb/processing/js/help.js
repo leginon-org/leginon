@@ -74,6 +74,7 @@ var help = {
 		'session': 'Session name as created at leginon startup on the date of image capture.',
 		'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
 		'tomorunname' : 'Specifies the name associated with the full tomogram processing results unique to the specified tilt series and parameters.',
+		'tomothickness' : 'Thickness of the tomogram to be reconstructed, count by pixelsof the tilt image before tomogram binning',
 		'subtomorunname' : 'Specifies the name associated with the sub tomogram boxing. Default is "subtomo_"+particle pickrun Id. New attempt to use the same run name from the same full tomogram will append to the old results.',
 		'volume': 'a bounded subvolume (often a specific structure) of the full tomogram.  Leave it blank if uploading full tomogram for boxing later',
 		'tomobox': 'a box dimension to define the subvolume in pixels of the tilt series images. x is column, y is row ',

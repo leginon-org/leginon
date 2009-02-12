@@ -491,7 +491,7 @@ if ($expId) {
 	if ($tiltruns > 0) {
 		$action = "Tomography";
 
-		// get ctf estimation stats:
+		// get tomogram upload stats:
 		$sresults=array();
 		$sdone = count($subclusterjobs['uploadtomo']['done']);
 		$srun = count($subclusterjobs['uploadtomo']['running']);
@@ -510,11 +510,15 @@ if ($expId) {
 
 		$nruns=array();
 		$nruns[]=array (
-				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload Tomogram</a>",
+				'name'=>"<a href='runTomoMaker.php?expId=$sessionId'>Create full tomogram</a>",
 				'result'=>$sresults,
 				);
 		$nruns[]=array (
-				'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create Tomogram Subvolume</a>",
+				'name'=>"<a href='uploadtomo.php?expId=$sessionId'>Upload tomogram</a>",
+				'result'=>$sresults,
+				);
+		$nruns[]=array (
+				'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create tomogram subvolume</a>",
 				'result'=>$sresults,
 				);
 

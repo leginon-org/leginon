@@ -191,8 +191,10 @@ class particledata {
 			."t.pixelsize, "
 			."t.description as description, "
 			."t.`REF|leginondata|TiltSeriesData|tiltseries` as tiltseries, "
+			."t.offsetz as offsetz, "
 			."t.`SUBD|dimension|x` as dx, "
 			."t.`SUBD|dimension|y` as dy, "
+			."t.`SUBD|dimension|z` as dz, "
 			."tilt.`number` as tiltnumber, "
 			."prtl.xcoord as centerx, "
 			."prtl.ycoord as centery, "
@@ -293,6 +295,7 @@ class particledata {
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
 			."pc.`pixelsize` as ccdpixelsize, "
 			."a.`REF|SessionData|session` as session, "
+			."a.`filename` as filename, "
 			."t.`number` as number "
 			."FROM ".DB.".`AcquisitionImageData` a "
 			."left join ".DB.".`TiltSeriesData` t "
@@ -311,6 +314,14 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function countTomoAlignmentRuns($tiltseriesId){
+		$q="SELECT * "
+			."FROM ApTomoAlignmentRunData "
+			."WHERE `REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId;
+		$r = $this->mysql->getSQLResult($q);
+		return count($r);
+	}
+	
 	// ------CTF data functions -------//
 	function hasCtfData($sessionId) {
 		$d = ($this->getLastCtfRun($sessionId)) ? true : false;

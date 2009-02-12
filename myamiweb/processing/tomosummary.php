@@ -82,29 +82,35 @@ if ($tomograms) {
 	$html = "<h4>Subvolume tomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'tiltseries','full','volume','snapshot','description');
+	$display_keys = array ( 'tiltseries','full','volume<br/>xycenter,zoffset<br/>dimension','snapshot','description');
 	foreach($display_keys as $key) {
 		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	foreach ($tomograms as $tomo) {
 		$tomogramid = $tomo['DEF_id'];
 		$tomogram = $particle->getTomogramInfo($tomogramid);
+		$dzprint = ($tomogram['dz'])?$tomogram['dz']:'?';
+		$dimprint = '('.$tomogram['dx'].','.$tomogram['dy'].','.$dzprint.')';
 		if ($tomogram['prtlimage']) {
 			$number = $tomogram['number'];
 			$center0 = $particle->getTomoCenter($tomogram['centerx'],
 					$tomogram['centery'],$tomogram['prtlimage'],$tomogram['tiltseries']);
 			$center0['x'] = floor($center0['x']);
 			$center0['y'] = floor($center0['y']);
+			$offsetz = floor($tomogram['offsetz']);
 		} else {
 			if ($tomogram['full']) {
 				$number = $tomogram['number'];
 				$center0 = array('x'=>'?','y'=>'?');
+				$offsetz = '?';
 			} else {
 				$number = '';
 				$center0 = Null;
+				$offsetz = 0;
 			}
 		}
 		$centerprint = ($tomogram['full']) ? '('.$center0['x'].','.$center0['y'].')' : 'Full';
+		$offsetprint = $offsetz;
 		// update description
 		if ($_POST['updateDesc'.$tomogramid]) {
 			updateDescription('ApTomogramData', $tomogramid, $_POST['newdescription'.$tomogramid]);
@@ -117,12 +123,22 @@ if ($tomograms) {
 		$html .= "<TR>\n";
 		$html .= "<TD>$tiltseriesnumber</TD>\n";
 		$html .= "<TD>".$tomogram['full']."</TD>\n";
-		$html .= "<TD><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint</A></TD>\n";
+		$html .= "<TD><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint,$offsetprint<br/>$dimprint</A></TD>\n";
 		$html .= "<td>";
     $snapfile = $tomogram['path'].'/snapshot.png';
-		if (!file_exists($snapshotfile)) 
+		if (!file_exists($snapfile)) 
 			$snapfile = $tomogram['path'].'/projectiona.jpg';
-    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+		$maxheight = 80;
+		$maxwidth = 400;
+		$imgsize = array(10,10);
+		if (file_exists($snapfile)) 
+			$imgsize = getimagesize($snapfile);
+		if ($imgsize[1] < $maxheight) {
+			$imglimit = "WIDTH='".min($imgsize[0],$maxwidth)."'";
+		} else {
+			$imglimit = "HEIGHT='".$maxheight."'";
+		}
+    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
 		$html .= "</td>\n";
 
 		# add edit button to description if logged in
