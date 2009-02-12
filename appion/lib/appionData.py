@@ -761,6 +761,7 @@ class ApTomogramData(Data):
 			('tiltseries', leginondata.TiltSeriesData),
 			('fulltomogram', ApFullTomogramData),
 			('center', ApParticleData),
+			('offsetz', int),
 			('dimension', dict),
 			('path', ApPathData),
 			('runname', str),
