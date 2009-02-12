@@ -47,7 +47,7 @@ class subStackScript(appionScript.AppionScript):
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
 		elif self.params['clusterid'] is not None:
 			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
-			self.alignstackdata = clusterstackdata['clusterrun']['alignstack']
+			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
 			self.params['stackid'] = self.alignstackdata['stack'].dbid
 
 		### check and make sure we got the stack id
