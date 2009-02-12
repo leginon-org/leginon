@@ -881,6 +881,7 @@ def frame_constant(a, shape, cval=0):
 	return b
 
 def writeMrcStack(path, stackname, mrc_files, binning=1):
+	apDisplay.printMsg("Writing MRC stack file... ")
 	stackname = os.path.join(path, stackname)
 	im = mrc.read(mrc_files[0])
 	image = imagefun.bin(im, binning)
