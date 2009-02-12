@@ -16,6 +16,7 @@
 import os
 import sys
 import re
+import time
 import shutil
 import appionScript
 import appionData
@@ -24,6 +25,7 @@ import apParam
 import apRecon
 import apDisplay
 import apEMAN
+import apIMAGIC
 import apFile
 import apUpload
 import apDatabase
@@ -49,8 +51,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="total number of iterations", metavar="int")
 		self.parser.add_option("--itn", dest="itn", type="int",
 			help="number of this iteration", metavar="int")
-		self.parser.add_option("--symmetry", dest="symmetry", type="str",
-			help="symmetry of the object", metavar="STR")
+		self.parser.add_option("--symmetry", dest="symmetry", type="int",
+			help="symmetry of the object", metavar="INT")
 		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float",
 			help="maximum radial shift during MRA", metavar="float")	
 		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
@@ -131,122 +133,14 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		self.params['rundir'] = os.path.join(path, self.params['runname'])
 
 
-	def upload3dRunData(self):
-		refineq = appionData.ApImagic3dRefineRunData()
-		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
-		refineq['runname'] = self.params['runname']
-		refineq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
-		refineq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
-		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
-		refineq['description'] = self.params['description']
-		refineq['pixelsize'] = self.params['apix']
-		refineq['boxsize'] = self.params['boxsize']
-		refineq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
-		refineq['hidden'] = False
-		if self.params['commit'] is True and self.params['itn'] == 1:
-			refineq.insert()
-		self.refinedata = refineq
-		return 
-
-	def upload3dIterationData(self):
-		itnq = appionData.ApImagic3dRefineIterationData()
-		itnq['refinement_run'] = self.refinedata
-		itnq['iteration'] = self.params['itn']
-		itnq['name'] = "masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-		itnq['max_shift_orig'] = self.params['max_shift_orig']
-		itnq['max_shift_this'] = self.params['max_shift_this']
-		itnq['sampling_parameter'] = self.params['samp_param']
-		itnq['euler_ang_inc'] = self.params['euler_ang_inc']
-		itnq['ham_win'] = self.params['ham_win']
-		itnq['obj_size'] = self.params['object_size']
-		itnq['repalignments'] = self.params['repalignments']
-		itnq['amask_dim'] = self.params['amask_dim']
-		itnq['amask_lp'] = self.params['amask_lp']
-		itnq['amask_sharp'] = self.params['amask_sharp']
-		itnq['amask_thresh'] = self.params['amask_thresh']
-		itnq['mra_ang_inc'] = self.params['mrarefs_ang_inc']
-		itnq['forw_ang_inc'] = self.params['forw_ang_inc']
-		itnq['num_classums'] = self.params['num_classums']
-		itnq['symmetry'] = appionData.ApSymmetryData.direct_query(self.params['symmetry'])
-		if self.params['commit'] is True:
-			itnq.insert()
-		return
-
-	#=====================
-
-	def start(self):
-		print self.params
-		
-		if self.params['imagic3d0Id'] is not None:
-			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
-			self.params['boxsize'] = modeldata['boxsize']
-			self.params['apix'] = modeldata['pixelsize']
-		else: 
-			apDisplay.printError("3d0 initial model not in the database")
-		
-		
-		# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid	
-		if modeldata['norefclass'] is not None:
-			norefclassdata = modeldata['norefclass']
-			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
-	                norefpath = norefclassdata['norefRun']['path']['path']
-	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
-		elif modeldata['reclass'] is not None:
-			reclassid = modeldata['reclass'].dbid
-			reclassdata = appionData.ApImagicReclassifyData.direct_query(reclassid)
-			norefclassdata = reclassdata['norefclass']
-			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
-	                norefpath = norefclassdata['norefRun']['path']['path']
-	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
-		elif modeldata['clusterclass'] is not None:
-			clusterid = modeldata['clusterclass'].dbid			
-			clusterdata = appionData.ApClusteringStackData.direct_query(clusterid)
-			self.params['stackid'] = clusterdata['clusterrun']['alignstack'].dbid
-			clusterpath = clusterdata['path']['path']
-			clsavgfile = os.path.join(clusterpath, clusterdata['avg_imagicfile'])
-			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
-				clsavgfile = clsavgfile[:-4]
-		else:
-			apDisplay.printError("no class averages associated with model in the database")
-		
-		
-################ 		NEED TO SPECIFY THE NUMBER OF CLASS AVERAGES IN ORIGINAL NOREF FILE 	###################
-		
-		
-
-# need to copy files from initial model directory to working directory
-		orig_path = os.path.join(modeldata['path']['path'], modeldata['runname'])
-		mrarefsimg = "mrarefs_masked_3d0.img"
-		mrarefshed = "mrarefs_masked_3d0.hed"
-		forwimg = "masked_3d0_ordered0_repaligned_forward.img"
-		forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
-		if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
-			shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")
-		if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
-			shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
-		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
-			shutil.copyfile(orig_path+"/"+mrarefsimg, str(self.params['rundir'])+"/mrarefs_masked_3d.img")
-		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.hed") is False:
-			shutil.copyfile(orig_path+"/"+mrarefshed, str(self.params['rundir'])+"/mrarefs_masked_3d.hed")
-		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img") is False:
-			shutil.copyfile(orig_path+"/"+forwimg, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img")
-		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed") is False:
-			shutil.copyfile(orig_path+"/"+forwhed, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed")
-	
-
-
-		print "... class average pixel size: "+str(self.params['apix'])
-		print "... class average box size: "+str(self.params['boxsize'])	
-		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
-	
-		filename = "imagicCreate3dRefine_"+str(self.params['itn'])+".batch"
-		f = open(filename, 'w')
-		
-		
-		
-		
-		
-		
+	#=======================
+	def createImagicBatchFile(self):
+		# IMAGIC batch file creation
+		syminfo = apUpload.getSymmetryData(self.params['symmetry'])
+		symmetry = syminfo['symmetry']
+		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+				
+		f = open(filename, 'w')	
 		f.write("#!/bin/csh -f\n")	
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("cd "+str(self.params['rundir'])+"\n")
@@ -291,8 +185,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("NO\n")
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write(str(self.params['symmetry'])+"\n")
-		lowercase = self.params['symmetry'].lower()
+		f.write(symmetry+"\n")
+		lowercase = symmetry.lower()
 		if lowercase != "c1": 
 			f.write("0\n")
 		f.write("ANCHOR\n")
@@ -322,7 +216,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
-		f.write(str(self.params['symmetry'])+"\n") 		
+		f.write(symmetry+"\n") 		
 		f.write("YES\n")
 		f.write("ordered\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -345,7 +239,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
-		f.write(str(self.params['symmetry'])+"\n") 		
+		f.write(symmetry+"\n") 		
 		f.write("YES\n")
 		f.write("ordered_repaligned\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -374,7 +268,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
-		f.write(str(self.params['symmetry'])+"\n")		
+		f.write(symmetry+"\n")		
 		f.write("YES\n")
 		f.write("ordered_repaligned\n")
 		f.write("ANGREC_HEADER_VALUES\n")
@@ -426,7 +320,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
-		f.write(str(self.params['symmetry'])+"\n") 		
+		f.write(symmetry+"\n") 		
 		f.write("YES\n")
 		f.write("ordered_repaligned_odd\n")
 		f.write("ANGREC_HEAD\n")
@@ -439,7 +333,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
-		f.write(str(self.params['symmetry'])+"\n")		
+		f.write(symmetry+"\n")		
 		f.write("YES\n")
 		f.write("ordered_repaligned_even\n")
 		f.write("ANGREC_HEAD\n")
@@ -455,7 +349,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("3d_ordered_repaligned_even\n")
 		f.write("3d_fsc\n")
 		f.write("3.\n")
-		f.write(str(self.params['symmetry'])+"\n")		
+		f.write(symmetry+"\n")		
 		f.write(".66\n")			
 		f.write(str(self.params['boxsize'])+"\n")			
 		f.write("EOF\n")
@@ -466,7 +360,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("WIDENING\n")
 		f.write("mrarefs_masked_3d\n")
 		f.write("ASYM_TRIANGLE\n")
-		f.write(str(self.params['symmetry'])+"\n")		
+		f.write(symmetry+"\n")		
 		f.write("EQUIDIST\n")
 		f.write("ZERO\n")
 		f.write(str(self.params['mrarefs_ang_inc'])+"\n")		
@@ -478,7 +372,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("WIDENING\n")
 		f.write("masked_3d_ordered_repaligned_forward\n")
 		f.write("ASYM_TRIANGLE\n")
-		f.write(str(self.params['symmetry'])+"\n")		
+		f.write(symmetry+"\n")		
 		f.write("EQUIDIST\n")
 		f.write("ZERO\n")
 		f.write(str(self.params['forw_ang_inc'])+"\n")		
@@ -534,10 +428,128 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("rm fsc_rep.*\n")
 		f.write("rm fsc_err.*\n") 
 		f.close()
+		
+		return filename
 
-		os.chdir(str(self.params['rundir']))
-		os.system("chmod 755 "+str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-		os.system(str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+	#======================
+	def upload3dRunData(self):
+		refineq = appionData.ApImagic3dRefineRunData()
+		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		refineq['runname'] = self.params['runname']
+		if self.params['norefClassId'] is not None:
+			refineq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+		elif self.params['clusterId'] is not None:
+			refineq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+		refineq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
+		refineq['description'] = self.params['description']
+		refineq['pixelsize'] = self.params['apix']
+		refineq['boxsize'] = self.params['boxsize']
+		refineq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
+		refineq['hidden'] = False
+		if self.params['commit'] is True and self.params['itn'] == 1:
+			refineq.insert()
+		self.refinedata = refineq
+		return 
+		
+		
+	#======================	
+	def upload3dIterationData(self):
+		itnq = appionData.ApImagic3dRefineIterationData()
+		itnq['refinement_run'] = self.refinedata
+		itnq['iteration'] = self.params['itn']
+		itnq['name'] = "masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+		itnq['max_shift_orig'] = self.params['max_shift_orig']
+		itnq['max_shift_this'] = self.params['max_shift_this']
+		itnq['sampling_parameter'] = self.params['samp_param']
+		itnq['euler_ang_inc'] = self.params['euler_ang_inc']
+		itnq['ham_win'] = self.params['ham_win']
+		itnq['obj_size'] = self.params['object_size']
+		itnq['repalignments'] = self.params['repalignments']
+		itnq['amask_dim'] = self.params['amask_dim']
+		itnq['amask_lp'] = self.params['amask_lp']
+		itnq['amask_sharp'] = self.params['amask_sharp']
+		itnq['amask_thresh'] = self.params['amask_thresh']
+		itnq['mra_ang_inc'] = self.params['mrarefs_ang_inc']
+		itnq['forw_ang_inc'] = self.params['forw_ang_inc']
+		itnq['num_classums'] = self.params['num_classums']
+		itnq['symmetry'] = appionData.ApSymmetryData.direct_query(self.params['symmetry'])
+		if self.params['commit'] is True:
+			itnq.insert()
+		return
+
+	#=====================
+	def start(self):
+		
+		if self.params['imagic3d0Id'] is not None:
+			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
+			self.params['boxsize'] = modeldata['boxsize']
+			self.params['apix'] = modeldata['pixelsize']
+		else: 
+			apDisplay.printError("3d0 initial model not in the database")
+		
+		# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid	or clusterId
+		if modeldata['norefclass'] is not None:
+			norefclassdata = modeldata['norefclass']
+			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+	                norefpath = norefclassdata['norefRun']['path']['path']
+	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
+		elif modeldata['reclass'] is not None:
+			reclassid = modeldata['reclass'].dbid
+			reclassdata = appionData.ApImagicReclassifyData.direct_query(reclassid)
+			norefclassdata = reclassdata['norefclass']
+			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+	                norefpath = norefclassdata['norefRun']['path']['path']
+	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
+		elif modeldata['clusterclass'] is not None:
+			clusterid = modeldata['clusterclass'].dbid			
+			clusterdata = appionData.ApClusteringStackData.direct_query(clusterid)
+			self.params['stackid'] = clusterdata['clusterrun']['alignstack'].dbid
+			clusterpath = clusterdata['path']['path']
+			clsavgfile = os.path.join(clusterpath, clusterdata['avg_imagicfile'])
+			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
+				clsavgfile = clsavgfile[:-4]
+		else:
+			apDisplay.printError("no class averages associated with model in the database")
+		
+		print self.params
+				
+		# copy files from initial model directory to working directory
+		orig_path = os.path.join(modeldata['path']['path'], modeldata['runname'])
+		mrarefsimg = "mrarefs_masked_3d0.img"
+		mrarefshed = "mrarefs_masked_3d0.hed"
+		forwimg = "masked_3d0_ordered0_repaligned_forward.img"
+		forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
+		if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
+			shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")
+		if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
+			shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
+		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
+			shutil.copyfile(orig_path+"/"+mrarefsimg, str(self.params['rundir'])+"/mrarefs_masked_3d.img")
+		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.hed") is False:
+			shutil.copyfile(orig_path+"/"+mrarefshed, str(self.params['rundir'])+"/mrarefs_masked_3d.hed")
+		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img") is False:
+			shutil.copyfile(orig_path+"/"+forwimg, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img")
+		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed") is False:
+			shutil.copyfile(orig_path+"/"+forwhed, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed")
+	
+		print "... class average pixel size: "+str(self.params['apix'])
+		print "... class average box size: "+str(self.params['boxsize'])	
+		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+	
+		# create batch file for execution with IMAGIC
+		batchfile = self.createImagicBatchFile()
+		
+		### execute batch file that was created
+		time3dRefine = time.time()
+		os.system('chmod 755 '+batchfile)
+		apIMAGIC.executeImagicBatchFile(batchfile)
+		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
+		time3dRefine = time.time() - time3dRefine
+			
+#		os.chdir(str(self.params['rundir']))
+#		os.system("chmod 755 "+str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+#		os.system(str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
 
 		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
 		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
