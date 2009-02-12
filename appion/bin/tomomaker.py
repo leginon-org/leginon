@@ -40,7 +40,7 @@ class tomoMaker(appionScript.AppionScript):
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
 		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
 			help="tilt series number in the session", metavar="int")
-		self.parser.add_option("--sizez", dest="sizez", default=0, type="int",
+		self.parser.add_option("--thickness", dest="thickness", default=100, type="int",
 			help="Full tomo reconstruction thickness before binning, e.g. --sizez=200", metavar="int")
 		self.parser.add_option("--fulltomoId", dest="fulltomoId", type="int",
 			help="Full tomogram id for subvolume creation, e.g. --fulltomoId=2", metavar="int")
@@ -52,6 +52,10 @@ class tomoMaker(appionScript.AppionScript):
 			help="Volume size in column before binning, e.g. --sizex=20", metavar="int")
 		self.parser.add_option("--sizey", dest="sizey", default=0, type="int",
 			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
+		self.parser.add_option("--sizez", dest="sizez", type="int",
+			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
+		self.parser.add_option("--offsetz", dest="offsetz", default=0, type="int",
+			help="Volume z offset from the full tomogram center after binning, e.g. --offsetz=0", metavar="int")
 		self.parser.add_option("--subvolumeonly", dest="subvolumeonly", default=False,
 			action="store_true", help="Flag for only trim sub volume, e.g. --subvolumeonly")
 
@@ -73,6 +77,8 @@ class tomoMaker(appionScript.AppionScript):
 		if self.params['selexonId'] is not None:
 			if int(self.params['sizex']) < 1 or int(self.params['sizey']) < 1:
 				apDisplay.printError("must enter non-zero subvolume size")
+			if int(self.params['sizez']) is None:
+				self.params['sizez'] = self.params['thickness']
 
 	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
@@ -152,7 +158,7 @@ class tomoMaker(appionScript.AppionScript):
 				# pretend to be gotten from tomogram until fixed
 				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
 				imodxcorrdata = None
-			#gtransforms = apImod.convertToGlobalAlignment(processpath, seriesname)
+			gtransforms = apImod.convertToGlobalAlignment(processpath, seriesname)
 			# Add fine alignments here ----------------
 			# use the croase global alignment as final alignment
 			origxfpath = os.path.join(processpath, seriesname+".prexg")
@@ -163,7 +169,7 @@ class tomoMaker(appionScript.AppionScript):
 			if commit:
 				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltseriesdata,leginonxcorrdata,imodxcorrdata,bin,self.params['runname'])
 			# Reconstruction
-			thickness = self.params['sizez']/bin
+			thickness = int(self.params['thickness']/bin)
 			apImod.recon3D(processpath, seriesname,thickness)
 			if commit:
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltseriesdata,alignrun,
@@ -173,19 +179,20 @@ class tomoMaker(appionScript.AppionScript):
 			bin = fulltomodata['alignment']['bin']
 			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
-			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey'])}
+			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey']),'z':int(self.params['sizez'])}
 			for i,imagedata in enumerate(ordered_imagelist):
 				particles = apParticle.getParticles(imagedata, self.params['selexonId'])
 				for particle in particles:
 					center = apTomo.transformParticleCenter(particle,bin,gtransforms[i])
-					size = (dimension['x']/bin,dimension['y']/bin)
+					offsetz = self.params['offsetz']
+					size = (dimension['x']/bin,dimension['y']/bin,dimension['z'])
 					volumename = 'volume%d'% (volumeindex,)
 					volumepath = os.path.join(processpath,subrunname+'/',volumename+'/')
 					apParam.createDirectory(volumepath)
-					apImod.trimVolume(processpath, subrunname,seriesname,volumename,center,size)
+					apImod.trimVolume(processpath, subrunname,seriesname,volumename,center,offsetz,size)
 					if commit:
 						long_volumename = seriesname+'_'+volumename
-						subtomodata = apTomo.insertSubTomogram(fulltomodata,particle,dimension,
+						subtomodata = apTomo.insertSubTomogram(fulltomodata,particle,offsetz,dimension,
 								volumepath, subrunname,long_volumename,volumeindex,pixelsize
 								,description)
 						tomogramfile = subtomodata['path']['path']+'/'+subtomodata['name']+'.rec'

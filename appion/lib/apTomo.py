@@ -223,11 +223,12 @@ def checkExistingFullTomoData(path,name):
 	filepath = os.path.join(path,name+".rec")
 	if not os.path.isfile(filepath):
 		return None
-	md5sum = apFile.md5sumfile(filepath)
-	tomoq = appionData.ApFullTomogramData(md5sum = md5sum)
-	results = tomoq.query()
-	if not results:
-		return None
+	# This takes too long
+	#md5sum = apFile.md5sumfile(filepath)
+	#tomoq = appionData.ApFullTomogramData(md5sum = md5sum)
+	#results = tomoq.query()
+	#if not results:
+	#	return None
 	else:
 		return results[0]
 	
@@ -277,7 +278,7 @@ def transformParticleCenter(particle,bin,gtransform):
 	newy = A21 * X + A22 * Y + DY
 	return (newx,newy)
 
-def insertSubTomogram(fulltomogram,center,dimension,path,runname,name,index,pixelsize,description):
+def insertSubTomogram(fulltomogram,center,offsetz,dimension,path,runname,name,index,pixelsize,description):
 	tomoq = appionData.ApTomogramData()
 	tomoq['session'] = fulltomogram['session']
 	tomoq['tiltseries'] = fulltomogram['tiltseries']
@@ -287,6 +288,7 @@ def insertSubTomogram(fulltomogram,center,dimension,path,runname,name,index,pixe
 	tomoq['runname'] = runname
 	tomoq['number'] = index
 	tomoq['center'] = center
+	tomoq['offsetz'] = offsetz
 	tomoq['dimension'] = dimension
 	tomoq['pixelsize'] = pixelsize
 	tomoq['description'] = description
@@ -375,4 +377,5 @@ def makeProjection(filename,xsize=512):
 		slice = numpy.sum(array[:,:,:],axis=axis)/(shape[axis])
 		print "sum done"
 		# adjust and shrink each image
+		mrc.write(slice,pictpath+'.mrc')
 		array2jpg(pictpath,slice,size=xsize)

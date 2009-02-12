@@ -181,39 +181,61 @@ DONE
 			"RADIAL 0.35 0.05",
 			"SCALE 1.39 -500.0",
 			"SUBSETSTART 0 0",
-			"THICKNESS "+inputparams['thickness'],
+			"THICKNESS %d" % inputparams['thickness'],
 			"TILTFILE "+inputparams['tilts'],
 			"XAXISTILT 0.0",
 		]
 		writeCommandAndRun(processpath,'tilt',commands,[inputparams['recon'],'tilt.log'])
 
-def trimVolume(processpath, runname, seriesname, volumename, center, size):
+def trimVolume(processpath, runname, seriesname, volumename, center, offsetz, size,yzflip=True):
 		"""
 #	Command for triming reconstructed volume
 #
 # Tomography reconstruction y and z are flipped
+# full tomogram array axes [z,y,x]
+# imod full_rec axes [y,z,x]
+# center and size axes [x,y,z]
 trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 		"""	
 		inputparams = {
 			'recon': os.path.join(processpath, seriesname+"_full.rec"),
 			'subvolume': os.path.join(processpath, runname+"/",volumename+"/",seriesname+"_"+volumename+".rec"),
-			'xrange0': max(1,1+center[0] - size[0]/2),
-			'zrange0': max(1,1+center[1] - size[1]/2),
+			'xrange0': max(1,center[0] - size[0]/2),
+			'yrange0': max(1,center[1] - size[1]/2),
 		}
-		fulltomo = mrc.read(inputparams['recon'])
-		fullshape = fulltomo.shape
-		inputparams['xrange1'] = min(fullshape[2],1+inputparams['xrange0'] + size[0])
-		# y and z can be flip so use x dimension as limit
-		inputparams['zrange1'] = min(fullshape[0],1+inputparams['zrange0'] + size[1])
-
-		commands = [
-			"$trimvol -x %d,%d -z %d,%d -yz %s %s"
-				% (inputparams['xrange0'],inputparams['xrange1'],
-				inputparams['zrange0'],inputparams['zrange1'],
-				inputparams['recon'],
-				inputparams['subvolume'],
-				),
-		]
+		if yzflip:
+			lookup = {'y':0,'z':1}
+		else:
+			lookup = {'y':1,'z':0}
+		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
+		fullshape = fulltomoheader['shape']
+		center = list(center)
+		center.append(fullshape[lookup['z']]/2+offsetz)
+		inputparams['zrange0'] = max(1,center[2] - size[2]/2)
+		inputparams['xrange1'] = min(fullshape[2],inputparams['xrange0'] + size[0]-1)
+		inputparams['yrange1'] = min(fullshape[lookup['y']],inputparams['yrange0'] + size[1]-1)
+		inputparams['zrange1'] = min(fullshape[lookup['z']],inputparams['zrange0'] + size[2]-1)
+		if yzflip:
+			commands = [
+				"$trimvol -x %d,%d -y %d,%d -z %d,%d -yz %s %s"
+					% (inputparams['xrange0'],inputparams['xrange1'],
+					inputparams['zrange0'],inputparams['zrange1'],
+					inputparams['yrange0'],inputparams['yrange1'],
+					inputparams['recon'],
+					inputparams['subvolume'],
+					),
+				]
+		else:
+			commands = [
+				"$trimvol -x %d,%d -y %d,%d -z %d,%d %s %s"
+					% (inputparams['xrange0'],inputparams['xrange1'],
+					inputparams['yrange0'],inputparams['yrange1'],
+					inputparams['zrange0'],inputparams['zrange1'],
+					inputparams['recon'],
+					inputparams['subvolume'],
+					),
+				]
+		print commands
 		writeCommandAndRun(processpath,'trimvol',commands,[inputparams['subvolume'],'trimvol.log'])
 
 def writeCommandAndRun(path,comname, commands, outputlist):		
