@@ -22,8 +22,8 @@ $particle = new particledata();
 
 processing_header('Refine Iteration Report','Refine Iteration Report');
 
-$itr=$particle->getRefinementData($runId,$itr);
-$itrinfo=$itr[0];
+$iteration=$particle->getRefinementData($runId,$itr);
+$itrinfo=$iteration[0];
 $paraminfo=$particle->getIterationInfo($runId,$itr);
 
 $report_title = 'Report for Iteration';
