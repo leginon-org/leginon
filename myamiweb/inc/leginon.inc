@@ -143,6 +143,7 @@ class leginondata {
 				$ps[$psession['name']] = $psession['name'];
 			}
 			$sessions = $this->getSessions($comment, false, $like);
+			if (!$sessions) return array();
 			foreach ($sessions as $session) {
 				$s[$session['name_org']] = $session;
 			}
@@ -737,9 +738,11 @@ class leginondata {
 		return $rctfilename;
 	}
 
-	function getFilename($name) {
+	function getFilename($name,$sessionId=Null) {
 		$sqlwhere = (is_numeric($name)) ? "where `DEF_id`='$name' " 
 				: "where `MRC|image` like '$name' ";
+		if ($sessionId) 
+			$sqlwhere.="and `REF|SessionData|session`=".$sessionId;
 		$q = "select `DEF_id` as id, `MRC|image` as filename, `REF|SessionData|session` as sessionId from `AcquisitionImageData` "
 		    .$sqlwhere;
 		$filenames = $this->mysql->getSQLResult($q);
@@ -1227,7 +1230,7 @@ class leginondata {
 		if ($preset == $this->rcttype ) {
 			$rctfilename = $this->getRCTfilename($imgId);
 			// --- get most recent fields
-			$filename = end($this->getFilename($rctfilename));
+			$filename = end($this->getFilename($rctfilename,$imageinfo['sessionId']));
 			$newimage[id] = $filename[id];
 			$newimage[preset] = $imageinfo[preset];
 			return $newimage;
