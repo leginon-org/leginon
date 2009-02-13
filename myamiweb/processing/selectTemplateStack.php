@@ -36,7 +36,7 @@ echo "  <h3><a href='templateStackSummaryForward.php?expId=$expId'>Template Stac
 echo "  Summary of the template stacks created from forward projections of an already existing map. These "
 	."are particularly useful for running IMAGIC Multi Reference Alignment, but can also be used for other "
 	."template-based protocols. "
-	."<br/>\n";
+	."<br/><br/>\n";
 echo "</td></tr>\n";
 
 echo "</table>\n";
