@@ -13,7 +13,6 @@ import time
 import calibrationclient
 import threading
 import node
-import data
 import gui.wx.MatrixCalibrator
 
 class CalibrationError(Exception):
