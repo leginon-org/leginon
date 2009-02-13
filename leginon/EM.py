@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import instrument
 import node
 import socket
@@ -129,10 +129,10 @@ class EM(node.Node):
 			raise ValueError('no instrument %s' % name)
 		if instance.getMagnificationsInitialized():
 			return
-		instrumentdata = data.InstrumentData()
+		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		instrumentdata['hostname'] = instance.getHostname()
-		queryinstance = data.MagnificationsData()
+		queryinstance = leginondata.MagnificationsData()
 		queryinstance['instrument'] = instrumentdata
 		try:
 			result = self.research(queryinstance, results=1)[0]
@@ -149,10 +149,10 @@ class EM(node.Node):
 		self.logger.info('Getting magnifications from the instrument...')
 		instance.findMagnifications()
 		self.logger.info('Saving...')
-		instrumentdata = data.InstrumentData()
+		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		instrumentdata['hostname'] = instance.getHostname()
-		magnificationsdata = data.MagnificationsData()
+		magnificationsdata = leginondata.MagnificationsData()
 		magnificationsdata['instrument'] = instrumentdata
 		magnificationsdata['magnifications'] = instance.getMagnifications()
 		self.publish(magnificationsdata, database=True, dbforce=True)

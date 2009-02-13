@@ -10,7 +10,7 @@ import Queue
 from pyami import ordereddict
 import threading
 import datatransport
-import data
+import leginondata
 import remotecall
 
 class DataBinder(object):
@@ -77,7 +77,7 @@ class DataBinder(object):
 	def handle(self, request):
 		if isinstance(request, datatransport.Ping):
 			return None
-		elif isinstance(request, data.Data):
+		elif isinstance(request, leginondata.Data):
 			return self.insert(request)
 		elif isinstance(request, remotecall.Request):
 			return self.handleRemoteCall(request)

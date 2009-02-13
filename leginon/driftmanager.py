@@ -9,7 +9,7 @@
 #
 
 import watcher
-import event, data
+import event, leginondata
 from pyami import correlator, peakfinder
 import calibrationclient
 import math
@@ -25,13 +25,13 @@ import rctacquisition
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
-	settingsclass = data.DriftManagerSettingsData
+	settingsclass = leginondata.DriftManagerSettingsData
 	defaultsettings = {
 		'threshold': 3e-10,
 		'pause time': 2.5,
 		'timeout': 30,
 		'camera settings':
-			data.CameraSettingsData(
+			leginondata.CameraSettingsData(
 				initializer={
 					'dimension': {
 						'x': 1024,
@@ -90,7 +90,7 @@ class DriftManager(watcher.Watcher):
 
 		# Use camera config of original image to make sure correlation works
 		oldcam = im['camera']
-		newcam = data.CameraEMData()
+		newcam = leginondata.CameraEMData()
 		newcam['dimension'] = oldcam['dimension']
 		newcam['binning'] = oldcam['binning']
 		newcam['offset'] = oldcam['offset']
@@ -103,7 +103,7 @@ class DriftManager(watcher.Watcher):
 		oldscope = im['scope']
 		oldishift = oldscope['image shift']
 		oldstage = oldscope['stage position']
-		newscope = data.ScopeEMData()
+		newscope = leginondata.ScopeEMData()
 		newscope['stage position'] = {'x': oldstage['x'], 'y': oldstage['y']}
 		newscope['image shift'] = oldishift
 		self.logger.info('Returning to original stage position and image shift')
@@ -133,7 +133,7 @@ class DriftManager(watcher.Watcher):
 
 		self.logger.info('rows %s, columns %s' % (rows, cols))
 		## publish AcquisitionImageDriftData here
-		imagedrift = data.AcquisitionImageDriftData()
+		imagedrift = leginondata.AcquisitionImageDriftData()
 		imagedrift['session'] = self.session
 		imagedrift['old image'] = im
 		imagedrift['new image'] = newim
@@ -152,7 +152,7 @@ class DriftManager(watcher.Watcher):
 		self.publish(newimagedata['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
-		newimagedata = data.AcquisitionImageData(initializer=newimagedata)
+		newimagedata = leginondata.AcquisitionImageData(initializer=newimagedata)
 		## then add stuff from old imagedata
 		newimagedata['preset'] = oldimagedata['preset']
 		newimagedata['label'] = oldimagedata['label']
@@ -185,7 +185,7 @@ class DriftManager(watcher.Watcher):
 
 	def processData(self, newdata):
 		self.logger.info('processData')
-		if isinstance(newdata, data.DriftMonitorRequestData):
+		if isinstance(newdata, leginondata.DriftMonitorRequestData):
 			self.logger.info('DriftMonitorRequest')
 			self.startTimer('monitorDrift')
 			self.monitorDrift(newdata)
@@ -230,14 +230,14 @@ class DriftManager(watcher.Watcher):
 		## only output if this was called from another node
 		if driftdata is not None:
 			self.logger.info('Publishing final drift image...')
-			acqim = data.AcquisitionImageData(initializer=im)
+			acqim = leginondata.AcquisitionImageData(initializer=im)
 			acqim['target'] = target
 			acqim['emtarget'] = emtarget
 			acqim['preset'] = presetdata
 			self.publish(acqim, pubevent=True)
 
 			self.logger.info('Publishing DriftMonitorResultData...')
-			result = data.DriftMonitorResultData()
+			result = leginondata.DriftMonitorResultData()
 			result['status'] = status
 			result['final'] = final
 			self.publish(result, pubevent=True, database=True, dbforce=True)
@@ -248,9 +248,9 @@ class DriftManager(watcher.Watcher):
 		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
 		if correct:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		else:
-			imagedata = self.instrument.getData(data.CameraImageData)
+			imagedata = self.instrument.getData(leginondata.CameraImageData)
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')
@@ -348,7 +348,7 @@ class DriftManager(watcher.Watcher):
 			camera = imagedata['camera']
 			self.publish(camera, database=True, dbforce=True)
 
-			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target, scope=scope, camera=camera)
+			d = leginondata.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target, scope=scope, camera=camera)
 			self.publish(d, database=True, dbforce=True)
 
 			## t0 becomes t1 and t1 will be reset for next image

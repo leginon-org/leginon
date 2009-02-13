@@ -7,7 +7,7 @@
 #
 import calibrator
 import calibrationclient
-import event, data
+import event, leginondata
 import node
 import gui.wx.DoseCalibrator
 import time
@@ -18,7 +18,7 @@ class DoseCalibrator(calibrator.Calibrator):
 	calibrate the camera sensitivity and other dose measurements
 	'''
 	panelclass = gui.wx.DoseCalibrator.Panel
-	settingsclass = data.DoseCalibratorSettingsData
+	settingsclass = leginondata.DoseCalibratorSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
 	defaultsettings.update({
 		'beam diameter': 0.16,
@@ -57,7 +57,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		if self.initInstruments():
 			return 'error'
 		try:
-			scope = self.instrument.getData(data.ScopeEMData)
+			scope = self.instrument.getData(leginondata.ScopeEMData)
 		except:
 			return 'error'
 		mag = scope['main screen magnification']
@@ -100,7 +100,7 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def onSetSensitivity(self,sens):
 		try:
-			scope = self.instrument.getData(data.ScopeEMData)
+			scope = self.instrument.getData(leginondata.ScopeEMData)
 		except:
 			return None
 		ht = scope['high tension']

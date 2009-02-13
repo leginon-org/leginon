@@ -1,5 +1,5 @@
 import targetfilter
-import data
+import leginondata
 import gui.wx.CenterTargetFilter
 
 class CenterTargetFilter(targetfilter.TargetFilter):
@@ -7,7 +7,7 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 	Example of a TargetFilter subclass
 	'''
 	panelclass = gui.wx.CenterTargetFilter.Panel
-	settingsclass = data.CenterTargetFilterSettingsData
+	settingsclass = leginondata.CenterTargetFilterSettingsData
 	defaultsettings = dict(targetfilter.TargetFilter.defaultsettings)
 	defaultsettings.update({
 		'limit':1,
@@ -25,7 +25,7 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 		distlist = []
 		targetdistances = {}
 		for target in targetlist:
-			oldtarget = data.AcquisitionImageTargetData(initializer=target)
+			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			dist = oldtarget['delta row']**2+oldtarget['delta column']**2
 			targetdistances[dist] = target
 			distlist.append(dist)
@@ -36,7 +36,7 @@ class CenterTargetFilter(targetfilter.TargetFilter):
 
 		for i in range(0,outputnumber):
 			target = targetdistances[distlist[i]]
-			newtarget = data.AcquisitionImageTargetData(initializer=target)
+			newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			newtarget['fromtarget'] = target
 			newlist.append(newtarget)
 		return newlist
