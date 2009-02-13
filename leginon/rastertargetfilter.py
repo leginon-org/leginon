@@ -1,5 +1,5 @@
 import targetfilter
-import data
+import leginondata
 import gui.wx.RasterTargetFilter
 import presets
 import calibrationclient
@@ -13,7 +13,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 	Example of a TargetFilter subclass
 	'''
 	panelclass = gui.wx.RasterTargetFilter.Panel
-	settingsclass = data.RasterTargetFilterSettingsData
+	settingsclass = leginondata.RasterTargetFilterSettingsData
 	defaultsettings = dict(targetfilter.TargetFilter.defaultsettings)
 	defaultsettings.update({
 		'raster spacing': 50.0,
@@ -50,7 +50,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 			targetdata = self.targetdata
 		imageref = targetdata.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
-		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
+		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
 
 		tem = imagedata['scope']['tem']
 		cam = imagedata['camera']['ccdcamera']
@@ -111,11 +111,11 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad)
 		# create raster
 		for target in targetlist:
-			oldtarget = data.AcquisitionImageTargetData(initializer=target)
+			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			self.targetdata = oldtarget
 			rasterpoints = self.makeRaster()
 			for rp in rasterpoints:
-				newtarget = data.AcquisitionImageTargetData(initializer=target)
+				newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 				newtarget['delta row'] += rp[0]
 				newtarget['delta column'] += rp[1]
 				newtarget['fromtarget'] = target
