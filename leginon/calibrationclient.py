@@ -1657,29 +1657,6 @@ class ModeledStageCalibrationClient(MatrixCalibrationClient):
 
 		return iy,ix
 
-	def pixelShift(self, ievent):
-		# XXX
-		mag = ievent.content['magnification']
-		delta_row = ievent.content['row']
-		delta_col = ievent.content['column']
-
-		current = self.getStagePosition()
-		self.node.logger.info('Current position delta %s' % current)
-		curx = current['stage position']['x']
-		cury = current['stage position']['y']
-
-		xmodfile = self.modfilename('x')
-		ymodfile = self.modfilename('y')
-		magfile = self.magfilename(mag)
-
-		deltagon = self.pixtix(xmodfile,ymodfile,magfile,curx,cury,delta_col,delta_row)
-
-		current['stage position']['x'] += deltagon['x']
-		current['stage position']['y'] += deltagon['y']
-		self.node.logger.info('Current position after delta %s' % current)
-
-		self.instrument.tem.StagePosition = current
-
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
