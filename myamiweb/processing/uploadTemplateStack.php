@@ -37,6 +37,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	$template_stack = ($_POST['template_stack']) ? $_POST['template_stack'] : '';
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$description = ($_POST['description']) ? $_POST['description'] : '';	
+	$newname = ($_POST['newname']) ? $_POST['newname'] : '';
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	processing_header($title,$heading,$javafunctions);
@@ -81,11 +82,14 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 		echo "<BR/>";			
 	}
 
-	echo "<br/>\n";
+	echo "<BR/>";
+	echo "New Name for Template Stack (no spaces)<BR/>";
+	echo "<INPUT TYPE='text' NAME='newname' VALUE='$newname' SIZE='50'/>\n";
+	echo "<BR/>";
 
+	echo "<br/>\n";
 	echo "Template Stack Description:<BR/>";
 	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
-
 	echo "</TD></TR><TR><TD VALIGN='TOP'>";
 	
 	// give option of choosing the type of images if not coming directly from clustering stack
@@ -118,9 +122,16 @@ function runUploadTemplateStack() {
 	$template_stack = $_POST['template_stack'];
 	$stacktype = $_POST['stack_type'];
 	$apix = $_POST['apix'];
+	$newname = $_POST['newname'];
 	$description = $_POST['description'];
 	$session = $_POST['sessionname'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+
+	//make sure new name does not have spaces
+	if (!$newname) createUploadTemplateStackForm("<B>ERROR:</B> Enter a new name for the template stack, as it will be stored in templatestacks directory");
+	if (ereg(" ", $newname)) {
+		$newname = ereg_replace(" ", "_", $newname);
+	}
 
 	//make sure a description is provided
 	if (!$description) createUploadTemplateStackForm("<B>ERROR:</B> Enter a brief description of the template");
@@ -149,6 +160,7 @@ function runUploadTemplateStack() {
 	if ($template_stack) {
 		$command.="--templatestack=$template_stack ";
 		$command.="--templatetype=$stacktype ";
+		$command.="--newname=$newname ";
 		$command.="--apix=$apix ";
 	}
 	
