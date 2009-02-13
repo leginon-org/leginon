@@ -6,7 +6,7 @@
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import event
 import node
 import project
@@ -28,7 +28,7 @@ class AcquireError(Exception):
 
 class ManualAcquisition(node.Node):
 	panelclass = gui.wx.ManualAcquisition.Panel
-	settingsclass = data.ManualAcquisitionSettingsData
+	settingsclass = leginondata.ManualAcquisitionSettingsData
 	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
 	defaultsettings = {
 		'camera settings': None,
@@ -103,12 +103,12 @@ class ManualAcquisition(node.Node):
 	def acquireCorrectedImage(self):
 		if not self.correctargs:
 			## acquire image and scope/camera params
-			imagedata = self.instrument.getData(data.CameraImageData)
+			imagedata = self.instrument.getData(leginondata.CameraImageData)
 			imarray = imagedata['image']
 			self.correctargs = {}
 			camdata = imagedata['camera']
 			self.correctargs['ccdcamera'] = camdata['ccdcamera']
-			corstate = data.CorrectorCamstateData()
+			corstate = leginondata.CorrectorCamstateData()
 			corstate['dimension'] = camdata['dimension']
 			corstate['offset'] = camdata['offset']
 			corstate['binning'] = camdata['binning']
@@ -139,9 +139,9 @@ class ManualAcquisition(node.Node):
 		if self.settings['save image']:
 			try:
 				if correct:
-					dataclass = data.CorrectedCameraImageData
+					dataclass = leginondata.CorrectedCameraImageData
 				else:
-					dataclass = data.CameraImageData
+					dataclass = leginondata.CameraImageData
 				imagedata = self.instrument.getData(dataclass)
 			except Exception, e:
 				self.logger.exception('Error acquiring image: %s' % e)
@@ -158,19 +158,19 @@ class ManualAcquisition(node.Node):
 
 		try:
 			if correct:
-				#dataclass = data.CorrectedCameraImageData
+				#dataclass = leginondata.CorrectedCameraImageData
 				image = self.acquireCorrectedImage()
 			else:
-				#dataclass = data.CameraImageData
+				#dataclass = leginondata.CameraImageData
 				image = self.instrument.ccdcamera.Image
 			#imagedata = self.instrument.getData(dataclass)
 			if self.settings['reduced params']:
-				scope = self.instrument.getData(data.ManualAcquisitionScopeEMData)
-				scope = data.ScopeEMData(initializer=scope)
+				scope = self.instrument.getData(leginondata.ManualAcquisitionScopeEMData)
+				scope = leginondata.ScopeEMData(initializer=scope)
 			else:
-				scope = self.instrument.getData(data.ScopeEMData)
-			camera = self.instrument.getData(data.CameraEMData, image=False)
-			imagedata = data.CameraImageData(image=image, scope=scope, camera=camera)
+				scope = self.instrument.getData(leginondata.ScopeEMData)
+			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
+			imagedata = leginondata.CameraImageData(image=image, scope=scope, camera=camera)
 			imagedata['session'] = self.session
 		except Exception, e:
 			self.logger.exception('Error acquiring image: %s' % e)
@@ -255,11 +255,11 @@ class ManualAcquisition(node.Node):
 		imagedata['filename'] = filename
 
 	def publishImageData(self, imagedata, save):
-		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
+		acquisitionimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
 		if save:
 			if self.grid is not None:
 				gridinfo = self.gridmapping[self.grid]
-				griddata = data.GridData()
+				griddata = leginondata.GridData()
 				griddata['grid ID'] = gridinfo['gridId']
 				acquisitionimagedata['grid'] = griddata
 	
@@ -428,7 +428,7 @@ class ManualAcquisition(node.Node):
 		self.instrument.ccdcamera.Settings = tmpcam
 
 		# acquire image
-		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
 		# display
 		self.logger.info('Displaying %dx%d dose image...' % (cutsize,cutsize))
@@ -438,7 +438,7 @@ class ManualAcquisition(node.Node):
 		# calculate dose
 		dose = self.dosecal.dose_from_imagedata(imagedata)
 
-		dosedata = data.DoseMeasurementData()
+		dosedata = leginondata.DoseMeasurementData()
 		dosedata['dose'] = dose
 		self.publish(dosedata, database=True, dbforce=True)
 		self.instrument.ccdcamera.Settings = origcam
@@ -502,9 +502,9 @@ class ManualAcquisition(node.Node):
 			self.instrument.ccdcamera.Settings = camdata1
 			try:
 				if correction:
-					imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+					imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 				else:
-					imagedata = self.instrument.getData(data.CameraImageData)
+					imagedata = self.instrument.getData(leginondata.CameraImageData)
 				imarray = imagedata['image']
 			except:
 				raise
@@ -547,7 +547,7 @@ class ManualAcquisition(node.Node):
 			if not self.comment:
 				pass
 			else:
-				comment = data.ImageCommentData()
+				comment = leginondata.ImageCommentData()
 				comment['session'] = self.session
 				comment['image'] = image
 				comment['comment']=self.comment
@@ -556,7 +556,7 @@ class ManualAcquisition(node.Node):
 			if not viewstatus or viewstatus == 'normal':
 				pass
 			else:
-				status = data.ImageStatusData()
+				status = leginondata.ImageStatusData()
 				status['session'] = self.session
 				status['image'] = image
 				status['status'] = viewstatus
@@ -570,11 +570,11 @@ class ManualAcquisition(node.Node):
 			return True
 		
 		for imagedata in images:
-			commentq = data.ImageCommentData()
+			commentq = leginondata.ImageCommentData()
 			commentq['image'] = imagedata
 			commentresults = self.research(commentq, readimages=False)
 			
-			statusq = data.ImageStatusData()
+			statusq = leginondata.ImageStatusData()
 			statusq['image'] = imagedata
 			statusresults = self.research(statusq, readimages=False)
 			
@@ -585,7 +585,7 @@ class ManualAcquisition(node.Node):
 				
 				
 	def getMostRecentImageData(self,sessiondata):
-		imageq = data.AcquisitionImageData()
+		imageq = leginondata.AcquisitionImageData()
 		imageq['session'] = sessiondata
 		images = self.research(imageq, readimages=False, results=1)
 		return images[0]

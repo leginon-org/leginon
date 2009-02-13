@@ -9,7 +9,7 @@
 #
 
 import application
-import data
+import leginondata
 import databinder
 import datatransport
 import event
@@ -158,7 +158,7 @@ class Manager(node.Node):
 			threading.Thread(target=self.launchPreviousApp).start()
 
 	def getSessionByName(self, name):
-		qsession = data.SessionData(name=name)
+		qsession = leginondata.SessionData(name=name)
 		sessions = self.research(qsession, results=1)
 		if sessions:
 			session = sessions[0]
@@ -502,7 +502,7 @@ class Manager(node.Node):
 
 		# add node location to nodelocations dict
 		initializer = {'location': location, 'class string': classname}
-		self.nodelocations[name] = data.NodeLocationData(initializer=initializer)
+		self.nodelocations[name] = leginondata.NodeLocationData(initializer=initializer)
 
 		self.confirmEvent(evt)
 
@@ -687,7 +687,7 @@ class Manager(node.Node):
 
 	def getApplicationNames(self):
 		names = []
-		appdatalist = self.research(data.ApplicationData())
+		appdatalist = self.research(leginondata.ApplicationData())
 		for appdata in appdatalist:
 			if appdata['name'] not in names:
 				names.append(appdata['name'])
@@ -695,7 +695,7 @@ class Manager(node.Node):
 
 	def getApplications(self):
 		apps = {}
-		appdatalist = self.research(data.ApplicationData())
+		appdatalist = self.research(leginondata.ApplicationData())
 		for appdata in appdatalist:
 			appname = appdata['name']
 			if appname not in apps:
@@ -709,9 +709,9 @@ class Manager(node.Node):
 		return orderedapps
 
 	def getApplicationHistory(self):
-		initializer = {'session': data.SessionData(user=self.session['user']),
-										'application': data.ApplicationData()}
-		appdata = data.LaunchedApplicationData(initializer=initializer)
+		initializer = {'session': leginondata.SessionData(user=self.session['user']),
+										'application': leginondata.ApplicationData()}
+		appdata = leginondata.LaunchedApplicationData(initializer=initializer)
 		appdatalist = self.research(appdata, timelimit='-90 0:0:0')
 		history = []
 		map = {}
@@ -751,7 +751,7 @@ class Manager(node.Node):
 		self.appnodes = app.getNodeNames()
 		app.launch()
 		self.applicationevent.wait()
-		d = data.LaunchedApplicationData(initializer=initializer)
+		d = leginondata.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
 
@@ -779,7 +779,7 @@ class Manager(node.Node):
 			self.application.setLauncherAlias(alias.name, aliasvalue)
 		nodenames = self.application.launch()
 		self.waitNodes(nodenames)
-		dat = data.LaunchedApplicationData(session=self.session, application=self.application.applicationdata)
+		dat = leginondata.LaunchedApplicationData(session=self.session, application=self.application.applicationdata)
 		self.publish(dat, database=True, dbforce=True)
 
 	def killApp(self):
@@ -893,6 +893,6 @@ if __name__ == '__main__':
 		session = time.strftime('%Y-%m-%d-%H-%M')
 
 	initializer = {'name': session}
-	m = Manager(('manager',), data.SessionData(initializer=initializer))
+	m = Manager(('manager',), leginondata.SessionData(initializer=initializer))
 	m.start()
 

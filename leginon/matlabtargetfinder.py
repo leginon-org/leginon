@@ -13,7 +13,7 @@
 
 import os.path
 import threading
-import data
+import leginondata
 from pyami import mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder
@@ -24,7 +24,7 @@ except:
 
 class MatlabTargetFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.MatlabTargetFinder.Panel
-	settingsclass = data.MatlabTargetFinderSettingsData
+	settingsclass = leginondata.MatlabTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
 		'module': '',

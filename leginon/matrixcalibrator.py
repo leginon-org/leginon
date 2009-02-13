@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import calibrator
-import event, data
+import event, leginondata
 from pyami import fftengine, correlator, peakfinder
 import sys
 import time
@@ -37,7 +37,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	(Valid Shift is currently being ignored)
 	'''
 	panelclass = gui.wx.MatrixCalibrator.Panel
-	settingsclass = data.MatrixCalibratorSettingsData
+	settingsclass = leginondata.MatrixCalibratorSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
 	defaultsettings.update({
 		'image shift tolerance': 12.0,
@@ -174,7 +174,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				raise CalibrationError('no successful calibration measurement')
 
 		# return to base
-		emdata = data.ScopeEMData()
+		emdata = leginondata.ScopeEMData()
 		emdata[self.parameter] = basebase
 		self.instrument.setData(emdata)
 
@@ -213,13 +213,13 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.panel.calibrationDone()
 
 	def getParameter(self):
-		self.saveparam = self.instrument.getData(data.ScopeEMData)[self.parameter]
+		self.saveparam = self.instrument.getData(leginondata.ScopeEMData)[self.parameter]
 		self.logger.debug('Storing parameter %s, %s'
 											% (self.parameter, self.saveparam))
 
 	def setParameter(self):
 		self.logger.info('Returning to original state')
-		emdata = data.ScopeEMData()
+		emdata = leginondata.ScopeEMData()
 		emdata[self.parameter] = self.saveparam
 		self.instrument.setData(emdata)
 

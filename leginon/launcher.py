@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import event
 import node
 import nodeclassreg
@@ -45,7 +45,7 @@ class Launcher(node.Node):
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)
 		nodeclassnames = nodeclassreg.getNodeClassNames()
-		d = data.NodeClassesData(nodeclasses=nodeclassnames)
+		d = leginondata.NodeClassesData(nodeclasses=nodeclassnames)
 		self.publish(d, pubevent=True)
 
 	def onNodeOrder(self, evt):
@@ -119,5 +119,5 @@ if __name__ == '__main__':
 	l = gui.wx.Launcher.App(*args, **kwargs)
 	print kwargs
 	l.MainLoop()
-	data.datamanager.exit()
+	leginondata.datamanager.exit()
 

@@ -6,7 +6,7 @@
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import event
 import node
 import project
@@ -31,7 +31,7 @@ class AcquireError(Exception):
 
 class ManualImageLoader(manualacquisition.ManualAcquisition):
 	panelclass = gui.wx.ManualImageLoader.Panel
-	settingsclass = data.ManualImageLoaderSettingsData
+	settingsclass = leginondata.ManualImageLoaderSettingsData
 	eventoutputs = node.Node.eventoutputs + [event.AcquisitionImagePublishEvent]
 	defaultsettings = {
 		'instruments': {'tem': None, 'ccdcamera': None},
@@ -69,9 +69,9 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 
 		try:
 			image = self.uploadedInfo['image']
-			scope = self.instrument.getData(data.ScopeEMData)
-			camera = self.instrument.getData(data.CameraEMData, image=False)
-			imagedata = data.CameraImageData(image=image, scope=scope, camera=camera)
+			scope = self.instrument.getData(leginondata.ScopeEMData)
+			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
+			imagedata = leginondata.CameraImageData(image=image, scope=scope, camera=camera)
 			imagedata['session'] = self.session
 		except Exception, e:
 			self.logger.exception('Error loading image: %s' % e)
@@ -249,7 +249,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		current_pixelsize = self.calclient.getPixelSize(mag, temdata, camdata)
 		if current_pixelsize != self.uploadedInfo['unbinned pixelsize']:
 			self.logger.info('Updating pixel size at %d' % mag)
-			caldata = data.PixelSizeCalibrationData()
+			caldata = leginondata.PixelSizeCalibrationData()
 			caldata['magnification'] = mag
 			caldata['pixelsize'] = self.uploadedInfo['unbinned pixelsize']
 			caldata['comment'] = 'based on uploaded pixel size'
@@ -267,7 +267,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		else:
 			self.logger.info('setting tilt series')
 			if self.tilt == 0:
-				self.tiltseries = data.TiltSeriesData()
+				self.tiltseries = leginondata.TiltSeriesData()
 				#self.tiltseries['session'] = self.session
 				self.tiltseries['number'] = grouplimit
 				self.publish(self.tiltseries, database=True, dbforce=True)
