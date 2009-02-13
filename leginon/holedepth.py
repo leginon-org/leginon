@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import targetfinder
 import holefinder
 import holedepthback
@@ -22,7 +22,7 @@ import gui.wx.HoleDepth
 
 class HoleDepth(holefinder.HoleFinder):
 	panelclass = gui.wx.HoleDepth.Panel
-	settingsclass = data.HoleDepthFinderSettingsData
+	settingsclass = leginondata.HoleDepthFinderSettingsData
 	defaultsettings = dict(holefinder.HoleFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,
@@ -286,7 +286,7 @@ class HoleDepth(holefinder.HoleFinder):
 
 		for target in targets:
 			stats=target['stats']
-			holestats = data.HoleDepthStatsData(session=self.session, prefs=prefs)
+			holestats = leginondata.HoleDepthStatsData(session=self.session, prefs=prefs)
 			holestats['row'] = target['y']
 			holestats['column'] = target['x']
 			holestats['mean'] = stats['Mean Intensity']
@@ -297,7 +297,7 @@ class HoleDepth(holefinder.HoleFinder):
 			self.publish(holestats, database=True)
 
 	def storeHoleDepthFinderPrefsData(self, imagedata,allhdimagedata):
-		hfprefs = data.HoleDepthFinderPrefsData()
+		hfprefs = leginondata.HoleDepthFinderPrefsData()
 		
 		hfprefs.update({
 			'session': self.session,

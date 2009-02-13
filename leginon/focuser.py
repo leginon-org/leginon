@@ -6,7 +6,7 @@
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
 import acquisition
-import node, data
+import node, leginondata
 import calibrationclient
 import corrector
 import threading
@@ -21,7 +21,7 @@ import player
 
 class Focuser(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
-	settingsclass = data.FocuserSettingsData
+	settingsclass = leginondata.FocuserSettingsData
 	defaultsettings = {
 		'pause time': 2.5,
 		'move type': 'image shift',
@@ -113,15 +113,15 @@ class Focuser(acquisition.Acquisition):
 	def researchFocusSequence(self):
 		user_data = self.session['user']
 		initializer = {
-			'session': data.SessionData(user=user_data),
+			'session': leginondata.SessionData(user=user_data),
 			'node name': self.name,
 		}
-		query = data.FocusSequenceData(initializer=initializer)
+		query = leginondata.FocusSequenceData(initializer=initializer)
 		try:
 			focus_sequence_data = self.research(query, results=1)[0]
 		except IndexError:
 			# if that failed, try to load default settings from DB
-			query = data.FocusSequenceData(initializer={'isdefault': True, 'node name': self.name})
+			query = leginondata.FocusSequenceData(initializer={'isdefault': True, 'node name': self.name})
 			try:
 				focus_sequence_data = self.research(query, results=1)[0]
 			except IndexError:
@@ -139,16 +139,16 @@ class Focuser(acquisition.Acquisition):
 
 	def researchFocusSetting(self, name):
 		initializer = {
-			'session': data.SessionData(user=self.session['user']),
+			'session': leginondata.SessionData(user=self.session['user']),
 			'node name': self.name,
 			'name': name,
 		}
-		query = data.FocusSettingData(initializer=initializer)
+		query = leginondata.FocusSettingData(initializer=initializer)
 		try:
 			focus_setting_data = self.research(query, results=1)[0]
 		except IndexError:
 			# if that failed, try to load default settings from DB
-			query = data.FocusSettingData(initializer={'isdefault': True, 'node name': self.name, 'name': name})
+			query = leginondata.FocusSettingData(initializer={'isdefault': True, 'node name': self.name, 'name': name})
 			try:
 				focus_setting_data = self.research(query, results=1)[0]
 			except IndexError:
@@ -173,7 +173,7 @@ class Focuser(acquisition.Acquisition):
 				initializer['isdefault'] = True
 			else:
 				initializer['isdefault'] = isdefault
-			sequence_data = data.FocusSequenceData(initializer=initializer)
+			sequence_data = leginondata.FocusSequenceData(initializer=initializer)
 			self.publish(sequence_data, database=True, dbforce=True)
 		for setting in sequence:
 			if setting != self.researchFocusSetting(setting['name']):
@@ -184,7 +184,7 @@ class Focuser(acquisition.Acquisition):
 					initializer['isdefault'] = True
 				else:
 					initializer['isdefault'] = isdefault
-				setting_data = data.FocusSettingData(initializer=initializer)
+				setting_data = leginondata.FocusSettingData(initializer=initializer)
 				self.publish(setting_data, database=True, dbforce=True)
 		self.focus_sequence = sequence
 
@@ -450,7 +450,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Image shift offset:  x = %.3e, y = %.3e' % (imx, imy))
 
 	def processFocusSetting(self, setting, emtarget=None):
-		resultdata = data.FocuserResultData(session=self.session)
+		resultdata = leginondata.FocuserResultData(session=self.session)
 		resultdata['target'] = emtarget['target']
 		resultdata['preset'] = emtarget['preset']
 		resultdata['method'] = setting['focus method']
@@ -474,7 +474,7 @@ class Focuser(acquisition.Acquisition):
 			self.stopTimer('autoStage')
 
 		resultdata['status'] = status
-		scopedata = self.instrument.getData(data.ScopeEMData)
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		scopedata.insert(force=True)
 		resultdata['scope'] = scopedata
 		self.publish(resultdata, database=True, dbforce=True)
@@ -576,12 +576,12 @@ class Focuser(acquisition.Acquisition):
 	def acquireCorrectedImage(self):
 		if not self.samecorrection or (self.samecorrection and not self.correctargs):
 			## acquire image and scope/camera params
-			imagedata = self.instrument.getData(data.CameraImageData)
+			imagedata = self.instrument.getData(leginondata.CameraImageData)
 			imarray = imagedata['image']
 			self.correctargs = {}
 			camdata = imagedata['camera']
 			self.correctargs['ccdcamera'] = camdata['ccdcamera']
-			corstate = data.CorrectorCamstateData()
+			corstate = leginondata.CorrectorCamstateData()
 			corstate['dimension'] = camdata['dimension']
 			corstate['offset'] = camdata['offset']
 			corstate['binning'] = camdata['binning']

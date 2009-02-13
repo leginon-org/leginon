@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import node
-import data
+import leginondata
 from pyami import correlator, peakfinder
 import event
 import time
@@ -21,7 +21,7 @@ import gui.wx.GonModeler
 
 class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
-	settingsclass = data.GonModelerSettingsData
+	settingsclass = leginondata.GonModelerSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
 	defaultsettings.update({
 		'measure axis': 'x',
@@ -123,7 +123,7 @@ class GonModeler(calibrator.Calibrator):
 		self.instrument.setCorrectionChannel(self.corchannel)
 
 		## acquire image
-		newimagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		newimagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage, 'Image')
@@ -185,7 +185,7 @@ class GonModeler(calibrator.Calibrator):
 			return 'x'
 
 	def writeData(self, label, ht, mag, axis, gonx, gony, delta, imx, imy):
-		stagedata = data.StageMeasurementData()
+		stagedata = leginondata.StageMeasurementData()
 		stagedata['label'] = label
 		stagedata['magnification'] = mag
 		stagedata['axis'] = axis

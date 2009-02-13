@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import event
 import fftmaker
 import threading
@@ -28,7 +28,7 @@ import instrument
 class CTFAnalyzer(fftmaker.FFTMaker):
 	eventinputs = fftmaker.FFTMaker.eventinputs
 	panelclass = gui.wx.FFTAce.Panel
-	settingsclass = data.FFTAceSettingsData
+	settingsclass = leginondata.FFTAceSettingsData
 	defaultsettings = {
 		'process': False,
 		'label': '',
@@ -163,7 +163,7 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 		calculate the FFT, until we find one that is already done
 		'''
 		## find images in this session with the given label
-		iquery = data.AcquisitionImageData(session=self.session, label=label)
+		iquery = leginondata.AcquisitionImageData(session=self.session, label=label)
 		images = self.research(iquery, readimages=False)
 		# start with first chronologically
 		images.reverse()
@@ -172,7 +172,7 @@ class CTFAnalyzer(fftmaker.FFTMaker):
 				self.logger.info('stopping post processing')
 				break
 			## find if there is already an FFT
-			fquery = data.AcquisitionFFTData(source=im)
+			fquery = leginondata.AcquisitionFFTData(source=im)
 			fft = self.research(fquery, readimages=False)
 			if fft:
 				continue

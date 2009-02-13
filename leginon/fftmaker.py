@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import event
 import imagewatcher
 import threading
@@ -20,7 +20,7 @@ import gui.wx.FFTMaker
 class FFTMaker(imagewatcher.ImageWatcher):
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent]
 	panelclass = gui.wx.FFTMaker.Panel
-	settingsclass = data.FFTMakerSettingsData
+	settingsclass = leginondata.FFTMakerSettingsData
 	defaultsettings = {
 		'process': False,
 		'mask radius': 1.0,
@@ -57,7 +57,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			return pow
 
 	def publishPowerImage(self, imagedata, powimage):
-		powdata = data.AcquisitionFFTData(session=self.session, source=imagedata, image=powimage)
+		powdata = leginondata.AcquisitionFFTData(session=self.session, source=imagedata, image=powimage)
 
 		# filename
 		self.setImageFilename(powdata)
@@ -72,7 +72,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		calculate the FFT, until we find one that is already done
 		'''
 		## find images in this session with the given label
-		iquery = data.AcquisitionImageData(session=self.session, label=label)
+		iquery = leginondata.AcquisitionImageData(session=self.session, label=label)
 		images = self.research(iquery, readimages=False)
 		# start with first chronologically
 		images.reverse()
@@ -81,7 +81,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 				self.logger.info('stopping post processing')
 				break
 			## find if there is already an FFT
-			fquery = data.AcquisitionFFTData(source=im)
+			fquery = leginondata.AcquisitionFFTData(source=im)
 			fft = self.research(fquery, readimages=False)
 			if fft:
 				continue

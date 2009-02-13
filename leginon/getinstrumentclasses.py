@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 '''
-find classes in data.py that have 'tem' and 'ccdcamera' as fields
+find classes in leginondata.py that have 'tem' and 'ccdcamera' as fields
 '''
 
 import inspect
-import data
+import leginondata
 
-for attr in data.__dict__.keys():
+for attr in leginondata.__dict__.keys():
    ob = getattr(data, attr)
    if inspect.isclass(ob):
-     if issubclass(ob, data.Data):
+     if issubclass(ob, leginondata.Data):
        fields = ob.typemap()
        keys = [field[0] for field in fields]
        if 'tem' in keys and 'ccdcamera' in keys:
