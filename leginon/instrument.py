@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import data
+import leginondata
 import remotecall
 import gui.wx.Events
 
@@ -108,7 +108,7 @@ class Proxy(object):
 		else:
 			if name not in self.tems:
 				raise RuntimeError('no TEM \'%s\' available' % name)
-		instrumentdata = data.InstrumentData()
+		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		#instrumentdata['type'] = dbtype
 		#print dbtype
@@ -156,7 +156,7 @@ class Proxy(object):
 		else:
 			if name not in self.ccdcameras:
 				raise RuntimeError('no CCD camera \'%s\' available' % name)
-		instrumentdata = data.InstrumentData()
+		instrumentdata = leginondata.InstrumentData()
 		instrumentdata['name'] = name
 		#instrumentdata['type'] = dbtype
 		#print dbtype
@@ -221,7 +221,7 @@ class Proxy(object):
 		raise ValueError
 
 	def getData(self, dataclass, image=True, temname=None, ccdcameraname=None):
-		if issubclass(dataclass, data.ScopeEMData):
+		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
 			else:
@@ -229,7 +229,7 @@ class Proxy(object):
 					proxy = self.tems[temname]
 				except KeyError:
 					raise NotAvailableError('TEM \'%s\' not available' % temname)
-		elif issubclass(dataclass, data.CameraEMData):
+		elif issubclass(dataclass, leginondata.CameraEMData):
 			if ccdcameraname is None:
 				proxy = self.ccdcamera
 			else:
@@ -237,14 +237,14 @@ class Proxy(object):
 					proxy = self.ccdcameras[ccdcameraname]
 				except KeyError:
 					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
-		elif issubclass(dataclass, data.CorrectedCameraImageData):
+		elif issubclass(dataclass, leginondata.CorrectedCameraImageData):
 			if self.imagecorrection is None:
 				raise RuntimeError('no image correction set')
 			return self.imagecorrection.getImageData(self.getCCDCameraName())
-		elif issubclass(dataclass, data.CameraImageData):
+		elif issubclass(dataclass, leginondata.CameraImageData):
 			instance = dataclass()
-			instance['scope'] = self.getData(data.ScopeEMData, temname=temname)
-			instance['camera'] = self.getData(data.CameraEMData, image=image,
+			instance['scope'] = self.getData(leginondata.ScopeEMData, temname=temname)
+			instance['camera'] = self.getData(leginondata.CameraEMData, image=image,
 																					ccdcameraname=ccdcameraname)
 			if image:
 				instance['image'] = instance['camera']['image data']
@@ -286,7 +286,7 @@ class Proxy(object):
 		return instance
 
 	def setData(self, instance, temname=None, ccdcameraname=None):
-		if isinstance(instance, data.ScopeEMData):
+		if isinstance(instance, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
 			else:
@@ -294,7 +294,7 @@ class Proxy(object):
 					proxy = self.tems[temname]
 				except KeyError:
 					raise NotAvailableError('TEM \'%s\' not available' % temname)
-		elif isinstance(instance, data.CameraEMData):
+		elif isinstance(instance, leginondata.CameraEMData):
 			if ccdcameraname is None:
 				proxy = self.ccdcamera
 			else:
@@ -302,7 +302,7 @@ class Proxy(object):
 					proxy = self.ccdcameras[ccdcameraname]
 				except KeyError:
 					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
-		elif isinstance(instance, data.CameraImageData):
+		elif isinstance(instance, leginondata.CameraImageData):
 			instance = dataclass()
 			self.setData(instance['scope'], temname=temname)
 			self.setData(instance['camera'], ccdcameraname=ccdcameraname)

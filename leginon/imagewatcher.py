@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import event
 import watcher
 
@@ -36,7 +36,7 @@ class ImageWatcher(watcher.Watcher):
 		self.outputEvent(oevent)
 
 	def processData(self, idata):
-		if isinstance(idata, data.ImageData):
+		if isinstance(idata, leginondata.ImageData):
 			self.setStatus('processing')
 			self.logger.debug('Imagewathcer.processData (ImageData)')
 			imageid = idata.dbid
@@ -47,7 +47,7 @@ class ImageWatcher(watcher.Watcher):
 			self.publishImageProcessDone(imageid)
 			self.logger.debug('Imagewathcer.processData (ImageData) done')
 			self.setStatus('idle')
-		elif isinstance(idata, data.ImageListData):
+		elif isinstance(idata, leginondata.ImageListData):
 			self.setStatus('processing')
 			self.logger.debug('Imagewathcer.processData (ImageListData)')
 			self.processImageListData(idata)

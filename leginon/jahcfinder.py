@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import targetfinder
 import jahcfinderback
 from pyami import ordereddict
@@ -25,7 +25,7 @@ default_template = os.path.join(version.getInstalledLocation(),'holetemplate.mrc
 
 class JAHCFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.JAHCFinder.Panel
-	settingsclass = data.JAHCFinderSettingsData
+	settingsclass = leginondata.JAHCFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,
@@ -261,7 +261,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
-		if type(self.currentimagedata) == type(data.AcquisitionImageData()):
+		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
 			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
 			self.storeHoleStatsData(hfprefs)
 
@@ -399,7 +399,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 		holes = self.hf['holes']
 		for hole in holes:
 			stats = hole.stats
-			holestats = data.HoleStatsData(session=self.session, prefs=prefs)
+			holestats = leginondata.HoleStatsData(session=self.session, prefs=prefs)
 			holestats['row'] = stats['center'][0]
 			holestats['column'] = stats['center'][1]
 			holestats['mean'] = stats['hole_mean']
@@ -410,7 +410,7 @@ class JAHCFinder(targetfinder.TargetFinder):
 			self.publish(holestats, database=True)
 
 	def storeHoleFinderPrefsData(self, imagedata):
-		hfprefs = data.HoleFinderPrefsData()
+		hfprefs = leginondata.HoleFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
 			'image': imagedata,

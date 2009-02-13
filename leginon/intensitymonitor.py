@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import data
+import leginondata
 import node
 import gui.wx.IntensityMonitor
 from pyami import arraystats
@@ -18,7 +18,7 @@ class IntensityMonitor(node.Node):
 	track changes in beam intensity and/or camera sensitivity
 	'''
 	panelclass = gui.wx.IntensityMonitor.Panel
-	settingsclass = data.IntensityMonitorSettingsData
+	settingsclass = leginondata.IntensityMonitorSettingsData
 	defaultsettings = {
 		'iterations': 10,
 		'wait time':  60,
@@ -51,14 +51,14 @@ class IntensityMonitor(node.Node):
 		## screen down for dark image and screen current
 		self.logger.info('   acquiring dark image and screen current')
 		self.screenDown()
-		darkim = self.instrument.getData(data.CameraImageData)
+		darkim = self.instrument.getData(leginondata.CameraImageData)
 		darkim['filename'] = basename + '_d'
 		darkim['label'] = 'dark'
 
 		## screen up for bright image
 		self.logger.info('   acquiring bright image')
 		self.screenUp()
-		brightim = self.instrument.getData(data.CameraImageData)
+		brightim = self.instrument.getData(leginondata.CameraImageData)
 		brightim['filename'] = basename + '_b'
 		brightim['label'] = 'bright'
 		## no screen current measured because screen up, so get from dark
@@ -85,7 +85,7 @@ class IntensityMonitor(node.Node):
 		mean = stats['mean']
 		std = stats['std']
 
-		statsdata = data.CameraImageStatsData()
+		statsdata = leginondata.CameraImageStatsData()
 		statsdata['min'] = mn
 		statsdata['max'] = mx
 		statsdata['mean'] = mean

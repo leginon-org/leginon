@@ -15,7 +15,7 @@ import numpy
 import threading
 import calibrator
 import calibrationclient
-import data
+import leginondata
 import gui.wx.IntensityCalibrator
 from pyami import arraystats
 
@@ -24,7 +24,7 @@ class Abort(Exception):
 
 class IntensityCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.IntensityCalibrator.Panel
-	settingsclass = data.IntensityCalibratorSettingsData
+	settingsclass = leginondata.IntensityCalibratorSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
 	defaultsettings.update({
 		'min': 0.3,
@@ -71,10 +71,10 @@ class IntensityCalibrator(calibrator.Calibrator):
 		print 'mean0,mean1', mean0, mean1
 
 	def acquire(self, intensity):
-		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		self.setImage(imagedata['image'])
 		preset = self.presetsclient.getCurrentPreset()
-		acqimdata = data.AcquisitionImageData(initializer=imagedata, session=self.session, preset=preset)
+		acqimdata = leginondata.AcquisitionImageData(initializer=imagedata, session=self.session, preset=preset)
 		acqimdata['filename'] = '%s_%s_%s_%04d' % (self.session['name'], preset['name'], self.settings['label'], int(intensity*1000))
 		self.publish(acqimdata, database=True)
 		return acqimdata
@@ -86,7 +86,7 @@ class IntensityCalibrator(calibrator.Calibrator):
 		return stats
 
 	def storeIntensityMeasurement(self, label, intensity, stats):
-		meas = data.IntensityMeasurementData(session=self.session, label=label, intensity=intensity)
+		meas = leginondata.IntensityMeasurementData(session=self.session, label=label, intensity=intensity)
 		meas.update(stats)
 		self.publish(meas, database=True)
 

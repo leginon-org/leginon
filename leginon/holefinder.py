@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import targetfinder
 import holefinderback
 from pyami import ordereddict
@@ -21,7 +21,7 @@ import gui.wx.HoleFinder
 
 class HoleFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.HoleFinder.Panel
-	settingsclass = data.HoleFinderSettingsData
+	settingsclass = leginondata.HoleFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,
@@ -263,7 +263,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.setTargets(focus_points, 'focus', block=True)
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
-		if type(self.currentimagedata) == type(data.AcquisitionImageData()):
+		if type(self.currentimagedata) == type(leginondata.AcquisitionImageData()):
 			hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
 			self.storeHoleStatsData(hfprefs)
 
@@ -378,7 +378,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		holes = self.hf['holes']
 		for hole in holes:
 			stats = hole.stats
-			holestats = data.HoleStatsData(session=self.session, prefs=prefs)
+			holestats = leginondata.HoleStatsData(session=self.session, prefs=prefs)
 			holestats['row'] = stats['center'][0]
 			holestats['column'] = stats['center'][1]
 			holestats['mean'] = stats['hole_mean']
@@ -389,7 +389,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.publish(holestats, database=True)
 
 	def storeHoleFinderPrefsData(self, imagedata):
-		hfprefs = data.HoleFinderPrefsData()
+		hfprefs = leginondata.HoleFinderPrefsData()
 		hfprefs.update({
 			'session': self.session,
 			'image': imagedata,
