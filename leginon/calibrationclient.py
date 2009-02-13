@@ -47,6 +47,7 @@ class CalibrationClient(object):
 	'''
 	this is a component of a node that needs to use calibrations
 	'''
+	mover = False
 	def __init__(self, node):
 		self.node = node
 		try:
@@ -818,6 +819,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return cftilt
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
+	mover = True
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)
 
@@ -932,6 +934,7 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 		return p2
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
+	mover = False
 	def __init__(self, node):
 		SimpleMatrixCalibrationClient.__init__(self, node)
 
@@ -1295,6 +1298,7 @@ class StageTiltCalibrationClient(StageCalibrationClient):
 		return imagedata0, defocusdiff 
 
 class ModeledStageCalibrationClient(MatrixCalibrationClient):
+	mover = True
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 

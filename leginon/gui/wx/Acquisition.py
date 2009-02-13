@@ -38,7 +38,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
 
 		# move type
-		movetypes = self.node.calclients.keys()
+		movetypes = self.node.getMoveTypes()
 		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
 		szmovetype = wx.GridBagSizer(5, 5)
 		szmovetype.Add(wx.StaticText(self, -1, 'Use'),

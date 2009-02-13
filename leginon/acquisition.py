@@ -876,3 +876,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)
+
+	def getMoveTypes(self):
+		movetypes = []
+		for key, value in self.calclients.items():
+			if value.mover:
+				movetypes.append(key)
+		return movetypes
