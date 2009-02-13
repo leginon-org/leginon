@@ -13,7 +13,6 @@
 # $Locker:  $
 
 import copy
-import data
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 
