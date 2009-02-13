@@ -12,7 +12,7 @@
 # $Locker:  $
 
 import copy
-import data
+import leginondata
 import instrument
 from pyami.ordereddict import OrderedDict
 import threading
@@ -862,7 +862,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.sz.Layout()
 
 	def setParameters(self, parameters):
-		if isinstance(parameters, data.Data):
+		if isinstance(parameters, leginondata.Data):
 			parameters = parameters.toDict(dereference=True)
 		evt = SetParametersEvent(parameters, self)
 		self.GetEventHandler().AddPendingEvent(evt)
@@ -904,7 +904,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		preset = self.node.presetByName(evt.presetname)
 		if preset is None:
 			return
-		if isinstance(preset, data.Data):
+		if isinstance(preset, leginondata.Data):
 			preset = preset.toDict(dereference=True)
 
 		tems = {}
@@ -1359,7 +1359,7 @@ class ImportDialog(wx.Dialog):
 			return
 		days = self.ageentry.GetValue()
 		agestr = '-%d 0:0:0' % (days,)
-		pquery = data.PresetData(tem=tem, ccdcamera=ccd)
+		pquery = leginondata.PresetData(tem=tem, ccdcamera=ccd)
 		presets = self.node.research(pquery, timelimit=agestr)
 		self.sessiondict = OrderedDict()
 		for p in presets:

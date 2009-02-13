@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import data
+import leginondata
 import wx
 import wx.lib.intctrl
 import wx.lib.masked
@@ -90,7 +90,7 @@ def setWindowFromDB(window):
 	if root.session is None:	
 		session = None
 	else:
-		session = data.SessionData(user=root.session['user'])
+		session = leginondata.SessionData(user=root.session['user'])
 	initializer = {'path': path, 'session': session}
 	instance = dataclass(initializer=initializer)
 	try:

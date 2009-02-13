@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import copy
-import data
+import leginondata
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 
@@ -66,14 +66,14 @@ class ImageBrowserPanel(wx.Panel):
 
 	def getSessions(self):
 		user = self.node.session['user']
-		qsession = data.SessionData(user=user)
+		qsession = leginondata.SessionData(user=user)
 		sessionlist = self.node.research(qsession)
 		self.session_names = [s['name'] for s in sessionlist]
 		self.session_dict = dict(zip(self.session_names,sessionlist))
 		return self.session_names
 
 	def getImages(self, sessiondata):
-		qimage = data.AcquisitionImageData(session=sessiondata)
+		qimage = leginondata.AcquisitionImageData(session=sessiondata)
 		imdatalist = self.node.research(qimage, readimages=False)
 		imagenames = [imdata['filename'] for imdata in imdatalist]
 		self.image_dict = dict(zip(imagenames,imdatalist))
@@ -104,11 +104,10 @@ class ImageBrowserPanel(wx.Panel):
 
 if __name__ == "__main__":
 	import node
-	import data
 	import Icons
 	class App(wx.App):
 		def OnInit(self):
-			mysession = data.SessionData()
+			mysession = leginondata.SessionData()
 			mynode = node.Node('mnode', session=mysession)
 
 			icon = wx.EmptyIcon()

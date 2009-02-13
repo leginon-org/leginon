@@ -12,7 +12,7 @@
 # $Locker:  $
 
 import sys
-import data
+import leginondata
 import icons
 import leginonconfig
 import leginondata
@@ -766,14 +766,14 @@ class Setup(object):
 			self.projectdata = None
 
 	def getUsers(self):
-		userdata = data.UserData(initializer={})
+		userdata = leginondata.UserData(initializer={})
 		userdatalist = self.research(datainstance=userdata)
 		if not userdatalist:
-			userdatalist = [data.UserData(initializer={'full name': 'Fake User'})]
+			userdatalist = [leginondata.UserData(initializer={'full name': 'Fake User'})]
 		return _indexBy('full name', userdatalist)
 
 	def getSettings(self, userdata):
-		settingsclass = data.SetupWizardSettingsData
+		settingsclass = leginondata.SetupWizardSettingsData
 		defaultsettings = {
 			'session type': 'Create a new session',
 			'selected session': None,
@@ -781,7 +781,7 @@ class Setup(object):
 			'n limit': 10,
 			'connect': True,
 		}
-		qsession = data.SessionData(initializer={'user': userdata})
+		qsession = leginondata.SessionData(initializer={'user': userdata})
 		qdata = settingsclass(initializer={'session': qsession})
 		try:
 			settings = self.research(qdata, results=1)[0]
@@ -790,8 +790,8 @@ class Setup(object):
 		return settings
 
 	def getClients(self, name):
-		sessiondata = data.SessionData(initializer={'name': name})
-		querydata = data.ConnectToClientsData(session=sessiondata)
+		sessiondata = leginondata.SessionData(initializer={'name': name})
+		querydata = leginondata.ConnectToClientsData(session=sessiondata)
 		try:
 			return self.research(querydata, results=1)[0]['clients']
 		except IndexError:
@@ -799,7 +799,7 @@ class Setup(object):
 
 	def getRecentClients(self):
 		try:
-			results = self.research(data.ConnectToClientsData(), results=500)
+			results = self.research(leginondata.ConnectToClientsData(), results=500)
 		except IndexError:
 			results = []
 		clients = {}
@@ -815,17 +815,17 @@ class Setup(object):
 		loc = version.getInstalledLocation()
 		host = socket.gethostname()
 		initializer = {'session': session, 'clients': clients, 'localhost':host, 'version': ver, 'installation': loc}
-		clientsdata = data.ConnectToClientsData(initializer=initializer)
+		clientsdata = leginondata.ConnectToClientsData(initializer=initializer)
 		self.publish(clientsdata, database=True, dbforce=True)
 
 	def saveSettings(self, sessiondata, initializer):
-		settingsclass = data.SetupWizardSettingsData
+		settingsclass = leginondata.SetupWizardSettingsData
 		sd = settingsclass(initializer=initializer)
 		sd['session'] = sessiondata
 		self.publish(sd, database=True, dbforce=True)
 
 	def getSessions(self, userdata, n=None):
-		sessiondata = data.SessionData(initializer={'user': userdata})
+		sessiondata = leginondata.SessionData(initializer={'user': userdata})
 		sessiondatalist = self.research(datainstance=sessiondata, results=n)
 		names = []
 		for sessiondata in sessiondatalist:
@@ -853,7 +853,7 @@ class Setup(object):
 		return session_name
 
 	def existsSessionName(self, name):
-		sessiondata = data.SessionData(name=name)
+		sessiondata = leginondata.SessionData(name=name)
 		if self.research(datainstance=sessiondata):
 			return True
 		return False
@@ -866,7 +866,7 @@ class Setup(object):
 			'user': user,
 			'image path': imagedirectory,
 		}
-		return data.SessionData(initializer=initializer)
+		return leginondata.SessionData(initializer=initializer)
 
 	def linkSessionProject(self, sessiondata, projectid):
 		if self.projectdata is None:

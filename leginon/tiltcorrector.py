@@ -17,7 +17,7 @@ import pyami.quietscipy
 import scipy.ndimage
 from pyami import arraystats, convolver, affine
 import math
-import data
+import leginondata
 
 ## defocus calibration matrix format:
 ##   x-row  y-row
@@ -68,7 +68,7 @@ class TiltCorrector(object):
 		return mat
 	
 	def getMatrix(self, tem, cam, ht, mag, type):
-		matdat = data.MatrixCalibrationData()
+		matdat = leginondata.MatrixCalibrationData()
 		matdat['tem'] = tem
 		matdat['ccdcamera'] = cam
 		matdat['type'] = type
@@ -254,7 +254,7 @@ class VirtualStageTilter(object):
 		return offset
 
 	def getMatrix(self, tem, cam, ht, mag, type):
-		matdat = data.MatrixCalibrationData()
+		matdat = leginondata.MatrixCalibrationData()
 		matdat['tem'] = tem
 		matdat['ccdcamera'] = cam
 		matdat['type'] = type
@@ -279,7 +279,7 @@ class VirtualStageTilter(object):
 		return matrix	
 
 	def makeFakeStageMatrix(self, tem, cam, mag):
-		q = data.PixelSizeCalibrationData(tem=tem, ccdcamera=cam, magnification=mag)
+		q = leginondata.PixelSizeCalibrationData(tem=tem, ccdcamera=cam, magnification=mag)
 		results = q.query(results=1)
 		if results:
 			pixelsize=results[0]['pixelsize']

@@ -7,7 +7,7 @@ import inspect
 import leginondata
 
 for attr in leginondata.__dict__.keys():
-   ob = getattr(data, attr)
+   ob = getattr(leginondata, attr)
    if inspect.isclass(ob):
      if issubclass(ob, leginondata.Data):
        fields = ob.typemap()

@@ -11,7 +11,7 @@
 # $State: Exp $
 # $Locker:  $
 
-import data
+import leginondata
 import dbdatakeeper
 import unique
 import wx
@@ -108,9 +108,9 @@ class QueryPanel(wx.Panel):
 		self.sizer = wx.GridBagSizer(5, 5)
 
 		choices = []
-		for i in dir(data):
+		for i in dir(leginondata):
 			try:
-				if issubclass(getattr(data, i), data.Data):
+				if issubclass(getattr(leginondata, i), leginondata.Data):
 					choices.append(i)
 			except TypeError:
 				pass
