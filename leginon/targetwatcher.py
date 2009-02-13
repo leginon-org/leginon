@@ -89,6 +89,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		imageref = targetlistdata.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
 		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
+
+		# look for a more recent version of this image
+		target = imagedata['target']
+		imquery = leginondata.AcquisitionImageData(target=target)
+		allversions = imquery.query(readimages=False)
+		imagedata = allversions[0]
+
 		scope = imagedata['scope']
 		z = scope['stage position']['z']
 		tem = scope['tem']
