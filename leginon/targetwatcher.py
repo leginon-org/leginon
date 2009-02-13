@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import event, data
+import event, leginondata
 import watcher
 import threading
 import targethandler
@@ -22,7 +22,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	process.  All other targets are republished in another target list.
 	'''
 
-	settingsclass = data.TargetWatcherSettingsData
+	settingsclass = leginondata.TargetWatcherSettingsData
 	defaultsettings = {
 		'process target type': 'acquisition',
 	}
@@ -45,14 +45,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.startQueueProcessor()
 
 	def processData(self, newdata):
-		if isinstance(newdata, data.ImageTargetListData):
+		if isinstance(newdata, leginondata.ImageTargetListData):
 			self.setStatus('processing')
 			self.startTimer('processTargetList')
 			self.processTargetList(newdata)
 			self.stopTimer('processTargetList')
 			self.player.play()
 			self.setStatus('idle')
-		if isinstance(newdata, data.QueueData):
+		if isinstance(newdata, leginondata.QueueData):
 			self.processTargetListQueue(newdata)
 
 	def processTargetListQueue(self, newdata):
@@ -69,10 +69,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			imquery = parentimage
 		else:
 			## query targets from all image descendents of parenttarget
-			imquery = data.AcquisitionImageData(target=parenttarget)
+			imquery = leginondata.AcquisitionImageData(target=parenttarget)
 		## query focus corrections made on parent image
-		targetquery = data.AcquisitionImageTargetData(image=imquery)
-		focusquery = data.FocuserResultData(target=targetquery)
+		targetquery = leginondata.AcquisitionImageTargetData(image=imquery)
+		focusquery = leginondata.FocuserResultData(target=targetquery)
 		siblingresults = focusquery.query(results=1)
 		# use z from focus result or from parent image
 		if siblingresults:
@@ -88,7 +88,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		'''use the z position of the target list parent image'''
 		imageref = targetlistdata.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
-		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
+		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
 		scope = imagedata['scope']
 		z = scope['stage position']['z']
 		tem = scope['tem']
@@ -170,7 +170,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if state in ('stop', 'stopqueue'):
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
-				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
+				donetarget = leginondata.AcquisitionImageTargetData(initializer=target, status='aborted')
 				self.publish(donetarget, database=True)
 				## continue so that remaining targets are marked as done also
 				continue
@@ -182,14 +182,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			### generate a focus target
 			#if self.settings['duplicate targets']:
-			#	focustarget = data.AcquisitionImageTargetData(initializer=target)
+			#	focustarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			#	focustarget['type'] = self.settings['duplicate target type']
 			#	self.publish(focustarget, database=True)
 			#	tlist = [focustarget]
 			#	self.rejectTargets(tlist)
 
 			self.logger.debug('Creating processing target...')
-			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
+			adjustedtarget = leginondata.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
 			self.logger.debug('Publishing processing target...')
 			self.publish(adjustedtarget, database=True)
@@ -228,7 +228,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				# end of target repeat loop
 
 			self.logger.debug('Creating done target...')
-			donetarget = data.AcquisitionImageTargetData(initializer=adjustedtarget,
+			donetarget = leginondata.AcquisitionImageTargetData(initializer=adjustedtarget,
 																										status='done')
 			#self.publish(donetarget, database=True, dbforce=True)
 			## Why force???
@@ -267,7 +267,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		rejectlist = self.newTargetList(image=parentimage, sublist=True)
 		self.publish(rejectlist, database=True)
 		for target in targets:
-			reject = data.AcquisitionImageTargetData(initializer=target)
+			reject = leginondata.AcquisitionImageTargetData(initializer=target)
 			reject['list'] = rejectlist
 			self.publish(reject, database=True)
 		tlistid = rejectlist.dmid

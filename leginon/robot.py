@@ -9,7 +9,7 @@ import Image
 import sys
 import threading
 import time
-import data
+import leginondata
 import emailnotification
 import event
 import instrument
@@ -134,7 +134,7 @@ class Robot(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
 																						event.GridLoadedEvent,
 																						event.EmailEvent]
-	settingsclass = data.RobotSettingsData
+	settingsclass = leginondata.RobotSettingsData
 	defaultsettings = {
 		'column pressure threshold': 3.5e-5,
 		'default Z position': -140e-6,
@@ -287,7 +287,7 @@ class Robot(node.Node):
 				gridid = request.gridid
 				evt = event.GridLoadedEvent()
 				evt['request node'] = request.node
-				evt['grid'] = data.GridData(initializer={'grid ID': gridid})
+				evt['grid'] = leginondata.GridData(initializer={'grid ID': gridid})
 				evt['status'] = 'failed'
 				gridnumber = request.number
 				
@@ -707,7 +707,7 @@ class Robot(node.Node):
 			self.logger.error('Failed to get grid labels: %s' % e)
 			return None
 		gridinfo = projectdata.getGridInfo(gridid)
-		emgriddata = data.EMGridData()
+		emgriddata = leginondata.EMGridData()
 		emgriddata['name'] = gridinfo['label']
 		emgriddata['project'] = gridinfo['projectId']
 		self.publish(emgriddata, database=True)
@@ -719,14 +719,14 @@ class Robot(node.Node):
 			return None
 		emgriddata = self.publishEMGridData(gridid)
 		initializer = {'grid ID': gridid}
-		querydata = data.GridData(initializer=initializer)
+		querydata = leginondata.GridData(initializer=initializer)
 		griddatalist = self.research(querydata)
 		insertion = 0
 		for griddata in griddatalist:
 			if griddata['insertion'] > insertion:
 				insertion = griddata['insertion']
 		initializer = {'grid ID': gridid, 'insertion': insertion + 1, 'emgrid': emgriddata}
-		griddata = data.GridData(initializer=initializer)
+		griddata = leginondata.GridData(initializer=initializer)
 		self.publish(griddata, database=True)
 		return griddata
 

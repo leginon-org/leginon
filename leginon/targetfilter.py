@@ -13,7 +13,7 @@ Subclasses need to implement the filterTargets method.
 '''
 
 import node
-import data
+import leginondata
 import event
 import threading
 import targethandler
@@ -21,7 +21,7 @@ import gui.wx.TargetFilter
 
 class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFilter.Panel
-	settingsclass = data.TargetFilterSettingsData
+	settingsclass = leginondata.TargetFilterSettingsData
 	defaultsettings = {
 		'bypass':True,
 		'target type':'acquisition',	
@@ -66,7 +66,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 				newtargetlist = self.__filterTargetList(oldtargetlist,self.settings['target type'])
 				if newtargetlist is not oldtargetlist:
 					# newtargetlist has already been put in queue, now dequeue old one
-					donetargetlist = data.DequeuedImageTargetListData(list=oldtargetlist,queue=queuedata)
+					donetargetlist = leginondata.DequeuedImageTargetListData(list=oldtargetlist,queue=queuedata)
 					self.publish(donetargetlist, database=True)
 		self.publish(queuedata, pubevent=True)
 		self.setStatus('idle')
@@ -140,7 +140,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		filteredtype = self.settings['target type']
 		for target in alltargets:
 			if target['type'] != filteredtype and target['status'] not in ('done','aborted'):
-				newtarget = data.AcquisitionImageTargetData(initializer=target)
+				newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 				newtarget['delta row'] = target['delta row']
 				newtarget['delta column'] = target['delta column']
 				newtargets.append(newtarget)

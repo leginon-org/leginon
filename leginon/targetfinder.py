@@ -7,7 +7,7 @@
 #
 
 import calibrationclient
-import data
+import leginondata
 import event
 import instrument
 import imagewatcher
@@ -39,7 +39,7 @@ except NameError:
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFinder.Panel
-	settingsclass = data.TargetFinderSettingsData
+	settingsclass = leginondata.TargetFinderSettingsData
 	defaultsettings = {
 		'queue': False,
 		'wait for done': True,
@@ -98,7 +98,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		# only want filename without path and extension
 		filename = os.path.split(filename)[1]
 		filename = '.'.join(filename.split('.')[:-1])
-		q = data.AcquisitionImageData(filename=filename)
+		q = leginondata.AcquisitionImageData(filename=filename)
 		results = self.research(datainstance=q)
 		if not results:
 			return None
@@ -135,7 +135,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
 
-		querydata = data.AcquisitionImageData(list=imagelistdata)
+		querydata = leginondata.AcquisitionImageData(list=imagelistdata)
 		## research, but don't read images until later
 		images = self.research(querydata, readimages=False)
 		targetlist = self.newTargetList(queue=self.settings['queue'])
@@ -239,7 +239,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 
 	def processImageData(self, imagedata):
 		'''
-		Gets and publishes target information of specified image data.
+		Gets and publishes target information of specified image leginondata.
 		'''
 		if self.settings['ignore images']:
 			return
@@ -252,10 +252,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		qtarget = imagedata['target']
 		try:
 			pname = imagedata['preset']['name']
-			qpreset = data.PresetData(name=pname)
+			qpreset = leginondata.PresetData(name=pname)
 		except:
 			qpreset = None
-		qimage = data.AcquisitionImageData(target=qtarget, preset=qpreset)
+		qimage = leginondata.AcquisitionImageData(target=qtarget, preset=qpreset)
 		previouslists = self.researchTargetLists(image=qimage, sublist=False)
 		if previouslists:
 			# I hope you can only have one target list on an image, right?
@@ -306,7 +306,7 @@ class ClickTargetFinder(TargetFinder):
 	targetnames = ['preview', 'reference', 'focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
 	eventoutputs = TargetFinder.eventoutputs + [event.ReferenceTargetPublishEvent]
-	settingsclass = data.ClickTargetFinderSettingsData
+	settingsclass = leginondata.ClickTargetFinderSettingsData
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 

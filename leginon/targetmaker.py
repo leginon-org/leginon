@@ -6,7 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import threading
-import node, event, data
+import node, event, leginondata
 import presets
 import calibrationclient
 import math
@@ -49,7 +49,7 @@ class TargetMaker(node.Node, targethandler.TargetHandler):
 
 class MosaicTargetMaker(TargetMaker):
 	panelclass = gui.wx.MosaicTargetMaker.Panel
-	settingsclass = data.MosaicTargetMakerSettingsData
+	settingsclass = leginondata.MosaicTargetMakerSettingsData
 	defaultsettings = {
 		'preset': None,
 		'label': '',
@@ -114,11 +114,11 @@ class MosaicTargetMaker(TargetMaker):
 		# tem/camera from preset?
 		self.logger.debug('Getting current instrument state...')
 		try:
-			scope = self.instrument.getData(data.ScopeEMData)
+			scope = self.instrument.getData(leginondata.ScopeEMData)
 		except:
 			raise AtlasError('unable to access microscope')
 		try:
-			camera = self.instrument.getData(data.CameraEMData, image=False)
+			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
 		except:
 			raise AtlasError('unable to access camera')
 		self.logger.debug('Get current instrument state completed')
