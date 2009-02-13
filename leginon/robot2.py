@@ -9,7 +9,7 @@ import Image
 import sys
 import threading
 import time
-import data
+import leginondata
 import emailnotification
 import event
 import instrument
@@ -165,7 +165,7 @@ class Robot2(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
 																						event.GridLoadedEvent,
 																						event.EmailEvent]
-	settingsclass = data.RobotSettingsData
+	settingsclass = leginondata.RobotSettingsData
 	defaultsettings = {
 		'column pressure threshold': 3.5e-5,
 		'default Z position': -140e-6,
@@ -316,7 +316,7 @@ class Robot2(node.Node):
 				gridid = request.gridid
 				evt = event.GridLoadedEvent()
 				evt['request node'] = request.node
-				evt['grid'] = data.GridData(initializer={'grid ID': gridid})
+				evt['grid'] = leginondata.GridData(initializer={'grid ID': gridid})
 				evt['status'] = 'failed'
 				gridnumber = request.number
 				
@@ -729,14 +729,14 @@ class Robot2(node.Node):
 		if gridid is None:
 			return None
 		initializer = {'grid ID': gridid}
-		querydata = data.GridData(initializer=initializer)
+		querydata = leginondata.GridData(initializer=initializer)
 		griddatalist = self.research(querydata)
 		insertion = 0
 		for griddata in griddatalist:
 			if griddata['insertion'] > insertion:
 				insertion = griddata['insertion']
 		initializer = {'grid ID': gridid, 'insertion': insertion + 1}
-		griddata = data.GridData(initializer=initializer)
+		griddata = leginondata.GridData(initializer=initializer)
 		self.publish(griddata, database=True)
 		return griddata
 

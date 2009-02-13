@@ -7,7 +7,7 @@
 #
 
 import calibrationclient
-import data
+import leginondata
 import event
 import instrument
 import imagewatcher
@@ -37,7 +37,7 @@ except NameError:
 
 class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
-	settingsclass = data.MosaicClickTargetFinderSettingsData
+	settingsclass = leginondata.MosaicClickTargetFinderSettingsData
 	defaultsettings = dict(targetfinder.ClickTargetFinder.defaultsettings)
 	defaultsettings.update({
 
@@ -315,7 +315,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		### clear mosaic here
 		self.clearTiles()
 
-		self.mosaicimagelist = data.ImageListData(session=self.session, targets=targetlist)
+		self.mosaicimagelist = leginondata.ImageListData(session=self.session, targets=targetlist)
 		self.logger.debug('publishing new mosaic image list')
 		self.publish(self.mosaicimagelist, database=True, dbforce=True)
 		self.logger.debug('published new mosaic image list')
@@ -335,7 +335,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 			return
 		imagelist = self.getMosaicImageList(targets)
 		self.logger.debug('creating MosaicTileData for image %s' % (imagedata.dbid,))
-		tiledata = data.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
+		tiledata = leginondata.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
 		self.logger.debug('publishing MosaicTileData')
 		self.publish(tiledata, database=True)
 		self.logger.debug('published MosaicTileData')
@@ -358,7 +358,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 			self.logger.info('Generate a mosaic image before saving it')
 			return
 		self.logger.info('Saving mosaic image data')
-		mosaicimagedata = data.MosaicImageData()
+		mosaicimagedata = leginondata.MosaicImageData()
 		mosaicimagedata['session'] = self.session
 		mosaicimagedata['list'] = self.mosaicimagelist
 		mosaicimagedata['image'] = self.mosaicimage
@@ -375,7 +375,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		self.logger.info('Mosaic saved')
 
 	def researchMosaicTileData(self):
-		tilequery = data.MosaicTileData(session=self.session, list=data.ImageListData())
+		tilequery = leginondata.MosaicTileData(session=self.session, list=leginondata.ImageListData())
 		mosaictiles = self.research(datainstance=tilequery)
 		mosaiclists = {}
 		for tile in mosaictiles:
@@ -498,7 +498,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 		self.mosaic.setCalibrationClient(calclient)
 
 	def storeSquareFinderPrefs(self):
-		prefs = data.SquareFinderPrefsData()
+		prefs = leginondata.SquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
 		prefs['lpf-sigma'] = self.settings['lpf']['sigma']
 		prefs['threshold'] = self.settings['threshold']
@@ -555,7 +555,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 			column = blob.stats['center'][1]
 			mean = blob.stats['mean']
 			std = blob.stats['stddev']
-			stats = data.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
+			stats = leginondata.SquareStatsData(prefs=prefs, row=row, column=column, mean=mean, stdev=std)
 			if (mean_min <= mean <= mean_max) and (std_min <= std <= std_max):
 				stats['good'] = True
 				## create a display target

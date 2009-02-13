@@ -5,7 +5,7 @@
 #	   For terms of the license agreement
 #	   see  http://ami.scripps.edu/software/leginon-license
 #
-import data
+import leginondata
 import acquisition
 import gui.wx.RCTAcquisition
 import libCVwrapper
@@ -76,7 +76,7 @@ def targetPoints(targets):
 #====================
 class RCTAcquisition(acquisition.Acquisition):
 	panelclass = gui.wx.RCTAcquisition.Panel
-	settingsclass = data.RCTAcquisitionSettingsData
+	settingsclass = leginondata.RCTAcquisitionSettingsData
 	defaultsettings = acquisition.Acquisition.defaultsettings
 	defaultsettings.update({
 		'tilts': '(-45, 45)',
@@ -197,7 +197,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		self.logger.info('focus already done at previous tilt, forcing focus target status=done')
 		targetlist = self.getFocusTargets(targetlistdata)
 		for targetdata in targetlist:
-				donetarget = data.AcquisitionImageTargetData(initializer=targetdata, status='done')
+				donetarget = leginondata.AcquisitionImageTargetData(initializer=targetdata, status='done')
 				self.publish(donetarget, database=True)
 
 	#====================
@@ -220,7 +220,7 @@ class RCTAcquisition(acquisition.Acquisition):
 
 		newtargets = []
 		for centerpoint,target in zip(centerpoints,targets):
-			tiltedtarget = data.AcquisitionImageTargetData(initializer=target)
+			tiltedtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			tiltedtarget['delta row'] = centerpoint[0]
 			tiltedtarget['delta column'] = centerpoint[1]
 			tiltedtarget['version'] = 0
@@ -304,7 +304,7 @@ class RCTAcquisition(acquisition.Acquisition):
 				time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
 			#print 'acquire intertilt'
-			dataclass = data.CorrectedCameraImageData
+			dataclass = leginondata.CorrectedCameraImageData
 			imagenew = self.instrument.getData(dataclass)
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
 			if medfilt > 1:
@@ -366,7 +366,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		dim = image0['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(image0['image'].dtype)
-		imagedata = data.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name,
+		imagedata = leginondata.AcquisitionImageData(initializer=imageold, preset=image0['preset'], label=self.name,
 			target=image0['target'], list=None, emtarget=image0['emtarget'], 
 			version=0, tiltnumber=self.tiltnumber, pixels=pixels, pixeltype=pixeltype)
 		self.setTargets([], 'Peak')
@@ -524,10 +524,10 @@ class RCTAcquisition(acquisition.Acquisition):
 		'''
 		commontarget = targetdata['image']['target']
 		targetnumber = targetdata['number']
-		qimage1 = data.AcquisitionImageData(target=commontarget)
-		qtarget = data.AcquisitionImageTargetData(image=qimage1, number=targetnumber)
-		qpreset = data.PresetData(name=presetdata['name'], session=presetdata['session'])
-		qimage2 = data.AcquisitionImageData(target=qtarget, preset=qpreset, session=presetdata['session'])
+		qimage1 = leginondata.AcquisitionImageData(target=commontarget)
+		qtarget = leginondata.AcquisitionImageTargetData(image=qimage1, number=targetnumber)
+		qpreset = leginondata.PresetData(name=presetdata['name'], session=presetdata['session'])
+		qimage2 = leginondata.AcquisitionImageData(target=qtarget, preset=qpreset, session=presetdata['session'])
 		images = self.research(qimage2, readimages=False)
 		if images:
 			tiltseries = images[0]['tilt series']
@@ -549,7 +549,7 @@ class RCTAcquisition(acquisition.Acquisition):
 		targetdata = emtarget['target']
 		tiltseries,defocus = self.getTiltSeries(targetdata, presetdata)
 		if tiltseries is None:
-			self.tiltseries = data.TiltSeriesData()
+			self.tiltseries = leginondata.TiltSeriesData()
 			self.publish(self.tiltseries, database=True, dbforce=True)
 		else:
 			self.tiltseries = tiltseries
@@ -601,7 +601,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			return
 
 		try:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		except:
 			self.logger.error(errstr % 'unable to get corrected image')
 			return

@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import targetfinder
 import threading
 import gui.wx.RegionFinder
@@ -19,7 +19,7 @@ import math
 
 class RegionFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RegionFinder.Panel
-	settingsclass = data.RegionFinderSettingsData
+	settingsclass = leginondata.RegionFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
 		'image filename': '',

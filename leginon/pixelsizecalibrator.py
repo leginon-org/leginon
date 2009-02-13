@@ -7,7 +7,7 @@
 #
 import calibrator
 import calibrationclient
-import event, data
+import event, leginondata
 from pyami import imagefun
 import node
 import math
@@ -19,7 +19,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	calibrate the pixel size for different mags
 	'''
 	panelclass = gui.wx.PixelSizeCalibrator.Panel
-	settingsclass = data.PixelSizeCalibratorSettingsData
+	settingsclass = leginondata.PixelSizeCalibratorSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
 	defaultsettings.update({
 		'lattice a': 69.0,
@@ -45,7 +45,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 	def fakeImage(self):
 		# need an existing image name
-		imageq = data.AcquisitionImageData(filename='08oct13d_00045ma_1')
+		imageq = leginondata.AcquisitionImageData(filename='08oct13d_00045ma_1')
 		results = imageq.query()
 		return results[0]
 
@@ -119,7 +119,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	def _store(self, mag, psize, comment):
 		temdata = self.instrument.getTEMData()
 		camdata = self.instrument.getCCDCameraData()
-		caldata = data.PixelSizeCalibrationData()
+		caldata = leginondata.PixelSizeCalibrationData()
 		caldata['magnification'] = mag
 		caldata['pixelsize'] = psize
 		caldata['comment'] = comment

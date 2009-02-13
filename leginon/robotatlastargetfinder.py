@@ -17,7 +17,7 @@ import pyami.quietscipy
 import scipy.ndimage
 import threading
 import align
-import data
+import leginondata
 import event
 import instrument
 import node
@@ -326,7 +326,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		self.panel.getAtlasesDone()
 
 	def queryAtlases(self):
-		querydata = data.MosaicTileData(session=self.session)
+		querydata = leginondata.MosaicTileData(session=self.session)
 		tiledatalist = self.research(datainstance=querydata)
 		imagedatarefs = {}
 		for tiledata in tiledatalist:
@@ -584,7 +584,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 	def saveTransform(self, result, griddata1, griddata2):
 		rotation, scale, shift, rsvalue, value = result
-		transformdata = data.LogPolarGridTransformData()
+		transformdata = leginondata.LogPolarGridTransformData()
 		transformdata['rotation'] = rotation
 		transformdata['scale'] = scale
 		transformdata['translation'] = {'x': shift[1], 'y': shift[0]}
@@ -595,7 +595,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		self.publish(transformdata, database=True)
 
 	def loadTransform(self, griddata1, griddata2):
-		querydata = data.LogPolarGridTransformData()
+		querydata = leginondata.LogPolarGridTransformData()
 		querydata['grid 1'] = griddata1
 		querydata['grid 2'] = griddata2
 		resultdatalist = self.research(querydata, results=1)
@@ -723,11 +723,11 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				for originaltargetdata, targetdata in targetdatalist:
 					targetquery = targetdata.__class__(initializer=targetdata)
 					targetquery['status'] = None
-					query = data.AcquisitionImageData(session=self.session,
+					query = leginondata.AcquisitionImageData(session=self.session,
 																						target=targetquery)
 					imagedatalist = self.research(query, readimages=False)
 					for imagedata in imagedatalist:
-						imagedata = data.AcquisitionImageData(initializer=imagedata)
+						imagedata = leginondata.AcquisitionImageData(initializer=imagedata)
 						imagedata['target'] = originaltargetdata
 						## this will probably save the image file again with
 						## the same filename
@@ -749,7 +749,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 	def getLastGridInsertion(self, gridid):
 		initializer = {}
 		initializer['grid ID'] = gridid
-		querydata = data.GridData(initializer=initializer)
+		querydata = leginondata.GridData(initializer=initializer)
 		griddatalist = self.research(querydata)
 		maxinsertion = -1
 		griddata = None
@@ -776,8 +776,8 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 			else:
 				return None
 	
-		targetdata = data.AcquisitionImageTargetData(initializer=imagedata['target'])
-		emtargetdata = data.EMTargetData(initializer=imagedata['emtarget'])
+		targetdata = leginondata.AcquisitionImageTargetData(initializer=imagedata['target'])
+		emtargetdata = leginondata.EMTargetData(initializer=imagedata['emtarget'])
 
 		movetype = emtargetdata['movetype']
 		calclient = self.calibrationclients[movetype]
@@ -809,9 +809,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		emtargetdata['target'] = targetdata
 		#emtargetdata['preset'] = presetdata
 
-		query = data.AcquisitionImageTargetData()
+		query = leginondata.AcquisitionImageTargetData()
 		query['session'] = self.session
-		query['preset'] = data.PresetData()
+		query['preset'] = leginondata.PresetData()
 		query['preset']['name'] = presetname
 		query['grid'] = griddata
 		try:
@@ -840,7 +840,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		errorstring = 'Image acqisition failed: %s'
 		try:
-			imagedata2 = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata2 = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		except:
 			imagedata2 = None
 			self.logger.error(errorstring % 'cannot acquire image')
@@ -850,7 +850,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 		# Jim says: store to DB to prevent referencing errors
 		self.publish(imagedata2['scope'], database=True)
 		self.publish(imagedata2['camera'], database=True)
-		imagedata2 = data.AcquisitionImageData(initializer=imagedata2)
+		imagedata2 = leginondata.AcquisitionImageData(initializer=imagedata2)
 		imagedata2['target'] = targetdata
 		imagedata2['emtarget'] = emtargetdata
 		imagedata2['preset'] = presetdata

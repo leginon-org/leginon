@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
+import leginondata
 import targetfinder
 import threading
 import ice
@@ -22,7 +22,7 @@ import polygon
 
 class RasterFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
-	settingsclass = data.RasterFinderSettingsData
+	settingsclass = leginondata.RasterFinderSettingsData
 	defaultsettings = dict(targetfinder.TargetFinder.defaultsettings)
 	defaultsettings.update({
 		'skip': False,

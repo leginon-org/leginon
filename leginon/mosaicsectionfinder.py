@@ -7,7 +7,7 @@
 #
 
 import calibrationclient
-import data
+import leginondata
 import event
 import instrument
 import imagewatcher
@@ -37,7 +37,7 @@ except NameError:
 
 class MosaicSectionFinder(mosaictargetfinder.MosaicClickTargetFinder):
 	panelclass = gui.wx.MosaicSectionFinder.Panel
-	settingsclass = data.MosaicSectionFinderSettingsData
+	settingsclass = leginondata.MosaicSectionFinderSettingsData
 	defaultsettings = dict(mosaictargetfinder.MosaicClickTargetFinder.defaultsettings)
 	defaultsettings.update({
 		'autofinder': False,

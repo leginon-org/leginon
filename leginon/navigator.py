@@ -13,7 +13,7 @@
 
 import node
 import event
-import data
+import leginondata
 import time
 import calibrationclient
 from pyami import correlator, peakfinder, imagefun, ordereddict
@@ -54,7 +54,7 @@ class NavigatorClient(object):
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
-	settingsclass = data.NavigatorSettingsData
+	settingsclass = leginondata.NavigatorSettingsData
 	defaultsettings = {
 		'instruments': {'tem':None, 'ccdcamera':None},
 		'pause time': 2.5,
@@ -69,7 +69,7 @@ class Navigator(node.Node):
 		'cycle each': False,
 		'final image shift': False,
 		'camera settings':
-			data.CameraSettingsData(
+			leginondata.CameraSettingsData(
 				initializer={
 					'dimension': {
 						'x': 1024,
@@ -180,7 +180,7 @@ class Navigator(node.Node):
 
 	def _moveback(self):
 		self.logger.info('moving back to previous state')
-		emdat = data.NavigatorScopeEMData()
+		emdat = leginondata.NavigatorScopeEMData()
 		emdat.friendly_update(self.oldstate)
 		try:
 			self.instrument.setData(emdat)
@@ -216,7 +216,7 @@ class Navigator(node.Node):
 
 		self.oldstate = self.newstate
 		self.newstate = newstate
-		emdat = data.NavigatorScopeEMData()
+		emdat = leginondata.NavigatorScopeEMData()
 		emdat.friendly_update(newstate)
 		try:
 			self.instrument.setData(emdat)
@@ -403,7 +403,7 @@ class Navigator(node.Node):
 		else:
 			corchannel = 1
 		self.instrument.setCorrectionChannel(corchannel)
-		#camerasettings = data.CameraSettingsData(initializer=camera)
+		#camerasettings = leginondata.CameraSettingsData(initializer=camera)
 		self.instrument.setCCDCamera(ccdcamera['name'])
 		self.instrument.setData(cameradata)
 		return self._acquireImage()
@@ -433,7 +433,7 @@ class Navigator(node.Node):
 
 	def _acquireImage(self):
 		try:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		except:
 			self.logger.error('unable to get corrected image')
 			return
@@ -467,11 +467,11 @@ class Navigator(node.Node):
 
 		loc = self.getLocation(name)
 		if loc is None:
-			newloc = data.StageLocationData()
+			newloc = leginondata.StageLocationData()
 			newloc['name'] = name
 			newloc['xy only'] = xyonly
 		else:
-			newloc = data.StageLocationData(initializer=loc.toDict())
+			newloc = leginondata.StageLocationData(initializer=loc.toDict())
 
 		newloc['session'] = self.session
 		newloc.update(stagedata)
@@ -513,7 +513,7 @@ class Navigator(node.Node):
 			self.stagelocations.remove(loc)
 
 		if locremove is not None:
-			removeloc = data.StageLocationData(initializer=locremove.toDict())
+			removeloc = leginondata.StageLocationData(initializer=locremove.toDict())
 			removeloc['removed'] = True
 			self.locationToDB(removeloc)
 		locnames = self.locationNames()
@@ -538,7 +538,7 @@ class Navigator(node.Node):
 		and use them to create self.stagelocations list
 		'''
 		### get location from database
-		locdata = data.StageLocationData(session=self.session)
+		locdata = leginondata.StageLocationData(session=self.session)
 		locations = self.research(datainstance=locdata)
 
 		### only want most recent of each name
@@ -573,7 +573,7 @@ class Navigator(node.Node):
 				if loc == location['name']:
 					locdata = location
 					break
-		elif isinstance(loc, data.StageLocationData):
+		elif isinstance(loc, leginondata.StageLocationData):
 			locdata = loc
 		else:
 			self.logger.error(errstr % 'bad argument')

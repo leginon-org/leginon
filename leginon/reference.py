@@ -8,7 +8,7 @@
 
 import threading
 import time
-import data
+import leginondata
 import calibrationclient
 import event
 import instrument
@@ -23,7 +23,7 @@ class MoveError(Exception):
 
 class Reference(watcher.Watcher, targethandler.TargetHandler):
 	panelclass = gui.wx.Reference.ReferencePanel
-	settingsclass = data.ReferenceSettingsData
+	settingsclass = leginondata.ReferenceSettingsData
 	eventinputs = watcher.Watcher.eventinputs + \
 				  presets.PresetsClient.eventinputs + \
 				  [event.ReferenceTargetPublishEvent]
@@ -65,7 +65,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		self.start()
 
 	def processData(self, incoming_data):
-		if isinstance(incoming_data, data.ReferenceTargetData):
+		if isinstance(incoming_data, leginondata.ReferenceTargetData):
 			self.processReferenceTarget(incoming_data)
 
 	def processReferenceTarget(self, target_data):
@@ -83,7 +83,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		target_delta_row = target_data['delta row']
 		target_delta_column = target_data['delta column']
 		pixel_shift = {'row': -target_delta_row, 'col': -target_delta_column}
-		target_scope = data.ScopeEMData(initializer=target_data['scope'])
+		target_scope = leginondata.ScopeEMData(initializer=target_data['scope'])
 		for i in ['image shift', 'beam shift', 'stage position']:
 			target_scope[i] = dict(target_data['scope'][i])
 		target_camera = target_data['camera']
@@ -95,7 +95,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 			message = 'no %s calibration to move to reference target: %s'
 			raise MoveError(message % (move_type, e))
 
-		em_target_data = data.EMTargetData()
+		em_target_data = leginondata.EMTargetData()
 		if check_preset_name is None:
 			em_target_data['preset'] = target_data['preset']
 		else:
@@ -110,7 +110,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		else:
 			scope_move_type = move_type
 		em_target_data[scope_move_type] = scope[scope_move_type]
-		em_target_data['target'] = data.AcquisitionImageTargetData(initializer=target_data)
+		em_target_data['target'] = leginondata.AcquisitionImageTargetData(initializer=target_data)
 
 		return em_target_data
 
@@ -168,7 +168,7 @@ class Reference(watcher.Watcher, targethandler.TargetHandler):
 		pass
 
 class AlignZeroLossPeak(Reference):
-	settingsclass = data.AlignZLPSettingsData
+	settingsclass = leginondata.AlignZLPSettingsData
 	defaultsettings = {
 		'move type': 'stage position',
 		'pause time': 3.0,
@@ -188,7 +188,7 @@ class AlignZeroLossPeak(Reference):
 
 	def processData(self, incoming_data):
 		Reference.processData(self, incoming_data)
-		if isinstance(incoming_data, data.AlignZeroLossPeakData):
+		if isinstance(incoming_data, leginondata.AlignZeroLossPeakData):
 			self.processRequest(incoming_data)
 
 	def _processRequest(self, request_data):
@@ -281,7 +281,7 @@ class AlignZeroLossPeak(Reference):
 			s = 'Energy internal shift query failed: %s.'
 			self.logger.error(s % e)
 
-		shift_data = data.InternalEnergyShiftData(session=self.session, before=before_shift, after=after_shift)
+		shift_data = leginondata.InternalEnergyShiftData(session=self.session, before=before_shift, after=after_shift)
 		self.publish(shift_data, database=True, dbforce=True)
 		if self.settings['threshold'] >= 0.1:
 			self.resetZeroLossCheck()
@@ -291,10 +291,10 @@ class AlignZeroLossPeak(Reference):
 		if not ccd_camera.EnergyFiltered:
 			self.logger.warning('No energy filter on this instrument.')
 			return False
-		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		image = imagedata['image']
 		stageposition = imagedata['scope']['stage position']
-		lastresetq = data.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
+		lastresetq = leginondata.ZeroLossCheckData(session=self.session, preset=self.checkpreset)
 		result = lastresetq.query(readimages=False, results=1)
 
 		if result is None:
@@ -308,7 +308,7 @@ class AlignZeroLossPeak(Reference):
 		return True
 
 	def publishZeroLossCheck(self,image):
-		resetdata = data.ZeroLossCheckData()
+		resetdata = leginondata.ZeroLossCheckData()
 		resetdata['session'] = self.session
 		resetdata['reference'] = self.reference_target
 		resetdata['preset'] = self.checkpreset
@@ -324,7 +324,7 @@ class AlignZeroLossPeak(Reference):
 			self.logger.error('Error moving to target, %s' % e)
 			return
 		self.logger.info('reset zero-loss check data')
-		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		stageposition = imagedata['scope']['stage position']
 		image = imagedata['image']
 		self.publishZeroLossCheck(image)
@@ -349,7 +349,7 @@ class MeasureDose(Reference):
 
 	def processData(self, incoming_data):
 		Reference.processData(self, incoming_data)
-		if isinstance(incoming_data, data.MeasureDoseData):
+		if isinstance(incoming_data, leginondata.MeasureDoseData):
 			self.processRequest(incoming_data)
 
 	# override move to measure dose...

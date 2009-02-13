@@ -8,7 +8,7 @@
 import numpy
 from pyami import correlator, peakfinder, imagefun
 import math
-import data
+import leginondata
 
 class Tile(object):
 	def __init__(self, image, position, imagedata):
@@ -367,13 +367,13 @@ class EMMosaic(object):
 		## each tile.
 		## To use calibrationclient's itransform method, we need
 		## a fake image from which to calculate a pixel vector
-		## Maybe could use an actual final image data.
+		## Maybe could use an actual final image leginondata.
 		someimage = self.tiles[0].imagedata
-		self.fakescope = data.ScopeEMData(initializer=someimage['scope'])
+		self.fakescope = leginondata.ScopeEMData(initializer=someimage['scope'])
 		self.fakescope[param] = dict(someimage['scope'][param])
 		self.fakescope[param].update(center)
 		## assume the final fake image has same binning as first tile
-		self.fakecamera = data.CameraEMData(initializer=someimage['camera'])
+		self.fakecamera = leginondata.CameraEMData(initializer=someimage['camera'])
 		tile0 = self.tiles[0]
 		mosaic0 = mosaic1 = None
 		for tile in self.tiles:
