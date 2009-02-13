@@ -164,6 +164,24 @@ class ApTemplateRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApTemplateRunData=ApTemplateRunData
 
+class ApTemplateStackData(Data):
+        def typemap(cls):
+                return Data.typemap() + (
+			('clusterstack', ApClusteringStackData),
+                        ('templatename', str),
+			('cls_avgs', bool),
+			('forward_proj', bool),
+                        ('origpath', str),
+			('description', str),
+			('session', leginondata.SessionData),
+			('apix', float),
+			('boxsize', int),
+			('hidden', bool),
+			('project|projects|project', int),
+                )
+        typemap = classmethod(typemap)
+leginondata.ApTemplateRunData=ApTemplateRunData
+
 ### Transformation/shift tables ###
 
 class ApImageTransformationData(Data):
