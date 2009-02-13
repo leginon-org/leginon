@@ -29,6 +29,7 @@ if ($_POST['write']) {
 	$exists = $particle->getJobFileFromPath($outdir,$jobname);
 	//  if ($exists[0]) jobForm("ERROR: This job name already exists");
 	if (!$_POST['radius']) jobForm("ERROR: Enter an outer radius");
+	if ($_POST['initorientmethod']=='projmatch' && !$_POST['ang']) jobForm("ERROR: Enter an angular increment");
 	writeJobFile();
 }
 
@@ -106,37 +107,37 @@ function stackModelForm($extra=False) {
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
-	  $sel = ($project['id']==$projectId) ? "selected" : '';
-	  echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
+		$sel = ($project['id']==$projectId) ? "selected" : '';
+		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
 	}
 	echo"
   </select>
   <P>\n";
 	if (!$modelonly) {
-	  echo"
+		echo"
     <B>Stack:</B><BR>";
-	  echo "<SELECT NAME='stackval'>\n";
+		echo "<SELECT NAME='stackval'>\n";
 
-	  foreach ($stackIds as $stackid){
-	    // get stack parameters from database
-	    $s=$particle->getStackParams($stackid['stackid']);
-	    // get number of particles in each stack
-	    $nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-	    // get pixel size of stack
-	    $apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-	    // get box size
-	    $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-	    // get stack path with name
-	    $opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
-	    // if imagic stack, send both hed & img files for dmf
-	    if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-	    if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
-	    echo "<OPTION VALUE='$opvals'";
-	    // select previously set stack on resubmit
-	    if ($stackid['stackid']==$stackidval) echo " SELECTED";
-	    echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
-	  }
-	  echo "</SELECT>\n";
+		foreach ($stackIds as $stackid){
+			// get stack parameters from database
+			$s=$particle->getStackParams($stackid['stackid']);
+			// get number of particles in each stack
+			$nump=commafy($particle->getNumStackParticles($stackid['stackid']));
+			// get pixel size of stack
+			$apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			// get box size
+			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+			// get stack path with name
+			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
+			// if imagic stack, send both hed & img files for dmf
+			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
+			echo "<OPTION VALUE='$opvals'";
+			// select previously set stack on resubmit
+			if ($stackid['stackid']==$stackidval) echo " SELECTED";
+			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+		}
+		echo "</SELECT>\n";
 	}
 	//  show initial models
 	echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
@@ -366,22 +367,28 @@ function jobForm($extra=false) {
 	echo "<br />\n";
 
 	// if a reconstruction has been selected, show iterations & resolutions
-	echo "&nbsp;&nbsp;&nbsp; Iteration:\n";
-	$iterinfo = $particle->getRefinementData($_POST['importrecon']);
-	print_r($iterinfo);
-	echo "<select name='importiter'>\n";
-	if (is_array($iterinfo)) {
-		foreach ($iterinfo as $iter){
-			$iopt.="<option value='".$iter['DEF_id']."' ";
-			$iopt.= ($_POST['importiter']==$iter['DEF_id']) ? 'selected':'';
-			$iopt.= ">";
-			$iopt.= print_r($iter);
-			$iopt.= "</option>\n";
+	if ($_POST['importrecon'] && $_POST['importrecon']!='None') {
+		echo "&nbsp;&nbsp;&nbsp; Iteration:\n";
+		$iterinfo = $particle->getRefinementData($_POST['importrecon']);
+		echo "<select name='importiter'>\n";
+		if (is_array($iterinfo)) {
+			foreach ($iterinfo as $iter){
+			  	$iterstuff = $particle->getIterationInfo($_POST['importrecon'],$iter['iteration']);
+				$rmeas = $particle->getRMeasureInfo($iter['REF|ApRMeasureData|rMeasure']);
+				$fsc = $particle->getResolutionInfo($iter['REF|ApResolutionData|resolution']);
+				$iopt.="<option value='".$iter['DEF_id']."' ";
+				$iopt.= ($_POST['importiter']==$iter['DEF_id']) ? 'selected':'';
+				$iopt.= ">Iter ".$iter['iteration'];
+				$iopt.= ": Ang=".$iterstuff['ang'];
+				$iopt.= ", FSC=".sprintf('%.1f',$fsc['half']);
+				$iopt.= ", Rmeas=".sprintf('%.1f',$rmeas['rMeasure']);
+				$iopt.= "</option>\n";
+			}
 		}
+		echo $iopt;
+		echo "</select>\n";
+		echo "<br />\n";
 	}
-	echo $iopt;
-	echo "</select>\n";
-	echo "<br />\n";
 	echo "<input type='radio' name='initorientmethod' value='projmatch' $angcheck>\n";
 	echo docpop('ang',"Determine with Frealign - Ang incr:");
 	echo " <input type='type' name='ang' value='$ang' size='4'>\n";
@@ -511,30 +518,7 @@ function writeJobFile ($extra=False) {
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];
 
-	// insert the job file into the database
-	if (!$extra) {	
-		// create dmf put javascript
-		$javafunc.="
-  <SCRIPT LANGUAGE='JavaScript'>
-  function setupFiles() {
-    newwindow=window.open('','name','height=150', width=900')
-    newwindow.document.write('<HTML><BODY>')
-    newwindow.document.write('Please create a working directory and copy the initial model and stack to that directory')
-    newwindow.document.write('<p>dmf put $stackpath/$stackname1 $stackname1</p>')\n";
-		if ($stackname2) $javafunc.="    newwindow.document.write('<p>dmf put $stackpath/$stackname2 $stackname2</p>')\n";
-		$javafunc.="
-    newwindow.document.write('<p>dmf put $modelpath/$modelname threed.0a.mrc</p>');
-    newwindow.document.write('<p>echo done');
-    newwindow.document.write('<p>&nbsp;<BR></BODY></HTML>');
-    newwindow.document.close();
-  }
-  </SCRIPT>\n";
-	}
 	processing_header("Frealign Job Generator","Frealign Job Generator", $javafunc);
-
-	$pad=intval($box*1.25);
-	// make sure $pad value is even int
-	$pad = ($pad%2==1) ? $pad+=1 : $pad;
 
 	$apix=$_POST["apix"];
 	$last=$_POST['last'];
@@ -576,11 +560,14 @@ function writeJobFile ($extra=False) {
 	$bfactor=$_POST["bfactor"];
 	$setuponly=$_POST["setuponly"];
 	$refcycles=$_POST['refcycles'];
+	$inpar=$_POST['inparfile'];
+	$importiter=$_POST['importiter'];
 	
 	$line="\nrunfrealign.py -n $jobname --radius=$radius --iradius=$iradius --apix=$apix ";
 	$line.="--ampcontrast=$ampcontrast --maskthresh=$maskthresh --phaseconstant=$phaseconstant --avgresidual=$avgresidual --itmax=$itmax ";
 	$line.="--maxmatch=$maxmatch --last=$last --sym=$sym --targetresidual=$targetresidual --residualthresh=$residualthresh ";
 	$line.="--cs=$cs --kv=$kv --reslimit=$reslimit --hp=$hp --lp=$lp --bfactor=$bfactor";
+	if ($inpar) $line.= " --inpar=$inpar";
 	if ($ang) $line.= " --ang=$ang";
 	//if ($magrefine=='on') $line.=" --magrefine='T'";
 	//if ($defocusrefine=='on') $line.=" --defocusrefine='T'";
@@ -597,13 +584,12 @@ function writeJobFile ($extra=False) {
 	//if ($deltay=='on') $line.=" --deltay=1";
 	if ($refcycles) $line.= " --refcycles=$refcycles";
 	if ($setuponly=='on') $line.=" --setuponly";
-	//
+
 	//appion specific options
-	//
-	
-	$line .=" --stackid=$stackidval";
-	$line.=" --modelid=$modelid";
-	$line.=" --project=$projectId";
+	$line.= " --reconiterid=$importiter";
+	$line.= " --stackid=$stackidval";
+	$line.= " --modelid=$modelid";
+	$line.= " --project=$projectId";
 	
 	$line.=" > runfrealign".$i.".txt\n";
 	$clusterjob.= $line;
@@ -675,7 +661,6 @@ function defaultReconValues ($box, $apix) {
       obj.maskthresh.value = '0.0';
       obj.phaseconstant.value = '3.0';
       obj.avgresidual.value = '75';
-      obj.ang.value = '5';
       obj.itmax.value = '10';
       obj.maxmatch.value = '0';
       obj.targetresidual.value = '10.0';
