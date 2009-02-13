@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import databinder
 import time
-import data, event
+import event
 import socket
 import datatransport
 

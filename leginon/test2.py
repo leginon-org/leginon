@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import data
 import databinder
 import socket
 import event
