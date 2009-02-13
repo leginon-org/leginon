@@ -70,7 +70,8 @@ class imagicClusterScript(appionScript.AppionScript):
 
 	def createImagicBatchFile(self,clusternumber):
 		# IMAGIC batch file creation
-		filename = os.path.join(self.params['rundir'], "imagicMSAcluster_classes_"+str(clusternumber)+".batch")
+		batchending = "_"+str(self.params['ignore_images'])+"_"+str(self.params['ignore_members'])
+		filename = os.path.join(self.params['rundir'], "imagicMSAcluster_classes_"+str(clusternumber)+batchending+".batch")
 		f = open(filename, 'w')
                 f.write("#!/bin/csh -f\n")
                 f.write("setenv IMAGIC_BATCH 1\n")
