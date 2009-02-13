@@ -35,6 +35,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 
 	// set any default parameters
 	$template_stack = ($_POST['template_stack']) ? $_POST['template_stack'] : '';
+	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$description = ($_POST['description']) ? $_POST['description'] : '';	
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
@@ -74,7 +75,10 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 		echo "<BR/>\n";
 		echo "Template Stack Name with path: <BR/> \n";
 		echo "<INPUT TYPE='text' NAME='template_stack' VALUE='$template_stack' SIZE='55'/>\n";
-		echo "<BR/>\n";			
+		echo "<BR/><BR/>\n";
+		echo "&Aring;ngstroms per pixel <BR/>\n";
+		echo "<INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'/>\n";
+		echo "<BR/>";			
 	}
 
 	echo "<br/>\n";
@@ -113,12 +117,19 @@ function runUploadTemplateStack() {
 	$projectId = $_POST['projectId'];
 	$template_stack = $_POST['template_stack'];
 	$stacktype = $_POST['stack_type'];
+	$apix = $_POST['apix'];
 	$description = $_POST['description'];
 	$session = $_POST['sessionname'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	//make sure a description is provided
 	if (!$description) createUploadTemplateStackForm("<B>ERROR:</B> Enter a brief description of the template");
+
+	//make sure angstroms per pixel is specified, or is retrieved from the database
+	if (!$apix) createUploadTemplateStackForm("<B>ERROR:</B> Enter a value for angstroms per pixel");
+
+        //make sure template type is specified
+        if (!$stacktype) createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
 
 	//make sure a session was selected
 	if (!$session) createUploadTemplateStackForm("<B>ERROR:</B> Select an experiment session");
@@ -138,6 +149,7 @@ function runUploadTemplateStack() {
 	if ($template_stack) {
 		$command.="--templatestack=$template_stack ";
 		$command.="--templatetype=$stacktype ";
+		$command.="--apix=$apix ";
 	}
 	
 	$command.="--projectid=$projectId ";
