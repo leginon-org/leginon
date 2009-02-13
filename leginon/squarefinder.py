@@ -8,7 +8,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
 from pyami import imagefun, convolver, mrc, arraystats
 import random
 import targetfinder

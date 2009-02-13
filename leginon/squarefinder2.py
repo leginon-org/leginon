@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
 try:
 	import numarray as Numeric
 	import fft as FFT
