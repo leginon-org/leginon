@@ -340,6 +340,13 @@ if ($expId) {
 			}
 		}
 
+		// ===================================================================
+		// template stacks (class averages & forward projections)
+		// ===================================================================
+		$nruns[] = array (
+			'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
+			);
+
 		// =======================
 		// old spider alignment
 		// =======================
