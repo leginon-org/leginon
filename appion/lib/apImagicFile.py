@@ -12,6 +12,8 @@ import apDisplay
 import apFile
 import numpy
 from pyami import mrc
+import pyami.quietscipy
+from scipy import ndimage
 
 #===============
 def compareHeader(hfile1, hfile2, numround=1):
