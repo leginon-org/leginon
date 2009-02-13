@@ -8,7 +8,7 @@
 
 import math
 import calibrationclient
-import data
+import leginondata
 import event
 import instrument
 import node
@@ -87,7 +87,7 @@ def optimizeTargets(start, targets):
 class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 	panelclass = gui.wx.AtlasTargetMaker.Panel
 
-	settingsclass = data.AtlasTargetMakerSettingsData
+	settingsclass = leginondata.AtlasTargetMakerSettingsData
 	defaultsettings = {
 		'preset': None,
 		'label': None,
@@ -150,11 +150,11 @@ class AtlasTargetMaker(node.Node, targethandler.TargetHandler):
 		# tem/camera from preset?
 		self.logger.debug('Getting current instrument state...')
 		try:
-			scope = self.instrument.getData(data.ScopeEMData)
+			scope = self.instrument.getData(leginondata.ScopeEMData)
 		except:
 			raise AtlasError('unable to access microscope')
 		try:
-			camera = self.instrument.getData(data.CameraEMData, image=False)
+			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
 		except:
 			raise AtlasError('unable to access camera')
 		self.logger.debug('Get current instrument state completed')

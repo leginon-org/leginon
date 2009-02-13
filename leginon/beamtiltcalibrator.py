@@ -15,7 +15,7 @@ import numpy
 import threading
 import calibrator
 import calibrationclient
-import data
+import leginondata
 import gui.wx.BeamTiltCalibrator
 
 class Abort(Exception):
@@ -23,7 +23,7 @@ class Abort(Exception):
 
 class BeamTiltCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
-	settingsclass = data.BeamTiltCalibratorSettingsData
+	settingsclass = leginondata.BeamTiltCalibratorSettingsData
 	defaultsettings = calibrator.Calibrator.defaultsettings
 	defaultsettings.update({
 		'defocus beam tilt': 0.01,
@@ -194,7 +194,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				v = dict(stigmator)
 				v[stig_axis] += delta
 				parameters.append(v[stig_axis])
-				s = data.ScopeEMData(stigmator={'objective': v})
+				s = leginondata.ScopeEMData(stigmator={'objective': v})
 				states.append(s)
 
 			matrix = numpy.identity(2, numpy.float)

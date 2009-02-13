@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import node, event, data
+import node, event, leginondata
 import gui.wx.Calibrator
 import instrument
 import presets
@@ -50,7 +50,7 @@ class Calibrator(node.Node):
 
 	def currentState(self):
 		try:
-			dat = self.instrument.getData(data.ScopeEMData)
+			dat = self.instrument.getData(leginondata.ScopeEMData)
 		except:
 			return None
 		return dat
@@ -86,7 +86,7 @@ class Calibrator(node.Node):
 			self.panel.acquisitionDone()
 			return
 		try:
-			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		except Exception, e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()
