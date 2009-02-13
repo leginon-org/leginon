@@ -5,13 +5,13 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import data
+import leginondata
 import event
 
 class Application(object):
 	def __init__(self, node, name=None):
 		self.node = node
-		self.data = data.ApplicationData()
+		self.data = leginondata.ApplicationData()
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
@@ -21,7 +21,7 @@ class Application(object):
 
 	def clear(self):
 		name = self.getName()
-		self.data = data.ApplicationData()
+		self.data = leginondata.ApplicationData()
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
@@ -40,7 +40,7 @@ class Application(object):
 			if alias == spec['alias']:
 				self.nodespecs.remove(spec)
 				break
-		nodespecdata = data.NodeSpecData()
+		nodespecdata = leginondata.NodeSpecData()
 		nodespecdata['class string'] = class_string
 		nodespecdata['alias'] = alias
 		nodespecdata['launcher alias'] = launcheralias
@@ -64,7 +64,7 @@ class Application(object):
 				self.nodespecs.remove(nodespec)
 
 	def addBindingSpec(self, eventclass_string, fromnodealias, tonodealias):
-		bindingspecdata = data.BindingSpecData()
+		bindingspecdata = leginondata.BindingSpecData()
 		bindingspecdata['event class string'] = eventclass_string
 		bindingspecdata['from node alias'] = fromnodealias
 		bindingspecdata['to node alias'] = tonodealias
@@ -79,7 +79,7 @@ class Application(object):
 		self.bindingspecs.append(bindingspecdata)
 
 	def delBindingSpec(self, eventclass_string, fromnodealias, tonodealias):
-		bindingspecdata = data.BindingSpecData()
+		bindingspecdata = leginondata.BindingSpecData()
 		bindingspecdata['event class string'] = eventclass_string
 		bindingspecdata['from node alias'] = fromnodealias
 		bindingspecdata['to node alias'] = tonodealias
@@ -161,10 +161,10 @@ class Application(object):
 		for bindingspecdata in self.bindingspecs:
 			self.node.publish(bindingspecdata, database=True)
 		## create a copy so we can modify it
-		self.data = data.ApplicationData(initializer=self.data)
+		self.data = leginondata.ApplicationData(initializer=self.data)
 
 	def getNewVersion(self, name):
-		instance = data.ApplicationData(name=name)
+		instance = leginondata.ApplicationData(name=name)
 		applicationdatalist = self.node.research(datainstance=instance)
 		try:
 			applicationdata = applicationdatalist[0]
@@ -175,16 +175,16 @@ class Application(object):
 	def load(self, name=None):
 		if name is None:
 			name = self.getName()
-		instance = data.ApplicationData(name=name)
+		instance = leginondata.ApplicationData(name=name)
 		applicationdatalist = instance.query()
 		try:
 			appdata = applicationdatalist[0]
 		except IndexError:
 			raise ValueError('no such application')
-		nodeinstance = data.NodeSpecData(application=appdata)
+		nodeinstance = leginondata.NodeSpecData(application=appdata)
 		self.nodespecs = nodeinstance.query()
-		bindinginstance = data.BindingSpecData(application=appdata)
+		bindinginstance = leginondata.BindingSpecData(application=appdata)
 		self.bindingspecs = bindinginstance.query()
 		self.applicationdata = appdata
 		## create a copy so we can modify it
-		self.data = data.ApplicationData(initializer=appdata)
+		self.data = leginondata.ApplicationData(initializer=appdata)

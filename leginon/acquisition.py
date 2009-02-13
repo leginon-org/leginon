@@ -12,7 +12,8 @@ ImageTargetData.
 '''
 import targetwatcher
 import time
-import data, event
+import leginondata
+import event
 import calibrationclient
 import presets
 import copy
@@ -107,7 +108,7 @@ def newRootName(imagedata, gridlabel):
 
 class Acquisition(targetwatcher.TargetWatcher):
 	panelclass = gui.wx.Acquisition.Panel
-	settingsclass = data.AcquisitionSettingsData
+	settingsclass = leginondata.AcquisitionSettingsData
 	# maybe not a class attribute
 	defaultsettings = {
 		'pause time': 2.5,
@@ -210,11 +211,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['received'].set()
 
 	def processData(self, newdata):
-		if isinstance(newdata, data.QueueData):
+		if isinstance(newdata, leginondata.QueueData):
 			self.processTargetListQueue(newdata)
 			return
 		self.logger.info('Acquisition.processData')
-		self.imagelistdata = data.ImageListData(session=self.session,
+		self.imagelistdata = leginondata.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
 		#print "newdata",newdata
@@ -326,18 +327,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
-		presetquery = data.PresetData(name=presetname)
+		presetquery = leginondata.PresetData(name=presetname)
 		## don't care if drift correction was done on target after image was
 		## acquired, so ignore version, delta row/col
-		targetquery = data.AcquisitionImageTargetData(initializer=targetdata)
+		targetquery = leginondata.AcquisitionImageTargetData(initializer=targetdata)
 		targetquery['version'] = None
 		targetquery['delta row'] = None
 		targetquery['delta column'] = None
-		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
+		imagequery = leginondata.AcquisitionImageData(target=targetquery, preset=presetquery)
 		## other things to fill in
-		imagequery['scope'] = data.ScopeEMData()
-		imagequery['camera'] = data.CameraEMData()
-		imagequery['session'] = data.SessionData()
+		imagequery['scope'] = leginondata.ScopeEMData()
+		imagequery['camera'] = leginondata.CameraEMData()
+		imagequery['session'] = leginondata.SessionData()
 
 		datalist = self.research(datainstance=imagequery)
 		if datalist:
@@ -362,13 +363,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		necessary, and cause problems if used between different
 		magnification modes (LM, M, SA).
 		'''
-		emtargetdata = data.EMTargetData()
+		emtargetdata = leginondata.EMTargetData()
 		if targetdata is not None:
 			# get relevant info from target data
 			targetdeltarow = targetdata['delta row']
 			targetdeltacolumn = targetdata['delta column']
 			origscope = targetdata['scope']
-			targetscope = data.ScopeEMData(initializer=origscope)
+			targetscope = leginondata.ScopeEMData(initializer=origscope)
 			## copy these because they are dictionaries that could
 			## otherwise be shared (although transform() should be
 			## smart enough to create copies as well)
@@ -434,7 +435,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return emtargetdata
 
 	def lastFilmAcquisition(self):
-		filmdata = self.research(datainstance=data.FilmData(), results=1)
+		filmdata = self.research(datainstance=leginondata.FilmData(), results=1)
 		if filmdata:
 			filmdata = filmdata[0]
 		else:
@@ -453,7 +454,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
 		targetdata = emtarget['target']
-		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=targetdata, emtarget=emtarget)
+		filmdata = leginondata.FilmData(session=self.session, preset=presetdata, label=self.name, target=targetdata, emtarget=emtarget)
 
 		## first three of user name
 		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
@@ -468,7 +469,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.instrument.tem.FilmDateType = 'YY.MM.DD'
 
 		## get scope for database
-		scopebefore = self.instrument.getData(data.ScopeEMData)
+		scopebefore = self.instrument.getData(leginondata.ScopeEMData)
 		filmdata['scope'] = scopebefore
 		## insert film
 		self.instrument.tem.preFilmExposure(True)
@@ -545,9 +546,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.startTimer('acquire getData')
 		try:
 			if correctimage:
-				dataclass = data.CorrectedCameraImageData
+				dataclass = leginondata.CorrectedCameraImageData
 			else:
-				dataclass = data.CameraImageData
+				dataclass = leginondata.CameraImageData
 			imagedata = self.instrument.getData(dataclass)
 			self.reportStatus('acquisition', 'image acquired')
 		except:
@@ -565,7 +566,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, corrected=correctimage, pixels=pixels, pixeltype=pixeltype)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, corrected=correctimage, pixels=pixels, pixeltype=pixeltype)
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
@@ -647,7 +648,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def publishStats(self, imagedata):
 		im = imagedata['image']
 		allstats = arraystats.all(im)
-		statsdata = data.AcquisitionImageStatsData()
+		statsdata = leginondata.AcquisitionImageStatsData()
 		statsdata['session'] = self.session
 		statsdata['min'] = allstats['min']
 		statsdata['max'] = allstats['max']
@@ -690,7 +691,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		request DriftManager to monitor drift
 		'''
-		driftdata = data.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
+		driftdata = leginondata.DriftMonitorRequestData(session=self.session, presetname=presetname, emtarget=emtarget, threshold=threshold)
 		self.driftdone.clear()
 		self.driftimagedone.clear()
 		self.publish(driftdata, pubevent=True, database=True, dbforce=True)
@@ -716,7 +717,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdata = self.newSimulatedTarget(preset=currentpreset)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
-		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
+		proctargetdata = leginondata.AcquisitionImageTargetData(initializer=targetdata, status='processing')
 		ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 		self.setStatus('idle')
@@ -762,12 +763,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imageref = oldtarget.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
 		self.logger.info('ADJUSTTARGET, imageid: %s' % (imageid,))
-		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
+		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
 		# image time
 		imagetime = imagedata['scope']['system time']
 		self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
 		# last declared drift
-		lastdeclared = self.research(data.DriftDeclaredData(session=self.session), results=1)
+		lastdeclared = self.research(leginondata.DriftDeclaredData(session=self.session), results=1)
 		self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
 		if not lastdeclared:
 			## no drift declared, no adjustment needed
@@ -817,7 +818,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			row += imagedrift['rows']
 			col += imagedrift['columns']
 		imagedrift = driftsequence[-1]
-		newtarget = data.AcquisitionImageTargetData(initializer=oldtarget)
+		newtarget = leginondata.AcquisitionImageTargetData(initializer=oldtarget)
 		newtarget['version'] = imagedrift['new image']['version']
 		newtarget['image'] = imagedrift['new image']
 		newtarget['delta row'] = row
@@ -830,13 +831,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		driftsequence = []
 		oldimage = imagedata
 		while True:
-			query = data.AcquisitionImageDriftData(initializer={'old image':oldimage, 'session':self.session})
+			query = leginondata.AcquisitionImageDriftData(initializer={'old image':oldimage, 'session':self.session})
 			imagedrift = self.research(query, results=1)
 			if imagedrift:
 				imagedrift = imagedrift[0]
 				driftsequence.append(imagedrift)
 				oldimageid = imagedrift.special_getitem('new image', dereference=False).dbid
-				oldimage = self.researchDBID(data.AcquisitionImageData, oldimageid, readimages=False)
+				oldimage = self.researchDBID(leginondata.AcquisitionImageData, oldimageid, readimages=False)
 			else:
 				break
 		return driftsequence
@@ -868,11 +869,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.received_image_drift.set()
 
 	def processReferenceTarget(self,preset_name):
-		refq = data.ReferenceTargetData(session=self.session)
+		refq = leginondata.ReferenceTargetData(session=self.session)
 		results = refq.query(results=1, readimages=False)
 		if not results:
 			return
-		request_data = data.FixBeamData()
+		request_data = leginondata.FixBeamData()
 		request_data['session'] = self.session
 		request_data['preset'] = preset_name
 		self.publish(request_data, database=True, pubevent=True, wait=True)

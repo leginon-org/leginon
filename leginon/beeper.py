@@ -10,14 +10,14 @@
 '''
 
 import node
-import data
+import leginondata
 import event
 import gui.wx.Beeper
 import threading
 
 class Beeper(node.Node):
 	panelclass = gui.wx.Beeper.Panel
-	settingsclass = data.BeeperSettingsData
+	settingsclass = leginondata.BeeperSettingsData
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent]
 										
 	def __init__(self, id, session, managerlocation, **kwargs):
