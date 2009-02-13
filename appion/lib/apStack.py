@@ -144,6 +144,13 @@ def checkForPreviousStack(stackname, stackpath=None):
 	return
 
 #===============
+def getStackIdFromIterationId(iterid, msg=True):
+	iterdata = appionData.ApRefinementData.direct_query(iterid)
+	refrun = iterdata['refinementRun'].dbid
+	stackid = getStackIdFromRecon(refrun)
+	return stackid
+	
+#===============
 def getStackIdFromRecon(reconrunid, msg=True):
 	reconrundata = appionData.ApRefinementRunData.direct_query(reconrunid)
 	if not reconrundata:
@@ -316,7 +323,7 @@ def getStackPixelSizeFromStackId(stackId):
 	return stackapix
 
 #===============
-def getStackBoxsize(stackId):
+def getStackBoxsize(stackId, msg=True):
 	"""
 	For a given stack id return stack box size
 
@@ -329,7 +336,8 @@ def getStackBoxsize(stackId):
 	runsindata = getRunsInStack(stackId)
 	stackbin = runsindata[0]['stackRun']['stackParams']['bin']
 	stackboxsize = int(rawboxsize/stackbin)
-	apDisplay.printMsg("Stack "+str(stackId)+" box size: "+str(stackboxsize))
+	if msg is True:
+		apDisplay.printMsg("Stack "+str(stackId)+" box size: "+str(stackboxsize))
 	return stackboxsize
 
 #===============
@@ -358,5 +366,17 @@ def getStackIdFromPath(stackpath):
 		apDisplay.printError("More than one stack has path: "+stackpath)
 	return stackdatas[0].dbid
 
-
-
+#===============
+def getStackParticleFromParticleId(particleid,stackid):
+	"""
+	Provided a Stack Id & an ApParticle Id, find the stackparticle Id
+	"""
+	stackdata = appionData.ApStackParticlesData()
+	stackdata['particle'] = appionData.ApParticleData.direct_query(particleid)
+	stackdata['stack'] = appionData.ApStackData.direct_query(stackid)
+	stackpnum = stackdata.query()
+	if not stackpnum:
+		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
+	if len(stackpnum) > 1:
+		apDisplay.printError("There's a problem with this stack. More than one particle with the same number.")
+	return stackpnum[0]
