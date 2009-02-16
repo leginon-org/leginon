@@ -90,7 +90,7 @@ class frealignJob(appionScript.AppionScript):
 	
 		####card 6
 		self.parser.add_option('--relmag', dest="relmag" , default = 1, type='float',
-				       help = "relative magnification of dataset?")
+				       help = "relative magnification of dataset")
 		self.parser.add_option('--targetresidual', dest="targetresidual" , default = 10.0, type='float',
 				       help = "target phase residual during refinement")
 		self.parser.add_option('--residualthresh', dest="residualthresh" , default = 90.0, type='float',
@@ -318,8 +318,16 @@ class frealignJob(appionScript.AppionScript):
 		self.params['initmodel'] = os.path.join(modeldata['path']['path'],modeldata['name'])
 
 		#create Frealign job(s)
-		jobname = os.path.join(self.params['rundir'],self.params['runname']+'.job')
-		apFrealign.createFrealignJob(self.params, jobname, norecon=False)
+		if self.params['proc']>1:
+			# run refinement
+			apFrealign.createMultipleJobs(self.params)
+			if self.params['setuponly'] is False:
+				apFrealign.submitMultipleJobs(self.params)
+				# create density
+				apFrealign.combineMultipleJobs(self.params)
+		else:
+			jobname = os.path.join(self.params['rundir'],self.params['runname']+'.job')
+			apFrealign.createFrealignJob(self.params, jobname, norecon=False)
 
 		#run frealign
 #		os.chdir(params['workingdir'])

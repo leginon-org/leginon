@@ -7,6 +7,7 @@ import apVolume
 import apDisplay
 import appionData
 import apFrealign
+import shutil
 
 #===============
 def imagicToMrc(params, msg=True):
@@ -36,7 +37,6 @@ def imagicToMrc(params, msg=True):
 	mrc.updateHeaderDefaults(header)
 
 	# fill with stack params
-	nump=2000
 	header['nx']=box
 	header['ny']=box
 	header['nz']=nump
@@ -66,8 +66,9 @@ def imagicToMrc(params, msg=True):
 		apDisplay.printMsg('saving MRC stack file:')
 		apDisplay.printMsg(os.path.join(params['rundir'],outstack))
 	catcmd = "cat %s %s > %s" % (tmpheadername, stackimg, outstack)
-#	os.system(catcmd)
-#	os.remove(tmpheadername)
+	print catcmd
+	os.system(catcmd)
+	os.remove(tmpheadername)
 	
 #===============
 def generateParticleParams(params):
@@ -105,8 +106,8 @@ def generateParticleParams(params):
 				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
 
 			# use defocus & astigmatism values 
-			particleparams['df1']=ctfdata['defocus1']*1e10
-			particleparams['df2']=ctfdata['defocus2']*1e10
+			particleparams['df1']=abs(ctfdata['defocus1']*1e10)
+			particleparams['df2']=abs(ctfdata['defocus2']*1e10)
 			particleparams['angast']=-ctfdata['angle_astigmatism']
 
 		# if using parameters from previous reconstruction
@@ -121,8 +122,6 @@ def generateParticleParams(params):
 			particleparams['shy']=params['eman_orient']['shifty']
 		
 		writeParticleParamLine(particleparams,f)
-		if particle['particleNumber']==2000:
-			return
 	f.close()
 	
 #===============
@@ -131,54 +130,52 @@ def writeParticleParamLine(particleparams, fileobject):
 	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n" % (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres']))
 
 #===============
-def createFrealignJob (params, jobname, norecon=False):
+def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, outpar=None, first=None, last=None, norecon=False):
 
-	mode = params['mode']
-	inparname = params['inpar']
-	outparname = params['outpar']
-	firstparticle = params['first']
-	lastparticle = params['last']
+	if mode is None:
+		mode=params['mode']
+	if inpar is None:
+		inpar = params['inpar']
+	if outpar is None:
+		outpar = params['outpar']
+	if first is None:
+		first=params['first']
+	if last is None:
+		last=params['last']
 
-	if norecon:
-		relmag=1
+	# set relmag to -100 if no 3d reconstruction
+	if norecon is True:
+		reconrelmag=-100.0
 	else:
-		relmag=params['relmag']
+		reconrelmag=0.0
 
 	f=open(jobname,'w')
 
 	# first copy files
 	f.write('cd %s\n' % params['rundir'])
-	f.write('rm -rf working\n')
-	f.write('mkdir working\n')
 	f.write('cd working\n')
-	f.write('cp %s threed.0.mrc\n' % params['initmodel'])
-	f.write('cp %s params.0.par\n' % inparname)
-
-	# set mode if not refining(1=refine)
-	if mode != 1:
-		f.write("set m = %d\n" % mode)
-	f.write("\n")
-	
-	# create loop for refinement cycles
-	f.write("@ i = 0\n")
-	f.write("@ j = 1\n")
-	f.write('while ($i <= %d)\n' % params['refcycles'])
-	# make a copy of the file that will be overwritten
-	f.write('cp threed.$i.mrc workingvol.mrc\n')
-	f.write('frealign << EOF > frealign.$j.out\n')
+	if vnodenum is not None:
+		workdir = "sub"+str(vnodenum)
+		f.write('rm -rf %s\n' %workdir)
+		f.write('mkdir %s\n' %workdir)
+		f.write('cd %s\n' %workdir)
+	f.write('cp %s workingvol.mrc\n' % params['initmodel'])
+	f.write('cp %s params.0.par\n' % inpar)
+	f.write('\n')
+	f.write('frealign << EOF > frealign.out\n')
 	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' % ('M', mode, params['magrefine'], params['defocusrefine'], params['astigrefine'], params['fliptilt'], params['ewald'], params['matches'], params['history'], params['finalsym'], params['fomfilter'], params['fsc']))
 	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], params['ang'], params['itmax'], params['maxmatch']))
 	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
-	f.write('%d, %d\n' % (firstparticle, lastparticle))
+	f.write('%d, %d\n' % (first, last))
 	f.write('%s\n' % (params['sym']))
-	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (relmag, params['apix'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))
+	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (params['relmag'], params['apix'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))
 	f.write('%.2f,%.2f,%.2f,%.2f\n' % (params['reslimit'], params['hp'], params['lp'], params['bfactor']))
 	f.write('%s\n' % (params['stackfile']))
 	f.write('match.mrc\n')
-	f.write('params.$i.par\n')
-	f.write('params.$j.par\n')
-	f.write('shift.$j.par\n')
-	f.write('0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0\n')
+	f.write('params.0.par\n')
+	f.write('params.1.par\n')
+	f.write('shift.par\n')
+	f.write('%.1f,0.0,0.0,0.0,0.0,0.0,0.0,0.0\n' %reconrelmag)
 	f.write('workingvol.mrc\n')
 	f.write('weights.mrc\n')
 	f.write('odd.mrc\n')
@@ -186,13 +183,6 @@ def createFrealignJob (params, jobname, norecon=False):
 	f.write('phasediffs.mrc\n')
 	f.write('pointspread.mrc\n')
 	f.write('EOF\n')
-	f.write('mv workingvol.mrc threed.$j.mrc\n')
-	f.write('\n')
-	f.write('@ i ++\n')
-	f.write('@ j ++\n')
-	if mode != 1:
-		f.write('set m = 1\n')
-	f.write('end\n')
 	f.write('\n')
 	f.close()
 
@@ -248,7 +238,7 @@ def getStackParticleEulersForIteration(params,pnum):
 	pclassq['particle'] = refstackp
 	pclassq['refinement'] = appionData.ApRefinementData.direct_query(params['reconiterid'])
 	pclass = pclassq.query()
-
+	
 	if not pclass:
 		apDisplay.printError('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))
 
@@ -263,5 +253,70 @@ def getStackParticleEulersForIteration(params,pnum):
 	params['eman_orient']['shifty']=pclass['shifty']
 	
 	return params
-	
-	
+
+#===============
+def createMultipleJobs(params):
+	"""
+	Create multiple job files for frealign reconstruction
+	using pbsdsh, which assumes a PBS installation that has
+	the PBS_VNODENUM variable
+	"""
+	# create script that will launch all mpi scripts
+	workdir = os.path.join(params['rundir'],"working")
+	shutil.rmtree(workdir)
+	os.mkdir(workdir)
+	cscript = os.path.join(workdir,'frealign_MP.csh')
+	params['mp_script']=cscript
+	fr = open(cscript,'w')
+	fr.write("#!/bin/csh\n")
+	frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.csh')
+	fr.write("csh "+frscript+"\n")
+	fr.close()
+	os.chmod(cscript,0777)
+
+	# create individual mpi scripts
+	ptcls_per_job = params['last']/params['proc']
+	r = params['last']%params['proc']
+	lastp = 0
+	for n in range(params['proc']):
+		firstp = lastp+1
+		lastp = firstp+ptcls_per_job-1
+
+		if r > 0:
+			lastp+=1
+			r-=1
+
+		jobname=os.path.join(workdir,"frealign.%d.csh" %n)
+		createFrealignJob(params,jobname,vnodenum=n, first=firstp, last=lastp,norecon=True)
+		
+#===============
+def submitMultipleJobs(params):
+	"""
+	Must be launched from within a PBS job!
+	"""
+	cmd = 'pbsdsh -v '+params['mp_script']
+	print cmd
+	os.system(cmd)
+
+#===============
+def combineMultipleJobs(params):
+	"""
+	combine all the parameter files & combine into 1
+	then reconstruct the density
+	"""
+	workdir = os.path.join(params['rundir'],"working")
+	paramname = os.path.join(workdir,'params.all')
+	combine = open(paramname,'w')
+	for n in range(params['proc']):
+		subdir = "sub"+str(n)
+		outpar = os.path.join(workdir,subdir,'params.1.par')
+		f=open(outpar,'r')
+		lines = f.readlines()
+		f.close()
+		for n in lines:
+			if n[0] != 'C':
+				combine.write(n)
+	combine.close()
+	combinejobname = os.path.join(workdir,'frealign.all.csh')
+	createFrealignJob(params,combinejobname,mode=0,inpar=paramname)
+		
