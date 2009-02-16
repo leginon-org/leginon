@@ -247,9 +247,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			xyshift = (refdict['xshift'], refdict['yshift'])
 			alignrefarray = apImage.rotateThenShift(refarray, rot=refdict['inplane'], 
 				shift=xyshift, mirror=refdict['mirror'])
-			stack.append(refarray)
+			stack.append(alignrefarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
-		print stackarray.shape
+		#print stackarray.shape
 		apImagicFile.writeImagic(stackarray, "part"+self.timestamp+"_average.hed")
 		return
 
@@ -426,8 +426,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "ref"+self.timestamp)
 			+" -psi_step 1 "
-			+" -C 1e-16 "
-			+" -eps 5e-6 "
+			+" -fast -C 1e-18 "
+			+" -eps 5e-8 "
 		)
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
