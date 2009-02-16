@@ -29,6 +29,11 @@ else {
   createTemplateForm();
 }
 
+
+//***************************************
+//***************************************
+//***************************************
+//***************************************
 function createTemplateForm() {
 	// check if coming directly from a session
 	$expId = $_GET[expId];
@@ -113,6 +118,10 @@ function createTemplateForm() {
 	echo"</FORM>\n";
 }
 
+//***************************************
+//***************************************
+//***************************************
+//***************************************
 function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher', $heading='Perform a reference-based Alignment') {
   // check if coming directly from a session
 	//echo print_r($_POST);
@@ -135,8 +144,25 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$stackIds = $particle->getStackIds($sessionId);
 	$refbasedIds = $particle->getRefAliIds($sessionId);
 	$alignruns = count($particle->getAlignStackIds($sessionId));
+	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
 
-	processing_header($title,$heading,"");
+	$javascript = "<script src='../js/viewer.js'></script>\n";
+	$javascript .= "<script>\n";
+	$javascript .= "function switchDefaults(stackvars) {\n";
+	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	// remove commas from number
+	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
+	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
+	// set max last ring radius
+	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
+	$javascript .= "	var lastring = Math.floor(stackArray[2]/3/bestbin);\n";
+	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
+	$javascript .= "	document.viewerform.lastring.value = lastring;\n";
+	// set particle & mask radius and lp
+	$javascript .= "}\n";
+	$javascript .= "</script>\n";
+
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -163,15 +189,17 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
-	$iters = ($_POST['iters']) ? $_POST['iters'] : 5;
+	$iters = ($_POST['iters']) ? $_POST['iters'] : 3;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
-	$diam = $_POST['diam'] ? $_POST['diam'] : 160;
-	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '3';
+	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '5';
 	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
 	$csym = 1;
-	$maskdiam = ($_POST['maskdiam']) ? $_POST['maskdiam'] : $diam/2.0 - 6.0;
-	$imaskdiam = ($_POST['imaskdiam']) ? $_POST['imaskdiam'] : '2';
+	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
+	$bestbin = floor($boxsz/100);
+	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
+	$firstring = ($_POST['firstring']) ? $_POST['firstring'] : '4';
+	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 
 
 	$templateCheck='';
@@ -185,7 +213,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
 			$filename=$templateinfo[path]."/".$templateinfo['templatename'];
-			$templateTable.="<TR><TD VALIGN='TOP'><IMG SRC='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></TD></TR>\n";
+			$templateTable.="<TR><TD VALIGN='TOP'><IMG SRC='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></TR>\n";
 			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></TR>\n";
 			$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
 			$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
@@ -235,7 +263,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	else {
 		echo "
 		Particles:<BR>
-		<SELECT NAME='stackid'>\n";
+		<SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -246,7 +274,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			if ($stackparams['substackname'])
 				$stackname .= "-".$stackparams['substackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stackid));
-			echo "<OPTION VALUE='$stackid'";
+			echo "<option value='$stackid|~~|$mpix|~~|$boxsz|~~|$totprtls'";
+			//echo "<OPTION VALUE='$stackid'";
 			// select previously set prtl on resubmit
 			if ($stackidval == $stackid) echo " SELECTED";
 			echo ">$stackid: $stackname ($totprtls prtls,";
@@ -275,10 +304,10 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		<TD VALIGN='TOP'>
 		<B>Particle Params:</B></A><BR>";
 	echo"
-		<INPUT TYPE='text' NAME='maskdiam' SIZE='5' VALUE='$maskdiam'>
+		<INPUT TYPE='text' NAME='lastring' SIZE='5' VALUE='$lastring'>
 		Last Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
 	echo"
-		<INPUT TYPE='text' NAME='imaskdiam' SIZE='5' VALUE='$imaskdiam'>
+		<INPUT TYPE='text' NAME='firstring' SIZE='5' VALUE='$firstring'>
 		First Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
 	echo"
 		<INPUT TYPE='text' NAME='lowpass' SIZE='5' VALUE='$lowpass'>
@@ -286,6 +315,9 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo"
 		<INPUT TYPE='text' NAME='highpass' SIZE='5' VALUE='$highpass'>
 		High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+	echo"
+		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>
+		Particle Binning<BR>";
 	echo"
 		</TD>
 	</TR>
@@ -339,14 +371,20 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	exit;
 }
 
+//***************************************
+//***************************************
+//***************************************
+//***************************************
 function runAlignment() {
 	$expId   = $_GET['expId'];
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$stackid=$_POST['stackid'];
-	$maskdiam=$_POST['maskdiam'];
-	$imaskdiam=$_POST['imaskdiam'];
+	$stackvars=$_POST['stackid'];
+	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	$lastring=$_POST['lastring'];
+	$firstring=$_POST['firstring'];
+	$bin=$_POST['bin'];
 	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
 	$csym=$_POST['csym'];
@@ -363,7 +401,6 @@ function runAlignment() {
 	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
 
 	//make sure a stack was selected
-	$stackid=$_POST['stackid'];
 	if (!$stackid) createAlignmentForm("<B>ERROR:</B> No stack selected");
 
 	// make sure outdir ends with '/' and append run name
@@ -390,8 +427,8 @@ function runAlignment() {
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
 
-	if ($maskdiam) $command.="--last-ring=$maskdiam ";
-	if ($imaskdiam) $command.="--first-ring=$imaskdiam ";
+	if ($lastring) $command.="--last-ring=$lastring ";
+	if ($firstring) $command.="--first-ring=$firstring ";
 	$command.="--rundir=".$rundir." ";
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lowpass ";
@@ -401,6 +438,7 @@ function runAlignment() {
 	$command.="--xy-step=$xystep ";
 	$command.="--num-iter=$iters ";
 	$command.="--num-part=$numpart ";
+	$command.="--bin=$bin ";
 	if ($inverttempl) $command.="--invert-templates ";
 	#if ($staticref) $command.="--static-ref ";
 	if ($commit) $command.="--commit ";
@@ -433,8 +471,8 @@ function runAlignment() {
 		<TR><TD>refids</TD><TD>".templateCommand()."</TD></TR>
 		<TR><TD>iter</TD><TD>$iters</TD></TR>
 		<TR><TD>numpart</TD><TD>$numpart</TD></TR>
-		<TR><TD>last ring</TD><TD>$maskdiam</TD></TR>
-		<TR><TD>first ring</TD><TD>$imaskdiam</TD></TR>
+		<TR><TD>last ring</TD><TD>$lastring</TD></TR>
+		<TR><TD>first ring</TD><TD>$firstring</TD></TR>
 		<TR><TD>rundir</TD><TD>$rundir</TD></TR>
 		<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
 		<TR><TD>xystep</TD><TD>$xystep</TD></TR>
