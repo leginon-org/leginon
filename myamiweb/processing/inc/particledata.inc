@@ -2964,6 +2964,21 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r;
 	}
 
+	function getAlignParticleData ($alignid) {
+		$q="SELECT "
+			."  a.`partnum`, "
+			."  a.`spread`, "
+			."  a.`correlation`, "
+			."  a.`score` "
+			."FROM ApAlignParticlesData AS a "
+			."WHERE "
+			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' ";
+			//."ORDER BY e.`median` "
+			//."LIMIT 100 ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getClusteringParticleNumber($clusterId) {
 		$q="SELECT part.`refnum` AS classNumber, count(part.`DEF_id`) as number "
 			."FROM ApClusteringParticlesData AS part "

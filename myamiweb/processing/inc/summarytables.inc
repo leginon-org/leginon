@@ -229,6 +229,15 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$stackdata = $particle->getAlignStackParams($alignstackid);
 	//echo print_r($stackdata)."<br/>\n";
 
+	if ($stackdata['REF|ApSpiderNoRefRunData|norefrun'])
+		$type = 'score';
+	elseif ($stackdata['REF|ApRefBasedRunData|refbasedrun'])
+		$type = 'score';
+	elseif ($stackdata['REF|ApMaxLikeRunData|maxlikerun'])
+		$type = 'spread';
+	else
+		$type = 'score';
+
 	if ($_POST['updateDesc'.$alignstackid])
 		updateDescription('ApAlignStackData', $alignstackid, $_POST['newdescription'.$alignstackid]);
 
@@ -256,18 +265,27 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	//echo $j."<br/>\n";
 
 
-
 	$stacktable.= "<table border='0'>\n";
 	$stackavg = $stackdata['path']."/average.mrc";
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
 		if ($mini)
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
 		else
-			$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=180' height='180'><br/>\n";
+			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=120' height='120'><br/>\n";
 		$stacktable.= "<i>averaged stack image</i>\n";
 		$stacktable.= "</td>\n";
+
+		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+		$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
+		if ($mini)
+			$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=60&type=$type' height='60'><br/>\n";
+		else
+			$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=120&type=$type' height='120'><br/>\n";
+		$stacktable.= "</a><i>$type distribution</i>\n";
+		$stacktable.= "</td>\n";
+
 		$stacktable.= "</tr>\n\n";
 	} #endif
 
