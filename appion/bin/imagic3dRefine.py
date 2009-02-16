@@ -137,7 +137,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	def createImagicBatchFile(self):
 		# IMAGIC batch file creation
 		syminfo = apUpload.getSymmetryData(self.params['symmetry'])
-		symmetry = syminfo['symmetry']
+		symmetry = syminfo['eman_name']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
 				
 		f = open(filename, 'w')	
