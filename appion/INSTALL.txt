@@ -36,3 +36,24 @@ openPBS. I know Torque comes with Fedora 10.
 http://en.wikipedia.org/wiki/Portable_Batch_System
 http://en.wikipedia.org/wiki/TORQUE_Resource_Manager
 
+5. Download AMI software from AMI site: http://ami.scripps.edu/software/
+	* dbemtools: web interface to pyAppion
+	* leginon: only for image viewer and polygon tool
+		* svn available, svn co http://ami.scripps.edu/svn/leginon/trunk/ leginon/
+	* sinedon: for MySQL interaction 
+	* pyami: image processing and input/output
+	* projectdb: for keeping separate projects and web logins
+	* numextension
+
+6. Download AMI software from Google site: http://appion.org/
+	* pyAppion: python processing pipeline
+		* includes ACE1, ACE2, DoG Picker, TiltPicker, and FindEM
+
+7. Additional external software needed:
+	EMAN v1.8
+	SPIDER v13
+	Xmipp v2.2
+	IMOD
+	MATLAB, for ACE1
+
+...
