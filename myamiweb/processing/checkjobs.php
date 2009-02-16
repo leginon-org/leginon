@@ -88,7 +88,9 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		$display_keys['cluster'] = $jobinfo['cluster'];
 		
 		// find if job has been uploaded
+		//echo $job['DEF_id']."<br/>\n";
 		if ($particle->getReconIdFromClusterJobId($job['DEF_id'])) continue;
+		//echo $jobinfo['status']."<br/>\n";
 		if ($showall != True && $jobinfo['status'] == 'A') continue;
 		// get stack id for job from job file
 		$jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
@@ -114,6 +116,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 			$status='Running';
 		}
 		elseif ($jobinfo['status']=='A') $status='Aborted';
+
 		elseif ($jobinfo['status']=='D') {
 			$dlbuttons = "<input type='BUTTON' onclick=\"displayDMF('$jobinfo[dmfpath]','$jobinfo[appath]')\" value='get from DMF'> \n";
 			$dlbuttons.= "<input type='BUTTON' onclick=\"parent.location=('uploadrecon.php?expId=$expId&jobId=$job[DEF_id]')\" value='upload results'>\n";
@@ -131,7 +134,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		}
 		echo "</table>\n";
 
-		if ($showjobs && $status=='Running') {
+		if ($showjobs && ($status=='Running' || $status='Awaiting Upload')) {
 			$previters=array();
 			$stat = checkJobStatus($jobinfo['cluster'],$jobinfo['clusterpath'],$jobinfo['name'],$user,$pass);
 			if (!empty($stat)) {
@@ -162,9 +165,10 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 
 				foreach ($previters as $previter) echo "$previter <br />\n";
 				$numtot=count($stat['allref']);
-				echo "<br/>\n<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
+				if ($status=='Running')
+					echo "<br/>\n<font class='aptitle'>Processing iteration $current of $numtot</font>\n";
 				// get key corresponding to where the last refinement run starts
-				if (is_array($stat['refinelog'])) {
+				if ($status=='Running' && is_array($stat['refinelog'])) {
 					echo "<table class='tableborder' border='1' cellpadding='5' cellspacing='0'><tr>\n";
 					$keys = array('reconstruction step', 'started', 'duration', 'status');
 					$steps = array();
@@ -320,7 +324,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 					}
 					echo "</table>\n";
 				}
-				else echo "<p>getting files from DMF...</p>\n";
+				elseif ($status=='Running') echo "<p>getting files from DMF...</p>\n";
 				if ($stat['errors']) {
 					if ($stat['alarm']) echo "<p><font color='red'><b>There are EMAN Alarm errors (in refine*.txt) for this job, you should resubmit</b></font><p>";
 					else echo "<p><font color='red'><b>There are unknown errors (refine*.txt) for this job, you should resubmit</b></font><p>";
