@@ -145,6 +145,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$refbasedIds = $particle->getRefAliIds($sessionId);
 	$alignruns = count($particle->getAlignStackIds($sessionId));
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
+	$initparts = $particle->getNumStackParticles($stackIds[0]['stackid']);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	$javascript .= "<script>\n";
@@ -188,7 +189,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
 	// alignment params
-	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 3000;
+	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 3;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
