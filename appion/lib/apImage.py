@@ -895,16 +895,44 @@ def writeMrcStack(path, stackname, mrc_files, binning=1):
 #=========================
 def rotateThenShift(a, rot=0, shift=(0,0), mirror=False, order=2):
 	"""
-	rotates (in degrees) then shifts (in pixels) an array, just like SPIDER
+	rotates (in degrees) then shifts (in pixels) then mirrors an array, just like SPIDER
+	http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html
 	"""
+	#print shift, rot, mirror
 	#rad = rot*math.pi/180.0
 	# rotate the image
 	b = ndimage.rotate(a, angle=rot, reshape=False, mode='reflect', order=order)
 	# shift the image
 	c = ndimage.shift(b, shift=shift, mode='reflect', order=order)
 	# mirror the image about the y-axis, i.e. flip left-right
-	d = numpy.fliplr(c)
+	if mirror is True:
+		d = numpy.fliplr(c)
+	else:
+		d = c
 	return d
+
+
+#=========================
+def XmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
+	"""
+	rotates (in degrees) then shifts (in pixels) then mirrors an array, just like SPIDER
+	FROM xmipp/libraries/data/matrix2d.h
+	"""
+	print shift, rot, mirror
+
+	b = ndimage.shift(a, shift=shift, mode='reflect', order=order)
+
+	c = ndimage.rotate(b, angle=rot, reshape=False, mode='reflect', order=order)
+
+	if mirror is True:
+		d = numpy.flipud(c)
+	else:
+		d = c
+
+	return d
+
+
+
 
 
 
