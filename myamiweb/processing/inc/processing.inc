@@ -14,12 +14,9 @@
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
-//define(DONE_PIC,'img/green_circle.gif');
-//define(NONE_PIC,'img/red_circle.gif');
-//define(PROG_PIC,'img/blue_circle.gif');
-define(DONE_PIC,'img/icon-check.png');
-define(NONE_PIC,'img/icon-cross.png');
-define(PROG_PIC,'img/icon-bluestar.png');
+define(DONE_PIC,'img/green_circle.gif');
+define(NONE_PIC,'img/red_circle.gif');
+define(PROG_PIC,'img/blue_circle.gif');
 
 define(NONE_COLOR,'#FFFFCC');
 define(PROG_COLOR,'#CCFFFF');
