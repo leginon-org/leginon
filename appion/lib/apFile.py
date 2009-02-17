@@ -1,8 +1,10 @@
 import md5
 import os
+import re
 import sys
 import time
 import glob
+import subprocess
 import apDisplay
 
 #===============
@@ -70,9 +72,30 @@ def fileSize(filename, msg=False):
 	"""
 	return file size in bytes
 	"""
+	if not os.path.isfile(filename):
+		return 0
 	stats = os.stat(filename)
 	size = stats[6]
 	return size
+
+#===============
+def getBoxSize(filename, msg=False):
+	"""
+	return boxsize of stack in pixels
+	"""
+	if not os.path.isfile(filename):
+		return (1,1)
+	proc = subprocess.Popen("iminfo %s"%(filename), shell=True, stdout=subprocess.PIPE)
+	proc.wait()
+	for line in proc.stdout:
+		sline = line.strip()
+		m = re.match("Image\(s\) are ([0-9]+)x([0-9]+)x([0-9]+)", sline)	
+		if m and m.groups() and len(m.groups()) > 1:
+			xdim = int(m.groups()[0])
+			ydim = int(m.groups()[0])
+			return (xdim,ydim)
+	return (1,1)
+
 
 #===============
 def numImagesInStack(imgfile, boxsize=None):
