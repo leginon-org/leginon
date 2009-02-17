@@ -3,14 +3,19 @@
 #python
 import os
 import shutil
+import time
+import numpy
 #appion
 import appionScript
 import apStack
 import apFile
+import apParam
 import apXmipp
 import apImagicFile
 import apDisplay
 import apEMAN
+import apImage
+from apSpider import operations
 
 class centerStackScript(appionScript.AppionScript):
 	#=====================
@@ -23,9 +28,9 @@ class centerStackScript(appionScript.AppionScript):
 		self.parser.add_option("--new-stack-name", dest="runname",
 			help="Run name", metavar="STR")
 
-		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int", default=10,
+		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int", default=50,
 			help="Low pass filter radius (in Angstroms) not applied to final particles", metavar="#")
-		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int", default=400,
+		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int", default=1000,
 			help="High pass filter radius (in Angstroms) not applied to final particles", metavar="#")
 
 		### true/false
@@ -33,7 +38,7 @@ class centerStackScript(appionScript.AppionScript):
 			action="store_true", help="Use mirror method")
 		self.parser.add_option("--no-mirror", dest="mirror", default=False,
 			action="store_false", help="Do NOT use rotate method")
-		self.parser.add_option("-R", "--rotate", dest="rotate", default=False,
+		self.parser.add_option("--rotate", dest="rotate", default=False,
 			action="store_true", help="Use rotate method")
 		self.parser.add_option("--no-rotate", dest="rotate", default=False,
 			action="store_false", help="Do NOT use rotate method")
@@ -54,7 +59,9 @@ class centerStackScript(appionScript.AppionScript):
 			apDisplay.printError("new stack name was not defined")
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
-		stacksize = apFile.fileSize(datafilename)/1024.0/1024.0
+		if oldstack[-4:] == ".hed":
+			oldstack = oldstack[:-4]+".img"
+		stacksize = apFile.fileSize(oldstack)/1024.0/1024.0
 		if stacksize > 1200:
 			apDisplay.printError("Stack is too large to read "+str(round(stacksize,1))+" MB")
 
@@ -85,7 +92,6 @@ class centerStackScript(appionScript.AppionScript):
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
-		proccmd += " last="+str(self.params['numpart'])
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### convert stack into single spider files
@@ -96,7 +102,7 @@ class centerStackScript(appionScript.AppionScript):
 		xmippopts = ( " "
 			+" -i "+os.path.join(self.params['rundir'], self.partlistdocfile)
 			+" -nref 1 "
-			+" -iter 100 "
+			+" -iter 10 "
 			+" -o "+os.path.join(self.params['rundir'], "part"+self.timestamp)
 			+" -fast -C 1e-18 "
 		)
@@ -116,7 +122,7 @@ class centerStackScript(appionScript.AppionScript):
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
 		if self.params['maxshift'] is not None:
-			xmippopts += " -max_shift=%d "%(self.params['maxshift'])
+			xmippopts += " -max_shift %d "%(self.params['maxshift'])
 
 
 		### use single processor
@@ -148,7 +154,7 @@ class centerStackScript(appionScript.AppionScript):
 	#=====================
 	def readPartDocFile(self):
 		partlist = []
-		docfile = "part"+self.params['timestamp']+".doc"
+		docfile = "part"+self.timestamp+".doc"
 		if not os.path.isfile(docfile):
 			apDisplay.printError("could not find doc file "+docfile+" to read particle angles")
 		f = open(docfile, "r")
@@ -214,8 +220,6 @@ class centerStackScript(appionScript.AppionScript):
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
 
 		### make sure that old stack is numbered
-		apEMAN.checkStackNumbering(oldstack)
-
 		alignedstack = os.path.join(self.params['rundir'], 'alignstack.hed')
 		apStack.checkForPreviousStack(alignedstack)
 
@@ -233,7 +237,7 @@ class centerStackScript(appionScript.AppionScript):
 		self.writeFakeKeepFile(numpart)
 		self.params['description'] += (
 			" ... %d maxlike centered substack id %d" 
-			% (numparticles, self.params['stackid']))
+			% (numpart, self.params['stackid']))
 		
 		apStack.commitSubStack(self.params, newname='alignstack.hed', centered=True)
 		apStack.averageStack(stack=alignedstack)
