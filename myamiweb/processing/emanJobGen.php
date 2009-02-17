@@ -14,29 +14,30 @@ require "inc/leginon.inc";
 require "inc/viewer.inc";
 require "inc/project.inc";
 
-// bin directory for appion functions
-$appionbin = '~bcarr/appionbin/';
+$selectedcluster=$CLUSTER_CONFIGS[0];
+if ($_POST['cluster']) {
+	$selectedcluster=$_POST['cluster'];
+}
+$selectedcluster=strtolower($selectedcluster);
+@include_once $selectedcluster.".php";
 
 if ($_POST['write']) {
 	$particle = new particledata();
-	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=4");
-	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=4");
-	if ($_POST['ppn'] > 4 && $_POST['clustername']=='garibaldi') jobForm("ERROR: Max processors per node is 4");
-	if ($_POST['ppn'] > 8 && $_POST['clustername']=='guppy') jobForm("ERROR: Max processors per node is 4");
-	if ($_POST['nodes'] > 10 && $_POST['clustername']=='guppy') jobForm("ERROR: Max nodes on guppy is 10");
-	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=240");
-	if ($_POST['walltime'] > 240) jobForm("ERROR: Max walltime is 240");
-	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=240");
-	if ($_POST['cput'] > 240) jobForm("ERROR: Max CPU time is 240");
-	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=4");
+
+	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
+	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
+	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on guppy is ".C_NODES_MAX);
+	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
+	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
+	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
+	if ($_POST['cput'] > C_CPUTIME_MAX) jobForm("ERROR: Max CPU time is ".C_CPUTIME_MAX);
+	if (!$_POST['rprocs']) jobForm("ERROR: No reconstruction ppn specified, setting default=".C_RPROCS_DEF);
 	if ($_POST['rprocs'] > $_POST['ppn'])
 	  jobForm("ERROR: Asking to reconstruct on more processors than available");
-	if ($_POST['clustername']=='garibaldi') {
-		if (!$_POST['dmfpath']) jobForm("ERROR: No DMF path specified");
-		if (!$_POST['dmfmod']) jobForm("ERROR: No starting model");
-		if (!$_POST['dmfstack']) jobForm("ERROR: No stack file");
-	}
-  	for ($i=1; $i<=$_POST['numiters']; $i++) {
+
+
+  for ($i=1; $i<=$_POST['numiters']; $i++) {
 		if (!$_POST['ang'.$i]) jobForm("ERROR: no angular increment set for iteration $i");
 		if (!$_POST['mask'.$i]) jobForm("ERROR: no mask set for iteration $i");
 		// if amask is used, then xfiles must also be used
@@ -45,18 +46,17 @@ if ($_POST['write']) {
 			if (!$_POST['xfiles'.$i]) jobForm ("ERROR: amask requires the use of xfiles for iteration $i");
 		} 
 	}
+
 	// check that job file doesn't already exist
-	$outdir = $_POST['outdir'];
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$outdir = formatEndPath($_POST['outdir']);
 	$outdir .= $_POST['jobname'];
 
 	// jobname ends with .job
 	$jobname = $_POST['jobname'];
 	$jobname .= '.job';
 	$exists = $particle->getJobFileFromPath($outdir,$jobname);
-	//  if ($exists[0]) jobForm("ERROR: This job name already exists");
 	writeJobFile();
-}	
+}
 
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 	## make sure a stack and model were selected
@@ -85,11 +85,13 @@ elseif ($_POST['submitjob']) {
 	if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
 	$jobname=$_POST['jobname'];
-	$outdir=$_POST['outdir'].$_POST['jobname'];
-	if ($host=='garibaldi') {
+	$outdir=$_POST['outdir'].$jobname;
+
+	$dmfpath=null;
+	if (!empty($_POST['dmfpath'])) {
 		$dmfpath=$_POST['dmfpath'].$jobname;
 	}
-	else $appionbin='';
+
 	$clusterpath=$_POST['clusterpath'].$jobname;
 	$jobfile="$jobname.job";
 	$tmpjobfile = "/tmp/$jobfile";
@@ -102,46 +104,41 @@ elseif ($_POST['submitjob']) {
 	$clusterjob = "## $jobname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
 
-	$clusterjob.= $appionbin."updateAppionDB.py $jobid R $projectId\n\n";
+	$clusterjob.= C_APPION_BIN."updateAppionDB.py $jobid R $projectId\n\n";
 	$clusterjob.= "# jobId: $jobid\n";
 	$clusterjob.= "# projectId: $projectId\n";
-	$clusterlastline.= $appionbin."updateAppionDB.py $jobid D $projectId\nexit\n\n";
+	$clusterlastline.= C_APPION_BIN."updateAppionDB.py $jobid D $projectId\nexit\n\n";
 	$f = file_get_contents($tmpjobfile);
 	file_put_contents($tmpjobfile, $clusterjob . $f . $clusterlastline);
 
 	processing_header("Eman Job Submitted","EMAN Job Submitted",$javafunc);
-	echo "<TABLE WIDTH='600'>\n";
+	echo "<table width='600'>\n";
 
 	// create appion directory & copy job file
 	$cmd = "mkdir -p $outdir;\n";
 	$cmd.= "cp $tmpjobfile $outdir/$jobfile;\n";
-	exec_over_ssh($_SERVER['HTTP_HOST'], $user, $pass, $cmd, True);
+	exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
 
-	// if running on garibaldi:
-	if ($host=='garibaldi') {
-		// create directory on cluster and copy job file over
-		$cmd = "mkdir -p $clusterpath;\n";
-		$cmd .= "cp $outdir/$jobfile $clusterpath/$jobfile;\n";
-		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
-	}
+	$clusterdata->cluster_cmd($host, $user, $pass);
 	// if on guppy, clusterpath is same as outdir
-	else $clusterpath=$outdir;
+	$path = formatEndPath($clusterdata->get_path()).$jobname;
 
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
 	// submit job on host
-	$cmd = "cd $clusterpath; qsub $jobname.job;\n";
-	$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
+	$cmd = "cd $path; qsub $jobfile;\n";
+	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
   
-	$jobnum=trim($jobnum);
-	$jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
-	if (!is_numeric($jobnum)) {
-		echo "</TABLE><P>\n";
-		echo "ERROR in job submission.  Check the cluster\n";
-		processing_footer();
-		exit;
-	}
+	$jobnum=trim($jobnumstr);
+  echo "jobnum: $jobnum <br/>";
+  $jobnum = ereg_replace('\..*','',$jobnum);
+  if (!is_numeric($jobnum)) {
+    echo "</table><p>\n";
+    echo "ERROR in job submission. Check the cluster\n";
+    processing_footer();
+    exit;
+  }
 
 	// insert cluster job id into row that was just created
 	$particle->updateClusterQueue($jobid,$jobnum,'Q');
@@ -209,10 +206,10 @@ function stackModelForm($extra=False) {
 		processing_header("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
 	}
 	// write out errors, if any came up:
-	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formAction'>\n";
+	if ($extra) echo "<font color='red'>$extra</font>\n<hr>\n";
+	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 	echo "
-  <B>Select Project:</B><BR>
+  <b>Select Project:</b><br>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
@@ -299,7 +296,9 @@ function stackModelForm($extra=False) {
 	exit;
 }
 
+
 function jobForm($extra=false) {
+	global $clusterdata, $CLUSTER_CONFIGS, $selectedcluster;
 	$expId = $_GET['expId'];
 
 	$user = $_SESSION['username'];
@@ -309,8 +308,12 @@ function jobForm($extra=false) {
 	$leginondata = new leginondata();
 	$sessiondata = $leginondata->getSessionInfo($expId);
 	$sessionpath = $sessiondata['Image path'];
-	$sessionpath = ereg_replace("leginon","appion",$sessionpath);
-	$sessionpath = ereg_replace("rawdata","recon/",$sessionpath);
+	ereg("(.*)leginon(.*)rawdata", $sessionpath, $reg_match);
+	$rootpath = "appion".$reg_match[2]."recon/";
+	$sessionpath=$reg_match[1].$rootpath;
+
+	$clusterdata->set_rootpath($rootpath);
+	$clusterdata->post_data();
 
 	$particle = new particledata();
 	$reconruns = count($particle->getJobIdsFromSession($expId));
@@ -318,42 +321,24 @@ function jobForm($extra=false) {
 
 	// get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
-	$dmfstack = $stackinfo[4];
-	$box=$stackinfo[2];
-	$rootpathdata = explode('/', $sessionpath);
-	$dmfpath = '/home/'.$_SESSION['username'].'/';
-	$clusterpath = '~'.$_SESSION['username'].'/';
-	for ($i=3 ; $i<count($rootpathdata); $i++) {
-		$rootpath .= "$rootpathdata[$i]";
-		if ($i+1<count($rootpathdata)) $rootpath.='/';
-	}
-  
-	$dmfpath .= $rootpath;
-	$clusterpath .= $rootpath;
+	$box = $stackinfo[2];
 
 	// get model data
 	$modelinfo = explode('|--|',$_POST['model']);
-	$dmfmod = $modelinfo[2];
 	$syminfo = explode(' ',$modelinfo[4]);
 	$modsym=$syminfo[0];
 	if ($modsym == 'Icosahedral') $modsym='icos';
 
-	// garibaldi is selected by default
-	$garibaldicheck = ($_POST['clustername']=='garibaldi' || $_POST['model']) ? 'CHECKED' : '';
-	$guppycheck = ($_POST['clustername']=='guppy') ? 'CHECKED' : '';
-
+	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
+	
 	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	$clusterpath = ($_POST['clusterpath']) ? $_POST['clusterpath'] : $clusterpath;
-	$nodes = ($_POST['nodes']) ? $_POST['nodes'] : 4;
-	$ppn = ($_POST['ppn']) ? $_POST['ppn'] : 4;
-	$rprocs = ($_POST['rprocs']) ? $_POST['rprocs'] : 4;
-	$walltime = ($_POST['walltime']) ? $_POST['walltime'] : 240;
-	$cput = ($_POST['cput']) ? $_POST['cput'] : 240;
-	$dmfstack = ($_POST['dmfstack']) ? $_POST['dmfstack'] : $dmfstack;
-	$dmfpath = ($_POST['dmfpath']) ? $_POST['dmfpath'] : $dmfpath;
-	$dmfmod = ($_POST['dmfmod']) ? $_POST['dmfmod'] : $dmfmod;
-	$dmfstorech = ($_POST['dmfstore']=='on' || $_POST['model']) ? 'CHECKED' : '';
+	$nodes = ($_POST['nodes'] && $clusterdefaults) ? $_POST['nodes'] : C_NODES_DEF;
+	$ppn = ($_POST['ppn'] && $clusterdefaults) ? $_POST['ppn'] : C_PPN_DEF;
+	$rprocs = ($_POST['rprocs'] && $clusterdefaults) ? $_POST['rprocs'] : C_RPROCS_DEF;
+	$walltime = ($_POST['walltime'] && $clusterdefaults) ? $_POST['walltime'] : C_WALLTIME_DEF;
+	$cput = ($_POST['cput'] && $clusterdefaults) ? $_POST['cput'] : C_CPUTIME_DEF;
+
 	$numiters= ($_POST['numiters']) ? $_POST['numiters'] : 1;
 	if ($_POST['duplicate']) {
 		$numiters+=1;
@@ -363,7 +348,6 @@ function jobForm($extra=false) {
 
 	$javafunc .= defaultReconValues($box);
 	$javafunc .= writeJavaPopupFunctions('eman');
-	$javafunc .= garibaldiFun();
 	processing_header("Eman Job Generator","EMAN Job Generator",$javafunc);
 	// write out errors, if any came up:
 	if (!($user && $pass)) echo "<font color='red'><B>WARNING!!!</B> You are not logged in!!!</font><br />";
@@ -371,39 +355,43 @@ function jobForm($extra=false) {
 		echo "<font color='red'>$extra</font>\n<hr />\n";
 	}
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
+	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
+	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
+	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
 	echo "<tr><td>\n";
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>
-    <td rowspan='2'><b>Cluster:</b></td>
-    <td><input type='radio' name='clustername' value='garibaldi' onClick=\"enableGaribaldi('true')\" $garibaldicheck>Garibaldi</td></tr>
-    <tr><td><input type='radio' name='clustername' value='guppy' onClick=\"enableGaribaldi('false')\" $guppycheck>Guppy</td>
+    <td><b>Cluster:</b></td>
+		<td><select name='cluster' onchange='emanjob.submit()'>
+		";
+		foreach ($CLUSTER_CONFIGS as $cluster) {
+			$s = ($cluster == $_POST['cluster']) ? 'selected' : '';
+			echo '<option value="'.$cluster.'" '.$s.' >'.$cluster.'</option>'."\n";
+		}
+	echo "
+		</select></td>
   </tr>
   <tr>
     <td><B>Job Run Name:</B></td>
-    <td><input type='text' NAME='jobname' VALUE='$jobname' SIZE=20></td>
+    <td><input type='text' name='jobname' value='$jobname' size='20'></td>
   </tr>
   <tr>
     <td><B>Output Directory:</B></td>
-    <td><input type='text' NAME='outdir' VALUE='$outdir' SIZE=50></td>
-  </tr>
-  <tr>
-    <td><B>Cluster Directory:</B></td>
-    <td><input type='text' NAME='clusterpath' VALUE='$clusterpath' SIZE=50></td>
+    <td><input type='text' NAME='outdir' value='$outdir' size='50'></td>
   </tr>
   </table>\n";
 	echo closeRoundBorder();
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo "<p>\n";
-	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
-	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 
-	//overall PBS & DMF tables
+	//--- overall PBS tables
 	echo "<table border='0'><tr><td valign='top'>"; 
 
-	//Cluster Parameters
+	//--- Cluster Parameters
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>\n";
@@ -424,42 +412,24 @@ function jobForm($extra=false) {
       <td><input type='text' NAME='cput' VALUE='$cput' SIZE='4'></td>
     </tr>
     <tr>
-      <TD COLSPAN='4'>
+      <td colspan='4'>
       Reconstruction procs per node:<input type='text' NAME='rprocs' VALUE='$rprocs' SIZE='3'>
       </td>
     </tr>
     </table>\n";
+/*
 	echo closeRoundBorder();
 
 	echo"</td><td valign='top'>"; //overall table
 
 	//DMF Parameters TABLE
 	echo openRoundBorder();
-	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
-	echo "<tr>
-      <TD COLSPAN='4' ALIGN='CENTER'>
-      <H4>DMF Parameters</H4>
-      </td>
-    </tr>
-    <tr>
-      <td>DMF Directory:</td>
-      <td><input type='text' NAME='dmfpath' VALUE='$dmfpath' SIZE='40' ></td>
-    </tr>
-    <tr>
-      <td>Starting Model (mrc):</td>
-      <td><input type='text' NAME='dmfmod' VALUE='$dmfmod' SIZE='40' ></td>
-    </tr>
-    <tr>
-      <td>Stack (img or hed):</td>
-      <td><input type='text' NAME='dmfstack' VALUE='$dmfstack' SIZE='40' ></td>
-    </tr>
-    <tr>
-      <td>Save results to DMF</td>
-      <td><input type='checkbox' NAME='dmfstore' $dmfstorech></td>
-    </tr>
-    </table>\n";
+*/
+	echo $clusterdata->cluster_parameters();
+
 	echo closeRoundBorder();
 	echo"</td></tr></table>"; //overall table
+
 	$bgcolor="#E8E8E8";
 	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
 	echo"
@@ -716,66 +686,47 @@ function jobForm($extra=false) {
   </TABLE>
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
-  </FORM>\n";
-	if ($guppycheck) echo "<script language='javascript'>enableGaribaldi('false')</script>\n";
+  </form>\n";
 	processing_footer();
 	exit;
 }
 
+function formatEndPath($path) {
+	$path = ereg(DIRECTORY_SEPARATOR."$", $path) ? $path : $path.DIRECTORY_SEPARATOR;
+	return $path;
+}
+
 function writeJobFile ($extra=False) {
+	global $clusterdata;
 	$expId = $_GET['expId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+
+	$dmfpath = $_POST['dmfpath'];
 
 	$jobname = $_POST['jobname'];
 	$jobfile ="$jobname.job";
 
-	$clustername = $_POST['clustername'];
-	$outdir = $_POST['outdir'];
-	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$clustername = C_NAME;
+	$outdir = formatEndPath($_POST['outdir']);
 
-	// clusterpath contains jobname, if running on guppy, cluster path is local
-	$clusterpath = ($clustername=='guppy') ? $outdir : $_POST['clusterpath'];
-	if (substr($clusterpath,-1,1)!='/') $clusterpath.='/';
-	$clusterfullpath = $clusterpath.$jobname;
+	$clusterpath=$clusterdata->get_path();
+	$clusterpath = formatEndPath($clusterpath);
 
-	// make sure dmf store dir ends with '/'
-	$dmfpath=$_POST['dmfpath'];
-	if (substr($dmfpath,-1,1)!='/') $dmfpath.='/';
-	$dmffullpath = $dmfpath.$jobname;
+	$clusterdata->post_data();
 
 	// get the stack info (pixel size, box size)
 	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
-	$stackpath=$stackinfo[3];
-	$stackname1=$stackinfo[4];
-	$stackname2=$stackinfo[5];
 
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
-	$modelpath = $modelinfo[1];
-	$modelname = $modelinfo[2];
 
 	// insert the job file into the database
 	if (!$extra) {
-		// create dmf put javascript
-		$javafunc.="
-  <SCRIPT LANGUAGE='JavaScript'>
-  function displayDMF() {
-    newwindow=window.open('','name','height=150, width=900')
-    newwindow.document.write('<HTML><BODY>')
-    newwindow.document.write('dmf mkdir -p $dmffullpath');
-    newwindow.document.write('<P>dmf put $stackpath/$stackname1 $dmffullpath/$stackname1')\n";
-		if ($stackname2) $javafunc.="    newwindow.document.write('<P>dmf put $stackpath/$stackname2 $dmffullpath/$stackname2')\n";
-		$javafunc.="
-    newwindow.document.write('<P>dmf put $modelpath/$modelname $dmffullpath/$modelname');
-    newwindow.document.write('<P>echo done');
-    newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>');
-    newwindow.document.close();
-  }
-  </SCRIPT>\n";
+		$javafunc.=$clusterdata->get_javascript();
 	}
 	processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
 
@@ -788,33 +739,7 @@ function writeJobFile ($extra=False) {
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
-	if ($clustername=='garibaldi') {
-		$clusterjob.= "mkdir -p $clusterfullpath\n";
-		$clusterjob.= "cd $clusterfullpath\n";
-		$clusterjob.= "rm -f recon\n";
-		$clusterjob.= "ln -s \$PBSREMOTEDIR recon\n";
-		$clusterjob.= "chmod 755 recon\n"; 
-		$clusterjob.= "cd recon\n";
-		// get file name, strip extension
-		$ext=strrchr($_POST['dmfstack'],'.');
-		$stackname=substr($_POST['dmfstack'],0,-strlen($ext));
-		$clusterjob.= "\ndmf get $dmffullpath/".$_POST['dmfmod']." threed.0a.mrc\n";
-		$clusterjob.= "dmf get $dmffullpath/$stackname.hed start.hed\n";
-		$clusterjob.= "dmf get $dmffullpath/$stackname.img start.img\n";
-		$clusterjob.= "setenv RUNPAR_RSH 'rsh'\n\n";
-		global $appionbin;
-	}
-	else {
-		$clusterjob.= "rm -rf $clusterfullpath/recon\n";
-		$clusterjob.= "mkdir -p $clusterfullpath/recon\n";
-		$clusterjob.= "cd $clusterfullpath/recon\n\n";
-		$ext=strrchr($stackname1,'.');
-		$stackname=substr($stackname1,0,-strlen($ext));
-		$clusterjob.= "ln -s $stackpath/$stackname.hed start.hed\n";
-		$clusterjob.= "ln -s $stackpath/$stackname.img start.img\n";
-		$clusterjob.= "ln -s $modelpath/$modelname threed.0a.mrc\n";
-		$clusterjob.= "setenv RUNPAR_RSH 'ssh'\n\n";
-	}
+
 	$procs=$_POST['nodes']*$_POST['rprocs'];
 	$numiters=$_POST['numiters'];
 	$pad=intval($box*1.25);
@@ -874,12 +799,12 @@ function writeJobFile ($extra=False) {
 		$line.="getProjEulers.py proj.img proj.$i.txt\n";
 		// if ref-free correllation analysis
 		if ($coran=='on') {
-			$line .= $appionbin."coran_for_cls.py mask=$mask proc=$procs iter=$i";
+			$line .= C_APPION_BIN."coran_for_cls.py mask=$mask proc=$procs iter=$i";
 			if ($sym) $line .= " sym=$sym";
 			if ($hard) $line .= " hard=$hard";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
-			$line.=$appionbin."getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		// if eotest specified with coran, don't do eotest here:
 		elseif ($eotest=='on') {
@@ -894,7 +819,7 @@ function writeJobFile ($extra=False) {
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
 			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
-			$line.=$appionbin."getRes.pl >> resolution.txt $i $box $apix\n";
+			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		if ($msgp=='on') {
 			$line .="msgPassing_subClassification.py mask=$mask iter=$i";
@@ -905,60 +830,38 @@ function writeJobFile ($extra=False) {
 			$line .= "\n";
 		}
 		$line.="rm cls*.lst\n";
-		$clusterjob.= $line;
+		$ejob.= $line;
 	}
 	
+	$clusterjob .= $clusterdata->cluster_job_file($ejob);
 	
-	if ($clustername=='garibaldi') {
-		$clusterjob.= "\ncp $clusterfullpath/$jobname.job .\n";
-		if ($_POST['dmfstore']=='on') {
-			$clusterjob.= "\ntar -cvzf model.tar.gz threed.*a.mrc\n";
-			$clusterjob.= "dmf put model.tar.gz $dmffullpath\n";
-			$line = "\ntar -cvzf results.tar.gz fsc* cls* refine.* particle.* classes.* classes_*.* proj.* sym.* .emanlog *txt *.job";
-			if ($msgp=='on') {
-				$line .= "goodavgs.* ";
-				$clusterjob.= "dmf put msgPassing.tar $dmffullpath\n";
-			}
-			$line .= "\n";
-			$clusterjob.= $line;
-			$clusterjob.= "dmf put results.tar.gz $dmffullpath\n";
-		}
-	}
-	else {
-		$clusterjob.= "\nmv $clusterfullpath/recon/* $clusterfullpath/.\n";
-		$clusterjob.= "\nmv $clusterfullpath/recon/.* $clusterfullpath/.\n";
-		$clusterjob.= "\nrm -rf $clusterfullpath/recon\n";
-	}
 	if (!$extra) {
-		if ($clustername=='garibaldi') {
-			echo "Please review your job below.<BR>";
-			echo "If you are satisfied:<BR>\n";
-			echo "1) Place files in DMF<BR>\n";
-			echo "2) Once this is done, click the button to launch your job.<BR>\n";
-			echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
-			echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
-		}
-		else echo "Review your job, and submit.<br />\n";
+		echo $clusterdata->cluster_check_msg();
+		echo "<p>";
+	} else {
+		echo "<font color='red'>$extra</font>\n<hr>\n";
 	}
-	else {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	}
-	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
-	echo "<input type='hidden' name='clustername' value='$clustername'>\n";
-	echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
-	echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";
-	echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
-	echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
+	echo "<form name='emanjob' method='POST' action='$formAction'>\n";
+	echo "<input type='hidden' name='clustername' value='".C_NAME."'>\n";
+	echo "<input type='hidden' name='cluster' value='".C_NAME."'>\n";
+	echo "<input type='hidden' NAME='clusterpath' value='$clusterpath'>\n";
+	echo "<input type='hidden' NAME='dmfpath' value='$dmfpath'>\n";
+	echo "<input type='hidden' NAME='jobname' value='$jobname'>\n";
+	echo "<input type='hidden' NAME='outdir' value='$outdir'>\n";
+
 	// convert \n to /\n's for script
 	$header_conv=preg_replace('/\n/','|--|',$header);
-	echo "<input type='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
-	echo "<input type='SUBMIT' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
+
+	echo "<input type='hidden' NAME='header' VALUE='$header_conv'>\n";
+	echo "<input type='submit' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";
+  echo "</form>\n";
+	echo "</p>";
 	if (!$extra) {
-		echo "<HR>\n";
-		echo "<PRE>\n";
+		echo "<hr>\n";
+		echo "<pre>\n";
 		echo $header;
 		echo $clusterjob;
-		echo "</PRE>\n";
+		echo "</pre>\n";
 		$tmpfile = "/tmp/$jobfile";
 		// write file to tmp directory
 		$f = fopen($tmpfile,'w');
@@ -967,7 +870,7 @@ function writeJobFile ($extra=False) {
 	}	
 	processing_footer();
 	exit;
-};
+}
 
 function defaultReconValues ($box) {
 	$rad = ($box/2)-2;
@@ -1002,31 +905,4 @@ function defaultReconValues ($box) {
 	return $javafunc;
 };
 
-function garibaldiFun() {
-	$javafunc="
-  <script language='javascript'>
-  function enableGaribaldi(i) {
-    if (i=='true') {
-      document.emanjob.clusterpath.disabled=false;
-      document.emanjob.dmfpath.disabled=false;
-      document.emanjob.dmfmod.disabled=false;
-      document.emanjob.dmfstack.disabled=false;
-      document.emanjob.dmfstore.disabled=false;
-      document.emanjob.nodes.value=4;
-      document.emanjob.ppn.value=4;
-      document.emanjob.rprocs.value=4;
-    }
-    else {
-      document.emanjob.clusterpath.disabled=true;
-      document.emanjob.dmfpath.disabled=true;
-      document.emanjob.dmfmod.disabled=true;
-      document.emanjob.dmfstack.disabled=true;
-      document.emanjob.dmfstore.disabled=true;
-      document.emanjob.nodes.value=2;
-      document.emanjob.ppn.value=8;
-      document.emanjob.rprocs.value=8;
-    }
-  }
-  </script>\n";
-	return $javafunc;
-}
+?>

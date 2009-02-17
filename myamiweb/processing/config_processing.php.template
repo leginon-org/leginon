@@ -19,7 +19,13 @@ $PROCESSING_DB = ""; //--- leave empty,  set by projectdb
 // --- Add as many processing hosts as you like --- //
 $PROCESSING_HOSTS[]="";
 $PROCESSING_HOSTS[]="";
-$PROCESSING_HOSTS[]="";
+
+// --- register your cluster config file below i.e (default_cluster.php) --- //
+$CLUSTER_CONFIGS= array (
+	'default_cluster'
+);
+
+// Better if Cs came out of DB, but for now...
 
 // Better if Cs came out of DB, but for now...
 $DEFAULTCS = "";

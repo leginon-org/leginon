@@ -30,6 +30,8 @@ processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascri
 // --- Get Stack Data --- //
 $particle = new particledata();
 
+echo $particle->mysql->getDBInfo();
+
 // find each stack entry in database
 //$stackIds = $particle->getAlignStackIds($expId, True);
 if ($_GET['cluster']) {
