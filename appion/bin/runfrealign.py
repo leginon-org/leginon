@@ -60,7 +60,7 @@ class frealignJob(appionScript.AppionScript):
 				       help = "conversion constant for phase residual weighting of particles. 100 gives equal weighting")
 		self.parser.add_option('--avgresidual', dest="avgresidual" , default = 75, type='int',
 				       help = "average phase residual of all particles. used for weighting")
-		self.parser.add_option('--ang', dest="ang" , default = 5, type='int',
+		self.parser.add_option('--ang', dest="ang" , type='int',
 				       help = "step size if using modes 3 and 4")
 		self.parser.add_option('--itmax', dest="itmax" , default = 10, type='int',
 				       help = "number of iterations of randomization. used for modes 2 and 4")
@@ -194,28 +194,6 @@ class frealignJob(appionScript.AppionScript):
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath,'recon',self.params['runname'])
 		
-	#=====================
-	def createMultipleJobs (params):
-		params['jobs']=[]
-		ptcls_per_job = params['last']/params['proc']
-		remainder= params['last']%params['proc']
-		lastparticle=0
-		params['outparlst']=[]	
-		for n in range(0,params['proc']):
-			firstparticle=lastparticle+1
-			lastparticle=firstparticle+ptcls_per_job-1
-		
-			if remainder > 0:
-				lastparticle+=1
-				remainder-=1
-		
-			jobname=("frealign.%d.job" % (n))
-			params['jobs'].append(jobname)
-			outparname=params['outpar']+'.'+str(n)
-			params['outparlst'].append(outparname)
-			print 'outparname is', outparname
-			createFrealignJob(params, jobname, params['mode'], params['inpar'], outparname, firstparticle, lastparticle, norecon=True)
-
 	def forceMrcHeader(array=None):
 		'''
 		Hack to force MRC header to something that frealign will accept.
@@ -227,13 +205,6 @@ class frealignJob(appionScript.AppionScript):
 			mrc.updateHeaderUsingArray(h,array)
 		h['byteorder']=0x4144
 		return h
-
-	def imagicToMrc(stackname,mrcname):
-		stackdict=apImagicFile.readImagic(stackname)
-		#force machine stamp integer
-		print "forcing machine stamp"
-		h=forceMrcHeader(array=stackdict['images'])
-		mrc.write(stackdict['images'],mrcname, header=h)
 
 	def fixMrcHeaderHack(involname, outvolname):
 		a=mrc.read(involname)
@@ -287,6 +258,9 @@ class frealignJob(appionScript.AppionScript):
 		if self.params['reconiterid'] is not None:
 			# get reference stackid
 			self.params['compStackId'] = apStack.getStackIdFromIterationId(self.params['reconiterid'])
+		elif self.params['ang'] is not None:
+			# use projection matching to determine initial Eulers
+			self.params['mode']=3
 
 		#set up directories
 		self.params['workingvol']="workingvol.mrc"

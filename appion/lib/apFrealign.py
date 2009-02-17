@@ -213,8 +213,9 @@ def convertEmanEulersToFrealign(eman_eulers):
 	if e3 < 0:
 		e3+=360
 	e3+=90
-	if e3 > 360:
-		e3-=360
+	e3*=-1
+	if e3 < 0:
+		e3+=360
 	eulers={"phi":e1,"theta":e2,"psi":e3}
 	return eulers
 
