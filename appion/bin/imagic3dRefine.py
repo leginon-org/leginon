@@ -573,12 +573,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
 			os.remove(str(self.params['rundir'])+"/chimera.log")
 		apRecon.renderSnapshots(mrcname, 30, None, 
-			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
 			os.remove(str(self.params['rundir'])+"/chimera.log")
 		apRecon.renderSnapshots(mrcnamerot, 30, None, 
-			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		### upload density
 		#if self.params['itn'] == 1:		
