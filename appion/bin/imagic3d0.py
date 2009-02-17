@@ -178,6 +178,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")
 		f.write(symmetry+"\n")
+		if lowercase != "c1":
+                        f.write("0\n")
 		f.write("new\n")
 		f.write("add\n")
 		f.write("start_stack\n")
