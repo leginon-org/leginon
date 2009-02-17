@@ -436,12 +436,12 @@ class imagic3d0Script(appionScript.AppionScript):
 			volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
 			apEMAN.executeEmanCmd(volumecmd1)
 			apEMAN.executeEmanCmd(volumecmd2)
-
+		
 		### create chimera slices of densities
 		apRecon.renderSnapshots(mrcname, 30, None, 
-			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 		apRecon.renderSnapshots(mrcnamerot, 30, None, 
-			3.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		### upload density
 		self.upload3d0()
