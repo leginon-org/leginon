@@ -47,18 +47,18 @@ class frealignJob(appionScript.AppionScript):
 				       help = "internall calculate FSC between even and odd particles")
 	
 		####card 2
-		self.parser.add_option('--radius', dest="radius" , type='int',
+		self.parser.add_option('--radius', dest="radius", type='int',
 				       help = "radius from center of particle to outer edge")
-		self.parser.add_option('--iradius', dest="iradius" , default = 0, type='int',
+		self.parser.add_option('--iradius', dest="iradius", default = 0, type='int',
 				       help = "inner mask radius")
 		self.parser.add_option('--apix', dest="apix" , type='float', help = "pixel size in angstroms")
-		self.parser.add_option('--ampcontrast', dest="ampcontrast" , default = 0.07, type='float',
+		self.parser.add_option('--ampcontrast', dest="ampcontrast", default = 0.07, type='float',
 				       help = "amplitude contrast")
-		self.parser.add_option('--maskthresh', dest="maskthresh" , default = 0.0, type='float',
+		self.parser.add_option('--maskthresh', dest="maskthresh", default = 0.0, type='float',
 				       help = "standard deviations above mean for masking of input model")
-		self.parser.add_option('--phaseconstant', dest="phaseconstant" , default = 3.0,type='float',
+		self.parser.add_option('--phaseconstant', dest="phaseconstant", default = 100.0, type='float',
 				       help = "conversion constant for phase residual weighting of particles. 100 gives equal weighting")
-		self.parser.add_option('--avgresidual', dest="avgresidual" , default = 75, type='int',
+		self.parser.add_option('--avgresidual', dest="avgresidual", default = 75, type='int',
 				       help = "average phase residual of all particles. used for weighting")
 		self.parser.add_option('--ang', dest="ang" , type='int',
 				       help = "step size if using modes 3 and 4")
@@ -171,8 +171,6 @@ class frealignJob(appionScript.AppionScript):
 				       help="name of output volume", default = 'threed.1.mrc')
 		self.parser.add_option('--proc', dest='proc', default=1, type='int',
 				       help="number of processors")
-		self.parser.add_option('--setuponly', dest='setuponly', default=False, action='store_true',
-				       help="if setuponly is specified, everything will be set up but frealign will not be run")
 		self.parser.add_option('--refcycles', dest='refcycles', type='int', default=1,
 				       help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
@@ -186,7 +184,9 @@ class frealignJob(appionScript.AppionScript):
 			apDisplay.printError("model id was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("missing a reconstruction name")
-			
+		if self.params['projectid'] is None:
+			apDisplay.printError("missing a project id")
+
 	#=====================
 	def setRunDir(self):
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
@@ -263,10 +263,13 @@ class frealignJob(appionScript.AppionScript):
 			self.params['mode']=3
 
 		#set up directories
-		self.params['workingvol']="workingvol.mrc"
 		self.params['workingdir']=os.path.join(self.params['rundir'],"working")	
 		apParam.makedirs(self.params['workingdir'], mode=0755)
-	
+
+		# 3d density will be saved as 'workingvol' in the working directory
+		self.params['workingvol'] = os.path.join(self.params['workingdir'],"workingvol.mrc")
+		# output param file will be saved as 'params.1.par' in the working directory
+		self.params['workingparam'] = os.path.join(self.params['workingdir'],"params.1.par")
 		
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		self.params['stackfile'] = os.path.join(self.stackdata['path']['path'],self.stackdata['name'])
@@ -280,6 +283,7 @@ class frealignJob(appionScript.AppionScript):
 			apDisplay.printMsg('converting to IMAGIC stack to MRC stack...')
 			apFrealign.imagicToMrc(self.params)
 
+		self.params['iter']=0
 		#if no parameter file specified then generate input parameter file
 		if self.params['inpar'] is None:
 			apFrealign.generateParticleParams(self.params)
@@ -291,29 +295,27 @@ class frealignJob(appionScript.AppionScript):
 		modeldata = apVolume.getModelFromId(self.params['modelid'])
 		self.params['initmodel'] = os.path.join(modeldata['path']['path'],modeldata['name'])
 
-		#create Frealign job(s)
-		if self.params['proc']>1:
-			# run refinement
-			apFrealign.createMultipleJobs(self.params)
-			if self.params['setuponly'] is False:
+		# for first iteration:
+		self.params['itervol']=None
+		self.params['iterparam']=None
+		## run frealign for number for refinement cycles
+		for i in range(self.params['refcycles']):
+			self.params['iter']+=1
+			if self.params['proc']>1:
+				# create jobs
+				apFrealign.createMultipleJobs(self.params)
+				# run split jobs
 				apFrealign.submitMultipleJobs(self.params)
 				# create density
 				apFrealign.combineMultipleJobs(self.params)
-		else:
-			jobname = os.path.join(self.params['rundir'],self.params['runname']+'.job')
-			apFrealign.createFrealignJob(self.params, jobname, norecon=False)
-
-		#run frealign
-#		os.chdir(params['workingdir'])
-	
-#		if not params['setuponly']:
-#			if params['proc'] > 1:
-#				runParallel(params)
-#			else:
-#				runSingle(params)
-			
-			#copy results back to run dir
-#			shutil.copy(params['workingvol'],(os.path.join(params['rundir'],params['outvol'])))
+			else:
+				jobname = os.path.join(self.params['rundir'],self.params['runname']+'.job')
+				apFrealign.createFrealignJob(self.params, jobname, norecon=False)
+			# copy density & parameter file to rundir
+			self.params['itervol'] = os.path.join(self.params['rundir'],"threed."+self.params['iter']+".mrc")
+			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+self.params['iter']+".par")
+			shutil.copy(self.params['workingvol'],self.params['itervol'])
+			shutil.copy(self.params['workingparam'],self.params['iterparam'])
 
 		print "Done!"
 

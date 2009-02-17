@@ -130,14 +130,14 @@ def writeParticleParamLine(particleparams, fileobject):
 	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n" % (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres']))
 
 #===============
-def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, outpar=None, first=None, last=None, norecon=False):
+def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):
 
 	if mode is None:
 		mode=params['mode']
 	if inpar is None:
 		inpar = params['inpar']
-	if outpar is None:
-		outpar = params['outpar']
+	if invol is None:
+		invol = params['initmodel']
 	if first is None:
 		first=params['first']
 	if last is None:
@@ -159,7 +159,7 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, ou
 		f.write('rm -rf %s\n' %workdir)
 		f.write('mkdir %s\n' %workdir)
 		f.write('cd %s\n' %workdir)
-	f.write('cp %s workingvol.mrc\n' % params['initmodel'])
+	f.write('cp %s workingvol.mrc\n' % invol)
 	f.write('cp %s params.0.par\n' % inpar)
 	f.write('\n')
 	f.write('frealign << EOF > frealign.out\n')
@@ -203,6 +203,7 @@ def convertEmanEulersToFrealign(eman_eulers):
 		e1+=360
 	e1-=90
 	e1*=-1
+	e1-=180
 	if e1 < 0:
 		e1+=360
 
@@ -289,7 +290,7 @@ def createMultipleJobs(params):
 			r-=1
 
 		jobname=os.path.join(workdir,"frealign.%d.csh" %n)
-		createFrealignJob(params,jobname,vnodenum=n, first=firstp, last=lastp,norecon=True)
+		createFrealignJob(params,jobname,invol=params['itervol'], inpar=params['iterparam'],vnodenum=n, first=firstp, last=lastp,norecon=True)
 		
 #===============
 def submitMultipleJobs(params):
