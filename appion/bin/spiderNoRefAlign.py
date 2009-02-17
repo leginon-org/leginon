@@ -181,6 +181,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			alignpartq['xshift'] = partdict['xshift']
 			alignpartq['yshift'] = partdict['yshift']
 			alignpartq['rotation'] = partdict['rot']
+			alignpartq['score'] = partdict['score']
 
 			if insert is True:
 				alignpartq.insert()
