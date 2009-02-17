@@ -82,6 +82,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int",	#default=25
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
 
+		### mass specified for eman volume function
+                self.parser.add_option("--mass", dest="mass", type="int",
+                        help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
+
 		return 
 
 	#=====================
@@ -521,7 +525,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		forwimg = "masked_3d0_ordered0_repaligned_forward.img"
 		forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
 		if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
-			shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")
+			
 		if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
 			shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
 		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
@@ -557,6 +561,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+
+                ### optional thresholding based on specified size
+                if self.params['mass'] is not None:
+                        volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+                        volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+                        apEMAN.executeEmanCmd(volumecmd1)
+                        apEMAN.executeEmanCmd(volumecmd2)
 
 		### create chimera slices of densities ******* .log file has caused problems if not removed
 		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
