@@ -214,12 +214,13 @@ def refBasedAlignParticles(stackfile, templatestack,
 	t0 = time.time()
 	rundir = "alignments"
 	apParam.createDirectory(rundir)
+	nproc = apParam.getNumProcessors()
 
 	### remove previous iterations
 	apFile.removeFile(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
 	### perform alignment, should I use 'AP SH' instead?
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
 	mySpider.toSpider("AP MQ", 
 		spyder.fileFilter(templatestack)+"@**",     # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
@@ -375,39 +376,63 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	"""
 	if not os.path.isfile(oldstack+dataext):
 		apDisplay.printError("Could not find original stack: "+oldstack+dataext)
+	boxsize = apFile.getBoxSize(oldstack+dataext)
 
 	apDisplay.printMsg("applying alignment parameters to stack")
-
 	apFile.removeFile(alignedstack+dataext)
-
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	count = 0
+	t0 = time.time()
+	nproc = apParam.getNumProcessors()
+
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	#create stack in core
+	numpart = len(partlist)
+	mySpider.toSpiderQuiet(
+		"MS I", #command
+		"_2@", #name
+		"%d,%d,1"%(boxsize), #boxsize
+		str(numpart+1), #num part to create in memory
+		str(numpart+1), #max particle number
+	)
 	for partdict in partlist:
-		count += 1
+		partnum = partdict['num']
 		#if partdict['num'] in [3,6,7]:
 		#	print partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
-		p = partdict['num']
+
+		### Rotate and Shift operations
+		count += 1
+		#rotate/shift
 		mySpider.toSpiderQuiet(
 			"RT SQ",
-			oldstack+"@"+("%06d" % (p)),
+			spyder.fileFilter(oldstack)+"@"+("%06d" % (partnum)),
 			"_1",
 			str(partdict['rot']), str(partdict['xshift'])+","+str(partdict['yshift']),
 		)
+		#mirror, if necessary
 		if 'mirror' in partdict and partdict['mirror'] is True:
 			mySpider.toSpiderQuiet(
 				"MR", "_1",
-				alignedstack+"@"+("%06d" % (p)),	"Y", 
+				"_2@"+("%06d" % (partnum)),	"Y", 
 			)
 		else:
 			mySpider.toSpiderQuiet(
 				"CP", "_1",
-				alignedstack+"@"+("%06d" % (p)),	
+				"_2@"+("%06d" % (partnum)),
 			)
-		if count % 10000 == 0:
-			### align 1000 particles, close spider, open new thread
-			mySpider.close()
-			mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+
+	### finish up
+	#save stack to file
+	mySpider.toSpiderQuiet(
+		"CP", "_2@",
+		spyder.fileFilter(alignedstack)+"@",	
+	)
+	#delete stack
+	mySpider.toSpiderQuiet(
+		"DE", "_2",
+	)
 	mySpider.close()
+
+	apDisplay.printMsg("Completed transforming %d particles in %s"%(count, apDisplay.timeString(time.time()-t0)))
 
 	if not os.path.isfile(alignedstack+dataext):
 		apDisplay.printError("Failed to create stack "+alignedstack+dataext)
