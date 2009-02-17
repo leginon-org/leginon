@@ -97,7 +97,7 @@ def numberStackFile(oldheadfile, startnum=0):
 	return True
 
 #===============
-def readImagic(filename, first=None, last=None):
+def readImagic(filename, first=None, last=None, msg=True):
 	"""
 	Rudimentary Imagic stack reader
 	Could be improved with more sophisticated error testing and header parsing
@@ -105,7 +105,8 @@ def readImagic(filename, first=None, last=None):
 	Currently reads header information for only first image in stack
 	"""
 	t0 = time.time()
-	apDisplay.printMsg("reading stack from disk into memory: "+filename)
+	if msg is True:
+		apDisplay.printMsg("reading stack from disk into memory: "+filename)
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
@@ -121,7 +122,8 @@ def readImagic(filename, first=None, last=None):
 	stack={}
 	stack['header'] = readImagicHeader(headerfilename)
 	stack['images'] = readImagicData(datafilename, stack['header'], first, last)
-	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
+	if msg is True:
+		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
 	return stack
 
 #===============	
@@ -166,7 +168,7 @@ def readImagicData(datafilename, headerdict, first=None, last=None):
 
 #===============
 #===============
-def writeImagic(array, filename):
+def writeImagic(array, filename, msg=True):
 	"""
 	Rudimentary Imagic stack writer
 	Could be improved with more sophisticated error testing and header parsing
@@ -182,7 +184,8 @@ def writeImagic(array, filename):
 		none
 	"""
 	t0 = time.time()
-	apDisplay.printMsg("writing stack to disk from memory: "+filename)
+	if msg is True:
+		apDisplay.printMsg("writing stack to disk from memory: "+filename)
 	root=os.path.splitext(filename)[0]
 	headerfilename = root+".hed"
 	datafilename   = root+".img"
@@ -205,9 +208,9 @@ def writeImagic(array, filename):
 		i += 1
 	headfile.close()
 	datafile.close()
-	apDisplay.printMsg("wrote "+str(partnum)+" particles to header file")
-
-	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
+	if msg is True:
+		apDisplay.printMsg("wrote "+str(partnum)+" particles to header file")
+		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
 	return
 
 #=========================
