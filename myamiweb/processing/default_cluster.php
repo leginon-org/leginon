@@ -5,7 +5,7 @@
  * You can add/modify:
  *    - job file input
  *    - form input
- *    - javqascript check
+ *    - javascript check
  *
  * Note: each cluster file must be register in config_processing.php
  **/
