@@ -270,11 +270,13 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	if (file_exists($stackavg)) {
 		$stacktable.= "<tr>\n";
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
-		if ($mini)
+		if ($mini) {
 			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=60' height='60'><br/>\n";
-		else
+			$stacktable.= "<i>avg image</i>\n";
+		} else {
 			$stacktable.= "<img src='loadimg.php?filename=$stackavg&h=120' height='120'><br/>\n";
-		$stacktable.= "<i>averaged stack image</i>\n";
+			$stacktable.= "<i>averaged stack image</i>\n";
+		}
 		$stacktable.= "</td>\n";
 
 		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
