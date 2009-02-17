@@ -14,7 +14,7 @@ require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
 
-// IF VALUES SUBMITTED, EVALUATE DATA
+// IF valueS SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runUploadRecon();
 }
@@ -69,10 +69,10 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   // write out errors, if any came up:
 
   if ($extra) {
-    echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+    echo "<font color='red'>$extra</font>\n<hr>\n";
   }
   
-  echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+  echo"<form name='viewerform' method='post' action='$formAction'>\n";
   $sessiondata=getSessionList($projectId,$expId);
   $sessioninfo=$sessiondata['info'];
   
@@ -97,45 +97,45 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   $contiteration = ($_POST['contiteration']=="on") ? "CHECKED" : "";
   $startiteration = $_POST['startiteration'];
   echo"
-  <TABLE BORDER=3 CLASS=tableborder>
-  <TR>
-    <TD VALIGN='TOP'>
-    <TABLE>
-    <TR>
-      <TD VALIGN='TOP'>
-      <BR/>
-      <B>Recon Name: </B>\n";
-  if ($jobId) echo "$jobrunid<INPUT TYPE='HIDDEN' NAME='reconname' VALUE='$jobrunid'>";
-  else echo "<BR/><INPUT TYPE='text' NAME='reconname' VALUE='$reconname' SIZE='50'>";
+  <table border='3' class='tableborder'>
+  <tr>
+    <td valign='top'>
+    <table>
+    <tr>
+      <td valign='top'>
+      <br>
+      <b>Recon Name:</b> \n";
+  if ($jobId) echo "$jobrunid<input type='hidden' name='reconname' value='$jobrunid'>";
+  else echo "<BR/><input type='text' name='reconname' value='$reconname' size='50'>";
   echo "
       <BR/>
       <B>Recon Base Directory:</B>\n";
   if ($jobId) echo "$sessionpath\n";
-  else echo "<BR/><INPUT TYPE='text' NAME='reconpath' VALUE='$sessionpath' SIZE='50'/>";
+  else echo "<BR/><input type='text' name='reconpath' value='$sessionpath' size='50'/>";
   echo "
-      <BR/>
-      <P>
-      <B>Recon Description:</B><BR/>
-      <TEXTAREA NAME='description' ROWS='3' COLS='50'>$description</TEXTAREA>
-<BR>
-      <INPUT TYPE='checkbox' NAME='oneiteration' $oneiteration><B>Upload only iteration </b>
-<INPUT TYPE='text' NAME='iteration' VALUE='$iteration' SIZE='4'/><br />
-      <INPUT TYPE='checkbox' NAME='contiteration' $contiteration><b>Begin with iteration </b>
-<INPUT TYPE='text' NAME='startiteration' VALUE='$startiteration' SIZE='4'/><br/>
-      </TD>
+      <br/>
+      <p>
+      <b>Recon Description:</b><br/>
+      <textarea name='description' rows='3' cols='50'>$description</textarea>
+<br>
+      <input type='checkbox' name='oneiteration' $oneiteration><B>Upload only iteration </b>
+<input type='text' name='iteration' value='$iteration' size='4'/><br />
+      <input type='checkbox' name='contiteration' $contiteration><b>Begin with iteration </b>
+<input type='text' name='startiteration' value='$startiteration' size='4'/><br/>
+      </td>
 
-    <TR>
-      <TD VALIGN='TOP' CLASS='tablebg'>
-      <P>";
+    <tr>
+      <td valign='top' class='tablebg'>
+      <p>";
   echo "Stack: ";
   if ($jobId) {
-		echo "$stackid <INPUT TYPE='HIDDEN' NAME='stack' VALUE='$stackid'><BR/>\n";
+		echo "$stackid <input type='hidden' name='stack' value='$stackid'><BR/>\n";
 		$stackparams = $particle->getStackParams($stackid);
 		//print_r($stackparams);
 		echo "&nbsp;Name: ".$stackparams['shownstackname']."<BR/>\n";
 		echo "&nbsp;Desc: '".$stackparams['description']."'<BR/>\n";
 	} else {
-    echo "<SELECT NAME='stack'>\n";
+    echo "<select name='stack'>\n";
 
     // find each stack entry in database
     $stackIds = $particle->getStackIds($sessionId);
@@ -151,16 +151,16 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       $box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
       // get stack path with name
       $opvals = "$stackid[stackid]";
-      echo "<OPTION VALUE='$stackid[stackid]'";
+      echo "<option value='$stackid[stackid]'";
       // select previously set stack on resubmit
-      if ($stackid['stackid']==$_POST['stack']) echo " SELECTED";
-      echo">$stackid[stackid] ($s[shownstackname]: $nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+      if ($stackid['stackid']==$_POST['stack']) echo " selected";
+      echo">$stackid[stackid] ($s[shownstackname]: $nump particles, $apix &Aring;/pix, ".$box."x".$box.")</option>\n";
     }
-    echo "</SELECT>\n";
+    echo "</select>\n";
   }
   echo "<P>Initial Model:\n";
   if ($jobId) {
-		echo "$modelid <INPUT TYPE='HIDDEN' NAME='model' VALUE='$modelid'><BR/>\n";
+		echo "$modelid <input type='hidden' name='model' value='$modelid'><BR/>\n";
 		$stackparams = $particle->getInitModelInfo($modelid);
 		//print_r($stackparams);
 		//echo "\n<BR/>";
@@ -168,14 +168,14 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		echo "&nbsp;Desc: '".$stackparams['description']."'<BR/>\n";
 	} else {
     echo "
-      <SELECT NAME='model'>
-      <OPTION VALUE=''>Select One</OPTION>\n";
+      <SELECT name='model'>
+      <OPTION value=''>Select One</OPTION>\n";
 
     // get initial models associated with project
     $models=$particle->getModelsFromProject($projectId);
 
     foreach ($models as $model) {
-      echo "<OPTION VALUE='$model[DEF_id]'";
+      echo "<OPTION value='$model[DEF_id]'";
       if ($model['DEF_id']==$_POST['model']) echo " SELECTED";
       echo "> ".$model['DEF_id']." ($model[description])";
       echo "</OPTION>\n";
@@ -190,45 +190,45 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   $eman_coran=array('description'=>'EMAN refine followed by SPIDER coran subclassification','setting'=>'EMAN/SpiCoran');
 	$packages=array('EMAN'=>$eman,'EMAN/SpiCoran'=>$eman_coran,'EMAN/MsgP'=>$eman_msgp);
   if ($jobId) {
-		echo "$package<INPUT TYPE='HIDDEN' NAME='package' VALUE='$package'><BR/>\n";
-		echo "&nbsp;Desc: '".$packages[$package]['description']."'<BR/>\n";
-		echo "<BR/>\n";
+		echo "$package<input type='hidden' name='package' value='$package'><br/>\n";
+		echo "&nbsp;Desc: '".$packages[$package]['description']."'<br/>\n";
+		echo "<br/>\n";
 	} else {
 		echo "Process Used:
-		    <SELECT NAME='package'> ";
+		    <select name='package'> ";
 		foreach ($packages as $p) {
-			echo "<OPTION VALUE='$p[setting]'";
+			echo "<option value='$p[setting]'";
 			// select previously set stack on resubmit
 			if ($p['setting']==$_POST['package']) echo " SELECTED";
 			echo ">  $p[description]";
-			echo "</OPTION>\n";
+			echo "</option>\n";
 		}
 		echo "
-      </SELECT>";
+      </select>";
 	}
 	echo "
+      <p>
+      <b>Snapshot Options:</b>
+      <br>
+      <input type='text' name='contour' value='$contour' size='5'> Contour Level
+      <br>
+      <input type='text' name='zoom' value='$zoom' size='5'> Zoom
       <P>
-      <B>Snapshot Options:</B>
-      <BR>
-      <INPUT TYPE='text' NAME='contour' VALUE='$contour' SIZE='5'> Contour Level
-      <BR>
-      <INPUT TYPE='text' NAME='zoom' VALUE='$zoom' SIZE='5'> Zoom
-      <P>
-      </TD>
-    </TR>
-    </TABLE>
-  </TD>
-  </TR>
-  <TR>
-    <TD ALIGN='CENTER'>
+      </td>
+    </tr>
+    </table>
+  </td>
+  </tr>
+  <tr>
+    <td align='center'>
       <hr />\n";
 	echo getSubmitForm("Upload Recon");
 	echo "
-    </TD>
-	</TR>
-  </TABLE>
-  </FORM>
-  </CENTER>\n";
+    </td>
+	</tr>
+  </table>
+  </form>
+  </center>\n";
   processing_footer();
   exit;
 }
@@ -337,20 +337,20 @@ function runUploadRecon() {
 	processing_header("UploadRecon Run","UploadRecon Params");
 	
 	echo"
-	<TABLE WIDTH='600' BORDER='1'>
-	<TR><TD COLSPAN='2'>
-	<B>UploadRecon Command:</B><BR>
+	<table class='tableborder' width='600' border='1'>
+	<tr><td colspan='2'>
+	<b>UploadRecon Command:</b><br>
 	$command
-	</TD></TR>
-	<TR><TD>run name</TD><TD>$runid</TD></TR>
-	<TR><TD>stack ID</TD><TD>$stack</TD></TR>
-	<TR><TD>model</TD><TD>$model</TD></TR>
-	<TR><TD>path</TD><TD>$reconpath</TD></TR>
-        <TR><TD>jobid</TD><TD>$jobId</TD></TR>
-	<TR><TD>contour</TD><TD>$contour</TD></TR>
-	<TR><TD>zoom</TD><TD>$zoom</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	</TABLE>\n";
+	</td></tr>
+	<tr><td>run name</td><td>$runid</td></tr>
+	<tr><td>stack ID</td><td>$stack</td></tr>
+	<tr><td>model</td><td>$model</td></tr>
+	<tr><td>path</td><td>$reconpath</td></tr>
+	<tr><td>jobid</td><td>$jobId</td></tr>
+	<tr><td>contour</td><td>$contour</td></tr>
+	<tr><td>zoom</td><td>$zoom</td></tr>
+	<tr><td>description</td><td>$description</td></tr>
+	</table>\n";
 	processing_footer();
 }
 ?>
