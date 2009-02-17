@@ -35,7 +35,7 @@ def printMsg(text, colorstr=None):
 			f.close()
 		except:
 			print "write error"
-	print " ... "+colorString(text, colorstr)
+	sys.stderr.write(" ... "+colorString(text, colorstr)+"\n")
 	
 def printError(text):
 	"""
@@ -61,7 +61,7 @@ def printColor(text, colorstr):
 			f.close()
 		except:
 			print "write error"
-	print colorString(text, colorstr)
+	sys.stderr.write(colorString(text, colorstr)+"\n")
 	
 
 def shortenImageName(imgname):
