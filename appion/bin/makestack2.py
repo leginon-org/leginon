@@ -179,7 +179,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
 		emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
 		apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+imgstackfile)
-		apEMAN.executeEmanCmd(emancmd)
+		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
 		### read mean and stdev
 		partmeantree = []
