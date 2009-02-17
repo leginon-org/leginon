@@ -42,7 +42,7 @@ def fileFilter(fname, dataext=".spi"):
 	return fname
 
 class SpiderSession:
-	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True):
+	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True, nproc=1):
 		# spider executable		
 		if spiderexec is None:
 			if os.environ.has_key('SPIDER_LOC'):
@@ -75,6 +75,8 @@ class SpiderSession:
 		self.toSpiderQuiet(self.projext+"/"+self.dataext)
 		self.toSpiderQuiet("MD", "TERM OFF")
 		self.toSpiderQuiet("MD", "RESULTS OFF")
+		if nproc > 1:
+			self.toSpiderQuiet("MD", "SET MP", str(nproc))
 		if self.logo is True:
 			self.showlogo()
 
@@ -118,7 +120,7 @@ class SpiderSession:
 		self.logf.flush()
 		f = open("spider.log", "r")
 		for i in range(7):
-			sys.stdout.write(f.readline())
+			sys.stderr.write(f.readline())
 		f.close()
 
 	def wait(self):
@@ -156,14 +158,14 @@ class SpiderSession:
 			tdiff = time.time()-self.starttime
 			if tdiff > 20:
 				tstr = self.timeString(tdiff)
-				sys.stdout.write("\nSPIDER completed in "+tstr+"\n")
+				sys.stderr.write("\nSPIDER completed in "+tstr+"\n")
 			else:
 				sys.stderr.write("\n")
 		self.spiderproc.wait()
 
 	def toSpider(self, *args):
 		" each item is a line sent to Spider"
-		sys.stdout.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
+		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
 		for item in args:
 			self.spiderin.write(str(item) + '\n')
 		self.spiderin.flush()
