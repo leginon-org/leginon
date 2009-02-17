@@ -202,6 +202,7 @@ def convertEmanEulersToFrealign(eman_eulers):
 	if e1 < 0:
 		e1+=360
 	e1-=90
+	e1*=-1
 	if e1 < 0:
 		e1+=360
 
