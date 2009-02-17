@@ -72,6 +72,10 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="angular increment of reprojections for MRA", metavar="INT")
 		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", #default=25,
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
+		
+		### mass specified for eman volume function
+		self.parser.add_option("--mass", dest="mass", type="int",
+                        help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
 
 		return 
 
@@ -425,6 +429,13 @@ class imagic3d0Script(appionScript.AppionScript):
 		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
 		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+
+		### optional thresholding based on specified size
+		if self.params['mass'] is not None:
+			volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+			volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+			apEMAN.executeEmanCmd(volumecmd1)
+			apEMAN.executeEmanCmd(volumecmd2)
 
 		### create chimera slices of densities
 		apRecon.renderSnapshots(mrcname, 30, None, 
