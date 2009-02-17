@@ -164,7 +164,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 	"""
 	waited = False
 	if showcmd is True:
-		sys.stdout.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
+		sys.stderr.write(apDisplay.colorString("EMAN: ","magenta")+emancmd+"\n")
 	t0 = time.time()
 	try:
 		if logfile is not None:
