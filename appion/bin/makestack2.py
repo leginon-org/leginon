@@ -713,6 +713,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		self.parser.add_option("--defocpair", dest="defocpair", default=False,
 			action="store_true", help="select defocal pair")
 
+		self.parser.add_option("--no-meanplot", dest="meanplot", default=True,
+			action="store_false", help="do not make stack mean plot")
+
 		self.parser.add_option("--boxfiles", dest="boxfiles", default=False,
 			action="store_true", help="create only boxfiles, no stack")
 		self.parser.add_option("--checkmask", dest="checkmask", default=False,
@@ -838,7 +841,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		stackpath = os.path.join(self.params['rundir'], "start.hed")
 		apStack.averageStack(stack=stackpath)
 		### Create Stack Mean Plot
-		if self.params['commit'] is True:
+		if self.params['commit'] is True and self.params['meanplot'] is True:
 			stackid = apStack.getStackIdFromPath(stackpath)
 			if stackid is not None:
 				apStackMeanPlot.makeStackMeanPlot(stackid)
