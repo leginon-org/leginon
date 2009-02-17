@@ -9,14 +9,13 @@ import os
 ## stdout & sterr will be saved to a file
 if __name__ == '__main__':
 	if len(sys.argv) < 3:
-		print "Usage: webcaller.py <command> <outfile>"
+		print "Usage: webcaller.py '<command>' <outfile>"
 		sys.exit(1)
 	cmd = sys.argv[1]
 	outf = sys.argv[2]
-	#PIPE = subprocess.PIPE
-	f = open(outf, "a")
-	proc = subprocess.Popen(cmd, shell=True, stdout=f, stderr=f)
-	#proc.stderr
-	#proc.stdout
+
+	f = open(outf, "w")
+	proc = subprocess.Popen(cmd, shell=True, stdout=f, stderr=subprocess.STDOUT)
 	proc.wait()
+
 	f.close()
