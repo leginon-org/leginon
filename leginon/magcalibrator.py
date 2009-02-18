@@ -34,6 +34,8 @@ class MagCalibrator(calibrator.Calibrator):
 		'cutoffpercent': 1.0,
 		'minbright': 100,
 		'maxbright': 5000,
+		'mag1': 5000,
+		'mag2': 6500,
 	})
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
@@ -60,6 +62,11 @@ class MagCalibrator(calibrator.Calibrator):
 		self.matchMags(previousmags)
 
 	def uiStart(self):
+		mag1 = self.settings['mag1']
+		mag2 = self.settings['mag2']
+		self.compareTwoMags(mag1, mag2)
+		return
+
 		mag = self.instrument.tem.Magnification
 		print 'MAG', mag
 		mags = self.getMags()
@@ -118,33 +125,33 @@ class MagCalibrator(calibrator.Calibrator):
 		mags = self.instrument.tem.Magnifications
 		return mags
 
-	def compareToOtherMag(self, othermag):
-		## acquire image at this mag
-		thisimagedata = self.acquireImage()
-		stats = arraystats.all(thisimagedata['image'])
-		limitmax = 1.5 * stats['mean']
-		limitmin = 0.5 * stats['mean']
-		thismag = self.instrument.tem.Magnification
-		print 'THISMAG', thismag
-		print 'OTHERMAG', othermag
+	def compareTwoMags(self, mag1, mag2):
+		minbright = self.settings['minbright']
+		maxbright = self.settings['maxbright']
 
-		## acquire image at other mag
-		self.instrument.tem.Magnification = othermag
+		## mag1
+		self.instrument.tem.Magnification = mag1
 		self.pause()
-		otherimagedata = self.acquireWithinRange(3000, 40000)
-		this = thisimagedata['image']
-		other = otherimagedata['image']
-		
+		mag1imdata = self.acquireWithinRange(minbright, maxbright)
+
+		## mag2
+		self.instrument.tem.Magnification = mag2
+		self.pause()
+		mag2imdata = self.acquireWithinRange(minbright, maxbright)
+
+		mag1im = mag1imdata['image']
+		mag2im = mag2imdata['image']
+
 		## compare
 		anglestart = -3
 		angleend = 3
 		angleinc = 0.25
-		scaleguess = float(othermag) / thismag
+		scaleguess = float(mag2) / mag1
 		scalestart = scaleguess - 0.08
 		scaleend = scaleguess + 0.08
 		scaleinc = 0.02
-		prebin = 4
-		result = msc.findRotationScaleShift(this, other, anglestart, angleend, angleinc, scalestart, scaleend, scaleinc, prebin)
+		prebin = 1
+		result = msc.findRotationScaleShift(mag1im, mag2im, anglestart, angleend, angleinc, scalestart, scaleend, scaleinc, prebin)
 		if result is None:
 			self.logger.error('could not determine relation')
 			return
@@ -156,8 +163,8 @@ class MagCalibrator(calibrator.Calibrator):
 		print 'SCALE', scale
 		print 'SHIFT', shift
 		magdata = leginondata.MagnificationComparisonData()
-		magdata['maghigh'] = thismag
-		magdata['maglow'] = othermag
+		magdata['mag1'] = mag1
+		magdata['mag2'] = mag2
 		magdata['rotation'] = angle
 		magdata['scale'] = scale
 		magdata['shiftrow'] = shift[0]

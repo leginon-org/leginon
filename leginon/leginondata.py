@@ -1617,6 +1617,8 @@ class MagCalibratorSettingsData(CalibratorSettingsData):
 			('minbright', float),
 			('maxbright', float),
 			('magsteps', int),
+			('mag1', int),
+			('mag2', int),
 		)
 	typemap = classmethod(typemap)
 

@@ -96,6 +96,16 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz.Add(lab, (10,0), (1,1))
 		sz.Add(self.widgets['magsteps'], (10,1), (1,1))
 
+		lab = wx.StaticText(self, -1, 'mag1')
+		self.widgets['mag1'] = IntEntry(self, -1)
+		sz.Add(lab, (11,0), (1,1))
+		sz.Add(self.widgets['mag1'], (11,1), (1,1))
+
+		lab = wx.StaticText(self, -1, 'mag2')
+		self.widgets['mag2'] = IntEntry(self, -1)
+		sz.Add(lab, (12,0), (1,1))
+		sz.Add(self.widgets['mag2'], (12,1), (1,1))
+
 		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.Bind(wx.EVT_BUTTON, self.onGo, self.gobut)
