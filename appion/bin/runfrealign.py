@@ -306,14 +306,14 @@ class frealignJob(appionScript.AppionScript):
 				apFrealign.createMultipleJobs(self.params)
 				# run split jobs
 				apFrealign.submitMultipleJobs(self.params)
-				# create density
+				# combine results & create density
 				apFrealign.combineMultipleJobs(self.params)
 			else:
 				jobname = os.path.join(self.params['rundir'],self.params['runname']+'.job')
 				apFrealign.createFrealignJob(self.params, jobname, norecon=False)
 			# copy density & parameter file to rundir
-			self.params['itervol'] = os.path.join(self.params['rundir'],"threed."+self.params['iter']+".mrc")
-			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+self.params['iter']+".par")
+			self.params['itervol'] = os.path.join(self.params['rundir'],"threed."+str(self.params['iter'])+".mrc")
+			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter'])+".par")
 			shutil.copy(self.params['workingvol'],self.params['itervol'])
 			shutil.copy(self.params['workingparam'],self.params['iterparam'])
 
