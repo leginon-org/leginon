@@ -202,8 +202,8 @@ def convertEmanEulersToFrealign(eman_eulers):
 	# get Frealign phi (add 90 degrees)
 	if e1 < 0:
 		e1+=360
-	e1+=90
 	e1*=-1
+	e1+=90
 	if e1 < 0:
 		e1+=360
 
