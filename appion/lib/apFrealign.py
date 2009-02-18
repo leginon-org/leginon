@@ -190,14 +190,14 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 def convertEmanEulersToFrealign(eman_eulers):
 	e1 = eman_eulers['az']
 	e2 = eman_eulers['alt']
-	e3 = eman_eulers['phi']
+	e3 = eman_eulers['phi']-180
 	m = eman_eulers['mirror']
 
 	# if mirror plane, invert az & alt
 	if m is True:
 		e1*=-1
 		e2*=-1
-		e3-=180
+		e3+=180
 
 	# get Frealign phi (add 90 degrees)
 	if e1 < 0:
