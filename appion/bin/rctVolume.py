@@ -300,11 +300,11 @@ class rctVolumeScript(appionScript.AppionScript):
 			partnum = stackpartdata['particleNumber']-1
 			line = operations.spiderOutLine(count, [tiltrot, tiltangle, totrot])
 			eulerf.write(line)
+		eulerf.close()
+		apDisplay.printColor("\nFinished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		memdiff = (mem.active()-startmem)/count/1024.0
 		if memdiff > 0.1:
 			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
-		eulerf.close()
-		apDisplay.printColor("\nFinished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return eulerfile
 
 	#=====================
@@ -401,10 +401,6 @@ class rctVolumeScript(appionScript.AppionScript):
 							badmirror += 1
 				else:
 					excludeParticle += 1
-		memdiff = (mem.active()-startmem)/count/1024.0
-		if memdiff > 0.1:
-			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
-
 		includeParticle.sort()
 		if time.time()-t0 > 1.0:
 			apDisplay.printMsg("\nSorting time: "+apDisplay.timeString(time.time()-t0))
@@ -416,6 +412,9 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printColor("Particles with bad scores: %d"%(badscore), "cyan")
 		if len(includeParticle) < 1:
 			apDisplay.printError("No particles were kept")
+		memdiff = (mem.active()-startmem)/count/1024.0
+		if memdiff > 0.1:
+			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
 		return includeParticle, tiltParticlesData
 
 	#=====================
