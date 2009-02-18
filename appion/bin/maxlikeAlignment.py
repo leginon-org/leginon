@@ -245,7 +245,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 				apDisplay.printError("sorting error in reflist, see neil")
 			refarray = spider.read(fname)
 			xyshift = (refdict['xshift'], refdict['yshift'])
-			alignrefarray = apImage.rotateThenShift(refarray, rot=refdict['inplane'], 
+			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'], 
 				shift=xyshift, mirror=refdict['mirror'])
 			stack.append(alignrefarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)

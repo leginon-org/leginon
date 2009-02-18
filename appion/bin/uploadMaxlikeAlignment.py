@@ -398,7 +398,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			if partdict['partnum'] != partnum:
 				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
 			xyshift = (partdict['xshift'], partdict['yshift'])
-			alignpartimg = apImage.rotateThenShift(partimg, rot=partdict['inplane'], 
+			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'], 
 				shift=xyshift, mirror=partdict['mirror'])
 			alignstack.append(alignpartimg)
 			#partfile = "partimg*%03d.spi"%(partnum)
