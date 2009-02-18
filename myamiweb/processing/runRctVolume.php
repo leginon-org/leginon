@@ -322,7 +322,7 @@ function runRctVolume() {
 
 		if (!($user && $password)) createRctVolumeForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'rctvolume');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'rctvolume',False,False,False,8);
 		// if errors:
 		if ($sub) createRctVolumeForm("<b>ERROR:</b> $sub");
 		exit;
