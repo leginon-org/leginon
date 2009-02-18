@@ -3,6 +3,7 @@ import re
 import numpy
 import time
 import math
+import datetime
 #leginon
 import leginondata
 #appion
@@ -263,6 +264,12 @@ def getParticleTiltRotationAngles(stackpartdata):
 		#no particle pair info was found
 		print partdata
 		apDisplay.printError("failed to get tilt pair data")
+
+	if transformdata.timestamp < datetime.datetime(2009, 2, 19, 0, 0, 0):
+		### bugfix for switched tilt axis angles
+		temprot = notrot
+		notrot = tiltrot
+		tiltrot = temprot
 
 	if tiltangle < 0:
 		#swap angles
