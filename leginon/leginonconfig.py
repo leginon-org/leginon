@@ -88,6 +88,12 @@ for drive in drives:
 # image path
 IMAGE_PATH = configparser.get('Images', 'path')
 
+# project
+try:
+	default_project = configparser.get('Project', 'default')
+except:
+	default_project = None
+
 # check to see if image path has been set, then create it
 if not IMAGE_PATH:
 	raise LeginonConfigError('set IMAGE_PATH in leginonconfig.py')

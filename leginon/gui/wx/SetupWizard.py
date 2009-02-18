@@ -433,7 +433,14 @@ class SessionProjectPage(WizardPage):
 		choices = self.projects.keys()
 		choices.sort()
 		self.projectchoice = wx.Choice(self, -1, choices=choices)
-		self.projectchoice.SetSelection(0)
+		# select default project
+		default = 0
+		if leginonconfig.default_project is not None:
+			try:
+				default = choices.index(leginonconfig.default_project)
+			except:
+				pass
+		self.projectchoice.SetSelection(default)
 		sizer.Add(self.projectchoice, (1, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 
