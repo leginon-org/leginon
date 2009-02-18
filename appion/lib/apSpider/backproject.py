@@ -187,6 +187,7 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 #===============================
 def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, numpart, dataext=".spi"):
 	### rewriten to do the whole thing in memory in SPIDER, it should be faster
+	starttime = time.time()
 	infile = spyder.fileFilter(infile)
 	reffile = spyder.fileFilter(reffile)
 	alignfile = spyder.fileFilter(alignfile)
@@ -215,9 +216,6 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, numpart, datae
 	partnum = 0
 	while partnum < numpart:
 		partnum+=1
-		if partnum%25 == 0:
-			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
-			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
 
 		mySpider.toSpiderQuiet("CP", 
 			infile+("@%05d"%(partnum)), #picture
@@ -272,6 +270,9 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, numpart, datae
 		"DE", "_2",
 	)
 	mySpider.close()
+
+	apDisplay.printColor("finished shifting particles in "+apDisplay.timeString(time.time()-starttime), "cyan")
+
 	return
 	
 #===============================
@@ -295,7 +296,6 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 
 	### align particles to projection
 	apDisplay.printMsg("Shifting particles")
-	starttime = time.time()
 	crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, numpart)
 
 	if not os.path.isfile(alignstackfile):
