@@ -144,6 +144,11 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 	if last is None:
 		last=params['last']
 
+	# get angular increment for search, if none set a default
+	ang = params['ang']
+	if ang is None:
+		ang=5
+
 	# set relmag to -100 if no 3d reconstruction
 	if norecon is True:
 		reconrelmag=-100.0
@@ -165,7 +170,7 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 	f.write('\n')
 	f.write('frealign << EOF > frealign.out\n')
 	f.write('%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%d\n' % ('M', mode, params['magrefine'], params['defocusrefine'], params['astigrefine'], params['fliptilt'], params['ewald'], params['matches'], params['history'], params['finalsym'], params['fomfilter'], params['fsc']))
-	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], params['ang'], params['itmax'], params['maxmatch']))
+	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], ang, params['itmax'], params['maxmatch']))
 	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
 	f.write('%d, %d\n' % (first, last))
 	f.write('%s\n' % (params['sym']))
@@ -315,7 +320,7 @@ def combineMultipleJobs(params):
 	then reconstruct the density
 	"""
 	workdir = os.path.join(params['rundir'],"working")
-	paramname = os.path.join(workdir,'params.all')
+	paramname = os.path.join(workdir,'params.all.par')
 	combine = open(paramname,'w')
 	for n in range(params['proc']):
 		subdir = "sub"+str(n)
@@ -329,4 +334,6 @@ def combineMultipleJobs(params):
 	combine.close()
 	combinejobname = os.path.join(workdir,'frealign.all.csh')
 	createFrealignJob(params,combinejobname,mode=0,inpar=paramname)
+	os.system('csh '+combinejobname)
+
 		
