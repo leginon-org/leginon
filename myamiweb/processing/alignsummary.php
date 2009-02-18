@@ -119,6 +119,7 @@ if ($stackdatas) {
 						} elseif ($clusterrun['REF|ApKerDenSOMParamsData|kerdenparams']) {
 							// KerDen only has one cluster data
 							$clusterdata = $clusterdatas[0];
+							$clusterid = $clusterdata['clusterid'];
 							echo "<b>Cluster Run ".$clusterrunid.":</b>"
 								."<i>KerDen Self-Organizing Map (Xmipp)</i><br/>\n";
 							$montagefile = $clusterdata['path']."/"."montage.png";
