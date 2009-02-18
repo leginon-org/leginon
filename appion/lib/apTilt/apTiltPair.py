@@ -102,7 +102,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 	runq = appionData.ApSelectionRunData()
 	runq['name'] = params['runname']
 	runq['session'] = imgdata1['session']
-	rundatas = runq.query(results=1)
+	rundatas = runq.query(results=1, readimages=False)
 	if not rundatas:
 		apDisplay.printError("could not find runid in database")
 
@@ -112,7 +112,7 @@ def insertTiltTransform(imgdata1, imgdata2, tiltparams, params):
 			transq = appionData.ApImageTiltTransformData()
 			transq["image"+index] = imgdata
 			transq['tiltrun'] = rundatas[0]
-			transdata = transq.query()
+			transdata = transq.query(readimages=False)
 			if transdata:
 				apDisplay.printWarning("Transform values already in database for "+imgdata['filename'])
 				return transdata[0]
@@ -173,11 +173,11 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	### figure out if its particle 1 or 2
 	tiltpartq1 = appionData.ApTiltParticlePairData()
 	tiltpartq1['particle1'] = partdata
-	tiltpartdatas1 = tiltpartq1.query(results=1)
+	tiltpartdatas1 = tiltpartq1.query(results=1, readimages=False)
 
 	tiltpartq2 = appionData.ApTiltParticlePairData()
 	tiltpartq2['particle2'] = partdata
-	tiltpartdatas2 = tiltpartq2.query(results=1)
+	tiltpartdatas2 = tiltpartq2.query(results=1, readimages=False)
 
 	if not tiltpartdatas1 and tiltpartdatas2:
 		#print "image1"
@@ -196,7 +196,7 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	stackpartq = appionData.ApStackParticlesData()
 	stackpartq['stack'] = tiltstackdata
 	stackpartq['particle'] = otherpart
-	stackpartdatas2 = stackpartq.query(results=1)
+	stackpartdatas2 = stackpartq.query(results=1, readimages=False)
 	if not stackpartdatas2:
 		#print otherpart.dbid
 		#apDisplay.printError("particle "+str(partnum)+" has no tilt pair in stackid="+str(tiltstackid))
@@ -204,8 +204,8 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 	stackpartdata = stackpartdatas2[0]
 
 	#print partnum,"-->",stackpartnum
-	if time.time()-t0 > 0.7:
-		print "getStackParticleTiltPair1", apDisplay.timeString(time.time()-t0)
+	if time.time()-t0 > 1.0:
+		print "long getStackPartTiltPair", apDisplay.timeString(time.time()-t0)
 	return stackpartdata
 
 #===============================
@@ -215,11 +215,11 @@ def getTiltTransformFromParticle(partdata):
 	### figure out if its particle 1 or 2
 	tiltpartq1 = appionData.ApTiltParticlePairData()
 	tiltpartq1['particle1'] = partdata
-	tiltpartdatas1 = tiltpartq1.query(results=1)
+	tiltpartdatas1 = tiltpartq1.query(results=1, readimages=False)
 
 	tiltpartq2 = appionData.ApTiltParticlePairData()
 	tiltpartq2['particle2'] = partdata
-	tiltpartdatas2 = tiltpartq2.query(results=1)
+	tiltpartdatas2 = tiltpartq2.query(results=1, readimages=False)
 
 	if tiltpartdatas1 and not tiltpartdatas2:
 		imgnum = 1
@@ -235,8 +235,8 @@ def getTiltTransformFromParticle(partdata):
 		print tiltpartdatas2
 		apDisplay.printError("failed to get tilt pair data")
 
-	if time.time()-t0 > 0.3:
-		print "getTiltTransformFromParticle1", apDisplay.timeString(time.time()-t0)
+	if time.time()-t0 > 1.0:
+		print "long getTiltTransFromPart1", apDisplay.timeString(time.time()-t0)
 	return imgnum, transformdata, otherpartdata
 
 #===============================
@@ -276,7 +276,7 @@ def getTransformImageIds(transformdata):
 	img1 = transformdata.special_getitem('image1', dereference=False).dbid
 	img2 = transformdata.special_getitem('image2', dereference=False).dbid
 	if time.time()-t0 > 0.3:
-		print "image query", apDisplay.timeString(time.time()-t0)
+		print "long image query", apDisplay.timeString(time.time()-t0)
 	return img1, img2
 
 
