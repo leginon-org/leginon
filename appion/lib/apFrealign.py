@@ -120,7 +120,8 @@ def generateParticleParams(params):
 			particleparams['phi'] = fr_eulers['phi']
 			particleparams['shx']=params['eman_orient']['shiftx']
 			particleparams['shy']=params['eman_orient']['shifty']
-		
+			if params['eman_orient']['mirror'] is True:
+				particleparams['shx']*=-1	
 		writeParticleParamLine(particleparams,f)
 	f.close()
 	
@@ -192,6 +193,36 @@ def convertEmanEulersToFrealign(eman_eulers):
 	e2 = eman_eulers['alt']
 	e3 = eman_eulers['phi']
 	m = eman_eulers['mirror']
+
+	# first get Frealign theta (easiest)
+	if m is True:
+		e2+=180
+	if e2 < 0:
+		e2+=360
+	if e2 > 360:
+		e2-=360
+		
+	# get Frealign phi (add 90 degrees)
+	e1*=-1
+	if m is True:
+		e1-=90
+	else:
+		e1+=90
+	if e1 < 0:
+		e1+=360+(360*int(e3/360.0))
+	if e1 > 360:
+		e1-=360*int(e3/360.0)
+
+	# get Frealign psi (subtract 90 degrees)
+	e3*=-1
+	if m is True:
+		e3+=90
+	else:
+		e3-=90
+	if e3 < 0:
+		e3+=360+(360*int(e3/360.0))
+	if e3 > 360:
+		e3-=360*int(e3/360.0)
 
 	eulers={"phi":e1,"theta":e2,"psi":e3}
 	
