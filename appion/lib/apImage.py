@@ -893,43 +893,58 @@ def writeMrcStack(path, stackname, mrc_files, binning=1):
 		mrc.append(image, stackname)
 
 #=========================
-def rotateThenShift(a, rot=0, shift=(0,0), mirror=False, order=2):
+def spiderTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
 	"""
-	rotates (in degrees) then shifts (in pixels) then mirrors an array, just like SPIDER
-	http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html
+	rotates (in degrees) about an off-center pixel, then shifts (in pixels) and last mirrors an array
+
+	FROM http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html
+
+	UNTESTED
 	"""
-	#print shift, rot, mirror
-	#rad = rot*math.pi/180.0
-	# rotate the image
-	b = ndimage.rotate(a, angle=rot, reshape=False, mode='reflect', order=order)
-	# shift the image
-	c = ndimage.shift(b, shift=shift, mode='reflect', order=order)
+	### make a copy
+	b = a
+
+	### rotate is positive, but shifted by a half pixel
+	b = ndimage.shift(b, shift=(-0.5, -0.5), mode='wrap', order=order)
+	b = ndimage.rotate(b, angle=rot, reshape=False, mode='reflect', order=order)
+	b = ndimage.shift(b, shift=(0.5, 0.5), mode='wrap', order=order)
+
+	# shift is in rows/columns not x,y
+	rowcol = (shift[1],shift[0])
+	b = ndimage.shift(b, shift=rowcol, mode='reflect', order=order)
+
 	# mirror the image about the y-axis, i.e. flip left-right
 	if mirror is True:
-		d = numpy.fliplr(c)
-	else:
-		d = c
-	return d
+		b = numpy.fliplr(b)
+
+	return b
 
 
 #=========================
-def XmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
+def xmippTransform(a, rot=0, shift=(0,0), mirror=False, order=2):
 	"""
+	shift, mirror, then rotate (in degrees) about an off-center pixel
 	rotates (in degrees) then shifts (in pixels) then mirrors an array, just like SPIDER
-	FROM xmipp/libraries/data/matrix2d.h
+
+	FROM http://xmipp.cnb.uam.es/twiki/bin/view/Xmipp/AlignementParametersNote
 	"""
-	print shift, rot, mirror
+	### make a copy
+	b = a
 
-	b = ndimage.shift(a, shift=shift, mode='reflect', order=order)
+	### shift is in rows/columns not x,y
+	rowcol = (shift[1],shift[0])
+	b = ndimage.shift(b, shift=rowcol, mode='reflect', order=order)
 
-	c = ndimage.rotate(b, angle=rot, reshape=False, mode='reflect', order=order)
-
+	### mirror the image about the y-axis, i.e. flip left-right
 	if mirror is True:
-		d = numpy.flipud(c)
-	else:
-		d = c
+		b = numpy.fliplr(b)
+	
+	### rotate is positive, but shifted by a half pixel
+	b = ndimage.shift(b, shift=(-0.5, -0.5), mode='wrap', order=order)
+	b = ndimage.rotate(b, angle=-1*rot, reshape=False, mode='reflect', order=order)
+	b = ndimage.shift(b, shift=(0.5, 0.5), mode='wrap', order=order)
 
-	return d
+	return b
 
 
 
