@@ -49,6 +49,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '15';
 	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '400';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '4';
+	$minscore = ($_POST['minscore']) ? $_POST['minscore'] : '';
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -229,6 +230,14 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 	echo "\n<br/>\n<br/>\n";
 
+	if ($_GET['alignid'] || $_GET['clusterid']) {
+		//Minimum score cutoff
+		echo docpop('minscore','Min Score cutoff:<br/>');
+		echo "<INPUT TYPE='text' NAME='minscore' SIZE='5' VALUE='$minscore'>\n";
+		echo "<FONT SIZE='-2'>(see graph)</FONT>\n";
+		echo "\n<br/>\n<br/>\n";
+	}
+
 	//Number of iterations
 	echo docpop('numiter','Number of Particle centering iterations:<br/>');
 	echo "<INPUT TYPE='text' NAME='numiter' SIZE='2' VALUE='$numiter'>\n";
@@ -263,6 +272,7 @@ function runRctVolume() {
 	$classnum = $_POST['classnum'];
 	$description=$_POST['description'];
 	$stack=$_POST['stack'];
+	$minscore=$_POST['minscore'];
 
 	if (!$tiltstack)
 		createRctVolumeForm("<B>ERROR:</B> No tilted stack selected");
@@ -312,7 +322,8 @@ function runRctVolume() {
 	$command.="--num-iters=$numiter ";
 	$command.="--lowpassvol=$lowpassvol ";
 	$command.="--highpasspart=$highpasspart ";
-
+	if ($minscore)
+		$command.="--min-score=$minscore ";
 	$command.="--commit ";
 
 	// submit job to cluster
