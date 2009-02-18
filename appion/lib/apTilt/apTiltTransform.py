@@ -206,8 +206,8 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	point2 -> numpy coordinates for a particle in image 2
 	"""
 	#gamma rotation, negative for inverse rotation
-	cosgamma = math.cos(1.0*gamma)
-	singamma = math.sin(1.0*gamma)
+	cosgamma = math.cos(1.0*phi)
+	singamma = math.sin(1.0*phi)
 	gammamat = numpy.array([[ cosgamma, -singamma ], [ singamma, cosgamma ]], dtype=numpy.float32)
 	#theta compression
 	if theta < 0:
@@ -215,8 +215,8 @@ def a2Toa1(a2, theta, gamma, phi, scale, point1, point2):
 	else:
 		thetamat  = numpy.array([[ 1.0/math.cos(theta), 0.0 ], [ 0.0, 1.0]], dtype=numpy.float32)
 	#phi rotation
-	cosphi = math.cos(-1.0*phi)
-	sinphi = math.sin(-1.0*phi)
+	cosphi = math.cos(-1.0*gamma)
+	sinphi = math.sin(-1.0*gamma)
 	phimat = numpy.array([[ cosphi, -sinphi ], [ sinphi, cosphi ]], dtype=numpy.float32)
 	#scale factor
 	scalemat =  numpy.array([[ scale, 0.0 ], [ 0.0, scale ]], dtype=numpy.float32)
