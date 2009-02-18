@@ -284,6 +284,7 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	outputs:
 		volume
 	"""
+	starttime = time.time()
 	### create corresponding projections
 	projstackfile = "projstack%s-%03d.spi"%(timestamp, iternum)
 	projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext)
