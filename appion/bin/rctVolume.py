@@ -20,6 +20,7 @@ import apProject
 import spyder
 from apTilt import apTiltPair
 from apSpider import operations, backproject
+from pyami import mem
 
 class rctVolumeScript(appionScript.AppionScript):
 	#=====================
@@ -49,6 +50,12 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
+
+		self.parser.add_option("--min-score", dest="minscore", type="float",
+			help="Minimum cross-correlation score", metavar="#")
+
+		self.parser.add_option("--num-part", dest="numpart", type="int",
+			help="Limit number of particles, for debugging", metavar="#")
 
 		self.mirrormodes = ( "all", "yes", "no" )
 		self.parser.add_option("--mirror", dest="mirror",
@@ -270,11 +277,15 @@ class rctVolumeScript(appionScript.AppionScript):
 		apDisplay.printMsg("Creating Euler angles doc file")
 		starttime = time.time()
 		tiltParticlesData.sort(self.sortTiltParticlesData)
+		startmem = mem.active()
 		for stackpartdata in tiltParticlesData:
 			count += 1
-			if count%20 == 0:
+			if count%50 == 0:
 				sys.stderr.write(".")
 				eulerf.flush()
+				memdiff = (mem.active()-startmem)/count/1024.0
+				if memdiff > 3:
+					apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			totrot = -1.0*(notrot + inplane)
@@ -289,6 +300,9 @@ class rctVolumeScript(appionScript.AppionScript):
 			partnum = stackpartdata['particleNumber']-1
 			line = operations.spiderOutLine(count, [tiltrot, tiltangle, totrot])
 			eulerf.write(line)
+		memdiff = (mem.active()-startmem)/count/1024.0
+		if memdiff > 0.1:
+			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
 		eulerf.close()
 		apDisplay.printColor("\nFinished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
 		return eulerfile
@@ -300,23 +314,32 @@ class rctVolumeScript(appionScript.AppionScript):
 		nopairParticle = 0
 		excludeParticle = 0
 		badmirror = 0
+		badscore = 0
 		apDisplay.printMsg("Sorting particles from classes")
 		count = 0
-
+		startmem = mem.active()
 		t0 = time.time()
 		if self.params['clusterid'] is not None:
 			### method 1: get particles from clustering data
 			clusterpartq = appionData.ApClusteringParticlesData()
 			clusterpartq['clusterstack'] = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
 			clusterpartdatas = clusterpartq.query()
-			apDisplay.printMsg("Found "+str(len(clusterpartdatas))+" clustered particles")
+			apDisplay.printMsg("Sorting "+str(len(clusterpartdatas))+" clustered particles")
 
 			for clustpart in clusterpartdatas:
 				count += 1
 				if count%50 == 0:
 					sys.stderr.write(".")
+					memdiff = (mem.active()-startmem)/count/1024.0
+					if memdiff > 3:
+						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 				#write to text file
 				clustnum = clustpart['refnum']-1
+				if ( self.params['minscore'] is not None 
+				 and clustpart['alignparticle']['score'] is not None 
+				 and clustpart['alignparticle']['score'] < self.params['minscore'] ):
+					badscore += 1
+					continue
 				if clustnum in self.classlist:
 					notstackpartnum = clustpart['alignparticle']['stackpart']['particleNumber']
 					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
@@ -331,6 +354,8 @@ class rctVolumeScript(appionScript.AppionScript):
 							emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
 							includeParticle.append(emantiltstackpartnum)
 							tiltParticlesData.append(tiltstackpartdata)
+							if self.params['numpart'] is not None and len(includeParticle) > self.params['numpart']:
+								break
 						else:
 							badmirror += 1
 				else:
@@ -340,14 +365,22 @@ class rctVolumeScript(appionScript.AppionScript):
 			alignpartq = appionData.ApAlignParticlesData()
 			alignpartq['alignstack'] = self.alignstackdata
 			alignpartdatas = alignpartq.query()
-			apDisplay.printMsg("Found "+str(len(alignpartdatas))+" aligned particles")
+			apDisplay.printMsg("Sorting "+str(len(alignpartdatas))+" aligned particles")
 
 			for alignpart in alignpartdatas:
 				count += 1
 				if count%50 == 0:
 					sys.stderr.write(".")
+					memdiff = (mem.active()-startmem)/count/1024.0
+					if memdiff > 3:
+						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 				#write to text file
 				alignnum = alignpart['ref']['refnum']-1
+				if ( self.params['minscore'] is not None 
+				 and alignpart['score'] is not None 
+				 and alignpart['score'] < self.params['minscore'] ):
+					badscore += 1
+					continue
 				if alignnum in self.classlist:
 					notstackpartnum = alignpart['stackpart']['particleNumber']
 					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
@@ -362,17 +395,25 @@ class rctVolumeScript(appionScript.AppionScript):
 							emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
 							includeParticle.append(emantiltstackpartnum)
 							tiltParticlesData.append(tiltstackpartdata)
+							if self.params['numpart'] is not None and len(includeParticle) > self.params['numpart']:
+								break
 						else:
 							badmirror += 1
 				else:
 					excludeParticle += 1
+		memdiff = (mem.active()-startmem)/count/1024.0
+		if memdiff > 0.1:
+			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
 
 		includeParticle.sort()
 		if time.time()-t0 > 1.0:
 			apDisplay.printMsg("\nSorting time: "+apDisplay.timeString(time.time()-t0))
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
 			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
-		apDisplay.printColor("Bad mirrors: %d"%(badmirror), "cyan")
+		if badmirror > 0:
+			apDisplay.printMsg("Particles with bad mirrors: %d"%(badmirror))
+		if badscore > 0:
+			apDisplay.printColor("Particles with bad scores: %d"%(badscore), "cyan")
 		if len(includeParticle) < 1:
 			apDisplay.printError("No particles were kept")
 		return includeParticle, tiltParticlesData
@@ -461,6 +502,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### insert volumes into DB
 		self.insertRctRun(emanvolfile)
+		apDisplay.printMsg("waiting for Chimera to finish")
 		time.sleep(60)
 
 #=====================
