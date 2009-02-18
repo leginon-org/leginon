@@ -652,7 +652,7 @@ class AppionLoop(appionScript.AppionScript):
 			slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
 			memleak = rho*slope
 			###
-			if(self.stats['memleak'] and slope > 0 and memleak > 128 and gain > 256):
+			if(self.stats['memleak'] and slope > 20 and memleak > 512 and gain > 1024):
 				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
 				self.stats['memleak'] = True
