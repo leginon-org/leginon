@@ -58,8 +58,8 @@ def backprojectCG(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".s
 	if not os.path.isfile(eulerdocfile+dataext):
 		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
 	apFile.removeFile(volfile+dataext)
-
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	nproc = apParam.getNumProcessors()
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
 	mySpider.toSpider("BP CG", 
 		stackfile+"@*****", #stack file
 		"1-%d"%(numpart), #number of particles
@@ -104,8 +104,8 @@ def backprojectRP(stackfile, eulerdocfile, volfile, pixrad, classnum, lambDa, nu
 		selection = selfile
 	else:
 		apDisplay.printError("Partilce selection is invalid for BP RP. Please make sure either numpart or selfile is specified in the function backprojectRP!")
-
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	nproc = apParam.getNumProcessors()
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
 	mySpider.toSpider("BP RP x11", 
 		stackfile+"@*****", #stack file
 		selection, #selection file or particle range 
@@ -142,8 +142,8 @@ def backproject3F(stackfile, eulerdocfile, volfile, numpart, dataext=".spi"):
 	if not os.path.isfile(eulerdocfile+dataext):
 		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
 	apFile.removeFile(volfile+dataext)
-
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	nproc = apParam.getNumProcessors()
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
 	mySpider.toSpider("BP 3F", 
 		stackfile+"@*****", #stack file
 		"1-%d"%(numpart), #number of particles
@@ -161,6 +161,7 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 	project 3D volumes using given Euler angles
 	"""
 	starttime = time.time()
+
 	volfile = spyder.fileFilter(volfile)
 	eulerdocfile = spyder.fileFilter(eulerdocfile)
 	projstackfile = spyder.fileFilter(projstackfile)
@@ -170,7 +171,8 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
 
 	apFile.removeFile(projstackfile)
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	nproc = apParam.getNumProcessors()
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
 	mySpider.toSpider("PJ 3Q", 
 		volfile, #input vol file
 		str(pixrad), #pixel radius
@@ -183,55 +185,91 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 	return
 
 #===============================
-def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, partnum, dataext=".spi"):
+def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, numpart, dataext=".spi"):
 	### rewriten to do the whole thing in memory in SPIDER, it should be faster
 	infile = spyder.fileFilter(infile)
 	reffile = spyder.fileFilter(reffile)
 	alignfile = spyder.fileFilter(alignfile)
+	partimg = "_4"
 	ccmap = "_5"
 	windccmap = "_6"
+
+	boxsize = apFile.getBoxSize(infile+dataext)
+
 	if not os.path.isfile(infile+dataext):
 		apDisplay.printError("input stack file not found: "+infile+dataext)
 	if not os.path.isfile(reffile+dataext):
 		apDisplay.printError("reference stack file not found: "+reffile+dataext)
+	nproc = apParam.getNumProcessors()
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
 
-
-	### cross correlate images; reversed order to avoid -1*shift
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
-	mySpider.toSpiderQuiet("CC N", 
-		reffile+("@%05d"%(partnum)), #reference
-		infile+("@%05d"%(partnum)), #picture
-		ccmap, #output file
+	### Allocate empty stack
+	mySpider.toSpiderQuiet(
+		"MS I", #command
+		"_2@", #name
+		"%d,%d,1"%(boxsize), #boxsize
+		str(numpart+1), #num part to create in memory
+		str(numpart+1), #max particle number
 	)
 
-	### cannot shift more the 1/4 size of the image
-	mySpider.toSpiderQuiet("FI x52", infile+("@%05d"%(partnum)), "12" )
-	mySpider.toSpiderQuiet("x54=int(x52/2)") #window size
-	mySpider.toSpiderQuiet("x55=int(x52/4)") #window topleft
-	mySpider.toSpiderQuiet("WI", 
-		ccmap, #input file
-		windccmap, #output file
-		"x54,x54", #window size
-		"x55,x55", #window origin
-	)
+	partnum = 0
+	while partnum < numpart:
+		partnum+=1
+		if partnum%25 == 0:
+			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
+			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
 
-	### find the cross-correlation peak
-	mySpider.toSpiderQuiet("x56=int(x52/4)+1") #center of window
-	mySpider.toSpiderQuiet("PK M x11,x12,x13,x14", 
-		windccmap, #input ccmap file
-		"x56,x56", #origin coordinates
-	)
+		mySpider.toSpiderQuiet("CP", 
+			infile+("@%05d"%(partnum)), #picture
+			partimg,
+		)
 
-	### save info to doc file
-	mySpider.toSpiderQuiet("SD %d,x13,x14"%(partnum), 
-		ccdocfile, #input ccmap file
-	)
+		### cross correlate images; reversed order to avoid -1*shift
 
-	### shift the images images
-	mySpider.toSpiderQuiet("SH", 
-		infile+("@%05d"%(partnum)), #old stack
-		alignfile+("@%05d"%(partnum)), #new stack
-		"x13,x14", #shift value file
+		mySpider.toSpiderQuiet("CC N", 
+			reffile+("@%05d"%(partnum)), #reference
+			partimg, #picture
+			ccmap, #output file
+		)
+
+		### cannot shift more the 1/4 size of the image
+		mySpider.toSpiderQuiet("FI x52", partimg, "12" )
+		mySpider.toSpiderQuiet("x54=int(x52/2)") #window size
+		mySpider.toSpiderQuiet("x55=int(x52/4)") #window topleft
+		mySpider.toSpiderQuiet("WI", 
+			ccmap, #input file
+			windccmap, #output file
+			"x54,x54", #window size
+			"x55,x55", #window origin
+		)
+
+		### find the cross-correlation peak
+		mySpider.toSpiderQuiet("x56=int(x52/4)+1") #center of window
+		mySpider.toSpiderQuiet("PK M x11,x12,x13,x14", 
+			windccmap, #input ccmap file
+			"x56,x56", #origin coordinates
+		)
+
+		### save info to doc file
+		mySpider.toSpiderQuiet("SD %d,x13,x14"%(partnum), 
+			ccdocfile, #input ccmap file
+		)
+
+		### shift the images images
+		mySpider.toSpiderQuiet("SH", 
+			partimg, #old stack
+			("_2@%05d"%(partnum)), #new stack
+			"x13,x14", #shift value file
+		)
+	### finish up
+	#save stack to file
+	mySpider.toSpiderQuiet(
+		"CP", "_2@",
+		alignfile+"@",	
+	)
+	#delete stack
+	mySpider.toSpiderQuiet(
+		"DE", "_2",
 	)
 	mySpider.close()
 	return
@@ -258,13 +296,7 @@ def rctParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	### align particles to projection
 	apDisplay.printMsg("Shifting particles")
 	starttime = time.time()
-	partnum = 0
-	while partnum < numpart:
-		partnum+=1
-		if partnum%25 == 0:
-			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
-			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
-		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
+	crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, numpart)
 
 	if not os.path.isfile(alignstackfile):
 		apDisplay.printError("aligned stack file not found: "+alignstackfile)
