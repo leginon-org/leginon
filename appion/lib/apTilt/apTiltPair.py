@@ -246,8 +246,8 @@ def getParticleTiltRotationAngles(stackpartdata):
 
 	t0 = time.time()
 	tiltangle1, tiltangle2 = apDatabase.getTiltAnglesDegFromTransform(transformdata)
-	if time.time()-t0 > 0.3:
-		print "angle queries", apDisplay.timeString(time.time()-t0)
+	if time.time()-t0 > 1.0:
+		print "long angle query", apDisplay.timeString(time.time()-t0)
 
 	if imgnum == 1:
 		tiltrot = transformdata['image1_rotation']
