@@ -746,8 +746,10 @@ class particledata {
 	}
 
 	function getTemplateStacksFromProject ($projectId, $getHidden=False, $type) {
-		$q = "SELECT stack.* "
+		$q = "SELECT stack.*, path.path "
 			."FROM ApTemplateStackData as stack "
+			."LEFT JOIN ApPathData AS path ON "
+                        ."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
 			."WHERE `project|projects|project`='$projectId' ";
 		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
 		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
