@@ -745,6 +745,18 @@ class particledata {
 		return $r[0];
 	}
 
+	function getTemplateStacksFromProject ($projectId, $getHidden=False, $type) {
+		$q = "SELECT stack.* "
+			."FROM ApTemplateStackData as stack "
+			."WHERE `project|projects|project`='$projectId' ";
+		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
+		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
+		if ($type == "forward") $q.= "AND (stack.`forward_proj` = 1) ";
+		$q .= "ORDER BY stack.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+                return $r;
+	}
+
 	function getParticlesFromImageId ($runId, $imageId){
 		$q = "select p.DEF_id as id, "
 			."p.xcoord, p.ycoord, p.correlation, "
