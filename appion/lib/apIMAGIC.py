@@ -43,7 +43,7 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
                 print ""
 
 
-def copyImage(path, file, headers=False):
+def copyFile(path, file, headers=False):
 	# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER 
 	# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
 	#
