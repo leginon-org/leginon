@@ -525,7 +525,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		forwimg = "masked_3d0_ordered0_repaligned_forward.img"
 		forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
 		if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
-			
+			shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")	
 		if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
 			shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
 		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
