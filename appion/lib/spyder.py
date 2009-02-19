@@ -193,16 +193,11 @@ class SpiderSession:
 		#	self.logf.write(line)
 		self.logf.close()
 		if self.logo is True:
-			print self.spidererr.readline()
+			sys.stderr.write(self.spidererr.readline())
 	 
 # --------------------------------------------------------------
 if __name__ == '__main__':
 	sp = SpiderSession(dataext='dat')
 	sp.toSpider("[size]=117")
-	s = sp.getreg('size')
-	print "---------------------- size =  %f" % s
-	sp.toSpider("x11=7.7")
-	s = sp.getreg('x11')
-	print "---------------------- x11 =  %f" % s
 	sp.close()
 

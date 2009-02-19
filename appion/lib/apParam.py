@@ -248,7 +248,7 @@ def resetVirtualFrameBuffer():
 		+fontpath+securfile+rgbfile
 		+" &\n"
 	)
-	print xvfbcmd
+	apDisplay.printMsg(xvfbcmd)
 	logf.write(xvfbcmd)
 	proc = subprocess.Popen(xvfbcmd, shell=True, stdout=logf, stderr=logf)
 	time.sleep(1)
