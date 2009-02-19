@@ -30,7 +30,7 @@ processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascri
 // --- Get Stack Data --- //
 $particle = new particledata();
 
-echo $particle->mysql->getDBInfo();
+//echo $particle->mysql->getDBInfo();
 
 // find each stack entry in database
 //$stackIds = $particle->getAlignStackIds($expId, True);
@@ -120,7 +120,7 @@ if ($stackdatas) {
 							// KerDen only has one cluster data
 							$clusterdata = $clusterdatas[0];
 							$clusterid = $clusterdata['clusterid'];
-							echo "<b>Cluster Run ".$clusterrunid.":</b>"
+							echo "<b>Cluster Run ".$clusterrunid.":</b>&nbsp;\n"
 								."<i>KerDen Self-Organizing Map (Xmipp)</i><br/>\n";
 							$montagefile = $clusterdata['path']."/"."montage.png";
 							echo "<a href='loadimg.php?filename=$montagefile'>\n"
