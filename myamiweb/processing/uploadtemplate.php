@@ -43,14 +43,14 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 	$formAction.=($clusterId) ? "&clusterId=$clusterId" : "";
 	$formAction.=($alignId) ? "&alignId=$alignId" : "";
 	$formAction.=($avg) ? "&avg=True" : "";
-	$formAction.=($templateIds) ? "&templateIds=$templateIds" : "";
+	$formAction.=($templateIds!="") ? "&templateIds=$templateIds" : "";
 
 	// Set any existing parameters in form
 	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
 	$diam = ($_POST['diam']) ? $_POST['diam'] : '';
 	$template = ($_POST['template']) ? $_POST['template'] : '';
 	$description = $_POST['description'];
-	if (!$templateIds) $templateIds = $_POST['templateIds'];
+	if ($templateIds=="") $templateIds = $_POST['templateIds'];
 	if (!$stackId) $stackId = $_POST['stackId'];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
@@ -132,7 +132,7 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 		echo "<input type='hidden' name='avgstack' value='avg'>\n";
 	  	echo"<font size='+1'><i>Stack images will be averaged to create a template</i></font>\n";
 		echo "<br/>\n";
-	} elseif ($templateIds) {
+	} elseif ($templateIds!="") {
 		echo"<font size='+1'>Selected Image Numbers: <i>$templateIds</i></font>\n";
 		echo "<input type='hidden' name='templateIds' value='$templateIds'>\n";
 		echo "<br/>\n";
@@ -232,7 +232,7 @@ function runUploadTemplate() {
 	$command.="--diam=$diam ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
-	if ($templateIds) $command.="--imgnums=$templateIds ";
+	if ($templateIds!="") $command.="--imgnums=$templateIds ";
 	if ($avgstack) $command.="--avgstack ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
@@ -287,7 +287,7 @@ function runUploadTemplate() {
 	<tr><td>commit</td><td>$commit</td></tr>
 	<TR><TD>description</TD><TD>$description</TD></TR>";
 
-	if ($templateIds) echo"<TR><TD>image numbers</TD><TD>$templateIds</TD></TR>";
+	if ($templateIds!="") echo"<TR><TD>image numbers</TD><TD>$templateIds</TD></TR>";
 	if ($stackId) echo"<TR><TD>stack id</TD><TD>$stackId</TD></TR>";
 	echo"
 	</TABLE>\n";
