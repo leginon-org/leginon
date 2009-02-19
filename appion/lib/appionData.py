@@ -171,7 +171,7 @@ class ApTemplateStackData(Data):
                         ('templatename', str),
 			('cls_avgs', bool),
 			('forward_proj', bool),
-                        ('origpath', str),
+                        ('origfile', str),
 			('description', str),
 			('session', leginondata.SessionData),
 			('apix', float),
