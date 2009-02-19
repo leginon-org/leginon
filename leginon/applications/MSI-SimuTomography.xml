@@ -4,8 +4,8 @@
 - http://ami.scripps.edu/ 
 -
 - Application :MSI-SimuTomography (1.6)
-- Version     :3
-- Date : 11/24/2008
+- Version     :5
+- Date : 02/19/2009
 -
 -->
 
@@ -212,47 +212,121 @@
  <data>
   <!-- ApplicationData -->
     <sqltable name="ApplicationData" >
-        <field name="DEF_id" >607</field>
-        <field name="DEF_timestamp" >2008-11-24 15:18:18</field>
+        <field name="DEF_id" >629</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
         <field name="name" >MSI-SimuTomography (1.6)</field>
-        <field name="version" >3</field>
+        <field name="version" >5</field>
     </sqltable>
   <!-- BindingSpecData -->
     <sqltable name="BindingSpecData" >
-        <field name="DEF_id" >15148</field>
-        <field name="DEF_timestamp" >2008-11-24 15:18:18</field>
+        <field name="DEF_id" >15895</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
         <field name="event class string" >TargetListDoneEvent</field>
         <field name="from node alias" >Tomography</field>
         <field name="to node alias" >Start Tomo Processing</field>
-        <field name="REF|ApplicationData|application" >607</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15896</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >ChangePresetEvent</field>
+        <field name="from node alias" >Tomography</field>
+        <field name="to node alias" >Presets Manager</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15897</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >MoveToTargetEvent</field>
+        <field name="from node alias" >Tomography</field>
+        <field name="to node alias" >Navigation</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15898</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >PresetChangedEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Tomography</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15899</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >MoveToTargetEvent</field>
+        <field name="from node alias" >Presets Manager</field>
+        <field name="to node alias" >Navigation</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15900</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >MoveToTargetDoneEvent</field>
+        <field name="from node alias" >Navigation</field>
+        <field name="to node alias" >Presets Manager</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15901</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >MoveToTargetDoneEvent</field>
+        <field name="from node alias" >Navigation</field>
+        <field name="to node alias" >Tomography</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >15902</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="event class string" >ChangePresetEvent</field>
+        <field name="from node alias" >Navigation</field>
+        <field name="to node alias" >Presets Manager</field>
+        <field name="REF|ApplicationData|application" >629</field>
     </sqltable>
   <!-- NodeSpecData -->
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6395</field>
-        <field name="DEF_timestamp" >2008-11-24 15:18:18</field>
-        <field name="class string" >TomographySimu</field>
-        <field name="alias" >Tomography</field>
-        <field name="launcher alias" >main</field>
+        <field name="DEF_id" >6684</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="class string" >ImodProcessor</field>
+        <field name="alias" >Start Tomo Processing</field>
+        <field name="launcher alias" >processing</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >607</field>
+        <field name="REF|ApplicationData|application" >629</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6396</field>
-        <field name="DEF_timestamp" >2008-11-24 15:18:18</field>
+        <field name="DEF_id" >6685</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
         <field name="class string" >EM</field>
         <field name="alias" >Instrument</field>
         <field name="launcher alias" >scope</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >607</field>
+        <field name="REF|ApplicationData|application" >629</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >6397</field>
-        <field name="DEF_timestamp" >2008-11-24 15:18:18</field>
-        <field name="class string" >FileNames</field>
-        <field name="alias" >Start Tomo Processing</field>
-        <field name="launcher alias" >processing</field>
+        <field name="DEF_id" >6686</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="class string" >TomographySimu</field>
+        <field name="alias" >Tomography</field>
+        <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >607</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >6687</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="class string" >PresetsManager</field>
+        <field name="alias" >Presets Manager</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >629</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >6688</field>
+        <field name="DEF_timestamp" >2009-02-19 15:10:02</field>
+        <field name="class string" >Navigator</field>
+        <field name="alias" >Navigation</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >629</field>
     </sqltable>
   <!-- bindingspecdata -->
   <!-- launchedapplicationdata -->
