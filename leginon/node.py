@@ -420,9 +420,19 @@ class Node(object):
 		self.panel.setStatus(status)
 
 	def declareDrift(self, type):
+		self.declareTransform(type)
+
+	def OLDdeclareDrift(self, type):
 		## declare drift manually
 		declared = leginondata.DriftDeclaredData()
 		declared['system time'] = self.instrument.tem.SystemTime
+		declared['type'] = type
+		declared['session'] = self.session
+		declared['node'] = self.name
+		self.publish(declared, database=True, dbforce=True)
+
+	def declareTransform(self, type):
+		declared = leginondata.TransformDeclaredData()
 		declared['type'] = type
 		declared['session'] = self.session
 		declared['node'] = self.name

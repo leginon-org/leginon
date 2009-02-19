@@ -11,7 +11,7 @@
 import node
 import event
 import leginondata
-from pyami import correlator, peakfinder, ordereddict
+from pyami import mrc,correlator, peakfinder, ordereddict
 import calibrationclient
 import math
 import numpy
@@ -26,11 +26,15 @@ import acquisition
 import rctacquisition
 import libCVwrapper
 import align
+import targethandler
 
 class InvalidStagePosition(Exception):
 	pass
 
-class TargetTransformer(object):
+class TargetTransformer(targethandler.TargetHandler):
+	def __init__(self):
+		targethandler.TargetHandler.__init__(self)
+
 	def lookupMatrix(self, image):
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
@@ -56,23 +60,26 @@ class TargetTransformer(object):
 			return initialmatrix
 		else:
 			return mymatrix
-	
+
 	def calculateMatrix(self, image1, image2):
 		array1 = image1['image']
 		array2 = image2['image']
+		shape = array1.shape
 		print image1['filename']
 		print image2['filename']
 		self.logger.info('Calculating main transform...')
-		if image1['scope']['magnification'] < 2000:
+		#if image1['scope']['magnification'] < 2000:
+		if False:
+			print "libcv"
 			for minsize in (160,40,10):
-				shape = array1.shape
-				minsize = minsize * 4096 / shape[0]
+				minsize = int(minsize * (shape[0]/4096.0))
 				print minsize
 				resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
 				if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
 					break
 			matrix = resultmatrix
-		else:
+		elif False:
+			print "log-polar transform"
 			result = align.findRotationScaleTranslation(array1, array2)
 			rotation, scale, shift, rsvalue, value = result
 			matrix = numpy.array([1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0])
@@ -81,6 +88,26 @@ class TargetTransformer(object):
 			matrix[0,1] = -scale*math.sin(rotation)
 			matrix[1,0] = scale*math.sin(rotation)
 			matrix[1,1] = scale*math.cos(rotation)
+			matrix[2,0] = shift[0]
+			matrix[2,1] = shift[1]
+		else:
+			print "correlator"
+			matrix = numpy.array([1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0])
+			matrix = matrix.reshape((3,3))
+			c = correlator.Correlator()
+			p = peakfinder.PeakFinder()
+			c.setImage(0,array1)
+			c.setImage(1,array2)
+			corrimage = c.phaseCorrelate()
+			mrc.write(corrimage,'corr.mrc')
+			p.setImage(corrimage)
+			peak = peakfinder.findPixelPeak(corrimage)
+			shift = [0,0]
+			for i in (0,1):
+				if peak['pixel peak'][i] > shape[i]/2:
+					shift[i] = peak['pixel peak'][i] - shape[i]
+				else:
+					shift[i] = peak['pixel peak'][i]
 			matrix[2,0] = shift[0]
 			matrix[2,1] = shift[1]
 		print matrix
@@ -97,35 +124,76 @@ class TargetTransformer(object):
 			results = [newmatrix]
 	
 		return matrix
+
+	def recentTargetVersions(self, targetdata):
+		# find all siblings of this target, but only most recent versions
+		q = leginondata.AcquisitionImageTargetData()
+		q['session'] = targetdata['session']
+		q['image'] = targetdata['image']
+		q['list'] = targetdata['list']
+		alltargets = q.query()
+		mostrecent = {}
+		for t in alltargets:
+			key = (t['number'],t['status'])
+			if key in mostrecent:
+				continue
+			mostrecent[key] = t
+		final = mostrecent.values()
+		return final
+
+	def matrixTransform(self, target, matrix, newimage=None):
+		alltargets = self.recentTargetVersions(target)
+		print 'TARGET', target['number'], target['version'], target['status'], target.dbid
+		for t in alltargets:
+			print 'T', t['number'], t['version'], t['status'], t.dbid
+			newt = self.matrixTransformOne(t, matrix, newimage)
+			if t['number'] == target['number'] and t['status'] == target['status']:
+				ret = newt
+		return ret
 	
-	def matrixTransform(self, target, matrix,newimage=None):
-			row = target['delta row']
-			col = target['delta column']
-			row,col,one = numpy.dot((row,col,1), matrix)
-			newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
-			# Fix here about version
-			newtarget['version'] = 0
-			newtarget['image'] = newimage
-			newtarget['delta row'] = row
-			newtarget['delta column'] = col
-			newtarget['fromtarget'] = target
-			return newtarget
+	def matrixTransformOne(self, target, matrix,newimage=None):
+		row = target['delta row']
+		col = target['delta column']
+		row,col,one = numpy.dot((row,col,1), matrix)
+		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
+		# Fix here about version
+		newtarget['image'] = newimage
+		newtarget['delta row'] = row
+		newtarget['delta column'] = col
+		newtarget['fromtarget'] = target
+		# newimagedata can be none if it is from a virtual grid for atlas
+		if newimage is not None:
+			newtarget['version'] = newimage['version']
+			newtarget['scope'] = newimage['scope']
+			newtarget['camera'] = newimage['camera']
+			newtarget['preset'] = newimage['preset']
+		newtarget.insert(force=True)
+		return newtarget
 	
 	def transformTarget(self, target):
+		if target is None:
+			print 'TRANSFORMTARGET NONE'
+		else:
+			print 'TRANSFORMTARGET', target.dbid
 		parentimage = target['image']
+		print 'PARENTIMAGE', parentimage
 		matrix = self.lookupMatrix(parentimage)
+		print 'MATRIX', matrix
 		if parentimage is None:
 			newtarget = self.matrixTransform(target, matrix)
+			print 'AAAAAAAAA'
 			return newtarget
 		if matrix is None:
 			parenttarget = parentimage['target']
 			newparenttarget = self.transformTarget(parenttarget)
 			newparentimage = self.reacquire(newparenttarget)
 			if newparentimage is None:
+				print 'BBBBBBBB'
 				return None
 			matrix = self.calculateMatrix(parentimage, newparentimage)
 		print parentimage.dbid,newparentimage.dbid
 		newtarget = self.matrixTransform(target, matrix,newparentimage)
+		print 'CCCCCCC'
 		return newtarget
 
 class TransformManager(node.Node, TargetTransformer):
@@ -157,6 +225,7 @@ class TransformManager(node.Node, TargetTransformer):
 	eventoutputs = node.Node.eventoutputs + presets.PresetsClient.eventoutputs + [event.TransformTargetDoneEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		TargetTransformer.__init__(self)
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
@@ -264,7 +333,6 @@ class TransformManager(node.Node, TargetTransformer):
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
-
 	
 	def reacquire(self, targetdata):
 		oldtargetdata = targetdata['fromtarget']
@@ -299,6 +367,7 @@ class TransformManager(node.Node, TargetTransformer):
 		self.publish(imagedata['camera'], database=True)
 		self.logger.info('Publishing new transformed image...')
 		self.publish(imagedata, database=True)
+		self.setImage(imagedata['image'], 'Image')
 		return imagedata
 
 	def handleTransformTargetEvent(self, ev):
@@ -346,7 +415,7 @@ class TransformManager(node.Node, TargetTransformer):
 		return newimagedata
 
 	def uiDeclareDrift(self):
-		self.declareDrift('manual')
+		self.declareTransform('manual')
 
 	def uiMeasureDrift(self):
 		t = threading.Thread(target=self.measureDrift)

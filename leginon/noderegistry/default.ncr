@@ -213,3 +213,6 @@ type: Pipeline
 module: manualimageloader
 type: Utility
 
+[TransformManager]
+module: transformmanager
+type: Utility

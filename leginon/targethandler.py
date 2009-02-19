@@ -21,9 +21,9 @@ class TargetHandler(object):
 		self.transformtargetevent = threading.Event()
 
 	def handleTransformTargetDoneEvent(self, evt):
-		newtarget = evt['target']
-		self.transformtargetevent.set()
+		self.transformedtarget = evt['target']
 		self.logger.info('got back a transformed target')
+		self.transformtargetevent.set()
 
 	def requestTransformTarget(self, targetdata):
 		evt = event.TransformTargetEvent()
@@ -32,6 +32,7 @@ class TargetHandler(object):
 		self.logger.info('requesting transformed target')
 		self.outputEvent(evt)
 		self.transformtargetevent.wait()
+		return self.transformedtarget
 
 	def transpose_points(self, points):
 		newpoints = []

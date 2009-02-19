@@ -249,6 +249,37 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if presetname not in availablepresets:
 				raise InvalidPresetsSequence('bad preset %s in presets order' % (presetname,))
 
+	def adjustTargetForTransform(self, targetdata):
+		## look up most recent version of this target
+		targetlist = targetdata['list']
+		targetnumber = targetdata['number']
+		newtargetdata = self.researchTargets(session=self.session, number=targetnumber, list=targetlist, status='new')
+		# this is the most recent version with status "new"
+		newtargetdata = newtargetdata[0]
+		print 'ORIGINAL TARGET', targetdata.dbid
+		print 'NEWER TARGET', newtargetdata.dbid
+		
+		## look up all transforms declared for this session
+		decq = leginondata.TransformDeclaredData(session=self.session)
+		transformsdeclared = decq.query()
+		print 'TRANSFORMSDECLARED', len(transformsdeclared)
+
+		## if no transforms declared, return recent target
+		if not transformsdeclared:
+			return newtargetdata
+
+		## if recent target after transforms declared, return recent target
+		newtargettime = newtargetdata.timestamp
+		declaredtime = transformsdeclared[0].timestamp
+		print 'NEWTARGETTIME', newtargettime
+		print 'DECLAREDTIME', declaredtime
+		if newtargettime > declaredtime:
+			return newtargetdata
+
+		## if transform declared after most recent target, need new transformed	target
+		newtargetdata = self.requestTransformTarget(newtargetdata)
+		return newtargetdata
+
 	def processTargetData(self, targetdata, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -280,7 +311,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for drift']:
 				if self.settings['drift between'] and self.goodnumber > 0:
 					self.declareDrift('between targets')
-				targetdata = self.adjustTargetForDrift(targetdata)
+				#targetdata = self.adjustTargetForDrift(targetdata)
+				targetdata = self.adjustTargetForTransform(targetdata)
 
 			### determine how to move to target
 			try:

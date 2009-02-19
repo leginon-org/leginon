@@ -260,6 +260,14 @@ class DriftDeclaredData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class TransformDeclaredData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('type', str),
+			('node', str),
+		)
+	typemap = classmethod(typemap)
+
 class TransformData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1617,8 +1625,6 @@ class MagCalibratorSettingsData(CalibratorSettingsData):
 			('minbright', float),
 			('maxbright', float),
 			('magsteps', int),
-			('mag1', int),
-			('mag2', int),
 		)
 	typemap = classmethod(typemap)
 
