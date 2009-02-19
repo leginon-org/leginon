@@ -46,10 +46,13 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$description = $_POST['description'];
 	$tiltstack = ($_POST['tiltstack']) ? $_POST['tiltstack'] : '';
 	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : '';
-	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '15';
-	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '400';
-	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '4';
+	$lowpassvol = ($_POST['lowpassvol']) ? $_POST['lowpassvol'] : '10';
+	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '800';
+	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '3';
 	$minscore = ($_POST['minscore']) ? $_POST['minscore'] : '';
+	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.1';
+	$contour = ($_POST['contour']) ? $_POST['contour'] : '3.0';
+
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
@@ -168,7 +171,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	}
 
 	//Class Numbers
-	echo docpop('classnum','Class Numbers');
+	//echo docpop('classnum','Class Numbers');
+	echo 'Class Numbers';
 	echo " to generate volume:<br/>";
 	if (!$classnum && $classnum != '0') {
 		$classnum = '0,1';
@@ -181,7 +185,8 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	}
 
 	//Tilted stack id
-	echo docpop('stackid','Tilted Stack Id:<br/>');
+	//echo docpop('stackid','Tilted Stack Id:<br/>');
+	echo "Tilted Stack Id:<br/>";
 	$stackDatas = $particle->getStackIds($expId);
 	echo "<SELECT name='tiltstack'>\n";
 	foreach ($stackDatas as $stackdata){
@@ -239,8 +244,17 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	}
 
 	//Number of iterations
-	echo docpop('numiter','Number of Particle centering iterations:<br/>');
+	//echo docpop('numiter','Number of Particle centering iterations:<br/>');
+	echo 'Number of Particle centering iterations:<br/>';
 	echo "<INPUT TYPE='text' NAME='numiter' SIZE='2' VALUE='$numiter'>\n";
+	echo "\n<br/>\n<br/>\n";
+
+	//Chimera settings
+	echo "<u>Chimera snapshot settings:</u><br/>";
+	echo "<i>Contour:</i>\n&nbsp;\n";
+	echo "<INPUT TYPE='text' NAME='contour' SIZE='3' VALUE='$contour'>\n&nbsp;\n";
+	echo "<i>Zoom:</i>\n&nbsp;\n";
+	echo "<INPUT TYPE='text' NAME='zoom' SIZE='3' VALUE='$zoom'>\n";
 
 	echo "</td></tr></table>\n";
 
@@ -273,6 +287,8 @@ function runRctVolume() {
 	$description=$_POST['description'];
 	$stack=$_POST['stack'];
 	$minscore=$_POST['minscore'];
+	$contour=$_POST['contour'];
+	$zoom=$_POST['zoom'];
 
 	if (!$tiltstack)
 		createRctVolumeForm("<B>ERROR:</B> No tilted stack selected");
@@ -320,11 +336,14 @@ function runRctVolume() {
 	$command.="--tilt-stack=$tiltstack ";
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
+	$command.="--zoom=$zoom ";
+	$command.="--contour=$contour ";
 	$command.="--lowpassvol=$lowpassvol ";
 	$command.="--highpasspart=$highpasspart ";
 	if ($minscore)
 		$command.="--min-score=$minscore ";
 	$command.="--commit ";
+
 
 	// submit job to cluster
 	if (($_POST['process']=="Rct Volume")) {
