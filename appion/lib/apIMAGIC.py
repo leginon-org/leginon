@@ -1,5 +1,6 @@
 import os
 import sys
+import stat
 import time
 import apDisplay
 import subprocess
@@ -8,7 +9,10 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
         """
         executes an IMAGIC batch file in a controlled fashion
         """
-        waited = False
+        os.system("chmod 775 "+filename)
+	path = os.path.dirname(filename)
+	os.chdir(path)
+	waited = False
         t0 = time.time()
         try:
                 if logfile is not None:
@@ -37,6 +41,47 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
                 apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
         elif waited is True:
                 print ""
+
+
+def copyImage(path, file, headers=False):
+	# THERE IS A REALLY STUPID IMAGIC ERROR WHERE IT DOESN'T READ IMAGIC FORMAT CREATED BY OTHER 
+	# PROGRAMS, AND SO FAR THE ONLY WAY I CAN DEAL WITH IT IS BY WIPING OUT THE HEADERS!
+	#
+	# 			WORKS WITH BOTH .IMG AND .HED FILES
+	#	
+
+	batchfile = os.path.join(path, 'copyImage.batch')
+
+	if file[-4:] == ".img" or file[-4:] == ".hed":
+                stripped_file = file[:-4]
+	else:
+		 stripped_file = file
+
+	f = open(batchfile, 'w')
+        f.write("#!/bin/csh -f\n")
+        f.write("setenv IMAGIC_BATCH 1\n")	 
+        f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF \n")
+        f.write(stripped_file+"\n")
+        f.write(stripped_file+"_copy\n")
+        f.write("EOF\n")
+	f.write("/usr/local/IMAGIC/stand/imdel.e <<EOF \n")
+	f.write(stripped_file+"\n")
+	f.write("EOF\n")
+	f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF \n")
+	f.write(stripped_file+"_copy\n")
+	f.write(stripped_file+"\n")
+	f.write("EOF\n")
+	if headers is True:
+		f.write("/usr/local/IMAGIC/stand/headers.e <<EOF \n")
+        	f.write(stripped_file+"\n")
+        	f.write("write\n")
+        	f.write("wipe\n")
+        	f.write("all\n")
+        	f.write("EOF\n")
+	f.close()
+
+	executeImagicBatchFile(batchfile)
+
 
 
 
