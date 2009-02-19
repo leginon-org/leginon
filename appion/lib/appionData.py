@@ -177,6 +177,7 @@ class ApTemplateStackData(Data):
 			('apix', float),
 			('boxsize', int),
 			('hidden', bool),
+			('path', ApPathData),
 			('project|projects|project', int),
                 )
         typemap = classmethod(typemap)
