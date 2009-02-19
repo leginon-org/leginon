@@ -63,44 +63,26 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 												allownone=False,
 												chars=7,
 												value='0.0')
-		self.widgets['equally sloped'] = wx.CheckBox(self, -1, 'Use equally sloped (symmetric) angles, power of 2 angles in 180 degree range:')
-		self.widgets['equally sloped n'] = IntEntry(self, -1, min=2, allownone=False, chars=5, value='8')
-		self.widgets['pausegroup'] = wx.CheckBox(self, -1, 'Pause between +/- tilt groups')
 
-		tiltsz = wx.GridBagSizer(5, 10)
-
-		tiltpsz = wx.GridBagSizer(5, 5)
+		tiltsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
-		tiltpsz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt min'], (0, 1), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Max.')
-		tiltpsz.Add(label, (0, 3), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt max'], (0, 3), (1, 1),
+					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Start')
-		tiltpsz.Add(label, (0, 5), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
-		label = wx.StaticText(self, -1, 'Step')
-		tiltpsz.Add(label, (0, 7), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
-
-		label = wx.StaticText(self, -1, 'Parameters')
-		tiltsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		tiltpsz.Add(self.widgets['tilt min'], (0, 2), (1, 1),
-					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		tiltpsz.Add(self.widgets['tilt max'], (0, 4), (1, 1),
-					wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		tiltpsz.Add(self.widgets['tilt start'], (0, 6), (1, 1),
+		tiltsz.Add(label, (0, 4), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt start'], (0, 5), (1, 1),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
-		tiltpsz.Add(self.widgets['tilt step'], (0, 8), (1, 1),
+		label = wx.StaticText(self, -1, 'Step')
+		tiltsz.Add(label, (0, 6), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.LEFT, 10)
+		tiltsz.Add(self.widgets['tilt step'], (0, 7), (1, 1),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'degree(s)')
-		tiltpsz.Add(label, (0, 9), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		tiltsz.Add(tiltpsz, (0, 1), (1, 8), wx.ALIGN_CENTER_VERTICAL)
-		tiltsz.Add(self.widgets['equally sloped'], (1, 2), (1, 6),
-					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		tiltsz.Add(self.widgets['equally sloped n'], (1, 8), (1, 1),
-					wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		tiltsz.Add(self.widgets['pausegroup'], (1, 0), (1, 2))
-
-		tiltsz.AddGrowableCol(0)
-
+		tiltsz.Add(label, (0, 8), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		tiltsbsz.Add(tiltsz, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.widgets['dose'] = FloatEntry(self, -1, min=0.0,
@@ -119,28 +101,26 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		expsz = wx.GridBagSizer(5, 10)
 		label = wx.StaticText(self, -1, 'Total dose')
 		expsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		expsz.Add(self.widgets['dose'], (0, 1), (1, 2),
+		expsz.Add(self.widgets['dose'], (0, 1), (1, 1),
 					wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		#text = u'e\N{SUPERSCRIPT MINUS}/\N{ANGSTROM SIGN}\N{SUPERSCRIPT TWO}'
-		#label = wx.StaticText(self, -1, text)
 		label = wx.StaticText(self, -1, 'e-/A^2')
-		expsz.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		expsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Exposure time')
+		expsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		exptsz = wx.GridBagSizer(0,0)
 		label = wx.StaticText(self, -1, 'Min.')
 		exptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Max.')
-		exptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Exposure time')
-		expsz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		exptsz.Add(self.widgets['min exposure'], (0, 1), (1, 1),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Max.')
+		exptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 		exptsz.Add(self.widgets['max exposure'], (0, 3), (1, 1),
 					wx.ALIGN_LEFT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds')
 		exptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		expsz.Add(exptsz, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		expsz.Add(exptsz, (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		expsz.AddGrowableCol(0)
 		expsz.AddGrowableRow(0)
@@ -159,10 +139,6 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		bcsz.Add(self.widgets['measure dose'],
 				   (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		bcsz.AddGrowableRow(0)
-		bcsz.AddGrowableRow(1)
-		bcsz.AddGrowableCol(0)
-
 		bcsbsz.Add(bcsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
 		self.widgets['integer'] = wx.CheckBox(self, -1, 'Scale by')
@@ -184,23 +160,14 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 															value='1.0')
 #		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
 		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
-		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
-		self.widgets['taper size'] = IntEntry(self, -1, min=0, allownone=False, chars=3, value='10')
+		#self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
 
-		wienersz = wx.GridBagSizer(5,5)
-		self.widgets['use wiener'] = wx.CheckBox(self, -1, 'Use Wiener filter phase correlation for tilt <')
-		wienersz.Add(self.widgets['use wiener'], (0,0), (1,1))
-		self.widgets['wiener max tilt'] = FloatEntry(self, -1, min=0.0, allownone=False, chars=3, value='60')
-		wienersz.Add(self.widgets['wiener max tilt'], (0,1), (1,1))
-		lab = wx.StaticText(self, -1, 'degrees')
-		wienersz.Add(lab, (0,2), (1,1))
-
-		tapersz = wx.GridBagSizer(5,5)
-		lab = wx.StaticText(self, -1, 'edge tapered upto')
-		tapersz.Add(lab, (0,0), (1,1))
-		tapersz.Add(self.widgets['taper size'], (0,1), (1,1))
-		lab = wx.StaticText(self, -1, '% image length')
-		tapersz.Add(lab, (0,2), (1,1))
+#		tapersz = wx.GridBagSizer(5,5)
+#		lab = wx.StaticText(self, -1, 'edge tapered upto')
+#		tapersz.Add(lab, (0,0), (1,1))
+#		tapersz.Add(self.widgets['taper size'], (0,1), (1,1))
+#		lab = wx.StaticText(self, -1, '% image length')
+#		tapersz.Add(lab, (0,2), (1,1))
 
 		intsz = wx.GridBagSizer(5, 5)
 		intsz.Add(self.widgets['integer'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -226,11 +193,11 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 
 		tptsz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Pause')
-		tptsz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		tptsz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		tptsz.Add(self.widgets['tilt pause time'],
-				   (0, 5), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+				   (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds before each tilt image.')
-		tptsz.Add(label, (0, 6), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		tptsz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		miscsz = wx.GridBagSizer(5, 10)
 		miscsz.Add(intsz, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -238,15 +205,9 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(wienersz, (6, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
+		#miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
+		#miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
 		#miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
-		miscsz.AddGrowableRow(0)
-		miscsz.AddGrowableRow(1)
-		miscsz.AddGrowableRow(2)
-		miscsz.AddGrowableCol(0)
-
 		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
 		modelmags = self.getMagChoices()
