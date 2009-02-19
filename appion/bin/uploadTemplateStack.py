@@ -111,7 +111,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['project|projects|project'] = self.params['projectid']
 		if self.params['clusterId'] is not None:
 			uploadq['clusterstack'] = self.params['clusterId']
-		uploadq['origpath'] = self.params['templatestack']
+		uploadq['origfile'] = self.params['templatestack']
 		uploadq['templatename'] = self.params['newname']
 		if self.params['templatetype'] == "clsavg":
 			uploadq['cls_avgs'] = True
@@ -121,7 +121,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['session'] = sessiondata
 		uploadq['apix'] = self.params['apix']
 		uploadq['boxsize'] = self.params['boxsize']
-		uploadq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
+		uploadq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.join(self.params['rundir'], "templatestacks")))
 		if insert is True:
 			uploadq.insert()
 
