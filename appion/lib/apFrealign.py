@@ -214,9 +214,9 @@ def convertEmanEulersToFrealign(eman_eulers):
 	else:
 		e1+=90
 	if e1 < 0:
-		e1+=360+(360*int(e3/360.0))
+		e1+=360-(360*int(e1/360.0))
 	if e1 > 360:
-		e1-=360*int(e3/360.0)
+		e1-=360*int(e1/360.0)
 
 	# get Frealign psi (subtract 90 degrees)
 	e3*=-1
@@ -225,12 +225,11 @@ def convertEmanEulersToFrealign(eman_eulers):
 	else:
 		e3-=90
 	if e3 < 0:
-		e3+=360+(360*int(e3/360.0))
+		e3+=360-(360*int(e3/360.0))
 	if e3 > 360:
 		e3-=360*int(e3/360.0)
 
 	eulers={"phi":e1,"theta":e2,"psi":e3}
-	
 	return eulers
 
 #===============
@@ -246,7 +245,7 @@ def getStackParticleEulersForIteration(params,pnum):
 	# get stack particle id
 	stackp = apStack.getStackParticle(params['stackid'],pnum)
 	particleid = stackp['particle'].dbid
-	
+
 	# find particle in reference stack
 	refstackp = apStack.getStackParticleFromParticleId(particleid,params['compStackId'])
 	pclassq = appionData.ApParticleClassificationData()
