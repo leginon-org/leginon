@@ -1169,6 +1169,7 @@ class view {
 				';
 		$param = "left=0,top=".($this->viewnb*180).",height=200,width=370";
 		$url = "adjust.php?name=$name&displayname=$this->title";
+		$htmlframe .="<div id='".$this->name."imgstat'>";
 		$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
 		';
@@ -1180,10 +1181,10 @@ class view {
 		$colormap = ($this->colormap) ? "&colormap=".$this->colormap : "";
 		$gradoptions = "h=12&w=100&dm=1".$minpix.$maxpix.$colormap;
 		$gradient = "img/dfe/grad.php?".$gradoptions;
-		$imgstatus = "<div id='".$this->name."imgstat'><img alt='gradient' name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon."</div>";
+		$imgstatus = "<img alt='gradient' name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon;
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
-			</a>';
+			</a></div></td>';
 		if ($this->ismaster) {
 		$htmlframe .= '<td><ul>';
 		$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
@@ -1191,11 +1192,10 @@ class view {
 		$htmlframe .= '<li class="list1"> <button type="button" style="border: 1px solid #bdcebb;" '
         .' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
 		$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul>';
+        .' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
 		}
 
 		$htmlframe .= '
-						</td>
 					 </tr>
 				</table>';
 		$htmlframe .= '
