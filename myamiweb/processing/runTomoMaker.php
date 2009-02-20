@@ -58,6 +58,7 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$thickness = ($_POST['thickness']) ? $_POST['thickness'] : '200';
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
+	$tiltseriesId2 = ($_POST['tiltseriesId2']) ? $_POST['tiltseriesId2'] : NULL;
 	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
 	$autorunname = 'full'.($alignruns+1);
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
@@ -65,6 +66,7 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
 
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
+	$seriesselector_array2 = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId2,'tiltseriesId2'); 
 	$tiltSeriesSelector = $seriesselector_array[0];
 	echo "<input type='hidden' name='lasttiltseries' value='$tiltseriesId'>\n";
 	if ($tiltseriesId) {
@@ -72,11 +74,19 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
   } else {
 		$tiltseriesinfos = array();
 	}
+	$tiltSeriesSelector2 = $seriesselector_array2[0];
+	if ($tiltseriesId2) {
+		$tiltseriesinfos2 = $particle ->getTiltSeriesInfo($tiltseriesId2);
+  } else {
+		$tiltseriesinfos2 = array();
+	}
 	echo"
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
-	echo "<p>";
+	echo"	<TABLE BORDER=3 CLASS=tableborder>
+				<TR>
+					<TD VALIGN='TOP'>\n";
 	echo $seriesselector_array[0];
 	echo docpop('tiltseries', 'Tilt Series');
 	if (count($tiltseriesinfos) && $tiltseriesId) {
@@ -87,6 +97,22 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
 		if ($tiltseriesId)
 			echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
 	}
+	echo "</TD><TD VALIGN='TOP'>\n";
+	echo $seriesselector_array2[0];
+	echo docpop('tiltseriestwo', '2ndary Tilt Series');
+	if (count($tiltseriesinfos2) && $tiltseriesId2) {
+		if ($tiltseriesId2==$tiltseriesId){
+			echo "<br/><b>2nd tilt series must be different.</b><br/>";
+		} else {
+			echo "
+				<br/><b>First Image in the Tilt Series:</b><br/>"
+				.$tiltseriesinfos2[0]['filename'];
+		}
+	} else {
+		if ($tiltseriesId2)
+			echo "<br/><b>Bad Tilt Series! Do not use.</b><br/>";
+	}
+	echo "</td></table>";
 	echo "<p>
     <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='5'>\n";
 	echo docpop('tomorunname', 'Runname');
@@ -152,6 +178,7 @@ function runTomoMaker() {
 	$command = "tomomaker.py ";
 
 	$tiltseriesId=$_POST['tiltseriesId'];
+	$tiltseriesId2=$_POST['tiltseriesId2'];
 	$runname=$_POST['runname'];
 	$volume=$_POST['volume'];
 	$sessionname=$_POST['sessionname'];
@@ -176,7 +203,11 @@ function runTomoMaker() {
 	$command.="--runname=$runname ";
 	$command.="--thickness=$thickness ";
 	$command.="--description=\"$description\" ";
-	
+	if ($tiltseriesId2) {
+		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId2);
+		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
+		$command.="--othertilt=$tiltseriesnumber ";
+	}	
 	// submit job to cluster
 	if ($_POST['process']=="Create Tomogram") {
 		$user = $_SESSION['username'];
@@ -212,7 +243,7 @@ function runTomoMaker() {
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
-	<B>UploadTomogram Command:</B><BR>
+	<B>Full Tomogram Making Command:</B><BR>
 	$command
 	</TD></TR>
 	<TR><TD>tomo name</TD><TD>$tomofilename</TD></TR>

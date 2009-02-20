@@ -246,8 +246,8 @@ class particledata {
 		return $this->mysql->getSQLResult($query);
 	}
 
-	function getTiltSeriesSelector($tiltSeries, $tiltSeriesId=NULL) {
-		$selector = '<select name="tiltseriesId" '
+	function getTiltSeriesSelector($tiltSeries, $tiltSeriesId=NULL,$selectname='tiltseriesId') {
+		$selector = '<select name="'.$selectname.'" '
 				.'size=5 '
 				.'onchange=submit()>';
 		$length = strlen(count($tiltSeries));

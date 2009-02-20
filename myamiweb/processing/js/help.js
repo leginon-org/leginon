@@ -71,6 +71,7 @@ var help = {
 		'numclass' : 'Particle stack will be aligned according to the selected eigen images and averaged into this number of classes.',
 		'apix' : 'Pixel size of the acquired image in Angstroms.  Conversion: (1 nm = 10 Angstroms)',
 		'tiltseries': 'Select the tilt series number of the session that corresponds to the tomogram to be uploaded.',
+		'tiltseriestwo': 'Select the 2nd tilt series if the tomogram is made from a combination of the two.',
 		'session': 'Session name as created at leginon startup on the date of image capture.',
 		'extrabin': 'additional binning used to reconstruct the tomogram relative to that of the tilt series images.',
 		'tomorunname' : 'Specifies the name associated with the full tomogram processing results unique to the specified tilt series and parameters.',
