@@ -765,10 +765,11 @@ class ApFullTomogramData(Data):
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
 			('alignment', ApTomoAlignmentRunData),
+			('combined', list),
 			('path', ApPathData),
 			('name', str),
 			('description', str),
-			('md5sum', str),			
+			('zprojection', leginondata.AcquisitionImageData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApFullTomogramData=ApFullTomogramData
