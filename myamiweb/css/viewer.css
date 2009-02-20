@@ -250,6 +250,11 @@ INPUT.button {
 	border-color:    #D4D0C8;
 }
 
+.list1
+{
+display: inline;
+}
+
 #roundbox h1, #roundbox h2, #roundbox p {margin:0 10px;}
 
 .xtop, .xbottom {display:block; background:transparent; font-size:1px;}
