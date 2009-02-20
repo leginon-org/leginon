@@ -206,7 +206,6 @@ class tomoMaker(appionScript.AppionScript):
 			thickness = int(self.params['thickness'])
 			apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
 			zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,True)
-#			zprojectfile = '/ami/data15/appion/08aug14f/tomo/tiltseries8/full15/08aug14f_008_zproject.mrc'
 			if commit:
 				zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist,alignlist,
