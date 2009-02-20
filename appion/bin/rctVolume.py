@@ -54,6 +54,11 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.parser.add_option("--min-score", dest="minscore", type="float",
 			help="Minimum cross-correlation score", metavar="#")
 
+		self.parser.add_option("--contour", dest="contour", type="float", default=3.0,
+			help="Chimera snapshot contour", metavar="#")
+		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.1,
+			help="Chimera snapshot zoom", metavar="#")
+
 		self.parser.add_option("--num-part", dest="numpart", type="int",
 			help="Limit number of particles, for debugging", metavar="#")
 
@@ -263,7 +268,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 		### image with chimera
 		chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-			args=(emanvolfile, 30, None, 3.5, 0.9, apix, 'c1', boxsize, False))
+			args=(emanvolfile, 30, None, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
 		chimerathread.setDaemon(1)
 		chimerathread.start()
 
