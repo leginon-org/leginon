@@ -13,6 +13,7 @@ try:
 	import node
 except:
 	pass
+import apDatabase
 import apDisplay
 import apImage
 import apFile
@@ -27,6 +28,11 @@ def getFilename(tiltserieslist):
 		names.append(numberstr)
 	seriesname += '+'.join(names)
 	return seriesname
+
+def getFirstImage(tiltseries):
+	tiltlist = [tiltseries,]
+	imagelist = getImageList(tiltlist)
+	return imagelist[0]
 
 def getImageList(tiltserieslist):
 	imagelist = []
@@ -270,6 +276,42 @@ def getFullTomoData(fulltomoId):
 def getTomogramData(tomoId):
 	return appionData.ApTomogramData.direct_query(tomoId)
 	
+def insertTomo(params):
+	if not params['commit']:
+		apDisplay.printWarning("not commiting tomogram to database")
+		return
+	apDisplay.printMsg("Commiting tomogram to database")
+	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+	tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(params['tiltseriesnumber'],sessiondata)
+	runname = params['runname']
+	name = params['name']
+	aligndata = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,params['bin'],runname)
+	firstimagedata = getFirstImage(tiltdata)
+	path = os.path.abspath(params['rundir'])
+	description = params['description']
+	tiltdatalist = [tiltdata,]
+	alignlist = [aligndata,]
+	if params['full']:
+		uploadfile = params['zprojfile']
+		projectimagedata = uploadZProjection(runname,firstimagedata,uploadfile)
+		return insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata)
+	else:
+		projectimagedata = None
+		fulltpath = params['rundir'].replace('/'+params['volume'],'')
+		dummyname = 'dummy'
+		dummydescription = 'fake full tomogram for subtomogram upload'
+		fulltomogram = insertFullTomogram(sessiondata,tiltdatalist,alignlist,fulltpath,dummyname,dummydescription,projectimagedata)
+		apix = apDatabase.getPixelSize(firstimagedata)
+		tomoq = appionData.ApTomogramData()
+		tomoq['session'] = sessiondata
+		tomoq['tiltseries'] = tiltdata
+		results = tomoq.query()
+		index = len(results)+1
+		pixelsize = apix * params['bin']
+		runname = params['volume']
+		dimension = {'x':params['shape'][2],'y':params['shape'][1], 'z':params['shape'][0]}
+		return insertSubTomogram(fulltomogram,None,0,dimension,path,runname,name,index,pixelsize,description)
+
 def insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata):
 	tomoq = appionData.ApFullTomogramData()
 	tomoq['session'] = sessiondata
