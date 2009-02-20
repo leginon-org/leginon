@@ -198,8 +198,8 @@ def convertEmanEulersToFrealign(eman_eulers):
 	e3 = eman_eulers['phi']
 	m = eman_eulers['mirror']
 
-	# first get Frealign theta (easiest)
-	if m is True:
+	# first get Frealign theta 
+	if m is not True:
 		e2+=180
 	if e2 < 0:
 		e2+=360
@@ -209,8 +209,10 @@ def convertEmanEulersToFrealign(eman_eulers):
 	# get Frealign phi (add 90 degrees)
 	e1*=-1
 	if m is True:
-		e1-=90
+		e1+=90
+		e1*=-1
 	else:
+		e1*=-1
 		e1+=90
 	if e1 < 0:
 		e1+=360-(360*int(e1/360.0))
@@ -218,11 +220,7 @@ def convertEmanEulersToFrealign(eman_eulers):
 		e1-=360*int(e1/360.0)
 
 	# get Frealign psi (subtract 90 degrees)
-	e3*=-1
-	if m is True:
-		e3+=90
-	else:
-		e3-=90
+	e3-=90
 	if e3 < 0:
 		e3+=360-(360*int(e3/360.0))
 	if e3 > 360:
