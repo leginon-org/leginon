@@ -13,9 +13,7 @@ import apParam
 import apFile
 import apDisplay
 import apDatabase
-import apRecon
-import apVolume
-import apProject
+import apImod
 import apTomo
 #=====================
 #=====================
@@ -99,23 +97,34 @@ class UploadTomoScript(appionScript.AppionScript):
 		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".rec")
 		origtomopath = self.params['file']
 		apDisplay.printWarning("A Tomogram by the same filename already exists: '"+newtomopath+"'")
-		### a model by the same name already exists
-		mdnew = apFile.md5sumfile(newtomopath)
-		mdold = apFile.md5sumfile(origtomopath)
-		if mdnew != mdold:
-			### they are different, make unique name
-			self.setNewFileName(unique=True)
-			apDisplay.printWarning("The tomograms are different, cannot overwrite, so using new name: %s" % (self.params['name'],))
-			# restart
-			self.start()
-			return True
-		elif apDatabase.isTomoInDB(mdnew,self.params['full']):
-			### they are the same and its in the database already
-			apDisplay.printWarning("Same Tomogram with md5sum '"+mdnew+"' already exists in the database!")
-			self.params['commit'] = False
-			self.params['chimeraonly'] = True
+		### a tomogram by the same name already exists
+		if self.params['full']:
+			newheader = mrc.readHeaderFromFile(newtomopath)
+			newshape = newheader['shape']
+			origheader = mrc.readHeaderFromFile(origtomopath)
+			origshape = origheader['shape']
+			if newshape != origshape or newheader['amax'] != origheader['amax'] or newheader['amin'] != origheader['amax'] or newheader['amean'] != origheader['amean']:
+				different = True
+			else:
+				different = False
+				mdnew = None
 		else:
-			### they are the same, but its not in the database
+			mdnew = apFile.md5sumfile(newtomopath)
+			mdold = apFile.md5sumfile(origtomopath)
+			if mdnew != mdold:
+				different = True
+			else:
+				different = False
+		if different:
+			apDisplay.printWarning("The tomograms are different, cannot overwrite")
+			return True
+		elif apDatabase.isTomoInDB(mdnew,self.params['full'],newtomopath):
+			### they are the same and its in the database already
+			apDisplay.printWarning("Identical Tomogram already exists in the database!")
+			self.params['commit'] = False
+			return True
+		else:
+			### they are the same, but it is not in the database
 			apDisplay.printWarning("The same tomogram with name '"+newtomopath+"' already exists, but is not uploaded!")
 			if self.params['commit'] is True:
 				apDisplay.printMsg("Inserting tomogram into database...")
@@ -145,9 +154,13 @@ class UploadTomoScript(appionScript.AppionScript):
 		### inserting tomogram
 		tomoheader = mrc.readHeaderFromFile(newtomopath)
 		self.params['shape'] = tomoheader['shape']
-		apUpload.insertTomo(self.params)
-		apTomo.makeMovie(newtomopath)
-		apTomo.makeProjection(newtomopath)
+		if self.params['full']:
+			seriesname = "%s_%03d" % (self.params['session'],self.params['tiltseriesnumber'])
+			self.params['zprojfile'] = apImod.projectFullZ(self.params['rundir'], self.params['runname'], seriesname,True)
+		else:
+			apTomo.makeMovie(newtomopath)
+			apTomo.makeProjection(newtomopath)
+		apTomo.insertTomo(self.params)
 
 #=====================
 #=====================
