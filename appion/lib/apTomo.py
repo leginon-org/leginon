@@ -1,11 +1,12 @@
 import os
 import time
 import subprocess
+import shutil
 import numpy
 import scipy.ndimage as nd
 from tomography import tiltcorrelator
 import leginondata
-from pyami import arraystats, mrc, imagefun, numpil
+from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
 import appionData
 import libCVwrapper
 try:
@@ -16,23 +17,32 @@ import apDisplay
 import apImage
 import apFile
 
-def getFilename(tiltseriesdata):
-	# determine param filename
-	session_name = tiltseriesdata['session']['name']
-	seriesnumber = tiltseriesdata['number']
-	numberstr = '%03d' % (seriesnumber,)
-	seriesname = session_name + '_' + numberstr
+def getFilename(tiltserieslist):
+	seriesname = tiltserieslist[0]['session']['name']+'_'
+	names = []
+	for tiltseriesdata in tiltserieslist:
+		# determine param filename
+		seriesnumber = tiltseriesdata['number']
+		numberstr = '%03d' % (seriesnumber,)
+		names.append(numberstr)
+	seriesname += '+'.join(names)
 	return seriesname
 
-def getImageList(tiltseriesdata):
-	imquery = leginondata.AcquisitionImageData()
-	imquery['tilt series'] = tiltseriesdata
-
-	## query, but don't read image files yet, or else run out of memory
-	imagelist = imquery.query(readimages=False)
-	## list is reverse chronological, so reverse it
-	imagelist.reverse()
-	return imagelist
+def getImageList(tiltserieslist):
+	imagelist = []
+	for tiltseriesdata in tiltserieslist:
+		imquery = leginondata.AcquisitionImageData()
+		imquery['tilt series'] = tiltseriesdata
+		## query, but don't read image files yet, or else run out of memory
+		subimagelist = imquery.query(readimages=False)
+		## list is reverse chronological, so reverse it
+		subimagelist.reverse()
+		realist = []
+		imagelist.extend(subimagelist)
+	for imagedata in imagelist:
+		if imagedata['label'] != 'projection':
+			realist.append(imagedata)
+	return realist
 	
 def orderImageList(imagelist):
 	if not imagelist:
@@ -88,37 +98,62 @@ def getOrderedImageListCorrelation(imagelist, bin):
 	fakenode.die()
 	return correlationpeak
 
-def getOrderedImageListTransform(ordered_imagelist, bin):
+def getFeatureMatchTransform(ordered_imagelist, bin):
+	xfname = os.path.join('/ami/data15/appion/08jun11b/tomo/tiltseries3/full3/08jun11b_003'+'.prexf')
 	transformlist = []
 	shape = ordered_imagelist[0]['image'].shape
-	minsize = 40
+	minsize = 250
 	for i,imagedata in enumerate(ordered_imagelist):
+		f = open(xfname, 'a')
 		if i == 0:
 			array1 = imagedata['image']
 		array2 = imagedata['image']
 		print imagedata['filename'],minsize
-		resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
-		if abs(resultmatrix[0,0]) < 0.01 and abs(resultmatrix[0,1] < 0.01):
+		resultmatrix = libCVwrapper.MatchImages(array2, array1, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
+		if abs(resultmatrix[0,0]) < 0.9 :
 			resultmatrix[0,0]=1.0
 			resultmatrix[1,0]=0.0
 			resultmatrix[0,1]=0.0
 			resultmatrix[0,0]=1.0
-			resultmatrix[2,0]=0.0
-			resultmatrix[2,1]=0.0
+			shift = simpleCorrelation(array2,array1)
+			resultmatrix[2,0]=shift[0]
+			resultmatrix[2,1]=shift[1]
 			resultmatrix[2,2]=1.0
-		matrix = transform
-		matrix[0,0] = transform[1,1]
-		matrix[0,1] = transform[1,]
-		matrix[0,0] = transform[1,1]
-		matrix[0,1] = -transform[1,0]
-		matrix[1,0] = transform[0,1]
-		matrix[1,1] = transform[0,0]
-		matrix[2,0] = -transform[2,1]/bin
-		matrix[2,1] = -transform[2,0]/bin
-		transformlist.append(resultmatrix)
+		matrix = numpy.zeros((3,3))
+		matrix[2,2] = 1.0
+		matrix[0,0] = resultmatrix[1,1]
+		matrix[0,1] = resultmatrix[1,0]
+		matrix[1,0] = resultmatrix[0,1]
+		matrix[1,1] = resultmatrix[0,0]
+		matrix[2,0] = resultmatrix[2,1]-shape[1]*(1-resultmatrix[1,0]-resultmatrix[1,1])
+		matrix[2,1] = resultmatrix[2,0]-shape[0]*(1-resultmatrix[0,0]-resultmatrix[0,1])
+		f.write('%11.7f %11.7f %11.7f %11.7f %11.3f %11.3f\n' % (
+			matrix[0,0],matrix[0,1],
+			matrix[1,0],matrix[1,1],
+			matrix[2,0],matrix[2,1]))
+		print matrix
+		transformlist.append(matrix)
 		array1 = imagedata['image']
+		f.close()
 	return transformlist
-	
+
+def simpleCorrelation(array1,array2):
+	c = correlator.Correlator()
+	p = peakfinder.PeakFinder()
+	c.setImage(0,array1)
+	c.setImage(1,array2)
+	shape = array1.shape
+	corrimage = c.phaseCorrelate()
+	p.setImage(corrimage)
+	peak = peakfinder.findPixelPeak(corrimage)
+	shift = [0,0]
+	for i in (0,1):
+		if peak['pixel peak'][i] > shape[i]/2:
+			shift[i] = peak['pixel peak'][i] - shape[i]
+		else:
+			shift[i] = peak['pixel peak'][i]
+	return shift
+		
 def getCorrelationPeak(correlator, bin, tiltseries, tilt, imagedata,allpeaks,second_group):
 	q = leginondata.TomographyPredictionData(image=imagedata)
 	results = q.query()
@@ -179,7 +214,6 @@ def getTomographySettings(sessiondata,tiltdata):
 		else:
 			settingsid = None
 	if settingsid:
-		print settingsid
 		qtomo = leginondata.TomographySettingsData()
 		return qtomo.direct_query(settingsid)
 
@@ -189,6 +223,9 @@ def getTomoPixelSize(imagedata):
 	if results:
 		print results[0]['pixel size']
 		return results[0]['pixel size']
+
+def getTomoImageShape(imagedata):
+	return (imagedata['camera']['dimension']['y'],imagedata['camera']['dimension']['x'])
 
 def	insertImodXcorr(rotation,filtersigma1,filterradius,filtersigma2):
 	paramsq = appionData.ApImodXcorrParamsData()		
@@ -216,19 +253,14 @@ def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bi
 	return results[0]
 
 def checkExistingFullTomoData(path,name):
-	tomoq = appionData.ApFullTomogramData(name = name)
+	pathq = appionData.ApPath(name=path)
+	tomoq = appionData.ApFullTomogramData(name=name,path=pathq)
 	results = tomoq.query()
 	if not results:
 		return None
 	filepath = os.path.join(path,name+".rec")
 	if not os.path.isfile(filepath):
 		return None
-	# This takes too long
-	#md5sum = apFile.md5sumfile(filepath)
-	#tomoq = appionData.ApFullTomogramData(md5sum = md5sum)
-	#results = tomoq.query()
-	#if not results:
-	#	return None
 	else:
 		return results[0]
 	
@@ -238,16 +270,20 @@ def getFullTomoData(fulltomoId):
 def getTomogramData(tomoId):
 	return appionData.ApTomogramData.direct_query(tomoId)
 	
-def insertFullTomogram(sessiondata,tiltdata,alignrun,path,name,description):
+def insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata):
 	tomoq = appionData.ApFullTomogramData()
 	tomoq['session'] = sessiondata
-	tomoq['tiltseries'] = tiltdata
-	tomoq['alignment'] = alignrun
+	tomoq['tiltseries'] = tiltdatalist[0]
+	tomoq['alignment'] = alignlist[0]
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 	tomoq['name'] = name
 	tomoq['description'] = description
-	filepath = os.path.join(path,name+".rec")
-	tomoq['md5sum'] = apFile.md5sumfile(filepath)
+	tomoq['zprojection'] = projectimagedata
+	if len(tiltdatalist) > 1:
+		idlist = []
+		for align in alignlist:
+			idlist.append(align.dbid)
+		tomoq['combined'] = idlist
 	tomoq.query()
 	results = tomoq.query()
 	if not results:
@@ -266,8 +302,8 @@ def getLastVolumeIndex(fulltomodata):
 def transformParticleCenter(particle,bin,gtransform):
 	#See imod manual for definition 
 	# at http://bio3d.colorado.edu/imod/doc/serialalign.txt
-	X = particle['xcoord']/bin
-	Y = particle['ycoord']/bin
+	X = particle['xcoord']
+	Y = particle['ycoord']
 	A11 = gtransform[0]
 	A12 = gtransform[1]
 	A21 = gtransform[2]
@@ -276,7 +312,7 @@ def transformParticleCenter(particle,bin,gtransform):
 	DY = gtransform[5]
 	newx = A11 * X + A12 * Y + DX
 	newy = A21 * X + A22 * Y + DY
-	return (newx,newy)
+	return (newx/bin,newy/bin)
 
 def insertSubTomogram(fulltomogram,center,offsetz,dimension,path,runname,name,index,pixelsize,description):
 	tomoq = appionData.ApTomogramData()
@@ -320,7 +356,6 @@ def makeMovie(filename,xsize=512):
 	rootpath = splitnames[0]
 	apDisplay.printMsg('Reading 3D recon %s' % mrcpath)
 	array = mrc.read(mrcpath)
-	print "image read"
 	shape = array.shape
 	xsize = min(xsize,shape[2])
 	stats = {}
@@ -372,10 +407,31 @@ def makeProjection(filename,xsize=512):
 	keys.sort()
 	for key in keys:
 		apDisplay.printMsg('project to axis %s' % renders[key]['axisname'])
-		pictpath = dirpath+'/projection'+key
+		pictpath = os.path.join(dirpath,'projection'+key)
 		axis = renders[key]['axis']
 		slice = numpy.sum(array[:,:,:],axis=axis)/(shape[axis])
-		print "sum done"
-		# adjust and shrink each image
 		mrc.write(slice,pictpath+'.mrc')
+		# adjust and shrink each image
 		array2jpg(pictpath,slice,size=xsize)
+
+def uploadZProjection(runname,initialimagedata,uploadfile):
+	presetdata = leginondata.PresetData(initializer=initialimagedata['preset'])
+	presetdata['name']='Zproj'
+	imagedata = leginondata.AcquisitionImageData(initializer=initialimagedata)
+	basename = os.path.basename(uploadfile)
+	splitname = os.path.splitext(basename)
+	names = splitname[0].split('_zproject')
+	projectionname = names[0]+'_'+runname+'_zproject'
+	imagedata['filename']=projectionname
+	imagedata['label'] = 'projection'
+	imagedata['preset'] = presetdata
+	newimgfilepath = os.path.join(imagedata['session']['image path'],projectionname)
+	apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
+	shutil.copyfile(uploadfile, newimgfilepath)
+	image = mrc.read(newimgfilepath)
+	imagedata['image'] = image
+	results = imagedata.query()
+	if not results:
+		imagedata.insert()
+		return imagedata
+	return imagedata[0]

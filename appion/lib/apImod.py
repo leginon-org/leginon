@@ -35,7 +35,7 @@ def writeTransformPrexfFile(path, seriesname,transforms):
 					transform[2,0],transform[2,1]))
 	f.close()
 
-def coarseAlignment(processpath, seriesname, commit=False):
+def coarseAlignment(stackdir, processdir, seriesname, commit=False):
 		"""
 #
 # TO RUN TILTXCORR
@@ -52,9 +52,9 @@ FilterSigma2    0.05
 		"""
 
 		inputparams = {
-			'imagestack': os.path.join(processpath, seriesname+".st"),
-			'output': os.path.join(processpath, seriesname+".prexf"),
-			'tilts': os.path.join(processpath, seriesname+".rawtlt"),
+			'imagestack': os.path.join(stackdir, seriesname+".st"),
+			'output': os.path.join(processdir, seriesname+".prexf"),
+			'tilts': os.path.join(stackdir, seriesname+".rawtlt"),
 		}
 		commands = [
 			"$tiltxcorr -StandardInput",
@@ -67,12 +67,12 @@ FilterSigma2    0.05
 			"FilterRadius2   0.25",
 			"FilterSigma2    0.05",
 		]
-		writeCommandAndRun(processpath,'xcorr',commands,[inputparams['output'],'xcorr.log'])
+		writeCommandAndRun(processdir,'xcorr',commands,[inputparams['output'],'xcorr.log'])
 		if commit:
 			xcorrdata = apTomo.insertImodXcorr(0.0,0.03,0.25,0.05)
 			return xcorrdata
 
-def convertToGlobalAlignment(processpath, seriesname):
+def convertToGlobalAlignment(processdir, seriesname):
 		"""
 $xftoxg
 # global fit
@@ -81,8 +81,8 @@ $xftoxg
 08aug14f_008.prexg
 		"""
 		inputparams = {
-			'input': os.path.join(processpath, seriesname+".prexf"),
-			'output': os.path.join(processpath, seriesname+".prexg"),
+			'input': os.path.join(processdir, seriesname+".prexf"),
+			'output': os.path.join(processdir, seriesname+".prexg"),
 		}
 		commands = [
 			"$xftoxg",
@@ -91,7 +91,7 @@ $xftoxg
 			inputparams['input'],
 			inputparams['output'],
 		]
-		writeCommandAndRun(processpath,'gcorr',commands,[inputparams['output'],'gcorr.log'])
+		writeCommandAndRun(processdir,'gcorr',commands,[inputparams['output'],'gcorr.log'])
 		return readTransforms(inputparams['output'])
 
 def readTransforms(filepath):
@@ -104,7 +104,7 @@ def readTransforms(filepath):
 		transforms.append(map((lambda x: float(x)), items))
 	return transforms
 
-def createAlignedStack(processpath, seriesname):
+def createAlignedStack(stackdir, processdir, seriesname,bin):
 		"""
 # THIS IS A COMMAND FILE TO MAKE AN ALIGNED STACK FROM THE ORIGINAL STACK
 #
@@ -123,18 +123,19 @@ $newstack -input 08aug14f_008.st -output 08aug14f_008.ali -offset 0,0 -xform 08a
 $mrctaper 08aug14f_008.ali
 		"""
 		inputparams = {
-			'alignedstack': os.path.join(processpath, seriesname+".ali"),
-			'alignment': os.path.join(processpath, seriesname+".prexg"),
-			'imagestack': os.path.join(processpath, seriesname+".st"),
+			'alignedstack': os.path.join(processdir, seriesname+".ali"),
+			'alignment': os.path.join(processdir, seriesname+".prexg"),
+			'imagestack': os.path.join(stackdir, seriesname+".st"),
+			'bin': bin,
 		}
 		commands = [
-			"$newstack -input "+inputparams['imagestack']+" -output "+inputparams['alignedstack']+" -offset 0,0 -xform "+inputparams['alignment'],
+			"$newstack -input "+inputparams['imagestack']+" -output "+inputparams['alignedstack']+" -offset 0,0 -xform "+inputparams['alignment']+" -bin %d" % inputparams['bin'],
 			"$mrctaper "+inputparams['alignedstack'],
 		]
-		writeCommandAndRun(processpath,'newst',commands,[inputparams['alignedstack'],'newst.log'])
+		writeCommandAndRun(processdir,'newst',commands,[inputparams['alignedstack'],'newst.log'])
 
 
-def recon3D(processpath, seriesname,thickness=100,invert=False):
+def recon3D(stackdir, processdir, seriesname, shape=(2048,2048), thickness=100, invert=False):
 		"""
 # Command file to run Tilt
 #
@@ -162,10 +163,11 @@ DONE
 
 		"""
 		inputparams = {
-			'alignedstack': os.path.join(processpath, seriesname+".ali"),
-			'tilts': os.path.join(processpath, seriesname+".rawtlt"),
-			'recon': os.path.join(processpath, seriesname+"_full.rec"),
+			'alignedstack': os.path.join(processdir, seriesname+".ali"),
+			'tilts': os.path.join(stackdir, seriesname+".rawtlt"),
+			'recon': os.path.join(processdir, seriesname+"_full.rec"),
 			'scale': 500.0,
+			'size': shape,
 			'thickness': thickness,
 		}
 		if invert:
@@ -174,7 +176,7 @@ DONE
 			"$tilt",
 			inputparams['alignedstack'],
 			inputparams['recon'],
-			"FULLIMAGE 512 512",
+			"FULLIMAGE %d %d" %(shape[1],shape[0]),
 			"LOG 0.0",
 			"MODE 2",
 			"PERPENDICULAR",
@@ -185,9 +187,9 @@ DONE
 			"TILTFILE "+inputparams['tilts'],
 			"XAXISTILT 0.0",
 		]
-		writeCommandAndRun(processpath,'tilt',commands,[inputparams['recon'],'tilt.log'])
+		writeCommandAndRun(processdir,'tilt',commands,[inputparams['recon'],'tilt.log'])
 
-def trimVolume(processpath, runname, seriesname, volumename, center, offsetz, size,yzflip=True):
+def trimVolume(processdir, runname, seriesname, volumename, center, offsetz, size,yzflip=True):
 		"""
 #	Command for triming reconstructed volume
 #
@@ -198,8 +200,8 @@ def trimVolume(processpath, runname, seriesname, volumename, center, offsetz, si
 trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 		"""	
 		inputparams = {
-			'recon': os.path.join(processpath, seriesname+"_full.rec"),
-			'subvolume': os.path.join(processpath, runname+"/",volumename+"/",seriesname+"_"+volumename+".rec"),
+			'recon': os.path.join(processdir, seriesname+"_full.rec"),
+			'subvolume': os.path.join(processdir, runname+"/",volumename+"/",seriesname+"_"+volumename+".rec"),
 			'xrange0': max(1,center[0] - size[0]/2),
 			'yrange0': max(1,center[1] - size[1]/2),
 		}
@@ -235,8 +237,45 @@ trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 					inputparams['subvolume'],
 					),
 				]
-		print commands
-		writeCommandAndRun(processpath,'trimvol',commands,[inputparams['subvolume'],'trimvol.log'])
+		writeCommandAndRun(processdir,'trimvol',commands,[inputparams['subvolume'],'trimvol.log'])
+
+def projectFullZ(processdir, runname, seriesname,yzflip=True):
+		"""
+#	Command for projecting full tomogram to z-axis
+#
+# Tomography reconstruction y and z are usually flipped
+# full tomogram mrc file axes [x,z,y]
+# clip average command need [x,y,z]
+clip flipyz 09feb18c_002_full.rec temp.mrc
+clip avg -2d -iz 0-199 temp.mrc projection.mrc
+		"""	
+		inputparams = {
+			'recon': os.path.join(processdir, seriesname+"_full.rec"),
+			'temp': os.path.join(processdir, "temp.rec"),
+			'project': os.path.join(processdir, seriesname+"_zproject.mrc"),
+		}
+		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
+		fullshape = fulltomoheader['shape']
+		commands = []
+		if yzflip:
+			lookup = {'y':0,'z':1}
+			inputparams['3d'] = inputparams['temp']
+			commands.append(
+				"$clip flipyz %s %s"
+					% (inputparams['recon'],inputparams['temp'],
+					)
+				)
+		else:
+			lookup = {'y':1,'z':0}
+			inputparams['3d'] = inputparams['recon']
+		commands.append(
+				"$clip avg -2d -iz %d-%d %s %s"
+					% (0,fullshape[lookup['z']]-1,
+					inputparams['3d'],inputparams['project'],
+					),
+			)	
+		writeCommandAndRun(processdir,'projectZ',commands,[inputparams['temp'],inputparams['project'],'projectZ.log'])
+		return inputparams['project']
 
 def writeCommandAndRun(path,comname, commands, outputlist):		
 		### make standard input for ctftilt
