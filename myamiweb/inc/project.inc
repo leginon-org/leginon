@@ -7,7 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "inc/session.inc";
+$me=($_SERVER['REMOTE_ADDR']=="137.131.204.65") ? true : false;
 
 define('DEFAULT_PROJECT', 'all'); 
 define('PROJECT_DB_HOST', $PROJECT_DB_HOST);
@@ -15,14 +15,22 @@ define('PROJECT_DB_USER', $PROJECT_DB_USER);
 define('PROJECT_DB_PASS', $PROJECT_DB_PASS);
 define('PROJECT_DB', $PROJECT_DB);
 
-
 function setDatabase() {
+	global $me;
+	$leginondata=&new leginondata;
 	$expId= ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+	$projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
+	if ($projectId) {
+		$sessions = $leginondata->getSessions('description', $projectId);
+		$sessionId_exists = $leginondata->sessionIdExists($sessions, $expId);
+		if (!$sessionId_exists) {
+			$expId=$sessions[0]['id'];
+		}
+	}
 	if (!$expId) {
 		if ($_GET['session']) {
 			$expId=$_GET['session'];
 		} else {
-			$leginondata=&new leginondata;
 			$expId=$leginondata->getLastSessionId();
 		}
 	}
@@ -31,6 +39,7 @@ function setDatabase() {
 	$projectId=$r['projectId'];
 	$db="ap".$projectId;
 	$_SESSION['processingdb']=$db;
+	$_SESSION['expId']=$expId;
 	return $db;
 }
 

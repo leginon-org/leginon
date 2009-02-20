@@ -18,10 +18,12 @@
 <tr valign="top">
 <td>
 <?php
+require "inc/viewer.inc";
 require "inc/leginon.inc";
-@require_once "inc/project.inc";
 require "inc/particledata.inc";
-
+if (!defined(PARTICLE_DB)) {
+	define(PARTICLE_DB, $_SESSION['processingdb']);
+}
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 
@@ -29,6 +31,7 @@ $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
+
 
 $ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);

@@ -9,63 +9,127 @@ var autoscale=false
 var pl_interval = false
 var lastoptions = new Array()
 
-if (window.XMLHttpRequest) {
-        xmlhttp = new XMLHttpRequest()
-        xmlhttp.overrideMimeType('text/xml')
-} else if (window.ActiveXObject) {
-        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP")
-}
-String.prototype.trim = function() { return this.replace(/^\s+|\s+$/, ''); }
+function getXMLHttpRequest() {
+	var xmlhttp = false
+	// --- IE only --- //
+	/*@cc_on
+	@if (@_jscript_version >= 5)
+	try {
+		xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+	} catch (e) {
+		try {
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch (E) {
+			xmlhttp = false
+		}
+	}
+  @else
+		xmlhttp = false;
+	@end @*/
 
-function image_is_exemplar(view) {
+	if (!xmlhttp && typeof XMLHttpRequest != 'undefined') {
+		try {
+			xmlhttp = new XMLHttpRequest()
+		} catch (e) {
+			xmlhttp = false
+		}
+	}
+	return xmlhttp;
+}
+
+function image_is_exemplar() {
+	var bt=false
+	if (bt = document.getElementById("bt_ex")) {
+		bt.disabled=true
+	}
+	view=jsmasterview
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
-	displaydebug("a:"+view+" "+selpreset)
 	var jsUsername=null
 	if (obj=document.viewerform.imageId) {
 		jsindex = obj.selectedIndex
 		jsimgId = obj.options[jsindex].value
 		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&s=ex'
+		var xmlhttp = getXMLHttpRequest()
 		xmlhttp.open('GET', url, true)
 		xmlhttp.onreadystatechange = function() {
 			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-				// --- check
-				dbresult = xmlhttp.responseText
-				displaydebug("c:"+jsindex+" l:"+obj.length+": dbe:"+dbresult.length+"  "+dbresult)
+				if (bt) {
+					bt.disabled=false
+				}
+				incIndex()
+				updateviews()
 			}
 		}
 	xmlhttp.send(null)
 	}
 }
 
+function hide_image() {
+	var all=false
+	if (o=document.getElementById("chk_hide_all")) {
+		all=(o.checked) ? true : false
+	}
+	if (all) {
+		for (var i in jsviews) {
+			update_image_list(jsviews[i])
+		}
+	} else {
+		update_image_list(jsmasterview) 
+	}
+}
+
+function check_hide_state(view) {
+	state = eval("js"+view+"done")
+	if (state) {
+		eval('clearInterval(hide_interval'+view+')')
+		eval('js'+view+'done=false')
+		if (bt_hide_state) {
+			bt_hide_state.disabled=false
+		}
+	} else {
+		if (bt_hide_state) {
+			bt_hide_state.disabled=true
+		}
+	}
+}
+
 function update_image_list(view) {
+	if (bt_hide_state = document.getElementById("bt_hide")) {
+		bt_hide_state.disabled=true
+	}
 	if (list = eval("document.viewerform."+view+"pre"))
 		selpreset=list.options[list.selectedIndex].value
-	displaydebug("a:"+view+" "+selpreset)
 	var jsUsername=null
 	if (obj=document.viewerform.imageId) {
 		jsindex = obj.selectedIndex
 		jsimgId = obj.options[jsindex].value
 		var url = 'updateimagelist.php?username='+jsUsername+'&imageId='+jsimgId+'&sessionId='+jsSessionId+'&p='+selpreset+'&ac=h'
+		var xmlhttp = getXMLHttpRequest()
 		xmlhttp.open('GET', url, true)
 		xmlhttp.onreadystatechange = function() {
 			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 				// --- check
-				dbresult = xmlhttp.responseText
-				displaydebug("c:"+jsindex+" l:"+obj.length+": dbe:"+dbresult.length+"  "+dbresult)
+				var dbresult = eval('('+xmlhttp.responseText+')')
+
+				eval('js'+view+'done=true')
 				// --- set index to next image
-				if (jsindex<obj.length && dbresult=="1") {
-					obj.remove(jsindex)
+				if (jsindex<obj.length && dbresult['value']==1) {
+					for (var i = 0; i < obj.length; i++) {
+						if (obj.options[i].value == dbresult['imageId']) {
+							obj.remove(i)
+						}
+					}
 					if (jsindex<obj.length)
 						obj.options[jsindex].selected=true
-					else if (obj.length-1>0)
-						obj.options[obj.length-1].selected=true
 					updateviews()
 				}
 			}
 		}
-	xmlhttp.send(null)
+		xmlhttp.send(null)
 	}
+	eval ('hide_interval'+view+'=setInterval ( "check_hide_state(\''+view+'\')", 100 )')
+	return true
 }
 
 function setproject(id) {
@@ -122,24 +186,20 @@ function getKey(e)
 			updateviews()
 			break
 		case 'H':
-			update_image_list()
+			hide_image()
 			break
 		case 'E':
 			image_is_exemplar()
-			incIndex()
-			updateviews()
 			break
   }
 }
 
 function dwdpre(preset) {
-	alert(preset)
-	"http://stratocaster.scripps.edu/dbemd/download.php?id=574467&preset=all"
 }
 
 function getImageAutoScale(view) {
 	var url = 'getimagestat.php?id='+jsimgId
-	alert(url)
+	var xmlhttp = getXMLHttpRequest()
 	xmlhttp.open('GET', url, true)
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {

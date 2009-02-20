@@ -335,8 +335,13 @@ class viewer {
 		$init = '<script>'.$this->crlf;
 		$init .= 'var jsviews = new Array();'.$this->crlf;
 		$init .= 'var jscomments = new Array();'.$this->crlf;
-		foreach ($this->views as $v) 
+		$init .= 'var bt_hide_state = false;'.$this->crlf;
+		foreach ($this->views as $v) {
+			if ($v->ismaster) {
+				$init .= 'var jsmasterview = "'.$v->getName().'";'.$this->crlf;
+			}
 			$init .= $v->getJavascriptvar();
+		}
 
 		foreach ($this->views as $v) {
 			$init .= $v->getJavascriptButton();
@@ -807,6 +812,7 @@ class view {
 		$javascript = ''
 			.'var '.$this->name.'size='.$this->size.';'.$this->crlf
 			.'var n_img_interval'.$this->name.'=false;'.$this->crlf
+			.'var hide_interval'.$this->name.'=false;'.$this->crlf
 			.'var n_img_'.$this->name.'= new Image();'.$this->crlf
 			.'var jsimagescript'.$this->name.'="'.$this->imagescript.'";'.$this->crlf
 			.'var jspresetscript'.$this->name.'="'.$this->presetscript.'";'.$this->crlf
@@ -831,6 +837,7 @@ class view {
 			.'var jstagparam2'.$this->name.'="'.$this->jstagpar2.'";'.$this->crlf
 			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
 			.'var '.$this->name.'adjw=false;'.$this->crlf
+			.'var js'.$this->name.'done=false;'.$this->crlf
 			.$this->crlf;
 		return $javascript;
 	}
@@ -1177,14 +1184,14 @@ class view {
 		$htmlframe .= $imgstatus;
 		$htmlframe .='
 			</a>';
-		// -- HACK for now -- //
-		if ($this->title=="Main View") {
-		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'update_image_list("'.$name.'")\' ><u><b>h</b></u>ide</button>';
-		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button>';
-		$htmlframe .= '</td><td> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'image_is_exemplar("'.$name.'"); incIndex(); updateviews()\' ><u><b>e</b></u>xemplar</button>';
+		if ($this->ismaster) {
+		$htmlframe .= '<td><ul>';
+		$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
+        .' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button></li>';
+		$htmlframe .= '<li class="list1"> <button type="button" style="border: 1px solid #bdcebb;" '
+        .' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
+		$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
+        .' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul>';
 		}
 
 		$htmlframe .= '

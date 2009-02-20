@@ -9,11 +9,11 @@ $projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
 $imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
 $preset = $_POST[$_POST['controlpre']];
 
+$me=($_SERVER['REMOTE_ADDR']=="137.131.204.65") ? true : false;
+
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
-
-$_SESSION['sessionId']=$sessionId;
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
@@ -33,6 +33,9 @@ if ($ptcl) {
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
 if (!$sessionId_exists)
 	$sessionId=$sessions[0]['id'];
+
+$_SESSION['sessionId']=$sessionId;
+
 $filenames = $leginondata->getFilenames($sessionId, $preset);
 
 // --- Get data type list
