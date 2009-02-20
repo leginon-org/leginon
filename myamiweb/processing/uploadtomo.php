@@ -57,8 +57,14 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	// Set any existing parameters in form
 	$extrabin = ($_POST['extrabin']) ? $_POST['extrabin'] : '1';
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'upload1';
-	$volume = ($_POST['volume']) ? $_POST['volume'] : 'volume1';
+	// Runname is determined by tiltseries if not manually set
+	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
+	$autorunname = 'upload'.($alignruns+1);
+	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
+	// Volumename is determined by tiltseries amd runname if not manually set
+	$volumeruns = $particle->countTomogramsByAlignment($tiltseriesId,$runname);
+	$autovolumename = 'volume'.($volumeruns+1);
+	$volume = ($_POST['lastrunname']==$runname && $_POST['lasttiltseries']==$tiltseriesId) ? $_POST['volume']:$autovolumename;
 	$tomofilename = ($_POST['tomofilename']) ? $_POST['tomofilename'] : '';
 	$xffilename = ($_POST['xffilename']) ? $_POST['xffilename'] : '';
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
@@ -68,6 +74,9 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];
+	// Need these to notify that the values has changed in the next reload
+	echo "<input type='hidden' name='lasttiltseries' value='$tiltseriesId'>\n";
+	echo "<input type='hidden' name='lastrunname' value='$runname'>\n";
   
 	echo"
   <TABLE BORDER=3 CLASS=tableborder>

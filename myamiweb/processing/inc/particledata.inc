@@ -227,6 +227,14 @@ class particledata {
 		return $r;
 	}
 
+	function getFullTomogramsFromSession($sessionId){
+		$q =  "SELECT t.`DEF_id` as DEF_id "
+			."FROM `ApFullTomogramData` t "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId." "
+			."AND t.name NOT LIKE 'dummy'";
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getTomogramsFromSession($sessionId){
 		$q =  "SELECT t.`DEF_id` as DEF_id "
 			."FROM `ApTomogramData` t "
@@ -318,6 +326,19 @@ class particledata {
 		$q="SELECT * "
 			."FROM ApTomoAlignmentRunData "
 			."WHERE `REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId;
+		$r = $this->mysql->getSQLResult($q);
+		return count($r);
+	}
+	
+	function countTomogramsByAlignment($tiltseriesId,$alignrunname){
+		$q="SELECT t.* "
+			."FROM ApTomoAlignmentRunData a "
+			."LEFT JOIN ApFullTomogramData f "
+			."on f.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` "
+			."LEFT JOIN ApTomogramData t "
+			."on t.`REF|ApFullTomogramData|fulltomogram` = f.`DEF_id` "
+			."WHERE a.`REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId." "
+			."AND a.name LIKE '".$alignrunname."' ";
 		$r = $this->mysql->getSQLResult($q);
 		return count($r);
 	}
