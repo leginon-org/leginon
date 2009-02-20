@@ -307,7 +307,7 @@ def insertTomo(params):
 		tomoq['tiltseries'] = tiltdata
 		results = tomoq.query()
 		index = len(results)+1
-		pixelsize = apix * params['bin']
+		pixelsize = 1e-10 * apix * params['bin']
 		runname = params['volume']
 		dimension = {'x':params['shape'][2],'y':params['shape'][1], 'z':params['shape'][0]}
 		return insertSubTomogram(fulltomogram,None,0,dimension,path,runname,name,index,pixelsize,description)
