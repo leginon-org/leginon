@@ -480,15 +480,21 @@ def isModelInDB(md5sum):
 		return True
 	return False
 	
-def isTomoInDB(md5sum, full=False):
+def isTomoInDB(md5sum, full=False,recfile=''):
+	abspath = os.path.abspath(recfile)
+	rundir = os.path.dirname(abspath)
+	basename = os.path.basename(abspath)
+	rootname = os.path.splitext(basename)
 	if not full:
-		tomoq = appionData.ApTomogramData()
+		tomoq = appionData.ApTomogramData(name=rootname[0])
+		tomoq['md5sum'] = md5sum
 	else:
-		tomoq = appionData.ApFullTomogramData()
-	tomoq['md5sum'] = md5sum
+		tomoq = appionData.ApFullTomogramData(name=rootname[0])
 	tomod = tomoq.query(results=1)
 	if tomod:
-		return True
+		tomodata = tomod[0]
+		if tomodata['path']['path'] == rundir:
+			return True
 	return False
 	
 def isTemplateInDB(md5sum):
