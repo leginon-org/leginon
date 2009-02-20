@@ -104,11 +104,11 @@ def generateParticleParams(params):
 			ctfdata, confidence=apCtf.getBestAceTwoValueForImage(imagedata, msg=False)
 			if ctfdata is None:
 				ctfdata, confidence=apCtf.getBestCtfValueForImage(imagedata, msg=False)
-
-			# use defocus & astigmatism values 
-			particleparams['df1']=abs(ctfdata['defocus1']*1e10)
-			particleparams['df2']=abs(ctfdata['defocus2']*1e10)
-			particleparams['angast']=-ctfdata['angle_astigmatism']
+			if ctfdata is not None:	
+				# use defocus & astigmatism values 
+				particleparams['df1']=abs(ctfdata['defocus1']*1e10)
+				particleparams['df2']=abs(ctfdata['defocus2']*1e10)
+				particleparams['angast']=-ctfdata['angle_astigmatism']
 
 		# if using parameters from previous reconstruction
 		if params['compStackId'] is not None:
