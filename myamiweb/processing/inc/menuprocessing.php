@@ -122,6 +122,8 @@ if ($expId) {
 	// --- Get TiltSeries Data
 	if ($tiltseries = $particle->getTiltSeries($sessionId))
 		$tiltruns=count($tiltseries);
+	if ($fulltomograms = $particle->getFullTomogramsFromSession($sessionId))
+		$fulltomoruns=count($fulltomograms);
 	if ($tomograms = $particle->getTomogramsFromSession($sessionId))
 		$tomoruns=count($tomograms);
 
@@ -511,9 +513,9 @@ if ($expId) {
 		// tomograms being created and completed
 		$tottomo = $sdone+$srun+$sq;
 
-		$tottomo = ($tottomo > $tomoruns) ? $tottomo : $tomoruns;
+		$tottomo = ($tottomo > $tomoruns+$fulltomoruns) ? $tottomo : $tomoruns+$fulltomoruns;
 		$totresult = ($tottomo==0) ? "" :
-			"<a href='tomosummary.php?expId=$sessionId'>$tottomo</a>";
+			"<a href='tomosummary.php?expId=$sessionId'>$fulltomoruns/$tomoruns</a>";
 
 		$nruns=array();
 		$nruns[]=array (
