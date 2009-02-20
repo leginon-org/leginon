@@ -1045,7 +1045,10 @@ class SessionListCtrl(wx.ListCtrl, ColumnSorterMixin):
 				time = session.timestamp
 			except:
 				time = None
-			user = session['user']['full name']
+			try:
+				user = session['user']['full name']
+			except:
+				continue
 			comment = session['comment']
 			index = self.InsertStringItem(0, name)
 			self.SetStringItem(index, 1, str(time))
