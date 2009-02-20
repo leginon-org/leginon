@@ -215,6 +215,8 @@ def insertTomo(params):
 		tomoq['fulltomogram'] = results[0]
 		tomoq['runname'] = params['volume']
 		tomoq['dimension'] = {'x':params['shape'][2],'y':params['shape'][1], 'z':params['shape'][0]}
+		filepath = os.path.join(params['rundir'], params['name']+".rec")
+		tomoq['md5sum'] = apFile.md5sumfile(filepath)
 	else:
 		alignq = appionData.ApTomoAlignmentRunData()
 		alignq['bin'] = params['bin']
@@ -225,8 +227,6 @@ def insertTomo(params):
 		tomoq['tiltseries'] = tiltdata
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
 	tomoq['name'] = params['name']
-	filepath = os.path.join(params['rundir'], params['name']+".rec")
-	tomoq['md5sum'] = apFile.md5sumfile(filepath)
 	tomoq['description'] = params['description']
 		
 	if params['commit'] is True:
