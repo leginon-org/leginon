@@ -206,7 +206,7 @@ def getStackParticleTiltPair(stackid, partnum, tiltstackid=None):
 
 	#print partnum,"-->",stackpartnum
 	if time.time()-t0 > 1.0:
-		apDisplay.printMsg("long getStackPartTiltPair", apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("long getStackPartTiltPair "+apDisplay.timeString(time.time()-t0))
 	return stackpartdata
 
 #===============================
@@ -237,7 +237,7 @@ def getTiltTransformFromParticle(partdata):
 		apDisplay.printError("failed to get tilt pair data")
 
 	if time.time()-t0 > 1.0:
-		apDisplay.printMsg("long getTiltTransFromPart1", apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("long getTiltTransFromPart1 "+apDisplay.timeString(time.time()-t0))
 	return imgnum, transformdata, otherpartdata
 
 #===============================
@@ -248,7 +248,7 @@ def getParticleTiltRotationAngles(stackpartdata):
 	t0 = time.time()
 	tiltangle1, tiltangle2 = apDatabase.getTiltAnglesDegFromTransform(transformdata)
 	if time.time()-t0 > 1.0:
-		apDisplay.printMsg("long angle query", apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("long angle query "+apDisplay.timeString(time.time()-t0))
 
 	if imgnum == 1:
 		tiltrot = transformdata['image1_rotation']
@@ -283,7 +283,7 @@ def getTransformImageIds(transformdata):
 	img1 = transformdata.special_getitem('image1', dereference=False).dbid
 	img2 = transformdata.special_getitem('image2', dereference=False).dbid
 	if time.time()-t0 > 0.3:
-		apDisplay.printMsg("long image query", apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("long image query "+apDisplay.timeString(time.time()-t0))
 	return img1, img2
 
 
