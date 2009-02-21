@@ -28,6 +28,7 @@ class TargetHandler(object):
 	def requestTransformTarget(self, targetdata):
 		evt = event.TransformTargetEvent()
 		evt['target'] = targetdata
+		evt['level'] = self.settings['adjust for transform']
 		self.transformtargetevent.clear()
 		self.logger.info('requesting transformed target')
 		self.outputEvent(evt)

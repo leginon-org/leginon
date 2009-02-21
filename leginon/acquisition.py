@@ -120,12 +120,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for process': False,
 		'wait for rejects': False,
 		'wait for reference': False,
-		'wait for transform': False,
 		#'duplicate targets': False,
 		#'duplicate target type': 'focus',
 		'iterations': 1,
 		'wait time': 0,
-		'adjust for drift': False,
+		'adjust for transform': 'off',
 		'drift between': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,
@@ -273,8 +272,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		declaredtime = transformsdeclared[0].timestamp
 		print 'NEWTARGETTIME', newtargettime
 		print 'DECLAREDTIME', declaredtime
+		print 'TARGET GREATER', newtargettime > declaredtime
 		if newtargettime > declaredtime:
+			print 'RETURNING'
 			return newtargetdata
+			print 'NOT RETURNING'
 
 		## if transform declared after most recent target, need new transformed	target
 		newtargetdata = self.requestTransformTarget(newtargetdata)
@@ -308,7 +310,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
 
-			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for drift']:
+			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'off':
 				if self.settings['drift between'] and self.goodnumber > 0:
 					self.declareDrift('between targets')
 				#targetdata = self.adjustTargetForDrift(targetdata)
@@ -337,13 +339,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				break
 			if ret == 'repeat':
 				return repeat
-
-		## This is a test
-		if self.settings['wait for transform']:
-			self.setStatus('waiting')
-			self.requestTransformTarget(targetdata)
-			self.setStatus('processing')
-			self.logger.info('New target id  %d' % (targetdata.dbid))
 
 		self.reportStatus('processing', 'Processing complete')
 

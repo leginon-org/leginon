@@ -1201,6 +1201,17 @@ class DriftManagerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TransformManagerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('threshold', float),
+			('pause time', float),
+			('camera settings', CameraSettingsData),
+			('timeout', int),
+			('min mag', int),
+		)
+	typemap = classmethod(typemap)
+
 class FFTMakerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -1510,7 +1521,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			#('duplicate target type', str),
 			('wait time', float),
 			('iterations', int),
-			('adjust for drift', bool),
+			('adjust for transform', str),
 			('drift between', bool),
 			('mover', str),
 			('move precision', float),

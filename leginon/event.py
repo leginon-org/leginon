@@ -419,6 +419,7 @@ class TransformTargetEvent(Event):
 	def typemap(cls):
 		return Event.typemap() + (
 			('target', leginondata.AcquisitionImageTargetData),
+			('level', str),
 		)
 	typemap = classmethod(typemap)
 

@@ -84,8 +84,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 																				'Publish and wait for rejected targets')
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
-		self.widgets['adjust for drift'] = wx.CheckBox(self, -1,
-																				'Adjust targets for drift')
+		self.widgets['adjust for transform'] = Choice(self, -1, choices=['off', 'one', 'all'])
 		self.widgets['drift between'] = wx.CheckBox(self, -1,
 																				'Declare drift between targets')
 
@@ -171,7 +170,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['wait for reference'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['adjust for drift'], (4, 0), (1, 1),
+		sz_misc.Add(self.widgets['adjust for transform'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)

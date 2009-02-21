@@ -20,7 +20,7 @@ import threading
 import presets
 import copy
 import EM
-import gui.wx.DriftManager
+import gui.wx.TransformManager
 import instrument
 import acquisition
 import rctacquisition
@@ -170,22 +170,36 @@ class TargetTransformer(targethandler.TargetHandler):
 		newtarget.insert(force=True)
 		return newtarget
 	
-	def transformTarget(self, target):
+	def transformTarget(self, target, level):
 		if target is None:
 			print 'TRANSFORMTARGET NONE'
 		else:
 			print 'TRANSFORMTARGET', target.dbid
 		parentimage = target['image']
-		print 'PARENTIMAGE', parentimage
+		if parentimage:
+			print 'PARENTIMAGE', parentimage.dbid
+		else:
+			print 'PAENTIMAGE', parentimage
 		matrix = self.lookupMatrix(parentimage)
 		print 'MATRIX', matrix
 		if parentimage is None:
-			newtarget = self.matrixTransform(target, matrix)
+			return target
+			#newtarget = self.matrixTransform(target, matrix)
 			print 'AAAAAAAAA'
 			return newtarget
+		## check all transforms declared to decide on minimum mag
+		## for now there is only one
+		minimum_mag = self.settings['min mag']
+		print 'PARENTIMAGE PRESET', parentimage['preset']['name'], parentimage['preset']['magnification']
+		if parentimage['preset']['magnification'] < minimum_mag:
+			self.logger.info('not transforming target because parent image has low mag')
+			return target
 		if matrix is None:
 			parenttarget = parentimage['target']
-			newparenttarget = self.transformTarget(parenttarget)
+			if level == 'all':
+				newparenttarget = self.transformTarget(parenttarget, level)
+			elif level == 'one':
+				newparenttarget = parenttarget
 			newparentimage = self.reacquire(newparenttarget)
 			if newparentimage is None:
 				print 'BBBBBBBB'
@@ -197,11 +211,12 @@ class TargetTransformer(targethandler.TargetHandler):
 		return newtarget
 
 class TransformManager(node.Node, TargetTransformer):
-	panelclass = gui.wx.DriftManager.Panel
-	settingsclass = leginondata.DriftManagerSettingsData
+	panelclass = gui.wx.TransformManager.Panel
+	settingsclass = leginondata.TransformManagerSettingsData
 	defaultsettings = {
 		'threshold': 3e-10,
 		'pause time': 2.5,
+		'min mag': 2000,
 		'camera settings':
 			leginondata.CameraSettingsData(
 				initializer={
@@ -335,7 +350,10 @@ class TransformManager(node.Node, TargetTransformer):
 		return emtargetdata
 	
 	def reacquire(self, targetdata):
-		oldtargetdata = targetdata['fromtarget']
+		if targetdata['fromtarget'] is None:
+			oldtargetdata = targetdata
+		else:
+			oldtargetdata = targetdata['fromtarget']
 		aquery = leginondata.AcquisitionImageData(target=oldtargetdata)
 		results = aquery.query(readimages=False, results=1)
 		oldimage = results[0]
@@ -373,7 +391,8 @@ class TransformManager(node.Node, TargetTransformer):
 	def handleTransformTargetEvent(self, ev):
 		self.setStatus('processing')
 		oldtarget = ev['target']
-		newtarget = self.transformTarget(oldtarget)
+		level = ev['level']
+		newtarget = self.transformTarget(oldtarget, level)
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
 		self.outputEvent(evt)
