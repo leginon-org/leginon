@@ -23,10 +23,13 @@ class ImodProcessor(imageprocessor.ImageProcessor):
 	})
 
 	def processImageList(self, imagelist):
+		self.processpath = self.settings['path']
+		if not os.path.isdir(self.processpath):
+			os.makedirs(self.processpath)
 		if not imagelist:
 			self.logger.warning('No images in image list.')
 			return
-		self.nopeaks = False
+		self.nopeaks = True
 		self.correlator = tiltcorrelator.Correlator(self, 0, 4,lpf=1.5)
 		mrc_files = []
 		self.peaks = [{'x':0.0,'y':0.0}]
@@ -57,7 +60,7 @@ class ImodProcessor(imageprocessor.ImageProcessor):
 			mrc_name = imagedata['filename'] + '.mrc'
 			fullname = os.path.join(imagepath, mrc_name)
 			mrc_files.append(fullname)
-		self.writeParamsFile(tiltseries, mrc_files)
+		#self.writeParamsFile(tiltseries, mrc_files)
 		self.logger.info('making stack for tilt series %d' % (tiltseries['number'],))
 		self.makeStack(tiltseries, mrc_files)
 		self.writeRawtltFile(tiltseries,tiltkeys)
