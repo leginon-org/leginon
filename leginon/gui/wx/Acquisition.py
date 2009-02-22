@@ -138,30 +138,13 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'targets')
 		sz_target_type.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-#		# duplicate target
-#		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
-#																				'Duplicate targets with type:')
-#		self.widgets['duplicate target type'] = Choice(self, -1,
-#																							choices=self.node.duplicatetypes)
-
-#		szduplicate = wx.GridBagSizer(0, 0)
-#		szduplicate.Add(self.widgets['duplicate targets'], (0, 0), (1, 1),
-#										wx.ALIGN_CENTER_VERTICAL)
-#		szduplicate.Add(self.widgets['duplicate target type'], (0, 1), (1, 1),
-#										wx.ALIGN_CENTER_VERTICAL)
-
 		# settings sizer
-		sz = wx.GridBagSizer(5, 25)
-		sz_misc = wx.GridBagSizer(0, 0)
-		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (0, 2), (4, 1), wx.ALIGN_CENTER)
-#		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
+		sz = wx.GridBagSizer(5, 5)
 		sz_save = wx.GridBagSizer(0, 0)
 		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc = wx.GridBagSizer(0, 0)
 		sz_misc.Add(self.widgets['correct image'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['wait for process'], (1, 0), (1, 1),
@@ -174,17 +157,18 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		szright = wx.GridBagSizer(3, 3)
+		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
+		szright.Add(szmover, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(szmoveprec, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		szright.Add(sz_target_type, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmovetype, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (3,0), (4,1), wx.ALIGN_BOTTOM)
-		sz.Add(sz_misc, (2,1), (5,1), wx.ALIGN_TOP)
-		sz.Add(szmover, (4,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmoveprec, (5,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sz_target_type, (6,2), (1,1), wx.ALIGN_CENTER_VERTICAL)
-#		sz.Add(szduplicate, (5, 1), (1, 1),
-#						wx.ALIGN_CENTER_VERTICAL)
-#		sz.AddGrowableRow(6)
-
-		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		sz.Add(sbszsim, (3,0), (6,1), wx.ALIGN_BOTTOM)
+		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(9,1), wx.ALIGN_CENTER_VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]
 
