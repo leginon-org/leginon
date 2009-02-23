@@ -124,7 +124,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		#'duplicate target type': 'focus',
 		'iterations': 1,
 		'wait time': 0,
-		'adjust for transform': 'off',
+		'adjust for transform': 'no',
 		'drift between': False,
 		'mover': 'presets manager',
 		'move precision': 0.0,

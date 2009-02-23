@@ -342,21 +342,29 @@ class TransformManager(node.Node, TargetTransformer):
 		print	'stage position', emtargetdata['stage position']
 
 		emtargetdata['target'] = targetdata
-
+		print "TARGETtoEMTARGET",targetdata.dbid
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
+		print "EMTARGETTARGET",emtargetdata['target'].dbid
 		return emtargetdata
 	
 	def reacquire(self, targetdata):
+		print "REACQUIRE START",targetdata.dbid
 		if targetdata['fromtarget'] is None:
 			oldtargetdata = targetdata
 		else:
 			oldtargetdata = targetdata['fromtarget']
+		print "REACQUIRE OLDTARGET",oldtargetdata.dbid
 		aquery = leginondata.AcquisitionImageData(target=oldtargetdata)
 		results = aquery.query(readimages=False, results=1)
-		oldimage = results[0]
+		if len(results) > 0:
+			oldimage = results[0]
+		else:
+			aquery = leginondata.AcquisitionImageData(target=targetdata)
+			results = aquery.query(readimages=False, results=1)
+			oldimage = results[0]
 		oldemtarget = oldimage['emtarget']
 		movetype = oldemtarget['movetype']
 		try:
@@ -369,6 +377,7 @@ class TransformManager(node.Node, TargetTransformer):
 		channel = int(oldimage['correction channel']==0)
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		targetdata = emtarget['target']
+		print "REACQUIRE TARGET",targetdata.dbid
 		self.instrument.setCorrectionChannel(channel)
 		dataclass = leginondata.CorrectedCameraImageData
 		imagedata = self.instrument.getData(dataclass)
@@ -378,13 +387,19 @@ class TransformManager(node.Node, TargetTransformer):
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, corrected=True, pixels=pixels, pixeltype=pixeltype)
-		imagedata['version'] = oldimage['version']+1 
-		imagedata['filename'] = oldimage['filename']+'_tr' 
+		version = oldimage['version']+1
+		imagedata['version'] = version
+		## set the 'filename' value
+		if imagedata['label'] == 'RCT':
+			rctacquisition.setImageFilename(imagedata)
+		else:
+			acquisition.setImageFilename(imagedata)
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
 		self.logger.info('Publishing new transformed image...')
 		self.publish(imagedata, database=True)
+		print "REACQUIRE IMAGE",imagedata.dbid
 		self.setImage(imagedata['image'], 'Image')
 		return imagedata
 
