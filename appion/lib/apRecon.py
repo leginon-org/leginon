@@ -412,7 +412,7 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 	tmphed = density + '.hed'
 	tmpimg = density + '.img'
 	hedcmd = ('proc3d %s %s' % (density,tmphed))
-	if sym != 'Icosahedral':
+	if sym.lower()[:4] != 'icos':
 		hedcmd = hedcmd + " rot=90"
 	apEMAN.executeEmanCmd(hedcmd)
 	pngslice = density + '.slice.png'
