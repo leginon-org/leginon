@@ -302,7 +302,7 @@ class Tomography(acquisition.Acquisition):
 
 	def adjusttarget(self,preset_name,target,emtarget):
 		self.declareDrift('tilt')
-		target = self.adjustTargetForDrift(target)
+		target = self.adjustTargetForTransform(target)
 		emtarget = self.targetToEMTargetData(target)
 		presetdata = self.presetsclient.getPresetFromDB(preset_name)
 		status = self.moveAndPreset(presetdata, emtarget)
