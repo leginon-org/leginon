@@ -51,9 +51,10 @@ def getSpecificImagesFromDB(imglist):
 			imgname = imgname[:-4]
 		imgquery = leginondata.AcquisitionImageData(filename=imgname)
 		imgres   = imgquery.query(readimages=False, results=1)
-		if len(imgres) > 1:
+		if len(imgres) >= 1:
 			imgtree.append(imgres[0])
 		else:
+			print imgres
 			apDisplay.printError("Could not find image: "+imgname)
 	return imgtree
 
