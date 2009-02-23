@@ -268,8 +268,8 @@ class frealignJob(appionScript.AppionScript):
 
 		# 3d density will be saved as 'workingvol' in the working directory
 		self.params['workingvol'] = os.path.join(self.params['workingdir'],"workingvol.mrc")
-		# output param file will be saved as 'params.1.par' in the working directory
-		self.params['workingparam'] = os.path.join(self.params['workingdir'],"params.1.par")
+		# output param file will be saved as 'params.all.par' in the working directory
+		self.params['workingparam'] = os.path.join(self.params['workingdir'],"params.all.par")
 		
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		self.params['stackfile'] = os.path.join(self.stackdata['path']['path'],self.stackdata['name'])

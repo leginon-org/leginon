@@ -8,6 +8,8 @@ import apDisplay
 import appionData
 import apFrealign
 import shutil
+import math
+import numpy
 
 #===============
 def imagicToMrc(params, msg=True):
@@ -79,6 +81,7 @@ def generateParticleParams(params):
 	apix=params['apix']
 	particleparams={}
 	f=open(params['inpar'],'w')
+	params['noClassification']=0
 	print "Writing out particle parameters"
 	for particle in stackdata:
 		# defaults
@@ -111,10 +114,19 @@ def generateParticleParams(params):
 				particleparams['angast']=-ctfdata['angle_astigmatism']
 
 		# if using parameters from previous reconstruction
-		if params['compStackId'] is not None:
+		if params['reconiterid'] is not None:
 			params['mode']=1
 			apFrealign.getStackParticleEulersForIteration(params,particle['particleNumber'])
 			fr_eulers = apFrealign.convertEmanEulersToFrealign(params['eman_orient'])
+			e1 = fr_eulers['phi']
+			e2 = fr_eulers['theta']
+			e3 = fr_eulers['psi']
+			# if icos, rotate eulers to crowther orientation
+			if params['sym']=='Icos':
+				newEulers = sumEulers([0,-31.7174744,0],[e1,e2,e3])
+				fr_eulers['phi']=newEulers[0]
+				fr_eulers['theta']=newEulers[1]
+				fr_eulers['psi']=newEulers[2]
 			particleparams['psi'] = fr_eulers['psi']
 			particleparams['theta'] = fr_eulers['theta']
 			particleparams['phi'] = fr_eulers['phi']
@@ -206,21 +218,20 @@ def convertEmanEulersToFrealign(eman_eulers):
 	if e2 > 360:
 		e2-=360
 		
-	# get Frealign phi (add 90 degrees)
-	e1*=-1
-	if m is True:
-		e1+=90
-		e1*=-1
-	else:
-		e1*=-1
-		e1+=90
+	# get Frealign phi 
+	e1-=90
 	if e1 < 0:
 		e1+=360-(360*int(e1/360.0))
 	if e1 > 360:
 		e1-=360*int(e1/360.0)
 
-	# get Frealign psi (subtract 90 degrees)
-	e3-=90
+	# get Frealign psi
+	if m is True:
+		e3+=90
+		e3*=-1
+	else:
+		e3*=-1
+		e3+=90
 	if e3 < 0:
 		e3+=360-(360*int(e3/360.0))
 	if e3 > 360:
@@ -228,6 +239,117 @@ def convertEmanEulersToFrealign(eman_eulers):
 
 	eulers={"phi":e1,"theta":e2,"psi":e3}
 	return eulers
+
+#===============
+def sumEulers(eul1,eul2):
+	"""
+	combine two successive euler rotations
+	NOTE: eulers should be in degrees
+	"""
+	e11=math.radians(eul1[0])
+	e12=math.radians(eul1[1])
+	e13=math.radians(eul1[2])
+	e21=math.radians(eul2[0])
+	e22=math.radians(eul2[1])
+	e23=math.radians(eul2[2])
+
+	# convert each set of eulers to a rotation matrix
+	r1 = eulersToRotationMatrix(e11,e12,e13)
+	r2 = eulersToRotationMatrix(e21,e22,e23)
+	
+	m = [[0,0,0],[0,0,0],[0,0,0]]
+	for i in range(0,3):
+		for j in range (0,3):
+			m[i][j] = 0.0
+			for k in range (0,3):
+				m[i][j] = m[i][j] + (r2[i][k]*r1[k][j])
+
+	# convert near-zeroes and ones
+	for j in range (0,3):
+		for i in range (0,3):
+			if abs(m[i][j]) < 1e-6:
+				m[i][j] = 0
+			if m[i][j] - 1.0 > -1e-6:
+				m[i][j] = 1
+			if m[i][j] + 1 < 1e-6:
+				m[i][j] = -1	
+
+	if m[2][2] == 1:
+		theta = 0.0
+		psi = 0.0
+		if m[0][0] == 0:
+			phi = math.degrees(math.asin(m[0][1]))
+		else:
+			if m[0][0] < 0:
+				phi = math.degrees(math.pi+math.atan(m[0][1]/m[0][0]))
+			else:
+				phi = math.degrees(math.atan(m[0][1]/m[0][0]))
+	elif m[2][2] == -1:
+		theta = 180.0
+		psi = 0.0
+		if m[0][0] == 0:
+			phi = math.degrees(math.asin(-m[0][1]))
+		else:
+			if -m[0][0] < 0:
+				phi = math.degrees(math.pi+math.atan(-m[0][1]/-m[0][0]))
+			else:	
+				phi = math.degrees(math.atan(-m[0][1]/-m[0][0]))
+	else:
+		theta = math.degrees(math.acos(m[2][2]))
+		sign = cmp(theta,0) # get sign of theta
+		if m[2][0] == 0:
+			if sign != cmp(m[2][1],0):
+				phi = 270.0
+			else:
+				phi = 90.0
+		else:
+			if m[2][0] < 0:
+				phi = math.degrees(math.pi+math.atan(m[2][1]/m[2][0]))
+			else:		
+				phi = math.degrees(math.atan(m[2][1]/m[2][0]))
+		if m[0][2] == 0:
+			if sign != cmp(m[1][2],0):
+				psi=270.0
+			else:
+				psi=90.0
+		else:
+			if -m[0][2] < 0:
+				psi = math.degrees(math.pi+math.atan(m[1][2]/-m[0][2]))
+			else:	
+				psi = math.degrees(math.atan(m[1][2]/-m[0][2]))
+
+	if phi < 0:
+		phi+=360
+	if theta < 0:
+		theta+=360
+	if psi < 0:
+		psi+=360
+
+	return [phi,theta,psi]
+
+def eulersToRotationMatrix(e1,e2,e3):
+	"""
+	converts 3 eulers to a rotation matrix using
+	a zyz convention
+	"""
+	cphi = math.cos(e1)
+	sphi = math.sin(e1)
+	ctheta = math.cos(e2)
+	stheta = math.sin(e2)
+	cpsi = math.cos(e3)
+	spsi = math.sin(e3)
+
+	m11 = cphi*ctheta*cpsi-sphi*spsi
+	m21 = -cphi*ctheta*spsi-sphi*cpsi
+	m31 = cphi*stheta
+	m12 = sphi*ctheta*cpsi+cphi*spsi
+	m22 = -sphi*ctheta*spsi+cphi*cpsi
+	m32 = sphi*stheta
+	m13 = -stheta*cpsi
+	m23 = stheta*spsi
+	m33 = ctheta
+
+	return [[m11,m12,m13],[m21,m22,m23],[m31,m32,m33]]
 
 #===============
 def getStackParticleEulersForIteration(params,pnum):
@@ -244,16 +366,27 @@ def getStackParticleEulersForIteration(params,pnum):
 	particleid = stackp['particle'].dbid
 
 	# find particle in reference stack
-	refstackp = apStack.getStackParticleFromParticleId(particleid,params['compStackId'])
-	pclassq = appionData.ApParticleClassificationData()
-	pclassq['particle'] = refstackp
-	pclassq['refinement'] = appionData.ApRefinementData.direct_query(params['reconiterid'])
-	pclass = pclassq.query()
-	
-	if not pclass:
-		apDisplay.printError('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))
+	refstackp = apStack.getStackParticleFromParticleId(particleid,params['compStackId'], nodie=True)
+	if not refstackp:
+		apDisplay.printWarning('No classification for stack particle %d in reconstruction iteration id: %d' % (pnum, params['reconiterid']))
+		params['noClassification']+=1
+		if params['noClassification'] > (float(params['last'])*0.10):
+			apDisplay.printError('More than 10% of the particles have no classification, use a different reference reconstruction')
+		pclass={}
+		pclass['eulers']={}
+		pclass['eulers']['euler1']=0.0
+		pclass['eulers']['euler2']=0.0
+		pclass['inplane_rotation']=0.0
+		pclass['mirror']=False
+		pclass['shiftx']=0.0
+		pclass['shifty']=0.0
+	else:
+		pclassq = appionData.ApParticleClassificationData()
+		pclassq['particle'] = refstackp
+		pclassq['refinement'] = appionData.ApRefinementData.direct_query(params['reconiterid'])
+		pclass = pclassq.query()
+		pclass=pclass[0]
 
-	pclass=pclass[0]
 	params['eman_orient']={}
 	params['eman_orient']['alt']=pclass['eulers']['euler1']
 	params['eman_orient']['az']=pclass['eulers']['euler2']
