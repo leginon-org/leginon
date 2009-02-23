@@ -394,8 +394,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		aligntime0 = time.time()
 		os.system("chmod 775 "+str(batchfile))
 		os.chdir(self.params['rundir'])
-#		apIMAGIC.copyFile(self.params['rundir'], "start.hed")  ### removes poorly formatted EMAN headers
-#		apIMAGIC.executeImagicBatchFile(batchfile)
+		apIMAGIC.copyFile(self.params['rundir'], "start.hed")  ### removes poorly formatted EMAN headers
+		apIMAGIC.executeImagicBatchFile(batchfile)
                	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
 
 		### create Average MRC file
