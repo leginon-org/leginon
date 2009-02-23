@@ -84,7 +84,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 																				'Publish and wait for rejected targets')
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
-		self.widgets['adjust for transform'] = Choice(self, -1, choices=['off', 'one', 'all'])
+		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
 		self.widgets['drift between'] = wx.CheckBox(self, -1,
 																				'Declare drift between targets')
 
@@ -144,6 +144,13 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz_transform = wx.GridBagSizer(0, 0)
+		label = wx.StaticText(self, -1, 'Adjust target using')
+		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz_transform.Add(self.widgets['adjust for transform'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'ancestor(s)')
+		sz_transform.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_misc = wx.GridBagSizer(0, 0)
 		sz_misc.Add(self.widgets['correct image'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -153,7 +160,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['wait for reference'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz_misc.Add(self.widgets['adjust for transform'], (4, 0), (1, 1),
+		sz_misc.Add(sz_transform, (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
