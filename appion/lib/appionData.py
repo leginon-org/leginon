@@ -487,6 +487,24 @@ class ApSpiderNoRefRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApSpiderNoRefRunData=ApSpiderNoRefRunData
 
+class ApMultiRefAlignRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('lowpass_refs', int),
+			('thresh_refs', int),
+			('maskrad_refs', float),
+			('mirror', bool),
+			('max_shift_orig', float),
+			('max_shift_this', float),
+			('samp_param', float),
+			('min_radius', float),
+			('max_radius', float),
+			('numiter', int),
+		)
+	typemap = classmethod(typemap)
+#leginondata.ApMultiRefAlignRunData=ApMultiRefAlignRunData
+
 ### Improved alignment data tables
 
 class ApAlignRunData(Data):
@@ -500,7 +518,7 @@ class ApAlignRunData(Data):
 			('norefrun', ApSpiderNoRefRunData),
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
-			('imagicnorefrun', ApImagicNoRefRunData),
+			('imagicMRA', ApMultiRefAlignRunData),
 			('hidden', bool),
 			('project|projects|project', int),
 			('path', ApPathData),
