@@ -20,6 +20,7 @@ import appionData
 import apParam
 import apRecon
 import apDisplay
+import apEMAN
 import apIMAGIC
 import apFile
 import apUpload
@@ -349,9 +350,11 @@ class imagicAlignmentScript(appionScript.AppionScript):
 				strippedfile = self.stack['file'][:-4]
 			else:
 				strippedfile = self.stack['file']
-			shutil.copyfile(strippedfile+".hed", os.path.join(self.params['rundir'], "start.hed"))
-			shutil.copyfile(strippedfile+".img", os.path.join(self.params['rundir'], "start.img"))
-
+			emancmd = "proc2d "+strippedfile+".hed "+os.path.join(self.params['rundir'], "start_copy.hed ")+"first=0 last="+str(self.params['numpart']-1)
+			apEMAN.executeEmanCmd(emancmd)
+			os.renames(os.path.join(self.params['rundir'], "start_copy.hed"), os.path.join(self.params['rundir'], "start.hed"))
+			os.renames(os.path.join(self.params['rundir'], "start_copy.img"), os.path.join(self.params['rundir'], "start.img"))	
+	
 		### get template stack parameters
 		self.templatestack = {}
 		self.templatestack['data'] = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
