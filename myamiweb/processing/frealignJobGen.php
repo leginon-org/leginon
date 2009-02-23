@@ -334,8 +334,6 @@ function jobForm($extra=false) {
 	echo "<br />\n";
 	echo "<h4 style='align=\'center\' >Frealign Reconstruction Parameters</h4>\n";
 	echo "<hr />\n";
-	echo "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
-	echo "<br />\n";
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr><td>\n";
@@ -399,6 +397,8 @@ function jobForm($extra=false) {
 	echo "</td></tr>\n";
 	echo "</table>\n";
 	echo closeRoundBorder();
+	echo "<br />\n";
+	echo "<input type='BUTTON' onClick='setDefaults(this.form)' VALUE='Set Defaults'>\n";
 	echo "<br />\n";
 	$reslimit=($_POST['reslimit']) ? $_POST['reslimit'] : (ceil($apix*20))/10;
 
@@ -500,6 +500,9 @@ function writeJobFile ($extra=False) {
 	$jobname = $_POST['jobname'];
 	$jobfile ="$jobname.job";
 
+	$nodes = $_POST['nodes'];
+	$ppn = $_POST['ppn'];
+	$procs = $nodes*$ppn;
 	$clustername = $_POST['clustername'];
 	$outdir = $_POST['outdir'];
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
@@ -558,15 +561,28 @@ function writeJobFile ($extra=False) {
 	$hp=$_POST["hp"];
 	$lp=$_POST["lp"];
 	$bfactor=$_POST["bfactor"];
-	$setuponly=$_POST["setuponly"];
 	$refcycles=$_POST['refcycles'];
 	$inpar=$_POST['inparfile'];
 	$importiter=$_POST['importiter'];
 	
-	$line="\nrunfrealign.py -n $jobname --radius=$radius --iradius=$iradius --apix=$apix ";
-	$line.="--ampcontrast=$ampcontrast --maskthresh=$maskthresh --phaseconstant=$phaseconstant --avgresidual=$avgresidual --itmax=$itmax ";
-	$line.="--maxmatch=$maxmatch --last=$last --sym=$sym --targetresidual=$targetresidual --residualthresh=$residualthresh ";
-	$line.="--cs=$cs --kv=$kv --reslimit=$reslimit --hp=$hp --lp=$lp --bfactor=$bfactor";
+	$line.= "#PBS -l nodes=$nodes:ppn=$ppn\n";
+	$line.= "#PBS -l walltime=240:00:00\n";
+	$line.= "#PBS -l cput=240:00:00\n";
+	$line.= "\nrunfrealign.py -n $jobname ";
+	$line.= "--radius=$radius ";
+	if ($iradius > 0) $line.="--iradius=$iradius ";
+	$line.= "--apix=$apix ";
+	$line.= "--ampcontrast=$ampcontrast ";
+	if ($maskthresh > 0) $line.= "--maskthresh=$maskthresh ";
+	if ($phaseconstant < 100) $line.= "--phaseconstant=$phaseconstant ";
+	$line.= "--avgresidual=$avgresidual ";
+	$line.= "--itmax=$itmax ";
+	if ($maxmatch > 0) $line.= "--maxmatch=$maxmatch ";
+	$line.= "--last=$last ";
+	$line.= "--sym=$sym ";
+	$line.= "--targetresidual=$targetresidual ";
+	$line.= "--residualthresh=$residualthresh ";
+	$line.= "--cs=$cs --kv=$kv --reslimit=$reslimit --hp=$hp --lp=$lp --bfactor=$bfactor";
 	if ($inpar) $line.= " --inpar=$inpar";
 	if ($ang) $line.= " --ang=$ang";
 	//if ($magrefine=='on') $line.=" --magrefine='T'";
@@ -583,31 +599,17 @@ function writeJobFile ($extra=False) {
 	//if ($deltax=='on') $line.=" --deltax=1";
 	//if ($deltay=='on') $line.=" --deltay=1";
 	if ($refcycles) $line.= " --refcycles=$refcycles";
-	if ($setuponly=='on') $line.=" --setuponly";
 
 	//appion specific options
-	$line.= " --reconiterid=$importiter";
+	if ($importiter) $line.= " --reconiterid=$importiter";
 	$line.= " --stackid=$stackidval";
 	$line.= " --modelid=$modelid";
 	$line.= " --project=$projectId";
+	if ($procs > 1) $line.= " --proc=$procs";
 	
 	$line.=" > runfrealign".$i.".txt\n";
 	$clusterjob.= $line;
  
-	if (!$extra) {
-		if ($clustername=='garibaldi') {
-			echo "Please review your job below.<BR>";
-			echo "If you are satisfied:<BR>\n";
-			echo "1) Place files in DMF<BR>\n";
-			echo "2) Once this is done, click the button to launch your job.<BR>\n";
-			echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
-			echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
-		}
-		else echo "Review your job, and submit.<br />\n";
-	}
-	else {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	}
 	echo "<FORM NAME='frealignjob' METHOD='POST' ACTION='$formAction'><BR>\n";
 	echo "<input type='hidden' name='clustername' value='$clustername'>\n";
 	echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
@@ -615,12 +617,9 @@ function writeJobFile ($extra=False) {
 	echo "<input type='HIDDEN' NAME='jobname' VALUE='$jobname'>\n";
 	echo "<input type='HIDDEN' NAME='outdir' VALUE='$outdir'>\n";
 	// convert \n to /\n's for script
-	$header_conv=preg_replace('/\n/','|--|',$header);
-	echo "<input type='HIDDEN' NAME='header' VALUE='$header_conv'>\n";
 	if (!$extra) {
 		echo "<HR>\n";
 		echo "<PRE>\n";
-		echo $header;
 		echo $clusterjob;
 		echo "</PRE>\n";
 		$tmpfile = "/tmp/$jobfile";
@@ -659,7 +658,7 @@ function defaultReconValues ($box, $apix) {
   $javafunc.="obj.iradius.value = '0';
       obj.ampcontrast.value = '0.07';
       obj.maskthresh.value = '0.0';
-      obj.phaseconstant.value = '3.0';
+      obj.phaseconstant.value = '100.0';
       obj.avgresidual.value = '75';
       obj.itmax.value = '10';
       obj.maxmatch.value = '0';
@@ -668,7 +667,6 @@ function defaultReconValues ($box, $apix) {
       obj.hp.value = '100.0';
       obj.lp.value = '".$lp1val."';
       obj.bfactor.value = '0.0';
-      obj.setuponly.value = false;
       return;
     }
   </SCRIPT>\n";
