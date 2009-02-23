@@ -17,122 +17,6 @@
 
 require ("inc/leginon.inc");
 
-function getDeQueuedTargetListIds($sessionId,$qtype) {
-	global $leginondata;
-	$q="SELECT "
-		."dqlist.`REF|ImageTargetListData|list` as doneid "
-		."FROM "
-		."`DequeuedImageTargetListData` AS `dqlist` "
-		."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`dqlist`.`REF|QueueData|queue`) "
-		."where "
-		."`q`.`REF|SessionData|session`=".$sessionId." "
-		."AND "
-		."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
-		."";
-	return $leginondata->mysql->getSQLResult($q);
-}
-
-function getTargetListIds($sessionId,$qtype) {
-	global $leginondata;
-	$q="SELECT "
-		."itlist.`DEF_id` as itlid "
-		."FROM "
-		."`ImageTargetListData` AS `itlist` "
-		."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
-		."where "
-		."`q`.`REF|SessionData|session`=".$sessionId." "
-		."AND "
-		."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
-		."";
-	return $leginondata->mysql->getSQLResult($q);
-}
-
-function rsum($v, $w) {
-	$v += $w;
-	return $v;
-}
-
-function getCountFromTargetListId($targetlistId,$status) {
-	global $leginondata;
-	$q="SELECT "
-		."count(`t`.`DEF_id`) as Count "
-		."FROM "
-		."`AcquisitionImageTargetData` AS `t` "
-		."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
-		."WHERE "
-		." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
-		."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
-		."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
-		."";
-	$result = $leginondata->mysql->getSQLResult($q);
-	if ($result) {
-		return $result[0]['Count'];
-	} else {
-		return;	
-	}
-}
-
-function getCountsFromImageTargetLists($itls) {
-	$counts = array();
-	foreach ($itls as $itl) {
-		$count = getCountFromTargetListId($itl,'new');
-		array_push($counts, $count);
-	};
-	$result = array_reduce($counts,"rsum");
-	if (!$result) $result=0;
-	return $result;
-}
-
-function getQueueTimeData($sessionId,$qtype) {
-  global $leginondata;
-  $q="SELECT "
-		."proc.QueueOn as queue,"
-		."done.QueueCount as QueueCount, "
-		."(done.time-proc.time) as QueueTime "
-		."FROM "
-		."(SELECT "
-		."min(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
-		."`t`.`REF|AcquisitionImageData|image` as QueueOn, "
-		."count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
-		."FROM "
-		."`AcquisitionImageTargetData` AS `t` "
-		."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
-		."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
-		."WHERE "
-		." q.`REF|SessionData|session` = ".$sessionId." "
-		."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
-		."AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
-		."AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-		."latin1_swedish_ci "
-		."group by t.`REF|AcquisitionImageData|image`) AS proc, "
-		."(SELECT "
-		."max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
-		."`t`.`REF|AcquisitionImageData|image` as QueueOn, "
-		."count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
-		."FROM "
-		."`AcquisitionImageTargetData` AS `t` "
-		."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
-		."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
-		."WHERE "
-		." q.`REF|SessionData|session` = ".$sessionId." "
-		."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
-		."AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
-		."AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
-		."latin1_swedish_ci "
-		."group by t.`REF|AcquisitionImageData|image`) AS done "
-		."WHERE "
-		."proc.QueueOn=done.QueueOn "
-		."";
-	return $leginondata->mysql->getSQLResult($q);
-}
-
-function getQueueTypes($sessionId) {
-	global $leginondata;
-	$q="SELECT "
-		."`label` FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
-	return $leginondata->mysql->getSQLResult($q);
-}
-
 function getSessionSelector($sessions, $sessionId=NULL) {
 	$selector = '<select name="sessionId" onchange=submit()>';
 	foreach ($sessions as $session) {
@@ -167,16 +51,16 @@ $sessionSelector = getSessionSelector($sessions, $sessionId);
 	<tr>
 <?
 // --- Get nodes with queue
-$qtypes = getQueueTypes($sessionId);
+$qtypes = $leginondata->getQueueTypes($sessionId);
 if (!$qtypes) {
 	?><td><h4>No queuing in this session</h4></td><?
 } else {
 	arsort($qtypes);
 	foreach ($qtypes as $t) {
 		$qtype = $t['label'];
-		$sqldataTime = getQueueTimeData($sessionId,$qtype);
-		$sqldataDqList = getDeQueuedTargetListIds($sessionId,$qtype);
-		$sqldataTList = getTargetListIds($sessionId,$qtype);
+		$sqldataTime = $leginondata->getQueueTimeData($sessionId,$qtype);
+		$sqldataDqList = $leginondata->getDeQueuedTargetListIds($sessionId,$qtype);
+		$sqldataTList = $leginondata->getTargetListIds($sessionId,$qtype);
 
 
 		$doneitls = array();
@@ -189,15 +73,15 @@ if (!$qtypes) {
 		};
 
 		$activeitls = array_diff($allitls,$doneitls);
-		$totalActive = getCountsFromImageTargetLists($activeitls);
-		$totalNew = getCountsFromImageTargetLists($allitls);
+		$totalActive = $leginondata->getCountsFromImageTargetLists($activeitls);
+		$totalNew = $leginondata->getCountsFromImageTargetLists($allitls);
 		$totalDone = 0;
 		$totalTime = 0;
 		$totalDoneInActive = 0;
 		// Some targets in the active target list may have been processed
 		foreach ($activeitls as $d) {
-			$totalDoneInActive += getCountFromTargetListId($d,'done');
-			$totalDoneInActive += getCountFromTargetListId($d,'aborted');
+			$totalDoneInActive += $leginondata->getCountFromTargetListId($d,'done');
+			$totalDoneInActive += $leginondata->getCountFromTargetListId($d,'aborted');
 		}
 		$totalActive -= $totalDoneInActive;
 

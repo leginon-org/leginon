@@ -13,6 +13,8 @@
  *	
  */
 
+$paths = array( get_include_path(), './processing');
+set_include_path(implode(PATH_SEPARATOR, $paths));
 require_once "config.php";
 require_once "inc/util.inc";
 require_once "inc/xmlapplicationimport.inc";
@@ -2565,7 +2567,118 @@ class leginondata {
 		return $filearray;
 	}	
 
+	function getDeQueuedTargetListIds($sessionId,$qtype) {
+		$q="SELECT "
+			."dqlist.`REF|ImageTargetListData|list` as doneid "
+			."FROM "
+			."`DequeuedImageTargetListData` AS `dqlist` "
+			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`dqlist`.`REF|QueueData|queue`) "
+			."where "
+			."`q`.`REF|SessionData|session`=".$sessionId." "
+			."AND "
+			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
+			."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTargetListIds($sessionId,$qtype) {
+		$q="SELECT "
+			."itlist.`DEF_id` as itlid "
+			."FROM "
+			."`ImageTargetListData` AS `itlist` "
+			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
+			."where "
+			."`q`.`REF|SessionData|session`=".$sessionId." "
+			."AND "
+			."`q`.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE latin1_swedish_ci "
+			."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getCountFromTargetListId($targetlistId,$status) {
+		$q="SELECT "
+			."count(`t`.`DEF_id`) as Count "
+			."FROM "
+			."`AcquisitionImageTargetData` AS `t` "
+			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."WHERE "
+			." t.`REF|ImageTargetListData|list` = ".$targetlistId." "
+			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
+			."AND t.`status` LIKE CONVERT(_utf8 '".$status."' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."";
+		$result = $this->mysql->getSQLResult($q);
+		if ($result) {
+			return $result[0]['Count'];
+		} else {
+			return;	
+		}
+	}
+
+	function getCountsFromImageTargetLists($itls) {
+		$counts = array();
+		foreach ($itls as $itl) {
+			$count = $this->getCountFromTargetListId($itl,'new');
+			array_push($counts, $count);
+		};
+		$result = array_reduce($counts,"rsum");
+		if (!$result) $result=0;
+		return $result;
+	}
+
+	function getQueueTimeData($sessionId,$qtype) {
+		$q="SELECT "
+			."proc.QueueOn as queue,"
+			."done.QueueCount as QueueCount, "
+			."(done.time-proc.time) as QueueTime "
+			."FROM "
+			."(SELECT "
+			."min(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
+			."`t`.`REF|AcquisitionImageData|image` as QueueOn, "
+			."count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
+			."FROM "
+			."`AcquisitionImageTargetData` AS `t` "
+			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
+			."WHERE "
+			." q.`REF|SessionData|session` = ".$sessionId." "
+			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
+			."AND t.`status` LIKE CONVERT(_utf8 'processing' USING latin1) COLLATE " ."latin1_swedish_ci "
+			."AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
+			."latin1_swedish_ci "
+			."group by t.`REF|AcquisitionImageData|image`) AS proc, "
+			."(SELECT "
+			."max(UNIX_timestamp(`t`.`DEF_timestamp`)) as time, "
+			."`t`.`REF|AcquisitionImageData|image` as QueueOn, "
+			."count(`t`.`REF|AcquisitionImageData|image`) as QueueCount "
+			."FROM "
+			."`AcquisitionImageTargetData` AS `t` "
+			."LEFT JOIN `ImageTargetListData` AS `itlist` ON" ."(`itlist`.`DEF_id`=`t`.`REF|ImageTargetListData|list`) "
+			."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`itlist`.`REF|QueueData|queue`) "
+			."WHERE "
+			." q.`REF|SessionData|session` = ".$sessionId." "
+			."AND t.`type` LIKE CONVERT(_utf8 'acquisition' USING latin1) COLLATE "."latin1_swedish_ci "
+			."AND t.`status` LIKE CONVERT(_utf8 'done' USING latin1) COLLATE "."latin1_swedish_ci "
+			."AND q.`label` LIKE CONVERT(_utf8 '".$qtype."' USING latin1) COLLATE "
+			."latin1_swedish_ci "
+			."group by t.`REF|AcquisitionImageData|image`) AS done "
+			."WHERE "
+			."proc.QueueOn=done.QueueOn "
+			."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getQueueTypes($sessionId) {
+		$q="SELECT "
+			."`label` FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
+		return $this->mysql->getSQLResult($q);
+	}
 }
+
+function rsum($v, $w) {
+	$v += $w;
+	return $v;
+}
+
 
 class MessageLog {
 
