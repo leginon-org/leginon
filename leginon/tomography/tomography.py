@@ -42,8 +42,8 @@ class Tomography(acquisition.Acquisition):
 		'tilt max': 60.0,
 		'tilt start': 0.0,
 		'tilt step': 1.0,
-		'equally sloped': False,
-		'equally sloped n': 8,
+#		'equally sloped': False,
+#		'equally sloped n': 8,
 		'xcf bin': 1,
 		'run buffer cycle': True,
 		'align zero loss peak': True,
@@ -57,7 +57,7 @@ class Tomography(acquisition.Acquisition):
 		'measure defocus': False,
 		'integer': False,
 		'intscale': 10,
-		'pausegroup': False,
+#		'pausegroup': False,
 		'model mag': 'this preset and lower mags',
 		'z0 error': 2e-6,
 		'phi': 0.0,
@@ -66,10 +66,10 @@ class Tomography(acquisition.Acquisition):
 		'offset2': 0.0,
 		'fixed model': False,
 		'use lpf': True,
-		'use wiener': False,
+#		'use wiener': False,
 		'taper size': 10,
 		'use tilt': True,
-		'wiener max tilt': 45,
+#		'wiener max tilt': 45,
 		'fit data points': 4,
 	}
 
@@ -118,12 +118,12 @@ class Tomography(acquisition.Acquisition):
 
 	def update(self):
 		try:
-			self.tilts.update(equally_sloped=self.settings['equally sloped'],
+			self.tilts.update(equally_sloped=False,
 							  min=math.radians(self.settings['tilt min']),
 							  max=math.radians(self.settings['tilt max']),
 							  start=math.radians(self.settings['tilt start']),
 							  step=math.radians(self.settings['tilt step']),
-							  n=self.settings['equally sloped n'])
+							  n=8)
 		except ValueError, e:
 			self.logger.warning('Tilt parameters invalid: %s.' % e)
 		else:

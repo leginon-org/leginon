@@ -122,13 +122,6 @@ class Collection(object):
 			self.prediction.newTiltGroup()
 			self.loop(self.tilts[0], self.exposures[0], False)
 			self.checkAbort()
-			if self.settings['pausegroup']:
-				self.node.player.pause()
-				self.node.setStatus('user input')
-				self.node.logger.info('Click play button to continue tilt series')
-				self.node.player.wait()
-				self.node.logger.info('Continuing')
-				self.node.setStatus('processing')
 			self.node.initGoodPredictionInfo(tiltgroup=2)
 			self.prediction.newTiltGroup()
 			self.loop(self.tilts[1], self.exposures[1], True)
@@ -311,14 +304,7 @@ class Collection(object):
 			#self.correlator.setTiltAxis(predicted_position['phi'])
 			while True:
 				try:
-					w = False
-					if self.settings['use wiener']:
-						if abs(math.degrees(tilt)) < self.settings['wiener max tilt']:
-							self.logger.info('wiener filter enabled for this tilt')
-							w = True
-						else:
-							self.logger.info('wiener filter disabled for this tilt')
-					correlation_image = self.correlator.correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=self.settings['use wiener'], taper=self.settings['taper size'])
+					correlation_image = self.correlator.correlate(tilt_series_image_data, self.settings['use tilt'], channel=channel, wiener=False, taper=0)
 					break
 				except Exception, e:
 					self.logger.warning('Retrying correlate image: %s.' % (e,))
