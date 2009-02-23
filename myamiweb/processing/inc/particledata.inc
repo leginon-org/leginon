@@ -766,7 +766,7 @@ class particledata {
 		return $r[0];
 	}
 
-	function getTemplateStacksFromProject ($projectId, $getHidden=False, $type) {
+	function getTemplateStacksFromProject ($projectId, $getHidden=False, $type=False) {
 		$q = "SELECT stack.*, path.path "
 			."FROM ApTemplateStackData as stack "
 			."LEFT JOIN ApPathData AS path ON "
