@@ -82,7 +82,17 @@ def copyFile(path, file, headers=False):
 
 	executeImagicBatchFile(batchfile)
 
+def convertFilteringParameters(hpfilt, lpfilt, apix):
+	### CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
+	if lpfilt is not None:
+		lpfilt_imagic = 2 * float(apix) / int(lpfilt)
+        else:
+		lpfilt_imagic = False
+        if float(lpfilt_imagic) > 1:
+		lpfilt_imagic = 1        # imagic cannot perform job when lowpass > 1
+        if hpfilt is not None:
+		hpfilt_imagic = 2 * float(apix) / int(hpfilt)
+        else:
+		hpfilt_imagic = False
 
-
-
-
+	return hpfilt_imagic, lpfilt_imagic
