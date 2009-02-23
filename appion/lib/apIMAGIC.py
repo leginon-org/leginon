@@ -85,9 +85,6 @@ def copyFile(path, file, headers=False):
 def convertFilteringParameters(hpfilt, lpfilt, apix):
 	### CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
 	if lpfilt is not "" and apix is not "":
-		print lpfilt
-		print hpfilt
-		print apix
 		lpfilt_imagic = 2 * float(apix) / int(lpfilt)
         else:
 		lpfilt_imagic = False
