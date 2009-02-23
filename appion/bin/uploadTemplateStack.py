@@ -111,8 +111,8 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['project|projects|project'] = self.params['projectid']
 		if self.params['clusterId'] is not None:
 			uploadq['clusterstack'] = self.params['clusterId']
-		uploadq['origfile'] = self.params['templatestack']
-		uploadq['templatename'] = self.params['newname']
+		uploadq['origfile'] = self.params['templatestack']+".hed"
+		uploadq['templatename'] = self.params['newname']+".hed"
 		if self.params['templatetype'] == "clsavg":
 			uploadq['cls_avgs'] = True
 		if self.params['templatetype'] == "forward_proj":
