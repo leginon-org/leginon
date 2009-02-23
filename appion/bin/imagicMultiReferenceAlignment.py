@@ -298,7 +298,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### setup alignment stack
                 alignstackq = appionData.ApAlignStackData()
                 alignstackq['imagicfile'] = "alignstack.hed"
-                alignstackq['avgmrcfile'] = "average.mrc"
+#		alignstackq['avgmrcfile'] = "average.mrc"
                 alignstackq['refstackfile'] = os.path.join(self.params['rundir'], "references.hed") 
                 alignstackq['iteration'] = self.params['numiter']
                 alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
