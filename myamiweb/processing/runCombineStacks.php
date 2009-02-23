@@ -97,19 +97,21 @@ function runCombineStack() {
 	$stackids = $particle->getStackIdsForProject($projectId, False);
 	$stacklist = "";
 	$count = 0;
-	$newstackid = "";
+	$stacks = array();
 	foreach ($stackids as $stackdata) {
 		$stackid = $stackdata['stackid'];
 		$key = 'stack'.$stackid;
 		//$stacklist .= $key.": ".$_POST[$key]."<br/>\n";
 		if ($_POST[$key] == 'on') {
-			if (strlen($newstackid) < 1) $newstackid = $stackid;
 			$count++;
-			$stacklist .= $stackid.",";
+			$stacks[]=$stackid;
 		}
 	}
-	if (strlen($stacklist) < 1 && $count < 2) 
+	$stacklist = implode(',',$stacks);
+	if (strlen($stacklist) < 1) 
 		createCombineStackForm("<B>ERROR:</B> No stacks selected ".$count.": ".$stacklist);
+	if ($count < 2) 
+		createCombineStackForm("<B>ERROR:</B> Selected more than one stack");
 
 	if ($outdir) {
 		// make sure outdir ends with '/' and append run name
