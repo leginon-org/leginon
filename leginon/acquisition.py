@@ -310,7 +310,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if self.alreadyAcquired(targetdata, newpresetname):
 				continue
 
-			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'off':
+			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'no':
 				if self.settings['drift between'] and self.goodnumber > 0:
 					self.declareDrift('between targets')
 				#targetdata = self.adjustTargetForDrift(targetdata)
