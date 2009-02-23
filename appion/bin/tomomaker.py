@@ -123,7 +123,9 @@ class tomoMaker(appionScript.AppionScript):
 		commit = self.params['commit']
 		tiltseriesdata = self.params['tiltseries']
 		othertiltdata = self.params['othertiltseries']
-		if othertiltdata is not None:
+		if othertiltdata is None:
+			tiltdatalist = [tiltseriesdata]
+		else:
 			tiltdatalist = [tiltseriesdata,othertiltdata]
 			apDisplay.printMsg('Combining images from two tilt series')
 		sessiondata = tiltseriesdata['session']
