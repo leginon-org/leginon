@@ -26,6 +26,7 @@ var help = {
 		'hpval' : 'High pass filtering of the image before picking.  This removes any darkness gradients in the image.  Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good.  Warning this feature typically normalizes the crud so more particles get picked from crud.',
 		'medianval' : 'Median filtering of the image before picking.  This helps remove any noise spikes in the image.  Typical values are 2, 3, or 5.  The bigger the number the more information is thrown away.',
 		'binval' : 'Binning of the image.  This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster.  Typically you want to use 4 or 8 depending on the quality of the templates.',
+		'binval2' : 'Binning of the image.  This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster.',
 		'defocpair' : 'Select this box if you are collecting defocal pairs.  This feature takes both of the en and ef images and aligns them, so you can use makestack later.',
 		'maxsize' : 'Max size multiple of the particle peak.  When the peak is found in the thresholded image it has a size in pixels.  If that size is greater than maxsize*particle diameter, then the peak is rejected.',
 		'overlapmult' : 'The overlap multiple specifies the minimum distance allowed between two peaks.  If two peaks are closer than overlapmult*particle diameter, then only the larger of the two peaks is retained.',
@@ -138,6 +139,12 @@ var help = {
 		'numiters' : 'Number of Iterations for multivariate statistical alignment. Typically the eigenimages converge very quickly, within a few iterations, but a large number is set as default to make sure that spikes do not occur later on during convergence.',
 		'overcorrection' : 'The overcorrection factor is a very important parameter in the MSA program. It determines the convergence speed of the Eigenvector Eigenvalue algorithm. However, if a too large overcorrection is chosen, the algorithm may start oscillating. Oscillations of the algorithm may be observed in the plot of the sum of the eigenvalues versus iteration number which is part of the output of this program. Divergence may thus only be detected a posteriori. The accepted values for OVER_CORRECTION lie between 0 and 0.9',
 		'norefbin' : 'Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Binning would be useful if, for example, the reference-free averages are to be used for initial model creation. Otherwise IMAGIC MSA runs are quite fast. For example, on a stack of 10,000 particles with a boxsize of 192, the algorithm takes ~15-30 minutes to run, so bining is not necessary.',
+		'lpfilt_refs' : 'Low pass filter applied to the references. Note that this is during processing, and does not alter the actual reference file in any way',
+		'thresh_refs' : 'Thresholds the reference images to a certain pixel value. The reason for this is that commonly negative values represent negative stain. For example, thresholding to 0 removes all dark pixel values that would represent stain. NOTE: If you do not want any threshold give -999. ',
+		'maskrad_refs' : 'contour the references with a circular mask. Value can be given in pixels OR as a fraction of the inner radius of the image (default)',
+		'numiter_mra' : 'Number of Iterations for multi-reference alignment. IMAGIC limits this value to 5, since the good images will typically be ready after 2 or 3 iterations, whereas the bad images go on forever',
+		'minrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0 means that the starting point is the center of the image',
+		'maxrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0.7 means that all radii up to 70% of the image will be included in the search',
 	},
 
 	'eman' : {
