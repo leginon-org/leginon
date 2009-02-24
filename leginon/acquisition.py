@@ -874,7 +874,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.received_image_drift.clear()
 		ev = event.NeedTargetShiftEvent(image=imagedata)
 		imageid = imagedata.dbid
-		## set requested_drift to the reply can be recognized
+		## set requested_drift so the reply can be recognized
 		self.requested_drift = imageid
 		self.logger.info('Sending NeedTargetShiftEvent and waiting, imageid = %s' % (imageid,))
 		self.outputEvent(ev)
