@@ -196,13 +196,19 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 		$modeltable.= "View all class averages used to create model</a>";
 	}
 	else {
-		// note that ALL class averages will be used for refinement, NOT the reclassifications
-		$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
-		$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
-		$norefparams = $particle->getNoRefParams($norefId);
-		$norefclassimgfile = $norefparams['path']."/".$norefclassdata['classFile'].".img";
-		$modeltable.= "<a href='viewstack.php?file=$norefclassimgfile&expId=$expId'>";
-		$modeltable.= "View all class averages used for THIS refinement</a>";
+		if ($norefClassId) {
+			// note that ALL class averages will be used for refinement, NOT the reclassifications
+			$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
+			$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
+			$norefparams = $particle->getNoRefParams($norefId);
+			$norefclassimgfile = $norefparams['path']."/".$norefclassdata['classFile'].".img";
+			$modeltable.= "<a href='viewstack.php?file=$norefclassimgfile&expId=$expId'>";
+			$modeltable.= "View all class averages used for THIS refinement</a>";
+		}
+		elseif ($clusterId) {
+			$modeltable.= "<a href='viewstack.php?file=$classhedfile&expId=$expId'>";
+			$modeltable.= "View all class averages used for this refinement</a>";
+		}
 	}
 	$modeltable.= "</td></tr></table>\n<BR/>";
 	$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
@@ -253,18 +259,12 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 	$modeltable.= "</tr>\n";
 	$modeltable.="<tr><TD COLSPAN=8>description: $model[description]</td>\n";
 	$modeltable.="<tr><TD COLSPAN=8>path: $model[path]/$model[runname]/$model[name]</td></tr>\n";
-	if ($sum_specific_params) {
-		$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
-	   		          <td>box size:</td><td><b>$model[boxsize]</b></td>
-	   		          <td>symmetry:</td><td><b>$model[symmetry]</b></td>
-	   		          <td># class averages used:</td><td><b>$model[num_classums]</b></td></tr>\n";
-	}
-	else {
-		$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
-	         		  <td>box size:</td><td><b>$model[boxsize]</b></td>
-			          <td>symmetry:</td><td><b>$model[symmetry]</b></td>
-			          <td># <b>ORIGINAL</b> class averages in noref run:</td><td><b>$norefclassdata[num_classes]</b></td></tr>\n";
-	}
+	
+	$modeltable.="<tr><td>pixel size:</td><td><b>$model[pixelsize]</b></td>
+			  <td>box size:</td><td><b>$model[boxsize]</b></td>
+	   		  <td>symmetry:</td><td><b>$model[symmetry]</b></td>
+	   		  <td># class averages used:</td><td><b>$model[num_classums]</b></td></tr>\n";
+	
 	$modeltable.="<tr><td>Automask dimension parameter:</td><td><b>$model[amask_dim]</b></td>
 			  <td>Automask low-pass parameter:</td><td><b>$model[amask_lp]</b></td>
 			  <td>Automask sharpness parameter:</td><td><b>$model[amask_sharp]</b></td>
@@ -332,6 +332,7 @@ function jobform($modelid, $extra=false) {
 	$doc_runname = docpop('runid', '<t><b>Run Name:</b>');
 	$doc_outdir = docpop('outdir', '<b>Output Directory:</b>');
 	$doc_description = docpop('descr', '<b>Description of 3d Refinement:</b>');
+	$doc_mass = docpop('mass', '<b>Approximate mass in Kd</b>');
 
 	$modelvalues = modelEntry($modeldata,$particle,False,True);
 	echo $modelvalues[0];
@@ -342,9 +343,10 @@ function jobform($modelid, $extra=false) {
 	echo openRoundBorder();
 	echo "	<b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='50'><br /><br />\n
 		<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
-		<b> $doc_description</b><BR/><textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
+		<b> $doc_description</b><BR/><textarea name='description' rows='3' cols='50'>$rundescrval</textarea><BR><BR>\n";
 	echo closeRoundBorder();
 	echo "</td></tr></TABLE><br />";	
+
 
 	// keys and documentation for user input values
 	$display_keys = array('copy', 
@@ -353,11 +355,11 @@ function jobform($modelid, $extra=false) {
 				'shift_orig', 
 				'shift_this', 
 				'samp_par', 
-				'euler_ang_inc', 
-				'num_classums', 
+				'ang_inc', 
+				'classums', 
 				'ham_win', 
 				'obj_size', 
-				'repalignments', 
+				'repalign', 
 				'amask_dim', 
 				'amask_lp', 
 				'amask_sharp',
@@ -433,11 +435,21 @@ function jobform($modelid, $extra=false) {
 			$mrarefs_ang_inc = ($i>$j) ? $_POST['mrarefs_ang_inc'.($i-1)] : $_POST[$mrarefs_ang_incn];
 			$forw_ang_inc = ($i>$j) ? $_POST['forw_ang_inc'.($i-1)] : $_POST[$forw_ang_incn];
 		}
+		$syms = $particle->getSymmetries();
 		// print form with user input for all values
 		echo "<tr>
        			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|--|$modelid' onclick='imagic3dRefine.submit()'></td>
        			<td bgcolor='$rcol'><b>$i</b></td>
-			<td bgcolor='$rcol'><input type='text' NAME='$symmetryn' SIZE='4' VALUE='$symmetry'></td>
+			<td bgcolor='$rcol'><SELECT NAME='$symmetryn'><OPTION VALUE='$symmetry'>Select One</OPTION>\n";
+                	foreach ($syms as $sym) {
+                        	echo "<OPTION VALUE='$sym[DEF_id]'";
+                        	if ($sym['DEF_id']==$_POST[$symmetryn]) echo " SELECTED";
+				if ($sym['DEF_id']==$_POST["symmetry".($i-1)] && $symmetry == $_POST["symmetry".($i-1)]) echo " SELECTED";
+				echo ">$sym[symmetry]";
+                        	if ($sym['symmetry']=='C1') echo " (no symmetry)";
+                        	echo "</OPTION>\n";
+                	}
+                	echo "</td>
        			<td bgcolor='$rcol'><input type='text' NAME='$max_shift_orign' SIZE='4' VALUE='$max_shift_orig'></td>
        			<td bgcolor='$rcol'><input type='text' NAME='$max_shift_thisn' SIZE='4' VALUE='$max_shift_this'></td>
        			<td bgcolor='$rcol'><input type='text' NAME='$samp_paramn' SIZE='4' VALUE='$samp_param'>
@@ -456,6 +468,8 @@ function jobform($modelid, $extra=false) {
      	    	</tr>\n";
 	}
 	echo "</table>";
+
+	echo "<BR></b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <BR>";
 
 	echo "<BR/><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
@@ -488,6 +502,7 @@ function imagic3dRefine() {
 	$clusterId = $_POST['clusterId'];
 	$numiters = $_POST['numiters'];
 	$description = $_POST['description'];
+	$mass = $_POST['mass'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	
 	// create batch files for each iteration, put them into working directory
@@ -525,6 +540,7 @@ function imagic3dRefine() {
 		$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
 		$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc";
 		$command.= " --description=\"$description\"";
+		$command.= " --mass=$mass";
 		if ($commit) $command.= " --commit";
 		else $command.=" --no-commit";
 		$command_array[] = $command;
@@ -554,10 +570,23 @@ function imagic3dRefine() {
 
 	processing_header("IMAGIC 3d Refinement Job Generator","IMAGIC 3d Refinement Job Generator",$javafunc);
 
-	echo "<pre>";
-	echo htmlspecialchars($command);
-	echo "</pre>";
+	echo"
+        <TABLE WIDTH='600' BORDER='1'>
+        <TR><TD COLSPAN='2'>
+        <B>Alignment Command:</B><BR><BR>";
+	foreach ($command_array as $c) {
+                echo $c."<BR><BR>";
+	}
+	echo"
+         </TD></TR>
+         </TABLE>\n";
 
+/*	echo "<pre>";
+	foreach ($command_array as $c) {
+		echo htmlspecialchars($c);
+	}
+	echo "</pre>";
+*/
 	processing_footer();
 	exit;
 	
