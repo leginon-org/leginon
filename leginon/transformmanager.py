@@ -216,7 +216,7 @@ class TransformManager(node.Node, TargetTransformer):
 	defaultsettings = {
 		'threshold': 3e-10,
 		'pause time': 2.5,
-		'min mag': 2000,
+		'min mag': 300,
 		'camera settings':
 			leginondata.CameraSettingsData(
 				initializer={
