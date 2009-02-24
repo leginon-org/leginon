@@ -31,26 +31,40 @@ $particle = new particledata();
 
 // get reference-free classification parameters for refinement run
 $refineparams = $particle->getImagic3dRefinementParamsFromRefineId($refineId);
-$norefClassId = $refineparams[0]['REF|ApNoRefClassRunData|norefclass'];
-$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
-$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
-$norefdata = $particle->getNoRefParams($norefId);
-$norefpath = $norefdata['path'];
-$norefclassfilepath = $norefclassdata['classFile'];
-$clsavgfile = $norefpath."/".$norefclassfilepath.".img";
 
+//print_r($refineparams);
+if ($refineparams[0]['REF|ApNoRefClassRunData|norefclass']) {
+	$norefClassId = $refineparams[0]['REF|ApNoRefClassRunData|norefclass'];
+	$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
+	$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
+	$norefdata = $particle->getNoRefParams($norefId);
+	$norefpath = $norefdata['path'];
+	$norefclassfilepath = $norefclassdata['classFile'];
+	$clsavgfile = $norefpath."/".$norefclassfilepath.".img";
+}
+elseif ($refineparams[0]['REF|ApClusteringStackData|clusterclass']) {
+	$clusterid = $refineparams[0]['REF|ApClusteringStackData|clusterclass'];
+	$clusterdata = $particle->getClusteringStackParams($clusterid);
+	$clsavgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];	
+}
 
 ########################### BASIC REFINEMENT INFO ##############################
 
 // basic refinement run info
 $title = "Refinement info";
+if ($refineparams[0]['REF|ApNoRefClassRunData|norefclass']) {
+	$clsavgs = "<a href='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=$norefClassId'>$norefclassfilepath</a>";
+}
+elseif ($refineparams[0]['REF|ApClusteringStackData|clusterclass']) {
+	$clsavgs = "<a href='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterid'>$clusterdata[avg_imagicfile]</a>";
+}
+
 $refinementinfo = array(
 	'id'=>$refineparams[0]['DEF_id'],
 	'name'=>$refineparams[0]['runname'],
 	'description'=>$refineparams[0]['description'],
 	'path'=>$refineparams[0]['path'],
-	'class averages used for refinement'=>"<A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
-			  $norefClassId'>$norefclassfilepath</A>",
+	'class averages used for refinement'=>$clsavgs,
 	'boxsize'=>$refineparams[0]['boxsize'],
 	'pixelsize'=>$refineparams[0]['pixelsize']
 );
@@ -78,22 +92,30 @@ $projections = $modeldata['projections'];
 $projections = explode(";", $projections);
 // check to see if initial model was created from reference-free classification or reclassification
 if ($modeldata['REF|ApImagicReclassifyData|reclass'])  {
-	$modelparams = $particle->getImagicReclassParamsFrom3d0($imagic3d0Id);
-	$reclassnum = $modelparams['DEF_id'];
-	$norefClassId = $modelparams['REF|ApNoRefClassRunData|norefclass'];
-	$clsavgpath = $modelparams['path']."/".$modelparams['runname'];
+	$clsavgparams = $particle->getImagicReclassParamsFrom3d0($imagic3d0Id);
+	$reclassnum = $clsavgparams['DEF_id'];
+	$norefClassId = $clsavgparams['REF|ApNoRefClassRunData|norefclass'];
+	$clsavgpath = $clsavgparams['path']."/".$clsavgparams['runname'];
 	$classimgfile = $clsavgpath."/reclassified_classums_sorted.img";
 	$classhedfile = $clsavgpath."/reclassified_classums_sorted.hed";
 }
 if ($modeldata['REF|ApNoRefClassRunData|norefclass']) {
-	$modelparams = $particle->getNoRefClassRunParamsFrom3d0($imagic3d0Id);
-	$norefClassId = $modelparams['DEF_id'];
-	$norefId = $modelparams['REF|ApNoRefRunData|norefRun'];
+	$clsavgparams = $particle->getNoRefClassRunParamsFrom3d0($imagic3d0Id);
+	$norefClassId = $clsavgparams['DEF_id'];
+	$norefId = $clsavgparams['REF|ApNoRefRunData|norefRun'];
 	$norefparams = $particle->getNoRefParams($norefId);
-	$clsavgpath = $norefparams['path']."/".$modelparams['classFile'];
+	$clsavgpath = $norefparams['path']."/".$clsavgparams['classFile'];
 	$classimgfile = $clsavgpath.".img";
 	$classhedfile = $clsavgpath.".hed";
 }
+if ($modeldata['REF|ApClusteringStackData|clusterclass']) {
+	$clsavgparams = $particle->getClusteringStackParamsFrom3d0($imagic3d0Id);
+	$clsavgpath = $clsavgparams['path'];
+	$strippedfile = ereg_replace(".hed", "", $clsavgparams['avg_imagicfile']);
+	$classimgfile = $clsavgpath."/".$strippedfile.".img";
+	$classhedfile = $clsavgpath."/".$strippedfile.".hed";	
+}
+
 $html.= "<td colspan='11'><b> 3 Initial Projections Used in Angular Reconstitution </b></td>
 		 </TR><TR>";
 foreach ($projections as $key => $projection) {
@@ -115,11 +137,10 @@ $html.= "class averages used to create 3d0 ---- <b>model ID: $modeldata[DEF_id]<
 $html.= "</TD></TR>";
 // view model parameters
 $html.="<TR><TD>";
-$symmetryinit = $modeldata['REF|ApSymmetryData|symmetry'];
 $html.="<TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html.="<tr><td>euler ang increment</td><td><b>$modeldata[euler_ang_inc]</b></td>
 	    <td>num cls avgs used</td><td><b>$modeldata[num_classums]</b></td>
-	    <td>symmetry</td><td><b>$symmetryinit</b></td></tr>
+	    <td>symmetry</td><td><b>$modeldata[symmetry]</b></td></tr>
 	<tr><td>hamming window</td><td><b>$modeldata[ham_win]</b></td>
 	    <td>object size</td><td><b>$modeldata[obj_size]</b></td>
 	    <td>reproj alignments</td><td><b>$modeldata[repalignments]</b></td></tr>
@@ -141,6 +162,7 @@ while ($f = readdir($modeldir)) {
 sort($pngfiles);
 		
 // display starting models
+
 $html.= "<TD width='550'>\n";	
 foreach ($pngfiles as $snapshot) {
 	$snapfile = $modeldata['path'].'/'.$modeldata['runname'].'/'.$snapshot;
@@ -149,7 +171,6 @@ foreach ($pngfiles as $snapshot) {
 }
 $html.="</TD>";
 $html.= "</TR></table><BR/><BR/>";
-
 
 
 
@@ -171,11 +192,10 @@ foreach ($refineparams as $iteration) {
 	$html.="<TR>
 		<TD>$iteration[iteration]</TD>";
 	$html.="<TD>";
-	$symmetry = $iteration['REF|ApSymmetryData|symmetry'];
 	$html.="<TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html.="<tr><td>euler ang increment</td><td><b>$iteration[euler_ang_inc]</b></td>
 		    <td>num cls avgs used</td><td><b>$iteration[num_classums]</b></td>
-		    <td>symmetry</td><td><b>$symmetry</b></td></tr>
+		    <td>symmetry</td><td><b>$iteration[symmetry]</b></td></tr>
 		<tr><td>sampling param (MRA)</td><td><b>$iteration[sampling_parameter]</b></td>
 		    <td>max shift orig (MRA)</td><td><b>$iteration[max_shift_orig]</b></td>
 		    <td>max shift this (MRA)</td><td><b>$iteration[max_shift_this]</b></td></tr>
