@@ -63,6 +63,8 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$javascript .= "}\n";
 	$javascript .= "</script>\n";
 
+	$javascript .= writeJavaPopupFunctions('appion');
+
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
@@ -110,20 +112,23 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		<TD VALIGN='TOP'>
 		<TABLE CELLPADDING='10' BORDER='0'>
 		<TR>
-			<TD VALIGN='TOP'>
-			<B>Alignment Run Name:</B>
+			<TD VALIGN='TOP'>";
+		echo 	docpop('runname','<b>Alignment Run Name:</b>');
+		echo"
 			<INPUT TYPE='text' NAME='runname' VALUE='$runnameval'>
 			</TD>
 		</TR>\n";
 		echo"<TR>
-			<TD VALIGN='TOP'>
-			<B>Alignment Description:</B><BR>
+			<TD VALIGN='TOP'>";
+		echo 	docpop('description','<b>Alignment Description:</b>');
+		echo"   <BR>
 			<TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
 			</TD>
 		</TR>\n";
 		echo"<TR>
-			<TD VALIGN='TOP'>	 
-			<B>Output Directory:</B><BR>
+			<TD VALIGN='TOP'>";
+		echo 	docpop('outdir','<b>Output Directory:</b>');	
+		echo "  <BR>	 
 			<INPUT TYPE='text' NAME='rundir' VALUE='$sessionpathval' SIZE='38'>
 			</TD>
 		</TR>
@@ -136,9 +141,9 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		<FONT COLOR='RED'><B>No Stacks for this Session</B></FONT>\n";
 	}
 	else {
+		echo docpop('stack', "<B>Particles:</B>");
 		echo "
-		<B>Particles:</B><BR>
-		<SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
+		<BR><SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -159,14 +164,15 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		}
 		echo "</SELECT>\n";
 	}
+	echo "<BR><BR>\n";
 	// select template stack
 	if (!$templateIds) { 
 		echo"<FONT COLOR='red'><B>No Template Stacks for this project</B></FONT>\n";
 	}
 	else {
+		echo docpop('templatestack', "<B>Template Stacks:</B>");
 		echo"
-		<BR><BR><B>Template Stacks:</B><BR>
-		<SELECT NAME='templatestackid'>\n";
+		<BR><SELECT NAME='templatestackid'>\n";
 		foreach ($templateIds as $temp) {
 			$templateId = $temp['DEF_id'];
 			$templatename = $temp['templatename'];
@@ -188,8 +194,9 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	echo"
 	<TR>
 		<TD VALIGN='TOP'>
-		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-		<B>Commit to Database</B><BR>
+		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>";
+	echo 	docpop('commit', " <B>Commit to Database</B><BR>");
+	echo"
 		</TD>
 	</TR>";
 	echo"
@@ -202,58 +209,58 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		<TD VALIGN='TOP'>
 		<B>Particle Params:</B></A><BR>";
 	echo"
-		<INPUT TYPE='text' NAME='lowpass' SIZE='5' VALUE='$lowpass'>
-		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+		<INPUT TYPE='text' NAME='lowpass' SIZE='5' VALUE='$lowpass'>";
+	echo	docpop('lpstackval', " Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>");
 	echo"
-		<INPUT TYPE='text' NAME='highpass' SIZE='5' VALUE='$highpass'>
-		High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+		<INPUT TYPE='text' NAME='highpass' SIZE='5' VALUE='$highpass'>";
+	echo	docpop('hpstackval', " High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>");
 	echo"
-		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>
-		Particle Binning<BR>";
+		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>";
+	echo 	docpop('binval2', " Particle Binning<BR>");
 	echo"
 		</TD>
 	</TR>
 	<TR>
-		<TD VALIGN='TOP'>
+		<TD VALIGN='TOP' WIDTH=320>
 		<B>Reference-Specific Params (optional):</B><BR>";
 	echo"  
-		<INPUT TYPE='text' NAME='lowpass_refs' VALUE='$lprefs' SIZE='4'>
-		Low Pass Filter References <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+		<INPUT TYPE='text' NAME='lowpass_refs' VALUE='$lprefs' SIZE='4'>";
+	echo	docpop('lpfilt_refs', " Low Pass Filter References <FONT SIZE='-1'>(&Aring;ngstroms)</FONT><BR>");
 	echo"
-		<INPUT TYPE='text' NAME='thresh_refs' VALUE='$threshrefs' SIZE='4'>
-		Threshold Reference Pixel values<BR>";
+		<INPUT TYPE='text' NAME='thresh_refs' VALUE='$threshrefs' SIZE='4'>";
+	echo 	docpop('thresh_refs', " Threshold Reference Pixel values<BR>");
 	echo"
-		<INPUT TYPE='text' NAME='maskrad_refs' VALUE='$maskrad_refs' SIZE='4'>
-		Apply a radial mask to references<BR>";
+		<INPUT TYPE='text' NAME='maskrad_refs' VALUE='$maskrad_refs' SIZE='4'>";
+	echo 	docpop('maskrad_refs', " Apply a radial mask to references<BR>");
 	echo"
 	</TR>
 	<TR>
 		<TD VALIGN='TOP'>
 		<B>Alignment Params:</B></A><BR>";
 	echo"
-		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>
-		Iterations<BR>";
+		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>";
+	echo 	docpop('numiter_mra', " Iterations<BR>");
 	echo"
-		<INPUT TYPE='text' NAME='max_shift_orig' VALUE='$max_shift_orig' SIZE='4'>
-		Maximum radial shift compared to originals<BR>";
+		<INPUT TYPE='text' NAME='max_shift_orig' VALUE='$max_shift_orig' SIZE='4'>";
+	echo 	docpop('shift_orig', " Maximum radial shift<BR>");
 	echo"
-		<INPUT TYPE='text' NAME='samp_param' VALUE='$samp_param' SIZE='4'>
-		Sampling Parameter<BR>";
+		<INPUT TYPE='text' NAME='samp_param' VALUE='$samp_param' SIZE='4'>";
+	echo 	docpop('samp_par', " Sampling Parameter<BR>");
 	echo"
-		<INPUT TYPE='text' NAME='minrad' VALUE='$minrad' SIZE='4'>
-		Minimum Inner radius<BR>";
+		<INPUT TYPE='text' NAME='minrad' VALUE='$minrad' SIZE='4'>";
+	echo 	docpop('minrad', " Minimum Inner radius<BR>");
 	echo"
-                <INPUT TYPE='text' NAME='maxrad' VALUE='$maxrad' SIZE='4'>
-                Maximum Inner radius<BR>";
+                <INPUT TYPE='text' NAME='maxrad' VALUE='$maxrad' SIZE='4'>";
+	echo 	docpop('maxrad', " Maximum Inner radius<BR>");
 	echo"
-		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
-		Number of Particles to Use<BR>";
+		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>";
+	echo	docpop('numpart', " Number of Particles to Use<BR>");
 	echo"
-		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
-		Invert density of all templates before alignment<BR>";
+		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>";
+	echo 	docpop('invert', " Invert reference density before alignment<BR>");
 	echo"
-		<INPUT TYPE='checkbox' NAME='mirror' $mirror>
-		Mirror Alignment<BR>";
+		<INPUT TYPE='checkbox' NAME='mirror' $mirror>";
+	echo	docpop('mirror', " Mirror Alignment<BR>");
 	echo"
 		</TD>
 	</TR>
