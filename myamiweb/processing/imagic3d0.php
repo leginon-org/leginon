@@ -262,6 +262,7 @@ function jobform($extra=false) {
 	$doc_projections = docpop('choose_projections', 'Choose 3 projections:');
 	$doc_symmetry = docpop('symmetry', 'Symmetry');
 	$doc_num_classaverages = docpop('num_classaverages', 'Number of class averages to use');
+	$doc_mass = docpop('mass', '<b>Approximate mass in Kd</b>');
 
 	// form for output directory & runid
 	echo "<TABLE cellspacing='10' cellpadding='10'><tr><td>";
@@ -349,7 +350,8 @@ function jobform($extra=false) {
         	<td bgcolor='$rcol'><input type='text' NAME='forw_ang_incn' SIZE='4' VALUE='$forw_ang_inc'></td>
      	     </tr>\n";
 	echo "</table><BR/>";
-	
+
+	echo "</b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <BR><BR>";	
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "<BR/><BR/>";
@@ -386,6 +388,7 @@ function create3d0() {
 	$mrarefs_ang_inc = $_POST['mrarefs_ang_incn'];
 	$forw_ang_inc = $_POST['forw_ang_incn'];
 	$description = $_POST['description'];
+	$mass = $_POST['mass'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
@@ -411,6 +414,7 @@ function create3d0() {
 	$command.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
 	$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
 	$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"";
+	$command.= " --mass=$mass";
 	if ($commit) $command.= " --commit";
 	else $command.=" --no-commit";
 
@@ -424,9 +428,13 @@ function create3d0() {
 
 	processing_header("IMAGIC 3d0 Job Generator","IMAGIC 3d0 Job Generator",$javafunc);
 
-	echo "<pre>";
-	echo htmlspecialchars($command);
-	echo "</pre>";
+	echo"
+        <TABLE WIDTH='600' BORDER='1'>
+        <TR><TD COLSPAN='2'>
+        <B>Alignment Command:</B><BR><BR>
+        $command<BR><BR>
+         </TD></TR>
+         </TABLE>\n";
 
 	processing_footer();
 	exit;
