@@ -84,7 +84,6 @@ function templateStackEntry($stackInfo, $hidden=False){
 		$stackInfo['description']=$_POST['newdescription'.$templateId];
 	}
 	$filename = $stackInfo['path'] ."/".$stackInfo['templatename'];
-	if (!ereg(".img", $filename) || !ereg(".hed", $filename)) $filename = $filename.".img";
 	
 	// create the image template table
 	$j = "Template ID: $templateId";
