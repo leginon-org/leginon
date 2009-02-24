@@ -134,9 +134,9 @@ class uploadTemplateScript(appionScript.AppionScript):
 			apDisplay.printMsg("Using local file: '"+str(self.params['templatestack'])+"' to upload template")
 
 		# copy templates to final location
-		if str(self.params['templatestack'])[-4:] == (".img" or ".hed"):
+		if str(self.params['templatestack'])[-4:] == ".img" or str(self.params['templatestack'])[-4:] == ".hed":
 			self.params['templatestack'] = self.params['templatestack'][:-4]
-		if str(self.params['newname'])[-4:] == (".img" or ".hed"):
+		if str(self.params['newname'])[-4:] == ".img" or str(self.params['newname'])[-4:0] == ".hed":
 			self.params['newname'] = self.params['newname'][:-4]
 		shutil.copyfile(str(self.params['templatestack'])+".img", os.path.join(self.params['rundir'], str(self.params['newname'])+".img"))
 		shutil.copyfile(str(self.params['templatestack'])+".hed", os.path.join(self.params['rundir'], str(self.params['newname'])+".hed"))
