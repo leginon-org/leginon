@@ -48,6 +48,9 @@ im = mrc.read(infile)
 if options.range is None:
 	try:
 		head = mrc.getHeader(im)
+		if head['rms'] < 1e-8:
+			head['amean'] = arraystats.mean(im)
+			head['rms'] = arraystats.std(im)
 		range = head['amean']-3*head['rms'],head['amean']+3*head['rms']
 	except:
 		range = None
