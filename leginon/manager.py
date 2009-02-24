@@ -288,6 +288,10 @@ class Manager(node.Node):
 
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
+		## possible destinations are:
+		## 1) all nodes  (if destination set to empty string)
+		## 2) use application event bindings (destination is None)
+		## 3) one node  (destination set to node name)
 		if ievent['destination'] is '':
 			if ievent['confirm'] is not None:
 				raise RuntimeError('not allowed to wait for broadcast event')
@@ -295,22 +299,25 @@ class Manager(node.Node):
 			do = list(self.initializednodes)
 			## save event for future nodes
 			self.broadcast.append(ievent)
-		else:
+		elif ievent['destination'] is None:
 			do = []
+		else:
+			do = [ievent['destination']]
 		eventclass = ievent.__class__
 		from_node = ievent['node']
-		for distclass,fromnodes in self.distmap.items():
-			if issubclass(eventclass, distclass):
-				for fromnode in (from_node, None):
-					if fromnode in fromnodes:
-						for to_node in fromnodes[from_node]:
-							if to_node is not None:
-								if to_node not in do:
-									do.append(to_node)
-							else:
-								for to_node in self.handler.clients:
+		if not do:
+			for distclass,fromnodes in self.distmap.items():
+				if issubclass(eventclass, distclass):
+					for fromnode in (from_node, None):
+						if fromnode in fromnodes:
+							for to_node in fromnodes[from_node]:
+								if to_node is not None:
 									if to_node not in do:
 										do.append(to_node)
+								else:
+									for to_node in self.handler.clients:
+										if to_node not in do:
+											do.append(to_node)
 
 		## if nothing to do, report a warning and return now
 		if not do:

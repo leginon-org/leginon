@@ -140,6 +140,7 @@ class Navigator(node.Node):
 		self.stopTimer('move')
 
 		evt = event.MoveToTargetDoneEvent(status=status, target=targetdata)
+		evt['destination'] = nodename
 		self.outputEvent(evt)
 
 	def newImage(self, imagedata):

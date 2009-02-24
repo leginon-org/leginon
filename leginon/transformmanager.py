@@ -407,9 +407,11 @@ class TransformManager(node.Node, TargetTransformer):
 		self.setStatus('processing')
 		oldtarget = ev['target']
 		level = ev['level']
+		requestingnode = ev['node']
 		newtarget = self.transformTarget(oldtarget, level)
 		evt = event.TransformTargetDoneEvent()
 		evt['target'] = newtarget
+		evt['destination'] = requestingnode
 		self.outputEvent(evt)
 		self.setStatus('idle')
 
