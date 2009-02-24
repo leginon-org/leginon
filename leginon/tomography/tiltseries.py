@@ -1,13 +1,13 @@
-import data
+import leginondata
 import instrument
 from acquisition import setImageFilename
 
 class TiltSeries(object):
 	def __init__(self, node, settings, session, preset, target, emtarget):
 		self.node = node
-		self.dataclass = data.TiltSeriesData
-		#self.imagedataclass = data.TiltSeriesImageData
-		self.imagedataclass = data.AcquisitionImageData
+		self.dataclass = leginondata.TiltSeriesData
+		#self.imagedataclass = leginondata.TiltSeriesImageData
+		self.imagedataclass = leginondata.AcquisitionImageData
 		self.settings = settings
 		self.session = session
 		# TODO: fix me

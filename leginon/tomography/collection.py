@@ -1,6 +1,6 @@
 import math
 import time
-import data
+import leginondata
 import tiltcorrelator
 import tiltseries
 import numpy
@@ -19,13 +19,13 @@ class Collection(object):
 		self.theta = 0.0
 
 	def saveInstrumentState(self):
-		self.instrument_state = self.instrument.getData(data.ScopeEMData)
+		self.instrument_state = self.instrument.getData(leginondata.ScopeEMData)
 
 	def restoreInstrumentState(self):
 		keys = ['stage position', 'defocus', 'image shift', 'magnification']
 		if self.instrument_state is None:
 			return
-		instrument_state = data.ScopeEMData()
+		instrument_state = leginondata.ScopeEMData()
 		for key in keys:
 			instrument_state[key] = self.instrument_state[key]
 		self.instrument.setData(instrument_state)
@@ -249,7 +249,7 @@ class Collection(object):
 			# TODO: error checking
 			channel = self.correlator.getChannel()
 			self.instrument.setCorrectionChannel(channel)
-			image_data = self.instrument.getData(data.CorrectedCameraImageData)
+			image_data = self.instrument.getData(leginondata.CorrectedCameraImageData)
 			self.logger.info('Image acquired.')
 
 			image_mean = image_data['image'].mean()
@@ -380,7 +380,7 @@ class Collection(object):
 			'measured defocus': measured_defocus,
 			'measured fit': measured_fit,
 		}
-		tomo_prediction_data = data.TomographyPredictionData(initializer=initializer)
+		tomo_prediction_data = leginondata.TomographyPredictionData(initializer=initializer)
 					
 		self.node.publish(tomo_prediction_data, database=True, dbforce=True)
 
