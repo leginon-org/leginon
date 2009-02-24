@@ -3140,10 +3140,13 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	function getImagic3d0ReclassifiedModelsFromSessionId($sessionId) {
 		$q="SELECT "
 			."  model.*, "
-			."  path.`path` AS path "
+			."  path.`path` AS path, "
+			."  symmetry.symmetry "
 			."FROM ApImagic3d0Data as model "
 			."LEFT JOIN ApPathData AS path "
 			."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApSymmetryData as symmetry "
+                        ."  ON model.`REF|ApSymmetryData|symmetry` = symmetry.`DEF_id` "
 			."LEFT JOIN ApImagicReclassifyData as reclass "
 			."  ON model. `REF|ApImagicReclassifyData|reclass` = reclass.`DEF_id` "
 			."LEFT JOIN ApNoRefClassRunData AS norefclass "
@@ -3165,10 +3168,13 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	function getImagic3d0NoRefModelsFromSessionId($sessionId) {
 		$q="SELECT "
 			."  model.*, "
-			."  path.`path` AS path "
+			."  path.`path` AS path, "
+			."  symmetry.symmetry "
 			."FROM ApImagic3d0Data as model "
 			."LEFT JOIN ApPathData AS path "
 			."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApSymmetryData as symmetry "
+                        ."  ON model.`REF|ApSymmetryData|symmetry` = symmetry.`DEF_id` "
 			."LEFT JOIN ApNoRefClassRunData AS norefclass "
 			."  ON model. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
 			."LEFT JOIN ApNoRefRunData AS norefrun "
@@ -3188,10 +3194,13 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
         function get3d0ClusterModelsFromSessionId($sessionId) {
                 $q="SELECT "
                         ."  model.*, "
-                        ."  path.`path` AS path "
+                        ."  path.`path` AS path, "
+			."  symmetry.symmetry "
 			."FROM ApImagic3d0Data as model "
                         ."LEFT JOIN ApPathData AS path "
                         ."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApSymmetryData as symmetry "
+                        ."  ON model.`REF|ApSymmetryData|symmetry` = symmetry.`DEF_id` "
 			."LEFT JOIN ApClusteringStackData as cluster "
 			."  ON model.`REF|ApClusteringStackData|clusterclass` = cluster.`DEF_id` "
 			."LEFT JOIN ApClusteringRunData as run "
@@ -3238,10 +3247,13 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	function getImagic3d0Data ($imagic3d0Id) {
 		$q = "SELECT  "
 			."  3d0run.*, "
-			."  path.`path` AS path "
+			."  path.`path` AS path, "
+			."  symmetry.symmetry "
 			."FROM ApImagic3d0Data as 3d0run "
 			."LEFT JOIN ApPathData AS path "
 			."  ON 3d0run.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApSymmetryData as symmetry "
+			."  ON 3d0run.`REF|ApSymmetryData|symmetry` = symmetry.`DEF_id` "
 			."WHERE 3d0run.`DEF_id` = '$imagic3d0Id' ";
 		//echo $q;
 		$r = $this->mysql->getSQLResult($q);
@@ -3280,12 +3292,14 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	}
 
 	function getImagic3dRefinementParamsFromRefineId ($refineId) {
-		$q = "SELECT param.*, run.*, pd.path "
+		$q = "SELECT param.*, run.*, pd.path, symmetry.symmetry "
 			."FROM ApImagic3dRefineRunData as run "
 			."LEFT JOIN ApImagic3dRefineIterationData as param "
-			."ON (param.`REF|ApImagic3dRefineRunData|refinement_run`=run.`DEF_id`) "
+			."  ON (param.`REF|ApImagic3dRefineRunData|refinement_run`=run.`DEF_id`) "
 			."LEFT JOIN ApPathData AS pd ON "
-			."(run.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."  (run.`REF|ApPathData|path` = pd.`DEF_id`) "
+			."LEFT JOIN ApSymmetryData as symmetry "
+			."  ON param.`REF|ApSymmetryData|symmetry`=symmetry.`DEF_id` "
 			."WHERE run.`DEF_id` = '$refineId'";
 		$r = $this->mysql->getSQLResult($q);
 
