@@ -26,7 +26,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 	apix =      float(params["apix"])
 	olapmult =  float(params["overlapmult"])
 	maxpeaks =  int(params["maxpeaks"])
-	maxthresh = float(params["maxthresh"])
+	maxthresh = params["maxthresh"]
 	maxsizemult = float(params["maxsize"])
 	peaktype =  params["peaktype"]
 	msg =       not params['background']
@@ -47,7 +47,7 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 
 		#find peaks
 		peaktree = findPeaksInMap(imgmap, thresh, pixdiam, count, olapmult, 
-			maxpeaks, maxsizemult, maxthresh, msg, tmpldbid, mapdiam, bin=bin, peaktype=peaktype)
+			maxpeaks, maxsizemult, msg, tmpldbid, mapdiam, bin=bin, peaktype=peaktype)
 
 		#remove border peaks
 		peaktree = removeBorderPeaks(peaktree, pixdiam, imgdict['image'].shape[1], imgdict['image'].shape[0])
@@ -63,7 +63,14 @@ def findPeaks(imgdict, maplist, params, maptype="ccmaxmap"):
 		peaktreelist.append(peaktree)
 
 	peaktree = mergePeakTrees(imgdict, peaktreelist, params, msg)
-	print len(peaktree)
+
+	#max threshold
+	if maxthresh is not None:
+		precount = len(peaktree)
+		peaktree = maxThreshPeaks(peaktree, maxthresh)
+		postcount = len(peaktree)
+		#if precount != postcount:
+		apDisplay.printMsg("Filtered %d particles above threshold %.2f"%(precount-postcount,maxthresh))
 
 	return peaktree
 
@@ -73,7 +80,7 @@ def printPeakTree(peaktree):
 		print "  ",i,":",int(p['xcoord']),int(p['ycoord'])
 
 def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500, 
-		maxsizemult=1.0, maxthresh=None, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum"):
+		maxsizemult=1.0, msg=True, tmpldbid=None, mapdiam=None, bin=1, peaktype="maximum"):
 
 	pixrad = pixdiam/2.0
 
@@ -101,10 +108,6 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 	#remove overlaps
 	cutoff = olapmult*pixrad #1.5x particle radius in pixels
 	removeOverlappingPeaks(peaktree, cutoff, msg)
-
-	#max threshold
-	if maxthresh is not None:
-		peaktree = maxThreshPeaks(peaktree, maxthresh)
 
 	#max peaks
 	if(len(peaktree) > maxpeaks):
