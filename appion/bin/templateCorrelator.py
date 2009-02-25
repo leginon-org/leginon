@@ -97,7 +97,13 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			apDisplay.printError("template list was not specified, e.g. --template-list=34,56,12")
 		
 		### Parse template list
-		self.params['templateIds'] = self.params['templateliststr'].split(',')
+		oldtemplateids = self.params['templateliststr'].split(',')
+		self.params['templateIds'] = []
+		for tid in oldtemplateids:
+			templateid = abs(int(tid))
+			self.params['templateIds'].append(templateid)
+			if self.params['templatemirrors'] is True:
+				self.params['templateIds'].append(-1*templateid)
 
 		### Check if we have ranges
 		if self.params['rangeliststr'] is None:
@@ -108,13 +114,9 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		if len(self.params['templateIds']) != len(rangestrlist):
 			apDisplay.printError("the number of templates and ranges do not match")
 
-		if self.params['templatemirrors'] is True:
-			oldtemplateids = self.params['templateIds']
-			self.params['templateIds'] = []
-			for tid in oldtemplateids:
-				templateid = abs(int(tid))
-				self.params['templateIds'].append(templateid)
-				self.params['templateIds'].append(-1*templateid)
+
+
+		
 
 		### Parse range list
 		i = 0
