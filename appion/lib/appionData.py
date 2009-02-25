@@ -160,6 +160,7 @@ class ApTemplateRunData(Data):
 			('range_start', int),
 			('range_end', int),
 			('range_incr', int),
+			('mirror', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTemplateRunData=ApTemplateRunData

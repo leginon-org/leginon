@@ -40,9 +40,13 @@ def getTemplates(params):
 	params['templatelist'] = [] #list of scaled files 
 	for i,templateid in enumerate(params['templateIds']):
 		index = i+1
+		#print templateid
 		templateid = int(templateid)
+		if templateid < 0:
+			continue
+
 		#QUERY DB FOR TEMPLATE INFO
-		templatedata = appionData.ApTemplateImageData.direct_query(templateid)
+		templatedata = appionData.ApTemplateImageData.direct_query(abs(templateid))
 		if not (templatedata):
 			apDisplay.printError("Template Id "+str(templateid)+" was not found in database.")
 
@@ -78,6 +82,13 @@ def getTemplates(params):
 
 		#ADD TO TEMPLATE LIST
 		params['templatelist'].append(os.path.basename(filtertemplatepath))
+
+		### ADD MIRROR IF REQUESTED
+		if 'templatemirrors' in params and params['templatemirrors'] is True:
+			mirrortemplatepath = os.path.join(params['rundir'], "mirrorTemplate"+str(index)+".mrc")
+			mirrorarray = numpy.fliplr(templatearray)
+			apImage.arrayToMrc(mirrorarray, mirrortemplatepath, msg=False)
+			params['templatelist'].append(os.path.basename(mirrortemplatepath))
 
 	#FINISH LOOP OVER template ids
 	#Set the apix

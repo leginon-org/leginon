@@ -76,11 +76,14 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			help="Template Ids", metavar="#,#" )
 		self.parser.add_option("--range-list", dest="rangeliststr",
 			help="Start, end, and increment angles: e.g. 0,360,10x0,180,5", metavar="#,#,#x#,#,#")	
+
 		### True / False options
 		self.parser.add_option("--thread-findem", dest="threadfindem", default=False,
 			action="store_true", help="Run findem crosscorrelation in threads")
 		self.parser.add_option("--spectral", dest="spectral", default=False,
 			action="store_true", help="Use spectral correlation instead of normal correlation")
+		self.parser.add_option("--use-mirrors", dest="templatemirrors", default=False,
+			action="store_true", help="Use mirrors as additional templates")
 
 		return
 	
@@ -105,8 +108,17 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		if len(self.params['templateIds']) != len(rangestrlist):
 			apDisplay.printError("the number of templates and ranges do not match")
 
+		if self.params['templatemirrors'] is True:
+			oldtemplateids = self.params['templateIds']
+			self.params['templateIds'] = []
+			for tid in oldtemplateids:
+				templateid = abs(int(tid))
+				self.params['templateIds'].append(templateid)
+				self.params['templateIds'].append(-1*templateid)
+
 		### Parse range list
-		for i, rangestr in enumerate(rangestrlist):
+		i = 0
+		for rangestr in rangestrlist:
 			self.params['range'+str(i)] = rangestr
 			angs = rangestr.split(",")
 			if not len(angs) == 3:
@@ -114,6 +126,14 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 			self.params['startang'+str(i+1)] = float(angs[0])
 			self.params['endang'+str(i+1)]   = float(angs[1])
 			self.params['incrang'+str(i+1)]  = float(angs[2])
+			self.params['mirror'+str(i+1)]  = False
+			if self.params['templatemirrors'] is True:
+				i+=1
+				self.params['startang'+str(i+1)] = float(angs[0])
+				self.params['endang'+str(i+1)]   = float(angs[1])
+				self.params['incrang'+str(i+1)]  = float(angs[2])
+				self.params['mirror'+str(i+1)]  = True
+			i+=1		
 		return
 
 	##=======================
@@ -123,6 +143,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		# CREATES TEMPLATES
 		# SETS params['templatelist'] AND self.params['templateapix']
 		apTemplate.getTemplates(self.params)
+		apDisplay.printColor("Template list: "+str(self.params['templatelist']), "cyan")
 		self.checkPreviousTemplateRun()
 
 	##=======================
@@ -130,6 +151,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		if abs(self.params['apix'] - self.params['templateapix']) > 0.01:
 			#rescale templates, apix has changed
 			apTemplate.getTemplates(self.params)
+
 		### RUN FindEM
 
 		### save filter image to .dwn.mrc
@@ -162,13 +184,14 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 	##=======================
 	def commitToDatabase(self, imgdata, rundata):
 		#insert template rotation data
-		for i,templateid in enumerate(self.params['templateIds']):
+		for i, templateid in enumerate(self.params['templateIds']):
 			templaterunq = appionData.ApTemplateRunData()
 			templaterunq['selectionrun'] = rundata	
-			templaterunq['template']     = appionData.ApTemplateImageData.direct_query(templateid)
+			templaterunq['template']     = appionData.ApTemplateImageData.direct_query(abs(templateid))
 			templaterunq['range_start']  = self.params["startang"+str(i+1)]
 			templaterunq['range_end']    = self.params["endang"+str(i+1)]
 			templaterunq['range_incr']   = self.params["incrang"+str(i+1)]
+			templaterunq['mirror']   = self.params["mirror"+str(i+1)]
 			if self.params['commit'] is True:
 				templaterunq.insert()
 		return
