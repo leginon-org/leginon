@@ -163,7 +163,7 @@ if ($expId) {
 	$mresults[] = ($mq==0) ? "" : "$mq queued";
 
 	$tiltresults[] = ($tiltdone==0) ? "" : "<a href='prtlreport.php?expId=$sessionId'>$tiltdone complete</a>";
-	$tiltresults[] = ($tiltrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=manualpicker'>$tiltrun running</a>";
+	$tiltresults[] = ($tiltrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=tiltalign'>$tiltrun running</a>";
 	$tiltresults[] = ($tiltqueue==0) ? "" : "$tiltqueue queued";
 
 	// in case weren't submitted by web:
