@@ -660,8 +660,13 @@ def convertPostscriptToPng(psfile, pngfile, size=1024):
 		imagemagickcmd = ("convert -colorspace Gray -trim -resize "
 			+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
 	else:
-		imagemagickcmd = ("convert -colorspace Gray -trim -resize "
-			+str(size)+"x"+str(size)+" "+psfile+" "+pngfile)
+		ppmfile = psfile+"001.ppm"
+		if os.path.isfile(ppmfile):
+			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+				+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
+		else:
+			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+				+str(size)+"x"+str(size)+" "+psfile+" "+pngfile)
 	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
 
 	if os.path.isfile(ppmfile):
