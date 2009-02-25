@@ -114,10 +114,6 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 		if len(oldtemplateids) != len(rangestrlist):
 			apDisplay.printError("the number of templates and ranges do not match")
 
-
-
-		
-
 		### Parse range list
 		i = 0
 		for rangestr in rangestrlist:
