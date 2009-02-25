@@ -858,6 +858,7 @@ class Ap3dDensityData(Data):
 			('pdbid', str),
 			('emdbid', str),
 			('eman', str),
+			('rmeasure', float),
 			('rctrun', ApRctRunData),
 		)
 	typemap = classmethod(typemap)
@@ -1186,6 +1187,9 @@ class ApRctRunData(Data):
 			('lowpassvol', float),
 			('highpasspart', float),
 			('description', str),
+			('numpart', int),
+			('fsc_resolution', float),
+			('rmeasure_resolution', float),
 			('path', ApPathData),
 			('tiltstack', ApStackData),
 			('alignstack', ApAlignStackData),
