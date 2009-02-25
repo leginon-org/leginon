@@ -30,18 +30,18 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_DRIFT,
-													'ruler',
-													shortHelpString='Measure Drift')
+#		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_DRIFT,
+#													'ruler',
+#													shortHelpString='Measure Drift')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_DECLARE_DRIFT,
 													'declare',
 													shortHelpString='Declare Drift')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
-													'play',
-													shortHelpString='Check Drift')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_DRIFT,
-													'stop',
-													shortHelpString='Abort Drift Check')
+#		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
+#													'play',
+#													shortHelpString='Check Drift')
+#		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_DRIFT,
+#													'stop',
+#													shortHelpString='Abort Drift Check')
 		self.toolbar.Realize()
 
 		# image
@@ -50,6 +50,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.imagepanel.addTypeTool('Correlation', display=True)
 		self.imagepanel.addTargetTool('Peak', wx.Color(255,0,0))
+		self.imagepanel.addTargetTool('Target', wx.Color(255,128,0))
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 
@@ -64,12 +65,6 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onCheckDriftTool,
-											id=gui.wx.ToolBar.ID_CHECK_DRIFT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortDriftTool,
-											id=gui.wx.ToolBar.ID_ABORT_DRIFT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDriftTool,
-											id=gui.wx.ToolBar.ID_MEASURE_DRIFT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onDeclareDriftTool,
 											id=gui.wx.ToolBar.ID_DECLARE_DRIFT)
 
@@ -77,15 +72,6 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
-
-	def onCheckDriftTool(self, evt):
-		self.node.uiMonitorDrift()
-
-	def onAbortDriftTool(self, evt):
-		self.node.abort()
-
-	def onMeasureDriftTool(self, evt):
-		self.node.uiMeasureDrift()
 
 	def onDeclareDriftTool(self, evt):
 		self.node.uiDeclareDrift()
@@ -100,29 +86,11 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sb = wx.StaticBox(self, -1, 'Transform Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
-		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
-		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 		self.widgets['min mag'] = IntEntry(self, -1, min=1, chars=9)
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
-		self.panel.setInstrumentSelection(self.instrumentselection)
-		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
-
-		szthreshold = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait for drift to be less than')
-		szthreshold.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szthreshold.Add(self.widgets['threshold'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'meters')
-		szthreshold.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		szpause = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait at least')
-		szpause.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szpause.Add(self.widgets['pause time'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, 'seconds between images')
-		szpause.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#self.instrumentselection = gui.wx.Instrument.SelectionPanel(self, passive=True)
+		#self.panel.setInstrumentSelection(self.instrumentselection)
+		#self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		#self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		szminmag = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Minimum Magnification')
@@ -131,11 +99,9 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szthreshold, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpause, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szminmag, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.instrumentselection, (3, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (4, 0), (1, 1), wx.EXPAND)
+		sz.Add(szminmag, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		#sz.Add(self.instrumentselection, (1, 0), (1, 1), wx.EXPAND)
+		#sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
@@ -144,7 +110,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Drift Manager Test')
+			frame = wx.Frame(None, -1, 'Transform Manager Test')
 			panel = Panel(frame, 'Test')
 			frame.Fit()
 			self.SetTopWindow(frame)

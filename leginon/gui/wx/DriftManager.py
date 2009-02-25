@@ -33,9 +33,6 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_DRIFT,
 													'ruler',
 													shortHelpString='Measure Drift')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_DECLARE_DRIFT,
-													'declare',
-													shortHelpString='Declare Drift')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
 													'play',
 													shortHelpString='Check Drift')
@@ -70,8 +67,6 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_ABORT_DRIFT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDriftTool,
 											id=gui.wx.ToolBar.ID_MEASURE_DRIFT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onDeclareDriftTool,
-											id=gui.wx.ToolBar.ID_DECLARE_DRIFT)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -86,9 +81,6 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onMeasureDriftTool(self, evt):
 		self.node.uiMeasureDrift()
-
-	def onDeclareDriftTool(self, evt):
-		self.node.uiDeclareDrift()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
