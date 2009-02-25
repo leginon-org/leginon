@@ -84,17 +84,35 @@ def getBoxSize(filename, msg=False):
 	return boxsize of stack in pixels
 	"""
 	if not os.path.isfile(filename):
-		return (1,1)
+		if msg is True:
+			apDisplay.printWarning("file does not exist")
+		return (1,1,1)
 	proc = subprocess.Popen("iminfo %s"%(filename), shell=True, stdout=subprocess.PIPE)
 	proc.wait()
+	lines = ""
 	for line in proc.stdout:
 		sline = line.strip()
-		m = re.match("Image\(s\) are ([0-9]+)x([0-9]+)x([0-9]+)", sline)	
+		lines += line
+		m = re.match("^Image\(s\) are ([0-9]+)x([0-9]+)x([0-9]+)", sline)	
 		if m and m.groups() and len(m.groups()) > 1:
 			xdim = int(m.groups()[0])
-			ydim = int(m.groups()[0])
-			return (xdim,ydim)
-	return (1,1)
+			ydim = int(m.groups()[1])
+			zdim = int(m.groups()[2])
+			return (xdim,ydim,zdim)
+		m = re.match("^0\.\s+([0-9]+)x([0-9]+)\s+", sline)	
+		if m and m.groups() and len(m.groups()) > 1:
+			xdim = int(m.groups()[0])
+			ydim = int(m.groups()[1])
+			return (xdim,ydim,1)
+		m = re.match("^0\.\s+([0-9]+)x([0-9]+)x([0-9]+)\s+", sline)	
+		if m and m.groups() and len(m.groups()) > 1:
+			xdim = int(m.groups()[0])
+			ydim = int(m.groups()[1])
+			zdim = int(m.groups()[2])
+			return (xdim,ydim,zdim)
+	if msg is True:
+		apDisplay.printWarning("failed to get boxsize: "+lines)
+	return (1,1,1)
 
 
 #===============
