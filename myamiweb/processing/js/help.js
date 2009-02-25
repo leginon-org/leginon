@@ -98,6 +98,7 @@ var help = {
 		'angleinc' : 'angular increment for alignment, the smaller the increment the longer it takes to run, default 5, rough run use 10 degrees',
 		'fastmode' : 'fast mode is a setting in Xmipp that reduces the time for an iteration after the first round, if off all iterations take a long time, if on then if the the iteration time will drop 90% after the first round, e.g.  60 min after round 1 to 4 min for each iteration after',
 		'stack' : 'Input particles to be classified',
+		'planereg' : 'Fit a 2D plane to the image and subtract, similar to a high pass filter',
 		'peaktype' : 'The determines how the center of the particle is found. Default for leginon hole finder is center of mass, but you may get better results with maximum. WARNING: Christopher needs to update pyami on cluster for maximum to work, so use center of mass',
 		'doubles' : 'Each particle must be picked twice. Picked by more than one template or DoG slice',
 		'griddim' : 'Self-organizing maps create a large two grid and each grid point is a class average. E.g., 4x3 grid gives 12 class averages',

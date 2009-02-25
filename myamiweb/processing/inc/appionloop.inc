@@ -308,8 +308,8 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	echo "<!-- BEGIN Particle Loop Param -->\n";
 	$threshv = ($_POST['thresh']) ? $_POST['thresh'] : $defthresh;
 	$maxthreshv = ($_POST['maxthresh']) ? $_POST['maxthresh'] : $defmaxthresh;
-	$lpv = ($_POST['lp'] || $_POST['process']) ? $_POST['lp'] : '5';
-	$hpv = ($_POST['hp'] || $_POST['process']) ? $_POST['hp'] : '600';
+	$lpv = ($_POST['lp'] || $_POST['process']) ? $_POST['lp'] : '15';
+	$hpv = ($_POST['hp'] || $_POST['process']) ? $_POST['hp'] : '0';
 	$binv = (int) ($_POST['bin']) ? $_POST['bin'] : '4';
 	$medianv = (int) ($_POST['median'] || $_POST['process']) ? $_POST['median'] : '2';
 	$pixlimitv = ($_POST['pixlimit'] || $_POST['process']) ? $_POST['pixlimit'] : '4.0';
@@ -322,6 +322,7 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 	$nojpegsv = ($_POST['nojpegs']=="on") ? "CHECKED" : "";
 	$defocpairv = ($_POST['defocpair']=="on") ? "CHECKED" : "";
 	$doublesv = ($_POST['doubles']=="on") ? "CHECKED" : "";
+	$planeregv = ($_POST['planereg']=="off") ? "" : "CHECKED";
 
 	if ($defthresh != -1) {
 		echo "<B>Peak thresholds:</B><br/>\n";
@@ -337,21 +338,31 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 		echo "<br />\n";
 	}
 	echo"<b>Filter Values:</b><br />\n";
+
 	echo "<input type='text' name='lp' VALUE='$lpv' size='4'>\n";
 	echo docpop('lpval',' Low Pass');
 	echo "<font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br />\n";
+
 	echo "<input type='text' name='hp' VALUE='$hpv' size='4'>\n";
 	echo docpop('hpval', 'High Pass');
 	echo "<font size=-2><I>(in &Aring;ngstroms; 0 = off)</I></font><br />\n";
+
 	echo "<input type='text' name='median' VALUE='$medianv' size='4'>\n";
 	echo docpop('medianval',' Median');
 	echo "<font size=-2><I>(in pixels; 0 = off)</I></font><br />\n";
+
 	echo "<input type='text' name='pixlimit' VALUE='$pixlimitv' size='4'>\n";
 	echo docpop('pixlimit',' Pixel Limit');
 	echo "<font size=-2><I>(in Standard Deviations; 0 = off)</I></font><br />\n";
+
 	echo "<input type='text' name='bin' VALUE='$binv' size='4'>\n";
 	echo docpop('binval',' Binning');
 	echo "<font size=-2><I>(power of 2)</I></font><br />\n";
+
+	echo "<input type='checkbox' name='planereg' $planeregv>\n";
+	echo docpop('planereg','Plane regression');
+	echo "<br />\n";
+
 	echo "<br />\n";
 	echo "<B>Defocal pairs:</B><br />\n";
 	echo "<input type='checkbox' name='defocpair' $defocpairv>\n";
@@ -418,6 +429,7 @@ function parseParticleLoopParams ($type) {
 	$nojpegs = ($_POST['nojpegs']=="on") ? true : false;
 	$invert = ($_POST['invert']=="on") ? true : false;
 	$doubles = ($_POST['doubles']=="on") ? true : false;
+	$planereg = ($_POST['planereg']=="on") ? true : false;
 
 	// CREATE COMMAND
 	$command = " ";
@@ -434,6 +446,7 @@ function parseParticleLoopParams ($type) {
 	if ($median != '') $command.=" --median=$median";
 	if ($lp != '') $command.=" --lowpass=$lp";
 	if ($hp != '') $command.=" --highpass=$hp";
+	if ($planereg) $command.=" --planereg";
 	if ($bin) $command.=" --bin=$bin";
 	if ($diam) $command.=" --diam=$diam";
 	if ($pixlimit != '') $command.=" --pixlimit=$pixlimit";
@@ -475,12 +488,16 @@ function particleLoopSummaryTable () {
 	$peaktype = $_POST['peaktype'];
 	$invert = ($_POST[invert]=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$diam = $_POST[diam];
+	$doubles = ($_POST['doubles']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$planereg = ($_POST['planereg']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$spectral = ($_POST['spectral']=="on") ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
 	echo "<TR><TD>thresh</TD><TD>$thresh</TD></TR>\n";
 	echo "<TR><TD>max thresh</TD><TD>$maxthresh</TD></TR>\n";
 	echo "<TR><TD>max peaks</TD><TD>$maxpeaks</TD></TR>\n";
 	echo "<TR><TD>lp</TD><TD>$lp</TD></TR>\n";
 	echo "<TR><TD>hp</TD><TD>$hp</TD></TR>\n";
+	echo "<TR><TD>planereg</TD><TD>$planereg</TD></TR>\n";
 	echo "<TR><TD>median</TD><TD>$median</TD></TR>\n";
 	echo "<TR><TD>bin</TD><TD>$bin</TD></TR>\n";
 	echo "<TR><TD>defocal pairs</TD><TD>$defocpair</TD></TR>\n";
@@ -489,6 +506,8 @@ function particleLoopSummaryTable () {
 	echo "<TR><TD>peak type</TD><TD>$peaktype</TD></TR>\n";
 	echo "<TR><TD>invert</TD><TD>$invert</TD></TR>\n";
 	echo "<TR><TD>diameter</TD><TD>$diam</TD></TR>\n";
+	echo "<TR><TD>doubles</TD><TD>$doubles</TD></TR>\n";
+
 }
 
 ?>

@@ -298,7 +298,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	echo "Mask diameter for template(s) <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
 	echo "<BR/>\n";
 
-	echo "<input type='checkbox' name='mirrors' $mirrorsv DISABLED>\n";
+	echo "<input type='checkbox' name='mirrors' $mirrorsv>\n";
 	echo docpop('mirror','Use template mirrors');
 	echo "<br/><BR/>\n";
 
