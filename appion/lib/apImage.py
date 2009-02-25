@@ -35,7 +35,7 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	simgarray = lowPassFilter(simgarray, apix, bin, lowpass, msg)
 	#simgarray = fermiLowPassFilter(simgarray, apix, bin, lowpass, msg)
 	if planeReg is True:
-		simgarray = planeRegression(simgarray)
+		simgarray = planeRegression(simgarray, msg)
 	if invert is True:
 		simgarray = invertImage(simgarray)
 	simgarray = 255.0*(normRange(simgarray)+1.0e-7)
@@ -242,15 +242,14 @@ def highPassFilter(imgarray, apix=1.0, bin=1, radius=0.0, localbin=8, msg=True):
 	return filtimg
 
 #=========================
-def planeRegression(imgarray):
+def planeRegression(imgarray, msg=True):
 	"""
 	performs a two-dimensional linear regression and subtracts it from an image
 	essentially a fast high pass filter
 	"""
 	#print " ... calculate 2d linear regression"
 	if ( (imgarray.shape)[0] != (imgarray.shape)[1] ):
-		print "Array is NOT square"
-		sys.exit(1)
+		apDisplay.printError("Array is NOT square")
 	size = (imgarray.shape)[0]
 	count = float((imgarray.shape)[0]*(imgarray.shape)[1])
 	def retx(y,x):
@@ -273,8 +272,9 @@ def planeRegression(imgarray):
 	leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
 	rightmat = numpy.array( [xzsum, yzsum, zsum] )
 	resvec = linalg.solve(leftmat,rightmat)
-	print " ... plane_regress: x-slope:",round(resvec[0]*size,5),\
-		", y-slope:",round(resvec[1]*size,5),", xy-intercept:",round(resvec[2],5)
+	if msg is True:
+		apDisplay.printMsg("plane_regress: x-slope: %.3f, y-slope: %.3f, xy-intercept: %.3f"
+			%(resvec[0]*size, resvec[1]*size, resvec[2]*size))
 	newarray = imgarray - xarray*resvec[0] - yarray*resvec[1] - resvec[2]
 	del imgarray,xarray,yarray,resvec
 	return newarray
