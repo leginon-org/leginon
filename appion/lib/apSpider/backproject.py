@@ -208,7 +208,7 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, numpart, datae
 	mySpider.toSpiderQuiet(
 		"MS I", #command
 		"_2@", #name
-		"%d,%d,1"%(boxsize), #boxsize
+		"%d,%d,%d"%(boxsize), #boxsize
 		str(numpart+1), #num part to create in memory
 		str(numpart+1), #max particle number
 	)
