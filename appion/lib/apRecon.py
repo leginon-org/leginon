@@ -932,9 +932,11 @@ def getRefinementsFromRun(refinerundata):
 	refineitq['refinementRun'] = refinerundata
 	return refineitq.query()
 
-def getResolutionFromFSCFile(fscfile, boxsize, apix):
+def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 	if not os.path.isfile(fscfile):
 		apDisplay.printError("fsc file does not exist")
+	if msg is True:
+		apDisplay.printMsg("box: %d, apix: %.3f, file: %s"%(boxsize, apix, fscfile))
 	f = open(fscfile, 'r')
 	lastx=0
 	lasty=0
@@ -942,6 +944,8 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix):
 		xy = line.strip().split()
 		x = float(xy[0])
 		y = float(xy[1])
+		if x != 0.0 and x < 0.9:
+			apDisplay.printWarning("FSC is wrong data format")
 		if y > 0.5:
 			#store values for later
 			lastx = x
