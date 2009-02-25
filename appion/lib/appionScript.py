@@ -57,7 +57,7 @@ class AppionScript(object):
 		#	self.params['rundir'] = self.params['outdir']
 
 		### setup correct database after we have read the project id
-		if apDatabase.splitdb and self.params['projectid'] is not None:
+		if apDatabase.splitdb and 'projectid' in self.params and self.params['projectid'] is not None:
 			apDisplay.printWarning("Using split database")
 			# use a project database
 			newdbname = "ap"+str(self.params['projectid'])
@@ -65,10 +65,11 @@ class AppionScript(object):
 			apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 		### check if user wants to print help message
-		if self.params['commit'] is False:
-			apDisplay.printWarning("Not committing data to database")
-		else:
+		if 'commit' in self.params and self.params['commit'] is True:
 			apDisplay.printMsg("Committing data to database")
+		else:
+			apDisplay.printWarning("Not committing data to database")
+
 		self.checkConflicts()
 		if useglobalparams is True:
 			self.checkGlobalConflicts()
@@ -76,8 +77,8 @@ class AppionScript(object):
 		### setup run directory
 		self.setProcessingDirName()
 		self.setupRunDirectory()
-		if apDatabase.queryDirectory(self.params['rundir']):
-			self.preExistingDirectoryError()
+		#if apDatabase.queryDirectory(self.params['rundir']):
+		#	self.preExistingDirectoryError()
 
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
