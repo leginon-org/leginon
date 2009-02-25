@@ -110,8 +110,20 @@ def timeString(avg, stdev=0):
 	"""
 	avg = float(avg)
 	stdev = float(stdev)
+	#less than 0.5 milliseconds
+	if avg < 0.5e-3:
+		if stdev > 0.0:
+			timestr = str(round(avg*1e6,2))+" +/- "+str(round(stdev*1e6,2))+" usec"
+		else:
+			timestr = str(round(avg*1e6,2))+" usec"
+	#less than 0.5 seconds
+	elif avg < 0.5:
+		if stdev > 0.0:
+			timestr = str(round(avg*1e3,2))+" +/- "+str(round(stdev*1e3,2))+" msec"
+		else:
+			timestr = str(round(avg*1e3,2))+" msec"
 	#less than 70 seconds
-	if avg < 70.0:
+	elif avg < 70.0:
 		if stdev > 0.0:
 			timestr = str(round(avg,2))+" +/- "+str(round(stdev,2))+" sec"
 		else:
