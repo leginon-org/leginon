@@ -26,42 +26,54 @@ class rctVolumeScript(appionScript.AppionScript):
 	#=====================
 	def onInit(self):
 		self.rotmirrorcache = {}
+		self.fscresolution = None
+		self.rmeasureresolution = None
 
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --cluster-id=ID --tilt-stack=# --classnums=#,#,# [options]")
+
+		### strings
 		self.parser.add_option("--classnums", dest="classnums", type="str",
 			help="Class numbers to use for rct volume, e.g. 0,1,2", metavar="#")
+
+		### integers
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
-
 		self.parser.add_option("--cluster-id", dest="clusterid", type="int",
 			help="clustering stack id", metavar="ID")
 		self.parser.add_option("--align-id", dest="alignid", type="int",
 			help="alignment stack id", metavar="ID")
-
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=4, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
 			help="Particle mask radius (in pixels)", metavar="ID")
 		self.parser.add_option("--tilt-bin", dest="tiltbin", type="int", default=1,
 			help="Binning of the tilted image", metavar="ID")
+		self.parser.add_option("--num-part", dest="numpart", type="int",
+			help="Limit number of particles, for debugging", metavar="#")
+
+		### floats
 		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float", default=10.0,
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
-
 		self.parser.add_option("--min-score", dest="minscore", type="float",
 			help="Minimum cross-correlation score", metavar="#")
-
 		self.parser.add_option("--contour", dest="contour", type="float", default=3.0,
 			help="Chimera snapshot contour", metavar="#")
 		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.1,
 			help="Chimera snapshot zoom", metavar="#")
 
-		self.parser.add_option("--num-part", dest="numpart", type="int",
-			help="Limit number of particles, for debugging", metavar="#")
+		### true/false
+		self.parser.add_option("--no-eotest", dest="eotest", default=True,
+			action="store_false", help="Do not perform eotest for resolution")
+		self.parser.add_option("--eotest", dest="eotest", default=True,
+			action="store_true", help="Perform eotest for resolution")
+		self.parser.add_option("--skip-chimera", dest="skipchimera", default=False,
+			action="store_true", help="Skip chimera imaging")
 
+		### choices
 		self.mirrormodes = ( "all", "yes", "no" )
 		self.parser.add_option("--mirror", dest="mirror",
 			help="Mirror mode", metavar="MODE", 
@@ -218,6 +230,9 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		rctrunq['alignstack'] = self.alignstackdata
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
+		rctrunq['numpart']  = self.numpart
+		rctrunq['fsc_resolution'] = self.fscresolution
+		rctrunq['rmeasure_resolution'] = self.rmeasureresolution
 		if self.params['commit'] is True:
 			rctrunq.insert()
 
@@ -236,7 +251,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		densq['mask'] = self.params['radius']
 		#densq['iterid'] = self.params['numiters']
 		densq['description'] = self.params['description']
-		#densq['resolution'] = float
+		densq['resolution'] = self.fscresolution
+		densq['rmeasure'] = self.rmeasureresolution
 		densq['session'] = apStack.getSessionDataFromStackId(self.params['tiltstackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
 		if self.params['commit'] is True:
@@ -267,10 +283,11 @@ class rctVolumeScript(appionScript.AppionScript):
 		emancmd = "proc3d "+emanvolfile+" "+spivolfile+" spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 		### image with chimera
-		chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-			args=(emanvolfile, 30, None, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
-		chimerathread.setDaemon(1)
-		chimerathread.start()
+		if self.params['skipchimera'] is False:
+			chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
+				args=(emanvolfile, 30, None, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+			chimerathread.setDaemon(1)
+			chimerathread.start()
 
 		return emanvolfile
 
@@ -446,6 +463,86 @@ class rctVolumeScript(appionScript.AppionScript):
 		mySpider.close()
 
 	#=====================
+	def runEoTest(self, alignstack, eulerfile):
+		evenvolfile = os.path.join(self.params['rundir'], "evenvolume%s.spi"%(self.timestamp))
+		oddvolfile = os.path.join(self.params['rundir'], "oddvolume%s.spi"%(self.timestamp))
+		eveneulerfile = os.path.join(self.params['rundir'], "eveneulers%s.spi"%(self.timestamp))
+		oddeulerfile = os.path.join(self.params['rundir'], "oddeulers%s.spi"%(self.timestamp))
+		evenpartlist = os.path.join(self.params['rundir'], "evenparts%s.lst"%(self.timestamp))
+		oddpartlist = os.path.join(self.params['rundir'], "oddparts%s.lst"%(self.timestamp))
+
+		### Create New Doc Files
+		of = open(oddeulerfile, "w")
+		ef = open(eveneulerfile, "w")
+		op = open(oddpartlist, "w")
+		ep = open(evenpartlist, "w")
+		inf = open(eulerfile, "r")
+		evenpart = 0
+		oddpart = 0
+		for line in inf:
+			spidict = operations.spiderInLine(line)
+			if spidict:
+				partnum = spidict['row']
+				if partnum % 2 == 0:
+					ep.write("%d\n"%(partnum-1))
+					evenpart += 1
+					outline = operations.spiderOutLine(evenpart, spidict['floatlist'])
+					ef.write(outline)
+				elif partnum % 2 == 1:
+					op.write("%d\n"%(partnum-1))
+					oddpart += 1
+					outline = operations.spiderOutLine(oddpart, spidict['floatlist'])
+					of.write(outline)
+		inf.close()
+		of.close()
+		ef.close()
+		op.close()
+		ep.close()
+
+		### Create stacks
+		evenstack = os.path.join(self.params['rundir'], "evenstack%s.spi"%(self.timestamp))
+		emancmd = "proc2d %s %s list=%s spiderswap"%(alignstack,evenstack,evenpartlist)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		oddstack = os.path.join(self.params['rundir'], "oddstack%s.spi"%(self.timestamp))
+		emancmd = "proc2d %s %s list=%s spiderswap"%(alignstack,oddstack,oddpartlist)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+
+		### Create Volumes
+		backproject.backproject3F(evenstack, eveneulerfile, evenvolfile, evenpart)
+		backproject.backproject3F(oddstack, oddeulerfile, oddvolfile, oddpart)
+		if not os.path.isfile(evenvolfile) or  not os.path.isfile(oddvolfile):
+			apDisplay.printError("Even-Odd volume creation failed")
+
+		### Calculate FSC
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		emancmd = "proc3d %s %s"%(evenvolfile, evenvolfile+".mrc")
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		emancmd = "proc3d %s %s"%(oddvolfile, oddvolfile+".mrc")
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		fscfile = os.path.join(self.params['rundir'], "fscdata%s.fsc"%(self.timestamp))
+		emancmd = "proc3d %s %s fsc=%s"%(evenvolfile+".mrc", oddvolfile+".mrc", fscfile)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+
+		if not os.path.isfile(fscfile):
+			apDisplay.printError("Even-Odd fsc calculation failed")
+		boxsize = self.getBoxSize()
+		self.fscresolution = apRecon.getResolutionFromFSCFile(fscfile, boxsize, apix, msg=True)
+		apDisplay.printColor( ("Final FSC resolution: %.5f" % (self.fscresolution)), "cyan")
+
+		for fname in (evenvolfile, oddvolfile, evenstack, oddstack, eveneulerfile, oddeulerfile, evenpartlist, oddpartlist):
+			apFile.removeFile(fname)
+
+	#=====================
+	def runRmeasure(self):
+		finalrawvolfile = os.path.join(self.params['rundir'], "rawvolume%s-%03d.spi"%(self.timestamp, self.params['numiters']))
+		emancmd = "proc3d %s %s"%(finalrawvolfile, "rmeasure.mrc")
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		self.rmeasureresolution = apRecon.runRMeasure(apix, "rmeasure.mrc")
+		apDisplay.printColor( ("Final Rmeasure resolution: %.5f" % (self.rmeasureresolution)), "cyan")
+		apFile.removeFile("rmeasure.mrc")
+
+	#=====================
 	def start(self):
 		### get stack data
 		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
@@ -453,6 +550,7 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### get good particle numbers
 		includeParticle, tiltParticlesData = self.getGoodAlignParticles()
+		self.numpart = len(includeParticle)
 
 		### make doc file of Euler angles
 		eulerfile = self.makeEulerDoc(tiltParticlesData)
@@ -478,7 +576,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		### back project particles into filter volume
 		volfile = os.path.join(self.params['rundir'], "volume%s-%03d.spi"%(self.timestamp, 0))
 		backproject.backprojectCG(spiderstack, eulerfile, volfile,
-			numpart=len(includeParticle), pixrad=self.params['radius'])
+			numpart=self.numpart, pixrad=self.params['radius'])
 		alignstack = spiderstack
 
 		### center/convert the volume file
@@ -489,14 +587,15 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 
-				numpart=len(includeParticle), pixrad=self.params['radius'], timestamp=self.timestamp)
+				numpart=self.numpart, pixrad=self.params['radius'], timestamp=self.timestamp)
 			apDisplay.printColor("finished volume refinement in "
 				+apDisplay.timeString(time.time()-looptime), "cyan")
+			apFile.removeFile(volfile)
 
 			### back project particles into better volume
 			volfile = os.path.join(self.params['rundir'], "volume%s-%03d.spi"%(self.timestamp, iternum))
 			backproject.backproject3F(alignstack, eulerfile, volfile,
-				numpart=len(includeParticle))
+				numpart=self.numpart)
 
 			### center/convert the volume file
 			emanvolfile = self.processVolume(volfile, iternum)
@@ -504,10 +603,15 @@ class rctVolumeScript(appionScript.AppionScript):
 		### optimize Euler angles
 		#NOT IMPLEMENTED YET
 
+		### perform eotest
+		if self.params['eotest'] is True:
+			self.runEoTest(alignstack, eulerfile)
+		self.runRmeasure()
+
 		### insert volumes into DB
 		self.insertRctRun(emanvolfile)
-		apDisplay.printMsg("waiting for Chimera to finish")
-		time.sleep(60)
+		#apDisplay.printMsg("waiting for Chimera to finish")
+		#time.sleep(60)
 
 #=====================
 if __name__ == "__main__":
