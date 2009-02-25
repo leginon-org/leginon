@@ -579,9 +579,9 @@ if ($expId) {
 		$result .= "</a>";
 	}
 
-	$nrun = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment</a>";
 	$nruns=array();
-	$nruns[]=$nrun;
+	$nruns[] = "<a href='imgassessor.php?expId=$sessionId'>Web Img Assessment</a>";
+	$nruns[] = "<a href='multiimgassessor.php?expId=$sessionId'>Multi Img Assessment</a>";
 	$nruns[] = "<a href='runImgRejector.php?expId=$sessionId'>Run Image Rejector</a>";
 
 	$data[]=array(
