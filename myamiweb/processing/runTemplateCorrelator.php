@@ -265,8 +265,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
-	$threadcheck = ($_POST['threadfindem']=='on') ? 'CHECKED' : '';
+	$threadcheck = ($_POST['threadfindem']=='off') ? '' : 'CHECKED';
 	$keepallcheck = ($_POST['keepall']=='on') ? 'CHECKED' : '';
+	$mirrorsv = ($_POST['mirrors']=='on') ? 'CHECKED' : '';
 
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
@@ -295,7 +296,11 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	echo "<B>Mask Diameter:</B><BR>\n";
 	echo "<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;\n";
 	echo "Mask diameter for template(s) <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
-	echo "<BR/><BR/>\n";
+	echo "<BR/>\n";
+
+	echo "<input type='checkbox' name='mirrors' $mirrorsv DISABLED>\n";
+	echo docpop('mirror','Use template mirrors');
+	echo "<br/><BR/>\n";
 
 	createParticleLoopTable(0.5,"",$_POST);
 
@@ -349,6 +354,7 @@ function runTemplateCorrelator() {
 
 	$thread = ($_POST['threadfindem']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 	$keepall = ($_POST['keepall']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
+	$mirrors = ($_POST['mirrors']=='on') ? "<font color='green'>true</font>" : "<font color='red'>false</font>";
 
 	// START MAKE COMMAND
 
@@ -402,6 +408,8 @@ function runTemplateCorrelator() {
 		$command.="--thread-findem ";
 	if ($_POST['keepall']=='on')
 		$command.="--keep-all ";
+	if ($_POST['mirrors']=='on')
+		$command.="--use-mirrors ";
 
 	// END MAKE COMMAND
 
@@ -468,7 +476,8 @@ function runTemplateCorrelator() {
 		echo"<TR><TD>range list string</TD><TD>$rangeliststr</TD></TR>";
 		echo"<TR><TD>testimage</TD><TD>$testimage</TD></TR>";
 		echo"<TR><TD>thread findem</TD><TD>$thread</TD></TR>";
-		echo"<TR><TD>keep all .dwn.mrc</TD><TD>$thread</TD></TR>";
+		echo"<TR><TD>keep all .dwn.mrc</TD><TD>$keepall</TD></TR>";
+		echo"<TR><TD>use mirrors</TD><TD>$mirrors</TD></TR>";
 		appionLoopSummaryTable($_POST);
 		particleLoopSummaryTable($_POST);
 
