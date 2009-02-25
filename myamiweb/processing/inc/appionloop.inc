@@ -373,7 +373,7 @@ function createParticleLoopTable ($defthresh, $defmaxthresh) {
 		echo "<br/>\n";
 		echo "&nbsp;<input type='radio' name='peaktype' value='centerofmass' $centerofmasscheck>\n";
 		echo "Center of mass <font size=-2><i>(default)</i></font><br/>\n";
-		echo "&nbsp;<input type='radio' name='peaktype' value='maximum' $maximumcheck>\n";
+		echo "&nbsp;<input type='radio' name='peaktype' value='maximum' $maximumcheck DISABLED>\n";
 		echo "Maximum position";
 		echo "<br/>\n";
 
