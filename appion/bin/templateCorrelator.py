@@ -111,7 +111,7 @@ class TemplateCorrelationLoop(particleLoop2.ParticleLoop):
 
 		### Check that numbers of ranges and templates are equal
 		rangestrlist = self.params['rangeliststr'].split('x')
-		if len(self.params['templateIds']) != len(rangestrlist):
+		if len(oldtemplateids) != len(rangestrlist):
 			apDisplay.printError("the number of templates and ranges do not match")
 
 
