@@ -167,21 +167,23 @@ if ($imgdir) {
 		echo "<FONT class='apcomment'>Specified path: $imgdir does not exist</FONT><HR>\n";
 	else {
 		// open image directory
-		$pathdir=opendir($imgdir);
 		// get all files in directory, ordered by time created
-		$ext= $imgtype ? $imgtype : "jpg";
+		$ext = $imgtype ? $imgtype : "jpg";
 		$i=0;
-		while ($filename=readdir($pathdir)) {
-			if ($filename == '.' || $filename == '..') continue;
-			if (preg_match('`\.'.$ext.'$`i',$filename)) {
-				if (preg_match('`'.$typematch.'\.`',$filename)) {
-			      $files[$i][0] = $filename;
-			      $files[$i][1] = filemtime($imgdir.$filename);
-			      $i++;
-				}
+		if (!$typematch) {
+			$allfiles = glob($imgdir."*.".$ext);
+		} else {
+			$allfiles = glob($imgdir."*".$typematch."[\._]*.".$ext);
+			//echo "TYPEMATCH: '".$typematch."'<br/>";
+		}
+		foreach ($allfiles as $filepath) {
+			$filename = basename($filepath);
+			if (!$typematch || preg_match('`'.$typematch.'(_[0-9][0-9])?\.`',$filename)) {
+		      $files[$i][0] = $filename;
+		      $files[$i][1] = filemtime($filepath);
+		      $i++;
 			}
 		}
-		closedir($pathdir);
 		if ($files) {
 			// sort the files by time
 			foreach($files as $t) $sortTime[] = $t[1];
