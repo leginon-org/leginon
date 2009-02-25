@@ -247,7 +247,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo docpop('fastmode','Use Fast Mode');
 	echo "<br/>\n";
 
-	echo "Search space reduction cutoff criteria";
+	echo "Search space reduction criteria";
 	echo "<br/>\n";
 	echo "&nbsp;&nbsp;<select name='fastmode' ";
 	if (!$fast) echo " disabled";
@@ -255,6 +255,15 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo " <option value='normal'>Normal search</option>\n";
 	echo " <option value='narrow'>Faster, narrower search</option>\n";
 	echo " <option value='wide'>Slower, wider search</option>\n";
+	echo "</select>\n";
+	echo "<br/>\n";
+
+	echo "Convergence stopping criteria";
+	echo "<br/>\n";
+	echo "&nbsp;&nbsp;<select name='converge'>\n";
+	echo " <option value='normal'>Normal search</option>\n";
+	echo " <option value='fast'>Faster, shorter search</option>\n";
+	echo " <option value='slow'>Slower, longer search</option>\n";
 	echo "</select>\n";
 	echo "<br/>\n";
 
@@ -299,6 +308,7 @@ function runMaxLikeAlign() {
 	//$fast = ($_POST['fast']=="on") ? true : false;
 	$fast = true;
 	$fastmode = $_POST['fastmode'];
+	$converge = $_POST['converge'];
 	$mirror = ($_POST['mirror']=="on") ? true : false;
 	$commit = ($_POST['commit']=="on") ? true : false;
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
@@ -373,7 +383,7 @@ function runMaxLikeAlign() {
 		$command.="--no-mirror ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
-
+	$command.="--converge=$converge ";
 	// submit job to cluster
 	if ($_POST['process']=="Run Max Like Alignment") {
 		$user = $_SESSION['username'];
@@ -415,6 +425,8 @@ function runMaxLikeAlign() {
 			<tr><td>angle increment</td><td>$angle</td></tr>
 			<tr><td>binning</td><td>$bin</td></tr>
 			<tr><td>fast</td><td>$fast</td></tr>
+			<tr><td>fast mode</td><td>$fastmode</td></tr>
+			<tr><td>converge</td><td>$converge</td></tr>
 			<tr><td>mirror</td><td>$mirror</td></tr>
 			<tr><td>run dir</td><td>$rundir</td></tr>
 			<tr><td>commit</td><td>$commit</td></tr>
