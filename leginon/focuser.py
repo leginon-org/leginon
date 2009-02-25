@@ -22,25 +22,14 @@ import player
 class Focuser(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
 	settingsclass = leginondata.FocuserSettingsData
-	defaultsettings = {
-		'pause time': 2.5,
-		'move type': 'image shift',
-		'preset order': [],
-		'correct image': True,
-		'display image': True,
-		'save image': True,
-		'wait for process': False,
-		'wait for rejects': False,
-		#'duplicate targets': False,
-		#'duplicate target type': 'focus',
-		'iterations': 1,
-		'wait time': 0,
-		'adjust for drift': False,
+	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings.update({
+		'process target type': 'focus',
 		'melt time': 0.0,
 		'melt preset': '',
 		'acquire final': True,
         'process target type': 'focus',
-	}
+	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
