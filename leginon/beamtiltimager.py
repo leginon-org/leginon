@@ -27,21 +27,9 @@ import os
 class BeamTiltImager(acquisition.Acquisition):
 	panelclass = gui.wx.BeamTiltImager.Panel
 	settingsclass = leginondata.BeamTiltImagerSettingsData
-	defaultsettings = {
-		'pause time': 2.5,
-		'move type': 'image shift',
-		'preset order': [],
-		'correct image': True,
-		'display image': True,
-		'save image': True,
-		'wait for process': False,
-		'wait for rejects': False,
-		#'duplicate targets': False,
-		#'duplicate target type': 'focus',
-		'iterations': 1,
-		'wait time': 0,
+	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings.update({
 		'process target type': 'focus',
-		'adjust for drift': False,
 		'beam tilt': 0.01,
 		'beam tilt count': 1,
 		'sites': 0,
@@ -50,7 +38,7 @@ class BeamTiltImager(acquisition.Acquisition):
 		'tableau type': 'split image',
 		'tableau binning': 2,
 		'tableau split': 8,
-	}
+	})
 
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
