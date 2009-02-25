@@ -100,14 +100,15 @@ class TargetTransformer(targethandler.TargetHandler):
 			c.setImage(1,array2)
 			corrimage = c.phaseCorrelate()
 			mrc.write(corrimage,'corr.mrc')
-			p.setImage(corrimage)
-			peak = peakfinder.findPixelPeak(corrimage)
+			self.setImage(corrimage, 'Correlation')
+			peak = p.subpixelPeak(newimage=corrimage)
+			self.setTargets([(peak[1],peak[0])], 'Peak')
 			shift = [0,0]
 			for i in (0,1):
-				if peak['pixel peak'][i] > shape[i]/2:
-					shift[i] = peak['pixel peak'][i] - shape[i]
+				if peak[i] > shape[i]/2:
+					shift[i] = peak[i] - shape[i]
 				else:
-					shift[i] = peak['pixel peak'][i]
+					shift[i] = peak[i]
 			matrix[2,0] = shift[0]
 			matrix[2,1] = shift[1]
 		print matrix
@@ -453,59 +454,6 @@ class TransformManager(node.Node, TargetTransformer):
 	def uiDeclareDrift(self):
 		self.declareTransform('manual')
 
-	def uiMeasureDrift(self):
-		t = threading.Thread(target=self.measureDrift)
-		t.setDaemon(1)
-		t.start()
-
-	def uiMonitorDrift(self):
-		self.instrument.ccdcamera.Settings = self.settings['camera settings']
-		## calls monitorDrift in a new thread
-		t = threading.Thread(target=self.monitorDrift)
-		t.setDaemon(1)
-		t.start()
-
-	def monitorDrift(self, driftdata=None):
-		self.setStatus('processing')
-		self.logger.info('DriftManager monitoring drift...')
-		if driftdata is not None:
-			## use driftdata to set up scope and camera
-			pname = driftdata['presetname']
-			emtarget = driftdata['emtarget']
-			threshold = driftdata['threshold']
-			target = emtarget['target']
-			self.presetsclient.toScope(pname, emtarget)
-			presetdata = self.presetsclient.getCurrentPreset()
-		else:
-			target = None
-			threshold = None
-
-		## acquire images, measure drift
-		self.abortevent.clear()
-		time.sleep(self.settings['pause time']/2.0)	
-		status,final,im = self.acquireLoop(target, threshold=threshold)
-		if status == 'drifted':
-			## declare drift above threshold
-			self.declareDrift('threshold')
-
-		## Generate DriftMonitorResultData
-		## only output if this was called from another node
-		if driftdata is not None:
-			self.logger.info('Publishing final drift image...')
-			acqim = leginondata.AcquisitionImageData(initializer=im)
-			acqim['target'] = target
-			acqim['emtarget'] = emtarget
-			acqim['preset'] = presetdata
-			self.publish(acqim, pubevent=True)
-
-			self.logger.info('Publishing DriftMonitorResultData...')
-			result = leginondata.DriftMonitorResultData()
-			result['status'] = status
-			result['final'] = final
-			self.publish(result, pubevent=True, database=True, dbforce=True)
-		self.logger.info('DriftManager done monitoring drift')
-		self.setStatus('idle')
-
 	def acquireImage(self, channel=0, correct=True):
 		self.startTimer('drift acquire')
 		self.instrument.setCorrectionChannel(channel)
@@ -517,114 +465,6 @@ class TransformManager(node.Node, TargetTransformer):
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')
 		return imagedata
-
-	def acquireLoop(self, target=None, threshold=None):
-		## acquire first image
-		# make sure we have waited "pause time" before acquire the first image
-		time.sleep(self.settings['pause time'])
-		corchan = 0
-		imagedata = self.acquireImage(channel=corchan)
-		if imagedata is None:
-			return 'aborted', None
-		numdata = imagedata['image']
-		t0 = imagedata['scope']['system time']
-		self.correlator.insertImage(numdata)
-		mag = imagedata['scope']['magnification']
-		tem = imagedata['scope']['tem']
-		ccd = imagedata['camera']['ccdcamera']
-		pixsize = self.pixsizeclient.retrievePixelSize(tem, ccd, mag)
-		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
-
-		if threshold is None:
-			requested = False
-			threshold = self.settings['threshold']
-			self.logger.info('using threshold setting: %.2e' % (threshold,))
-		else:
-			self.logger.info('using requested threshold: %.2e' % (threshold,))
-			requested = True
-
-		status = 'ok'
-		current_drift = 1.0e-3
-		lastdrift1 = 1.0e-3
-		lastdrift2 = 1.0e-3
-		while 1:
-			# make sure we have waited at least "pause time" before acquire
-			t1 = self.instrument.tem.SystemTime
-			dt = t1 - t0
-			pausetime = self.settings['pause time']
-			# make sure we have waited at least "pause time" before acquire
-			# disabled but use the setting for before the first image.
-#			if dt < pausetime:
-			if False:
-				thispause = pausetime - dt
-				self.startTimer('drift pause')
-				time.sleep(thispause)
-				self.stopTimer('drift pause')
-
-			## acquire next image at different correction channel than previous
-			if corchan:
-				corchan = 0
-			else:
-				corchan = 1
-			imagedata = self.acquireImage(channel=corchan)
-			numdata = imagedata['image']
-			binning = imagedata['camera']['binning']['x']
-			t1 = imagedata['scope']['system time']
-			self.correlator.insertImage(numdata)
-
-			## do correlation
-			self.startTimer('drift correlate')
-			pc = self.correlator.phaseCorrelate()
-			self.stopTimer('drift correlate')
-			self.startTimer('drift peak')
-			peak = self.peakfinder.subpixelPeak(newimage=pc)
-			self.stopTimer('drift peak')
-			rows,cols = self.peak2shift(peak, pc.shape)
-			dist = math.hypot(rows,cols)
-
-			self.setImage(pc, 'Correlation')
-			self.setTargets([(peak[1],peak[0])], 'Peak')
-
-			## calculate drift 
-			meters = dist * binning * pixsize
-			rowmeters = rows * binning * pixsize
-			colmeters = cols * binning * pixsize
-			# rely on system time of EM node
-			seconds = t1 - t0
-			lastdrift2 = lastdrift1
-			lastdrift1 = current_drift
-			current_drift = meters / seconds
-			avgdrift = (current_drift + lastdrift1 + lastdrift2) / 3.0
-			if lastdrift2 < 1.0e-4:
-				self.logger.info('Drift rate: %.2e, average of last three: %.2e' % (current_drift, avgdrift,))
-				drift_rate = avgdrift
-			else:
-				self.logger.info('Drift rate: %.2e' % (current_drift,))
-				drift_rate = current_drift
-
-			## publish scope and camera to be used with drift data
-			scope = imagedata['scope']
-			self.publish(scope, database=True, dbforce=True)
-			camera = imagedata['camera']
-			self.publish(camera, database=True, dbforce=True)
-
-			d = leginondata.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target, scope=scope, camera=camera)
-			self.publish(d, database=True, dbforce=True)
-
-			## t0 becomes t1 and t1 will be reset for next image
-			t0 = t1
-
-			if drift_rate < threshold:
-				return status, d, imagedata
-			else:
-				status = 'drifted'
-
-			## check for abort
-			if self.abortevent.isSet():
-				return 'aborted', d, imagedata
-
-	def abort(self):
-		self.abortevent.set()
 
 	def peak2shift(self, peak, shape):
 		shift = list(peak)
@@ -673,7 +513,7 @@ class TransformManager(node.Node, TargetTransformer):
 		dist = math.hypot(rows,cols)
 
 		self.setImage(pc, 'Correlation')
-		self.setTargets([(peak[1],peak[0])], 'Peak')
+		#self.setTargets([(peak[1],peak[0])], 'Peak')
 
 		## calculate drift 
 		meters = dist * pixsize
@@ -688,3 +528,13 @@ class TransformManager(node.Node, TargetTransformer):
 		for target in self.targetlist:
 			self.publish(target, database=True)
 
+	def displayTarget(self, targetdata):
+		halfrows = targetdata['image']['camera']['dimension']['y'] / 2
+		halfcols = targetdata['image']['camera']['dimension']['x'] / 2
+		drow = target['delta row']
+		dcol = target['delta column']
+		x = dcol + halfcols
+		y = drow + halfrows
+		disptarget = x,y
+			
+		self.setTargets([disptarget], 'Target')
