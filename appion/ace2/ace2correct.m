@@ -122,17 +122,18 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 		{ 3,	NULL,	"Microscope voltage in kilovolts",				"kv",	1 },
 		{ 4,	NULL,	"Microscope Spherical Aberration in mm",		"cs",	1 },
 		{ 5,	NULL,	"Angstroms per pixel",						  "apix",	1 },
-		{ 6,	NULL,	"Defocus: x,y,angle in um,um,radians",			"df",	1 },
+		{ 6,	NULL,	"Defocus: x,y,angle in m,m,radians",			"df",	1 },
 		{ 7,	NULL,	"Correct only phase signs",	  		  		 "phase",	0 },
 		{ 8,	NULL,	"Correct using wiener filter",		 	    "wiener",	1 },		
-		{ 9,	NULL,	"Apply the given CTF",				"apply", 0 },
+		{ 9,	NULL,	"Apply the given CTF",						 "apply", 	0 },
 		{ 0,	NULL,	NULL,											NULL,	0 }
 	};
 	
-	u32 option = 0;
+	int option = 0;
 	char arg[1024];
 	
 	while ( ( option = getopts(argc,argv,opts,arg) ) != 0 ) {
+		fprintf(stderr,"Parsing option: %d %s\n",option,arg);
 		switch ( option ) {
 			case -1:
 				fprintf(stderr,"No memory for parsing, exiting!!!\n");
@@ -156,20 +157,20 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 				sscanf(arg,"%le,%le,%le",&(ctfp->defocus_x),&(ctfp->defocus_y),&(ctfp->astig_angle));
 				break;
 			case 7:
-				ctfp->correction_type |= CORRECT_PHASE;
 				ctfp->correction_type &= !CORRECT_WIENER;
 				ctfp->correction_type &= !CORRECT_APPLY;
+				ctfp->correction_type |=  CORRECT_PHASE;
 				break;
 			case 8:
 				ctfp->correction_type &= !CORRECT_PHASE;
-				ctfp->correction_type |= CORRECT_WIENER;
 				ctfp->correction_type &= !CORRECT_APPLY;
+				ctfp->correction_type |=  CORRECT_WIENER;
 				sscanf(arg,"%le",&(ctfp->wiener));
 				break;
 			case 9: 
 				ctfp->correction_type &= !CORRECT_PHASE;
 				ctfp->correction_type &= !CORRECT_WIENER;
-				ctfp->correction_type |= CORRECT_APPLY;
+				ctfp->correction_type |=  CORRECT_APPLY;
 				break;
 			default:
 				break;
