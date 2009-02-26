@@ -160,7 +160,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 															value='1.0')
 #		self.widgets['measure defocus'] = wx.CheckBox(self, -1, 'Measure defocus')
 		self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
-		#self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
+		self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Stretch images according to the tilt before correlation')
 
 #		tapersz = wx.GridBagSizer(5,5)
 #		lab = wx.StaticText(self, -1, 'edge tapered upto')
@@ -205,7 +205,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
 		miscsz.Add(ctsz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(tptsz, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		miscsz.Add(self.widgets['use lpf'], (4, 0), (1, 1), wx.ALIGN_CENTER)
-		#miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
+		miscsz.Add(self.widgets['use tilt'], (5, 0), (1, 1), wx.ALIGN_CENTER)
 		#miscsz.Add(tapersz, (7, 0), (1, 1), wx.ALIGN_CENTER)
 		#miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
 		miscsbsz.Add(miscsz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
