@@ -18,7 +18,7 @@ from apTilt import apTiltTransform, apTiltShift, tiltfile
 try:
 	import radermacher
 except:
-	print "using slow tilt angle calculator"
+	apDisplay.printWarning("using slow tilt angle calculator")
 	import slowmacher as radermacher
 
 class autoTilt(object):
@@ -103,10 +103,10 @@ class autoTilt(object):
 		a1 = numpy.asarray(self.currentpicks1, dtype=numpy.float32)
 		a2 = numpy.asarray(self.currentpicks2, dtype=numpy.float32)
 		if len(a1) > len(a2):
-			print "shorten a1"
+			apDisplay.printWarning("shorten a1")
 			a1 = a1[0:len(a2),:]
 		elif len(a2) > len(a1):
-			print "shorten a2"
+			apDisplay.printWarning("shorten a2")
 			a2 = a2[0:len(a1),:]
 		lsfit = apTiltTransform.willsq(a1, a2, self.data['theta'], self.data['gamma'],
 			self.data['phi'], 1.0, self.data['shiftx'], self.data['shifty'], xscale)

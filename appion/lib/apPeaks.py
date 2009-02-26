@@ -9,6 +9,7 @@ import ImageDraw
 #import ImageOps
 #appion
 import apImage
+import apFile
 import apDisplay
 import apParam
 #leginon
@@ -114,7 +115,8 @@ def findPeaksInMap(imgmap, thresh, pixdiam, count=1, olapmult=1.5, maxpeaks=500,
 		#orders peaks from biggest to smallest
 		peaktree.sort(_peakCompareBigSmall)
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
-		print "Corr Best="+str(round(peaktree[0]['correlation'],3))+" Worst="+str(round(peaktree[len(peaktree)-1]['correlation'],3))
+		apDisplay.printMsg("Corr best=%.3f, worst=%.3f"
+			%(peaktree[0]['correlation'], peaktree[len(peaktree)-1]['correlation']))
 		peaktree = peaktree[0:maxpeaks]
 
 	return peaktree
@@ -247,8 +249,8 @@ def mergePeakTrees(imgdict, peaktreelist, params, msg=True):
 		apDisplay.printWarning("more than maxpeaks ("+str(maxpeaks)+" peaks), selecting only top peaks")
 		#orders peaks from biggest to smallest
 		bestpeaktree.sort(_peakCompareBigSmall)
-		print ("Corr Best="+str(round(bestpeaktree[0]['correlation'],3))
-			+" Worst="+str(round(bestpeaktree[len(peaktree)-1]['correlation'],3)))
+		apDisplay.printMsg("Corr best=%.3f, worst=%.3f"
+			%(peaktree[0]['correlation'], peaktree[len(peaktree)-1]['correlation']))
 		bestpeaktree = bestpeaktree[0:maxpeaks]
 
 	peakTreeToPikFile(bestpeaktree, imgname, 'a', params['rundir'])
@@ -329,11 +331,11 @@ def varyThreshold(ccmap, threshold, maxsize):
 		lbstr = "%4d" % len(blobtree)
 		pcstr = "%.2f" % percentcov
 		if(thresh == threshold):
-			print " ... *** selected threshold: "+tstr+" gives "+lbstr+" peaks ("+\
-				pcstr+"% coverage ) ***"
+			apDisplay.printMsg("*** selected threshold: "+tstr+" gives "
+				+lbstr+" peaks ("+pcstr+"% coverage ) ***")
 		else:
-			print " ...      varying threshold: "+tstr+" gives "+lbstr+" peaks ("+\
-				pcstr+"% coverage )"
+			apDisplay.printMsg("    varying threshold: "+tstr+" gives "
+				+lbstr+" peaks ("+pcstr+"% coverage )")
 
 def convertListToPeaks(peaks, params):
 	if peaks is None or len(peaks) == 0:
@@ -392,9 +394,7 @@ def peakTreeToPikFile(peaktree, imgname, tmpl, rundir="."):
 	outpath = os.path.join(rundir, "pikfiles")
 	apParam.createDirectory(outpath, warning=False)
 	outfile = os.path.join(outpath, imgname+"."+str(tmpl)+".pik")
-	if (os.path.isfile(outfile)):
-		os.remove(outfile)
-		print " ... removed existing file:", outfile
+	apFile.removeFile(outfile, warn=True)
 	#WRITE PIK FILE
 	f=open(outfile, 'w')
 	f.write("#filename x y mean stdev corr_coeff peak_size templ_num angle moment diam\n")
@@ -513,10 +513,10 @@ def createTiltedPeakJpeg(imgdata1, imgdata2, peaktree1, peaktree2, params, proci
 	image = Image.blend(image, image2, 0.9) 
 
 	outfile1 = os.path.join(jpegdir, imgname1+".prtl.jpg")
-	print " ... writing peak JPEG: ",outfile1
+	apDisplay.printMsg("writing peak JPEG: "+outfile1)
 	image.save(outfile1, "JPEG", quality=95)
 	outfile2 = os.path.join(jpegdir, imgname2+".prtl.jpg")
-	print " ... writing peak JPEG: ",outfile2
+	apDisplay.printMsg("writing peak JPEG: "+outfile2)
 	image.save(outfile2, "JPEG", quality=95)
 
 	return

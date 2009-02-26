@@ -53,7 +53,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 		#		bestangle = angle
 		bestangle = inittiltaxis
 		if msg is True:
-			print "best=", bestsnr, bestangle
+			apDisplay.printMsg("Best tilt axis angle= %.1f; SNR=%.2f"%(bestangle,bestsnr))
 		### finer refine
 		for angle in [bestangle-1, bestangle-0.5, bestangle+0.5, bestangle+1]:
 			if msg is True:
@@ -63,7 +63,7 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 				bestsnr = snr
 				bestangle = angle
 		if msg is True:
-			print "best=", bestsnr, bestangle
+			apDisplay.printMsg("Best tilt axis angle= %.1f; SNR=%.2f"%(bestangle,bestsnr))
 		### really fine refine
 		for angle in [bestangle-0.2, bestangle-0.1, bestangle+0.1, bestangle+0.2]:
 			if msg is True:
@@ -73,11 +73,11 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 				bestsnr = snr
 				bestangle = angle
 		if msg is True:
-			print "best=", bestsnr, bestangle
+			apDisplay.printMsg("Best tilt axis angle= %.1f; SNR=%.2f"%(bestangle,bestsnr))
 
 		shift, xfactor, snr = getTiltedRotateShift(filt1, filt2, tiltdiff, bestangle, bin, msg=msg)
 		if msg is True:
-			print "best=", bestsnr, bestangle
+			apDisplay.printMsg("Best tilt axis angle= %.1f; SNR=%.2f"%(bestangle,bestsnr))
 	else:
 		bestangle = 0.0
 		shift, xfactor, snr = getTiltedRotateShift(img1, img2, tiltdiff, bestangle, bin)
@@ -107,7 +107,8 @@ def getTiltedCoordinates(img1, img2, tiltdiff, picks1=[], angsearch=True, initti
 	newpart = translatePoint(origin, center, shift, bestangle, xfactor)
 	newpart2 = numpy.array([(origin[0]*xfactor-shift[0])*xfactor, origin[1]-shift[1]])
 	if msg is True:
-		print "origin=",origin, "; newpart=",newpart, "; newpart2=",newpart2
+		apDisplay.printMsg("origin=(%d,%d); newpart=(%.1f,%.1f); newpart2=(%.1f,%.1f)"
+			%(origin[0],origin[1], newpart[0],newpart[1], newpart2[0],newpart2[1],))
 		apDisplay.printMsg("completed in "+apDisplay.timeString(time.time()-t0))
 
 	return origin, newpart, snr, bestangle
@@ -194,7 +195,7 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 
 	if filt1.shape != filt2.shape:
 		newshape = ( max(filt1.shape[0],filt2.shape[0]), max(filt1.shape[1],filt2.shape[1]) )
-		print "Resizing images to: ",newshape
+		apDisplay.printMsg("Resizing images to: "+str(newshape))
 		filt1 = apImage.frame_constant(filt1, newshape, filt1.mean())
 		filt2 = apImage.frame_constant(filt2, newshape, filt2.mean())
 
@@ -215,7 +216,7 @@ def getTiltedRotateShift(img1, img2, tiltdiff, angle=0, bin=1, msg=True):
 	#pprint.pprint(peak)
 	pixpeak = peakdict['subpixel peak']
 	if msg is True:
-		print pixpeak
+		apDisplay.printMsg("Pixel peak: "+str(pixpeak))
 		apImage.arrayToJpegPlusPeak(cc, "guess-cross-ang"+str(abs(angle))+".jpg", pixpeak)
 
 	rawpeak = numpy.array([pixpeak[1], pixpeak[0]]) #swap coord

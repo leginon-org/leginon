@@ -34,7 +34,8 @@ def tiltang(picks1, picks2, arealim=5000.0, maxtri=10000, speed=30.0):
 	 'wsumsq': 0,
 	}
 
-	print leng, "picks", choo, "ops", apDisplay.timeString(choo*speed*1e-6)
+	apDisplay.printMsg("%d picks, %d operations, %s"
+		%(leng, choo, apDisplay.timeString(choo*speed*1e-6)))
 	t0 = time.time()
 	for i in range(leng):
 		for j in range(i+1, leng):
@@ -67,7 +68,7 @@ def tiltang(picks1, picks2, arealim=5000.0, maxtri=10000, speed=30.0):
 	#print choo
 	datadict['time'] = time.time()-t0
 	datadict['speed'] = datadict['time']/float(datadict['tottri'])*1.0e6
-	print apDisplay.timeString(datadict['time']), datadict['speed'], "ns/oper"
+	apDisplay.printMsg(apDisplay.timeString(datadict['time'])+" "+datadict['speed']+" ns/oper")
 
 	#post-analysis
 	datadict['theta'] = datadict['sum'] / datadict['numtri']*180.0/math.pi
