@@ -585,25 +585,23 @@ class AppionLoop(appionScript.AppionScript):
 		if not self.params['continue'] or tdiff > 0.1:
 			count = self.stats['count']
 			#if(count != self.stats['lastcount']):
-			print "\n\tSUMMARY: "+self.functionname
+			sys.stderr.write("\n\tSUMMARY: "+self.functionname)
 			self._printLine()
 			if(self.stats['lastpeaks'] != None):
 				self.stats['peaksum'] += self.stats['lastpeaks']
 				self.stats['peaksumsq'] += self.stats['lastpeaks']**2
-				print "\tPEAKS:    \t",self.stats['lastpeaks'],"peaks of",self.stats['peaksum']
+				sys.stderr.write("\tPEAKS:    \t%d peaks of %d"%(self.stats['lastpeaks'],self.stats['peaksum']))
 				if(count > 1):
 					peaksum   = self.stats['peaksum']
 					peaksumsq = self.stats['peaksumsq']
 					peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
 					peakavg = float(peaksum)/float(count)
-					print "\tAVG PEAKS:\t",round(peakavg,1),"+/-",\
-						round(peakstdev,1),"peaks"
+					sys.stderr.write("\tAVG PEAKS:\t%.1f +/- %.1f peaks"%(peakavg,peakstdev))
 					lowestpeaks = int((peakavg-peakstdev*0.5)*self.stats['imagesleft'])+peaksum
 					highestpeaks = int((peakavg+peakstdev*0.5)*self.stats['imagesleft'])+peaksum
-					print "\t(- ESTIMATE:",lowestpeaks,"to",highestpeaks,"total peaks -)"
+					sys.stderr.write("\t(- ESTIMATE: %d to %d total peaks -)"%(lowestpeaks,highestpeaks))
 				self._printLine()
-
-			print "\tTIME:     \t",apDisplay.timeString(tdiff)
+			sys.stderr.write("\tTIME:     \t"+apDisplay.timeString(tdiff))
 			self.stats['timesum'] = self.stats['timesum'] + tdiff
 			self.stats['timesumsq'] = self.stats['timesumsq'] + (tdiff**2)
 			timesum = self.stats['timesum']
@@ -612,10 +610,11 @@ class AppionLoop(appionScript.AppionScript):
 				timeavg = float(timesum)/float(count)
 				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
 				timeremain = (float(timeavg)+float(timestdev))*self.stats['imagesleft']
-				print "\tAVG TIME: \t",apDisplay.timeString(timeavg,timestdev)
+				sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev))
 				#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
 				if(self.stats['imagesleft'] > 0):
-					print "\t(- REMAINING TIME:",apDisplay.timeString(timeremain),"for",self.stats['imagesleft'],"images -)"
+					sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
+						+str(self.stats['imagesleft'])+" images -)")
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 			self.stats['count'] += 1
 			self._printLine()
@@ -732,7 +731,7 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def _printLine(self):
-		print "\t------------------------------------------"
+		sys.stderr.write("\t------------------------------------------")
 
 	#=====================
 	def _waitForMoreImages(self):
@@ -768,15 +767,15 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printWarning("waited longer than three hours for new images with no results, so I am quitting")
 			return False
 		apParam.closeFunctionLog(params=self.params, msg=False, stats=self.stats)
-		print "\nAll images processed. Waiting ten minutes for new images (waited",\
-			self.stats['waittime'],"min so far)."
+		sys.stderr.write("\nAll images processed. Waiting ten minutes for new images (waited "+
+			+str(self.stats['waittime'])+" min so far).")
 		twait0 = time.time()
 		for i in range(20):
 			time.sleep(20)
 			#print a dot every 30 seconds
 			sys.stderr.write(".")
 		self.stats['waittime'] += round((time.time()-twait0)/60.0,2)
-		print ""
+		sys.stderr.write("\n")
 
 		### GET NEW IMAGES
 		self._getAllImages()
