@@ -287,7 +287,7 @@ int main (int argc, char **argv) {
 	}
 	if ( cty & CORRECT_APPLY ) {
 		fprintf(stderr,"Applying the CTF for Dmitry...         ");
-		for(i=0;i<size;i++) ip[i] = ip[i]*cp[i];
+		for(i=0;i<size;i++) ip[i] = -ip[i]*cp[i];
 	}
 	
 	fprintf(stderr,"\tDONE in %2.2f secs\n",CPUTIME-t1);
