@@ -313,9 +313,9 @@ class rctVolumeScript(appionScript.AppionScript):
 			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
 				#theta flips to the back
-				tiltangle = tiltangle + 180.0
-				totrot = -1.0 * totrot - 180.0
-				tiltrot = -1.0 * tiltrot + 180.0
+				tiltangle = -1.0 * tiltangle + 180 #tiltangle = tiltangle + 180.0   #theta
+				totrot = -1.0 * totrot - 180.0  #phi
+				tiltrot = tiltrot + 180            #tiltrot = -1.0 * tiltrot + 180.0 #psi
 			while totrot < 0:
 				totrot += 360.0
 			### this is the original eman part num; count is new part num
