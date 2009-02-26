@@ -11,6 +11,7 @@
 #define CORRECT_WIENER					( 1<<1 )
 #define CORRECT_BACKGROUND				( 1<<2 )
 #define CORRECT_ENVELOPE				( 1<<3 )
+#define CORRECT_APPLY					( 1<<4 )
 
 typedef struct CTFParamsSt {
 	
@@ -124,6 +125,7 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 		{ 6,	NULL,	"Defocus: x,y,angle in um,um,radians",			"df",	1 },
 		{ 7,	NULL,	"Correct only phase signs",	  		  		 "phase",	0 },
 		{ 8,	NULL,	"Correct using wiener filter",		 	    "wiener",	1 },		
+		{ 9,	NULL,	"Apply the given CTF",				"apply", 0 },
 		{ 0,	NULL,	NULL,											NULL,	0 }
 	};
 	
@@ -156,11 +158,18 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 			case 7:
 				ctfp->correction_type |= CORRECT_PHASE;
 				ctfp->correction_type &= !CORRECT_WIENER;
+				ctfp->correction_type &= !CORRECT_APPLY;
 				break;
 			case 8:
 				ctfp->correction_type &= !CORRECT_PHASE;
 				ctfp->correction_type |= CORRECT_WIENER;
+				ctfp->correction_type &= !CORRECT_APPLY;
 				sscanf(arg,"%le",&(ctfp->wiener));
+				break;
+			case 9: 
+				ctfp->correction_type &= !CORRECT_PHASE;
+				ctfp->correction_type &= !CORRECT_WIENER;
+				ctfp->correction_type |= CORRECT_APPLY;
 				break;
 			default:
 				break;
@@ -269,12 +278,16 @@ int main (int argc, char **argv) {
 	t1 = CPUTIME;
 	
 	if ( cty & CORRECT_PHASE ) {
-		fprintf(stderr,"Correcting image using phase flips...");
+		fprintf(stderr,"Correcting image using phase flips...  ");
 		for(i=0;i<size;i++) if ( -cp[i] < 0.0 ) ip[i] = -ip[i];
 	}
 	if ( cty & CORRECT_WIENER ) {
 		fprintf(stderr,"Correcting image using wiener filter...");
 		for(i=0;i<size;i++) ip[i] = (-ip[i]*cp[i])/(cp[i]*cp[i]+snr);
+	}
+	if ( cty & CORRECT_APPLY ) {
+		fprintf(stderr,"Applying the CTF for Dmitry...         ");
+		for(i=0;i<size;i++) ip[i] = ip[i]*cp[i];
 	}
 	
 	fprintf(stderr,"\tDONE in %2.2f secs\n",CPUTIME-t1);
