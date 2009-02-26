@@ -49,8 +49,8 @@ class DriftManager(watcher.Watcher):
 				}
 			),
 	}
-	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.NeedTargetShiftEvent, event.PresetChangedEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImageDriftPublishEvent, event.AcquisitionImagePublishEvent]
+	eventinputs = watcher.Watcher.eventinputs + [event.DriftMonitorRequestEvent, event.PresetChangedEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftMonitorResultEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent, event.AcquisitionImagePublishEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftMonitorRequestEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
@@ -61,124 +61,10 @@ class DriftManager(watcher.Watcher):
 																				self.panel)
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
-		self.addEventInput(event.NeedTargetShiftEvent, self.handleNeedShift)
 
 		self.abortevent = threading.Event()
 
 		self.start()
-
-	def handleNeedShift(self, ev):
-		self.setStatus('processing')
-		## reaquire the image from which the target originated
-		im = ev['image']
-		## go through preset manager to ensure we follow the right
-		## cycle
-		presetname = im['preset']['name']
-		emtarget = im['emtarget']
-		self.logger.info('Preset name %s' % presetname)
-		self.presetsclient.toScope(presetname, emtarget)
-
-		### Some parameters of the original acquisition were not set by
-		### the presets manager, so we need to override them here using
-		### info from the original image.  Also, the preset may have
-		### changed since the original image was acquired.  The drift
-		### manager can be used to adjust targets after a preset is
-		### modified, so it is good to use many of the new preset's
-		### parameters.  However, some of the new parameters will
-		### break the drift manager.  If the old preset camera config is
-		### different than the new one, then correlations will fail.
-
-		# Use camera config of original image to make sure correlation works
-		oldcam = im['camera']
-		newcam = leginondata.CameraEMData()
-		newcam['dimension'] = oldcam['dimension']
-		newcam['binning'] = oldcam['binning']
-		newcam['offset'] = oldcam['offset']
-		newcam['exposure time'] = oldcam['exposure time']
-		self.instrument.setData(newcam)
-
-		# other things that make correlation difficult if they changed:
-		# stage tilt also ???
-		# what if preset mag changed ???
-		oldscope = im['scope']
-		oldishift = oldscope['image shift']
-		oldstage = oldscope['stage position']
-		newscope = leginondata.ScopeEMData()
-		newscope['stage position'] = {'x': oldstage['x'], 'y': oldstage['y']}
-		newscope['image shift'] = oldishift
-		self.logger.info('Returning to original stage position and image shift')
-		self.instrument.setData(newscope)
-
-		## acquire new image using different correction channel
-		correct = im['corrected']
-		chan = im['correction channel']
-		if chan in (None, 0):
-			newchan = 1
-		else:
-			newchan = 0
-		newcamim = self.acquireImage(channel=newchan, correct=correct)
-
-		## store new version of image to database
-		newim = self.newImageVersion(im, newcamim, correct)
-
-		## do correlation
-		self.correlator.insertImage(im['image'])
-		self.correlator.insertImage(newim['image'])
-		pc = self.correlator.phaseCorrelate()
-		peak = self.peakfinder.subpixelPeak(newimage=pc)
-		rows,cols = self.peak2shift(peak, pc.shape)
-
-		self.setImage(pc, 'Correlation')
-		self.setTargets([(peak[1],peak[0])], 'Peak')
-
-		self.logger.info('rows %s, columns %s' % (rows, cols))
-		## publish AcquisitionImageDriftData here
-		imagedrift = leginondata.AcquisitionImageDriftData()
-		imagedrift['session'] = self.session
-		imagedrift['old image'] = im
-		imagedrift['new image'] = newim
-		imagedrift['rows'] = rows
-		imagedrift['columns'] = cols
-		imagedrift['system time'] = newim['scope']['system time']
-		self.publish(imagedrift, database=True, dbforce=True, pubevent=True)
-
-		self.setStatus('idle')
-		self.confirmEvent(ev)
-
-	## much of the following method was stolen from acquisition.py
-	def newImageVersion(self, oldimagedata, newimagedata, correct):
-		## store EMData to DB to prevent referencing errors
-		self.publish(newimagedata['scope'], database=True)
-		self.publish(newimagedata['camera'], database=True)
-
-		## convert CameraImageData to AcquisitionImageData
-		newimagedata = leginondata.AcquisitionImageData(initializer=newimagedata)
-		## then add stuff from old imagedata
-		newimagedata['preset'] = oldimagedata['preset']
-		newimagedata['label'] = oldimagedata['label']
-		newimagedata['target'] = oldimagedata['target']
-		newimagedata['list'] = oldimagedata['list']
-		newimagedata['emtarget'] = oldimagedata['emtarget']
-		newimagedata['version'] = oldimagedata['version'] + 1
-		newimagedata['corrected'] = correct
-		dim = newimagedata['camera']['dimension']
-		newimagedata['pixels'] = dim['x'] * dim['y']
-		newimagedata['pixeltype'] = str(newimagedata['image'].dtype)
-		target = newimagedata['target']
-		if target is not None and 'grid' in target and target['grid'] is not None:
-			newimagedata['grid'] = target['grid']
-
-		## set the 'filename' value
-		if newimagedata['label'] == 'RCT':
-			rctacquisition.setImageFilename(newimagedata)
-		else:
-			acquisition.setImageFilename(newimagedata)
-
-		newimagedata.attachPixelSize()
-
-		self.logger.info('Publishing new version of image...')
-		self.publish(newimagedata, database=True, dbforce=True)
-		return newimagedata
 
 	def uiDeclareDrift(self):
 		self.declareDrift('manual')

@@ -134,15 +134,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
-										event.ImageProcessDoneEvent, event.AcquisitionImageDriftPublishEvent, event.AcquisitionImagePublishEvent] \
+										event.ImageProcessDoneEvent, event.AcquisitionImagePublishEvent] \
 								+ presets.PresetsClient.eventinputs \
 								+ navigator.NavigatorClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
 									+ [event.LockEvent,
 											event.UnlockEvent,
 											event.AcquisitionImagePublishEvent,
-											event.NeedTargetShiftEvent,
-										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftMonitorRequestEvent, 
 											event.FixBeamEvent,
@@ -156,8 +154,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.AcquisitionImagePublishEvent, self.handleDriftImage)
 		self.addEventInput(event.DriftMonitorResultEvent, self.handleDriftResult)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
-		self.addEventInput(event.AcquisitionImageDriftPublishEvent,
-												self.handleImageDrift)
 		self.driftdone = threading.Event()
 		self.driftimagedone = threading.Event()
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -313,7 +309,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'no':
 				if self.settings['drift between'] and self.goodnumber > 0:
 					self.declareDrift('between targets')
-				#targetdata = self.adjustTargetForDrift(targetdata)
 				targetdata = self.adjustTargetForTransform(targetdata)
 
 			### determine how to move to target
@@ -781,119 +776,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			else:
 				imagedata.__setitem__('image', num, force=True)
 			self.setImage(numpy.asarray(imagedata['image'], numpy.float32), 'Image')
-
-	def adjustTargetForDrift(self, oldtarget):
-		if oldtarget['image'] is None:
-			return oldtarget
-		## check if drift has occurred since target's parent image was acquired
-		# hack to be sure image data is not read, since it's not needed
-		imageref = oldtarget.special_getitem('image', dereference=False)
-		imageid = imageref.dbid
-		self.logger.info('ADJUSTTARGET, imageid: %s' % (imageid,))
-		imagedata = self.researchDBID(leginondata.AcquisitionImageData, imageid, readimages=False)
-		# image time
-		imagetime = imagedata['scope']['system time']
-		self.logger.info('ADJUSTTARGET, imagetime: %s' % (imagetime,))
-		# last declared drift
-		lastdeclared = self.research(leginondata.DriftDeclaredData(session=self.session), results=1)
-		self.logger.info('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
-		if not lastdeclared:
-			## no drift declared, no adjustment needed
-			self.logger.info('target does not need shift')
-			return oldtarget
-		# last declared drift time
-		lastdeclared = lastdeclared[0]
-		lastdeclaredtime = lastdeclared['system time']
-		# has drift occurred?
-		if imagetime > lastdeclaredtime:
-			self.logger.info('target does not need shift')
-			return oldtarget
-		self.logger.info('target needs shift')
-		# yes, now we need a recent image drift for this image
-		# was image drift already measured for this image?
-		driftsequence = self.getImageDriftSequence(imagedata)
-		if not driftsequence:
-			self.logger.info('need to request image drift')
-			# no, request measurement now
-			imagedrift = self.requestImageDrift(imagedata)
-			driftsequence = [imagedrift]
-		else:
-			lastimagedrift = driftsequence[-1]
-			# yes, but was it measured after declared drift?
-			if lastimagedrift['system time'] < lastdeclaredtime:
-				# too old, need to measure it again
-				self.logger.info('existing image drift, but too old, requesting new one')
-				imagedrift = self.requestImageDrift(lastimagedrift['new image'])
-				driftsequence.append(imagedrift)
-
-		newtarget = self.sequentialTargetAdjustment(oldtarget, driftsequence)
-
-		odr = oldtarget['delta row']
-		odc = oldtarget['delta column']
-		dr = newtarget['delta row']
-		dc = newtarget['delta column']
-		self.logger.info('old target:  %s, %s, new target:  %s, %s' % (odr, odc, dr, dc))
-		self.publish(newtarget, database=True, dbforce=True)
-		return newtarget
-
-	def sequentialTargetAdjustment(self, target, driftsequence):
-		oldtarget = target
-		row = oldtarget['delta row']
-		col = oldtarget['delta column']
-		for imagedrift in driftsequence:
-			## create new adjusted target from old target
-			row += imagedrift['rows']
-			col += imagedrift['columns']
-		imagedrift = driftsequence[-1]
-		newtarget = leginondata.AcquisitionImageTargetData(initializer=oldtarget)
-		newtarget['version'] = imagedrift['new image']['version']
-		newtarget['image'] = imagedrift['new image']
-		newtarget['delta row'] = row
-		newtarget['delta column'] = col
-		self.logger.info('sequentially applied %d drift correction(s)' % (len(driftsequence,)))
-		return newtarget
-
-	def getImageDriftSequence(self, imagedata):
-		'''get the full history of AcquisitionImageDriftData for this image'''
-		driftsequence = []
-		oldimage = imagedata
-		while True:
-			query = leginondata.AcquisitionImageDriftData(initializer={'old image':oldimage, 'session':self.session})
-			imagedrift = self.research(query, results=1)
-			if imagedrift:
-				imagedrift = imagedrift[0]
-				driftsequence.append(imagedrift)
-				oldimageid = imagedrift.special_getitem('new image', dereference=False).dbid
-				oldimage = self.researchDBID(leginondata.AcquisitionImageData, oldimageid, readimages=False)
-			else:
-				break
-		return driftsequence
-
-	def requestImageDrift(self, imagedata):
-		# need to have drift manager do it
-		self.received_image_drift.clear()
-		ev = event.NeedTargetShiftEvent(image=imagedata)
-		imageid = imagedata.dbid
-		## set requested_drift so the reply can be recognized
-		self.requested_drift = imageid
-		self.logger.info('Sending NeedTargetShiftEvent and waiting, imageid = %s' % (imageid,))
-		self.outputEvent(ev)
-		self.setStatus('waiting')
-		self.received_image_drift.wait()
-		self.setStatus('processing')
-		self.logger.info('Done waiting for NeedTargetShiftEvent')
-		# drift manager moved away from target
-		self.onTarget = False
-		return self.requested_drift
-
-	def handleImageDrift(self, ev):
-		self.logger.info('HANDLING IMAGE DRIFT')
-		driftdata = ev['data']
-		imageid = driftdata.special_getitem('old image', dereference=False).dbid
-		## only continue if this was one that I requested
-		if imageid == self.requested_drift:
-			self.requested_drift = driftdata
-			self.received_image_drift.set()
 
 	def processReferenceTarget(self,preset_name):
 		refq = leginondata.ReferenceTargetData(session=self.session)

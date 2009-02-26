@@ -167,17 +167,6 @@ class MeasureDosePublishEvent(PublishEvent):
 class FixBeamEvent(PublishEvent):
 	dataclass = leginondata.FixBeamData
 
-class AcquisitionImageDriftPublishEvent(PublishEvent):
-	dataclass = leginondata.AcquisitionImageDriftData
-
-class NeedTargetShiftEvent(NotificationEvent):
-	'''notify DriftManager that I want to know image drift for target update'''
-	def typemap(cls):
-		return NotificationEvent.typemap() + (
-			('image', leginondata.AcquisitionImageData),
-		)
-	typemap = classmethod(typemap)
-
 class DriftMonitorRequestEvent(PublishEvent):
 	dataclass = leginondata.DriftMonitorRequestData
 

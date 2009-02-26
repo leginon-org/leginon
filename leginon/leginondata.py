@@ -710,17 +710,6 @@ class AcquisitionImageStatsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class AcquisitionImageDriftData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('old image', AcquisitionImageData),
-			('new image', AcquisitionImageData),
-			('rows', float),
-			('columns', float),
-			('system time', float),
-		)
-	typemap = classmethod(typemap)
-
 ## actually, this has only some things in common with AcquisitionImageData
 ## but enough that it is easiest to inherit it
 class FilmData(AcquisitionImageData):
@@ -1531,7 +1520,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class BeamTiltImagerSettingsData(SettingsData):
+class BeamTiltImagerSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
 			('beam tilt', float),
