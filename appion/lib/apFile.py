@@ -44,7 +44,7 @@ def removeStack(filename, warn=True):
 	for f in (rootname+".hed", rootname+".img"):
 		if os.path.isfile(f):
 			if warn is True:
-				apDisplay.printWarning("removing stack:"+f)
+				apDisplay.printWarning("removing stack: "+f)
 				time.sleep(1)
 			try:
 				os.remove(f)
