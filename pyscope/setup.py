@@ -28,5 +28,8 @@ setup(
 	ext_package=ext_package,
 	ext_modules=ext_modules,
 	scripts=scripts,
+	data_files=[
+		('pyScope', ['instruments.cfg']),
+	]
 )
 
