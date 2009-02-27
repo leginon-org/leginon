@@ -250,30 +250,31 @@ def getParticleTiltRotationAngles(stackpartdata):
 	if time.time()-t0 > 1.0:
 		apDisplay.printMsg("long angle query "+apDisplay.timeString(time.time()-t0))
 
-	if imgnum == 1:
+	if imgnum == 1 and transformdata['tilt_angle'] < 2:
+		### negative case, tilt picker theta < 0
 		tiltrot = transformdata['image1_rotation']
 		theta = transformdata['tilt_angle']
 		notrot   = transformdata['image2_rotation']
 		tiltangle = tiltangle1 - tiltangle2
-	elif imgnum == 2:
+	elif imgnum == 2 and transformdata['tilt_angle'] > -2:
+		### positive case, tilt picker theta > 0
 		tiltrot = transformdata['image2_rotation']
 		theta = transformdata['tilt_angle']
 		notrot   = transformdata['image1_rotation']
 		tiltangle = tiltangle2 - tiltangle1
 	else:
-		#no particle pair info was found
+		#no particle pair info was found or some other problem
 		print partdata
-		apDisplay.printError("failed to get tilt pair data")
+		apDisplay.printError("failed to get tilt pair data or some other problem")
 
 	if transformdata.timestamp < datetime.datetime(2009, 2, 19, 0, 0, 0):
-		### bugfix for switched tilt axis angles
+		### bugfix for switched tilt axis angles, before Feb 19, 2009
+		#apDisplay.printWarning("Switching angles")
 		temprot = notrot
 		notrot = tiltrot
 		tiltrot = temprot
 
-	if tiltangle < 0:
-		#swap angles
-		return notrot, -1.0*theta, tiltrot, -1.0*tiltangle
+	#print "tr=%.2f, th=%.2f, nr=%.2f, tilt=%.2f"%(tiltrot, theta, notrot, tiltangle)
 	return tiltrot, theta, notrot, tiltangle
 
 
