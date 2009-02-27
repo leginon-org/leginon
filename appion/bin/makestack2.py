@@ -8,6 +8,8 @@ import re
 import time
 import glob
 import socket
+import numpy
+import subprocess
 #appion
 import appionLoop2
 import apImage
@@ -24,7 +26,7 @@ import apProject
 import apFile
 import apParam
 import apImagicFile
-import subprocess
+
 
 class Makestack2Loop(appionLoop2.AppionLoop):
 
@@ -167,14 +169,16 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apImage.arrayToMrc(imgarray,imgpath)
 			print "processing", imgpath
 
+		t0 = time.time()
 		if self.params['phaseflipped'] is True:
 			if self.params['fliptype'] == 'emanimage':
 				### ctf correct whole image using EMAN
 				imgpath = self.phaseFlipWholeImage(imgpath, imgdata)
+				self.ctftimes.append(time.time()-t0)
 			elif self.params['fliptype'] == "ace2image":
 				### ctf correct whole image using Ace 2
 				imgpath = self.phaseFlipAceTwo(imgpath, imgdata)
-		
+				self.ctftimes.append(time.time()-t0)
 		if imgpath is None:
 			return None, None, None
 		
@@ -182,10 +186,13 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		imgstackfile = os.path.join(self.params['rundir'], shortname+".hed")
 		emancmd = "batchboxer input=%s dbbox=%s output=%s newsize=%i" %(imgpath, emanboxfile, imgstackfile, self.params['boxsize'])
 		apDisplay.printMsg("boxing "+str(len(boxedpartdatas))+" particles into temp file: "+imgstackfile)
+		t0 = time.time()
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+		self.batchboxertimes.append(time.time()-t0)
 
 		### read mean and stdev
 		partmeantree = []
+		t0 = time.time()
 		imagicdata = apImagicFile.readImagic(imgstackfile)
 		### loop over the particles and read data
 		for i in range(len(boxedpartdatas)):
@@ -204,15 +211,19 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			if partmeandict['stdev'] > 1.0e7:
 				partmeandict['stdev'] /= 1.0e7
 			partmeantree.append(partmeandict)
+		self.meanreadtimes.append(time.time()-t0)
 
 		### phase flipping
+		t0 = time.time()
 		if self.params['phaseflipped'] is True:
 			if self.params['fliptype'] == 'emantilt':
 				### ctf correct individual particles with tilt using Eman
 				imgstackfile = self.tiltPhaseFlipParticles(imgdata, imgstackfile, boxedpartdatas)
+				self.ctftimes.append(time.time()-t0)
 			elif self.params['fliptype'] == 'emanpart':
 				### ctf correct individual particles using Eman
 				imgstackfile = self.phaseFlipParticles(imgdata, imgstackfile)
+				self.ctftimes.append(time.time()-t0)
 			else:
 				apDisplay.printMsg("phase flipped whole image already")
 		else:
@@ -536,7 +547,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			emancmd += " spiderswap"
 
 		apDisplay.printMsg("appending particles to stack: "+bigimgstack)
+		t0 = time.time()
 		apEMAN.executeEmanCmd(emancmd)
+		self.mergestacktimes.append(time.time()-t0)
 
 		### count particles
 		bigcount = apFile.numImagesInStack(bigimgstack, self.params['boxsize']/self.params['bin'])
@@ -785,6 +798,11 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 	#=======================
 	def preLoopFunctions(self):
+		self.batchboxertimes = []
+		self.ctftimes = []
+		self.mergestacktimes = []
+		self.meanreadtimes = []
+		self.insertdbtimes = []
 		self.checkPixelSize()
 		if self.params['commit'] is True:
 			self.insertStackRun()
@@ -862,10 +880,25 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			stackid = apStack.getStackIdFromPath(stackpath)
 			if stackid is not None:
 				apStackMeanPlot.makeStackMeanPlot(stackid)
+		apDisplay.printColor("Timing stats", "blue")
+		self.printTimeStats("Batch Boxer", self.batchboxertimes)
+		self.printTimeStats("Ctf Correction", self.ctftimes)
+		self.printTimeStats("Stack Merging", self.mergestacktimes)
+		self.printTimeStats("Mean/Std Read", self.meanreadtimes)
+		self.printTimeStats("DB Insertion", self.insertdbtimes)
 
+	#=======================
+	def printTimeStats(self, name, timelist):
+		if len(timelist) < 2:
+			return
+		meantime = self.stats['timesum']/float(self.stats['count'])
+		timearray = numpy.array(timelist, dtype=numpy.float64)
+		apDisplay.printColor("%s: %s (%.2f percent)"%
+			(name, apDisplay.timeString(timearray.mean(), timearray.std()), 100*timearray.mean()/meantime), "blue")
 
 	#=======================
 	def commitToDatabase(self, imgdata):
+		t0 = time.time()
 		### loop over the particles and insert
 		for i in range(len(self.boxedpartdatas)):
 			partdata = self.boxedpartdatas[i]
@@ -887,6 +920,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			stpartq['stdev'] = partmeandict['stdev']
 			if self.params['commit'] is True:
 				stpartq.insert()
+		self.insertdbtimes.append(time.time()-t0)
 
 		### last remove any existing boxed files, reset global params
 		shortname = apDisplay.short(imgdata['filename'])
@@ -896,6 +930,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apFile.removeFile(rmfile)
 		self.imgstackfile = None
 		self.boxedpartdatas = []
+
 
 if __name__ == '__main__':
 	makeStack = Makestack2Loop()
