@@ -86,7 +86,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font COLOR='RED'>$extra</font>\n<HR>\n";
+		echo "<font color='#bb2222' size='+2'>$extra</font>\n<HR>\n";
 	}
 
 	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'>\n";
@@ -394,8 +394,26 @@ function runMakestack() {
 
 	// box size
 	$boxsize = $_POST['boxsize'];
-	if (!$boxsize) createMakestackForm("<b>ERROR:</b> Specify a box size");
-	if (!is_numeric($boxsize)) createMakestackForm("<b>ERROR:</b> Box size must be an integer");
+	if (!$boxsize)
+		createMakestackForm("<b>ERROR:</b> Specify a box size");
+	if (!is_numeric($boxsize))
+		createMakestackForm("<b>ERROR:</b> Box size must be an integer");
+	$goodboxes = array(2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 
+		24, 25, 27, 28, 30, 32, 35, 36, 40, 42, 45, 48, 49, 50, 54, 56, 60, 
+		63, 64, 70, 72, 75, 80, 81, 84, 90, 96, 98, 100, 105, 108, 112, 120, 
+		125, 126, 128, 135, 140, 144, 147, 150, 160, 162, 168, 175, 180, 189, 
+		192, 196, 200, 210, 216, 224, 225, 240, 243, 245, 250, 252, 256, 270, 
+		280, 288, 294, 300, 315, 320, 324, 336, 343, 350, 360, 375, 378, 384, 392, 400);
+	foreach ($goodboxes as $box) {
+		if ($box == $boxsize)
+			break;
+		elseif ($box > $boxsize) {
+			$bigbox = $box;
+			createMakestackForm("<b>ERROR:</b> Bad prime number in boxsize, try using $smallbox or $bigbox instead");
+			exit;
+		}
+		$smallbox = $box;
+	}
 
 	// lp filter
 	$lp = $_POST['lp'];
@@ -458,7 +476,7 @@ function runMakestack() {
 
 	$apcommand = parseAppionLoopParams($_POST);
 	if ($apcommand[0] == "<") {
-		createPyAceForm($apcommand);
+		createMakestackForm($apcommand);
 		exit;
 	}
 	$command .= $apcommand;
