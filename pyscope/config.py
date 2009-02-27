@@ -25,7 +25,8 @@ for name in names:
 	cls_str = configparser.get(name, 'class')
 	modname,clsname = cls_str.split('.')
 	args = imp.find_module(modname, [modpath])
-	mod = imp.load_module(modname, *args)
+	fullmodname = 'pyScope.' + modname
+	mod = imp.load_module(fullmodname, *args)
 	cls = getattr(mod, clsname)
 	if issubclass(cls, tem.TEM):
 		temclasses.append(cls)
