@@ -3,23 +3,27 @@ f77=g77
 cc=gcc
 ar=ar cr
 LPATH=.
-BINPATH=../bin
+BINPATH=.
 FFLAGS=-O3 -Wall -w -fno-second-underscore
 CFLAGS=-O3 -Wall
 LIBS=$(LPATH)/imlib2k.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a $(LPATH)/plot2klib.a
-## CentOS 5
-EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
-#EXLIBS=-L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
-## Fedora 10
-#EXLIBS=-L/usr/lib64 -L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
+ARCH=$(shell uname -i)
+ifeq ($(ARCH),x86_64)
+	EXENAME=findem64.exe
+	EXLIBS=-L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
+else
+	EXENAME=findem32.exe
+	EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
+endif
+
 
 findem:	clean plot2k misc im2k ifft gen findem.f90
-	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/findem.exe findem.f90 $(LIBS) 
-	chmod 777 $(BINPATH)/findem.exe
+	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/$(EXENAME) findem.f90 $(LIBS) 
+	chmod 777 $(BINPATH)/$(EXENAME)
 
 quick:	clean findem.f90
-	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/findem.exe findem.f90 $(LIBS) 
-	chmod 777 $(BINPATH)/findem.exe
+	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/$(EXENAME) findem.f90 $(LIBS) 
+	chmod 777 $(BINPATH)/$(EXENAME)
 
 old:	clean plot2k misc im2k ifft gen oldfindem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/oldfindem.exe oldfindem.f90 $(LIBS) 
@@ -51,7 +55,6 @@ gen:	clean unix.for diskio.for ccplib.for subs.for parser.for symlib.for library
 	$(ar) $(LPATH)/genlib.a diskio.o library.o parser.o subs.o symlib.o unix.o ccplib.o
 
 clean:
-	echo ""
 	rm -fv *~ *.mod
 	#rm -fv *.o *.a
 	rm -fv cccmaxmap001.mrc
@@ -59,10 +62,10 @@ clean:
 distclean:
 	rm -fv *.o *~ *.mod
 	rm -fv $(LIBS) $(LPATH)/a.out 
-	#rm -fv $(BINPATH)/findem.exe findem.exe 
+	#rm -fv $(BINPATH)/$(EXENAME) $(EXENAME)
 	rm -fv cccmaxmap001.mrc
 
-test:	$(BINPATH)/findem.exe
+test:	$(BINPATH)/$(EXENAME)
 	rm -fv cccmaxmap001.mrc
-	$(BINPATH)/findem.exe < feedtest.txt
-	#echo ""; md5sum cccmaxmap001.mrc; echo "2a2f0482ab92e4b9cc9b5990c7a7de42"; echo "the above MD5SUMs should match"; echo ""
+	$(BINPATH)/$(EXENAME) < feedtest.txt
+
