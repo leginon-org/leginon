@@ -200,8 +200,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 
-		apFile.removeStack(tempstack)
-		apFile.removeStack(emanstackfile)
+		apFile.removeStack(tempstack, warn=False)
+		apFile.removeStack(emanstackfile, warn=False)
 		return spiderstack
 
 	#=====================
@@ -212,6 +212,17 @@ class rctVolumeScript(appionScript.AppionScript):
 
 	#=====================
 	def insertRctRun(self, volfile):
+
+		### setup resolutions
+		fscresq = appionData.ApResolutionData()
+		fscresq['type'] = "fsc"
+		fscresq['half'] = self.fscresolution
+		fscresq['fscfile'] = "fscdata"+self.timestamp+".fsc"
+		rmeasureq = appionData.ApResolutionData()
+		rmeasureq['type'] = "rmeasure"
+		rmeasureq['half'] = self.rmeasureresolution
+		rmeasureq['fscfile'] = None
+
 		### insert rct run data
 		rctrunq = appionData.ApRctRunData()
 		rctrunq['runname']    = self.params['runname']
@@ -231,8 +242,8 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['alignstack'] = self.alignstackdata
 		rctrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
 		rctrunq['numpart']  = self.numpart
-		rctrunq['fsc_resolution'] = self.fscresolution
-		rctrunq['rmeasure_resolution'] = self.rmeasureresolution
+		rctrunq['fsc_resolution'] = fscresq
+		rctrunq['rmeasure_resolution'] = rmeasureq
 		if self.params['commit'] is True:
 			rctrunq.insert()
 
@@ -566,7 +577,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		### make new stack of tilted particle from that run
 		tiltstackfile = os.path.join(tiltstackdata['path']['path'], tiltstackdata['name'])
 		rctstackfile = os.path.join(self.params['rundir'], "rctstack"+self.timestamp+".hed")
-		apFile.removeStack(rctstackfile)
+		apFile.removeStack(rctstackfile, warn=False)
 		apStack.makeNewStack(tiltstackfile, rctstackfile, self.params['keepfile'])
 		spiderstack = self.convertStackToSpider(rctstackfile)
 		#self.mirrorParticles(tiltParticlesData, spiderstack)

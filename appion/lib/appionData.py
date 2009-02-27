@@ -835,32 +835,32 @@ leginondata.ApInitialModelData=ApInitialModelData
 class Ap3dDensityData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
-			('session', leginondata.SessionData),
-			('path', ApPathData),
 			('name', str),
-			('resolution', float),
-			('symmetry', ApSymmetryData),
-			('pixelsize', float),
 			('boxsize', int),
-			('description', str),
-			('lowpass', float),
-			('highpass', float),
 			('mask', int),
 			('imask', int),
-			('iterid', ApRefinementData),
-			('ampPath', ApPathData),
-			('ampName', str),
+			('pixelsize', float),
+			('lowpass', float),
+			('highpass', float),
+			('maxfilt', float),
+			('resolution', float),
+			('rmeasure', float),
 			('handflip', bool),
 			('norm', bool),
 			('invert', bool),
-			('maxfilt', float),
 			('hidden', bool),
 			('md5sum', str),
 			('pdbid', str),
 			('emdbid', str),
 			('eman', str),
-			('rmeasure', float),
+			('description', str),
+			('ampName', str),
+			('path', ApPathData),
+			('ampPath', ApPathData),
+			('symmetry', ApSymmetryData),
+			('iterid', ApRefinementData),
 			('rctrun', ApRctRunData),
+			('session', leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
 leginondata.Ap3dDensityData=Ap3dDensityData
@@ -928,6 +928,7 @@ class ApResolutionData(Data):
 		return Data.typemap() + (
 			('fscfile', str),
 			('half', float),
+			('type', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApResolutionData=ApResolutionData
@@ -1189,8 +1190,8 @@ class ApRctRunData(Data):
 			('highpasspart', float),
 			('description', str),
 			('numpart', int),
-			('fsc_resolution', float),
-			('rmeasure_resolution', float),
+			('fsc_resolution', ApResolutionData),
+			('rmeasure_resolution', ApResolutionData),
 			('path', ApPathData),
 			('tiltstack', ApStackData),
 			('alignstack', ApAlignStackData),
