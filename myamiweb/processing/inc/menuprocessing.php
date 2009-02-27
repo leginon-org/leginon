@@ -62,21 +62,27 @@ if ($expId) {
 	//echo "PROJECT ID: ".$projectId."<br/>\n";
 
 	if ($projectId) {
-		if ($templatesData=$particle->getTemplatesFromProject($projectId)) $templates = count($templatesData);
-		if ($modelData=$particle->getModelsFromProject($projectId)) $models = count($modelData);
+		if ($templatesData=$particle->getTemplatesFromProject($projectId)) {
+			$templates = count($templatesData);
+		}
+		if ($modelData=$particle->getModelsFromProject($projectId)) {
+			$models = count($modelData);
+		}
 	}
 
 	// --- Get Mask Maker Data
-	if ($maskrunIds = $particle->getMaskMakerRunIds($sessionId))
+	if ($maskrunIds = $particle->getMaskMakerRunIds($sessionId)) {
 		$maskruns=count($maskrunIds);
+	}
 
 	// --- Get Micrograph Assessment Data
 	$totimgs = $particle->getNumImgsFromSessionId($sessionId);
 	$assessedimgs = $particle->getNumTotalAssessImages($sessionId);
 
 	// --- Get Stack Data
-	if ($stackIds = $particle->getStackIds($sessionId))
+	if ($stackIds = $particle->getStackIds($sessionId)) {
 		$stackruns=count($stackIds);
+	}
 
 	// --- Get NoRef Data
 	if ($stackruns>0) {
@@ -89,8 +95,9 @@ if ($expId) {
 
 	// --- Get Alignment Data
 	if ($stackruns>0) {
-		$alignIds = $particle->getAlignStackIds($sessionId);
-		$alignruns=count($alignIds);
+		if ($alignIds = $particle->getAlignStackIds($sessionId)) {
+			$alignruns=count($alignIds);
+		}
 	}
 	else {
 		$alignruns=0;
@@ -120,12 +127,15 @@ if ($expId) {
 	}
 
 	// --- Get TiltSeries Data
-	if ($tiltseries = $particle->getTiltSeries($sessionId))
+	if ($tiltseries = $particle->getTiltSeries($sessionId)) {
 		$tiltruns=count($tiltseries);
-	if ($fulltomograms = $particle->getFullTomogramsFromSession($sessionId))
+	}
+	if ($fulltomograms = $particle->getFullTomogramsFromSession($sessionId)) {
 		$fulltomoruns=count($fulltomograms);
-	if ($tomograms = $particle->getTomogramsFromSession($sessionId))
+	}
+	if ($tomograms = $particle->getTomogramsFromSession($sessionId)) {
 		$tomoruns=count($tomograms);
+	}
 
 	$action = "Particle Selection";
 
@@ -295,10 +305,14 @@ if ($expId) {
 
 		// get alignment stats:
 		$alignresults=array();
-		//$aligndone  = count($subclusterjobs['partalign']['done']);
-		$aligndone = count($particle->getAlignStackIds($expId));
+		if ($alignstackids=$particle->getAlignStackIds($expId)) {
+			$aligndone = count($alignstackids);
+		}
 		$alignrun = count($subclusterjobs['partalign']['running']);
-		$maxlikejobs = count($particle->getFinishedMaxLikeJobs($projectId));
+		if ($maxlikejobs=$particle->getFinishedMaxLikeJobs($projectId)) {
+			$maxlikejobs = count($maxlikejobs);
+		}
+		
 		$alignqueue  = count($subclusterjobs['partalign']['queued']);
 
 		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
@@ -315,7 +329,9 @@ if ($expId) {
 		if ($aligndone > 0) {
 			// alignment analysis
 			$analysisresults=array();
-			$analysisdone  = count($particle->getAnalysisRuns($expId, $projectId));
+			if ($analysisruns=$particle->getAnalysisRuns($expId, $projectId)) {
+				$analysisdone  = count($analysisruns);
+			}
 			$analysisrun  = count($subclusterjobs['alignanalysis']['running']);
 			$analysisqueue  = count($subclusterjobs['alignanalysis']['queued']);
 			$analysisresults[] = ($analysisdone==0) ? "" : "<a href='alignsummary.php?analysis=1&expId=$sessionId'>$analysisdone complete</a>";
@@ -329,7 +345,9 @@ if ($expId) {
 			if ($analysisdone > 0) {
 				// particle clustering
 				$clusterresults=array();
-				$clusterdone  = count($particle->getClusteringStacks($expId, $projectId));
+				if ($clusterstack=$particle->getClusteringStacks($expId, $projectId)) {
+					$clusterdone  = count($clusterstack);
+				}
 				$clusterrun  = count($subclusterjobs['partcluster']['running']);
 				$clusterqueue  = count($subclusterjobs['partcluster']['queued']);
 				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='alignsummary.php?cluster=1&expId=$sessionId'>$clusterdone complete</a>";
@@ -381,18 +399,6 @@ if ($expId) {
 			       'result'=>$norefresults,
 				 );
 
-		// only give option of reclassification if ref-free
-		// stacks exist
-/*		if ($norefresults) {
-			$numreresults = count($particle->getImagicReclassFromSessionId($expId));
-			$sreresults = ($numreresults==0) ? "" : "<a href='imagicReclassifySummary.php?expId=$sessionId'>$numreresults complete</a>";
-			// imagic reclassifications
-			$nruns[] = array (
-					  'name'=>"<a href='imagicReclassifyClassums.php?expId=$sessionId'>IMAGIC Reclassify</a>",
-					  'result'=>$sreresults,
-					  );
-		}
-*/
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array(""),
@@ -434,7 +440,9 @@ if ($expId) {
 	}
 
 	/* IMAGIC Common Lines */
-	$numimagicrefinements = count($particle->getImagic3dRefinementRunsFromSessionId($sessionId));
+	if($imagic3drefrun=$particle->getImagic3dRefinementRunsFromSessionId($sessionId)){
+		$numimagicrefinements = count($imagic3drefrun);
+	}
 	$refineresults = ($numimagicrefinements==0) ? "" : "<a href='imagic3dRefineSummary.php?expId=$sessionId'>$numimagicrefinements complete</a>";
 	if ($aligndone >= 1 || $norefdone >= 1) {
 		$nruns[]=array(
@@ -445,8 +453,9 @@ if ($expId) {
 
 
 	/* 3d Density Volumes */
-	$threedvols = $particle->get3dDensitysFromSession($sessionId);
-	$num3dvols = count($threedvols);
+	if ($threedvols = $particle->get3dDensitysFromSession($sessionId)) {
+		$num3dvols = count($threedvols);
+	}
 	if ($num3dvols >= 1) {
 		$nruns[]=array(
 			'name'=>"<a href='upgradeVolume.php?expId=$sessionId'>3d Density Volumes</a>",
