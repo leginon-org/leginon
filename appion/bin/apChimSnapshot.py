@@ -76,7 +76,7 @@ def color_surface_height(surf):
 	writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
 	#key: red,green,blue,opacity
 	#order: red, yellow, green, cyan, blue
-	colors = [(0.750,0.375,0.067,1), (0.750,0.750,0.067,1), (0.375,0.750,0.067,1), (0.067,0.750,0.067,1), (0.067,0.750,0.750,1)]  
+	colors = [(0.8,0.2,0.2,1), (0.8,0.5,0.5,1), (0.8,0.8,0.8,1), (0.5,0.5,0.8,1), (0.2,0.2,0.8,1)]  
 
 	hc.colormap = Color_Map(data_values, colors)
 	color_surface(surf, hc, caps_only = False, auto_update = False)
@@ -117,6 +117,12 @@ def save_image(path, format):
 
 # -----------------------------------------------------------------------------
 #
+def hideDust(surf):
+	from HideDust import dust
+	dust.hide_dust(surf, 'volume', limit, auto_update = True)
+
+# -----------------------------------------------------------------------------
+#
 def render_volume(tmp_path, vol_path, contour=1.5, 
 	zoom_factor=1.0, image_size=(1024, 1024), imgFormat="PNG", sym="C"):
 
@@ -129,6 +135,9 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	from chimera import openModels as om
 	surfs = om.list(modelTypes=[SurfaceModel])
 	
+	#for s in surfs:
+	#	hideDust(s)
+
 #	m = v.surface_model()
 	
 	#from chimera import runCommand
