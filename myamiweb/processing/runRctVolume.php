@@ -85,16 +85,18 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	//query the database for parameters
 	$particle = new particledata();
 	$numRctRuns = $particle->getNumberOfRctRuns($sessionId, True);
-	while (glob($sessionpathval.'rct'.($numRctRuns+1)."*"))
+	while (glob($sessionpathval.'rct'.($numRctRuns+1)."[a-z]*"))
 		$numRctRuns += 1;
 	$defrctname = 'rct'.($numRctRuns+1);
 	if ($alignid)
 		$defrctname .= "align".$alignid;
-	if ($clusterid)
+	elseif ($clusterid)
 		$defrctname .= "clust".$clusterid;
-	if ($classnum) {
+	if ($classnum!="") {
 		$classstr = ereg_replace(",","",$classnum);
 		$defrctname .= "class".$classstr;
+	}	else {
+		$defrctname .= "run";
 	}
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrctname;
 
