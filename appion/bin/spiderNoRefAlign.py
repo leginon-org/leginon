@@ -85,7 +85,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
-			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
+			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
 
 	#=====================
 	def insertNoRefRun(self, spiderstack, imagicstack, insert=False):
@@ -95,7 +95,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		uniquerun = alignrunq.query(results=1)
 		if uniquerun:
-			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
+			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
 
 		# create a norefParam object
 		norefq = appionData.ApSpiderNoRefRunData()
