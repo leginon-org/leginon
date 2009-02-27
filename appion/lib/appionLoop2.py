@@ -731,7 +731,7 @@ class AppionLoop(appionScript.AppionScript):
 
 	#=====================
 	def _printLine(self):
-		sys.stderr.write("\t------------------------------------------")
+		sys.stderr.write("\t------------------------------------------\n")
 
 	#=====================
 	def _waitForMoreImages(self):
