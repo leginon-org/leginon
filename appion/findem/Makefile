@@ -7,8 +7,11 @@ BINPATH=../bin
 FFLAGS=-O3 -Wall -w -fno-second-underscore
 CFLAGS=-O3 -Wall
 LIBS=$(LPATH)/imlib2k.a $(LPATH)/ifftlib.a $(LPATH)/genlib.a $(LPATH)/misclib.a $(LPATH)/plot2klib.a
-#EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
-EXLIBS=-L/usr/lib64 -L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
+## CentOS 5
+EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
+#EXLIBS=-L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
+## Fedora 10
+#EXLIBS=-L/usr/lib64 -L/usr/lib/gcc/x86_64-redhat-linux/3.4.6/ -lg2c
 
 findem:	clean plot2k misc im2k ifft gen findem.f90
 	$(f90) $(FFLAGS) $(EXLIBS) -o $(BINPATH)/findem.exe findem.f90 $(LIBS) 
