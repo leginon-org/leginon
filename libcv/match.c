@@ -108,6 +108,9 @@ int TransformGood( double **TR ) {
 	// max rotation angle of 65 degrees, ang ~= arcsin(t)
 	if (fabs(TR[0][1]) > 0.8) return FALSE; 
 	if (fabs(TR[1][0]) > 0.8) return FALSE; 
+	// max shift of 250 pixels
+	//if (fabs(TR[2][1]) > 200) return FALSE; 
+	//if (fabs(TR[2][0]) > 200) return FALSE; 
 
 	/* FORM of MATRIX
 		[	math.cos(radangle)**2 + math.sin(radangle)**2/math.cos(raddifftilt),
