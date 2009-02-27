@@ -585,23 +585,23 @@ class AppionLoop(appionScript.AppionScript):
 		if not self.params['continue'] or tdiff > 0.1:
 			count = self.stats['count']
 			#if(count != self.stats['lastcount']):
-			sys.stderr.write("\n\tSUMMARY: "+self.functionname)
+			sys.stderr.write("\n\tSUMMARY: "+self.functionname+"\n")
 			self._printLine()
 			if(self.stats['lastpeaks'] != None):
 				self.stats['peaksum'] += self.stats['lastpeaks']
 				self.stats['peaksumsq'] += self.stats['lastpeaks']**2
-				sys.stderr.write("\tPEAKS:    \t%d peaks of %d"%(self.stats['lastpeaks'],self.stats['peaksum']))
+				sys.stderr.write("\tPEAKS:    \t%d peaks of %d\n"%(self.stats['lastpeaks'],self.stats['peaksum']))
 				if(count > 1):
 					peaksum   = self.stats['peaksum']
 					peaksumsq = self.stats['peaksumsq']
 					peakstdev = math.sqrt(float(count*peaksumsq - peaksum**2) / float(count*(count-1)))
 					peakavg = float(peaksum)/float(count)
-					sys.stderr.write("\tAVG PEAKS:\t%.1f +/- %.1f peaks"%(peakavg,peakstdev))
+					sys.stderr.write("\tAVG PEAKS:\t%.1f +/- %.1f peaks\n"%(peakavg,peakstdev))
 					lowestpeaks = int((peakavg-peakstdev*0.5)*self.stats['imagesleft'])+peaksum
 					highestpeaks = int((peakavg+peakstdev*0.5)*self.stats['imagesleft'])+peaksum
-					sys.stderr.write("\t(- ESTIMATE: %d to %d total peaks -)"%(lowestpeaks,highestpeaks))
+					sys.stderr.write("\t(- ESTIMATE: %d to %d total peaks -)\n"%(lowestpeaks,highestpeaks))
 				self._printLine()
-			sys.stderr.write("\tTIME:     \t"+apDisplay.timeString(tdiff))
+			sys.stderr.write("\tTIME:     \t"+apDisplay.timeString(tdiff)+"\n")
 			self.stats['timesum'] = self.stats['timesum'] + tdiff
 			self.stats['timesumsq'] = self.stats['timesumsq'] + (tdiff**2)
 			timesum = self.stats['timesum']
@@ -610,11 +610,11 @@ class AppionLoop(appionScript.AppionScript):
 				timeavg = float(timesum)/float(count)
 				timestdev = math.sqrt(float(count*timesumsq - timesum**2) / float(count*(count-1)))
 				timeremain = (float(timeavg)+float(timestdev))*self.stats['imagesleft']
-				sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev))
+				sys.stderr.write("\tAVG TIME: \t"+apDisplay.timeString(timeavg,timestdev)+"\n")
 				#print "\t(- TOTAL:",apDisplay.timeString(timesum)," -)"
 				if(self.stats['imagesleft'] > 0):
 					sys.stderr.write("\t(- REMAINING TIME: "+apDisplay.timeString(timeremain)+" for "
-						+str(self.stats['imagesleft'])+" images -)")
+						+str(self.stats['imagesleft'])+" images -)\n")
 			#print "\tMEM: ",(mem.active()-startmem)/1024,"M (",(mem.active()-startmem)/(1024*count),"M)"
 			self.stats['count'] += 1
 			self._printLine()
