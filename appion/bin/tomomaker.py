@@ -218,6 +218,9 @@ class tomoMaker(appionScript.AppionScript):
 			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
 			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey']),'z':int(self.params['sizez'])}
+			zprojimagedata = fulltomodata['zprojection']
+			gtransforms.append([1,0,0,1,0,0])
+			ordered_imagelist.append(zprojimagedata)
 			for i,imagedata in enumerate(ordered_imagelist):
 				particles = apParticle.getParticles(imagedata, self.params['selexonId'])
 				for particle in particles:
