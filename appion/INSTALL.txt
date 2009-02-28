@@ -11,49 +11,237 @@ You will need 3 servers:
 
 Fortunately, all 3 servers can run on the same machine
 
-
 ===============================
-Install operating system:
+Install recommended operating system:
 ===============================
 
-1. Download ISO disk of CentOS 5 and burn to a blank DVD:
+Note: CentOS is the exact same as RedHat Enterprise Linux (RHEL) 
+except that it is free and supported by the community
+
+-------------------------------
+1. Download the latest ISO disk of CentOS and burn to a blank DVD:
 	* ISO file is available at
 		http://mirror.centos.org/centos/5/isos/
 	* Click on i386 for 32bit machines or x86_64 for 64bit machines
 	* Pick a mirror and download 'CentOS-5.2-x86_64-bin-DVD.iso' file
+	* Burn ISO file to DVD disk:
+% dvdrecord -v -dao gracetime=10 dev=/dev/dvd speed=16 CentOS-5.2-i386-bin-DVD.iso
 
-2. Install CentOS 5 with default packages on your machine
+-------------------------------
+2. Install CentOS 5 with default packageson your machine
+	* Only "Desktop - GNOME" is assumed to be installed
 
-3. Install the additional repositories to get additional packages:
-	* EPEL
-	* RPM Forge
-	* RPM Fusion
-	* Fedora 6 Extras?
+-------------------------------
+3. Add yourself to the sudoers file, add this line below the root version:
+username ALL=(ALL)       ALL
 
-4. You'll need to install a PBS system for job submission, such as TORQUE or 
-openPBS. I know Torque comes with Fedora 10.
+===============================
+Install additional software:
+===============================
+
+-------------------------------
+1. Install the additional repositories to get additional packages:
+
+	* EPEL, http://fedoraproject.org/wiki/EPEL
+% sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm
+
+### GOOD FOR MP3, etc.
+	* RPM Fusion, http://rpmfusion.org/
+% sudo rpm -Uhv http://download1.rpmfusion.org/free/el/updates/testing/5/`uname -i`/rpmfusion-free-release-5-0.1.noarch.rpm
+% sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/el/updates/testing/5/`uname -i`/rpmfusion-nonfree-release-5-0.1.noarch.rpm
+
+### SKIP THIS ONE
+	* RPM Forge, http://rpmrepo.org/RPMforge
+% wget http://packages.sw.be/rpmforge-release/rpmforge-release-0.3.6-1.el5.rf.`uname -i`.rpm
+% sudo rpm -Uvh rpmforge-release-0.3.6-1.el5.rf.`uname -i`.rpm
+
+-------------------------------
+2. Update current packages:
+
+	* Update the updater to make life easier
+% sudo yum -y update yum
+
+	* Note: Download was over 264 MB. If you have a slow internet connection you can setup presto/deltarpms.
+% sudo yum -y update
+
+	* If you have an Nvidia video card install the nvidia binary, will speed things up especially chimera
+% sudo yum -y install nvidia-x11-drv
+
+	* Install Complete list of additional packages:
+% sudo yum -y install \
+python-tools python-devel \ # general applications
+subversion ImageMagick grace gnuplot \ # general applications
+wxPython numpy scipy python-imaging \ #TILT PICKER
+gcc-gfortran compat-gcc-34-g77 \ #FINDEM
+gcc-objc fftw3-devel gsl-devel \ #ACE2
+mysql mysql-server MySQL-python \ #Sinedon
+httpd php php-mysql phpMyAdmin \ #DBEM
+gcc-c++ openmpi-devel libtiff-devel \#Xmipp MPI
+
+	* Clean up to save drive space 
+% sudo yum clean all
+
+	* Re-index the hard drive, this will come in handy later
+% sudo updatedb
+
+	* Reboot the computer
+% sudo reboot
+
+-------------------------------
+3. Download AMI software 
+	from AMI site: http://ami.scripps.edu/software/
+	from Google site: http://appion.org/
+	* dbemtools: 
+		* dbem: web interface to pyAppion
+		* project: for keeping separate projects and web logins
+	* leginon: only for image viewer and polygon tool
+		* pyami r107+, generic image processing
+		* numextension r52+: numpy extension library
+		* sinedon r50+: for MySQL interaction
+		* leginon r5463+: core gui libraries for manual pickers
+	* pyAppion r3072+: python processing pipeline
+		* includes ACE1, ACE2, radermacher module, DoG Picker, TiltPicker, and FindEM
+
+-------------------------------
+4. Additional external software needed:
+	* Required:
+EMAN v1.9 cluster, 
+http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman
+
+UCSF Chimera v1.2509, newer versions have problems, 
+http://www.cgl.ucsf.edu/chimera/olddownload.html
+
+	* Recommended:
+SPIDER v15 or older, newest version not supported,
+http://www.wadsworth.org/spider_doc/spider/docs/spi-register.html
+
+Xmipp v2.2 or newer, for alignment, compile your own for openmpi support,
+http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware
+
+IMOD, for tomography
+
+	* Not required:
+MATLAB, for ACE1
+Imagic v5, for alignment
+
+
+===============================
+Compile and setup programs:
+===============================
+
+1. Compile FindEM:
+	* Goto pyappion/findem
+	* compile the libraries and binary 
+% make
+	* test findem.exe to see if it runs
+% make test
+
+	* If it fails, locate libg2c.so:
+% ls /usr/lib/gcc/`uname -i`-redhat-linux/3.4.6/libg2c.so
+% locate libg2c.so
+	* Edit Makefile with location of libg2c.so
+% nano Makefile
+	* Example: EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
+	* Re-compile
+
+-------------------------------
+2. Compile Ace2:
+	* Goto pyappion/ace2
+	* compile the libraries and binary 
+% make
+	* test to see if program runs
+% ../bin/ace2.exe -h
+% ../bin/ace2correct.exe -h
+
+-------------------------------
+3. Compile Radermacher module:
+	* Goto pyappion/radermacher
+	* compile the libraries and binary 
+% python ./setup.py build
+	* install module globally
+% sudo python ./setup.py install
+	* test installed module
+% python
+>>> import radermacher
+>>> <Ctrl-D>
+
+-------------------------------
+4. Compile Numextension module:
+	* Goto Leginon/numextension
+	* compile the libraries and binary 
+% python ./setup.py build
+	* install module globally
+% sudo python ./setup.py install
+	* test installed module
+% python
+>>> import numextension
+>>> <Ctrl-D>
+
+-------------------------------
+5. Globally install python programs:
+	* Go into directory with pyami, leginon and sinedon (from Leginon.tgz)
+	* Setup main python site-packages, depends on ARCH and VERSION
+% export SITEPKG=/usr/lib/python2.4/site-packages
+% export SITEPKG=/usr/lib64/python2.4/site-packages
+% export SITEPKG=/usr/lib64/python2.5/site-packages
+	* Install software to main site-packages
+% sudo rsync -vaP pyami-r??/ $SITEPKG/pyami/
+% sudo rsync -vaP leginon-r????/ $SITEPKG/leginon/
+% sudo rsync -vaP sinedon-r??/ $SITEPKG/sinedon/
+
+-------------------------------
+6. Setup leginon.cfg file in your home directory
+	* Go into leginon directory (from Leginon.tgz)
+	* Copy default.cfg to your home directory
+% cp config/default.cfg ~/leginon.cfg
+	* Create a directory for images
+% mkdir -p ~/leginon/images/
+	* Edit ~/leginon.cfg and add image path
+% nano ~/leginon.cfg
+path: ~/leginon/images/
+
+-------------------------------
+7. Test PyAppion:
+	* Go into pyappion directory
+	* Add leginon to PYTHONPATH
+% export PYTHONPATH="$SITEPKG/leginon:$PYTHONPATH"
+	* Add pyappion lib to PYTHONPATH
+% export PYTHONPATH="~/pyappion/lib:$PYTHONPATH"
+	* Run the test script
+% ./check.sh
+	* You can ignore EMAN, MATLAB, and chimera errors at this point
+
+-------------------------------
+8. Install Xmipp:
+	* For more info, see http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware
+
+	* Go into Xmipp source directory
+
+	* Find openmpi directory
+% locate libmpi.so
+/usr/lib/openmpi/1.2.5-gcc/lib/libmpi.so
+
+	* Setup Xmipp to use openmpi by changing three lines in SConstruct
+% cp SConstruct SConstruct.orig
+% nano SConstruct
+opts.Add('MPI_INCLUDE', 'MPI headers dir ', '/usr/lib/openmpi/1.2.5-gcc/include/')
+opts.Add('MPI_LIBDIR', 'MPI libraries dir ', '/usr/lib/openmpi/1.2.5-gcc/lib/')
+opts.Add('MPI_LIB', 'MPI library', 'mpi')
+
+	* Compile
+% sudo mpi-selector --yes --system --set `rpm --qf '%{NAME}-%{VERSION}-gcc-%{ARCH}\n' -q openmpi`
+% export PATH=$PATH:/usr/lib/openmpi/1.2.5-gcc/bin
+% ./scons.configure
+% ./scons.compile
+
+-------------------------------
+9. Setup MySQL databases:
+
+-------------------------------
+10. You'll need to install a PBS system for job submission, such as TORQUE or 
+openPBS. I know Torque comes with Fedora 10, but not CentOS.
 
 http://en.wikipedia.org/wiki/Portable_Batch_System
 http://en.wikipedia.org/wiki/TORQUE_Resource_Manager
 
-5. Download AMI software from AMI site: http://ami.scripps.edu/software/
-	* dbemtools: web interface to pyAppion
-	* leginon: only for image viewer and polygon tool
-		* svn available, svn co http://ami.scripps.edu/svn/leginon/trunk/ leginon/
-	* sinedon: for MySQL interaction 
-	* pyami: image processing and input/output
-	* projectdb: for keeping separate projects and web logins
-	* numextension
 
-6. Download AMI software from Google site: http://appion.org/
-	* pyAppion: python processing pipeline
-		* includes ACE1, ACE2, DoG Picker, TiltPicker, and FindEM
-
-7. Additional external software needed:
-	EMAN v1.8
-	SPIDER v13
-	Xmipp v2.2
-	IMOD
-	MATLAB, for ACE1
-
-...
