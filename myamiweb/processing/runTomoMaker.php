@@ -203,6 +203,7 @@ function runTomoMaker() {
 	$command.="--runname=$runname ";
 	$command.="--thickness=$thickness ";
 	$command.="--description=\"$description\" ";
+	$command.="--commit ";
 	if ($tiltseriesId2) {
 		$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId2);
 		$tiltseriesnumber = $tiltseriesinfos[0]['number'];
