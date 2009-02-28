@@ -239,6 +239,7 @@ function runSubTomogram() {
 	$command.="--offsetz=$offsetz ";
 	$command.="--description=\"$description\" ";
 	$command.="--subvolumeonly ";
+	$command.="--commit ";
 
 	// submit job to cluster
 	if ($_POST['process']=="Create SubTomogram") {
