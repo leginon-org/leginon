@@ -59,21 +59,36 @@ if ($refineruns) {
 		}
 
 		// GET INFO
-		$norefClassId = $refinerun['REF|ApNoRefClassRunData|norefclass'];
-		$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
-		$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
-		$norefdata = $particle->getNoRefParams($norefId);
-		$norefpath = $norefdata['path'];
-		$norefclassfilepath = $norefclassdata['classFile'];
-		$clsavgfile = $norefpath."/".$norefclassfilepath.".img";
+		if ($refinerun['REF|ApNoRefClassRunData|norefclass']) {
+			$norefClassId = $refinerun['REF|ApNoRefClassRunData|norefclass'];
+			$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
+			$norefId = $norefclassdata['REF|ApNoRefRunData|norefRun'];
+			$norefdata = $particle->getNoRefParams($norefId);
+			$norefpath = $norefdata['path'];
+			$norefclassfilepath = $norefclassdata['classFile'];
+			$clsavgfile = $norefpath."/".$norefclassfilepath.".img";
+		}
+		elseif ($refinerun['REF|ApClusteringStackData|clusterclass']) {
+			$clusterId = $refinerun['REF|ApClusteringStackData|clusterclass'];
+			$clusterdata = $particle->getClusteringStackParams($clusterId);
+			$clusterpath = $clusterdata['path'];
+			$clsavgfile = $clusterpath."/".$clusterdata['avg_imagicfile'];
+		}
 
 		// PRINT INFO
 		$html .= "<TR>\n";
 		$html .= "<TD>$refineid</TD>\n";
 		$html .= "<TD><A HREF='imagic3dRefineItnReport.php?expId=$expId&refineId=$refineid'>$refinerun[runname]</A></TD>\n";
-		$html .= "<TD><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
-			  $norefClassId'>View Class Averages</A></TD>\n";
-		$html .= "<TD>$norefclassdata[num_classes]</TD>\n";
+		if ($refinerun['REF|ApNoRefClassRunData|norefclass']) {
+			$html .= "<TD><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
+			$norefClassId'>View Class Averages</A></TD>\n";
+			$html .= "<TD>$norefclassdata[num_classes]</TD>\n";
+		}
+		elseif ($refinerun['REF|ApClusteringStackData|clusterclass']) {
+			$html .= "<TD><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterId'
+			>View Class Averages</A></TD>\n";
+			$html .= "<TD>$clusterdata[num_classes]</TD>\n";
+		}
 		$html .= "<TD>$numiters</TD>\n";
 		$html .= "<TD>$refinerun[pixelsize]</TD>\n";
 		$html .= "<TD>$refinerun[boxsize]</TD>\n";
