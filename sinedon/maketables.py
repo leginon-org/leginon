@@ -5,10 +5,10 @@ import sys
 import sqldict
 import inspect
 import _mysql_exceptions
-#import sinedon
+import sinedon
 import imp
 
-#Data = sinedon.data.Data
+Data = sinedon.data.Data
 
 #=================
 class DatabaseError(Exception):
