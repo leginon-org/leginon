@@ -357,9 +357,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
 			clipsize = int(self.clipsize*self.params['bin'])
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		if self.params['highpass'] > 1:
+		if self.params['highpass'] is not None and self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
-		if self.params['lowpass'] > 1:
+		if self.params['lowpass'] is not None and self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
 		proccmd += " last="+str(self.params['numpart'])
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
