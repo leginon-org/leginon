@@ -2302,9 +2302,11 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 
 	#---------RECONSTRUCTION FUNCTIONS---------------#
 
-	function getSymmetries() {
+	function getSymmetries($order=true) {
 		$q="SELECT * "
 			."FROM `ApSymmetryData`";
+		if ($order)
+			$q.=" order by symmetry ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
