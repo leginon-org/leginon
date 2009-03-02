@@ -13,6 +13,7 @@ import appionScript
 import apProject
 import apDisplay
 import apFrealign
+import apEMAN
 
 #================
 #================
@@ -298,6 +299,14 @@ class frealignJob(appionScript.AppionScript):
 		# for first iteration:
 		self.params['itervol']=None
 		self.params['iterparam']=None
+		
+		# if icosahedral recon, rotate volume to FREALIGN orientation
+		if self.params['sym'] == 'Icos':
+			outvol = os.path.join(self.params['rundir'],"threed.0.mrc")
+			emancmd = 'proc3d %s %s icos5fTo2f' % (self.params['initmodel'], outvol)
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			self.params['itervol'] = outvol
+
 		## run frealign for number for refinement cycles
 		for i in range(self.params['refcycles']):
 			self.params['iter']+=1

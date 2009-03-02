@@ -184,7 +184,10 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 	f.write('%d,%d,%.3f,%.2f,%.2f,%d,%d,%d,%d,%d\n' % (params['radius'], params['iradius'], params['apix'], params['ampcontrast'], params['maskthresh'], params['phaseconstant'], params['avgresidual'], ang, params['itmax'], params['maxmatch']))
 	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
 	f.write('%d, %d\n' % (first, last))
-	f.write('%s\n' % (params['sym']))
+	if params['sym']=='Icos':
+		f.write('I2\n')
+	else:
+		f.write('%s\n' % (params['sym']))
 	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (params['relmag'], params['apix'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))
 	f.write('%.2f,%.2f,%.2f,%.2f\n' % (params['reslimit'], params['hp'], params['lp'], params['bfactor']))
 	f.write('%s\n' % (params['stackfile']))
