@@ -251,7 +251,6 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 
 	$numpart = $particle->getNumAlignStackParticles($alignstackid);
 	//echo $numpart."<br/>\n";
-	if ($numpart == 0) return;
 
 	$j = "Align Stack Info: <a class='aptitle' href='alignreport.php?expId=$expId&sId=$alignstackid'>"
 		.$stackdata['runname']."</a> (ID: $alignstackid)\n";
