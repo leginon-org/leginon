@@ -27,7 +27,7 @@ if ($_POST['write']) {
 	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
 	if (!$_POST['ppn']) jobForm("ERROR: No processors per node specified, setting default=".C_PPN_DEF);
 	if ($_POST['ppn'] > C_PPN_MAX ) jobForm("ERROR: Max processors per node is ".C_PPN_MAX);
-	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on guppy is ".C_NODES_MAX);
+	if ($_POST['nodes'] > C_NODES_MAX ) jobForm("ERROR: Max nodes on ".C_NAME." is ".C_NODES_MAX);
 	if (!$_POST['walltime']) jobForm("ERROR: No walltime specified, setting default=".C_WALLTIME_DEF);
 	if ($_POST['walltime'] > C_WALLTIME_MAX ) jobForm("ERROR: Max walltime is ".C_WALLTIME_MAX);
 	if (!$_POST['cput']) jobForm("ERROR: No CPU time specified, setting default=".C_CPUTIME_DEF);
@@ -76,6 +76,7 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 
 elseif ($_POST['submitjob']) {
 	$particle = new particledata();
+	$clusterdata->post_data();
 
 	$expId = $_GET['expId'];
 	$projectId = getProjectFromExpId($expId);
