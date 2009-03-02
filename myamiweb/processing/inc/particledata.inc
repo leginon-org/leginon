@@ -224,6 +224,8 @@ class particledata {
 			."WHERE p1.`REF|AcquisitionImageData|image`=$image1id "
 			."";
 		list($r) = $this->mysql->getSQLResult($q);
+		if (count($r) == 0) 
+			$r = array(x=>$centerx,y=>$centery);
 		return $r;
 	}
 
