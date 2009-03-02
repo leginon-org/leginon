@@ -325,6 +325,10 @@ class frealignJob(appionScript.AppionScript):
 			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter'])+".par")
 			shutil.copy(self.params['workingvol'],self.params['itervol'])
 			shutil.copy(self.params['workingparam'],self.params['iterparam'])
+			evenvol = os.path.join(self.params['rundir'],'even.mrc')
+			oddvol = os.path.join(self.params['rundir'],'odd.mrc')
+			emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, str(self.params['iter']))
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		print "Done!"
 
