@@ -16,7 +16,7 @@ class DatabaseError(Exception):
 
 #=================
 columns_created = {}
-
+dbd = None
 
 #=================
 #=================
@@ -67,6 +67,10 @@ if __name__ == "__main__":
 			dbd = sqldict.SQLDict(**dbconf)
 		except _mysql_exceptions.OperationalError, e:
 			raise DatabaseError(e.args[-1])
+	else:
+		dbconf = sinedon.getConfig(modulename)
+		print dbconf
+		dbd = sqldict.SQLDict(**dbconf)
 
 	# import desire module
 	(file, pathname, description) = imp.find_module(modulename)
