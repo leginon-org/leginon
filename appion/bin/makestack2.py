@@ -762,7 +762,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			125, 126, 128, 135, 140, 144, 147, 150, 160, 162, 168, 175, 180, 189, 
 			192, 196, 200, 210, 216, 224, 225, 240, 243, 245, 250, 252, 256, 270, 
 			280, 288, 294, 300, 315, 320, 324, 336, 343, 350, 360, 375, 378, 384, 392, 400]
-		if not self.params['boxsize'] in goodboxes:
+		if not self.params['boxsize'] in goodboxes and self.params['boxsize'] <= 400:
 			apDisplay.printWarning("Boxsize does not contain recommended prime numbers")
 			for box in goodboxes:
 				if box > self.params['boxsize']:
