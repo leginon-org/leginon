@@ -62,6 +62,7 @@ function abortJob($showjobs=False,$extra=False) {
 					echo "<td><tr>deleting ".$queuejobid." on the cluster</tr></td>";
 					// delete queued job on host
 					$cmd = "qdel ".$queuejobnum.".".$c.";\n";
+					$host =  $job['cluster'];
 					$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 					$qdeljob = True; 
 				} else {
