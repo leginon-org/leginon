@@ -24,6 +24,8 @@ class CCDCamera(object):
 		self.buffer = {}
 		self.buffer_ready = {}
 		self.bufferlock = threading.Lock()
+		self.readoutname = None
+		self.readoutcallback = None
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
@@ -63,11 +65,13 @@ class CCDCamera(object):
 	def getSettings(self):
 		settings = self.getGeometry()
 		settings['exposure time'] = self.getExposureTime()
+		settings['readout callback'] = self.getReadoutCallback()
 		return settings
 
 	def setSettings(self, settings):
 		self.setGeometry(settings)
 		self.setExposureTime(settings['exposure time'])
+		self.setReadoutCallback(settings['readout callback'])
 
 	def getBinning(self):
 		raise NotImplementedError
@@ -108,20 +112,34 @@ class CCDCamera(object):
 	def getCameraSize(self):
 		raise NotImplementedError
 
-	def getImage(self, bgreadout=False):
-		if bgreadout:
-			return self.backgroundReadout()
+	def registerCallback(self, name, callback):
+		self.callbacks[name] = callback
+
+	def getImage(self):
+		if self.readoutcallback:
+			name = str(time.time())
+			self.registerCallback(name, self.readoutcallback)
+			self.backgroundReadout(name)
 		else:
 			return self._getImage()
 
-	def backgroundReadout(self):
-		name = str(time.time())
-		self.buffer_ready[name] = threading.Event()
-		threading.Thread(target=self.getImageToBuffer, args=(name,)).run()
+	def setReadoutCallback(self, callback):
+		self.readoutcallback = callback
+
+	def getReadoutCallback(self):
+		return None
+
+	def backgroundReadout(self, name):
+		#self.buffer_ready[name] = threading.Event()
+		threading.Thread(target=self.getImageToCallback, args=(name,)).start()
 		t = 1.0 + self.getExposureTime() / 1000.0
 		## wait for t or getImage to be done, which ever is first
-		self.buffer_ready[name].wait(t)
-		return name
+		#self.buffer_ready[name].wait(t)
+
+	def getImageToCallback(self, name):
+		image = self._getImage()
+		self.callbacks[name](image)
+		del self.callbacks[name]
 
 	def getImageToBuffer(self, name):
 		image = self._getImage()
