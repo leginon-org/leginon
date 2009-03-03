@@ -230,7 +230,7 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	//echo print_r($stackdata)."<br/>\n";
 
 	if ($stackdata['REF|ApSpiderNoRefRunData|norefrun'])
-		$type = 'score';
+		$type = 'none';
 	elseif ($stackdata['REF|ApRefBasedRunData|refbasedrun'])
 		$type = 'score';
 	elseif ($stackdata['REF|ApMaxLikeRunData|maxlikerun'])
@@ -278,14 +278,16 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		}
 		$stacktable.= "</td>\n";
 
-		$stacktable.= "<td rowspan='30' align='center' valign='top'>";
-		$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
-		if ($mini)
-			$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=60&type=$type' height='60'><br/>\n";
-		else
-			$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=120&type=$type' height='120'><br/>\n";
-		$stacktable.= "</a><i>$type distribution</i>\n";
-		$stacktable.= "</td>\n";
+		if ($type != "none") {
+			$stacktable.= "<td rowspan='30' align='center' valign='top'>";
+			$stacktable.= "<a href='aligngraph.php?expId=$expId&alignid=$alignstackid&type=$type'>\n";
+			if ($mini)
+				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=60&type=$type' height='60'><br/>\n";
+			else
+				$stacktable.= "<img border='0' src='aligngraph.php?expId=$expId&alignid=$alignstackid&h=120&type=$type' height='120'><br/>\n";
+			$stacktable.= "</a><i>$type distribution</i>\n";
+			$stacktable.= "</td>\n";
+		}
 
 		$stacktable.= "</tr>\n\n";
 	} #endif
