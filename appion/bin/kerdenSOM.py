@@ -48,7 +48,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		if self.params['numpart'] is None:
 			alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
 			self.params['numpart'] = alignstackdata['num_particles']
-		if self.params['xdim'] > 14 or self.params['xdim'] > 14:
+		if self.params['xdim'] > 16 or self.params['xdim'] > 16:
 			apDisplay.printError("Dimensions must be less than 15")
 
 	#======================
