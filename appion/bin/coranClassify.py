@@ -27,12 +27,14 @@ class CoranClassifyScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --alignstack=ID --mask=# [ --num-part=# ]")
 
 		### custom params
-		self.parser.add_option("--num-factors", dest="numfactors", type="int", default=8,
+		self.parser.add_option("--num-factors", dest="numfactors", type="int", default=20,
 			help="Number of factors to use in classification", metavar="#")
 		self.parser.add_option("-s", "--alignstack", dest="alignstackid", type="int",
 			help="Stack database id", metavar="ID#")
 		self.parser.add_option("-m", "--mask", "--maskrad", dest="maskrad", type="float",
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
+		self.parser.add_option("--num-part", dest="numpart", type="int",
+			help="Number of particles to use in classification", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -44,7 +46,7 @@ class CoranClassifyScript(appionScript.AppionScript):
 			apDisplay.printError("a mask radius was not provided")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
-		if self.params['numfactors'] > 20:
+		if self.params['numfactors'] > 60:
 			apDisplay.printError("too many factors defined: "+str(self.params['numfactors']))
 
 	#=====================
@@ -143,9 +145,15 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['spiderfile'])
 		alignedstack = os.path.join(self.params['rundir'], self.alignstackdata['spiderfile'])
+		apFile.removeFile(alignedstack)
 		emancmd = "proc2d "+oldalignedstack+" "+alignedstack+" clip="+str(clippixdiam)+","+str(clippixdiam)
+		if self.params['numpart'] is not None:
+			emancmd += " last=%d"%(self.params['numpart']-1)
+			numpart = self.params['numpart']
+		else:
+			numpart = self.getNumAlignedParticles()
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
-		numpart = self.getNumAlignedParticles()
+
 
 		esttime = apAlignment.estimateTime(numpart, maskpixrad)
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
