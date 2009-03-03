@@ -19,6 +19,8 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 processing_header("Particle Alignment Run","Particle Alignment Run Page", $javascript,False);
 
+echo "<h2>Particle Alignment Procedures</h2><br/>\n";
+
 echo "<table border='1' class='tableborder' width='640'>\n";
 
 #echo "<tr><td>\n";

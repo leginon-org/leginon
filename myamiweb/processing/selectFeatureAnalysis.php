@@ -20,6 +20,8 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId&alignId=$alignId";
 
 processing_header("Alignment Classify Run","Alignment Classify  Run Page", $javascript,False);
 
+echo "<h2>Feature Analysis Procedures</h2><br/>\n";
+
 echo "<table border='1' class='tableborder' width='600'>";
 
 #echo "<tr><td>";
