@@ -121,3 +121,16 @@ input.edit {
 		font-size:10pt;
 		padding-left:5px;
 }
+
+/* for link to look like button */
+A.btp1 {
+	border: 1px solid #aabbcc;
+	padding: 2px 2px 2px 2px;
+	background: #ddd;
+	color: #000;
+	text-decoration: none;
+}
+
+A.btp1:hover {
+	background: #ffe88d;
+}
