@@ -58,7 +58,7 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set mask radius
 	$javascript .= "	if (stackArray[1]) {\n";
-	$javascript .= "		var maxmask = Math.floor(((stackArray[2]/2)-2)*stackArray[1]);\n";
+	$javascript .= "		var maxmask = Math.floor(stackArray[2]*stackArray[1]/3);\n";
 	$javascript .= "		document.viewerform.maskrad.value = maxmask;\n";
 	$javascript .= "	}\n";
 	$javascript .= "}\n";
@@ -140,7 +140,7 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 		echo "<input type='hidden' name='stackid' value='$stackval'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
-		$defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
+		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
 	} elseif ($alignIds) {
 		echo "
 		Aligned Stack:<BR>
@@ -252,8 +252,8 @@ function runKerDenSOM() {
 	if ($numpart < 10)
 		createKerDenSOMForm("<B>ERROR:</B> Must have more than 10 particles");
 
-	if ($xdim > 14 || $ydim > 14)
-		createKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 15");
+	if ($xdim > 15 || $ydim > 15)
+		createKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
