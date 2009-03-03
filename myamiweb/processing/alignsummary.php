@@ -75,7 +75,7 @@ if ($stackdatas) {
 				// --------------------------
 				echo "<tr><td>\n";
 				echo alignstacksummarytable($alignstackid, true);
-				echo "<a class='btp1' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+				echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 					."Run Another Feature Analysis On Align Stack Id $alignstackid</a></span><br/>\n";	
 				echo "</td></tr>\n";
 				foreach ($analysisdatas as $analysisdata) {
@@ -84,12 +84,12 @@ if ($stackdatas) {
 					$analysisid = $analysisdata['analysisid'];
 					echo analysissummarytable($analysisid, true);
 					if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
-						echo "<a class='btp1' href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						echo "<a class='btp1blue' href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
 							."Run Another Particle Clustering On Analysis Id $analysisid</a><br/>\n";
 						echo "</td></tr>\n";
 					}
 					elseif ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun'] != false) {
-						echo "<a class='btp1' href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						echo "<a class='btp1blue' href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
 							."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 						echo "</td></tr>\n";
 					}
@@ -156,7 +156,7 @@ if ($stackdatas) {
 				// --------------------------
 				echo "<tr><td>\n";
 				echo alignstacksummarytable($alignstackid, true);
-				echo "<a class='btp1' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+				echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 					."Run Another Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";	
 				echo "</td></tr>\n";
 				foreach ($analysisdatas as $analysisdata) {
@@ -164,12 +164,12 @@ if ($stackdatas) {
 					$analysisid = $analysisdata['DEF_id'];
 					echo analysissummarytable($analysisid);
 					if ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-						echo "<a class='btp1' href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						echo "<a class='btp1blue' href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
 							."Run IMAGIC Particle Clustering On Analysis Id $analysisid</a><br/>\n";
 						echo "</td></tr>\n";
 					}
 					else {
-						echo "<a class='btp1' href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						echo "<a class='btp1blue' href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
 							."Run Particle Clustering On Analysis Id $analysisid</a><br/>\n";
 						echo "</td></tr>\n";
 					}
@@ -181,7 +181,7 @@ if ($stackdatas) {
 			// --------------------------
 			echo "<tr><td>\n";
 			echo alignstacksummarytable($alignstackid);
-			echo "<a class='btp1' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+			echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";
 			echo "</td></tr>\n";
 		}

@@ -125,7 +125,7 @@ input.edit {
 /* for link to look like button */
 A.btp1 {
 	border: 1px solid #aabbcc;
-	padding: 2px 2px 2px 2px;
+	padding: 2px 6px 2px 6px;
 	background: #ddd;
 	color: #000;
 	text-decoration: none;
@@ -134,3 +134,28 @@ A.btp1 {
 A.btp1:hover {
 	background: #ffe88d;
 }
+
+A.btp1blue {
+	border: 1px solid #6b98b3;
+	padding: 2px 6px 2px 6px;
+	background: #d5e6f0;
+	color: #093d5a;
+	text-decoration: none;
+}
+
+A.btp1blue:hover {
+	background: #ffe88d;
+}
+
+A.btp1white {
+	border: 1px solid #aabbcc;
+	padding: 2px 6px 2px 6px;
+	background: #fff;
+	color: #000;
+	text-decoration: none;
+}
+
+A.btp1white:hover {
+	background: #ffe88d;
+}
+
