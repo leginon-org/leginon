@@ -1,8 +1,8 @@
 Steps to install Appion on a CentOS 5 machine
 
-===============================
-Pre-install:
-===============================
+================================
+== Pre-install ==
+================================
 
 You will need 3 servers:
 	* MySQL database
@@ -11,11 +11,11 @@ You will need 3 servers:
 
 Fortunately, all 3 servers can run on the same machine
 
-===============================
-Install recommended operating system:
-===============================
+================================
+== Install recommended operating system ==
+================================
 
-Note: CentOS is the exact same as RedHat Enterprise Linux (RHEL) 
+Note: CentOS is the exact same as Red Hat Enterprise Linux (RHEL) 
 except that it is free and supported by the community
 
 -------------------------------
@@ -25,7 +25,10 @@ except that it is free and supported by the community
 	* Click on i386 for 32bit machines or x86_64 for 64bit machines
 	* Pick a mirror and download 'CentOS-5.2-x86_64-bin-DVD.iso' file
 	* Burn ISO file to DVD disk:
-% dvdrecord -v -dao gracetime=10 dev=/dev/dvd speed=16 CentOS-5.2-i386-bin-DVD.iso
+
+<code>
+dvdrecord -v -dao gracetime=10 dev=/dev/dvd speed=16 CentOS-5.2-i386-bin-DVD.iso
+</code>
 
 -------------------------------
 2. Install CentOS 5 with default packageson your machine
@@ -35,40 +38,52 @@ except that it is free and supported by the community
 3. Add yourself to the sudoers file, add this line below the root version:
 username ALL=(ALL)       ALL
 
-===============================
-Install additional software:
-===============================
+================================
+== Install additional software ==
+================================
 
 -------------------------------
 1. Install the additional repositories to get additional packages:
 
 	* EPEL, http://fedoraproject.org/wiki/EPEL
-% sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm
+<code>
+sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm
+</code>
 
 ### GOOD FOR MP3, etc.
 	* RPM Fusion, http://rpmfusion.org/
-% sudo rpm -Uhv http://download1.rpmfusion.org/free/el/updates/testing/5/`uname -i`/rpmfusion-free-release-5-0.1.noarch.rpm
-% sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/el/updates/testing/5/`uname -i`/rpmfusion-nonfree-release-5-0.1.noarch.rpm
+<code>
+sudo rpm -Uhv http://download1.rpmfusion.org/free/el/updates/testing/5/`uname -i`/rpmfusion-free-release-5-0.1.noarch.rpm
+sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/el/updates/testing/5/`uname -i`/rpmfusion-nonfree-release-5-0.1.noarch.rpm
+</code>
 
 ### SKIP THIS ONE
 	* RPM Forge, http://rpmrepo.org/RPMforge
-% wget http://packages.sw.be/rpmforge-release/rpmforge-release-0.3.6-1.el5.rf.`uname -i`.rpm
-% sudo rpm -Uvh rpmforge-release-0.3.6-1.el5.rf.`uname -i`.rpm
-
+<code>
+wget http://packages.sw.be/rpmforge-release/rpmforge-release-0.3.6-1.el5.rf.`uname -i`.rpm
+sudo rpm -Uvh rpmforge-release-0.3.6-1.el5.rf.`uname -i`.rpm
+</code>
 -------------------------------
 2. Update current packages:
 
 	* Update the updater to make life easier
-% sudo yum -y update yum
+<code>
+sudo yum -y update yum
+</code>
 
 	* Note: Download was over 264 MB. If you have a slow internet connection you can setup presto/deltarpms.
-% sudo yum -y update
+<code>
+sudo yum -y update
+</code>
 
 	* If you have an Nvidia video card install the nvidia binary, will speed things up especially chimera
-% sudo yum -y install nvidia-x11-drv
+<code>
+sudo yum -y install nvidia-x11-drv
+</code>
 
 	* Install Complete list of additional packages:
-% sudo yum -y install \
+<code>
+sudo yum -y install \
 python-tools python-devel \ # general applications
 subversion ImageMagick grace gnuplot \ # general applications
 wxPython numpy scipy python-imaging \ #TILT PICKER
@@ -77,15 +92,22 @@ gcc-objc fftw3-devel gsl-devel \ #ACE2
 mysql mysql-server MySQL-python \ #Sinedon
 httpd php php-mysql phpMyAdmin \ #DBEM
 gcc-c++ openmpi-devel libtiff-devel \#Xmipp MPI
+</code>
 
 	* Clean up to save drive space 
-% sudo yum clean all
+<code>
+sudo yum clean all
+</code>
 
 	* Re-index the hard drive, this will come in handy later
-% sudo updatedb
+<code>
+sudo updatedb
+</code>
 
 	* Reboot the computer
-% sudo reboot
+<code>
+sudo reboot
+</code>
 
 -------------------------------
 3. Download AMI software 
@@ -105,42 +127,48 @@ gcc-c++ openmpi-devel libtiff-devel \#Xmipp MPI
 -------------------------------
 4. Additional external software needed:
 	* Required:
-EMAN v1.9 cluster, 
+		* EMAN v1.9 cluster, 
 http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman
 
-UCSF Chimera v1.2509, newer versions have problems, 
+		* UCSF Chimera v1.2509, newer versions have problems, 
 http://www.cgl.ucsf.edu/chimera/olddownload.html
 
 	* Recommended:
-SPIDER v15 or older, newest version not supported,
+		* SPIDER v15 or older, newest version not supported,
 http://www.wadsworth.org/spider_doc/spider/docs/spi-register.html
 
-Xmipp v2.2 or newer, for alignment, compile your own for openmpi support,
+		* Xmipp v2.2 or newer, for alignment, compile your own for openmpi support,
 http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware
 
-IMOD, for tomography
+		* IMOD, for tomography
 
 	* Not required:
-MATLAB, for ACE1
-Imagic v5, for alignment
+		* MATLAB, for ACE1
+		* Imagic v5, for alignment
 
 
-===============================
-Compile and setup programs:
-===============================
+================================
+== Compile and setup programs ==
+================================
 
 1. Compile FindEM:
 	* Goto pyappion/findem
-	* compile the libraries and binary 
-% make
+	* compile the libraries and binary
 	* test findem.exe to see if it runs
-% make test
+<code>
+make
+make test
+</code>
 
 	* If it fails, locate libg2c.so:
-% ls /usr/lib/gcc/`uname -i`-redhat-linux/3.4.6/libg2c.so
-% locate libg2c.so
+<code>
+ls /usr/lib/gcc/`uname -i`-redhat-linux/3.4.6/libg2c.so
+locate libg2c.so
+</code>
 	* Edit Makefile with location of libg2c.so
-% nano Makefile
+<code>
+nano Makefile
+</code>
 	* Example: EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
 	* Re-compile
 
@@ -148,67 +176,97 @@ Compile and setup programs:
 2. Compile Ace2:
 	* Goto pyappion/ace2
 	* compile the libraries and binary 
-% make
 	* test to see if program runs
-% ../bin/ace2.exe -h
-% ../bin/ace2correct.exe -h
+<code>
+make
+../bin/ace2.exe -h
+../bin/ace2correct.exe -h
+</code>
 
 -------------------------------
 3. Compile Radermacher module:
 	* Goto pyappion/radermacher
 	* compile the libraries and binary 
-% python ./setup.py build
+<code>
+python ./setup.py build
+</code>
 	* install module globally
-% sudo python ./setup.py install
+<code>
+sudo python ./setup.py install
+</code>
 	* test installed module
-% python
+<code>
+python
 >>> import radermacher
 >>> <Ctrl-D>
+</code>
 
 -------------------------------
 4. Compile Numextension module:
 	* Goto Leginon/numextension
 	* compile the libraries and binary 
-% python ./setup.py build
+<code>
+python ./setup.py build
+</code>
 	* install module globally
-% sudo python ./setup.py install
+<code>
+sudo python ./setup.py install
+</code>
 	* test installed module
-% python
+<code>
+python
 >>> import numextension
 >>> <Ctrl-D>
-
+</code>
 -------------------------------
 5. Globally install python programs:
 	* Go into directory with pyami, leginon and sinedon (from Leginon.tgz)
 	* Setup main python site-packages, depends on ARCH and VERSION
-% export SITEPKG=/usr/lib/python2.4/site-packages
-% export SITEPKG=/usr/lib64/python2.4/site-packages
-% export SITEPKG=/usr/lib64/python2.5/site-packages
+<code>
+export SITEPKG=/usr/lib/python2.4/site-packages
+export SITEPKG=/usr/lib64/python2.4/site-packages
+export SITEPKG=/usr/lib64/python2.5/site-packages
+</code>
+
 	* Install software to main site-packages
-% sudo rsync -vaP pyami-r??/ $SITEPKG/pyami/
-% sudo rsync -vaP leginon-r????/ $SITEPKG/leginon/
-% sudo rsync -vaP sinedon-r??/ $SITEPKG/sinedon/
+<code>
+sudo rsync -vaP pyami-r??/ $SITEPKG/pyami/
+sudo rsync -vaP leginon-r????/ $SITEPKG/leginon/
+sudo rsync -vaP sinedon-r??/ $SITEPKG/sinedon/
+</code>
 
 -------------------------------
 6. Setup leginon.cfg file in your home directory
 	* Go into leginon directory (from Leginon.tgz)
 	* Copy default.cfg to your home directory
-% cp config/default.cfg ~/leginon.cfg
+<code>
+cp config/default.cfg ~/leginon.cfg
+</code>
 	* Create a directory for images
-% mkdir -p ~/leginon/images/
+<code>
+mkdir -p ~/leginon/images/
+</code>
 	* Edit ~/leginon.cfg and add image path
-% nano ~/leginon.cfg
+<code>
+nano ~/leginon.cfg
 path: ~/leginon/images/
+</code>
 
 -------------------------------
 7. Test PyAppion:
 	* Go into pyappion directory
 	* Add leginon to PYTHONPATH
-% export PYTHONPATH="$SITEPKG/leginon:$PYTHONPATH"
+<code>
+export PYTHONPATH="$SITEPKG/leginon:$PYTHONPATH"
+</code>
 	* Add pyappion lib to PYTHONPATH
-% export PYTHONPATH="~/pyappion/lib:$PYTHONPATH"
+<code>
+export PYTHONPATH="~/pyappion/lib:$PYTHONPATH"
+</code>
 	* Run the test script
-% ./check.sh
+<code>
+./check.sh
+</code>
 	* You can ignore EMAN, MATLAB, and chimera errors at this point
 
 -------------------------------
@@ -218,24 +276,50 @@ path: ~/leginon/images/
 	* Go into Xmipp source directory
 
 	* Find openmpi directory
-% locate libmpi.so
+<code>
+locate libmpi.so
 /usr/lib/openmpi/1.2.5-gcc/lib/libmpi.so
-
+</code>
 	* Setup Xmipp to use openmpi by changing three lines in SConstruct
-% cp SConstruct SConstruct.orig
-% nano SConstruct
+<code>
+cp SConstruct SConstruct.orig
+nano SConstruct
 opts.Add('MPI_INCLUDE', 'MPI headers dir ', '/usr/lib/openmpi/1.2.5-gcc/include/')
 opts.Add('MPI_LIBDIR', 'MPI libraries dir ', '/usr/lib/openmpi/1.2.5-gcc/lib/')
 opts.Add('MPI_LIB', 'MPI library', 'mpi')
-
+</code>
 	* Compile
-% sudo mpi-selector --yes --system --set `rpm --qf '%{NAME}-%{VERSION}-gcc-%{ARCH}\n' -q openmpi`
-% export PATH=$PATH:/usr/lib/openmpi/1.2.5-gcc/bin
-% ./scons.configure
-% ./scons.compile
+<code>
+sudo mpi-selector --yes --system --set `rpm --qf '%{NAME}-%{VERSION}-gcc-%{ARCH}\n' -q openmpi`
+export PATH=$PATH:/usr/lib/openmpi/1.2.5-gcc/bin
+./scons.configure
+./scons.compile
+</code>
+
+=========================
+== Not finished....  ==
+=========================
 
 -------------------------------
 9. Setup MySQL databases:
+
+	* Set a MySQL root password, by default it is blank
+<code>
+mysqladmin -u root password NEWPASSWORD
+</code>
+
+	* Create a new user, database, and give user access to databases
+<code>
+mysql -u root -p
+CREATE USER 'appiondata';
+CREATE DATABASE leginondata;
+CREATE DATABASE projectdata;
+CREATE DATABASE appiondata;
+GRANT ALL PRIVILEGES ON leginondata.* TO appionuser@"%";
+GRANT ALL PRIVILEGES ON projectdata.* TO appionuser@"%";
+GRANT ALL PRIVILEGES ON appiondata.* TO appionuser@"%";
+<Ctrl-D>
+</code>
 
 -------------------------------
 10. You'll need to install a PBS system for job submission, such as TORQUE or 
@@ -243,5 +327,22 @@ openPBS. I know Torque comes with Fedora 10, but not CentOS.
 
 http://en.wikipedia.org/wiki/Portable_Batch_System
 http://en.wikipedia.org/wiki/TORQUE_Resource_Manager
+
+	* An RPM is available in the EPEL testing section
+<code>
+sudo yum -y --enablerepo=epel-testing install torque
+</code>
+or
+<code>
+wget http://centos.karan.org/el5/extras/testing/`uname -i`/RPMS/torque-2.1.9-1.el5.kb.`uname -i`.rpm
+#sudo yum -y localinstall torque-2.1.9-1.el5.kb.`uname -i`.rpm
+sudo rpm -Uhv torque-2.1.9-1.el5.kb.`uname -i`.rpm
+</code>
+
+
+
+
+
+
 
 
