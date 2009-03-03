@@ -401,6 +401,7 @@ class Prediction(object):
 		return position
 
 	def leastSquaresXY(self, tilts, xs, ys, tilt, n=5):
+		n = self.fitdata + 1
 		position = scipy.zeros(2, scipy.dtype('d'))
 		for i, positions in enumerate((xs, ys)):
 			position[i] = self._leastSquaresXY(tilts[-n:], positions[-n:], tilt)
