@@ -41,6 +41,11 @@ if ($stackdatas) {
 			echo "<table cellspacing='8' cellpading='5' border='0'>\n";
 			echo "<tr><td>\n";
 			echo analysissummarytable($analysisid, true);
+			$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
+			if ($clusterruns) {
+				echo "<br/>".count($clusterruns)." cluster runs completed on this feature analysis run, "
+					."<a href='clusterlist.php?expId=$expId'>view particle clusters</a><br/><br/>\n";
+			}
 			if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
 				echo "<a class='btp1blue' href='runClusterCoran.php?expId=$expId"
 					."&analysisId=$analysisid&alignId=$alignstackid'>"
@@ -49,9 +54,7 @@ if ($stackdatas) {
 				echo "<a class='btp1blue' href='imagicMSAcluster.php?expId=$expId"
 					."&analysisId=$analysisid&alignId=$alignstackid'>"
 					."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
-			} else {
-				echo "<a href='clusterlist.php?expId=$expId'>See clustering page for more information</a>\n";
-			}
+			} 
 			echo "</td></tr>\n";
 			echo "</table>\n";
 			echo closeRoundBorder();

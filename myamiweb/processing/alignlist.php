@@ -52,6 +52,21 @@ if ($stackdatas) {
 		$alignstackid = $stackdata['alignstackid'];
 		echo "<tr><td>\n";
 		echo alignstacksummarytable($alignstackid, true);
+		$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, true);
+		if ($analysisdatas) {
+			echo "<br/>".count($analysisdatas)." feature analysis runs completed on this align run, "
+				."<a href='analysislist.php?expId=$expId'>view feature analysis runs</a><br/><br/>\n";
+			echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+				."Run Another Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";
+		} else {
+			echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+				."Run Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";
+		}
+		$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
+		if ($clusterruns) {
+			echo "<br/>".count($clusterruns)." cluster runs completed on this feature analysis run, "
+				."<a href='clusterlist.php?expId=$expId'>view particle clusters</a>\n";
+		}
 		echo "</td></tr>\n";
 		echo "</table>\n";
 		echo closeRoundBorder();
