@@ -216,7 +216,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	echo	docpop('hpstackval', " High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>");
 	echo"
 		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>";
-	echo 	docpop('binval2', " Particle Binning<BR>");
+	echo 	docpop('partbin', " Particle Binning<BR>");
 	echo"
 		</TD>
 	</TR>

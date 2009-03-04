@@ -222,7 +222,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4' onChange='estimatetime()'>\n";
-	echo docpop('binval','Particle binning');
+	echo docpop('partbin','Particle binning');
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4' onChange='estimatetime()'>\n";
