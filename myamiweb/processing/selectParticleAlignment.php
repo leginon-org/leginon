@@ -17,15 +17,19 @@ require "inc/processing.inc";
 $expId = $_GET['expId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-processing_header("Particle Alignment Run","Particle Alignment Run Page", $javascript,False);
+processing_header("Particle Alignment Selection","Particle Alignment Selection Page", $javascript,False);
 
 // Selection Header
 echo "<table border='0' width='640'>\n";
 echo "<tr><td>\n";
 echo "  <h2>Particle Alignment Procedures</h2>\n";
 echo "  <img src='img/align-smr.png' width='250'><br/>\n";
-echo "  <h4>Particle alignment consist of shift, rotation, and mirror transformations for all"
-		." particles in a stack to a common orientation or template</h4>\n";
+echo "  <h4>\n";
+echo "    Particle alignment consists of shift, rotation, and mirror transformations for all"
+		." particles in a stack to a common orientation or template. "
+		." The reference free methods are great methods to create a template"
+		."for particle picking or reference-based alignments.\n";
+echo "  </h4>\n";
 echo "</td></tr>\n";
 echo "</table>\n";
 

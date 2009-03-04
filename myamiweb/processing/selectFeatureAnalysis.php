@@ -18,11 +18,33 @@ $expId = $_GET['expId'];
 $alignId = $_GET['alignId'];
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId&alignId=$alignId";
 
-processing_header("Alignment Classify Run","Alignment Classify  Run Page", $javascript,False);
+processing_header("Feature Analysis Selection","Feature Analysis Selection Page", $javascript,False);
 
-echo "<h2>Feature Analysis Procedures</h2><br/>\n";
+// Selection Header
+echo "<table border='0' width='640'>\n";
+echo "<tr><td>\n";
+echo "  <h2>Feature Analysis Procedures</h2>\n";
+echo "  <h4>\n";
+echo "    Feature analysis refers to systematic techniques for extracting features"
+	." from a series of images or particles with the intent of clustering images with"
+	." with similar features together."
+	." Feature anaylsis is closely related to "
+	."<a href='http://en.wikipedia.org/wiki/Multivariate_statistics'>multivariate statistics"
+	."&nbsp;<img border='0' src='img/external.png'></a>."
+	." All of these feature analysis techniques fall into two categories"
+	." <a href='http://en.wikipedia.org/wiki/Principal_components_analysis'>principal component analysis (PCA)"
+	."&nbsp;<img border='0' src='img/external.png'></a>"
+	." (Spider Coran and IMAGIC MSA)."
+	." and <a href='http://en.wikipedia.org/wiki/Artificial_neural_network'>neural networks"
+	."&nbsp;<img border='0' src='img/external.png'></a>"
+	." (Xmipp KerDen SOM).";
+echo "  </h4>\n";
+echo "</td></tr>\n";
+echo "</table>\n";
 
-echo "<table border='1' class='tableborder' width='600'>";
+echo "<br/>\n";
+
+echo "<table border='1' class='tableborder' width='640'>";
 
 #echo "<tr><td>";
 #echo "  <h3>Just run an alignment, I don't care how</h3>";
@@ -33,11 +55,11 @@ echo "  <img src='img/spider_logo.png' width='64'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runCoranClassify.php?expId=$expId&alignId=$alignId'>Spider Coran Classification</a></h3>";
 echo "  this method uses the "
-	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>Spider CA S</a>"
-	."&nbsp;<img src='img/external.png'>"
+	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/cas.html'>Spider CA S"
+	."&nbsp;<img border='0' src='img/external.png'></a>"
 	." to run correspondence analysis (coran), "
-	." a form of <a href='http://en.wikipedia.org/wiki/Principal_components_analysis'>"
-	."Principal components analysis</a>&nbsp;<img src='img/external.png'>, "
+	." a form of <a href='http://en.wikipedia.org/wiki/Principal_components_analysis#Correspondence_analysis'>"
+	."principal components analysis&nbsp;<img border='0' src='img/external.png'></a>, "
 	."and classify your aligned particles"
 	."<br/><br/>";
 echo "</td></tr>";
@@ -49,7 +71,8 @@ echo "  <h3><a href='runKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Kerde
 echo "  Kerden SOM stands for 'Kernel Probability Density Estimator Self-Organizing Map'. "
 	."It maps a set of high dimensional input vectors into a two-dimensional grid. "
 	."For more information, please see the following "
-	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/KerDenSOM'>Xmipp webpage</a>. "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/KerDenSOM'>Xmipp webpage"
+	."&nbsp;<img border='0' src='img/external.png'></a>. "
 	."<br/><br/>";
 echo "</td></tr>";
 
@@ -58,9 +81,10 @@ echo "  <img src='img/imagic_logo.png' width='64'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='imagicMSA.php?expId=$expId&alignId=$alignId'>IMAGIC Multivariate Statistical Analysis (MSA)</a></h3>";
 echo "  IMAGIC multivariate statistical analysis "
-        ."gives you the option of using one of 3 distance criteria for determining "
+	."gives you the option of using one of 3 distance criteria for determining "
 	."a set of eigenimages, and can remove  poor particles and class averages. For more information, visit "
-        ."<a href='http://www.imagescience.de/imagic/index.htm'>IMAGIC webpage</a>. "
+	."<a href='http://www.imagescience.de/imagic/index.htm'>IMAGIC webpage"
+	."&nbsp;<img border='0' src='img/external.png'></a></a>. "
         ."<br/><br/>";
 echo "</td></tr>";
 
