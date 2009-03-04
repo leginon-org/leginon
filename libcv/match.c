@@ -5,6 +5,12 @@
 void FindMatch( Descriptor d1, PStack d2s, int bound, PStack );
 float DistSquared( float *d1, float *d2);
 
+void freeMatches( PStack matches ) {
+	
+	while ( !PStackIsEmpty(matches) ) free(PopPStack(matches));
+		
+}
+
 void FindMatches(PStack d1s, PStack d2s, PStack matches, int bound ) {	
 	int k;
 	int size = d1s->stacksize;
@@ -39,7 +45,7 @@ void FindMatch( Descriptor d1, PStack d2s, int bound, PStack matches ) {
 	if ( distsq1*bound*bound >= distsq2*(bound-1)*(bound-1) ) return;
 
 	Match match = malloc(sizeof(struct MatchSt));
-   	match->p1 = d1;
+   match->p1 = d1;
 	match->p2 = dbest;
 	match->score = distsq1;
 	PushPStack(matches,match);

@@ -6,6 +6,27 @@ FVec GenerateOrientationHistogram( Image patch );
 void FindDominantOrientations( FVec hist, float peak, FStack orientations );
 void DeterminePatchOrientations( Image patch, FStack orientations );
 
+void freeDescriptors( PStack desc ) {
+	
+	while( !PStackIsEmpty(desc) ) freeDescriptor(PopPStack(desc));
+	FreePStack(desc);
+
+}
+
+void freeRegions( PStack desc ) {
+
+	while( !PStackIsEmpty(desc) ) freeRegion(PopPStack(desc));
+	FreePStack(desc);
+
+}
+
+void freeDescriptor( Descriptor desc ) {
+	
+	free(desc->descriptor);
+	free(desc);
+	
+}
+
 void DeterminePatchOrientations( Image patch, FStack orientations ) {
 
 	FVec hist = GenerateOrientationHistogram(patch);
@@ -84,11 +105,12 @@ void RegionsToSIFTDescriptors( PStack regions, PStack descriptors, int pb, int o
 		while ( !FStackEmpty(orientations) ) {
 			float orientation = PopFStack(orientations);
 			RotateImage(patch,rpatch,orientation);
-			float *newDescriptor = PCADescriptorFromPatch(rpatch);
+			float * newDescriptor = PCADescriptorFromPatch(rpatch);
 			PushPStack(descriptors,NewDescriptor(region,36,3,newDescriptor));
 		}
 	}
 	
+	FreeFStack(orientations);
 	FreeImage(patch); FreeImage(rpatch);
 
 }
@@ -120,6 +142,8 @@ void RegionToPatch( Region key, Image source, Image patch, float scale ) {
 	Ellipse e2 = NewEllipse(rad,rad,rad,rad,key->phi);
 	ComputeEllipseTransform(e1,e2,TR,IT); free(e1); free(e2);
 	SeparableAffineTransform(source,patch,TR,IT);
+	FreeDMatrix(IT,0,0);
+	FreeDMatrix(TR,0,0);
 	
 }
 
@@ -176,6 +200,7 @@ float *GLOHDescriptorFromPatch( Image patch, int pb, int ob ) {
 }	
 	
 float *PCADescriptorFromPatch( Image patch ) {
+	
 	#define PatchSize  41
 	#define PatchLength (PatchSize * PatchSize)
 	#define GPLEN ((PatchSize - 2) * (PatchSize - 2) * 2)
@@ -184,31 +209,7 @@ float *PCADescriptorFromPatch( Image patch ) {
 	#define PatchMag 20
 
 	float *kv = malloc(sizeof(float)*PatchLength*2);
-	
-	/*
-	int i, j;
-	static float *avgs= NULL, **eigs;
-	if ( avgs == NULL ) {
-		float val;
-		fprintf(stderr, "Attepting to open any pcavects.txt file!\n");
-		FILE *pcaf = fopen("pcavects.txt", "rb");
-		if ( pcaf == NULL ) { fprintf(stderr,"No valid pcavects.txt file!\n"); return NULL; }
-		avgs = malloc(sizeof(float)*GPLEN);
-		eigs = AllocFMatrix(EPCALEN,GPLEN,0,0);
-		for (i=0;i<GPLEN;++i) {
-			if (fscanf(pcaf, "%f", &val) != 1) {fprintf(stderr,"No valid pcavects.txt file!\n");return NULL;}
-			avgs[i] = (float)val;
-		}
-		for (i=0;i<GPLEN;++i) {
-			for (j=0;j<PCALEN;j++) {
-				if (fscanf(pcaf,"%f", &val) != 1) {fprintf(stderr,"No valid pcavects.txt file!\n");return NULL;}
-				if (j<EPCALEN) eigs[j][i] = (float)val;
-			}
-		}
-		fclose(pcaf);
-	}
-	*/
-	
+		
 	int count=0, **p1 = patch->pixels, row, col;
 	for (row=1;row<PatchSize-1;++row) {
 		for (col=1;col<PatchSize-1;++col) {	
@@ -232,8 +233,9 @@ float *PCADescriptorFromPatch( Image patch ) {
 	for (count=0;count<EPCALEN;++count) {
 		kpdescriptor[count] = 0;
 		for (row=0;row<GPLEN;++row) kpdescriptor[count] += eigs[row][count]*kv[row];
-		//for (row=0;row<GPLEN;++row) kpdescriptor[count] += eigs[count][row]*kv[row];
 	}
+	
+	free(kv);
 	
 	return kpdescriptor;
 	

@@ -14,5 +14,6 @@ typedef struct MatchSt {
 void FindMatches(PStack k1, PStack k2, PStack matches, int bound );
 float FindArea( FArray array );
 void ScreenMatches( PStack matches, double **transform);
+void freeMatches( PStack matches );
 
 #endif

@@ -23,5 +23,8 @@ void PrintSIFTDescriptors( char *name, PStack descriptors );
 float *PCADescriptorFromPatch( Image patch );
 void PrintRegions( char *name, PStack Regions );
 void DrawRegion( Region key, float scale );
+void freeDescriptors( PStack desc );
+void freeRegions( PStack desc );
+void freeDescriptor( Descriptor desc );
 
 #endif

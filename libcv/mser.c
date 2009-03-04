@@ -23,30 +23,22 @@ char FindMSERegions( Image image, PStack regions, float minSize, float maxSize, 
 	
 	if ( !ImageIsGood(image) || !PStackGood(regions) ) return FALSE;
 	
-	//fprintf(stderr,"Filtering image ");
 	int i, min = 0, max = 0;
 	for (i=0;i<image->rows*image->cols;i++) {
 		int pix = image->pixels[0][i];
 		if ( pix < min ) min = pix;
 		if ( pix > max ) max = pix;
 	}
+	
 	fprintf(stderr,"Image min and max are %d %d\n",min,max);
 	image->minv = min;
 	image->maxv = max;
 	EnhanceImage(image,0,1024,0.01,0.01);
-	//fprintf(stderr,"Enhanced ");
-	//GaussianBlurImage(image,blur);
-	//fprintf(stderr,"Blurred ");
-	//UnsharpMaskImage(image,sharpen);
-	//fprintf(stderr,"Sharpened\n");
-	
-	//fprintf(stderr,"Creating MSERArray\n");
+
 	MSERArray ma = ImageToMSERArray(image);
 	if ( minSize <= 1.0 ) minSize = minSize*ma->size;
 	if ( maxSize <= 1.0 ) maxSize = maxSize*ma->size;
-	
-	//fprintf(stderr," ... Min / Max region sizes %d - %d pixels\n",(int)minSize,(int)maxSize); 
-	
+
 	void **sizes = malloc(sizeof(void **)*ma->size);
 	int k; for (k=0;k<ma->size;k++) sizes[k] = NULL;
 	
@@ -164,6 +156,7 @@ void EvaluateStableRegions( MSERArray ma, void **tSizes, PStack regions) {
 	//fprintf(stderr,"Mean stability : %d  ", minStable);
 	//fprintf(stderr,"Mean period : %d\n", minPeriod);
 	
+	FreePolygon(polygon);
 	free(hist);
 	
 }
@@ -336,10 +329,10 @@ void ResetMSERArray( MSERArray ma ) {
 MSERArray FreeMSERArray( MSERArray pa ) {
 	if ( pa == NULL ) return NULL;
 	if ( pa->sb+pa->minv != NULL )	free(pa->sb+pa->minv);
-	if ( pa->sp != NULL )			free(pa->sp);
-	if ( pa->roots != NULL )		free(pa->roots);
-	if ( pa->sizes != NULL )		free(pa->sizes);
-	if ( pa->flags != NULL )		free(pa->flags);
+	if ( pa->sp != NULL )				free(pa->sp);
+	if ( pa->roots != NULL )			free(pa->roots);
+	if ( pa->sizes != NULL )			free(pa->sizes);
+	if ( pa->flags != NULL )			free(pa->flags);
 	free(pa);
 	return NULL;
 }
@@ -430,6 +423,14 @@ Region NewRegion( Ellipse e, Image image, Polygon sizes, Polygon border, int sta
 	reg->maxc = e->rightBound;
 	
 	return reg;
+	
+}
+
+void freeRegion( Region reg ) {
+	
+	FreePolygon(reg->sizes);
+	FreePolygon(reg->border);
+	free(reg);
 	
 }
 	
