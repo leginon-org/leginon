@@ -31,7 +31,7 @@ $stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
-	echo "<h3><a href='alignsummary.php?expId=$expId'>Show Composite Page</a></h3>\n";
+	echo "<h3><a href='alignsummary.php?expId=$expId&cluster=1'>Show Composite Page</a></h3>\n";
 	foreach ($stackdatas as $stackdata) {
 		$alignstackid = $stackdata['alignstackid'];
 		$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, $projectId, False);
@@ -93,7 +93,7 @@ if ($stackdatas) {
 			}
 		}
 	}
-	echo "<h3><a href='alignsummary.php?expId=$expId'>Show Composite Page</a></h3>\n";
+	echo "<h3><a href='alignsummary.php?expId=$expId&cluster=1'>Show Composite Page</a></h3>\n";
 	echo "</form>\n";
 } else {
 	echo "<B>Session does not contain any aligned stacks.</B>\n";
