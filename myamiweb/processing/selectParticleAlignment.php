@@ -35,18 +35,7 @@ echo "  this method is the most robust, but takes some time to complete."
 	." It uses the "
 	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." program to perform alignments"
-	."<br/><br/>\n";
-echo "</td></tr>\n";
-
-echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/spider_logo.png' width='64'>\n";
-echo "</td><td>\n";
-echo "  <h3><a href='runSpiderNoRefAlignment.php?expId=$expId'>Spider Reference-free Alignment</a></h3>\n";
-echo "  this method uses the "
-	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
-	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles"
+	." program to perform alignments. This method is unbiased and very thorough, but also the slowest of the methods"
 	."<br/><br/>\n";
 echo "</td></tr>\n";
 
@@ -57,7 +46,7 @@ echo "  <h3><a href='runRefBasedAlignment.php?expId=$expId'>Spider Reference-bas
 echo "  first you select template and then this method uses the "
 	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apmq.html'>Spider AP MQ</a>"
 	."&nbsp;<img src='img/external.png'>"
-	." command to align your particles to the selected templates"
+	." command to align your particles to the selected templates. Multiprocessing additions has made this very fast."
 	."<br/><br/>\n";
 echo "</td></tr>\n";
 
@@ -70,6 +59,18 @@ echo "  this method uses the "
         ."&nbsp;<img src='img/external.png'>"
         ." command to align your particles to the templates within a specified template stack"
         ."<br/><br/>\n";
+echo "</td></tr>\n";
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/spider_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runSpiderNoRefAlignment.php?expId=$expId'>Spider Reference-free Alignment</a></h3>\n";
+echo "  this method uses the "
+	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
+	."&nbsp;<img src='img/external.png'>"
+	." command to align your particles. This method is very quick, but also very sloppy. "
+	."It is best to run several times and compare the results."
+	."<br/><br/>\n";
 echo "</td></tr>\n";
 
 echo "</table>\n";
