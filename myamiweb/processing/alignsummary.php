@@ -84,12 +84,14 @@ if ($stackdatas) {
 					$analysisid = $analysisdata['analysisid'];
 					echo analysissummarytable($analysisid, true);
 					if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
-						echo "<a class='btp1blue' href='runClusterCoran.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						echo "<a class='btp1blue' href='runClusterCoran.php?expId=$expId"
+							."&analysisId=$analysisid&alignId=$alignstackid'>"
 							."Run Another Particle Clustering On Analysis Id $analysisid</a><br/>\n";
 						echo "</td></tr>\n";
 					}
 					elseif ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun'] != false) {
-						echo "<a class='btp1blue' href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
+						echo "<a class='btp1blue' href='imagicMSAcluster.php?expId=$expId"
+							."&analysisId=$analysisid&alignId=$alignstackid'>"
 							."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 						echo "</td></tr>\n";
 					}
