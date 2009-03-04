@@ -6,7 +6,7 @@ void convolve1Ds( f32 *src, f32 *dst, u32 size, u32 cols, f32 *kernel, u32 ksize
 void rotateLong( f32 *src, f32 *dst, u32 size, u32 cols );
 
 static int fftw_is_wise = 0;
-static char fftw_wisdom_path[256] = "/tmp/.fftw_wisdom";
+static char fftw_wisdom_path[256] = ".fftw_wisdom";
 
 @implementation Array ( Image_Functions )
 
