@@ -315,7 +315,7 @@ if ($expId) {
 		
 		$alignqueue  = count($subclusterjobs['partalign']['queued']);
 
-		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignsummary.php?expId=$sessionId'>$alignruns complete</a>";
+		$alignresults[] = ($aligndone==0) ? "" : "<a href='alignlist.php?expId=$sessionId'>$alignruns complete</a>";
 		$alignresults[] = ($alignrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partalign'>$alignrun running</a>";
 		$alignresults[] = ($nmaxlikejobs==0) ? "" : "<a href='runUploadMaxLike.php?expId=$sessionId'>$nmaxlikejobs ready to upload</a>";
 		$alignresults[] = ($alignqueue==0) ? "" : "$alignqueue queued";
@@ -334,7 +334,7 @@ if ($expId) {
 			}
 			$analysisrun  = count($subclusterjobs['alignanalysis']['running']);
 			$analysisqueue  = count($subclusterjobs['alignanalysis']['queued']);
-			$analysisresults[] = ($analysisdone==0) ? "" : "<a href='alignsummary.php?analysis=1&expId=$sessionId'>$analysisdone complete</a>";
+			$analysisresults[] = ($analysisdone==0) ? "" : "<a href='analysislist.php?expId=$sessionId'>$analysisdone complete</a>";
 			$analysisresults[] = ($analysisrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=alignanalysis'>$analysisrun running</a>";
 			$analysisresults[] = ($analysisqueue==0) ? "" : "$analysisqueue queued";
 			$nruns[] = array (
@@ -350,11 +350,11 @@ if ($expId) {
 				}
 				$clusterrun  = count($subclusterjobs['partcluster']['running']);
 				$clusterqueue  = count($subclusterjobs['partcluster']['queued']);
-				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='alignsummary.php?cluster=1&expId=$sessionId'>$clusterdone complete</a>";
+				$clusterresults[] = ($clusterdone==0) ? "" : "<a href='clusterlist.php?expId=$sessionId'>$clusterdone complete</a>";
 				$clusterresults[] = ($clusterrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=partcluster'>$clusterrun running</a>";
 				$clusterresults[] = ($clusterqueue==0) ? "" : "$clusterqueue queued";
 				$nruns[] = array (
-					'name'=>"<a href='alignsummary.php?analysis=1&expId=$sessionId'>Run Particle Clustering</a>",
+					'name'=>"<a href='analysislist.php?expId=$sessionId'>Run Particle Clustering</a>",
 					'result'=>$clusterresults,
 				);
 			}
