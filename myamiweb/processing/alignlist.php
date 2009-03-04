@@ -56,10 +56,10 @@ if ($stackdatas) {
 		if ($analysisdatas) {
 			echo "<br/>".count($analysisdatas)." feature analysis runs completed on this align run, "
 				."<a href='analysislist.php?expId=$expId'>view feature analysis runs</a><br/><br/>\n";
-			echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+			echo "<a class='btp1' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Another Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";
 		} else {
-			echo "<a class='btp1blue' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
+			echo "<a class='btp1' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";
 		}
 		$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);

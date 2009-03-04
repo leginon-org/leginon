@@ -47,11 +47,11 @@ if ($stackdatas) {
 					."<a href='clusterlist.php?expId=$expId'>view particle clusters</a><br/><br/>\n";
 			}
 			if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
-				echo "<a class='btp1blue' href='runClusterCoran.php?expId=$expId"
+				echo "<a class='btp1' href='runClusterCoran.php?expId=$expId"
 					."&analysisId=$analysisid&alignId=$alignstackid'>"
 					."Run Another Particle Clustering On Analysis Id $analysisid</a><br/>\n";
 			} elseif ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun'] != false) {
-				echo "<a class='btp1blue' href='imagicMSAcluster.php?expId=$expId"
+				echo "<a class='btp1' href='imagicMSAcluster.php?expId=$expId"
 					."&analysisId=$analysisid&alignId=$alignstackid'>"
 					."Run Another Particle Clustering On Analysis Id $analysisid</a>&nbsp;<br/>\n";
 			} 
