@@ -19,8 +19,18 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 processing_header("Particle Alignment Run","Particle Alignment Run Page", $javascript,False);
 
-echo "<h2>Particle Alignment Procedures</h2><br/>\n";
+// Selection Header
+echo "<table border='0' width='640'>\n";
+echo "<tr><td>\n";
+echo "  <h2>Particle Alignment Procedures</h2>\n";
+echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "  <h4>Particle alignment consist of shift, rotation, and mirror transformations for all"
+		." particles in a stack to a common orientation or template</h4>\n";
+echo "</td></tr>\n";
+echo "</table>\n";
 
+
+echo "<br/>\n";
 echo "<table border='1' class='tableborder' width='640'>\n";
 
 #echo "<tr><td>\n";
@@ -37,6 +47,7 @@ echo "  this method is the most robust, but takes some time to complete."
 	."&nbsp;<img src='img/external.png'>"
 	." program to perform alignments. This method is unbiased and very thorough, but also the slowest of the methods"
 	."<br/><br/>\n";
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
 echo "<tr><td width='100' align='center'>\n";
@@ -48,6 +59,7 @@ echo "  first you select template and then this method uses the "
 	."&nbsp;<img src='img/external.png'>"
 	." command to align your particles to the selected templates. Multiprocessing additions has made this very fast."
 	."<br/><br/>\n";
+//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
 echo "<tr><td width='100' align='center'>\n";
@@ -71,6 +83,7 @@ echo "  this method uses the "
 	." command to align your particles. This method is very quick, but also very sloppy. "
 	."It is best to run several times and compare the results."
 	."<br/><br/>\n";
+//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
 echo "</table>\n";
