@@ -98,8 +98,10 @@ class BeamFixer(reference.Reference):
 		pixelshift['col'] = camdimension['x'] * shiftstep
 		pixelshift['row'] = camdimension['y'] * shiftstep
 		try:
-			shift = beamshiftcal.transform(pixelshift,scope,camera)
-			beamshift = shift['beam shift']
+			scope2 = beamshiftcal.transform(pixelshift,scope,camera)
+			shiftx = scope2['beam shift']['x'] - scope['beam shift']['x']
+			shifty = scope2['beam shift']['y'] - scope['beam shift']['y']
+			beamshift = {'x': shiftx, 'y': shifty}
 		except Exception, e:
 			self.logger.warning(e)
 			beamshift = {'x':1e-07, 'y':1e-07}
