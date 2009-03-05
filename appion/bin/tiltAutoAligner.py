@@ -314,9 +314,9 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		tiltpath = os.path.join(self.params['rundir'], tiltname)
 
 		### set out file
-		outname1 = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+		outname1 = os.path.basename(imgdata['filename'])+"."+self.getExtension()
 		outfile1 = os.path.join(self.params['pickdatadir'], outname1)
-		outname2 = os.path.basename(tiltdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+		outname2 = os.path.basename(tiltdata['filename'])+"."+self.getExtension()
 		outfile2 = os.path.join(self.params['pickdatadir'], outname1)
 
 		pixdiam = self.params['diam']/self.params['apix']/self.params['bin']

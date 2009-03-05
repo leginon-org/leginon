@@ -242,8 +242,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				sys.stderr.write(" %d left\n" % (total-count))
 
 			### check if automation was already run
-			outname1 = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
-			outname2 = os.path.basename(tiltdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+			outname1 = os.path.basename(imgdata['filename'])+"."+self.getExtension()
+			outname2 = os.path.basename(tiltdata['filename'])+"."+self.getExtension()
 			outfile1 = os.path.join(self.params['pickdatadir'], outname1)
 			outfile2 = os.path.join(self.params['pickdatadir'], outname2)
 			if os.path.isfile(outfile1):
@@ -293,7 +293,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.theta = abs(tilt2) - abs(tilt1)
 		self.app.data['theta'] = self.theta
 		self.app.data['filetypeindex'] = self.params['outtypeindex']
-		outname = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+		outname = os.path.basename(imgdata['filename'])+"."+self.getExtension()
 		outfile = os.path.join(self.params['pickdatadir'], outname)
 		self.app.data['outfile'] = outfile
 		self.app.data['dirname'] = self.params['pickdatadir']
