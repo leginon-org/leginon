@@ -59,7 +59,7 @@ if ($stackdatas) {
 		}
 		$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
 		if ($clusterruns) {
-			echo "<br/>".count($clusterruns)." cluster runs completed on this feature analysis run, "
+			echo "<br/>".count($clusterruns)." cluster runs completed on this alignment run, "
 				."<a href='clusterlist.php?expId=$expId'>view particle clusters</a>\n";
 		}
 		echo "</td></tr>\n";
