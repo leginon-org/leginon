@@ -33,13 +33,13 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#=======================================
 	def preLoopFunctions(self):
+		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
+		apParam.createDirectory(self.params['pickdatadir'], warning=False)
 		if self.params['sessionname'] is not None:
 			self.processAndSaveAllImages()
 		self.app = ApTiltPicker.PickerApp(mode='loop')
 		self.app.appionloop = self
 		self.theta = 0.0
-		self.params['pickdatadir'] = os.path.join(self.params['rundir'],"pickdata")
-		apParam.createDirectory(self.params['pickdatadir'], warning=False)
 
 	#=======================================
 	def postLoopFunctions(self):
@@ -242,7 +242,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				sys.stderr.write(" %d left\n" % (total-count))
 
 			### check if automation was already run
-			outfile = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+			outfile = os.path.join(self.params['pickdatadir'], 
+				os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension())
 			if os.path.isfile(outfile):
 				sys.stderr.write(",")
 			else:
@@ -285,12 +286,13 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.theta = abs(tilt2) - abs(tilt1)
 		self.app.data['theta'] = self.theta
 		self.app.data['filetypeindex'] = self.params['outtypeindex']
-		self.app.data['outfile'] = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.app.getExtension()
+		self.app.data['outfile'] = os.path.join(self.params['pickdatadir'], 
+			os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension())
 		self.app.data['dirname'] = self.params['pickdatadir']
 		self.app.data['image1file'] = apDisplay.short(imgdata['filename'])
 		self.app.data['image2file'] = apDisplay.short(tiltdata['filename'])
 		self.app.data['pixdiam'] = self.params['diam']/self.params['apix']/self.params['bin']
-		print "pixdiam=", self.app.data['pixdiam']
+		#print "pixdiam=", self.app.data['pixdiam']
 		#print "theta=",self.app.data['theta']
 
 		#pre-load particle picks
@@ -315,6 +317,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		#guess the shift
 		outfile = self.app.data['outfile']
 		if not os.path.isfile(outfile):
+			apDisplay.printMsg("Autopicking image")
 			if len(self.app.picks1) > 0 and len(self.app.picks2) > 0 and self.params['autopick'] is True:
 				self.app.onGuessShift(None)
 		else:
