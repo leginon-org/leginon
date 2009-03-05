@@ -44,16 +44,13 @@ if ($stackdatas) {
 				if ($clusterdatas) {
 					echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
 					echo "<tr><td>\n";
+					echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
+						." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
+					echo "<br/>";
 					if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-						echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
-							." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
-						echo "<br/>";
 						echo "<b>Type:</b> <i>Imagic MSA</i><br/>\n";
 						echo "<ul>\n";
 					} elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
-						echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
-							." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
-						echo "<br/>";
 						echo "<b>Type:</b> <i>SPIDER Coran</i><br/>\n";
 						echo "<b>Method:</b> <i>".$clusterrun['method']."</i><br/>\n";
 						echo "<b>Factor list:</b> <i>".$clusterrun['factor_list']."</i>\n";
@@ -62,9 +59,6 @@ if ($stackdatas) {
 						// KerDen only has one cluster data
 						$clusterdata = $clusterdatas[0];
 						$clusterid = $clusterdata['clusterid'];
-						echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
-							." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
-						echo "<br/>";
 						echo "<b>Type:</b> <i>Xmipp KerDen SOM</i><br/><br/>\n";
 
 						$montagefile = $clusterdata['path']."/"."montage.png";
