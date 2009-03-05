@@ -21,7 +21,7 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 $javascript.= editTextJava();
 
-processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascript, True);
+processing_header("Feature Analysis List","Feature Analysis List", $javascript, True);
 
 // --- Get Stack Data --- //
 $particle = new particledata();
@@ -31,19 +31,19 @@ $stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
-	echo "<h3><a href='alignsummary.php?expId=$expId&analysis=1'>Show Composite Page</a></h3>\n";
+	echo "<h2>Feature Analysis List</h2>\n";
+	echo "<h4><a href='alignsummary.php?expId=$expId&analysis=1'>Show Composite Page</a></h4>\n";
 	foreach ($stackdatas as $stackdata) {
 		$alignstackid = $stackdata['alignstackid'];
 		$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, False);
 		foreach ($analysisdatas as $analysisdata) {
 			$analysisid = $analysisdata['analysisid'];
-			echo openRoundBorder();
-			echo "<table cellspacing='8' cellpading='5' border='0'>\n";
+			echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
 			echo "<tr><td>\n";
 			echo analysissummarytable($analysisid, true);
 			$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
 			if ($clusterruns) {
-				echo "<br/>".count($clusterruns)." cluster runs completed on this feature analysis run, "
+				echo count($clusterruns)." cluster runs completed on this feature analysis run, "
 					."<a href='clusterlist.php?expId=$expId'>view particle clusters</a><br/><br/>\n";
 			}
 			if ($analysisdata['REF|ApCoranRunData|coranrun'] != false) {
@@ -57,11 +57,10 @@ if ($stackdatas) {
 			} 
 			echo "</td></tr>\n";
 			echo "</table>\n";
-			echo closeRoundBorder();
 			echo "<br/>\n";
 		}
 	}
-	echo "<h3><a href='alignsummary.php?expId=$expId&analysis=1'>Show Composite Page</a></h3>\n";
+	echo "<h4><a href='alignsummary.php?expId=$expId&analysis=1'>Show Composite Page</a></h4>\n";
 	echo "</form>\n";
 } else {
 	echo "<B>Session does not contain any aligned stacks.</B>\n";

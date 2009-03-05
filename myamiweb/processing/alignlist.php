@@ -23,7 +23,7 @@ if ($_GET['showHidden'])
 
 $javascript.= editTextJava();
 
-processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascript, True);
+processing_header("Aligned Stack List","Aligned Stack List", $javascript, True);
 
 // --- Get Stack Data --- //
 $particle = new particledata();
@@ -37,24 +37,19 @@ if (!$_GET['showHidden']) {
 	$hidestackdatas = $stackdatas;
 }
 
-if (count($stackdatas) != count($hidestackdatas) && !$_GET['showHidden']) {
-	$numhidden = count($hidestackdatas) - count($stackdatas);
-	echo "<a href='".$formAction."&showHidden=True'>[Show ".$numhidden." hidden aligned stacks]</a><br/>\n";
-}
-
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
-	echo "<h3><a href='alignsummary.php?expId=$expId'>Show Composite Page</a></h3>\n";
+	echo "<h2>Alignment Stack List</h2>\n";
+	echo "<h4><a href='alignsummary.php?expId=$expId'>Show Composite Page</a></h4>\n";
 	//echo print_r($stackdatas)."<br/>\n";
 	foreach ($stackdatas as $stackdata) {
-		echo openRoundBorder();
-		echo "<table cellspacing='8' cellpading='5' border='0'>\n";
+		echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
 		$alignstackid = $stackdata['alignstackid'];
 		echo "<tr><td>\n";
 		echo alignstacksummarytable($alignstackid, true);
 		$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, true);
 		if ($analysisdatas) {
-			echo "<br/>".count($analysisdatas)." feature analysis runs completed on this align run, "
+			echo count($analysisdatas)." feature analysis runs completed on this align run, "
 				."<a href='analysislist.php?expId=$expId'>view feature analysis runs</a><br/><br/>\n";
 			echo "<a class='btp1' href='selectFeatureAnalysis.php?expId=$expId&alignId=$alignstackid'>"
 				."Run Another Feature Analysis On Align Stack Id $alignstackid</a><br/>\n";
@@ -69,10 +64,9 @@ if ($stackdatas) {
 		}
 		echo "</td></tr>\n";
 		echo "</table>\n";
-		echo closeRoundBorder();
 		echo "<br/>\n";
 	}
-	echo "<h3><a href='alignsummary.php?expId=$expId'>Show Composite Page</a></h3>\n";
+	echo "<h4><a href='alignsummary.php?expId=$expId'>Show Composite Page</a></h4>\n";
 	echo "</form>\n";
 } else {
 	echo "<B>Session does not contain any aligned stacks.</B>\n";

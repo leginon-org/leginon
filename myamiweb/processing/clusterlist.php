@@ -21,7 +21,7 @@ $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 $javascript.= editTextJava();
 
-processing_header("Aligned Stack Report","Aligned Stack Summary Page", $javascript, True);
+processing_header("Cluster Stack List","Cluster Stack List", $javascript, True);
 
 // --- Get Stack Data --- //
 $particle = new particledata();
@@ -31,7 +31,8 @@ $stackdatas = $particle->getAlignStackIdsWithAnalysis($expId, $projectId);
 
 if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
-	echo "<h3><a href='alignsummary.php?expId=$expId&cluster=1'>Show Composite Page</a></h3>\n";
+	echo "<h2>Cluster Stack List</h2>\n";
+	echo "<h4><a href='alignsummary.php?expId=$expId&cluster=1'>Show Composite Page</a></h4>\n";
 	foreach ($stackdatas as $stackdata) {
 		$alignstackid = $stackdata['alignstackid'];
 		$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, $projectId, False);
@@ -40,17 +41,16 @@ if ($stackdatas) {
 				$clusterrunid = $clusterrun['clusterrunid'];
 				$clusterdatas = $particle->getClusteringStacksForClusteringRun($clusterrunid, false);
 				if ($clusterdatas) {
-					echo openRoundBorder();
-					echo "<table cellspacing='8' cellpading='5' border='0'>\n";
+					echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
 					echo "<tr><td>\n";
 					if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-						echo "<b>Cluster Run ".$clusterrunid."</b>"
-							.", <br/>method='<i> Hierarchical Clustering (IMAGIC)"
+						echo "<b>Cluster Run ".$clusterrunid."</b>: <i>Imagic MSA</i><br/>\n"
+							."method='<i> Hierarchical Clustering (IMAGIC)"
 							."</i>', <br/>factor list='<i>69 Eigen Images, (eigenimages.img)</i>'\n";
 						echo "<ul>\n";
 					} elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
-						echo "<b>Cluster Run ".$clusterrunid."</b>"
-							.", <br/>method='<i>".$clusterrun['method']." (SPIDER) "
+						echo "<b>Cluster Run ".$clusterrunid."</b>: <i>SPIDER Coran</i><br/>\n"
+							."method='<i>".$clusterrun['method']." (SPIDER) "
 							."</i>', <br/>factor list='<i>".$clusterrun['factor_list']."</i>'\n";
 						echo "<ul>\n";
 					} elseif ($clusterrun['REF|ApKerDenSOMParamsData|kerdenparams']) {
@@ -61,10 +61,14 @@ if ($stackdatas) {
 							."<i>KerDen Self-Organizing Map (Xmipp)</i><br/>\n";
 						$montagefile = $clusterdata['path']."/"."montage.png";
 						echo "<a href='loadimg.php?filename=$montagefile'>\n"
-							."<img src='loadimg.php?h=80&filename=$montagefile' height='80'><br/>View Montage</a>\n";
+							."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>";
+
+						echo "<ul>\n";
+						echo "<li><a href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
 						$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-						echo "&nbsp;<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-							." View as Stack</a><br/>\n";
+						echo "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+							."View montage as a stack for further processing</a><br/>\n";
+						echo "</ul>\n";
 					}
 					foreach ($clusterdatas as $clusterdata) {
 						$clusterid = $clusterdata['clusterid'];
@@ -87,13 +91,12 @@ if ($stackdatas) {
 					echo "</ul>\n";
 					echo "</td></tr>\n";
 					echo "</table>\n";
-					echo closeRoundBorder();
 					echo "<br/>\n";
 				}
 			}
 		}
 	}
-	echo "<h3><a href='alignsummary.php?expId=$expId&cluster=1'>Show Composite Page</a></h3>\n";
+	echo "<h4><a href='alignsummary.php?expId=$expId&cluster=1'>Show Composite Page</a></h4>\n";
 	echo "</form>\n";
 } else {
 	echo "<B>Session does not contain any aligned stacks.</B>\n";

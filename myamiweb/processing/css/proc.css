@@ -29,6 +29,12 @@ input.edit {
       padding: 1px 1px 1px 1px;
 }
 
+.tablebubble
+{
+	border:		 solid;
+	border-color:    #D4D0C8;
+}
+
 /* Header */
 #apheader hr {display:none;}
 #apheader ul {

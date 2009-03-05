@@ -57,8 +57,7 @@ if ($stackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	//echo print_r($stackdatas)."<br/>\n";
 	foreach ($stackdatas as $stackdata) {
-		echo openRoundBorder();
-		echo "<table cellspacing='8' cellpading='5' border='0'>\n";
+		echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
 		$alignstackid = $stackdata['alignstackid'];
 		if ($_GET['showHidden'])
 			$analysisdatas = $particle->getAnalysisRunForAlignStack($alignstackid, $projectId, true);
@@ -188,7 +187,6 @@ if ($stackdatas) {
 			echo "</td></tr>\n";
 		}
 		echo "</table>\n";
-		echo closeRoundBorder();
 		echo "<br/>\n";
 	}
 	echo "</form>\n";
