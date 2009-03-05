@@ -1,4 +1,75 @@
-Steps to install Appion on a CentOS 5 machine
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="docbook.css" type="text/css"?>
+<!DOCTYPE set SYSTEM "dtd/docbookx.dtd" [
+<!ENTITY Intro SYSTEM "Intro.xml">
+<!ENTITY AppCreateEdit SYSTEM "AppCreateEdit.xml">
+<!ENTITY UpdateInstall SYSTEM "Update1_5.xml">
+<!ENTITY Install SYSTEM "Install.xml">
+<!ENTITY NodeDescribe SYSTEM "NodeDescribe.xml">
+<!ENTITY EmSetup SYSTEM "EmSetup.xml">
+<!ENTITY TroubleShoot SYSTEM "TroubleShoot.xml">
+<!ENTITY AppMSI SYSTEM "AppMSI.xml">
+<!ENTITY AppManual SYSTEM "AppManual.xml">
+<!ENTITY AppMSIpref SYSTEM "AppMSIpref.xml">
+<!ENTITY Authors SYSTEM "Authors.xml">
+<!ENTITY AppMSIT SYSTEM "AppMSIT.xml">
+<!ENTITY StartLeg SYSTEM "StartLeg.xml">
+<!ENTITY Admin SYSTEM "Admin.xml">
+<!ENTITY NewVersion SYSTEM "New1_6.xml">
+<!ENTITY AppTomo SYSTEM "AppTomo.xml">
+<!ENTITY AppCal SYSTEM "AppCal.xml">
+<!ENTITY AppMSIE SYSTEM "AppMSIE.xml">
+<!ENTITY AppMSISection SYSTEM "AppMSISection.xml">
+<!ENTITY AppMSIRaster SYSTEM "AppMSIRaster.xml">
+<!ENTITY TroubleShootInstall SYSTEM "TroubleShootInstall.xml">
+]>
+<set version="$Revision: 1.196 $">
+  <title>Leginon Manual </title>
+  <subtitle></subtitle>
+  <setinfo>
+    <author>
+      &Authors;
+    </author>
+  </setinfo>
+  <toc>
+    <tocpart>
+      <tocentry> <link linkend="bookfull">Full Manual</link></tocentry>
+      <tocentry> <link linkend="bookinstall">Installation Manual</link></tocentry>
+      <tocentry> <link linkend="bookshort">Beginner Manual</link></tocentry>
+    </tocpart>
+  </toc>
+  <book version="$Revision: 1.196 $">
+    <title><anchor id="bookfull"/>Leginon Full Manual </title>
+    <bookinfo>
+      <author>
+        &Authors;
+      </author>
+    </bookinfo>
+    &Intro;
+  </book>
+  <book>
+    <title><anchor id="bookinstall"/>Leginon Installation Manual </title>
+    <bookinfo>
+      <author>
+        &Authors;
+      </author>
+    </bookinfo>
+    &Intro;
+  </book>
+  <book>
+    <title><anchor id="bookshort"/>Leginon Short Manual </title>
+    <bookinfo>
+      <author>
+        &Authors;
+      </author>
+    </bookinfo>
+    &Intro;
+  </book>
+</set>
+
+
+
+Steps to install Appion on a CentOS 5.2 machine
 
 ================================
 == Pre-install ==
@@ -309,9 +380,9 @@ mysqladmin -u root password NEWPASSWORD
 </code>
 
 	* Create a new user, database, and give user access to databases
-<code>
+{{{
 mysql -u root -p
-CREATE USER 'appiondata';
+CREATE USER 'appionuser';
 CREATE DATABASE leginondata;
 CREATE DATABASE projectdata;
 CREATE DATABASE appiondata;
@@ -319,6 +390,35 @@ GRANT ALL PRIVILEGES ON leginondata.* TO appionuser@"%";
 GRANT ALL PRIVILEGES ON projectdata.* TO appionuser@"%";
 GRANT ALL PRIVILEGES ON appiondata.* TO appionuser@"%";
 <Ctrl-D>
+}}}
+
+	* Setup a sinedon.cfg in the home directory for all users
+{{{
+nano sinedon.cfg
+}}}
+		* add the following lines
+{{{
+[global]
+host:	'server ip address'
+
+[leginondata]
+db:	dbemdata
+user:	appionuser
+
+[appionData]
+db:	dbappiondata
+user:	appionuser
+
+[project]
+db:	project
+user:	appionuser
+}}}
+	* Go into sinedon directory
+	* Fill databases with maketables.py
+<code>
+./maketables.py leginondata
+./maketables.py appionData
+./maketables.py project
 </code>
 
 -------------------------------
