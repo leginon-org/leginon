@@ -394,11 +394,6 @@ if ($expId) {
 		$norefresults[] = ($norefq==0) ? "" : "$norefq align queued";
 		$norefresults[] = ($norefclq==0) ? "" : "$norefq avg queued";
 
-		$nruns[]=array(
-			       'name'=>"<a href='runNoRefAlignment.php?expId=$sessionId'>Old Spider Ref-free</a>",
-			       'result'=>$norefresults,
-				 );
-
 		$data[]=array(
 			      'action'=>array($action, $celloption),
 			      'result'=>array(""),
