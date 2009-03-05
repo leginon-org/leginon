@@ -314,14 +314,20 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		tiltpath = os.path.join(self.params['rundir'], tiltname)
 
 		### set out file
-		outname = (imgname+"-alignment.spi")
-		outfile = os.path.join(self.params['pickdatadir'], outname)
+		outname1 = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+		outfile1 = os.path.join(self.params['pickdatadir'], outname1)
+		outname2 = os.path.basename(tiltdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+		outfile2 = os.path.join(self.params['pickdatadir'], outname1)
 
 		pixdiam = self.params['diam']/self.params['apix']/self.params['bin']
 
 		### run tilt automation
 		autotilter = autotilt.autoTilt()
-		result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, theta, outfile, pixdiam)
+		result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, theta, outfile1, pixdiam)
+		if os.path.isfile(outfile1):
+			if os.path.exists(outfile2):
+				os.remove(outfile2)
+			os.symlink(os.path.basename(outfile1), outfile2)
 
 		if result is None:
 			apDisplay.printWarning("Image processing failed")
@@ -329,7 +335,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			return
 
 		### read alignment results
-		self.data = tiltfile.readData(outfile)
+		self.data = tiltfile.readData(outfile1)
 		self.currentpicks1 = numpy.asarray(self.data['picks1'])
 		self.currentpicks2 = numpy.asarray(self.data['picks2'])
 
