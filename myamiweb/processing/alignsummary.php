@@ -96,32 +96,37 @@ if ($stackdatas) {
 					}
 				}
 				echo "<tr><td>\n";
-				$numclusters = count($particle->getClusteringStacks($expId, $projectId));
-				echo apdivtitle("Clustering Info: ".$numclusters." clusters\n");
 
 				foreach ($clusterruns as $clusterrun) {
 					$clusterrunid = $clusterrun['clusterrunid'];
+					$clusterrunname = $clusterrun['runname'];
 					if ($_GET['showHidden'])
 						$clusterdatas = $particle->getClusteringStacksForClusteringRun($clusterrunid, true);
 					else
 						$clusterdatas = $particle->getClusteringStacksForClusteringRun($clusterrunid, false);
 					if ($clusterdatas) {
 						if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-							echo "<b>Cluster Run ".$clusterrunid."</b>"
-								.", method='<i> Hierarchical Clustering (IMAGIC)"
-								."</i>', factor list='<i>69 Eigen Images, (eigenimages.img)</i>'\n";
+							echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
+								." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
+							echo "<br/>";
+							echo "<b>Type:</b> <i>Imagic MSA</i><br/>\n";
 							echo "<ul>\n";
 						} elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
-							echo "<b>Cluster Run ".$clusterrunid."</b>"
-								.", method='<i>".$clusterrun['method']." (SPIDER) "
-								."</i>', factor list='<i>".$clusterrun['factor_list']."</i>'\n";
+							echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
+								." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
+							echo "<br/>";
+							echo "<b>Type:</b> <i>SPIDER Coran</i><br/>\n";
+							echo "<b>Method:</b> <i>".$clusterrun['method']."</i><br/>\n";
+							echo "<b>Factor list:</b> <i>".$clusterrun['factor_list']."</i>\n";
 							echo "<ul>\n";
 						} elseif ($clusterrun['REF|ApKerDenSOMParamsData|kerdenparams']) {
 							// KerDen only has one cluster data
 							$clusterdata = $clusterdatas[0];
 							$clusterid = $clusterdata['clusterid'];
-							echo "<b>Cluster Run ".$clusterrunid.":</b>&nbsp;\n"
-								."<i>KerDen Self-Organizing Map (Xmipp)</i><br/>\n";
+							echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
+								." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
+							echo "<br/>";
+							echo "<b>Type:</b> <i>Xmipp KerDen SOM</i><br/><br/>\n";
 							$montagefile = $clusterdata['path']."/"."montage.png";
 							echo "<a href='loadimg.php?filename=$montagefile'>\n"
 								."<img src='loadimg.php?h=80&filename=$montagefile' height='80'><br/>View Montage</a>\n";

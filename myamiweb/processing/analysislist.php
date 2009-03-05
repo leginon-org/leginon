@@ -40,7 +40,7 @@ if ($stackdatas) {
 			$analysisid = $analysisdata['analysisid'];
 			echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
 			echo "<tr><td>\n";
-			echo analysissummarytable($analysisid, true);
+			echo analysissummarytable($analysisid, false);
 			$clusterruns = $particle->getClusteringRunsForAlignStack($alignstackid, false);
 			if ($clusterruns) {
 				echo count($clusterruns)." cluster runs completed on this feature analysis run, "

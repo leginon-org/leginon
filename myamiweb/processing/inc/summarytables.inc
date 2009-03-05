@@ -252,8 +252,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	$numpart = $particle->getNumAlignStackParticles($alignstackid);
 	//echo $numpart."<br/>\n";
 
-	$j = "Align Stack Info: <a class='aptitle' href='alignreport.php?expId=$expId&sId=$alignstackid'>"
-		.$stackdata['runname']."</a> (ID: $alignstackid)\n";
+	$j = "Align Stack Info: <span class='aptitle' >"
+		.$stackdata['runname']."</span> (ID: $alignstackid)\n";
 	if ($stackdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideStack".$alignstackid."' value='unhide'>\n";
@@ -369,7 +369,8 @@ function analysissummarytable($analysisid, $mini=false) {
 		$analysisdata['hidden']='0';
 	}
 
-	$j = "Analysis Info: ".$analysisdata['runname']." (ID: $analysisid)\n";
+	$j = "Analysis Info: <span class='aptitle'>"
+		.$analysisdata['runname']."</span> (ID: $analysisid)\n";
 	if ($analysisdata['hidden'] == 1) {
 		$j.= " <font color='#cc0000'>HIDDEN</font>\n";
 		$j.= " <input class='edit' type='submit' name='unhideAnalysis".$analysisid."' value='unhide'>\n";
