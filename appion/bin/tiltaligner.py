@@ -242,9 +242,11 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				sys.stderr.write(" %d left\n" % (total-count))
 
 			### check if automation was already run
-			outfile = os.path.join(self.params['pickdatadir'], 
-				os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension())
-			if os.path.isfile(outfile):
+			outname1 = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+			outname2 = os.path.basename(tiltdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+			outfile1 = os.path.join(self.params['pickdatadir'], outname1)
+			outfile2 = os.path.join(self.params['pickdatadir'], outname2)
+			if os.path.isfile(outfile1):
 				sys.stderr.write(",")
 			else:
 				### set important parameters
@@ -258,9 +260,14 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				### run tilt automation
 				if len(picks1) > 0 and len(picks2) > 0 and self.params['autopick'] is True:
 					autotilter = autotilt.autoTilt()
-					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, tiltdiff, outfile, pixdiam, tiltaxis, msg=False)
+					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, 
+						tiltdiff, outfile1, pixdiam, tiltaxis, msg=False)
+					if os.path.isfile(outfile1) and not os.path.exists(outfile2):
+						if os.path.exists(outfile2):
+							os.remove(outfile2)
+						os.symlink(os.path.basename(outfile1), outfile2)
 				sys.stderr.write("%")
-			apDisplay.printMsg("done") 
+		apDisplay.printMsg("done") 
 		return
 
 	#=======================================
@@ -286,8 +293,9 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		self.theta = abs(tilt2) - abs(tilt1)
 		self.app.data['theta'] = self.theta
 		self.app.data['filetypeindex'] = self.params['outtypeindex']
-		self.app.data['outfile'] = os.path.join(self.params['pickdatadir'], 
-			os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension())
+		outname = os.path.basename(imgdata['filename'])+".dwn.mrc"+"."+self.getExtension()
+		outfile = os.path.join(self.params['pickdatadir'], outname)
+		self.app.data['outfile'] = outfile
 		self.app.data['dirname'] = self.params['pickdatadir']
 		self.app.data['image1file'] = apDisplay.short(imgdata['filename'])
 		self.app.data['image2file'] = apDisplay.short(tiltdata['filename'])
@@ -316,7 +324,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 		#guess the shift
 		outfile = self.app.data['outfile']
-		if not os.path.isfile(outfile):
+		if not os.path.exists(outfile):
 			apDisplay.printMsg("Autopicking image")
 			if len(self.app.picks1) > 0 and len(self.app.picks2) > 0 and self.params['autopick'] is True:
 				self.app.onGuessShift(None)
