@@ -262,7 +262,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 					autotilter = autotilt.autoTilt()
 					result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, 
 						tiltdiff, outfile1, pixdiam, tiltaxis, msg=False)
-					if os.path.isfile(outfile1) and not os.path.exists(outfile2):
+					if os.path.isfile(outfile1):
 						if os.path.exists(outfile2):
 							os.remove(outfile2)
 						os.symlink(os.path.basename(outfile1), outfile2)
