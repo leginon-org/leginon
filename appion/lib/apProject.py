@@ -33,7 +33,6 @@ def getProjectIdFromSessionId(sessionid):
 	projectid = getProjectIdFromSessionName(sessionname)
 	return projectid
 
-
 #========================
 def getProjectIdFromStackId(stackid):
 	sessiondata = apStack.getSessionDataFromStackId(stackid)
@@ -47,6 +46,11 @@ def getProjectIdFromAlignStackId(alignstackid):
 	stackid = alignstackdata['stack'].dbid
 	projectid = getProjectIdFromStackId(stackid)	
 	return projectid
+
+#========================
+def getAppionDBFromProjectId(projectid):
+	""" Not working """
+	return "ap"+str(projectid)
 
 
 
