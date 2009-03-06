@@ -15,7 +15,8 @@ require "inc/viewer.inc";
 require "inc/processing.inc";
 require "inc/appionloop.inc";
 
-$defaultcs="2.0";
+// Cs should come straight out of the DB somehow, instead it is in config
+$defaultcs=$DEFAULTCS;
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {

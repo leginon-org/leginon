@@ -16,7 +16,6 @@ require "inc/processing.inc";
 require "inc/appionloop.inc";
 
 // Cs should come straight out of the DB somehow, instead it is in config
-require_once "config_processing.php";
 $defaultcs=$DEFAULTCS;
 
 // IF VALUES SUBMITTED, EVALUATE DATA
