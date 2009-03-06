@@ -16,6 +16,7 @@ import apDisplay
 import apDatabase
 import apParam
 import apFile
+import apProject
 #leginon
 import sinedon
 from pyami import mem
