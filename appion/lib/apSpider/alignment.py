@@ -553,7 +553,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	### generate factor maps
 	apDisplay.printMsg("creating factor maps")
 	for f1 in range(1,min(numfactors,2)):
-		for f2 in range(f1+1, numfactors+1):
+		for f2 in range(f1+1, min(3,numfactors+1)):
 			sys.stderr.write(".")
 			try:
 				createFactorMap(f1, f2, rundir, dataext)
