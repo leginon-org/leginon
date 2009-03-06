@@ -137,8 +137,9 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		### get database information
+		### get original align stack
 		alignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], self.analysisdata['alignstack']['spiderfile'])
+		### get database information
 		numpart = self.analysisdata['alignstack']['num_particles']
 		corandata = os.path.join(self.analysisdata['path']['path'],"coran/corandata")
 
