@@ -1416,8 +1416,6 @@ def subSQLColumns(value_dict, data_instance):
 			row.update(result[1])
 			continue
 
-		#raise ValueError('%s, %s, %s, %s' % (data_instance.__class__, key, value, value_type))
-		print 'subSQLColumns failed', data_instance.__class__, key, value, value_type
 	return columns, row
 
 def dataSQLColumns(data_instance):
