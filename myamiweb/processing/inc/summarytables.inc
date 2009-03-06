@@ -53,7 +53,7 @@ function stacksummarytable($stackid) {
 		$centered = True;
 	}
 
-	$stacktable.= "<table border='0' width='700'>\n";
+	$stacktable.= "<table border='0' width='700' >\n";
 	$stackavg = $stackdata['path']."/average.mrc";
 	$badstackavg = $stackdata['path']."/badaverage.mrc";
 	$montage = $stackdata['path']."/montage".$stackdata['DEF_id'].".png";
@@ -380,10 +380,13 @@ function analysissummarytable($analysisid, $mini=false) {
 	$analysistable.= apdivtitle($j);
 	//echo $j."<br/>\n";
 
-	$analysistable.= "<table border='0'>\n";
+	$analysistable.= "<table border='0' align='center' valign='top'>\n";
+	// open table row
+	$analysistable.= "<tr>\n";
+
 	$dendrogram = $analysisdata['path']."/dendrogram.png";
 	if (file_exists($dendrogram)) {
-		$analysistable.= "<tr>\n";
+
 		$analysistable.= "<td rowspan='30' align='center' valign='top'>";
 		$analysistable.= "<a href='loadimg.php?filename=$dendrogram'>\n";
 		if ($mini)
@@ -392,8 +395,38 @@ function analysissummarytable($analysisid, $mini=false) {
 			$analysistable.= "<img src='loadimg.php?filename=$dendrogram&s=160' height='160' border='1'></a><br/>\n";
 		$analysistable.= "<i>dendrogram</i>\n";
 		$analysistable.= "</td>\n";
-		$analysistable.= "</tr>\n\n";
+
 	} #endif
+
+	// eigen images
+	$eigendata = $particle->getCoranEigenDataFromAnalysis($analysisid);
+	if(!$mini && $eigendata) {
+		$analysistable.= "<td rowspan='30' align='center' valign='top'>\n";
+		$analysistable.= "<table class='tablebg' border='0' cellpadding='2'>\n";
+		$analysistable.= "<tr>\n";
+		foreach ($eigendata as $edata) {
+			$analysistable.= "<td>\n";
+			$index = (int) $edata['num'];
+			$efile = $edata['path']."/".$edata['name'];
+			$contrib = round($edata['contrib'],1);
+			$level = dechex($contrib/$eigendata[0]['contrib']*239 + 16);
+			$analysistable.=  "<a href='loadimg.php?filename=$efile' target='eigenimage'>\n"
+				."<img src='loadimg.php?filename=$efile&s=48' width='48' height='48' border='0'></a><br />\n";
+			$imgname = 'eigenimg'.$index;
+			$analysistable.=  "<center>$index ";
+			// when first loading page select first 3
+			// eigenimgs, otherwise reload selected
+			$analysistable.=  "<font color='#".$level."2222' size='-2'>($contrib %)</font></center>\n";
+			$analysistable.=  "</td>\n";
+			if ($index % 3 == 0) $analysistable.= "</tr>\n";
+			if ($index >= 9) break;
+		}
+		if ($index % 3 != 0) $analysistable.= "</tr>\n";
+		$analysistable.=  "</table>\n";
+	}
+
+	// close table row
+	$analysistable.= "</tr>\n\n";
 
 	// add edit button to description if logged in
 	$descDiv = ($_SESSION['username']) ? editButton($analysisid, $analysisdata['description']) : $analysisdata['description'];
@@ -426,9 +459,14 @@ function analysissummarytable($analysisid, $mini=false) {
 		$display_keys['overcorrection factor'] = $imagicrun['overcorrection'];
 		$display_keys['MSA method'] = $imagicrun['MSAmethod'];
 	}
+
+
+
+	// show data
 	foreach($display_keys as $k=>$v) {
-	        $analysistable.= formatHtmlRow($k,$v);
+		$analysistable.= formatHtmlRow($k,$v);
 	}
+
 	$analysistable.= "</table>\n";
 	$analysistable.= "<p>\n";
 	return $analysistable;
