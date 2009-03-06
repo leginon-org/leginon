@@ -89,16 +89,19 @@ function getAdminUserId(){
 }
 
 $nodenames = array(
-	'AcquisitionSettingsData'=>array('Grid','Square','Hole','Exposure','Square Q','Hole Q','Tomography Preview','Final Section','Subsquare'),
-	'FocuserSettingsData'=>array('Focus','Z Focus','Tomo Focus','Tomo Z Focus'),
-	'MosaicTargetMakerSettingsData'=>array('Grid Targeting'),
-	'MosaicClickTargetFinderSettingsData'=>array('Square Targeting','Raster Center Targeting'),
+	'AcquisitionSettingsData'=>array('Grid','Square','Hole','Preview','Exposure','Square Q','Hole Q','Tomography Preview','Final Section','Subsquare','Centered Square','Rough Tissue','Final Raster','Grid Survey','Mid Mag Survey','Reacquisition','High Mag Acquisition'),
+	'FocuserSettingsData'=>array('Focus','Z Focus','Tomo Focus','Tomo Z Focus','RCT Focus','Section Z Focus','Grid Focus','Section Focus'),
+	'MosaicTargetMakerSettingsData'=>array('Grid Targeting','Grid Targeting Robot','Grid Survey Targeting'),
+	'MosaicClickTargetFinderSettingsData'=>array('Square Targeting','Raster Center Targeting','Rough Tissue Targeting','Atlas View'),
 	'ClickTargetFinderSettingsData'=>array('Hole Targeting','Tomography Targeting'),
 	'HoleFinderSettingsData'=>array('Hole Targeting','Exposure Targeting'),
-	'JAHCFinderSettingsData'=>array('Hole Targeting','Exposure Targeting'),
-	'RasterFinderSettingsData'=>array('Subsquare Targeting','Exposure Targeting'),
-	'RasterTargetFilterSettingsData'=>array('Raster Generation'),
+	'JAHCFinderSettingsData'=>array('Hole Targeting','Exposure Targeting','RCT Targeting','Square Targeting'),
+	'RasterFinderSettingsData'=>array('Subsquare Targeting','Exposure Targeting','Square Centering','RCT Targeting','Mid Mag Survey Targeting','High Mag Raster Targeting'),
+	'RasterTargetFilterSettingsData'=>array('Raster Generation','Final Raster Targeting'),
+	'CenterTargetFilterSettingsData'=>array('Square Target Filtering'),
 	'TomographySettingsData'=>array('Tomography'),
+	'RCTAcquisitionSettingsData'=>array('RCT'),
+	'DTFinderSettingsData'=>array('Tissue Centering'),
 );
 
 $lpfids = array();
@@ -109,7 +112,7 @@ $user_id = getAdminUserId();
 foreach (array_keys($nodenames) as $table) {
 	foreach ($nodenames[$table] as $name) { 
 		$sqldata1 = getSettingsData($user_id,$table,$name);
-		if ($table == 'MosaicClickTargetFinderSettingsData' or 'HoleFinderSettingsData' or 'JAHCFinderSettingsData') {
+		if ($table == 'MosaicClickTargetFinderSettingsData' or 'HoleFinderSettingsData' or 'JAHCFinderSettingsData' or 'DTFinderSettingsData') {
 			foreach ($aliases as $alias) {
 				$id = $sqldata1['REF|LowPassFilterSettingsData|'.$alias]; 
 				if ($id != 0 and !in_array($id,$lpfids)) {
