@@ -362,7 +362,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 				boxsize=boxsize, maskpixrad=maskpixrad, 
 				numpart=self.params['numpart'], numfactors=self.params['numfactors'])
 			### make dendrogram
-			alignment.makeDendrogram(alignedstack, numfactors=self.params['numfactors'])
+			alignment.makeDendrogram(numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 

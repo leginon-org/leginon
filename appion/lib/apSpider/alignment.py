@@ -617,7 +617,7 @@ def createFactorMap(f1, f2, rundir, dataext):
 	return
 
 #===============================
-def makeDendrogram(alignedstack, numfactors=1, corandata="coran/corandata", dataext=".spi"):
+def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 
 	rundir = "cluster"
 	apParam.createDirectory(rundir)
