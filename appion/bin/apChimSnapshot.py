@@ -117,9 +117,20 @@ def save_image(path, format):
 
 # -----------------------------------------------------------------------------
 #
-def hideDust(surf):
-	from HideDust import dust
-	dust.hide_dust(surf, 'volume', limit, auto_update = True)
+def hideDust(volume, size=10):
+	"""
+	Hide all dust particles less than 10 voxels in size
+	"""
+	try:
+		from HideDust import dust
+		writeMessageToLog("hiding dust of size %.1f"%(size))
+		#writeMessageToLog(str(dir(dust))
+		#writeMessageToLog(str(help(dust))
+		dust.hide_dust(volume, 'size', limit, auto_update = True)
+		#runChimCommand('hide dust # %d'%(size))
+	except:
+		writeMessageToLog("skipping hide dust")
+		pass
 
 # -----------------------------------------------------------------------------
 #
@@ -135,8 +146,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	from chimera import openModels as om
 	surfs = om.list(modelTypes=[SurfaceModel])
 	
-	#for s in surfs:
-	#	hideDust(s)
+
 
 #	m = v.surface_model()
 	
@@ -148,6 +158,7 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	image3 = vol_path+'.3.png'
 
 	if sym[:4].lower() == 'icos':
+		hideDust(v, 2)
 		for s in surfs:
 			color_surface_radially(s)
 
@@ -181,9 +192,11 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 
 	else:
 		if sym.lower() != 'c1':
+			hideDust(v, 20)
 			for s in surfs:
 				color_surface_cylinder(s)
 		else:
+			hideDust(v, 10)
 			for s in surfs:
 				color_surface_height(s)
 		writeMessageToLog("turn: get top view")
