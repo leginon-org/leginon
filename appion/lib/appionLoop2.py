@@ -740,8 +740,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		### SKIP MESSAGE
 		if(self.stats['skipcount'] > 0):
-			apDisplay.printWarning("Images already processed and were therefore skipped (total "+\
-				str(self.stats['skipcount'])+" skipped).")
+			apDisplay.printWarning("Images already processed and were therefore skipped (total "+str(self.stats['skipcount'])+" skipped).")
 			apDisplay.printMsg("to process them again, remove \'continue\' option and run "+self.functionname+" again.")
 			self.stats['skipcount'] = 0
 
@@ -767,8 +766,7 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printWarning("waited longer than three hours for new images with no results, so I am quitting")
 			return False
 		apParam.closeFunctionLog(params=self.params, msg=False, stats=self.stats)
-		sys.stderr.write("\nAll images processed. Waiting ten minutes for new images (waited "+
-			+str(self.stats['waittime'])+" min so far).")
+		sys.stderr.write("\nAll images processed. Waiting ten minutes for new images (waited "+str(self.stats['waittime'])+" min so far).")
 		twait0 = time.time()
 		for i in range(20):
 			time.sleep(20)
