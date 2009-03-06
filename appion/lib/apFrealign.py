@@ -121,9 +121,9 @@ def generateParticleParams(params):
 			e1 = fr_eulers['phi']
 			e2 = fr_eulers['theta']
 			e3 = fr_eulers['psi']
-			# if icos, rotate eulers to crowther orientation
+			# if icos, rotate eulers to 3dem standard orientation
 			if params['sym']=='Icos':
-				newEulers = sumEulers([0,-31.7174744,0],[e1,e2,e3])
+				newEulers = sumEulers([90,-31.7174744,0],[e1,e2,e3])
 				fr_eulers['phi']=newEulers[0]
 				fr_eulers['theta']=newEulers[1]
 				fr_eulers['psi']=newEulers[2]
@@ -185,7 +185,7 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 	f.write('%d %d %d %d %d\n' % (params['psi'], params['theta'], params['phi'], params['deltax'], params['deltay']))
 	f.write('%d, %d\n' % (first, last))
 	if params['sym']=='Icos':
-		f.write('I2\n')
+		f.write('I\n')
 	else:
 		f.write('%s\n' % (params['sym']))
 	f.write('%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (params['relmag'], params['apix'], params['targetresidual'], params['residualthresh'], params['cs'], params['kv'], params['beamtiltx'], params['beamtilty']))

@@ -271,6 +271,9 @@ class frealignJob(appionScript.AppionScript):
 		self.params['workingvol'] = os.path.join(self.params['workingdir'],"workingvol.mrc")
 		# output param file will be saved as 'params.all.par' in the working directory
 		self.params['workingparam'] = os.path.join(self.params['workingdir'],"params.all.par")
+		# even & odd volumes will be saved in the working directory
+		evenvol = os.path.join(self.params['workingdir'],"even.mrc")
+		oddvol = os.path.join(self.params['workingdir'],"odd.mrc")
 		
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		self.params['stackfile'] = os.path.join(self.stackdata['path']['path'],self.stackdata['name'])
@@ -295,15 +298,22 @@ class frealignJob(appionScript.AppionScript):
 		#get initial model path
 		modeldata = apVolume.getModelFromId(self.params['modelid'])
 		self.params['initmodel'] = os.path.join(modeldata['path']['path'],modeldata['name'])
+		#get initial model orientation
+		modsym = modeldata['symmetry']['symmetry']
 
 		# for first iteration:
 		self.params['itervol']=None
 		self.params['iterparam']=None
 		
-		# if icosahedral recon, rotate volume to FREALIGN orientation
-		if self.params['sym'] == 'Icos':
-			outvol = os.path.join(self.params['rundir'],"threed.0.mrc")
-			emancmd = 'proc3d %s %s icos5fTo2f' % (self.params['initmodel'], outvol)
+		# if icosahedral recon, rotate volume to 3DEM standard orientation
+		outvol = os.path.join(self.params['rundir'],"threed.0.mrc")
+		tmpinvol = self.params['initmodel']
+		if modsym == 'Icos (5 3 2)':
+			emancmd = 'proc3d %s %s icos5fTo2f' % (tmpinvol, outvol)
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			tmpinvol = outvol
+		if modsym == 'Icos (5 3 2)' or modsym=='Icos (2 5 3)':
+			emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (tmpinvol, outvol)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			self.params['itervol'] = outvol
 
@@ -325,9 +335,7 @@ class frealignJob(appionScript.AppionScript):
 			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter'])+".par")
 			shutil.copy(self.params['workingvol'],self.params['itervol'])
 			shutil.copy(self.params['workingparam'],self.params['iterparam'])
-			evenvol = os.path.join(self.params['rundir'],'even.mrc')
-			oddvol = os.path.join(self.params['rundir'],'odd.mrc')
-			emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, str(self.params['iter']))
+			emancmd = 'proc3d %s %s fsc=fsc.eotest.%d' % (evenvol, oddvol, self.params['iter'])
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		print "Done!"
