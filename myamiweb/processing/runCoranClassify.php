@@ -57,7 +57,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set mask radius
 	$javascript .= "	if (stackArray[1]) {\n";
-	$javascript .= "		var maxmask = Math.floor(((stackArray[2]/2)-2)*stackArray[1]);\n";
+	$javascript .= "		var maxmask = Math.floor(((stackArray[2]/3))*stackArray[1]);\n";
 	$javascript .= "		document.viewerform.maskrad.value = maxmask;\n";
 	$javascript .= "	}\n";
 	$javascript .= "}\n";
@@ -123,7 +123,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		echo "<input type='hidden' name='stackid' value='$selectAlignId'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
-		$defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
+		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
 	} elseif ($alignIds) {
 		echo "
 		Aligned Stack:<BR>
