@@ -49,7 +49,7 @@ def getProjectIdFromAlignStackId(alignstackid):
 
 #========================
 def getAppionDBFromProjectId(projectid):
-	""" Not working """
+	""" Not working properly """
 	return "ap"+str(projectid)
 
 
