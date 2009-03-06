@@ -92,6 +92,8 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$rundescrval = $_POST['description'];
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '20';
 
+
+	$defaultbin = 3;
 	$defaultmaskrad = 100;
 
 	echo"
@@ -124,6 +126,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
 		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
+		$defaultbin = (int) floor($alignstack['boxsize']/32);
 	} elseif ($alignIds) {
 		echo "
 		Aligned Stack:<BR>
@@ -175,6 +178,12 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+	$bin = ($_POST['bin']) ? $_POST['bin'] : $defaultbin;
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
+	echo docpop('coranbin','Particle binning');
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "<br/>\n";
@@ -209,6 +218,7 @@ function runSpiderCoranClassify() {
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	$maskrad=$_POST['maskrad'];
 	$numfactors=$_POST['numfactors'];
+	$bin=$_POST['bin'];
 
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -240,6 +250,7 @@ function runSpiderCoranClassify() {
 	$command.="--alignstack=$stackid ";
 	$command.="--maskrad=$maskrad ";
 	$command.="--num-factors=$numfactors ";
+	$command.="--bin=$bin ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
@@ -266,6 +277,7 @@ function runSpiderCoranClassify() {
 		<tr><td>run id</td><td>$runname</td></tr>
 		<tr><td>stack id</td><td>$stackid</td></tr>
 		<tr><td>num factors</td><td>$numfactors</td></tr>
+		<tr><td>binning</td><td>$bin</td></tr>
 		<tr><td>run dir</td><td>$rundir</td></tr>
 		<tr><td>commit</td><td>$commit</td></tr>
 		</table>\n";
