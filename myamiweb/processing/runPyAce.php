@@ -251,11 +251,36 @@ function createPyAceForm($extra=false) {
 	<TR>
 	  <TD VALIGN='TOP'>";
 
+
 	createAppionLoopTable($sessiondata, $defrunname, "ctf");
+
+	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
+	echo "Reprocess Below Confidence Value<br />\n";
+	echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
+	echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
+	echo "<br />\n";
+	echo "<B>Nominal override:</B><br />\n";
+	echo "<INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>\n";
+	echo "Override Nominal Defocus<br />\n";
+	echo "Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>\n";
+	echo "<FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><br />";
+	if ($ctfruns > 0) {
+		echo"
+			<INPUT TYPE='checkbox' NAME='newnominal'>
+	    Use Previously ACE Estimated Defocus";
+	}
+
 	echo"
 	  </TD>
-	  <TD CLASS='tablebg'>
+	  <TD CLASS='tablebg'>";
 
+	srand(time());
+	if ((rand()%2) < 3) {
+		echo"<center><IMG SRC='img/ace1.jpg' WIDTH='300'></center><br />\n";
+	}
+
+
+	echo"
 	    <INPUT TYPE='checkbox' NAME='display' CHECKED>
 	    Write Result Images<br/>
 	    <br/>
@@ -307,22 +332,7 @@ function createPyAceForm($extra=false) {
 	echo "<INPUT TYPE='checkbox' NAME='drange'>\n";
 	echo docpop('drange','Compress Dynamic Range');
 	echo "<br />\n";
-	echo "<br />\n";
-	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
-	echo "Reprocess Below Confidence Value<br />\n";
-	echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
-	echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
-	echo "<br />\n";
-	echo "<B>Nominal override:</B><br />\n";
-	echo "<INPUT TYPE='checkbox' NAME='nominalcheck' onclick='enabledf(this)'>\n";
-	echo "Override Nominal Defocus<br />\n";
-	echo "Set Defocus:<INPUT TYPE='text' NAME='nominal' DISABLED VALUE='db value' SIZE='8'>\n";
-	echo "<FONT SIZE=-2><I>(in meters, i.e. <B>-2.0e-6</B>)</I></FONT><br />";
-	if ($ctfruns > 0) {
-		echo"
-			<INPUT TYPE='checkbox' NAME='newnominal'>
-	    Use Previously ACE Estimated Defocus";
-	}
+
 	echo"
 	  </TD>
 	</TR>
