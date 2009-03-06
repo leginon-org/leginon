@@ -60,7 +60,7 @@ class AppionScript(object):
 		if apDatabase.splitdb and 'projectid' in self.params and self.params['projectid'] is not None:
 			apDisplay.printWarning("Using split database")
 			# use a project database
-			newdbname = "ap"+str(self.params['projectid'])
+			newdbname = apProject.getAppionDBFromProjectId(self.params['projectid'])
 			sinedon.setConfig('appionData', db=newdbname)
 			apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
