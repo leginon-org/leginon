@@ -35,6 +35,8 @@ class CoranClassifyScript(appionScript.AppionScript):
 			help="Mask radius for particle coran (in Angstoms)", metavar="#")
 		self.parser.add_option("--num-part", dest="numpart", type="int",
 			help="Number of particles to use in classification", metavar="#")
+		self.parser.add_option("-b", "--bin", dest="bin", type="int", default=2,
+			help="Particle binning", metavar="#")
 
 	#=====================
 	def checkConflicts(self):
@@ -139,21 +141,24 @@ class CoranClassifyScript(appionScript.AppionScript):
 
 		### convert stack to spider
 		self.alignstackdata = self.getAlignedStack()
-		maskpixrad = self.params['maskrad']/self.alignstackdata['pixelsize']
-		clippixdiam = int(math.ceil(maskpixrad)+1)*2
+		maskpixrad = self.params['maskrad']/self.alignstackdata['pixelsize']/self.params['bin']
+		boxpixdiam = int(math.ceil(maskpixrad)+1)*2
+		if boxpixdiam*self.params['bin'] > self.alignstackdata['boxsize']:
+			boxpixdiam = math.floor(self.alignstackdata['boxsize']/self.params['bin'])
+		clippixdiam = boxpixdiam*self.params['bin']
 		apDisplay.printMsg("Pixel mask radius="+str(maskpixrad)) 
 
 		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['spiderfile'])
 		alignedstack = os.path.join(self.params['rundir'], self.alignstackdata['spiderfile'])
 		apFile.removeFile(alignedstack)
-		emancmd = "proc2d "+oldalignedstack+" "+alignedstack+" clip="+str(clippixdiam)+","+str(clippixdiam)
+		emancmd = ("proc2d %s %s shrink=%d clip=%d,%d"
+			%(oldalignedstack,alignedstack,self.params['bin'],clippixdiam,clippixdiam))
 		if self.params['numpart'] is not None:
 			emancmd += " last=%d"%(self.params['numpart']-1)
 			numpart = self.params['numpart']
 		else:
 			numpart = self.getNumAlignedParticles()
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
-
 
 		esttime = apAlignment.estimateTime(numpart, maskpixrad)
 		apDisplay.printColor("Running spider this can take awhile, estimated time: "+\
@@ -162,12 +167,14 @@ class CoranClassifyScript(appionScript.AppionScript):
 		### do correspondence analysis
 		corantime = time.time()
 		self.contriblist = alignment.correspondenceAnalysis( alignedstack, 
-			boxsize=clippixdiam, maskpixrad=maskpixrad, 
+			boxsize=boxpixdiam, maskpixrad=maskpixrad, 
 			numpart=numpart, numfactors=self.params['numfactors'])
 		corantime = time.time() - corantime
 
 		### make dendrogram
-		alignment.makeDendrogram(alignedstack, numfactors=min(3,self.params['numfactors']))
+		dendrotime = time.time()
+		alignment.makeDendrogram(numfactors=min(3,self.params['numfactors']))
+		dendrotime = time.time() - dendrotime
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
@@ -177,7 +184,10 @@ class CoranClassifyScript(appionScript.AppionScript):
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
 
+		apFile.removeFile(alignedstack, warn=True)
+
 		apDisplay.printMsg("Correspondence Analysis time: "+apDisplay.timeString(corantime))
+		apDisplay.printMsg("Make Dendrogram time: "+apDisplay.timeString(dendrotime))
 		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
 #=====================
