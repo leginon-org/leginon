@@ -50,7 +50,9 @@ $numpart = commafy($rctrun['numpart']);
 
 $rcttable.= "<br />\n";
 
-// Parameter table
+$rcttable .= "<table border='0'><tr><td valign='top'>";
+
+// Parameter Table
 $rcttable .= "<table class='tablebubble'>\n";
 	// Particle count
 	$rcttable .= "<tr><td valign='center'>\n";
@@ -77,14 +79,6 @@ $rcttable .= "<table class='tablebubble'>\n";
 		$rcttable .= "<tr><td valign='center'>\n";
 		$rcttable .= "<b>FSC Resolution:</b>\n</td><td valign='center'>\n".round($rctrun['fsc'],2)." &Aring;\n";
 
-		$halfint = (int) floor($rctrun['fsc']);
-		$rcttable .= "</td><td>\n";
-		$fscfile = $rctrun['path']."/".$rctrun['fscfile'];
-		$rcttable .= "<a href='fscplot.php?expId=$expId&width=800&height=600&apix=$stackapix&box=$boxsize&fscfile=$fscfile&half=$halfint'>"
-		."<img border='0' src='fscplot.php?expId=$expId&width=200&height=40&apix=$stackapix&box=$boxsize"
-		."&nomargin=TRUE&fscfile=$fscfile&half=$halfint'></a>\n";
-		$rcttable .= "</td></tr>\n";
-
 		$rcttable .= "<tr><td valign='center'>\n";
 		$rcttable .= "<b>Rmeasure Resolution:</b>\n</td><td valign='center'>\n".round($rctrun['rmeas'],2)." &Aring;\n";
 		$rcttable .= "</td></tr>\n";
@@ -98,7 +92,27 @@ $rcttable .= "<table class='tablebubble'>\n";
 	$rcttable .= "<b>Description:</b>\n</td><td valign='center' colspan='2'>\n$descDiv\n";
 	$rcttable .= "</td></tr>\n";
 $rcttable .= "</table><br/>\n";
-// End Table
+// End Parameter Table
+
+$rcttable .= "</td><td>\n";
+
+// FSC Table
+	if ($rctrun['fscfile']) {
+		$rcttable .= "<table border='0'>\n";
+		$rcttable .= "<tr><td valign='center'>\n";
+		$halfint = (int) floor($rctrun['fsc']);
+		$rcttable .= "</td><td>\n";
+		$fscfile = $rctrun['path']."/".$rctrun['fscfile'];
+		$rcttable .= "<a href='fscplot.php?expId=$expId&width=800&height=600&apix=$stackapix&box=$boxsize&fscfile=$fscfile&half=$halfint'>"
+		."<img border='0' src='fscplot.php?expId=$expId&width=350&height=250&apix=$stackapix&box=$boxsize"
+		."&fscfile=$fscfile&half=$halfint'></a>\n";
+		$rcttable .= "</td></tr>\n";
+		$rcttable .= "</table><br/>\n";
+	}
+// End FSC Table
+
+$rcttable .= "</td></tr>\n";
+$rcttable .= "</table><br/>\n";
 
 $numiter = (int) $rctrun['numiter'];
 for ($i = 0; $i <= $numiter; $i++) {
