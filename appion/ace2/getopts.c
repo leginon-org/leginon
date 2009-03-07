@@ -158,7 +158,7 @@ int getopts(int argc, char **argv, struct options opts[], char arg[] ) {
 			}
 				
 			option_index++;
-			fprintf(stderr,"Option number is %d\n",opts[argCounter].number);
+//			fprintf(stderr,"Option number is %d\n",opts[argCounter].number);
 			return opts[argCounter].number;
 				
 		}
