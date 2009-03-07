@@ -103,24 +103,24 @@ function createTemplateForm($extra=False) {
 				$templatetable.="<tr><td>\n";
 				$templatetable.="<img src='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></td>\n";
 				$templatetable.="<td>\n";
-				$templatetable.="<imput type='hidden' NAME='templateId".$i."' VALUE='$templateinfo[DEF_id]'>\n";
-				$templatetable.="<imput type='hidden' NAME='diam' VALUE='$templateinfo[diam]'>\n";
-				$templatetable.="<imput type='checkbox' NAME='$checkboxname' onclick='enable".$checkboxname."()'>\n";
-				$templatetable.="<B>Use This Template</B><BR>\n";
-				$templatetable.="Enter rotation values (leave blank for no rotation):<BR>\n";
-				$templatetable.="<imput type='text' NAME='".$checkboxname
-					."strt' DISABLED VALUE='$startval' SIZE='3'> Starting Angle<BR>\n";
-				$templatetable.="<imput type='text' NAME='".$checkboxname
-					."end' DISABLED VALUE='$endval' SIZE='3'> Ending Angle<BR>\n";
-				$templatetable.="<imput type='text' NAME='".$checkboxname
-					."incr' DISABLED VALUE='$incrval' SIZE='3'> Angular Increment<BR>\n";
+				$templatetable.="<input type='hidden' name='templateId".$i."' value='$templateinfo[DEF_id]'>\n";
+				$templatetable.="<input type='hidden' name='diam' value='$templateinfo[diam]'>\n";
+				$templatetable.="<input type='checkbox' name='$checkboxname' onclick='enable".$checkboxname."()'>\n";
+				$templatetable.="<b>Use This Template</b><br>\n";
+				$templatetable.="Enter rotation values (leave blank for no rotation):<br>\n";
+				$templatetable.="<input type='text' name='".$checkboxname
+					."strt' DISABLED value='$startval' SIZE='3'> Starting Angle<br>\n";
+				$templatetable.="<input type='text' name='".$checkboxname
+					."end' DISABLED value='$endval' SIZE='3'> Ending Angle<br>\n";
+				$templatetable.="<input type='text' name='".$checkboxname
+					."incr' DISABLED value='$incrval' SIZE='3'> Angular Increment<br>\n";
 				$templatetable.="<P>\n";
-				$templatetable.="<TABLE BORDER='0'>\n";
-				$templatetable.="<tr><td><B>Template ID:</B></td><td>$templateinfo[DEF_id]</td></tr>\n";
-				$templatetable.="<tr><td><B>Diameter:</B></td><td>$templateinfo[diam]</td></tr>\n";
-				$templatetable.="<tr><td><B>Pixel Size:</B></td><td>$templateinfo[apix]</td></tr>\n";
+				$templatetable.="<table BORDER='0'>\n";
+				$templatetable.="<tr><td><b>Template ID:</b></td><td>$templateinfo[DEF_id]</td></tr>\n";
+				$templatetable.="<tr><td><b>Diameter:</b></td><td>$templateinfo[diam]</td></tr>\n";
+				$templatetable.="<tr><td><b>Pixel Size:</b></td><td>$templateinfo[apix]</td></tr>\n";
 				$templatetable.="</table>\n";
-				$templatetable.="<B>Description:</B><BR>$templateinfo[description]\n";
+				$templatetable.="<b>Description:</b><br>$templateinfo[description]\n";
 				$templatetable.="</td></tr>\n";
 
 				$i++;
@@ -134,9 +134,9 @@ function createTemplateForm($extra=False) {
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	echo"
-  <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
-  <B>Select Project:</B><BR>
-  <SELECT NAME='projectId' onchange='newexp()'>\n";
+  <FORM name='viewerform' method='POST' ACTION='$formAction'>
+  <b>Select Project:</b><br>
+  <SELECT name='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
 		$sel = ($project['id']==$projectId) ? "selected" : '';
@@ -148,15 +148,15 @@ function createTemplateForm($extra=False) {
 	if ($templatetable) {
 		echo"
     <CENTER>
-    <imput type='submit' NAME='templates' value='Use These Templates'>
+    <input type='submit' name='templates' value='Use These Templates'>
     </CENTER>\n
     $templatetable
     <CENTER>
-    <imput type='hidden' NAME='numtemplates' value='$numtemplates'>
-    <imput type='submit' NAME='templates' value='Use These Templates'>
+    <input type='hidden' name='numtemplates' value='$numtemplates'>
+    <input type='submit' name='templates' value='Use These Templates'>
     </CENTER>\n";
 	}
-	else echo "<B>Project does not contain any templates.</B>\n";
+	else echo "<b>Project does not contain any templates.</b>\n";
 	echo"</FORM>\n";
 	processing_footer();
 	exit;
@@ -185,7 +185,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 
 	$numtemplates=$_POST['numtemplates'];
 	$templateForm='';
-	$templateTable="<TABLE CLASS='tableborder'><tr><td>\n";
+	$templateTable="<table class='tableborder'><tr><td>\n";
 	$templateCheck='';
 
 	$particle=new particleData;
@@ -208,23 +208,23 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
 			$filename=$templateinfo[path]."/".$templateinfo[templatename];
-			$templateTable.="<TD VALIGN='TOP'><img src='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><BR>\n";
-			if (!$start && !$end && !$incr) $templateTable.="<B>no rotation</B>\n";
+			$templateTable.="<td VALIGN='TOP'><img src='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><br>\n";
+			if (!$start && !$end && !$incr) $templateTable.="<b>no rotation</b>\n";
 			elseif ($start=='' || !$end || !$incr) {
-				echo "<B>Error in template $i</B><BR> missing rotation parameter - fix this<BR>\n";
-				echo "starting angle: $start<BR>ending angle: $end<BR>increment: $incr<BR>\n";
+				echo "<b>Error in template $i</b><br> missing rotation parameter - fix this<br>\n";
+				echo "starting angle: $start<br>ending angle: $end<br>increment: $incr<br>\n";
 				exit;
 			}	
 			else {
-				$templateTable.="<B>starting angle:</B> $start<BR>\n";
-				$templateTable.="<B>ending angle:</B> $end<BR>\n";
-				$templateTable.="<B>angular incr:</B> $incr</td>\n";
+				$templateTable.="<b>starting angle:</b> $start<br>\n";
+				$templateTable.="<b>ending angle:</b> $end<br>\n";
+				$templateTable.="<b>angular incr:</b> $incr</td>\n";
 			}
-			$templateForm.="<imput type='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
-			$templateForm.="<imput type='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
-			$templateForm.="<imput type='hidden' NAME='$tmpltstrt' VALUE='$start'>\n";
-			$templateForm.="<imput type='hidden' NAME='$tmpltend' VALUE='$end'>\n";
-			$templateForm.="<imput type='hidden' NAME='$tmpltincr' VALUE='$incr'>\n";
+			$templateForm.="<input type='hidden' name='$templateIdName' value='$templateId'>\n";
+			$templateForm.="<input type='hidden' name='$templateimg' value='$templateId'>\n";
+			$templateForm.="<input type='hidden' name='$tmpltstrt' value='$start'>\n";
+			$templateForm.="<input type='hidden' name='$tmpltend' value='$end'>\n";
+			$templateForm.="<input type='hidden' name='$tmpltincr' value='$incr'>\n";
 		}
 	}
 	$templateTable.="</td></tr></table>\n";
@@ -255,7 +255,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	if ($results) echo "$results<hr />\n";
 	echo"
 	<form name='viewerform' method='POST' ACTION='$formAction'>
-	<imput type='HIDDEN' NAME='lastSessionId' VALUE='$sessionId'>\n";
+	<input type='HIDDEN' name='lastSessionId' value='$sessionId'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 
@@ -292,9 +292,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	echo "Do not delete .dwn.mrc files after finishing\n";
 	echo "<br />\n";
 
-	echo "</td><TD CLASS='tablebg'>\n";
-	echo "<B>Mask Diameter:</B><BR>\n";
-	echo "<imput type='text' NAME='diam' VALUE='$diam' SIZE='4'>&nbsp;\n";
+	echo "</td><td class='tablebg'>\n";
+	echo "<b>Mask Diameter:</b><br>\n";
+	echo "<input type='text' name='diam' value='$diam' SIZE='4'>&nbsp;\n";
 	echo "Mask diameter for template(s) <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
 	echo "<br/>\n";
 
@@ -308,11 +308,11 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		</td>
 	</tr>
 	<tr>
-		<TD COLSPAN='2' ALIGN='CENTER'>
+		<td COLSPAN='2' ALIGN='CENTER'>
 		<HR>
-		<imput type='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
+		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these setting on image:
-		<imput type='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
+		<input type='text' name='testfilename' $testdisabled value='$testvalue' SIZE='45'>
                 <hr />
 	";
 	echo getSubmitForm("Run Correlator");
@@ -324,9 +324,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	<table><tr>
 		<td>\n";
 	// Display the templates that will be used for Template Correlator
-	echo "<imput type='hidden' NAME='templateList' VALUE='$templateList'>\n";
-	echo "<imput type='hidden' NAME='templates' VALUE='continue'>\n";
-	echo "<imput type='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
+	echo "<input type='hidden' name='templateList' value='$templateList'>\n";
+	echo "<input type='hidden' name='templates' value='continue'>\n";
+	echo "<input type='hidden' name='numtemplates' value='$numtemplates'>\n";
 	echo "$templateForm\n";
 	echo "$templateTable\n";
 	echo "
@@ -421,7 +421,7 @@ function runTemplateCorrelator() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createTCForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createTCForm("<b>ERROR:</b> Enter a user name and password");
 
 		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'templatepicker', $testimage);
 		// if errors:
@@ -457,7 +457,7 @@ function runTemplateCorrelator() {
 			<table width='600'>
 			<tr><td colspan='2'>
 			<font size='+1'>
-			<B>Template Correlation Picker Command:</B><BR>
+			<b>Template Correlation Picker Command:</b><br>
 			$command</font><hr>
 			</td></tr>";
 		$i = 0;
