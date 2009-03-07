@@ -3047,6 +3047,9 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	function getRctRunsFromSession($sessionId) {
 		$q="SELECT rctrun.*, "
 			."  path.`path` AS path, "
+			."  rmeas.`half` AS rmeas, "
+			."  fsc.`half` AS fsc, "
+			."  fsc.`fscfile` AS fscfile, "
 			."  stparam.`boxSize` AS boxsize "
 			."FROM ApRunsInStackData as runsin "
 			."LEFT JOIN ApStackRunData AS strun "
@@ -3057,6 +3060,10 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
 			."LEFT JOIN ApPathData AS path "
 			."  ON rctrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS rmeas "
+			."  ON rctrun.`REF|ApResolutionData|rmeasure_resolution` = rmeas.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS fsc "
+			."  ON rctrun.`REF|ApResolutionData|fsc_resolution` = fsc.`DEF_id` "
 			."WHERE "
 			."  rctrun.`DEF_id` IS NOT NULL "
 			."AND "
@@ -3069,6 +3076,9 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	function getRctRunDataFromId($rctId) {
 		$q="SELECT rctrun.*, "
 			."  path.`path` AS path, "
+			."  rmeas.`half` AS rmeas, "
+			."  fsc.`half` AS fsc, "
+			."  fsc.`fscfile` AS fscfile, "
 			."  stparam.`boxSize` AS boxsize "
 			."FROM ApRctRunData as rctrun "
 			."LEFT JOIN ApRunsInStackData AS runsin "
@@ -3079,6 +3089,10 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
 			."LEFT JOIN ApPathData AS path "
 			."  ON rctrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS rmeas "
+			."  ON rctrun.`REF|ApResolutionData|rmeasure_resolution` = rmeas.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS fsc "
+			."  ON rctrun.`REF|ApResolutionData|fsc_resolution` = fsc.`DEF_id` "
 			."WHERE "
 			."  rctrun.`DEF_id` = '$rctId' ";
 		$r=$this->mysql->getSQLResult($q);
