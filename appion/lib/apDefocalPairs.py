@@ -76,7 +76,7 @@ def getShift(imgdata1 ,imgdata2):
 	return peak
 
 def recordShift(params,img,sibling,peak):
-	filename=params['session']['name']+'.shift.txt'
+	filename=params['sessionname']+'.shift.txt'
 	f=open(filename,'a')
 	f.write('%s\t%s\t%f\t%f\t%f\t%f\n' % (img['filename'],sibling['filename'],peak['shift'][1],peak['shift'][0],peak['scalefactor'],peak['subpixel peak value']))
 	f.close()
