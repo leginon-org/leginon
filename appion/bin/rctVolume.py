@@ -583,7 +583,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		#self.mirrorParticles(tiltParticlesData, spiderstack)
 
 		### iterations over volume creation
-		looptime = time.time()
+
 		### back project particles into filter volume
 		volfile = os.path.join(self.params['rundir'], "volume%s-%03d.spi"%(self.timestamp, 0))
 		backproject.backprojectCG(spiderstack, eulerfile, volfile,
@@ -594,13 +594,12 @@ class rctVolumeScript(appionScript.AppionScript):
 		emanvolfile = self.processVolume(volfile, 0)
 
 		for i in range(self.params['numiters']):
+			looptime = time.time()
 			iternum = i+1
 			apDisplay.printMsg("running backprojection iteration "+str(iternum))
 			### xy-shift particles to volume projections
 			alignstack = backproject.rctParticleShift(volfile, alignstack, eulerfile, iternum, 
 				numpart=self.numpart, pixrad=self.params['radius'], timestamp=self.timestamp)
-			apDisplay.printColor("finished volume refinement in "
-				+apDisplay.timeString(time.time()-looptime), "cyan")
 			apFile.removeFile(volfile)
 
 			### back project particles into better volume
@@ -610,6 +609,9 @@ class rctVolumeScript(appionScript.AppionScript):
 
 			### center/convert the volume file
 			emanvolfile = self.processVolume(volfile, iternum)
+
+			apDisplay.printColor("finished volume refinement loop in "
+				+apDisplay.timeString(time.time()-looptime), "cyan")
 
 		### optimize Euler angles
 		#NOT IMPLEMENTED YET
