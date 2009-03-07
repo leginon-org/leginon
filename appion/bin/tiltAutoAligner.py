@@ -55,6 +55,18 @@ class tiltAligner(particleLoop2.ParticleLoop):
 
 	#---------------------------------------
 	#---------------------------------------
+	def getExtension(self):
+		if self.params['outtype'] == "text":
+			return "txt"
+		elif self.params['outtype'] == "xml":
+			return "xml"
+		elif self.params['outtype'] == "pickle":
+			return "pickle"
+		else:
+			return "spi"
+
+	#---------------------------------------
+	#---------------------------------------
 	def checkConflicts(self):
 		"""
 		put in any additional conflicting parameters
