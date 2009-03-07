@@ -24,6 +24,7 @@ $nomargin=$_GET['nomargin'];
 $apix=$_GET['apix'];
 $box=$_GET['box'];
 $fscid=$_GET['fscid'];
+$half=$_GET['half'];
 
 if (!$width || !$height){
 	$width=800;
@@ -54,7 +55,11 @@ else {
 			list($x,$sy[])=split("\t",$line);
 			$sx[]=$x;
 			// convert pixels to resolution in angstroms
-			$xpix[]=sprintf("%.2f",$box*$apix/$x);
+			$res = $box*$apix/$x;
+			$xpix[] = sprintf("%.2f",$res);
+			// hack to not show everything
+			if ($half && $res < $half/3.0)
+				break;
 		}
 }
 
@@ -82,7 +87,7 @@ else {
 	$graph->ygrid->Show(false,false);
 	$graph->xgrid->Show(false,false);
 	$graph->xaxis->Hide(true);
-	$graph->AddLine(new PlotLine(HORIZONTAL,0,"black",1));
+	//$graph->AddLine(new PlotLine(HORIZONTAL,0,"black",1));
 }  
 
 $lp1 = new LinePlot($sy,$sx);
