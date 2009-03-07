@@ -154,6 +154,9 @@ class rctVolumeScript(appionScript.AppionScript):
 			apDisplay.printError("could not get inplane rotation for particle %d"%(tiltstackpartdata['particleNumber']))
 		inplane = alignpartdatas[0]['rotation']
 		mirror = alignpartdatas[0]['mirror']
+		if mirror is False and alignpartdatas[0]['alignstack']['alignrun']['maxlikerun'] is not None:
+			# maxlike does mirror then rotation, and its rotation is negative relative to spider
+			inplane = -1.0*inplane
 		self.rotmirrorcache[partid] = (inplane, mirror)
 		return inplane, mirror
 
