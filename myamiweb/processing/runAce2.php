@@ -62,7 +62,7 @@ function createAce2Form($extra=false) {
 	}
 
 	echo"
-	<FORM NAME='viewerform' method='POST' action='$phpself'>\n";
+	<FORM name='viewerform' method='POST' action='$phpself'>\n";
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 	$presets=$sessiondata['presets'];
@@ -86,21 +86,26 @@ function createAce2Form($extra=false) {
 	  </TD>
 	  <TD CLASS='tablebg' valign='top'>\n";
 
-	srand(time());
-	if ((rand()%2) < 3) {
-		echo"<center><IMG SRC='img/ace2.jpg' WIDTH='300'></center><br />\n";
-	}
+	echo"<center><img alt='ace2' src='img/ace2.jpg' WIDTH='300'></center><br />\n";
 
 
-	echo "<INPUT TYPE='text' NAME='binval' VALUE='2' SIZE='4'>\n";
+	echo "<input type='text' name='binval' value='2' size='4'>\n";
 	echo docpop('binval','Binning');
 	echo "<br/><br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='cs' VALUE='".$defaultcs."' SIZE='4'>\n";
+	echo "<input type='text' name='cs' value='".$defaultcs."' size='4'>\n";
 	echo docpop('cs','Spherical Aberration');
 	echo "<br/><br/>\n";
 
-	echo "<INPUT TYPE='checkbox' NAME='refine2d'>\n";
+	echo "<input type='text' name='edge1' value='10' size='4'>\n";
+	echo docpop('edge1','Canny, edge Blur Sigma');
+	echo "<br/><br/>\n";
+
+	echo "<input type='text' name='edge2' value='0.001' size='4'>\n";
+	echo docpop('edge2','Canny, edge Treshold(0.0-1.0)');
+	echo "<br/><br/>\n";
+
+	echo "<input type='checkbox' name='refine2d'>\n";
 	echo docpop('refine2d','Extra 2d Refine');
 	echo "<br/><br/>\n";
 
@@ -146,6 +151,16 @@ function runAce2() {
 	$refine2d=$_POST['refine2d'];
 	$binval=$_POST['binval'];
 	$cs=$_POST['cs'];
+	$edge1=trim($_POST['edge1']);
+	$edge2=trim($_POST['edge2']);
+
+	if (is_numeric($edge1)) {
+		$command.="--edge1=$edge1 ";
+	}
+
+	if (is_numeric($edge2)) {
+		$command.="--edge2=$edge2 ";
+	}
 
 	if($refine2d) $command.="--refine2d ";
 	$command.="--cs=$cs ";
