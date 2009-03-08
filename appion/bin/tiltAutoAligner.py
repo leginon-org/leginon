@@ -148,7 +148,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		### insert the runid
 		self.commitRunToDatabase(imgdata['session'], True)
 
-		if len(self.peaktree1) < 3 or len(self.peaktree1) < 3:
+		if len(self.peaktree1) < 3 or len(self.peaktree2) < 3:
 			apDisplay.printWarning("Not enough particle picks; not commiting transform or particle data")
 			return False
 
@@ -336,15 +336,15 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		### run tilt automation
 		autotilter = autotilt.autoTilt()
 		result = autotilter.processTiltPair(imgpath, tiltpath, picks1, picks2, theta, outfile1, pixdiam)
-		if os.path.isfile(outfile1):
-			if os.path.exists(outfile2):
-				os.remove(outfile2)
-			os.symlink(os.path.basename(outfile1), outfile2)
-
 		if result is None:
 			apDisplay.printWarning("Image processing failed")
 			self.badprocess = True
 			return
+
+		if os.path.isfile(outfile1):
+			if os.path.exists(outfile2):
+				os.remove(outfile2)
+			os.symlink(os.path.basename(outfile1), outfile2)
 
 		### read alignment results
 		self.data = tiltfile.readData(outfile1)
