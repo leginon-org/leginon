@@ -108,7 +108,9 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			apFindEM.processAndSaveImage(tiltdata, params=self.params)
 
 		#RUN THE ALIGNER GUI
-		self.runTiltAligner(imgdata, tiltdata)
+		result = self.runTiltAligner(imgdata, tiltdata)
+		if self.badprocess is True:
+			return
 		numpeaks = len(self.peaktree1)
 		#apDisplay.printMsg("Found "+str(numpeaks)+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = numpeaks
