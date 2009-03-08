@@ -113,12 +113,14 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printColor(commandline, "purple")
 
 		t0 = time.time()
+
 		if self.params['verbose'] is True:
 			ace2proc = subprocess.Popen(commandline, shell=True)
 		else:
 			aceoutf = open("ace2.out", "a")
 			aceerrf = open("ace2.err", "a")
 			ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
+
 		ace2proc.wait()
 
 		### check if ace2 worked
@@ -126,12 +128,14 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if not os.path.isfile(imagelog) and self.stats['count'] <= 1:
 			### ace2 always crashes on first image??? .fft_wisdom file??
 			time.sleep(1)
+
 			if self.params['verbose'] is True:
 				ace2proc = subprocess.Popen(commandline, shell=True)
 			else:
 				aceoutf = open("ace2.out", "a")
 				aceerrf = open("ace2.err", "a")
 				ace2proc = subprocess.Popen(commandline, shell=True, stderr=aceerrf, stdout=aceoutf)	
+
 			ace2proc.wait()
 
 		if self.params['verbose'] is False:	
