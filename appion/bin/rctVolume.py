@@ -553,7 +553,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
 		self.rmeasureresolution = apRecon.runRMeasure(apix, "rmeasure.mrc")
-		apDisplay.printColor( ("Final Rmeasure resolution: %.5f" % (self.rmeasureresolution)), "cyan")
+		apDisplay.printColor("Final Rmeasure resolution: "+str(self.rmeasureresolution), "cyan")
 		apFile.removeFile("rmeasure.mrc")
 
 	#=====================
