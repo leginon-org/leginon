@@ -243,6 +243,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		rctrunq['maskrad']    = self.params['radius']
 		rctrunq['lowpassvol'] = self.params['lowpassvol']
 		rctrunq['highpasspart'] = self.params['highpasspart']
+		rctrunq['median'] = self.params['median']
 		rctrunq['description'] = self.params['description']
 		rctrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		rctrunq['alignstack'] = self.alignstackdata

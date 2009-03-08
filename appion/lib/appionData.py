@@ -1188,6 +1188,7 @@ class ApRctRunData(Data):
 			('maskrad', int),
 			('lowpassvol', float),
 			('highpasspart', float),
+			('median', int),
 			('description', str),
 			('numpart', int),
 			('fsc_resolution', ApResolutionData),
