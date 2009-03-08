@@ -8,6 +8,7 @@ import numpy
 import time
 import math
 import threading
+from scipy import ndimage
 #appion
 import appionScript
 import apStack
@@ -20,7 +21,7 @@ import apProject
 import spyder
 from apTilt import apTiltPair
 from apSpider import operations, backproject
-from pyami import mem
+from pyami import mem, mrc
 
 class rctVolumeScript(appionScript.AppionScript):
 	#=====================
@@ -52,6 +53,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Binning of the tilted image", metavar="ID")
 		self.parser.add_option("--num-part", dest="numpart", type="int",
 			help="Limit number of particles, for debugging", metavar="#")
+		self.parser.add_option("--median", dest="median", type="int", default=3,
+			help="Median filter", metavar="#")
 
 		### floats
 		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float", default=10.0,
@@ -280,30 +283,46 @@ class rctVolumeScript(appionScript.AppionScript):
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
 		boxsize = self.getBoxSize()
 		rawspifile = os.path.join(self.params['rundir'], "rawvolume%s-%03d.spi"%(self.timestamp, iternum))
-		emanvolfile = os.path.join(self.params['rundir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
+		mrcvolfile = os.path.join(self.params['rundir'], "volume%s-%03d.mrc"%(self.timestamp, iternum))
 		lowpass = self.params['lowpassvol']
 		### copy original to raw file
 		shutil.copy(spivolfile, rawspifile)
-		### process volume files
-		emancmd = ("proc3d "+spivolfile+" "+emanvolfile+" center norm=0,1 apix="
+
+		### convert to mrc
+		emancmd = ("proc3d "+spivolfile+" "+mrcvolfile+" norm=0,1 apix="+str(apix))
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
+		### median filter
+		rawvol = mrc.read(mrcvolfile)
+		medvol = ndimage.median_filter(rawvol, size=self.params['median'])
+		mrc.write(medvol, mrcvolfile)
+
+		### low pass filter
+		emancmd = ("proc3d "+mrcvolfile+" "+mrcvolfile+" center norm=0,1 apix="
 			+str(apix)+" lp="+str(lowpass))
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" origin=0,0,0 "
+
+		### set origin
+		emancmd = "proc3d "+mrcvolfile+" "+mrcvolfile+" origin=0,0,0 "
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" mask="+str(self.params['radius'])
+
+		### mask volume
+		emancmd = "proc3d "+mrcvolfile+" "+mrcvolfile+" mask="+str(self.params['radius'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
 		### convert to spider
 		apFile.removeFile(spivolfile)
-		emancmd = "proc3d "+emanvolfile+" "+spivolfile+" spidersingle"
+		emancmd = "proc3d "+mrcvolfile+" "+spivolfile+" spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
 		### image with chimera
 		if self.params['skipchimera'] is False:
 			chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-				args=(emanvolfile, 30, None, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+				args=(mrcvolfile, 30, None, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
 			chimerathread.setDaemon(1)
 			chimerathread.start()
 
-		return emanvolfile
+		return mrcvolfile
 
 	#=====================
 	def makeEulerDoc(self, tiltParticlesData):
@@ -553,7 +572,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
 		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
 		self.rmeasureresolution = apRecon.runRMeasure(apix, "rmeasure.mrc")
-		apDisplay.printColor("Final Rmeasure resolution: "+str(self.rmeasureresolution), "cyan")
+		#apDisplay.printColor("Final Rmeasure resolution: "+str(self.rmeasureresolution), "cyan")
 		apFile.removeFile("rmeasure.mrc")
 
 	#=====================
@@ -594,7 +613,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		alignstack = spiderstack
 
 		### center/convert the volume file
-		emanvolfile = self.processVolume(volfile, 0)
+		mrcvolfile = self.processVolume(volfile, 0)
 
 		for i in range(self.params['numiters']):
 			looptime = time.time()
@@ -611,7 +630,7 @@ class rctVolumeScript(appionScript.AppionScript):
 				numpart=self.numpart)
 
 			### center/convert the volume file
-			emanvolfile = self.processVolume(volfile, iternum)
+			mrcvolfile = self.processVolume(volfile, iternum)
 
 			apDisplay.printColor("finished volume refinement loop in "
 				+apDisplay.timeString(time.time()-looptime), "cyan")
@@ -625,7 +644,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		self.runRmeasure()
 
 		### insert volumes into DB
-		self.insertRctRun(emanvolfile)
+		self.insertRctRun(mrcvolfile)
 		#apDisplay.printMsg("waiting for Chimera to finish")
 		#time.sleep(60)
 
