@@ -48,7 +48,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	if limits['minmean'] > 1e11:
 		apDisplay.printWarning("particles have no mean values in database")
 		return
-	print limits
+	apDisplay.printMsg(str(limits))
 
 	### create particle bins
 	partlists = {}
@@ -77,9 +77,9 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 		sys.stderr.write(backs+backs+backs+backs)
 		sys.stderr.write("% 3d of % 3d, %s: % 6d"%(count, len(keys), key, len(partlists[key])))
 		averageSubStack(partlists[key], stackfile, montagestack, bin)
-	print ""
+	sys.stderr.write("\n")
 	assemblePngs(keys, str(stackid), montagestack)
-	print "mv -v montage"+str(stackid)+".??? "+stackdata['path']['path']
+	apDisplay.printMsg("mv -v montage"+str(stackid)+".??? "+stackdata['path']['path'])
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
@@ -135,7 +135,7 @@ def printPlot(partlists, gridpoints):
 			if j % 2 == 0:
 				key = ("%02dx%02d"%(i,j))
 				outstr += "% 5d "%(len(partlists[key]))
-		print outstr
+		apDisplay.printMsg(outstr)
 
 #===============
 def meanStdevToKey(mean, stdev, limits, gridpoints):
