@@ -5,6 +5,7 @@
 import os
 import subprocess
 import shutil
+import glob
 #appion
 import apFile
 import apEMAN
@@ -14,7 +15,7 @@ import apDisplay
 #=========================================
 #=========================================
 def renderSnapshots(density, res=30, contour=1.5, zoom=1.0,
-		apix=None, sym=None, box=None, lpfilter=True):
+		apix=None, sym=None, box=None, lpfilter=True, sliceimg=True):
 	### if eotest failed, filter to 30
 	badres = False
 	if not res:
@@ -22,7 +23,6 @@ def renderSnapshots(density, res=30, contour=1.5, zoom=1.0,
 	elif str(res) == 'nan':
 		res=100
 		badres = True
-	halfbox = int(box/2)
 
 	### low pass filter the volume to 60% of reported res
 	tmpf = density+'.tmp.mrc'
@@ -48,18 +48,68 @@ def renderSnapshots(density, res=30, contour=1.5, zoom=1.0,
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
 
-	# create mrc of central slice for viruses
-	tmphed = density + '.hed'
-	tmpimg = density + '.img'
-	hedcmd = ('proc3d %s %s' % (density,tmphed))
-	if sym.lower()[:4] != 'icos':
-		hedcmd = hedcmd + " rot=90"
-	apEMAN.executeEmanCmd(hedcmd)
-	pngslice = density + '.slice.png'
-	slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
-	apEMAN.executeEmanCmd(slicecmd)
-	apFile.removeStack(tmphed, warn=False)
+	if sliceimg is True:
+		# create mrc of central slice for viruses
+		halfbox = int(box/2)
+		tmphed = density + '.hed'
+		tmpimg = density + '.img'
+		hedcmd = ('proc3d %s %s' % (density,tmphed))
+		if sym.lower()[:4] != 'icos':
+			hedcmd = hedcmd + " rot=90"
+		apEMAN.executeEmanCmd(hedcmd)
+		pngslice = density + '.slice.png'
+		slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
+		apEMAN.executeEmanCmd(slicecmd)
+		apFile.removeStack(tmphed, warn=False)
 	return badres
+
+#=========================================
+#=========================================
+def renderAnimation(density, res=30, contour=1.5, zoom=1.0,
+		apix=None, sym=None, box=None, lpfilter=True):
+	### if eotest failed, filter to 30
+	if not res or str(res) == 'nan':
+		res = 30
+	halfbox = int(box/2)
+
+	### low pass filter the volume to 60% of reported res
+	tmpf = density+'.tmp.mrc'
+	if lpfilter is True:
+		filtres = 0.6*res
+		if box > 250:
+			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=2 origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
+		else:
+			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
+		apDisplay.printMsg("Low pass filtering model for images")
+		apEMAN.executeEmanCmd(lpcmd)
+	else:
+		shutil.copy(density, tmpf)
+
+	### setup chimera params
+	chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
+	os.environ["CHIMENV"] = chimsnapenv
+	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimAnimate.py")
+	runChimeraScript(chimsnappath)
+	apFile.removeFile(tmpf)
+
+	image1 = density+".000.png"
+	if not os.path.isfile(image1):
+		apDisplay.printWarning("Chimera failed to generate images")
+	else:
+		finalgif = density+".animate.gif"
+		imagemagickcmd = "convert -delay 10 -loop 15 "
+		images = glob.glob(density+".*[0-9][0-9].png")
+		images.sort()
+		for image in images:
+			imagemagickcmd += image+" "
+		imagemagickcmd += finalgif
+		apFile.removeFile(finalgif)
+		apEMAN.executeEmanCmd(imagemagickcmd, verbose=True)
+		if os.path.isfile(finalgif):
+			apFile.removeFilePattern(density+".*[0-9][0-9].png")
+	
+	return
+
 
 #=========================================
 #=========================================
@@ -84,10 +134,5 @@ def runChimeraScript(chimscript):
 	proc.wait()
 	logf.close()
 	return
-
-
-
-
-
 
 
