@@ -90,7 +90,7 @@ function getAdminUserId(){
 
 $nodenames = array(
 	'AcquisitionSettingsData'=>array('Grid','Square','Hole','Preview','Exposure','Square Q','Hole Q','Tomography Preview','Final Section','Subsquare','Centered Square','Rough Tissue','Final Raster','Grid Survey','Mid Mag Survey','Reacquisition','High Mag Acquisition'),
-	'FocuserSettingsData'=>array('Focus','Z Focus','Tomo Focus','Tomo Z Focus','RCT Focus','Section Z Focus','Grid Focus','Section Focus'),
+	'FocuserSettingsData'=>array('Focus','Z Focus','Tomo Focus','Tomo Z Focus','RCT Focus','Section Z Focus','Grid Focus','Section Focus','Screen Z Focus'),
 	'MosaicTargetMakerSettingsData'=>array('Grid Targeting','Grid Targeting Robot','Grid Survey Targeting'),
 	'MosaicClickTargetFinderSettingsData'=>array('Square Targeting','Raster Center Targeting','Rough Tissue Targeting','Atlas View'),
 	'ClickTargetFinderSettingsData'=>array('Hole Targeting','Tomography Targeting'),
@@ -102,6 +102,8 @@ $nodenames = array(
 	'TomographySettingsData'=>array('Tomography'),
 	'RCTAcquisitionSettingsData'=>array('RCT'),
 	'DTFinderSettingsData'=>array('Tissue Centering'),
+	'CorrectorSettingsData'=>array('Correction'),
+	'BeamFixerSettingsData'=>array('Fix Beam'),
 );
 
 $lpfids = array();
@@ -109,7 +111,7 @@ $bfids = array();
 $aliases = array('edge lpf','template lpf','lpf');
 
 $user_id = getAdminUserId();
-$extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData');
+$extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData','FocusSequenceData');
 //Tables
 ?><p><?;
 foreach ($extratables as $table) {
@@ -144,13 +146,10 @@ foreach (array_keys($nodenames) as $table) {
 	}
 }
 
-$nodenames = array(
-	'FocusSequenceData'=>array('Focus','Z Focus','Tomo Focus','Tomo Z Focus'),
-);
-foreach (array_keys($nodenames) as $table) {
-	foreach ($nodenames[$table] as $name) { 
-		$sqldata1 = getFocusSequenceData($user_id,$table,$name);
-	}
+$focusernodenames = $nodenames['FocuserSettingsData'];
+$table = 'FocusSequenceData';
+foreach ($focusernodenames as $name) { 
+	$sqldata1 = getFocusSequenceData($user_id,$table,$name);
 }
 ?>
 </body></html>
