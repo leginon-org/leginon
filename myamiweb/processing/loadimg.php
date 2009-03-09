@@ -6,6 +6,7 @@ $rescale = ($_GET['rescale']);
 $s = $_GET['s'];
 $w = $_GET['w'];
 $h = $_GET['h'];
+$rawgif = $_GET['rawgif'];
 
 if (preg_match('`\.mrc$`i',$filename)) {
 	$src_mrc = mrcread($filename);
@@ -75,9 +76,16 @@ elseif ($s) {
 
 else $image_p=$image;
 
-// --- create png image
-header("Content-type: image/x-png");
-imagepng($image_p);
+
+if (preg_match('`\.gif$`i',$filename) && $rawgif) {
+	// --- show raw gif
+	header("Content-type: image/gif");
+	readfile($filename);
+} else {
+	// --- create png image
+	header("Content-type: image/x-png");
+	imagepng($image_p);
+}
 
 // --- destroy resources in memory
 imagedestroy($image_p);
