@@ -200,25 +200,29 @@ def process_asymmetric(v, surfs, vol_path, imgFormat="PNG"):
 	hideDust(v, 10)
 	for s in surfs:
 		color_surface_height(s)
-	writeMessageToLog("turn: get top view")
+	writeMessageToLog("turn: get front view")
 	runChimCommand('turn x 180')
 	save_image(vol_path+'.1.png', format=imgFormat)
 
-	writeMessageToLog("turn: get tilt view")
-	runChimCommand('turn x -45')
+	writeMessageToLog("turn: get front 60 tilt view")
+	runChimCommand('turn y -60')
 	save_image(vol_path+'.2.png', format=imgFormat)
 
-	writeMessageToLog("turn: get side view")
-	runChimCommand('turn x -45')
+	writeMessageToLog("turn: get front 120 tilt view")
+	runChimCommand('turn y -60')
 	save_image(vol_path+'.3.png', format=imgFormat)
 
-	writeMessageToLog("turn: get tilt 2")
-	runChimCommand('turn x -45')
+	writeMessageToLog("turn: get back view")
+	runChimCommand('turn y -60')
 	save_image(vol_path+'.4.png', format=imgFormat)
 
-	writeMessageToLog("turn: bottom view")
-	runChimCommand('turn x -45')
+	writeMessageToLog("turn: get back 60 tilt view")
+	runChimCommand('turn y -60')
 	save_image(vol_path+'.5.png', format=imgFormat)
+
+	writeMessageToLog("turn: get back 120 tilt view")
+	runChimCommand('turn y -60')
+	save_image(vol_path+'.6.png', format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
@@ -299,6 +303,7 @@ if True:
 	from chimera.colorTable import getColorByName
 	white = getColorByName('white')
 	chimera.viewer.background = white
+	chimera.viewer.showSilhouette = True
 
 	tmpfile_path = params[0] #sys.argv[2]
 	volume_path = params[1] #sys.argv[3]
