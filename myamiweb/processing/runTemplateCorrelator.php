@@ -134,27 +134,27 @@ function createTemplateForm($extra=False) {
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	echo"
-  <FORM name='viewerform' method='POST' ACTION='$formAction'>
-  <b>Select Project:</b><br>
-  <SELECT name='projectId' onchange='newexp()'>\n";
+	<FORM name='viewerform' method='POST' ACTION='$formAction'>
+	<b>Select Project:</b><br>
+	<SELECT name='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
 		$sel = ($project['id']==$projectId) ? "selected" : '';
 		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
 	}
 	echo"
-  </select>
-  <P>\n";
+	</select>
+	<P>\n";
 	if ($templatetable) {
 		echo"
-    <CENTER>
-    <input type='submit' name='templates' value='Use These Templates'>
-    </CENTER>\n
-    $templatetable
-    <CENTER>
-    <input type='hidden' name='numtemplates' value='$numtemplates'>
-    <input type='submit' name='templates' value='Use These Templates'>
-    </CENTER>\n";
+			<CENTER>
+			<input type='submit' name='templates' value='Use These Templates'>
+			</CENTER>\n
+			$templatetable
+			<CENTER>
+			<input type='hidden' name='numtemplates' value='$numtemplates'>
+			<input type='submit' name='templates' value='Use These Templates'>
+			</CENTER>\n";
 	}
 	else echo "<b>Project does not contain any templates.</b>\n";
 	echo"</FORM>\n";
@@ -313,7 +313,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 		<input type='checkbox' name='testimage' onclick='enabledtest(this)' $testcheck>
 		Test these setting on image:
 		<input type='text' name='testfilename' $testdisabled value='$testvalue' SIZE='45'>
-                <hr />
+		<hr />
 	";
 	echo getSubmitForm("Run Correlator");
 	echo"
@@ -443,7 +443,7 @@ function runTemplateCorrelator() {
 		$templateList=$_POST['templateList'];
 		$templates=split(",", $templateList);
 		foreach ($templates as $tmplt) {
-   			$cccimg=$outdir.$runname."/maps/".$testjpg.".ccmaxmap".$i.".jpg";
+			$cccimg=$outdir.$runname."/maps/".$testjpg.".ccmaxmap".$i.".jpg";
 			$ccclist[]=$cccimg;
 			$i++;
 		}
