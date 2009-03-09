@@ -343,12 +343,16 @@ class tiltAligner(particleLoop2.ParticleLoop):
 			self.badprocess = True
 			return
 
-		if os.path.isfile(outfile1):
+		if os.path.isfile(outfile1) and outfile1 != outfile2:
 			if os.path.exists(outfile2):
 				os.remove(outfile2)
 			os.symlink(os.path.basename(outfile1), outfile2)
 
 		### read alignment results
+		if not os.path.isfile(outfile1):
+			apDisplay.printWarning("Image processing failed")
+			self.badprocess = True
+			return			
 		self.data = tiltfile.readData(outfile1)
 		self.currentpicks1 = numpy.asarray(self.data['picks1'])
 		self.currentpicks2 = numpy.asarray(self.data['picks2'])
