@@ -2,6 +2,14 @@
 # Tools for using Chimera
 ###############
 
+import os
+import subprocess
+import shutil
+#appion
+import apFile
+import apEMAN
+import apParam
+import apDisplay
 
 #=========================================
 #=========================================

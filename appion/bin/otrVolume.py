@@ -15,7 +15,7 @@ import apDisplay
 import appionData
 import apEMAN
 import apFile
-import apRecon
+import apChimera
 import apParam
 from apTilt import apTiltPair
 from apSpider import operations, backproject, alignment
@@ -213,10 +213,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		emancmd = "proc3d "+emanvolfile+" "+spivolfile+" spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
 		### image with chimera
-		chimerathread = threading.Thread(target=apRecon.renderSnapshots,
-			args=(emanvolfile, 30, None, 1.5, 0.9, apix, 'c1', boxsize, False))
-		chimerathread.setDaemon(1)
-		chimerathread.start()
+		apChimera.renderSnapshots(emanvolfile, 30, 1.5, 0.9, apix, 'c1', boxsize, False)
 
 		return emanvolfile
 

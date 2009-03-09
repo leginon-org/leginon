@@ -22,7 +22,7 @@ import appionScript
 import appionData
 
 import apParam
-import apRecon
+import apChimera
 import apDisplay
 import apEMAN
 import apIMAGIC
@@ -572,12 +572,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### create chimera slices of densities ******* .log file has caused problems if not removed
 		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
 			os.remove(str(self.params['rundir'])+"/chimera.log")
-		apRecon.renderSnapshots(mrcname, 30, None, 
+		apChimera.renderSnapshots(mrcname, 30,
 			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
 			os.remove(str(self.params['rundir'])+"/chimera.log")
-		apRecon.renderSnapshots(mrcnamerot, 30, None, 
+		apChimera.renderSnapshots(mrcnamerot, 30,
 			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		### upload density

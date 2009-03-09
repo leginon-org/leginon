@@ -17,6 +17,7 @@ import appionData
 import apEMAN
 import apFile
 import apRecon
+import apChimera
 import apProject
 import spyder
 from apTilt import apTiltPair
@@ -318,8 +319,8 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### image with chimera
 		if self.params['skipchimera'] is False:
-			chimerathread = threading.Thread(target=apRecon.renderSnapshots, 
-				args=(mrcvolfile, 30, None, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+			chimerathread = threading.Thread(target=apChimera.renderSnapshots, 
+				args=(mrcvolfile, 30, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
 			chimerathread.setDaemon(1)
 			chimerathread.start()
 

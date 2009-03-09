@@ -12,7 +12,7 @@ import apParam
 import apFile
 import apDisplay
 import apDatabase
-import apRecon
+import apChimera
 import apVolume
 import apProject
 import appionData
@@ -225,7 +225,7 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
-		apRecon.renderSnapshots(newmodelpath, res=self.params['res'], contour=self.params['contour'], 
+		apChimera.renderSnapshots(newmodelpath, res=self.params['res'], contour=self.params['contour'], 
 			zoom=self.params['zoom'], apix=self.params['newapix'], sym=self.params['syminfo']['eman_name'],
 			box=self.params['newbox'], lpfilter=True)
 

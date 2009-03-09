@@ -15,7 +15,7 @@ import apDisplay
 import apDatabase
 import urllib
 import apEMAN
-import apRecon
+import apChimera
 import apFile
 import appionData
 import gzip
@@ -147,7 +147,7 @@ class modelFromPDB(appionScript.AppionScript):
 		apFile.removeFile(tmpname+".spi")
 
 		### chimera imaging
-		apRecon.renderSnapshots(mrcname, self.params['res'], None, 
+		apChimera.renderSnapshots(mrcname, self.params['res'],
 			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
 
 		### upload it

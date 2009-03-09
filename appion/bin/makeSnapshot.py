@@ -3,8 +3,8 @@
 
 import os
 import appionScript
-import apParam
-import apRecon
+import apChimera
+import apVolume
 import apDisplay
 
 #=====================
@@ -12,10 +12,8 @@ import apDisplay
 class MakeSnapshotScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-
-		self.parser.set_usage("Usage: %prog --file=<filename> --sym=<#> \n\t "
+		self.parser.set_usage("Usage: %prog --file=<filename> --sym=<c1,icos,d7> \n\t "
 			+" [--contour=<#>] [--zoom=<#>] ")
-
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="3d MRC file to snapshot", metavar="FILE")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
@@ -42,19 +40,10 @@ class MakeSnapshotScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		### set the environment parameters
-		chimsnapenv = ( "%s,%s,%s,%.3f,%.3f" % (
-			self.params['file'], 
-			self.params['file'], 
-			self.params['sym'], 
-			self.params['contour'], 
-			self.params['zoom'], ))
-		os.environ["CHIMENV"] = chimsnapenv
+		box = apVolume.getModelDimensions(self.params['file'])
+		apChimera.renderSnapshots(self.params['file'], res=30, contour=self.params['contour'], zoom=self.params['zoom'],
+			apix=None, sym=self.params['sym'], box=box, lpfilter=False)
 
-		### run the script
-		appiondir = apParam.getAppionDirectory()
-		chimsnappath = os.path.join(appiondir, "bin", "apChimSnapshot.py")
-		apRecon.runChimeraScript(chimsnappath)
 
 
 #=====================

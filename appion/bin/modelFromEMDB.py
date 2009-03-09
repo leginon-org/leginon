@@ -14,7 +14,7 @@ import apFile
 import apDisplay
 import apDatabase
 import appionData
-import apRecon
+import apChimera
 import urllib
 import apEMAN
 import gzip
@@ -160,7 +160,7 @@ class modelFromEMDB(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 		### chimera imaging
-		apRecon.renderSnapshots(mrcname, self.params['res'], None, 
+		apChimera.renderSnapshots(mrcname, self.params['res'], 
 			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
 
 		### upload it

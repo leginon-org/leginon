@@ -17,7 +17,7 @@ import appionScript
 import appionData
 
 import apParam
-import apRecon
+import apChimera
 import apDisplay
 import apEMAN
 import apIMAGIC
@@ -438,9 +438,9 @@ class imagic3d0Script(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(volumecmd2)
 		
 		### create chimera slices of densities
-		apRecon.renderSnapshots(mrcname, 30, None, 
+		apChimera.renderSnapshots(mrcname, 30,
 			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
-		apRecon.renderSnapshots(mrcnamerot, 30, None, 
+		apChimera.renderSnapshots(mrcnamerot, 30,
 			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
 
 		### upload density

@@ -11,7 +11,7 @@ import shutil
 import appionScript
 import apEMAN
 import apDisplay
-import apRecon
+import apChimera
 import apStack
 import apUpload
 import apFile
@@ -300,7 +300,7 @@ class createModelScript(appionScript.AppionScript):
 		self.changeapix(modelpath, self.params['apix'])
 
 		### chimera imaging
-		apRecon.renderSnapshots(modelpath, self.params['lp'], None,
+		apChimera.renderSnapshots(modelpath, self.params['lp'],
 			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
 
 		### upload it

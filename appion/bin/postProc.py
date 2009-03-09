@@ -13,7 +13,7 @@ import apVolume
 import apFile
 import apUpload
 import apDatabase
-import apRecon
+import apChimera
 
 #=====================
 #=====================
@@ -185,12 +185,11 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			apUpload.insert3dDensity(self.params)
 			### render chimera images of model
-			density={}
-			density['pixelsize'] = self.params['apix']
-			density['boxsize']   = self.params['box']
-			density['symmetry']  = apUpload.getSymmetryData(self.params['sym'])
+			symdata  = apUpload.getSymmetryData(self.params['sym'])
+			symmetry = symdata['eman_name']
 
-			apRecon.renderSnapshots(outfile, self.params['res'], density, self.params['contour'], self.params['zoom'])
+			apChimera.renderSnapshots(outfile, res=self.params['res'], contour=self.params['contour'], zoom=self.params['zoom'],
+				apix=self.params['apix'], box=self.params['box'], sym=symmetry, lpfilter=True)
 
 #=====================
 #=====================
