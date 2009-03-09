@@ -220,7 +220,7 @@ foreach ($reconRuns as $recon) {
 	foreach ($pngimages['pngfiles'] as $snapshot) {
 		if (eregi($recon['volumeDensity'],$snapshot)) {
 			$snapfile = $recon['path'].'/'.$snapshot;
-			$modhtml .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+			$modhtml .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 		}
 	}
 	$modhtml .= "</td>\n";

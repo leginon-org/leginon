@@ -131,7 +131,7 @@ elseif ($_POST['submitjob']) {
 	$jobnum=trim($jobnum);
 	$jobnum = ereg_replace('\.'.$host.'.*','',$jobnum);
 	if (!is_numeric($jobnum)) {
-		echo "</TABLE><P>\n";
+		echo "</table><P>\n";
 		echo "ERROR in job submission.  Check the cluster\n";
 		processing_footer();
 		exit;
@@ -142,7 +142,7 @@ elseif ($_POST['submitjob']) {
 
 	echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
 	echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
-	echo "</TABLE>\n";
+	echo "</table>\n";
 
 	// check jobs that are running on the cluster
 	echo "<P>Jobs currently running on the cluster:\n";
@@ -206,7 +206,7 @@ function stackModelForm($extra=False) {
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formAction'>\n";
 	echo "
-  <B>Select Project:</B><BR>
+  <B>Select Project:</B><br>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
@@ -242,8 +242,8 @@ function stackModelForm($extra=False) {
 		echo "</SELECT>\n";
 	}
 	// show initial models
-	echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
-	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><BR/>\n";
+	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
+	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
 	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
@@ -270,10 +270,10 @@ function stackModelForm($extra=False) {
 			}
 			echo"Use ";
 			echo"Model ID: $model[DEF_id]\n";
-			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
+			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
 			foreach ($pngfiles as $snapshot) {
 				$snapfile = $model['path'].'/'.$snapshot;
-				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 			}
 			echo "</td>\n";
 			echo "</tr>\n";
@@ -283,7 +283,7 @@ function stackModelForm($extra=False) {
 			echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
 			echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
 			echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
-			echo "</TABLE>\n";
+			echo "</table>\n";
 			echo "<P>\n";
 		}
 		if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
@@ -530,7 +530,7 @@ function emanForm($extra=false) {
       </tr>\n";
 	}
 	echo"
-  </TABLE>
+  </table>
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
@@ -948,12 +948,12 @@ function jobForm($extra=false) {
 #        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
 #          <input type='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></td>
 #            </tr>
-#          </TABLE>
+#          </table>
 #        <TD colspan=2 bgcolor='$bgcolor' ALIGN='CENTER'>
 #      </tr>
 	}
 	echo"
-  </TABLE>
+  </table>
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </FORM>\n";
@@ -1012,7 +1012,7 @@ function writeJobFile ($extra=False) {
 		$javafunc.="
     newwindow.document.write('<P>dmf put $modelpath/$modelname $dmffullpath/$modelname');
     newwindow.document.write('<P>echo done');
-    newwindow.document.write('<P>&nbsp;<BR></BODY></HTML>');
+    newwindow.document.write('<P>&nbsp;<br></BODY></HTML>');
     newwindow.document.close();
   }
   </SCRIPT>\n";
@@ -1170,10 +1170,10 @@ function writeJobFile ($extra=False) {
 	}
 	if (!$extra) {
 		if ($clustername=='garibaldi') {
-			echo "Please review your job below.<BR>";
-			echo "If you are satisfied:<BR>\n";
-			echo "1) Place files in DMF<BR>\n";
-			echo "2) Once this is done, click the button to launch your job.<BR>\n";
+			echo "Please review your job below.<br>";
+			echo "If you are satisfied:<br>\n";
+			echo "1) Place files in DMF<br>\n";
+			echo "2) Once this is done, click the button to launch your job.<br>\n";
 			echo"<input type='button' NAME='dmfput' VALUE='Put files in DMF' onclick='displayDMF()'><P>\n";
 			echo"<input type='hidden' NAME='dmfpath' VALUE=''>\n";
 		}
@@ -1182,7 +1182,7 @@ function writeJobFile ($extra=False) {
 	else {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
 	}
-	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><BR>\n";
+	echo "<FORM NAME='emanjob' METHOD='POST' ACTION='$formAction'><br>\n";
 	echo "<input type='hidden' name='clustername' value='$clustername'>\n";
 	echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
 	echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";

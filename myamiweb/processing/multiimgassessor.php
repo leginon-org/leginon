@@ -198,7 +198,7 @@ if ($imgdir) {
 
 }
 echo"</CENTER>\n";
-echo"<HR/></TD></TR>\n";
+echo"<hr></TD></tr>\n";
 
 //SELECT A RUN CONTAINING IMAGES
 echo"<TR ALIGN='CENTER'><TD VALIGN='TOP' COLSPAN='3'>\n";
@@ -214,16 +214,16 @@ foreach ($allruns as $run){
 }
 echo "</SELECT>\n";
 
-echo"<BR/><HR/></TD></TR>\n";
+echo"<br><hr></TD></tr>\n";
 
 // HEADER FORM FOR FILLING IMAGE PATH
 echo"<TR ALIGN='CENTER'><TD VALIGN='TOP'>\n";
-echo"&nbsp;<B>Image Directory:</B><BR>\n";
+echo"&nbsp;<B>Image Directory:</B><br>\n";
 echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$imgdir' SIZE='60' onchange='this.form.submit()'></TD>\n";
 
 // IMAGE TYPE
 echo"<TD VALIGN='TOP'>\n";
-echo"<B>Image Type:</B><BR>\n";
+echo"<B>Image Type:</B><br>\n";
 echo"<SELECT NAME='imgtype' onchange='this.form.submit()'>\n";
 foreach ($imgtypes as $type) {
 	$s = ($imgtype==$type) ? 'SELECTED' : '';
@@ -234,16 +234,16 @@ echo"</TD>";
 
 // PRESET
 echo"<TD VALIGN='TOP'>\n";
-echo"<B>Preset:</B><BR>\n";
+echo"<B>Preset:</B><br>\n";
 echo"<SELECT NAME='presettype' onchange='this.form.submit()'>\n";
 foreach ($presets as $type) {
 	$s = ($_POST['presettype']==$type) ? 'SELECTED' : '';
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
-echo"<BR/></TD></TR>\n";
+echo"<br></TD></tr>\n";
 
-echo"</TABLE>\n";
+echo"</table>\n";
 echo"</FORM>\n";
 processing_footer();
 
@@ -300,7 +300,7 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 	printToolBarRow();
 	echo "</td></tr><tr><td rowspan='15'>\n";
 	printToolBarSide();
-	echo"</TD><TD>\n";
+	echo"</TD><td>\n";
 	$tool = false;
 	$curindex = $imgindex;
 	for ($i = 0; $i < $imgperpage; $i += 1) {
@@ -340,11 +340,11 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 	echo"(number)\n";
 	echo"</TD><TD ALIGN='LEFT'>\n";
 	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>";
-	echo"</TD></TR></TABLE>";
+	echo"</TD></tr></table>";
 	echo"</TD><TD ALIGN='RIGHT'>\n";
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.2; 
 	echo"Scale Factor: <INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
 	$skipallcheck=($_POST['skipimages']=='all') ? 'CHECKED' : '';
 	$skiprejcheck=($_POST['skipimages']=='rejectonly') ? 'CHECKED' : '';
 	$skipcheck=($_POST['skipimages']!='all' && $_POST['skipimages']!='rejectonly') ? 'CHECKED' : '';
@@ -353,7 +353,7 @@ function displayImagePanel ($_POST,$files,$imgdir,$leginondata,$particle,$assess
 	echo"<input type='radio' name='skipimages' value='rejectonly' $skiprejcheck>Skip only rejected images\n";
 	echo"<input type='radio' name='skipimages' value='none' $skipcheck>Show all images\n";
 
-	echo"</TD></TR></TABLE>\n</CENTER>\n";
+	echo"</TD></tr></table>\n</CENTER>\n";
 }
 
 //****************************************
@@ -390,7 +390,7 @@ function getNextImage ($files, $imgindex, $lastindex, $leginondata, $particle, $
 		$imgindex++;
 		//echo "Checking next file: $imgindex";
 		if ($imgindex > $lastindex) {
-			echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
+			echo "<FONT COLOR='RED'> At end of image list</FONT><br>\n";
 			$imgindex = $lastindex;
 			$statdata=getImageStatus($files[$imgindex],$leginondata,$particle,$assessmentrid);
 			return $imgindex;
@@ -413,7 +413,7 @@ function getPrevImage ($files, $imgindex, $firstindex, $leginondata, $particle, 
 		$imgindex--;
 		//echo "Checking prev file: $imgindex";
 		if ($imgindex < $firstindex) {
-			echo "<FONT COLOR='RED'> At start of image list</FONT><BR>\n";
+			echo "<FONT COLOR='RED'> At start of image list</FONT><br>\n";
 			$imgindex = $firstindex;
 			$statdata=getImageStatus($files[$imgindex], $leginondata, $particle, $assessmentrid);
 			return $imgindex;
@@ -445,10 +445,10 @@ function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $asses
 	//Image and tool bars on side
 	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='5'><TR><TD align='center'>\n";
 	//printToolBar();
-	//echo"</TD><TD>\n";
+	//echo"</TD><td>\n";
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.2; 
-	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
-	//echo"</TD><TD>\n";
+	echo"<img src='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
+	//echo"</TD><td>\n";
 	//printToolBar();
 
 	echo"</td></tr><tr><td align='center'>\n";
@@ -476,7 +476,7 @@ function displayImage ($file, $imgdir, $filenum, $leginondata, $particle, $asses
 	echo"<input type='radio' name='imgstatus$filenum' value='no' $rejecton><FONT COLOR='RED'>Reject</FONT>&nbsp;\n";
 	echo"<input type='radio' name='imgstatus$filenum' value='yes' $keepon><FONT COLOR='GREEN'>Keep</FONT>\n";
 	echo"<input type='radio' name='imgstatus$filenum' value='none' $noneon>None\n";	
-	echo"</TD></TR></TABLE>\n";
+	echo"</TD></tr></table>\n";
 }
 
 //****************************************
@@ -490,7 +490,7 @@ function printToolBarRow() {
 	echo"<INPUT BORDER='0'TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
 	echo"</TD><TD ALIGN='CENTER'>\n";
 	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
-	echo"</TD></TR></TABLE>";
+	echo"</TD></tr></table>";
 }
 
 //****************************************
@@ -498,13 +498,13 @@ function printToolBarSide() {
 	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT BORDER='0'TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT BORDER='0' TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
-	echo"</TD></TR></TABLE>";
+	echo"</TD></tr></table>";
 }
 
 //****************************************

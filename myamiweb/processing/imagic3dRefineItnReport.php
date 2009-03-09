@@ -80,7 +80,7 @@ $numiters = count($refineparams);
 ########################### 3d0 Model Info ##############################
 
 
-$html.= "<BR/><h4> Initial 3d0 Model Selected for Refinement </h4>";
+$html.= "<br><h4> Initial 3d0 Model Selected for Refinement </h4>";
 $html.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html.= "<TR>";
 
@@ -117,7 +117,7 @@ if ($modeldata['REF|ApClusteringStackData|clusterclass']) {
 }
 
 $html.= "<td colspan='11'><b> 3 Initial Projections Used in Angular Reconstitution </b></td>
-		 </TR><TR>";
+		 </tr><TR>";
 foreach ($projections as $key => $projection) {
 	$num = $key + 1;
 	$image = $projection - 1; // Imagic numbering system starts with 1 instead of 0
@@ -126,17 +126,17 @@ foreach ($projections as $key => $projection) {
 		&img=$classimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
 	$html.= "<i>projection $num</i></TD>\n";
 }
-$html.="</TR></table>";
+$html.="</tr></table>";
 
 // display model info
-$html.= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html.= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html.= "<TR><TD colspan='6' bgcolor='#bbffbb'>";
 // view class averages used for 3d0 in summary page (both norefs and reclassifications)
 $html.= "<a href='viewstack.php?file=$classimgfile&expId=$expId&reclassId=$reclassnum'>";
 $html.= "class averages used to create 3d0 ---- <b>model ID: $modeldata[DEF_id]</b></a>";
-$html.= "</TD></TR>";
+$html.= "</TD></tr>";
 // view model parameters
-$html.="<TR><TD>";
+$html.="<TR><td>";
 $html.="<TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html.="<tr><td>euler ang increment</td><td><b>$modeldata[euler_ang_inc]</b></td>
 	    <td>num cls avgs used</td><td><b>$modeldata[num_classums]</b></td>
@@ -150,7 +150,7 @@ $html.="<tr><td>euler ang increment</td><td><b>$modeldata[euler_ang_inc]</b></td
 	<tr><td>automask threshold</td><td><b>$modeldata[amask_thresh]</b></td>
 	    <td>mrarefs ang incr</td><td><b>$modeldata[mra_ang_inc]</b></td>
 	    <td>forw proj ang incr</td><td><b>$modeldata[forw_ang_inc]</b></td></tr>";
-$html.="</TABLE>";
+$html.="</table>";
 $html.="</TD>";
 
 // get list of png files in initial model (3d0) directory
@@ -167,10 +167,10 @@ $html.= "<TD width='550'>\n";
 foreach ($pngfiles as $snapshot) {
 	$snapfile = $modeldata['path'].'/'.$modeldata['runname'].'/'.$snapshot;
 	$html.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-		<IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+		<img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 }
 $html.="</TD>";
-$html.= "</TR></table><BR/><BR/>";
+$html.= "</tr></table><br><br>";
 
 
 
@@ -178,20 +178,20 @@ $html.= "</TR></table><BR/><BR/>";
 #######################  REFINEMENT ITERATIONS  ############################
 
 
-$html .= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
 $display_keys = array ( 'iter', 'parameters', 'snapshots');
 $numcols = count($display_keys);
 foreach($display_keys as $key) {
-        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+        $html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 }
-$html .= "</TR>\n";
+$html .= "</tr>\n";
 
 $html.= "<h4> Refinement Iterations </h4>";
 foreach ($refineparams as $iteration) {
 	$html.="<TR>
-		<TD>$iteration[iteration]</TD>";
-	$html.="<TD>";
+		<td>$iteration[iteration]</TD>";
+	$html.="<td>";
 	$html.="<TABLE class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html.="<tr><td>euler ang increment</td><td><b>$iteration[euler_ang_inc]</b></td>
 		    <td>num cls avgs used</td><td><b>$iteration[num_classums]</b></td>
@@ -208,7 +208,7 @@ foreach ($refineparams as $iteration) {
 		<tr><td>automask threshold</td><td><b>$iteration[amask_thresh]</b></td>
 		    <td>mrarefs ang incr</td><td><b>$iteration[mra_ang_inc]</b></td>
 		    <td>forw proj ang incr</td><td><b>$iteration[forw_ang_inc]</b></td></tr>";
-	$html.="</TABLE>";
+	$html.="</table>";
 
 	// get list of png files in directory
 	$pngfiles = array();
@@ -224,7 +224,7 @@ foreach ($refineparams as $iteration) {
 	foreach ($pngfiles as $snapshot) {
 		$snapfile = $iteration['path'].'/'.$iteration['runname'].'/'.$snapshot;
 		$html.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-			<IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+			<img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 	}
 	$html.="</TD>";
 

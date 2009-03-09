@@ -95,12 +95,12 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
   <TR>
     <TD VALIGN='TOP'>\n";
 	if (!$densityid &&!$rescale) echo"<A HREF='emanJobGen.php?expId=$expId&modelonly=True'>[rescale an existing model]</A><P>\n";
-	echo"<TABLE>
+	echo"<table>
     <TR>
       <TD VALIGN='TOP'>";
 	if ($rescale) echo "
-      <BR/>\n
-      <B>New Model Name:</B><BR>
+      <br>\n
+      <B>New Model Name:</B><br>
       <INPUT TYPE='text' NAME='newmodel' VALUE='$newmodel' SIZE='50'><br />\n";
 	else {
 		if ($densityid) {
@@ -112,10 +112,10 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	}
 	echo"
       <P>
-      <B>Model Description:</B><BR/>
+      <B>Model Description:</B><br>
       <TEXTAREA NAME='description' ROWS='3' COLS='65'>$description</TEXTAREA>
       </TD>
-    </TR>
+    </tr>
     <TR>
       <TD VALIGN='TOP' CLASS='tablebg'>
       <P>
@@ -126,13 +126,13 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 		$res = $modelinfo['resolution'];
 		$apix = ($_POST['apix']) ? $_POST['apix'] : $modelinfo['pixelsize'];
 		$boxsize = ($_POST['boxsize']) ? $_POST['boxsize'] : $modelinfo['boxsize'];
-		echo "$symmetry[symmetry]<BR>
+		echo "$symmetry[symmetry]<br>
     <INPUT TYPE='hidden' NAME='sym' VALUE='$symid'>
-    <B>Model Resolution:</B> $res<BR>
+    <B>Model Resolution:</B> $res<br>
     <INPUT TYPE='hidden' NAME='res' VALUE='$res' SIZE='5'>
-    <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'><B>New Pixel Size</B> (originally $modelinfo[pixelsize])<BR>
+    <INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'><B>New Pixel Size</B> (originally $modelinfo[pixelsize])<br>
     <INPUT TYPE='hidden' NAME='origapix' VALUE='$modelinfo[pixelsize]'>
-    <INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxsize'><B>New Box Size</B> (originally $modelinfo[boxsize])<BR>\n";
+    <INPUT TYPE='text' NAME='boxsize' SIZE='5' VALUE='$boxsize'><B>New Box Size</B> (originally $modelinfo[boxsize])<br>\n";
 	}
 	else {
 		echo"
@@ -160,16 +160,16 @@ function createUploadModelForm($extra=false, $title='UploadModel.py Launcher', $
 	echo "
       <P>
       <B>Snapshot Options:</B>
-      <BR>
+      <br>
       <INPUT TYPE='text' NAME='contour' VALUE='$contour' SIZE='5'> Contour Level
-      <BR>
+      <br>
       <INPUT TYPE='text' NAME='zoom' VALUE='$zoom' SIZE='5'> Zoom
       <P>
       </TD>
-    </TR>
-    </TABLE>
+    </tr>
+    </table>
   </TD>
-  </TR>
+  </tr>
   <TR>
     <TD ALIGN='CENTER'>
       <hr>
@@ -295,7 +295,7 @@ function runUploadModel() {
 	echo"
 	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>
-	<B>UploadModel Command:</B><BR>
+	<B>UploadModel Command:</B><br>
 	$command
 	</td></tr>
 	<tr><td>old model id</td><td>$modelid</td></tr>

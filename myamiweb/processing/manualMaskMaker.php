@@ -39,19 +39,19 @@ function maskMakerJavaCommands () {
 			 var newwindow=window.open('','name','height=250, width=400');
 			 newwindow.document.write('<HTML><BODY>');
 			 if (infoname=='minthresh'){
-			    newwindow.document.write('Lower limit in gradient amplitude for Canny edge detection.<BR>This should be between 0.0 to 1.0 and should be smaller than that of the high limit<BR>');
+			    newwindow.document.write('Lower limit in gradient amplitude for Canny edge detection.<br>This should be between 0.0 to 1.0 and should be smaller than that of the high limit<br>');
 			 }
 			 if (infoname=='maxthresh'){
-			    newwindow.document.write('Threshold for Canny edge detector to consider as an edge in the gradient amplitude map.<BR>  The edge is then extended continuously from such places until the gradient falls below the Low threshold<BR>The value should be between 0.0 to 1.0 and should be close to 1.0');
+			    newwindow.document.write('Threshold for Canny edge detector to consider as an edge in the gradient amplitude map.<br>  The edge is then extended continuously from such places until the gradient falls below the Low threshold<br>The value should be between 0.0 to 1.0 and should be close to 1.0');
 			 }
 			 if (infoname=='blur'){
-			    newwindow.document.write('Gaurssian filter bluring used for producing the gradient amplitude map<BR> 1.0=no bluring');
+			    newwindow.document.write('Gaurssian filter bluring used for producing the gradient amplitude map<br> 1.0=no bluring');
 			 }
 			 if (infoname=='crudstd'){
-			    newwindow.document.write('Threshold to eliminate false positive regions that picks up the background<BR> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<BR> Leave it blank or as 0.0 if not considered');
+			    newwindow.document.write('Threshold to eliminate false positive regions that picks up the background<br> The region will be removed from the final result if the intensity standard deviation in the region is below the specified number of standard deviation of the map<br> Leave it blank or as 0.0 if not considered');
 			 }
 			 if (infoname=='masktype'){
-			    newwindow.document.write('Crud: Selexon crudfinder. Canny edge detector and Convex Hull is used<BR>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<BR>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.');
+			    newwindow.document.write('Crud: Selexon crudfinder. Canny edge detector and Convex Hull is used<br>  Edge: Hole Edge detection using region finder in libCV so that the region can be concave.<br>  Aggr: Aggregate finding by convoluting Sobel edge with a disk of the particle size.');
 			 }
 			 if (infoname=='bin'){
 			    newwindow.document.write('Binning of the image. This takes a power of 2 (1,2,4,8,16) and shrinks the image to help make the processing faster. Typically you want to use 4 or 8 depending on the quality of you templates.');
@@ -80,12 +80,12 @@ function createManualMaskMakerTable ($sessionId) {
 		$oldassessval = $_POST['oldassess'];
 	}
 	echo "	
-		<B>Image Option:</B><BR>
+		<B>Image Option:</B><br>
 
 		<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>&nbsp;
 		<A HREF=\"javascript:mminfopopup('bin')\">
-		Binning</A><BR>
-		<BR>
+		Binning</A><br>
+		<br>
 	";
 	echo "
 		<A HREF=\"javascript:mmminfopopup('assess')\">
@@ -159,9 +159,9 @@ function maskMakerSummaryTable () {
 	$bin = $_POST[bin];
 	$masktype = 'manaul';
 
-	echo "<TR><TD>mask type</TD><TD>$masktype</TD></TR>\n";
-	echo "<TR><TD>bin</TD><TD>$bin</TD></TR>\n";
-	echo "<TR><TD>assessment name</TD><TD>$assessname</TD></TR>\n";
+	echo "<TR><td>mask type</TD><td>$masktype</TD></tr>\n";
+	echo "<TR><td>bin</TD><td>$bin</TD></tr>\n";
+	echo "<TR><td>assessment name</TD><td>$assessname</TD></tr>\n";
 }
 
 
@@ -244,17 +244,17 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 	createManualMaskMakerTable($sessionId);
 	echo "
 		</TD>
-		</TR>
+		</tr>
 		<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>";
 	echo getSubmitForm("Run MaskMaker", true, true);
 	echo "
 		</TD>
-	</TR>
-	</TABLE>
+	</tr>
+	</table>
 	</TD>
-	</TR>
-	</TABLE>\n";
+	</tr>
+	</table>\n";
 	?>
 
 	</CENTER>
@@ -312,13 +312,13 @@ function runMaskMaker() {
 	echo"
   <TABLE WIDTH='600'>
   <TR><TD COLSPAN='2'>
-  <B>Mask Maker Command:</B><BR>
+  <B>Mask Maker Command:</B><br>
   $command<HR>
-  </TD></TR>
+  </TD></tr>
 	";
 	appionLoopSummaryTable();
 	maskMakerSummaryTable();
-	echo"</TABLE>\n";
+	echo"</table>\n";
 	processing_footer();
 }
 

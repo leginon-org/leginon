@@ -46,9 +46,9 @@ function createMaskMakerTable ($cannyminthresh, $cannymaxthresh) {
 		if ($masktype==$masktypeval) echo "SELECTED";
 		echo ">$masktype</OPTION>\n";
 	}
-	echo"</SELECT><BR><BR>\n";
+	echo"</SELECT><br><br>\n";
 	echo "
-		<B>Canny Edge thresholds:</B><BR>
+		<B>Canny Edge thresholds:</B><br>
 		<INPUT TYPE='text' NAME='blur' VALUE='$blur' SIZE='4'>\n";
 	echo docpop('blur','Gradient bluring');
 	echo "<br />\n";
@@ -196,16 +196,16 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	echo"
 				</td>
 				<td CLASS='tablebg'>
-					<B>Particle Diameter:</B><BR>
+					<B>Particle Diameter:</B><br>
 					<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
 	echo docpop('pdiam','Particle diameter as reference for template');
 	echo "	<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>\n";
 	echo "	<br /><br />";
 	echo"
-					<B>Minimal Mask Region Diameter:</B><BR>
+					<B>Minimal Mask Region Diameter:</B><br>
 					<INPUT TYPE='text' NAME='cdiam' VALUE='$cdiam' SIZE='4'>&nbsp;
 						Mask Region diameter as lower area/perimeter threshold <FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-					<BR><BR>";
+					<br><br>";
 
 	createMaskMakerTable(0.6,0.95);
 	echo "
@@ -217,7 +217,7 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 					<INPUT TYPE='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
 						Test these setting on image:
 					<INPUT TYPE='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
-					<HR/>
+					<hr>
 				</td>
 			</tr>
 			<tr>
@@ -227,10 +227,10 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	echo "
 				</td>
 			</tr>
-		</TABLE>
+		</table>
 	</td>
 	</tr>
-	</TABLE>\n";
+	</table>\n";
 	?>
 
 	</CENTER>
@@ -292,7 +292,7 @@ function runMaskMaker() {
 		// make sure outdir ends with '/'
 		if (substr($outdir,-1,1)!='/') $outdir.='/';
 		$runname=$_POST[runname];
-		echo  " <B>MaskMaker Command:</B><BR>$command<HR>";
+		echo  " <B>MaskMaker Command:</B><br>$command<HR>";
 		$testjpg=ereg_replace(".mrc","",$testimage);
 		$testdir=$outdir.$runname."/tests/";
     if (file_exists($testdir)) {
@@ -310,8 +310,8 @@ function runMaskMaker() {
 		if (count($files) > 0) 	{
 			$images=displayTestResults($testimage,$testdir,$files);
 		} else {
-			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><BR></FONT>";
-			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><BR></FONT>";
+			echo "<FONT COLOR='RED'><B>NO RESULT YET</B><br></FONT>";
+			echo "<FONT COLOR='RED'><B>Refresh this page when ready</B><br></FONT>";
 		}
 
 		createMMForm($images,'Particle Selection Results','');
@@ -323,7 +323,7 @@ function runMaskMaker() {
 		<TABLE WIDTH='600'>
 			<tr>
 				<td COLSPAN='2'>
-					<B>Mask Maker Command:</B><BR>
+					<B>Mask Maker Command:</B><br>
 					$command<HR>
 				</td>
 			</tr>
@@ -346,7 +346,7 @@ function runMaskMaker() {
 			</tr>";
 	appionLoopSummaryTable();
 	maskMakerSummaryTable();
-	echo"</TABLE>\n";
+	echo"</table>\n";
 	processing_footer();
 }
 
@@ -362,7 +362,7 @@ function displayTestResults($testimage,$imgdir,$files){
 	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='0' WIDTH='400'>\n";
 	echo"<tr><td ALIGN='LEFT'>\n";
   echo"<B>$testimage</B>\n";
-	echo"</td></tr></TABLE>";
+	echo"</td></tr></table>";
 	echo"<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='0'><tr>\n";
 	$col = 0;
 	$row = 0;
@@ -378,11 +378,11 @@ function displayTestResults($testimage,$imgdir,$files){
 		$imgname=$files[$imgindx];
 		$imgfull=$imgdir.$imgname;
 		echo"<B>$imgname</B>\n<P>";
-		echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=0.25'><P>\n";
+		echo"<img src='loadimg.php?filename=$imgfull&scale=0.25'><P>\n";
 		echo "</td>";
 		$col = $col + 1;
 	}	
-	echo"</tr></TABLE>\n";
+	echo"</tr></table>\n";
 	echo "</CENTER>\n";
 }
 ?>

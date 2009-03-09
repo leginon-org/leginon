@@ -111,7 +111,7 @@ function jobForm($extra=false) {
 			echo "<option value='$opvals'>$name; ID=$id; $description; $num_classes classes; $number_particles particles in stack; $method </option>\n";
 		}
 	}
-	echo "</select><BR/><BR/>\n";
+	echo "</select><br><br>\n";
 
 
 	// javascript documentation in help.js
@@ -153,16 +153,16 @@ function jobForm($extra=false) {
 			<td>\n";
 
 
-	echo "</TD></TR><TR>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
-	echo "</TD></TR>\n";
+	echo "</TD></tr>\n";
 	echo "<TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
-	echo "<BR></TD></TR>\n</TABLE>\n";
+	echo "<br></TD></tr>\n</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
@@ -189,8 +189,8 @@ function jobForm($extra=false) {
 
 	echo "<INPUT TYPE='text' NAME='mask_dropoff' VALUE='$mask_dropoff' SIZE='4'>\n";
 	echo $doc_maskd;
-	echo "<BR>\n";
-	echo "<BR>\n";
+	echo "<br>\n";
+	echo "<br>\n";
 
 	// particle centering
 	echo "<b>Particle Centering</b>\n";
@@ -199,8 +199,8 @@ function jobForm($extra=false) {
 
 	echo "<INPUT TYPE='text' NAME='transalign_iter' VALUE='$niter' SIZE='4'>\n";
 	echo "number of $doc_transiter";
-	echo "<BR>\n";
-	echo "<BR>\n";
+	echo "<br>\n";
+	echo "<br>\n";
 
 	// Reclassification
 	echo "<b>Reclassification</b>\n";
@@ -209,13 +209,13 @@ function jobForm($extra=false) {
 
 	echo "<INPUT TYPE='text' NAME='new_classums' SIZE='4'>\n";
 	echo "How many $doc_newclassums do you want?";
-	echo "<BR>\n";
+	echo "<br>\n";
 
 	echo "  </td>\n";
 	echo "  </tr>\n";
 	echo "</table>\n";
 	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "</tr>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";

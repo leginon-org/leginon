@@ -131,21 +131,21 @@ function createManualPickerForm($extra=false, $title='Manual Picker Launcher', $
   createParticleLoopTable(-1, -1);
   echo "
     </TD>
-  </TR>
+  </tr>
   <TR>
-    <TD COLSPAN='2' ALIGN='CENTER'><HR/>";
+    <TD COLSPAN='2' ALIGN='CENTER'><hr>";
   /*  <input type='checkbox' NAME='testimage' onclick='enabledtest(this)' $testcheck>
     Test these settings on image:
     <input type='text' NAME='testfilename' $testdisabled VALUE='$testvalue' SIZE='45'>
     <HR>
     </TD>
-  </TR>
+  </tr>
   <TR>
     <TD COLSPAN='2' ALIGN='CENTER'>";
 	*/
 	echo getSubmitForm("Run ManualPicker", false, true);
   echo "</TD>
-  </TR>
+  </tr>
   </table>
   </CENTER>
   </FORM>
@@ -222,7 +222,7 @@ function runManualPicker() {
     <TR><TD COLSPAN='2'>
     <B>Manual Picker Command:</B><br />
     $command<HR>
-    </TD></TR>";
+    </TD></tr>";
 
   appionLoopSummaryTable();
   particleLoopSummaryTable();

@@ -65,7 +65,7 @@ $particle = new particledata();
 	echo"</tr></table>\n\n";
 
 	$stackfile=$s['path']."/".$s['name'];
-	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><BR>\n";
+	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><br>\n";
 
 //Report stack run parameters
 	$exclude_fields = array('DEF_id','DEF_timestamp','count','REF|ApPathData|path');

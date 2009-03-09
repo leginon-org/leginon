@@ -128,28 +128,28 @@ function runPyAce() {
 	<TR><TD COLSPAN='2'>
 	<B>ACE Command:</B><br/>
 	$command<HR>
-	</TD></TR>";
+	</TD></tr>";
 	appionLoopSummaryTable();
 	echo"
-	<TR><TD>edgethcarbon</TD><TD>$edgethcarbon</TD></TR>
-	<TR><TD>edgethice</TD><TD>$edgethice</TD></TR>
-	<TR><TD>pfcarbon</TD><TD>$pfcarbon</TD></TR>
-	<TR><TD>pfice</TD><TD>$pfice</TD></TR>
-	<TR><TD>overlap</TD><TD>$overlap</TD></TR>
-	<TR><TD>fieldsize</TD><TD>$fieldsize</TD></TR>
-	<TR><TD>resamplefr</TD><TD>$resamplefr</TD></TR>
-	<TR><TD>medium</TD><TD>$medium</TD></TR>
-	<TR><TD>cs</TD><TD>$cs</TD></TR>
-	<TR><TD>drange</TD><TD>$drange</TD></TR>
-	<TR><TD>display</TD><TD>$display</TD></TR>
-	<TR><TD>stig</TD><TD>$stig</TD></TR>\n";
+	<TR><td>edgethcarbon</TD><td>$edgethcarbon</TD></tr>
+	<TR><td>edgethice</TD><td>$edgethice</TD></tr>
+	<TR><td>pfcarbon</TD><td>$pfcarbon</TD></tr>
+	<TR><td>pfice</TD><td>$pfice</TD></tr>
+	<TR><td>overlap</TD><td>$overlap</TD></tr>
+	<TR><td>fieldsize</TD><td>$fieldsize</TD></tr>
+	<TR><td>resamplefr</TD><td>$resamplefr</TD></tr>
+	<TR><td>medium</TD><td>$medium</TD></tr>
+	<TR><td>cs</TD><td>$cs</TD></tr>
+	<TR><td>drange</TD><td>$drange</TD></tr>
+	<TR><td>display</TD><td>$display</TD></tr>
+	<TR><td>stig</TD><td>$stig</TD></tr>\n";
 
-	if ($nominal=="db value" OR $nominal=="") echo "<TR><TD>nominal</TD><TD><I>NULL</I></TD></TR>\n";
-	else echo "<TR><TD>nominal</TD><TD>$nominal</TD></TR>\n";
-	if ($reprocess) echo "<TR><TD>reprocess</TD><TD>$reprocess</TD></TR>\n";
-	else echo "<TR><TD>reprocess</TD><TD><I>NULL</I></TD></TR>\n";
-	echo "<TR><TD>newnominal</TD><TD>$newnominal</TD></TR>\n";
-	echo "</TABLE>\n";
+	if ($nominal=="db value" OR $nominal=="") echo "<TR><td>nominal</TD><td><I>NULL</I></TD></tr>\n";
+	else echo "<TR><td>nominal</TD><td>$nominal</TD></tr>\n";
+	if ($reprocess) echo "<TR><td>reprocess</TD><td>$reprocess</TD></tr>\n";
+	else echo "<TR><td>reprocess</TD><td><I>NULL</I></TD></tr>\n";
+	echo "<TR><td>newnominal</TD><td>$newnominal</TD></tr>\n";
+	echo "</table>\n";
 	processing_footer(True, True);
 }
 
@@ -213,7 +213,7 @@ function createPyAceForm($extra=false) {
 				newwindow.document.write('Use in cases where the signal to noise ratio is so high that the edge detection is incorrect.');
 			}
 			if (infoname=='resamplefr'){
-				newwindow.document.write('Sets the sampling size of the CTF.  At high defoci or at higher magnifications, the first thon rings may be so close to the origin that they are not processed by ACE. In these cases raise the resampling value (2.0 works well in these cases).<br/><br/><TABLE><TR><TD COLSPAN=2>typical values for defocus/apix</TD></TR><TR><TD>0.5</TD><TD>1.2</TD></TR><TR><TD>1.0</TD><TD>1.5</TD></TR><TR><TD>1.5</TD><TD>1.6</TD></TR><TR><TD>2.0</TD><TD>1.8</TD></TR><TR><TD>3.0</TD><TD>2.2</TD></TR><TR><TD>4.0</TD><TD>2.7</TD></TR></TABLE><br/>For example, with defocus = 2.0 (-2.0x10<SUP>-6</SUP> m) and apix (&Aring;/pixel) = 1.63<br/>then defocus/apix = 1.22 and you should use resamplefr=1.6<br/>(as long as its close it should work.)');
+				newwindow.document.write('Sets the sampling size of the CTF.  At high defoci or at higher magnifications, the first thon rings may be so close to the origin that they are not processed by ACE. In these cases raise the resampling value (2.0 works well in these cases).<br/><br/><table><TR><TD COLSPAN=2>typical values for defocus/apix</TD></tr><TR><td>0.5</TD><td>1.2</TD></tr><TR><td>1.0</TD><td>1.5</TD></tr><TR><td>1.5</TD><td>1.6</TD></tr><TR><td>2.0</TD><td>1.8</TD></tr><TR><td>3.0</TD><td>2.2</TD></tr><TR><td>4.0</TD><td>2.7</TD></tr></table><br/>For example, with defocus = 2.0 (-2.0x10<SUP>-6</SUP> m) and apix (&Aring;/pixel) = 1.63<br/>then defocus/apix = 1.22 and you should use resamplefr=1.6<br/>(as long as its close it should work.)');
 			}
 			if (infoname=='overlap'){
 				newwindow.document.write('During processing, micrographs are cut into a series of smaller images and averaged together to increase the signal to noise ratio. This value (n) will result in successive images having an overlap of (1-n)*field size. Increase in cases of very low signal to noise ratio.');
@@ -276,7 +276,7 @@ function createPyAceForm($extra=false) {
 
 	srand(time());
 	if ((rand()%2) < 3) {
-		echo"<center><IMG SRC='img/ace1.jpg' WIDTH='300'></center><br />\n";
+		echo"<center><img src='img/ace1.jpg' WIDTH='300'></center><br />\n";
 	}
 
 
@@ -315,7 +315,7 @@ function createPyAceForm($extra=false) {
 	echo "Ice\n";
 	echo "</TD>\n";
 
-	echo "</TR></TABLE><br />\n";
+	echo "</tr></table><br />\n";
 
 	echo "<INPUT TYPE='text' NAME='resamplefr' VALUE='1.5' size='4'>\n";
 	echo docpop('resamplefr','Resampling Frequency');
@@ -335,7 +335,7 @@ function createPyAceForm($extra=false) {
 
 	echo"
 	  </TD>
-	</TR>
+	</tr>
 	<TR>
 	  <TD COLSPAN='2' ALIGN='CENTER'>\n<hr />";
 	echo getSubmitForm("Run ACE");

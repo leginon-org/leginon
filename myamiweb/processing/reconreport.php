@@ -48,11 +48,11 @@ foreach($refine_params_fields as $param) {
 		$param=end($namesplit);
 	}
 	$javascript.="                if ($param) {\n";
-	$javascript.="                        newwindow.document.write('<TR><TD>$param</TD>');\n";
-	$javascript.="                        newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
+	$javascript.="                        newwindow.document.write('<TR><td>$param</TD>');\n";
+	$javascript.="                        newwindow.document.write('<td>'+$param+'</TD></tr>');\n";
 	$javascript.="                }\n";
 }
-$javascript.="                newwindow.document.write('</TABLE></BODY></HTML>');\n";
+$javascript.="                newwindow.document.write('</table></BODY></HTML>');\n";
 $javascript.="                newwindow.document.close()\n";
 $javascript.="        }\n";
 $javascript.="</script>\n";
@@ -77,14 +77,14 @@ $boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $st
 $stackparticles= $particle->getNumStackParticles($stackId);
 
 $html .= "<form name='iterations' method='post' action='$formAction'>\n";
-$html .= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $html .= "<TR>\n";
 $display_keys = array ( 'iter', 'ang', 'fsc', 'classes', '# particles', 'density','snapshot');
 $numcols = count($display_keys);
 foreach($display_keys as $key) {
-        $html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+        $html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 }
-$html .= "</TR>\n";
+$html .= "</tr>\n";
 
 $refinerun=$particle->getRefinementRunInfo($reconId);
 $initmodel=$particle->getInitModelInfo($refinerun['REF|ApInitialModelData|initialModel']);
@@ -114,12 +114,12 @@ $reconinfo = array(
 if ($refinerun['package']=='EMAN/SpiCoran') {
 	$corankeepplotfile = $refinerun['path']."/corankeepplot-".$refinerun['DEF_id'].".png";
 	if (file_exists($corankeepplotfile)) {
-		echo "<TABLE><TR><TD>\n";
+		echo "<table><TR><td>\n";
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
-		echo "</TD><TD>";
+		echo "</TD><td>";
 		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='corankeepplotfile'>"
-			."<IMG SRC='loadimg.php?filename=$corankeepplotfile&s=180' HEIGHT='180'><BR/>\nCoran Keep Plot</A>";
-		echo "</TD></TR></TABLE>";
+			."<img src='loadimg.php?filename=$corankeepplotfile&s=180' HEIGHT='180'><br>\nCoran Keep Plot</A>";
+		echo "</TD></tr></table>";
 	} else {
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
 	}
@@ -133,7 +133,7 @@ echo ministacksummarytable($stackId);
 $initmodelname = showModelInfo($initmodel, $expId, $particle);
 
 $misc = $particle->getMiscInfoFromReconId($reconId);
-if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><BR>\n"; 
+if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><br>\n"; 
 
 $iterations = $particle->getIterationInfo($reconId);
 
@@ -154,18 +154,18 @@ $pngimages = getPngList($refinerun['path']);
 # display starting model
 $html .= "<TR>\n";
 foreach ($display_keys as $p) {
-	$html .= "<TD>";
+	$html .= "<td>";
 	if ($p == 'iteration') $html .= "0";
 	elseif ($p == 'snapshot') {
 		foreach ($initpngs as $snapshot) {
 			$snapfile = $initmodel['path'].'/'.$snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
-				."<IMG SRC='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></A>\n";
+				."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></A>\n";
 		}
 	}
 	$html .= "</TD>";
 }
-$html .= "</TR>\n";
+$html .= "</tr>\n";
 
 # show info for each iteration
 //sort($iterations);
@@ -233,7 +233,7 @@ foreach ($iterations as $iteration){
 	$html .= "<td bgcolor='$bg'>\n";
 
 /*
-  $html .= "<TD><A HREF=\"javascript:infopopup(";
+  $html .= "<td><A HREF=\"javascript:infopopup(";
   $refinestr2='';
   foreach ($refine_params_fields as $param) {
     if (eregi('hard|class|median|phasecls|refine',$param)){$param="EMAN_$param";}
@@ -301,12 +301,12 @@ foreach ($iterations as $iteration){
 		if (array_key_exists($type,$badprtls)) {
 			$prtlsused=$stackparticles-$badprtls[$type];
 			$html .= "<TR><td bgcolor='$bg'>\n"
-			."$type </TD></TR>\n";
+			."$type </TD></tr>\n";
 			if ($prtlsused != $goodprtls[$type]) 
-				$html .= "<TR><td bgcolor='$bg'>Not all prtls accounted for!!!</TD></TR>";
+				$html .= "<TR><td bgcolor='$bg'>Not all prtls accounted for!!!</TD></tr>";
 			$html .= "<TR><td bgcolor='$bg'>\n"
-			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><BR/></TD></TR><TR><td bgcolor='$bg'>"
-			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</A></TD></TR>\n";
+			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><br></TD></tr><TR><td bgcolor='$bg'>"
+			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</A></TD></tr>\n";
 		}
 	}	
 	$html .= "</table></TD>";
@@ -325,7 +325,7 @@ foreach ($iterations as $iteration){
 		if (eregi($iteration['volumeDensity'],$snapshot)) {
 			$snapfile = $refinerun['path'].'/'.$snapshot;
 			$html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>"
-				."<IMG SRC='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
+				."<img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'></a>\n";
 		}
 	}
 	"</td></tr>\n";
@@ -371,7 +371,7 @@ foreach ($iterations as $iteration){
 	}	  
 }
 $html .= "</form>\n";
-$html.="</TABLE>\n";
+$html.="</table>\n";
 
 echo "<P><FORM NAME='compareparticles' METHOD='POST' ACTION='compare_eulers.php'>
 Compare Iterations:

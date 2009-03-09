@@ -66,61 +66,61 @@ function jobform($extra=false)	{
 	<TR>
 		<TD valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
-	echo "<TR><TD>\n";
+	echo "<TR><td>\n";
 	echo openRoundBorder();
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo "<input type='text' name='outdir' value='$outdir' size='42'>\n";
-	echo "<BR/>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
+	echo "<br>\n";
 	echo docpop('descr','<b>Description of IMAGIC Clustering run:</b>');
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo "<textarea name='description' rows='3' cols='36'>$description</textarea>\n";
 	echo closeRoundBorder();
-	echo "</TD></TR><TR>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
-	echo "</TD></TR><TR>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
-	echo "</TD></TR>\n";
+	echo "</TD></tr>\n";
 	echo "<TR>";
 	echo "    <TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
-	echo "<BR/></TD></TR>\n</TABLE>\n";
+	echo "<br></TD></tr>\n</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
 	echo "<b>Clustering Parameters</b>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo "<INPUT TYPE='text' NAME='num_classes' SIZE='8' VALUE='$num_classes'>\n";
 	echo docpop('num_classes','Number of Classes');
-	echo "<BR/>\n";
+	echo "<br>\n";
 
 	echo "<INPUT TYPE='text' NAME='ignore_images' SIZE='4' VALUE='$ignore_images'>\n";
 	echo docpop('ignore_images','Percentage of images to ignore');
-	echo "<BR/>\n";
-        echo "<BR/>\n";
+	echo "<br>\n";
+        echo "<br>\n";
 	
 	echo "<b>Summing Parameters</b>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
 	
 	echo "<INPUT TYPE='text' NAME='ignore_members' VALUE='$ignore_members' SIZE='4'>\n";
 	echo docpop('ignore_members', 'Percentage of worst class members to ignore');
-	echo "<BR/>";
+	echo "<br>";
 	
 	echo "  </TD>\n";
-	echo "  </TR>\n";
+	echo "  </tr>\n";
 	echo "</table>\n";
 	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "</tr>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
-	echo "	<HR />\n";
+	echo "	<hr>\n";
 	echo getSubmitForm("run imagic");
 	echo "  </td>\n";
 	echo "</tr>\n";

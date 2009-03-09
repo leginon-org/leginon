@@ -47,18 +47,18 @@ processing_header('Mask Creation Results','Mask Creation Results');
 
 echo"<table border='0' cellpadding=10>
 <TR>
-  <TD>\n";
+  <td>\n";
 
 $sessionDescr=$sessioninfo['Purpose'];
-echo "<TABLE>";
-echo "<TR><TD><B>Project:</B></TD><TD>$proj_link</TD></TR>\n";
-echo "<TR><TD><B>Session:</B></TD><TD><A CLASS='header' target='project' href='3wviewer.php?expId=$expId'>$sessionDescr</A></TD></TR>\n";
-echo "</TABLE>";
+echo "<table>";
+echo "<TR><td><B>Project:</B></TD><td>$proj_link</TD></tr>\n";
+echo "<TR><td><B>Session:</B></TD><td><A CLASS='header' target='project' href='3wviewer.php?expId=$expId'>$sessionDescr</A></TD></tr>\n";
+echo "</table>";
 echo "<HR>\n";
 /*
 $inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
 echo"<FORM NAME='prtl' method='POST' action='$_SERVER[REQUEST_URI]'>
-     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use regions from discarded images<BR>
+     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use regions from discarded images<br>
      <INPUT CLASS='field' NAME='mselex' TYPE='text' size='5' VALUE='$mselexval'>Minimum correlation value
      </form>\n";
 */

@@ -28,7 +28,7 @@ if ($projectId)
 # display starting model
 $html .= "<TABLE WIDTH='600' BORDER='1'>\n";
 foreach ($fileinfo as $p) {
-  $html .= "<TR><TD>";
+  $html .= "<TR><td>";
   $snapfile = $p['path'].'/'.$p['name'];
   if (ereg('\.txt$',$p['name'])){
     $html .= "<A HREF='loadtxt.php?filename=$snapfile'>$p[name]</A>\n";
@@ -38,12 +38,12 @@ foreach ($fileinfo as $p) {
     $html .= $txt;
   }
   else{
-    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='200'>\n";
+    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='200'>\n";
   }
-  $html .= "</TD><TD>$p[description]</TD>\n";
-  $html .= "</TR>\n";
+  $html .= "</TD><td>$p[description]</TD>\n";
+  $html .= "</tr>\n";
 }
-$html.="</TABLE>\n";
+$html.="</table>\n";
 
 echo $html;
 

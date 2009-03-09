@@ -37,7 +37,7 @@ if (is_array($data))
 		$sx[]=$x;
 		$y=floatval($y);
 		$sy[]=log($y);
-#		echo "$x, $y<BR>\n";
+#		echo "$x, $y<br>\n";
 	}
 // Setup the basic graph
 $graph = new Graph($width,$height,"auto");

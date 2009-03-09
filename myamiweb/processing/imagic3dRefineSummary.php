@@ -44,7 +44,7 @@ if ($refineruns) {
 	$html .= "<TR>\n";
 	$display_keys = array ( 'defid', 'run name', 'class averages', 'num cls avgs (original)', 'num iters', 'pixel size', 'box size', 'description');
 	foreach($display_keys as $key) {
-		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
 	foreach ($refineruns as $refinerun) {
@@ -77,27 +77,27 @@ if ($refineruns) {
 
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<TD>$refineid</TD>\n";
-		$html .= "<TD><A HREF='imagic3dRefineItnReport.php?expId=$expId&refineId=$refineid'>$refinerun[runname]</A></TD>\n";
+		$html .= "<td>$refineid</TD>\n";
+		$html .= "<td><A HREF='imagic3dRefineItnReport.php?expId=$expId&refineId=$refineid'>$refinerun[runname]</A></TD>\n";
 		if ($refinerun['REF|ApNoRefClassRunData|norefclass']) {
-			$html .= "<TD><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
+			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
 			$norefClassId'>View Class Averages</A></TD>\n";
-			$html .= "<TD>$norefclassdata[num_classes]</TD>\n";
+			$html .= "<td>$norefclassdata[num_classes]</TD>\n";
 		}
 		elseif ($refinerun['REF|ApClusteringStackData|clusterclass']) {
-			$html .= "<TD><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterId'
+			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterId'
 			>View Class Averages</A></TD>\n";
-			$html .= "<TD>$clusterdata[num_classes]</TD>\n";
+			$html .= "<td>$clusterdata[num_classes]</TD>\n";
 		}
-		$html .= "<TD>$numiters</TD>\n";
-		$html .= "<TD>$refinerun[pixelsize]</TD>\n";
-		$html .= "<TD>$refinerun[boxsize]</TD>\n";
+		$html .= "<td>$numiters</TD>\n";
+		$html .= "<td>$refinerun[pixelsize]</TD>\n";
+		$html .= "<td>$refinerun[boxsize]</TD>\n";
 	
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($refineid,$refinerun['description']) : $refinerun['description'];
 
 		$html .= "<td>$descDiv</td>\n";
-		$html .= "</TR>\n";
+		$html .= "</tr>\n";
 	}
 
 	$html .= "</table>\n";

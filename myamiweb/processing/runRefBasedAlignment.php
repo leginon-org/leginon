@@ -62,21 +62,21 @@ function createTemplateForm() {
 		$numtemplates=count($templateData);
 		foreach($templateData as $templateinfo) {
 			if ($i%2 == 1)
-				$templatetable.="<TR><TD>\n";
+				$templatetable.="<TR><td>\n";
 			else
-				$templatetable.="<TD>\n";
+				$templatetable.="<td>\n";
 			if (is_array($templateinfo)) {
 				$filename = $templateinfo[path] ."/".$templateinfo[templatename];
 				$checkboxname='template'.$i;
 				// create the image template table
-				$templatetable.="<IMG SRC='loadimg.php?filename=$filename&s=90' WIDTH='90'>\n";
-				$templatetable.="</TD><TD>\n";
+				$templatetable.="<img src='loadimg.php?filename=$filename&s=90' WIDTH='90'>\n";
+				$templatetable.="</TD><td>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='templateId".$i."' VALUE='$templateinfo[DEF_id]'>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='diam' VALUE='$templateinfo[diam]'>\n";
 				$templatetable.="<INPUT TYPE='checkbox' NAME='$checkboxname'>\n";
-				$templatetable.="<B>Use Template ID:</B>  $templateinfo[DEF_id]<BR/>\n";
-				$templatetable.="Diameter:  $templateinfo[diam]<BR/>\n";
-				$templatetable.="Pixel Size: $templateinfo[apix]<BR/>\n";
+				$templatetable.="<B>Use Template ID:</B>  $templateinfo[DEF_id]<br>\n";
+				$templatetable.="Diameter:  $templateinfo[diam]<br>\n";
+				$templatetable.="Pixel Size: $templateinfo[apix]<br>\n";
 				$templatetable.="File:&nbsp;<I>\n";
 				$templatetable.=$templateinfo[templatename]."</I><br/>\n";
 				$templatetable.="Description:&nbsp;<I>\n";
@@ -84,17 +84,17 @@ function createTemplateForm() {
 				$i++;
 			}
 			if ($i%2 == 1)
-				$templatetable.="</TD></TR>\n";
+				$templatetable.="</TD></tr>\n";
 			else
 				$templatetable.="</TD>\n";
 		}
-		$templatetable.="</TABLE>\n<br/>\n";
+		$templatetable.="</table>\n<br/>\n";
 	}
 
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator","");
 	echo"
   <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
-  <B>Select Project:</B><BR>
+  <B>Select Project:</B><br>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
@@ -204,7 +204,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 
 
 	$templateCheck='';
-	$templateTable.="<TABLE><TR>\n";
+	$templateTable.="<table><TR>\n";
 	for ($i=1; $i<=$_POST['numtemplates']; $i++) {
 		$templateimg = "template".$i;
 		if ($_POST[$templateimg]){
@@ -214,17 +214,17 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
 			$filename=$templateinfo[path]."/".$templateinfo['templatename'];
-			$templateTable.="<TR><TD VALIGN='TOP'><IMG SRC='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></TR>\n";
-			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></TR>\n";
+			$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
+			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
 			$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
 			$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
-			$templateTable.="</TABLE></TD>\n";
+			$templateTable.="</table></TD>\n";
 		}
 	}
-	$templateTable.="</TR></TABLE>\n";
+	$templateTable.="</tr></table>\n";
 	if ($templateList) { $templateList=substr($templateList,0,-1);}
 	else {
-		echo "<BR/><B>no templates chosen, go back and choose templates</B>\n";
+		echo "<br><B>no templates chosen, go back and choose templates</B>\n";
 		exit;
 	}
 	echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
@@ -241,21 +241,21 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			<B>Alignment Run Name:</B>
 			<INPUT TYPE='text' NAME='runname' VALUE='$runnameval'>
 			</TD>
-		</TR>\n";
+		</tr>\n";
 		echo"<TR>
 			<TD VALIGN='TOP'>
-			<B>Alignment Description:</B><BR>
+			<B>Alignment Description:</B><br>
 			<TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
 			</TD>
-		</TR>\n";
+		</tr>\n";
 		echo"<TR>
 			<TD VALIGN='TOP'>	 
-			<B>Output Directory:</B><BR>
+			<B>Output Directory:</B><br>
 			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='38'>
 			</TD>
-		</TR>
+		</tr>
 		<TR>
-			<TD>\n";
+			<td>\n";
 
 	if (!$stackIds) {
 		echo"
@@ -263,7 +263,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	}
 	else {
 		echo "
-		Particles:<BR>
+		Particles:<br>
 		<SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
@@ -287,72 +287,72 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	}
 	echo"
 		</TD>
-	</TR>";
+	</tr>";
 	echo"
 	<TR>
 		<TD VALIGN='TOP'>
 		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-		<B>Commit to Database</B><BR>
+		<B>Commit to Database</B><br>
 		</TD>
-	</TR>";
+	</tr>";
 	echo"
-	</TABLE>
+	</table>
 	</TD>
 	<TD CLASS='tablebg'>
 	<TABLE CELLPADDING='5' BORDER='0'>
 	<TR>";
 	echo"
 		<TD VALIGN='TOP'>
-		<B>Particle Params:</B></A><BR>";
+		<B>Particle Params:</B></A><br>";
 	echo"
 		<INPUT TYPE='text' NAME='lastring' SIZE='5' VALUE='$lastring'>
-		Last Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+		Last Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><br>";
 	echo"
 		<INPUT TYPE='text' NAME='firstring' SIZE='5' VALUE='$firstring'>
-		First Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+		First Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><br>";
 	echo"
 		<INPUT TYPE='text' NAME='lowpass' SIZE='5' VALUE='$lowpass'>
-		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><br>";
 	echo"
 		<INPUT TYPE='text' NAME='highpass' SIZE='5' VALUE='$highpass'>
-		High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><BR>";
+		High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><br>";
 	echo"
 		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>
-		Particle Binning<BR>";
+		Particle Binning<br>";
 	echo"
 		</TD>
-	</TR>
+	</tr>
 	<TR>
 		<TD VALIGN='TOP'>
-		<B>Alignment Params:</B></A><BR>";
+		<B>Alignment Params:</B></A><br>";
 	echo"
 		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>
-		Iterations<BR>";
+		Iterations<br>";
 	echo"
 		<INPUT TYPE='text' NAME='xysearch' VALUE='$xysearch' SIZE='4'>
-		Search range from center <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+		Search range from center <FONT SIZE='-1'>(in pixels)</FONT><br>";
 	echo"
 		<INPUT TYPE='text' NAME='xystep' VALUE='$xystep' SIZE='4'>
-		Step size for parsing search range <FONT SIZE='-1'>(in pixels)</FONT><BR>";
+		Step size for parsing search range <FONT SIZE='-1'>(in pixels)</FONT><br>";
 	//echo"
 	//	<INPUT TYPE='text' NAME='csym' VALUE='$csym' SIZE='4'>
-	//	C-symmetry to apply<BR>";
+	//	C-symmetry to apply<br>";
 	echo"
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
-		Number of Particles to Use<BR>";
+		Number of Particles to Use<br>";
 	//echo"
 	//	<INPUT TYPE='checkbox' NAME='staticref' $staticref>
-	//	Use original references for each iteration<BR>";
+	//	Use original references for each iteration<br>";
 	echo"
 		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
-		Invert density of all templates before alignment<BR>";
+		Invert density of all templates before alignment<br>";
 	echo"
 		</TD>
-	</TR>
-	</TR>
-	</TABLE>
+	</tr>
+	</tr>
+	</table>
 	</TD>
-	</TR>
+	</tr>
 	<TR>
 		<TD COLSPAN='2' ALIGN='CENTER'>
 		<HR>";
@@ -360,8 +360,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo getSubmitForm("Run Ref-Based Alignment");
 	echo "
 	  </TD>
-	</TR>
-	</TABLE>
+	</tr>
+	</table>
 	</FORM>
 	</CENTER>\n";
 
@@ -464,23 +464,23 @@ function runAlignment() {
 		echo"
 		<TABLE WIDTH='600' BORDER='1'>
 		<TR><TD COLSPAN='2'>
-		<B>Alignment Command:</B><BR>
+		<B>Alignment Command:</B><br>
 		$command
-		</TD></TR>
-		<TR><TD>runname</TD><TD>$runname</TD></TR>
-		<TR><TD>stackid</TD><TD>$stackid</TD></TR>
-		<TR><TD>refids</TD><TD>".templateCommand()."</TD></TR>
-		<TR><TD>iter</TD><TD>$iters</TD></TR>
-		<TR><TD>numpart</TD><TD>$numpart</TD></TR>
-		<TR><TD>last ring</TD><TD>$lastring</TD></TR>
-		<TR><TD>first ring</TD><TD>$firstring</TD></TR>
-		<TR><TD>rundir</TD><TD>$rundir</TD></TR>
-		<TR><TD>xysearch</TD><TD>$xysearch</TD></TR>
-		<TR><TD>xystep</TD><TD>$xystep</TD></TR>
-		<TR><TD>low pass</TD><TD>$lowpass</TD></TR>l
-		<TR><TD>high pass</TD><TD>$highpass</TD></TR>";
-		if ($csym > 1) echo"	<TR><TD>c-symmetry</TD><TD>$csym</TD></TR>";
-		echo"	</TABLE>\n";
+		</TD></tr>
+		<TR><td>runname</TD><td>$runname</TD></tr>
+		<TR><td>stackid</TD><td>$stackid</TD></tr>
+		<TR><td>refids</TD><td>".templateCommand()."</TD></tr>
+		<TR><td>iter</TD><td>$iters</TD></tr>
+		<TR><td>numpart</TD><td>$numpart</TD></tr>
+		<TR><td>last ring</TD><td>$lastring</TD></tr>
+		<TR><td>first ring</TD><td>$firstring</TD></tr>
+		<TR><td>rundir</TD><td>$rundir</TD></tr>
+		<TR><td>xysearch</TD><td>$xysearch</TD></tr>
+		<TR><td>xystep</TD><td>$xystep</TD></tr>
+		<TR><td>low pass</TD><td>$lowpass</TD></tr>l
+		<TR><td>high pass</TD><td>$highpass</TD></tr>";
+		if ($csym > 1) echo"	<TR><td>c-symmetry</TD><td>$csym</TD></tr>";
+		echo"	</table>\n";
 		processing_footer();
 	}
 }

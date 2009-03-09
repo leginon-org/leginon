@@ -183,27 +183,27 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		}
 		echo "</SELECT><br/>\n";
 	}
-	echo "</TD></TR><TR>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
-	echo "</TD></TR>\n";
+	echo "</TD></tr>\n";
 	echo "<TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
-	echo "<BR/>";
+	echo "<br>";
 
 	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
 	echo "Number of Processors";
 	echo "<br/>\n";
 
-	echo "</TD></TR>\n</TABLE>\n";
+	echo "</TD></tr>\n</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE cellpading='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
-	//echo "<B>Particle Params:</B></A><BR>\n";
+	//echo "<B>Particle Params:</B></A><br>\n";
 
 	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
 	echo "<br />\n";
@@ -273,7 +273,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "  </tr>\n";
 	echo "</table>\n";
 	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "</tr>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";

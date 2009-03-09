@@ -83,22 +83,22 @@ function jobform($extra=false)	{
 	<TR>
 		<TD valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
-	echo "<TR><TD>\n";
+	echo "<TR><td>\n";
 	echo openRoundBorder();
 	echo docpop('runid','<b>MSA Run Name:</b>');
 	echo "<input type='text' name='runid' value='$runid'>\n";
-	echo "<BR/>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
+	echo "<br>\n";
 	echo docpop('outdir','<b>Output Directory:</b>');
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
-	echo "<BR/>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
+	echo "<br>\n";
 	echo docpop('descr','<b>Description of IMAGIC MSA run:</b>');
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo "<textarea name='description' rows='3' cols='36'>$description</textarea>\n";
 	echo closeRoundBorder();
-	echo "</TD></TR><TR>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 /*	if (!$stackIds) {
 		echo"
@@ -140,7 +140,7 @@ function jobform($extra=false)	{
                 $defaultmaskrad = (int) ($alignstack['boxsize']/2-2)*$alignstack['pixelsize'];
         } elseif ($alignIds) {
                 echo "
-                Aligned Stack:<BR>
+                Aligned Stack:<br>
                 <select name='alignid' onchange='switchDefaults(this.value)'>\n";
                 foreach ($alignIds as $alignarray) {
                         $alignid = $alignarray['alignstackid'];
@@ -170,22 +170,22 @@ function jobform($extra=false)	{
         }
 
 
-	echo "</TD></TR><TR>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 
-	echo "</TD></TR>\n";
+	echo "</TD></tr>\n";
 	echo "<TR>";
 	echo "    <TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
-	echo "<BR/></TD></TR>\n</TABLE>\n";
+	echo "<br></TD></tr>\n</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
 	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
 	if  (!$apix) {
         	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
 		echo "Make sure you are within the limitations of the box size</font><br />\n";
@@ -193,56 +193,56 @@ function jobform($extra=false)	{
 	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lpfilt'>\n";
 	echo docpop('lpval','Low Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
 
 	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$hpfilt'>\n";
 	echo docpop('hpval','High Pass Filter Radius');
 	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
 
 	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
 	echo docpop('norefbin','Particle binning');
-	echo "<BR/>\n";
+	echo "<br>\n";
 	
 	echo "<INPUT TYPE='text' NAME='mask_radius' VALUE='$mask_radius' SIZE='4'>\n";
 	echo docpop('mask_radius', 'Mask Radius');
-	echo "<BR/>\n";
+	echo "<br>\n";
 
         echo "<INPUT TYPE='text' NAME='mask_dropoff' VALUE='$mask_dropoff' SIZE='4'>\n";
         echo docpop('mask_dropoff', 'Mask Drop-off');
-        echo "<BR/>\n";
-        echo "<BR/>\n";
+        echo "<br>\n";
+        echo "<br>\n";
 	
 	echo "<b>Multivariate Statistical Analysis Parameters</b>\n";
-	echo "<BR/>\n";
+	echo "<br>\n";
 	
 	// specify selection (modulation, euclidean, chisquare)
 	echo docpop('MSAmethod', 'MSA distance criteria');
-	echo "<BR/>\n";
+	echo "<br>\n";
 	echo "<SELECT name='MSAmethod'>";
 	echo "<OPTION VALUE='modulation'>Modulation</OPTION>";
 	echo "<OPTION VALUE='euclidian'>Euclidian Distance</OPTION>";
 	echo "<OPTION VALUE='chisquare'>Chi-Square</OPTION>";
-	echo "</SELECT><BR/>";
+	echo "</SELECT><br>";
 	
 	
 	
 	echo "<INPUT TYPE='text' NAME='numiters' VALUE='$numiters' SIZE='4'>\n";
 	echo docpop('numiters', 'Number of MSA Iterations');
-	echo "<BR/>";
+	echo "<br>";
 	
 	echo "<INPUT TYPE='text' NAME='overcorrection' VALUE='$overcorrection' SIZE='4'>\n";
 	echo docpop('overcorrection', 'Overcorrection Factor for MSA');
-	echo "<BR/>";
+	echo "<br>";
 	
 	echo "  </TD>\n";
-	echo "  </TR>\n";
+	echo "  </tr>\n";
 	echo "</table>\n";
 	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "</tr>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
-	echo "	<HR />\n";
+	echo "	<hr>\n";
 	echo getSubmitForm("run imagic");
 	echo "  </td>\n";
 	echo "</tr>\n";

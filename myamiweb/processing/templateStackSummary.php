@@ -33,7 +33,7 @@ if (is_int($projectId)) {
 
 
 // first give the option of uploading a new template stack
-echo "<a href='uploadTemplateStack.php?expId=$expId'><P><B>Upload a New Template Stack</B></P></a><BR/>\n";
+echo "<a href='uploadTemplateStack.php?expId=$expId'><P><B>Upload a New Template Stack</B></P></a><br>\n";
 
 
 // extract template info
@@ -94,8 +94,8 @@ function templateStackEntry($stackInfo, $hidden=False){
 	$templatetable.="<tr><td valign='top'>\n";
 	$templatetable.="<img src='loadimg.php?filename=$filename&s=100' width='100'></td>\n";
 	$templatetable.="<td>\n";
-	$templatetable.="<B>Pixel Size:</B>  $stackInfo[apix]<BR/>\n";
-	$templatetable.="<B>Box Size: </B> $stackInfo[boxsize]<BR/>\n";
+	$templatetable.="<B>Pixel Size:</B>  $stackInfo[apix]<br>\n";
+	$templatetable.="<B>Box Size: </B> $stackInfo[boxsize]<br>\n";
 	$templatetable.="<B>File: </B>";
 	$templatetable.=$filename;
 	$templatetable.="<br />\n";

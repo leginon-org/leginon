@@ -44,7 +44,7 @@ if ($densityRuns) {
 	$html .= "<TR>\n";
 	$display_keys = array ( 'defid', 'name', 'image', 'history', 'pixel size', 'box size', 'resolution', 'description', 'path', );
 	foreach($display_keys as $key) {
-		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
 	foreach ($densityRuns as $densityrun) {
@@ -59,49 +59,49 @@ if ($densityRuns) {
 		// PRINT INFO
 		$html .= "<TR>\n";
 		# def if
-		$html .= "<TD>$densityrun[DEF_id]</TD>\n";
+		$html .= "<td>$densityrun[DEF_id]</TD>\n";
 		# name
-		$html .= "<TD><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A></TD>\n";
+		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A></TD>\n";
 
 		# sample image
 		$imgfile = $densityrun['path']."/".$densityrun['name'].".1.png";
 		if (file_exists($imgfile))
-			$html .= "<TD><IMG SRC='loadimg.php?scale=0.07&filename=$imgfile' HEIGHT=71></TD>\n";
+			$html .= "<td><img src='loadimg.php?scale=0.07&filename=$imgfile' HEIGHT=71></TD>\n";
 		else
-			$html .= "<TD></TD>\n";
+			$html .= "<td></TD>\n";
 
 		if ($densityrun['REF|ApRctRunData|rctrun'])
-			$html .= "<TD><A HREF='rctreport.php?expId=$expId&rctId="
+			$html .= "<td><A HREF='rctreport.php?expId=$expId&rctId="
 				.$densityrun['REF|ApRctRunData|rctrun']."'>rctrun #"
 				.$densityrun['REF|ApRctRunData|rctrun']."</A></TD>\n";
 		elseif ($densityrun['REF|ApRefinementData|iterid'])
-			$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId="
+			$html .= "<td><A HREF='reconreport.php?expId=$expId&reconId="
 				.$densityrun['refrun']."'> refine run #"
 				.$densityrun['refrun']."</A></TD>\n";
 		elseif ($densityrun['pdbid'])
-			$html .= "<TD><A HREF='http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId="
+			$html .= "<td><A HREF='http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId="
 				.$densityrun['pdbid']."'> PDB id "
-				.$densityrun['pdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+				.$densityrun['pdbid']."&nbsp;<img src='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
 				."</A></TD>\n";
 		elseif ($densityrun['emdbid'])
-			$html .= "<TD><A HREF='http://www.ebi.ac.uk/msd-srv/emsearch/atlas/"
+			$html .= "<td><A HREF='http://www.ebi.ac.uk/msd-srv/emsearch/atlas/"
 				.$densityrun['emdbid']."_visualization.html'> EMDB id "
-				.$densityrun['emdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+				.$densityrun['emdbid']."&nbsp;<img src='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
 				."</A></TD>\n";
 		else
-			$html .= "<TD><I>unknown</I></TD>\n";
+			$html .= "<td><I>unknown</I></TD>\n";
 
-		$html .= "<TD>".round($densityrun[pixelsize],2)."</TD>\n";
-		$html .= "<TD>$densityrun[boxsize]</TD>\n";
-		$html .= "<TD>$densityrun[resolution]</TD>\n";
+		$html .= "<td>".round($densityrun[pixelsize],2)."</TD>\n";
+		$html .= "<td>$densityrun[boxsize]</TD>\n";
+		$html .= "<td>$densityrun[resolution]</TD>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($densityid,$densityrun['description']) : $densityrun['description'];
 		$html .= "<td>$descDiv</td>\n";
 
-		$html .= "<TD>$densityrun[path]</TD>\n";
+		$html .= "<td>$densityrun[path]</TD>\n";
 
-		$html .= "</TR>\n";
+		$html .= "</tr>\n";
 	}
 
 	$html .= "</table>\n";

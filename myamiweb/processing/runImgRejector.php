@@ -125,7 +125,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 		//no presets
 		echo"<input type='hidden' name='alldbimages' VALUE=1>\n";
 		echo"<I>No Presets for this Session<br/>\n"
-			."Will Process ALL Images</I><BR/>\n";
+			."Will Process ALL Images</I><br>\n";
 	}
 	echo "<input type='hidden' name='sessionname' value='$sessionname'>\n";
 	echo "</td></tr>\n";

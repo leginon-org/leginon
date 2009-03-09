@@ -113,7 +113,7 @@ function create3d0SummaryForm($extra=False) {
 
 		$modeltable="<form name='3d0summaryform' method='post' action='$formAction'>\n";
 		$modeltable.="<P><input type='SUBMIT' name='refinemodel' value='Refine this Model' onclick=\"parent.
-			     location='imagic3dRefine.php?expId=$expId'\"><BR>\n";
+			     location='imagic3dRefine.php?expId=$expId'\"><br>\n";
 		foreach ($shown as $m) $modeltable.=modelEntry($m,$particle,True);
 
 		// show hidden reclassifications
@@ -124,7 +124,7 @@ function create3d0SummaryForm($extra=False) {
 			foreach ($hidden as $m) $modeltable.= modelEntry($m,$particle,True,True);
 		}
 		$modeltable.="<P><input type='SUBMIT' name='refinemodel' value='Refine this Model' onclick=\"parent.
-			     location='imagic3dRefine.php?expId=$expId'\"><BR>\n";
+			     location='imagic3dRefine.php?expId=$expId'\"><br>\n";
 		$modeltable.="</form>\n";
 	}
 	if ($hidden && !$_GET['showHidden']) echo "<a href='".$formAction."&showHidden=True'>[Show Hidden Models]</a><br />\n";
@@ -210,7 +210,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 			$modeltable.= "View all class averages used for this refinement</a>";
 		}
 	}
-	$modeltable.= "</td></tr></table>\n<BR/>";
+	$modeltable.= "</td></tr></table>\n<br>";
 	$modeltable.= "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
 
 	// get list of png files in directory
@@ -240,7 +240,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 	$modeltable.="Model ID: <b>$model[DEF_id]</b>\n";
 
 /*	$modeltable.= "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.
-	     location='uploadmodel.php?expId=$expId&rescale=TRUE&imagic3d0id=$model[DEF_id]'\"><BR>\n";
+	     location='uploadmodel.php?expId=$expId&rescale=TRUE&imagic3d0id=$model[DEF_id]'\"><br>\n";
 */
 	if ($sum_specific_params) {			
 		if ($hidden) $modeltable.= " <input class='edit' type='submit' name='unhidemodel".$imagic3d0Id."' value='unhide'>";
@@ -252,7 +252,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 	foreach ($pngfiles as $snapshot) {
 		$snapfile = $model['path'].'/'.$model['runname'].'/'.$snapshot;
 		$modeltable.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-			<IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+			<img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 	}
 
 	// display info about each model run
@@ -273,7 +273,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 			  <td>Increment forward projections:</td><td><b>$model[forw_ang_inc]</b></td>
 			  <td>Hamming window:</td><td><b>$model[ham_win]</b></td>
 			  <td>Object size as fraction of image size:</td><td><b>$model[obj_size]</b></td></tr>\n";
-	$modeltable.= "</TABLE><BR/><BR/>\n";
+	$modeltable.= "</table><br><br>\n";
 	$modeltable.= "<P>\n";
 
 
@@ -343,9 +343,9 @@ function jobform($modelid, $extra=false) {
 	echo openRoundBorder();
 	echo "	<b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='50'><br /><br />\n
 		<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
-		<b> $doc_description</b><BR/><textarea name='description' rows='3' cols='50'>$rundescrval</textarea><BR><BR>\n";
+		<b> $doc_description</b><br><textarea name='description' rows='3' cols='50'>$rundescrval</textarea><br><br>\n";
 	echo closeRoundBorder();
-	echo "</td></tr></TABLE><br />";	
+	echo "</td></tr></table><br />";	
 
 
 	// keys and documentation for user input values
@@ -368,7 +368,7 @@ function jobform($modelid, $extra=false) {
 				'forw_ang_inc', 
 				'copy');
 	$bgcolor="#E8E8E8";
-	echo "<BR/> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
+	echo "<br> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
 	<tr>\n";
 	foreach ($display_keys as $k => $key) {
 		$id = "$key";
@@ -378,7 +378,7 @@ function jobform($modelid, $extra=false) {
 			$key 
 			</a></font></td>\n";
 	}
-	echo"  </tr><BR/>\n";
+	echo"  </tr><br>\n";
 	$rcol = ($i % 2) ? '#FFFFFF' : '#FFFDCC';
 
 	for ($i=1; $i<=$numiters; $i++)	{
@@ -469,9 +469,9 @@ function jobform($modelid, $extra=false) {
 	}
 	echo "</table>";
 
-	echo "<BR></b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <BR>";
+	echo "<br></b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <br>";
 
-	echo "<BR/><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo "<br><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 
   	echo "<input type='hidden' NAME='numiters' VALUE='$numiters'><P>";
@@ -573,13 +573,13 @@ function imagic3dRefine() {
 	echo"
         <TABLE WIDTH='600' BORDER='1'>
         <TR><TD COLSPAN='2'>
-        <B>Alignment Command:</B><BR><BR>";
+        <B>Alignment Command:</B><br><br>";
 	foreach ($command_array as $c) {
-                echo $c."<BR><BR>";
+                echo $c."<br><br>";
 	}
 	echo"
-         </TD></TR>
-         </TABLE>\n";
+         </TD></tr>
+         </table>\n";
 
 /*	echo "<pre>";
 	foreach ($command_array as $c) {

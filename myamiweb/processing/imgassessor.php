@@ -198,7 +198,7 @@ if ($imgdir) {
 
 }
 echo"</CENTER>\n";
-echo"<HR/></TD></TR>\n";
+echo"<hr></TD></tr>\n";
 
 //SELECT A RUN CONTAINING IMAGES
 echo"<TR ALIGN='CENTER'><TD VALIGN='TOP' COLSPAN='3'>\n";
@@ -214,16 +214,16 @@ foreach ($allruns as $run){
 }
 echo "</SELECT>\n";
 
-echo"<BR/><HR/></TD></TR>\n";
+echo"<br><hr></TD></tr>\n";
 
 // HEADER FORM FOR FILLING IMAGE PATH
 echo"<TR ALIGN='CENTER'><TD VALIGN='TOP'>\n";
-echo"&nbsp;<B>Image Directory:</B><BR>\n";
+echo"&nbsp;<B>Image Directory:</B><br>\n";
 echo"<INPUT TYPE='text' NAME='imgdir' VALUE='$imgdir' SIZE='60' onchange='this.form.submit()'></TD>\n";
 
 // IMAGE TYPE
 echo"<TD VALIGN='TOP'>\n";
-echo"<B>Image Type:</B><BR>\n";
+echo"<B>Image Type:</B><br>\n";
 echo"<SELECT NAME='imgtype' onchange='this.form.submit()'>\n";
 foreach ($imgtypes as $type) {
 	$s = ($imgtype==$type) ? 'SELECTED' : '';
@@ -234,16 +234,16 @@ echo"</TD>";
 
 // PRESET
 echo"<TD VALIGN='TOP'>\n";
-echo"<B>Preset:</B><BR>\n";
+echo"<B>Preset:</B><br>\n";
 echo"<SELECT NAME='presettype' onchange='this.form.submit()'>\n";
 foreach ($presets as $type) {
 	$s = ($_POST['presettype']==$type) ? 'SELECTED' : '';
 	echo "<OPTION $s>$type</OPTION>\n";
 }
 echo"</SELECT>\n";
-echo"<BR/></TD></TR>\n";
+echo"<br></TD></tr>\n";
 
-echo"</TABLE>\n";
+echo"</table>\n";
 echo"</FORM>\n";
 processing_footer();
 
@@ -254,7 +254,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 	$imlst=$_POST['imagelist'];
 	$imgindx= ($_POST['imgindex']) ? $_POST['imgindex'] : 0;
 	$imgrescl= ($_POST['imgrescale']) ? $_POST['imgrescale'] : 0.5; 
-	//echo "<BR>\n";
+	//echo "<br>\n";
 
 	//find first and last good images
 	$imgstart=array('first','last');
@@ -327,7 +327,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 			while ($found!='TRUE') {
 				$imgindx--;
 				if ($imgindx < $firstindx) {
-					echo "<FONT COLOR='RED'> At beginning of image list</FONT><BR>\n";
+					echo "<FONT COLOR='RED'> At beginning of image list</FONT><br>\n";
 					$imgindx=$firstindx;
 					$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 					break;
@@ -347,7 +347,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 			while ($found!='TRUE') {
 				$imgindx++;
 				if ($imgindx > $lastindx) {
-					echo "<FONT COLOR='RED'> At end of image list</FONT><BR>\n";
+					echo "<FONT COLOR='RED'> At end of image list</FONT><br>\n";
 					$imgindx= $lastindx;
 					$statdata=getImageStatus($files[$imgindx],$leginondata,$particle,$assessmentrid);
 					break;
@@ -373,7 +373,7 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 	$imgstatus=$statdata['status'];
 
 	$thisnum=$imgindx+1;
-	echo"<br\>$imgname<BR>\n<B>Current Status: ";
+	echo"<br\>$imgname<br>\n<B>Current Status: ";
 	if ($imgstatus=='no') echo"<FONT COLOR='RED'>REJECT</FONT>";
 	elseif ($imgstatus=='yes') echo "<FONT COLOR='GREEN'>KEEP</FONT>";
 	else echo"none";
@@ -384,13 +384,13 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 	echo"<INPUT TYPE='HIDDEN' NAME='imageid' VALUE='$imgid'>\n";
 
 	//Image and tool bars on side
-	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='5'><TR><TD>\n";
+	echo"<CENTER>\n<TABLE BORDER='0' CELLPADDING='5' CELLSPACING='5'><TR><td>\n";
 	printToolBar();
-	echo"</TD><TD>\n";
-	echo"<IMG SRC='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
-	echo"</TD><TD>\n";
+	echo"</TD><td>\n";
+	echo"<img src='loadimg.php?filename=$imgfull&scale=$imgrescl'>\n";
+	echo"</TD><td>\n";
 	printToolBar();
-	echo"</TD></TR></TABLE>\n";
+	echo"</TD></tr></table>\n";
 
 	//Scale factor, etc.
 	echo"<TABLE BORDER='0' CELLPADDING='0' CELLSPACING='5'>\n";
@@ -403,10 +403,10 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 	echo"(name or number)\n";
 	echo"</TD><TD ALIGN='LEFT'>\n";
 	echo"<INPUT TYPE='text' NAME='imgjump' SIZE='5'>";
-	echo"</TD></TR></TABLE>";
+	echo"</TD></tr></table>";
 	echo"</TD><TD ALIGN='RIGHT'>\n";
 	echo"Scale Factor: <INPUT TYPE='text' NAME='imgrescale' VALUE='$imgrescl' SIZE='4'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER' COLSPAN='3'>\n";
 	$skipallcheck=($_POST['skipimages']=='all') ? 'CHECKED' : '';
 	$skiprejcheck=($_POST['skipimages']=='rejectonly') ? 'CHECKED' : '';
 	$skipcheck=($_POST['skipimages']!='all' && $_POST['skipimages']!='rejectonly') ? 'CHECKED' : '';
@@ -415,24 +415,24 @@ function displayImage ($_POST,$files,$imgdir,$leginondata,$particle,$assessmentr
 	echo"<input type='radio' name='skipimages' value='rejectonly' $skiprejcheck>Skip only rejected images\n";
 	echo"<input type='radio' name='skipimages' value='none' $skipcheck>Show all images\n";
 	//echo "<INPUT TYPE='CHECKBOX' NAME='skiprejected' $skiprejcheck>Skip rejected images\n"; 
-	echo"</TD></TR></TABLE>\n</CENTER>\n";
+	echo"</TD></tr></table>\n</CENTER>\n";
 }
 
 function printToolBar() {
 	echo"<TABLE BORDER='0' CELLPADDING='3' CELLSPACING='5'>\n";
 	echo"<TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-first.png' ALT='First' NAME='imagelist' VALUE='First'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-back.png' ALT='Back' NAME='imagelist' VALUE='Back'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-reject.png' ALT='Reject' NAME='imagelist' VALUE='Remove'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-keep.png' ALT='Keep' NAME='imagelist' VALUE='Keep'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-next.png' ALT='Next' NAME='imagelist' VALUE='Next'>\n";
-	echo"</TD></TR><TR><TD ALIGN='CENTER'>\n";
+	echo"</TD></tr><TR><TD ALIGN='CENTER'>\n";
 	echo"<INPUT TYPE='IMAGE' SRC='img/button-last.png' ALT='Last' NAME='imagelist' VALUE='Last'>\n";
-	echo"</TD></TR></TABLE>";
+	echo"</TD></tr></table>";
 }
 
 function getImageStatus ($imgname,$leginondata,$particle,$assessmentrid) {

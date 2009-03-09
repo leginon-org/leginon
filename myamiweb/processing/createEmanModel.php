@@ -113,7 +113,7 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 		}
 		echo "</SELECT>\n<br/>\n<br/>\n";
 
-		echo"<b>OR select from <a href='http://cronus3/laupw/dbem/processing/norefsummary.php?expId=$expId'>Reference-free Summary Page</a><BR><BR></b>";
+		echo"<b>OR select from <a href='http://cronus3/laupw/dbem/processing/norefsummary.php?expId=$expId'>Reference-free Summary Page</a><br><br></b>";
 	}
 
 	echo docpop('commonlineemanprog','<b>EMAN Program:</b> ');
@@ -227,13 +227,13 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			<TR><TD VALIGN='TOP'>\n";
 	
 			if( $_POST['method'] == 'startCSym') {
-				echo " <B>EMAN Program: StartCSym</B><BR/><BR/>";
+				echo " <B>EMAN Program: StartCSym</B><br><br>";
 			} elseif ( $_POST['method'] == 'startIcos') {
-				echo " <B>EMAN Program: StartIcos</B><BR/><BR/>";	
+				echo " <B>EMAN Program: StartIcos</B><br><br>";	
 			} elseif ( $_POST['method'] == 'startOct') {
-				echo " <B>EMAN Program: StartOct</B><BR/><BR/>";
+				echo " <B>EMAN Program: StartOct</B><br><br>";
 			} elseif ( $_POST['method'] == 'startAny') {
-				echo " <B>EMAN Program: StartAny</B><BR/><BR/>";
+				echo " <B>EMAN Program: StartAny</B><br><br>";
 			} 
 	
 			echo"
@@ -254,10 +254,10 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 				<TABLE WIDTH='450' BORDER='0'>
 					<TR><TD COLSPAN='2'>
 						
-						<B>Required Parameters:</B><BR/>
-						<TR><TD>Model Symmetry:</TD>
+						<B>Required Parameters:</B><br>
+						<TR><td>Model Symmetry:</TD>
 						
-							<TD><SELECT NAME='symm'>
+							<td><SELECT NAME='symm'>
       						<OPTION VALUE=''>Select One</OPTION>\n";
 							foreach ($syms as $sym) {
 								#if ($sym['symmetry']=='C1') {
@@ -270,17 +270,17 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 							}
     					echo" </SELECT>";
 					
-						echo "<TR><TD>";   
+						echo "<TR><td>";   
 						echo docpop('partnum','<b>Particle Number:</b> ');
-						echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";  
-						echo "<TR><TD>";   
+						echo "</TD><td><input type='text' name='partnum' value='$partnum'> <br/>";  
+						echo "<TR><td>";   
 						echo docpop('lp','<b>Low Pass Filter:</b> ');
-						echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
-						echo "<TR><TD>";
-						echo "<B>Optional Parameters:</B><BR/>";
-						echo "<TR><TD>";
+						echo "</TD><td><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
+						echo "<TR><td>";
+						echo "<B>Optional Parameters:</B><br>";
+						echo "<TR><td>";
 						echo docpop('imask','<b>Internal Mask:</b> ');
-						echo "</TD><TD><INPUT TYPE='text' name='imask' value='$imask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
+						echo "</TD><td><INPUT TYPE='text' name='imask' value='$imask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
 						
 		} elseif ( $_POST['method'] == 'startIcos') {
 			echo "
@@ -290,19 +290,19 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 					<TABLE WIDTH='450' BORDER='0'>
 						<TR><TD COLSPAN='2'>
 						
-						<B>Required Parameters:</B><BR/>";							
+						<B>Required Parameters:</B><br>";							
 						
-			echo "<TR><TD>";   
+			echo "<TR><td>";   
 			echo docpop('partnum','<b>Particle Number:</b> ');
-			echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";  
-			echo "<TR><TD>";
+			echo "</TD><td><input type='text' name='partnum' value='$partnum'> <br/>";  
+			echo "<TR><td>";
 			echo docpop('lp','<b>Low Pass Filter:</b> ');
-			echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
-			echo "<TR><TD>";
-			echo "<B>Optional Parameters:</B><BR/>";
-			echo "<TR><TD>";
+			echo "</TD><td><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
+			echo "<TR><td>";
+			echo "<B>Optional Parameters:</B><br>";
+			echo "<TR><td>";
 			echo docpop('imask','<b>Internal Mask:</b> ');
-			echo "</TD><TD><INPUT TYPE='text' name='imask' value='$imask'> <br/>";
+			echo "</TD><td><INPUT TYPE='text' name='imask' value='$imask'> <br/>";
 			
 		} elseif ( $_POST['method'] == 'startOct') {
 			echo "
@@ -312,14 +312,14 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 					<TABLE WIDTH='450' BORDER='0'>
 						<TR><TD COLSPAN='2'>
 						
-						<B>Required Parameters:</B><BR/>";
+						<B>Required Parameters:</B><br>";
 
-			echo "<TR><TD>";   
+			echo "<TR><td>";   
 			echo docpop('lp','<b>Low Pass Filter:</b> ');
-			echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  			
-			echo "<TR><TD>";   
+			echo "</TD><td><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  			
+			echo "<TR><td>";   
 			echo docpop('partnum','<b>Particle Number:</b> ');
-			echo "</TD><TD><input type='text' name='partnum' value='$partnum'> <br/>";
+			echo "</TD><td><input type='text' name='partnum' value='$partnum'> <br/>";
 
 		} elseif ( $_POST['method'] == 'startAny') {
 			echo "
@@ -329,10 +329,10 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			<TABLE WIDTH='450' BORDER='0'>
 				<TR><TD COLSPAN='2'>
 						
-					<B>Required Parameters:</B><BR/>
-					<TR><TD>Model Symmetry:</TD>
+					<B>Required Parameters:</B><br>
+					<TR><td>Model Symmetry:</TD>
 						
-					<TD><SELECT NAME='symm'>
+					<td><SELECT NAME='symm'>
       			<OPTION VALUE=''>Select One</OPTION>\n";
 						foreach ($syms as $sym) {
 							echo "<OPTION VALUE='".$sym['DEF_id']."'";
@@ -343,17 +343,17 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 						}
     					echo" </SELECT>";
 					
-					echo "<TR><TD>";   
+					echo "<TR><td>";   
 					echo docpop('lp','<b>Low Pass Filter:</b> ');
-					echo "</TD><TD><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
-					echo "<TR><TD>";
-					echo "<B>Optional Parameters:</B><BR/>";
-					echo "<TR><TD>";
+					echo "</TD><td><input type='text' name='lp' value='$lp'> <FONT SIZE='-2'> (in &Aring;ngstroms)</FONT><br/>";  
+					echo "<TR><td>";
+					echo "<B>Optional Parameters:</B><br>";
+					echo "<TR><td>";
 					echo docpop('mask','<b>Mask:</b> ');
-					echo "</TD><TD><INPUT TYPE='text' name='mask' value='$mask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
-					echo "<TR><TD>";
+					echo "</TD><td><INPUT TYPE='text' name='mask' value='$mask'> <FONT SIZE='-2'>(in &Aring;ngstroms)</FONT><br/>";
+					echo "<TR><td>";
 					echo docpop('rounds','<b>Rounds:</b> ');
-					echo "</TD><TD><INPUT TYPE='text' name='rounds' value='$rounds'> <FONT SIZE='-2'>(2-5)</FONT><br/>";
+					echo "</TD><td><INPUT TYPE='text' name='rounds' value='$rounds'> <FONT SIZE='-2'>(2-5)</FONT><br/>";
 		
 	} else {
 
@@ -362,23 +362,23 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 
 	echo "
 												
-		</TABLE>
+		</table>
 		</TD>
-	  	</TR>
+	  	</tr>
 		
-	   </TABLE>
+	   </table>
 		</TD>
-  		</TR>
+  		</tr>
   		<TR>
     	<TD ALIGN='CENTER'>
      		<HR>
-     		<BR/>
-     		<INPUT type='SUBMIT' name='process' value='Create Model'><BR/>
-     		<FONT class='apcomment'>Submission will NOT create the model,<BR/>
+     		<br>
+     		<INPUT type='SUBMIT' name='process' value='Create Model'><br>
+     		<FONT class='apcomment'>Submission will NOT create the model,<br>
 				only output a command that you can copy and paste into a unix shell</FONT>
     	</TD>
-		</TR>
-  		</TABLE>
+		</tr>
+  		</table>
   		</FORM>
   		</CENTER>\n";
 

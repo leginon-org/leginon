@@ -121,10 +121,10 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 	echo "<FONT>(pixels on full tomogram)</FONT>
 		<br />";
 	echo"<P>
-			<B> Sub-Tomogram Description:</B><BR/>
+			<B> Sub-Tomogram Description:</B><br>
 			<TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
 		  </TD>
-    </TR>
+    </tr>
     <TR>
       <TD VALIGN='TOP' CLASS='tablebg'>";       
 
@@ -137,7 +137,7 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
    
 	if (!$sessionname) {
 		echo "
-			<BR>
+			<br>
       <INPUT TYPE='text' NAME='sessionname' VALUE='$sessionname' SIZE='5'>\n";
 		echo docpop('session', 'Session Name');
 		echo "<FONT> (leginon session name)</FONT>";
@@ -175,10 +175,10 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 		<p><br />
 		<P>
       </TD>
-   </TR>
-    </TABLE>
+   </tr>
+    </table>
   </TD>
-  </TR>
+  </tr>
   <td
 
   <TR>
@@ -277,16 +277,16 @@ function runSubTomogram() {
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
-	<B>SubTomogram Command:</B><BR>
+	<B>SubTomogram Command:</B><br>
 	$command
-	</TD></TR>
-	<TR><TD>subtomogram runname</TD><TD>$runname</TD></TR>
-	<TR><TD>particle selection id</TD><TD>$prtlrunId</TD></TR>
-	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
-	<TR><TD>fulltomogram id</TD><TD>$fulltomoId</TD></TR>
-	<TR><TD>session</TD><TD>$sessionname</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	</TABLE>\n";
+	</TD></tr>
+	<TR><td>subtomogram runname</TD><td>$runname</TD></tr>
+	<TR><td>particle selection id</TD><td>$prtlrunId</TD></tr>
+	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
+	<TR><td>fulltomogram id</TD><td>$fulltomoId</TD></tr>
+	<TR><td>session</TD><td>$sessionname</TD></tr>
+	<TR><td>description</TD><td>$description</TD></tr>
+	</table>\n";
 	processing_footer();
 }
 

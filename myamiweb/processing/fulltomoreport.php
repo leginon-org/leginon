@@ -46,11 +46,11 @@ foreach($align_params_fields as $param) {
 		$param=end($namesplit);
 	}
 	$javascript.="                if ($param) {\n";
-	$javascript.="                        newwindow.document.write('<TR><TD>$param</TD>');\n";
-	$javascript.="                        newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
+	$javascript.="                        newwindow.document.write('<TR><td>$param</TD>');\n";
+	$javascript.="                        newwindow.document.write('<td>'+$param+'</TD></tr>');\n";
 	$javascript.="                }\n";
 }
-$javascript.="                newwindow.document.write('</TABLE></BODY></HTML>');\n";
+$javascript.="                newwindow.document.write('</table></BODY></HTML>');\n";
 $javascript.="                newwindow.document.close()\n";
 $javascript.="        }\n";
 $javascript.="</script>\n";
@@ -68,7 +68,7 @@ $particle = new particledata();
 $tomogram = $particle->getFullTomogramInfo($tomoId);
 $alignment = $particle->getTomoAlignmentInfo($tomogram['alignment']);
 // get pixel size
-$html .= "<BR>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $title = "tomogram processing info";
 $tomograminfo = array(
 	'id'=>$tomogram['DEF_id'],

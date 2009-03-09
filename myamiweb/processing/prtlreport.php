@@ -37,7 +37,7 @@ $inspectcheck=($_POST['onlyinspected']=='on') ? 'CHECKED' : '';
 $mselexval=(is_numeric($_POST['mselex'])) ? $_POST['mselex'] 
 		: (is_numeric($_GET['mselex']) ? $_GET['mselex'] : false);
 echo"<FORM NAME='prtl' method='POST' action='$_SERVER[REQUEST_URI]'>
-     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images<BR>
+     <INPUT TYPE='CHECKBOX' name='onlyinspected' $inspectcheck onclick='javascript:document.prtl.submit()'>Don't use particles from discarded images<br>
      <INPUT CLASS='field' NAME='mselex' TYPE='text' size='5' VALUE='$mselexval'>Minimum correlation value
      </form>\n";
 $sessionId=$expId;

@@ -45,7 +45,7 @@ if ($reconRuns) {
 	$display_keys = array ( 'defid', 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 
 		'best: fsc / rMeas (iter)', 'avg median<br/>euler jump','description');
 	foreach($display_keys as $key) {
-		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
 	foreach ($reconRuns as $reconrun) {
@@ -69,25 +69,25 @@ if ($reconRuns) {
 
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<TD>$reconrun[DEF_id]</TD>\n";
-		$html .= "<TD><A HREF='reconreport.php?expId=$expId&reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
-		$html .= "<TD>$stackcount</TD>\n";
-		$html .= "<TD>";
+		$html .= "<td>$reconrun[DEF_id]</TD>\n";
+		$html .= "<td><A HREF='reconreport.php?expId=$expId&reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
+		$html .= "<td>$stackcount</TD>\n";
+		$html .= "<td>";
 		$html .= "$sym[symmetry]</TD>\n";
-		$html .= "<TD>".$stackapix."</TD>\n";
-		$html .= "<TD>$stmodel[boxsize]</TD>\n";
-		$html .= sprintf("<TD>% 2.2f / % 2.1f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
+		$html .= "<td>".$stackapix."</TD>\n";
+		$html .= "<td>$stmodel[boxsize]</TD>\n";
+		$html .= sprintf("<td>% 2.2f / % 2.1f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
 		if ($avgmedjump['count'] > 0) {
-			$html .= "<TD><A HREF='eulergraph.php?expId=$expId&hg=1&recon=$reconrun[DEF_id]'>";
+			$html .= "<td><A HREF='eulergraph.php?expId=$expId&hg=1&recon=$reconrun[DEF_id]'>";
 			$html .= sprintf("%2.2f &plusmn; %2.1f </A></TD>\n", $avgmedjump['average'], $avgmedjump['stdev']);
 		} else
-			$html .= "<TD></TD>\n";
+			$html .= "<td></TD>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
 
 		$html .= "<td>$descDiv</td>\n";
-		$html .= "</TR>\n";
+		$html .= "</tr>\n";
 	}
 
 	$html .= "</table>\n";

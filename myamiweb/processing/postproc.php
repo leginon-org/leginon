@@ -103,7 +103,7 @@ if ($_POST['process']) {
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
-	<B>PostProc Command:</B><BR>
+	<B>PostProc Command:</B><br>
 	$command
 	</td></tr>
         <tr><td>runname</td><td>$runname</td></tr>
@@ -229,15 +229,15 @@ function createform($extra=False) {
 	echo "<TABLE CLASS='tableborder' BORDER='1' WIDTH='600'>\n";
 	foreach ($amplist as $amp) {
 		$ampfile = $appiondir.$amp['name'];
-		echo "<TR><TD>\n";
-		echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'><IMG SRC='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=TRUE'>\n";
-		echo "</TD><TD>\n";
+		echo "<TR><td>\n";
+		echo "<A HREF='ampcorplot.php?file=$ampfile&width=800&height=600'><img src='ampcorplot.php?file=$ampfile&width=200&height=150&nomargin=TRUE'>\n";
+		echo "</TD><td>\n";
 		echo "<B>Resolution limit:</B> $amp[maxfilt]<br />\n";
 		echo "<B>Source:</B> $amp[src]<br />\n";
 		echo "<INPUT TYPE='radio' name='ampcor' value='$amp[name]|~~|$amp[maxfilt]'> Use this amplitude curve\n";
-		echo "</TD></TR>\n";
+		echo "</TD></tr>\n";
 	}
-	echo "</TABLE>\n";
+	echo "</table>\n";
 	echo "<P>\n";
 	echo "<INPUT TYPE='hidden' name='apix' value='$apix'>\n";
 	echo "<INPUT TYPE='hidden' name='file' value='$info[volumeDensity]'>\n";

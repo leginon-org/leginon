@@ -215,7 +215,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "</td></tr></table>\n";
 
 	//Second half of the table
-	echo "</TD></TR>\n<TR><TD VALIGN='TOP' CLASS='tablebg' WIDTH='100%'>\n";
+	echo "</TD></tr>\n<TR><TD VALIGN='TOP' CLASS='tablebg' WIDTH='100%'>\n";
 
 	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
 
@@ -261,7 +261,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "</td></tr></table>\n";
 
 	//Finish up
-	echo "</TD></TR><TR><TD ALIGN='CENTER'><hr/>\n";
+	echo "</TD></tr><TR><TD ALIGN='CENTER'><hr/>\n";
 	echo getSubmitForm("Rct Volume");
 	echo "</td></tr></table></form>\n";
 
@@ -365,21 +365,21 @@ function runRctVolume() {
 		<table width='600' border='1'>
 		<tr><td colspan='2'>
 		<font size='+1'>
-		<B>Rct Volume Command:</B><BR>
+		<B>Rct Volume Command:</B><br>
 		$command
 		</font>
-		</TD></TR>
-		<TR><TD>run name</TD><TD>$runname</TD></TR>
-		<TR><TD>align id</TD><TD>$alignid</TD></TR>
-		<TR><TD>cluster id</TD><TD>$clusterid</TD></TR>
-		<TR><TD>class nums</TD><TD>$classnum</TD></TR>
-		<TR><TD>tilt stack</TD><TD>$tiltstack</TD></TR>
-		<TR><TD>num iter</TD><TD>$numiter</TD></TR>
-		<TR><TD>volume lowpass</TD><TD>$lowpassvol</TD></TR>
-		<TR><TD>particle highpass</TD><TD>$highpasspart</TD></TR>
-		<TR><TD>mask rad</TD><TD>$maskrad</TD></TR>";
+		</TD></tr>
+		<TR><td>run name</TD><td>$runname</TD></tr>
+		<TR><td>align id</TD><td>$alignid</TD></tr>
+		<TR><td>cluster id</TD><td>$clusterid</TD></tr>
+		<TR><td>class nums</TD><td>$classnum</TD></tr>
+		<TR><td>tilt stack</TD><td>$tiltstack</TD></tr>
+		<TR><td>num iter</TD><td>$numiter</TD></tr>
+		<TR><td>volume lowpass</TD><td>$lowpassvol</TD></tr>
+		<TR><td>particle highpass</TD><td>$highpasspart</TD></tr>
+		<TR><td>mask rad</TD><td>$maskrad</TD></tr>";
 
-		echo"</TABLE>\n";
+		echo"</table>\n";
 		processing_footer();
 	}
 }

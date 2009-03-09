@@ -130,7 +130,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	}
 	else {
 		echo "
-		Particles:<BR>
+		Particles:<br>
 		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackparams=$particle->getStackParams($stack[stackid]);
@@ -159,8 +159,8 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 		}
 		echo "</SELECT>\n";
 	}
-	echo"</SELECT><BR>\n";
-	echo "</TD></TR><TR>\n";
+	echo"</SELECT><br>\n";
+	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 	echo docpop('initmethod','<B>Alignment initialization method:</B>');
 	echo "<br/>";
@@ -180,18 +180,18 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	echo ":&nbsp;<INPUT TYPE='text' NAME='templateid' SIZE='4' VALUE='$templateid'>\n";
 	echo "<br />\n";
 
-	echo "</TD></TR>\n";
+	echo "</TD></tr>\n";
 	echo "<TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 	echo "";
-	echo "<BR></TD></TR>\n</TABLE>\n";
+	echo "<br></TD></tr>\n</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
-	//echo "<B>Particle Params:</B></A><BR>\n";
+	//echo "<B>Particle Params:</B></A><br>\n";
 
 	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
 	echo "<br />\n";
@@ -230,18 +230,18 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 
 	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4'>\n";
 	echo docpop('bin','Particle binning');
-	echo "<font size='-2'>(adjust above ring numbers)</font><BR>\n";
+	echo "<font size='-2'>(adjust above ring numbers)</font><br>\n";
 	echo "<br />\n";
 
 	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>\n";
 	echo docpop('numpart','Number of Particles');
-	echo " to Use<BR>\n";
+	echo " to Use<br>\n";
 
 	echo "  </td>\n";
 	echo "  </tr>\n";
 	echo "</table>\n";
 	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "</tr>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";

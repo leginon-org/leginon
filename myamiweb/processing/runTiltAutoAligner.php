@@ -71,7 +71,7 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 
 	srand(time());
 	if ((rand()%2) < 3) {
-		echo"<center><IMG SRC='img/autotiltpicker.png' WIDTH='300'></center><br />\n";
+		echo"<center><img src='img/autotiltpicker.png' WIDTH='300'></center><br />\n";
 	}
 
 	createAppionLoopTable($sessiondata, $defrunname, "tiltalign");
@@ -82,7 +82,7 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 		echo"<INPUT TYPE='HIDDEN' NAME='pickrunid2' VALUE='None'>\n";
 	}
 	else {
-		echo "<BR/>Edit Particle Picks:<br/>
+		echo "<br>Edit Particle Picks:<br/>
 		<SELECT NAME='pickrunid1'>\n";
 		echo "<OPTION VALUE='None'>None</OPTION>";
 		foreach ($prtlrunIds as $prtlrun){
@@ -117,42 +117,42 @@ function createTiltAutoAlignerForm($extra=false, $title='Tilt Auto Aligner Launc
 		<INPUT TYPE='text' NAME='diam' VALUE='$diam' SIZE='4'>\n";
 	echo docpop('pdiam',' Particle diameter for result images');
 	echo "<FONT SIZE=-2><I>(in &Aring;ngstroms)</I></FONT>
-		<BR><BR>";
+		<br><br>";
 	/*echo"
-		<B>Picking Icon:</B><BR/>
+		<B>Picking Icon:</B><br>
 		<SELECT NAME='shape'>\n";
 	$shapes = array('plus', 'circle', 'cross', 'point', 'square', 'diamond', );
 	foreach($shapes as $shape) {
 		$s = ($_POST['shape']==$shape) ? 'SELECTED' : '';
 		echo "<OPTION $s>$shape</OPTION>\n";
 	}
-	echo "</SELECT>\n&nbsp;Picking icon shape<BR/>";
+	echo "</SELECT>\n&nbsp;Picking icon shape<br>";
 	$shapesize = (int) $_POST['shapesize'];
 	echo"
 		<INPUT TYPE='text' NAME='shapesize' VALUE='$shapesize' SIZE='3'>&nbsp;
 		Picking icon diameter <FONT SIZE=-2><I>(in pixels)</I></FONT>
-		<BR><BR>";
+		<br><br>";
 	*/
 	echo"
-		<B>Output file type:</B><BR/>
+		<B>Output file type:</B><br>
 		<SELECT NAME='ftype'>\n";
 	$ftypes = array('spider', 'text', 'xml', 'pickle', );
 	foreach($ftypes as $ftype) {
 		$s = ($_POST['ftype']==$ftype) ? 'SELECTED' : '';
 		echo "<OPTION $s>$ftype</OPTION>\n";
 	}
-	echo "</SELECT><BR/>";
+	echo "</SELECT><br>";
 	createParticleLoopTable(-1, -1);
 	echo "
 		</TD>
-	</TR>
+	</tr>
 	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'><HR/>";
+		<TD COLSPAN='2' ALIGN='CENTER'><hr>";
 	echo getSubmitForm("Run Tilt Auto Aligner");
 	echo "
 		</TD>
-	</TR>
-	</TABLE>";
+	</tr>
+	</table>";
 	processing_footer();
 	?>
 
@@ -216,13 +216,13 @@ function runTiltAutoAligner() {
 		echo"
 			<TABLE WIDTH='600'>
 			<TR><TD COLSPAN='2'>
-			<B>Tilt Aligner Command:</B><BR>
+			<B>Tilt Aligner Command:</B><br>
 			$command<HR>
-			</TD></TR>";
+			</TD></tr>";
 
 		appionLoopSummaryTable();
 		particleLoopSummaryTable();
-		echo"</TABLE>\n";
+		echo"</table>\n";
 		processing_footer();
 	}
 }

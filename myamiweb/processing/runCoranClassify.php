@@ -129,7 +129,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		$defaultbin = (int) floor($alignstack['boxsize']/32);
 	} elseif ($alignIds) {
 		echo "
-		Aligned Stack:<BR>
+		Aligned Stack:<br>
 		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($alignIds as $alignarray) {
 			$alignid = $alignarray['alignstackid'];
@@ -158,8 +158,8 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		<FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
 	}
 
-	echo "</TD></TR>\n";
-	echo "</TABLE>\n";
+	echo "</TD></tr>\n";
+	echo "</table>\n";
 	echo "</TD>\n";
 	echo "<TD CLASS='tablebg'>\n";
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
@@ -193,7 +193,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "  </tr>\n";
 	echo "</table>\n";
 	echo "</TD>\n";
-	echo "</TR>\n";
+	echo "</tr>\n";
 	echo "<TR>\n";
 	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
 	echo "	<hr />\n";

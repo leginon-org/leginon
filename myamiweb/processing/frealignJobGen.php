@@ -103,7 +103,7 @@ function stackModelForm($extra=False) {
 	}
 	echo "<FORM NAME='viewerform' METHOD='POST' ACTION='$formAction'>\n";
 	echo "
-  <B>Select Project:</B><BR>
+  <B>Select Project:</B><br>
   <SELECT NAME='projectId' onchange='newexp()'>\n";
 
 	foreach ($projects as $k=>$project) {
@@ -115,7 +115,7 @@ function stackModelForm($extra=False) {
   <P>\n";
 	if (!$modelonly) {
 		echo"
-    <B>Stack:</B><BR>";
+    <B>Stack:</B><br>";
 		echo "<SELECT NAME='stackval'>\n";
 
 		foreach ($stackIds as $stackid){
@@ -140,8 +140,8 @@ function stackModelForm($extra=False) {
 		echo "</SELECT>\n";
 	}
 	//  show initial models
-	echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
-	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><BR/>\n";
+	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
+	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
 	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
@@ -167,10 +167,10 @@ function stackModelForm($extra=False) {
 	    }
 	    echo"Use ";
 	    echo"Model ID: $model[DEF_id]\n";
-	    echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
+	    echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
 	    foreach ($pngfiles as $snapshot) {
 	      $snapfile = $model['path'].'/'.$snapshot;
-	      echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+	      echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
 	    }
 	    echo "</td>\n";
 	    echo "</tr>\n";
@@ -180,7 +180,7 @@ function stackModelForm($extra=False) {
 	    echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
 	    echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
 	    echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
-	    echo "</TABLE>\n";
+	    echo "</table>\n";
 	    echo "<P>\n";
 	  }
 	  if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
@@ -610,7 +610,7 @@ function writeJobFile ($extra=False) {
 	$line.=" > runfrealign".$i.".txt\n";
 	$clusterjob.= $line;
  
-	echo "<FORM NAME='frealignjob' METHOD='POST' ACTION='$formAction'><BR>\n";
+	echo "<FORM NAME='frealignjob' METHOD='POST' ACTION='$formAction'><br>\n";
 	echo "<input type='hidden' name='clustername' value='$clustername'>\n";
 	echo "<input type='HIDDEN' NAME='clusterpath' VALUE='$clusterpath'>\n";
 	echo "<input type='HIDDEN' NAME='dmfpath' VALUE='$dmfpath'>\n";

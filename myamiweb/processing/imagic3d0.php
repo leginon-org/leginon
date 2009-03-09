@@ -145,7 +145,7 @@ function jobform($extra=false) {
 			$projectiontable.= "<img src='getstackimg.php?hed=$reclasshedfile&img=$reclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
 			$projectiontable.= "<i>projection $num</i></td>\n";
 		}
-		$projectiontable.= "</tr></table>\n<BR/>";
+		$projectiontable.= "</tr></table>\n<br>";
 		echo $projectiontable;
 		$display_keys = array();
 		$display_keys['description']=$reclassparams['description'];
@@ -171,7 +171,7 @@ function jobform($extra=false) {
 			$projectiontable.= "<img src='getstackimg.php?hed=$norefclasshedfile&img=$norefclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
 			$projectiontable.= "<i>projection $num</i></td>\n";
 		}
-		$projectiontable.= "</tr></table>\n<BR/>";
+		$projectiontable.= "</tr></table>\n<br>";
 		echo $projectiontable;
 		$display_keys = array();
 		//$display_keys['description']=$norefclassparams['description'];
@@ -197,7 +197,7 @@ function jobform($extra=false) {
                         $projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
                         $projectiontable.= "<i>projection $num</i></td>\n";
                 }
-                $projectiontable.= "</tr></table>\n<BR/>";
+                $projectiontable.= "</tr></table>\n<br>";
                 echo $projectiontable;
                 $display_keys = array();
                 //$display_keys['description']=$norefclassparams['description'];
@@ -224,7 +224,7 @@ function jobform($extra=false) {
                         $projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
                         $projectiontable.= "<i>projection $num</i></td>\n";
                 }
-                $projectiontable.= "</tr></table>\n<BR/>";
+                $projectiontable.= "</tr></table>\n<br>";
                 echo $projectiontable;
                 $display_keys = array();
                 //$display_keys['description']=$norefclassparams['description'];
@@ -269,9 +269,9 @@ function jobform($extra=false) {
 	echo openRoundBorder();
 	echo "	<b> $doc_outdir</b> <input type='text' name='output_directory' value='$outdir' size='50'><br /><br />\n
 		<b> $doc_runname</b> <input type='text' name='runid' value='$runid' size='20'><br /><br />\n
-		<b> $doc_description</b><BR/><textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
+		<b> $doc_description</b><br><textarea name='description' rows='3' cols='50'>$rundescrval</textarea>\n";
 	echo closeRoundBorder();
-	echo "</td></tr></TABLE>";
+	echo "</td></tr></table>";
 
 	echo "<input type='text' name='choose_projections' value='$newprojections' size='10'> $nbsp $doc_projections\n";
 	echo "<input type='hidden' name='fileorig' value=$noreffile>";
@@ -296,7 +296,7 @@ function jobform($extra=false) {
 				'mra_ang_inc', 
 				'forw_ang_inc',);
 	$bgcolor="#E8E8E8";
-	echo "<BR/> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
+	echo "<br> <TABLE CLASS='tableborder' BORDER='1' CELLPADDING=4 CELLSPACING=4>
 	<tr>\n";
 	foreach ($display_keys as $k => $key) {
 		$id = "$key";
@@ -306,7 +306,7 @@ function jobform($extra=false) {
 			$key 
 			</a></font></td>\n";
 	}
-	echo"  </tr><BR/>\n";
+	echo"  </tr><br>\n";
 
 	// define default parameters for 0 iteration
 	$symmetry = ($_POST['symmetryn']) ? $_POST['symmetryn'] : "";
@@ -349,12 +349,12 @@ function jobform($extra=false) {
         	<td bgcolor='$rcol'><input type='text' NAME='mrarefs_ang_incn' SIZE='4' VALUE='$mrarefs_ang_inc'></td>
         	<td bgcolor='$rcol'><input type='text' NAME='forw_ang_incn' SIZE='4' VALUE='$forw_ang_inc'></td>
      	     </tr>\n";
-	echo "</table><BR/>";
+	echo "</table><br>";
 
-	echo "</b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <BR><BR>";	
+	echo "</b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <br><br>";	
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
-	echo "<BR/><BR/>";
+	echo "<br><br>";
 	echo "<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>";
 	echo getSubmitForm("run imagic");
 	echo "</form>\n";
@@ -431,10 +431,10 @@ function create3d0() {
 	echo"
         <TABLE WIDTH='600' BORDER='1'>
         <TR><TD COLSPAN='2'>
-        <B>Alignment Command:</B><BR><BR>
-        $command<BR><BR>
-         </TD></TR>
-         </TABLE>\n";
+        <B>Alignment Command:</B><br><br>
+        $command<br><br>
+         </TD></tr>
+         </table>\n";
 
 	processing_footer();
 	exit;

@@ -43,7 +43,7 @@ $html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>
 $html .= "<TR>\n";
 $display_keys = array ( 'tiltseries','id','runname','description');
 foreach($display_keys as $key) {
-	$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+	$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 }
 foreach ($tiltseries as $t) {
 	$fulltomos = $particle->checkforFulltomogram($t['id']);
@@ -59,9 +59,9 @@ foreach ($tiltseries as $t) {
 		$tiltseriesnumber = $t['number'];
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<TD>$tiltseriesnumber</TD>\n";
-		$html .= "<TD><A HREF='fulltomoreport.php?expId=$expId&tomoId=$fulltomoid'>$fulltomoid</A></TD>\n";
-		$html .= "<TD>".$fulltomo['runname']."</TD>\n";
+		$html .= "<td>$tiltseriesnumber</TD>\n";
+		$html .= "<td><A HREF='fulltomoreport.php?expId=$expId&tomoId=$fulltomoid'>$fulltomoid</A></TD>\n";
+		$html .= "<td>".$fulltomo['runname']."</TD>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($fulltomoid,$fulltomo['description']) : $fulltomo['description'];
@@ -69,7 +69,7 @@ foreach ($tiltseries as $t) {
 		$html .= "<td>$descDiv</td>\n";
 #		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
 #		$html .= "<td>$downloadDiv</td>\n";
-		$html .= "</TR>\n";
+		$html .= "</tr>\n";
 	}
 }
 $html .= "</table>\n";
@@ -84,7 +84,7 @@ if ($tomograms) {
 	$html .= "<TR>\n";
 	$display_keys = array ( 'tiltseries','full','volume<br/>xycenter,zoffset<br/>dimension','snapshot','description');
 	foreach($display_keys as $key) {
-		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 	foreach ($tomograms as $tomo) {
 		$tomogramid = $tomo['DEF_id'];
@@ -121,9 +121,9 @@ if ($tomograms) {
 		$tiltseriesnumber = $tomogram['tiltnumber'];
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<TD>$tiltseriesnumber</TD>\n";
-		$html .= "<TD>".$tomogram['full']."</TD>\n";
-		$html .= "<TD><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint,$offsetprint<br/>$dimprint</A></TD>\n";
+		$html .= "<td>$tiltseriesnumber</TD>\n";
+		$html .= "<td>".$tomogram['full']."</TD>\n";
+		$html .= "<td><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint,$offsetprint<br/>$dimprint</A></TD>\n";
 		$html .= "<td>";
     $snapfile = $tomogram['path'].'/snapshot.png';
 		if (!file_exists($snapfile)) 
@@ -138,7 +138,7 @@ if ($tomograms) {
 		} else {
 			$imglimit = "HEIGHT='".$maxheight."'";
 		}
-    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
+    $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
 		$html .= "</td>\n";
 
 		# add edit button to description if logged in
@@ -147,7 +147,7 @@ if ($tomograms) {
 		$html .= "<td>$descDiv</td>\n";
 #		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$tomogramid>[Download Tomogram]</a><br>";
 #		$html .= "<td>$downloadDiv</td>\n";
-		$html .= "</TR>\n";
+		$html .= "</tr>\n";
 	}
 	$html .= "</table>\n";
 	echo $html;

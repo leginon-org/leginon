@@ -102,10 +102,10 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	//if neither a refId or stackId exist
 	if (!$stackId && !$alignId && !$clusterId) {
-		echo "<BR/>\n";
-		echo "Template Name with path <i>(wild cards are acceptable)</i>: <BR/> \n";
+		echo "<br>\n";
+		echo "Template Name with path <i>(wild cards are acceptable)</i>: <br> \n";
 		echo "<INPUT TYPE='text' NAME='template' VALUE='$template' SIZE='55'/>\n";
-		echo "<BR/>\n";			
+		echo "<br>\n";			
 	} 
 
 	if ($stackId) {
@@ -140,18 +140,18 @@ function createUploadTemplateForm($extra=false, $title='UploadTemplate.py Launch
 
 	echo "<br/>\n";
 
-	echo "Template Description:<BR/>";
+	echo "Template Description:<br>";
 	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
 
-	echo "</TD></TR><TR><TD VALIGN='TOP'>";
+	echo "</TD></tr><TR><TD VALIGN='TOP'>";
 
-	echo "Particle Diameter:<BR/>\n"
+	echo "Particle Diameter:<br>\n"
 			."<INPUT TYPE='text' NAME='diam' SIZE='5' VALUE='$diam'>\n"
 			."<FONT SIZE='-2'>(in &Aring;ngstroms)</FONT>\n";
 		echo "<br/>\n";
 
 	if (!$stackId && !$alignId && !$clusterId) {
-		echo "Pixel Size:<BR/>\n"
+		echo "Pixel Size:<br>\n"
 			."<INPUT TYPE='text' NAME='apix' SIZE='5' VALUE='$apix'>\n"
 			."<FONT SIZE='-2'>(in &Aring;ngstroms per pixel)</FONT>\n";
 		echo "<br/>\n";
@@ -277,20 +277,20 @@ function runUploadTemplate() {
 	<table class='tableborder' width='600' border='1'>
 	<tr><td colspan='2'>
 	$template_command 
-	<B>UploadTemplate Command:</B><BR>
+	<B>UploadTemplate Command:</B><br>
 	$command
-	</TD></TR>
-	<TR><TD>template name</TD><TD>$template</TD></TR>
-	<TR><TD>apix</TD><TD>$apix</TD></TR>
-	<TR><TD>diam</TD><TD>$diam</TD></TR>
-	<TR><TD>session</TD><TD>$session</TD></TR>
+	</TD></tr>
+	<TR><td>template name</TD><td>$template</TD></tr>
+	<TR><td>apix</TD><td>$apix</TD></tr>
+	<TR><td>diam</TD><td>$diam</TD></tr>
+	<TR><td>session</TD><td>$session</TD></tr>
 	<tr><td>commit</td><td>$commit</td></tr>
-	<TR><TD>description</TD><TD>$description</TD></TR>";
+	<TR><td>description</TD><td>$description</TD></tr>";
 
-	if ($templateIds!="") echo"<TR><TD>image numbers</TD><TD>$templateIds</TD></TR>";
-	if ($stackId) echo"<TR><TD>stack id</TD><TD>$stackId</TD></TR>";
+	if ($templateIds!="") echo"<TR><td>image numbers</TD><td>$templateIds</TD></tr>";
+	if ($stackId) echo"<TR><td>stack id</TD><td>$stackId</TD></tr>";
 	echo"
-	</TABLE>\n";
+	</table>\n";
 	processing_footer();
 }
 

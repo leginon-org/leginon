@@ -47,10 +47,10 @@ foreach ($aceparamsfields as $param) {
 		$namesplit=explode("|",$param);
 		$param=end($namesplit);
 	}
-	$javafunctions.= "newwindow.document.write('<TR><TD>$param</TD>');\n";
-	$javafunctions.= "newwindow.document.write('<TD>'+$param+'</TD></TR>');\n";
+	$javafunctions.= "newwindow.document.write('<TR><td>$param</TD>');\n";
+	$javafunctions.= "newwindow.document.write('<td>'+$param+'</TD></tr>');\n";
 }
-$javafunctions.= "newwindow.document.write('</TABLE></BODY></HTML>');\n";
+$javafunctions.= "newwindow.document.write('</table></BODY></HTML>');\n";
 $javafunctions.= "newwindow.document.close();\n";
 $javafunctions.= "}\n";
 $javafunctions.= "</script>\n";

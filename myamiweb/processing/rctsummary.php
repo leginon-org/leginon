@@ -44,7 +44,7 @@ if ($rctRuns) {
 	$html .= "<TR>\n";
 	$display_keys = array ( 'defid', 'name', 'image', 'num part', 'pixel size', 'box size', 'fsc res', 'rmeasure', 'description');
 	foreach($display_keys as $key) {
-		$html .= "<TD><span class='datafield0'>".$key."</span> </TD> ";
+		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
 	foreach ($rctRuns as $rctrun) {
@@ -71,15 +71,15 @@ if ($rctRuns) {
 		// SAMPLE PNG FILE
 		$pngfiles = glob($rctrun['path']."/"."volume*".$rctrun['numiter'].".mrc.1.png");
 		if ($pngfiles && file_exists($pngfiles[0]))
-			$html .= "<TD valign='center' align='center'><IMG SRC='loadimg.php?h=80&filename=".$pngfiles[0]."' height='80'></TD>\n";
+			$html .= "<TD valign='center' align='center'><img src='loadimg.php?h=80&filename=".$pngfiles[0]."' height='80'></TD>\n";
 		else
-			$html .= "<TD></TD>\n";
+			$html .= "<td></TD>\n";
 
 		// NUMBER OF PARTICLES
 		if ($numpart)
 			$html .= "<TD valign='center' align='center'>$numpart<br/>of<br/>$stackcount</TD>\n";
 		else
-			$html .= "<TD></TD>\n";
+			$html .= "<td></TD>\n";
 
 		// APIX
 		$html .= "<TD valign='center' align='center'>$stackapix</TD>\n";
@@ -101,14 +101,14 @@ if ($rctRuns) {
 
 			$html .= "<TD valign='center' align='center'>\n".round($rctrun['rmeas'],2)." &Aring;</TD>\n";
 		} else {
-			$html .= "<TD></TD>\n<TD></TD>\n";
+			$html .= "<td></TD>\n<td></TD>\n";
 		}
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($rctid,$rctrun['description']) : $rctrun['description'];
 
 		$html .= "<td>$descDiv</td>\n";
-		$html .= "</TR>\n";
+		$html .= "</tr>\n";
 	}
 
 	$html .= "</table>\n";

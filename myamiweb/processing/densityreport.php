@@ -64,12 +64,12 @@ elseif ($density['REF|ApRefinementData|iterid'])
 elseif ($density['pdbid'])
 	$densitytable .= "<A HREF='http://www.rcsb.org/pdb/cgi/explore.cgi?pdbId="
 		.$density['pdbid']."'> PDB id "
-		.$density['pdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+		.$density['pdbid']."&nbsp;<img src='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
 		."</A>\n";
 elseif ($density['emdbid'])
 	$densitytable .= "<A HREF='http://www.ebi.ac.uk/msd-srv/emsearch/atlas/"
 		.$density['emdbid']."_visualization.html'> EMDB id "
-		.$density['emdbid']."&nbsp;<IMG SRC='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
+		.$density['emdbid']."&nbsp;<img src='img/external.png' BORDER='0' HEIGHT='10' WIDTH='10'>"
 		."</A>\n";
 else
 	$densitytable .= "<I>unknown</I>\n";

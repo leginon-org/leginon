@@ -81,19 +81,19 @@ function runCtfTilt() {
 	<TR><TD COLSPAN='2'>
 	<B>ACE Command:</B><br/>
 	$command<HR>
-	</TD></TR>";
+	</TD></tr>";
 	appionLoopSummaryTable();
 	echo"
-	<TR><TD>ampcarbon</TD><TD>$ampcarbon</TD></TR>
-	<TR><TD>ampice</TD><TD>$ampice</TD></TR>
-	<TR><TD>fieldsize</TD><TD>$fieldsize</TD></TR>
-	<TR><TD>medium</TD><TD>$medium</TD></TR>
-	<TR><TD>cs</TD><TD>$cs</TD></TR>\n";
-	//if ($nominal=="db value" OR $nominal=="") echo "<TR><TD>nominal</TD><TD><I>NULL</I></TD></TR>\n";
-	//else echo "<TR><TD>nominal</TD><TD>$nominal</TD></TR>\n";
-	//if ($reprocess) echo "<TR><TD>reprocess</TD><TD>$reprocess</TD></TR>\n";
-	//else echo "<TR><TD>reprocess</TD><TD><I>NULL</I></TD></TR>\n";
-	echo "</TABLE>\n";
+	<TR><td>ampcarbon</TD><td>$ampcarbon</TD></tr>
+	<TR><td>ampice</TD><td>$ampice</TD></tr>
+	<TR><td>fieldsize</TD><td>$fieldsize</TD></tr>
+	<TR><td>medium</TD><td>$medium</TD></tr>
+	<TR><td>cs</TD><td>$cs</TD></tr>\n";
+	//if ($nominal=="db value" OR $nominal=="") echo "<TR><td>nominal</TD><td><I>NULL</I></TD></tr>\n";
+	//else echo "<TR><td>nominal</TD><td>$nominal</TD></tr>\n";
+	//if ($reprocess) echo "<TR><td>reprocess</TD><td>$reprocess</TD></tr>\n";
+	//else echo "<TR><td>reprocess</TD><td><I>NULL</I></TD></tr>\n";
+	echo "</table>\n";
 	processing_footer(True, True);
 }
 
@@ -177,7 +177,7 @@ function createCtfTiltForm($extra=false) {
 	echo "Ice\n";
 	echo "</TD>\n";
 
-	echo "</TR></TABLE><br /><br />\n";
+	echo "</tr></table><br /><br />\n";
 
 	echo "<INPUT TYPE='text' NAME='fieldsize' VALUE='512' size='4'>\n";
 	echo docpop('field','Field Size');
@@ -203,7 +203,7 @@ function createCtfTiltForm($extra=false) {
 	//}
 	echo"
 	  </TD>
-	</TR>
+	</tr>
 	<TR>
 	  <TD COLSPAN='2' ALIGN='CENTER'>\n<hr />";
 	echo getSubmitForm("Run CtfTilt");

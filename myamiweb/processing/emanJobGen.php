@@ -146,7 +146,7 @@ elseif ($_POST['submitjob']) {
 
 	echo "<tr><td>Cluster Directory</td><td>$clusterpath</td></tr>\n";
 	echo "<tr><td>Job number</td><td>$jobnum</td></tr>\n";
-	echo "</TABLE>\n";
+	echo "</table>\n";
 
 	// check jobs that are running on the cluster
 	echo "<P>Jobs currently running on the cluster:\n";
@@ -246,8 +246,8 @@ function stackModelForm($extra=False) {
 		echo "</SELECT>\n";
 	}
 	// show initial models
-	echo "<P><B>Model:</B><BR><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><BR/>\n";
-	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><BR/>\n";
+	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
+	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
 	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
@@ -274,10 +274,10 @@ function stackModelForm($extra=False) {
 			}
 			echo"Use ";
 			echo"Model ID: $model[DEF_id]\n";
-			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><BR>\n";
+			echo "<input type='BUTTON' NAME='rescale' VALUE='Rescale/Resize this model' onclick=\"parent.location='uploadmodel.php?expId=$expId&rescale=TRUE&modelid=$model[DEF_id]'\"><br>\n";
 			foreach ($pngfiles as $snapshot) {
 				$snapfile = $model['path'].'/'.$snapshot;
-				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><IMG SRC='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'>\n";
+				echo "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?s=80&filename=$snapfile' HEIGHT='80'>\n";
 			}
 			echo "</td>\n";
 			echo "</tr>\n";
@@ -287,7 +287,7 @@ function stackModelForm($extra=False) {
 			echo"<tr><td>box size:</td><td>$model[boxsize]</td></tr>\n";
 			echo"<tr><td>symmetry:</td><td>$sym[symmetry]</td></tr>\n";
 			echo"<tr><td>resolution:</td><td>$model[resolution]</td></tr>\n";
-			echo "</TABLE>\n";
+			echo "</table>\n";
 			echo "<P>\n";
 		}
 		if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'></FORM>\n";
@@ -679,12 +679,12 @@ function jobForm($extra=false) {
 #        <td bgcolor='$bgcolor'><A HREF=\"javascript:refinfopopup('msgp_minptcls')\">MinPtcls:</A>
 #          <input type='text' NAME='$msgp_minptclsn' SIZE='4' VALUE='$msgp_minptcls'></td>
 #            </tr>
-#          </TABLE>
+#          </table>
 #        <TD colspan=2 bgcolor='$bgcolor' ALIGN='CENTER'>
 #      </tr>
 	}
 	echo"
-  </TABLE>
+  </table>
   <input type='hidden' NAME='numiters' VALUE='$numiters'><P>
   <input type='SUBMIT' NAME='write' VALUE='Create Job File'>
   </form>\n";

@@ -119,10 +119,10 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
   echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
 	
 	echo"<P>
-      <B>Tomogram Description:</B><BR/>
+      <B>Tomogram Description:</B><br>
       <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
       </TD>
-    </TR>
+    </tr>
     <TR>
       <TD VALIGN='TOP' CLASS='tablebg'>";       
 
@@ -140,7 +140,7 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
    
 	if (!$sessionname) {
 		echo "
-		<BR>
+		<br>
       <INPUT TYPE='text' NAME='sessionname' VALUE='$sessionname' SIZE='5'>\n";
 		echo docpop('session', 'Session Name');
 		echo "<FONT> (leginon session name)</FONT>";
@@ -148,10 +148,10 @@ function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', 
 		echo "	  		
 		<P>
       </TD>
-   </TR>
-    </TABLE>
+   </tr>
+    </table>
   </TD>
-  </TR>
+  </tr>
   <td
 
   <TR>
@@ -244,19 +244,19 @@ function runTomoMaker() {
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<TR><TD COLSPAN='2'>
-	<B>Full Tomogram Making Command:</B><BR>
+	<B>Full Tomogram Making Command:</B><br>
 	$command
-	</TD></TR>
-	<TR><TD>tomo name</TD><TD>$tomofilename</TD></TR>
-	<TR><TD>transform file</TD><TD>$xffilename</TD></TR>
-	<TR><TD>snapshot file</TD><TD>$snapshot</TD></TR>
-	<TR><TD>apix</TD><TD>$apix</TD></TR>
-	<TR><TD>tiltseries number</TD><TD>$tiltseriesnumber</TD></TR>
-	<TR><TD>runname</TD><TD>$runname</TD></TR>
-	<TR><TD>volume</TD><TD>$volume</TD></TR>
-	<TR><TD>session</TD><TD>$sessionname</TD></TR>
-	<TR><TD>description</TD><TD>$description</TD></TR>
-	</TABLE>\n";
+	</TD></tr>
+	<TR><td>tomo name</TD><td>$tomofilename</TD></tr>
+	<TR><td>transform file</TD><td>$xffilename</TD></tr>
+	<TR><td>snapshot file</TD><td>$snapshot</TD></tr>
+	<TR><td>apix</TD><td>$apix</TD></tr>
+	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
+	<TR><td>runname</TD><td>$runname</TD></tr>
+	<TR><td>volume</TD><td>$volume</TD></tr>
+	<TR><td>session</TD><td>$sessionname</TD></tr>
+	<TR><td>description</TD><td>$description</TD></tr>
+	</table>\n";
 	processing_footer();
 }
 

@@ -111,7 +111,7 @@ function createAce2Form($extra=false) {
 
 	echo"
 	  </TD>
-	</TR>
+	</tr>
 	<TR>
 	  <TD COLSPAN='2' ALIGN='CENTER'>\n<hr />";
 	echo getSubmitForm("Run Ace 2");
@@ -186,13 +186,13 @@ function runAce2() {
 		<TR><TD COLSPAN='2'>
 		<B>ACE Command:</B><br/>
 		$command<HR>
-		</TD></TR>";
+		</TD></tr>";
 		appionLoopSummaryTable();
 		echo"
-		<TR><TD>refine 2d</TD><TD>$refine2d</TD></TR>
-		<TR><TD>bin</TD><TD>$binval</TD></TR>
-		<TR><TD>cs</TD><TD>$cs</TD></TR>\n";
-		echo "</TABLE>\n";
+		<TR><td>refine 2d</TD><td>$refine2d</TD></tr>
+		<TR><td>bin</TD><td>$binval</TD></tr>
+		<TR><td>cs</TD><td>$cs</TD></tr>\n";
+		echo "</table>\n";
 		processing_footer(True, True);
 	}
 }

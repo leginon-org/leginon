@@ -73,24 +73,24 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 
 	//if uploading a new template stack that does not yet exist in the database 
 	if (!$clusterId) {
-		echo "<BR/>\n";
-		echo "Template Stack Name with path: <BR/> \n";
+		echo "<br>\n";
+		echo "Template Stack Name with path: <br> \n";
 		echo "<INPUT TYPE='text' NAME='template_stack' VALUE='$template_stack' SIZE='55'/>\n";
-		echo "<BR/><BR/>\n";
-		echo "&Aring;ngstroms per pixel <BR/>\n";
+		echo "<br><br>\n";
+		echo "&Aring;ngstroms per pixel <br>\n";
 		echo "<INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'/>\n";
-		echo "<BR/>";			
+		echo "<br>";			
 	}
 
-	echo "<BR/>";
-	echo "New Name for Template Stack (no spaces)<BR/>";
+	echo "<br>";
+	echo "New Name for Template Stack (no spaces)<br>";
 	echo "<INPUT TYPE='text' NAME='newname' VALUE='$newname' SIZE='50'/>\n";
-	echo "<BR/>";
+	echo "<br>";
 
 	echo "<br/>\n";
-	echo "Template Stack Description:<BR/>";
+	echo "Template Stack Description:<br>";
 	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
-	echo "</TD></TR><TR><TD VALIGN='TOP'>";
+	echo "</TD></tr><TR><TD VALIGN='TOP'>";
 	
 	// give option of choosing the type of images if not coming directly from clustering stack
 	if (!$clusterId) {
@@ -216,14 +216,14 @@ function runUploadTemplateStack() {
 	<tr><td colspan='2'>
 	$command
 	<br/><br/>
-	</TD></TR>
-	<TR><TD>template stack name</TD><TD>$template_stack</TD></TR>
-	<TR><TD>session</TD><TD>$session</TD></TR>
+	</TD></tr>
+	<TR><td>template stack name</TD><td>$template_stack</TD></tr>
+	<TR><td>session</TD><td>$session</TD></tr>
 	<tr><td>commit</td><td>$commit</td></tr>
-	<TR><TD>description</TD><TD>$description</TD></TR>";
+	<TR><td>description</TD><td>$description</TD></tr>";
 
 	echo"
-	</TABLE>\n";
+	</table>\n";
 	processing_footer();
 }
 

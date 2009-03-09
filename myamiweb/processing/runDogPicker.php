@@ -86,7 +86,7 @@ function createDogPickerForm($extra=false, $title='DoG Picker Launcher', $headin
 		<td VALIGN='TOP'>";
 	srand(time());
 	if ((rand()%2) < 3) {
-		echo"<center><IMG SRC='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
+		echo"<center><img src='img/dogpicker.jpg' WIDTH='300'></center><br />\n";
 	}
 	createAppionLoopTable($sessiondata, $defrunname, "extract");
 	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
@@ -211,7 +211,7 @@ function runDogPicker() {
 			</td></tr>";
 		appionLoopSummaryTable();
 		particleLoopSummaryTable();
-		echo"</TABLE>\n";
+		echo"</table>\n";
 		processing_footer(True, True);
 		exit;
 	}

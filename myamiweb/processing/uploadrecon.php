@@ -106,12 +106,12 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <br>
       <b>Recon Name:</b> \n";
   if ($jobId) echo "$jobrunid<input type='hidden' name='reconname' value='$jobrunid'>";
-  else echo "<BR/><input type='text' name='reconname' value='$reconname' size='50'>";
+  else echo "<br><input type='text' name='reconname' value='$reconname' size='50'>";
   echo "
-      <BR/>
+      <br>
       <B>Recon Base Directory:</B>\n";
   if ($jobId) echo "$sessionpath\n";
-  else echo "<BR/><input type='text' name='reconpath' value='$sessionpath' size='50'/>";
+  else echo "<br><input type='text' name='reconpath' value='$sessionpath' size='50'/>";
   echo "
       <br/>
       <p>
@@ -129,11 +129,11 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <p>";
   echo "Stack: ";
   if ($jobId) {
-		echo "$stackid <input type='hidden' name='stack' value='$stackid'><BR/>\n";
+		echo "$stackid <input type='hidden' name='stack' value='$stackid'><br>\n";
 		$stackparams = $particle->getStackParams($stackid);
 		//print_r($stackparams);
-		echo "&nbsp;Name: ".$stackparams['shownstackname']."<BR/>\n";
-		echo "&nbsp;Desc: '".$stackparams['description']."'<BR/>\n";
+		echo "&nbsp;Name: ".$stackparams['shownstackname']."<br>\n";
+		echo "&nbsp;Desc: '".$stackparams['description']."'<br>\n";
 	} else {
     echo "<select name='stack'>\n";
 
@@ -160,12 +160,12 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   }
   echo "<P>Initial Model:\n";
   if ($jobId) {
-		echo "$modelid <input type='hidden' name='model' value='$modelid'><BR/>\n";
+		echo "$modelid <input type='hidden' name='model' value='$modelid'><br>\n";
 		$stackparams = $particle->getInitModelInfo($modelid);
 		//print_r($stackparams);
-		//echo "\n<BR/>";
-		echo "&nbsp;Name: ".$stackparams['name']."<BR/>\n";
-		echo "&nbsp;Desc: '".$stackparams['description']."'<BR/>\n";
+		//echo "\n<br>";
+		echo "&nbsp;Name: ".$stackparams['name']."<br>\n";
+		echo "&nbsp;Desc: '".$stackparams['description']."'<br>\n";
 	} else {
     echo "
       <SELECT name='model'>

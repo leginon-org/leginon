@@ -87,9 +87,9 @@ function templateEntry($templateinfo, $hidden=False){
 	$templatetable.="<tr><td valign='top'>\n";
 	$templatetable.="<img src='loadimg.php?filename=$filename&s=100' width='100'></td>\n";
 	$templatetable.="<td>\n";
-	$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<BR/>\n";
-	$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<BR/>\n";
-	$templatetable.="<B>File:</B><BR/>";
+	$templatetable.="<B>Diameter:</B>  $templateinfo[diam]<br>\n";
+	$templatetable.="<B>Pixel Size:</B>  $templateinfo[apix]<br>\n";
+	$templatetable.="<B>File:</B><br>";
 	$templatetable.=$filename;
 	$templatetable.="<br />\n";
 	$templatetable.="<b>Description:</b><br />";

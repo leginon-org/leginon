@@ -48,7 +48,7 @@ if ($_POST['run']) {
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
-	<B>Create Class Averages Command:</B><BR>
+	<B>Create Class Averages Command:</B><br>
 	$command
 	</td></tr>
         <tr><td>file</td><td>$stackname</td></tr>
