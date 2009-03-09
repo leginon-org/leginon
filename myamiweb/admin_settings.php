@@ -109,7 +109,7 @@ $bfids = array();
 $aliases = array('edge lpf','template lpf','lpf');
 
 $user_id = getAdminUserId();
-$extratables = array('LowPassFilterSettingsData','MosaicClickTargetFinderSettingsData');
+$extratables = array('LowPassFilterSettingsData','BlobFinderSettingsData');
 //Tables
 ?><p><?;
 foreach ($extratables as $table) {
