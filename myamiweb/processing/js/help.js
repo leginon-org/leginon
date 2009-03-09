@@ -4,6 +4,7 @@
 
 var help = {
 	'appion' : {
+		'boxfiles' : 'Only the eman box files will be created',
 		'runid' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error.',
 		'runname' : 'Specifies the name associated with the processing results unique to the specified session and parameters.  An attempt to use the same run name for a session using different processing parameters will result in an error. The Default is automatically incremented',
 		'description' : 'brief description attributed with the processing results',
