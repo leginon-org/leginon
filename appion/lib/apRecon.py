@@ -14,6 +14,7 @@ import apParam
 import apDisplay
 import apEMAN
 import apEulerDraw
+import apChimera
 import apStack
 import apFile
 import apUpload
