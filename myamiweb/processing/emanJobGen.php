@@ -755,7 +755,7 @@ function writeJobFile ($extra=False) {
 	if ($rebox || $rescale) {
 		$ejob.= "mv threed.0a.mrc init.mrc\n";
 		$ejob.= "proc3d init.mrc threed.0a.mrc $rescale clip=$box,$box,$box\n";
-		$ejob.= "rm init.mrc\n";
+		$ejob.= "rm -f init.mrc\n";
 	}
 
 	for ($i=1; $i<=$numiters; $i++) {
