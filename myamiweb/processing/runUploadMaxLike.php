@@ -106,7 +106,7 @@ function createMaxLikeAlignForm($extra=false, $title='uploadMaxlikeAlignment.py 
 
 			echo "<input type='hidden' name='timestamp".$jobid."' value='".$maxlikejob['timestamp']."'>\n";
 			foreach($display_keys as $k=>$v) {
-			        echo formatHtmlRow($k,$v);
+				echo formatHtmlRow($k,$v);
 			}
 
 			echo "<tr><td colspan='2'>\n";
