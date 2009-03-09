@@ -221,7 +221,7 @@ def process_dsym(v, surfs, vol_path, imgFormat="PNG"):
 
 	tilt = 30
 	runChimCommand("turn x %d"%(tilt))
-	increment = 15
+	increment = 5
 	nsteps = int(360/increment)
 	for i in range(nsteps):
 		filename = "%s.%03d.%s"%(vol_path, i, imgFormat.lower())
@@ -243,15 +243,31 @@ def process_csym(v, surfs, vol_path, imgFormat="PNG"):
 	tilt = 30
 	runChimCommand("turn x %d"%(tilt))
 	increment = 15
-	nsteps = int(360/increment)
+	nsteps = int(180/increment)
 	for i in range(nsteps):
 		filename = "%s.%03d.%s"%(vol_path, i, imgFormat.lower())
 		save_image(filename, format=imgFormat)
-		writeMessageToLog("turn: rotate by %d to %d"%(increment,increment*(i+1)))
+		writeMessageToLog("turn: rotate about by %d to %d"%(increment,increment*(i+1)))
 		runChimCommand("turn x %d"%(-tilt))
 		runChimCommand("turn y %d"%(increment))
 		runChimCommand("turn x %d"%(tilt))
-
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i+nsteps, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate down by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(increment))
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i+nsteps*2, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate about by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(-tilt))
+		runChimCommand("turn y %d"%(increment))
+		runChimCommand("turn x %d"%(tilt))
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i+nsteps*3, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate up by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(-increment))
 
 # -----------------------------------------------------------------------------
 #
