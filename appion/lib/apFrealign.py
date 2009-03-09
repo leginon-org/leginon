@@ -143,7 +143,7 @@ def writeParticleParamLine(particleparams, fileobject):
 	fileobject.write("%7d%8.3f%8.3f%8.3f%8.3f%8.3f%9.1f%5d%9.1f%9.1f%8.2f%7.2f%8.2f\n" % (p['ptclnum'],p['psi'],p['theta'],p['phi'],p['shx'],p['shy'],p['mag'],p['film'],p['df1'],p['df2'],p['angast'],p['presa'],p['dpres']))
 
 #===============
-def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):
+def createFrealignJob (params, jobname, nodenum=None, mode=None, inpar=None, invol=None, first=None, last=None, norecon=False):
 
 	if mode is None:
 		mode=params['mode']
@@ -168,12 +168,13 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 		reconrelmag=0.0
 
 	f=open(jobname,'w')
+	f.write("#!/bin/csh\n")
 
 	# first copy files
 	f.write('cd %s\n' % params['rundir'])
 	f.write('cd working\n')
-	if vnodenum is not None:
-		workdir = "sub"+str(vnodenum)
+	if nodenum is not None:
+		workdir = "sub"+str(nodenum)
 		f.write('rm -rf %s\n' %workdir)
 		f.write('mkdir %s\n' %workdir)
 		f.write('cd %s\n' %workdir)
@@ -205,6 +206,7 @@ def createFrealignJob (params, jobname, vnodenum=None, mode=None, inpar=None, in
 	f.write('EOF\n')
 	f.write('\n')
 	f.close()
+	os.chmod(jobname,0755)
 
 #===============
 def convertEmanEulersToFrealign(eman_eulers):
@@ -405,8 +407,7 @@ def getStackParticleEulersForIteration(params,pnum):
 def createMultipleJobs(params):
 	"""
 	Create multiple job files for frealign reconstruction
-	using pbsdsh, which assumes a PBS installation that has
-	the PBS_VNODENUM variable
+	using the mpiexec command
 	"""
 	# create script that will launch all mpi scripts
 	workdir = os.path.join(params['rundir'],"working")
@@ -415,11 +416,8 @@ def createMultipleJobs(params):
 	cscript = os.path.join(workdir,'frealign_MP.csh')
 	params['mp_script']=cscript
 	fr = open(cscript,'w')
-	fr.write("#!/bin/csh\n")
-	frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.csh')
-	fr.write("csh "+frscript+"\n")
-	fr.close()
-	os.chmod(cscript,0777)
+	#frscript = os.path.join(workdir,'frealign.$PBS_VNODENUM.csh')
+	#fr.write("csh "+frscript+"\n")
 
 	# create individual mpi scripts
 	ptcls_per_job = params['last']/params['proc']
@@ -434,14 +432,20 @@ def createMultipleJobs(params):
 			r-=1
 
 		jobname=os.path.join(workdir,"frealign.%d.csh" %n)
-		createFrealignJob(params,jobname,invol=params['itervol'], inpar=params['iterparam'],vnodenum=n, first=firstp, last=lastp,norecon=True)
-		
+		fr.write("-np 1 %s\n" % jobname)
+		createFrealignJob(params,jobname,invol=params['itervol'], inpar=params['iterparam'],nodenum=n, first=firstp, last=lastp,norecon=True)
+	fr.close()
+	os.chmod(cscript,0755)
+	
+	
 #===============
 def submitMultipleJobs(params):
 	"""
+	Launch jobs using mpiexec
 	Must be launched from within a PBS job!
 	"""
-	cmd = 'pbsdsh -v '+params['mp_script']
+	#cmd = 'pbsdsh -v '+params['mp_script']
+	cmd = 'mpiexec --app '+params['mp_script']
 	print cmd
 	os.system(cmd)
 
