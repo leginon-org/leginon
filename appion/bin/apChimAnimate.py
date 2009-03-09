@@ -135,7 +135,7 @@ def hideDust(volume, size=10):
 # -----------------------------------------------------------------------------
 #
 def render_volume(tmp_path, vol_path, contour=1.5, 
-	zoom_factor=1.0, image_size=(1024, 1024), imgFormat="PNG", sym="C"):
+	zoom_factor=1.0, image_size=(128, 128), imgFormat="PNG", sym="C"):
 
 	chimera.viewer.windowSize = image_size
 
@@ -145,14 +145,8 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	from _surface import SurfaceModel
 	from chimera import openModels as om
 	surfs = om.list(modelTypes=[SurfaceModel])
-	
 
-
-#	m = v.surface_model()
-	
-	#from chimera import runCommand
 	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
-
 
 	if sym[:4].lower() == 'icos':
 		process_icosahedral(v, surfs, vol_path, imgFormat="PNG")
@@ -166,23 +160,19 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 # -----------------------------------------------------------------------------
 #
 def process_icosahedral(v, surfs, vol_path, imgFormat="PNG"):
-	image1 = vol_path+'.1.png'
-	image2 = vol_path+'.2.png'
-	image3 = vol_path+'.3.png'
-
 	hideDust(v, 2)
 	for s in surfs:
 		color_surface_radially(s)
 
-	save_image(vol_path+'.1.png', format=imgFormat)
+	save_image(vol_path+'.001.png', format=imgFormat)
 
 	writeMessageToLog("turn: down 3-fold axis")
 	runChimCommand('turn y 37.377')
-	save_image(vol_path+'.2.png', format=imgFormat)
+	save_image(vol_path+'.002.png', format=imgFormat)
 	
 	writeMessageToLog("turn: viper orientation (2 fold)")
 	runChimCommand('turn y 20.906')
-	save_image(vol_path+'.3.png', format=imgFormat) 
+	save_image(vol_path+'.003.png', format=imgFormat) 
 
 	writeMessageToLog("turn: get clipped view")
 	time.sleep(0.5)
@@ -192,7 +182,7 @@ def process_icosahedral(v, surfs, vol_path, imgFormat="PNG"):
 	runChimCommand('ac cc')
 	runChimCommand('wait')
 	time.sleep(0.5)
-	save_image(vol_path+'.6.png', format=imgFormat)
+	save_image(vol_path+'.006.png', format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
@@ -201,24 +191,24 @@ def process_asymmetric(v, surfs, vol_path, imgFormat="PNG"):
 	for s in surfs:
 		color_surface_height(s)
 	writeMessageToLog("turn: get top view")
-	runChimCommand('turn x 180')
-	save_image(vol_path+'.1.png', format=imgFormat)
+	runChimCommand("turn x 180")
 
-	writeMessageToLog("turn: get tilt view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.2.png', format=imgFormat)
-
-	writeMessageToLog("turn: get side view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.3.png', format=imgFormat)
-
-	writeMessageToLog("turn: get tilt 2")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.4.png', format=imgFormat)
-
-	writeMessageToLog("turn: bottom view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.5.png', format=imgFormat)
+	tilt = 15
+	runChimCommand("turn x %d"%(-tilt))
+	increment = 5
+	nsteps = int(360/increment)
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(tilt))
+		runChimCommand("turn y %d"%(increment))
+		runChimCommand("turn x %d"%(-tilt))
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i+nsteps, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(increment))
 
 # -----------------------------------------------------------------------------
 #
@@ -226,17 +216,20 @@ def process_dsym(v, surfs, vol_path, imgFormat="PNG"):
 	hideDust(v, 2)
 	for s in surfs:
 		color_surface_cylinder(s)
-	writeMessageToLog("turn: get top view")
-	runChimCommand('turn x 180')
-	save_image(vol_path+'.1.png', format=imgFormat)
+	writeMessageToLog("turn: get intermediate side view")
+	runChimCommand('turn x 90')
 
-	writeMessageToLog("turn: get tilt view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.2.png', format=imgFormat)
-
-	writeMessageToLog("turn: get side view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.3.png', format=imgFormat)
+	tilt = 30
+	runChimCommand("turn x %d"%(tilt))
+	increment = 15
+	nsteps = int(360/increment)
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(-tilt))
+		runChimCommand("turn y %d"%(increment))
+		runChimCommand("turn x %d"%(tilt))
 
 # -----------------------------------------------------------------------------
 #
@@ -244,25 +237,21 @@ def process_csym(v, surfs, vol_path, imgFormat="PNG"):
 	hideDust(v, 5)
 	for s in surfs:
 		color_surface_cylinder(s)
-	writeMessageToLog("turn: get top view")
-	runChimCommand('turn x 180')
-	save_image(vol_path+'.1.png', format=imgFormat)
+	writeMessageToLog("turn: get intermediate side view")
+	runChimCommand('turn x 90')
 
-	writeMessageToLog("turn: get tilt view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.2.png', format=imgFormat)
+	tilt = 30
+	runChimCommand("turn x %d"%(tilt))
+	increment = 15
+	nsteps = int(360/increment)
+	for i in range(nsteps):
+		filename = "%s.%03d.%s"%(vol_path, i, imgFormat.lower())
+		save_image(filename, format=imgFormat)
+		writeMessageToLog("turn: rotate by %d to %d"%(increment,increment*(i+1)))
+		runChimCommand("turn x %d"%(-tilt))
+		runChimCommand("turn y %d"%(increment))
+		runChimCommand("turn x %d"%(tilt))
 
-	writeMessageToLog("turn: get side view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.3.png', format=imgFormat)
-
-	writeMessageToLog("turn: get tilt 2")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.4.png', format=imgFormat)
-
-	writeMessageToLog("turn: bottom view")
-	runChimCommand('turn x -45')
-	save_image(vol_path+'.5.png', format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
@@ -299,6 +288,7 @@ if True:
 	from chimera.colorTable import getColorByName
 	white = getColorByName('white')
 	chimera.viewer.background = white
+	#chimera.viewer.showSilhouette = True
 
 	tmpfile_path = params[0] #sys.argv[2]
 	volume_path = params[1] #sys.argv[3]
