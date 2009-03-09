@@ -195,6 +195,7 @@ class leginondata {
 		."time_to_sec(s.`DEF_timestamp`)+time_to_sec(a.`DEF_timestamp`)) as `Total Duration`, "
 		."s.`Image path`, "
 		."concat(i.name,' - ',ic.name) as Instrument, "
+		."i.hostname as `Instrument Host`, "
 		."sc.`REF|InstrumentData|tem`  as `InstrumentId`, "
 		."c.`REF|InstrumentData|ccdcamera`  as `CameraId`, "
 		."u.`DEF_id` as userId, "
