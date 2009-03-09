@@ -45,7 +45,7 @@ class Cluster {
 
 		$modelinfo = explode('|--|',$_POST['model']);
 		$modelpath = $modelinfo[1];
-		$dmfmod = $modelinfo[2];
+		$modelname = $modelinfo[2];
 
 		$clusterpath = formatEndPath($_POST['outdir']).$this->rootpath;
 
@@ -60,6 +60,7 @@ class Cluster {
 		$this->clusterfullpath = $this->clusterpath.$jobname;
 		$this->stackpath = $stackpath;
 		$this->modelpath = $modelpath;
+		$this->modelname = $modelname;
 	}
 
 	function cluster_parameters() {
@@ -72,6 +73,7 @@ class Cluster {
 		$clusterfullpath=$this->clusterfullpath;
 		$stackpath = $this->stackpath;
 		$modelpath = $this->modelpath;
+		$modelname = $this->modelname;
 		$stackname1 = $this->stackname1;
 
 		$clusterjob= "rm -rf $clusterfullpath/recon\n";
