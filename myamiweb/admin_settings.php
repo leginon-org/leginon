@@ -109,6 +109,18 @@ $bfids = array();
 $aliases = array('edge lpf','template lpf','lpf');
 
 $user_id = getAdminUserId();
+$extratables = array('LowPassFilterSettingsData','MosaicClickTargetFinderSettingsData');
+//Tables
+?><p><?;
+foreach ($extratables as $table) {
+	echo $table?></br><?;
+}
+foreach (array_keys($nodenames) as $table) {
+	echo $table?></br><?;
+}
+?><p><?;
+
+//Default values
 foreach (array_keys($nodenames) as $table) {
 	foreach ($nodenames[$table] as $name) { 
 		$sqldata1 = getSettingsData($user_id,$table,$name);
