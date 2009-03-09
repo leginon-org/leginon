@@ -50,7 +50,7 @@ def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
 	print "saving to",outfile,"with a boxsize:",newbox
 	emancmd = "proc3d %s %s " % (infile, outfile)
 	emancmd += "scale=%s " % scalefactor
-	emancmd += "clip=%i,%i,%i edgenorm" % (newbox, newbox, newbox)
+	emancmd += "clip=%i,%i,%i norm=0,1" % (newbox, newbox, newbox)
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 def MRCtoSPI(infile,rundir):

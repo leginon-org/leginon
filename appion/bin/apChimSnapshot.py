@@ -153,87 +153,116 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	#from chimera import runCommand
 	runChimCommand('scale %.3f' % zoom_factor)   # Zoom
 
+
+	if sym[:4].lower() == 'icos':
+		process_icosahedral(v, surfs, vol_path, imgFormat="PNG")
+	elif sym.lower()[0] == 'd':
+		process_dsym(v, surfs, vol_path, imgFormat="PNG")
+	elif sym.lower() == 'c1':
+		process_asymmetric(v, surfs, vol_path, imgFormat="PNG")
+	else:
+		process_csym(v, surfs, vol_path, imgFormat="PNG")
+
+# -----------------------------------------------------------------------------
+#
+def process_icosahedral(v, surfs, vol_path, imgFormat="PNG"):
 	image1 = vol_path+'.1.png'
 	image2 = vol_path+'.2.png'
 	image3 = vol_path+'.3.png'
 
-	if sym[:4].lower() == 'icos':
-		hideDust(v, 2)
-		for s in surfs:
-			color_surface_radially(s)
+	hideDust(v, 2)
+	for s in surfs:
+		color_surface_radially(s)
 
-		# move clipping planes to obscure back half
-#		xsize,ysize,zsize=dr.data.size
-#		hither=float(zsize)/5
-#		runChimCommand('clip yon %.3f' % yon)
-#		runChimCommand('clip hither -%.3f' % hither)
+	save_image(vol_path+'.1.png', format=imgFormat)
+
+	writeMessageToLog("turn: down 3-fold axis")
+	runChimCommand('turn y 37.377')
+	save_image(vol_path+'.2.png', format=imgFormat)
 	
-		save_image(image1, format=imgFormat)
+	writeMessageToLog("turn: viper orientation (2 fold)")
+	runChimCommand('turn y 20.906')
+	save_image(vol_path+'.3.png', format=imgFormat) 
 
-		writeMessageToLog("turn: down 3-fold axis")
-		runChimCommand('turn y 37.377')
-		save_image(image2, format=imgFormat)
-		
-		writeMessageToLog("turn: viper orientation (2 fold)")
-		runChimCommand('turn y 20.906')
-		save_image(image3, format=imgFormat) 
+	writeMessageToLog("turn: get clipped view")
+	time.sleep(0.5)
+	runChimCommand('mclip #0 coords screen axis z')
+	runChimCommand('wait')
+	time.sleep(0.5)
+	runChimCommand('ac cc')
+	runChimCommand('wait')
+	time.sleep(0.5)
+	save_image(vol_path+'.6.png', format=imgFormat)
 
-		writeMessageToLog("turn: get clipped view")
-		time.sleep(0.5)
-		runChimCommand('mclip #0 coords screen axis z')
-		runChimCommand('wait')
-		time.sleep(0.5)
-		runChimCommand('ac cc')
-		runChimCommand('wait')
-		
-		time.sleep(0.5)
-		image6 = vol_path+'.6.png'
-		save_image(image6, format=imgFormat)
+# -----------------------------------------------------------------------------
+#
+def process_asymmetric(v, surfs, vol_path, imgFormat="PNG"):
+	hideDust(v, 10)
+	for s in surfs:
+		color_surface_height(s)
+	writeMessageToLog("turn: get top view")
+	runChimCommand('turn x 180')
+	save_image(vol_path+'.1.png', format=imgFormat)
 
-	else:
-		if sym.lower() != 'c1':
-			hideDust(v, 20)
-			for s in surfs:
-				color_surface_cylinder(s)
-		else:
-			hideDust(v, 10)
-			for s in surfs:
-				color_surface_height(s)
-		writeMessageToLog("turn: get top view")
-		runChimCommand('turn x 180')
-		save_image(image1, format=imgFormat)
+	writeMessageToLog("turn: get tilt view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.2.png', format=imgFormat)
 
-		writeMessageToLog("turn: get tilt view")
-		runChimCommand('turn x -45')
-		save_image(image2, format=imgFormat)
+	writeMessageToLog("turn: get side view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.3.png', format=imgFormat)
 
-		writeMessageToLog("turn: get side view")
-		runChimCommand('turn x -45')
-		save_image(image3, format=imgFormat)
+	writeMessageToLog("turn: get tilt 2")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.4.png', format=imgFormat)
 
-		if sym.upper()[0] is not 'D':
-			image4 = vol_path+'.4.png'
-			image5 = vol_path+'.5.png'
+	writeMessageToLog("turn: bottom view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.5.png', format=imgFormat)
 
-			writeMessageToLog("turn: get tilt 2")
-			runChimCommand('turn x -45')
-			save_image(image4, format=imgFormat)
+# -----------------------------------------------------------------------------
+#
+def process_dsym(v, surfs, vol_path, imgFormat="PNG"):
+	hideDust(v, 2)
+	for s in surfs:
+		color_surface_cylinder(s)
+	writeMessageToLog("turn: get top view")
+	runChimCommand('turn x 180')
+	save_image(vol_path+'.1.png', format=imgFormat)
 
-			writeMessageToLog("turn: bottom view")
-			runChimCommand('turn x -45')
-			save_image(image5, format=imgFormat)
-		else:
-			return
-			writeMessageToLog("turn: get clipped side view")
-			time.sleep(0.5)
-			runChimCommand('mclip #0 coords screen axis z')
-			runChimCommand('wait')
-			time.sleep(0.5)
-			runChimCommand('ac cc')
-			runChimCommand('wait')
-		
-			image6 = vol_path+'.6.png'
-			save_image(image6, format=imgFormat)
+	writeMessageToLog("turn: get tilt view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.2.png', format=imgFormat)
+
+	writeMessageToLog("turn: get side view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.3.png', format=imgFormat)
+
+# -----------------------------------------------------------------------------
+#
+def process_csym(v, surfs, vol_path, imgFormat="PNG"):
+	hideDust(v, 5)
+	for s in surfs:
+		color_surface_cylinder(s)
+	writeMessageToLog("turn: get top view")
+	runChimCommand('turn x 180')
+	save_image(vol_path+'.1.png', format=imgFormat)
+
+	writeMessageToLog("turn: get tilt view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.2.png', format=imgFormat)
+
+	writeMessageToLog("turn: get side view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.3.png', format=imgFormat)
+
+	writeMessageToLog("turn: get tilt 2")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.4.png', format=imgFormat)
+
+	writeMessageToLog("turn: bottom view")
+	runChimCommand('turn x -45')
+	save_image(vol_path+'.5.png', format=imgFormat)
 
 # -----------------------------------------------------------------------------
 #
