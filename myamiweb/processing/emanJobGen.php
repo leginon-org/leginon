@@ -65,12 +65,12 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 
 	// make sure that box sizes are the same
 	// get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
-	$stackbox = $stackinfo[2];
+	//	$stackinfo = explode('|--|',$_POST['stackval']);
+	//$stackbox = $stackinfo[2];
 	// get model data
-	$modelinfo = explode('|--|',$_POST['model']);
-	$modbox = $modelinfo[3];
-	if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
+	//$modelinfo = explode('|--|',$_POST['model']);
+	//$modbox = $modelinfo[3];
+	//if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
 }
 
@@ -699,6 +699,7 @@ function formatEndPath($path) {
 
 function writeJobFile ($extra=False) {
 	global $clusterdata;
+	$particle = new particledata();
 	$expId = $_GET['expId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
@@ -724,6 +725,9 @@ function writeJobFile ($extra=False) {
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
+	$initmodel = $particle->getInitModelInfo($modelid);
+	if ($initmodel['boxsize'] != $box) $rebox = True; 
+	if ($initmodel['pixelsize'] != $apix) $rescale = "scale=".$initmodel['pixelsize']/$apix;
 
 	// insert the job file into the database
 	if (!$extra) {
@@ -746,6 +750,14 @@ function writeJobFile ($extra=False) {
 	$pad=intval($box*1.25);
 	// make sure $pad value is even int
 	$pad = ($pad%2==1) ? $pad+=1 : $pad;
+
+	// rescale initial model if necessary:
+	if ($rebox || $rescale) {
+		$ejob.= "mv threed.0a.mrc init.mrc\n";
+		$ejob.= "proc3d init.mrc threed.0a.mrc $rescale clip=$box,$box,$box\n";
+		$ejob.= "rm init.mrc\n";
+	}
+
 	for ($i=1; $i<=$numiters; $i++) {
 		$ang=$_POST["ang".$i];
 		$mask=$_POST["mask".$i];
