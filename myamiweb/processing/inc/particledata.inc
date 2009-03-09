@@ -3030,7 +3030,7 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r;
 	}
 
-	function getNumberOfRctRuns($sessionId) {
+	function getNumberOfRctRuns($sessionId, $showHidden=False) {
 		$q="SELECT count(rctrun.`DEF_id`) AS number "
 			."FROM ApRunsInStackData as runsin "
 			."LEFT JOIN ApStackRunData AS strun "
@@ -3038,13 +3038,15 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."LEFT JOIN ApRctRunData AS rctrun "
 			."  ON rctrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
 			."WHERE strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden )
+			$q .= " AND ( rctrun.`hidden` = 0 OR rctrun.`hidden` IS NULL ) ";
 		//echo $q."<br/><br/>\n";
 		$r=$this->mysql->getSQLResult($q);
 		//echo $r[0]['number']."<br/><br/>\n";
 		return $r[0]['number'];
 	}
 
-	function getRctRunsFromSession($sessionId) {
+	function getRctRunsFromSession($sessionId, $showHidden=False) {
 		$q="SELECT rctrun.*, "
 			."  path.`path` AS path, "
 			."  rmeas.`half` AS rmeas, "
@@ -3067,8 +3069,10 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."WHERE "
 			."  rctrun.`DEF_id` IS NOT NULL "
 			."AND "
-			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' "
-			."ORDER BY rctrun.`DEF_id` DESC ";
+			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden )
+			$q .= " AND ( rctrun.`hidden` = 0 OR rctrun.`hidden` IS NULL ) ";
+		$q .= "ORDER BY rctrun.`DEF_id` DESC ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}

@@ -16,14 +16,15 @@ require "inc/processing.inc";
 // check if coming directly from a session
 $expId = $_GET['expId'];
 if ($expId) {
-        $sessionId=$expId;
-        $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+	$sessionId=$expId;
+	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+} else {
+	$sessionId=$_POST['sessionId'];
+	$formAction=$_SERVER['PHP_SELF'];
 }
-else {
-        $sessionId=$_POST['sessionId'];
-        $formAction=$_SERVER['PHP_SELF'];
-}
-$projectId=$_POST['projectId'];
+if ($_GET['showHidden'])
+	$formAction.="&showHidden=1";
+$projectId = (int) getProjectFromExpId($expId);
 
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();
@@ -31,14 +32,30 @@ $javascript.= editTextJava();
 processing_header("RCT Volume Summary","RCT Volume Summary Page", $javascript);
 
 // edit description form
-echo "<form name='templateform' method='post' action='$formAction'>\n";
+echo "<form name='rctform' method='post' action='$formAction'>\n";
 
 // --- Get Stack Data
 $particle = new particledata();
 
 // --- Get RCT Data
-$rctRuns = $particle->getRctRunsFromSession($sessionId);
-if ($rctRuns) {
+$rctRuns = $particle->getRctRunsFromSession($sessionId, False);
+
+if (!$_GET['showHidden']) {
+	$rctRuns = $particle->getRctRunsFromSession($sessionId, False);
+	$hiderctRuns = $particle->getRctRunsFromSession($sessionId, True);
+} else {
+	$rctRuns = $particle->getRctRunsFromSession($sessionId, True);
+	$hiderctRuns = $rctRuns;
+}
+
+if (!$_GET['showHidden'] && count($rctRuns) != count($hiderctRuns)) {
+	$numhidden = count($hiderctRuns) - count($rctRuns);
+	echo "<a href='".$_SERVER['PHP_SELF']."?expId=$expId&showHidden=1'>[Show ".$numhidden." hidden rct runs]</a><br/><br/>\n";
+} elseif ($_GET['showHidden']) {
+	echo "<a href='".$_SERVER['PHP_SELF']."?expId=$expId&showHidden=0'>[Hide hidden rct runs]</a><br/><br/>\n";
+}
+
+if ($rctRuns) { 
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
@@ -47,6 +64,7 @@ if ($rctRuns) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
 
+	srand(time());
 	foreach ($rctRuns as $rctrun) {
 		$rctid = $rctrun['DEF_id'];
 		$numpart = commafy($rctrun['numpart']);
@@ -55,6 +73,14 @@ if ($rctRuns) {
 		if ($_POST['updateDesc'.$rctid]) {
 			updateDescription('ApRctRunData', $rctid, $_POST['newdescription'.$rctid]);
 			$rctrun['description']=$_POST['newdescription'.$rctrun];
+		}
+
+		if ($_POST['hideStack'.$rctid] == 'hide') {
+			$particle->updateHide('ApRctRunData', $rctid, '1');
+			$rctrun['hidden']=1;
+		} elseif ($_POST['unhideStack'.$rctid] == 'unhide') {
+			$particle->updateHide('ApRctRunData', $rctid, '0');
+			$rctrun['hidden']=0;
 		}
 
 		// GET INFO
@@ -66,10 +92,19 @@ if ($rctRuns) {
 		$html .= "<TR>\n";
 		$html .= "<TD valign='center' align='center'>$rctrun[DEF_id]</TD>\n";
 		$html .= "<TD valign='center' align='center'>"
-			."<A HREF='rctreport.php?expId=$expId&rctId=$rctrun[DEF_id]'>$rctrun[runname]</A></TD>\n";
+			."<A HREF='rctreport.php?expId=$expId&rctId=$rctrun[DEF_id]'>$rctrun[runname]</A>\n";
+		if ($rctrun['hidden'] == 1) {
+			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
+			$html.= " <input class='edit' type='submit' name='unhideStack".$rctid."' value='unhide'>\n";
+		} else $html .= "<br/><input class='edit' type='submit' name='hideStack".$rctid."' value='hide'>\n";
+		echo "</td>\n";
 
 		// SAMPLE PNG FILE
-		$pngfiles = glob($rctrun['path']."/"."volume*".$rctrun['numiter'].".mrc.1.png");
+
+		//$imgnum = (rand()%5)+1;
+		//echo "$imgnum</br>\n";
+		$imgnum = 1;
+		$pngfiles = glob($rctrun['path']."/"."volume*".$rctrun['numiter'].".mrc.$imgnum.png");
 		if ($pngfiles && file_exists($pngfiles[0]))
 			$html .= "<TD valign='center' align='center'><img src='loadimg.php?h=80&filename=".$pngfiles[0]."' height='80'></TD>\n";
 		else
@@ -117,6 +152,12 @@ if ($rctRuns) {
 	echo "no rct volume information available";
 }
 
+if (!$_GET['showHidden'] && count($rctRuns) != count($hiderctRuns)) {
+	$numhidden = count($hiderctRuns) - count($rctRuns);
+	echo "<a href='".$formAction."&showHidden=1'>[Show ".$numhidden." hidden rct runs]</a><br/><br/>\n";
+} elseif ($_GET['showHidden']) {
+	echo "<a href='".$formAction."&showHidden=0'>[Hide hidden rct runs]</a><br/><br/>\n";
+}
 
 processing_footer();
 ?>
