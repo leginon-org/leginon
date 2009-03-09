@@ -517,7 +517,7 @@ def insertResolutionData(params,iteration):
 		resq=appionData.ApResolutionData()
 
 		# calculate the resolution:
-		halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
+		halfres = calcRes(fscfile, params['boxsize'], params['apix'])
 
 		# save to database
 		resq['half'] = halfres
@@ -583,11 +583,11 @@ def insertIteration(iteration, params):
 
 	#create Chimera snapshots
 	fscfile = os.path.join(params['rundir'], "fsc.eotest."+iteration['num'])
-	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
+	halfres = calcRes(fscfile, params['boxsize'], params['apix'])
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	volDensPath = os.path.join(params['rundir'], volumeDensity)
 	badres = renderSnapshots(volDensPath, halfres, params['model'],
-		params['contour'], params['zoom'], params['apix'])
+		params['contour'], params['zoom'], params['apix'], box=params['boxsize'])
 
 	## uncommment this for chimera image only runs...
 	if params['chimeraonly'] is True:
@@ -647,7 +647,7 @@ def insertIteration(iteration, params):
 	#insert FSC data
 	fscfile = os.path.join(params['rundir'], "fsc.eotest."+iteration['num'])
 	insertFSC(fscfile, refineq, params['commit'])
-	halfres = calcRes(fscfile, params['model']['boxsize'], params['apix'])
+	halfres = calcRes(fscfile, params['boxsize'], params['apix'])
 	apDisplay.printColor("FSC 0.5 Resolution: "+str(halfres), "cyan")
 
 	# get projections eulers for iteration:

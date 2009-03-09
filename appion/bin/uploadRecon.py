@@ -112,6 +112,8 @@ class UploadReconScript(appionScript.AppionScript):
 		self.params['stack'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.params['model'] = apRecon.getModelData(self.params['modelid'])
 
+		self.params['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
+
 		### parse out the refinement parameters from the log file
 		apRecon.parseLogFile(self.params)
 
