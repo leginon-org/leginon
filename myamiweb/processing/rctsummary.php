@@ -101,12 +101,12 @@ if ($rctRuns) {
 
 		// SAMPLE PNG FILE
 
-		//$imgnum = (rand()%5)+1;
-		//echo "$imgnum</br>\n";
-		$imgnum = 1;
-		$pngfiles = glob($rctrun['path']."/"."volume*".$rctrun['numiter'].".mrc.$imgnum.png");
-		if ($pngfiles && file_exists($pngfiles[0]))
-			$html .= "<TD valign='center' align='center'><img src='loadimg.php?h=80&filename=".$pngfiles[0]."' height='80'></TD>\n";
+		$giffiles = glob($rctrun['path']."/volume*".$rctrun['numiter'].".mrc.animate.gif");
+		$pngfiles = glob($rctrun['path']."/volume*".$rctrun['numiter'].".mrc.1.png");
+		if ($giffiles && file_exists($giffiles[0]))
+			$html .= "<td valign='center' align='center'><img src='loadimg.php?rawgif=1&filename=".$giffiles[0]."' height='128'></td>\n";
+		elseif ($pngfiles && file_exists($pngfiles[0]))
+			$html .= "<td valign='center' align='center'><img src='loadimg.php?h=128&filename=".$pngfiles[0]."' height='128'></TD>\n";
 		else
 			$html .= "<td></TD>\n";
 
@@ -130,7 +130,7 @@ if ($rctRuns) {
 			$halfint = (int) floor($rctrun['fsc']);
 			$fscfile = $rctrun['path']."/".$rctrun['fscfile'];
 			$html .= "<a href='fscplot.php?expId=$expId&width=800&height=600&apix=$stackapix&box=$boxsize&fscfile=$fscfile&half=$halfint'>"
-			."<img border='0' src='fscplot.php?expId=$expId&width=100&height=50&apix=$stackapix&box=$boxsize"
+			."<img border='0' src='fscplot.php?expId=$expId&width=120&height=90&apix=$stackapix&box=$boxsize"
 			."&nomargin=TRUE&fscfile=$fscfile&half=$halfint'></a>\n";
 			$html .= "</td>\n";
 

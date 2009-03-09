@@ -23,19 +23,6 @@ if ($_POST['updateDesc'.$rctId]) {
 	$rctrun['description']=$_POST['newdescription'.$rctId];
 }
 
-# get list of png files in directory
-//$pngfiles=array();
-//$rctrundir= opendir($rctrun['path']);
-$searchstr = $rctrun['path']."/*.png";
-//echo $searchstr."<br/>\n";
-$pngfiles = glob($searchstr);
-//print_r($pngfiles)."<br/>\n";
-//while ($f = readdir($rctrundir)) {
-//	if (eregi('^volume.*\.mrc\.[0-9]\.png$', $f))
-//		$pngfiles[] = $f;
-//}
-sort($pngfiles);
-
     // display starting rctrun
 $j = "RCT Run: <span class='aptitle'>".$rctrun['runname']."</span> (ID: $rctId)";
 $rcttable = apdivtitle($j);
@@ -114,18 +101,31 @@ $rcttable .= "</td><td>\n";
 $rcttable .= "</td></tr>\n";
 $rcttable .= "</table><br/>\n";
 
+# get list of gif and png files in directory
+$searchstr = $rctrun['path']."/*\.png";
+$pngfiles = glob($searchstr);
+sort($pngfiles);
+
 $numiter = (int) $rctrun['numiter'];
 for ($i = 0; $i <= $numiter; $i++) {
 	$j = "RCT Run, <i>iteration ".$i."</i><br/>\n";
 	$rcttable .= "<h3>$j</h3>\n";
+	$gifsearchstr = $rctrun['path']."/*".$i.".mrc*.gif";
+	$giffiles = glob($gifsearchstr);
+	foreach ($giffiles as $snapshot) {
+		//echo $snapshot."<br/>\n";
+		if (file_exists($snapshot)) {
+			$rcttable.= "<img src='loadimg.php?rawgif=1&filename=$snapshot' height='128'>\n";
+		}
+	}
 	foreach ($pngfiles as $snapshot) {
 		//echo $snapshot."<br/>\n";
 		$searchstr = "volume.*".$i."\.mrc\..*.png$";
+		$gifsearchstr = "volume.*".$i."\.mrc\..*\.gif$";
+		//echo $gifsearchstr."<br/>\n";
 		if (eregi($searchstr, $snapshot)) {
-			//$snapfile = $rctrun['path'].'/'.$snapshot;
-			$snapfile = $snapshot;
-			$rcttable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
-			$rcttable.= "<img src='loadimg.php?w=120&filename=$snapfile' width='120'></a>\n";
+			$rcttable.= "<a border='0' href='loadimg.php?filename=$snapshot' target='snapshot'>";
+			$rcttable.= "<img src='loadimg.php?h=128&filename=$snapshot' height='128'></a>\n";
 		}
 	}
 	$rcttable.= "<br/>\n";
