@@ -1182,7 +1182,6 @@ class ApRctRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
-			('classnum', int),
 			('classnums', str),
 			('numiter', int),
 			('maskrad', int),
