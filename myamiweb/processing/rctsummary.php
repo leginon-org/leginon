@@ -90,14 +90,19 @@ if ($rctRuns) {
 
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<TD valign='center' align='center'>$rctrun[DEF_id]</TD>\n";
-		$html .= "<TD valign='center' align='center'>"
-			."<A HREF='rctreport.php?expId=$expId&rctId=$rctrun[DEF_id]'>$rctrun[runname]</A>\n";
+		// runid and hide
+		$html .= "<TD valign='center' align='center'>$rctrun[DEF_id]\n";
 		if ($rctrun['hidden'] == 1) {
 			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
 			$html.= " <input class='edit' type='submit' name='unhideStack".$rctid."' value='unhide'>\n";
 		} else $html .= "<br/><input class='edit' type='submit' name='hideStack".$rctid."' value='hide'>\n";
-		echo "</td>\n";
+		$html .= "</td>\n";
+
+		// runname and link
+		$html .= "<TD valign='center' align='center'>"
+			."<A HREF='rctreport.php?expId=$expId&rctId=$rctrun[DEF_id]'>$rctrun[runname]</A></td>\n";
+
+
 
 		// SAMPLE PNG FILE
 

@@ -3,6 +3,7 @@ require"inc/particledata.inc";
 require"inc/leginon.inc";
 require"inc/project.inc";
 require"inc/processing.inc";
+require"inc/summarytables.inc";
 
 $expId= $_GET['expId'];
 $rctId= $_GET['rctId'];
@@ -32,54 +33,37 @@ $descDiv = ($_SESSION['username']) ? editButton($rctId, $rctrun['description']) 
 
 $stackcount= commafy($particle->getNumStackParticles($rctrun['REF|ApStackData|tiltstack']));
 $stackmpix = $particle->getStackPixelSizeFromStackId($rctrun['REF|ApStackData|tiltstack']);
-$stackapix = format_angstrom_number($stackmpix);
+$stackapix = round($stackmpix*1.0e10,2);
 $numpart = commafy($rctrun['numpart']);
+$boxsize = $rctrun['boxsize'];
 
 $rcttable.= "<br />\n";
-
 $rcttable .= "<table border='0'><tr><td valign='top'>";
 
 // Parameter Table
 $rcttable .= "<table class='tablebubble'>\n";
-	// Particle count
-	$rcttable .= "<tr><td valign='center'>\n";
-	$rcttable .= "<b>Number of Particles:</b>\n";
-	$rcttable .= "</td><td valign='center' colspan='2'>\n";
 	if ($numpart)
-		$rcttable .= "$numpart of $stackcount\n";
-	else
-		$rcttable .= "$stackcount\n";
-	$rcttable .= "</td></tr>\n";
-
-	// Pixel size
-	$rcttable .= "<tr><td valign='center'>\n";
-	$rcttable .= "<b>Pixel size:</b>\n</td><td valign='center' colspan='2'>\n$stackapix\n";
-	$rcttable .= "</td></tr>\n";
-
-	$boxsize = $rctrun['boxsize'];
-	$rcttable .= "<tr><td valign='center'>\n";
-	$rcttable .= "<b>Box size:</b>\n</td><td valign='center' colspan='2'>\n$boxsize\n";
-	$rcttable .= "</td></tr>\n";
+		$display_keys['Number of Particles'] = "$numpart of $stackcount\n";
+	$display_keys['Pixel size'] = $stackapix." &Aring;\n";
+	$display_keys['Box size'] = $boxsize." pixels\n";
+	$display_keys['Mask radius'] = $rctrun['maskrad']." pixels\n";
+	$display_keys['Volume Lowpass filter'] = $rctrun['lowpassvol']." &Aring;\n";
+	$display_keys['Particle Highpass filter'] = $rctrun['highpasspart']." &Aring;\n";
+	$display_keys['Median filter'] = $rctrun['median']."\n";
+	$display_keys['Class numbers'] = $rctrun['classnums']."\n";
+	$display_keys['Path name'] = $rctrun['path']."\n";
+	$display_keys['Description'] = $descDiv."\n";
 
 	if ($rctrun['fscfile']) {
-		// show resolution info
-		$rcttable .= "<tr><td valign='center'>\n";
-		$rcttable .= "<b>FSC Resolution:</b>\n</td><td valign='center'>\n".round($rctrun['fsc'],2)." &Aring;\n";
-
-		$rcttable .= "<tr><td valign='center'>\n";
-		$rcttable .= "<b>Rmeasure Resolution:</b>\n</td><td valign='center'>\n".round($rctrun['rmeas'],2)." &Aring;\n";
-		$rcttable .= "</td></tr>\n";
+		$display_keys['FSC Resolution'] = round($rctrun['fsc'],2)." &Aring;\n";
+		$display_keys['Rmeasure Resolution'] = round($rctrun['rmeas'],2)." &Aring;\n";
 	}
-
-	$rcttable .= "<tr><td valign='center'>\n";
-	$rcttable .= "<b>Path name:</b>\n</td><td valign='center' colspan='2'>\n$rctrun[path]\n";
-	$rcttable .= "</td></tr>\n";
-
-	$rcttable .= "<tr><td valign='center'>\n";
-	$rcttable .= "<b>Description:</b>\n</td><td valign='center' colspan='2'>\n$descDiv\n";
-	$rcttable .= "</td></tr>\n";
+	foreach($display_keys as $k=>$v) {
+		$rcttable .= formatHtmlRow($k,$v);
+	}
 $rcttable .= "</table><br/>\n";
 // End Parameter Table
+
 
 $rcttable .= "</td><td>\n";
 
@@ -100,6 +84,22 @@ $rcttable .= "</td><td>\n";
 
 $rcttable .= "</td></tr>\n";
 $rcttable .= "</table><br/>\n";
+
+
+if ($rctrun['REF|ApAlignStackData|alignstack']) {
+	$rcttable .= "<table class='tablebubble'><tr><td>\n";
+	$rcttable .= "<h4>Alignment information</h4><br/>\n";
+	$rcttable .= alignstacksummarytable($rctrun['REF|ApAlignStackData|alignstack'], $mini=True);
+	$rcttable .= "</td></tr>\n";
+	$rcttable .= "</table><br/>\n";
+}
+/*if ($rctrun['REF|ApClusteringStackData|clusterstack']) {
+	$rcttable .= "<table class='tablebubble'><tr><td>\n";
+	$rcttable .= "<h4>Clustering information</h4><br/>\n";
+	$rcttable .= clusterstacksummarytable($rctrun['REF|ApAlignStackData|alignstack']);
+	$rcttable .= "</td></tr>\n";
+	$rcttable .= "</table><br/>\n";
+}*/
 
 # get list of gif and png files in directory
 $searchstr = $rctrun['path']."/*\.png";
