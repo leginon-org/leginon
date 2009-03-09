@@ -1191,6 +1191,7 @@ class ApRctRunData(Data):
 			('median', int),
 			('description', str),
 			('numpart', int),
+			('hidden', bool),
 			('fsc_resolution', ApResolutionData),
 			('rmeasure_resolution', ApResolutionData),
 			('path', ApPathData),
