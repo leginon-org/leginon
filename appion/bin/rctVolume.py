@@ -238,8 +238,6 @@ class rctVolumeScript(appionScript.AppionScript):
 			tempstr += str(cnum)+","
 		classliststr = tempstr[:-1]
 		rctrunq['classnums']  = classliststr
-		if len(self.classlist) == 1:
-			rctrunq['classnum']  = self.classlist[0]
 		rctrunq['numiter']    = self.params['numiters']
 		rctrunq['maskrad']    = self.params['radius']
 		rctrunq['lowpassvol'] = self.params['lowpassvol']
