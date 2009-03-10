@@ -105,8 +105,6 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			user = os.getlogin()
 		except:
 			user = None
-		if hostname[:5] == "guppy" or (user != "craigyk" and user != "vossman"):
-			commandline = "unset LD_LIBRARY_PATH; "+commandline
 
 		### run ace2
 		apDisplay.printMsg("running ace2 at "+time.asctime())
@@ -259,7 +257,7 @@ class Ace2Loop(appionLoop2.AppionLoop):
 			help="Minimal acceptable defocus (in meters)", metavar="#")
 		self.parser.add_option("--maxdefocus", dest="maxdefocus", type="float", default=-10e-6,
 			help="Maximal acceptable defocus (in meters)", metavar="#")
-		self.parser.add_option("--edge1", dest="edge_b", type="float", default=6.0,
+		self.parser.add_option("--edge1", dest="edge_b", type="float", default=12.0,
 			help="Canny edge parameters Blur Sigma", metavar="#")
 		self.parser.add_option("--edge2", dest="edge_t", type="float", default=0.001,
 			help="Canny edge parameters Edge Treshold(0.0-1.0)", metavar="#")
