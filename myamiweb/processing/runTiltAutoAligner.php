@@ -190,8 +190,10 @@ function runTiltAutoAligner() {
 		$command .= " --pickrunids=$pickrunid1";
 	} elseif ($pickrunid2 != 'None') {
 		$command .= " --pickrunids=$pickrunid2";
+	} else {
+		createTiltAutoAlignerForm("<b>ERROR:</b> Select a previous particle picking run");
+		exit;
 	}
-
 
 	$ftype=$_POST['ftype'];
 	$command .= " --outtype=$ftype";
