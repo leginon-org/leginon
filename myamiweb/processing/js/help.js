@@ -25,7 +25,7 @@ var help = {
 		'lpstackval' : 'Low pass filter applied to individual particles',
 		'hpstackval' : 'High pass filter applied to individual particles',
 		'hpval' : 'High pass filtering of the image before picking.  This removes any darkness gradients in the image.  Typically you could disable this by setting it equal to zero, otherwise 600 work pretty good.  Warning this feature typically normalizes the crud so more particles get picked from crud.',
-		'medianval' : 'Median filtering of the image before picking.  This helps remove any noise spikes in the image.  Typical values are 2, 3, or 5.  The bigger the number the more information is thrown away.',
+		'medianval' : 'Median filtering of the image or volume. Unlike a low pass filter this filters removes any noise spikes in the image or volume. Typical values are less than 5. The bigger the number the more information is thrown away.',
 		'binval' : 'Binning of the image.  This takes a power of 2 (1,2,4,8,16) and quickly shrinks the image to help make the processing faster.  Typically you want to use 4 or 8 depending on the quality of the templates.',
 		'partbin' : 'Binning of the particle images. This quickly shrinks the image to help make the processing faster.',
 		'stackbin' : 'Amount to bin the particles by after they are extracted from each image.  Note that this binning occurs AFTER boxing from the raw image, so that your box size must correspond to the UNBINNED micrograph.  Usually bin by 2.',
@@ -112,6 +112,7 @@ var help = {
 		'camera' : 'Type of camera used in data collection. Gatan refers to any models of Gatan camera interfaced through Gatan Digital Micrograph software.  Use Film Scanner type for arbitrary dimension and pixel size image upload',
 		'images_in_group' : 'Number of images per tilt series.  Enter 1 or leave it blank if not a tilt series. This will divide all images to be upload in groups of the defined number.  It is therefore not advisable to mix images belonging to a tilt series with ones that are not in the same upload. if the number is larger than 1, Field 8 (stage alpha tilt) must exist in the information file',
 		'batchfile' : 'A text file that contains information of each mrc image to be uploaded. The file has no title line.  Each line has the following fields of the image separated by tabs (examples are shown in []): <p>(1) complete image path ended with extension mrc; [/yourhome/yourimage.mrc]<p>(2) pixel size in meters; [1.5e-10]<p>(3) binning in x; [1]<p>(4) binning in y; [1]<p>(5) nominal scope magnification; [50000]<p>(6) intended defocus in meters, [-2e-6]<p>(7) high tension in volts; [200000]<p>(8) (optional) stage alpha tilt in degrees if loading tilt group.[55.0] See help on number of image pertilt series.<p>Note that (3) and (4) are only relavent for CCD camera, use 1 for scanned film with arbitrary scan step.',
+		'rctcenter' : 'In RCT, the particle Euler angles are fixed, but the particles are not centered. Through an interative process the volume is projected in the direction of the particle and cross-correlated, then the particle is shifted to its correct location.',
 
 /******* IMAGIC terms ********/
 
