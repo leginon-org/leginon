@@ -109,12 +109,19 @@ def getDefocPairParticles(imgdata, selectionid):
 	apDisplay.printMsg("Found %d particles for defocal pair %s (id %d)"
 		%(len(partdatas), apDisplay.short(defimgdata['filename']), defimgdata.dbid,))
 
+	if len(partdatas) == 0:
+		return ([], {'shiftx':0, 'shifty':0, 'scale':1})
+
 	### get shift information
 	shiftq = appionData.ApImageTransformationData()
 	shiftq['image1'] = defimgdata
-	shiftdata = shiftq.query()[0]
-	apDisplay.printMsg("Shifting particles by %.1f,%.1f (%d X)"
-		%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
+	shiftdatas = shiftq.query()
+	if shiftdatas:
+		shiftdata = shiftdatas[0]
+		apDisplay.printMsg("Shifting particles by %.1f,%.1f (%d X)"
+			%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
+	else:
+		apDisplay.printError("Could not find defocal shift data, please run alignDefocalPairs.py")
 	return (partdatas, shiftdata)
 
 
