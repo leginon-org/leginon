@@ -20,10 +20,20 @@ $ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);
 list($ctfdata)  = $ctf->getCtfInfoFromImageId($imgId);
 $filename=$ctfdata['path']."/opimages/".$ctfdata[$graph];
-if ($img=@imagecreatefrompng($filename)) {
+(array)$imageinfo = @getimagesize($filename);
+$imagecreate = 'imagecreatefrompng';
+$imagemime = 'image/png';
+switch ($imageinfo['mime']) {
+	case 'image/jpeg':
+		$imagecreate = "imagecreatefromjpeg";
+		$imagemime = $imageinfo['mime'];
+	break;
+}
+
+if ($img=@$imagecreate($filename)) {
 		resample($img, $imgsize);
 } else {
-	header("Content-type: image/x-png");
+	header('Content-type: '.$imagemime);
 	$blkimg = blankimage();
 	imagepng($blkimg);
 	imagedestroy($blkimg);
