@@ -368,7 +368,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
 
 		### write garibaldi job file
-		self.writeGaribaldiJobFile()
+		#self.writeGaribaldiJobFile()
 
 		### setup Xmipp command
 		aligntime = time.time()
