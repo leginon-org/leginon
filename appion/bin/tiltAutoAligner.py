@@ -76,6 +76,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 				self.params['outtypeindex'] = i
 		if self.params['outtypeindex'] is None:
 			apDisplay.printError("outtype must be one of: "+str(self.outtypes)+"; NOT "+str(self.params['outtype']))
+		if self.params['pickrunids'] is None:
+			apDisplay.printError("you must select a previous particle picking run to use auto tilt picker")
 		return
 
 	#---------------------------------------
