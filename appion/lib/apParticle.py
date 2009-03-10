@@ -129,13 +129,13 @@ def getDefocPairParticles2(imgdata, selectionid):
 	partq['selectionrun'] = appionData.ApSelectionRunData.direct_query(selectionid)
 	partdatas = partq.query()
 	apDisplay.printMsg("Found %d particles for defocal pair %s (id %d)"
-		%(len(partdatas), apDisplay.short(defimgdata['filename']), defimgdata.dbid,)
+		%(len(partdatas), apDisplay.short(defimgdata['filename']), defimgdata.dbid,))
 
 	### get shift information
 	shiftq = appionData.ApImageTransformationData()
 	shiftq['image1'] = defimgdata
 	shiftdata = shiftq.query()[0]
-	apDisplay.printMsg("shifting particles by %.1f,%.1f (%d X)"
+	apDisplay.printMsg("Shifting particles by %.1f,%.1f (%d X)"
 		%(shiftdata['shiftx'], shiftdata['shifty'], shiftdata['scale']))
 	return (partdatas, shiftdata)
 
