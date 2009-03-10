@@ -32,11 +32,6 @@ echo "  combine stacks from different sessions into one large stack.";
 echo "</td></tr>";
 
 echo "<tr><td>";
-echo "  <h3><a href='makestack.php?expId=$expId'>Old Make Stack</a></h3>";
-echo "  use the old make stack to create a new stack ";
-echo "</td></tr>";
-
-echo "<tr><td>";
 echo "  <h3><a href='stacksummary.php?expId=$expId&mean=1'>View Stacks</a></h3>";
 echo "  view a list of the available stacks where you can center the particles"
 	." or filter the stack based on the mean and standard deviation";
