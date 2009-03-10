@@ -115,13 +115,23 @@ def getDefocPairParticles(imgdata, params):
 	return(particles,shift)
 
 def getDefocPairParticles2(imgdata, selectionid):
-	apDisplay.printMsg("finding defocus pair for "+apDisplay.short(imgdata['filename']))
+	### get defocal pair
+	defimgdata = apDefocalPairs.getDefocusPair(imgdata)
+	if defimgdata is None:
+		apDisplay.printError("Could not find defocal pair for image %s (id %d)"
+			%(apDisplay.short(imgdata['filename']), imgdata.dbid))
+	apDisplay.printMsg("Found defocus pair %s (id %d) for image %s (id %d)"
+		%(apDisplay.short(defimgdata['filename']), defimgdata.dbid, apDisplay.short(imgdata['filename']), imgdata.dbid))
+
+	### get particles
 	partq = appionData.ApParticleData()
-	defimgdata = apDefocalPairs.getTransformedDefocPair(imgdata, 1)
 	partq['image'] = defimgdata
 	partq['selectionrun'] = appionData.ApSelectionRunData.direct_query(selectionid)
 	partdatas = partq.query()
-	
+	apDisplay.printMsg("Found %d particles for defocal pair %s (id %d)"
+		%(len(partdatas), apDisplay.short(defimgdata['filename']), defimgdata.dbid,)
+
+	### get shift information
 	shiftq = appionData.ApImageTransformationData()
 	shiftq['image1'] = defimgdata
 	shiftdata = shiftq.query()[0]
