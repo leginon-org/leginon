@@ -1,16 +1,49 @@
-from ccdcamera import CCDCamera
+﻿import ccdcamera
 import NumpySafeArray
 from win32com.client import Dispatch
+import pythoncom
+import numpy
 
-class TIA(CCDCamera):
+class TIA(ccdcamera.CCDCamera):
 	name = 'TIA'
 
 	def __init__(self):
+		self.unsupported = [
+			'getPixelSize',
+			'getInserted', 'setInserted',]
+		ccdcamera.CCDCamera.__init__(self)
+        	pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+		self.im = None
+		self.imdisp = None
 		self.tianame = 'pyScope'
 		self.setupname = self.tianame + ' Setup'
 		self.imagedispname = self.tianame + ' Image Display'
 		self.imagename = self.tianame + ' Image'
 		self._connectToESVision()
+		self.initSettings()
+
+	def initSettings(self):
+		self.dimension = self.getCameraSize()
+		self.binning = {'x':1, 'y':1}
+		self.offset = {'x':0, 'y':0}
+		self.exposure = 500
+		self.exposuretype = 'normal'
+	def setDimension(self, value):
+		self.dimension = value
+	def getDimension(self):
+		return self.dimension
+	def setBinning(self, value):
+		self.binning = value
+	def getBinning(self):
+		return self.binning
+	def setOffset(self, value):
+		self.offset = value
+	def getOffset(self):
+		return self.offset
+	def setExposureTime(self, value):
+		self.exposure = value
+	def getExposureTime(self):
+		return self.exposure
 
 	def _connectToESVision(self):
 		'''
@@ -21,7 +54,7 @@ class TIA(CCDCamera):
 		self.ccd = self.esv.CcdServer()
 
 		## scan mode to spot so CCD can be setup
-		self.esv.ScanningServer().ScanMode = 0
+		#self.esv.ScanningServer().ScanMode = 0
 
 		## new display window
 		disp = self.esv.FindDisplayWindow(self.tianame)
@@ -46,16 +79,19 @@ binning is an integer binning factor
 exposure is the exposure time in seconds
 		'''
 		self.selectSetup()
-		if 'range' in kwargs:
-			range = kwargs['range']
-			self.ccd.PixelReadoutRange = range
-		if 'binning' in kwargs:
-			binning = kwargs['binning']
-			self.ccd.Binning = binning
-		if 'exposure' in kwargs:
-			exposure = kwargs['exposure']
-			self.ccd.IntegrationTime = exposure
-		self.updateImageDisplay()
+		try:
+			if 'range' in kwargs:
+				range = kwargs['range']
+				self.ccd.PixelReadoutRange = range
+			if 'binning' in kwargs:
+				binning = kwargs['binning']
+				self.ccd.Binning = binning
+			if 'exposure' in kwargs:
+				exposure = kwargs['exposure']
+				self.ccd.IntegrationTime = exposure
+			self.updateImageDisplay()
+		except:
+			print 'could not set', kwargs
 
 	def getConfig(self, param):
 		self.selectSetup()
@@ -73,111 +109,92 @@ parameters.  This will update the image display and prepare for
 acquisition.
 		'''
 		## add image display
-		imdisp = self.dispwin.AddDisplay(self.imagedispname, 0, 0, 0, 1)
+		if self.imdisp is None:
+			self.imdisp = self.dispwin.AddDisplay(self.imagedispname, 0, 0, 0, 1)
 		## create image in image display
 		cal = self.esv.Calibration2D(0,0,1,1,0,0)
 		sizex = self.ccd.PixelReadoutRange.SizeX
 		sizey = self.ccd.PixelReadoutRange.SizeY
-		self.im = imdisp.AddImage(self.imagename, sizex, sizey, cal)
+		if self.im is not None:
+			self.imdisp.DeleteObject(self.im)
+		self.im = self.imdisp.AddImage(self.imagename, sizex, sizey, cal)
 		self.acqman.LinkSignal('CCD', self.im)
 
-	def getBinning(self):
-		binfactor = self.getConfig('binning')
-		return {'x':binfactor, 'y':binfactor}
-
-	def setBinning(self, value):
-		binfactor = value['x']
-		self.configureCCD(binning=binfactor)
-
-	def getOffset(self):
-		range = self.getConfig('range')
-		offset = {'x':range.StartX, 'y':range.StartY}
-		return offset
-
-	def setOffset(self, value):
-		range = getConfig('range')
-		range.StartX = value['x']
-		range.StartY = value['y']
-		self.setConfig(range=range)
-
-	def getUnbinnedDimension(self):
-		range = self.getConfig('range')
-		dimx = range.SizeX
-		dimy = range.SizeY
-		return {'x':dimx, 'y':dimy}
-
-	def setUnbinnedDimension(self, value):
-		range = self.getConfig('range')
-		range.SizeX = value['x']
-		range.SizeY = value['y']
-		self.setConfig(range=range)
-
-	def getDimension(self):
-		unbindim = self.getUnbinnedDimension()
-		bin = self.getBinning()
-		dim = {'x':unbindim['x']/bin['x'], 'y':unbindim['y']/bin['y']}
-		return dim
-
-	def setDimension(self, value):
-		bin = self.getBinning()
-		unbindim = {'x':bin['x']*value['x'], 'y':bin['y']*value['y']}
-		self.setUnbinnedDimension(unbindim)
-
-	def getExposureTime(self):
-		seconds = self.getConfig('exposure')
-		ms = int(1000 * seconds)
-		return ms
-
-	def setExposureTime(self, value):
-		seconds = value/1000.0
-		self.setConfig(exposure=seconds)
-
 	def getExposureTypes(self):
-		raise NotImplementedError
+		return ['normal', 'dark']
 
 	def getExposureType(self):
-		raise NotImplementedError
+		return self.exposuretype
 
 	def setExposureType(self, value):
-		raise NotImplementedError
+		if value not in ['normal', 'dark']:
+			raise ValueError('invalid exposure type')
+		self.exposuretype = value
 
 	def getPixelSize(self):
-		raise NotImplementedError
+		## this is the Eagle 4k camera
+		return {'x': 1.5e-5, 'y': 1.5e-5}
 
 	def getCameraSize(self):
-		range = self.ccd.GetTotalPixelReadoutRange()
-		camsize = {'x':range.SizeX, 'y':range.SizeY}
+		rangex = self.ccd.GetTotalPixelReadoutRange().SizeX
+		rangey = self.ccd.GetTotalPixelReadoutRange().SizeY
+		camsize = {'x':rangex, 'y':rangey}
 		return camsize
+
+	def finalizeSetup(self):
+		# final bin
+		bin = self.binning['x']
+
+		# final range
+		unbindim = {'x':self.dimension['x']*bin, 'y':self.dimension['y']*bin}
+		off = self.offset
+		range = self.getConfig('range')
+		range.StartX = off['x']
+		range.StartY = off['y']
+		range.EndX = off['x'] + unbindim['x']
+		range.EndY = off['y'] + unbindim['y']
+
+		# final exposure time
+		if self.exposuretype == 'dark':
+			exposure = self.ccd.GetIntegrationTimeRange().Start
+		else:
+			exposure = self.exposure/1000.0
+
+		# send it to camera
+		self.setConfig(binning=bin, range=range, exposure=exposure)
 
 	def _getImage(self):
 		'''
 		Acquire an image using the setup for this ESVision client.
-		This will not work unless you have previously called
-		configureCCD.
-
-		This (unfortunately) returns a Python tuple of tuples from
-		the COM SafeArray.
 		'''
-		self.selectSetup()
-		self.acqman.Acquire()
-		arr = NumpySafeArray.prop(self.im.Data, 'Array')
+		try:
+			self.selectSetup()
+			self.finalizeSetup()
+			self.acqman.Acquire()
+			arr = NumpySafeArray.prop(self.im.Data, 'Array')
+			arr = numpy.flipud(arr)
+		except Exception, e:
+			print e
+			arr = None
 		return arr
 
 	def getRetractable(self):
 		retractable = bool(self.ccd.IsCameraRetractable())
 		return retractable
 
+	'''
 	def getInserted(self):
 		if self.getRetractable():
 			return self.ccd.CameraInserted
 		else:
-			raise NotImplementedError('getInserted')
+			return True
 
 	def setInserted(self, value):
 		if self.getRetractable():
 			self.ccd.CameraInserted = value
 		else:
 			raise NotImplementedError('getInserted')
+	'''
 
 	def getEnergyFiltered(self):
 		return False
