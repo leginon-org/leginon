@@ -133,7 +133,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		### get the particle before image filtering
 		if self.params['defocpair'] is True:
-			partdatas, shiftdata = apParticle.getDefocPairParticles2(imgdata, self.params['selectionid'])
+			partdatas, shiftdata = apParticle.getDefocPairParticles(imgdata, self.params['selectionid'])
 		else:
 			partdatas = apParticle.getParticles(imgdata, self.params['selectionid'])
 			shiftdata = {'shiftx':0, 'shifty':0, 'scale':1}

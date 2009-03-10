@@ -92,29 +92,7 @@ def getSelectionRunDataFromName(imgdata, runname):
 	selectionrundata = srunq.query()
 	return selectionrundata[0]
 
-def getDefocPairParticles(imgdata, params):
-	print "finding pair for", apDisplay.short(imgdata['filename'])
-	selexonrun=appionData.ApSelectionRunData.direct_query(params['selexonId'])
-	prtlq=appionData.ApParticleData()
-	prtlq['image'] = leginondata.AcquisitionImageData.direct_query(
-		params['sibpairs'][imgdata.dbid], readimages = False)
-	prtlq['selectionrun'] = selexonrun
-	particles=prtlq.query()
-	
-	shiftq=appionData.ApImageTransformationData()
-	shiftq['image1'] = leginondata.AcquisitionImageData.direct_query(
-		params['sibpairs'][imgdata.dbid], readimages = False)
-	shiftdata=shiftq.query(readimages=False)[0]
-	shiftx=shiftdata['shiftx']
-	shifty=shiftdata['shifty']
-	shift={}
-	shift['shiftx']=shiftx
-	shift['shifty']=shifty
-	shift['scale']=shiftdata['scale']
-	print "shifting particles by", shiftx, shifty,shiftdata['scale']
-	return(particles,shift)
-
-def getDefocPairParticles2(imgdata, selectionid):
+def getDefocPairParticles(imgdata, selectionid):
 	### get defocal pair
 	defimgdata = apDefocalPairs.getDefocusPair(imgdata)
 	if defimgdata is None:
