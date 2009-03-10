@@ -7,6 +7,7 @@ import gui.wx.ToolBar
 from gui.wx.Entry import Entry, FloatEntry, IntEntry
 from gui.wx.Presets import EditPresetOrder
 import gui.wx.tomography.TomographyViewer as TomoViewer
+from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 
 class ImagePanel(object):
     def __init__(self, viewer):
@@ -33,7 +34,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
     def initialize(self):
-        szs = gui.wx.Acquisition.ScrolledSettings.initialize(self)
+        #szs = gui.wx.Acquisition.ScrolledSettings.initialize(self)
         simusb = wx.StaticBox(self, -1, 'Simulation')
         simusbsz = wx.StaticBoxSizer(simusb, wx.VERTICAL)
         miscsb = wx.StaticBox(self, -1, 'Misc.')
@@ -43,6 +44,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
         optb = wx.StaticBox(self, -1, 'Custom Tilt Axis Model in +/- Directions(d)')
         optbsz = wx.StaticBoxSizer(optb, wx.VERTICAL)
 
+ 
         alltiltseries = self.getTiltSeriesChoices()
         self.widgets['simu tilt series'] = wx.Choice(self, -1, choices=alltiltseries)
         simusz = wx.GridBagSizer(5, 5)
@@ -52,7 +54,6 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
         simusbsz.Add(simusz, 1, wx.ALL|wx.ALIGN_CENTER, 5)
 
         self.widgets['use lpf'] = wx.CheckBox(self, -1, 'Use lpf in peak finding of tilt image correlation')
-        self.widgets['use wiener'] = wx.CheckBox(self, -1, 'Use Wiener filter phase correlation')
         self.widgets['use tilt'] = wx.CheckBox(self, -1, 'Use tilt info to stretch images')
         self.widgets['taper size'] = IntEntry(self, -1, min=0, allownone=False, chars=3, value='10')
         tapersz = wx.GridBagSizer(5,5)
@@ -63,9 +64,8 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
         tapersz.Add(lab, (0,2), (1,1))
         miscsz = wx.GridBagSizer(5, 10)
         miscsz.Add(self.widgets['use lpf'], (0, 0), (1, 1), wx.ALIGN_CENTER)
-        miscsz.Add(self.widgets['use wiener'], (1, 0), (1, 1), wx.ALIGN_CENTER)
-        miscsz.Add(self.widgets['use tilt'], (2, 0), (1, 1), wx.ALIGN_CENTER)
-        miscsz.Add(tapersz, (3, 0), (1, 1), wx.ALIGN_CENTER)
+        miscsz.Add(self.widgets['use tilt'], (1, 0), (1, 1), wx.ALIGN_CENTER)
+        miscsz.Add(tapersz, (2, 0), (1, 1), wx.ALIGN_CENTER)
         #miscsz.Add(self.widgets['measure defocus'], (5, 0), (1, 1), wx.ALIGN_CENTER)
         miscsz.AddGrowableRow(0)
         miscsz.AddGrowableRow(1)
@@ -163,7 +163,7 @@ class ScrolledSettings(gui.wx.Acquisition.ScrolledSettings):
         sz.AddGrowableCol(1)
 
         self.Bind(wx.EVT_CHECKBOX, self.onFixedModel, self.widgets['fixed model'])
-        return szs + [sz]
+        return [sz]
 
     def onFixedModel(self, evt):
         state = evt.IsChecked()

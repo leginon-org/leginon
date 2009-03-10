@@ -41,7 +41,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 	
 
 	
-		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0), settings=False)
+		self.imagepanel.addTargetTool('Polygon Raster', wx.Color(255,128,0))
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True, settings=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True, settings=True)
@@ -67,8 +67,6 @@ class Panel(gui.wx.TargetFinder.Panel):
 			dialog = RasterSettingsDialog(self)
 		elif evt.name == 'Polygon Vertices':
 			dialog = PolygonSettingsDialog(self)
-		elif evt.name == 'Polygon Raster':
-			dialog = PolygonRasterSettingsDialog(self)
 		elif evt.name == 'acquisition':
 			dialog = FinalSettingsDialog(self)
 		elif evt.name == 'focus':
@@ -280,8 +278,12 @@ class PolygonRasterSettingsDialog(gui.wx.Settings.Dialog):
 class PolygonRasterScrolledSettings(gui.wx.Settings.ScrolledDialog):
 	def initialize(self):
 		gui.wx.Settings.ScrolledDialog.initialize(self)
-		sb = wx.StaticBox(self, -1, 'Polygon Raster (No Settings)')
+		sb = wx.StaticBox(self, -1, 'Polygon Raster')
 		sbszpolygon = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		szpolyraster = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'No Settings')
+		szpolyraster.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sbszpolygon.Add(szpolyraster, 1, wx.EXPAND|wx.ALL, 5)
 		return [sbszpolygon,]
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):

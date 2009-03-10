@@ -66,7 +66,7 @@ def createIndices2(a,b,angle):
 	'''
 	cos = math.cos(angle)
 	sin = math.sin(angle)
-	maxind = 1+2*int(max(a,b))
+	maxind = 1+2*int(math.ceil(max(a,b)))
 	shape = maxind,maxind
 	ind = numpy.indices(shape, numpy.float32)
 	center0 = shape[0] / 2.0 - 0.5

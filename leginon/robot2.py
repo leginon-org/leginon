@@ -168,15 +168,15 @@ class Robot2(node.Node):
 	settingsclass = leginondata.RobotSettingsData
 	defaultsettings = {
 		'column pressure threshold': 3.5e-5,
-		'default Z position': -140e-6,
-		'simulate': False,
+		'default Z position': 0,
+		'simulate': True,
 		'turbo on': True,
 		'pause': False,
 		'grid tray': None,
 		'grid clear wait': False,
 	}
 	defaultcolumnpressurethreshold = 3.5e-5
-	defaultzposition = -140e-6
+	defaultzposition = 0
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 
@@ -296,6 +296,7 @@ class Robot2(node.Node):
 			### need to wait if something goes wrong
 			if not self.startnowait:
 				self.usercontinue.clear()
+				self.logger.warning('You may need to click on "Continue" tool after clickin "Start" tool to start')
 				self.usercontinue.wait()
 
 			if self.exitevent.isSet():

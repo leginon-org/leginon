@@ -276,6 +276,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## if transform declared after most recent target, need new transformed	target
 		newtargetdata = self.requestTransformTarget(newtargetdata)
+		## make sure we move to new target
+		self.onTarget = False
 		return newtargetdata
 
 	def processTargetData(self, targetdata, attempt=None):

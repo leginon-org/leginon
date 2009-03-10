@@ -5,7 +5,7 @@
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
-
+import math
 import reference
 import leginondata
 import event
@@ -54,7 +54,9 @@ class BeamFixer(reference.Reference):
 	def processData(self, incoming_data):
 		reference.Reference.processData(self, incoming_data)
 		if isinstance(incoming_data, leginondata.FixBeamData):
-			self.processRequest(incoming_data)
+			newdata = incoming_data.toDict()
+			newdata['preset'] = self.settings['correction presets'][0]
+			self.processRequest(newdata)
 
 	def acquire(self):
 		if self.settings['override preset']:
@@ -105,8 +107,9 @@ class BeamFixer(reference.Reference):
 		except Exception, e:
 			self.logger.warning(e)
 			beamshift = {'x':1e-07, 'y':1e-07}
-		self.logger.info('Calculated Beam Shift Step: %s' %(beamshift))
-		return beamshift
+		beamshiftlength = math.sqrt(beamshift['x']**2 + beamshift['y']**2)
+		self.logger.info('Calculated Beam Shift Step: %s' %(beamshiftlength))
+		return beamshiftlength
 
 	def execute(self, request_data=None):
 		# get current beam shift
@@ -114,9 +117,9 @@ class BeamFixer(reference.Reference):
 		bestbeamshift = original_beamshift
 		maxvalue = 0
 		step = self.getBeamShiftStep()
-		for beamx in (-step['x'], 0,step['x']):
+		for beamx in (-step, 0,step):
 			newbeamx = original_beamshift['x'] + beamx
-			for beamy in (-step['y'], 0,step['y']):
+			for beamy in (-step, 0,step):
 				newbeamy = original_beamshift['y'] + beamy
 
 				# set scope parameters

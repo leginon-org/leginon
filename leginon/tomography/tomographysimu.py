@@ -25,19 +25,8 @@ class TomographySimu(acquisition.Acquisition):
 	settingsclass = leginondata.TomographySimuSettingsData
 
 	defaultsettings = {
-		'pause time': 2.5,
-		'move type': 'image shift',
 		'preset order': [],
-		'correct image': True,
-		'display image': True,
-		'save image': True,
-		'wait for process': False,
-		'wait for rejects': False,
-		'duplicate targets': False,
-		'duplicate target type': 'focus',
-		'iterations': 1,
-		'wait time': 0,
-		'adjust for drift': False,
+		'move type': 'image shift',
 		'model mag': 'saved value for this series',
 		'z0 error': 2e-6,
 		'phi': 0.0,
@@ -46,7 +35,6 @@ class TomographySimu(acquisition.Acquisition):
 		'offset2': 0.0,
 		'fixed model': False,
 		'use lpf': True,
-		'use wiener': False,
 		'use tilt': True,
 		'simu tilt series': '1',
 		'fit data points': 4,
@@ -63,6 +51,9 @@ class TomographySimu(acquisition.Acquisition):
 		self.tilts = tilts.Tilts()
 		self.exposure = exposure.Exposure()
 		self.prediction = prediction.Prediction()
+		if self.settings['simu tilt series'] is '':
+			self.settings['simu tilt series'] = '1'
+			self.setSettings(self.settings)
 		self.simuseries = int(self.settings['simu tilt series'])
 		self.simuseriesdata = self.getTiltSeries()
 		if self.simuseriesdata is not None:
@@ -94,6 +85,7 @@ class TomographySimu(acquisition.Acquisition):
 	def getTiltSeries(self):
 		if self.simuseries is None:
 			self.simuseries = 1
+			self.settings['simu tilt series'] = '1'
 		allseries_num = self.getTiltSeriesNumbers()
 		if len(allseries_num) == 0 or len(allseries_num) < 1 or allseries_num[0] is None:
 			self.logger.error('No tomography tilt series in this session')
@@ -160,6 +152,9 @@ class TomographySimu(acquisition.Acquisition):
 			print "images in 1st group:",len(images_in_groups[0])
 			if len(images_in_groups) > 1:
 				print "images in 2nd group:",len(images_in_groups[1])
+			tiltpresetname = images_in_groups[0][0]['preset']['name']
+			self.settings['preset order'] = [tiltpresetname]
+			self.setSettings(self.settings)
 
 	def getTiltSeriesNumbers(self):
 		#To Do: NEED TO exclude aborted series

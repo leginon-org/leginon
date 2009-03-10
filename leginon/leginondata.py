@@ -1819,7 +1819,6 @@ class TomographySimuSettingsData(AcquisitionSettingsData):
 			('offset2', float),
 			('fixed model', bool),
 			('use lpf', bool),
-			('use wiener', bool),
 			('taper size', int),
 			('use tilt', bool),
 			('fit data points', int),

@@ -139,7 +139,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		if goodtargets:
-			preset_name = self.settings['preset order'][-1]
+			# This is only for beamfixer now and it does not need preset_name
+			preset_name = None
 			if self.settings['wait for reference']:
 				self.setStatus('waiting')
 				self.processReferenceTarget(preset_name)

@@ -1,5 +1,12 @@
 <!--
-- Application :Manual (1.3)
+-
+- Application XML-Dump
+- http://ami.scripps.edu/ 
+-
+- Application :Manual (1.6)
+- Version     :1
+- Date : 05/14/2008
+-
 -->
 
 <applicationdump>
@@ -205,39 +212,56 @@
  <data>
   <!-- ApplicationData -->
     <sqltable name="ApplicationData" >
-        <field name="DEF_id" >335</field>
-        <field name="DEF_timestamp" >2005-05-26 16:16:57</field>
-        <field name="name" >Manual (1.3)</field>
-        <field name="version" >0</field>
+        <field name="DEF_id" >540</field>
+        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="name" >Manual (1.6)</field>
+        <field name="version" >1</field>
     </sqltable>
   <!-- BindingSpecData -->
+    <sqltable name="BindingSpecData" >
+        <field name="DEF_id" >12383</field>
+        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="event class string" >AcquisitionImagePublishEvent</field>
+        <field name="from node alias" >Manual</field>
+        <field name="to node alias" >Power Spectrum</field>
+        <field name="REF|ApplicationData|application" >540</field>
+    </sqltable>
   <!-- NodeSpecData -->
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >3028</field>
-        <field name="DEF_timestamp" >2005-05-26 16:16:57</field>
+        <field name="DEF_id" >5515</field>
+        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
+        <field name="class string" >FFTMaker</field>
+        <field name="alias" >Power Spectrum</field>
+        <field name="launcher alias" >main</field>
+        <field name="SEQ|dependencies" >[]</field>
+        <field name="REF|ApplicationData|application" >540</field>
+    </sqltable>
+    <sqltable name="NodeSpecData" >
+        <field name="DEF_id" >5516</field>
+        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
         <field name="class string" >ManualAcquisition</field>
         <field name="alias" >Manual</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >335</field>
+        <field name="REF|ApplicationData|application" >540</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >3029</field>
-        <field name="DEF_timestamp" >2005-05-26 16:16:57</field>
+        <field name="DEF_id" >5517</field>
+        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
         <field name="class string" >Corrector</field>
         <field name="alias" >Correction</field>
         <field name="launcher alias" >main</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >335</field>
+        <field name="REF|ApplicationData|application" >540</field>
     </sqltable>
     <sqltable name="NodeSpecData" >
-        <field name="DEF_id" >3030</field>
-        <field name="DEF_timestamp" >2005-05-26 16:16:57</field>
+        <field name="DEF_id" >5518</field>
+        <field name="DEF_timestamp" >2008-05-14 14:59:17</field>
         <field name="class string" >EM</field>
         <field name="alias" >Instrument</field>
         <field name="launcher alias" >scope</field>
         <field name="SEQ|dependencies" >[]</field>
-        <field name="REF|ApplicationData|application" >335</field>
+        <field name="REF|ApplicationData|application" >540</field>
     </sqltable>
   <!-- bindingspecdata -->
   <!-- launchedapplicationdata -->

@@ -50,7 +50,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		else:
 			pixellabel = 'x does not exist'
 		label = 'pixel size at '+str(self.node.mag)+pixellabel
-		self.measuredialog.currentimagepixelsize.SetLabel(label)
+		self.measuredialog.scrsettings.currentimagepixelsize.SetLabel(label)
 		self.oldmag = self.node.mag
 
 	#def onMeasurement(self, evt):

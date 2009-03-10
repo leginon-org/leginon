@@ -114,13 +114,14 @@ class BeamTiltImager(acquisition.Acquisition):
 		pow = imagefun.power(image)
 		binning = self.settings['tableau binning']
 		binned = imagefun.bin(pow, binning)
-		ctfdata = self.estimateCTF(imagedata)
-		s = '%.1f' % (ctfdata['astig'],)
-		t = numpil.textArray(s)
-		min = arraystats.min(binned)
-		max = arraystats.max(binned)
-		t = min + t * (max-min)
-		imagefun.pasteInto(t, binned, (20,20))
+		if self.ace2exe:
+			ctfdata = self.estimateCTF(imagedata)
+			s = '%.1f' % (ctfdata['astig'],)
+			t = numpil.textArray(s)
+			min = arraystats.min(binned)
+			max = arraystats.max(binned)
+			t = min + t * (max-min)
+			imagefun.pasteInto(t, binned, (20,20))
 		self.tableauimages.append(binned)
 		self.tableauangles.append(angle)
 		self.tableaurads.append(rad)
@@ -336,7 +337,8 @@ class BeamTiltImager(acquisition.Acquisition):
 		exename = 'ace2.exe'
 		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if not os.path.isfile(ace2exe):
-			self.logger.error(exename+" was not found in path ")
+			self.logger.warning(exename+" was not found in path. No ctf estimation")
+			return None
 		return ace2exe
 
 	def estimateCTF(self, imagedata):

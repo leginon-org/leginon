@@ -904,6 +904,8 @@ class PresetsManager(node.Node):
 		called to change some parameters of an existing preset
 		'''
 		oldpreset = self.presetByName(presetname)
+		if oldpreset is None:
+			return
 		newpreset = self.renewPreset(oldpreset)
 		if 'tem' in newparams:
 			if isinstance(newparams['tem'], basestring):
@@ -1618,7 +1620,6 @@ class PresetsManager(node.Node):
 		ccdcamera = cam['ccdcamera']
 		pixelsize = self.calclients['pixel size'].retrievePixelSize(tem,ccdcamera,scope['magnification'])
 		diameter_micron = 1e6 * diameter * pixelsize * cam['binning']['x']
-		print 'diameter in micrometer', diameter_micron
 		xy = center[1], center[0]
 		self.onBeamImageClicked(xy, cycle)
 
@@ -1633,10 +1634,7 @@ class PresetsManager(node.Node):
 		blob = blobs[0]
 		center = blob.stats['center']
 		area = blob.stats['n']
-		print 'AREA', area
-		print 'CENTER', center
 		diameter = 2 * math.sqrt(area/3.14159)
-		print 'diameter', diameter
 		return center, diameter
 
 	def onBeamImageClicked(self, xy, cycle):
