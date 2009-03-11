@@ -38,6 +38,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		# make sure that images all have same pixel size:
 		# first get pixel size of first image:
 		if len(self.imgtree) == 0:
+			apDisplay.printWarning("No images were found")
 			return
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		for imgdata in self.imgtree:
@@ -761,6 +762,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			apDisplay.printWarning("Boxsize does not contain recommended prime numbers")
 			smallbox,bigbox = apPrimeFactor.getPrimeLimits(self.params['boxsize'])
 			apDisplay.printWarning("You should use %d or %d for a boxsize instead"%(smallbox,bigbox))
+		else:
+			primes = apPrimeFactor.prime_factors(self.params['boxsize'])
+			apDisplay.printMsg("Boxsize "+str(self.params['boxsize'])+" contains the primes: "+str(primes))
 		if self.params['description'] is None:
 			apDisplay.printError("A description has to be specified")
 		if (self.params['mindefocus'] is not None and
