@@ -29,7 +29,7 @@ def getAllPrimes(maxn=400):
 	while True:
 		factors = prime_factors(n)
 		if max(factors) < 13:
-			print n, factors
+			#print n, factors
 			goodones.append(n)
 			if (n > maxn):
 				break
@@ -60,7 +60,7 @@ def getPrimeLimits(num=4):
 
 #====================
 def isGoodPrime(num=4):
-	print num
+	#print num
 	factors = prime_factors(num)
 	if max(factors) < 13:
 		return True
