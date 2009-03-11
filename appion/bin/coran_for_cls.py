@@ -101,43 +101,42 @@ if __name__== '__main__':
 	### if multiprocessor, create the jobs to run
 	if params['proc'] > 1:
 		### create pbsdsh script
-		cscript = open("coranscript.csh",'w')
-		cscript.write("#!/bin/csh\n")
-		spiscript = os.path.join(os.path.abspath('.'),'spider.$PBS_VNODENUM.csh')
-		cscript.write("csh "+spiscript+"\n")
-		cscript.close()
-		os.chmod("coranscript.csh",0777)
 		
 		spnum = 0
 		coranscript=os.path.join(os.path.abspath('.'),'coranscript.csh')
 		while spnum < len(clslist):
-			### get the current tasknum
-#			tasknum=getPBSTasknum(os.path.abspath('.'))
+			cscript = open(coranscript,'w')
 
 			### loop through number of processors
 			for n in range(params['proc']):
 				if spnum==len(clslist):
 					break
-#				tasknum+=1
+				
 				cls = clslist[spnum]
 				clsdir=cls.split('.')[0]+'.dir'
 				print "creating mpi jobfile for "+cls 
 				spidercmd = alignment.runCoranClass(params,cls)
 				## if enough particles, run spider
 				if spidercmd is not None:
-					procfile=('spider.%i.csh' %n)
+					pfile=('spider.%i.csh' %n)
+					procfile=os.path.join(os.path.abspath('.'),pfile)
 					f=open(procfile, 'w')
 					f.write("#!/bin/csh\n\n")
 					f.write("cd "+os.path.abspath('.')+"\n");
 					f.write(spidercmd)
 					f.write("exit\n")
 					f.close()
+					os.chmod(procfile,0755)
+					cscript.write("-np 1 %s\n" % procfile)
 				spnum+=1
-			os.system('pbsdsh -v '+coranscript)
+			cscript.close()
+			os.chmod("coranscript.csh",0755)
+			os.system('mpiexec --app '+coranscript)
 			time.sleep(2)
 			## remove spider files after completed
 			for file in glob.glob('spider.*.csh'):
 				os.remove(file)
+			os.remove(coranscript)
 			time.sleep(2)
 
 		### make sure class averages were created for all classes if aligned.spi exists,
