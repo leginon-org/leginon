@@ -89,9 +89,9 @@ def makeClassAverages(lst, outputstack, classdata, params):
 	
 	#write class average
 	e = EMAN.Euler()
-	alt = classdata['euler']['euler1']*math.pi/180
-	az = classdata['euler']['euler2']*math.pi/180
-	phi = classdata['euler']['euler3']*math.pi/180
+	alt = classdata['euler1']*math.pi/180
+	az = classdata['euler2']*math.pi/180
+	phi = classdata['euler3']*math.pi/180
 	e.setAngle(alt,az,phi)
 	avg.setRAlign(e)
 	avg.setNImg(len(images))
@@ -311,7 +311,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 					mirror=1
 				else:
 					mirror=0
-				rot=ptcl['inplane_rotation']
+				rot=ptcl['euler3']
 				rot=rot*math.pi/180
 				if ptcl['particle']['particleNumber'] not in rejectlst:
 					keeplist.write(

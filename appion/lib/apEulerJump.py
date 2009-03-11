@@ -213,10 +213,9 @@ class ApEulerJump(object):
 			try:
 				euler = {}
 				euler['stackpartid'] = int(data['particle'].dbid)
-				euler['euler1'] = float(data['eulers']['euler1'])
-				euler['euler2'] = float(data['eulers']['euler2'])
-				#euler['euler3'] = float(data['eulers']['euler3'])
-				euler['euler3'] = float(data['inplane_rotation'])
+				euler['euler1'] = float(data['euler1'])
+				euler['euler2'] = float(data['euler2'])
+				euler['euler3'] = float(data['euler3'])
 				euler['mirror'] = self.nullOrValue(data['mirror'])
 				euler['reject'] = self.nullOrValue(data['thrown_out'])
 				euler['iteration'] = int(data['refinement']['iteration'])
@@ -236,10 +235,9 @@ class ApEulerJump(object):
 		query = (
 			"SELECT \n"
 			+"  stackpart.`DEF_id` AS alt, \n"
-			+"  eulers.`euler1` AS alt, \n"
-			+"  eulers.`euler2` AS az, \n"
-			#+"  eulers.`euler3` AS euler3, \n"
-			+"  partclass.`inplane_rotation` AS phi, \n"
+			+"  partclass.`euler1` AS alt, \n"
+			+"  partclass.`euler2` AS az, \n"
+			+"  partclass.`euler3` AS phi, \n"
 			+"  partclass.`mirror` AS mirror, \n"
 			+"  partclass.`thrown_out` AS reject, \n"
 			+"  ref.`iteration` AS iteration \n"
@@ -248,8 +246,6 @@ class ApEulerJump(object):
 			+"  ON partclass.`REF|ApStackParticlesData|particle` = stackpart.`DEF_id` \n"
 			+"LEFT JOIN `ApRefinementData` AS ref \n"
 			+"  ON partclass.`REF|ApRefinementData|refinement` = ref.`DEF_id` \n"
-			+"LEFT JOIN `ApEulerData` AS eulers \n"
-			+"  ON partclass.`REF|ApEulerData|eulers` = eulers.`DEF_id` \n"
 			+"WHERE \n"
 			+"  stackpart.`DEF_id` = "+str(stackpartid)+" \n" 
 			+"AND \n"

@@ -291,7 +291,7 @@ class satAverageScript(appionScript.AppionScript):
 						mirror=1
 					else:
 						mirror=0
-					rot = ptcl['inplane_rotation']*math.pi/180.0
+					rot = ptcl['euler3']*math.pi/180.0
 					classf.write(
 						"%d\t%s\t%f,\t%f,%f,%f,%d\n" % 
 						(partnum, stackpath, ptcl['quality_factor'], 

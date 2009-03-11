@@ -947,28 +947,20 @@ class ApParticleClassificationData(Data):
 		return Data.typemap() + (
 			('refinement', ApRefinementData),
 			('particle', ApStackParticlesData),
-			('eulers', ApEulerData),
 			('shiftx', float),
 			('shifty', float),
-			('inplane_rotation', float),
+			('euler1', float),
+			('euler2', float),
+			('euler3', float),
 			('quality_factor', float),
 			('mirror', bool),
 			('thrown_out',bool),
 			('msgp_keep',bool),
 			('coran_keep',bool),
+			('euler_convention', str),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApParticleClassificationData=ApParticleClassificationData
-
-class ApEulerData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
-			('euler1', float),
-			('euler2', float),
-			('euler3', float),
-		)
-	typemap = classmethod(typemap)
-leginondata.ApEulerData=ApEulerData
 
 class ApEulerJumpData(Data):
 	def typemap(cls):
@@ -982,7 +974,7 @@ class ApEulerJumpData(Data):
 			('max', float),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApEulerData=ApEulerData
+leginondata.ApEulerJumpData=ApEulerJumpData
 
 class ApFSCData(Data):
 	def typemap(cls):

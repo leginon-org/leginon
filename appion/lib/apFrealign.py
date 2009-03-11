@@ -393,9 +393,9 @@ def getStackParticleEulersForIteration(params,pnum):
 		pclass=pclass[0]
 
 	params['eman_orient']={}
-	params['eman_orient']['alt']=pclass['eulers']['euler1']
-	params['eman_orient']['az']=pclass['eulers']['euler2']
-	params['eman_orient']['phi']=pclass['inplane_rotation']
+	params['eman_orient']['alt']=pclass['euler1']
+	params['eman_orient']['az']=pclass['euler2']
+	params['eman_orient']['phi']=pclass['euler3']
 
 	params['eman_orient']['mirror']=pclass['mirror']
 	params['eman_orient']['shiftx']=pclass['shiftx']

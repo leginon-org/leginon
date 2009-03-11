@@ -587,9 +587,6 @@ def insertIteration(iteration, params):
 	# get projections eulers for iteration:
 	eulers = getEulersFromProj(params,iteration['num'])
 
-	# get # of class averages and # kept
-	#params['eulers']=getClassInfo(os.path.join(params['rundir'],classavg))
-
 	# get list of bad particles for this iteration
 	badprtls = readParticleLog(params['rundir'], iteration['num'])
 
@@ -650,15 +647,10 @@ def readParticleLog(path, iternum):
 	f.close()
 	return badprtls
 
-def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,numcls):
+def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,numcls,euler_convention='zxz'):
 	# get the corresponding proj number & eulers from filename
 	replace=re.compile('\D')
 	projnum=int(replace.sub('',cls))
-
-	eulq=appionData.ApEulerData()
-	eulq['euler1']=eulers[projnum][0]
-	eulq['euler2']=eulers[projnum][1]
-	eulq['euler3']=eulers[projnum][2]
 
 	clsfilename=os.path.join(params['tmpdir'],cls)
 	sys.stderr.write(".")
@@ -715,13 +707,15 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 			# insert classification info
 			prtlaliq['refinement']=refineq
 			prtlaliq['particle']=stackp
-			prtlaliq['eulers']=eulq
 			prtlaliq['shiftx']=shx
 			prtlaliq['shifty']=shy
-			prtlaliq['inplane_rotation']=rot
+			prtlaliq['euler1']=eulers[projnum][0]
+			prtlaliq['euler2']=eulers[projnum][1]
+			prtlaliq['euler3']=rot
 			prtlaliq['quality_factor']=qualf
 			prtlaliq['msgp_keep']=msgk
 			prtlaliq['coran_keep']=corank
+			prtlaliq['euler_convention']=euler_convention
 
 			#apDisplay.printMsg("inserting Particle Classification Data into database")
 			if params['commit'] is True:
