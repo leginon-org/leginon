@@ -140,7 +140,6 @@ def runCoranClass(params,cls):
 		os.system(clscmd)
 		avgcmd=("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
 		os.system(avgcmd)
-	#	corancmd+=avgcmd+'\n'
 		dummyclsdir=os.path.join(clsdir,'classes')
 		os.mkdir(dummyclsdir)
 		dummyfilename='clhc_cls0001.spi'
