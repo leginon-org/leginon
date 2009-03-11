@@ -118,8 +118,6 @@ def runCoranClass(params,cls):
 	if params['proc'] == 1:
 		#make aligned stack
 		os.system(clscmd)
-#	       	if os.path.exists('aligned.spi'):
-#			os.rename('aligned.spi',os.path.join(clsdir,'aligned.spi'))
 
 	corancmd=clscmd+'\n'
 
@@ -129,18 +127,20 @@ def runCoranClass(params,cls):
 	params['nptcls']=apEMAN.getNPtcls(cls)
 	# if no particles, create an empty class average
 	if params['nptcls'] == 0:
+		# don't run clscmd, just make directory and empty average
 		os.mkdir(clsdir)
 		apEMAN.writeBlankImage(os.path.join(clsdir,'classes_avg.spi'),params['boxsize'],0,'spider')
 		print "WARNING!! no particles in class"
+		return
 			
 	# if only 3 particles or less, turn particles into the class averages
 	elif params['nptcls'] < 4:
-#this is an ugly hack, just average the particles together, no ref-free
-		os.mkdir(clsdir)
+		#this is an ugly hack, just average the particles together, no ref-free
+		# don't use mpi, just make directory with clscmd and average particles
+		os.system(clscmd)
 		avgcmd=("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
-		if params['proc']==1:
-			os.system(avgcmd)
-		corancmd+=avgcmd+'\n'
+		os.system(avgcmd)
+	#	corancmd+=avgcmd+'\n'
 		dummyclsdir=os.path.join(clsdir,'classes')
 		os.mkdir(dummyclsdir)
 		dummyfilename='clhc_cls0001.spi'
@@ -150,6 +150,7 @@ def runCoranClass(params,cls):
 			dummyfile.write('%d 1 %d\n' % (ptcl,ptcl+1))
 		dummyfile.close()
 		print "WARNING!! not enough particles in class for subclassification"
+		return
 
 	# otherwise, run coran
 	else:
@@ -170,7 +171,7 @@ def readRefFreeDocFile(docfile, picklefile):
 	partlist = []
 	for line in docf:
 		data = line.strip().split()
-		if data[0][0] == ";":
+		iif data[0][0] == ";":
 			continue
 		if len(data) < 4:
 			continue
