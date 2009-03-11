@@ -2770,20 +2770,23 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	}
 
 	function getNumClasses ($refinementDataId) {
-		$q = "SELECT count(distinct(`REF|ApEulerData|eulers`)) as num "
+		$q = "SELECT count(*) AS `num` FROM "
+				."(SELECT ROUND(`euler2`, 4) AS e1, ROUND(`euler1`, 4) AS e2 "
 				."FROM `ApParticleClassificationData` "
-				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
+				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
+				."GROUP BY e1,e2) "
+				."AS `uniqEulers`";
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0]['num'];
 	}
 
-	function getEulerIds ($refinementDataId) {
-		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
-				."FROM `ApParticleClassificationData` "
-				."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r;
-	}
+	//function getEulerIds ($refinementDataId) {
+	//	$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
+	//			."FROM `ApParticleClassificationData` "
+	//			."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
+	//	$r = $this->mysql->getSQLResult($q);
+	//	return $r;
+	//}
 
 	function getAverageMedianJump ($refineRunId) {
 		$q = "SELECT "
@@ -2811,22 +2814,23 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r;
 	}
 
-	function getParticleEuler ($refinementDataId) {
-		$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
-			."FROM `ApParticleClassificationData` "
-			."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
-		$r = $this->mysql->getSQLResult($q);
-		return $r;
-	}
+	// no more ApEulerData tables
+	//function getParticleEuler ($refinementDataId) {
+	//	$q = "SELECT distinct(`REF|ApEulerData|eulers`) as eulers "
+	//		."FROM `ApParticleClassificationData` "
+	//		."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' ";
+	//	$r = $this->mysql->getSQLResult($q);
+	//	return $r;
+	//}
 
-	function getNumInClass ($refinementDataId,$eulerId) {
-		$q = "SELECT count(DEF_id) as num "
-			."FROM `ApParticleClassificationData` "
-			."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
-			."AND `REF|ApEulerData|eulers` = $eulerId";
-		list($r) = $this->mysql->getSQLResult($q);
-		return $r['num'];
-	}
+	//function getNumInClass ($refinementDataId,$eulerId) {
+	//	$q = "SELECT count(DEF_id) as num "
+	//		."FROM `ApParticleClassificationData` "
+	//		."WHERE `REF|ApRefinementData|refinement` = '$refinementDataId' "
+	//		."AND `REF|ApEulerData|eulers` = $eulerId";
+	//	list($r) = $this->mysql->getSQLResult($q);
+	//	return $r['num'];
+	//}
 
 	function getEulerAngles ($eulerId) {
 		$q = "SELECT * "
@@ -2841,31 +2845,31 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		# reconstructions (ignore those that were thrown out) and return the eulers"
 		$q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
 				."spd.particleNumber, "
-				."euler1.euler1 as euler1_1, "
-				."euler1.euler2 as euler1_2, "
-				."euler1.euler3 as euler1_3, "
-				."euler2.euler1 as euler2_1, "
-				."euler2.euler2 as euler2_2, "
-				."euler2.euler3 as euler2_3, "
+				."cls1.euler1 as euler1_1, "
+				."cls1.euler2 as euler1_2, "
+				."cls1.euler3 as euler1_3, "
+				."cls2.euler1 as euler2_1, "
+				."cls2.euler2 as euler2_2, "
+				."cls2.euler3 as euler2_3, "
 				."cls1.`shiftx` as shiftx1, "
 				."cls2.`shiftx` as shiftx2, "
 				."cls1.`shifty` as shifty1, "
 				."cls2.`shifty` as shifty2, "
-				."cls1.`inplane_rotation` as rot1, "
-				."cls2.`inplane_rotation` as rot2, "
+				."cls1.`euler3` as rot1, "
+				."cls2.`euler3` as rot2, "
 				."cls1.`quality_factor` as qf1, "
 				."cls2.`quality_factor` as qf2 "
 				."FROM (`ApParticleClassificationData` as cls1) "
 				."LEFT JOIN ( "
 				." `ApParticleClassificationData` as cls2, "
-				." `ApStackParticlesData` as spd, "
-				." `ApEulerData` euler1, `ApEulerData` euler2) "
+				." `ApStackParticlesData` as spd) "
+				//." `ApEulerData` euler1, `ApEulerData` euler2) "
 				."ON ( "
 				."cls1.`REF|ApStackParticlesData|particle`=cls2.`REF|ApStackParticlesData|particle` "
 				."AND spd.DEF_id=cls1.`REF|ApStackParticlesData|particle` "
 				."AND cls1.`thrown_out` is NULL AND cls2.`thrown_out` is NULL "
-				."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
-				."AND euler2.DEF_id=cls2.`REF|ApEulerData|eulers` "
+				//."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
+				//."AND euler2.DEF_id=cls2.`REF|ApEulerData|eulers` "
 				.") "
 				."WHERE (cls1.`REF|ApRefinementData|refinement`=$refine1 "
 				."AND cls2.`REF|ApRefinementData|refinement`=$refine2 "
@@ -2880,21 +2884,21 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		# reconstructions (ignore those that were thrown out) and return the eulers"
 		$q = "SELECT cls1.`REF|ApStackParticlesData|particle` as prtl, "
 				."spd.particleNumber, "
-				."euler1.euler1 as euler1_1, "
-				."euler1.euler2 as euler1_2, "
-				."euler1.euler3 as euler1_3, "
+				."cls1.euler1 as euler1_1, "
+				."cls1.euler2 as euler1_2, "
+				."cls1.euler3 as euler1_3, "
 				."cls1.`shiftx` as shiftx1, "
 				."cls1.`shifty` as shifty1, "
 				."cls1.`inplane_rotation` as rot1, "
 				."cls1.`quality_factor` as qf1 "
 				."FROM (`ApParticleClassificationData` as cls1) "
 				."LEFT JOIN ( "
-				." `ApStackParticlesData` as spd, "
-				." `ApEulerData` euler1) "
+				." `ApStackParticlesData` as spd) "
+				//." `ApEulerData` euler1) "
 				."ON ( "
 				."spd.DEF_id=cls1.`REF|ApStackParticlesData|particle` "
 				."AND cls1.`thrown_out` is NULL "
-				."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
+				//."AND euler1.DEF_id=cls1.`REF|ApEulerData|eulers` "
 				.") "
 				."WHERE ( "
 				." cls1.`REF|ApRefinementData|refinement`=$refine1 "
@@ -2923,8 +2927,8 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 	}
 
 	function getEulerStats($reconId, $iterId1, $iterId2) {
-		$q = "SELECT difference, eulers,	mean from `ApProcEulerData` "
-				." WHERE `reconId`=$reconId AND `iter1`=$iterId1 AND `iter2`=$iterId2";
+		$q = "SELECT difference, eulers, mean from `ApProcEulerData` "
+		." WHERE `reconId`=$reconId AND `iter1`=$iterId1 AND `iter2`=$iterId2";
 		$r=$this->mysql->getSQLResult($q);
 
 		return $r;
