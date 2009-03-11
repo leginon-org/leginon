@@ -15,6 +15,7 @@ import apDisplay
 import apDatabase
 import apImage
 import apParam
+import apProject
 #leginon
 import appionScript
 from pyami import mem
@@ -265,6 +266,11 @@ class AppionLoop(appionScript.AppionScript):
 			apDisplay.printError("preset can not be specified if particular images have been specified")
 		if self.params['sessionname'] is None and self.params['mrcnames'] is None:
 			apDisplay.printError("please specify an mrc name or session")
+		if self.params['sessionname'] is not None and self.params['projectid'] is not None:
+			### Check that project and images are in sync
+			imgproject = apProject.getProjectIdFromSessionName(self.params['sessionname'])
+			if imgproject != self.params['projectid']:
+				apDisplay.printError("project id and session do not correlate")
 
 	#=====================
 	def setupGlobalParserOptions(self):
