@@ -171,7 +171,7 @@ def readRefFreeDocFile(docfile, picklefile):
 	partlist = []
 	for line in docf:
 		data = line.strip().split()
-		iif data[0][0] == ";":
+		if data[0][0] == ";":
 			continue
 		if len(data) < 4:
 			continue
