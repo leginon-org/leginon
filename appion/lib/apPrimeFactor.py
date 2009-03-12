@@ -2,6 +2,8 @@
 
 import sys
 
+maxprime = 13
+
 #====================
 def prime_factors(n):
 	""" Return the prime factors of the given number. """
@@ -23,12 +25,12 @@ def prime_factors(n):
 	return factors
 
 #====================
-def getAllPrimes(maxn=400):
+def getAllPrimes(maxn=1028):
 	goodones = []
-	n = 2
+	n = 5
 	while True:
 		factors = prime_factors(n)
-		if max(factors) < 13:
+		if max(factors) < maxprime:
 			#print n, factors
 			goodones.append(n)
 			if (n > maxn):
@@ -62,7 +64,7 @@ def getPrimeLimits(num=4):
 def isGoodPrime(num=4):
 	#print num
 	factors = prime_factors(num)
-	if max(factors) < 13:
+	if max(factors) < maxprime:
 		return True
 	return False
 
