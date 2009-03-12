@@ -15,6 +15,20 @@ require "inc/viewer.inc";
 require "inc/project.inc";
 require "inc/appionloop.inc";
 
+$goodboxes = array(
+	5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 21, 22, 24, 25, 27, 28, 30, 32, 33, 35, 
+	36, 40, 42, 44, 45, 48, 49, 50, 54, 55, 56, 60, 63, 64, 66, 70, 72, 75, 77, 80, 81, 84, 
+	88, 90, 96, 98, 99, 100, 105, 108, 110, 112, 120, 121, 125, 126, 128, 132, 135, 140, 144, 
+	147, 150, 154, 160, 162, 165, 168, 175, 176, 180, 189, 192, 196, 198, 200, 210, 216, 220, 
+	224, 225, 231, 240, 242, 243, 245, 250, 252, 256, 264, 270, 275, 280, 288, 294, 297, 300, 
+	308, 315, 320, 324, 330, 336, 343, 350, 352, 360, 363, 375, 378, 384, 385, 392, 396, 400, 
+	405, 420, 432, 440, 441, 448, 450, 462, 480, 484, 486, 490, 495, 500, 504, 512, 525, 528, 
+	539, 540, 550, 560, 567, 576, 588, 594, 600, 605, 616, 625, 630, 640, 648, 660, 672, 675, 
+	686, 693, 700, 704, 720, 726, 729, 735, 750, 756, 768, 770, 784, 792, 800, 810, 825, 840, 
+	847, 864, 875, 880, 882, 891, 896, 900, 924, 945, 960, 968, 972, 980, 990, 1000, 1008, 
+	1024, 1029
+);
+
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runMakestack();
@@ -106,14 +120,14 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	while (file_exists($sessionpathval.'stack'.($stackruns+1)))
 		$stackruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'stack'.($stackruns+1);
-	$prtlrunval = $_POST['prtlrunId'];
+	$prtlrunval = ($_POST['prtlrunId']) ? $_POST['prtlrunId'] : $prtlrunIds[0]['DEF_id'];
 	$massessval = $_POST['massessname'];
 	// set phaseflip on by default
 	$phasecheck = ($_POST['phaseflip']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
-	$boxszval = $_POST['boxsize'];
+
 	$binval = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$partlimit = $_POST['partlimit'];
 	$lpval = ($_POST['lp']) ? $_POST['lp'] : '';
@@ -166,12 +180,12 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 
 		echo "Phaseflipping Method:\n";
 		echo "&nbsp;&nbsp;<select name='fliptype' ";
-			if (!$phasecheck) echo " disabled";
-			echo ">\n";
-		echo "<option value='emanpart'>EMAN Flip by Stack (default)</option>\n";
+		if (!$phasecheck) echo " disabled";
+		echo ">\n";
+		echo "<option value='ace2image'>Ace 2 Whole Image (default)</option>\n";
+		echo "<option value='emanpart'>EMAN Flip by Stack</option>\n";
 		echo "<option value='emanimage'>EMAN Flip Whole Image</option>\n";
 		echo "<option value='emantilt'>EMAN Flip by Tilt Location</option>\n";
-		echo "<option value='ace2image'>Ace 2 Whole Image</option>\n";
 		echo "</select>\n";
 		echo "<br/>\n";
 	}
@@ -204,9 +218,10 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$prtlruns=count($prtlrunIds);
 
 	if (!$prtlrunIds) {
+		createMakestackForm("<b>ERROR:</b> No Particles for this Session");
+		exit;
 		echo"<font class='apcomment' size='+2'><b>No Particles for this Session</b></font>\n";
-	}
-	else {
+	} else {
 		echo docpop('stackparticles','Particles:');
 		echo "<select name='prtlrunId'>\n";
 		foreach ($prtlrunIds as $prtlrun){
@@ -216,7 +231,9 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 			$totprtls=commafy($prtlstats['totparticles']);
 			echo "<OPTION value='$prtlrunId'";
 			// select previously set prtl on resubmit
-			if ($prtlrunval==$prtlrunId) echo " SELECTED";
+			if ($prtlrunval==$prtlrunId) {
+				echo " SELECTED";
+			}
 			echo">$runname ($totprtls prtls)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
@@ -229,9 +246,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$massessnames= $particle->getMaskAssessNames($sessionId);
 
 	if (!$massessnames) {
-		echo"<font class='apcomment' size='-2'><i>No Mask Assessed for this Session</i></font>\n";
-	}
-	else {
+		echo"<font size='-1'><i>No Mask Assessed for this Session</i></font>\n";
+	} else {
 		echo "Mask Assessment:
 		<SELECT name='massessname'>\n";
 		foreach ($massessnames as $name) {
@@ -255,6 +271,35 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 	echo "<br/>\n";
 
+
+	// Determine best box size...
+
+	if (!$_POST['boxsize']) {
+		$partrundata = $particle->getSelectionParams($prtlrunval);
+		$imgid = $particle->getImgIdFromSelectionRun($prtlrunval);
+		$partdiam = $partrundata[0]['diam'];
+		$pixelsize = $particle->getPixelSizeFromImgId($imgid)*1e10;
+		//echo "Diameter: $partdiam &Aring;<br/>\n";
+		//echo "Image id: $imgid<br/>\n";
+		//echo "Pixel size: $pixelsize &Aring;<br/>\n";
+		$pixdiam = (int) ($partdiam/$pixelsize);
+		//echo "Pixel diam: $pixdiam pixels<br/>\n";
+		$boxdiam = (int) ($partdiam/$pixelsize*1.5);
+		//echo "Box diam: $boxdiam pixels<br/>\n";
+		global $goodboxes;
+		foreach ($goodboxes as $box) {
+			if ($box == $boxdiam)
+				break;
+			elseif ($box > $boxdiam) {
+				$defaultboxsize = $box;
+				break;
+			}
+		}
+		//echo "Box size: $defaultboxsize pixels<br/>\n";
+		$boxszval = $defaultboxsize;
+	} else {
+		$boxszval = $_POST['boxsize'];
+	}
 	echo "<input type='text' name='boxsize' size='5' value='$boxszval'>\n";
 	echo docpop('boxsize','Box Size');
 	echo "(Unbinned, in pixels)<br />\n";
@@ -402,12 +447,7 @@ function runMakestack() {
 		createMakestackForm("<b>ERROR:</b> Specify a box size");
 	if (!is_numeric($boxsize))
 		createMakestackForm("<b>ERROR:</b> Box size must be an integer");
-	$goodboxes = array(2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 
-		24, 25, 27, 28, 30, 32, 35, 36, 40, 42, 45, 48, 49, 50, 54, 56, 60, 
-		63, 64, 70, 72, 75, 80, 81, 84, 90, 96, 98, 100, 105, 108, 112, 120, 
-		125, 126, 128, 135, 140, 144, 147, 150, 160, 162, 168, 175, 180, 189, 
-		192, 196, 200, 210, 216, 224, 225, 240, 243, 245, 250, 252, 256, 270, 
-		280, 288, 294, 300, 315, 320, 324, 336, 343, 350, 360, 375, 378, 384, 392, 400);
+	global $goodboxes;
 	foreach ($goodboxes as $box) {
 		if ($box == $boxsize)
 			break;

@@ -927,6 +927,18 @@ class particledata {
 		return $r;
 	}
 
+	function getImgIdFromSelectionRun ($runId) {
+		$q="SELECT "
+			."  p.`REF|leginondata|AcquisitionImageData|image` AS imgid "
+			."FROM ApParticleData AS p "
+			."WHERE "
+			."  p.`REF|ApSelectionRunData|selectionrun` = '$runId' "
+			."ORDER BY p.`REF|leginondata|AcquisitionImageData|image` DESC "
+			."LIMIT 1 "; 
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0]['imgid'];
+	}
+
 	function getParticleCorrelationStats($runId) {
 	}
 
@@ -945,15 +957,17 @@ class particledata {
 			."from ApParticleData p ";
 		// use the latest inspection value. This should be changed later
 		if ($inspect) {
-				$q.= "left join ApAssessmentData ad "
+			$q.= "left join ApAssessmentData ad "
 				."on (ad.`REF|leginondata|AcquisitionImageData|image` = p.`REF|leginondata|AcquisitionImageData|image`) ";
 		}
 		$q.="WHERE ";
 		if ($inspect) {
-			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 where ad2.`REF|leginondata|AcquisitionImageData|image` = ad.`REF|leginondata|AcquisitionImageData|image`) "
+			$q.= "ad.`DEF_id`=(select max(ad2.`DEF_id`) from ApAssessmentData ad2 "
+				."where ad2.`REF|leginondata|AcquisitionImageData|image` = ad.`REF|leginondata|AcquisitionImageData|image`) "
 				."and ad.selectionkeep=1 AND ";
 		}
-		if ($selexval) $q.="p.`correlation`>='$selexval' AND ";
+		if ($selexval)
+			$q.="p.`correlation`>='$selexval' AND ";
 		$q.="p.`REF|ApSelectionRunData|selectionrun` = '$runId' ";
 		list($r) = $this->mysql->getSQLResult($q);
 		return $r;
@@ -1450,16 +1464,15 @@ class particledata {
 			list($r1)= $this->mysql->getSQLResult($q);
 		//if no sibling image when defocpair param is not specified, use the original image
 		$imgId = ($r1['image']) ? $r1['image'] : $r1['pimage'];
-
 		// get image bin and the most recent pixel calibration
 		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
-		  ."pc.`pixelsize` as ccdpixelsize, pd.*, "
-		  ."pscope.`high tension` as hightension "
+		  ."  pc.`pixelsize` as ccdpixelsize, pd.*, "
+		  ."  pscope.`high tension` as hightension "
 		  ."FROM ".DB.".`AcquisitionImageData` a "
 		  ."left join ".DB.".`PresetData` pd "
-		  ."on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
+		  ."  on (a.`REF|PresetData|preset`=pd.`DEF_id`) "
 		  ."LEFT JOIN ".DB.".`ScopeEMData` pscope "
-		  ."ON (pscope.`DEF_id` = a.`REF|ScopeEMData|scope`) "
+		  ."  ON (pscope.`DEF_id` = a.`REF|ScopeEMData|scope`) "
 			.", ".DB.".PixelSizeCalibrationData pc "
 			."WHERE a.`DEF_id`='$imgId' "
 			."AND pc.`REF|InstrumentData|tem`= pd.`REF|InstrumentData|tem` "
@@ -1478,6 +1491,31 @@ class particledata {
 		}
 		$r2['stackpixelsize'] = $r2['ccdpixelsize']*$r2['imgbin']*$stackbin;
 		return $r2;
+	}
+
+	function getPixelSizeFromImgId ($imgid) {
+		$q="SELECT pd.`SUBD|binning|x` as imgbin, "
+		  ."  pc.`pixelsize` as ccdpixelsize  "
+		  ."FROM ".DB.".`AcquisitionImageData` AS a "
+		  ."LEFT JOIN ".DB.".`PresetData` AS pd "
+		  ."  ON (a.`REF|PresetData|preset` = pd.`DEF_id`) "
+			.", ".DB.".PixelSizeCalibrationData pc "
+			."WHERE "
+			."  a.`DEF_id`='$imgid' "
+			."AND "
+			."  pc.`REF|InstrumentData|tem` = pd.`REF|InstrumentData|tem` "
+			."AND "
+			."  pc.`magnification` = pd.`magnification` "
+			."AND "
+			."  pc.`REF|InstrumentData|ccdcamera` = pd.`REF|InstrumentData|ccdcamera` "
+			."AND "
+			."  pc.`DEF_timestamp` < a.`DEF_timestamp` "
+			."ORDER BY pc.`DEF_timestamp` DESC ";
+		//echo $q."<br/>\n";
+		list($r2)=$this->mysql->getSQLResult($q);
+		//echo print_r($r2)."<br/>\n";
+		$pixelsize = $r2['ccdpixelsize']*$r2['imgbin'];
+		return $pixelsize;
 	}
 
 	function displayParticleStats ($particleruns, $display_keys, $inspect=False, $selexval=False, $dispImg=True) {
