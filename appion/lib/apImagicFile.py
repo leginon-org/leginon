@@ -351,3 +351,57 @@ def writeVarianceImage(imagicfile, varmrcfile):
 	mrc.write(vararray, varmrcfile)
 	return vararray
 
+
+#===============
+def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
+	"""
+	reads a single particle from imagic stack
+	particle number starts at 1
+	assumes particles have squares boxes
+	"""
+	t0 = time.time()
+	if partnum < 1:
+		apDisplay.printError("particle numbering starts at 1")
+
+	root=os.path.splitext(filename)[0]
+	headerfilename=root + ".hed"
+	datafilename=root + ".img"
+
+	if msg is True:
+		apDisplay.printMsg("reading particle %d from stack %s into memory"%(partnum, os.path.basename(filename)))
+
+	### determine boxsize
+	if boxsize is None:
+		headerdict = readImagicHeader(headerfilename)
+		boxsize = headerdict['rows']
+		if partnum > headerdict['nimg']:
+			apDisplay.printError("requested particle %d from stack of length %d"%(partnum, headerdict['nimg']))
+	else:
+		filesize = apFile.fileSize(datafilename)
+
+	### calculate number of bytes per particle
+	partbytes = boxsize**2*4
+	if partbytes*partnum > filesize:
+		apDisplay.printError("requested particle %d from stack of length %d"%(partnum, filesize/partbytes))
+
+	### open file
+	f = open(datafilename, 'rb')
+
+	### skip ahead to desired particle
+	f.seek(partbytes*(partnum-1))
+
+	### read particle image
+	data = f.read(partbytes)
+	f.close()
+
+	shape = (boxsize, boxsize)
+	partimg = numpy.fromstring(data, dtype=numpy.float32)
+	try:
+		partimg = partimg.reshape(boxsize, boxsize)
+		partimg = numpy.fliplr(partimg)
+	except:
+		print partimg
+		print boxsize, boxsize*boxsize, partimg.shape
+		apDisplay.printError("could not read particle from stack")
+	return partimg
+
