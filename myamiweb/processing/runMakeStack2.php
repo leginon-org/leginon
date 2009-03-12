@@ -284,7 +284,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		//echo "Pixel size: $pixelsize &Aring;<br/>\n";
 		$pixdiam = (int) ($partdiam/$pixelsize);
 		//echo "Pixel diam: $pixdiam pixels<br/>\n";
-		$boxdiam = (int) ($partdiam/$pixelsize*1.5);
+		$boxdiam = (int) ($partdiam/$pixelsize*1.4);
 		//echo "Box diam: $boxdiam pixels<br/>\n";
 		global $goodboxes;
 		foreach ($goodboxes as $box) {
