@@ -45,7 +45,7 @@ elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
 	## get model data
 	$modelinfo = explode('|--|',$_POST['model']);
 	$modbox = $modelinfo[3];
-	if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
+	#if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
 }
 
