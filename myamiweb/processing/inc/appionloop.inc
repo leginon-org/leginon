@@ -25,8 +25,8 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$reversecheck = ($_POST['imgorder'] == 'reverse') ? "CHECKED" : "";
 	$shufflecheck = ($_POST['imgorder'] == 'shuffle') ? "CHECKED" : "";
 
-	if ($_POST[preset]) $dbimages=$_POST[sessionname].",".$_POST[preset];
-	else $alldbimages = $_POST[sessionname];
+	if ($_POST['preset']) $dbimages=$_POST['sessionname'].",".$_POST['preset'];
+	else $alldbimages = $_POST['sessionname'];
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 	}
