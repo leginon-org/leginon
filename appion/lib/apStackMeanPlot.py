@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
+#python
 import sys
 import os
 import time
-import sinedon
+import numpy
+# appion
 import apEMAN
 import apFile
 import apDisplay
 import apStack
-import apDatabase
+import apImage
+import apImagicFile
 
 #===============
 def makeStackMeanPlot(stackid, gridpoints=16):
@@ -60,7 +63,7 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	### sort paritcles into bins
 	for partdata in partdatas:
 		key = meanStdevToKey(partdata['mean'], partdata['stdev'], limits, gridpoints)
-		partnum = int(partdata['particleNumber']-1)
+		partnum = int(partdata['particleNumber'])
 		partlists[key].append(partnum)
 
 	printPlot(partlists, gridpoints)
@@ -72,49 +75,51 @@ def makeStackMeanPlot(stackid, gridpoints=16):
 	backs = "\b\b\b\b\b\b\b\b\b\b\b"
 	montagestack = "montage"+str(stackid)+".hed"
 	apFile.removeStack(montagestack)
+	mystack = []
 	for key in keys:
 		count += 1
 		sys.stderr.write(backs+backs+backs+backs)
 		sys.stderr.write("% 3d of % 3d, %s: % 6d"%(count, len(keys), key, len(partlists[key])))
-		averageSubStack(partlists[key], stackfile, montagestack, bin)
+		avgimg = averageSubStack(partlists[key], stackfile, bin)
+		if avgimg is not False:
+			mystack.append(avgimg)
+	apImagicFile.writeImagic(mystack, montagestack)
 	sys.stderr.write("\n")
 	assemblePngs(keys, str(stackid), montagestack)
 	apDisplay.printMsg("mv -v montage"+str(stackid)+".??? "+stackdata['path']['path'])
 	apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))
 
 #===============
-def averageSubStack(partlist, stackfile, filename, bin=1):
+def averageSubStack(partlist, stackfile, bin=1):
+	if len(partlist) > 300:
+		partlist = partlist[:300]
+	boxsize = apImagicFile.getBoxsize(stackfile)
 	if len(partlist) == 0:
-		emancmd = ( "proc2d "+stackfile+" "+filename+" first=0 last=0 mask="+str(bin+1)+" shrink="+str(bin) )
-		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
-		return False
+		blank = numpy.ones((boxsize,boxsize), dtype=numpy.float32)
+		return blank
 	if not os.path.isfile(stackfile):
-		apDisplay.printWarning("could not create stack average, "+filename)
+		apDisplay.printWarning("could not find stack, "+stackfile)
 		return False
-	listfile = "temp.lst"
-	f = open(listfile, "w")
-	count = 0
-	#for partnum in partlist:
-	while(count < len(partlist) and count < 500):
-		partnum = partlist[count]
-		count += 1
-		f.write(str(partnum)+"\n")
-	f.close()
-	emancmd = ( "proc2d "+stackfile+" "+filename+" list="+listfile+" average shrink="+str(bin) )
-	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
-	apFile.removeFile(listfile)
-	return True
+	partdatalist = apImagicFile.readParticleListFromStack(stackfile, partlist, boxsize, msg=False)
+	partdataarray = numpy.asarray(partdatalist)
+	finaldata = partdataarray.mean(0)
+	if bin > 1:
+		finaldata = apImage.binImg(finaldata, bin)
+	return finaldata
 
 #===============
 def assemblePngs(keys, tag, montagestack):
 	apDisplay.printMsg("assembling pngs into montage")
 	montagecmd = "montage -geometry +4+4 "
+	montagestackdata = apImagicFile.readImagic(montagestack)
 	for i,key in enumerate(keys):
 		if i % 20 == 0:
 			sys.stderr.write(".")
 		pngfile = key+".png"
-		proccmd = "proc2d "+montagestack+" "+pngfile+" first="+str(i)+" last="+str(i)
-		apEMAN.executeEmanCmd(proccmd, verbose=False, showcmd=False)
+		array = montagestackdata['images'][i]
+		apImage.arrayToPng(array, pngfile, normalize=True, msg=False)
+		#proccmd = "proc2d "+montagestack+" "+pngfile+" first="+str(i)+" last="+str(i)
+		#apEMAN.executeEmanCmd(proccmd, verbose=False, showcmd=False)
 		montagecmd += pngfile+" "
 	apDisplay.printMsg("montaging")
 	montagefile = "montage"+tag+".png"
@@ -168,10 +173,11 @@ if __name__ == "__main__":
 	else:
 		projectid=None
 	### setup correct database after we have read the project id
-	if apDatabase.splitdb and pprojectid is not None:
+	if projectid is not None:
 		apDisplay.printWarning("Using split database")
 		# use a project database
 		newdbname = "ap"+str(projectid)
+		import sinedon
 		sinedon.setConfig('appionData', db=newdbname)
 		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
