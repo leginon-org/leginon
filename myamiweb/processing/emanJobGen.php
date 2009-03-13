@@ -727,7 +727,7 @@ function writeJobFile ($extra=False) {
 	$modelid=$modelinfo[0];
 	$initmodel = $particle->getInitModelInfo($modelid);
 	if ($initmodel['boxsize'] != $box) $rebox = True; 
-	if ($initmodel['pixelsize'] != $apix) $rescale = "scale=".$initmodel['pixelsize']/$apix;
+	if (round($initmodel['pixelsize'],2) != round($apix,2)) $rescale = "scale=".$initmodel['pixelsize']/$apix;
 
 	// insert the job file into the database
 	if (!$extra) {
