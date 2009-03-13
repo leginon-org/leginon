@@ -17,6 +17,10 @@ from pyami import mrc
 import pyami.quietscipy
 from scipy import ndimage
 
+#maximum allowed stack size in gigabytes (GB)
+memorylimit = 1.2
+bytelimit = memorylimit*(1024**3)
+
 #===============
 def compareHeader(hfile1, hfile2, numround=1):
 	"""
@@ -99,7 +103,7 @@ def numberStackFile(oldheadfile, startnum=0):
 	return True
 
 #===============
-def readImagic(filename, first=None, last=None, msg=True):
+def readImagic(filename, first=1, last=None, msg=True):
 	"""
 	Rudimentary Imagic stack reader
 	Could be improved with more sophisticated error testing and header parsing
@@ -107,6 +111,10 @@ def readImagic(filename, first=None, last=None, msg=True):
 	Currently reads header information for only first image in stack
 	"""
 	t0 = time.time()
+	if first < 1:
+		apDisplay.printError("particle numbering starts at 1")
+	if last is not None and first > last:
+		apDisplay.printError("requested first particle %d is greater than last particle %d"%(first,last))
 	if msg is True:
 		apDisplay.printMsg("reading stack from disk into memory: "+filename)
 	root=os.path.splitext(filename)[0]
@@ -115,17 +123,36 @@ def readImagic(filename, first=None, last=None, msg=True):
 
 	### check file size, no more than 2 GB is possible 
 	### it takes double memory on machine to read stack
-	stacksize = apFile.fileSize(datafilename)/1024.0/1024.0
-	if stacksize > 1200:
-		apDisplay.printWarning("Stack is too large to read "+str(round(stacksize,1))+" MB")
+	filesize = apFile.fileSize(datafilename)
+	if first is None and last is None and filesize > bytelimit:
+		apDisplay.printWarning("Stack is too large to read %s"%(apDisplay.bytes(filesize)))
 		return None
 
-	### read stack
-	stack={}
-	stack['header'] = readImagicHeader(headerfilename)
-	stack['images'] = readImagicData(datafilename, stack['header'], first, last)
+	### read stack header
+
+	headerdict = readImagicHeader(headerfilename)
+
+	### determine amount of memory needed
+	partbytes = 4*headerdict['rows']*headerdict['lines']
+	if last is None:
+		last = headerdict['nimg']
+	elif last > headerdict['nimg']:
+		apDisplay.printError("requested particle %d from stack of length %d"%(last, headerdict['nimg']))
+	numpart = last - first + 1
+	if partbytes*numpart > filesize:
+		apDisplay.printError("requested particle %d from stack of length %d"%(last, filesize/partbytes))
+	if partbytes*numpart > bytelimit:
+		apDisplay.printWarning("Stack is too large to read %d particles, requesting %s"
+			%(numpart, apDisplay.bytes(partbytes*numpart)))
+
+	### read stack images
+	images = readImagicData(datafilename, headerdict, first, numpart)
+	stack = {'header': headerdict, 'images': images}
+
 	if msg is True:
+		apDisplay.printMsg("read %d particles equaling %s in size"%(numpart, apDisplay.bytes(partbytes*numpart)))
 		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
+
 	return stack
 
 #===============	
@@ -156,15 +183,30 @@ def readImagicHeader(headerfilename):
 	return header
 
 #===============	
-def readImagicData(datafilename, headerdict, first=None, last=None):
-	shape = (headerdict['nimg'], headerdict['rows'], headerdict['lines'])
-	images = numpy.fromfile(file=datafilename, dtype=numpy.float32)
+def readImagicData(datafilename, headerdict, firstpart=1, numpart=1):
+	### calculate number of bytes in particle image
+	partbytes = 4*headerdict['rows']*headerdict['lines']
+
+	### open file
+	f = open(datafilename, 'rb')
+
+	### skip ahead to desired first particle
+	f.seek(partbytes*(firstpart-1))
+
+	### read particle images
+	data = f.read(partbytes*numpart)
+
+	### close file
+	f.close()
+
+	shape = (numpart, headerdict['rows'], headerdict['lines'])
+	rawarray = numpy.fromstring(data, dtype=numpy.float32)
 	try:
-		images = images.reshape(headerdict['nimg'], headerdict['rows'], headerdict['lines'])
+		images = rawarray.reshape(shape)
 		images = numpy.fliplr(images)
 	except:
-		mult = headerdict['nimg']*headerdict['rows']*headerdict['lines']
-		print mult, images.shape, headerdict['nimg'], headerdict['rows'], headerdict['lines']
+		mult = numpart*headerdict['rows']*headerdict['lines']
+		print mult, shape, rawarray.shape, numpart, headerdict['nimg'], headerdict['rows'], headerdict['lines']
 		apDisplay.printError("could not read image stack")
 	return images
 
