@@ -407,6 +407,21 @@ def getImageMsgPKeepCount(imgdata,refinerundata):
 
 	return results
 
+def getImagesFromParticleRun(runid):
+	q = """SELECT `REF|leginondata|AcquisitionImageData|image` as imageid
+		from `ApParticleData`	
+		WHERE `REF|ApSelectionRunData|selectionrun`= %d
+		GROUP BY `REF|leginondata|AcquisitionImageData|image`""" % (runid)
+	results = directq.complexMysqlQuery('appionData',q)
+	imgtree = []
+	
+	qa =  leginondata.AcquisitionImageData()
+	for result in results:
+		imgdata = qa.direct_query(result['imageid'],readimages=False)
+		if imgdata:
+			imgtree.append(imgdata)
+	return imgtree
+
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
