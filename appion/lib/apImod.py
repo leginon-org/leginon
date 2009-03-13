@@ -166,7 +166,7 @@ DONE
 			'alignedstack': os.path.join(processdir, seriesname+".ali"),
 			'tilts': os.path.join(stackdir, seriesname+".rawtlt"),
 			'recon': os.path.join(processdir, seriesname+"_full.rec"),
-			'scale': 500.0,
+			'scale': 1.0,
 			'size': shape,
 			'thickness': thickness,
 		}
@@ -181,7 +181,7 @@ DONE
 			"MODE 2",
 			"PERPENDICULAR",
 			"RADIAL 0.35 0.05",
-			"SCALE 1.39 -500.0",
+			"SCALE 0.0 %.1f" %(inputparams['scale']),
 			"SUBSETSTART 0 0",
 			"THICKNESS %d" % inputparams['thickness'],
 			"TILTFILE "+inputparams['tilts'],
