@@ -96,8 +96,9 @@ def getDefocPairParticles(imgdata, selectionid):
 	### get defocal pair
 	defimgdata = apDefocalPairs.getDefocusPair(imgdata)
 	if defimgdata is None:
-		apDisplay.printError("Could not find defocal pair for image %s (id %d)"
+		apDisplay.printWarning("Could not find defocal pair for image %s (id %d)"
 			%(apDisplay.short(imgdata['filename']), imgdata.dbid))
+		return ([], {'shiftx':0, 'shifty':0, 'scale':1})
 	apDisplay.printMsg("Found defocus pair %s (id %d) for image %s (id %d)"
 		%(apDisplay.short(defimgdata['filename']), defimgdata.dbid, apDisplay.short(imgdata['filename']), imgdata.dbid))
 
