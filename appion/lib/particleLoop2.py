@@ -82,7 +82,7 @@ class ParticleLoop(filterLoop.FilterLoop):
 		raise NotImplementedError()
 
 	#=====================
-	def commitToDatabase(self, imgdata):
+	def commitToDatabase(self, imgdata,rundata=None):
 		"""
 		put in any additional commit parameters
 		"""
