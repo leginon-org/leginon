@@ -276,8 +276,8 @@ class frealignJob(appionScript.AppionScript):
 		oddvol = os.path.join(self.params['workingdir'],"odd.mrc")
 		
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		self.params['stackfile'] = os.path.join(self.stackdata['path']['path'],self.stackdata['name'])
-
+		print self.stackdata
+		self.params['stackfile'] = os.path.join(self.stackdata['path']['path'],self.stackdata['name'])		
 		# check if the stack is made with defocal pairs
 		self.params['defocpair'] = apStack.checkDefocPairFromStackId(self.params['stackid'])
 
@@ -305,9 +305,26 @@ class frealignJob(appionScript.AppionScript):
 		self.params['itervol']=None
 		self.params['iterparam']=None
 		
-		# if icosahedral recon, rotate volume to 3DEM standard orientation
+		
+		# rescale initial model if necessary
 		outvol = os.path.join(self.params['rundir'],"threed.0.mrc")
 		tmpinvol = self.params['initmodel']
+
+		# check box sizes
+		stackbx = apStack.getStackBoxsize(self.params['stackid'])
+		resize = False
+		if (modeldata['boxsize'] != stackbx):
+			resize=True
+		# check pixel size
+		scale = modeldata['pixelsize']/self.params['apix']
+		if round(scale,2) != 1.:
+			resize=True
+		
+		if resize is True:
+			emancmd = "proc3d %s %s scale=%f clip=%d,%d,%d" % (tmpinvol, outvol, scale, stackbx, stackbx, stackbx)
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			tmpinvol = outvol
+		# if icosahedral recon, rotate volume to 3DEM standard orientation
 		if modsym == 'Icos (5 3 2)':
 			emancmd = 'proc3d %s %s icos5fTo2f' % (tmpinvol, outvol)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
@@ -316,6 +333,7 @@ class frealignJob(appionScript.AppionScript):
 			emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (tmpinvol, outvol)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			self.params['itervol'] = outvol
+		sys.exit() 
 
 		## run frealign for number for refinement cycles
 		for i in range(self.params['refcycles']):
