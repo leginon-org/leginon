@@ -86,6 +86,21 @@ def shortenImageName(imgname):
 	shortimgname = re.sub("_+$","",shortimgname)
 	return shortimgname
 
+def bytes(numbytes):
+	numbytes = int(numbytes)
+	if numbytes < 1.1e3:
+		return "%d B"%(numbytes)
+	elif numbytes < 1.1e6:
+		return "%.1f kB"%(numbytes/1e3)
+	elif numbytes < 1.1e9:
+		return "%.1f MB"%(numbytes/1e6)
+	elif numbytes < 1.1e12:
+		return "%.1f GB"%(numbytes/1e9)
+	elif numbytes < 1.1e15:
+		return "%.1f TB"%(numbytes/1e12)
+	else:
+		return "%.1f PB"%(numbytes/1e15)
+
 def orderOfMag(num):
 	if num > 1:
 		num = int(num)
