@@ -2,12 +2,14 @@
 # Imagic I/O
 #########################################################
 
+#python
 import os
 import sys 
 import re
 import time
 import math
 import shutil
+#appion
 import apDisplay
 import apFile
 import numpy
@@ -183,6 +185,9 @@ def writeImagic(array, filename, msg=True):
 	Outputs:
 		none
 	"""
+	if isinstance(array, list):
+		array = numpy.asarray(array, dtype=numpy.float32)
+
 	t0 = time.time()
 	if msg is True:
 		apDisplay.printMsg("writing stack to disk from memory: "+filename)
@@ -351,6 +356,14 @@ def writeVarianceImage(imagicfile, varmrcfile):
 	mrc.write(vararray, varmrcfile)
 	return vararray
 
+#===============
+def getBoxsize(filename):
+	root=os.path.splitext(filename)[0]
+	headerfilename=root + ".hed"
+	datafilename=root + ".img"
+	headerdict = readImagicHeader(headerfilename)
+	boxsize = headerdict['rows']
+	return boxsize
 
 #===============
 def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
@@ -376,8 +389,7 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 		boxsize = headerdict['rows']
 		if partnum > headerdict['nimg']:
 			apDisplay.printError("requested particle %d from stack of length %d"%(partnum, headerdict['nimg']))
-	else:
-		filesize = apFile.fileSize(datafilename)
+	filesize = apFile.fileSize(datafilename)
 
 	### calculate number of bytes per particle
 	partbytes = boxsize**2*4
@@ -404,4 +416,67 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 		print boxsize, boxsize*boxsize, partimg.shape
 		apDisplay.printError("could not read particle from stack")
 	return partimg
+
+#===============
+def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
+	"""
+	reads a single particle from imagic stack
+	particle number starts at 1
+	assumes particles have squares boxes
+	"""
+	t0 = time.time()
+
+	### sort list
+	partlist.sort()
+	firstpartnum = partlist[0]
+	lastpartnum = partlist[len(partlist)-1]
+	if firstpartnum < 1:
+		apDisplay.printError("particle numbering starts at 1")
+
+	root=os.path.splitext(filename)[0]
+	headerfilename=root + ".hed"
+	datafilename=root + ".img"
+
+	### determine boxsize
+	if boxsize is None:
+		headerdict = readImagicHeader(headerfilename)
+		boxsize = headerdict['rows']
+		if lastpartnum > headerdict['nimg']:
+			apDisplay.printError("requested particle %d from stack %s of length %d"
+				%(lastpartnum, os.path.basename(datafilename), headerdict['nimg']))
+	filesize = apFile.fileSize(datafilename)
+
+	### calculate number of bytes per particle
+	partbytes = boxsize**2*4
+	if partbytes*lastpartnum > filesize:
+		apDisplay.printError("requested particle %d from stack %s of length %d"
+			%(lastpartnum, os.path.basename(datafilename), filesize/partbytes))
+
+	### open file
+	f = open(datafilename, 'rb')
+	partdatalist = []
+	prevpartnum = 0
+	for partnum in partlist:
+		if msg is True:
+			apDisplay.printMsg("reading particle %d from stack %s into memory"
+				%(partnum, os.path.basename(datafilename)))
+
+		### skip ahead to desired particle
+		f.seek(partbytes*(partnum-prevpartnum-1))
+
+		### read particle image
+		data = f.read(partbytes)
+
+		shape = (boxsize, boxsize)
+		partimg = numpy.fromstring(data, dtype=numpy.float32)
+		try:
+			partimg = partimg.reshape(boxsize, boxsize)
+			partimg = numpy.fliplr(partimg)
+		except:
+			print partimg
+			print boxsize, boxsize*boxsize, partimg.shape
+			apDisplay.printError("could not read particle from stack")
+		partdatalist.append(partimg)
+	f.close()
+	return partdatalist
 
