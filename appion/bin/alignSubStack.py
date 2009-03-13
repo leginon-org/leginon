@@ -19,11 +19,19 @@ class subStackScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog [options]")
 
+		### Ints
 		self.parser.add_option("--cluster-id", dest="clusterid", type="int",
 			help="clustering stack id", metavar="ID")
 		self.parser.add_option("--align-id", dest="alignid", type="int",
 			help="alignment stack id", metavar="ID")
 
+		### Floats
+		self.parser.add_option("--min-score", dest="minscore", type="float",
+			help="Minimum cross-correlation score", metavar="#")
+		self.parser.add_option("--min-spread", dest="minspread", type="float",
+			help="Minimum maxlikelihood spread", metavar="#")
+
+		### Strings
 		self.parser.add_option("--class-list-keep", dest="keepclasslist",
 			help="list of EMAN style class numbers to include in sub-stack, e.g. --class-list-keep=0,5,3", metavar="#,#")
 		self.parser.add_option("--class-list-drop", dest="dropclasslist",
@@ -116,7 +124,21 @@ class subStackScript(appionScript.AppionScript):
 				classnum = int(part['ref']['refnum'])-1
 			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 
-			if includelist and classnum in includelist:
+			### check score
+			if ( self.params['minscore'] is not None 
+			 and alignpart['score'] is not None 
+			 and alignpart['score'] < self.params['minscore'] ):
+				excludeParticle += 1
+				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+
+			### check spread
+			elif ( self.params['minspread'] is not None 
+			 and alignpart['spread'] is not None 
+			 and alignpart['spread'] < self.params['minspread'] ):
+				excludeParticle += 1
+				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+
+			elif includelist and classnum in includelist:
 				includeParticle.append(emanstackpartnum)
 				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
 			elif excludelist and not classnum in excludelist:
@@ -155,11 +177,12 @@ class subStackScript(appionScript.AppionScript):
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
 
+		apStack.averageStack(stack=newstack)
 		if self.params['commit'] is True:
 			apStack.commitSubStack(self.params)
 			newstackid = apStack.getStackIdFromPath(newstack)
-			apStackMeanPlot.makeStackMeanPlot(newstackid)
-		apStack.averageStack(stack=newstack)
+			apStackMeanPlot.makeStackMeanPlot(newstackid, gridpoints=4)
+
 
 
 #=====================
