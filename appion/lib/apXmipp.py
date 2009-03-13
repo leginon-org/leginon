@@ -35,7 +35,8 @@ def convertStackToXmippData(instack, outdata, maskpixrad, boxsize, numpart=None)
 	outfilesize = apFile.fileSize(outdata)
 	partfilesize = apFile.fileSize(partlistdocfile)
 	if outfilesize < 2*partfilesize:
-		apDisplay.printError("Outdata conversion did not work, data file smaller than docfile, %d < %d bytes"%(outfilesize, partfilesize))
+		apDisplay.printError("Outdata conversion did not work, data file smaller than docfile, %s < %s"
+			%(apDisplay.bytes(outfilesize), apDisplay.bytes(partfilesize)))
 	apFile.removeFilePattern("partfiles/*")
 
 	return outdata
@@ -70,12 +71,14 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	apParam.createDirectory(partdir)
 	if numpart > filesperdir:
 		numdir = createSubFolders(partdir, numpart, filesperdir)
-		filesperdir = int(math.ceil(numpart/float(numdir)+2))
+		filesperdir = int(math.ceil(numpart/float(numdir)))
 		apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(numdir)+" folders with "
 			+str(filesperdir)+" particles per folder")
+		last = filesperdir
 		subdir = 1
 	else:
-		subdir = "."
+		last = numpart
+		subdir = 1
 
 	if not os.path.isfile(stackfile):
 		apDisplay.printError("stackfile does not exist: "+stackfile)
@@ -84,27 +87,29 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	partlistdocfile = "partlist.doc"
 	f = open(partlistdocfile, "w")
 	i = 0
-
-	curdir = os.path.join(partdir,str(subdir))
-	stackimages = apImagicFile.readImagic(stackfile)
-
+	first = 1
+	i = 0
 	t0 = time.time()
 	while i < numpart:
-		### messaging
-		if (i+1) % filesperdir == 0:
-			subdir += 1
-			curdir = os.path.join(partdir,str(subdir))
-			esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
-			apDisplay.printMsg("new directory: '"+curdir+"' at particle "+str(i)+" of "+str(numpart)
-				+", "+apDisplay.timeString(esttime)+" remain")
+		### read images
+		stackimages = apImagicFile.readImagic(stackfile, first=first, last=last, msg=False)
+		esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
+		apDisplay.printMsg("dirnum %d at partnum %d to %d of %d, %s remain"
+			%(subdir, first, last, numpart, apDisplay.timeString(esttime)))
 
-		### Scott's imagic reader and Neil's spidersingle writer, 38 sec for 9000 particles
-		partfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
-		partimg = stackimages['images'][i]
-		spider.write(partimg, partfile)
-		f.write(os.path.abspath(partfile)+" 1\n")
+		### write images
+		for partimg in stackimages['images']:
+			partfile = os.path.join(partdir, str(subdir), "part%06d.spi"%(i))
+			spider.write(partimg, partfile)
+			f.write(os.path.abspath(partfile)+" 1\n")
+			i += 1
 
-		i += 1
+		### setup for next subdir
+		first = last+1
+		last += filesperdir
+		if last > numpart:
+			last = numpart
+		subdir += 1
 	f.close()
 
 	apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
