@@ -555,7 +555,7 @@ def arrayToJpeg(numer,filename,normalize=True, msg=True):
 	return
 
 #=========================
-def arrayToPng(numer,filename,normalize=True, msg=True):
+def arrayToPng(numer, filename, normalize=True, msg=True):
 	"""
 	takes a numpy and writes a PNG
 	best for masks and line art
