@@ -321,34 +321,28 @@ def otrParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 	"""
 	### create corresponding projections
 	if classnum is not None:
-		projstackfile = str(classnum)+"/"+"projstack%s-%03d.spi"%(timestamp, iternum)
+		projstackfile = str(classnum)+"/"+"projstack-%03d.spi"%(iternum)
 	else:
-		projstackfile = "projstack%s-%03d.spi"%(timestamp, iternum)
+		projstackfile = "projstack-%03d.spi"%(iternum)
 	projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext)
 
 	### clean up files
 	if classnum is not None:
-		ccdocfile = str(classnum)+"/"+"ccdocfile%s-%03d.spi"%(timestamp, iternum)
+		ccdocfile = str(classnum)+"/"+"ccdocfile-%03d.spi"%(iternum)
 	else:
-		ccdocfile = "ccdocfile%s-%03d.spi"%(timestamp, iternum)
+		ccdocfile = "ccdocfile-%03d.spi"%(iternum)
 	apFile.removeFile(ccdocfile)
 	
 	if classnum is not None:
-		alignstackfile = str(classnum)+"/"+"alignstack%s-%03d.spi"%(timestamp, iternum)
+		alignstackfile = str(classnum)+"/"+"alignstack-%03d.spi"%(iternum)
 	else:
-		alignstackfile = "alignstack%s-%03d.spi"%(timestamp, iternum)
+		alignstackfile = "alignstack-%03d.spi"%(iternum)
 	apFile.removeFile(alignstackfile)
 
 	### align particles to projection
-	apDisplay.printMsg("Shifting particles")
 	starttime = time.time()
-	partnum = 0
-	while partnum < numpart:
-		partnum+=1
-		if partnum%25 == 0:
-			esttime = float(time.time()-starttime)/float(partnum)*float(numpart-partnum)
-			print "partnum=", partnum, "--", apDisplay.timeString(esttime), "remain"
-		crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, partnum)
+	apDisplay.printMsg("Shifting particles")
+	crossCorrelateAndShift(origstackfile, projstackfile, alignstackfile, ccdocfile, numpart)
 
 	if not os.path.isfile(alignstackfile):
 		apDisplay.printError("aligned stack file not found: "+alignstackfile)
@@ -358,32 +352,33 @@ def otrParticleShift(volfile, origstackfile, eulerdocfile, iternum, numpart, pix
 #===============================
 def alignAPSH(volfile, origstackfile, eulerdocfile, classnum, boxsize, numpart, pixrad, timestamp, iternum, dataext=".spi"):
 	
-	apshAngularFile = str(classnum)+"/"+"apshAngularFile%s-%03d.spi"%(timestamp, iternum)
+	apshAngularFile = str(classnum)+"/"+"apshAngularFile-%03d.spi"%(iternum)
 	if os.path.isfile(apshAngularFile):
 		os.remove(apshAngularFile)
 		apDisplay.printColor("File exist! Removing file "+apshAngularFile, "cyan")
 	apshAngularFile = spyder.fileFilter(apshAngularFile)
 	
-	apshListFile = str(classnum)+"/"+"apshListFile%s-%03d.spi"%(timestamp, iternum)
+	apshListFile = str(classnum)+"/"+"apshListFile-%03d.spi"%(iternum)
 	if os.path.isfile(apshListFile):
 		os.remove(apshListFile)
 		apDisplay.printColor("File exist! Removing file "+apshListFile, "cyan")
 	apshListFile = spyder.fileFilter(apshListFile)
 	
-	apshOutFile = str(classnum)+"/"+"apshOut%s-%03d.spi"%(timestamp, iternum)
+	apshOutFile = str(classnum)+"/"+"apshOut-%03d.spi"%(iternum)
 	if os.path.isfile(apshOutFile):
 		os.remove(apshOutFile)
 		apDisplay.printColor("File exist! Removing file "+apshOut, "cyan")
 	apshOut = spyder.fileFilter(apshOutFile)
 	
-	apshStack = str(classnum)+"/"+"apshStack%s-%03d.spi"%(timestamp, iternum)
-	if os.path.isfile(apshStack):
-		os.remove(apshStack)
-		apDisplay.printColor("File exist! Removing file "+apshStack, "cyan")
-	apshStack = spyder.fileFilter(apshStack)
+	apshProjStack = str(classnum)+"/"+"apshProjStack-%03d.spi"%(iternum)
+	if os.path.isfile(apshProjStack):
+		os.remove(apshProjStack)
+		apDisplay.printColor("File exist! Removing file "+apshProjStack, "cyan")
+	apshProjStack = spyder.fileFilter(apshProjStack)
 	
 	origstackfile = spyder.fileFilter(origstackfile)
 	volfile = spyder.fileFilter(volfile)
+	origeulerdocfile = spyder.fileFilter(eulerdocfile)
 	
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider("VO EA,x53",
@@ -397,28 +392,28 @@ def alignAPSH(volfile, origstackfile, eulerdocfile, classnum, boxsize, numpart, 
 		"1",
 		"1-x53"
 	)
-	mySpider.toSpider("MS",
-		"_9@", #reference projections
-		str(boxsize),str(boxsize),"1", #boxsize
-		"x53",
-	)
+	#mySpider.toSpider("MS",
+	#	"_9@", #reference projections
+	#	str(boxsize),str(boxsize),"1", #boxsize
+	#	"x53",
+	#)
 	mySpider.toSpider("PJ 3Q", 
 		volfile, #input vol file
 		str(pixrad), #pixel radius
 		apshListFile, #number of particles		
 		apshAngularFile, #Euler DOC file
-		apshStack+"@*****", #output projections
+		apshProjStack+"@*****", #output projections
 	)
 	mySpider.toSpider("AP SH",
-		apshStack+"@*****", #reference projections
+		apshProjStack+"@*****", #reference projections
 		"1-x53", #reference numbers
-		"69,3", #translational search range, step size
-		"1,24", #first and last ring
+		"6,2", #translational search range, step size
+		"1,%d"%(boxsize/3), #first and last ring
 		apshAngularFile,
 		origstackfile+"@*****",
 		"1-%d"%(numpart),
-		"*",
-		"(0.0)", # no restrictions for alignment
+		origeulerdocfile,
+		"20", #"(0.0)", # no restrictions for alignment
 		"1", # mirror check?
 		apshOut, # output 
 	)
@@ -463,29 +458,30 @@ def calcFSC(volfile1, volfile2, fscout, dataext=".spi"):
 	return
 
 #===============================
-def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, timestamp, classnum=None, dataext=".spi"):
+def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, iternum, timestamp, classnum=None, dataext=".spi"):
 
 	origstack = spyder.fileFilter(origstackfile)
 	
 	if classnum is not None:
-		apshstackfile = str(classnum)+"/"+"apshstack%s.spi"%(timestamp)
+		apshstackfile = str(classnum)+"/"+"apshStack-%03d.spi"%(iternum)
 	else:
-		apshstackfile = "apshstack%s.spi"%(timestamp)
+		apshstackfile = "apshStack-%03d.spi"%(iternum)
 	
 	apshstack = spyder.fileFilter(apshstackfile)
-		
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
-	mySpider.toSpider("RT SQ",
+	
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider.toSpiderQuiet("RT SQ",
 		origstack+"@"+str(partnum), #stack and particle number
 		apshstack+"@"+str(partnum), #output stack and particle
 		"("+str(rotation)+")", #rotation
 		"("+str(Xshift)+","+str(Yshift)+")", #shift parameters
 	)
 	mySpider.close()
+		
 	return apshstackfile
 
 #=============================== NOT WORKING CORRECTLY
-def rotshiftStack(origstackfile, rotShiftFile, timestamp, classnum=None, dataext=".spi"):
+def rotshiftStack(origstackfile, rotShiftFile, timestamp, iternum, classnum=None, dataext=".spi"):
 
 	origstackfile = spyder.fileFilter(origstackfile)
 	
