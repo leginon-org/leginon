@@ -115,7 +115,7 @@ def preProcessImage(imgarray, bin=None, apix=None, lowpass=None, planeReg=None,
 	return result
 
 #=========================
-def binImg(imgarray, bin=1):
+def binImg(imgarray, bin=1, warn=True):
 	"""
 	returns a binned image of a 2D image
 	"""
@@ -127,7 +127,8 @@ def binImg(imgarray, bin=1):
 		maxx = int(oldshape[0]/bin)*bin
 		maxy = int(oldshape[1]/bin)*bin
 		cutshape = numpy.asarray((maxx, maxy))
-		apDisplay.printWarning("rescaling array to fit bin dimensions: "+str(oldshape)+" -> "+str(cutshape))
+		if warn is True:
+			apDisplay.printWarning("rescaling array to fit bin dimensions: "+str(oldshape)+" -> "+str(cutshape))
 		imgarray = frame_cut(imgarray, cutshape)
 	newshape = numpy.asarray(oldshape)/bin
 	tmpshape = (newshape[0], bin, newshape[1], bin)
@@ -880,6 +881,7 @@ def frame_constant(a, shape, cval=0):
 	b[my:, mx:]   = cval			 # bottomright
 	return b
 
+#=========================
 def writeMrcStack(path, stackname, mrc_files, binning=1):
 	apDisplay.printMsg("Writing MRC stack file... ")
 	stackname = os.path.join(path, stackname)
