@@ -116,51 +116,13 @@ class Tomography {
 			."a.`REF|ScopeEMData|scope` as scope_em_id, "
 			."s.`SUBD|stage position|a` as stage_alpha, "
 			."p.* "
-
-#			."p.`SUBD|pixel predicted shift|n` AS
-#			."p.`SUBD|pixel predicted shift|t` AS
-#			."p.`SUBD|pixel predicted shift|x` AS
-#			."p.`SUBD|pixel predicted shift|y` AS
-#			."p.`SUBD|predicted shift|n` AS
-#			."p.`SUBD|predicted shift|t` AS
-#			."p.`SUBD|predicted shift|x` AS
-#			."p.`SUBD|predicted shift|y` AS
-#			."p.`SUBD|predicted shift|z` AS
-#			."p.`SUBD|pixel position|n` AS
-#			."p.`SUBD|pixel position|t` AS
-#			."p.`SUBD|pixel position|x` AS
-#			."p.`SUBD|pixel position|y` AS
-#			."p.`SUBD|correlated position|x` AS
-#			."p.`SUBD|correlated position|y` AS
-#			."p.`SUBD|pixel predicted position|n` AS
-#			."p.`SUBD|pixel predicted position|t` AS
-#			."p.`SUBD|pixel predicted position|x` AS
-#			."p.`SUBD|pixel predicted position|y` AS
-#			."p.`SUBD|pixel correlated position|x` AS
-#			."p.`SUBD|pixel correlated position|y` AS
-#			."p.`SUBD|predicted position|n` AS
-#			."p.`SUBD|predicted position|t` AS
-#			."p.`SUBD|predicted position|theta` AS
-#			."p.`SUBD|predicted position|x` AS
-#			."p.`SUBD|predicted position|y` AS
-#			."p.`SUBD|predicted position|z` AS
-#			."p.`SUBD|position|n` AS
-#			."p.`SUBD|position|t` AS
-#			."p.`SUBD|position|x` AS
-#			."p.`SUBD|position|y` AS
-#			."p.`SUBD|pixel raw correlation|x` AS
-#			."p.`SUBD|pixel raw correlation|y` AS
-#			."p.`SUBD|correlation|x` AS
-#			."p.`SUBD|correlation|y` AS
-#			."p.`SUBD|pixel correlation|x` AS
-#			."p.`SUBD|pixel correlation|y` AS
-
 			."FROM AcquisitionImageData a "
 			."LEFT JOIN ScopeEMData s "
 			."ON (s.DEF_id = a.`REF|ScopeEMData|scope`) "
 			."LEFT JOIN TomographyPredictionData p "
 			."ON (a.DEF_id = p.`REF|AcquisitionImageData|image`) "
-			."WHERE `REF|TiltSeriesData|tilt series`=$tiltSeriesId "
+			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
+			."AND a.`label` IS NULL "
 			."ORDER BY stage_alpha";
 
 		return $this->mysql->getSQLResult($query);
