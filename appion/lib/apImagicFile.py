@@ -228,7 +228,15 @@ def writeImagic(array, filename, msg=True):
 		none
 	"""
 	if isinstance(array, list):
-		array = numpy.asarray(array, dtype=numpy.float32)
+		try:
+			array = numpy.asarray(array, dtype=numpy.float32)
+		except:
+			boxsizes = []
+			for part in array:
+				shape = part.shape
+				if not shape in boxsizes:
+					boxsizes.append(shape)
+			apDisplay.printError("your particles have different boxsizes: "+str(boxsizes))
 
 	t0 = time.time()
 	if msg is True:
