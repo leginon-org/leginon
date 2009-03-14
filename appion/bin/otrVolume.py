@@ -8,6 +8,7 @@ import numpy
 import time
 import threading
 import math
+from scipy import ndimage
 #appion
 import appionScript
 import apStack
@@ -15,61 +16,115 @@ import apDisplay
 import appionData
 import apEMAN
 import apFile
+import apRecon
 import apChimera
+import apProject
 import apParam
 from apTilt import apTiltPair
 from apSpider import operations, backproject, alignment
+from pyami import mem, mrc
 
 class otrVolumeScript(appionScript.AppionScript):
 	#=====================
+	def onInit(self):
+		self.rotmirrorcache = {}
+		self.fscresolution = None
+		self.rmeasureresolution = None
+
+	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage("Usage: %prog --norefclass=ID --tilt-stack=# --classnums=#,#,# [options]")
-		self.parser.add_option("--classnum", "--classnums", dest="classnums", type="str",
-			help="Class numbers to use for otr volume, e.g. 0,1,2", metavar="#")
+		self.parser.set_usage("Usage: %prog --cluster-id=ID --tilt-stack=# --classnums=#,#,# [options]")
+
+		### strings
+		self.parser.add_option("--classnums", dest="classnums", type="str",
+			help="Class numbers to use for rct volume, e.g. 0,1,2", metavar="#")
+
+		### integers
 		self.parser.add_option("--tilt-stack", dest="tiltstackid", type="int",
 			help="Tilted Stack ID", metavar="#")
-		self.parser.add_option("--norefclass", dest="norefclassid", type="int",
-			help="Noref class id", metavar="ID")
-		self.parser.add_option("--num-iters", dest="numiters", type="int", default=6,
+		self.parser.add_option("--cluster-id", dest="clusterid", type="int",
+			help="clustering stack id", metavar="ID")
+		self.parser.add_option("--align-id", dest="alignid", type="int",
+			help="alignment stack id", metavar="ID")
+		self.parser.add_option("--num-iters", dest="numiters", type="int", default=4, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
 			help="Particle mask radius (in pixels)", metavar="ID")
+		self.parser.add_option("--tilt-bin", dest="tiltbin", type="int", default=1,
+			help="Binning of the tilted image", metavar="ID")
+		self.parser.add_option("--num-part", dest="numpart", type="int",
+			help="Limit number of particles, for debugging", metavar="#")
+		self.parser.add_option("--median", dest="median", type="int", default=3,
+			help="Median filter", metavar="#")
+
+		### floats
 		self.parser.add_option("--lowpassvol", dest="lowpassvol", type="float", default=10.0,
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
+		self.parser.add_option("--min-score", dest="minscore", type="float",
+			help="Minimum cross-correlation score", metavar="#")
+		self.parser.add_option("--contour", dest="contour", type="float", default=3.0,
+			help="Chimera snapshot contour", metavar="#")
+		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.1,
+			help="Chimera snapshot zoom", metavar="#")
+
+		### true/false
+		self.parser.add_option("--no-eotest", dest="eotest", default=True,
+			action="store_false", help="Do not perform eotest for resolution")
+		self.parser.add_option("--eotest", dest="eotest", default=True,
+			action="store_true", help="Perform eotest for resolution")
+		self.parser.add_option("--skip-chimera", dest="skipchimera", default=False,
+			action="store_true", help="Skip chimera imaging")
+
+		### choices
+		self.mirrormodes = ( "all", "yes", "no" )
+		self.parser.add_option("--mirror", dest="mirror",
+			help="Mirror mode", metavar="MODE", 
+			type="choice", choices=self.mirrormodes, default="all" )
 
 	#=====================
 	def checkConflicts(self):
+		### parse class list
 		if self.params['classnums'] is None:
 			apDisplay.printError("class number was not defined")
 		rawclasslist = self.params['classnums'].split(",")
-		self.classlist = []
+		self.classlist = []	
 		for cnum in rawclasslist:
 			try:
 				self.classlist.append(int(cnum))
 			except:
 				apDisplay.printError("could not parse: "+cnum)
-		if self.params['runname'] is None:
-			apDisplay.printError("new stack name was not defined")
-		if self.params['norefclassid'] is None:
-			apDisplay.printError("noref class ID was not defined")
+
+		### check for missing and duplicate entries
+		if self.params['alignid'] is None and self.params['clusterid'] is None:
+			apDisplay.printError("Please provide either --cluster-id or --align-id")
+		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
+			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
+
+		### get the stack ID from the other IDs
+		if self.params['alignid'] is not None:
+			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.params['notstackid'] = self.alignstackdata['stack'].dbid
+		elif self.params['clusterid'] is not None:
+			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
+			self.params['notstackid'] = self.alignstackdata['stack'].dbid
+
+		### check and make sure we got the stack id
+		if self.params['notstackid'] is None:
+			apDisplay.printError("untilted stackid was not found")
+
 		if self.params['tiltstackid'] is None:
 			apDisplay.printError("tilt stack ID was not defined")
 		if self.params['radius'] is None:
 			apDisplay.printError("particle mask radius was not defined")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description")
-
-		#get the stack ID from the noref class ID
-		self.norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
-		norefRun = self.norefclassdata['norefRun']
-		self.params['notstackid'] = norefRun['stack'].dbid
-		if self.params['notstackid'] is None:
-			apDisplay.printError("untilted stackid was not defined")
-		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
+		
+		boxsize = self.getBoxSize()
 		if self.params['radius']*2 > boxsize-2:
-			apDisplay.printError("particle radius is too big for stack boxsize")
+			apDisplay.printError("particle radius is too big for stack boxsize")	
 
 	#=====================
 	def setRunDir(self):
@@ -145,6 +200,146 @@ class otrVolumeScript(appionScript.AppionScript):
 		return -1
 
 	#=====================
+	def getBoxSize(self):
+		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
+		if self.params['tiltbin'] == 1:
+			return boxsize
+		newbox = int( math.floor( boxsize / float(self.params['tiltbin']) / 2.0)* 2.0 )
+		return newbox
+
+	#=====================
+	def getGoodAlignParticles(self, cnum):
+		includeParticle = []
+		tiltParticlesData = []
+		nopairParticle = 0
+		excludeParticle = 0
+		badmirror = 0
+		badscore = 0
+		apDisplay.printMsg("Sorting particles from classes")
+		count = 0
+		startmem = mem.active()
+		t0 = time.time()
+		if self.params['clusterid'] is not None:
+			### method 1: get particles from clustering data
+			clusterpartq = appionData.ApClusteringParticlesData()
+			clusterpartq['clusterstack'] = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			clusterpartdatas = clusterpartq.query()
+			apDisplay.printMsg("Sorting "+str(len(clusterpartdatas))+" clustered particles")
+
+			for clustpart in clusterpartdatas:
+				count += 1
+				if count%50 == 0:
+					sys.stderr.write(".")
+					memdiff = (mem.active()-startmem)/count/1024.0
+					if memdiff > 3:
+						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
+				#write to text file
+				clustnum = clustpart['refnum']-1
+				if ( self.params['minscore'] is not None 
+				 and clustpart['alignparticle']['score'] is not None 
+				 and clustpart['alignparticle']['score'] < self.params['minscore'] ):
+					badscore += 1
+					continue
+				if clustnum == cnum:
+					notstackpartnum = clustpart['alignparticle']['stackpart']['particleNumber']
+					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+						notstackpartnum, self.params['tiltstackid'])
+					if tiltstackpartdata is None:
+						nopairParticle += 1
+					else:
+						inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
+						if ( self.params['mirror'] == "all"
+						 or (self.params['mirror'] == "no" and mirror is False)
+						 or (self.params['mirror'] == "yes" and mirror is True) ):
+							emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+							includeParticle.append(emantiltstackpartnum)
+							tiltParticlesData.append(tiltstackpartdata)
+							if self.params['numpart'] is not None and len(includeParticle) > self.params['numpart']:
+								break
+						else:
+							badmirror += 1
+				else:
+					excludeParticle += 1
+		else:
+			### method 2: get particles from alignment data
+			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq['alignstack'] = self.alignstackdata
+			alignpartdatas = alignpartq.query()
+			apDisplay.printMsg("Sorting "+str(len(alignpartdatas))+" aligned particles")
+
+			for alignpart in alignpartdatas:
+				count += 1
+				if count%50 == 0:
+					sys.stderr.write(".")
+					memdiff = (mem.active()-startmem)/count/1024.0
+					if memdiff > 3:
+						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
+				#write to text file
+				alignnum = alignpart['ref']['refnum']-1
+				if ( self.params['minscore'] is not None 
+				 and alignpart['score'] is not None 
+				 and alignpart['score'] < self.params['minscore'] ):
+					badscore += 1
+					continue
+				if alignnum == cnum:
+					notstackpartnum = alignpart['stackpart']['particleNumber']
+					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
+						notstackpartnum, self.params['tiltstackid'])
+					if tiltstackpartdata is None:
+						nopairParticle += 1
+					else:
+						inplane, mirror = self.getParticleInPlaneRotation(tiltstackpartdata)
+						if ( self.params['mirror'] == "all"
+						 or (self.params['mirror'] == "no" and mirror is False)
+						 or (self.params['mirror'] == "yes" and mirror is True) ):
+							emantiltstackpartnum = tiltstackpartdata['particleNumber']-1
+							includeParticle.append(emantiltstackpartnum)
+							tiltParticlesData.append(tiltstackpartdata)
+							if self.params['numpart'] is not None and len(includeParticle) > self.params['numpart']:
+								break
+						else:
+							badmirror += 1
+				else:
+					excludeParticle += 1
+		includeParticle.sort()
+		if time.time()-t0 > 1.0:
+			apDisplay.printMsg("\nSorting time: "+apDisplay.timeString(time.time()-t0))
+		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
+			+str(excludeParticle)+" particles with "+str(nopairParticle)+" unpaired particles")
+		if badmirror > 0:
+			apDisplay.printMsg("Particles with bad mirrors: %d"%(badmirror))
+		if badscore > 0:
+			apDisplay.printColor("Particles with bad scores: %d"%(badscore), "cyan")
+		if len(includeParticle) < 1:
+			apDisplay.printError("No particles were kept")
+		memdiff = (mem.active()-startmem)/count/1024.0
+		if memdiff > 0.1:
+			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
+		return includeParticle, tiltParticlesData
+
+	#=====================
+	def getParticleInPlaneRotation(self, tiltstackpartdata):
+		partid = tiltstackpartdata.dbid
+		if partid in self.rotmirrorcache:
+			### use cached value
+			return self.rotmirrorcache[partid] 
+
+		partnum = tiltstackpartdata['particleNumber']
+		notstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['tiltstackid'], 
+			partnum, self.params['notstackid'])
+
+		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq['stackpart'] = notstackpartdata
+		alignpartq['alignstack'] = self.alignstackdata
+		alignpartdatas = alignpartq.query()
+		if not alignpartdatas or len(alignpartdatas) != 1:
+			apDisplay.printError("could not get inplane rotation for particle %d"%(tiltstackpartdata['particleNumber']))
+		inplane = alignpartdatas[0]['rotation']
+		mirror = alignpartdatas[0]['mirror']
+		self.rotmirrorcache[partid] = (inplane, mirror)
+		return inplane, mirror
+		
+	#=====================
 	def insertOtrRun(self, volfile):
 		### insert otr run data
 		otrrunq = appionData.ApOtrRunData()
@@ -193,29 +388,55 @@ class otrVolumeScript(appionScript.AppionScript):
 	#=====================
 	def processVolume(self, spivolfile, cnum, iternum=0):
 		### set values
-		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
-		rawspifile = os.path.join(self.params['rundir'], str(cnum),"rawvolume%s-%03d.spi"%(self.timestamp, iternum))
-		emanvolfile = os.path.join(self.params['rundir'], str(cnum), "volume%s-%03d.mrc"%(self.timestamp, iternum))
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		boxsize = self.getBoxSize()
+		
+		volfilename = os.path.splitext(spivolfile)[0]
+		rawspifile = volfilename + "-raw.spi"
+		mrcvolfile = volfilename + ".mrc"
 		lowpass = self.params['lowpassvol']
 		### copy original to raw file
 		shutil.copy(spivolfile, rawspifile)
-		### process volume files
-		emancmd = ("proc3d "+spivolfile+" "+emanvolfile+" center norm=0,1 apix="
+
+		### convert to mrc
+		emancmd = ("proc3d "+spivolfile+" "+mrcvolfile+" norm=0,1 apix="+str(apix))
+		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
+		### median filter
+		rawvol = mrc.read(mrcvolfile)
+		medvol = ndimage.median_filter(rawvol, size=self.params['median'])
+		mrc.write(medvol, mrcvolfile)
+
+		### low pass filter
+		emancmd = ("proc3d "+mrcvolfile+" "+mrcvolfile+" center norm=0,1 apix="
 			+str(apix)+" lp="+str(lowpass))
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" origin=0,0,0 "
+
+		### set origin
+		emancmd = "proc3d "+mrcvolfile+" "+mrcvolfile+" origin=0,0,0 "
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		emancmd = "proc3d "+emanvolfile+" "+emanvolfile+" mask="+str(self.params['radius'])
+
+		### mask volume
+		emancmd = "proc3d "+mrcvolfile+" "+mrcvolfile+" mask="+str(self.params['radius'])
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
+
 		### convert to spider
 		apFile.removeFile(spivolfile)
-		emancmd = "proc3d "+emanvolfile+" "+spivolfile+" spidersingle"
+		emancmd = "proc3d "+mrcvolfile+" "+spivolfile+" spidersingle"
 		apEMAN.executeEmanCmd(emancmd, verbose=False)
-		### image with chimera
-		apChimera.renderSnapshots(emanvolfile, 30, 1.5, 0.9, apix, 'c1', boxsize, False)
 
-		return emanvolfile
+		### image with chimera
+		if self.params['skipchimera'] is False:
+			snapshotthread = threading.Thread(target=apChimera.renderSnapshots, 
+				args=(mrcvolfile, 30, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+			snapshotthread.setDaemon(1)
+			snapshotthread.start()
+			animationthread = threading.Thread(target=apChimera.renderAnimation, 
+				args=(mrcvolfile, 30, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+			animationthread.setDaemon(1)
+			animationthread.start()
+
+		return mrcvolfile
 
 	#=====================
 	def getGoodParticles(self, classpartdatas, norefclassnum):
@@ -247,29 +468,41 @@ class otrVolumeScript(appionScript.AppionScript):
 		return includeParticle, tiltParticlesData
 
 	#=====================
-	def makeEulerDoc(self, tiltParticlesData, classnum):
+	def makeEulerDoc(self, tiltParticlesData, cnum):
 		count = 0
-		eulerfile = os.path.join(self.params['rundir'], str(classnum), "eulersdoc"+self.timestamp+".spi")
+		eulerfile = os.path.join(self.params['rundir'], str(cnum), "eulersdoc"+self.timestamp+".spi")
 		eulerf = open(eulerfile, "w")
-		apDisplay.printMsg("creating Euler doc file")
+		apDisplay.printMsg("Creating Euler angles doc file")
 		starttime = time.time()
 		tiltParticlesData.sort(self.sortTiltParticlesData)
+		startmem = mem.active()
 		for stackpartdata in tiltParticlesData:
 			count += 1
-			if count%100 == 0:
+			if count%50 == 0:
 				sys.stderr.write(".")
 				eulerf.flush()
-			gamma, theta, phi, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
-			inplane = self.getParticleNoRefInPlaneRotation(stackpartdata)
-			psi = -1.0*(gamma + inplane)
-			while psi < 0:
-				psi += 360.0
+				memdiff = (mem.active()-startmem)/count/1024.0
+				if memdiff > 3:
+					apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
+			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
+			totrot = -1.0*(notrot + inplane)
+			if mirror is True:
+				#theta flips to the back
+				tiltangle = -1.0 * tiltangle + 180 #tiltangle = tiltangle + 180.0   #theta
+				totrot = -1.0 * totrot - 180.0  #phi
+				tiltrot = tiltrot + 180            #tiltrot = -1.0 * tiltrot + 180.0 #psi
+			while totrot < 0:
+				totrot += 360.0
 			### this is the original eman part num; count is new part num
 			partnum = stackpartdata['particleNumber']-1
-			line = operations.spiderOutLine(count, [phi, tiltangle, psi])
+			line = operations.spiderOutLine(count, [tiltrot, tiltangle, totrot])
 			eulerf.write(line)
 		eulerf.close()
-		apDisplay.printColor("finished Euler doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		apDisplay.printColor("\nFinished Euler angle doc file in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		memdiff = (mem.active()-startmem)/count/1024.0
+		if memdiff > 0.1:
+			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
 		return eulerfile
 
 	#=====================
@@ -326,11 +559,14 @@ class otrVolumeScript(appionScript.AppionScript):
 
 		apsh = open(APSHout, "r")
 
-		neweulerdoc = os.path.join(self.params['rundir'], str(classnum),"newEulersdoc%s-%03d.spi"%(self.timestamp, iternum))
+		neweulerdoc = os.path.join(self.params['rundir'], str(classnum),"newEulersdoc-%03d.spi"%(iternum))
 		neweulerfile = open(neweulerdoc, "w")
-		rotshiftdoc = os.path.join(self.params['rundir'], str(classnum),"rotShiftdoc%s-%03d.spi"%(self.timestamp, iternum))
+		rotshiftdoc = os.path.join(self.params['rundir'], str(classnum),"rotShiftdoc-%03d.spi"%(iternum))
 		rotshiftfile = open(rotshiftdoc, "w")
 
+		starttime = time.time()
+
+		count = 0
 		for line in apsh.readlines():
 			value = line.split()
 			try:
@@ -347,14 +583,21 @@ class otrVolumeScript(appionScript.AppionScript):
 			phi = float(value[4])
 
 			### rotate and shift particle
-			APSHstack = backproject.rotshiftParticle(alignstack, key, rot, cumX, cumY, self.timestamp, str(classnum))
+			APSHstack = backproject.rotshiftParticle(alignstack, key, rot, cumX, cumY, iternum, self.timestamp, str(classnum))
 
 			### write out new euler file
-			eulerline = operations.spiderOutLine(key, [phi, theta, psi])
+			eulerline = operations.spiderOutLine(key, [psi, theta, phi])
 			neweulerfile.write(eulerline)
 
 			rotshiftline = operations.spiderOutLine(key, [rot, 1.00, cumX, cumY])
 			rotshiftfile.write(rotshiftline)
+			count+=1
+			
+			if (count%20) == 0:
+				apDisplay.printColor(str(numpart-count)+" particles left", "cyan")
+				apDisplay.printColor("Estimated time left is "+apDisplay.timeString(((time.time()-starttime)/count)*(numpart-count)), "cyan")
+			
+		apDisplay.printColor("finished rotating and shifting particles "+apDisplay.timeString(time.time()-starttime), "cyan")
 
 		neweulerfile.close()
 		rotshiftfile.close()
@@ -408,7 +651,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			probs.append(prob)
 
 		### output file for APSH with weighted CC values
-		APSHout_weighted = os.path.join(self.params['rundir'], str(classnum), "APSHout_weighted%s-%03d.spi"%(self.timestamp, iternum))
+		APSHout_weighted = os.path.join(self.params['rundir'], str(classnum), "apshOut_weighted-%03d.spi"%(iternum))
 
 		apsh = open(APSHout, "r")
 		apshCCC = open(APSHout_weighted, "w")
@@ -483,14 +726,14 @@ class otrVolumeScript(appionScript.AppionScript):
 		count = 1
 		part = 1
 
-		corrSelect = os.path.join(self.params['rundir'], str(classnum), "APSHcorrSelect%s-%03d.spi"%(self.timestamp, iternum))
+		corrSelect = os.path.join(self.params['rundir'], str(classnum), "apshCorrSelect-%03d.spi"%(iternum))
 		corrSelectFile = open(corrSelect, "w")
 
 
 		for i,corrValue in enumerate(corrValues):
 
 			if corrValue >= threshold:
-				line = operations.spiderOutLine(count, [i])
+				line = operations.spiderOutLine(count, [i+1])
 				corrSelectFile.write(line)
 				count+=1
 
@@ -507,10 +750,10 @@ class otrVolumeScript(appionScript.AppionScript):
 		selectFile = open(select, "r")
 		selectFilename = os.path.splitext(os.path.basename(select))[0]
 
-		selectOdd = os.path.join(self.params['rundir'], str(classnum), selectFilename+"Odd%s-%03d.spi"%(self.timestamp, iternum))
+		selectOdd = os.path.join(self.params['rundir'], str(classnum), selectFilename+"Odd.spi")
 		selectOddFile = open(selectOdd, "w")
 
-		selectEven = os.path.join(self.params['rundir'], str(classnum), selectFilename+"Even%s-%03d.spi"%(self.timestamp, iternum))
+		selectEven = os.path.join(self.params['rundir'], str(classnum), selectFilename+"Even.spi")
 		selectEvenFile = open(selectEven, "w")
 
 		countOdd=1
@@ -599,19 +842,10 @@ class otrVolumeScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-
 		### get stack data
 		notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
 		tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
-		pixelsize = tiltstackdata['pixelsize']*1e10
-		boxsize = apStack.getStackBoxsize(self.params['tiltstackid'])
-
-		### get particles from noref class run
-		classpartq = appionData.ApNoRefClassParticlesData()
-		classpartq['classRun'] = self.norefclassdata
-		classpartdatas = classpartq.query()
-		apDisplay.printMsg("Found "+str(len(classpartdatas))+" particles in the norefRun")
-
+		
 		for cnum in self.classlist:
 
 			print "\n"
@@ -619,9 +853,10 @@ class otrVolumeScript(appionScript.AppionScript):
 			apDisplay.printMsg("Processing stack of class "+str(cnum)+"")
 			apDisplay.printMsg("###########################")
 			print "\n"
-
+			
 			### get good particle numbers
-			includeParticle, tiltParticlesData = self.getGoodParticles(classpartdatas, cnum)
+			includeParticle, tiltParticlesData = self.getGoodAlignParticles(cnum)
+			self.numpart = len(includeParticle)
 
 			### write kept particles to file
 			apParam.createDirectory(os.path.join(self.params['rundir'], str(cnum)))
@@ -648,9 +883,12 @@ class otrVolumeScript(appionScript.AppionScript):
 			### back project particles into volume
 			volfile = os.path.join(self.params['rundir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, 0))
 			self.initialBPRP(cnum, volfile, spiderstack, eulerfile, len(includeParticle), self.params['radius'])
+			### RCT backproject method
+			#backproject.backprojectCG(spiderstack, eulerfile, volfile, numpart=len(includeParticle), pixrad=self.params['radius'])
 
 			### filter the volume (low-pass Butterworth)
-			backproject.butterworthLP(volfile, pixelsize)
+			apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
+			backproject.butterworthLP(volfile, apix)
 
 			### need work... filtered volume overwrites on the existing volume
 			backproject.normalizeVol(volfile)
@@ -658,9 +896,9 @@ class otrVolumeScript(appionScript.AppionScript):
 			alignstack = spiderstack
 
 			### center/convert the volume file
-			emanvolfile = self.processVolume(volfile, cnum, 0)
+			mrcvolfile = self.processVolume(volfile, cnum, 0)
 
-			for i in range(5):
+			for i in range(4):
 				iternum = i+1
 				apDisplay.printMsg("running backprojection iteration "+str(iternum))
 				### xy-shift particles to volume projections
@@ -671,72 +909,86 @@ class otrVolumeScript(appionScript.AppionScript):
 
 				### back project particles into better volume
 				volfile = os.path.join(self.params['rundir'], str(cnum), "volume%s-%03d.spi"%(self.timestamp, iternum))
-				backproject.backproject3F(alignstack, eulerfile, volfile,
-					numpart=len(includeParticle))
+				backproject.backproject3F(alignstack, eulerfile, volfile, numpart=len(includeParticle))
 
 				### filter the volume (low-pass Butterworth)
-				backproject.butterworthLP(volfile, pixelsize)
+				backproject.butterworthLP(volfile, apix)
 
 				### need work... filtered volume has a different name
 				backproject.normalizeVol(volfile)
 
 				### center/convert the volume file
-				emanvolfile = self.processVolume(volfile, cnum, iternum)
+				mrcvolfile = self.processVolume(volfile, cnum, iternum)
 
 			###############################
 			#										#
 			# Andres's refinement steps	#
 			#										#
 			###############################
+			print "\n"
+			apDisplay.printMsg("##################################")
+			apDisplay.printMsg("Starting Andres' refinement steps")
+			apDisplay.printMsg("##################################")
+			print "\n"
+
 
 			for j in range(5):
 				iternum = j+1
-				self.appiondb.dbd.ping()
-				apDisplay.printMsg("projection-matching refinement/XMIPP iteration "+str(iternum))
+				appionData.ApPathData.direct_query(1)
+				apDisplay.printMsg("Starting projection-matching refinement/XMIPP iteration "+str(iternum))
 
+				boxsize = self.getBoxSize()
 				### projection-matching refinement/XMIPP
 				apshout, apshstack, apsheuler = self.projMatchRefine(cnum, volfile, alignstack, eulerfile, boxsize, len(includeParticle), self.params['radius'], iternum)
+
+				apDisplay.printMsg("Calculating weighted cross-correlation coefficients")
 
 				### calculation of weighted cross-correlation coefficients
 				apshout_weighted = self.cccAPSH(apshout, cnum, iternum)
 
+				apDisplay.printMsg("Creating select files based on weighted cross-correlation coefficients")
+
 				### create select files based on calculated weighted-cross-correlation
 				corrSelect = self.makecccAPSHselectFile(apshout_weighted, cnum, iternum, factor=0.1)
 
-				### generate odd and even select files for FSC calculation
-				corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
-
 				### create volume file names
-				apshVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume%s-%03d.spi"%(self.timestamp, iternum))
-				apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd%s-%03d.spi"%(self.timestamp, iternum))
-				apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even%s-%03d.spi"%(self.timestamp, iternum))
-
-				apshVols = []
-				apshVols.append(apshVolfile)
-				apshVols.append(apshOddVolfile)
-				apshVols.append(apshEvenVolfile)
+				apshVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume-%03d.spi"%(iternum))
 
 				### run BPRP on selected particles
 				self.APSHbackProject(apshstack, apsheuler, apshVolfile, cnum, corrSelect)
-				self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
-				self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
 
-				apshCenteredVols = []
 				### center volume
-				for apshVol in apshVols:
-					filename = os.path.splitext(apshVol)[0]
-					apshOutVol = filename+"_centered%s-%03d.spi"%(self.timestamp, iternum)
-					apshCenteredVols.append(apshOutVol)
-					backproject.centerVolume(apshVol, apshOutVol)
+				filename = os.path.splitext(apshVol)[0]
+				apshVolFileCentered = filename+"_centered.spi"
+				backproject.centerVolume(apshVolfile, apshVolFileCentered)
 
 				### calculate FSC
-				fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout%s-%03d.spi"%(self.timestamp, iternum))
-				backproject.calcFSC(apshCenteredVols[1], apshCenteredVols[2], fscout)
+				
+				### generate odd and even select files for FSC calculation
+				#corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
+				
+				#apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd-%03d.spi"%(iternum))
+				#apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even-%03d.spi"%(iternum))
+				
+				#self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
+				#self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
+				
+				#fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout%s-%03d.spi"%(self.timestamp, iternum))
+				#backproject.calcFSC(apshCenteredVols[1], apshCenteredVols[2], fscout)
 
 				### filter volume
-				backproject.butterworthFscLP(apshVolfile, fscout)
+				#backproject.butterworthFscLP(apshVolfile, fscout)
 
+				volfile = apshVolFileCentered
+				eulerfile = apsheuler
+				mrcvolfile = self.processVolume(volfile, cnum, iternum)
 
+				print "\n"
+				apDisplay.printMsg("###########################")
+				apDisplay.printMsg("Done with iteration "+str(j+1)+"")
+				apDisplay.printMsg("###########################")
+				print "\n"
+		
 		sys.exit(1)
 
 
@@ -748,7 +1000,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			pairlist = self.computeClassVolPair()
 
 		### insert volumes into DB
-		self.insertOtrRun(emanvolfile)
+		self.insertOtrRun(mrcvolfile)
 
 #=====================
 if __name__ == "__main__":
