@@ -12,7 +12,7 @@
 # $Locker:  $
 
 import wx
-from gui.wx.Entry import FloatEntry
+from gui.wx.Entry import FloatEntry, IntEntry
 import gui.wx.Camera
 import gui.wx.TargetPanel
 import gui.wx.Node
@@ -115,11 +115,22 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'seconds between images')
 		szpause.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
+		sztimeout = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Give up after')
+		sztimeout.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.widgets['timeout'] = IntEntry(self, -1, min=0, chars=4)
+		sztimeout.Add(self.widgets['timeout'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'minutes')
+		sztimeout.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szthreshold, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpause, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.instrumentselection, (2, 0), (1, 1), wx.EXPAND)
-		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1), wx.EXPAND)
+		sz.Add(sztimeout, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.instrumentselection, (3, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (4, 0), (1, 1), wx.EXPAND)
 
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
