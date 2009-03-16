@@ -4,7 +4,6 @@
 #include <complex.h>
 #include "imgbase.h"
 #include "edge.h"
-#include <fftw3.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
