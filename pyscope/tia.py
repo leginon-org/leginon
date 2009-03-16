@@ -1,5 +1,5 @@
 ﻿import ccdcamera
-import NumpySafeArray
+import comarray
 from win32com.client import Dispatch
 import pythoncom
 import numpy
@@ -171,7 +171,7 @@ acquisition.
 			self.selectSetup()
 			self.finalizeSetup()
 			self.acqman.Acquire()
-			arr = NumpySafeArray.prop(self.im.Data, 'Array')
+			arr = comarray.prop(self.im.Data, 'Array')
 			arr = numpy.flipud(arr)
 		except Exception, e:
 			print e

@@ -14,10 +14,7 @@ try:
     import pythoncom
     import pywintypes
     import win32com.client
-    try:
-        import NumpySafeArray
-    except ImportError:
-        from pyScope import NumpySafeArray
+    import comarray
 except ImportError:
     pass
 
@@ -116,18 +113,18 @@ class Gatan(ccdcamera.CCDCamera):
                 if self.getInserted():
                     self.setInserted(False)
 
-                    image = NumpySafeArray.call(self.camera, 'AcquireRawImage')
+                    image = comarray.call(self.camera, 'AcquireRawImage')
 
                     self.setInserted(True)
                     return image
             else:
                 exposuretime = self.getExposureTime()
                 self.setExposureTime(0)
-                image = NumpySafeArray.call(self.camera, 'AcquireRawImage')
+                image = comarray.call(self.camera, 'AcquireRawImage')
                 self.setExposureTime(exposuretime)
                 return image
         try:
-            image = NumpySafeArray.call(self.camera, 'AcquireRawImage')
+            image = comarray.call(self.camera, 'AcquireRawImage')
             return image
         except pywintypes.com_error, e:
             raise ValueError('invalid image dimensions')
