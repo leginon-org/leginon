@@ -51,7 +51,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--maxfilt", dest="maxfilt", type="float", default=3.2,
 			help="maximum value for low-pass filter applied to the aplitude-corrected stack", metavar="FLOAT")
-		self.parser.add_option("--ampfile", dest="ampfile", type="str", default='/export/home/dlyumkis/synthetic_data/ampcor_power.spi',
+		self.parser.add_option("--ampfile", dest="ampfile", type="str", default='/usr/local/pyappion/lib/ampcor_power.spi',
 			help="amplitude correction file that will be applied to the stack", metavar="STR")
 		self.parser.add_option("--kv", dest="kv", type="float", default=120,
 			help="KV of the microscope, needed for envelope function", metavar="INT")
