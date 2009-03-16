@@ -159,7 +159,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	#=====================
 	def runAmpCorrect (self, start_name, end_name, params):
 		tmpfile = apVolume.createAmpcorBatchFile(start_name, params)
-	        apVolume.runAmpcor()
+		apVolume.runAmpcor()
 
 		### convert back to mrc or img/hed
 		if os.path.isfile(end_name):
@@ -199,42 +199,42 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 	#=====================
 	def breakupStackIntoSingleFiles(self, stackfile, partdir="partfiles", numpart=None):
-	        """
-	        takes the stack file and creates single spider files ready for processing
-	        """
-	        apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
-	        
-	        starttime = time.time()
-	        filesperdir = self.params['filesperdir']
-	        if numpart is None:
-	                numpart = apFile.numImagesInStack(stackfile)
-	        apParam.createDirectory(partdir)
-	        
-	        if numpart > filesperdir:
-	                self.params['numdir'] = self.createSubFolders(partdir, numpart, filesperdir)
-	                apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(self.params['numdir'])+" folders with "
-	                        +str(filesperdir)+" particles per folder")
-	                subdir = 0
-	        else:
-	                subdir = "."
+		"""
+		takes the stack file and creates single spider files ready for processing
+		"""
+		apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
+		
+		starttime = time.time()
+		filesperdir = self.params['filesperdir']
+		if numpart is None:
+			numpart = apFile.numImagesInStack(stackfile)
+		apParam.createDirectory(partdir)
+		
+		if numpart > filesperdir:
+			self.params['numdir'] = self.createSubFolders(partdir, numpart, filesperdir)
+			apDisplay.printMsg("Splitting "+str(numpart)+" particles into "+str(self.params['numdir'])+" folders with "
+				+str(filesperdir)+" particles per folder")
+			subdir = 0
+		else:
+			subdir = "."
 
-	        if not os.path.isfile(stackfile):
-	                apDisplay.printError("stackfile does not exist: "+stackfile)
+		if not os.path.isfile(stackfile):
+			apDisplay.printError("stackfile does not exist: "+stackfile)
 
-	        ### make particle files
-	        partlistdocfile = "partlist.doc"
-	        f = open(partlistdocfile, "w")
-	        i = 0
-	        j = 0
+		### make particle files
+		partlistdocfile = "partlist.doc"
+		f = open(partlistdocfile, "w")
+		i = 0
+		j = 0
 
 		curdir = os.path.join(partdir,str(subdir))
 		numsubstacks = math.ceil(float(numpart) / float(filesperdir))
 
-	        t0 = time.time()
-	        newrun = True
+		t0 = time.time()
+		newrun = True
 		stackimages = {}
 
-	        while i < numpart:
+		while i < numpart:
 	       		if (i) % filesperdir == 0 or newrun is True:
 	                       	subdir += 1
 	                       	curdir = os.path.join(partdir,str(subdir))
@@ -260,66 +260,66 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	               	spider.write(partimg, partfile)
 			f.write(os.path.abspath(partfile)+" 1\n")
 			i += 1
-			        		
-	        f.close()
+				
+		f.close()
 
 		apDisplay.printColor("now removing all substacks", "green")	
 		subdir = os.path.dirname(substack)
 		syscmd = "rm -f "+subdir+"/substack*"
 		os.system(syscmd)
-	        apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
+		apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
 
-	        return partlistdocfile
+		return partlistdocfile
 
 
 	#=====================
 	def createSubFolders(self, partdir, numpart, filesperdir):
-	        i = 0
-	        dirnum = 0
-	        while i < numpart:
-	                dirnum += 1
-	                apParam.createDirectory(os.path.join(partdir, str(dirnum)))
-	                i += filesperdir
+		i = 0
+		dirnum = 0
+		while i < numpart:
+			dirnum += 1
+			apParam.createDirectory(os.path.join(partdir, str(dirnum)))
+			i += filesperdir
 
-	        return dirnum
+		return dirnum
 
 
 	#=====================
 	def executeAce2Cmd(self, ace2cmd, verbose=False, showcmd=True, logfile=None):
-	        """
-	        executes an EMAN command in a controlled fashion
-	        """
-	        waited = False
-	        if showcmd is True:
-	                sys.stderr.write(apDisplay.colorString("ACE2: ","magenta")+ace2cmd+"\n")
-	        t0 = time.time()
-	        try:
-	                if logfile is not None:
-	                        logf = open(logfile, 'a')
-	                        ace2proc = subprocess.Popen(ace2cmd, shell=True, stdout=logf, stderr=logf)
-	                elif verbose is False:
-	                        ace2proc = subprocess.Popen(ace2cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	                else:
-	                        ace2proc = subprocess.Popen(ace2cmd, shell=True)
-	                if verbose is True:
-	                        ace2proc.wait()
-	                else:
-	                        ### continuous check
-	                        waittime = 2.0
-	                        while ace2proc.poll() is None:
-	                                if waittime > 10:
-	                                        waited = True
-	                                        sys.stderr.write(".")
-	                                waittime *= 1.1
-	                                time.sleep(waittime)
-	        except:
-	                apDisplay.printWarning("could not run ace2 command: "+ace2cmd)
-	                raise
-	        tdiff = time.time() - t0
-	        if tdiff > 20:
-	                apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
-	        elif waited is True:
-	                print ""
+		"""
+		executes an EMAN command in a controlled fashion
+		"""
+		waited = False
+		if showcmd is True:
+			sys.stderr.write(apDisplay.colorString("ACE2: ","magenta")+ace2cmd+"\n")
+		t0 = time.time()
+		try:
+			if logfile is not None:
+				logf = open(logfile, 'a')
+				ace2proc = subprocess.Popen(ace2cmd, shell=True, stdout=logf, stderr=logf)
+			elif verbose is False:
+				ace2proc = subprocess.Popen(ace2cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			else:
+				ace2proc = subprocess.Popen(ace2cmd, shell=True)
+			if verbose is True:
+				ace2proc.wait()
+			else:
+				### continuous check
+				waittime = 2.0
+				while ace2proc.poll() is None:
+					if waittime > 10:
+						waited = True
+						sys.stderr.write(".")
+					waittime *= 1.1
+					time.sleep(waittime)
+		except:
+			apDisplay.printWarning("could not run ace2 command: "+ace2cmd)
+			raise
+		tdiff = time.time() - t0
+		if tdiff > 20:
+			apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
+		elif waited is True:
+			print ""
 
 
 	#=====================
@@ -372,8 +372,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				else:
 					self.params['rundir'] = os.path.join(self.params['rundir'], 'partfiles', str(j+1))
 				esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
-	                        apDisplay.printMsg("new directory: '"+self.params['rundir']+"' at particle "+str(i)+" of "+str(numpart)
-	                                +", "+apDisplay.timeString(esttime)+" remain")
+				apDisplay.printMsg("new directory: '"+self.params['rundir']+"' at particle "+str(i)+" of "+str(numpart)
+					+", "+apDisplay.timeString(esttime)+" remain")
 				os.chdir(self.params['rundir'])	### ace2 workaround
 				newrun = False
 				j += 1
