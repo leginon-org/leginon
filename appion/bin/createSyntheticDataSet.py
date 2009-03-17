@@ -51,7 +51,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--maxfilt", dest="maxfilt", type="float", default=3.2,
 			help="maximum value for low-pass filter applied to the aplitude-corrected stack", metavar="FLOAT")
-		self.parser.add_option("--ampfile", dest="ampfile", type="str", default='/usr/local/pyappion/lib/ampcor_power.spi',
+		self.parser.add_option("--ampfile", dest="ampfile",
 			help="amplitude correction file that will be applied to the stack", metavar="STR")
 		self.parser.add_option("--kv", dest="kv", type="float", default=120,
 			help="KV of the microscope, needed for envelope function", metavar="INT")
@@ -102,6 +102,9 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### workaround for now
 		if self.params['filesperdir'] > self.params['projcount']:
 			self.params['filesperdir'] = self.params['projcount'] / 2	
+		if self.params['ampfile'] is None:
+			self.params['ampfile'] = os.path.join(apParam.getAppionDirectory(), "lib/ampcor_power.spi")
+
 
 		return
 
@@ -234,29 +237,29 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		stackimages = {}
 
 		while i < numpart:
-	       		if (i) % filesperdir == 0 or newrun is True:
-	                       	subdir += 1
-	                       	curdir = os.path.join(partdir,str(subdir))
-	                       	esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
-	                       	apDisplay.printMsg("new directory: '"+curdir+"' at particle "+str(i)+" of "+str(numpart)
-	                       	        +", "+apDisplay.timeString(esttime)+" remain")
+			if (i) % filesperdir == 0 or newrun is True:
+				subdir += 1
+				curdir = os.path.join(partdir,str(subdir))
+				esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
+				apDisplay.printMsg("new directory: '"+curdir+"' at particle "+str(i)+" of "+str(numpart)
+					+", "+apDisplay.timeString(esttime)+" remain")
 
-	        		### use EMAN to breakup large stack into substack
-	        		path = os.path.dirname(stackfile)
-	        		substack = os.path.join(path, "substack"+str(j))+".hed"
-	        		emancmd = "proc2d "+stackfile+" "+substack+" first="+str(filesperdir * j)+" last="+str(filesperdir * (j+1) - 1)
-	        		apEMAN.executeEmanCmd(emancmd)
+				### use EMAN to breakup large stack into substack
+				path = os.path.dirname(stackfile)
+				substack = os.path.join(path, "substack"+str(j))+".hed"
+				emancmd = "proc2d "+stackfile+" "+substack+" first="+str(filesperdir * j)+" last="+str(filesperdir * (j+1) - 1)
+				apEMAN.executeEmanCmd(emancmd)
 				stackimages = apImagicFile.readImagic(substack)
 				j += 1
 				newrun = False
-	        	elif numpart < filesperdir: 
-	        		stackimages = apImagicFile.readImagic(stackfile)
+			elif numpart < filesperdir: 
+	   		stackimages = apImagicFile.readImagic(stackfile)
 
-	        	### Scott's imagic reader and Neil's spidersingle writer, 38 sec for 9000 particles
-	               	partfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
-	               	k = i - (filesperdir * (j-1))
-	               	partimg = stackimages['images'][k]
-	               	spider.write(partimg, partfile)
+				### Scott's imagic reader and Neil's spidersingle writer, 38 sec for 9000 particles
+				partfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
+				k = i - (filesperdir * (j-1))
+				partimg = stackimages['images'][k]
+				spider.write(partimg, partfile)
 			f.write(os.path.abspath(partfile)+" 1\n")
 			i += 1
 				
