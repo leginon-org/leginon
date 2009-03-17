@@ -74,6 +74,8 @@ function createAce2Form($extra=false) {
 	}
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
+	while (file_exists($sessionpath.'acetwo'.($ctfruns+1)))
+		$ctfruns += 1;
 	$defrunname = 'acetwo'.($ctfruns+1);
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
