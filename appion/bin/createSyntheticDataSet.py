@@ -101,8 +101,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### workaround for now
 		if self.params['filesperdir'] > self.params['projcount']:
-			apDisplay.printError('please decrease the files per directory option ... this is a bug')
-			
+			self.params['filesperdir'] = self.params['projcount'] / 2	
 
 		return
 
