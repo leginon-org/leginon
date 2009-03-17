@@ -16,7 +16,7 @@ module = Extension('libCV',sources=['mserpy.c','mser.c','geometry.c','lautil.c',
 
 setup(
 	name='libCV',
-	version='0.1a',
+	version='0.2',
 	description='wrapper around libCV',
 	ext_modules=[module]
 )
