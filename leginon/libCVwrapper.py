@@ -24,7 +24,7 @@ def degrees(radians):
 	return float(radians) * 180.0 / pi
 
 #-----------------------
-def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=False, BoW=True, depricated=0):
+def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=True, BoW=True, depricated=0):
 	"""
 	Given an image find regions
 
@@ -60,7 +60,7 @@ def FindRegions(image, minsize=3, maxsize=0.8, blur=0, sharpen=0, WoB=False, BoW
 	print ""
 
 #-----------------------
-def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=False, BoW=True):
+def MatchImages(image1, image2, minsize=0.01, maxsize=0.9, blur=0, sharpen=0, WoB=True, BoW=True):
 	"""
 	Given two images:
 	(1) Find regions
@@ -166,6 +166,11 @@ def checkLibCVResult(self, result):
 		self.logger.warning("Bad libCV result: too much rotation: "+affineToText(result))
 		print ("Bad libCV result: too much rotation: "+affineToText(result))
 		return False
+	#elif abs(result[2][0]) > 200 or abs(result[2][1]) > 200:
+	#	#max rotation angle of 45 degrees
+	#	self.logger.warning("Bad libCV result: too much shift: "+affineToText(result))
+	#	print ("Bad libCV result: too much shift: "+affineToText(result))
+	#	return False
 	return True
 
 #-----------------------
