@@ -19,6 +19,7 @@ import apAlignment
 import apParam
 import apEMAN
 import shutil
+import spyder
 #pyami
 from pyami import mrc
 from pyami import imagefun
@@ -62,6 +63,8 @@ def MRCtoSPI(infile,rundir):
 	return tmpspifile
 
 def createAmpcorBatchFile(infile,params):
+	localinfile = spyder.fileFilter(infile)
+
 	appiondir = apParam.getAppionDirectory()
 	scriptfile = os.path.join(appiondir, "lib/enhance.bat")
 	pwscfile = os.path.join(appiondir, "lib/pwsc.bat")
@@ -71,8 +74,9 @@ def createAmpcorBatchFile(infile,params):
 		apDisplay.printError("could not find spider script: "+pwscfile)
 	inf = open(scriptfile, "r")
 
-	tmpfile="out"+randomfilename(8)+".spi"
-	tmpfile=os.path.join(params['rundir'], tmpfile)
+	tmpfile = "out"+randomfilename(8)+".spi"
+	tmpfile = os.path.join(params['rundir'], tmpfile)
+	localtmpfile = spyder.fileFilter(tmpfile)
 	
 	outfile = "enhance_edit.bat"
 	if os.path.isfile(outfile):
@@ -98,9 +102,9 @@ def createAmpcorBatchFile(infile,params):
 			elif thr == "x80":
 				outf.write(apAlignment.spiderline(80,params['apix'],"pixel size"))
 			elif re.search("^\[vol\]",line):
-				outf.write(apAlignment.spiderline("vol",infile,"input density file"))
+				outf.write(apAlignment.spiderline("vol",localinfile,"input density file"))
 			elif re.search("^\[outvol\]",line):
-				outf.write(apAlignment.spiderline("outvol",tmpfile,"enhanced output file"))
+				outf.write(apAlignment.spiderline("outvol",localtmpfile,"enhanced output file"))
 			elif re.search("^\[scatter\]",line):
 				outf.write(apAlignment.spiderline("scatter",params['ampfile'],"amplitude curve file"))
 			elif re.search("^\[pwsc\]",line):
