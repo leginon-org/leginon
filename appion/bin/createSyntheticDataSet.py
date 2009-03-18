@@ -150,9 +150,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			print "angle average %d: %03.3f, %03.3f, %03.3f"%(i, angavg[0], angavg[1], angavg[2])
 	
 		### first get rid of projection artifacts from insufficient padding
+		origfile = os.path.join(self.params['rundir'], self.params['threedfile'])
 		clipped = os.path.join(self.params['rundir'], "clipped.mrc")
-		newsize = self.params['boxsize'] * 1.5
-		emancmd = "proc3d "+self.params['threedfile']+" "+clipped+" clip="+newsize+","+newsize+","+newsize+" edgenorm"
+		newsize = self.params['box'] * 1.5
+		emancmd = "proc3d "+origfile+" "+clipped+" clip="+str(int(newsize))+","+str(int(newsize))+","+str(int(newsize))+" edgenorm"
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 
 		### project resized file
@@ -261,13 +262,13 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				j += 1
 				newrun = False
 			elif numpart < filesperdir: 
-	   		stackimages = apImagicFile.readImagic(stackfile)
+	   			stackimages = apImagicFile.readImagic(stackfile)
 
-				### Scott's imagic reader and Neil's spidersingle writer, 38 sec for 9000 particles
-				partfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
-				k = i - (filesperdir * (j-1))
-				partimg = stackimages['images'][k]
-				spider.write(partimg, partfile)
+			### Scott's imagic reader and Neil's spidersingle writer, 38 sec for 9000 particles
+			partfile = os.path.join(partdir,str(subdir),"part%06d.spi"%(i))
+			k = i - (filesperdir * (j-1))
+			partimg = stackimages['images'][k]
+			spider.write(partimg, partfile)
 			f.write(os.path.abspath(partfile)+" 1\n")
 			i += 1
 				
@@ -347,7 +348,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if os.path.isfile(newname):
 			apFile.removeStack(newname)
 		emancmd = "proc2d "+filename+" "+newname+" randomize="+str(self.params['shiftrad'])+","+\
-			str(self.params['rotang'])+flip+" clip="+self.params['boxsize']+","+self.params['boxsize']+" edgenorm norm"
+			str(self.params['rotang'])+flip+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm norm"
 		apEMAN.executeEmanCmd(emancmd)
 
 		### read MRC stats to figure out noise level addition
