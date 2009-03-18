@@ -28,6 +28,7 @@ import apDisplay
 import apUpload
 import apDatabase
 import apParticle
+import apStack
 
 #=====================
 #=====================
@@ -51,7 +52,9 @@ class tomoMaker(appionScript.AppionScript):
 		self.parser.add_option("--xmethod", dest="xmethod", default="imod",
 			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method")
 		self.parser.add_option("--selexonId", dest="selexonId", type="int",
-			help="Volume selection, e.g. --selexonId=2", metavar="int")
+			help="Volume selection by particle selection, e.g. --selexonId=2", metavar="int")
+		self.parser.add_option("--stackId", dest="stackId", type="int",
+			help="Volume selection by stack, e.g. --stackId=2", metavar="int")
 		self.parser.add_option("--sizex", dest="sizex", default=0, type="int",
 			help="Volume size in column before binning, e.g. --sizex=20", metavar="int")
 		self.parser.add_option("--sizey", dest="sizey", default=0, type="int",
@@ -80,9 +83,11 @@ class tomoMaker(appionScript.AppionScript):
 		if self.params['subvolumeonly']:
 			if self.params['fulltomoId'] is None:
 				apDisplay.printError("enter a fulltomogram run id, e.g. --fulltomoId=2")
-			if self.params['selexonId'] is None:
-				apDisplay.printError("enter a selection run id, e.g. --selexonId=2")
-		if self.params['selexonId'] is not None:
+			if self.params['stackId'] is None and self.params['selexonId'] is None:
+				apDisplay.printError("enter a stack or selection run id, e.g. --stackId=2 or --selexonId=2")
+		if self.params['stackId'] is not None and self.params['selexonId'] is not None:
+			apDisplay.printError("enter a stack or selection run id, NOT BOTH")
+		if self.params['stackId'] is not None or self.params['selexonId'] is not None:
 			if int(self.params['sizex']) < 1 or int(self.params['sizey']) < 1:
 				apDisplay.printError("must enter non-zero subvolume size")
 			if int(self.params['sizez']) is None:
@@ -115,9 +120,14 @@ class tomoMaker(appionScript.AppionScript):
 			self.params['rundir'] = os.path.join(path,intermediatepath)
 			self.params['fulltomodir'] = self.params['rundir']
 			if self.params['selexonId']:
-				subrunname = 'subtomo_%d' % self.params['selexonId']
-				self.params['subrunname'] = subrunname
-				self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
+				subrunname = 'subtomo_pick%d' % self.params['selexonId']
+			elif self.params['stackId']:
+				subrunname = 'subtomo_stack%d' % self.params['stackId']
+			else:
+				subrunname = None
+			self.params['subrunname'] = subrunname
+			self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
+
 	#=====================
 	def start(self):
 		commit = self.params['commit']
@@ -213,7 +223,7 @@ class tomoMaker(appionScript.AppionScript):
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist,alignlist,
 							processdir,reconname,description,zimagedata)
 		#subvolume making
-		if self.params['selexonId'] is not None and fulltomodata is not None:
+		if (self.params['selexonId'] is not None or self.params['stackId']) and fulltomodata is not None:
 			bin = fulltomodata['alignment']['bin']
 			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
@@ -222,7 +232,10 @@ class tomoMaker(appionScript.AppionScript):
 			gtransforms.append([1,0,0,1,0,0])
 			ordered_imagelist.append(zprojimagedata)
 			for i,imagedata in enumerate(ordered_imagelist):
-				particles = apParticle.getParticles(imagedata, self.params['selexonId'])
+				if self.params['selexonId']:
+					particles = apParticle.getParticles(imagedata, self.params['selexonId'])
+				if self.params['stackId']:
+					particles = apStack.getImageParticles(imagedata, self.params['stackId'])
 				for particle in particles:
 					print particle['xcoord'],particle['ycoord']
 					center = apTomo.transformParticleCenter(particle,bin,gtransforms[i])
