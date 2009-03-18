@@ -148,8 +148,16 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		for i in range(len(eulerlist)):
 			angavg = angsum[i,:]/projcount[i]
 			print "angle average %d: %03.3f, %03.3f, %03.3f"%(i, angavg[0], angavg[1], angavg[2])
+	
+		### first get rid of projection artifacts from insufficient padding
+		clipped = os.path.join(self.params['rundir'], "clipped.mrc")
+		newsize = self.params['boxsize'] * 1.5
+		emancmd = "proc3d "+self.params['threedfile']+" "+clipped+" clip="+newsize+","+newsize+","+newsize+" edgenorm"
+		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+
+		### project resized file
 		filename = os.path.join(self.params['rundir'], 'proj.hed')
-		emancmd = "project3d "+self.params['threedfile']+" out="+filename+" list="+eulerfile
+		emancmd = "project3d "+clipped+" out="+filename+" list="+eulerfile
 		t0 = time.time()
 		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
 		apDisplay.printMsg("Finished project3d in %s, %.3f ms per iteration"
@@ -339,7 +347,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if os.path.isfile(newname):
 			apFile.removeStack(newname)
 		emancmd = "proc2d "+filename+" "+newname+" randomize="+str(self.params['shiftrad'])+","+\
-			str(self.params['rotang'])+flip+" norm"
+			str(self.params['rotang'])+flip+" clip="+self.params['boxsize']+","+self.params['boxsize']+" edgenorm norm"
 		apEMAN.executeEmanCmd(emancmd)
 
 		### read MRC stats to figure out noise level addition
