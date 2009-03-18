@@ -384,3 +384,23 @@ def getStackParticleFromParticleId(particleid,stackid, nodie=False):
 	if len(stackpnum) > 1:
 		apDisplay.printError("There's a problem with this stack. More than one particle with the same number.")
 	return stackpnum[0]
+
+#===============
+def getImageParticles(imagedata,stackid,nodie=True):
+	"""
+	Provided a Stack Id & imagedata, to find particles
+	"""
+	particleq = appionData.ApParticleData(image=imagedata)
+
+	stackpdata = appionData.ApStackParticlesData()
+	stackpdata['particle'] = particleq
+	stackpdata['stack'] = appionData.ApStackData.direct_query(stackid)
+	stackps = stackpdata.query()
+	particles = []
+	if not stackps:
+		if nodie is True:
+			return particles
+		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
+	for stackp in stackps:
+		particles.append(stackp['particle'])
+	return particles
