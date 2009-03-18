@@ -16,6 +16,7 @@
 typedef struct CTFParamsSt {
 	
 	char img_path[1024];
+	char out_path[1024];
 	f64 kv;
 	f64 cs;
 	f64 apix;
@@ -51,6 +52,9 @@ CTFParams newCTFParams() {
 	
 	CTFParams c = malloc(sizeof(CTFParamsSt));
 	if ( c == NULL ) return c;
+	
+	sprintf(c->img_path,"./");
+	sprintf(c->out_path."./");
 	
 	c->kv = 120.0;
 	c->cs = 2.0;
@@ -117,21 +121,22 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 	}
 	
 	struct options opts[] = {
-		{ 1,	NULL,	"Path to CTF estimate file",	 			   "ctf",	1 },
-		{ 2,	NULL,	"Path to image file",	 					   "img",	1 },
-		{ 3,	NULL,	"Microscope voltage in kilovolts",				"kv",	1 },
-		{ 4,	NULL,	"Microscope Spherical Aberration in mm",		"cs",	1 },
-		{ 5,	NULL,	"Angstroms per pixel",						  "apix",	1 },
-		{ 6,	NULL,	"Defocus: x,y,angle in m,m,radians",			"df",	1 },
-		{ 7,	NULL,	"Correct only phase signs",	  		  		 "phase",	0 },
-		{ 8,	NULL,	"Correct using wiener filter",		 	    "wiener",	1 },		
-		{ 9,	NULL,	"Apply the given CTF",						 "apply", 	0 },
-		{ 0,	NULL,	NULL,											NULL,	0 }
+		{ 1,	NULL,	"Path to CTF estimate file",	 			   "ctf",		1 },
+		{ 2,	NULL,	"Path to image file",	 					   "img",		1 },
+		{ 3,	NULL,	"Microscope voltage in kilovolts",			"kv",			1 },
+		{ 4,	NULL,	"Microscope Spherical Aberration in mm",	"cs",			1 },
+		{ 5,	NULL,	"Angstroms per pixel",						  	"apix",		1 },
+		{ 6,	NULL,	"Defocus: x,y,angle in m,m,radians",		"df",			1 },
+		{ 7,	NULL,	"Correct only phase signs",	  		  		"phase",		0 },
+		{ 8,	NULL,	"Correct using wiener filter",		 	   "wiener",	1 },		
+		{ 9,	NULL,	"Apply the given CTF",							"apply", 	0 },
+		{ 10,	NULL, "Set output path",								"out",		1 },
+		{ 0,	NULL,	NULL,													NULL,			0 }
 	};
 	
 	int option = 0;
 	char arg[1024];
-	
+		
 	while ( ( option = getopts(argc,argv,opts,arg) ) != 0 ) {
 		fprintf(stderr,"Parsing option: %d %s\n",option,arg);
 		switch ( option ) {
@@ -171,6 +176,9 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 				ctfp->correction_type &= !CORRECT_PHASE;
 				ctfp->correction_type &= !CORRECT_WIENER;
 				ctfp->correction_type |=  CORRECT_APPLY;
+				break;
+			case 10:
+				strcpy(ctfp->out_path,arg);
 				break;
 			default:
 				break;
@@ -304,8 +312,9 @@ int main (int argc, char **argv) {
 	
 //---------Writing corrected image--------------------------------------------------------------		
 	
-	char name[1024];
-	sprintf(name,"%s.corrected.mrc",basename([image name]));
+	char name[2048];
+	strcat(name,basename([image name]));
+	strcat(name,".corrected.mrc");s
 	[image writeMRCFile:name];
 	
 	[image release];

@@ -172,14 +172,14 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	restoreFFTWisdom();
 	
-	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
-//	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
-//	if ( plan == NULL ) {
-//		xi = NEWV(f64,size);
-//		plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
-//		memcpy(xi,[self data],sizeof(f64)*size);
-//		[self setDataTo:xi];
-//	}
+//	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
+	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	if ( plan == NULL ) {
+		xi = NEWV(f64,size);
+		plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
+		memcpy(xi,[self data],sizeof(f64)*size);
+		[self setDataTo:xi];
+	}
 	
 	if ( plan == NULL ) {
 		fprintf(stderr,"Function r2cfftc could not create fftw plan\n");
@@ -236,14 +236,14 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	restoreFFTWisdom();
 	
-	fftw_plan plan = fftw_plan_dft_c2r(ndim,dims,xi,xt,FFTW_MEASURE);
-//	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
-//	if ( plan == NULL ) {
-//		xi = NEWV(c64,size);
-//		plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE);
-//		memcpy(xi,[self data],sizeof(c64)*size);
-//		[self setDataTo:xi];
-//	}
+//	fftw_plan plan = fftw_plan_dft_c2r(ndim,dims,xi,xt,FFTW_MEASURE);
+	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	if ( plan == NULL ) {
+		xi = NEWV(c64,size);
+		plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE);
+		memcpy(xi,[self data],sizeof(c64)*size);
+		[self setDataTo:xi];
+	}
 	
 	if ( plan == NULL ) {
 		fprintf(stderr,"Function c2rfftc could not create fftw plan\n");
@@ -351,14 +351,14 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	restoreFFTWisdom();
 	
-	fftw_plan plan = fftw_plan_dft(ndim,dims,xi,xi,FFTW_BACKWARD,FFTW_MEASURE);	
-//	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE|FFTW_WISDOM_ONLY);
-//	if ( plan == NULL ) {
-//		xi = NEWV(c64,size);
-//		plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE);
-//		memcpy(xi,[self data],sizeof(c64)*size);
-//		xi = [[self setDataTo:xi] data];
-//	}
+//	fftw_plan plan = fftw_plan_dft(ndim,dims,xi,xi,FFTW_BACKWARD,FFTW_MEASURE);	
+	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE|FFTW_WISDOM_ONLY);
+	if ( plan == NULL ) {
+		xi = NEWV(c64,size);
+		plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE);
+		memcpy(xi,[self data],sizeof(c64)*size);
+		xi = [[self setDataTo:xi] data];
+	}
 	
 	if ( plan == NULL ) {
 		fprintf(stderr,"Could not create fftw plan in function ifftc\n");
