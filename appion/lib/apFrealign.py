@@ -469,7 +469,7 @@ def combineMultipleJobs(params):
 				combine.write(n)
 	combine.close()
 	combinejobname = os.path.join(workdir,'frealign.all.csh')
-	createFrealignJob(params,combinejobname,mode=0,inpar=paramname)
+	createFrealignJob(params,combinejobname,mode=0,invol=params['itervol'],inpar=paramname)
 	os.system('csh '+combinejobname)
 
 		

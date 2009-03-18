@@ -176,7 +176,8 @@ class frealignJob(appionScript.AppionScript):
 				       help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 				       help="choose if frealign should not perform ctf correction")
-	 
+		self.parser.add_option('--iter', dest='iter', default=None, type='int',
+					help="continue previous run from this iteration number")
 	#=====================
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
@@ -287,7 +288,10 @@ class frealignJob(appionScript.AppionScript):
 			apDisplay.printMsg('converting to IMAGIC stack to MRC stack...')
 			apFrealign.imagicToMrc(self.params)
 
-		self.params['iter']=0
+		# set input parameter file if continuing a run
+		if self.params['iter']>0:
+			self.params['inpar'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter']-1)+".par")
+
 		#if no parameter file specified then generate input parameter file
 		if self.params['inpar'] is None:
 			apFrealign.generateParticleParams(self.params)
@@ -295,45 +299,51 @@ class frealignJob(appionScript.AppionScript):
 		else:
 			apDisplay.printMsg("Using parameter file: "+self.params['inpar'])
 			
-		#get initial model path
-		modeldata = apVolume.getModelFromId(self.params['modelid'])
-		self.params['initmodel'] = os.path.join(modeldata['path']['path'],modeldata['name'])
-		#get initial model orientation
-		modsym = modeldata['symmetry']['symmetry']
+		if self.params['iter'] == 0:
+			#get initial model path
+			modeldata = apVolume.getModelFromId(self.params['modelid'])
+			self.params['initmodel'] = os.path.join(modeldata['path']['path'],modeldata['name'])
+			#get initial model orientation
+			modsym = modeldata['symmetry']['symmetry']
 
-		# for first iteration:
-		self.params['itervol']=None
-		self.params['iterparam']=None
+			# for first iteration:
+			self.params['itervol']=None
+			self.params['iterparam']=None
 		
 		
-		# rescale initial model if necessary
-		outvol = os.path.join(self.params['rundir'],"threed.0.mrc")
-		tmpinvol = self.params['initmodel']
+			# rescale initial model if necessary
+			outvol = os.path.join(self.params['rundir'],"threed.0.mrc")
+			tmpinvol = self.params['initmodel']
 
-		# check box sizes
-		stackbx = apStack.getStackBoxsize(self.params['stackid'])
-		resize = False
-		if (modeldata['boxsize'] != stackbx):
-			resize=True
-		# check pixel size
-		scale = modeldata['pixelsize']/self.params['apix']
-		if round(scale,2) != 1.:
-			resize=True
+			# check box sizes
+			stackbx = apStack.getStackBoxsize(self.params['stackid'])
+			resize = False
+			if (modeldata['boxsize'] != stackbx):
+				resize=True
+			# check pixel size
+			scale = modeldata['pixelsize']/self.params['apix']
+			if round(scale,2) != 1.:
+				resize=True
 		
-		if resize is True:
-			emancmd = "proc3d %s %s scale=%f clip=%d,%d,%d" % (tmpinvol, outvol, scale, stackbx, stackbx, stackbx)
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
-			tmpinvol = outvol
-		# if icosahedral recon, rotate volume to 3DEM standard orientation
-		if modsym == 'Icos (5 3 2)':
-			emancmd = 'proc3d %s %s icos5fTo2f' % (tmpinvol, outvol)
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
-			tmpinvol = outvol
-		if modsym == 'Icos (5 3 2)' or modsym=='Icos (2 5 3)':
-			emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (tmpinvol, outvol)
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
-			self.params['itervol'] = outvol
-		sys.exit() 
+			if resize is True:
+				emancmd = "proc3d %s %s scale=%f clip=%d,%d,%d" % (tmpinvol, outvol, scale, stackbx, stackbx, stackbx)
+				apEMAN.executeEmanCmd(emancmd, verbose=True)
+				tmpinvol = outvol
+			# if icosahedral recon, rotate volume to 3DEM standard orientation
+			if modsym == 'Icos (5 3 2)':
+				emancmd = 'proc3d %s %s icos5fTo2f' % (tmpinvol, outvol)
+				apEMAN.executeEmanCmd(emancmd, verbose=True)
+				tmpinvol = outvol
+			if modsym == 'Icos (5 3 2)' or modsym=='Icos (2 5 3)':
+				emancmd = 'proc3d %s %s rotspin=0,0,1,90' % (tmpinvol, outvol)
+				apEMAN.executeEmanCmd(emancmd, verbose=True)
+				self.params['itervol'] = outvol
+
+		# if continuing a previous run:
+		else:
+			self.params['iter']-=1
+			self.params['itervol'] = os.path.join(self.params['rundir'],"threed."+str(self.params['iter'])+".mrc")
+			self.params['iterparam'] = os.path.join(self.params['rundir'],"params."+str(self.params['iter'])+".par")
 
 		## run frealign for number for refinement cycles
 		for i in range(self.params['refcycles']):
