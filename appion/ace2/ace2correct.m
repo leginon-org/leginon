@@ -6,6 +6,7 @@
 #include "util.h"
 #include "getopts.h"
 #include "ctf.h"
+#include <stddef.h>
 
 #define CORRECT_PHASE					( 1<<0 )
 #define CORRECT_WIENER					( 1<<1 )
@@ -54,7 +55,7 @@ CTFParams newCTFParams() {
 	if ( c == NULL ) return c;
 	
 	sprintf(c->img_path,"./");
-	sprintf(c->out_path."./");
+	sprintf(c->out_path,"./");
 	
 	c->kv = 120.0;
 	c->cs = 2.0;
@@ -313,8 +314,12 @@ int main (int argc, char **argv) {
 //---------Writing corrected image--------------------------------------------------------------		
 	
 	char name[2048];
-	strcat(name,basename([image name]));
-	strcat(name,".corrected.mrc");s
+	strcat(name,ctfp->out_path);
+	strcat(name,((char *)(basename([image name]))));
+	strcat(name,".corrected.mrc");
+	
+	fprintf(stderr,"Saving corrected image to: %s\n",name);
+	
 	[image writeMRCFile:name];
 	
 	[image release];
