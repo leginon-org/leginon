@@ -108,6 +108,8 @@ u32 parseACE2CTFFile( char path[], CTFParams c ) {
 	
 	fclose(fp);
 	
+	sprintf(c->out_path,"%s.corrected.mrc",c->img_path);
+	
 	return count;
 	
 }
@@ -148,7 +150,8 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 				if ( parseACE2CTFFile(arg,ctfp) != 8 ) fprintf(stderr,"!!!! Incomplete ACE2 CTF File !!!!\n");
 				break;
 			case 2:
-				strcpy(ctfp->img_path,arg);
+				strcpy(ctfp->img_path,arg);				
+				sprintf(ctfp->out_path,"%s.corrected.mrc",ctfp->img_path);
 				break;
 			case 3:
 				sscanf(arg,"%le",&(ctfp->kv));
@@ -186,7 +189,7 @@ CTFParams parseACE2CorrectOptions( int argc, char **argv ) {
 		}
 		
 	}
-	
+
 	return ctfp;
 	
 }
@@ -313,14 +316,9 @@ int main (int argc, char **argv) {
 	
 //---------Writing corrected image--------------------------------------------------------------		
 	
-	char name[2048];
-	strcat(name,ctfp->out_path);
-	strcat(name,((char *)(basename([image name]))));
-	strcat(name,".corrected.mrc");
+	fprintf(stderr,"Saving corrected image to: %s\n",ctfp->out_path);
 	
-	fprintf(stderr,"Saving corrected image to: %s\n",name);
-	
-	[image writeMRCFile:name];
+	[image writeMRCFile:ctfp->out_path];
 	
 	[image release];
 	[ctf release];

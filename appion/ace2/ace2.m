@@ -77,9 +77,10 @@ int main (int argc, char **argv) {
 		{ 2, "apix",	"Angstroms per pixel of input image", 			"a", 1 },
 		{ 3, "sabr",	"Spherical Aberation of microcope in mm",		"c", 1 },
 		{ 4, "kvolts",	"Voltage of microscope in kv",					"k", 1 },
-		{ 5, "binby",	"Ammount to bin input image",					"b", 1 },
-		{ 6, "amp",		"Initial Amplitude Contrast",					"m", 1 },
-		{ 7, "edge",	"Edge Parameters",								"e", 1 },
+		{ 5, "binby",	"Ammount to bin input image",						"b", 1 },
+		{ 6, "amp",		"Initial Amplitude Contrast",						"m", 1 },
+		{ 7, "edge",	"Edge Parameters",									"e", 1 },
+		{ 8, "out",		"Out Path for data",									"o", 1 },
 		{ 0, NULL,		NULL,										   NULL, 0 }
 	};
 	
