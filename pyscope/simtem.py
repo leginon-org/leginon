@@ -77,6 +77,16 @@ class SimTEM(tem.TEM):
 
 		self.main_screen_positions = ['up', 'down']
 		self.main_screen_position = self.main_screen_positions[0]
+		self.columnvalveposition = 'open'
+
+	def getColumnValvePosition(self):
+		return self.columnvalveposition
+
+	def setColumnValvePosition(self, state):
+		if state in ('open','closed'):
+			self.columnvalveposition = state
+		else:
+			raise RuntimeError('invalid column valve position %s' % (state,))
 
 	def getHighTension(self):
 		return self.high_tension
