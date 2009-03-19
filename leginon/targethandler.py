@@ -93,6 +93,8 @@ class TargetHandler(object):
 			'''
 			get a list of all active (not done) target lists in the queue
 			'''
+			if queuedata is None:
+				return []
 			# get targetlists relating to this queue
 			tarlistquery = leginondata.ImageTargetListData(queue=queuedata)
 			targetlists = self.research(datainstance=tarlistquery)
@@ -124,8 +126,8 @@ class TargetHandler(object):
 			return
 		self.instrument.tem.ColumnValvePosition = 'closed'
 		print 'column valves closed and exiting leginon'
-		self.logger.warning('column valves closed and exiting leginon')
-		sys.exit()
+		self.logger.warning('column valves closed')
+		self.queueidleactive = False
 
 	def toggleQueueTimeout(self):
 		if self.queueidleactive:
@@ -158,7 +160,7 @@ class TargetHandler(object):
 			self.queueupdate.clear()
 			self.logger.info('received queue update')
 
-			active = self.getListsInQueue(self.targetlistqueue)
+			active = self.getListsInQueue(self.getQueue())
 
 			# process all target lists in the queue
 			for targetlist in active:
