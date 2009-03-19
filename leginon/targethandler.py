@@ -3,6 +3,7 @@ import leginondata
 import event
 import threading
 from pyami import ordereddict
+import sys
 
 target_types = ('acquisition', 'focus', 'preview')
 
@@ -19,6 +20,7 @@ class TargetHandler(object):
 		self.queueupdate = threading.Event()
 		self.addEventInput(event.TransformTargetDoneEvent, self.handleTransformTargetDoneEvent)
 		self.transformtargetevent = threading.Event()
+		self.queueidleactive = False
 
 	def handleTransformTargetDoneEvent(self, evt):
 		self.transformedtarget = evt['target']
@@ -117,6 +119,23 @@ class TargetHandler(object):
 		else:
 			return False
 
+	def queueIdleFinish(self):
+		if not self.queueidleactive:
+			return
+		self.instrument.tem.ColumnValvePosition = 'closed'
+		print 'column valves closed and exiting leginon'
+		self.logger.warning('column valves closed and exiting leginon')
+		sys.exit()
+
+	def toggleQueueTimeout(self):
+		if self.queueidleactive:
+			self.queueidleactive = False
+			self.logger.info('Queue timeout deactivated')
+		else:
+			self.queueidleactive = True
+			self.queueupdate.set()
+			self.logger.info('Queue timeout activated')
+
 	def queueProcessor(self):
 		'''
 		this is run in a thread to watch for and handle queue updates
@@ -124,7 +143,17 @@ class TargetHandler(object):
 		while 1:
 			# wait for a queue update
 			self.setStatus('idle')
-			self.queueupdate.wait()
+			
+			## hard coded idletime before giving up
+			if self.queueidleactive:
+				idletime = 20
+			else:
+				idletime = None
+			self.queueupdate.wait(idletime)
+			if not self.queueupdate.isSet():
+				self.queueIdleFinish()
+				# close valves, stop doing everything or quit
+			
 			self.setStatus('processing')
 			self.queueupdate.clear()
 			self.logger.info('received queue update')

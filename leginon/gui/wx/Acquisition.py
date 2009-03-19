@@ -85,8 +85,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['wait for reference'] = wx.CheckBox(self, -1,
 																				'Publish and wait for the reference target')
 		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
-		self.widgets['drift between'] = wx.CheckBox(self, -1,
-																				'Declare drift between targets')
+		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -190,30 +189,15 @@ class Panel(gui.wx.Node.Panel):
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
-													'play',
-													shortHelpString='Process')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE,
-													'pause',
-													shortHelpString='Pause')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
-													'stop',
-													shortHelpString='Abort')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_QUEUE,
-													'stop_queue',
-													shortHelpString='Abort Queue')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
-													'simulatetarget',
-													shortHelpString='Simulate Target')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP,
-													'simulatetargetloop',
-													shortHelpString='Simulate Target Loop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP,
-													'simulatetargetloopstop',
-													shortHelpString='Stop Simulate Target Loop')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_BROWSE_IMAGES,
-													'imagebrowser',
-													shortHelpString='Browse Images')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Process')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, 'pause', shortHelpString='Pause')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT, 'stop', shortHelpString='Abort')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_QUEUE, 'stop_queue', shortHelpString='Abort Queue')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT, 'clock', shortHelpString='Toggle queue timeout')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, 'simulatetarget', shortHelpString='Simulate Target')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP, 'simulatetargetloop', shortHelpString='Simulate Target Loop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP, 'simulatetargetloopstop', shortHelpString='Stop Simulate Target Loop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_BROWSE_IMAGES, 'imagebrowser', shortHelpString='Browse Images')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
@@ -256,8 +240,11 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopStopTool,
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool,
-											id=gui.wx.ToolBar.ID_BROWSE_IMAGES)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool, id=gui.wx.ToolBar.ID_BROWSE_IMAGES)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleQueueTimeout, id=gui.wx.ToolBar.ID_EXTRACT)
+
+	def onToggleQueueTimeout(self, evt):
+		self.node.toggleQueueTimeout()
 
 	def onSimulateTargetTool(self, evt):
 		threading.Thread(target=self.node.simulateTarget).start()
