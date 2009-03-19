@@ -27,6 +27,7 @@ import gui.wx.Manager
 import nodeclassreg
 import remotecall
 import time
+import sys
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
