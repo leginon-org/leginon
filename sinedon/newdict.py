@@ -103,6 +103,8 @@ class MRCArrayType(numpy.ndarray):
 	pass
 class DatabaseArrayType(numpy.ndarray):
 	pass
+class CallableType(object):
+	pass
 
 ### and here's the validator for it
 def validateArrayType(obj):
@@ -119,5 +121,11 @@ def validateArrayType(obj):
 
 	raise TypeError(type(obj))
 
+def validateCallable(obj):
+	if callable(obj):
+		return obj
+	raise TypeError(type(obj))
+
 registerValidator(MRCArrayType, validateArrayType)
 registerValidator(DatabaseArrayType, validateArrayType)
+registerValidator(CallableType, validateCallable)
