@@ -3,6 +3,7 @@ import ccdcamera
 import numpy
 import random
 random.seed()
+import time
 
 class SimCCDCamera(ccdcamera.CCDCamera):
     name = 'SimCCDCamera'
@@ -107,6 +108,11 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         rows = self.dimension['y']
 
         shape = (rows, columns)
+
+	## exposure time
+	time.sleep(self.exposure_time)
+	## extra time for readout simulation
+	time.sleep(10)
 
         if self.exposure_type == 'dark' or self.exposure_time == 0:
             return numpy.zeros(shape, numpy.uint16)

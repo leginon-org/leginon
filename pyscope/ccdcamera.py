@@ -24,8 +24,8 @@ class CCDCamera(object):
 		self.buffer = {}
 		self.buffer_ready = {}
 		self.bufferlock = threading.Lock()
-		self.readoutname = None
 		self.readoutcallback = None
+		self.callbacks = {}
 
 	def calculateCenteredGeometry(self, dimension, binning):
 		camerasize = self.getCameraSize()
@@ -113,6 +113,7 @@ class CCDCamera(object):
 		raise NotImplementedError
 
 	def registerCallback(self, name, callback):
+		print 'REGISTER', name, callback, time.time()
 		self.callbacks[name] = callback
 
 	def getImage(self):
@@ -132,14 +133,21 @@ class CCDCamera(object):
 	def backgroundReadout(self, name):
 		#self.buffer_ready[name] = threading.Event()
 		threading.Thread(target=self.getImageToCallback, args=(name,)).start()
-		t = 1.0 + self.getExposureTime() / 1000.0
+		t = 0.2 + self.getExposureTime() / 1000.0
+		time.sleep(t)
 		## wait for t or getImage to be done, which ever is first
 		#self.buffer_ready[name].wait(t)
+		print 'EXPOSURE DONE (READOUT NOT DONE)', time.time()
 
 	def getImageToCallback(self, name):
+		print 'GETIMAGETOCALLBACK', name, time.time()
 		image = self._getImage()
-		self.callbacks[name](image)
-		del self.callbacks[name]
+		try:
+			print 'CALLBACK', self.callbacks[name], time.time()
+			self.callbacks[name](image)
+			print 'CALLBACKDONE', time.time()
+		finally:
+			del self.callbacks[name]
 
 	def getImageToBuffer(self, name):
 		image = self._getImage()
@@ -148,7 +156,7 @@ class CCDCamera(object):
 		self.bufferlock.release()
 		self.buffer_ready[name].set()
 
-	def getBuffer(self, name, block=False):
+	def getBuffer(self, name, block=True):
 		if block:
 			self.buffer_ready[name].wait()
 		self.bufferlock.acquire()
