@@ -126,6 +126,10 @@ class otrVolumeScript(appionScript.AppionScript):
 		if self.params['radius']*2 > boxsize-2:
 			apDisplay.printError("particle radius is too big for stack boxsize")	
 
+		if self.params['notstackid'] == self.params['tiltstackid']:
+			apDisplay.printError("tilt stack and align stack are the same: %d vs. %d"%
+				(self.params['notstackid'],self.params['tiltstackid']))
+
 	#=====================
 	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['tiltstackid'], msg=False)
@@ -484,7 +488,7 @@ class otrVolumeScript(appionScript.AppionScript):
 				memdiff = (mem.active()-startmem)/count/1024.0
 				if memdiff > 3:
 					apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
-			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAngles(stackpartdata)
+			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAnglesOTR(stackpartdata)
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
@@ -958,22 +962,22 @@ class otrVolumeScript(appionScript.AppionScript):
 				self.APSHbackProject(apshstack, apsheuler, apshVolfile, cnum, corrSelect)
 
 				### center volume
-				filename = os.path.splitext(apshVol)[0]
+				filename = os.path.splitext(apshVolfile)[0]
 				apshVolFileCentered = filename+"_centered.spi"
 				backproject.centerVolume(apshVolfile, apshVolFileCentered)
 
 				### calculate FSC
 				
 				### generate odd and even select files for FSC calculation
-				#corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
+				corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
 				
-				#apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd-%03d.spi"%(iternum))
-				#apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even-%03d.spi"%(iternum))
+				apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd-%03d.spi"%(iternum))
+				apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even-%03d.spi"%(iternum))
 				
-				#self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
-				#self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
+				self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
+				self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
 				
-				#fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout%s-%03d.spi"%(self.timestamp, iternum))
+				fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout-%03d.spi"%(iternum))
 				#backproject.calcFSC(apshCenteredVols[1], apshCenteredVols[2], fscout)
 
 				### filter volume
@@ -989,12 +993,9 @@ class otrVolumeScript(appionScript.AppionScript):
 				apDisplay.printMsg("###########################")
 				print "\n"
 		
+
 		sys.exit(1)
-
-
-
-
-
+		
 		if len(self.classlist) > 1:
 			#get a list of all unique combinations of volumes
 			pairlist = self.computeClassVolPair()
