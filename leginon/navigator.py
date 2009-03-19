@@ -407,20 +407,31 @@ class Navigator(node.Node):
 		#camerasettings = leginondata.CameraSettingsData(initializer=camera)
 		self.instrument.setCCDCamera(ccdcamera['name'])
 		self.instrument.setData(cameradata)
-		return self._acquireImage()
+		#self._acquireImage()
+		self._acquireImageNEW()
 
 	def acquireImage(self):
 		if self.settings['override preset']:
 			## use override
 			instruments = self.settings['instruments']
 			try:
+				print 'AAAAA'
 				self.instrument.setTEM(instruments['tem'])
+				print 'BBBBB'
 				self.instrument.setCCDCamera(instruments['ccdcamera'])
+				print 'CCCCC'
 			except ValueError, e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return
 			try:
-				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+				camsettings = self.settings['camera settings']
+				if self.settings['background readout']:
+					camsettings['readout callback'] = self.finalizeAcquire
+				else:
+					camsettings['readout callback'] = None
+				print 'DDDDD'
+				self.instrument.ccdcamera.Settings = camsettings
+				print 'EEEEE'
 			except Exception, e:
 				errstr = 'Acquire image failed: %s'
 				self.logger.error(errstr % e)
@@ -430,7 +441,26 @@ class Navigator(node.Node):
 			if self.presetsclient.getCurrentPreset() is None:
 				self.logger.error('Preset is unknown and preset override is off')
 				return
-		return self._acquireImage()
+		self._acquireImageNEW()
+		if not self.settings['background readout']:
+			self.finalizeAcquire()
+
+	def _acquireImageNEW(self):
+		try:
+			self.imagedata = self.instrument.getData(leginondata.CameraImageData)
+		except:
+			raise
+			self.logger.error('unable to get corrected image')
+			return
+
+		if self.imagedata is None:
+			self.logger.error('Acquire image failed')
+			return
+
+	def finalizeAcquire(self, imagearray=None):
+		if imagearray is not None:
+			self.imagedata['image'] = imagearray
+		self.newImage(self.imagedata)
 
 	def _acquireImage(self):
 		try:

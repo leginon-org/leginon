@@ -149,6 +149,7 @@ camera_params = (
 	('energy filtered', bool),
 	('energy filter', bool),
 	('energy filter width', float),
+	('readout callback', sinedon.newdict.CallableType),
 )
 
 class ScopeEMData(EMData):
@@ -1177,6 +1178,7 @@ class NavigatorSettingsData(SettingsData):
 			('cycle each', bool),
 			('cycle after', bool),
 			('final image shift', bool),
+			('background readout', bool),
 		)
 	typemap = classmethod(typemap)
 

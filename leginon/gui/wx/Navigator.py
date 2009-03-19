@@ -325,11 +325,14 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
+		self.widgets['background readout'] = wx.CheckBox(self, -1, 'Background Readout')
+
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(self.widgets['override preset'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['instruments'], (1, 0), (1, 1), wx.EXPAND)
 		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['background readout'], (3, 0), (1, 1), wx.EXPAND)
 		overridesz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# error checking and correction
