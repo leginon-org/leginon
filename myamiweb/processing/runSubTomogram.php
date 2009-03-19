@@ -24,7 +24,7 @@ else {
 	createSubTomogramForm();
 }
 
-function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $heading='Create Tomogram Subvolume from Particle Picks') {
+function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $heading='Extract Particle Sub-Tomogram') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 

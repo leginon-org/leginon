@@ -24,7 +24,7 @@ else {
 	createUploadTomogramForm();
 }
 
-function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launcher', $heading='Upload an Initial Tomogram') {
+function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launcher', $heading='Upload Tomogram') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 
