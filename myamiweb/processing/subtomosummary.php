@@ -15,6 +15,7 @@ require "inc/processing.inc";
   
 // check if coming directly from a session
 $expId = $_GET['expId'];
+$fulltomoId = $_GET['fullId'];
 if ($expId) {
         $sessionId=$expId;
         $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
@@ -28,7 +29,7 @@ $projectId=$_POST['projectId'];
 $javascript = "<script src='../js/viewer.js'></script>\n";
 $javascript.= editTextJava();
 
-processing_header("Tomographic Reconstruction Summary","Tomogram Summary Page", $javascript);
+processing_header("SubTomographic Reconstruction Summary","SubTomogram Summary Page", $javascript);
 
 // edit description form
 echo "<form name='templateform' method='post' action='$formAction'>\n";
@@ -37,58 +38,19 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 $particle = new particledata();
 
 // --- Get Fulltomograms
-$allfulltomos = $particle->getFullTomogramsFromSession($sessionId);
-	if ($allfulltomos) {
-	$tiltseries = $particle->getTiltSeries($sessionId);
-	$html = "<h4>Full Tomograms</h4>";
-	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
-	$html .= "<TR>\n";
-	$display_keys = array ( 'tiltseries','id','runname','description','subtomograms');
-	foreach($display_keys as $key) {
-		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
-	}
-	foreach ($tiltseries as $t) {
-		$fulltomos = $particle->checkforFulltomogram($t['id']);
-		foreach ($fulltomos as $fulltomo) {
-			$fulltomoid = $fulltomo['DEF_id'];
-				// update description
-			if ($_POST['updateDesc'.$fulltomoid]) {
-				updateDescription('ApFullTomogramData', $fulltomoid, $_POST['newdescription'.$fulltomoid]);
-
-				$fulltomo['description']=$_POST['newdescription'.$fulltomoid];
-
-			}
-			$tiltseriesnumber = $t['number'];
-			// PRINT INFO
-			$html .= "<TR>\n";
-			$html .= "<td>$tiltseriesnumber</TD>\n";
-			$html .= "<td><A HREF='fulltomoreport.php?expId=$expId&tomoId=$fulltomoid'>$fulltomoid</A></TD>\n";
-			$html .= "<td>".$fulltomo['runname']."</TD>\n";
-
-			# add edit button to description if logged in
-			$descDiv = ($_SESSION['username']) ? editButton($fulltomoid,$fulltomo['description']) : $fulltomo['description'];
-
-			$html .= "<td>$descDiv</td>\n";
-	#		$downloadDiv = "<a href=downloadtomo.php?tomogramId=$fulltomoid&full=1>[Download Tomogram]</a><br>";
-	#		$html .= "<td>$downloadDiv</td>\n";
-			$html .= "<td>";
-			$html .= ( $fulltomo['subtomo'] > 0) ? "<A HREF='subtomosummary.php?expId=$expId&fullId=".$fulltomoid."'>".$fulltomo['subtomo']."</A>" : $fulltomo['subtomo'];
-			$html .= "</TD>\n";
-			$html .= "</tr>\n";
-		}
-	}
-	$html .= "</table>\n";
-	$html .= "<br>\n";
-	echo $html;
-} else {
-	$html = "<p>no full tomograms available</p>";
-	echo $html;
+$tiltseries = $particle->getTiltSeries($sessionId);
+$html = "<h4>Full Tomograms</h4>";
+$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+$html .= "<TR>\n";
+$display_keys = array ( 'tiltseries','id','runname','description','subtomograms');
+foreach($display_keys as $key) {
+	$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 }
 
 // --- Get Subvolume Tomograms
-$tomograms = $particle->getOrphanSubTomogramsFromSession($sessionId);
+$tomograms = $particle->getSubTomogramsFromFullTomogram($fulltomoId);
 if ($tomograms) {
-	$html = "<h4>Directly Uploaded Subvolume tomograms</h4>";
+	$html = "<h4>Subvolume tomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
 	$display_keys = array ( 'tiltseries','full','volume<br/>xycenter,zoffset<br/>dimension','snapshot','description');
@@ -132,7 +94,7 @@ if ($tomograms) {
 		$html .= "<TR>\n";
 		$html .= "<td>$tiltseriesnumber</TD>\n";
 		$html .= "<td>".$tomogram['full']."</TD>\n";
-		$html .= "<td><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>Direct Upload<br/>Unknown Location</A></TD>\n";
+		$html .= "<td><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint,$offsetprint<br/>$dimprint</A></TD>\n";
 		$html .= "<td>";
     $snapfile = $tomogram['path'].'/snapshot.png';
 		if (!file_exists($snapfile)) 
@@ -161,8 +123,9 @@ if ($tomograms) {
 	$html .= "</table>\n";
 	echo $html;
 } else {
-	echo "no other subvolume tomograms available";
+	echo "no subvolume tomograms available";
 }
+
 
 processing_footer();
 ?>

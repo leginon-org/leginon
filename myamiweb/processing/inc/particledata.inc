@@ -244,6 +244,21 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getOrphanSubTomogramsFromSession($sessionId){
+		$q =  "SELECT t.`DEF_id` as DEF_id "
+			."FROM `ApTomogramData` t "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId. " "
+			."AND t.`REF|ApFullTomogramData|fulltomogram` IS NULL";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getsubTomogramsFromFullTomogram($fullId){
+		$q =  "SELECT t.`DEF_id` as DEF_id "
+			."FROM `ApTomogramData` t "
+			."WHERE t.`REF|ApFullTomogramData|fulltomogram` = " .$fullId;
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getTiltSeries($sessionId) {
 		if($sessionId == NULL)
 			return array();
@@ -292,12 +307,20 @@ class particledata {
 	}
 
 	function checkforFullTomogram($tiltseriesId){
-		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description` "
+		$q =  "SELECT t.`DEF_id`, t.name as `tomofilename` , p.`path`, a.`name` as `runname`, a.`bin`,t.`description`,count(*) as `subtomo` "
 			."FROM `ApFullTomogramData` t "
 			."LEFT JOIN `ApPathData` p ON t.`REF|ApPathData|path` = p.`DEF_id` "
 			."LEFT JOIN `ApTomoAlignmentRunData` a ON t.`REF|ApTomoAlignmentRunData|alignment` = a.`DEF_id` "
-			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId;
-		return $this->mysql->getSQLResult($q);
+			."LEFT JOIN `ApTomogramData` sub ON sub.`REF|ApFullTomogramData|fulltomogram` = t.`DEF_id` "
+			."WHERE t.`REF|leginondata|TiltSeriesData|tiltseries` = " .$tiltseriesId." "
+			."GROUP BY t.`DEF_id`";
+		$r = $this->mysql->getSQLResult($q);
+		$result = array();
+		foreach ($r as $full) {
+			$full['subtomo'] = $this->countSubtomograms($full['DEF_id']);
+			$result[] = $full;
+		}
+		return $result;
 	}
 
 	function getTiltSeriesInfo($tiltseriesId){
@@ -324,6 +347,14 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function countSubTomograms($fulltomogramId){
+		$q="SELECT * "
+			."FROM ApTomogramData "
+			."WHERE `REF|ApFullTomogramData|fulltomogram`=".$fulltomogramId;
+		$r = $this->mysql->getSQLResult($q);
+		return count($r);
+	}
+	
 	function countTomoAlignmentRuns($tiltseriesId){
 		$q="SELECT * "
 			."FROM ApTomoAlignmentRunData "
