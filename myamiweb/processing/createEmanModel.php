@@ -33,7 +33,7 @@ else {
 #######################################################################################
 
 
-function createEMANInitialModelForm($extra=false, $title='createModel.py Launcher', $heading='Make an initial model') {
+function createEMANInitialModelForm($extra=false, $title='EMAN Common Lines createModel.py Launcher', $heading='Run EMAN Common Lines') {
    // check if coming directly from a session
 	$expId=$_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
