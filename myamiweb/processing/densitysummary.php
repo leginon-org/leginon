@@ -93,7 +93,7 @@ if ($densityRuns) {
 
 		$html .= "<td>".round($densityrun[pixelsize],2)."</TD>\n";
 		$html .= "<td>$densityrun[boxsize]</TD>\n";
-		$html .= "<td>$densityrun[resolution]</TD>\n";
+		$html .= "<td>".round($densityrun[resolution],2)."</TD>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($densityid,$densityrun['description']) : $densityrun['description'];
