@@ -3176,7 +3176,7 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r[0];
 	}
 
-	function get3dDensitysFromSession($sessionId) {
+	function get3dDensitysFromSession($sessionId, $showHidden=False) {
 		$q="SELECT "
 			."  dens.*, "
 			."  path.`path` AS path, "
@@ -3187,8 +3187,10 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."LEFT JOIN ApRefinementData AS iterid "
 			."  ON dens.`REF|ApRefinementData|iterid` = iterid.`DEF_id` "
 			."WHERE "
-			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' "
-			."ORDER BY dens.`DEF_id` DESC ";
+			."  dens.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden )
+			$q .= " AND ( dens.`hidden` = 0 OR dens.`hidden` IS NULL ) ";
+		$q .= "ORDER BY dens.`DEF_id` DESC ";
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
