@@ -12,6 +12,7 @@ import sys
 import os
 import chimera
 import time
+from chimera.colorTable import getColorByName
 
 chimlog=None
 
@@ -64,7 +65,7 @@ def color_surface_radially(surf):
 
 # -----------------------------------------------------------------------------
 #
-def color_surface_height(surf):
+def color_surface_height(surf, color):
 	writeMessageToLog("Color by height")
 	from SurfaceColor import color_surface, Height_Color, Color_Map
 	hc = Height_Color()
@@ -72,18 +73,28 @@ def color_surface_height(surf):
 	vertices, triangles = surf.surfacePieces[0].geometry
 	hmin, hmax = hc.value_range(vertices, vertex_xform = None)
 	hrange = hmax-hmin
-	data_values = (.125*hrange+hmin, .25*hrange+hmin, .5*hrange+hmin, .75*hrange+hmin, .875*hrange+hmin)
+	#chimera.viewer.viewSize = hrange*0.9
+
 	writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
 	#key: red,green,blue,opacity
 	#order: red, yellow, green, cyan, blue
-	colors = [(0.8,0.2,0.2,1), (0.8,0.5,0.5,1), (0.8,0.8,0.8,1), (0.5,0.5,0.8,1), (0.2,0.2,0.8,1)]  
+	if color is None:
+		data_values = (.125*hrange+hmin, .25*hrange+hmin, .5*hrange+hmin, .75*hrange+hmin, .875*hrange+hmin)
+		colors = [(0.8,0.2,0.2,1), (0.8,0.5,0.5,1), (0.8,0.8,0.8,1), (0.5,0.5,0.8,1), (0.2,0.2,0.8,1)]  
+	else:
+		#rgbcolor = getColorByName(color)
+		colorvalues = color.split(":")
+		rgbcolor = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+		print rgbcolor
+		data_values = (.125*hrange+hmin, .5*hrange+hmin, .875*hrange+hmin)
+		colors = [rgbcolor, (0.8,0.8,0.8,1), rgbcolor]
 
 	hc.colormap = Color_Map(data_values, colors)
 	color_surface(surf, hc, caps_only = False, auto_update = False)
 
 # -----------------------------------------------------------------------------
 #
-def color_surface_cylinder(surf):
+def color_surface_cylinder(surf, color):
 	writeMessageToLog("Color cylindrically")
 	from SurfaceColor import color_surface, Cylinder_Color, Color_Map
 	cc = Cylinder_Color()
@@ -126,7 +137,7 @@ def hideDust(volume, size=10):
 		writeMessageToLog("hiding dust of size %.1f"%(size))
 		#writeMessageToLog(str(dir(dust))
 		#writeMessageToLog(str(help(dust))
-		dust.hide_dust(volume, 'size', limit, auto_update = True)
+		dust.hide_dust(volume, 'size', size, auto_update=True)
 		#runChimCommand('hide dust # %d'%(size))
 	except:
 		writeMessageToLog("skipping hide dust")
@@ -135,7 +146,7 @@ def hideDust(volume, size=10):
 # -----------------------------------------------------------------------------
 #
 def render_volume(tmp_path, vol_path, contour=1.5, 
-	zoom_factor=1.0, image_size=(128, 128), imgFormat="PNG", sym="C"):
+	zoom_factor=1.0, image_size=(512, 512), imgFormat="PNG", sym="C", color=None):
 
 	chimera.viewer.windowSize = image_size
 
@@ -153,9 +164,9 @@ def render_volume(tmp_path, vol_path, contour=1.5,
 	elif sym.lower()[0] == 'd':
 		process_dsym(v, surfs, vol_path, imgFormat="PNG")
 	elif sym.lower() == 'c1':
-		process_asymmetric(v, surfs, vol_path, imgFormat="PNG")
+		process_asymmetric(v, surfs, vol_path, imgFormat="PNG", color=color)
 	else:
-		process_csym(v, surfs, vol_path, imgFormat="PNG")
+		process_csym(v, surfs, vol_path, imgFormat="PNG", color=color)
 
 # -----------------------------------------------------------------------------
 #
@@ -186,16 +197,16 @@ def process_icosahedral(v, surfs, vol_path, imgFormat="PNG"):
 
 # -----------------------------------------------------------------------------
 #
-def process_asymmetric(v, surfs, vol_path, imgFormat="PNG"):
-	hideDust(v, 10)
+def process_asymmetric(v, surfs, vol_path, imgFormat="PNG", color=None):
+	hideDust(v, 100)
 	for s in surfs:
-		color_surface_height(s)
+		color_surface_height(s, color)
 	writeMessageToLog("turn: get top view")
 	runChimCommand("turn x 180")
 
 	tilt = 15
 	runChimCommand("turn x %d"%(-tilt))
-	increment = 5
+	increment = 4
 	nsteps = int(360/increment)
 	for i in range(nsteps):
 		filename = "%s.%03d.%s"%(vol_path, i, imgFormat.lower())
@@ -233,10 +244,10 @@ def process_dsym(v, surfs, vol_path, imgFormat="PNG"):
 
 # -----------------------------------------------------------------------------
 #
-def process_csym(v, surfs, vol_path, imgFormat="PNG"):
-	hideDust(v, 5)
+def process_csym(v, surfs, vol_path, imgFormat="PNG", color=None):
+	hideDust(v, 3)
 	for s in surfs:
-		color_surface_cylinder(s)
+		color_surface_height(s, color)
 	writeMessageToLog("turn: get intermediate side view")
 	runChimCommand('turn x 90')
 
@@ -301,7 +312,6 @@ if True:
 	params = env.split(',')
 
 	## change bg color	
-	from chimera.colorTable import getColorByName
 	white = getColorByName('white')
 	chimera.viewer.background = white
 	#chimera.viewer.showSilhouette = True
@@ -312,13 +322,18 @@ if True:
 	sym = params[2] #sys.argv[4]
 	contour = float(params[3]) #sys.argv[5])
 	zoom_factor = float(params[4]) #sys.argv[6])
+	if len(params) > 4:
+		color = params[5] #sys.argv[6])
+		print color
+	else:
+		color = None
 
 	rundir = os.path.dirname(volume_path)
 	chimlog = os.path.join(rundir, "chimera.log")
 
 	writeMessageToLog("Environmental data: "+str(params))
 
-	render_volume(tmpfile_path, volume_path, contour, zoom_factor=zoom_factor, sym=sym)
+	render_volume(tmpfile_path, volume_path, contour, zoom_factor=zoom_factor, sym=sym, color=color)
 
 	chimera.ChimeraExit()
 	chimera.ChimeraSystemExit()
