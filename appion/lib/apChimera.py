@@ -66,7 +66,7 @@ def renderSnapshots(density, res=30, contour=1.5, zoom=1.0,
 #=========================================
 #=========================================
 def renderAnimation(density, res=30, contour=1.5, zoom=1.0,
-		apix=None, sym=None, box=None, lpfilter=True):
+		apix=None, sym=None, box=None, lpfilter=True, color=None):
 	### if eotest failed, filter to 30
 	if not res or str(res) == 'nan':
 		res = 30
@@ -86,8 +86,12 @@ def renderAnimation(density, res=30, contour=1.5, zoom=1.0,
 		shutil.copy(density, tmpf)
 
 	### setup chimera params
-	chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
+	if color is not None:
+		chimsnapenv = "%s,%s,%s,%.3f,%.3f,%s" % (tmpf, density, sym, contour, zoom, color)
+	else:
+		chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
 	os.environ["CHIMENV"] = chimsnapenv
+	#print chimsnapenv
 	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimAnimate.py")
 	runChimeraScript(chimsnappath)
 	apFile.removeFile(tmpf)
@@ -97,14 +101,20 @@ def renderAnimation(density, res=30, contour=1.5, zoom=1.0,
 		apDisplay.printWarning("Chimera failed to generate images")
 	else:
 		finalgif = density+".animate.gif"
-		imagemagickcmd = "convert -delay 10 -loop 15 "
+		#finalpng = density+".average.png"
+		imagemagickcmd1 = "convert -delay 10 -loop 15 "
+		#imagemagickcmd2 = "convert -average "
 		images = glob.glob(density+".*[0-9][0-9].png")
 		images.sort()
+		imagestr = ""
 		for image in images:
-			imagemagickcmd += image+" "
-		imagemagickcmd += finalgif
+			imagestr += image+" "
+		imagemagickcmd1 += imagestr+finalgif
+		#imagemagickcmd2 += imagestr+finalpng
 		apFile.removeFile(finalgif)
-		apEMAN.executeEmanCmd(imagemagickcmd, verbose=True)
+		apEMAN.executeEmanCmd(imagemagickcmd1, verbose=True)
+		#apFile.removeFile(finalpng)
+		#apEMAN.executeEmanCmd(imagemagickcmd2, verbose=True)
 		if os.path.isfile(finalgif):
 			apFile.removeFilePattern(density+".*[0-9][0-9].png")
 	
