@@ -305,8 +305,8 @@ foreach ($iterations as $iteration){
 			if ($prtlsused != $goodprtls[$type]) 
 				$html .= "<TR><td bgcolor='$bg'>Not all prtls accounted for!!!</TD></tr>";
 			$html .= "<TR><td bgcolor='$bg'>\n"
-			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><br></TD></tr><TR><td bgcolor='$bg'>"
-			."<a target='stackview' HREF='viewstack.php?refinement=$refinementData[DEF_id]&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</A></TD></tr>\n";
+			."<a target='stackview' HREF='viewstack.php?expId=$expId&refinement=$refinementData[DEF_id]&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</A><br></TD></tr><TR><td bgcolor='$bg'>"
+			."<a target='stackview' HREF='viewstack.php?expId=$expId&refinement=$refinementData[DEF_id]&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</A></TD></tr>\n";
 		}
 	}	
 	$html .= "</table></TD>";
