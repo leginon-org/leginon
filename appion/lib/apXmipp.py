@@ -77,6 +77,7 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 		last = filesperdir
 		subdir = 1
 	else:
+		apParam.createDirectory(os.path.join(partdir, "1"))
 		last = numpart
 		subdir = 1
 
