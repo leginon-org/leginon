@@ -132,13 +132,13 @@ function createClusterCoranForm($extra=false, $title='clusterCoran.py Launcher',
 			$level = dechex($contrib/$eigendata[0]['contrib']*239 + 16);
 			echo "<td>\n";
 			echo "<a href='loadimg.php?filename=$efile' target='eigenimage'>\n"
-				."<img src='loadimg.php?filename=$efile&s=128' width='128' height='128' border='0'></a><br />\n";
+				."<img src='loadimg.php?filename=$efile&s=64' width='64' height='64' border='0'></a><br />\n";
 			$imgname = 'eigenimg'.$index;
 			echo "<center>$index <input type='checkbox' name='$imgname' ";
 			// when first loading page select first 3
 			// eigenimgs, otherwise reload selected
 			if (($index<=3 && !$_POST['process']) || $_POST[$imgname]) echo "checked";
-			echo "><font color='#".$level."2222' size='-1'>($contrib %)</font></center>\n";
+			echo "><font color='#".$level."2222' size='-2'>($contrib %)</font></center>\n";
 			echo "</td>\n";
 			if ($index % 4 == 0) echo "</tr>\n";
 		}
