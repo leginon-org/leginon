@@ -111,10 +111,9 @@ function runUploadModel() {
 	$box=$_POST['box'];
 	if (!$box) createForm("<B>ERROR:</B> Enter a box size");
 
-	// check if downloading the biological unit
 
-	if (!is_float($apix)) $apix = $apix.".0";
-	if (!is_float($res)) $res = $res.".0";
+	if (!is_float($apix)) $apix = sprintf("%.1f", $apix);
+	if (!is_float($res)) $res = sprintf("%.1f", $res);
 	$filename = $emdbid.'-'.$apix.'-'.$res.'-'.$box;
 	// emdb id will be the runname
 	$runname = $_POST['runtime'];
