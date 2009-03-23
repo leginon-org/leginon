@@ -64,11 +64,15 @@ if ($densityRuns) {
 		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A></TD>\n";
 
 		# sample image
-		$imgfile = $densityrun['path']."/".$densityrun['name'].".1.png";
-		if (file_exists($imgfile))
-			$html .= "<td><img src='loadimg.php?scale=0.07&filename=$imgfile' HEIGHT=71></TD>\n";
+		$giffile = $densityrun['path']."/".$densityrun['name'].".animate.gif";
+		$pngfile = $densityrun['path']."/".$densityrun['name'].".1.png";
+		if ($giffile && file_exists($giffile))
+			$html .= "<td valign='center' align='center'><img src='loadimg.php?rawgif=1&filename=".$giffile."' height='128'></td>\n";
+		elseif ($pngfile && file_exists($pngfile))
+			$html .= "<td valign='center' align='center'><img src='loadimg.php?h=128&filename=".$pngfile."' height='128'></td>\n";
 		else
-			$html .= "<td></TD>\n";
+			$html .= "<td></td>\n";
+
 
 		if ($densityrun['REF|ApRctRunData|rctrun'])
 			$html .= "<td><A HREF='rctreport.php?expId=$expId&rctId="
