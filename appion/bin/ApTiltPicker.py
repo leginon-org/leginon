@@ -30,7 +30,7 @@ from scipy import ndimage, optimize
 
 class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True, name=None):
-		gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id, 
+		gui.wx.TargetPanel.TargetImagePanel.__init__(self, parent, id,
 			callback=callback, tool=tool, mode="vertical")
 		if name is not None:
 			self.outname = name
@@ -73,10 +73,10 @@ class TiltTargetPanel(gui.wx.TargetPanel.TargetImagePanel):
 
 #---------------------------------------
 class PickerApp(wx.App):
-	def __init__(self, mode='default', 
-	 pickshape="circle", pshapesize=24, 
+	def __init__(self, mode='default',
+	 pickshape="circle", pshapesize=24,
 	 alignshape="square", ashapesize=6,
-	 worstshape="square", wshapesize=28, 
+	 worstshape="square", wshapesize=28,
 	 tiltangle=None, tiltaxis=None, doinit=True):
 		self.mode = mode
 		self.pshape = self.canonicalShape(pickshape)
@@ -118,22 +118,22 @@ class PickerApp(wx.App):
 		self.panel1.parent = self.frame
 		self.panel1.app = self
 
-		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32), 
+		self.panel1.addTargetTool('Picked', color=wx.Color(215, 32, 32),
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel1.setTargets('Picked', [])
 		self.panel1.selectiontool.setTargeting('Picked', True)
 
-		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215), 
+		self.panel1.addTargetTool('Aligned', color=wx.Color(32, 128, 215),
 			shape=self.ashape, size=self.ashapesize, numbers=True)
 		self.panel1.setTargets('Aligned', [])
 		self.panel1.selectiontool.setDisplayed('Aligned', True)
 
-		self.panel1.addTargetTool('Worst', color=wx.Color(250, 160, 32), 
+		self.panel1.addTargetTool('Worst', color=wx.Color(250, 160, 32),
 			shape=self.eshape, size=self.wshapesize)
 		self.panel1.setTargets('Worst', [])
 		self.panel1.selectiontool.setDisplayed('Worst', True)
 
-		self.panel1.addTargetTool('Polygon', color=wx.Color(32, 215, 32), 
+		self.panel1.addTargetTool('Polygon', color=wx.Color(32, 215, 32),
 			shape='polygon', target=True)
 		self.panel1.setTargets('Polygon', [])
 		self.panel1.selectiontool.setDisplayed('Polygon', True)
@@ -145,22 +145,22 @@ class PickerApp(wx.App):
 		self.panel2.parent = self.frame
 		self.panel2.app = self
 
-		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215), 
+		self.panel2.addTargetTool('Picked', color=wx.Color(32, 128, 215),
 			shape=self.pshape, size=self.pshapesize, target=True, numbers=True)
 		self.panel2.setTargets('Picked', [])
 		self.panel2.selectiontool.setTargeting('Picked', True)
 
-		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32), 
+		self.panel2.addTargetTool('Aligned', color=wx.Color(215, 32, 32),
 			shape=self.ashape, size=self.ashapesize, numbers=True)
 		self.panel2.setTargets('Aligned', [])
 		self.panel2.selectiontool.setDisplayed('Aligned', True)
 
-		self.panel2.addTargetTool('Worst', color=wx.Color(250, 160, 32), 
+		self.panel2.addTargetTool('Worst', color=wx.Color(250, 160, 32),
 			shape=self.eshape, size=self.wshapesize)
 		self.panel2.setTargets('Worst', [])
 		self.panel2.selectiontool.setDisplayed('Worst', True)
 
-		self.panel2.addTargetTool('Polygon', color=wx.Color(32, 215, 32), 
+		self.panel2.addTargetTool('Polygon', color=wx.Color(32, 215, 32),
 			shape='polygon', target=True)
 		self.panel2.setTargets('Polygon', [])
 		self.panel2.selectiontool.setDisplayed('Polygon', True)
@@ -228,7 +228,7 @@ class PickerApp(wx.App):
 		self.createMenuBar()
 
 		self.frame.SetSizer(self.sizer)
-		self.frame.SetMinSize((512,384))
+		self.frame.SetMinSize((256,128))
 		self.SetTopWindow(self.frame)
 		self.frame.Show(True)
 		return True
@@ -485,7 +485,7 @@ class PickerApp(wx.App):
 
 		elif len(vert1) < 3 and len(vert2) < 3:
 			self.statbar.PushStatusText("ERROR: Could not create a closed polygon. Select more vertices.", 0)
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"Could not create a closed polygon.\nSelect more vertices.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -670,8 +670,8 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onCheckGuessShift(self, evt):
-		if ( self.data['theta'] == 0.0 
-		 or self.data['gamma'] == 0.0 
+		if ( self.data['theta'] == 0.0
+		 or self.data['gamma'] == 0.0
 		 or self.data['phi'] == 0.0 ):
 			self.shift_dialog.Show()
 		else:
@@ -684,7 +684,7 @@ class PickerApp(wx.App):
 		targets2 = self.panel2.getTargets('Picked')
 		if len(targets1) > 2 or len(targets2) > 2:
 			self.statbar.PushStatusText("ERROR: Abort guess shift; more than 2 particles", 0)
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"Will not guess shift when you have more than 2 particles.",\
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -709,19 +709,73 @@ class PickerApp(wx.App):
 			outfile = self.data['outfile']
 			pixdiam = self.data['pixdiam']
 
-			### run tilt automation
-			autotilter = autotilt.autoTilt()
-			result = autotilter.processTiltPair(imgfile1, imgfile2, self.picks1, self.picks2, tiltdiff, outfile, pixdiam, tiltaxis)
-			if result is not None:
-				self.readData(outfile)
+			if False:
+				### run old tilt automation scheme
+				origin, newpart, snr, ang = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, 
+					self.picks1, angsearch=True, inittiltaxis=tiltaxis)
+				self.panel1.setTargets('Picked', [origin])
+				self.panel2.setTargets('Picked', [newpart])
+
+				self.shift.SetBackgroundColour(self.deselectcolor)
+				time.sleep(0.5)
+
+				self.onMaskRegion(None)
+				time.sleep(0.5)
+				self.onImportPicks(None, msg=False, tight=False)
+				time.sleep(0.5)
+				self.deleteFirstPick()
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onImportPicks(None, msg=False, tight=False)
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onImportPicks(None, msg=False, tight=False)
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onImportPicks(None, msg=False, tight=True)
+				time.sleep(0.5)
+				self.onClearBadPicks(None)
+				time.sleep(0.5)
+				self.onAutoOptim(None)
+			else:
+				### run new tilt automation scheme
+				autotilter = autotilt.autoTilt()
+				result = autotilter.processTiltPair(imgfile1, imgfile2, self.picks1, 
+					self.picks2, tiltdiff, outfile, pixdiam, tiltaxis)
+				if result is not None:
+					self.readData(outfile)
 		else:
 			### STAND ALONE MODE
-			#dialog = wx.MessageDialog(self.frame, 
+			#dialog = wx.MessageDialog(self.frame,
 			#	"Unsure about initial shift", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
 			#if dialog.ShowModal() == wx.ID_OK:
 			#	dialog.Destroy()
-			origin, newpart, snr, ang = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, self.picks1, True, tiltaxis)
-
+			origin, newpart, snr, ang = apTiltShift.getTiltedCoordinates(img1, img2, tiltdiff, 
+				self.picks1, True, tiltaxis)
 			self.panel1.setTargets('Picked', [origin])
 			self.panel2.setTargets('Picked', [newpart])
 			self.shift.SetBackgroundColour(self.deselectcolor)
@@ -730,7 +784,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def getCutoffCriteria(self, errorArray):
-		#do a small minimum filter to  get rid of outliers
+		#do a small minimum filter to get rid of outliers
 		size = int(len(errorArray)**0.3)+1
 		errorArray2 = ndimage.minimum_filter(errorArray, size=size, mode='wrap')
 		mean = ndimage.mean(errorArray2)
@@ -880,8 +934,8 @@ class PickerApp(wx.App):
 		len1 = len(self.picks1)
 		len2 = len(self.picks2)
 		if len1 < 1 or len2 < 1:
-			dialog = wx.MessageDialog(self.frame, 
-				"There are no picks to import: "+str(len1)+", "+str(len2), 
+			dialog = wx.MessageDialog(self.frame,
+				"There are no picks to import: "+str(len1)+", "+str(len2),
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -891,8 +945,8 @@ class PickerApp(wx.App):
 		a1 = self.targetsToArray(targets1)
 		a2 = self.targetsToArray(targets2)
 		if len(a1) < 1 or len(a2) < 1:
-			dialog = wx.MessageDialog(self.frame, 
-				"You must pick a particle pair first", 
+			dialog = wx.MessageDialog(self.frame,
+				"You must pick a particle pair first",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -904,8 +958,8 @@ class PickerApp(wx.App):
 			pixdiam /= 2.0
 		list1, list2 = apTiltTransform.alignPicks2(self.picks1, self.picks2, self.data, limit=pixdiam)
 		if list1.shape[0] == 0 or list2.shape[0] == 0:
-			dialog = wx.MessageDialog(self.frame, 
-				"No new picks were found", 
+			dialog = wx.MessageDialog(self.frame,
+				"No new picks were found",
 				'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -921,17 +975,17 @@ class PickerApp(wx.App):
 
 		self.statbar.PushStatusText("Inserted "+str(newparts)+" new particles", 0)
 		if msg is True:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"Inserted "+str(newparts)+" new particles", 'INFORMATION', wx.OK|wx.ICON_INFORMATION)
 			if dialog.ShowModal() == wx.ID_OK:
-				dialog.Destroy()	
+				dialog.Destroy()
 
 		return True
 
 	#---------------------------------------
 	def onFitTheta(self, evt):
 		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -945,14 +999,14 @@ class PickerApp(wx.App):
 	def onFitAll(self, evt):
 		self.onUpdate(None)
 		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You should run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -969,7 +1023,7 @@ class PickerApp(wx.App):
 
 	#---------------------------------------
 	def onRepairList(self, evt):
-		dialog = wx.MessageDialog(self.frame, 
+		dialog = wx.MessageDialog(self.frame,
 			"This attempt to repairs you picks when you delete"+
 			" from one image and not the other", 'Error',
 			wx.OK|wx.ICON_ERROR)
@@ -995,7 +1049,7 @@ class PickerApp(wx.App):
 	#---------------------------------------
 	def onAutoOptim(self, evt):
 		if len(self.getArray1()) < 5 or len(self.getArray2()) < 5:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You should pick at least 5 particle pairs first", 'Error',
 				 wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -1080,20 +1134,20 @@ class PickerApp(wx.App):
 		Automatically picks image pairs using dog picker
 		"""
 		if self.data['theta'] == 0.0 and self.data['thetarun'] is False:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You must run 'Find Theta' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
-		if False and (len(self.panel1.getTargets('Picked')) < 5 
+		if False and (len(self.panel1.getTargets('Picked')) < 5
 		 or len(self.panel2.getTargets('Picked')) < 5):
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You must pick at least 5 particle pairs first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 		if self.data['gamma'] == 0.0 and self.data['optimrun'] is False:
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"You must run 'Optimize Angles' first", 'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
@@ -1264,7 +1318,7 @@ class PickerApp(wx.App):
 			self.data['extension'] = "xml"
 		else:
 			return "spi"
-		return self.data['extension'] 
+		return self.data['extension']
 
 	#---------------------------------------
 	def onQuit(self, evt):
@@ -1274,7 +1328,7 @@ class PickerApp(wx.App):
 			self.statbar.PushStatusText(
 				"ERROR: Left image ("+str(len(a2))+") has more picks than the right ("
 				+str(len(a1))+"). Quit cancelled.", 0)
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"Left image ("+str(len(a2))+") has more picks than the right ("
 				+str(len(a1))+"). Quit cancelled.",
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -1285,7 +1339,7 @@ class PickerApp(wx.App):
 			self.statbar.PushStatusText(
 				"ERROR: Right image ("+str(len(a2))+") has more picks than the left ("
 				+str(len(a1))+"). Quit cancelled.", 0)
-			dialog = wx.MessageDialog(self.frame, 
+			dialog = wx.MessageDialog(self.frame,
 				"Right image ("+str(len(a2))+") has more picks than the left ("
 				+str(len(a1))+"). Quit cancelled.",
 				'Error', wx.OK|wx.ICON_ERROR)
@@ -1383,22 +1437,22 @@ if __name__ == '__main__':
 		help="Initial tilt axis angle", metavar="#")
 
 	parser.add_option("-s", "--pick-shape", dest="pickshape",
-		help="Particle picking shape", metavar="SHAPE", 
+		help="Particle picking shape", metavar="SHAPE",
 		type="choice", choices=shapes, default="cross" )
 	parser.add_option("-S", "--pick-shape-size", dest="pshapesize",
-		help="Particle picking shape size", metavar="INT", 
+		help="Particle picking shape size", metavar="INT",
 		type="int", default=16 )
 	parser.add_option("-a", "--align-shape", dest="alignshape",
-		help="Algined particles shape", metavar="SHAPE", 
+		help="Algined particles shape", metavar="SHAPE",
 		type="choice", choices=shapes, default="circle" )
 	parser.add_option("-A", "--align-shape-size", dest="ashapesize",
-		help="Algined particles shape size", metavar="INT", 
+		help="Algined particles shape size", metavar="INT",
 		type="int", default=16 )
 	parser.add_option("-w", "--worst-shape", dest="worstshape",
-		help="Worst particles shape", metavar="SHAPE", 
+		help="Worst particles shape", metavar="SHAPE",
 		type="choice", choices=shapes, default="plus" )
 	parser.add_option("-W", "--worst-shape-size", dest="wshapesize",
-		help="Worst particles shape size", metavar="INT", 
+		help="Worst particles shape size", metavar="INT",
 		type="int", default=16 )
 
 	params = apParam.convertParserToParams(parser)
