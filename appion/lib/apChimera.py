@@ -118,7 +118,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
 	runChimeraScript(chimsnappath)
-	image1 = density+".000.png"
+	image1 = density+".001.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
 	else:
