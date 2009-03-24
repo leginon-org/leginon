@@ -383,7 +383,7 @@ function runAlignment() {
 		if (!($user && $password))
 			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,"runAlignment");
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,"partalign");
 		// if errors:
 		if ($sub)
 			createAlignmentForm("<b>ERROR:</b> $sub");
