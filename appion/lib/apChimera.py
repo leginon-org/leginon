@@ -34,7 +34,7 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	os.environ['CHIMTEMPVOL'] = tmpf
 
 	### render images
-	renderSlice(density, tmpf, box, sym)
+	renderSlice(density, box=box, tmpfile=tmpf, sym=sym)
 	if chimtype != 'snapshot':
 		renderAnimation(density, contour, zoom, sym, color, silhouette)
 	elif chimtype != 'animate':
