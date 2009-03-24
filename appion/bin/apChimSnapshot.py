@@ -37,7 +37,7 @@ class ChimSnapShots(object):
 			elif self.symmetry == 'c1':
 				self.animate_asymmetric()
 			else:
-				self.animate_csym(h)
+				self.animate_csym()
 		else:
 			if self.symmetry[:4] == 'icos':
 				self.snapshot_icosahedral()
@@ -237,7 +237,7 @@ class ChimSnapShots(object):
 		increment = 15
 		nsteps = int(180/increment)
 		for i in range(nsteps):
-			self.filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
+			filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
 			self.save_image(filename)
 			self.writeMessageToLog("turn: rotate about by %d to %d"%(increment,increment*(i+1)))
 			self.runChimCommand("turn x %d"%(-tilt))
@@ -329,7 +329,7 @@ class ChimSnapShots(object):
 	def snapshot_csym(self):
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_cylinder(s, self.color)
+			self.color_surface_height(s, self.color)
 		self.writeMessageToLog("turn: get top view")
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
@@ -345,7 +345,6 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("turn: bottom view")
 		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.5.png')
-
 
 	# -----------------------------------------------------------------------------
 	def runChimCommand(self, cmd):
