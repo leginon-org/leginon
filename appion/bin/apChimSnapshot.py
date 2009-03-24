@@ -72,9 +72,8 @@ class ChimSnapShots(object):
 		vertices, triangles = surf.surfacePieces[0].geometry
 		rc = Radial_Color()
 		rmin, rmax = rc.value_range(vertices, vertex_xform=None)
-		chimera.viewer.viewSize = rmax*1.3
-		if self.zoom is not None:
-			self.runChimCommand('scale %.3f' % self.zoom)
+		chimera.viewer.viewSize = rmax*self.zoom
+		#self.runChimCommand('scale %.3f' % self.zoom)
 
 	# -----------------------------------------------------------------------------
 	def color_surface_radially(self, surf, color=None):
@@ -99,8 +98,6 @@ class ChimSnapShots(object):
 		vertices, triangles = surf.surfacePieces[0].geometry
 		hmin, hmax = hc.value_range(vertices, vertex_xform = None)
 		hrange = hmax-hmin
-		#chimera.viewer.viewSize = hrange*0.9
-		self.runChimCommand('scale %.3f' % self.zoom)
 		self.writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
 		#key: red,green,blue,opacity
 		#order: red, yellow, green, cyan, blue
@@ -442,6 +439,7 @@ class ChimSnapShots(object):
 		### image size
 		imgsize = os.environ.get('CHIMIMGSIZE')
 		if imgsize is not None:
+			imgsize = int(imgsize)
 			self.imgsize = (imgsize, imgsize)
 		elif self.type == 'animate':
 			self.imgsize = (128,128)
