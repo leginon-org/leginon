@@ -71,7 +71,10 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
 	os.environ['CHIMTYPE'] = 'snapshot'
-	os.environ['CHIMSILHOUETTE'] = 'true'
+	if silhouette is True:
+		os.environ['CHIMSILHOUETTE'] = 'true'
+	else:
+		os.unsetenv('CHIMSILHOUETTE')
 	if sym is not None:
 		os.environ['CHIMSYM'] = sym
 	if contour is not None:
@@ -97,8 +100,10 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
 	os.environ['CHIMTYPE'] = 'animate'
-	os.unsetenv('CHIMSILHOUETTE')
-	os.unsetenv('CHIMSILHOUETTE')
+	if silhouette is True:
+		os.environ['CHIMSILHOUETTE'] = 'true'
+	else:
+		os.unsetenv('CHIMSILHOUETTE')
 	if sym is not None:
 		os.environ['CHIMSYM'] = sym
 	if contour is not None:
