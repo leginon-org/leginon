@@ -491,7 +491,7 @@ function jobform($modelid, $extra=false) {
 ############################################################
 
 function imagic3dRefine() {
-	$expId = $_GET['expid'];
+	$expId = $_GET['expId'];
 	$projectId=getProjectFromExpId($expId);
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
