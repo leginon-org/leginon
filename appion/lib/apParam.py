@@ -244,9 +244,9 @@ def resetVirtualFrameBuffer():
 	apDisplay.printMsg("Opening Xvfb port "+portstr)
 	xvfbcmd = (
 		"Xvfb :"+portstr
-		+" -ac -pn -screen 0 800x800x8 "
+		+" -once -ac -pn -screen 0 800x800x8 "
 		+fontpath+securfile+rgbfile
-		+" &\n"
+		+" &"
 	)
 	apDisplay.printMsg(xvfbcmd)
 	logf.write(xvfbcmd)
