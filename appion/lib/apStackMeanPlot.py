@@ -95,7 +95,8 @@ def averageSubStack(partlist, stackfile, bin=1):
 		partlist = partlist[:300]
 	boxsize = apImagicFile.getBoxsize(stackfile)
 	if len(partlist) == 0:
-		blank = numpy.ones((boxsize,boxsize), dtype=numpy.float32)
+		binboxsize = boxsize/bin
+		blank = numpy.ones((binboxsize, binboxsize), dtype=numpy.float32)
 		return blank
 	if not os.path.isfile(stackfile):
 		apDisplay.printWarning("could not find stack, "+stackfile)
