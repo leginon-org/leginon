@@ -165,7 +165,7 @@ function runImagicMSAcluster($extra=false)	{
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'runImagicMSAcluster');
+		$sub = submitAppionJob($cmd,$outdir,$runname,$expId,'partcluster');
 		// if errors:
 		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
