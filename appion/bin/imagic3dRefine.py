@@ -57,29 +57,29 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="maximum radial shift during MRA", metavar="float")	
 		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
 			help="maximum radial shift during MRA for this iteration", metavar="float")
-		self.parser.add_option("--samp_param", dest="samp_param", type="int",
+		self.parser.add_option("--samp_param", dest="samp_param", type="int", default=8,
 			help="used to define precision of rotational alignment during MRA", metavar="int")
-		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", #default=10,
+		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", default=10,
 			help="angular increment for euler angle search", metavar="INT")
 		self.parser.add_option("--num_classums", dest="num_classums", type="int",
 			help="total number of classums used for 3d0 construction", metavar="INT")	
-		self.parser.add_option("--ham_win", dest="ham_win", type="float", 
+		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
 			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
-		self.parser.add_option("--object_size", dest="object_size", type="float", #default=0.8
+		self.parser.add_option("--object_size", dest="object_size", type="float", default=0.8,
 			help="object size as fraction of image size", metavar="float")	
-		self.parser.add_option("--repalignments", dest="repalignments", type="int",
+		self.parser.add_option("--repalignments", dest="repalignments", type="int", default=1,
 			help="number of alignments to reprojections", metavar="INT")
-		self.parser.add_option("--amask_dim", dest="amask_dim", type="float",
+		self.parser.add_option("--amask_dim", dest="amask_dim", type="float", default=0.04,
 			help="automasking parameter determined by smallest object size", metavar="float")
-		self.parser.add_option("--amask_lp", dest="amask_lp", type="float",
+		self.parser.add_option("--amask_lp", dest="amask_lp", type="float", default=0.5,
 			help="automasking parameter for low-pass filtering", metavar="float")
-		self.parser.add_option("--amask_sharp", dest="amask_sharp", type="float",
+		self.parser.add_option("--amask_sharp", dest="amask_sharp", type="float", default=0.5,
 			help="automasking parameter that determines sharpness of mask", metavar="float")
-		self.parser.add_option("--amask_thresh", dest="amask_thresh", type="float",
+		self.parser.add_option("--amask_thresh", dest="amask_thresh", type="float", default=15,
 			help="automasking parameter that determines object thresholding", metavar="float")
-		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	#default=25
+		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	default=25,
 			help="angular increment of reprojections for MRA", metavar="INT")
-		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int",	#default=25
+		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", default=25,
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
 
 		### mass specified for eman volume function
@@ -98,30 +98,30 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			apDisplay.printError("enter maximum radial shift during MRA")
 		if self.params['max_shift_this'] is None:
 			apDisplay.printError("enter maximum radial shift during MRA for this iteration")
-		if self.params['samp_param'] is None:
-			apDisplay.printError("enter sampling parameter for MRA")
-		if self.params['euler_ang_inc'] is None:
-			apDisplay.printError("enter euler angle increment")
+#		if self.params['samp_param'] is None:
+#			apDisplay.printError("enter sampling parameter for MRA")
+#		if self.params['euler_ang_inc'] is None:
+#			apDisplay.printError("enter euler angle increment")
 		if self.params['num_classums'] is None:
 			apDisplay.printError("enter number of classums used for creating 3d0")
-		if self.params['ham_win'] is None:
-			apDisplay.printError("enter value for hamming window")
-		if self.params['object_size'] is None:
-			apDisplay.printError("enter value for object size as fraction of image size")
-		if self.params['repalignments'] is None:
-			apDisplay.printError("enter number of alignments to reprojections")
-		if self.params['amask_dim'] is None:
-			apDisplay.printError("enter automask parameter amask_dim")
-		if self.params['amask_lp'] is None:
-			apDisplay.printError("enter automask parameter amask_lp")
-		if self.params['amask_sharp'] is None:
-			apDisplay.printError("enter automask parameter amask_sharp")
-		if self.params['amask_thresh'] is None:
-			apDisplay.printError("enter automask parameter amask_thresh")
-		if self.params['mrarefs_ang_inc'] is None:
-			apDisplay.printError("enter angular increment of forward projections for MRA")
-		if self.params['forw_ang_inc'] is None:
-			apDisplay.printError("enter angular increment of forward projections for euler angle refinement")
+#		if self.params['ham_win'] is None:
+#			apDisplay.printError("enter value for hamming window")
+#		if self.params['object_size'] is None:
+#			apDisplay.printError("enter value for object size as fraction of image size")
+#		if self.params['repalignments'] is None:
+#			apDisplay.printError("enter number of alignments to reprojections")
+#		if self.params['amask_dim'] is None:
+#			apDisplay.printError("enter automask parameter amask_dim")
+#		if self.params['amask_lp'] is None:
+#			apDisplay.printError("enter automask parameter amask_lp")
+#		if self.params['amask_sharp'] is None:
+#			apDisplay.printError("enter automask parameter amask_sharp")
+#		if self.params['amask_thresh'] is None:
+#			apDisplay.printError("enter automask parameter amask_thresh")
+#		if self.params['mrarefs_ang_inc'] is None:
+#			apDisplay.printError("enter angular increment of forward projections for MRA")
+#		if self.params['forw_ang_inc'] is None:
+#			apDisplay.printError("enter angular increment of forward projections for euler angle refinement")
 		
 		return
 
@@ -255,7 +255,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(str(self.params['object_size'])+"\n")		
 		f.write("EOF\n\n")
 		f.write("set j=1\n")
-		f.write("while ($j<"+str(self.params['repalignments'])+")\n")
+		repalignments = self.params['repalignments'] + 1
+		f.write("while ($j<"+str(repalignments)+")\n")
 		f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("ordered_repaligned\n")
 		f.write("to_be_aligned\n")
