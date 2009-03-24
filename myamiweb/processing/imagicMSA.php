@@ -297,7 +297,7 @@ function runImagicMSA($extra=false)	{
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'runImagicMSA');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignanalysis');
 		// if errors:
 		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
