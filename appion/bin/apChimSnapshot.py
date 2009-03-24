@@ -57,6 +57,7 @@ class ChimSnapShots(object):
 		"""
 		default_settings.set('limit_voxel_count', False)
 		default_settings.set('surface_smoothing', True)
+		default_settings.set('smoothing_iterations', 10)
 		self.voldata = open_volume_file(self.tmpfilepath, self.fileformat)[0]
 		self.voldata.set_parameters(show_outline_box=False, surface_smoothing = True, two_sided_lighting = False)
 		if self.contour is not None:
