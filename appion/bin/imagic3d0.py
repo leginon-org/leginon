@@ -52,8 +52,6 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="symmetry of the object", metavar="INT")
 		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", default=10,
 			help="angular increment for euler angle search", metavar="INT")
-		self.parser.add_option("--numpart", dest="numpart", type="int",
-			help="total number of particles subjected to angular reconstitution", metavar="INT")
 		self.parser.add_option("--num_classums", dest="num_classums", type="int",
 			help="number of sorted classums (based on angular reconstitution error) used for 3d0 construction", metavar="INT")	
 		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
@@ -371,7 +369,6 @@ class imagic3d0Script(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.params['projections'] = self.params['projections'].replace(",", ";")
-		print self.params
 		
 		# get reference-free classification and reclassification parameters
 		if self.params['norefClassId'] is not None:
@@ -414,14 +411,14 @@ class imagic3d0Script(appionScript.AppionScript):
 			apDisplay.printError("class averages not in the database")
 
 		### check conflicts with number of particles
-		if self.params['numpart'] is None:
-			self.params['numpart'] = apFile.numImagesInStack(linkingfile+".hed")
+		self.params['numpart'] = apFile.numImagesInStack(linkingfile+".hed")
 		if self.params['num_classums'] is None:
 			self.params['num_classums'] = self.params['numpart']
 		if self.params['num_classums'] > self.params['numpart']:
 			apDisplay.printError("number of class averages greater than number of particles in stack")
 
-
+		print self.params
+		print "**********************"
 		print "... class average stack pixel size: "+str(self.params['apix'])
 		print "... class average stack box size: "+str(self.params['boxsize'])	
 		apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3d0.log for details")
