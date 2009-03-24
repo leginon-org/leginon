@@ -48,12 +48,10 @@ class MakeSnapshotScript(appionScript.AppionScript):
 		box = apVolume.getModelDimensions(self.params['file'])
 		if self.params['type'] != "snapshot":
 			apDisplay.printMsg("Creating animation")
-			apChimera.renderAnimation(self.params['file'], res=30, contour=self.params['contour'], zoom=self.params['zoom'],
-				apix=None, sym=self.params['sym'], box=box, lpfilter=False)
+			apChimera.renderAnimation(self.params['file'], contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['sym'])
 		if self.params['type'] != "animate":
 			apDisplay.printMsg("Creating snapshots")
-			apChimera.renderSnapshots(self.params['file'], res=30, contour=self.params['contour'], zoom=self.params['zoom'],
-				apix=None, sym=self.params['sym'], box=box, lpfilter=False)
+			apChimera.renderSnapshots(self.params['file'], contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['sym'])
 
 #=====================
 #=====================

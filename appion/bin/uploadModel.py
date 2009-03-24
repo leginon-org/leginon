@@ -225,9 +225,9 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
-		apChimera.renderSnapshots(newmodelpath, res=self.params['res'], contour=self.params['contour'], 
-			zoom=self.params['zoom'], apix=self.params['newapix'], sym=self.params['syminfo']['eman_name'],
-			box=self.params['newbox'], lpfilter=True)
+		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['syminfo']['eman_name'])
+		apChimera.renderAnimation(newmodelpath, contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['syminfo']['eman_name'])
+
 
 		apUpload.insertModel(self.params)
 

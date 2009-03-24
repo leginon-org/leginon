@@ -458,10 +458,9 @@ class imagic3d0Script(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(volumecmd2)
 		
 		### create chimera slices of densities
-		apChimera.renderSnapshots(mrcname, 30,
-			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
-		apChimera.renderSnapshots(mrcnamerot, 30,
-			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
+		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
+		apChimera.renderSnapshots(mrcnamerot, contour=1.0, zoom=1.0, sym='c1')
 
 		### upload density
 		self.upload3d0()

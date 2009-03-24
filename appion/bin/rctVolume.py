@@ -318,11 +318,11 @@ class rctVolumeScript(appionScript.AppionScript):
 		### image with chimera
 		if self.params['skipchimera'] is False:
 			snapshotthread = threading.Thread(target=apChimera.renderSnapshots, 
-				args=(mrcvolfile, 30, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+				args=(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1'))
 			snapshotthread.setDaemon(1)
 			snapshotthread.start()
 			animationthread = threading.Thread(target=apChimera.renderAnimation, 
-				args=(mrcvolfile, 30, self.params['contour'], self.params['zoom'], apix, 'c1', boxsize, False))
+				args=(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1'))
 			animationthread.setDaemon(1)
 			animationthread.start()
 

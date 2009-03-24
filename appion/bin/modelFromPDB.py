@@ -147,8 +147,8 @@ class modelFromPDB(appionScript.AppionScript):
 		apFile.removeFile(tmpname+".spi")
 
 		### chimera imaging
-		apChimera.renderSnapshots(mrcname, self.params['res'],
-			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
+		apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym='c1')
+		apChimera.renderAnimation(mrcname, contour=1.5, zoom=1.0, sym='c1')
 
 		### upload it
 		self.uploadDensity(mrcname)

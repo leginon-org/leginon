@@ -300,8 +300,8 @@ class createModelScript(appionScript.AppionScript):
 		self.changeapix(modelpath, self.params['apix'])
 
 		### chimera imaging
-		apChimera.renderSnapshots(modelpath, self.params['lp'],
-			1.5, 1.0, self.params['apix'], 'c1', self.params['box'], False)
+		apChimera.renderSnapshots(modelpath, contour=1.5, zoom=1.0, sym='c1')
+		apChimera.renderAnimation(modelpath, contour=1.5, zoom=1.0, sym='c1')
 
 		### upload it
 		self.uploadDensity(modelpath)

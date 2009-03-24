@@ -368,14 +368,14 @@ def getClassInfo(classes):
 	return projeulers
 
 def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
-		apix=None, sym=None, box=None, lpfilter=True):
+		apix=None, sym=None, box=None):
 	if sym is None:
 		sym = initmodel['symmetry']['eman_name']
 	if apix is None:
 		apix = initmodel['pixelsize']
 	if box is None:
 		box = initmodel['boxsize']
-	badres = apChimera.renderSnapshots(density, res, contour, zoom, apix, sym, box, lpfilter)
+	badres = apChimera.filterAndChimera(density, res, apix, box, 'snapshot', contour, zoom, sym)
 	return badres
 
 def insertRefinementRun(params):

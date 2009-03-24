@@ -35,12 +35,12 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 
 	### render images
 	if chimtype == 'animate':
-		renderAnimation2(density, contour, zoom, sym, color, silhouette)
+		renderAnimation(density, contour, zoom, sym, color, silhouette)
 	elif chimtype == 'both':
-		renderAnimation2(density, contour, zoom, sym, color, silhouette)
-		renderSnapshots2(density, contour, zoom, sym, color, silhouette)
+		renderAnimation(density, contour, zoom, sym, color, silhouette)
+		renderSnapshots(density, contour, zoom, sym, color, silhouette)
 	else:
-		renderSnapshots2(density, contour, zoom, sym, color, silhouette)
+		renderSnapshots(density, contour, zoom, sym, color, silhouette)
 	renderSlice(density, tmpf, box, sym)
 	apFile.removeFile(tmpf)
 

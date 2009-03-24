@@ -188,8 +188,8 @@ class PostProcScript(appionScript.AppionScript):
 			symdata  = apUpload.getSymmetryData(self.params['sym'])
 			symmetry = symdata['eman_name']
 
-			apChimera.renderSnapshots(outfile, res=self.params['res'], contour=self.params['contour'], zoom=self.params['zoom'],
-				apix=self.params['apix'], box=self.params['box'], sym=symmetry, lpfilter=True)
+			apChimera.filterAndChimera(outfile, res=self.params['res'], apix=self.params['apix'], box=self.params['box'], 
+				chimtype='snapshot', contour=self.params['contour'], zoom=self.params['zoom'], sym=symmetry)
 
 #=====================
 #=====================

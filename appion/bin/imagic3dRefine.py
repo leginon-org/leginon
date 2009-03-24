@@ -31,6 +31,7 @@ import apUpload
 import apDatabase
 import apStack
 import apProject
+import apFile
 
 
 #=====================
@@ -571,15 +572,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
                         apEMAN.executeEmanCmd(volumecmd2)
 
 		### create chimera slices of densities ******* .log file has caused problems if not removed
-		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
-			os.remove(str(self.params['rundir'])+"/chimera.log")
-		apChimera.renderSnapshots(mrcname, 30,
-			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
-
-		if os.path.isfile(str(self.params['rundir'])+"/chimera.log") is not False:
-			os.remove(str(self.params['rundir'])+"/chimera.log")
-		apChimera.renderSnapshots(mrcnamerot, 30,
-			1.0, 1.0, self.params['apix'], 'c1', self.params['boxsize'], False)
+		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
+		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
 
 		### upload density
 		#if self.params['itn'] == 1:		
