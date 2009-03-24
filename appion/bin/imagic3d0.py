@@ -50,27 +50,29 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="3 initial projections for angular reconstitution", metavar="STR")
 		self.parser.add_option("--symmetry", dest="symmetry", type="int",
 			help="symmetry of the object", metavar="INT")
-		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", #default=10,
+		self.parser.add_option("--euler_ang_inc", dest="euler_ang_inc", type="int", default=10,
 			help="angular increment for euler angle search", metavar="INT")
+		self.parser.add_option("--numpart", dest="numpart", type="int",
+			help="total number of particles subjected to angular reconstitution", metavar="INT")
 		self.parser.add_option("--num_classums", dest="num_classums", type="int",
-			help="total number of classums used for 3d0 construction", metavar="INT")	
-		self.parser.add_option("--ham_win", dest="ham_win", type="float", 
+			help="number of sorted classums (based on angular reconstitution error) used for 3d0 construction", metavar="INT")	
+		self.parser.add_option("--ham_win", dest="ham_win", type="float", default=0.8,
 			help="similar to lp-filtering parameter that determines detail in 3d map", metavar="float")
-		self.parser.add_option("--object_size", dest="object_size", type="float", #default=0.8,
+		self.parser.add_option("--object_size", dest="object_size", type="float", default=0.8,
 			help="object size as fraction of image size", metavar="float")	
-		self.parser.add_option("--repalignments", dest="repalignments", type="int", default=2,
+		self.parser.add_option("--repalignments", dest="repalignments", type="int", default=1,
 			help="number of alignments to reprojections", metavar="INT")
-		self.parser.add_option("--amask_dim", dest="amask_dim", type="float",
+		self.parser.add_option("--amask_dim", dest="amask_dim", type="float", default=0.04,
 			help="automasking parameter determined by smallest object size", metavar="float")
-		self.parser.add_option("--amask_lp", dest="amask_lp", type="float",
+		self.parser.add_option("--amask_lp", dest="amask_lp", type="float", default=0.5,
 			help="automasking parameter for low-pass filtering", metavar="float")
-		self.parser.add_option("--amask_sharp", dest="amask_sharp", type="float",
+		self.parser.add_option("--amask_sharp", dest="amask_sharp", type="float", default=0.5,
 			help="automasking parameter that determines sharpness of mask", metavar="float")
-		self.parser.add_option("--amask_thresh", dest="amask_thresh", type="float",
-			help="automasking parameter that determines object thresholding", metavar="float")
-		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	#default=25,
+		self.parser.add_option("--amask_thresh", dest="amask_thresh", type="int", default=15,
+			help="automasking parameter that determines object thresholding", metavar="INT")
+		self.parser.add_option("--mrarefs_ang_inc", dest="mrarefs_ang_inc", type="int",	default=25,
 			help="angular increment of reprojections for MRA", metavar="INT")
-		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", #default=25,
+		self.parser.add_option("--forw_ang_inc", dest="forw_ang_inc", type="int", default=25,
 			help="angular increment of reprojections for euler angle refinement", metavar="INT")
 		
 		### mass specified for eman volume function
@@ -87,28 +89,6 @@ class imagic3d0Script(appionScript.AppionScript):
 			apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
 		if self.params['symmetry'] is None:
 			apDisplay.printError("enter object symmetry")
-		if self.params['euler_ang_inc'] is None:
-			apDisplay.printError("enter euler angle increment")
-		if self.params['num_classums'] is None:
-			apDisplay.printError("enter number of classums used for creating 3d0")
-		if self.params['ham_win'] is None:
-			apDisplay.printError("enter value for hamming window")
-		if self.params['object_size'] is None:
-			apDisplay.printError("enter value for object size as fraction of image size")
-		if self.params['repalignments'] is None:
-			apDisplay.printError("enter number of alignments to reprojections")
-		if self.params['amask_dim'] is None:
-			apDisplay.printError("enter automask parameter amask_dim")
-		if self.params['amask_lp'] is None:
-			apDisplay.printError("enter automask parameter amask_lp")
-		if self.params['amask_sharp'] is None:
-			apDisplay.printError("enter automask parameter amask_sharp")
-		if self.params['amask_thresh'] is None:
-			apDisplay.printError("enter automask parameter amask_thresh")
-		if self.params['mrarefs_ang_inc'] is None:
-			apDisplay.printError("enter angular increment of forward projections for MRA")
-		if self.params['forw_ang_inc'] is None:
-			apDisplay.printError("enter angular increment of forward projections for euler angle refinement")
 		
 		return
 
@@ -180,6 +160,29 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("30\n")
 		f.write("no\n")
 		f.write("EOF\n")
+
+		### figure out which projections have already been used before proceeding
+		numbers = self.params['projections'].split(";")
+		integers = [int(x) for x in numbers]
+		integers.sort()
+		j = 1
+		list = []
+		while j <= self.params['numpart']:
+			list.append(j)
+			j += 1
+		for item in integers:
+			list.remove(item)
+		j = 1   
+		proj = str(list[0])
+		length = len(list)
+		while j < length:
+		        if (list[j] != (list[(j-1)] + 1)):
+		                proj = proj+"-"+str(list[j-1])+";"+str(list[j])
+		        j += 1
+		        if j == length:
+		                proj = proj+"-"+str(list[j-1])
+		
+		### continue with the script creation
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")
 		f.write(symmetry+"\n")
 		if lowercase != "c1":
@@ -187,7 +190,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("new\n")
 		f.write("add\n")
 		f.write("start_stack\n")
-		f.write("1-"+str(self.params['num_classums'])+"\n")
+		f.write(str(proj)+"\n")
 		f.write("ordered0\n")
 		f.write("sino_ordered0\n")
 		f.write("yes\n")
@@ -196,11 +199,21 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("5.0\n")
 		f.write("yes\n")
 		f.write("EOF\n")
+
+		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagicCreate3d0.log\n") 
+		f.write("SORT\n")
+		f.write("ordered0\n")
+		f.write("ordered0_sort\n")
+		f.write("ANGULAR_ERROR\n")
+		f.write("UP\n")
+		f.write(str(self.params['num_classums'])+"\n")
+		f.write("EOF\n")
+
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("no\n")
 		f.write(symmetry+"\n")
 		f.write("yes\n")
-		f.write("ordered0\n")
+		f.write("ordered0_sort\n")
 		f.write("ANGREC_HEADER_VALUES\n")
 		f.write("3d0_ordered0\n")
 		f.write("rep0_ordered0\n")
@@ -212,7 +225,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("all\n")
 		f.write("ccf\n")
-		f.write("ordered0\n")
+		f.write("ordered0_sort\n")
 		f.write("ordered0_repaligned\n")
 		f.write("rep0_ordered0\n")
 		f.write("0.2\n")
@@ -233,7 +246,8 @@ class imagic3d0Script(appionScript.AppionScript):
                 f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n\n")
 		f.write("set j=1\n")
-		f.write("while ($j<"+str(self.params['repalignments'])+")\n")
+		repalignments = self.params['repalignments'] + 1
+		f.write("while ($j<"+str(repalignments)+")\n")
 		f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("ordered0_repaligned\n")
 		f.write("to_be_aligned\n")
@@ -339,6 +353,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['mra_ang_inc'] = self.params['mrarefs_ang_inc']
 		modelq['forw_ang_inc'] = self.params['forw_ang_inc']
 		modelq['description'] = self.params['description']
+		modelq['numpart'] = self.params['numpart']
 		modelq['num_classums'] = self.params['num_classums']
 		modelq['pixelsize'] = self.params['apix']
 		modelq['boxsize'] = self.params['boxsize']
@@ -397,6 +412,14 @@ class imagic3d0Script(appionScript.AppionScript):
 			linkingfile = os.path.join(orig_path, orig_file)
 		else:
 			apDisplay.printError("class averages not in the database")
+
+		### check conflicts with number of particles
+		if self.params['numpart'] is None:
+			self.params['numpart'] = apFile.numImagesInStack(linkingfile+".hed")
+		if self.params['num_classums'] is None:
+			self.params['num_classums'] = self.params['numpart']
+		if self.params['num_classums'] > self.params['numpart']:
+			apDisplay.printError("number of class averages greater than number of particles in stack")
 
 
 		print "... class average stack pixel size: "+str(self.params['apix'])
