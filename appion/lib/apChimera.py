@@ -52,8 +52,6 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 	if box is None:
 		boxdims = apFile.getBoxSize(tmpfile)
 		box = boxdims[0]
-
-	print box
 	halfbox = int(box/2)
 	tmphed = density + '.hed'
 	tmpimg = density + '.img'
