@@ -65,13 +65,11 @@ class CCDCamera(object):
 	def getSettings(self):
 		settings = self.getGeometry()
 		settings['exposure time'] = self.getExposureTime()
-		settings['readout callback'] = self.getReadoutCallback()
 		return settings
 
 	def setSettings(self, settings):
 		self.setGeometry(settings)
 		self.setExposureTime(settings['exposure time'])
-		self.setReadoutCallback(settings['readout callback'])
 
 	def getBinning(self):
 		raise NotImplementedError
