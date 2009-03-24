@@ -414,6 +414,6 @@ parametermapping = (
 	('energy filtered', 'EnergyFiltered'),
 	('energy filter', 'EnergyFilter'),
 	('energy filter width', 'EnergyFilterWidth'),
-	('readout callback', 'ReadoutCallback'),
+	#('readout callback', 'ReadoutCallback'),
 )
 

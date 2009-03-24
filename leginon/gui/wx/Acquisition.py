@@ -76,7 +76,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		# misc. checkboxes
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
 		self.widgets['save integer'] = wx.CheckBox(self, -1, 'Float->Integer')
-#		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
+		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
 		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
@@ -86,6 +86,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 																				'Publish and wait for the reference target')
 		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
+		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -162,6 +163,10 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(sz_transform, (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['drift between'], (5, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(self.widgets['background'], (6, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(self.widgets['display image'], (7, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)

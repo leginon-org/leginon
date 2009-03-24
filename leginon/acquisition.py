@@ -131,6 +131,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'accept precision': 1e-3,
 		'process target type': 'acquisition',
 		'save integer': False,
+		'background': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -598,7 +599,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return imagedata
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
+		print 'MOVEANDPRESET START', time.time()
 		status = self.moveAndPreset(presetdata, emtarget)
+		print 'MOVEANDPRESET DONE', time.time()
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status,None
@@ -612,7 +615,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pretime = presetdata['pre exposure']
 		if pretime:
 			self.exposeSpecimen(pretime)
+		args = (presetdata, emtarget, channel)
+		if self.settings['background']:
+			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
+			t.start()
+			waittime = presetdata['exposure time'] / 1000.0 + 0.5
+			print 'EXPOSURE TIME', presetdata['exposure time']
+			print 'WAIT TIME', waittime
+			time.sleep(waittime)
+		else:
+			self.acquirePublishDisplayWait(*args)
+		return status
 
+	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
+		print 'APDW START', time.time()
 		if presetdata['film']:
 			imagedata = self.acquireFilm(presetdata, emtarget)
 		else:
@@ -622,7 +638,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
 		self.publishDisplayWait(imagedata)
-		return status,imagedata
+		print 'APDW DONE', time.time()
 
 	def publishDisplayWait(self, imagedata):
 		'''

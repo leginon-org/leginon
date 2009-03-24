@@ -50,7 +50,8 @@ class Client(Base):
 	def _send(self, request):
 		for client in self.clients:
 			try:
-				return client.send(request)
+				ret = client.send(request)
+				return ret
 			except TransportError, e:
 				pass
 		raise TransportError('Error sending request')

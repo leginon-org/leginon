@@ -23,6 +23,7 @@ import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
 import gui.wx.Instrument
+import time
 
 LocationsEventType = wx.NewEventType()
 EVT_LOCATIONS = wx.PyEventBinder(LocationsEventType)
@@ -210,7 +211,9 @@ class StageLocationsDialog(wx.Dialog):
 
 	def onToScope(self, evt):
 		name = self.lblocations.GetStringSelection()
+		print 'TOSCOPE', time.time()
 		self.node.toScope(name)
+		print 'TOSCOPEDONE', time.time()
 
 	def onFromScope(self, evt):
 		name = self.lblocations.GetStringSelection()

@@ -149,7 +149,7 @@ camera_params = (
 	('energy filtered', bool),
 	('energy filter', bool),
 	('energy filter width', float),
-	('readout callback', sinedon.newdict.CallableType),
+#	('readout callback', sinedon.newdict.CallableType),
 )
 
 class ScopeEMData(EMData):
@@ -1519,6 +1519,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('accept precision', float),
 			('final image shift', bool),
 			('save integer', bool),
+			('background', bool),
 		)
 	typemap = classmethod(typemap)
 
