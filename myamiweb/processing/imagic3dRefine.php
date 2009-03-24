@@ -409,7 +409,7 @@ function jobform($modelid, $extra=false) {
 			$num_classums = ($_POST[$num_classumsn]) ? $_POST[$num_classumsn] : "";
 			$hamming_window = ($_POST[$hamming_windown]) ? $_POST[$hamming_windown] : "0.8";
 			$obj_size = ($_POST[$obj_sizen]) ? $_POST[$obj_sizen] : "0.8";
-			$repalignments = ($_POST[$repalignmentsn]) ? $_POST[$repalignmentsn] : "15";
+			$repalignments = ($_POST[$repalignmentsn]) ? $_POST[$repalignmentsn] : "1";
 			$amask_dim = ($_POST[$amask_dimn]) ? $_POST[$amask_dimn] : "0.04";
 			$amask_lp = ($_POST[$amask_lpn]) ? $_POST[$amask_lpn] : "0.5";
 			$amask_sharp = ($_POST[$amask_sharpn]) ? $_POST[$amask_sharpn] : "0.5";
@@ -517,7 +517,7 @@ function imagic3dRefine() {
 		$num_classums = $_POST['num_classums'.$i];
 		$hamming_window = $_POST['hamming_window'.$i];
 		$obj_size = $_POST['obj_size'.$i];
-		$repalignments = $_POST['repalignments'.$i] + 1;
+		$repalignments = $_POST['repalignments'.$i];
 		$amask_dim = $_POST['amask_dim'.$i];
 		$amask_lp = $_POST['amask_lp'.$i];
 		$amask_sharp = $_POST['amask_sharp'.$i];
