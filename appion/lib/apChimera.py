@@ -14,117 +14,131 @@ import apDisplay
 
 #=========================================
 #=========================================
-def renderSnapshots(density, res=30, contour=1.5, zoom=1.0,
-		apix=None, sym=None, box=None, lpfilter=True, sliceimg=True):
+def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
+		contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+	if box is None:
+		boxdims = apFile.getBoxSize(density)
+		box = boxdims[0]
 	### if eotest failed, filter to 30
-	badres = False
-	if not res:
-		res=30
-	elif str(res) == 'nan':
-		res=100
-		badres = True
-
+	if not res or str(res) == 'nan':
+		res = 30
 	### low pass filter the volume to 60% of reported res
 	tmpf = density+'.tmp.mrc'
-	if lpfilter is True:
-		filtres = 0.6*res
-		if box > 250:
-			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=2 origin=0,0,0' % (density, tmpf, apix, filtres))
-		else:
-			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0' % (density, tmpf, apix, filtres))
-		apDisplay.printMsg("Low pass filtering model for images")
-		apEMAN.executeEmanCmd(lpcmd)
+	filtres = 0.6*res
+	if box is not None and box > 250:
+		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=2 origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
 	else:
-		shutil.copy(density, tmpf)
+		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
+	apDisplay.printMsg("Low pass filtering model for images")
+	apEMAN.executeEmanCmd(lpcmd)
+	os.environ['CHIMTEMPVOL'] = tmpf
 
+	### render images
+	if chimtype == 'animate':
+		renderAnimation2(density, contour, zoom, sym, color, silhouette)
+	elif chimtype == 'both':
+		renderAnimation2(density, contour, zoom, sym, color, silhouette)
+		renderSnapshots2(density, contour, zoom, sym, color, silhouette)
+	else:
+		renderSnapshots2(density, contour, zoom, sym, color, silhouette)
+	renderSlice(density, tmpf, box, sym)
+	apFile.removeFile(tmpf)
+
+#=========================================
+#=========================================
+def renderSlice(density, box=None, tmpfile=None, sym='c1'):
+	"""
+	create mrc of central slice for viruses
+	"""
+	if tmpfile is None:
+		tmpfile = density
+	if box is None:
+		boxdims = apFile.getBoxSize(tmpfile)
+		box = boxdims[0]
+
+	halfbox = int(box/2)
+	tmphed = density + '.hed'
+	tmpimg = density + '.img'
+	hedcmd = ('proc3d %s %s' % (tmpfile, tmphed))
+	if sym.lower()[:4] != 'icos':
+		hedcmd = hedcmd + " rot=90"
+	apEMAN.executeEmanCmd(hedcmd)
+	pngslice = density + '.slice.png'
+	slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
+	apEMAN.executeEmanCmd(slicecmd)
+	apFile.removeStack(tmphed, warn=False)
+	return
+
+#=========================================
+#=========================================
+def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
 	### setup chimera params
-	chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
-	os.environ["CHIMENV"] = chimsnapenv
+	os.environ['CHIMVOL'] = density
+	os.environ['CHIMTYPE'] = 'snapshot'
+	os.environ['CHIMSILHOUETTE'] = 'true'
+	if sym is not None:
+		os.environ['CHIMSYM'] = sym
+	if contour is not None:
+		os.environ['CHIMCONTOUR'] = str(contour)
+	if color is not None:
+		os.environ['CHIMCOLOR'] = color
+	if zoom is not None:
+		os.environ['CHIMZOOM'] = str(zoom)
+	### unused
+	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
 	runChimeraScript(chimsnappath)
-	apFile.removeFile(tmpf)
 
 	image1 = density+".1.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
 
-	if sliceimg is True:
-		# create mrc of central slice for viruses
-		halfbox = int(box/2)
-		tmphed = density + '.hed'
-		tmpimg = density + '.img'
-		hedcmd = ('proc3d %s %s' % (density,tmphed))
-		if sym.lower()[:4] != 'icos':
-			hedcmd = hedcmd + " rot=90"
-		apEMAN.executeEmanCmd(hedcmd)
-		pngslice = density + '.slice.png'
-		slicecmd = ('proc2d %s %s first=%i last=%i' % (tmphed, pngslice, halfbox, halfbox))
-		apEMAN.executeEmanCmd(slicecmd)
-		apFile.removeStack(tmphed, warn=False)
-	return badres
+	return
 
 #=========================================
 #=========================================
-def renderAnimation(density, res=30, contour=1.5, zoom=1.0,
-		apix=None, sym=None, box=None, lpfilter=True, color=None):
-	### if eotest failed, filter to 30
-	if not res or str(res) == 'nan':
-		res = 30
-	halfbox = int(box/2)
-
-	### low pass filter the volume to 60% of reported res
-	tmpf = density+'.tmp.mrc'
-	if lpfilter is True:
-		filtres = 0.6*res
-		if box > 250:
-			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=2 origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
-		else:
-			lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
-		apDisplay.printMsg("Low pass filtering model for images")
-		apEMAN.executeEmanCmd(lpcmd)
-	else:
-		shutil.copy(density, tmpf)
-
+def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
 	### setup chimera params
+	os.environ['CHIMVOL'] = density
+	os.environ['CHIMTYPE'] = 'animate'
+	os.unsetenv('CHIMSILHOUETTE')
+	os.unsetenv('CHIMSILHOUETTE')
+	if sym is not None:
+		os.environ['CHIMSYM'] = sym
+	if contour is not None:
+		os.environ['CHIMCONTOUR'] = str(contour)
 	if color is not None:
-		chimsnapenv = "%s,%s,%s,%.3f,%.3f,%s" % (tmpf, density, sym, contour, zoom, color)
-	else:
-		chimsnapenv = "%s,%s,%s,%.3f,%.3f" % (tmpf, density, sym, contour, zoom)
-	os.environ["CHIMENV"] = chimsnapenv
-	#print chimsnapenv
-	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimAnimate.py")
+		os.environ['CHIMCOLOR'] = color
+	if zoom is not None:
+		os.environ['CHIMZOOM'] = str(zoom)
+	### unused
+	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
+	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
 	runChimeraScript(chimsnappath)
-	apFile.removeFile(tmpf)
-
 	image1 = density+".000.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
 	else:
+		### merge into animated GIF
 		finalgif = density+".animate.gif"
-		#finalpng = density+".average.png"
 		imagemagickcmd1 = "convert -delay 10 -loop 15 "
-		#imagemagickcmd2 = "convert -average "
 		images = glob.glob(density+".*[0-9][0-9].png")
 		images.sort()
 		imagestr = ""
 		for image in images:
 			imagestr += image+" "
 		imagemagickcmd1 += imagestr+finalgif
-		#imagemagickcmd2 += imagestr+finalpng
 		apFile.removeFile(finalgif)
 		apEMAN.executeEmanCmd(imagemagickcmd1, verbose=True)
-		#apFile.removeFile(finalpng)
-		#apEMAN.executeEmanCmd(imagemagickcmd2, verbose=True)
 		if os.path.isfile(finalgif):
 			apFile.removeFilePattern(density+".*[0-9][0-9].png")
-	
 	return
 
 
 #=========================================
 #=========================================
 def runChimeraScript(chimscript):
-	apDisplay.printColor("Trying to use chimera for model imaging","cyan")
+	#apDisplay.printColor("Trying to use chimera for model imaging","cyan")
 	apParam.resetVirtualFrameBuffer()
 	if 'CHIMERA' in os.environ and os.path.isdir(os.environ['CHIMERA']):
 		chimpath = os.environ['CHIMERA']
@@ -139,7 +153,8 @@ def runChimeraScript(chimscript):
 		chimexe = "chimera"
 		#apDisplay.printWarning("'CHIMERA' environmental variable is unset")
 	rendercmd = (chimexe+" python:"+chimscript)
-	logf = open("chimera.log", "a")
+	logf = open("chimeraRun.log", "a")
+	apDisplay.printColor("running Chimera:\n "+rendercmd, "cyan")
 	proc = subprocess.Popen(rendercmd, shell=True, stdout=logf, stderr=logf)
 	proc.wait()
 	logf.close()
