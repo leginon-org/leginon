@@ -164,7 +164,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_icosahedral(self):
-		self.hideDust(2)
+		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_radially(s, self.color)
 		self.save_image(self.volumepath+'.001.png')
@@ -186,7 +186,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_asymmetric(self):
-		self.hideDust(100)
+		self.hideDust(50)
 		for s in self.surfaces:
 			self.color_surface_height(s, self.color)
 		self.writeMessageToLog("turn: get top view")
@@ -210,7 +210,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_dsym(self):
-		self.hideDust(2)
+		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s, self.color)
 		self.writeMessageToLog("turn: get intermediate side view")
@@ -229,7 +229,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_csym(self):
-		self.hideDust(3)
+		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_height(s, self.color)
 		self.writeMessageToLog("turn: get intermediate side view")
@@ -268,7 +268,7 @@ class ChimSnapShots(object):
 		image1 = self.volumepath+'.1.png'
 		image2 = self.volumepath+'.2.png'
 		image3 = self.volumepath+'.3.png'
-		self.hideDust(2)
+		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_radially(s, self.color)
 		self.save_image(self.volumepath+'.1.png')
@@ -290,7 +290,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
-		self.hideDust(10)
+		self.hideDust(50)
 		for s in self.surfaces:
 			self.color_surface_height(s, self.color)
 		self.writeMessageToLog("turn: get front view")
@@ -314,7 +314,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_dsym(self):
-		self.hideDust(2)
+		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s, self.color)
 		self.writeMessageToLog("turn: get top view")
@@ -329,7 +329,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def snapshot_csym(self):
-		self.hideDust(5)
+		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_cylinder(s, self.color)
 		self.writeMessageToLog("turn: get top view")

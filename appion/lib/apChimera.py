@@ -34,14 +34,11 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	os.environ['CHIMTEMPVOL'] = tmpf
 
 	### render images
-	if chimtype == 'animate':
-		renderAnimation(density, contour, zoom, sym, color, silhouette)
-	elif chimtype == 'both':
-		renderAnimation(density, contour, zoom, sym, color, silhouette)
-		renderSnapshots(density, contour, zoom, sym, color, silhouette)
-	else:
-		renderSnapshots(density, contour, zoom, sym, color, silhouette)
 	renderSlice(density, tmpf, box, sym)
+	if chimtype != 'snapshot':
+		renderAnimation(density, contour, zoom, sym, color, silhouette)
+	elif chimtype != 'animate':
+		renderSnapshots(density, contour, zoom, sym, color, silhouette)
 	apFile.removeFile(tmpf)
 
 #=========================================
@@ -56,6 +53,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 		boxdims = apFile.getBoxSize(tmpfile)
 		box = boxdims[0]
 
+	print box
 	halfbox = int(box/2)
 	tmphed = density + '.hed'
 	tmpimg = density + '.img'
