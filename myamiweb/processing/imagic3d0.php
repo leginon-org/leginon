@@ -364,7 +364,7 @@ function jobform($extra=false) {
 }
 
 function create3d0() {
-	$expId = $_GET['expid'];
+	$expId = $_GET['expId'];
 	$projectId = $_GET['projectId'];
 	$fileorig = $_POST['fileorig'];
 	$norefId = $_POST['norefid'];
