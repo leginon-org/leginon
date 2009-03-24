@@ -1242,6 +1242,7 @@ class ApImagic3d0Data(Data):
 			('symmetry', ApSymmetryData),
 			('projections', str),
 			('euler_ang_inc', int),
+			('numpart', int),
 			('num_classums', int),
 			('ham_win', float),
 			('obj_size', float),
