@@ -62,7 +62,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Number of volumes to create", metavar="#")
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
-		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
+		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=15,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
 
 		### floats
