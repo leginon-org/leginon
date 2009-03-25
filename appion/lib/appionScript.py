@@ -45,6 +45,7 @@ class AppionScript(object):
 		self.parsePythonPath()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
+			time.sleep(loadavg**2)
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
 
 		### setup default parser: run directory, etc.
@@ -142,6 +143,10 @@ class AppionScript(object):
 	#=====================
 	def close(self):
 		self.onClose()
+		loadavg = os.getloadavg()[0]
+		if loadavg > 2.0:
+			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
+			time.sleep(loadavg**2)
 		apParam.closeFunctionLog(params=self.params, logfile=self.logfile, msg=(not self.quiet))
 		apFile.removeFile("spider.log")
 		if self.quiet is False:
