@@ -124,7 +124,7 @@ class tomoMaker(appionScript.AppionScript):
 			elif self.params['stackId']:
 				subrunname = 'subtomo_stack%d' % self.params['stackId']
 			else:
-				subrunname = None
+				subrunname = ''
 			self.params['subrunname'] = subrunname
 			self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
 
