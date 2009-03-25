@@ -19,6 +19,7 @@ $reclassId=$_GET['reclassId'];
 $norefId=$_GET['norefId'];
 $norefClassId=$_GET['norefClassId'];
 $clusterId=$_GET['clusterId'];
+$templateStackId=$_GET['templateStackId'];
 $alignId=$_GET['alignId'];
 $stackId=$_GET['stackId'];
 $substack=$_GET['substack'];
@@ -107,6 +108,7 @@ var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
 var reclassId="<?=$reclassId?>"
 var clusterId="<?=$clusterId?>"
+var templateStackId="<?=$templateStackId?>"
 var alignId="<?=$alignId?>"
 
 <?php
@@ -117,7 +119,7 @@ if ($norefClassId || $alignId || $clusterId) {
 	}
 echo 'var stackinfo=['.implode(',',$c).']'."\n";
 }
-if ($norefClassId || $reclassId || $clusterId || $alignId) {
+if ($norefClassId || $reclassId || $clusterId || $templateStackId || $alignId) {
 echo 'var addselectfn=selectextra'."\n";
 
 }
@@ -144,6 +146,9 @@ function create3d0() {
 	}
 	if (clusterId!="") {
 		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&clusterId="+clusterId,"width=400,height=200")
+	}
+	if (templateStackId!="") {
+		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&templateStackId="+templateStackId,"width=400,height=200")
 	}
 }
 
@@ -272,7 +277,7 @@ if (($clusterId || $alignId) && $maxangle > 5)
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";
 // Imagic 3d0
-if ($norefClassId || $reclassId || $clusterId)
+if ($norefClassId || $reclassId || $clusterId || $templateStackId)
 	$includebuttons .= "<input id='3d0button' type='button' alt='Create 3D0' value='Run Imagic 3d0' onclick='create3d0();'>\n";
 
 echo "<table border='0' cellpading='6' cellspacing='10'><tr><td>\n";
