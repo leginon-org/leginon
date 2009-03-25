@@ -165,22 +165,85 @@ class ChimSnapShots(object):
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_radially(s, self.color)
-		self.save_image(self.volumepath+'.001.png')
+		stepsize = 3.0
+		numpause = 6
+
+		### pause
+		imgnum = 0
+		for i in range(numpause):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.save_image(filename)
+
+		### down 3-fold axis
 		self.writeMessageToLog("turn: down 3-fold axis")
-		self.runChimCommand('turn y 37.377')
-		self.save_image(self.volumepath+'.002.png')
+		threefoldangle = 37.377
+		threefoldsteps = int(threefoldangle/stepsize)+1
+		threefoldstepangle = threefoldangle/float(threefoldsteps)
+		for i in range(threefoldsteps):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.runChimCommand('turn y %.4f'%(threefoldstepangle))
+			self.save_image(filename)
+	
+		### pause
+		for i in range(numpause):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.save_image(filename)
+
+		### viper orientation (2 fold)
 		self.writeMessageToLog("turn: viper orientation (2 fold)")
-		self.runChimCommand('turn y 20.906')
-		self.save_image(self.volumepath+'.003.png')
+		viperangle = 20.906
+		vipersteps = int(viperangle/stepsize)+1
+		viperstepangle = viperangle/float(vipersteps)
+		for i in range(vipersteps):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.runChimCommand('turn y %.4f'%(viperstepangle))
+			self.save_image(filename)
+
+		### pause
+		for i in range(numpause):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.save_image(filename)
+
+		### clip
 		self.writeMessageToLog("turn: get clipped view")
-		time.sleep(0.5)
 		self.runChimCommand('mclip #0 coords screen axis z')
 		self.runChimCommand('wait')
-		time.sleep(0.5)
 		self.runChimCommand('ac cc')
 		self.runChimCommand('wait')
-		time.sleep(0.5)
-		self.save_image(self.volumepath+'.006.png')
+
+		### pause
+		for i in range(numpause):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.save_image(filename)
+
+		### walk back
+		### viper orientation (2 fold)
+		self.writeMessageToLog("turn: viper orientation (2 fold)")
+		for i in range(vipersteps):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.runChimCommand('turn y %.4f'%(-viperstepangle))
+			self.save_image(filename)
+
+		### pause
+		for i in range(numpause):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.save_image(filename)
+
+		### down 3-fold axis
+		self.writeMessageToLog("turn: down 3-fold axis")
+		for i in range(threefoldsteps):
+			imgnum += 1
+			filename = "%s.%03d.%s"%(self.volumepath, imgnum, self.imgformat.lower())
+			self.runChimCommand('turn y %.4f'%(-threefoldstepangle))
+			self.save_image(filename)
 
 	# -----------------------------------------------------------------------------
 	def animate_asymmetric(self):
