@@ -41,57 +41,76 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.fastmodes = [ "normal", "narrow", "wide" ]
-
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
-		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
-			help="Number of particles to use", metavar="#")
+
+		### integers
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
+		self.parser.add_option("--cluster-id", dest="clusterid", type="int",
+			help="clustering stack id", metavar="ID")
+		self.parser.add_option("--align-id", dest="alignid", type="int",
+			help="alignment stack id", metavar="ID")
+		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
+			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-m", "--model", dest="modelid", type="int",
 			help="Initial model database id", metavar="ID#")
-
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
-
-		#self.parser.add_option("-m", "--mask", dest="maskrad", type="float",
-		#	help="Mask radius for particle coran (in Angstoms)", metavar="#")
-		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="int",
-			help="Low pass filter radius (in Angstroms)", metavar="#")
-		self.parser.add_option("--highpass", "--hp", dest="highpass", type="int",
-			help="High pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
-
 		self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
 			help="Number of volumes to create", metavar="#")
-
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
 		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
-		self.parser.add_option("--fast-mode", dest="fastmode", default="normal",
-			help="Search space reduction cutoff criteria, options: "+str(self.fastmodes), metavar="#")
 
-		#self.parser.add_option("--templates", dest="templateids",
-		#	help="Template Id for template init method", metavar="1,56,34")
+		### floats
+		self.parser.add_option("--lowpass", "--lp", dest="lowpass", type="float",
+			help="Low pass filter radius (in Angstroms)", metavar="#")
+		self.parser.add_option("--highpass", "--hp", dest="highpass", type="float",
+			help="High pass filter radius (in Angstroms)", metavar="#")
 
 		### true/false
 		self.parser.add_option("-F", "--fast", dest="fast", default=True,
 			action="store_true", help="Use fast method")
 		self.parser.add_option("--no-fast", dest="fast", default=True,
 			action="store_false", help="Do NOT use fast method")
-
 		self.parser.add_option("-M", "--mirror", dest="mirror", default=True,
 			action="store_true", help="Use mirror method")
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="Do NOT use mirror method")
 
+		### choices
+		self.fastmodes = ( "normal", "narrow", "wide" )
+		self.parser.add_option("--fast-mode", dest="fastmode",
+			help="Search space reduction cutoff criteria", metavar="MODE", 
+			type="choice", choices=self.fastmodes, default="normal" )
+		self.convergemodes = ( "normal", "fast", "slow" )
+		self.parser.add_option("--converge", dest="converge",
+			help="Convergence criteria mode", metavar="MODE", 
+			type="choice", choices=self.convergemodes, default="normal" )
 
 	#=====================
 	def checkConflicts(self):
+		### check for missing and duplicate entries
+		if self.params['alignid'] is None and self.params['clusterid'] is None:
+			apDisplay.printError("Please provide either --cluster-id or --align-id")
+		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
+			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
+
+		### get the stack ID from the other IDs
+		if self.params['alignid'] is not None:
+			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.params['stackid'] = self.alignstackdata['stack'].dbid
+		elif self.params['clusterid'] is not None:
+			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
+			self.params['stackid'] = self.alignstackdata['stack'].dbid
 		if self.params['stackid'] is None:
 			apDisplay.printError("stack id was not defined")
+
+
 		#if self.params['description'] is None:
 		#	apDisplay.printError("run description was not defined")
 		if self.params['runname'] is None:
@@ -217,68 +236,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			return mpiexe
 
 	#=====================
-	def writeGaribaldiJobFile(self):
-		if self.params['nproc'] is None:
-			nproc = 128
-		else:
-			nproc = self.params['nproc']
-
-		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
-		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_refine3d"
-		newrundir = "$PBSREMOTEDIR/"
-		xmippopts = ( ""
-			+" -i $PBSREMOTEDIR/partlist2.doc \\\n"
-			+" -o $PBSREMOTEDIR/"+self.timestamp+" \\\n"
-			+" -iter "+str(self.params['maxiter'])
-			+" -psi_step "+str(self.params['psistep'])
-			+" -eps 5e-4"
-		)
-		if self.params['fast'] is True:
-			xmippopts += " -fast"
-		if self.params['mirror'] is True:
-			xmippopts += " -mirror"
-
-		### write to file
-		jobfile = "xmipp-"+self.timestamp+".job"
-		results = rundir+"/"+self.params['runname']+"-results.tgz"
-		f = open(jobfile, "w")
-		f.write("#PBS -l nodes="+str(nproc/4)+":ppn=4\n")
-		f.write("#PBS -l walltime=240:00:00\n")
-		f.write("#PBS -l cput=240:00:00\n")
-		f.write("#PBS -r n\n")
-		f.write("#PBS -k oe\n")
-		f.write("\n")
-		f.write("## rundir: "+self.params['rundir']+"\n")
-		f.write("\n")
-		f.write("cd "+rundir+"\n")
-		f.write("rm -fv pbstempdir "+results+"\n")
-		f.write("ln -s $PBSREMOTEDIR pbstempdir\n")
-		f.write("cd $PBSREMOTEDIR\n")
-		f.write("tar xzf "+rundir+"/particles.tgz\n")
-		f.write("\n")
-		f.write("foreach line ( `cat partlist.doc | cut -f1 -d' '` )\n")
-		f.write("  echo $PBSREMOTEDIR/`echo $line | sed 's/^.*partfiles/partfiles/'` 1 >> partlist2.doc\n")
-		f.write("end\n")
-		f.write("\n")
-		f.write("setenv MPI_HOME /garibaldi/people-b/applications/openmpi-1.2.2/\n")
-		f.write("setenv XMIPP_HOME /garibaldi/people-a/vossman/Xmipp-2.2-x64/\n")
-		f.write("set path = ( $MPI_HOME/bin $path )\n")
-		f.write("setenv LD_LIBRARY_PATH $MPI_HOME/lib:$XMIPP_HOME/lib:/usr/lib:/lib\n")
-		f.write("\n")
-		f.write("mpirun -np "+str(nproc)+" "+xmippexe+" \\\n")
-		f.write(xmippopts+"\n")
-		f.write("\n")
-		f.write("tar zcf "+results+" *.???\n")
-		f.write("\n")
-		f.write("exit\n")
-		f.close()
-
-		apDisplay.printMsg("tar zcf particles.tgz partlist.doc partfiles/")
-		apDisplay.printMsg("rsync -vaP "+jobfile+" garibaldi:"+rundir+"/")
-		apDisplay.printMsg("rsync -vaP particles.tgz garibaldi:"+rundir+"/")
-		#sys.exit(1)
-
-	#=====================
 	def writeXmippLog(self, text):
 		f = open("xmipp.log", "a")
 		f.write(apParam.getLogHeader())
@@ -387,9 +344,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
-
-		### write garibaldi job file
-		self.writeGaribaldiJobFile()
 
 		### run the refinement
 		self.runrefine()
