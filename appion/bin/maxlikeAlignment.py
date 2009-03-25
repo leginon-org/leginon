@@ -75,6 +75,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="Do NOT use mirror method")
 
+		self.parser.add_option("--norm", dest="norm", default=True,
+			action="store_true", help="Use internal normalization for data with normalization errors")
+		self.parser.add_option("--no-norm", dest="norm", default=True,
+			action="store_false", help="Do NOT use internal normalization")
+
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
 		self.parser.add_option("--fast-mode", dest="fastmode",
@@ -286,6 +291,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -iter "+str(self.params['maxiter'])
 			+" -psi_step "+str(self.params['psistep'])
 			+" -eps 5e-4"
+			+" -norm"
 		)
 		if self.params['fast'] is True:
 			xmippopts += " -fast"
@@ -397,6 +403,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### mirrors
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
+		### normalization
+		if self.params['norm'] is True:
+			xmippopts += " -norm "
+
 		### find number of processors
 		if self.params['nproc'] is None:
 			nproc = nproc = apParam.getNumProcessors()

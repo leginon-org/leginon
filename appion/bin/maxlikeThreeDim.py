@@ -162,8 +162,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		maxjobq['timestamp'] = self.timestamp
 		maxjobq['finished'] = False
 		maxjobq['hidden'] = False
-		if self.params['commit'] is True:
-			maxjobq.insert()
+		#if self.params['commit'] is True:
+		#	maxjobq.insert()
 		self.params['maxlikejobid'] = maxjobq.dbid
 		print "self.params['maxlikejobid']",self.params['maxlikejobid']
 		return
@@ -272,6 +272,34 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		return voldocfile
 
 	#=====================
+	def setupParticles(self, boxsize):
+		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
+
+		self.stack = {}
+		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
+		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
+		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
+		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+
+		boxsize = int(math.floor(self.stack['boxsize']/float(self.params['bin'])))
+
+		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
+		if self.params['bin'] > 1:
+			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
+			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
+		if self.params['highpass'] > 1:
+			proccmd += " hp="+str(self.params['highpass'])
+		if self.params['lowpass'] > 1:
+			proccmd += " lp="+str(self.params['lowpass'])
+		proccmd += " last="+str(self.params['numpart'])
+		apEMAN.executeEmanCmd(proccmd, verbose=True)
+
+		### convert stack into single spider files
+		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
+		return boxsize
+
+	#=====================
 	def runrefine(self):
 		### setup Xmipp command
 		recontime = time.time()
@@ -282,17 +310,29 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "part"+self.timestamp)
 			+" -psi_step "+str(self.params['psistep'])
-			+" -eps 5e-4 "
 		)
+		### fast mode
 		if self.params['fast'] is True:
 			xmippopts += " -fast "
 			if self.params['fastmode'] == "narrow":
 				xmippopts += " -C 1e-10 "
 			elif self.params['fastmode'] == "wide":
 				xmippopts += " -C 1e-18 "
+		### convergence criteria
+		if self.params['converge'] == "fast":
+			xmippopts += " -eps 5e-3 "
+		elif self.params['converge'] == "slow":
+			xmippopts += " -eps 5e-8 "
+		else:
+			xmippopts += " -eps 5e-5 "
+		### mirrors
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror "
+		### normalization
+		if self.params['norm'] is True:
+			xmippopts += " -norm "
 
+		### find number of processors
 		if self.params['nproc'] is None:
 			nproc = nproc = apParam.getNumProcessors()
 		else:
@@ -315,37 +355,20 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.insertMaxLikeJob()
-		self.stack = {}
-		self.stack['data'] = apStack.getOnlyStackData(self.params['stackid'])
-		self.stack['apix'] = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
-		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
-		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
-		self.estimateIterTime()
+		#self.insertMaxLikeJob()
+
+		#self.estimateIterTime()
 		self.dumpParameters()
 
+		### set particles
+		boxsize = self.setupParticles()
+
 		### setup volumes
-		smallboxsize = int(math.floor(self.stack['boxsize']/float(self.params['bin'])))
-		self.voldocfile = self.setupVolumes(smallboxsize)
 
-		### process stack to local file
-		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
-		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
-		if self.params['bin'] > 1:
-			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
-			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		if self.params['highpass'] > 1:
-			proccmd += " hp="+str(self.params['highpass'])
-		if self.params['lowpass'] > 1:
-			proccmd += " lp="+str(self.params['lowpass'])
-		proccmd += " last="+str(self.params['numpart'])
-		apEMAN.executeEmanCmd(proccmd, verbose=True)
-
-		### convert stack into single spider files
-		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
+		self.voldocfile = self.setupVolumes(boxsize)
 
 		### run the refinement
+		self.dumpParameters()
 		self.runrefine()
 
 		self.readyUploadFlag()
