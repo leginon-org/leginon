@@ -43,6 +43,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 
+		### strings
+		self.parser.add_option("--sym", "--symmetry", dest="symmetry",
+			help="Symmetry", metavar="#")
+
 		### integers
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
@@ -210,20 +214,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apDisplay.printColor("Estimated first iteration time: "+apDisplay.timeString(calctime), "purple")
 
 	#=====================
-	def createAverageStack(self):
-		searchstr = "part"+self.timestamp+"_ref0*.xmp"
-		files = glob.glob(searchstr)
-		files.sort()
-		stack = []
-		for fname in files:
-			refarray = spider.read(fname)
-			stack.append(refarray)
-		stackarray = numpy.asarray(stack, dtype=numpy.float32)
-		print stackarray.shape
-		apImagicFile.writeImagic(stackarray, "part"+self.timestamp+"_average.hed")
-		return
-
-	#=====================
 	def checkMPI(self):
 		mpiexe = apParam.getExecPath("mpirun")
 		if mpiexe is None:
@@ -335,6 +325,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### normalization
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
+		### symmetry
+		if self.params['symmetry'] is not None:
+			xmippopts += " -sym "+self.params['symmetry']+" "
 
 		### find number of processors
 		if self.params['nproc'] is None:
