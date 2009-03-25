@@ -223,7 +223,7 @@ function runUploadTemplateStack() {
         		createUploadTemplateStackForm("File ".$template_stack." does not exist. ");
 		 }
 
-		$sub = submitAppionJob($command,$rundir,$runname,$expId,'runUploadTemplateStack',True);
+		$sub = submitAppionJob($command,$rundir,$runname,$expId,'templatestack',True);
 		// if errors:
 		if ($sub) createUploadTemplateStackForm("<b>ERROR:</b> $sub");
 
