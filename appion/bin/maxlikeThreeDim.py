@@ -276,7 +276,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		return voldocfile
 
 	#=====================
-	def setupParticles(self, boxsize):
+	def setupParticles(self):
 		self.params['localstack'] = os.path.join(self.params['rundir'], self.timestamp+".hed")
 
 		self.stack = {}
@@ -290,7 +290,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1:
-			clipsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']))*self.params['bin'])
+			clipsize = boxsize*self.params['bin']
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		if self.params['highpass'] > 1:
 			proccmd += " hp="+str(self.params['highpass'])
