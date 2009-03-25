@@ -363,9 +363,21 @@ if ($expId) {
 		// ===================================================================
 		// template stacks (class averages & forward projections)
 		// ===================================================================
+
+		$tsresults=array();
+		if ($tstacks=$particle->getTemplateStacksFromProject($projectId)) {
+			$tsdone  = count($tstacks);
+		}
+		$tsruns  = count($subclusterjobs['templatestack']['running']);
+		$tsqueue  = count($subclusterjobs['templatestack']['queued']);
+		$tsresults[] = ($tsdone==0) ? "" : "<a href='selectTemplateStack.php?expId=$sessionId'>$tsdone complete</a>";
+		$tsresults[] = ($tsrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=templatestack'>$tsruns running</a>";
+		$tsresults[] = ($tsqueue==0) ? "" : "$analysisqueue queued";
 		$nruns[] = array (
 			'name'=>"<a href='selectTemplateStack.php?expId=$sessionId'>Template Stacks</a>",
-			);
+			'result'=>$tsresults,
+		);
+
 
 		// =======================
 		// old spider alignment
