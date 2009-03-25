@@ -94,8 +94,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	#=====================
 	def checkConflicts(self):
 		### check for missing and duplicate entries
-		if self.params['alignid'] is None and self.params['clusterid'] is None:
-			apDisplay.printError("Please provide either --cluster-id or --align-id")
+		#if self.params['alignid'] is None and self.params['clusterid'] is None:
+		#	apDisplay.printError("Please provide either --cluster-id or --align-id")
 		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
 			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
 
