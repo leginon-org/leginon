@@ -26,21 +26,18 @@ else {
 }
 
 function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py Launcher', $heading='Upload a template') {
+	$javafunc .= writeJavaPopupFunctions('appion');
+
         // check if coming directly from a session
 	$expId=$_GET['expId'];
 	$clusterId = $_GET['clusterId'];
+	$exclude = $_GET['exclude'];
+	$include = $_GET['include'];
 
 	$projectId=getProjectFromExpId($expId);
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
-	// set any default parameters
-	$template_stack = ($_POST['template_stack']) ? $_POST['template_stack'] : '';
-	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
-	$description = ($_POST['description']) ? $_POST['description'] : '';	
-	$newname = ($_POST['newname']) ? $_POST['newname'] : '';
-	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
-
-	processing_header($title,$heading,$javafunctions);
+	processing_header($title,$heading,$javafunc);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -63,41 +60,72 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	}
 	
 	echo"<INPUT TYPE='hidden' NAME='projectId' VALUE='$projectId'>\n";
-	
+	if ($clusterId) echo "<INPUT TYPE='hidden' NAME='clusterId' VALUE='$clusterId'>\n";
+
 	//query the database for parameters
 	$particle = new particledata();
+	$templateruns = 1;
+
+	// set any default parameters
+	$template_stack = ($_POST['template_stack']) ? $_POST['template_stack'] : '';
+	$apix = ($_POST['apix']) ? $_POST['apix'] : '';
+	$description = ($_POST['description']) ? $_POST['description'] : '';
+	while (file_exists($rundir."/templatestack".($templateruns)))
+		$templateruns += 1;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'templatestack'.$templateruns;
+	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	echo"<table border='3' class='tableborder'>";
 	echo"<tr><td valign='top'>\n";
 	echo"<table border='0' cellpading='5' cellspacing='5'><tr><td valign='top'>\n";
 
-	//if uploading a new template stack that does not yet exist in the database 
-	if (!$clusterId) {
-		echo "<br>\n";
-		echo "Template Stack Name with path: <br> \n";
-		echo "<INPUT TYPE='text' NAME='template_stack' VALUE='$template_stack' SIZE='55'/>\n";
-		echo "<br><br>\n";
-		echo "&Aring;ngstroms per pixel <br>\n";
-		echo "<INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'/>\n";
-		echo "<br>";			
-	}
+	echo "<br>\n";
+	echo docpop('runid','<b>Runname (New Name for Template Stack, no spaces)<br></b>');
+	echo "<input type='text' name='runname' value='$runname' SIZE='50'/>\n";
+	echo "<br>\n";
 
 	echo "<br>";
-	echo "New Name for Template Stack (no spaces)<br>";
-	echo "<INPUT TYPE='text' NAME='newname' VALUE='$newname' SIZE='50'/>\n";
+	echo "<i>Output Directory: </i>".$rundir;
 	echo "<br>";
 
 	echo "<br/>\n";
-	echo "Template Stack Description:<br>";
+	echo docpop('descr', '<b>Template Stack Description:<br></b>');
 	echo "<TEXTAREA NAME='description' ROWS='3' COLS='70'>$description</TEXTAREA>";
 	echo "</TD></tr><TR><TD VALIGN='TOP'>";
+
+	//if uploading a new template stack that does not yet exist in the database 
+	if (!$clusterId) {
+		echo "<br>\n";
+		echo docpop('oldtemplatename', "<b>Template Stack Name with path: </b><br> \n");
+		echo "<INPUT TYPE='text' NAME='template_stack' VALUE='$template_stack' SIZE='55'/>\n";
+		echo "<br><br>\n";
+		echo docpop('apix', "<b>&Aring;ngstroms per pixel </b><br>\n");
+		echo "<INPUT TYPE='text' NAME='apix' VALUE='$apix' SIZE='5'/>\n";
+		echo "<br><br>";			
+	}
+	
+	elseif ($clusterId) {
+		echo "<br>";
+		if ($exclude) {
+			echo docpop('excludeClassum', '<b>Excluded Class Averages: </b><br>');
+			echo "<TEXTAREA NAME='exclude' ROWS='3' COLS='70'>$exclude</TEXTAREA>";
+			echo "<br><br>";
+		}
+		elseif ($include) {
+			echo docpop('includeClassum', '<b>Included Class Averages: </b><br>');
+			echo "<TEXTAREA NAME='include' ROWS='3' COLS='70'>$include</TEXTAREA>";
+			echo "<br><br>";
+		}
+	}
 	
 	// give option of choosing the type of images if not coming directly from clustering stack
 	if (!$clusterId) {
-		echo "<label><INPUT TYPE='radio' NAME='stack_type' VALUE='clsavg'/></label> Class Averages";
+		echo "<INPUT TYPE='radio' NAME='stack_type' VALUE='clsavg'/>";
+		echo docpop('templatetype', '<b> Class Averages </b>');
 		echo "<br/>";
 
-		echo "<label><INPUT TYPE='radio' NAME='stack_type' VALUE='forward_proj'/></label> Forward Projections";
+		echo "<INPUT TYPE='radio' NAME='stack_type' VALUE='forward_proj'/>";
+		echo docpop('templatetype', '<b> Forward Projections </b>');
 	        echo "<br/><br/>";
 	}
 	
@@ -119,55 +147,67 @@ function runUploadTemplateStack() {
 	$expId = $_GET['expId'];
 	$rundir = $_POST['rundir'];
 	$projectId = $_POST['projectId'];
+	$clusterId = $_POST['clusterId'];
+	$exclude = $_POST['exclude'];
+	$include = $_POST['include'];
 	$template_stack = $_POST['template_stack'];
 	$stacktype = $_POST['stack_type'];
 	$apix = $_POST['apix'];
-	$newname = $_POST['newname'];
+	$runname = $_POST['runname'];
 	$description = $_POST['description'];
 	$session = $_POST['sessionname'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	//make sure new name does not have spaces
-	if (!$newname) createUploadTemplateStackForm("<B>ERROR:</B> Enter a new name for the template stack, as it will be stored in templatestacks directory");
-	if (ereg(" ", $newname)) {
-		$newname = ereg_replace(" ", "_", $newname);
+	if (!$runname) createUploadTemplateStackForm("<B>ERROR:</B> Enter a new name for the template stack, as it will be stored in templatestacks directory");
+	if (ereg(" ", $runname)) {
+		$runname = ereg_replace(" ", "_", $runname);
 	}
 
 	//make sure a description is provided
 	if (!$description) createUploadTemplateStackForm("<B>ERROR:</B> Enter a brief description of the template");
 
 	//make sure angstroms per pixel is specified, or is retrieved from the database
-	if (!$apix) createUploadTemplateStackForm("<B>ERROR:</B> Enter a value for angstroms per pixel");
+	if (!$apix && !$clusterId) createUploadTemplateStackForm("<B>ERROR:</B> Enter a value for angstroms per pixel");
 
         //make sure template type is specified
-        if (!$stacktype) createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
+        if (!$stacktype && !$clusterId) createUploadTemplateStackForm("<B>ERROR:</B> Enter the type of stack (i.e. class averages or forward projections)");
 
 	//make sure a session was selected
 	if (!$session) createUploadTemplateStackForm("<B>ERROR:</B> Select an experiment session");
 
 	//check if the template is an existing file 
-	if (!file_exists($template_stack)) {
+	if (!file_exists($template_stack) && !$clusterId) {
 		$template_warning="File ".$template_stack." does not exist. "; 
 	}
-	else $template_warning="File ".$template_stack." exists. Make sure that this is the file that you want!";
+	elseif (!$clusterId) $template_warning="File ".$template_stack." exists. Make sure that this is the file that you want!";
 	
 
 	// set runname as time
-	$runname = "templatestack".getTimestring();
+//	$runname = "templatestack".getTimestring();
 
 	//putting together command
 	$command = "uploadTemplateStack.py ";
 	if ($template_stack) {
 		$command.="--templatestack=$template_stack ";
 		$command.="--templatetype=$stacktype ";
-		$command.="--newname=$newname ";
 		$command.="--apix=$apix ";
+	}
+	elseif ($clusterId) {
+		$command.="--clusterId=$clusterId ";
+		$command.="--templatetype=clsavg ";
+		if ($exclude) {
+			$command.="--exclude=$exclude ";
+		}
+		elseif ($include) {
+			$command.="--include=$include ";
+		}
 	}
 	
 	$command.="--projectid=$projectId ";
 	$command.="--session=$session ";
-	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
+	$command.="--description=\"$description\" ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
