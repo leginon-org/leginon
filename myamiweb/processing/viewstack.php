@@ -206,6 +206,16 @@ function createSubStack() {
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
 }
 
+function createTemplateStackExcluded() {
+	var index = $('excludedIndex').value
+	window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&exclude="+index+"",'height=250,width=400');
+}
+
+function createTemplateStackIncluded() {
+	var index = $('selectedIndex').value
+	window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&include="+index+"",'height=250,width=400');
+}
+
 </script>
 </head>
 <body onload='load()'>
@@ -240,17 +250,22 @@ quality: <select id="quality">
 $excludebuttons = "";
 if ($stackId)
 	$excludebuttons .= "<input type='button' value='Remove Particles' onClick='createSubStack()' >\n";
-if ($clusterId || $alignId) {
+if ($clusterId || $alignId) 
 	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
+if ($clusterId) 
+	$excludebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackExcluded()'>\n";
+if ($clusterId || $alignId)
 	$excludebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
 
-}
+
 
 //Buttons for inclusion
 $includebuttons = "";
 // Substack
 if ($clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
+if ($clusterId)
+	$includebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackIncluded()'>\n";
 if (($clusterId || $alignId) && $maxangle > 5)
 	$includebuttons .= "<input type='button' value='Create RCT Volume' onClick='createRctVolume()'>\n";
 // Upload Template
