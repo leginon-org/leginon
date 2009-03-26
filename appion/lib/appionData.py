@@ -177,6 +177,7 @@ class ApTemplateStackData(Data):
 			('session', leginondata.SessionData),
 			('apix', float),
 			('boxsize', int),
+			('numimages', int),
 			('hidden', bool),
 			('path', ApPathData),
 			('project|projects|project', int),
