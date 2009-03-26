@@ -813,6 +813,20 @@ class particledata {
                 return $r;
 	}
 
+	function getTemplateStacksFromSession ($expId, $getHidden=False, $type=False) {
+		$q = "SELECT stack.*, path.path "
+			."FROM ApTemplateStackData as stack "
+			."LEFT JOIN ApPathData AS path ON "
+                        ."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
+			."WHERE `REF|leginondata|SessionData|session`='$expId' ";
+		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
+		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
+		if ($type == "forward") $q.= "AND (stack.`forward_proj` = 1) ";
+		$q .= "ORDER BY stack.`DEF_id` DESC";
+		$r = $this->mysql->getSQLResult($q);
+                return $r;
+	}
+
 	function getParticlesFromImageId ($runId, $imageId){
 		$q = "select p.DEF_id as id, "
 			."p.xcoord, p.ycoord, p.correlation, "
