@@ -212,6 +212,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 				partmeandict['mean'] /= 1.0e7
 			if partmeandict['stdev'] > 1.0e7:
 				partmeandict['stdev'] /= 1.0e7
+			if abs(partmeandict['stdev']) < 1.0e-6:
+				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
 			partmeantree.append(partmeandict)
 		self.meanreadtimes.append(time.time()-t0)
 
