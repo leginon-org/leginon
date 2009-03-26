@@ -1237,6 +1237,7 @@ class ApImagic3d0Data(Data):
 			('norefclass', ApNoRefClassRunData),
 			('reclass', ApImagicReclassifyData),
 			('clusterclass', ApClusteringStackData),
+			('templatestack', ApTemplateStackData),
 			#('imagicclusterclass', ApClusteringStackData),
 			('boxsize', int),
 			('pixelsize', float),
