@@ -368,7 +368,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.dumpParameters()
 		self.runrefine()
 
-		self.readyUploadFlag()
+		#self.readyUploadFlag()
 		self.dumpParameters()
 
 #=====================
