@@ -247,6 +247,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 			apFile.removeStack(newclusterstack)
 		emancmd = "proc2d "+oldclusterstack+" "+newclusterstack+" list="+self.params['keepfile']
 		apEMAN.executeEmanCmd(emancmd)
+		self.numimages = apFile.numImagesInStack(newclusterstack)
 #		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 		if not os.path.isfile(newclusterstack):
 			apDisplay.printError("No template stack was created")
@@ -273,6 +274,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['session'] = sessiondata
 		uploadq['apix'] = self.params['apix']
 		uploadq['boxsize'] = self.params['boxsize']
+		uploadq['numimages'] = self.numimages
 		uploadq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.join(self.params['rundir'], self.params['runname'])))
 		if insert is True:
 			uploadq.insert()
