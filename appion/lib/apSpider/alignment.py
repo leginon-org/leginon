@@ -502,18 +502,21 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	mySpider.close()
 
 	### convert to nice individual eigen image pngs for webpage
+	eigenspistack = os.path.join(rundir, "eigenstack.spi")
+	if not os.path.isfile(eigenspistack):
+		apDisplay.printError("Failed to create Eigen images")
 	for fact in range(1,numfactors+1):
 		pngfile = rundir+"/eigenimg"+("%02d" % (fact))+".png"
 		apFile.removeFile(pngfile)
-		emancmd = ("proc2d "+rundir+"/eigenstack.spi "
+		emancmd = ("proc2d "+eigenspistack+" "
 			+pngfile+" "
 			+" first="+str(fact-1)+" last="+str(fact-1))
 		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 
 	### convert eigen SPIDER stack to IMAGIC for stack viewer
-	eigenstack = rundir+"/eigenstack.hed"
-	apFile.removeStack(eigenstack)
-	emancmd = "proc2d "+rundir+"/eigenstack.spi "+eigenstack
+	eigenimagicstack = rundir+"/eigenstack.hed"
+	apFile.removeStack(eigenimagicstack)
+	emancmd = "proc2d "+eigenspistack+" "+eigenimagicstack
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 	### 2. collect eigenimage contribution percentage
