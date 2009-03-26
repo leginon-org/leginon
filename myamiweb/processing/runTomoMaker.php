@@ -24,7 +24,7 @@ else {
 	createTomoMakerForm();
 }
 
-function createTomoMakerForm($extra=false, $title='UploadTomogram.py Launcher', $heading='Run Tomogram Maker') {
+function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $heading='Run Tomogram Maker') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 
@@ -238,7 +238,7 @@ function runTomoMaker() {
 		echo "$status\n";
 	}
 
-	else processing_header("UploadTomogram Command","UploadTomogram Command");
+	else processing_header("Tomogram Making Command","Tomogram Making Command");
 	
 	// rest of the page
 	echo"
@@ -247,13 +247,10 @@ function runTomoMaker() {
 	<B>Full Tomogram Making Command:</B><br>
 	$command
 	</TD></tr>
-	<TR><td>tomo name</TD><td>$tomofilename</TD></tr>
-	<TR><td>transform file</TD><td>$xffilename</TD></tr>
-	<TR><td>snapshot file</TD><td>$snapshot</TD></tr>
 	<TR><td>apix</TD><td>$apix</TD></tr>
 	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
 	<TR><td>runname</TD><td>$runname</TD></tr>
-	<TR><td>volume</TD><td>$volume</TD></tr>
+	<TR><td>thickness</TD><td>$thickness</TD></tr>
 	<TR><td>session</TD><td>$sessionname</TD></tr>
 	<TR><td>description</TD><td>$description</TD></tr>
 	</table>\n";

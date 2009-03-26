@@ -16,9 +16,9 @@ require "inc/processing.inc";
 // check if coming directly from a session
 $expId = $_GET['expId'];
 $fulltomoId = $_GET['fullId'];
-if ($expId) {
+if ($expId && $fulltomoId) {
         $sessionId=$expId;
-        $formAction=$_SERVER['PHP_SELF']."?expId=$expId";
+        $formAction=$_SERVER['PHP_SELF']."?expId=$expId&fullId=$fulltomoId";
 }
 else {
         $sessionId=$_POST['sessionId'];
