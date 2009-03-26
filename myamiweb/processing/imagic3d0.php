@@ -44,6 +44,7 @@ function jobform($extra=false) {
         $norefId=$_GET['norefId'];
         $norefClassId=$_GET['norefClassId'];
         $clusterId=$_GET['clusterId'];
+	$tsId=$_GET['templateStackId'];
 //	$imagicClusterId=$_GET['imagicClusterId'];
         $projectId=getProjectFromExpId($expId);
         $sessiondata=getSessionList($projectId,$expId);
@@ -119,6 +120,17 @@ function jobform($extra=false) {
                         }
                 }
         }
+	// get parameters from templateStackId
+	$tsdata = $particle->getTemplateStacksFromSession($expId);
+	foreach ($tsdata as $key => $tsinfo) {
+                if ($tsinfo[DEF_id] == $tsId) {
+                        $position = $key;
+                        $tsparams = array();
+                        foreach ($tsdata[$position] as $key => $param) {
+                                $tsparams[$key] = $param;
+                        }
+                }
+        }	
 
 	// IMAGIC begins projections with [1] instead of [0]
 	$projections=$_GET['projections'];
@@ -206,6 +218,31 @@ function jobform($extra=false) {
                         echo formatHtmlRow($k,$v);
                 }
         }
+        // if coming from template stacks
+        elseif ($tsId) {
+                $tspath = $tsparams['path'];
+                $tsfile = $tsparams['templatename'];
+                if (ereg(".img", $tsfile)) $tsfile = str_replace(".img", "", $tsfile);
+		if (ereg(".hed", $tsfile)) $tsfile = str_replace(".hed", "", $tsfile);
+		$tsimgfile = $tspath."/".$tsfile.".img";
+                $tshedfile = $tspath."/".$tsfile.".hed";
+		$projectiontable.= "<table border='0', width='50'>";
+                //$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
+                $projectiontable.= "<tr>\n";
+                foreach ($projections as $key => $image) {
+                        $num = $key + 1;
+                        $projectiontable.= "<td rowspan='30' align='center' valign='top'>";
+                        $projectiontable.= "<img src='getstackimg.php?hed=$tshedfile&img=$tsimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
+                        $projectiontable.= "<i>projection $num</i></td>\n";
+                }
+                $projectiontable.= "</tr></table>\n<br>";
+                echo $projectiontable;
+                $display_keys = array();
+                $display_keys['# class averages']=$tsparams['numimages'];
+                foreach($display_keys as $k=>$v) {
+                        echo formatHtmlRow($k,$v);
+                }
+        }
 /*
         // if coming from new alignment pipeline using imagicClusterId 
         elseif ($imagicClusterId) {
@@ -237,11 +274,16 @@ function jobform($extra=false) {
 
 	else echo "error: there are no class average runs for the initial model determination";
 	$default_num_classes = $display_keys['# class averages'];
-	$numrun = count($particle->getImagic3d0NoRefModelsFromSessionId($expId));
-	$numrun+= count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
-	$numrun+= count($particle->get3d0ClusterModelsFromSessionId($expId));
-	$numrun+= count($particle->get3d0ImagicClusterModelsFromSessionId($expId));
-	$newrun = $numrun + 1;
+//	$numrun = count($particle->getImagic3d0NoRefModelsFromSessionId($expId));
+//	$numrun+= count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
+//	$numrun+= count($particle->get3d0ClusterModelsFromSessionId($expId));
+//	$numrun+= count($particle->get3d0ImagicClusterModelsFromSessionId($expId));
+
+	$numrun = 1;
+	while (file_exists($outdir."/model".$numrun))
+		$numrun += 1;
+	$newrun = $numrun;
+
 // need to figure this out
 //$something = count($particle->getImagic3d0ClusterModelsFromSessionId($expId));
 //echo $something;
@@ -279,6 +321,7 @@ function jobform($extra=false) {
 	echo "<input type='hidden' name='norefClassId' value=$norefClassId>";
 	echo "<input type='hidden' name='reclassid' value=$reclassId>";
 	echo "<input type='hidden' name='clusterId' value=$clusterId>";
+	echo "<input type='hidden' name='tsId' value=$tsId>";
 //	echo "<input type='hidden' name='imagicClusterId' value=$imagicClusterId>";	
 
 	// keys and documentation for user input values
@@ -370,6 +413,7 @@ function create3d0() {
 	$norefId = $_POST['norefid'];
 	$norefClassId = $_POST['norefClassId'];
 	$clusterId = $_POST['clusterId'];
+	$tsId = $_POST['tsId'];
 //	$imagicClusterId = $_POST['imagicClusterId'];
 	$reclassId = $_POST['reclassid'];
 	$outdir = $_POST['output_directory'];
@@ -405,15 +449,29 @@ function create3d0() {
 	elseif ($clusterId) {
 		$command.=" --clusterId=$clusterId";
 	}
+	elseif ($tsId) {
+		$command.=" --templateStackId=$tsId";
+	}
 /*	elseif ($imagicClusterId) {
 		$command.=" --imagicClusterId=$imagicClusterId";
 	}
 */	else jobform("error: there are no class average runs for the initial model determination");
-	$command.= " --runname=$runid --rundir=$outdir/$runid --3_projections=$projections --symmetry=$symmetry";
-	$command.= " --euler_ang_inc=$euler_ang_inc --num_classums=$num_classums --ham_win=$hamming_window";
-	$command.= " --object_size=$obj_size --repalignments=$repalignments --amask_dim=$amask_dim";
-	$command.= " --amask_lp=$amask_lp --amask_sharp=$amask_sharp --amask_thresh=$amask_thresh";
-	$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc --forw_ang_inc=$forw_ang_inc --description=\"$description\"";
+	$command.= " --runname=$runid";
+	$command.= " --rundir=$outdir/$runid";
+	$command.= " --3_projections=$projections";
+	$command.= " --symmetry=$symmetry";
+	$command.= " --euler_ang_inc=$euler_ang_inc";
+	$command.= " --num_classums=$num_classums";
+	$command.= " --ham_win=$hamming_window";
+	$command.= " --object_size=$obj_size";
+	$command.= " --repalignments=$repalignments";
+	$command.= " --amask_dim=$amask_dim";
+	$command.= " --amask_lp=$amask_lp";
+	$command.= " --amask_sharp=$amask_sharp";
+	$command.= " --amask_thresh=$amask_thresh";
+	$command.= " --mrarefs_ang_inc=$mrarefs_ang_inc";
+	$command.= " --forw_ang_inc=$forw_ang_inc";
+	$command.= " --description=\"$description\"";
 	$command.= " --mass=$mass";
 	if ($commit) $command.= " --commit";
 	else $command.=" --no-commit";
