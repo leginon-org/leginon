@@ -193,6 +193,7 @@ class Tomography {
 			.'AND p1.`REF|InstrumentData|ccdcamera`=c.`REF|InstrumentData|ccdcamera` '
 			.'AND p1.DEF_timestamp <= a.DEF_timestamp '
 			."WHERE a.`REF|TiltSeriesData|tilt series`=$tiltSeriesId "
+			."AND a.`label` IS NULL "
 			.'AND '
 			.'p1.DEF_timestamp=(SELECT MAX(p2.DEF_timestamp) '
 			.'FROM PixelSizeCalibrationData p2 '
