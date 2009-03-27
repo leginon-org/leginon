@@ -74,6 +74,12 @@ if ($refineruns) {
 			$clusterpath = $clusterdata['path'];
 			$clsavgfile = $clusterpath."/".$clusterdata['avg_imagicfile'];
 		}
+		elseif ($refinerun['REF|ApTemplateStackData|templatestack']) {
+			$tsId = $refinerun['REF|ApTemplateStackData|templatestack'];
+			$tsdata = $particle->getTemplateStackParams($tsId);
+			$tspath = $tsdata['path'];
+			$clsavgfile = $tspath."/".$tsdata['templatename'];
+		}
 
 		// PRINT INFO
 		$html .= "<TR>\n";
@@ -88,6 +94,11 @@ if ($refineruns) {
 			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterId'
 			>View Class Averages</A></TD>\n";
 			$html .= "<td>$clusterdata[num_classes]</TD>\n";
+		}
+		elseif ($refinerun['REF|ApTemplateStackData|templatestack']) {
+			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&templateStackId=$tsId'
+			>View Class Averages</A></TD>\n";
+			$html .= "<td>$tsdata[numimages]</TD>\n";
 		}
 		$html .= "<td>$numiters</TD>\n";
 		$html .= "<td>$refinerun[pixelsize]</TD>\n";
