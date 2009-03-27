@@ -47,6 +47,11 @@ elseif ($refineparams[0]['REF|ApClusteringStackData|clusterclass']) {
 	$clusterdata = $particle->getClusteringStackParams($clusterid);
 	$clsavgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];	
 }
+elseif ($refineparams[0]['REF|ApTemplateStackData|templatestack']) {
+	$tsId = $refineparams[0]['REF|ApTemplateStackData|templatestack'];
+	$tsdata = $particle->getTemplateStackParams($tsId);
+	$clsavgfile = $tsdata['path']."/".$tsdata['templatename'];	
+}
 
 ########################### BASIC REFINEMENT INFO ##############################
 
@@ -57,6 +62,9 @@ if ($refineparams[0]['REF|ApNoRefClassRunData|norefclass']) {
 }
 elseif ($refineparams[0]['REF|ApClusteringStackData|clusterclass']) {
 	$clsavgs = "<a href='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterid'>$clusterdata[avg_imagicfile]</a>";
+}
+elseif ($refineparams[0]['REF|ApTemplateStackData|templatestack']) {
+	$clsavgs = "<a href='viewstack.php?file=$clsavgfile&expId=$sessionId&templateStackId=$tsId'>$tsdata[templatename]</a>";
 }
 
 $refinementinfo = array(
@@ -112,6 +120,13 @@ if ($modeldata['REF|ApClusteringStackData|clusterclass']) {
 	$clsavgparams = $particle->getClusteringStackParamsFrom3d0($imagic3d0Id);
 	$clsavgpath = $clsavgparams['path'];
 	$strippedfile = ereg_replace(".hed", "", $clsavgparams['avg_imagicfile']);
+	$classimgfile = $clsavgpath."/".$strippedfile.".img";
+	$classhedfile = $clsavgpath."/".$strippedfile.".hed";	
+}
+if ($modeldata['REF|ApTemplateStackData|templatestack']) {
+	$clsavgparams = $particle->getTemplateStackParamsFrom3d0($imagic3d0Id);
+	$clsavgpath = $clsavgparams['path'];
+	$strippedfile = ereg_replace(".hed", "", $clsavgparams['templatename']);
 	$classimgfile = $clsavgpath."/".$strippedfile.".img";
 	$classhedfile = $clsavgpath."/".$strippedfile.".hed";	
 }
