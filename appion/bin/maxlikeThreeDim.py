@@ -238,10 +238,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def createGaussianSphere(self, volfile, boxsize):
-		stdev = boxsize/4.0
+		stdev = boxsize/5.0
+		randdev = boxsize/20.0
 		halfbox = boxsize/2.0
 		#width of Gaussian
-		gaussstr = "%.3f,%.3f,%.3f"%(stdev+random.random(), stdev+random.random(), stdev+random.random())
+		gaussstr = ("%.3f,%.3f,%.3f"
+			%(stdev+randdev*random.random(), stdev+randdev*random.random(), stdev+randdev*random.random()))
 		apDisplay.printMsg("Creating Gaussian volume with stdev="+gaussstr)
 		mySpider = spyder.SpiderSession(logo=False)
 		mySpider.toSpiderQuiet("MO 3",
