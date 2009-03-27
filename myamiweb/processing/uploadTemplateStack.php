@@ -139,6 +139,7 @@ function createUploadTemplateStackForm($extra=false, $title='UploadTemplate.py L
 	echo "</td></tr></table></td></tr><tr><td align='center'><hr/>";
 	echo getSubmitForm("Upload Template Stack");
 	echo "</td></tr></table></form>\n";
+
 	processing_footer();
 	exit;
 }
@@ -177,7 +178,7 @@ function runUploadTemplateStack() {
 	if (!$session) createUploadTemplateStackForm("<B>ERROR:</B> Select an experiment session");
 
 	//check if the template is an existing file 
-	if (!file_exists($template_stack) && !$clusterId) {
+	if ($clusterId == False && !file_exists($template_stack)) {
 		$template_warning="File ".$template_stack." does not exist. "; 
 	}
 	elseif (!$clusterId) $template_warning="File ".$template_stack." exists. Make sure that this is the file that you want!";
@@ -219,7 +220,7 @@ function runUploadTemplateStack() {
 
 		if (!($user && $password)) createUploadTemplateStackForm("<B>ERROR:</B> You must be logged in to submit");
 
-		if (!file_exists($template_stack)) {
+		if (!file_exists($template_stack) && $clusterId == False) {
         		createUploadTemplateStackForm("File ".$template_stack." does not exist. ");
 		 }
 
