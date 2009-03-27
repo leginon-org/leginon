@@ -818,13 +818,23 @@ class particledata {
 			."FROM ApTemplateStackData as stack "
 			."LEFT JOIN ApPathData AS path ON "
                         ."(stack.`REF|ApPathData|path`=path.`DEF_id`) "
-			."WHERE `REF|leginondata|SessionData|session`='$expId' ";
+			."WHERE stack.`REF|leginondata|SessionData|session`='$expId' ";
 		if (!$getHidden) $q.= "AND (stack.`hidden` IS NULL OR stack.`hidden` = 0) ";
 		if ($type == "clsavg") $q.= "AND (stack.`cls_avgs` = 1) ";
 		if ($type == "forward") $q.= "AND (stack.`forward_proj` = 1) ";
 		$q .= "ORDER BY stack.`DEF_id` DESC";
 		$r = $this->mysql->getSQLResult($q);
                 return $r;
+	}
+
+	function getTemplateStackParams ($templateStackId, $getHidden=False, $type=False) {
+		$q = "SELECT ts.*, path.path "
+			."FROM ApTemplateStackData as ts "
+			."  LEFT JOIN ApPathData as path ON "
+			."(ts.`REF|ApPathData|path`=path.`DEF_id`) "
+			."  WHERE ts.`DEF_id`='$templateStackId' ";
+		$r = $this->mysql->getSQLResult($q);
+                return $r[0];
 	}
 
 	function getParticlesFromImageId ($runId, $imageId){
@@ -2306,6 +2316,18 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
                 return $r[0];
         }
 
+	function getTemplateStackParamsFrom3d0($imagic3d0Id) {
+                $q = "SELECT ts.*, path.path "
+                        ."FROM ApImagic3d0Data as model "
+                        ."LEFT JOIN ApTemplateStackData as ts "
+                        ."  ON model.`REF|ApTemplateStackData|templatestack`=ts.`DEF_id` "
+                        ."LEFT JOIN ApPathData as path "
+                        ."  ON ts.`REF|ApPathData|path`=path.`DEF_id` "
+                        ."WHERE model.`DEF_id` = '$imagic3d0Id' ";
+                $r = $this->mysql->getSQLResult($q);
+                return $r[0];
+	}
+
 	function getRefAliParams ($refaliId) {
 		$q = "SELECT	par.*, run.*, path.path "
 			."FROM ApRefRunData as run "
@@ -3330,27 +3352,17 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
                 return $r;
         }
 
-        function get3d0ImagicClusterModelsFromSessionId($sessionId) {
+        function get3d0TemplateStackModelsFromSessionId($sessionId) {
                 $q="SELECT "
                         ."  model.*, "
                         ."  path.`path` AS path "
                         ."FROM ApImagic3d0Data as model "
                         ."LEFT JOIN ApPathData AS path "
                         ."  ON model.`REF|ApPathData|path` = path.`DEF_id` "
-                        ."LEFT JOIN ApImagicClusteringStackData as cluster "
-                        ."  ON model.`REF|ApImagicClusteringStackData|imagicclusterclass` = cluster.`DEF_id` "
-                        ."LEFT JOIN ApClusteringRunData as run "
-                        ."  ON cluster.`REF|ApClusteringRunData|clusterrun` = run.`DEF_id` "
-                        ."LEFT JOIN ApAlignStackData as align "
-                        ."  ON run.`REF|ApAlignStackData|alignstack` = align.`DEF_id` "
-                        ."LEFT JOIN ApStackData as stack "
-                        ."  ON align.`REF|ApStackData|stack` = stack.`DEF_id` "
-                        ."LEFT JOIN ApRunsInStackData AS runsinstack "
-                        ."  ON stack.`DEF_id` = runsinstack.`REF|ApStackData|stack` "
-                        ."LEFT JOIN ApStackRunData AS stackrun "
-                        ."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
+                        ."LEFT JOIN ApTemplateStackData as ts "
+                        ."  ON model.`REF|ApTemplateStackData|templatestack` = ts.`DEF_id` "
                         ."WHERE "
-                        ."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+                        ."  ts.`REF|leginondata|SessionData|session` = '$sessionId' ";
                 $r=$this->mysql->getSQLResult($q);
                 return $r;
         }
@@ -3381,7 +3393,13 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 //			."LEFT JOIN ApNoRefClassRunData AS norefclass "
 //			."  ON refinement. `REF|ApNoRefClassRunData|norefclass` = norefclass.`DEF_id` "
 //			."LEFT JOIN ApNoRefRunData AS norefrun "
-//			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "	
+//			."  ON norefclass.`REF|ApNoRefRunData|norefRun` = norefrun.`DEF_id` "
+
+			### first get template stack data, if exists
+			."LEFT JOIN ApTemplateStackData as ts "
+			."  ON refinement. `REF|ApTemplateStackData|templatestack` = ts.`DEF_id` "
+                        	
+			### then proceed with clustering data
 			."LEFT JOIN ApClusteringStackData as clusterclass "
 			."  ON refinement. `REF|ApClusteringStackData|clusterclass` = clusterclass.`DEF_id` "
 			."LEFT JOIN ApClusteringRunData as clusterrun "
@@ -3397,7 +3415,8 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."LEFT JOIN ApStackRunData AS stackrun "
 			."  ON stackrun.`DEF_id` = runsinstack.`REF|ApStackRunData|stackRun` "
 			."WHERE "
-			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";	
+			."  stackrun.`REF|leginondata|SessionData|session` = '$sessionId' OR "
+                        ."  ts.`REF|leginondata|SessionData|session` = '$sessionId' ";	
 		$r=$this->mysql->getSQLResult($q);
 		return $r;
 	}
