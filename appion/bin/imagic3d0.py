@@ -470,7 +470,7 @@ class imagic3d0Script(appionScript.AppionScript):
                 ### execute batch file that was created
 		time3d0 = time.time()
                 os.system('chmod 755 '+filename)
-		#apIMAGIC.executeImagicBatchFile(filename)
+		apIMAGIC.executeImagicBatchFile(filename)
                 apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
                 time3d0 = time.time() - time3d0
 
@@ -478,20 +478,20 @@ class imagic3d0Script(appionScript.AppionScript):
 		mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
 
 		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
-#		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
-#		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
+		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
 
 		### optional thresholding based on specified size
 		if self.params['mass'] is not None:
 			volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
 			volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-#			apEMAN.executeEmanCmd(volumecmd1)
-#			apEMAN.executeEmanCmd(volumecmd2)
+			apEMAN.executeEmanCmd(volumecmd1)
+			apEMAN.executeEmanCmd(volumecmd2)
 		
 		### create chimera slices of densities
-#		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
-#		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
-#		apChimera.renderSnapshots(mrcnamerot, contour=1.0, zoom=1.0, sym='c1')
+		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
+		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
+		apChimera.renderSnapshots(mrcnamerot, contour=1.0, zoom=1.0, sym='c1')
 
 		### upload density
 		self.upload3d0()
