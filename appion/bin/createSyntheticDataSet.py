@@ -57,22 +57,38 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="KV of the microscope, needed for envelope function", metavar="INT")
 		self.parser.add_option("--cs", dest="cs", type="float", default=0.002,
 			help="spherical aberration of the microscope", metavar="FLOAT")
-		self.parser.add_option("--df1", dest="df1", type="float", default=-1.0e-06,
-			help="defocus value 1", metavar="FLOAT")
-		self.parser.add_option("--df2", dest="df2", type="float", default=-1.0e-06,
-			help="defocus value 2", metavar="FLOAT")
-		self.parser.add_option("--randomdef", dest="randomdef", default=True,
-			action="store_true", help="randomize defocus values when applying CTF (df1 and df2 would represent upper bounds)")
-		self.parser.add_option("--no-randomdef", dest="randomdef", default=True,
-			action="store_false", help="DO NOT randomize defocus values when applying CTF")
+		self.parser.add_option("--df1", dest="df1", type="float", default=-1.5e-06,
+			help="defocus value 1 (represented as the mean if --randomdef & --randomdef-std specified)", metavar="FLOAT")
+		self.parser.add_option("--df2", dest="df2", type="float", default=-1.5e-06,
+			help="defocus value 2 (represented as the mean if --randomdef & --randomdef-std specified", metavar="FLOAT")
+		self.parser.add_option("--randomdef", dest="randomdef", default=False,
+			action="store_true", help="randomize defocus values when applying CTF (df1 and df2 would represent the mean)")
+		self.parser.add_option("--randomdef-std", dest="randomdef_std", type="float", default=0.4,
+			help="standard deviation (in microns) for the gaussian distribution of defoci randomizations about the mean", metavar="FLOAT")
+#		self.parser.add_option("--no-randomdef", dest="randomdef", default=True,
+#			action="store_false", help="DO NOT randomize defocus values when applying CTF")
 		self.parser.add_option("--astigmatism", dest="astigmatism", type="float", default=0,
 			help="only input if you want to apply an astigmatic ctf", metavar="FLOAT")
 		self.parser.add_option("--snr1", dest="snr1", type="float", default=1.8,
 			help="first level of noise, simulating beam damage & structural noise", metavar="FLOAT")
 		self.parser.add_option("--snrtot", dest="snrtot", type="float", default=0.06,
 			help="total signal-to-noise ratio, simulating beam damage, structural noise, & digitization", metavar="FLOAT")
-		self.parser.add_option("--filesperdir", dest="filesperdir", type="int", default=4096,
+		self.parser.add_option("--filesperdir", dest="filesperdir", type="int", default=2048,
 			help="workaround for now ... if you want less than 4096 projections, decrease this number", metavar="INT")
+
+		### optional parameters (ACE2 correct & filtering)
+		self.parser.add_option("--ace2correct-norand", dest="ace2correct", default=False,
+			action="store_true", help="ace2correct images after applying CTF")
+		self.parser.add_option("--ace2correct-rand", dest="ace2correct_rand", default=False,
+			action="store_true", help="ace2correct images after applying CTF & slightly randomize / wiggle the defocus parameters")
+		self.parser.add_option("--ace2correct-std", dest="ace2correct_std", type="float", default=0.05,
+			help="used in conjunction with ace2correct-rand, specify the standard deviation in microns. The correction \
+				defoci will be 'wiggled' about the actual applied defocus value with a gaussian distribution determined by the std. \
+				This value should not be too high, otherwise severe artifacts will be introduced into the images", metavar="float")
+		self.parser.add_option("--lpfilt", dest="lpfilt", type="int",
+			help="low-pass filter images after creation of the dataset", metavar="INT")
+		self.parser.add_option("--hpfilt", dest="hpfilt", type="int",
+			help="high-pass filter images after creation of the dataset", metavar="INT")
 
 		return		
 	
@@ -99,6 +115,12 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if self.params['df2'] < -1e-05:
 			apDisplay.printError('make sure defocus is in meters, i.e. for -2 microns, df=-2e-06!')
 
+		### make sure that only one type of ace2correction is specified
+		if self.params['ace2correct'] is True and self.params['ace2correct_rand'] is True:
+			apDisplay.printError('Please specify only 1 type of ace2 correction')
+		if self.params['ace2correct_std'] >= 0.5 or self.params['ace2correct_std'] <= 0:
+			apDisplay.printError("Ace2correct standard deviation specified too high, please use value between 0 < std < 0.5")
+
 		### workaround for now
 		if self.params['filesperdir'] > self.params['projcount']:
 			self.params['filesperdir'] = self.params['projcount'] / 2	
@@ -122,7 +144,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		timestamp = apParam.makeTimestamp()
 		eulerlist = self.setEulers()
 		if os.path.isfile(os.path.join(self.params['rundir'], "proj.hed")):
-			apFile.removeStack("proj.hed")
+			apFile.removeStack(os.path.join(self.params['rundir'], "proj.hed"))
 		eulerfile = os.path.join(self.params['rundir'], "eulers.lst")
 		f = open(eulerfile, "w")
 		projcount = numpy.zeros((len(eulerlist)), dtype=numpy.uint16)
@@ -357,6 +379,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### calculate noiselevel additions and add noise to an initial ratio of 1.8, simulating beak and structural damage
 		noiselevel1 = float(stdev1) / float(self.params['snr1'])
 		noisystack = self.addNoise(newname, noiselevel1, SNR=self.params['snr1'])
+		
+		### remove previous files, if they exist
+		if os.path.isdir(os.path.join(self.params['rundir'], "partfiles")):
+			apDisplay.printColor("now removing all previous .mrc files in subdirectory partfiles/", "cyan")
+			os.system("rm -rf partfiles/")
 
 		### breakup stack for applying envelope and ctf parameters
 		partlistdocfile = self.breakupStackIntoSingleFiles(noisystack)
@@ -371,6 +398,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		t0 = time.time()
 		defocuslist1 = []
 		defocuslist2 = []
+		defocuslist1c = []
+		defocuslist2c = []
 
 		while i < numpart:
 			### do this only when a new directory is encountered with 4096 particles
@@ -396,28 +425,73 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			
 			### apply CTF using ACE2
 			if self.params['randomdef'] is True:
-				randomfloat = random.random()
-				df1 = self.params['df1'] * randomfloat
-				df2 = self.params['df2'] * randomfloat
+				randomfloat = random.gauss(0,self.params['randomdef_std'])
+				df1 = self.params['df1'] + randomfloat * 1e-06
+				df2 = self.params['df2'] + randomfloat * 1e-06
 				defocuslist1.append(df1)
 				defocuslist2.append(df2)
 				ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 					str(df2)+","+str(self.params['astigmatism'])+" -apply"
 				self.executeAce2Cmd(ace2cmd)
+				ctfapplied = ampcorrected+".corrected.mrc"
 			else:
 				ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(self.params['df1'])+","+\
 					str(self.params['df2'])+","+str(self.params['astigmatism'])+" -apply"
 				self.executeAce2Cmd(ace2cmd)
+				ctfapplied = ampcorrected+".corrected.mrc"
+
+			### optional ace2correction here
+			if self.params['ace2correct'] is True and self.params['randomdef'] is True:
+				defocuslist1c.append(df1)
+				defocuslist2c.append(df2)
+				ace2cmd = "ace2correct.exe -img "+ctfapplied+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
+					str(df2)+","+str(self.params['astigmatism'])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				ctfcorrected = ctfapplied+".corrected.mrc"			
+			elif self.params['ace2correct'] is True and self.params['randomdef'] is False:	
+				defocuslist1c.append(self.params['df1'])
+				defocuslist2c.append(self.params['df2'])
+				ace2cmd = "ace2correct.exe -img "+ctfapplied+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(self.params['df1'])+","+\
+					str(self.params['df2'])+","+str(self.params['astigmatism'])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				ctfcorrected = ctfapplied+".corrected.mrc"
+			elif self.params['ace2correct_rand'] is True and self.params['randomdef'] is True:
+#				randomwiggle = random.uniform((1-float(self.params['ace2correct_wiggle']) / 100), (1+float(self.params['ace2correct_wiggle']) / 100))
+				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
+				df1w = df1 + randomwiggle * 1e-06
+				df2w = df2 + randomwiggle * 1e-06
+				defocuslist1c.append(df1w)
+				defocuslist2c.append(df2w)
+				ace2cmd = "ace2correct.exe -img "+ctfapplied+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1w)+","+\
+					str(df2w)+","+str(self.params['astigmatism'])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				ctfcorrected = ctfapplied+".corrected.mrc"
+			elif self.params['ace2correct_rand'] is True and self.params['randomdef'] is False:
+#				randomwiggle = random.uniform((1-float(self.params['ace2correct_wiggle']) / 100), (1+float(self.params['ace2correct_wiggle']) / 100))
+				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
+				df1w = self.params['df1'] + randomwiggle * 1e-06
+				df2w = self.params['df2'] + randomwiggle * 1e-06
+				defocuslist1c.append(df1w)
+				defocuslist2c.append(df2w)
+				ace2cmd = "ace2correct.exe -img "+ctfapplied+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1w)+","+\
+					str(df2w)+","+str(self.params['astigmatism'])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				ctfcorrected = ctfapplied+".corrected.mrc"
+
 			i += 1
 
 		self.params['rundir'] = basedir
 		
-		### if randomdef selected, write defocus lists to file
+		### write defocus lists to file for ctf application 
 		if self.params['randomdef'] is True:
 			n = 0
-			defocusfile = os.path.join(self.params['rundir'], "defocuslist.lst")
+			defocusfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
 			f = open(defocusfile, "w")
 			f.write("projection \t")
 			f.write("defocus1 \t")
@@ -430,6 +504,39 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				f.write(str(self.params['astigmatism'])+"\t\n")
 				n += 1
 			f.close()
+		else:
+			n = 0
+			defocusfile = os.path.join(self.params['rundir'], "defocuslist_application.lst")
+			f = open(defocusfile, "w")
+			f.write("projection \t")
+			f.write("defocus1 \t")
+			f.write("defocus2 \t")
+			f.write("astigmatism \t\n")
+			while n < self.params['projcount']:
+				f.write(str(n)+"\t")
+				f.write(str(self.params['df1'])+"\t")
+				f.write(str(self.params['df2'])+"\t")
+				f.write(str(self.params['astigmatism'])+"\t\n")
+				n += 1
+			f.close()
+
+		### write defocus lists to file for ctf correction
+		if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
+			n = 0
+			defocusfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
+			f = open(defocusfile, "w")
+			f.write("projection \t")
+			f.write("defocus1 \t")
+			f.write("defocus2 \t")
+			f.write("astigmatism \t\n")
+			while n < self.params['projcount']:
+				f.write(str(n)+"\t")
+				f.write(str(defocuslist1c[n])+"\t")
+				f.write(str(defocuslist2c[n])+"\t")
+				f.write(str(self.params['astigmatism'])+"\t\n")
+				n += 1
+			f.close()
+
 
 		### convert to single stack of .corrected files
 		filelist = []
@@ -439,10 +546,17 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		while l <= self.params['numdir']:
 			curdir = os.path.join(self.params['rundir'], "partfiles", str(l))
 			for file in os.listdir(curdir):
-				if os.path.isfile(curdir+"/"+file) and re.search("ampcorrected.mrc.corrected.mrc", file):
-					filelist.append(curdir+"/"+file)
-					a = mrc.read(curdir+"/"+file)
-					partlist.append(a)
+				if os.path.isfile(curdir+"/"+file):
+					if (self.params['ace2correct'] is False and self.params['ace2correct_rand'] is False) \
+					and re.search("ampcorrected.mrc.corrected.mrc", file):
+						filelist.append(curdir+"/"+file)
+						a = mrc.read(curdir+"/"+file)
+						partlist.append(a)
+					if (self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True) \
+					and re.search("ampcorrected.mrc.corrected.mrc.corrected.mrc", file):
+						filelist.append(curdir+"/"+file)
+						a = mrc.read(curdir+"/"+file)
+						partlist.append(a)
 			os.system("rm -rf "+curdir+"/*.spi")
 			l += 1
 
@@ -458,6 +572,19 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### add a last layer of noise
 		noisystack2 = self.addNoise(ctfappliedstack,noiselevel2, SNR=self.params['snrtot'])
+
+		### low-pass / high-pass filter resulting stack, if specified
+		if self.params['hpfilt'] is not None or self.params['lpfilt'] is not None:
+			filtstack = noisystack2[:-4]
+			filtstack = filtstack+"_filt.hed"
+			emancmd = "proc2d "+noisystack2+" "+filtstack+" apix="+str(self.params['apix'])+" "
+			if self.params['hpfilt'] is not None:
+				emancmd = emancmd+"hp="+str(self.params['hpfilt'])+" "
+			if self.params['lpfilt'] is not None:
+				emancmd = emancmd+"lp="+str(self.params['lpfilt'])+" "
+			if os.path.isfile(filtstack):
+				apFile.removeStack(filtstack)
+			apEMAN.executeEmanCmd(emancmd)
 
 
 #=====================
