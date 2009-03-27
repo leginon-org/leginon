@@ -48,15 +48,17 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="ID of noref class averages used in refinement", metavar="int")	
 		self.parser.add_option("--clusterId", dest="clusterId",
 			help="ID of class averages from new alignment pipeline", metavar="int")
+		self.parser.add_option("--templateStackId", dest="templateStackId", type="int",
+			help="template stack ID from either reprojections or class averages", metavar="INT")
 		self.parser.add_option("--numiters", dest="numiters", type="int",
 			help="total number of iterations", metavar="int")
 		self.parser.add_option("--itn", dest="itn", type="int",
 			help="number of this iteration", metavar="int")
 		self.parser.add_option("--symmetry", dest="symmetry", type="int",
 			help="symmetry of the object", metavar="INT")
-		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float",
+		self.parser.add_option("--max_shift_orig", dest="max_shift_orig", type="float", default=0.2,
 			help="maximum radial shift during MRA", metavar="float")	
-		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float",
+		self.parser.add_option("--max_shift_this", dest="max_shift_this", type="float", default=0.05,
 			help="maximum radial shift during MRA for this iteration", metavar="float")
 		self.parser.add_option("--samp_param", dest="samp_param", type="int", default=8,
 			help="used to define precision of rotational alignment during MRA", metavar="int")
@@ -95,16 +97,18 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			apDisplay.printError("enter iteration number")
 		if self.params['symmetry'] is None:
 			apDisplay.printError("enter object symmetry")
-		if self.params['max_shift_orig'] is None:
-			apDisplay.printError("enter maximum radial shift during MRA")
-		if self.params['max_shift_this'] is None:
-			apDisplay.printError("enter maximum radial shift during MRA for this iteration")
+		if self.params['num_classums'] is None:
+			apDisplay.printError("enter number of classums used for creating 3d0")
+
+### these are all set as defaults
+#		if self.params['max_shift_orig'] is None:
+#			apDisplay.printError("enter maximum radial shift during MRA")
+#		if self.params['max_shift_this'] is None:
+#			apDisplay.printError("enter maximum radial shift during MRA for this iteration")
 #		if self.params['samp_param'] is None:
 #			apDisplay.printError("enter sampling parameter for MRA")
 #		if self.params['euler_ang_inc'] is None:
 #			apDisplay.printError("enter euler angle increment")
-		if self.params['num_classums'] is None:
-			apDisplay.printError("enter number of classums used for creating 3d0")
 #		if self.params['ham_win'] is None:
 #			apDisplay.printError("enter value for hamming window")
 #		if self.params['object_size'] is None:
@@ -123,6 +127,10 @@ class imagic3dRefineScript(appionScript.AppionScript):
 #			apDisplay.printError("enter angular increment of forward projections for MRA")
 #		if self.params['forw_ang_inc'] is None:
 #			apDisplay.printError("enter angular increment of forward projections for euler angle refinement")
+
+		### check that only one ID is specified
+		if self.params['templateStackId'] is not None and self.params['clusterId'] is not None:
+			apDisplay.printError("Please use only one class average stack")
 		
 		return
 
@@ -440,13 +448,18 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	#======================
 	def upload3dRunData(self):
 		refineq = appionData.ApImagic3dRefineRunData()
-		refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		if self.params['stackid'] is not None:
+			refineq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+		elif self.params['templateStackId'] is not None:
+			tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+			refineq['project|projects|project'] = apProject.getProjectIdFromSessionId(tsdata['session'].dbid)
 		refineq['runname'] = self.params['runname']
 		if self.params['norefClassId'] is not None:
 			refineq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
 		elif self.params['clusterId'] is not None:
 			refineq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
-		refineq['clusterclass'] = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+		elif self.params['templateStackId'] is not None:
+			refineq['templatestack'] = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
 		refineq['imagic3d0run'] = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
 		refineq['description'] = self.params['description']
 		refineq['pixelsize'] = self.params['apix']
@@ -494,7 +507,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		else: 
 			apDisplay.printError("3d0 initial model not in the database")
 		
-		# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid	or clusterId
+		# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid or clusterId
 		if modeldata['norefclass'] is not None:
 			norefclassdata = modeldata['norefclass']
 			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
@@ -513,6 +526,18 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			self.params['stackid'] = clusterdata['clusterrun']['alignstack'].dbid
 			clusterpath = clusterdata['path']['path']
 			clsavgfile = os.path.join(clusterpath, clusterdata['avg_imagicfile'])
+			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
+				clsavgfile = clsavgfile[:-4]
+		elif modeldata['templatestack'] is not None:
+			self.params['templateStackId'] = modeldata['templatestack'].dbid
+			tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+			if tsdata['clusterstack'] is not None:
+				clusterdata = tsdata['clusterstack']
+				self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
+			else: 
+				self.params['stackid'] = None
+			tspath = tsdata['path']['path']
+			clsavgfile = os.path.join(tspath, tsdata['templatename'])
 			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
 				clsavgfile = clsavgfile[:-4]
 		else:
@@ -552,10 +577,6 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		apIMAGIC.executeImagicBatchFile(batchfile)
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
 		time3dRefine = time.time() - time3dRefine
-			
-#		os.chdir(str(self.params['rundir']))
-#		os.system("chmod 755 "+str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-#		os.system(str(self.params['rundir'])+"/imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
 
 		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
 		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
@@ -574,6 +595,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### create chimera slices of densities ******* .log file has caused problems if not removed
 		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
 		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
+		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+		apChimera.renderSnapshots(mrcnamerot, contour=1.0, zoom=1.0, sym='c1')
 		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
 		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
 
