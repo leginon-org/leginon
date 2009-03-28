@@ -74,7 +74,8 @@ def createAmpcorBatchFile(infile,params):
 		apDisplay.printError("could not find spider script: "+pwscfile)
 	inf = open(scriptfile, "r")
 
-	tmpfile = "out"+randomfilename(8)+".spi"
+#	tmpfile = "out"+randomfilename(8)+".spi" ### this does not always work, and creates filenames with special characters that cannot be read
+	tmpfile = "out_"+os.path.basename(infile)
 	tmpfile = os.path.join(params['rundir'], tmpfile)
 	localtmpfile = spyder.fileFilter(tmpfile)
 	
