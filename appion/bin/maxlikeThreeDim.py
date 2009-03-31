@@ -22,6 +22,7 @@ import apParam
 import apEMAN
 import apXmipp
 import appionData
+import apVolume
 import spyder
 import apImagicFile
 import apProject
@@ -46,6 +47,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### strings
 		self.parser.add_option("--sym", "--symmetry", dest="symmetry",
 			help="Symmetry", metavar="#")
+		self.parser.add_option("--model-ids", dest="modelstr",
+			help="Initial Model IDs", metavar="#")
 
 		### integers
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
@@ -62,8 +65,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Number of processor to use", metavar="ID#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
-		self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
-			help="Number of volumes to create", metavar="#")
+		#self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
+		#	help="Number of volumes to create", metavar="#")
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
 		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
@@ -107,6 +110,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
 			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
 
+		if not self.params['modelstr']:
+			apDisplay.printError("Please provide model numbers")
+		else:
+			modellist = self.params['modelstr'].split()
+			self.params['modelids'] = []
+			for modelid in modellist:
+				self.params['modelids'].append(int(modelid))
+
 		### get the stack ID from the other IDs
 		if self.params['alignid'] is not None:
 			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
@@ -139,6 +150,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def setRunDir(self):
+		"""
+		This funcion is only run when the user does not specifiy 'rundir'
+		"""
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
@@ -166,7 +180,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			alignrundata = alignrunq.query(results=1)
 			if maxjobdatas[0]['finished'] is True or alignrundata:
 				apDisplay.printError("This run name already exists as finished in the database, please change the runname")
-		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 		maxjobq['timestamp'] = self.timestamp
 		maxjobq['finished'] = False
 		maxjobq['hidden'] = False
@@ -257,13 +270,17 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def setupVolumes(self, boxsize):
+	def setupVolumes(self, boxsize, apix):
 		voldocfile = "volumelist"+self.timestamp+".doc"
 		f = open(voldocfile, "w")
-		for i in range(self.params['nvol']):
-			volfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
-			self.createGaussianSphere(volfile, boxsize)
-			f.write(volfile+" 1\n")
+		for modelid in self.params['modelids']:
+			mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
+			rescaleModelId(modelid, mrcvolfile, apix, boxsize)
+			spivolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
+			emancmd = "proc3d %s %s spiderswap"%(mrcvolfile, spivolfile)
+			apEMAN.executeEmanCmd(emancmd)
+			#self.createGaussianSphere(spivolfile, boxsize)
+			f.write(spivolfile+" 1\n")
 		f.close()
 		return voldocfile
 
@@ -279,6 +296,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
 		boxsize = int(math.floor(self.stack['boxsize']/float(self.params['bin'])))
+		apix = self.stack['apix']*self.params['bin']
 
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1:
@@ -293,7 +311,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
-		return boxsize
+		return (boxsize, apix)
 
 	#=====================
 	def runrefine(self):
@@ -360,11 +378,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.dumpParameters()
 
 		### set particles
-		boxsize = self.setupParticles()
+		(boxsize, apix) = self.setupParticles()
 
 		### setup volumes
 
-		self.voldocfile = self.setupVolumes(boxsize)
+		self.voldocfile = self.setupVolumes(boxsize, apix)
 
 		### run the refinement
 		self.dumpParameters()
