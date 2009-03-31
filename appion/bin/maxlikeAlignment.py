@@ -75,9 +75,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--no-mirror", dest="mirror", default=True,
 			action="store_false", help="Do NOT use mirror method")
 
-		self.parser.add_option("--norm", dest="norm", default=True,
+		self.parser.add_option("--norm", dest="norm", default=False,
 			action="store_true", help="Use internal normalization for data with normalization errors")
-		self.parser.add_option("--no-norm", dest="norm", default=True,
+		self.parser.add_option("--no-norm", dest="norm", default=False,
 			action="store_false", help="Do NOT use internal normalization")
 
 		### choices
