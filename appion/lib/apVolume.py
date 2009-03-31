@@ -40,7 +40,7 @@ def getModelFromId(modelid):
 	return appionData.ApInitialModelData.direct_query(modelid)
 
 #================
-def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
+def rescaleModel(infile, outfile, inapix, outapix, newbox=None):
 	# scale an existing model - provide an input model & output (strings)
 	# an input a/pix & output a/pix (floats)
 	# and the final box size (after scaling)
@@ -49,8 +49,8 @@ def rescaleModel(infile,outfile,inapix,outapix,newbox=None):
 	if newbox is None:
 		newbox = origbox
 	scalefactor = float(inapix/outapix)
-	apDisplay.printMsg("rescaling %s with boxsize %d by a factor of %.3f\n"
-		+"\tand saving to %s with a boxsize %d"
+	apDisplay.printMsg( ("rescaling %s with boxsize %d by a factor of %.3f\n"
+		+"\tand saving to %s with a boxsize %d")
 		%(infile, origbox, scalefactor, outfile, newbox))
 	emancmd = "proc3d %s %s " % (infile, outfile)
 	if abs(scalefactor-1.0) > 0.2:
