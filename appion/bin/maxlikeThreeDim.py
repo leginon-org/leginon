@@ -273,7 +273,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	def setupVolumes(self, boxsize, apix):
 		voldocfile = "volumelist"+self.timestamp+".doc"
 		f = open(voldocfile, "w")
+		i = 0
 		for modelid in self.params['modelids']:
+			i += 1
 			mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
 			rescaleModelId(modelid, mrcvolfile, apix, boxsize)
 			spivolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
