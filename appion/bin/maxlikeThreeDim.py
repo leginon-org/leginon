@@ -279,7 +279,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%05d.mrc"%(self.timestamp, i+1))
 			apVolume.rescaleModelId(modelid, mrcvolfile, apix, boxsize)
 			spivolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
-			emancmd = "proc3d %s %s spiderswap"%(mrcvolfile, spivolfile)
+			emancmd = "proc3d %s %s"%(mrcvolfile, spivolfile)
 			apEMAN.executeEmanCmd(emancmd, verbose=True)
 			#self.createGaussianSphere(spivolfile, boxsize)
 			f.write(spivolfile+" 1\n")
