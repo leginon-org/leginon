@@ -113,7 +113,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if not self.params['modelstr']:
 			apDisplay.printError("Please provide model numbers")
 		else:
-			modellist = self.params['modelstr'].split()
+			modellist = self.params['modelstr'].split(",")
 			self.params['modelids'] = []
 			for modelid in modellist:
 				self.params['modelids'].append(int(modelid))
