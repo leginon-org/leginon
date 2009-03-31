@@ -77,11 +77,10 @@ class AceTilt(object):
 		return imgarray
 
 	##========================
-	def splitImage(self, imgarray):
+	def setupCoordList(self):
 		splitsize = self.params['splitsize']
 		numsplits = self.params['numsplits']
-
-		imgdict = {}
+		coordlist = {}
 		for i in range(numsplits):
 			for j in range(numsplits):
 				xstart = int(self.imgshape[0]/float(numsplits)*i)
@@ -90,9 +89,29 @@ class AceTilt(object):
 				yend = ystart + splitsize
 				if xend <= self.imgshape[0] and yend <= self.imgshape[1]:
 					key = "%04dx%04d"%(xstart+splitsize/2,ystart+splitsize/2)
-					#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
-					imgdict[key] = imgarray[xstart:xend, ystart:yend]
-		return imgdict
+					print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
+					#imgdict[key] = imgarray[xstart:xend, ystart:yend]
+		return coordlist 
+
+	##========================
+	def getSubImage(self, imgarray, x, y):
+		splitsize = self.params['splitsize']
+		xstart = x - splitsize/2
+		xend = xstart + splitsize
+		ystart = y - splitsize/2
+		yend = ystart + splitsize
+		if xend <= self.imgshape[0] and yend <= self.imgshape[1]
+			and xstart > 0 and ystart > 0:
+			key = "%04dx%04d"%(xstart+splitsize/2,ystart+splitsize/2)
+			#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
+			subarray = imgarray[xstart:xend, ystart:yend]
+		return subarray
+
+	##========================
+	def getCtfInfo(self, imgarray):
+		imgfile = "temp.mrc"
+		mrc.write(imgarray, imgfile)
+		return processImage(imgfile)
 
 	##========================
 	def processImage(self, imgfile, msg=False):
@@ -158,19 +177,6 @@ class AceTilt(object):
 		if ampconst < -0.01 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			return None
-
-		## create power spectra jpeg
-		edgefile = imgfile+".edge.mrc"
-		if os.path.isfile(edgefile):
-			jpegfile = imgfile+".edge.jpg"
-			ps = mrc.read(edgefile)
-			ps = (ps-ps.mean())/ps.std()
-			cutoff = -2.0*ps.min()
-			ps = numpy.where(ps < cutoff, ps, cutoff)
-			apImage.arrayToJpeg(ps, jpegfile, msg=False)
-			apFile.removeFile(edgefile)
-
-		#print ctfvalues
 
 		return ctfvalues
 
@@ -246,18 +252,93 @@ class AceTilt(object):
 
 
 	##========================
+	def fitPlaneToCtf(self, imgarray):
+		"""
+		performs a two-dimensional linear regression and subtracts it from an image
+		essentially a fast high pass filter
+		"""
+		def retx(y,x):
+			return x
+		def rety(y,x):
+			return y
+		count = float((imgarray.shape)[0]*(imgarray.shape)[1])
+		xarray = numpy.fromfunction(retx, imgarray.shape)
+		yarray = numpy.fromfunction(rety, imgarray.shape)
+		xsum = float(xarray.sum())
+		xsumsq = float((xarray*xarray).sum())
+		ysum = xsum
+		ysumsq = xsumsq
+		xysum = float((xarray*yarray).sum())
+		xzsum = float((xarray*imgarray).sum())
+		yzsum = float((yarray*imgarray).sum())
+		zsum = imgarray.sum()
+		zsumsq = (imgarray*imgarray).sum()
+		xarray = xarray.astype(numpy.float32)
+		yarray = yarray.astype(numpy.float32)
+		leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
+		rightmat = numpy.array( [xzsum, yzsum, zsum] )
+		resvec = linalg.solve(leftmat,rightmat)
+		xslope = resvec[0]
+		yslope = resvec[1]
+		print "plane_regress: "
+		print " x-slope =  %.2e m"%(xslope)
+		print " y-slope =  %.2e m"%(yslope)
+		print " xy-intercept =  %.2e m"%(resvec[2])
+
+		tiltaxis = math.degrees(math.atan2(-yslope,xslope))
+		print " tilt axis angle = %.2f degrees"%(tiltaxis)
+
+		newarray = xarray*xslope + yarray*yslope + resvec[2]
+		#print newarray
+		diffarray = imgarray - newarray
+		#print diffarray
+		rmserror = math.sqrt( (diffarray*diffarray).mean() )
+		print " rms error = %.2e m"%(rmserror)
+
+		#print " max1-slope =  %.2e m"%(xslope*math.cos(math.radians(tiltaxis)))
+		#print " max2-slope =  %.2e m"%(yslope*math.sin(math.radians(tiltaxis)))
+
+		maxslope = abs(xslope*math.cos(math.radians(tiltaxis))) + abs(yslope*math.sin(math.radians(tiltaxis)))
+		print " max-slope =  %.2e m"%(maxslope)
+		if abs(maxslope) < max(abs(xslope),abs(yslope)):
+			print "ERROR in max slope calculation"
+
+		#print " num1-pix =  %.1f pixels"%(self.imgshape[1]*math.cos(math.radians(tiltaxis)))
+		#print " num2-pix =  %.1f pixels"%(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
+		numpix = abs(self.imgshape[1]*math.cos(math.radians(tiltaxis))) + abs(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
+		#print " num-pix =  %.1f pixels"%(numpix)
+		splitpix = numpix/float(self.params['numsplits'])
+		#print " split-pix =  %.1f pixels"%(splitpix)
+
+		splitsize = self.params['apix']*1.0e-10*splitpix
+		#print " split-size =  %.2e m"%(splitsize)
+		
+		#if abs(maxslope) > abs(splitsize):
+		#	print "invalid tilt:", maxslope, splitsize
+		#	return
+
+		print " angle ratio =  %.2e / %.2e => %.4f "%(maxslope,splitsize,maxslope/splitsize)
+		tiltangle = math.degrees(math.atan2(maxslope, splitsize))
+		print " tilt-angle =  %.2f degrees"%(tiltangle)
+
+
+
+	##========================
 	def run(self):
 		imgarray = self.openFile()
 		self.imgshape = imgarray.shape
-		imgdict = self.splitImage(imgarray)
+		coordlist = self.setupCoordList()
+
 		ctfdict = {}
 		self.count = 0
-
 		### process image pieces
-		print "processing image pieces "+str(len(imgdict.keys()))+" total"
-		for key in imgdict.keys():
+		print "processing image pieces "+str(len(coordlist))+" total"
+		for key in coordlist:
+			(xstr,ystr) = key.split('x')
+			x = int(xstr)
+			y = int(ystr)
 			self.count += 1
-			imgarray = imgdict[key]
+			imgarray = getSubImage(imgarray, x, y)
 			imgfile = "splitimage-"+key+".dwn.mrc"
 			mrc.write(imgarray, imgfile)
 			ctfvalues = None
