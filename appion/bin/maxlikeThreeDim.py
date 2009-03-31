@@ -277,7 +277,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		for modelid in self.params['modelids']:
 			i += 1
 			mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
-			rescaleModelId(modelid, mrcvolfile, apix, boxsize)
+			apVolume.rescaleModelId(modelid, mrcvolfile, apix, boxsize)
 			spivolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
 			emancmd = "proc3d %s %s spiderswap"%(mrcvolfile, spivolfile)
 			apEMAN.executeEmanCmd(emancmd)
