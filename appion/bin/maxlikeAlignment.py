@@ -291,13 +291,14 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -iter "+str(self.params['maxiter'])
 			+" -psi_step "+str(self.params['psistep'])
 			+" -eps 5e-4"
-			+" -norm"
+
 		)
 		if self.params['fast'] is True:
 			xmippopts += " -fast"
 		if self.params['mirror'] is True:
 			xmippopts += " -mirror"
-
+		if self.params['norm'] is True:
+			xmippopts += " -norm"
 		### write to file
 		jobfile = "xmipp-"+self.timestamp+".job"
 		results = rundir+"/"+self.params['runname']+"-results.tgz"
