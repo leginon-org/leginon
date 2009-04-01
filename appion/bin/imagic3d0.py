@@ -78,25 +78,45 @@ class imagic3d0Script(appionScript.AppionScript):
 		### mass specified for eman volume function
 		self.parser.add_option("--mass", dest="mass", type="int",
                         help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
+                        
+		### chimera only, if the run is already completed
+		self.parser.add_option("--chimera-only", dest="chimera-only", default=False,
+			action="store_true", help="use only if you want to regenerate chimera slices from an already existing model: input rundir and runname")
+		self.parser.add_option("--contour", dest="contour", type="float", default=1.0,
+			help="threshold value for chimera volume", metavar="#")
+		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.0,
+			help="threshold value for chimera volume", metavar="#")
 
 		return 
 
 	#=====================
 	def checkConflicts(self):
-		if (self.params['reclassId'] is None and self.params['norefClassId'] is None and self.params['clusterId'] is None and self.params['templateStackId'] is None):
-			apDisplay.printError("There is no class average ID specified")
-		if self.params['templateStackId'] is not None and (self.params['clusterId'] is not None or self.params['norefClassId'] is not None):
-			apDisplay.printError("Please use only one class average stack")
-		if self.params['clusterId'] is not None and (self.params['templateStackId'] is not None or self.params['norefClassId'] is not None):
-			apDisplay.printError("Please use only one class average stack")		
-		if self.params['norefClassId'] is not None and (self.params['clusterId'] is not None or self.params['templateStackId'] is not None):
-			apDisplay.printError("Please use only one class average stack")
-		if self.params['projections'] is None:
-			apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
-		if self.params['symmetry'] is None:
-			apDisplay.printError("enter object symmetry")
+	
+		### chimera only
+		if self.params['chimera-only'] is True:
+			if self.params['rundir'] is None:
+				apDisplay.printError("Please specify the directory in which your files are located")
 		
-		return
+			return
+		else:
+	
+		### otherwise go on with the reconstruction
+		
+			if (self.params['reclassId'] is None and self.params['norefClassId'] is None and \
+				self.params['clusterId'] is None and self.params['templateStackId'] is None):
+				apDisplay.printError("There is no class average ID specified")
+			if self.params['templateStackId'] is not None and (self.params['clusterId'] is not None or self.params['norefClassId'] is not None):
+				apDisplay.printError("Please use only one class average stack")
+			if self.params['clusterId'] is not None and (self.params['templateStackId'] is not None or self.params['norefClassId'] is not None):
+				apDisplay.printError("Please use only one class average stack")		
+			if self.params['norefClassId'] is not None and (self.params['clusterId'] is not None or self.params['templateStackId'] is not None):
+				apDisplay.printError("Please use only one class average stack")
+			if self.params['projections'] is None:
+				apDisplay.printError("enter 3 projections from which to begin angular reconstitution")
+			if self.params['symmetry'] is None:
+				apDisplay.printError("enter object symmetry")
+		
+			return
 
 	#=====================
 	def setRunDir(self):
@@ -384,119 +404,135 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.params['projections'] = self.params['projections'].replace(",", ";")
+	
+		### chimera only
+		if self.params['chimera-only'] is True:
+			mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
+			mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
+	
+			### create chimera slices of densities
+			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+	
+			return
 		
-		# get reference-free classification and reclassification parameters
-		if self.params['norefClassId'] is not None:
-			norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
-			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
-			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
-			binning = norefclassdata['norefRun']['norefParams']['bin']
-			self.params['boxsize'] = stack_box_size / binning
-			self.params['apix'] = stackpixelsize * binning
-			orig_path = norefclassdata['norefRun']['path']['path']
-			orig_file = norefclassdata['classFile']
-			linkingfile = orig_path+"/"+orig_file
-		elif self.params['reclassId'] is not None:
-			reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
-			self.params['stackid'] = reclassdata['norefclass']['norefRun']['stack'].dbid
-			stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-			stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
-			binning = reclassdata['norefclass']['norefRun']['norefParams']['bin']
-			self.params['boxsize'] = stack_box_size / binning
-			self.params['apix'] = stackpixelsize * binning
-			orig_path = reclassdata['path']['path']
-			orig_runname = reclassdata['runname']
-			orig_file = "reclassified_classums_sorted"
-			linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
-		elif self.params['clusterId'] is not None or self.params['imagicClusterId'] is not None:
-			if self.params['clusterId'] is not None:
-				clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
-            		elif self.params['imagicClusterId'] is not None:
-                        	clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
-			self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
-			self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
- 			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
-			orig_path = clusterdata['path']['path']
-			orig_file = clusterdata['avg_imagicfile']
-			if orig_file[-4:] == ".img" or orig_file[-4:] == ".hed":
-				orig_file = orig_file[:-4]
-			linkingfile = os.path.join(orig_path, orig_file)
-		elif self.params['templateStackId'] is not None:
-			tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
-			if tsdata['clusterstack'] is not None:
-				clusterdata = tsdata['clusterstack']
+		### otherwise go on with the reconstruction
+		else:	
+			self.params['projections'] = self.params['projections'].replace(",", ";")
+			
+			# get reference-free classification and reclassification parameters
+			if self.params['norefClassId'] is not None:
+				norefclassdata = appionData.ApNoRefClassRunData.direct_query(self.params['norefClassId'])
+				self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+				stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+				stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
+				binning = norefclassdata['norefRun']['norefParams']['bin']
+				self.params['boxsize'] = stack_box_size / binning
+				self.params['apix'] = stackpixelsize * binning
+				orig_path = norefclassdata['norefRun']['path']['path']
+				orig_file = norefclassdata['classFile']
+				linkingfile = orig_path+"/"+orig_file
+			elif self.params['reclassId'] is not None:
+				reclassdata = appionData.ApImagicReclassifyData.direct_query(self.params['reclassId'])
+				self.params['stackid'] = reclassdata['norefclass']['norefRun']['stack'].dbid
+				stackpixelsize = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+				stack_box_size = apStack.getStackBoxsize(self.params['stackid'])
+				binning = reclassdata['norefclass']['norefRun']['norefParams']['bin']
+				self.params['boxsize'] = stack_box_size / binning
+				self.params['apix'] = stackpixelsize * binning
+				orig_path = reclassdata['path']['path']
+				orig_runname = reclassdata['runname']
+				orig_file = "reclassified_classums_sorted"
+				linkingfile = orig_path+"/"+orig_runname+"/"+orig_file
+			elif self.params['clusterId'] is not None or self.params['imagicClusterId'] is not None:
+				if self.params['clusterId'] is not None:
+					clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
+	            		elif self.params['imagicClusterId'] is not None:
+	                        	clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 				self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
-			else: 
-				self.params['stackid'] = None
-			self.params['stackid'] = 0
-			self.params['boxsize'] = tsdata['boxsize']
-			self.params['apix'] = tsdata['apix']
-			orig_path = tsdata['path']['path']
-			orig_file = tsdata['templatename']
-			if orig_file[-4:] == ".img" or orig_file[-4:] == ".hed":
-				orig_file = orig_file[:-4]
-			linkingfile = os.path.join(orig_path, orig_file)
-		else:
-			apDisplay.printError("class averages not in the database")
+				self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
+	 			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
+				orig_path = clusterdata['path']['path']
+				orig_file = clusterdata['avg_imagicfile']
+				if orig_file[-4:] == ".img" or orig_file[-4:] == ".hed":
+					orig_file = orig_file[:-4]
+				linkingfile = os.path.join(orig_path, orig_file)
+			elif self.params['templateStackId'] is not None:
+				tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+				if tsdata['clusterstack'] is not None:
+					clusterdata = tsdata['clusterstack']
+					self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
+				else: 
+					self.params['stackid'] = None
+				self.params['stackid'] = 0
+				self.params['boxsize'] = tsdata['boxsize']
+				self.params['apix'] = tsdata['apix']
+				orig_path = tsdata['path']['path']
+				orig_file = tsdata['templatename']
+				if orig_file[-4:] == ".img" or orig_file[-4:] == ".hed":
+					orig_file = orig_file[:-4]
+				linkingfile = os.path.join(orig_path, orig_file)
+			else:
+				apDisplay.printError("class averages not in the database")
 
-		### check conflicts with number of particles
-		self.params['numpart'] = apFile.numImagesInStack(linkingfile+".hed")
-		if self.params['num_classums'] is None:
-			self.params['num_classums'] = self.params['numpart']
-		if self.params['num_classums'] > self.params['numpart']:
-			apDisplay.printError("number of class averages greater than number of particles in stack")
+			### check conflicts with number of particles
+			self.params['numpart'] = apFile.numImagesInStack(linkingfile+".hed")
+			if self.params['num_classums'] is None:
+				self.params['num_classums'] = self.params['numpart']
+			if self.params['num_classums'] > self.params['numpart']:
+				apDisplay.printError("number of class averages greater than number of particles in stack")
 
-		print self.params
-		print "**********************"
-		print "... class average stack pixel size: "+str(self.params['apix'])
-		print "... class average stack box size: "+str(self.params['boxsize'])	
-		apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3d0.log for details")
-	
-		### create batch file for execution with IMAGIC
-		filename = self.createImagicBatchFile(linkingfile)
+			print self.params
+			print "**********************"
+			print "... class average stack pixel size: "+str(self.params['apix'])
+			print "... class average stack box size: "+str(self.params['boxsize'])	
+			apDisplay.printMsg("Running IMAGIC .batch file: See imagicCreate3d0.log for details")
 		
-		### these files interfere with IMAGIC program
-                if os.path.isfile(str(self.params['rundir'])+"/ordered0.img") is True:
-			os.remove(str(self.params['rundir'])+"/ordered0.img")
-                if os.path.isfile(str(self.params['rundir'])+"/ordered0.hed") is True:
-			os.remove(str(self.params['rundir'])+"/ordered0.hed")
-                if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.img") is True:
-                        os.remove(str(self.params['rundir'])+"/sino_ordered0.img")
-		if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.hed") is True:
-			os.remove(str(self.params['rundir'])+"/sino_ordered0.hed")
+			### create batch file for execution with IMAGIC
+			filename = self.createImagicBatchFile(linkingfile)
+			
+			### these files interfere with IMAGIC program
+	                if os.path.isfile(str(self.params['rundir'])+"/ordered0.img") is True:
+				os.remove(str(self.params['rundir'])+"/ordered0.img")
+	                if os.path.isfile(str(self.params['rundir'])+"/ordered0.hed") is True:
+				os.remove(str(self.params['rundir'])+"/ordered0.hed")
+	                if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.img") is True:
+	                        os.remove(str(self.params['rundir'])+"/sino_ordered0.img")
+			if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.hed") is True:
+				os.remove(str(self.params['rundir'])+"/sino_ordered0.hed")
 
-                ### execute batch file that was created
-		time3d0 = time.time()
-                os.system('chmod 755 '+filename)
-		apIMAGIC.executeImagicBatchFile(filename)
-                apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
-                time3d0 = time.time() - time3d0
+	                ### execute batch file that was created
+			time3d0 = time.time()
+	                os.system('chmod 755 '+filename)
+			apIMAGIC.executeImagicBatchFile(filename)
+	                apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
+	                time3d0 = time.time() - time3d0
 
-		mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
-		mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
+			mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
+			mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
 
-		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
-		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
-		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+			### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
+			apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
+			apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
 
-		### optional thresholding based on specified size
-		if self.params['mass'] is not None:
-			volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-			volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-			apEMAN.executeEmanCmd(volumecmd1)
-			apEMAN.executeEmanCmd(volumecmd2)
-		
-		### create chimera slices of densities
-		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
-		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
-		apChimera.renderSnapshots(mrcnamerot, contour=1.0, zoom=1.0, sym='c1')
+			### optional thresholding based on specified size
+			if self.params['mass'] is not None:
+				volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+				volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+				apEMAN.executeEmanCmd(volumecmd1)
+				apEMAN.executeEmanCmd(volumecmd2)
+			
+			### create chimera slices of densities
+			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
-		### upload density
-		self.upload3d0()
+			### upload density
+			self.upload3d0()
+			
+			return
 
-	
 	
 	
 #=====================
