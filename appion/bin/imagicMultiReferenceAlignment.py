@@ -396,6 +396,11 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		os.chdir(self.params['rundir'])
 		apIMAGIC.copyFile(self.params['rundir'], "start.hed")  ### removes poorly formatted EMAN headers
 		apIMAGIC.executeImagicBatchFile(batchfile)
+		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
+		loglines = logfile.readlines()
+		for line in loglines:
+			if re.search("ERROR in program", line):
+				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: multiReferenceAlignment.log")
                	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime0), "cyan")
 
 		### create Average MRC file
