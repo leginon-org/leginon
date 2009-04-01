@@ -506,7 +506,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	
 				### create chimera slices of densities
 				apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
-				#apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+				apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 				apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
 			return
@@ -589,6 +589,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			time3dRefine = time.time()
 			os.system('chmod 755 '+batchfile)
 			apIMAGIC.executeImagicBatchFile(batchfile)
+			logfile = open(os.path.join(self.params['rundir'], "imagic3dRefine_"+str(self.params['itn'])+".log"))
+			loglines = logfile.readlines()
+			for line in loglines:
+				if re.search("ERROR in program", line):
+					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagic3dRefine_"+str(self.params['itn'])+".log")
 			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
 			time3dRefine = time.time() - time3dRefine
 
