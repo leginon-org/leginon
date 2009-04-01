@@ -88,51 +88,49 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### mass specified for eman volume function
                 self.parser.add_option("--mass", dest="mass", type="int",
                         help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
+                        
+		### chimera only, if the run is already completed
+		self.parser.add_option("--chimera-only", dest="chimera-only", default=False,
+			action="store_true", help="use only if you want to regenerate chimera slices from an already existing model: input rundir and runname")
+		self.parser.add_option("--contour", dest="contour", type="float", default=1.0,
+			help="threshold value for chimera volume", metavar="#")
+		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.0,
+			help="threshold value for chimera volume", metavar="#")
+		self.parser.add_option("--iterations", dest="iterations", type="str",
+			help="list of iterations for which you would like chimera slices generated, separated by comma", metavar="1,2,5...")
 
 		return 
 
 	#=====================
 	def checkConflicts(self):
-		if self.params['itn'] is None:
-			apDisplay.printError("enter iteration number")
-		if self.params['symmetry'] is None:
-			apDisplay.printError("enter object symmetry")
-		if self.params['num_classums'] is None:
-			apDisplay.printError("enter number of classums used for creating 3d0")
-
-### these are all set as defaults
-#		if self.params['max_shift_orig'] is None:
-#			apDisplay.printError("enter maximum radial shift during MRA")
-#		if self.params['max_shift_this'] is None:
-#			apDisplay.printError("enter maximum radial shift during MRA for this iteration")
-#		if self.params['samp_param'] is None:
-#			apDisplay.printError("enter sampling parameter for MRA")
-#		if self.params['euler_ang_inc'] is None:
-#			apDisplay.printError("enter euler angle increment")
-#		if self.params['ham_win'] is None:
-#			apDisplay.printError("enter value for hamming window")
-#		if self.params['object_size'] is None:
-#			apDisplay.printError("enter value for object size as fraction of image size")
-#		if self.params['repalignments'] is None:
-#			apDisplay.printError("enter number of alignments to reprojections")
-#		if self.params['amask_dim'] is None:
-#			apDisplay.printError("enter automask parameter amask_dim")
-#		if self.params['amask_lp'] is None:
-#			apDisplay.printError("enter automask parameter amask_lp")
-#		if self.params['amask_sharp'] is None:
-#			apDisplay.printError("enter automask parameter amask_sharp")
-#		if self.params['amask_thresh'] is None:
-#			apDisplay.printError("enter automask parameter amask_thresh")
-#		if self.params['mrarefs_ang_inc'] is None:
-#			apDisplay.printError("enter angular increment of forward projections for MRA")
-#		if self.params['forw_ang_inc'] is None:
-#			apDisplay.printError("enter angular increment of forward projections for euler angle refinement")
-
-		### check that only one ID is specified
-		if self.params['templateStackId'] is not None and self.params['clusterId'] is not None:
-			apDisplay.printError("Please use only one class average stack")
+	
+		### chimera only
+		if self.params['chimera-only'] is True:
+			if self.params['rundir'] is None:
+				apDisplay.printError("Please specify the directory in which your files are located")
+			if self.params['iterations'] is None:
+				apDisplay.printError("Please specify the iterations for which you need chimera slices generated (e.g. \"1,2,5\")")
+			else:
+				stringlist = self.params['iterations'].split(",")
+				self.itlist = [int(v) for v in stringlist]
 		
-		return
+			return
+		
+		### otherwise go on with the reconstruction
+		else:
+	
+			if self.params['itn'] is None:
+				apDisplay.printError("enter iteration number")
+			if self.params['symmetry'] is None:
+				apDisplay.printError("enter object symmetry")
+			if self.params['num_classums'] is None:
+				apDisplay.printError("enter number of classums used for creating 3d0")
+
+			### check that only one ID is specified
+			if self.params['templateStackId'] is not None and self.params['clusterId'] is not None:
+				apDisplay.printError("Please use only one class average stack")
+		
+			return
 
 	#=====================
 	def setRunDir(self):
@@ -499,114 +497,132 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
+	
+		### chimera only
+		if self.params['chimera-only'] is True:
+			for item in self.itlist:
+				mrcname = self.params['rundir']+"/masked_3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc"
+				mrcnamerot = self.params['rundir']+"/masked_3d"+str(item)+"_ordered"+str(item)+"_repaligned.mrc.rot.mrc"
+	
+				### create chimera slices of densities
+				apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+				#apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+				apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+
+			return
 		
-		if self.params['imagic3d0Id'] is not None:
-			modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
-			self.params['boxsize'] = modeldata['boxsize']
-			self.params['apix'] = modeldata['pixelsize']
-		else: 
-			apDisplay.printError("3d0 initial model not in the database")
-		
-		# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid or clusterId
-		if modeldata['norefclass'] is not None:
-			norefclassdata = modeldata['norefclass']
-			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
-	                norefpath = norefclassdata['norefRun']['path']['path']
-	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
-		elif modeldata['reclass'] is not None:
-			reclassid = modeldata['reclass'].dbid
-			reclassdata = appionData.ApImagicReclassifyData.direct_query(reclassid)
-			norefclassdata = reclassdata['norefclass']
-			self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
-	                norefpath = norefclassdata['norefRun']['path']['path']
-	                clsavgfile = norefpath+"/"+norefclassdata['classFile']
-		elif modeldata['clusterclass'] is not None:
-			clusterid = modeldata['clusterclass'].dbid			
-			clusterdata = appionData.ApClusteringStackData.direct_query(clusterid)
-			self.params['stackid'] = clusterdata['clusterrun']['alignstack'].dbid
-			clusterpath = clusterdata['path']['path']
-			clsavgfile = os.path.join(clusterpath, clusterdata['avg_imagicfile'])
-			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
-				clsavgfile = clsavgfile[:-4]
-		elif modeldata['templatestack'] is not None:
-			self.params['templateStackId'] = modeldata['templatestack'].dbid
-			tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
-			if tsdata['clusterstack'] is not None:
-				clusterdata = tsdata['clusterstack']
-				self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
-			else: 
-				self.params['stackid'] = None
-			tspath = tsdata['path']['path']
-			clsavgfile = os.path.join(tspath, tsdata['templatename'])
-			if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
-				clsavgfile = clsavgfile[:-4]
+		### otherwise go on with the reconstruction
 		else:
-			apDisplay.printError("no class averages associated with model in the database")
 		
-		print self.params
-				
-		# copy files from initial model directory to working directory
-		orig_path = os.path.join(modeldata['path']['path'], modeldata['runname'])
-		mrarefsimg = "mrarefs_masked_3d0.img"
-		mrarefshed = "mrarefs_masked_3d0.hed"
-		forwimg = "masked_3d0_ordered0_repaligned_forward.img"
-		forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
-		if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
-			shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")	
-		if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
-			shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
-		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
-			shutil.copyfile(orig_path+"/"+mrarefsimg, str(self.params['rundir'])+"/mrarefs_masked_3d.img")
-		if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.hed") is False:
-			shutil.copyfile(orig_path+"/"+mrarefshed, str(self.params['rundir'])+"/mrarefs_masked_3d.hed")
-		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img") is False:
-			shutil.copyfile(orig_path+"/"+forwimg, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img")
-		if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed") is False:
-			shutil.copyfile(orig_path+"/"+forwhed, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed")
-	
-		print "... class average pixel size: "+str(self.params['apix'])
-		print "... class average box size: "+str(self.params['boxsize'])	
-		apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
-	
-		# create batch file for execution with IMAGIC
-		batchfile = self.createImagicBatchFile()
+			if self.params['imagic3d0Id'] is not None:
+				modeldata = appionData.ApImagic3d0Data.direct_query(self.params['imagic3d0Id'])
+				self.params['boxsize'] = modeldata['boxsize']
+				self.params['apix'] = modeldata['pixelsize']
+			else: 
+				apDisplay.printError("3d0 initial model not in the database")
+			
+			# refinement is set to proceed against reference-free class averages, not reclassifications, so get norefid or clusterId
+			if modeldata['norefclass'] is not None:
+				norefclassdata = modeldata['norefclass']
+				self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+		                norefpath = norefclassdata['norefRun']['path']['path']
+		                clsavgfile = norefpath+"/"+norefclassdata['classFile']
+			elif modeldata['reclass'] is not None:
+				reclassid = modeldata['reclass'].dbid
+				reclassdata = appionData.ApImagicReclassifyData.direct_query(reclassid)
+				norefclassdata = reclassdata['norefclass']
+				self.params['stackid'] = norefclassdata['norefRun']['stack'].dbid
+		                norefpath = norefclassdata['norefRun']['path']['path']
+		                clsavgfile = norefpath+"/"+norefclassdata['classFile']
+			elif modeldata['clusterclass'] is not None:
+				clusterid = modeldata['clusterclass'].dbid			
+				clusterdata = appionData.ApClusteringStackData.direct_query(clusterid)
+				self.params['stackid'] = clusterdata['clusterrun']['alignstack'].dbid
+				clusterpath = clusterdata['path']['path']
+				clsavgfile = os.path.join(clusterpath, clusterdata['avg_imagicfile'])
+				if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
+					clsavgfile = clsavgfile[:-4]
+			elif modeldata['templatestack'] is not None:
+				self.params['templateStackId'] = modeldata['templatestack'].dbid
+				tsdata = appionData.ApTemplateStackData.direct_query(self.params['templateStackId'])
+				if tsdata['clusterstack'] is not None:
+					clusterdata = tsdata['clusterstack']
+					self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
+				else: 
+					self.params['stackid'] = None
+				tspath = tsdata['path']['path']
+				clsavgfile = os.path.join(tspath, tsdata['templatename'])
+				if clsavgfile[-4:] == '.img' or '.hed': 	# remove extension
+					clsavgfile = clsavgfile[:-4]
+			else:
+				apDisplay.printError("no class averages associated with model in the database")
+			
+			print self.params
+					
+			# copy files from initial model directory to working directory
+			orig_path = os.path.join(modeldata['path']['path'], modeldata['runname'])
+			mrarefsimg = "mrarefs_masked_3d0.img"
+			mrarefshed = "mrarefs_masked_3d0.hed"
+			forwimg = "masked_3d0_ordered0_repaligned_forward.img"
+			forwhed = "masked_3d0_ordered0_repaligned_forward.hed"
+			if os.path.isfile(str(self.params['rundir'])+"/start_stack.img") is False:
+				shutil.copyfile(clsavgfile+".img", str(self.params['rundir'])+"/start_stack.img")	
+			if os.path.isfile(str(self.params['rundir'])+"/start_stack.hed") is False:
+				shutil.copyfile(clsavgfile+".hed", str(self.params['rundir'])+"/start_stack.hed")
+			if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.img") is False:
+				shutil.copyfile(orig_path+"/"+mrarefsimg, str(self.params['rundir'])+"/mrarefs_masked_3d.img")
+			if os.path.isfile(str(self.params['rundir'])+"/mrarefs_masked_3d.hed") is False:
+				shutil.copyfile(orig_path+"/"+mrarefshed, str(self.params['rundir'])+"/mrarefs_masked_3d.hed")
+			if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img") is False:
+				shutil.copyfile(orig_path+"/"+forwimg, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.img")
+			if os.path.isfile(str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed") is False:
+				shutil.copyfile(orig_path+"/"+forwhed, str(self.params['rundir'])+"/masked_3d_ordered_repaligned_forward.hed")
 		
-		### execute batch file that was created
-		time3dRefine = time.time()
-		os.system('chmod 755 '+batchfile)
-		apIMAGIC.executeImagicBatchFile(batchfile)
-		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
-		time3dRefine = time.time() - time3dRefine
+			print "... class average pixel size: "+str(self.params['apix'])
+			print "... class average box size: "+str(self.params['boxsize'])	
+			apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+		
+			# create batch file for execution with IMAGIC
+			batchfile = self.createImagicBatchFile()
+			
+			### execute batch file that was created
+			time3dRefine = time.time()
+			os.system('chmod 755 '+batchfile)
+			apIMAGIC.executeImagicBatchFile(batchfile)
+			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3dRefine), "cyan")
+			time3dRefine = time.time() - time3dRefine
 
-		mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
-		mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
+			mrcname = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc"
+			mrcnamerot = self.params['rundir']+"/masked_3d"+str(self.params['itn'])+"_ordered"+str(self.params['itn'])+"_repaligned.mrc.rot.mrc"
 
-		### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
-		apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
-		apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
+			### use EMAN to normalize density & rotate model azimuthaly by 90 degrees
+			apEMAN.executeEmanCmd('proc3d %s %s apix=%f norm' % (mrcname, mrcname, self.params['apix']))
+			apEMAN.executeEmanCmd('proc3d %s %s apix=%f rot=0,90,0 norm' % (mrcname, mrcnamerot, self.params['apix']))
 
-                ### optional thresholding based on specified size
-                if self.params['mass'] is not None:
-                        volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-                        volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
-                        apEMAN.executeEmanCmd(volumecmd1)
-                        apEMAN.executeEmanCmd(volumecmd2)
+	                ### optional thresholding based on specified size
+	                if self.params['mass'] is not None:
+	                        volumecmd1 = "volume "+mrcname+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+	                        volumecmd2 = "volume "+mrcnamerot+" "+str(self.params['apix'])+" set="+str(self.params['mass'])
+	                        apEMAN.executeEmanCmd(volumecmd1)
+	                        apEMAN.executeEmanCmd(volumecmd2)
 
-		### create chimera slices of densities ******* .log file has caused problems if not removed
-		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-		apChimera.renderSnapshots(mrcname, contour=1.0, zoom=1.0, sym='c1')
-		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-		apChimera.renderSnapshots(mrcnamerot, contour=1.0, zoom=1.0, sym='c1')
-		apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
-		apChimera.renderAnimation(mrcname, contour=1.0, zoom=1.0, sym='c1')
+			### create chimera slices of densities ******* .log file has caused problems if not removed
+			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+			apChimera.renderSnapshots(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+			apChimera.renderSnapshots(mrcnamerot, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
+			apFile.removeFile(os.path.join(self.params['rundir'], "chimera.log"))
+			apChimera.renderAnimation(mrcname, contour=self.params['contour'], zoom=self.params['zoom'], sym='c1')
 
-		### upload density
-		#if self.params['itn'] == 1:		
-		self.upload3dRunData()
+			### upload density
+			#if self.params['itn'] == 1:		
+			self.upload3dRunData()
 
-		self.upload3dIterationData()
+			self.upload3dIterationData()
 
-		apDisplay.printMsg("IMAGIC .batch run for iteration "+str(self.params['itn'])+" is complete")
+			apDisplay.printMsg("IMAGIC .batch run for iteration "+str(self.params['itn'])+" is complete")
+			
+			return
 
 	
 	
