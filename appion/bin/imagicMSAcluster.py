@@ -232,7 +232,13 @@ class imagicClusterScript(appionScript.AppionScript):
 			clustertime0 = time.time()
 			os.system("chmod 775 "+str(batchfile))
 			apIMAGIC.executeImagicBatchFile(batchfile)
-                	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-clustertime0), "cyan")
+			logfile = open(os.path.join(self.params['rundir'], "imagicMSAcluster_classes_"+str(clusternumber)+".log"))
+			loglines = logfile.readlines()
+			for line in loglines:
+				if re.search("ERROR in program", line):
+					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicMSAcluster_classes_"\
+						+str(clusternumber)+".log")
+			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-clustertime0), "cyan")
 
 			### insert cluster stack into database
                         if self.params['commit'] is True:
