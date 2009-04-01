@@ -258,6 +258,11 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		aligntime = time.time()
 		os.system('chmod 775 '+filename)
 		apIMAGIC.executeImagicBatchFile(filename)
+		logfile = open(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
+		loglines = logfile.readlines()
+		for line in loglines:
+			if re.search("ERROR in program", line):
+				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicMultivariateStatisticalAnalysis.log")
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime), "cyan")
 		aligntime = time.time() - aligntime
 	
