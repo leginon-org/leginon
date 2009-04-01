@@ -35,9 +35,6 @@ function stacksummarytable($stackid) {
 
 	
 	$stackname = $stackdata['shownstackname'];
-	if ($stackdata['substackname'])
-		$stackname .= " - ".$stackdata['substackname'];
-
 	$j = "Stack Info: <a class='aptitle' href='stackreport.php?expId=$expId&sId=$stackid'>"
 		.$stackname."</a> (ID: $stackid)\n";
 	if ($stackdata['hidden'] == 1) {

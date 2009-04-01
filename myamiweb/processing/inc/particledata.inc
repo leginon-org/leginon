@@ -743,8 +743,16 @@ class particledata {
 						}
 					}
 					if ($type!='link') {
-						//plain display
-						echo $params[$key];
+						if (!is_array($params[$key])) {
+							//plain display
+							echo $params[$key];
+						} else {
+							//array item display
+							$text = '';
+							foreach (array_keys($params[$key]) as $akey) 
+								$text .= ($params[$key][$akey]).',';
+							echo trim($text,',');
+						}
 					} else {
 						//Specify different values for the displayed data and link if available
 						if (!is_array($params[$key])) {
@@ -1362,6 +1370,7 @@ class particledata {
 			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
 		$stackrunIds = $this->mysql->getSQLResult($q);
 		// Parameters of original stack of the runs in stack
+		$selectionstacks = array();
 		foreach ($stackrunIds as $runid) {
 			$stackrunId = $runid[runid];
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
@@ -1381,23 +1390,40 @@ class particledata {
 				."WHERE r.`REF|ApStackData|stack` = '$childstackId'";
 			list($r) = $this->mysql->getSQLResult($q);
 			$params[]=$r;
+			$selectionstacks[] = $childstackId;
 		}
 		//handle multiple runs in stack
 		if (count($stackrunIds) > 1) {
 			$patharray = explode('/',$stack_primary_array[path]);
 			$runname = $patharray[count($patharray)-1];
+			$extra=0;
 		} else {
+			$extra=1;
 			$runname=$params[0]['stackRunName'];
 		}
-
+		//substack has no other parameter but oldstack reference
+		if ($stack_primary_array['REF|ApStackData|oldstack']) {
+			$r = array('stackId'=>$stackId);
+			$r = array_merge($r,$stack_primary_array);
+			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];
+			$r['bin'] = $params[0]['bin'];
+			$r['boxSize'] = $params[0]['boxSize'];
+			return $r;
+		} 
 		$runarray = array();
 		$runarray['shownstackname'] = $runname;
 		$runarray['count'] = count($stackrunIds);
-		//use first run parameters for basic stack info
-		//$runarray['boxSize']       = $params[0]['boxSize'];
-		//$runarray['bin']           = $params[0]['bin'];
 		$runarray = array_merge($runarray,$stack_primary_array);
-		$r = array_merge($params[0],$runarray);
+		//use first run parameters for basic stack info
+		if ($extra) {
+			//use first run parameters for extra info
+			$r = array_merge($params[0],$runarray);
+		} else {
+			$r = $runarray;
+			$r['bin'] = $params[0]['bin'];
+			$r['boxSize'] = $params[0]['boxSize'];
+		}
+		$r['selectionstacks'] = $selectionstacks;
 		return $r;
 	}
 
@@ -1420,7 +1446,8 @@ class particledata {
 
 	function getStackSelectionRun ($stackId) {
 		$q = "SELECT pr . `DEF_id` selectionid , "
-		." pr . `name` "
+		." pr . `name`, "
+		." pr . `REF|leginondata|SessionData|session` as sessionId "
 		." FROM ( SELECT * FROM `ApStackParticlesData` "
 		." WHERE `REF|ApStackData|stack` = ".$stackId." "
 		." group by `REF|ApStackRunData|stackRun` ) sp1 "
