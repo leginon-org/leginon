@@ -442,7 +442,8 @@ if ($expId) {
 
 	if ($aligndone >= 1 || $norefdone >= 1 ) {
 		$nruns[]=array(
-			'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
+			'name'=>"<font color='#888888'>EMAN Common Lines</font>"
+			//'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
 		);
 	}
 
