@@ -506,7 +506,12 @@ class imagic3d0Script(appionScript.AppionScript):
 			time3d0 = time.time()
 	                os.system('chmod 755 '+filename)
 			apIMAGIC.executeImagicBatchFile(filename)
-	                apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
+			logfile = open(os.path.join(self.params['rundir'], "imagicCreate3d0.log"))
+			loglines = logfile.readlines()
+			for line in loglines:
+				if re.search("ERROR in program", line):
+					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicCreate3d0.log")
+			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
 	                time3d0 = time.time() - time3d0
 
 			mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
