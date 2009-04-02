@@ -407,32 +407,20 @@ class Navigator(node.Node):
 		#camerasettings = leginondata.CameraSettingsData(initializer=camera)
 		self.instrument.setCCDCamera(ccdcamera['name'])
 		self.instrument.setData(cameradata)
-		#self._acquireImage()
-		self._acquireImageNEW()
+		self._acquireImage()
 
 	def acquireImage(self):
 		if self.settings['override preset']:
 			## use override
 			instruments = self.settings['instruments']
 			try:
-				print 'AAAAA'
 				self.instrument.setTEM(instruments['tem'])
-				print 'BBBBB'
 				self.instrument.setCCDCamera(instruments['ccdcamera'])
-				print 'CCCCC'
 			except ValueError, e:
 				self.logger.error('Cannot set instruments: %s' % (e,))
 				return
 			try:
-				camsettings = self.settings['camera settings']
-				#if self.settings['background readout']:
-				#	camsettings['readout callback'] = self.finalizeAcquire
-				#else:
-				#	camsettings['readout callback'] = None
-				#camsettings['readout callback'] = None
-				print 'DDDDD'
-				self.instrument.ccdcamera.Settings = camsettings
-				print 'EEEEE'
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
 			except Exception, e:
 				errstr = 'Acquire image failed: %s'
 				self.logger.error(errstr % e)
@@ -442,44 +430,11 @@ class Navigator(node.Node):
 			if self.presetsclient.getCurrentPreset() is None:
 				self.logger.error('Preset is unknown and preset override is off')
 				return
-		self._acquireImageNEW2()
-		#if not self.settings['background readout']:
-		#	self.finalizeAcquire()
-
-	def _acquireImageNEW2(self):
-		if self.settings['background readout']:
-			t = threading.Thread(target=self._acquireImage)
-			t.start()
-			# wait for exposure time
-		else:
-			self._acquireImage()
-
-	def _acquireImageNEW(self):
-		try:
-			self.imagedata = self.instrument.getData(leginondata.CameraImageData)
-		except:
-			raise
-			self.logger.error('unable to get corrected image')
-			return
-
-		if self.imagedata is None:
-			self.logger.error('Acquire image failed')
-			return
-
-	def finalizeAcquire(self, imagearray=None):
-		print 'FINALIZE'
-		if imagearray is not None:
-			print 'ISNOTNONE'
-			self.imagedata['image'] = imagearray
-		print 'BBBBBBBBBBBBBBBBBBBBB'
-		self.newImage(self.imagedata)
+		self._acquireImage()
 
 	def _acquireImage(self):
 		try:
-			#imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
-			print 'GETDATA', time.time()
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
-			print 'GETDATADONE', time.time()
+			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		except:
 			self.logger.error('unable to get corrected image')
 			return
@@ -488,9 +443,7 @@ class Navigator(node.Node):
 			self.logger.error('Acquire image failed')
 			return
 
-		print 'NEWIMAGE', time.time()
 		self.newImage(imagedata)
-		print 'NEWIMAGEDONE', time.time()
 		return imagedata
 
 	def fromScope(self, name, comment='', xyonly=True):
@@ -644,7 +597,6 @@ class Navigator(node.Node):
 		try:
 			self.instrument.tem.StagePosition = stagedict
 		except:
-			raise
 			self.logger.exception(errstr % 'unable to set instrument')
 		else:
 			self.currentlocation = locdata
