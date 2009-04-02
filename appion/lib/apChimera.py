@@ -97,7 +97,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 
 #=========================================
 #=========================================
-def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False):
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
 	os.environ['CHIMTYPE'] = 'animate'
