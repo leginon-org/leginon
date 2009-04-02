@@ -146,7 +146,7 @@ class Navigator(node.Node):
 	def newImage(self, imagedata):
 		self.oldimagedata = self.newimagedata
 		self.newimagedata = imagedata
-		#self.setImage(imagedata['image'], 'Image')
+		self.setImage(imagedata['image'], 'Image')
 		self.correlator.insertImage(imagedata['image'])
 
 	## called by GUI when image is clicked
