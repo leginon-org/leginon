@@ -15,7 +15,7 @@ import mosaic
 import threading
 import node
 import targethandler
-from pyami import convolver, imagefun, mrc
+from pyami import convolver, imagefun, mrc, ordereddict
 import numpy
 import pyami.quietscipy
 import scipy.ndimage as nd
@@ -377,7 +377,7 @@ class MosaicClickTargetFinder(targetfinder.ClickTargetFinder):
 	def researchMosaicTileData(self):
 		tilequery = leginondata.MosaicTileData(session=self.session, list=leginondata.ImageListData())
 		mosaictiles = self.research(datainstance=tilequery)
-		mosaiclists = {}
+		mosaiclists = ordereddict.OrderedDict()
 		for tile in mosaictiles:
 			list = tile['list']
 			label = '(no label)'
