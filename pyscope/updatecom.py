@@ -4,6 +4,7 @@ from win32com.client import makepy
 
 info = [
 	('Tecnai Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
+	('TEM Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
 	('Low Dose Server Library', 'ldcom.py', 'Tecnai Low Dose Kit'),
 	('adaExp Library', 'adacom.py', 'Tecnai Exposure Adaptor'),
 	('TecnaiCCD 1.0 Type Library', 'gatancom.py', 'Gatan CCD Camera'),
