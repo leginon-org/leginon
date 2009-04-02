@@ -22,7 +22,7 @@ import apDisplay
 import apEMAN
 import apIMAGIC
 import apFile
-import apUpload
+import apSymmetry
 import apDatabase
 import apStack
 import apProject
@@ -146,7 +146,7 @@ class imagic3d0Script(appionScript.AppionScript):
 	#=====================
 	def createImagicBatchFile(self, linkingfile):
 		# IMAGIC batch file creation
-		syminfo = apUpload.getSymmetryData(self.params['symmetry'])
+		syminfo = apSymmetry.getSymmetryData(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3d0.batch")
 		f = open(filename, 'w')

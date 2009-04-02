@@ -17,7 +17,7 @@ import apEulerDraw
 import apChimera
 import apStack
 import apFile
-import apUpload
+import apSymmetry
 try:
 	import EMAN
 except:
@@ -287,7 +287,7 @@ def parseLogFile(params):
 				elif elements[0]=='pad':
 					iteration['pad']=int(float(elements[1]))
 				elif elements[0]=='sym':
-					iteration['sym'] = apUpload.findSymmetry(elements[1])
+					iteration['sym'] = apSymmetry.findSymmetry(elements[1])
 				elif elements[0]=='hard':
 					iteration['hard']=int(float(elements[1]))
 				elif elements[0]=='classkeep':

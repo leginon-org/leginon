@@ -27,7 +27,7 @@ import apDisplay
 import apEMAN
 import apIMAGIC
 import apFile
-import apUpload
+import apSymmetry
 import apDatabase
 import apStack
 import apProject
@@ -147,7 +147,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	#=======================
 	def createImagicBatchFile(self):
 		# IMAGIC batch file creation
-		syminfo = apUpload.getSymmetryData(self.params['symmetry'])
+		syminfo = apSymmetry.getSymmetryData(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
 				

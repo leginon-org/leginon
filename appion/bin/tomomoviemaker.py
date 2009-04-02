@@ -26,7 +26,6 @@ import apRecon
 import apDisplay
 import apEMAN
 import apFile
-import apUpload
 import apDatabase
 import apParticle
 

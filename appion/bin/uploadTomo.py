@@ -8,7 +8,6 @@ import re
 import shutil
 from pyami import mrc
 import appionScript
-import apUpload
 import apParam
 import apFile
 import apDisplay

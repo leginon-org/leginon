@@ -4,7 +4,6 @@
 import MySQLdb
 import dbconfig
 import sys
-import apDatabase
 
 if __name__ == "__main__":
 	# parse options
@@ -15,7 +14,7 @@ if __name__ == "__main__":
 		projectid = sys.argv[3]
 
 	# set new db
-	if apDatabase.splitdb and projectid is not None:
+	if projectid is not None:
 		newdbname = "ap"+projectid
 		dbconfig.setConfig('appionData', db=newdbname)
 

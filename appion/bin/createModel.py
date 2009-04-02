@@ -101,7 +101,7 @@ class createModelScript(appionScript.AppionScript):
 
 		if self.params['method'] == 'startAny' or self.params['method'] == 'startCSym':
 			# split self.params['symm'] into its id and name
-			try:
+				apUpload.find
 				symlist = self.params['symm'].split(",")
 				print len(symlist), str(symlist)
 				self.params['symm_id']   = int(symlist[0])

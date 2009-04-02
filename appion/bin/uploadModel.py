@@ -7,7 +7,7 @@ import time
 import re
 import shutil
 import appionScript
-import apUpload
+import apSymmetry
 import apParam
 import apFile
 import apDisplay
@@ -16,6 +16,34 @@ import apChimera
 import apVolume
 import apProject
 import appionData
+
+#===========================
+def insertModel(params):
+	apDisplay.printMsg("commiting model to database")
+	symdata=appionData.ApSymmetryData.direct_query(params['sym'])
+	if not symdata:
+		apDisplay.printError("no symmetry associated with this id\n")		
+	params['syminfo'] = symdata
+	modq=appionData.ApInitialModelData()
+	modq['project|projects|project'] = params['projectId']
+	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	modq['name'] = params['name']
+	modq['symmetry'] = symdata
+	modq['pixelsize'] = params['newapix']
+	modq['boxsize'] = params['newbox']
+	modq['resolution'] = params['res']
+	modq['hidden'] = False
+	filepath = os.path.join(params['rundir'], params['name'])
+	modq['md5sum'] = apFile.md5sumfile(filepath)
+	modq['description'] = params['description']
+	if params['densityid'] is not None:
+		modq['original density'] = appionData.Ap3dDensityData.direct_query(params['densityid'])
+	if params['oldmodelid'] is not None:
+		modq['original model'] = appionData.ApInitialModelData.direct_query(params['oldmodelid'])
+	if params['commit'] is True:
+		modq.insert()
+	else:
+		apDisplay.printWarning("not commiting model to database")
 
 #=====================
 #=====================
@@ -90,7 +118,7 @@ class UploadModelScript(appionScript.AppionScript):
 		if self.params['newapix'] is None:
 			apDisplay.printError("Enter the pixel size of the model")
 		if self.params['sym'] is None:
-			apUpload.printSymmetries()
+			apSymmetry.printSymmetries()
 			apDisplay.printError("Enter a symmetry ID, e.g. --symm=19")
 		if self.params['res'] is None:
 			apDisplay.printError("Enter the resolution of the initial model")
@@ -193,7 +221,7 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.params['syminfo'] = apUpload.getSymmetryData(self.params['sym'])
+		self.params['syminfo'] = apSymmetry.getSymmetryData(self.params['sym'])
 		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
 		if self.params['newbox'] is None:
 			self.params['newbox'] = self.params['oldbox']
@@ -229,7 +257,7 @@ class UploadModelScript(appionScript.AppionScript):
 		apChimera.renderAnimation(newmodelpath, contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['syminfo']['eman_name'])
 
 
-		apUpload.insertModel(self.params)
+		insertModel(self.params)
 
 
 #=====================

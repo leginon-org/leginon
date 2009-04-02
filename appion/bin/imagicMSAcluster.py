@@ -16,14 +16,12 @@ import sys
 import re
 import appionScript
 import appionData
-
 import apParam
 import apRecon
 import apDisplay
 import apIMAGIC
 import apEMAN
 import apFile
-import apUpload
 import apDatabase
 import apStack
 import apProject

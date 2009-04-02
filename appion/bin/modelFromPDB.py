@@ -8,7 +8,6 @@ import re
 import shutil
 #appion
 import appionScript
-import apUpload
 import apParam
 import apFile
 import apDisplay

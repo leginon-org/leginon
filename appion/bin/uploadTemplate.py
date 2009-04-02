@@ -10,7 +10,6 @@ import time
 import shutil
 #appion
 import appionScript
-import apUpload
 import apTemplate
 import apStack
 import apDisplay

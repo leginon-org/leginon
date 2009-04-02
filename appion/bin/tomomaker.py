@@ -25,7 +25,6 @@ import apImod
 import apImage
 import apParam
 import apDisplay
-import apUpload
 import apDatabase
 import apParticle
 import apStack
