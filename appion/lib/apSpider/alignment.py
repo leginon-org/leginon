@@ -964,6 +964,7 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 
 	return thresh, classes
 
+#===============================
 def makeSpiderCoranBatch(params,filename,clsdir):
 	nfacts=20
 	if params['nptcls'] < 21:
