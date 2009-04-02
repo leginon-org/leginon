@@ -234,6 +234,11 @@ class NoRefAlignScript(appionScript.AppionScript):
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
+
+		numpart = apFile.numImagesInStack(imagicstack)
+		if numpart != self.params['numpart']:
+			apDisplay.printError("The number of particles returned is different from the number requested")
+
 		return imagicstack
 
 	#=====================
