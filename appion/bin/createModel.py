@@ -100,15 +100,12 @@ class createModelScript(appionScript.AppionScript):
 			apDisplay.printError("Make sure options partnum is provided")
 
 		if self.params['method'] == 'startAny' or self.params['method'] == 'startCSym':
-			# split self.params['symm'] into its id and name
-				apUpload.find
-				symlist = self.params['symm'].split(",")
-				print len(symlist), str(symlist)
-				self.params['symm_id']   = int(symlist[0])
-				self.params['symm_name'] = symlist[1].lower()
-				apDisplay.printMsg("Selected symmetry: "+str(self.params['symm_id'])+" named: "+self.params['symm_name'])
+			self.symmdata   = apSymmetry.parseSymmetry(self.params['symm'])
+			self.params['symm_id'] = symmdata.dbid
+			self.params['symm_name'] = symmdata['eman_name']
+			apDisplay.printMsg("Selected symmetry: "+str(self.params['symm_id'])+" named: "+self.params['symm_name'])
 			except:
-				apUpload.printSymmetries()
+				apSymmetry.printSymmetries()
 				apDisplay.printError("Could not parse symmetry, should be of the form"
 					+" --symm=4,c3 NOT --symm="+str( self.params['symm']))
 

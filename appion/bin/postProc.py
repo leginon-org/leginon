@@ -11,7 +11,7 @@ import apDisplay
 import apEMAN
 import apVolume
 import apFile
-import apUpload
+import apSymmetry
 import apDatabase
 import apChimera
 
@@ -228,7 +228,7 @@ class PostProcScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			insert3dDensity(self.params)
 			### render chimera images of model
-			symdata  = apUpload.getSymmetryData(self.params['sym'])
+			symdata  = apSymmetry.getSymmetryData(self.params['sym'])
 			symmetry = symdata['eman_name']
 
 			apChimera.filterAndChimera(outfile, res=self.params['res'], apix=self.params['apix'], box=self.params['box'], 
