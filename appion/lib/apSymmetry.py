@@ -7,7 +7,6 @@ import sys
 import apDisplay
 import appionData
 
-
 #===========================
 def parseSymmetry(symtext):
 	if re.match("^[0-9]+$", symtext):
@@ -21,7 +20,7 @@ def parseSymmetry(symtext):
 	return symdata
 
 #===========================
-def findSymmetry(symtext):
+def findSymmetry(symtext='c1'):
 	# find the symmetry entry in the database
 	# based on the text version from EMAN
 	# first convert to lower case
@@ -29,9 +28,7 @@ def findSymmetry(symtext):
 	symdataq = appionData.ApSymmetryData(eman_name=symtext)
 	symdata = symdataq.query(results=1)
 	if not symdata:
-		apDisplay.printWarning("No symmetry found, assuming c1 (asymmetric)")
-		symdataq = appionData.ApSymmetryData(eman_name = 'c1')
-		symdata = symdataq.query(results=1)
+		apDisplay.printError("No symmetry named %s was found"%(symtext))
 	return symdata[0]
 
 #===========================
