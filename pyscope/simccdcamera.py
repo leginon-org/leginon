@@ -17,7 +17,7 @@ class SimCCDCamera(ccdcamera.CCDCamera):
         self.binning = {'x': 1, 'y': 1}
         self.offset = {'x': 0, 'y': 0}
         self.dimension = copy.copy(self.camera_size)
-        self.exposure_time = 0.0
+        self.exposure_time = 0.010
         self.exposure_type = 'normal'
 
         self.energy_filter = False
