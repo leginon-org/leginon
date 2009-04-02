@@ -37,12 +37,8 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.add_option("--class-list-drop", dest="dropclasslist",
 			help="list of EMAN style class numbers to exclude in sub-stack, e.g. --class-list-drop=0,5,3", metavar="#,#")
 
-
 	#=====================
 	def checkConflicts(self):
-		if self.params['runname'] is None:
-			apDisplay.printError("New stack name was not defined, e.g. --runname=newstack1")
-
 		### check for missing and duplicate entries
 		if self.params['alignid'] is None and self.params['clusterid'] is None:
 			apDisplay.printError("Please provide either --cluster-id or --align-id")
@@ -62,6 +58,7 @@ class subStackScript(appionScript.AppionScript):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stackid was not defined")
 
+		### check that we have a keep or drop list and not both
 		if self.params['keepclasslist'] is None and self.params['dropclasslist'] is None:
 			apDisplay.printError("class numbers to be included/excluded was not defined")
 		if self.params['keepclasslist'] is not None and self.params['dropclasslist'] is not None:
