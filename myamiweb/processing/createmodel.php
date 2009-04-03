@@ -31,6 +31,8 @@ else {
 
 
 #######################################################################################
+#######################################################################################
+#######################################################################################
 
 
 function createEMANInitialModelForm($extra=false, $title='createModel.py Launcher', $heading='EMAN Common Lines') {
@@ -51,10 +53,6 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$methodcheck = ($_POST['method']) ? $_POST['method']: 'csym';
 
-	// get outdir path
-	$sessiondata=getSessionList($projectId,$expId);
-	$sessioninfo=$sessiondata['info'];
-
 	$javafunctions = writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -66,9 +64,6 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 
 	//query the database for parameters
 	$particle = new particledata();
-
-	# get outdir
-	$outdir = $noref['path'];
 
 	echo "<table class='tablebubble'>";
 	echo "<tr><td>\n";
@@ -118,14 +113,14 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 
 	echo "<br/><br/>\n";
 
-
-
 	// Include / Exclude
 	if ($exclude!="") {
 		echo docpop('excludeClass','<b>Excluded Classes:</b> ');
+		echo "<font size='+1'><i>$exclude</i></font>\n";
 		echo "<input type='hidden' name='exclude' value='$exclude'>\n";
 	} elseif ($include!="") {
 		echo docpop('includeClass','<b>Included Classes:</b> ');
+		echo "<font size='+1'><i>$include</i></font>\n";
 		echo "<input type='hidden' name='include' value='$include'>\n";
 	} else {
 		echo docpop('includeClass','<b>Included Classes:</b> ');
@@ -159,10 +154,15 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 	$expId = $_GET['expId'];
 	$projectId = getProjectFromExpId($expId);
 
+	// from previous form
 	$clusterid = $_POST['clusterid'];
 	$exclude   = $_POST['exclude'];
 	$include   = $_POST['include'];
 	$method    = $_POST['method'];
+
+	// new to this form
+	$rounds = $_POST['rounds'] ? $_POST['rounds'] : 3;
+	$commit = $_POST['commit']=='off' ? '' : ' CHECKED';
 
 	if (!$clusterid)
 		createEMANInitialModelForm("<B>ERROR:</B> No Cluster ID was selected");
@@ -195,9 +195,8 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
 
 	echo"<table class='tablebubble'><tr><td>\n";
-	echo "<input type='hidden' name='method' value='$method'>";
-	echo "<input type='hidden' name='exclude' value='$exclude'>";
 
+	echo "<input type='hidden' name='method' value='$method'>";
 	if( $_POST['method'] == 'csym') {
 		echo " <B>EMAN Program: StartCSym for Volumes with Rotational Symmetry</B><br><br>";
 	} elseif ( $_POST['method'] == 'icos') {
@@ -208,10 +207,21 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 		echo " <B>EMAN Program: StartAny for Asymmetric Volumes</B><br><br>";
 	}
 
-	echo "<b>Clustering Information:</b> <br />";
-	echo "Cluster ID: $clusterid<br />";
+	echo "<b>Cluster ID:</b> <font size='+1'><i>$clusterid</i></font>\n";
 	echo "<input type='hidden' name='clusterid' value='$clusterid'>";
-	echo "<br />\n";
+	echo "<br/><br/>\n";
+
+	// Include / Exclude
+	if ($exclude!="") {
+		echo docpop('excludeClass','<b>Excluded Classes:</b> ');
+		echo "<font size='+1'><i>$exclude</i></font>\n";
+		echo "<input type='hidden' name='exclude' value='$exclude'>\n";
+	} elseif ($include!="") {
+		echo docpop('includeClass','<b>Included Classes:</b> ');
+		echo "<font size='+1'><i>$include</i></font>\n";
+		echo "<input type='hidden' name='include' value='$include'>\n";
+	}
+	echo "<br/><br/>\n";
 
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname' size='10'>\n";
