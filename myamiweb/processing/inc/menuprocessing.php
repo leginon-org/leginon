@@ -441,10 +441,15 @@ if ($expId) {
 	}
 
 	if ($aligndone >= 1 || $norefdone >= 1 ) {
+		$clinesqueue = count($subclusterjobs['createModel']['queued']);
+		$clinesrun = count($subclusterjobs['createModel']['running']);
+		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
+		$clinesresults[] = ($clinesqueue==0) ? "" : "$clinesqueue queued";
 		$nruns[]=array(
-			'name'=>"<font color='#888888'>EMAN Common Lines</font>"
-			//'name'=>"<a href='createEmanModel.php?expId=$sessionId'>EMAN Common Lines</a>"
+			'name'=>"<a href='createmodel.php?expId=$sessionId'>EMAN Common Lines</a>"
+			'result'=>$clinesresults,
 		);
+
 	}
 
 	/* IMAGIC Common Lines */
