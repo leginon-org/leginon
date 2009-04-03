@@ -59,7 +59,7 @@ class createModelScript(appionScript.AppionScript):
 		self.parser.add_option("--rounds", dest="rounds", type="int", default=5,
 			help="any: Rounds of Euler angle determination to use", metavar="INT")
 		self.parser.add_option("--numkeep", dest="numkeep",
-			help="csym/icos/oct: Number of particles per view. ~10% of the total particle", metavar="INT")
+			help="csym/icos/oct: Number of classes per projection, use <10% of the total classes", metavar="INT")
 		self.parser.add_option("--imask", dest="imask",
 			help="csym/icos: Inside mask used to exclude inside regions", metavar="INT")
 
@@ -95,37 +95,6 @@ class createModelScript(appionScript.AppionScript):
 		### check that we only have one of include and exclude
 		if self.params['includelist'] is not None and self.params['excludelist'] is not None:
 			apDisplay.printError("both --include and --exclude were defined, only one is allowed")
-
-	#=====================
-	def cleanup(self):
-		if self.params['rounds']:
-			for n in range(self.params['rounds']):
-				modelpath = os.path.join(norefpath, method+"-"+str(norefclassid)+"_"+str(n+1)+".mrc")
-				if not os.path.exists(modelpath):
-					break
-
-			apDisplay.printWarning("Moving threed.0a.mrc to "+norefpath+" and renaming it "+method+"-"
-				+str(norefclassid)+"_"+str(n)+".mrc")
-			shutil.copy("threed.0a.mrc", modelpath)
-
-			oldexcludepath = os.path.join(norefpath, "exclude.lst")
-			if os.path.exists(oldexcludepath):
-				newexcludepath = os.path.join(norefpath, "exclude-"+str(norefclassid)+"_"+str(n)+".mrc")
-				apDisplay.printWarning("Moving "+oldexcludepath+" to "+newexcludepath)
-				shutil.copy(oldexcludepath, newexcludepath)
-		else:
-			modelname = os.path.join(method+"-"+str(norefclassid)+".mrc")
-
-			apDisplay.printWarning("Moving threed.0a.mrc to "+norefpath+" and renaming it "+method+"-"
-				+str(norefclassid)+".mrc")
-			shutil.copy("threed.0a.mrc", modelpath)
-
-			oldexcludepath = os.path.join(norefpath, "exclude.lst")
-			if os.path.exists(oldexcludepath):
-				newexcludepath = os.path.join(norefpath, "exclude-"+str(norefclassid)+".mrc")
-				apDisplay.printWarning("Moving "+oldexcludepath+" to "+newexcludepath)
-				shutil.copy(oldexcludepath, newexcludepath)
-		return modelpath
 
 	#=====================
 	def setRunDir(self):
@@ -206,7 +175,7 @@ class createModelScript(appionScript.AppionScript):
 			numclusters = count
 
 		### create the new sub stack
-		newstack = os.path.join(self.params['rundir'], "clines.hed")
+		newstack = os.path.join(self.params['rundir'], "rawclusters.hed")
 		apFile.removeStack(newstack)
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 
@@ -254,15 +223,19 @@ class createModelScript(appionScript.AppionScript):
 			if self.params['imask'] is not None:
 				startcmd +=" imask="+self.params['imask']
 
-		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of "+self.params['method']+"")
+		apDisplay.printMsg("Creating 3D model with EMAN function: start"+self.params['method'])
 		apFile.removeFile("threed.0a.mrc")
 		apEMAN.executeEmanCmd(startcmd, verbose=True)
 
-		#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
-		#modelpath = self.cleanup()
+		finalmodelname = "threed-%s-eman_start%s.mrc"%(self.timestamp, self.params['method'])
+		finalmodel = "threed.0a.mrc"
+		if os.path.isfile(finalmodel):
+			shutil.move(finalmodel, finalmodelname)
+		else:
+			apDisplay.printError("No 3d model was created")
 
 		### upload it
-		#self.uploadDensity(modelpath)
+		#self.uploadDensity(finalmodelname)
 
 		### chimera imaging
 		apChimera.renderSnapshots(modelpath, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
