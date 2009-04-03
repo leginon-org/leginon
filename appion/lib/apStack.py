@@ -12,20 +12,22 @@ import numpy
 
 
 #===============
-def makeNewStack(oldstack, newstack, listfile):
+def makeNewStack(oldstack, newstack, listfile=None, remove=False):
 	if not os.path.isfile(oldstack):
 		apDisplay.printWarning("could not find old stack: "+oldstack)
 	if os.path.isfile(newstack):
-		apDisplay.printError("new stack already exists: "+newstack)
-		#apDisplay.printWarning("removing old stack: "+newstack)
-		#time.sleep(2)
-		#prefix=newstack.split('.')[0]
-		#os.remove(prefix+'.hed')
-		#os.remove(prefix+'.img')
+		if remove is True:
+			apDisplay.printWarning("removing old stack: "+newstack)
+			time.sleep(2)
+			apFile.removeStack(newstack)
+		else:
+			apDisplay.printError("new stack already exists: "+newstack)
 	apDisplay.printMsg("creating a new stack\n\t"+newstack+
-		"\nfrom the oldstack\n\t"+oldstack+"\nusing list file\n\t"+listfile)
-	command=("proc2d "+oldstack+" "+newstack+" list="+listfile)
-	apEMAN.executeEmanCmd(command, verbose=True)
+		"\nfrom the oldstack\n\t"+oldstack+"\nusing list file\n\t"+str(listfile))
+	emancmd = "proc2d "+oldstack+" "+newstack
+	if listfile is not None:
+		emancmd += " list="+listfile
+	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 
 #===============
