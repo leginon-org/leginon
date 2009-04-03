@@ -178,6 +178,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
 
+		self.timedebug = {}
+
 		self.start()
 
 	def onPresetPublished(self, evt):
@@ -214,10 +216,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = leginondata.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
-		#print "newdata",newdata
-		#preset_name = self.settings['preset order'][-1]
-		#if self.settings['wait for reference']:
-		#	self.processReferenceTarget(preset_name)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.presetsclient.unlock()
@@ -252,13 +250,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		newtargetdata = self.researchTargets(session=self.session, number=targetnumber, list=targetlist, status='new')
 		# this is the most recent version with status "new"
 		newtargetdata = newtargetdata[0]
-		print 'ORIGINAL TARGET', targetdata.dbid
-		print 'NEWER TARGET', newtargetdata.dbid
 		
 		## look up all transforms declared for this session
 		decq = leginondata.TransformDeclaredData(session=self.session)
 		transformsdeclared = decq.query()
-		print 'TRANSFORMSDECLARED', len(transformsdeclared)
 
 		## if no transforms declared, return recent target
 		if not transformsdeclared:
@@ -267,13 +262,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## if recent target after transforms declared, return recent target
 		newtargettime = newtargetdata.timestamp
 		declaredtime = transformsdeclared[0].timestamp
-		print 'NEWTARGETTIME', newtargettime
-		print 'DECLAREDTIME', declaredtime
-		print 'TARGET GREATER', newtargettime > declaredtime
 		if newtargettime > declaredtime:
-			print 'RETURNING'
 			return newtargetdata
-			print 'NOT RETURNING'
 
 		## if transform declared after most recent target, need new transformed	target
 		newtargetdata = self.requestTransformTarget(newtargetdata)
@@ -599,17 +589,28 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return imagedata
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		print 'MOVEANDPRESET START', time.time()
+		if target is None:
+			tnum = None
+		else:
+			tnum = target['number']
+		tnum = target['number']
+		print tnum, 'MOVEANDPRESETPAUSE START'
+		t0 = time.time()
+		self.timedebug[tnum] = t0
+		if 'consecutive' in self.timedebug:
+			print tnum, '************************************* CONSECUTIVE', t0 - self.timedebug['consecutive']
+		self.timedebug['consecutive'] = t0
 		status = self.moveAndPreset(presetdata, emtarget)
-		print 'MOVEANDPRESET DONE', time.time()
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
 			return status,None
 
 		pausetime = self.settings['pause time']
+		print tnum, 'PAUSING FOR', pausetime
 		self.startTimer('pause')
 		time.sleep(pausetime)
 		self.stopTimer('pause')
+		print tnum, 'MOVEANDPRESETPAUSE DONE', time.time() - t0
 
 		## pre-exposure
 		pretime = presetdata['pre exposure']
@@ -619,16 +620,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.settings['background']:
 			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
 			t.start()
-			waittime = presetdata['exposure time'] / 1000.0 + 0.5
-			print 'EXPOSURE TIME', presetdata['exposure time']
-			print 'WAIT TIME', waittime
+			extratime = 1.5
+			print tnum, 'EXPOSURE OVERHEAD (tune this):', extratime
+			waittime = presetdata['exposure time'] / 1000.0 + extratime
+			print tnum, 'EXPOSURE TIME', presetdata['exposure time']
+			print tnum, 'TOTAL EXPOSURE TIME', waittime
 			time.sleep(waittime)
 		else:
 			self.acquirePublishDisplayWait(*args)
 		return status
 
 	def acquirePublishDisplayWait(self, presetdata, emtarget, channel):
-		print 'APDW START', time.time()
+		try:
+			tnum = emtarget['target']['number']
+		except:
+			tnum = None
+		print tnum, 'APDW START'
+		t0 = time.time()
 		if presetdata['film']:
 			imagedata = self.acquireFilm(presetdata, emtarget)
 		else:
@@ -638,7 +646,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if targetdata is not None and 'grid' in targetdata and targetdata['grid'] is not None:
 			imagedata['grid'] = targetdata['grid']
 		self.publishDisplayWait(imagedata)
-		print 'APDW DONE', time.time()
+		print tnum, 'APDW DONE', time.time() - t0
+		ttt = time.time() - self.timedebug[tnum]
+		del self.timedebug[tnum]
+		print tnum, '************* TOTAL ***', ttt
 
 	def publishDisplayWait(self, imagedata):
 		'''
