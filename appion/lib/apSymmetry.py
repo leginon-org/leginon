@@ -11,7 +11,7 @@ import appionData
 def findSymmetry(symtext, msg=True):
 	apDisplay.printMsg("Looking up symmetry for input: %s"%(symtext))
 	symdata = None
-	if re.match("^[0-9]+$", symtext):
+	if isinstance(symtext, int) or re.match("^[0-9]+$", symtext):
 		### text is a number and probably a symm id
 		symdata = getSymmetryDataFromID(symtext, msg)
 	elif len(symtext) > 0:
@@ -40,7 +40,7 @@ def getSymmetryDataFromName(symtext='c1', msg=True):
 
 #===========================
 def getSymmetryDataFromID(symid, msg=True):
-	symdata = appionData.ApSymmetryData.direct_query(symid)
+	symdata = appionData.ApSymmetryData.direct_query(int(symid))
 	if not symdata:
 		printSymmetries()
 		apDisplay.printError("no symmetry associated with this id: "+str(symid))
