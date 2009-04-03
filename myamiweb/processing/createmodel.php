@@ -172,6 +172,13 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 
 	$particle = new particledata();
 	$syms = $particle->getSymmetries();
+	$clusterdata = $particle->getClusteringStackParams($clusterid);
+
+	// set defaults
+	$defoutdir = dirname(dirname($clusterdata['path']))."/models";
+	$defrunname = 'model1';
+	$outdir = $_POST['outdir'] ? $_POST['outdir'] : $defoutdir;
+	$runname = $_POST['runname'] ? $_POST['runname'] : $defrunname;
 
 	// write out errors, if any came up:
 	if ($extra) {
@@ -267,6 +274,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			if (strtoupper(substr($sym['eman_name'],0,4)) == 'ICOS') {
 				echo "<input type='hidden' name='symmetryid' value='$symid'>";
 				echo $sym['symmetry'].":&nbsp;<i>".$sym['description']."</i>\n";
+				break;
 			}
 		}
 		echo "</td></tr>";
@@ -299,6 +307,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			if (strtoupper(substr($sym['eman_name'],0,3)) == 'OCT') {
 				echo "<input type='hidden' name='symmetryid' value='$symid'>";
 				echo $sym['symmetry'].":&nbsp;<i>".$sym['description']."</i>\n";
+				break;
 			}
 		}
 		echo "</td></tr>";
@@ -322,6 +331,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 			if (strtoupper(substr($sym['eman_name'],0,2)) == 'C1') {
 				echo "<input type='hidden' name='symmetryid' value='$symid'>";
 				echo $sym['symmetry'].":&nbsp;<i>".$sym['description']."</i>\n";
+				break;
 			}
 		}
 		echo "</td></tr>";
