@@ -172,8 +172,18 @@ function uploadavg() {
 }
 
 function runCommonLines() {
+	var index = $('selectedIndex').value
+	if (index!="") {
+		if (clusterId!="") {
+			window.open("createmodel.php?expId="+expId+"&include="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+		}
+	} 
 	var index = $('excludedIndex').value
-	window.open("createmodel.php?expId="+expId+"&file="+filename+"&exclude="+index+"&noref="+norefId+"&norefClass="+norefClassId+"",'height=250,width=400');
+	if (index!="") {
+		if (clusterId!="") {
+			window.open("createmodel.php?expId="+expId+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+		}
+	}
 }
 
 function createAlignSubStack() {
@@ -259,7 +269,7 @@ if ($clusterId || $alignId)
 	$excludebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 if ($clusterId) 
 	$excludebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackExcluded()'>\n";
-if ($clusterId || $alignId)
+if ($clusterId)
 	$excludebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
 
 
@@ -279,6 +289,8 @@ if ($stackId || $clusterId || $alignId)
 // Imagic 3d0
 if ($norefClassId || $reclassId || $clusterId || $templateStackId)
 	$includebuttons .= "<input id='3d0button' type='button' alt='Create 3D0' value='Run Imagic 3d0' onclick='create3d0();'>\n";
+if ($clusterId)
+	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
 
 echo "<table border='0' cellpading='6' cellspacing='10'><tr><td>\n";
 echo "  <span>Selection mode:</span>\n";
