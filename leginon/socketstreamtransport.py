@@ -65,7 +65,10 @@ def _fixed_socket_read(self, size=-1):
 #		return "".join(buffers)
 
 # patch the method at runtime
-socket._fileobject.read = _fixed_socket_read
+## Newer versions of python already have a fix using StringIO.
+## Only apply our fix here if StringIO is not in socket module.
+if not hasattr(socket, 'StringIO'):
+	socket._fileobject.read = _fixed_socket_read
 
 class ExitException(Exception):
 	pass
