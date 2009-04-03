@@ -18,7 +18,7 @@ import apChimera
 #===========================
 def insert3dDensity(params):
 	apDisplay.printMsg("commiting density to database")
-	symdata=appionData.ApSymmetryData.direct_query(params['sym'])
+	symdata=apSymmetry.findSymmetry(params['sym'])
 	if not symdata:
 		apDisplay.printError("no symmetry associated with this id\n")		
 	params['syminfo'] = symdata
@@ -91,7 +91,7 @@ class PostProcScript(appionScript.AppionScript):
 			action="store_true", help="Rotate icosahedral densities from Eman orientation to Viper orientation")
 		self.parser.add_option("--norm", dest="norm", default=False,
 			action="store_true", help="Normalize the final density such that mean=0, sigma=1")
-		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym", type="int",
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym",
 			help="Symmetry id in the database", metavar="INT")
 		self.parser.add_option("--reconid", dest="reconid",
 			help="RefinementData Id for this iteration (not the recon id)", metavar="INT")
@@ -226,10 +226,11 @@ class PostProcScript(appionScript.AppionScript):
 			apDisplay.printError("3d density with md5sum '"+md5+"' already exists in the DB!")
 
 		if self.params['commit'] is True:
+			symdata  = apSymmetry.findSymmetry(self.params['sym'])
+			symmetry = symdata['eman_name']
 			insert3dDensity(self.params)
 			### render chimera images of model
-			symdata  = apSymmetry.getSymmetryData(self.params['sym'])
-			symmetry = symdata['eman_name']
+
 
 			apChimera.filterAndChimera(outfile, res=self.params['res'], apix=self.params['apix'], box=self.params['box'], 
 				chimtype='snapshot', contour=self.params['contour'], zoom=self.params['zoom'], sym=symmetry)

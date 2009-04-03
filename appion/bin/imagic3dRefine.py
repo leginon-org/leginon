@@ -147,7 +147,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 	#=======================
 	def createImagicBatchFile(self):
 		# IMAGIC batch file creation
-		syminfo = apSymmetry.getSymmetryData(self.params['symmetry'])
+		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
 				
@@ -490,7 +490,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		itnq['mra_ang_inc'] = self.params['mrarefs_ang_inc']
 		itnq['forw_ang_inc'] = self.params['forw_ang_inc']
 		itnq['num_classums'] = self.params['num_classums']
-		itnq['symmetry'] = appionData.ApSymmetryData.direct_query(self.params['symmetry'])
+		itnq['symmetry'] = apSymmetry.findSymmetry(self.params['symmetry'])
 		if self.params['commit'] is True:
 			itnq.insert()
 		return

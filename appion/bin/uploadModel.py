@@ -20,7 +20,7 @@ import appionData
 #===========================
 def insertModel(params):
 	apDisplay.printMsg("commiting model to database")
-	symdata=appionData.ApSymmetryData.direct_query(params['sym'])
+	symdata = apSymmetry.findSymmetry(params['sym'])
 	if not symdata:
 		apDisplay.printError("no symmetry associated with this id\n")		
 	params['syminfo'] = symdata
@@ -57,7 +57,7 @@ class UploadModelScript(appionScript.AppionScript):
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym", type="int",
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym",
 			help="Symmetry id in the database", metavar="INT")
 		self.parser.add_option("--old-apix", dest="oldapix", type="float",
 			help="Original pixel size in Angstroms if oldapix != apix, it will be rescaled", metavar="FLOAT")
@@ -160,7 +160,7 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['oldapix'] = float(densitydata['pixelsize'])
 		symmetrydata = densitydata['symmetry']
 		if symmetrydata is None:
-			symmq = appionData.ApSymmetryData(symmetry = 'C1')
+			symmq = apSymmetry.findSymmetry('C1')
 			symmresult = symmq.query()
 			self.params['sym'] = symmresult[0].dbid
 		else:
@@ -221,7 +221,7 @@ class UploadModelScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		self.params['syminfo'] = apSymmetry.getSymmetryData(self.params['sym'])
+		self.params['syminfo'] = apSymmetry.findSymmetry(self.params['sym'])
 		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
 		if self.params['newbox'] is None:
 			self.params['newbox'] = self.params['oldbox']

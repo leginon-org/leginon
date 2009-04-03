@@ -146,7 +146,7 @@ class imagic3d0Script(appionScript.AppionScript):
 	#=====================
 	def createImagicBatchFile(self, linkingfile):
 		# IMAGIC batch file creation
-		syminfo = apSymmetry.getSymmetryData(self.params['symmetry'])
+		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
 		symmetry = syminfo['eman_name']
 		filename = os.path.join(self.params['rundir'], "imagicCreate3d0.batch")
 		f = open(filename, 'w')
@@ -391,7 +391,7 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['num_classums'] = self.params['num_classums']
 		modelq['pixelsize'] = self.params['apix']
 		modelq['boxsize'] = self.params['boxsize']
-		modelq['symmetry'] = appionData.ApSymmetryData.direct_query(self.params['symmetry'])
+		modelq['symmetry'] = apSymmetry.findSymmetry(self.params['symmetry'])
 		modelq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(self.params['rundir'])))
 	
 		modelq['hidden'] = False
