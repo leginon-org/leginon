@@ -17,6 +17,7 @@ import apStack
 import apSymmetry
 import apFile
 import apParam
+import apVolume
 import appionData
 
 #=====================
@@ -68,8 +69,10 @@ class createModelScript(appionScript.AppionScript):
 		### check the method
 		if self.params['method'] is None:
 			apDisplay.printError("Please enter the EMAN commonline method")
-		if self.params['method'] != 'any' and self.params['numkeep'] is None:
-			apDisplay.printError("Please enter the number of particles per view, e.g. --numkeep=120")
+		#if self.params['method'] != 'any' and self.params['numkeep'] is None:
+		#	apDisplay.printError("Please enter the number of particles per view, e.g. --numkeep=120")
+
+		
 
 		### get the symmetry data
 		if self.params['symm'] is None:
@@ -79,6 +82,15 @@ class createModelScript(appionScript.AppionScript):
 			self.params['symm_id'] = self.symmdata.dbid
 			self.params['symm_name'] = self.symmdata['eman_name']
 			apDisplay.printMsg("Selected symmetry %s with id %s"%(self.symmdata['eman_name'], self.symmdata.dbid))
+
+		if self.params['method'] == 'oct' and self.params['symm_name'] != 'oct':
+			apDisplay.printError("startoct only works on octahedral symmetry")
+		if self.params['method'] == 'icos' and self.params['symm_name'] != 'icos':
+			apDisplay.printError("starticos only works on icosahedral symmetry")
+		if self.params['method'] == 'csym' and self.params['symm_name'][0] != 'c':
+			apDisplay.printError("startcsym only works on c symmetries")
+		if self.params['method'] == 'any' and self.params['symm_name'] != 'c1':
+			apDisplay.printError("startAny only works on c1 symmetry")
 
 		### check for missing and duplicate entries
 		if self.params['clusterid'] is None:
@@ -191,6 +203,9 @@ class createModelScript(appionScript.AppionScript):
 		if self.params['numkeep'] is not None and numclusters/10 < int(self.params['numkeep']):
 			apDisplay.printWarning("particle number of "+ self.params['numkeep'] 
 				+ " is greater than 10% of the number of selected classes")
+		elif self.params['numkeep'] is None:
+			self.params['numkeep'] = int(math.floor(numclusters/20.0))
+			apDisplay.printWarning("numkeep was not defined, using %d particles"%(self.params['numkeep']))
 
 		nproc = apParam.getNumProcessors()
 
@@ -208,29 +223,33 @@ class createModelScript(appionScript.AppionScript):
 
 		elif self.params['method'] == 'csym':
 			startcmd = "startcsym "+clusterstack+" "
+			startcmd +=" "+str(self.params['numkeep'])
 			startcmd +=" sym="+self.symmdata['eman_name']
-			startcmd +=" "+self.params['numkeep']
 			if self.params['imask'] is not None:
 				startcmd +=" imask="+self.params['imask']
 
 		elif self.params['method'] == 'oct':
 			startcmd = "startoct "+clusterstack+" "
-			startcmd +=" "+self.params['numkeep']
+			startcmd +=" "+str(self.params['numkeep'])
 
 		elif self.params['method'] == 'icos':
 			startcmd = "starticos "+clusterstack+" "
-			startcmd +=" "+self.params['numkeep']
+			startcmd +=" "+str(self.params['numkeep'])
 			if self.params['imask'] is not None:
 				startcmd +=" imask="+self.params['imask']
 
 		apDisplay.printMsg("Creating 3D model with EMAN function: start"+self.params['method'])
 		apFile.removeFile("threed.0a.mrc")
-		apEMAN.executeEmanCmd(startcmd, verbose=True)
+		apFile.removeFile("eman.log")
+		apEMAN.executeEmanCmd(startcmd, verbose=False, logfile="eman.log")
+		#apEMAN.executeEmanCmd(startcmd, verbose=True)
 
 		finalmodelname = "threed-%s-eman_start%s.mrc"%(self.timestamp, self.params['method'])
 		finalmodel = "threed.0a.mrc"
 		if os.path.isfile(finalmodel):
 			shutil.move(finalmodel, finalmodelname)
+			if not apVolume.isValidVolume(finalmodelname):
+				apDisplay.printError("Created volume is not valid")
 		else:
 			apDisplay.printError("No 3d model was created")
 
@@ -238,8 +257,8 @@ class createModelScript(appionScript.AppionScript):
 		#self.uploadDensity(finalmodelname)
 
 		### chimera imaging
-		apChimera.renderSnapshots(modelpath, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
-		apChimera.renderAnimation(modelpath, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
+		#apChimera.renderSnapshots(finalmodelname, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
+		#apChimera.renderAnimation(finalmodelname, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
 
 #=====================
 #=====================
