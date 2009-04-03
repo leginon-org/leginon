@@ -176,8 +176,16 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 
 	// set defaults
 	$defoutdir = dirname(dirname($clusterdata['path']))."/models";
-	$defrunname = 'model1';
 	$outdir = $_POST['outdir'] ? $_POST['outdir'] : $defoutdir;
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$models = $particle->getModelsFromProject($projectId, True);
+	if ($models)
+		$nummodels = count($models);
+	else
+		$nummodels = 0;
+	while (file_exists($outdir.'/emanmodel'.($nummodels+1)))
+		$nummodels += 1;
+	$defrunname = 'emanmodel'.($nummodels+1);
 	$runname = $_POST['runname'] ? $_POST['runname'] : $defrunname;
 
 	// write out errors, if any came up:
