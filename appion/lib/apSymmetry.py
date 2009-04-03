@@ -8,38 +8,45 @@ import apDisplay
 import appionData
 
 #===========================
-def parseSymmetry(symtext):
+def findSymmetry(symtext, msg=True):
+	apDisplay.printMsg("Looking up symmetry for input: %s"%(symtext))
+	symdata = None
 	if re.match("^[0-9]+$", symtext):
 		### text is a number and probably a symm id
-		symdata = getSymmetryData(symtext)
+		symdata = getSymmetryDataFromID(symtext, msg)
 	elif len(symtext) > 0:
 		### text is not a number and probably a symm name
-		symdata = findSymmetry(symtext)
-	else:
+		symdata = getSymmetryDataFromName(symtext, msg)
+	if not symdata:
 		printSymmetries()
 	return symdata
 
 #===========================
-def findSymmetry(symtext='c1'):
+def getSymmetryDataFromName(symtext='c1', msg=True):
 	# find the symmetry entry in the database
 	# based on the text version from EMAN
 	# first convert to lower case
 	symtext = symtext.lower()
 	symdataq = appionData.ApSymmetryData(eman_name=symtext)
-	symdata = symdataq.query(results=1)
-	if not symdata:
+	symdatas = symdataq.query()
+	if not symdatas:
 		apDisplay.printError("No symmetry named %s was found"%(symtext))
-	return symdata[0]
+	# select oldest match
+	symdata = symdatas[len(symdatas)-1]
+	if msg is True:
+		apDisplay.printMsg("Selected symmetry group: "
+			+apDisplay.colorString("%s -- %s"%(symdata['eman_name'].upper(), symdata['symmetry']), "cyan"))
+	return symdata
 
 #===========================
-def getSymmetryData(symid, msg=True):
+def getSymmetryDataFromID(symid, msg=True):
 	symdata = appionData.ApSymmetryData.direct_query(symid)
 	if not symdata:
 		printSymmetries()
 		apDisplay.printError("no symmetry associated with this id: "+str(symid))
 	if msg is True:
 		apDisplay.printMsg("Selected symmetry group: "
-			+apDisplay.colorString(str(symdata['symmetry']), "cyan"))
+			+apDisplay.colorString("%s -- %s"%(symdata['eman_name'].upper(), symdata['symmetry']), "cyan"))
 	return symdata
 
 #===========================
