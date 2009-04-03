@@ -37,7 +37,7 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 $particle = new particledata();
 
 // --- Get 3d Density Data
-$densityRuns = $particle->get3dDensitysFromSession($sessionId);
+$densityRuns = $particle->get3dDensitysFromSession($sessionId, false);
 if ($densityRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -56,10 +56,25 @@ if ($densityRuns) {
 			$densityrun['description']=$_POST['newdescription'.$densityrun];
 		}
 
+		if ($_POST['hideStack'.$densityid] == 'hide') {
+			$particle->updateHide('Ap3dDensityData', $densityid, '1');
+			$densityrun['hidden']=1;
+		} elseif ($_POST['unhideStack'.$densityid] == 'unhide') {
+			$particle->updateHide('Ap3dDensityData', $densityid, '0');
+			$densityrun['hidden']=0;
+		}
+
 		// PRINT INFO
 		$html .= "<TR>\n";
-		# def if
-		$html .= "<td>$densityrun[DEF_id]</TD>\n";
+
+		# def id
+		$html .= "<td>$densityrun[DEF_id]\n";
+		if ($rctrun['hidden'] == 1) {
+			$html.= "<br/><font color='#cc0000'>HIDDEN</font>\n";
+			$html.= " <input class='edit' type='submit' name='unhideStack".$densityid."' value='unhide'>\n";
+		} else $html .= "<br/><input class='edit' type='submit' name='hideStack".$densityid."' value='hide'>\n";
+		$html .= "</td>\n";
+
 		# name
 		$html .= "<td><A HREF='densityreport.php?expId=$expId&densityId=$densityid'>$densityrun[name]</A></TD>\n";
 
