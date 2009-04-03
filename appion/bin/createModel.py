@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import time
+import math
 import shutil
 ### appion
 import appionScript
@@ -16,7 +17,6 @@ import apStack
 import apSymmetry
 import apFile
 import apParam
-import apDatabase
 import appionData
 
 #=====================
@@ -34,10 +34,10 @@ class createModelScript(appionScript.AppionScript):
 			help="alignment stack id", metavar="ID")
 
 		### Strings
-		self.parser.add_option("--class-list-keep", dest="keepclasslist",
-			help="list of EMAN style class numbers to include in sub-stack, e.g. --class-list-keep=0,5,3", metavar="#,#")
-		self.parser.add_option("--class-list-drop", dest="dropclasslist",
-			help="list of EMAN style class numbers to exclude in sub-stack, e.g. --class-list-drop=0,5,3", metavar="#,#")
+		self.parser.add_option("--include", dest="includelist",
+			help="list of EMAN style class numbers to include, e.g. --include=0,5,3", metavar="#,#")
+		self.parser.add_option("--exclude", dest="excludelist",
+			help="list of EMAN style class numbers to exclude, e.g. --exclude=0,5,3", metavar="#,#")
 		self.parser.add_option("--symm", dest="symm", default="c1",
 			help="symmetry id or name, e.g. --symm=c3 or --symm=25", metavar="TEXT")
 
@@ -45,7 +45,7 @@ class createModelScript(appionScript.AppionScript):
 		self.startmethods = ( "any", "csym", "oct", "icos" )
 		self.parser.add_option("--method", dest="method",
 			help="EMAN common lines method: startIcos, startCSym, startAny, startOct", metavar="TEXT", 
-			type="choice", choices=self.startmethods, default="normal" )
+			type="choice", choices=self.startmethods, default="any")
 
 		### Program specific parameters
 		"""
@@ -75,43 +75,29 @@ class createModelScript(appionScript.AppionScript):
 		if self.params['symm'] is None:
 			apDisplay.printError("Symmetry was not defined")			
 		else:
-			self.symmdata = apSymmetry.parseSymmetry(self.params['symm'])
+			self.symmdata = apSymmetry.findSymmetry(self.params['symm'])
 			self.params['symm_id'] = self.symmdata.dbid
 			self.params['symm_name'] = self.symmdata['eman_name']
 			apDisplay.printMsg("Selected symmetry %s with id %s"%(self.symmdata['eman_name'], self.symmdata.dbid))
 
 		### check for missing and duplicate entries
-		if self.params['alignid'] is None and self.params['clusterid'] is None:
-			apDisplay.printError("Please provide either --cluster-id or --align-id")
-		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
-			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
-
+		if self.params['clusterid'] is None:
+			apDisplay.printError("Please provide --cluster-id")	
 		### get the stack ID from the other IDs
-		if self.params['alignid'] is not None:
-			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
-			self.params['stackid'] = self.alignstackdata['stack'].dbid
-		elif self.params['clusterid'] is not None:
-			self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
-			self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
-			self.params['stackid'] = self.alignstackdata['stack'].dbid
+		self.clusterstackdata = appionData.ApClusteringStackData.direct_query(self.params['clusterid'])
+		self.alignstackdata = self.clusterstackdata['clusterrun']['alignstack']
+		self.params['stackid'] = self.alignstackdata['stack'].dbid
 
 		### check and make sure we got the stack id
 		if self.params['stackid'] is None:
 			apDisplay.printError("stackid was not defined")
 
-		### check that we have a keep or drop list and not both
-		if self.params['keepclasslist'] is None and self.params['dropclasslist'] is None:
-			apDisplay.printError("class numbers to be included/excluded was not defined")
-		if self.params['keepclasslist'] is not None and self.params['dropclasslist'] is not None:
-			apDisplay.printError("both --class-list-keep and --class-list-drop were defined, only one is allowed")
+		### check that we only have one of include and exclude
+		if self.params['includelist'] is not None and self.params['excludelist'] is not None:
+			apDisplay.printError("both --include and --exclude were defined, only one is allowed")
 
 	#=====================
-	def cleanup(self, norefpath, norefclassid, method):
-		clean = "rm -fv CCL.hed CCL.img"
-		for file in ("CCL.hed", "CCL.img"):
-			if os.path.isfile(file):
-				apDisplay.printWarning("Removing file: "+file)
-				os.remove(file)
+	def cleanup(self):
 		if self.params['rounds']:
 			for n in range(self.params['rounds']):
 				modelpath = os.path.join(norefpath, method+"-"+str(norefclassid)+"_"+str(n+1)+".mrc")
@@ -128,7 +114,7 @@ class createModelScript(appionScript.AppionScript):
 				apDisplay.printWarning("Moving "+oldexcludepath+" to "+newexcludepath)
 				shutil.copy(oldexcludepath, newexcludepath)
 		else:
-			modelpath = os.path.join(norefpath, method+"-"+str(norefclassid)+".mrc")
+			modelname = os.path.join(method+"-"+str(norefclassid)+".mrc")
 
 			apDisplay.printWarning("Moving threed.0a.mrc to "+norefpath+" and renaming it "+method+"-"
 				+str(norefclassid)+".mrc")
@@ -145,37 +131,8 @@ class createModelScript(appionScript.AppionScript):
 	def setRunDir(self):
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = stackdata['path']['path']
-		uppath = os.path.dirname(os.path.abspath(path))
-		self.params['rundir'] = os.path.join(uppath, self.params['runname'])
-
-	#=====================
-	def excludedClasses(self, origclassfile, norefpath):
-		excludelist = self.params['exclude'].split(",")
-
-		apDisplay.printMsg( "Creating exclude.lst: "+norefpath )
-
-		excludefile = os.path.join(norefpath,"exclude.lst")
-		if os.path.isfile(excludefile):
-			apDisplay.printWarning("Removing the file 'exclude.lst' from: "+norefpath)
-			os.remove(excludefile)
-
-		f = open(excludefile, "w")
-		for excludeitem in excludelist:
-			f.write(str(excludeitem)+"\n")
-		f.close()
-
-		newclassfile = origclassfile+"-new"
-		# old file need to be removed or the images will be appended
-		if os.path.isfile(newclassfile):
-			apDisplay.printWarning("removing old image file: "+newclassfile )
-			os.remove(newclassfile+".hed")
-			os.remove(newclassfile+".img")
-
-		apDisplay.printMsg("Creating new class averages "+newclassfile)
-		excludecmd = ( "proc2d "+origclassfile+".hed "+newclassfile+".hed exclude="+excludefile )
-		apEMAN.executeEmanCmd(excludecmd, verbose=True)
-
-		return newclassfile
+		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
+		self.params['rundir'] = os.path.join(uppath, "models", self.params['runname'])
 
 	#=====================
 	def uploadDensity(self, volfile):
@@ -186,14 +143,14 @@ class createModelScript(appionScript.AppionScript):
 		densq['hidden'] = False
 		densq['norm'] = True
 		densq['symmetry'] = self.symmdata
-		densq['pixelsize'] = apix
-		densq['boxsize'] = self.params['box']
-		densq['lowpass'] = self.params['lp']
+		densq['pixelsize'] = self.clusterstackdata['clusterrun']['pixelsize']
+		densq['boxsize'] = self.clusterstackdata['clusterrun']['boxsize']
+		#densq['lowpass'] = self.params['lp']
 		#densq['highpass'] = self.params['highpasspart']
 		#densq['mask'] = self.params['radius']
-		densq['description'] = self.params['description']
-		densq['resolution'] = self.params['lp']
-		densq['session'] = self.sessiondata
+		densq['description'] = self.params['description']+" from eman start-"+self.params['method']
+		#densq['resolution'] = self.params['lp']
+		densq['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
 		densq['eman'] = self.params['method']
 		if self.params['commit'] is True:
@@ -201,200 +158,115 @@ class createModelScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def start(self):
+	def getClusterStack(self):
 		### new stack path
 		stackdata = apStack.getOnlyStackData(self.params['stackid'])
 		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
-		newstack = os.path.join(self.params['rundir'], stackdata['name'])
-		apStack.checkForPreviousStack(newstack)
 
-		### list of classes to be excluded
-		excludelist = []
-		if self.params['dropclasslist'] is not None:
-			excludestrlist = self.params['dropclasslist'].split(",")
-			for excludeitem in excludestrlist:
-				excludelist.append(int(excludeitem.strip()))
-		apDisplay.printMsg("Exclude list: "+str(excludelist))
+		### get classes from cluster stack
+		oldstack = os.path.join(self.clusterstackdata['path']['path'], self.clusterstackdata['avg_imagicfile'])
+		numclusters = self.clusterstackdata['num_classes']
 
-		### list of classes to be included
-		includelist = []
-		if self.params['keepclasslist'] is not None:
-			includestrlist = self.params['keepclasslist'].split(",")
-			for includeitem in includestrlist:
-				includelist.append(int(includeitem.strip()))		
-		apDisplay.printMsg("Include list: "+str(includelist))
+		if self.params['excludelist'] is None and self.params['includelist'] is None:
+			### Case 1: Keep all classes
+			self.params['keepfile'] = None
+			apDisplay.printMsg("Keeping all %d clusters"%(numclusters))
+		else:
+			### Case 2: Keep subset of classes
 
-		### get particles from align or cluster stack
-		if self.params['alignid'] is not None:
-			alignpartq =  appionData.ApAlignParticlesData()
-			alignpartq['alignstack'] = self.alignstackdata
-			particles = alignpartq.query()
-		elif self.params['clusterid'] is not None:
-			clusterpartq = appionData.ApClusteringParticlesData()
-			clusterpartq['clusterstack'] = self.clusterstackdata
-			particles = clusterpartq.query()
+			### list of classes to be excluded
+			excludelist = []
+			if self.params['excludelist'] is not None:
+				excludestrlist = self.params['excludelist'].split(",")
+				for excludeitem in excludestrlist:
+					excludelist.append(int(excludeitem.strip()))
+			apDisplay.printMsg("Exclude list: "+str(excludelist))
 
-		### write included particles to text file
-		includeParticle = []
-		excludeParticle = 0
-		f = open("test.log", "w")
-		count = 0
-		for part in particles:
-			count += 1
-			#partnum = part['partnum']-1
-			if 'alignparticle' in part:
-				alignpart = part['alignparticle']
-				classnum = int(part['refnum'])-1
-			else:
-				alignpart = part
-				classnum = int(part['ref']['refnum'])-1
-			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
+			### list of classes to be included
+			includelist = []
+			if self.params['includelist'] is not None:
+				includestrlist = self.params['includelist'].split(",")
+				for includeitem in includestrlist:
+					includelist.append(int(includeitem.strip()))
+			apDisplay.printMsg("Include list: "+str(includelist))
 
-			### check score
-			if ( self.params['minscore'] is not None 
-			 and alignpart['score'] is not None 
-			 and alignpart['score'] < self.params['minscore'] ):
-				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+			### write kept cluster numbers to file
+			self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
+			apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
+			kf = open(self.params['keepfile'], "w")
+			count = 0
+			for clusternum in range(numclusters):
+				if clusternum in includelist or not clusternum in excludelist:
+					count+=1
+					kf.write(str(clusternum)+"\n")
+			kf.close()
+			apDisplay.printMsg("Keeping %d of %d clusters"%(count,numclusters))
 
-			### check spread
-			elif ( self.params['minspread'] is not None 
-			 and alignpart['spread'] is not None 
-			 and alignpart['spread'] < self.params['minspread'] ):
-				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
-
-			elif includelist and classnum in includelist:
-				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-			elif excludelist and not classnum in excludelist:
-				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
-			else:
-				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
-
-		f.close()
-		includeParticle.sort()
-		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
-
-		#print includeParticle
-
-		### write kept particles to file
-		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
-		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
-		kf = open(self.params['keepfile'], "w")
-		for partnum in includeParticle:
-			kf.write(str(partnum)+"\n")
-		kf.close()
-
-		### get number of particles
-		numparticles = len(includeParticle)
-		if excludelist:
-			self.params['description'] += ( " ... %d particle substack with %s classes excluded" 
-				% (numparticles, self.params['dropclasslist']))
-		elif includelist:
-			self.params['description'] += ( " ... %d particle substack with %s classes included" 
-				% (numparticles, self.params['keepclasslist']))	
+			### override number of clusters with new number
+			numclusters = count
 
 		### create the new sub stack
+		newstack = os.path.join(self.params['rundir'], "clines.hed")
+		apFile.removeStack(newstack)
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 
 		if not os.path.isfile(newstack):
-			apDisplay.printError("No stack was created")
+			apDisplay.printError("No cluster stack was created")
 
-		apStack.averageStack(stack=newstack)
-		if self.params['commit'] is True:
-			apStack.commitSubStack(self.params)
-			newstackid = apStack.getStackIdFromPath(newstack)
-			apStackMeanPlot.makeStackMeanPlot(newstackid, gridpoints=4)
-
+		return newstack, numclusters
 
 	#=====================
 	def start(self):
+		clusterstack, numclusters = self.getClusterStack()
 
-		norefClassdata=appionData.ApNoRefClassRunData.direct_query(self.params['norefclass'])
-
-		#Get class average file path through ApNoRefRunData
-		norefpath = norefClassdata['norefRun']['path']['path']
-
-		self.params['box'] = apStack.getStackBoxsize((norefClassdata['norefRun']['stack']).dbid)
-
-		#Get class average file name
-		norefClassFile = norefClassdata['classFile']
-		origclassfile = os.path.join(norefpath, norefClassFile)
-
-		if self.params['exclude'] is not None:
-			#create the list of the indexes to be excluded
-			classfile = self.excludedClasses(origclassfile, norefpath)
-		else:
-			#complete path of the class average file
-			classfile = origclassfile+"-orig"
-			apDisplay.printMsg("copying file "+origclassfile+" to "+classfile)
-			shutil.copy(origclassfile+".hed", classfile+".hed")
-			shutil.copy(origclassfile+".img", classfile+".img")
-
-		#warn if the number of particles to use for each view is more than 10% of the total number of particles
-		if self.params['exclude'] is not None:
-			numclass = norefClassdata['num_classes'] - len(self.params['exclude'].split(","))
-		else:
-			numclass = norefClassdata['num_classes']
-
-		if self.params['partnum'] is not None and numclass/10 < int(self.params['partnum']):
-			apDisplay.printWarning("particle number of "+ self.params['partnum'] + " is greater than 10% of the number of selected classes")
-
+		if self.params['numkeep'] is not None and numclusters/10 < int(self.params['numkeep']):
+			apDisplay.printWarning("particle number of "+ self.params['numkeep'] 
+				+ " is greater than 10% of the number of selected classes")
 
 		nproc = apParam.getNumProcessors()
 
 		#construct command for each of the EMAN commonline method
-		if self.params['method']=='startAny':
-			startCmd = "startAny "+classfile+".hed proc="+str(nproc)
-			if self.params['symm_name'] is not None:
-				startCmd +=" sym="+self.params['symm_name']
+		if self.params['method'] == 'any':
+			startcmd = "startAny "+clusterstack+" proc="+str(nproc)
+			startcmd +=" sym="+self.symmdata['eman_name']
 			if self.params['mask'] is not None:
-				startCmd +=" mask="+str(self.params['mask'])
-			if self.params['lp'] is not None:
-				startCmd +=" lp="+str(self.params['lp'])
+				startcmd +=" mask="+str(self.params['mask'])
+			else:
+				maskrad = math.floor(self.clusterstackdata['clusterrun']['boxsize']/2.0)
+				startcmd +=" mask=%d"%(maskrad)
 			if self.params['rounds'] is not None:
-				startCmd +=" rounds="+str(self.params['rounds'])
+				startcmd +=" rounds="+str(self.params['rounds'])
 
-		elif self.params['method']=='startCSym':
-			startCmd = "startcsym "+classfile+".hed "
-			if self.params['partnum'] is not None:
-				startCmd +=" "+self.params['partnum']
-			if self.params['symm_name'] is not None:
-				startCmd +=" sym="+self.params['symm_name']
+		elif self.params['method'] == 'csym':
+			startcmd = "startcsym "+clusterstack+" "
+			startcmd +=" sym="+self.symmdata['eman_name']
+			startcmd +=" "+self.params['numkeep']
 			if self.params['imask'] is not None:
-				startCmd +=" imask="+self.params['imask']
+				startcmd +=" imask="+self.params['imask']
 
-		elif self.params['method']=='startOct':
-			startCmd = "startoct "+classfile+".hed "
-			if self.params['partnum'] is not None:
-				startCmd +=" "+self.params['partnum']
+		elif self.params['method'] == 'oct':
+			startcmd = "startoct "+clusterstack+" "
+			startcmd +=" "+self.params['numkeep']
 
-		elif self.params['method']=='startIcos':
-			startCmd = "starticos "+classfile+".hed "
-			if self.params['partnum'] is not None:
-				startCmd +=" "+self.params['partnum']
+		elif self.params['method'] == 'icos':
+			startcmd = "starticos "+clusterstack+" "
+			startcmd +=" "+self.params['numkeep']
 			if self.params['imask'] is not None:
-				startCmd +=" imask="+self.params['imask']
+				startcmd +=" imask="+self.params['imask']
 
-		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of"+self.params['method']+"")
-		print startCmd
-		apEMAN.executeEmanCmd(startCmd, verbose=False)
+		apDisplay.printMsg("Creating 3D model using class averages with EMAN function of "+self.params['method']+"")
+		apFile.removeFile("threed.0a.mrc")
+		apEMAN.executeEmanCmd(startcmd, verbose=True)
 
 		#cleanup the extra files, move the created model to the same folder as the class average and rename it as startAny.mrc
-		modelpath = self.cleanup(norefpath, self.params['norefclass'], self.params['method'])
+		#modelpath = self.cleanup()
 
 		### upload it
-		self.uploadDensity(modelpath)
+		#self.uploadDensity(modelpath)
 
 		### chimera imaging
-		apChimera.renderSnapshots(modelpath, contour=1.5, zoom=1.0, sym='c1')
-		apChimera.renderAnimation(modelpath, contour=1.5, zoom=1.0, sym='c1')
-
-
-
+		apChimera.renderSnapshots(modelpath, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
+		apChimera.renderAnimation(modelpath, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
 
 #=====================
 #=====================
