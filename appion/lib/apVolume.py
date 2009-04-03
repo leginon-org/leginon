@@ -161,6 +161,8 @@ def isValidVolume(volfile):
 	"""
 	Checks to see if a MRC volume is valid
 	"""
+	if not os.path.isfile(volfile):
+		return False
 	volarray = mrc.read(volfile)
 	if volarray.std() < 1e-6:
 		apDisplay.printWarning("Volume has zero standard deviation")

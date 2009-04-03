@@ -73,6 +73,15 @@ class ChimSnapShots(object):
 		vertices, triangles = surf.surfacePieces[0].geometry
 		rc = Radial_Color()
 		rmin, rmax = rc.value_range(vertices, vertex_xform=None)
+		while rmax is None:
+			self.writeMessageToLog("Contour %.2f is too big, no surface is shown"%(self.contour))
+			self.contour *= 0.9
+			self.voldata.set_parameters(surface_levels = [self.contour])
+			self.voldata.show('surface')
+			self.surfaces = openModels.list(modelTypes=[SurfaceModel])
+			surf = self.surfaces[0]
+			vertices, triangles = surf.surfacePieces[0].geometry
+			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
 		chimera.viewer.viewSize = rmax*self.zoom
 		#self.runChimCommand('scale %.3f' % self.zoom)
 
@@ -139,7 +148,10 @@ class ChimSnapShots(object):
 	def save_image(self, path):
 		# propagate changes from C++ layer back to Python
 		# can also be done via Midas module: Midas.wait(1)
-		chimera.update.checkForChanges()
+		try:
+			chimera.update.checkForChanges()
+		except:
+			time.sleep(0.2)
 		# save an image
 		chimera.printer.saveImage(path, format=self.imgformat)
 

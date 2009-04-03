@@ -34,6 +34,12 @@ class createModelScript(appionScript.AppionScript):
 		self.parser.add_option("--align-id", dest="alignid", type="int",
 			help="alignment stack id", metavar="ID")
 
+		### Floats
+		self.parser.add_option("--contour", dest="contour", type="float", default=3.0,
+			help="Chimera snapshot contour", metavar="#")
+		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.1,
+			help="Chimera snapshot zoom", metavar="#")
+
 		### Strings
 		self.parser.add_option("--include", dest="includelist",
 			help="list of EMAN style class numbers to include, e.g. --include=0,5,3", metavar="#,#")
@@ -72,7 +78,8 @@ class createModelScript(appionScript.AppionScript):
 		#if self.params['method'] != 'any' and self.params['numkeep'] is None:
 		#	apDisplay.printError("Please enter the number of particles per view, e.g. --numkeep=120")
 
-		
+		if self.params['description'] is None:
+			apDisplay.printError("Please enter a description")
 
 		### get the symmetry data
 		if self.params['symm'] is None:
@@ -126,11 +133,11 @@ class createModelScript(appionScript.AppionScript):
 		densq['symmetry'] = self.symmdata
 		densq['pixelsize'] = self.clusterstackdata['clusterrun']['pixelsize']
 		densq['boxsize'] = self.clusterstackdata['clusterrun']['boxsize']
-		#densq['lowpass'] = self.params['lp']
-		#densq['highpass'] = self.params['highpasspart']
-		#densq['mask'] = self.params['radius']
+		#densq['lowpass'] = None
+		#densq['highpass'] = None
+		densq['mask'] = self.params['mask']
 		densq['description'] = self.params['description']+" from eman start-"+self.params['method']
-		#densq['resolution'] = self.params['lp']
+		#densq['resolution'] = None
 		densq['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
 		densq['eman'] = self.params['method']
@@ -245,20 +252,26 @@ class createModelScript(appionScript.AppionScript):
 		#apEMAN.executeEmanCmd(startcmd, verbose=True)
 
 		finalmodelname = "threed-%s-eman_start%s.mrc"%(self.timestamp, self.params['method'])
+		finalmodelpath = os.path.join(self.params['rundir'], finalmodelname)
+		apDisplay.printMsg("Final model name: "+finalmodelname)
 		finalmodel = "threed.0a.mrc"
 		if os.path.isfile(finalmodel):
-			shutil.move(finalmodel, finalmodelname)
-			if not apVolume.isValidVolume(finalmodelname):
+			emancmd = "proc3d %s %s norm=0,1 origin=0,0,0"%(finalmodel, finalmodelpath)
+			#shutil.move(finalmodel, finalmodelpath)
+			apEMAN.executeEmanCmd(emancmd, verbose=True)
+			if not apVolume.isValidVolume(finalmodelpath):
 				apDisplay.printError("Created volume is not valid")
 		else:
 			apDisplay.printError("No 3d model was created")
 
 		### upload it
-		#self.uploadDensity(finalmodelname)
+		self.uploadDensity(finalmodelpath)
 
 		### chimera imaging
-		#apChimera.renderSnapshots(finalmodelname, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
-		#apChimera.renderAnimation(finalmodelname, contour=1.5, zoom=1.0, sym=self.symmdata['eman_name'])
+		apChimera.renderSnapshots(finalmodelpath, contour=self.params['contour'],
+			zoom=self.params['zoom'], sym=self.symmdata['eman_name'])
+		apChimera.renderAnimation(finalmodelpath, contour=self.params['contour'],
+			zoom=self.params['zoom'], sym=self.symmdata['eman_name'])
 
 #=====================
 #=====================

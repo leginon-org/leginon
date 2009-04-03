@@ -11,11 +11,14 @@ import apFile
 import apEMAN
 import apParam
 import apDisplay
+import apVolume
 
 #=========================================
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+	if apVolume.isValidVolume(density) is False:
+		apDisplay.printError("Volume file is not valid")
 	if box is None:
 		boxdims = apFile.getBoxSize(density)
 		box = boxdims[0]
@@ -47,6 +50,8 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 	"""
 	create mrc of central slice for viruses
 	"""
+	if apVolume.isValidVolume(density) is False:
+		apDisplay.printError("Volume file is not valid")
 	if tmpfile is None:
 		tmpfile = density
 	if box is None:
@@ -68,6 +73,8 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 #=========================================
 #=========================================
 def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+	if apVolume.isValidVolume(density) is False:
+		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
 	os.environ['CHIMTYPE'] = 'snapshot'
@@ -98,6 +105,8 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 #=========================================
 #=========================================
 def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False):
+	if apVolume.isValidVolume(density) is False:
+		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
 	os.environ['CHIMVOL'] = density
 	os.environ['CHIMTYPE'] = 'animate'
