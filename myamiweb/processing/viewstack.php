@@ -172,17 +172,23 @@ function uploadavg() {
 }
 
 function runCommonLines() {
-	var index = $('selectedIndex').value
-	if (index!="") {
-		if (clusterId!="") {
-			window.open("createmodel.php?expId="+expId+"&include="+index+"&clusterId="+clusterId+"",'height=250,width=400');
+	if (clusterId=="") {
+		return
+	}
+	var selindex = $('selectedIndex').value
+	var exindex = $('excludedIndex').value
+	if (selindex!="" && exindex!="") {
+		if (selindex.length > exindex.length) {
+			selindex = ""
+		} else {
+			exindex = ""
 		}
+	}
+	if (selindex!="") {
+		window.open("createmodel.php?expId="+expId+"&include="+selindex+"&clusterId="+clusterId+"",'height=250,width=400');
 	} 
-	var index = $('excludedIndex').value
-	if (index!="") {
-		if (clusterId!="") {
-			window.open("createmodel.php?expId="+expId+"&exclude="+index+"&clusterId="+clusterId+"",'height=250,width=400');
-		}
+	if (exindex!="") {
+		window.open("createmodel.php?expId="+expId+"&exclude="+exindex+"&clusterId="+clusterId+"",'height=250,width=400');
 	}
 }
 
