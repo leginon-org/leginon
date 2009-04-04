@@ -183,7 +183,6 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 		$clsavgpath = $tsparams['path'];
 		$classhedfile = $clsavgpath."/".$tsparams['templatename'];
 		$classimgfile = str_replace(".hed", ".img", $classhedfile);
-print_r($modelparams);
 	}
 
 	// get 3 initial projections for angular reconstitution associated with model		
