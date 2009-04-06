@@ -955,7 +955,7 @@ def setQueries(queryinfo):
 			queries[key]="%s %s" % (select, query)
 	return queries
 
-def queryFormatOptimized_original(queryinfo,tableselect):
+def queryFormatOptimized(queryinfo,tableselect):
 	"""
 	queryFormat: format the 'SQL WHERE' and figure out the tables to join.
 	"""
@@ -1029,111 +1029,22 @@ def queryFormatOptimized_original(queryinfo,tableselect):
 				sqljoin.append(alljoinon[onjoin[l]])
 
 	sqljoinstr = ' '.join(sqljoin)
-
 	### convert:	JOIN ... ON (), JOIN ... ON ()
 	###			to:		JOIN ( ... ) ON ( ... AND ...)
 	reg_ex = 'JOIN[ ]{1,}(.*)[ ]{1,}ON[ ]{1,}\((.*)[ ]{0,}\)'
 	p	= re.compile(reg_ex, re.IGNORECASE)
 	refjoinlist = []
 	fieldjoinlist = []
-	for i in sqljoin:
-		matches = p.search(sqljoin[i])
+	for s in sqljoin:
+		matches = p.search(s)
 		if matches is not None:
 			refjoinlist.append(matches.group(1))
 			fieldjoinlist.append(matches.group(2))
 
 	### comment the following line to use the orginal: JOIN ... ON (), JOIN ... ON ()
-	sqljoinstr = 'JOIN ' + ', '.join(refsqljoin) + ' AND '.join(fieldjoinlist)
-			
-	if sqlwhere:
-		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
-	else:
-		sqlwherestr = ''
-
-	sqlquery = "%s %s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder, sqllimit)
-	return sqlquery
-
-def queryFormatOptimized(queryinfo,tableselect):
-	"""
-	queryFormat: format the 'SQL WHERE' and figure out the tables to join.
-	"""
-	sqlquery = ""
-	sqlfrom = ""
-	sqljoin = []
-	sqlwhere = []
-	optimizedjoinlist = []
-	optimizedallonlist = []
-	alljoin={}
-	joinon={}
-	onjoin={}
-	allon={}
-	jointableref={}
-	wherejoin={}
-	listselect=[]
-	aliasdefined=[]
-	for key,value in queryinfo.items():
-		if value['known']:
-			continue
-		if type(value) is not type({}):
-			continue
-		tableclass = value['class']
-		a = value['alias']
-		j = value['join']
-		r = value['root']
-		w = value['where']
-
-		if r:
-			sqlfrom = sqlexpr.fromFormat(tableclass, a)
-			sqlorder = sqlexpr.orderFormat(a)
-			sqllimit = sqlexpr.limitFormat(value['limit'])
-			aliasdefined.append(a)
-		for field,id in j.items():
-			joinTable = queryinfo[id]
-			refclass = joinTable['class']
-			joinfield = refFieldName(tableclass, refclass, field)
-
-			## if data to join is already known, then
-			## we need to convert the join into a where
-			if queryinfo[id]['known'] is not None:
-				defid = queryinfo[id]['known'].dbid
-				w[joinfield] = defid
-				continue
-
-			fieldname = joinFieldName(a, joinfield)
-			joinonalias = joinTable['alias']
-			jointableref[joinonalias],allon[joinonalias] = sqlexpr.joinFormatDivided(fieldname, joinTable)
-			joinon[joinonalias]=a
-			onjoin[a]=joinonalias
-			if not joinonalias in optimizedjoinlist:
-				optimizedjoinlist.append(joinonalias)
-		if w:
-			if not a in optimizedjoinlist:
-				optimizedjoinlist.append(a)
-
-			sqlexprstr = sqlexpr.whereFormat(value)
-			if sqlexprstr:
-				sqlwhere.append(sqlexprstr)
-	if not tableselect in optimizedjoinlist:
-		optimizedjoinlist.append(tableselect)
-
-	for l in optimizedjoinlist:
-		if l not in allon.keys():
-			continue
-		if joinon.has_key(l):
-			if not joinon[l] in optimizedjoinlist:
-				optimizedjoinlist.append(joinon[l])
-			if not allon[l] in optimizedallonlist:
-				optimizedallonlist.append(allon[l])
-		if onjoin.has_key(l):
-			if not allon[onjoin[l]] in optimizedallonlist:
-				optimizedallonlist.append(allon[onjoin[l]])
-	optimizedtableref = set(jointableref.values())
-	optimizedallonset = set(optimizedallonlist)
-	if len(optimizedallonset) > 0:
-		sqljoinstr = 'JOIN (' + ','.join(optimizedtableref) + ') ON (' + ' AND '.join(optimizedallonset) + ')'
-	else:
-		sqljoinstr = ''
-
+	if len(sqljoin) > 1:
+		sqljoinstr = 'JOIN (' + ', '.join(refjoinlist) + ') ON ('+' AND '.join(fieldjoinlist)+')'
+		
 	if sqlwhere:
 		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
 	else:
