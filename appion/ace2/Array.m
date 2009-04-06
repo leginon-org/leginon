@@ -110,7 +110,9 @@ int compare_f64( const void * a, const void * b );
 	if ( new == nil ) return new;
 	
 	[new setFlag:CV_ARRAY_REFERS_DATA to:FALSE];
-	new->data = COPYV(data,memory);	
+	void * temp = malloc(memory);	
+	memcpy(temp,data,memory);
+	new->data = temp;
 	new->original = nil;
 	
 	return new;
@@ -306,7 +308,7 @@ int compare_f64( const void * a, const void * b );
 	fprintf(fp,"Type:  %s\n",TYPE_STRINGS[type]);
 	fprintf(fp,"Element Size: %u Bytes\n",(u32)esize);
 	fprintf(fp,"Number of Elements: %d\n",(u32)size);
-	fprintf(fp,"Memory: %u MB\n",(u32)(memory/MB));
+	fprintf(fp,"Memory: %2.2f MB\n",(f32)memory/MB);
 	fprintf(fp,"Dimensions: %u\n",ndim);
 	
 	fprintf(fp,"Bounds:  ");
@@ -528,9 +530,9 @@ int compare_f64( const void * a, const void * b );
 	
 	if ( type == totype ) return;
 
-	memory = esize * size;	
 	esize  = sizeFromType(totype);
-	
+	memory = esize * size;	
+		
 	if ( data != NULL && memory != 0 ) {
 		u32 scale_flag = [self getFlag: CV_ARRAY_DATA_SCALES];
 		u32 complex_flag = [self getFlag: CV_ARRAY_PREFERS_IMAGINARY];

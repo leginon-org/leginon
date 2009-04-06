@@ -114,6 +114,7 @@ int main (int argc, char **argv) {
 				t1 = CPUTIME;
 				fprintf(stderr,"Reading Image %s: ",arg);	
 				image = [Array readMRCFile:arg];
+				[image printInfoTo:stderr];
 				[image setFlag:CV_ARRAY_DATA_SCALES to: TRUE];
 				[image setTypeTo: TYPE_F64];
 				fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
@@ -162,14 +163,18 @@ int main (int argc, char **argv) {
 	fprintf(stderr,"Generating power spectrum...");	
 	[image generatePowerSpectrum];
 	u32 postbin = MIN([image sizeOfDimension:0],[image sizeOfDimension:1])/1024;
-	if ( postbin > 1 ) [image binBy:postbin];
+	if ( postbin > 1 ) {
+		fprintf(stderr,"binning by %d...",postbin);
+		[image binBy:postbin];
+	}
 	fprintf(stderr,"\t\t\tDONE in %2.2f seconds\n",CPUTIME-t1);
-
+	
 //----------------------------------------------------------------------------
 	
 	t1 = CPUTIME;
 	fprintf(stderr,"Finding edges for ellipse fitting...");	
 	ArrayP edges = [image deepCopy];
+	[edges printInfoTo:stderr];
 	[edges gaussianBlurWithSigma:edge_blur];
 	u32 edge_count = cannyedges2d([edges data],[edges sizeOfDimension:1],[edges sizeOfDimension:0],edge_mint,edge_maxt,5.0);
 
