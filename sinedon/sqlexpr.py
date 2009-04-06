@@ -735,15 +735,6 @@ def fromFormat(dataclass, alias=None):
 		sqlfrom += "AS %s " % backquote(alias)
 	return sqlfrom
 
-def joinFormatDivided(field, joinTable):
-	dataclass = joinTable['class']
-	dbname = dbconfig.getConfig(dataclass.__module__)['db']
-	dbname = backquote(dbname)
-	tablename = backquote(joinTable['class'].__name__)
-	alias = backquote(joinTable['alias'])
-	sqljoin = " JOIN %s.%s AS %s ON (%s = %s.%s) " % (dbname, tablename, alias, field, alias, backquote('DEF_ID'))
-	return "%s.%s AS %s" % (dbname,tablename,alias),"(%s = %s.%s)" % (field,alias,backquote('DEF_ID'))
-
 def joinFormat(field, joinTable):
 	dataclass = joinTable['class']
 	dbname = dbconfig.getConfig(dataclass.__module__)['db']
