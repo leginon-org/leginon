@@ -51,7 +51,7 @@ class AceTilt(object):
 	def getACE2Path(self):
 		unames = os.uname()
 		if unames[-1].find('64') >= 0:
-			exename = 'ace2_64.exe'
+			exename = 'ace2.exe'
 		else:
 			exename = 'ace2_32.exe'
 		ace2exe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
@@ -76,6 +76,15 @@ class AceTilt(object):
 				apDisplay.printError("Cound not read file "+self.params['filename'])
 		return imgarray
 
+		"""
+		2
+		1024 3072
+		3
+		1638	2457	3276
+		4
+		1364	2046	2728	3410
+		"""
+
 	##========================
 	def setupCoordList(self):
 		splitsize = self.params['splitsize']
@@ -83,15 +92,19 @@ class AceTilt(object):
 		coordlist = {}
 		for i in range(numsplits):
 			for j in range(numsplits):
-				xstart = int(self.imgshape[0]/float(numsplits)*i)
+				xcenter = int(self.imgshape[0]/float(2*numsplits)*(2*i+1))
+				ycenter = int(self.imgshape[1]/float(2*numsplits)*(2*j+1))
+				xstart = xcenter - splitsize/2
+				ystart = ycenter - splitsize/2
 				xend = xstart + splitsize
-				ystart = int(self.imgshape[1]/float(numsplits)*j)
 				yend = ystart + splitsize
-				if xend <= self.imgshape[0] and yend <= self.imgshape[1]:
-					key = "%04dx%04d"%(xstart+splitsize/2,ystart+splitsize/2)
+				if (xend <= self.imgshape[0] and yend <= self.imgshape[1]
+				 and xstart > 0 and ystart > 0):
+					key = "%05dx%05d"%(xcenter,ycenter)
 					print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
 					#imgdict[key] = imgarray[xstart:xend, ystart:yend]
-		return coordlist 
+					coordlist[key] = (xstart, xend, ystart, yend)
+		return coordlist
 
 	##========================
 	def getSubImage(self, imgarray, x, y):
@@ -100,12 +113,15 @@ class AceTilt(object):
 		xend = xstart + splitsize
 		ystart = y - splitsize/2
 		yend = ystart + splitsize
-		if xend <= self.imgshape[0] and yend <= self.imgshape[1]
-			and xstart > 0 and ystart > 0:
+		print (x,y), "-->", (xstart, xend, ystart, yend)
+		if (xend <= self.imgshape[0] and yend <= self.imgshape[1]
+		 and xstart > 0 and ystart > 0):
 			key = "%04dx%04d"%(xstart+splitsize/2,ystart+splitsize/2)
 			#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
 			subarray = imgarray[xstart:xend, ystart:yend]
-		return subarray
+			return subarray
+		else:
+			return None
 
 	##========================
 	def getCtfInfo(self, imgarray):
@@ -121,7 +137,8 @@ class AceTilt(object):
 			%(self.ace2exe, imgfile, self.params['cs'], self.params['kv'], self.params['apix']))
 
 		### run ace2
-		aceoutf = open("ace2.stdout", "a")
+		aceoutf = open("ace2.stdout", "w")
+		print acecmd
 		ace2proc = subprocess.Popen(acecmd, shell=True, stdout=aceoutf, stderr=aceoutf)
 		ace2proc.wait()
 
@@ -321,26 +338,46 @@ class AceTilt(object):
 		tiltangle = math.degrees(math.atan2(maxslope, splitsize))
 		print " tilt-angle =  %.2f degrees"%(tiltangle)
 
+	#=========================
+	def printImageInfo(self, im):
+		"""
+		prints out image information good for debugging
+		"""
+		#print " ... size: ",im.shape
+		#print " ... sum:  ",im.sum()
+		avg1 = im.mean()
+		stdev1 = im.std()
+		min1 = im.min()
+		max1 = im.max()
 
+		print " ... shape: "+str(im.shape)
+		print " ... avg:  %.1f +- %.1f"%(avg1, stdev1)
+		print " ... range: %.1f <> %.1f"%(min1,max1)
+
+		return
 
 	##========================
 	def run(self):
 		imgarray = self.openFile()
 		self.imgshape = imgarray.shape
+		self.printImageInfo(imgarray) 
 		coordlist = self.setupCoordList()
 
 		ctfdict = {}
 		self.count = 0
 		### process image pieces
 		print "processing image pieces "+str(len(coordlist))+" total"
-		for key in coordlist:
+		keys = coordlist.keys()
+		keys.sort()
+		for key in keys:
 			(xstr,ystr) = key.split('x')
 			x = int(xstr)
 			y = int(ystr)
 			self.count += 1
-			imgarray = getSubImage(imgarray, x, y)
+			subarray = self.getSubImage(imgarray, x, y)
+			self.printImageInfo(subarray) 
 			imgfile = "splitimage-"+key+".dwn.mrc"
-			mrc.write(imgarray, imgfile)
+			mrc.write(subarray, imgfile)
 			ctfvalues = None
 			while ctfvalues is None:
 				ctfvalues = self.processImage(imgfile)
