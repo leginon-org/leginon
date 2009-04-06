@@ -448,6 +448,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		else:
 			apDisplay.printWarning("not committing results to DB")
 
+		apFile.removeFilePattern("alignments/alignedstack*.spi")
+
 
 #=====================
 if __name__ == "__main__":
