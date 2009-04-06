@@ -690,7 +690,7 @@ class _multipleQueries:
 			try:
 				getpath = root.getpath
 			except AttributeError:
-				message = '%s object contains file references, needs a path() method' % (root.__class__,)
+				message = '%s object contains file references, needs a getpath() method' % (root.__class__,)
 				raise AttributeError(message)
 			imagepath = getpath()
 		## now set path in FileReferences, read image
