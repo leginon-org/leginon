@@ -1027,8 +1027,24 @@ def queryFormatOptimized_original(queryinfo,tableselect):
 		if onjoin.has_key(l):
 			if not alljoinon[onjoin[l]] in sqljoin:
 				sqljoin.append(alljoinon[onjoin[l]])
-			
+
 	sqljoinstr = ' '.join(sqljoin)
+
+	### convert:	JOIN ... ON (), JOIN ... ON ()
+	###			to:		JOIN ( ... ) ON ( ... AND ...)
+	reg_ex = 'JOIN[ ]{1,}(.*)[ ]{1,}ON[ ]{1,}\((.*)[ ]{0,}\)'
+	p	= re.compile(reg_ex, re.IGNORECASE)
+	refjoinlist = []
+	fieldjoinlist = []
+	for i in sqljoin:
+		matches = p.search(sqljoin[i])
+		if matches is not None:
+			refjoinlist.append(matches.group(1))
+			fieldjoinlist.append(matches.group(2))
+
+	### comment the following line to use the orginal: JOIN ... ON (), JOIN ... ON ()
+	sqljoinstr = 'JOIN ' + ', '.join(refsqljoin) + ' AND '.join(fieldjoinlist)
+			
 	if sqlwhere:
 		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
 	else:
