@@ -39,6 +39,22 @@ class CorrectorClient(object):
 		self.node = node
 		self.channel = 0
 
+	def acquireCorrectedCameraImageData(self):
+		## acquire image and scope/camera params
+		imagedata = self.node.instrument.getData(leginondata.CameraImageData)
+		imarray = imagedata['image']
+
+		camdata = imagedata['camera']
+		camstate = leginondata.CorrectorCamstateData()
+		camstate['dimension'] = camdata['dimension']
+		camstate['offset'] = camdata['offset']
+		camstate['binning'] = camdata['binning']
+		ccdcamera = camdata['ccdcamera']
+		scopedata = imagedata['scope']
+		corrected = self.correct(original=imarray, ccdcamera=ccdcamera, camstate=camstate, scopedata=scopedata)
+		imagedata['image'] = corrected
+		return imagedata
+
 	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel, readimages=True):
 		if type == 'dark':
 			imagetemp = leginondata.DarkImageData()
