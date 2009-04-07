@@ -123,7 +123,7 @@ var help = {
 /******* IMAGIC terms ********/
 
 		'lpfilt' : 'This should be about 1/10 to 1/50 of the particle diameter, <I>e.g.</I> for a particle with diameter 150 &Aring;, a low pass of 5-10 &Aring; works pretty well.<BR/><BR/> NOTE: Imagic uses filtering values between 0 and 1.  This parameter will be converted in the python script to between 0-1 for use in Imagic.',
-		'hpfilt' : 'This removes any darkness gradients in the image.  Typically you could disable this by setting it equal to zero, otherwise 200 works pretty well for IMAGIC.<BR/><BR/> NOTE: Imagic uses filtering values between 0 and 1.  This parameter will be converted in the python script to between 0-1 for use in Imagic.',	
+		'hpfilt' : 'This removes any darkness gradients in the image.  Typically you could disable this by setting it equal to zero, otherwise 400-600 works pretty well for IMAGIC.<BR/><BR/> NOTE: Imagic uses filtering values between 0 and 1.  This parameter will be converted in the python script to between 0-1 for use in Imagic.',	
 		'mask_radius' :'The mask radius is used during masking / filtering of the stack AND during the creation of eigenimages.  The output images will be normalized inside a circular mask with this radius.  The radius should be chosen such that no part of the molecules are cut off by the resulting mask.  This value may be specified as a fraction of the inner radius of the image or in pixels.  Radius = 1 means that the whole image is used for normalization.',
 		'mask_dropoff' : 'If you specify a drop-off the mask will be a soft mask.  The drop-off parameter determines the width of the soft edge (halfwidth of soft-edge Gaussian drop-off) by which the circular mask is smoothed.  A value of 0 specifies a hard mask.',
 		'transalign_iter' : 'Translational alignment in imagic has 3 basic steps.  1) A total sum of your images is created, 2) The total sum is rotationally averaged, 3) boxed particles are translationally (X-Y) aligned to the rotationally averaged sum.  In the imagic log file you will be able to see how the translational alignment converges with each iteration.  Generally this happens after ~5 iterations.',
@@ -159,6 +159,21 @@ var help = {
 		'numiter_mra' : 'Number of Iterations for multi-reference alignment. IMAGIC limits this value to 5, since the good images will typically be ready after 2 or 3 iterations, whereas the bad images go on forever',
 		'minrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0 means that the starting point is the center of the image',
 		'maxrad' : 'Specify which radial parts of the images are to be included in the rotational alignment. The suggested value of 0.7 means that all radii up to 70% of the image will be included in the search',
+		'projcount' : 'number of projections to be made from the input model',
+		'projstdev' : 'standard deviation of gaussian distribution of euler angles about each axis. The model will be projected randomly in the the XY, XZ, and YZ coordinates with euler angles determined by a random gaussian distribution with the given standard deviation. A value of ~5 will give 3 preferred orientations. A value of ~30 will produce an approximately random distribution across all euler angles without a preferred orientation',
+		'shiftrad' : 'radius of of random shift for each particle. Should not be too much, otherwise the particles will not fit inside box', 
+		'rotang' : 'angle of random rotation for each particle', 
+		'flip' : 'randomly flip the projections along with shifts and rotations',
+		'snr1' : 'first level of noise, simulating beam damage & structural noise. Estimated as 1.8 by Frank et. al.',
+		'snrtot' : 'signal-to-noise ratio of final particles, simulating beam damage, structural noise, & digitization. Estimated as 0.05 by Frank et. al.', 
+		'df1' : 'defocus value in x direction (represented as the mean, if randomization is checked)',
+		'df2' : 'defocus value in x direction (represented as the mean, if randomization is checked)',
+		'astigmatism' : 'Astigmatism of CTF. Only input if you want to apply an astigmatic ctf',
+		'randomdef' : 'randomize defocus values when applying CTF (df1 and df2 would represent the mean)',
+		'randdefstd' : 'standard deviation (in microns) for the gaussian distribution of defoci randomizations about the mean',
+		'ace2correct' : 'correct images after applying CTF. Several options are given',
+		'correctiontype' : 'Three options are available: <br><br><b> 1) Applied CTF </b> This is the simplest method, which simply corrects the images by wiener filters the particles using the same defocus values as those that were applied. <br><br><b> 2) Use ACE2 Estimate </b> This method actually generates raw micrographs, and then uses ACE2 to estimate the applied defocus. These Estimated values are then used to correct each particle, simulating reality. Of course, the problem is that estimating the defocus values of synthetic data is quite easy. <br><br><b> 3) Perturb Applied CTF </b> The correction values will be perturbed according to a gaussian mean (the applied CTF) and standard deviation (specified below) of the applied defoci. If you want to introduce errors in the correction phase, use this option.',
+		'ace2correct_std' : 'used only in conjunction with the perturbation option above, if you want to introduce random errors in the CTF correction process',		
 	},
 
 	'eman' : {
