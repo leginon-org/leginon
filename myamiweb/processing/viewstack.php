@@ -185,10 +185,10 @@ function runCommonLines() {
 		}
 	}
 	if (selindex!="") {
-		window.open("createmodel.php?expId="+expId+"&include="+selindex+"&clusterId="+clusterId+"",'height=250,width=400');
+		window.open("createmodel.php?expId="+expId+"&include="+selindex+"&clusterid="+clusterId+"",'height=250,width=400');
 	} 
 	if (exindex!="") {
-		window.open("createmodel.php?expId="+expId+"&exclude="+exindex+"&clusterId="+clusterId+"",'height=250,width=400');
+		window.open("createmodel.php?expId="+expId+"&exclude="+exindex+"&clusterid="+clusterId+"",'height=250,width=400');
 	}
 }
 

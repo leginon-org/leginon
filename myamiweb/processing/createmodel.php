@@ -163,6 +163,9 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 	// new to this form
 	$rounds = $_POST['rounds'] ? $_POST['rounds'] : 3;
 	$commit = $_POST['commit']=='off' ? '' : ' CHECKED';
+	$descript = $_POST['descript'] ? $_POST['descript'] : '';
+	$mask = $_POST['mask'] ? $_POST['mask'] : '';
+	$imask = $_POST['imask'] ? $_POST['imask'] : '';
 
 	if (!$clusterid)
 		createEMANInitialModelForm("<B>ERROR:</B> No Cluster ID was selected");
@@ -190,7 +193,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
+		echo "<font color='red' size='+2'>$extra</font>\n<hr />\n";
 	}
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
 
@@ -232,7 +235,7 @@ function createSelectParameterForm($extra=false, $title='createModel.py Launcher
 	echo "<br/><br/>\n";
 
 	echo "<b>Description:</b><br />\n";
-	echo "<textarea name='descript' rows='3'cols='70'>$description</textarea>\n";
+	echo "<textarea name='descript' rows='3'cols='70'>$descript</textarea>\n";
 	echo "<br/><br/>\n";
 
 	echo "<input type='checkbox' name='commit' $commit>\n";
@@ -454,12 +457,12 @@ function runCreateModel() {
 		$password = $_SESSION['password'];
 
 		if (!($user && $password))
-			createEMANInitialModelForm("<B>ERROR:</B> You must be logged in to submit");
+			createSelectParameterForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'createModel');
+		$sub = submitAppionJob($command, $outdir, $runname, $expId, 'createModel');
 		// if errors:
 		if ($sub)
-			createEMANInitialModelForm("<b>ERROR:</b> $sub");
+			createSelectParameterForm("<b>ERROR:</b> $sub");
 		exit();
 	} else {
 		processing_header("Creating an Initial Model", "Creating an Initial Model");
