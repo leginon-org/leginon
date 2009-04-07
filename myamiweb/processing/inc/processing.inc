@@ -891,6 +891,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 
 	$cmd = "mkdir -p $procdir;";
 	exec_over_ssh($host, $user, $pass, $cmd, True);
+	sleep(1);
 	if (!file_exists($procdir))
 		return "could not create directory, check folder permissions";
 	if ($testimg){
