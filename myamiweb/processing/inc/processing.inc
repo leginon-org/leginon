@@ -840,7 +840,7 @@ function getNumberOfRequiredNodes($nproc, $ppn) {
 	return array($nodes, $ppn);
 }
 
-function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
+function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 		$testimg=False, $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0) {
 	$particle=new particleData();
 
@@ -878,23 +878,26 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 	if (is_array($command)) {
 		$apcmd = array();
 		foreach ($command as $cmd) {
-        		$filtcommand = ereg_replace("\'","", $cmd);;
+			$filtcommand = ereg_replace("\'","", $cmd);;
 			$apcmd[] = "webcaller.py '".$filtcommand."' $procdir/$logfile"."\n";
 		}
 	}
 	else {
-	        // create appion command
-	        $filtcommand = ereg_replace("\'","", $command);
-	        //$filtcommand = preg_replace("/[\n\r]/", " -- ", $filtcommand);
+		// create appion command
+		$filtcommand = ereg_replace("\'","", $command);
+		//$filtcommand = preg_replace("/[\n\r]/", " -- ", $filtcommand);
 		$apcmd = "webcaller.py '".$filtcommand."' $procdir/$logfile";
 	}
 
 	$cmd = "mkdir -p $procdir;";
+	exec_over_ssh($host, $user, $pass, $cmd, True);
+	if (!file_exists($procdir))
+		return "could not create directory, check folder permissions";
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
 		$cmd .= "cd $procdir; $apcmd; exit;";
 		// this shouldn't be necessary -- neil, it is done in python
-		if ($xvfb) $cmd = "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &; $cmd; kill %1;";
+		//if ($xvfb) $cmd = "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &; $cmd; kill %1;";
 		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
 		return;
 	} else {
@@ -911,11 +914,15 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 		$jobtext .= "#PBS -l cput=480:00:00\n";
 		#$jobtext .= "#PBS -k oe\n";
 		$jobtext .= "#PBS -r n\n\n";
+		$dbprojectid = getProjectFromExpId($expId);
 		$projectid = $_SESSION['projectId'] ? $_SESSION['projectId'] : "";
+		if ($dbprojectid != $projectid)
+			return "Database project id ($dbprojectid) does not match session project id ($projectid)";
 		$jobtext .= "updateAppionDB.py $jobid R $projectid\n\n";
 
 		// create virtual window for matlab images
-		if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
+		// this shouldn't be necessary -- neil, it is done in python
+		//if ($xvfb) $jobtext .= "Xvfb :25 -ac -pn -screen 0 800x800x8  -fp /usr/share/X11/fonts/misc -sp /usr/lib64/xserver/SecurityPolicy -co /usr/share/X11/rgb &\n";
 		if (is_array($command)) {
 			foreach ($apcmd as $iteration) {
 				$jobtext .= "$iteration\n";
@@ -934,21 +941,26 @@ function submitAppionJob($command,$outdir,$runname,$expId,$jobtype,
 
 		// copy file to run directory
 		$cmd .= "cp $tmpfile $procdir/$jobfile;\n";
-		exec_over_ssh($_SERVER['SERVER_ADDR'],$user,$pass,$cmd, True);
+		exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
 
 		processing_header("Appion Job Submission","Appion Job Submission");
 		echo "<table width='600'>\n";
 		echo "<tr><td>Appion Directory</td><td>$procdir</td></tr>\n";
 		echo "<tr><td>Job File Name</td><td>$jobfile</td></tr>\n";
+		echo "<tr><td>Hostname</td><td>$host</td></tr>\n";
+		echo "<tr><td>Username</td><td>$user</td></tr>\n";
+		echo "<tr><td>Local server ip</td><td>".$_SERVER['SERVER_ADDR']."</td></tr>\n";
+		echo "<tr><td>Project Id</td><td>".$_SESSION['projectId']."</td></tr>\n";
 		$cmd = "cd $procdir; qsub $jobfile;\n";
 
 		// submit job on cluster
-		$jobnum = exec_over_ssh($host, $user, $pass, $cmd, True);
-		ereg("([0-9]{1,})", $jobnum, $regs);
+		$jobdata = exec_over_ssh($host, $user, $pass, $cmd, True);
+
+		ereg("([0-9]{1,})", $jobdata, $regs);
 		$jobnum = $regs[1];
 		if (!is_numeric($jobnum)) {
 			echo "</table><p>\n";
-			echo "ERROR in job submission.  Check the cluster\n";
+			echo "ERROR in job submission. Check the cluster\n".$jobdata."\n".$regs."\n";
 			writeBottom();
 			exit;
 		}
