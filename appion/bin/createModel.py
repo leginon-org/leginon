@@ -184,7 +184,8 @@ class createModelScript(appionScript.AppionScript):
 			kf = open(self.params['keepfile'], "w")
 			count = 0
 			for clusternum in range(numclusters):
-				if clusternum in includelist or not clusternum in excludelist:
+				if ( (len(includelist) > 0 and clusternum in includelist) 
+				 or (len(excludelist) > 0 and not clusternum in excludelist) ):
 					count+=1
 					kf.write(str(clusternum)+"\n")
 			kf.close()
@@ -207,12 +208,13 @@ class createModelScript(appionScript.AppionScript):
 	def start(self):
 		clusterstack, numclusters = self.getClusterStack()
 
-		if self.params['numkeep'] is not None and numclusters/10 < int(self.params['numkeep']):
-			apDisplay.printWarning("particle number of "+ self.params['numkeep'] 
-				+ " is greater than 10% of the number of selected classes")
-		elif self.params['numkeep'] is None:
-			self.params['numkeep'] = int(math.floor(numclusters/20.0))
-			apDisplay.printWarning("numkeep was not defined, using %d particles"%(self.params['numkeep']))
+		if self.params['method'] != 'any':
+			if self.params['numkeep'] is not None and numclusters/10 < int(self.params['numkeep']):
+				apDisplay.printWarning("particle number of "+ self.params['numkeep'] 
+					+ " is greater than 10% of the number of selected classes")
+			elif self.params['numkeep'] is None:
+				self.params['numkeep'] = int(math.floor(numclusters/20.0))+1
+				apDisplay.printWarning("numkeep was not defined, using %d particles"%(self.params['numkeep']))
 
 		nproc = apParam.getNumProcessors()
 
