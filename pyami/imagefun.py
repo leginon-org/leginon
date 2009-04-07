@@ -39,7 +39,7 @@ def despike(image, size=11, sigma=3.5, debug=0):
 	numextension.despike(image, size, sigma, debug)
 
 def medianSeries(series):
-	return numpy.median(series)
+	return numpy.median(series, 0)
 
 def averageSeries(series):
 	return numpy.mean(series, 0)
