@@ -158,7 +158,7 @@ class CorrectorClient(object):
 		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
 		if dark is not None and norm is not None:
 			print 'DARK', id(dark)
-			print 'BRIGHT', id(bright)
+			print 'NORM', id(norm)
 			diff = raw - dark
 			r = diff * norm
 			## remove nan and inf
