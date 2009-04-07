@@ -111,8 +111,6 @@ class SimCCDCamera(ccdcamera.CCDCamera):
 
 	## exposure time
 	time.sleep(self.exposure_time)
-	## extra time for readout simulation
-	time.sleep(10)
 
         if self.exposure_type == 'dark' or self.exposure_time == 0:
             return numpy.zeros(shape, numpy.uint16)
