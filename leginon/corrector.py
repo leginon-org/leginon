@@ -31,12 +31,13 @@ class ImageCorrection(remotecall.Object):
 	def setChannel(self, channel):
 		self.node.setChannel(channel)
 
+ref_cache = {}
+ref_cache_id = {}
+
 class CorrectorClient(object):
 	def __init__(self, node):
 		self.node = node
 		self.channel = 0
-		self.ref_cache = {}
-		self.ref_cache_id = {}
 
 	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel, readimages=True):
 		if type == 'dark':
@@ -120,11 +121,11 @@ class CorrectorClient(object):
 
 	def getFromCache(self, camstate, type, ccdcameraname, scopedata, channel):
 		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
-		cachedim = self.ref_cache[key]
+		cachedim = ref_cache[key]
 		newref = self.researchRef(camstate, type, ccdcameraname, scopedata, channel, readimages=False)
-		if newref.dbid != self.ref_cache_id[key]:
-			self.ref_cache[key] = newref['image']
-			self.ref_cache_id[key] = newref.dbid
+		if newref.dbid != ref_cache_id[key]:
+			ref_cache[key] = newref['image']
+			ref_cache_id[key] = newref.dbid
 			return newref['image']
 		else:
 			return cachedim
@@ -145,8 +146,8 @@ class CorrectorClient(object):
 		if ref:
 			## make it float to do float math later
 			image = numpy.asarray(ref['image'], numpy.float32)
-			self.ref_cache[key] = image
-			self.ref_cache_id[key] = ref.dbid
+			ref_cache[key] = image
+			ref_cache_id[key] = ref.dbid
 		else:
 			image = None
 		return image
@@ -156,6 +157,8 @@ class CorrectorClient(object):
 		dark = self.retrieveRef(camstate, 'dark', ccdcameraname, scopedata, channel)
 		norm = self.retrieveRef(camstate, 'norm', ccdcameraname, scopedata, channel)
 		if dark is not None and norm is not None:
+			print 'DARK', id(dark)
+			print 'BRIGHT', id(bright)
 			diff = raw - dark
 			r = diff * norm
 			## remove nan and inf
@@ -325,7 +328,7 @@ class CorrectorClient(object):
 		ht = scopedata['high tension']
 		## store in cache
 		key = self.refKey(camstate, type, ccdcameraname, scopedata, channel)
-		self.ref_cache[key] = numdata
+		ref_cache[key] = numdata
 
 		## store in database
 		if type == 'dark':
@@ -348,7 +351,7 @@ class CorrectorClient(object):
 		except node.PublishError, e:
 			self.node.logger.error('Publishing reference image failed: %s' % (e,))
 			return None
-		self.ref_cache_id[key] = imagetemp.dbid
+		ref_cache_id[key] = imagetemp.dbid
 		self.node.logger.info('Reference image published')
 		return imagetemp
 
@@ -668,7 +671,6 @@ class Corrector(node.Node):
 		clipmax = self.settings['clip max']
 		dsize = self.settings['despike size']
 		dthresh = self.settings['despike threshold']
-		#corrected = self.correct(ccdcamera, numimage, corstate, scopedata)
 		corrected = self.corclient.correct(ccdcamera, numimage, corstate, scopedata, despike=despike, despikesize=dsize, despikethresh=dthresh, clip=(clipmin,clipmax))
 		self.stopTimer('correct')
 		newdata = leginondata.CorrectedCameraImageData(initializer=imagedata,
