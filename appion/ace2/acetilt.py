@@ -90,6 +90,30 @@ class AceTilt(object):
 		splitsize = self.params['splitsize']
 		numsplits = self.params['numsplits']
 		coordlist = {}
+		xsize = self.imgshape[0]-splitsize
+		ysize = self.imgshape[1]-splitsize
+		for i in range(numsplits):
+			for j in range(numsplits):
+				xcenter = int(xsize/float(numsplits-1)*i)+splitsize/2
+				ycenter = int(ysize/float(numsplits-1)*j)+splitsize/2
+				xstart = xcenter - splitsize/2
+				ystart = ycenter - splitsize/2
+				xend = xstart + splitsize
+				yend = ystart + splitsize
+				if (xend <= self.imgshape[0] and yend <= self.imgshape[1]
+				 and xstart >= 0 and ystart >= 0):
+					key = "%05dx%05d"%(xcenter,ycenter)
+					#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
+					#imgdict[key] = imgarray[xstart:xend, ystart:yend]
+					coordlist[key] = (xstart, xend, ystart, yend)
+		return coordlist
+
+
+	##========================
+	def setupCoordListOld(self):
+		splitsize = self.params['splitsize']
+		numsplits = self.params['numsplits']
+		coordlist = {}
 		for i in range(numsplits):
 			for j in range(numsplits):
 				xcenter = int(self.imgshape[0]/float(2*numsplits)*(2*i+1))
@@ -99,9 +123,9 @@ class AceTilt(object):
 				xend = xstart + splitsize
 				yend = ystart + splitsize
 				if (xend <= self.imgshape[0] and yend <= self.imgshape[1]
-				 and xstart > 0 and ystart > 0):
+				 and xstart >= 0 and ystart >= 0):
 					key = "%05dx%05d"%(xcenter,ycenter)
-					print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
+					#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
 					#imgdict[key] = imgarray[xstart:xend, ystart:yend]
 					coordlist[key] = (xstart, xend, ystart, yend)
 		return coordlist
@@ -113,9 +137,9 @@ class AceTilt(object):
 		xend = xstart + splitsize
 		ystart = y - splitsize/2
 		yend = ystart + splitsize
-		print (x,y), "-->", (xstart, xend, ystart, yend)
+		#print (x,y), "-->", (xstart, xend, ystart, yend)
 		if (xend <= self.imgshape[0] and yend <= self.imgshape[1]
-		 and xstart > 0 and ystart > 0):
+		 and xstart >= 0 and ystart >= 0):
 			key = "%04dx%04d"%(xstart+splitsize/2,ystart+splitsize/2)
 			#print key, "==>", xstart, ":", xend, ",", ystart, ":", yend
 			subarray = imgarray[xstart:xend, ystart:yend]
@@ -130,15 +154,15 @@ class AceTilt(object):
 		return processImage(imgfile)
 
 	##========================
-	def processImage(self, imgfile, msg=False):
+	def processImage(self, imgfile, edgeblur=8, msg=False):
 
 		### make command line
-		acecmd = ("%s -i %s -c %.2f -k %d -a %.6f"
-			%(self.ace2exe, imgfile, self.params['cs'], self.params['kv'], self.params['apix']))
+		acecmd = ("%s -i %s -c %.2f -k %d -a %.3f -e %d,0.001 -b 1"
+			%(self.ace2exe, imgfile, self.params['cs'], self.params['kv'], self.params['apix'], edgeblur))
 
 		### run ace2
 		aceoutf = open("ace2.stdout", "w")
-		print acecmd
+		#print acecmd
 		ace2proc = subprocess.Popen(acecmd, shell=True, stdout=aceoutf, stderr=aceoutf)
 		ace2proc.wait()
 
@@ -194,148 +218,89 @@ class AceTilt(object):
 		if ampconst < -0.01 or ampconst > 80.0:
 			apDisplay.printWarning("bad amplitude contrast, not committing values to database")
 			return None
+		if ctfvalues['confidence'] < 0.6:
+			sys.stderr.write("c")
+			#apDisplay.printWarning("bad confidence")
+			return None
 
 		return ctfvalues
 
 	##========================
-	def fitPlaneToCtf(self, imgarray):
+	def fitPlaneToCtf(self, ctfdict):
 		"""
 		performs a two-dimensional linear regression and subtracts it from an image
 		essentially a fast high pass filter
 		"""
-		def retx(y,x):
-			return x
-		def rety(y,x):
-			return y
-		count = float((imgarray.shape)[0]*(imgarray.shape)[1])
-		xarray = numpy.fromfunction(retx, imgarray.shape)
-		yarray = numpy.fromfunction(rety, imgarray.shape)
+		### convert dict to 3 numpy arrays
+		xarray = []
+		yarray = []
+		zarray = []
+		confarray = []
+		count = 0
+		for key in ctfdict.keys():
+			(xstr,ystr) = key.split('x')
+			x = int(xstr)
+			y = int(ystr)
+			ctf = ctfdict[key]
+			if ctf is None:
+				continue
+			z = (ctf['defocus1']+ctf['defocus2'])/2.0
+			xarray.append(x)
+			yarray.append(y)
+			zarray.append(z)
+			confarray.append(ctf['confidence'])
+			count += 1
+		xarray = numpy.array(xarray, dtype=numpy.float32)
+		yarray = numpy.array(yarray, dtype=numpy.float32)
+		zarray = numpy.array(zarray, dtype=numpy.float32)
+		meanconf = numpy.array(confarray, dtype=numpy.float32).mean()
+		print " mean conf = %.4f"%(meanconf)
+
+		### running sums
 		xsum = float(xarray.sum())
 		xsumsq = float((xarray*xarray).sum())
-		ysum = xsum
-		ysumsq = xsumsq
+		ysum = float(yarray.sum())
+		ysumsq = float((yarray*yarray).sum())
 		xysum = float((xarray*yarray).sum())
-		xzsum = float((xarray*imgarray).sum())
-		yzsum = float((yarray*imgarray).sum())
-		zsum = imgarray.sum()
-		zsumsq = (imgarray*imgarray).sum()
-		xarray = xarray.astype(numpy.float32)
-		yarray = yarray.astype(numpy.float32)
+		xzsum = float((xarray*zarray).sum())
+		yzsum = float((yarray*zarray).sum())
+		zsum = zarray.sum()
+		zsumsq = (zarray*zarray).sum()
+
+		### linear solve for plane parameters
 		leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
 		rightmat = numpy.array( [xzsum, yzsum, zsum] )
 		resvec = linalg.solve(leftmat,rightmat)
 		xslope = resvec[0]
 		yslope = resvec[1]
 		print "plane_regress: "
-		print " x-slope =  %.2e m"%(xslope)
-		print " y-slope =  %.2e m"%(yslope)
+		print " x-slope =  %.2e m/pixel"%(xslope)
+		print " y-slope =  %.2e m/pixel"%(yslope)
 		print " xy-intercept =  %.2e m"%(resvec[2])
 
-		tiltaxis = math.degrees(math.atan2(-yslope,xslope))
-		print " tilt axis angle = %.2f degrees"%(tiltaxis)
-
+		### calculate residual
 		newarray = xarray*xslope + yarray*yslope + resvec[2]
-		#print newarray
-		diffarray = imgarray - newarray
-		#print diffarray
+		#print "Measured=", zarray
+		#print "Calculated=", newarray
+		diffarray = zarray - newarray
+		#print "Difference=", diffarray
 		rmserror = math.sqrt( (diffarray*diffarray).mean() )
 		print " rms error = %.2e m"%(rmserror)
+		meanz = newarray.mean()
+		print " confidence = %.4f"%(1.0-10.0*rmserror/abs(meanz))
 
-		#print " max1-slope =  %.2e m"%(xslope*math.cos(math.radians(tiltaxis)))
-		#print " max2-slope =  %.2e m"%(yslope*math.sin(math.radians(tiltaxis)))
-
-		maxslope = abs(xslope*math.cos(math.radians(tiltaxis))) + abs(yslope*math.sin(math.radians(tiltaxis)))
-		print " max-slope =  %.2e m"%(maxslope)
-		if abs(maxslope) < max(abs(xslope),abs(yslope)):
-			print "ERROR in max slope calculation"
-
-		#print " num1-pix =  %.1f pixels"%(self.imgshape[1]*math.cos(math.radians(tiltaxis)))
-		#print " num2-pix =  %.1f pixels"%(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
-		numpix = abs(self.imgshape[1]*math.cos(math.radians(tiltaxis))) + abs(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
-		#print " num-pix =  %.1f pixels"%(numpix)
-		splitpix = numpix/float(self.params['numsplits'])
-		#print " split-pix =  %.1f pixels"%(splitpix)
-
-		splitsize = self.params['apix']*1.0e-10*splitpix
-		#print " split-size =  %.2e m"%(splitsize)
-		
-		#if abs(maxslope) > abs(splitsize):
-		#	print "invalid tilt:", maxslope, splitsize
-		#	return
-
-		print " angle ratio =  %.2e / %.2e => %.4f "%(maxslope,splitsize,maxslope/splitsize)
-		tiltangle = math.degrees(math.atan2(maxslope, splitsize))
-		print " tilt-angle =  %.2f degrees"%(tiltangle)
-
-
-	##========================
-	def fitPlaneToCtf(self, imgarray):
-		"""
-		performs a two-dimensional linear regression and subtracts it from an image
-		essentially a fast high pass filter
-		"""
-		def retx(y,x):
-			return x
-		def rety(y,x):
-			return y
-		count = float((imgarray.shape)[0]*(imgarray.shape)[1])
-		xarray = numpy.fromfunction(retx, imgarray.shape)
-		yarray = numpy.fromfunction(rety, imgarray.shape)
-		xsum = float(xarray.sum())
-		xsumsq = float((xarray*xarray).sum())
-		ysum = xsum
-		ysumsq = xsumsq
-		xysum = float((xarray*yarray).sum())
-		xzsum = float((xarray*imgarray).sum())
-		yzsum = float((yarray*imgarray).sum())
-		zsum = imgarray.sum()
-		zsumsq = (imgarray*imgarray).sum()
-		xarray = xarray.astype(numpy.float32)
-		yarray = yarray.astype(numpy.float32)
-		leftmat = numpy.array( [[xsumsq, xysum, xsum], [xysum, ysumsq, ysum], [xsum, ysum, count]] )
-		rightmat = numpy.array( [xzsum, yzsum, zsum] )
-		resvec = linalg.solve(leftmat,rightmat)
-		xslope = resvec[0]
-		yslope = resvec[1]
-		print "plane_regress: "
-		print " x-slope =  %.2e m"%(xslope)
-		print " y-slope =  %.2e m"%(yslope)
-		print " xy-intercept =  %.2e m"%(resvec[2])
-
+		### angle calculations
 		tiltaxis = math.degrees(math.atan2(-yslope,xslope))
-		print " tilt axis angle = %.2f degrees"%(tiltaxis)
-
-		newarray = xarray*xslope + yarray*yslope + resvec[2]
-		#print newarray
-		diffarray = imgarray - newarray
-		#print diffarray
-		rmserror = math.sqrt( (diffarray*diffarray).mean() )
-		print " rms error = %.2e m"%(rmserror)
-
+		print " tilt axis angle = %.2f degrees"%(90-tiltaxis)
 		#print " max1-slope =  %.2e m"%(xslope*math.cos(math.radians(tiltaxis)))
 		#print " max2-slope =  %.2e m"%(yslope*math.sin(math.radians(tiltaxis)))
-
 		maxslope = abs(xslope*math.cos(math.radians(tiltaxis))) + abs(yslope*math.sin(math.radians(tiltaxis)))
-		print " max-slope =  %.2e m"%(maxslope)
+		print " max-slope =  %.2e m/pixel"%(maxslope)
 		if abs(maxslope) < max(abs(xslope),abs(yslope)):
 			print "ERROR in max slope calculation"
-
-		#print " num1-pix =  %.1f pixels"%(self.imgshape[1]*math.cos(math.radians(tiltaxis)))
-		#print " num2-pix =  %.1f pixels"%(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
-		numpix = abs(self.imgshape[1]*math.cos(math.radians(tiltaxis))) + abs(self.imgshape[0]*math.sin(math.radians(tiltaxis)))
-		#print " num-pix =  %.1f pixels"%(numpix)
-		splitpix = numpix/float(self.params['numsplits'])
-		#print " split-pix =  %.1f pixels"%(splitpix)
-
-		splitsize = self.params['apix']*1.0e-10*splitpix
-		#print " split-size =  %.2e m"%(splitsize)
-		
-		#if abs(maxslope) > abs(splitsize):
-		#	print "invalid tilt:", maxslope, splitsize
-		#	return
-
-		print " angle ratio =  %.2e / %.2e => %.4f "%(maxslope,splitsize,maxslope/splitsize)
-		tiltangle = math.degrees(math.atan2(maxslope, splitsize))
+		mpix = self.params['apix']*1.0e-10
+		print " angle ratio =  %.2e / %.2e => %.4f "%(maxslope,mpix,maxslope/mpix)
+		tiltangle = math.degrees(math.atan2(maxslope, mpix))
 		print " tilt-angle =  %.2f degrees"%(tiltangle)
 
 	#=========================
@@ -343,13 +308,10 @@ class AceTilt(object):
 		"""
 		prints out image information good for debugging
 		"""
-		#print " ... size: ",im.shape
-		#print " ... sum:  ",im.sum()
 		avg1 = im.mean()
 		stdev1 = im.std()
 		min1 = im.min()
 		max1 = im.max()
-
 		print " ... shape: "+str(im.shape)
 		print " ... avg:  %.1f +- %.1f"%(avg1, stdev1)
 		print " ... range: %.1f <> %.1f"%(min1,max1)
@@ -358,6 +320,7 @@ class AceTilt(object):
 
 	##========================
 	def run(self):
+		t0 = time.time()
 		imgarray = self.openFile()
 		self.imgshape = imgarray.shape
 		self.printImageInfo(imgarray) 
@@ -366,7 +329,7 @@ class AceTilt(object):
 		ctfdict = {}
 		self.count = 0
 		### process image pieces
-		print "processing image pieces "+str(len(coordlist))+" total"
+		print "processing %d image pieces"%(len(coordlist))
 		keys = coordlist.keys()
 		keys.sort()
 		for key in keys:
@@ -375,42 +338,28 @@ class AceTilt(object):
 			y = int(ystr)
 			self.count += 1
 			subarray = self.getSubImage(imgarray, x, y)
-			self.printImageInfo(subarray) 
+			#self.printImageInfo(subarray) 
 			imgfile = "splitimage-"+key+".dwn.mrc"
 			mrc.write(subarray, imgfile)
 			ctfvalues = None
-			while ctfvalues is None:
-				ctfvalues = self.processImage(imgfile)
+			reproc = 0
+			edgeblur = 8
+			while ctfvalues is None and reproc < 3:
+				ctfvalues = self.processImage(imgfile, edgeblur)
+				reproc += 1
+				edgeblur += 2
+			if ctfvalues is not None:
+				sys.stderr.write("#")
+			else:
+				sys.stderr.write("!")
 			ctfdict[key] = ctfvalues
 			apFile.removeFilePattern(imgfile+"*", False)
-			sys.stderr.write(".")
 		sys.stderr.write("\n")
 
-		## compile into grid form
-		numsplits = self.params['numsplits']
-		halfsize = self.params['splitsize']/2
-		ctfgrid = numpy.zeros((numsplits-1, numsplits-1), dtype=numpy.float32)
-		for i in range(numsplits):
-			for j in range(numsplits):
-				xavg = int(self.imgshape[0]/float(numsplits)*i) + halfsize
-				yavg = int(self.imgshape[1]/float(numsplits)*j) + halfsize
-				key = "%04dx%04d"%(xavg,yavg)
-				if key in ctfdict:
-					ctf = ctfdict[key]
-					if ctf is not None:
-						avgdf = (ctf['defocus1']+ctf['defocus2'])/2.0
-						sys.stdout.write("%.2e "%(avgdf))
-						ctfgrid[i,j] = avgdf
-					else:
-						sys.stdout.write("xxxxxxx\t")
-				else:
-					pass
-					#print "error: ", key
-			sys.stdout.write("\n")
-		#print ctfgrid
-
 		### calculate ctf parameters
-		self.fitPlaneToCtf(ctfgrid)
+		self.fitPlaneToCtf(ctfdict)
+		apDisplay.printMsg("Time: %s"%(apDisplay.timeString(time.time()-t0)))
+
 
 ##========================
 ##========================
