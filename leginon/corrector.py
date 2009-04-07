@@ -19,6 +19,7 @@ import instrument
 import sys
 from pyami import arraystats, imagefun
 import polygon
+import time
 
 class ImageCorrection(remotecall.Object):
 	def __init__(self, node):
@@ -355,27 +356,23 @@ class CorrectorClient(object):
 			imagetemp = leginondata.NormImageData()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
-		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
+		imagetemp['filename'] = self.filename(type, channel)
 		imagetemp['session'] = self.node.session
 		imagetemp['tem'] = self.node.instrument.getTEMData()
 		imagetemp['ccdcamera'] = self.node.instrument.getCCDCameraData()
 		imagetemp['scope'] = scopedata
 		imagetemp['channel'] = channel
-		self.node.logger.info('Publishing reference image...')
-		try:
-			self.node.publish(imagetemp, pubevent=True, database=True)
-		except node.PublishError, e:
-			self.node.logger.error('Publishing reference image failed: %s' % (e,))
-			return None
+		self.node.logger.info('Saving new %s' % (type,))
+		imagetemp.insert(force=True)
 		ref_cache_id[key] = imagetemp.dbid
-		self.node.logger.info('Reference image published')
+		self.node.logger.info('Saved: %s' % (imagetemp['filename'],))
 		return imagetemp
 
-	def filename(self, reftype, imid):
-		f = '%s_%s_%s_%06d' % (self.node.session['name'], self.node.name, reftype, imid)
+	def filename(self, type, channel):
+		sessionname = self.node.session['name']
+		timestamp = time.strftime('%Y%m%d-%H%m%S', time.localtime())
+		f = '%s_%s_%s_%s' % (sessionname, timestamp, type, channel)
 		return f
-
-
 
 class Corrector(node.Node):
 	'''
