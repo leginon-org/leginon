@@ -108,6 +108,17 @@ function runPyAce() {
 	}
 	$command .= $apcommand;
 
+	// check the tilt situation
+	$particle = new particledata();
+	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
+	if ($maxang > 5) {
+		$tiltangle = $_POST['tiltangle'];
+		if ($tiltangle!='notilt') {
+			createPyAceForm("ACE 1 does not work on tilted images");
+			exit;
+		}
+	}
+
 	// submit job to cluster
 	if ($_POST['process']=="Run ACE") {
 		$user = $_SESSION['username'];

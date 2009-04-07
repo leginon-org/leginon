@@ -156,6 +156,17 @@ function runAce2() {
 	$edge1=trim($_POST['edge1']);
 	$edge2=trim($_POST['edge2']);
 
+	// check the tilt situation
+	$particle = new particledata();
+	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
+	if ($maxang > 5) {
+		$tiltangle = $_POST['tiltangle'];
+		if ($tiltangle!='notilt') {
+			createAce2Form("ACE 2 does not work on tilted images");
+			exit;
+		}
+	}
+
 	if (is_numeric($edge1)) {
 		$command.="--edge1=$edge1 ";
 	}
