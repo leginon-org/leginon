@@ -11,6 +11,7 @@ or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
 '''
 import targetwatcher
+import corrector
 import time
 import leginondata
 import event
@@ -168,6 +169,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
+		self.corclient = corrector.CorrectorClient(self)
 		self.doneevents = {}
 		self.onTarget = False
 		self.imagelistdata = None
@@ -557,22 +559,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.instrument.setCorrectionChannel(channel)
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
-		correctimage = self.settings['correct image']
 		self.startTimer('acquire getData')
-		try:
-			if correctimage:
-				dataclass = leginondata.CorrectedCameraImageData
-			else:
-				dataclass = leginondata.CameraImageData
-			imagedata = self.instrument.getData(dataclass)
-			self.reportStatus('acquisition', 'image acquired')
-		except:
-			self.logger.error('Cannot access instrument')
-			imagedata = None
+		correctimage = self.settings['correct image']
+		if correctimage:
+			imagedata = self.corclient.acquireCorrectedCameraImageData()
+		else:
+			imagedata = self.instrument.getData(leginondata.CameraImageData)
+		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
 			return 'fail'
-
+			
 		## convert float to uint16
 		if self.settings['save integer']:
 			imagedata['image'] = numpy.asarray(imagedata['image'], numpy.uint16)
