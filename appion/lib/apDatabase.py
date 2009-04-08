@@ -301,15 +301,15 @@ def insertImgAssessmentStatus(imgdata, runname="run1", assessment=None, msg=True
 
 def getImgCompleteStatus(imgdata):
 	assess = getImgAssessmentStatus(imgdata)
-	hidden = getImgViewerStatus(imgdata)
-	if hidden is None:
+	viewer_status = getImgViewerStatus(imgdata)
+	if viewer_status is None:
 		return assess
 	elif assess is None:
-		return hidden
+		return viewer_status
 	#False overrides True
-	elif assess is False or hidden is False:
+	elif assess is False or viewer_status is False:
 		return False
-	elif assess is True or hidden is True:
+	elif assess is True or viewer_status is True:
 		return True
 	return None
 
