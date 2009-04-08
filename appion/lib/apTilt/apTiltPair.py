@@ -44,7 +44,9 @@ def getTiltPair(imgdata):
 	if imgdata['preset'] is None:
 		return None
 	presetq = leginondata.PresetData()
-	presetq['name'] = imgdata['preset']['name']
+	presetname = imgdata['preset']['name']
+	if presetname != "Zproj":
+		presetq['name'] = imgdata['preset']['name']
 	imageq['preset'] = presetq
 	#if beam changed between tilting, presets would be different
 	origid=imgdata.dbid
@@ -53,7 +55,7 @@ def getTiltPair(imgdata):
 	if len(alltilts) > 1:
 		#could be multiple tiltpairs but we are taking only the most recent
 		for tilt in alltilts:
-			if tilt.dbid != origid:
+			if tilt.dbid != origid and tilt['preset']['name'] != 'Zproj':
 				tiltpair = tilt
 				break
 	return tiltpair
