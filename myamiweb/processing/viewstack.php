@@ -29,6 +29,12 @@ $subprtls=False;
 $iter1=$_GET['itr1'];
 $iter2=$_GET['itr2'];
 $reconId=$_GET['recon'];
+$clusterIdForSubstack = $_GET['clusterIdForSubstack'];
+$alignIdForSubstack = $_GET['alignIdForSubstack'];
+$subStackClassesString=$_GET['include'];
+if ($subStackClassesString != "") {
+	$subStackClasses=explode(',',$subStackClassesString);
+}
 
 $updateheader=($_GET['uh']==1) ? 1 : 0;
 
@@ -39,7 +45,7 @@ if ($reconId) {
   $stackId=$particle->getStackIdFromReconId($reconId);
 	$stack = $particle->getStackParams($stackId);
 	$refine = array();
-  $filename=$stack['path'].'/'.$stack['name'];
+  	$filename=$stack['path'].'/'.$stack['name'];
 	$arrayall=array(array());
 	for ($i=$iter1;$i<=$iter2;$i++) {
 		$ref = $particle->getRefinementData($reconId,$i);
@@ -64,14 +70,30 @@ if ($norefClassId) {
 }
 
 if ($refinement) {
-  $stack=$particle->getStackFromRefinement($refinement);
-  //echo print_r($stack);
-  $filename=$stack['path'].'/'.$stack['name'];
-  if ($substack) {
-			// get all bad particles in stack
+  	$stack=$particle->getStackFromRefinement($refinement);
+  	//echo print_r($stack);
+	$filename=$stack['path'].'/'.$stack['name'];
+	if ($substack) {
+	// get all bad particles in stack
 		$subprtls=$particle->getSubsetParticlesInStack($refinement,$substack,$refinetype);
-    $numbad = count($subprtls);
-  }
+   	$numbad = count($subprtls);
+  	}
+}
+
+if ($subStackClassesString != "") {
+	if ($clusterIdForSubstack) {
+		$stack=$particle->getRawStackFromCluster($clusterIdForSubstack);
+	} elseif ($alignIdForSubstack) {
+		$stack=$particle->getRawStackFromAlign($alignIdForSubstack);
+	}
+	
+	$filename=$stack['path'].'/'.$stack['name'];
+	if ($clusterIdForSubstack) {
+		$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
+	} elseif ($alignIdForSubstack) {
+		$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
+	}
+	$numbad = count($subprtls);
 }
 
 function getimagicfilenames($file) {
@@ -94,7 +116,8 @@ $sessioninfo=$sessiondata['info'];
 $sessionname=$sessioninfo['Name'];
 
 $info=imagicinfo($file_hed);
-$n_images = ($substack) ? $numbad : $info['count']+1;
+$n_images = ($substack || $subStackClassesString != "") ? $numbad : $info['count']+1;
+
 ?>
 <html>
 <head>
@@ -237,6 +260,15 @@ function createTemplateStackIncluded() {
 	window.open("uploadTemplateStack.php?expId="+expId+"&clusterId="+clusterId+"&include="+index+"",'height=250,width=400');
 }
 
+function viewSubstack() {
+	var index = $('selectedIndex').value
+	if (clusterId!="") {
+		window.open("viewstack.php?expId="+expId+"&clusterIdForSubstack="+clusterId+"&include="+index+"",'height=250,width=400');
+	} else if (alignId!="") {
+		window.open("viewstack.php?expId="+expId+"&alignIdForSubstack="+alignId+"&include="+index+"",'height=250,width=400');
+	}
+}
+
 </script>
 </head>
 <body onload='load()'>
@@ -280,6 +312,7 @@ if ($clusterId)
 
 
 
+
 //Buttons for inclusion
 $includebuttons = "";
 // Substack
@@ -297,6 +330,8 @@ if ($norefClassId || $reclassId || $clusterId || $templateStackId)
 	$includebuttons .= "<input id='3d0button' type='button' alt='Create 3D0' value='Run Imagic 3d0' onclick='create3d0();'>\n";
 if ($clusterId)
 	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
+if ($clusterId || $alignId)
+	$includebuttons .= "<input type='button' value='View Raw Particles' onClick='viewSubstack()'>\n";
 
 echo "<table border='0' cellpading='6' cellspacing='10'><tr><td>\n";
 echo "  <span>Selection mode:</span>\n";
