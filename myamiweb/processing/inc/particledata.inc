@@ -2878,6 +2878,76 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		if ($count) return $r[0]['p'];
 		return $r;
 	}
+	
+	function getRawStackFromCluster ($clusterStackId) {
+		$q = "SELECT asd.*, path.path "
+			. " FROM `ApClusteringParticlesData` acpd "
+			. " LEFT JOIN ApAlignParticlesData aapd ON ( acpd.`REF|ApAlignParticlesData|alignparticle` = aapd.`DEF_id` ) "
+			. " LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`) "
+			. " LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`) "
+			. " LEFT JOIN `ApPathData` path ON ( asd.`REF|ApPathData|path` = path.`DEF_id`) "
+			. " WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+	
+	function getRawStackFromAlign ($alignStackId) {
+		$q = "SELECT asd.*, path.path "
+			. " FROM ApAlignParticlesData aapd "
+			. " LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`) "
+			. " LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`) "
+			. " LEFT JOIN `ApPathData` path ON ( asd.`REF|ApPathData|path` = path.`DEF_id`) "
+			. " WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+	
+	function getSubsetParticlesFromCluster ($clusterStackId, $refnums, $count=False) {
+		$q = "SELECT particleNumber as p ";
+		if ($count) $q = "SELECT count(particleNumber) as p ";	
+		$q .= "FROM `ApClusteringParticlesData` acpd "
+			."LEFT JOIN ApAlignParticlesData aapd ON ( acpd.`REF|ApAlignParticlesData|alignparticle` = aapd.`DEF_id` )"
+			."LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`)"
+			."LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`)"
+			."WHERE acpd.`REF|ApClusteringStackData|clusterstack` = '$clusterStackId' AND (";
+			
+		foreach ($refnums as $refnum) {
+			$refnum = strval(intval($refnum)+1);
+			$q .= " acpd.`refnum` = '$refnum' OR ";
+		}
+		
+		$q = substr($q, 0, -3);
+		$q .= ")";
+
+		//if (!$count) $q.= "ORDER BY aspd.`DEF_id` ASC ";		
+		$r = $this->mysql->getSQLResult($q);
+		if ($count) return $r[0]['p'];
+		return $r;
+	}
+	
+	function getSubsetParticlesFromAlign ($alignStackId, $refnums, $count=False) {
+		$q = "SELECT particleNumber as p ";
+		if ($count) $q = "SELECT count(particleNumber) as p ";	
+		$q .= "FROM `ApAlignParticlesData` aapd "
+			."LEFT JOIN ApAlignReferenceData aard ON ( aapd.`REF|ApAlignReferenceData|ref` = aard.`DEF_id`)"
+			."LEFT JOIN ApStackParticlesData aspd ON ( aapd.`REF|ApStackParticlesData|stackpart` = aspd.`DEF_id`)"
+			."LEFT JOIN ApStackData asd ON ( aspd.`REF|ApStackData|stack` = asd.`DEF_id`)"
+			."WHERE aapd.`REF|ApAlignStackData|alignstack` = '$alignStackId' AND (";
+			
+		foreach ($refnums as $refnum) {
+			$refnum = strval(intval($refnum)+1);
+			$q .= " aard.`refnum` = '$refnum' OR ";
+		}
+		
+		$q = substr($q, 0, -3);
+		$q .= ")";
+	
+		//if (!$count) $q.= "ORDER BY aspd.`DEF_id` ASC ";		
+		$r = $this->mysql->getSQLResult($q);
+		if ($count) return $r[0]['p'];
+		return $r;
+	}
+	
 	function getNumBadParticles ($refinementDataId, $refinetype='EMAN' ) {
 		$r = $this->getSubsetParticlesInStack($refinementDataId, 'bad',$refinetype);
 		return count($r);
