@@ -34,17 +34,17 @@ class AceTilt(object):
 		self.parser.set_usage("Usage: %prog -f <filename> [ -t <tiltangle> ]")
 		self.parser.add_option("-f", "--filename", dest="filename",
 			help="Name of imput mrc of spider format image", metavar="FILE")
-		self.parser.add_option("-t", "--tiltangle", dest="tiltangle", type="float",
-			help="Approximate tilt angle", metavar="#")
+		#self.parser.add_option("-t", "--tiltangle", dest="tiltangle", type="float",
+		#	help="Approximate tilt angle", metavar="#")
 		self.parser.add_option("-k", "--kv", dest="kv", type="int",
 			help="Voltage of microscope (in kV)", metavar="#")
 		self.parser.add_option("-c", "--cs", dest="cs", type="float", default=2.0,
 			help="Spherical abberation of the microscope (in mm)", metavar="#")
 		self.parser.add_option("-a", "--apix", dest="apix", type="float",
 			help="Pixel size of the image (in Angstroms per pixel)", metavar="#")
-		self.parser.add_option("-s", "--split-size", dest="splitsize", type="int", default=2,
+		self.parser.add_option("-s", "--split-size", dest="splitsize", type="int", default=768,
 			help="Size in pixels of areas to image", metavar="#")
-		self.parser.add_option("-n", "--num-splits", dest="numsplits", type="int", default=2,
+		self.parser.add_option("-n", "--num-splits", dest="numsplits", type="int", default=6,
 			help="Number of divisions to divide image; -s 4 ==> 4x4 for 16 pieces", metavar="#")
 
 	#======================
