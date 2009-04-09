@@ -84,7 +84,80 @@ class leginondata {
 		$update_tbl_name = 'viewer_update';
 		if (!$this->mysql->SQLTableExists($update_tbl_name)) 
 			$this->mysql->SQLquery($update_tbl_def);
-
+		$login_tbl_name = 'viewer_login';
+		$login_tbl_def  = ''
+		.'CREATE TABLE `'.$login_tbl_name.'` ('
+		.'`id` int(11) NOT NULL auto_increment,'
+		.'`username` varchar(50),'
+		.'`password` varchar(50),'
+		.'`privilege` tinyint(4),'
+		.'PRIMARY KEY  (`id`),'
+		.'KEY `login` (`username`)'
+		.');';
+		if (!$this->mysql->SQLTableExists($login_tbl_name)) 
+			$this->mysql->SQLquery($login_tbl_def);
+		$user_tbl_name = 'viewer_users';
+		$user_tbl_def  = ''
+		.'CREATE TABLE `'.$user_tbl_name.'` ('
+		.'`userid` int(11) NOT NULL auto_increment,'
+		.'`login` varchar(50),'
+		.'`firstname` text,'
+		.'`lasttname` text,'
+		.'`title` text,'
+		.'`institute` text,'
+		.'`dept` text,'
+		.'`address` text,'
+		.'`city` text,'
+		.'`statecountry` text,'
+		.'`zip` text,'
+		.'`phone` text,'
+		.'`fax` text,'
+		.'`email` text,'
+		.'`url` text,'
+		.'PRIMARY KEY  (`userid`),'
+		.'KEY `login` (`login`)'
+		.');';
+		if (!$this->mysql->SQLTableExists($user_tbl_name)) {
+			$this->mysql->SQLquery($user_tbl_def);
+		}
+		$image_status_tbl_name = 'viewer_pref_image';
+		$image_status_tbl_def  = ''
+		.'CREATE TABLE `'.$image_status_tbl_name.'` ('
+		.'`id` int(11) NOT NULL auto_increment,'
+		.'`timestamp` timestamp(14) NOT NULL,'
+		.'`username` varchar(50),'
+		.'`sessionId` int(11),'
+		.'`imageId` int(11),'
+		.'`status` enum(\'hidden\',\'visible\',\'exemplar\'),'
+		.'PRIMARY KEY  (`id`),'
+		.'KEY `timestamp` (`timestamp`),'
+		.'KEY `userId` (`username`),'
+		.'KEY `sessionId` (`sessionId`),'
+		.'KEY `imageId` (`imageId`),'
+		.'KEY `status` (`status`)'
+		.');';
+		if (!$this->mysql->SQLTableExists($image_status_tbl_name)) {
+			$this->mysql->SQLquery($image_status_tbl_def);
+		}
+		$image_del_tbl_name = 'viewer_del_image';
+		$image_del_tbl_def  = ''
+		.'CREATE TABLE `'.$image_del_tbl_name.'` ('
+		.'`id` int(11) NOT NULL auto_increment,'
+		.'`timestamp` timestamp(14) NOT NULL,'
+		.'`username` varchar(50),'
+		.'`sessionId` int(11),'
+		.'`imageId` int(11),'
+		.'`status` enum(\'deleted\',\'marked\'),'
+		.'PRIMARY KEY  (`id`),'
+		.'KEY `timestamp` (`timestamp`),'
+		.'KEY `userId` (`username`),'
+		.'KEY `sessionId` (`sessionId`),'
+		.'KEY `imageId` (`imageId`),'
+		.'KEY `status` (`status`)'
+		.');';
+		if (!$this->mysql->SQLTableExists($image_del_tbl_name)) {
+			$this->mysql->SQLquery($image_del_tbl_def);
+		}
 	}
 
 	function query($q) {
