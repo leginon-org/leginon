@@ -363,6 +363,8 @@ def mark_image(image, coord, value, size=15):
 			image[row,c] = value
 
 def bin(image, binning):
+	if binning==1:
+		return image
 	return numextension.bin(image, binning)
 
 def bin2(a, factor):
