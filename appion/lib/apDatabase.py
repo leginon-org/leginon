@@ -389,7 +389,6 @@ def getImgViewerStatus(imgdata):
 
 	### quick fix to get status from viewer_pref_image
 	dbconf=sinedon.getConfig('leginondata')
-	print dbconf
 	db=sinedon.sqldb.sqlDB(**dbconf)
 	imageId=imgdata.dbid
 	q="select `status` from "+dbconf['db']+".`viewer_pref_image` where imageId=%i" % (imageId,)
