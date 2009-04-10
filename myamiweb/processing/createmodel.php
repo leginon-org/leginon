@@ -51,7 +51,7 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 	if (!strlen($include)) $include = $_POST['include'];
 	$commit = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
-	$methodcheck = ($_POST['method']) ? $_POST['method']: 'csym';
+	$methodcheck = ($_POST['method']) ? $_POST['method']: 'any';
 
 	$javafunctions = writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
@@ -94,22 +94,45 @@ function createEMANInitialModelForm($extra=false, $title='createModel.py Launche
 		}
 	}
 
+	echo "<table border='0'><tr><td>\n";
 	echo docpop('commonlineemanprog','<b>Symmetry group:</b> ');
+	echo "</td><td>\n";
 	echo "<input type='radio' name='method' value='any'";
 	if ($methodcheck == 'any')  echo " CHECKED";
 	echo "> Asymmetric\n";
 
+	echo "</td><td>\n";
 	echo "<input type='radio' name='method' value='csym'";
 	if ($methodcheck == 'csym') echo " CHECKED";
 	echo "> C symmetry\n";
 
+	echo "</td><td>\n";
 	echo "<input type='radio' name='method' value='icos'";
 	if ($methodcheck == 'icos') echo " CHECKED";
 	echo "> Icosahedral\n";
 
+	echo "</td><td>\n";
 	echo "<input type='radio' name='method' value='oct'";
 	if ($methodcheck == 'oct')  echo " CHECKED";
 	echo "> Octahedral\n";
+
+	echo "</td></tr>\n";
+
+	echo "<tr><td>\n";
+	echo "EMAN manuals: \n";
+	echo "</td><td align='center'>\n";
+	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startAny.html'>"
+		."startAny</a>&nbsp;<img src='img/external.png'>\n";
+	echo "</td><td align='center'>\n";
+	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startcsym.html'>"
+		."startcsym</a>&nbsp;<img src='img/external.png'>\n";
+	echo "</td><td align='center'>\n";
+	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/starticos.html'>"
+		."starticos</a>&nbsp;<img src='img/external.png'>\n";
+	echo "</td><td align='center'>\n";
+	echo "<a href='http://blake.bcm.tmc.edu/eman/eman1/progs/startoct.html'>"
+		."startoct</a>&nbsp;<img src='img/external.png'>\n";
+	echo "</td></tr></table>\n";
 
 	echo "<br/><br/>\n";
 
