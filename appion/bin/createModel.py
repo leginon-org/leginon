@@ -31,8 +31,6 @@ class createModelScript(appionScript.AppionScript):
 		### Ints
 		self.parser.add_option("--cluster-id", dest="clusterid", type="int",
 			help="clustering stack id", metavar="ID")
-		self.parser.add_option("--align-id", dest="alignid", type="int",
-			help="alignment stack id", metavar="ID")
 
 		### Floats
 		self.parser.add_option("--contour", dest="contour", type="float", default=3.0,
@@ -268,8 +266,9 @@ class createModelScript(appionScript.AppionScript):
 		numparticles = len(includeParticle)
 
 		### create the new sub stack
-		stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		#stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		#oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		oldstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['imagicfile'])
 		newstack = os.path.join(self.params['rundir'], "rawparticles.hed")
 		apFile.removeStack(newstack)
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
@@ -356,9 +355,10 @@ class createModelScript(appionScript.AppionScript):
 			zoom=self.params['zoom'], sym=self.symmdata['eman_name'])
 
 		### remove stack
-		if apFile.stackSize(clusterstack) > 1000000:
-			### file bigger than 1MB
+		if apFile.stackSize(clusterstack)/1024**2 > 10:
+			### file bigger than 10MB
 			apFile.removeStack(clusterstack)
+		apFile.removeFile("threed.0a.mrc")
 
 #=====================
 #=====================
