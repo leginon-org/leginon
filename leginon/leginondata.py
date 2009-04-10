@@ -149,7 +149,6 @@ camera_params = (
 	('energy filtered', bool),
 	('energy filter', bool),
 	('energy filter width', float),
-#	('readout callback', sinedon.newdict.CallableType),
 )
 
 class ScopeEMData(EMData):
