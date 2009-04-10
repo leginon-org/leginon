@@ -106,7 +106,7 @@ class MosaicTargetMaker(TargetMaker):
 		if radius <= 0.0:
 			raise AtlasError('invalid radius specified')
 		overlap = self.settings['overlap']/100.0
-		if overlap < 0.0 or overlap >= 100.0:
+		if overlap >= 100.0:
 			raise AtlasError('invalid overlap specified')
 		return radius, overlap
 

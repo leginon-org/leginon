@@ -102,7 +102,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['preset'].setChoices(presets)
 		self.widgets['label'] = Entry(self, -1, allowspaces=False)
 		self.widgets['radius'] = FloatEntry(self, -1, min=0.0, chars=6)
-		#self.widgets['overlap'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['overlap'] = FloatEntry(self, -1, max=100.0, chars=6)
 		self.widgets['mosaic center'] = Choice(self, -1, choices=['stage center', 'current position'])
 
 		#szradius = wx.GridBagSizer(5, 5)
@@ -111,11 +111,11 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		#label = wx.StaticText(self, -1, 'meters')
 		#szradius.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		#szoverlap = wx.GridBagSizer(5, 5)
-		#szoverlap.Add(self.widgets['overlap'], (0, 0), (1, 1),
-		#								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		#label = wx.StaticText(self, -1, '%')
-		#szoverlap.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szoverlap = wx.GridBagSizer(5, 5)
+		szoverlap.Add(self.widgets['overlap'], (0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '%')
+		szoverlap.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz = wx.GridBagSizer(5, 10)
 
@@ -137,18 +137,18 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'm')
 		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		#label = wx.StaticText(self, -1, 'Overlap:')
-		#sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#sz.Add(szoverlap, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		#sz.Add(self.widgets['overlap'], (3, 1), (1, 1),
-		#								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Overlap:')
+		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szoverlap, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.widgets['overlap'], (3, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		#label = wx.StaticText(self, -1, '%')
 		#sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Mosaic Center:')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mosaic center'], (3, 1), (1, 1),
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mosaic center'], (4, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 
