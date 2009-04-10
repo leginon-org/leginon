@@ -390,17 +390,15 @@ class particledata {
 	function getLastCtfRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApAceRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
-		//echo $q."<br/><br/>\n";
 		list($r) = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/><br/>\n";
-		return $r[runId];
+		return $r['runId'];
 	}
 
 	function getLastCtfTiltRun($sessionId) {
 		$q = "select max(DEF_id) as runId "
 			."from `ApCtfTiltRunData` where `REF|leginondata|SessionData|session`='$sessionId'";
 		list($r) = $this->mysql->getSQLResult($q);
-		return $r[runId];
+		return $r['runId'];
 	}
 
 	function getCtfRunIds($sessionId, $showHidden=False) {

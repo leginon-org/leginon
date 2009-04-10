@@ -588,7 +588,16 @@ function streamToArray($stream) {
   return $rows;
 }
 
-function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
+function stackViewer($file_hed,$file_img,$n_images,$stackoptions=array()) {
+	$optionkeys = array ('updateheader', 'plist', 'stackinfoindex');
+	$plist=false;
+	$updateheader=false;
+	$stackinfoindex=0;
+	foreach ((array)$stackoptions as $k=>$v) {
+		if (in_array($k, $optionkeys)) {
+			$$k = $v;
+		}
+	}
 	$javascript = "
   <style type='text/css'>
 	input, select {
@@ -613,6 +622,7 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 	var file_img=\"$file_img\"
 	var n_images=\"$n_images\"
 	var updateheader=\"$updateheader\"
+	var stackinfoindex=\"$stackinfoindex\"
 	var excludeimages=Array()
 	var selectimages=Array()
 	var n_tiles=0
@@ -660,6 +670,10 @@ function stackViewer($file_hed,$file_img,$n_images,$updateheader,$plist=False) {
 
 		if (typeof stackinfo == 'object' && stackinfo[i]) {
 			filename +='&i='+stackinfo[i]
+		}
+
+		if (stackinfoindex) {
+			filename +='&k='+stackinfoindex
 		}
 
 		var img = $(tileId)

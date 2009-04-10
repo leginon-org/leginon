@@ -3,6 +3,7 @@ $file_hed=$_GET['hed'];
 $file_img=$_GET['img'];
 $img_num=$_GET['n'];
 $info=$_GET['i'];
+$stackinfoindex=$_GET['k'];
 $updateheader=($_GET['uh']==1) ? true : false;
 # don't remove
 $updateheader=true;
@@ -20,6 +21,10 @@ if ($t=='png') {
 	$ext = "jpg";
 }
 
+if (!$info && $stackinfoindex==1) {
+  $iminfo = imagicinfo($file_hed, $img_num);
+  $info = $iminfo['mrc2'];
+}
 
 $mrcimg = imagicread($file_hed, $file_img, $img_num);
 $maxval=255;

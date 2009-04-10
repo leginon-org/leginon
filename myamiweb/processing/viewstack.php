@@ -121,7 +121,13 @@ $n_images = ($substack || $subStackClassesString != "") ? $numbad : $info['count
 ?>
 <html>
 <head>
-<? echo stackViewer($file_hed,$file_img,$n_images,$updateheader, $subprtls);?>
+<?php
+	$stackoptions['updateheader']=$updateheader;
+	$stackoptions['plist']=$subprtls;
+	$stackoptions['stackinfoindex']=1;
+echo stackViewer($file_hed, $file_img, $n_images, $stackoptions);
+?>
+
 <script type="text/javascript">
 var expId="<?=$expId?>"
 var sessionname="<?=$sessionname?>"

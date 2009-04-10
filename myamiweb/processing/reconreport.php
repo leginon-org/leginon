@@ -261,9 +261,10 @@ foreach ($iterations as $iteration){
 	$html .= "<TR><td bgcolor='$bg'>";
 	$html .= "$numclasses classes<br />\n";
 	foreach ($refinetypes as $type) {
+		$infokey = ($type=='SpiCoran' || $type=='EMAN') ? '&k=1' : '';
 		if (array_key_exists($type,$clsavgs)) {
 			$clsavgfile = $refinerun['path'].'/'.$clsavgs[$type];
-			$html .= "<a target='stackview' href='viewstack.php?file=$clsavgfile'>".$clsavgs[$type]."</a><br />";
+			$html .= "<a target='stackview' href='viewstack.php?file=".$clsavgfile.$infokey."'>".$clsavgs[$type]."</a><br>";
 		}
 	}
 

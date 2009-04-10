@@ -129,6 +129,7 @@ elseif ($_POST['submitjob']) {
   
 	// submit job on host
 	$cmd = "cd $path; qsub $jobfile;\n";
+	
 	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
   
 	$jobnum=trim($jobnumstr);
