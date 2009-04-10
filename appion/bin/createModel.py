@@ -147,12 +147,9 @@ class createModelScript(appionScript.AppionScript):
 
 	#=====================
 	def getClusterStack(self):
-		### new stack path
-		stackdata = apStack.getOnlyStackData(self.params['stackid'])
-		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
-
-		### get classes from cluster stack
-		oldstack = os.path.join(self.clusterstackdata['path']['path'], self.clusterstackdata['avg_imagicfile'])
+		"""
+		get selected class averages from cluster stack
+		"""
 		numclusters = self.clusterstackdata['num_classes']
 
 		if self.params['excludelist'] is None and self.params['includelist'] is None:
@@ -196,6 +193,7 @@ class createModelScript(appionScript.AppionScript):
 
 		### create the new sub stack
 		newstack = os.path.join(self.params['rundir'], "rawclusters.hed")
+		oldstack = os.path.join(self.clusterstackdata['path']['path'], self.clusterstackdata['avg_imagicfile'])
 		apFile.removeStack(newstack)
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 
@@ -205,15 +203,97 @@ class createModelScript(appionScript.AppionScript):
 		return newstack, numclusters
 
 	#=====================
+	def getClusterParticles(self):
+		"""
+		get selected particles from cluster stack
+		"""
+		### list of classes to be excluded
+		excludelist = []
+		if self.params['excludelist'] is not None:
+			excludestrlist = self.params['excludelist'].split(",")
+			for excludeitem in excludestrlist:
+				excludelist.append(int(excludeitem.strip()))
+		apDisplay.printMsg("Exclude list: "+str(excludelist))
+
+		### list of classes to be included
+		includelist = []
+		if self.params['includelist'] is not None:
+			includestrlist = self.params['includelist'].split(",")
+			for includeitem in includestrlist:
+				includelist.append(int(includeitem.strip()))		
+		apDisplay.printMsg("Include list: "+str(includelist))
+
+		apDisplay.printMsg("Querying for clustered particles")	
+		clusterpartq = appionData.ApClusteringParticlesData()
+		clusterpartq['clusterstack'] = self.clusterstackdata
+		particles = clusterpartq.query()
+		apDisplay.printMsg("Sorting "+str(len(particles))+" clustered particles")	
+
+		### write included particles to text file
+		includeParticle = []
+		excludeParticle = 0
+		#f = open("test.log", "w")
+		count = 0
+		for part in particles:
+			count += 1
+			if count % 250 == 0:
+				sys.stderr.write(".")
+			alignpart = part['alignparticle']
+			classnum = int(part['refnum'])-1
+			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
+
+			if includelist and classnum in includelist:
+				includeParticle.append(emanstackpartnum)
+				#f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+			elif excludelist and not classnum in excludelist:
+				includeParticle.append(emanstackpartnum)
+				#f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
+			else:
+				excludeParticle += 1
+				#f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+		#f.close()
+		sys.stderr.write("\n")
+		includeParticle.sort()
+		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
+
+		### write kept particles to file
+		self.params['keepfile'] = os.path.join(self.params['rundir'], "keepfile-"+self.timestamp+".list")
+		apDisplay.printMsg("writing to keepfile "+self.params['keepfile'])
+		kf = open(self.params['keepfile'], "w")
+		for partnum in includeParticle:
+			kf.write(str(partnum)+"\n")
+		kf.close()
+
+		### get number of particles
+		numparticles = len(includeParticle)
+
+		### create the new sub stack
+		stackdata = apStack.getOnlyStackData(self.params['stackid'])
+		oldstack = os.path.join(stackdata['path']['path'], stackdata['name'])
+		newstack = os.path.join(self.params['rundir'], "rawparticles.hed")
+		apFile.removeStack(newstack)
+		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
+
+		if not os.path.isfile(newstack):
+			apDisplay.printError("No stack was created")
+
+		return newstack, numparticles
+
+	#=====================
 	def start(self):
-		clusterstack, numclusters = self.getClusterStack()
+		if self.params['method'] == 'any':
+			### startAny uses class averages
+			clusterstack, numimages = self.getClusterStack()
+		else:
+			### starticos, startoct, startcsym uses individual particles
+			clusterstack, numimages = self.getClusterParticles()
 
 		if self.params['method'] != 'any':
-			if self.params['numkeep'] is not None and numclusters/10 < int(self.params['numkeep']):
+			if self.params['numkeep'] is not None and numimages/10 < int(self.params['numkeep']):
 				apDisplay.printWarning("particle number of "+ self.params['numkeep'] 
 					+ " is greater than 10% of the number of selected classes")
 			elif self.params['numkeep'] is None:
-				self.params['numkeep'] = int(math.floor(numclusters/20.0))+1
+				self.params['numkeep'] = int(math.floor(numimages/20.0))+1
 				apDisplay.printWarning("numkeep was not defined, using %d particles"%(self.params['numkeep']))
 
 		nproc = apParam.getNumProcessors()
