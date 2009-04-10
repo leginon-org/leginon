@@ -779,6 +779,18 @@ class ApTomoAlignmentRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApTomoAlignmentRunData=ApTomoAlignmentRunData
 
+class ApSubTomogramRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('session', leginondata.SessionData),
+			('pick', ApSelectionRunData),
+			('stack', ApStackData),
+			('runname', str),
+			('bin', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApSubTomogramRunData=ApSubTomogramRunData
+
 class ApFullTomogramData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -800,11 +812,11 @@ class ApTomogramData(Data):
 			('session', leginondata.SessionData),
 			('tiltseries', leginondata.TiltSeriesData),
 			('fulltomogram', ApFullTomogramData),
+			('subtomorun', ApSubTomogramRunData),
+			('path', ApPathData),
 			('center', ApParticleData),
 			('offsetz', int),
 			('dimension', dict),
-			('path', ApPathData),
-			('runname', str),
 			('name', str),
 			('number', int),
 			('pixelsize', float),
