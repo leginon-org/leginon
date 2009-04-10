@@ -355,6 +355,11 @@ class createModelScript(appionScript.AppionScript):
 		apChimera.renderAnimation(finalmodelpath, contour=self.params['contour'],
 			zoom=self.params['zoom'], sym=self.symmdata['eman_name'])
 
+		### remove stack
+		if apFile.stackSize(clusterstack) > 1000000:
+			### file bigger than 1MB
+			apFile.removeStack(clusterstack)
+
 #=====================
 #=====================
 if __name__ == '__main__':

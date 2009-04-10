@@ -79,6 +79,20 @@ def fileSize(filename, msg=False):
 	return size
 
 #===============
+def stackSize(filename, msg=False):
+	"""
+	return file size in bytes
+	"""
+	rootname = os.path.splitext(filename)[0]
+	size = 0
+	for f in (rootname+".hed", rootname+".img"):
+		if not os.path.isfile(f):
+			size += 0
+		stats = os.stat(f)
+		size += stats[6]
+	return size
+
+#===============
 def getBoxSize(filename, msg=False):
 	"""
 	return boxsize of stack in pixels
