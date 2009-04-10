@@ -43,15 +43,15 @@ class CorrectorClient(object):
 	def acquireCorrectedCameraImageData(self):
 		## acquire image and scope/camera params
 		imagedata = self.node.instrument.getData(leginondata.CameraImageData)
+		scopedata = imagedata['scope']
+		camdata = imagedata['camera']
 		imarray = imagedata['image']
 
-		camdata = imagedata['camera']
 		camstate = leginondata.CorrectorCamstateData()
 		camstate['dimension'] = camdata['dimension']
 		camstate['offset'] = camdata['offset']
 		camstate['binning'] = camdata['binning']
 		ccdcamera = camdata['ccdcamera']
-		scopedata = imagedata['scope']
 		corrected = self.correct(original=imarray, ccdcamera=ccdcamera, camstate=camstate, scopedata=scopedata)
 		imagedata['image'] = corrected
 		return imagedata
@@ -115,7 +115,7 @@ class CorrectorClient(object):
 				exptype = key[6]
 		except IndexError:
 			exptype = 'unknown image'
-		s = '%s, %dV, size %dx%d, bin %dx%d, offset (%d,%d), channel %d'
+		s = '%s, %sV, size %sx%s, bin %sx%s, offset (%s,%s), channel %s'
 		try:
 			return s % (exptype, key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
 		except IndexError:
@@ -215,7 +215,7 @@ class CorrectorClient(object):
 			camstate[key] = imagedata['camera'][key]
 		ccdcameraname = imagedata['camera']['ccdcamera']['name']
 		scopedata = imagedata['scope']
-		
+
 		corrected = self.normalize(raw, camstate, ccdcameraname, scopedata)
 		newimagedata = leginondata.AcquisitionImageData(initializer=imagedata)
 		newimagedata['image'] = corrected
