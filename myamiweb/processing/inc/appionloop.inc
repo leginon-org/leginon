@@ -131,11 +131,11 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	echo docpop('imgorder','<i>Image order:</i>'); 
 	echo "<br/>\n";
 	echo "&nbsp;<input type='radio' name='imgorder' value='normal' $normordercheck>\n";
-	echo "Oldest to newest <font size=-2><i>(default)</i></font><br/>\n";
+	echo "Forward <font size=-2><i>(default)</i></font>\n";
 	echo "&nbsp;<input type='radio' name='imgorder' value='reverse' $reversecheck>\n";
-	echo "Newest to oldest<br/>\n";
+	echo "Reverse\n";
 	echo "&nbsp;<input type='radio' name='imgorder' value='shuffle' $shufflecheck>\n";
-	echo "Shuffle and process in random order<br/>\n";
+	echo "Shuffle<br/>\n";
 
 	echo docpop('cont','<i>Continuation:</i>'); 
 	echo "<br />\n";
