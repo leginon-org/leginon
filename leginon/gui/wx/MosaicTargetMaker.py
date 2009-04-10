@@ -140,7 +140,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Overlap:')
 		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szoverlap, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.widgets['overlap'], (3, 1), (1, 1),
+		sz.Add(self.widgets['overlap'], (3, 2), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 
 		#label = wx.StaticText(self, -1, '%')
