@@ -111,7 +111,7 @@ foreach ($reconRuns as $recon) {
 	$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 	// stack info
-	$stackparticles = $particle->getNumStackParticles($stackId);
+	$stackparticles = $particle->getNumStackParticles($stackid);
 	echo ministacksummarytable($stackid);
 	// initial model info
 	showModelInfo($initmodel, $expId, $particle);
@@ -209,8 +209,8 @@ foreach ($reconRuns as $recon) {
 			$prtlsused=$stackparticles-$badprtls[$type];
 			$phtml .= "$type<br />";
 			if ($prtlsused != $goodprtls[$type]) $phtml .= "Not all prtls accounted for!";
-			$phtml .= "<a target='stackview' href='viewstack.php?refinement=$reconid&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</a><br />\n"
-			."<a target='stackview' HREF='viewstack.php?refinement=$reconid&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</a></td><td>\n";
+			$phtml .= "<a target='stackview' href='viewstack.php?expId=$expId&refinement=$reconid&substack=good&refinetype=$type'>[$goodprtls[$type]-good]</a><br />\n"
+			."<a target='stackview' HREF='viewstack.php?expId=$expId&refinement=$reconid&substack=bad&refinetype=$type'>[$badprtls[$type]-bad]</a></td><td>\n";
 		}
 	}	
 	$phtml .= "</tr></table>\n";
