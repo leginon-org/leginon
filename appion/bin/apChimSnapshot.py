@@ -16,6 +16,7 @@ try:
 	from chimera.colorTable import getColorByName
 	from VolumeViewer.volume import default_settings, open_volume_file
 	from SurfaceColor import color_surface, Radial_Color, Color_Map, Height_Color, Cylinder_Color
+	from SurfaceCap import surfcaps
 	from _surface import SurfaceModel
 	from chimera import openModels
 	from chimera.replyobj import nogui_message
@@ -66,7 +67,6 @@ class ChimSnapShots(object):
 		self.surfaces = openModels.list(modelTypes=[SurfaceModel])
 		self.setZoom()
 
-
 	# -----------------------------------------------------------------------------
 	def setZoom(self):
 		surf = self.surfaces[0]
@@ -82,7 +82,7 @@ class ChimSnapShots(object):
 			surf = self.surfaces[0]
 			vertices, triangles = surf.surfacePieces[0].geometry
 			rmin, rmax = rc.value_range(vertices, vertex_xform=None)
-		chimera.viewer.viewSize = rmax*self.zoom
+		chimera.viewer.viewSize = rmax/self.zoom
 		#self.runChimCommand('scale %.3f' % self.zoom)
 
 	# -----------------------------------------------------------------------------
@@ -222,11 +222,11 @@ class ChimSnapShots(object):
 			self.save_image(filename)
 
 		### clip
-		self.writeMessageToLog("turn: get clipped view")
-		self.runChimCommand('mclip #0 coords screen axis z')
-		self.runChimCommand('wait')
-		self.runChimCommand('ac cc')
-		self.runChimCommand('wait')
+		#self.writeMessageToLog("turn: get clipped view")
+		#self.runChimCommand('mclip #0 coords screen axis z')
+		#self.runChimCommand('wait')
+		#self.runChimCommand('ac cc')
+		#self.runChimCommand('wait')
 
 		### pause
 		for i in range(numpause):
@@ -352,13 +352,14 @@ class ChimSnapShots(object):
 		self.runChimCommand('turn y 20.906')
 		self.save_image(self.volumepath+'.3.png')
 		self.writeMessageToLog("turn: get clipped view")
-		time.sleep(0.5)
+
+		### add clipping plane
 		self.runChimCommand('mclip #0 coords screen axis z')
-		self.runChimCommand('wait')
-		time.sleep(0.5)
 		self.runChimCommand('ac cc')
-		self.runChimCommand('wait')
-		time.sleep(0.5)
+		#self.capper = surfcaps.Surface_Capper()
+		#self.capper.show_caps()
+		#self.capper.unshow_caps()
+
 		self.save_image(self.volumepath+'.6.png')
 
 	# -----------------------------------------------------------------------------
