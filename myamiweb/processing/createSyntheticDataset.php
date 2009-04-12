@@ -368,7 +368,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo docpop('correctiontype','Correction Type: ');
 	echo "<select name='correction' onchange='checkcorrection()'>";
 	echo "<option value='applied'>Applied CTF</option>";
-	echo "<option value='ace2estimate' DISABLED >Use ACE2 Estimate</option>"; // disabled for now, need to get working in python
+	echo "<option value='ace2estimate'>Use ACE2 Estimate</option>"; // disabled for now, need to get working in python
 	echo "<option value='perturb'>Perturb Applied CTF</option>";
 	echo "</select><br>";
  
