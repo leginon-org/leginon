@@ -92,6 +92,9 @@ if ($subStackClassesString != "") {
 		$subprtls=$particle->getSubsetParticlesFromCluster($clusterIdForSubstack, $subStackClasses);
 	} elseif ($alignIdForSubstack) {
 		$subprtls=$particle->getSubsetParticlesFromAlign($alignIdForSubstack, $subStackClasses);
+		for ($i=0;$i<count($subprtls);$i++) {
+			$subprtls[$i]['p'] = intval($subprtls[$i]['p'])-1;
+		}
 	}
 	$numbad = count($subprtls);
 }
