@@ -447,7 +447,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			apFile.removeStack(stackname, warn=False)
 
 		### summarize
-		apDisplay.printMsg("rotate then shift %d particles in %s"%(i,apDisplay.timeString(time.time()-t0)))
+		apDisplay.printMsg("rotated and shifted %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-t0)))
 
 		self.alignspiderfile = "alignstack.spi"
 		self.convertStackToSpider(self.alignimagicfile, self.alignspiderfile)
