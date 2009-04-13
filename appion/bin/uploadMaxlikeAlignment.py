@@ -440,7 +440,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		for stackname in stacklist:
 			emancmd += stackname+" "
 		emancmd += self.alignimagicfile
-		apEMAN.executeEmanCommand(emancmd, verbose=True)
+		apEMAN.executeEmanCmd(emancmd, verbose=True)
 		filepart = apFile.numImagesInStack(self.alignimagicfile)
 		if filepart != numpart:
 			apDisplay.printError("number of particles in aligned stack is different from number of expected particles")
