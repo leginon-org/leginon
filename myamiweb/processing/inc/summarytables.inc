@@ -108,6 +108,8 @@ function stacksummarytable($stackid) {
 		$display_keys['# particles']=commafy($numpart);
 	$display_keys['# images used']=$particle->getNumStackImages($stackid);
 
+
+
 	// Get filesize
 	$display_keys['file size'] = getStackSize($stackdata);
 
@@ -126,19 +128,20 @@ function stacksummarytable($stackid) {
 	$display_keys['pixel size']=$apix;
 
 	# use values from first of the combined run, if any for now	
-	$pflip = ($stackdata['phaseFlipped']==1) ? "Yes" : "No";
+	$pflip = ($stackdata['phaseFlipped']==1) ? "yes" : "no";
 	if ($stackdata['fliptype']) $pflip.= ", ".$stackdata['fliptype'];
 	if ($stackdata['aceCutoff']) $pflip.=" (ACE > $stackdata[aceCutoff])";
 	
-	$display_keys['phase flipped']=$pflip;
+	$display_keys['ctf correct']=$pflip;
 	//$display_keys['raw data'] = print_r($stackdata);
 
 	if ($stackdata['correlationMin']) $display_keys['correlation min']=$stackdata['correlationMin'];
 	if ($stackdata['correlationMax']) $display_keys['correlation max']=$stackdata['correlationMax'];
 	if ($stackdata['minDefocus']) $display_keys['min defocus']=$stackdata['minDefocus'];
 	if ($stackdata['maxDefocus']) $display_keys['max defocus']=$stackdata['maxDefocus'];
-	$display_keys['density']=($stackdata['inverted']==1) ? 'Inverted':'Not inverted';
-	$display_keys['normalization']=($stackdata['normalized']==1) ? 'On':'Off';
+	$display_keys['density']=($stackdata['inverted']==1) ? 'inverted' : 'not inverted';
+	$display_keys['normalization']=($stackdata['normalized']==1) ? 'no' : 'yes';
+	if ($stackdata['tiltangle'] && $stackdata['tiltangle']!='all') $display_keys['tilt angle'] = $stackdata['tiltangle'];
 	//$display_keys['file type']=$stackdata['fileType'];
 	foreach($display_keys as $k=>$v) {
 	        $stacktable.= formatHtmlRow($k,$v);
