@@ -442,7 +442,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		filepart = apFile.numImagesInStack(self.alignimagicfile)
 		if filepart != numpart:
 			apDisplay.printError("number aligned particles (%d) not equal number expected particles (%d)"%
-				filepart, numpart)
+				(filepart, numpart))
 		for stackname in stacklist:
 			apFile.removeStack(stackname, warn=False)
 
