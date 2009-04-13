@@ -88,14 +88,20 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$particle = new particledata();
 	$maxang = $particle->getMaxTiltAngle($_GET['expId']);
 	if ($maxang > 5) {
+		if ($tiltangle == 'all') $allcheck = 'selected';
+		elseif ($tiltangle == 'notilt') $notiltcheck = 'selected';
+		elseif ($tiltangle == 'hightilt') $hightiltcheck = 'selected';
+		elseif ($tiltangle == 'lowtilt') $lowtiltcheck = 'selected';
+		elseif ($tiltangle == 'minustilt') $minustiltcheck = 'selected';
+		elseif ($tiltangle == 'plustilt') $plustiltcheck = 'selected';
 		echo docpop('tiltangle','Tilt Angle:');
 		echo "<select name='tiltangle'>\n";
-		echo "  <option value='all'>all tilt angles</option>\n";
-		echo "  <option value='notilt'>zero tilt angles only</option>\n";
-		echo "  <option value='hightilt'>large tilt angles only</option>\n";
-		echo "  <option value='lowtilt'>small tilt angles only</option>\n";
-		echo "  <option value='minustilt'>negative tilt angles only</option>\n";
-		echo "  <option value='plustilt'>positive tilt angles only</option>\n";
+		echo "  <option value='all' $allcheck>all tilt angles</option>\n";
+		echo "  <option value='notilt' $notiltcheck>zero tilt angles only</option>\n";
+		echo "  <option value='hightilt' $hightiltcheck>large tilt angles only</option>\n";
+		echo "  <option value='lowtilt' $lowtiltcheck>small tilt angles only</option>\n";
+		echo "  <option value='minustilt' $minustiltcheck>negative tilt angles only</option>\n";
+		echo "  <option value='plustilt' $plustiltcheck>positive tilt angles only</option>\n";
 		echo "</select>";
 		echo "<br />\n";
 	} else
