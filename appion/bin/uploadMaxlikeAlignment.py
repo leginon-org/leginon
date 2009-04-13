@@ -48,10 +48,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	#=====================
 	def setRunDir(self):
 		if self.params["jobid"] is not None:
-			self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-			path = self.stackdata['path']['path']
-			uppath = os.path.abspath(os.path.join(path, "../.."))
-			self.params['rundir'] = os.path.join(uppath, "maxlike", self.params['runname'])
+			jobdata = appionData.ApMaxLikeJobData.direct_query(self.params["jobid"])
+			self.params['rundir'] = jobdata['path']['path']
 		else:
 			self.params['rundir'] = os.path.abspath(".")
 
@@ -69,13 +67,20 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 	#=====================
 	def getTimestamp(self):
-		wildcard = "part*_*.*"
-		files = glob.glob(wildcard)
-		reg = re.match("part([0-9a-z]*)_", files[0])
-		if len(reg.groups()) == 0:
-			apDisplay.printError("Could not determine timestamp\n"
-				+"please provide it, e.g. -t 08nov27e54")
-		timestamp = reg.groups()[0]
+		if self.params["jobid"] is not None:
+			jobdata = appionData.ApMaxLikeJobData.direct_query(self.params["jobid"])
+			timestamp = jobdata['timestamp']
+		elif timestamp is None:
+			wildcard = "part*_*.*"
+			files = glob.glob(wildcard)
+			if len(files) == 0:
+				apDisplay.printError("Could not determine timestamp\n"
+					+"please provide it, e.g. -t 08nov27e54")
+			reg = re.match("part([0-9a-z]*)_", files[0])
+			if len(reg.groups()) == 0:
+				apDisplay.printError("Could not determine timestamp\n"
+					+"please provide it, e.g. -t 08nov27e54")
+			timestamp = reg.groups()[0]
 		apDisplay.printMsg("Found timestamp = '"+timestamp+"'")
 		return timestamp
 
@@ -97,7 +102,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 					numsort += 1
 					shutil.move(filename,iterdir)
 		if numsort < 3:
-			apDisplay.printWarning("Problem in iteration file sorting")
+			apDisplay.printWarning("Problem in iteration file sorting, are they already sorted?")
 		apDisplay.printMsg("Sorted "+str(numsort)+" iteration files")
 		### move files for all reference iterations
 		refsort = 0
@@ -380,37 +385,72 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def createAlignedStacks(self, stackid, partlist, origstackfile):
-		stackdata = apStack.getOnlyStackData(stackid)
-		imagesdict = apImagicFile.readImagic(origstackfile)
-		spiderstackfile = os.path.join(self.params['rundir'], "alignstack.spi")
-		apFile.removeFile(spiderstackfile)
+	def createAlignedStacks(self, partlist, origstackfile):
+		partperiter = 4096
+		numpart = len(partlist)
+		if numpart < partperiter:
+			partperiter = numpart+1
 
-		i = 0
 		t0 = time.time()
+		imgnum = 0
+		stacklist = []
 		apDisplay.printMsg("rotating and shifting particles at "+time.asctime())
-		alignstack = []
-		while i < len(partlist):
-			partimg = imagesdict['images'][i]
-			partdict = partlist[i]
-			partnum = i+1
-			#print partnum, partdict, partimg.shape
+		while imgnum < len(partlist):
+			index = imgnum % partperiter
+			if imgnum % 100 == 0:
+				sys.stderr.write(".")
+			if index == 0:
+				### deal with large stacks
+				if imgnum > 0:
+					sys.stderr.write("\n")
+					stackname = "alignstack%d.hed"%(imgnum)
+					apDisplay.printMsg("writing aligned particles to file "+stackname)
+					stacklist.append(stackname)
+					apFile.removeStack(stackname, warn=False)
+					apImagicFile.writeImagic(alignstack, stackname, msg=False)
+					perpart = (time.time()-t0)/imgnum
+					apDisplay.printColor("particle %d of %d :: %s per part :: %s remain"%
+						(imgnum+1, numpart, apDisplay.timeString(perpart), 
+						apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
+				alignstack = []
+				imagesdict = apImagicFile.readImagic(origstackfile, first=imgnum+1, last=imgnum+partperiter, msg=False)
+
+			### align particles
+			partimg = imagesdict['images'][index]
+			partdict = partlist[imgnum]
+			partnum = imgnum+1
 			if partdict['partnum'] != partnum:
 				apDisplay.printError("particle shifting "+str(partnum)+" != "+str(partdict))
 			xyshift = (partdict['xshift'], partdict['yshift'])
 			alignpartimg = apImage.xmippTransform(partimg, rot=partdict['inplane'], 
 				shift=xyshift, mirror=partdict['mirror'])
 			alignstack.append(alignpartimg)
-			#partfile = "partimg*%03d.spi"%(partnum)
-			#spider.write(alignpartimg, partfile)
-			#operations.addParticleToStack(partnum, partfile, spiderstackfile)
-			#apFile.removeFile(partfile)
-			i += 1
-		apDisplay.printMsg("rotate then shift %d particles in %s"%(i,apDisplay.timeString(time.time()-t0)))
-		alignstackarray = numpy.asarray(alignstack)
+			imgnum += 1
+
+		### write remaining particle to file
+		sys.stderr.write("\n")
+		stackname = "alignstack%d.hed"%(imgnum)
+		apDisplay.printMsg("writing aligned particles to file "+stackname)
+		stacklist.append(stackname)
+		apImagicFile.writeImagic(alignstack, stackname, msg=False)
+
+		### merge stacks
 		self.alignimagicfile = "alignstack.hed"
+		emancmd = "proc2d "
+		for stackname in stacklist:
+			emancmd += stackname+" "
+		emancmd += self.alignimagicfile
+		apEMAN.executeEmanCommand(emancmd, verbose=True)
+		filepart = apFile.numImagesInStack(self.alignimagicfile)
+		if filepart != numpart:
+			apDisplay.printError("number of particles in aligned stack is different from number of expected particles")
+		for stackname in stacklist:
+			apFile.removeStack(stackname, warn=False)
+
+		### summarize
+		apDisplay.printMsg("rotate then shift %d particles in %s"%(i,apDisplay.timeString(time.time()-t0)))
+
 		self.alignspiderfile = "alignstack.spi"
-		apImagicFile.writeImagic(alignstackarray, self.alignimagicfile)
 		self.convertStackToSpider(self.alignimagicfile, self.alignspiderfile)
 		apStack.averageStack(self.alignimagicfile)
 
@@ -428,7 +468,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.writePartDocFile(partlist)
 
 		### create aligned stacks
-		stackfile = self.createAlignedStacks(runparams['stackid'], partlist, runparams['localstack'])
+		stackfile = self.createAlignedStacks(partlist, runparams['localstack'])
 
 		### insert into databse
 		self.insertRunIntoDatabase(runparams, lastiter)

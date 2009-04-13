@@ -116,7 +116,9 @@ def readImagic(filename, first=1, last=None, msg=True):
 	if last is not None and first > last:
 		apDisplay.printError("requested first particle %d is greater than last particle %d"%(first,last))
 	if msg is True:
-		apDisplay.printMsg("reading stack from disk into memory: "+filename)
+		apDisplay.printMsg("reading stack from disk into memory: "+os.path.basename(filename))
+		if last is not None:
+			apDisplay.printMsg("particles %d through %d"%(first, last))
 	root=os.path.splitext(filename)[0]
 	headerfilename=root + ".hed"
 	datafilename=root + ".img"
@@ -125,8 +127,7 @@ def readImagic(filename, first=1, last=None, msg=True):
 	### it takes double memory on machine to read stack
 	filesize = apFile.fileSize(datafilename)
 	if first is None and last is None and filesize > bytelimit:
-		apDisplay.printWarning("Stack is too large to read %s"%(apDisplay.bytes(filesize)))
-		return None
+		apDisplay.printError("Stack is too large to read %s"%(apDisplay.bytes(filesize)))
 
 	### read stack header
 
@@ -137,12 +138,13 @@ def readImagic(filename, first=1, last=None, msg=True):
 	if last is None:
 		last = headerdict['nimg']
 	elif last > headerdict['nimg']:
-		apDisplay.printError("requested particle %d from stack of length %d"%(last, headerdict['nimg']))
+		apDisplay.printWarning("requested particle %d from stack of length %d"%(last, headerdict['nimg']))
+		last = headerdict['nimg']
 	numpart = last - first + 1
 	if partbytes*numpart > filesize:
 		apDisplay.printError("requested particle %d from stack of length %d"%(last, filesize/partbytes))
 	if partbytes*numpart > bytelimit:
-		apDisplay.printWarning("Stack is too large to read %d particles, requesting %s"
+		apDisplay.printError("Stack is too large to read %d particles, requesting %s"
 			%(numpart, apDisplay.bytes(partbytes*numpart)))
 
 	### read stack images
@@ -249,7 +251,7 @@ def writeImagic(array, filename, msg=True):
 
 	### write header file info, and dump images to image file
 	i = 0
-	headfile = open(headerfilename,'wb')
+	headfile = open(headerfilename, 'wb')
 	datafile = open(datafilename, 'wb')
 	while i < array.shape[0]:
 		partimg = array[i]
