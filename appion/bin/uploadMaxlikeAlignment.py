@@ -436,14 +436,13 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 
 		### merge stacks
 		self.alignimagicfile = "alignstack.hed"
-		emancmd = "proc2d "
 		for stackname in stacklist:
-			emancmd += stackname+" "
-		emancmd += self.alignimagicfile
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
+			emancmd = "proc2d %s %s"%(stackname, self.alignimagicfile)
+			apEMAN.executeEmanCmd(emancmd, verbose=False)
 		filepart = apFile.numImagesInStack(self.alignimagicfile)
 		if filepart != numpart:
-			apDisplay.printError("number of particles in aligned stack is different from number of expected particles")
+			apDisplay.printError("number aligned particles (%d) not equal number expected particles (%d)"%
+				filepart, numpart)
 		for stackname in stacklist:
 			apFile.removeStack(stackname, warn=False)
 
