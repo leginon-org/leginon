@@ -904,14 +904,16 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 	}
 
 	$cmd = "mkdir -p $procdir;";
-	$temp = exec_over_ssh($host, $user, $pass, $cmd, True);
+	//$temp = exec_over_ssh($host, $user, $pass, $cmd, True);
+	$temp = exec_over_ssh($_SERVER['SERVER_ADDR'], $user, $pass, $cmd, True);
+	//mkdir($procdir, 0777, true); //gives permissions to apache :(
 	$checkcount = 0;
-	while (!file_exists($procdir) && $checkcount < 3) {
+	while (!file_exists($procdir) && $checkcount < 5) {
 		sleep(1);
 		$checkcount++;
 	}
 	if (!file_exists($procdir))
-		return "could not create directory, check folder permissions";
+		return "could not create directory '$procdir'<br/>check folder permissions";
 	if ($testimg){
 		//submit directly to head node on cluster if testing 1 image
 		$cmd .= "cd $procdir; $apcmd; exit;";
@@ -929,8 +931,8 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 		// create job file
 		$jobid=$particle->insertClusterJobData($host,$procdir,'',$procdir,$jobfile,$expId,$jobtype,$user);
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
-		$jobtext .= "#PBS -l walltime=240:00:00\n";
-		$jobtext .= "#PBS -l cput=480:00:00\n";
+		$jobtext .= "#PBS -l walltime=120:00:00\n";
+		$jobtext .= "#PBS -l cput=960:00:00\n";
 		#$jobtext .= "#PBS -k oe\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$dbprojectid = getProjectFromExpId($expId);
