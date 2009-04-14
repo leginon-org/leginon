@@ -2,6 +2,7 @@
 
 #python
 import os
+import re
 import time
 import sys
 import random
@@ -65,11 +66,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Number of processor to use", metavar="ID#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
-		#self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
-		#	help="Number of volumes to create", metavar="#")
+		self.parser.add_option("--numvol", dest="nvol", type="int", default=2,
+			help="Number of volumes to create", metavar="#")
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
-		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
+		self.parser.add_option("--angle", "--angle-interval", dest="angle", type="int", default=5,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
 
 		### floats
@@ -104,15 +105,16 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		apDisplay.printMsg("rm -f *.hed *.img *.doc *.vol *.mrc *.spi *.log *~ *.pickle *.hist *.proj *.xmp *.sel *.basis *.original; rm -fr volume*")
 		### check for missing and duplicate entries
 		#if self.params['alignid'] is None and self.params['clusterid'] is None:
 		#	apDisplay.printError("Please provide either --cluster-id or --align-id")
 		if self.params['alignid'] is not None and self.params['clusterid'] is not None:
 			apDisplay.printError("Please provide only one of either --cluster-id or --align-id")		
 
-		if not self.params['modelstr']:
-			apDisplay.printError("Please provide model numbers")
-		else:
+		if self.params['modelstr'] is None and self.params['nvol'] is None:
+			apDisplay.printError("Please provide model numbers or number of volumes")
+		elif self.params['modelstr'] is not None:
 			modellist = self.params['modelstr'].split(",")
 			self.params['modelids'] = []
 			for modelid in modellist:
@@ -137,9 +139,13 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if not self.params['fastmode'] in self.fastmodes:
 			apDisplay.printError("fast mode must be on of: "+str(self.fastmodes))
 		maxparticles = 150000
+		minparticles = 50
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: " 
 				+ str(maxparticles) + " requested: " + str(self.params['numpart']))
+		if self.params['numpart'] < minparticles:
+			apDisplay.printError("not enough particles requested, min: " 
+				+ str(minparticles) + " requested: " + str(self.params['numpart']))
 		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
@@ -147,6 +153,13 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
+
+		### find number of processors
+		if self.params['nproc'] is None:
+			self.nproc = apParam.getNumProcessors()
+		else:
+			self.nproc = self.params['nproc']
+		self.mpirun = self.checkMPI()
 
 	#=====================
 	def setRunDir(self):
@@ -208,17 +221,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 	#=====================
 	def estimateIterTime(self):
 		secperiter = 0.12037
-		### get num processors
-		if self.params['nproc'] is None:
-			nproc = nproc = apParam.getNumProcessors()
-		else:
-			nproc = self.params['nproc']
-
 		calctime = (
 			(self.params['numpart']/1000.0)
 			*(self.stack['boxsize']/self.params['bin'])**2
-			/self.params['psistep']
-			/float(nproc)
+			/self.params['angle']**2
+			/float(self.nproc)
 			*secperiter
 		)
 		if self.params['mirror'] is True:
@@ -235,12 +242,16 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if xmippexe is None:
 			return None
 		lddcmd = "ldd "+xmippexe+" | grep mpi"
-		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE)
+		proc = subprocess.Popen(lddcmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		proc.wait()
 		lines = proc.stdout.readlines()
-		print "lines=", lines
+		#print "lines=", lines
 		if lines and len(lines) > 0:
 			return mpiexe
+		else:
+			apDisplay.printWarning("Failed to find mpirun")
+			print "lines=", lines
+			return None
 
 	#=====================
 	def writeXmippLog(self, text):
@@ -270,19 +281,127 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		return
 
 	#=====================
+	def normalizeVolume(self, volfile):
+		"""
+mkdir CorrectGreyscale
+
+xmipp_header_extract -i experimental_images.sel -o experimental_images.doc
+
+xmipp_angular_project_library  -i bad_greyscale.vol -experimental_images experimental_images.doc -o CorrectGreyscale/ref -sampling_rate 15 -sym c1h -compute_neighbors -angular_distance -1
+
+xmipp_angular_projection_matching  -i experimental_images.doc -o CorrectGreyscale/corrected_reference -ref CorrectGreyscale/ref
+
+xmipp_mpi_angular_class_average  -i CorrectGreyscale/corrected_reference.doc -lib CorrectGreyscale/ref_angles.doc -o CorrectGreyscale/corrected_reference
+
+xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -o corrected_reference.vol -threshold 0.02 -sym c1  -use_each_image -weight
+		"""
+		volroot = os.path.splitext(volfile)[0]
+		volroot = re.sub("\.", "_", volroot)
+		normfolder = os.path.join(self.params['rundir'], volroot)
+		apParam.createDirectory(normfolder)
+
+		### Create Euler doc file for particles
+		partselfile = os.path.join(self.params['rundir'], self.partlistdocfile)
+		parteulerdoc = os.path.join(normfolder, "parteulers.doc")
+		xmippcmd = "xmipp_header_extract -i %s -o %s"%(partselfile, parteulerdoc)
+		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
+		if not os.path.isfile(parteulerdoc):
+			apDisplay.printError("Could not normalize volume for file: "+volfile)
+
+		### Create projections
+		refprefix = os.path.join(normfolder, "refproj"+self.timestamp)
+		if self.nproc > 1 and self.mpirun is not None:
+			xmipppath = apParam.getExecPath("xmipp_mpi_angular_project_library", die=True)
+			xmippexe = self.mpirun+" -np "+str(self.nproc)+" "+xmipppath
+		else:
+			xmippexe = "xmipp_angular_project_library"
+		xmippcmd = ("%s -i %s -experimental_images %s -o %s"
+			%(xmippexe, volfile, parteulerdoc, refprefix))
+		xmippcmd += " -sampling_rate %d -compute_neighbors -angular_distance -1"%(self.params['angle'])
+		if self.params['symmetry'] is not None:
+			xmippcmd += " -sym "+str(self.params['symmetry'])
+		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
+		refs = glob.glob(refprefix+"*.xmp")
+		if not refs:
+			apDisplay.printError("Could not normalize volume for file: "+volfile)
+
+		### Match projections
+		fixprefix = os.path.join(normfolder, "match"+self.timestamp)
+		if self.nproc > 1 and self.mpirun is not None:
+			xmipppath = apParam.getExecPath("xmipp_mpi_angular_projection_matching", die=True)
+			xmippexe = self.mpirun+" -np "+str(self.nproc)+" "+xmipppath
+		else:
+			xmippexe = "xmipp_angular_projection_matching"
+		xmippcmd = ("%s -i %s -o %s -ref %s"
+			%(xmippexe, parteulerdoc, fixprefix, refprefix))
+		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
+		docfile = fixprefix+".doc"
+		if not os.path.isfile(docfile):
+			apDisplay.printError("Could not normalize volume for file: "+volfile)
+
+		### Create projection averages
+		correctprefix = os.path.join(normfolder, "correctproj"+self.timestamp)
+		if self.nproc > 1 and self.mpirun is not None:
+			xmipppath = apParam.getExecPath("xmipp_mpi_angular_class_average", die=True)
+			xmippexe = self.mpirun+" -np "+str(self.nproc)+" "+xmipppath
+		else:
+			xmippexe = "xmipp_angular_class_average"
+		xmippcmd = ("%s -i %s.doc -lib %s_angles.doc -o %s"
+			%(xmippexe, fixprefix, refprefix, correctprefix))
+		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
+		refs = glob.glob(correctprefix+"*.xmp")
+		if not refs:
+			apDisplay.printError("Could not normalize volume for file: "+volfile)
+
+		### Backproject
+		correctvolfile = os.path.join(normfolder, "volume"+self.timestamp+".spi")
+		if self.nproc > 1 and self.mpirun is not None:
+			xmipppath = apParam.getExecPath("xmipp_mpi_reconstruct_wbp", die=True)
+			xmippexe = self.mpirun+" -np "+str(self.nproc)+" "+xmipppath
+		else:
+			xmippexe = "xmipp_reconstruct_wbp"
+		xmippcmd = ("%s -i %s_classes.sel -o %s"
+			%(xmippexe, correctprefix, correctvolfile))
+		xmippcmd += " -threshold 0.02 -use_each_image -weight"
+		if self.params['symmetry'] is not None:
+			xmippcmd += " -sym "+str(self.params['symmetry'])
+		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
+
+		if not os.path.isfile(correctvolfile):
+			apDisplay.printError("Could not normalize volume for file: "+volfile)
+		return correctvolfile
+
+	#=====================
 	def setupVolumes(self, boxsize, apix):
 		voldocfile = "volumelist"+self.timestamp+".doc"
 		f = open(voldocfile, "w")
-		i = 0
-		for modelid in self.params['modelids']:
-			i += 1
-			mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%05d.mrc"%(self.timestamp, i+1))
-			apVolume.rescaleModelId(modelid, mrcvolfile, apix, boxsize)
-			spivolfile = os.path.join(self.params['rundir'], "volume%s_%05d.spi"%(self.timestamp, i+1))
-			emancmd = "proc3d %s %s spidersingle"%(mrcvolfile, spivolfile)
-			apEMAN.executeEmanCmd(emancmd, verbose=True)
-			#self.createGaussianSphere(spivolfile, boxsize)
-			f.write(spivolfile+" 1\n")
+		if self.params['modelstr'] is not None:
+			for i, modelid in enumerate(self.params['modelids']):
+				### Scale volume
+				mrcvolfile = os.path.join(self.params['rundir'], "volume%s_%02d_%05d.mrc"%(self.timestamp, i+1, modelid))
+				apVolume.rescaleModelId(modelid, mrcvolfile, apix, boxsize)
+
+				### Convert volume to spider
+				spivolfile = os.path.join(self.params['rundir'], "volume%s_%02d_%05d.spi"%(self.timestamp, i+1, modelid))
+				emancmd = "proc3d %s %s spidersingle"%(mrcvolfile, spivolfile)
+				apEMAN.executeEmanCmd(emancmd, verbose=False)
+
+				### Normalize volume
+				normalvolfile = self.normalizeVolume(spivolfile)
+		
+				### Write to selection file
+				f.write(normalvolfile+" 1\n")
+		else:
+			for i in range(self.params['nvol']):
+				### Create Gaussian sphere
+				spivolfile = os.path.join(self.params['rundir'], "volume%s_%02d.spi"%(self.timestamp, i+1))
+				self.createGaussianSphere(spivolfile, boxsize)
+
+				### Normalize volume
+				normalvolfile = self.normalizeVolume(spivolfile)
+
+				### Write to selection file
+				f.write(normalvolfile+" 1\n")
 		f.close()
 		return voldocfile
 
@@ -308,8 +427,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			proccmd += " hp="+str(self.params['highpass'])
 		if self.params['lowpass'] > 1:
 			proccmd += " lp="+str(self.params['lowpass'])
-		proccmd += " last="+str(self.params['numpart'])
-		apEMAN.executeEmanCmd(proccmd, verbose=True)
+		proccmd += " last="+str(self.params['numpart']-1)
+		apFile.removeStack(self.params['localstack'], warn=False)
+		apEMAN.executeEmanCmd(proccmd, verbose=False)
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
@@ -325,7 +445,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			+" -vol "+os.path.join(self.params['rundir'], self.voldocfile)
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "part"+self.timestamp)
-			+" -psi_step "+str(self.params['psistep'])
+			+" -psi_step "+str(self.params['angle'])
+			+" -ang "+str(self.params['angle'])
 		)
 		### fast mode
 		if self.params['fast'] is True:
@@ -351,17 +472,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['symmetry'] is not None:
 			xmippopts += " -sym "+self.params['symmetry']+" "
 
-		### find number of processors
-		if self.params['nproc'] is None:
-			nproc = nproc = apParam.getNumProcessors()
-		else:
-			nproc = self.params['nproc']
-		mpirun = self.checkMPI()
-		if nproc > 2 and mpirun is not None:
+		if self.nproc > 1 and self.mpirun is not None:
 			### use multi-processor
-			apDisplay.printColor("Using "+str(nproc-1)+" processors!", "green")
+			apDisplay.printColor("Using "+str(self.nproc)+" processors!", "green")
 			xmippexe = apParam.getExecPath("xmipp_mpi_ml_refine3d", die=True)
-			mpiruncmd = mpirun+" -np "+str(nproc-1)+" "+xmippexe+" "+xmippopts
+			mpiruncmd = self.mpirun+" -np "+str(self.nproc)+" "+xmippexe+" "+xmippopts
 			self.writeXmippLog(mpiruncmd)
 			apEMAN.executeEmanCmd(mpiruncmd, verbose=True, showcmd=True)
 		else:
