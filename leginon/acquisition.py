@@ -690,7 +690,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.startTimer('waitForImageProcess')
 			self.waitForImageProcessDone()
 			self.stopTimer('waitForImageProcess')
-			self.setStatus('processing')
+			if not self.settings['background']:
+				self.setStatus('processing')
+			else:
+				self.setStatus('idle')
 		return 'ok'
 
 	def publishStats(self, imagedata):
