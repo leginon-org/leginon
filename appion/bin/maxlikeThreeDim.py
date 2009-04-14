@@ -317,7 +317,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 			xmippexe = "xmipp_angular_project_library"
 		xmippcmd = ("%s -i %s -experimental_images %s -o %s"
 			%(xmippexe, volfile, parteulerdoc, refprefix))
-		xmippcmd += " -sampling_rate %d -compute_neighbors -angular_distance -1"%(self.params['angle'])
+		xmippcmd += " -sampling_rate %d -compute_neighbors -angular_distance -1 -perturb 0.5"%(self.params['angle'])
 		if self.params['symmetry'] is not None:
 			xmippcmd += " -sym "+str(self.params['symmetry'])
 		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
