@@ -386,8 +386,11 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo "<input type='text' name='hpfilt' value='$hpfilt' size='4'>\n";
 	echo docpop('hpfilt',' High-pass filter');
 	echo " <font size=-2><i>(&Aring;ngstroms)</i></font>\n";
-	echo "<br><br>\n";
-	
+	echo "<br>\n";
+
+        echo "<input type='checkbox' name='norm' \n";
+        echo docpop('stacknorm',' Normalize particles');
+        echo "<br>\n";	
 	
 	
 	
@@ -441,6 +444,7 @@ function createSyntheticDataset() {
 	$astigmatism = $_POST['astigmatism'];
 	$lpfilt = $_POST['lpfilt'];
 	$hpfilt = $_POST['hpfilt'];
+	$norm = $_POST['norm'];
 
 	// default params for javascript
 	$randomdef = ($_POST['randomdef']=='on') ? 'randomdef' : '';
@@ -482,22 +486,22 @@ function createSyntheticDataset() {
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--modelid=$modelId ";
-	$command.="--apix=$pixelsize ";
-	$command.="--boxsize=$boxsize ";
+	if ($pixelsize) $command.="--apix=$pixelsize ";
+	if ($boxsize) $command.="--boxsize=$boxsize ";
 	$command.="--projcount=$projcount ";
-	$command.="--projstdev=$projstdev ";
-	$command.="--shiftrad=$shiftrad ";
-	$command.="--rotang=$rotang ";
+	if ($projstdev) $command.="--projstdev=$projstdev ";
+	if ($shiftrad) $command.="--shiftrad=$shiftrad ";
+	if ($rotang) $command.="--rotang=$rotang ";
 	if ($flip) $command.="--flip ";
 	else $command.="--no-flip ";
-	$command.="--snr1=$snr1 ";
-	$command.="--snrtot=$snrtot ";
-	$command.="--df1=$df1 ";
-	$command.="--df2=$df2 ";
-	$command.="--astigmatism=$astigmatism ";
+	if ($snr1) $command.="--snr1=$snr1 ";
+	if ($snrtot) $command.="--snrtot=$snrtot ";
+	if ($df1) $command.="--df1=$df1 ";
+	if ($df2) $command.="--df2=$df2 ";
+	if ($astigmatism) $command.="--astigmatism=$astigmatism ";
 	if ($randomdef) {
 		$command.="--randomdef ";
-		$command.="--randomdef-std=$defstd ";
+		if ($defstd) $command.="--randomdef-std=$defstd ";
 	}
 	if ($correction=="applied") {
 		$command.="--ace2correct ";
@@ -508,10 +512,11 @@ function createSyntheticDataset() {
 	}
 	elseif ($correction=="perturb") {
 		$command.="--ace2correct-rand ";
-		$command.="--ace2correct-std=$randcor_std ";
+		if ($randcor_std) $command.="--ace2correct-std=$randcor_std ";
 	}
-	$command.="--lpfilt=$lpfilt ";
-	$command.="--hpfilt=$hpfilt ";
+	if ($lpfilt) $command.="--lpfilt=$lpfilt ";
+	if ($hpfilt) $command.="--hpfilt=$hpfilt ";
+	if ($norm) $command.="--norm ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
