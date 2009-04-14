@@ -554,9 +554,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## set correction channel
 		## in the future, may want this based on preset or something
 		if channel is None:
-			self.instrument.setCorrectionChannel(0)
+			self.corclient.channel = 0
 		else:
-			self.instrument.setCorrectionChannel(channel)
+			self.corclient.channel = channel
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
 		self.startTimer('acquire getData')
@@ -617,7 +617,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.settings['background']:
 			t = threading.Thread(target=self.acquirePublishDisplayWait, args=args)
 			t.start()
-			extratime = 1.5
+			extratime = 1.0
 			print tnum, 'EXPOSURE OVERHEAD (tune this):', extratime
 			waittime = presetdata['exposure time'] / 1000.0 + extratime
 			print tnum, 'EXPOSURE TIME', presetdata['exposure time']
