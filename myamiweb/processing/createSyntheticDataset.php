@@ -485,6 +485,7 @@ function createSyntheticDataset() {
 	$command.="--projectid=$projectId ";
 	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
+	$command.="--description=\"$description\" ";
 	$command.="--modelid=$modelId ";
 	if ($pixelsize) $command.="--apix=$pixelsize ";
 	if ($boxsize) $command.="--boxsize=$boxsize ";
