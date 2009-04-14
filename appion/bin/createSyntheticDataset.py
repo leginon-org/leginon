@@ -13,6 +13,7 @@ import time
 import apVolume
 import apEMAN
 import apDisplay
+import apDatabase
 import apFile
 import apImage
 import apImagicFile
@@ -40,6 +41,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="boxsize that will be applied to the stack", metavar="INT")
 		self.parser.add_option("--apix", dest="apix", type="float",
 			help="pixelsize of the 3d model", metavar="FLOAT")
+			
+		### optional global parameters
+		self.parser.add_option("--session", dest="sessionname", type="str",
+			help="session name (e.g. 06jul12a), do not give experiment id", metavar="str")
 
 		### default input parameters
 		self.parser.add_option("--projcount", dest="projcount", type="int", default=10228,
@@ -54,10 +59,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_true", help="randomly flip the projections along with shifts and rotations")
 		self.parser.add_option("--no-flip", dest="flip", default=True,
 			action="store_false", help="DO NOT randomly flip the projections along with shifts and rotations")
-		self.parser.add_option("--maxfilt", dest="maxfilt", type="float", default=3.2,
-			help="maximum value for low-pass filter applied to the aplitude-corrected stack", metavar="FLOAT")
-		self.parser.add_option("--ampfile", dest="ampfile",
-			help="amplitude correction file that will be applied to the stack", metavar="STR")
 		self.parser.add_option("--kv", dest="kv", type="float", default=120,
 			help="KV of the microscope, needed for envelope function", metavar="INT")
 		self.parser.add_option("--cs", dest="cs", type="float", default=0.002,
@@ -70,14 +71,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			action="store_true", help="randomize defocus values when applying CTF (df1 and df2 would represent the mean)")
 		self.parser.add_option("--randomdef-std", dest="randomdef_std", type="float", default=0.4,
 			help="standard deviation (in microns) for the gaussian distribution of defoci randomizations about the mean", metavar="FLOAT")
-#		self.parser.add_option("--no-randomdef", dest="randomdef", default=True,
-#			action="store_false", help="DO NOT randomize defocus values when applying CTF")
 		self.parser.add_option("--astigmatism", dest="astigmatism", type="float", default=0,
 			help="only input if you want to apply an astigmatic ctf", metavar="FLOAT")
 		self.parser.add_option("--snr1", dest="snr1", type="float", default=1.8,
 			help="first level of noise, simulating beam damage & structural noise", metavar="FLOAT")
 		self.parser.add_option("--snrtot", dest="snrtot", type="float", default=0.06,
 			help="total signal-to-noise ratio, simulating beam damage, structural noise, & digitization", metavar="FLOAT")
+		self.parser.add_option("--envelope", dest="envelope", type="string",
+			help="you may apply any envelope function to the dataset, but it has to be a 2d .mrc file that represents envelope decay", metavar="STR")
 
 		### optional parameters (ACE2 correct & filtering)
 		self.parser.add_option("--ace2correct", dest="ace2correct", default=False,
@@ -97,6 +98,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			help="low-pass filter images after creation of the dataset", metavar="INT")
 		self.parser.add_option("--hpfilt", dest="hpfilt", type="int",
 			help="high-pass filter images after creation of the dataset", metavar="INT")
+		self.parser.add_option("--norm", dest="norm", default=False,
+			action="store_true", help="normalize images after creation of the dataset")
 
 		return		
 	
@@ -121,6 +124,11 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printError('boxsize of the output stack not specified')
 		if self.params['apix'] is None and self.params['modelid'] is None:
 			apDisplay.printError('angstroms per pixel of the input model not specified')
+			
+		### get session info
+		if self.params['sessionname'] is None:
+			split = self.params['rundir'].split("/")
+			self.params['sessionname'] = split[4]
 
 		### make sure that the defoci are negative and in microns
 		self.params['df1'] *= 10**-6
@@ -144,15 +152,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		### some defaults, and workarounds for now
 		self.appiondir = apParam.getAppionDirectory()
-		self.params['envelope'] = os.path.join(self.appiondir, "lib", "envelopeImage.mrc")
 		self.params['filesperdir'] = 2048
 		self.params['projpergraph'] = 100 
 		if self.params['filesperdir'] > self.params['projcount']:
 			self.params['filesperdir'] = math.ceil(float(self.params['projcount']) / 2)
 						
 		### make sure amplitude correction file exists			
-		if self.params['ampfile'] is None:
-			self.params['ampfile'] = os.path.join(apParam.getAppionDirectory(), "lib/ampcor_power.spi")
+		if self.params['envelope'] is None:
+			self.params['envelope'] = os.path.join(apParam.getAppionDirectory(), "lib/envelopeImage.mrc")
 
 
 		return
@@ -636,15 +643,18 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			ampcorrected = ctfapplied+".ampcorrected.mrc"
 			scaleFactor =  self.params['box'] / float(4096)
 			self.applyEnvelope(ctfapplied, ampcorrected, self.params['envelope'], scaleFactor=scaleFactor)			
-				
-			### now correct CTF using estimated parameters from micrograph		
-			ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
-					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(self.defocuslist1c[i])+","+\
-					str(self.defocuslist2c[i])+","+str(self.astigmatismlistc[i])+" -wiener 0.1"
-			self.executeAce2Cmd(ace2cmd)
-			ctfcorrected = ampcorrected+".corrected.mrc"
 			
-			self.correctedpartlist.append(ctfcorrected)
+			if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:		
+				### now correct CTF using estimated parameters from micrograph		
+				ace2cmd = "ace2correct.exe -img "+ampcorrected+" -kv "+str(self.params['kv'])+" -cs "+\
+						str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(self.defocuslist1c[i])+","+\
+						str(self.defocuslist2c[i])+","+str(self.astigmatismlistc[i])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				ctfcorrected = ampcorrected+".corrected.mrc"
+				self.correctedpartlist.append(ctfcorrected)
+			else:
+				self.correctedpartlist.append(ampcorrected)
+				
 			i += 1
 
 		### exit while loops, change to basedir
@@ -723,15 +733,211 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 	#=====================
 	def uploadData(self):
-	
-		stackdataq = appionData.ApStackData()
-		particleq = appionData.ApParticleData()
-		
-		if self.params['commit'] is True:
-			apDisplay.printMsg("inserting Synthetic Dataset parameters into database")
-			dataq.insert()
+			
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		if self.params['projectid'] is not None:
+			projectnum = self.params['projectid']
 		else:
-			apDisplay.printMsg("NOT inserting Synthetic Dataset parameters into database")
+			projectnum = apProject.getProjectIdFromSessionName(self.params['sessionname'])
+
+		### create synthetic stack object ... not saving global params like runname, session, project, description, etc. here; that's in ApStackData
+		syntheticq = appionData.ApSyntheticStackParamsData()
+		### get number of fakestack runs
+		numentries = len(syntheticq)
+		syntheticq['modelid'] = appionData.ApInitialModelData.direct_query(self.params['modelid'])
+		syntheticq['boxsize'] = self.params['box']
+		syntheticq['apix'] = self.params['apix']
+		syntheticq['projcount'] = self.params['projcount']
+		syntheticq['projstdev'] = self.params['projstdev']
+		syntheticq['shiftrad'] = self.params['shiftrad']
+		syntheticq['rotang'] = self.params['rotang']
+		if self.params['flip'] is True:
+			syntheticq['flip'] = 1
+		else:
+			syntheticq['flip'] = 0
+		syntheticq['kilovolts'] = self.params['kv']
+		syntheticq['spher_aber'] = self.params['cs']
+		syntheticq['defocus_x'] = self.params['df1']
+		syntheticq['defocus_y'] = self.params['df2']
+		if self.params['randomdef'] is True:
+			syntheticq['randomdef'] = 1
+			syntheticq['randomdef_std'] = self.params['randomdef_std']
+		else:
+			syntheticq['randomdef'] = 0
+		syntheticq['astigmatism'] = self.params['astigmatism']
+		syntheticq['snr1'] = self.params['snr1']
+		syntheticq['snrtot'] = self.params['snrtot']
+		syntheticq['envelope'] = self.params['envelope']
+		if self.params['ace2correct'] is True:
+			syntheticq['ace2correct'] = 1
+		else:
+			syntheticq['ace2correct'] = 0
+		if self.params['ace2correct_rand'] is True:
+			syntheticq['ace2correct_rand'] = 1
+			syntheticq['ace2correct_std'] = self.params['ace2correct_std']
+		else:
+			syntheticq['ace2correct_rand'] = 0
+		if self.params['ace2estimate'] is True:
+			syntheticq['ace2estimate'] = 1
+		else:
+			syntheticq['ace2estimate'] = 0
+		syntheticq['lowpass'] = self.params['lpfilt']
+		syntheticq['highpass'] = self.params['hpfilt']
+		if self.params['norm'] is True:
+			syntheticq['norm'] = 1
+		else:
+			syntheticq['norm'] = 0
+
+		### fill stack parameters
+		stparamq = appionData.ApStackParamsData()
+		stparamq['boxSize'] = self.params['box']
+		stparamq['bin'] = 1
+		stparamq['fileType'] = "imagic"
+		stparamq['defocpair'] = 0
+		stparamq['lowpass'] = self.params['lpfilt']
+		stparamq['highpass'] = self.params['hpfilt']
+		stparamq['norejects'] = 1
+		stparamq['inverted'] = 0
+		if self.params['ace2correct'] is True or self.params['ace2correct_rand'] is True:
+			stparamq['phaseFlipped'] = 1
+			stparamq['fliptype'] = "ace2part"
+		else:
+			stparamq['phaseFlipped'] = 0
+		if self.params['norm'] is True:
+			stparamq['normalized'] = 1
+		else:
+			stparamq['normalized'] = 0
+		
+		paramslist = stparamq.query()
+
+		### create a stack object
+		stackq = appionData.ApStackData()
+		stackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		### see if stack already exists in the database (just checking path & name)
+		uniqstackdatas = stackq.query(results=1)
+
+		### create a stackRun object
+		runq = appionData.ApStackRunData()
+		runq['stackRunName'] = self.params['runname']
+		runq['session'] = sessiondata
+		### see if stack run already exists in the database (just checking runname & session)
+		uniqrundatas = runq.query(results=1)
+	
+		### finish stack object
+		stackq['name'] = self.params['finalstack']
+		stackq['description'] = self.params['description']
+		stackq['hidden'] = 0
+		stackq['pixelsize'] = self.params['apix'] * 1e-10
+		stackq['project|projects|project'] = projectnum
+		self.stackdata = stackq
+
+		### finish stackRun object
+		runq['stackParams'] = stparamq
+		runq['syntheticStackParams'] = syntheticq
+		self.stackrundata = runq
+
+		### create runinstack object
+		rinstackq = appionData.ApRunsInStackData()
+		rinstackq['stackRun'] = runq
+		rinstackq['project|projects|project'] = projectnum
+		
+        	### if not in the database, make sure run doesn't already exist
+		if not uniqstackdatas and not uniqrundatas:
+			if self.params['commit'] is True:
+				apDisplay.printColor("Inserting stack parameters into database", "cyan")
+				rinstackq['stack'] = stackq
+				rinstackq.insert()
+			else:
+				apDisplay.printColor("NOT INSERTING stack parameters into database", "cyan")
+				
+		elif uniqrundatas and not uniqstackdatas:
+			apDisplay.printError("Weird, run data without stack already in the database")
+		else:
+
+			rinstack = rinstackq.query(results=1)
+
+			prevrinstackq = appionData.ApRunsInStackData()
+			prevrinstackq['stackRun'] = uniqrundatas[0]
+			prevrinstackq['stack'] = uniqstackdatas[0]
+			prevrinstackq['project|projects|project'] = projectnum
+			prevrinstack = prevrinstackq.query(results=1)
+
+			## if no runinstack found, find out which parameters are wrong:
+			if not rinstack:
+				for i in uniqrundatas[0]:
+					print "r =======",i,"========"
+					if uniqrundatas[0][i] != runq[i]:
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i,uniqrundatas[0][i],runq[i]
+				for i in uniqrundatas[0]['stackParams']:
+					print "p =======",i,"========"
+					if uniqrundatas[0]['stackParams'][i] != stparamq[i]:
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i, uniqrundatas[0]['stackParams'][i], stparamq[i]
+				for i in uniqstackdatas[0]:
+					print "s =======",i,"========"
+					if uniqstackdatas[0][i] != stackq[i]:
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i,uniqstackdatas[0][i],stackq[i]
+				for i in prevrinstack[0]:
+					print "rin =======",i,"========"
+					if prevrinstack[0][i] != rinstackq[i]:
+						print i,prevrinstack[0][i],rinstackq[i]
+						apDisplay.printError("the value for parameter '"+str(i)+"' is different from before")
+					else:
+						print i,prevrinstack[0][i],rinstackq[i]
+				apDisplay.printError("All parameters for a particular stack must be identical! \n"+\
+											 "please check your parameter settings.")
+			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
+
+		### create a fake selection run
+		selectq = appionData.ApSelectionRunData()
+		selectq['session'] = sessiondata
+		selectq['name'] = "fakerun"
+		self.selectq = selectq
+		if self.params['commit'] is True:
+			apDisplay.printColor("Inserting fake selection parameters into the database", "cyan") 
+			selectq.insert()
+		else:
+			apDisplay.printColor("NOT INSERTING fake selection parameters into the database", "cyan")
+
+
+
+		partNumber = 0
+		### loop over the particles and insert
+		if self.params['commit'] is True:
+			apDisplay.printColor("inserting particle parameters into database", "cyan")
+		else:
+			apDisplay.printColor("NOT INSERTING particle parameters into database", "cyan")
+		for i in range(len(self.correctedpartlist)):
+			partNumber += 1
+			partfile = self.correctedpartlist[i]
+			partmeandict = self.partmeantree[i]
+			
+			partq = appionData.ApParticleData()
+			partq['selectionrun'] = selectq
+			partq['xcoord'] = partNumber
+
+			stpartq = appionData.ApStackParticlesData()
+
+			### check unique params
+			stpartq['stack'] = self.stackdata
+			stpartq['stackRun'] = self.stackrundata
+			stpartq['particleNumber'] = partNumber
+			stpartdata = stpartq.query(results=1)
+			if stpartdata:
+				apDisplay.printError("trying to insert a duplicate particle")
+
+			stpartq['particle'] = partq
+			stpartq['mean'] = partmeandict['mean']
+			stpartq['stdev'] = partmeandict['stdev']
+			if self.params['commit'] is True:
+				stpartq.insert()
+
+		return
 
 
 	#=====================
@@ -771,11 +977,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		
 		### create raw micrographs from input stack (newname)
 		self.createRawMicrographs(newname, noiselevel1)
-		
-		### remove previous files, if they exist
-#		if os.path.isdir(os.path.join(self.params['rundir'], "partfiles")):
-#			apDisplay.printColor("now removing all previous .mrc files in subdirectory partfiles/", "cyan")
-#			os.system("rm -rf "+os.path.join(self.params['rundir'], "partfiles"))
 
 		### breakup stack for applying envelope and ctf parameters
 		self.partlistdocfile = self.breakupStackIntoSingleFiles(noisystack)
@@ -811,11 +1012,48 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				emancmd = emancmd+"hp="+str(self.params['hpfilt'])+" "
 			if self.params['lpfilt'] is not None:
 				emancmd = emancmd+"lp="+str(self.params['lpfilt'])+" "
+			if self.params['norm'] is True:
+				emancmd = emancmd+"norm="+str(self.params['norm'])+" "
 			while os.path.isfile(filtstack):
 				apFile.removeStack(filtstack)
 			apEMAN.executeEmanCmd(emancmd)
+			self.params['finalstack'] = os.path.basename(filtstack)
+			finalstack = filtstack
+		else:
+			self.params['finalstack'] = os.path.basename(noisystack2)
+			finalstack = noisystack2
 			
+		### read mean and stdev
+		self.partmeantree = []
+		imagicdata = apImagicFile.readImagic(os.path.join(self.params['rundir'], self.params['finalstack']))
+		apDisplay.printColor("Reading mean and standard deviation values for each particle", "cyan")
+		### loop over the particles and read data
+		for i in range(len(self.correctedpartlist)):
+			partdata = self.correctedpartlist[i]
+			partarray = imagicdata['images'][i]
+			# take abs of mean, because ctf whole image may become negative
+			partmeandict = {
+				'partdata': partdata,
+				'mean': abs(partarray.mean()),
+				'stdev': partarray.std(),
+				'min': partarray.min(),
+				'max': partarray.max(),
+			}
+			if partmeandict['mean'] > 1.0e7:
+				partmeandict['mean'] /= 1.0e7
+			if partmeandict['stdev'] > 1.0e7:
+				partmeandict['stdev'] /= 1.0e7
+			if abs(partmeandict['stdev']) < 1.0e-6:
+				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
+			self.partmeantree.append(partmeandict)
+
+		### create average file for viewing on webpages
+		emancmd = "proc2d "+finalstack+" "+os.path.join(self.params['rundir'], "average.mrc")+" average"
+		apEMAN.executeEmanCmd(emancmd)
+		
 		### upload if commit is checked
+		micrographlist = self.micrographlist
+		particlelist = self.correctedpartlist
 		self.uploadData()
 
 
@@ -825,24 +1063,5 @@ if __name__ == "__main__":
 	syntheticdataset.start()
 	syntheticdataset.close()
 	
-	
-	
-	
-	
-	
-	
-#=====================
-def runAmpCorrect (self, start_name, end_name, params):
-	tmpfile = apVolume.createAmpcorBatchFile(start_name, params)
-	apVolume.runAmpcor()
 
-	### convert back to mrc or img/hed
-	while os.path.isfile(end_name):
-		os.remove(end_name)
-		apDisplay.printWarning("removing file "+str(end_name))
-
-	emancmd = "proc2d "+tmpfile+" "+str(end_name)
-	apEMAN.executeEmanCmd(emancmd)
-
-	return
 
