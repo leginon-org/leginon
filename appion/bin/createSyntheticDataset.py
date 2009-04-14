@@ -143,7 +143,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printError("ACE2 estimation should only be used if you're doing correction as well, please use both ace2correct and ace2estimate")
 
 		### some defaults, and workarounds for now
-		self.params['envelope'] = "/export/home/dlyumkis/envelopeFunction/sum_500_filt.mrc"
+		self.appiondir = apParam.getAppionDirectory()
+		self.params['envelope'] = os.path.join(self.appiondir, "lib", "envelopeImage.mrc")
 		self.params['filesperdir'] = 2048
 		self.params['projpergraph'] = 100 
 		if self.params['filesperdir'] > self.params['projcount']:
@@ -229,7 +230,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	def createProjections(self):
 		timestamp = apParam.makeTimestamp()
 		eulerlist = self.setEulers()
-		if os.path.isfile(os.path.join(self.params['rundir'], "proj.hed")):
+		while os.path.isfile(os.path.join(self.params['rundir'], "proj.hed")):
 			apFile.removeStack(os.path.join(self.params['rundir'], "proj.hed"))
 		eulerfile = os.path.join(self.params['rundir'], "eulers.lst")
 		f = open(eulerfile, "w")
@@ -300,7 +301,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		basename, extension = os.path.splitext(filename)
 		formattedsnr = "%.2f" % (SNR)
 		newname = basename+"_snr"+formattedsnr+".hed"
-		if os.path.isfile(newname):
+		while os.path.isfile(newname):
 			apFile.removeStack(newname)
 		emancmd = "proc2d "+filename+" "+newname+" addnoise="+str(noiselevel)
 		apEMAN.executeEmanCmd(emancmd)
@@ -371,7 +372,6 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				
 		f.close()
 
-		apDisplay.printColor("now removing all substacks", "green")	
 		subdir = os.path.dirname(substack)
 		syscmd = "rm -f "+subdir+"/substack*"
 		os.system(syscmd)
@@ -394,7 +394,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		micrographlist = []
 		for item in range(basenum):
 			partstack = os.path.join(self.params['rundir'], "micrographs", "stack"+str(mcount))+".hed"
-			if os.path.isfile(partstack):
+			while os.path.isfile(partstack):
 				apFile.removeStack(partstack)
 			time.sleep(1) ### workaround for now, encountering problems between removing and creating stack
 			emancmd = "proc2d "+stack+" "+partstack+" first="+str(imgcount)+" last="+str(imgcount+self.params['projpergraph']-1)+" norm"
@@ -411,7 +411,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			### add noise to micrographs
 			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
 			noisygraph = micrograph+".noise.mrc"
-			if os.path.isfile(noisygraph):
+			while os.path.isfile(noisygraph):
 				apDisplay.printWarning("removing file "+noisygraph)
 				apFile.removeFile(noisygraph)
 			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
@@ -424,7 +424,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		if remainder != 0:
 			remstack = os.path.join(self.params['rundir'], "micrographs", "stack"+str(mcount))+".hed"
 			emancmd = "proc2d "+stack+" "+remstack+" first="+str(imgcount)+" last="+str(imgcount+remainder-1)+" norm"
-			if os.path.isfile(remstack):
+			while os.path.isfile(remstack):
 				apFile.removeStack(remstack)
 			apEMAN.executeEmanCmd(emancmd)
 			
@@ -440,7 +440,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			### add noise to micrograph
 			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
 			noisygraph = micrograph+".noise.mrc"
-			if os.path.isfile(noisygraph):
+			while os.path.isfile(noisygraph):
 				apDisplay.printWarning("removing file "+noisygraph)
 				apFile.removeFile(noisygraph)
 			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
@@ -522,7 +522,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					self.astigmatismlistc.append(self.params['astigmatism'])
 				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
 					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
-					str(df2)+","+str(self.parasm['astigmatism'])+" -wiener 0.1"
+					str(df2)+","+str(self.params['astigmatism'])+" -wiener 0.1"
 				self.executeAce2Cmd(ace2cmd)
 				correctedgraph = noisygraph2+".corrected.mrc"
 				self.micrographlist.append(correctedgraph)
@@ -746,7 +746,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			flip = ",flip"
 		else: 
 			flip = ""
-		if os.path.isfile(newname):
+		while os.path.isfile(newname):
 			apFile.removeStack(newname)
 		emancmd = "proc2d "+filename+" "+newname+" randomize="+str(self.params['shiftrad'])+","+\
 			str(self.params['rotang'])+flip+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm norm"
@@ -811,7 +811,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				emancmd = emancmd+"hp="+str(self.params['hpfilt'])+" "
 			if self.params['lpfilt'] is not None:
 				emancmd = emancmd+"lp="+str(self.params['lpfilt'])+" "
-			if os.path.isfile(filtstack):
+			while os.path.isfile(filtstack):
 				apFile.removeStack(filtstack)
 			apEMAN.executeEmanCmd(emancmd)
 			
@@ -837,7 +837,7 @@ def runAmpCorrect (self, start_name, end_name, params):
 	apVolume.runAmpcor()
 
 	### convert back to mrc or img/hed
-	if os.path.isfile(end_name):
+	while os.path.isfile(end_name):
 		os.remove(end_name)
 		apDisplay.printWarning("removing file "+str(end_name))
 
