@@ -152,7 +152,7 @@ class DoseScrolledSettings(gui.wx.Settings.ScrolledDialog):
             self.stbeamcurrent.SetLabel('')
             self.stscreenmag.SetLabel('')
             self.stdoserate.SetLabel('')
-        self.szmain.Layout()
+        self.dialog.szmain.Layout()
         self.Fit()
 
     def onMeasureDoseButton(self, evt):
@@ -165,7 +165,7 @@ class DoseScrolledSettings(gui.wx.Settings.ScrolledDialog):
             self.sensitivity.SetValue(0)
         else:
             self.sensitivity.SetValue(results)
-        self.szmain.Layout()
+        self.dialog.szmain.Layout()
         self.Fit()
 
     def onSetSensitivityButton(self, evt):

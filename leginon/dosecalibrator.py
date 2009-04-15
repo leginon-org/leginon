@@ -51,7 +51,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		beam_diameter = self.settings['beam diameter']
 		doserate = self.calclient.dose_from_screen(screen_mag, beam_current, beam_diameter)
 		self.results['dose rate'] = doserate
-		CallAfter(self.panel.dialog._setDoseResults, self.results)
+		CallAfter(self.panel.dialog.scrsettings._setDoseResults, self.results)
 
 	def getCurrentAndMag(self):
 		if self.initInstruments():
@@ -96,7 +96,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.sens = sens
 		ht = imdata['scope']['high tension']
 		self.calclient.storeSensitivity(ht, sens)
-		CallAfter(self.panel.dialog._setSensitivityResults, sens)
+		CallAfter(self.panel.dialog.scrsettings._setSensitivityResults, sens)
 
 	def onSetSensitivity(self,sens):
 		try:
