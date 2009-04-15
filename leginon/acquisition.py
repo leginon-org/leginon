@@ -304,7 +304,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if targetdata is not None and targetdata['type'] != 'simulated' and self.settings['adjust for transform'] != 'no':
 				if self.settings['drift between'] and self.goodnumber > 0:
 					self.declareDrift('between targets')
+				targetonimage = targetdata['delta column'],targetdata['delta row']
 				targetdata = self.adjustTargetForTransform(targetdata)
+				self.logger.info('target adjusted by (%d,%d) (column, row)' % (targetdata['delta column']-targetonimage[0],targetdata['delta row']-targetonimage[1]))
 
 			### determine how to move to target
 			try:
