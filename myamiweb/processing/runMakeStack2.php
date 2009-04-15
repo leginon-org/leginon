@@ -288,9 +288,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		//echo "Box diam: $boxdiam pixels<br/>\n";
 		global $goodboxes;
 		foreach ($goodboxes as $box) {
-			if ($box == $boxdiam)
-				break;
-			elseif ($box > $boxdiam) {
+			if ($box >= $boxdiam) {
 				$defaultboxsize = $box;
 				break;
 			}
