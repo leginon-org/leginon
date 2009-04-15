@@ -59,7 +59,7 @@ class Correlator(object):
 	def swapQuadrants(self, image):
 		return imagefun.swap_quadrants(image)
 
-	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False,taper=0):
+	def correlate(self, imagedata, tiltcorrection=True, channel=None,wiener=False,taper=0,corrtype='phase'):
 		image = imagedata['image']
 		if len(image.shape) != 2 or image.shape[0] != image.shape[1]:
 			raise ValueError
@@ -87,10 +87,16 @@ class Correlator(object):
 			imagefun.taper(image,taperboundary)
 		self.correlation.insertImage(image)
 		self.channel = channel
-		try:
-			pc = self.correlation.phaseCorrelate(wiener=wiener)
-		except correlator.MissingImageError:
-			return
+		if corrtype == 'phase':
+			try:
+				pc = self.correlation.phaseCorrelate(wiener=wiener)
+			except correlator.MissingImageError:
+				return
+		else:
+			try:
+				pc = self.correlation.crossCorrelate()
+			except correlator.MissingImageError:
+				return
 
 		peak = self.peakfinder.subpixelPeak(newimage=pc)
 		rows, columns = self.peak2shift(peak, pc.shape)
