@@ -70,7 +70,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="Number of volumes to create", metavar="#")
 		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
 			help="Maximum number of iterations", metavar="#")
-		self.parser.add_option("--angle", "--angle-interval", dest="angle", type="int", default=5,
+		self.parser.add_option("--phi", "--angle-increment", dest="phi", type="int", default=5,
+			help="Projection sampling interval (degrees)", metavar="#")
+		self.parser.add_option("--psi", "--angle-inplane", dest="psi", type="int", default=5,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
 
 		### floats
@@ -317,7 +319,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 			xmippexe = "xmipp_angular_project_library"
 		xmippcmd = ("%s -i %s -experimental_images %s -o %s"
 			%(xmippexe, volfile, parteulerdoc, refprefix))
-		xmippcmd += " -sampling_rate %d -compute_neighbors -angular_distance -1 -perturb 0.5"%(self.params['angle'])
+		xmippcmd += " -sampling_rate %d -compute_neighbors -angular_distance -1 -perturb 0.5"%(self.params['phi'])
 		if self.params['symmetry'] is not None:
 			xmippcmd += " -sym "+str(self.params['symmetry'])
 		apEMAN.executeEmanCmd(xmippcmd, verbose=False)
@@ -429,7 +431,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 			proccmd += " lp="+str(self.params['lowpass'])
 		proccmd += " last="+str(self.params['numpart']-1)
 		apFile.removeStack(self.params['localstack'], warn=False)
-		apEMAN.executeEmanCmd(proccmd, verbose=False)
+		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
@@ -445,8 +447,8 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 			+" -vol "+os.path.join(self.params['rundir'], self.voldocfile)
 			+" -iter "+str(self.params['maxiter'])
 			+" -o "+os.path.join(self.params['rundir'], "part"+self.timestamp)
-			+" -psi_step "+str(self.params['angle'])
-			+" -ang "+str(self.params['angle'])
+			+" -psi_step "+str(self.params['psi'])
+			+" -ang "+str(self.params['phi'])
 		)
 		### fast mode
 		if self.params['fast'] is True:
