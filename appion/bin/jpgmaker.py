@@ -23,7 +23,7 @@ class MrcToJpgLoop(filterLoop.FilterLoop):
 
 	def setupParserOptions(self):
 		"""
-		Writes a maximal 512x512 jpg image
+		Writes a maximal 'imgsize' jpg image
 		default is 
 			min = mean - 3 * stdev
 			max = mean + 3 * stdev
