@@ -215,9 +215,12 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	// default params for javascript
 	$randomdef = ($_POST['randomdef']=='on') ? 'CHECKED' : '';
 	$defstd = ($_POST['randomdef']=='on') ? $_POST['defstd'] : '';
-	$randomdefdisable = ($_POST['randomdef']=='on') ? '' : 'DISABLED';
 	$ace2correct = ($_POST['ace2correct']=='on') ? 'CHECKED' : '';
 	$randcor_std = ($_POST['randomdef']=='on') ? $_POST['randcor_std'] : '';
+	$randomdefdisable = ($_POST['randomdef']=='on') ? '' : 'DISABLED';
+	$correctiondisable = ($_POST['correction']) ? $_POST['correction'] : "DISABLED";
+	$randcordisable = ($_POST['randcor_std']) ? $_POST['randcor_std'] : "DISABLED";
+
 	// get model data
 	
 	if ($modelId) $modeldata = $particle->getInitModelInfo($modelId);
@@ -366,7 +369,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo "<br>\n";
 	
 	echo docpop('correctiontype','Correction Type: ');
-	echo "<select name='correction' onchange='checkcorrection()'>";
+	echo "<select name='correction' onchange='checkcorrection()' $correctiondisable>";
 	echo "<option value='applied'>Applied CTF</option>";
 	echo "<option value='ace2estimate'>Use ACE2 Estimate</option>"; // disabled for now, need to get working in python
 	echo "<option value='perturb'>Perturb Applied CTF</option>";
