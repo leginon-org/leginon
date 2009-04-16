@@ -645,6 +645,37 @@ if ($expId) {
 		'newrun'=>array($nruns, $celloption),
 	);
 
+	// Synthetic Data
+	$action = "Synthetic Data";
+	if ($models != 0) {
+		$synresults=array();
+		$syndone = count($subclusterjobs['syntheticData']['done']);
+		$synrun = count($subclusterjobs['syntheticData']['running']);
+		$synq = count($subclusterjobs['syntheticData']['queued']);
+
+		$synresults[] = ($syndone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId'>$syndone complete</a>";
+		$synresults[] = ($synrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticData'>$synrun running</a>";
+		$synresults[] = ($synq==0) ? "" : "$synq queued";
+
+		// synthetic stacks being created and stacks completed
+		$totsynstack = $syndone+$synrun+$synq;
+
+		$totsynresult = ($totsynstack==0) ? "" :
+			"<a href='stacksummary.php?expId=$sessionId'>$totsynstack</a>";
+
+		$nruns=array();
+		$nruns[]=array (
+				'name'=>"<a href='createSyntheticDataset.php?expId=$sessionId'>Synthetic Dataset Creation</a>",
+				'result'=>$synresults,
+				);
+		$data[]=array(
+			      'action'=>array($action, $celloption),
+			      'result'=>array($totsynresult),
+			      'newrun'=>array($nruns, $celloption),
+			      );		
+	}
+	
+
 }
 
 $menujs='<script type="text/javascript">
