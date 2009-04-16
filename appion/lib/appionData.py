@@ -313,6 +313,7 @@ class ApStackRunData(Data):
 		return Data.typemap() + (
 			('stackRunName', str),
 			('stackParams', ApStackParamsData),
+			('syntheticStackParams', ApSyntheticStackParamsData),
 			('session', leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
@@ -343,6 +344,37 @@ class ApStackParamsData(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ApStackParamsData=ApStackParamsData
+
+class ApSyntheticStackParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('modelid', ApInitialModelData),
+			('boxsize' , int),
+			('apix', float),
+			('projcount', int),
+			('projstdev', float),
+			('shiftrad', float),
+			('rotang', int),
+			('flip', bool),
+			('kilovolts', int),
+			('spher_aber', float),
+			('defocus_x', float),
+			('defocus_y', float),
+			('randomdef', bool),
+			('randomdef_std', float),
+			('astigmatism', float),
+			('snr1', float),
+			('snrtot', float),
+			('envelope', str),
+			('ace2correct', bool),
+			('ace2correct_rand', bool),
+			('ace2correct_std', float),
+			('ace2estimate', bool),
+			('lowpass', int),
+			('highpass', int),
+			('norm', bool),
+		)
+	typemap = classmethod(typemap)
 
 class ApStackParticlesData(Data):
 	def typemap(cls):
