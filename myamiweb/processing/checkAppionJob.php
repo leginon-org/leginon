@@ -134,8 +134,10 @@ function checkJobStatus($host,$jobpath,$jobfile,$user,$pass,$tail) {
 }
 
 function tail_file($file, $lines) {
-	//global $fsize;
-	$handle = fopen($file, "r");
+	if (!$handle = fopen($file, "r")) {
+		return "";
+	}
+
 	$linecounter = $lines;
 	$pos = -2;
 	$beginning = false;
