@@ -42,7 +42,7 @@ def fermiLowPassFilter(imgarray, pixrad=2.0, dataext="spi"):
 	spider_exe = os.popen("which spider").read().strip()
 	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext, logo=False)
 	### filter request: infile, outfile, filter-type, inv-radius, temperature
-	mySpider.toSpiderQuiet("FQ NP", "temp001", "filt001", "5", str(1.0/pixrad), "0.02")
+	mySpider.toSpiderQuiet("FQ NP", "temp001", "filt001", "5", str(1.0/pixrad), "0.04")
 	mySpider.close()
 	### this function does not wait for a results
 	while(not os.path.isfile("filt001."+dataext)):
@@ -63,7 +63,7 @@ def fermiHighPassFilter(imgarray, pixrad=200.0, dataext="spi"):
 	spider_exe = os.popen("which spider").read().strip()
 	mySpider = spyder.SpiderSession(spiderexec=spider_exe, dataext=dataext, logo=False)
 	### filter request: infile, outfile, filter-type, inv-radius, temperature
-	mySpider.toSpiderQuiet("FQ NP", "temp001", "filt001", "6", str(1.0/pixrad), "0.02")
+	mySpider.toSpiderQuiet("FQ NP", "temp001", "filt001", "6", str(1.0/pixrad), "0.04")
 	mySpider.close()
 	### this function does not wait for a results
 	while(not os.path.isfile("filt001."+dataext)):
