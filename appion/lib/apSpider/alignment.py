@@ -2,11 +2,11 @@
 ## python
 import time
 import os
+import re
 import subprocess
 import cPickle
 import sys
 import math
-from string import lowercase
 import random
 ## PIL
 ## spider
@@ -21,11 +21,11 @@ import apFile
 A large collection of SPIDER functions
 
 I try to keep the trend
-image file: 
+image file:
 	*****img.spi
-image stack file: 
+image stack file:
 	*****stack.spi
-doc/keep/reject file: 
+doc/keep/reject file:
 	*****doc.spi
 file with some data:
 	*****data.spi
@@ -67,10 +67,10 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	apDisplay.printMsg("Performing particle alignment")
 	# copy template to memory
-	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9") 
-	mySpider.toSpider("AP SR", 
-		spyder.fileFilter(stackfile)+"@******", "1-"+str(numpart), 
-		str(int(pixrad)), str(int(firstring))+","+str(int(lastring)), 
+	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9")
+	mySpider.toSpider("AP SR",
+		spyder.fileFilter(stackfile)+"@******", "1-"+str(numpart),
+		str(int(pixrad)), str(int(firstring))+","+str(int(lastring)),
 		"_9", rundir+"/avgimg**", rundir+"/paramdoc**")
 	mySpider.close()
 
@@ -89,7 +89,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		+" "+rundir+"/avgimg"+("%02d%s" % (numiter, dataext))
 		+" "+rundir+"/average.mrc"
 	)
-	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)	
+	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=False)
 	apDisplay.printMsg(str(numiter)+" alignment iterations were run by spider")
 
 	### convert spider rotation, shift data to python
@@ -112,7 +112,7 @@ def runCoranClass(params,cls):
 
 	#set up cls dir
 	clsdir=cls.split('.')[0]+'.dir'
-	
+
 	clscmd='clstoaligned.py ' + cls
 	## if multiprocessor, don't run clstoaligned yet
 	if params['proc'] == 1:
@@ -132,7 +132,7 @@ def runCoranClass(params,cls):
 		apEMAN.writeBlankImage(os.path.join(clsdir,'classes_avg.spi'),params['boxsize'],0,'spider')
 		print "WARNING!! no particles in class"
 		return
-			
+
 	# if only 3 particles or less, turn particles into the class averages
 	elif params['nptcls'] < 4:
 		#this is an ugly hack, just average the particles together, no ref-free
@@ -160,7 +160,7 @@ def runCoranClass(params,cls):
 			os.system(spidercmd)
 		corancmd+=spidercmd
 		return corancmd
-	
+
 #===============================
 def readRefFreeDocFile(docfile, picklefile):
 	apDisplay.printMsg("processing alignment doc file")
@@ -188,12 +188,12 @@ def readRefFreeDocFile(docfile, picklefile):
 	return partlist
 
 #===============================
-def refBasedAlignParticles(stackfile, templatestack, 
-		origstackfile, 
-		xysearch, xystep, 
+def refBasedAlignParticles(stackfile, templatestack,
+		origstackfile,
+		xysearch, xystep,
 		numpart, numtemplate,
-		firstring=2, lastring=100, 
-		dataext=".spi", 
+		firstring=2, lastring=100,
+		dataext=".spi",
 		iternum=1, oldpartlist=None):
 	"""
 	inputs:
@@ -221,7 +221,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 
 	### perform alignment, should I use 'AP SH' instead?
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
-	mySpider.toSpider("AP MQ", 
+	mySpider.toSpider("AP MQ",
 		spyder.fileFilter(templatestack)+"@**",     # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
 		str(int(xysearch))+","+str(int(xystep)),    # translation search range, step size
@@ -238,7 +238,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	if oldpartlist is not None and iternum > 1:
 		apDisplay.printMsg("updating particle doc info")
 		partlist = updateRefBasedDocFile(oldpartlist, docfile, picklefile)
-	elif iternum == 1:	
+	elif iternum == 1:
 		apDisplay.printMsg("reading initial particle doc info")
 		partlist = readRefBasedDocFile(docfile, picklefile)
 	else:
@@ -286,9 +286,9 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 		oldpartdict = oldpartlist[newpartdict['num']-1]
 		### this is wrong because the shifts are not additive without a back rotation
 		if newpartdict['num'] == oldpartdict['num']:
-			adjxshift = ( oldpartdict['xshift']*math.cos(math.radians(newpartdict['rot'])) 
+			adjxshift = ( oldpartdict['xshift']*math.cos(math.radians(newpartdict['rot']))
 				- oldpartdict['yshift']*math.sin(math.radians(newpartdict['rot'])) )
-			adjyshift = ( oldpartdict['xshift']*math.sin(math.radians(newpartdict['rot'])) 
+			adjyshift = ( oldpartdict['xshift']*math.sin(math.radians(newpartdict['rot']))
 				+ oldpartdict['yshift']*math.cos(math.radians(newpartdict['rot'])) )
 			partdict = {
 				'num': newpartdict['num'],
@@ -371,7 +371,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	output:
 		none
 
-	I tried this loop in both spider and python; 
+	I tried this loop in both spider and python;
 	python was faster?!? -neil
 	"""
 	if not os.path.isfile(oldstack+dataext):
@@ -412,7 +412,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 		if 'mirror' in partdict and partdict['mirror'] is True:
 			mySpider.toSpiderQuiet(
 				"MR", "_1",
-				"_2@"+("%06d" % (partnum)),	"Y", 
+				"_2@"+("%06d" % (partnum)),	"Y",
 			)
 		else:
 			mySpider.toSpiderQuiet(
@@ -424,7 +424,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	#save stack to file
 	mySpider.toSpiderQuiet(
 		"CP", "_2@",
-		spyder.fileFilter(alignedstack)+"@",	
+		spyder.fileFilter(alignedstack)+"@",
 	)
 	#delete stack
 	mySpider.toSpiderQuiet(
@@ -495,9 +495,9 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
-			#"CA SRE", rundir+"/corandata", str(fact), 
+			#"CA SRE", rundir+"/corandata", str(fact),
 			#rundir+"/eigenstack@"+("%02d" % (fact)), )
-			"CA SRD", rundir+"/corandata", str(fact), str(fact), 
+			"CA SRD", rundir+"/corandata", str(fact), str(fact),
 			rundir+"/eigenstack@***", )
 	mySpider.close()
 
@@ -578,9 +578,9 @@ def createFactorMap(f1, f2, rundir, dataext):
 		rundir+"/corandata", #coran prefix
 		"0",
 		str(f1)+","+str(f2), #factors to plot
-		"S", "+", "Y", 
+		"S", "+", "Y",
 		"5", "0",
-		factorfile, 
+		factorfile,
 		"\n\n\n\n","\n\n\n\n","\n", #9 extra steps, use defaults
 	)
 	time.sleep(2)
@@ -595,13 +595,13 @@ def createFactorMap(f1, f2, rundir, dataext):
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
 	mySpider.toSpider(
 		"SD C", #create coordinate file
-		rundir+"/corandata", #coran prefix	
+		rundir+"/corandata", #coran prefix
 		str(f1)+","+str(f2), #factors to plot
 		rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)),
 	)
 	visimg = rundir+"/visimg"+("%02d%02d" % (f1,f2))
 	mySpider.toSpider(
-		"CA VIS", #visualization	
+		"CA VIS", #visualization
 		"(1024,1024)",
 		rundir+"/sdcdoc"+("%02d%02d" % (f1,f2)), #input doc from 'sd c'
 		rundir+"/visdoc"+("%02d%02d" % (f1,f2)), #output doc
@@ -624,9 +624,9 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 
 	rundir = "cluster"
 	apParam.createDirectory(rundir)
-	### make list of factors 	 
-	factorstr = "" 	 
-	for fact in range(1,numfactors+1): 	 
+	### make list of factors
+	factorstr = ""
+	for fact in range(1,numfactors+1):
 		factorstr += str(fact)+","
 	factorstr = factorstr[:-1]
 
@@ -640,7 +640,7 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 
 	## weight for each factor
 	for fact in range(numfactors):
-		mySpider.toSpiderQuiet("1.0")	 
+		mySpider.toSpiderQuiet("1.0")
 	mySpider.toSpider(
 		"5",         #use Ward's method
 		"T", "5.1", rundir+"/dendrogram.ps",  #dendrogram image file
@@ -676,7 +676,7 @@ def convertPostscriptToPng(psfile, pngfile, size=1024):
 		apFile.removeFile(ppmfile)
 
 	if not os.path.isfile(pngfile):
-		apDisplay.printWarning("Postscript image conversion failed")	
+		apDisplay.printWarning("Postscript image conversion failed")
 
 
 #===============================
@@ -692,7 +692,34 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	return classavg,classvar
 
 #===============================
-def hierarchClusterProcess(numpart=None, factorlist=range(1,5), 
+def factorListToString(strfactorlist):
+	### convert to ints and sort
+	factorlist = []
+	for fact in strfactorlist:
+		factint = int(fact)
+		factorlist.append(factint)
+	factorlist.sort()
+
+	### make list of factors
+	factorstr = ""
+	lastfact = None
+	for fact in factorlist:
+		if lastfact == fact-1:
+			lastend = "-"+str(lastfact) 
+			end = factorstr[-len(lastend):]
+			if end == lastend:
+				factorstr = re.sub(lastend, "-"+str(fact), factorstr)
+			else:
+				factorstr += "-"+str(fact)
+		else:
+			factorstr += ","+str(fact)
+		lastfact = fact
+	factorstr = factorstr[1:]
+	factorkey = re.sub(",", "_", factorstr)
+	return factorstr, factorkey
+
+#===============================
+def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 		corandata="coran/corandata", rundir=".", dataext=".spi"):
 	"""
 	inputs:
@@ -706,13 +733,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 	"""
 	#apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
 
-	### make list of factors 	 
-	factorstr = ""
-	factorkey = ""	 
-	for fact in factorlist: 	 
-		factorstr += str(fact)+","
-		factorkey += "_"+str(fact)
-	factorstr = factorstr[:-1]
+	factorstr, factorkey = factorListToString(factorlist)
 
 	dendrogramfile = rundir+"/dendrogramdoc"+factorkey+dataext
 	if os.path.isfile(dendrogramfile):
@@ -729,7 +750,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 	)
 	## weight for each factor
 	for fact in factorlist:
-		mySpider.toSpiderQuiet("1.0")	
+		mySpider.toSpiderQuiet("1.0")
 	minclasssize = "%.4f" % (numpart*0.0001+2.0)
 	mySpider.toSpider(
 		"5",         #use Ward's method
@@ -758,7 +779,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 		dendrogram.png
 	"""
 	if timestamp is None:
-		timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
+		timestamp = apParam.makeTimestamp()
 
 	classavg = rundir+"/"+("classavgstack_%s_%03d" %  (timestamp, numclasses))
 	classvar = rundir+"/"+("classvarstack_%s_%03d" %  (timestamp, numclasses))
@@ -770,7 +791,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 	mySpider.toSpider(
 		"CL HE",
 		thresh,
-		spyder.fileFilter(dendrogramfile), # dendrogram doc file 
+		spyder.fileFilter(dendrogramfile), # dendrogram doc file
 		rundir+"/classdoc_"+timestamp+"_****", # class doc file
 	)
 
@@ -816,7 +837,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 
 	"""
 	if timestamp is None:
-		timestamp = time.strftime("%y%b%d").lower()+lowercase[time.localtime()[4]%26]
+		timestamp = apParam.makeTimestamp()
 
 	if alignedstack[-4:] == dataext:
 		alignedstack = alignedstack[:-4]
@@ -829,11 +850,8 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		apFile.removeFile(rundir+("/classdoc%04d" % (i+1))+dataext)
 	apFile.removeFile(rundir+("/allclassesdoc%04d" % (numclasses))+dataext)
 
-	### make list of factors 	 
-	factorstr = "" 	 
-	for fact in factorlist: 	 
-		factorstr += str(fact)+","
-	factorstr = factorstr[:-1]
+	### make list of factors
+	factorstr, factorkey = factorListToString(factorlist)
 
 	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
@@ -845,7 +863,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	)
 	## weight for each factor
 	for fact in factorlist:
-		mySpider.toSpiderQuiet("1.0")	
+		mySpider.toSpiderQuiet("1.0")
 	randnum = (int(random.random()*1000) + 1)
 	mySpider.toSpider(
 		str(randnum),
@@ -888,7 +906,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	return classavg,classvar
 
 #===============================
-def ClCla(alignedstack, numpart=None, numclasses=40, 
+def ClCla(alignedstack, numpart=None, numclasses=40,
 		factorlist=range(1,5), corandata="coran/corandata", dataext=".spi"):
 	"""
 	this doesn't work
@@ -904,15 +922,17 @@ def ClCla(alignedstack, numpart=None, numclasses=40,
 		apFile.removeFile(rundir+("/classdoc%04d" % (i+1))+dataext)
 	apFile.removeFile(rundir+"/clusterdoc"+dataext)
 
+	factorstr, factorkey = factorListToString(factorlist)
+
 	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
 	mySpider.toSpider(
 		"CL CLA",
 		corandata, # path to coran data
 		rundir+"/clusterdoc",	#clusterdoc file
-		str(factorlist[-1]), #factor numbers
-		"5,8", 
-		"4", 
+		factorstr, #factor numbers
+		"5,8",
+		"4",
 		"2", # minimum number of particles per class
 		"Y", rundir+"/dendrogram.ps",
 		"Y", rundir+"/dendrogramdoc",
@@ -944,7 +964,7 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 		mySpider.toSpiderQuiet(
 			"CL HD",
 			thresh, #threshold
-			spyder.fileFilter(dendrogramdocfile), # dendrogram doc file 
+			spyder.fileFilter(dendrogramdocfile), # dendrogram doc file
 			classfile
 		)
 		mySpider.close()
@@ -977,7 +997,7 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('SET MP\n')
 	f.write('%d\n' % 4)
 	f.write('\n')
-	f.write('x99=%d  ; number of particles in stack\n' % params['nptcls']) 
+	f.write('x99=%d  ; number of particles in stack\n' % params['nptcls'])
 	f.write('x98=%d   ; box size\n' % params['boxsize'])
 	f.write('x94=%d    ; mask radius\n' % params['mask'])
 	f.write('x93=%f  ; cutoff for hierarchical clustering\n' % params['haccut'])
@@ -998,7 +1018,7 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('[ali]%s/alignment/\n' % clsdir)
 	f.write('\n')
 	f.write('VM\n')
-	f.write('mkdir %s/alignment\n' % clsdir) 
+	f.write('mkdir %s/alignment\n' % clsdir)
 	f.write('\n')
 	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
 	f.write(';; create the sequential file and then use that file and do a hierarchical ;;\n')

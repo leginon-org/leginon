@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+# python
 import os
+import re
 import time
 import sys
-import re
+# appion
 import appionScript
 import apDisplay
 import apFile
@@ -145,7 +147,9 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 		### parse factor list
 		factorlist = self.params['factorstr'].split(",")
-		apDisplay.printMsg("using factorlist "+str(factorlist))
+		factorstr, factorkey = alignment.factorListToString(factorlist)
+		factorstr = re.sub(",", ", ", factorstr)
+		apDisplay.printMsg("using factorlist "+factorstr)
 		if len(factorlist) > self.analysisdata['coranrun']['num_factors']:
 			apDisplay.printError("Requested factor list is longer than available factors")
 
