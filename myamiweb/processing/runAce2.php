@@ -53,7 +53,16 @@ function createAce2Form($extra=false) {
 	$projectId=$_SESSION['projectId'];
 
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
-	$javafunctions = "";
+	$javafunctions = "
+	<script type='text/javascript'>
+		function enableconf(){
+			 if (document.viewerform.confcheck.checked){
+			    document.viewerform.reprocess.disabled=false;
+			 } else {
+			    document.viewerform.reprocess.disabled=true;
+			 }
+		}
+	</script>";
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header("Ace 2 Launcher", "CTF Estimation by Ace 2", $javafunctions);
 
@@ -97,6 +106,12 @@ function createAce2Form($extra=false) {
 
 	echo "<input type='text' name='cs' value='".$defaultcs."' size='4'>\n";
 	echo docpop('cs','Spherical Aberration');
+	echo "<br/><br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
+	echo "Reprocess Below Confidence Value<br />\n";
+	echo "Set Value:<input type='text' name='reprocess' disabled value='0.8' size='4'>\n";
+	echo "<font size='-2'><i>(between 0.0 - 1.0)</i></font>\n";
 	echo "<br/><br/>\n";
 
 	echo "<input type='text' name='edge1' value='10' size='4'>\n";
@@ -155,6 +170,7 @@ function runAce2() {
 	$cs=$_POST['cs'];
 	$edge1=trim($_POST['edge1']);
 	$edge2=trim($_POST['edge2']);
+	$reprocess=$_POST['reprocess'];
 
 	// check the tilt situation
 	$particle = new particledata();
@@ -167,13 +183,14 @@ function runAce2() {
 		}
 	}
 
-	if (is_numeric($edge1)) {
-		$command.="--edge1=$edge1 ";
-	}
+	if (is_numeric($reprocess))
+		$command.="--reprocess=$reprocess ";
 
-	if (is_numeric($edge2)) {
+	if (is_numeric($edge1))
+		$command.="--edge1=$edge1 ";
+
+	if (is_numeric($edge2))
 		$command.="--edge2=$edge2 ";
-	}
 
 	if($refine2d) $command.="--refine2d ";
 	$command.="--cs=$cs ";

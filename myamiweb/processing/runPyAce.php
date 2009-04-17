@@ -267,7 +267,7 @@ function createPyAceForm($extra=false) {
 
 	echo "<INPUT TYPE='checkbox' NAME='confcheck' onclick='enableconf(this)'>\n";
 	echo "Reprocess Below Confidence Value<br />\n";
-	echo "Set Value:<INPUT TYPE='text' NAME='reprocess' DISABLED VALUE='0.8' SIZE='4'>\n";
+	echo "Set Value:<INPUT TYPE='text' NAME='reprocess' disabled value='0.8' size='4'>\n";
 	echo "<FONT SIZE=-2><I>(between 0.0 - 1.0)</I></FONT><br />\n";
 	echo "<br />\n";
 	echo "<B>Nominal override:</B><br />\n";
