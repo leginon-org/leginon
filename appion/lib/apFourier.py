@@ -20,7 +20,7 @@ def savePower(fft, fname="power.mrc"):
 
 #===========
 def real_fft2d(image, *args, **kwargs):
-	padshape = numpy.asarray(image.shape)*2
+	padshape = numpy.asarray(image.shape)*1
 	padimage = apImage.frame_constant(image, padshape, image.mean())
 	fft = fftpack.fft2(padimage, *args, **kwargs)
 	#normfft = (fft - fft.mean())/fft.std()
@@ -35,12 +35,17 @@ def normImage(image):
 	return (image - image.mean())/image.std()
 
 #===========
-def fourierRingCorrelation(fftim1, fftim2):
+def fourierRingCorrelation(imgarray1, imgarray2):
 	"""
 	Formula taken from:
 		http://www.imagescience.de/fsc/index.htm
 	"""
 	t0 = time.time()
+
+	### get FFTs
+	fftim1 = real_fft2d(imgarray1)
+	fftim2 = real_fft2d(imgarray2)
+
 	### initialization
 	if fftim1.shape != fftim2.shape:
 		apDisplay.printError("Cannot calculate the FRC for images of different sizes")
@@ -291,45 +296,6 @@ def mini_ssnr1fft(fftlist, indextuple):
 	return numer, denom
 
 #===========
-def mini_ssnr1(partarray, indextuple):
-	"""
-	this function works but is slow
-	"""
-	i,j = indextuple
-	fsum = 0.0
-	K = float(len(partarray))
-	for partimg in partarray:
-		fftim = real_fft2d(partimg)
-		F = fftim[i,j]
-		fsum += F
-	fmean = fsum/K
-	numer = abs(fsum)**2
-	denom = 0.0
-	for partimg in partarray:
-		fftim = real_fft2d(partimg)
-		F = fftim[i,j]
-		denom += abs(F - fmean)**2
-	return numer, denom
-
-#===========
-def mini_ssnr2(partarray, indextuple):
-	"""
-	this function is slow and does not work
-	"""
-	i,j = indextuple
-	fsum = 0.0
-	fsumsq = 0.0
-	K = float(len(partarray))
-	for partimg in partarray:
-		fftim = real_fft2d(partimg)
-		F = fftim[i,j]
-		fsum += F
-		fsumsq += (F**2)
-	numer = abs(fsum)**2
-	denom = abs(fsumsq - fsum**2/K)
-	return numer, denom
-
-#===========
 def printImageInfo(image):
 	print "+++++++++++++"
 	print image.shape
@@ -337,32 +303,6 @@ def printImageInfo(image):
 	print abs(image.mean()), image.std()
 	print image.min(), image.max()
 	print "============="
-
-def sumComp(clist):
-	sumc = 0.0
-	for c in clist:
-		sumc += c
-	return sumc
-
-def sumsqComp(clist):
-	sumsq = 0.0
-	for c in clist:
-		sumsq += (c**2)
-	return sumsq
-
-def varComp(clist):
-	meanComp = sumComp(clist)/float(len(clist))
-	diffsum = 0.0
-	for c in clist:
-		diffsum += abs(c-meanComp)**2
-	return diffsum
-
-def runComp(clist):
-	sumsq = sumsqComp(clist)
-	sumc = sumComp(clist)
-	N = float(len(clist))
-	return abs(sumsq - sumc**2/N)
-
 
 #===========
 if __name__ == "__main__":
@@ -393,7 +333,7 @@ if __name__ == "__main__":
 	#savePower(afft, "power1.mrc")
 	#savePower(bfft, "power2.mrc")
 	spectralSNR([a, b])
-	fourierRingCorrelation(afft, bfft)
+	fourierRingCorrelation(a, b)
 	spectralSNRfft([afft, bfft])
 
 	sys.exit(1)
