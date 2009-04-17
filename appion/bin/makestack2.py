@@ -869,6 +869,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		if self.params['keepall'] is False:
 			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.dwn.mrc')
 			apFile.removeFilePattern(pattern)
+			### remove Ace2 images
+			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*mrc.corrected.mrc')
+			apFile.removeFilePattern(pattern)
 		### Averaging completed stack
 		stackpath = os.path.join(self.params['rundir'], "start.hed")
 		apStack.averageStack(stack=stackpath)
