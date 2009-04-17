@@ -760,7 +760,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 	def checkConflicts(self):
 		if self.params['boxsize'] is None:
 			apDisplay.printError("A boxsize has to be specified")
-		if not apPrimeFactor.isGoodPrime(self.params['boxsize']):
+		if not apPrimeFactor.isGoodStack(self.params['boxsize']):
 			apDisplay.printWarning("Boxsize does not contain recommended prime numbers")
 			smallbox,bigbox = apPrimeFactor.getPrimeLimits(self.params['boxsize'])
 			apDisplay.printWarning("You should use %d or %d for a boxsize instead"%(smallbox,bigbox))
