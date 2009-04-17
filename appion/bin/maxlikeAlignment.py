@@ -255,7 +255,11 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			stack.append(alignrefarray)
 		stackarray = numpy.asarray(stack, dtype=numpy.float32)
 		#print stackarray.shape
-		apImagicFile.writeImagic(stackarray, "part"+self.timestamp+"_average.hed")
+		avgstack = "part"+self.timestamp+"_average.hed"
+		apImagicFile.writeImagic(stackarray, avgstack)
+		### create a average mrc
+		avgdata = stackarray.mean(0)
+		apImage.arrayToMrc(avgdata, "average.mrc")
 		return
 
 	#=====================
@@ -452,10 +456,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		xmippcmd = xmippexe+" "+xmippopts
 		self.writeXmippLog(xmippcmd)
 		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
-
-		### create a quick mrc
-		emancmd = "proc2d ref"+self.timestamp+"_ref000001.xmp average.mrc"
-		apEMAN.executeEmanCmd(emancmd, verbose=True)
 
 		self.createAverageStack()
 
