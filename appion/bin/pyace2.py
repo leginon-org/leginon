@@ -66,11 +66,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		if self.params['reprocess'] is None:
 			return True
 			
-		ctfvalue, conf = apCtf.getBestAceTwoValueForImage(imgdata,msg=False)
+		ctfvalue, conf = apCtf.getBestAceTwoValueForImage(imgdata, msg=False)
 		
 		if ctfvalue is None:
 			return True
-			
+
 		if conf > self.params['reprocess'] and ctfvalue['defocus1'] != ctfvalue['defocus2']:
 			return False
 		else:
@@ -179,11 +179,11 @@ class Ace2Loop(appionLoop2.AppionLoop):
 		apDisplay.printMsg("Amplitude contrast: %.2f percent"%(ampconst))
 		
 		if bestconf is None:
-			apDisplay.printMsg("Final confidence: %.3f"%(self.ctfvalues['confidence']))
+			apDisplay.printColor("Final confidence: %.3f"%(self.ctfvalues['confidence']),'cyan')
 		elif self.ctfvalues['confidence'] > bestconf: 
-			apDisplay.printMsg("Final (reprocessed) confidence: %.3f > %.3f"%(self.ctfvalues['confidence'],bestconf),'green')
+			apDisplay.printColor("Final confidence: %.3f > %.3f"%(self.ctfvalues['confidence'], bestconf),'green')
 		else:
-			apDisplay.printMsg("Final (reprocessed) confidence: %.3f < %.3f"%(self.ctfvalues['confidence'],bestconf),'red')
+			apDisplay.printColor("Final confidence: %.3f < %.3f"%(self.ctfvalues['confidence'], bestconf),'yellow')
 
 		### double check that the values are reasonable 
 		
