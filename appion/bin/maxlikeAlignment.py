@@ -362,7 +362,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		proccmd = "proc2d "+self.stack['file']+" temp.hed apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
-			clipsize = int(self.clipsize*self.params['bin'])
+			clipsize = int(self.clipsize*self.params['bin']/2.0)*2
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		proccmd += " last="+str(self.params['numpart'])
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
