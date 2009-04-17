@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 
+#python
 import sys
 import glob
-import numpy
 import time
 import math
+import numpy
+#scipy
 from pyami import quietscipy
 from scipy import fftpack, ndimage
-from pyami import mrc, imagefun, spider
+#leginon
+from pyami import mrc, imagefun
+#appion
 import apDisplay
 import apImage
 
@@ -35,7 +39,7 @@ def normImage(image):
 	return (image - image.mean())/image.std()
 
 #===========
-def fourierRingCorrelation(imgarray1, imgarray2):
+def fourierRingCorrelation(imgarray1, imgarray2, apix=1.0):
 	"""
 	Formula taken from:
 		http://www.imagescience.de/fsc/index.htm
@@ -86,78 +90,13 @@ def fourierRingCorrelation(imgarray1, imgarray2):
 	sys.stderr.write("\n")
 
 	### output
-	writeFrcPlot("frc.dat", linear)
-	res = getResolution(linear)
-	apDisplay.printMsg("Finished FRC of res %.3f in %s"%(res, apDisplay.timeString(time.time()-t0)))
-	return res
-
-
-#===========
-def spectralSNRfft(fftimlist):
-	"""
-	Compute the Spectral Signal-to-Noise Ratio (SSNR) of a given series of transforms. 
-	"""
-	t0 = time.time()
-	### initialization
-	fftim1 = fftimlist[0]
-	for fftim in fftimlist:
-		if fftim1.shape != fftim.shape:
-			apDisplay.printError("Cannot calculate the SSNR for images of different sizes")
-		if len(fftim1.shape) != 2 or len(fftim.shape) != 2:
-			apDisplay.printError("Cannot calculate the SSNR non-2D images")
-	fftshape = numpy.asarray(fftim1.shape, dtype=numpy.float32)
-	fftcenter = fftshape/2.0
-	#print fftshape, fftshape
-	#print fftcenter, fftcenter
-	length = int(max(fftshape)/2.0)
-	#print "linear length", length
-	linear = numpy.zeros((length), dtype=numpy.float32)
-	linear[0] = 1.0
-
-	### figure out which pixels go with which ring
-	lineardict = getLinearIndices(fftshape)
-
-	### for each ring calculate the FRC
-	keys = lineardict.keys()
-	keys.sort()
-	K = float(len(fftimlist))
-	for key in keys:
-		sys.stderr.write(".")
-		indexlist = lineardict[key]
-		numer = 0.0
-		denom = 0.0
-		for indextuple in indexlist:
-			i,j = indextuple
-			fsum = 0.0
-			for fftim in fftimlist:
-				F = fftim[i,j]
-				fsum += F
-			fmean = fsum/K
-			n1 = abs(fsum)**2
-			d1 = 0.0
-			for fftim in fftimlist:
-				F = fftim[i,j]
-				d1 += abs(F - fmean)**2
-			#if i == 5 and j == 5:
-			#print ("%d,%d (%.3f / %.3f) %.3f"%(indextuple[0], indextuple[1], n1, d1, n1/d1))
-			#return
-			numer += n1
-			denom += d1
-		ssnr = numer / ( K/(K-1.0) * denom ) - 1.0
-		frc = ssnr / (ssnr + 1)
-		#print "%02d %.3f %.3f (%.3f / %.3f)"%(key, ssnr, frc, numer/K, denom/K)
-		#print key, frc
-		linear[key] = frc
-	sys.stderr.write("\n")
-
-	### output
-	writeFrcPlot("ssnrfft.dat", linear)
-	res = getResolution(linear)
-	apDisplay.printMsg("Finished SSNR (fft) of res %.3f in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	writeFrcPlot("frc.dat", linear, apix)
+	res = getResolution(linear, apix)
+	apDisplay.printMsg("Finished FRC of res %.3f Angstroms in %s"%(res, apDisplay.timeString(time.time()-t0)))
 	return res
 
 #===========
-def spectralSNR(partarray):
+def spectralSNR(partarray, apix=1.0):
 	"""
 	Compute the Spectral Signal-to-Noise Ratio (SSNR) of a given series of images. 
 	"""
@@ -213,9 +152,9 @@ def spectralSNR(partarray):
 	sys.stderr.write("\n")
 
 	### output
-	writeFrcPlot("ssnr.dat", linear)
-	res = getResolution(linear)
-	apDisplay.printMsg("Finished SSNR of res %.3f in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	writeFrcPlot("ssnr.dat", linear, apix)
+	res = getResolution(linear, apix)
+	apDisplay.printMsg("Finished SSNR of res %.3f Angstroms in %s"%(res, apDisplay.timeString(time.time()-t0)))
 	return res
 
 #===========
@@ -326,8 +265,6 @@ def printImageInfo(image):
 	print image.min(), image.max()
 	print "============="
 
-
-
 #===========
 if __name__ == "__main__":
 	bin = 1
@@ -339,8 +276,6 @@ if __name__ == "__main__":
 	a = normImage(a)
 	a = imagefun.bin2(a, bin)
 	#printImageInfo(a)
-	afft = real_fft2d(a)
-	#printImageInfo(afft)
 
 	### read image 2
 	b = mrc.read("/ami/data00/appion/09mar04b/align/kerden11/09apr13q11.8.mrc")
@@ -349,33 +284,20 @@ if __name__ == "__main__":
 	#b = mrc.read("/home/vossman/appion/lib/pickwei2.mrc")
 	b = normImage(b)
 	b = imagefun.bin2(b, bin)
-	bfft = real_fft2d(b)
-	#printImageInfo(bfft)
 
-	#afft = afft/afft.std()
-	#bfft = bfft/bfft.std()
-	#savePower(afft, "power1.mrc")
-	#savePower(bfft, "power2.mrc")
 	#spectralSNR([a, b])
 	#fourierRingCorrelation(a, b)
-	#spectralSNRfft([afft, bfft])
 
 	#sys.exit(1)
 
 	files = glob.glob("/ami/data00/appion/09mar04b/align/kerden11/09apr13q11*.mrc")
-	fftlist = []
 	imlist = []
-	t0 = time.time()
 	for fname in files:
 		c = mrc.read(fname)
 		c = normImage(c)
 		c = imagefun.bin2(c, bin)
-		cfft = real_fft2d(c)
 		imlist.append(c)
-		fftlist.append(cfft)
-	apDisplay.printMsg("Finished conversion in "+apDisplay.timeString(time.time()-t0))
 	spectralSNR(imlist)
-	spectralSNRfft(fftlist)
 
 
 
