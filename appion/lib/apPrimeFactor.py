@@ -2,7 +2,8 @@
 
 import sys
 
-maxprime = 13
+maxprime = 12
+twomult = 2**1
 
 #====================
 def prime_factors(n):
@@ -27,37 +28,45 @@ def prime_factors(n):
 #====================
 def getAllPrimes(maxn=1028):
 	goodones = []
-	n = 5
-	while True:
-		factors = prime_factors(n)
-		if max(factors) < maxprime:
+	n = 2
+	while n < maxn:
+		if isGoodPrime(n):
 			#print n, factors
 			goodones.append(n)
-			if (n > maxn):
-				break
 		n += 1
 	return goodones
 
 #====================
-def getNextPrime(num=400):
+def getAllEvenPrimes(maxn=1028):
+	goodones = []
+	n = 2
+	while n < maxn:
+		if isGoodPrime(n):
+			#print n, factors
+			goodones.append(n)
+		n += 2
+	return goodones
+
+#====================
+def getNextEvenPrime(num=400):
 	goodones = []
 	n = num
-	while not isGoodPrime(n) and n < 10000:
+	while not isGoodStack(n) and n < 10000:
 		n += 1
 	return n
 
 #====================
-def getPrevPrime(num=400):
+def getPrevEvenPrime(num=400):
 	goodones = []
 	n = num
-	while not isGoodPrime(n) and n > 1:
+	while not isGoodStack(n) and n > 1:
 		n -= 1
 	return n
 
 #====================
 def getPrimeLimits(num=4):
-	prev = getPrevPrime(num)
-	next = getNextPrime(num)
+	prev = getPrevEvenPrime(num)
+	next = getNextEvenPrime(num)
 	return (prev, next)
 
 #====================
@@ -67,6 +76,12 @@ def isGoodPrime(num=4):
 	if max(factors) < maxprime:
 		return True
 	return False
+
+#====================
+def isGoodStack(num=4):
+	if num % twomult != 0:
+		return False
+	return isGoodPrime(num)
 
 #====================
 if __name__ == "__main__":
