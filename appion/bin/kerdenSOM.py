@@ -7,10 +7,11 @@ Kernel Probability Density Estimator Self-Organizing Map
 import re
 import os
 import sys
-import subprocess
 import glob
 import time
+import numpy
 import shutil
+import subprocess
 # appion
 import appionScript
 import apXmipp
@@ -19,6 +20,9 @@ import appionData
 import apEMAN
 import apFile
 import apProject
+import apFourier
+import apImagicFile
+import apImage
 
 
 #======================
@@ -119,6 +123,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 			clusterrefq['clusterrun'] = clusterrunq
 			clusterrefq['path'] = pathdata
 			clusterrefq['num_particles'] = len(partlist)
+			clusterrefq['ssnr_resolution'] = self.cluster_resolution[i]
 
 			### looping over particles
 			sys.stderr.write(".")
@@ -203,7 +208,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		return -1
 
 	#======================
-	def convertfiles(self):
+	def createMontageByEMAN(self):
 		apDisplay.printMsg("Converting files")
 
 		### create crappy files
@@ -218,7 +223,10 @@ class kerdenSOMScript(appionScript.AppionScript):
 		stackname = "kerdenstack"+self.timestamp+".hed"
 		count = 0
 		numclass = self.params['xdim']*self.params['ydim']
+		i = 0
 		for listname in files:
+			i += 1
+			apDisplay.printMsg("%d of %d classes"%(i,len(files)))
 			#listname = self.timestamp+str(i)
 			if not os.path.isfile(listname) or apFile.fileSize(listname) < 1:
 				### create a ghost particle
@@ -250,6 +258,88 @@ class kerdenSOMScript(appionScript.AppionScript):
 		apFile.removeFilePattern(self.timestamp+".*.png")
 
 	#======================
+	def readListFile(self, listfile):
+		partlist = []
+		f = open(listfile, "r")
+		for line in f:
+			sline = line.strip()
+			if re.match("[0-9]+$", sline):
+				partnum = int(sline)+1
+				partlist.append(partnum)
+		f.close()
+		return partlist
+
+	#======================
+	def createMontageInMemory(self, apix):
+		self.cluster_resolution = []
+		apDisplay.printMsg("Converting files")
+
+		### Set binning of images
+		boxsize = apImagicFile.getBoxsize(self.instack)
+		bin = 1
+		while boxsize/bin > 200:
+			bin+=1
+		binboxsize = boxsize/bin
+
+		### create averages
+		files = glob.glob(self.timestamp+".[0-9]*")
+		files.sort(self.sortFile)
+		montage = []
+		montagepngs = []
+		i = 0
+		for listname in files:
+			i += 1
+			apDisplay.printMsg("%d of %d classes"%(i,len(files)))
+			pngfile = listname+".png"
+			if not os.path.isfile(listname) or apFile.fileSize(listname) < 1:
+				### create a ghost particle
+				sys.stderr.write("skipping "+listname+"\n")
+				blank = numpy.ones((binboxsize, binboxsize), dtype=numpy.float32)
+
+				### add to montage stack
+				montage.append(blank)
+				self.cluster_resolution.append(None)
+
+				### create png
+				apImage.arrayToPng(blank, pngfile)
+
+			else:
+				### read particle list
+				partlist = self.readListFile(listname)
+
+				### average particles
+				partdatalist = apImagicFile.readParticleListFromStack(self.instack, partlist, boxsize, msg=False)
+				partdataarray = numpy.asarray(partdatalist)
+				finaldata = partdataarray.mean(0)
+				if bin > 1:
+					finaldata = apImage.binImg(finaldata, bin)
+
+				### add to montage stack
+				montage.append(finaldata)
+				res = apFourier.spectralSNR(partdatalist, apix)
+				self.cluster_resolution.append(res)
+
+				### create png
+				apImage.arrayToPng(finaldata, pngfile)
+
+			### check for png file
+			if os.path.isfile(pngfile):
+				montagepngs.append(pngfile)
+			else:
+				apDisplay.printError("failed to create montage")
+
+		stackname = "kerdenstack"+self.timestamp+".hed"
+		apImagicFile.writeImagic(montage, stackname)
+		### create montage
+		montagecmd = ("montage -geometry +4+4 -tile %dx%d "%(self.params['xdim'], self.params['ydim']))
+		for monpng in montagepngs:
+			montagecmd += monpng+" "
+		montagecmd += "montage.png"
+		apEMAN.executeEmanCmd(montagecmd, showcmd=True, verbose=False)
+		time.sleep(1)
+		apFile.removeFilePattern(self.timestamp+".*.png")
+
+	#======================
 	def start(self):
 		aligndata = appionData.ApAlignStackData.direct_query(self.params['alignstackid'])
 		boxsize = aligndata['boxsize']
@@ -264,9 +354,12 @@ class kerdenSOMScript(appionScript.AppionScript):
 		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad, 
 			boxsize, numpart=self.params['numpart'])
 
-
 		self.runKerdenSOM(outdata)
-		self.convertfiles()
+		if apFile.stackSize(self.instack) > 3.0*(1024**3):
+			# Big stacks use eman
+			self.createMontageByEMAN()
+		else:
+			self.createMontageInMemory(apix)
 		self.insertKerDenSOM()
 
 		apFile.removeFile(outdata)
