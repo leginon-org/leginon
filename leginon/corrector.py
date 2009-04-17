@@ -54,6 +54,7 @@ class CorrectorClient(object):
 		ccdcamera = camdata['ccdcamera']
 		corrected = self.correct(original=imarray, ccdcamera=ccdcamera, camstate=camstate, scopedata=scopedata)
 		imagedata['image'] = corrected
+		imagedata['correction channel'] = self.channel
 		return imagedata
 
 	def researchRef(self, camstate, type, ccdcameraname, scopedata, channel, readimages=True):
