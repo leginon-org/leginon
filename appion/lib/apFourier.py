@@ -52,11 +52,7 @@ def fourierRingCorrelation(imgarray1, imgarray2):
 	if len(fftim1.shape) != 2 or len(fftim2.shape) != 2:
 		apDisplay.printError("Cannot calculate the FRC non-2D images")
 	fftshape = numpy.asarray(fftim1.shape, dtype=numpy.float32)
-	fftcenter = fftshape/2.0
-	#print fftshape, fftshape
-	#print fftcenter, fftcenter
 	length = int(max(fftshape)/2.0)
-	#print "linear length", length
 	linear = numpy.zeros((length), dtype=numpy.float32)
 	linear[0] = 1.0
 
@@ -69,6 +65,7 @@ def fourierRingCorrelation(imgarray1, imgarray2):
 	lastfrc = 1.0
 	K = float(2)
 	for key in keys:
+		sys.stderr.write(".")
 		indexlist = lineardict[key]
 		numer = 0.0
 		f1sum = 0.0
@@ -85,16 +82,15 @@ def fourierRingCorrelation(imgarray1, imgarray2):
 		#print "*** %02d %03d %.3f (%.4f / %.4f %.4f)"%(key, K, frc, numer/K, f1sum/K, f2sum/K)
 		#print key, frc
 		linear[key] = frc
-		#if key > 2:
-		#	sys.exit(1)
-		if frc < 0 and lastfrc < 0:
-			break
 		lastfrc = frc
+	sys.stderr.write("\n")
 
 	### output
 	writeFrcPlot("frc.dat", linear)
-	apDisplay.printMsg("Finished FRC in "+apDisplay.timeString(time.time()-t0))
-	return
+	res = getResolution(linear)
+	apDisplay.printMsg("Finished FRC of res %.3f in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	return res
+
 
 #===========
 def spectralSNRfft(fftimlist):
@@ -156,10 +152,9 @@ def spectralSNRfft(fftimlist):
 
 	### output
 	writeFrcPlot("ssnrfft.dat", linear)
-
-	apDisplay.printMsg("Finished SSNR (fft) in "+apDisplay.timeString(time.time()-t0))
-
-	return
+	res = getResolution(linear)
+	apDisplay.printMsg("Finished SSNR (fft) of res %.3f in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	return res
 
 #===========
 def spectralSNR(partarray):
@@ -210,7 +205,7 @@ def spectralSNR(partarray):
 			#return
 			numer += n1
 			denom += d1
-		ssnr = numer / ( K/(K-1.0) * denom ) - 2.0
+		ssnr = numer / ( K/(K-1.0) * denom ) - 1.0
 		frc = ssnr / (ssnr + 1)
 		#print "%02d %.3f %.3f (%.3f / %.3f)"%(key, ssnr, frc, numer/K, denom/K)
 		#print key, frc
@@ -219,9 +214,9 @@ def spectralSNR(partarray):
 
 	### output
 	writeFrcPlot("ssnr.dat", linear)
-
-	apDisplay.printMsg("Finished SSNR in "+apDisplay.timeString(time.time()-t0))
-
+	res = getResolution(linear)
+	apDisplay.printMsg("Finished SSNR of res %.3f in %s"%(res, apDisplay.timeString(time.time()-t0)))
+	return res
 
 #===========
 def writeFrcPlot(fname, linear, apix=1.0):
@@ -229,12 +224,39 @@ def writeFrcPlot(fname, linear, apix=1.0):
 	f = open(fname, "w")
 	#f.write("0\t1.0\n")
 	for i in range(1, length):
-		f.write("%.1f\t%.5f\n"%(length/float(i), linear[i]))
+		if linear[i] > 0.9 and linear[i+1] > 0.9 and linear[i+2] > 0.9:
+			continue
+		f.write("%.1f\t%.5f\n"%(2.0*length/float(i), linear[i]))
 		if linear[i] < 0 and linear[i-1] < 0:
 			break
 	#f.write("%d\t0.0\n&\n"%(length+1))
 	f.close()
 	apDisplay.printMsg("wrote data to: "+fname)
+
+#===========
+def getResolution(linear, apix=1.0):
+	boxsize = linear.shape[0]*2
+	lastx=0
+	lasty=0
+	for i in range(linear.shape[0]):
+		x = float(i)
+		y = linear[i]
+		if x != 0.0 and x < 0.9:
+			apDisplay.printWarning("FSC is wrong data format")
+		if y > 0.5:
+			#store values for later
+			lastx = x
+			lasty = y
+		else:
+			# get difference of fsc
+			diffy = lasty-y
+			# get distance from 0.5
+			distfsc = (0.5-y) / diffy
+			# get interpolated spatial freq
+			intfsc = x - distfsc * (x-lastx)
+			# convert to Angstroms
+			res = boxsize * apix / intfsc
+			return res
 
 #===========
 def getLinearIndices(fftshape):
@@ -251,7 +273,7 @@ def getLinearIndices(fftshape):
 			if not index in lineardict:
 				lineardict[index] = []
 			lineardict[index].append((i,j))
-	apDisplay.printMsg("Number of rings: "+str(len(lineardict)))
+	#apDisplay.printMsg("Number of rings: "+str(len(lineardict)))
 	return lineardict
 
 #===========
@@ -304,6 +326,8 @@ def printImageInfo(image):
 	print image.min(), image.max()
 	print "============="
 
+
+
 #===========
 if __name__ == "__main__":
 	bin = 1
@@ -332,11 +356,11 @@ if __name__ == "__main__":
 	#bfft = bfft/bfft.std()
 	#savePower(afft, "power1.mrc")
 	#savePower(bfft, "power2.mrc")
-	spectralSNR([a, b])
-	fourierRingCorrelation(a, b)
-	spectralSNRfft([afft, bfft])
+	#spectralSNR([a, b])
+	#fourierRingCorrelation(a, b)
+	#spectralSNRfft([afft, bfft])
 
-	sys.exit(1)
+	#sys.exit(1)
 
 	files = glob.glob("/ami/data00/appion/09mar04b/align/kerden11/09apr13q11*.mrc")
 	fftlist = []
