@@ -147,14 +147,16 @@ var alignId="<?=$alignId?>"
 if ($norefClassId || $alignId || $clusterId) {
 	$c=array();
 	$numclass = count($classnumber);
-	$classnum = 0;
-	for($i =0; $i <$numclass; $i++) {
-		if ($classnumber[$i]['classNumber'] == $classnum) {
-			$c[]=$cn['number'];
-			$classnum++;
+	$classindex = 0;
+	$i = 0;
+	while ($classindex < $numclass && $i < $n_images) {
+		if ($classnumber[$classindex]['classNumber'] == $i+1) {
+			$c[]=$classnumber[$classindex]['number'];
+			$classindex++;
 		} else {
 			$c[]='0';
 		}
+		$i++;
 	}
 echo 'var stackinfo=['.implode(',',$c).']'."\n";
 }
