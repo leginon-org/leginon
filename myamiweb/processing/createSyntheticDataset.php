@@ -191,9 +191,10 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$particle=new particleData;
 	$datasetruns = 0;
 	$sessionpathval = ($_POST['rundir']) ? $_POST['rundir'] : $sessionpath;
-	while (file_exists($sessionpathval.'syntheticData'.(datasetruns+1))) 
+	while (file_exists($sessionpathval.'dataset'.($datasetruns+1))) {
 		$datasetruns += 1;
-	$runname = ($_POST['runname']) ? $_POST['runname'] : 'dataset'.(datasetruns+1);
+	}
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'dataset'.($datasetruns+1);
 	$description = $_POST['description'];
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
