@@ -146,8 +146,15 @@ var alignId="<?=$alignId?>"
 <?php
 if ($norefClassId || $alignId || $clusterId) {
 	$c=array();
-	foreach($classnumber as $cn) {
-		$c[]=$cn['number'];
+	$numclass = count($classnumber);
+	$classnum = 0;
+	for($i =0; $i <$numclass; $i++) {
+		if ($classnumber[$i]['classNumber'] == $classnum) {
+			$c[]=$cn['number'];
+			$classnum++;
+		} else {
+			$c[]='0';
+		}
 	}
 echo 'var stackinfo=['.implode(',',$c).']'."\n";
 }
