@@ -1,0 +1,103 @@
+[x62,x21] ; radius,iter
+; Runs specified number of rounds of reference-free alignment  
+;  only retains doc and image from last iteration of each round
+;  and generates iter_doc record of number of iterations per round
+FR
+?IN.LIST OF IMAGES (dir/file)?[pcllist]
+FR
+?IN.PARTICLE TEMPLATE (dir/ser*****)?[pcltmpl] 
+FR
+?IN.SHAPE TO CENTER PARTICE (*)?[shape]
+FR
+?OUT.OUTPUT DIRECTORY TO MAKE (dir/outdir)?[outdir]
+
+; ~~~~~ start ~~~~~ 
+x61=5  ; inner ring
+x63=x62*2  ; diameter particle size (must be less than image size)
+
+IF(x21.ge.100)THEN
+  VM
+  echo ERROR..Requested {%F7.1%x21} apsr rounds. Maximum is 99.
+  EN
+ENDIF
+
+VM
+mkdir [outdir]
+
+SD IC NEW
+iterdoc_ic
+(2),x21
+
+VM
+echo {**x21} Rounds of APSR reference-free alignment
+VM
+echo -n [outdir]..APSR round.
+
+DO LB1 x11=1,x21
+
+VM
+echo -n {**x11}'.'
+
+AP SR
+[pcltmpl]             ; template
+[pcllist]             ; list
+x63                   ; PARTICLE DIAMETER
+x61,x62               ; FIRST AND LAST RING
+[shape]               ; shape to center particle
+[outdir]/tmpi**       ;{**x11}i**  ; averages
+[outdir]/tmpd**       ;{**x11}d**  ; alignment doc
+
+; MAKE DOC FILE OF APSR RESULTS (HOW MANY CYCLES TO CONVERGE EACH ROUND)
+;VM
+;ls [outdir]/tmpi* | wc -w | nl -s '  1  ' > [outdir]/tmpcount.$DATEXT
+;UD 1,x23
+;[outdir]/tmpcount
+;UD E
+
+DO LB2 x12=1,99
+  x99=0
+  IQ FI x99
+  [outdir]/tmpi{**x12}
+  IF(x99.eq.0)THEN
+    x24=x12-1
+    GOTO LB21
+  ENDIF
+LB2
+LB21
+
+;IF(x23.ne.x24)THEN
+;  VM
+;  echo ERROR counting the correct number of apsr iterations..continue with {**x24}.
+;ENDIF
+
+SD IC x11,x11,x24
+iterdoc_ic
+; REMOVE ALL RESULTS EXCEPT LAST ITERATION DOC AND IMAGE
+VM
+mv [outdir]/tmpi{**x24}.$DATEXT [outdir]/r{**x11}i{**x24}.$DATEXT
+VM
+mv [outdir]/tmpd{**x24}.$DATEXT [outdir]/r{**x11}d{**x24}.$DATEXT
+
+;VM
+;rm -f [outdir]/tmpcount.$DATEXT
+VM
+rm -f [outdir]/tmpd*
+VM
+rm -f [outdir]/tmpi*
+;DE A
+;[outdir]/tmpd01
+;DE A
+;[outdir]/tmpi01
+
+LB1 ; next round of alignment
+
+SD IC COPY
+iterdoc_ic
+[outdir]/iter_doc
+SD IC END
+iterdoc_ic
+
+VM
+echo Alignments completed.
+
+RE

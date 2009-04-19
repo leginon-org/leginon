@@ -1,0 +1,88 @@
+[x20] ;maskradius
+; pclnorm -version 20090123
+; ramps and normalizes images from list
+; given a noise file and particle radius
+
+FR
+?IN.List of images in stack (dir/list)?<list>
+FR
+?IN.Image template (dir/in@******)?<stack>
+;FR
+;?IN.Noise file (dir/file)?<noise>
+FR
+?OUT.Image template (dir/out@******)?<out>
+
+; ~~~~~ start ~~~~~
+
+MO
+_5
+(1000,1000,1)
+R ;random
+Y ;gaussian
+(500,50) ;mean,stdev
+
+; RAMP AND COPY NOISE FILE TO MEMORY
+RA
+_5 ;<noise>
+_2
+
+DE
+_5
+
+; FIND SIZE OF IMAGE
+UD IC 1,x31
+<list>
+FS
+<stack>x31
+FI x21,x22
+<stack>x31
+(12,2)    ; nsam,nrow
+
+; MAKE A MASK FILE
+MO
+_3
+x21,x22
+C
+x20
+; INVERT MASK - PIXELS OF THE PARTICLE ARE EXCLUDED FROM NORMALIZATION
+NEG
+_3
+_4
+
+UD N x38
+<list>
+
+VM
+echo -n Ramping and Contrast Enhancing {%F7.1%x38} particles...
+
+DO LB1 x11 = 1,x38 
+
+   UD IC x11,x31
+   <list>
+
+   RA
+   <stack>x31
+   _3
+
+   ; NORMALIZE AS PER HISTOGRAM
+   CE FIT
+   _2  ; ramped noise
+   _3  ; ramped particle
+   _4  ; INVERTED MASK
+   <out>x31
+
+LB1
+UD ICE
+<list>
+DE
+_2
+DE
+_3
+DE
+_4
+
+VM
+echo Normalization complete.
+
+RE
+

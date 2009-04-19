@@ -1,0 +1,161 @@
+;difmap2d
+; normalize image to ref image
+; use mask to replace pixels in ref image with mean-1stdev
+;   input a blank image if you don't want this feature
+; remove the darkest densities from image before subtracting reference
+; threshold difference image to further remove the darkest densities
+
+FR
+?IN.Image Template (dir/avg***)?[avgtmpl]
+FR
+?IN.Image List (dir/list)?[avglist]
+FR
+?IN.Reference Image to Subtract (dir/img)?[ref]
+FR
+?IN.Mask (dir/mask)?[mask]
+FR
+?IN.Subtracted Image Template (dir/dif***)?[diftmpl]
+
+; ~~~~~ start ~~~~~
+
+FS
+[ref]
+FI x27
+[ref]
+(12)
+
+x28=x27*3/8 ;radius
+
+MO
+_1
+x27,x27,(1)
+C   ;circle
+x28 ;radius
+
+FS M x22,x23,x24,x25 ;find particle max,min,avg,std
+[ref]
+_1 ;circle
+x20=(x24+2*x23)/3 ;threshold
+
+TH
+[ref]
+_6
+B
+x20
+
+FS M x26,x27,x28,x29 ;find mean/sd in classified area
+_6 ;thref [ref]
+[mask]
+
+IF(x26.eq.x27)THEN ;mask is blank
+  CP
+  _6 ;thref [ref]
+  _2
+  DE
+  _6
+  GOTO LB90
+ENDIF
+
+x29=x28-1*x29 ;patch = 1sd below mean
+IF(x29.lt.x26)x29=(x28+1*x27)/3 ;between mean and min
+
+AR
+[mask]
+_3 ;invmask
+(P1-1)*(-1)
+
+BC ;soften edges
+_3 ;invmask
+_4 ;bcinvmask
+L
+(3,3) ;size
+(0.5) ;weight
+
+MU ;block mask out of reference
+[ref] ;ref
+_4 ;bcinvmask
+_5 ;replace values under mask with 0
+*
+
+AR ;create patch
+_4 ;bcinvmask
+_3 ;bcmask
+(P1-1)*(-1*x29)
+
+AD
+_5 ;maskedthref
+_3 ;patch
+_2 ;patchedthref
+*
+
+;CP
+;[ref]
+;_2
+;MM ;replace values under mask
+;_3
+;_2
+;x29
+;CP
+;_2
+;maskedref_tmp
+
+LB90 ;no mask
+
+UD N x21
+[avglist]
+DO LB1 x11=1,x21 ;for each image
+  UD IC x11,x30
+  [avglist]
+
+  FS M x32,x33,x34,x35
+  [avgtmpl]x30
+  _1 ;circle
+  
+  ;contrast normalize average to reference
+  AR
+  [avgtmpl]x30
+  _3 ;nimg
+  (P1-x34+x24)*x25/x35 ;(p1-mean(img)+mean(ref))*std(ref)/std(img)
+  ;CE FIT
+
+  TH ;remove darkest areas from nimg
+  _3 ;nimg
+  _5 ;tnimg
+  B
+  x20
+
+  SU
+  _5 ;tnimg  _4 ;thimg
+  _2 ;patchedthref  [ref]  ;
+  _4 ;[diftmpl]x30
+  *
+
+  FS M x32,x33,x34,x35
+  _4 ;difimg
+  _1 ;mask
+
+  x36=x34-1*x35 ;set threshold
+  IF(x36.lt.x33)x36=(2*x34+x33)/3 ;between mean and min
+  TH F
+  _4 ;difimg
+  [diftmpl]x30
+  B   ;below
+  x36 ;threshold
+  x36 ;replace
+
+LB1 ;next image
+UD ICE
+[avglist]
+
+DE
+_1
+DE
+_2
+DE
+_3
+DE
+_4
+DE 
+_5
+
+RE

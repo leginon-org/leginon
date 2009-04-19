@@ -1,0 +1,48 @@
+; MAKES A LIST OF FILES IN A DIRECTORY
+; MODIFIED 20081125
+
+FR
+?IN.Input file template (dir/file***)?<pcl>
+FR
+?OUT.Output doc (dir/file)?<doc>
+RR x21
+?IN.Maximum file number? ;[num]
+
+; ~~~~~ start ~~~~~
+
+x31=1
+SD IC NEW
+filelist_ic
+(x31,x21) ; registers,keys
+
+VM
+echo -n Making list...
+
+;LOOP FOR NON-SEQUENTIAL NUMBERS. OLD SEQUENCE IS KEPT
+x31=0 ; file counter
+DO LB1 x11=1,x21
+
+x32=0
+IQ FI x32
+<pcl>x11
+
+IF(x32.eq.1)THEN
+
+x31=x31+1
+SD IC x31,x11
+filelist_ic
+
+ENDIF
+
+LB1
+
+SD IC COPY
+filelist_ic
+<doc>
+SD IC END
+filelist_ic
+
+VM
+echo found {%F7.1%x31} files.
+
+RE

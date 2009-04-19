@@ -1,0 +1,434 @@
+[x20,x21,x31,x33,x46] ;[radius,iterations,numfactors,numclasses,numprocessors]
+; freealignandclassify.spi
+; - starts with reference-free alignment of whole data set, then classifies
+; - iterates the following:
+;  - reference-free alignment within classes, 
+;  - uses these free-aligned class averages as templates 
+;    for reference-based classification/alignment,
+;  - classifies within each reference class
+;  - aligns and merges similar subclasses
+;
+; input:
+;  particle template
+;  particle list
+;  reference projection for orientation of averages
+;  mask for classification
+;  decimation factor for accelerating classification
+;  existing output directory
+; output:
+;  classification directories (corhc**/)
+;  multiref alignment directories (refal**/)
+;
+; outline of procedure and dependencies:
+; 1. initial alignment of whole data set (10x apsr) 
+;         fraln10x.spi,alnapsr.spi 
+; 2. initial division of data if necessary
+;         dividelist.spi
+; 3. classify each division
+;         rtsqall.spi,classifyauto.spi,subgrpseq.spi
+ ; could be improved by module to remove poor class averages
+ ;        (how to automate - poor frc? - poor similarity among class?)
+; 4. align and classify class averages, and merge doc files
+;         alnavg.spi,classifyauto.spi,mergesubclasslists.spi
+; 5. align within classes (10x apsr)
+;         fraln10x.spi,alnapsr.spi
+; 6. use these apsr-averages for MRA
+;         refnm.spi,refgrp.spi
+; 7. classify each refclass
+;         classifyauto.spi
+ ;  could be improved by module to remove poor class averages
+; 9. goto step 4 and repeat until classes stabilize or maximum cycle 10 is reached
+
+FR
+?IN.PARTICLES TEMPLATE (dir/serf@*****)?<pcltmpl>
+FR
+?IN.PARTICLE LIST (dir/serlist)?<pcllist>
+FR
+?IN.REFERENCE PROJECTION FOR ORIENTING AVERAGES (dir/refprj)?<refprj>
+FR
+?IN.MASK FOR CLASSIFICATION (dir/mask)?<mask>
+FR
+?IN.DECIMATION FACTOR FOR CLASSIFICATION (3)?[decimate]
+FR
+?OUT.EXISTING OUTPUT DIRECTORY (dir)?<outdir>
+
+MD
+VB OFF
+
+x19=[decimate] ; decimation for classification
+x30=10 ; number of divisions for initial classification
+x32=0.1 ; factor weight
+
+; be smarter - use average threshold from initial classification
+;x29=0.005 ; threshold - this should give 5-25 classes
+
+x99=0
+IQ FI x99
+<outdir>/fraln1/lasti10
+IF(x99.eq.1)GOTO LB90
+
+MD
+SET MP
+(1)
+@/home/brignole/scripts/fraln10x[x20]
+<pcllist>        ; image list
+<pcltmpl>        ; image template
+*                ; shape for centering
+<outdir>/fraln1  ; output directory
+; output iter_doc r**i** and r**d**
+
+@/home/brignole/scripts/alnapsr[x20]
+<outdir>/fraln1  ; apsr directory
+<pcllist>        ; particle list
+(3)              ; apsr+apnq
+<refprj>         ; reference for alignment
+; output: lastd** lasti** alnapsrdoc
+
+LB90 ; <outdir>/fraln1/lasti10 exists - resume here
+MD
+SET MP
+(x46)
+VM
+rm -f <outdir>/fraln1/r*
+
+x99=0
+IQ FI x99 
+<outdir>/corhc01/grplist
+IF(x99.eq.1)GOTO LB91
+
+; want division by multiples of 10 to correspond with number of apsr rounds
+UD N x39    ; number of particles
+<pcllist>
+x30=1    ; no division - default - will be <50 pcls per group
+IF(x39.gt.10000)x30=10  ; >1000 pcl/div
+IF(x39.gt.100000)x30=20 ; >5000 pcl/div
+
+UD N x39
+<outdir>/fraln1/iter_doc
+IF(x30.ge.x39)THEN ; do list division
+@/home/brignole/scripts/dividelist[x30]
+<pcllist>              ;particle list
+<outdir>/fraln1/div**  ;template for doc file
+ENDIF
+
+SD /   div   numpcls
+<outdir>/fraln1/divlist
+
+VM
+mkdir <outdir>/corhc01
+x47=0
+DO LB1 x11=1,x39 ; for each division (x30) or apsr round (x39)
+IF(x30.ge.x39)THEN ; divisions
+x47=x47+1
+IF(x39.lt.x11)x47=1
+DOC AND
+<outdir>/fraln1/lastd{**x47}   ; first doc sap format alignment
+<outdir>/fraln1/div{**x11}     ; list of particles in division
+<outdir>/fraln1/lastdiv{**x11} ; output doc
+(1)                            ; column to compare
+DE
+<outdir>/fraln1/div{**x11}
+ELSE ; no divisions
+DOC AND
+<outdir>/fraln1/lastd{**x11}   ; first doc sap format alignment
+<pcllist>                      ; list of particles
+<outdir>/fraln1/lastdiv{**x11} ; output doc
+(1)                            ; column to compare
+ENDIF
+
+UD N x34
+<outdir>/fraln1/lastdiv{**x11}
+SD x11,x11,x34   ; lists division,numparticles (like _thrk or grp_count)
+<outdir>/fraln1/divlist
+
+@/home/brignole/scripts/rtsq
+(4)             ; sap format
+<outdir>/fraln1/lastdiv{**x11} ; transformation doc
+<pcltmpl>                ; input image template
+<outdir>/pcltemp@******  ; output image template
+
+IF(x19.eq.1)THEN ; not decimated
+
+@/home/brignole/scripts/classifyauto[x31,x32,x33] ; coran-hc of each div
+<outdir>/pcltemp@******  ; template to classify
+<outdir>/pcltemp@******  ; template to averge
+<outdir>/fraln1/lastdiv{**x11} ; list of particles
+<mask>                  ; mask for classification
+(2)                     ; specify number of classes
+<outdir>/corhc01        ; output dir
+grp{***x11}             ; output prefix
+
+ELSE ; decimate to speed classification
+
+@/home/brignole/scripts/dcs[x19]
+<outdir>/pcltemp@****** ; input template
+<outdir>/fraln1/lastdiv{**x11}
+<outdir>/dcstemp@****** ; output template
+
+DC S
+<mask>
+<outdir>/maskdcs
+x19,x19
+
+@/home/brignole/scripts/classifyauto[x31,x32,x33] ; coran-hc of each div
+<outdir>/dcstemp@******  ; template to classify
+<outdir>/pcltemp@******  ; template to averge
+<outdir>/fraln1/lastdiv{**x11} ; list
+<outdir>/maskdcs        ; mask for classification
+(2)                     ; option: specify number of classes x33
+<outdir>/corhc01        ; output dir
+grp{***x11}             ; output prefix
+
+DE
+<outdir>/dcstemp
+DE
+<outdir>/maskdcs
+
+ENDIF ; decimated
+
+DE A
+<outdir>/corhc01/grp{***x11}_var001
+
+LB1 ; for each division x11
+
+VM
+cp <outdir>/fraln1/divlist.$DATEXT <outdir>/corhc01/grplist.$DATEXT
+
+DE
+<outdir>/pcltemp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+VM
+echo BEGIN CYCLING CLASSIFICATION AND ALIGNMENT
+
+LB91 ; <outdir>/corhc01/grplist exists - resume from here
+
+DO LB2 x12=1,x21 ; cycle to converge alignment and classification
+
+x99=0
+IQ FI x99
+<outdir>/corhc{**x12}/rtidoc
+IF(x99.eq.1)GOTO LB92
+
+@/home/brignole/scripts/subgrpseq
+<outdir>/corhc{**x12}/grplist  ; list of grps
+<outdir>/corhc{**x12}/grp      ; prefix assumes ***_thrk ***_thr*** and ***_avg***
+<outdir>/corhc{**x12}/         ; output prefix
+; output: seqlist, d*****, i@*****
+
+VM
+rm -f <outdir>/corhc{**x12}/grp*_IMC.$DATEXT
+VM
+rm -f <outdir>/corhc{**x12}/grp*_MAS.$DATEXT
+VM
+rm -f <outdir>/corhc{**x12}/grp*_SEQ.$DATEXT
+VM
+rm -f <outdir>/corhc{**x12}/grp*_PIX.$DATEXT
+VM
+rm -f <outdir>/corhc{**x12}/grp*_EIG.$DATEXT
+VM
+rm -f <outdir>/corhc{**x12}/grp*_SET.$DATEXT
+
+@/home/brignole/scripts/alnavg[x20] ; align class averages
+<outdir>/corhc{**x12}/i@*****  ; template to align
+<outdir>/corhc{**x12}/seqlist  ; list
+(3)                            ; apnq
+<refprj>                       ; reference projection
+<outdir>/corhc{**x12}/rti      ; output prefix
+; output: rtidoc, rti@*****, rtiav, rtiva
+
+LB92 ; corhc{**x12}/rtidoc exists skip to here
+
+DE
+<outdir>/corhc{**x12}/i
+
+; need a method for removal of bad averages to improve subsequent alignment and classification
+;  apsrtest, frc within each class? % of particles with cc over threshold?
+
+VM
+mkdir <outdir>/corhc{**x12}/seqcor
+
+; find threshold that typically gives correct number of classes
+x44=0 ;count
+x45=0 ;sum
+DO LB5 x15=1,x30
+UD 1,x40,x41,x42,x43 ; firstfact,lastfact,thresh,numclasses
+<outdir>/corhc{**x12}/grp{***x15}_thresh
+;weight by difference from correct number of classes
+x44=x44+((x33-ABS(x33-x43))/x33) ;count=count+weight*1   
+x45=x45+(x42*(x33-ABS(x33-x43))/x33)  ;sum=sum+weight*thresh
+LB5
+x29=x45/x44 ;threshold=sum/count
+
+x99=0
+IQ FI x99
+<outdir>/refnm{**x12}/grp_count
+IF(x99.eq.1)GOTO LB93
+
+@/home/brignole/scripts/classifyauto[x31,x32,x29] ; classify to group similar class averages
+<outdir>/corhc{**x12}/rti@*****  ; template to classify
+<outdir>/corhc{**x12}/rti@*****  ; template to average
+<outdir>/corhc{**x12}/seqlist    ; list
+<mask>            ; mask for classification
+(1)               ; option: specify threshold x29
+<outdir>/corhc{**x12}/seqcor     ; existing output directory
+cor1              ; prefix
+
+DE
+<outdir>/corhc{**x12}/rti
+
+@/home/brignole/scripts/mergesubclasslists
+<outdir>/corhc{**x12}/seqcor/cor1  ; superclass prefix
+<outdir>/corhc{**x12}/d*****       ; subclass particle list template
+; output: <outdir>/corhc{**x12}/seqcor/cor1_mrg***
+
+; apsrtest each merged class
+UD N x34
+<outdir>/corhc{**x12}/seqcor/cor1_thrk
+DO LB3 x13=1,x34
+UD IC x13,x35
+<outdir>/corhc{**x12}/seqcor/cor1_thrk
+
+MD
+SET MP
+(1)
+@/home/brignole/scripts/fraln10x[x20]
+<outdir>/corhc{**x12}/seqcor/cor1_mrg{***x35}  ; list to align
+<pcltmpl>                  ; image template to align
+*                          ; feature to center
+<outdir>/corhc{**x12}/seqcor/apsr{***x35} ; output directory
+; output iter_doc, r**i**, and r**d**
+MD
+SET MP
+(x46)
+
+@/home/brignole/scripts/alnapsr[x20]
+<outdir>/corhc{**x12}/seqcor/apsr{***x35} ; apsr-directory
+<outdir>/corhc{**x12}/seqcor/cor1_mrg{***x35}  ; image list
+(3)                        ; ref-only
+<outdir>/corhc{**x12}/seqcor/cor1_avg{***x35}  ; reference image
+; output lasti** lastd** alnapsr
+
+VM
+rm -f <outdir>/corhc{**x12}/seqcor/apsr{***x35}/r*
+
+AS R
+<outdir>/corhc{**x12}/seqcor/apsr{***x35}/lasti**
+(1-10)
+A
+<outdir>/corhc{**x12}/seqcor/lastiav{***x35}
+<outdir>/corhc{**x12}/seqcor/lastiva{***x35}
+
+DE
+<outdir>/corhc{**x12}/seqcor/lastiva{***x35}
+
+LB3
+UD ICE
+<outdir>/corhc{**x12}/seqcor/cor1_thrk
+
+; refalign to apsrtest-average for each cleass
+VM
+mkdir <outdir>/refal{**x12}
+
+@/home/brignole/scripts/refnm[x20]
+<pcllist>                 ; particle list
+<pcltmpl>                 ; particle template
+<outdir>/corhc{**x12}/seqcor/cor1_thrk   ; ref list
+<outdir>/corhc{**x12}/seqcor/lastiav*** ; ref template
+<outdir>/refal{**x12}                    ; output directory
+; output: apnq_doc 
+
+@/home/brignole/scripts/refgrp
+(2) ; apnq (1) ; apsh
+<outdir>/refal{**x12}/apnq_doc ; alignment document
+<pcltmpl>  ; particle template
+<outdir>/refal{**x12}  ; alignment directory 
+; output: grp_count grp*** avg*** var*** rtp@*****
+
+LB93 ; refnm{**x12}/grp_count exits - resume here
+
+DE A
+<outdir>/refal{**x12}/var001
+DE
+<outdir>/refal{**x12}/apnqsort_doc
+x10=x12+1
+VM
+mkdir <outdir>/corhc{**x10}
+
+x99=0
+IQ FI x99
+<outdir>/corhc{**x10}/grplist
+IF(x99.eq.1)GOTO LB94
+
+; classify within each ref-class
+UD N x34
+<outdir>/refal{**x12}/grp_count
+x37=0 ; counter of good refclasses
+DO LB4 x14=1,x34  ; for each ref-class
+UD IC x14,x35,x36 ; grpnum,numpcls
+<outdir>/refal{**x12}/grp_count
+
+IF(x36.gt.1)THEN ; if class has only 1 particle then discard orphan particle
+x37=x37+1
+
+IF(x19.eq.1)THEN ; not decimated
+
+@/home/brignole/scripts/classifyauto[x31,x32,x33] ; coran-hc of each div (lastfact,weight,numclasses)
+<outdir>/refal{**x12}/rtp@******   ; template to classify
+<outdir>/refal{**x12}/rtp@******   ; template to averge
+<outdir>/refal{**x12}/grp{***x35}  ; list
+<mask>                  ; mask for classification
+(2)                     ; option: specify number of classes x33
+<outdir>/corhc{**x10}   ; output dir
+grp{***x37}             ; output prefix
+
+ELSE ; classify with decimation
+
+@/home/brignole/scripts/dcs[x19]
+<outdir>/refal{**x12}/rtp@****** ; input template
+<outdir>/refal{**x12}/grp{***x35} ; list
+<outdir>/refal{**x12}/dcstemp@****** ; output template
+
+DC S
+<mask>
+<outdir>/maskdcs
+x19,x19
+
+@/home/brignole/scripts/classifyauto[x31,x32,x33] ; coran-hc of each div
+<outdir>/refal{**x12}/dcstemp@******  ; template to classify
+<outdir>/refal{**x12}/rtp@******      ; template to averge
+<outdir>/refal{**x12}/grp{***x35}     ; list
+<outdir>/maskdcs        ; mask for classification
+(2)                     ; specify number of classes
+<outdir>/corhc{**x10}   ; output dir
+grp{***x37}             ; output prefix
+
+DE
+<outdir>/refal{**x12}/dcstemp
+DE
+<outdir>/maskdcs
+
+ENDIF ; decimated
+
+DE A
+<outdir>/corhc{**x10}/grp{***x37}_var001
+
+UD N x38
+<outdir>/corhc{**x10}/grp{***x37}_thrk
+SD x37,x37,x38
+<outdir>/corhc{**x10}/grplist
+ENDIF
+
+LB4 ; next ref-class
+UD ICE
+<outdir>/refal{**x12}/grp_count
+DE
+<outdir>/refal{**x12}/rtp
+
+; evaluate number of particles that changed class since previous cycle (how since number of classes also change?)
+; classvsclass to find overlapping matrix
+
+LB94 ; <outdir>/corhc{**x10}/grplist exists - resume here
+
+LB2  ; next cycle of alignment and classification
+
+RE

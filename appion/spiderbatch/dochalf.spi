@@ -1,0 +1,35 @@
+; divide doc into top and bottom halves
+; useful if too many particles (99,999)
+FR
+?IN.Doc file (dir/doc)?[docin]
+FR
+?OUT.Doc prefix (dir/docpfx a and b)?[outpfx]
+
+; ~~~~~ start ~~~~~
+;divide into two stacks with two docs
+x99=0
+IQ FI x99
+[docin]
+IF(x99.eq.0)THEN
+  VM
+  echo ERROR...[docin] Does Not Exist!
+  EN D
+ENDIF
+
+VM
+wc -l [docin].$DATEXT | cut -f1 -d' ' | nl -s ' 1   ' > [docin]length.$DATEXT
+
+UD 1,x21
+[docin]length
+UD E
+
+x22=int(x21/2)
+x23=x21-x22
+
+VM
+head -{******x22} [docin].$DATEXT > [outpfx]a.$DATEXT
+
+VM
+tail -{******x22} [docin].$DATEXT > [outpfx]b.$DATEXT
+
+RE

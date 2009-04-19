@@ -1,0 +1,24 @@
+; ft
+;  calculates ft of a series of images
+FR
+?IN.List of images (dir/list)?[list]
+FR
+?IN.Image template (dir/img***)?[inimg]
+FR
+?OUT.Image template (dir/ft***)?[ftimg]
+
+; ~~~~~ start ~~~~~
+UD N x21
+[list]
+DO LB1 x11=1,x21
+  UD IC x11,x22
+  [list]
+
+  FT
+  [inimg]x22
+  [ftimg]x22
+LB1
+UD ICE
+[list]
+
+RE

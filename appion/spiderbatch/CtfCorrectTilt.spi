@@ -1,0 +1,135 @@
+; Ctf correction of particles
+; designed with particles from tilted micrograph in mind
+;  but should work on any micro
+; to throw out those obviously calculated incorrectly 
+;  would be helpful to fit a plane to the defocus values
+
+FR
+?IN.List of micros (dir/doc)?[miclist]
+FR
+?IN.Micros template (dir/mic****)?[mictmpl]
+FR ;pclnum,micnum,xcord,ycord
+?IN.Windowed particle list (dir/serlist)?[pcllist]
+FR
+?IN.Windowed particle template (dir/pcl******)?[pcltmpl]
+FR
+?IN.Decimation factor of particle coordinates (#, usually 4)?[bin]
+RR [pix]
+?IN.Pixel size (#)?
+RR [sphr]
+?IN.Spherical abberation constant (#)?
+RR [wave]
+?IN.Wavelength lambda (# Angstroms)?
+RR [ampcr]
+?IN.Amplitude contrast ratio (#)?
+RR [snr]
+?IN.Signal to noise ratio (#)?
+FR
+?OUT.CTF corrected particles template (dir/cpl@******)?[cpltmpl]
+
+; ~~~~~ start ~~~~~
+
+UD N [nummics]  ;determine quantity of micros
+[miclist]
+DO LB1 [loop1] = 1,[nummics]   ;for each micro...
+  UD IC [loop1],[micnum]
+  [miclist]
+
+  FI x41,x42   ;determine size (nsam,nrow)
+  [mictmpl][micnum]
+  (12,2) ;nsam,nrow
+
+  x48=int(x41/1000) ;divide nsam into 1000pix squares
+  x49=int(x42/1000) ;divide nrow into 1000pix squares
+  x46 = int(x41/x48) ;actual pix per section (nsam)
+  x47 = int(x42/x49) ;actual pix per section (nrow)
+
+  ;x43 = 2*x46
+  ;x44 = 3*x46
+  ;x45 = 2*x47
+
+  ;loops will create sections, each with its own FT, power spectrum, and ctf-parameters
+  x40=0 ;window counter
+  DO LB2 [loop2] = 1,x48 ; for each nsam
+  DO LB3 [loop3] = 1,x49 ; for each nrow
+    x40 = x40 + 1
+    x18 = ( x46 * ([loop2] -1)) +1 ;top left coord sam
+    x19 = ( x47 * ([loop3] -1)) +1 ;top left coord row
+
+    WI
+    [mictmpl][micnum]
+    _1
+    (x46,x47) ;size
+    (x18,x19) ;topleft
+
+    FT
+    _1
+    _2
+
+    PW 2
+    _2
+    _1
+
+    TF ED x20,x21,x22,x23,x24
+    _1
+    [pix],[sphr]
+    [wave]
+    [ampcr]
+    ctf{****[micnum]}@{**x40}
+  LB3 ;next row
+  LB2 ;next column
+  DE
+  _1
+  DE
+  _2
+LB1 ;end loop for each miclist
+UD IC [loop4],x27,x28    ;get particle coordinates
+[miclist]
+
+UD N x25             ;determine number of particles
+[pcllist]
+DO LB4 [loop4] = 1,x25  ;window and defocus correct each particle based on its coordinates
+  UD IC [loop4],x27,x28    ;get particle coordinates
+  [pcllist]
+
+  x29 = [bin]*x27          ;multiply by decimation factor
+  x30 = [bin]*x28
+
+  ;find the quadrant containing this particle
+  x91=int(x29/1000)+1 ;nsam-quadrant
+  x92=int(x30/1000)+1 ;nrow-quadrant
+  x93=((x91-1) * x49) + x92 ;quadrant number
+
+  VM ;copies appropriate ctf parameters to a file that can be read by tf_cts2
+  cp CTF_{****[micnum]}_{*x92}_{*x91}.$DATEXT temp_ctf{*****[loop4]}.$DATEXT 
+
+  x31 = x29 - 20
+  x32 = x30 - 30
+  ;WI            ;window the particle
+  ;[mictmpl][micnum]
+  ;_3 ;pcl{*****[loop4]}
+  ;(40,40) ;size
+  ;(x31,x32) ;top left
+
+  TF CTS2  ;correct for ctf
+  [pcltmpl]_3 ;pcl*****
+  [loop4]-[loop4] !!! what's up with this !!!
+  ctf{****temp_ctf*****
+  [snr]
+  [cpltmpl][loop4]
+
+  ;Filter?
+
+LB4 ;next particle
+UD ICE
+[pcllist]
+
+VM
+rm -f temp_ctf*
+VM
+rm -f CTF????_?_?.$DATEXT
+
+DE
+_3
+
+RE

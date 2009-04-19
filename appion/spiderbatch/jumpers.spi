@@ -1,0 +1,53 @@
+;jumpers
+; makes a list of particles that have jumped from one alignment round to the next.
+
+FR
+?IN.List of classes to compare (dir/list)?[list]
+FR
+?IN.Template for first set of classes (dir/grp***)?[tmpl1]
+FR
+?IN.Template for second set of classes (dir/grp***)?[tmpl2]
+FR
+?OUT.List of jumping particles (dir/jumplist)?[outlist]
+
+; ~~~~~ start ~~~~~
+UD N x21
+[list]
+DO LB1 x11=1,x21
+  UD IC x11,x31
+  [list]
+
+  UD N x32
+  [tmpl1]x31
+  UD N x33
+  [tmpl2]x31
+
+  DOC SUBTRACT
+  [tmpl1]x31
+  [tmpl2]x31
+  jumplist_tmp{***x31}
+  (1)
+
+  UD N x34
+  jumplist_tmp{***x31}
+
+  ;x34 particles have jumped from group x31 
+LB1
+UD ICE
+[list]
+
+DOC COMBINE
+jumplist_tmp***
+[list]
+[outlist]
+
+UD N x34
+[outlist]
+VM
+echo {%F7.1%x34} particles have jumped to a new class.
+
+VM
+rm -f jumplist_tmp*.$DATEXT
+
+RE
+

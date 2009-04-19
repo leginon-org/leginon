@@ -1,0 +1,36 @@
+[x31,x32,x33,x34] ;topx,topy,xsize,ysize
+;@crop
+; crops a stack of images
+
+FR
+?IN.List of images (dir/doc)?[list]
+FR
+?IN.Image template (dir/ser@***)?[intmpl]
+FR
+?OUT.Image template (dir/ser@***)?[outmpl]
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+[list]
+
+VM
+echo -n Cropping {%F7.1%x21} images..
+DO LB1 x11=1,x21
+UD IC x11,x30
+[list]
+
+WI
+[intmpl]x30
+[outmpl]x30
+(x33,x34)
+(x31,x32)
+
+LB1
+UD ICE
+[list]
+
+VM
+echo .done.
+
+RE

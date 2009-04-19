@@ -1,0 +1,80 @@
+vm
+mkdir corrected
+vm 
+mkdir corrected/orig
+vm
+mkdir corrected/dcs2
+
+
+x19=1
+;
+do lb1 x11=1,9  ; Change this!  Number of defocus groups
+;
+ud ic,x11,x12,x14
+order_select001
+;
+cp i
+data{***x11}@
+_2@
+x12
+x12
+;
+x14=x14*10000    ; defocus value for this group (in Angstroms)
+;
+fi x17           ; size of image
+_2@00001
+(2)
+;
+x18=0.5/2.52    ; Change this!  Pixel size
+;
+tf ct
+_1
+(2.0)
+x14,0.03349     ; 0.03349 is lambda for 120 kV
+x17,x17
+x18
+(0.005,0.0)      ; 0.005 is source size
+(0,0)
+(0.09,0.1)             ; 0.09 is amplitude contrast ratio
+(-1)
+;
+; Signal to Noise ratio calculation
+;x20=SQR(x12/(2*27.5))  ; change last value, radius of particle
+;
+do lb2 x13=1,x12 ; x12 is number of particles in current defocus group
+;
+ft               ; fourier transform each particle
+_2@{*****x13}
+_3
+;
+mu             ; divide each particle's FT by the appropriate CTF
+_3
+_1
+_4
+*
+;
+ft               ; inverse fourier transform each CTF-corrected FT
+_4
+_5
+;
+
+cp
+_5
+corrected/orig/ptcl{*****x19}
+;
+dc s
+_5
+corrected/dcs2/ptcl{*****x19}
+(2,2)
+;
+x19=x19+1
+;
+lb2
+;
+cp  ; Save CTF for each defocus group
+_1
+corrected/ctf{**x11}
+;
+lb1
+;
+en d

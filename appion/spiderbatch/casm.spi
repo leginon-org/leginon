@@ -1,0 +1,37 @@
+[x21,x22]  ; factors to plot on x and y axis
+;------------------------
+; casm.bat
+; automates CA SM spider call
+; inputs;
+;	inputs are either from factor.bat or
+;	the factors interested in.
+; assumes: image coords, ID on map, no flip
+;----------------------- 
+
+FR
+?IN.CA PREFIX (dir/cor)?[prefix]
+
+; ~~~~~ start ~~~~~
+
+CA SM
+I            ; .(I)MAGE OR (P)IXEL COORDINATES
+[prefix]     ; .COORDINATE FILE PREFIX~
+0            ; .NUMBER OF HORIZONTAL PATCHES
+x21,x22      ; .TWO FACTOR NUMBERS FOR MAP
+S            ; .(S)YMBOL, (A)SSIGN SYMBOL, (C)LASS, (D)OC, (I)D
++
+Y            ; .PREPARE POSTSCRIPT MAP?
+             ; .NUMBER OF SD OR <CR>=2.3: 
+0            ; .1=FLIP #1/ 2=FLIP #2/ 3=FLIP 1+2/ <CR>=NO FLIP: 
+[prefix]_map{**x21}v{**x22}   ; .POSTSCRIPT OUTPUT FILE
+             ; .TEXT SIZE FOR AXIS AND DATA (USE <CR> FOR DEFAULT = 10,9): 
+             ; .ENTER X AXIS OFFSET
+             ; .ENTER NEW LOWER, UPPER AXIS BOUNDS OR <CR>:
+             ; .ENTER NEW AXIS LABEL UNIT AND TICKS / LABEL OR <CR>:
+             ; .ENTER LABEL NO. TO EDIT...OR  <CR> TO CONTINUE: 
+             ; .ENTER Y AXIS OFFSET:
+             ; .ENTER NEW LOWER, UPPER AXIS BOUNDS OR <CR>:
+             ; .ENTER NEW AXIS LABEL UNIT AND TICKS / LABEL OR <CR>:
+             ; .ENTER LABEL NO. TO EDIT... OR  <CR> TO CONTINUE: 
+
+RE

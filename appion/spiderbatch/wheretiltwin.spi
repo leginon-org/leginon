@@ -1,0 +1,57 @@
+; DISPLAY LOCATION OF PARTICLES ON MICRO
+
+FR
+?IN.UNDECIMATED MICRO (dir/img)?<micro>
+FR  ; coords doc x,y,pic,cc
+?IN.PARTICLE COORDS DOC (dir/doc)?<cords>
+RR x23
+?IN.COORDINATE DECIMATION FACTOR (#)?
+FR
+?OUT.OUTPUT IMAGE (dir/img)?<outimg>
+RR x24
+?OUT.OUTPUT IMAGE DECIMATION FACTOR (#)?<outdec>
+
+; ~~~~~ start ~~~~~
+FI x21,x22
+<micro>
+(12,2)   ; HEADER KEYS FOR NSAM NROW
+
+DC S
+<micro>
+_1
+x24,x24
+
+; HOW MANY PARTICLES
+UD N x25
+<cords>
+VM
+echo Micro has {%F7.1%x25} particles.
+
+DO LB2 x12=1,x25  ;  FOR EACH PARTICLE
+UD IC x12,x28,x26,x27  ; pic,x,y
+<cords>
+
+x26=x26*x23/x24
+x27=x27*x23/x24
+
+LA L
+_1
+_2
+y  ; y is actually an x
+x26,x27
+
+; MUST KEEP ABOVE LINE BLANK TO END LAL COMMAND
+
+CP
+_2
+_1
+
+LB2  ; END FOR EACH PARTICLE
+UD ICE
+<cords>
+
+CP
+_1
+<outimg>
+
+RE

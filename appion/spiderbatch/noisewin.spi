@@ -1,0 +1,53 @@
+; window noise image from decimated and undecimated micros
+; cords doc, top-left in key1, bottom-right in key2
+;             x-cord in register1, y-cord in register2
+FR
+?IN.DECIMATED MICRO (dir/d4micro)?<dmicro>
+FR
+?IN.UN-DECIMATED MICRO (dir/micro)?<micro>
+FR
+?IN.COORDINATE DOC (dir/cords)?<cordoc>
+RR [dfactor]
+?IN.COORDINATE DECIMATION FACTOR (4)?
+FR
+?OUT.DECIMATED NOISE WINDOW (dir/dnoise)?<dnoise>
+FR
+?OUT.UN-DECIMATED NOISE WINDOW (dir/noise)?<noise>
+
+; ~~~~~ start ~~~~~
+x21=[dfactor]
+UD 1,x22,x23
+<cordoc>
+UD 2,x24,x25
+<cordoc>
+
+x26=x24-x22
+x27=x25-x23
+
+VM
+echo Decimated window dimensions are {%F7.1%x26} by {%F7.1%x27}
+
+WI
+<dmicro>  ; input
+<dnoise>  ; output
+x26,x27   ; NSAM,NROW
+x22,x23   ; X,Y cords
+
+x32=x22*x21
+x33=x23*x21
+x34=x24*x21
+x35=x25*x21
+
+x36=x34-x32
+x37=x35-x33
+
+VM
+echo Undecimated window dimensions are {%F7.1%x36} by {%F7.1%x37}
+
+WI
+<micro>  ; input
+<noise>  ; output
+x36,x37   ; NSAM,NROW
+x32,x33   ; X,Y cords
+
+RE

@@ -1,0 +1,53 @@
+; FRC with mask
+; for each group of particles
+;   average odd/even
+;   mask average
+;   calculate RF
+
+FR
+?IN.ALIGNED PARTICLES LIST (dir/doc)?<pcllist>
+FR
+?IN.ALIGNED PARTICLES TEMPLATE (dir/ser@*****)?<pcltmpl>
+FR
+?IN.MASK (dir/img)?<mask>
+FR
+?OUT.FRC DOC (dir/doc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+AS R
+<pcltmpl>
+<pcllist>
+o ; odd-even
+_1 ; avg1
+_3 ; var1
+_2 ; avg2
+_4 ; var2
+
+MU
+_1
+<mask>
+_3
+*
+
+MU
+_2
+<mask>
+_4
+*
+
+RF
+_3  ; first image
+_4  ; second image
+(1) ; ring width
+(0.8),(1.2)  ; low and hi scale factor
+tempfrcdoc
+
+DOC REN
+tempfrcdoc
+<outdoc>  ; output file
+
+DE
+tempfrcdoc
+
+RE
+

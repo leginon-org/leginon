@@ -1,0 +1,2139 @@
+[x13,x14,x18] ;FIRSTFACTOR,LASTFACTOR,FACTORWEIGHT
+;uses Wards HAC to produce dendrogram from coran output
+;   scales the %variance to use as weights for each factor
+;   weight=(1-scale)+(variance*scale)
+;     when scale=0 all factors are given weight=1
+;     when scale=1 all factors are weighted by their variance
+;   (i.e., 20 factors x 0.2 scaling)
+;to handle discontinuous factors x13=0 or x14=0 then also requests [factors]
+;Remark: The script is writen for up to 50 factors. 
+; last update Ed Brignole 2008.05.29
+
+FR
+?IN.CORAN PREFIX (dir/cor assumes _IMC/EIG)?[pfx]
+
+; ~~~~~ start ~~~~~
+
+x17=(5) ; classification criterion (5 is Wards)
+
+IF(x13.eq.0)GOTO LB89 ;discontinuous
+IF(x14.eq.0)GOTO LB89 ;discontinuous
+GOTO LB91
+LB89 ;discontinuous
+  FR
+  ?IN.Factors to keep (1,3-4,6)?[factors]
+
+  VM
+  echo -n Hierarchical clustering with discontinuous factors..
+
+  CL HC
+  [pfx]_IMC
+  [factors]    ; factor numbers
+  (0)          ; factor weight
+  x17          ; classification method
+  N            ; no postscript file
+  Y            ; yes dendrogram file
+  [pfx]_dendoc  ; output dendrogram doc
+GOTO LB92 ;skip to end
+
+;---CONTINUOUS FACTORS WITH WEIGHTING
+LB91
+VM
+head -1 [pfx]_EIG.$DATEXT | nl -s ' 5' > [pfx]_EIGhead.$DATEXT
+
+UD 1,x21 ;how many factors
+[pfx]_EIGhead
+UD E
+DE
+[pfx]_EIGhead
+x31=x21+1 ;#factors + 1
+
+VM
+head -{**x31} [pfx]_EIG.$DATEXT | tail -{**x21} | cut -d' ' -f4-6 | nl -s ' 1  ' > [pfx]_EIGhist.$DATEXT
+
+UD N x15
+[pfx]_EIGhist
+IF(x15.LT.x14)THEN
+  VM
+  echo 'Error...Factors requested beyond what exists (' {**x14} > {**x15} ').'
+  VM
+  echo ___Continuing with {**x15} factors.___
+  x14=x15
+ENDIF
+
+x16=x14-x13+1 ; total number of factors to analyze (first - last + 1)
+IF(x16.GE.(50)) THEN
+  VM
+  echo 'Error...Maximum number of factors exceeded (' {%F7.1%x16} '> 50 ).'
+  x14=50+x13-1
+  x16=50
+  VM
+  echo ___Continuing with {**x16} factors.___
+ENDIF
+
+x21=0
+IF(x16.eq.1)GOTO LB90 ;only one factor - skip weighting
+
+SD IC NEW  ;/ key   weight
+weights_ic
+(1),x16
+
+DO LB2 x12=x13,x14 ; for each factor
+  UD IC x12,x97
+  [pfx]_EIGhist
+
+  ; adjust the variance for factor weight
+  x96=((1)-x18)+(x18*x97) ; x18 is amount to weight the eigenvalues
+
+  SD IC x12,x96
+  weights_ic
+LB2 ; next factor x12
+UD ICE
+[pfx]_EIGhist
+DE
+[pfx]_EIGhist
+
+; READ WEIGHTS INTO VARIABLES
+x99=(20)
+DO LB1 x11=x13,x14
+  x99=x99+1   ; variable counter
+  UD IC x11,x{**x99}
+  weights_ic
+LB1
+UD ICE
+weights_ic
+SD IC END
+weights_ic
+
+; --- now do CL HC
+LB90 ;only one factor
+IF(x16.EQ.1) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13          ; factor numbers
+x21          ; factor weight
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 1
+
+IF(x16.EQ.2) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 2
+
+IF(x16.EQ.3) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 3
+
+IF(x16.EQ.4) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 4
+
+IF(x16.EQ.5) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 5
+
+IF(x16.EQ.6) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 6
+
+IF(x16.EQ.7) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 7
+
+IF(x16.EQ.8) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 8
+
+IF(x16.EQ.9) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 9
+
+IF(x16.EQ.10) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 10
+
+IF(x16.EQ.11) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 11
+
+IF(x16.EQ.12) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 12
+
+IF(x16.EQ.13) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 13
+
+IF(x16.EQ.14) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 14
+
+IF(x16.EQ.15) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 15
+
+IF(x16.EQ.16) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 16
+
+IF(x16.EQ.17) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 17
+
+IF(x16.EQ.18) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 18
+
+IF(x16.EQ.19) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 19
+
+IF(x16.EQ.20) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 20
+
+IF(x16.EQ.21) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 21
+
+IF(x16.EQ.22) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 22
+
+IF(x16.EQ.23) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 23
+
+IF(x16.EQ.24) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 24
+
+IF(x16.EQ.25) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 25
+
+IF(x16.EQ.26) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 26
+
+IF(x16.EQ.27) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 27
+
+IF(x16.EQ.28) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 28
+
+IF(x16.EQ.29) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 29
+
+IF(x16.EQ.30) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 30
+
+IF(x16.EQ.31) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 31
+
+IF(x16.EQ.32) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 32
+
+IF(x16.EQ.33) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 33
+
+IF(x16.EQ.34) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 34
+
+IF(x16.EQ.35) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 35
+
+IF(x16.EQ.36) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 36
+
+IF(x16.EQ.37) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 37
+
+IF(x16.EQ.38) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 38
+
+IF(x16.EQ.39) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 39
+
+IF(x16.EQ.40) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 40
+
+IF(x16.EQ.41) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 41
+
+IF(x16.EQ.42) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 42
+
+IF(x16.EQ.43) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 43
+
+IF(x16.EQ.44) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 44
+
+IF(x16.EQ.45) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x65
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 45
+
+IF(x16.EQ.46) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x65
+x66
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 46
+
+IF(x16.EQ.47) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x65
+x66
+x67
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 47
+
+IF(x16.EQ.48) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x65
+x66
+x67
+x68
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 48
+
+IF(x16.EQ.49) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x65
+x66
+x67
+x68
+x69
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 49
+
+IF(x16.EQ.50) THEN
+
+VM
+echo -n Hierarchical clustering with {%F7.1%x16} factors..
+
+CL HC
+[pfx]_IMC
+x13-x14
+x21
+x22
+x23
+x24
+x25
+x26
+x27
+x28
+x29
+x30
+x31
+x32
+x33
+x34
+x35
+x36
+x37
+x38
+x39
+x40
+x41
+x42
+x43
+x44
+x45
+x46
+x47
+x48
+x49
+x50
+x51
+x52
+x53
+x54
+x55
+x56
+x57
+x58
+x59
+x60
+x61
+x62
+x63
+x64
+x65
+x66
+x67
+x68
+x69
+x70
+x17          ; classification method
+N            ; no postscript file
+Y            ; yes dendrogram file
+[pfx]_dendoc  ; output dendrogram doc
+
+ENDIF ; 50
+
+LB92 ;skip to end
+VM
+echo .done.
+
+RE

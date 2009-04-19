@@ -1,0 +1,124 @@
+[x55,x58,x60] ; lowpass(A),highpass(A),pixsize(A/pix)
+; description: low and high pass butterworth filters particles
+; lower end of low pass is 2/3*x55 (eg. 18 A will taper off to 12 A)
+; upper end of high pass is 4/3*x58 (eg. 300 A will taper off to 400 A)
+;
+; enter 0 for either to ignore high or low pass filter
+;
+; usage: @/home/brignole/scripts/filter[x20,x21,x22]
+;     x20 is upper end of low-pass (in Angstroms, eg. 21)
+;     x21 is lower end of high-pass (in Angstroms, eg. 330)
+;     x22 is Angstroms/pixel
+
+FR
+?IN.LIST OF PARTICLES TO FILTER (dir/doc)?<pcllist>
+FR
+?IN.TEMPLATE FOR INPUT PARTICLES (dir/ser@****)?<pcltmpl>
+FR
+?OUT.TEMPLATE FOR FILTERED PARTICLES (dir/fser@****)?<outtmpl>
+
+; ~~~~~ start ~~~~~
+
+UD N x23
+<pcllist>
+
+VM
+echo -n Filtering {%F7.1%x23} particles.
+
+; lowpass x55 to x56
+;x55=[lo1]   ; pass frequency has smaller (1/A) = greater (A) 
+x56=x55*2/3  ;[lo2]  ; cutoff frequency has greater (1/A) = smaller (A)
+; highpass x57 to x58
+x57=x58*4/3  ;[hi1]  ;  pass frequency has smaller (1/A) = greater (A)
+;x58=[hi2]   ; cutoff frequency has greater (1/A) = smaller (A)
+
+IF(x56.le.0)GOTO LB90 ; highpass only
+
+IF(x57.le.0)GOTO LB91 ; lowpass only
+
+VM
+echo -n .{%F7.1%x55} to {%F7.1%x56} A and {%F7.1%x57} to {%F7.1%x58} A..
+
+; do both filters: low pass then high pass
+x65=x60/x55
+x66=x60/x56
+x67=x60/x57
+x68=x60/x58
+
+DO LB1 x11=1,x23
+UD IC x11,x22
+<pcllist>
+
+; low pass
+FQ
+<pcltmpl>x22
+_1
+(7)         ; Butterworth low pass filter   
+x65,x66     ; passing and cut-off frequency (in 1/pixel)
+
+; high pass
+FQ
+_1
+<outtmpl>x22
+(8)        ; Butterworth high pass filter
+x67,x68    ; starting and ending frequency
+
+LB1
+UD ICE
+<pcllist>
+
+GOTO LB99 ; exit
+
+LB90 ;highpass only
+VM
+echo -n .{%F7.1%x57} to {%F7.1%x58} A..
+
+x67=x60/x57
+x68=x60/x58
+DO LB2 x11=1,x23
+UD IC x11,x22
+<pcllist>
+
+; high pass
+FQ
+<pcltmpl>x22
+<outtmpl>x22
+(8)        ; Butterworth high pass filter
+x67,x68    ; starting and ending frequency
+
+LB2
+UD ICE
+<pcllist>
+
+GOTO LB99 ; exit
+
+LB91 ; lowpass only
+VM
+echo -n at {%F7.1%x55} to {%F7.1%x56} A...
+
+x65=x60/x55
+x66=x60/x56
+DO LB3 x11=1,x23
+UD IC x11,x22
+<pcllist>
+
+; low pass
+FQ
+<pcltmpl>x22
+<outtmpl>x22
+(7)         ; Butterworth low pass filter   
+x65,x66     ; starting and ending frequency (in 1/pixel) for filtering
+
+LB3
+UD ICE
+<pcllist>
+
+LB99 ; exit
+
+DE
+_1
+
+VM
+echo done.
+
+RE

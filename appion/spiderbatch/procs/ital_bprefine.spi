@@ -1,0 +1,51 @@
+; procedure to make volumes of each class by rct
+; 20080615
+
+FR L        ;tilted particles
+[pcltmpl]ser2/mfsert@******
+FR L        ;list of classes
+[grplist]ral5b/r20/grp_count
+FR L        ;classlists template
+[grptmpl]ral5b/r20/grp***
+FR L
+[angles]ral5b/bp1/rctanglesapsh
+FR L
+[reftmpl]ral5b/bp1/vol***
+FR L        ;output directory for eulers (voea style) and volumes
+[bpdir]ral5b/bp1
+FR L
+[alnradius]26
+
+; ~~~~~~~~~~ start ~~~~~~~~~
+;MD
+;SET MP
+;(2)
+MD
+VB OFF
+
+x31=[alnradius]
+;--- generate volume and translational refine for each class
+UD N x21
+[grplist]
+UD E
+
+DO LB1 x11=1,x21
+UD IC x11,x22
+[grplist]
+
+  @rctanglerefine[x31]
+  [grptmpl]x22    ;list
+  [pcltmpl]       ;template
+  [angles]        ;angles-apsh format
+  [reftmpl]x22    ;input vol
+  [bpdir]         ;output dir
+
+  VM
+  mv [bpdir]/rvol.$DATEXT [bpdir]/rvol{***x22}.$DATEXT
+  VM
+  mv [bpdir]/apsh_doc.$DATEXT [bpdir]/refine{***x22}.$DATEXT
+LB1
+UD ICE
+[grplist]
+
+EN D

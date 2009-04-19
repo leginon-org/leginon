@@ -1,0 +1,96 @@
+; Procedure: RCT Backprojection of Volumes for Each Class
+; version 20090212
+
+FR L     ;list of all tilted particles
+[sertlist]ser/sertlist
+FR L     ;tilted particles template
+[pcltmpl]ser/mfsert@******
+FR L     ;pixSize of tilted particles
+[Apix]2.17
+FR L     ;tempate for docs with tilt parameters (dcb documents)
+[dcbtmpl]mics/dcb****
+FR L     ;tempate for alignment params of untilted particles
+[alndoc]ital3/apshsrt***
+FR L     ;tiltdirection - if this is wrong your volumes will be mirrored!
+[tiltindex]2 ;far from focus (1=left,2=right,3=top,4=bottom)
+FR L     ;list of classes
+[grplist]ital3/grp_good
+FR L     ;classlists template
+[grptmpl]ital3/r20/grp***
+FR L     ;output directory for for volumes and euler params (voea style)
+[bpdir]ital3/bp2
+
+; ~~~~~~~~~~ start ~~~~~~~~~
+MD
+SET MP
+(0)
+
+VM
+mkdir [bpdir]
+
+x21=[Apix]
+
+DOC COMBINE
+[alndoc]
+[grplist]
+[bpdir]/alncomb
+
+;--- combine alignment param and tilt angle
+@rctanglesmr
+[bpdir]/alncomb
+[sertlist]
+[dcbtmpl]
+(0)       ;factor to add to dcb to get image number
+([tiltindex])
+[bpdir]/rctangles
+
+;--- generate and translational refine volume for each class
+UD N x21
+[grplist]
+UD E
+
+UD 1,x30
+[sertlist]
+FS
+[pcltmpl]x30
+FI x20
+[pcltmpl]x30
+(12)
+x20=int(x20*3/7)
+
+x31=30 ;filter for volume from first iteration
+x32=20 ;filter for volume from last iteration
+
+DO LB1 x11=1,x21 ;for each class
+  UD IC x11,x22
+  [grplist]
+
+  ;backproject initial volume
+  @bpcg[x20]
+  [grptmpl]x22
+  [bpdir]/rctangles
+  [pcltmpl]
+  [bpdir]/vol{***x22}
+
+  ;refine volume by shift alignment of tilted particles
+  @rctshiftrefine[x20,x31,x32,x21] ;radius,filt1,filt6,Apix
+  [grptmpl]x22
+  [pcltmpl]
+  [bpdir]/rctangles
+  [bpdir]/vol{***x22}  ;initial volume
+  [bpdir]/vol{***x22}  ;directory by same name as unrefined volume
+
+  ;overwrite initial volume with refined volume then remove refinement directory
+  DE
+  [bpdir]/vol{***x22}
+  VM
+  mv [bpdir]/vol{***x22}/vol006.$DATEXT [bpdir]/vol{***x22}.$DATEXT
+  VM
+  mv [bpdir]/vol{***x22}/shift006.$DATEXT [bpdir]/shiftdoc{***x22}.$DATEXT
+  VM
+  rm -fr [bpdir]/vol{***x22}/
+LB1
+UD ICE
+[grplist]
+
+EN D

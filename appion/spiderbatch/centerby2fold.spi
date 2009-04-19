@@ -1,0 +1,85 @@
+[x20,x21] ;outsx,outsy
+;centerbymirrors
+; assumes that the center of object is already within 33% imagesize of center
+; x20 and x21 can be directly applied to shift object into center
+
+FR
+?IN.Image (dir/file)?[in]
+FR
+?OUT.Image (dir/file)?[out]
+
+; ~~~~~ start ~~~~~
+CP
+[in]
+_1
+
+; find yshift
+RT SQ
+_1
+_2
+(180,0) ;2-fold
+
+CC N
+_1
+_2
+_4
+
+;only allow shift within radius of 1/3 image
+FS
+_1
+FI x22
+_1
+(12) ;nsam
+
+x30=x22/3
+MO
+_2
+x22,x22
+C ;circle
+x30
+x30=x22/10
+BC
+_2
+_3
+L   ;lowpass
+x30,x30   ;filtersize
+(1.0)   ;weight
+TH
+_3 ;filtercircle
+_2 ;mask
+C
+(1.0,0.0)
+
+MU
+_4
+_2
+_3
+*
+
+x30=(x22/2)+1 center of image
+PK M x31,x32,x33,x34 ;x34 is -yshift
+_3
+x30,x30
+
+x20=-(x33)/2
+x21=-(x34)/2
+
+SH
+_1
+[out]
+x20,x21
+
+DE
+_1
+DE
+_2
+DE
+_3
+DE
+_4
+DE
+_5
+DE
+_6
+
+RE

@@ -1,0 +1,164 @@
+;rctangles.spi (modified from creatang.pnv)
+;for each class writes particle,phi,theta,gamma
+;
+; input:
+;    list of classes and lists of particles in each class
+;    alignment parameter for each classified particle
+;    documents created during web with angular information (dcb***)
+;    list of all tilted particles (key=pclnum, 2nd register=micronum)
+;    an additive factor for instance if micro#1222 has dcb222, then enter 1000
+; output:
+;    angles list for each particle (key=pclnum,phi,theta,gamma)
+;in addition to performing angfil operations, copies data images, discriminates
+;based on cross-correlation coefficient, etc.
+
+FR
+?IN.List of classes (dir/cor_thrk)?[grplist]
+FR
+?IN.Template for class lists (dir/cor_thr***)?[grptmpl]
+FR
+?IN.Particle alignment doc (dir/alndoc)?[alndoc]
+RR x19
+?IN.Alignment doc format (APSH=1,APNQ=2,SAP=4)?
+FR
+?IN.Template for micro angles (mics/dcb***)?[dcbtmpl]
+FR
+?IN.List of all tilt particles and their micros (ser/sertlist)?[serlist]
+RR x20
+?IN.Factor added to micronum (1000)?
+FR
+?OUT.Particle angle doc (dir/angles)?[angdoc]
+
+; ~~~~~ start ~~~~~
+IF(x19.eq.1)THEN ; apshdoc
+DOC SORT
+[alndoc]
+[alndoc]sort
+(5) ; particle num
+Y
+GOTO LB22
+ENDIF
+IF(x19.eq.2)THEN ; apnqdoc
+DOC SORT
+[alndoc]
+[alndoc]sort
+(6) ; particle num
+Y
+GOTO LB22
+ENDIF
+IF(x19.eq.4)THEN ; sapdoc
+DOC SORT
+[alndoc]
+[alndoc]sort
+(1) ; particle num
+Y
+GOTO LB22
+ENDIF
+VM
+echo Unrecognized alignment doc format.
+EN
+LB22
+UD N x25
+[alndoc]sort
+UD E
+
+UD N x21 ; number of classes
+[grplist]
+UD E
+VM
+echo Writing angles docs for {%F7.1%x21} classes
+DO LB1 x11=1,x21 ; for each class
+UD IC x11,x22
+[grplist]
+
+VM
+echo -n Class {%F7.1%x22}
+
+DOC SORT
+[grptmpl]x22
+[grplist]_tmp
+(1)
+Y
+UD N x23 ; number of particles
+[grplist]_tmp
+UD E
+VM
+echo ..writing angles for {%F7.1%x23} particles..
+
+x30=1
+DO LB2 x12=1,x23 ; for each particle
+UD IC x12,x24    ;particle x24
+[grplist]_tmp
+
+UD IC x24,x31,x32 ; pclnum,micnum
+[serlist]
+IF(x24.ne.x31)THEN
+ VM
+ echo Particle and key numbers do not correspond in [serlist]
+ EN
+ENDIF
+x32=x32-x20 ; convert mic num to dcb num
+
+;find particle alignment
+IF(x19.eq.1)THEN ; APSH
+ DO LB3 x13=x30,x25 ; for each aligned particle
+ ;         phi,tht,psi,ref,pcl,rt ,xsh,ysh
+ UD IC x13,x41,x42,x43,x44,x45,x46,x47,x48
+ [alndoc]sort
+ IF(x45.eq.x31)GOTO LB20 ; found particle
+ LB3
+ENDIF
+IF(x19.eq.2)THEN ; APNQ
+ DO LB4 x13=x30,x25 ; for each aligned particle
+ ;         ref,cc, rt ,xsh,ysh,pcl
+ UD IC x13,x44,x42,x46,x47,x48,x45
+ [alndoc]sort
+ IF(x45.eq.x31)GOTO LB20 ; found particle
+ LB4
+ENDIF
+IF(x19.eq.4)THEN ; SAP
+ DO LB5 x13=x30,x25 ; for each aligned particle
+ ;         pcl, rt,xsh,ysh
+ UD IC x13,x45,x46,x47,x48
+ [alndoc]sort
+ IF(x45.eq.x31)GOTO LB20 ; found particle
+ LB5
+ENDIF
+
+VM
+echo Particle {%F7.1%x31} alignment parameter not found.
+GOTO LB21 ; try to find next particle alignment
+
+LB20 ; escape - found particle
+x30=x13 ;start searching alndoc from here next time
+UD 124,x16,x17,x18   ;x16:theta, x17:gamma, x18:phi
+[dcbtmpl]x32
+;calculating gamma for angular file
+;x46=-x46
+x49=(-x46-x17)
+IF(x49.lt.0.0)x49=x49+360 ; add 360 to angles less than 0
+IF(x49.ge.360.0)x49=x49-360 ; subtract 360 from angles greater than
+;save the data x72:particle number, x18:phi, x16:theta, x49:corrected gamma
+SD x45,x18,x16,x49
+[angdoc]  ;[angtmpl]x22
+
+LB21 ; escape - particle not found
+LB2  ; next particle
+UD ICE
+[grplist]_tmp
+DE
+[grplist]_tmp
+
+;save the particle key number ; don't need alread 
+;sd x31,x31
+;hier/select{***x22}
+
+LB1  ; next class
+UD ICE
+[grplist]
+UD ICE
+[alndoc]sort
+DE
+[alndoc]sort
+
+RE

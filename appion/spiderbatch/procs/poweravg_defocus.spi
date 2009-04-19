@@ -1,0 +1,29 @@
+; 2008.12.17
+; for each micrograph
+; calculates average power spectra 
+; estimates defocus
+
+@listfiles
+mics/mictmpl**** ; micros template
+mics/miclist     ; output list
+(9999)           ; max number to check
+
+@powerspec
+mics/miclist     ; list of micros
+mics/mictmpl**** ; micros template
+(500)            ; window size of small pieces (Sx=Sy, normally 500)
+(0)              ; % overlap (0 for negative stain)
+(30)             ; dist. from edge (x) 30 is OK for CCD images
+(30)             ; dist. from edge (y) 30 is OK for CCD images
+pw            ; directory for powerspectra
+
+@defocus
+mics/miclist     ; list of micros
+pw/pwavg         ; power spectrum file
+(3.50)           ; pixel size, A/pixel
+(2.0)            ; spherical aberration constant Cs
+(0.09)           ; amplitude contrast ratio, normally 0.09-0.1
+(0.03349)        ; lambda - related to acceleration voltage, check your lambda on spider web page
+pw               ; output directory
+
+EN D

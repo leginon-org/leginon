@@ -1,0 +1,221 @@
+;classification of apsr-rounds or refgrps
+;version 20090115
+;  run this after fraln or refaln
+;  classify each apsr-round or refgrp
+;  within each class do 1apsr round to test homogeneity
+;AFTER THIS PROCEDURE: run clauto_clfa to merge similar classes
+
+FR L ;image stack
+<pcltmpl>iser2/mfiser@******
+FR L ; list of particles
+<pcllist>iser2/serlist
+FR L ; directory with alignment params
+<alndir>ifal3
+FR L ; undecimated mask
+<mask>circle28
+FR L ; number of classes to generate
+<classes>100
+FR L ; number of factors
+<factors>25
+FR L ; factor weight scale
+<factorweight>0.1
+FR L ; decimation factor to speed classification
+<decimation>4
+FR L ; radius for alignment of undecimated averages
+<radius>27
+FR L ; reference image for orienting class averages
+<refimg>ksq_ipshmrav
+FR L ; output directory
+<outdir>icl3
+
+; set to 3 to use iter_doc from fraln10x
+; set to 1 or 2 to use grp_count from refal or refnm
+x99=3 ;1=apsh,2=apnq,3=apsr
+
+; --- end input --- start script ---
+MD
+SET MP
+(0)
+MD
+VB OFF
+
+x22=<factors>
+x17=<factorweight>
+x20=<classes>
+x18=<decimation>
+x29=0 ; class counter
+x34=<radius>
+
+VM ; make classification directory
+mkdir <outdir>
+VM
+mkdir <outdir>/avggrp
+
+DC S
+<mask>
+_10
+x18,x18
+
+IF(x99.eq.3)THEN ;alignment was apsr
+  VM
+  cp <alndir>/iter_doc.$DATEXT <outdir>/iter.$DATEXT
+ELSE ;IF(x99.le.2)THEN ;alignment was apsh or apnq
+  VM
+  cp <alndir>/grp_count.$DATEXT <outdir>/iter.$DATEXT
+  IF(x99.eq.1)THEN
+    @rtsq
+    (1) ;apsh 
+    <alndir>/apsh_doc
+    <pcltmpl>
+    <outdir>/rtp@******
+  ENDIF
+  IF(x99.eq.2)THEN
+    @rtsq
+    (2) ;apnq 
+    <alndir>/apnq_doc
+    <pcltmpl>
+    <outdir>/rtp@******
+  ENDIF  
+ENDIF
+
+UD N x21
+<outdir>/iter
+DO LB1 x11=1,x21 ;for each iteration/group
+UD IC x11,x12
+<outdir>/iter
+
+x90=0
+IQ FI x90
+<outdir>/r{**x11}_thrk
+IF(x90.eq.1)GOTO LB90
+
+IF(x99.eq.3)THEN
+  VM
+  echo '--- Classifying APSR round' {**x12} '---'
+
+  @rtsq
+  (4) ; sap
+  <alndir>/lastd{**x12}
+  <pcltmpl>
+  <outdir>/rtp@******
+  UD N x23
+  <alndir>/lastd{**x12}
+  IF(x23.gt.15000)THEN
+    @dividelist[x21] ;divide into number of iterations
+    <alndir>/lastd{**x12}
+    <outdir>/pcltmp**
+    VM
+    cp <outdir>/pcltmp{**x12}.$DATEXT <outdir>/pcldoc{**x12}.$DATEXT
+    DE A
+    <outdir>/pcltmp01
+  ELSE
+    VM
+    cp <alndir>/lastd{**x12}.$DATEXT <outdir>/pcldoc{**x12}.$DATEXT
+  ENDIF
+ELSE ;IF(x99.le.2)THEN
+  VM
+  echo '--- Classifying APSH/NQ class' {**x12} '---'
+
+  DOC SORT
+  <alndir>/grp{***x12}
+  <outdir>/pcldoc{**x12}
+  (1)
+  Y
+ENDIF
+
+@dcs[x18]
+<outdir>/rtp@******       ; pcltmpl to average
+<outdir>/pcldoc{**x12}    ; pcllist
+<outdir>/drtp@******      ; pcltmpl to classify
+
+@classifyauto[x22,x17,x20]
+<outdir>/drtp@*****       ; pcltmpl to classify
+<outdir>/rtp@*****        ; pcltmpl to average
+<outdir>/pcldoc{**x12}    ; pcllist
+_10                       ; mask
+(2)                       ; method=classes
+<outdir>                  ; existing directory
+r{**x11}                  ; prefix
+
+DE
+<outdir>/pcldoc{**x12}
+
+LB90
+x90=0
+IQ FI x90
+<outdir>/r{**x11}_avg
+IF(x90.eq.0)GOTO LB91
+
+UD N x28 ; how many classes
+<outdir>/r{**x11}_thrk
+VM
+echo ...moving {%F7.1%x28} class averages to avggrp directory
+
+DO LB3 x13=1,x28 ; for each resulting class
+  x29=x29+1 ; class counter
+  CP
+  <outdir>/r{**x11}_avg@{***x13}
+  <outdir>/avggrp/avg@{*****x29}.$DATEXT
+  VM
+  mv -f <outdir>/r{**x11}_thr{***x13}.$DATEXT <outdir>/avggrp/thr{*****x29}.$DATEXT
+  UD IC x13,x30,x31
+  <outdir>/r{**x11}_thrk
+  SD x29,x29,x11,x12,x30,x31 ; class# apsr# div# grp# numpcls
+  <outdir>/grpdoc
+LB3 ; next class x13
+DE
+<outdir>/r{**x11}_var
+DE
+<outdir>/r{**x11}_avg
+
+LB91 ;r{**x11}_avg already deleted
+
+UD ICE
+<outdir>/r{**x11}_thrk
+DE
+<outdir>/drtp
+
+LB1 ; next apsr round x11
+SD E
+<outdir>/grpdoc
+DE
+<outdir>/rtp
+UD ICE
+<outdir>/iter
+DE
+<outdir>/iter
+
+; --- SECOND HALF OF PROCEDURE ---
+; --- align class averages
+MD
+SET MP
+(1)
+
+@alnimg[x34]
+<outdir>/avggrp/avg@*****
+<outdir>/grpdoc
+(3) ; refalign to oriented apsr-average
+<refimg>
+<outdir>/avggrp/alnavg   ; prefix for doc av va stack
+
+; --- align freealigned class averages
+VM
+mkdir <outdir>/apsrgrp
+
+@apsrgrps[x34] ; free align particles within classes
+<outdir>/grpdoc          ; list of groups
+<outdir>/avggrp/thr***** ; particle lists template
+<pcltmpl>                ; particle template
+<outdir>/apsrgrp/        ; output prefix
+
+@alnimg[x34]
+<outdir>/apsrgrp/i*****
+<outdir>/grpdoc
+(3) ; refalign
+<refimg>
+<outdir>/apsrgrp/alni   ; prefix for stack doc av va 
+
+VM
+echo Now handselect best averages, classify and merge docs
+
+EN D

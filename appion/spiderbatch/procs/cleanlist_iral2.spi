@@ -1,0 +1,84 @@
+; makecleanlist 2080909
+; to be removed, a particle must be in rejected group 
+; in last two rounds of iterative alignment/classification
+
+FR L
+[badgrplist]iral2_50/grp_reject
+FR L
+[grptmpl1]iral2_50/r20/grp***
+FR L
+[grptmpl2]iral2_50/r19/grp***
+FR L
+[pcllist]iser2/serlist
+FR L
+[newlist]iral2_50/serkeeplist
+
+; ~~~~ start ~~~~
+
+UD N x21
+[badgrplist]
+UD E
+
+VM
+echo {%F7.1%x21} bad classes of particles
+
+DOC COMBINE
+[grptmpl1]
+[badgrplist]
+[newlist]_tmp1
+
+UD N x21
+[newlist]_tmp1
+UD E
+
+VM
+echo Listed {%F7.1%x21} bad particles from first group.
+
+DOC COMBINE
+[grptmpl2]
+[badgrplist]
+[newlist]_tmp2
+
+UD N x21
+[newlist]_tmp2
+UD E
+
+VM
+echo Listed {%F7.1%x21} bad particles from second group.
+
+;particles that were in bad groups twice
+DOC AND
+[newlist]_tmp1
+[newlist]_tmp2
+[newlist]_tmpand
+(1) ;first column
+
+UD N x21
+[newlist]_tmpand
+UD E
+
+VM
+echo Listed {%F7.1%x21} bad particles in both first and second group.
+
+DOC SUBTRACT
+[pcllist]
+[newlist]_tmpand
+[newlist]_tmpsub
+(1) ;first column
+
+DOC REN
+[newlist]_tmpsub
+[newlist]
+
+UD N x21
+[newlist]
+UD E
+
+VM
+echo Bad particles subtracted from [pcllist] to make list of {%F7.1%x21} good particles.
+
+VM
+rm -f [newlist]_tmp*.$DATEXT
+
+EN D
+

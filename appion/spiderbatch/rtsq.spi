@@ -1,0 +1,126 @@
+; RT SQ LOOP
+; Rotates and shifts particles according to the alignment parameters 
+; could be improved by reducing input/output - rotate incore
+; be sure to doc ren the transformation
+
+RR x20
+?IN.TRANSFORMATION DOC FORMAT (APSH/APREF=1,APNQ=2,APSR=3,SAP=4,ALL=5)?
+IF(x20.eq.3)THEN
+FR
+?IN.DOCUMENT LIST OF PARTICLES (dir/doc)?[pcllist]
+ENDIF
+IF(x20.eq.5)THEN
+FR
+?IN.DOCUMENT LIST OF PARTICLES (dir/doc)?[pcllist]
+ENDIF
+FR
+?IN.TRANSFORMATION DOC (dir/doc)?[rtdoc]
+FR
+?IN.INPUT PARTICLE TEMPLATE (dir/ser*****)?[pcltmpl]
+FR
+?OUT.OUTPUT PARTICLE TEMPLATE (dir/ser*****)?[outtmpl]
+
+; ~~~~~ start ~~~~~
+x10=1 ; scale factor
+
+; READ NUMBER OF PARTICLES AND TRANSFORMATIONS
+UD N x11
+[rtdoc]
+UD E
+
+IF(x20.eq.1)THEN  ; apsh format
+  VM
+  echo -n Rotating {%F9.1%x11} particles according to apsh alignment..
+  DO LB1 x90=1,x11   ; FOR EACH PARTICLE
+    UD IC x90,x41,x42,x43,x44,x21,x46,x47,x48,x49,x50,x51,x31,x32,x33,x55
+    [rtdoc]
+    RT SQ
+    [pcltmpl]x21        ; IN
+    [outtmpl]x21     ; OUT
+    x31,x10     ; ANGLE,SCALE
+    x32,x33     ; X,Y
+  LB1 ; next particle x11
+ENDIF
+
+IF(x20.eq.2)THEN  ; apnq format
+  VM
+  echo -n Rotating {%F9.1%x11} particles according to apnq alignment..
+  DO LB2 x90=1,x11   ; FOR EACH PARTICLE
+    UD IC x90,x41,x42,x31,x32,x33,x21
+    [rtdoc]
+    RT SQ
+    [pcltmpl]x21        ; IN
+    [outtmpl]x21     ; OUT
+    x31,x10     ; ANGLE,SCALE
+    x32,x33     ; X,Y
+  LB2 ; next particle x11
+ENDIF
+
+IF(x20.eq.3)THEN  ; apsr format
+  UD N x12
+  [pcllist]
+  UD E
+  IF (x11.NE.x12) THEN
+    VM
+    echo Try again...Number of particles and rotations not same, exit script
+    RE
+  ENDIF
+  VM
+  echo -n Rotating {%F9.1%x11} particles according to apsr alignment..
+  DO LB3 x90=1,x11   ; FOR EACH PARTICLE
+    UD IC x90,x31,x32,x33
+    [rtdoc]
+    UD IC x90,x21
+    [pcllist]
+    RT SQ
+    [pcltmpl]x21        ; IN
+    [outtmpl]x21     ; OUT
+    x31,x10     ; ANGLE,SCALE
+    x32,x33     ; X,Y
+  LB3 ; next particle x11
+  UD ICE
+  [pcllist]
+ENDIF
+
+IF(x20.eq.4)THEN  ; sap cumulative format
+  VM
+  echo -n Rotating {%F9.1%x11} particles according to cumulative alignment..
+  DO LB4 x90=1,x11   ; FOR EACH PARTICLE
+    UD IC x90,x21,x31,x32,x33
+    [rtdoc]
+    RT SQ
+    [pcltmpl]x21        ; IN
+    [outtmpl]x21     ; OUT
+    x31,x10     ; ANGLE,SCALE
+    x32,x33     ; X,Y
+  LB4 ; next particle x11
+ENDIF
+
+UD ICE
+[rtdoc]
+
+IF(x20.eq.5)THEN  ; apply same transformation to all particles
+  UD 1,x31,x32,x33
+  [rtdoc]
+  UD E
+  UD N x11
+  [pcllist]
+  VM
+  echo -n Rotating all {%F9.1%x11} particles by same transformation..
+  DO LB5 x90=1,x11   ; FOR EACH PARTICLE
+    UD IC x90,x21
+    [pcllist]
+    RT SQ
+    [pcltmpl]x21        ; IN
+    [outtmpl]x21     ; OUT
+    x31,x10     ; ANGLE,SCALE
+    x32,x33     ; X,Y
+  LB5 ; next particle x11
+  UD ICE
+  [pcllist]
+ENDIF
+
+VM
+echo .done.
+
+RE

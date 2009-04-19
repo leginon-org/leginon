@@ -1,0 +1,49 @@
+; apsr2sap: merge apsr doc and particle list into sap format
+FR
+?IN.PARTICLE LIST (dir/doc)?<pcllist>
+FR
+?IN.APSR ALIGNMENT DOCUMENT (dir/doc)?<apsrdoc>
+FR
+?OUT.SAP FORMAT DOCUMENT (dir/doc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<pcllist>
+UD N x22
+<apsrdoc>
+
+IF(x21.ne.x22)THEN
+VM
+echo ERROR...Particle list and APSR list have different number of keys.
+EN D
+ENDIF
+
+SD IC NEW
+outdoc
+(4),x21
+
+DO LB1 x11=1,x21
+
+UD IC x11,x23
+<pcllist>
+UD IC x11,x24,x25,x26
+<apsrdoc>
+
+SD IC x11,x23,x24,x25,x26
+outdoc
+
+LB1
+UD ICE
+<pcllist>
+UD ICE
+<apsrdoc>
+
+SD IC COPY
+outdoc
+<outdoc>
+
+SD IC END
+outdoc
+
+RE

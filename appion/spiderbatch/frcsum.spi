@@ -1,0 +1,47 @@
+[x10] ; pixel size (3.5,2.26,etc)
+; resolution calculator
+; outdoc has 0.5FRC and 3sigmaFRC
+FR
+?IN.FRC FILE (dir/doc)?<frcdoc>
+FR
+?OUT.RESOLUTION DOC (dir/doc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<frcdoc>
+UD E
+
+x22=0.5
+
+x47=0 ; sum
+DO LB2 x12=3,x21 ; second loop calculate 3-sigma-resolution
+;first two points are first cross over find next = start loop at 3
+
+UD IC x12,x41,x42,x43,x44,x45 ;freq,dph,frc,crt,pix
+<frcdoc>
+
+IF(x43.lt.x44)THEN
+; sum statistically significant information
+x47=x47+x43-x44 ; difference between frc and 3sigma
+ENDIF
+
+LB2 ; next x12
+
+SD /   0.5crit   3sigma
+<outdoc> 
+SD 1,x38,x53
+<outdoc>
+SD E
+<outdoc>
+UD ICE
+<frcdoc>
+
+x38=1/x38
+IF(x53.ne.0)THEN
+x53=1/x53
+ENDIF
+VM
+echo {%F7.1%x38}A is 0.5 crit and {%F7.1%x53}A is 3sigma crit
+
+RE

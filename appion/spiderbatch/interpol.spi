@@ -1,0 +1,79 @@
+[x20,x21,x22] ;inApix,outApix,outSize
+;interpol
+; inter(extra)polates a series of images by a given factor 
+; and crops/pads to a given size
+; ex. factor of 0.5 reduces image dimensions by 2
+
+FR
+?IN.Image List (dir/list)?[list]
+FR
+?IN.Image Template (dir/ser@*****)?[intmpl]
+FR
+?OUT.Image Template (dir/ip@*****)?[outmpl]
+
+; ~~~~~ start ~~~~~
+UD N x23
+[list]
+
+VM
+echo -n "Inter(Extra)polating "{%F7.1%x23} images..
+
+UD IC x23,x30
+[list]
+
+FS
+[intmpl]x30
+FI x24,x25
+[intmpl]x30
+(12,2)
+IF(x24.ne.x25)THEN
+  VM
+  echo ERROR...nsam and nrow must be same.
+ENDIF
+
+x26=x20/x21   ;rescale by this factor
+x24=int(x24*x26)   ;ipSize
+x25=int(abs(x24-x22)/2)+1   ;topleftCorner
+
+DO LB1 x11=1,x23
+UD IC x11,x30
+[list]
+
+IP
+[intmpl]x30
+_2 ;[outmpl]x30
+(x24,x24)
+
+IF(x22.lt.x24)THEN ;interpolated image is larger than intended
+  WI
+  _2
+  [outmpl]x30
+  (x22,x22) ;newNsam,newNrow
+  (x25,x25) ;topleftNsam,topleftNrow
+ENDIF
+
+IF(x22.gt.x24)THEN ;interpolated image is smaller than intended
+  PD
+  _2
+  [outmpl]x30
+  (x22,x22) ;newNsam,newNrow
+  B ;use border
+  (x25,x25) ;topleftNsam,topleftNrow
+ENDIF
+
+IF(x22.eq.x24)THEN ;interpolated image is same size as intended
+  CP
+  _2
+  [outmpl]x30
+ENDIF
+
+LB1
+UD ICE
+[list]
+DE
+_2
+
+VM
+echo .done.
+
+RE

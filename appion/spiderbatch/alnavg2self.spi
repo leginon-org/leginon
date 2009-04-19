@@ -1,0 +1,153 @@
+[x20] ; radius
+; alnavg2self
+; 2step self alignment
+; 1) center and vertically align by rotating halfway to mirror average
+; 2) AP RA to rotationally align only
+; 3) rotate and average averages
+; ;;;might not work well on individual particles
+; ;;;assumes that mirrored image is suitable for centering (2-fold symmetry)
+FR
+?IN.IMAGE TEMPLATE (dir/avg***)?<imgtmpl>
+FR
+?IN.IMAGE LIST (dir/avglist)?<imglist>
+FR
+?OUT.SAP FORMAT OUTPUT ALIGNMENT DOC (dir/alndoc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+<imglist>
+UD IC 1,x30
+<imglist>
+
+FS
+<imgtmpl>x30
+FI x19
+<imgtmpl>x30
+(12) ; nsam
+
+x18=((x19/2-x20)/2)-2 ; search range decimated by 2
+x17=x20/2 ; decimated particle radius
+
+SD IC NEW ; apsr format output
+outdoc1
+(3),x21
+
+SD IC NEW ; sap format output
+outdoc2
+(4),x21
+
+MS
+_2@
+x19,x19
+x21
+
+DO LB1 x11=1,x21 ; for each image
+UD IC x11,x30
+<imglist>
+
+DC S
+<imgtmpl>x30
+_3
+(2),(2)
+
+MR
+_3
+_1
+X  ; mirror across x-axis (nrow exchange)
+
+AP NQ  ; to find y-shift
+_*
+(1)
+x18,(1) ; range,step
+(5),x17 ; rings
+_*
+(3)
+<outdoc>temp1
+
+UD 1,x31,x32,x33,x34,x35,x36 ;ref,cc,rt,x,Y,pcl
+<outdoc>temp1
+UD E
+
+MR
+_3
+_1
+Y ; mirror across y-axis (nsam exchange)
+
+AP NQ ; to find rt and x-shift
+_*
+(1)
+x18,(1) ; range,step
+(5),x17 ; rings
+_*
+(3)
+<outdoc>temp2
+
+UD 1,x36,x37,x38,x39,x40,x41 ;ref,cc,rt,X,y,pcl
+<outdoc>temp2
+
+x38=x38/2 ; only need half-rt across y-axis 
+; x and y shift already half because 2x dcs
+
+RT SQ
+<imgtmpl>x30
+_2@{*****x30}
+x38
+x39,x35
+
+SD IC x11,x38,x39,x35
+outdoc1
+
+VM
+rm -f <outdoc>temp*
+
+LB1 ; next image x11
+UD ICE
+<imglist>
+DE
+_1
+DE
+_3
+
+x18=x19/2-x20-2 ; search range undecimated
+
+AP RA
+_2@*****
+<imglist>
+(5),x20
+(1)
+F
+<outdoc>temp
+
+DE
+_2
+
+DO LB2 x12=1,x21 ; for each image
+
+UD IC x12,x31,x32,x33 ; rt,x,y
+outdoc1
+UD IC x12,x34,x35 ; num,rt
+<outdoc>temp
+
+x99=0
+SA P x36,x37,x38
+x31,x32,x33
+x35,x99,x99
+
+SD IC x12,x34,x36,x37,x38
+outdoc2
+
+LB2 ; next image x12
+SD IC END
+outdoc1
+UD ICE
+outdoc1
+SD IC COPY
+outdoc2
+<outdoc>
+SD IC END
+outdoc2
+DE
+<outdoc>temp
+
+RE

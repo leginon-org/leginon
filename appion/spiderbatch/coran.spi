@@ -1,0 +1,81 @@
+[x21] ; numfactors
+; usage: coran[x21]
+; description: CA S BY PCA AND CORAN
+;  finds additive constant
+
+FR
+?IN.INPUT ALIGNED PARTICLES TEMPLATE (dir/ser*****)?[pcltmpl]
+FR
+?IN.DOC LIST OF PARTICLES (dir/file)?[pcldoc]
+FR
+?IN.MASK FOR CLASSIFICATION (dir/file)?[mask]
+FR
+?OUT.OUTPUT PREFIX (dir/prefix)?[prefix]
+
+; ~~~~~ start ~~~~~
+
+; -----FIND ADDITIVE CONSTANT
+
+UD N x30
+[pcldoc]
+UD E
+IF(x30.gt.10000)THEN
+  VM
+  echo You have more than 10000 particles. CorAn could take a while.
+  ;GOTO LB90 ; do iterative pca instead
+ELSE
+  VM
+  echo -n CorAn on {%F9.1%x30} particles..
+ENDIF
+
+x35=0  ; additive constant default
+DO LB1 x11=1,x30 ; for each image
+  UD IC,x11,x31  ;  ,x32,x33
+  [pcldoc]  ; particle number in first register
+
+  ; FIND MINIMUM
+  FS
+  [pcltmpl]x31
+  FI x34
+  [pcltmpl]x31
+  (8)  ; FMIN
+
+  IF(x34.lt.x35)x35=x34   ; new minimum
+LB1 ; next image
+UD ICE
+[pcldoc]
+
+x35=x35*(-1.05)  ; increase by 5% and flip sign
+
+;VM
+;echo Coran additive constant is {%ES11.3%x35}
+
+; -----CORRESPONDENCE ANALYSIS
+
+CA S
+[pcltmpl]
+[pcldoc]
+[mask]
+x21        ; NUMBER EIGENVECTORS(FACTORS)
+C          ; CORRESPONDENCE ANALYSIS
+x35        ; ADDITIVE CONSTANT
+[prefix]   ; OUTPUT PREFIX
+
+VM
+echo .done.
+RE
+
+LB90
+VM
+echo There are greater than 5000 particles, performing iterative PCA instead of CorAn.
+CA S
+[pcltmpl]
+[pcldoc]
+[mask]
+x21        ; NUMBER EIGENVECTORS(FACTORS)
+I          ; ITERATIVE PCA
+[prefix]   ; OUTPUT PREFIX
+
+VM
+echo .done.
+RE

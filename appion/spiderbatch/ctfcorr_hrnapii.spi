@@ -1,0 +1,89 @@
+; CTF correction for a set of particles, arranged into defocus groups
+; Requires order_select001 doc file and data format of the refinement
+;
+FR G
+<outdir>/fa/buckbeak2/usr/asturias/HRNAPII/hrnapii_data052308/ctfcorr_clamp1;  output folder
+FR G
+<indir>/fa/buckbeak2/usr/asturias/HRNAPII/hrnapii_data052308/hrnapii_clamp1
+;.....................................................
+vm
+mkdir <outdir>
+
+x18=0.5/2.055      ; Change this!  Pixel size
+
+x19=1
+;
+do lb1 x11=1,18  ; Change this!  Number of defocus groups
+;
+ud ic,x11,x12,x14,x15,x16
+<indir>/order_select001
+;
+cp i
+<indir>/data{***x11}@
+_2@
+x12
+x12
+;
+x14=x14*10000    ; defocus value for this group (in Angstroms)
+;
+fi x17           ; size of image
+_2@00001
+(2)
+;
+tf ct
+_1
+(2.0)
+x14,0.03349     ; Lambda
+x17,x17
+x18
+(0.005,x16)      ; 0.005 is source size
+(0,0)
+(0.09,x15)             ; 0.09 is amplitude contrast ratio
+(-1)
+;
+; Signal to Noise ratio calculation
+;x20=SQR(x12/(2*27.5))  ; change last value, radius of particle
+;
+do lb2 x13=1,x12 ; x12 is number of particles in current defocus group
+;
+ft               ; fourier transform each particle
+_2@{*****x13}
+_3
+;
+mu             ; divide each particle's FT by the appropriate CTF
+_3
+_1
+_4
+*
+;
+ft               ; inverse fourier transform each CTF-corrected FT
+_4
+_5
+;
+;tf cts
+;_2@{*****x13}
+;(1)
+;_1
+;x20
+;_5
+;
+cp
+_5
+<outdir>/ptcl@{*****x19}
+;
+dc s
+_5
+<outdir>/dcs2_ptcl@{*****x19}
+(2,2)
+;
+x19=x19+1
+;
+lb2
+;
+cp  ; Save CTF for each defocus group
+_1
+<outdir>/ctf{***x11}
+;
+lb1
+;
+en d

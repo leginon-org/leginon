@@ -1,0 +1,26 @@
+; reseqence images according to doc file
+; new name in key, old name in first column
+FR
+?IN.IMAGE DOC (dir/doc)?<imglist>
+FR
+?IN.IMAGE TEMPLATE (dir/ser***)?<imgtmpl>
+FR
+?OUT.IMAGE TEMPLATE (dir/out***)?<outtmpl>
+
+; ~~~~~ start ~~~~~
+UD N x21
+<imglist>
+UD E
+DO LB1 x11=1,x21
+UD IC x11,x22
+<imglist>
+
+CP
+<imgtmpl>x22
+<outtmpl>x11
+
+LB1
+UD ICE
+<imglist>
+
+RE

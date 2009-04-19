@@ -1,0 +1,99 @@
+; grpalnpcls.spi
+; write group alignment to individual particles
+;   now accepts any input format (06302007)
+;     input alignment doc format is grp,rt,x,y
+; write doc in sap+class format pcl,rt,x,y,class
+
+FR
+?IN.CLASS ALIGNMENT DOC (dir/doc)?<aln>
+FR
+?IN.CLASS ALIGNMENT FORMAT (1=apsh,2=apnq,3=apsr,4=sap)?<format>
+IF(<format>.eq.3)THEN
+FR
+?IN.LIST OF CLASSES CORRESPONDING WITH APSR DOC (dir/list)?<list>
+ENDIF
+FR
+?IN.CLASS DOC TEMPLATE (dir/classlist***)?<tmpl>
+FR
+?OUT.PARTICLE ALIGNMENT DOC (dir/doc)?<outdoc>
+
+; ~~~~~ start ~~~~~
+
+VM
+echo -n Writing class alignment for each particle..
+
+x20=0 ; particle counter
+; find number of particles
+UD N x21
+<aln>
+DO LB3 x13=1,x21
+UD IC x13,x22
+<aln>
+
+UD N x23
+<tmpl>x22
+
+x20=x20+x23
+
+LB3
+
+SD IC NEW
+outdoc
+(5),x20
+
+x20=0 ; particle counter
+UD N x21
+<aln>
+DO LB1 x11=1,x21 ; for each group
+
+IF(<format>.eq.1)THEN
+UD IC x11,x91,x92,x93,x94,x22,x23,x24,x25
+<aln>
+ENDIF
+IF(<format>.eq.2)THEN
+UD IC x11,x92,x92,x23,x24,x25,x22
+<aln>
+ENDIF
+IF(<format>.eq.3)THEN
+UD IC x11,x23,x24,x25
+<aln>
+UD IC x11,x22
+<list>
+ENDIF
+IF(<format>.eq.4)THEN
+UD IC x11,x22,x23,x24,x25
+<aln>
+ENDIF
+
+UD N x26
+<tmpl>x22
+DO LB2 x12=1,x26 ; read particles from each group doc
+UD IC x12,x27
+<tmpl>x22
+
+x20=x20+1
+SD IC x20,x27,x23,x24,x25,x22
+outdoc
+
+LB2
+UD ICE
+<tmpl>x22
+
+LB1
+UD ICE
+<aln>
+IF(<format>.eq.3)THEN
+UD ICE
+<list>
+ENDIF
+
+SD IC COPY
+outdoc
+<outdoc>
+SD IC END
+outdoc
+
+VM
+echo <outdoc> ..done.
+
+RE

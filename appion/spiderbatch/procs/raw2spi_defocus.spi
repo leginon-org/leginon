@@ -1,0 +1,34 @@
+; 2008.02.20
+; for each micrograph
+; calculates average power spectra 
+; estimates defocus
+
+MD
+SET MP
+(0)
+
+;@/home/brignole/scripts/rawmicro2spi
+;mics/            ;micros directory
+;mics/miclist3    ;list of micros
+;(3)              ;decimation-negstain
+
+@/home/brignole/scripts/power_average3
+mics/miclist3    ; list of micros
+mics/****        ; micros template
+(500)            ; window size of small pieces (Sx=Sy, normally 500)
+(0)              ; % overlap in x (0 for negative stain)
+(0)              ; % overlap in y (0 for negative stain)
+(150)            ; dist. from edge (x) 30 is OK for CCD images
+(150)            ; dist. from edge (y) 30 is OK for CCD images
+(0.02)           ; radius of central mask in fraction of image size
+
+@/home/brignole/scripts/defocus_loop2
+mics/miclist3    ; list of micros
+pw_spec/pw_avg   ; power spectrum file
+(4.2)            ; pixel size, A/pixel
+(2.0)            ; spherical aberration constant Cs
+(0.09)           ; amplitude contrast ratio, normally 0.09-0.1
+(0.03349)        ; lambda (on spider web page) - related to acceleration voltage
+pw_spec          ; output directory
+
+EN D

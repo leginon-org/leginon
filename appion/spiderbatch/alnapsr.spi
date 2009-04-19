@@ -1,0 +1,332 @@
+[x25] ; particle radius
+; Syntax: @alnapsr[x25]
+; Description: aligns averages from independent rounds of apsr by one of four options.
+; Option1: APSR-only (free-align)
+;  1) Align images to self (APSR)
+; Option2: APSR+APSH (free-align and orient with reference)
+;  1) Align images to self (APSR)
+;  2) Then align APSR average to reference image (APSH)
+;  3) Combine alignment parameters
+; Option3: APSR+APSH+APSH (ref-align to oriented apsr average)
+;  1) Align images to self (APSR)
+;  2) Align APSR average to reference image (APSH)
+;  3) Use aligned APSR average as reference (APSH)
+; Option4: APSH-only (align to reference)
+;  1) Align images to reference (APSH)
+; 
+; Input:
+; 1) 10x APSR directory (assumes iter_doc and r??d?? and r??i?? exist)
+; 2) list of particles
+; 3) alignment method and optional reference image
+; Output:
+; 1) parameters to align final averages from each apsr round (alnapsrdoc)
+; 2) for each apsr-round: SAP format alignment parameters (lastd**)
+; 3) for each apsr round: the rotated final average (lasti**)
+; 4) the average of the aligned apsr-averages (lastiav)
+; 
+; Some advice:
+; Option1 is for alignment of images without reference bias
+;         if you don't care about the orientation of the final average.
+; Option2 is for alignment of images avoiding reference-bias (images never see a reference)
+;         using the reference image only to orient the apsr average.
+; Option3 is reference alignment of images to the oriented apsr average.  Images are
+;         refaligned to their oriented apsr-average.
+; Option4 is standard reference alignment of images (use refnm for multiref).
+
+FR
+?IN.APSR directory (contains iter_doc r**i** r**d**)?[apsrdir]
+FR
+?IN.LIST OF ALIGNED PARTICLES (dir/serlist)?[pcllist]
+RR x90
+?IN.ALIGNMENT METHOD (1=apsr,2=apsr+ref,3=apsr+ref+ref,4=ref)?
+IF(x90.gt.1)THEN
+  FR
+  ?IN.REFERENCE IMAGE (dir/img)?[refimg]
+ENDIF
+
+; ~~~~~ start ~~~~~
+
+x23=x25*2 ; particle diameter
+x24=1     ; start at 1
+x27=1     ; step size
+x28=5     ; typical inner ring of 5
+x29=0     ; zero
+
+MD
+VB OFF
+
+UD N x20 ;how many particles
+[pcllist]
+UD E
+
+UD N x21  ; how many rounds of apsr (usually 10)
+[apsrdir]/iter_doc
+UD E
+DO LB1 x11=1,x21   ; for each apsr round
+  UD IC x11,x30,x31
+  [apsrdir]/iter_doc
+  CP  ; copy last apsr images to template for apsr and ref
+  [apsrdir]/r{**x11}i{**x31}
+  [apsrdir]/lasti{**x11}
+LB1  ; next round x11
+UD ICE
+[apsrdir]/iter_doc
+SD IC NEW
+alnapsr_ic
+(4),x21
+
+IF(x21.eq.1)x90=4 ;just align 1 image to refimg
+
+; ---calculate search range
+FS
+[apsrdir]/lasti01
+FI x12
+[apsrdir]/lasti01
+(2) ; nrow
+x12=(x12/2)-2 ; effective image radius
+
+IF(x25.gt.x12)THEN ; particle radius bigger than image radius
+  VM
+  echo -n RADIUS WAS {%F7.1%x25}
+  x25=x12 ; reset particle radius
+  VM
+  echo ..NEW RADIUS IS {%F7.1%x25}
+ENDIF ; now particle radius is smaller than image radius
+
+IF(x25.lt.x28)THEN   ; if particle radius is less than inner ring
+  VM
+  echo -n RADIUS WAS {%F7.1%x25}' '
+  x25=x12    ; reset particle radius to image radius
+  VM
+  echo ..NEW RADIUS IS {%F7.1%x25}
+ENDIF
+
+IF(x25.le.25)x28=3 ;set inner ring (approx 1/10 radius)
+IF(x25.le.10)x28=1 ;set inner ring
+x26=INT(x12-x25)  ; search range = (image radius - 2) - particle radius 
+IF(x26.le.0)THEN
+  VM
+  echo "ERROR...Search range less than 1. Reducing outer ring by 1."
+  x25=x25-1
+  x26=0
+  x27=0
+ENDIF
+
+VM
+echo -n Aligning APSR results..
+
+IF(x90.lt.4)THEN ; --- option 1, 2 and 3 start with apsr
+VM
+echo -n .APSR.
+AP SR
+[apsrdir]/lasti**   ; Image series template
+[apsrdir]/iter_doc  ; Image list
+x23                 ; Diameter
+x28,x25             ; FIRST AND LAST RING
+*                   ; Shape for centering
+[apsrdir]/tempi**   ; Output images template
+[apsrdir]/tempd**   ; Output transformation template
+
+; find last apsr iteration
+VM
+ls [apsrdir]/tempd* | wc -w | cut -c 1-7 | nl -s ' 1  ' > [apsrdir]/templastd.$DATEXT
+UD 1,x22
+[apsrdir]/templastd
+UD E
+VM
+cp [apsrdir]/tempd{**x22}.$DATEXT [apsrdir]/apsrtemp.$DATEXT
+CP
+[apsrdir]/tempi{**x22}
+_2
+VM
+rm -f [apsrdir]/temp*
+ENDIF ; --option 1,2,or 3 ;_2 is apsrav and apsrtemp is doc
+
+; --- option 2, 3, and 4 require apsh
+IF(x90.gt.1)THEN ;apsr+ref,apsr=ref or ref-only
+CP
+[refimg]
+_1
+
+SD IC NEW
+refangles
+(3,1) ; 3 registers,1key
+SD IC 1,x29,x29,x29
+refangles
+
+IF(x90.lt.4)THEN ; option 2 or 3 (apsr+ref or apsr=ref)
+  VM
+  echo -n .ref orient APSRav.
+
+  AP SH    ; align apsrav _2 to ref _1
+  _*          ; reference template
+  (1)         ; reference number
+  x26,x27     ; search range, step size
+  x28,x25     ; first, last ring
+  refangles   ; temporary angles
+  _*          ; image template to align
+  (2)         ; image numbers
+  *           ; no image angles
+  (0.0)       ; angle search,threshold
+  (0)         ; no mirror
+  [apsrdir]/apshpre
+  DOC REN
+  [apsrdir]/apshpre
+  [apsrdir]/apshtemp
+  DE
+  [apsrdir]/apshpre
+  ;    ps, th, ph, ref,pcl,crt,c-x,c-y
+  UD 1,x91,x92,x93,x94,x95,x33,x34,x35
+  [apsrdir]/apshtemp
+  UD E
+  DE
+  [apsrdir]/apshtemp
+ENDIF ; option 2 or 3 (x33,x34,x35)
+
+IF(x90.ge.3)THEN ; option 3 or 4 ;apsrav=ref or ref-only
+  IF(x90.eq.3)THEN ;alnimg to oriented apsrav, apsrav becomes new reference _1
+    RT SQ
+    _2  ;apsrav
+    _1
+    x33,(1)
+    x34,x35
+    VM
+    echo -n .APSRav=ref.
+  ENDIF ;option3
+
+  VM
+  echo -n .APSH to ref.
+
+  AP SH
+  _*          ; reference template
+  1           ; reference number
+  x26,x27     ; searchrange,stepsize
+  x28,x25     ; first,last ring
+  refangles   ; temporary refangles
+  [apsrdir]/lasti**  ; image template to align 
+  [apsrdir]/iter_doc ; image numbers
+  *           ; images angles
+  (0.0)       ; angle search,threshold
+  (0)         ; no mirror
+  [apsrdir]/apshpre
+  DOC REN
+  [apsrdir]/apshpre
+  [apsrdir]/apshtemp
+  DE
+  [apsrdir]/apshpre
+ENDIF ; option 3 or 4
+
+SD IC END
+refangles
+ENDIF ; option 2,3,4 - all required apsh
+
+; --- now combine alignment parameters to output same format
+DO LB2 x12=1,x21 ; for each apsr round
+  UD IC x12,x38,x40  ; iterations
+  [apsrdir]/iter_doc
+
+  IF(x90.lt.3)THEN ;option1 or 2
+    UD IC x12,x41,x42,x43
+    [apsrdir]/apsrtemp
+    IF(x90.eq.2)THEN ;apsr+ref
+      SA P x41,x42,x43
+      x41,x42,x43  ; from apsr
+      x33,x34,x35  ; from ref
+    ENDIF ;option2
+  ENDIF ;option1 or 2
+
+  IF(x90.ge.3)THEN ;option 3 or 4
+    ;         ps, th, ph, ref,pcl,crt,c-x,c-y
+    UD IC x12,x31,x32,x33,x34,x35,x41,x42,x43
+    [apsrdir]/apshtemp
+  ENDIF
+
+  RT SQ
+  [apsrdir]/r{**x12}i{**x40}  ; input image
+  [apsrdir]/lasti{**x12}      ; save over previous unaligned copy
+  x41  ; angle
+  x42,x43  ; xshift,yshift
+
+  SD IC x12,x12,x41,x42,x43
+  alnapsr_ic
+
+  UD N x50
+  [apsrdir]/r{**x12}d{**x40}
+  UD E
+  IF(x20.ne.x50)THEN
+    VM
+    echo ERROR...alignment doc and particle list have different number of particles
+    EN
+  ENDIF
+  SD IC NEW
+  lastd_ic
+  (4),x20
+
+  DO LB3 x13=1,x20 ; for each particle
+    UD IC x13,x51,x52,x53
+    [apsrdir]/r{**x12}d{**x40}
+    UD IC x13,x39
+    [pcllist]
+
+    SA P x54,x55,x56
+    x51,x52,x53  ; apsr
+    x41,x42,x43  ; aln
+
+    SD IC x13,x39,54,x55,x56 ; sap output format
+    lastd_ic
+  LB3 ; next particle x13
+  UD ICE
+  [apsrdir]/r{**x12}d{**x40}
+  SD IC COPY
+  lastd_ic
+  [apsrdir]/lastd{**x12}
+  SD IC END
+  lastd_ic
+LB2 ; next round x12
+UD ICE
+[apsrdir]/iter_doc
+UD ICE
+[pcllist]
+
+SD IC COPY
+alnapsr_ic
+[apsrdir]/alnapsrdoc
+SD IC END
+alnapsr_ic
+
+IF(x90.lt.3)THEN ; used apsrtemp
+UD ICE
+[apsrdir]/apsrtemp
+ENDIF
+
+IF(x90.le.3)THEN ; produced apsrtemp
+DE
+[apsrdir]/apsrtemp
+ENDIF
+
+IF(x90.ge.3)THEN
+UD ICE
+[apsrdir]/apshtemp
+DE
+[apsrdir]/apshtemp
+ENDIF
+
+IF(x90.lt.4)THEN
+DE
+_2
+ENDIF
+
+AS R
+[apsrdir]/lasti**
+x24-x21
+A
+[apsrdir]/lastiav
+_1  ;save over reference image
+
+DE
+_1
+
+VM
+echo .done.
+
+RE

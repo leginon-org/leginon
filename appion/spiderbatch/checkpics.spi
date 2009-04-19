@@ -1,0 +1,55 @@
+; check to make sure all good micros have been categorized
+
+FR
+?IN.List of autopicked micros (dir/doc)?[miclist]
+FR
+?IN.Autopic directory containing sel**** (dir)?[dir]
+FR
+?IN.Categorize docs template (cat****)?[cattmpl]
+FR
+?OUT.List of categorized micros (dir/catlist)?[catdoc]
+
+; ~~~~~ start ~~~~~
+
+UD N x21
+[miclist]
+UD E
+SD IC NEW
+categorized_ic
+(1),x21
+
+x12=0 ; forgotten counter
+x13=0 ; categorized counter
+DO LB1 x11=1,x21
+UD IC x11,x31
+[miclist]
+
+x99=0
+IQ FI x99
+[dir]/sel{****x31}/[cattmpl]x31
+IF(x99.ne.1)THEN
+  VM
+  echo You forgot to categorize micro {****x31}
+  x12=x12+1
+ELSE
+  x13=x13+1
+  SD IC x13,x31
+  categorized_ic
+ENDIF
+
+LB1 ; next x11
+UD ICE
+[miclist]
+
+SD IC COPY
+categorized_ic
+[catdoc]
+SD IC END
+categorized_ic
+
+VM
+echo You forgot to categorize particles from {%F7.1%x12} micros.
+VM
+echo You categorized particles from {%F7.1%x13} micros.
+
+RE

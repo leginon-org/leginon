@@ -1,0 +1,98 @@
+[x32,x33,x34]  ;meanccc,stdccc,nbelow
+;ccc[meanccc,stdccc]
+;output is list of particles and ccc to image, returns meanccc and stdev
+; can be used to make cutoff of ccc to class average for including images in class
+
+FR
+?IN.List of particles (dir/serlist)?[pcllist]
+FR
+?IN.Particle template (dir/ser@******)?[pcltmpl]
+FR
+?IN.Image to correlate with particles (dir/img)?[img]
+FR
+?IN.Mask of region to correlate (dir/mask)?[mask]
+FR
+?OUT.CrossCorrelation list (dir/list)?[ccdoc]
+
+; ~~~~~ start ~~~~~
+
+CP
+[img]
+_1 ;average
+CP
+[mask]
+_2 ;mask
+
+UD N x21
+[pcllist]
+
+SD IC NEW
+ccdoc_ic
+(2),x21 ;2 registers,x21 keys
+
+BL
+_3
+(1),x21
+n
+(0)
+
+DO LB1 x11=1,x21
+UD IC x11,x31
+[pcllist]
+
+CC C x30
+[pcltmpl]x31
+_1 ;average
+_2 ;mask
+
+SD IC x11,x31,x30
+ccdoc_ic
+
+RP
+_3
+(1),x11
+x31
+
+LB1
+UD ICE
+[pcllist]
+
+SD IC COPY
+ccdoc_ic
+[ccdoc]
+SD IC END
+ccdoc_ic
+
+FS
+_3
+FI x32,x33 ;avg,std
+_3
+(9,10)
+x34=x32-x33 ;one std below mean
+TH M
+_3
+_4
+A ;blank above threshold
+x34 ;threshold
+
+FS
+_4
+FI x35
+_4
+(9) ;avg
+x34=x35*x21 ;sum = avg * numpix
+
+x35=x35*100
+VM
+echo meanccc {%F7.1%x32}"+/-"{%F7.1%x33}": "{%F7.1%x35}"% of "{%F7.1%x21}" particles below 1 stdev"
+
+DE
+_1
+DE
+_2
+DE
+_3
+DE
+_4
+
+RE

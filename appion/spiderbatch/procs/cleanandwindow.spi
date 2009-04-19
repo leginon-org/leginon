@@ -1,0 +1,47 @@
+; cleanandwindow procedure
+
+; check to be sure particles have been categorized from each good micros
+@checkpics
+pw_spec/defocusgrp1 ; list of good micros
+handpic ; categorization doc prefix assumes autopic/sel****/prefix****
+
+FR
+?IN.HAVE YOU CLEANED ALL PARTICLES (0=STOP,1=YES)?<clean>
+x19=<clean>
+IF(x19.eq.0)GOTO LB99
+
+; use categorization doc to make a list of goodpics (score:good>bad>tail)
+@cleanpics
+autopic
+handpic ; categorization doc prefix assumess sel****/prefix**** 
+pw_spec/defocusgrp1 ; list of autopic'd micros
+
+@cleancords
+autopic  ; automatic selection directory
+goodpic ; prefix for categorization doc
+pw_spec/defocusgrp1 ; list of selected micros
+
+@winpcls
+pw_spec/defocusgrp1   ;IN.MICROGRAPH OR PIECE NUMBER SELECTION DOC (dir/file)
+mics/ccd*****         ;IN.MICROS TEMPLATE (eg. dir/ or dir/tmpl)
+mics/noise224         ;IN.NOISE FILE (dir/file)
+(150)               ;IN.NSAM (#)
+(150)               ;IN.NROW (#)
+(60)                ;IN.MASK RADIUS (#). outside the mask to determine normalization
+autopic/cleancords/cords  ;IN.PARTICLE COORD-S DOC PREFIX (dir/doc assumes ****)
+(4)                 ;IN.DECIMATION FACTOR FOR P.SEL-N (1 if no decimation, #)
+parameter_file    ;IN.PARAMETER FILE
+ser               ;OUT.OUTPUT FOLDER (dir)
+
+@lphpfilter
+ser/serlist
+ser/ser*****
+(0.151) ; lowpass start 15A
+(0.215) ; lowpass stop 10.5A
+(0.00753) ; hipass start 300A
+(0.00904) ; hipass stop 250A
+ser
+serf@*****
+
+LB99
+EN D

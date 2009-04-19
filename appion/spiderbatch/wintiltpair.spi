@@ -1,0 +1,375 @@
+; Cut particles from from tilted and untilted micrographs
+; 
+; dct**** and dcu**** must be numbered according to tilted (first) micrograph 
+; tilt pairs must be sequentially numbered
+; ex. 1001.spi and 1002.spi are tilted and untilted micros, 
+;     dct1001.spi and dcu1001.spi are the corresponding particle coordinates
+; coordinate files contain pcl#,x,y,dx,dy
+;   x and y are coordinates used, these may be decimated so double check
+;
+; Output:  ser@****** and serlist
+;
+; Normalization radius about 10-20% larger than particle and window about 50% larger
+
+FR
+?IN.Micros List (dir/file)?[mdoc]
+FR
+?IN.Micros Template (dir/pre****)?[mic]
+FR
+?IN.Tilt Coordinates Template (dir/dct****)?[dct]
+FR
+?IN.Untilt Coordinates Template (dir/dcu****)?[dcu]
+FR
+?IN.Noise (dir/file)?[noise]
+RR x21
+?IN.Box Size (#)? ;[winsize]
+RR x22
+?IN.Radius For Normalization (#)? ;[radius]
+RR x24
+?IN.Decimation Factor of Coordinates (#)?
+FR
+?OUT.Folder To Create For Particles (dir)?[ser]
+
+; ~~~~~ start ~~~~~
+
+MD
+VB OFF
+
+UD N x31 ;number of micros
+[mdoc]
+x32=(x31/2)-(int(x31/2)) ;even or odd number of micros
+IF(x32.ne.0)THEN
+  VM
+  echo ERROR...You Have {%F7.1%x31} Micros.  All Micros Must Have Pairs!
+  EN 
+ENDIF
+
+VM
+echo Windowing particles with box size {%F7.1%x21}
+
+VM
+mkdir [ser]
+
+SD IC NEW
+sertlist_ic
+(6,999999)
+SD IC NEW
+serulist_ic
+(6,999999)
+
+x90=0
+IQ FI x90
+[noise]
+IF(x90.eq.0)THEN
+  VM
+  echo "WARNING...NOISE FILE NOT FOUND, SKIPPING NORMALIZATION, ONLY RAW PARTICLES WINDOWED"
+ELSE
+  BL         ;make empty file for normalization mask
+  _6
+  x21,x21    ;image size
+  n
+  (0.0)
+
+  MA         ;normalization mask
+  _6         ;file to mask
+  _3         ;output masked file
+  x22,x20    ;outer,inner radius
+  d          ;disc
+  e          ;give external value
+  (1.0)
+  x23,x23    ;center
+
+  DE
+  _6
+
+  RA
+  [noise]
+  _6
+
+  VM
+  echo Radius for histogram normalization is {%F7.1%x22}
+ENDIF
+
+IF(x24.eq.0)THEN
+  VM
+  echo Decimation factor of coordinates was 0, assuming 1.
+  x24=1
+ENDIF
+
+x20=0.0          ;particle counter
+x23=(x21/2)+1    ;coordinate of window center
+x23=(x21/2)      ;value to subtract to get top left coord
+x31=x31/2        ;pairs of micros
+DO LB1 x11=1,x31 ; for each pair of micrographs
+  x30=2*x11-1 ;get tilted micro #
+  UD IC x30,x32
+  [mdoc]
+
+  x30=2*x11   ;get untilted micro #
+  UD IC x30,x33
+  [mdoc]
+
+  CP
+  [mic]x32
+  _7
+  CP
+  [mic]x33
+  _8
+  
+  FS
+  _7 ;[mic]x32
+  FI x50,x51
+  _7 ;[mic]x32
+  (12,2)
+
+  FS
+  _8 ;[mic]x33
+  FI x52,x53
+  _8 ;[mic]x33
+  (12,2)
+
+  DOC REN
+  [dct]x32
+  [ser]/dctr_tmp
+  DOC REN
+  [dcu]x32
+  [ser]/dcur_tmp
+
+  UD N x35  ;number of tilted picks
+  [ser]/dctr_tmp
+  UD N x36  ;number of untilted picks
+  [ser]/dcur_tmp
+
+  VM
+  echo ' '
+  VM
+  echo Tilted Micro {****x32} Has {%F7.1%x35} Particles 
+  VM
+  echo Untilted Micro {****x33} Has {%F7.1%x36} Particles
+
+  IF(x35.lt.x36)THEN
+    VM
+    echo '   'ERROR...Tilted micro has fewer picks than untilted pair. 
+  ENDIF
+  IF(x35.gt.x36)THEN
+    VM
+    echo '   'ERROR...Tilted micro has more picks than untilted pair.
+  ENDIF
+
+  x18=0 ;current tilted key
+  x19=0 ;current untilted key
+  x25=0 ;skipped particle counter
+  x44=x20 ;end of previous count
+  x45=x20 ;end of previous count
+  x37=x35+x36
+  DO LB2 x12=1,x37 ; for each key
+    x18=x18+1 ; next tilted key
+    x19=x19+1 ; next untilted key
+
+    x97=0
+    IF(x18.gt.x35)THEN ;at end of tiltdoc
+      x97=x97+1
+    ELSE
+      UD IC x18,x38,x40,x41,x70,x71 ; web writes: pcl#,x,y,dx,dy
+      [ser]/dctr_tmp
+      x40=x40*x24 ;if x=dx then x needs to be scaled
+      x41=x41*x24 ;if y=dy then y needs to be scaled
+    ENDIF
+
+    IF(x19.gt.x36)THEN ;at end of untiltdoc
+      x97=x97+1
+    ELSE
+      UD IC x19,x39,x42,x43,x72,x73 ; web writes: pcl#,x,y,dx,dy
+      [ser]/dcur_tmp
+      x42=x42*x24 ;if x=dx then x needs to be scaled
+      x43=x43*x24 ;if y=dy then y needs to be scaled
+    ENDIF
+    IF(x97.eq.2)GOTO LB97 ; everything has been windowed
+
+    x34=0
+    ;---tilted particle
+    ;top left
+    x46=x40-x23
+    x47=x41-x23
+    ;bottom right
+    x48=x40+x23
+    x49=x41+x23
+    IF(x46.lt.1)x34=1
+    IF(x47.lt.1)x34=1
+    IF(x48.gt.x50)x34=1
+    IF(x49.gt.x51)x34=1
+    ;---untilted particle
+    ;top left
+    x56=x42-x23
+    x57=x43-x23
+    ;bottom right
+    x58=x42+x23
+    x59=x43+x23
+    IF(x56.lt.1)x34=1
+    IF(x57.lt.1)x34=1
+    IF(x58.gt.x52)x34=1
+    IF(x59.gt.x53)x34=1
+    IF(x34.eq.1)THEN
+    ;  VM
+    ;  echo '   'Particle Beyond Micrograph Edge...skipped.
+      x25=x25+1
+      GOTO LB99
+    ENDIF
+
+    IF(x38.gt.x39)THEN
+      VM
+      echo '   'Current tilted {%F7.1%x38} is greater than current untilted {%F7.1%x39}
+      x18=x18-1 ; repeat x38 until x39 catches up
+      GOTO LB98 ; current tilted particle is greater than current untilted - wait
+    ENDIF
+
+    WI  ;---cut tilted particle
+    _7 ;[mic]x32
+    _1
+    x21,x21  ;size
+    x46,x47  ;x,y
+    
+    x44=x44+1 ; current particle number
+    IF(x90.eq.1)THEN ;normalize particles
+      RA
+      _1
+      _2
+
+      CE FIT
+      _6    ;ramped noise
+      _2    ;ramped window
+      _3    ;mask
+      [ser]/sert@{******x44}
+    ELSE
+      CP
+      _1
+      [ser]/sert@{******x44}
+    ENDIF
+
+    ;         pcl,mic, x , y ,pic,cc
+    SD IC x44,x44,x32,x40,x41,x18
+    sertlist_ic
+
+    LB98 ; catch up untilted particles because tilted are ahead
+
+    IF(x39.gt.x38)THEN
+      VM
+      echo '   'Current untilted {%F7.1%x39} is greater than current untilted {%F7.1%x38}
+      x19=x19-1 ; increment key for next x39
+      GOTO LB99 ; current untilted particle is greater than current tilted - wait
+    ENDIF
+
+    WI  ;---cut untilted particle
+    _8 ;[mic]x33
+    _1
+    x21,x21  ;size
+    x56,x57  ;x,y
+    
+    x45=x45+1 ; current particle number
+    IF(x90.eq.1)THEN ;normalize particles
+      RA
+      _1
+      _2
+
+      CE FIT
+      _6 ;<micros>/noise
+      _2 ; ramped window
+      _3 ; mask
+      [ser]/seru@{******x45}
+    ELSE
+      CP
+      _1
+      [ser]/seru@{******x45}
+    ENDIF
+
+    ;         pcl,mic, x , y ,pic,cc
+    SD IC x45,x45,x33,x42,x43,x19
+    serulist_ic
+
+    LB99 ; catch up tilted particles because untilted are ahead
+  LB2 ; next particle x12
+  LB97 ; all particle were windowed...escape from loop
+  IF(x97.ne.2)THEN ;end of both docs was not reached
+    IF(x18.lt.x35)THEN
+      VM
+      echo ERROR...number of tilted keys {%F7.1%x35} greater than number that were read {%F7.1%x18}.
+      EN
+    ENDIF
+    IF(x19.lt.x36)THEN
+      VM
+      echo ERROR...number of untilted keys {%F7.1%x36} greater than number that were read {%F7.1%x19}.
+      EN
+    ENDIF
+  ENDIF
+
+  IF(x38.ne.x39)THEN
+    VM
+    echo ERROR, FIX DOCUMENTS! There are not the same number of tilted and untilted particles.
+    EN D
+  ENDIF
+  IF(x44.ne.x45)THEN
+    VM
+    echo ERROR, FIX DOCUMENTS! There are not the same number of tilted and untilted particles.
+  ENDIF
+  VM
+  echo '   'Skipped {%F7.1%x25} Particles Beyond Micrograph Edge
+
+  x38=x44-x20
+  x39=x45-x20
+  VM
+  echo '   'Windowed {%F7.1%x38} tilted and {%F7.1%x39} untilted particles.
+
+  x48=x20+1   ;first particle from this pair of micros
+  x20=x44     ;cumulative number of particles from all micros
+
+  ;save information about untilted particles
+  ;x32/x33 is the micrograph number
+  ;x48 is the first particle for that micrograph x32 and x33
+  ;x20 is the last particle for that micrograph x32 and x33
+  ;x38=x39 are the total number of particles in micrograph
+  SD x11,x32,x48,x20,x38
+  [ser]/particles_t
+  SD x11,x33,x48,x20,x39
+  [ser]/particles_u
+
+  UD ICE
+  [ser]/dctr_tmp
+  UD ICE
+  [ser]/dcur_tmp
+  DE
+  [ser]/dctr_tmp
+  DE
+  [ser]/dcur_tmp
+  DE
+  _7 ;clear incore mic
+  DE
+  _8 ;clear incore mic
+LB1 ; next micro x11
+UD ICE
+[mdoc]
+
+SD IC COPY
+sertlist_ic
+[ser]/sertlist
+SD IC END
+sertlist_ic
+
+SD IC COPY
+serulist_ic
+[ser]/serulist
+SD IC END
+serulist_ic
+
+DE
+_1 ;windowed particle
+DE
+_2 ;ramped particle
+DE
+_3 ;normalization mask
+DE
+_6 ;ramped normalization density distribution
+
+VM
+echo Windowed {%F7.1%x20} particle pairs...go make a nice volume...good luck!
+
+RE

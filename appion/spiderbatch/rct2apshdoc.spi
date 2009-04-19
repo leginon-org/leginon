@@ -1,0 +1,70 @@
+;rct2apshdoc
+;combine shiftdoc and rctanglesdoc into apshformat doc
+; INPUT:
+;  rctangles doc has keys=pclnum
+;  shift doc in SAP format, but rotation=0
+; OUTPUT:
+;  rctapshdoc
+
+FR
+?IN.RCT angles doc (dir/rctangles)?[rctang]
+FR
+?IN.Shift doc template (dir/shiftdoc)?[shifttmpl]
+FR
+?IN.List of groups (dir/grplist)?[grplist]
+FR
+?OUT.Dir to receive shiftcomb and rctapshdoc (dir)?[dir]
+
+; ~~~~~ start ~~~~~
+
+DOC COMBINE
+[shifttmpl]        ;docs template to combine
+[grplist]          ;list of docs
+[dir]/shiftcomb  ;output doc
+
+DOC SORT
+[dir]/shiftcomb
+[dir]/shiftdoc_tmp
+(1)
+Y
+
+UD N x21
+[dir]/shiftdoc_tmp
+UD IC x21,x31
+[dir]/shiftdoc_tmp
+
+SD IC NEW
+rctapshdoc_ic
+(15),x31
+
+x90=0
+DO LB1 x11=1,x21 ;next shifted particle
+  ;     key,pcl,rt ,xsh,ysh
+  UD IC x11,x31,x32,x33,x34
+  [dir]/shiftdoc_tmp
+  IF(x32.ne.0)THEN
+    VM
+    echo ERROR...shift doc also has rotation
+  ENDIF
+
+  ;     pcl,psi,tta,phi
+  UD IC x31,x35,x36,x37
+  [rctang]
+
+  ;     pcl,psi,tta,phi,ref,pcl,crt,cxs,xys,npj,ang,ccc,rt ,xsh,ysh,mr
+  SD IC x31,x35,x36,x37,x90,x31,x32,x33,x34,x90,x90,x90,x90,x90,x90,x90
+  rctapshdoc_ic
+LB1 ;next shifted particle
+UD ICE
+[dir]/shiftdoc_tmp
+DE
+[dir]/shiftdoc_tmp
+UD ICE
+[rctang]
+SD IC COPY
+rctapshdoc_ic
+[dir]/rctapshdoc
+SD IC END
+rctapshdoc_ic
+
+RE  

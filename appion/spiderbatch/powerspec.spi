@@ -1,0 +1,223 @@
+;[x31,x36,x37,x56,x59,x89] ;box,overlapx,overlapy,edgex,edgey,maskcenter
+; power.bat
+;
+; Calculates avg power spectra for a set of micrographs.
+; Converts a scanned file to SPIDER format.
+; input: window size, percentage of the overlap
+; distance of the window from the micrograph border
+; results in power/roo***
+
+FR
+?IN.List of micros (dir/file)?[list]
+FR
+?IN.Micros template (dir/tmpl****)?[mictmpl]
+RR x31
+?IN.Window size (x=y, normally 500)?
+RR x36
+?IN.% overlap (increase for low contrast)?
+RR x56
+?IN.Distance from the edge (x)?
+RR x59
+?IN.Distance from the edge (y)?
+FR
+?OUT.Output directory (pw_spec)?[pwdir]
+
+;RR x40
+x40=0.02 ;?IN.Mask radius (fraction of window size, 0=don't mask)?
+
+; ~~~~~ start ~~~~~
+VM
+mkdir [pwdir]
+
+x52=x40*2  ;highpass
+x53=x40    ;highstop
+UD N x20
+[list]
+VM
+echo -n Calculating power spectra for {****x20} micros..
+DO LB1 x11=1,x20 ;for each micro
+  UD IC x11,x51
+  [list]
+
+  FS
+  [mictmpl]x51
+  FI x23,x24  ; get the dimensions of the full image
+  [mictmpl]x51
+  (12,2)
+
+  x38=(100-x36)/100; nonoverlap fraction in x = stepsize as a fraction of xwindowsize
+  x39=(100-x36)/100; nonoverlap fraction in y = stepsize as a fraction of ywindowsize
+
+  ; (((xsize-2*edgex)/winsize)/stepsizefrac)
+  x26=INT( ((x23-2*x56)/x31)/x38 )  ;number of pieces horizontal dim.(X)
+  x29=INT( ((x24-2*x59)/x31)/x39 )  ;number of pieces vertical dim.(Y)
+  x30=x26*x29
+  IF(x30.eq.0)THEN ;no windows
+    VM
+    echo ERROR...window size is too large for your image
+    EN
+  ENDIF
+  ; -------------------- Loops over X and Y -------------- 
+  BL
+  _3
+  x31,x31,(1)
+  N
+  (0)
+
+  x94 = 0 ;windows counter
+  DO LB2 x12 = 1, x29 ;for each y-window
+    x21 = (x31*x39)*(x12-1) + x59   ;y-direction
+    DO LB3 x13 = 1, x26 ;for each x-window
+      x94=x94+1 ;increment window counter
+      x22 = (x31*x38)*(x13-1) + x56  ; x-direction
+
+      WI
+      [mictmpl]x51      ;get small pieces of the input image 
+      _1
+      x31,x31    ;windowsize
+      x22,x21    ;upper left corner
+
+      RA     ;correct ramp effects
+      _1
+      _2
+
+      FQ
+      _2
+      _1
+      (8) ;buter-highpass
+      (x53,x52)  ;ex.0.1,0.2
+
+      PW     ;power spectrum (same dimension)
+      _1
+      _2
+
+      SQ     ;square = AR by P1**2          
+      _2  
+      _1
+
+      AD
+      _3 ;in1
+      _1 ;in2
+      _3 ;out = sum of squares
+      *
+
+    LB3 ;next x-window
+  LB2 ;next y-window
+
+  AR    ; root mean squared power spectra 
+  _3    ; sum of squares
+  _2
+  (P1/x94)**0.5 ;root mean squared
+
+  ; --------- End Loops. Resulting spectrum in _2 ---------
+  IF(x40.NE.0)THEN  ; mask out center 
+    FS
+    _2
+    FI x41,x42 ;sx,sy  ;x41=x42=x31?
+    _2
+    (12,2)
+
+    x43 = (x41/2 + 1) ;centerx
+    x44 = (x42/2 + 1) ;centery
+
+    MO
+    _1 ;existing image dim x41,x42
+    x41,x42
+    C ;circle
+    (x43-5)
+
+    MO
+    _3 ;existing image dim x41,x42
+    x41,x42
+    C
+    (x43-4)
+
+    SU
+    _3 ;large circle
+    _1 ;small circle
+    _4
+    *
+    FS M x47,x48,x49
+    _2
+    _4
+
+    ;GP x49  ;get value of pixel near periphery
+    ;_2
+    ;(x43+10,5) ;10pix + centerx,5pix from topedge
+
+    MA
+    _2 ;input
+    _3 ;output
+    (0.0,x40*x41)  ; radius of the central dot. e.g., .05 x 500 = 25 pixels
+    D  ;disc
+    E  ;external
+    x49 ;value
+    (x43,x44) ;mask center
+
+    CP
+    _3
+    _2
+  ENDIF   ;end maskout if clause. Spectrum in _2 
+
+  CP   ; write the output file
+  _2
+  [pwdir]/pwavg{****x51}
+
+  ; create the document file, with column headings and spatial freq. column
+  RO 
+  _2
+  _5  ; 1D rotational average (row vector)
+
+  FS
+  _5
+  FI x71
+  _5
+  (12)
+  ;x71 = (x31/2)  ; 1/2 large window size
+  ;VM
+  ;echo Rotational Spectra is a row vector of {%F7.1%x71} columns
+
+  ;SD /     amplitude     x-axis    spat.freq.
+  ;[pwdir]/pwdoc{****x51}
+  SD IC NEW
+  pwdoc_ic
+  (3),x71
+
+  DO LB4 x14 = 1,x71
+    GP x72
+    _5
+    x14,(1)
+
+    x74 = x14 / (2.0 * x71)  ; compute spat.freq.
+
+    ;SD x14,x72,x73,x74
+    ;[pwdir]/pwdoc{****x51}
+    SD IC x14,x72,x14,x74
+    pwdoc_ic
+  LB4 ;next pixel
+  ;SD E
+  ;[pwdir]/pwdoc{****x51}
+  SD IC COPY
+  pwdoc_ic
+  [pwdir]/pwdoc{****x51}
+  SD IC END
+  pwdoc_ic
+
+  DE
+  _1
+  DE
+  _2
+  DE
+  _3
+  DE
+  _4
+  DE
+  _5
+LB1 ;next micro
+UD ICE
+[list]
+
+VM
+echo .done. Display pwdocs in web.
+
+RE
