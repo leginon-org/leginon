@@ -4,12 +4,17 @@ import numpy
 import Image
 import ImageDraw
 
-def insidePolygon(points, polygon):
-	truthlist = []
-	for point in points:
-		inside = point_inside_polygon(point[0], point[1], polygon)
-		truthlist.append(inside)
-	return truthlist
+try:
+	import numextension
+	def insidePolygon(points, polygon):
+		return numextension.pointsInPolygon(points, polygon)
+except:
+	def insidePolygon(points, polygon):
+		truthlist = []
+		for point in points:
+			inside = point_inside_polygon(point[0], point[1], polygon)
+			truthlist.append(inside)
+		return truthlist
 
 def point_inside_polygon(x, y, poly):
 	"""
