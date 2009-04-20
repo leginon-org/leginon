@@ -606,6 +606,7 @@ class ApAlignReferenceData(Data):
 			('iteration', int),
 			('mrcfile', str),
 			('varmrcfile', str),
+			('imagicfile', str),
 			('ssnr_resolution', float),
 			('alignrun', ApAlignRunData),
 			('path', ApPathData),
