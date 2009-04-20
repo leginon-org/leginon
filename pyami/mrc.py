@@ -71,7 +71,10 @@ numpy2mrc = {
 	numpy.float32: 2,
 	numpy.float64: 2,
 	numpy.int32: 2,
+	numpy.int64: 2,
 	numpy.int: 2,
+	numpy.uint32: 2,
+	numpy.uint64: 2,
 
 	## convert these to complex64
 	numpy.complex: 4,
