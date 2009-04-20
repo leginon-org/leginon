@@ -653,7 +653,7 @@ if ($expId) {
 		$synrun = count($subclusterjobs['syntheticData']['running']);
 		$synq = count($subclusterjobs['syntheticData']['queued']);
 
-		$synresults[] = ($syndone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId'>$syndone complete</a>";
+		$synresults[] = ($syndone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId&syntheticOnly=True'>$syndone complete</a>";
 		$synresults[] = ($synrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=syntheticData'>$synrun running</a>";
 		$synresults[] = ($synq==0) ? "" : "$synq queued";
 
@@ -661,7 +661,7 @@ if ($expId) {
 		$totsynstack = $syndone+$synrun+$synq;
 
 		$totsynresult = ($totsynstack==0) ? "" :
-			"<a href='stacksummary.php?expId=$sessionId'>$totsynstack</a>";
+			"<a href='stacksummary.php?expId=$sessionId&syntheticOnly=True'>$totsynstack</a>";
 
 		$nruns=array();
 		$nruns[]=array (
