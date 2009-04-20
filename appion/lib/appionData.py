@@ -611,6 +611,7 @@ class ApAlignReferenceData(Data):
 			('alignrun', ApAlignRunData),
 			('path', ApPathData),
 			('template', ApTemplateImageData),
+			('templatestack', ApTemplateStackData),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApAlignReferenceData=ApAlignReferenceData
