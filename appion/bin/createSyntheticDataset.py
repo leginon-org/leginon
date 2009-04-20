@@ -21,6 +21,7 @@ import apIMAGIC
 import apParam
 import appionScript
 import appionData
+import apStackMeanPlot
 from pyami import mrc, imagefun
 from EMAN import *
 from scipy import fftpack, ndimage
@@ -846,7 +847,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			if self.params['commit'] is True:
 				apDisplay.printColor("Inserting stack parameters into database", "cyan")
 				rinstackq['stack'] = stackq
-				rinstackq.insert()
+#				rinstackq.insert()
 			else:
 				apDisplay.printColor("NOT INSERTING stack parameters into database", "cyan")
 				
@@ -900,7 +901,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		self.selectq = selectq
 		if self.params['commit'] is True:
 			apDisplay.printColor("Inserting fake selection parameters into the database", "cyan") 
-			selectq.insert()
+#			selectq.insert()
 		else:
 			apDisplay.printColor("NOT INSERTING fake selection parameters into the database", "cyan")
 
@@ -935,7 +936,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			stpartq['mean'] = partmeandict['mean']
 			stpartq['stdev'] = partmeandict['stdev']
 			if self.params['commit'] is True:
-				stpartq.insert()
+#				stpartq.insert()
 
 		return
 
@@ -1046,15 +1047,20 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			if abs(partmeandict['stdev']) < 1.0e-6:
 				apDisplay.printError("Standard deviation == 0 for particle %d in image %s"%(i,shortname))
 			self.partmeantree.append(partmeandict)
-
-		### create average file for viewing on webpages
-		emancmd = "proc2d "+finalstack+" "+os.path.join(self.params['rundir'], "average.mrc")+" average"
-		apEMAN.executeEmanCmd(emancmd)
 		
 		### upload if commit is checked
 		micrographlist = self.micrographlist
 		particlelist = self.correctedpartlist
 		self.uploadData()
+
+		### post-processing: create average file for viewing on webpages
+		emancmd = "proc2d "+finalstack+" "+os.path.join(self.params['rundir'], "average.mrc")+" average"
+		apEMAN.executeEmanCmd(emancmd)
+		### post-processing: Create Stack Mean Plot
+		if self.params['commit'] is True:
+			stackid = apStack.getStackIdFromPath(finalstack)
+			if stackid is not None:
+				apStackMeanPlot.makeStackMeanPlot(stackid)
 
 
 #=====================
