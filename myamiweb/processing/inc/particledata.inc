@@ -1288,7 +1288,7 @@ class particledata {
 		return $r;
   	}
 
-	function getStackIds ($sessionId, $showHidden=False) {
+	function getStackIds ($sessionId, $showHidden=False, $syntheticOnly=False) {
 		$q = "SELECT "
 		  ."  r.`REF|ApStackData|stack` as stackid , "
 		  ."  st.*, "
@@ -1302,6 +1302,8 @@ class particledata {
 		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
+		if ($syntheticOnly)
+			$q.= " AND s.`REF|ApSyntheticStackParamsData|syntheticStackParams` is NOT NULL ";
 		$q.= "ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
