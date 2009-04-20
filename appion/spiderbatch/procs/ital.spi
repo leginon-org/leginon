@@ -19,11 +19,13 @@ FR L    ;number of rounds in apsrtest
 [apsrtest]3
 FR L    ;reference for orientation of averages
 [ref]ksqavmrip
+FR L    ;number of processors
+[mp]4
 
 ;--- Begin ---
 MD
 SET MP
-(0)
+([mp])
 
 x20=[radius]
 x23=[iter]
@@ -33,8 +35,8 @@ x99=0
 IQ FI x99
 [dir]/r00/grp_count
 IF(x99.eq.0)THEN
-  VM
-  mkdir [dir]
+  ;VM
+  ;mkdir [dir]
   VM
   mkdir [dir]/r00
   VM
@@ -156,7 +158,7 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference alignment
 
     MD
     SET MP
-    (0)
+    ([mp])
     IF(x25.eq.10)THEN ;if don't have 10 apsrrounds
       @apsrstat
       [dir]/r{**x14}/apsr{***x22}

@@ -15,16 +15,15 @@ import apStack
 import apEMAN
 import apProject
 from apSpider import alignment
+import spyder
 import appionData
 
 #=====================
 #=====================
-class NoRefAlignScript(appionScript.AppionScript):
+class EdIterAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def setupParserOptions(self):
-		self.initmethods = ('allaverage', 'selectrand', 'randpart', 'template', 'blob')
-
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int", default=3000,
 			help="Number of particles to use", metavar="#")
@@ -33,9 +32,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.add_option("--numrounds", dest="numrounds", type="int",
 			help="Number of AP SR rounds", metavar="#")
 
-		### radii
-		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
-			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
+		### filters
 		self.parser.add_option("--hp", "--highpass", dest="highpass", type="int",
 			help="High pass filter radius (in Angstroms)", metavar="#")
 		self.parser.add_option("--lp", "--lowpass", dest="lowpass", type="int",
@@ -43,10 +40,22 @@ class NoRefAlignScript(appionScript.AppionScript):
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
-		self.parser.add_option("--init-method", dest="initmethod", default="allaverage",
-			help="Initialization method: "+str(self.initmethods), metavar="#")
-		self.parser.add_option("--templateid", dest="templateid", type="int",
-			help="Template Id for template init method", metavar="#")
+		### ed specific parameters
+		self.parser.add_option("--ref-template", dest="reftemplate", type="int", 
+			help="Template ID to use as alignment reference", metavar="#")
+		self.parser.add_option("--template-list", dest="templatelist",
+			help="List of template ids to use, e.g. 1,2", metavar="2,5,6")
+		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
+			help="Expected radius of particle for alignment (in Angstroms)", metavar="#")
+		self.parser.add_option("-i", "--num-iter", dest="refiter", type="int", default=20,
+			help="Number of global iterations for ref-based alignment", metavar="#")
+		self.parser.add_option("--rfi", "--num-reffree-iter", dest="reffreeiter", type="int", default=3,
+			help="Number of iterations for ref-free alignment", metavar="#")
+		self.parser.add_option("--invert-templates", dest="inverttemplates", default=False,
+			action="store_true", help="Invert the density of all the templates")
+		self.parser.add_option("--nproc", dest="nproc", type="int",
+			help="Number of processor to use", metavar="ID#")
+
 
 	#=====================
 	def checkConflicts(self):
@@ -56,21 +65,32 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("run description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("run name was not defined")
+		if self.params['partrad'] is None:
+			apDisplay.printError("particle radius was not defined")
 		maxparticles = 150000
 		if self.params['numpart'] > maxparticles:
 			apDisplay.printError("too many particles requested, max: " + str(maxparticles) + " requested: " + str(self.params['numpart']))
-		if self.params['initmethod'] not in self.initmethods:
-			apDisplay.printError("unknown initialization method defined: "
-				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
-		stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
-		stackfile = os.path.join(stackdata['path']['path'], stackdata['name'])
+		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
+		stackfile = os.path.join(self.stackdata['path']['path'], self.stackdata['name'])
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
+		### get num processors
+		if self.params['nproc'] is None:
+			self.params['nproc'] = apParam.getNumProcessors()
+
+		### convert / check template data
+		if self.params['templatelist'] is None:
+			apDisplay.printError("template list was not provided")
+		self.templatelist = self.params['templatelist'].strip().split(",")
+		if not self.templatelist or type(self.templatelist) != type([]):
+			apDisplay.printError("could not parse template list="+self.params['templatelist'])
+		self.params['numtemplate'] = len(self.templatelist)
+		apDisplay.printMsg("Found "+str(self.params['numtemplate'])+" templates")
+
 	#=====================
 	def setRunDir(self):
-		self.stackdata = apStack.getOnlyStackData(self.params['stackid'], msg=False)
 		path = self.stackdata['path']['path']
 		uppath = os.path.abspath(os.path.join(path, "../.."))
 		self.params['rundir'] = os.path.join(uppath, "align", self.params['runname'])
@@ -86,104 +106,8 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 	#=====================
-	def insertNoRefRun(self, spiderstack, imagicstack, insert=False):
-		### setup alignment run
-		alignrunq = appionData.ApAlignRunData()
-		alignrunq['runname'] = self.params['runname']
-		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		uniquerun = alignrunq.query(results=1)
-		if uniquerun:
-			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
-
-		# create a norefParam object
-		norefq = appionData.ApSpiderNoRefRunData()
-		norefq['runname'] = self.params['runname']
-		norefq['particle_diam'] = 2.0*self.params['partrad']
-		norefq['first_ring'] = self.params['firstring']
-		norefq['last_ring'] = self.params['lastring']
-		norefq['init_method'] = self.params['initmethod']
-		norefq['run_seconds'] = self.runtime
-
-		### finish alignment run
-		alignrunq['norefrun'] = norefq
-		alignrunq['hidden'] = False
-		alignrunq['bin'] = self.params['bin']
-		alignrunq['hp_filt'] = self.params['highpass']
-		alignrunq['lp_filt'] = self.params['lowpass']
-		alignrunq['description'] = self.params['description']
-		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
-
-		# STOP HERE
-
-		### setup alignment stack
-		alignstackq = appionData.ApAlignStackData()
-		alignstackq['alignrun'] = alignrunq
-		alignstackq['imagicfile'] = os.path.basename(imagicstack)
-		alignstackq['spiderfile'] = os.path.basename(spiderstack)
-		alignstackq['avgmrcfile'] = "average.mrc"
-		alignstackq['alignrun'] = alignrunq
-		alignstackq['iteration'] = 0
-		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		### check to make sure files exist
-		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
-		if not os.path.isfile(imagicfile):
-			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
-		if not os.path.isfile(spiderfile):
-			apDisplay.printError("could not find stack file: "+spiderfile)
-		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
-		if not os.path.isfile(avgmrcfile):
-			apDisplay.printError("could not find average file: "+avgmrcfile)
-		alignstackq['stack'] = self.stack['data']
-		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
-		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
-		alignstackq['description'] = self.params['description']
-		alignstackq['hidden'] = False
-		alignstackq['num_particles'] = self.params['numpart']
-		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
-
-		if insert is True:
-			alignstackq.insert()
-
-		### create reference
-		refq = appionData.ApAlignReferenceData()
-		refq['refnum'] = 0
-		refq['iteration'] = 0
-		refq['mrcfile'] = "template.mrc"
-		#refpath = os.path.abspath(os.path.join(self.params['rundir'], "alignment"))
-		#refq['path'] = appionData.ApPathData(path=refpath)
-		refq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		refq['alignrun'] = alignrunq
-
-		### insert particle data
-		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
-		for partdict in self.partlist:
-			### see apSpider.alignment.alignStack() for more info
-			"""
-			partdict.keys()
-			'num': int(data[0]), #SPIDER NUMBERING: 1,2,3,...
-			'template': int(abs(templatenum)), #SPIDER NUMBERING: 1,2,3,...
-			'mirror': checkMirror(templatenum),
-			'score': float(data[3]),
-			'rot': float(data[4]),
-			'xshift': float(data[5]),
-			'yshift': float(data[6]),
-			"""
-
-			alignpartq = appionData.ApAlignParticlesData()
-			alignpartq['ref'] = refq
-			alignpartq['partnum'] = partdict['num']
-			alignpartq['alignstack'] = alignstackq
-			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['num'])
-			alignpartq['stackpart'] = stackpartdata
-			alignpartq['xshift'] = partdict['xshift']
-			alignpartq['yshift'] = partdict['yshift']
-			alignpartq['rotation'] = partdict['rot']
-
-			if insert is True:
-				alignpartq.insert()
-
-		return
+	def insertEdIterRun(self, spiderstack, imagicstack, insert=False):
+		return None
 
 	#=====================
 	def createSpiderFile(self):
@@ -204,9 +128,9 @@ class NoRefAlignScript(appionScript.AppionScript):
 			emancmd += "lp="+str(self.params['lowpass'])+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
 		emancmd += "shrink="+str(self.params['bin'])+" "
-		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin']*2.0)
 		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
-		emancmd += "spiderswap edgenorm"
+		emancmd += "spiderswap"
 		starttime = time.time()
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
@@ -234,110 +158,114 @@ class NoRefAlignScript(appionScript.AppionScript):
 		return imagicstack
 
 	#=====================
-	def averageTemplate(self):
+	def createTemplateStack(self):
 		"""
 		takes the spider file and creates an average template of all particles
 		"""
-		emancmd  = "proc2d "+self.stack['file']+" template.mrc average edgenorm"
-		apEMAN.executeEmanCmd(emancmd)
 
-		templatefile = self.processTemplate("template.mrc")
+		templatestack = os.path.join(self.params['rundir'], "templatestack.spi")
+		apFile.removeFile(templatestack, warn=True)
 
-		return templatefile
+		### hack to use standard filtering library
+		templateparams = {}
+		templateparams['apix'] = self.stack['apix']
+		templateparams['rundir'] = os.path.join(self.params['rundir'], "templates")
+		templateparams['templateIds'] = self.templatelist
+		templateparams['bin'] = self.params['bin']
+		templateparams['lowpass'] = self.params['lowpass']
+		templateparams['median'] = None
+		templateparams['pixlimit'] = None
+		print templateparams
+		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
+		filelist = apTemplate.getTemplates(templateparams)
+
+		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
+		for mrcfile in filelist:
+			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
+				+" clip="+str(newboxsize)+","+str(newboxsize)
+				+" edgenorm spiderswap ")
+			if self.params['inverttemplates'] is True:
+				emancmd += " invert "
+			apEMAN.executeEmanCmd(emancmd, showcmd=False)
+
+		return templatestack
 
 	#=====================
-	def selectRandomParticles(self):
+	def setupBatchFile(self, spiderstack, templatestack):
 		"""
-		takes the spider file and creates an average template of all particles
+		sets up Ed's batch script to run
 		"""
-		### create random keep list
-		numrandpart = int(self.params['numpart']/100)+2
-		apDisplay.printMsg("Selecting 1% of particles ("+str(numrandpart)+") to average")
-		# create random list
-		keepdict = {}
-		randlist = []
-		for i in range(numrandpart):
-			rand = int(random.random()*self.params['numpart'])
-			while rand in keepdict:
-				rand = int(random.random()*self.params['numpart'])
-			keepdict[rand] = 1
-			randlist.append(rand)
-		# sort and write to file
-		randlist.sort()
-		f = open("randkeep.lst", "w")
-		for rand in randlist:
-			f.write(str(rand)+"\n")
+
+		### write particle selection file
+		partsel = os.path.join(self.params['rundir'], "partlist.spi")
+		f = open(partsel, "w")
+		for i in range(self.params['numpart']):
+			f.write("%06d 1 %06d"%(i+1, i+1))
 		f.close()
 
-		emancmd  = "proc2d "+self.stack['file']+" template.mrc list=randkeep.lst average edgenorm"
-		apEMAN.executeEmanCmd(emancmd)
+		refsel = os.path.join(self.params['rundir'], "reflist.spi")
+		f = open(refsel, "w")
+		for i in range(self.params['numtemplate']):
+			f.write("%03d 1 %03d"%(i+1, i+1))
+		f.close()
 
-		templatefile = self.processTemplate("template.mrc")
-
-		return templatefile
+		### read / write batch file
+		globalbatch = os.path.join(apParam.getAppionDir(), "spiderbatch/procs/ital.spi")
+		localbatch =  os.path.join(self.params['rundir'], "ital.spi")
+		gf = open(globalbatch, "r")
+		lf = open(localbatch, "w")
+		modify = True
+		for line in gf:
+			if modify is True:
+				if re.match("\[pcllist\]", line):
+					### sequential list of particle numbers
+					lf.write("[pcllist]"+spyder.fileFilter(partsel)+"\n")
+				elif re.match("\[pcltmpl\]", line):
+					### spider stack of particles
+					lf.write("[pcltmpl]"+spyder.fileFilter(spiderstack)+"\n")	
+				elif re.match("\[radius\]", line):
+					### particle radius in pixels
+					pixrad = int(self.params['partrad']/self.stack['apix']/self.stack['bin'])
+					lf.write("[radius]%d\n"%(pixrad))
+				elif re.match("\[reftmpl\]", line):
+					### spider stack of templates
+					lf.write("[reftmpl]"+spyder.fileFilter(templatestack)+"\n")
+				elif re.match("\[reflist\]", line):
+					### sequential list of reference numbers
+					lf.write("[reflist]"+spyder.fileFilter(refsel)+"\n")
+				elif re.match("\[dir\]", line):
+					### sub-directory, we use "."
+					lf.write("[dir].\n")
+				elif re.match("\[iter\]", line):
+					### number of ref-based iterations
+					lf.write("[iter]%d\n"%(self.params['refiter']))
+				elif re.match("\[apsrtest\]", line):
+					### number of ref-free subroutine iterations 
+					lf.write("[apsrtest]%d\n"%(self.params['reffreeiter']))
+				elif re.match("\[ref\]", line):
+					### orientation reference
+					templatedata = apTemplate.getTemplateFromId(self.params['reftemplate'])
+					templatefile = os.path.join(templatedata['path']['path'], templatedata['templatefile'])
+					localtemplate = os.path.join(self.params['rundir'], "orient.spi")
+					emancmd "proc2d %s %s spiderswap"%(templatefile, localtemplate)
+					apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
+					lf.write("[ref]"+spyder.fileFilter(localtemplate)+"\n")
+				elif re.match("\[mp\]", line):
+					### number of processors
+					lf.write("[mp]%d\n"%(self.params['nproc'])
+					modify = False
+				else:
+					lf.write(line)
+			else:
+				lf.write(line)
 
 	#=====================
-	def pickRandomParticle(self):
-		"""
-		takes the spider file and creates an average template of all particles
-		"""
-		### create random keep list
-		f = open("randkeep.lst", "w")
-		keepdict = {}
-		randpart = int(random.random()*self.params['numpart'])
-		apDisplay.printMsg("Selecting random particle ("+str(randpart)+") to average")
+	def runSpiderBatch(self)
+		### copy over additional batch files
+		for bfile in ("a", "b"):
+			gfile = os.path.join(apParam.getAppionDir(), "spiderbatch", bfile)
+			shutil.copy(
 
-		emancmd  = ( "proc2d "+self.stack['file']+" template.mrc first="
-			+str(randpart)+" last="+str(randpart)+" edgenorm" )
-		apEMAN.executeEmanCmd(emancmd)
-
-		templatefile = self.processTemplate("template.mrc")
-
-		return templatefile
-
-	#=====================
-	def getTemplate(self):
-		"""
-		takes the spider file and creates an average template of all particles
-		"""
-		### create random keep list
-		templatedata = apTemplate.getTemplateFromId(self.params['templateid'])
-		templatepath = os.path.join(templatedata['path']['path'], templatedata['templatename'])
-		if not os.path.isfile(templatepath):
-			apDisplay.printError("Could not find template: "+templatepath)
-		newpath = os.path.join(self.params['rundir'], "template.mrc")
-		shutil.copy(templatepath, newpath)
-
-		### needs to scale template by old apix to new apix
-
-		templatefile = self.processTemplate("template.mrc")
-
-		return templatefile
-
-	#=====================
-	def processTemplate(self, mrcfile):
-		### shrink
-		apDisplay.printMsg("Binning template by a factor of "+str(self.params['bin']))
-		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
-		emancmd  = ( "proc2d "+mrcfile+" "+mrcfile+" shrink="
-			+str(self.params['bin'])+" spiderswap " )
-		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
-		apEMAN.executeEmanCmd(emancmd)
-
-		### normalize and center
-		#apDisplay.printMsg("Normalize and centering template")
-		#emancmd = "proc2d "+mrcfile+" "+mrcfile+" edgenorm center"
-		#apEMAN.executeEmanCmd(emancmd)
-
-		### convert to SPIDER
-		apDisplay.printMsg("Converting template to SPIDER")
-		templatefile = "template.spi"
-		if os.path.isfile(templatefile):
-			apFile.removeFile(templatefile, warn=True)
-		emancmd = "proc2d template.mrc "+templatefile+" spiderswap "
-		apEMAN.executeEmanCmd(emancmd)
-
-		return templatefile	
 
 	#=====================
 	def start(self):
@@ -355,29 +283,18 @@ class NoRefAlignScript(appionScript.AppionScript):
 		### convert stack to spider
 		spiderstack = self.createSpiderFile()
 
-		### create initialization template
-		if self.params['initmethod'] == 'allaverage':
-			templatefile = self.averageTemplate()
-		elif self.params['initmethod'] == 'selectrand':
-			templatefile = self.selectRandomParticles()
-		elif self.params['initmethod'] == 'randpart':
-			templatefile = self.pickRandomParticle()
-		elif self.params['initmethod'] == 'template':
-			templatefile = self.getTemplate()
-		elif self.params['initmethod'] == 'blob':
-			templatefile = "*"
-		else:
-			apDisplay.printError("unknown initialization method defined: "
-				+str(self.params['initmethod'])+" not in "+str(self.initmethods))
+		#create template stack
+		templatestack = self.createTemplateStack()
 
+		###################################################################
+    ### create batch file
+		self.setupBatchFile(spiderstack, templatestack)
+		### run the spider alignment
 		apDisplay.printColor("Running spider this can take awhile","cyan")
-
-		### run the alignment
-    create batch file
-    run spider
+    self.runSpiderBatch()
+		###################################################################
 
 		### remove large, worthless stack
-		spiderstack = os.path.join(self.params['rundir'], "start.spi")
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
 
@@ -397,7 +314,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 #=====================
 if __name__ == "__main__":
-	noRefAlign = NoRefAlignScript(True)
-	noRefAlign.start()
-	noRefAlign.close()
+	edIterAlign = EdIterAlignScript(True)
+	edIterAlign.start()
+	edIterAlign.close()
 
