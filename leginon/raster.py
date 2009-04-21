@@ -2,7 +2,6 @@
 convenience functions for raster of points
 '''
 import numpy
-import numpy.ma as ma
 import math
 
 def createRaster(shape, spacing, angle, indices=False, limit=None):
@@ -71,7 +70,7 @@ def createIndices2(a,b,angle,offset=False):
 	shape = maxind,maxind
 	ind = numpy.indices(shape, numpy.float32)
 	if offset:
-		adds = ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
+		adds = numpy.ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
 		ind = numpy.array((ind[0],ind[1]+adds.data))
 	center0 = shape[0] / 2.0 - 0.5
 	center1 = shape[1] / 2.0 - 0.5
