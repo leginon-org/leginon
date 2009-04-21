@@ -134,36 +134,11 @@ class ManualAcquisition(node.Node):
 		else:
 			self.instrument.ccdcamera.ExposureType = 'normal'
 
-
-		'''
-		if self.settings['save image']:
-			try:
-				if correct:
-					dataclass = leginondata.CorrectedCameraImageData
-				else:
-					dataclass = leginondata.CameraImageData
-				imagedata = self.instrument.getData(dataclass)
-			except Exception, e:
-				self.logger.exception('Error acquiring image: %s' % e)
-				raise AcquireError
-			image = imagedata['image']
-		else:
-			if correct:
-				ccdcameraname = self.instrument.getCCDCameraName()
-				imagedata = self.instrument.imagecorrection.getImageData(ccdcameraname=ccdcameraname)
-				image = imagedata['image']
-			else:
-				image = self.instrument.ccdcamera.Image
-		'''
-
 		try:
 			if correct:
-				#dataclass = leginondata.CorrectedCameraImageData
 				image = self.acquireCorrectedImage()
 			else:
-				#dataclass = leginondata.CameraImageData
 				image = self.instrument.ccdcamera.Image
-			#imagedata = self.instrument.getData(dataclass)
 			if self.settings['reduced params']:
 				scope = self.instrument.getData(leginondata.ManualAcquisitionScopeEMData)
 				scope = leginondata.ScopeEMData(initializer=scope)
