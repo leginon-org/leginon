@@ -49,6 +49,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 
 		self.widgets['raster spacing'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['raster angle'] = FloatEntry(self, -1, chars=8)
+		self.widgets['raster offset'] = wx.CheckBox(self, -1,'offset by half an image every other row')
 		self.widgets['ellipse angle'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ellipse a'] = FloatEntry(self, -1, min=0, chars=6)
 		self.widgets['ellipse b'] = FloatEntry(self, -1, min=0, chars=6)
@@ -103,6 +104,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		szr.Add(self.widgets['raster angle'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'degrees')
 		szr.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szr.Add(self.widgets['raster offset'], (2, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
 
 		## raster limiting ellipse
 		szlimit = wx.GridBagSizer(0,5)
@@ -125,7 +127,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		szlimit.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sbszlimit.Add(szlimit, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		szr.Add(sbszlimit, (2, 0), (1, 3), wx.EXPAND)
+		szr.Add(sbszlimit, (3, 0), (1, 3), wx.EXPAND)
 
 		sbszr.Add(szr, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		sz.Add(sbszr, (2, 0), (1, 2), wx.EXPAND)

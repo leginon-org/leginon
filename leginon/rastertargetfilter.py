@@ -21,6 +21,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		'raster movetype': None,
 		'raster overlap': 0.0,
 		'raster preset': None,
+		'raster offset': False,
 		'ellipse angle': 0.0,
 		'ellipse a': 1.0,
 		'ellipse b': 1.0,
@@ -108,7 +109,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		# use ellipse diameter to define raster limit
 		limita = self.settings['ellipse a'] / 2.0
 		limitb = self.settings['ellipse b'] / 2.0
-		self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad)
+		self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['raster offset'])
 		# create raster
 		for target in targetlist:
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)

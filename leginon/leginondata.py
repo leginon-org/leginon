@@ -1887,6 +1887,7 @@ class RasterTargetFilterSettingsData(TargetFilterSettingsData):
 			('raster preset', str),
 			('raster movetype', str),
 			('raster overlap', float),
+			('raster offset', bool),
 			('ellipse angle', float),
 			('ellipse a', float),
 			('ellipse b', float),
