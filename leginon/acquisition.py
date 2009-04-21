@@ -588,11 +588,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return imagedata
 
 	def acquire(self, presetdata, emtarget=None, attempt=None, target=None, channel=None):
-		if target is None:
+		try:
+			tnum = emtarget['target']['number']
+		except:
 			tnum = None
-		else:
-			tnum = target['number']
-		tnum = target['number']
 		print tnum, 'MOVEANDPRESETPAUSE START'
 		t0 = time.time()
 		self.timedebug[tnum] = t0
