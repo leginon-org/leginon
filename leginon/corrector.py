@@ -68,7 +68,7 @@ class CorrectorClient(object):
 			return None
 
 		imagetemp['camstate'] = camstate
-		imagetemp['tem'] = self.node.instrument.getTEMData()
+		imagetemp['tem'] = scopedata['tem']
 		imagetemp['ccdcamera'] = leginondata.InstrumentData()
 		imagetemp['ccdcamera']['name'] = ccdcameraname
 		# only care about high tension for query
