@@ -288,7 +288,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
 				+" clip="+str(newboxsize)+","+str(newboxsize)
-				+" edgenorm spiderswap ")
+				+" spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
