@@ -80,6 +80,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--no-norm", dest="norm", default=False,
 			action="store_false", help="Do NOT use internal normalization")
 
+		self.parser.add_option("--garibaldi", dest="garibaldi", default=False,
+			action="store_true", help="Write a garibaldi job file and quit")
+
 		### choices
 		self.fastmodes = ( "normal", "narrow", "wide" )
 		self.parser.add_option("--fast-mode", dest="fastmode",
@@ -184,7 +187,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		secperiter = 0.12037
 		### get num processors
 		if self.params['nproc'] is None:
-			nproc = nproc = apParam.getNumProcessors()
+			nproc = apParam.getNumProcessors()
 		else:
 			nproc = self.params['nproc']
 
@@ -200,67 +203,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			calctime *= 2.0
 		self.params['estimatedtime'] = calctime
 		apDisplay.printColor("Estimated first iteration time: "+apDisplay.timeString(calctime), "purple")
-
-	#=====================
-	def spidict2partdict(self, spidict):
-		partdict = {
-			'partnum': int(spidict['row']),
-			'inplane': float(spidict['floatlist'][2]),
-			'xshift': float(spidict['floatlist'][3]),
-			'yshift': float(spidict['floatlist'][4]),
-			'refnum': int(spidict['floatlist'][5]),
-			'mirror': bool(spidict['floatlist'][6]),
-			'spread': float(spidict['floatlist'][7]),
-		}
-		return partdict
-
-	#=====================
-	def readRefDocFile(self):
-		reflist = []
-		docfile = "ref"+self.timestamp+".doc"
-		if not os.path.isfile(docfile):
-			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
-		f = open(docfile, "r")
-		mininplane = 360.0
-		for line in f:
-			if line[:2] == ' ;':
-				continue
-			spidict = operations.spiderInLine(line)
-			refdict = self.spidict2partdict(spidict)
-			if refdict['inplane'] < mininplane:
-				mininplane = refdict['inplane']
-			reflist.append(refdict)
-		for refdict in reflist:
-			refdict['inplane'] = refdict['inplane']-mininplane
-		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
-		return reflist
-
-	#=====================
-	def createAverageStack(self):
-		searchstr = "part"+self.timestamp+"_ref0*.xmp"
-		files = glob.glob(searchstr)
-		files.sort()
-		stack = []
-		reflist = self.readRefDocFile()
-		for i in range(len(files)):
-			fname = files[i]
-			refdict = reflist[i]
-			if refdict['partnum'] != i+1:
-				print i, refdict['partnum']
-				apDisplay.printError("sorting error in reflist, see neil")
-			refarray = spider.read(fname)
-			xyshift = (refdict['xshift'], refdict['yshift'])
-			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'], 
-				shift=xyshift, mirror=refdict['mirror'])
-			stack.append(alignrefarray)
-		stackarray = numpy.asarray(stack, dtype=numpy.float32)
-		#print stackarray.shape
-		avgstack = "part"+self.timestamp+"_average.hed"
-		apImagicFile.writeImagic(stackarray, avgstack)
-		### create a average mrc
-		avgdata = stackarray.mean(0)
-		apImage.arrayToMrc(avgdata, "average.mrc")
-		return
 
 	#=====================
 	def checkMPI(self):
@@ -285,24 +227,37 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		else:
 			nproc = self.params['nproc']
 
-		rundir = os.path.join("/garibaldi/people-a/vossman/xmippdata", self.params['runname'])
-		xmippexe = "/garibaldi/people-a/vossman/Xmipp-2.2-x64/bin/xmipp_mpi_ml_align2d"
+		rundir = os.path.join("/lustre/people/vossman/xmippdata", self.params['runname'])
 		newrundir = "$PBSREMOTEDIR/"
-		xmippopts = ( ""
-			+" -i $PBSREMOTEDIR/partlist2.doc \\\n"
-			+" -o $PBSREMOTEDIR/"+self.timestamp+" \\\n"
+
+		xmippopts = ( " "
+			+" -i $PBSREMOTEDIR/partlist2.doc "
 			+" -nref "+str(self.params['numrefs'])
 			+" -iter "+str(self.params['maxiter'])
+			+" -o $PBSREMOTEDIR/part"+self.timestamp
 			+" -psi_step "+str(self.params['psistep'])
-			+" -eps 5e-4"
-
 		)
+		### fast mode
 		if self.params['fast'] is True:
-			xmippopts += " -fast"
+			xmippopts += " -fast "
+			if self.params['fastmode'] == "narrow":
+				xmippopts += " -C 1e-10 "
+			elif self.params['fastmode'] == "wide":
+				xmippopts += " -C 1e-18 "
+		### convergence criteria
+		if self.params['converge'] == "fast":
+			xmippopts += " -eps 5e-3 "
+		elif self.params['converge'] == "slow":
+			xmippopts += " -eps 5e-8 "
+		else:
+			xmippopts += " -eps 5e-5 "
+		### mirrors
 		if self.params['mirror'] is True:
-			xmippopts += " -mirror"
+			xmippopts += " -mirror "
+		### normalization
 		if self.params['norm'] is True:
-			xmippopts += " -norm"
+			xmippopts += " -norm "
+
 		### write to file
 		jobfile = "xmipp-"+self.timestamp+".job"
 		results = rundir+"/"+self.params['runname']+"-results.tgz"
@@ -325,12 +280,12 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("  echo $PBSREMOTEDIR/`echo $line | sed 's/^.*partfiles/partfiles/'` 1 >> partlist2.doc\n")
 		f.write("end\n")
 		f.write("\n")
-		f.write("setenv MPI_HOME /garibaldi/people-b/applications/openmpi-1.2.2/\n")
-		f.write("setenv XMIPP_HOME /garibaldi/people-a/vossman/Xmipp-2.2-x64/\n")
+		f.write("setenv MPI_HOME /lustre/people/applications/openmpi-1.2.2/\n")
+		f.write("setenv XMIPP_HOME /lustre/people/vossman/Xmipp-2.3-src/\n")
 		f.write("set path = ( $MPI_HOME/bin $path )\n")
 		f.write("setenv LD_LIBRARY_PATH $MPI_HOME/lib:$XMIPP_HOME/lib:/usr/lib:/lib\n")
 		f.write("\n")
-		f.write("mpirun -np "+str(nproc)+" "+xmippexe+" \\\n")
+		f.write("$MPI_HOME/bin/mpirun -np "+str(nproc)+" $XMIPP_HOME/bin/xmipp_mpi_ml_align2d \\\n")
 		f.write(xmippopts+"\n")
 		f.write("\n")
 		f.write("tar zcf "+results+" *.???\n")
@@ -338,10 +293,21 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("exit\n")
 		f.close()
 
+		query = (
+				"  UPDATE ApMaxLikeJobData "
+				+" SET `finished` = '1' "
+				+" WHERE `DEF_id` = '"+str(self.params['maxlikejobid'])+"'"
+				+"\n"
+			)
+		f = open("readyupload.sql", "w")
+		f.write(query)
+		f.close()
+		apDisplay.printMsg("mysql -u usr_object -h cronus4 ap"+str(self.params['projectid'])+" < readyupload.sql")
 		apDisplay.printMsg("tar zcf particles.tgz partlist.doc partfiles/")
 		apDisplay.printMsg("rsync -vaP "+jobfile+" garibaldi:"+rundir+"/")
 		apDisplay.printMsg("rsync -vaP particles.tgz garibaldi:"+rundir+"/")
-		#sys.exit(1)
+		apDisplay.printColor("ready to run job on garibaldi", "cyan")
+		sys.exit(1)
 
 	#=====================
 	def writeXmippLog(self, text):
@@ -349,6 +315,25 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write(apParam.getLogHeader())
 		f.write(text+"\n")
 		f.close()
+
+	#=====================
+	def createReferenceStack(self):
+		avgstack = "part"+self.timestamp+"_average.hed"
+		apFile.removeStack(avgstack, warn=False)
+		searchstr = "part"+self.timestamp+"_ref0*.xmp"
+		files = glob.glob(searchstr)
+		files.sort()
+		stack = []
+		for i in range(len(files)):
+			fname = files[i]
+			refarray = spider.read(fname)
+			stack.append(refarray)
+		apImagicFile.writeImagic(stack, avgstack)
+		### create a average mrc
+		stackarray = numpy.asarray(stack, dtype=numpy.float32)
+		avgdata = stackarray.mean(0)
+		apImage.arrayToMrc(avgdata, "average.mrc")
+		return
 
 	#=====================
 	def start(self):
@@ -368,7 +353,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
 			clipsize = int(self.clipsize*self.params['bin']/2.0)*2
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
-		proccmd += " last="+str(self.params['numpart'])
+		proccmd += " last="+str(self.params['numpart']-1)
 		apEMAN.executeEmanCmd(proccmd, verbose=True)
 
 		### process stack to final file
@@ -383,9 +368,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
-
-		### write garibaldi job file
-		#self.writeGaribaldiJobFile()
 
 		### setup Xmipp command
 		aligntime = time.time()
@@ -418,6 +400,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
 
+		### write garibaldi job file
+		if self.params['garibaldi'] is True:
+			self.writeGaribaldiJobFile()
+
 		### find number of processors
 		if self.params['nproc'] is None:
 			nproc = nproc = apParam.getNumProcessors()
@@ -440,25 +426,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
 
-		### align references
-		xmippopts = ( " "
-			+" -i "+os.path.join(self.params['rundir'], "part"+self.timestamp+".sel")
-			+" -nref 1 "
-			+" -iter "+str(self.params['maxiter'])
-			+" -o "+os.path.join(self.params['rundir'], "ref"+self.timestamp)
-			+" -psi_step 1 "
-			+" -fast -C 1e-18 "
-			+" -eps 5e-8 "
-		)
-		if self.params['mirror'] is True:
-			xmippopts += " -mirror "
-		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
-		xmippcmd = xmippexe+" "+xmippopts
-		self.writeXmippLog(xmippcmd)
-		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
-
-		self.createAverageStack()
-
+		### minor post-processing
+		self.createReferenceStack()
 		self.readyUploadFlag()
 		self.dumpParameters()
 

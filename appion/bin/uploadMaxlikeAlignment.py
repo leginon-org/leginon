@@ -238,7 +238,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		maxjobq['runname'] = runparams['runname']
 		maxjobq['path'] = appionData.ApPathData(path=os.path.abspath(runparams['rundir']))
 		maxjobq['project|projects|project'] = apProject.getProjectIdFromStackId(runparams['stackid'])
-		maxjobq['timestamp'] = runparams['timestamp']
+		maxjobq['timestamp'] = self.params['timestamp']
 		maxjobdata = maxjobq.query(results=1)
 		if not maxjobdata:
 			return None
@@ -389,7 +389,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		partperiter = 4096
 		numpart = len(partlist)
 		if numpart < partperiter:
-			partperiter = numpart+1
+			partperiter = numpart
 
 		t0 = time.time()
 		imgnum = 0
@@ -455,9 +455,90 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		apStack.averageStack(self.alignimagicfile)
 
 	#=====================
+	def writeXmippLog(self, text):
+		f = open("xmipp.log", "a")
+		f.write(apParam.getLogHeader())
+		f.write(text+"\n")
+		f.close()
+
+	#=====================
+	def alignReferences(self, runparams):
+		### align references
+		xmippopts = ( " "
+			+" -i "+os.path.join(self.params['rundir'], "part"+self.params['timestamp']+".sel")
+			+" -nref 1 "
+			+" -iter 20 "
+			+" -o "+os.path.join(self.params['rundir'], "ref"+self.params['timestamp'])
+			+" -psi_step 1 "
+			+" -fast -C 1e-18 "
+			+" -eps 5e-8 "
+		)
+		if runparams['mirror'] is True:
+			xmippopts += " -mirror "
+		xmippexe = apParam.getExecPath("xmipp_ml_align2d")
+		xmippcmd = xmippexe+" "+xmippopts
+		self.writeXmippLog(xmippcmd)
+		apEMAN.executeEmanCmd(xmippcmd, verbose=True, showcmd=True)
+
+	#=====================
+	def createAlignedReferenceStack(self):
+		searchstr = "part"+self.params['timestamp']+"_ref0*.xmp"
+		files = glob.glob(searchstr)
+		files.sort()
+		stack = []
+		reflist = self.readRefDocFile()
+		for i in range(len(files)):
+			fname = files[i]
+			refdict = reflist[i]
+			if refdict['partnum'] != i+1:
+				print i, refdict['partnum']
+				apDisplay.printError("sorting error in reflist, see neil")
+			refarray = spider.read(fname)
+			xyshift = (refdict['xshift'], refdict['yshift'])
+			alignrefarray = apImage.xmippTransform(refarray, rot=refdict['inplane'], 
+				shift=xyshift, mirror=refdict['mirror'])
+			stack.append(alignrefarray)
+		stackarray = numpy.asarray(stack, dtype=numpy.float32)
+		#print stackarray.shape
+		avgstack = "part"+self.params['timestamp']+"_average.hed"
+		apFile.removeStack(avgstack, warn=False)
+		apImagicFile.writeImagic(stackarray, avgstack)
+		### create a average mrc
+		avgdata = stackarray.mean(0)
+		apImage.arrayToMrc(avgdata, "average.mrc")
+		return
+
+	#=====================
+	def readRefDocFile(self):
+		reflist = []
+		docfile = "ref"+self.params['timestamp']+".doc"
+		if not os.path.isfile(docfile):
+			apDisplay.printError("could not find doc file "+docfile+" to read reference angles")
+		f = open(docfile, "r")
+		mininplane = 360.0
+		for line in f:
+			if line[:2] == ' ;':
+				continue
+			spidict = operations.spiderInLine(line)
+			refdict = self.spidict2partdict(spidict)
+			if refdict['inplane'] < mininplane:
+				mininplane = refdict['inplane']
+			reflist.append(refdict)
+		for refdict in reflist:
+			refdict['inplane'] = refdict['inplane']-mininplane
+		apDisplay.printMsg("read rotation and shift parameters for "+str(len(reflist))+" references")
+		return reflist
+
+	#=====================
 	def start(self):
 		### load parameters
 		runparams = self.readRunParameters()
+
+		### align references
+		self.alignReferences(runparams)
+		
+		### create an aligned stack
+		self.createAlignedReferenceStack()
 
 		### read particles
 		lastiter = self.findLastIterNumber()
@@ -474,7 +555,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.insertRunIntoDatabase(runparams, lastiter)
 		self.insertParticlesIntoDatabase(runparams['stackid'], partlist, lastiter)
 
-		apFile.removeStack(runparams['localstack'])
+		apFile.removeStack(runparams['localstack'], warn=False)
+		rmcmd = "rm -fr partfiles/*"
+		apEMAN.executeEmanCmd(rmcmd, verbose=False, showcmd=False)
 		apFile.removeFilePattern("partfiles/*")
 
 #=====================
