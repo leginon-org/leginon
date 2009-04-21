@@ -304,8 +304,7 @@ class RCTAcquisition(acquisition.Acquisition):
 				time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
 			#print 'acquire intertilt'
-			dataclass = leginondata.CorrectedCameraImageData
-			imagenew = self.instrument.getData(dataclass)
+			imagenew = self.instrument.getData(leginondata.CorrectedCameraImageData)
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)
