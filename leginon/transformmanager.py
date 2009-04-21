@@ -65,15 +65,12 @@ class TargetTransformer(targethandler.TargetHandler):
 		array1 = image1['image']
 		array2 = image2['image']
 		shape = array1.shape
-		print image1['filename']
-		print image2['filename']
 		self.logger.info('Calculating main transform...')
 		#if image1['scope']['magnification'] < 2000:
 		if False:
 			print "libcv"
 			for minsize in (160,40,10):
 				minsize = int(minsize * (shape[0]/4096.0))
-				print minsize
 				resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
 				if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
 					break
@@ -91,7 +88,6 @@ class TargetTransformer(targethandler.TargetHandler):
 			matrix[2,0] = shift[0]
 			matrix[2,1] = shift[1]
 		else:
-			print "correlator"
 			matrix = numpy.array([1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0])
 			matrix = matrix.reshape((3,3))
 			c = correlator.Correlator()
@@ -111,7 +107,6 @@ class TargetTransformer(targethandler.TargetHandler):
 					shift[i] = peak[i]
 			matrix[2,0] = shift[0]
 			matrix[2,1] = shift[1]
-		print matrix
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
@@ -144,9 +139,7 @@ class TargetTransformer(targethandler.TargetHandler):
 
 	def matrixTransform(self, target, matrix, newimage=None):
 		alltargets = self.recentTargetVersions(target)
-		print 'TARGET', target['number'], target['version'], target['status'], target.dbid
 		for t in alltargets:
-			print 'T', t['number'], t['version'], t['status'], t.dbid
 			newt = self.matrixTransformOne(t, matrix, newimage)
 			if t['number'] == target['number'] and t['status'] == target['status']:
 				ret = newt
@@ -172,26 +165,13 @@ class TargetTransformer(targethandler.TargetHandler):
 		return newtarget
 	
 	def transformTarget(self, target, level):
-		if target is None:
-			print 'TRANSFORMTARGET NONE'
-		else:
-			print 'TRANSFORMTARGET', target.dbid
 		parentimage = target['image']
-		if parentimage:
-			print 'PARENTIMAGE', parentimage.dbid
-		else:
-			print 'PAENTIMAGE', parentimage
 		matrix = self.lookupMatrix(parentimage)
-		print 'MATRIX', matrix
 		if parentimage is None:
 			return target
-			#newtarget = self.matrixTransform(target, matrix)
-			print 'AAAAAAAAA'
-			return newtarget
 		## check all transforms declared to decide on minimum mag
 		## for now there is only one
 		minimum_mag = self.settings['min mag']
-		print 'PARENTIMAGE PRESET', parentimage['preset']['name'], parentimage['preset']['magnification']
 		if parentimage['preset']['magnification'] < minimum_mag:
 			self.logger.info('not transforming target because parent image has low mag')
 			return target
@@ -203,12 +183,9 @@ class TargetTransformer(targethandler.TargetHandler):
 				newparenttarget = parenttarget
 			newparentimage = self.reacquire(newparenttarget)
 			if newparentimage is None:
-				print 'BBBBBBBB'
 				return None
 			matrix = self.calculateMatrix(parentimage, newparentimage)
-		print parentimage.dbid,newparentimage.dbid
 		newtarget = self.matrixTransform(target, matrix,newparentimage)
-		print 'CCCCCCC'
 		return newtarget
 
 class TransformManager(node.Node, TargetTransformer):
@@ -306,7 +283,6 @@ class TransformManager(node.Node, TargetTransformer):
 				deltacol = -targetdeltacolumn
 		
 				pixelshift = {'row':deltarow, 'col':deltacol}
-				print "target pixel shift, ,movetype",pixelshift,movetype
 				## figure out scope state that gets to the target
 				calclient = self.calclients[movetype]
 				try:
@@ -340,24 +316,18 @@ class TransformManager(node.Node, TargetTransformer):
 			emtargetdata['stage position'] = dict(newscope['stage position'])
 			emtargetdata['delta z'] = zdiff
 		
-		print	'stage position', emtargetdata['stage position']
-
 		emtargetdata['target'] = targetdata
-		print "TARGETtoEMTARGET",targetdata.dbid
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
-		print "EMTARGETTARGET",emtargetdata['target'].dbid
 		return emtargetdata
 	
 	def reacquire(self, targetdata):
-		print "REACQUIRE START",targetdata.dbid
 		if targetdata['fromtarget'] is None:
 			oldtargetdata = targetdata
 		else:
 			oldtargetdata = targetdata['fromtarget']
-		print "REACQUIRE OLDTARGET",oldtargetdata.dbid
 		aquery = leginondata.AcquisitionImageData(target=oldtargetdata)
 		results = aquery.query(readimages=False, results=1)
 		if len(results) > 0:
@@ -378,10 +348,8 @@ class TransformManager(node.Node, TargetTransformer):
 		channel = int(oldimage['correction channel']==0)
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		targetdata = emtarget['target']
-		print "REACQUIRE TARGET",targetdata.dbid
 		self.instrument.setCorrectionChannel(channel)
-		dataclass = leginondata.CorrectedCameraImageData
-		imagedata = self.instrument.getData(dataclass)
+		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
@@ -400,7 +368,6 @@ class TransformManager(node.Node, TargetTransformer):
 		self.publish(imagedata['camera'], database=True)
 		self.logger.info('Publishing new transformed image...')
 		self.publish(imagedata, database=True)
-		print "REACQUIRE IMAGE",imagedata.dbid
 		self.setImage(imagedata['image'], 'Image')
 		return imagedata
 
