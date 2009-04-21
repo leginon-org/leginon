@@ -125,6 +125,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		##### DELETE HEADERS!!!!!!!!!!
 		
 		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
+		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)		
 
 		filename = os.path.join(self.params['rundir'], "imagicMRA.batch")
 		f = open(filename, 'w')
