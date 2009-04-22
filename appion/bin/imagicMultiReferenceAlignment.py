@@ -474,8 +474,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		aligntime0 = time.time()
 		os.system("chmod 775 "+str(batchfile))
 		os.chdir(self.params['rundir'])
-		apIMAGIC.copyFile(self.params['rundir'], "start.hed")  ### removes poorly formatted EMAN headers
-		apIMAGIC.executeImagicBatchFile(batchfile)
+		#apIMAGIC.executeImagicBatchFile(batchfile)
 		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
 		loglines = logfile.readlines()
 		for line in loglines:
@@ -488,7 +487,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		### average stack
 		alignstack = os.path.join(self.params['rundir'], "alignstack.hed")
-		apStack.averageStack(alignstack)	
+		#apStack.averageStack(alignstack)	
 
 		### remove copied stack
 		apFile.removeStack(os.path.join(self.params['rundir'], "start.hed"))
@@ -497,7 +496,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		emancmd = "proc2d "+alignstack+" "+alignstack+".norm.hed norm"
 		while os.path.isfile(alignstack+".norm.img"):
 			apStack.removeStack(alignstack+".norm.img")
-		apEMAN.ExecuteEmanCmd(emancmd)
+		apEMAN.executeEmanCmd(emancmd)
 		os.rename(alignstack+".norm.hed", alignstack)
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
 
