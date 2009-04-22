@@ -237,6 +237,16 @@ class imagicClusterScript(appionScript.AppionScript):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicMSAcluster_classes_"\
 						+str(clusternumber)+".log")
 			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-clustertime0), "cyan")
+			
+			### normalize 
+			classfile = "classums_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+\
+				"_membersignored_"+str(self.params['ignore_members'])+"\n")
+			emancmd = "proc2d "+classfile+" "+classfile+".norm.hed norm"
+			while os.path.isfile(classfile+".norm.img"):
+				apStack.removeStack(alignstack+".norm.img")
+			apEMAN.executeEmanCmd(emancmd)
+			os.rename(classfile+".norm.hed", classfile)
+			os.rename(classfile+".norm.img", classfile[:-4]+".img")
 
 			### insert cluster stack into database
                         if self.params['commit'] is True:
