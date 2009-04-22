@@ -995,7 +995,7 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('\n')
 	f.write('MD\n')
 	f.write('SET MP\n')
-	f.write('%d\n' % 4)
+	f.write('%d\n' % 1)
 	f.write('\n')
 	f.write('x99=%d  ; number of particles in stack\n' % params['nptcls'])
 	f.write('x98=%d   ; box size\n' % params['boxsize'])
