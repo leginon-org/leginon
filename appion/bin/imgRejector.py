@@ -144,7 +144,7 @@ class ImageRejector(appionLoop2.AppionLoop):
 				apDisplay.printColor("\nrejecting no ACE values: "+apDisplay.short(imgdata['filename']), "yellow")
 				return False
 			else:
-				apDisplay.printWarning("skipping no ACE values for "+apDisplay.short(imgdata['filename']))
+				#apDisplay.printWarning("skipping no ACE values for "+apDisplay.short(imgdata['filename']))
 				return True
 
 		### check that ACE estimation is above confidence threshold
