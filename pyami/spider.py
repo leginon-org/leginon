@@ -83,7 +83,7 @@ def getHeaderDict(hdr):
 # --------------------------------------------------------------------
 def read(filename):
 	" Convert a SPIDER file into a numpy array "
-	print "reading SPIDER file "+filename
+	#print "reading SPIDER file "+filename
 	return spider2array(filename)
 
 # --------------------------------------------------------------------
