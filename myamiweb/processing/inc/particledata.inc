@@ -1362,12 +1362,14 @@ class particledata {
 			."LEFT JOIN ApPathData AS pd ON "
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."WHERE sd.`DEF_id` = '$stackId'";
+		//echo $q."<br/>\n";
 		list($stack_primary_array) = $this->mysql->getSQLResult($q);
 		if (!$stack_primary_array) return;
 		// Get runs in stack
 		$q = "SELECT r.`REF|ApStackRunData|stackRun` as runid "
 			."FROM ApRunsInStackData as r "
 			."WHERE r.`REF|ApStackData|stack` = '$stackId'";
+		//echo $q."<br/>\n";
 		$stackrunIds = $this->mysql->getSQLResult($q);
 		// Parameters of original stack of the runs in stack
 		$selectionstacks = array();
@@ -1389,6 +1391,7 @@ class particledata {
 				."ON (p.`DEF_id` = s.`REF|ApStackParamsData|stackParams`) "
 				."WHERE r.`REF|ApStackData|stack` = '$childstackId'";
 			list($r) = $this->mysql->getSQLResult($q);
+			//echo $q."<br/>\n";
 			$params[]=$r;
 			$selectionstacks[] = $childstackId;
 		}
@@ -1404,10 +1407,13 @@ class particledata {
 		//substack has no other parameter but oldstack reference
 		if ($stack_primary_array['REF|ApStackData|oldstack']) {
 			$r = array('stackId'=>$stackId);
-			$r = array_merge($r,$stack_primary_array);
+			$r = array_merge($r, $stack_primary_array);
+			$r = array_merge($r, $params[0]);
 			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];
-			$r['bin'] = $params[0]['bin'];
-			$r['boxSize'] = $params[0]['boxSize'];
+			//$r['bin'] = $params[0]['bin'];
+			//$r['boxSize'] = $params[0]['boxSize'];
+			//$r['tiltangle'] = $params[0]['tiltangle'];
+			//$r['fliptype'] = $params[0]['fliptype'];
 			return $r;
 		} 
 		$runarray = array();

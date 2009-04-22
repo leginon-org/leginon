@@ -142,6 +142,7 @@ function stacksummarytable($stackid) {
 	$display_keys['density']=($stackdata['inverted']==1) ? 'inverted' : 'not inverted';
 	$display_keys['normalization']=($stackdata['normalized']==1) ? 'no' : 'yes';
 	if ($stackdata['tiltangle'] && $stackdata['tiltangle']!='all') $display_keys['tilt angle'] = $stackdata['tiltangle'];
+	//echo print_r($stackdata)."<br/><br/>";
 	//$display_keys['file type']=$stackdata['fileType'];
 	foreach($display_keys as $k=>$v) {
 	        $stacktable.= formatHtmlRow($k,$v);

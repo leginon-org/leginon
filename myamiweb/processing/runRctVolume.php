@@ -204,8 +204,6 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 			$numpart = commafy($particle->getNumStackParticles($stackid));
 			//handle multiple runs in stack
 			$stackname = $stackparams['shownstackname'];
-			if ($stackparams['substackname'])
-				$stackname .= "-".$stackparams['substackname'];
 			//print_r($stackparams[0]);
 			echo "<OPTION value='$stackid'";
 			if ($stackid == $tiltstack) echo " SELECTED";
