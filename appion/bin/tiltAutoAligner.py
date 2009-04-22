@@ -36,8 +36,8 @@ class tiltAligner(particleLoop2.ParticleLoop):
 	#---------------------------------------
 	def preLoopFunctions(self):
 		self.data = {}
-		if self.params['sessionname'] is not None:
-			self.processAndSaveAllImages()
+		#if self.params['sessionname'] is not None:
+		#	self.processAndSaveAllImages()
 		self.params['pickdatadir'] = os.path.join(self.params['rundir'], "outfiles")
 		apParam.createDirectory(self.params['pickdatadir'], warning=False)
 
@@ -105,9 +105,18 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		if tiltdata is None:
 			return
 
-		if self.params['sessionname'] is None:
+		### process images
+		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
+		if not os.path.isfile(procimgpath):
+			apDisplay.printMsg("processing mrc for first image")
 			apFindEM.processAndSaveImage(imgdata, params=self.params)
+		procimg1 = apImage.mrcToArray(procimgpath, msg=False)
+
+		procimgpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
+		if not os.path.isfile(procimgpath):
+			apDisplay.printMsg("processing mrc for second image")
 			apFindEM.processAndSaveImage(tiltdata, params=self.params)
+		procimg2 = apImage.mrcToArray(procimgpath, msg=False)
 
 		#RUN THE ALIGNER GUI
 		result = self.runTiltAligner(imgdata, tiltdata)
@@ -117,14 +126,7 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		#apDisplay.printMsg("Found "+str(numpeaks)+" particles for "+apDisplay.shortenImageName(imgdata['filename']))
 		self.stats['lastpeaks'] = numpeaks
 
-		procimgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-		if os.path.isfile(procimgpath):
-			#apDisplay.printMsg("reading processing mrc for reg")
-			procimg1 = apImage.mrcToArray(procimgpath, msg=False)
-		procimgpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
-		if os.path.isfile(procimgpath):
-			#apDisplay.printMsg("reading processing mrc for tilt")
-			procimg2 = apImage.mrcToArray(procimgpath, msg=False)
+		### mask the images
 		procimg1, procimg2 = apTiltTransform.maskOverlapRegion(procimg1, procimg2, self.data)
 
 		#CREATE PEAK JPEG
@@ -205,43 +207,6 @@ class tiltAligner(particleLoop2.ParticleLoop):
 		theta = self.tiltparams['theta']
 		gamma = self.tiltparams['gamma']
 		phi   = self.tiltparams['phi']
-
-	#---------------------------------------
-	#---------------------------------------
-	def processAndSaveAllImages(self):
-		print "Pre-processing images before picking\nNow is a good time to go get a candy bar"
-		count = 0
-		total = len(self.imgtree)
-		for imgdata in self.imgtree:
-			count += 1
-			tiltdata = apTiltPair.getTiltPair(imgdata)
-			if tiltdata is None:
-				#reject it
-				apDatabase.insertImgAssessmentStatus(imgdata, "notiltpair", False)
-				continue
-
-			#First the image
-			imgpath = os.path.join(self.params['rundir'], imgdata['filename']+'.dwn.mrc')
-			if os.path.isfile(imgpath):
-				sys.stderr.write(".")
-				#print "already processed: ",apDisplay.short(imgdata['filename'])
-			else:
-				sys.stderr.write("#")
-				#print "processing: ",apDisplay.short(imgdata['filename'])
-				apFindEM.processAndSaveImage(imgdata, params=self.params)
-
-			#Now for its tilt pair
-			tiltpath = os.path.join(self.params['rundir'], tiltdata['filename']+'.dwn.mrc')
-			if os.path.isfile(tiltpath):
-				sys.stderr.write(".")
-				#print "already processed: ",apDisplay.short(tiltdata['filename'])
-			else:
-				sys.stderr.write("#")
-				#print "processing: ",apDisplay.short(tiltdata['filename'])
-				apFindEM.processAndSaveImage(tiltdata, params=self.params)
-
-			if count % 30 == 0:
-				sys.stderr.write(" %d left\n" % (total-count))
 
 	#---------------------------------------
 	#---------------------------------------
