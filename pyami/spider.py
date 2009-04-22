@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Source material taken from the spipylib package at Wadsworth
 
@@ -58,7 +60,7 @@ SpiderHeaderDict = {
 # --------------------------------------------------------------------
 def getHeaderDict(hdr):
 	hdrdict = {}
-	hdrdict['header'] = hdr
+	#hdrdict['header'] = hdr
 	hdrlen = len(hdr)
 	hdrdict['bigendian'] = hdr[0]
 
@@ -74,11 +76,14 @@ def getHeaderDict(hdr):
 		hdrdict['avg'] = hdr[9]  # alternate access format
 	if hdrlen > 31:
 		hdrdict['kangle']  = hdr[31]
+	#import pprint
+	#pprint.pprint(hdrdict)
 	return hdrdict
 
 # --------------------------------------------------------------------
 def read(filename):
 	" Convert a SPIDER file into a numpy array "
+	print "reading SPIDER file "+filename
 	return spider2array(filename)
 
 # --------------------------------------------------------------------
@@ -121,18 +126,33 @@ def spider2array(filename):
 	databytes = datawords * 4
 
 	# seek ahead to the data
+	#print "read"
 	fp = open(filename,'rb')
 	fp.seek(hdrbytes)
-	f = fp.read(databytes)
+	if int(hdrdict['bigendian']):
+		#print "using big endian"
+		fmt = '>%df' % datawords
+	else:
+		#print "using small endian"
+		fmt = '<%df' % datawords
+	arr = numpy.fromfile(fp, dtype=numpy.dtype(fmt))
+	"""
+	if hdrdict['bigendian']:
+
+		data = fp.read(databytes)
+
+		#print "unpack"
+		t = struct.unpack(fmt, data)
+
+		# the numpy function 'array' will automatically upcast
+		# to 64 bits if you don't use savespace
+		#print "convert"
+		arr = numpy.array(t, dtype=numpy.dtype(fmt))
+		arr = numpy.fromfile(fp, dtype=numpy.dtype(fmt))
+	"""
+
+
 	fp.close()
-
-	if int(hdrdict['bigendian']): fmt = '>%df' % datawords
-	else: fmt = '<%df' % datawords
-	t = struct.unpack(fmt,f)
-
-	# the numpy function 'array' will automatically upcast
-	# to 64 bits if you don't use savespace
-	arr = numpy.array(t, dtype=numpy.float32)
 
 	if isVolume:
 		arr.shape = zsize, ysize, xsize
@@ -146,6 +166,7 @@ def spider2array(filename):
 # --------------------------------------------------------------------
 def write(arr, filename):
 	" Convert a numpy array into a SPIDER file "
+	#print "writing SPIDER file "+filename
 	return array2spider(arr, filename)
 
 # --------------------------------------------------------------------
@@ -162,11 +183,9 @@ def array2spider(arr, filename):
 		raise IOError, "Unable to open %s for writing" % filename
 
 	# write image data
-	if arr.dtype == numpy.float32:
-		fp.write(arr.tostring())
-	else:
-		farr = arr.astype(numpy.float32)
-		fp.write(farr.tostring())
+	farr = numpy.array(arr, dtype=numpy.dtype('>f4'))
+	farr.tofile(fp)
+	#fp.write(farr.tostring())
 	fp.close
 
 # --------------------------------------------------------------------
@@ -197,6 +216,7 @@ def getSpiderHeader(filename, n=27):
 	t = struct.unpack(bigformat,f)	 # try big-endian first
 	hdr = isSpiderHeader(t)
 	if hdr == 0:
+		print "reading small endian"
 		bigendian = 0
 		littleformat = '<%df' % n
 		t = struct.unpack(littleformat,f)  # little-endian
@@ -247,16 +267,18 @@ def makeSpiderHeader(dims):
 	hdr[5]  = iform			# iform for 2D image
 	hdr[12] = float(nsam)	# number of pixels per line
 	hdr[13] = float(labrec) # number of records in file header
-	hdr[22] = float(labbyt) # total number of bytes in header
+	hdr[22] = float(labbyt) # total number ofu bytes in header
 	hdr[23] = float(lenbyt) # record length in bytes
 
 	# adjust for Fortran indexing
 	hdr = hdr[1:]
-	hdr.append(0.0)
+	hdr.append(1.0)
 	# pack binary data into a string
 	hdrstr = []
+	#print "WRITING HEADER"
+	getHeaderDict(hdr)
 	for v in hdr:
-		hdrstr.append(struct.pack('f',v))
+		hdrstr.append(struct.pack('>f', v))
 	return hdrstr
 
 # --------------------------------------------------------------------
@@ -289,15 +311,65 @@ def isInt(f):
 		return 0
 
 # --------------------------------------------------------------------
+def randTest():
+	print "Running read/write test"
+
+	### create random array
+	array1 = numpy.random.random((160,160))
+	print "********", array1.mean(), array1.std(), array1.shape
+
+	### write to file
+	write(array1, "rand1.spi")
+
+	### read array back in
+	array2 = read("rand1.spi")
+	print "********", array2.mean(), array2.std(), array2.shape
+
+	### convert using eman
+	import subprocess
+	emancmd = "proc2d rand1.spi rand3.spi spiderswap-single"
+	proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.wait()
+
+	### read eman array
+	array3 = read("rand3.spi")
+	print "********", array3.mean(), array3.std(), array3.shape
+
+	### copy with spider
+	import spyder
+	spider = spyder.SpiderSession(logo=False)
+	spider.toSpider("CP", "rand1", "rand2")
+	spider.toSpider("CP", "rand3", "rand4")
+	spider.close()
+	
+	### read arrays
+	array4 = read("rand2.spi")
+	print "********", array4.mean(), array4.std(), array4.shape
+	array5 = read("rand4.spi")
+	print "********", array5.mean(), array5.std(), array5.shape
+
+	### direct convert using eman
+	from pyami import mrc
+	mrc.write(array1, "rand1.mrc")
+	emancmd = "proc2d rand1.mrc rand5.spi spiderswap-single"
+	proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.wait()
+
+	### read eman array
+	array6 = read("rand5.spi")
+	print "********", array6.mean(), array6.std(), array6.shape
+
+# --------------------------------------------------------------------
 if __name__ == '__main__':
 	if len(sys.argv[1:]) < 2:
+		randTest()
 		print "Usage: spi2arr.py spiderfile outfile"
 		sys.exit(1)
 	filename = sys.argv[1]
 	outfile = sys.argv[2]
-	arr = spider2array(filename)
+	arr = read(filename)
 	b = arr * -1  # perform a simple array operation
-	array2spider(b, outfile)
+	write(b, outfile)
 
 
 
