@@ -6,7 +6,6 @@ from pyami import mrc
 import apVolume
 import apDisplay
 import appionData
-import apFrealign
 import shutil
 import math
 import numpy
@@ -116,8 +115,8 @@ def generateParticleParams(params):
 		# if using parameters from previous reconstruction
 		if params['reconiterid'] is not None:
 			params['mode']=1
-			apFrealign.getStackParticleEulersForIteration(params,particle['particleNumber'])
-			fr_eulers = apFrealign.convertEmanEulersToFrealign(params['eman_orient'])
+			getStackParticleEulersForIteration(params,particle['particleNumber'])
+			fr_eulers = convertEmanEulersToFrealign(params['eman_orient'])
 			e1 = fr_eulers['phi']
 			e2 = fr_eulers['theta']
 			e3 = fr_eulers['psi']
