@@ -251,7 +251,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		if self.params['highpass'] > 0:
 			emancmd += "hp="+str(self.params['highpass'])+" "
 		if self.params['bin'] > 1:
-			clipboxsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+			clipboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin'])*2
 			emancmd += "shrink="+str(self.params['bin'])+" "
 			emancmd += "clip="+str(clipboxsize)+","+str(clipboxsize)+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "

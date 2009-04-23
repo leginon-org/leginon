@@ -118,7 +118,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 				+" than available "+str(apFile.numImagesInStack(stackfile)))
 
 		boxsize = apStack.getStackBoxsize(self.params['stackid'])
-		self.clipsize = int(math.floor(boxsize/float(self.params['bin'])))
+		self.clipsize = int(math.floor(boxsize/float(self.params['bin']*2)))*2
 		if self.params['clipsize'] is not None:
 			if self.params['clipsize'] >= self.clipsize:
 				apDisplay.printError("requested clipsize is too big %d > %d"
@@ -351,7 +351,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		proccmd = "proc2d "+self.stack['file']+" temp.hed apix="+str(self.stack['apix'])
 		if self.params['bin'] > 1 or self.params['clipsize'] is not None:
-			clipsize = int(self.clipsize*self.params['bin']/2.0)*2
+			clipsize = int(self.clipsize)*self.params['bin']
 			proccmd += " shrink=%d clip=%d,%d "%(self.params['bin'],clipsize,clipsize)
 		proccmd += " last="+str(self.params['numpart']-1)
 		apEMAN.executeEmanCmd(proccmd, verbose=True)

@@ -207,7 +207,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			emancmd += "lp="+str(self.params['lowpass'])+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
 		emancmd += "shrink="+str(self.params['bin'])+" "
-		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin'])*self.params['bin'])
+		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin']*2)
 		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
 		emancmd += "spiderswap edgenorm"
 		starttime = time.time()

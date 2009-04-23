@@ -418,7 +418,7 @@ xmipp_mpi_reconstruct_wbp  -i CorrectGreyscale/corrected_reference_classes.sel -
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
-		boxsize = int(math.floor(self.stack['boxsize']/float(self.params['bin'])))
+		boxsize = int(math.floor(self.stack['boxsize']/float(self.params['bin']*2)))*2
 		apix = self.stack['apix']*self.params['bin']
 
 		proccmd = "proc2d "+self.stack['file']+" "+self.params['localstack']+" apix="+str(self.stack['apix'])
