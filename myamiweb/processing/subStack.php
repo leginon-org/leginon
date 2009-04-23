@@ -13,19 +13,18 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
 	runSubStack();
-}
-elseif ($_POST['testmean']){
-	createSubStackForm();
-}
-// Create the form page
-else {
+} else {
 	createSubStackForm();
 }
 
+
+// *************************************
+// *************************************
 function createSubStackForm($extra=false, $title='subStack.py Launcher', $heading='Make a partial Stack') {
         // check if coming directly from a session
 	$expId=$_GET['expId'];
@@ -98,7 +97,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
+		echo "<font color='#CC3333' size='+2'>$extra</font>\n<hr/>\n";
 	}
   
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
@@ -113,31 +112,82 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	$nump=$particle->getNumStackParticles($stackId);
 	$filename = $stackParams['path'].'/'.$stackParams['name'];
 
-	echo"
-	<TABLE BORDER=3 CLASS=tableborder>";
-	echo"
-	<TR>
-		<TD VALIGN='TOP'>\n";
-	echo"
-					<b>Original Stack Information:</b> <br />
-					Name & Path: $filename <br />	
-					Stack ID: $stackId<br />
-					# Particles: $nump<br />
-					 
-                     <input type='hidden' name='stackId' value='$stackId'>
-					\n";
-	if ($exclude) {
-		echo "Particles to be excluded: $exclude<br />
-				<input type='hidden' name='exclude' value='$exclude'>";
-	}
+	echo"<table class='tablebubble'>\n";
+	echo "<tr><td valign='top' align='center'>\n";
 
-	echo "<br />";
+	// Show old stack info
+	echo openRoundBorder();
+	echo "<table border='0' cellpading='5' cellspacing='5' width='600'>\n";
+	echo "<tr><td align='center'>\n";
+	echo "<b>Original Stack Information:</b><br/>\n";
+	echo "</td></tr><tr><td align='center'>\n";
+	echo ministacksummarytable($stackId);
+  	echo "<input type='hidden' name='stackId' value='$stackId'>\n";
+	echo "</td></tr></table>\n";
+	echo closeRoundBorder();
+	echo "<br/>";
+
+	// New parameters
+	echo "<table border='0' cellpading='5' cellspacing='5' width='500'>\n";
+	echo "<tr><td align='left'>\n";
 	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' value='$runid'><br />\n";
-	echo "<b>Description:</b><br />\n";
+	echo "<input type='text' name='runid' value='$runid'>\n";
+	echo "<br/>\n";
+
+	echo "<b>Description:</b><br/>\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
-	echo "<br />\n";
-	if (!$exclude and !$mean) { 
+	echo "<br/><br/>\n";
+	echo "</td></tr></table>\n";
+
+	// *************************************
+	// Break into different type of substacks
+	if ($exclude) {
+		// Exclude list
+		echo "Particles to be excluded: <font size='-1'>$exclude</font><br/>\n";
+		echo "<input type='hidden' name='exclude' value='$exclude'>\n";
+
+	} elseif ($mean) {
+		// Mean Stdev Filter
+		echo "<table class='tablebubble'>\n";
+		echo "<tr><td align='center' valign='top'>\n";
+
+		// Mean plot 
+		if ($minx and $maxx and $miny and $maxy) {
+			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId"
+				."&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy&expId=$expId'><br/>\n";
+		} else {
+			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&expId=$expId'><br>\n";
+		}
+
+		$montage = $stackParams['path']."/montage$stackId.png";
+		if (file_exists($montage)) {
+			// Montage
+			echo "</td>\n";
+			echo "<td align='center' valign='top'>\n";
+			echo "<a href='loadimg.php?filename=$montage'>";
+			echo "<img border='0' src='loadimg.php?filename=$montage&s=450' height='450'></a><br/>\n";
+			echo "<i>Mean & Stdev Montage</i>\n";
+		}
+		echo "</td></tr>\n";
+
+		echo "<tr><td valign='top' colspan='2' align='center'>\n";
+		// Min/Max Table
+		echo "<hr/>\n";
+		echo "<table class='tablebubble'>";
+		echo "<tr><td><input type='text' name='minx' value='$minx' size='7'> minimum X<br />\n</td>";
+		echo "<td> <input type='text' name='maxx' value='$maxx' size='7'> maximum X<br />\n </td></tr>\n";
+		echo "<tr><td><input type='text' name='miny' value='$miny' size='7'> minimum Y<br />\n</td>";
+		echo "<td> <input type='text' name='maxy' value='$maxy' size='7'> maximum Y<br />\n </td></tr>";
+		echo "<tr><td align='center' colspan='2'><input type='SUBMIT' NAME='testmean' VALUE='Test selected points'></td></tr>";
+		echo "<tr><td align='center' colspan='2'><font color='#CC3333'><b>Warning:</b></font> <i>limits do not create a box,"
+			." but rather a trapezoid, click test to visualize</i></td></tr>";
+		echo "</table>\n";
+
+		echo "</td></tr></table>\n";
+
+
+	} else {
+		// Normal SubStack
 		echo openRoundBorder();
 		echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'><tr><td width='50%' valign='top'>\n";
 		echo "<input type='radio' name='subsplit' onclick='subORsplit(\"sub\")' value='sub' $subcheck>\n";
@@ -153,29 +203,13 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 		echo "<input type='text' name='split' value='$split' size='3' $splitdisable> sets\n";
 		echo "</td></tr></table>\n";
 		echo closeRoundBorder();
-	} elseif ($mean) {
-		if ($minx and $maxx and $miny and $maxy) {
-			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&minx=$minx&maxx=$maxx&miny=$miny&maxy=$maxy&expId=$expId'><br/>\n";
-		} else {
-			echo "<img border='0' src='stack_mean_stdev.php?w=512&sId=$stackId&expId=$expId'><br>\n";
-		}
-		$montage = $stackParams['path']."/montage$stackId.png";
-		if (file_exists($montage)) {
-			echo "<td align='center'>\n";
-			echo "<a href='loadimg.php?filename=$montage'>";
-			echo "<img border='0' src='loadimg.php?filename=$montage&s=450' height='450'></a><br/>\n";
-			echo "<i>Mean & Stdev Montage</i>\n";
-			echo "</td>\n";
-		}
-		echo "<table border='0' cellpadding='5' cellspacing='0' width='100%'>";
-		echo "<tr><td width='50%' valign='top'><input type='text' name='minx' value='$minx' size='7'> minimum X<br />\n</td>";
-		echo "<td> <input type='text' name='maxx' value='$maxx' size='7'> maximum X<br />\n </td></tr>\n";
-		echo "<tr><td width='50%' valign='top'><input type='text' name='miny' value='$miny' size='7'> minimum Y<br />\n</td>";
-		echo "<td> <input type='text' name='maxy' value='$maxy' size='7'> maximum Y<br />\n </td></tr>";
-		echo "<tr><input type='SUBMIT' NAME='testmean' VALUE='Test selected points'></tr></table>\n";
 	}
+	echo "<br/><br/>\n";
+	// *************************************
+
+
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
-	echo docpop('commit','<b>Commit stack to database');
+	echo docpop('commit',"<font size='+1'><b>Commit stack to database</b></font>");
 	echo "<br />\n";
 	echo "<input type='hidden' name='outdir' value='$outdir' size='38'>\n";
 	echo "</td>
@@ -194,6 +228,9 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	exit;
 }
 
+
+// *************************************
+// *************************************
 function runSubStack() {
 	$expId = $_GET['expId'];
 
