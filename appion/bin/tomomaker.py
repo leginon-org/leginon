@@ -43,28 +43,11 @@ class tomoMaker(appionScript.AppionScript):
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
 			help="2nd tilt group series number if needed", metavar="int")
 		self.parser.add_option("--thickness", dest="thickness", default=100, type="int",
-			help="Full tomo reconstruction thickness before binning, e.g. --sizez=200", metavar="int")
-		self.parser.add_option("--fulltomoId", dest="fulltomoId", type="int",
-			help="Full tomogram id for subvolume creation, e.g. --fulltomoId=2", metavar="int")
+			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
 		self.parser.add_option("--bin", "-b", dest="bin", default=1, type="int",
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--xmethod", dest="xmethod", default="imod",
 			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method")
-		self.parser.add_option("--selexonId", dest="selexonId", type="int",
-			help="Volume selection by particle selection, e.g. --selexonId=2", metavar="int")
-		self.parser.add_option("--stackId", dest="stackId", type="int",
-			help="Volume selection by stack, e.g. --stackId=2", metavar="int")
-		self.parser.add_option("--sizex", dest="sizex", default=0, type="int",
-			help="Volume size in column before binning, e.g. --sizex=20", metavar="int")
-		self.parser.add_option("--sizey", dest="sizey", default=0, type="int",
-			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
-		self.parser.add_option("--sizez", dest="sizez", type="int",
-			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
-		self.parser.add_option("--offsetz", dest="offsetz", default=0, type="int",
-			help="Volume z offset from the full tomogram center after binning, e.g. --offsetz=0", metavar="int")
-		self.parser.add_option("--subvolumeonly", dest="subvolumeonly", default=False,
-			action="store_true", help="Flag for only trim sub volume, e.g. --subvolumeonly")
-
 		return 
 
 	#=====================
@@ -79,18 +62,6 @@ class tomoMaker(appionScript.AppionScript):
 			apDisplay.printError("enter a run name")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
-		if self.params['subvolumeonly']:
-			if self.params['fulltomoId'] is None:
-				apDisplay.printError("enter a fulltomogram run id, e.g. --fulltomoId=2")
-			if self.params['stackId'] is None and self.params['selexonId'] is None:
-				apDisplay.printError("enter a stack or selection run id, e.g. --stackId=2 or --selexonId=2")
-		if self.params['stackId'] is not None and self.params['selexonId'] is not None:
-			apDisplay.printError("enter a stack or selection run id, NOT BOTH")
-		if self.params['stackId'] is not None or self.params['selexonId'] is not None:
-			if int(self.params['sizex']) < 1 or int(self.params['sizey']) < 1:
-				apDisplay.printError("must enter non-zero subvolume size")
-			if int(self.params['sizez']) is None:
-				self.params['sizez'] = self.params['thickness']
 
 	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
@@ -221,39 +192,6 @@ class tomoMaker(appionScript.AppionScript):
 				zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
 				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist,alignlist,
 							processdir,reconname,description,zimagedata)
-		#subvolume making
-		if (self.params['selexonId'] is not None or self.params['stackId']) and fulltomodata is not None:
-			bin = fulltomodata['alignment']['bin']
-			subrunname = self.params['subrunname']
-			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
-			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey']),'z':int(self.params['sizez'])}
-			zprojimagedata = fulltomodata['zprojection']
-			gtransforms.append([1,0,0,1,0,0])
-			ordered_imagelist.append(zprojimagedata)
-			for i,imagedata in enumerate(ordered_imagelist):
-				if self.params['selexonId']:
-					particles = apParticle.getParticles(imagedata, self.params['selexonId'])
-				if self.params['stackId']:
-					particles = apStack.getImageParticles(imagedata, self.params['stackId'])
-				for particle in particles:
-					print particle['xcoord'],particle['ycoord']
-					center = apTomo.transformParticleCenter(particle,bin,gtransforms[i])
-					print center,bin
-					offsetz = self.params['offsetz']
-					size = (dimension['x']/bin,dimension['y']/bin,dimension['z'])
-					volumename = 'volume%d'% (volumeindex,)
-					volumedir = os.path.join(processdir,subrunname+'/',volumename+'/')
-					apParam.createDirectory(volumedir)
-					apImod.trimVolume(processdir, subrunname,seriesname,volumename,center,offsetz,size)
-					if commit:
-						long_volumename = seriesname+'_'+volumename
-						subtomodata = apTomo.insertSubTomogram(fulltomodata,particle,offsetz,dimension,
-								volumedir, subrunname,long_volumename,volumeindex,pixelsize
-								,description)
-						tomogramfile = subtomodata['path']['path']+'/'+subtomodata['name']+'.rec'
-						apTomo.makeMovie(tomogramfile)
-						apTomo.makeProjection(tomogramfile)
-					volumeindex += 1
 #=====================
 #=====================
 if __name__ == '__main__':
