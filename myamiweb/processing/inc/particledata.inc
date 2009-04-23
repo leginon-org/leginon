@@ -1409,7 +1409,6 @@ class particledata {
 			$r = array('stackId'=>$stackId);
 			$r = array_merge($r, $params[0]);
 			$r = array_merge($r, $stack_primary_array);
-
 			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];
 			//$r['bin'] = $params[0]['bin'];
 			//$r['boxSize'] = $params[0]['boxSize'];
