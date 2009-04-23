@@ -34,6 +34,8 @@ class UploadTomoScript(appionScript.AppionScript):
 			help="File name for new tomogram, automatically set")
 		self.parser.add_option("-t", "--tiltseries", dest="tiltseriesnumber", type="int",
 			help="Tilt Series # for a given session, Manually specified", metavar="TILTSERIES")
+		self.parser.add_option("--order", dest="order", 
+			help="Axis order (e.g. XZY where XY is the untilted image column and row)")
 		self.parser.add_option("-v", "--volume", dest="volume",
 			help="Subvolume from original voxel volume", default='', metavar="VOLUME")
 		self.parser.add_option("-b", "--bin", dest="bin", type="int",
@@ -45,10 +47,14 @@ class UploadTomoScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a Tilt Series")
 		if not self.params['volume']:
 			self.params['full'] = True
+			if not self.params['order']:
+				self.params['order'] = 'XZY'
 			if self.params['oldxffile'] is None:
 				apDisplay.printWarning("Subvolume boxing not possible without alignment file uploading")
 		else:
 			self.params['full'] = False
+			if not self.params['order']:
+				self.params['order'] = 'XYZ'
 		if self.params['session'] is None:
 			apDisplay.printError("Enter a session ID")
 		if self.params['description'] is None:
@@ -93,38 +99,35 @@ class UploadTomoScript(appionScript.AppionScript):
 
 	#=====================
 	def checkExistingFile(self):
-		newtomopath = os.path.join(self.params['rundir'], self.params['name']+".rec")
+		savedtomopath = os.path.join(self.params['rundir'], self.params['name']+".rec")
 		origtomopath = self.params['file']
 		apDisplay.printWarning("A Tomogram by the same filename already exists: '"+newtomopath+"'")
 		### a tomogram by the same name already exists
+		savedheader = mrc.readHeaderFromFile(savedtomopath)
+		savedshape = savedheader['shape']
+		origheader = mrc.readHeaderFromFile(origtomopath)
+		origshape = origheader['shape']
+		order = self.params['order']
 		if self.params['full']:
-			newheader = mrc.readHeaderFromFile(newtomopath)
-			newshape = newheader['shape']
-			origheader = mrc.readHeaderFromFile(origtomopath)
-			origshape = origheader['shape']
-			if newshape != origshape or newheader['amax'] != origheader['amax'] or newheader['amin'] != origheader['amax'] or newheader['amean'] != origheader['amean']:
-				different = True
-			else:
-				different = False
-				mdnew = None
+			newshape = (origshape(order.find('X')), origshape(order.find('Z')), origshape(order.find('Y')))
 		else:
-			mdnew = apFile.md5sumfile(newtomopath)
-			mdold = apFile.md5sumfile(origtomopath)
-			if mdnew != mdold:
-				different = True
-			else:
-				different = False
+			newshape = (origshape(order.find('X')), origshape(order.find('Y')), origshape(order.find('Z')))
+		if newshape != savedshape or savedheader['amax'] != origheader['amax'] or savedheader['amin'] != origheader['amax'] or savedheader['amean'] != origheader['amean']:
+			different = True
+		else:
+			different = False
+			mdnew = None
 		if different:
 			apDisplay.printWarning("The tomograms are different, cannot overwrite")
 			return True
-		elif apDatabase.isTomoInDB(mdnew,self.params['full'],newtomopath):
+		elif apDatabase.isTomoInDB(mdnew,self.params['full'],savedtomopath):
 			### they are the same and its in the database already
 			apDisplay.printWarning("Identical Tomogram already exists in the database!")
 			self.params['commit'] = False
 			return True
 		else:
 			### they are the same, but it is not in the database
-			apDisplay.printWarning("The same tomogram with name '"+newtomopath+"' already exists, but is not uploaded!")
+			apDisplay.printWarning("The same tomogram with name '"+savedtomopath+"' already exists, but is not uploaded!")
 			if self.params['commit'] is True:
 				apDisplay.printMsg("Inserting tomogram into database...")
 
@@ -142,6 +145,25 @@ class UploadTomoScript(appionScript.AppionScript):
 			if self.checkExistingFile():
 				return
 		else:
+			if self.params['full']:
+				if self.params['order'] == 'XZY':
+					apDisplay.printMsg("Default full tomogram orientation")
+				elif self.params['order'] == 'XYZ':
+					apDisplay.printMsg("Rotating original tomogram....")
+					origtomopath = apImod.rotateVolume(origtomopath)
+				else:
+					apDisplay.printMsg("Not sure how to rotate/flip this....")
+					return
+			### simple upload, just copy file to Tomo folder
+			else:
+				if self.params['order'] == 'XYZ':
+					apDisplay.printMsg("Default sub tomogram orientation")
+				elif self.params['order'] == 'XZY':
+					apDisplay.printMsg("Rotating original tomogram....")
+					origtomopath = apImod.rotateVolume(origtomopath)
+				else:
+					apDisplay.printMsg("Not sure how to rotate/flip this....")
+					return
 			### simple upload, just copy file to Tomo folder
 			apDisplay.printMsg("Copying original tomogram to a new location: "+newtomopath)
 			shutil.copyfile(origtomopath, newtomopath)
