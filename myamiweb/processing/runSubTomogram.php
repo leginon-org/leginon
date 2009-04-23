@@ -24,7 +24,7 @@ else {
 	createSubTomogramForm();
 }
 
-function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $heading='Extract Particle Sub-Tomogram') {
+function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', $heading='Extract Particle Sub-Tomogram') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 
@@ -63,6 +63,8 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
 	$sizey = ($_POST['sizey']) ? $_POST['sizey'] : NULL;
 	$sizez = ($_POST['sizez']) ? $_POST['sizez'] : 100;
 	$offsetz = ($_POST['offsetz']) ? $_POST['offsetz'] : 0;
+	$bin = ($_POST['bin']) ? $_POST['bin'] : 1;
+	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
 	$description = $_POST['description'];
 
 	$alltiltseries = $particle->getTiltSeries($expId);
@@ -120,6 +122,16 @@ function createSubTomogramForm($extra=false, $title='tomomaker.py Launcher', $he
       <INPUT TYPE='text' NAME='offsetz' SIZE='5' VALUE='$offsetz'>\n";
 	echo "<FONT>(pixels on full tomogram)</FONT>
 		<br />";
+	echo "
+      <P>";
+	echo docpop('bin','Binning');
+	echo "
+      <INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>\n";
+	echo "<FONT>(relative to full tomogram)</FONT>
+		<br />";
+	echo "<input type='checkbox' name='invert' $invertv>\n";
+	echo docpop('invert',' Invert image density');
+	echo "<br />\n";
 	echo"<P>
 			<B> Sub-Tomogram Description:</B><br>
 			<TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
@@ -202,7 +214,7 @@ function runSubTomogram() {
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
 
-	$command = "tomomaker.py ";
+	$command = "subtomomaker.py ";
 
 	$xffilename=$_POST['xffilename'];
 	$tiltseriesId=$_POST['tiltseriesId'];
@@ -215,6 +227,8 @@ function runSubTomogram() {
 	$offsetz=$_POST['offsetz'];
 	$sessionname=$_POST['sessionname'];
 	$fulltomoId=$_POST['fulltomoId'];
+	$bin=$_POST['bin'];
+	$invertv = $_POST['invert'];
 
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createSubTomogramForm("<B>ERROR:</B> Select the tilt series");
@@ -227,7 +241,6 @@ function runSubTomogram() {
 	$particle = new particledata();
 
 	$command.="--session=$sessionname ";
-	$command.="--tiltseries=$tiltseriesnumber ";
 	$command.="--projectid=$projectId ";
 	$command.="--fulltomoId=$fulltomoId ";
 	$command.="--runname=$runname ";
@@ -237,8 +250,10 @@ function runSubTomogram() {
 	if ($sizez > 0)
 		$command.="--sizez=$sizez ";
 	$command.="--offsetz=$offsetz ";
+	$command.="--bin=$bin ";
 	$command.="--description=\"$description\" ";
-	$command.="--subvolumeonly ";
+	if ($invertv)
+		$command.="--invert ";
 	$command.="--commit ";
 
 	// submit job to cluster
@@ -248,7 +263,7 @@ function runSubTomogram() {
 
 		if (!($user && $password)) createSubTomogramForm("<B>ERROR:</B> You must be logged in to submit");
 		$rundir = $outdir.'/'.$runname;
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'tomomaker',True,True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'subtomomaker',True,True);
 		// if errors:
 		if ($sub) createSubTomogramForm("<b>ERROR:</b> $sub");
 
