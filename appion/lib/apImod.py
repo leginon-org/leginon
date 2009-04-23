@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 import apDisplay
 import apFile
 import time
@@ -189,15 +190,15 @@ DONE
 		]
 		writeCommandAndRun(processdir,'tilt',commands,[inputparams['recon'],'tilt.log'])
 
-def trimVolume(processdir, runname, seriesname, volumename, center, offsetz, size,yzflip=True):
+def trimVolume(processdir, runname, seriesname, volumename, center, offsetz, size,rotx=True):
 		"""
 #	Command for triming reconstructed volume
 #
-# Tomography reconstruction y and z are flipped
+# Full Tomography reconstruction is X,Z,Y need to rotate around x
 # full tomogram array axes [z,y,x]
 # imod full_rec axes [y,z,x]
 # center and size axes [x,y,z]
-trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
+trimvol -x 390,460 -z 477,537 -rx 08aug14f_008_full.rec test.rec
 		"""	
 		inputparams = {
 			'recon': os.path.join(processdir, seriesname+"_full.rec"),
@@ -205,7 +206,7 @@ trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 			'xrange0': max(1,center[0] - size[0]/2),
 			'yrange0': max(1,center[1] - size[1]/2),
 		}
-		if yzflip:
+		if rotx:
 			lookup = {'y':0,'z':1}
 		else:
 			lookup = {'y':1,'z':0}
@@ -217,9 +218,9 @@ trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 		inputparams['xrange1'] = min(fullshape[2],inputparams['xrange0'] + size[0]-1)
 		inputparams['yrange1'] = min(fullshape[lookup['y']],inputparams['yrange0'] + size[1]-1)
 		inputparams['zrange1'] = min(fullshape[lookup['z']],inputparams['zrange0'] + size[2]-1)
-		if yzflip:
+		if rotx:
 			commands = [
-				"$trimvol -x %d,%d -y %d,%d -z %d,%d -yz %s %s"
+				"$trimvol -x %d,%d -y %d,%d -z %d,%d -rx %s %s"
 					% (inputparams['xrange0'],inputparams['xrange1'],
 					inputparams['zrange0'],inputparams['zrange1'],
 					inputparams['yrange0'],inputparams['yrange1'],
@@ -239,7 +240,37 @@ trimvol -x 390,460 -z 477,537 -yz 08aug14f_008_full.rec test.rec
 				]
 		writeCommandAndRun(processdir,'trimvol',commands,[inputparams['subvolume'],'trimvol.log'])
 
-def projectFullZ(processdir, runname, seriesname,yzflip=True):
+def rotateVolume(volumepath):
+		"""
+#	Command for projecting full tomogram to z-axis
+#
+# Tomography reconstruction y and z are usually flipped
+# full tomogram mrc file axes [x,z,y]
+# clip average command need [x,y,z]
+clip rotx 09feb18c_002_full.rec temp.mrc
+		"""	
+		rotx = True
+		volumedir = os.path.dirname(volumepath)
+		volumefilename = os.path.basename(volumepath)
+		rotxfilename = volumefilename+".rotx"
+		inputparams = {
+			'recon': os.path.join(volumedir, volumefilename),
+			'out': os.path.join(volumedir, rotxfilename),
+		}
+		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
+		commands = []
+		if rotx:
+			lookup = {'y':0,'z':1}
+			inputparams['3d'] = inputparams['out']
+			commands.append(
+				"$clip rotx %s %s"
+					% (inputparams['recon'],inputparams['out'],
+					)
+				)
+		writeCommandAndRun(volumedir,'rotateX',commands,[inputparams['out'],'rotateX.log'])
+		return os.path.join(volumedir,rotxfilename)
+
+def projectFullZ(processdir, runname, seriesname,rotx=True):
 		"""
 #	Command for projecting full tomogram to z-axis
 #
@@ -257,11 +288,11 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
 		fullshape = fulltomoheader['shape']
 		commands = []
-		if yzflip:
+		if rotx:
 			lookup = {'y':0,'z':1}
 			inputparams['3d'] = inputparams['temp']
 			commands.append(
-				"$clip flipyz %s %s"
+				"$clip rotx %s %s"
 					% (inputparams['recon'],inputparams['temp'],
 					)
 				)

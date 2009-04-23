@@ -401,8 +401,34 @@ def getImageParticles(imagedata,stackid,nodie=True):
 	particles = []
 	if not stackps:
 		if nodie is True:
-			return particles
+			return particles,None
 		apDisplay.printError("partnum="+str(particleid)+" was not found in stackid="+str(stackid))
 	for stackp in stackps:
 		particles.append(stackp['particle'])
-	return particles
+	return particles,stackps
+
+def findSubStackConditionData(stackdata):
+	substackname = stackdata['substackname']
+	if not substackname:
+		return None,None
+	typedict = {
+		'alignsub':appionData.ApAlignStackData(),
+		'clustersub':appionData.ApClusteringStackData(),
+	}
+	substacktype = None
+	for type in typedict.keys():
+		if substackname.find(type) >= 0:
+			substacktype = type
+			break
+	if substacktype is None:
+		return None,None
+	conditionids = re.findall('[0-9]+',substackname)
+	q = typedict[substacktype]
+	return substacktype,q.direct_query(conditionids[-1])
+
+def getAlignStack(substacktype,conditionstackdata):
+	if substacktype == 'clustersub':
+		clusterrundata = conditionstackdata['clusterrun']
+		conditionstackdata = clusterrundata['alignstack']
+	return conditionstackdata
+

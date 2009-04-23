@@ -3,7 +3,7 @@ import time
 import subprocess
 import shutil
 import numpy
-import scipy.ndimage as nd
+import scipy.ndimage as ndimage
 from tomography import tiltcorrelator
 import leginondata
 from pyami import arraystats, mrc, imagefun, numpil,correlator, peakfinder
@@ -17,6 +17,7 @@ import apDatabase
 import apDisplay
 import apImage
 import apFile
+import apEMAN
 
 def getFilename(tiltserieslist):
 	seriesname = tiltserieslist[0]['session']['name']+'_'
@@ -224,11 +225,14 @@ def getTomographySettings(sessiondata,tiltdata):
 		return qtomo.direct_query(settingsid)
 
 def getTomoPixelSize(imagedata):
-	predq = leginondata.TomographyPredictionData(image=imagedata)
-	results = predq.query(readimages=False)
-	if results:
-		print results[0]['pixel size']
-		return results[0]['pixel size']
+	imageq = leginondata.AcquisitionImageData(emtarget=imagedata['emtarget'])
+	imageresults = imageq.query(readimages=False)
+	for tomoimagedata in imageresults:
+		if tomoimagedata['label'] != 'projection':
+			predq = leginondata.TomographyPredictionData(image=tomoimagedata)
+			results = predq.query(readimages=False)
+			if results:
+				return results[0]['pixel size']
 
 def getTomoImageShape(imagedata):
 	return (imagedata['camera']['dimension']['y'],imagedata['camera']['dimension']['x'])
@@ -258,6 +262,25 @@ def insertTomoAlignmentRun(sessiondata,tiltdata,leginoncorrdata,imodxcorrdata,bi
 		return qalign
 	return results[0]
 
+def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin=1):
+	if selectionrunid:
+		qpick = appionData.ApSelectionRunData()
+		pickdata = qpick.direct_query(selectionrunid)
+	else:
+		pickdata = None
+	if stackid:
+		qstack = appionData.ApStackData()
+		stackdata = qstack.direct_query(stackid)
+	else:
+		stackdata = None
+	qrun = appionData.ApSubTomogramRunData(session=sessiondata,
+			pick=pickdata,stack=stackdata,runname=name,invert=invert,subbin=subbin)
+	results = qrun.query()
+	if not results:
+		qrun.insert()
+		return qrun
+	return results[0]
+
 def checkExistingFullTomoData(path,name):
 	pathq = appionData.ApPath(name=path)
 	tomoq = appionData.ApFullTomogramData(name=name,path=pathq)
@@ -285,7 +308,12 @@ def insertTomo(params):
 	tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(params['tiltseriesnumber'],sessiondata)
 	runname = params['runname']
 	name = params['name']
-	aligndata = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,params['bin'],runname)
+	if params['full']:
+		fullbin = params['bin']
+	else:
+		fullbin = 1
+		subbin = params['bin']
+	aligndata = insertTomoAlignmentRun(sessiondata,tiltdata,None,None,fullbin,runname)
 	firstimagedata = getFirstImage(tiltdata)
 	path = os.path.abspath(params['rundir'])
 	description = params['description']
@@ -309,8 +337,11 @@ def insertTomo(params):
 		index = len(results)+1
 		pixelsize = 1e-10 * apix * params['bin']
 		runname = params['volume']
-		dimension = {'x':params['shape'][2],'y':params['shape'][1], 'z':params['shape'][0]}
-		return insertSubTomogram(fulltomogram,None,0,dimension,path,runname,name,index,pixelsize,description)
+		shape = map((lambda x: x * params['bin']), params['shape'])
+		dimension = {'x':shape[2],'y':shape[1], 'z':shape[0]}
+		subtomorundata = apTomo.insertSubTomoRun(sessiondata,
+				None,None,runname,params['invert'],subbin)
+		return insertSubTomogram(fulltomogram,subtomorundata,None,0,dimension,path,name,index,pixelsize,description)
 
 def insertFullTomogram(sessiondata,tiltdatalist,alignlist,path,name,description,projectimagedata):
 	tomoq = appionData.ApFullTomogramData()
@@ -356,18 +387,19 @@ def transformParticleCenter(particle,bin,gtransform):
 	newy = A21 * X + A22 * Y + DY
 	return (newx/bin,newy/bin)
 
-def insertSubTomogram(fulltomogram,center,offsetz,dimension,path,runname,name,index,pixelsize,description):
-	tomoq = appionData.ApTomogramData()
-	tomoq['session'] = fulltomogram['session']
-	tomoq['tiltseries'] = fulltomogram['tiltseries']
-	tomoq['fulltomogram'] = fulltomogram
+def insertSubTomogram(fulltomodata,rundata,center,offsetz,dimension,path,name,index,pixelsize,description):
+	tomoq = appionData.ApTomogramData(fulltomogram=fulltomodata)
+	tomoq['session'] = fulltomodata['session']
+	tomoq['tiltseries'] = fulltomodata['tiltseries']
+	tomoq['subtomorun'] = rundata
 	tomoq['path'] = appionData.ApPathData(path=os.path.abspath(path))
 	tomoq['name'] = name
-	tomoq['runname'] = runname
 	tomoq['number'] = index
 	tomoq['center'] = center
+	# dimension is that of the original tilt images, i.e., before binning of the full tomogram
 	tomoq['offsetz'] = offsetz
 	tomoq['dimension'] = dimension
+	# pixelsize is of the binned full and sub tomogram
 	tomoq['pixelsize'] = pixelsize
 	tomoq['description'] = description
 	filepath = os.path.join(path,name+".rec")
@@ -477,3 +509,88 @@ def uploadZProjection(runname,initialimagedata,uploadfile):
 		imagedata.insert()
 		return imagedata
 	return imagedata[0]
+
+def getSubvolumeShape(subtomorundata):
+	tomoq = appionData.ApTomogramData(subtomorun=subtomorundata)
+	results = tomoq.query(results=1)
+	if results:
+		tomo = results[0]
+		shape = (tomo['dimension']['z'],tomo['dimension']['y'],tomo['dimension']['x'])
+		return shape
+
+def getFullZSubvolume(subtomorundata,stackpdata):
+	pdata = stackpdata['particle']
+	tomoq = appionData.ApTomogramData(subtomorun=subtomorundata,center=pdata)
+	results = tomoq.query()
+	if results:
+		tomo = results[0]
+		print tomo['center']['xcoord']
+		if tomo['center']['xcoord'] < 800 or tomo['center']['xcoord'] > 1150:
+			return None
+		if tomo['center']['ycoord'] < 800 or tomo['center']['ycoord'] > 1250:
+			return None
+		path = tomo['path']['path']
+		name = tomo['name']+'.rec'
+		print name
+		volume = mrc.read(os.path.join(path,name))
+		return volume
+
+def getParticleCenterZProfile(subvolume,shift,halfwidth):
+	shape = subvolume.shape
+	ystart = max(0,int(shape[1]/2.0 - shift['y'] - halfwidth))
+	xstart = max(0,int(shape[1]/2.0 - shift['x'] - halfwidth))
+	yend = min(shape[1],ystart + 2 * halfwidth + 1)
+	xend = min(shape[2],xstart + 2 * halfwidth + 1)
+	array = subvolume[:,ystart:yend,xstart:xend]
+	xavg = numpy.sum(array,axis=2)/(2*halfwidth+1)
+	xyavg = numpy.sum(xavg,axis=1)/(2*halfwidth+1)
+	bgwidth = 35
+	background = numpy.sum(xyavg[:bgwidth])/bgwidth
+	background += numpy.sum(xyavg[-bgwidth:])/bgwidth
+	background = background / 2
+	vmax = xyavg.max()
+	return (xyavg - background) / (vmax-background)
+
+def transformTomo(a,package,alignpdata,zshift=0.0):
+	shift = (alignpdata['xshift'],alignpdata['yshift'],zshift)
+	angle = alignpdata['rotation']
+	mirror = alignpdata['mirror']
+	print shift,angle,mirror
+	if package == 'Xmipp':
+		return xmippTransformTomo(a,angle,shift,mirror,2)
+	elif package == 'Spider':
+		return xmippTransformTomo(a,angle,shift,mirror,2)
+
+def xmippTransformTomo(a,rot=0,shift=(0,0,0), mirror=False, order=2):
+	"""
+		similar to apImage.xmippTransform but on 3D volume and rotate on the
+		xy plane
+	"""
+	b = a
+	shiftxyz = (shift[2],shift[1],shift[0])
+	b = ndimage.shift(b, shift=shiftxyz, mode='reflect', order=order)
+	if mirror is True:
+		b = numpy.fliplr(b)
+	b = ndimage.shift(b, shift=(0,-0.5,-0.5), mode='wrap',order=order)
+	b = ndimage.rotate(b, angle=-1*rot, axes=(2,1), reshape=False, order=order)
+	b = ndimage.shift(b, shift=(0, 0.5, 0.5), mode='wrap',order=order)
+	return b
+	
+
+def gaussianCenter(array):
+	X = numpy.arange(array.size)
+	#ignore negative shadow
+	array = numpy.where(array < 0, 0,array)
+	return numpy.sum(X*array)/numpy.sum(array)
+
+def modifyVolume(volpath,bin=1,invert=False):
+	volpathtemp = volpath+".tmp.mrc"
+	if invert:
+		multfactor = -1.0
+	else:
+		multfactor = 1.0
+	lpcmd = ('proc3d %s %s shrink=%d mult=%e' % (volpath,volpathtemp,bin,multfactor))
+	apDisplay.printMsg("modifying 3d volume with EMAN")
+	apEMAN.executeEmanCmd(lpcmd)
+	if os.path.exists(volpathtemp):
+		shutil.move(volpathtemp,volpath)

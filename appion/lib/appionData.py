@@ -820,7 +820,8 @@ class ApSubTomogramRunData(Data):
 			('pick', ApSelectionRunData),
 			('stack', ApStackData),
 			('runname', str),
-			('bin', int),
+			('invert', bool),
+			('subbin', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApSubTomogramRunData=ApSubTomogramRunData
@@ -856,6 +857,7 @@ class ApTomogramData(Data):
 			('pixelsize', float),
 			('description', str),
 			('md5sum', str),			
+			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApTomogramData=ApTomogramData
