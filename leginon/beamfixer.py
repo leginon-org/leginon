@@ -83,7 +83,7 @@ class BeamFixer(reference.Reference):
 
 	def _acquire(self):
 		try:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData()
 		except:
 			self.logger.error('unable to get corrected image')
 			return
@@ -91,7 +91,7 @@ class BeamFixer(reference.Reference):
 
 	def getBeamShiftStep(self):
 		#acquire an image to get scope and camera
-		camera = self.instrument.getData(leginondata.CameraEMData, image=False)
+		camera = self.instrument.getData(leginondata.CameraEMData)
 		scope = self.instrument.getData(leginondata.ScopeEMData)
 		beamshiftcal = self.calibration_clients['beam shift']
 		shiftstep = 0.01 * self.settings['shift step']

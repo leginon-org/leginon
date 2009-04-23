@@ -51,14 +51,14 @@ class IntensityMonitor(node.Node):
 		## screen down for dark image and screen current
 		self.logger.info('   acquiring dark image and screen current')
 		self.screenDown()
-		darkim = self.instrument.getData(leginondata.CameraImageData)
+		darkim = self.acquireCameraImageData()
 		darkim['filename'] = basename + '_d'
 		darkim['label'] = 'dark'
 
 		## screen up for bright image
 		self.logger.info('   acquiring bright image')
 		self.screenUp()
-		brightim = self.instrument.getData(leginondata.CameraImageData)
+		brightim = self.acquireCameraImageData()
 		brightim['filename'] = basename + '_b'
 		brightim['label'] = 'bright'
 		## no screen current measured because screen up, so get from dark

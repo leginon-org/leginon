@@ -636,7 +636,7 @@ class PresetsManager(node.Node):
 			return
 
 		try:
-			cameradata = self.instrument.getData(leginondata.PresetCameraEMData, image=False)
+			cameradata = self.instrument.getData(leginondata.PresetCameraEMData)
 		except Exception, e:
 			self.logger.error('Preset from instrument failed, unable to get CCD camera parameters: %s' % e)
 			return
@@ -1226,7 +1226,7 @@ class PresetsManager(node.Node):
 			self.logger.error(errstr % 'unable to set camera parameters')
 			return
 		try:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData()
 		except:
 			self.logger.error(errstr % 'unable to acquire corrected image data')
 			return
@@ -1383,7 +1383,7 @@ class PresetsManager(node.Node):
 				return self.instrument.getTEMParameter(instrument_name, parameter)
 			elif instrument_type == 'ccdcamera':
 				if parameter == 'camera parameters':
-					return self.instrument.getData(leginondata.CameraEMData, image=False, ccdcameraname=instrument_name).toDict()
+					return self.instrument.getData(leginondata.CameraEMData, ccdcameraname=instrument_name).toDict()
 				else:
 					return self.instrument.getCCDCameraParameter(instrument_name, parameter)
 			else:
@@ -1555,13 +1555,15 @@ class PresetsManager(node.Node):
 		if preset != selectedpreset:
 			self.logger.info('Send the selected preset to scope')
 			self.cycleToScope(selectedpreset)
+		self.getValidTempMag()
 
-	def acquireBeamImage(self):
+	def getValidTempMag(self):
 		# go to selected preset
 		preset = self.currentpreset
 		if preset is None:
 			return
-
+		tem = preset['tem']
+		ccdcamera = preset['ccdcamera']
 		# calculate temporary mag
 		original_mag = preset['magnification']
 		temp_mag = original_mag / 5.0
@@ -1571,14 +1573,43 @@ class PresetsManager(node.Node):
 			if mag >= temp_mag:
 				temp_mag = mag
 				break
+		# look for magnification with beam shift calibration. Start from temp_mag above to the lowest, and the go down from preset mag
+		# This may not work between HM and LM mode
+		startindex = allmags.index(temp_mag)
+		while True:
+			try:
+				self.calclients['beam'].researchMatrix(tem, ccdcamera, 'beam shift', self.instrument.tem.HighTension, temp_mag)
+			except:
+				index = allmags.index(temp_mag)
+				if index < 1:
+					temp_mag = preset['magnification']
+				elif index == startindex + 1 or startindex == 0:
+					self.panel.disableBeamAdjust(preset['magnification'])
+					self.temp_mag = None
+					return
+				else:
+					temp_mag = allmags[index-1]
+			else:
+				beamshift = self.instrument.tem.BeamShift
+				self.panel.enableBeamAdjust(temp_mag,beamshift)
+				break
+		self.temp_mag = temp_mag
 
+	def acquireBeamImage(self):
+		# go to selected preset
+		preset = self.currentpreset
+		if preset is None:
+			return
+		temp_mag = self.temp_mag
+		if temp_mag is None:
+			return
 		# go to temporary mag
+		original_mag = preset['magnification']
 		self.instrument.tem.Magnification = temp_mag
 		time.sleep(self.settings['pause time'])
 		self.logger.info('Temporary mag: %d' % (temp_mag,))
-
-		fullcamdim = self.instrument.ccdcamera.CameraSize['x']
 		# temp binning,dimension
+		fullcamdim = self.instrument.ccdcamera.CameraSize['x']
 		orig_dim = preset['dimension']['x']
 		orig_bin = preset['binning']['x']
 		temp_bin = 4
@@ -1588,7 +1619,6 @@ class PresetsManager(node.Node):
 		self.instrument.ccdcamera.Binning = {'x': temp_bin, 'y': temp_bin}
 		self.instrument.ccdcamera.Offset = {'x': 0, 'y': 0}
 		self.logger.info('Temporary Dimension, Binning: %d, %d' % (temp_dim, temp_bin,))
-
 		# calculate temporary exposure time
 		orig_unbinned_dim = orig_bin * orig_dim
 		orig_zoom = fullcamdim / orig_unbinned_dim 
@@ -1600,14 +1630,13 @@ class PresetsManager(node.Node):
 			temp_exptime = 5
 		self.instrument.ccdcamera.ExposureTime = temp_exptime
 		self.logger.info('Beam image using temporary exposure time: %d' % (temp_exptime,))
-
 		# acquire image
-		self.beamimagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		self.beamimagedata = self.acquireCorrectedCameraImageData()
 		im = self.beamimagedata['image']
 		self.panel.setBeamImage(im)
+		# display info
 		beamshift = self.instrument.tem.BeamShift
 		self.panel.displayBeamShift(beamshift)
-
 		# return to original preset
 		self.toScope(preset['name'])
 

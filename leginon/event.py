@@ -193,10 +193,6 @@ class CameraImagePublishEvent(ImagePublishEvent):
 	'Event indicating camera image was published'
 	dataclass = leginondata.CameraImageData
 
-class CorrectedCameraImagePublishEvent(CameraImagePublishEvent):
-	'Event indicating camera image was published'
-	dataclass = leginondata.CorrectedCameraImageData
-
 class PresetImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating preset camera image was published'
 	dataclass = leginondata.PresetImageData

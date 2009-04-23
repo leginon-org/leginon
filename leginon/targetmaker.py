@@ -118,7 +118,7 @@ class MosaicTargetMaker(TargetMaker):
 		except:
 			raise AtlasError('unable to access microscope')
 		try:
-			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
+			camera = self.instrument.getData(leginondata.CameraEMData)
 		except:
 			raise AtlasError('unable to access camera')
 		self.logger.debug('Get current instrument state completed')

@@ -840,7 +840,7 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 
 		errorstring = 'Image acqisition failed: %s'
 		try:
-			imagedata2 = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata2 = self.acquireCorrectedCameraImageData()
 		except:
 			imagedata2 = None
 			self.logger.error(errorstring % 'cannot acquire image')

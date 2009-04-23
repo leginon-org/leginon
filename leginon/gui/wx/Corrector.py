@@ -198,7 +198,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 		self.settingsdialog = SettingsDialog(self)
 
-		plan = self.node.getPlan()
+		plan = self.node.retrieveCorrectorPlanFromSettings()
 		self.setPlan(plan)
 
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
@@ -210,7 +210,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.ShowModal()
-		plan = self.node.getPlan()
+		plan = self.node.retrieveCorrectorPlanFromSettings()
 		self.setPlan(plan)
 
 	def _acquisitionEnable(self, enable):

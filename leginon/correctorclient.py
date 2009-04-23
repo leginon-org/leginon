@@ -1,0 +1,356 @@
+#!/usr/bin/env python
+
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
+
+import leginondata
+import numpy
+import scipy.ndimage
+import instrument
+from pyami import arraystats, imagefun
+import time
+import cameraclient
+
+ref_cache = {}
+ref_cache_id = {}
+
+class CorrectorClient(cameraclient.CameraClient):
+	def __init__(self):
+		cameraclient.CameraClient.__init__(self)
+
+	def acquireCorrectedCameraImageData(self, channel=0, **kwargs):
+		imagedata = self.acquireCameraImageData(**kwargs)
+		self.correctCameraImageData(imagedata, channel)
+		return imagedata
+
+	def researchCorrectorImageData(self, type, scopedata, cameradata, channel, readimages=True):
+		if type == 'dark':
+			imagetemp = leginondata.DarkImageData()
+		elif type == 'bright':
+			imagetemp = leginondata.BrightImageData()
+		elif type == 'norm':
+			imagetemp = leginondata.NormImageData()
+		else:
+			return None
+
+		camstate = leginondata.CorrectorCamstateData()
+		camstate.friendly_update(cameradata)
+		imagetemp['camstate'] = camstate
+		imagetemp['tem'] = scopedata['tem']
+		imagetemp['ccdcamera'] = leginondata.InstrumentData()
+		imagetemp['ccdcamera']['name'] = cameradata['ccdcamera']['name']
+		# only care about high tension for query
+		imagetemp['scope'] = leginondata.ScopeEMData()
+		imagetemp['scope']['high tension'] = scopedata['high tension']
+		imagetemp['channel'] = channel
+		try:
+			ref = imagetemp.query(results=1, readimages=readimages)
+		except Exception, e:
+			self.logger.warning('Loading reference image failed: %s' % e)
+			ref = None
+
+		if ref:
+			ref = ref[0]
+		else:
+			# check if no results because no ref of requested channel
+			# try to get ref of any channel
+			imagetemp['channel'] = None
+			try:
+				ref = imagetemp.query(results=1, readimages=readimages)
+			except Exception, e:
+				self.logger.warning('Loading reference image from any channel failed: %s' % e)
+				ref = None
+			if ref:
+				ref = ref[0]
+				self.logger.warning('channel requested: %s, channel available: %s' % (channel, ref['channel']))
+			else:
+				self.logger.error('No reference image in database')
+				ref = None
+
+		if ref is not None:
+			self.logger.info('Reference image loaded: %s' % (ref['filename'],))
+
+		return ref
+
+	def formatCorrectorKey(self, key):
+		try:
+			if key[6] == 'dark':
+				exptype = 'dark reference image'
+			elif key[6] == 'bright':
+				exptype = 'bright reference image'
+			elif key[6] == 'norm':
+				exptype = 'normalization image'
+			else:
+				exptype = key[6]
+		except IndexError:
+			exptype = 'unknown image'
+		s = '%s, %sV, size %sx%s, bin %sx%s, offset (%s,%s), channel %s'
+		try:
+			return s % (exptype, key[8], key[0], key[1], key[2], key[3], key[4], key[5], key[9])
+		except IndexError:
+			return str(key)
+
+	def makeCorrectorKey(self, type, scopedata, cameradata, channel):
+		mylist = []
+		for param in ('dimension', 'binning', 'offset'):
+			values = cameradata[param]
+			if values is None:
+				valuetuple = (None,None)
+			else:
+				valuetuple = (values['x'],values['y'])
+			mylist.extend( valuetuple )
+		mylist.append(type)
+		mylist.append(cameradata['ccdcamera']['name'])
+		mylist.append(scopedata['high tension'])
+		mylist.append(channel)
+		return tuple(mylist)
+
+	def getCorrectorImageFromCache(self, type, scopedata, cameradata, channel):
+		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)
+		cachedim = ref_cache[key]
+		newref = self.researchCorrectorImageData(type, scopedata, cameradata, channel, readimages=False)
+		if newref.dbid != ref_cache_id[key]:
+			ref_cache[key] = newref
+			ref_cache_id[key] = newref.dbid
+			return newref
+		else:
+			return cachedim
+
+	def retrieveCorrectorImageData(self, type, scopedata, cameradata, channel):
+		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)
+		## another way to do the cache would be to use the local
+		##   data keeper
+
+		## try to use reference image from cache
+		try:
+			return self.getCorrectorImageFromCache(type, scopedata, cameradata, channel)
+		except KeyError:
+			self.logger.info('Loading %s...' % self.formatCorrectorKey(key))
+
+		## use reference image from database
+		ref = self.researchCorrectorImageData(type, scopedata, cameradata, channel)
+		if ref:
+			## make it float to do float math later
+			## image = numpy.asarray(ref['image'], numpy.float32)
+			ref_cache[key] = ref
+			ref_cache_id[key] = ref.dbid
+			return ref
+		else:
+			return None
+
+	def normalizeCameraImageData(self, imagedata, channel):
+		cameradata = imagedata['camera']
+		scopedata = imagedata['scope']
+		dark = self.retrieveCorrectorImageData('dark', scopedata, cameradata, channel)
+		norm = self.retrieveCorrectorImageData('norm', scopedata, cameradata, channel)
+		print 'DARK', id(dark)
+		print 'NORM', id(norm)
+		if dark is None or norm is None:
+			self.logger.warning('Cannot find references, image will not be normalized')
+			return
+		rawarray = imagedata['image']
+		darkarray = dark['image']
+		normarray = norm['image']
+		diff = rawarray - darkarray
+		r = diff * normarray
+		## remove nan and inf
+		r = numpy.where(numpy.isfinite(r), r, 0)
+		imagedata['image'] = r	
+		imagedata['dark'] = dark
+		imagedata['norm'] = norm
+		imagedata['correction channel'] = channel
+
+	def denormalizeCameraImageData(self, imagedata):
+		'''
+		reverse the normalization to create a raw image
+		'''
+		dark = imagedata['dark']
+		norm = imagedata['norm']
+		if dark is None or norm is None:
+			raise RuntimeError('uncorrected cannot be denormalized')
+		corrected = imagedata['image']
+		normarray = norm['image']
+		darkarray = dark['image']
+		raw = corrected / normarray
+		raw = numpy.where(numpy.isfinite(raw), raw, 0)
+		raw = raw + darkarray
+		imagedata['image'] = raw
+		imagedata['dark'] = None
+		imagedata['norm'] = None
+		imagedata['correction channel'] = None
+
+	def reverseCorrectorChannel(self, imagedata):
+		oldchannel = imagedata['correction channel']
+		if oldchannel == 1:
+			newchannel = 0
+		elif oldchannel == 0:
+			newchannel = 1
+		else:
+			raise RuntimeError('cannot reverse unknown channel')
+		newimagedata = imagedata.copy()
+		self.denormalizeCameraImageData(newimagedata)
+		self.normalizeCameraImageData(newimagedata, newchannel)
+		return newimagedata
+
+	def correctCameraImageData(self, imagedata, channel):
+		'''
+		this puts an image through a pipeline of corrections
+		'''
+		self.normalizeCameraImageData(imagedata, channel)
+		imagedata['correction channel'] = channel
+
+		cameradata = imagedata['camera']
+		plan = self.retrieveCorrectorPlan(cameradata)
+		if plan is not None:
+			self.fixBadPixels(imagedata['image'], plan)
+
+		'''
+		if clip and (clip[0] or clip[1]):
+			clipped = numpy.clip(normalized, clip[0], clip[1])
+		else:
+			clipped = normalized
+
+		if despike:
+			self.logger.debug('Despiking...')
+			nsize = despikesize
+			thresh = despikethresh
+			imagefun.despike(clipped, nsize, thresh)
+			self.logger.debug('Despiked')
+
+		final = numpy.asarray(clipped, numpy.float32)
+		return final
+		'''
+
+	def retrieveCorrectorPlan(self, cameradata):
+		corstate = leginondata.CorrectorCamstateData()
+		corstate.friendly_update(cameradata)
+		ccdcamera = cameradata['ccdcamera']
+		qplan = leginondata.CorrectorPlanData()
+		qplan['camstate'] = corstate
+		qplan['ccdcamera'] = ccdcamera
+		plandatalist = self.research(datainstance=qplan)
+		if plandatalist:
+			plandata = plandatalist[0]
+			result = {}
+			result['rows'] = list(plandata['bad_rows'])
+			result['columns'] = list(plandata['bad_cols'])
+			if plandata['bad_pixels'] is None:
+				result['pixels'] = []
+			else:
+				result['pixels'] = list(plandata['bad_pixels'])
+			return result
+		else:
+			return {'rows': [], 'columns': [], 'pixels': []}
+
+	def fixBadPixels(self, image, plan):
+		badrows = plan['rows']
+		badcols = plan['columns']
+		badrowscols = [badrows,badcols]
+		badpixels = plan['pixels']
+
+		shape = image.shape
+
+		## fix individual pixels (pixels are in x,y format)
+		## replace each with median of 8 neighbors, however, some neighbors
+		## are also labeled as bad, so we will not use those in the calculation
+		for badpixel in badpixels:
+			badcol,badrow = badpixel
+			if badcol in badcols or badrow in badrows:
+				## pixel will be fixed along with entire row/column later
+				continue
+			neighbors = []
+
+			## d is how far we will go to find good pixels for this calculation
+			## this is extra paranoia for the case where there is a whole cluster of
+			## bad pixels. Usually it will only interate once (d=1)
+			for d in range(1,20):
+				for r in range(badrow-d, badrow+d+1):
+					# check for out of bounds or bad neighbor
+					if r<0 or r>=shape[0] or r in badrows:
+						continue
+					for c in range(badcol-d, badcol+d+1):
+						# check for out of bounds or bad neighbor
+						if c<0 or c>=shape[1] or c in badcols or (c,r) in badpixels:
+							continue
+						neighbors.append(image[r,c])
+				if neighbors:
+					break
+
+			if not neighbors:
+				return
+
+			# median
+			neighbors.sort()
+			nlen = len(neighbors)
+			if nlen % 2:
+				# odd
+				i = nlen // 2
+				med = neighbors[i]
+			else:
+				i1 = nlen / 2
+				i2 = i1 - 1
+				med = (neighbors[i1]+neighbors[i2]) / 2
+			image[badrow,badcol] = med
+
+		## fix whole rows and columns
+		for axis in (0,1):
+			for bad in badrowscols[axis]:
+				## find a near by good one
+				good = None
+				for i in range(bad+1,shape[axis]):
+					if i not in badrowscols[axis]:
+						good = i
+						break
+				if good is None:
+					for i in range(bad-1,-1,-1):
+						if i not in badrowscols[axis]:
+							good = i
+							break
+				if good is None:
+					raise RuntimeError('image has no good rows/cols')
+				else:
+					if axis == 0:
+						image[bad] = image[good]
+					else:
+						image[:,bad] = image[:,good]
+
+	def storeCorrectorImageData(self, imarray, type, scopedata, cameradata, channel):
+		## store in database
+		if type == 'dark':
+			refdata = leginondata.DarkImageData()
+		elif type == 'bright':
+			refdata = leginondata.BrightImageData()
+		elif type == 'norm':
+			refdata = leginondata.NormImageData()
+		camstate = leginondata.CorrectorCamstateData()
+		camstate.friendly_update(cameradata)
+		refdata['image'] = imarray
+		refdata['camstate'] = camstate
+		refdata['filename'] = self.makeCorrectorImageFilename(type, channel)
+		refdata['session'] = self.session
+		refdata['tem'] = scopedata['tem']
+		refdata['ccdcamera'] = cameradata['ccdcamera']
+		refdata['scope'] = scopedata
+		refdata['channel'] = channel
+		self.logger.info('Saving new %s' % (type,))
+		refdata.insert(force=True)
+		self.logger.info('Saved: %s' % (refdata['filename'],))
+
+		## store in cache
+		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)
+		ref_cache[key] = refdata
+		ref_cache_id[key] = refdata.dbid
+
+		return refdata
+
+	def makeCorrectorImageFilename(self, type, channel):
+		sessionname = self.session['name']
+		timestamp = time.strftime('%Y%m%d-%H%m%S', time.localtime())
+		f = '%s_%s_%s_%s' % (sessionname, timestamp, type, channel)
+		return f
+

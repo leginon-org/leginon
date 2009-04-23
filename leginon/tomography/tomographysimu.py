@@ -296,7 +296,7 @@ class TomographySimu(acquisition.Acquisition):
 
 	def getPixelPosition(self, move_type, position=None):
 		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+		camera_data = self.instrument.getData(leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -311,7 +311,7 @@ class TomographySimu(acquisition.Acquisition):
 
 	def getParameterPosition(self, move_type, position=None):
 		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+		camera_data = self.instrument.getData(leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -342,7 +342,7 @@ class TomographySimu(acquisition.Acquisition):
 		presetdata = self.presetdata
 		if presetdata is None:
 			scope_data = self.instrument.getData(leginondata.ScopeEMData)
-			camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+			camera_data = self.instrument.getData(leginondata.CameraEMData)
 			tem = scope_data['tem']
 			ccd_camera = camera_data['ccdcamera']
 			high_tension = scope_data['high tension']

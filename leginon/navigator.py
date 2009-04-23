@@ -403,11 +403,10 @@ class Navigator(node.Node):
 			corchannel = 0
 		else:
 			corchannel = 1
-		self.instrument.setCorrectionChannel(corchannel)
 		#camerasettings = leginondata.CameraSettingsData(initializer=camera)
 		self.instrument.setCCDCamera(ccdcamera['name'])
 		self.instrument.setData(cameradata)
-		self._acquireImage()
+		self._acquireImage(corchannel)
 
 	def acquireImage(self):
 		if self.settings['override preset']:
@@ -432,9 +431,9 @@ class Navigator(node.Node):
 				return
 		self._acquireImage()
 
-	def _acquireImage(self):
+	def _acquireImage(self, channel=0):
 		try:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
 		except:
 			self.logger.error('unable to get corrected image')
 			return

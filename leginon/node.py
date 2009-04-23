@@ -24,6 +24,7 @@ import time
 import numpy
 import leginonconfig
 import os
+import correctorclient
 
 class ResearchError(Exception):
 	pass
@@ -41,7 +42,7 @@ import sys
 if sys.platform == 'win32':
 	import winsound
 
-class Node(object):
+class Node(correctorclient.CorrectorClient):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 	panelclass = None
 	eventinputs = [event.Event,
@@ -98,6 +99,8 @@ class Node(object):
 			except:
 				self.logger.exception('exception in setManager')
 				raise
+
+		correctorclient.CorrectorClient.__init__(self)
 
 		self.initializeSettings()
 

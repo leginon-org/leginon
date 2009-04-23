@@ -21,7 +21,6 @@ import calibrationclient
 import copy
 from pyami import arraystats, imagefun
 import numpy
-import corrector
 
 class AcquireError(Exception):
 	pass
@@ -84,9 +83,6 @@ class ManualAcquisition(node.Node):
 		self.published_images = []
 		self.viewstatus = None
 
-		self.corclient = corrector.CorrectorClient(self)
-		self.initSameCorrection()
-		
 		self.start()
 
 	def getImageStats(self, image):
@@ -98,28 +94,7 @@ class ManualAcquisition(node.Node):
 		return stats
 
 	def initSameCorrection(self):
-		self.correctargs = None
-
-	def acquireCorrectedImage(self):
-		if not self.correctargs:
-			## acquire image and scope/camera params
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
-			imarray = imagedata['image']
-			self.correctargs = {}
-			camdata = imagedata['camera']
-			self.correctargs['ccdcamera'] = camdata['ccdcamera']
-			corstate = leginondata.CorrectorCamstateData()
-			corstate['dimension'] = camdata['dimension']
-			corstate['offset'] = camdata['offset']
-			corstate['binning'] = camdata['binning']
-			self.correctargs['camstate'] = corstate
-			self.correctargs['scopedata'] = imagedata['scope']
-		else:
-			## acquire only raw image
-			imarray = self.instrument.ccdcamera.Image
-
-		corrected = self.corclient.correct(original=imarray, **self.correctargs)
-		return corrected
+		self.resetRepeatConfig()
 
 	def acquire(self):
 		correct = self.settings['correct image']
@@ -134,24 +109,18 @@ class ManualAcquisition(node.Node):
 		else:
 			self.instrument.ccdcamera.ExposureType = 'normal'
 
-		try:
-			if correct:
-				image = self.acquireCorrectedImage()
-			else:
-				image = self.instrument.ccdcamera.Image
-			if self.settings['reduced params']:
-				scope = self.instrument.getData(leginondata.ManualAcquisitionScopeEMData)
-				scope = leginondata.ScopeEMData(initializer=scope)
-			else:
-				scope = self.instrument.getData(leginondata.ScopeEMData)
-			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
-			imagedata = leginondata.CameraImageData(image=image, scope=scope, camera=camera)
-			imagedata['session'] = self.session
-		except Exception, e:
-			self.logger.exception('Error acquiring image: %s' % e)
-			raise AcquireError
-		image = imagedata['image']
 
+		if self.settings['reduced params']:
+			scopeclass = leginondata.ManualAcquisitionScopeEMData
+		else:
+			scopeclass = leginondata.ScopeEMData
+
+		if correct:
+			imagedata = self.acquireCorrectedCameraImageData(repeatconfig=True, scopeclass=scopeclass)
+		else:
+			imagedata = self.acquireCameraImageData(repeatconfig=True, scopeclass=scopeclass)
+
+		image = imagedata['image']
 
 		self.logger.info('Displaying image...')
 		self.getImageStats(image)
@@ -403,7 +372,7 @@ class ManualAcquisition(node.Node):
 		self.instrument.ccdcamera.Settings = tmpcam
 
 		# acquire image
-		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		imagedata = self.acquireCorrectedCameraImageData()
 
 		# display
 		self.logger.info('Displaying %dx%d dose image...' % (cutsize,cutsize))
@@ -477,9 +446,9 @@ class ManualAcquisition(node.Node):
 			self.instrument.ccdcamera.Settings = camdata1
 			try:
 				if correction:
-					imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+					imagedata = self.acquireCorrectedCameraImageData()
 				else:
-					imagedata = self.instrument.getData(leginondata.CameraImageData)
+					imagedata = self.acquireCameraImageData()
 				imarray = imagedata['image']
 			except:
 				raise

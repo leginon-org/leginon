@@ -145,15 +145,16 @@ class Collection(object):
 
 		if second_loop:
 			self.restoreInstrumentState()
-			self.logger.info('Adjust target for the second tilt group...')
-			try:
-				self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
-			except Exception, e:
-				self.logger.error('Failed to adjust target: %s.' % e)
-				raise
-			if status == 'error':
-				self.finalize()
-				return
+			if self.settings['adjust for transform'] != "no":
+				self.logger.info('Adjust target for the second tilt group...')
+				try:
+					self.emtarget, status = self.node.adjusttarget(self.preset['name'], self.target, self.emtarget)
+				except Exception, e:
+					self.logger.error('Failed to adjust target: %s.' % e)
+					raise
+				if status == 'error':
+					self.finalize()
+					return
 		self.logger.info('Removing tilt backlash...')
 		try:
 			self.node.removeStageAlphaBacklash(tilts, self.preset['name'], self.target, self.emtarget)
@@ -248,8 +249,7 @@ class Collection(object):
 
 			# TODO: error checking
 			channel = self.correlator.getChannel()
-			self.instrument.setCorrectionChannel(channel)
-			image_data = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			image_data = self.acquireCorrectedCameraImageData(channel)
 			self.logger.info('Image acquired.')
 
 			image_mean = image_data['image'].mean()

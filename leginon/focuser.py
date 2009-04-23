@@ -8,7 +8,6 @@
 import acquisition
 import node, leginondata
 import calibrationclient
-import corrector
 import threading
 import event
 import time
@@ -73,7 +72,6 @@ class Focuser(acquisition.Acquisition):
 		self.stagetiltcalclient = calibrationclient.StageTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
-		self.corclient = corrector.CorrectorClient(self)
 		self.focus_sequence = self.researchFocusSequence()
 		self.deltaz = 0.0
 
@@ -556,41 +554,17 @@ class Focuser(acquisition.Acquisition):
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def initSameCorrection(self):
-		self.samecorrection = True
-		self.correctargs = None
-
-	def endSameCorrection(self):
-		self.samecorrection = False
-
-	def acquireCorrectedImage(self):
-		if not self.samecorrection or (self.samecorrection and not self.correctargs):
-			## acquire image and scope/camera params
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
-			imarray = imagedata['image']
-			self.correctargs = {}
-			camdata = imagedata['camera']
-			self.correctargs['ccdcamera'] = camdata['ccdcamera']
-			corstate = leginondata.CorrectorCamstateData()
-			corstate['dimension'] = camdata['dimension']
-			corstate['offset'] = camdata['offset']
-			corstate['binning'] = camdata['binning']
-			self.correctargs['camstate'] = corstate
-			self.correctargs['scopedata'] = imagedata['scope']
-		else:
-			## acquire only raw image
-			imarray = self.instrument.ccdcamera.Image
-
-		corrected = self.corclient.correct(original=imarray, **self.correctargs)
-		return corrected
+		self.resetRepeatConfig()
 
 	def acquireManualFocusImage(self):
 		t0 = time.time()
 		correction = self.settings['correct image']
 		self.manualchecklock.acquire()
 		if correction:
-			imarray = self.acquireCorrectedImage()
+			imdata = self.acquireCorrectedCameraImageData(repeatconfig=True)
 		else:
-			imarray = self.instrument.ccdcamera.Image
+			imdata = self.acquireCameraImageData(repeatconfig=True)
+		imarray = imdata['image']
 		self.manualchecklock.release()
 		pow = imagefun.power(imarray, self.maskradius)
 		self.man_power = pow.astype(numpy.float32)
@@ -634,7 +608,6 @@ class Focuser(acquisition.Acquisition):
 				self.logger.error('Failed to acquire image, pausing...')
 				continue
 
-		self.endSameCorrection()
 		self.onManualCheckDone()
 		self.logger.info('Manual focus check completed')
 

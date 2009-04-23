@@ -22,7 +22,6 @@ import calibrationclient
 import copy
 from pyami import arraystats, imagefun, mrc
 import numpy
-import corrector
 import version
 
 default_batch = os.path.join(version.getInstalledLocation(),'upload_example.txt')
@@ -70,7 +69,7 @@ class ManualImageLoader(manualacquisition.ManualAcquisition):
 		try:
 			image = self.uploadedInfo['image']
 			scope = self.instrument.getData(leginondata.ScopeEMData)
-			camera = self.instrument.getData(leginondata.CameraEMData, image=False)
+			camera = self.instrument.getData(leginondata.CameraEMData)
 			imagedata = leginondata.CameraImageData(image=image, scope=scope, camera=camera)
 			imagedata['session'] = self.session
 		except Exception, e:

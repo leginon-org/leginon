@@ -86,7 +86,7 @@ class Calibrator(node.Node):
 			self.panel.acquisitionDone()
 			return
 		try:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData()
 		except Exception, e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()

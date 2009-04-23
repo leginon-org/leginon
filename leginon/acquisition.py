@@ -11,7 +11,6 @@ or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
 '''
 import targetwatcher
-import corrector
 import time
 import leginondata
 import event
@@ -169,7 +168,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.presetsclient = presets.PresetsClient(self)
 		self.navclient = navigator.NavigatorClient(self)
-		self.corclient = corrector.CorrectorClient(self)
 		self.doneevents = {}
 		self.onTarget = False
 		self.imagelistdata = None
@@ -556,17 +554,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## set correction channel
 		## in the future, may want this based on preset or something
 		if channel is None:
-			self.corclient.channel = 0
+			channel = 0
 		else:
-			self.corclient.channel = channel
+			channel = channel
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
 		self.startTimer('acquire getData')
 		correctimage = self.settings['correct image']
 		if correctimage:
-			imagedata = self.corclient.acquireCorrectedCameraImageData()
+			imagedata = self.acquireCorrectedCameraImageData(channel=channel)
 		else:
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
+			imagedata = self.acquireCameraImageData()
 		self.reportStatus('acquisition', 'image acquired')
 		self.stopTimer('acquire getData')
 		if imagedata is None:
@@ -580,7 +578,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, corrected=correctimage, pixels=pixels, pixeltype=pixeltype)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=self.imagelistdata, emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		imagedata['version'] = 0
 		## store EMData to DB to prevent referencing errors
 		self.publish(imagedata['scope'], database=True)
@@ -662,7 +660,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.reportStatus('output', 'Publishing image...')
 		self.startTimer('publish image')
-		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
+		if self.settings['save image']:
+			imagedata.insert(force=True)
+		self.publish(imagedata, pubevent=True)
 
 		## set up to handle done events
 		dataid = imagedata.dbid

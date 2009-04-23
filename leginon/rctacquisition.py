@@ -304,7 +304,7 @@ class RCTAcquisition(acquisition.Acquisition):
 				time.sleep(pausetime)
 			self.logger.info('Acquire intermediate tilted parent image')
 			#print 'acquire intertilt'
-			imagenew = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagenew = self.acquireCorrectedCameraImageData()
 			arraynew = numpy.asarray(imagenew['image'], dtype=numpy.float32)
 			if medfilt > 1:
 				arraynew = ndimage.median_filter(arraynew, size=medfilt)
@@ -600,7 +600,7 @@ class RCTAcquisition(acquisition.Acquisition):
 			return
 
 		try:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData()
 		except:
 			self.logger.error(errstr % 'unable to get corrected image')
 			return

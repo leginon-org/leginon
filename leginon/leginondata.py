@@ -142,7 +142,6 @@ camera_params = (
 	('offset', dict),
 	('exposure time', float),
 	('exposure type', str),
-	('image data', sinedon.newdict.MRCArrayType),
 	('inserted', bool),
 	('dump', bool),
 	('pixel size', dict),
@@ -566,6 +565,8 @@ class CameraImageData(ImageData):
 			('scope', ScopeEMData),
 			('camera', CameraEMData),
 			('correction channel', int),
+			('dark', DarkImageData),
+			('norm', NormImageData),
 		)
 	typemap = classmethod(typemap)
 
@@ -604,9 +605,6 @@ class CameraImageStatsData(InSessionData):
 			('stdev', float),
 		)
 	typemap = classmethod(typemap)
-
-class CorrectedCameraImageData(CameraImageData):
-	pass
 
 ## the camstate key is redundant (it's a subset of 'camera')
 ## but for now it helps to query the same way we used to
@@ -695,7 +693,6 @@ class AcquisitionImageData(PresetImageData):
 			('tilt series', TiltSeriesData),
 			('version', int),
 			('tiltnumber', int),
-			('corrected', int),
 		)
 	typemap = classmethod(typemap)
 

@@ -132,11 +132,10 @@ class DriftManager(watcher.Watcher):
 
 	def acquireImage(self, channel=0, correct=True):
 		self.startTimer('drift acquire')
-		self.instrument.setCorrectionChannel(channel)
 		if correct:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData(channel)
 		else:
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
+			imagedata = self.acquireCameraImageData()
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')

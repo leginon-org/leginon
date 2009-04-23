@@ -24,20 +24,8 @@ class Tomography(acquisition.Acquisition):
 	panelclass = gui.wx.tomography.Tomography.Panel
 	settingsclass = leginondata.TomographySettingsData
 
-	defaultsettings = {
-		'pause time': 2.5,
-		'move type': 'image shift',
-		'preset order': [],
-		'correct image': True,
-		'display image': True,
-		'save image': True,
-		'wait for process': False,
-		'wait for rejects': False,
-		'duplicate targets': False,
-		'duplicate target type': 'focus',
-		'iterations': 1,
-		'wait time': 0,
-		'adjust for drift': False,
+	defaultsettings = acquisition.Acquisition.defaultsettings
+	defaultsettings.update({
 		'tilt min': -60.0,
 		'tilt max': 60.0,
 		'tilt start': 0.0,
@@ -71,7 +59,7 @@ class Tomography(acquisition.Acquisition):
 		'use tilt': True,
 #		'wiener max tilt': 45,
 		'fit data points': 4,
-	}
+	})
 
 	def __init__(self, *args, **kwargs):
 		acquisition.Acquisition.__init__(self, *args, **kwargs)
@@ -231,7 +219,7 @@ class Tomography(acquisition.Acquisition):
 
 	def getPixelPosition(self, move_type, position=None):
 		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+		camera_data = self.instrument.getData(leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -246,7 +234,7 @@ class Tomography(acquisition.Acquisition):
 
 	def getParameterPosition(self, move_type, position=None):
 		scope_data = self.instrument.getData(leginondata.ScopeEMData)
-		camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+		camera_data = self.instrument.getData(leginondata.CameraEMData)
 		if position is None:
 			position = {'x': 0.0, 'y': 0.0}
 		else:
@@ -276,7 +264,7 @@ class Tomography(acquisition.Acquisition):
 	def getCalibrations(self, presetdata=None):
 		if presetdata is None:
 			scope_data = self.instrument.getData(leginondata.ScopeEMData)
-			camera_data = self.instrument.getData(leginondata.CameraEMData, image=False)
+			camera_data = self.instrument.getData(leginondata.CameraEMData)
 			tem = scope_data['tem']
 			ccd_camera = camera_data['ccdcamera']
 			high_tension = scope_data['high tension']
@@ -327,8 +315,7 @@ class Tomography(acquisition.Acquisition):
 			isoffset = self.getImageShiftOffset()
 			self.presetsclient.toScope(parentname)
 			self.setImageShiftOffset(isoffset)
-			self.instrument.setCorrectionChannel(0)
-			imagedata0 = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata0 = self.acquireCorrectedCameraImageData(0)
 
 		## tilt then return in slow increments
 		delta = math.radians(5.0)
@@ -348,8 +335,7 @@ class Tomography(acquisition.Acquisition):
 
 		if adjust:
 			## acquire parent preset image, final image
-			self.instrument.setCorrectionChannel(1)
-			imagedata1 = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata1 = self.acquireCorrectedCameraImageData(1)
 
 			## return to tomography preset
 			if emtarget['movetype'] == 'image shift':

@@ -9,7 +9,6 @@ import acquisition
 import node
 import leginondata
 import calibrationclient
-import corrector
 import threading
 import event
 import time
@@ -55,7 +54,6 @@ class BeamTiltImager(acquisition.Acquisition):
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.imageshiftcalclient = calibrationclient.ImageShiftCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
-		self.corclient = corrector.CorrectorClient(self)
 		self.ace2exe = self.getACE2Path()
 
 	def alignRotationCenter(self, defocus1, defocus2):
@@ -284,27 +282,6 @@ class BeamTiltImager(acquisition.Acquisition):
 
 	def endSameCorrection(self):
 		self.samecorrection = False
-
-	def acquireCorrectedImage(self):
-		if not self.samecorrection or (self.samecorrection and not self.correctargs):
-			## acquire image and scope/camera params
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
-			imarray = imagedata['image']
-			self.correctargs = {}
-			camdata = imagedata['camera']
-			self.correctargs['ccdcamera'] = camdata['ccdcamera']
-			corstate = leginondata.CorrectorCamstateData()
-			corstate['dimension'] = camdata['dimension']
-			corstate['offset'] = camdata['offset']
-			corstate['binning'] = camdata['binning']
-			self.correctargs['camstate'] = corstate
-			self.correctargs['scopedata'] = imagedata['scope']
-		else:
-			## acquire only raw image
-			imarray = self.instrument.ccdcamera.Image
-
-		corrected = self.corclient.correct(original=imarray, **self.correctargs)
-		return corrected
 
 	def navigate(self, xy):
 		clickrow = xy[1]

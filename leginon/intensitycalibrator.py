@@ -71,7 +71,7 @@ class IntensityCalibrator(calibrator.Calibrator):
 		print 'mean0,mean1', mean0, mean1
 
 	def acquire(self, intensity):
-		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		imagedata = self.acquireCorrectedCameraImageData()
 		self.setImage(imagedata['image'])
 		preset = self.presetsclient.getCurrentPreset()
 		acqimdata = leginondata.AcquisitionImageData(initializer=imagedata, session=self.session, preset=preset)

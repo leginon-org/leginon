@@ -25,12 +25,10 @@ class Proxy(object):
 	def __init__(self, objectservice, session=None, wxeventhandler=None):
 		self.tems = {}
 		self.ccdcameras = {}
-		self.imagecorrections = {}
 		self.tem = None
 		self.ccdcamera = None
 		self.camerasize = None
 		self.camerasizes = {}
-		self.imagecorrection = None
 		self.session = session
 		self.wxeventhandler = wxeventhandler
 		self.objectservice = objectservice
@@ -59,12 +57,6 @@ class Proxy(object):
 			if self.ccdcamera is None:
 				self.setCCDCamera(name)
 
-		if 'ImageCorrection' in types:
-			proxy = self.objectservice.getObjectProxy(nodename, name)
-			self.imagecorrections[name] = proxy
-			if self.imagecorrection is None:
-				self.setImageCorrection(name)
-
 	def onRemoveDescription(self, nodename, name):
 		if name in self.tems and self.tem is self.tems[name]:
 			self.setTEM(None)
@@ -77,10 +69,6 @@ class Proxy(object):
 			del self.camerasizes[name]
 		except KeyError:
 			pass
-
-		if name in self.imagecorrections:
-			if self.imagecorrection is self.imagecorrections[name]:
-				self.setImageCorrection(None)
 
 	def getTEM(self, temname):
 		try:
@@ -166,16 +154,6 @@ class Proxy(object):
 			raise RuntimeError('unable to get TEM hostname')
 		return instrumentdata
 
-	def getImageCorrectionName(self):
-		if self.imagecorrection is None:
-			return None
-		return self.imagecorrection._name
-
-	def getImageCorrectionNames(self):
-		ics = self.imagecorrections.keys()
-		ics.sort()
-		return ics
-
 	def setTEM(self, name):
 		if name is None:
 			self.tem = None
@@ -202,12 +180,6 @@ class Proxy(object):
 			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
-	def setImageCorrection(self, name):
-		if name is None:
-			self.imagecorrection = None
-		else:
-			self.imagecorrection = self.imagecorrections[name]
-
 	def getTEMParameter(self, temname, name):
 		for parameter, attr_name in parametermapping:
 			if parameter == name:
@@ -220,7 +192,7 @@ class Proxy(object):
 				return getattr(self.ccdcameras[ccdcameraname], attr_name)
 		raise ValueError
 
-	def getData(self, dataclass, image=True, temname=None, ccdcameraname=None):
+	def getData(self, dataclass, temname=None, ccdcameraname=None):
 		if issubclass(dataclass, leginondata.ScopeEMData):
 			if temname is None:
 				proxy = self.tem
@@ -237,18 +209,18 @@ class Proxy(object):
 					proxy = self.ccdcameras[ccdcameraname]
 				except KeyError:
 					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
-		elif issubclass(dataclass, leginondata.CorrectedCameraImageData):
-			if self.imagecorrection is None:
-				raise RuntimeError('no image correction set')
-			return self.imagecorrection.getImageData(self.getCCDCameraName())
 		elif issubclass(dataclass, leginondata.CameraImageData):
+			if ccdcameraname is None:
+				proxy = self.ccdcamera
+			else:
+				try:
+					proxy = self.ccdcameras[ccdcameraname]
+				except KeyError:
+					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
 			instance = dataclass()
 			instance['scope'] = self.getData(leginondata.ScopeEMData, temname=temname)
-			instance['camera'] = self.getData(leginondata.CameraEMData, image=image,
-																					ccdcameraname=ccdcameraname)
-			if image:
-				instance['image'] = instance['camera']['image data']
-				instance['camera']['image data'] = None
+			instance['camera'] = self.getData(leginondata.CameraEMData, ccdcameraname=ccdcameraname)
+			instance['image'] = proxy.Image
 			instance['session'] = self.session
 			return instance
 		if proxy is None:
@@ -258,8 +230,6 @@ class Proxy(object):
 		attributes = []
 		types = []
 		for key, attribute in parametermapping:
-			if not image and attribute == 'Image':
-				continue
 			if key not in instance:
 				continue
 			attributetypes = proxy.getAttributeTypes(attribute)
@@ -336,16 +306,6 @@ class Proxy(object):
 			except AttributeError:
 				pass
 
-	def setCorrectionChannel(self, channel, imagecorrection=None):
-		if imagecorrection is None:
-			proxy = self.imagecorrection
-		else:
-			try:
-				proxy = self.imagecorrections[imagecorrection]
-			except KeyError:
-				raise NotAvailableError('Image correction \'%s\' not available' % (imagecorrection,))
-		proxy.setChannel(channel)	
-
 class TEM(remotecall.Locker):
 	def getDatabaseType(self):
 		return 'TEM'
@@ -408,7 +368,6 @@ parametermapping = (
 	('offset', 'Offset'),
 	('exposure time', 'ExposureTime'),
 	('exposure type', 'ExposureType'),
-	('image data', 'Image'),
 	('inserted', 'Inserted'),
 	('pixel size', 'PixelSize'),
 	('energy filtered', 'EnergyFiltered'),

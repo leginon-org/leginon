@@ -348,14 +348,13 @@ class TransformManager(node.Node, TargetTransformer):
 		channel = int(oldimage['correction channel']==0)
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		targetdata = emtarget['target']
-		self.instrument.setCorrectionChannel(channel)
-		imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+		imagedata = self.acquireCorrectedCameraImageData(channel)
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, corrected=True, pixels=pixels, pixeltype=pixeltype)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		version = oldimage['version']+1
 		imagedata['version'] = version
 		## set the 'filename' value
@@ -398,7 +397,6 @@ class TransformManager(node.Node, TargetTransformer):
 		newimagedata['list'] = oldimagedata['list']
 		newimagedata['emtarget'] = oldimagedata['emtarget']
 		newimagedata['version'] = oldimagedata['version'] + 1
-		newimagedata['corrected'] = correct
 		dim = newimagedata['camera']['dimension']
 		newimagedata['pixels'] = dim['x'] * dim['y']
 		newimagedata['pixeltype'] = str(newimagedata['image'].dtype)
@@ -423,11 +421,10 @@ class TransformManager(node.Node, TargetTransformer):
 
 	def acquireImage(self, channel=0, correct=True):
 		self.startTimer('drift acquire')
-		self.instrument.setCorrectionChannel(channel)
 		if correct:
-			imagedata = self.instrument.getData(leginondata.CorrectedCameraImageData)
+			imagedata = self.acquireCorrectedCameraImageData(channel)
 		else:
-			imagedata = self.instrument.getData(leginondata.CameraImageData)
+			imagedata = self.acquireCameraImageData()
 		if imagedata is not None:
 			self.setImage(imagedata['image'], 'Image')
 		self.stopTimer('drift acquire')
