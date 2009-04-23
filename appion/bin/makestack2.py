@@ -38,7 +38,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		# make sure that images all have same pixel size:
 		# first get pixel size of first image:
 		if len(self.imgtree) == 0:
-			apDisplay.printWarning("No images were found")
+			apDisplay.printError("No images were found to process")
 			return
 		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		for imgdata in self.imgtree:
