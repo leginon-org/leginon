@@ -322,6 +322,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		apFile.removeStack(avgstack, warn=False)
 		searchstr = "part"+self.timestamp+"_ref0*.xmp"
 		files = glob.glob(searchstr)
+		if len(files) == 0:
+			apDisplay.printError("Xmipp did not run")
 		files.sort()
 		stack = []
 		for i in range(len(files)):
