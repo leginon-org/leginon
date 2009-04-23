@@ -938,7 +938,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 		$dbprojectid = getProjectFromExpId($expId);
 		$projectid = $_SESSION['projectId'] ? $_SESSION['projectId'] : "";
 		if ($dbprojectid != $projectid)
-			return "Database project id ($dbprojectid) does not match session project id ($projectid)";
+			return "project id from expId ($expId -> $dbprojectid) does not match project id from web browser ($projectid)";
 		$jobtext .= "updateAppionDB.py $jobid R $projectid\n\n";
 
 		// create virtual window for matlab images
