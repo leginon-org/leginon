@@ -1407,8 +1407,9 @@ class particledata {
 		//substack has no other parameter but oldstack reference
 		if ($stack_primary_array['REF|ApStackData|oldstack']) {
 			$r = array('stackId'=>$stackId);
-			$r = array_merge($r, $stack_primary_array);
 			$r = array_merge($r, $params[0]);
+			$r = array_merge($r, $stack_primary_array);
+
 			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];
 			//$r['bin'] = $params[0]['bin'];
 			//$r['boxSize'] = $params[0]['boxSize'];
