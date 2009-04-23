@@ -209,20 +209,6 @@ class Proxy(object):
 					proxy = self.ccdcameras[ccdcameraname]
 				except KeyError:
 					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
-		elif issubclass(dataclass, leginondata.CameraImageData):
-			if ccdcameraname is None:
-				proxy = self.ccdcamera
-			else:
-				try:
-					proxy = self.ccdcameras[ccdcameraname]
-				except KeyError:
-					raise NotAvailableError('CCD Camera \'%s\' not available' % ccdcameraname)
-			instance = dataclass()
-			instance['scope'] = self.getData(leginondata.ScopeEMData, temname=temname)
-			instance['camera'] = self.getData(leginondata.CameraEMData, ccdcameraname=ccdcameraname)
-			instance['image'] = proxy.Image
-			instance['session'] = self.session
-			return instance
 		if proxy is None:
 			raise ValueError('no proxy selected for this data class')
 		instance = dataclass()
