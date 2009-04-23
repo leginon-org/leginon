@@ -282,11 +282,11 @@ class DBDataKeeper(object):
 				raise Reconnect(e.args[-1])
 			raise InsertError(e.args[-1])
 
-	def flatInsert(self, newdata, force=False):
+	def flatInsert(self, newdata, force=False, skipinsert=False, fail=True):
 		dbname = dbconfig.getConfig(newdata.__module__)['db']
 		tablename = newdata.__class__.__name__
 		table = (dbname, tablename)
-		definition, formatedData = sqldict.dataSQLColumns(newdata)
+		definition, formatedData = sqldict.dataSQLColumns(newdata, fail)
 		## check for any new columns that have not been created
 		if table not in columns_created:
 			columns_created[table] = {}
@@ -302,6 +302,8 @@ class DBDataKeeper(object):
 		if create_table:
 			self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
+		if skipinsert is True:
+			return None
 		newid = myTable.insert([formatedData], force=force)
 		return newid
 

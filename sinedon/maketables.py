@@ -3,6 +3,7 @@
 
 import sys
 import sqldict
+import dbdatakeeper
 import inspect
 import _mysql_exceptions
 import sinedon
@@ -17,29 +18,6 @@ class DatabaseError(Exception):
 #=================
 columns_created = {}
 dbd = None
-
-#=================
-#=================
-#=================
-def flatInsert(newdata, force=False):
-	dbname = sinedon.getConfig(newdata.__module__)['db']
-	tablename = newdata.__class__.__name__
-	table = (dbname, tablename)
-	definition, formatedData = sqldict.dataSQLColumns(newdata)
-	## check for any new columns that have not been created
-	if table not in columns_created:
-		columns_created[table] = {}
-	fields = [d['Field'] for d in definition]
-	create_table = False
-	for field in fields:
-		if field not in columns_created[table]:
-			columns_created[table][field] = None
-			create_table = True
-	if create_table:
-		dbd.createSQLTable(table, definition)
-	myTable = dbd.Table(table)
-	#newid = myTable.insert([formatedData], force=force)
-	return
 
 #=================
 #=================
@@ -78,18 +56,20 @@ if __name__ == "__main__":
 	
 	# get module members
 	funcs = inspect.getmembers(tableData, inspect.isclass)
+	dbkeeper = dbdatakeeper.DBDataKeeper(**dbconf)
 
 	# parse members
 	for func in funcs:
 		# check if member is a class
+
 		if issubclass(func[1], Data):
 			a = func[1]()
-			print "=============\n", a, "\n"
+			#print "=============\n", a, "\n"
+			#print func
 			if not a:
 				print "Did not do "+str(func)
 			else:
-				flatInsert(a)
-				flatInsert(a)
+				dbkeeper.flatInsert(a, skipinsert=True, fail=False)
 
 
 

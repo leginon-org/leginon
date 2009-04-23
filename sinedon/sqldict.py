@@ -1434,7 +1434,7 @@ def subSQLColumns(value_dict, data_instance):
 
 	return columns, row
 
-def dataSQLColumns(data_instance):
+def dataSQLColumns(data_instance, fail=True):
 	columns = []
 	row = {}
 	# default columns
@@ -1471,7 +1471,11 @@ def dataSQLColumns(data_instance):
 			row.update(result[1])
 			continue
 
-		raise ValueError, value_type.__name__
+		if fail is True:
+			raise ValueError, value_type.__name__
+		else:
+			print "ERROR", value_type.__name__
+
 	return columns, row
 
 def type2column(key, value, value_type, parentdata):
