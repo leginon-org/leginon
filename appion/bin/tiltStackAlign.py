@@ -15,6 +15,7 @@ import apEMAN
 import apFile
 from apSpider import operations
 from apTilt import apTiltPair
+import apImagicFile
 import sinedon
 
 class tiltStackAlign(appionScript.AppionScript):
@@ -58,7 +59,7 @@ class tiltStackAlign(appionScript.AppionScript):
 		query1 = self.queryParticles(swap=False)
 		self.cursor.execute(query1)
 		results1 = self.cursor.fetchall()
-		print "Found "+str(len(results1))+" particle pairs in forward order"
+		apDisplay.printMsg("Found "+str(len(results1))+" particle pairs in forward order")
 		#if len(results1) < 2:
 		#	apDisplay.printError("Failed to find any particles")
 
@@ -66,7 +67,7 @@ class tiltStackAlign(appionScript.AppionScript):
 		query2 = self.queryParticles(swap=True)
 		self.cursor.execute(query2)
 		results2 = self.cursor.fetchall()
-		print "Found "+str(len(results2))+" particle pairs in reverse order"
+		apDisplay.printMsg("Found "+str(len(results2))+" particle pairs in reverse order")
 		#if len(results2) < 2:
 		#	apDisplay.printError("Failed to find any particles")
 
@@ -82,7 +83,7 @@ class tiltStackAlign(appionScript.AppionScript):
 			f.write(line)
 		f.close()
 
-		print "Found "+str(len(parttree))+" particle pairs"
+		apDisplay.printMsg("Writing "+str(len(parttree))+" particle pairs")
 		if len(parttree) < 2:
 			apDisplay.printError("Failed to find any particle pairs")
 
@@ -101,7 +102,7 @@ class tiltStackAlign(appionScript.AppionScript):
 			partdict['not'] = int(result[0])
 			partdict['tilt'] = int(result[1])
 			parttree.append(partdict)
-		apDisplay.printMsg("found "+str(len(parttree))+" particle pairs")
+		apDisplay.printMsg("Parsed "+str(len(parttree))+" particle pairs")
 		return parttree
 
 	#=====================
@@ -172,17 +173,11 @@ class tiltStackAlign(appionScript.AppionScript):
 		### untilted stack
 		self.notstackdata = apStack.getOnlyStackData(self.params['notstackid'])
 		notstackfile = os.path.join(self.notstackdata['path']['path'], self.notstackdata['name'])
-		newnotstack = os.path.join(self.params['rundir'], "notstack.hed")
-		if os.path.isfile(newnotstack):
-			apFile.removeStack(newnotstack)
 
 		### tilted stack
 		if not self.tiltstackdata:
 			self.tiltstackdata = apStack.getOnlyStackData(self.params['tiltstackid'])
 		tiltstackfile = os.path.join(self.tiltstackdata['path']['path'], self.tiltstackdata['name'])
-		newtiltstack = os.path.join(self.params['rundir'], "tiltstack.hed")
-		if os.path.isfile(newtiltstack):
-			apFile.removeStack(newtiltstack)
 
 		### make doc file of Euler angles
 		#eulerfile = self.makeEulerDoc(parttree)
@@ -191,24 +186,63 @@ class tiltStackAlign(appionScript.AppionScript):
 			apFile.removeFile(eulerfile)
 
 		count = 0
+		notstacklist = []
+		tiltstacklist = []
+		sizelimit = 2048
+		notbox = apImagicFile.getBoxsize(notstackfile)
+		tiltbox  = apImagicFile.getBoxsize(tiltstackfile)
+		tiltstacks = []
+		notstacks = []
 		for partdict in parttree:
 			count += 1
-			if count % 20 == 0:
+			### print friendly message
+			if count % 100 == 0:
 				backs = "\b\b\b\b\b\b\b\b"
 				sys.stderr.write(backs+backs+backs+backs)
 				sys.stderr.write(str(count)+" particles of "+str(len(parttree)))
-			### get particle numbers
-			emannotnum = partdict['not']-1
-			emantiltnum = partdict['tilt']-1
+			### save stacks to file to save memory
+			if count%sizelimit == 1:
+				if count > 1:
+					apDisplay.printMsg("Writing stacks to file")
+					t0 = time.time()
+					tiltname = os.path.join(self.params['rundir'], "tiltstack%d.hed"%(count))
+					apFile.removeStack(tiltname)
+					apImagicFile.writeImagic(tiltstacklist, tiltname, msg=False)
+					tiltstacks.append(tiltname)
+					apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t0))	
+					t0 = time.time()
+					notname = os.path.join(self.params['rundir'], "notstack%d.hed"%(count))
+					apFile.removeStack(notname)
+					apImagicFile.writeImagic(notstacklist, notname, msg=False)
+					notstacks.append(notname)
+					apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t0))	
+				### reset stacks
+				apDisplay.printMsg("Reset stacks in memory")
+				notstacklist = []
+				tiltstacklist = []
 			### write to Euler doc
 			self.appendEulerDoc(eulerfile, partdict['tilt'], count)
-			### untilted stack		
-			emancmd = "proc2d %s %s first=%d last=%d "%(notstackfile,newnotstack,emannotnum,emannotnum)
-			apEMAN.executeEmanCmd(emancmd, showcmd=False)
+			### untilted stack
+			notpartarray = apImagicFile.readSingleParticleFromStack(notstackfile, partdict['not'], notbox, False)
+			notstacklist.append(notpartarray)
 			### tilted stack
-			emancmd = "proc2d %s %s first=%d last=%d "%(tiltstackfile,newtiltstack,emantiltnum,emantiltnum)
-			apEMAN.executeEmanCmd(emancmd, showcmd=False)
-
+			tiltpartarray = apImagicFile.readSingleParticleFromStack(tiltstackfile, partdict['tilt'], tiltbox, False)
+			tiltstacklist.append(tiltpartarray)
+		### write remaining particles to stack
+		if len(notstacklist) > 0:
+			apDisplay.printMsg("Writing stacks to file")
+			t0 = time.time()
+			tiltname = os.path.join(self.params['rundir'], "tiltstack%d.hed"%(count))
+			apFile.removeStack(tiltname)
+			apImagicFile.writeImagic(tiltstacklist, tiltname, msg=False)
+			tiltstacks.append(tiltname)
+			apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t0))	
+			t0 = time.time()
+			notname = os.path.join(self.params['rundir'], "notstack%d.hed"%(count))
+			apFile.removeStack(notname)
+			apImagicFile.writeImagic(notstacklist, notname, msg=False)
+			notstacks.append(notname)
+			apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t0))	
 
 	#=====================
 	def start(self):
