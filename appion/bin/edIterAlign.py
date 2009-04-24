@@ -27,7 +27,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
 		self.parser.set_usage("Usage: %prog --stack=ID [ --num-part=# ]")
-		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
+		self.parser.add_option("-N", "--nparticles", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
 		self.parser.add_option("-s", "--stack", dest="stackid", type="int",
 			help="Stack database id", metavar="ID#")
@@ -41,22 +41,21 @@ class EdIterAlignScript(appionScript.AppionScript):
 			help="Bin images by factor", metavar="#")
 
 		### ed specific parameters
-		self.parser.add_option("--orientref", dest="orientref", 
+		self.parser.add_option("-o", "--orientref", dest="orientref", 
 			help="ID of orientation reference", metavar="8")
-		self.parser.add_option("--templates", dest="templatelist",
+		self.parser.add_option("-t", "--templates", dest="templatelist",
 			help="List of template IDs", metavar="2,5,6")
-		self.parser.add_option("-r", "--rad", "--part-rad", dest="partrad", type="float",
-			help="Radius of particle for alignment (in Angstroms)", metavar="#")
-		self.parser.add_option("-i", "--num-iter", dest="refiter", type="int", default=20,
-			help="Number of global iterations for ref-based classification", metavar="#")
-		self.parser.add_option("-f", "--fraln", "--freealigns", dest="freealigns", 
-		  type="int", default=3, help="Number of ref-free alignment rounds per class", 
-		  metavar="#")
 		self.parser.add_option("--invert-templates", dest="inverttemplates", default=False,
 			action="store_true", help="Invert the density of all the templates")
+		self.parser.add_option("-r", "--radius", dest="partrad", type="float",
+			help="Radius of particle for alignment (in Angstroms)", metavar="#")
+		self.parser.add_option("-i", "--iterations", dest="numiter", type="int", default=20,
+			help="Number of ref-based classification iterations", metavar="#")
+		self.parser.add_option("-f", "--freealigns", dest="freealigns", 
+			type="int", default=3, help="Number of ref-free alignment rounds per class", 
+			metavar="#")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
-
 
 	#=====================
 	def checkConflicts(self):
@@ -76,7 +75,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		if self.params['numpart'] is None:
 			self.params['numpart'] = apFile.numImagesInStack(stackfile)
 		if self.params['numpart'] > maxparticles:
-			apDisplay.printError("too many particles requested, max: " + str(maxparticles) + " requested: " + str(self.params['numpart']))
+			apDisplay.printError("too many particles requested, max: "+str(maxparticles)+" requested: "+str(self.params['numpart']))
 
 		if self.params['numpart'] > apFile.numImagesInStack(stackfile):
 			apDisplay.printError("trying to use more particles "+str(self.params['numpart'])
@@ -102,8 +101,8 @@ class EdIterAlignScript(appionScript.AppionScript):
 		if not self.orientref or type(self.orientref) != type([]):
 			apDisplay.printError("could not parse orientref="+self.params['orientref'])
 		if len(self.orientref) > 1:
-		  apDisplay.printMsg(str(len(self.orientref))+" orientation references provided. Only first will be used")
-		  self.orientref = self.orientref[0]
+			apDisplay.printMsg(str(len(self.orientref))+" orientation references provided. Only first will be used")
+		self.orientref = self.orientref[0]
 
 	#=====================
 	def setRunDir(self):
@@ -122,9 +121,183 @@ class EdIterAlignScript(appionScript.AppionScript):
 			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
 
 	#=====================
-	def insertEdIterRun(self, spiderstack, imagicstack, insert=False):
-		return None		
+	def insertEdIterRun(self, insert=False):
+		apDisplay.printMsg("committing results to DB")
 
+		### setup alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		uniquerun = alignrunq.query(results=1)
+		if uniquerun:
+			apDisplay.printError("Run name '"+runparams['runname']+"' and path already exist in database")
+
+		### setup ed-iter run
+		editrunq = appionData.ApEdIterRunData()
+		editrunq['runname'] = self.params['runname']
+		editrunq['radius'] = self.params['partrad']
+		editrunq['num_iter'] = self.params['numiter']
+		editrunq['freealigns'] = self.params['freealigns']
+		editrunq['invert_templs'] = self.params['inverttemplates']
+		editrunq['num_templs'] = self.params['numtemplate']
+		#editrunq['csym', int),
+		editrunq['run_seconds'] = self.params['runtime']
+
+		### finish alignment run
+		alignrunq = appionData.ApAlignRunData()
+		alignrunq['editerrun'] = editrunq
+		alignrunq['hidden'] = False
+		alignrunq['bin'] = self.params['bin']
+		alignrunq['hp_filt'] = self.params['highpass']
+		alignrunq['lp_filt'] = self.params['lowpass']
+		alignrunq['runname'] = self.params['runname']
+		alignrunq['description'] = self.params['description']
+		alignrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+
+		### setup aligned stack
+		alignstackq = appionData.ApAlignStackData()
+		alignstackq['alignrun'] = alignrunq
+		alignstackq['iteration'] = self.params['numiter']
+		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		#final averages
+		emancmd = "proc2d avg.spi avg.hed"
+		apEMAN.executeEmanCmd(emancmd)
+		alignstackq['refstackfile'] = ("avg.hed")
+		#aligned stack
+		#emancmd = "proc2d alignedstack.spi alignedstack.hed" ###aligned particle stack does not exit
+		#apEMAN.executeEmanCmd(emancmd)
+		#alignstackq['imagicfile'] = imagicstack
+		#averaged results
+		emancmd = "proc2d avg.spi average.mrc average"
+		apEMAN.executeEmanCmd(emancmd)
+		alignstackq['avgmrcfile'] = "average.mrc"
+		### check to make sure files exist
+		#imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
+		#if not os.path.isfile(imagicfile):
+		#	apDisplay.printError("could not find stack file: "+imagicfile)
+		#spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
+		#if not os.path.isfile(spiderfile):
+		#	apDisplay.printError("could not find stack file: "+spiderfile)
+		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile']) #averaged results
+		if not os.path.isfile(avgmrcfile):
+			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
+		refstackfile = os.path.join(self.params['rundir'], alignstackq['refstackfile']) #final averages
+		if not os.path.isfile(refstackfile):
+			apDisplay.printError("could not find reference stack file: "+refstackfile)
+		alignstackq['stack'] = self.stack['data']
+		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
+		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
+		alignstackq['description'] = self.params['description']
+		alignstackq['hidden'] = False
+		alignstackq['num_particles'] = self.params['numpart']
+		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
+
+		if insert is True:
+			alignstackq.insert() #alignstackq linked to alignrunq linked to editrunq
+
+		### setup data from each iteration
+		reflist = []
+		for j in range(self.params['numiter']):
+			iternum = j+1
+			for i in range(len(self.templatelist)):
+				refnum = i+1
+				templateid = self.templatelist[i]
+				refq = appionData.ApAlignReferenceData()
+				refq['refnum'] = refnum
+				refq['iteration'] = iternum
+				refq['template'] = apTemplate.getTemplateFromId(templateid)
+				refpath = os.path.abspath(os.path.join(self.params['rundir'], "templates"))
+				refq['path'] = appionData.ApPathData(path=refpath)
+				refq['alignrun'] = alignrunq
+				#refq['frc_resolution'] = #(float)
+				avgname = "r%02d/avg%03d"%(iternum,refnum)
+				varname = "r%02d/var%03d"%(iternum,refnum)
+				if os.path.isfile(avgname+".spi"):
+					emancmd = "proc2d "+avgname+".spi "+avgname+".mrc"
+					apEMAN.executeEmanCmd(emancmd)
+					refq['mrcfile'] = (avgname+".mrc")
+					emancmd = "proc2d "+varname+".spi "+varname+".mrc"
+					apEMAN.executeEmanCmd(emancmd)
+					refq['varmrcfile'] = (varname+".mrc")
+					if insert is True:
+						refq.insert()
+					if iternum == self.params['numiter']:
+						reflist.append(refq)
+				else:
+					reflist.append(None)
+
+		### insert particle data
+		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
+		partlist = alignment.readApshDocFile("apshdoc.spi","apshdoc.pickle")
+		for partdict in partlist:
+			alignpartq = appionData.ApAlignParticlesData()
+			alignpartq['ref'] = reflist[partdict['template']-1]
+			alignpartq['partnum'] = partdict['num']
+			alignpartq['alignstack'] = alignstackq
+			stackpartdata = apStack.getStackParticle(self.params['stackid'], partdict['num'])
+			alignpartq['stackpart'] = stackpartdata
+			alignpartq['rotation'] = partdict['rot']
+			alignpartq['xshift'] = partdict['xshift']
+			alignpartq['yshift'] = partdict['yshift']
+			alignpartq['mirror'] = partdict['mirror']
+			alignpartq['score'] = partdict['score']
+
+			if insert is True:
+				alignpartq.insert() #insert each particle
+		return
+
+	#=====================
+	def readApshDocFile(docfile, picklefile):
+		### eventually add this as apSpider.alignment.readAPSHDocFile()
+		apDisplay.printMsg("processing alignment doc file "+docfile)
+		if not os.path.isfile(docfile):
+			apDisplay.printError("Doc file, "+docfile+" does not exist")
+		docf = open(docfile, "r")
+		partlist = []
+		for line in docf:
+			data = line.strip().split()
+			if data[0][0] == ";":
+				continue
+			if len(data) < 15:
+				continue
+		"""
+		2 psi,
+		3 theta,
+		4 phi,
+		5 refNum,
+		6 particleNum,
+		7 sumRotation,
+		8 sumXshift,
+		9 sumYshift,
+		10 #refs,
+		11 anglechange,
+		12 cross-correlation,
+		13 currentRotation,
+		14 currentXshift,
+		15 currentYshift,
+		16 currentMirror
+		"""
+		partdict = {
+				'key': int(data[0]),
+				'regs': int(data[1]),
+				'psi': float(data[2]),
+				'theta': float(data[3]),
+				'phi': float(data[4]),
+				'template': int(abs( float(data[5]) )),
+				'num': int(data[6]),
+				'rot': wrap360(float(data[7])),
+				'xshift': float(data[8]),
+				'yshift': float(data[9]),
+				'mirror': alignment.checkMirror(float),
+				'score': float(data[12]),
+			}
+		partlist.append(partdict)
+		docf.close()
+		picklef = open(picklefile, "w")
+		cPickle.dump(partlist, picklef)
+		picklef.close()
+		return partlist
+		
 	#=====================
 	def createSpiderFile(self):
 		"""
@@ -191,7 +364,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
-		print 'Converting reference templates:', templateparams
+		print 'Converting reference templates:\n', templateparams
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
@@ -206,7 +379,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 		return templatestack
 
-	#===================== ### pick up from here ????###
+	#=====================
 	def createOrientationReference(self):
 		"""
 		convert spider orientation reference
@@ -227,7 +400,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
 		templateparams['pixlimit'] = None
-		print 'Converting orientation reference:', templateparams
+		print 'Converting orientation reference:\n', templateparams
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
@@ -290,7 +463,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 					lf.write("[dir].\n")
 				elif re.match("\[iter\]", line):
 					### number of ref-based iterations
-					lf.write("[iter]%d\n"%(self.params['refiter']))
+					lf.write("[iter]%d\n"%(self.params['numiter']))
 				elif re.match("\[apsrtest\]", line):
 					### number of ref-free subroutine iterations 
 					lf.write("[apsrtest]%d\n"%(self.params['freealigns']))
@@ -356,13 +529,14 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
 
-		### convert stack to imagic - there is no output stack, only class averages, variances, paricle lists and alignment parameters
+		###there is no output stack, only class averages, variances, paricle lists and alignment parameters
 		###imagicstack = self.convertSpiderStack(alignedstack)
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
+			apDisplay.printWarning("committing results to DB")
 			self.runtime = aligntime
-			#self.insertEdIterRun(alignedstack, imagicstack, insert=True)
+			self.insertEdIterRun(insert=False) ## insert=True
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
