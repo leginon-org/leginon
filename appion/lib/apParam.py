@@ -313,8 +313,8 @@ def getRgbFile(msg=True):
 	return " "
 
 def getNumProcessors(msg=True):
-	f = os.popen("cat /proc/cpuinfo | grep processor")
-	nproc = len(f.readlines())
+	f = subprocess.Popen("cat /proc/cpuinfo | grep processor", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	nproc = len(f.stdout.readlines())
 	if msg is True:
 		apDisplay.printMsg("Found "+str(nproc)+" processors on this machine")
 	return nproc

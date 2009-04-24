@@ -19,7 +19,7 @@ def createImageLinks(imagelist):
 		if not os.path.exists((imagename + '.mrc')):
 			command=('ln -s %s .' %  imgpath)
 			print command
-			os.system(command)
+			subprocess.Popen(command, shell=True)
 	return
 
 def createJPG(params,img):
@@ -67,7 +67,7 @@ def createJPG(params,img):
 	tclfile=open(tmpfile.name,'w')
 	tclfile.writelines(cmdlist)
 	tclfile.close()
-	f=os.popen('viewit '+tmpfile.name)
+	f=subprocess.Popen('viewit '+tmpfile.name, shell=True)
 	result=f.readlines()
 	f.close()
 
@@ -213,7 +213,7 @@ def findCrud(params,img):
 	tclfile=open(tmpfile.name,'w')
 	tclfile.writelines(cmdlist)
 	tclfile.close()
-	f=os.popen('viewit '+tmpfile.name)
+	f=subprocess.Popen('viewit '+tmpfile.name, shell=True)
 	result=f.readlines()
 	line=result[-2].split()
 	reject=line[1]
@@ -302,7 +302,7 @@ def findPeaks(params,img):
 	tclfile=open(tmpfile.name,'w')
 	tclfile.writelines(cmdlist)
 	tclfile.close()
-	f=os.popen('viewit '+tmpfile.name)
+	f=subprocess.Popen('viewit '+tmpfile.name, shell=True)
 	result=f.readlines()
 	if (params["thresh"]!=0):
 		line=result[-2].split()

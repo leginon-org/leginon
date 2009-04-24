@@ -14,6 +14,7 @@ import shutil
 import time
 import sys
 import re
+import subprocess
 import appionScript
 import appionData
 import apImagicFile
@@ -472,7 +473,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		### execute IMAGIC batch file
 		aligntime0 = time.time()
-		os.system("chmod 775 "+str(batchfile))
+		subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
 		os.chdir(self.params['rundir'])
 		#apIMAGIC.executeImagicBatchFile(batchfile)
 		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))

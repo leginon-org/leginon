@@ -14,6 +14,7 @@ import shutil
 import time
 import sys
 import re
+import subprocess
 import appionScript
 import appionData
 import apParam
@@ -228,7 +229,7 @@ class imagicClusterScript(appionScript.AppionScript):
 
 			### execute IMAGIC batch file
 			clustertime0 = time.time()
-			os.system("chmod 775 "+str(batchfile))
+			subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
 			apIMAGIC.executeImagicBatchFile(batchfile)
 			logfile = open(os.path.join(self.params['rundir'], "imagicMSAcluster_classes_"+str(clusternumber)+".log"))
 			loglines = logfile.readlines()

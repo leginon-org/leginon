@@ -13,6 +13,7 @@ import os
 import time
 import sys
 import re
+import subprocess
 import appionScript
 import appionData
 
@@ -504,7 +505,7 @@ class imagic3d0Script(appionScript.AppionScript):
 
 	                ### execute batch file that was created
 			time3d0 = time.time()
-	                os.system('chmod 755 '+filename)
+	                subprocess.Popen('chmod 755 '+filename, shell=True)
 			apIMAGIC.executeImagicBatchFile(filename)
 			logfile = open(os.path.join(self.params['rundir'], "imagicCreate3d0.log"))
 			loglines = logfile.readlines()

@@ -5,6 +5,7 @@ import EMAN
 import shutil
 import math
 import string
+import subprocess
 from Numeric import *
 from subprocess import call
 
@@ -111,7 +112,7 @@ if __name__== '__main__':
 		#would like to use os functions for removal but doesn't work
 		#os.rmdir(params['corandir'])
 		try:
-			os.system('rm -r %s' % params['corandir'])
+			subprocess.Popen('rm -r %s' % params['corandir'], shell=True)
 		except:
 			pass
 			
@@ -120,7 +121,7 @@ if __name__== '__main__':
 			time.sleep(3)
 			if os.path.exists(params['corandir']):
 				try:
-					os.system('rm -r %s' % params['corandir'])
+					subprocess.Popen('rm -r %s' % params['corandir'], shell=True)
 				except:
 					pass
 				
@@ -133,9 +134,9 @@ if __name__== '__main__':
 	shutil.copy('proj.hed',os.path.join(params['corandir'],'proj.hed'))
 	shutil.copy('proj.img',os.path.join(params['corandir'],'proj.img'))
 	os.chdir(params['corandir'])
-	os.system('tar xf %s' % classfile)
-	os.system('ln -s ../start.hed .')
-	os.system('ln -s ../start.img .')
+	subprocess.Popen('tar xf %s' % classfile, shell=True)
+	subprocess.Popen('ln -s ../start.hed .', shell=True)
+	subprocess.Popen('ln -s ../start.img .', shell=True)
 
 	clslist=glob.glob('cls*.lst')
 	projections=EMAN.readImages('proj.hed',-1,-1,0)
@@ -196,7 +197,7 @@ if __name__== '__main__':
 			command='clstoaligned.py cls_even.lst'			
 
 		print command
-		os.system(command)
+		subprocess.Popen(command, shell=True)
 		
 		#set up cls dir
 		clsdir=cls.split('.')[0]+'.dir'
@@ -216,7 +217,7 @@ if __name__== '__main__':
 				D[i,j] = cc(alignedImgs[i],alignedImgs[j])
 				
 
-		os.system('rm classes_avg.*')
+		subprocess.Popen('rm classes_avg.*', shell=True)
 		os.chdir(clsdir)
 				
 
@@ -250,7 +251,7 @@ if __name__== '__main__':
 
 		str1 = 'subClassAvgs'
 		if os.path.exists(str1):
-			os.system('rm -r %s' % str1)
+			subprocess.Popen('rm -r %s' % str1, shell=True)
 		else:
 			pass
 		os.mkdir(str1)
@@ -265,8 +266,8 @@ if __name__== '__main__':
 			C.append(int(a[i]))
 			E[C[i]-1].append(i)
 		
-		os.system('rm subclasses_avg.*')
-		os.system('rm tempClsAvg.*')		
+		subprocess.Popen('rm subclasses_avg.*', shell=True)
+		subprocess.Popen('rm tempClsAvg.*', shell=True)		
 		k=0
 		for i in range(0,len(E)):
 			if len(E[i])==0:
@@ -276,7 +277,7 @@ if __name__== '__main__':
 				for j in range(0,len(E[i])):
 					f1.write('%d aligned.spi clusterCenterImgNum%d\n' % (E[i][j], i))
 				f1.close()
-				os.system('proc2d aligned.spi tempClsAvg.hed list=%s/subcls%02d.lst mask=%d average edgenorm' % (str1,k,params['mask']))
+				subprocess.Popen('proc2d aligned.spi tempClsAvg.hed list=%s/subcls%02d.lst mask=%d average edgenorm' % (str1,k,params['mask']), shell=True)
 				k=k+1
 				
 		clsAvgs = EMAN.readImages('tempClsAvg.hed',-1,-1,0)
@@ -293,8 +294,8 @@ if __name__== '__main__':
 
 		#Determine best averages
 
-		os.system('rm tempClsAvg.*')		
-		os.system('proc2d %s/aligned.spi tempClsAvg.hed mask=%d average edgenorm' % (clsdir, params['mask']))
+		subprocess.Popen('rm tempClsAvg.*', shell=True)		
+		subprocess.Popen('proc2d %s/aligned.spi tempClsAvg.hed mask=%d average edgenorm' % (clsdir, params['mask']), shell=True)
 		class_avg = EMAN.readImages('tempClsAvg.hed',-1,-1,0)
 
 		avgname=os.path.join(clsdir,'subclasses_avg.hed')
@@ -333,8 +334,8 @@ if __name__== '__main__':
 			fw.writelines(Ptcls)
 			fw.close()
 
-			os.system('rm mergedClsAvg.spi')
-			os.system('proc2d %s/aligned.spi mergedClsAvg.spi list=mergeClasses.lst mask=%d average' % (clsdir, params['mask']))
+			subprocess.Popen('rm mergedClsAvg.spi', shell=True)
+			subprocess.Popen('proc2d %s/aligned.spi mergedClsAvg.spi list=mergeClasses.lst mask=%d average' % (clsdir, params['mask']), shell=True)
 			mergedavg=EMAN.readImages('mergedClsAvg.spi',-1,-1,0)
 
 			mergedavg[0].setNImg(len(Ptcls))
@@ -359,30 +360,30 @@ if __name__== '__main__':
 	else:
 		make3dcommand='make3d goodavgs.hed out=threed.%d.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['iter'], params['mask'], params['sym'], pad, params['hard'])
 	print make3dcommand
-	os.system(make3dcommand)
+	subprocess.Popen(make3dcommand, shell=True)
 	proc3dcommand='proc3d threed.%d.mrc threed.%da.mrc mask=%d norm' % (params['iter'],params['iter'],params['mask'])
 	print proc3dcommand
-	os.system(proc3dcommand)
+	subprocess.Popen(proc3dcommand, shell=True)
 	if params['findResolution']=='no':
 		#copy the resulting class average images to the main recon directory
-		os.system('cp threed.%da.mrc ../.'%(params['iter']))
-		os.system('cp goodavgs.hed ../classes_msgp.%d.hed' %(params['iter']))
-		os.system('cp goodavgs.img ../classes_msgp.%d.img' %(params['iter']))
+		subprocess.Popen('cp threed.%da.mrc ../.'%(params['iter']), shell=True)
+		subprocess.Popen('cp goodavgs.hed ../classes_msgp.%d.hed' %(params['iter']), shell=True)
+		subprocess.Popen('cp goodavgs.img ../classes_msgp.%d.img' %(params['iter']), shell=True)
 		#link msgp result as the final result for this iteration
 		rmcommand='rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
-		os.system(rmcommand)
+		subprocess.Popen(rmcommand, shell=True)
 		lncommand='ln -s classes_msgp.%d.hed ../classes.%d.hed' % (params['iter'], params['iter'])
-		os.system(lncommand)
+		subprocess.Popen(lncommand, shell=True)
 		lncommand='ln -s classes_msgp.%d.img ../classes.%d.img' % (params['iter'], params['iter'])
-		os.system(lncommand)
+		subprocess.Popen(lncommand, shell=True)
 	elif params['findResolution']=='odd':
-		os.system('cp threed.%da.mrc ../threed.%da.o.mrc' %(params['iter'], params['iter']))
+		subprocess.Popen('cp threed.%da.mrc ../threed.%da.o.mrc' %(params['iter'], params['iter']), shell=True)
 	elif params['findResolution']=='even':
-		os.system('cp threed.%da.mrc ../threed.%da.e.mrc' %(params['iter'], params['iter']))
-		os.system('proc3d threed.%da.mrc ../threed.%da.o.mrc fsc=../corEO%d.fsc.dat' %(params['iter'], params['iter'], params['iter']))
+		subprocess.Popen('cp threed.%da.mrc ../threed.%da.e.mrc' %(params['iter'], params['iter']), shell=True)
+		subprocess.Popen('proc3d threed.%da.mrc ../threed.%da.o.mrc fsc=../corEO%d.fsc.dat' %(params['iter'], params['iter'], params['iter']), shell=True)
 
 	#replace the old cls*.lst with the new extended one
-	os.system('tar cvzf %s %s' % (newclassfile,"cls*.lst.new"))
-	os.system('cp %s ../%s' %(newclassfile,classfile))
+	subprocess.Popen('tar cvzf %s %s' % (newclassfile,"cls*.lst.new"), shell=True)
+	subprocess.Popen('cp %s ../%s' %(newclassfile,classfile), shell=True)
 
 	print "Done!"

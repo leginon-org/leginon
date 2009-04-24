@@ -7,6 +7,7 @@ import time
 import glob
 import shutil
 import math
+import subprocess
 import leginondata
 import apXml
 import apParam
@@ -513,9 +514,9 @@ def executeSpiderCmd(spidercmd, verbose=True):
 	sys.stderr.write("SPIDER: "+spidercmd+"\n")
 	try:
 		if verbose is False:
-			os.popen(spidercmd)
+			subprocess.Popen(spidercmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 		else:
-			os.system(spidercmd)
+			subprocess.Popen(spidercmd, shell=True)
 	except:
 		apDisplay.printError("could not run spider command: "+spidercmd)
 

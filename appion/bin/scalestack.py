@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys
+import subprocess
 import appionData
 import apStack
 
@@ -14,7 +15,7 @@ def scaleStack(stackdata,params):
 		
 	bin=params['bin']
 	command=('proc2d %s %s shrink=%d' % (origpath,newstackpath,bin))
-	os.system(command)
+	subprocess.Popen(command, shell=True)
 	return
 
 def commitScaledStack(stackdata,params):

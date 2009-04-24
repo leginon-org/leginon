@@ -5,6 +5,7 @@ import operator
 import EMAN
 import shutil
 import math
+import subprocess
 import string
 import re
 import time
@@ -15,7 +16,7 @@ clslist=glob.glob('cls*.lst')
 
 #def getPBSTasknum(outdir):
 #	outfile = os.path.join(outdir,'PBSTASKNUM.txt')
-#	os.system("pbsdsh -n 0 sh -c 'echo $PBS_TASKNUM > %s'" % outfile)
+#	subprocess.Popen("pbsdsh -n 0 sh -c 'echo $PBS_TASKNUM > %s'" % outfile, shell=True)
 #	f = open(outfile)
 #	tasknum=f.readlines()[0]
 #	f.close()
@@ -84,9 +85,9 @@ if __name__== '__main__':
 	shutil.copy('proj.hed',os.path.join(params['corandir'],'proj.hed'))
 	shutil.copy('proj.img',os.path.join(params['corandir'],'proj.img'))
 	os.chdir(params['corandir'])
-	os.system('tar xf %s' % classfile)
-	os.system('ln -s ../start.hed .')
-	os.system('ln -s ../start.img .')
+	subprocess.Popen(('tar xf %s' % classfile), shell=True)
+	subprocess.Popen('ln -s ../start.hed .', shell=True)
+	subprocess.Popen('ln -s ../start.img .', shell=True)
 	
 	#Loop through classes and prepare for spider
 	clslist=glob.glob('cls*.lst')
@@ -131,7 +132,7 @@ if __name__== '__main__':
 				spnum+=1
 			cscript.close()
 			os.chmod("coranscript.csh",0755)
-			os.system('mpiexec --app '+coranscript)
+			subprocess.Popen('mpiexec --app '+coranscript, shell=True)
 			time.sleep(2)
 			## remove spider files after completed
 			for file in glob.glob('spider.*.csh'):
@@ -150,7 +151,8 @@ if __name__== '__main__':
 				spijobfile='coranfor'+cls.split('.')[0]+'.bat'
 				print "WARNING!!! rerunning "+spijobfile
 				if os.path.exists(spijobfile):
-					os.system("spider bat/spi @%s\n" % spijobfile.split('.')[0])
+					#f = open("spider.log", "a")
+					subprocess.Popen("spider bat/spi @%s\n" % spijobfile.split('.')[0], shell=True)
 	else:
 		for cls in clslist:
 		## create SPIDER batch file and run coran	
@@ -294,54 +296,54 @@ if __name__== '__main__':
 
 	# save previous model
 	mvcommand='mv ../threed.%d.mrc ../threed.%d.old.mrc' % (params['iter'],params['iter'])
-	os.system(mvcommand)
+	subprocess.Popen(mvcommand, shell=True)
 	mvcommand='mv ../threed.%da.mrc ../threed.%da.old.mrc' % (params['iter'],params['iter'])
-	os.system(mvcommand)
+	subprocess.Popen(mvcommand, shell=True)
 	
 	# create 3d model:
 	make3dcommand='make3d goodavgs.hed out=threed.%d.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['iter'], params['mask'], params['sym'], pad, params['hard'])
 	apEMAN.writeEMANTime('../refine.log', make3dcommand)
 	print make3dcommand
-	os.system(make3dcommand)
+	subprocess.Popen(make3dcommand, shell=True)
 	proc3dcommand='proc3d threed.%d.mrc ../threed.%da.mrc mask=%d norm' % (params['iter'],params['iter'],params['mask'])
 	apEMAN.writeEMANTime('../refine.log', proc3dcommand)
 	print proc3dcommand
-	os.system(proc3dcommand)
+	subprocess.Popen(proc3dcommand, shell=True)
 
 	if params['eotest'] is True:
 		# create even 3d model:
 		make3dcommand='make3d goodavgs.even.hed out=threed.te.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['mask'], params['sym'], pad, params['hard'])
 		apEMAN.writeEMANTime('../refine.log', make3dcommand)
 		print make3dcommand
-		os.system(make3dcommand)
+		subprocess.Popen(make3dcommand, shell=True)
 
 		# create odd 3d model:
 		make3dcommand='make3d goodavgs.odd.hed out=threed.to.mrc mask=%d sym=%s pad=%d mode=2 hard=%d' % (params['mask'], params['sym'], pad, params['hard'])
 		apEMAN.writeEMANTime('../refine.log', make3dcommand)
 		print make3dcommand
-		os.system(make3dcommand)
+		subprocess.Popen(make3dcommand, shell=True)
 	
 		# calculate fsc for even/odd models:
 		fsccommand='proc3d threed.te.mrc threed.to.mrc fsc=../fsc.eotest.%d' % params['iter']
 		apEMAN.writeEMANTime('../refine.log', fsccommand)
 		print fsccommand
-		os.system(fsccommand)
+		subprocess.Popen(fsccommand, shell=True)
 	
 	mvcommand='mv goodavgs.hed ../classes_coran.%d.hed' % params['iter']
-	os.system(mvcommand)
+	subprocess.Popen(mvcommand, shell=True)
 	mvcommand='mv goodavgs.img ../classes_coran.%d.img' % params['iter']
-	os.system(mvcommand)
+	subprocess.Popen(mvcommand, shell=True)
 	rmcommand='rm -f ../classes.%d.hed ../classes.%d.img' % (params['iter'], params['iter'])
-	os.system(rmcommand)
+	subprocess.Popen(rmcommand, shell=True)
 	lncommand='ln -s classes_coran.%d.hed ../classes.%d.hed' % (params['iter'], params['iter'])
-	os.system(lncommand)
+	subprocess.Popen(lncommand, shell=True)
 	lncommand='ln -s classes_coran.%d.img ../classes.%d.img' % (params['iter'], params['iter'])
-	os.system(lncommand)
+	subprocess.Popen(lncommand, shell=True)
 
 	print "updating %s" % classfile
-	os.system('tar -cvf %s cls*.lst' % classfile)
+	subprocess.Popen(('tar -cvf %s cls*.lst' % classfile), shell=True)
 	mvcommand='mv %s ../%s' % (classfile,classfile)
-	os.system(mvcommand)
+	subprocess.Popen(mvcommand, shell=True)
 	
 	
 	print "Done!"

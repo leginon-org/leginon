@@ -63,7 +63,7 @@ class SpiderSession:
 		if projext[0] == '.': self.projext = projext[1:]
 
 		### Start spider process, initialize with some MD commands.
-		#self.spiderin = os.popen(self.spiderexec, 'w')
+		#self.spiderin = open(self.spiderexec.stdin, 'w')
 		self.logf = open("spider.log", "a")
 		self.starttime = time.time()
 		self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 

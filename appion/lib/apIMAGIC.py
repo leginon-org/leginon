@@ -9,7 +9,7 @@ def executeImagicBatchFile(filename, verbose=False, logfile=None):
         """
         executes an IMAGIC batch file in a controlled fashion
         """
-        os.system("chmod 775 "+filename)
+        subprocess.Popen("chmod 775 "+filename, shell=True)
 	path = os.path.dirname(filename)
 	os.chdir(path)
 	waited = False

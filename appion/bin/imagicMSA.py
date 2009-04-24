@@ -14,6 +14,7 @@ import shutil
 import time
 import sys
 import re
+import subprocess
 import appionScript
 import appionData
 import apParam
@@ -255,7 +256,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		filename = self.createImagicBatchFile()
 		### execute batch file that was created
 		aligntime = time.time()
-		os.system('chmod 775 '+filename)
+		subprocess.Popen('chmod 775 '+filename, shell=True)
 		apIMAGIC.executeImagicBatchFile(filename)
 		logfile = open(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
 		loglines = logfile.readlines()

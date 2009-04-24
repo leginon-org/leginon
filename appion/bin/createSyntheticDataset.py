@@ -382,7 +382,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 
 		subdir = os.path.dirname(substack)
 		syscmd = "rm -f "+subdir+"/substack*"
-		os.system(syscmd)
+		subprocess.Popen(syscmd, shell=True)
 		apDisplay.printColor("finished breaking stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
 
 		return self.partlistdocfile

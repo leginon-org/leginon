@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys, os, glob
+import subprocess
 import shutil
 import apParam
 import apStack
@@ -7,7 +8,6 @@ import apVolume
 import apCtf
 from pyami import mrc
 import threading
-import glob
 import apImagicFile
 import appionScript
 import apProject
@@ -246,14 +246,14 @@ class frealignJob(appionScript.AppionScript):
 		createFrealignJob(params, combinejobname, 0, combinedparams, params['outpar'], params['first'], params['last'], norecon=False)
 		command='frealign < ' + combinejobname
 		print 'command is',command
-		os.system(command)	
+		subprocess.Popen(command, shell=True)	
 
 	def runSingle(params):
 		jobname='frealign.job'
 		createFrealignJob(params, jobname)
 		command='freaalign < ' + jobname
 		print 'command is',command
-		os.system(command)
+		subprocess.Popen(command, shell=True)
 		
 	def start(self):
 		# if using parameters from previous reconstruction

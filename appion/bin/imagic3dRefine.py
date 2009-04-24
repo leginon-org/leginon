@@ -18,6 +18,7 @@ import sys
 import re
 import time
 import shutil
+import subprocess
 import appionScript
 import appionData
 
@@ -587,7 +588,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			
 			### execute batch file that was created
 			time3dRefine = time.time()
-			os.system('chmod 755 '+batchfile)
+			subprocess.Popen('chmod 755 '+batchfile, shell=True)
 			apIMAGIC.executeImagicBatchFile(batchfile)
 			logfile = open(os.path.join(self.params['rundir'], "imagic3dRefine_"+str(self.params['itn'])+".log"))
 			loglines = logfile.readlines()
