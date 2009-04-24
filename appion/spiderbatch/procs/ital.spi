@@ -74,10 +74,10 @@ DO LB4 x14=1,x23 ;for each iteration of multi-reference alignment
   [dir]/r{**x14}/alnavdoc
   IF(x99.eq.1)THEN
     VM
-    echo '____ Ref-Alignment Iteration '{**x14}' was already completed ____'
+    echo '____ Ref-Classification Iteration '{**x14}' was already completed ____'
   ELSE
     VM
-    echo '____ Ref-Alignment Iteration '{**x14}' ____'
+    echo '____ Ref-Classification Iteration '{**x14}' ____'
     
     @refnm[x20]
     [pcllist]
@@ -283,8 +283,8 @@ DO LB5 x15=1,x21 ;for each reference class
   _11@******
   [dir]/r{**x23}/grp{***x22} ;pcllist
   A
-  [dir]/avg{***x22}
-  [dir]/var{***x22}
+  [dir]/avg@{***x22}
+  [dir]/var@{***x22}
 
   DE
   _11
@@ -293,5 +293,13 @@ UD ICE
 [dir]/r{**x23}/grp_count
 DE
 [dir]/apshangles_tmp
+
+DOC COMBINE
+[dir]/apshsrt***
+[dir]/r{**x23}/grp_count
+[dir]/apshdoc
+
+VM
+rm -f [dir]/apshsrt*.$DATEXT
 
 EN D
