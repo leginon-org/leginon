@@ -463,6 +463,7 @@ function jobForm($extra=false) {
 	echo "<option>Import parameters</option>\n";
 	echo "<option value='groel1'>GroEL with 10,000+ particles</option>\n";
 	echo "<option value='virusgood'>Icos Virus with good starting model</option>\n";
+	echo "<option value='asymm'>Mostly asymmetric particle</option>\n";
 	echo "<option value=''>------------------------------</option>\n";
 	echo $ropt;
 	echo "</select>\n";
@@ -478,6 +479,7 @@ function jobForm($extra=false) {
 	// set number of iterations if importing:
 	if ($_POST['import']=='groel1') $numiters=20;
 	elseif ($_POST['import']=='virusgood') $numiters=14;
+	elseif ($_POST['import']=='asymm') $numiters=9;
 	elseif (is_numeric($_POST['import'])) {
 		$iterinfo = $particle->getIterationInfo($_POST['import']);
 		// get initial model info
@@ -524,6 +526,7 @@ function jobForm($extra=false) {
 			$hard='25';
 			$classkeep='0.8';
 			$median = $_POST['median1']=='on' ? 'CHECKED' : '';
+			$refine = $_POST['refine1']=='on' ? 'CHECKED' : '';
 			$coran = $_POST['coran1']=='on' ? 'CHECKED' : '';
 			$phasecls='CHECKED';
 			$eotest='CHECKED';
@@ -543,7 +546,9 @@ function jobForm($extra=false) {
 			$mask=($box/2)-2;
 			$hard='25';
 			$classkeep='0.8';
-			$median='CHECKED';
+			$median = $_POST['median1']=='on' ? 'CHECKED' : '';
+			$refine = $_POST['refine1']=='on' ? 'CHECKED' : '';
+			$coran = $_POST['coran1']=='on' ? 'CHECKED' : '';
 			$phasecls='CHECKED';
 			$eotest='CHECKED';
 			$sym=$modsym;
@@ -557,6 +562,27 @@ function jobForm($extra=false) {
 			else { 
 				$classiter=3;
 				$ang=0.8;
+				$refine='CHECKED';
+			}
+		}
+		elseif ($_POST['import']=='asymm') {
+			// values that don't change:
+			$mask=($box/2)-2;
+			$hard='25';
+			$classkeep='0.8';
+			$phasecls='CHECKED';
+			$median = $_POST['median1']=='on' ? 'CHECKED' : '';
+			$refine = $_POST['refine1']=='on' ? 'CHECKED' : '';
+			$coran = $_POST['coran1']=='on' ? 'CHECKED' : '';
+			$eotest='CHECKED';
+			$sym=$modsym;
+			$classiter=((($i) % 3) < 1) ? 3 : 8;
+			if ($i <= 3)
+				$ang=10;
+			elseif ($i <= 6)
+				$ang=8;
+			elseif ($i <= 9) {
+				$ang=6;
 				$refine='CHECKED';
 			}
 		}
