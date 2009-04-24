@@ -193,33 +193,40 @@ class tiltStackAlign(appionScript.AppionScript):
 		tiltbox  = apImagicFile.getBoxsize(tiltstackfile)
 		tiltstacks = []
 		notstacks = []
+		t0 = time.time()
 		for partdict in parttree:
-			count += 1
 			### print friendly message
 			if count % 100 == 0:
-				backs = "\b\b\b\b\b\b\b\b"
+				backs = "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 				sys.stderr.write(backs+backs+backs+backs)
-				sys.stderr.write(str(count)+" particles of "+str(len(parttree)))
+				if count > sizelimit:
+					esttime = (len(parttree)/float(count)-1.0)*(time.time()-t0)
+					sys.stderr.write(str(count)+" particles of "+str(len(parttree))
+						+", "+apDisplay.timeString(esttime)+" remaining")	
+				else:
+					sys.stderr.write(str(count)+" particles of "+str(len(parttree)))
 			### save stacks to file to save memory
-			if count%sizelimit == 1:
+			if count%sizelimit == 0:
 				if count > 1:
 					apDisplay.printMsg("Writing stacks to file")
-					t0 = time.time()
+					t1 = time.time()
 					tiltname = os.path.join(self.params['rundir'], "tiltstack%d.hed"%(count))
 					apFile.removeStack(tiltname)
 					apImagicFile.writeImagic(tiltstacklist, tiltname, msg=False)
 					tiltstacks.append(tiltname)
-					apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t0))	
-					t0 = time.time()
+					apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t1))	
+					t1 = time.time()
 					notname = os.path.join(self.params['rundir'], "notstack%d.hed"%(count))
 					apFile.removeStack(notname)
 					apImagicFile.writeImagic(notstacklist, notname, msg=False)
 					notstacks.append(notname)
-					apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t0))	
+					apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t1))
 				### reset stacks
 				apDisplay.printMsg("Reset stacks in memory")
 				notstacklist = []
 				tiltstacklist = []
+			### increment count
+			count += 1
 			### write to Euler doc
 			self.appendEulerDoc(eulerfile, partdict['tilt'], count)
 			### untilted stack
@@ -231,18 +238,18 @@ class tiltStackAlign(appionScript.AppionScript):
 		### write remaining particles to stack
 		if len(notstacklist) > 0:
 			apDisplay.printMsg("Writing stacks to file")
-			t0 = time.time()
+			t1 = time.time()
 			tiltname = os.path.join(self.params['rundir'], "tiltstack%d.hed"%(count))
 			apFile.removeStack(tiltname)
 			apImagicFile.writeImagic(tiltstacklist, tiltname, msg=False)
 			tiltstacks.append(tiltname)
-			apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t0))	
-			t0 = time.time()
+			apDisplay.printMsg("finished tilted stack in "+apDisplay.timeString(time.time()-t1))	
+			t1 = time.time()
 			notname = os.path.join(self.params['rundir'], "notstack%d.hed"%(count))
 			apFile.removeStack(notname)
 			apImagicFile.writeImagic(notstacklist, notname, msg=False)
 			notstacks.append(notname)
-			apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t0))	
+			apDisplay.printMsg("finished untilted stack in "+apDisplay.timeString(time.time()-t1))	
 
 	#=====================
 	def start(self):
