@@ -68,9 +68,8 @@ class Corrector(node.Node):
 		plan = self.retrieveCorrectorPlan(cameradata)
 		return plan
 
-	def acquireDark(self):
-		channels = self.settings['channels']
-		for channel in range(channels):
+	def acquireDark(self, channels):
+		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='dark', channel=channel)
 			except Exception, e:
@@ -82,9 +81,8 @@ class Corrector(node.Node):
 				self.beep()
 		self.panel.acquisitionDone()
 
-	def acquireBright(self):
-		channels = self.settings['channels']
-		for channel in range(channels):
+	def acquireBright(self, channels):
+		for channel in channels:
 			try:
 				imagedata = self.acquireReference(type='bright', channel=channel)
 			except Exception, e:
@@ -114,21 +112,20 @@ class Corrector(node.Node):
 		self.panel.acquisitionDone()
 		self.stopTimer('acquireRaw')
 
-	def acquireCorrected(self):
-		self.startTimer('acquireCorrected')
-		self.setTargets([], 'Bad_Region', block=False)
-		self.startTimer('set ccd')
-		self.instrument.ccdcamera.Settings = self.settings['camera settings']
-		self.stopTimer('set ccd')
-		## XXX channel should be a setting!
-		channel=0
-		imagedata = self.acquireCorrectedCameraImageData(channel)
-		image = imagedata['image']
-		self.maskimg = numpy.zeros(image.shape)
-		self.displayImage(image)
-		self.currentimage = image
-		self.panel.acquisitionDone()
-		self.stopTimer('acquireCorrected')
+	def acquireCorrected(self, channels):
+		for channel in channels:
+			self.startTimer('acquireCorrected')
+			self.setTargets([], 'Bad_Region', block=False)
+			self.startTimer('set ccd')
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			self.stopTimer('set ccd')
+			imagedata = self.acquireCorrectedCameraImageData(channel)
+			image = imagedata['image']
+			self.maskimg = numpy.zeros(image.shape)
+			self.displayImage(image)
+			self.currentimage = image
+			self.panel.acquisitionDone()
+			self.stopTimer('acquireCorrected')
 
 	def displayImage(self, image):
 		self.startTimer('Corrector.displayImage')

@@ -55,23 +55,6 @@ class CorrectorClient(cameraclient.CameraClient):
 
 		if ref:
 			ref = ref[0]
-		else:
-			# check if no results because no ref of requested channel
-			# try to get ref of any channel
-			imagetemp['channel'] = None
-			try:
-				ref = imagetemp.query(results=1, readimages=readimages)
-			except Exception, e:
-				self.logger.warning('Loading reference image from any channel failed: %s' % e)
-				ref = None
-			if ref:
-				ref = ref[0]
-				self.logger.warning('channel requested: %s, channel available: %s' % (channel, ref['channel']))
-			else:
-				self.logger.error('No reference image in database')
-				ref = None
-
-		if ref is not None:
 			self.logger.info('Reference image loaded: %s' % (ref['filename'],))
 
 		return ref

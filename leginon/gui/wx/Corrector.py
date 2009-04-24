@@ -130,9 +130,21 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.cacqtype = wx.Choice(self.toolbar, -1, choices=choices)
 		self.cacqtype.SetSelection(0)
 		self.toolbar.AddControl(self.cacqtype)
+
+		choices = [
+			'Channel 0',
+			'Channel 1',
+			'Both Channels',
+		]
+		self.cchannel = wx.Choice(self.toolbar, -1, choices=choices)
+		self.cchannel.SetSelection(0)
+		self.toolbar.AddControl(self.cchannel)
+
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
+		self.toolbar.AddSeparator()
+
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS,'plus',shortHelpString='Add Region To Bad Pixel List')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_STAGE_LOCATIONS,'stagelocations',shortHelpString='Add Extreme Points To Bad Pixel List')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,'display',shortHelpString='Display Normalization Image')
@@ -220,15 +232,26 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
 		acqtype = self.cacqtype.GetStringSelection()
+		channel = self.cchannel.GetStringSelection()
+		if channel == 'Channel 0':
+			channels = [0]
+		elif channel == 'Channel 1':
+			channels = [1]
+		elif channel == 'Both Channels':
+			channels = [0,1]
 		if acqtype == 'Dark reference':
 			method = self.node.acquireDark
+			kwargs = {'channels': channels}
 		elif acqtype == 'Bright reference':
 			method = self.node.acquireBright
+			kwargs = {'channels': channels}
 		elif acqtype == 'Raw image':
 			method = self.node.acquireRaw
+			kwargs = {}
 		elif acqtype == 'Corrected image':
 			method = self.node.acquireCorrected
-		threading.Thread(target=method).start()	
+			kwargs = {'channels': channels}
+		threading.Thread(target=method, kwargs=kwargs).start()	
 
 	def onDisplayTool(self, evt):
 		self.node.displayNorm()
