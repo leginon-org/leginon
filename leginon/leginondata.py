@@ -611,10 +611,8 @@ class CameraImageStatsData(InSessionData):
 class CorrectorImageData(ImageData):
 	def typemap(cls):
 		return ImageData.typemap() + (
-			('camstate', CorrectorCamstateData),
-			('tem', InstrumentData),
-			('ccdcamera', InstrumentData),
 			('scope', ScopeEMData),
+			('camera', CameraEMData),
 			('channel', int),
 		)
 	typemap = classmethod(typemap)
@@ -742,21 +740,11 @@ class CorrectorPlanData(InSessionData):
 	'''
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('camstate', CorrectorCamstateData),
+			('camera', CameraEMData),
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('bad_pixels', tuple),
 			('clip_limits', tuple),
-			('ccdcamera', InstrumentData),
-		)
-	typemap = classmethod(typemap)
-
-class CorrectorCamstateData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('dimension', dict),
-			('binning', dict),
-			('offset', dict),
 		)
 	typemap = classmethod(typemap)
 

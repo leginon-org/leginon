@@ -138,27 +138,6 @@ class Corrector(node.Node):
 			self.setImage(numpy.asarray(image, numpy.float32))
 		self.stopTimer('Corrector.displayImage')
 
-	def storePlan(self, plan):
-		newcamstate = leginondata.CorrectorCamstateData()
-		newcamstate['session'] = self.session
-		if self.instrument is None or self.instrument.ccdcamera is None:
-			self.logger.error('Plan not saved: no camera to associate it with')
-			return
-		try:
-			self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			newcamstate.friendly_update(self.instrument.ccdcamera.Geometry)
-		except Exception, e:
-			self.logger.error('Plan not saved: %s' % e)
-			return
-		plandata = leginondata.CorrectorPlanData()
-		plandata['session'] = self.session
-		plandata['camstate'] = newcamstate
-		plandata['bad_rows'] = plan['rows']
-		plandata['bad_cols'] = plan['columns']
-		plandata['bad_pixels'] = plan['pixels']
-		plandata['ccdcamera'] = self.instrument.getCCDCameraData()
-		self.publish(plandata, database=True, dbforce=True)
-
 	def acquireSeries(self, n):
 		series = []
 		for i in range(n):
@@ -226,9 +205,7 @@ class Corrector(node.Node):
 
 	def calc_norm(self, refdata):
 		scopedata = refdata['scope']
-		cameradata = leginondata.CameraEMData()
-		cameradata.friendly_update(refdata['camstate'])
-		cameradata['ccdcamera'] = refdata['ccdcamera']
+		cameradata = refdata['camera']
 		channel = refdata['channel']
 		if isinstance(refdata, leginondata.DarkImageData):
 			dark = refdata
@@ -330,7 +307,7 @@ class Corrector(node.Node):
 				newextrema=scipy.ndimage.extrema(imageshown)
 		plan['pixels'] = newbadpixels
 		self.displayImage(imageshown)
-		self.storePlan(plan)
+		self.storeCorrectorPlan(plan)
 		self.panel.setPlan(plan)
 
 	def onAddRegion(self):
@@ -346,7 +323,7 @@ class Corrector(node.Node):
 		fullbadpixelset = fullbadpixelset.union(oldbadpixels)
 		fullbadpixelset = fullbadpixelset.union(badpixels)
 		plan['pixels'] = list(fullbadpixelset)
-		self.storePlan(plan)
+		self.storeCorrectorPlan(plan)
 		self.panel.setPlan(plan)
 		self.setTargets([], 'Bad_Region', block=False)
 		

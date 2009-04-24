@@ -38,15 +38,14 @@ class CorrectorClient(cameraclient.CameraClient):
 		else:
 			return None
 
-		camstate = leginondata.CorrectorCamstateData()
-		camstate.friendly_update(cameradata)
-		imagetemp['camstate'] = camstate
-		imagetemp['tem'] = scopedata['tem']
-		imagetemp['ccdcamera'] = leginondata.InstrumentData()
-		imagetemp['ccdcamera']['name'] = cameradata['ccdcamera']['name']
-		# only care about high tension for query
+		## query only based on certain camera parameters, not all
+		imagetemp['camera'] = leginondata.CameraEMData()
+		for key in ('ccdcamera','dimension','binning','offset'):
+			imagetemp['camera'][key] = cameradata[key]
+		# query only based on certain scope parameters, not all
 		imagetemp['scope'] = leginondata.ScopeEMData()
-		imagetemp['scope']['high tension'] = scopedata['high tension']
+		for key in ('tem', 'high tension'):
+			imagetemp['scope'][key] = scopedata[key]
 		imagetemp['channel'] = channel
 		try:
 			ref = imagetemp.query(results=1, readimages=readimages)
@@ -227,13 +226,13 @@ class CorrectorClient(cameraclient.CameraClient):
 		'''
 
 	def retrieveCorrectorPlan(self, cameradata):
-		corstate = leginondata.CorrectorCamstateData()
-		corstate.friendly_update(cameradata)
-		ccdcamera = cameradata['ccdcamera']
+		qcamera = leginondata.CameraEMData()
+		for key in ('ccdcamera','dimension','binning','offset'):
+			qcamera[key] = cameradata[key]
 		qplan = leginondata.CorrectorPlanData()
-		qplan['camstate'] = corstate
-		qplan['ccdcamera'] = ccdcamera
-		plandatalist = self.research(datainstance=qplan)
+		qplan['camera'] = qcamera
+		plandatalist = qplan.query()
+
 		if plandatalist:
 			plandata = plandatalist[0]
 			result = {}
@@ -327,15 +326,11 @@ class CorrectorClient(cameraclient.CameraClient):
 			refdata = leginondata.BrightImageData()
 		elif type == 'norm':
 			refdata = leginondata.NormImageData()
-		camstate = leginondata.CorrectorCamstateData()
-		camstate.friendly_update(cameradata)
 		refdata['image'] = imarray
-		refdata['camstate'] = camstate
 		refdata['filename'] = self.makeCorrectorImageFilename(type, channel)
 		refdata['session'] = self.session
-		refdata['tem'] = scopedata['tem']
-		refdata['ccdcamera'] = cameradata['ccdcamera']
 		refdata['scope'] = scopedata
+		refdata['camera'] = cameradata
 		refdata['channel'] = channel
 		self.logger.info('Saving new %s' % (type,))
 		refdata.insert(force=True)
@@ -347,6 +342,21 @@ class CorrectorClient(cameraclient.CameraClient):
 		ref_cache_id[key] = refdata.dbid
 
 		return refdata
+
+	def storeCorrectorPlan(self, plan):
+		camsettings = self.settings['camera settings']
+		ccdname = self.settings['instruments']['ccdcamera']
+		ccdcamera = self.instrument.getCCDCameraData(ccdname)
+		cameradata = leginondata.CameraEMData()
+		cameradata.update(self.settings['camera settings'])
+		cameradata['ccdcamera'] = ccdcamera
+		plandata = leginondata.CorrectorPlanData()
+		plandata['session'] = self.session
+		plandata['camera'] = cameradata
+		plandata['bad_rows'] = plan['rows']
+		plandata['bad_cols'] = plan['columns']
+		plandata['bad_pixels'] = plan['pixels']
+		plandata.insert(force=True)
 
 	def makeCorrectorImageFilename(self, type, channel):
 		sessionname = self.session['name']
