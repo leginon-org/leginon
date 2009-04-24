@@ -142,8 +142,8 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		imagemagickcmd1 += imagestr+finalgif
 		apFile.removeFile(finalgif)
 		apEMAN.executeEmanCmd(imagemagickcmd1, verbose=True)
-		if os.path.isfile(finalgif):
-			apFile.removeFilePattern(density+".*[0-9][0-9].png")
+		#if os.path.isfile(finalgif):
+		apFile.removeFilePattern(density+".*[0-9][0-9].png")
 	return
 
 
