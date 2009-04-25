@@ -95,13 +95,17 @@ class CorrectorClient(cameraclient.CameraClient):
 	def getCorrectorImageFromCache(self, type, scopedata, cameradata, channel):
 		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)
 		cachedim = ref_cache[key]
-		newref = self.researchCorrectorImageData(type, scopedata, cameradata, channel, readimages=False)
-		if newref.dbid != ref_cache_id[key]:
-			ref_cache[key] = newref
-			ref_cache_id[key] = newref.dbid
-			return newref
-		else:
-			return cachedim
+		return cachedim
+
+		### do not need this since all nodes share same cache, but
+		### need this again if node on another launcher need correction images
+		#newref = self.researchCorrectorImageData(type, scopedata, cameradata, channel, readimages=False)
+		#if newref.dbid != ref_cache_id[key]:
+		#	ref_cache[key] = newref
+		#	ref_cache_id[key] = newref.dbid
+		#	return newref
+		#else:
+		#	return cachedim
 
 	def retrieveCorrectorImageData(self, type, scopedata, cameradata, channel):
 		key = self.makeCorrectorKey(type, scopedata, cameradata, channel)
