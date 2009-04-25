@@ -869,9 +869,7 @@ function writeJobFile ($extra=False) {
 			if ($msgp_minptcls) $line .= " minNumOfPtcls=$msgp_minptcls";
 			$line .= "\n";
 		}
-		$line.="foreach file (cls*.lst)\n";
-		$line.="\trm \$file\n";
-		$line.="end\n";
+		$line.="rm cls*.lst\n";
 		$ejob.= $line;
 	}
 	
