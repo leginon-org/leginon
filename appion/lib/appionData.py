@@ -508,6 +508,20 @@ class ApRefBasedRunData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApRefBasedRunData=ApRefBasedRunData
 
+class ApEdIterRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('radius', int),
+			('num_iter', int),
+			('freealigns', int),
+			('invert_templs', bool),
+			('num_templs', int),
+			('run_seconds', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApRefBasedRunData=ApRefBasedRunData
+
 class ApSpiderNoRefRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -553,6 +567,7 @@ class ApAlignRunData(Data):
 			('refbasedrun', ApRefBasedRunData),
 			('maxlikerun', ApMaxLikeRunData),
 			('imagicMRA', ApMultiRefAlignRunData),
+			('editerrun', ApEdIterRunData),
 			('hidden', bool),
 			('project|projects|project', int),
 			('path', ApPathData),
