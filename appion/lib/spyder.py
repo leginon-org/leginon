@@ -42,7 +42,7 @@ def fileFilter(fname, dataext=".spi"):
 	return fname
 
 class SpiderSession:
-	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True, nproc=1):
+	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True, nproc=1, spiderprocdir=""):
 		# spider executable		
 		if spiderexec is None:
 			if os.environ.has_key('SPIDER_LOC'):
@@ -61,13 +61,17 @@ class SpiderSession:
 		if dataext[0] == '.': self.dataext = dataext[1:]
 		self.projext = projext
 		if projext[0] == '.': self.projext = projext[1:]
+		if spiderprocdir is None:
+			spiderprocdir = os.environ('SPPROC_DIR')
+		else:
+			spiderprocdir = spiderprocdir
 
 		### Start spider process, initialize with some MD commands.
 		#self.spiderin = open(self.spiderexec.stdin, 'w')
 		self.logf = open("spider.log", "a")
 		self.starttime = time.time()
 		self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
-			stdin=subprocess.PIPE, stdout=self.logf, stderr=subprocess.PIPE)
+			stdin=subprocess.PIPE, stdout=self.logf, stderr=subprocess.PIPE, env={'SPPROC_DIR': spiderprocdir})
 		self.spiderin = self.spiderproc.stdin
 		#self.spiderout = self.spiderproc.stdout
 		self.spidererr = self.spiderproc.stderr
