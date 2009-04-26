@@ -19,6 +19,7 @@ import apProject
 from apSpider import alignment
 import spyder
 import appionData
+import cPickle
 
 #=====================
 #=====================
@@ -122,8 +123,6 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def insertEdIterRun(self, insert=False):
-		apDisplay.printMsg("committing results to DB")
-
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
@@ -141,7 +140,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		editrunq['invert_templs'] = self.params['inverttemplates']
 		editrunq['num_templs'] = self.params['numtemplate']
 		#editrunq['csym', int),
-		editrunq['run_seconds'] = self.params['runtime']
+		editrunq['run_seconds'] = self.runtime
 
 		### finish alignment run
 		alignrunq = appionData.ApAlignRunData()
@@ -228,7 +227,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 		### insert particle data
 		apDisplay.printColor("Inserting particle alignment data, please wait", "cyan")
-		partlist = alignment.readApshDocFile("apshdoc.spi","apshdoc.pickle")
+		partlist = self.readApshDocFile("apshdoc.spi","apshdoc.pickle")
 		for partdict in partlist:
 			alignpartq = appionData.ApAlignParticlesData()
 			alignpartq['ref'] = reflist[partdict['template']-1]
@@ -247,7 +246,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def readApshDocFile(docfile, picklefile):
+	def readApshDocFile(self, docfile, picklefile):
 		### eventually add this as apSpider.alignment.readAPSHDocFile()
 		apDisplay.printMsg("processing alignment doc file "+docfile)
 		if not os.path.isfile(docfile):
@@ -256,41 +255,39 @@ class EdIterAlignScript(appionScript.AppionScript):
 		partlist = []
 		for line in docf:
 			data = line.strip().split()
-			if data[0][0] == ";":
+			if data[0] == ";":
 				continue
 			if len(data) < 15:
 				continue
-		"""
-		2 psi,
-		3 theta,
-		4 phi,
-		5 refNum,
-		6 particleNum,
-		7 sumRotation,
-		8 sumXshift,
-		9 sumYshift,
-		10 #refs,
-		11 anglechange,
-		12 cross-correlation,
-		13 currentRotation,
-		14 currentXshift,
-		15 currentYshift,
-		16 currentMirror
-		"""
-		partdict = {
-				'key': int(data[0]),
-				'regs': int(data[1]),
+			"""
+			2 psi,
+			3 theta,
+			4 phi,
+			5 refNum,
+			6 particleNum,
+			7 sumRotation,
+			8 sumXshift,
+			9 sumYshift,
+			10 #refs,
+			11 anglechange,
+			12 cross-correlation,
+			13 currentRotation,
+			14 currentXshift,
+			15 currentYshift,
+			16 currentMirror
+			"""
+			partdict = {
 				'psi': float(data[2]),
 				'theta': float(data[3]),
 				'phi': float(data[4]),
 				'template': int(abs( float(data[5]) )),
-				'num': int(data[6]),
-				'rot': wrap360(float(data[7])),
+				'num': int(float(data[6])),
+				'rot': alignment.wrap360(float(data[7])),
 				'xshift': float(data[8]),
 				'yshift': float(data[9]),
-				'mirror': alignment.checkMirror(float),
+				'mirror': alignment.checkMirror( float(data[16]) ),
 				'score': float(data[12]),
-			}
+				}
 		partlist.append(partdict)
 		docf.close()
 		picklef = open(picklefile, "w")
@@ -522,7 +519,6 @@ class EdIterAlignScript(appionScript.AppionScript):
 		self.runSpiderBatch()
 		aligntime = time.time() - aligntime
 		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
-		sys.exit(1)
 		###################################################################
 
 		### remove unaligned spider stack
