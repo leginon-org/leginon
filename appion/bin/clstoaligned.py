@@ -16,7 +16,6 @@ if __name__ == "__main__":
 		n=fileCount(fsp)[0]
 
 		classnamepath = fsp.split('.')[0]+'.dir'
-		os.mkdir(classnamepath)
 		b=EMData()
 		b.readImage(fsp,0)
 		e=b.getEuler()

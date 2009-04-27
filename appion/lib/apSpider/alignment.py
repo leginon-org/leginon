@@ -112,6 +112,7 @@ def runCoranClass(params,cls):
 
 	#set up cls dir
 	clsdir=cls.split('.')[0]+'.dir'
+	os.mkdir(clsdir)
 
 	clscmd='clstoaligned.py ' + cls
 	## if multiprocessor, don't run clstoaligned yet
@@ -126,10 +127,10 @@ def runCoranClass(params,cls):
 
 	#make spider batch
 	params['nptcls']=apEMAN.getNPtcls(cls)
+
 	# if no particles, create an empty class average
 	if params['nptcls'] == 0:
 		# don't run clscmd, just make directory and empty average
-		os.mkdir(clsdir)
 		apEMAN.writeBlankImage(os.path.join(clsdir,'classes_avg.spi'),params['boxsize'],0,'spider')
 		print "WARNING!! no particles in class"
 		return
@@ -160,7 +161,9 @@ def runCoranClass(params,cls):
 		### this is how we should do this
 		#mySpider = spyder.SpiderSession(logo=False, nproc=1)
 		#mySpider.toSpiderQuiet("@%s\n" % coranbatch.split('.')[0])
-		spidercmd = ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
+		spidercmd = ("cd %s\n" % clsdir)
+		spidercmd+= ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
+
 		## if multiprocessor, don't run spider yet
 		if params['proc'] == 1:
 			proc = subprocess.Popen(spidercmd, shell=True)
@@ -996,36 +999,29 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	nfacts=20
 	if params['nptcls'] < 21:
 		nfacts=params['nptcls']-1
-	f=open(filename,'w')
+	f=open(os.path.join(clsdir,filename),'w')
 	f.write('MD ; verbose off in spider log file\n')
 	f.write('VB OFF\n')
 	f.write('\n')
-	f.write('MD\n')
-	f.write('SET MP\n')
-	f.write('%d\n' % 1)
-	f.write('\n')
 	f.write('x99=%d  ; number of particles in stack\n' % params['nptcls'])
 	f.write('x98=%d   ; box size\n' % params['boxsize'])
-	f.write('x94=%d    ; mask radius\n' % params['mask'])
+	f.write('x94=%d    ; mask radius\n' % params['coranmask'])
 	f.write('x93=%f  ; cutoff for hierarchical clustering\n' % params['haccut'])
 	f.write('x92=20    ; additive constant for hierarchical clustering\n')
 	f.write('\n')
 	f.write('FR G ; aligned stack file\n')
-	f.write('[aligned]%s/aligned\n' % clsdir)
+	f.write('[aligned]aligned\n')
 	f.write('\n')
 	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
 	f.write('\n')
-	f.write('FR G ; home dir\n')
-	f.write('[home]%s/\n' % clsdir)
-	f.write('\n')
 	f.write('FR G ; where to write class lists\n')
-	f.write('[clhc_cls]%s/classes/clhc_cls\n' % clsdir)
+	f.write('[clhc_cls]classes/clhc_cls\n')
 	f.write('\n')
 	f.write('FR G ; where to write alignment data\n')
-	f.write('[ali]%s/alignment/\n' % clsdir)
+	f.write('[ali]alignment/\n')
 	f.write('\n')
 	f.write('VM\n')
-	f.write('mkdir %s/alignment\n' % clsdir)
+	f.write('mkdir alignment\n')
 	f.write('\n')
 	f.write(';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n')
 	f.write(';; create the sequential file and then use that file and do a hierarchical ;;\n')
@@ -1087,13 +1083,13 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('CL HD\n')
 	f.write('x93\n')
 	f.write('[ali]clhc_doc\n')
-	f.write('[home]clhc_classes\n')
+	f.write('clhc_classes\n')
 	f.write('\n')
 	f.write('UD N,x12\n')
-	f.write('[home]clhc_classes\n')
+	f.write('clhc_classes\n')
 	f.write('\n')
 	f.write('VM\n')
-	f.write('mkdir %s/classes\n' % clsdir)
+	f.write('mkdir classes\n')
 	f.write('\n')
 	f.write('VM\n')
 	f.write('echo "Creating {%F5.1%x12} classes using a threshold of {%F7.5%x93}"\n')
@@ -1114,8 +1110,8 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('[aligned]@*****\n')
 	f.write('[clhc_cls]{****x81}\n')
 	f.write('A\n')
-	f.write('[home]classes_avg@{****x81}\n')
-	f.write('[home]classes_var@{****x81}\n')
+	f.write('classes_avg@{****x81}\n')
+	f.write('classes_var@{****x81}\n')
 	f.write('LB20\n')
 	f.write('\n')
 	f.write('EN D\n')

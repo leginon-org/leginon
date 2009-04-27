@@ -12,18 +12,6 @@ import time
 import apEMAN
 from apSpider import alignment
 
-clslist=glob.glob('cls*.lst')
-
-#def getPBSTasknum(outdir):
-#	outfile = os.path.join(outdir,'PBSTASKNUM.txt')
-#	proc = subprocess.Popen("pbsdsh -n 0 sh -c 'echo $PBS_TASKNUM > %s'" % outfile, shell=True)
-#	proc.wait()
-#	f = open(outfile)
-#	tasknum=f.readlines()[0]
-#	f.close()
-#	print "Current PBS_TASKNUM is:",tasknum
-#	return int(tasknum.strip())
-	
 def parseInput(args,params):
 	for arg in args:
 		elements=arg.split('=')
@@ -31,6 +19,8 @@ def parseInput(args,params):
 			params['iter']=int(elements[1])
 		elif elements[0]=='mask':
 			params['mask']=int(elements[1])
+		elif elements[0]=='coranmask':
+			params['coranmask']=int(elements[1])
 		elif elements[0]=='haccut':
 			params['haccut']=float(elements[1])
 		elif elements[0]=='proc':
@@ -50,6 +40,7 @@ def createDefaults():
 	params={}
 	params['corandir']='coran'
 	params['mask']=None
+	params['coranmask']=None
 	params['iter']=None
 	params['haccut']=0.15
 	params['proc']=1
@@ -69,6 +60,9 @@ if __name__== '__main__':
 	params=createDefaults()
 	parseInput(args,params)
 	
+	if params['coranmask'] is None:
+		params['coranmask'] = params['mask']
+		
 	#Determine box size
 	tmpimg=EMAN.readImages('start.hed',1,1)
 	params['boxsize']=tmpimg[0].xSize()
@@ -92,12 +86,13 @@ if __name__== '__main__':
 	proc.wait()
 	proc = subprocess.Popen('ln -s ../start.img .', shell=True)
 	proc.wait()
-	
+		
 	#Loop through classes and prepare for spider
 	clslist=glob.glob('cls*.lst')
+	
 	# sort the list numerically
 	clslist.sort()
-
+	
 	projections=EMAN.readImages('proj.hed',-1,-1,0)
 	if len(projections)!=len(clslist):
 		print "Error: Number of projections (%d) not equal to number of classes (%d)" % (len(projections),len(clslist))
@@ -135,6 +130,7 @@ if __name__== '__main__':
 					cscript.write("-np 1 %s\n" % procfile)
 				spnum+=1
 			cscript.close()
+			print "executing coranscript: ",coranscript
 			os.chmod("coranscript.csh",0755)
 			proc = subprocess.Popen('mpiexec --app '+coranscript, shell=True)
 			proc.wait()
