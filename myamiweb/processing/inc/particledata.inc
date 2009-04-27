@@ -1310,6 +1310,44 @@ class particledata {
 	}
 
 
+	function getPrimaryStackIds ($sessionId) {
+		$q = "SELECT "
+		  ."  r.`REF|ApStackData|stack` as stackid , "
+		  ."  st.*, "
+		  ."  s.`REF|leginondata|SessionData|session` AS sessionid "
+		  ."FROM ApRunsInStackData as r "
+		  ."LEFT JOIN ApStackRunData as s ON "
+		  ."  (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		  ."LEFT JOIN ApStackData as st ON "
+		  ."  (r.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."WHERE "
+		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ." AND st.`REF|ApStackData|oldstack` IS NULL "
+		  ."ORDER BY stackid DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getSubStackIds ($sessionId, $primarystackid, $showHidden=False) {
+		$q = "SELECT "
+		  ."  r.`REF|ApStackData|stack` as stackid , "
+		  ."  st.*, "
+		  ."  s.`REF|leginondata|SessionData|session` AS sessionid "
+		  ."FROM ApRunsInStackData as r "
+		  ."LEFT JOIN ApStackRunData as s ON "
+		  ."  (r.`REF|ApStackRunData|stackRun`=s.`DEF_id`) "
+		  ."LEFT JOIN ApStackData as st ON "
+		  ."  (r.`REF|ApStackData|stack` = st.`DEF_id`) "
+		  ."WHERE "
+		  ."  s.`REF|leginondata|SessionData|session` = '$sessionId' "
+		  ." AND st.`REF|ApStackData|oldstack` = '$primarystackid' ";
+		if (!$showHidden)
+			$q.= " AND st.`hidden` != 1 ";
+		$q.= "ORDER BY stackid DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getTiltedStackIds ($sessionId, $showHidden=False) {
 		$q = "SELECT "
 			."  stack.`DEF_id` as stackid "

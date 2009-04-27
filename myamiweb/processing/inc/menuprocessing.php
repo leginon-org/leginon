@@ -272,7 +272,7 @@ if ($expId) {
 		$srun = count($subclusterjobs['makestack']['running']);
 		$sq = count($subclusterjobs['makestack']['queued']);
 
-		$sresults[] = ($sdone==0) ? "" : "<a href='stacksummary.php?expId=$sessionId'>$sdone complete</a>";
+		$sresults[] = ($sdone==0) ? "" : "<a href='stackhierarchy.php?expId=$sessionId'>$sdone complete</a>";
 		$sresults[] = ($srun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=makestack'>$srun running</a>";
 		$sresults[] = ($sq==0) ? "" : "$sq queued";
 
@@ -281,7 +281,7 @@ if ($expId) {
 
 		$totstack = ($totstack > $stackruns) ? $totstack : $stackruns;
 		$totresult = ($totstack==0) ? "" :
-			"<a href='stacksummary.php?expId=$sessionId'>$totstack</a>";
+			"<a href='stackhierarchy.php?expId=$sessionId'>$totstack</a>";
 
 		$nruns=array();
 		$nruns[]=array (
