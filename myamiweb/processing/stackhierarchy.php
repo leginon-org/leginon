@@ -29,7 +29,8 @@ function showStack($stackdata) {
 	elseif ($substackdatas)
 		echo stacksummarytable($stackid, true);
 	if ($allsubstackdatas) {
-		echo "<table class='tablebubble'><tr><td>&nbsp;</td><td>\n";
+		echo "</td></tr><tr><td valign='center'>substack<br/>&ndash;&ndash;&gt;</td><td>";
+		echo "<table class='tablebubble'><tr><td colspan='2'>\n";
 		foreach ($substackdatas as $substackdata) {
 			showStack($substackdata);
 		}
@@ -52,7 +53,7 @@ echo "<a href='stacksummary.php?expId=$expId'>[Show original stack summary page]
 if ($allstackdatas) {
 	echo "<form name='stackform' method='post' action='$formAction'>\n";
 	foreach ($allstackdatas as $stackdata) {
-		echo "<table class='tablebubble'><tr><td>\n";
+		echo "<table class='tablebubble'><tr><td colspan='2'>\n";
 		showStack($stackdata);
 		echo "</td></tr></table>\n";
 	}
