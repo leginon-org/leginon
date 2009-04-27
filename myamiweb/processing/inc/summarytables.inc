@@ -14,7 +14,7 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
-function stacksummarytable($stackid, $mini=false) {
+function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
 	$stackdata = $particle->getStackParams($stackid);
@@ -44,6 +44,9 @@ function stacksummarytable($stackid, $mini=false) {
 	} else $j.= " <input class='edit' type='submit' name='hideStack".$stackid."' value='hide'>\n";
 
 	$stacktable.= apdivtitle($j);
+	if ($tiny)
+		return $stacktable;
+
 
 	// if particles were centered, set centered variable
 	if ($stackdata['centered'] == 1) {
