@@ -498,7 +498,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		### execute IMAGIC batch file
 		aligntime0 = time.time()
-		subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
+		proc = subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
+		proc.wait()
 		os.chdir(self.params['rundir'])
 		apIMAGIC.executeImagicBatchFile(batchfile)
 		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))

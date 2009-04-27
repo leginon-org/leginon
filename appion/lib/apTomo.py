@@ -464,7 +464,8 @@ def makeMovie(filename,xsize=512):
 		cmd = 'mencoder -nosound -mf type=jpg:fps=24 -ovc lavc -lavcopts vcodec=flv -of lavf -lavfopts format=flv -o '+moviename+' "mf://'+rootpath+'_avg*.jpg"'
 		proc = subprocess.Popen(cmd, shell=True)
 		proc.wait()
-		subprocess.Popen('rm '+rootpath+'_avg*.jpg', shell=True)
+		proc = subprocess.Popen('rm '+rootpath+'_avg*.jpg', shell=True)
+		proc.wait()
 
 def makeProjection(filename,xsize=512):
 	mrcpath = filename

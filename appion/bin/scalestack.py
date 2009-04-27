@@ -15,7 +15,8 @@ def scaleStack(stackdata,params):
 		
 	bin=params['bin']
 	command=('proc2d %s %s shrink=%d' % (origpath,newstackpath,bin))
-	subprocess.Popen(command, shell=True)
+	proc = subprocess.Popen(command, shell=True)
+	proc.wait()
 	return
 
 def commitScaledStack(stackdata,params):

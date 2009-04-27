@@ -19,7 +19,8 @@ def createImageLinks(imagelist):
 		if not os.path.exists((imagename + '.mrc')):
 			command=('ln -s %s .' %  imgpath)
 			print command
-			subprocess.Popen(command, shell=True)
+			proc = subprocess.Popen(command, shell=True)
+			proc.wait()
 	return
 
 def createJPG(params,img):

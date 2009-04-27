@@ -49,7 +49,7 @@ class SpiderSession:
 					self.spiderexec = os.path.join(os.environ['SPIDER_LOC'],'spider')
 			else:
 					try:
-						self.spiderexec =	subprocess.Popen("which spider", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+						self.spiderexec = subprocess.Popen("which spider", shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 					except:
 						self.spiderexec = '/usr/local/spider/bin/spider'
 			#print "using spider executable: ",self.spiderexec

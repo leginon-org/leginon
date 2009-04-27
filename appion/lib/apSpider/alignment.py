@@ -117,7 +117,8 @@ def runCoranClass(params,cls):
 	## if multiprocessor, don't run clstoaligned yet
 	if params['proc'] == 1:
 		#make aligned stack
-		subprocess.Popen(clscmd, shell=True)
+		proc = subprocess.Popen(clscmd, shell=True)
+		proc.wait()
 
 	corancmd=clscmd+'\n'
 
@@ -137,9 +138,11 @@ def runCoranClass(params,cls):
 	elif params['nptcls'] < 4:
 		#this is an ugly hack, just average the particles together, no ref-free
 		# don't use mpi, just make directory with clscmd and average particles
-		subprocess.Popen(clscmd, shell=True)
+		proc = subprocess.Popen(clscmd, shell=True)
+		proc.wait()
 		avgcmd=("proc2d %s %s average" % (os.path.join(clsdir,'aligned.spi'),os.path.join(clsdir,'classes_avg.spi')))
-		subprocess.Popen(avgcmd, shell=True)
+		proc = subprocess.Popen(avgcmd, shell=True)
+		proc.wait()
 		dummyclsdir=os.path.join(clsdir,'classes')
 		os.mkdir(dummyclsdir)
 		dummyfilename='clhc_cls0001.spi'
@@ -155,12 +158,13 @@ def runCoranClass(params,cls):
 	else:
 		makeSpiderCoranBatch(params,coranbatch,clsdir)
 		### this is how we should do this
-		mySpider = spyder.SpiderSession(logo=False, nproc=1)
-		mySpider.toSpiderQuiet("@%s\n" % coranbatch.split('.')[0])
-		#spidercmd = ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
+		#mySpider = spyder.SpiderSession(logo=False, nproc=1)
+		#mySpider.toSpiderQuiet("@%s\n" % coranbatch.split('.')[0])
+		spidercmd = ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
 		## if multiprocessor, don't run spider yet
 		if params['proc'] == 1:
-			subprocess.Popen(spidercmd, shell=True)
+			proc = subprocess.Popen(spidercmd, shell=True)
+			proc.wait()
 		corancmd+=spidercmd
 		return corancmd
 

@@ -514,9 +514,10 @@ def executeSpiderCmd(spidercmd, verbose=True):
 	sys.stderr.write("SPIDER: "+spidercmd+"\n")
 	try:
 		if verbose is False:
-			subprocess.Popen(spidercmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+			proc = subprocess.Popen(spidercmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 		else:
-			subprocess.Popen(spidercmd, shell=True)
+			proc = subprocess.Popen(spidercmd, shell=True)
+		proc.wait()
 	except:
 		apDisplay.printError("could not run spider command: "+spidercmd)
 

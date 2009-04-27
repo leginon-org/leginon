@@ -246,14 +246,16 @@ class frealignJob(appionScript.AppionScript):
 		createFrealignJob(params, combinejobname, 0, combinedparams, params['outpar'], params['first'], params['last'], norecon=False)
 		command='frealign < ' + combinejobname
 		print 'command is',command
-		subprocess.Popen(command, shell=True)	
+		proc = subprocess.Popen(command, shell=True)
+		proc.wait()	
 
 	def runSingle(params):
 		jobname='frealign.job'
 		createFrealignJob(params, jobname)
 		command='freaalign < ' + jobname
 		print 'command is',command
-		subprocess.Popen(command, shell=True)
+		proc = subprocess.Popen(command, shell=True)
+		proc.wait()
 		
 	def start(self):
 		# if using parameters from previous reconstruction

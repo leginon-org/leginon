@@ -47,10 +47,12 @@ reconsubdir = os.path.join(path,'recon')
 if os.path.exists(reconsubdir):
 	print '* recon subdir is still present, moving contents to parent dir...'
 	cmd = 'mv %s/* %s/.* %s' % (reconsubdir, reconsubdir, path)
-	subprocess.Popen(cmd, shell=True)
+	proc = subprocess.Popen(cmd, shell=True)
+	proc.wait()
 	print '* removing recon subdir...'
 	cmd = 'rmdir %s' % (reconsubdir,)
-	subprocess.Popen(cmd, shell=True)
+	proc = subprocess.Popen(cmd, shell=True)
+	proc.wait()
 
 print '* changing status to "Done" in database'
 cmd = 'updateAppionDB.py %s D' % (myjob.dbid,)

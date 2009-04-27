@@ -256,7 +256,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		filename = self.createImagicBatchFile()
 		### execute batch file that was created
 		aligntime = time.time()
-		subprocess.Popen('chmod 775 '+filename, shell=True)
+		proc = subprocess.Popen('chmod 775 '+filename, shell=True)
+		proc.wait()
 		apIMAGIC.executeImagicBatchFile(filename)
 		logfile = open(os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.log"))
 		loglines = logfile.readlines()

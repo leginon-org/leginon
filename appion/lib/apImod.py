@@ -315,7 +315,8 @@ def writeCommandAndRun(path,comname, commands, outputlist):
 		comfile = open(comname+".com", "w")
 		comfile.writelines(commandlines)
 		comfile.close()
-		subprocess.Popen('chmod 755 '+comname+'.com', shell=True)
+		proc = subprocess.Popen('chmod 755 '+comname+'.com', shell=True)
+		proc.wait()
 		comfile = open(comname+".com", "r")
 		for output in outputlist:
 			if os.path.isfile(output):

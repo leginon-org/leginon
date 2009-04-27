@@ -69,7 +69,8 @@ def imagicToMrc(params, msg=True):
 		apDisplay.printMsg(os.path.join(params['rundir'],outstack))
 	catcmd = "cat %s %s > %s" % (tmpheadername, stackimg, outstack)
 	print catcmd
-	subprocess.Popen(catcmd, shell=True)
+	proc = subprocess.Popen(catcmd, shell=True)
+	proc.wait()
 	os.remove(tmpheadername)
 	
 #===============
@@ -447,7 +448,7 @@ def submitMultipleJobs(params):
 	#cmd = 'pbsdsh -v '+params['mp_script']
 	cmd = 'mpiexec --app '+params['mp_script']
 	print cmd
-	subprocess.Popen(cmd, shell=True)
+	proc = subprocess.Popen(cmd, shell=True)
 
 #===============
 def combineMultipleJobs(params):
@@ -470,6 +471,7 @@ def combineMultipleJobs(params):
 	combine.close()
 	combinejobname = os.path.join(workdir,'frealign.all.csh')
 	createFrealignJob(params,combinejobname,mode=0,invol=params['itervol'],inpar=paramname)
-	subprocess.Popen('csh '+combinejobname, shell=True)
+	proc = subprocess.Popen('csh '+combinejobname, shell=True)
+	proc.wait()
 
 		
