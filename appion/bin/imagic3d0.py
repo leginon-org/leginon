@@ -43,8 +43,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			help="ID for reference-free alignment", metavar="int")
 		self.parser.add_option("--norefClassId", dest="norefClassId", type="int",
 			help="reference free class id", metavar="INT")
-                self.parser.add_option("--clusterId", dest="clusterId", type="int",
-                        help="new class average id from alignment pipeline", metavar="INT")
+		self.parser.add_option("--clusterId", dest="clusterId", type="int",
+			help="new class average id from alignment pipeline", metavar="INT")
 		self.parser.add_option("--imagicClusterId", dest="imagicClusterId", type="int",
 			help="new IMAGIC class average id from alignment pipeline", metavar="INT")
 		self.parser.add_option("--templateStackId", dest="templateStackId", type="int",
@@ -78,8 +78,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		
 		### mass specified for eman volume function
 		self.parser.add_option("--mass", dest="mass", type="int",
-                        help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
-                        
+			help="OPTIONAL: used for thresholding volume of a 3d map to 1 based on given mass", metavar="INT")
+			
 		### chimera only, if the run is already completed
 		self.parser.add_option("--chimera-only", dest="chimera-only", default=False,
 			action="store_true", help="use only if you want to regenerate chimera slices from an already existing model: input rundir and runname")
@@ -207,17 +207,17 @@ class imagic3d0Script(appionScript.AppionScript):
 		proj = str(list[0])
 		length = len(list)
 		while j < length:
-		        if (list[j] != (list[(j-1)] + 1)):
-		                proj = proj+"-"+str(list[j-1])+";"+str(list[j])
-		        j += 1
-		        if j == length:
-		                proj = proj+"-"+str(list[j-1])
+			if (list[j] != (list[(j-1)] + 1)):
+				proj = proj+"-"+str(list[j-1])+";"+str(list[j])
+			j += 1
+			if j == length:
+				proj = proj+"-"+str(list[j-1])
 		
 		### continue with the script creation
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagicCreate3d0.log\n")
 		f.write(symmetry+"\n")
 		if lowercase != "c1":
-                        f.write("0\n")
+			f.write("0\n")
 		f.write("new\n")
 		f.write("add\n")
 		f.write("start_stack\n")
@@ -248,8 +248,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("rep0_ordered0\n")
 		f.write("err0_ordered0\n")
 		f.write("no\n")
-                f.write(str(self.params['ham_win'])+"\n")
-                f.write(str(self.params['object_size'])+"\n")
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n")
 		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagicCreate3d0.log\n")
 		f.write("all\n")
@@ -271,8 +271,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		f.write("rep0_ordered0_repaligned\n")
 		f.write("err0_ordered0_repaligned\n")
 		f.write("no\n")
-                f.write(str(self.params['ham_win'])+"\n")
-                f.write(str(self.params['object_size'])+"\n")
+		f.write(str(self.params['ham_win'])+"\n")
+		f.write(str(self.params['object_size'])+"\n")
 		f.write("EOF\n\n")
 		f.write("set j=1\n")
 		f.write("while ($j<"+str(repalignments)+")\n")
@@ -398,8 +398,8 @@ class imagic3d0Script(appionScript.AppionScript):
 		modelq['hidden'] = False
 		if self.params['commit'] is True:
 			modelq.insert()
-                else:
-                        apDisplay.printWarning("not committing results to DB")
+		else:
+			apDisplay.printWarning("not committing results to DB")
 		return 
 
 
@@ -449,8 +449,8 @@ class imagic3d0Script(appionScript.AppionScript):
 			elif self.params['clusterId'] is not None or self.params['imagicClusterId'] is not None:
 				if self.params['clusterId'] is not None:
 					clusterdata = appionData.ApClusteringStackData.direct_query(self.params['clusterId'])
-	            		elif self.params['imagicClusterId'] is not None:
-	                        	clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
+		    		elif self.params['imagicClusterId'] is not None:
+					clusterdata = appionData.ApClusteringStackData.direct_query(self.params['imagicClusterId'])
 				self.params['stackid'] = clusterdata['clusterrun']['alignstack']['stack'].dbid
 				self.params['boxsize'] = clusterdata['clusterrun']['boxsize']
 	 			self.params['apix'] = clusterdata['clusterrun']['pixelsize']
@@ -494,18 +494,19 @@ class imagic3d0Script(appionScript.AppionScript):
 			filename = self.createImagicBatchFile(linkingfile)
 			
 			### these files interfere with IMAGIC program
-	                if os.path.isfile(str(self.params['rundir'])+"/ordered0.img") is True:
+			if os.path.isfile(str(self.params['rundir'])+"/ordered0.img") is True:
 				os.remove(str(self.params['rundir'])+"/ordered0.img")
-	                if os.path.isfile(str(self.params['rundir'])+"/ordered0.hed") is True:
+			if os.path.isfile(str(self.params['rundir'])+"/ordered0.hed") is True:
 				os.remove(str(self.params['rundir'])+"/ordered0.hed")
-	                if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.img") is True:
-	                        os.remove(str(self.params['rundir'])+"/sino_ordered0.img")
+			if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.img") is True:
+				os.remove(str(self.params['rundir'])+"/sino_ordered0.img")
 			if os.path.isfile(str(self.params['rundir'])+"/sino_ordered0.hed") is True:
 				os.remove(str(self.params['rundir'])+"/sino_ordered0.hed")
 
-	                ### execute batch file that was created
+			### execute batch file that was created
 			time3d0 = time.time()
-	                subprocess.Popen('chmod 755 '+filename, shell=True)
+			proc = subprocess.Popen('chmod 755 '+filename, shell=True)
+			proc.wait()
 			apIMAGIC.executeImagicBatchFile(filename)
 			logfile = open(os.path.join(self.params['rundir'], "imagicCreate3d0.log"))
 			loglines = logfile.readlines()
@@ -513,7 +514,7 @@ class imagic3d0Script(appionScript.AppionScript):
 				if re.search("ERROR in program", line):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicCreate3d0.log")
 			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-time3d0), "cyan")
-	                time3d0 = time.time() - time3d0
+			time3d0 = time.time() - time3d0
 
 			mrcname = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc"
 			mrcnamerot = self.params['rundir']+"/masked_3d0_ordered0_repaligned.mrc.rot.mrc"
