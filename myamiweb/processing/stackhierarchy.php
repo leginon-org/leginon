@@ -24,14 +24,14 @@ function showStack($stackdata) {
 	$stackid = $stackdata['stackid'];
 	$allsubstackdatas = $particle->getSubStackIds($expId, $stackid, true);
 	$substackdatas = $particle->getSubStackIds($expId, $stackid);
-	if ($stackdata['hidden'] != 1)
+	if ($stackdata['hidden'] != 1 || $_POST['unhideStack'.$stackid] == 'unhide')
 		echo stacksummarytable($stackid);
-	elseif ($substackdatas)
-		echo stacksummarytable($stackid, true);
+	else
+		echo stacksummarytable($stackid, true, true);
 	if ($allsubstackdatas) {
 		echo "</td></tr><tr><td valign='center'>substack<br/>&ndash;&ndash;&gt;</td><td>";
 		echo "<table class='tablebubble'><tr><td colspan='2'>\n";
-		foreach ($substackdatas as $substackdata) {
+		foreach ($allsubstackdatas as $substackdata) {
 			showStack($substackdata);
 		}
 		echo "</td></tr></table>\n";
