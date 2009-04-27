@@ -17,33 +17,7 @@ import apVolume
 import apProject
 import appionData
 
-#===========================
-def insertModel(params):
-	apDisplay.printMsg("commiting model to database")
-	symdata = apSymmetry.findSymmetry(params['sym'])
-	if not symdata:
-		apDisplay.printError("no symmetry associated with this id\n")		
-	params['syminfo'] = symdata
-	modq=appionData.ApInitialModelData()
-	modq['project|projects|project'] = params['projectId']
-	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
-	modq['name'] = params['name']
-	modq['symmetry'] = symdata
-	modq['pixelsize'] = params['newapix']
-	modq['boxsize'] = params['newbox']
-	modq['resolution'] = params['res']
-	modq['hidden'] = False
-	filepath = os.path.join(params['rundir'], params['name'])
-	modq['md5sum'] = apFile.md5sumfile(filepath)
-	modq['description'] = params['description']
-	if params['densityid'] is not None:
-		modq['original density'] = appionData.Ap3dDensityData.direct_query(params['densityid'])
-	if params['oldmodelid'] is not None:
-		modq['original model'] = appionData.ApInitialModelData.direct_query(params['oldmodelid'])
-	if params['commit'] is True:
-		modq.insert()
-	else:
-		apDisplay.printWarning("not commiting model to database")
+
 
 #=====================
 #=====================
@@ -57,7 +31,7 @@ class UploadModelScript(appionScript.AppionScript):
 			help="MRC file to upload", metavar="FILE")
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name associated with template (e.g. 06mar12a)", metavar="SESSION")
-		self.parser.add_option("--sym", "--symm", "--symmetry", dest="sym",
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="symmetry",
 			help="Symmetry id in the database", metavar="INT")
 		self.parser.add_option("--old-apix", dest="oldapix", type="float",
 			help="Original pixel size in Angstroms if oldapix != apix, it will be rescaled", metavar="FLOAT")
@@ -117,9 +91,11 @@ class UploadModelScript(appionScript.AppionScript):
 		### required only if now model id is provided
 		if self.params['newapix'] is None:
 			apDisplay.printError("Enter the pixel size of the model")
-		if self.params['sym'] is None:
+		if self.params['symmetry'] is None:
 			apSymmetry.printSymmetries()
 			apDisplay.printError("Enter a symmetry ID, e.g. --symm=19")
+		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
+		self.params['symid'] = int(self.params['symdata'].dbid)
 		if self.params['res'] is None:
 			apDisplay.printError("Enter the resolution of the initial model")
 
@@ -158,13 +134,9 @@ class UploadModelScript(appionScript.AppionScript):
 	def getDensityParams(self):
 		densitydata = appionData.Ap3dDensityData.direct_query(self.params['densityid'])
 		self.params['oldapix'] = float(densitydata['pixelsize'])
-		symmetrydata = densitydata['symmetry']
-		if symmetrydata is None:
-			symmq = apSymmetry.findSymmetry('C1')
-			symmresult = symmq.query()
-			self.params['sym'] = symmresult[0].dbid
-		else:
-			self.params['sym'] = symmetrydata.dbid
+		if self.params['symmetry'] is None:
+			self.params['symdata'] = densitydata['symmetry']
+			self.params['symmetry'] = self.params['symdata']['eman_name']
 		self.params['res'] = float(densitydata['resolution'])
 		self.params['file'] = os.path.join(densitydata['path']['path'], densitydata['name'])
 		if self.params['newapix'] is None:
@@ -176,7 +148,9 @@ class UploadModelScript(appionScript.AppionScript):
 	def getModelParams(self):
 		modeldata = apVolume.getModelFromId(self.params['oldmodelid'])
 		self.params['oldapix'] = float(modeldata['pixelsize'])
-		self.params['sym'] = int(modeldata['symmetry'].dbid)
+		if self.params['symmetry'] is None:
+			self.params['symdata'] = modeldata['symmetry']
+			self.params['symmetry'] = self.params['symdata']['eman_name']
 		self.params['res'] = float(modeldata['resolution'])
 		self.params['file'] = os.path.join(modeldata['path']['path'], modeldata['name'])
 
@@ -219,9 +193,32 @@ class UploadModelScript(appionScript.AppionScript):
 		if self.params['rescale'] is True:
 			apDisplay.printError("cannot rescale an existing model")	
 
+	#===========================
+	def insertModel(self):
+		apDisplay.printMsg("commiting model to database")	
+		modq=appionData.ApInitialModelData()
+		modq['project|projects|project'] = self.params['projectId']
+		modq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+		modq['name'] = self.params['name']
+		modq['symmetry'] = self.params['symdata']
+		modq['pixelsize'] = self.params['newapix']
+		modq['boxsize'] = self.params['newbox']
+		modq['resolution'] = self.params['res']
+		modq['hidden'] = False
+		filepath = os.path.join(self.params['rundir'], self.params['name'])
+		modq['md5sum'] = apFile.md5sumfile(filepath)
+		modq['description'] = self.params['description']
+		if self.params['densityid'] is not None:
+			modq['original density'] = appionData.Ap3dDensityData.direct_query(self.params['densityid'])
+		if self.params['oldmodelid'] is not None:
+			modq['original model'] = appionData.ApInitialModelData.direct_query(self.params['oldmodelid'])
+		if self.params['commit'] is True:
+			modq.insert()
+		else:
+			apDisplay.printWarning("not commiting model to database")
+
 	#=====================
 	def start(self):
-		self.params['syminfo'] = apSymmetry.findSymmetry(self.params['sym'])
 		self.params['oldbox'] = apVolume.getModelDimensions(self.params['file'])
 		if self.params['newbox'] is None:
 			self.params['newbox'] = self.params['oldbox']
@@ -253,11 +250,13 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
-		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['syminfo']['eman_name'])
-		apChimera.renderAnimation(newmodelpath, contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['syminfo']['eman_name'])
+		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'], 
+			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
+		apChimera.renderAnimation(newmodelpath, contour=self.params['contour'], 
+			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
 
 
-		insertModel(self.params)
+		self.insertModel()
 
 
 #=====================
