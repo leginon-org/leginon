@@ -251,14 +251,39 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 	### ==========================	
 	def scaleTemplates(self):
-		scalefactor = self.params['boxsize'] / float(self.templatestack['boxsize'])
-		templates = apImagicFile.readImagic(os.path.join(self.params['rundir'], "references.hed"))
-		scaledtemplates = []
-		for templatearray in templates['images']:
-			newarray = apTemplate.scaleTemplate(templatearray, scalefactor)
-			scaledtemplates.append(newarray)
-		apImagicFile.writeImagic(scaledtemplates, os.path.join(self.params['rundir'], "references.hed"))
+		reffile = os.path.join(self.params['rundir'], "references.hed")
+		if self.params['apix'] != self.templatestack['apix']:
+			scalefactor = float(self.templatestack['apix']) / self.params['apix']
+			templates = apImagicFile.readImagic(reffile)
+			scaledtemplates = []
+			for templatearray in templates['images']:
+				newarray = apTemplate.scaleTemplate(templatearray, scalefactor)
+				scaledtemplates.append(newarray)
+			apImagicFile.writeImagic(scaledtemplates, reffile)
+
+		### get boxsizes (new or old) for templatestack
+		emancmd = "iminfo "+reffile	
+		proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		results = proc.stdout
+		proc.wait() 
+		for line in results:
+			res = re.search("([0-9]+)x([0-9]+)x([0-9])", line)
+			if res:
+				num1 = int(res.groups()[0])
+				num2 = int(res.groups()[1])
+				if num1 == num2:
+					refbox = num1
 		
+		stbox = self.params['boxsize']			
+		### now clip the references to get identical boxsizes
+		if stbox != refbox:
+			while os.path.isfile(reffile+".new.img"):
+				apStack.removeStack(reffile+".new.img")
+			emancmd = "proc2d "+reffile+" "+reffile+".new.hed clip="+str(stbox)+" edgenorm"
+			apEMAN.executeEmanCmd(emancmd)
+			os.rename(reffile+".new.hed", reffile)
+			os.rename(reffile+".new.img", reffile[:-4]+".img")
+			
 		return
 
 
@@ -459,7 +484,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			self.params['boxsize'] = int(self.stack['boxsize']) / int(self.params['bin'])
 
 		### make sure template stack boxsize matches that of the input stack
-		if self.params['boxsize'] != self.templatestack['boxsize']:
+		if self.params['apix'] != self.templatestack['apix'] or self.params['boxsize'] != self.templatestack['boxsize']:
 			self.scaleTemplates()
 
 		starttime=time.time()
@@ -475,7 +500,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		aligntime0 = time.time()
 		subprocess.Popen("chmod 775 "+str(batchfile), shell=True)
 		os.chdir(self.params['rundir'])
-		#apIMAGIC.executeImagicBatchFile(batchfile)
+		apIMAGIC.executeImagicBatchFile(batchfile)
 		logfile = open(os.path.join(self.params['rundir'], "multiReferenceAlignment.log"))
 		loglines = logfile.readlines()
 		for line in loglines:
