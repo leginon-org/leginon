@@ -138,25 +138,10 @@ function runDownloadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadmodel',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'uploadmodel',False);
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
-
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Model was created from PDB";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
+		exit;
 	}
 
 	processing_header("PDB to EM Density", "PDB to EM Density");

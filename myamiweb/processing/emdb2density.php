@@ -135,26 +135,11 @@ function runUploadModel() {
 
 		if (!($user && $password)) createForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'downloadmodel',True);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'downloadmodel',False);
 
 		// if errors:
 		if ($sub) createForm("<b>ERROR:</b> $sub");
-
-		// check that upload finished properly
-		$jobf = $outdir.'/'.$runname.'/'.$runname.'.appionsub.log';
-		$status = "Model was created from EMDB";
-		if (file_exists($jobf)) {
-			$jf = file($jobf);
-			$jfnum = count($jf);
-			for ($i=$jfnum-5; $i<$jfnum-1; $i++) {
-			  // if anything is red, it's not good
-				if (preg_match("/red/",$jf[$i])) {
-					$status = "<font class='apcomment'>Error while uploading, check the log file:<br />$jobf</font>";
-					continue;
-				}
-			}
-		}
-		else $status = "Job did not run, contact the appion team";
+		exit;
 	}
 
 	processing_header("EMDB to EM Density", "EMDB to EM Density");
