@@ -77,11 +77,11 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		}
 	}
 
-	function enablefliptype() {
-		if (document.viewerform.phaseflip.checked){
-			document.viewerform.fliptype.disabled=false;
+	function enablectftype() {
+		if (document.viewerform.ctfcorrect.checked){
+			document.viewerform.ctfcorrecttype.disabled=false;
 		} else {
-			document.viewerform.fliptype.disabled=true;
+			document.viewerform.ctfcorrecttype.disabled=true;
 		}
 	}
 
@@ -127,7 +127,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$prtlrunval = ($_POST['prtlrunId']) ? $_POST['prtlrunId'] : $prtlrunIds[0]['DEF_id'];
 	$massessval = $_POST['massessname'];
 	// set phaseflip on by default
-	$phasecheck = ($_POST['phaseflip']=='on' || !$_POST['process']) ? 'CHECKED' : '';
+	$phasecheck = ($_POST['ctfcorrect']=='on' || !$_POST['process']) ? 'CHECKED' : '';
 	$boxfilescheck = ($_POST['boxfiles']=='on') ? 'CHECKED' : '';
 	$inspectcheck = ($_POST['inspected']=='off') ? '' : 'CHECKED';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'CHECKED' : '';
@@ -178,18 +178,18 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	echo "<br/>\n";
 
 	if ($ctfdata) {
-		echo"<input type='checkbox' name='phaseflip' onclick='enablefliptype(this)' $phasecheck>\n";
-		echo docpop('phaseflip','Phaseflip Particle Images');
+		echo"<input type='checkbox' name='ctfcorrect' onclick='enablectftype(this)' $phasecheck>\n";
+		echo docpop('ctfcorrect','Ctf Correct Particle Images');
 		echo "<br/>\n";
 
-		echo "Phaseflipping Method:\n";
-		echo "&nbsp;&nbsp;<select name='fliptype' ";
+		echo "Ctf Correct Method:\n";
+		echo "&nbsp;&nbsp;<select name='ctfcorrecttype' ";
 		if (!$phasecheck) echo " disabled";
 		echo ">\n";
-		echo "<option value='ace2image'>Ace 2 Whole Image (default)</option>\n";
-		echo "<option value='emanpart'>EMAN Flip by Stack</option>\n";
-		echo "<option value='emanimage'>EMAN Flip Whole Image</option>\n";
-		echo "<option value='emantilt'>EMAN Flip by Tilt Location</option>\n";
+		echo "<option value='ace2image'>Ace 2 WeinerFilter Whole Image (default)</option>\n";
+		echo "<option value='emanpart'>EMAN PhaseFlip by Stack</option>\n";
+		echo "<option value='emanimage'>EMAN PhaseFlip Whole Image</option>\n";
+		echo "<option value='emantilt'>EMAN PhaseFlip by Tilt Location</option>\n";
 		echo "</select>\n";
 		echo "<br/>\n";
 	}
@@ -406,8 +406,6 @@ function runMakestack() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$command.="makestack2.py"." ";
-
 	$single=$_POST['single'];
 	//make sure a session was selected
 	$description=$_POST['description'];
@@ -422,8 +420,8 @@ function runMakestack() {
 
 	$invert = ($_POST['density']=='invert') ? 'yes' : 'no';
 	$normalize = ($_POST['normalize']=='on') ? 'yes' : 'no';
-	$phaseflip = ($_POST['phaseflip']=='on') ? 'phaseflip' : '';
-	$fliptype = $_POST['fliptype'];
+	$ctfcorrect = ($_POST['ctfcorrect']=='on') ? 'ctfcorrect' : '';
+	$ctfcorrecttype = $_POST['ctfcorrecttype'];
 	$stig = ($_POST['stig']=='on') ? 'stig' : '';
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$defocpair = ($_POST['defocpair']=="on") ? "1" : "0";
@@ -491,12 +489,25 @@ function runMakestack() {
 	$massessname=$_POST['massessname'];
 
 
+	// check the tilt situation
+	$particle = new particledata();
+	$maxang = $particle->getMaxTiltAngle($expId);
+	if ($maxang > 5) {
+		$tiltangle = $_POST['tiltangle'];
+		if ($_POST['ctfcorrect']=='on' && $_POST['ctfcorrecttype']!='emantilt' && $tiltangle!='notilt') {
+			createMakestackForm("CtfCorrect does not work on tilted images");
+			exit;
+		}
+	}
+
+
 	// limit the number of particles
 	$partlimit=$_POST['partlimit'];
 	if ($partlimit) {
 		if (!is_numeric($partlimit)) createMakestackForm("<b>ERROR:</b> Particle limit must be an integer");
 	} else $partlimit="none";
 
+	$command = "makestack2.py"." ";
 	$command.="--single=$single ";
 	$command.="--selectionid=$prtlrunId ";
 	if ($lp) $command.="--lowpass=$lp ";
@@ -504,8 +515,8 @@ function runMakestack() {
 	if ($invert == "yes") $command.="--invert ";
 	if ($invert == "no") $command.="--no-invert ";
 	if ($normalize == "yes") $command.="--normalized ";
-	if ($phaseflip) { 
-		$command.="--phaseflip --flip-type=$fliptype ";
+	if ($ctfcorrect) { 
+		$command.="--phaseflip --flip-type=$ctfcorrecttype ";
 	}
 	if ($massessname) $command.="--maskassess=$massessname ";
 	$command.="--boxsize=$boxsize ";
@@ -558,8 +569,8 @@ function runMakestack() {
 	<tr><td>selection Id</td><td>$prtlrunId</td></tr>
 	<tr><td>invert</td><td>$invert</td></tr>
 	<tr><td>normalize</td><td>$normalize</td></tr>
-	<tr><td>phase flip</td><td>$phaseflip</td></tr>
-	<tr><td>flip type</td><td>$fliptype</td></tr>
+	<tr><td>ctf correct</td><td>$ctfcorrect</td></tr>
+	<tr><td>ctf correct type</td><td>$ctfcorrecttype</td></tr>
 	<tr><td>mask assessment</td><td>$massessname</td></tr>
 	<tr><td>box size</td><td>$boxsize</td></tr>
 	<tr><td>binning</td><td>$bin</td></tr>
