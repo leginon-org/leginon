@@ -66,7 +66,7 @@ function createTemplateForm() {
 			else
 				$templatetable.="<td>\n";
 			if (is_array($templateinfo)) {
-				$filename = $templateinfo[path] ."/".$templateinfo[templatename];
+				$filename = $templateinfo['path'] ."/".$templateinfo['templatename'];
 				$checkboxname='template'.$i;
 				// create the image template table
 				$templatetable.="<img src='loadimg.php?filename=$filename&s=90' WIDTH='90'>\n";
@@ -74,13 +74,18 @@ function createTemplateForm() {
 				$templatetable.="<INPUT TYPE='hidden' NAME='templateId".$i."' VALUE='$templateinfo[DEF_id]'>\n";
 				$templatetable.="<INPUT TYPE='hidden' NAME='diam' VALUE='$templateinfo[diam]'>\n";
 				$templatetable.="<INPUT TYPE='checkbox' NAME='$checkboxname'>\n";
-				$templatetable.="<B>Use Template ID:</B>  $templateinfo[DEF_id]<br>\n";
+				$templatetable.="<B>Align to Template ID:</B>  $templateinfo[DEF_id]<br/>\n";
+				$templatetable.="<INPUT TYPE='radio' NAME='orientref' value='".$templateinfo['DEF_id']."'";
+				if ($i == 1)
+					$templatetable.=" CHECKED";
+				$templatetable.=">\n";
+				$templatetable.="<B>Use as orientation reference</b><br/>\n";
 				$templatetable.="Diameter:  $templateinfo[diam]<br>\n";
 				$templatetable.="Pixel Size: $templateinfo[apix]<br>\n";
 				$templatetable.="File:&nbsp;<I>\n";
-				$templatetable.=$templateinfo[templatename]."</I><br/>\n";
+				$templatetable.=$templateinfo['templatename']."</I><br/>\n";
 				$templatetable.="Description:&nbsp;<I>\n";
-				$templatetable.=$templateinfo[description]."</I>\n";
+				$templatetable.=$templateinfo['description']."</I>\n";
 				$i++;
 			}
 			if ($i%2 == 1)
@@ -91,18 +96,9 @@ function createTemplateForm() {
 		$templatetable.="</table>\n<br/>\n";
 	}
 
-	processing_header("Ed Iter Template Selection","Ed Iter Template Selection","");
-	echo"
-  <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
-  <B>Select Project:</B><br>
-  <SELECT NAME='projectId' onchange='newexp()'>\n";
+	processing_header("Ed-Iter Template Selection","Ed-Iter Template Selection","");
+	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>";
 
-	foreach ($projects as $k=>$project) {
-		$sel = ($project['id']==$projectId) ? "selected" : '';
-		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-	}
-	echo"
-  </select>\n";
 	if ($templatetable) {
 		echo"
     <CENTER>
@@ -122,7 +118,7 @@ function createTemplateForm() {
 //***************************************
 //***************************************
 //***************************************
-function createAlignmentForm($extra=false, $title='edIterAlignment.py Launcher', $heading='Perform a Ed Iter Alignment') {
+function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $heading='Perform Ed Iter Alignment') {
   // check if coming directly from a session
 	//echo print_r($_POST);
 
@@ -192,10 +188,12 @@ function createAlignmentForm($extra=false, $title='edIterAlignment.py Launcher',
 	$freealigns = ($_POST['freealigns']) ? $_POST['freealigns'] : 3;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
+	$orientref = $_POST['orientref'];
 	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
 	$bestbin = floor($boxsz/100)+1;
 	$radius = ($_POST['radius']) ? $_POST['radius'] : floor($boxsz/3.0/$bestbin);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
+
 
 	$templateCheck='';
 	$templateTable.="<table><TR>\n";
@@ -212,6 +210,7 @@ function createAlignmentForm($extra=false, $title='edIterAlignment.py Launcher',
 			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
 			$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
 			$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
+
 			$templateTable.="</table></TD>\n";
 		}
 	}
@@ -223,6 +222,7 @@ function createAlignmentForm($extra=false, $title='edIterAlignment.py Launcher',
 	}
 	echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
 	echo "<INPUT TYPE='hidden' NAME='templates' VALUE='continue'>\n";
+	echo "<INPUT TYPE='hidden' NAME='orientref' VALUE='$orientref'>\n";
 	echo "<INPUT TYPE='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
 
   echo"
@@ -323,9 +323,6 @@ function createAlignmentForm($extra=false, $title='edIterAlignment.py Launcher',
 	echo"
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
 		Number of Particles to Use<br>";
-	//echo"
-	//	<INPUT TYPE='checkbox' NAME='staticref' $staticref>
-	//	Use original references for each iteration<br>";
 	echo"
 		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
 		Invert density of all templates before alignment<br>";
@@ -366,18 +363,15 @@ function runAlignment() {
 
 	$stackvars=$_POST['stackid'];
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
-	$lastring=$_POST['lastring'];
-	$firstring=$_POST['firstring'];
+	$radius=$_POST['radius'];
 	$bin=$_POST['bin'];
 	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
-	$csym=$_POST['csym'];
-	$xysearch=$_POST['xysearch'];
-	$xystep=$_POST['xystep'];
-	$refid=$_POST['refid'];
+	$templates=$_POST['refid'];
+	$orientref=$_POST['orientref'];
 	$iters=$_POST['iters'];
+	$freealigns=$_POST['freealigns'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$staticref = ($_POST['staticref']=="on") ? 'staticref' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 
 	//make sure a session was selected
@@ -398,38 +392,35 @@ function runAlignment() {
 	$particle = new particledata();
 	$totprtls=$particle->getNumStackParticles($stackid);
 	if ($numpart > $totprtls) 
-		createAlignmentForm("<B>ERROR:</B> Number of particles to aligne ($numpart) must be less than the number of particles in the stack ($totprtls)");
+		createAlignmentForm("<B>ERROR:</B> Number of particles to align ($numpart) exceeds number of particles in the stack ($totprtls)");
 
 	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
 //	$command ="source /ami/sw/ami.csh;";
 //	$command.="source /ami/sw/share/python/usepython.csh common32;";
 //	$command.="source /home/$user/pyappion/useappion.csh;";
-	$command="refBasedAlignment2.py ";
+	$command="edIterAlign.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--template-list=".templateCommand()." ";
-	$command.="--runname=$runname ";
-	$command.="--stack=$stackid ";
-
-	if ($lastring) $command.="--last-ring=$lastring ";
-	if ($firstring) $command.="--first-ring=$firstring ";
 	$command.="--rundir=".$rundir." ";
+	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
+	$command.="--templates=".templateCommand()." ";
+	$command.="--orientref=$orientref ";
+	$command.="--stack=$stackid ";
+	$command.="--nparticles=$numpart ";
+	$command.="--bin=$bin ";
+	$command.="--radius=$radius ";
 	$command.="--lowpass=$lowpass ";
 	$command.="--highpass=$highpass ";
-	#if ($csym > 1) $command.="--csym=$csym ";
-	$command.="--xy-search=$xysearch ";
-	$command.="--xy-step=$xystep ";
-	$command.="--num-iter=$iters ";
-	$command.="--num-part=$numpart ";
-	$command.="--bin=$bin ";
+	$command.="--iterations=$iters ";
+	$command.="--freealigns=$freealigns ";
+
 	if ($inverttempl) $command.="--invert-templates ";
-	#if ($staticref) $command.="--static-ref ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
 	// submit job to cluster
-	if ($_POST['process']=="Run Ref-Based Alignment") {
+	if ($_POST['process']=="Run Ed-Iter Alignment") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -451,18 +442,19 @@ function runAlignment() {
 		$command
 		</TD></tr>
 		<TR><td>runname</TD><td>$runname</TD></tr>
-		<TR><td>stackid</TD><td>$stackid</TD></tr>
-		<TR><td>refids</TD><td>".templateCommand()."</TD></tr>
-		<TR><td>iter</TD><td>$iters</TD></tr>
-		<TR><td>numpart</TD><td>$numpart</TD></tr>
-		<TR><td>last ring</TD><td>$lastring</TD></tr>
-		<TR><td>first ring</TD><td>$firstring</TD></tr>
 		<TR><td>rundir</TD><td>$rundir</TD></tr>
-		<TR><td>xysearch</TD><td>$xysearch</TD></tr>
-		<TR><td>xystep</TD><td>$xystep</TD></tr>
-		<TR><td>low pass</TD><td>$lowpass</TD></tr>l
-		<TR><td>high pass</TD><td>$highpass</TD></tr>";
-		if ($csym > 1) echo"	<TR><td>c-symmetry</TD><td>$csym</TD></tr>";
+		<TR><td>templates</TD><td>".templateCommand()."</TD></tr>
+		<TR><td>orientref</TD><td>$orientref</TD></tr>
+		<TR><td>stackid</TD><td>$stackid</TD></tr>
+		<TR><td>numpart</TD><td>$numpart</TD></tr>
+		<TR><td>bin</TD><td>$bin</TD></tr>
+		<TR><td>radius</TD><td>$radius</TD></tr>
+		<TR><td>low pass</TD><td>$lowpass</TD></tr>
+		<TR><td>high pass</TD><td>$highpass</TD></tr>
+		<TR><td>iterations</TD><td>$iters</TD></tr>
+		<TR><td>freealigns</TD><td>$freealigns</TD></tr>
+		<TR><td>inverttmpl</TD><td>$inverttmpl</TD></tr>
+		<TR><td>commit</TD><td>$commit</TD></tr>";
 		echo"	</table>\n";
 		processing_footer();
 	}
