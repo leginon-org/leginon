@@ -185,9 +185,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
 	$rundescrval = $_POST['description'];
 	$stackidval =$_POST['stackid'];
-	$csym = $_POST['csym'];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
-	$staticref = ($_POST['staticref']=='on') ? 'CHECKED' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 3;
@@ -195,7 +193,6 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
 	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '5';
 	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
-	$csym = 1;
 	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
 	$bestbin = floor($boxsz/100)+1;
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
@@ -334,15 +331,9 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo"
 		<INPUT TYPE='text' NAME='xystep' VALUE='$xystep' SIZE='4'>
 		Step size for parsing search range <FONT SIZE='-1'>(in pixels)</FONT><br>";
-	//echo"
-	//	<INPUT TYPE='text' NAME='csym' VALUE='$csym' SIZE='4'>
-	//	C-symmetry to apply<br>";
 	echo"
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
 		Number of Particles to Use<br>";
-	//echo"
-	//	<INPUT TYPE='checkbox' NAME='staticref' $staticref>
-	//	Use original references for each iteration<br>";
 	echo"
 		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
 		Invert density of all templates before alignment<br>";
@@ -388,13 +379,11 @@ function runAlignment() {
 	$bin=$_POST['bin'];
 	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
-	$csym=$_POST['csym'];
 	$xysearch=$_POST['xysearch'];
 	$xystep=$_POST['xystep'];
 	$refid=$_POST['refid'];
 	$iters=$_POST['iters'];
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$staticref = ($_POST['staticref']=="on") ? 'staticref' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 
 	//make sure a session was selected
@@ -434,14 +423,12 @@ function runAlignment() {
 	$command.="--description=\"$description\" ";
 	$command.="--lowpass=$lowpass ";
 	$command.="--highpass=$highpass ";
-	#if ($csym > 1) $command.="--csym=$csym ";
 	$command.="--xy-search=$xysearch ";
 	$command.="--xy-step=$xystep ";
 	$command.="--num-iter=$iters ";
 	$command.="--num-part=$numpart ";
 	$command.="--bin=$bin ";
 	if ($inverttempl) $command.="--invert-templates ";
-	#if ($staticref) $command.="--static-ref ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
@@ -479,7 +466,6 @@ function runAlignment() {
 		<TR><td>xystep</TD><td>$xystep</TD></tr>
 		<TR><td>low pass</TD><td>$lowpass</TD></tr>l
 		<TR><td>high pass</TD><td>$highpass</TD></tr>";
-		if ($csym > 1) echo"	<TR><td>c-symmetry</TD><td>$csym</TD></tr>";
 		echo"	</table>\n";
 		processing_footer();
 	}
