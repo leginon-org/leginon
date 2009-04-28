@@ -195,7 +195,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 		print ""
 	proc_code = emanproc.returncode
 	if proc_code != 0:
-		if proc_code == 11:
+		if proc_code == -11:
 			apDisplay.printError("EMAN failed with Segmentation Fault")
 		else:
 			apDisplay.printError("EMAN failed with subprocess error code %d" % proc_code)
