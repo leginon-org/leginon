@@ -46,9 +46,7 @@ function createTemplateForm() {
 	}
 
 	// if user wants to use templates from another project
-	if($_POST['projectId']) $projectId =$_POST[projectId];
-
-	$projects=getProjectList();
+	if($_POST['projectId']) $projectId =$_POST['projectId'];
 
 	if (is_numeric($projectId)) {
 		$particle=new particleData;
@@ -92,17 +90,8 @@ function createTemplateForm() {
 	}
 
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator","");
-	echo"
-  <FORM NAME='viewerform' method='POST' ACTION='$formAction'>
-  <B>Select Project:</B><br>
-  <SELECT NAME='projectId' onchange='newexp()'>\n";
+	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>";
 
-	foreach ($projects as $k=>$project) {
-		$sel = ($project['id']==$projectId) ? "selected" : '';
-		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-	}
-	echo"
-  </select>\n";
 	if ($templatetable) {
 		echo"
     <CENTER>
@@ -408,9 +397,6 @@ function runAlignment() {
 
 	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
 
-//	$command ="source /ami/sw/ami.csh;";
-//	$command.="source /ami/sw/share/python/usepython.csh common32;";
-//	$command.="source /home/$user/pyappion/useappion.csh;";
 	$command="refBasedAlignment2.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--template-list=".templateCommand()." ";
