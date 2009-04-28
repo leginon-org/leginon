@@ -158,25 +158,17 @@ class EdIterAlignScript(appionScript.AppionScript):
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = self.params['numiter']
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		#final averages
-		emancmd = "proc2d avg.spi avg.hed"
+		#final class averages
+		avgstack = os.path.join(self.params['rundir'], "avg")
+		emancmd = "proc2d "+avgstack+".spi "+avgstack+".hed"
 		apEMAN.executeEmanCmd(emancmd)
 		alignstackq['refstackfile'] = ("avg.hed")
-		#aligned stack
-		#emancmd = "proc2d alignedstack.spi alignedstack.hed" ###aligned particle stack does not exit
-		#apEMAN.executeEmanCmd(emancmd)
-		#alignstackq['imagicfile'] = imagicstack
 		#averaged results
-		emancmd = "proc2d avg.spi average.mrc average"
+		averagedstack = os.path.join(self.params['rundir'], "average.mrc")
+		emancmd = "proc2d "+avgstack+".spi "+averagedstack+" average"
 		apEMAN.executeEmanCmd(emancmd)
 		alignstackq['avgmrcfile'] = "average.mrc"
-		### check to make sure files exist
-		#imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
-		#if not os.path.isfile(imagicfile):
-		#	apDisplay.printError("could not find stack file: "+imagicfile)
-		#spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
-		#if not os.path.isfile(spiderfile):
-		#	apDisplay.printError("could not find stack file: "+spiderfile)
+		#check to be sure files exist
 		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile']) #averaged results
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
@@ -192,7 +184,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		alignstackq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['stackid'])
 
 		if insert is True:
-			alignstackq.insert() #alignstackq linked to alignrunq linked to editrunq
+			alignstackq.insert() #alignstackq contains alignrunq which contains editrunq
 
 		### setup data from each iteration
 		reflist = []
@@ -209,8 +201,8 @@ class EdIterAlignScript(appionScript.AppionScript):
 				refq['path'] = appionData.ApPathData(path=refpath)
 				refq['alignrun'] = alignrunq
 				#refq['frc_resolution'] = #(float)
-				avgname = "r%02d/avg%03d"%(iternum,refnum)
-				varname = "r%02d/var%03d"%(iternum,refnum)
+				avgname = os.path.join(self.params['rundir'], "r%02d/avg%03d"%(iternum,refnum) )
+				varname = os.path.join(self.params['rundir'], "r%02d/var%03d"%(iternum,refnum) )
 				if os.path.isfile(avgname+".spi"):
 					emancmd = "proc2d "+avgname+".spi "+avgname+".mrc"
 					apEMAN.executeEmanCmd(emancmd)
