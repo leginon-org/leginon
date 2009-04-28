@@ -518,6 +518,8 @@ def insertIteration(iteration, params):
 	#create Chimera snapshots
 	fscfile = os.path.join(params['rundir'], "fsc.eotest."+iteration['num'])
 	halfres = calcRes(fscfile, params['boxsize'], params['apix'])
+	if params['snapfilter']:
+		halfres = params['snapfilter']
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	volDensPath = os.path.join(params['rundir'], volumeDensity)
 	badres = renderSnapshots(volDensPath, halfres, params['model'],

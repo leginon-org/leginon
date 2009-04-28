@@ -193,6 +193,12 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 		apDisplay.printMsg("completed in "+apDisplay.timeString(tdiff))
 	elif waited is True:
 		print ""
+	proc_code = emanproc.returncode
+	if proc_code != 0:
+		if proc_code == 11:
+			apDisplay.printError("EMAN failed with Segmentation Fault")
+		else:
+			apDisplay.printError("EMAN failed with subprocess error code %d" % proc_code)
 
 #=====================
 def getNumParticlesInStack(stackname):

@@ -29,7 +29,15 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	tmpf = density+'.tmp.mrc'
 	filtres = 0.6*res
 	if box is not None and box > 250:
-		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=2 origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
+		if box % 4:
+			shrinkby = 2
+		elif box % 6:
+			shrinkby = 3
+		elif box % 10:
+			shrinkby = 10
+		else:
+			apDisplay.printWarning('This box size might cause error in shrinking with low pass filtering')
+		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f shrink=%d origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres,shrinkby))
 	else:
 		lpcmd = ('proc3d %s %s apix=%.3f lp=%.2f origin=0,0,0 norm=0,1' % (density, tmpf, apix, filtres))
 	apDisplay.printMsg("Low pass filtering model for images")
