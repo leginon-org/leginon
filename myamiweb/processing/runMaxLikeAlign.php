@@ -169,8 +169,6 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 
 			//handle multiple runs in stack
 			$stackname = $stackparams['shownstackname'];
-			if ($stackparams['substackname'])
-				$stackname .= "-".$stackparams['substackname'];
 
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
