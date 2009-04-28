@@ -262,8 +262,8 @@ class ChimSnapShots(object):
 		self.hideDust(50)
 		for s in self.surfaces:
 			self.color_surface_height(s, self.color)
-		self.writeMessageToLog("turn: get top view")
-		self.runChimCommand("turn x 180")
+		#self.writeMessageToLog("turn: get top view")
+		#self.runChimCommand("turn x 180")
 		tilt = 15
 		self.runChimCommand("turn x %d"%(-tilt))
 		increment = 4
@@ -367,8 +367,8 @@ class ChimSnapShots(object):
 		self.hideDust(50)
 		for s in self.surfaces:
 			self.color_surface_height(s, self.color)
-		self.writeMessageToLog("turn: get front view")
-		self.runChimCommand('turn x 180')
+		#self.writeMessageToLog("turn: get front view")
+		#self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
 		self.writeMessageToLog("turn: get front 60 tilt view")
 		self.runChimCommand('turn y -60')
