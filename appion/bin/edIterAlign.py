@@ -42,7 +42,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 			help="Bin images by factor", metavar="#")
 
 		### ed specific parameters
-		self.parser.add_option("-o", "--orientref", dest="orientref", 
+		self.parser.add_option("-o", "--orientref", dest="orientref", type="int",
 			help="ID of orientation reference", metavar="8")
 		self.parser.add_option("-t", "--templates", dest="templatelist",
 			help="List of template IDs", metavar="2,5,6")
@@ -98,12 +98,6 @@ class EdIterAlignScript(appionScript.AppionScript):
 		### convert / check template data
 		if self.params['orientref'] is None:
 			apDisplay.printError("reference for orientation was not provided")
-		self.orientref = self.params['orientref'].strip().split(",")
-		if not self.orientref or type(self.orientref) != type([]):
-			apDisplay.printError("could not parse orientref="+self.params['orientref'])
-		if len(self.orientref) > 1:
-			apDisplay.printMsg(str(len(self.orientref))+" orientation references provided. Only first will be used")
-		self.orientref = self.orientref[0]
 
 	#=====================
 	def setRunDir(self):
@@ -383,7 +377,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		templateparams = {}
 		templateparams['apix'] = self.stack['apix']
 		templateparams['rundir'] = os.path.join(self.params['rundir'], "templates")
-		templateparams['templateIds'] = [self.orientref,]
+		templateparams['templateIds'] = [self.params['orientref'],]
 		templateparams['bin'] = self.params['bin']
 		templateparams['lowpass'] = self.params['lowpass']
 		templateparams['median'] = None
@@ -391,15 +385,15 @@ class EdIterAlignScript(appionScript.AppionScript):
 		print 'Converting orientation reference:\n', templateparams
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
+		mrcfile = filelist[0]
 		
 		localclip = self.clipsize/self.params['bin']
-		for mrcfile in filelist:
-			emancmd  = ("proc2d templates/"+mrcfile+" "+orientref
-				+" clip="+str(localclip)+","+str(localclip)
-				+" edgenorm spiderswap-single ")
-			if self.params['inverttemplates'] is True:
-				emancmd += " invert "
-			apEMAN.executeEmanCmd(emancmd, showcmd=False)
+		emancmd  = ("proc2d templates/"+mrcfile+" "+orientref
+			+" clip="+str(localclip)+","+str(localclip)
+			+" edgenorm spiderswap-single ")
+		if self.params['inverttemplates'] is True:
+			emancmd += " invert "
+		apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
 		return orientref
 		
@@ -471,7 +465,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 	def runSpiderBatch(self):
 		### set SPPROC_DIR environment variable
 		spiprocdir = os.path.join(apParam.getAppionDirectory(), "spiderbatch/")
-		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True)
+		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True, verbose=True)
 		mySpider.toSpider("@ital")
 		mySpider.close()
 
