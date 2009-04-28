@@ -306,8 +306,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 			emancmd += "lp="+str(self.params['lowpass'])+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
 		emancmd += "shrink="+str(self.params['bin'])+" "
-		clipsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin']*2.0)
-		emancmd += "clip="+str(clipsize)+","+str(clipsize)+" "
+		emancmd += "clip="+str(self.clipsize)+","+str(self.clipsize)+" "
 		emancmd += "spiderswap"
 		starttime = time.time()
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
@@ -318,7 +317,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 	#=====================
 	def convertSpiderStack(self, spiderstack):
 		"""
-		takes the stack file and creates a imagic file ready for processing
+		converts spider stack to imagicstack
 		"""
 		emancmd  = "proc2d "
 		if not os.path.isfile(spiderstack):
@@ -357,10 +356,9 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
-		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
-				+" clip="+str(newboxsize)+","+str(newboxsize)
+				+" clip="+str(self.clipsize)+","+str(self.clipsize)
 				+" edgenorm spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
@@ -393,10 +391,9 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
-		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+orientref
-				+" clip="+str(newboxsize)+","+str(newboxsize)
+				+" clip="+str(self.clipsize)+","+str(self.clipsize)
 				+" edgenorm spiderswap-single ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
@@ -487,6 +484,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		self.stack['part'] = apStack.getOneParticleFromStackId(self.params['stackid'])
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
+		self.clipsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin']*2.0)
 
 		#self.checkRunNamePath()
 
@@ -514,8 +512,13 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apDisplay.printMsg("Removing un-aligned stack: "+spiderstack)
 		apFile.removeFile(spiderstack, warn=False)
 
-		###there is no output stack, only class averages, variances, paricle lists and alignment parameters
-		###imagicstack = self.convertSpiderStack(alignedstack)
+		###output is class averages, variances, paricle lists and alignment parameters
+		###imagicstack = self.convertSpiderStack(alignedstack) ###there is not aligned stack
+
+		#check to be sure files exist
+		avgfile = os.path.join(self.params['rundir'], "avg.spi") #class averages
+		if not os.path.isfile(avgfile):
+			apDisplay.printError("could not find average stack file: "+avgfile)
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
