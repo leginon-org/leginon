@@ -122,10 +122,11 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 		choices = [
-			'Dark reference',
-			'Bright reference',
-			'Raw image',
-			'Corrected image'
+			'Dark',
+			'Bright',
+			'Norm',
+			'Raw',
+			'Corrected'
 		]
 		self.cacqtype = wx.Choice(self.toolbar, -1, choices=choices)
 		self.cacqtype.SetSelection(0)
@@ -239,27 +240,30 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 			channels = [1]
 		elif channel == 'Both Channels':
 			channels = [0,1]
-		if acqtype == 'Dark reference':
+		if acqtype == 'Dark':
 			method = self.node.acquireDark
 			kwargs = {'channels': channels}
-		elif acqtype == 'Bright reference':
+		elif acqtype == 'Bright':
 			method = self.node.acquireBright
 			kwargs = {'channels': channels}
-		elif acqtype == 'Raw image':
+		elif acqtype == 'Raw':
 			method = self.node.acquireRaw
 			kwargs = {}
-		elif acqtype == 'Corrected image':
+		elif acqtype == 'Corrected':
 			method = self.node.acquireCorrected
 			kwargs = {'channels': channels}
+		else:
+			self._acquisitionEnable(True)
+			return
 		threading.Thread(target=method, kwargs=kwargs).start()	
 
 	def onDisplayTool(self, evt):
 		acqtype = self.cacqtype.GetStringSelection()
-		if acqtype == 'Dark reference':
+		if acqtype == 'Dark':
 			reftype = 'dark'
-		elif acqtype == 'Bright reference':
+		elif acqtype == 'Bright':
 			reftype = 'bright'
-		elif acqtype == 'Norm reference':
+		elif acqtype == 'Norm':
 			reftype = 'norm'
 		else:
 			return
@@ -301,17 +305,17 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setPlan(dialog.plan)
 			# ...
-			threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
+			threading.Thread(target=self.node.storeCorrectorPlan, args=(self.plan,)).start()
 		dialog.Destroy()
 
 	def onGrabPixels(self, evt):
 		pixels = self.imagepanel.getTargetPositions('Bad_Pixels')
 		self.setPlan({'pixels':pixels})
-		threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
+		threading.Thread(target=self.node.storeCorrectorPlan, args=(self.plan,)).start()
 
 	def onClearPixels(self, evt):
 		self.setPlan({'pixels':[]})
-		threading.Thread(target=self.node.storePlan, args=(self.plan,)).start()
+		threading.Thread(target=self.node.storeCorrectorPlan, args=(self.plan,)).start()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
