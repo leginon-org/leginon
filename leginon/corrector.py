@@ -58,11 +58,11 @@ class Corrector(node.Node):
 		camsettings = self.settings['camera settings']
 		if ccdcameraname is None or camsettings is None:
 			return None
+		cameradata = leginondata.CameraEMData()
 		try:
 			cameradata['ccdcamera'] = self.instrument.getCCDCameraData(ccdcameraname)
 		except:
 			return None
-		cameradata = leginondata.CameraEMData()
 		cameradata.update(camsettings)
 		scopedata = self.instrument.getData(leginondata.ScopeEMData)
 		imdata = self.retrieveCorrectorImageData(reftype, scopedata, cameradata, channel)
@@ -73,11 +73,11 @@ class Corrector(node.Node):
 		camsettings = self.settings['camera settings']
 		if ccdcameraname is None or camsettings is None:
 			return None
+		cameradata = leginondata.CameraEMData()
 		try:
 			cameradata['ccdcamera'] = self.instrument.getCCDCameraData(ccdcameraname)
 		except:
 			return None
-		cameradata = leginondata.CameraEMData()
 		cameradata.update(camsettings)
 		plan = self.retrieveCorrectorPlan(cameradata)
 		return plan
