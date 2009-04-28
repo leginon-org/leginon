@@ -274,7 +274,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 				'mirror': alignment.checkMirror( float(data[16]) ),
 				'score': float(data[12]),
 				}
-		partlist.append(partdict)
+			partlist.append(partdict)
 		docf.close()
 		picklef = open(picklefile, "w")
 		cPickle.dump(partlist, picklef)
