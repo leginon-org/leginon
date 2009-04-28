@@ -3273,7 +3273,9 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."  a.`REF|ApAlignStackData|alignstack` = '$alignid' ";
 			//."ORDER BY e.`median` "
 			//."LIMIT 100 ";
+		//echo $q."<br/><br/>\n";
 		$r=$this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
 
