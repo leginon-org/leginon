@@ -46,12 +46,12 @@ FI x87,x88
 x89=0
 IF(x87.ne.x82)THEN
   VM
-  echo Particles are {%F7.1%x87} NROW but References are {%F7.1%x82} NROW
+  echo Particles are {%F7.1%x82} NROW but References are {%F7.1%x87} NROW
   x89=1
 ENDIF
 IF(x88.ne.x83)THEN
   VM
-  echo Particles are {%F7.1%x88} NSAM but References are {%F7.1%x83} NSAM
+  echo Particles are {%F7.1%x83} NSAM but References are {%F7.1%x88} NSAM
   x89=1
 ENDIF
 IF(x89.eq.1)THEN
