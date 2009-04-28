@@ -514,6 +514,9 @@ class Data(newdict.TypedDict):
 	def __copy__(self):
 		return self.__class__(initializer=self)
 
+	def copy(self):
+		return self.__copy__()
+
 	def setPersistent(self, dbid):
 		self.dbid = dbid
 		self.sync()
