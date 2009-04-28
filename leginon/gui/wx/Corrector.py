@@ -132,9 +132,9 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.toolbar.AddControl(self.cacqtype)
 
 		choices = [
+			'Both Channels',
 			'Channel 0',
 			'Channel 1',
-			'Both Channels',
 		]
 		self.cchannel = wx.Choice(self.toolbar, -1, choices=choices)
 		self.cchannel.SetSelection(0)
@@ -254,7 +254,23 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		threading.Thread(target=method, kwargs=kwargs).start()	
 
 	def onDisplayTool(self, evt):
-		self.node.displayNorm()
+		acqtype = self.cacqtype.GetStringSelection()
+		if acqtype == 'Dark reference':
+			reftype = 'dark'
+		elif acqtype == 'Bright reference':
+			reftype = 'bright'
+		elif acqtype == 'Norm reference':
+			reftype = 'norm'
+		else:
+			return
+		chanstr = self.cchannel.GetStringSelection()
+		if chanstr  == 'Channel 0':
+			channel = 0
+		elif chanstr == 'Channel 1':
+			channel = 1
+		else:
+			return
+		self.node.displayRef(reftype, channel)
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
@@ -317,7 +333,6 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.panel.setInstrumentSelection(self.widgets['instruments'])
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
-		self.widgets['channels'] = IntEntry(self, -1, min=1, max=99, chars=2)
 		self.widgets['combine'] = Choice(self, -1, choices=['median', 'average'])
 
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
@@ -361,11 +376,6 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		label = wx.StaticText(self, -1, 'Combine method:')
 		szref.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szref.Add(self.widgets['combine'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-
-		label = wx.StaticText(self, -1, 'Number of Channels:')
-		szref.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szref.Add(self.widgets['channels'], (2, 1), (1, 1), wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szref.AddGrowableCol(1)
 
 		sbszref.Add(szref, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 

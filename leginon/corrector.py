@@ -45,7 +45,6 @@ class Corrector(node.Node):
 		'clip max': 2**16,
 		'camera settings': None,
 		'combine': 'average',
-		'channels': 1,
 	}
 	eventinputs = node.Node.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
@@ -53,6 +52,21 @@ class Corrector(node.Node):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session, self.panel)
 		self.start()
+
+	def retrieveCorrectorImageFromSettings(self, reftype, channel):
+		ccdcameraname = self.settings['instruments']['ccdcamera']
+		camsettings = self.settings['camera settings']
+		if ccdcameraname is None or camsettings is None:
+			return None
+		try:
+			cameradata['ccdcamera'] = self.instrument.getCCDCameraData(ccdcameraname)
+		except:
+			return None
+		cameradata = leginondata.CameraEMData()
+		cameradata.update(camsettings)
+		scopedata = self.instrument.getData(leginondata.ScopeEMData)
+		imdata = self.retrieveCorrectorImageData(reftype, scopedata, cameradata, channel)
+		return imdata
 
 	def retrieveCorrectorPlanFromSettings(self):
 		ccdcameraname = self.settings['instruments']['ccdcamera']
@@ -134,6 +148,17 @@ class Corrector(node.Node):
 		else:
 			self.setImage(numpy.asarray(image, numpy.float32))
 		self.stopTimer('Corrector.displayImage')
+
+	def displayRef(self, reftype, channel):
+		self.setStatus('processing')
+		self.logger.info('load channel %s %s image' % (channel, reftype))
+
+		imdata = self.retrieveCorrectorImageFromSettings(reftype, channel)
+		imarray = imdata['image']
+		self.displayImage(imarray)
+		self.currentimage = imarray
+		self.beep()
+		self.setStatus('idle')
 
 	def acquireSeries(self, n):
 		series = []
