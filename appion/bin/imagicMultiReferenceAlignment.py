@@ -120,7 +120,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 
 	#=====================
-	def createImagicBatchFile(self):
+	def createImagicBatchFileMRA(self):
 		# IMAGIC batch file creation
 
 		##### DELETE HEADERS!!!!!!!!!!
@@ -134,41 +134,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		f.write("setenv IMAGIC_BATCH 1\n")
 
 		append_log = False ### log file for imagic MRA, appended only if options are given
-
-		#### Bin down stack, low-pass filter and high-pass filter images
-
-		if self.params['bin'] > 1:
-			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > multiReferenceAlignment.log\n")
-			f.write("start\n")
-			f.write("start_coarse\n")
-			f.write(str(self.params['bin'])+"\n")
-			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
-			f.write("start_coarse\n")
-			f.write("start\n")
-			f.write("EOF\n")
-			append_log = True
-		if self.params['highpass'] is not None and self.params['lowpass'] is not None:
-			
-			### convert to IMAGIC-specific filtering parameters
-			highpass, lowpass = apIMAGIC.convertFilteringParameters(self.params['highpass'], self.params['lowpass'], self.params['apix'])
-			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
-			if append_log is True:
-				f.write(" >> multiReferenceAlignment.log\n")
-			else:
-				f.write(" > multiReferenceAlignment.log\n")
-			f.write("start\n")
-			f.write("start_filt\n")
-			f.write(str(highpass)+"\n")
-			f.write("0\n")
-			f.write(str(lowpass)+"\n")
-			f.write("NO\n")
-			f.write("EOF\n")
-			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> multiReferenceAlignment.log\n")
-			f.write("start_filt\n")
-			f.write("start\n")
-			f.write("EOF\n")
-			append_log = True
 
 		#### OPTION OF PREPARING MULTI-REFERENCE ALIGNMENT REFERENCES
 
@@ -250,6 +215,61 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 
 	### ==========================	
+	
+	def createImagicBatchFileScaling(self):
+		# IMAGIC batch file creation
+
+		##### DELETE HEADERS!!!!!!!!!!
+		
+		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
+
+		filename = os.path.join(self.params['rundir'], "prepareStack.batch")
+		f = open(filename, 'w')
+		f.write("#!/bin/csh -f\n")
+		f.write("setenv IMAGIC_BATCH 1\n")
+
+		append_log = False ### log file for imagic MRA, appended only if options are given
+
+		#### Bin down stack, low-pass filter and high-pass filter images
+
+		if self.params['bin'] > 1:
+			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > prepareStack.log\n")
+			f.write("start\n")
+			f.write("start_coarse\n")
+			f.write(str(self.params['bin'])+"\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> prepareStack.log\n")
+			f.write("start_coarse\n")
+			f.write("start\n")
+			f.write("EOF\n")
+			append_log = True
+		if self.params['highpass'] is not None and self.params['lowpass'] is not None:	
+			### convert to IMAGIC-specific filtering parameters
+			highpass, lowpass = apIMAGIC.convertFilteringParameters(self.params['highpass'], self.params['lowpass'], self.params['apix'])
+			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
+			if append_log is True:
+				f.write(" >> prepareStack.log\n")
+			else:
+				f.write(" > prepareStack.log\n")
+			f.write("start\n")
+			f.write("start_filt\n")
+			f.write(str(highpass)+"\n")
+			f.write("0\n")
+			f.write(str(lowpass)+"\n")
+			f.write("NO\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> prepareStack.log\n")
+			f.write("start_filt\n")
+			f.write("start\n")
+			f.write("EOF\n")
+			append_log = True
+
+		f.close()
+
+		return filename
+
+
+	### ==========================
 	def scaleTemplates(self):
 		reffile = os.path.join(self.params['rundir'], "references.hed")
 		if self.params['apix'] != self.templatestack['apix']:
@@ -262,19 +282,21 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			apImagicFile.writeImagic(scaledtemplates, reffile)
 
 		### get boxsizes (new or old) for templatestack
-		emancmd = "iminfo "+reffile	
-		proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		results = proc.stdout
-		proc.wait() 
-		for line in results:
-			res = re.search("([0-9]+)x([0-9]+)x([0-9])", line)
-			if res:
-				num1 = int(res.groups()[0])
-				num2 = int(res.groups()[1])
-				if num1 == num2:
-					refbox = num1
-		
-		stbox = self.params['boxsize']			
+#		emancmd = "iminfo "+reffile	
+#		proc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#		results = proc.stdout
+#		proc.wait() 
+#		for line in results:
+#			res = re.search("([0-9]+)x([0-9]+)x([0-9])", line)
+#			if res:
+#				num1 = int(res.groups()[0])
+#				num2 = int(res.groups()[1])
+#				if num1 == num2:
+#					refbox = num1
+
+		refbox = apFile.getBoxSize(reffile)[0]		
+		stbox = self.params['boxsize']		
+	
 		### now clip the references to get identical boxsizes
 		if stbox != refbox:
 			while os.path.isfile(reffile+".new.img"):
@@ -422,7 +444,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			alignpartq['rotation'] = rotation
 			alignpartq['mirror'] = mirror
 			alignpartq['ref'] = refq
-#			alignpartq['spread'] = partdict['spread']
 			alignpartq['correlation'] = ccc
 
 			### insert
@@ -478,10 +499,30 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			emancmd = "proc2d "+strippedfile+".img "+ts
 			apEMAN.executeEmanCmd(emancmd)
 
-		### set new pixelsize and boxsize
+		### set new pixelsize
 		if self.params['bin'] is not None:
 			self.params['apix'] = float(self.stack['apix']) * int(self.params['bin'])
-			self.params['boxsize'] = int(self.stack['boxsize']) / int(self.params['bin'])
+		else:
+			self.params['apix'] = self.stack['apix']
+
+		### scale, low-pass, and high-pass filter stack ... do this with imagic, because it determines the appropriate boxsizes
+		scalingbatchfile = self.createImagicBatchFileScaling()
+		preptime = time.time()
+		subprocess.Popen("chmod 775 "+str(scalingbatchfile), shell=True)
+		os.chdir(self.params['rundir'])
+		apIMAGIC.executeImagicBatchFile(scalingbatchfile)
+		logfile = open(os.path.join(self.params['rundir'], "prepareStack.log"))
+		loglines = logfile.readlines()
+		for line in loglines:
+			if re.search("ERROR in program", line):
+				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: prepareStack.log")
+               	apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-preptime), "cyan")
+
+		### set new boxsize, done only after scaling is complete
+		if self.params['bin'] is not None:
+			self.params['boxsize'] = apFile.getBoxSize(os.path.join(self.params['rundir'], "start.hed"))[0]
+		else:
+			self.params['boxsize'] = self.stack['boxsize']
 
 		### make sure template stack boxsize matches that of the input stack
 		if self.params['apix'] != self.templatestack['apix'] or self.params['boxsize'] != self.templatestack['boxsize']:
@@ -494,7 +535,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		apDisplay.printColor("Running IMAGIC .batch file: See multiReferenceAlignment.log file for details", "cyan")
 	
 		### create IMAGIC batch file
-		batchfile = self.createImagicBatchFile()
+		batchfile = self.createImagicBatchFileMRA()
 
 		### execute IMAGIC batch file
 		aligntime0 = time.time()
@@ -514,7 +555,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		### average stack
 		alignstack = os.path.join(self.params['rundir'], "alignstack.hed")
-		#apStack.averageStack(alignstack)	
+		apStack.averageStack(alignstack)	
 
 		### remove copied stack
 		apFile.removeStack(os.path.join(self.params['rundir'], "start.hed"))
