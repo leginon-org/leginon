@@ -115,7 +115,7 @@ def scaleTemplate(templatearray, scalefactor=1.0, boxsize=None):
 		edgeavg = apImage.meanEdgeValue(templatearray)
 		origsize = templatearray.shape[0]
 		if boxsize is None:
-			padsize  = int(math.ceil(float(origsize)/16)*16)
+			padsize  = int(math.floor(float(origsize)/16)*16)
 		else:
 			padsize = boxsize
 		padshape = numpy.array([padsize,padsize])
