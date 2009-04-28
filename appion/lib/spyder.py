@@ -42,7 +42,7 @@ def fileFilter(fname, dataext=".spi"):
 	return fname
 
 class SpiderSession:
-	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True, nproc=1, spiderprocdir=""):
+	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True, nproc=1, spiderprocdir="", term=False):
 		# spider executable		
 		if spiderexec is None:
 			if os.environ.has_key('SPIDER_LOC'):
@@ -77,7 +77,8 @@ class SpiderSession:
 		self.spidererr = self.spiderproc.stderr
 
 		self.toSpiderQuiet(self.projext+"/"+self.dataext)
-		self.toSpiderQuiet("MD", "TERM OFF")
+		if term is False:
+			self.toSpiderQuiet("MD", "TERM OFF")
 		self.toSpiderQuiet("MD", "RESULTS OFF")
 		if nproc > 1:
 			self.toSpiderQuiet("MD", "SET MP", str(nproc))
