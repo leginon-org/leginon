@@ -724,6 +724,21 @@ function formatEndPath($path) {
 	return $path;
 }
 
+function getPBSStackSize($stackid) {
+	$particle = new particledata();
+	$stackdata = $particle->getStackParams($stackid);
+	if (substr($stackdata['name'], -4) == ".hed")
+		$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
+	else
+		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
+	if (file_exists($stackimgfile)) {
+		$size = sprintf("%.0fgb", ceil(filesize($stackimgfile)/1073741824)+1);
+		return $size;
+	}
+	// failed to find stack
+	return "2gb";
+}
+
 function writeJobFile ($extra=False) {
 	global $clusterdata;
 	$particle = new particledata();
@@ -761,10 +776,10 @@ function writeJobFile ($extra=False) {
 		$javafunc.=$clusterdata->get_javascript();
 	}
 	processing_header("Eman Job Generator","EMAN Job Generator", $javafunc);
-
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
+	$header.= "#PBS -l mem=".getPBSStackSize($stackidval)."\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
