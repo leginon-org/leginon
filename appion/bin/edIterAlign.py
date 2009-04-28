@@ -478,10 +478,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 
 	#=====================
 	def runSpiderBatch(self):
-		### copy over additional batch file ???why not just set SPPROC_DIR environment variable???
-		#for bfile in ("a", "b"):
-		#	gfile = os.path.join(apParam.getAppionDirectory(), "spiderbatch", bfile)
-		#	shutil.copy(
+		### set SPPROC_DIR environment variable
 		spiprocdir = os.path.join(apParam.getAppionDirectory(), "spiderbatch/")
 		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi")
 		mySpider.toSpider("@ital")
@@ -532,7 +529,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			apDisplay.printWarning("committing results to DB")
 			self.runtime = aligntime
-			self.insertEdIterRun(insert=False) ## insert=True
+			self.insertEdIterRun(insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
