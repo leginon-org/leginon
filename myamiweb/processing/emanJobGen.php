@@ -724,19 +724,18 @@ function formatEndPath($path) {
 	return $path;
 }
 
-function getPBSStackSize($stackid) {
+function getPBSMemoryNeeded($boxsize) {
 	$particle = new particledata();
-	$stackdata = $particle->getStackParams($stackid);
-	if (substr($stackdata['name'], -4) == ".hed")
-		$stackimgfile = $stackdata['path']."/".substr($stackdata['name'], 0, -4).".img";
-	else
-		$stackimgfile = $stackdata['path']."/".$stackdata['name'];
-	if (file_exists($stackimgfile)) {
-		$size = sprintf("%.0fgb", ceil(filesize($stackimgfile)/1073741824)+1);
-		return $size;
-	}
-	// failed to find stack
-	return "2gb";
+	$numiters=$_POST['numiters'];
+	$maxang=$_POST["ang".$numiters];
+	$emansym=$_POST["sym".$numiters];
+	$symdata = $particle->getSymmetryDataFromEmanName($emansym);
+	$foldsym = (int) $symdata['fold_symmetry'];
+	$numproj = 18000.0/($foldsym*$maxang*$maxang);
+	$memneed = $numproj*$boxsize*$boxsize*8.0;
+	$numgig = ceil($memneed/1073741824.0);
+	$sizestr = sprintf("%.0fgb", $numgig);
+	return $sizestr;
 }
 
 function writeJobFile ($extra=False) {
@@ -779,14 +778,13 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -l mem=".getPBSStackSize($stackidval)."\n";
+	$header.= "#PBS -l mem=".getPBSMemoryNeeded($box)."\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
 	$clusterjob = "# stackId: $stackidval\n";
 	$clusterjob.= "# modelId: $modelid\n\n";
 	
-
 	$procs=$_POST['nodes']*$_POST['rprocs'];
 	$numiters=$_POST['numiters'];
 	$pad=intval($box*1.25);

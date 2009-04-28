@@ -2494,6 +2494,15 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r;
 	}
 
+	function getSymmetryDataFromEmanName($emansym) {
+		$q="SELECT * "
+			."FROM `ApSymmetryData` "
+			."WHERE eman_name = '$emansym' "
+			."LIMIT 1 ";
+		list($r)=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getModelsFromProject ($projectId, $getHidden=False) {
 		$q="SELECT i.*, p.path "
 			."FROM `ApInitialModelData` i "
