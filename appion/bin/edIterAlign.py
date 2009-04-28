@@ -469,7 +469,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 	def runSpiderBatch(self):
 		### set SPPROC_DIR environment variable
 		spiprocdir = os.path.join(apParam.getAppionDirectory(), "spiderbatch/")
-		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi")
+		mySpider = spyder.SpiderSession(logo=True, spiderprocdir=spiprocdir, projext=".spi", term=True)
 		mySpider.toSpider("@ital")
 		mySpider.close()
 
