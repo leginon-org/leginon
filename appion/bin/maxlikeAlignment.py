@@ -258,13 +258,19 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
 
+		### memory needed
+		numbytes = apFile.stackSize(self.stack['file'])
+		numgig = math.ceil( numbytes / (1024.0**3) / (self.params['bin']**2) )
+
 		### write to file
 		jobfile = "xmipp-"+self.timestamp+".job"
 		results = rundir+"/"+self.params['runname']+"-results.tgz"
 		f = open(jobfile, "w")
-		f.write("#PBS -l nodes="+str(nproc/4)+":ppn=4\n")
+		f.write("#PBS -l nodes=1:ppn=8\n")
+		#f.write("#PBS -l nodes="+str(nproc/4)+":ppn=4\n")
 		f.write("#PBS -l walltime=240:00:00\n")
 		f.write("#PBS -l cput=240:00:00\n")
+		f.write("#PBS -l mem=%dgb\n"%(numgig))
 		f.write("#PBS -r n\n")
 		f.write("#PBS -k oe\n")
 		f.write("\n")
@@ -274,7 +280,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("rm -fv pbstempdir "+results+"\n")
 		f.write("ln -s $PBSREMOTEDIR pbstempdir\n")
 		f.write("cd $PBSREMOTEDIR\n")
-		f.write("tar xzf "+rundir+"/particles.tgz\n")
+		f.write("tar xf "+rundir+"/particles.tar\n")
 		f.write("\n")
 		f.write("foreach line ( `cat partlist.doc | cut -f1 -d' '` )\n")
 		f.write("  echo $PBSREMOTEDIR/`echo $line | sed 's/^.*partfiles/partfiles/'` 1 >> partlist2.doc\n")
@@ -285,8 +291,10 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write("set path = ( $MPI_HOME/bin $path )\n")
 		f.write("setenv LD_LIBRARY_PATH $MPI_HOME/lib:$XMIPP_HOME/lib:/usr/lib:/lib\n")
 		f.write("\n")
-		f.write("$MPI_HOME/bin/mpirun -np "+str(nproc)+" $XMIPP_HOME/bin/xmipp_mpi_ml_align2d \\\n")
-		f.write(xmippopts+"\n")
+		#f.write("$MPI_HOME/bin/mpirun -np "+str(nproc)+" $XMIPP_HOME/bin/xmipp_mpi_ml_align2d \\\n")
+		f.write("$MPI_HOME/bin/mpirun -np 8 \\\n")
+		f.write("  $XMIPP_HOME/bin/xmipp_mpi_ml_align2d -save_memB \\\n")
+		f.write("  "+xmippopts+"\n")
 		f.write("\n")
 		f.write("tar zcf "+results+" *.???\n")
 		f.write("\n")
@@ -303,9 +311,9 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		f.write(query)
 		f.close()
 		apDisplay.printMsg("mysql -u usr_object -h cronus4 ap"+str(self.params['projectid'])+" < readyupload.sql")
-		apDisplay.printMsg("tar zcf particles.tgz partlist.doc partfiles/")
+		apDisplay.printMsg("tar cf particles.tar partlist.doc partfiles/")
 		apDisplay.printMsg("rsync -vaP "+jobfile+" garibaldi:"+rundir+"/")
-		apDisplay.printMsg("rsync -vaP particles.tgz garibaldi:"+rundir+"/")
+		apDisplay.printMsg("rsync -vaP particles.tar garibaldi:"+rundir+"/")
 		apDisplay.printColor("ready to run job on garibaldi", "cyan")
 		sys.exit(1)
 
