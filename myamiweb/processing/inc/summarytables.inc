@@ -193,6 +193,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 		$type = 'none';
 	elseif ($stackdata['REF|ApRefBasedRunData|refbasedrun'])
 		$type = 'score';
+	elseif ($stackdata['REF|ApEdIterRunData|editerrun'])
+		$type = 'score';
 	elseif ($stackdata['REF|ApMaxLikeRunData|maxlikerun'])
 		$type = 'spread';
 	elseif ($stackdata['REF|ApMultiRefAlignRunData|imagicMRA'])
