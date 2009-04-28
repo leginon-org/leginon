@@ -37,9 +37,10 @@ echo "</table>\n";
 echo "<br/>\n";
 echo "<table border='1' class='tableborder' width='640'>\n";
 
-#echo "<tr><td>\n";
-#echo "  <h3>Just run an alignment, I don't care how</h3>\n";
-#echo "</td></tr>\n";
+
+/*
+** Xmipp Maximum Likelihood Reference Free Alignment
+*/
 
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";
@@ -58,6 +59,10 @@ echo " <p> this method is the most robust, but takes some time to complete."
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
 
+/*
+** SPIDER Reference Based Alignment
+*/
+
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/spider_logo.png' width='64'>\n";
 echo "</td><td>\n";
@@ -70,6 +75,10 @@ echo " <p> first you select template and then this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
+/*
+** IMAGIC Reference Based Alignment
+*/
+
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/imagic_logo.png' width='64'>\n";
 echo "</td><td>\n";
@@ -80,6 +89,31 @@ echo " <p> this method uses the "
 	." command to align your particles to the templates within a specified template stack"
 	."</p>\n";
 echo "</td></tr>\n";
+
+/*
+** SPIDER Ed Iter Alignment
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/spider_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runEdIterAlignment.php?expId=$expId'>Ed's Iteration Alignment</a></h3>\n";
+echo " <p> this method uses the "
+	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsr.html'>Spider AP SR</a>"
+	."&nbsp;<img src='img/external.png'> "
+	." and the  "
+	."<a href='http://www.wadsworth.org/spider_doc/spider/docs/man/apsh.html'>Spider AP SH</a>"
+	."&nbsp;<img src='img/external.png'> "
+	." commands to align your particles through multiple iterations of ref-free and ref-based alignments. "
+	."</p><p>\n"
+	."<font color='#aa2222'>WARNING:</font> report all problems to Ed"
+	."</p>\n";
+//echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
+echo "</td></tr>\n";
+
+/*
+** SPIDER Reference Free Alignment
+*/
 
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/spider_logo.png' width='64'>\n";
