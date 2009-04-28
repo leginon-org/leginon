@@ -38,6 +38,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
     $formAction=$_SERVER['PHP_SELF'];
   }
 
+	$javafunctions .= writeJavaPopupFunctions('appion');  
+
   $particle = new particledata();
 
   // if uploading a specific recon, get recon info from database & job file
@@ -65,7 +67,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 
   $projects=getProjectList();
 
-  processing_header($title,$heading,$javascript);
+  processing_header($title,$heading,$javafunctions);
   // write out errors, if any came up:
 
   if ($extra) {
@@ -89,6 +91,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   $package = ($_POST['package']) ? $_POST['package'] : $package;
   $contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
   $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
+  $filter = ($_POST['filter']) ? $_POST['filter'] : '';
   $model = ($_POST['model']) ? $_POST['model'] : '';
   $reconname = ($_POST['reconname']) ? $_POST['reconname'] : '';
   $description = $_POST['description'];
@@ -212,7 +215,15 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <br>
       <input type='text' name='contour' value='$contour' size='5'> Contour Level
       <br>
-      <input type='text' name='zoom' value='$zoom' size='5'> Zoom
+      <input type='text' name='zoom' value='$zoom' size='5'>
+		";	
+	echo docpop('snapzoom','Zoom');
+	echo "
+      <br>
+      <input type='text' name='filter' value='$filter' size='5'>
+		";	
+	echo docpop('snapfilter','Fixed Low Pass Filter (Angstrum)');
+	echo "
       <P>
       </td>
     </tr>
@@ -246,6 +257,7 @@ function runUploadRecon() {
 	$description=$_POST['description'];
 	$contour=$_POST['contour'];
 	$zoom=$_POST['zoom'];
+	$filter=$_POST['filter'];
 	$oneiteration=$_POST['oneiteration'];
 	$iteration=$_POST['iteration'];
 	$contiteration=$_POST['contiteration'];
@@ -319,6 +331,7 @@ function runUploadRecon() {
 	if ($jobId) $command.="--jobid=$jobId ";
 	if ($contour) $command.="--contour=$contour ";
 	if ($zoom) $command.="--zoom=$zoom ";
+	if ($filter) $command.="--filter=$filter ";
 	if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
 	if ($contiteration=='on' && $startiteration) $command.="--startiter=$startiteration ";
 	$command.="--description=\"$description\"";
@@ -347,8 +360,9 @@ function runUploadRecon() {
 	<tr><td>model</td><td>$model</td></tr>
 	<tr><td>path</td><td>$reconpath</td></tr>
 	<tr><td>jobid</td><td>$jobId</td></tr>
-	<tr><td>contour</td><td>$contour</td></tr>
-	<tr><td>zoom</td><td>$zoom</td></tr>
+	<tr><td>snapshot contour</td><td>$contour</td></tr>
+	<tr><td>snapshot zoom</td><td>$zoom</td></tr>
+	<tr><td>snapshot filter</td><td>$filter</td></tr>
 	<tr><td>description</td><td>$description</td></tr>
 	</table>\n";
 	processing_footer();

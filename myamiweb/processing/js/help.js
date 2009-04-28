@@ -119,6 +119,8 @@ var help = {
 		'images_in_group' : 'Number of images per tilt series.  Enter 1 or leave it blank if not a tilt series. This will divide all images to be upload in groups of the defined number.  It is therefore not advisable to mix images belonging to a tilt series with ones that are not in the same upload. if the number is larger than 1, Field 8 (stage alpha tilt) must exist in the information file',
 		'batchfile' : 'A text file that contains information of each mrc image to be uploaded. The file has no title line.  Each line has the following fields of the image separated by tabs (examples are shown in []): <p>(1) complete image path ended with extension mrc; [/yourhome/yourimage.mrc]<p>(2) pixel size in meters; [1.5e-10]<p>(3) binning in x; [1]<p>(4) binning in y; [1]<p>(5) nominal scope magnification; [50000]<p>(6) intended defocus in meters, [-2e-6]<p>(7) high tension in volts; [200000]<p>(8) (optional) stage alpha tilt in degrees if loading tilt group.[55.0] See help on number of image pertilt series.<p>Note that (3) and (4) are only relavent for CCD camera, use 1 for scanned film with arbitrary scan step.',
 		'rctcenter' : 'In RCT, the particle Euler angles are fixed, but the particles are not centered. Through an interative process the volume is projected in the direction of the particle and cross-correlated, then the particle is shifted to its correct location.',
+		'snapfilter' : 'Fixed low pass filter used in rendering volume snapshot, leave it blank to use the FSC 0.5 result for each iteration',
+		'snapzoom' : 'Zoom in the volume data to see the volume better for a large boxsize',
 
 /******* IMAGIC terms ********/
 
