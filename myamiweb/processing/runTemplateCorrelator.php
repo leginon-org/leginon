@@ -3,7 +3,7 @@
  *	The Leginon software is Copyright 2003 
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	see http://ami.scripps.edu/software/leginon-license
  *
  *	Simple viewer to view a image using mrcmodule
  */
@@ -52,8 +52,6 @@ function createTemplateForm($extra=False) {
 	// if user wants to use templates from another project
 	if($_POST['projectId']) $projectId =$_POST[projectId];
 
-	$projects=getProjectList();
-
 	if (is_numeric($projectId)) {
 		$particle=new particleData;
 		$templateData=$particle->getTemplatesFromProject($projectId);
@@ -63,10 +61,13 @@ function createTemplateForm($extra=False) {
 	if ($templateData) {
 		$i=1;
 		$javafunctions="<script type='text/javascript'>\n";
-		$templatetable="<table class='tableborder' border='1' cellpadding='5' width='600'>\n";
+		$templatetable="<table class='tableborder' border='1' cellpadding='5'>\n";
 		$numtemplates = count($templateData);
-
-		foreach($templateData as $templateinfo) { 
+		foreach($templateData as $templateinfo) {
+			if ($i%2 == 1)
+				$templatetable.="<tr><td align='left'>\n";
+			else
+				$templatetable.="<td align='left'>\n";
 			if (is_array($templateinfo)) {
 				$filename = $templateinfo[path] ."/".$templateinfo[templatename];
 				$checkboxname='template'.$i;
@@ -79,52 +80,54 @@ function createTemplateForm($extra=False) {
 				if ($incrval==0 || $incrval==20) $incrval='';
 				if ($startval==0 && $endval=='') $startval='';
 
-				// create the javascript functions to enable the templates
+				// create the javascript functions to enable/disable the templates
 				$javafunctions.="function enable".$checkboxname."() {
-						 if (document.viewerform.$checkboxname.checked){
+					if (document.viewerform.$checkboxname.checked){
 						 document.viewerform.".$checkboxname."strt.disabled=false;
-						 //document.viewerform.".$checkboxname."strt.value='';
 						 document.viewerform.".$checkboxname."end.disabled=false;
-						 //document.viewerform.".$checkboxname."end.value='';
 						 document.viewerform.".$checkboxname."incr.disabled=false;
-						 //document.viewerform.".$checkboxname."incr.value='';
 					 }
 					 else {
 						 document.viewerform.".$checkboxname."strt.disabled=true;
-						 //document.viewerform.".$checkboxname."strt.value='0';
 						 document.viewerform.".$checkboxname."end.disabled=true;
-						 //document.viewerform.".$checkboxname."end.value='90';
 						 document.viewerform.".$checkboxname."incr.disabled=true;
-						 //document.viewerform.".$checkboxname."incr.value='10';
 					 }
-				 }\n";
-
+				}\n";
 				// create the image template table
-				$templatetable.="<tr><td>\n";
-				$templatetable.="<img src='loadimg.php?filename=$filename&rescale=True' WIDTH='200'></td>\n";
-				$templatetable.="<td>\n";
-				$templatetable.="<input type='hidden' name='templateId".$i."' value='$templateinfo[DEF_id]'>\n";
-				$templatetable.="<input type='hidden' name='diam' value='$templateinfo[diam]'>\n";
-				$templatetable.="<input type='checkbox' name='$checkboxname' onclick='enable".$checkboxname."()'>\n";
-				$templatetable.="<b>Use This Template</b><br>\n";
-				$templatetable.="Enter rotation values (leave blank for no rotation):<br>\n";
-				$templatetable.="<input type='text' name='".$checkboxname
-					."strt' DISABLED value='$startval' SIZE='3'> Starting Angle<br>\n";
-				$templatetable.="<input type='text' name='".$checkboxname
-					."end' DISABLED value='$endval' SIZE='3'> Ending Angle<br>\n";
-				$templatetable.="<input type='text' name='".$checkboxname
-					."incr' DISABLED value='$incrval' SIZE='3'> Angular Increment<br>\n";
-				$templatetable.="<P>\n";
-				$templatetable.="<table BORDER='0'>\n";
-				$templatetable.="<tr><td><b>Template ID:</b></td><td>$templateinfo[DEF_id]</td></tr>\n";
-				$templatetable.="<tr><td><b>Diameter:</b></td><td>$templateinfo[diam]</td></tr>\n";
-				$templatetable.="<tr><td><b>Pixel Size:</b></td><td>$templateinfo[apix]</td></tr>\n";
-				$templatetable.="</table>\n";
-				$templatetable.="<b>Description:</b><br>$templateinfo[description]\n";
-				$templatetable.="</td></tr>\n";
+				$templatetable.="<img src='loadimg.php?filename=$filename&w=120' width='120'>\n";
+				$templatetable.="<br/>\n";
+				$templatetable.="Template ID: <i>&nbsp;$templateinfo[DEF_id]</i><br/>\n";
+				$templatetable.="Diameter:    <i>&nbsp;$templateinfo[diam] &Aring;</i><br/>\n";
+				$templatetable.="Pixel Size:  <i>&nbsp;$templateinfo[apix] &Aring;</i><br/>\n";
 
+
+				// Table separator
+				$templatetable.="</td><td align='left'>\n";
+
+				// set parameters
+				$templatetable.="<input type='hidden' name='templateId".$i."' value='$templateinfo[DEF_id]'>\n";
+				$templatetable.="<input type='checkbox' name='$checkboxname' onclick='enable".$checkboxname."()'>\n";
+				$templatetable.="<b>Use Template $templateinfo[DEF_id]</b>\n";
+				$templatetable.="<br/>\n";
+				$templatetable.="<br/>\n";
+				$templatetable.="<b>Rotation values</b><br/>";
+				$templatetable.="<i>(leave blank for no rotation)</i>:<br>\n";
+				$templatetable.="<input type='text' name='".$checkboxname
+					."strt' DISABLED value='$startval' SIZE='3'> Starting Angle<br/>\n";
+				$templatetable.="<input type='text' name='".$checkboxname
+					."end' DISABLED value='$endval' SIZE='3'> Ending Angle<br/>\n";
+				$templatetable.="<input type='text' name='".$checkboxname
+					."incr' DISABLED value='$incrval' SIZE='3'> Angular Increment<br/>\n";
+				$templatetable.="<br/>\n";
+				$templatetable.="<table width='200'><tr><td>\n";
+				$templatetable.="<b>Description:</b>&nbsp;<font size='-2'>$templateinfo[description]</font>\n";
+				$templatetable.="</td></tr></table>\n";
 				$i++;
 			}
+			if ($i%2 == 1)
+				$templatetable.="</td></tr>\n";
+			else
+				$templatetable.="</td>\n";
 		}
 		$javafunctions.="</SCRIPT>\n";
 		$templatetable.="</table>\n";
@@ -133,18 +136,7 @@ function createTemplateForm($extra=False) {
 
 	processing_header("Template Correlator Launcher","Automated Particle Selection with Template Correlator",$javafunctions);
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
-	echo"
-	<FORM name='viewerform' method='POST' ACTION='$formAction'>
-	<b>Select Project:</b><br>
-	<SELECT name='projectId' onchange='newexp()'>\n";
-
-	foreach ($projects as $k=>$project) {
-		$sel = ($project['id']==$projectId) ? "selected" : '';
-		echo "<option value='".$project['id']."' ".$sel.">".$project['name']."</option>\n";
-	}
-	echo"
-	</select>
-	<P>\n";
+	echo"<FORM name='viewerform' method='POST' ACTION='$formAction'><P>\n";
 	if ($templatetable) {
 		echo"
 			<CENTER>
@@ -170,7 +162,8 @@ function createTemplateForm($extra=False) {
 **
 */
 
-function createTCForm($extra=false, $title='Template Correlator Launcher' , $heading='Automated Particle Selection with Template Correlator', $results=false) {
+function createTCForm($extra=false, $title='Template Correlator Launcher', 
+ $heading='Automated Particle Selection with Template Correlator', $results=false) {
 	// check if coming directly from a session
 	$expId = $_GET['expId'];
 	if ($expId) {
@@ -191,10 +184,12 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$particle=new particleData;
 	$prtlruns = count($particle->getParticleRunIds($sessionId, True));
 
+	$defdiam = 0;
 	$numtemplatesused = 0;
 	for ($i=1; $i<=$numtemplates; $i++) {
 		$templateimg="template".$i;
 		if ($_POST[$templateimg]){
+
 			$numtemplatesused++;
 			$templateIdName="templateId".$i;
 			$tmpltstrt=$templateimg."strt";
@@ -204,9 +199,16 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			$start = $_POST[$tmpltstrt];
 			$end   = $_POST[$tmpltend];
 			$incr  = $_POST[$tmpltincr];
-
 			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
+
+			// set default mask diameter
+			if ($defdiam == 0) {
+				$tempdiam = $templateinfo['diam'];
+				if ($tempdiam)
+					$defdiam = $tempdiam*1.3;
+			}
+
 			$filename=$templateinfo[path]."/".$templateinfo[templatename];
 			$templateTable.="<td VALIGN='TOP'><img src='loadimg.php?filename=$filename&rescale=True' WIDTH='200'><br>\n";
 			if (!$start && !$end && !$incr) $templateTable.="<b>no rotation</b>\n";
@@ -227,8 +229,9 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 			$templateForm.="<input type='hidden' name='$tmpltincr' value='$incr'>\n";
 		}
 	}
-	$templateTable.="</td></tr></table>\n";
-	
+
+
+
 	// check that there are templates, remove last comma
 	if (!$templateList) createTemplateForm("ERROR: Choose a template");
 	$templateList=substr($templateList,0,-1);
@@ -264,7 +267,7 @@ function createTCForm($extra=false, $title='Template Correlator Launcher' , $hea
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
 	$testvalue = ($_POST['testimage']=='on') ? $_POST['testfilename'] : 'mrc file name';
-	$diam = ($_POST['diam']) ? $_POST['diam'] : "";
+	$diam = ($_POST['diam']) ? $_POST['diam'] : $defdiam;
 	$threadcheck = ($_POST['threadfindem']=='off') ? '' : 'CHECKED';
 	$keepallcheck = ($_POST['keepall']=='on') ? 'CHECKED' : '';
 	$mirrorsv = ($_POST['mirrors']=='on') ? 'CHECKED' : '';
