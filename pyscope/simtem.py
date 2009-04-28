@@ -245,6 +245,9 @@ class SimTEM(tem.TEM):
 	def getMagnifications(self):
 		return list(self.magnifications)
 
+	def getMagnificationsInitialized(self):
+		return True
+
 	def getMainScreenPositions(self):
 		return list(self.main_screen_positions)
 
