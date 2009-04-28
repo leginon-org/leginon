@@ -356,9 +356,10 @@ class EdIterAlignScript(appionScript.AppionScript):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
+		localclip = self.clipsize/self.params['bin']
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
-				+" clip="+str(self.clipsize)+","+str(self.clipsize)
+				+" clip="+str(localclip)+","+str(localclip)
 				+" edgenorm spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
@@ -390,10 +391,11 @@ class EdIterAlignScript(appionScript.AppionScript):
 		print 'Converting orientation reference:\n', templateparams
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
-
+		
+		localclip = self.clipsize/self.params['bin']
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+orientref
-				+" clip="+str(self.clipsize)+","+str(self.clipsize)
+				+" clip="+str(localclip)+","+str(localclip)
 				+" edgenorm spiderswap-single ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
