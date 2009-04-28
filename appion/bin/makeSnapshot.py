@@ -16,7 +16,7 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			+" [--contour=<#>] [--zoom=<#>] [--type=<snapshot>] ")
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="3d MRC file to snapshot", metavar="FILE")
-		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.5,
+		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.0,
 			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="#")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=2.0,
 			help="Sigma level at which snapshot of density will be contoured (2.0 by default)", metavar="FLOAT")
