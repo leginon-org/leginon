@@ -732,9 +732,9 @@ function getPBSMemoryNeeded($boxsize) {
 	$symdata = $particle->getSymmetryDataFromEmanName($emansym);
 	$foldsym = (int) $symdata['fold_symmetry'];
 	$numproj = 18000.0/($foldsym*$maxang*$maxang);
-	$memneed = $numproj*$boxsize*$boxsize*8.0;
+	$memneed = $numproj*$boxsize*$boxsize*16.0;
 	$numgig = ceil($memneed/1073741824.0);
-	$sizestr = sprintf("%.0fgb", $numgig);
+	$sizestr = sprintf("%dgb", $numgig);
 	return $sizestr;
 }
 
