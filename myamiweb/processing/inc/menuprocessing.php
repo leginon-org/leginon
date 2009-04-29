@@ -38,15 +38,15 @@ $particle = new particledata();
 
 if ($expId) {
 	// sort out submitted job information
-	$clusterjobs = $particle->getJobIdsFromSession($expId);
-	$subclusterjobs=array();
-	foreach ($clusterjobs as $job) {
-		$jobtype = $job['jobtype'];
-		if ($job['status']=='D') $subclusterjobs[$jobtype]['done'][]=$job['DEF_id'];
-		elseif ($job['status']=='R') $subclusterjobs[$jobtype]['running'][]=$job['DEF_id'];
-		elseif ($job['status']=='Q') $subclusterjobs[$jobtype]['queued'][]=$job['DEF_id'];
+	if ($clusterjobs = $particle->getJobIdsFromSession($expId)) {
+		$subclusterjobs=array();
+		foreach ($clusterjobs as $job) {
+			$jobtype = $job['jobtype'];
+			if ($job['status']=='D') $subclusterjobs[$jobtype]['done'][]=$job['DEF_id'];
+			elseif ($job['status']=='R') $subclusterjobs[$jobtype]['running'][]=$job['DEF_id'];
+			elseif ($job['status']=='Q') $subclusterjobs[$jobtype]['queued'][]=$job['DEF_id'];
+		}
 	}
-
 	// ---  Get CTF Data
 	if ($ctfrunIds = $particle->getCtfRunIds($expId, False)) {
 		$ctfruns=count($ctfrunIds);
