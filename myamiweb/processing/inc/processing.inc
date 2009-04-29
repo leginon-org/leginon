@@ -878,8 +878,8 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 	$procdir = $outdir.$runname;
 
 	// AMI SPECIFIC
-	// if not data00 or data15, write to data00
-	if (!ereg("/ami/data(00|15)",$procdir)) $procdir = ereg_replace("/ami/data..","/ami/data00",$procdir);
+	// if not data00 or data16, write to data00
+	if (!ereg("/ami/data(00|16)",$procdir)) $procdir = ereg_replace("/ami/data..","/ami/data00",$procdir);
 
 	// if more than one job running in the directory (like
 	// classification of ref free)
