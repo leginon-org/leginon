@@ -39,6 +39,6 @@ if __name__ == '__main__':
 
 	for r in results:
 		print r[0], apDisplay.short(r[1])
-		time.sleep(1)
+		time.sleep(0.2)
 		hideImage(int(r[0]))
 		
