@@ -141,6 +141,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$refbasedIds = $particle->getRefAliIds($sessionId);
 	$alignruns = count($particle->getAlignStackIds($sessionId));
 	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
+	$firstmpix = $particle->getStackPixelSizeFromStackId($stackIds[0]['stackid']);
 	$initparts = $particle->getNumStackParticles($stackIds[0]['stackid']);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
@@ -151,10 +152,10 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set max last ring radius
-	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
-	$javascript .= "	var lastring = Math.floor(stackArray[2]/3/bestbin);\n";
+	$javascript .= "	var bestbin = Math.ceil(stackArray[2]/100);\n";
+	$javascript .= "	var radius = Math.ceil(stackArray[2]/3.0*stackArray[1]*1e10);\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
-	$javascript .= "	document.viewerform.lastring.value = lastring;\n";
+	$javascript .= "	document.viewerform.radius.value = radius;\n";
 	// set particle & mask radius and lp
 	$javascript .= "}\n";
 	$javascript .= "</script>\n";
@@ -189,9 +190,12 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
 	$orientref = $_POST['orientref'];
+
+
+
 	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
-	$bestbin = floor($boxsz/100)+1;
-	$radius = ($_POST['radius']) ? $_POST['radius'] : floor($boxsz/3.0/$bestbin);
+	$bestbin = ceil($boxsz/100);
+	$radius = ($_POST['radius']) ? $_POST['radius'] : ceil($boxsz/3.0*$firstmpix*1e10);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 
 
