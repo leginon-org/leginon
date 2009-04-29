@@ -134,6 +134,12 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo "<input type='text' name='runid' value='$runid'>\n";
 	echo "<br/>\n";
 
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' value='$outdir' size='38'>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	echo "<b>Description:</b><br/>\n";
 	echo "<textarea name='description' rows='3'cols='70'>$description</textarea>\n";
 	echo "<br/><br/>\n";
@@ -211,7 +217,6 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo "<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit',"<font size='+1'><b>Commit stack to database</b></font>");
 	echo "<br />\n";
-	echo "<input type='hidden' name='outdir' value='$outdir' size='38'>\n";
 	echo "</td>
   </tr>
   <tr>
