@@ -2539,7 +2539,7 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		return $r;
 	}
 
-	function getJobIdsFromSession($expId,$jobtype=False,$status=False,$ignore=True) {
+	function getJobIdsFromSession($expId, $jobtype=False, $status=False, $ignore=True) {
 		$q="SELECT j.*, "
 		  ."p.path as appath "
 		  ."FROM `ApClusterJobData` AS j "
