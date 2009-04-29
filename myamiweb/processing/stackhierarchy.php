@@ -25,7 +25,10 @@ function showStack($stackdata) {
 	$allsubstackdatas = $particle->getSubStackIds($expId, $stackid, true);
 	$substackdatas = $particle->getSubStackIds($expId, $stackid);
 	if ($stackdata['hidden'] != 1 || $_POST['unhideStack'.$stackid] == 'unhide')
-		echo stacksummarytable($stackid);
+		if($substackdatas)
+			echo stacksummarytable($stackid, true);
+		else
+			echo stacksummarytable($stackid);
 	else
 		echo stacksummarytable($stackid, true, true);
 	if ($allsubstackdatas) {
