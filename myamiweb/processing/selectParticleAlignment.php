@@ -95,7 +95,7 @@ echo "</td></tr>\n";
 */
 
 echo "<tr><td width='100' align='center'>\n";
-echo "  <img src='img/spider_logo.png' width='64'>\n";
+echo "  <img src='img/editer.jpg' width='64'>\n";
 echo "</td><td>\n";
 echo "  <h3><a href='runEdIterAlignment.php?expId=$expId'>Ed's Iteration Alignment</a></h3>\n";
 echo " <p> this method uses the "
