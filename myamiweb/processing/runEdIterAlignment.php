@@ -191,13 +191,10 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
 	$orientref = $_POST['orientref'];
 
-
-
 	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
 	$bestbin = ceil($boxsz/100);
 	$radius = ($_POST['radius']) ? $_POST['radius'] : ceil($boxsz/3.0*$firstmpix*1e10);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
-
 
 	$templateCheck='';
 	$templateTable.="<table><TR>\n";
