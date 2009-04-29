@@ -318,8 +318,7 @@ function jobForm($extra=false) {
 	$clusterdata->post_data();
 
 	$particle = new particledata();
-	$reconruns = count($particle->getJobIdsFromSession($expId));
-	$defrunid = 'recon'.($reconruns+1);
+
 
 	// get stack data
 	$stackinfo = explode('|--|',$_POST['stackval']);
@@ -333,8 +332,14 @@ function jobForm($extra=false) {
 
 	$clusterdefaults = ($selectedcluster==$_POST['clustermemo']) ? true : false;
 	
-	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
+
 	$outdir = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	$reconruns = count($particle->getJobIdsFromSession($expId, 'recon'));
+	while (file_exists($outdir.'recon'.($reconruns+1)))
+		$reconruns += 1;
+	$defrunid = 'recon'.($reconruns+1);
+	$jobname = ($_POST['jobname']) ? $_POST['jobname'] : $defrunid;
+
 	$nodes = ($_POST['nodes'] && $clusterdefaults) ? $_POST['nodes'] : C_NODES_DEF;
 	$ppn = ($_POST['ppn'] && $clusterdefaults) ? $_POST['ppn'] : C_PPN_DEF;
 	$rprocs = ($_POST['rprocs'] && $clusterdefaults) ? $_POST['rprocs'] : C_RPROCS_DEF;
