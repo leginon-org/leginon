@@ -294,6 +294,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 				self.params['runname'] = self.params['runname'][:-4]
 			shutil.copyfile(str(self.params['templatestack'])+".img", os.path.join(self.params['rundir'], str(self.params['runname'])+".img"))
 			shutil.copyfile(str(self.params['templatestack'])+".hed", os.path.join(self.params['rundir'], str(self.params['runname'])+".hed"))
+			self.numimages = apFile.numImagesInStack(os.path.join(self.params['rundir'], str(self.params['runname'])+".hed"))			
 
 		# insert templates to database
 		if self.params['commit'] is True:
