@@ -102,6 +102,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
+	apDisplay.printColor("running Chimera Snapshot for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath)
 
 	image1 = density+".1.png"
@@ -134,6 +135,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
+	apDisplay.printColor("running Chimera Animation for sym "+str(sym), "cyan")
 	runChimeraScript(chimsnappath)
 	image1 = density+".001.png"
 	if not os.path.isfile(image1):
