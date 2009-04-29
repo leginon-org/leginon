@@ -241,8 +241,8 @@ class imagicClusterScript(appionScript.AppionScript):
 			apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-clustertime0), "cyan")
 			
 			### normalize 
-			classfile = "classums_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+\
-				"_membersignored_"+str(self.params['ignore_members'])+"\n")
+			classfile = os.path.join(self.params['rundir'], "classums_"+str(clusternumber)+"_imagesignored_"+\
+				str(self.params['ignore_images'])+"_membersignored_"+str(self.params['ignore_members'])+".hed")
 			emancmd = "proc2d "+classfile+" "+classfile+".norm.hed norm"
 			while os.path.isfile(classfile+".norm.img"):
 				apStack.removeStack(alignstack+".norm.img")
