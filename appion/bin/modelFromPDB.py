@@ -6,18 +6,20 @@ import os
 import time
 import re
 import shutil
+import gzip
+import urllib
 #appion
 import appionScript
 import apParam
 import apFile
 import apDisplay
 import apDatabase
-import urllib
 import apEMAN
 import apChimera
 import apFile
 import appionData
-import gzip
+import apSymmetry
+
 from apSpider import volFun
 
 class modelFromPDB(appionScript.AppionScript):
@@ -30,6 +32,8 @@ class modelFromPDB(appionScript.AppionScript):
 			help="Model name", metavar="STR")
 		self.parser.add_option("--pdbid", dest="pdbid",
 			help="PDB ID", metavar="STR")
+		self.parser.add_option("--pdbfile", dest="pdbfile",
+			help="PDB file", metavar="STR")
 		self.parser.add_option("-r", "--resolution", dest="res", type='float',
 			help="Resolution of resulting model (in Angstroms)")
 		self.parser.add_option("-a", "--apix", dest="apix", type='float',
@@ -38,19 +42,30 @@ class modelFromPDB(appionScript.AppionScript):
 			help="Box size of model (in Pixels)")
 		self.parser.add_option("-u", "--biolunit", dest="bunit", default=False,
 			action="store_true", help="Download the biological unit")
+		self.parser.add_option("--sym", "--symm", "--symmetry", dest="symmetry",
+			help="Symmetry id in the database", metavar="INT")
+
+		self.methods = ( "eman", "spider" )
+		self.parser.add_option("--method", dest="method",
+			help="Method for PDB to MRC conversion: eman or spider", metavar="METHOD", 
+			type="choice", choices=self.methods, default="spider" )
 
 	#=====================
 	def checkConflicts(self):
 		if self.params['session'] is None:
 			apDisplay.printError("Enter a session ID")
-		if self.params['pdbid'] is None:
-			apDisplay.printError("specify a PDB id")
+		if self.params['pdbid'] is None and self.params['pdbfile'] is None:
+			apDisplay.printError("specify a PDB id or PDB file")
 		if self.params['res'] is None:
 			apDisplay.printError("enter a resolution value")
 		if self.params['apix'] is None:
 			apDisplay.printError("specify a pixel size")
 		if self.params['box'] is None:
 			apDisplay.printError("specify a box size")
+		if self.params['symmetry'] is None:
+			apDisplay.printWarning("No symmetry specified using 'c1'")
+			self.params['symmetry'] = 'c1'
+		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
 
 	#=====================
 	def setRunDir(self):
@@ -63,11 +78,15 @@ class modelFromPDB(appionScript.AppionScript):
 	#=====================
 	def setNewFileName(self, unique=False):
 		# set apix, box, and foldname
-		self.params['name'] = self.params['pdbid']+"-"
+		if self.params['pdbid'] is not None:
+			self.params['name'] = self.params['pdbid']+"-"
+		else:
+			self.params['name'] = os.path.splitext(self.params['pdbfile'])[0]+"-"
 		self.params['name'] += str(self.params['apix'])+"-"
 		self.params['name'] += str(self.params['res'])+"-"
 		self.params['name'] += str(self.params['box'])+".mrc"
 
+	#=====================
 	def fetchPDB(self, tmpname):
 		# retrieve pdb from web based on pdb id
 		pdbid = self.params['pdbid']+'.pdb'
@@ -94,7 +113,7 @@ class modelFromPDB(appionScript.AppionScript):
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
-		#densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
+		densq['symmetry'] = self.params['symdata']
 		densq['pixelsize'] = self.params['apix']
 		densq['boxsize'] = self.params['box']
 		densq['lowpass'] = self.params['res']
@@ -109,7 +128,6 @@ class modelFromPDB(appionScript.AppionScript):
 			densq.insert()
 		return 
 
-
 	#=====================
 	def start(self):
 		if self.params['name'] is None:
@@ -123,31 +141,41 @@ class modelFromPDB(appionScript.AppionScript):
 		### remove '.' from basename for spider
 		tmpname = re.sub("\.", "_", self.params['basename'])
 		tmpdir = os.path.dirname(tmpname)
-		tmpname = os.path.join(self.params['rundir'],tmpname)
+		tmpname = os.path.join(self.params['rundir'], tmpname)
 		### get pdb from web
-		pdbfile = self.fetchPDB(tmpname)
+		if self.params['pdbid'] is not None:
+			pdbfile = self.fetchPDB(tmpname)
+		else:
+			pdbfile = tmpname+".pdb"
+			shutil.copy(self.params['pdbfile'], pdbfile)
+
 
 		if not os.path.exists(pdbfile):
 			apDisplay.printError("Could not retrieve PDB file")
 
 		### create density from pdb
-		volFun.pdb2vol(pdbfile,self.params['apix'],self.params['box'], tmpname)
-		
-		if not os.path.exists(tmpname+".spi"):
+		if self.params['method'] == 'spider':
+			volFun.pdb2vol(pdbfile, self.params['apix'], self.params['box'], tmpname)
+			if not os.path.isfile(tmpname+".spi"):
+				apFile.removeFile(tmpname+".pdb")
+				apDisplay.printError("SPIDER could not create density file: "+tmpname+".spi")
+			### convert spider to mrc format
+			apDisplay.printMsg("converting spider file to mrc")
+			emancmd='proc3d %s.spi %s apix=%.4f lp=%.2f norm' % (tmpname, mrcname,
+				self.params['apix'], self.params['res'])
+			apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 			apFile.removeFile(tmpname+".pdb")
-			apDisplay.printError("SPIDER could not create density file: "+tmpname+".spi")
+			apFile.removeFile(tmpname+".spi")
+		elif self.params['method'] == 'eman':
+			emancmd='pdb2mrc %s %s apix=%.4f lp=%.2f box=%d norm' % (pdbfile, mrcname,
+				self.params['apix'], self.params['res'], self.params['box'])
 
-		### convert spider to mrc format
-		apDisplay.printMsg("converting spider file to mrc")
-		emancmd='proc3d %s.spi %s apix=%f lp=%f norm' % (tmpname, mrcname,
-			self.params['apix'], self.params['res'])
-		apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
-		apFile.removeFile(tmpname+".pdb")
-		apFile.removeFile(tmpname+".spi")
+		if not os.path.isfile(mrcname):
+			apDisplay.printError("could not create density file: "+mrcname)
 
 		### chimera imaging
-		apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym='c1')
-		apChimera.renderAnimation(mrcname, contour=1.5, zoom=1.0, sym='c1')
+		apChimera.renderSnapshots(mrcname, contour=1.5, zoom=1.0, sym=self.params['symdata']['eman_name'])
+		apChimera.renderAnimation(mrcname, contour=1.5, zoom=1.0, sym=self.params['symdata']['eman_name'])
 
 		### upload it
 		self.uploadDensity(mrcname)
