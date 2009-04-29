@@ -95,7 +95,6 @@ class UploadModelScript(appionScript.AppionScript):
 			apSymmetry.printSymmetries()
 			apDisplay.printError("Enter a symmetry ID, e.g. --symm=19")
 		self.params['symdata'] = apSymmetry.findSymmetry(self.params['symmetry'])
-		self.params['symid'] = int(self.params['symdata'].dbid)
 		if self.params['res'] is None:
 			apDisplay.printError("Enter the resolution of the initial model")
 
