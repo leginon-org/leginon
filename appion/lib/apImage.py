@@ -29,13 +29,13 @@ def _processImage(imgarray, bin=1, apix=1.0, lowpass=0.0, highpass=0.0,
 	if median > 0:
 		simgarray = ndimage.median_filter(simgarray, size=median)
 	simgarray = binImg(simgarray, bin)
+	if planeReg is True:
+		simgarray = planeRegression(simgarray, msg)
 	#simgarray = highPassFilter(simgarray, apix, bin, highpass, msg=msg)
 	simgarray = fermiHighPassFilter(simgarray, apix, bin, highpass, msg=msg)
 	simgarray = pixelLimitFilter(simgarray, pixlimit)
 	simgarray = lowPassFilter(simgarray, apix, bin, lowpass, msg)
 	#simgarray = fermiLowPassFilter(simgarray, apix, bin, lowpass, msg)
-	if planeReg is True:
-		simgarray = planeRegression(simgarray, msg)
 	if invert is True:
 		simgarray = invertImage(simgarray)
 	simgarray = 255.0*(normRange(simgarray)+1.0e-7)
