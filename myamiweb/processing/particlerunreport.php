@@ -19,7 +19,7 @@ processing_header("Particle run report","Particle report for $runparams[name]");
 $particlestats = $particle->getStats($runId);
 echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[name]: </span></td><td>$particlestats[totparticles]</td></tr></table>\n";
 //Report template run parameters
-if (count($templateparams) > 0) {
+if ($templateparams) {
 	$template_fields = array('id', 'apix', 'description', 'range_start', 'range_end', 'range_incr');
 	echo "<h4>Template images and parameters</h4>\n";
 	echo "<table>";
