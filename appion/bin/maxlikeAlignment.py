@@ -54,7 +54,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="Bin images by factor", metavar="#")
 
-		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=100,
+		self.parser.add_option("--max-iter", dest="maxiter", type="int", default=30,
 			help="Maximum number of iterations", metavar="#")
 		self.parser.add_option("--num-ref", dest="numrefs", type="int",
 			help="Number of classes to create", metavar="#")
