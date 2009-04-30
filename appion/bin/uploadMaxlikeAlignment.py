@@ -160,6 +160,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		for partdict in partlist:
 			partdict['inplane'] = partdict['inplane']-mininplane
 		apDisplay.printMsg("read rotation and shift parameters for "+str(len(partlist))+" particles")
+		if len(partlist) < 1:
+			apDisplay.printError("Did not find any particles in doc file: "+docfile)
 		return partlist
 
 	#=====================

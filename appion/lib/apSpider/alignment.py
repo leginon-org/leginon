@@ -265,8 +265,11 @@ def refBasedAlignParticles(stackfile, templatestack,
 	apEMAN.executeEmanCmd(emancmd, verbose=False, showcmd=True)
 
 	td1 = time.time()-t0
+
 	apDisplay.printMsg("completed alignment of "+str(numpart)
 		+" particles in "+apDisplay.timeString(td1))
+	if numpart < 1:
+		apDisplay.printError("Failed to find any particles")
 
 	return alignedstack+dataext, partlist
 
@@ -443,6 +446,8 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	mySpider.close()
 
 	apDisplay.printMsg("Completed transforming %d particles in %s"%(count, apDisplay.timeString(time.time()-t0)))
+	if count < 1:
+		apDisplay.printError("Failed to transform any particles")
 
 	if not os.path.isfile(alignedstack+dataext):
 		apDisplay.printError("Failed to create stack "+alignedstack+dataext)
