@@ -138,9 +138,9 @@ def checkForPreviousStack(stackname, stackpath=None):
 	if stackpath is None:
 		spath = os.path.dirname(stackname)
 	else:
-		spath = os.path.abspath(stackpath)
+		spath = stackpath
 	stackq = appionData.ApStackData()
-	stackq['path'] = appionData.ApPathData(path=spath)
+	stackq['path'] = appionData.ApPathData(path=os.path.abspath(spath))
 	stackq['name'] = os.path.basename(stackname)
 	stackdata = stackq.query(results=1)
 	if stackdata:
