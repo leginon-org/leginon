@@ -274,7 +274,7 @@ class uploadTemplateScript(appionScript.AppionScript):
 		uploadq['apix'] = self.params['apix']
 		uploadq['boxsize'] = self.params['boxsize']
 		uploadq['numimages'] = self.numimages
-		uploadq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.join(self.params['rundir'], self.params['runname'])))
+		uploadq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		if insert is True:
 			uploadq.insert()
 

@@ -190,8 +190,8 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				refq['iteration'] = iternum
 				refq['template'] = apTemplate.getTemplateFromId(templateid)
 				refq['mrcfile'] = ("templateavg%02d-%02d.mrc"%(iternum,refnum))
-				refpath = os.path.abspath(os.path.join(self.params['rundir'], "templates"))
-				refq['path'] = appionData.ApPathData(path=refpath)
+				refpath = os.path.join(self.params['rundir'], "templates")
+				refq['path'] = appionData.ApPathData(path=os.path.abspath(refpath))
 				refq['alignrun'] = alignrunq
 				if insert is True:
 					refq.insert()

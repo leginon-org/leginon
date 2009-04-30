@@ -76,7 +76,7 @@ class UploadReconScript(appionScript.AppionScript):
 		jobname = self.params['runname'] + '.job'
 		jobtype = 'recon'
 		jobpath = self.params['rundir']
-		qpath = appionData.ApPathData(path=jobpath)
+		qpath = appionData.ApPathData(path=os.path.abspath(jobpath))
 		q = appionData.ApClusterJobData(name=jobname, jobtype=jobtype, path=qpath)
 		results = q.query()
 		if len(results) == 1:

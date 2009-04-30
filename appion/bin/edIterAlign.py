@@ -191,8 +191,8 @@ class EdIterAlignScript(appionScript.AppionScript):
 				refq['refnum'] = refnum
 				refq['iteration'] = iternum
 				refq['template'] = apTemplate.getTemplateFromId(templateid)
-				refpath = os.path.abspath(os.path.join(self.params['rundir'], "templates"))
-				refq['path'] = appionData.ApPathData(path=refpath)
+				refpath = os.path.join(self.params['rundir'], "templates")
+				refq['path'] = appionData.ApPathData(path=os.path.abspath(refpath))
 				refq['alignrun'] = alignrunq
 				#refq['frc_resolution'] = #(float)
 				avgname = os.path.join(self.params['rundir'], "r%02d/avg%03d"%(iternum,refnum) )

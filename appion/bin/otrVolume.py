@@ -369,7 +369,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		### insert 3d volume density
 		densq = appionData.Ap3dDensityData()
 		densq['otrrun'] = otrrunq
-		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
+		densq['path'] = appionData.ApPathData(path=os.path.abspath(os.path.dirname(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
@@ -937,6 +937,7 @@ class otrVolumeScript(appionScript.AppionScript):
 
 			for j in range(5):
 				iternum = j+1
+				### hack to keep db connection going
 				appionData.ApPathData.direct_query(1)
 				apDisplay.printMsg("Starting projection-matching refinement/XMIPP iteration "+str(iternum))
 
