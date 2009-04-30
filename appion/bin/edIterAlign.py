@@ -514,7 +514,7 @@ class EdIterAlignScript(appionScript.AppionScript):
 		#check to be sure files exist
 		avgfile = os.path.join(self.params['rundir'], "avg.spi") #class averages
 		if not os.path.isfile(avgfile):
-			apDisplay.printError("could not find average stack file: "+avgfile)
+			apDisplay.printError("SPIDER did not run correcly")
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
