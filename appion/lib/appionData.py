@@ -924,6 +924,7 @@ class Ap3dDensityData(Data):
 			('symmetry', ApSymmetryData),
 			('iterid', ApRefinementData),
 			('rctrun', ApRctRunData),
+			('otrrun', ApOtrRunData),
 			('session', leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
@@ -1260,16 +1261,22 @@ class ApOtrRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('runname', str),
-			('classnum', int),
 			('classnums', str),
 			('numiter', int),
+			('euleriter', int),
 			('maskrad', int),
 			('lowpassvol', float),
 			('highpasspart', float),
+			('median', int),
 			('description', str),
+			('numpart', int),
+			('hidden', bool),
+			('fsc_resolution', ApResolutionData),
+			('rmeasure_resolution', ApResolutionData),
 			('path', ApPathData),
 			('tiltstack', ApStackData),
-			('norefclass', ApNoRefClassRunData),
+			('alignstack', ApAlignStackData),
+			('clusterstack', ApClusteringStackData),
 		)
 	typemap = classmethod(typemap)
 
