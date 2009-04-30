@@ -263,6 +263,17 @@ function createRctVolume() {
 	}
 }
 
+function createOtrVolume() {
+	var index = $('selectedIndex').value
+	if (index!="") {
+		if (clusterId!="") {
+			window.open("runOtrVolume.php?expId="+expId+"&clusterid="+clusterId+"&classnum="+index+"",'height=250,width=400');
+		} else if (alignId!="") {
+			window.open("runOtrVolume.php?expId="+expId+"&alignid="+alignId+"&classnum="+index+"",'height=250,width=400');
+		}
+	}
+}
+
 function createSubStack() {
 	var index = $('excludedIndex').value
 	window.open("subStack.php?expId="+expId+"&sId="+stackId+"&exclude="+index+"",'height=250,width=400');
@@ -340,6 +351,7 @@ if ($clusterId)
 	$includebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackIncluded()'>\n";
 if (($clusterId || $alignId) && $maxangle > 5)
 	$includebuttons .= "<input type='button' value='Create RCT Volume' onClick='createRctVolume()'>\n";
+	$includebuttons .= "<input type='button' value='Create OTR Volume' onClick='createOtrVolume()'>\n";
 // Upload Template
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";
