@@ -367,7 +367,7 @@ def alignAPSH(volfile, origstackfile, eulerdocfile, classnum, boxsize, numpart, 
 	apshOutFile = str(classnum)+"/"+"apshOut-%03d.spi"%(iternum)
 	if os.path.isfile(apshOutFile):
 		os.remove(apshOutFile)
-		apDisplay.printColor("File exist! Removing file "+apshOut, "cyan")
+		apDisplay.printColor("File exist! Removing file "+apshOutFile, "cyan")
 	apshOut = spyder.fileFilter(apshOutFile)
 	
 	apshProjStack = str(classnum)+"/"+"apshProjStack-%03d.spi"%(iternum)
