@@ -569,9 +569,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.stopTimer('acquire getData')
 		if imagedata is None:
 			return 'fail'
-			
+
 		## convert float to uint16
 		if self.settings['save integer']:
+			imagedata['image'] = numpy.clip(imagedata['image'], 0, 2**16-1)
 			imagedata['image'] = numpy.asarray(imagedata['image'], numpy.uint16)
 
 		## convert CameraImageData to AcquisitionImageData
