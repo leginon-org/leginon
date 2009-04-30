@@ -48,6 +48,8 @@ class otrVolumeScript(appionScript.AppionScript):
 			help="alignment stack id", metavar="ID")
 		self.parser.add_option("--num-iters", dest="numiters", type="int", default=4, 
 			help="Number of tilted image shift refinement iterations", metavar="#")
+		self.parser.add_option("--refine-iters", dest="refineiters", type="int", default=4, 
+			help="Number of euler angle refinement iterations", metavar="#")
 		self.parser.add_option("--mask-rad", dest="radius", type="int",
 			help="Particle mask radius (in pixels)", metavar="ID")
 		self.parser.add_option("--tilt-bin", dest="tiltbin", type="int", default=1,
@@ -345,7 +347,17 @@ class otrVolumeScript(appionScript.AppionScript):
 		
 	#=====================
 	def insertOtrRun(self, volfile):
-		### insert otr run data
+		### setup resolutions
+		fscresq = appionData.ApResolutionData()
+		fscresq['type'] = "fsc"
+		fscresq['half'] = self.fscresolution
+		fscresq['fscfile'] = "fscdata"+self.timestamp+".fsc"
+		rmeasureq = appionData.ApResolutionData()
+		rmeasureq['type'] = "rmeasure"
+		rmeasureq['half'] = self.rmeasureresolution
+		rmeasureq['fscfile'] = None
+
+		### insert rct run data
 		otrrunq = appionData.ApOtrRunData()
 		otrrunq['runname']    = self.params['runname']
 		tempstr = ""
@@ -353,39 +365,45 @@ class otrVolumeScript(appionScript.AppionScript):
 			tempstr += str(cnum)+","
 		classliststr = tempstr[:-1]
 		otrrunq['classnums']  = classliststr
-		if len(self.classlist) == 1:
-			otrrunq['classnum']  = self.classlist[0]
 		otrrunq['numiter']    = self.params['numiters']
+		otrrunq['euleriter']  = self.params['refineiters']
 		otrrunq['maskrad']    = self.params['radius']
 		otrrunq['lowpassvol'] = self.params['lowpassvol']
 		otrrunq['highpasspart'] = self.params['highpasspart']
+		otrrunq['median'] = self.params['median']
 		otrrunq['description'] = self.params['description']
 		otrrunq['path']  = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
-		otrrunq['norefclass'] = appionData.ApNoRefClassRunData.direct_query(self.params['norefclassid'])
+		otrrunq['alignstack'] = self.alignstackdata
 		otrrunq['tiltstack']  = apStack.getOnlyStackData(self.params['tiltstackid'])
+		otrrunq['numpart']  = self.numpart
+		otrrunq['fsc_resolution'] = fscresq
+		otrrunq['rmeasure_resolution'] = rmeasureq
 		if self.params['commit'] is True:
-			otrrunq.insert()
+			print otrrunq
+			#otrrunq.insert()
 
 		### insert 3d volume density
 		densq = appionData.Ap3dDensityData()
 		densq['otrrun'] = otrrunq
-		densq['path'] = appionData.ApPathData(path=os.path.abspath(os.path.dirname(volfile)))
+		densq['path'] = appionData.ApPathData(path=os.path.dirname(os.path.abspath(volfile)))
 		densq['name'] = os.path.basename(volfile)
 		densq['hidden'] = False
 		densq['norm'] = True
 		densq['symmetry'] = appionData.ApSymmetryData.direct_query(25)
-		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])
-		densq['boxsize'] = apStack.getStackBoxsize(self.params['tiltstackid'])
+		densq['pixelsize'] = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		densq['boxsize'] = self.getBoxSize()
 		densq['lowpass'] = self.params['lowpassvol']
 		densq['highpass'] = self.params['highpasspart']
 		densq['mask'] = self.params['radius']
 		#densq['iterid'] = self.params['numiters']
 		densq['description'] = self.params['description']
-		#densq['resolution'] = float
+		densq['resolution'] = self.fscresolution
+		densq['rmeasure'] = self.rmeasureresolution
 		densq['session'] = apStack.getSessionDataFromStackId(self.params['tiltstackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
 		if self.params['commit'] is True:
-			densq.insert()
+			print densq
+			#densq.insert()
 
 		return
 
@@ -829,6 +847,47 @@ class otrVolumeScript(appionScript.AppionScript):
 		return
 
 	#=====================
+	def runEoTest(self, corrSelectOdd, corrSelectEven, cnum, apshstack, apsheuler, iternum):
+
+				
+		apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd-%03d.spi"%(iternum))
+		apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even-%03d.spi"%(iternum))
+		
+		self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
+		self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
+		
+		fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout-%03d.spi"%(iternum))
+		backproject.calcFSC(apshOddVolfile, apshEvenVolfile, fscout)
+
+		### Calculate FSC - taken from Neil's RCT script
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		emancmd = "proc3d %s %s"%(apshEvenVolfile, apshEvenVolfile+".mrc")
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		emancmd = "proc3d %s %s"%(apshOddVolfile, apshOddVolfile+".mrc")
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		fscfile = os.path.join(self.params['rundir'], "fscdata%s.fsc"%(self.timestamp))
+		emancmd = "proc3d %s %s fsc=%s"%(apshEvenVolfile+".mrc", apshOddVolfile+".mrc", fscfile)
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+
+		if not os.path.isfile(fscfile):
+			apDisplay.printError("Even-Odd fsc calculation failed")
+		boxsize = self.getBoxSize()
+		self.fscresolution = apRecon.getResolutionFromFSCFile(fscfile, boxsize, apix, msg=True)
+		apDisplay.printColor( ("Final FSC resolution: %.5f" % (self.fscresolution)), "cyan")
+		
+		return fscout
+
+	#=====================
+	def runRmeasure(self, volfile):
+		emancmd = "proc3d %s %s"%(volfile, "rmeasure.mrc")
+		apEMAN.executeEmanCmd(emancmd, verbose=True, showcmd=True)
+		apix = apStack.getStackPixelSizeFromStackId(self.params['tiltstackid'])*self.params['tiltbin']
+		self.rmeasureresolution = apRecon.runRMeasure(apix, "rmeasure.mrc")
+		#apDisplay.printColor("Final Rmeasure resolution: "+str(self.rmeasureresolution), "cyan")
+		apFile.removeFile("rmeasure.mrc")
+
+
+	#=====================
 	def computeClassVolPair(self):
 		done=[]
 		pairlist=[]
@@ -901,7 +960,7 @@ class otrVolumeScript(appionScript.AppionScript):
 			### center/convert the volume file
 			mrcvolfile = self.processVolume(volfile, cnum, 0)
 
-			for i in range(4):
+			for i in range(self.params['numiters']):
 				iternum = i+1
 				apDisplay.printMsg("running backprojection iteration "+str(iternum))
 				### xy-shift particles to volume projections
@@ -935,9 +994,8 @@ class otrVolumeScript(appionScript.AppionScript):
 			print "\n"
 
 
-			for j in range(5):
+			for j in range(self.params['refineiters']):
 				iternum = j+1
-				### hack to keep db connection going
 				appionData.ApPathData.direct_query(1)
 				apDisplay.printMsg("Starting projection-matching refinement/XMIPP iteration "+str(iternum))
 
@@ -970,19 +1028,13 @@ class otrVolumeScript(appionScript.AppionScript):
 				
 				### generate odd and even select files for FSC calculation
 				corrSelectOdd, corrSelectEven = self.splitOddEven(cnum, corrSelect, iternum)
+				fscout = self.runEoTest(corrSelectOdd, corrSelectEven, cnum, apshstack, apsheuler, iternum)
+				self.runRmeasure(apshVolFileCentered)
 				
-				apshOddVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Odd-%03d.spi"%(iternum))
-				apshEvenVolfile = os.path.join(self.params['rundir'], str(cnum), "apshVolume_Even-%03d.spi"%(iternum))
-				
-				self.APSHbackProject(apshstack, apsheuler, apshOddVolfile, cnum, corrSelectOdd)
-				self.APSHbackProject(apshstack, apsheuler, apshEvenVolfile, cnum, corrSelectEven)
-				
-				fscout = os.path.join(self.params['rundir'], str(cnum), "FSCout-%03d.spi"%(iternum))
-				#backproject.calcFSC(apshCenteredVols[1], apshCenteredVols[2], fscout)
-
 				### filter volume
-				#backproject.butterworthFscLP(apshVolfile, fscout)
-
+				backproject.butterworthFscLP(apshVolFileCentered, fscout)
+	
+				### reset file names for next round
 				volfile = apshVolFileCentered
 				eulerfile = apsheuler
 				mrcvolfile = self.processVolume(volfile, cnum, iternum)
@@ -993,12 +1045,9 @@ class otrVolumeScript(appionScript.AppionScript):
 				apDisplay.printMsg("###########################")
 				print "\n"
 		
-
-		sys.exit(1)
-		
-		if len(self.classlist) > 1:
+		#if len(self.classlist) > 1:
 			#get a list of all unique combinations of volumes
-			pairlist = self.computeClassVolPair()
+		#	pairlist = self.computeClassVolPair()
 
 		### insert volumes into DB
 		self.insertOtrRun(mrcvolfile)
