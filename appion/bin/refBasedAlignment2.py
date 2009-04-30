@@ -167,7 +167,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		if not os.path.isfile(refstackfile):
 			apDisplay.printError("could not find reference stack file: "+refstackfile)
 		alignstackq['stack'] = self.stack['data']
-		alignstackq['boxsize'] = math.floor(self.stack['boxsize']/self.params['bin'])
+		alignstackq['boxsize'] = self.boxsize
 		alignstackq['pixelsize'] = self.stack['apix']*self.params['bin']
 		alignstackq['description'] = self.params['description']
 		alignstackq['hidden'] = False
@@ -251,7 +251,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		if self.params['highpass'] > 0:
 			emancmd += "hp="+str(self.params['highpass'])+" "
 		if self.params['bin'] > 1:
-			clipboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0)*self.params['bin'])*2
+			clipboxsize = self.boxsize*self.params['bin']
 			emancmd += "shrink="+str(self.params['bin'])+" "
 			emancmd += "clip="+str(clipboxsize)+","+str(clipboxsize)+" "
 		emancmd += "last="+str(self.params['numpart']-1)+" "
@@ -284,10 +284,9 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		apParam.createDirectory(os.path.join(self.params['rundir'], "templates"))
 		filelist = apTemplate.getTemplates(templateparams)
 
-		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 		for mrcfile in filelist:
 			emancmd  = ("proc2d templates/"+mrcfile+" "+templatestack
-				+" clip="+str(newboxsize)+","+str(newboxsize)
+				+" clip="+str(self.boxsize)+","+str(self.boxsize)
 				+" spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
@@ -378,11 +377,10 @@ class RefBasedAlignScript(appionScript.AppionScript):
 				apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			filelist.append(mrcfile)
 
-		newboxsize = int(math.floor(self.stack['boxsize']/self.params['bin']))
 		### create new template stack
 		for mrcfile in filelist:
 			emancmd  = ("proc2d "+mrcfile+" "+templatestack
-				+" clip="+str(newboxsize)+","+str(newboxsize)
+				+" clip="+str(self.boxsize)+","+str(self.boxsize)
 				+" edgenorm norm=0,1 spiderswap ")
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 
@@ -401,13 +399,16 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		self.params['runtime'] = 0
 		#self.checkDuplicateRefBasedRun()
 
-		#convert stack to spider
+		### set box size
+		self.boxsize = int(math.floor(self.stack['boxsize']/self.params['bin']/2.0))*2
+
+		### convert stack to spider
 		spiderstack = self.createSpiderFile()
 
-		#create template stack
+		### create template stack
 		templatestack = self.createTemplateStack()
 
-		#run the alignment
+		### run the alignment
 		aligntime = time.time()
 		usestack = spiderstack
 		oldpartlist = None
