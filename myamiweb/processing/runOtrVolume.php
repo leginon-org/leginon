@@ -87,9 +87,9 @@ function createOtrVolumeForm($extra=false, $title='OtrVolume.py Launcher', $head
 	//query the database for parameters
 	$particle = new particledata();
 	$numOtrRuns = $particle->getNumberOfOtrRuns($sessionId, True);
-	while (glob($sessionpathval.'otr'.($numRctRuns+1)."[a-z]*"))
+	while (glob($sessionpathval.'otr'.($numOtrRuns+1)."[a-z]*"))
 		$numOtrRuns += 1;
-	$defotrname = 'otr'.($numRctRuns+1);
+	$defotrname = 'otr'.($numOtrRuns+1);
 	if ($alignid)
 		$defotrname .= "align".$alignid;
 	elseif ($clusterid)
