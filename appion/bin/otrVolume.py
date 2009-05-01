@@ -758,6 +758,9 @@ class otrVolumeScript(appionScript.AppionScript):
 
 		corrSelectFile.close()
 
+		if count == 0:
+			apDisplay.printError("no correlation value is above threshold!")
+
 		return corrSelect
 
 	#===================== Andres script #4 --- p.makeselect_APSH.spi
