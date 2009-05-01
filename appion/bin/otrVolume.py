@@ -379,8 +379,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		otrrunq['fsc_resolution'] = fscresq
 		otrrunq['rmeasure_resolution'] = rmeasureq
 		if self.params['commit'] is True:
-			print otrrunq
-			#otrrunq.insert()
+			otrrunq.insert()
 
 		### insert 3d volume density
 		densq = appionData.Ap3dDensityData()
@@ -402,8 +401,7 @@ class otrVolumeScript(appionScript.AppionScript):
 		densq['session'] = apStack.getSessionDataFromStackId(self.params['tiltstackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
 		if self.params['commit'] is True:
-			print densq
-			#densq.insert()
+			densq.insert()
 
 		return
 
