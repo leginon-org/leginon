@@ -3316,7 +3316,7 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 			."  ON otrrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
 			."WHERE strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden )
-			$q .= " AND ( otrrun.`hidden` = 0 OR rctrun.`hidden` IS NULL ) ";
+			$q .= " AND ( otrrun.`hidden` = 0 OR otrrun.`hidden` IS NULL ) ";
 		//echo $q."<br/><br/>\n";
 		$r=$this->mysql->getSQLResult($q);
 		//echo $r[0]['number']."<br/><br/>\n";
