@@ -158,7 +158,7 @@ def flagGoodParticleInClassLst(clsfile, goodclsfile):
 	os.rename(new_clsfile,clsfile)
 
 #=====================
-def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
+def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=False):
 	"""
 	executes an EMAN command in a controlled fashion
 	"""
@@ -196,9 +196,16 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None):
 	proc_code = emanproc.returncode
 	if proc_code != 0:
 		if proc_code == -11:
-			apDisplay.printError("EMAN failed with Segmentation Fault")
+			if fail is True:
+				apDisplay.printError("EMAN failed with Segmentation Fault")
+			else:
+				apDisplay.printWarning("EMAN failed with Segmentation Fault")
 		else:
-			apDisplay.printError("EMAN failed with subprocess error code %d" % proc_code)
+			if fail is True:
+				apDisplay.printError("EMAN failed with subprocess error code %d" % proc_code)
+			else:
+				apDisplay.printWarning("EMAN failed with subprocess error code %d" % proc_code)
+		
 
 #=====================
 def getNumParticlesInStack(stackname):

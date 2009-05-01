@@ -670,7 +670,8 @@ def convertPostscriptToPng(psfile, pngfile, size=1024):
 
 	### better pstopnm pre-step
 	pstopnmcmd = "pstopnm -xsize=2000 -ysize=2000 -xborder=0 -yborder=0 -portrait "+psfile
-	apEMAN.executeEmanCmd(pstopnmcmd, verbose=False, showcmd=False)
+	proc = subprocess.Popen(pstopnmcmd, verbose=False, showcmd=False)
+	proc.wait()
 
 	### direct conversion
 	ppmfile = os.path.splitext(psfile)[0]+"001.ppm"
@@ -685,7 +686,8 @@ def convertPostscriptToPng(psfile, pngfile, size=1024):
 		else:
 			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
 				+str(size)+"x"+str(size)+" "+psfile+" "+pngfile)
-	apEMAN.executeEmanCmd(imagemagickcmd, verbose=False, showcmd=False)
+	proc = subprocess.Popen(imagemagickcmd, verbose=False, showcmd=False)
+	proc.wait()
 
 	if os.path.isfile(ppmfile):
 		apFile.removeFile(ppmfile)
