@@ -447,8 +447,8 @@ def calcFSC(volfile1, volfile2, fscout, dataext=".spi"):
 		volfile1, #volume 1
 		volfile2, #volume 2
 		"0.5", # ring width for RF 3
-		"0.5", # scale factor - lower
-		"1.5", # scale factor - upper
+		"0.5,1.5", # scale factor - lower
+		#"1.5", # scale factor - upper
 		"C", # use 'C' for missing cone and 'W' for missing wedge
 		"90", # maximum tilt angle in data for OTR
 		"3", # factor for noise comparison ("sigma")
@@ -553,6 +553,7 @@ def butterworthFscLP(volfile, fscout, dataext=".spi"):
 		apDisplay.printError("fsc output file not found: "+fscout+dataext)
 		
 	fscfile = open(fscout, "r")
+	prevValue = None
 	for line in fscfile.readlines():
 		value = line.split() 
 		try:
