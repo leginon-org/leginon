@@ -69,7 +69,7 @@ class SpiderSession:
 
 		### Start spider process, initialize with some MD commands.
 		#self.spiderin = open(self.spiderexec.stdin, 'w')
-		self.logf = open("spider.log", "a")
+		self.logf = open("spider.log", "w")
 		self.starttime = time.time()
 		if verbose is False:
 			self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
