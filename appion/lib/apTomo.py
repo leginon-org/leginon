@@ -525,18 +525,13 @@ def getFullZSubvolume(subtomorundata,stackpdata):
 	results = tomoq.query()
 	if results:
 		tomo = results[0]
-		print tomo['center']['xcoord']
-		if tomo['center']['xcoord'] < 800 or tomo['center']['xcoord'] > 1150:
-			return None
-		if tomo['center']['ycoord'] < 800 or tomo['center']['ycoord'] > 1250:
-			return None
 		path = tomo['path']['path']
 		name = tomo['name']+'.rec'
-		print name
+		apDisplay.printMsg("Loading subtomogram %s" %name) 
 		volume = mrc.read(os.path.join(path,name))
 		return volume
 
-def getParticleCenterZProfile(subvolume,shift,halfwidth):
+def getParticleCenterZProfile(subvolume,shift,halfwidth,bgwidth):
 	shape = subvolume.shape
 	ystart = max(0,int(shape[1]/2.0 - shift['y'] - halfwidth))
 	xstart = max(0,int(shape[1]/2.0 - shift['x'] - halfwidth))
@@ -545,7 +540,6 @@ def getParticleCenterZProfile(subvolume,shift,halfwidth):
 	array = subvolume[:,ystart:yend,xstart:xend]
 	xavg = numpy.sum(array,axis=2)/(2*halfwidth+1)
 	xyavg = numpy.sum(xavg,axis=1)/(2*halfwidth+1)
-	bgwidth = 35
 	background = numpy.sum(xyavg[:bgwidth])/bgwidth
 	background += numpy.sum(xyavg[-bgwidth:])/bgwidth
 	background = background / 2

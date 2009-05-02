@@ -240,37 +240,46 @@ trimvol -x 390,460 -z 477,537 -rx 08aug14f_008_full.rec test.rec
 				]
 		writeCommandAndRun(processdir,'trimvol',commands,[inputparams['subvolume'],'trimvol.log'])
 
-def rotateVolume(volumepath):
+def transformVolume(volumepath,operation):
 		"""
-#	Command for projecting full tomogram to z-axis
-#
-# Tomography reconstruction y and z are usually flipped
-# full tomogram mrc file axes [x,z,y]
-# clip average command need [x,y,z]
-clip rotx 09feb18c_002_full.rec temp.mrc
+#	Command for transform tomogram
+# for example, flipyz flip y and z axis (transpose, and results in handness change)
+# clip flipyz 09feb18c_002_full.rec temp.mrc
 		"""	
-		rotx = True
 		volumedir = os.path.dirname(volumepath)
 		volumefilename = os.path.basename(volumepath)
-		rotxfilename = volumefilename+".rotx"
+		flipyzfilename = volumefilename+".flipyz"
 		inputparams = {
 			'recon': os.path.join(volumedir, volumefilename),
-			'out': os.path.join(volumedir, rotxfilename),
+			'out': os.path.join(volumedir, flipyzfilename),
 		}
-		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
 		commands = []
-		if rotx:
-			lookup = {'y':0,'z':1}
-			inputparams['3d'] = inputparams['out']
-			commands.append(
-				"$clip rotx %s %s"
-					% (inputparams['recon'],inputparams['out'],
-					)
+		inputparams['3d'] = inputparams['out']
+		commands.append(
+			"$clip %s %s %s"
+				% (operation,inputparams['recon'],inputparams['out'],
 				)
-		writeCommandAndRun(volumedir,'rotateX',commands,[inputparams['out'],'rotateX.log'])
-		return os.path.join(volumedir,rotxfilename)
+			)
+		writeCommandAndRun(volumedir,'flipYZ',commands,[inputparams['out'],'flipYZ.log'])
+		return os.path.join(volumedir,flipyzfilename)
 
-def projectFullZ(processdir, runname, seriesname,rotx=True):
+def pad(volumepath,originalshape,finalshape):
+	volumedir = os.path.dirname(volumepath)
+	volumefilename = os.path.basename(volumepath)
+	padfilename = volumefilename+".pad"
+	inputparams = {
+		'in': os.path.join(volumedir, volumefilename),
+		'out': os.path.join(volumedir, padfilename),
+		'padxwidth': (finalshape[1] - originalshape[1]) / 2,
+		'padywidth': (finalshape[0] - originalshape[0]) / 2,
+	}
+	commands.append(
+		"$taperoutvol"
+	)
+	#### Not finished
+	return volumepath
+
+def projectFullZ(processdir, runname, seriesname,rotx=True,flipyz=False):
 		"""
 #	Command for projecting full tomogram to z-axis
 #
@@ -288,11 +297,16 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 		fulltomoheader = mrc.readHeaderFromFile(inputparams['recon'])
 		fullshape = fulltomoheader['shape']
 		commands = []
-		if rotx:
+		if rotx or flipyz:
+			op = ''
+			if rotx:
+				op += ' rotx'
+			if flipyz:
+				op += ' flipyz'
 			lookup = {'y':0,'z':1}
 			inputparams['3d'] = inputparams['temp']
 			commands.append(
-				"$clip rotx %s %s"
+				"$clip"+op+" %s %s"
 					% (inputparams['recon'],inputparams['temp'],
 					)
 				)
