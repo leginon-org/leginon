@@ -86,7 +86,7 @@ class ChimSnapShots(object):
 		#self.runChimCommand('scale %.3f' % self.zoom)
 
 	# -----------------------------------------------------------------------------
-	def color_surface_radially(self, surf, color=None):
+	def color_surface_radially(self, surf):
 		self.writeMessageToLog("Color radially")
 		rc = Radial_Color()
 		rc.origin = [0,0,0]
@@ -101,7 +101,7 @@ class ChimSnapShots(object):
 		color_surface(surf, rc, caps_only = False, auto_update = False)
 
 	# -----------------------------------------------------------------------------
-	def color_surface_height(self, surf, color=None):
+	def color_surface_height(self, surf):
 		self.writeMessageToLog("Color by height")
 		hc = Height_Color()
 		hc.origin = [0,0,0]
@@ -110,22 +110,34 @@ class ChimSnapShots(object):
 		hrange = hmax-hmin
 		self.writeMessageToLog("%.3f,%.3f"%(hmin,hmax))
 		#key: red,green,blue,opacity
-		#order: red, yellow, green, cyan, blue
-		if color is None:
+		if self.colors is None:
+			### red, white blue
 			data_values = (.125*hrange+hmin, .25*hrange+hmin, .5*hrange+hmin, .75*hrange+hmin, .875*hrange+hmin)
 			colors = [(0.8,0.2,0.2,1), (0.8,0.5,0.5,1), (0.8,0.8,0.8,1), (0.5,0.5,0.8,1), (0.2,0.2,0.8,1)]
 		else:
-			#rgbcolor = getColorByName(color)
-			colorvalues = color.split(":")
-			rgbcolor = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
-			print rgbcolor
+			### set colors
+			if len(self.colors) >= 1 and ":" in self.colors[1]:
+				colorvalues = self.colors[0].split(":")
+				rgbcolor0 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+			else:
+				rgbcolor0 = (0.8,0.2,0.2,1)
+			if len(self.colors) >= 2 and ":" in self.colors[1]:
+				colorvalues = self.colors[1].split(":")
+				rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+			else:
+				rgbcolor1 = (0.8,0.8,0.8,1)
+			if len(self.colors) >= 3 and ":" in self.colors[2]:
+				colorvalues = self.colors[2].split(":")
+				rgbcolor2 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+			else:
+				rgbcolor2 = (0.2,0.2,0.8,1)
+			colors = [rgbcolor0, rgbcolor1, rgbcolor2]
 			data_values = (.125*hrange+hmin, .5*hrange+hmin, .875*hrange+hmin)
-			colors = [rgbcolor, (0.8,0.8,0.8,1), rgbcolor]
 		hc.colormap = Color_Map(data_values, colors)
 		color_surface(surf, hc, caps_only = False, auto_update = False)
 
 	# -----------------------------------------------------------------------------
-	def color_surface_cylinder(self, surf, color=None):
+	def color_surface_cylinder(self, surf):
 		self.writeMessageToLog("Color cylindrically")
 		cc = Cylinder_Color()
 		vertices, triangles = surf.surfacePieces[0].geometry
@@ -176,7 +188,7 @@ class ChimSnapShots(object):
 	def animate_icosahedral(self):
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_radially(s, self.color)
+			self.color_surface_radially(s)
 		stepsize = 3.0
 		numpause = 6
 
@@ -261,7 +273,7 @@ class ChimSnapShots(object):
 	def animate_asymmetric(self):
 		self.hideDust(50)
 		for s in self.surfaces:
-			self.color_surface_height(s, self.color)
+			self.color_surface_height(s)
 		#self.writeMessageToLog("turn: get top view")
 		#self.runChimCommand("turn x 180")
 		tilt = 15
@@ -285,7 +297,7 @@ class ChimSnapShots(object):
 	def animate_dsym(self):
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_cylinder(s, self.color)
+			self.color_surface_cylinder(s)
 		self.writeMessageToLog("turn: get intermediate side view")
 		self.runChimCommand('turn x 90')
 		tilt = 30
@@ -304,7 +316,7 @@ class ChimSnapShots(object):
 	def animate_csym(self):
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_height(s, self.color)
+			self.color_surface_height(s)
 		self.writeMessageToLog("turn: get intermediate side view")
 		self.runChimCommand('turn x 90')
 		tilt = 30
@@ -343,7 +355,7 @@ class ChimSnapShots(object):
 		image3 = self.volumepath+'.3.png'
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_radially(s, self.color)
+			self.color_surface_radially(s)
 		self.save_image(self.volumepath+'.1.png')
 		self.writeMessageToLog("turn: down 3-fold axis")
 		self.runChimCommand('turn y 37.377')
@@ -366,7 +378,7 @@ class ChimSnapShots(object):
 	def snapshot_asymmetric(self):
 		self.hideDust(50)
 		for s in self.surfaces:
-			self.color_surface_height(s, self.color)
+			self.color_surface_height(s)
 		#self.writeMessageToLog("turn: get front view")
 		#self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
@@ -390,7 +402,7 @@ class ChimSnapShots(object):
 	def snapshot_dsym(self):
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_cylinder(s, self.color)
+			self.color_surface_cylinder(s)
 		self.writeMessageToLog("turn: get top view")
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
@@ -405,7 +417,7 @@ class ChimSnapShots(object):
 	def snapshot_csym(self):
 		self.hideDust(10)
 		for s in self.surfaces:
-			self.color_surface_height(s, self.color)
+			self.color_surface_height(s)
 		self.writeMessageToLog("turn: get top view")
 		self.runChimCommand('turn x 180')
 		self.save_image(self.volumepath+'.1.png')
@@ -493,7 +505,11 @@ class ChimSnapShots(object):
 		if self.type is None or self.type not in ('snapshot', 'animate'):
 			self.type = 'snapshot'
 		### Color array
-		self.color = os.environ.get('CHIMCOLOR')
+		colors = os.environ.get('CHIMCOLORS')
+		if colors is not None and "," in colors:
+			self.colors = colors.split(",")
+		else:
+			self.colors = None
 		### Silhouette
 		silhouette = os.environ.get('CHIMSILHOUETTE')
 		if silhouette is not None and bool(silhouette) is True:

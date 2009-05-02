@@ -3,9 +3,11 @@
 ###############
 
 import os
-import subprocess
-import shutil
+import time
 import glob
+import shutil
+import random
+import subprocess
 #appion
 import apFile
 import apEMAN
@@ -16,7 +18,7 @@ import apVolume
 #=========================================
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
-		contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+		contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=True):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if box is None:
@@ -47,9 +49,9 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	### render images
 	renderSlice(density, box=box, tmpfile=tmpf, sym=sym)
 	if chimtype != 'snapshot':
-		renderAnimation(density, contour, zoom, sym, color, silhouette)
+		renderAnimation(density, contour, zoom, sym, colorstr, silhouette)
 	elif chimtype != 'animate':
-		renderSnapshots(density, contour, zoom, sym, color, silhouette)
+		renderSnapshots(density, contour, zoom, sym, colorstr, silhouette)
 	apFile.removeFile(tmpf)
 
 #=========================================
@@ -80,7 +82,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 
 #=========================================
 #=========================================
-def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+def renderSnapshots(density, contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=True):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -94,8 +96,12 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		os.environ['CHIMSYM'] = sym
 	if contour is not None:
 		os.environ['CHIMCONTOUR'] = str(contour)
-	if color is not None:
-		os.environ['CHIMCOLOR'] = color
+	if colorstr is not None:
+		os.environ['CHIMCOLORS'] = colorstr
+	else:
+		colorstr = timeColor()+",None,"+randomColor()
+		print colorstr
+		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
 	os.environ['CHIMIMGSIZE'] = "1024"
@@ -113,7 +119,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silho
 
 #=========================================
 #=========================================
-def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False):
+def renderAnimation(density, contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=False):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -127,8 +133,12 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		os.environ['CHIMSYM'] = sym
 	if contour is not None:
 		os.environ['CHIMCONTOUR'] = str(contour)
-	if color is not None:
-		os.environ['CHIMCOLOR'] = color
+	if colorstr is not None:
+		os.environ['CHIMCOLORS'] = colorstr
+	else:
+		colorstr = timeColor()+",None,"+randomColor()
+		print colorstr
+		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
 	os.environ['CHIMIMGSIZE'] = "128"
@@ -181,5 +191,25 @@ def runChimeraScript(chimscript):
 	proc.wait()
 	logf.close()
 	return
+
+
+#=========================================
+#=========================================
+def timeColor():
+	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+	day = int( (time.time()/(3600*24)-8.0/24.0)%216 )
+	rgbindex = [ day%6, (day/6)%6, (day/36)%6 ]
+	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	return colorstr
+
+#=========================================
+#=========================================
+def randomColor():
+	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+	day = int(random.random()*216.0)
+	rgbindex = [ day%6, (day/6)%6, (day/36)%6 ]
+	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	return colorstr
+
 
 
