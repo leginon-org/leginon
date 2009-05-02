@@ -7,7 +7,11 @@ from scipy import ndimage
 import appionData
 import appionScript
 import apStack
+import apTomo
+import apImod
+import apAlignment
 from pyami import mrc
+
 '''
 def findSubStackConditionData(stackdata):
 	substackname = stackdata['substackname']
@@ -154,6 +158,7 @@ class Test(appionScript.AppionScript):
 		stackdata = stackq.direct_query(self.params['stackId'])
 		halfwidth = 20
 		ztolerance = 10
+		zbackgroundrange = 15
 		profiles = []
 		volshape = apTomo.getSubvolumeShape(subtomorundata)
 		sumvol = numpy.zeros(volshape)
@@ -168,7 +173,7 @@ class Test(appionScript.AppionScript):
 				subvolume = apTomo.getFullZSubvolume(subtomorundata,stackp)
 				if subvolume is not None:
 					zcenter = volshape[0] / 2
-					profile = apTomo.getParticleCenterZProfile(subvolume,shift,halfwidth)
+					profile = apTomo.getParticleCenterZProfile(subvolume,shift,halfwidth,zbackgroundrange)
 					#profiles.append(profile)
 					center = apTomo.gaussianCenter(profile)
 					if center > zcenter - ztolerance and center < zcenter + ztolerance:
