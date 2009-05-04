@@ -452,6 +452,33 @@ if ($expId) {
 
 	}
 
+	/* OTR Volumes */
+	if ($maxangle > 5 && $aligndone >= 1 && $stackruns >= 2 ) {
+		$otrdone = $particle->getNumberOfOtrRuns($sessionId);
+		$otrrun = count($subclusterjobs['otrvolume']['running']);
+		$otrqueue = count($subclusterjobs['otrvolume']['queued']);
+		$otrresults[] = ($otrdone > 0) ? "<a href='otrsummary.php?expId=$sessionId'>$otrdone complete</a>" : '';
+		$otrresults[] = ($otrrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=otrvolume'>$otrrun running</a>";
+		$otrresults[] = ($otrqueue==0) ? "" : "$otrqueue queued";
+		$nruns[]=array(
+			'name'=>"<a href='runOtrVolume.php?expId=$sessionId'>OTR Volume</a>",
+			'result'=>$otrresults,
+		);
+	}
+
+	if ($aligndone >= 1 || $norefdone >= 1 ) {
+		$clinesqueue = count($subclusterjobs['createModel']['queued']);
+		$clinesrun = count($subclusterjobs['createModel']['running']);
+		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
+		$clinesresults[] = ($clinesqueue==0) ? "" : "$clinesqueue queued";
+		$nruns[]=array(
+			'name'=>"<a href='createmodel.php?expId=$sessionId'>EMAN Common Lines</a>",
+			'result'=>$clinesresults,
+		);
+
+	}
+
+
 	/* IMAGIC Common Lines */
 	if ($imagic3d0run=$particle->get3d0ClusterModelsFromSessionId($sessionId)) {
 		$numimagic3d0 = count($imagic3d0run);
