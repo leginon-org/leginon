@@ -129,6 +129,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	// connect to particle info
 	$particle = new particledata();
 	$templateid = $_POST['templateid'];
+	$templateForm.="<INPUT TYPE='hidden' NAME='templateid' VALUE='$templateid'>\n";
 	$templateinfo = $particle->getTemplatesFromId($templateid);
 	$stackIds = $particle->getStackIds($sessionId);
 	$refbasedIds = $particle->getRefAliIds($sessionId);
@@ -155,7 +156,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='#993333' size='+2'>$extra</font>\n<hr>\n";
 	}
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
 	$sessiondata=getSessionList($projectId,$expId);
@@ -375,10 +376,6 @@ function runAlignment() {
 	$commit = ($_POST['commit']=="on") ? 'commit' : '';
 	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
 
-	//make sure a session was selected
-	$description=$_POST['description'];
-	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
-
 	//make sure a stack was selected
 	if (!$stackid) createAlignmentForm("<B>ERROR:</B> No stack selected");
 
@@ -393,9 +390,19 @@ function runAlignment() {
 	$particle = new particledata();
 	$totprtls=$particle->getNumStackParticles($stackid);
 	if ($numpart > $totprtls) 
-		createAlignmentForm("<B>ERROR:</B> Number of particles to aligne ($numpart) must be less than the number of particles in the stack ($totprtls)");
+		createAlignmentForm("<B>ERROR:</B> Number of particles to aligned ($numpart) must be "
+			."less than the number of particles in the stack ($totprtls)");
 
-	$fileformat = ($_POST['fileformat']=='spider') ? 'spider' : '';
+	$boxsize = (int) floor($boxsz/$bin);
+	$maxbox = (int) floor($boxsize/2-2);
+	if (($lastring+$xysearch) > $maxbox) {
+		createAlignmentForm("<B>ERROR:</B> last ring radius ($lastring pixels) plus xy-search ($xysearch pixels) "
+			."is too big for final boxsize ($boxsize pixels); must be less than $maxbox pixels");
+	}
+
+	//make sure a session was selected
+	$description=$_POST['description'];
+	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
 
 	$command="refBasedAlignment2.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
