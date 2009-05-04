@@ -3380,6 +3380,63 @@ NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
 		$r=$this->mysql->getSQLResult($q);
 		return $r[0];
 	}
+	
+	function getOtrRunsFromSession($sessionId, $showHidden=False) {
+		$q="SELECT otrrun.*, "
+			."  path.`path` AS path, "
+			."  rmeas.`half` AS rmeas, "
+			."  fsc.`half` AS fsc, "
+			."  fsc.`fscfile` AS fscfile, "
+			."  stparam.`boxSize` AS boxsize "
+			."FROM ApRunsInStackData as runsin "
+			."LEFT JOIN ApStackRunData AS strun "
+			."  ON (runsin.`REF|ApStackRunData|stackRun` = strun.`DEF_id`) "
+			."LEFT JOIN ApOtrRunData AS otrrun "
+			."  ON otrrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackParamsData AS stparam "
+			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			."  ON otrrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS rmeas "
+			."  ON otrrun.`REF|ApResolutionData|rmeasure_resolution` = rmeas.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS fsc "
+			."  ON otrrun.`REF|ApResolutionData|fsc_resolution` = fsc.`DEF_id` "
+			."WHERE "
+			."  otrrun.`DEF_id` IS NOT NULL "
+			."AND "
+			."  strun.`REF|leginondata|SessionData|session` = '$sessionId' ";
+		if (!$showHidden )
+			$q .= " AND ( otrrun.`hidden` = 0 OR otrrun.`hidden` IS NULL ) ";
+		$q .= "ORDER BY otrrun.`DEF_id` DESC ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getOtrRunDataFromId($otrId) {
+		$q="SELECT otrrun.*, "
+			."  path.`path` AS path, "
+			."  rmeas.`half` AS rmeas, "
+			."  fsc.`half` AS fsc, "
+			."  fsc.`fscfile` AS fscfile, "
+			."  stparam.`boxSize` AS boxsize "
+			."FROM ApOtrRunData as otrrun "
+			."LEFT JOIN ApRunsInStackData AS runsin "
+			."  ON otrrun.`REF|ApStackData|tiltstack` = runsin.`REF|ApStackData|stack` "
+			."LEFT JOIN ApStackRunData AS strun "
+			."  ON (runsin.`REF|ApStackRunData|stackRun` = strun.`DEF_id`) "
+			."LEFT JOIN ApStackParamsData AS stparam "
+			."  ON strun.`REF|ApStackParamsData|stackParams` = stparam.`DEF_id` "
+			."LEFT JOIN ApPathData AS path "
+			."  ON otrrun.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS rmeas "
+			."  ON otrrun.`REF|ApResolutionData|rmeasure_resolution` = rmeas.`DEF_id` "
+			."LEFT JOIN ApResolutionData AS fsc "
+			."  ON otrrun.`REF|ApResolutionData|fsc_resolution` = fsc.`DEF_id` "
+			."WHERE "
+			."  otrrun.`DEF_id` = '$otrId' ";
+		$r=$this->mysql->getSQLResult($q);
+		return $r[0];
+	}
 
 	function get3dDensitysFromSession($sessionId, $showHidden=False) {
 		$q="SELECT "
