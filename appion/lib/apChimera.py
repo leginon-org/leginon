@@ -99,8 +99,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 	if colorstr is not None:
 		os.environ['CHIMCOLORS'] = colorstr
 	else:
-		colorstr = timeColor()+",None,"+randomColor()
-		print colorstr
+		colorstr = getColorString()
 		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
@@ -136,8 +135,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 	if colorstr is not None:
 		os.environ['CHIMCOLORS'] = colorstr
 	else:
-		colorstr = timeColor()+",None,"+randomColor()
-		print colorstr
+		colorstr = getColorString()
 		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
@@ -192,13 +190,49 @@ def runChimeraScript(chimscript):
 	logf.close()
 	return
 
+#=========================================
+#=========================================
+def getColorString():
+	#return secondColor()+",None,"+minuteColor()
+	return secondColor()+",None,"+hourColor()
 
 #=========================================
 #=========================================
-def timeColor():
+def dayColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	day = int( (time.time()/(3600*24)-8.0/24.0)%216 )
+	day = int( (time.time()/(3600*24.0)-8.0/24.0)%216 )
 	rgbindex = [ day%6, (day/6)%6, (day/36)%6 ]
+	rgbindex = checkRGBwhite(rgbindex)
+	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	return colorstr
+
+#=========================================
+#=========================================
+def hourColor():
+	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+	hour = int( (time.time()/3600)%216 )
+	rgbindex = [ hour%6, (hour/6)%6, (hour/36)%6 ]
+	rgbindex = checkRGBwhite(rgbindex)
+	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	return colorstr
+
+#=========================================
+#=========================================
+def minuteColor():
+	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+	mins = int( (time.time()/60)%216 )
+	rgbindex = [ mins%6, (mins/6)%6, (mins/36)%6 ]
+	rgbindex = checkRGBwhite(rgbindex)
+	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	return colorstr
+
+#=========================================
+#=========================================
+def secondColor():
+	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+	secs = int( time.time()%216 )
+	rgbindex = [ secs%6, (secs/6)%6, (secs/36)%6 ]
+	rgbindex = checkRGBwhite(rgbindex)
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
 
@@ -206,10 +240,24 @@ def timeColor():
 #=========================================
 def randomColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	day = int(random.random()*216.0)
-	rgbindex = [ day%6, (day/6)%6, (day/36)%6 ]
+	rand = int(random.random()*216.0)
+	rgbindex = [ rand%6, (rand/6)%6, (rand/36)%6 ]
+	rgbindex = checkRGBwhite(rgbindex)
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
+
+#=========================================
+#=========================================
+def checkRGBwhite(rgbindex):
+	d1 = abs(rgbindex[0]-rgbindex[1])
+	d2 = abs(rgbindex[0]-rgbindex[2])
+	d3 = abs(rgbindex[1]-rgbindex[2])
+	if d1 < 2 and d2 < 2 and d3 < 2:
+		rand = int(random.random()*216.0)
+		randindex = [ rand%6, (rand/6)%6, (rand/36)%6 ]
+		print rgbindex, d1, d2, d3, randindex
+		return checkRGBwhite(randindex)
+	return rgbindex
 
 
 
