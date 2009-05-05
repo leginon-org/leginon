@@ -243,34 +243,6 @@ function jobform($extra=false) {
                         echo formatHtmlRow($k,$v);
                 }
         }
-/*
-        // if coming from new alignment pipeline using imagicClusterId 
-        elseif ($imagicClusterId) {
-                $clusterpath = $imagicClusterParams['path'];
-                $clusterclassfile = $imagicClusterParams['avg_imagicfile'];
-                if (ereg(".img", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
-                if (ereg(".hed", $clusterclassfile)) $clusterclassfile = str_replace(".hed", "", $clusterclassfile);
-                $clusterclassimgfile = $clusterpath."/".$clusterclassfile.".img";
-                $clusterclasshedfile = $clusterpath."/".$clusterclassfile.".hed";
-                $projectiontable.= "<table border='0', width='50'>";
-                //$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
-                $projectiontable.= "<tr>\n";
-                foreach ($projections as $key => $image) {
-                        $num = $key + 1;
-                        $projectiontable.= "<td rowspan='30' align='center' valign='top'>";
-                        $projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
-                        $projectiontable.= "<i>projection $num</i></td>\n";
-                }
-                $projectiontable.= "</tr></table>\n<br>";
-                echo $projectiontable;
-                $display_keys = array();
-                //$display_keys['description']=$norefclassparams['description'];
-                $display_keys['# class averages']=$imagicClusterParams['num_classes'];
-                foreach($display_keys as $k=>$v) {
-                        echo formatHtmlRow($k,$v);
-                }
-        }
-*/
 
 	else echo "error: there are no class average runs for the initial model determination";
 	$default_num_classes = $display_keys['# class averages'];
@@ -283,12 +255,6 @@ function jobform($extra=false) {
 	while (file_exists($outdir."/model".$numrun))
 		$numrun += 1;
 	$newrun = $numrun;
-
-// need to figure this out
-//$something = count($particle->getImagic3d0ClusterModelsFromSessionId($expId));
-//echo $something;
-//$test = count($particle->getImagic3d0ReclassifiedModelsFromSessionId($expId));
-//echo $test;
 
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
@@ -356,7 +322,7 @@ function jobform($extra=false) {
 
 	$syms = $particle->getSymmetries();
 
-	$euler_ang_inc = ($_POST['euler_ang_incn']) ? $_POST['euler_ang_incn'] : "10";
+	$euler_ang_inc = ($_POST['euler_ang_incn']) ? $_POST['euler_ang_incn'] : "5";
 	$num_classums = ($_POST['num_classumsn']) ?  $_POST['num_classumsn'] : $default_num_classes;
 	$hamming_window = ($_POST['hamming_windown']) ?$_POST['hamming_windown'] : "0.8";
 	$obj_size = ($_POST['obj_sizen']) ? $_POST['obj_sizen'] : "0.8";
