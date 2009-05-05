@@ -244,7 +244,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 
 	if ($_GET['alignid'] || $_GET['clusterid']) {
 		//Minimum score cutoff
-		echo docpop('minscore','Min Score cutoff:<br/>');
+		echo docpop('minscore','Min Score/Spread cutoff:<br/>');
 		echo "<INPUT TYPE='text' NAME='minscore' SIZE='5' VALUE='$minscore'>\n";
 		echo "<FONT SIZE='-2'>(see graph)</FONT>\n";
 		echo "\n<br/>\n<br/>\n";
