@@ -62,8 +62,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Low pass volume filter (in Angstroms)", metavar="#")
 		self.parser.add_option("--highpasspart", dest="highpasspart", type="float", default=600.0,
 			help="High pass particle filter (in Angstroms)", metavar="#")
-		self.parser.add_option("--min-score", dest="minscore", type="float",
-			help="Minimum cross-correlation score", metavar="#")
+		self.parser.add_option("--min-score", "--min-spread", dest="minscore", type="float",
+			help="Minimum score/spread/cross-correlation for particles", metavar="#")
 		self.parser.add_option("--contour", dest="contour", type="float", default=3.0,
 			help="Chimera snapshot contour", metavar="#")
 		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.1,
@@ -395,11 +395,15 @@ class rctVolumeScript(appionScript.AppionScript):
 						apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 				#write to text file
 				clustnum = clustpart['refnum']-1
-				if ( self.params['minscore'] is not None 
-				 and clustpart['alignparticle']['score'] is not None 
-				 and clustpart['alignparticle']['score'] < self.params['minscore'] ):
-					badscore += 1
-					continue
+				if self.params['minscore'] is not None:
+					if clustpart['alignparticle']['score'] is not None 
+					 and clustpart['alignparticle']['score'] < self.params['minscore'] ):
+						badscore += 1
+						continue
+					elif clustpart['alignparticle']['spread'] is not None 
+					 and clustpart['alignparticle']['spread'] < self.params['minscore'] ):
+						badscore += 1
+						continue
 				if clustnum in self.classlist:
 					notstackpartnum = clustpart['alignparticle']['stackpart']['particleNumber']
 					tiltstackpartdata = apTiltPair.getStackParticleTiltPair(self.params['notstackid'], 
