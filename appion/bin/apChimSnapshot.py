@@ -11,15 +11,18 @@
 import sys
 import os
 import time
+import numpy
 try:
 	import chimera
 	from chimera.colorTable import getColorByName
 	from VolumeViewer.volume import default_settings, open_volume_file
+	import Surface
 	from SurfaceColor import color_surface, Radial_Color, Color_Map, Height_Color, Cylinder_Color
 	from SurfaceCap import surfcaps
-	from _surface import SurfaceModel
+	from _surface import SurfaceModel, connected_pieces
 	from chimera import openModels
 	from chimera.replyobj import nogui_message
+	from MeasureVolume import enclosed_volume
 except:
 	pass
 
@@ -172,17 +175,49 @@ class ChimSnapShots(object):
 		"""
 		Hide all dust particles less than 10 voxels in size
 		"""
-		try:
-			from HideDust import dust
-			self.writeMessageToLog("hiding dust of size %.1f"%(size))
-			#writeMessageToLog(str(dir(dust))
-			#writeMessageToLog(str(help(dust))
-			dust.hide_dust(self.voldata, 'size', size, auto_update=True)
-			#runChimCommand('hide dust # %d'%(size))
-		except:
+		native = False
+		#try:
+		if True:
+			if native is True:
+				from HideDust import dust
+				self.writeMessageToLog("hiding dust of size %.1f"%(size))
+				#writeMessageToLog(str(dir(dust))
+				#writeMessageToLog(str(help(dust))
+				dust.hide_dust(self.voldata, 'size', size, auto_update=True)
+				#runChimCommand('hide dust # %d'%(size))
+			else:
+				for surf in self.selected_surface_pieces():
+					self.hide_small_blobs(surf)
+		if False:
+		#except:
 			self.writeMessageToLog("skipping hide dust")
 			pass
 
+	# -----------------------------------------------------------------------------
+	def hide_small_blobs(self, surf):
+		varray, tarray = surf.geometry
+		mask = numpy.ones((len(varray),), numpy.intc)
+		cplist = connected_pieces(tarray)
+		hid = 0
+		for vi, ti in cplist:
+			ta = tarray.take(ti, axis = 0)
+			vol, holes = enclosed_volume(varray, ta)
+			if not vol is None and vol < self.minvolume:
+				mask.put(vi, 0)
+				hid += 1
+		surf.setTriangleMaskFromVertexMask(mask)
+		self.writeMessageToLog("Hid %d of %d connected surface components having volume < %.1f"
+			% (hid, len(cplist), self.minvolume))
+
+	# -----------------------------------------------------------------------------
+	def selected_surface_pieces(self):
+		plist = Surface.selected_surface_pieces()
+		if len(plist) > 0:
+			return plist
+		plist = []
+		for m in openModels.list(modelTypes = [SurfaceModel]):
+			plist.extend(m.surfacePieces)
+		return plist
 
 	# -----------------------------------------------------------------------------
 	def animate_icosahedral(self):
@@ -541,11 +576,15 @@ class ChimSnapShots(object):
 		self.fileformat = os.environ.get('CHIMFILEFORMAT')
 		if self.fileformat is None:
 			self.fileformat = "mrc"
+		### minimum volume
+		self.minvolume = os.environ.get('CHIMMINVOLUME')
+		if self.minvolume is None:
+			self.minvolume = 2500.0
 		### write to log
 		variables = (
 			'CHIMVOL', 'CHIMTEMPVOL', 'CHIMSYM', 'CHIMCONTOUR', 'CHIMCOLOR',
 			'CHIMTYPE', 'CHIMSILHOUETTE', 'CHIMBACK', 'CHIMZOOM', 'CHIMIMGSIZE',
-			'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
+			'CHIMIMGFORMAT', 'CHIMFILEFORMAT', 'CHIMMINVOLUME',
 		)
 		self.writeMessageToLog("Environmental data: ")
 		for var in variables:
