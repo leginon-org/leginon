@@ -85,12 +85,12 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return timestamp
 
 	#=====================
-	def sortFolder(self, lastiter):
+	def sortFolder(self):
 		numsort = 0
 		apDisplay.printMsg("Sorting files into clean folders")
 		### move files for all particle iterations
 		files = []
-		for i in range(lastiter+1):
+		for i in range(self.lastiter+1):
 			iterdir = "iter%03d"%(i)
 			apParam.createDirectory(iterdir, warning=False)
 			wildcard = "part*_it*%03d_*.*"%(i)
@@ -143,8 +143,13 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 	def readPartDocFile(self, reflist):
 		partlist = []
 		docfile = "part"+self.params['timestamp']+".doc"
-		if not os.path.isfile(docfile):
-			apDisplay.printError("could not find doc file "+docfile+" to read particle angles")
+		if not os.path.isfile(docfile) or apFile.fileSize(docfile) < 50:
+			apDisplay.printWarning("Could not find doc file "+docfile+" to read particle angles")
+			lastdocfile = "iter%03d/part%s_it%06d.doc"%(self.lastiter, self.params['timestamp'], self.lastiter)
+			if not os.path.isfile(lastdocfile) or apFile.fileSize(lastdocfile) < 50:
+				apDisplay.printError("Could not find backup doc file")
+			apDisplay.printColor("Found a backup copy of docfile", "green")
+			shutil.copy(lastdocfile, docfile)
 		f = open(docfile, "r")
 		mininplane = 360.0
 		for line in f:
@@ -247,7 +252,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return maxjobdata[0]
 
 	#=====================
-	def insertRunIntoDatabase(self, runparams, lastiter):
+	def insertRunIntoDatabase(self, runparams):
 		apDisplay.printMsg("Inserting MaxLike Run into DB")
 
 		### setup alignment run
@@ -285,7 +290,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		alignstackq['spiderfile'] = "alignstack.spi"
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
-		alignstackq['iteration'] = lastiter
+		alignstackq['iteration'] = self.lastiter
 		alignstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		alignstackq['alignrun'] = alignrunq
 		### check to make sure files exist
@@ -317,7 +322,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def insertParticlesIntoDatabase(self, stackid, partlist, lastiter):
+	def insertParticlesIntoDatabase(self, stackid, partlist):
 		count = 0
 		inserted = 0
 		t0 = time.time()
@@ -330,7 +335,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			### setup reference
 			refq = appionData.ApAlignReferenceData()
 			refq['refnum'] = partdict['refnum']
-			refq['iteration'] = lastiter
+			refq['iteration'] = self.lastiter
 			refsearch = "part"+self.params['timestamp']+"_ref*"+str(partdict['refnum'])+"*"
 			refbase = os.path.splitext(glob.glob(refsearch)[0])[0]
 			refq['mrcfile'] = refbase+".mrc"
@@ -472,7 +477,7 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 			+" -iter 20 "
 			+" -o "+os.path.join(self.params['rundir'], "ref"+self.params['timestamp'])
 			+" -psi_step 1 "
-			+" -fast -C 1e-18 "
+			#+" -fast -C 1e-18 "
 			+" -eps 5e-8 "
 		)
 		if runparams['mirror'] is True:
@@ -543,9 +548,9 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		self.createAlignedReferenceStack()
 
 		### read particles
-		lastiter = self.findLastIterNumber()
+		self.lastiter = self.findLastIterNumber()
 		if self.params['sort'] is True:
-			self.sortFolder(lastiter)
+			self.sortFolder()
 		reflist = self.readRefDocFile()
 		partlist = self.readPartDocFile(reflist)
 		self.writePartDocFile(partlist)
@@ -554,8 +559,8 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		stackfile = self.createAlignedStacks(partlist, runparams['localstack'])
 
 		### insert into databse
-		self.insertRunIntoDatabase(runparams, lastiter)
-		self.insertParticlesIntoDatabase(runparams['stackid'], partlist, lastiter)
+		self.insertRunIntoDatabase(runparams)
+		self.insertParticlesIntoDatabase(runparams['stackid'], partlist)
 
 		apFile.removeStack(runparams['localstack'], warn=False)
 		rmcmd = "rm -fr partfiles/*"
