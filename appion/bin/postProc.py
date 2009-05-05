@@ -5,7 +5,6 @@ import os
 import sys
 import re
 import appionScript
-
 import apParam
 import apDisplay
 import apEMAN
@@ -13,6 +12,7 @@ import apVolume
 import apFile
 import apSymmetry
 import apDatabase
+import appionData
 import apChimera
 
 #===========================
@@ -112,8 +112,11 @@ class PostProcScript(appionScript.AppionScript):
 			apDisplay.printError("enter a symmetry ID")
 		if self.params['res'] is None:
 			apDisplay.printError("enter a resolution")
-		if self.params['file'] is None:
-			apDisplay.printError("enter a file name for processing")
+		if self.params['file'] is None or not os.path.isfile(self.params['file']):
+			apDisplay.printError("enter a valid file name for processing")
+		if self.params['maxfilt'] < self.params['apix']*2.0:
+			apDisplay.printError("maxfilt must be greater than the (pixel size)*2")
+
 		self.params['filepath'] = os.path.dirname(os.path.abspath(self.params['file']))
 		self.params['filename'] = os.path.basename(self.params['file'])
 		if self.params['ampfile'] is not None:
