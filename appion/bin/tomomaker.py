@@ -34,10 +34,14 @@ import apStack
 class tomoMaker(appionScript.AppionScript):
 	#=====================
 	def setupParserOptions(self):
-		self.parser.set_usage( "Usage: %prog --file=<name> --rundir=<dir> "
+		self.parser.set_usage( "Usage: %prog --tiltseriesnumber=<#> --session=<session> "
 			+"[options]")
+
+		### strings
 		self.parser.add_option("-s", "--session", dest="session",
 			help="Session name (e.g. 06mar12a)", metavar="SESSION")
+
+		### integers
 		self.parser.add_option("--tiltseriesnumber", dest="tiltseriesnumber", type="int",
 			help="tilt series number in the session", metavar="int")
 		self.parser.add_option("--othertilt", dest="othertilt", type="int",
@@ -46,15 +50,19 @@ class tomoMaker(appionScript.AppionScript):
 			help="Full tomo reconstruction thickness before binning, e.g. --thickness=200", metavar="int")
 		self.parser.add_option("--bin", "-b", dest="bin", default=1, type="int",
 			help="Extra binning from original images, e.g. --bin=2", metavar="int")
-		self.parser.add_option("--xmethod", dest="xmethod", default="imod",
-			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method")
+
+		### choices
+		self.xmethods = ( "imod", "leginon", "sift", "projalign" )
+		self.parser.add_option("--xmethod", dest="xmethod",
+			help="correlation method, e.g. --xmdethod=imod,leginon, or sift", metavar="Method", 
+			type="choice", choices=self.xmethods, default="imod" )
 		return 
 
 	#=====================
 	def checkConflicts(self):
 		if self.params['tiltseriesnumber'] is None :
-			apDisplay.printError("There is no tilt series specified")
-		if self.params['xmethod'] not in ('imod','leginon','sift'):
+			apDisplay.printError("There is no tilt series specified, use one of: "+str(self.xmethods))
+		if self.params['xmethod'] not in self.xmethods:
 			apDisplay.printError("No valid correlation method specified")
 		if self.params['rundir'] is not None:
 			apDisplay.printError("Directory requirement too complex for simple specification, better skip it")
@@ -62,8 +70,6 @@ class tomoMaker(appionScript.AppionScript):
 			apDisplay.printError("enter a run name")
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
-
-	def setRunDir(self):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		self.params['tiltseries'] = tiltdata
@@ -72,11 +78,17 @@ class tomoMaker(appionScript.AppionScript):
 			self.params['othertiltseries'] = othertiltdata
 		else:
 			self.params['othertiltseries'] = None
+
+	#=====================
+	def setRunDir(self):
+		"""
+		this function only runs if no rundir is defined at the command line
+		"""
 		if self.params['subvolumeonly']:
 			tomodata = apTomo.getFullTomoData(self.params['fulltomoId'])
 			path=tomodata['path']['path']
 			self.params['fulltomodir'] = path
-			self.params['rundir'] = os.path.join(path,self.params['runname'])
+			self.params['rundir'] = os.path.join(path, self.params['runname'])
 			self.params['subrunname'] = self.params['runname']
 			self.params['subdir'] = self.params['rundir']
 		else:
@@ -97,6 +109,62 @@ class tomoMaker(appionScript.AppionScript):
 				subrunname = ''
 			self.params['subrunname'] = subrunname
 			self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
+
+	#=====================
+	def runProjalign(self):
+		"""
+		Uses Hans Peters' projalign
+		takes individual MRC files not an MRC stack
+		"""
+		tltfile = self.writeProjalignParamFile(imglist)
+		env = self.setProjalignParams()
+
+		while "transmation matrices are inconsistent":
+			#run tomo-refine.sh which iteratively run projalign
+			### changes origin and rotation for each image
+			tomorefineexe = apParam.getExecPath("tomo-refine.sh", die=True)
+			cmd = ( tomorefineexe
+				+" "+paramfile
+			)
+			proc = subprocess.Popen(cmd, shell=True, environ=env)
+			proc.wait()
+			### results got to runname-iter-numimgs.tlt
+			### convert postscript files to png images
+			#apSpider.alignment.convertPostscriptToPng()
+
+			#run tomofit.sh
+			tomofitexe = apParam.getExecPath("tomofit.sh", die=True)
+			cmd = ( tomofitexe
+				+" "+paramfile
+			)
+			proc = subprocess.Popen(cmd, shell=True, environ=env)
+			proc.wait()
+			## refines geometric parameters: inplane rotation and tilt axis angle
+
+			### repeat tomo-refine.sh
+			### stop when the transmation matrices are consistent, less than 1% difference
+
+	#=====================
+	def writeProjalignTltFile(self, imglist):
+		### see c2-00.tlt file
+		tltfile = self.params['runname']+"-00.tlt"
+		f = open(tltfile, "w")
+		f.write("TILT SERIES "+self.params['runname']+"\n")
+		f.write("PARAMETER\n")
+		f.write("TILT AZIMUTH %.6f\n"%(tiltaxis))
+		for img in imglist:
+			# fileprefix must start with a letter and only contain numbers, letters, and underscores with no extension
+			f.write("  IMAGE %d\tFILE %s\tORIGIN [ %.3f %.3f ]\tTILT ANGLE %.3f\tROTATION %.3f\n"
+			%(num, fileprefix, x, y, ang, rot))
+		f.write("END")	
+		f.close()
+		return tltfile
+
+	#=====================
+	def setProjalignParams(self):
+		### see c2-00.params file
+		env['imgref'] = 59
+		return env
 
 	#=====================
 	def start(self):
@@ -163,6 +231,9 @@ class tomoMaker(appionScript.AppionScript):
 					imodxcorrdata = None
 					leginonxcorrlist.append(leginonixcorrdata)
 					imodxcorrlist.append(imodxcorrdata)
+			elif self.params['xmethod']=="projalign":
+				# Uses Hans Peters' projalign
+		 		self.runProjalign()
 			else:
 				# Correlation by Coarse correlation in IMOD
 				for tiltseriesdata in tiltdatalist:
@@ -170,6 +241,7 @@ class tomoMaker(appionScript.AppionScript):
 					leginonxcorrdata = None
 					leginonxcorrlist.append(leginonxcorrdata)
 					imodxcorrlist.append(imodxcorrdata)
+
 			# Global Transformation
 			gtransforms = apImod.convertToGlobalAlignment(processdir, seriesname)
 			# Add fine alignments here ----------------
