@@ -1332,6 +1332,22 @@ class ApImagic3d0Data(Data):
 		)
 	typemap = classmethod(typemap)
 
+class ApIterCommonLinesData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('clusterid', ApClusteringStackData),
+			('templatestackid', ApTemplateStackData),
+			('numimgs', int),
+			('numbest', int),
+			('summaryfile', str),
+			('description', str),
+			('hidden', bool),
+			('path', ApPathData),
+			('project|projects|project', int),
+		)
+	typemap = classmethod(typemap)
+
 class ApImagic3dRefineRunData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
