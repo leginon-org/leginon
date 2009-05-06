@@ -175,8 +175,11 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 		else:
 			emanproc = subprocess.Popen(emancmd, shell=True)
 		if verbose is True:
-			emanproc.wait()
+#			emanproc.wait()
+			out, err = emanproc.communicate()
+			print out, err
 		else:
+			out, err = emanproc.communicate()
 			### continuous check
 			waittime = 2.0
 			while emanproc.poll() is None:
