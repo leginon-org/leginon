@@ -73,13 +73,14 @@ $graph->SetAlphaBlending();
 if (!$nomargin) {
 	$graph->SetScale("linlin",0.0,1.0,$sx[0],$last);
 	//Margin: Left, Right, Top, Bottom
-	$graph->img->SetMargin(45, 10, 15, 40);	
+	$graph->img->SetMargin(45, 10, 15, 80);	
 	$graph->title->Set('Fourier Shell Correlation ');
-	$graph->xaxis->SetTitlemargin(10);
+	$graph->xaxis->SetTitlemargin(40);
 	$graph->xaxis->title->Set("Resolution (A/pix)");
 	$graph->yaxis->SetTitlemargin(30);
 	$graph->yaxis->title->Set("Correlation");
 	$graph->xaxis->SetTickLabels($xpix);
+	$graph->xaxis->SetLabelAngle(90);
 	$graph->AddLine(new PlotLine(HORIZONTAL,0.5,"black",1));
 } else {
 	$graph->SetScale("intlin",0.0,1.0,$sx[0],$last);
