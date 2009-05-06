@@ -42,8 +42,8 @@ class subStackScript(appionScript.AppionScript):
 
 		### get the stack ID from the other IDs
 		self.recondata = appionData.ApRefinementRunData.direct_query(self.params['reconid'])
-		self.params['stackid'] = apStack.getStackIdFromRecon(reconid)
-		self.sessiondata = apRecon.getSessionDataFromReconId(reconid)
+		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
+		self.sessiondata = apRecon.getSessionDataFromReconId(self.params['reconid'])
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
 		### check and make sure we got the stack id
