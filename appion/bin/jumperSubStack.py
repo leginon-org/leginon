@@ -5,12 +5,12 @@ import sys
 import os
 import shutil
 import numpy
+import time
 #appion
 import appionScript
 import apStack
 import apDisplay
 import appionData
-import apEMAN
 import apRecon
 import apStackMeanPlot
 
@@ -43,7 +43,6 @@ class subStackScript(appionScript.AppionScript):
 		### get the stack ID from the other IDs
 		self.recondata = appionData.ApRefinementRunData.direct_query(self.params['reconid'])
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
-		self.sessiondata = apRecon.getSessionDataFromReconId(self.params['reconid'])
 		self.stackdata = apStack.getOnlyStackData(self.params['stackid'])
 
 		### check and make sure we got the stack id
@@ -64,17 +63,24 @@ class subStackScript(appionScript.AppionScript):
 		apStack.checkForPreviousStack(newstack)
 
 		### get particles from stack
+		apDisplay.printMsg("Querying stack particles")
+		t0 = time.time()
 		stackpartq =  appionData.ApStackParticlesData()
 		stackpartq['stack'] = self.stackdata
 		particles = stackpartq.query()
+		apDisplay.printMsg("Finished in "+apDisplay.timeString(time.time()-t0))
 
 		### write included particles to text file
 		includeParticle = []
 		excludeParticle = 0
 		f = open("test.log", "w")
 		count = 0
+		apDisplay.printMsg("Processing stack particles")
+		t0 = time.time()
 		for part in particles:
 			count += 1
+			if count%500 == 0:
+				sys.stderr.write(".")
 			emanstackpartnum = part['particleNumber']-1
 
 			### get euler jump data
@@ -90,11 +96,13 @@ class subStackScript(appionScript.AppionScript):
 			if jumpdata['median'] is None or jumpdata['median'] > self.params['maxjump']:
 				### bad particle
 				excludeParticle += 1
-				f.write("%d\t%d\texclude\n"%(count, emanstackpartnum))
+				f.write("%d\t%d\t%.1f\texclude\n"%(count, emanstackpartnum, jumpdata['median']))
 			else:
 				### good particle
 				includeParticle.append(emanstackpartnum)
-				f.write("%d\t%d\tinclude\n"%(count, emanstackpartnum))
+				f.write("%d\t%d\t%.1f\tinclude\n"%(count, emanstackpartnum, jumpdata['median']))
+		sys.stderr.write("\n")
+		apDisplay.printMsg("Finished in "+apDisplay.timeString(time.time()-t0))
 
 		f.close()
 		includeParticle.sort()
