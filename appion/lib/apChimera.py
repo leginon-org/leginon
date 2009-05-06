@@ -194,7 +194,11 @@ def runChimeraScript(chimscript):
 #=========================================
 def getColorString():
 	#return secondColor()+",None,"+minuteColor()
-	return secondColor()+",None,"+hourColor()
+	print "first"
+	first = secondColor()
+	print "third"
+	third = hourColor()
+	return first+",None,"+third
 
 #=========================================
 #=========================================
@@ -249,14 +253,27 @@ def randomColor():
 #=========================================
 #=========================================
 def checkRGBwhite(rgbindex):
+	mindiff = 3
+	maxsum = 12
 	d1 = abs(rgbindex[0]-rgbindex[1])
 	d2 = abs(rgbindex[0]-rgbindex[2])
 	d3 = abs(rgbindex[1]-rgbindex[2])
-	if d1 < 2 and d2 < 2 and d3 < 2:
+	csum = rgbindex[0]+rgbindex[1]+rgbindex[2]
+	if d1 < mindiff and d2 < mindiff and d3 < mindiff:
+		# color is too gray
 		rand = int(random.random()*216.0)
 		randindex = [ rand%6, (rand/6)%6, (rand/36)%6 ]
-		print rgbindex, d1, d2, d3, randindex
+		print "too gray", rgbindex, d1, d2, d3, randindex, csum
 		return checkRGBwhite(randindex)
+	if csum > maxsum:
+		# color is too light-colored
+		upindex = [rgbindex[0]+1, rgbindex[1]+1, rgbindex[2]+1, ]
+		for i in range(3):
+			if upindex[i] > 5:
+				upindex[i] = 5
+		print "too light", rgbindex, d1, d2, d3, upindex, csum
+		return checkRGBwhite(upindex)
+	print "good", d1, d2, d3, rgbindex,  csum
 	return rgbindex
 
 
