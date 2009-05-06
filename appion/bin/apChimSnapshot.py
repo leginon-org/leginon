@@ -119,7 +119,7 @@ class ChimSnapShots(object):
 			colors = [(0.8,0.2,0.2,1), (0.8,0.5,0.5,1), (0.8,0.8,0.8,1), (0.5,0.5,0.8,1), (0.2,0.2,0.8,1)]
 		else:
 			### set colors
-			if len(self.colors) >= 1 and ":" in self.colors[1]:
+			if len(self.colors) >= 1 and ":" in self.colors[0]:
 				colorvalues = self.colors[0].split(":")
 				rgbcolor0 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
 			else:
