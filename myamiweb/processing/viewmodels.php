@@ -66,22 +66,28 @@ function modelEntry($model,$particle,$hidden=False) {
 	}
 
 	# get list of png files in directory
-	$pngfiles=array();
-	$modeldir= opendir($model['path']);
-	while ($f = readdir($modeldir)) {
-		if (eregi($model['name'].'.*\.png$',$f)) $pngfiles[] = $f;
-	}
+	$searchstr = $model['path']."/".$model['name']."*.png";
+	$pngfiles = glob($searchstr);
 	sort($pngfiles);
-  
+	$gifsearchstr = $model['path']."/".$model['name']."*.gif";
+	$giffiles = glob($gifsearchstr);
+  	sort($giffiles);
+
         // display starting model
 	$j = "Model ID: $modelid";
 	if ($hidden)  $j.= " <input class='edit' type='submit' name='unhideModel".$modelid."' value='unhide'>";
 	else $j.= " <input class='edit' type='submit' name='hideModel".$modelid."' value='hide'>";
 	$modeltable = apdivtitle($j);
+	foreach ($giffiles as $snapshot) {
+		//echo $snapshot."<br/>\n";
+		if (file_exists($snapshot)) {
+			$modeltable.= "<img src='loadimg.php?rawgif=1&filename=$snapshot' height='64'>\n";
+		}
+	}
 	foreach ($pngfiles as $snapshot) {
-		$snapfile = $model['path'].'/'.$snapshot;
+		$snapfile = $snapshot;
 		$modeltable.= "<a border='0' href='loadimg.php?filename=$snapfile' target='snapshot'>";
-		$modeltable.= "<img src='loadimg.php?filename=$snapfile&s=80' height='80'></a>\n";
+		$modeltable.= "<img src='loadimg.php?filename=$snapfile&h=80' height='80'></a>\n";
 	}
 	$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 
