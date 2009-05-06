@@ -12,6 +12,7 @@ import appionScript
 import apFile
 import apStack
 import apEMAN
+import apIMAGIC
 
 class iterateCommonLinesScript(appionScript.AppionScript):
 
@@ -113,9 +114,21 @@ class iterateCommonLinesScript(appionScript.AppionScript):
 		lines = f.readlines()
 		stripped = [line.strip() for line in lines]
 		f.close()
+		
+		### sometimes common lines fails, so set initially to 0
 		eulerdist1_2 = 0
 		eulerdist2_3 = 0
 		eulerdist3_1 = 0
+		alpha1 = 0
+		beta1 = 0
+		gamma1 = 0
+		alpha2 = 0
+		beta2 = 0
+		gamma2 = 0
+		alpha3 = 0
+		beta3 = 0
+		gamma3 = 0
+		
 		for line in stripped:
 			if re.search("Angular distance between direction 1 <--> 2", str(line)):
 				split = line.split()
@@ -190,6 +203,7 @@ class iterateCommonLinesScript(appionScript.AppionScript):
 			apFile.removeStack(newstack)
 		emancmd = "proc2d "+stack+" "+newstack
 		apEMAN.executeEmanCmd(emancmd)
+		apIMAGIC.copyFile(self.params['rundir'], "start.hed")
 
 		if self.params['numimgs'] is None:
 				self.params['numimgs'] = apFile.numImagesInStack(newstack)
@@ -239,7 +253,7 @@ class iterateCommonLinesScript(appionScript.AppionScript):
 						str(eulers[3])+","+str(eulers[4])+","+str(eulers[5])+"    "+\
 						str(eulers[6])+","+str(eulers[7])+","+str(eulers[8])+"    "+\
 						str(eulerparams[0])+","+str(eulerparams[1])+","+str(eulerparams[2])+"\n")
-					if count % 5 == 0:
+					if count % 100 == 0:
 						apDisplay.printMsg("Now working on iteration "+str(count)+" using projections "+projections+" ... "+str(itercount - count)+" iterations remaining")
 					count += 1
 		eulerfile.close()
