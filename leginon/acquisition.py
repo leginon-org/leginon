@@ -237,7 +237,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def validatePresets(self):
 		presetorder = self.settings['preset order']
 		if not presetorder:
-			raise InvalidPresetsSequence()
+			raise InvalidPresetsSequence('no presets configured')
 		availablepresets = self.getPresetNames()
 		for presetname in presetorder:
 			if presetname not in availablepresets:
