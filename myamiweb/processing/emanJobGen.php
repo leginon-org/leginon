@@ -798,9 +798,9 @@ function writeJobFile ($extra=False) {
 
 	// rescale initial model if necessary:
 	if ($rebox || $rescale) {
-		$ejob.= "mv threed.0a.mrc init.mrc\n";
+		$ejob.= "mv -v threed.0a.mrc init.mrc\n";
 		$ejob.= "proc3d init.mrc threed.0a.mrc $rescale clip=$box,$box,$box\n";
-		$ejob.= "rm -f init.mrc\n";
+		$ejob.= "rm -fv init.mrc\n";
 	}
 
 	for ($i=1; $i<=$numiters; $i++) {
@@ -850,9 +850,9 @@ function writeJobFile ($extra=False) {
 		if ($euler2) $line.=" euler2=$euler2";
 		if ($goodbad=='on') $line.=" goodbad";
 		$line.=" > refine".$i.".txt\n";
-		$line.="mv classes.".$i.".hed classes_eman.".$i.".hed\n";
+		$line.="mv -v classes.".$i.".hed classes_eman.".$i.".hed\n";
 		$line.="ln -s classes_eman.".$i.".hed classes.".$i.".hed\n";
-		$line.="mv classes.".$i.".img classes_eman.".$i.".img\n";
+		$line.="mv -v classes.".$i.".img classes_eman.".$i.".img\n";
 		$line.="ln -s classes_eman.".$i.".img classes.".$i.".img\n";
 		$line.="getProjEulers.py proj.img proj.$i.txt\n";
 		// if ref-free correllation analysis
@@ -876,7 +876,7 @@ function writeJobFile ($extra=False) {
 			if ($median=='on') $line.=" median";
 			if ($refine=='on') $line.=" refine";
 			$line.=" > eotest".$i.".txt\n";
-			$line.="mv fsc.eotest fsc.eotest.".$i."\n";
+			$line.="mv -v fsc.eotest fsc.eotest.".$i."\n";
 			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
 		}
 		if ($msgp=='on') {
