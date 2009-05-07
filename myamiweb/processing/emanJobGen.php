@@ -22,6 +22,7 @@ $selectedcluster=strtolower($selectedcluster);
 @include_once $selectedcluster.".php";
 
 if ($_POST['write']) {
+	// write job file
 	$particle = new particledata();
 
 	if (!$_POST['nodes']) jobForm("ERROR: No nodes specified, setting default=".C_NODES_DEF);
@@ -59,6 +60,7 @@ if ($_POST['write']) {
 }
 
 elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
+	// create job form
 	## make sure a stack and model were selected
 	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
 	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
@@ -75,18 +77,19 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 }
 
 elseif ($_POST['submitjob']) {
+	// submit job
 	$particle = new particledata();
 	$clusterdata->post_data();
 
 	$expId = $_GET['expId'];
 	$projectId = getProjectFromExpId($expId);
-	$host =$_POST['clustername'];
+	$host = $_POST['clustername'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	if (!($user && $pass)) writeJobFile("<B>ERROR:</B> Enter a user name and password");
 
-	$jobname=$_POST['jobname'];
-	$outdir=$_POST['outdir'].$jobname;
+	$jobname = $_POST['jobname'];
+	$outdir = $_POST['outdir'].$jobname;
 
 	$dmfpath=null;
 	if (!empty($_POST['dmfpath'])) {
@@ -125,6 +128,7 @@ elseif ($_POST['submitjob']) {
 	$path = formatEndPath($clusterdata->get_path()).$jobname;
 
 	echo "<tr><td>Appion Directory</td><td>$outdir</td></tr>\n";
+	echo "<tr><td>Cluster Job File</td><td>$path.job</td></tr>\n";
 	echo "<tr><td>Job File Name</td><td>$jobname.job</td></tr>\n";
   
 	// submit job on host
@@ -132,15 +136,15 @@ elseif ($_POST['submitjob']) {
 	
 	$jobnumstr = exec_over_ssh($host, $user, $pass, $cmd, True);
   
-	$jobnum=trim($jobnumstr);
-  echo "jobnum: $jobnum <br/>";
-  $jobnum = ereg_replace('\..*','',$jobnum);
-  if (!is_numeric($jobnum)) {
-    echo "</table><p>\n";
-    echo "ERROR in job submission. Check the cluster\n";
-    processing_footer();
-    exit;
-  }
+	$jobnum = trim($jobnumstr);
+	echo "<tr><td>Cluster Job Id</td><td>$jobnum</td></tr>\n";
+	$jobnum = ereg_replace('\..*','',$jobnum);
+	if (!is_numeric($jobnum)) {
+		echo "</table><p>\n";
+		echo "<hr>\n<font color='#CC3333' size='+1'>ERROR: job submission failed</font>\n";
+		processing_footer();
+		exit;
+	}
 
 	// insert cluster job id into row that was just created
 	$particle->updateClusterQueue($jobid,$jobnum,'Q');
@@ -155,7 +159,7 @@ elseif ($_POST['submitjob']) {
 	if ($subjobs) {echo "<PRE>$subjobs</PRE>\n";}
 	else {echo "<FONT COLOR='RED'>No Jobs on the cluster, check your settings</FONT>\n";}
 	echo "<p><a href='checkjobs.php?expId=$expId'>[Check Status of Jobs Associated with this Experiment]</a><p>\n";
-	echo "<P><FONT COLOR='RED'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
+	echo "<P><hr>\n<font color='#CC3333' size='+1'>Do not hit 'reload' - it will re-submit job</FONT><P>\n";
 	processing_footer(True, True);
 	exit;
 }
@@ -208,7 +212,7 @@ function stackModelForm($extra=False) {
 		processing_header("Rescale/Resize Model","Rescale/Resize Model",$javafunc);
 	}
 	// write out errors, if any came up:
-	if ($extra) echo "<font color='red'>$extra</font>\n<hr>\n";
+	if ($extra) echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
 	echo "<form name='viewerform' method='POST' ACTION='$formAction'>\n";
 	echo "
   <b>Select Project:</b><br>
@@ -900,7 +904,7 @@ function writeJobFile ($extra=False) {
 		echo $clusterdata->cluster_check_msg();
 		echo "<p>";
 	} else {
-		echo "<font color='red'>$extra</font>\n<hr>\n";
+		echo "<font color='red' size='+2'>$extra</font>\n<hr>\n";
 	}
 	echo "<form name='emanjob' method='POST' action='$formAction'>\n";
 	echo "<input type='hidden' name='clustername' value='".C_NAME."'>\n";
