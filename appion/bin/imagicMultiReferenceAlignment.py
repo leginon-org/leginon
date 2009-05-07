@@ -1,11 +1,6 @@
 #!/usr/bin/env python
-# Python script to upload a template to the database, and prepare images for import
+# Python script to align images based on a reference template stack
 
-
-
-
-	####	need to change mode to 755 of the batch file that is created
-	####	how do I specify the filename from the pulldown menu?
 
 
 
@@ -300,7 +295,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### now clip the references to get identical boxsizes
 		if stbox != refbox:
 			while os.path.isfile(reffile+".new.img"):
-				apStack.removeStack(reffile+".new.img")
+				apFile.removeStack(reffile+".new.img")
 			emancmd = "proc2d "+reffile+" "+reffile+".new.hed clip="+str(stbox)+" edgenorm"
 			apEMAN.executeEmanCmd(emancmd)
 			os.rename(reffile+".new.hed", reffile)
@@ -563,7 +558,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		### normalize particles (otherwise found problems in viewing with stackviewer)
 		emancmd = "proc2d "+alignstack+" "+alignstack+".norm.hed norm"
 		while os.path.isfile(alignstack+".norm.img"):
-			apStack.removeStack(alignstack+".norm.img")
+			apFile.removeStack(alignstack+".norm.img")
 		apEMAN.executeEmanCmd(emancmd)
 		os.rename(alignstack+".norm.hed", alignstack)
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
