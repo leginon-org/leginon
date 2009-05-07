@@ -396,11 +396,11 @@ class rctVolumeScript(appionScript.AppionScript):
 				#write to text file
 				clustnum = clustpart['refnum']-1
 				if self.params['minscore'] is not None:
-					if clustpart['alignparticle']['score'] is not None 
+					if ( clustpart['alignparticle']['score'] is not None
 					 and clustpart['alignparticle']['score'] < self.params['minscore'] ):
 						badscore += 1
 						continue
-					elif clustpart['alignparticle']['spread'] is not None 
+					elif ( clustpart['alignparticle']['spread'] is not None
 					 and clustpart['alignparticle']['spread'] < self.params['minscore'] ):
 						badscore += 1
 						continue
