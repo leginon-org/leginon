@@ -490,8 +490,10 @@ function jobForm($extra=false) {
 		// get initial model info
 		$refinfo = $particle->getRefinementRunInfo($_POST['import']);
 		$initmodel = $particle->getInitModelInfo($refinfo['REF|ApInitialModelData|initialModel']);
+		$stackinfo = $particle->getStackParams($refinfo['REF|ApStackData|stack']);
 		// get scaling factor for box sizes
-		$boxscale = $box / $initmodel['boxsize'];
+		$prevboxsize = ($stackinfo['bin']) ? $stackinfo['boxSize']/$stackinfo['bin'] : $stackinfo['boxSize'];
+		$boxscale = $box / $prevboxsize;
 		$numiters = count($iterinfo);
 	}
 
@@ -595,8 +597,9 @@ function jobForm($extra=false) {
 			foreach ($iterinfo as $iter) {
 				if ($iter['iteration'] == $i) {
 					$ang=$iter['ang'];
-					$mask=ceil($boxscale*$iter['mask']);
-					$imask=$iter['imask'];
+					$mask=ceil($iter['mask']*$boxscale);
+					if (floor($iter['imask']*$boxscale) > 0)
+						$imask=floor($iter['imask']*$boxscale);
 					$amask1=$iter['EMAN_amask1'];
 					$amask2=$iter['EMAN_amask2'];
 					$amask3=$iter['EMAN_amask3'];
