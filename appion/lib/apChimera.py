@@ -19,6 +19,36 @@ colorlist = []
 
 #=========================================
 #=========================================
+def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
+	"""
+	set the contour of 1.0 to the desired mass (in kDa) of the
+	macromolecule based on its density
+	
+	use RNA to set the percentage of RNA in the structure
+	"""
+	if apVolume.isValidVolume(volumefile) is False:
+		apDisplay.printError("Volume file is not valid")
+
+	procbin = apParam.getExecPath("proc2d")
+	emandir = os.path.dirname(procbin)
+	volumebin = os.path.join(emandir, "volume")
+	if not os.path.isfile(volumebin):
+		apDisplay.printWarning("failed to find volume program")
+		return False
+	command = "%s %s %.3f set=%.3f"%(	
+		volumebin, volumefile, apix, mass
+	)
+	t0 = time.time()
+	proc = subprocess.Popen(command, shell=True)
+	proc.wait()
+	if time.time()-t0 < 0.01:
+		apDisplay.printWarning("failed to scale by mass in "+apDisplay.timeString(time.time()-t0))
+		return False
+	apDisplay.printMsg("finished scaling by mass in "+apDisplay.timeString(time.time()-t0))
+	return True
+
+#=========================================
+#=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 		contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=True):
 	if apVolume.isValidVolume(density) is False:
