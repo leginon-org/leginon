@@ -569,7 +569,7 @@ class ChimSnapShots(object):
 			imgsize = int(imgsize)
 			self.imgsize = (imgsize, imgsize)
 		elif self.type == 'animate':
-			self.imgsize = (128,128)
+			self.imgsize = (256,256)
 		else:
 			self.imgsize = (1024,1024)
 		### file format
