@@ -2,6 +2,7 @@
 ## python
 import time
 import os
+import re
 ## appion
 import apDisplay
 import apFile
@@ -75,7 +76,7 @@ def addParticleToStack(partnum, partfile, stackfile, dataext=".spi"):
 
 #===============================
 def averageStack(stackfile, numpart, avgfile, varfile, dataext=".spi"):
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider("AS R", 
 		spyder.fileFilter(stackfile)+"@******", #stack file
 		"1-%6d"%(numpart), #num of particles
@@ -101,6 +102,32 @@ def createMask(maskfile, maskrad, boxsize, dataext=".spi"):
 		apDisplay.printError("Failed to create mask file")
 	return
 
+#===============================
+def intListToString(strintlist):
+	### convert to ints and sort
+	intlist = []
+	for item in strintlist:
+		intitem = int(item)
+		intlist.append(intitem)
+	intlist.sort()
+
+	### make list of factors
+	intstr = ""
+	lastitem = None
+	for item in intlist:
+		if lastitem == item-1:
+			lastend = "-"+str(lastitem) 
+			end = intstr[-len(lastend):]
+			if end == lastend:
+				intstr = re.sub(lastend, "-"+str(item), intstr)
+			else:
+				intstr += "-"+str(item)
+		else:
+			intstr += ","+str(item)
+		lastitem = item
+	intstr = intstr[1:]
+	intkey = re.sub(",", "_", intstr)
+	return intstr, intkey
 
 
 
