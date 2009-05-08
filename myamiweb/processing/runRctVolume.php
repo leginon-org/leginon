@@ -51,8 +51,9 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$median = ($_POST['median']) ? $_POST['median'] : '3';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '3';
 	$minscore = ($_POST['minscore']) ? $_POST['minscore'] : '';
-	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.1';
+	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '0.9';
 	$contour = ($_POST['contour']) ? $_POST['contour'] : '3.0';
+	$mass = ($_POST['mass']) ? $_POST['mass'] : '';
 
 	$sessiondata=getSessionList($projectId,$expId);
 	$sessioninfo=$sessiondata['info'];
@@ -260,7 +261,9 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	echo "<i>Contour:</i>\n&nbsp;\n";
 	echo "<INPUT TYPE='text' NAME='contour' SIZE='3' VALUE='$contour'>\n&nbsp;\n";
 	echo "<i>Zoom:</i>\n&nbsp;\n";
-	echo "<INPUT TYPE='text' NAME='zoom' SIZE='3' VALUE='$zoom'>\n";
+	echo "<INPUT TYPE='text' NAME='zoom' SIZE='3' VALUE='$zoom'>\n&nbsp;\n";
+	echo "<i>Mass:</i>\n&nbsp;\n";
+	echo "<INPUT TYPE='text' NAME='mass' SIZE='3' VALUE='$mass'> kDa\n";
 
 	echo "</td></tr></table>\n";
 
@@ -295,6 +298,7 @@ function runRctVolume() {
 	$stack=$_POST['stack'];
 	$minscore=$_POST['minscore'];
 	$contour=$_POST['contour'];
+	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 
 	if (!$tiltstack)
@@ -344,7 +348,10 @@ function runRctVolume() {
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
 	$command.="--zoom=$zoom ";
-	$command.="--contour=$contour ";
+	if ($mass)
+		$command.="--mass=$mass ";
+	else
+		$command.="--contour=$contour ";
 	$command.="--lowpassvol=$lowpassvol ";
 	$command.="--highpasspart=$highpasspart ";
 	$command.="--median=$median ";
@@ -384,7 +391,11 @@ function runRctVolume() {
 		<tr><td>volume lowpass</td><td>$lowpassvol</td></tr>
 		<tr><td>volume median</td><td>$median</td></tr>
 		<tr><td>particle highpass</td><td>$highpasspart</td></tr>
-		<tr><td>mask rad</td><td>$maskrad</td></tr>";
+		<tr><td>mask rad</td><td>$maskrad</td></tr>
+		<tr><td>Chimera contour</td><td>$contour</td></tr>
+		<tr><td>Chimera mass</td><td>$mass kDa</td></tr>
+		<tr><td>Chimera zoom</td><td>$zoom</td></tr>";
+
 
 		echo"</table>\n";
 		processing_footer();
