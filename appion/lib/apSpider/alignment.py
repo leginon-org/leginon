@@ -325,13 +325,14 @@ def getNewPartDict(oldpartdict, newpartdict):
 	T[C1, S1, Sx1, Sy1, My1] = 
 	matrix([My1*C1,My1*S1,My1*(Sy1*S1+Sx1*C1)],[-S1,C1,Sy1*C1-Sx1*S1],[0,0,1])
 
+	My' = My1*My2
+	My3 = My'*My2
 	M[My'].T[C2,S2,Sx2,Sy2,My2].T[C1,S1,Sx1,Sy1,My1] =
 	matrix(
-		[My1*My2*C1*C2-My2*S1*S2, My2*C1*S2+My1*My2*C2*S1,  My2*Sy1*S2 + My1*My2*Sx1*C2 + My2*Sx2],
-		[-My1*C1*S2-C2*S1,        C1*C2-My1*S1*S2,         -My1*Sx1*S2 + Sy1*C2 + Sy2],
+		[My3*(My1*C1*C2 - S1*S2), My3*(C1*S2 + My1*C2*S1), My3*(Sy1*S2 + My1*Sx1*C2 + Sx2)],
+		[-My1*C1*S2 - C2*S1,      C1*C2 - My1*S1*S2,            Sy1*C2 - My1*Sx1*S2 + Sy2 ],
 		[0,0,1]
 	)
-
 
 	## figure out rotation
 	# double mirror
