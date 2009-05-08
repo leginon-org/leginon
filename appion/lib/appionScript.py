@@ -95,9 +95,9 @@ class AppionScript(object):
 		for arg in args:
 			elements=arg.split('=')
 			opt = elements[0].lower()
-			if opt in argdict:
-				apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
-			else:
+			if opt[0] == "-":
+				if opt in argdict:
+					apDisplay.printError("Multiple arguments were supplied for argument: "+str(opt))
 				argdict[opt] = True
 
 	#=====================
