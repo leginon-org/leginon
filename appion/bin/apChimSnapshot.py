@@ -313,7 +313,7 @@ class ChimSnapShots(object):
 		#self.runChimCommand("turn x 180")
 		tilt = 15
 		self.runChimCommand("turn x %d"%(-tilt))
-		increment = 4
+		increment = 6
 		nsteps = int(360/increment)
 		for i in range(nsteps):
 			filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
