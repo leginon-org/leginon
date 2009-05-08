@@ -202,7 +202,7 @@ def crossCorrelateAndShift(infile, reffile, alignfile, ccdocfile, numpart, datae
 	if not os.path.isfile(reffile+dataext):
 		apDisplay.printError("reference stack file not found: "+reffile+dataext)
 	nproc = apParam.getNumProcessors()
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 
 	### Allocate empty stack
 	mySpider.toSpiderQuiet(
@@ -380,7 +380,7 @@ def alignAPSH(volfile, origstackfile, eulerdocfile, classnum, boxsize, numpart, 
 	volfile = spyder.fileFilter(volfile)
 	origeulerdocfile = spyder.fileFilter(eulerdocfile)
 	
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider("VO EA,x53",
 		"5", #angular increment
 		"0,90.0", #Range of Theta
@@ -469,7 +469,7 @@ def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, iternum, 
 	
 	apshstack = spyder.fileFilter(apshstackfile)
 	
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	mySpider.toSpiderQuiet("RT SQ",
 		origstack+"@"+str(partnum), #stack and particle number
 		apshstack+"@"+str(partnum), #output stack and particle
@@ -492,7 +492,7 @@ def rotshiftStack(origstackfile, rotShiftFile, timestamp, iternum, classnum=None
 	
 	apshstackfile = spyder.fileFilter(apshstackfile)
 		
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider("RT SQ",
 		origstackfile+"@*****", #stack and particle number
 		apshstackfile+"@*****", #output stack and particle
