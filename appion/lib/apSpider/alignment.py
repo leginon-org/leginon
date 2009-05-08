@@ -16,6 +16,7 @@ import apEMAN
 import apParam
 import apDisplay
 import apFile
+from apSpider import operations
 
 """
 A large collection of SPIDER functions
@@ -64,7 +65,7 @@ def refFreeAlignParticles(stackfile, template, numpart, pixrad,
 		numiter += 1
 
 	### perform alignment
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	apDisplay.printMsg("Performing particle alignment")
 	# copy template to memory
 	mySpider.toSpiderQuiet("CP", (template+"@1"), "_9")
@@ -230,7 +231,7 @@ def refBasedAlignParticles(stackfile, templatestack,
 	apFile.removeFile(rundir+"/paramdoc%02d%s" % (iternum, dataext))
 
 	### perform alignment, should I use 'AP SH' instead?
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("AP MQ",
 		spyder.fileFilter(templatestack)+"@**",     # reference image series
 		"1-"+str(numtemplate),                      # enter number of templates of doc file
@@ -468,7 +469,7 @@ def alignStack(oldstack, alignedstack, partlist, dataext=".spi"):
 	t0 = time.time()
 	nproc = apParam.getNumProcessors()
 
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	#create stack in core
 	numpart = len(partlist)
 	mySpider.toSpiderQuiet(
@@ -545,7 +546,7 @@ def correspondenceAnalysis(alignedstack, boxsize, maskpixrad, numpart, numfactor
 	apParam.createDirectory(rundir)
 
 	### make template in memory
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpiderQuiet("MO", "_9", "%d,%d" % (boxsize, boxsize), "C", str(maskpixrad*2.0))
 
 	### performing correspondence analysis
@@ -578,7 +579,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 		Broken 4. 2D factor plot visualization
 	"""
 	### 1. generate eigen images
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	for fact in range(1,numfactors+1):
 		mySpider.toSpiderQuiet(
 			#"CA SRE", rundir+"/corandata", str(fact),
@@ -657,7 +658,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 def createFactorMap(f1, f2, rundir, dataext):
 	### 3. factor plot
 	apParam.createDirectory(rundir+"/factors", warning=False)
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	factorfile = rundir+"/factors/factorps"+("%02d-%02d" % (f1,f2))
 	mySpider.toSpiderQuiet(
 		"CA SM", "I",
@@ -717,7 +718,7 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 	factorstr = factorstr[:-1]
 
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	mySpider.toSpider(
 		"CL HC",
 		corandata+"_IMC", # path to coran data
@@ -780,33 +781,6 @@ def hierarchCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	return classavg,classvar
 
 #===============================
-def factorListToString(strfactorlist):
-	### convert to ints and sort
-	factorlist = []
-	for fact in strfactorlist:
-		factint = int(fact)
-		factorlist.append(factint)
-	factorlist.sort()
-
-	### make list of factors
-	factorstr = ""
-	lastfact = None
-	for fact in factorlist:
-		if lastfact == fact-1:
-			lastend = "-"+str(lastfact) 
-			end = factorstr[-len(lastend):]
-			if end == lastend:
-				factorstr = re.sub(lastend, "-"+str(fact), factorstr)
-			else:
-				factorstr += "-"+str(fact)
-		else:
-			factorstr += ","+str(fact)
-		lastfact = fact
-	factorstr = factorstr[1:]
-	factorkey = re.sub(",", "_", factorstr)
-	return factorstr, factorkey
-
-#===============================
 def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 		corandata="coran/corandata", rundir=".", dataext=".spi"):
 	"""
@@ -821,7 +795,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 	"""
 	#apFile.removeFile(rundir+"/dendrogramdoc"+dataext)
 
-	factorstr, factorkey = factorListToString(factorlist)
+	factorstr, factorkey = operations.intListToString(factorlist)
 
 	dendrogramfile = rundir+"/dendrogramdoc"+factorkey+dataext
 	if os.path.isfile(dendrogramfile):
@@ -830,7 +804,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 
 	apDisplay.printMsg("Creating dendrogram file: "+dendrogramfile)
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	mySpider.toSpider(
 		"CL HC",
 		spyder.fileFilter(corandata)+"_IMC", # path to coran data
@@ -875,7 +849,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 	thresh, classes = findThreshold(numclasses, dendrogramfile, rundir, dataext)
 
 	### create class doc files
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	mySpider.toSpider(
 		"CL HE",
 		thresh,
@@ -939,10 +913,10 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	apFile.removeFile(rundir+("/allclassesdoc%04d" % (numclasses))+dataext)
 
 	### make list of factors
-	factorstr, factorkey = factorListToString(factorlist)
+	factorstr, factorkey = operations.intListToString(factorlist)
 
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider(
 		"CL KM",
 		corandata+"_IMC", # path to coran data
@@ -967,7 +941,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 		apFile.removeFile(classvar+dext)
 	print ""
 
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	### create class averages
 	apDisplay.printMsg("Averaging particles into classes")
 	for i in range(numclasses):
@@ -1010,7 +984,7 @@ def ClCla(alignedstack, numpart=None, numclasses=40,
 		apFile.removeFile(rundir+("/classdoc%04d" % (i+1))+dataext)
 	apFile.removeFile(rundir+"/clusterdoc"+dataext)
 
-	factorstr, factorkey = factorListToString(factorlist)
+	factorstr, factorkey = operations.intListToString(factorlist)
 
 	### do hierarchical clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True)
@@ -1048,7 +1022,7 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 		thresh = (maxthresh-minthresh)/3.0 + minthresh
 		classfile = rundir+"/classes"
 		apFile.removeFile(classfile+dataext)
-		mySpider = spyder.SpiderSession(dataext=dataext, logo=False)
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 		mySpider.toSpiderQuiet(
 			"CL HD",
 			thresh, #threshold
