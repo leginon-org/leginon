@@ -319,23 +319,18 @@ def getNewPartDict(oldpartdict, newpartdict):
 	R[C,S] := matrix([C,S,0],[-S,C,0],[0,0,1]);
 	S[Sx,Sy] := matrix([1,0,Sx],[0,1,Sy],[0,0,1]);
 	M[My] := matrix([My,0,0],[0,1,0],[0,0,1]);
-	T[C, S, Sx, Sy, My] := M[My].S[Sx+1/2,Sy+1/2].R[C,S].S[-1/2,-1/2]
 	T[C, S, Sx, Sy, My] := M[My].S[Sx,Sy].R[C,S]
 
 	#composite
 	T[C1, S1, Sx1, Sy1, My1] = 
 	matrix([My1*C1,My1*S1,My1*(Sy1*S1+Sx1*C1)],[-S1,C1,Sy1*C1-Sx1*S1],[0,0,1])
 
-	T[C2,S2,Sx2,Sy2,My2].T[C1,S1,Sx1,Sy1,My1] =
-matrix(
- [My1*C1*C2-S1*S2,  C1*S2+My1*C2*S1,  My1*Sx1*C2 + Sy1*S2 + Sx2],
- [-My1*C1*S2-C2*S1, C1*C2-My1*S1*S2, -My1*Sx1*S2 + Sy1*C2 + Sy2],
- [0,0,1]
-)
-matrix(
-[My1*My2*C1*C2-My2*S1*S2, My2*C1*S2+My1*My2*C2*S1,  My2*Sy1*S2 + My1*My2*Sx1*C2 + My2*Sx2],
-[-My1*C1*S2-C2*S1,        C1*C2-My1*S1*S2,         -My1*Sx1*S2 + Sy1*C2 + Sy2],
-[0,0,1])
+	M[My'].T[C2,S2,Sx2,Sy2,My2].T[C1,S1,Sx1,Sy1,My1] =
+	matrix(
+		[My1*My2*C1*C2-My2*S1*S2, My2*C1*S2+My1*My2*C2*S1,  My2*Sy1*S2 + My1*My2*Sx1*C2 + My2*Sx2],
+		[-My1*C1*S2-C2*S1,        C1*C2-My1*S1*S2,         -My1*Sx1*S2 + Sy1*C2 + Sy2],
+		[0,0,1]
+	)
 
 
 	## figure out rotation
