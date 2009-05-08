@@ -169,9 +169,12 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 	try:
 		if logfile is not None:
 			logf = open(logfile, 'a')
-			emanproc = subprocess.Popen(emancmd, shell=True, stdout=logf, stderr=logf)
+			emanproc = subprocess.Popen(emancmd, shell=True, 
+				stdout=logf, stderr=logf)
 		elif verbose is False:
-			emanproc = subprocess.Popen(emancmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			devnull = open('/dev/null', 'w')
+			emanproc = subprocess.Popen(emancmd, shell=True, 
+				stdout=devnull, stderr=devnull)
 		else:
 			emanproc = subprocess.Popen(emancmd, shell=True)
 		if verbose is True:
