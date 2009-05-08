@@ -43,7 +43,7 @@ def fileFilter(fname, dataext=".spi"):
 
 class SpiderSession:
 	def __init__(self, spiderexec=None, dataext='.spi', projext=".bat", logo=True, 
-	 nproc=1, spiderprocdir="", term=False, verbose=False):
+	 nproc=1, spiderprocdir="", term=False, verbose=False, log=True):
 		# spider executable		
 		if spiderexec is None:
 			if os.environ.has_key('SPIDER_LOC'):
@@ -71,12 +71,18 @@ class SpiderSession:
 		#self.spiderin = open(self.spiderexec.stdin, 'w')
 		self.logf = open("spider.log", "w")
 		self.starttime = time.time()
-		if verbose is False:
-			self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
-				stdin=subprocess.PIPE, stdout=self.logf, stderr=subprocess.PIPE, env={'SPPROC_DIR': spiderprocdir})
-		else:
+		if verbose is True:
 			self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
 				stdin=subprocess.PIPE, stderr=subprocess.PIPE, env={'SPPROC_DIR': spiderprocdir})
+		elif log is False:
+			self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
+				stdin=subprocess.PIPE, stdout=open('/dev/null', 'w'), stderr=subprocess.PIPE, 
+				env={'SPPROC_DIR': spiderprocdir})
+		else:
+			self.spiderproc = subprocess.Popen(self.spiderexec, shell=True, 
+				stdin=subprocess.PIPE, stdout=self.logf, stderr=subprocess.PIPE, 
+				env={'SPPROC_DIR': spiderprocdir})
+
 		self.spiderin = self.spiderproc.stdin
 		#self.spiderout = self.spiderproc.stdout
 		self.spidererr = self.spiderproc.stderr
