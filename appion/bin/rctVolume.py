@@ -68,6 +68,8 @@ class rctVolumeScript(appionScript.AppionScript):
 			help="Chimera snapshot contour", metavar="#")
 		self.parser.add_option("--zoom", dest="zoom", type="float", default=1.1,
 			help="Chimera snapshot zoom", metavar="#")
+		self.parser.add_option("--mass", dest="mass", type="float",
+			help="Use mass in kDa to set Chimera snapshot contour", metavar="#")
 
 		### true/false
 		self.parser.add_option("--no-eotest", dest="eotest", default=True,
@@ -95,6 +97,11 @@ class rctVolumeScript(appionScript.AppionScript):
 				self.classlist.append(int(cnum))
 			except:
 				apDisplay.printError("could not parse: "+cnum)
+
+		### check for missing and duplicate entries
+		if self.params['mass'] is not None:
+			self.params['contour'] = 1.0
+			apDisplay.printMsg("Using scale by mass method")
 
 		### check for missing and duplicate entries
 		if self.params['alignid'] is None and self.params['clusterid'] is None:
@@ -131,10 +138,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		stackdata = apStack.getOnlyStackData(self.params['tiltstackid'], msg=False)
 		path = stackdata['path']['path']
 		uppath = os.path.dirname(os.path.dirname(os.path.abspath(path)))
-		tempstr = ""
-		for cnum in self.classlist:
-			tempstr += str(cnum)+"-"
-		classliststr = tempstr[:-1]
+		classliststr = operations.intListToString(self.classlist)
 
 		self.params['rundir'] = os.path.join(uppath, "rctvolume", 
 			self.params['runname'] )
@@ -234,10 +238,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		### insert rct run data
 		rctrunq = appionData.ApRctRunData()
 		rctrunq['runname']    = self.params['runname']
-		tempstr = ""
-		for cnum in self.classlist:
-			tempstr += str(cnum)+","
-		classliststr = tempstr[:-1]
+		classliststr = operations.intListToString(self.classlist)
 		rctrunq['classnums']  = classliststr
 		rctrunq['numiter']    = self.params['numiters']
 		rctrunq['maskrad']    = self.params['radius']
@@ -318,15 +319,11 @@ class rctVolumeScript(appionScript.AppionScript):
 
 		### image with chimera
 		if self.params['skipchimera'] is False:
-			snapshotthread = threading.Thread(target=apChimera.renderSnapshots, 
-				args=(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1'))
-			snapshotthread.setDaemon(1)
-			snapshotthread.start()
-			animationthread = threading.Thread(target=apChimera.renderAnimation, 
-				args=(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1'))
-			animationthread.setDaemon(1)
-			animationthread.start()
-
+			if self.params['mass'] is not None:
+				apDisplay.printMsg("Using scale by mass method")
+				apChimera.setVolumeMass(mrcvolfile, apix=apix, mass=self.params['mass'])
+			apChimera.renderSnapshots(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1')
+			apChimera.renderAnimation(mrcvolfile, self.params['contour'], self.params['zoom'], 'c1')
 		return mrcvolfile
 
 	#=====================
@@ -375,7 +372,7 @@ class rctVolumeScript(appionScript.AppionScript):
 		excludeParticle = 0
 		badmirror = 0
 		badscore = 0
-		apDisplay.printMsg("Sorting particles from classes")
+		apDisplay.printMsg("Sorting particles from classes at "+time.asctime())
 		count = 0
 		startmem = mem.active()
 		t0 = time.time()
@@ -465,7 +462,10 @@ class rctVolumeScript(appionScript.AppionScript):
 							badmirror += 1
 				else:
 					excludeParticle += 1
+		### end methods
+
 		includeParticle.sort()
+		### messages
 		if time.time()-t0 > 1.0:
 			apDisplay.printMsg("\nSorting time: "+apDisplay.timeString(time.time()-t0))
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding \n\t"
@@ -479,12 +479,13 @@ class rctVolumeScript(appionScript.AppionScript):
 		memdiff = (mem.active()-startmem)/count/1024.0
 		if memdiff > 0.1:
 			apDisplay.printColor("Memory increase: %.2f MB/part"%(memdiff), "red")
+
 		return includeParticle, tiltParticlesData
 
 	#=====================
 	def mirrorParticles(self, partdatas, spiderstack):
 		partnum = 0
-		mySpider = spyder.SpiderSession(dataext=".spi", logo=False)
+		mySpider = spyder.SpiderSession(dataext=".spi", logo=False, log=False)
 		for stackpartdata in partdatas:
 			partnum += 1
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
