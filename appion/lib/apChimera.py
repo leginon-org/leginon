@@ -15,6 +15,8 @@ import apParam
 import apDisplay
 import apVolume
 
+colorlist = []
+
 #=========================================
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
@@ -195,18 +197,17 @@ def runChimeraScript(chimscript):
 def getColorString():
 	#return secondColor()+",None,"+minuteColor()
 	#print "first"
-	first = secondColor()
+	first = minuteColor()
 	#print "third"
-	third = hourColor()
+	third = dayColor()
 	return first+",None,"+third
 
 #=========================================
 #=========================================
 def dayColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	day = int( (time.time()/(3600*24.0)-8.0/24.0)%216 )
-	rgbindex = [ day%6, (day/6)%6, (day/36)%6 ]
-	rgbindex = checkRGBwhite(rgbindex)
+	day = int( (time.time()/(3600*24.0)-8.0/24.0)%len(colorlist) )
+	rgbindex = colorlist[day]
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
 
@@ -214,9 +215,8 @@ def dayColor():
 #=========================================
 def hourColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	hour = int( (time.time()/3600)%216 )
-	rgbindex = [ hour%6, (hour/6)%6, (hour/36)%6 ]
-	rgbindex = checkRGBwhite(rgbindex)
+	hour = int( (time.time()/3600)%len(colorlist) )
+	rgbindex = colorlist[hour]
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
 
@@ -224,9 +224,8 @@ def hourColor():
 #=========================================
 def minuteColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	mins = int( (time.time()/60)%216 )
-	rgbindex = [ mins%6, (mins/6)%6, (mins/36)%6 ]
-	rgbindex = checkRGBwhite(rgbindex)
+	mins = int( (time.time()/60)%len(colorlist) )
+	rgbindex = colorlist[mins]
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
 
@@ -234,9 +233,8 @@ def minuteColor():
 #=========================================
 def secondColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	secs = int( time.time()%216 )
-	rgbindex = [ secs%6, (secs/6)%6, (secs/36)%6 ]
-	rgbindex = checkRGBwhite(rgbindex)
+	secs = int( time.time()%len(colorlist) )
+	rgbindex = colorlist[secs]
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
 
@@ -244,37 +242,47 @@ def secondColor():
 #=========================================
 def randomColor():
 	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	rand = int(random.random()*216.0)
-	rgbindex = [ rand%6, (rand/6)%6, (rand/36)%6 ]
-	rgbindex = checkRGBwhite(rgbindex)
+	rand = int(random.random()*len(colorlist))
+	rgbindex = colorlist[rand]
 	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
 	return colorstr
 
 #=========================================
 #=========================================
-def checkRGBwhite(rgbindex):
+def isTooGray(rgbindex):
 	mindiff = 3
-	maxsum = 12
 	d1 = abs(rgbindex[0]-rgbindex[1])
 	d2 = abs(rgbindex[0]-rgbindex[2])
 	d3 = abs(rgbindex[1]-rgbindex[2])
-	csum = rgbindex[0]+rgbindex[1]+rgbindex[2]
 	if d1 < mindiff and d2 < mindiff and d3 < mindiff:
-		# color is too gray
-		rand = int(random.random()*216.0)
-		randindex = [ rand%6, (rand/6)%6, (rand/36)%6 ]
-		#print "too gray", rgbindex, d1, d2, d3, randindex, csum
-		return checkRGBwhite(randindex)
+		return True
+	return False
+
+#=========================================
+#=========================================
+def isTooLight(rgbindex):
+	maxsum = 12
+	csum = rgbindex[0]+rgbindex[1]+rgbindex[2]
 	if csum > maxsum:
+		return True
+	return False
+
+#=========================================
+#=========================================
+def isGoodColor(rgbindex):
+	if isTooGray(rgbindex):
+		# color is too gray
+		return False
+	if isTooLight(rgbindex):
 		# color is too light-colored
-		upindex = [rgbindex[0]+1, rgbindex[1]+1, rgbindex[2]+1, ]
-		for i in range(3):
-			if upindex[i] > 5:
-				upindex[i] = 5
-		#print "too light", rgbindex, d1, d2, d3, upindex, csum
-		return checkRGBwhite(upindex)
-	#print "good", d1, d2, d3, rgbindex,  csum
-	return rgbindex
+		return False
+	return True
 
+#=========================================
+#=========================================
 
+for i in range(216):
+	rgbindex = [ i%6, (i/6)%6, (i/36)%6 ]
+	if isGoodColor(rgbindex):
+		colorlist.append(rgbindex)
 
