@@ -319,17 +319,24 @@ def getNewPartDict(oldpartdict, newpartdict):
 	R[C,S] := matrix([C,S,0],[-S,C,0],[0,0,1]);
 	S[Sx,Sy] := matrix([1,0,Sx],[0,1,Sy],[0,0,1]);
 	M[My] := matrix([My,0,0],[0,1,0],[0,0,1]);
-	T[C, S, Sx, Sy, My] := M[My].R[C,S].S[Sx,Sy]
+	T[C, S, Sx, Sy, My] := M[My].S[Sx+1/2,Sy+1/2].R[C,S].S[-1/2,-1/2]
+	T[C, S, Sx, Sy, My] := M[My].S[Sx,Sy].R[C,S]
 
 	#composite
 	T[C1, S1, Sx1, Sy1, My1] = 
 	matrix([My1*C1,My1*S1,My1*(Sy1*S1+Sx1*C1)],[-S1,C1,Sy1*C1-Sx1*S1],[0,0,1])
 
-	T[C2,S2,Sx2,Sy2,1].T[C1,S1,Sx1,Sy1,My1] =
-	matrix(
-	[ My1*C1*C2 - S1*S2, C1*S2 + My1*C2*S1, (Sy1*C1 - Sx1*S1)*S2 + Sy2*S2 + My1*C2*(Sy1*S1 + Sx1*C1) + Sx2*C2],
-	[-My1*C1*S2 - C2*S1, C1*C2 - My1*S1*S2, -My1*(Sy1*S1 + Sx1*C1)*S2 - Sx2*S2 + C2*(Sy1*C1 - Sx1*S1) + Sy2*C2],
-	[0, 0, 1])
+	T[C2,S2,Sx2,Sy2,My2].T[C1,S1,Sx1,Sy1,My1] =
+matrix(
+ [My1*C1*C2-S1*S2,  C1*S2+My1*C2*S1,  My1*Sx1*C2 + Sy1*S2 + Sx2],
+ [-My1*C1*S2-C2*S1, C1*C2-My1*S1*S2, -My1*Sx1*S2 + Sy1*C2 + Sy2],
+ [0,0,1]
+)
+matrix(
+[My1*My2*C1*C2-My2*S1*S2, My2*C1*S2+My1*My2*C2*S1,  My2*Sy1*S2 + My1*My2*Sx1*C2 + My2*Sx2],
+[-My1*C1*S2-C2*S1,        C1*C2-My1*S1*S2,         -My1*Sx1*S2 + Sy1*C2 + Sy2],
+[0,0,1])
+
 
 	## figure out rotation
 	# double mirror
@@ -341,32 +348,34 @@ def getNewPartDict(oldpartdict, newpartdict):
 	newrot = math.radians(newpartdict['rot'])
 	oldrot = math.radians(oldpartdict['rot'])
 	#newmir = evalMirror(newpartdict['mirror'])
-	oldmir = evalMirror(oldpartdict['mirror'])
-	oldx = oldpartdict['xshift']
-	oldy = oldpartdict['yshift']
-	newx = newpartdict['xshift']
-	newy = newpartdict['yshift']
+	S1 = math.sin(oldrot)
+	C1 = math.cos(oldrot)
+	S2 = math.sin(newrot)
+	C2 = math.cos(newrot)
+	My1 = evalMirror(oldpartdict['mirror'])
+	My2 = evalMirror(newpartdict['mirror'])
+	Sx1 = oldpartdict['xshift']
+	Sy1 = oldpartdict['yshift']
+	Sx2 = newpartdict['xshift']
+	Sy2 = newpartdict['yshift']
 
 	### calculate complex values
-	#Sx' = (Sy1*C1 - Sx1*S1)*S2 + Sy2*S2 + My1*C2*(Sy1*S1 + Sx1*C1) + Sx2*C2
-	totalxshift = (
-		( oldy*math.cos(oldrot) - oldx*math.sin(oldrot) )*math.cos(newrot)
-		+ newy*math.sin(newrot)
-		+ oldmir*math.cos(newrot)*( oldy*math.sin(oldrot) - oldx*math.cos(oldrot) )
-		+ newx*math.cos(newrot)
-	)
-	#Sy' = (Sy1*C1 - Sx1*S1)*C2 - Sx2*S2 - My1*(Sy1*S1 + Sx1*C1)*S2 + Sy2*C2
-	totalyshift = (
-		( oldy*math.cos(oldrot) - oldx*math.sin(oldrot) )*math.cos(newrot)
-		+ newx*math.sin(newrot)
-		- oldmir*( oldy*math.sin(oldrot) - oldx*math.cos(oldrot) )*math.sin(newrot)
-		+ newy*math.cos(newrot)
-	)
-	#t' =  t1 + My1*t2
-	totalrot = wrap360(oldpartdict['rot'] + oldmir*newpartdict['rot'])
-
+	### mirroring
 	#My' = My1 * My2
 	totalmir = bool(oldpartdict['mirror'] - newpartdict['mirror'])
+	My3 = evalMirror(totalmir)
+
+	### x shift
+	#Sx' = My3*My2*(Sy1*S2 + My1*Sx1*C2 + Sx2)
+	totalxshift = My3*My2*(Sy1*S2 + My1*Sx1*C2 + Sx2)
+
+	### y shift
+	#Sy' = -My1*Sx1*S2 + Sy1*C2 + Sy2
+	totalyshift = -My1*Sx1*S2 + Sy1*C2 + Sy2
+
+	### rotation
+	#t' =  t1 + My1*t2
+	totalrot = wrap360(oldpartdict['rot'] + My1*newpartdict['rot'])
 
 	partdict = {
 		'num': newpartdict['num'],
@@ -377,19 +386,21 @@ def getNewPartDict(oldpartdict, newpartdict):
 		'xshift': totalxshift,
 		'yshift': totalyshift,
 	}
+	"""
 	if partdict['num'] in [3,6,7]:
 		print ("old", oldpartdict['num'], oldpartdict['template'], 
-		oldpartdict['mirror'], round(oldpartdict['rot'],3))
+			oldpartdict['mirror'], round(oldpartdict['rot'],3))
 		print ("new", newpartdict['num'], newpartdict['template'], 
-		newpartdict['mirror'], round(newpartdict['rot'],3))
+			newpartdict['mirror'], round(newpartdict['rot'],3))
 		print ("update", partdict['num'], partdict['template'], 
-		partdict['mirror'], round(partdict['rot'],3))
+			partdict['mirror'], round(partdict['rot'],3))
+	"""
 	return partdict
 
 
 #===============================
 def evalMirror(mirror):
-	return int(mirror)*2-1
+	return -1*(int(mirror)*2 - 1)
 
 #===============================
 def wrap360(theta):
