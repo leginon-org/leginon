@@ -299,33 +299,97 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 		oldpartdict = oldpartlist[newpartdict['num']-1]
 		### this is wrong because the shifts are not additive without a back rotation
 		if newpartdict['num'] == oldpartdict['num']:
-			adjxshift = ( oldpartdict['xshift']*math.cos(-1*math.radians(newpartdict['rot']))
-				- oldpartdict['yshift']*math.sin(-1*math.radians(newpartdict['rot'])) )
-			adjyshift = ( oldpartdict['xshift']*math.sin(-1*math.radians(newpartdict['rot']))
-				+ oldpartdict['yshift']*math.cos(-1*math.radians(newpartdict['rot'])) )
-			partdict = {
-				'num': newpartdict['num'],
-				'template': newpartdict['template'],
-				'score': newpartdict['score'],
-				'mirror': bool(oldpartdict['mirror']-newpartdict['mirror']),
-				'rot': wrap360(oldpartdict['rot']+newpartdict['rot']),
-				'xshift': adjxshift + newpartdict['xshift'],
-				'yshift': adjyshift + newpartdict['yshift'],
-			}
+			partdict = getNewPartDict(oldpartdict, newpartdict)
 		else:
 			print oldpartdict
 			print newpartdict
 			apDisplay.printError("wrong particle in update")
-		#if partdict['num'] in [3,6,7]:
-		#	print "old", oldpartdict['num'], oldpartdict['template'], oldpartdict['mirror'], round(oldpartdict['rot'],3)
-		#	print "new", newpartdict['num'], newpartdict['template'], newpartdict['mirror'], round(newpartdict['rot'],3)
-		#	print "update", partdict['num'], partdict['template'], partdict['mirror'], round(partdict['rot'],3)
 		partlist.append(partdict)
 	docf.close()
 	picklef = open(picklefile, "w")
 	cPickle.dump(partlist, picklef)
 	picklef.close()
 	return partlist
+
+
+def getNewPartDict(oldpartdict, newpartdict):
+	"""
+	### solved matrix
+	#define
+	R[C,S] := matrix([C,S,0],[-S,C,0],[0,0,1]);
+	S[Sx,Sy] := matrix([1,0,Sx],[0,1,Sy],[0,0,1]);
+	M[My] := matrix([My,0,0],[0,1,0],[0,0,1]);
+	T[C, S, Sx, Sy, My] := M[My].R[C,S].S[Sx,Sy]
+
+	#composite
+	T[C1, S1, Sx1, Sy1, My1] = 
+	matrix([My1*C1,My1*S1,My1*(Sy1*S1+Sx1*C1)],[-S1,C1,Sy1*C1-Sx1*S1],[0,0,1])
+
+	T[C2,S2,Sx2,Sy2,1].T[C1,S1,Sx1,Sy1,My1] =
+	matrix(
+	[ My1*C1*C2 - S1*S2, C1*S2 + My1*C2*S1, (Sy1*C1 - Sx1*S1)*S2 + Sy2*S2 + My1*C2*(Sy1*S1 + Sx1*C1) + Sx2*C2],
+	[-My1*C1*S2 - C2*S1, C1*C2 - My1*S1*S2, -My1*(Sy1*S1 + Sx1*C1)*S2 - Sx2*S2 + C2*(Sy1*C1 - Sx1*S1) + Sy2*C2],
+	[0, 0, 1])
+
+	## figure out rotation
+	# double mirror
+	trigreduce(T[cos(t2),sin(t2),0,0,-1].T[cos(t1),sin(t1),0,0,-1])
+	# equal unmirror with negative t2
+	trigreduce(T[cos(-t2),sin(-t2),0,0,1].T[cos(t1),sin(t1),0,0,1])
+	"""
+	### setup values
+	newrot = math.radians(newpartdict['rot'])
+	oldrot = math.radians(oldpartdict['rot'])
+	#newmir = evalMirror(newpartdict['mirror'])
+	oldmir = evalMirror(oldpartdict['mirror'])
+	oldx = oldpartdict['xshift']
+	oldy = oldpartdict['yshift']
+	newx = newpartdict['xshift']
+	newy = newpartdict['yshift']
+
+	### calculate complex values
+	#Sx' = (Sy1*C1 - Sx1*S1)*S2 + Sy2*S2 + My1*C2*(Sy1*S1 + Sx1*C1) + Sx2*C2
+	totalxshift = (
+		( oldy*math.cos(oldrot) - oldx*math.sin(oldrot) )*math.cos(newrot)
+		+ newy*math.sin(newrot)
+		+ oldmir*math.cos(newrot)*( oldy*math.sin(oldrot) - oldx*math.cos(oldrot) )
+		+ newx*math.cos(newrot)
+	)
+	#Sy' = (Sy1*C1 - Sx1*S1)*C2 - Sx2*S2 - My1*(Sy1*S1 + Sx1*C1)*S2 + Sy2*C2
+	totalyshift = (
+		( oldy*math.cos(oldrot) - oldx*math.sin(oldrot) )*math.cos(newrot)
+		+ newx*math.sin(newrot)
+		- oldmir*( oldy*math.sin(oldrot) - oldx*math.cos(oldrot) )*math.sin(newrot)
+		+ newy*math.cos(newrot)
+	)
+	#t' =  t1 + My1*t2
+	totalrot = wrap360(oldpartdict['rot'] + oldmir*newpartdict['rot'])
+
+	#My' = My1 * My2
+	totalmir = bool(oldpartdict['mirror'] - newpartdict['mirror'])
+
+	partdict = {
+		'num': newpartdict['num'],
+		'template': newpartdict['template'],
+		'score': newpartdict['score'],
+		'mirror': totalmir,
+		'rot': totalrot,
+		'xshift': totalxshift,
+		'yshift': totalyshift,
+	}
+	if partdict['num'] in [3,6,7]:
+		print ("old", oldpartdict['num'], oldpartdict['template'], 
+		oldpartdict['mirror'], round(oldpartdict['rot'],3))
+		print ("new", newpartdict['num'], newpartdict['template'], 
+		newpartdict['mirror'], round(newpartdict['rot'],3))
+		print ("update", partdict['num'], partdict['template'], 
+		partdict['mirror'], round(partdict['rot'],3))
+	return partdict
+
+
+#===============================
+def evalMirror(mirror):
+	return int(mirror)*2-1
 
 #===============================
 def wrap360(theta):
