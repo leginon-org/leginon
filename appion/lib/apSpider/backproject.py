@@ -59,7 +59,7 @@ def backprojectCG(stackfile, eulerdocfile, volfile, numpart, pixrad, dataext=".s
 		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
 	apFile.removeFile(volfile+dataext)
 	nproc = apParam.getNumProcessors()
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("BP CG", 
 		stackfile+"@*****", #stack file
 		"1-%d"%(numpart), #number of particles
@@ -105,7 +105,7 @@ def backprojectRP(stackfile, eulerdocfile, volfile, pixrad, classnum, lambDa, nu
 	else:
 		apDisplay.printError("Partilce selection is invalid for BP RP. Please make sure either numpart or selfile is specified in the function backprojectRP!")
 	nproc = apParam.getNumProcessors()
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("BP RP x11", 
 		stackfile+"@*****", #stack file
 		selection, #selection file or particle range 
@@ -143,7 +143,7 @@ def backproject3F(stackfile, eulerdocfile, volfile, numpart, dataext=".spi"):
 		apDisplay.printError("euler doc file not found: "+eulerdocfile+dataext)
 	apFile.removeFile(volfile+dataext)
 	nproc = apParam.getNumProcessors()
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("BP 3F", 
 		stackfile+"@*****", #stack file
 		"1-%d"%(numpart), #number of particles
@@ -172,7 +172,7 @@ def projectVolume(volfile, eulerdocfile, projstackfile, numpart, pixrad, dataext
 
 	apFile.removeFile(projstackfile)
 	nproc = apParam.getNumProcessors()
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, nproc=nproc, log=False)
 	mySpider.toSpider("PJ 3Q", 
 		volfile, #input vol file
 		str(pixrad), #pixel radius
