@@ -145,6 +145,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 	image1 = density+".1.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
+		runChimeraScript(chimsnappath)
 
 	return
 
@@ -180,7 +181,9 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 	image1 = density+".001.png"
 	if not os.path.isfile(image1):
 		apDisplay.printWarning("Chimera failed to generate images")
-	else:
+		runChimeraScript(chimsnappath)
+
+	if os.path.isfile(image1):
 		### merge into animated GIF
 		finalgif = density+".animate.gif"
 		imagemagickcmd1 = "convert -delay 10 -loop 15 "
