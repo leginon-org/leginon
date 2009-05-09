@@ -183,7 +183,7 @@ class SpiderSession:
 		" each item is a line sent to Spider"
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
-			sys.stderr.write("Load average is high "+str(round(loadavg,2)))
+			sys.stderr.write("Load average is high "+str(round(loadavg,2))+"\n")
 			loadsquared = loadavg*loadavg
 			time.sleep(loadsquared)
 		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
@@ -199,8 +199,8 @@ class SpiderSession:
 		#self.spiderin.flush()
 
 	def close(self, delturds=1):
-		self.toSpiderQuiet("EN D")			 # end the spider process,
-		self.toSpiderQuiet("EN D")			 # end the spider process,
+		self.toSpiderQuiet("EN D") # end the spider process,
+		self.toSpiderQuiet("EN D") # end the spider process,
 		self.wait()
 
 		for file in ['fort.1', 'jnkASSIGN1', 
