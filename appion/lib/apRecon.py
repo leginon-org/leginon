@@ -107,7 +107,7 @@ def convertClassAvgFiles(params):
 				newf = oldf.replace('classes','classes_eman')
 				os.rename(oldf,newf)
 				os.symlink(newf,oldf)
-	if params['package']=='EMAN/SpiCoran':
+	elif params['package']=='EMAN/SpiCoran':
 		for f in files_classavg:
 			for ext in ['.img','.hed']:
 				oldf = f.replace('.img',ext)
@@ -120,7 +120,7 @@ def convertClassAvgFiles(params):
 				newf = oldf.replace('classes','classes_eman')
 				new2f = newf.replace('old.','')
 				os.rename(oldf,new2f)
-	if params['package']=='EMAN/MsgP':
+	elif params['package']=='EMAN/MsgP':
 		for f in files_classgood:
 			for ext in ['.img','.hed']:
 				oldf = f.replace('.img',ext)
