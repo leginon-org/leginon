@@ -2,10 +2,15 @@
 # Make structure snapshots using chimera
 
 import os
+import re
+import glob
+import shutil
+#appion
 import appionScript
 import apChimera
 import apVolume
 import apDisplay
+import apFile
 
 #=====================
 #=====================
@@ -17,16 +22,26 @@ class MakeSnapshotScript(appionScript.AppionScript):
 		self.parser.add_option("-f", "--file", dest="file", 
 			help="3d MRC file to snapshot", metavar="FILE")
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.0,
-			help="Zoom factor for snapshot rendering (1.5 by default)", metavar="#")
+			help="Zoom factor for snapshot rendering (1.0 by default)", metavar="#")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=2.0,
 			help="Sigma level at which snapshot of density will be contoured (2.0 by default)", metavar="FLOAT")
 		self.parser.add_option("-s", "--sym", "--symmetry", dest="sym", default='c1',
 			help="Symmetry name, e.g. d7, c1, c4, or icos", metavar="")
 
+		### mass
+		self.parser.add_option("-m", "--mass", dest="mass", type="float",
+			help="Mass in kDa of particle to set contouring", metavar="kDa")
+		self.parser.add_option("-a", "--apix", dest="apix", type="float", default=1.0,
+			help="Pixel size in Angstroms (only required for mass)", metavar="FLOAT")
+
+		### strings
+		self.parser.add_option("--color", dest="colorstr",
+			help="Override color choice, with rgb tuple: 0.8:0.2:0.6", metavar="COLOR")
+
 		### choices
 		self.typemodes = ( "snapshot", "animate", "both" )
 		self.parser.add_option("-t", "--type", dest="type",
-			help="Snapshot mode: "+str(self.typemodes), metavar="MODE", 
+			help="Snapshot mode: "+str(self.typemodes), metavar="TYPE", 
 			type="choice", choices=self.typemodes, default="snapshot" )
 
 	#=====================
@@ -35,6 +50,9 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apDisplay.printError("Enter a symmetry group, e.g. d7, c1, c4, or icos")
 		if self.params['file'] is None:
 			apDisplay.printError("Enter a file name, e.g. -f threed.20a.mrc")
+		if self.params['mass'] is not None and self.params['apix'] is None:
+			apDisplay.printError("Please provide apix if using mass based threshold")
+
 		if not os.path.isfile(self.params['file']):
 			apDisplay.printError("Could not find file: "+self.params['file'])
 		self.params['file'] = os.path.abspath(self.params['file'])
@@ -45,13 +63,38 @@ class MakeSnapshotScript(appionScript.AppionScript):
 
 	#=====================
 	def start(self):
-		box = apVolume.getModelDimensions(self.params['file'])
+		mrcfile = self.params['file']
+		box = apVolume.getModelDimensions(mrcfile)
+
+		### scale by mass
+		if self.params['mass'] is not None:
+			apDisplay.printMsg("Using scale by mass method")
+			mrcfile = os.path.join(self.params['rundir'], "temp.mrc")
+			shutil.copy(self.params['file'], mrcfile)
+			apChimera.setVolumeMass(mrcfile, apix=self.params['apix'], mass=self.params['mass'])
+			self.params['contour'] = 1.0
+
+		### snapshot
 		if self.params['type'] != "snapshot":
 			apDisplay.printMsg("Creating animation")
-			apChimera.renderAnimation(self.params['file'], contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['sym'])
+			apChimera.renderAnimation(mrcfile, contour=self.params['contour'],
+				 zoom=self.params['zoom'], sym=self.params['sym'],
+				 colorstr=self.params['colorstr'])
+
+		### animation
 		if self.params['type'] != "animate":
 			apDisplay.printMsg("Creating snapshots")
-			apChimera.renderSnapshots(self.params['file'], contour=self.params['contour'], zoom=self.params['zoom'], sym=self.params['sym'])
+			apChimera.renderSnapshots(mrcfile, contour=self.params['contour'],
+				 zoom=self.params['zoom'], sym=self.params['sym'],
+				 colorstr=self.params['colorstr'])
+
+		### clean up
+		if self.params['mass'] is not None:
+			images = glob.glob(mrcfile+"*")
+			for img in images:
+				newimg = re.sub(mrcfile, self.params['file'], img)
+				shutil.move(img, newimg)
+			apFile.removeFile("temp.mrc")
 
 #=====================
 #=====================
