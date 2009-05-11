@@ -24,7 +24,8 @@ except:
 	pass
 import tarfile
 
-
+#==================
+#==================
 def defineIteration():
 	iteration = {
 		'ang': None,
@@ -52,6 +53,8 @@ def defineIteration():
 	}
 	return iteration
 
+#==================
+#==================
 def getModelData(modelid):
 	modeldata = appionData.ApInitialModelData.direct_query(modelid)
 	if not modeldata:
@@ -59,6 +62,8 @@ def getModelData(modelid):
 	apDisplay.printMsg("Selected initial model: "+os.path.join(modeldata['path']['path'], modeldata['name']))
 	return modeldata
 
+#==================
+#==================
 def listFiles(params):
 	for key in ('classavgs', 'classvars', 'volumes', 'fscs', 'emanavgs', 'msgpavgs', 'coranavgs'):
 		params[key] = []
@@ -76,6 +81,8 @@ def listFiles(params):
 		if re.match("classes_coran\.\d+\.img",f):
 			params['coranavgs'].append(f)
 
+#==================
+#==================
 def convertClassAvgFiles(params):
 	files_classavg = []
 	files_classold = []
@@ -126,6 +133,8 @@ def convertClassAvgFiles(params):
 				newf = oldf.replace('classes','classes_eman')
 				os.rename(oldf,newf)
 
+#==================
+#==================
 # Parse MsgPassing params through EMAN jobfile
 def parseMsgPassingParams(params):
 	emanJobFile = os.path.join(params['rundir'], params['jobinfo']['name'])
@@ -148,6 +157,8 @@ def parseMsgPassingParams(params):
 	else:
 		apDisplay.printError("EMAN Job file: "+emanJobFile+" does not exist!")
 
+#==================
+#==================
 def findEmanJobFile(params):
 	# first find the job file, if it doesn't exist, use the .eman log file
 	if 'jobinfo' in params and params['jobinfo'] is not None:
@@ -164,6 +175,8 @@ def findEmanJobFile(params):
 		return logfile
 	apDisplay.printError("Could not find eman job or log file")
 
+#==================
+#==================
 def parseLogFile(params):
 	# parse out the refine command from the .emanlog to get the parameters for each iteration
 	logfile = findEmanJobFile(params)
@@ -237,6 +250,8 @@ def parseLogFile(params):
 	apDisplay.printColor("Found "+str(len(params['iterations']))+" iterations", "green")
 	lines.close()
 
+#==================
+#==================
 def getEulersFromProj(params,iter):
 	# get Eulers from the projection file
 	eulers=[]
@@ -254,6 +269,8 @@ def getEulersFromProj(params,iter):
 	f.close()
 	return eulers
 
+#==================
+#==================
 def getClassInfo(classes):
 	# read a classes.*.img file, get # of images
 	imgnum, imgtype = EMAN.fileCount(classes)
@@ -273,6 +290,8 @@ def getClassInfo(classes):
 			projeulers.append(eulers)
 	return projeulers
 
+#==================
+#==================
 def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 		apix=None, sym=None, box=None):
 	if sym is None:
@@ -284,6 +303,8 @@ def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
 	badres = apChimera.filterAndChimera(density, res, apix, box, 'snapshot', contour, zoom, sym)
 	return badres
 
+#==================
+#==================
 def insertRefinementRun(params):
 	runq=appionData.ApRefinementRunData()
 	#first two must be unique
@@ -345,6 +366,8 @@ def insertRefinementRun(params):
 		params['refinementRun'] = None
 	return True
 
+#==================
+#==================
 def insertResolutionData(params,iteration):
 	fsc = 'fsc.eotest.'+iteration['num']
 	fscfile = os.path.join(params['rundir'],fsc)
@@ -371,6 +394,8 @@ def insertResolutionData(params,iteration):
 
 		return resq
 
+#==================
+#==================
 def insertRMeasureData(params, iteration):
 	volumeDensity='threed.'+iteration['num']+'a.mrc'
 
@@ -396,6 +421,8 @@ def insertRMeasureData(params, iteration):
 
 	return resq
 
+#==================
+#==================
 def insertIteration(iteration, params):
 	refineparamsq=appionData.ApRefinementParamsData()
 	refineparamsq['ang']=iteration['ang']
@@ -532,10 +559,10 @@ def insertIteration(iteration, params):
 		coran = False
 
 	apEulerDraw.createEulerImages(refrunid, iternum, path=params['rundir'], coran=coran)
-
 	return
 
-
+#==================
+#==================
 def readParticleLog(path, iternum):
 	plogf = os.path.join(path,"particle.log")
 	if not os.path.isfile(plogf):
@@ -555,6 +582,8 @@ def readParticleLog(path, iternum):
 	f.close()
 	return badprtls
 
+#==================
+#==================
 def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refineq,numcls,euler_convention='zxz'):
 	# get the corresponding proj number & eulers from filename
 	replace=re.compile('\D')
@@ -632,6 +661,8 @@ def insertParticleClassificationData(params,cls,iteration,eulers,badprtls,refine
 	f.close()
 	return
 
+#==================
+#==================
 def calcRes(fscfile, boxsize, apix):
 	# calculate the resolution at 0.5
 
@@ -660,7 +691,8 @@ def calcRes(fscfile, boxsize, apix):
 	f.close()
 	return
 
-#===========
+#==================
+#==================
 def insertFSC(fscfile, refineData, commit=True):
 	if not os.path.isfile(fscfile):
 		apDisplay.printWarning("Could not open FSC file: "+fscfile)
@@ -682,8 +714,8 @@ def insertFSC(fscfile, refineData, commit=True):
 	apDisplay.printMsg("inserted "+str(numinserts)+" rows of FSC data into database")
 	f.close()
 
-
-#===========
+#==================
+#==================
 def getRMeasurePath():
 	unames = os.uname()
 	if unames[-1].find('64') >= 0:
@@ -703,7 +735,9 @@ def getRMeasurePath():
 		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
 	return rmeasexe
 
-#===========
+
+#==================
+#==================
 def runRMeasure(apix, volpath, imask=0):
 	t0 = time.time()
 
@@ -743,9 +777,13 @@ def runRMeasure(apix, volpath, imask=0):
 
 	return resolution
 
+#==================
+#==================
 def getRefineRunDataFromID(refinerunid):
 	return appionData.ApRefinementRunData.direct_query(refinerunid)
 
+#==================
+#==================
 def getNumIterationsFromRefineRunID(refinerunid):
 	refrundata = appionData.ApRefinementRunData.direct_query(refinerunid)
 	refq = appionData.ApRefinementData()
@@ -760,14 +798,20 @@ def getNumIterationsFromRefineRunID(refinerunid):
 			maxiter = iternum
 	return maxiter
 
+#==================
+#==================
 def getClusterJobDataFromID(jobid):
 	return appionData.ApClusterJobData.direct_query(jobid)
 
+#==================
+#==================
 def getRefinementsFromRun(refinerundata):
 	refineitq=appionData.ApRefinementData()
 	refineitq['refinementRun'] = refinerundata
 	return refineitq.query()
 
+#==================
+#==================
 def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 	if not os.path.isfile(fscfile):
 		apDisplay.printError("fsc file does not exist")
@@ -798,6 +842,8 @@ def getResolutionFromFSCFile(fscfile, boxsize, apix, msg=False):
 			f.close()
 			return res
 
+#==================
+#==================
 def getSessionDataFromReconId(reconid):
 	stackid = apStack.getStackIdFromRecon(reconid)
 	partdata = apStack.getOneParticleFromStackId(stackid, msg=False)
@@ -805,6 +851,10 @@ def getSessionDataFromReconId(reconid):
 	return sessiondata
 
 
+#==================
+#==================
+#==================
+#==================
 if __name__ == '__main__':
 	r = runRMeasure(1.63,"/ami/data15/appion/08may09b/recon/recon1/threed.20a.mrc",'0,0')
 	print r
