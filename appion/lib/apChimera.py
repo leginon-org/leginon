@@ -230,7 +230,7 @@ def runChimeraScript(chimscript):
 def getColorString():
 	#return secondColor()+",None,"+minuteColor()
 	#print "first"
-	first = minuteColor()
+	first = hourColor()
 	#print "third"
 	third = dayColor()
 	return first+",None,"+third
