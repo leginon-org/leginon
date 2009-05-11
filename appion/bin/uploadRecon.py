@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # Upload pik or box files to the database
 
-import sys
+#python
 import os
+import sys
 import time
+import glob
+#appion
 import appionScript
+import appionData
 import apParam
 import apDisplay
 import apStack
 import apRecon
 import apEulerJump
-import appionData
 import apCoranPlot
 
 #=====================
@@ -22,6 +25,8 @@ class UploadReconScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --runname=<name> --stackid=<int> --modelid=<int>\n\t "
 			+"--description='<quoted text>'\n\t [ --package=EMAN --jobid=<int> --oneiter=<iter> --startiter=<iter> --zoom=<float> "
 			+"--contour=<contour> --rundir=/path/ --commit ]")
+	
+		### integers
 		self.parser.add_option("-i", "--oneiter", dest="oneiter", type="int",
 			help="Only upload one iteration", metavar="INT")
 		self.parser.add_option("--startiter", dest="startiter", type="int",
@@ -32,27 +37,45 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Initial model id in the database", metavar="INT")
 		self.parser.add_option("-j", "--jobid", dest="jobid", type="int",
 			help="Jobfile id in the database", metavar="INT")
-		self.parser.add_option("-k", "--package", dest="package", default="EMAN",
-			help="Reconstruction package used (EMAN by default)", metavar="TEXT")
+
+		### floats
 		self.parser.add_option("-z", "--zoom", dest="zoom", type="float", default=1.75,
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
 		self.parser.add_option("--filter", dest="snapfilter", type="float",
 			help="Low pass filter in angstrum for snapshot rendering (0.6*FSC_0.5 by default)", metavar="FLOAT")
+
+		### true / false
 		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False,
 			action="store_true", help="Do not do any reconstruction calculations only run chimera")
 		self.parser.add_option("--euler-only", dest="euleronly", default=False,
 			action="store_true", help="Do not do any reconstruction calculations only run euler jump calculation")
 
+		### choices
+		self.packages = ( "EMAN", "EMAN/MsgP", "EMAN/SpiCoran")
+		self.parser.add_option("-k", "--package", dest="package", default="EMAN",
+			help="Reconstruction package used (EMAN by default)", metavar="TEXT", 
+			type="choice", choices=self.packages, )
+
 	#=====================
 	def checkConflicts(self):
+		if self.params['package'] not in self.packages:
+			apDisplay.printError("No valid reconstruction package method specified")
 		# msgPassing requires a jobId in order to get the jobfile & the paramters
 		if ((self.params['package'] == 'EMAN/MsgP' or self.params['package'] == 'EMAN/SpiCoran') 
 		 and self.params['jobid'] is None):
 			err = self.tryToGetJobID()
 			if err:
-				apDisplay.printError(self.params['package']+" refinement requires a jobid. Please enter a jobId," +" e.g. --jobid=734" + '\n' + err)
+				apDisplay.printError(self.params['package']
+					+" refinement requires a jobid. Please enter a jobId," 
+					+" e.g. --jobid=734" + '\n' + err)
+		if self.params['package'] != "EMAN/SpiCoran":
+			### check if we have coran files
+			corans = glob.glob("classes_coran.*.hed")
+			if corans and len(corans) > 0:
+				apDisplay.printError("You used coran in the recon, but it was not selected\n"
+					+"set package to coran, e.g. --package='EMAN/SpiCoran'")
 		if self.params['stackid'] is None:
 			apDisplay.printError("please enter a stack id, e.g. --stackid=734")
 		if self.params['modelid'] is None:
@@ -113,7 +136,6 @@ class UploadReconScript(appionScript.AppionScript):
 		emanJobFile = apRecon.findEmanJobFile(self.params)
 		self.params['stack'] = apStack.getOnlyStackData(self.params['stackid'])
 		self.params['model'] = apRecon.getModelData(self.params['modelid'])
-
 		self.params['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 
 		### parse out the refinement parameters from the log file
@@ -158,8 +180,6 @@ class UploadReconScript(appionScript.AppionScript):
 			### coran keep plot
 			if self.params['package']=='EMAN/SpiCoran':
 				apCoranPlot.makeCoranKeepPlot(reconrunid)
-				
-
 
 #=====================
 #=====================
