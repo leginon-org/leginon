@@ -8,6 +8,7 @@ import cPickle
 import sys
 import math
 import random
+import numpy
 ## PIL
 ## spider
 import spyder
@@ -179,19 +180,29 @@ def readRefFreeDocFile(docfile, picklefile):
 		apDisplay.printError("Doc file, "+docfile+" does not exist")
 	docf = open(docfile, "r")
 	partlist = []
+	angs = []
+	shifts = []
 	for line in docf:
 		data = line.strip().split()
 		if data[0][0] == ";":
 			continue
 		if len(data) < 4:
 			continue
+		angle = wrap360(float(data[2]))
 		partdict = {
 			'num': int(data[0]),
-			'rot': float(data[2]),
+			'rot': angle,
 			'xshift': float(data[3]),
 			'yshift': float(data[4]),
 		}
+		angs.append(angle)
+		shift = math.hypot(float(data[3]), float(data[4]))
+		shifts.append(shift)
 		partlist.append(partdict)
+	shifts = numpy.array(shifts, dtype=numpy.float32)
+	angs = numpy.array(angs, dtype=numpy.float32)
+	apDisplay.printMsg("Angles = %.3f +/- %.3f"%(angs.mean(), angs.std()))
+	apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 	docf.close()
 	picklef = open(picklefile, "w")
 	cPickle.dump(partlist, picklef)
@@ -281,6 +292,8 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 		apDisplay.printError("Doc file, "+docfile+" does not exist")
 	docf = open(docfile, "r")
 	partlist = []
+	angs = []
+	shifts = []
 	for line in docf:
 		data = line.strip().split()
 		if data[0][0] == ";":
@@ -288,15 +301,19 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 		if len(data) < 6:
 			continue
 		templatenum = float(data[2])
+		angle = wrap360(float(data[4]))
 		newpartdict = {
 			'num': int(data[0]),
 			'template': int(abs(templatenum)),
 			'mirror': checkMirror(templatenum),
 			'score': float(data[3]),
-			'rot': wrap360(float(data[4])),
+			'rot': angle,
 			'xshift': float(data[5]),
 			'yshift': float(data[6]),
 		}
+		angs.append(angle)
+		shift = math.hypot(float(data[5]), float(data[6]))
+		shifts.append(shift)
 		oldpartdict = oldpartlist[newpartdict['num']-1]
 		### this is wrong because the shifts are not additive without a back rotation
 		if newpartdict['num'] == oldpartdict['num']:
@@ -306,6 +323,10 @@ def updateRefBasedDocFile(oldpartlist, docfile, picklefile):
 			print newpartdict
 			apDisplay.printError("wrong particle in update")
 		partlist.append(partdict)
+	shifts = numpy.array(shifts, dtype=numpy.float32)
+	angs = numpy.array(angs, dtype=numpy.float32)
+	apDisplay.printMsg("Angles = %.3f +/- %.3f"%(angs.mean(), angs.std()))
+	apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 	docf.close()
 	picklef = open(picklefile, "w")
 	cPickle.dump(partlist, picklef)
@@ -413,6 +434,8 @@ def readRefBasedDocFile(docfile, picklefile):
 		apDisplay.printError("Doc file, "+docfile+" does not exist")
 	docf = open(docfile, "r")
 	partlist = []
+	angs = []
+	shifts = []
 	for line in docf:
 		data = line.strip().split()
 		if data[0][0] == ";":
@@ -420,17 +443,25 @@ def readRefBasedDocFile(docfile, picklefile):
 		if len(data) < 6:
 			continue
 		templatenum = float(data[2])
+		angle = wrap360(float(data[4]))
 		partdict = {
 			'num': int(data[0]),
 			'template': int(abs(templatenum)),
 			'mirror': checkMirror(templatenum),
 			'score': float(data[3]),
-			'rot': wrap360(float(data[4])),
+			'rot': angle,
 			'xshift': float(data[5]),
 			'yshift': float(data[6]),
 		}
+		angs.append(angle)
+		shift = math.hypot(float(data[5]), float(data[6]))
+		shifts.append(shift)
 		partlist.append(partdict)
 	docf.close()
+	shifts = numpy.array(shifts, dtype=numpy.float32)
+	angs = numpy.array(angs, dtype=numpy.float32)
+	apDisplay.printMsg("Angles = %.3f +/- %.3f"%(angs.mean(), angs.std()))
+	apDisplay.printMsg("Shifts = %.3f +/- %.3f"%(shifts.mean(), shifts.std()))
 	picklef = open(picklefile, "w")
 	cPickle.dump(partlist, picklef)
 	picklef.close()
