@@ -24,127 +24,33 @@ except:
 	pass
 import tarfile
 
-def createDefaults():
-	# create default values for parameters
-	params={}
-	params['runname']='recon1'
-	params['stackid']=None
-	params['modelid']=None
-	params['jobid']=None
-	params['jobinfo']=None
-	params['chimeraonly']=False
-	params['path']=os.path.abspath('.')
-	params['rundir']=os.path.abspath('.')
-	params['volumes']=[]
-	params['classavgs']=[]
-	params['classvars']=[]
-	params['emanavgs']=[]
-	params['coranavgs']=[]
-	params['msgpavgs']=[]
-	params['iterations']=[]
-	params['fscs']=[]
-	params['package']='EMAN'
-	params['tmpdir']=None
-	params['commit']=True
-	params['contour']=1.5
-	params['oneiteration']=None
-	params['zoom']=1.75
-	params['description']=None
-	return params
-
-def createModelDefaults():
-	params={}
-	params['apix']=None
-	params['boxsize']=None
-	params['description']=None
-	params['path']=None
-	params['rundir']=None
-	params['name']=None
 
 def defineIteration():
-	iteration={}
-	iteration['num']=None
-	iteration['ang']=None
-	iteration['mask']=None
-	iteration['imask']=None
-	iteration['lpfilter']=None
-	iteration['hpfilter']=None
-	iteration['pad']=None
-	iteration['hard']=None
-	iteration['classkeep']=None
-	iteration['classiter']=None
-	iteration['filt3d']=None
-	iteration['shrink']=None
-	iteration['euler2']=None
-	iteration['xfiles']=None
-	iteration['median']=None
-	iteration['phasecls']=None
-	iteration['fscls']=None
-	iteration['refine']=None
-	iteration['goodbad']=None
-	iteration['perturb']=None
-	iteration['msgpasskeep']=None
-	iteration['msgpassminp']=None
+	iteration = {
+		'ang': None,
+		'classiter': None,
+		'classkeep': None,
+		'euler2': None,
+		'filt3d': None,
+		'fscls': None,
+		'goodbad': None,
+		'hard': None,
+		'hpfilter': None,
+		'imask': None,
+		'lpfilter': None,
+		'mask': None,
+		'median': None,
+		'msgpasskeep': None,
+		'msgpassminp': None,
+		'num': None,
+		'pad': None,
+		'perturb': None,
+		'phasecls': None,
+		'refine': None,
+		'shrink': None,
+		'xfiles': None,
+	}
 	return iteration
-
-def printHelp():
-	print "\nUsage:\nuploadRecon.py stackid=<n> modelid=<n> [jobid=<cluster job id>] [package=<packagename>] [dir=/path/to/directory] [tmpdir=/path/to/dir] [contour=<n>] [zoom=<n>]\n"
-	print "Example: uploadRecon.py stackid=23 modelid=20 package=EMAN\n"
-	print "runname=<name>         : name assigned to this reconstruction"
-	print "stackid=<n>          : stack Id in the database"
-	print "modelid=<n>          : starting model id in the database"
-	print "package=<package>    : reconstruction package used (EMAN by default)"
-	print "dir=<path>           : directory containing the results of the reconstruction"
-	print "                       (current dir is default)"
-	print "tmpdir=<path>        : directory to which tmp data is extracted"
-	print "                       (./temp is default)"
-	print "jobid=<jobid>        : DEF_id of jobfile that was created & run"
-	print "contour=<n>          : sigma level at which snapshot of density will be contoured (1.5 by default)"
-	print "zoom=<n>             : zoom factor for snapshot rendering (1.75 by default)"
-	print "nocommit             : don't commit to database, for testing only"
-	print "oneiteration=<n>     : only upload one iteration"
-	print "description=\"text\"     : description of the reconstruction - must be in quotes"
-	print "\n"
-
-	sys.exit(1)
-
-def parseInput(args,params):
-	# check that there are enough input parameters
-	if (len(args)<2 or args[1]=='help') :
-		printHelp()
-
-	# save the input parameters into the "params" dictionary
-	for arg in args[1:]:
-		elements=arg.split('=')
-		if (elements[0]=='runname'):
-			params['runname']=elements[1]
-		elif (elements[0]=='stackid'):
-			params['stackid']=int(elements[1])
-		elif (arg=='nocommit'):
-			params['commit']=False
-		elif (elements[0]=='modelid'):
-			params['modelid']=int(elements[1])
-		elif (elements[0]=='package'):
-			params['package']=elements[1]
-		elif (elements[0]=='dir'):
-			params['path']=os.path.abspath(elements[1])
-			params['rundir']=os.path.abspath(elements[1])
-		elif (elements[0]=='jobid'):
-			params['jobid']=int(elements[1])
-		elif (elements[0]=='contour'):
-			params['contour']=float(elements[1])
-		elif (elements[0]=='zoom'):
-			params['zoom']=float(elements[1])
-		elif (elements[0]=='oneiteration'):
-			params['oneiteration']=int(elements[1])
-		elif (elements[0]=='description'):
-			params['description']=elements[1]
-		elif (arg=='chimeraonly'):
-			params['chimeraonly']=True
-			params['commit']=False
-		else:
-			print "undefined parameter '"+arg+"'\n"
-			sys.exit(1)
 
 def getModelData(modelid):
 	modeldata = appionData.ApInitialModelData.direct_query(modelid)
