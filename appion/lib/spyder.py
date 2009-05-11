@@ -184,8 +184,8 @@ class SpiderSession:
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
 			sys.stderr.write("Load average is high "+str(round(loadavg,2))+"\n")
-			loadsquared = loadavg*loadavg
-			time.sleep(loadsquared)
+			loadcubed = loadavg*loadavg*loadavg
+			time.sleep(loadcubed)
 		sys.stderr.write("\033[35m"+"executing command: "+str(args)+"\033[0m\n")
 		for item in args:
 			self.spiderin.write(str(item) + '\n')
