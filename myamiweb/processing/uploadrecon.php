@@ -49,6 +49,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
     $sessionpath = ereg_replace($jobrunid,'',$jobinfo['appath']);
     $jobfile = $jobinfo['appath'].'/'.$jobinfo['name'];
     $f = file($jobfile);
+    $package='EMAN';
     foreach ($f as $line) {
       if (preg_match('/^\#\sstackId:\s/',$line)) $stackid=ereg_replace('# stackId: ','',trim($line));
       elseif (preg_match('/^\#\smodelId:\s/',$line)) $modelid=ereg_replace('# modelId: ','',trim($line));
@@ -57,15 +58,11 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       if ($stackid && $modelid && $package) break;
     }
   }
-	if (!$package) $package='EMAN';
-  // if user wants to use templates from another project
 
   if($_POST['projectId'])
-    $projectId = $_POST[projectId];
+    $projectId = $_POST['projectId'];
   else
     $projectId=getProjectFromExpId($expId);
-
-  $projects=getProjectList();
 
   processing_header($title,$heading,$javafunctions);
   // write out errors, if any came up:
@@ -202,7 +199,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		foreach ($packages as $p) {
 			echo "<option value='$p[setting]'";
 			// select previously set stack on resubmit
-			if ($p['setting']==$_POST['package']) echo " SELECTED";
+			if ($p['setting']==$package) echo " SELECTED";
 			echo ">  $p[description]";
 			echo "</option>\n";
 		}
