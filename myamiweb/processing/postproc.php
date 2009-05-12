@@ -55,6 +55,8 @@ if ($_POST['process']) {
 	$command.= "--runname $runname ";
 	$command.= "-f $densitypath ";
 	$command.= "--amp=/ami/sw/packages/pyappion/lib/$ampfile ";
+	if ($maxfilt < $apix*2)
+		$maxfilt = ceil($apix*2.1);
 	$command.= "--maxfilt=$maxfilt ";
 	$command.= "--apix=$apix ";
 	$command.= "--res=$res ";
