@@ -382,7 +382,7 @@ def alignAPSH(volfile, origstackfile, eulerdocfile, classnum, boxsize, numpart, 
 	
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider("VO EA,x53",
-		"5", #angular increment
+		"10", #angular increment
 		"0,90.0", #Range of Theta
 		"0,359.9", #Range of Phi
 		apshAngularFile, #Angular file name
