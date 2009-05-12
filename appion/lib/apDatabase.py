@@ -203,43 +203,6 @@ def getImgSize(imgdict):
 		apDisplay.printError("Image "+fname+" not found in database\n")
 	return(size)
 
-def getApixFromStackData(stackdata):
-	# pixel size is obtained from the first image in the stack
-	stkptclq = appionData.ApStackParticlesData()
-	stkptclq['stack'] = stackdata
-	stkptclresults = stkptclq.query(results=1)
-	if not stkptclresults:
-		apDisplay.printError("Stack not found")
-	stackbin = stkptclresults[0]['stackRun']['stackParams']['bin']
-	if stackbin is None:
-		stackbin = 1
-
-	### what is this next line???
-	imageref = stkptclresults[0]['particle'].special_getitem('image', dereference = False)
-	imagedata = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages = False)
-
-	if 'defocpair' in stkptclresults[0]['stackRun']['stackParams']:
-		defocpair = stkptclresults[0]['stackRun']['stackParams']['defocpair']
-	else:
-		defocpair = None
-	if defocpair != 0:
-		defocdata = apDefocalPairs.getTransformedDefocPair(imagedata, 1)
-		if defocdata:
-			imagedata = defocdata
-		else:
-			apDisplay.printWarning("apDefocalPairs.getTransformedDefocPair() failed")
-
-	#imagedata=leginondata.AcquisitionImageData.direct_query(imageid)
-		
-	if not imagedata:
-		apDisplay.printError("imagedata not found for stackid="+str(stackdata.dbid)
-			+" and image="+str(imageref.dbid))
-
-	apix = getPixelSize(imagedata)
-	stackapix = apix*stackbin
-
-	return stackapix	
-
 def getImgSizeFromName(imgname):
 	# get image size (in pixels) of the given mrc file
 	imageq=leginondata.AcquisitionImageData(filename=imgname)
@@ -516,7 +479,6 @@ def queryDirectory(path):
 if __name__ == '__main__':
 	stackid = 442
 	stackdata = appionData.ApStackData.direct_query(stackid)
-	stackapix = getApixFromStackData(stackdata)
-	print stackapix
+	print stackdata
 
 
