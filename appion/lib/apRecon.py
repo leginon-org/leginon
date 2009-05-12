@@ -332,7 +332,7 @@ def insertRefinementRun(params):
 			apDisplay.printWarning("Refinement Run parameters have changed")
 
 	# get stack apix
-	params['apix'] = apDatabase.getApixFromStackData(params['stack'])
+	params['apix'] = apStack.getStackPixelSizeFromStackId(params['stack'].dbid)
 
 	apDisplay.printMsg("inserting Refinement Run into database")
 	if params['commit'] is True:
