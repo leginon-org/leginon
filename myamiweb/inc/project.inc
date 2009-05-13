@@ -214,13 +214,19 @@ class project {
 		global $dbemauth;
 		$rsessions=array();
 		$r=array();
+		$allowprojects=array();
 		$authentication = $dbemauth->is_logged();
+		$username=$authentication[0];
 		if ($authentication[2]==2) {
 			return $rsessions;
 		}
 		$rprojects=$this->getRestrictedProject();
 		foreach ($rprojects as $rp) {
 			if ($rp['type']=='USER' && $rp['username']==$username) {
+				$allowprojects[]=$rp['projectId'];
+				continue;
+			}
+			if (in_array($rp['projectId'], $allowprojects)) {
 				continue;
 			}
 			$q='select pe.name  '
