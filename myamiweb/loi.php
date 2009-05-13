@@ -8,6 +8,7 @@
 
 require "inc/leginon.inc";
 require "inc/viewer.inc";
+require "inc/project.inc";
 
 $refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
 
@@ -23,6 +24,14 @@ $imageId= $leginondata->getLastFilenameId($sessionId);
 $datatypes = $leginondata->getDatatypes($sessionId);
 
 $sessions = $leginondata->getSessions('description');
+
+$projectdata = new project();
+$projectdb = $projectdata->checkDBConnection();
+
+if($projectdb) {
+	$projects = $projectdata->getProjects('all');
+	$sessions=$projectdata->getSessions($sessions);
+}
 
 $viewer = new viewer();
 $viewer->setSessionId($sessionId);

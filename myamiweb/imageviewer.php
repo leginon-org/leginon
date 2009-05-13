@@ -16,12 +16,13 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
-if($projectdb)
-	$projects = $projectdata->getProjects('all');
-
-
 if(!$sessions)
 	$sessions = $leginondata->getSessions('description', $projectId);
+
+if($projectdb) {
+	$projects = $projectdata->getProjects('all');
+	$sessions=$projectdata->getSessions($sessions);
+}
 
 if ($ptcl) {
 	$particle = new particledata();
@@ -49,10 +50,7 @@ if($projectdb) {
 		}
 	}
 	$currentproject = $projectdata->getProjectFromSession($sessionname);
-	if ($currentproject=='restricted' || (is_numeric($projectId) && $projectdata->isRestricted($projectId))) {
-		header("Location: ".BASE_URL);
-		exit;
-	}
+
 	$viewer->setProjectId($projectId);
 	$viewer->addProjectSelector($projects, $currentproject);
 }

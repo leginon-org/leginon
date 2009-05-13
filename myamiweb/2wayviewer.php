@@ -16,25 +16,17 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
 
-if($projectdb)
-	$projects = $projectdata->getProjects('all');
-
 if(!$sessions)
 	$sessions = $leginondata->getSessions('description', $projectId);
+
+if($projectdb) {
+	$projects = $projectdata->getProjects('all');
+	$sessions=$projectdata->getSessions($sessions);
+}
 
 if ($ptcl) {
 	$particle = new particledata();
 	$particleruns=$particle->getParticleRunIds($sessionId);
-	$defaultrunId=$particleruns[0]['DEF_id'];
-	foreach ($particleruns as $p) {
-		$runId=$p['DEF_id'];
-		list($selectionparams)=$particle->getSelectionParams($runId);
-		$diam = $selectionparams['diam'];
-		$correlationstats=$particle->getStats($runId);
-		$correlationstats['diam']=$diam;
-		$particleruns[$k]['diam']=$diam;
-		$data[$runId]=$correlationstats;
-	}
 }
 
 // --- update SessionId while a project is selected

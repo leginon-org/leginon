@@ -154,7 +154,7 @@ class project {
 		return $r;
 	}
 
-	function getRestritedProject($projectId="") {
+	function getRestrictedProject($projectId="") {
 		$q="select r.projectId, r.type, u.username from restriction r left join pis u on (u.projectId=r.projectId)";
 		if (is_numeric($projectId)) {
 			$q.=" where r.projectId=$projectId ";
@@ -169,7 +169,7 @@ class project {
 			return $projects;
 		}
 		### check if user belongs to restricted projects ###
-		$rprojects=$this->getRestritedProject();
+		$rprojects=$this->getRestrictedProject();
 		$username=$authentication[0];
 		$rprojectIds=array();
 		foreach ($rprojects as $rp) {
@@ -196,7 +196,7 @@ class project {
 			return false;
 		}
 		$username=$authentication[0];
-		$rprojects=$this->getRestritedProject($projectId);
+		$rprojects=$this->getRestrictedProject($projectId);
 		
 		if (!$rprojects)
 			return false;
@@ -208,6 +208,45 @@ class project {
 			}
 		}
 		return $isrestricted;
+	}
+
+	function getRestrictedSessions() {
+		global $dbemauth;
+		$rsessions=array();
+		$r=array();
+		$authentication = $dbemauth->is_logged();
+		if ($authentication[2]==2) {
+			return $rsessions;
+		}
+		$rprojects=$this->getRestrictedProject();
+		foreach ($rprojects as $rp) {
+			if ($rp['type']=='USER' && $rp['username']==$username) {
+				continue;
+			}
+			$q='select pe.name  '
+				.'from projectexperiments pe '
+				.'where pe.projectId="'.$rp['projectId'].'"';
+			$r = $this->mysql->getSQLResult($q);
+			$r = array_merge($r, $r);
+		}
+		foreach ($r as $rs) {
+			if (!in_array($rs['name'], $rsessions)) {
+				$rsessions[]=$rs['name'];
+			}
+		}
+		return $rsessions;
+	}
+
+	function getSessions($sessions) {
+			$rsessions=$this->getRestrictedSessions();
+			$nsessions=array();
+			foreach ($sessions as $s) {
+				$id=$s['name_org'];
+				if (!in_array($id, $rsessions)) {
+					$nsessions[]=$s;
+				}
+			}
+		return $nsessions;
 	}
 
 	function hasProjectId($projectId, $projects) {
