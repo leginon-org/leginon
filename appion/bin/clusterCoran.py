@@ -13,6 +13,7 @@ import apStack
 import apEMAN
 import apParam
 from apSpider import alignment
+from apSpider import operations
 import appionData
 
 
@@ -147,7 +148,7 @@ class ClusterCoranScript(appionScript.AppionScript):
 
 		### parse factor list
 		factorlist = self.params['factorstr'].split(",")
-		factorstr, factorkey = alignment.factorListToString(factorlist)
+		factorstr, factorkey = operations.intListToString(factorlist)
 		factorstr = re.sub(",", ", ", factorstr)
 		apDisplay.printMsg("using factorlist "+factorstr)
 		if len(factorlist) > self.analysisdata['coranrun']['num_factors']:
