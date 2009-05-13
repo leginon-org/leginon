@@ -23,6 +23,7 @@ $link->addlink('admin.php','Administration','', 'admin');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
+$link->addlink('template.php', 'Hole Template viewer','', '');
 
 
 $ip = $_SERVER['REMOTE_ADDR'];

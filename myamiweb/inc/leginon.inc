@@ -214,6 +214,7 @@ class leginondata {
 			$db  = &$project->mysql;
 			$q = "select p.name from ".PROJECT_DB.".projectexperiments p where p.projectId='$projectId'";
 			$psessions = $db->getSQLResult($q);
+			$ps=array();
 			foreach ($psessions as $psession) {
 				$ps[$psession['name']] = $psession['name'];
 			}
@@ -2744,6 +2745,11 @@ class leginondata {
 	function getQueueTypes($sessionId) {
 		$q="SELECT "
 			."`label` FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTemplates() {
+		$q='select `template-filename` name  from HoleFinderPrefsData where `template-filename` <> "" group by `template-filename` order by DEF_timestamp desc;';
 		return $this->mysql->getSQLResult($q);
 	}
 }

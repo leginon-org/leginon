@@ -7,6 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require_once "inc/dbemauth.php";
+
 $me=($_SERVER['REMOTE_ADDR']=="137.131.204.65") ? true : false;
 
 define('DEFAULT_PROJECT', 'all'); 
@@ -88,15 +90,21 @@ class project {
 		  .'where pe.name="'.$session.'"';
 
 		list($info) = $this->mysql->getSQLResult($q);
+
+		$projectId=$info['projectId'];
+
+		if ($this->isRestricted($projectId)) {
+			return "restricted";
+		}
 		return $info;
 	}
 
 	function getProjectfromSessionId($sessionid) {
-	        $dbemdata = &new leginondata;
-	        $db  = &$dbemdata->mysql;
-	        $q='select `name` as sessionname '
-		  .'from `SessionData` '
-                  .'where `DEF_id`='.$sessionid;
+		$dbemdata = &new leginondata;
+		$db  = &$dbemdata->mysql;
+		$q='select `name` as sessionname '
+			.'from `SessionData` '
+			.'where `DEF_id`='.$sessionid;
 		list($r)=$db->getSQLResult($q);
 		$sname=$r[sessionname];
  		$q='select p.projectId, p.name  '
@@ -105,21 +113,29 @@ class project {
  			.'on (pe.projectId=p.projectId) '
  		  .'where pe.name="'.$sname.'"';
 		list($info) = $this->mysql->getSQLResult($q);
+
+		$projectId=$info['projectId'];
+		
+		if ($this->isRestricted($projectId)) {
+			return "restricted";
+		}
 		return $info;
 	}
 
 	function getProjects($type=""){
-                $projects = array();
+		global $dbemauth;
+		$login_check = $dbemauth->is_logged();
+		$projects = array();
 		if ($type=="all")  
-			$projects[] = array(	0 => DEFAULT_PROJECT, 'id' => DEFAULT_PROJECT,
-						1 => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
-                $q='select projectId, name  from projects order by name';
-                $RprojectInfo = $this->mysql->SQLQuery($q);
-                while ($row = mysql_fetch_array($RprojectInfo))
-                        $projects[]=array(0 => $row[projectId], 'id' => $row[projectId],
-                                          1 => $row[name], 'name' => $row[name] );
-                return $projects;
-        }
+			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
+		$q='select projectId as id, name  from projects order by name';
+		$rprojects = $this->mysql->getSQLResult($q);
+		$projects = array_merge($projects, $rprojects);
+
+		$projects=$this->restrict($projects, $login_check);
+
+		return $projects;
+	}
 
 	function getSample($sessionId="") {
 		# get sample name from project database
@@ -131,7 +147,78 @@ class project {
 		$q='select projectId, name  from projects '
 			.'where projectId='.$projectId;
 		list($r)=$this->mysql->getSQLResult($q);
+
+		if ($this->isRestricted($projectId)) {
+			return array();
+		}
 		return $r;
+	}
+
+	function getRestritedProject($projectId="") {
+		$q="select r.projectId, r.type, u.username from restriction r left join pis u on (u.projectId=r.projectId)";
+		if (is_numeric($projectId)) {
+			$q.=" where r.projectId=$projectId ";
+		}
+		$r=$this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function restrict($projects, $authentication) {
+		### check if is admin ###
+		if ($authentication[2]==2) {
+			return $projects;
+		}
+		### check if user belongs to restricted projects ###
+		$rprojects=$this->getRestritedProject();
+		$username=$authentication[0];
+		$rprojectIds=array();
+		foreach ($rprojects as $rp) {
+			if ($rp['type']=='USER' && $rp['username']==$username) {
+				continue;
+			}
+			$rprojectIds[]=$rp['projectId'];
+		}
+		
+		$newprojects=array();
+		foreach ($projects as $p) {
+			if (in_array($p['id'], $rprojectIds)) {
+				continue;
+			}
+			$newprojects[]=$p;
+		}
+		return $newprojects;
+	}
+
+	function isRestricted($projectId) {
+		global $dbemauth;
+		$authentication = $dbemauth->is_logged();
+		if ($authentication[2]==2) {
+			return false;
+		}
+		$username=$authentication[0];
+		$rprojects=$this->getRestritedProject($projectId);
+		
+		if (!$rprojects)
+			return false;
+		$isrestricted=true;
+		foreach ($rprojects as $rp) {
+			if ($rp['type']=='USER' && $rp['username']==$username) {
+				$isrestricted=false;
+				break;
+			}
+		}
+		return $isrestricted;
+	}
+
+	function hasProjectId($projectId, $projects) {
+		$exists=false;
+		foreach ((array)$projects as $p) {
+			if ($p['projectId']==$projectId) {
+				$exists=true;
+				break;
+			}
+		}
+		return $exists;
 	}
 
 }

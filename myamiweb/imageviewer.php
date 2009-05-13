@@ -9,8 +9,6 @@ $projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
 $imageId = ($_POST['imageId']) ? $_POST['imageId'] : $_GET['imageId'];
 $preset = $_POST[$_POST['controlpre']];
 
-$me=($_SERVER['REMOTE_ADDR']=="137.131.204.65") ? true : false;
-
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
@@ -20,6 +18,7 @@ $projectdb = $projectdata->checkDBConnection();
 
 if($projectdb)
 	$projects = $projectdata->getProjects('all');
+
 
 if(!$sessions)
 	$sessions = $leginondata->getSessions('description', $projectId);
@@ -50,6 +49,10 @@ if($projectdb) {
 		}
 	}
 	$currentproject = $projectdata->getProjectFromSession($sessionname);
+	if ($currentproject=='restricted' || (is_numeric($projectId) && $projectdata->isRestricted($projectId))) {
+		header("Location: ".BASE_URL);
+		exit;
+	}
 	$viewer->setProjectId($projectId);
 	$viewer->addProjectSelector($projects, $currentproject);
 }

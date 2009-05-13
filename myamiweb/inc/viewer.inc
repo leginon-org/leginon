@@ -14,6 +14,7 @@ require_once "inc/button.inc";
 require_once "inc/dbemauth.php";
 require_once "inc/pref.inc";
 require_once "inc/session.inc";
+require_once "inc/ace.inc";
 
 setsession();
 
@@ -569,6 +570,9 @@ class view {
 		$this->displaydownloadicon = true;
 		$this->displaydeqicon = false;
 		$this->displaycloseicon = true;
+		$this->displayhidebt = true;
+		$this->displayexemplarbt = true;
+		$this->displaynextbt = true;
 		$this->displayadjustlink = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
@@ -595,6 +599,7 @@ class view {
 		$this->loadjpg= "0";
 		$this->ptclsel = "0";
 		$this->jsacepar= "1";
+		$this->jsaceopt= "2";
 		$this->jstagpar1= "1";
 		$this->jstagpar2= "0";
 		$this->jsprtlpick= "1";
@@ -721,11 +726,27 @@ class view {
 	}
 
 	function displayPresets($state) {
-		$this->displaypreset= $state;
+		$this->displaypreset = $state;
+	}
+
+	function displayHideBt($state) {
+		$this->displayhidebt = $state;
+	}
+
+	function displayNextBt($state) {
+		$this->displaynextbt = $state;
+	}
+
+	function displayExemplarBt($state) {
+		$this->displayexemplarbt = $state;
+	}
+	
+	function displayExportBt($state) {
+		$this->displayexportbt = $state;
 	}
 
 	function displayComment($state) {
-		$this->displaycomment= $state;
+		$this->displaycomment = $state;
 	}
 
 	function displayCloseIcon($state) {
@@ -833,6 +854,7 @@ class view {
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
 			.'var jsptclsel'.$this->name.'="'.$this->ptclsel.'";'.$this->crlf
 			.'var jsaceparam'.$this->name.'="'.$this->jsacepar.'";'.$this->crlf
+			.'var jsaceopt'.$this->name.'="'.$this->jsaceopt.'";'.$this->crlf
 			.'var jstagparam1'.$this->name.'="'.$this->jstagpar1.'";'.$this->crlf
 			.'var jstagparam2'.$this->name.'="'.$this->jstagpar2.'";'.$this->crlf
 			.'var jsptclpick'.$this->name.'="'.$this->jsptclpick.'";'.$this->crlf
@@ -1056,11 +1078,7 @@ class view {
 			$acemenu->closeval=$closedownimg;
 			$acemenu->height="";
 			$acemenu->width="";
-			$aceform='ACE params:<br /><select id="'.$name.'aceparam">';
-			$aceform.="<option value='1'>graph1</option>";
-			$aceform.="<option value='2'>graph2</option>";
-			$aceform.="</select>";
-			$aceform.='<input type="button" value="update" onclick=setAceParam(\''.$name.'\') />';
+			$aceform=getAceViewerForm($name);
 			$acemenu->setContent($aceform);
 			$htmlframe.=$acemenu->display();
 		$htmlframe .= '
@@ -1163,7 +1181,9 @@ class view {
 		$htmlframe .= '
 						</td>';
 		$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img alt="export" class="setting" src="img/export.png" ></a>';
+		if ($this->displayexportbt) {
 		$htmlframe .= "<td>$export_icon</td>";
+		}
 		$htmlframe .= '
 						<td valign="center">
 				';
@@ -1187,12 +1207,18 @@ class view {
 			</a></div></td>';
 		if ($this->ismaster) {
 		$htmlframe .= '<td><ul>';
+		if ($this->displayhidebt) {
 		$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
         .' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button></li>';
+		}
+		if ($this->displaynextbt) {
 		$htmlframe .= '<li class="list1"> <button type="button" style="border: 1px solid #bdcebb;" '
         .' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
+		}
+		if ($this->displayexemplarbt) {
 		$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
         .' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
+		}
 		}
 
 		$htmlframe .= '

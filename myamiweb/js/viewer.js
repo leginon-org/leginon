@@ -395,13 +395,11 @@ function newfile(view){
 	if (eval(view+"ace_bt_st")) {
 		jsimagescriptcur="getaceimg.php"
 		jspresetscriptcur="getacepreset.php"
-	} else { 
-		jsimagescriptcur="getimg.php"
-		jspresetscriptcur="getpreset.php"
 	}
 	jscommentscriptcur = "getcomment.php"
 	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
 	ag = (cacepar = eval("jsaceparam"+view)) ? "&g="+cacepar : ""
+	ao = (caceopt = eval("jsaceopt"+view)) ? "&opt="+caceopt : ""
 	sb = (eval(view+"scale_bt_st")) ? "&sb=1" : ""
 	tg = (eval(view+"target_bt_st")) ? "&tg=1" : ""
 	t1=(eval("jstagparam1"+view)==1) ? 1 : 0
@@ -422,7 +420,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+pselp+nptcl+ag
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+pselp+nptcl+ag+ao
 
 	if (options == lastoptions[vid])
 		return
@@ -468,6 +466,28 @@ function setAceParam(view) {
 	if (param = document.getElementById(view+"aceparam")) {
 		vf = param.options[param.selectedIndex].value
 		eval("jsaceparam"+view+"="+vf)
+		aceopt=0
+		if (aceo = document.getElementById(view+"aceparam2")) {
+			if (aceo.checked) {
+				aceopt+=1
+			}
+		}
+		if (aceo = document.getElementById(view+"aceparam3")) {
+			if (aceo.checked) {
+				aceopt+=2
+			}
+		}
+		if (aceo = document.getElementById(view+"aceparam4")) {
+			if (aceo.checked) {
+				aceopt+=4
+			}
+		}
+		if (aceo = document.getElementById(view+"aceparam5")) {
+			if (aceo.checked) {
+				aceopt+=8
+			}
+		}
+		eval("jsaceopt"+view+"="+aceopt)
 		newfile(view)
 	}
 }

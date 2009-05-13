@@ -32,6 +32,12 @@ if (!$imgwidth = $imginfo['dimx'])
 if (!$imgheight= $imginfo['dimy'])
 	$imgheight=1024;
 
+if (!$imginfo && file_exists($id)) {
+	$info=mrcinfo($id);
+	$imgwidth=$info['nx'];
+	$imgheight=$info['ny'];
+}
+
 $imgbinning = $_GET['binning'];
 if ($_GET['binning']=='auto')
 	$imgbinning = ($imgwidth > 1024) ? (($imgwidth > 2048) ? 4 : 2 ) : 1;
@@ -376,7 +382,7 @@ function getDistance() {
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<div id="imgmap" style="position:relative; height:<?=$imgmapsize?>px; width:<?=$imgmapsize?>px; background:url('<?=$imgmapsrc?>')"
+	<div id="imgmap" style="position:relative; height:<?=$imgmapsize?>px; width:<?=$imgmapsize?>px; background:url('<?=$imgmapsrc?>') no-repeat"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
@@ -394,7 +400,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgsize;?>px; height:<?=$imgsize;?>; background:url('<?php echo $imgsrc; ?>')"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgsize;?>px; height:<?=$imgsize;?>; background:url('<?php echo $imgsrc; ?>') no-repeat"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

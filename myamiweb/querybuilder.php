@@ -3,8 +3,9 @@ require "config.php";
 $proc=(@require "config_processing.php") ? true : false;
 require "inc/mysql.inc";
 $databases[]=$DB;
-if ($proc)
-	$databases[]=$PROCESSING_DB;
+#if ($proc)
+#	$databases[]=$PROCESSING_DB;
+$databases[]="ap172";
 
 $s_db=($_POST['s_db']) ? $_POST['s_db'] : $DB;
 $dbchanged=($s_db==$_POST['db_memo']) ? false : true;

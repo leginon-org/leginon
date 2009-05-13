@@ -19,6 +19,7 @@
 <td>
 <?php
 require "inc/leginon.inc";
+require "inc/viewer.inc";
 require "inc/project.inc";
 
 $p[]='gridId';

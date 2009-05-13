@@ -43,6 +43,10 @@ if($projectdb) {
 		}
 	}
 	$currentproject = $projectdata->getProjectFromSession($sessionname);
+	if ($currentproject=='restricted' || (is_numeric($projectId) && $projectdata->isRestricted($projectId))) {
+		header("Location: ".BASE_URL);
+		exit;
+	}
 	$viewer->setProjectId($projectId);
 	$viewer->addProjectSelector($projects, $currentproject);
 }
