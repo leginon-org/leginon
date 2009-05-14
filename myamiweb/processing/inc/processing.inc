@@ -936,7 +936,7 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 		$jobtext .= "#PBS -l nodes=$nodes:ppn=$ppn\n";
 		$jobtext .= "#PBS -l walltime=120:00:00\n";
 		$jobtext .= "#PBS -l cput=960:00:00\n";
-		#$jobtext .= "#PBS -k oe\n";
+		$jobtext .= "#PBS -j oe\n";
 		$jobtext .= "#PBS -r n\n\n";
 		$dbprojectid = getProjectFromExpId($expId);
 		$projectid = $_SESSION['projectId'] ? $_SESSION['projectId'] : "";
