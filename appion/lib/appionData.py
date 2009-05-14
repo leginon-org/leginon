@@ -800,6 +800,7 @@ class ApRefinementRunData(Data):
 			('path', ApPathData),
 			('package', str),
 			('description', str),
+			('hidden', bool), 
 		)
 	typemap = classmethod(typemap)
 leginondata.ApRefinementRunData=ApRefinementRunData
