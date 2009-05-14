@@ -410,6 +410,16 @@ class ChimSnapShots(object):
 		self.save_image(self.volumepath+'.6.png')
 
 	# -----------------------------------------------------------------------------
+	def snapshot_ribosome(self):
+		self.hideDust(50)
+		for s in self.surfaces:
+			self.color_surface_height(s)
+		self.save_image(self.volumepath+'.1.png')
+		self.writeMessageToLog("turn: get side view")
+		self.runChimCommand('turn y -90')
+		self.save_image(self.volumepath+'.2.png')
+
+	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
 		self.hideDust(50)
 		for s in self.surfaces:
@@ -549,6 +559,7 @@ class ChimSnapShots(object):
 		silhouette = os.environ.get('CHIMSILHOUETTE')
 		if silhouette is not None and bool(silhouette) is True:
 			chimera.viewer.showSilhouette = True
+			chimera.viewer.silhouetteWidth = 3.0
 		elif silhouette is None or bool(silhouette) is False:
 			chimera.viewer.showSilhouette = False
 		### Background
