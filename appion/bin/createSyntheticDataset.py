@@ -11,6 +11,7 @@ import time
 
 ### appion imports
 import apVolume
+import EMAN
 import apEMAN
 import apDisplay
 import apDatabase
@@ -23,7 +24,6 @@ import appionScript
 import appionData
 import apStackMeanPlot
 from pyami import mrc, imagefun
-from EMAN import *
 from scipy import fftpack, ndimage
 
 class createSyntheticDatasetScript(appionScript.AppionScript):
@@ -295,7 +295,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	#=====================
 	def readMRCStats(self, filename):
 		### read mean and stdev parameters from original image
-		data = EMData()
+		data = EMAN.EMData()
 		data.readImage(filename) 
 		mean = data.Mean()
 		stdev = data.Sigma()
