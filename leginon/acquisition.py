@@ -600,7 +600,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		status = self.moveAndPreset(presetdata, emtarget)
 		if status == 'error':
 			self.logger.warning('Move failed. skipping acquisition at this target')
-			return status,None
+			return status
 
 		pausetime = self.settings['pause time']
 		print tnum, 'PAUSING FOR', pausetime
