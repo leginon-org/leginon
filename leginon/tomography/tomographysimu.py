@@ -439,9 +439,10 @@ class TomographySimu(acquisition.Acquisition):
 			allmags = allmags[preset_mag_index:]	
 		
 		goodprediction = None
+		imagedata = self.first_tilt_imagedata[tiltgroup-1]
+		hightension = imagedata['scope']['high tension']
 		if self.settings['model mag'] == 'saved value for this series':
 			#overwrite with saved values for the simutiltseries		
-			imagedata = self.first_tilt_imagedata[tiltgroup-1]
 			q = leginondata.TomographyPredictionData(image=imagedata)
 			results = q.query(results=1)
 			if len(results) > 0:
@@ -530,7 +531,7 @@ class TomographySimu(acquisition.Acquisition):
 
 			# get high tension from scope	
 			try:
-				fakescope['high tension'] = tem['high tension']
+				fakescope['high tension'] = hightension
 			except:
 				fakescope['high tension'] = 120000
 
