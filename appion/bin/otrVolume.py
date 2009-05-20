@@ -504,6 +504,11 @@ class otrVolumeScript(appionScript.AppionScript):
 				if memdiff > 3:
 					apDisplay.printColor("Memory increase: %d MB/part"%(memdiff), "red")
 			tiltrot, theta, notrot, tiltangle = apTiltPair.getParticleTiltRotationAnglesOTR(stackpartdata)
+
+			### Hack for OTR to work ( bad tilt axis angle from tilt picker )
+			tiltrot = -7.0
+			notrot = -7.0
+			
 			inplane, mirror = self.getParticleInPlaneRotation(stackpartdata)
 			totrot = -1.0*(notrot + inplane)
 			if mirror is True:
