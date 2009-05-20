@@ -103,6 +103,13 @@ def spectralSNR(partarray, apix=1.0):
 	t0 = time.time()
 	### initialization
 	part0 = partarray[0]
+	if isinstance(partarray, list):
+		numimg = len(partarray)
+	else:
+		numimg = partarray.shape[0]
+	if numimg < 2:
+		apDisplay.printWarning("Cannot calculate the SSNR for less than 2 images")
+		return 0.0
 	for partimg in partarray:
 		if part0.shape != partimg.shape:
 			apDisplay.printError("Cannot calculate the SSNR for images of different sizes")
@@ -163,7 +170,7 @@ def writeFrcPlot(fname, linear, apix=1.0):
 	f = open(fname, "w")
 	#f.write("0\t1.0\n")
 	for i in range(1, length):
-		if linear[i] > 0.9 and linear[i+1] > 0.9 and linear[i+2] > 0.9:
+		if i < (length-3) and linear[i] > 0.9 and linear[i+1] > 0.9 and linear[i+2] > 0.9:
 			continue
 		f.write("%.1f\t%.5f\n"%(2.0*length/float(i), linear[i]))
 		if linear[i] < 0 and linear[i-1] < 0:
@@ -196,6 +203,7 @@ def getResolution(linear, apix=1.0):
 			# convert to Angstroms
 			res = boxsize * apix / intfsc
 			return res
+	return 0.0
 
 #===========
 def getLinearIndices(fftshape):
