@@ -104,6 +104,7 @@ function apdivtitle($title) {
 }
 
 function processing_header($title,$heading=false,$headerstuff=false,$pleaseWait=false) {
+	global $PROJECT_URL;
 	$expId = $_GET['expId'];
 
 	// check if logged in
@@ -241,6 +242,7 @@ function processing_footer() {
 }
 
 function writeTop($title,$heading=false,$headerstuff=false) {
+	global $PROJECT_URL;
 	$expId = $_GET['expId'];
 	$leginondata = new leginondata();
 	$particle = new particledata();
@@ -331,6 +333,7 @@ $html.='
 }
 
 function writeTop_org($title,$heading=false,$headerstuff=false) {
+	global $PROJECT_URL;
 	global $_GET;
 	$expId = $_GET['expId'];
 	$leginondata = new leginondata();
