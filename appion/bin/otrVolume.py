@@ -600,8 +600,8 @@ class otrVolumeScript(appionScript.AppionScript):
 				continue
 			key = int(float(value[6]))
 			rot = float(value[7])
-			cumX = float(value[8])
-			cumY = float(value[9])
+			cumX = float(value[14]) #float(value[8])
+			cumY = float(value[15]) #float(value[9])
 			psi = float(value[2])
 			theta = float(value[3])
 			phi = float(value[4])
