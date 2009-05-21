@@ -7,6 +7,7 @@ import time
 import glob
 import shutil
 import random
+import colorsys
 import subprocess
 #appion
 import apFile
@@ -15,7 +16,7 @@ import apParam
 import apDisplay
 import apVolume
 
-colorlist = []
+hsvalue = 0.4
 
 #=========================================
 #=========================================
@@ -50,7 +51,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 #=========================================
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
-		contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=True):
+		contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if box is None:
@@ -78,12 +79,14 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	apEMAN.executeEmanCmd(lpcmd)
 	os.environ['CHIMTEMPVOL'] = tmpf
 
+
+
 	### render images
 	renderSlice(density, box=box, tmpfile=tmpf, sym=sym)
 	if chimtype != 'snapshot':
-		renderAnimation(density, contour, zoom, sym, colorstr, silhouette)
+		renderAnimation(density, contour, zoom, sym, color, silhouette)
 	elif chimtype != 'animate':
-		renderSnapshots(density, contour, zoom, sym, colorstr, silhouette)
+		renderSnapshots(density, contour, zoom, sym, color, silhouette)
 	apFile.removeFile(tmpf)
 
 #=========================================
@@ -114,7 +117,7 @@ def renderSlice(density, box=None, tmpfile=None, sym='c1'):
 
 #=========================================
 #=========================================
-def renderSnapshots(density, contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=True):
+def renderSnapshots(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -128,7 +131,8 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 		os.environ['CHIMSYM'] = sym
 	if contour is not None:
 		os.environ['CHIMCONTOUR'] = str(contour)
-	if colorstr is not None:
+	if color is not None:
+		colorstr = colorToString(color)
 		os.environ['CHIMCOLORS'] = colorstr
 	else:
 		colorstr = getColorString()
@@ -151,7 +155,7 @@ def renderSnapshots(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 
 #=========================================
 #=========================================
-def renderAnimation(density, contour=None, zoom=1.0, sym=None, colorstr=None, silhouette=False):
+def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silhouette=False):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	### setup chimera params
@@ -165,7 +169,8 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 		os.environ['CHIMSYM'] = sym
 	if contour is not None:
 		os.environ['CHIMCONTOUR'] = str(contour)
-	if colorstr is not None:
+	if color is not None:
+		colorstr = colorToString(color)
 		os.environ['CHIMCOLORS'] = colorstr
 	else:
 		colorstr = getColorString()
@@ -199,7 +204,6 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, colorstr=None, si
 		apFile.removeFilePattern(density+".*[0-9][0-9].png")
 	return
 
-
 #=========================================
 #=========================================
 def runChimeraScript(chimscript):
@@ -227,63 +231,78 @@ def runChimeraScript(chimscript):
 
 #=========================================
 #=========================================
+def colorToString(color):
+	if color == "red":
+		return "0.6:0.0:0.0,None,0.6:0.0:0.0"
+	elif color == "orange":
+		return "0.6:0.2:0.0,None,0.6:0.2:0.0"
+	elif color == "yellow":
+		return "0.8:0.6:0.0,None,0.8:0.6:0.0"
+	elif color == "green":
+		return "0.0:0.6:0.0,None,0.0:0.6:0.0"
+	elif color == "blue":
+		return "0.0:0.0:0.6,None,0.0:0.0:0.6"
+	elif color == "violet":
+		return "0.6:0.2:0.6,None,0.6:0.2:0.6"
+	else:
+		return "None,None,None"
+
+#=========================================
+#=========================================
 def getColorString():
 	#return secondColor()+",None,"+minuteColor()
-	#print "first"
 	first = hourColor()
-	#print "third"
+	#print "first", first
 	third = dayColor()
-	return first+",None,"+third
+	#print "third", third
+	colortuple = first+",None,"+third
+	#print colortuple
+	return colortuple
 
 #=========================================
 #=========================================
 def dayColor():
-	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	day = int( (time.time()/(3600*24.0)-8.0/24.0)%len(colorlist) )
-	rgbindex = colorlist[day]
-	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	hue = ((time.time()/(24*3600.))%365)/365
+	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
 #=========================================
 #=========================================
 def hourColor():
-	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	hour = int( (time.time()/3600)%len(colorlist) )
-	rgbindex = colorlist[hour]
-	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	hue = ((time.time()/3600.)%24)/24
+	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
 #=========================================
 #=========================================
 def minuteColor():
-	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	mins = int( (time.time()/60)%len(colorlist) )
-	rgbindex = colorlist[mins]
-	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	hue = ((time.time()/60.)%60)/60
+	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
 #=========================================
 #=========================================
 def secondColor():
-	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	secs = int( time.time()%len(colorlist) )
-	rgbindex = colorlist[secs]
-	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	hue = (time.time()%60.)/60
+	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
 #=========================================
 #=========================================
 def randomColor():
-	valrange = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-	rand = int(random.random()*len(colorlist))
-	rgbindex = colorlist[rand]
-	colorstr = "%.1f:%.1f:%.1f"%(valrange[rgbindex[0]], valrange[rgbindex[1]], valrange[rgbindex[2]])
+	hue = random.random()
+	rgbindex = colorsys.hsv_to_rgb(hue, 1, hsvalue)
+	colorstr = "%.1f:%.1f:%.1f"%(rgbindex[0], rgbindex[1], rgbindex[2])
 	return colorstr
 
 #=========================================
 #=========================================
 def isTooGray(rgbindex):
-	mindiff = 3
+	mindiff = 0.16
 	d1 = abs(rgbindex[0]-rgbindex[1])
 	d2 = abs(rgbindex[0]-rgbindex[2])
 	d3 = abs(rgbindex[1]-rgbindex[2])
@@ -294,7 +313,7 @@ def isTooGray(rgbindex):
 #=========================================
 #=========================================
 def isTooLight(rgbindex):
-	maxsum = 12
+	maxsum = 0.67
 	csum = rgbindex[0]+rgbindex[1]+rgbindex[2]
 	if csum > maxsum:
 		return True
@@ -313,9 +332,10 @@ def isGoodColor(rgbindex):
 
 #=========================================
 #=========================================
-
-for i in range(216):
-	rgbindex = [ i%6, (i/6)%6, (i/36)%6 ]
-	if isGoodColor(rgbindex):
-		colorlist.append(rgbindex)
+def getColorList():
+	colorlist = []
+	for i in range(216):
+		rgbindex = [ i%6, (i/6)%6, (i/36)%6 ]
+		if isGoodColor(rgbindex):
+			colorlist.append(rgbindex)
 

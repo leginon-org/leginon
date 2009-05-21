@@ -35,8 +35,8 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			help="Pixel size in Angstroms (only required for mass)", metavar="FLOAT")
 
 		### strings
-		self.parser.add_option("--color", dest="colorstr",
-			help="Override color choice, with rgb tuple: 0.8:0.2:0.6", metavar="COLOR")
+		self.parser.add_option("--color", dest="color",
+			help="Override color choice", metavar="COLOR")
 
 		### choices
 		self.typemodes = ( "snapshot", "animate", "both" )
@@ -79,14 +79,14 @@ class MakeSnapshotScript(appionScript.AppionScript):
 			apDisplay.printMsg("Creating animation")
 			apChimera.renderAnimation(mrcfile, contour=self.params['contour'],
 				 zoom=self.params['zoom'], sym=self.params['sym'],
-				 colorstr=self.params['colorstr'])
+				 color=self.params['color'])
 
 		### animation
 		if self.params['type'] != "animate":
 			apDisplay.printMsg("Creating snapshots")
 			apChimera.renderSnapshots(mrcfile, contour=self.params['contour'],
 				 zoom=self.params['zoom'], sym=self.params['sym'],
-				 colorstr=self.params['colorstr'])
+				 color=self.params['color'])
 
 		### clean up
 		if self.params['mass'] is not None:

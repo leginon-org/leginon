@@ -127,6 +127,7 @@ class ChimSnapShots(object):
 			if len(self.colors) >= 2 and ":" in self.colors[1]:
 				colorvalues = self.colors[1].split(":")
 				rgbcolor1 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
+
 			else:
 				rgbcolor1 = (0.8,0.8,0.8,1)
 			if len(self.colors) >= 3 and ":" in self.colors[2]:
@@ -134,6 +135,9 @@ class ChimSnapShots(object):
 				rgbcolor2 = (float(colorvalues[0]), float(colorvalues[1]), float(colorvalues[2]), 1)
 			else:
 				rgbcolor2 = (0.2,0.2,0.8,1)
+			self.writeMessageToLog("rgbcolor0 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor0))
+			self.writeMessageToLog("rgbcolor1 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor1))
+			self.writeMessageToLog("rgbcolor2 = %.1f, %.1f, %.1f, %.1f"%(rgbcolor2))
 			colors = [rgbcolor0, rgbcolor1, rgbcolor2]
 			data_values = (.125*hrange+hmin, .5*hrange+hmin, .875*hrange+hmin)
 		hc.colormap = Color_Map(data_values, colors)
@@ -593,7 +597,7 @@ class ChimSnapShots(object):
 			self.minvolume = 2500.0
 		### write to log
 		variables = (
-			'CHIMVOL', 'CHIMTEMPVOL', 'CHIMSYM', 'CHIMCONTOUR', 'CHIMCOLOR',
+			'CHIMVOL', 'CHIMTEMPVOL', 'CHIMSYM', 'CHIMCONTOUR', 'CHIMCOLORS',
 			'CHIMTYPE', 'CHIMSILHOUETTE', 'CHIMBACK', 'CHIMZOOM', 'CHIMIMGSIZE',
 			'CHIMIMGFORMAT', 'CHIMFILEFORMAT', 'CHIMMINVOLUME',
 		)
