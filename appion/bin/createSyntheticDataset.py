@@ -848,7 +848,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			if self.params['commit'] is True:
 				apDisplay.printColor("Inserting stack parameters into database", "cyan")
 				rinstackq['stack'] = stackq
-#				rinstackq.insert()
+				rinstackq.insert()
 			else:
 				apDisplay.printColor("NOT INSERTING stack parameters into database", "cyan")
 				
@@ -896,10 +896,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apDisplay.printWarning("Stack already exists in database! Will try and appending new particles to stack")
 
 		### create a fake selection run
-		selectq = appionData.ApSelectionRunData()
-		selectq['session'] = sessiondata
-		selectq['name'] = "fakerun"
-		self.selectq = selectq
+#		selectq = appionData.ApSelectionRunData()
+#		selectq['session'] = sessiondata
+#		selectq['name'] = "fakerun"
+#		self.selectq = selectq
 		if self.params['commit'] is True:
 			apDisplay.printColor("Inserting fake selection parameters into the database", "cyan") 
 #			selectq.insert()
@@ -920,7 +920,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			partmeandict = self.partmeantree[i]
 			
 			partq = appionData.ApParticleData()
-			partq['selectionrun'] = selectq
+#			partq['selectionrun'] = selectq
 			partq['xcoord'] = partNumber
 
 			stpartq = appionData.ApStackParticlesData()
@@ -937,7 +937,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			stpartq['mean'] = partmeandict['mean']
 			stpartq['stdev'] = partmeandict['stdev']
 			if self.params['commit'] is True:
-#				stpartq.insert()
+				stpartq.insert()
 
 		return
 
