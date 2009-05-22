@@ -107,7 +107,7 @@ class AppionScript(object):
 		self.stats['count'] = 1
 		self.stats['lastcount'] = 0
 		self.stats['startmem'] = mem.active()
-		self.stats['memleak'] = False
+		self.stats['memleak'] = 0
 		self.stats['peaksum'] = 0
 		self.stats['lastpeaks'] = None
 		self.stats['imagesleft'] = 1

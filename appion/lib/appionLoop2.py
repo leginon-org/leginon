@@ -632,7 +632,8 @@ class AppionLoop(appionScript.AppionScript):
 		unnecessary code for determining if the program is eating memory over time
 		"""
 		### Memory leak code:
-		self.stats['memlist'].append(mem.active())
+		#self.stats['memlist'].append(mem.mySize()/1024)
+		self.stats['memlist'].append(mem.active)
 		memfree = mem.free()
 		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
@@ -642,6 +643,7 @@ class AppionLoop(appionScript.AppionScript):
 		if(self.stats['count'] > 15):
 			memlist = self.stats['memlist'][-15:]
 			n       = len(memlist)
+			
 			gain    = (memlist[n-1] - memlist[0])/1024.0
 			sumx    = n*(n-1.0)/2.0
 			sumxsq  = n*(n-1.0)*(2.0*n-1.0)/6.0
@@ -658,10 +660,10 @@ class AppionLoop(appionScript.AppionScript):
 			slope = float(n*sumxy - sumx*sumy)/float(n*sumxsq - sumx*sumx)
 			memleak = rho*slope
 			###
-			if(self.stats['memleak'] and slope > 20 and memleak > 512 and gain > 1024):
+			if(self.stats['memleak'] > 3 and slope > 20 and memleak > 512 and gain > 2048):
 				apDisplay.printError("Memory leak of "+str(round(memleak,2))+"MB")
 			elif(memleak > 32):
-				self.stats['memleak'] = True
+				self.stats['memleak'] += 1
 				apDisplay.printWarning("substantial memory leak "+str(round(memleak,2))+"MB")
 				print "(",str(n),round(slope,5),round(rho,5),round(gain,2),")"
 
