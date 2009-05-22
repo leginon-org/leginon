@@ -183,7 +183,7 @@ if __name__== '__main__':
 			# blank class average
 			apEMAN.writeBlankImage('goodavgs.hed',params['boxsize'],-1)
 			# blank "good" average
-			apEMAN.writeBlankImage('allavgs.hed',params['boxsize'],-1)
+			#apEMAN.writeBlankImage('allavgs.hed',params['boxsize'],-1)
 			if params['eotest'] is True:
 				apEMAN.writeBlankImage('goodavgs.even.hed',params['boxsize'],-1)
 				apEMAN.writeBlankImage('goodavgs.odd.hed',params['boxsize'],-1)
@@ -205,7 +205,7 @@ if __name__== '__main__':
 			f.write(str(ccval)+'\n')
 			avg.setNImg(10)
 			avg.setRAlign(e)
-			avg.writeImage('allavgs.hed',-1)
+		#	avg.writeImage('allavgs.hed',-1)
 		f.close()
 
 		### order class averages in order of highest cc value
