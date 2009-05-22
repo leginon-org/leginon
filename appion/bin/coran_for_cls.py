@@ -118,8 +118,8 @@ if __name__== '__main__':
 				spidercmd = alignment.runCoranClass(params,cls)
 				## if enough particles, run spider
 				if spidercmd is not None:
-					pfile=('spider.%i.csh' %n)
-					procfile=os.path.join(os.path.abspath('.'),pfile)
+					pfile=('spider.%i.csh' %spnum)
+					procfile=os.path.join(os.path.abspath('.'),clsdir,pfile)
 					f=open(procfile, 'w')
 					f.write("#!/bin/csh\n\n")
 					f.write("cd "+os.path.abspath('.')+"\n");
@@ -132,7 +132,7 @@ if __name__== '__main__':
 			cscript.close()
 			print "executing coranscript: ",coranscript
 			os.chmod("coranscript.csh",0755)
-			proc = subprocess.Popen('mpiexec --app '+coranscript, shell=True)
+			proc = subprocess.Popen('mpiexec --hostfile $PBS_NODEFILE --app '+coranscript, shell=True)
 			proc.wait()
 			time.sleep(2)
 			## remove spider files after completed
@@ -143,18 +143,28 @@ if __name__== '__main__':
 
 		### make sure class averages were created for all classes if aligned.spi exists,
 		### sometimes for some reason the spider job doesn't run
-		print "Checking that all spider jobs completed"
-		for cls in clslist:
-			clsdir=cls.split('.')[0]+'.dir'
-			alignedfile = os.path.join(clsdir,'aligned.spi')
-			clsavgfile = os.path.join(clsdir,'classes_avg.spi')
+                print "Checking that all spider jobs completed"
+                for cls in clslist:
+                        clsdir=cls.split('.')[0]+'.dir'
+                        alignedfile = os.path.join(clsdir,'aligned.spi')
+                        clsavgfile = os.path.join(clsdir,'classes_avg.spi')
+			clscsh=glob.glob(os.path.join(clsdir,'spider.*.csh'))
+			if not clscsh :
+				print "ERROR!!! no spider csh file was created in "+clsdir
+			if not os.path.exists(alignedfile) and clscsh: 
+				print "WARNING!!! re-executing" + clscsh[0]
+				proc = subprocess.Popen(clscsh[0])
+				proc.wait()
 			if os.path.exists(alignedfile) and not os.path.exists(clsavgfile):
 				spijobfile='coranfor'+cls.split('.')[0]+'.bat'
-				print "WARNING!!! rerunning "+spijobfile
-				if os.path.exists(spijobfile):
-					#f = open("spider.log", "a")
-					proc = subprocess.Popen("spider bat/spi @%s\n" % spijobfile.split('.')[0], shell=True)
-					proc.wait()
+                                print "WARNING!!! rerunning "+spijobfile
+                                if os.path.exists(os.path.join(clsdir,spijobfile)):
+                                        #f = open("spider.log", "a")
+                                        spicmd = "spider bat/spi @%s\n" % spijobfile.split('.')[0]
+                                        proc = subprocess.Popen("cd %s\n%s\ncd .." % (clsdir,spicmd), shell=True)
+                                        proc.wait()
+                                else:
+                                        print "ERROR!!! "+clsdir+"/"+spijobfile+" does not exist"
 	else:
 		for cls in clslist:
 		## create SPIDER batch file and run coran	
