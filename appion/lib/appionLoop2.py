@@ -633,7 +633,7 @@ class AppionLoop(appionScript.AppionScript):
 		"""
 		### Memory leak code:
 		#self.stats['memlist'].append(mem.mySize()/1024)
-		self.stats['memlist'].append(mem.active)
+		self.stats['memlist'].append(mem.active())
 		memfree = mem.free()
 		swapfree = mem.swapfree()
 		minavailmem = 64*1024; # 64 MB, size of one image
