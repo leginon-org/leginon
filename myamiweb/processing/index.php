@@ -257,11 +257,11 @@ foreach ($reconRuns as $recon) {
 	$pix = $presetinfo['ccdpixelsize']*1e9;
 	$campix = "15";
 	$dose = round($presetinfo['dose']/1e20);
-	$kev = $presetinfo['hightension']/1e3;
+	$kv = $presetinfo['hightension']/1e3;
 
 	$m = "<h4>Data Collection</h4>\n";
 	$m .= "<table class='tableborder' border='1' width='600'><tr><td>\n";
-	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kev keV, \n";
+	$m .= "Data were acquired using a $scope transmission electron microscope operating at $kev kV, \n";
 	$m .= "using a dose of ~".$dose." e-/&Aring;&sup2; and a nominal underfocus ranging from $maxNomDF to $minNomDF &micro;m.\n";
 	//	$m .= "A Gatan side-entry cryostage/room temp stage was used for data collection.\n";
 	$m .= "$totimgs images were automatically collected at a nominal magnification of $mag x at a pixel size of $pix nm at the specimen level.\n";
