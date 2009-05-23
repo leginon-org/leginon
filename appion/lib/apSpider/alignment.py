@@ -749,7 +749,7 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 	factorstr = factorstr[:-1]
 
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
 	mySpider.toSpider(
 		"CL HC",
 		corandata+"_IMC", # path to coran data
@@ -835,7 +835,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 
 	apDisplay.printMsg("Creating dendrogram file: "+dendrogramfile)
 	### do hierarchical clustering
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
 	mySpider.toSpider(
 		"CL HC",
 		spyder.fileFilter(corandata)+"_IMC", # path to coran data
@@ -880,7 +880,7 @@ def hierarchClusterClassify(alignedstack, dendrogramfile, numclasses=40, timesta
 	thresh, classes = findThreshold(numclasses, dendrogramfile, rundir, dataext)
 
 	### create class doc files
-	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
 	mySpider.toSpider(
 		"CL HE",
 		thresh,
@@ -946,7 +946,7 @@ def kmeansCluster(alignedstack, numpart=None, numclasses=40, timestamp=None,
 	### make list of factors
 	factorstr, factorkey = operations.intListToString(factorlist)
 
-	### do hierarchical clustering
+	### do k-means clustering
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=True, log=False)
 	mySpider.toSpider(
 		"CL KM",
@@ -1053,7 +1053,7 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 		thresh = (maxthresh-minthresh)/3.0 + minthresh
 		classfile = rundir+"/classes"
 		apFile.removeFile(classfile+dataext)
-		mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
+		mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=True)
 		mySpider.toSpiderQuiet(
 			"CL HD",
 			thresh, #threshold
