@@ -36,6 +36,10 @@ class fakeStackScript(appionScript.AppionScript):
 		self.parser.add_option("--density", dest="density", 
 			default="/ami/data13/appion/06jul12a/refine/logsplit2/run55351/threed.20a.mrc",
 			help="density file, e.g. --density=groel.mrc", metavar="NAME")
+		self.parser.add_option("--slop", dest="slop", type="float", default=3.0,
+			help="sloppiness in Euler angles", metavar="INT")
+		self.parser.add_option("--slop-cam", dest="slopcam", type="float", default=0.0,
+			help="sloppiness in Camera locations", metavar="INT")
 
 	#=====================
 	def checkConflicts(self):
@@ -136,20 +140,30 @@ class fakeStackScript(appionScript.AppionScript):
 		Rotate model and then project at two tilt angles
 
 		This could go faster if we could add Euler angles...
+
+		90,-90 puts cameras where the would be in the microscope
 		"""
 		(alt, az, phi) = euler
 		rotcmd = ( "proc3d "+density+" rotated.mrc rot="
 			+str(alt)+","+str(az)+","+str(phi) )
 		apEMAN.executeEmanCmd(rotcmd, verbose=False, showcmd=False)
 		if abs(tilt - self.tiltangle) < 5.0:
-			euler = "%.3f,90,-90"%(tilt)
+			bigtilt = self.tiltangle - self.notangle
+			euler = ("%.3f,%.3f,%.3f"%(
+				bigtilt + random.gauss(0, self.params['slopcam']), 
+				90+random.gauss(0, self.params['slopcam']), 
+				-90+random.gauss(0, self.params['slopcam'])))
 			cmd = "project3d rotated.mrc out="+self.params['tiltstack']+" euler="+euler
 		elif abs(tilt - self.notangle) < 5.0:
-			euler = "%.3f,90,-90"%(tilt)
+			#euler = "%.3f,90,-90"%(0.0)
+			euler = ( "%.3f,%.3f,%.3f"%(
+				random.gauss(0, self.params['slopcam']), 
+				90+random.gauss(0, self.params['slopcam']), 
+				-90+random.gauss(0, self.params['slopcam'])))
 			cmd = "project3d rotated.mrc out="+self.params['notstack']+" euler="+euler
 		else:
 			apDisplay.printError("unknown tilt angle: %.3f"%(tilt))
-		#apEMAN.executeEmanCmd(cmd, verbose=False, showcmd=False)
+		apEMAN.executeEmanCmd(cmd, verbose=False, showcmd=False)
 
 	#=====================
 	def convertSQLtoTree(self, results, notstackid):
@@ -328,12 +342,14 @@ class fakeStackScript(appionScript.AppionScript):
 		"""
 		#alt = int(round(random.random()*90.0,0))
 		#alt = int(round(random.random()*180.0,0))
-		alt = 0
+		#alt = 0
+		alt = random.gauss(0,self.params['slop'])
 		#az = int(round(random.random()*51.43,0))
 		#az = int(round(random.random()*360.0,0))
-		az = 0
+		#az = 0
+		az = random.gauss(0,self.params['slop'])
 		#phi = int(round(random.random()*360.0,0))
-		phi = int(round(random.random()*6.0,0))*60
+		phi = int(round(random.random()*6.0,0))*60 + random.gauss(0,self.params['slop'])
 		#phi = 0
 		return (alt, az, phi)
 
