@@ -122,6 +122,10 @@ class RCTAcquisition(acquisition.Acquisition):
 		except:
 			self.logger.error('Invalid tilt list')
 			return
+		## check for singular value
+		if isinstance(tilts, float) or isinstance(tilts, int):
+			tilts = (tilts,)
+		## convert to radians
 		tilts = map(radians, tilts)
 
 		## parent image and tilt of parent image
