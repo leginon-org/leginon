@@ -458,7 +458,7 @@ def calcFSC(volfile1, volfile2, fscout, dataext=".spi"):
 	return
 
 #===============================
-def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, iternum, timestamp, classnum=None, dataext=".spi"):
+def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, mirror, iternum, timestamp, classnum=None, dataext=".spi"):
 
 	origstack = spyder.fileFilter(origstackfile)
 	
@@ -476,6 +476,14 @@ def rotshiftParticle(origstackfile, partnum, rotation, Xshift, Yshift, iternum, 
 		"("+str(rotation)+")", #rotation
 		"("+str(Xshift)+","+str(Yshift)+")", #shift parameters
 	)
+	
+	if mirror==-1:
+		mySpider.toSpiderQuiet("MR",
+			apshstack+"@"+str(partnum), #stack and particle number
+			apshstack+"@"+str(partnum), #output stack and particle
+			"Y",
+		)
+		
 	mySpider.close()
 		
 	return apshstackfile
