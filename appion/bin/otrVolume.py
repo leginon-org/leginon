@@ -605,9 +605,10 @@ class otrVolumeScript(appionScript.AppionScript):
 			psi = float(value[2])
 			theta = float(value[3])
 			phi = float(value[4])
+			mirror = int(float(value[16]))
 
 			### rotate and shift particle
-			APSHstack = backproject.rotshiftParticle(alignstack, key, rot, cumX, cumY, iternum, self.timestamp, str(classnum))
+			APSHstack = backproject.rotshiftParticle(alignstack, key, rot, cumX, cumY, mirror, iternum, self.timestamp, str(classnum))
 
 			### write out new euler file
 			eulerline = operations.spiderOutLine(key, [psi, theta, phi])
