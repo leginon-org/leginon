@@ -1078,6 +1078,39 @@ def findThreshold(numclasses, dendrogramdocfile, rundir, dataext):
 	return thresh, classes
 
 #===============================
+def createProjections(increment, imgsz, invol, radius, sel, ang, outstack):
+	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
+	mySpider.toSpider(
+		"VO EA, [numprojs]",
+		"(0,90.0)",
+		"(0,359.9)",
+		ang,
+	)
+	projs = mySpider.getreg([numprojs])
+	mySpider.toSpider(
+		"DOC CREATE",
+		sel,
+		"1",
+		"1-[numprojs]",
+	)
+	mySpider.toSpider(
+		"MS",
+		outstack+"@",
+		str(imgsz),str(imgsz),"1",
+		"[numprojs]",
+	)
+	mySpider.toSpider(
+		"PJ 3Q",
+		str(radius),
+		sel,
+		ang,
+		outstack+"@*****",
+	)
+	mySpider.close()
+	return
+
+
+#===============================
 def makeSpiderCoranBatch(params,filename,clsdir):
 	nfacts=20
 	if params['nptcls'] < 21:
