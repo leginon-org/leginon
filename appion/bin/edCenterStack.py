@@ -8,7 +8,7 @@ from scipy import ndimage
 import appionScript
 import apStack
 import apDisplay
-import apEMAN
+import apImagicFile
 from pyami import correlator, peakfinder
 
 class centerStackScript(appionScript.AppionScript):
