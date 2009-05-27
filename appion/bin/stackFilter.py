@@ -85,7 +85,7 @@ class subStackScript(appionScript.AppionScript):
 		apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 		if not os.path.isfile(newstack):
 			apDisplay.printError("No stack was created")
-		apStack.commitSubStack(self.params, newname)
+		apStack.commitSubStack(self.params, newname, oldstackparts=stackparts)
 		apStack.averageStack(stack=newstack)
 
 		# stack mean plot

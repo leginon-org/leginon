@@ -201,7 +201,7 @@ def centerParticles(stack, mask=None, maxshift=None):
 	return
 	
 #===============
-def commitSubStack(params, newname=False, centered=False):
+def commitSubStack(params, newname=False, centered=False, oldstackparts=None):
 	"""
 	commit a substack to database
 	
@@ -242,6 +242,9 @@ def commitSubStack(params, newname=False, centered=False):
 		if 'maxshift' in params:
 			stackq['maxshift'] = params['maxshift']
 
+	## insert now before datamanager cleans up referenced data
+	stackq.insert()
+
 	partinserted = 0
 	#Insert particles
 	listfile = params['keepfile']
@@ -260,6 +263,12 @@ def commitSubStack(params, newname=False, centered=False):
 	total = len(listfilelines)
 	f.close()
 
+	## index old stack particles by number
+	part_by_number = {}
+	if oldstackparts is not None:
+		for part in oldstackparts:
+			part_by_number[part['particleNumber']] = part
+
 	apDisplay.printMsg("Inserting stack particles")
 	count = 0
 	newpartnum = 1
@@ -270,7 +279,12 @@ def commitSubStack(params, newname=False, centered=False):
 			sys.stderr.write(str(count)+" of "+(str(total))+" complete")
 
 		# Find corresponding particle in old stack
-		oldstackpartdata = getStackParticle(params['stackid'], origpartnum)
+		# Use previously queried particles if possible, otherwise
+		# do new query here (very slow if millions of prtls in DB)
+		try:
+			oldstackpartdata = part_by_number[origpartnum]
+		except KeyError:
+			oldstackpartdata = getStackParticle(params['stackid'], origpartnum)
 
 		# Insert particle
 		newstackq = appionData.ApStackParticlesData()
