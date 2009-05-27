@@ -470,6 +470,93 @@ def readSingleParticleFromStack(filename, partnum=1, boxsize=None, msg=True):
 	return partimg
 
 #===============
+def mergeStacks(stacklist, mergestack):
+	### initialization
+	t0 = time.time()
+	apFile.removeStack(mergestack)
+	root=os.path.splitext(mergestack)[0]
+	mergeheader = root+".hed"
+	mergedata   = root+".img"
+
+	### merge data files
+	fout = file(mergedata, 'wb')
+	numpart = 0
+	totalsize = 0
+	for stackfile in stacklist:
+		stackdatafile = os.path.splitext(stackfile)[0]+ ".img"
+		### size checks
+		npart = apFile.numImagesInStack(stackdatafile)
+		size = apFile.fileSize(stackdatafile)
+		apDisplay.printMsg("%d particles in %s (%s)"%(npart, stackdatafile, apDisplay.bytes(size)))
+		totalsize += size
+		numpart += npart
+
+		fin = file(stackdatafile, 'rb')
+		shutil.copyfileobj(fin, fout, 65536)
+		fin.close()
+	fout.close()
+	if numpart < 1:
+		apDisplay.printError("found %d particles"%(numpart))
+	apDisplay.printMsg("found %d particles"%(numpart))
+	finalsize = apFile.fileSize(mergedata)
+	if finalsize != totalsize:
+		apDisplay.printError("size mismatch %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+
+	### merge header files
+	#apDisplay.printError("not finished")
+	mergehead = open(mergeheader, 'wb')
+	partnum = 0
+	totalsize = 0
+	for stackfile in stacklist:
+		headerfilename = os.path.splitext(stackfile)[0]+ ".hed"
+		headfile = open(headerfilename, 'rb')
+		### size checks
+		size = apFile.fileSize(headerfilename)
+		apDisplay.printMsg("%s (%d kB)"%(headerfilename, size/1024))
+		totalsize += size
+
+		#apDisplay.printMsg("%d\t%s"%(npart, stackfile))
+		i = 0
+		npart = apFile.numImagesInStack(stackfile)
+		while i < npart:
+			#print i, npart, partnum
+			### read old header
+			data = headfile.read(1024)
+			### start new string
+			headerstr = ""
+			### first image number
+			headerstr += intToFourByte(partnum)
+			### number of images, less one
+			headerstr += intToFourByte(numpart-1)
+			### always 0,1 ???
+			headerstr += intToFourByte(0)
+			headerstr += intToFourByte(1)
+			### creation date: day, month, year, hour, min, sec
+			headerstr += intToFourByte(time.localtime()[2])
+			headerstr += intToFourByte(time.localtime()[1]) #eman always uses month-1?
+			headerstr += intToFourByte(time.localtime()[0])
+			headerstr += intToFourByte(time.localtime()[3])
+			headerstr += intToFourByte(time.localtime()[4])
+			headerstr += intToFourByte(time.localtime()[5])
+			### append other header info, 4 character per item
+			headerstr += data[10*4:61*4]
+			### first image number, EMAN does this
+			headerstr += intToFourByte(partnum)
+			### append other header info, 4 character per item
+			headerstr += data[62*4:]
+			mergehead.write(headerstr)
+			partnum += 1
+			i += 1
+	mergehead.close()
+	apDisplay.printMsg("wrote %d particles"%(numpart))
+	finalsize = apFile.fileSize(mergeheader)
+	if finalsize != totalsize:
+		apDisplay.printError("size mismatch %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
+
+
+#===============
 def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
 	"""
 	reads a single particle from imagic stack
