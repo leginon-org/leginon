@@ -49,8 +49,9 @@ def getProjectIdFromAlignStackId(alignstackid):
 
 #========================
 def getAppionDBFromProjectId(projectid):
-	""" Not working properly """
-	return "ap"+str(projectid)
+	projectdata = project.ProjectData()
+	projectdb = projectdata.getProcessingDB(projectid)
+	return projectdb
 
 
 
