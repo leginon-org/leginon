@@ -12,7 +12,7 @@ class Project(sqldict.ObjectBuilder):
 	`projects` table in the project DB
 	'''
 	table = 'projects'
-	columns = ['projectId', 'name', 'short_description']
+	columns = ['projectId', 'name', 'short_description', 'db']
 
 class ProjectExperiment(sqldict.ObjectBuilder):
 	'''ProjectExperiment: a class object to access the
@@ -20,6 +20,14 @@ class ProjectExperiment(sqldict.ObjectBuilder):
 	'''
 	table = "projectexperiments"
 	columns = ['projectId', 'name']
+	indices = [ ('projectId', ['projectId'] )]
+
+class ProjectProcessingDB(sqldict.ObjectBuilder):
+	'''ProjectProcessingDB: a class object to access the
+	`processingdb` table in the project DB
+	'''
+	table = "processingdb"
+	columns = ['projectId', 'db']
 	indices = [ ('projectId', ['projectId'] )]
 
 class GridBox(sqldict.ObjectBuilder):
@@ -55,6 +63,7 @@ class ProjectData:
 
 		self.projects = Project().register(self.db)
 		self.projectexperiments = ProjectExperiment().register(self.db)
+		self.projectprocessingdb = ProjectProcessingDB().register(self.db)
 		self.gridboxes = GridBox().register(self.db)
 		self.grids = Grid().register(self.db)
 		self.gridlocations = GridLocation().register(self.db)
@@ -75,6 +84,16 @@ class ProjectData:
 				return int(projectsession['projectId'])
 		return None	
 
+	def getProcessingDB(self, projectId):
+		processingdblist = self.projectprocessingdb.Index(['projectId'])
+		result = processingdblist[projectId].fetchone()
+		if result is None:
+			return None
+		try:
+			return result['db']
+		except KeyError:
+			return None
+
 	def getGridBoxes(self):
 		return self.gridboxes
 
@@ -91,7 +110,7 @@ class ProjectData:
 	def getGridLocations(self):
 		return self.gridlocations
 
-	def getPojectFromGridId(self, gridid):
+	def getProjectFromGridId(self, gridid):
 		gridsindex = self.grids.Index(['gridId'])
 		grid = gridsindex[gridid].fetchone()
 		if grid is None:
@@ -128,6 +147,9 @@ class ProjectData:
 		except:
 			return None
 
+
+
+
 ########################################
 ## Testing
 ########################################
@@ -135,11 +157,14 @@ class ProjectData:
 if __name__ == "__main__":
 	import sys
 	# getall projects
-	#allprojects = projects.getall()
+	projectdata = ProjectData()
+	projects = projectdata.getProjects()
+	allprojects = projects.getall()
+	#print allprojects;
+	"""
 	projectdata = ProjectData()
 
 	print projectdata.getGridName(111)
-	"""
 	gridid = 751
 	grids = projectdata.getGrids()
 	gridsindex = grids.Index(['gridId'])
