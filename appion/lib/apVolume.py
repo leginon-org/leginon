@@ -55,7 +55,8 @@ def rescaleModel(infile, outfile, inapix, outapix, newbox=None):
 	emancmd = "proc3d %s %s " % (infile, outfile)
 	if abs(scalefactor-1.0) > 0.2:
 		emancmd += "scale=%.3f " % scalefactor
-	emancmd += "clip=%i,%i,%i norm=0,1" % (newbox, newbox, newbox)
+#	emancmd += "clip=%i,%i,%i norm=0,1" % (newbox, newbox, newbox)
+	emancmd += "clip=%i,%i,%i edgenorm" % (newbox, newbox, newbox)
 	apEMAN.executeEmanCmd(emancmd, verbose=True)
 	return
 
