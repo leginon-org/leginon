@@ -88,8 +88,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   
   // Set any existing parameters in form
   $package = ($_POST['package']) ? $_POST['package'] : $package;
-  $contour = ($_POST['contour']) ? $_POST['contour'] : '1.5';
-  $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.5';
+  $contour = ($_POST['contour']) ? $_POST['contour'] : '2.0';
+  $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
   $filter = ($_POST['filter']) ? $_POST['filter'] : '';
   $model = ($_POST['model']) ? $_POST['model'] : '';
   $reconname = ($_POST['reconname']) ? $_POST['reconname'] : '';
@@ -187,13 +187,19 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
 		echo"<P>";
 	}
   echo "<P>Refinement Strategy:\n";
-  $eman=array('description'=>'EMAN refine','setting'=>'EMAN');
-  $eman_msgp=array('description'=>'EMAN refine followed by message passing subclassification','setting'=>'EMAN/MsgP');
-  $eman_coran=array('description'=>'EMAN refine followed by SPIDER coran subclassification','setting'=>'EMAN/SpiCoran');
+  $eman      = array(
+		'description'=>'<b><font color="#00cc00">Normal EMAN refine</font></b>',
+		'setting'=>'EMAN');
+  $eman_msgp = array(
+		'description'=>'<b><font color="#cc0000">EMAN refine with Message Passing</font></b>',
+		'setting'=>'EMAN/MsgP');
+  $eman_coran= array(
+		'description'=>'<b><font color="#0000cc">EMAN refine with SPIDER Coran</font></b>',
+		'setting'=>'EMAN/SpiCoran');
 	$packages=array('EMAN'=>$eman,'EMAN/SpiCoran'=>$eman_coran,'EMAN/MsgP'=>$eman_msgp);
   if ($jobId) {
 		echo "$package<input type='hidden' name='package' value='$package'><br/>\n";
-		echo "&nbsp;Desc: '".$packages[$package]['description']."'<br/>\n";
+		echo "Type: '".$packages[$package]['description']."'<br/>\n";
 		echo "<br/>\n";
 	} else {
 		echo "Process Used:
@@ -212,16 +218,16 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <p>
       <b>Snapshot Options:</b>
       <br>
-      <input type='text' name='contour' value='$contour' size='5'> Contour Level
+      <input type='text' name='contour' value='$contour' size='4'> Contour Level
       <br>
-      <input type='text' name='zoom' value='$zoom' size='5'>
+      <input type='text' name='zoom' value='$zoom' size='4'>
 		";	
 	echo docpop('snapzoom','Zoom');
 	echo "
       <br>
-      <input type='text' name='filter' value='$filter' size='5'>
+      <input type='text' name='filter' value='$filter' size='4'>
 		";	
-	echo docpop('snapfilter','Fixed Low Pass Filter (Angstrum)');
+	echo docpop('snapfilter','Fixed Low Pass Filter <i>(in &Aring;ngstr&ouml;ms)</i>');
 	echo "
       <P>
       </td>
