@@ -702,7 +702,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		"""
 		waited = False
 		if showcmd is True:
-			sys.stderr.write(apDisplay.colorString("ACE2: ","magenta")+ace2cmd+"\n")
+			os.sys.stderr.write(apDisplay.colorString("ACE2: ","magenta")+ace2cmd+"\n")
 		t0 = time.time()
 		try:
 			if logfile is not None:
@@ -720,7 +720,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				while ace2proc.poll() is None:
 					if waittime > 10:
 						waited = True
-						sys.stderr.write(".")
+						os.sys.stderr.write(".")
 					waittime *= 1.1
 					time.sleep(waittime)
 		except:
