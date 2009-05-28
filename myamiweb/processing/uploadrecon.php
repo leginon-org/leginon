@@ -57,6 +57,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       elseif (preg_match('/^msgPassing_subClassification.py\s/',$line)) $package='EMAN/MsgP';
       if ($stackid && $modelid && $package) break;
     }
+    if (file_exists($jobinfo['appath'].'/classes_coran.1.hed'))
+      $package='EMAN/SpiCoran';
   }
 
   if($_POST['projectId'])
