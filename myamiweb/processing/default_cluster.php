@@ -90,6 +90,7 @@ class Cluster {
 
 		$clusterjob.= "\nmv $clusterfullpath/recon/* $clusterfullpath/.\n";
 		$clusterjob.= "\nmv $clusterfullpath/recon/.* $clusterfullpath/.\n";
+		$clusterjob.= "\ncd $clusterfullpath\n";
 		$clusterjob.= "\nrm -rf $clusterfullpath/recon\n";
 		return $clusterjob;
 	}
