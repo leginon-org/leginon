@@ -5,7 +5,6 @@ import ConfigParser
 debug = True
 
 HOME = os.path.expanduser('~')
-CURRENT = os.getcwd()
 modulepath = os.path.dirname(__file__)
 
 configfilename = 'sinedon.cfg'
