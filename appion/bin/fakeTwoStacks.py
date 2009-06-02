@@ -36,7 +36,7 @@ class fakeStackScript(appionScript.AppionScript):
 		self.parser.add_option("--density", dest="density", 
 			default="/ami/data13/appion/06jul12a/refine/logsplit2/run55351/threed.20a.mrc",
 			help="density file, e.g. --density=groel.mrc", metavar="NAME")
-		self.parser.add_option("--slop", dest="slop", type="float", default=3.0,
+		self.parser.add_option("--slop", dest="slop", type="float", default=0.0,
 			help="sloppiness in Euler angles", metavar="INT")
 		self.parser.add_option("--slop-cam", dest="slopcam", type="float", default=0.0,
 			help="sloppiness in Camera locations", metavar="INT")
@@ -341,15 +341,15 @@ class fakeStackScript(appionScript.AppionScript):
 		phi = int(round(random.random()*360.0,0))
 		"""
 		#alt = int(round(random.random()*90.0,0))
-		#alt = int(round(random.random()*180.0,0))
+		alt = int(round(random.random()*180.0,0))
 		#alt = 0
-		alt = random.gauss(0,self.params['slop'])
+		#alt = random.gauss(0,self.params['slop'])
 		#az = int(round(random.random()*51.43,0))
-		#az = int(round(random.random()*360.0,0))
+		az = int(round(random.random()*360.0,0))
 		#az = 0
-		az = random.gauss(0,self.params['slop'])
-		#phi = int(round(random.random()*360.0,0))
-		phi = int(round(random.random()*6.0,0))*60 + random.gauss(0,self.params['slop'])
+		#az = random.gauss(0,self.params['slop'])
+		phi = int(round(random.random()*360.0,0))
+		#phi = int(round(random.random()*6.0,0))*60 + random.gauss(0,self.params['slop'])
 		#phi = 0
 		return (alt, az, phi)
 
