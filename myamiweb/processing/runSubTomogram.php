@@ -66,9 +66,17 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	$bin = ($_POST['bin']) ? $_POST['bin'] : 1;
 	$invertv = ($_POST['invert']=="on") ? "CHECKED" : "";
 	$description = $_POST['description'];
+	$regiontype = ($_POST['regiontype']) ? $_POST['regiontype'] : "";
 
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$prtlrunIds = $particle->getParticleRunIds($expId);
+	// find each stack entry in database
+	// THIS IS REALLY, REALLY SLOW
+	$stackIds = $particle->getStackIds($expId);
+	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackidval=$stackinfo[0];
+	$apix=$stackinfo[1];
+	$box=$stackinfo[2];
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];
   
@@ -76,13 +84,38 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
   <TABLE BORDER=3 CLASS=tableborder>
   <TR>
     <TD VALIGN='TOP'>\n";
-	
-	$prtlruns=count($prtlrunIds);
+	$regionselections = array();
+	if ($stackIds) $regionselections['s']="Stack Created";
+	if ($prtlrunIds) $regionselections['p']="Particle Selection Run";
+	if (!$regionselections) {
+		echo"<B>ERROR:</B> Need either particle selection run or stack";
+	} else {
+		if (count($regionselections) == 1) {
+			$keys = array_keys($regionselections);
+			echo "<input type='hidden' name='regiontype' value='$keys[0]'>\n";
+		} else {
+			array_unshift($regionselections,"--SELECT ONE-- ");
+			echo docpop('tomoregiontype','Subtomogram Selected from:');
+			echo "<select name='regiontype'onchange=submit()>\n";
+			foreach (array_keys($regionselections) as $type){
+				echo "<OPTION value='$type'";
+				// select previously set prtl on resubmit
+				if ($regiontype==$type) {
+					echo " SELECTED";
+				}
+				echo">$regionselections[$type]</OPTION>\n";
+			}
+			echo "</SELECT>\n";
+			echo "<br/>\n";
+		}
+	}	
 
-	if (!$prtlrunIds) {
-		echo"<font class='apcomment' size='+2'><b>No Particles for this Session</b></font>\n";
-	}
-	else {
+	if ($regiontype=='p') {
+		if (!$prtlrunval) {
+			$runname = "subtomo_pick".$prtlrunIds[0][DEF_id];
+		} else {
+			$runname = "subtomo_pick".$prtlrunval;
+		}
 		echo docpop('stackparticles','Particles:');
 		echo "<select name='prtlrunId'onchange=submit()>\n";
 		foreach ($prtlrunIds as $prtlrun){
@@ -94,11 +127,20 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 			// select previously set prtl on resubmit
 			if ($prtlrunval==$prtlrunId) {
 				echo " SELECTED";
-				$runname = 'subtomo_pick'.$prtlrunval;
 			}
 			echo">$prtlrunname ($totprtls prtls)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
+		echo "<br/>\n";
+	}
+	if ($regiontype=='s') {
+		if (!$stackidval) {
+			$runname = "subtomo_stack".$stackIds[0][stackid];
+		} else {
+			$runname = "subtomo_stack".$stackidval;
+		}
+		echo docpop('tomostack','Stack:');
+		$particle->getStackSelector($stackIds,$stackidval,'submit()');
 	}
 	echo "<br/>\n";
   echo "<P>";
@@ -124,13 +166,13 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 		<br />";
 	echo "
       <P>";
-	echo docpop('bin','Binning');
+	echo docpop('subtomobin','Binning');
 	echo "
       <INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>\n";
 	echo "<FONT>(relative to full tomogram)</FONT>
 		<br />";
 	echo "<input type='checkbox' name='invert' $invertv>\n";
-	echo docpop('invert',' Invert image density');
+	echo docpop('tomoinvert',' Invert image density');
 	echo "<br />\n";
 	echo"<P>
 			<B> Sub-Tomogram Description:</B><br>
@@ -209,7 +251,6 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 }
 
 function runSubTomogram() {
-
 	$projectId=$_SESSION['projectId'];
 	$expId = $_GET['expId'];
 	$outdir = $_POST['outdir'];
@@ -221,6 +262,8 @@ function runSubTomogram() {
 	$tiltseriesnumber = $_POST['tiltseriesnumber'];
 	$runname=$_POST['runname'];
 	$prtlrunId=$_POST['prtlrunId'];
+	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackidval=$stackinfo[0];
 	$sizex=$_POST['sizex'];
 	$sizey=$_POST['sizey'];
 	$sizez=$_POST['sizez'];
@@ -234,6 +277,8 @@ function runSubTomogram() {
 	if (!$tiltseriesId) createSubTomogramForm("<B>ERROR:</B> Select the tilt series");
 //make sure a tomogram was entered
 	if (!$runname) createSubTomogramForm("<B>ERROR:</B> Select a full tomogram to be boxed");
+	//make sure a particle run or stack is chosen
+	if (!$prtlrunId && !$stackidval) createSubTomogramForm("<B>ERROR:</B> Select a particle run or stack");
 	//make sure a description was provided
 	$description=$_POST['description'];
 	if (!$description) createSubTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
@@ -244,7 +289,8 @@ function runSubTomogram() {
 	$command.="--projectid=$projectId ";
 	$command.="--fulltomoId=$fulltomoId ";
 	$command.="--runname=$runname ";
-	$command.="--selexonId=$prtlrunId ";
+	if ($prtlrunId) $command.="--selexonId=$prtlrunId ";
+	if ($stackidval) $command.="--stackId=$stackidval ";
 	$command.="--sizex=$sizex ";
 	$command.="--sizey=$sizey ";
 	if ($sizez > 0)
@@ -296,7 +342,10 @@ function runSubTomogram() {
 	$command
 	</TD></tr>
 	<TR><td>subtomogram runname</TD><td>$runname</TD></tr>
-	<TR><td>particle selection id</TD><td>$prtlrunId</TD></tr>
+	";
+	if ($stackidval) echo "<TR><td>stack id</TD><td>$stackidval</TD></tr>";
+	if ($prtlrunId) echo "<TR><td>particle selection id</TD><td>$prtlrunId</TD></tr>";
+	echo"
 	<TR><td>tiltseries number</TD><td>$tiltseriesnumber</TD></tr>
 	<TR><td>fulltomogram id</TD><td>$fulltomoId</TD></tr>
 	<TR><td>session</TD><td>$sessionname</TD></tr>
