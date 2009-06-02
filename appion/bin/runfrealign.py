@@ -176,7 +176,7 @@ class frealignJob(appionScript.AppionScript):
 				       help="number of refinement iterations to perform")
 		self.parser.add_option('--noctf', dest='noctf', default=False, action='store_true',
 				       help="choose if frealign should not perform ctf correction")
-		self.parser.add_option('--iter', dest='iter', default=None, type='int',
+		self.parser.add_option('--iter', dest='iter', default=0, type='int',
 					help="continue previous run from this iteration number")
 	#=====================
 	def checkConflicts(self):
@@ -252,7 +252,7 @@ class frealignJob(appionScript.AppionScript):
 	def runSingle(params):
 		jobname='frealign.job'
 		createFrealignJob(params, jobname)
-		command='freaalign < ' + jobname
+		command='frealign < ' + jobname
 		print 'command is',command
 		proc = subprocess.Popen(command, shell=True)
 		proc.wait()

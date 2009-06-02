@@ -449,6 +449,7 @@ def submitMultipleJobs(params):
 	cmd = 'mpiexec --app '+params['mp_script']
 	print cmd
 	proc = subprocess.Popen(cmd, shell=True)
+	proc.wait()
 
 #===============
 def combineMultipleJobs(params):
