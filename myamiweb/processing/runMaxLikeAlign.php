@@ -65,7 +65,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		}
 		function estimatetime() {
 			var secperiter = 0.12037;
-			var stackvars = document.viewerform.stackid.value;
+			var stackvars = document.viewerform.stackval.value;
 			var stackArray = stackvars.split('|~~|');
 			var numpart = document.viewerform.numpart.value;
 			var boxsize = stackArray[2];
@@ -154,7 +154,10 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
 	} else {
 		echo docpop('stack','<b>Select a stack of particles to use</b>');
-		echo "<br/>\n<select name='stackid' onchange='switchDefaults(this.value)'>\n";
+		echo "<br/>";
+		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
+		/*
+		echo "<br/>\n<select name='stackval' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -180,6 +183,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 			echo " $boxsz pixels)</option>\n";
 		}
 		echo "</SELECT><br/>\n";
+		*/
 	}
 	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
@@ -285,7 +289,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -295,7 +299,7 @@ function runMaxLikeAlign() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-	$stackvars=$_POST['stackid'];
+	$stackvars=$_POST['stackval'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
 	$numpart=$_POST['numpart'];
@@ -312,7 +316,7 @@ function runMaxLikeAlign() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackvars);
 
 	//make sure a session was selected
 

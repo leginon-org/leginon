@@ -67,10 +67,10 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 
 	// make sure that box sizes are the same
 	// get stack data
-	//	$stackinfo = explode('|--|',$_POST['stackval']);
+	//	$stackinfo = explode('|~~|',$_POST['stackval']);
 	//$stackbox = $stackinfo[2];
 	// get model data
-	//$modelinfo = explode('|--|',$_POST['model']);
+	//$modelinfo = explode('|~~|',$_POST['model']);
 	//$modbox = $modelinfo[3];
 	//if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
@@ -104,7 +104,7 @@ elseif ($_POST['submitjob']) {
 
 	// add header & job id to the beginning of the script
 	// convert /\n's back to \n for the script
-	$header = explode('|--|',$_POST['header']);
+	$header = explode('|~~|',$_POST['header']);
 	$clusterjob = "## $jobname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
 
@@ -198,7 +198,7 @@ function stackModelForm($extra=False) {
 	 	 // find each stack entry in database
 	  	// THIS IS REALLY, REALLY SLOW
 		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|--|',$_POST['stackval']);
+		$stackinfo=explode('|~~|',$_POST['stackval']);
 		$stackidval=$stackinfo[0];
 		$apix=$stackinfo[1];
 		$box=$stackinfo[2];
@@ -226,35 +226,15 @@ function stackModelForm($extra=False) {
   </select>
   <P>\n";
 	if (!$modelonly) {
-		echo"<b>Stack:</b<br />";
-		echo "<select name='stackval'>\n";
-
-		foreach ($stackIds as $stackid){
-			// get stack parameters from database
-			$s=$particle->getStackParams($stackid['stackid']);
-			// get number of particles in each stack
-			$nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-			// get pixel size of stack
-			$apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-			// get box size
-			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-			// get stack path with name
-			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
-			// if imagic stack, send both hed & img files for dmf
-			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
-			echo "<OPTION VALUE='$opvals'";
-			// select previously set stack on resubmit
-			if ($stackid['stackid']==$stackidval) echo " SELECTED";
-			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
-		}
-		echo "</SELECT>\n";
+		echo"
+			<B>Stack:</B><br>";
+		$particle->getStackSelector($stackIds,$stackidval,'');
 	}
 	// show initial models
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
 	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
-	$minf = explode('|--|',$_POST['model']);
+	$minf = explode('|~~|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
 		foreach ($models as $model) {
 			echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
@@ -270,7 +250,7 @@ function stackModelForm($extra=False) {
 			$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 			$sym['symmetry'] = strtolower($sym['symmetry']);
 			echo "<tr><TD COLSPAN=2>\n";
-			$modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
+			$modelvals="$model[DEF_id]|~~|$model[path]|~~|$model[name]|~~|$model[boxsize]|~~|$sym[symmetry]";
 			if (!$modelonly) {
 				echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
 				// check if model was selected
@@ -325,11 +305,11 @@ function jobForm($extra=false) {
 
 
 	// get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
+	$stackinfo = explode('|~~|',$_POST['stackval']);
 	$box = $stackinfo[2];
 
 	// get model data
-	$modelinfo = explode('|--|',$_POST['model']);
+	$modelinfo = explode('|~~|',$_POST['model']);
 	$syminfo = explode(' ',$modelinfo[4]);
 	$modsym=$syminfo[0];
 	if ($modsym == 'Icosahedral') $modsym='icos';
@@ -770,13 +750,13 @@ function writeJobFile ($extra=False) {
 	$clusterdata->post_data();
 
 	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|--|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
 
 	// get the model id
-	$modelinfo=explode('|--|',$_POST['model']);
+	$modelinfo=explode('|~~|',$_POST['model']);
 	$modelid=$modelinfo[0];
 	$initmodel = $particle->getInitModelInfo($modelid);
 	if ($initmodel['boxsize'] != $box) $rebox = True; 
@@ -915,7 +895,7 @@ function writeJobFile ($extra=False) {
 	echo "<input type='hidden' NAME='outdir' value='$outdir'>\n";
 
 	// convert \n to /\n's for script
-	$header_conv=preg_replace('/\n/','|--|',$header);
+	$header_conv=preg_replace('/\n/','|~~|',$header);
 
 	echo "<input type='hidden' NAME='header' VALUE='$header_conv'>\n";
 	echo "<input type='submit' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";

@@ -843,6 +843,34 @@ class particledata {
                 return $r[0];
 	}
 
+	function getStackSelector($stackIds,$stackidval,$onchange) {
+		echo "<SELECT NAME='stackval'";
+		if ($onchange) echo "onchange='".$onchange."'";
+		echo ">\n";
+		foreach ($stackIds as $stackid){
+			// get stack parameters from database
+			$s=$this->getStackParams($stackid['stackid']);
+			// get number of particles in each stack
+			$totalp=$this->getNumStackParticles($stackid['stackid']);
+			$nump=commafy($totalp);
+			// get pixel size of stack
+			$apix=($this->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
+			// get box size
+			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
+			// get stack path with name
+			$opvals = "$stackid[stackid]|~~|$apix|~~|$box|~~|$totalp|~~|$s[path]|~~|$s[name]";
+			// if imagic stack, send both hed & img files for dmf
+			if (ereg('\.hed', $s['name'])) $opvals.='|~~|'.ereg_replace('hed','img',$s['name']);
+			if (ereg('\.img', $s['name'])) $opvals.='|~~|'.ereg_replace('img','hed',$s['name']);
+			echo "<OPTION VALUE='$opvals'";
+			// select previously set stack on resubmit
+			if ($stackid['stackid']==$stackidval) echo " SELECTED";
+			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
+		}
+		echo "</SELECT>\n";
+		return $apix;
+	}
+
 	function getParticlesFromImageId ($runId, $imageId){
 		$q = "select p.DEF_id as id, "
 			."p.xcoord, p.ycoord, p.correlation, "

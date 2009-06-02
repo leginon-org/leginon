@@ -40,10 +40,10 @@ elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
 
 	## make sure that box sizes are the same
 	## get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
+	$stackinfo = explode('|~~|',$_POST['stackval']);
 	$stackbox = $stackinfo[2];
 	## get model data
-	$modelinfo = explode('|--|',$_POST['model']);
+	$modelinfo = explode('|~~|',$_POST['model']);
 	$modbox = $modelinfo[3];
 	#if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
@@ -84,7 +84,7 @@ function stackModelForm($extra=False) {
 		// find each stack entry in database
 		// THIS IS REALLY, REALLY SLOW
 		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|--|',$_POST['stackval']);
+		$stackinfo=explode('|~~|',$_POST['stackval']);
 		$stackidval=$stackinfo[0];
 		$apix=$stackinfo[1];
 		$box=$stackinfo[2];
@@ -115,35 +115,14 @@ function stackModelForm($extra=False) {
   <P>\n";
 	if (!$modelonly) {
 		echo"
-    <B>Stack:</B><br>";
-		echo "<SELECT NAME='stackval'>\n";
-
-		foreach ($stackIds as $stackid){
-			// get stack parameters from database
-			$s=$particle->getStackParams($stackid['stackid']);
-			// get number of particles in each stack
-			$nump=commafy($particle->getNumStackParticles($stackid['stackid']));
-			// get pixel size of stack
-			$apix=($particle->getStackPixelSizeFromStackId($stackid['stackid']))*1e10;
-			// get box size
-			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
-			// get stack path with name
-			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$s[path]|--|$s[name]";
-			// if imagic stack, send both hed & img files for dmf
-			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
-			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
-			echo "<OPTION VALUE='$opvals'";
-			// select previously set stack on resubmit
-			if ($stackid['stackid']==$stackidval) echo " SELECTED";
-			echo">$s[shownstackname] ID: $stackid[stackid] ($nump particles, $apix &Aring;/pix, ".$box."x".$box.")</OPTION>\n";
-		}
-		echo "</SELECT>\n";
+			<B>Stack:</B><br>";
+		$particle->getStackSelector($stackIds,$stackidval,"");
 	}
 	//  show initial models
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
 	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
-	$minf = explode('|--|',$_POST['model']);
+	$minf = explode('|~~|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
 	  foreach ($models as $model) {
 	    echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
@@ -158,7 +137,7 @@ function stackModelForm($extra=False) {
 	    // display starting models
 	    $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 	    echo "<tr><TD COLSPAN=2>\n";
-	    $modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
+	    $modelvals="$model[DEF_id]|~~|$model[path]|~~|$model[name]|~~|$model[boxsize]|~~|$sym[symmetry]";
 	    if (!$modelonly) {
 	      echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
 	      // check if model was selected
@@ -206,7 +185,7 @@ function jobForm($extra=false) {
 	$defrunid = 'frealign_recon'.($reconruns+1);
 
 	## get stack data
-	$stackinfo = explode('|--|',$_POST['stackval']);
+	$stackinfo = explode('|~~|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$nump=$particle->getNumStackParticles($stackidval);
 	$apix=$stackinfo[1];
@@ -227,7 +206,7 @@ function jobForm($extra=false) {
 	}
 	
 	## get model data
-	$modelinfo = explode('|--|',$_POST['model']);
+	$modelinfo = explode('|~~|',$_POST['model']);
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];
 	$dmfmod = $modelinfo[2];
@@ -509,14 +488,14 @@ function writeJobFile ($extra=False) {
 
 
 	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|--|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$stackpath=$stackinfo[3];
 	$stackname1=$stackinfo[4];
 	$stackname2=$stackinfo[5];
  
 	// get the model id
-	$modelinfo=explode('|--|',$_POST['model']);
+	$modelinfo=explode('|~~|',$_POST['model']);
 	$modelid=$modelinfo[0];
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];
