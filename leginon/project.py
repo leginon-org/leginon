@@ -50,10 +50,7 @@ class ProjectData:
 		try:
 			dbparams = sinedon.getConfig('projectdata')
 		except:
-			try:
-				dbparams = sinedon.getConfig('projectData')
-			except:
-				raise NotConnectedError('no project database')
+			raise NotConnectedError('no project database')
 		if not dbparams['host']:
 			raise NotConnectedError('no hostname for project database')
 		try:
