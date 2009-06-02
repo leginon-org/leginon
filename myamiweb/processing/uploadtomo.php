@@ -67,10 +67,11 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$volume = ($_POST['lastrunname']==$runname && $_POST['lasttiltseries']==$tiltseriesId) ? $_POST['volume']:$autovolumename;
 	$tomofilename = ($_POST['tomofilename']) ? $_POST['tomofilename'] : '';
 	$xffilename = ($_POST['xffilename']) ? $_POST['xffilename'] : '';
+	$orientation = ($_POST['orientation']) ? $_POST['orientation'] : '';
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
 	$description = $_POST['description'];
 	$outdir .= $tomofilename.'mrc';
-
+print_r($_POST);
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];
@@ -90,7 +91,22 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
       <INPUT TYPE='text' NAME='xffilename' VALUE='$xffilename' SIZE='50'><br />\n
 	<B>Original Snapshot file name with path:</B><br>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
-	
+
+	$choices = array('XYZ:right-handed','XZY:right-handed','XZY:left-handed');	
+	$selector = '<select name="orientation" '
+				.'size=5 '
+				.'onchange=submit()>';
+	foreach ($choices as $choice) {
+		$selector .= '<option class="fixed" value='.$choice;
+		if ($choice == $orientation) {
+			$selector .= ' selected ';
+			$selected_number = $number;
+		}
+		$selector .= '>'.$choice.'</option>';
+	}
+	$selector .= '</select>';
+	echo $selector;
+	echo docpop('tomoorientation', 'Tomogram Orientation');
 	echo"<P>
       <B>Tomogram Description:</B><br>
       <TEXTAREA NAME='description' ROWS='2' COLS='40'>$description</TEXTAREA>
@@ -171,6 +187,7 @@ function runUploadTomogram() {
 	$sessionname=$_POST['sessionname'];
 	$extrabin=$_POST['extrabin'];
 	$snapshot=$_POST['snapshot'];
+	$orientation=$_POST['orientation'];
 
 	//make sure a tilt series was provided
 	if (!$tiltseriesId) createUploadTomogramForm("<B>ERROR:</B> Select the tilt series");
@@ -180,6 +197,18 @@ function runUploadTomogram() {
 	$description=$_POST['description'];
 	if (!$description) createUploadTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
+	$transform = '';
+	if ($orientation) {
+		$splitorientation = explode(':',$orientation);
+		$order = $splitorientation[0];
+		$handness = $splitorientation[1];
+		if ($handness == 'left-handed') $transform .=" flipyz";
+		if ($volume) {
+			if ($order !='XYZ') $transform .=" rotx";
+		} else {
+			if ($order !='XZY') $transform .=" rotx";
+		}
+	} 
 	$particle = new particledata();
 	$tiltseriesinfos = $particle ->getTiltSeriesInfo($tiltseriesId);
 	$apix = $tiltseriesinfos[0]['ccdpixelsize'] * $tiltseriesinfos[0]['imgbin'] * $extrabin * 1e10;
@@ -191,6 +220,8 @@ function runUploadTomogram() {
 	$command.="--tiltseries=$tiltseriesnumber ";
 	$command.="--projectid=$projectId ";
 	$command.="--runname=$runname ";
+	if ($transform) $command.="--transform=\"$transform\" ";
+	if ($order) $command.="--order=$order ";
 	if ($volume) $command.="--volume=$volume ";
 	if ($xffilename) $command.="--xffile=$xffilename ";
 	$command.="--description=\"$description\" ";
