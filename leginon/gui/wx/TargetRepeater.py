@@ -9,13 +9,11 @@ import gui.wx.Settings
 import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
-	icon = 'targetrepeater'
+	icon = 'targetfilter'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
-													'settings',
-													shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 
 		self.toolbar.Realize()
@@ -25,6 +23,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
+		print 'AAAAAA'
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
 
 	def onSettingsTool(self, evt):

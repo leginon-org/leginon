@@ -1861,6 +1861,7 @@ class TargetRepeaterSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('bypass', bool),
 		)
+	typemap = classmethod(typemap)
 
 class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 	def typemap(cls):

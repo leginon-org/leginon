@@ -160,6 +160,10 @@ type: Pipeline
 module: rastertargetfilter
 type: Pipeline
 
+[TestRepeater]
+module: testrepeater
+type: Pipeline
+
 [ClickTargetTransformer]
 module: clicktargettransformer
 type: Utility
