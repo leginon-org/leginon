@@ -198,6 +198,21 @@ class SpiderSession:
 			self.spiderin.write(str(item) + '\n')
 		#self.spiderin.flush()
 
+	def getreg(self, varname):
+		### this is broken
+		return None
+		varname = varname.strip()
+		### need to read stdout, but I cannot get the handle 
+		### if it writing to spider.log or /dev/null
+		self.spidererr.readline()
+		if varname[0] != '[' and not re.match("[xX]\d\d", varname):
+			varname = '[' + varname + ']'
+		self.toSpiderQuiet(varname)
+
+		line = self.spidererr.readline()
+		regvar = line.strip()
+		return regvar
+
 	def close(self, delturds=1):
 		self.toSpiderQuiet("EN D") # end the spider process,
 		self.toSpiderQuiet("EN D") # end the spider process,
@@ -220,5 +235,6 @@ class SpiderSession:
 if __name__ == '__main__':
 	sp = SpiderSession(dataext='dat')
 	sp.toSpider("[size]=117")
+	sp.getreg('size')
 	sp.close()
 
