@@ -113,8 +113,6 @@ function createTemplateForm() {
 //***************************************
 function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher', $heading='Perform a reference-based Alignment') {
   // check if coming directly from a session
-	//echo print_r($_POST);
-
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
@@ -174,7 +172,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackidval =$_POST['stackid'];
+	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackidval=$stackinfo[0];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
@@ -188,31 +187,46 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
 	$firstring = ($_POST['firstring']) ? $_POST['firstring'] : '4';
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
+	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
 
-
-	$templateCheck='';
-	$templateTable.="<table><TR>\n";
-	for ($i=1; $i<=$_POST['numtemplates']; $i++) {
-		$templateimg = "template".$i;
-		if ($_POST[$templateimg]){
+	if (!$templateList) {
+		$templateTable.="<table><TR>\n";
+		for ($i=1; $i<=$_POST['numtemplates']; $i++) {
+			$templateimg = "template".$i;
+			if ($_POST[$templateimg]){
+				$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
+				$templateIdName="templateId".$i;
+				$templateId=$_POST[$templateIdName];
+				$templateList.=$i.":".$templateId.",";
+				$templateinfo=$particle->getTemplatesFromId($templateId);
+				$filename=$templateinfo[path]."/".$templateinfo['templatename'];
+				$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
+				$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
+				$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
+				$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
+				$templateTable.="</table></TD>\n";
+			}
+		}
+		$templateTable.="</tr></table>\n";
+		if ($templateList) { $templateList=substr($templateList,0,-1);}
+		else {
+			echo "<br><B>no templates chosen, go back and choose templates</B>\n";
+			exit;
+		}
+	} else {
+		//get template info if coming from resubmitting input
+		$templateIds = templateIds();
+		$templatearray=split(",",$templateIds);
+		$templateTable.="<table><TR>\n";
+		foreach ($templatearray as $templateId) {
 			$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
-			$templateIdName="templateId".$i;
-			$templateId=$_POST[$templateIdName];
-			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
 			$filename=$templateinfo[path]."/".$templateinfo['templatename'];
 			$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
 			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
-			$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
-			$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
 			$templateTable.="</table></TD>\n";
 		}
-	}
-	$templateTable.="</tr></table>\n";
-	if ($templateList) { $templateList=substr($templateList,0,-1);}
-	else {
-		echo "<br><B>no templates chosen, go back and choose templates</B>\n";
-		exit;
+		$templateTable.="</tr></table>\n";
 	}
 	echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
 	echo "<INPUT TYPE='hidden' NAME='templates' VALUE='continue'>\n";
@@ -250,8 +264,9 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	}
 	else {
 		echo "
-		Particles:<br>
-		<SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
+		Particles:<br/>";
+		$particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
+/*		<SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -271,6 +286,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
+*/
 	}
 	echo"
 		</TD>
@@ -362,7 +378,7 @@ function runAlignment() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$stackvars=$_POST['stackid'];
+	$stackvars=$_POST['stackval'];
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	$lastring=$_POST['lastring'];
 	$firstring=$_POST['firstring'];
@@ -406,7 +422,7 @@ function runAlignment() {
 
 	$command="refBasedAlignment2.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--template-list=".templateCommand()." ";
+	$command.="--template-list=".templateIds()." ";
 	$command.="--runname=$runname ";
 	$command.="--stack=$stackid ";
 
@@ -449,7 +465,7 @@ function runAlignment() {
 		</TD></tr>
 		<TR><td>runname</TD><td>$runname</TD></tr>
 		<TR><td>stackid</TD><td>$stackid</TD></tr>
-		<TR><td>refids</TD><td>".templateCommand()."</TD></tr>
+		<TR><td>refids</TD><td>".templateIds()."</TD></tr>
 		<TR><td>iter</TD><td>$iters</TD></tr>
 		<TR><td>numpart</TD><td>$numpart</TD></tr>
 		<TR><td>last ring</TD><td>$lastring</TD></tr>
@@ -472,7 +488,7 @@ function runAlignment() {
 **
 */
 
-function templateCommand () {
+function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templateList=$_POST['templateList'];
@@ -483,8 +499,6 @@ function templateCommand () {
 	}
 	$templateIds=substr($templateIds,0,-1);
 	return $templateIds;
-	$command.="refids=$templateIds ";
-	return $command;
 }
 
 ?>
