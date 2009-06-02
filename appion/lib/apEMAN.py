@@ -180,7 +180,7 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 		if verbose is True:
 #			emanproc.wait()
 			out, err = emanproc.communicate()
-			print out, err
+			print "EMAN error", out, err
 		else:
 			out, err = emanproc.communicate()
 			### continuous check
