@@ -44,6 +44,9 @@ class DBDataKeeper(object):
 	def ping(self):
 		self.dbd.ping()
 
+	def close(self):
+		self.dbd.close()
+
 	def direct_query(self, dataclass, id, readimages=True):
 		dummy = dataclass()
 		dummy.isRoot = True

@@ -2,7 +2,7 @@
 import os
 import ConfigParser
 
-debug = True
+debug = False
 
 HOME = os.path.expanduser('~')
 modulepath = os.path.dirname(__file__)

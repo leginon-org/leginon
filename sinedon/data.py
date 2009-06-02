@@ -167,9 +167,9 @@ class DataManager(object):
 					break
 				if not self.limitreached:
 					self.limitreached = True
-					print '************************************************************************'
-					print '***** DataManager size reached, removing data as needed ******'
-					print '************************************************************************'
+					#print '************************************************************************'
+					#print '***** DataManager size reached, removing data as needed ******'
+					#print '************************************************************************'
 				self.remove(key)
 		finally:
 			self.lock.release()
@@ -481,6 +481,11 @@ class Data(newdict.TypedDict):
 		db = connections.getConnection(modulename)
 		results = db.query(self, **kwargs)
 		return results
+
+	def close(self):
+		modulename = self.__module__
+		db = connections.getConnection(modulename)
+		db.close()
 
 	def direct_query(cls, dbid, **kwargs):
 		modulename = cls.__module__
