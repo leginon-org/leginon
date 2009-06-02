@@ -554,7 +554,7 @@ def mergeStacks(stacklist, mergestack):
 	if finalsize != totalsize:
 		apDisplay.printError("size mismatch %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
 	apDisplay.printMsg("size match %s vs. %s"%(apDisplay.bytes(finalsize), apDisplay.bytes(totalsize)))
-
+	apDisplay.printMsg("finished stack merge in "+apDisplay.timeString(time.time()-t0))	
 
 #===============
 def readParticleListFromStack(filename, partlist, boxsize=None, msg=True):
