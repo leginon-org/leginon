@@ -17,6 +17,7 @@ import apDatabase
 import apParam
 import apFile
 import apProject
+import appionData
 #leginon
 import sinedon
 from pyami import mem
@@ -143,6 +144,8 @@ class AppionScript(object):
 	#=====================
 	def close(self):
 		self.onClose()
+		#a = appionData.ApPathData()
+		#a.close()
 		loadavg = os.getloadavg()[0]
 		if loadavg > 2.0:
 			apDisplay.printMsg("Load average is high "+str(round(loadavg,2)))
