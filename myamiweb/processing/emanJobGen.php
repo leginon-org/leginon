@@ -63,11 +63,11 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 	// create job form
 	## make sure a stack and model were selected
 	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
+	if (!$_POST['stackvars']) stackModelForm("ERROR: no stack selected");
 
 	// make sure that box sizes are the same
 	// get stack data
-	//	$stackinfo = explode('|~~|',$_POST['stackval']);
+	//	$stackinfo = explode('|~~|',$_POST['stackvars']);
 	//$stackbox = $stackinfo[2];
 	// get model data
 	//$modelinfo = explode('|~~|',$_POST['model']);
@@ -198,7 +198,7 @@ function stackModelForm($extra=False) {
 	 	 // find each stack entry in database
 	  	// THIS IS REALLY, REALLY SLOW
 		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|~~|',$_POST['stackval']);
+		$stackinfo=explode('|~~|',$_POST['stackvars']);
 		$stackidval=$stackinfo[0];
 		$apix=$stackinfo[1];
 		$box=$stackinfo[2];
@@ -305,7 +305,7 @@ function jobForm($extra=false) {
 
 
 	// get stack data
-	$stackinfo = explode('|~~|',$_POST['stackval']);
+	$stackinfo = explode('|~~|',$_POST['stackvars']);
 	$box = $stackinfo[2];
 
 	// get model data
@@ -348,7 +348,7 @@ function jobForm($extra=false) {
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
-	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+	echo "<input type='hidden' name='stackvars' value='".$_POST['stackvars']."'>\n";
 
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
 	echo "<tr><td>\n";
@@ -750,7 +750,7 @@ function writeJobFile ($extra=False) {
 	$clusterdata->post_data();
 
 	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackvars']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];

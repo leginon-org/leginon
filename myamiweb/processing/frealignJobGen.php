@@ -36,11 +36,11 @@ if ($_POST['write']) {
 elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
 	## make sure a stack and model were selected
 	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
+	if (!$_POST['stackvars']) stackModelForm("ERROR: no stack selected");
 
 	## make sure that box sizes are the same
 	## get stack data
-	$stackinfo = explode('|~~|',$_POST['stackval']);
+	$stackinfo = explode('|~~|',$_POST['stackvars']);
 	$stackbox = $stackinfo[2];
 	## get model data
 	$modelinfo = explode('|~~|',$_POST['model']);
@@ -84,7 +84,7 @@ function stackModelForm($extra=False) {
 		// find each stack entry in database
 		// THIS IS REALLY, REALLY SLOW
 		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|~~|',$_POST['stackval']);
+		$stackinfo=explode('|~~|',$_POST['stackvars']);
 		$stackidval=$stackinfo[0];
 		$apix=$stackinfo[1];
 		$box=$stackinfo[2];
@@ -185,7 +185,7 @@ function jobForm($extra=false) {
 	$defrunid = 'frealign_recon'.($reconruns+1);
 
 	## get stack data
-	$stackinfo = explode('|~~|',$_POST['stackval']);
+	$stackinfo = explode('|~~|',$_POST['stackvars']);
 	$stackidval=$stackinfo[0];
 	$nump=$particle->getNumStackParticles($stackidval);
 	$apix=$stackinfo[1];
@@ -235,7 +235,7 @@ function jobForm($extra=false) {
 	echo "<form name='frealignjob' method='post' action='$formaction'><br />\n";
 	echo "<p>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
-	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
+	echo "<input type='hidden' name='stackvars' value='".$_POST['stackvars']."'>\n";
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>\n";
@@ -488,7 +488,7 @@ function writeJobFile ($extra=False) {
 
 
 	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackvars']);
 	$stackidval=$stackinfo[0];
 	$stackpath=$stackinfo[3];
 	$stackname1=$stackinfo[4];

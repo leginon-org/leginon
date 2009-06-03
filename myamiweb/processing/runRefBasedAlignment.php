@@ -172,7 +172,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackvars']);
 	$stackidval=$stackinfo[0];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
@@ -378,7 +378,7 @@ function runAlignment() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$stackvars=$_POST['stackval'];
+	$stackvars=$_POST['stackvars'];
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	$lastring=$_POST['lastring'];
 	$firstring=$_POST['firstring'];

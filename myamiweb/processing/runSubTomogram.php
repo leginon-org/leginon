@@ -73,7 +73,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	// find each stack entry in database
 	// THIS IS REALLY, REALLY SLOW
 	$stackIds = $particle->getStackIds($expId);
-	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackvars']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
@@ -262,7 +262,7 @@ function runSubTomogram() {
 	$tiltseriesnumber = $_POST['tiltseriesnumber'];
 	$runname=$_POST['runname'];
 	$prtlrunId=$_POST['prtlrunId'];
-	$stackinfo=explode('|~~|',$_POST['stackval']);
+	$stackinfo=explode('|~~|',$_POST['stackvars']);
 	$stackidval=$stackinfo[0];
 	$sizex=$_POST['sizex'];
 	$sizey=$_POST['sizey'];

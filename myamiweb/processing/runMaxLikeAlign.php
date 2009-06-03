@@ -65,7 +65,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		}
 		function estimatetime() {
 			var secperiter = 0.12037;
-			var stackvars = document.viewerform.stackval.value;
+			var stackvars = document.viewerform.stackvars.value;
 			var stackArray = stackvars.split('|~~|');
 			var numpart = document.viewerform.numpart.value;
 			var boxsize = stackArray[2];
@@ -116,7 +116,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		$alignruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
 	$description = $_POST['description'];
-	$stackidstr = $_POST['stackid'];
+	$stackidstr = $_POST['stackvars'];
 	list($stackidval) = split('\|~~\|',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
@@ -157,7 +157,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo "<br/>";
 		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 		/*
-		echo "<br/>\n<select name='stackval' onchange='switchDefaults(this.value)'>\n";
+		echo "<br/>\n<select name='stackvars' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -289,7 +289,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackvars.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -299,7 +299,7 @@ function runMaxLikeAlign() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-	$stackvars=$_POST['stackval'];
+	$stackvars=$_POST['stackvars'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
 	$numpart=$_POST['numpart'];
@@ -316,8 +316,7 @@ function runMaxLikeAlign() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackvars);
-
+	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	//make sure a session was selected
 
 	if (!$description)

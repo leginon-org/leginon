@@ -86,7 +86,8 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'multiRefAlign'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackidval =$_POST['stackid'];
+	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackidval=$stackinfo[0];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
@@ -273,7 +274,7 @@ function runAlignment() {
 	$rundir  = $_POST['rundir'];
 	$runname = $_POST['runname'];
 
-	$stackvars = $_POST['stackval'];
+	$stackvars = $_POST['stackvars'];
 	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = split('\|~~\|', $stackvars);
 
 	$templatestackvars=$_POST['templatestackid'];

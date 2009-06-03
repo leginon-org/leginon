@@ -844,7 +844,7 @@ class particledata {
 	}
 
 	function getStackSelector($stackIds,$stackidval,$onchange) {
-		echo "<SELECT NAME='stackval'";
+		echo "<SELECT NAME='stackvars'";
 		if ($onchange) echo "onchange='".$onchange."'";
 		echo ">\n";
 		foreach ($stackIds as $stackid){
