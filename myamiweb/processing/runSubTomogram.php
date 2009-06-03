@@ -33,9 +33,19 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	$projectId=$_SESSION['projectId'];
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	
-	$javafunctions .= writeJavaPopupFunctions('appion');  
+	$javascript = "<script src='../js/viewer.js'></script>\n";
+	$javascript .= "<script>\n";
+	$javascript .= "function switchDefaults(stackvars) {\n";
+	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	// set max last ring radius
+	$javascript .= "	var box = Math.floor(stackArray[2]);\n";
+	$javascript .= "	document.viewerform.sizex.value = box;\n";
+	$javascript .= "	document.viewerform.sizey.value = box;\n";
+	$javascript .= "}\n";
+	$javascript .= "</script>\n";
+	$javascript .= writeJavaPopupFunctions('appion');  
 	
-	processing_header($title,$heading,$javafunctions);
+	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
 		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -140,7 +150,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 			$runname = "subtomo_stack".$stackidval;
 		}
 		echo docpop('tomostack','Stack:');
-		$particle->getStackSelector($stackIds,$stackidval,'submit()');
+		$particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 	}
 	echo "<br/>\n";
   echo "<P>";
@@ -245,7 +255,10 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	</tr>
   </table>
   </form>\n";
-
+	// first time loading page, set defaults:
+	if (!$_POST['process']) {
+		echo "<script>switchDefaults(document.viewerform.stackvars.options[0].value);</script>\n";
+	}
 	processing_footer();
 	exit;
 }
