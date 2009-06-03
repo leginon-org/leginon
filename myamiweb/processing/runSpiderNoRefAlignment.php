@@ -84,7 +84,8 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
 	$rundescrval = $_POST['description'];
-	$stackidval = $_POST['stackid'];
+	$stackidstr = $_POST['stackvars'];
+	list($stackidval) = split('\|~~\|',$stackidstr);
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'noref'.($alignruns+1)))
 		$alignruns += 1;
@@ -130,36 +131,9 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	}
 	else {
 		echo "
-		Particles:<br>
-		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
-		foreach ($stackIds as $stack) {
-			$stackparams=$particle->getStackParams($stack[stackid]);
-
-			// get pixel size and box size
-			$mpix=$particle->getStackPixelSizeFromStackId($stack['stackid']);
-			if ($mpix) {
-				$apix = $mpix*1E10;
-				$apixtxt=format_angstrom_number($mpix)."/pixel";
-			}
-			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
-
-			//handle multiple runs in stack
-			$stackname = $stackparams['shownstackname'];
-			if ($stackparams['substackname'])
-				$stackname .= "-".$stackparams['substackname'];
-
-			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
-			$stackid = $stack['stackid'];
-			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
-			// select previously set prtl on resubmit
-			if ($stackidval==$stackid) echo " SELECTED";
-			echo ">$stackid: $stackname ($totprtls prtls,";
-			if ($mpix) echo " $apixtxt,";
-			echo " $boxsz pixels)</OPTION>\n";
-		}
-		echo "</SELECT>\n";
+		Particles:<br>";
+		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 	}
-	echo"</SELECT><br>\n";
 	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";
 	echo docpop('initmethod','<B>Alignment initialization method:</B>');
@@ -252,7 +226,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackvars.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -265,7 +239,7 @@ function runSpiderNoRefAlign() {
 
 
 
-	$stackvars=$_POST['stackid'];
+	$stackvars=$_POST['stackvars'];
 	$partrad=$_POST['partrad'];
 	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
@@ -284,7 +258,6 @@ function runSpiderNoRefAlign() {
 	if (!$description) createSpiderNoRefAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
-	//$stackid=$_POST['stackid'];
 	if (!$stackid) createSpiderNoRefAlignForm("<B>ERROR:</B> No stack selected");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';

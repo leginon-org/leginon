@@ -181,7 +181,8 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'editer'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackidval =$_POST['stackid'];
+	$stackidstr = $_POST['stackvars'];
+	list($stackidval) = split('\|~~\|',$stackidstr);
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
@@ -195,31 +196,47 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$bestbin = ceil($boxsz/100);
 	$radius = ($_POST['radius']) ? $_POST['radius'] : ceil($boxsz/3.0*$firstmpix*1e10);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
+	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
 
-	$templateCheck='';
-	$templateTable.="<table><TR>\n";
-	for ($i=1; $i<=$_POST['numtemplates']; $i++) {
-		$templateimg = "template".$i;
-		if ($_POST[$templateimg]){
+	if (!$templateList) {
+		$templateTable.="<table><TR>\n";
+		for ($i=1; $i<=$_POST['numtemplates']; $i++) {
+			$templateimg = "template".$i;
+			if ($_POST[$templateimg]){
+				$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
+				$templateIdName="templateId".$i;
+				$templateId=$_POST[$templateIdName];
+				$templateList.=$i.":".$templateId.",";
+				$templateinfo=$particle->getTemplatesFromId($templateId);
+				$filename=$templateinfo[path]."/".$templateinfo['templatename'];
+				$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
+				$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
+				$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
+				$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
+
+				$templateTable.="</table></TD>\n";
+			}
+		}
+		$templateTable.="</tr></table>\n";
+		if ($templateList) { $templateList=substr($templateList,0,-1);}
+		else {
+			echo "<br><B>no templates chosen, go back and choose templates</B>\n";
+			exit;
+		}
+	} else {
+		//get template info if coming from resubmitting input
+		$templateIds = templateIds();
+		$templatearray=split(",",$templateIds);
+		$templateTable.="<table><TR>\n";
+		foreach ($templatearray as $templateId) {
 			$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
-			$templateIdName="templateId".$i;
-			$templateId=$_POST[$templateIdName];
-			$templateList.=$i.":".$templateId.",";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
 			$filename=$templateinfo[path]."/".$templateinfo['templatename'];
 			$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
 			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
-			$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
-			$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
-
 			$templateTable.="</table></TD>\n";
 		}
-	}
-	$templateTable.="</tr></table>\n";
-	if ($templateList) { $templateList=substr($templateList,0,-1);}
-	else {
-		echo "<br><B>no templates chosen, go back and choose templates</B>\n";
-		exit;
+		$templateTable.="</tr></table>\n";
 	}
 	echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
 	echo "<INPUT TYPE='hidden' NAME='templates' VALUE='continue'>\n";
@@ -258,8 +275,10 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	}
 	else {
 		echo "
-		Particles:<br>
-		<SELECT NAME='stackid' onchange='switchDefaults(this.value)'>\n";
+		Particles:<br>";
+		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
+/*
+		<SELECT NAME='stackvars' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -277,6 +296,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 			echo " $boxsz pixels)</OPTION>\n";
 		}
 		echo "</SELECT>\n";
+*/
 	}
 	echo"
 		</TD>
@@ -362,7 +382,7 @@ function runAlignment() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$stackvars=$_POST['stackid'];
+	$stackvars=$_POST['stackvars'];
 	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
 	$radius=$_POST['radius'];
 	$bin=$_POST['bin'];
@@ -405,7 +425,7 @@ function runAlignment() {
 	$command.="--rundir=".$rundir." ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
-	$command.="--templates=".templateCommand()." ";
+	$command.="--templates=".templateIds()." ";
 	$command.="--orientref=$orientref ";
 	$command.="--stack=$stackid ";
 	$command.="--nparticles=$numpart ";
@@ -444,7 +464,7 @@ function runAlignment() {
 		</TD></tr>
 		<TR><td>runname</TD><td>$runname</TD></tr>
 		<TR><td>rundir</TD><td>$rundir</TD></tr>
-		<TR><td>templates</TD><td>".templateCommand()."</TD></tr>
+		<TR><td>templates</TD><td>".templateIds()."</TD></tr>
 		<TR><td>orientref</TD><td>$orientref</TD></tr>
 		<TR><td>stackid</TD><td>$stackid</TD></tr>
 		<TR><td>numpart</TD><td>$numpart</TD></tr>
@@ -469,7 +489,7 @@ function runAlignment() {
 **
 */
 
-function templateCommand () {
+function templateIds () {
 	$command = "";
 	// get the list of templates
 	$templateList=$_POST['templateList'];
@@ -480,8 +500,6 @@ function templateCommand () {
 	}
 	$templateIds=substr($templateIds,0,-1);
 	return $templateIds;
-	$command.="refids=$templateIds ";
-	return $command;
 }
 
 ?>
