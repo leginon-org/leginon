@@ -4,6 +4,7 @@
 import os
 import sys
 import time
+import glob
 import apParam
 import apDisplay
 import apDatabase
@@ -19,7 +20,7 @@ def insertManualParams(params, expid):
 	#runq['path'] = appionData.ApPathData(path=os.path.abspath(????????))
 
 	manparams=appionData.ApSelectionParamsData()
-	manparams['diam']=params['diam']
+	manself.params['diam']=params['diam']
 
 	selectionruns=runq.query(results=1)
 
@@ -82,26 +83,26 @@ def parsePrtlUploadInput(args,params):
 #===========================	
 def createDefaults():
 	params={}
-	params['apix']=None
-	params['diam']=None
-	params['bin']=None
-	params['description']=None
-	params['template']=None
-	params['session']=None
-	params['runname']=None
-	params['imgs']=None
-	params['rundir']=os.path.abspath('.')
-	params['abspath']=os.path.abspath('.')
-	params['rundir']=None
-	params['scale']=None
-	params['commit']=True
-	params['sym']=None
-	params['res']=None
-	params['contour']=1.5
-	params['zoom']=1.5
-	params['reconid']=None
-	params['rescale']=False
-	params['newbox']=None
+	self.params['apix']=None
+	self.params['diam']=None
+	self.params['bin']=None
+	self.params['description']=None
+	self.params['template']=None
+	self.params['session']=None
+	self.params['runname']=None
+	self.params['imgs']=None
+	self.params['rundir']=os.path.abspath('.')
+	self.params['abspath']=os.path.abspath('.')
+	self.params['rundir']=None
+	self.params['scale']=None
+	self.params['commit']=True
+	self.params['sym']=None
+	self.params['res']=None
+	self.params['contour']=1.5
+	self.params['zoom']=1.5
+	self.params['reconid']=None
+	self.params['rescale']=False
+	self.params['newbox']=None
 	return params
 
 #===========================	
@@ -109,40 +110,45 @@ class UploadParticles(appionScript.AppionScript):
 	def setupParserOptions(self):
 		""" NEED TO COPY PARAM SETTING FROM ABOVE """
 
-		# create params dictionary & set defaults
-		params = createDefaults()
-		params['runname'] = "manual1"
+		self.parser.set_usage("Usage:\nuploadParticles.py <boxfiles> scale=<n>\n")
+		self.parser.add_option("--imgs", dest="imgs",
+			help="EMAN box file(s) containing picked particle coordinates", metavar="FILE")
+		self.parser.add_option("--scale", dest="scale",
+			help="If particles were picked on binned images, enter the binning factor", type='int')
+		self.parser.add_option("--diam", dest="diam",
+			help="particle diameter in angstroms", type="int")
 
-		# parse command line input
-		#parsePrtlUploadInput(sys.argv,params)
-
+	#===========================	
 	def checkConflicts(self):
 		# check to make sure that incompatible parameters are not set
-		if params['diam'] is None or params['diam']==0:
+		if self.params['diam'] is None or self.params['diam']==0:
 			apDisplay.printError("please input the diameter of your particle (for display purposes only)")
 		
 		# get list of input images, since wildcards are supported
-		if params['imgs'] is None:
+		if self.params['imgs'] is None:
 			apDisplay.printError("please enter the image names with picked particle files")
-		imglist = params["imgs"]
 
+	#===========================	
 	def start(self):
 		print "getting image data from database:"
+		imglist=glob.glob(self.params['imgs'])
 		totimgs = len(imglist)
+		if totimgs==0:
+			apDisplay.printError("no images specified")
 		imgtree = []
-		for i in range(len(imglist)):
-			imgname = imglist[i]
-			print "image",i+1,"of",totimgs,":",apDisplay.short(imgname)
-			imgdata = apDatabase.getImageData(imgname)
+		for img in imglist:
+			print "image",img,"of",totimgs,":",apDisplay.short(img)
+			fileinfo=os.path.splitext(img)
+			imgdata = apDatabase.getImageData(fileinfo[0]+".mrc")['image']
 			imgtree.append(imgdata)
-		params['session'] = imgdata['session']['name']
+		self.params['session'] = imgdata['session']['name']
 
 		# upload Particles
 		for imgdata in imgtree:
 			# insert selexon params into dbappiondata.selectionParams table
 			expid = int(imgdata['session'].dbid)
-			insertManualParams(params,expid)
-			apParticle.insertParticlePicks(params, imgdata, manual=True)
+			insertManualParams(self.params,expid)
+			apParticle.insertParticlePicks(self.params, imgdata, manual=True)
 
 if __name__ == '__main__':
 	uploadpart = UploadParticles()
