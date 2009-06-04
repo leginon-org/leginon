@@ -4,6 +4,7 @@ import os, sys, re
 import time
 import math
 import apDatabase
+import apParticle
 import apEMAN
 import apDisplay
 import appionData
@@ -446,3 +447,10 @@ def getAlignStack(substacktype,conditionstackdata):
 		conditionstackdata = clusterrundata['alignstack']
 	return conditionstackdata
 
+def getStackParticleDiameter(stackdata):
+	stackpdata = appionData.ApStackParticlesData()
+	stackpdata['stack'] = stackdata
+	results = stackpdata.query(results=1)
+	if results:
+		stackp = results[0]
+		return apParticle.getParticleDiameter(stackp['particle'])

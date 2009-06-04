@@ -878,6 +878,20 @@ class ApTomogramData(Data):
 	typemap = classmethod(typemap)
 leginondata.ApTomogramData=ApTomogramData
 
+class ApTomoAverageRunData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('runname', str),
+			('path', ApPathData),
+			('stack', ApStackData),
+			('subtomorun', ApSubTomogramRunData),
+			('xyhalfwidth', int),
+			('description', str),
+			('hidden', bool),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApTomogramData=ApTomogramData
+
 class ApInitialModelData(Data):
 	def typemap(cls):
 		return Data.typemap() + (

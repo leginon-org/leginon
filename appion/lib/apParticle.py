@@ -423,6 +423,14 @@ def getImagesFromParticleRun(runid):
 			imgtree.append(imgdata)
 	return imgtree
 
+def getParticleDiameter(particledata):
+	selectionrun = particledata['selectionrun']
+	print selectionrun
+	selection_params = ['params','dogparams','manparams','tiltparams']
+	for p in selection_params:
+		if selectionrun[p]:
+			return selectionrun[p]['diam']
+
 if __name__ == '__main__':
 	name = 'test2'
 	sessionname = '07jan05b'
