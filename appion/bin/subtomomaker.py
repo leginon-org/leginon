@@ -46,13 +46,13 @@ class tomoMaker(appionScript.AppionScript):
 		self.parser.add_option("--stackId", dest="stackId", type="int",
 			help="Volume selection by stack, e.g. --stackId=2", metavar="int")
 		self.parser.add_option("--sizex", dest="sizex", default=0, type="int",
-			help="Volume size in column before binning, e.g. --sizex=20", metavar="int")
+			help="Volume column pixels in the tilt series image, e.g. --sizex=20", metavar="int")
 		self.parser.add_option("--sizey", dest="sizey", default=0, type="int",
-			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
+			help="Volume row pixels in the tilt series image, e.g. --sizey=20", metavar="int")
 		self.parser.add_option("--sizez", dest="sizez", type="int",
-			help="Volume size in row before binning, e.g. --sizey=20", metavar="int")
+			help="Volume depth pixels in the tilt series image, e.g. --sizey=20", metavar="int")
 		self.parser.add_option("--offsetz", dest="offsetz", default=0, type="int",
-			help="Volume z offset from the full tomogram center after binning, e.g. --offsetz=0", metavar="int")
+			help="Volume z offset from the full tomogram center and in pixel unit of the full tomogram, e.g. --offsetz=0", metavar="int")
 		self.parser.add_option("--bin", dest="bin", default=1, type="int",
 			help="binning relative to the full tomogram, e.g. --bin=2", metavar="int")
 		self.parser.add_option("--invert", dest="invert", default=False,
@@ -103,13 +103,13 @@ class tomoMaker(appionScript.AppionScript):
 		if (self.params['selexonId'] is not None or self.params['stackId']) and fulltomodata is not None:
 			sessiondata = fulltomodata['session']
 			seriesname = fulltomodata['name'].rstrip('_full')
-			bin = fulltomodata['alignment']['bin']
+			fullbin = fulltomodata['alignment']['bin']
 			subrunname = self.params['subrunname']
 			volumeindex = apTomo.getLastVolumeIndex(fulltomodata) + 1
 			dimension = {'x':int(self.params['sizex']),'y':int(self.params['sizey']),'z':int(self.params['sizez'])}
 			zprojimagedata = fulltomodata['zprojection']
 			apDisplay.printMsg("getting pixelsize")
-			pixelsize = apTomo.getTomoPixelSize(zprojimagedata) * bin
+			pixelsize = apTomo.getTomoPixelSize(zprojimagedata) * fullbin * subbin
 			gtransform = [1,0,0,1,0,0]
 			if self.params['selexonId']:
 				particles = apParticle.getParticles(zprojimagedata, self.params['selexonId'])
@@ -118,8 +118,8 @@ class tomoMaker(appionScript.AppionScript):
 				stackdata = apStack.getOnlyStackData(self.params['stackId'])
 			for p, particle in enumerate(particles):
 				print particle['xcoord'],particle['ycoord']
-				center = apTomo.transformParticleCenter(particle,bin,gtransform)
-				size = (dimension['x']/bin,dimension['y']/bin,dimension['z'])
+				center = apTomo.transformParticleCenter(particle,fullbin,gtransform)
+				size = (dimension['x']/fullbin,dimension['y']/fullbin,dimension['z']/fullbin)
 				volumename = 'volume%d'% (volumeindex,)
 				volumedir = os.path.join(processdir,subrunname+'/',volumename+'/')
 				apParam.createDirectory(volumedir)

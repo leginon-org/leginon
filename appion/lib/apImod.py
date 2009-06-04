@@ -1,6 +1,7 @@
 import os
 import subprocess
 import shutil
+import apImage
 import apDisplay
 import apFile
 import time
@@ -263,23 +264,28 @@ def transformVolume(volumepath,operation):
 		writeCommandAndRun(volumedir,'flipYZ',commands,[inputparams['out'],'flipYZ.log'])
 		return os.path.join(volumedir,flipyzfilename)
 
-def pad(volumepath,originalshape,finalshape):
+def pad(volumepath,originalshape,finalshape,bin=1):
+	# This padding is only in x and y direction symmetrically
 	volumedir = os.path.dirname(volumepath)
 	volumefilename = os.path.basename(volumepath)
 	padfilename = volumefilename+".pad"
 	inputparams = {
 		'in': os.path.join(volumedir, volumefilename),
 		'out': os.path.join(volumedir, padfilename),
-		'padxwidth': (finalshape[1] - originalshape[1]) / 2,
-		'padywidth': (finalshape[0] - originalshape[0]) / 2,
+		'padxwidth': (finalshape[1]/bin - originalshape[1]) / 2,
+		'padywidth': (finalshape[0]/bin - originalshape[0]) / 2,
 	}
-	commands.append(
-		"$taperoutvol"
-	)
-	#### Not finished
+	commands = [
+		"$taperoutvol",
+		inputparams['in'],
+		inputparams['out'],
+		"/",
+		"%d %d 0" % (inputparams['padxwidth'],inputparams['padywidth']),
+	]
+	writeCommandAndRun(volumedir,'volumepad',commands,[inputparams['out'],'volumepad.log'])
 	return volumepath
 
-def projectFullZ(processdir, runname, seriesname,rotx=True,flipyz=False):
+def projectFullZ(processdir, runname, seriesname,bin=1,rotx=True,flipyz=False):
 		"""
 #	Command for projecting full tomogram to z-axis
 #
@@ -320,6 +326,11 @@ clip avg -2d -iz 0-199 temp.mrc projection.mrc
 					),
 			)	
 		writeCommandAndRun(processdir,'projectZ',commands,[inputparams['temp'],inputparams['project'],'projectZ.log'])
+		if bin > 1:
+			# unbin the projection
+			a = mrc.read(inputparams['project'])
+			b = apImage.scaleImage(a,bin)
+			mrc.write(b,inputparams['project'])
 		return inputparams['project']
 
 def writeCommandAndRun(path,comname, commands, outputlist):		

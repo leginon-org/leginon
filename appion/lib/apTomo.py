@@ -282,7 +282,7 @@ def insertSubTomoRun(sessiondata,selectionrunid,stackid,name,invert=False,subbin
 	return results[0]
 
 def checkExistingFullTomoData(path,name):
-	pathq = appionData.ApPath(name=path)
+	pathq = appionData.ApPath(path=path)
 	tomoq = appionData.ApFullTomogramData(name=name,path=pathq)
 	results = tomoq.query()
 	if not results:
@@ -396,10 +396,11 @@ def insertSubTomogram(fulltomodata,rundata,center,offsetz,dimension,path,name,in
 	tomoq['name'] = name
 	tomoq['number'] = index
 	tomoq['center'] = center
-	# dimension is that of the original tilt images, i.e., before binning of the full tomogram
+	# offsetz is in pixel of the full tomogram
 	tomoq['offsetz'] = offsetz
+	# dimension is that of the original tilt images, i.e., before binning of the full tomogram
 	tomoq['dimension'] = dimension
-	# pixelsize is of the binned full and sub tomogram
+	# pixelsize is of the full_bin * sub_bin tomogram
 	tomoq['pixelsize'] = pixelsize
 	tomoq['description'] = description
 	filepath = os.path.join(path,name+".rec")
@@ -474,6 +475,7 @@ def makeProjection(filename,xsize=512):
 	array = mrc.read(mrcpath)
 	shape = array.shape
 	xsize = min(xsize,shape[2])
+	# default for full tomogram is XZY
 	if shape[0] > shape[1]:
 		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'}}
 	else:
@@ -511,13 +513,19 @@ def uploadZProjection(runname,initialimagedata,uploadfile):
 		return imagedata
 	return imagedata[0]
 
-def getSubvolumeShape(subtomorundata):
+def getSubvolumeInfo(subtomorundata):
 	tomoq = appionData.ApTomogramData(subtomorun=subtomorundata)
 	results = tomoq.query(results=1)
 	if results:
 		tomo = results[0]
-		shape = (tomo['dimension']['z'],tomo['dimension']['y'],tomo['dimension']['x'])
-		return shape
+		subbin = subtomorundata['subbin']
+		fullbin = tomo['fulltomogram']['alignment']['bin']
+		totalbin = subbin * fullbin
+		shape = (tomo['dimension']['z']/totalbin,tomo['dimension']['y']/totalbin,tomo['dimension']['x']/totalbin)
+		pixelsize = tomo['pixelsize']
+		return shape,totalbin,pixelsize
+	else:
+		return None, 1,None
 
 def getFullZSubvolume(subtomorundata,stackpdata):
 	pdata = stackpdata['particle']
@@ -546,8 +554,8 @@ def getParticleCenterZProfile(subvolume,shift,halfwidth,bgwidth):
 	vmax = xyavg.max()
 	return (xyavg - background) / (vmax-background)
 
-def transformTomo(a,package,alignpdata,zshift=0.0):
-	shift = (alignpdata['xshift'],alignpdata['yshift'],zshift)
+def transformTomo(a,package,alignpdata,zshift=0.0,bin=1):
+	shift = (alignpdata['xshift']/bin,alignpdata['yshift']/bin,zshift)
 	angle = alignpdata['rotation']
 	mirror = alignpdata['mirror']
 	print shift,angle,mirror
@@ -589,3 +597,18 @@ def modifyVolume(volpath,bin=1,invert=False):
 	apEMAN.executeEmanCmd(lpcmd)
 	if os.path.exists(volpathtemp):
 		shutil.move(volpathtemp,volpath)
+
+def insertTomoAverageRun(runname,rundir,subtomorundata,stackdata,halfwidth,description):
+	tomoaq = appionData.ApTomoAverageRunData()
+	tomoaq['path'] = appionData.ApPathData(path=os.path.abspath(rundir))
+	tomoaq['runname'] = runname
+	tomoaq['subtomorun'] = subtomorundata
+	tomoaq['stack'] = stackdata
+	tomoaq['xyhalfwidth'] = halfwidth
+	tomoaq.query()
+	results = tomoaq.query()
+	if not results:
+		tomoaq['description'] = description
+		tomoaq.insert()
+		return tomoaq
+	return results[0]

@@ -152,6 +152,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		newxfpath = os.path.join(self.params['rundir'], self.params['newxffile'])
 		order = self.params['order']
 		voltransform = self.params['transform']
+		bin = self.params['bin']
 		if os.path.isfile(newtomopath):
 			if self.checkExistingFile():
 				return
@@ -166,10 +167,11 @@ class UploadTomoScript(appionScript.AppionScript):
 				sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
 				tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 				firstimagedata = apTomo.getFirstImage(tiltdata)
+				### padding the tomogram to the image size
 				imageshape = apTomo.getTomoImageShape(firstimagedata)
 				orgshape = (self.params['origshape'][order.find('Y'), self.params['origshape'][order.find('X')]
-				if orgshape[0] < imageshape[0] or orgshape[1] < imageshape[1]:
-					origtomopath = apImod.pad(origtomopath,orgshape,imageshape)
+				if orgshape[0] < imageshape[0]/bin or orgshape[1] < imageshape[1]/bin:
+					origtomopath = apImod.pad(origtomopath,orgshape,imageshape,bin)
 			### simple upload, just copy file to Tomo folder
 			else:
 				if self.params['order'] == 'XYZ':
@@ -191,7 +193,7 @@ class UploadTomoScript(appionScript.AppionScript):
 		self.params['shape'] = tomoheader['shape']
 		if self.params['full']:
 			seriesname = "%s_%03d" % (self.params['session'],self.params['tiltseriesnumber'])
-			self.params['zprojfile'] = apImod.projectFullZ(self.params['rundir'], self.params['runname'], seriesname,True)
+			self.params['zprojfile'] = apImod.projectFullZ(self.params['rundir'], self.params['runname'], seriesname,bin,True,False)
 		else:
 			apTomo.makeMovie(newtomopath)
 			apTomo.makeProjection(newtomopath)

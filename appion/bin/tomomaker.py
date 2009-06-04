@@ -84,31 +84,15 @@ class tomoMaker(appionScript.AppionScript):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
-		if self.params['subvolumeonly']:
-			tomodata = apTomo.getFullTomoData(self.params['fulltomoId'])
-			path=tomodata['path']['path']
-			self.params['fulltomodir'] = path
-			self.params['rundir'] = os.path.join(path, self.params['runname'])
-			self.params['subrunname'] = self.params['runname']
-			self.params['subdir'] = self.params['rundir']
-		else:
-			path = os.path.abspath(sessiondata['image path'])
-			path = re.sub("leginon","appion",path)
-			path = re.sub("/rawdata","/tomo",path)
-			tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
-			tomorunpath = self.params['runname']
-			intermediatepath = os.path.join(tiltseriespath,tomorunpath)
-			self.params['tiltseriesdir'] = os.path.join(path,tiltseriespath)
-			self.params['rundir'] = os.path.join(path,intermediatepath)
-			self.params['fulltomodir'] = self.params['rundir']
-			if self.params['selexonId']:
-				subrunname = 'subtomo_pick%d' % self.params['selexonId']
-			elif self.params['stackId']:
-				subrunname = 'subtomo_stack%d' % self.params['stackId']
-			else:
-				subrunname = ''
-			self.params['subrunname'] = subrunname
-			self.params['subdir'] = os.path.join(self.params['rundir'],subrunname)
+		path = os.path.abspath(sessiondata['image path'])
+		path = re.sub("leginon","appion",path)
+		path = re.sub("/rawdata","/tomo",path)
+		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
+		tomorunpath = self.params['runname']
+		intermediatepath = os.path.join(tiltseriespath,tomorunpath)
+		self.params['tiltseriesdir'] = os.path.join(path,tiltseriespath)
+		self.params['rundir'] = os.path.join(path,intermediatepath)
+		self.params['fulltomodir'] = self.params['rundir']
 
 	#=====================
 	def runProjalign(self):
@@ -189,81 +173,76 @@ class tomoMaker(appionScript.AppionScript):
 		stackname = seriesname+".st"
 		tilts,ordered_imagelist,mrc_files = apTomo.orderImageList(imagelist)
 		reconname = seriesname+"_full"
-		if self.params['subvolumeonly'] and self.params['fulltomoId']:
-			fulltomodata = apTomo.getFullTomoData(self.params['fulltomoId'])
-			gcorrfilepath = os.path.join(processdir, seriesname+".xf")
-			gtransforms = apImod.readTransforms(gcorrfilepath)
-		else:
-			# Write tilt series stack images and tilt angles
-			
-			stackpath = os.path.join(self.params['tiltseriesdir'], stackname)
-			stackdir = self.params['tiltseriesdir']
-			if os.path.exists(stackpath):
-				stheader = mrc.readHeaderFromFile(stackpath)
-				stshape = stheader['shape']
-				imageheader = mrc.readHeaderFromFile(mrc_files[0])
-				imageshape = imageheader['shape']
-				if stshape[1:] == imageshape and stshape[0] == len(imagelist):
-					apDisplay.printMsg("No need to get new stack of the tilt series")
-				else:
-					apImage.writeMrcStack(self.params['tiltseriesdir'],stackname,mrc_files, 1)
+		# Write tilt series stack images and tilt angles
+		
+		stackpath = os.path.join(self.params['tiltseriesdir'], stackname)
+		stackdir = self.params['tiltseriesdir']
+		if os.path.exists(stackpath):
+			stheader = mrc.readHeaderFromFile(stackpath)
+			stshape = stheader['shape']
+			imageheader = mrc.readHeaderFromFile(mrc_files[0])
+			imageshape = imageheader['shape']
+			if stshape[1:] == imageshape and stshape[0] == len(imagelist):
+				apDisplay.printMsg("No need to get new stack of the tilt series")
 			else:
 				apImage.writeMrcStack(self.params['tiltseriesdir'],stackname,mrc_files, 1)
-			apImod.writeRawtltFile(stackdir,seriesname,tilts)
-			leginonxcorrlist = []
-			imodxcorrlist = []
-			if self.params['xmethod']=='leginon':
-				# Correlation by tiltcorrelator
-				corrpeaks = apTomo.getOrderedImageListCorrelation(imagelist, 1)
-				apImod.writeShiftPrexfFile(processdir,seriesname,corrpeaks)
-				for tiltseriesdata in tiltdatalist:
-					leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
-					imodxcorrdata = None
-					leginonxcorrlist.append(leginoncorrdata)
-					imodxcorrlist.append(imodxcorrdata)
-			elif self.params['xmethod']=='sift':
-				# Correlation with rotation by Feature Matching
-				transforms = apTomo.getFeatureMatchTransform(ordered_imagelist, 1)
-				apImod.writeTransformPrexfFile(processdir,seriesname,transforms)
-				# pretend to be gotten from tomogram until fixed
-				for tiltseriesdata in tiltdatalist:
-					leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
-					imodxcorrdata = None
-					leginonxcorrlist.append(leginonixcorrdata)
-					imodxcorrlist.append(imodxcorrdata)
-			elif self.params['xmethod']=="projalign":
-				# Uses Hans Peters' projalign
-		 		self.runProjalign()
-			else:
-				# Correlation by Coarse correlation in IMOD
-				for tiltseriesdata in tiltdatalist:
-					imodxcorrdata = apImod.coarseAlignment(stackdir, processdir, seriesname, commit)
-					leginonxcorrdata = None
-					leginonxcorrlist.append(leginonxcorrdata)
-					imodxcorrlist.append(imodxcorrdata)
+		else:
+			apImage.writeMrcStack(self.params['tiltseriesdir'],stackname,mrc_files, 1)
+		apImod.writeRawtltFile(stackdir,seriesname,tilts)
+		leginonxcorrlist = []
+		imodxcorrlist = []
+		if self.params['xmethod']=='leginon':
+			# Correlation by tiltcorrelator
+			corrpeaks = apTomo.getOrderedImageListCorrelation(imagelist, 1)
+			apImod.writeShiftPrexfFile(processdir,seriesname,corrpeaks)
+			for tiltseriesdata in tiltdatalist:
+				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
+				imodxcorrdata = None
+				leginonxcorrlist.append(leginoncorrdata)
+				imodxcorrlist.append(imodxcorrdata)
+		elif self.params['xmethod']=='sift':
+			# Correlation with rotation by Feature Matching
+			transforms = apTomo.getFeatureMatchTransform(ordered_imagelist, 1)
+			apImod.writeTransformPrexfFile(processdir,seriesname,transforms)
+			# pretend to be gotten from tomogram until fixed
+			for tiltseriesdata in tiltdatalist:
+				leginonxcorrdata = apTomo.getTomographySettings(sessiondata,tiltseriesdata)
+				imodxcorrdata = None
+				leginonxcorrlist.append(leginonixcorrdata)
+				imodxcorrlist.append(imodxcorrdata)
+		elif self.params['xmethod']=="projalign":
+			# Uses Hans Peters' projalign
+			self.runProjalign()
+		else:
+			# Correlation by Coarse correlation in IMOD
+			for tiltseriesdata in tiltdatalist:
+				imodxcorrdata = apImod.coarseAlignment(stackdir, processdir, seriesname, commit)
+				leginonxcorrdata = None
+				leginonxcorrlist.append(leginonxcorrdata)
+				imodxcorrlist.append(imodxcorrdata)
 
-			# Global Transformation
-			gtransforms = apImod.convertToGlobalAlignment(processdir, seriesname)
-			# Add fine alignments here ----------------
-			# use the croase global alignment as final alignment
-			origxfpath = os.path.join(processdir, seriesname+".prexg")
-			newxfpath = os.path.join(processdir, seriesname+".xf")
-			shutil.copyfile(origxfpath, newxfpath)
-			# Create Aligned Stack
-			apImod.createAlignedStack(stackdir, processdir, seriesname,bin)
-			if commit:
-				alignlist = []
-				for i in range(0,len(tiltdatalist)):
-					alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],leginonxcorrlist[i],imodxcorrlist[i],bin,self.params['runname'])
-					alignlist.append(alignrun)
-			# Reconstruction
-			thickness = int(self.params['thickness'])
-			apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
-			zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,True)
-			if commit:
-				zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
-				fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist,alignlist,
-							processdir,reconname,description,zimagedata)
+		# Global Transformation
+		gtransforms = apImod.convertToGlobalAlignment(processdir, seriesname)
+		# Add fine alignments here ----------------
+		# use the croase global alignment as final alignment
+		origxfpath = os.path.join(processdir, seriesname+".prexg")
+		newxfpath = os.path.join(processdir, seriesname+".xf")
+		shutil.copyfile(origxfpath, newxfpath)
+		# Create Aligned Stack
+		apImod.createAlignedStack(stackdir, processdir, seriesname,bin)
+		if commit:
+			alignlist = []
+			for i in range(0,len(tiltdatalist)):
+				alignrun = apTomo.insertTomoAlignmentRun(sessiondata,tiltdatalist[i],leginonxcorrlist[i],imodxcorrlist[i],bin,self.params['runname'])
+				alignlist.append(alignrun)
+		# Reconstruction
+		thickness = int(self.params['thickness'])
+		apImod.recon3D(stackdir, processdir, seriesname, imgshape, thickness)
+		zprojectfile = apImod.projectFullZ(processdir, self.params['runname'], seriesname,bin,True,False)
+		if commit:
+			zimagedata = apTomo.uploadZProjection(self.params['runname'],imagelist[0],zprojectfile)
+			fulltomodata = apTomo.insertFullTomogram(sessiondata,tiltdatalist,alignlist,
+						processdir,reconname,description,zimagedata)
 #=====================
 #=====================
 if __name__ == '__main__':
