@@ -37,7 +37,6 @@ class Test(appionScript.AppionScript):
 			self.params['rundir'] = os.path.join(tiltdirs[0],"average",self.params['runname'])
 
 	def start(self):
-		print self.params
 		subtomorunq = appionData.ApSubTomogramRunData()
 		subtomorundata = subtomorunq.direct_query(self.params['subtomoId'])
 		volshape,totalbin,pixelsize = apTomo.getSubvolumeInfo(subtomorundata)
