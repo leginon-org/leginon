@@ -5,11 +5,14 @@ import os
 import sys
 import time
 import glob
+import string
 import apParam
 import apDisplay
 import apDatabase
 import apParticle
 import appionScript
+import leginondata
+import appionData
 
 #===========================
 def insertManualParams(params, expid):
@@ -20,7 +23,7 @@ def insertManualParams(params, expid):
 	#runq['path'] = appionData.ApPathData(path=os.path.abspath(????????))
 
 	manparams=appionData.ApSelectionParamsData()
-	manself.params['diam']=params['diam']
+	manparams['diam']=params['diam']
 
 	selectionruns=runq.query(results=1)
 
@@ -42,43 +45,6 @@ def printPrtlUploadHelp():
 	print "scale=<n>             : If particles were picked on binned images, enter the binning factor"
 	print "\n"
 	sys.exit(1)
-
-#===========================
-def parsePrtlUploadInput(args,params):
-	# check that there are enough input parameters
-	if (len(args)<2 or args[1]=='help') :
-		printPrtlUploadHelp()
-	lastarg=1
-	# first get all box files
-	mrcfileroot=[]
-	for arg in args[lastarg:]:
-		# gather all input files into mrcfileroot list
-		if '=' in  arg:
-			break
-		else:
-			boxfile=arg
-			if (os.path.isfile(boxfile)):
-				# in case of multiple extenstions, such as pik files
-				splitfname=(os.path.basename(boxfile).split('.'))
-				mrcfileroot.append(splitfname[0])
-				params['extension'] = string.join(splitfname[1:],'.')
-				params['prtltype'] = splitfname[-1]
-			else:
-				apDisplay.printError("file '"+boxfile+"' does not exist \n")
-		lastarg+=1
-	params["imgs"]=mrcfileroot
-
-	# save the input parameters into the "params" dictionary
-	for arg in args[lastarg:]:
-		elements=arg.split('=')
-		if (elements[0]=='scale'):
-			params['scale']=int(elements[1])
-		elif (elements[0]=='runname'):
-			params['runname']=elements[1]
-		elif (elements[0]=='diam'):
-			params['diam']=int(elements[1])
-		else:
-			apDisplay.printError("undefined parameter \'"+arg+"\'\n")
 
 #===========================	
 def createDefaults():
@@ -111,7 +77,7 @@ class UploadParticles(appionScript.AppionScript):
 		""" NEED TO COPY PARAM SETTING FROM ABOVE """
 
 		self.parser.set_usage("Usage:\nuploadParticles.py <boxfiles> scale=<n>\n")
-		self.parser.add_option("--imgs", dest="imgs",
+		self.parser.add_option("--files", dest="files",
 			help="EMAN box file(s) containing picked particle coordinates", metavar="FILE")
 		self.parser.add_option("--scale", dest="scale",
 			help="If particles were picked on binned images, enter the binning factor", type='int')
@@ -125,23 +91,35 @@ class UploadParticles(appionScript.AppionScript):
 			apDisplay.printError("please input the diameter of your particle (for display purposes only)")
 		
 		# get list of input images, since wildcards are supported
-		if self.params['imgs'] is None:
+		if self.params['files'] is None:
 			apDisplay.printError("please enter the image names with picked particle files")
+
+	#===========================
+	def getPrtlImgs(self):
+		# first get all box files
+		imglist=glob.glob(self.params['files'])
+		if len(imglist)==0:
+			apDisplay.printError("no images specified")
+		imgs=[]
+		for img in imglist:
+			if (os.path.isfile(img)):
+				# in case of multiple extenstions, such as pik files
+				splitfname=(os.path.basename(img).split('.'))
+				imgs.append(splitfname[0])
+				self.params['extension'] = string.join(splitfname[1:],'.')
+				self.params['prtltype'] = splitfname[-1]
+			else:
+				apDisplay.printError("file '"+img+"' does not exist \n")
+		return imgs
 
 	#===========================	
 	def start(self):
 		print "getting image data from database:"
-		imglist=glob.glob(self.params['imgs'])
-		totimgs = len(imglist)
-		if totimgs==0:
-			apDisplay.printError("no images specified")
+		self.params['imgs']=self.getPrtlImgs()
+		print self.params['extension']
 		imgtree = []
-		for img in imglist:
-			print "image",img,"of",totimgs,":",apDisplay.short(img)
-			fileinfo=os.path.splitext(img)
-			imgdata = apDatabase.getImageData(fileinfo[0]+".mrc")['image']
-			imgtree.append(imgdata)
-		self.params['session'] = imgdata['session']['name']
+		imgtree=apDatabase.getSpecificImagesFromDB(self.params['imgs'])
+		self.params['session'] = imgtree[0]['session']['name']
 
 		# upload Particles
 		for imgdata in imgtree:
