@@ -23,7 +23,7 @@ class ApEulerJump(object):
 		Need to connect to DB server before moving forward
 		"""
 		### get db config info
-		self.dbconf = sinedon.getConfig('appionData')
+		self.dbconf = sinedon.getConfig('appiondata')
 		### connect 
 		self.db     = MySQLdb.connect(**self.dbconf)
 		### create a cursor

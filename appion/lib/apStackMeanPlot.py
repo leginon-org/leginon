@@ -12,6 +12,7 @@ import apDisplay
 import apStack
 import apImage
 import apImagicFile
+import apProject
 
 #===============
 def makeStackMeanPlot(stackid, gridpoints=16):
@@ -177,9 +178,9 @@ if __name__ == "__main__":
 	if projectid is not None:
 		apDisplay.printWarning("Using split database")
 		# use a project database
-		newdbname = "ap"+str(projectid)
+		newdbname = getAppionDBFromProjectId(projectid)
 		import sinedon
-		sinedon.setConfig('appionData', db=newdbname)
+		sinedon.setConfig('appiondata', db=newdbname)
 		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
 
 	makeStackMeanPlot(stackid, gridpoints)

@@ -26,7 +26,7 @@ def getEulersForIteration(reconid, iteration=1):
 	to taking several hours with sinedon
 	"""
 	# connect
-	dbconf = sinedon.getConfig('appionData')
+	dbconf = sinedon.getConfig('appiondata')
 	db = MySQLdb.connect(**dbconf)
 	# create a cursor
 	cursor = db.cursor()
