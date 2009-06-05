@@ -271,8 +271,6 @@ function runSpiderNoRefAlign() {
 	$totprtls=$particle->getNumStackParticles($stackid);
 	if ($numpart > $totprtls) createSpiderNoRefAlignForm("<B>ERROR:</B> Number of particles to align ($numpart) must be less than the number of particles in the stack ($totprtls)");
 
-	$stackparams=$particle->getStackParams($stackid);
-
 	// check first & last ring radii
 	if ($firstring > (($boxsz/2)-2)) createSpiderNoRefAlignForm("<b>ERROR:</b> First Ring Radius too large!");
 	if ($lastring > (($boxsz/2)-2)) createSpiderNoRefAlignForm("<b>ERROR:</b> Last Ring Radius too large!");
