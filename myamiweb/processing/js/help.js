@@ -88,7 +88,7 @@ var help = {
 		'tomostack': 'a stack of particles specifying the subvolume extraction center and the orientation if aligned.',
 		'tomobox': 'a box dimension to define the subvolume in pixels of the tilt series images. x is column, y is row. For the purpose of subtomogram averaging, z should be large enough to bound all possible particle.',
 		'subtomobin': 'binning to the cut subvolumes before saving',
-		'zoffset': 'Offset in z-direction from the center of the full tomogram, normally 0',
+		'zoffset': 'Offset in z-direction from the center of and in pixel of the full tomogram, normally 0',
 		'tomoinvert': 'Invert the density in making the subtomogram.  The particles need to have positive density (white on black background) for subtomogram averaging later',
 		'tomoorientation': 'Depending on the orientation of the image acquisition, definition of the tilt direction in the reconstruction package etc., the resulting tomogram may have different handness.  XYZ or XZY refers to the order of the axes in the mrc file to be uploaded where X and Y are the column and row of an untilted image in its series.  Right-handed means that from a rotation from +X to +Y axis results in a counterclockwise rotation look from +Z direction towards the origin.  Default eTOMO full reconstruction (our default) results in an XZY:right-handed file while a trimed subtomogram is defaulted to XYZ:right-handed',
 		'mask' : 'Radius of external mask (in pixels)',

@@ -35,7 +35,6 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 
 // --- Get Stack Data
 $particle = new particledata();
-
 // --- Get Fulltomograms
 $allfulltomos = $particle->getFullTomogramsFromSession($sessionId);
 	if ($allfulltomos) {
@@ -163,6 +162,39 @@ if ($tomograms) {
 } else {
 	echo "no other subvolume tomograms available";
 }
+// --- Get Averagedtomograms
+$allavgtomos = $particle->getAveragedTomogramsFromSession($sessionId);
+if ($allavgtomos) {
+	$html = "<h4>Averaged SubTomograms</h4>";
+	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
+	$html .= "<TR>\n";
+	$display_keys = array ( 'id','runname','stack','description');
+	foreach($display_keys as $key) {
+		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
+	}
+	$html .= "</TR>\n";
+	foreach ($allavgtomos as $t) {
+		$avgid = $t['avgid'];
+		$stackid = $t['stackid'];
+		$stackparams = $particle->getStackParams($stackid);
+		$stackname = $stackparams['shownstackname'];
+		$html .= "<TR>\n";
+		$html .= "<td><A HREF='tomoavgreport.php?expId=$expId&avgId=$avgid'>$avgid</A></TD>\n";
+		$html .= "<td>".$t['runname']."</TD>\n";
+		$html .= "<td><A HREF='stackreport.php?expId=$expId&sId=$stackid']'>$stackname</A></TD>\n";
+
+		$html .= "<td>".$t['description']."</td>\n";
+		$html .= "</tr>\n";
+	}
+	$html .= "</table>\n";
+	$html .= "<br>\n";
+	echo $html;
+} else {
+	$html = "<p>no averaged tomograms available</p>";
+	echo $html;
+}
+
+// --- 
 
 processing_footer();
 ?>

@@ -252,6 +252,46 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getAveragedTomogramsFromSession($sessionId){
+		$q =  "SELECT t.`DEF_id` as `avgid`, "
+			."t.`description`, "
+			."t.`runname`, "
+			."t.`REF|ApStackData|stack` as stackid, "
+			."stack.`substackname` as substackname "
+			."FROM `ApTomoAverageRunData` t "
+			."LEFT JOIN `ApSubTomogramRunData` sub "
+			."ON  t.`REF|ApSubTomogramRunData|subtomorun` = sub.DEF_id "
+			."LEFT JOIN `ApStackData` stack "
+			."ON  t.`REF|ApStackData|stack` = stack.DEF_id "
+			."WHERE sub.`REF|leginondata|SessionData|session` = " .$sessionId;
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getAveragedTomogramInfo($avgId){
+		$q =  "SELECT avgt.`DEF_id` as `avgid`, "
+			."avgt.`description`, "
+			."avgt.`runname`, "
+			."avgt.`REF|ApStackData|stack` as stackid, "
+			."subt.`DEF_id` as `subtomoid`, "
+			."sub.`DEF_id` as `subtomorunid`, "
+			."path.`path` "
+			."FROM `ApTomoAverageRunData` avgt "
+			."LEFT JOIN `ApPathData` path "
+			."ON avgt.`REF|ApPathData|path` = path.`DEF_id` "
+			."LEFT JOIN `ApSubTomogramRunData` sub "
+			."ON  avgt.`REF|ApSubTomogramRunData|subtomorun` = sub.DEF_id "
+			."LEFT JOIN `ApStackData` stack "
+			."ON  avgt.`REF|ApStackData|stack` = stack.DEF_id "
+			."LEFT JOIN `ApStackParticlesData` stackp "
+			."ON  stackp.`REF|ApStackData|stack` = stack.DEF_id "
+			."LEFT JOIN `ApParticleData` p "
+			."ON  stackp.`REF|ApParticleData|particle` = p.DEF_id "
+			."LEFT JOIN `ApTomogramData` subt "
+			."ON  subt.`REF|ApParticleData|center` = p.DEF_id "
+			."WHERE avgt.`DEF_id` = " .$avgId;
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getsubTomogramsFromFullTomogram($fullId){
 		$q =  "SELECT t.`DEF_id` as DEF_id "
 			."FROM `ApTomogramData` t "
@@ -1423,7 +1463,7 @@ class particledata {
 	}
 
 	function getStackParams ($stackId) {
-		$q = "SELECT sd.*, pd.`path` "
+		$q = "SELECT sd.*, pd.`path`, sd.`DEF_id` as `stackId`"
 			."FROM ApStackData as sd "
 			."LEFT JOIN ApPathData AS pd ON "
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
@@ -1444,7 +1484,7 @@ class particledata {
 			$rstack = $this->getOriginalStackFromStackRun($stackrunId);
 			$childstackId = $rstack['stackId'];
 			//Get Parameters
-			$q = "SELECT sd.`DEF_id` as stackId, s.`DEF_id` as runid, s.*, p.*,sd.*,"
+			$q = "SELECT sd.`DEF_id` as `stackId`, s.`DEF_id` as runid, s.*, p.*,sd.*,"
 				."s.`REF|leginondata|SessionData|session` AS sessionid "
 				."FROM ApRunsInStackData as r "
 				."LEFT JOIN ApStackRunData as s "
@@ -1472,7 +1512,7 @@ class particledata {
 		}
 		//substack has no other parameter but oldstack reference
 		if ($stack_primary_array['REF|ApStackData|oldstack']) {
-			$r = array('stackId'=>$stackId);
+			$r = array();
 			$r = array_merge($r, $params[0]);
 			$r = array_merge($r, $stack_primary_array);
 			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];

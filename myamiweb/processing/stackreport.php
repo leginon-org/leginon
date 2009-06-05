@@ -21,7 +21,6 @@ $stackId = $_GET['sId'];
 processing_header('Particle Stack Report','Particle Stack Report');
 
 $particle = new particledata();
-	echo $stackId;
 	$s=$particle->getStackParams($stackId);
 	# get list of stack parameters from database
 	$nump=commafy($particle->getNumStackParticles($stackId));
