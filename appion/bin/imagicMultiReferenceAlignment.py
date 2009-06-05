@@ -120,8 +120,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		##### DELETE HEADERS!!!!!!!!!!
 		
-		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
-		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)		
+#		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
+#		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)		
 
 		filename = os.path.join(self.params['rundir'], "imagicMRA.batch")
 		f = open(filename, 'w')
@@ -216,7 +216,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		##### DELETE HEADERS!!!!!!!!!!
 		
-		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
+#		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
 
 		filename = os.path.join(self.params['rundir'], "prepareStack.batch")
 		f = open(filename, 'w')
@@ -495,7 +495,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(emancmd)
 
 		### set new pixelsize
-		if self.params['bin'] is not None:
+		if self.params['bin'] is not None and self.params['bin'] != 0:
 			self.params['apix'] = float(self.stack['apix']) * int(self.params['bin'])
 		else:
 			self.params['apix'] = self.stack['apix']
