@@ -137,8 +137,8 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -172,7 +172,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
@@ -277,7 +277,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 			if ($stackparams['substackname'])
 				$stackname .= "-".$stackparams['substackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stackid));
-			echo "<option value='$stackid|~~|$mpix|~~|$boxsz|~~|$totprtls'";
+			echo "<option value='$stackid|--|$mpix|--|$boxsz|--|$totprtls'";
 			//echo "<OPTION VALUE='$stackid'";
 			// select previously set prtl on resubmit
 			if ($stackidval == $stackid) echo " SELECTED";
@@ -378,8 +378,8 @@ function runAlignment() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$stackvars=$_POST['stackvars'];
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	$stackval=$_POST['stackval'];
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 	$lastring=$_POST['lastring'];
 	$firstring=$_POST['firstring'];
 	$bin=$_POST['bin'];

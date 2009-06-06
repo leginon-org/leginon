@@ -35,8 +35,8 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// set max last ring radius
 	$javascript .= "	var box = Math.floor(stackArray[2]);\n";
 	$javascript .= "	document.viewerform.sizex.value = box;\n";
@@ -83,7 +83,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
 	// find each stack entry in database
 	// THIS IS REALLY, REALLY SLOW
 	$stackIds = $particle->getStackIds($expId);
-	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
@@ -257,7 +257,7 @@ function createSubTomogramForm($extra=false, $title='subtomomaker.py Launcher', 
   </form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackvars.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -275,7 +275,7 @@ function runSubTomogram() {
 	$tiltseriesnumber = $_POST['tiltseriesnumber'];
 	$runname=$_POST['runname'];
 	$prtlrunId=$_POST['prtlrunId'];
-	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$sizex=$_POST['sizex'];
 	$sizey=$_POST['sizey'];

@@ -51,8 +51,8 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -135,7 +135,7 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 		}
 		$boxsz = $alignstack['boxsize'];
 		$totprtls=commafy($particle->getNumAlignStackParticles($selectAlignId));
-		$stackval = "$selectAlignId|~~|$apix|~~|$boxsz|~~|$totprtls";
+		$stackval = "$selectAlignId|--|$apix|--|$boxsz|--|$totprtls";
 		//echo $stackval;
 		echo "<input type='hidden' name='stackid' value='$stackval'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
@@ -159,7 +159,7 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 			//handle multiple runs in stack
 			$runname=$alignstack['runname'];
 			$totprtls=commafy($particle->getNumAlignStackParticles($alignid));
-			echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+			echo "<OPTION VALUE='$alignid|--|$apix|--|$boxsz|--|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$alignid) echo " SELECTED";
 			echo ">$alignid: $runname ($totprtls prtls,";
@@ -233,8 +233,8 @@ function runKerDenSOM() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-	$stackvars=$_POST['stackid'];
-	list($stackid,$apix,$boxsz,$totpart) = split('\|~~\|',$stackvars);
+	$stackval=$_POST['stackid'];
+	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
 	$maskrad=$_POST['maskrad'];
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];

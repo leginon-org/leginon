@@ -46,8 +46,8 @@ elseif ($_POST['refinemodel'])  {
 	if (!$_POST['model']) create3d0SummaryForm("Error: No model selected");
 	else {
 		//$modelarrays = explode('|-|-|-|', $_POST['model']);
-		//$modelkeys = explode('|--|', $modelarrays[0]);
-		//$modelvals = explode('|--|', $modelarrays[1]);
+		//$modelkeys = explode('|~~|', $modelarrays[0]);
+		//$modelvals = explode('|~~|', $modelarrays[1]);
 		//$modeldata = array_combine($modelkeys, $modelvals);
 		$modelid = $_POST['model'];		
 		jobform($modelid);
@@ -55,7 +55,7 @@ elseif ($_POST['refinemodel'])  {
 }
 
 elseif ($_POST['duplicate'])  {
-	$postdata = explode('|--|', $_POST['duplicate']);
+	$postdata = explode('|~~|', $_POST['duplicate']);
 	$modelid = $postdata[1];
 	jobform($modelid);
 }
@@ -234,8 +234,8 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 			
 	// display starting models
 	$modeltable.= "<tr><TD COLSPAN=8>\n";
-	//$modelkeys="DEF_id|--|path|--|name|--|boxsize|--|symmetry";
-	//$modelvals="$model[DEF_id]|--|$model[path]/$model[runname]|--|$model[name]|--|$model[boxsize]|--|$model[symmetry]";
+	//$modelkeys="DEF_id|~~|path|~~|name|~~|boxsize|~~|symmetry";
+	//$modelvals="$model[DEF_id]|~~|$model[path]/$model[runname]|~~|$model[name]|~~|$model[boxsize]|~~|$model[symmetry]";
 	if ($sum_specific_params) {			
 		$modeltable.= "<input type='RADIO' NAME='model' VALUE='$model[DEF_id]' ";
 	
@@ -447,7 +447,7 @@ function jobform($modelid, $extra=false) {
 		$syms = $particle->getSymmetries();
 		// print form with user input for all values
 		echo "<tr>
-       			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|--|$modelid' onclick='imagic3dRefine.submit()'></td>
+       			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|~~|$modelid' onclick='imagic3dRefine.submit()'></td>
        			<td bgcolor='$rcol'><b>$i</b></td>
 			<td bgcolor='$rcol'><SELECT NAME='$symmetryn'><OPTION VALUE='$symmetry'>Select One</OPTION>\n";
                 	foreach ($syms as $sym) {
@@ -473,7 +473,7 @@ function jobform($modelid, $extra=false) {
 			<td bgcolor='$rcol'><input type='text' NAME='$amask_threshn' SIZE='4' VALUE='$amask_thresh'>
         		<td bgcolor='$rcol'><input type='text' NAME='$mrarefs_ang_incn' SIZE='4' VALUE='$mrarefs_ang_inc'></td>
         		<td bgcolor='$rcol'><input type='text' NAME='$forw_ang_incn' SIZE='4' VALUE='$forw_ang_inc'></td>
-       			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|--|$modelid' onclick='imagic3dRefine.submit()'></td>
+       			<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i|~~|$modelid' onclick='imagic3dRefine.submit()'></td>
      	    	</tr>\n";
 	}
 	echo "</table>";

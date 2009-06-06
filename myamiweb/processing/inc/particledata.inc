@@ -884,7 +884,7 @@ class particledata {
 	}
 
 	function getStackSelector($stackIds,$stackidval,$onchange) {
-		echo "<SELECT NAME='stackvars'";
+		echo "<SELECT NAME='stackval'";
 		if ($onchange) echo "onchange='".$onchange."'";
 		echo ">\n";
 		foreach ($stackIds as $stackid){
@@ -898,10 +898,10 @@ class particledata {
 			// get box size
 			$box=($s['bin']) ? $s['boxSize']/$s['bin'] : $s['boxSize'];
 			// get stack path with name
-			$opvals = "$stackid[stackid]|~~|$apix|~~|$box|~~|$totalp|~~|$s[path]|~~|$s[name]";
+			$opvals = "$stackid[stackid]|--|$apix|--|$box|--|$totalp|--|$s[path]|--|$s[name]";
 			// if imagic stack, send both hed & img files for dmf
-			if (ereg('\.hed', $s['name'])) $opvals.='|~~|'.ereg_replace('hed','img',$s['name']);
-			if (ereg('\.img', $s['name'])) $opvals.='|~~|'.ereg_replace('img','hed',$s['name']);
+			if (ereg('\.hed', $s['name'])) $opvals.='|--|'.ereg_replace('hed','img',$s['name']);
+			if (ereg('\.img', $s['name'])) $opvals.='|--|'.ereg_replace('img','hed',$s['name']);
 			echo "<OPTION VALUE='$opvals'";
 			// select previously set stack on resubmit
 			if ($stackid['stackid']==$stackidval) echo " SELECTED";

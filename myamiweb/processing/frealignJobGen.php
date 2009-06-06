@@ -36,14 +36,14 @@ if ($_POST['write']) {
 elseif ($_POST['submitstackmodel'] || $_POST['importrecon']) {
 	## make sure a stack and model were selected
 	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackvars']) stackModelForm("ERROR: no stack selected");
+	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
 
 	## make sure that box sizes are the same
 	## get stack data
-	$stackinfo = explode('|~~|',$_POST['stackvars']);
+	$stackinfo = explode('|--|',$_POST['stackval']);
 	$stackbox = $stackinfo[2];
 	## get model data
-	$modelinfo = explode('|~~|',$_POST['model']);
+	$modelinfo = explode('|--|',$_POST['model']);
 	$modbox = $modelinfo[3];
 	#if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
@@ -84,7 +84,7 @@ function stackModelForm($extra=False) {
 		// find each stack entry in database
 		// THIS IS REALLY, REALLY SLOW
 		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|~~|',$_POST['stackvars']);
+		$stackinfo=explode('|--|',$_POST['stackval']);
 		$stackidval=$stackinfo[0];
 		$apix=$stackinfo[1];
 		$box=$stackinfo[2];
@@ -122,7 +122,7 @@ function stackModelForm($extra=False) {
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
 	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
-	$minf = explode('|~~|',$_POST['model']);
+	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
 	  foreach ($models as $model) {
 	    echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
@@ -137,7 +137,7 @@ function stackModelForm($extra=False) {
 	    // display starting models
 	    $sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 	    echo "<tr><TD COLSPAN=2>\n";
-	    $modelvals="$model[DEF_id]|~~|$model[path]|~~|$model[name]|~~|$model[boxsize]|~~|$sym[symmetry]";
+	    $modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
 	    if (!$modelonly) {
 	      echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
 	      // check if model was selected
@@ -185,7 +185,7 @@ function jobForm($extra=false) {
 	$defrunid = 'frealign_recon'.($reconruns+1);
 
 	## get stack data
-	$stackinfo = explode('|~~|',$_POST['stackvars']);
+	$stackinfo = explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$nump=$particle->getNumStackParticles($stackidval);
 	$apix=$stackinfo[1];
@@ -206,7 +206,7 @@ function jobForm($extra=false) {
 	}
 	
 	## get model data
-	$modelinfo = explode('|~~|',$_POST['model']);
+	$modelinfo = explode('|--|',$_POST['model']);
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];
 	$dmfmod = $modelinfo[2];
@@ -235,7 +235,7 @@ function jobForm($extra=false) {
 	echo "<form name='frealignjob' method='post' action='$formaction'><br />\n";
 	echo "<p>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
-	echo "<input type='hidden' name='stackvars' value='".$_POST['stackvars']."'>\n";
+	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 	echo openRoundBorder();
 	echo "<table border='0' cellpadding='4' cellspacing='4'>\n";
 	echo "<tr>\n";
@@ -488,14 +488,14 @@ function writeJobFile ($extra=False) {
 
 
 	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
-	$stackpath=$stackinfo[3];
-	$stackname1=$stackinfo[4];
-	$stackname2=$stackinfo[5];
+	$stackpath=$stackinfo[4];
+	$stackname1=$stackinfo[5];
+	$stackname2=$stackinfo[6];
  
 	// get the model id
-	$modelinfo=explode('|~~|',$_POST['model']);
+	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
 	$modelpath = $modelinfo[1];
 	$modelname = $modelinfo[2];

@@ -43,8 +43,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -65,8 +65,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		}
 		function estimatetime() {
 			var secperiter = 0.12037;
-			var stackvars = document.viewerform.stackvars.value;
-			var stackArray = stackvars.split('|~~|');
+			var stackval = document.viewerform.stackval.value;
+			var stackArray = stackval.split('|--|');
 			var numpart = document.viewerform.numpart.value;
 			var boxsize = stackArray[2];
 			var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
@@ -116,8 +116,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		$alignruns += 1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
 	$description = $_POST['description'];
-	$stackidstr = $_POST['stackvars'];
-	list($stackidval) = split('\|~~\|',$stackidstr);
+	$stackidstr = $_POST['stackval'];
+	list($stackidval) = split('\|--\|',$stackidstr);
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
@@ -157,7 +157,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo "<br/>";
 		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 		/*
-		echo "<br/>\n<select name='stackvars' onchange='switchDefaults(this.value)'>\n";
+		echo "<br/>\n<select name='stackval' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -175,7 +175,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
-			echo "<option value='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+			echo "<option value='$stackid|--|$apix|--|$boxsz|--|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " selected";
 			echo ">".$stack['stackid'].": $stackname ($totprtls prtls,";
@@ -289,7 +289,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackvars.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -299,7 +299,7 @@ function runMaxLikeAlign() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-	$stackvars=$_POST['stackvars'];
+	$stackval=$_POST['stackval'];
 	$highpass=$_POST['highpass'];
 	$lowpass=$_POST['lowpass'];
 	$numpart=$_POST['numpart'];
@@ -316,7 +316,7 @@ function runMaxLikeAlign() {
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 	//make sure a session was selected
 
 	if (!$description)

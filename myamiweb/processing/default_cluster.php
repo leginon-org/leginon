@@ -39,9 +39,9 @@ class Cluster {
 	function post_data() {
 		
 		$stackinfo = explode('|--|',$_POST['stackval']);
-		$stackpath=$stackinfo[3];
+		$stackpath=$stackinfo[4];
 		$stackname1=$stackinfo[5];
-		$stackname2=$stackinfo[5];
+		$stackname2=$stackinfo[6];
 
 		$modelinfo = explode('|--|',$_POST['model']);
 		$modelpath = $modelinfo[1];

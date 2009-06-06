@@ -50,8 +50,8 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -122,15 +122,16 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 			<td>\n";
 
 	if ($selectAlignId) {
-		echo "<input type='hidden' name='stackid' value='$selectAlignId'>\n";
+		echo "<input type='hidden' name='stackval' value='$selectAlignId'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
 		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
 		$defaultbin = (int) floor($alignstack['boxsize']/32);
 	} elseif ($alignIds) {
+		print_r($_POST);
 		echo "
 		Aligned Stack:<br>
-		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
+		<select name='stackval' onchange='switchDefaults(this.value)'>\n";
 		foreach ($alignIds as $alignarray) {
 			$alignid = $alignarray['alignstackid'];
 			$alignstack = $particle->getAlignStackParams($alignid);
@@ -145,7 +146,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 			//handle multiple runs in stack
 			$runname=$alignstack['runname'];
 			$totprtls=commafy($particle->getNumAlignStackParticles($alignid));
-			echo "<OPTION VALUE='$alignid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+			echo "<OPTION VALUE='$alignid|--|$apix|--|$boxsz|--|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$alignid) echo " SELECTED";
 			echo ">$alignid: $runname ($totprtls prtls,";
@@ -204,7 +205,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackid.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -214,8 +215,8 @@ function runSpiderCoranClassify() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
-	$stackvars=$_POST['stackid'];
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	$stackval=$_POST['stackval'];
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 	$maskrad=$_POST['maskrad'];
 	$numfactors=$_POST['numfactors'];
 	$bin=$_POST['bin'];

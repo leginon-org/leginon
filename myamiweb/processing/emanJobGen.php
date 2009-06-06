@@ -63,14 +63,14 @@ elseif ($_POST['submitstackmodel'] || $_POST['duplicate'] || $_POST['import']) {
 	// create job form
 	## make sure a stack and model were selected
 	if (!$_POST['model']) stackModelForm("ERROR: no initial model selected");
-	if (!$_POST['stackvars']) stackModelForm("ERROR: no stack selected");
+	if (!$_POST['stackval']) stackModelForm("ERROR: no stack selected");
 
 	// make sure that box sizes are the same
 	// get stack data
-	//	$stackinfo = explode('|~~|',$_POST['stackvars']);
+	//	$stackinfo = explode('|--|',$_POST['stackval']);
 	//$stackbox = $stackinfo[2];
 	// get model data
-	//$modelinfo = explode('|~~|',$_POST['model']);
+	//$modelinfo = explode('|--|',$_POST['model']);
 	//$modbox = $modelinfo[3];
 	//if ($stackbox != $modbox) stackModelForm("ERROR: model and stack must have same box size");
 	jobForm();
@@ -104,7 +104,7 @@ elseif ($_POST['submitjob']) {
 
 	// add header & job id to the beginning of the script
 	// convert /\n's back to \n for the script
-	$header = explode('|~~|',$_POST['header']);
+	$header = explode('|--|',$_POST['header']);
 	$clusterjob = "## $jobname\n";
 	foreach ($header as $l) $clusterjob.="$l\n";
 
@@ -198,7 +198,7 @@ function stackModelForm($extra=False) {
 	 	 // find each stack entry in database
 	  	// THIS IS REALLY, REALLY SLOW
 		$stackIds = $particle->getStackIds($sessionId);
-		$stackinfo=explode('|~~|',$_POST['stackvars']);
+		$stackinfo=explode('|--|',$_POST['stackval']);
 		$stackidval=$stackinfo[0];
 		$apix=$stackinfo[1];
 		$box=$stackinfo[2];
@@ -234,7 +234,7 @@ function stackModelForm($extra=False) {
 	echo "<P><B>Model:</B><br><A HREF='uploadmodel.php?expId=$expId'>[Upload a new initial model]</A><br>\n";
 	if (!$modelonly) echo"<P><input type='SUBMIT' NAME='submitstackmodel' VALUE='Use this stack and model'><br>\n";
 	echo "<P>\n";
-	$minf = explode('|~~|',$_POST['model']);
+	$minf = explode('|--|',$_POST['model']);
 	if (is_array($models) && count($models)>0) {
 		foreach ($models as $model) {
 			echo "<table class='tableborder' border='1' cellspacing='1' cellpadding='2'>\n";
@@ -250,7 +250,7 @@ function stackModelForm($extra=False) {
 			$sym=$particle->getSymInfo($model['REF|ApSymmetryData|symmetry']);
 			$sym['symmetry'] = strtolower($sym['symmetry']);
 			echo "<tr><TD COLSPAN=2>\n";
-			$modelvals="$model[DEF_id]|~~|$model[path]|~~|$model[name]|~~|$model[boxsize]|~~|$sym[symmetry]";
+			$modelvals="$model[DEF_id]|--|$model[path]|--|$model[name]|--|$model[boxsize]|--|$sym[symmetry]";
 			if (!$modelonly) {
 				echo "<input type='RADIO' NAME='model' VALUE='$modelvals' ";
 				// check if model was selected
@@ -305,11 +305,11 @@ function jobForm($extra=false) {
 
 
 	// get stack data
-	$stackinfo = explode('|~~|',$_POST['stackvars']);
+	$stackinfo = explode('|--|',$_POST['stackval']);
 	$box = $stackinfo[2];
 
 	// get model data
-	$modelinfo = explode('|~~|',$_POST['model']);
+	$modelinfo = explode('|--|',$_POST['model']);
 	$syminfo = explode(' ',$modelinfo[4]);
 	$modsym=$syminfo[0];
 	if ($modsym == 'Icosahedral') $modsym='icos';
@@ -348,7 +348,7 @@ function jobForm($extra=false) {
 	echo "<form name='emanjob' method='post' action='$formaction'><br />\n";
 	echo "<input type='hidden' name='clustermemo' value='".$selectedcluster."'>\n";
 	echo "<input type='hidden' name='model' value='".$_POST['model']."'>\n";
-	echo "<input type='hidden' name='stackvars' value='".$_POST['stackvars']."'>\n";
+	echo "<input type='hidden' name='stackval' value='".$_POST['stackval']."'>\n";
 
 	echo "<table border='0' cellpadding='0' cellspacing='0' width='600'>\n";
 	echo "<tr><td>\n";
@@ -750,13 +750,13 @@ function writeJobFile ($extra=False) {
 	$clusterdata->post_data();
 
 	// get the stack info (pixel size, box size)
-	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
 
 	// get the model id
-	$modelinfo=explode('|~~|',$_POST['model']);
+	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
 	$initmodel = $particle->getInitModelInfo($modelid);
 	if ($initmodel['boxsize'] != $box) $rebox = True; 
@@ -895,7 +895,7 @@ function writeJobFile ($extra=False) {
 	echo "<input type='hidden' NAME='outdir' value='$outdir'>\n";
 
 	// convert \n to /\n's for script
-	$header_conv=preg_replace('/\n/','|~~|',$header);
+	$header_conv=preg_replace('/\n/','|--|',$header);
 
 	echo "<input type='hidden' NAME='header' VALUE='$header_conv'>\n";
 	echo "<input type='submit' NAME='submitjob' VALUE='Submit Job to Cluster'>\n";

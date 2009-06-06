@@ -44,8 +44,8 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -84,8 +84,8 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// Set any existing parameters in form
 	$rundescrval = $_POST['description'];
-	$stackidstr = $_POST['stackvars'];
-	list($stackidval) = split('\|~~\|',$stackidstr);
+	$stackidstr = $_POST['stackval'];
+	list($stackidval) = split('\|--\|',$stackidstr);
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	while (file_exists($sessionpathval.'noref'.($alignruns+1)))
 		$alignruns += 1;
@@ -226,7 +226,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	echo "</form>\n";
 	// first time loading page, set defaults:
 	if (!$_POST['process']) {
-		echo "<script>switchDefaults(document.viewerform.stackvars.options[0].value);</script>\n";
+		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
 	}
 	processing_footer();
 	exit;
@@ -239,7 +239,7 @@ function runSpiderNoRefAlign() {
 
 
 
-	$stackvars=$_POST['stackvars'];
+	$stackval=$_POST['stackval'];
 	$partrad=$_POST['partrad'];
 	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
@@ -251,7 +251,7 @@ function runSpiderNoRefAlign() {
 	$templateid=$_POST['templateid'];
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 
 	//make sure a session was selected
 	$description=$_POST['description'];

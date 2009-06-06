@@ -120,7 +120,6 @@ function createTemplateForm() {
 //***************************************
 function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $heading='Perform Ed Iter Alignment') {
   // check if coming directly from a session
-	//echo print_r($_POST);
 
 	$expId=$_GET['expId'];
 	if ($expId){
@@ -146,14 +145,14 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set max last ring radius
 	$javascript .= "	var bestbin = Math.ceil(stackArray[2]/100);\n";
-	$javascript .= "	var radius = Math.ceil(stackArray[2]/3.0*stackArray[1]*1e10);\n";
+	$javascript .= "	var radius = Math.ceil(stackArray[2]/3.0*stackArray[1]);\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
 	$javascript .= "	document.viewerform.radius.value = radius;\n";
 	// set particle & mask radius and lp
@@ -181,8 +180,8 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'editer'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackidstr = $_POST['stackvars'];
-	list($stackidval) = split('\|~~\|',$stackidstr);
+	$stackidstr = $_POST['stackval'];
+	list($stackidval) = split('\|--\|',$stackidstr);
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
@@ -278,7 +277,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 		Particles:<br>";
 		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 /*
-		<SELECT NAME='stackvars' onchange='switchDefaults(this.value)'>\n";
+		<SELECT NAME='stackval' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackid = $stack['stackid'];
 			$stackparams=$particle->getStackParams($stackid);
@@ -287,7 +286,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 			$apixtxt=format_angstrom_number($mpix)."/pixel";
 			$stackname = $stackparams['shownstackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stackid));
-			echo "<option value='$stackid|~~|$mpix|~~|$boxsz|~~|$totprtls'";
+			echo "<option value='$stackid|--|$mpix|--|$boxsz|--|$totprtls'";
 			//echo "<OPTION VALUE='$stackid'";
 			// select previously set prtl on resubmit
 			if ($stackidval == $stackid) echo " SELECTED";
@@ -382,8 +381,8 @@ function runAlignment() {
 	$outdir  = $_POST['outdir'];
 	$runname = $_POST['runname'];
 
-	$stackvars=$_POST['stackvars'];
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	$stackval=$_POST['stackval'];
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 	$radius=$_POST['radius'];
 	$bin=$_POST['bin'];
 	$lowpass=$_POST['lowpass'];

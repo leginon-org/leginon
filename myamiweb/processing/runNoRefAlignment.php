@@ -49,8 +49,8 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	$javascript = '<script type="text/javascript" src="../js/viewer.js"></script>'."\n";
 	// javascript to switch the defaults based on the stack
 	$javascript .= '<script type="text/javascript">'."\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -92,7 +92,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	// Set any existing parameters in form
 	$runidval = ($_POST['runid']) ? $_POST['runid'] : $defrunid;
 	$rundescrval = $_POST['description'];
-	$stackidval = $_POST['stackid'];
+	$stackidval = $_POST['stackval'];
 	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
 	$numfactors = ($_POST['numfactors']) ? $_POST['numfactors'] : '8';
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
@@ -137,7 +137,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 	else {
 		echo "
 		Particles:<br>
-		<select name='stackid' onchange='switchDefaults(this.value)'>\n";
+		<select name='stackval' onchange='switchDefaults(this.value)'>\n";
 		foreach ($stackIds as $stack) {
 			$stackparams=$particle->getStackParams($stack[stackid]);
 
@@ -153,7 +153,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 			$runname=$stackparams[shownstackname];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
-			echo "<OPTION VALUE='$stackid|~~|$apix|~~|$boxsz|~~|$totprtls'";
+			echo "<OPTION VALUE='$stackid|--|$apix|--|$boxsz|--|$totprtls'";
 			// select previously set prtl on resubmit
 			if ($stackidval==$stackid) echo " SELECTED";
 			echo ">$runname ($totprtls prtls,";
@@ -272,7 +272,7 @@ function runNoRefAlign() {
 	$command.="norefAlignment.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 
-	$stackvars=$_POST['stackid'];
+	$stackval=$_POST['stackval'];
 	$partrad=$_POST['partrad'];
 	$maskrad=$_POST['maskrad'];
 	$lowpass=$_POST['lowpass'];
@@ -285,14 +285,14 @@ function runNoRefAlign() {
 	$templateid=$_POST['templateid'];
 
 	// get stack id, apix, & box size from input
-	list($stackid,$apix,$boxsz) = split('\|~~\|',$stackvars);
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
 
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description) createNoRefAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
-	//$stackid=$_POST['stackid'];
+	//$stackid=$_POST['stackval'];
 	if (!$stackid) createNoRefAlignForm("<B>ERROR:</B> No stack selected");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';

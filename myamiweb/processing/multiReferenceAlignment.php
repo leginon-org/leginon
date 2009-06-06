@@ -49,8 +49,8 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	$javascript .= "<script>\n";
-	$javascript .= "function switchDefaults(stackvars) {\n";
-	$javascript .= "	var stackArray = stackvars.split('|~~|');\n";
+	$javascript .= "function switchDefaults(stackval) {\n";
+	$javascript .= "	var stackArray = stackval.split('|--|');\n";
 	// remove commas from number
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
@@ -86,7 +86,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 		$alignruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'multiRefAlign'.($alignruns+1);
 	$rundescrval = $_POST['description'];
-	$stackinfo=explode('|~~|',$_POST['stackvars']);
+	$stackinfo=explode('|--|',$_POST['stackval']);
 	$stackidval=$stackinfo[0];
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// alignment params
@@ -163,7 +163,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 			$totprtls = "";
 			if ($temp['cls_avgs'] == 1) $type = "Class Averages";
 			elseif ($temp['forward'] == 1) $type = "Forward Projections";
-			echo "<OPTION VALUE='$templateId|~~|$apix|~~|$boxsz|~~|$totprtls|~~|$type'";
+			echo "<OPTION VALUE='$templateId|--|$apix|--|$boxsz|--|$totprtls|--|$type'";
 			if ($templateidval == $templateId) echo " SELECTED";
 			echo ">$templateId: $templatename ($apix &Aring;/pixel, $boxsz pixels)</OPTION>\n";
 		}
@@ -274,11 +274,11 @@ function runAlignment() {
 	$rundir  = $_POST['rundir'];
 	$runname = $_POST['runname'];
 
-	$stackvars = $_POST['stackvars'];
-	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = split('\|~~\|', $stackvars);
+	$stackval = $_POST['stackval'];
+	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = split('\|--\|', $stackval);
 
-	$templatestackvars=$_POST['templatestackid'];
-	list($templatestackid,$apix_t,$boxsz_t,$totprtls_t,$type) = split('\|~~\|',$templatestackvars);
+	$templatestackval=$_POST['templatestackid'];
+	list($templatestackid,$apix_t,$boxsz_t,$totprtls_t,$type) = split('\|--\|',$templatestackval);
 	
 	// particle parameters
 	$bin=$_POST['bin'];
