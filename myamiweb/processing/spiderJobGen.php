@@ -546,7 +546,8 @@ function writeJobFile ($extra=False) {
 	$line="\napmqRefine.py ";
 	$line.="--stack=$stackidval ";
 	$line.="--projectid=$projectId ";
-	$line.="--radius=$mask ";
+	$line.="--mask=$mask ";
+	if ($imask) $line.="--imask=$imask ";
 	$line.="--allowed-shift=$xyshift ";
   	$line.="--keepsig=$keep ";
 	$line.="--modelid=$modelid ";
