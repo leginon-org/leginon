@@ -486,7 +486,8 @@ function writeJobFile ($extra=False) {
 
 	$jobname = $_POST['jobname'];
 	$jobfile ="$jobname.job";
-
+	$logfile ="$jobname.log";
+	
 	$clustername = C_NAME;
 	$outdir = formatEndPath($_POST['outdir']);
 
@@ -563,8 +564,7 @@ function writeJobFile ($extra=False) {
 	if ($hp) $line.="--highpass=$hp ";
 	$line.="--proc=$proc ";
 	$line.="--rundir=. ";
-	$line.="\n";
-	$ejob.= $line;
+	$spijob= "webcaller.py '$line' $logfile\n";
 	
 	$clusterjob .= $clusterdata->cluster_job_file($ejob);
 	
