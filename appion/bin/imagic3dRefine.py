@@ -144,14 +144,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		self.params['rundir'] = os.path.join(path, self.params['runname'])
 
-
 	#=======================
-	def createImagicBatchFile(self):
-		# IMAGIC batch file creation
-		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
-		symmetry = syminfo['eman_name']
-		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
-				
+	def createImagicBatchFileHeaders(self):
+		# this is for deleting header information that may interfere with the batch file
+		filename = os.path.join(self.params['rundir'], "headers.batch")
+		
 		f = open(filename, 'w')	
 		f.write("#!/bin/csh -f\n")	
 		f.write("setenv IMAGIC_BATCH 1\n")
@@ -174,9 +171,27 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("wipe\n")
 		f.write("shift\n")
 		f.write("EOF\n")
+		f.close()
+		
+		return filename
+
+
+	#=======================
+	def createImagicBatchFile(self):
+		# IMAGIC batch file creation
+		syminfo = apSymmetry.findSymmetry(self.params['symmetry'])
+		symmetry = syminfo['eman_name']
+		filename = os.path.join(self.params['rundir'], "imagicCreate3dRefine_"+str(self.params['itn'])+".batch")
+				
+		f = open(filename, 'w')	
+		f.write("#!/bin/csh -f\n")	
+		f.write("setenv IMAGIC_BATCH 1\n")
+		f.write("cd "+str(self.params['rundir'])+"\n")
+		
 		f.write("/usr/local/IMAGIC/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write("FRESH\n")
+		f.write("ALIGNMENT\n")
 		f.write("ALL\n")
 		f.write("ROTATION_FIRST\n")
 		f.write("CCF\n")
@@ -196,6 +211,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("5\n")			
 		f.write("NO\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/angrec/euler.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write(symmetry+"\n")
 		lowercase = symmetry.lower()
@@ -218,6 +234,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("NO\n")
 		f.write("YES\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("SORT\n")
 		f.write("mra_start_stack\n")
@@ -226,6 +243,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("UP\n")
 		f.write(str(self.params['num_classums'])+"\n")		
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write(symmetry+"\n") 		
@@ -239,6 +257,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(str(self.params['ham_win'])+"\n")		
 		f.write(str(self.params['object_size'])+"\n")		
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("ALL\n")
 		f.write("CCF\n")
@@ -249,6 +268,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("-180,180\n")
 		f.write("5\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write(symmetry+"\n") 		
@@ -265,10 +285,12 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("set j=1\n")
 		repalignments = self.params['repalignments'] + 1
 		f.write("while ($j<"+str(repalignments)+")\n")
+		
 		f.write("/usr/local/IMAGIC/stand/copyim.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("ordered_repaligned\n")
 		f.write("to_be_aligned\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/align/alipara.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("ALL\n")
 		f.write("CCF\n")
@@ -279,6 +301,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("-180,180\n")
 		f.write("5\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write(symmetry+"\n")		
@@ -294,6 +317,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n")
 		f.write("@ j++\n")
 		f.write("end\n\n")
+		
 		f.write("/usr/local/IMAGIC/threed/automask3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("DO_IT_ALL\n")
 		f.write("3d_ordered_repaligned\n")
@@ -306,15 +330,17 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("mask_3d_ordered_repaligned\n")
 		f.write("masked_3d_ordered_repaligned\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/stand/em2em.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("IMAGIC\n")
 		f.write("MRC\n")
 		f.write("3D\n")
-		f.write("MULTIPLE\n")
+#		f.write("MULTIPLE\n")
 		f.write("masked_3d_ordered_repaligned\n")
 		f.write("masked_3d_ordered_repaligned.mrc\n")
 		f.write("YES\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("EXTRACT\n")
 		f.write("ordered_repaligned\n")
@@ -323,6 +349,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("1-"+str(self.params['num_classums'])+"\n")		
 		f.write("ODD\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/incore/excopy.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("EXTRACT\n")
 		f.write("ordered_repaligned\n")
@@ -331,6 +358,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("1-"+str(self.params['num_classums'])+"\n") 		
 		f.write("EVEN\n")
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write(symmetry+"\n") 		
@@ -344,6 +372,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(str(self.params['ham_win'])+"\n")		
 		f.write(str(self.params['object_size'])+"\n")	
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write(symmetry+"\n")		
@@ -357,6 +386,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(str(self.params['ham_win'])+"\n")		
 		f.write(str(self.params['object_size'])+"\n")		
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/foushell.e MODE FSC <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("3d_ordered_repaligned_odd\n")
 		f.write("3d_ordered_repaligned_even\n")
@@ -366,11 +396,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write(".66\n")			
 		f.write(str(self.params['boxsize'])+"\n")			
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("masked_3d_ordered_repaligned\n")
 		f.write("-99999\n")
 		f.write("PROJECTIONS\n")
-		f.write("WIDENING\n")
+		f.write("YES\n")
+#		f.write("WIDENING\n")
 		f.write("mrarefs_masked_3d\n")
 		f.write("ASYM_TRIANGLE\n")
 		f.write(symmetry+"\n")		
@@ -378,11 +410,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("ZERO\n")
 		f.write(str(self.params['mrarefs_ang_inc'])+"\n")		
 		f.write("EOF\n")
+		
 		f.write("/usr/local/IMAGIC/threed/forward.e SURF FORWARD <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("masked_3d_ordered_repaligned\n")
 		f.write("-99999\n")
 		f.write("PROJECTIONS\n")
-		f.write("WIDENING\n")
+		f.write("YES\n")
+#		f.write("WIDENING\n")
 		f.write("masked_3d_ordered_repaligned_forward\n")
 		f.write("ASYM_TRIANGLE\n")
 		f.write(symmetry+"\n")		
@@ -582,6 +616,13 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			print "... class average pixel size: "+str(self.params['apix'])
 			print "... class average box size: "+str(self.params['boxsize'])	
 			apDisplay.printMsg("Running IMAGIC .batch file: See imagic3dRefine_"+str(self.params['itn'])+".log for details")
+		
+			# first copy class averages and delete header information for batch script
+			if self.params['itn'] == 1:
+				headerscript = self.createImagicBatchFileHeaders()
+				proc = subprocess.Popen('chmod 755 '+headerscript, shell=True)
+				proc.wait()
+				apIMAGIC.executeImagicBatchFile(headerscript)
 		
 			# create batch file for execution with IMAGIC
 			batchfile = self.createImagicBatchFile()
