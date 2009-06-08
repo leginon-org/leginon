@@ -418,10 +418,15 @@ class ChimSnapShots(object):
 		self.hideDust(50)
 		for s in self.surfaces:
 			self.color_surface_height(s)
+		self.writeMessageToLog("turn: get top view")
+		self.runChimCommand('turn x +45')
 		self.save_image(self.volumepath+'.1.png')
-		self.writeMessageToLog("turn: get side view")
-		self.runChimCommand('turn y -90')
+		self.writeMessageToLog("turn: back to front view")
+		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.2.png')
+		self.writeMessageToLog("turn: get side view")
+		self.runChimCommand('turn y -60')
+		self.save_image(self.volumepath+'.3.png')
 
 	# -----------------------------------------------------------------------------
 	def snapshot_asymmetric(self):
