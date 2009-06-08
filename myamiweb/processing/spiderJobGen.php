@@ -544,7 +544,7 @@ function writeJobFile ($extra=False) {
 	$hp=$_POST['hp'];
 	$proc=$_POST['nodes']*$_POST['ppn'];
 
-	$line="\napmqRefine.py ";
+	$line="apmqRefine.py ";
 	$line.="--stack=$stackidval ";
 	$line.="--projectid=$projectId ";
 	$line.="--mask=$mask ";
@@ -564,9 +564,9 @@ function writeJobFile ($extra=False) {
 	if ($hp) $line.="--highpass=$hp ";
 	$line.="--proc=$proc ";
 	$line.="--rundir=. ";
-	$spijob= "webcaller.py '$line' $logfile\n";
+	$spijob= "\nwebcaller.py '$line' ../$logfile\n";
 	
-	$clusterjob .= $clusterdata->cluster_job_file($ejob);
+	$clusterjob .= $clusterdata->cluster_job_file($spijob);
 	
 	if (!$extra) {
 		echo $clusterdata->cluster_check_msg();
