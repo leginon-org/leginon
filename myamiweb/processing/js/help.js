@@ -217,6 +217,21 @@ var help = {
 		'eotest' : 'Run the <I>eotest</I> program that performs a 2 way even-odd test to determine the resolution of a reconstruction.',
 		'coran' : 'Use correspondence analysis particle clustering algorithm',
 	},
+
+	'spider' : {
+		'mask' : 'Radius from center of particle to outer edge (in pixels). Everything further will be masked after each iteration',
+		'imask' : 'Inner masking radius (in pixels).',
+		'lp' : 'Particles can be low-pass filtered for projection-matching, specify the amount here (in Angstroms).  The raw, unfiltered data is used for the back-projection.',
+		'hp' : 'Particles can be high-pass filtered for projection-matching, specify the amount here (in Angstroms).  The raw, unfiltered data is used for the back-projection.',
+		'firstring' : 'Used in determination of rotational alignment. Any pixels this far away from the center will not be used in the analysis. If you have an empty virus caspid, for example, enter a value that is a few pixels smaller than the particle radius.',
+		'lastring' : 'Used in determination of rotational alignment. Only pixels this far from the center will be used in the analysis.',
+		'xyshift' : 'During projection-matching, particles will only be allowed to shift this far from the center of the image. This value is a percentage of the total box size (0-1).  For example, if using a box size of 256, an xyshift value of 0.2 will allow the particle to move a maximum distance of 52 pixels from its original location.',
+		'keep' : 'Used to determine which particles are kept for use in the back-projection.  This value sets the particle cutoff in terms of sigma levels above or below the mean cross-correlation.  A value of 0 only keeps the particles that have an equal or better cc value than the mean. The higher the value entered here, the fewer (but better correlated) particles that are used.  A value of -1 will include particles that are 1 standard deviation worse than the mean cc value in the back projection.',
+		'voliter' : 'Maximum number of iterative back-projection cycles to perform, in order to properly determine the relative weights of the low to high frequencies.',
+		'lambda' : 'Controls the speed of convergence during iterative back-projection.  Too small a value will result in a structure that has high frequencies underrepresented, and will appear very smooth. Too large a value will terminate the iterations too soon, and the resulting structure will be incorrect.',
+		'smooth' : 'Determines the relative weight of the low-pass filtration. 0 means no smoothing.  To achieve stronger low-pass filtration, one can decrease lambda and increase the smoothing constant.',
+		'ang_inc' : 'A list of angular increments for projection matching, separated by commas.',
+	},
 	
 	'frealign' : {
 		'copy' : 'Duplicate the parameters for this iteration',	
