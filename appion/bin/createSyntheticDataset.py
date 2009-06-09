@@ -22,6 +22,7 @@ import apIMAGIC
 import apParam
 import appionScript
 import appionData
+import apStack
 import apStackMeanPlot
 from pyami import mrc, imagefun
 from scipy import fftpack, ndimage
@@ -400,9 +401,10 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 	
 		imgcount = 0
 		mcount = 1
-		micrographlist = []
+#		micrographlist = []
+		self.micrographlist = []
 		for item in range(basenum):
-			partstack = os.path.join(self.params['rundir'], "micrographs", "stack"+str(mcount))+".hed"
+			partstack = os.path.join(self.params['rundir'], "micrographs", "stack.img")
 			while os.path.isfile(partstack):
 				apFile.removeStack(partstack)
 			time.sleep(1) ### workaround for now, encountering problems between removing and creating stack
@@ -418,7 +420,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
 		
 			### add noise to micrographs
-			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
+#			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
+			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph.hed")
 			noisygraph = micrograph+".noise.mrc"
 			while os.path.isfile(noisygraph):
 				apDisplay.printWarning("removing file "+noisygraph)
@@ -427,42 +430,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(emancmd)
 		
 			imgcount += self.params['projpergraph']
-			micrographlist.append(noisygraph)
-			mcount += 1
-		
-		if remainder != 0:
-			remstack = os.path.join(self.params['rundir'], "micrographs", "stack"+str(mcount))+".hed"
-			emancmd = "proc2d "+stack+" "+remstack+" first="+str(imgcount)+" last="+str(imgcount+remainder-1)+" norm"
-			while os.path.isfile(remstack):
-				apFile.removeStack(remstack)
-			apEMAN.executeEmanCmd(emancmd)
+#			micrographlist.append(noisygraph)
 			
-			batchfile = self.createImagicBatchFile(mcount)
-			apIMAGIC.copyFile(os.path.join(self.params['rundir'], "micrographs"), "stack"+str(mcount)+".hed", headers=True)
-			apIMAGIC.executeImagicBatchFile(batchfile)
-			logfile = open(os.path.join(self.params['rundir'], "micrographs", "createMicrograph.log"))
-			loglines = logfile.readlines()
-			for line in loglines:
-				if re.search("ERROR in program", line):
-					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
-		
-			### add noise to micrograph
-			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
-			noisygraph = micrograph+".noise.mrc"
-			while os.path.isfile(noisygraph):
-				apDisplay.printWarning("removing file "+noisygraph)
-				apFile.removeFile(noisygraph)
-			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
-			apEMAN.executeEmanCmd(emancmd)
-			micrographlist.append(noisygraph)
-		
-		self.params['numgraphs'] = mcount
-		
-		### now do the rest: ctf application, envelope function, noise addition
-		
-		self.micrographlist = []
-		for image in micrographlist:
-		
 			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
 			if self.params['randomdef'] is True:
 				randomfloat = random.gauss(0,self.params['randomdef_std'])
@@ -472,11 +441,15 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 				df1 = self.params['df1']
 				df2 = self.params['df2']
 				
-			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
+#			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
+				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
+				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
+			ace2cmd = "ace2correct.exe -img "+noisygraph+" -kv "+str(self.params['kv'])+" -cs "+\
 				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
 				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
 			self.executeAce2Cmd(ace2cmd)
-			ctfappliedgraph = image+".corrected.mrc"
+#			ctfappliedgraph = image+".corrected.mrc"
+			ctfappliedgraph = noisygraph+".corrected.mrc"
 			for num in range(self.params['projpergraph']): ### write defocus for each projection
 				self.defocuslist1.append(df1)
 				self.defocuslist2.append(df2)
@@ -552,17 +525,147 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			else:
 				self.micrographlist.append(noisygraph2)
 			
+			mcount += 1
+		
+		### NOW DO THE SAME WITH THE REMAINDER
+		
+		if remainder != 0:
+			remstack = os.path.join(self.params['rundir'], "micrographs", "stack.img")
+			emancmd = "proc2d "+stack+" "+remstack+" first="+str(imgcount)+" last="+str(imgcount+remainder-1)+" norm"
+			while os.path.isfile(remstack):
+				apFile.removeStack(remstack)
+			apEMAN.executeEmanCmd(emancmd)
+			
+			batchfile = self.createImagicBatchFile(mcount)
+			apIMAGIC.copyFile(os.path.join(self.params['rundir'], "micrographs"), "stack"+str(mcount)+".hed", headers=True)
+			apIMAGIC.executeImagicBatchFile(batchfile)
+			logfile = open(os.path.join(self.params['rundir'], "micrographs", "createMicrograph.log"))
+			loglines = logfile.readlines()
+			for line in loglines:
+				if re.search("ERROR in program", line):
+					apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: createMicrograph.log")
+		
+			### add noise to micrograph
+#			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph"+str(mcount)+".hed")
+			micrograph = os.path.join(self.params['rundir'], "micrographs", "micrograph.hed")
+			noisygraph = micrograph+".noise.mrc"
+			while os.path.isfile(noisygraph):
+				apDisplay.printWarning("removing file "+noisygraph)
+				apFile.removeFile(noisygraph)
+			emancmd = "proc2d "+micrograph+" "+noisygraph+" addnoise="+str(noiselevel)
+			apEMAN.executeEmanCmd(emancmd)
+#			micrographlist.append(noisygraph)
+			
+			### run ace2 correction, set defocus parameters early, i.e. once for every micrograph
+			if self.params['randomdef'] is True:
+				randomfloat = random.gauss(0,self.params['randomdef_std'])
+				df1 = self.params['df1'] + randomfloat * 1e-06
+				df2 = self.params['df2'] + randomfloat * 1e-06
+			else:
+				df1 = self.params['df1']
+				df2 = self.params['df2']
+				
+#			ace2cmd = "ace2correct.exe -img "+image+" -kv "+str(self.params['kv'])+" -cs "+\
+				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
+				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
+			ace2cmd = "ace2correct.exe -img "+noisygraph+" -kv "+str(self.params['kv'])+" -cs "+\
+				str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
+				str(df2)+","+str(self.params['astigmatism'])+" -apply -out="+self.params['rundir']
+			self.executeAce2Cmd(ace2cmd)
+#			ctfappliedgraph = image+".corrected.mrc"
+			ctfappliedgraph = noisygraph+".corrected.mrc"
+			for num in range(self.params['projpergraph']): ### write defocus for each projection
+				self.defocuslist1.append(df1)
+				self.defocuslist2.append(df2)
+				self.astigmatismlist.append(self.params['astigmatism'])
+		
+			### apply envelope
+			outimage = ctfappliedgraph+".ampcorrected.mrc"
+			self.applyEnvelope(ctfappliedgraph, outimage, self.params['envelope'])
+			
+			### read MRC stats to figure out the second noise level addition
+			graphmean, graphstdev = self.readMRCStats(outimage)
+
+			### cascading of noise processes according to Frank and Al-Ali (1975)
+			graphsnr2 = 1 / ((1+1/float(self.params['snrtot'])) / (1/float(self.params['snr1']) + 1) - 1)
+			graphnoiselevel2 = float(graphstdev) / float(graphsnr2)
+			
+			noisygraph2 = outimage+".noise.mrc"
+			emancmd = "proc2d "+outimage+" "+noisygraph2+" addnoise="+str(graphnoiselevel2)
+			apEMAN.executeEmanCmd(emancmd)
+			
+			### optional ace2correction here
+			if self.params['ace2correct'] is True and self.params['ace2estimate'] is True:
+				### use ACE2 to estimate the defoci that were applied to the raw micrographs
+				ace2cmd = "ace2.exe -i "+noisygraph2+" -a "+str(self.params['apix'])+" -c "+\
+					str(self.params['cs'] * 1000 )+" -k "+str(self.params['kv'])+" -b 2"
+				self.executeAce2Cmd(ace2cmd)
+				ctfparamspath = noisygraph2+".ctf.txt"
+				ctffile = open(ctfparamspath, 'r')
+				lines = ctffile.readlines()
+				ctffile.close()
+				stripped = [line.strip() for line in lines]
+				defparams = stripped[1]
+				deflist = defparams.split(" ")
+				df1c = deflist[2]
+				df2c = deflist[3]
+				astigmatismc = deflist[4]
+				for num in range(self.params['projpergraph']):
+					self.defocuslist1c.append(df1c)
+					self.defocuslist2c.append(df2c)
+					self.astigmatismlistc.append(astigmatismc)
+				### and now correct
+				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1c)+","+\
+					str(df2c)+","+str(astigmatismc)+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				correctedgraph = noisygraph2+".corrected.mrc"
+				self.micrographlist.append(correctedgraph)
+			elif self.params['ace2correct'] is True and self.params['ace2estimate'] is False:
+				for num in range(self.params['projpergraph']):
+					self.defocuslist1c.append(df1)
+					self.defocuslist2c.append(df2)
+					self.astigmatismlistc.append(self.params['astigmatism'])
+				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1)+","+\
+					str(df2)+","+str(self.params['astigmatism'])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				correctedgraph = noisygraph2+".corrected.mrc"
+				self.micrographlist.append(correctedgraph)
+			elif self.params['ace2correct_rand'] is True and self.params['ace2correct_std'] is not None:
+				randomwiggle = random.gauss(0, self.params['ace2correct_std'])
+				df1w = df1 + randomwiggle * 1e-06
+				df2w = df2 + randomwiggle * 1e-06
+				for num in range(self.params['projpergraph']):
+					self.defocuslist1c.append(df1w)
+					self.defocuslist2c.append(df2w)
+					self.astigmatismlistc.append(self.params['astigmatism'])
+				ace2cmd = "ace2correct.exe -img "+noisygraph2+" -kv "+str(self.params['kv'])+" -cs "+\
+					str(self.params['cs'])+" -apix "+str(self.params['apix'])+" -df "+str(df1w)+","+\
+					str(df2w)+","+str(self.params['astigmatism'])+" -wiener 0.1"
+				self.executeAce2Cmd(ace2cmd)
+				correctedgraph = noisygraph2+".corrected.mrc"
+				self.micrographlist.append(correctedgraph)
+			else:
+				self.micrographlist.append(noisygraph2)
+		
+		self.params['numgraphs'] = mcount
+		
+								
 	#=====================
 	def createImagicBatchFile(self, mcount):
 		# IMAGIC batch file creation
+		# mcount is not being used anymore, creates too many large & unnecessary files & uses up disk space
 
 		batchfile = os.path.join(self.params['rundir'], "micrographs", "createMicrograph.batch")
 		f = open(batchfile, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("/usr/local/IMAGIC/stand/arithm.e MODE THRESHOLD <<EOF > createMicrograph.log\n")
-		f.write("stack"+str(mcount)+"\n")
-		f.write("stack"+str(mcount)+"_thresh\n")
+#		f.write("stack"+str(mcount)+"\n")
+#		f.write("stack"+str(mcount)+"_thresh\n")
+		f.write("stack\n")
+		f.write("stack_thresh\n")
 		f.write("LOWER_THRESHOLD\n")
 		f.write("FIXED_DENSITY\n")
 		f.write("0\n")
@@ -570,16 +673,21 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		f.write("EOF\n")
 
 		f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> createMicrograph.log\n")
-		f.write("stack"+str(mcount)+"_thresh\n")
-		f.write("stack"+str(mcount)+"\n")
+#		f.write("stack"+str(mcount)+"_thresh\n")
+#		f.write("stack"+str(mcount)+"\n")
+		f.write("stack_thresh\n")
+		f.write("stack\n")
 		f.write("EOF\n")
 		
 		f.write("/usr/local/IMAGIC/stand/model_micrograph.e <<EOF >> createMicrograph.log\n")
-		f.write("stack"+str(mcount)+"\n")
-		f.write("micrograph"+str(mcount)+"\n")
+#		f.write("stack"+str(mcount)+"\n")
+		f.write("stack\n")
+#		f.write("micrograph"+str(mcount)+"\n")
+		f.write("micrograph\n")
 		f.write("ROTATE_RANDOMLY_TOO\n")
 		f.write(str(self.params['projpergraph'])+"\n")
-		f.write("micrograph"+str(mcount)+"\n")
+#		f.write("micrograph"+str(mcount)+"\n")
+		f.write("micrograph\n")
 		f.write("4096,4096\n")
 		f.write("128\n")
 		f.write("AVOID_OVERLAP\n")
@@ -963,7 +1071,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		### read MRC stats to figure out noise level addition
 		mean1, stdev1 = self.readMRCStats(newname)
 
-		### calculate noiselevel additions and add noise to an initial ratio of 1.8, simulating beak and structural damage
+		### calculate noiselevel additions and add noise to an initial ratio of 1.8, simulating beam and structural damage
 		noiselevel1 = float(stdev1) / float(self.params['snr1'])
 		noisystack = self.addNoise(newname, noiselevel1, SNR=self.params['snr1'])
 		
