@@ -74,7 +74,10 @@ class DTFinder(targetfinder.TargetFinder):
 
 		if oldimagedata['correction channel'] == newimagedata['correction channel']:
 			self.logger.info('reversing template corrector channel')
-			oldimagedata = self.reverseCorrectorChannel(oldimagedata)
+			try:
+				oldimagedata = self.reverseCorrectorChannel(oldimagedata)
+			except:
+				self.logger.warning('failed to reverse template corrector channel')
 
 		oldimage = oldimagedata['image']
 		newimage = newimagedata['image']
