@@ -440,18 +440,6 @@ if ($expId) {
 		);
 	}
 
-	if ($aligndone >= 1 || $norefdone >= 1 ) {
-		$clinesqueue = count($subclusterjobs['createModel']['queued']);
-		$clinesrun = count($subclusterjobs['createModel']['running']);
-		$clinesresults[] = ($clinesrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=createModel'>$clinesrun running</a>";
-		$clinesresults[] = ($clinesqueue==0) ? "" : "$clinesqueue queued";
-		$nruns[]=array(
-			'name'=>"<a href='createmodel.php?expId=$sessionId'>EMAN Common Lines</a>",
-			'result'=>$clinesresults,
-		);
-
-	}
-
 	/* OTR Volumes */
 	if ($maxangle > 5 && $aligndone >= 1 && $stackruns >= 2 ) {
 		$otrdone = $particle->getNumberOfOtrRuns($sessionId);
@@ -466,6 +454,7 @@ if ($expId) {
 		);
 	}
 
+	/* EMAN Common Lines */
 	if ($aligndone >= 1 || $norefdone >= 1 ) {
 		$clinesqueue = count($subclusterjobs['createModel']['queued']);
 		$clinesrun = count($subclusterjobs['createModel']['running']);
@@ -477,7 +466,6 @@ if ($expId) {
 		);
 
 	}
-
 
 	/* IMAGIC Common Lines */
 	if ($imagic3d0run=$particle->get3d0ClusterModelsFromSessionId($sessionId)) {
