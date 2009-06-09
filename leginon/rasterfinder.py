@@ -149,6 +149,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		for xt in xlist:
 			xshft = xt * xspacing
 			for yt in ylist:
+				print 'old',xt,yt
 				yshft = yt * yspacing
 				xrot = xshft * numpy.cos(radians) - yshft * numpy.sin(radians) 
 				yrot = yshft * numpy.cos(radians) + xshft * numpy.sin(radians)
@@ -156,10 +157,11 @@ class RasterFinder(targetfinder.TargetFinder):
 				y = int(yrot + y0)
 				if x < 0 or x >= imageshape[0]: continue
 				if y < 0 or y >= imageshape[1]: continue
+				print 'rotated',x,y
 				points.append( (x,y) )
 
 		#old stuff
-		self.setTargets(self.transpose_points(points), 'Raster')
+		self.setTargets(points, 'Raster')
 		self.rasterpoints = points
 		self.logger.info('Full raster has %s points' % (len(points),))
 
@@ -211,12 +213,11 @@ class RasterFinder(targetfinder.TargetFinder):
 
 	def setPolygon(self):
 		vertices = self.panel.getTargetPositions('Polygon Vertices')
-		vertices = self.transpose_points(vertices)
 		if len(vertices) < 3:
 			self.polygonrasterpoints = self.rasterpoints
 		else:
 			self.polygonrasterpoints = polygon.pointsInPolygon(self.rasterpoints, vertices)
-		self.setTargets(self.transpose_points(self.polygonrasterpoints), 'Polygon Raster')
+		self.setTargets(self.polygonrasterpoints, 'Polygon Raster')
 
 	def get_box_stats(self, image, coord, boxsize):
 		## select the region of interest
@@ -261,7 +262,6 @@ class RasterFinder(targetfinder.TargetFinder):
 				goodpoints.append(rasterpoint)
 				mylist.append( (rasterpoint, t, ts))
 
-		goodpoints = self.transpose_points(goodpoints)
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
 
 		### run template convolution

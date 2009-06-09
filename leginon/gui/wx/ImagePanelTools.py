@@ -429,6 +429,7 @@ class RulerTool(ImageTool):
 					'to': (x, y),
 					'delta': (dx, dy),
 					'magnitude': math.hypot(dx, dy),
+					'angle': math.degrees(math.atan2(dy, dx)),
 				}
 				mevt = MeasurementEvent(self.imagepanel, dict(self.measurement))
 				self.imagepanel.GetEventHandler().AddPendingEvent(mevt)
@@ -469,7 +470,7 @@ class RulerTool(ImageTool):
 		if self.button.GetToggle() and self.start is not None:
 			x0, y0 = self.start
 			dx, dy = x - x0, y - y0
-			return ['From (%d, %d) x=%d y=%d d=%.2f' % (x0, y0, dx, dy, math.hypot(dx, dy))]
+			return ['From (%d, %d) x=%d y=%d d=%.2f a=%.0f' % (x0, y0, dx, dy, math.hypot(dx, dy),math.degrees(math.atan2(dy, dx)))]
 		else:
 			return []
 

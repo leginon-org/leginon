@@ -80,8 +80,8 @@ def createIndices2(a,b,angle,offset=False):
 	goodindices = []
 	for index in indices:
 		if index != (0,0):
-			col = abs(index[0]*cos-index[1]*sin)-0.5
-			row = abs(index[0]*sin+index[1]*cos)-0.5
+			row = abs(index[0]*cos-index[1]*sin)-0.5
+			col = abs(index[0]*sin+index[1]*cos)-0.5
 		else:
 			col = 0
 			row = 0

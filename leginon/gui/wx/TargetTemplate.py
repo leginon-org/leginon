@@ -257,8 +257,8 @@ class AutoFillTargets(wx.Dialog):
 		degincr = 360.0/numtargets
 		while(deg < 359.9):
 			rad = (deg + degoffset) * math.pi / 180.0
-			x = int(math.sin(rad)*radius)
-			y = int(math.cos(rad)*radius)
+			x = int(math.cos(rad)*radius)
+			y = int(math.sin(rad)*radius)
 			target = (x, y)
 			if not self.GetParent().validate(target):
 				dialog = wx.MessageDialog(self, 'Invalid target dimensions (%d,%d)' % x,y, 'Error', wx.OK|wx.ICON_ERROR)
