@@ -27,6 +27,32 @@ from pyami import convolver
 from random import choice
 
 #================
+def rescaleVolume(modelId, outfile, outbox, outpix, spider=False):
+	# get initial model path
+	modeldata = getModelFromId(modelId)
+	initmodel=os.path.join(modeldata['path']['path'],modeldata['name'])
+
+	# check Box Size
+	resize = False
+	if (modeldata['boxsize'] != outbox):
+		resize=True
+	# check Pixel size
+	scale = modeldata['pixelsize']/outpix
+	if round(scale,2) != 1.:
+		resize=True
+
+	if resize is True:
+		emancmd = "proc3d %s %s scale=%f clip=%d,%d,%d" % (initmodel, outfile, scale, outbox, outbox, outbox)
+		if spider is True:
+			emancmd+=" spidersingle"
+		apEMAN.executeEmanCmd(emancmd,verbose=True)
+	else:
+		if spider is True:
+			emancmd = "proc3d %s %s spidersingle" % (initmodel,outfile)
+		else:
+			shutil.copy(initmodel,outfile)
+
+#================
 def getModelDimensions(mrcfile):
 	print "calculating dimensions..."
 	vol=mrc.read(mrcfile)
