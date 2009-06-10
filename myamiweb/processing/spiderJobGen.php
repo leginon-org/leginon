@@ -41,6 +41,12 @@ if ($_POST['write']) {
 	if (!$_POST['ang_inc']) jobForm("ERROR: no angular increment set for iteration $i");
 	if (!$_POST['mask']) jobForm("ERROR: no mask set for iteration $i");
 
+	$lastring=($_POST['lastring']) ? $_POST['lastring']:$_POST['mask'];
+	// make sure that xysearch & lastring are appropriate
+	$stackinfo=explode('|--|',$_POST['stackval']);
+	$halfbox=$stackinfo[2]/2-2;
+	if (($_POST['xysearch']+$lastring) > $halfbox) jobForm("ERROR: lastring + xysearch must be less than $halfbox");
+
 	// check that job file doesn't already exist
 	$outdir = formatEndPath($_POST['outdir']);
 	$outdir .= $_POST['jobname'];
@@ -418,7 +424,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('sym','mask','imask','firstring','lastring','lp','hp','xyshift','keep');  
+	$display_keys = array('sym','mask','imask','firstring','lastring','xysearch','lp','hp','xyshift','keep');  
 	echo"
   <br />
   <H4 style='align=\'center\' >SPIDER Reconstruction Parameters</H4>
@@ -534,9 +540,11 @@ function writeJobFile ($extra=False) {
 	$keep=$_POST["keep"];
 	$xyshift=$_POST["xyshift"];
 	$keep=$_POST['keep'];
-	$firstring=($_POST['firstring']) ? $_POST['firstring'] : 1;
-	$lastring=($_POST['lastring']) ? $_POST['lastring'] : $_POST['mask'];
+	$firstring=$_POST['firstring'];
+	$lastring=$_POST['lastring'];
+	$xysearch=$_POST['xysearch'];
 	$ang=$_POST['ang_inc'];
+	$xysearch=$_POST['xysearch'];
 	$lp=$_POST['lp'];
 	$hp=$_POST['hp'];
 	$proc=$_POST['nodes']*$_POST['ppn'];
@@ -551,7 +559,7 @@ function writeJobFile ($extra=False) {
 	$line.="--modelid=$modelid ";
 	$line.="--first-ring=$firstring ";
 	$line.="--last-ring=$lastring ";
-	$line.="--xy-search=5 ";
+	$line.="--xy-search=$xysearch ";
 	$line.="--xy-step=1 ";
 	$line.="--increment=$ang ";
 	if ($lp) $line.="--lowpass=$lp ";
@@ -600,12 +608,15 @@ function writeJobFile ($extra=False) {
 }
 
 function defaultReconValues ($box) {
-	$rad = ($box/2)-2;
+	$rad = ($box/2)-8;
 	$javafunc = "
 <script type='text/javascript'>
 	function setDefaults(obj) {
 		obj.mask.value = '$rad';
 		obj.keep.value = '0';
+		obj.xysearch.value = '6';
+		obj.firstring.value = '1';
+		obj.lastring.value = '$rad';
 		obj.lp.value= '10';
 		obj.hp.value= '800';
 		obj.xyshift.value='0.2';
