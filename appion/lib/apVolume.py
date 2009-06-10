@@ -49,6 +49,7 @@ def rescaleVolume(modelId, outfile, outbox, outpix, spider=False):
 	else:
 		if spider is True:
 			emancmd = "proc3d %s %s spidersingle" % (initmodel,outfile)
+			apEMAN.executeEmanCmd(emancmd,verbose=True)
 		else:
 			shutil.copy(initmodel,outfile)
 
