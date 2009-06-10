@@ -56,7 +56,7 @@ def stackToSpiderStack(stack,spiderstack,apix,boxsize,lp=0,hp=0,bin=1,numpart=0)
 	if lp > 0:
 		emancmd += "lp="+str(lp)+" "
 	if hp > 0:
-		emancmd += "hp="+str(lp)+" "
+		emancmd += "hp="+str(hp)+" "
 	if bin > 1:
 		clipboxsize = boxsize*bin
 		emancmd += "shrink="+str(bin)+" "
@@ -368,7 +368,7 @@ def rotAndShiftImg(inimg,outimg,rot=0,shx=0,shy=0,dataext=".spi",inMySpi=False):
 		mySpi=inMySpi
 	img1=spyder.fileFilter(inimg)
 	img2=spyder.fileFilter(outimg)
-	mySpi.toSpiderQuiet("RT SQ",img1,img2,str(rot),str(shx)+","+str(shy))
+	mySpi.toSpiderQuiet("RT SQ",img1,img2,rot,str(shx)+","+str(shy))
 	if inMySpi is False:
 		mySpi.close()
 
@@ -492,6 +492,44 @@ def spiderFSCtoEMAN(spiderFSC,emanFSC):
 	outfile.close()
 
 #===============================
+def symmetryDoc(symtype,symfold=None,outfile="sym.spi",dataext=".spi"):
+	mySpi=spyder.SpiderSession(dataext=dataext,logo=False,log=False)
+	checkFile(outfile)
+	mySpi.toSpiderQuiet("SY",spyder.fileFilter(outfile),symtype)
+	if symfold is not None:
+		mySpi.toSpiderQuiet(symfold)
+	mySpi.close()
+
+#===============================
+def backProjection(
+		stack,
+		select,
+		ang,
+		out,
+		sym=None,
+		nproc=1,
+		dataext=".spi",
+		inMySpi=False):
+	if inMySpi is False:
+		mySpi = spyder.SpiderSession(nproc=nproc,dataext=dataext,logo=False,log=False)
+	else:
+		mySpi=inMySpi
+	checkFile(out)
+
+	if sym is None:
+		sym="*"
+	mySpi.toSpiderQuiet(
+		"BP 3F",
+		spyder.fileFilter(stack)+"@******",
+		spyder.fileFilter(select),
+		spyder.fileFilter(ang),
+		spyder.fileFilter(sym),
+		spyder.fileFilter(out)
+	)
+	if inMySpi is False:
+		mySpi.close()
+
+#===============================
 def iterativeBackProjection(
 		stack,
 		select,
@@ -502,7 +540,7 @@ def iterativeBackProjection(
 		iterlimit,
 		mode,
 		smoothfac,
-		sym="*",
+		sym=None,
 		nproc=1,
 		dataext=".spi",
 		inMySpi=False):
@@ -510,6 +548,9 @@ def iterativeBackProjection(
 		mySpi = spyder.SpiderSession(nproc=nproc,dataext=dataext,logo=False,log=False)
 	else:
 		mySpi=inMySpi
+
+	if sym is None:
+		sym="*"
 	checkFile(out)
 	# calculate the smoothing factor
 	smooth=(1/(1+6*lam))*smoothfac
@@ -531,6 +572,7 @@ def iterativeBackProjection(
 		"(0,0)",
 		"x48",
 	)
+
 	# check if BP RP finished the requested iterations,
 	# if not, modify lambda and smoothing constant and rerun
 	mySpi.toSpiderQuiet("IF (x11.LT.%d) THEN" % iterlimit)
@@ -943,7 +985,7 @@ def analyzeEigenFactors(alignedstack, rundir, numpart, numfactors=8, dataext=".s
 	return contriblist
 
 #===============================
-def createClassAverages(stack,projs,apmq,numprojs,boxsz,outclass="classes",shifted=False,rotated=False,apmqlist=False,dataext=".spi"):
+def createClassAverages(stack,projs,apmq,numprojs,boxsz,outclass="classes",rotated=False,shifted=False,dataext=".spi"):
 	"""
 	creates EMAN-style class average file "classes.hed" & "classes.img"
 	and variance files "variances.hed" & "variances.img"
@@ -952,8 +994,7 @@ def createClassAverages(stack,projs,apmq,numprojs,boxsz,outclass="classes",shift
 	checkFile(outclass)
 	outf=spyder.fileFilter(outclass)
 	outvf="tmpvar"
-	if apmqlist is False:
-		apmqlist = readDocFile(apmq)
+	apmqlist = readDocFile(apmq)
 	mySpi = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 
 	# create file containing the number of particles matched to each projection
@@ -980,31 +1021,33 @@ def createClassAverages(stack,projs,apmq,numprojs,boxsz,outclass="classes",shift
 			mySpi.toSpiderQuiet("DE","_2@")
 			mySpi.toSpiderQuiet("MS","_2@","%d,%d,1" % (boxsz,boxsz), str(len(clsfile)))
 			for p in range(0,len(clsfile)):
+				mySpi.toSpiderQuiet("DE","_1")
 				# get the particle
 				part = int(float(clsfile[p][2]))-1
 				pimg = spyder.fileFilter(stack)+"@%d"%(part+1)
-				# mirror, rotate and shift the image
-				if int(float(apmqlist[part][2])) < 0:
-					mirrorImg(pimg,"_1",inMySpi=mySpi)
-					pimg="_1"
-				if rotated is True:
-					rot=0
-				else:
-					rot=float(apmqlist[part][4])
+				
+				rot=float(apmqlist[part][4])
+				shx=float(apmqlist[part][5])
+				shy=float(apmqlist[part][6])
 				if shifted is True:
 					shx=0
 					shy=0
-				else:
-					shx=float(apmqlist[part][5])
-					shy=float(apmqlist[part][6])
+				if rotated is True:
+					rot=0
+				p_out="_2@%d" % (p+1)
 				rotAndShiftImg(
 					pimg,
-					"_2@%d" % (p+1),
-					str(rot),
-					str(shx),
-					str(shy),
+					"_1",
+					rot,
+					shx,
+					shy,
 					inMySpi=mySpi
 				)
+				# mirror
+				if int(float(apmqlist[part][2])) < 0:
+					mirrorImg("_1",p_out,inMySpi=mySpi)
+				else:
+					mySpi.toSpiderQuiet("CP","_1",p_out)
 			if len(clsfile) == 1:
 				mySpi.toSpiderQuiet("CP","_2@1","%s@%d" % (outf,(i+1)))
 				mySpi.toSpiderQuiet("BL","%s@%d" % (outvf,(i+1)),"(%d,%d)" % (boxsz,boxsz),"N","(0.0)",)
@@ -1442,14 +1485,14 @@ def checkFile(f):
 	return
 
 #===============================
-def spiderVOEA(incr,ang,dataext=".spi"):
+def spiderVOEA(incr,ang,fold=1.0,dataext=".spi"):
 	checkFile(ang)
 	mySpider = spyder.SpiderSession(dataext=dataext, logo=False, log=False)
 	mySpider.toSpiderQuiet(
 		"VO EA",
 		str(incr),
 		"(0,90.0)",
-		"(0,359.9)",
+		"(0,%.1f)" % ((360.0/fold)-0.1),
 		spyder.fileFilter(ang),
 	)
 	mySpider.close()
@@ -1458,6 +1501,7 @@ def spiderVOEA(incr,ang,dataext=".spi"):
 def createProjections(
 		incr,
 		boxsz,
+		symfold,
 		invol,
 		rad,
 		sel="selvoea.spi",
@@ -1467,7 +1511,7 @@ def createProjections(
 		dataext=".spi"):
 
 	# create doc file containing euler angles
-	spiderVOEA(incr,ang)
+	spiderVOEA(incr,ang,symfold)
 	projangles=readDocFile(ang)
 	numprojs = len(projangles)
 

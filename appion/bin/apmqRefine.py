@@ -53,7 +53,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			help="allowed translational particle shift, as a fraction of the image size")
 		self.parser.add_option("--keepsig", dest="keepsig", type="float", default=0,
 			help="# of sigmas above the mean cc value to set the cutoff")
-		self.parser.add_option("--voliter", dest="voliter", type="int", default=50,
+		self.parser.add_option("--voliter", dest="voliter", type="int",
 			help="iterative back projection iteration limit")
 		self.parser.add_option("--bpmode", dest="bpmode", type="int", default=3,
 			help="type of constraint used in back projection")
@@ -65,7 +65,8 @@ class apmqRefineScript(appionScript.AppionScript):
 			help="smoothing constant will be multiplied by this value after each iteration of BP")
 		self.parser.add_option("--proc", dest="proc", type="int", default=1,
 			help="number of processors to use")
-	
+		self.parser.add_option("--sym", dest="sym", type="string", default="c1",
+			help="particle symmetry")	
 
 	#=====================
 	def checkConflicts(self):
@@ -116,6 +117,21 @@ class apmqRefineScript(appionScript.AppionScript):
 		self.stack['boxsize'] = apStack.getStackBoxsize(self.params['stackid'])
 		self.stack['file'] = os.path.join(self.stack['data']['path']['path'], self.stack['data']['name'])
 
+		# symmetry info
+		if self.params['sym']=='Icos':
+			self.params['symtype']='I'
+			self.params['symfold']=None
+		else:
+			self.params['symtype']=self.params['sym'][0]
+			self.params['symfold']=int(self.params['sym'][1:])
+			# eman "d" symmetry is spider "ci"
+			if self.params['symtype'].upper()=="D":
+				self.params['symtype'] = "CI"
+
+		# create symmetry doc file
+		sydoc="sym.spi"
+		alignment.symmetryDoc(self.params['symtype'],self.params['symfold'],sydoc)
+
 		# convert incr to array of increments
 		ang_inc=self.params['incr'].split(',')
 		self.params['numiter'] = len(ang_inc)
@@ -132,7 +148,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			boxsize=self.stack['boxsize'],
 			numpart=self.params['numpart']
 		)
-		
+
 		# create filtered stack
 		spiderstackfilt=spiderstack
 		if (self.params['lowpass']+self.params['highpass']) > 0:
@@ -159,6 +175,7 @@ class apmqRefineScript(appionScript.AppionScript):
 			projs,numprojs,ang,sel = alignment.createProjections(
 				incr=self.params['increments'][iter-1],
 				boxsz=self.stack['boxsize'],
+				symfold=self.params['symfold'],
 				invol=self.params['itervol'],
 				rad=self.params['rad'],
 			)
@@ -195,7 +212,7 @@ class apmqRefineScript(appionScript.AppionScript):
 		
 			# don't use MPI here - for some reason slower?
 			mySpi=spyder.SpiderSession(dataext=".spi", logo=False, log=False)
-			
+
 			apmqlist = alignment.readDocFile(apmqfile)
 			avgccrot = 0
 
@@ -246,6 +263,7 @@ class apmqRefineScript(appionScript.AppionScript):
 				mySpi.toSpiderQuiet("GP x17","_2",str(shift+1)+","+str(shift+1))
 				alignment.copyImg(stackimg,shpos,inMySpi=mySpi)
 				mySpi.toSpiderQuiet("ELSE")
+				#mySpi.toSpiderQuiet("RT SQ",stackimg,shpos,inplane*-1,"-x15,-x16")
 				mySpi.toSpiderQuiet("SH F",stackimg,shpos,"-x15,-x16")
 				mySpi.toSpiderQuiet("ENDIF")
 				
@@ -256,13 +274,13 @@ class apmqRefineScript(appionScript.AppionScript):
 			
 			# create class average images
 			alignment.createClassAverages(
-				spiderstack,
+				shiftedStack,
 				projs,
 				apmqfile,
 				numprojs,
 				self.stack['boxsize'],
 				shifted=True,
-				apmqlist=apmqlist)
+			)
 			# rename class averages & variacnes for iteration
 			cmd="mv classes.hed classes.%d.hed;" % iter
 			cmd+="mv classes.img classes.%d.img;" % iter
@@ -298,18 +316,29 @@ class apmqRefineScript(appionScript.AppionScript):
 			# and the corrected angles from the angular doc file
 			apDisplay.printMsg("creating 3d volume")
 			out_rawvol="vol_raw%03d.spi" % iter
-			alignment.iterativeBackProjection(
-				shiftedStack,
-				selectfile,
-				rad=self.params['rad'],
-				ang=outang,
-				out=out_rawvol,
-				lam=self.params['lambda'],
-				iterlimit=self.params['voliter'],
-				mode=self.params['bpmode'],
-				smoothfac=self.params['smoothfac'],
-				nproc=self.params['proc'],
-			)
+			if self.params['voliter'] is not None: 
+				alignment.iterativeBackProjection(
+					shiftedStack,
+					selectfile,
+					rad=self.params['rad'],
+					ang=outang,
+					out=out_rawvol,
+					lam=self.params['lambda'],
+					iterlimit=self.params['voliter'],
+					mode=self.params['bpmode'],
+					smoothfac=self.params['smoothfac'],
+					sym=sydoc,
+					nproc=self.params['proc'],
+				)
+			else:
+				alignment.backProjection(
+					shiftedStack,
+					selectfile,
+					ang=outang,
+					out=out_rawvol,
+					sym=sydoc,
+					nproc=self.params['proc']
+				)
 
 			# create even & odd select files
 			apDisplay.printMsg("creating even/odd volumes")
@@ -320,30 +349,50 @@ class apmqRefineScript(appionScript.AppionScript):
 			# get the even & odd volumesa
 			oddvol="vol1%03d.spi" % iter
 			evenvol="vol2%03d.spi" % iter
-			alignment.iterativeBackProjection(
-				shiftedStack,
-				oddfile,
-				rad=self.params['rad'],
-				ang=outang,
-				out=oddvol,
-				lam=self.params['lambda'],
-				iterlimit=self.params['voliter'],
-				mode=self.params['eobpmode'],
-				smoothfac=self.params['smoothfac'],
-				nproc=self.params['proc']
-			)
-			alignment.iterativeBackProjection(
-				shiftedStack,
-				evenfile,
-				rad=self.params['rad'],
-				ang=outang,
-				out=evenvol,
-				lam=self.params['lambda'],
-				iterlimit=self.params['voliter'],
-				mode=self.params['eobpmode'],
-				smoothfac=self.params['smoothfac'],
-				nproc=self.params['proc']
-			)
+			if self.params['voliter'] is not None:
+				alignment.iterativeBackProjection(
+					shiftedStack,
+					oddfile,
+					rad=self.params['rad'],
+					ang=outang,
+					out=oddvol,
+					lam=self.params['lambda'],
+					iterlimit=self.params['voliter'],
+					mode=self.params['eobpmode'],
+					smoothfac=self.params['smoothfac'],
+					sym=sydoc,
+					nproc=self.params['proc']
+				)
+				alignment.iterativeBackProjection(
+					shiftedStack,
+					evenfile,
+					rad=self.params['rad'],
+					ang=outang,
+					out=evenvol,
+					lam=self.params['lambda'],
+					iterlimit=self.params['voliter'],
+					mode=self.params['eobpmode'],
+					smoothfac=self.params['smoothfac'],
+					sym=sydoc,
+					nproc=self.params['proc']
+				)
+			else:
+				alignment.backProjection(
+					shiftedStack,
+					oddfile,
+					ang=outang,
+					out=oddvol,
+					sym=sydoc,
+					nproc=self.params['proc'],
+				)
+				alignment.backProjection(
+					shiftedStack,
+					evenfile,
+					ang=outang,
+					out=evenvol,
+					sym=sydoc,
+					nproc=self.params['proc'],
+				)
 
 			# calculate the FSC
 			apDisplay.printMsg("calculating FSC")
