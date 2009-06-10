@@ -65,7 +65,9 @@ class MakeSnapshotScript(appionScript.AppionScript):
 	def start(self):
 		mrcfile = self.params['file']
 		box = apVolume.getModelDimensions(mrcfile)
-
+		apDisplay.printMsg("Box: %.2f Apix: %.2f for file %s"%
+			(box, self.params['apix'], os.path.basename(mrcfile)))
+	
 		### scale by mass
 		if self.params['mass'] is not None:
 			apDisplay.printMsg("Using scale by mass method")
