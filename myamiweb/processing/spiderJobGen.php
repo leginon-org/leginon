@@ -418,7 +418,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('sym','mask','imask','firstring','lastring','lp','hp','xyshift','keep','voliter','lambda','smooth');  
+	$display_keys = array('sym','mask','imask','firstring','lastring','lp','hp','xyshift','keep');  
 	echo"
   <br />
   <H4 style='align=\'center\' >SPIDER Reconstruction Parameters</H4>
@@ -537,9 +537,6 @@ function writeJobFile ($extra=False) {
 	$firstring=($_POST['firstring']) ? $_POST['firstring'] : 1;
 	$lastring=($_POST['lastring']) ? $_POST['lastring'] : $_POST['mask'];
 	$ang=$_POST['ang_inc'];
-	$lambda=$_POST['lambda'];
-	$smooth=$_POST['smooth'];
-	$voliter=$_POST['voliter'];
 	$lp=$_POST['lp'];
 	$hp=$_POST['hp'];
 	$proc=$_POST['nodes']*$_POST['ppn'];
@@ -557,9 +554,6 @@ function writeJobFile ($extra=False) {
 	$line.="--xy-search=5 ";
 	$line.="--xy-step=1 ";
 	$line.="--increment=$ang ";
-	$line.="--lambda=$lambda ";
-	$line.="--voliter=$voliter ";
-	$line.="--smoothfactor=$smooth ";
 	if ($lp) $line.="--lowpass=$lp ";
 	if ($hp) $line.="--highpass=$hp ";
 	$line.="--proc=$proc ";
@@ -615,9 +609,6 @@ function defaultReconValues ($box) {
 		obj.lp.value= '10';
 		obj.hp.value= '800';
 		obj.xyshift.value='0.2';
-		obj.voliter.value='100';
-		obj.smooth.value='0.95';
-		obj.lambda.value='0.05';
 		return;
 	}
 </script>\n";
