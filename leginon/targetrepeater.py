@@ -58,20 +58,33 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 	def makeStates(self):
 		pass
 
+	def onContinue(self):
+		self.userpause.set()
+
 	def repeatTargetList(self, targetlistdata):
 		states = self.makeStates()
+		print 'repeating target at %d states' % (len(states),)
 		for scopedata in states:
+			self.setStatus('idle')
+			self.setStatus('user input')
+			self.logger.info('Continue to next state? waiting for user...')
+			self.userpause.clear()
+			self.userpause.wait()
+			self.setStatus('processing')
+
 			self.instrument.setData(scopedata)
-			# declare transform:
 
 			newtargetlistdata = self.copyTargetList(targetlistdata)
 			if newtargetlistdata is None:
 				break
 
+			# declare transform:
+			self.declareTransform(self.transformtype)
+
 			tid = self.makeTargetListEvent(newtargetlistdata)
 			self.publish(newtargetlistdata, pubevent=True)
-			self.setStatus('idle')
 			status = self.waitForTargetListDone(tid)
+
 
 	def markAllTargetsDone(self, targetlistdata):
 			alltargets = self.researchTargets(list=targetlistdata)

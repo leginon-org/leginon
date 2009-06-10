@@ -15,6 +15,8 @@ class Panel(gui.wx.Node.Panel):
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, 'settings', shortHelpString='Settings')
 		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, 'play', shortHelpString='Submit')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
 
 		self.toolbar.Realize()
 
@@ -22,9 +24,14 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
+	def onPlayTool(self, evt):
+		self.node.onContinue()
+
 	def onNodeInitialized(self):
 		print 'AAAAAA'
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=gui.wx.ToolBar.ID_PLAY)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
