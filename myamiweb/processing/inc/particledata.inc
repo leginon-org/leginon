@@ -243,6 +243,14 @@ class particledata {
 			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId;
 		return $this->mysql->getSQLResult($q);
 	}
+	function getSubTomoRunFromStack($stackId){
+		$q =  "SELECT `DEF_id` as subtomorunid "
+			."FROM `ApSubTomogramRunData` "
+			."WHERE `REF|ApStackdata|stack` = " .$stackId." "
+			."LIMIT 1";
+		list($r) = $this->mysql->getSQLResult($q);
+		return $r['subtomorunid'];
+	}
 
 	function getOrphanSubTomogramsFromSession($sessionId){
 		$q =  "SELECT t.`DEF_id` as DEF_id "
@@ -252,18 +260,33 @@ class particledata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getAveragedTomogramsFromSession($sessionId){
+	function getSubTomogramStackIds($sessionId){
+		$q =  "SELECT s.`DEF_id` as stackid, "
+			."s.* "
+			."FROM `ApSubTomogramRunData` t "
+			."LEFT JOIN `ApStackData` s "
+			."ON t.`REF|ApStackData|stack` = s.`DEF_id` "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId. " "
+			." ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getAveragedTomogramsFromSession($sessionId,$showHidden=False){
 		$q =  "SELECT t.`DEF_id` as `avgid`, "
 			."t.`description`, "
 			."t.`runname`, "
 			."t.`REF|ApStackData|stack` as stackid, "
+			."t.`hidden` as hidden, "
 			."stack.`substackname` as substackname "
 			."FROM `ApTomoAverageRunData` t "
 			."LEFT JOIN `ApSubTomogramRunData` sub "
 			."ON  t.`REF|ApSubTomogramRunData|subtomorun` = sub.DEF_id "
 			."LEFT JOIN `ApStackData` stack "
 			."ON  t.`REF|ApStackData|stack` = stack.DEF_id "
-			."WHERE sub.`REF|leginondata|SessionData|session` = " .$sessionId;
+			."WHERE sub.`REF|leginondata|SessionData|session` = " .$sessionId." ";
+		if (!$showHidden )
+			$q .= " AND ( t.`hidden` = 0 OR t.`hidden` IS NULL ) ";
+		$q .= "ORDER BY `avgid` ASC ";
 		return $this->mysql->getSQLResult($q);
 	}
 
@@ -290,6 +313,25 @@ class particledata {
 			."ON  subt.`REF|ApParticleData|center` = p.DEF_id "
 			."WHERE avgt.`DEF_id` = " .$avgId;
 		return $this->mysql->getSQLResult($q);
+	}
+
+	function getTomoAlignedParticleInfo($avgid,$subtomoid){
+		$q =  "SELECT p.`DEF_id` as `alignpid`, "
+			."p.`xshift`, "
+			."p.`yshift`, "
+			."p.`rotation`, "
+			."p.`mirror`, "
+			."avgtp.`z shift` as zshift, "
+			."p.`REF|ApAlignStackData|alignstack` as `alignstack` "
+			."FROM `ApTomoAvgParticleData` avgtp "
+			."LEFT JOIN `ApTomogramData` sub "
+			."ON  avgtp.`REF|ApTomogramData|subtomo` = sub.DEF_id "
+			."LEFT JOIN `ApAlignParticlesData` p "
+			."ON  avgtp.`REF|ApAlignParticlesData|aligned particle` = p.DEF_id "
+			."WHERE avgtp.`REF|ApTomoAverageRunData|avgrun` = " .$avgid." "
+			."AND avgtp.`REF|ApTomogramData|subtomo` = ".$subtomoid." ";
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
 	}
 
 	function getsubTomogramsFromFullTomogram($fullId){
@@ -1377,7 +1419,6 @@ class particledata {
 		return $r;
 	}
 
-
 	function getPrimaryStackIds ($sessionId) {
 		$q = "SELECT "
 		  ."  r.`REF|ApStackData|stack` as stackid , "
@@ -1416,6 +1457,68 @@ class particledata {
 		return $r;
 	}
 
+	function getClusterRefNumsFromSubStack ($substackid,$clusterstackid) {
+		$q = "SELECT "
+			."cp.`refnum` as classnum "
+			."FROM `ApClusteringParticlesData` as cp "
+			."LEFT JOIN `ApAlignParticlesData` as ap "
+			."ON cp.`REF|ApAlignParticlesData|alignparticle` = ap.`DEF_id` "
+			."LEFT JOIN `ApStackParticlesData` as pst "
+			."ON ap.`REF|ApStackParticlesData|stackpart` = pst.`DEF_id` "
+			."LEFT JOIN `ApParticleData` as pp "
+			."ON pst.`REF|ApParticleData|particle` = pp.`DEF_id` "
+			."LEFT JOIN `ApStackParticlesData` as sst "
+			."ON sst.`REF|ApParticleData|particle` = pp.`DEF_id` "
+			."WHERE "
+			."sst.`REF|ApStackData|stack` = ".$substackid." "
+			."AND cp.`REF|ApClusteringStackData|clusterstack` = ".$clusterstackid." "
+			."GROUP BY cp.`refnum` "
+			." ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getSubStackAlignCluster($substackinfo) {
+		$conditions = array(
+			'alignsub'=>array('alias'=>'ast','data'=>'ApAlignStackData'),
+			'clustersub'=>array('alias'=>'cst','data'=>'ApClausteringStackData')
+		);
+		$substackname = $substackinfo['substackname'];
+		foreach (array_keys($conditions) as $key) {
+			if (ereg($key,$substackname)) {
+				$conditionid = str_replace($key, '', $substackname);
+				$condition = $key;
+			} else {
+			echo ereg($key,$substackname);
+			}
+		}
+		if ($condition) {
+			$q = "SELECT ";
+			if ('clustersub' == $condition) {
+				$q.= "cst.`DEF_id` as clusterstackid, ";
+				$q.= "cr.`DEF_id` as clusterrunid, ";
+			}
+			$q.= " ast.`REF|ApStackData|stack` as primarystackid , "
+				." ast.`DEF_id` as alignstackid, "
+				." ar.`DEF_id` as alignrunid "
+				."FROM ApAlignStackData as ast "
+				."LEFT JOIN ApAlignRunData as ar ON "
+				."  (ast.`REF|ApAlignRunData|alignRun`=ar.`DEF_id`) ";
+			if ('clustersub' == $condition) {
+				$q.= "LEFT JOIN ApClusteringRunData as cr ON "
+					."(cr.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+					."LEFT JOIN ApClusteringStackData as cst ON "
+					."(cst.`REF|ApClusteringRunData|clusterrun` = cr.`DEF_id`) "
+					."WHERE "
+					." cst.`DEF_id` = '$conditionid' ";
+			} else {
+				$q.="WHERE "
+					." ast.`DEF_id` = '$conditionid' ";
+			}
+		}
+		$r = $this->mysql->getSQLResult($q);
+		return $r[0];
+	}
+
 	function getTiltedStackIds ($sessionId, $showHidden=False) {
 		$q = "SELECT "
 			."  stack.`DEF_id` as stackid "
@@ -1430,6 +1533,22 @@ class particledata {
 			."  ( stackrun.`tiltangle` != 'notilt' AND stackrun.`tiltangle` != 'all' )";
 		if (!$showHidden)
 			$q.= " AND st.`hidden` != 1 ";
+		$q.= "ORDER BY stackid DESC";
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
+	function getNamedSubStackIds ($sessionId, $primarystackid, $name, $showHidden=False) {
+		$q = "SELECT "
+		  ."  s.`DEF_id` as stackid, "
+		  ."  s.* "
+		  ."FROM ApStackData as s "
+		  ."WHERE "
+		  ." s.`REF|ApStackData|oldstack` = '$primarystackid' ";
+		if ($name) 
+			$q.= "AND s.`substackname` REGEXP '".$name."' ";
+		if (!$showHidden)
+			$q.= " AND s.`hidden` != 1 ";
 		$q.= "ORDER BY stackid DESC";
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
@@ -1463,7 +1582,7 @@ class particledata {
 	}
 
 	function getStackParams ($stackId) {
-		$q = "SELECT sd.*, pd.`path`, sd.`DEF_id` as `stackId`"
+		$q = "SELECT sd.`DEF_id` as `stackId`, sd.*, pd.`path`"
 			."FROM ApStackData as sd "
 			."LEFT JOIN ApPathData AS pd ON "
 			."(sd.`REF|ApPathData|path` = pd.`DEF_id`) "
@@ -1513,13 +1632,15 @@ class particledata {
 		//substack has no other parameter but oldstack reference
 		if ($stack_primary_array['REF|ApStackData|oldstack']) {
 			$r = array();
-			$r = array_merge($r, $params[0]);
 			$r = array_merge($r, $stack_primary_array);
+			$r = array_merge($r,$this->getSubStackAlignCluster($stack_primary_array));
 			$r['shownstackname'] = $runname.'-'.$stack_primary_array['substackname'];
-			//$r['bin'] = $params[0]['bin'];
-			//$r['boxSize'] = $params[0]['boxSize'];
-			//$r['tiltangle'] = $params[0]['tiltangle'];
-			//$r['fliptype'] = $params[0]['fliptype'];
+			$r['REF|ApStackData|oldstack'] = $stack_primary_array['REF|ApStackData|oldstack'];
+			//add needed parent stackrun parameters, but not all since they overwrites the primary values
+			$r['bin'] = $params[0]['bin'];
+			$r['boxSize'] = $params[0]['boxSize'];
+			$r['tiltangle'] = $params[0]['tiltangle'];
+			$r['fliptype'] = $params[0]['fliptype'];
 			return $r;
 		} 
 		$runarray = array();
@@ -1807,16 +1928,26 @@ class particledata {
 	}
 
 	function getAlignStackParams ($alignstackid) {
-		$q = "SELECT ar.*, ast.*, ar.runname AS runname,  pd.`path` AS path "
+		$q = "SELECT ar.*, ast.*, "
+			."ar.runname AS runname, "
+			."pd.`path` AS path "
 			."FROM ApAlignStackData as ast "
 			."LEFT JOIN ApPathData AS pd ON "
 			."(ast.`REF|ApPathData|path` = pd.`DEF_id`) "
 			."LEFT JOIN ApAlignRunData AS ar ON "
 			."(ast.`REF|ApAlignRunData|alignrun` = ar.`DEF_id`) "
 			."WHERE ast.`DEF_id` = '$alignstackid'";
-		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/><br/>\n";
+		$packagerefs = array(
+			'spidernoref'=>'REF|ApSpiderNoRefRunData|norefrun',
+			'spiderefbased'=>'REF|ApRefBasedRunData|refbasedrun',
+			'maxlike'=>'REF|ApMaxLikeRunData|maxlikerun',
+			'imagicMRA'=>'REF|ApMultiRefAlignRunData|imagicMRA',
+			'editerrun'=>'REF|ApEdIterRunData|editerrun',
+		);
+		foreach (array_keys($packagerefs) as $package) {
+			if ($r[0][$packagerefs[$package]]) $r[0]['package'] = $package;
+		}
 		return $r[0];
 	}
 
