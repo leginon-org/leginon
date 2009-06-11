@@ -71,7 +71,6 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	$snapshot = ($_POST['snapshot']) ? $_POST['snapshot'] : '';
 	$description = $_POST['description'];
 	$outdir .= $tomofilename.'mrc';
-print_r($_POST);
 	$alltiltseries = $particle->getTiltSeries($expId);
 	$seriesselector_array = $particle->getTiltSeriesSelector($alltiltseries,$tiltseriesId); 
 	$tiltSeriesSelector = $seriesselector_array[0];
@@ -87,9 +86,10 @@ print_r($_POST);
   echo"
 	<B>Original Tomogram file name with path:</B><br>
       <INPUT TYPE='text' NAME='tomofilename' VALUE='$tomofilename' SIZE='50'><br />\n
-	<B>Original Full Tomogram Transform file name (.xf) with path:</B><br>
+	<br/>
+	<B>(Optional) Original Full Tomogram Transform file name (.xf) with path:</B><br>
       <INPUT TYPE='text' NAME='xffilename' VALUE='$xffilename' SIZE='50'><br />\n
-	<B>Original Snapshot file name with path:</B><br>
+	<B>(Optional) Original Snapshot file name with path:</B><br>
       <INPUT TYPE='text' NAME='snapshot' VALUE='$snapshot' SIZE='50'><br />\n";
 
 	$choices = array('XYZ:right-handed','XZY:right-handed','XZY:left-handed');	
