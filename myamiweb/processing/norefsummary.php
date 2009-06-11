@@ -114,7 +114,7 @@ function norefEntry($norefid, $particle, $hidden=False) {
 	$display_keys['# particles']=$r['num_particles'];
 	if ($r['lp_filt']) $display_keys['lp filt']=$r['lp_filt'];
 	$display_keys['particle & mask diam']=$r['particle_diam']." / ".$r['mask_diam'];
-	$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['DEF_id']."'>".$s['shownstackname']."</a>";
+	$stackstr = "<a href='stackreport.php?expId=$expId&sId=".$s['stackId']."'>".$s['shownstackname']."</a>";
 	$display_keys['stack run name'] = $stackstr;
 			
 	$dendrofile = $r['path']."/dendrogram.png";
