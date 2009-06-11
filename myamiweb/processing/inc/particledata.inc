@@ -1514,9 +1514,9 @@ class particledata {
 				$q.="WHERE "
 					." ast.`DEF_id` = '$conditionid' ";
 			}
-		}
 		$r = $this->mysql->getSQLResult($q);
 		return $r[0];
+		} else return array();
 	}
 
 	function getTiltedStackIds ($sessionId, $showHidden=False) {

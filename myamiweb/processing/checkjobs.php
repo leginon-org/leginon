@@ -103,7 +103,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 		}
 		// get num of particles in stack
 		$numinstack = $particle->getNumStackParticles($stackid);
-
+		print_r($jobinfo);
 		$dlbuttons = '';
 		if ($jobinfo['status']=='Q') {
 			if ($user == $job['user'] || is_null($job['user']))
