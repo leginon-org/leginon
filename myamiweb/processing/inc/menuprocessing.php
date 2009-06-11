@@ -136,6 +136,9 @@ if ($expId) {
 	if ($tomograms = $particle->getTomogramsFromSession($sessionId)) {
 		$tomoruns=count($tomograms);
 	}
+	if ($avgtomograms = $particle->getAveragedTomogramsFromSession($sessionId)) {
+		$avgtomoruns=count($avgtomograms);
+	}
 
 	$action = "Particle Selection";
 
@@ -582,6 +585,10 @@ if ($expId) {
 		$nruns[]=array (
 				'name'=>"<a href='runSubTomogram.php?expId=$sessionId'>Create tomogram subvolume</a>",
 				'result'=>$sresults,
+				);
+		$nruns[]=array (
+				'name'=>"<a href='runTomoAverage.php?expId=$sessionId'>Average subvolumes</a>",
+				'result'=> ($avgtomoruns>0) ? "<a href='tomoavgsummary.php?expId=$sessionId'>$avgtomoruns complete</a>" : "",
 				);
 
 
