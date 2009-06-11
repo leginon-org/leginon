@@ -150,7 +150,7 @@ function createNoRefAlignForm($extra=false, $title='norefAlign.py Launcher', $he
 			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
 
 			//handle multiple runs in stack
-			$runname=$stackparams[shownstackname];
+			$runname=$stackparams['shownstackname'];
 			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
 			$stackid = $stack['stackid'];
 			echo "<OPTION VALUE='$stackid|--|$apix|--|$boxsz|--|$totprtls'";
