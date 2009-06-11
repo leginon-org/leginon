@@ -163,11 +163,11 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   echo "<P>Initial Model:\n";
   if ($jobId) {
 		echo "$modelid <input type='hidden' name='model' value='$modelid'><br>\n";
-		$stackparams = $particle->getInitModelInfo($modelid);
-		//print_r($stackparams);
+		$modelparams = $particle->getInitModelInfo($modelid);
+		//print_r($modelparams);
 		//echo "\n<br>";
-		echo "&nbsp;Name: ".$stackparams['name']."<br>\n";
-		echo "&nbsp;Desc: '".$stackparams['description']."'<br>\n";
+		echo "&nbsp;Name: ".$modelparams['name']."<br>\n";
+		echo "&nbsp;Desc: '".$modelparams['description']."'<br>\n";
 	} else {
     echo "
       <SELECT name='model'>
