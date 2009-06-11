@@ -19,6 +19,8 @@ class Test(appionScript.AppionScript):
 			help="subtomogram id for subvolume averaging, e.g. --subtomoId=2", metavar="int")
 		self.parser.add_option("--stackId", dest="stackId", type="int",
 			help="Stack selected for averaging, e.g. --stackId=2", metavar="int")
+		self.parser.add_option("--maxsize", dest="maxsize", type="int",
+			help="Maximum movie pixel numbers in x or y, whichever is larger. Will respect proportion in scaling, e.g. --maxsize=500", default = 512, metavar="int")
 
 	def checkConflicts(self):
 		pass
@@ -50,6 +52,14 @@ class Test(appionScript.AppionScript):
 		halfwidth = diameterpixel / 4
 		ztolerance = halfwidth
 		zbackgroundrange = max(((volshape[0] - diameterpixel*3)/2,10))
+		if self.params['commit']:
+			avgrundata = apTomo.insertTomoAverageRun(self.params['runname'],
+					self.params['rundir'],
+					subtomorundata,
+					stackdata,
+					halfwidth,
+					self.params['description'],
+			)
 		profiles = []
 		sumvol = numpy.zeros(volshape)
 		substacktype,conditionstackdata = apStack.findSubStackConditionData(stackdata)
@@ -61,7 +71,8 @@ class Test(appionScript.AppionScript):
 			for stackp in stackprtls:
 				alignp = apAlignment.getAlignParticle(stackp,alignstack)
 				shift = apAlignment.getAlignShift(alignp,alignpackage)
-				subvolume = apTomo.getFullZSubvolume(subtomorundata,stackp)
+				subtomodata = apTomo.getSubTomogramData(subtomorundata,stackp)
+				subvolume = apTomo.getTomoVolume(subtomodata)
 				if subvolume is not None:
 					zcenter = volshape[0] / 2
 					profile = apTomo.getParticleCenterZProfile(subvolume,shift,halfwidth,zbackgroundrange)
@@ -72,21 +83,19 @@ class Test(appionScript.AppionScript):
 						shiftz = zcenter - center
 						transformedvolume = apTomo.transformTomo(subvolume,alignpackage,alignp,shiftz,totalbin)
 						sumvol += transformedvolume
+						if self.params['commit']:
+							apTomo.insertTomoAvgParticle(avgrundata,subtomodata,alignp,shiftz)
 			if i < 1:
 				apDisplay,printError('no subtomogram qualifies for averaging')
 			else:
 				avgvol = sumvol / i
-			if self.params['commit']:
-				avgvolfilename = sessionname+"_"+self.params['runname']+".mrc"
-				avgvolpath = os.path.join(self.params['rundir'],avgvolfilename)
-				mrc.write(sumvol,avgvolpath)
-				apTomo.insertTomoAverageRun(self.params['runname'],
-						self.params['rundir'],
-						subtomorundata,
-						stackdata,
-						halfwidth,
-						self.params['description'],
-				)
+			avgvolfilename = sessionname+"_"+self.params['runname']+".mrc"
+			avgvolpath = os.path.join(self.params['rundir'],avgvolfilename)
+			mrc.write(avgvol,avgvolpath)
+			if not os.path.isfile(avgvolpath):
+					apDisplay.printError("tomogram not exist")
+			apTomo.makeMovie(avgvolpath,self.params['maxsize'])
+			apTomo.makeProjection(avgvolpath,self.params['maxsize'])
 		'''
 		proshape = profile.shape
 		out = open('profiles.txt','w')

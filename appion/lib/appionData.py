@@ -890,7 +890,18 @@ class ApTomoAverageRunData(Data):
 			('hidden', bool),
 		)
 	typemap = classmethod(typemap)
-leginondata.ApTomogramData=ApTomogramData
+leginondata.ApTomoAverageRunData=ApTomoAverageRunData
+
+class ApTomoAvgParticleData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('avgrun', ApTomoAverageRunData),
+			('subtomo', ApTomogramData),
+			('aligned particle', ApAlignParticlesData),
+			('z shift', float),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApTomoAvgParticleData=ApTomoAvgParticleData
 
 class ApInitialModelData(Data):
 	def typemap(cls):

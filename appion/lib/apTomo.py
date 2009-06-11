@@ -527,14 +527,17 @@ def getSubvolumeInfo(subtomorundata):
 	else:
 		return None, 1,None
 
-def getFullZSubvolume(subtomorundata,stackpdata):
+def getSubTomogramData(subtomorundata,stackpdata):
 	pdata = stackpdata['particle']
 	tomoq = appionData.ApTomogramData(subtomorun=subtomorundata,center=pdata)
 	results = tomoq.query()
 	if results:
 		tomo = results[0]
-		path = tomo['path']['path']
-		name = tomo['name']+'.rec'
+		return tomo
+
+def getTomoVolume(tomodata):
+		path = tomodata['path']['path']
+		name = tomodata['name']+'.rec'
 		apDisplay.printMsg("Loading subtomogram %s" %name) 
 		volume = mrc.read(os.path.join(path,name))
 		return volume
@@ -612,3 +615,17 @@ def insertTomoAverageRun(runname,rundir,subtomorundata,stackdata,halfwidth,descr
 		tomoaq.insert()
 		return tomoaq
 	return results[0]
+
+def insertTomoAvgParticle(avgrundata,subvolumedata,alignp,shiftz):
+	tomoaq = appionData.ApTomoAvgParticleData()
+	tomoaq['avgrun'] = avgrundata
+	tomoaq['subtomo'] = subvolumedata
+	tomoaq['aligned particle'] = alignp
+	tomoaq['z shift'] = shiftz
+	tomoaq.query()
+	results = tomoaq.query()
+	if not results:
+		tomoaq.insert()
+		return tomoaq
+	return results[0]
+
