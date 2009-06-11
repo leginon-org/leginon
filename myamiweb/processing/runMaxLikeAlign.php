@@ -156,34 +156,6 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 		echo docpop('stack','<b>Select a stack of particles to use</b>');
 		echo "<br/>";
 		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
-		/*
-		echo "<br/>\n<select name='stackval' onchange='switchDefaults(this.value)'>\n";
-		foreach ($stackIds as $stack) {
-			$stackid = $stack['stackid'];
-			$stackparams=$particle->getStackParams($stackid);
-
-			// get pixel size and box size
-			$mpix=$particle->getStackPixelSizeFromStackId($stackid);
-			if ($mpix) {
-				$apix = $mpix*1E10;
-				$apixtxt=format_angstrom_number($mpix)."/pixel";
-			}
-			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
-
-			//handle multiple runs in stack
-			$stackname = $stackparams['shownstackname'];
-
-			$totprtls=commafy($particle->getNumStackParticles($stack[stackid]));
-			$stackid = $stack['stackid'];
-			echo "<option value='$stackid|--|$apix|--|$boxsz|--|$totprtls'";
-			// select previously set prtl on resubmit
-			if ($stackidval==$stackid) echo " selected";
-			echo ">".$stack['stackid'].": $stackname ($totprtls prtls,";
-			if ($mpix) echo " $apixtxt,";
-			echo " $boxsz pixels)</option>\n";
-		}
-		echo "</SELECT><br/>\n";
-		*/
 	}
 	echo "</TD></tr><TR>\n";
 	echo "<TD VALIGN='TOP'>\n";

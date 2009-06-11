@@ -276,26 +276,6 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 		echo "
 		Particles:<br>";
 		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
-/*
-		<SELECT NAME='stackval' onchange='switchDefaults(this.value)'>\n";
-		foreach ($stackIds as $stack) {
-			$stackid = $stack['stackid'];
-			$stackparams=$particle->getStackParams($stackid);
-			$boxsz=($stackparams['bin']) ? $stackparams['boxSize']/$stackparams['bin'] : $stackparams['boxSize'];
-			$mpix=$particle->getStackPixelSizeFromStackId($stackid);
-			$apixtxt=format_angstrom_number($mpix)."/pixel";
-			$stackname = $stackparams['shownstackname'];
-			$totprtls=commafy($particle->getNumStackParticles($stackid));
-			echo "<option value='$stackid|--|$mpix|--|$boxsz|--|$totprtls'";
-			//echo "<OPTION VALUE='$stackid'";
-			// select previously set prtl on resubmit
-			if ($stackidval == $stackid) echo " SELECTED";
-			echo ">$stackid: $stackname ($totprtls prtls,";
-			if ($mpix) echo " $apixtxt,";
-			echo " $boxsz pixels)</OPTION>\n";
-		}
-		echo "</SELECT>\n";
-*/
 	}
 	echo"
 		</TD>
