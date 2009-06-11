@@ -16,35 +16,46 @@ require "inc/processing.inc";
 require "inc/summarytables.inc";
 
 // check if reconstruction is specified
-if (!$avgId = $_GET['avgId'])
-	$avgId=false;
+if (!$avgid = $_GET['avgId'])
+	$avgid=false;
 $expId = $_GET['expId'];
 
 processing_header("Averaged Tomogram Report","Avergaged Tomogram Report Page", $javascript);
-if (!$avgId) {
+if (!$avgid) {
 	processing_footer();
 	exit;
 }
 
 // --- Get Reconstruction Data
 $particle = new particledata();
-$avginfo = $particle->getAveragedTomogramInfo($avgId);
+$avginfo = $particle->getAveragedTomogramInfo($avgid);
 // get pixel size
 $html .= "<br>\n<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 $title = "tomogram average info";
 $stackid = $avginfo[0]['stackid'];
 $stackparams = $particle->getStackParams($stackid);
 $stackname = $stackparams['shownstackname'];
+$alignruninfo = $particle->getAlignStackParams($stackparams['alignstackid']);
+$clusternums = $particle->getClusterRefNumsFromSubStack ($stackid,$stackparams['clusterstackid']);
+$clusternums_array = array();
+foreach ($clusternums as $c) $clusternums_array[] = $c['classnum'];
+
 $avgruninfo = array(
 	'id'=>$avginfo[0]['avgid'],
 	'name'=>$avginfo[0]['runname'],
 	'description'=>$avginfo[0]['description'],
 	'path'=>$avginfo[0]['path'],
 	'stackId'=>$avginfo[0]['stackid'],
+	'stackname'=>$stackparams['shownstackname'],
+	'stack alignment run id: name (package)'=>$stackparams['alignrunid'].": ".$alignruninfo['runname']." (".$alignruninfo['package'].")",
+	'included cluster classes'=>implode(',',$clusternums_array),
 	'subtomo run id'=>$avginfo[0]['subtomorunid'],
+	'number of subvolumes averaged'=>count($avginfo),
 );
 echo "<table><tr><td colspan=2>\n";
 $particle->displayParameters($title,$avgruninfo,array(),$expId);
+echo "</td></tr>";
+echo "<tr>";
 echo "</td></tr>";
 echo "<tr>";
 // --- SnapShot --- //
@@ -54,6 +65,66 @@ if (file_exists($snapshotfile)) {
 	echo "<a href='loadimg.php?filename=$snapshotfile' target='snapshotfile'>"
 		."<img src='loadimg.php?filename=$snapshotfile&s=180' height='180'><br/>\nSnap Shot</a>";
 	echo "</td>";
+}
+// --- Display Flash Movie from flv --- //
+@require_once('getid3/getid3.php');
+function getflvsize($filename) {
+	if (!class_exists('getID3')) {
+		return false;
+	}
+	$getID3 = new getID3;
+	$i = $getID3->analyze($filename);
+	$w = $i['meta']['onMetaData']['width'];
+	$h = $i['meta']['onMetaData']['height'];
+	return array($w, $h);
+}
+
+if (!defined('FLASHPLAYER_URL')) {
+	echo "<p style='color: #FF0000'>FLASHPLAYER_URL is not defined in config.php</p>";
+}
+$swfstyle=FLASHPLAYER_URL . 'FlowPlayer.swf';
+$axes = array(0=>'a',1=>'b');
+$projnames = array('a'=>'Top','b'=>'Side');
+$tomogram = $avgruninfo;
+foreach ($axes as $axis) {
+	$flvfile = $tomogram['path']."/minitomo".$axes[0].".flv";
+	if (file_exists($flvfile)) {
+		echo "<table><tr><td>".$projnames[$axis]." Projection</td><td>Slicing Through</td></tr>";
+			$flvfile = $tomogram['path']."/minitomo".$axis.".flv";
+			$projfile = $tomogram['path']."/projection".$axis.".jpg";
+			if (file_exists($flvfile)) {
+				if ($size=getflvsize($flvfile)) {
+					list($flvwidth, $flvheight)=$size;
+				}
+				$maxcolwidth = 400;
+				echo "<tr><td>";
+				$imagesizes = getimagesize($projfile);
+				$colwidth = ($maxcolwidth < $flvwidth) ? $maxcolwidth : $flvwidth;
+				$rowheight = $colwidth * $flvheight / $flvwidth;
+				echo "<img src='loadimg.php?filename=$projfile&width=".$colwidth."' width='".$colwidth."'>";
+				echo "</td><td>";
+				echo '<object type="application/x-shockwave-flash" data="'
+					.$swfstyle.'" width="'.$colwidth.'" height="'.$rowheight.'" >
+				<param name="allowScriptAccess" value="sameDomain" />
+				<param name="movie" value="'.$swfstyle.'" />
+				<param name="quality" value="high" />
+				<param name="scale" value="noScale" />
+				<param name="wmode" value="transparent" />
+				<param name="allowNetworking" value="all" />
+				<param name="flashvars" value="config={ 
+					autoPlay: true, 
+					loop: false, 
+					initialScale: \'orig\',
+					videoFile: \'getflv.php?file='.$flvfile.'\',
+					hideControls: true,
+					showPlayList: false,
+					showPlayListButtons: false,
+					}" />
+				</object>';
+				echo "</td></tr>";	
+		}
+	}
+	echo "</table>";
 }
 echo "</tr></table>\n";
 echo "</tr></table>\n";
@@ -67,7 +138,7 @@ if ($tomograms) {
 	$html = "<h4>Included Subvolume tomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'tiltseries','full','volume<br/>xycenter,zoffset<br/>dimension','snapshot');
+	$display_keys = array ( 'tiltseries','full','particle alignment<br/>(xyshift) zshift<br/>rotation,mirror','volume<br/>xycenter,zoffset<br/>dimension','snapshot');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
@@ -97,10 +168,17 @@ if ($tomograms) {
 		$centerprint = ($tomogram['full']) ? '('.$center0['x'].','.$center0['y'].')' : 'Full';
 		$offsetprint = $offsetz;
 		$tiltseriesnumber = $tomogram['tiltnumber'];
+		$alignpinfo = $particle->getTomoAlignedParticleInfo($avgid,$tomogramid);
+		if (!$alignpackage)
+			$alignstackinfo = $particle->getAlignStackParams($alignpinfo['alignstack']);
+			$alignpackage = $alignstackinfo['package'];
+		$alignpshiftprint = "(".$alignpinfo['xshift'].",".$alignpinfo['yshift'].") ".sprintf('%5.1f',$alignpinfo['zshift']);
+		$alignprmprint = $alignpinfo['rotation']." mirror=".$alignpinfo['mirror'];
 		// PRINT INFO
 		$html .= "<TR>\n";
-		$html .= "<td>$tiltseriesnumber</TD>\n";
+		$html .= "<td>$alignpackage.$tiltseriesnumber</TD>\n";
 		$html .= "<td>".$tomogram['full']."</TD>\n";
+		$html .= "<td>".$alignpshiftprint."<br/>".$alignprmprint."</TD>\n";
 		$html .= "<td><A HREF='tomoreport.php?expId=$expId&tomoId=$tomogramid'>$number<br/>$centerprint,$offsetprint<br/>$dimprint</A></TD>\n";
 		$html .= "<td>";
     $snapfile = $tomogram['path'].'/snapshot.png';
