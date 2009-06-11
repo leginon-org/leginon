@@ -52,7 +52,7 @@ class Image(object):
 		## allow image in fileref to be garbage collected
 		self.fileref.data = None
 		return im
-	
+
 	def calculateStagePositions(self):
 		self.bin = self.camera['binning']
 		self.binx = self.bin['x']
@@ -94,6 +94,7 @@ class MontageImage(Image):
 		self.image = None
 		self.inserted = 0
 		self.targets = []
+		self.transforms = []
 
 	def containInputs(self, inputimages):
 		stagepositions = []
@@ -167,7 +168,7 @@ class MontageImage(Image):
 			return True
 		return False
 
-	def insertImage(self, input, target=None):
+	def insertImage(self, input, target=None, outtext=None):
 		if not self.needImage(input):
 			return
 
@@ -192,6 +193,19 @@ class MontageImage(Image):
 		pixels = self.trans.itransform(instage, self.stage, self.bin, True)
 		shift = [pixels['row'],pixels['col']]
 		offset = affine.affine_transform_offset(input.shape, self.shape, atmatrix, shift)
+
+		if outtext:
+			fname = input.fileref.filename
+			fmt = '\t'.join(['%.5f' for i in range(6)])
+			args = tuple(atmatrix.flat) + tuple(shift)
+			line = fmt % args
+			line = fname + '\t' + line
+
+			f = open(outtext, 'a')
+			f.write(line+'\n')
+			f.close()
+			return
+
 		if target is None:
 			## affine transform into temporary output
 			output = numpy.zeros(self.shape, numpy.float32)
@@ -211,9 +225,7 @@ class MontageImage(Image):
 			pix = self.shape[0]/2.0+shift[0],self.shape[1]/2.0+shift[1]
 			self.targets.append(pix)
 
-
 def getImageData(filename_or_id):
-	print 'getImageData(%s)' % (filename_or_id,)
 	if isinstance(filename_or_id, basestring):
 		q = leginondata.AcquisitionImageData(filename=filename_or_id)
 		images = dbdk.query(q, readimages=False, results=1)
@@ -263,14 +275,13 @@ def longEdgeAngle(left_target, right_target, output):
 
 	edgeangle = numpy.arctan2(edgevecty, edgevectx)
 	horizangle = numpy.arctan2(horizy, horizx)
-	
+
 	return edgeangle - horizangle
 
 def createInputs(images, cachefile=None):
 	inputimages = []
 	for imdata in images:
 		fileref = imdata.special_getitem('image', dereference=False)
-		print 'Creating Image:', imdata['filename']
 		input = Image(imdata['scope'], imdata['camera'], imdata.timestamp, fileref)
 		inputimages.append(input)
 	if cachefile is not None:
@@ -287,7 +298,7 @@ def readInputs(cachefile):
 	return inputimages
 
 def createGlobalOutput(imdata, angle=0.0, bin=1):
-	print 'creating global image space'
+	sys.stderr.write('creating global image space\n')
 	timestamp = imdata.timestamp
 	scope = leginondata.ScopeEMData(initializer=imdata['scope'])
 	camera = leginondata.CameraEMData(initializer=imdata['camera'])
@@ -317,11 +328,14 @@ def markTarget(im, target):
 	c2 = int(target[1]+size)
 	im[r1:r2, c1:c2] -= 3000
 
-def createSingleImage(inputimages, globaloutput, outfilename, outformat):
+def createSingleImage(inputimages, globaloutput, outfilename, outformat, outtext):
 	n = len(inputimages)
+	if outtext:
+		f = open(outtext, 'w')
+		f.close()
 	for i,input in enumerate(inputimages):
 		print 'inserting %d of %d' % (i+1,n)
-		globaloutput.insertImage(input)
+		globaloutput.insertImage(input, outtext=outtext)
 	'''
 	if targetinputs:
 		for input,target in targetinputs:
@@ -331,7 +345,8 @@ def createSingleImage(inputimages, globaloutput, outfilename, outformat):
 		print 'T', target
 		markTarget(globaloutput.image, target)
 	'''
-	mrc.write(globaloutput.image, outfilename)
+	if outfilename is not None:
+		mrc.write(globaloutput.image, outfilename)
 
 def createTiles(inputs, tiledict, tilesize, row1=None, row2=None, col1=None, col2=None):
 	blank = numpy.zeros((tilesize,tilesize), numpy.float32)
@@ -409,6 +424,7 @@ if __name__ == '__main__':
 	parser.add_option('-d', '--output-definition', action='store', type='string', dest='outdef', help="use the given image as the space to transform into")
 	parser.add_option('-s', '--spline-order', action='store', type='int', dest='splineorder', help="use the given spline order for affine transforms")
 	parser.add_option('-f', '--output-format-order', action='store', type='string', dest='outformat', help="jpeg or mrc")
+	parser.add_option('-O', '--output-text', action='store', type='string', dest='output_text', help="save transform details to file")
 
 	(options, args) = parser.parse_args()
 
@@ -417,14 +433,14 @@ if __name__ == '__main__':
 		print 'You must specify either an input file list (-i) or an input cache (-I) or an XML file (-x).'
 		badargs = True
 
-	if options.outfilename is None and options.tilesize is None:
+	if [options.outfilename, options.tilesize, options.output_text].count(None) != 2:
 		print 'You must specify either an output MRC filename (-o) for a single output file'
 		print '   or a tile size (-t) if you want to generate tiles'
+		print '   or -O if you want to save transform details only'
 		badargs = True
 
 	if badargs:
 		sys.exit()
-
 
 	############## Set up inputs ################
 	if options.xmlfilename is not None or options.infilename is not None:
@@ -442,8 +458,8 @@ if __name__ == '__main__':
 			## database has filenames without the mrc extension
 			filenames = map(os.path.basename, filenames)
 			filenames = [filename[:-4] for filename in filenames]
-	
-		print 'reading image metadata'
+
+		sys.stderr.write('reading image metadata\n')
 		images1 = [getImageData(filename) for filename in filenames]
 		images = []
 		for image in images1:
@@ -451,10 +467,10 @@ if __name__ == '__main__':
 				images.append(image)
 			else:
 				print 'rejecting', image['filename']
-		print 'creating input image objects'
+		sys.stderr.write('creating input image objects\n')
 		inputimages = createInputs(images, options.incache)
 	elif options.incache is not None:
-		print 'reading input image objects'
+		sys.stderr.write('reading input image objects\n')
 		inputimages = readInputs(options.incache)
 
 	############# Set up output image
@@ -477,7 +493,7 @@ if __name__ == '__main__':
 		globaloutput = createGlobalOutput(outim, angle, bin=bin)
 	else:
 		globaloutput = tempoutput
-	
+
 	#### set output boundaries and center
 	globaloutput.containInputs(inputimages)
 
@@ -498,7 +514,7 @@ if __name__ == '__main__':
 	targetstages = targetStagePositions(targetinputs)
 	globaloutput.containStagePositions(targetstages)
 	'''
-	
+
 	############ create outputs and save ###############
 	if options.splineorder is None:
 		splineorder = 1
@@ -512,11 +528,14 @@ if __name__ == '__main__':
 		#storeTileInfo(tiledict)
 		createTiles(inputimages, tiledict, tilesize)
 	elif options.outfilename is not None:
-		createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)
+		createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat, options.output_text)
 		#profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
-		
+	elif options.output_text is not None:
+		createSingleImage(inputimages, globaloutput, None, None, options.output_text)
+		#profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
+
 	#tiledict = readTileInfo()
-	
+
 	############# Image stats ############
 	'''
 	print 'calculating image stats...'
