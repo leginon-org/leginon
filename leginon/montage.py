@@ -21,6 +21,46 @@ import os.path
 import sinedon
 from pyami import affine
 import caltransformer
+import xml.dom.minidom
+
+def getMosaicXMLData(data):
+	'''
+	data = [
+		{'name': '/data/image1.mrc', 'width':4096, 'height':4096, 'matrix':[1.0, 0.0, 0.0, 1.0, 1234, 5634]},
+		{'name': '/data/image2.mrc', 'width':4096, 'height':4096, 'matrix':[1.0, 0.0, 0.0, 1.0, 1234, 5634]},
+	]
+
+	format a XML Structure like:
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<mosaic>
+					<tile file_path="/data/image1.mrc" height="4096" matrix="matrix(1.0,0.0,0.0,1.0,1234,5634)" title="image1.mrc" width="4096"/>
+					<tile file_path="/data/image2.mrc" height="4096" matrix="matrix(1.0,0.0,0.0,1.0,1234,5634)" title="image2.mrc" width="4096"/>
+	</mosaic>
+	'''
+
+	doc = xml.dom.minidom.Document()
+
+	mosaic = doc.createElement("mosaic")
+	doc.appendChild(mosaic)
+
+	for d in data:
+		file_path = d['fullname']
+		title = d['name']
+		width=str(d['width'])
+		height=str(d['height'])
+		matrix='matrix(' + ','.join(map(str,d['matrix'])) + ')'
+
+		tile = doc.createElement("tile")
+		tile.setAttribute("width", width)
+		tile.setAttribute("height", height)
+		tile.setAttribute("title", title)
+		tile.setAttribute("file_path", file_path)
+		tile.setAttribute("matrix", matrix)
+		mosaic.appendChild(tile)
+
+	return doc
+
 
 def memmapMRC(fileref):
 	fullname = os.path.join(fileref.path, fileref.filename)
@@ -193,18 +233,19 @@ class MontageImage(Image):
 		offset = affine.affine_transform_offset(input.shape, self.shape, atmatrix, shift)
 
 		if outtext:
+			tile={}
 			path = input.fileref.path
 			fname = input.fileref.filename
 			fullname = os.path.join(path, fname)
-			fmt = '\t'.join(['%.5f' for i in range(6)])
 			args = tuple(atmatrix.flat) + tuple(shift)
-			line = fmt % args
-			line = fullname + '\t' + line
 
-			f = open(outtext, 'a')
-			f.write(line+'\n')
-			f.close()
-			return
+			tile['fullname'] = fullname
+			tile['name'] = fname
+			tile['height'] = input.shape[0]
+			tile['width'] = input.shape[1]
+			tile['matrix'] = args
+			
+			return tile
 
 		if target is None:
 			## affine transform into temporary output
@@ -328,14 +369,13 @@ def markTarget(im, target):
 	c2 = int(target[1]+size)
 	im[r1:r2, c1:c2] -= 3000
 
-def createSingleImage(inputimages, globaloutput, outfilename, outformat, outtext):
+def createSingleImage(inputimages, globaloutput, outfilename, outformat, outtext, outxml=False):
 	n = len(inputimages)
-	if outtext:
-		f = open(outtext, 'w')
-		f.close()
+	tiles = []
 	for i,input in enumerate(inputimages):
 		print 'inserting %d of %d' % (i+1,n)
-		globaloutput.insertImage(input, outtext=outtext)
+		tile = globaloutput.insertImage(input, outtext=outtext)
+		tiles.append(tile)
 	'''
 	if targetinputs:
 		for input,target in targetinputs:
@@ -345,6 +385,16 @@ def createSingleImage(inputimages, globaloutput, outfilename, outformat, outtext
 		print 'T', target
 		markTarget(globaloutput.image, target)
 	'''
+	if outtext is not None:
+		f = open(outtext, 'w')
+		if outxml:
+			xmldoc = getMosaicXMLData(tiles)
+			xmldoc.writexml(f, "    ", "", "\n", "UTF-8")
+		else:
+			lines = [ str(tile)+"\n" for tile in tiles ]
+			f.writelines(lines)
+		f.close()
+
 	if outfilename is not None:
 		mrc.write(globaloutput.image, outfilename)
 
@@ -425,6 +475,7 @@ if __name__ == '__main__':
 	parser.add_option('-s', '--spline-order', action='store', type='int', dest='splineorder', help="use the given spline order for affine transforms")
 	parser.add_option('-f', '--output-format-order', action='store', type='string', dest='outformat', help="jpeg or mrc")
 	parser.add_option('-O', '--output-text', action='store', type='string', dest='output_text', help="save transform details to file")
+	parser.add_option('-X', '--xml', action='store_true', dest='output_xml', help="save transform details to xml file")
 
 	(options, args) = parser.parse_args()
 
@@ -531,7 +582,7 @@ if __name__ == '__main__':
 		createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat, options.output_text)
 		#profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
 	elif options.output_text is not None:
-		createSingleImage(inputimages, globaloutput, None, None, options.output_text)
+		createSingleImage(inputimages, globaloutput, None, None, options.output_text, options.output_xml)
 		#profile.run('createSingleImage(inputimages, globaloutput, options.outfilename, options.outformat)')
 
 	#tiledict = readTileInfo()
