@@ -22,8 +22,6 @@ import sinedon
 from pyami import affine
 import caltransformer
 
-dbdk = sinedon.getConnection('leginondata')
-
 def memmapMRC(fileref):
 	fullname = os.path.join(fileref.path, fileref.filename)
 	im = mrc.mmap(fullname)
@@ -195,11 +193,13 @@ class MontageImage(Image):
 		offset = affine.affine_transform_offset(input.shape, self.shape, atmatrix, shift)
 
 		if outtext:
+			path = input.fileref.path
 			fname = input.fileref.filename
+			fullname = os.path.join(path, fname)
 			fmt = '\t'.join(['%.5f' for i in range(6)])
 			args = tuple(atmatrix.flat) + tuple(shift)
 			line = fmt % args
-			line = fname + '\t' + line
+			line = fullname + '\t' + line
 
 			f = open(outtext, 'a')
 			f.write(line+'\n')
@@ -228,13 +228,13 @@ class MontageImage(Image):
 def getImageData(filename_or_id):
 	if isinstance(filename_or_id, basestring):
 		q = leginondata.AcquisitionImageData(filename=filename_or_id)
-		images = dbdk.query(q, readimages=False, results=1)
+		images = q.query(readimages=False, results=1)
 		if images:
 			return images[0]
 		else:
 			raise RuntimeError('%s does not exist' % (filename_or_id,))
 	else:
-		im = dbdk.direct_query(data.AcquisitionImageData, filename_or_id, readimages=False)
+		im = data.AcquisitionImageData.direct_query(filename_or_id, readimages=False)
 		return im
 
 def createTargetInputs(targetimages):
