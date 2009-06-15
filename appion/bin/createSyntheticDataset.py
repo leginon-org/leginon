@@ -250,7 +250,8 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			projnum = int(random.random()*len(eulerlist))
 			alt = random.gauss(eulerlist[projnum][0], self.params['projstdev'])
 			az = random.gauss(eulerlist[projnum][1], self.params['projstdev'])
-			phi = random.random()*360.0-180.0
+#			phi = random.random()*360.0-180.0
+			phi = random.random()*360.0
 			f.write("%.8f\t%.8f\t%.8f\n"%(alt,az,phi))
 
 			### stats
