@@ -13,6 +13,7 @@ require_once "inc/mysql.inc";
 define(PARTICLE_DB_HOST, $PROCESSING_DB_HOST);
 define(PARTICLE_DB_USER, $PROCESSING_DB_USER);
 define(PARTICLE_DB_PASS, $PROCESSING_DB_PASS);
+#define(PARTICLE_DB, $PROCESSING_DB);
 
 class particledata {
 
@@ -3955,4 +3956,18 @@ function displayCTFdata($data, $display_keys) {
 	$html .= "</table>";
 	return $html;
 }
+
+// --- loads tomo z profile --- //
+function loadProfileData($filename) {
+	$data = array();
+	if (file_exists($filename)) {
+		$lines = file ($filename);
+		foreach ($lines as $line) {
+			list($k, $v) = explode('	', $line);
+			$data[]=trim($v);
+		}
+	}
+	return $data;
+}
+
 ?>
