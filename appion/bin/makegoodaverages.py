@@ -3,7 +3,6 @@
 #python
 import os
 import math
-import sys
 import time
 import re
 import cPickle
@@ -54,23 +53,26 @@ def determineClasses(particles):
 	classes={}
 	class_stats={}
 	quality=numpy.zeros(len(particles))
+	# group the particles by euler angle
 	for ptcl in range(0,len(particles)):
 		quality[ptcl]=particles[ptcl]['quality_factor']
-		key=particles[ptcl]['eulers'].dbid
+		key=str(particles[ptcl]['euler1'])+','+str(particles[ptcl]['euler2'])
 		if key not in classes.keys():
 			classes[key]={}
 			classes[key]['particles']=[]
-		classes[key]['euler']=particles[ptcl]['eulers']
+		classes[key]['euler1']=particles[ptcl]['euler1']
+		classes[key]['euler2']=particles[ptcl]['euler2']
+		classes[key]['euler3']=particles[ptcl]['euler3']
 		classes[key]['particles'].append(particles[ptcl])
 	class_stats['meanquality']=quality.mean()
 	class_stats['stdquality']=quality.std()
 	class_stats['max']=quality.max()
 	class_stats['min']=quality.min()
 	### print stats
-	print "-- quality factor stats --"
-	print ("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
+	apDisplay.printMsg("-- quality factor stats --")
+	apDisplay.printMsg("mean/std :: "+str(round(class_stats['meanquality'],2))+" +/- "
 		+str(round(class_stats['stdquality'],2)))
-	print ("min/max  :: "+str(round(class_stats['min'],2))+" <> "
+	apDisplay.printMsg("min/max  :: "+str(round(class_stats['min'],2))+" <> "
 		+str(round(class_stats['max'],2)))
 	apDisplay.printMsg("finished sorting in "+apDisplay.timeString(time.time()-t0))
 	return classes, class_stats
@@ -163,10 +165,11 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 
 		### prepare file
 		f = open('jumps.txt','w', 0666)
-		f.write("#partnum\t")
+		f.write("#pnum\t")
 		headerlist = ('mean', 'median', 'stdev', 'min', 'max')
 		for key in headerlist:
 			f.write(key+"\t")
+		f.write("\n")
 
 		### get stack particles
 		stackid = apStack.getStackIdFromRecon(self.params['reconid'], msg=True)
@@ -183,21 +186,22 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			f.write('%d\t' % partnum)
 			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid, sym=symmetry)
 			medians.append(jumpdata['median'])
-			if jumpdata['median'] > self.params['avgjump']:
+			if (jumpdata['median'] > self.params['avgjump']) and partnum not in rejectlst:
 				rejectlst.append(partnum)
 			for key in headerlist:
-				f.write("%3.4f\t" % (jumpdata[key]))
+				f.write("%.3f\t" % (jumpdata[key]))
+			f.write("\n")
 			if count % 1000 == 0:
 				timeremain = (time.time()-t0)/(count+1)*(numparts-count)
-				print ("particle=% 5d; median jump=% 3.2f, remain time= %s" % (partnum, jumpdata['median'],
+				apDisplay.printMsg("particle=% 5d; median jump=% 3.2f, remain time= %s" % (partnum, jumpdata['median'],
 					apDisplay.timeString(timeremain)))
 				#f.flush()
 		### print stats
-		print "-- median euler jumper stats --"
+		apDisplay.printMsg("-- median euler jumper stats --")
 		medians = numpy.asarray(medians, dtype=numpy.float32)
-		print ("mean/std :: "+str(round(medians.mean(),2))+" +/- "
+		apDisplay.printMsg("mean/std :: "+str(round(medians.mean(),2))+" +/- "
 			+str(round(medians.std(),2)))
-		print ("min/max  :: "+str(round(medians.min(),2))+" <> "
+		apDisplay.printMsg("min/max  :: "+str(round(medians.min(),2))+" <> "
 			+str(round(medians.max(),2)))
 
 		perrej = round(100.0*float(numparts-len(rejectlst))/float(numparts),2)
@@ -256,7 +260,6 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			apDisplay.printError("enter a mask radius")
 		if self.params['iter'] is None:
 			apDisplay.printError("enter an iteration for the final Eulers")
-		print "reconid",self.params['reconid']
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
 
 	#=====================
@@ -278,7 +281,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		rejectlst=[]
 		if self.params['sigma'] is not None:
 			cutoff=cstats['meanquality']+self.params['sigma']*cstats['stdquality']
-			print "Cutoff =",cutoff
+			apDisplay.printMsg("Cutoff = "+str(cutoff))
 			rejectlst = self.removePtclsByQualityFactor(particles, rejectlst, cutoff)
 		if self.params['avgjump'] is not None:
 			rejectlst = self.removePtclsByJumps(particles, rejectlst)
@@ -289,22 +292,27 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		classkeys.sort()
 		classnum=0
 		totalptcls=0
-		
+
+		keepfile=open('keep.lst','w')
+		keepfile.write('#LST\n')
 		reject=open('reject.lst','w')
-		keep=open('keep.lst','w')
 		reject.write('#LST\n')
-		print "Processing classes"
+		apDisplay.printMsg("Processing classes")
 		#loop through classes
 		for key in classkeys:
+
+			# file to hold particles of this class
+			clsfile=open('clstmp.lst','w')
+			clsfile.write('#LST\n')
+			apDisplay.printMsg(key)
+
 			classnum+=1
 			if classnum%10 == 1:
-				sys.stderr.write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
-				sys.stderr.write(str(classnum)+" of "+(str(len(classkeys))))
+				apDisplay.printMsg("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
+				apDisplay.printMsg(str(classnum)+" of "+(str(len(classkeys))))
 			images=EMAN.EMData()
 
 			#loop through particles in class
-			keeplist=open('class.lst','w')
-			keeplist.write('#LST\n')
 			nptcls=0
 			for ptcl in classes[key]['particles']:
 				if ptcl['mirror']:
@@ -314,31 +322,33 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				rot=ptcl['euler3']
 				rot=rot*math.pi/180
 				if ptcl['particle']['particleNumber'] not in rejectlst:
-					keeplist.write(
-						"%d\t%s\t%f,\t%f,%f,%f,%d\n" % 
-						(ptcl['particle']['particleNumber']-1, stack, ptcl['quality_factor'],
-						 rot, ptcl['shiftx'], ptcl['shifty'], mirror))
+					l = '%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
+						stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror)
+					keepfile.write(l)
+					clsfile.write(l)
 					totalptcls+=1
 					nptcls+=1
-					keep.write('%d\n' % (ptcl['particle']['particleNumber']-1))
 				else:
 					reject.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
 						stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
 				#if ptcl['quality_factor']>cstats['meanquality']+3*cstats['stdquality']:
 				#	high.write('%d\t%s\t%f,\t%f,%f,%f,%d\n' % (ptcl['particle']['particleNumber']-1,
 				#		stack,ptcl['quality_factor'],rot,ptcl['shiftx'],ptcl['shifty'],mirror))
-			keeplist.close()
-			
+					
+			clsfile.close()	
+
 			if nptcls<1:
 				continue
 			if self.params['skipavg'] is False:
-				makeClassAverages('class.lst', self.params['outputstack'], classes[key], self.params)
+				makeClassAverages('clstmp.lst', self.params['outputstack'], classes[key], self.params)
 			
 			if self.params['eotest']:
-				makeEvenOddClasses('class.lst',classes[key],self.params)
-		sys.stderr.write("\n")
+				makeEvenOddClasses('clstmp.lst',classes[key],self.params)
+
+		apDisplay.printMsg("\n")
 		reject.close()
-		keep.close()
+		keepfile.close()
+		os.remove('clstmp.lst')
 
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
