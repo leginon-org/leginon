@@ -298,7 +298,7 @@ class Robot2(node.Node):
 				self.usercontinue.clear()
 				self.logger.warning('You may need to click on "Continue" tool after clickin "Start" tool to start')
 				self.usercontinue.wait()
-
+				self.zeroStage()
 			if self.exitevent.isSet():
 				break
 
@@ -778,7 +778,7 @@ class Robot2(node.Node):
 
 		if self.simulate or self.settings['simulate']:
 			self.estimateTimeLeft()
-			self.logger.info('Insertion of holder successfully completed')
+			self.logger.info('Simulated Insertion of holder successfully completed')
 			try:
 				griddata = self.gridInserted(self.gridnumber)
 			except Exception, e:
