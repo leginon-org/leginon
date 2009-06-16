@@ -314,6 +314,7 @@ class ApStackRunData(Data):
 			('stackRunName', str),
 			('stackParams', ApStackParamsData),
 			('syntheticStackParams', ApSyntheticStackParamsData),
+			('selectionrun', ApSelectionRunData),
 			('session', leginondata.SessionData),
 		)
 	typemap = classmethod(typemap)
