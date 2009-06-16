@@ -250,6 +250,16 @@ class particledata {
 			."WHERE `REF|ApStackdata|stack` = " .$stackId." "
 			."LIMIT 1";
 		list($r) = $this->mysql->getSQLResult($q);
+		if (!$r['subtomorunid']) {
+			$selectionruns = $this->getParticleRunsFromStack($stackId);
+			if (count($selectionruns) > 1) return;
+			$selectionrunid = $selectionruns[0][0]['DEF_id'];
+			$q =  "SELECT `DEF_id` as subtomorunid "
+				."FROM `ApSubTomogramRunData` "
+				."WHERE `REF|ApSelectionRundata|pick` = " .$selectionrunid." "
+				."LIMIT 1";
+			list($r) = $this->mysql->getSQLResult($q);
+		}
 		return $r['subtomorunid'];
 	}
 
@@ -262,14 +272,47 @@ class particledata {
 	}
 
 	function getSubTomogramStackIds($sessionId){
+		// subtomograms picked by stack
 		$q =  "SELECT s.`DEF_id` as stackid, "
 			."s.* "
 			."FROM `ApSubTomogramRunData` t "
 			."LEFT JOIN `ApStackData` s "
 			."ON t.`REF|ApStackData|stack` = s.`DEF_id` "
 			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId. " "
+			."AND s.`DEF_id` IS NOT NULL "
 			." ";
-		return $this->mysql->getSQLResult($q);
+		$r = $this->mysql->getSQLResult($q);
+		// subtomograms picked by particle selection (pick)
+		$q =  "SELECT s.`DEF_id` as stackid, "
+			."sp1.`REF|ApStackData|stack` as oldstackid, "
+			."sp1.`REF|ApStackRunData|stackRun` as stackrunid, "
+			."pr . `DEF_id` as selectionid, "
+			."t. `DEF_id` as subtomorunid, "
+			."s.* "
+			."FROM ( "
+			."SELECT st.*, stpm.`DEF_id` as stackparamsid "
+			."FROM `ApStackParticlesData` as st  "
+			."LEFT JOIN `ApStackRunData` as str "
+			."ON st.`REF|ApStackRunData|stackRun` = str.`DEF_id` "
+			."LEFT JOIN `ApStackParamsData` as stpm "
+			."ON str.`REF|ApStackParamsData|stackParams` = stpm.`DEF_id` "
+			."group by "
+			."st.`REF|ApStackRunData|stackRun`  "
+			.") sp1  "
+			."LEFT JOIN `ApParticleData` p  "
+			."ON p .`DEF_id` = sp1 . `REF|ApParticleData|particle`  "
+			."LEFT JOIN `ApSelectionRunData` pr ON  "
+			."pr . `DEF_id` = p . `REF|ApSelectionRunData|selectionrun` "
+			."LEFT JOIN `ApStackData` s "
+			."ON s.`REF|ApStackData|oldstack` = sp1.`REF|ApStackData|stack` "
+			."LEFT JOIN `ApSubTomogramRunData` t "
+			."ON t.`REF|ApSelectionRunData|pick` = pr.`DEF_id` "
+			."WHERE t.`REF|leginondata|SessionData|session` = " .$sessionId. " "
+			."AND s.`DEF_id` IS NOT NULL "
+			." ";
+		$r1 = $this->mysql->getSQLResult($q);
+		$r = array_merge($r,$r1);
+		return $r;
 	}
 
 	function getAveragedTomogramsFromSession($sessionId,$showHidden=False){
@@ -458,7 +501,22 @@ class particledata {
 		$r = $this->mysql->getSQLResult($q);
 		return count($r);
 	}
-	
+
+	// --- loads tomo z profile --- //
+	function loadTomoZProfile($filename) {
+		$data = array();
+		if (file_exists($filename)) {
+			$lines = file ($filename);
+			foreach ($lines as $line) {
+				list($k, $v) = explode('	', $line);
+				$data[]=trim($v);
+			}
+		}
+		$r = array();
+		foreach(array_keys($data) as $i) $r[] = array('z'=>$i,'profile'=>$data[$i]);
+		return array($r);
+	}	
+
 	// ------CTF data functions -------//
 	function hasCtfData($sessionId) {
 		$d = ($this->getLastCtfRun($sessionId)) ? true : false;
@@ -1690,7 +1748,31 @@ class particledata {
 		." LEFT JOIN `ApSelectionRunData` pr "
 		." ON pr . `DEF_id` = p . `REF|ApSelectionRunData|selectionrun` "
 		." ";
-		list($r) = $this->mysql->getSQLResult($q);
+		echo $q;
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+	function getStacksFromSelectionRun ($pickrunid) {
+		$q = "SELECT sp1.`REF|ApStackData|stack` as stackid, "
+		."sp1.`REF|ApStackRunData|stackRun` as stackrunid, "
+		."pr . `DEF_id` as selectionid  "
+		."FROM ( "
+		."SELECT st.*, stpm.`DEF_id` as stackparamsid "
+		."FROM `ApStackParticlesData` as st  "
+		."LEFT JOIN `ApStackRunData` as str "
+		."ON st.`REF|ApStackRunData|stackRun` = str.`DEF_id` "
+		."LEFT JOIN `ApStackParamsData` as stpm "
+		."ON str.`REF|ApStackParamsData|stackParams` = stpm.`DEF_id` "
+		."group by "
+		."st.`REF|ApStackRunData|stackRun`  "
+		.") sp1  "
+		."LEFT JOIN `ApParticleData` p  "
+		."ON p .`DEF_id` = sp1 . `REF|ApParticleData|particle`  "
+		."LEFT JOIN `ApSelectionRunData` pr ON  "
+		."pr . `DEF_id` = p . `REF|ApSelectionRunData|selectionrun` "
+		."WHERE pr.`DEF_id` =".$pickrunid." "
+		." ";
+		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
 
@@ -3957,17 +4039,5 @@ function displayCTFdata($data, $display_keys) {
 	return $html;
 }
 
-// --- loads tomo z profile --- //
-function loadProfileData($filename) {
-	$data = array();
-	if (file_exists($filename)) {
-		$lines = file ($filename);
-		foreach ($lines as $line) {
-			list($k, $v) = explode('	', $line);
-			$data[]=trim($v);
-		}
-	}
-	return $data;
-}
 
 ?>

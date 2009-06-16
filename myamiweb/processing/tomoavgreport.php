@@ -196,6 +196,12 @@ if ($tomograms) {
 		}
     $html .= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'><img src='loadimg.php?filename=$snapfile' ".$imglimit." >\n";
 		$html .= "</td>\n";
+		$html .= "<td>";
+		$zfile = sprintf('%s/profile_%05d.txt',$avgruninfo['path'],$tomogramid);
+		$zshift = $alignpinfo['zshift'] * (($alignpinfo['mirror'])? -1:1);
+    $html .= "<A HREF='tomozprofilegraph.php?file=$zfile&center=$zshift' target='snapshot'>
+<img border='0' width='100' src='tomozprofilegraph.php?w=100&hg=0&file=$zfile&center=$zshift'></a>\n";
+		$html .= "</td>\n";
 		$html .= "</tr>\n";
 	}
 	$html .= "</table>\n";
