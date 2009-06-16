@@ -66,12 +66,12 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 	// Set any existing parameters in form
 	$stackval = ($_POST['stackval']) ? $_POST['stackval'] : NULL;
 	$avgruns = $particle->getAveragedTomogramsFromSession($expId);
-	$nextavgrun = count($avgruns)+1;
+	$lastavgrunid = $avgruns[count($avgruns)-1]['avgid'];
+	$nextavgrun = $lastavgrunid+1;
 	$runname = ($_POST['runname']) ? $_POST['runname'] : 'average'.$nextavgrun;
 	$description = $_POST['description'];
 
 	// find each stack entry in database
-	// THIS IS REALLY, REALLY SLOW
 	$primarystackinfo = $particle->getSubTomogramStackIds($expId);
 	$stackIds = array();
 	$subtomoruns = array();
@@ -101,9 +101,9 @@ function createAverageTomogramForm($extra=false, $title='tomoaverage.py Launcher
 	$particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 	echo "<br/>\n";
   echo "<P>";
-	echo docpop('subtomorunname','Runname');
+	echo docpop('avgtomorunname','Runname');
   echo "<INPUT TYPE='text' NAME='runname' SIZE='15' VALUE='$runname'>\n";
-	echo "<FONT>(subtomogram creating run name)</FONT>
+	echo "<FONT>(avgtomogram creating run name)</FONT>
 		<br/>";
 	echo"<P>
 			<B> Tomogram Average Description:</B><br>
@@ -153,6 +153,8 @@ function runAverageTomogram() {
 	$stackidval=$stackinfo[0];
 	$sessionname=$_POST['sessionname'];
 
+	$particle = new particledata();
+	$selectionruns = $particle->getParticleRunsFromStack($stackidval);
 //make sure a tomogram was entered
 	if (!$runname) createAverageTomogramForm("<B>ERROR:</B> Select a full tomogram to be boxed");
 	//make sure a particle run or stack is chosen
@@ -161,11 +163,9 @@ function runAverageTomogram() {
 	$description=$_POST['description'];
 	if (!$description) createAverageTomogramForm("<B>ERROR:</B> Enter a brief description of the tomogram");
 
-	$particle = new particledata();
-
 	$subtomorunid = $particle->getSubTomoRunFromStack($stackidval);
 	$command.="--projectid=$projectId ";
-	$command.="--subtomoId=$subtomorunid ";
+	$command.="--subtomorunId=$subtomorunid ";
 	$command.="--runname=$runname ";
 	$command.="--stackId=$stackidval ";
 	$command.="--description=\"$description\" ";
