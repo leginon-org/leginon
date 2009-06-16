@@ -609,6 +609,9 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		runq = appionData.ApStackRunData()
 		runq['stackRunName'] = self.params['runname']
 		runq['session'] = sessiondata
+		selectionq = appionData.ApSelectionRunData()
+		selectionrundata = selectionq.direct_query(self.params['selectionid'])
+		runq['selectionrun'] = selectionrundata
       	### see if stack run already exists in the database (just checking runname & session)
 		uniqrundatas = runq.query(results=1)
 

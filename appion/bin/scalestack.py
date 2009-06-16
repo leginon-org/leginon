@@ -53,6 +53,9 @@ def commitScaledStack(stackdata,params):
 	newstackrunq['stackRunName'] = os.path.basename(os.getcwd()) #use cwd for run name
 	newstackrunq['stackParams']=newstackparamsq
 	newstackrunq['session']=stackdata[0]['stackRun']['session']
+	if "selectionrun" in stackdata[0]['stackRun'].keys:
+		newstackrunq['selectionrun']=stackdata[0]['stackRun']['selectionrun']
+	newstackrunq['syntheticStackParams']=stackdata[0]['stackRun']['syntheticStackParams']
 	
 	
 	#make new runs in stack query and insert also inserts stack and stack run
