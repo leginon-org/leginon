@@ -71,6 +71,7 @@ class tomoMaker(appionScript.AppionScript):
 		if self.params['description'] is None:
 			apDisplay.printError("enter a description, e.g. --description='awesome data'")
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['session'])
+		self.sessiondata = sessiondata
 		tiltdata = apDatabase.getTiltSeriesDataFromTiltNumAndSessionId(self.params['tiltseriesnumber'],sessiondata)
 		self.params['tiltseries'] = tiltdata
 		if self.params['othertilt'] is not None:
@@ -84,7 +85,7 @@ class tomoMaker(appionScript.AppionScript):
 		"""
 		this function only runs if no rundir is defined at the command line
 		"""
-		path = os.path.abspath(sessiondata['image path'])
+		path = os.path.abspath(self.sessiondata['image path'])
 		path = re.sub("leginon","appion",path)
 		path = re.sub("/rawdata","/tomo",path)
 		tiltseriespath = "tiltseries%d" %  self.params['tiltseriesnumber']
