@@ -526,10 +526,16 @@ if ($expId) {
 
 		$reconresults = array();
 
+		// check for euler jumper filter jobs
+		$ejdone = count($subclusterjobs['removeJumpers']['done']);
+		$ejq = count($subclusterjobs['removeJumpers']['queued']);
+		$ejrun = count($subclusterjobs['removeJumpers']['running']);
+
 		$reconresults[] = ($jobqueue>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobqueue queued</a>" : "";
 		$reconresults[] = ($jobrun>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobrun running</a>" : "";
 		$reconresults[] = ($jobincomp>0) ? "<a href='checkjobs.php?expId=$sessionId'>$jobincomp ready for upload</a>" : "";
 		$reconresults[] = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns complete</a>" : "";
+		$reconresults[] = ($ejrun==0) ? "" : "<a href='listAppionJobs.php?expId=$sessionId&jobtype=removeJumpers'>$ejrun reclassifying</a>";
 
 		$totresult = ($reconruns>0) ? "<a href='reconsummary.php?expId=$sessionId'>$reconruns</a>" : "";
 

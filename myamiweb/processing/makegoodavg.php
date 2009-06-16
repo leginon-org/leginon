@@ -16,7 +16,8 @@ require "inc/processing.inc";
   
 // --- check if reconstruction is specified
 
-if ($_POST['run']) {
+if ($_POST['process']) {
+	$expId = $_GET['expId'];
 	$reconId=$_GET['reconId'];
 	$refId=$_GET['refId'];
 	$iter=$_GET['iter'];
@@ -25,7 +26,8 @@ if ($_POST['run']) {
 	$avgjump=$_POST['avgjump'];
 	$stackname=$_POST['avgname'];
 	$runname=$_POST['runname'];
-	$rundir=$_POST['outdir']."/".$runname;
+	$outdir=$_POST['outdir'];
+	$rundir=$outdir."/".$runname;
 	$eotest=$_POST['eotest'];
 
 	if (!$stackname) createform('<B>ERROR:</B> Enter a name for new class average stack file');
@@ -44,6 +46,17 @@ if ($_POST['run']) {
 	if ($sigma) $command.= "--sigma=$sigma ";
 	if ($eotest=='on') $command.="--eotest ";
 
+	// submit job to cluster
+	if ($_POST['process']=='Create new class averages'){
+		$user = $_SESSION['username'];
+		$password = $_SESSION['password'];
+
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'removeJumpers',False,False);
+		// if errors:
+		if ($sub) createform("<b>ERROR:</b> $sub");
+		exit;
+	}
+
 	processing_header("Create New Class Averages","Create New Class Averages");
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
@@ -51,14 +64,14 @@ if ($_POST['run']) {
 	<B>Create Class Averages Command:</B><br>
 	$command
 	</td></tr>
-        <tr><td>file</td><td>$stackname</td></tr>
-        <tr><td>mask</td><td>$mask</td></tr>
-        <tr><td>avgjump</td><td>$avgjump</td></tr>
-        <tr><td>iter</td><td>$iter</td></tr>
-        <tr><td>reconId</td><td>$reconId</td></tr>
-        <tr><td>sigma</td><td>$sigma</td></tr>
-        <tr><td>eotest</td><td>$eotest</td></tr>
-        </table>\n";
+	<tr><td>file</td><td>$stackname</td></tr>
+	<tr><td>mask</td><td>$mask</td></tr>
+	<tr><td>avgjump</td><td>$avgjump</td></tr>
+	<tr><td>iter</td><td>$iter</td></tr>
+	<tr><td>reconId</td><td>$reconId</td></tr>
+	<tr><td>sigma</td><td>$sigma</td></tr>
+	<tr><td>eotest</td><td>$eotest</td></tr>
+	</table>\n";
 	processing_footer();
 	exit;
 }
@@ -130,7 +143,9 @@ function createform($extra=False) {
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "	<td>\n";
-	echo "  <center><INPUT type='submit' name='run' value='Create new class averages'></center>\n";
+	echo "  <center>\n";
+	echo getSubmitForm("Create new class averages");
+	echo "  </center>\n";
 	echo "	</td>\n";
 	echo "</tr>\n";
 	echo "</table>\n";
