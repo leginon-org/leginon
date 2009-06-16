@@ -249,7 +249,7 @@ class Collection(object):
 
 			# TODO: error checking
 			channel = self.correlator.getChannel()
-			image_data = self.acquireCorrectedCameraImageData(channel)
+			image_data = self.node.acquireCorrectedCameraImageData(channel)
 			self.logger.info('Image acquired.')
 
 			image_mean = image_data['image'].mean()
