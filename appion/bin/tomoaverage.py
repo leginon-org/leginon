@@ -15,7 +15,7 @@ from pyami import mrc
 class Test(appionScript.AppionScript):
 	def setupParserOptions(self):
 		self.parser.set_usage('')
-		self.parser.add_option("--subtomoId", dest="subtomoId", type="int",
+		self.parser.add_option("--subtomorunId", dest="subtomoId", type="int",
 			help="subtomogram id for subvolume averaging, e.g. --subtomoId=2", metavar="int")
 		self.parser.add_option("--stackId", dest="stackId", type="int",
 			help="Stack selected for averaging, e.g. --stackId=2", metavar="int")
@@ -60,7 +60,7 @@ class Test(appionScript.AppionScript):
 					halfwidth,
 					self.params['description'],
 			)
-		profiles = []
+		profiles = {}
 		sumvol = numpy.zeros(volshape)
 		substacktype,conditionstackdata = apStack.findSubStackConditionData(stackdata)
 		if substacktype in ['clustersub','alignsub']:
@@ -76,12 +76,15 @@ class Test(appionScript.AppionScript):
 				if subvolume is not None:
 					zcenter = volshape[0] / 2
 					profile = apTomo.getParticleCenterZProfile(subvolume,shift,halfwidth,zbackgroundrange)
-					#profiles.append(profile)
+					subtomoid = subtomodata.dbid
+					profiles[subtomoid] = profile
 					center = apTomo.gaussianCenter(profile)
 					if center > zcenter - ztolerance and center < zcenter + ztolerance:
 						i += 1
 						shiftz = zcenter - center
 						transformedvolume = apTomo.transformTomo(subvolume,alignpackage,alignp,shiftz,totalbin)
+						## write transformed mrc file to check the result
+						mrc.write(transformedvolume,'./transformed%05d.mrc' %subtomoid)
 						sumvol += transformedvolume
 						if self.params['commit']:
 							apTomo.insertTomoAvgParticle(avgrundata,subtomodata,alignp,shiftz)
@@ -96,17 +99,17 @@ class Test(appionScript.AppionScript):
 					apDisplay.printError("tomogram not exist")
 			apTomo.makeMovie(avgvolpath,self.params['maxsize'])
 			apTomo.makeProjection(avgvolpath,self.params['maxsize'])
-		'''
+		
 		proshape = profile.shape
-		out = open('profiles.txt','w')
-		for z in range(0,proshape[0]):
-			str = "%5d\t" % z
-			for i in range(0,len(profiles)):
-				str += "%6.3f\t" % profiles[i][z]
-			str += "\n"
-			out.write(str)
-		out.close()
-		'''
+		for id in profiles.keys():
+			out = open('profile_%05d.txt'%id,'w')
+			for z in range(0,proshape[0]):
+				str = "%5d\t" % z
+				str += "%6.3f\t" % profiles[id][z]
+				str += "\n"
+				out.write(str)
+			out.close()
+	
 if __name__ == '__main__':
 	test = Test()
 	test.start()
