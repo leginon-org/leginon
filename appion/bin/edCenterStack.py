@@ -83,6 +83,8 @@ class centerStackScript(appionScript.AppionScript):
 			xypeak = correlator.wrap_coord(peakdict['pixel peak'], xycc.shape)
 
 			### do some math to get shift
+			xshift = (ypeak[0] + xypeak[0])/4.0
+			yshift = (xpeak[0] + xypeak[0])/4.0
 
 			### shift particle, by integers only
 			if xshift < maxshift and yshift < maxshift:
