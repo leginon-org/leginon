@@ -118,12 +118,10 @@ for ($i = 0; $i <= $numiter; $i++) {
 			$otrtable.= "<img src='loadimg.php?rawgif=1&filename=$snapshot' height='128'>\n";
 		}
 	}
+	$pngsearchstr = $otrrun['path']."/".$otrrun['classnums']."/*".$i.".mrc*.png";
+	$pngfiles = glob($pngsearchstr);
 	foreach ($pngfiles as $snapshot) {
-		//echo $snapshot."<br/>\n";
-		$searchstr = "volume.*".$i."\.mrc\..*.png$";
-		$gifsearchstr = "volume.*".$i."\.mrc\..*\.gif$";
-		//echo $gifsearchstr."<br/>\n";
-		if (eregi($searchstr, $snapshot)) {
+		if (file_exists($snapshot)) {
 			$otrtable.= "<a border='0' href='loadimg.php?filename=$snapshot' target='snapshot'>";
 			$otrtable.= "<img src='loadimg.php?h=128&filename=$snapshot' height='128'></a>\n";
 		}
