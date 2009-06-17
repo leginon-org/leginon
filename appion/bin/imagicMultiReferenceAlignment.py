@@ -552,9 +552,6 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		alignstack = os.path.join(self.params['rundir'], "alignstack.hed")
 		apStack.averageStack(alignstack)	
 
-		### remove copied stack
-		apFile.removeStack(os.path.join(self.params['rundir'], "start.hed"))
-
 		### normalize particles (otherwise found problems in viewing with stackviewer)
 		emancmd = "proc2d "+alignstack+" "+alignstack+".norm.hed norm"
 		while os.path.isfile(alignstack+".norm.img"):
@@ -562,6 +559,10 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		apEMAN.executeEmanCmd(emancmd)
 		os.rename(alignstack+".norm.hed", alignstack)
 		os.rename(alignstack+".norm.img", alignstack[:-4]+".img")
+
+		### remove copied stack
+		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
+			apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 
 		### insert run into database
 		self.insertAlignmentRun(insert=True)
