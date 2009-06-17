@@ -38,7 +38,8 @@ $stackname = $stackparams['shownstackname'];
 $alignruninfo = $particle->getAlignStackParams($stackparams['alignstackid']);
 $clusternums = $particle->getClusterRefNumsFromSubStack ($stackid,$stackparams['clusterstackid']);
 $clusternums_array = array();
-foreach ($clusternums as $c) $clusternums_array[] = $c['classnum'];
+if ($clusternums && count($clusternums)) 
+	foreach ($clusternums as $c) $clusternums_array[] = $c['classnum'];
 
 $avgruninfo = array(
 	'id'=>$avginfo[0]['avgid'],
