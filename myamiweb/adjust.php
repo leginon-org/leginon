@@ -8,99 +8,249 @@
  */
 
 $title = "Image Adjust";
-if ($displayname=$_REQUEST['displayname'])
+if ($displayname=$_GET['displayname'])
 	$title .=" - ".$displayname;
 
-if (!$cmap = $_REQUEST['colormap'])
+if (!$cmap = $_GET['colormap'])
 	$cmap = 0;
 $defaultmax = ($cmap) ? 1274 : 255;
-if (!$min=$_REQUEST['pmin'])
+if (!$min=$_GET['pmin'])
 	$min=0;
-if (!$max=$_REQUEST['pmax'])
+if (!$max=$_GET['pmax'])
 	$max=$defaultmax;
-if (!$name=$_REQUEST['name'])
+if (!$name=$_GET['name'])
 	$name='v';
-if (!$currentfilter=$_REQUEST['filter'])
+if (!$currentfilter=$_GET['filter'])
 	$currentfilter='default';
-if (!$currentbinning=$_REQUEST['binning'])
+if (!$currentbinning=$_GET['binning'])
 	$currentbinning='auto';
-if (!$currentquality=$_REQUEST['t'])
+if (!$currentquality=$_GET['t'])
 	$currentquality='80';
+if (!$currentgradient=$_GET['gr'])
+	$currentgradient='';
 if ($min > $defaultmax)
 	$min = $defaultmax;
 if ($max > $defaultmax)
 	$max = $defaultmax;
 if (!$autoscale=$_GET['autoscale'])
 	$autoscale=0;
-if ($_POST && !$_POST['autoscale']) {
-	$autoscale=0;
-}
 
-if (!$loadfromjpg=$_REQUEST['lj'])
+if (!$loadfromjpg=$_GET['lj'])
 	$loadfromjpg=0;
 
-$currentgradient='grad.php';
+$state = ($loadfromjpg) ? "disabled" : "";
+$disabledcolor="#AABBCC";
 
 $arrayurl = explode("/", $_SERVER['PHP_SELF']);
 array_pop($arrayurl);
 $baseurl=implode("/",$arrayurl);
+
+$def_stddev=3;
+$def_permin=.01;
+$def_permax=.999;
+$sel_mnmx="";
+$sel_std="checked";
+$sel_ctf="";
+
+$sel_auto = ($loadfromjpg==1) ? "checked" : "";
+$sel_man = ($loadfromjpg==1) ? "" : "checked";
+
+
+list($scaletype, $arg1, $arg2)=explode(';', $autoscale);
+
+if ($GET['autoscale']==0) {
+	$sel_mnmx="checked";
+	$sel_std="";
+	$sel_cdf="";
+}
+if ($scaletype=="s") {
+  $def_stddev=$arg1;
+	$sel_mnmx="";
+  $sel_std="checked";
+  $sel_cdf="";
+} else if ($scaletype=="c") {
+  $def_permin=$arg1;
+  $def_permax=$arg2;
+	$sel_mnmx="";
+  $sel_std="";
+  $sel_cdf="checked";
+}
 ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<title><?php echo $title; ?></title>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-<link rel="stylesheet" type="text/css" href="css/view.css">
-
-<script src="js/LibCrossBrowser.js"></script>
-<script src="js/EventHandler.js"></script>
-<script src="js/Bs_Slider.class.js"></script>
-<script src="js/Bs_FormUtil.lib.js"></script>
-<script src="js/viewer.js"></script>
-<script><!--
 <?php
-
-
-
-echo"
-var jsminpix = $min;
-var jsmaxpix = $max;
-var jscolormap = $cmap;
-var jsmingradpix = 0;
-var jsmaxgradpix = $defaultmax;
-var jsbaseurl = '$baseurl/';
-var jsviewname = '$name';
-var jsfilter = '$currentfilter';
-var jsbinning = '$currentbinning';
-var jsquality = '$currentquality';
-var jsautoscale = '$autoscale';
-var jsloadfromjpg = '$loadfromjpg';
-var gradient = '/img/dfe/$currentgradient';
-";
+require "getgrad.php";
 require "inc/filter.inc";
+
 $filterdata = new filter();
 $filtertypes = $filterdata->getFilterTypes();
 $binningtypes = $filterdata->getBinningTypes();
 
 ?>
-function getautoscale() {
-	parentwindow.getImageAutoScale(jsviewname);
-	a = parentwindow.getminmax(jsviewname);
-	minpix1.updatePointer(a[0]);
-	maxpix1.updatePointer(a[1]);
-	
+
+<title><?=$title?></title>
+<script type="text/javascript" src="js/viewer.js"></script>
+<script type="text/javascript"><!--
+<?php
+echo"
+var jsmaxgradcolor = 1274
+var jsmaxgrad = 255
+var jsminpix = $min
+var jsmaxpix = $max
+var jscolormap = $cmap
+var jsmingradpix = 0
+var jsmaxgradpix = $defaultmax
+var jsbaseurl = '$baseurl/'
+var jsviewname = '$name'
+var jsfilter = '$currentfilter'
+var jsbinning = '$currentbinning'
+var jsquality = '$currentquality'
+var jsautoscale = '$autoscale'
+var jsloadfromjpg = '$loadfromjpg'
+var jsgradient = '$currentgradient'
+";
+?>
+var rminval=false
+var rmaxval=false
+var	jsdefaultborder="1px solid #AAAAAA"
+var	jserrorborder="2px solid #ff0000"
+
+function displayimginfo(minval, maxval, meanval, stdevval) {
+	str='<ul style="padding: 0 0 0 0; margin: 0 0 0 0;">'
+		+'<li style="display: inline">min:'+minval+'<\/li> '
+		+'<li style="display: inline">max:'+maxval+'<\/li> '
+		+'<li style="display: inline">mean:'+meanval+'<\/li> '
+		+'<li style="display: inline">stdev:'+stdevval+'<\/li>'
+		+'<\/ul>'
+	return str
 }
 
-function setautoscale() {
-	if (autoscale = document.adjustform.autoscale)
-		jsautoscale = (autoscale.checked==true) ? 1 : 0;
+function getImageInfo() {
+	jsimgId=parentwindow.jsimgId
+	selpreset = eval("parentwindow.jspreset"+jsviewname)
+	var url = 'getimagestat.php?id='+jsimgId+'&pr='+selpreset
+	var xmlhttp = getXMLHttpRequest()
+	xmlhttp.open('GET', url, true)
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+		var xmlDocument = xmlhttp.responseXML
+		var minval = parseFloat(xmlDocument.getElementsByTagName('min').item(0).firstChild.data)
+		var maxval = parseFloat(xmlDocument.getElementsByTagName('max').item(0).firstChild.data)
+		var meanval = parseFloat(xmlDocument.getElementsByTagName('mean').item(0).firstChild.data)
+		var stdevval = parseFloat(xmlDocument.getElementsByTagName('stdev').item(0).firstChild.data)
+	if (infodiv=document.getElementById('imginfodiv')) {
+		infodiv.innerHTML=displayimginfo(minval, maxval, meanval, stdevval)
+	}
+	normminval = meanval - 3*stdevval
+	normmaxval = meanval + 3*stdevval
+	rminval=minval
+	rmaxval=maxval
+
+	pnormminval = ((meanval - 3*stdevval)-minval)*100/(maxval-minval)
+	pnormmaxval = ((meanval + 3*stdevval)-minval)*100/(maxval-minval)
+
+	document.getElementById('pmin').value=Math.round(pnormminval)
+	document.getElementById('pmax').value=Math.round(pnormmaxval)
+	document.getElementById('pminrel').value=normminval.toFixed(1)
+	document.getElementById('pmaxrel').value=normmaxval.toFixed(1)
+		}
+	}
+	xmlhttp.send(null)
+}
+
+function selectimgtype(name) {
+	if (loadfromjpg = document.adjustform.loadfromjpg) {
+		for (i=0; i<loadfromjpg.length; i++){
+			imgtype=loadfromjpg[i].value
+			loadfromjpg[i].checked=(imgtype==name) ? true : false
+		}
+	}
+	setloadfromjpg()
+}
+
+function selectradio(name) {
+		selectimgtype('0')
+    scaletype = document.adjustform.scaletype
+    for (i=0; i<scaletype.length; i++){
+      scale=scaletype[i].value
+      scaletype[i].checked=(scale==name) ? true : false
+    }
+}
+
+function setscale() {
+	scalepar=""
+	scale=""
+	auto=false
+		scaletype = document.adjustform.scaletype
+		for (i=0; i<scaletype.length; i++){
+			if(scaletype[i].checked) {
+			 scale=scaletype[i].value
+			}
+		}
+		if (scale=="minmax") {
+				objpmin=document.getElementById('pminrel')
+				objpmax=document.getElementById('pmaxrel')
+				jsminpix=objpmin.value
+				jsmaxpix=objpmax.value
+				objpmin.style.border=jsdefaultborder
+				objpmax.style.border=jsdefaultborder
+				if (isNaN(jsminpix)) {
+					objpmin.style.border=jserrorborder
+					return false;
+				}
+				if (isNaN(jsmaxpix)) {
+					objpmin.style.border=jserrorborder
+					return false;
+				}
+				jsminpix=(jsminpix-rminval)*255/(rmaxval-rminval)
+				jsmaxpix=(jsmaxpix-rminval)*255/(rmaxval-rminval)
+		} else if (scale=="stdev") {
+				auto=true
+				objnstdev=document.getElementById('nstdev')
+				nstdev=objnstdev.value
+				objnstdev.style.border=jsdefaultborder
+				if (isNaN(nstdev) || nstdev<0 ) {
+					objnstdev.style.border=jserrorborder
+					return false;
+				}
+				scalepar="s;"+nstdev
+		} else if (scale=="cdf") {
+				auto=true
+				objpermin=document.getElementById('permin')
+				objpermax=document.getElementById('permax')
+				permin=objpermin.value
+				permax=objpermax.value
+				objpermin.style.border=jsdefaultborder
+				objpermax.style.border=jsdefaultborder
+				if (isNaN(permin) || permin<0 || permin>1) {
+					objpermin.style.border=jserrorborder
+					return false;
+				}
+				if (isNaN(permax) || permax<0 || permax>1) {
+					objpermax.style.border=jserrorborder
+					return false;
+				}
+				scalepar="c;"+permin+";"+permax
+	}
+	jsautoscale = (auto==true) ? scalepar : 0;
+	return true
 }
 
 function setloadfromjpg() {
-	if (loadfromjpg = document.adjustform.loadfromjpg)
-		jsloadfromjpg = (loadfromjpg.checked==true) ? 1 : 0;
+	if (loadfromjpg = document.adjustform.loadauto) {
+		for (i=0; i<loadfromjpg.length; i++){
+			if(loadfromjpg[i].checked) {
+				jsloadfromjpg=loadfromjpg[i].value
+			}
+		}
+	}
 }
 
 function update() {
+	if(!setscale()) {
+		return false
+	}
 	if (binninglist = document.adjustform.binning)
 		jsbinning=binninglist.options[binninglist.selectedIndex].value;
 	parentwindow.setbinning(jsviewname,jsbinning);
@@ -118,113 +268,257 @@ function update() {
 	if (qualitylist = document.adjustform.quality)
 		jsquality=qualitylist.options[qualitylist.selectedIndex].value;
 	parentwindow.setquality(jsviewname,jsquality);
+	if (gradientlist = document.adjustform.gradientlist) {
+		jsgradient=gradientlist.options[gradientlist.selectedIndex].value;
+		parentwindow.setgradient(jsviewname,jsgradient);
+	}
 	parentwindow.newfile(jsviewname);
 }
 
-function drawSliders() {
-
-  minpix1 = new Bs_Slider();
-  minpix1.objectName = 'minpix1';
-  minpix1.attachOnChange(bsSliderChange1);
-  minpix1.width         = 255;
-  minpix1.height        = 8;
-  minpix1.minVal        = 0;
-  minpix1.maxVal        = <?php echo $defaultmax; ?>;
-  minpix1.valueInterval = 1;
-  minpix1.arrowAmount   = 1;
-  minpix1.valueDefault  = <?php echo $min; ?>;
-  minpix1.imgBasePath   = 'img/';
-  minpix1.setBackgroundImage('dfe/white.php', 'no-repeat');
-  minpix1.setSliderIcon('dfe/cursor_min2.gif', 11, 8);
-  minpix1.useInputField = 0;
-  minpix1.draw('minpix1Div');
-  
-  maxpix1 = new Bs_Slider();
-  maxpix1.objectName = 'maxpix1';
-  maxpix1.attachOnChange(bsSliderChange2);
-  maxpix1.width         = 255;
-  maxpix1.height        = 8;
-  maxpix1.minVal        = 0;
-  maxpix1.maxVal        = <?php echo $defaultmax; ?>;
-  maxpix1.valueInterval = 1;
-  maxpix1.arrowAmount   = 1;
-  maxpix1.valueDefault  = <?php echo $max; ?>;
-  maxpix1.imgBasePath   = 'img/';
-  maxpix1.setBackgroundImage('dfe/white.php', 'no-repeat');
-  maxpix1.setSliderIcon('dfe/cursor_max2.gif', 11, 8);
-  maxpix1.useInputField = 0;
-  maxpix1.draw('maxpix1Div');
-
-}
-
 function init(){
-  parentwindow = window.opener;
-  initCrossBrowserLib();
-  drawSliders();
-  jsminpix = minpix1.valueDefault;
-  jsmaxpix = maxpix1.valueDefault;
-  document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?colormap='+jscolormap+'&min='+jsminpix+'&max='+jsmaxpix+')'; 
-  parentwindow.setImageHistogram(jsviewname);
-  this.focus();
+  parentwindow = window.opener
+	getImageInfo()
+	setgrad()
+	f(jsloadfromjpg)
+  this.focus()
 } 
 
- // --> 
-</script> 
+function setcolor() {
+	if (c=document.adjustform.colormap) {
+	}
+	if (i=document.getElementById('imggrad')) {
 
-</head>
-<body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" bgcolor="#FFFFFF" onload="init();">
-<form method="post" name="adjustform" id="adjust" >
-<?php $cmapstr = ($cmap==1) ? "0" : "1"; ?>
-<input type="hidden" name="colormap" value="<?php echo $cmapstr; ?>">
-<div style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
-<div style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
-<table border="0">
-  <tr>
-   <td colspan="3" align="center">
-	<img name="imghisto" src="imagehistogram.php">
-   </td>
-  </tr>
-  <tr>
-   <td>
-	<button class="button" type="submit" value="">
-	<img src="img/dfe/grad.php?w=15&h=15&colormap=<?php
-echo $cmapstr;
-?>">
-	</button>
-   </td>
-   <td>
-	<label for="maxpix1Div">max</label><br>
-	<label for="minpix1Div">min</label>
-    </td>
-   <td>
-    <table border=0 cellspacing=0 cellpadding=0 >
-   <tr>
-    <td width="250" height=8>
-      <div id="maxpix1Div"</div>
-    </td>
-   </tr>
-   <tr>
-    <td width="255" height=16>
-      <div id="gradientDiv"><p></div>
-    </td>
-   </tr>
-   <tr>
-    <td width="250" height=0>
-      <div id="minpix1Div"></div>
-    </td>
-  </tr>
- </table>
- </td>
- </tr>
- <tr>
-	<td colspan="2">
+		i.src="img/dfe/grad.php?w=15&h=15&colormap="+jscolormap
+	}
+	jscolormap=(jscolormap==1) ? 0 : 1
+}
+
+function f(state) {
+	if (state==0) {
+		state=false
+	}
+	o=document.getElementById('adjust')
+	setGroup(o, state)
+}
+
+function setGroup(groupRef, state) {
+	var inputs = groupRef.getElementsByTagName("input");
+	for (var i=0;i<inputs.length;i++) {
+		inputs[i].disabled = state;
+	}
+	var inputs = groupRef.getElementsByTagName("select");
+		for (var i=0;i<inputs.length;i++) {
+		inputs[i].disabled = state;
+	}
+	var inputs = groupRef.getElementsByTagName("span");
+		for (var i=0;i<inputs.length;i++) {
+		inputs[i].style.color= (state) ? "<?=$disabledcolor?>" : "";
+	}
+	var inputs = groupRef.getElementsByTagName("li");
+		for (var i=0;i<inputs.length;i++) {
+		inputs[i].style.color= (state) ? "<?=$disabledcolor?>" : "";
+	}
+}
+
+function setpminrel() {
+	if (o=document.getElementById('pmin')) {
+		m=o.value
+		o.style.border=jsdefaultborder
+		if (isNaN(m)) {
+			o.style.border=jserrorborder
+			return false;
+		}
+		if (m>100) {
+			m=100
+		}
+		if (m<0) {
+			m=0
+		}
+		o.value=m
+		if (po=document.getElementById('pminrel')) {
+			m=m*(rmaxval-rminval)/100 + rminval
+			m=(m>rmaxval) ? rmaxval  : m
+			po.value=m.toFixed(1)
+		}
+	}
+	update()
+}
+
+function setpmaxrel() {
+	if (o=document.getElementById('pmax')) {
+		m=o.value
+		o.style.border=jsdefaultborder
+		if (isNaN(m)) {
+			o.style.border=jserrorborder
+			return false;
+		}
+		if (m>100) {
+			m=100
+		}
+		if (m<0) {
+			m=0
+		}
+		o.value=m
+		if (po=document.getElementById('pmaxrel')) {
+			m=m*(rmaxval-rminval)/100 + rminval
+			m=(m<rminval) ? rminval  : m
+			po.value=m.toFixed(1)
+		}
+	}
+	update()
+}
+
+function setpmin() {
+	if (o=document.getElementById('pminrel')) {
+		m=o.value
+		o.style.border=jsdefaultborder
+		if (isNaN(m)) {
+			o.style.border=jserrorborder
+			return false;
+		}
+		if (m<rminval) {
+			m=rminval
+		}
+		if (m>rmaxval) {
+			m=rmaxval
+		}
+		o.value=m
+		if (po=document.getElementById('pmin')) {
+			m=(m-rminval)*100/(rmaxval-rminval)
+			m=(m<0) ? 0 : m
+			po.value=m.toFixed(1)
+		}
+	}
+	update()
+}
+
+function setpmax() {
+	if (o=document.getElementById('pmaxrel')) {
+		m=o.value
+		if (isNaN(m)) {
+			o.style.border=jserrorborder
+			return false;
+		}
+		if (m<rminval) {
+			m=rminval
+		}
+		if (m>rmaxval) {
+			m=rmaxval
+		}
+		o.value=m
+		if (po=document.getElementById('pmax')) {
+			m=(m-rminval)*100/(rmaxval-rminval)
+			m=(m>100) ? 100 : m
+			po.value=m.toFixed(1)
+		}
+	}
+	update()
+}
+
+ // --> 
+</script>
+<style type="text/css">
+span, ul, li {
+	font-family: Arial;
+	font-size: 12px;
+	padding:0;
+	margin:3px 0px;
+}
+ul {
+	list-style-type: none;
+}
+.d li {
+display:inline;
+background-color:#eee;
+border:1px solid;
+border-color:#f3f3f3 #bbb #bbb #f3f3f3;
+margin:0;
+padding:.5em .3em .3em .3em;
+} 
+
+.r li {
+display:block;
+background-color:#eee;
+border:1px solid;
+border-color:#f3f3f3 #bbb #bbb #f3f3f3;
+margin:0;
+padding:.2em;
+} 
+
+.e li {
+display:block;
+}
+
+.b {
+	border: 1px solid #AAAAAA;
+}
+
+</style>
+
+</head><body onload="init();" bgcolor="#ffffff" >
+<form action="(EmptyReference!)" name="adjustform" >
+<ul class="d">
+<li>
+<span style="font-weight: bold"><?=$title?></span>
+		<input name="loadauto" value="1" <?=$sel_auto?> onclick="f(true); setloadfromjpg(); update()" type="radio">auto
+	<input name="loadauto" value="0" <?=$sel_man?> onclick="f(false); setloadfromjpg(); update()" type="radio">
+	manual
+</li>
+</ul>
+<ul>
+<li>
+<div id="imginfodiv" style="font-family: Arial; font-size: 12px; border: 1px solid rgb(0, 0, 0); margin-top: 6px; padding-left:2px; background: rgb(255, 255, 200) none repeat scroll 0% 0%; position: relative; width: 265px; ">
+<ul><li>min:	max:	mean:	stdev:</li></ul>
+</div>
+</li>
+</ul>
+<div id="adjust">
+<ul>
+<li>
+<span style="font-weight: bold">Image Contrast</span>
+</li>
+<li>
+	<ul class="r" style="width: 250px;">
+	<li>
+	<div>
+	<div style="position:relative; margin:0px; padding:0px">
+	<p style="margin:0px 0px 0px 0px; padding:0">
+	<input name="scaletype" value="minmax" type="radio"  <?=$state?> <?=$sel_mnmx?> onclick="update()" >
+	<span style="margin-left:10px">min</span>
+	<span style="margin-left:25px">max</span>
+	</p>
+	<p style="margin:0px 0px 0px 25px; padding:0">
+	<input class="b" id="pminrel" size="3" value="<?=$min?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmin()" ><span style="margin-left:8px">&nbsp;</span>
+  <input class="b" id="pmaxrel" size="3" value="<?=$max?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmax()" > 
+	image value</p>
+	<p style="margin:1px 0px 0px 25px; padding:0">
+	<input class="b" id="pmin" size="3" value="<?=$min?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpminrel()" >%
+  <input class="b" id="pmax" size="3" value="<?=$max?>" type="text"  <?=$state?> onclick="selectradio('minmax')" onchange="setpmaxrel()" >% 
+	relative value</p>
+	</div>
+	</div>
+	<li>
+	<input name="scaletype" value="stdev" type="radio"  <?=$state?> <?=$sel_std?> onclick="update()" >
+	norm +/- <input class="b" id="nstdev" size="2" value="<?=$def_stddev?>" type="text"  <?=$state?> onclick="selectradio('stdev')" onchange="update()" > std dev
+	</li>
+	<li>
+	<input name="scaletype" value="cdf" type="radio"  <?=$state?> <?=$sel_cdf?> onclick="update()" >
+	CDF
+	<input class="b" id="permin" size="2" value="<?=$def_permin?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > to
+	<input class="b" id="permax" size="2" value="<?=$def_permax?>" type="text"  <?=$state?> onclick="selectradio('cdf')" onchange="update()" > 
+	</li>
+<?php
+displaygrad($options, $imgsrc);
+?>
+	</ul>
+</li>
+
+</ul>
+<span style="font-weight: bold">Filtering</span>
+<ul class="r" style="width: 250px" >
+<li>
 		Filter
-	</td>
-	<td>
-    <table border=0 cellspacing=0 cellpadding=0 >
-	<tr>
-	<td>
-	<select name="filter">
+	<select name="filter"  <?=$state?> onchange="update()" >
 	<?php
 	foreach ($filtertypes as $k=>$filter) {
 		$sel = ($k==$currentfilter) ? 'selected' : '';
@@ -232,12 +526,10 @@ echo $cmapstr;
 	}
 	?>
 	</select>
-	</td>
-	<td>
+</li>
+<li>
 		Binning
-	</td>
-	<td>
-	<select name="binning">
+	<select name="binning"  <?=$state?> onchange="update()" >
 	<?php
 	foreach ($binningtypes as $k=>$binning) {
 		$sel = ($k==$currentbinning) ? 'selected' : '';
@@ -245,43 +537,19 @@ echo $cmapstr;
 	}
 	?>
 	</select>
-	</td>
-	<td>AutoScale
-		<?php $sel = ($autoscale==1) ? "checked" : ""; ?>
-		<input type="checkbox" name="autoscale" <?php echo $sel; ?> value="1" onClick="setautoscale()">
-		
-	</td>
-	</tr>
-    </table>
-  </td>
- </tr>
- <tr>
- <td colspan="2">
 	Quality
- </td>
- <td>
-	<select name="quality">
+	<select name="quality"  <?=$state?> onchange="update()" >
 		<option value="png">png</option>
 	<?php
-		for($q=100; $q>0; $q--) {
+		foreach(array(100,90,80,70,60,50) as $q) {
 		$sel = ($q==$currentquality) ? 'selected' : '';
 		echo '		<option value="'.$q.'" '.$sel.'>jpeg '.$q.'</option>'."\n";
 		}
 	?>
 	</select>
-	</td>
-	</tr>
-	<tr>
-	<td colspan="2">
-	Load jpeg
-	</td>
-	<td>
-		<?php $sel = ($loadfromjpg==1) ? "checked" : ""; ?>
-		<input type="checkbox" name="loadfromjpg" <?php echo $sel; ?> value="1" onClick="setloadfromjpg()">
-	<input id="updatebutton" type="button" alt="Update Image" value="Update" onclick="update();">
- </td>
- </tr>
-</table>
+</li>
+</ul>
+</div>
 </form>
 </body>
 </html>

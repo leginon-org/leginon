@@ -1,7 +1,5 @@
 <?php
-
-require "inc/leginon.inc";
-
+require('inc/leginon.inc');
 // --- get image parameters from URL
 $id=$_GET['id'];
 if (!$imgscript=$_GET['imgsc'])
@@ -16,13 +14,14 @@ $maxpix = ($_GET['xp']) ? '&xp='.$_GET['xp'] : '';
 $fft = ($_GET['fft']) ? '&fft='.$_GET['fft'] : '';
 $filter = ($_GET['flt']) ? '&flt='.$_GET['flt'] : '';
 $binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
-$colormap = ($_GET['colormap']) ? '&colormap='.$_GET['colormap'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
 $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : ''; 
+$gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
+$autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel.$acepar;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel.$acepar.$gradient.$autoscale;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
@@ -31,12 +30,6 @@ if (!$imgwidth = $imginfo['dimx'])
 	$imgwidth=1024;
 if (!$imgheight= $imginfo['dimy'])
 	$imgheight=1024;
-
-if (!$imginfo && file_exists($id)) {
-	$info=mrcinfo($id);
-	$imgwidth=$info['nx'];
-	$imgheight=$info['ny'];
-}
 
 $imgbinning = $_GET['binning'];
 if ($_GET['binning']=='auto')
@@ -382,7 +375,7 @@ function getDistance() {
 		onmousemove = "areamousemove(event)"
 		onmouseout	= "areamouseup(event)"
 	></div>
-	<div id="imgmap" style="position:relative; height:<?=$imgmapsize?>px; width:<?=$imgmapsize?>px; background:url('<?=$imgmapsrc?>') no-repeat"
+	<div id="imgmap" style="position:relative; height:<?=$imgmapsize?>px; width:<?=$imgmapsize?>px; background:url('<?=$imgmapsrc?>')"
 		onmousemove = "areamousemove(event)"
 		onmousedown	= "imgmapmousedown(event)" ></div>
 	<div	id="divcoord"
@@ -400,7 +393,7 @@ function getDistance() {
 </div>
 </div>
 <div id="divimg" style="z-index:1; position:absolute; width:100%; height:100%; overflow:auto;cursor:crosshair; ">
-<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgsize;?>px; height:<?=$imgsize;?>; background:url('<?php echo $imgsrc; ?>') no-repeat"
+<div id="img" style="position:absolute; top:0px; left:0px; width:<?=$imgsize;?>px; height:<?=$imgsize;?>; background:url('<?php echo $imgsrc; ?>')"
 	onmousemove	=	"imgmousemove(event)";
 	onmousedown	=	"imgmousedown(event)";
 	onmouseup		=	"imgmouseup(event)";

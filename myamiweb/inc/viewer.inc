@@ -9,14 +9,11 @@
 
 require_once "config.php";
 require_once "inc/util.inc";
-require_once "inc/mysql.inc";
+require_once "inc/mysql.php";
 require_once "inc/button.inc";
 require_once "inc/dbemauth.php";
 require_once "inc/pref.inc";
-require_once "inc/session.inc";
 require_once "inc/ace.inc";
-
-setsession();
 
 $VIEWNB=0;
 
@@ -231,22 +228,18 @@ class viewer {
 		.''.$this->crlf;
 
 		$playback= ''
-		.'<table border="0" cellspacing="1" cellpadding="0" >'.$this->crlf
-		.'<tr>'.$this->crlf
-		.'<td>'.$this->crlf
-		.'	<input type="hidden" name="refreshtimepl" size="4" value="'.$refreshtime.'">'.$this->crlf
-		.'</td>'.$this->crlf
-		.'<td width="15">'.$this->crlf
-		.'	'.$btrstartpl->display().$this->crlf
-		.'</td>'.$this->crlf
-		.'<td width="15">'.$this->crlf
-		.'	'.$btstoppl->display().$this->crlf
-		.'</td>'.$this->crlf
-		.'<td width="15">'.$this->crlf
-		.'	'.$btstartpl->display().$this->crlf
-		.'</td>'.$this->crlf
-		.'</tr>'.$this->crlf
-		.'</table>'.$this->crlf;
+		.'<li class="buttonmenu">'
+		.'<input type="hidden" name="refreshtimepl" size="4" value="'.$refreshtime.'">'.$this->crlf
+		.'</li>'
+		.'<li class="buttonmenu">'
+		.$btrstartpl->display()
+		.'</li>'
+		.'<li  class="buttonmenu">'
+		.$btstoppl->display()
+		.'</li>'
+		.'<li class="buttonmenu">'
+		.$btstartpl->display()
+		.'</li>';
 
 		$this->addplaybackcontrol = $playback;
 		$this->addplaybackjavascript = $playbackjavascript;
@@ -262,7 +255,8 @@ class viewer {
 
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
-		$selector = '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
+		$selector = '#images :'.count($filenames).'<br />';
+		$selector .= '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
 		foreach ($filenames as $filename) {
 			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
@@ -274,32 +268,18 @@ class viewer {
 		$this->addfilesel = $selector;
 	}
 
+	function addjs($jsdata) {
+			$this->jsparams.=$jsdata;
+	}
+
 	function getJavascript() {
 		$str = '<script src="js/viewer.js"></script>'.$this->crlf;
 		$str .= '<script src="js/button.js"></script>'.$this->crlf;
 		$str .= '<script src="js/dropdiv.js"></script>'.$this->crlf;
 		$str .= '<script>'.$this->crlf;
 		if ($params=$this->jsparams) {
-			$str.="var jsparams={".$this->crlf;
-			foreach($params as $key=>$values) {
-				$str.='"'.$key.'": ['.$this->crlf;
-				if (is_array($values)) {
-					$arr=array();
-					foreach($values as $value) {
-						$arrsub=array();
-						foreach($value as $k=>$v) {
-							$arrsub[]='"'.$k.'": "'.$v.'"';
-						}
-						$arr[]='{'.$this->crlf
-									.join(",".$this->crlf,$arrsub).$this->crlf
-									.'}'.$this->crlf;
-					}
-					$str.=join(",".$this->crlf,$arr).$this->crlf;
-					
-				}
-				$str.=']'.$this->crlf;
-			}
-			$str.="}".$this->crlf;
+			$str .= $params;
+			$str .= $this->crlf;
 		}
 		if ($this->sessionId)
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
@@ -333,7 +313,7 @@ class viewer {
 	function getJavascriptInit() {
 		$initbuttons="";
 		$nv=0;
-		$init = '<script>'.$this->crlf;
+		$init = '<script type="text/javascript">'.$this->crlf;
 		$init .= 'var jsviews = new Array();'.$this->crlf;
 		$init .= 'var jscomments = new Array();'.$this->crlf;
 		$init .= 'var bt_hide_state = false;'.$this->crlf;
@@ -364,6 +344,10 @@ class viewer {
 		$init .= ''.$this->crlf;
 		$init .= 'function initviewer() { '.$this->crlf;
 		$init .= 'mainview=getMainView();'.$this->crlf;
+		foreach ($this->views as $v) {
+			$name = $v->getName();
+			$init .= 'getParticleStat("'.$name.'");'.$this->crlf;
+		}
 		if (!empty($initbuttons))
 			$init .= $initbuttons.$this->crlf;
 		$init .= 'setevents();'.$this->crlf;
@@ -570,10 +554,8 @@ class view {
 		$this->displaydownloadicon = true;
 		$this->displaydeqicon = false;
 		$this->displaycloseicon = true;
-		$this->displayhidebt = true;
-		$this->displayexemplarbt = true;
-		$this->displaynextbt = true;
 		$this->displayadjustlink = true;
+		$this->displayexportlink = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
 		$this->presetscript = 'getpreset.php';
@@ -582,29 +564,36 @@ class view {
 		$this->histoscript = 'imagehistogram.php';
 		$this->imagescript = 'getimg.php';
 		$this->commentscript = 'getcomment.php';
-		$this->scale_st = "true";
+		$this->scale_st = "false";
 		$this->target_st = "false";
 		$this->tag_st = "false";
 		$this->nptcl_st = "false";
 		$this->btscalestate = "true";
 		$this->bttargetstate = "true";
 		$this->bttagstate = "true";
-		$this->btnptclstate = "true";
+		$this->btfftstate = "false";
+		$this->btnptclstate = "false";
 		$this->quality = "80";
+		$this->gradient = "";
 		$this->filter= "default";
 		$this->binning= "auto";
 		$this->colormap = "0";
-		$this->autoscale = "1";
+		$this->autoscale = "s;3";
 		$this->displayfilename = "0";
-		$this->loadjpg= "0";
+		$this->loadjpg= "1";
 		$this->ptclsel = "0";
 		$this->jsacepar= "1";
 		$this->jsaceopt= "2";
-		$this->jstagpar1= "1";
-		$this->jstagpar2= "0";
+		$this->jstagpar1 = "1";
+		$this->jstagpar2 = "0";
+		if ($_POST) {
+			$this->jstagpar1 = ($_REQUEST[$this->name.'tagp1']) ? "1" : "0";
+			$this->jstagpar2 = ($_REQUEST[$this->name.'tagp2']) ? "1" : "0";
+		}
 		$this->jsprtlpick= "1";
 		$this->ptclselmemo = $this->name.'psel';
 		$this->qualitymemo = $this->name.'q';
+		$this->gradientmemo = $this->name.'gr';
 		$this->binningmemo = $this->name.'b';
 		$this->filtermemo = $this->name.'f';
 		$this->maxpixmemo = $this->name.'maxpix';
@@ -614,14 +603,16 @@ class view {
 		$this->displayfilenamememo= $this->name.'df';
 		$this->loadjpgmemo= $this->name.'df';
 		$this->btfftmemo = $this->name.'fft_bt_st';
-		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->bttagmemo = $this->name.'tag_bt_st';
 		$this->btnptclmemo = $this->name.'nptcl_bt_st';
+		$this->bttargetmemo = $this->name.'target_bt_st';
 		$this->btscalememo = $this->name.'scale_bt_st';
 		if ($ptcl=$_REQUEST[$this->ptclselmemo])
 			$this->ptclsel = $ptcl;
 		if ($quality=$_REQUEST[$this->qualitymemo])
 			$this->quality = $quality;
+		if ($gradient=$_REQUEST[$this->gradientmemo])
+			$this->gradient = $gradient;
 		if ($binning=$_REQUEST[$this->binningmemo])
 			$this->binning = $binning;
 		if ($filter=$_REQUEST[$this->filtermemo])
@@ -650,7 +641,6 @@ class view {
 			$this->btnptclstate = $btnptclstate;
 		if ($btscalestate=$_REQUEST[$this->btscalememo])
 			$this->btscalestate = $btscalestate;
-		
 	}
 
 	function setParam($key, $value) {
@@ -726,27 +716,11 @@ class view {
 	}
 
 	function displayPresets($state) {
-		$this->displaypreset = $state;
-	}
-
-	function displayHideBt($state) {
-		$this->displayhidebt = $state;
-	}
-
-	function displayNextBt($state) {
-		$this->displaynextbt = $state;
-	}
-
-	function displayExemplarBt($state) {
-		$this->displayexemplarbt = $state;
-	}
-	
-	function displayExportBt($state) {
-		$this->displayexportbt = $state;
+		$this->displaypreset= $state;
 	}
 
 	function displayComment($state) {
-		$this->displaycomment = $state;
+		$this->displaycomment= $state;
 	}
 
 	function displayCloseIcon($state) {
@@ -799,6 +773,8 @@ class view {
 
 	function displayPTCL($state) {
 		$state_str = ($state) ? "true" : "false";
+		if ($btnptclstate=$_REQUEST[$this->btnptclmemo])
+			return $btnptclstate;
 		$this->nptcl_st= $state_str;
 		$this->btnptclstate = $state_str;
 	}
@@ -821,12 +797,20 @@ class view {
 		$this->displayadjustlink = $state;
 	}
 
+	function displayExportLink($state) {
+		$this->displayexportlink = $state;
+	}
+
 	function setPreset($preset) {
 		$this->preset = $preset;
 	}
 
 	function setQuality($quality) {
 		$this->quality = $quality;
+	}
+
+	function setGradient($gradient) {
+		$this->gradient = $gradient;
 	}
 
 	function getJavascriptvar() {
@@ -844,10 +828,15 @@ class view {
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.'="'.$this->minpix.'";'.$this->crlf
 			.'var jsmax'.$this->name.'="'.$this->maxpix.'";'.$this->crlf
+			.'var jspsize'.$this->name.'="";'.$this->crlf
+			.'var jscorrelation'.$this->name.'="";'.$this->crlf
+			.'var jscorrelationmin'.$this->name.'="";'.$this->crlf
+			.'var jscorrelationmax'.$this->name.'="";'.$this->crlf
 			.'var jsfilter'.$this->name.'="'.$this->filter.'";'.$this->crlf
 			.'var jsbinning'.$this->name.'="'.$this->binning.'";'.$this->crlf
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
+			.'var jsgradient'.$this->name.'="'.$this->gradient.'";'.$this->crlf
 			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
@@ -922,12 +911,18 @@ class view {
 		if ($this->getViewState()=='true')
 			$javascript .= $this->btclose->getjstoggle();
 		// --- set Scale, targets buttons on 
+		if ($this->btfftstate=='true') 
+			$javascript .= $this->btfft->getjstoggle();
+		if ($this->btacestate=='true') 
+			$javascript .= $this->btace->getjstoggle();
+		if ($this->btnptclstate=='true') 
+			$javascript .= $this->btnptcl->getjstoggle();
+		if ($this->bttagstate=='true') 
+			$javascript .= $this->bttag->getjstoggle();
+		if ($this->bttargetstate=='true') 
+			$javascript .= $this->bttarget->getjstoggle();
 		if ($this->btscalestate=='true') 
 			$javascript .= $this->btscale->getjstoggle();
-		if ($this->bttargetstate=='true') 
-				$javascript .= $this->bttarget->getjstoggle();
-		if ($this->btnptclstate=='true') 
-				$javascript .= $this->btnptcl->getjstoggle();
 		return $javascript;
 	}
 
@@ -965,11 +960,11 @@ class view {
 	}
 
 	function setImageScript($scriptname) {
-                $this->imagescript= $scriptname;
+		$this->imagescript= $scriptname;
 	}
 
 	function setCommentScript($scriptname) {
-                $this->commentscript= $scriptname;
+		$this->commentscript= $scriptname;
 	}
 
 	function display() {
@@ -984,10 +979,12 @@ class view {
 		$defaultpre = ($_POST[$prememo]) ? $_POST[$prememo] : $defaultdatatype;
 		$selpre = ($_POST[$prename]) ? $_POST[$prename] : $defaultpre;
 		$displayview = $this->getViewState();
+
 		$htmlframe = '
 		<input type="hidden" name="'.$displayname.'" value="'.$displayview.'">
 		<input type="hidden" name="'.$prename.'m" value="'.$selpre.'"> 
 		<input type="hidden" name="'.$this->qualitymemo.'" value="'.$this->quality.'"> 
+		<input type="hidden" name="'.$this->gradientmemo.'" value="'.$this->gradient.'"> 
 		<input type="hidden" name="'.$this->binningmemo.'" value="'.$this->binning.'"> 
 		<input type="hidden" name="'.$this->filtermemo.'" value="'.$this->filter.'">
 		<input type="hidden" name="'.$this->colormapmemo.'" value="'.$this->colormap.'">
@@ -1008,6 +1005,7 @@ class view {
 		<input type="hidden" name="controlview" value="'.$name.'"> 
 			';
 		}
+
 		$htmlframe .= '
 		<table '.$this->framecolor.' border="0" cellspacing="0" cellpadding="1">
 		 <tr '.$this->menucolor.'> 
@@ -1096,14 +1094,23 @@ class view {
 			$ptclmenu->closeval=$closedownimg;
 			$ptclmenu->height="";
 			$ptclmenu->width="";
-			$ptclform='Picks:<br /><select id="'.$name.'ptclparam">';
+			$ptclform='Picks:<br /><select name="'.$name.'ptclrun" id="'.$name.'ptclparam" onchange="getParticleStat(\''.$name.'\')" >';
+			$correcheck = ($_POST[$name.'treshon']=="on") ? "checked" : "";
 			if (is_array($this->params['ptclparams'])) {
 				foreach ($this->params['ptclparams'] as $v) {
-					$ptclform.= "<option value=\"".$v['DEF_id']."\" >".$v['name']."</option>\n"; 
+					$sel = ($_POST[$name.'ptclrun']==$v['DEF_id']) ? "selected" : "";
+					$ptclform.= "<option value=\"".$v['DEF_id']."\" $sel >".$v['name']."</option>\n"; 
 				}
 			}
-			$ptclform.="</select>";
-			$ptclform.='<input type="button" value="update" onclick=setPtclParam(\''.$name.'\') />';
+			$ptclform.='</select><br />';
+// --- select threshold option --- //
+/**
+			$ptclform.='<p>diam:<input class="bt1" type="text" name="'.$name.'psize" size="3" value="'.$this->params['diam'].'">&Aring;<br />';
+			$ptclform.='<p>Treshold:<input type="checkbox" id="'.$name.'treshon" name="'.$name.'treshon" '.$correcheck.' ><br />';
+			$ptclform.='min:<input class="bt1" type="text" name="'.$name.'tresh1" size="3" value="'.$this->params['ptclthresh1'].'" >';
+			$ptclform.='max:<input class="bt1" type="text" name="'.$name.'tresh2" size="3" value="'.$this->params['ptclthresh2'].'" ></p>';
+**/
+			$ptclform.='<input class="bt1" type="button" value="update" onclick=setPtclParam(\''.$name.'\') />';
 			$ptclmenu->setContent($ptclform);
 			$htmlframe.=$ptclmenu->display();
 		}
@@ -1119,9 +1126,12 @@ class view {
 			$tagmenu->closeval=$closedownimg;
 			$tagmenu->height="";
 			$tagmenu->width="";
-			$tagform='image:<input type="checkbox" id="'.$name.'tagparam1" checked " >';
+			$tag1check = ($this->jstagpar1=="1") ? "checked" : "";
+			$tag2check = ($this->jstagpar2=="1") ? "checked" : "";
+
+			$tagform='image:<input type="checkbox" name="'.$name.'tagp1" id="'.$name.'tagparam1" '.$tag1check.' >';
 			$tagform.='<br />';
-			$tagform.='sample:<input type="checkbox" id="'.$name.'tagparam2" >';
+			$tagform.='sample:<input type="checkbox" name="'.$name.'tagp2" id="'.$name.'tagparam2" '.$tag2check.' >';
 			$tagform.='<br />';
 			$tagform.='<input type="button" value="update" onclick=setTagParam(\''.$name.'\') />';
 			$tagmenu->setContent($tagform);
@@ -1180,16 +1190,16 @@ class view {
 		}
 		$htmlframe .= '
 						</td>';
-		$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img alt="export" class="setting" src="img/export.png" ></a>';
-		if ($this->displayexportbt) {
-		$htmlframe .= "<td>$export_icon</td>";
+		if ($this->displayexportlink) {
+			$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img alt="export" class="setting" src="img/export.png" ></a>';
+			$htmlframe .= "<td>$export_icon</td>";
 		}
 		$htmlframe .= '
 						<td valign="center">
 				';
-		$param = "left=0,top=".($this->viewnb*180).",height=200,width=370";
+		$param = "left=0,top=".($this->viewnb*180).",height=340,width=300";
 		$url = "adjust.php?name=$name&displayname=$this->title";
-		$htmlframe .="<div id='".$this->name."imgstat'>";
+		$htmlframe .= "<div id='".$this->name."imgstat'>";
 		$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">
 		';
@@ -1206,19 +1216,18 @@ class view {
 		$htmlframe .='
 			</a></div></td>';
 		if ($this->ismaster) {
-		$htmlframe .= '<td><ul>';
-		if ($this->displayhidebt) {
-		$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button></li>';
-		}
-		if ($this->displaynextbt) {
-		$htmlframe .= '<li class="list1"> <button type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
-		}
-		if ($this->displayexemplarbt) {
-		$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
-        .' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
-		}
+			$htmlframe .= '<td><ul style="padding:0; margin:0">';
+			$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
+							.' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button>';
+// --- hide all option
+/*
+			$htmlframe .= ' all<input type="checkbox" id="chk_hide_all"></li>';
+*/
+			$htmlframe .= '</li> ';
+			$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb;" '
+							.' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
+			$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
+							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
 		}
 
 		$htmlframe .= '

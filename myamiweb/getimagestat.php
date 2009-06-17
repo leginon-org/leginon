@@ -1,6 +1,9 @@
 <?php
-require "inc/leginon.inc";
+require 'inc/leginon.inc';
 $id=$_GET['id'];
+$preset=$_GET['pr'];
+$newimage = $leginondata->findImage($id, $preset);
+$id=$newimage['id'];
 list($info) = $leginondata->getImageStat($id);
 if ($info) {
 	$min = $info['min'];
@@ -15,6 +18,15 @@ if ($info) {
 	$mean = $info['amean'];
 	$stdev = $info['rms'];
 }
+function formatnumber($number) {
+	$number=number_format($number,1,'.','');
+	return $number;
+}
+$min=formatnumber($min);
+$max=formatnumber($max);
+$mean=formatnumber($mean);
+$stdev=formatnumber($stdev);
+
 header('Content-Type: text/xml');
 echo '<?xml version="1.0" standalone="yes"?>';
 echo "<data>";
@@ -31,4 +43,3 @@ echo "<stdev>";
 echo $stdev;
 echo "</stdev>";
 echo "</data>";
-?>

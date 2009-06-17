@@ -13,6 +13,7 @@ require_once "inc/util.inc";
 require_once "inc/filter.inc";
 require_once "inc/graphutil.inc";
 require_once "inc/scalebar.inc";
+require_once "inc/cachedb.inc";
 
 
 
@@ -25,6 +26,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'filter' => 'default',
 		'fft' => false,
 		'colormap' => false,
+		'gradient' => false,
 		'binning' => 'auto',
 		'scalebar' => true,
 		'displaytargets' => true,
@@ -69,16 +71,32 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		$dimx = $imginfo['dimx'];
-		if ($p['loadjpg']) {
+		if ($binning=='auto') {
+			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+		}
+
+		if ($p['loadjpg'] && !$p['fft']) {
+			$sessioninfo=$leginondata->getSessionInfo($sessionId);
+      $session=$sessioninfo['Name'];
 			$jpgfilename = ereg_replace('mrc$', 'jpg', $filename);
-			$jpgpath = ereg_replace("rawdata", "jpegs", $path);
+			$jpgpath = CACHE_PATH.$session."/";
 			$jpgpic = $jpgpath.$jpgfilename;
 		}
 		if (@is_file($jpgpic)) {
 			$img = imagecreatefromjpeg($jpgpic);
+			$binning=$dimx/imagesx($img);
 		} else {
 		if ($p['autoscale']) {
+			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
+			
 			$densitymax = ($p['colormap']) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+			if ($type=="c") {
+				$mrcimg = mrcread($pic);
+				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $arg1, $arg2);
+				mrcdestroy($mrcimg);
+				
+			} else {
+			
 			list($info) = $leginondata->getImageStat($id);
 			if ($info) {
 				$minval = $info['min'];
@@ -97,16 +115,15 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$stdev = $info['rms'];
 			}
 			if ($meanval && $stdev && $maxval-$minval) {
-				$p['minpix'] = (($meanval - 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
-				$p['maxpix'] = (($meanval + 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
+				$nstdev=($arg1>=1) ? $arg1 : 3;
+				$p['minpix'] = (($meanval - $nstdev*$stdev)-$minval)*$densitymax/($maxval-$minval);
+				$p['maxpix'] = (($meanval + $nstdev*$stdev)-$minval)*$densitymax/($maxval-$minval);
+			}
 			}
 		}
 				
 		if ($p['loadtime'])
 			$begin=getmicrotime();
-
-		if ($binning=='auto') 
-			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
 
 		if ($p['mrc']) {
 			$imgmrc = mrcread($pic);
@@ -114,7 +131,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			return $imgmrc;
 		}
 		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning, $p['autoscale']);
+			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
 		}
 
 		else if (function_exists($p['filter']))
@@ -129,6 +146,12 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($size) {
 			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
 			myimagescale($img, $scalefactor);
+		}
+		if ($p['gradient']) {
+			require "inc/gradient.php";
+			if ($gradient=getGradient($p['gradient'])) {
+				imagegradient($img, $gradient);
+			}
 		}
 
 		if ($p['loadtime'])
@@ -305,7 +328,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				$col = imagecolorallocatehex($img,$selcolor);
 				$dbp = new particledata();
 				$particles = $dbp->getParticlesFromSelectionId($selectionId, $filename);
-				exit;
 				foreach ($particles as $particle) {
 					$tsize = 100*$scalefactor/$binning;
 					$cx = $particle['Xcoord']/$binning*$scalefactor;
@@ -328,7 +350,9 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		
 		}
 		if ($p['newptcl']) {
+				list($pon, $diam)=explode(";", $p['newptcl']['info']);
 				require "inc/particledata.inc";
+				require "inc/histogram.inc";
 				$particle = new particledata();
 				$particlerun=$particle->getLastParticleRun($sessionId);
 				if ($p['ptclsel']) {
@@ -341,14 +365,33 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 				}
 				$particledata=$particle->getParticlesFromImageId($particlerun, $imageId);
 				list($selectionparams)=$particle->getSelectionParams($particlerun);
-				$diam = $selectionparams['diam'];
+				if (!$diam) {
+					$diam = $selectionparams['diam'];
+				}
+				$d=array_map('getdiam', $particledata);
+				$d=array_unique($d);
+				$groupcolors=array();
+				$index=0;
+				foreach ((array)$d as $val) {
+					$groupcolors[(int)$val]=getParticleColor($img, $index);
+					$index++;
+				}
 				$col = imagecolorallocate($img, 255,255,255);
 				$apix = $imginfo['pixelsize']*1e10;
 				$diam = $diam*$scalefactor/$binning/$apix/$imginfo['binning'];
-				if (is_array($particledata))
-				foreach ($particledata as $particle) {
+				$correlationmin=$p['newptcl']['cm'];
+				$correlationmax=$p['newptcl']['cx'];
+				$tresh = (is_numeric($correlationmin) && is_numeric($correlationmax)) ? true : false;
+				foreach ((array)$particledata as $particle) {
+					if ($tresh && ($particle['correlation']<$correlationmin || $particle['correlation']>$correlationmax)) {
+						continue;
+					}
 					$cx = $particle['xcoord']/$binning*$scalefactor;
 					$cy = $particle['ycoord']/$binning*$scalefactor;
+					$col=$groupcolors[(int)$particle['diameter']];
+					if (!$col) {
+						$col = imagecolorallocate($img, 255,255,255);
+					}
 					drawcircle($img, $cx, $cy, $diam, $col, true);
 				}
 		}
@@ -590,4 +633,25 @@ function myimagescale(&$img, $percent) {
 	imagecopyresampled($img, $source, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
 	imagedestroy($source);
 }
+
+function getdiam($a) {
+	return $a['diameter'];
+}
+
+function getParticleColor($img, $index) {
+$colors = array ( 
+		"#ff4040","#3df23d","#3d3df2", 
+		"#f2f23d","#3df2f2","#f23df2", 
+		"#f2973d","#3df297","#973df2", 
+		"#97f23d","#3d97f2","#f23d97" );
+$n=sizeof($colors);
+$index=$index%$n;
+$hexstr=$colors[$index];
+$int = hexdec($hexstr);
+  return ImageColorAllocate ($img,
+         0xFF & ($int >> 0x10),
+         0xFF & ($int >> 0x8),
+         0xFF & $int);
+}
+	
 ?>

@@ -9,7 +9,6 @@
 
 define('MIN_PIXEL_VAL', 0); 
 define('MAX_PIXEL_VAL', 255); 
-define('MAX_COLOR_PIXEL_VAL', 1274); 
 
 class filter {
 
@@ -40,20 +39,25 @@ class filter {
 
 }
 
-function getfft($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $autoscale=false) {
-	$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+function getfft($filename="", $minpix="", $maxpix="", $binning=1, $autoscale=false) {
+	list($type,$arg1, $arg2)=explode(";", $autoscale);
 	$mrcimg = mrcread($filename);
 	mrcfftw($mrcimg,10);
 	mrcbinning($mrcimg, $binning);
-	if ($autoscale)
-		list($minpix, $maxpix) = mrcstdevscale($mrcimg, $densitymax);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
+	if ($autoscale) {
+		if ($type=="c") {
+			list($minpix, $maxpix)=mrccdfscale($mrcimg, $arg1, $arg2);
+		} else {
+			list($minpix, $maxpix) = mrcstdevscale($mrcimg, $arg1);
+		}
+	}
+	$img = mrctoimage($mrcimg, $minpix, $maxpix);
 	mrcdestroy($mrcimg);
 	return $img;
 }
 
 function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $type='default') {
-	$densitymax = ($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+	$densitymax = MAX_PIXEL_VAL;
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 	$maxpix = ($maxpix) ? $maxpix : $densitymax;
 	
@@ -62,7 +66,7 @@ function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binn
 	$mrcimg = mrcread($filename);
 	$info = mrcgetinfo($mrcimg);
 	mrcbinning($mrcimg, $binning);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
+	$img = mrctoimage($mrcimg, $minpix, $maxpix);
 	mrcdestroy($mrcimg);
 	return $img;
 
@@ -70,28 +74,28 @@ function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binn
 
 function smooth1($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
+	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 	if (!is_file($filename))
 		return false;
 	$kernel = 5;
 	$sigma = 2.73;
 	$mrcimg = mrcread($filename);
 	mrcgaussianfilter($mrcimg, $binning, $kernel, $sigma);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
+	$img = mrctoimage($mrcimg, $minpix, $maxpix);
 	mrcdestroy($mrcimg);
 	return $img;
 }
 
 function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
+	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 	if (!is_file($filename))
 		return false;
 	$mrcimg = mrcread($filename);
 	$kernel = 5;
 	$sigma = 1;
 	mrcgaussianfilter($mrcimg, $binning, $kernel, $sigma);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
+	$img = mrctoimage($mrcimg, $minpix, $maxpix);
 	mrcdestroy($mrcimg);
 	$kernel = 3;
 	$sigma = 2.12;
@@ -101,16 +105,16 @@ function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning
 
 function smooth3($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
+	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 	if (!is_file($filename))
 		return false;
 	$mrcimg = mrcread($filename);
 	$kernel = 3;
 	$sigma = 1;
 	mrcgaussianfilter($mrcimg, 2, $kernel, $sigma);
-	$img = mrctoimage($mrcimg, $minpix, $maxpix, $colormap);
+	$img = mrctoimage($mrcimg, $minpix, $maxpix);
 	mrcdestroy($mrcimg);
-	imagescale($img, .25);
+	myimagescale($img, .25);
 	$kernel = 3;
 	$sigma = 1;
 	imagegaussianfilter($img, $kernel, $sigma);

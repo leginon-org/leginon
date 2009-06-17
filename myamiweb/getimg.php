@@ -33,13 +33,14 @@ if ($t=='png') {
 
 
 $colormap = ($_GET['colormap']==1) ? "1" : "0";
-$autoscale = ($_GET['autoscale']==1) ? true : false;
+$gradient= ($_GET['gr']) ? $_GET['gr']:false;
+$autoscale = ($_GET['autoscale']) ? $_GET['autoscale'] : false;
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
-$maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
+$maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
 $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
 $nptclsel = ($_GET['psel']) ? $_GET['psel'] : 0;
-$displaynptcl = ($_GET['nptcl']==1) ? true : false;
+$displaynptcl = ($_GET['nptcl']) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
 $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
@@ -51,6 +52,10 @@ $displayloadingtime = false;
 $displayfilename = ($_GET['df']&1) ? true : false;
 $displaysample= ($_GET['df']&2) ? true : false;
 $loadjpg= ($_GET['lj']==1) ? true : false;
+$displaynptcl = ($_GET['nptcl']) ? true : false;
+$correlationmin=($_GET['cm']) ? $_GET['cm'] : false;
+$correlationmax=($_GET['cx']) ? $_GET['cx'] : false;
+$ptclparams= ($displaynptcl) ? array('cm'=>$correlationmin, 'cx'=>$correlationmax, 'info'=>trim($_GET['nptcl'])) : false;
 
 if ($g) {
 
@@ -61,13 +66,14 @@ if ($g) {
 		'filter' => $filter,
 		'fft' => $fft,
 		'colormap' => $colormap,
+		'gradient' => $gradient,
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
 		'loadtime' => $displayloadingtime,
 		'loadjpg' => $loadjpg,
 		'autoscale' => $autoscale,
-		'newptcl' => $displaynptcl,
+		'newptcl' => $ptclparams,
 		'ptclsel' => $nptclsel
 	);
 
@@ -116,7 +122,8 @@ if ($g) {
 	}
 	if ($displaysample) {
 		$projectdata = new project();
-		$tag=$projectdata->getSample();
+		$info=$leginondata->getSessionInfo($sessionId);
+		$tag=$projectdata->getSample($info);
 		$margin=10;
 		$tagoffset=strlen($tag)*6+$margin;
 		$xpos=imagesx($img)-$tagoffset;
@@ -124,8 +131,9 @@ if ($g) {
 	}
 
 	$filename = ereg_replace('mrc$', $ext, $filename);
-	Header( "Content-type: $type ");
-	Header( "Content-Disposition: inline; filename=".$filename);
+
+	header( "Content-type: $type ");
+	header( "Content-Disposition: inline; filename=".$filename);
         if ($t=='png')
                 imagepng($img);
         else

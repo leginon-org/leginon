@@ -8,12 +8,12 @@ A:visited {
      text-decoration: none;
 }
 A:active {
-    color:     rgb( 0, 180, 210 );
-     text-decoration: none;
+	color:     rgb( 0, 180, 210 );
+	text-decoration: none;
 }
 A:hover{
-    color:     rgb( 0, 180, 210 );
-     text-decoration: none;
+	color:     rgb( 0, 180, 210 );
+  text-decoration: none;
 }
 
 DIV.bodytext { padding-left:3em; }
@@ -253,6 +253,12 @@ INPUT.button {
 .list1
 {
 display: inline;
+}
+
+.buttonmenu
+{
+	display: inline;
+	padding: 1px 1px 0px 0px;
 }
 
 #roundbox h1, #roundbox h2, #roundbox p {margin:0 10px;}

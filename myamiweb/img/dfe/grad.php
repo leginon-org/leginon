@@ -7,6 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require '../../config.php';
+require '../../inc/gradient.php';
+
 if (!$colormap=$_GET['colormap'])
 	$colormap=false;
 if (!$imgwidth=$_GET['w'])
@@ -27,9 +30,15 @@ if (!$gmin=$_GET['gmin'])
 $gmax = (is_numeric($_GET['gmax'])) ? $_GET['gmax'] : $gradientsize-1;
 
 
+$save=false;
  
 $pic=ImageCreateTrueColor($imgwidth,$imgheight);
 $gradfunc = ($colormap) ? 'getColorMap' : 'getGrayColor';
+if ($_GET['map']) {
+	if ($gradients=getGradient($_GET['map'])) {
+		$gradfunc = 'getGradientColor';
+	}
+}
 $black = imagecolorallocate($pic, 0, 0, 0);
 $green = imagecolorallocate($pic, 0, 255, 0);
 $red = imagecolorallocate($pic, 255, 0, 0);
@@ -54,6 +63,11 @@ if ($displaymark) {
 	imageline ($pic , $col, 0, $col, $cTop+$imgheight, $green);
 }
 
+function getGradientColor($col) {
+	global $gradients;
+	$c=$gradients[$col];
+	return $c;
+}
 
 function getGrayColor($v) {
 	$col = ($v << 16) + ($v << 8) + $v;
@@ -77,6 +91,6 @@ function getColorMap($v) {
 }
 
 header("Content-type: image/x-png");
-ImagePNG($pic);
+imagepng($pic);
 ImageDestroy($pic);
 ?>

@@ -83,7 +83,7 @@ function check_hide_state(view) {
 	state = eval("js"+view+"done")
 	if (state) {
 		eval('clearInterval(hide_interval'+view+')')
-		eval('js'+view+'done=false')
+		eval('js'+view+'done=true')
 		if (bt_hide_state) {
 			bt_hide_state.disabled=false
 		}
@@ -186,10 +186,12 @@ function getKey(e)
 			updateviews()
 			break
 		case 'H':
-			hide_image()
+			update_image_list()
 			break
 		case 'E':
 			image_is_exemplar()
+			incIndex()
+			updateviews()
 			break
   }
 }
@@ -214,6 +216,21 @@ function getImageAutoScale(view) {
 		}
 	}
 	xmlhttp.send(null)
+}
+
+function getParticleStat(view) {
+	if (param = document.getElementById(view+"ptclparam")) {
+		if (param.selectedIndex<0) {
+			return
+		}
+		if (jsrunId = param.options[param.selectedIndex].value) {
+			minval=particlestats[jsrunId].min
+			maxval=particlestats[jsrunId].max
+			psizeval=particlestats[jsrunId].diam
+			setcorrelation(view, minval, maxval)
+			setparticlesize(view, psizeval)
+		}
+	}
 }
 
 function startInterval()
@@ -395,6 +412,9 @@ function newfile(view){
 	if (eval(view+"ace_bt_st")) {
 		jsimagescriptcur="getaceimg.php"
 		jspresetscriptcur="getacepreset.php"
+	} else { 
+		jsimagescriptcur = eval("jsimagescript"+view)
+		jspresetscriptcur = eval("jspresetscript"+view)
 	}
 	jscommentscriptcur = "getcomment.php"
 	pselp = (cpselpar = eval("jsptclpick"+view)) ? "&psel="+cpselpar : ""
@@ -406,11 +426,23 @@ function newfile(view){
 	t1+=(eval("jstagparam2"+view)==1) ? 2 : 0
 	displayfilename = (eval(view+"tag_bt_st")) ? "&df="+t1 : ""
 	nptcl = (eval(view+"nptcl_bt_st")) ? "&nptcl=1" : ""
+	if (nptcl) {
+		if (eval("jspsize"+view)) {
+			psize=eval("jspsize"+view)
+			nptcl+=";"+psize
+		}
+		if (eval("jscorrelation"+view)) {
+			cm=eval("jscorrelationmin"+view)
+			cx=eval("jscorrelationmax"+view)
+			nptcl+="&cm="+cm+"&cx="+cx
+		}
+	}
 	np = (cmin = eval("jsmin"+view)) ? "&np="+cmin : ""
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp=""
 	if (cfilter = eval("jsfilter"+view)) flt="&flt="+cfilter; else flt=""
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality=""
+	if (cgradient = eval("jsgradient"+view)) gradient="&gr="+cgradient; else gradient=""
 	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap=""
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
@@ -420,7 +452,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+pselp+nptcl+ag+ao
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+pselp+nptcl+ag+ao+gradient
 
 	if (options == lastoptions[vid])
 		return
@@ -506,8 +538,14 @@ function setTagParam(view) {
 
 function setPtclParam(view) {
 	if (param = document.getElementById(view+"ptclparam")) {
+		getcorrelation(view)
+		getparticlesize(view)
 		vf = param.options[param.selectedIndex].value
 		eval("jsptclpick"+view+"="+vf)
+		if (treshon = document.getElementById(view+"treshon")) {
+			cutoff=(treshon.checked) ? true : false
+			eval("jscorrelation"+view+"="+cutoff)
+		}
 		newfile(view)
 	}
 }
@@ -572,7 +610,44 @@ function setImageHistogram(viewname) {
 		if (!w.closed) {
 			if (histo = w.document.imghisto)
 				histo.src="imagehistogram.php?tf=1&"+options
+			if (comp= w.document.imgcomp)
+				comp.src="imagehistogram2.php?cp=1&tf=1&"+options
 		}
+	}
+}
+
+function setparticlesize(viewname, psizeval) {
+	eval("jspsize"+viewname+"='"+psizeval+"'")
+	if (s = eval("document.viewerform."+viewname+"psize")) {
+		s.value=psizeval
+	}
+}
+
+function setcorrelation(viewname, min, max) {
+	var cmin=min
+	var cmax=max
+	eval("jscorrelationmin"+viewname+"='"+cmin+"'")
+	eval("jscorrelationmax"+viewname+"='"+cmax+"'")
+	if (m = eval("document.viewerform."+viewname+"tresh1")) {
+		m.value=cmin
+	}
+	if (x = eval("document.viewerform."+viewname+"tresh2")) {
+		x.value=cmax
+	}
+}
+
+function getparticlesize(viewname) {
+	if (s = eval("document.viewerform."+viewname+"psize")) {
+		eval("jspsize"+viewname+"='"+s.value+"'")
+	}
+}
+
+function getcorrelation(viewname) {
+	if (m = eval("document.viewerform."+viewname+"tresh1")) {
+		eval("jscorrelationmin"+viewname+"='"+m.value+"'")
+	}
+	if (x = eval("document.viewerform."+viewname+"tresh2")) {
+		eval("jscorrelationmax"+viewname+"='"+x.value+"'")
 	}
 }
 
@@ -608,6 +683,13 @@ function setquality(viewname, quality) {
 	eval('jsquality'+viewname+'="'+quality+'"')
 	if (q = eval("document.viewerform."+viewname+"q")) {
 		q.value=quality
+	}
+}
+
+function setgradient(viewname, gradient) {
+	eval('jsgradient'+viewname+'="'+gradient+'"')
+	if (q = eval("document.viewerform."+viewname+"gr")) {
+		q.value=gradient
 	}
 }
 
@@ -658,7 +740,7 @@ function popUpMap(URL) {
 }
 
 function popUpW(URL) {
-	window.open(URL, "deq", "left=0,top=0,height=512,width=400,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
+	window.open(URL, "deq", "left=0,top=0,height=512,width=300,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes")
 }
 
 
@@ -668,6 +750,7 @@ function popUpAdjust(URL, view, param){
 	filter = eval("jsfilter"+view)
 	binning = eval("jsbinning"+view)
 	quality = eval("jsquality"+view)
+	gradient = eval("jsgradient"+view)
 	colormap = eval("jscolormap"+view)
 	autoscale = eval("jsautoscale"+view)
 	displayfilename = eval("jsdisplayfilename"+view)
@@ -677,12 +760,13 @@ function popUpAdjust(URL, view, param){
 	filter = (filter) ? "&filter="+filter : ""
 	binning = (binning) ? "&binning="+binning : ""
 	quality = (quality) ? "&t="+quality : ""
+	gradient = (gradient) ? "&gr="+gradient : ""
 	colormap= (colormap) ? "&colormap="+colormap : ""
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
-	param = (param) ? param : "left=0,top=0,height=200,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	param = (param) ? param : "left=0,top=0,height=370,width=370"
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {
