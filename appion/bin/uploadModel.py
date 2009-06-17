@@ -43,6 +43,8 @@ class UploadModelScript(appionScript.AppionScript):
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
+		self.parser.add_option("--mass", dest="mass", type="int",
+			help="Mass (in kDa) at which snapshot of density will be contoured", metavar="FLOAT")
 		self.parser.add_option("--chimera-only", dest="chimeraonly", default=False, action="store_true",
 			help="Do not do any reconstruction calculations only run chimera")
 		self.parser.add_option("-b", "--boxsize", "--newbox", dest="newbox", type="int",
@@ -249,6 +251,9 @@ class UploadModelScript(appionScript.AppionScript):
 		self.params['projectId'] = apProject.getProjectIdFromSessionName(self.params['session'])
 
 		### render chimera images of model
+		if self.params['mass'] is not None:
+			apChimera.setVolumeMass(newmodelpath, self.params['newapix'], self.params['mass'])
+			contour = 1.0
 		apChimera.renderSnapshots(newmodelpath, contour=self.params['contour'], 
 			zoom=self.params['zoom'], sym=self.params['symdata']['eman_name'])
 		apChimera.renderAnimation(newmodelpath, contour=self.params['contour'], 
