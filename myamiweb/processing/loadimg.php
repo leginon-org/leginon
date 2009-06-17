@@ -12,8 +12,7 @@ if (preg_match('`\.mrc$`i',$filename)) {
 	$src_mrc = mrcread($filename);
 	if ($rescale) {
 		// --- scale image values (not size)
-		$densitymax=255;
-		list($pmin, $pmax) = mrcstdevscale($src_mrc, $densitymax);
+		list($pmin, $pmax) = mrcstdevscale($src_mrc, 3);
 		$image = mrctoimage($src_mrc,$pmin,$pmax);
 	}
 	else $image = mrctoimage($src_mrc);

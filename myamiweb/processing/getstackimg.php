@@ -31,7 +31,7 @@ $maxval=255;
 list($pmin, $pmax) = array(0, $maxval);
 if ($updateheader)
 	mrcupdateheader($mrcimg);
-list($pmin, $pmax) = mrcstdevscale($mrcimg, $maxval, 3);
+list($pmin, $pmax) = mrcstdevscale($mrcimg, 3);
 mrcbinning($mrcimg,$binning);
 $img = mrctoimage($mrcimg,$pmin,$pmax);
 mrcdestroy($mrcimg);

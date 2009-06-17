@@ -20,7 +20,7 @@ $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
 $link->addlink('rctviewer.php','RCT','', 'rct');
 $link->addlink('admin.php','Administration','', 'admin');
-$link->addlink('dualview.php','Dual Viewer','', 'dual_view');
+$link->addlink('2wayviewer.php','2 Way Viewer','', 'viewer');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
 $link->addlink('template.php', 'Hole Template viewer','', '');
