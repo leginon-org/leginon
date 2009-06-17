@@ -135,7 +135,7 @@ $euleriter = (int) $otrrun['euleriter'];
 for ($i = 1; $i <= $euleriter; $i++) {
 	$j = "OTR Run, <i>Euler refinement iteration ".$i."</i><br/>\n";
 	$otrtable .= "<h3>$j</h3>\n";
-	$gifsearchstr = $otrrun['path']."/".$otrrun['classnums']."/*".$i.".mrc*.gif";
+	$gifsearchstr = $otrrun['path']."/".$otrrun['classnums']."/apshVolume*".$i."_cent*.mrc*.gif";
 	$giffiles = glob($gifsearchstr);
 	foreach ($giffiles as $snapshot) {
 		//echo $snapshot."<br/>\n";
@@ -143,12 +143,11 @@ for ($i = 1; $i <= $euleriter; $i++) {
 			$otrtable.= "<img src='loadimg.php?rawgif=1&filename=$snapshot' height='128'>\n";
 		}
 	}
+	$pngsearchstr = $otrrun['path']."/".$otrrun['classnums']."/apshVolume*".$i."_cent*.mrc*.png";
+	//$otrtable.=  $pngsearchstr."<br/>\n";
+	$pngfiles = glob($pngsearchstr);
 	foreach ($pngfiles as $snapshot) {
-		//echo $snapshot."<br/>\n";
-		$searchstr = "apshVolume.*".$i."\.mrc\..*.png$";
-		$gifsearchstr = "apshVolume.*".$i."\.mrc\..*\.gif$";
-		//echo $gifsearchstr."<br/>\n";
-		if (eregi($searchstr, $snapshot)) {
+		if (file_exists($snapshot)) {
 			$otrtable.= "<a border='0' href='loadimg.php?filename=$snapshot' target='snapshot'>";
 			$otrtable.= "<img src='loadimg.php?h=128&filename=$snapshot' height='128'></a>\n";
 		}
