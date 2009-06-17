@@ -716,16 +716,33 @@ function formatEndPath($path) {
 	return $path;
 }
 
-function getPBSMemoryNeeded($boxsize) {
+function getPBSMemoryNeeded() {
 	$particle = new particledata();
+	$stackinfo=explode('|--|',$_POST['stackval']);
+	$stackidval=$stackinfo[0];
+	$boxsize = (int) $stackinfo[2];
+	$numpart = $particle->getNumStackParticles($stackidval);
 	$numiters=$_POST['numiters'];
-	$maxang=$_POST["ang".$numiters];
+	$startang=$_POST["ang1"];
+	$endang=$_POST["ang".$numiters];
 	$emansym=$_POST["sym".$numiters];
 	$symdata = $particle->getSymmetryDataFromEmanName($emansym);
 	$foldsym = (int) $symdata['fold_symmetry'];
-	$numproj = 18000.0/($foldsym*$maxang*$maxang);
-	$memneed = $numproj*$boxsize*$boxsize*16.0;
-	$numgig = ceil($memneed/1073741824.0);
+	$endnumproj = 18000.0/($foldsym*$endang*$endang);
+	$startnumproj = 18000.0/($foldsym*$startang*$startang);
+	$memneed = $endnumproj*$boxsize*$boxsize*16.0;
+	//echo "endnumproj = $endnumproj * boxsize = $boxsize*$boxsize*16.0";
+	$numgig1 = ceil($memneed/1073741824.0);
+	$memneed = $numpart/$startnumproj*$boxsize*$boxsize*16.0;
+	$numgig2 = ceil($memneed/1073741824.0);
+	$memneed = $numpart*$boxsize*$boxsize*4.0;
+	$numgig3 = ceil($memneed/1073741824.0);
+	$numgig = max($numgig1,$numgig2,$numgig3);
+	//echo "numpart = $numpart /startnumproj = $startnumproj *boxsize = $boxsize\n";
+	//echo sprintf("numgig1 = %dgb\n", $numgig1);
+	//echo sprintf("numgig2 = %dgb\n", $numgig2);
+	//echo sprintf("numgig3 = %dgb\n", $numgig3);
+	//echo sprintf("numgig = %dgb\n", $numgig);
 	$sizestr = sprintf("%dgb", $numgig);
 	return $sizestr;
 }
@@ -755,6 +772,7 @@ function writeJobFile ($extra=False) {
 	$apix=$stackinfo[1];
 	$box=$stackinfo[2];
 
+
 	// get the model id
 	$modelinfo=explode('|--|',$_POST['model']);
 	$modelid=$modelinfo[0];
@@ -770,7 +788,7 @@ function writeJobFile ($extra=False) {
 	$header.= "#PBS -l nodes=".$_POST['nodes'].":ppn=".$_POST['ppn']."\n";
 	$header.= "#PBS -l walltime=".$_POST['walltime'].":00:00\n";
 	$header.= "#PBS -l cput=".$_POST['cput'].":00:00\n";
-	$header.= "#PBS -l mem=".getPBSMemoryNeeded($box)."\n";
+	$header.= "#PBS -l mem=".getPBSMemoryNeeded()."\n";
 	$header.= "#PBS -m e\n";
 	$header.= "#PBS -r n\n";
 	$header.= "#PBS -j oe\n\n";
