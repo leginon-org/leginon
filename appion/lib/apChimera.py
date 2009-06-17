@@ -51,7 +51,7 @@ def setVolumeMass(volumefile, apix=1.0, mass=1.0, rna=0.0):
 #=========================================
 #=========================================
 def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
-		contour=None, zoom=1.0, sym=None, color=None, silhouette=True):
+		contour=None, zoom=1.0, sym=None, color=None, silhouette=True, mass=None):
 	if apVolume.isValidVolume(density) is False:
 		apDisplay.printError("Volume file is not valid")
 	if box is None:
@@ -79,7 +79,9 @@ def filterAndChimera(density, res=30, apix=None, box=None, chimtype='snapshot',
 	apEMAN.executeEmanCmd(lpcmd)
 	os.environ['CHIMTEMPVOL'] = tmpf
 
-
+	if mass is not None:
+		setVolumeMass(density, apix, mass)
+		contour = 1.0
 
 	### render images
 	renderSlice(density, box=box, tmpfile=tmpf, sym=sym)
