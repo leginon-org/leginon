@@ -224,14 +224,20 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		else:
 			apDisplay.printError("stack not in the database")
 		
-		# copy stack file to working directory	
+		# link stack file to working directory	
                 if not os.path.isfile(linkingfile+".hed"):
                         apDisplay.printError("stackfile does not exist: "+linkingfile+".img")
                 else:
 			if not os.path.isfile(os.path.join(str(self.params['rundir']), "start.img")):
 				apDisplay.printMsg("copying aligned stack into working directory for operations with IMAGIC")
-	                        shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
-	                        shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
+#	                        shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
+#	                        shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
+				lnkcmd1 = "ln -s "+linkingfile+".img "+os.path.join(self.params['rundir'], "start.img")
+				lnkcmd2 = "ln -s "+linkingfile+".hed "+os.path.join(self.params['rundir'], "start.hed")
+				proc = subprocess.Popen(lnkcmd1, shell=True)
+				proc.wait()
+				proc = subprocess.Popen(lnkcmd2, shell=True)
+				proc.wait()
 			else:	
 				apDisplay.printColor("aligned stack already exists in working directory", "green")
 
@@ -266,6 +272,10 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 				apDisplay.printError("ERROR IN IMAGIC SUBROUTINE, please check the logfile: imagicMultivariateStatisticalAnalysis.log")
 		apDisplay.printColor("finished IMAGIC in "+apDisplay.timeString(time.time()-aligntime), "cyan")
 		aligntime = time.time() - aligntime
+
+		### remove copied stack
+#		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
+#			apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 	
 		### upload alignment
 		imagicstack = os.path.join(self.params['rundir'], "start.hed")
