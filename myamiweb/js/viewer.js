@@ -223,6 +223,7 @@ function getParticleStat(view) {
 		if (param.selectedIndex<0) {
 			return
 		}
+/*
 		if (jsrunId = param.options[param.selectedIndex].value) {
 			minval=particlestats[jsrunId].min
 			maxval=particlestats[jsrunId].max
@@ -230,6 +231,7 @@ function getParticleStat(view) {
 			setcorrelation(view, minval, maxval)
 			setparticlesize(view, psizeval)
 		}
+*/
 	}
 }
 

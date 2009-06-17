@@ -1,15 +1,4 @@
 <?php
-$graddir=$_SERVER['DOCUMENT_ROOT']."/dbemd/gradient/";
-$gradients=array();
-$gradients[]="";
-if ($handle = opendir($graddir)) {
-    while (false !== ($file = readdir($handle))) {
-        if (ereg('^(.*)\.txt', $file, $match)) {
-						$gradients[]=$match[1];
-        }
-    }
-    closedir($handle);
-}
 
 $gradients=array(
 	'default'=>'',
