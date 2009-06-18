@@ -84,8 +84,12 @@ class Test(appionScript.AppionScript):
 						shiftz = zcenter - center
 						transformedvolume = apTomo.transformTomo(subvolume,alignpackage,alignp,shiftz,totalbin)
 						## write transformed mrc file to check the result
-						mrc.write(transformedvolume,'./transformed%05d.mrc' %subtomoid)
+						filename = os.path.join(self.params['rundir'],'./transformed%05d.mrc' %subtomoid)
+						mrc.write(transformedvolume,filename)
 						sumvol += transformedvolume
+						t = numpy.sum(transformedvolume,axis=0)
+						filename = os.path.join(self.params['rundir'],'./p%05d.mrc' %subtomoid)
+						mrc.write(transformedvolume,filename)
 						if self.params['commit']:
 							apTomo.insertTomoAvgParticle(avgrundata,subtomodata,alignp,shiftz)
 			if i < 1:
