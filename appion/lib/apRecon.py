@@ -293,14 +293,14 @@ def getClassInfo(classes):
 #==================
 #==================
 def renderSnapshots(density, res=30, initmodel=None, contour=1.5, zoom=1.0,
-		apix=None, sym=None, box=None):
+		apix=None, sym=None, box=None, mass=None):
 	if sym is None:
 		sym = initmodel['symmetry']['eman_name']
 	if apix is None:
 		apix = initmodel['pixelsize']
 	if box is None:
 		box = initmodel['boxsize']
-	badres = apChimera.filterAndChimera(density, res, apix, box, 'snapshot', contour, zoom, sym)
+	badres = apChimera.filterAndChimera(density, res, apix, box, 'snapshot', contour, zoom, sym, mass=mass)
 	return badres
 
 #==================
@@ -456,7 +456,7 @@ def insertIteration(iteration, params):
 	volumeDensity = 'threed.'+iteration['num']+'a.mrc'
 	volDensPath = os.path.join(params['rundir'], volumeDensity)
 	badres = renderSnapshots(volDensPath, halfres, params['model'],
-		params['contour'], params['zoom'], params['apix'], box=params['boxsize'])
+		params['contour'], params['zoom'], params['apix'], box=params['boxsize'], mass=params['mass'])
 
 	## uncommment this for chimera image only runs...
 	if params['chimeraonly'] is True:

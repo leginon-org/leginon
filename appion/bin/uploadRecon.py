@@ -43,6 +43,8 @@ class UploadReconScript(appionScript.AppionScript):
 			help="Zoom factor for snapshot rendering (1.75 by default)", metavar="FLOAT")
 		self.parser.add_option("-c", "--contour", dest="contour", type="float", default=1.5,
 			help="Sigma level at which snapshot of density will be contoured (1.5 by default)", metavar="FLOAT")
+		self.parser.add_option("--mass", dest="mass", type="int",
+			help="Mass (in kDa) at which snapshot of density will be contoured", metavar="kDa")
 		self.parser.add_option("--filter", dest="snapfilter", type="float",
 			help="Low pass filter in angstrum for snapshot rendering (0.6*FSC_0.5 by default)", metavar="FLOAT")
 
