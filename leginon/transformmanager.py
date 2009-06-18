@@ -343,18 +343,19 @@ class TransformManager(node.Node, TargetTransformer):
 		except InvalidStagePosition:
 			self.logger.error('Invalid new emtarget')
 			return None
-		presetdata = oldimage['preset']
-		presetname = presetdata['name']
+		oldpresetdata = oldimage['preset']
+		presetname = oldpresetdata['name']
 		channel = int(oldimage['correction channel']==0)
 		self.presetsclient.toScope(presetname, emtarget, keep_shift=False)
 		targetdata = emtarget['target']
 		imagedata = self.acquireCorrectedCameraImageData(channel)
+		currentpresetdata = self.presetsclient.getCurrentPreset()
 		## convert CameraImageData to AcquisitionImageData
 		dim = imagedata['camera']['dimension']
 		pixels = dim['x'] * dim['y']
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
-		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
+		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
 		version = oldimage['version']+1
 		imagedata['version'] = version
 		## set the 'filename' value
