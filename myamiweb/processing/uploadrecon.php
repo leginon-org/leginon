@@ -89,6 +89,7 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
   // Set any existing parameters in form
   $package = ($_POST['package']) ? $_POST['package'] : $package;
   $contour = ($_POST['contour']) ? $_POST['contour'] : '2.0';
+  $mass = ($_POST['mass']) ? $_POST['mass'] : '';
   $zoom = ($_POST['zoom']) ? $_POST['zoom'] : '1.0';
   $filter = ($_POST['filter']) ? $_POST['filter'] : '';
   $model = ($_POST['model']) ? $_POST['model'] : '';
@@ -220,6 +221,8 @@ function createUploadReconForm($extra=false, $title='UploadRecon.py Launcher', $
       <br>
       <input type='text' name='contour' value='$contour' size='4'> Contour Level
       <br>
+      <input type='text' name='mass' value='$mass' size='4'> Mass (in kDa)
+      <br>
       <input type='text' name='zoom' value='$zoom' size='4'>
 		";	
 	echo docpop('snapzoom','Zoom');
@@ -261,6 +264,7 @@ function runUploadRecon() {
 	$jobId=$_GET['jobId'];
 	$description=$_POST['description'];
 	$contour=$_POST['contour'];
+	$mass=$_POST['mass'];
 	$zoom=$_POST['zoom'];
 	$filter=$_POST['filter'];
 	$oneiteration=$_POST['oneiteration'];
@@ -335,6 +339,7 @@ function runUploadRecon() {
 	if (!$jobId) $command.="--rundir=$runpath ";
 	if ($jobId) $command.="--jobid=$jobId ";
 	if ($contour) $command.="--contour=$contour ";
+	if ($mass) $command.="--mass=$mass ";
 	if ($zoom) $command.="--zoom=$zoom ";
 	if ($filter) $command.="--filter=$filter ";
 	if ($oneiteration=='on' && $iteration) $command.="--oneiter=$iteration ";
@@ -366,6 +371,7 @@ function runUploadRecon() {
 	<tr><td>path</td><td>$reconpath</td></tr>
 	<tr><td>jobid</td><td>$jobId</td></tr>
 	<tr><td>snapshot contour</td><td>$contour</td></tr>
+	<tr><td>snapshot mass</td><td>$mass</td></tr>
 	<tr><td>snapshot zoom</td><td>$zoom</td></tr>
 	<tr><td>snapshot filter</td><td>$filter</td></tr>
 	<tr><td>description</td><td>$description</td></tr>
