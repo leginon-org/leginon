@@ -261,7 +261,7 @@ function modelEntry($model, $particle, $sum_specific_params=True, $hidden=False)
 	foreach ($pngfiles as $snapshot) {
 		$snapfile = $model['path'].'/'.$model['runname'].'/'.$snapshot;
 		$modeltable.= "<A HREF='loadimg.php?filename=$snapfile' target='snapshot'>
-			<img src='loadimg.php?filename=$snapfile' HEIGHT='80'>\n";
+			<img src='loadimg.php?h=80&filename=$snapfile' HEIGHT='80'>\n";
 	}
 
 	// display info about each model run
