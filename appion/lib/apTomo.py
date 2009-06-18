@@ -1,5 +1,6 @@
 import os
 import time
+import math
 import subprocess
 import shutil
 import numpy
@@ -563,9 +564,9 @@ def transformTomo(a,package,alignpdata,zshift=0.0,bin=1):
 	mirror = alignpdata['mirror']
 	print shift,angle,mirror
 	if package == 'Xmipp':
-		return xmippTransformTomo(a,angle,shift,mirror,2)
+		return xmippTransformTomo(a,angle,shift,mirror,3)
 	elif package == 'Spider':
-		return xmippTransformTomo(a,angle,shift,mirror,2)
+		return spiderTransformTomo(a,angle,shift,mirror,3)
 
 def xmippTransformTomo(a,rot=0,shift=(0,0,0), mirror=False, order=2):
 	"""
@@ -576,12 +577,38 @@ def xmippTransformTomo(a,rot=0,shift=(0,0,0), mirror=False, order=2):
 	shiftxyz = (shift[2],shift[1],shift[0])
 	b = ndimage.shift(b, shift=shiftxyz, mode='reflect', order=order)
 	if mirror is True:
-		b = numpy.fliplr(b)
+		b = ndimage.rotate(b, axes=(0,2), angle =math.pi, reshape=False, mode='reflect', order=order)
 	b = ndimage.shift(b, shift=(0,-0.5,-0.5), mode='wrap',order=order)
 	b = ndimage.rotate(b, angle=-1*rot, axes=(2,1), reshape=False, order=order)
 	b = ndimage.shift(b, shift=(0, 0.5, 0.5), mode='wrap',order=order)
 	return b
 	
+def spiderTransformTomo(a, rot=0, shift=(0,0,0), mirror=False, order=2):
+	"""
+		similar to apImage.spiderTransform but on 3D volume and rotate on the
+		xy plane!!!!!!!PROBABLY WRONG NEED TESTING!!!!!!!!!!!!!!!!
+
+	"""
+	### make a copy
+	b = a
+
+	### rotate is positive, but shifted by a half pixel
+	b = ndimage.shift(b, shift=(0, -0.5, -0.5), mode='wrap', order=order)
+	b = ndimage.rotate(b, angle=rot, reshape=False, mode='reflect', order=order)
+	b = ndimage.shift(b, shift=(0, 0.5, 0.5), mode='wrap', order=order)
+
+	# shift is in rows/columns not x,y
+	rowcol = (shift[2],shift[1],shift[0])
+	b = ndimage.shift(b, shift=rowcol, mode='reflect', order=order)
+
+	# mirror the image about the y-axis in projection means rotation on xz plane 
+	if mirror is True:
+		b = ndimage.rotate(b, axes=(0,2), angle =math.pi, reshape=False, mode='reflect', order=order)
+
+	return b
+
+
+#=========================
 
 def gaussianCenter(array):
 	X = numpy.arange(array.size)
