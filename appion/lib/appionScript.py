@@ -193,13 +193,15 @@ class AppionScript(object):
 	def parsePythonPath(self):
 		pythonpath = os.environ.get("PYTHONPATH")
 		paths = pythonpath.split(":")
-		leginons = []
-		appions = []
+		leginons = {}
+		appions = {}
 		for p in paths:
 			if "appion" in p:
-				appions.append(p)
+				appions[p] = None
 			if "leginon" in p:
-				leginons.append(p)
+				leginons[p] = None
+		leginons = leginons.keys()
+		appions = appions.keys()
 		if len(appions) > 1:
 			apDisplay.printWarning("There is more than one appion directory in your PYTHONPATH")
 			print appions
