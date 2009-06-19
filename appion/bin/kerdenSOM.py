@@ -352,7 +352,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		outdata = "stack.data"
 
 		apXmipp.convertStackToXmippData(self.instack, outdata, maskpixrad, 
-			boxsize, numpart=self.params['numpart'])
+			boxsize, numpart=self.params['numpart']-1)
 
 		self.runKerdenSOM(outdata)
 		if apFile.stackSize(self.instack) > 3.0*(1024**3):
