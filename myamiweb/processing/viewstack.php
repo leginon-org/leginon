@@ -349,9 +349,10 @@ if ($clusterId || $alignId)
 	$includebuttons .= "<input type='button' value='Create SubStack' onClick='createAlignSubStack()'>\n";
 if ($clusterId)
 	$includebuttons .= "<input type='button' value='Create Template Stack' onClick='createTemplateStackIncluded()'>\n";
-if (($clusterId || $alignId) && $maxangle > 5)
+if (($clusterId || $alignId) && $maxangle > 5) {
 	$includebuttons .= "<input type='button' value='Create RCT Volume' onClick='createRctVolume()'>\n";
 	$includebuttons .= "<input type='button' value='Create OTR Volume' onClick='createOtrVolume()'>\n";
+}
 // Upload Template
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";
