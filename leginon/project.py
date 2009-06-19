@@ -3,6 +3,7 @@ import sinedon
 from sinedon import sqldict
 import leginonconfig
 
+use_processingdb_table = False
 class NotConnectedError(Exception):
 	pass
 
@@ -12,7 +13,7 @@ class Project(sqldict.ObjectBuilder):
 	`projects` table in the project DB
 	'''
 	table = 'projects'
-	columns = ['projectId', 'name', 'short_description', 'db']
+	columns = ['projectId', 'name', 'short_description']
 
 class ProjectExperiment(sqldict.ObjectBuilder):
 	'''ProjectExperiment: a class object to access the
@@ -60,7 +61,8 @@ class ProjectData:
 
 		self.projects = Project().register(self.db)
 		self.projectexperiments = ProjectExperiment().register(self.db)
-		self.projectprocessingdb = ProjectProcessingDB().register(self.db)
+		if use_processingdb_table:
+			self.projectprocessingdb = ProjectProcessingDB().register(self.db)
 		self.gridboxes = GridBox().register(self.db)
 		self.grids = Grid().register(self.db)
 		self.gridlocations = GridLocation().register(self.db)
@@ -82,6 +84,8 @@ class ProjectData:
 		return None	
 
 	def getProcessingDB(self, projectId):
+		if not use_processingdb_table:
+			return 'ap'+projectId
 		processingdblist = self.projectprocessingdb.Index(['projectId'])
 		result = processingdblist[projectId].fetchone()
 		if result is None:
