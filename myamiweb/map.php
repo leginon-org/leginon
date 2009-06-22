@@ -1,5 +1,5 @@
 <?php
-require('inc/leginon.inc');
+require 'inc/leginon.inc';
 // --- get image parameters from URL
 $id=$_GET['id'];
 if (!$imgscript=$_GET['imgsc'])
@@ -17,11 +17,12 @@ $binning = ($_GET['binning']) ? '&binning='.$_GET['binning'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 $quality = ($_GET['t']) ? '&t='.$_GET['t']: '';
 $psel = ($_GET['psel']) ? '&psel='.urlencode($_GET['psel']) : ''; 
+$nptcl = ($_GET['nptcl']) ? '&nptcl='.$_GET['nptcl'] : '';
 $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : ''; 
 $gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel.$acepar.$gradient.$autoscale;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
