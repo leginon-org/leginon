@@ -610,10 +610,7 @@ function setImageHistogram(viewname) {
 			"&s="+jssize+quality+np+xp+flt+binning+colormap+fft
 
 		if (!w.closed) {
-			if (histo = w.document.imghisto)
-				histo.src="imagehistogram.php?tf=1&"+options
-			if (comp= w.document.imgcomp)
-				comp.src="imagehistogram2.php?cp=1&tf=1&"+options
+			w.getImageInfo()
 		}
 	}
 }
