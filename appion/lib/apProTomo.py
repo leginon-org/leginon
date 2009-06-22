@@ -84,19 +84,19 @@ def createRefineDefaults(imgref, indir, outdir, tmp=None):
 	refinedict['corbox_x']=64
 	refinedict['corbox_y']=64
 
-	refinedict['imgmsktype']=None
+	refinedict['imgmsktype']=''
 
-	refinedict['imgmsk_x']=None
-	refinedict['imgmsk_y']=None
-	refinedict['imgmskapo_x']=None
-	refinedict['imgmskapo_y']=None
+	refinedict['imgmsk_x']=''
+	refinedict['imgmsk_y']=''
+	refinedict['imgmskapo_x']=''
+	refinedict['imgmskapo_y']=''
 
-	refinedict['refmsktype']=None
+	refinedict['refmsktype']=''
 	
-	refinedict['refmsk_x']=None
-	refinedict['refmsk_y']=None
-	refinedict['refmskapo_x']=None
-	refinedict['refmskapo_y']=None
+	refinedict['refmsk_x']=''
+	refinedict['refmsk_y']=''
+	refinedict['refmskapo_x']=''
+	refinedict['refmskapo_y']=''
 
 	refinedict['hipass_x']=0.01
 	refinedict['hipass_y']=0.01
@@ -112,13 +112,13 @@ def createRefineDefaults(imgref, indir, outdir, tmp=None):
 	
 	refinedict['guess']='false'
 	
-	refinedict['lastitr']=None
+	refinedict['lastitr']=''
 	
-	refinedict['reflow']=None
-	refinedict['refhigh']=None
+	refinedict['reflow']=''
+	refinedict['refhigh']=''
 	
-	refinedict['fitmin']=None
-	refinedict['fitmax']=None
+	refinedict['fitmin']=''
+	refinedict['fitmax']=''
 	
 	refinedict['map_x']=512
 	refinedict['map_y']=512
@@ -126,7 +126,7 @@ def createRefineDefaults(imgref, indir, outdir, tmp=None):
 	
 	refinedict['mapsmp']=1
 	
-	refinedict['sffx']='mrc'
+	refinedict['sffx']='.img'
 	refinedict['inp']=indir
 	refinedict['out']=outdir
 	refinedict['tmp']=tmp
