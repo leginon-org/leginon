@@ -28,6 +28,13 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 			$jobid = $job['DEF_id'];
 			$name = $job['name'];
 			$display_keys['time']=$job['DEF_timestamp'];
+			$running=time()-strtotime($job['DEF_timestamp']);
+			$rundays = floor($running/60/60/24);
+			$runhours = floor(($running-$rundays*60*60*24)/60/60);
+			$runmins = floor(($running-$rundays*60*60*24-$runhours*60*60)/60);
+			$display_keys['runtime'] =($rundays>0) ? "$rundays days, ":'';
+			$display_keys['runtime'].=($runhours>0) ? "$runhours hours, ":'';
+			$display_keys['runtime'].=($runmins>0) ? "$runmins mins":'';
 			$display_keys['path']=$job['appath'];
 			$display_keys['cluster']=$job['cluster'];
        			$display_keys['PBS ID'] = $job['clusterjobid'];	
@@ -45,6 +52,11 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				$extraKeys['imgs processed']=commafy($numimg);
 				$extraKeys['particles so far']=commafy($numptl);
 				$extraKeys['particles per img']=$ppimg;
+				$perimg=$running/$numimg;
+				$perimg_m=floor($perimg/60);
+				$perimg_s=floor(($perimg-$perimg_m/60)/60);
+				$extraKeys['time per img'] = ($perimg_m>0) ? "$perimg_m min, ":'';
+				$extraKeys['time per img'].= ($perimg_s>0) ? "$perimg_s sec":'';
 				$extraKeys['min']=format_sci_number($pstats['min'],4);
 				$extraKeys['max']=format_sci_number($pstats['max'],4);
 				$extraKeys['avg']=format_sci_number($pstats['avg'],4);
