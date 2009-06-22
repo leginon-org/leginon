@@ -149,7 +149,7 @@ if __name__=='__main__':
 	
 	#if tar is specified, create big tarball
 	if inputparams['tar']:
-		files=rawdir+' '+cleandir+' '+outdir+' '+aligndir+' '+'*.tlt *.params'
+		files='raw clean out align *.tlt *.param'
 		command='tar cvfh %s %s' % ((inputparams['seriesname']+'.tar'), files)
 		print command
 		os.system(command)
