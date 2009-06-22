@@ -99,6 +99,7 @@ class fakeStackScript(appionScript.AppionScript):
 		nots = 0
 		total = float(len(parttree))
 		mult = 0.00
+		f = open("euler.lst", "w")
 		apDisplay.printMsg("Creating projections")
 		for part in parttree:
 			count += 1.0
@@ -124,11 +125,13 @@ class fakeStackScript(appionScript.AppionScript):
 				mult += 0.01
 
 			### generate projection
+			f.write("%.3f\t%.3f\t%.3f\n"%(part['euler']))
 			self.genProj(part['euler'], density, tilt=part['tilt'])
 			if part['tilt'] is False:
 				nots += 1
 			else:
 				tilts += 1
+		f.close()
 		dataf.close()
 		print "tilts=",tilts,"nots=",nots
 		apDisplay.printMsg("Projected "+str(len(parttree))
@@ -340,14 +343,21 @@ class fakeStackScript(appionScript.AppionScript):
 		az = int(round(random.random()*360.0,0))
 		phi = int(round(random.random()*360.0,0))
 		"""
+		#create four views
+		views = [ (0.,0.), (60.,0.), (90., 60.) ]
+
 		#alt = int(round(random.random()*90.0,0))
-		alt = int(round(random.random()*180.0,0))
+		#alt = int(round(random.random()*180.0,0))
 		#alt = 0
 		#alt = random.gauss(0,self.params['slop'])
 		#az = int(round(random.random()*51.43,0))
-		az = int(round(random.random()*360.0,0))
+		#az = int(round(random.random()*360.0,0))
 		#az = 0
 		#az = random.gauss(0,self.params['slop'])
+		altaz = views[int(random.random()*len(views))]
+		#altaz = views[0]
+		alt = altaz[0]
+		az = altaz[1]
 		phi = int(round(random.random()*360.0,0))
 		#phi = int(round(random.random()*6.0,0))*60 + random.gauss(0,self.params['slop'])
 		#phi = 0
