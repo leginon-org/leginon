@@ -466,6 +466,11 @@ class ChimSnapShots(object):
 		self.writeMessageToLog("turn: get side view")
 		self.runChimCommand('turn x -45')
 		self.save_image(self.volumepath+'.3.png')
+		dfold = int(self.symmetry[1:])
+		dangle = 180.0/dfold
+		self.writeMessageToLog("turn about dsym: %.3f"%(dangle))
+		self.runChimCommand('turn y %.3f'%(dangle))
+		self.save_image(self.volumepath+'.4.png')
 
 	# -----------------------------------------------------------------------------
 	def snapshot_csym(self):
