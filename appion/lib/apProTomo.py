@@ -53,8 +53,11 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 		f.write('     PSI   %8.3f\n' % parameterdict['psi'])
 		f.write('     THETA %8.3f\n' % parameterdict['theta'])
 		f.write('     PHI   %8.3f\n' % parameterdict['phi'])
-		f.write('\n\n   PARAMETER\n')
+		f.write('\n\n   PARAMETER\n\n')
 		f.write('     TILT AZIMUTH %8.3f\n' % parameterdict['azimuth'])
+	else:
+		f.write('\n\n   PARAMETER\n\n')
+		f.write('     TILT AZIMUTH %8.3f\n' % 0.0)
 	f.write('\n\n')
 	keys=imagedict.keys()
 	keys.sort()
@@ -68,3 +71,73 @@ def writeTiltFile(outfilename, seriesname, imagedict, parameterdict=False):
 		f.write('   IMAGE %-5d TILT ANGLE %8.3f   ROTATION %8.3f\n' % (n, imagedict[n]['tilt'], imagedict[n]['rotation']))
 	f.write('\n\n\n END\n\n')
 	f.close()
+
+def createRefineDefaults(imgref, indir, outdir, tmp=None):
+	refinedict={}
+	refinedict['imgref']=imgref
+	refinedict['bckbody']=100
+	refinedict['alismp']=1
+
+	refinedict['alibox_x']=512
+	refinedict['alibox_y']=512
+
+	refinedict['corbox_x']=64
+	refinedict['corbox_y']=64
+
+	refinedict['imgmsktype']=None
+
+	refinedict['imgmsk_x']=None
+	refinedict['imgmsk_y']=None
+	refinedict['imgmskapo_x']=None
+	refinedict['imgmskapo_y']=None
+
+	refinedict['refmsktype']=None
+	
+	refinedict['refmsk_x']=None
+	refinedict['refmsk_y']=None
+	refinedict['refmskapo_x']=None
+	refinedict['refmskapo_y']=None
+
+	refinedict['hipass_x']=0.01
+	refinedict['hipass_y']=0.01
+	refinedict['hipassapo_x']=0.05
+	refinedict['hipassapo_y']=0.05
+	
+	refinedict['lopass_x']=0.2
+	refinedict['lopass_y']=0.2
+	refinedict['lopassapo_x']=0.05
+	refinedict['lopassapo_y']=0.05
+	
+	refinedict['cormod']='xcf'
+	
+	refinedict['guess']='false'
+	
+	refinedict['lastitr']=None
+	
+	refinedict['reflow']=None
+	refinedict['refhigh']=None
+	
+	refinedict['fitmin']=None
+	refinedict['fitmax']=None
+	
+	refinedict['map_x']=512
+	refinedict['map_y']=512
+	refinedict['map_z']=512
+	
+	refinedict['mapsmp']=1
+	
+	refinedict['sffx']='mrc'
+	refinedict['inp']=indir
+	refinedict['out']=outdir
+	refinedict['tmp']=tmp
+	refinedict['cor']='.xcf'
+	return refinedict
+	
+def writeRefineParamFile(refinedict,paramfile):
+	f=open(paramfile,'w')
+	keys=refinedict.keys()
+	for key in keys:
+		val=str(refinedict[key])
+		f.write('%s=%s\n' % (key, val))
+	f.close()
+
