@@ -110,8 +110,40 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 			."<li>Align Stack ID: $alignId\n"
 			."<input type='hidden' name='alignId' value='$alignId'>\n"
 			."</ul>\n";
-	}
+	} else {
+		$alignIds = $particle->getAlignStackIds($expId, false);
+		if ($alignIds) {
+			echo"
+			Select Aligned Stack:<br>
+			<select name='alignId''>\n";
+			foreach ($alignIds as $alignarray) {
+				$alignid = $alignarray['alignstackid'];
+				$alignstack = $particle->getAlignStackParams($alignid);
 
+				// get pixel size and box size
+				$apix = $alignstack['pixelsize'];
+				if ($apix) {
+					$mpix = $apix/1E10;
+					$apixtxt=format_angstrom_number($mpix)."/pixel";
+				}
+				$boxsz = $alignstack['boxsize'];
+				//handle multiple runs in stack
+				$runname=$alignstack['runname'];
+				$totprtls=commafy($particle->getNumAlignStackParticles($alignid));
+				echo "<OPTION VALUE='$alignid'";
+				// select previously set prtl on resubmit
+				if ($stackidval==$alignid) echo " SELECTED";
+				echo ">$alignid: $runname ($totprtls prtls,";
+				if ($mpix) echo " $apixtxt,";
+				echo " $boxsz pixels)</OPTION>\n";
+			}
+			echo "</SELECT>\n";
+			echo "<br/><br/>\n";
+		} else {
+			echo"
+			<FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
+		}
+	}
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname' size='15'><br/><br/>\n";
 
@@ -178,8 +210,13 @@ function runSubStack() {
 	if ($include && $exclude) createNorefSubStackForm("<B>ERROR:</B> You cannot have both included and excluded classes");
 	if (!$include && !$exclude) createNorefSubStackForm("<B>ERROR:</B> You must one of either included and excluded classes");
 
+	// make sure outdir ends with '/' and append run name
+	if (substr($outdir,-1,1)!='/') $outdir.='/';
+	$rundir = $outdir.$runname;
+
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
+	$command.="--rundir=$rundir ";
 	$command.="--runname=$runname ";
 	$command.="--description=\"$description\" ";
 	if ($exclude)
@@ -193,7 +230,7 @@ function runSubStack() {
 	} else {
 		createNorefSubStackForm("<b>ERROR:</b> You need either a cluster Id or align ID");
 	}
-	
+
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
 	// submit job to cluster
