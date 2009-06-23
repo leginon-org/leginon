@@ -119,7 +119,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	echo "<br/>\n<input type='text' name='maxjump' value='$maxjump' size='5'><br/>\n";
 
 	if ($reconId) {
-		echo "<img src='eulergraph.php?expId=$expId&hg=1&recon=$reconId'>";
+		echo "<img width='640' height='320' src='eulergraph.php?expId=$expId&hg=1&recon=$reconId&w=640&h=320'>";
 		echo "<br/>\n";
 	}
 	echo "<br/>\n";
