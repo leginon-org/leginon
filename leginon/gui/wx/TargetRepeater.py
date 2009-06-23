@@ -28,7 +28,6 @@ class Panel(gui.wx.Node.Panel):
 		self.node.onContinue()
 
 	def onNodeInitialized(self):
-		print 'AAAAAA'
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
 											id=gui.wx.ToolBar.ID_PLAY)
