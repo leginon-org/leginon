@@ -95,7 +95,7 @@ $avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
 if ($avgmedjump['count'] > 0) {
 	$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$refinerun[DEF_id]'>";
 	$avgmedjumpstr .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
-	$avgmedjumpstr .= "&nbsp;&nbsp;<font size=-2><A HREF='jumpSubStack.php?expId=$expId&reconId=$reconrun[DEF_id]'>[make substack]</a></font>";
+	$avgmedjumpstr .= "&nbsp;&nbsp;<font size=-2><A HREF='jumpSubStack.php?expId=$expId&reconId=$refinerun[DEF_id]'>[make substack]</a></font>";
 } else
 	$avgmedjumpstr = NULL;
 
