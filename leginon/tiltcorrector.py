@@ -354,10 +354,10 @@ class VirtualStageTilter(object):
 		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
 		im2 = scipy.ndimage.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
-		return im2
+		return im2, mat
 
 	def undo_tilt(self, imagedata):
-		im2 = self.getZeroTiltArray(imagedata)
+		im2,mat = self.getZeroTiltArray(imagedata)
 		if im2 is None:
 			return False
 		imagedata['image'] = im2
