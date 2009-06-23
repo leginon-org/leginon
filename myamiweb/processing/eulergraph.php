@@ -20,7 +20,7 @@ define (PARTICLE_DB, $_SESSION['processingdb']);
 $reconRunId= $_GET['recon'];
 $viewdata = ($_GET['vd']==1) ? true : false;
 $histogram = ($_GET['hg']==1) ? true : false;
-$width = $_GET['w'] ? (int) $_GET['w'] : 512 ;
+$width = $_GET['w'] ? (int) $_GET['w'] : 800 ;
 $height = $_GET['h'] ? (int) $_GET['h'] : (int) $width*0.75 ;
 
 $particle = new particledata();
