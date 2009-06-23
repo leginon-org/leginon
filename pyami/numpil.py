@@ -55,7 +55,7 @@ def read(imfile):
 	im = im2numpy(im)
 	return im
 
-def write(a, imfile=None, format=None, limits=None, float=False):
+def write(a, imfile=None, format=None, limits=None, writefloat=False):
 	'''
 	Convert array to 8 bit gray scale and save to filename.
 	Format is determined from filename extension by PIL.
@@ -71,7 +71,7 @@ def write(a, imfile=None, format=None, limits=None, float=False):
 		imfile = sys.stdout
 
 	## try saving float data
-	if a.dtype.type in (numpy.int64, numpy.float32):
+	if writefloat and a.dtype.type in (numpy.int64, numpy.float32):
 		a = numpy.asarray(a, numpy.float32)
 		im = Image.frombuffer('F', size, a, 'raw', 'F', 0, 1)
 		try:
