@@ -32,6 +32,8 @@ class InvalidStagePosition(Exception):
 	pass
 
 class Registration(object):
+	def __init__(self, node):
+		self.node = node
 	def register(self, array1, array2):
 		raise NotImplementedError('define "register" method in a subclass of Registration')
 
@@ -42,7 +44,8 @@ class IdentityRegistration(Registration):
 
 class CorrelationRegistration(Registration):
 	'''Register using peak found in phase correlation image'''
-	def __init__(self):
+	def __init__(self, *args, **kwargs):
+		super(CorrelationRegistration, self).__init__(*args, **kwargs)
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 
@@ -51,9 +54,9 @@ class CorrelationRegistration(Registration):
 		self.correlator.setImage(1,array2)
 		corrimage = self.correlator.phaseCorrelate()
 		mrc.write(corrimage,'corr.mrc')
-		self.setImage(corrimage, 'Correlation')
+		self.node.setImage(corrimage, 'Correlation')
 		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
-		self.setTargets([(peak[1],peak[0])], 'Peak')
+		self.node.setTargets([(peak[1],peak[0])], 'Peak')
 		shift = correlator.wrap_coord(peak, corrimage.shape)
 		matrix = numpy.identity(3, numpy.float)
 		matrix[2,0] = shift[0]
@@ -63,7 +66,7 @@ class CorrelationRegistration(Registration):
 class KeyPointsRegistration(Registration):
 	def register(self, array1, array2):
 		for minsize in (160,40,10):
-			minsize = int(minsize * (shape[0]/4096.0))
+			minsize = int(minsize * (array1.shape[0]/4096.0))
 			resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
 			if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
 				break
@@ -252,9 +255,9 @@ class TransformManager(node.Node, TargetTransformer):
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
 
 		self.registrations = {
-			'correlation': CorrelationRegistration,
-			'keypoints': KeyPointsRegistration,
-			'logpolar': LogPolarRegistration,
+			'correlation': CorrelationRegistration(self),
+			'keypoints': KeyPointsRegistration(self),
+			'logpolar': LogPolarRegistration(self),
 		}
 
 		self.abortevent = threading.Event()
