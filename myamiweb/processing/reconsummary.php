@@ -79,7 +79,9 @@ if ($reconRuns) {
 		$html .= sprintf("<td>% 2.2f / % 2.1f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
 		if ($avgmedjump['count'] > 0) {
 			$html .= "<td><A HREF='eulergraph.php?expId=$expId&hg=1&recon=$reconrun[DEF_id]'>";
-			$html .= sprintf("%2.2f &plusmn; %2.1f </A></TD>\n", $avgmedjump['average'], $avgmedjump['stdev']);
+			$html .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
+			$html .= " <font size=-2><A HREF='jumpSubStack.php?expId=$expId&reconId=$reconrun[DEF_id]'>[sub]</a></font>";
+			$html .= "</td>\n";
 		} else
 			$html .= "<td></TD>\n";
 
