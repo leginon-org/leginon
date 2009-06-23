@@ -128,7 +128,7 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
 		$defaultbin = (int) floor($alignstack['boxsize']/32);
 	} elseif ($alignIds) {
-		print_r($_POST);
+		//print_r($_POST);
 		echo "
 		Aligned Stack:<br>
 		<select name='stackval' onchange='switchDefaults(this.value)'>\n";
