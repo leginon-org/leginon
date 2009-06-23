@@ -31,6 +31,57 @@ import targethandler
 class InvalidStagePosition(Exception):
 	pass
 
+class Registration(object):
+	def register(self, array1, array2):
+		raise NotImplementedError('define "register" method in a subclass of Registration')
+
+class IdentityRegistration(Registration):
+	'''Fake registration.  Always returns identity matrix'''
+	def register(self, array1, array2):
+		return numpy.identity(3, numpy.float)
+
+class CorrelationRegistration(Registration):
+	'''Register using peak found in phase correlation image'''
+	def __init__(self):
+		self.correlator = correlator.Correlator()
+		self.peakfinder = peakfinder.PeakFinder()
+
+	def register(self, array1, array2):
+		self.correlator.setImage(0,array1)
+		self.correlator.setImage(1,array2)
+		corrimage = self.correlator.phaseCorrelate()
+		mrc.write(corrimage,'corr.mrc')
+		self.setImage(corrimage, 'Correlation')
+		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
+		self.setTargets([(peak[1],peak[0])], 'Peak')
+		shift = correlator.wrap_coord(peak, corrimage.shape)
+		matrix = numpy.identity(3, numpy.float)
+		matrix[2,0] = shift[0]
+		matrix[2,1] = shift[1]
+		return matrix
+
+class KeyPointsRegistration(Registration):
+	def register(self, array1, array2):
+		for minsize in (160,40,10):
+			minsize = int(minsize * (shape[0]/4096.0))
+			resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
+			if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
+				break
+		return resultmatrix
+
+class LogPolarRegistration(Registration):
+	def register(self, array1, array2):
+		result = align.findRotationScaleTranslation(array1, array2)
+		rotation, scale, shift, rsvalue, value = result
+		matrix = numpy.identity(3, numpy.float)
+		matrix[0,0] = scale*math.cos(rotation)
+		matrix[0,1] = -scale*math.sin(rotation)
+		matrix[1,0] = scale*math.sin(rotation)
+		matrix[1,1] = scale*math.cos(rotation)
+		matrix[2,0] = shift[0]
+		matrix[2,1] = shift[1]
+		return matrix
+
 class TargetTransformer(targethandler.TargetHandler):
 	def __init__(self):
 		targethandler.TargetHandler.__init__(self)
@@ -45,7 +96,7 @@ class TargetTransformer(targethandler.TargetHandler):
 			newmatrix['matrix'] = numpy.identity(3)
 			newmatrix.insert()
 			results = [newmatrix]
-	
+
 		initialmatrix = None
 		mymatrix = None
 		for matrix in results:
@@ -55,7 +106,7 @@ class TargetTransformer(targethandler.TargetHandler):
 				break
 			if resultimage.dbid == image.dbid:
 				mymatrix = matrix['matrix']
-	
+
 		if image is None:
 			return initialmatrix
 		else:
@@ -65,48 +116,13 @@ class TargetTransformer(targethandler.TargetHandler):
 		array1 = image1['image']
 		array2 = image2['image']
 		shape = array1.shape
-		self.logger.info('Calculating main transform...')
-		#if image1['scope']['magnification'] < 2000:
-		if False:
-			print "libcv"
-			for minsize in (160,40,10):
-				minsize = int(minsize * (shape[0]/4096.0))
-				resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
-				if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
-					break
-			matrix = resultmatrix
-		elif False:
-			print "log-polar transform"
-			result = align.findRotationScaleTranslation(array1, array2)
-			rotation, scale, shift, rsvalue, value = result
-			matrix = numpy.array([1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0])
-			matrix = matrix.reshape((3,3))
-			matrix[0,0] = scale*math.cos(rotation)
-			matrix[0,1] = -scale*math.sin(rotation)
-			matrix[1,0] = scale*math.sin(rotation)
-			matrix[1,1] = scale*math.cos(rotation)
-			matrix[2,0] = shift[0]
-			matrix[2,1] = shift[1]
-		else:
-			matrix = numpy.array([1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0])
-			matrix = matrix.reshape((3,3))
-			c = correlator.Correlator()
-			p = peakfinder.PeakFinder()
-			c.setImage(0,array1)
-			c.setImage(1,array2)
-			corrimage = c.phaseCorrelate()
-			mrc.write(corrimage,'corr.mrc')
-			self.setImage(corrimage, 'Correlation')
-			peak = p.subpixelPeak(newimage=corrimage)
-			self.setTargets([(peak[1],peak[0])], 'Peak')
-			shift = [0,0]
-			for i in (0,1):
-				if peak[i] > shape[i]/2:
-					shift[i] = peak[i] - shape[i]
-				else:
-					shift[i] = peak[i]
-			matrix[2,0] = shift[0]
-			matrix[2,1] = shift[1]
+
+		regtype = self.settings['registration']
+		reg = self.registrations[regtype]
+		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
+
+		matrix = reg.register(array1, array2)
+
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
@@ -192,6 +208,7 @@ class TransformManager(node.Node, TargetTransformer):
 	panelclass = gui.wx.TransformManager.Panel
 	settingsclass = leginondata.TransformManagerSettingsData
 	defaultsettings = {
+		'registration': 'correlation',
 		'threshold': 3e-10,
 		'pause time': 2.5,
 		'min mag': 300,
@@ -234,9 +251,18 @@ class TransformManager(node.Node, TargetTransformer):
 		self.presetsclient = presets.PresetsClient(self)
 		self.addEventInput(event.TransformTargetEvent, self.handleTransformTargetEvent)
 
+		self.registrations = {
+			'correlation': CorrelationRegistration,
+			'keypoints': KeyPointsRegistration,
+			'logpolar': LogPolarRegistration,
+		}
+
 		self.abortevent = threading.Event()
 
 		self.start()
+
+	def getRegistrationTypes(self):
+		return self.registrations.keys()
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target

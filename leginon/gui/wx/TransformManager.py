@@ -13,6 +13,7 @@
 
 import wx
 from gui.wx.Entry import FloatEntry, IntEntry
+from gui.wx.Choice import Choice
 import gui.wx.Camera
 import gui.wx.TargetPanel
 import gui.wx.Node
@@ -92,11 +93,18 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		#self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		#self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
+		regtypes = self.node.getRegistrationTypes()
+		self.widgets['registration'] = Choice(self, -1, choices=regtypes)
+
 		szminmag = wx.GridBagSizer(5, 5)
+
 		label = wx.StaticText(self, -1, 'Minimum Magnification')
 		szminmag.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szminmag.Add(self.widgets['min mag'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szminmag.Add(self.widgets['min mag'], (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		label = wx.StaticText(self, -1, 'Register images using')
+		szminmag.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szminmag.Add(self.widgets['registration'], (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szminmag, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)

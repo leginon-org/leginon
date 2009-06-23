@@ -1178,6 +1178,7 @@ class DriftManagerSettingsData(SettingsData):
 class TransformManagerSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('registration', str),
 			('threshold', float),
 			('pause time', float),
 			('camera settings', CameraSettingsData),
