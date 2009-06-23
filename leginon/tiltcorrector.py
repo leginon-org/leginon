@@ -328,7 +328,7 @@ class VirtualStageTilter(object):
 		m = (m1+m2+m3+m4) / 4.0
 		return m
 	
-	def undo_tilt(self, imagedata):
+	def getZeroTiltArray(self, imagedata):
 		'''
 		takes imagedata and calculates a corrected image
 		'''
@@ -341,7 +341,7 @@ class VirtualStageTilter(object):
 		cam = imagedata['camera']['ccdcamera']
 
 		if abs(alpha) < self.alpha_threshold:
-			return False
+			return None
 		stagematrix = self.getStageMatrix(tem, cam, ht, mag)
 		mat = self.affine_transform_matrix(stagematrix, alpha)
 		scope = imagedata['scope']
@@ -354,8 +354,12 @@ class VirtualStageTilter(object):
 		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
 		im2 = scipy.ndimage.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
+		return im2
 
-		#im2 = self.filter.convolve(im2)
+	def undo_tilt(self, imagedata):
+		im2 = self.getZeroTiltArray(imagedata)
+		if im2 is None:
+			return False
 		imagedata['image'] = im2
 		try:
 			self.node.logger.info('image stretched to reverse alpha tilt')
