@@ -27,6 +27,7 @@ import rctacquisition
 import libCVwrapper
 import align
 import targethandler
+import tiltcorrector
 
 class InvalidStagePosition(Exception):
 	pass
@@ -34,6 +35,56 @@ class InvalidStagePosition(Exception):
 class Registration(object):
 	def __init__(self, node):
 		self.node = node
+		self.stagetiltcorrector = tiltcorrector.VirtualStageTilter(self.node)
+
+	def determinetransformtypes(self, image1, image2):
+		ttype = []
+		alpha1 = image1['scope']['stage position']['a']
+		alpha2 = image2['scope']['stage position']['a']
+		print "-------------"
+		print alpha1 * 180.0/3.14159
+		print alpha2 * 180.0/3.14159
+		if abs(alpha1 - alpha2)* 180.0 / 3.14159 > 2:
+			ttype.append('tilt')
+		try:
+			beta1 = image1['scope']['stage position']['b']
+			beta2 = image2['scope']['stage position']['b']
+			if abs(beta1 - beta2) * 180.0 / 3.14159 > 2:
+				ttype.append('rotate')
+		except:
+			pass
+		print ttype
+		return ttype
+
+	def undo_tilt(self,imagedata):
+		untilted_array,tilt2by2matrix =self.stagetiltcorrector.getZeroTiltArray(imagedata)
+		affinematrix = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
+		affinematrix[0,0] = tilt2by2matrix[0,0]
+		affinematrix[0,1] = tilt2by2matrix[0,1]
+		affinematrix[1,0] = tilt2by2matrix[1,0]
+		affinematrix[1,1] = tilt2by2matrix[1,1]
+		return untilted_array,affinematrix
+
+	def registerimagedata(self,image1,image2):
+		transformtypes = self.determinetransformtypes(image1,image2)
+		prepmatrix1 = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
+		prepmatrix2 = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
+		array1 = image1['image']
+		array2 = image2['image']
+		for ttype in transformtypes:
+			if type == 'tilt':
+				array1, tiltmatrix1 = undo_tilt(image1)
+				array2, tiltmatrix2 = undo_tilt(image2)
+				prepmatrix1 *= tiltmatrix1 
+				prepmatrix2 *= tiltmatrix2 
+				self.node.logger.info('Prepare imagese by virtual untilting')
+		matrix = self.register(array1, array2)
+		if len(transformtypes) > 0:
+			inverse_prepmatrix2 = numpy.linalg.inv(prepmatrix2)
+			matrix = matrix * prepmatrix1
+			matrix = inverse_prepmatrix2 * matrix
+		return matrix
+			
 	def register(self, array1, array2):
 		raise NotImplementedError('define "register" method in a subclass of Registration')
 
@@ -115,6 +166,8 @@ class TargetTransformer(targethandler.TargetHandler):
 		else:
 			return mymatrix
 
+
+
 	def calculateMatrix(self, image1, image2):
 		array1 = image1['image']
 		array2 = image2['image']
@@ -123,9 +176,7 @@ class TargetTransformer(targethandler.TargetHandler):
 		regtype = self.settings['registration']
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
-
-		matrix = reg.register(array1, array2)
-
+		matrix = reg.registerimagedata(image1,image2)
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
