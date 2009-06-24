@@ -84,6 +84,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			tid = self.makeTargetListEvent(newtargetlistdata)
 			self.publish(newtargetlistdata, pubevent=True)
 			status = self.waitForTargetListDone(tid)
+		self.setStatus('idle')
 
 
 	def markAllTargetsDone(self, targetlistdata):
