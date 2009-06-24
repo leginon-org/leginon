@@ -341,8 +341,9 @@ class VirtualStageTilter(object):
 		cam = imagedata['camera']['ccdcamera']
 
 		if abs(alpha) < self.alpha_threshold:
-			return None
+			return im, numpy.matrix(numpy.identity(2)),(0.0,0.0)
 		stagematrix = self.getStageMatrix(tem, cam, ht, mag)
+		# mat is the rotation matrix only
 		mat = self.affine_transform_matrix(stagematrix, alpha)
 		scope = imagedata['scope']
 		camera = imagedata['camera']
@@ -354,10 +355,10 @@ class VirtualStageTilter(object):
 		offset = self.affine_transform_offset(im.shape, mat, pixelshift)
 		mean=self.edge_mean(im)
 		im2 = scipy.ndimage.affine_transform(im, mat, offset=offset, mode='constant', cval=mean)
-		return im2, mat
+		return im2, mat,offset
 
 	def undo_tilt(self, imagedata):
-		im2,mat = self.getZeroTiltArray(imagedata)
+		im2,mat,offset = self.getZeroTiltArray(imagedata)
 		if im2 is None:
 			return False
 		imagedata['image'] = im2
