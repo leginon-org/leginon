@@ -41,9 +41,6 @@ class Registration(object):
 		ttype = []
 		alpha1 = image1['scope']['stage position']['a']
 		alpha2 = image2['scope']['stage position']['a']
-		print "-------------"
-		print alpha1 * 180.0/3.14159
-		print alpha2 * 180.0/3.14159
 		if abs(alpha1 - alpha2)* 180.0 / 3.14159 > 2:
 			ttype.append('tilt')
 		try:
@@ -53,16 +50,13 @@ class Registration(object):
 				ttype.append('rotate')
 		except:
 			pass
-		print ttype
 		return ttype
 
 	def undo_tilt(self,imagedata):
-		untilted_array,tilt2by2matrix =self.stagetiltcorrector.getZeroTiltArray(imagedata)
+		untilted_array,tilt2by2matrix,shiftvector =self.stagetiltcorrector.getZeroTiltArray(imagedata)
 		affinematrix = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
-		affinematrix[0,0] = tilt2by2matrix[0,0]
-		affinematrix[0,1] = tilt2by2matrix[0,1]
-		affinematrix[1,0] = tilt2by2matrix[1,0]
-		affinematrix[1,1] = tilt2by2matrix[1,1]
+		affinematrix[:2,:2] = tilt2by2matrix
+		affinematrix[2,:2] = shiftvector
 		return untilted_array,affinematrix
 
 	def registerimagedata(self,image1,image2):
@@ -72,18 +66,15 @@ class Registration(object):
 		array1 = image1['image']
 		array2 = image2['image']
 		for ttype in transformtypes:
-			if type == 'tilt':
-				array1, tiltmatrix1 = undo_tilt(image1)
-				array2, tiltmatrix2 = undo_tilt(image2)
+			if ttype == 'tilt':
+				array1, tiltmatrix1 = self.undo_tilt(image1)
+				array2, tiltmatrix2 = self.undo_tilt(image2)
 				prepmatrix1 *= tiltmatrix1 
 				prepmatrix2 *= tiltmatrix2 
 				self.node.logger.info('Prepare imagese by virtual untilting')
 		matrix = self.register(array1, array2)
-		if len(transformtypes) > 0:
-			inverse_prepmatrix2 = numpy.linalg.inv(prepmatrix2)
-			matrix = matrix * prepmatrix1
-			matrix = inverse_prepmatrix2 * matrix
-		return matrix
+		finalmatrix = prepmatrix1 * matrix * prepmatrix2.I
+		return finalmatrix
 			
 	def register(self, array1, array2):
 		raise NotImplementedError('define "register" method in a subclass of Registration')
@@ -91,7 +82,7 @@ class Registration(object):
 class IdentityRegistration(Registration):
 	'''Fake registration.  Always returns identity matrix'''
 	def register(self, array1, array2):
-		return numpy.identity(3, numpy.float)
+		return numpy.matrix(numpy.identity(3, numpy.float))
 
 class CorrelationRegistration(Registration):
 	'''Register using peak found in phase correlation image'''
@@ -109,7 +100,7 @@ class CorrelationRegistration(Registration):
 		peak = self.peakfinder.subpixelPeak(newimage=corrimage)
 		self.node.setTargets([(peak[1],peak[0])], 'Peak')
 		shift = correlator.wrap_coord(peak, corrimage.shape)
-		matrix = numpy.identity(3, numpy.float)
+		matrix = numpy.matrix(numpy.identity(3, numpy.float))
 		matrix[2,0] = shift[0]
 		matrix[2,1] = shift[1]
 		return matrix
@@ -121,13 +112,13 @@ class KeyPointsRegistration(Registration):
 			resultmatrix = libCVwrapper.MatchImages(array1, array2, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
 			if abs(resultmatrix[0,0]) > 0.01 or abs(resultmatrix[0,1]) > 0.01:
 				break
-		return resultmatrix
+		return numpy.matrix(resultmatrix)
 
 class LogPolarRegistration(Registration):
 	def register(self, array1, array2):
 		result = align.findRotationScaleTranslation(array1, array2)
 		rotation, scale, shift, rsvalue, value = result
-		matrix = numpy.identity(3, numpy.float)
+		matrix = numpy.matrix(numpy.identity(3, numpy.float))
 		matrix[0,0] = scale*math.cos(rotation)
 		matrix[0,1] = -scale*math.sin(rotation)
 		matrix[1,0] = scale*math.sin(rotation)
@@ -177,6 +168,8 @@ class TargetTransformer(targethandler.TargetHandler):
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
 		matrix = reg.registerimagedata(image1,image2)
+		print "-------"
+		print matrix
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
@@ -218,12 +211,12 @@ class TargetTransformer(targethandler.TargetHandler):
 	def matrixTransformOne(self, target, matrix,newimage=None):
 		row = target['delta row']
 		col = target['delta column']
-		row,col,one = numpy.dot((row,col,1), matrix)
+		rowcolmatrix = numpy.dot((row,col,1), matrix)
 		newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 		# Fix here about version
 		newtarget['image'] = newimage
-		newtarget['delta row'] = row
-		newtarget['delta column'] = col
+		newtarget['delta row'] = rowcolmatrix[0,0]
+		newtarget['delta column'] = rowcolmatrix[0,1]
 		newtarget['fromtarget'] = target
 		# newimagedata can be none if it is from a virtual grid for atlas
 		if newimage is not None:
