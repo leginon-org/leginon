@@ -44,10 +44,10 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 
 	// set sub-stack name
 	if ($mean)
-		$defrunid = 'meanfilt'.$stackId;
+		$defrunname = 'meanfilt'.$stackId;
 	else
-		$defrunid = 'sub'.$stackId;
-	$runid = ($_POST['runid']) ? $_POST['runid'] : $defrunid;
+		$defrunname = 'sub'.$stackId;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 
 	$subcheck = ($_POST['subsplit']=='sub' || !$_POST['process']) ? 'checked' : '';		
 	$firstpdisable = ($subcheck) ? '' : 'disabled';		
@@ -130,8 +130,8 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 	// New parameters
 	echo "<table border='0' cellpading='5' cellspacing='5' width='500'>\n";
 	echo "<tr><td align='left'>\n";
-	echo docpop('runid','<b>Run Name:</b> ');
-	echo "<input type='text' name='runid' value='$runid'>\n";
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' value='$runname'>\n";
 	echo "<br/>\n";
 
 	echo docpop('outdir','<b>Output Directory:</b>');
@@ -239,7 +239,7 @@ function createSubStackForm($extra=false, $title='subStack.py Launcher', $headin
 function runSubStack() {
 	$expId = $_GET['expId'];
 
-	$runid=$_POST['runid'];
+	$runname=$_POST['runname'];
 	$stackId=$_POST['stackId'];
 	$exclude=$_POST['exclude'];
 	$outdir=$_POST['outdir'];
@@ -266,12 +266,12 @@ function runSubStack() {
 	
 	//make sure a description is provided
 	$description=$_POST['description'];
-	if (!$runid) createSubStackForm("<b>ERROR:</b> Specify a runid");
+	if (!$runname) createSubStackForm("<b>ERROR:</b> Specify a run name");
 	if (!$description) createSubStackForm("<B>ERROR:</B> Enter a brief description");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
-	$procdir = $outdir.$runid;
+	$procdir = $outdir.$runname;
 
 	// check sub stack particle numbers
 	if (!$exclude and !$minx) {
@@ -287,7 +287,7 @@ function runSubStack() {
 	//putting together command
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="-s $stackId ";
-	$command.="-n $runid ";
+	$command.="--runname=$runname ";
 	$command.="-d \"$description\" ";
 	if (!$exclude and !$minx) {
 		if ($firstp!='' && $lastp) $command.="--first=".($firstp-1)." --last=".($lastp-1)." ";
@@ -309,7 +309,7 @@ function runSubStack() {
 
 		if (!($user && $password)) createSubStackForm("<B>ERROR:</B> You must be logged in to submit");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'makestack');
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'makestack');
 		// if errors:
 		if ($sub) createSubStackForm("<b>ERROR:</b> $sub");
 		exit();
@@ -328,7 +328,7 @@ function runSubStack() {
 	}
 	echo "$command
 	</td></tr>\n";
-	echo "<tr><td>run id</td><td>$runid</td></tr>\n";
+	echo "<tr><td>runname</td><td>$runname</td></tr>\n";
 	echo "<tr><td>stack id</td><td>$stackId</td></tr>\n";
 	echo "<tr><td>description</td><td>$description</td></tr>\n";
 	echo "<tr><td>outdir</td><td>$procdir</td></tr>\n";
