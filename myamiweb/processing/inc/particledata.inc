@@ -1748,7 +1748,6 @@ class particledata {
 		." LEFT JOIN `ApSelectionRunData` pr "
 		." ON pr . `DEF_id` = p . `REF|ApSelectionRunData|selectionrun` "
 		." ";
-		echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
