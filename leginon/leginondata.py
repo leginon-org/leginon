@@ -1864,6 +1864,13 @@ class TargetRepeaterSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TiltRotateSettingsData(TargetRepeaterSettingsData):
+	def typemap(cls):
+		return TargetRepeaterSettingsData.typemap() + (
+			('tilts', str),
+		)
+	typemap = classmethod(typemap)
+
 class CenterTargetFilterSettingsData(TargetFilterSettingsData):
 	def typemap(cls):
 		return TargetFilterSettingsData.typemap() + (

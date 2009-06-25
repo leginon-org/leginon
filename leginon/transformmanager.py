@@ -73,6 +73,10 @@ class Registration(object):
 				self.node.logger.info('Virtual untilt images before registering')
 				array1, untiltmatrix1 = self.undoTilt(image1)
 				array2, untiltmatrix2 = self.undoTilt(image2)
+				print "---untiltmatrix1"
+				print untiltmatrix1
+				print "---untiltmatrix2"
+				print untiltmatrix2
 				prepmatrix1 *= untiltmatrix1 
 				prepmatrix2 *= untiltmatrix2 
 		matrix = self.register(array1, array2)
