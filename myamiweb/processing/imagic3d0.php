@@ -38,27 +38,27 @@ else jobform();
 
 
 function jobform($extra=false) {
-        // get session info and experiment info
-        $expId=$_GET['expId'];
-        $reclassId=$_GET['reclassId'];
-        $norefId=$_GET['norefId'];
-        $norefClassId=$_GET['norefClassId'];
-        $clusterId=$_GET['clusterId'];
+	// get session info and experiment info
+	$expId=$_GET['expId'];
+	$reclassId=$_GET['reclassId'];
+	$norefId=$_GET['norefId'];
+	$norefClassId=$_GET['norefClassId'];
+	$clusterId=$_GET['clusterId'];
 	$tsId=$_GET['templateStackId'];
 //	$imagicClusterId=$_GET['imagicClusterId'];
-        $projectId=getProjectFromExpId($expId);
-        $sessiondata=getSessionList($projectId,$expId);
-        $sessioninfo=$sessiondata['info'];
-        if (!empty($sessioninfo)) {
-                $outdir=$sessioninfo['Image path'];
-                $outdir=ereg_replace("leginon","appion",$outdir);
-                $outdir=ereg_replace("rawdata","init_models",$outdir);
-                $sessionname=$sessioninfo['Name'];
-                echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
-        }
+	$projectId=getProjectFromExpId($expId);
+	$sessiondata=getSessionList($projectId,$expId);
+	$sessioninfo=$sessiondata['info'];
+	if (!empty($sessioninfo)) {
+		$outdir=$sessioninfo['Image path'];
+		$outdir=ereg_replace("leginon","appion",$outdir);
+		$outdir=ereg_replace("rawdata","init_models",$outdir);
+		$sessionname=$sessioninfo['Name'];
+		echo "<input type='hidden' name='output_directory' value='$outdir'>\n";
+	}
 
-        if ($expId){
-                $formaction=$_SERVER['PHP_SELF']."?expId=$expId";
+	if ($expId){
+		$formaction=$_SERVER['PHP_SELF']."?expId=$expId";
 	}
 
 	$javafunc .= writeJavaPopupFunctions('appion');
@@ -112,26 +112,27 @@ function jobform($extra=false) {
 	$clusterdata = $particle->getClusteringStacks($expId,"$projectId","False");
 	//print_r($clusterdata);
 	foreach ($clusterdata as $key => $clusterinfo) {
-                if ($clusterinfo[DEF_id] == $clusterId) {
-                        $position = $key;
-                        $clusterparams = array();
-                        foreach ($clusterdata[$position] as $key => $param) {
-                                $clusterparams[$key] = $param;
-                        }
-                }
-        }
+		if ($clusterinfo[DEF_id] == $clusterId) {
+			$position = $key;
+			$clusterparams = array();
+			foreach ($clusterdata[$position] as $key => $param) {
+				$clusterparams[$key] = $param;
+			}     
+		}
+	}
 	// get parameters from templateStackId
 	$tsdata = $particle->getTemplateStacksFromSession($expId);
-	foreach ($tsdata as $key => $tsinfo) {
-                if ($tsinfo[DEF_id] == $tsId) {
-                        $position = $key;
-                        $tsparams = array();
-                        foreach ($tsdata[$position] as $key => $param) {
-                                $tsparams[$key] = $param;
-                        }
-                }
-        }	
-
+	if ($tsdata && count($tsdata)) {
+		foreach ($tsdata as $key => $tsinfo) {
+			if ($tsinfo[DEF_id] == $tsId) {
+				$position = $key;
+				$tsparams = array();
+				foreach ($tsdata[$position] as $key => $param) {
+					$tsparams[$key] = $param;
+				}
+			}
+		}	
+	}
 	// IMAGIC begins projections with [1] instead of [0]
 	$projections=$_GET['projections'];
 	$projections=explode(',', $projections);
@@ -192,57 +193,57 @@ function jobform($extra=false) {
 			echo formatHtmlRow($k,$v);
 		}
 	}
-        // if coming from new alignment pipeline using clusterId 
-        elseif ($clusterId) {
-                $clusterpath = $clusterparams['path'];
-                $clusterclassfile = $clusterparams['avg_imagicfile'];
-                if (ereg(".img", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
+	// if coming from new alignment pipeline using clusterId 
+	elseif ($clusterId) {
+		$clusterpath = $clusterparams['path'];
+		$clusterclassfile = $clusterparams['avg_imagicfile'];
+		if (ereg(".img", $clusterclassfile)) $clusterclassfile = str_replace(".img", "", $clusterclassfile);
 		if (ereg(".hed", $clusterclassfile)) $clusterclassfile = str_replace(".hed", "", $clusterclassfile);
 		$clusterclassimgfile = $clusterpath."/".$clusterclassfile.".img";
-                $clusterclasshedfile = $clusterpath."/".$clusterclassfile.".hed";
+		$clusterclasshedfile = $clusterpath."/".$clusterclassfile.".hed";
 		$projectiontable.= "<table border='0', width='50'>";
-                //$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
-                $projectiontable.= "<tr>\n";
-                foreach ($projections as $key => $image) {
-                        $num = $key + 1;
-                        $projectiontable.= "<td rowspan='30' align='center' valign='top'>";
-                        $projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
-                        $projectiontable.= "<i>projection $num</i></td>\n";
-                }
-                $projectiontable.= "</tr></table>\n<br>";
-                echo $projectiontable;
-                $display_keys = array();
-                //$display_keys['description']=$norefclassparams['description'];
-                $display_keys['# class averages']=$clusterparams['num_classes'];
-                foreach($display_keys as $k=>$v) {
-                        echo formatHtmlRow($k,$v);
-                }
-        }
-        // if coming from template stacks
-        elseif ($tsId) {
-                $tspath = $tsparams['path'];
-                $tsfile = $tsparams['templatename'];
-                if (ereg(".img", $tsfile)) $tsfile = str_replace(".img", "", $tsfile);
+		//$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
+		$projectiontable.= "<tr>\n";
+		foreach ($projections as $key => $image) {
+			$num = $key + 1;
+			$projectiontable.= "<td rowspan='30' align='center' valign='top'>";
+			$projectiontable.= "<img src='getstackimg.php?hed=$clusterclasshedfile&img=$clusterclassimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
+			$projectiontable.= "<i>projection $num</i></td>\n";
+		}
+		$projectiontable.= "</tr></table>\n<br>";
+		echo $projectiontable;
+		$display_keys = array();
+		//$display_keys['description']=$norefclassparams['description'];
+		$display_keys['# class averages']=$clusterparams['num_classes'];
+		foreach($display_keys as $k=>$v) {
+			echo formatHtmlRow($k,$v);
+		}
+	}
+	// if coming from template stacks
+	elseif ($tsId) {
+		$tspath = $tsparams['path'];
+		$tsfile = $tsparams['templatename'];
+		if (ereg(".img", $tsfile)) $tsfile = str_replace(".img", "", $tsfile);
 		if (ereg(".hed", $tsfile)) $tsfile = str_replace(".hed", "", $tsfile);
 		$tsimgfile = $tspath."/".$tsfile.".img";
-                $tshedfile = $tspath."/".$tsfile.".hed";
+		$tshedfile = $tspath."/".$tsfile.".hed";
 		$projectiontable.= "<table border='0', width='50'>";
-                //$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
-                $projectiontable.= "<tr>\n";
-                foreach ($projections as $key => $image) {
-                        $num = $key + 1;
-                        $projectiontable.= "<td rowspan='30' align='center' valign='top'>";
-                        $projectiontable.= "<img src='getstackimg.php?hed=$tshedfile&img=$tsimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
-                        $projectiontable.= "<i>projection $num</i></td>\n";
-                }
-                $projectiontable.= "</tr></table>\n<br>";
-                echo $projectiontable;
-                $display_keys = array();
-                $display_keys['# class averages']=$tsparams['numimages'];
-                foreach($display_keys as $k=>$v) {
-                        echo formatHtmlRow($k,$v);
-                }
-        }
+		//$projectiontable.= "<tr>".apdivtitle("3 initial projections from run ".$runname." are:")."</tr>";
+		$projectiontable.= "<tr>\n";
+		foreach ($projections as $key => $image) {
+			$num = $key + 1;
+			$projectiontable.= "<td rowspan='30' align='center' valign='top'>";
+			$projectiontable.= "<img src='getstackimg.php?hed=$tshedfile&img=$tsimgfile&n=".$image."&t=80&b=1&uh=0'><br/>\n";
+			$projectiontable.= "<i>projection $num</i></td>\n";
+		}
+		$projectiontable.= "</tr></table>\n<br>";
+		echo $projectiontable;
+		$display_keys = array();
+		$display_keys['# class averages']=$tsparams['numimages'];
+		foreach($display_keys as $k=>$v) {
+			echo formatHtmlRow($k,$v);
+		}
+	}
 
 	else echo "error: there are no class average runs for the initial model determination";
 	$default_num_classes = $display_keys['# class averages'];
@@ -338,25 +339,25 @@ function jobform($extra=false) {
 	echo "<tr>
       		<td bgcolor='$rcol'><b>0</b></td>
 		<td bgcolor='$rcol'><SELECT NAME='symmetryn'><OPTION VALUE=''>Select One</OPTION>\n";
-                foreach ($syms as $sym) {
-                        echo "<OPTION VALUE='$sym[DEF_id]'";
-                        if ($sym['DEF_id']==$_POST['symmetry']) echo " SELECTED";
-                        echo ">$sym[symmetry]";
-                        if ($sym['symmetry']=='C1') echo " (no symmetry)";
-                        echo "</OPTION>\n";
-                }
+		foreach ($syms as $sym) {
+			echo "<OPTION VALUE='$sym[DEF_id]'";
+			if ($sym['DEF_id']==$_POST['symmetry']) echo " SELECTED";
+			echo ">$sym[symmetry]";
+			if ($sym['symmetry']=='C1') echo " (no symmetry)";
+			echo "</OPTION>\n";
+		}
 		echo "</td>
        		<td bgcolor='$rcol'><input type='text' NAME='euler_ang_incn' SIZE='4' VALUE='$euler_ang_inc'></td>
        		<td bgcolor='$rcol'><input type='text' NAME='num_classumsn' SIZE='4' VALUE='$num_classums'></td>
-        	<td bgcolor='$rcol'><input type='text' NAME='hamming_windown' SIZE='4' VALUE='$hamming_window'></td>
-        	<td bgcolor='$rcol'><input type='text' NAME='obj_sizen' SIZE='4' VALUE='$obj_size'></td>
-        	<td bgcolor='$rcol'><input type='text' NAME='repalignmentsn' SIZE='4' VALUE='$repalignments'></td>
-        	<td bgcolor='$rcol'><input type='text' NAME='amask_dimn' SIZE='4' value='$amask_dim'>
-        	<td bgcolor='$rcol'><input type='text' NAME='amask_lpn' SIZE='4' VALUE='$amask_lp'></td>
-        	<td bgcolor='$rcol'><input type='text' NAME='amask_sharpn' SIZE='4' value='$amask_sharp'>
+		<td bgcolor='$rcol'><input type='text' NAME='hamming_windown' SIZE='4' VALUE='$hamming_window'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='obj_sizen' SIZE='4' VALUE='$obj_size'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='repalignmentsn' SIZE='4' VALUE='$repalignments'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='amask_dimn' SIZE='4' value='$amask_dim'>
+		<td bgcolor='$rcol'><input type='text' NAME='amask_lpn' SIZE='4' VALUE='$amask_lp'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='amask_sharpn' SIZE='4' value='$amask_sharp'>
 		<td bgcolor='$rcol'><input type='text' NAME='amask_threshn' SIZE='4' VALUE='$amask_thresh'>
-        	<td bgcolor='$rcol'><input type='text' NAME='mrarefs_ang_incn' SIZE='4' VALUE='$mrarefs_ang_inc'></td>
-        	<td bgcolor='$rcol'><input type='text' NAME='forw_ang_incn' SIZE='4' VALUE='$forw_ang_inc'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='mrarefs_ang_incn' SIZE='4' VALUE='$mrarefs_ang_inc'></td>
+		<td bgcolor='$rcol'><input type='text' NAME='forw_ang_incn' SIZE='4' VALUE='$forw_ang_inc'></td>
      	     </tr>\n";
 	echo "</table><br>";
 
@@ -453,12 +454,12 @@ function create3d0() {
 	processing_header("IMAGIC 3d0 Job Generator","IMAGIC 3d0 Job Generator",$javafunc);
 
 	echo"
-        <TABLE WIDTH='600' BORDER='1'>
-        <TR><TD COLSPAN='2'>
-        <B>Alignment Command:</B><br><br>
-        $command<br><br>
-         </TD></tr>
-         </table>\n";
+	<TABLE WIDTH='600' BORDER='1'>
+	<TR><TD COLSPAN='2'>
+	<B>Alignment Command:</B><br><br>
+	$command<br><br>
+	 </TD></tr>
+	 </table>\n";
 
 	processing_footer();
 	exit;
