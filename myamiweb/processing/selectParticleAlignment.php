@@ -45,7 +45,7 @@ echo "<table border='1' class='tableborder' width='640'>\n";
 echo "<tr><td width='100' align='center'>\n";
 echo "  <img src='img/xmipp_logo.png' width='64'>\n";
 echo "</td><td>\n";
-echo "  <h3><a href='runMaxLikeAlign.php?expId=$expId'>Xmipp Maximum Likeihood Alignment</a></h3>\n";
+echo "  <h3><a href='runMaxLikeAlign.php?expId=$expId'>Xmipp Maximum Likelihood Alignment</a></h3>\n";
 echo " <p> this method is the most robust, but takes some time to complete."
 	." It uses the "
 	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
