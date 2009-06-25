@@ -31,6 +31,10 @@ def parseInput(args,params):
 			params['hard']=int(elements[1])
 		elif elements[0]=='ccCutoff':
 			params['ccCutoff']=float(elements[1])
+		elif elements[0]=='hp':
+			params['hp']=float(elements[1])
+		elif elements[0]=='apix':
+			params['apix']=float(elements[1])
 		elif arg=='eotest':
 			params['eotest']=True
 		else:
@@ -48,6 +52,8 @@ def createDefaults():
 	params['hard']=None
 	params['eotest']=False
 	params['ccCutoff']=1.0
+	params['hp']=None
+	params['apix']=None
 	return(params)
 
 if __name__== '__main__':

@@ -198,7 +198,9 @@ def runCoranClass(params,cls):
 		#mySpider.toSpiderQuiet("@%s\n" % coranbatch.split('.')[0])
 		spidercmd = ("cd %s\n" % clsdir)
 		spidercmd+= ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
-
+		
+		if params['hp'] is not None:
+			spidercmd+=("proc2d aligned.spi alignedhp.spi spiderswap apix=%s hp=%s\n" % (params['apix'],params['hp']))
 		## if multiprocessor, don't run spider yet
 		if params['proc'] == 1:
 			proc = subprocess.Popen(spidercmd, shell=True)
@@ -224,6 +226,7 @@ def readDocFile(docfile):
 		content.append(d)
 	return content
 	
+>>>>>>> .r3547
 #===============================
 def readRefFreeDocFile(docfile, picklefile):
 	apDisplay.printMsg("processing alignment doc file")
@@ -1577,6 +1580,7 @@ def spiderAPMQ(projs,
 	return outang
 
 #===============================
+>>>>>>> .r3547
 def makeSpiderCoranBatch(params,filename,clsdir):
 	nfacts=20
 	if params['nptcls'] < 21:
@@ -1591,6 +1595,11 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('x93=%f  ; cutoff for hierarchical clustering\n' % params['haccut'])
 	f.write('x92=20    ; additive constant for hierarchical clustering\n')
 	f.write('\n')
+	alignstack='aligned'
+	if params['hp'] is not None:
+		f.write('FR G ; aligned hp stack file\n')
+		f.write('[alignedhp]alignedhp\n')
+		alignstack='alignedhp'
 	f.write('FR G ; aligned stack file\n')
 	f.write('[aligned]aligned\n')
 	f.write('\n')
@@ -1626,7 +1635,7 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('echo "  doing correspondence analysis"\n')
 	f.write('\n')
 	f.write('CA S           ; do correspondence analysis\n')
-	f.write('[aligned]@***** ; aligned stack\n')
+	f.write('[%s]@***** ; aligned stack\n' % alignstack)
 	f.write('1-x99          ; particles to use\n')
 	f.write('_9             ; mask file\n')
 	f.write('%d             ; number of factors to be used\n' % nfacts)
