@@ -52,26 +52,29 @@ class Registration(object):
 			pass
 		return ttype
 
-	def undo_tilt(self,imagedata):
-		untilted_array,tilt2by2matrix,shiftvector =self.stagetiltcorrector.getZeroTiltArray(imagedata)
-		affinematrix = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
-		affinematrix[:2,:2] = tilt2by2matrix
-		affinematrix[2,:2] = shiftvector
-		return untilted_array,affinematrix
+	def undoTilt(self,imagedata):
+		# matrix and shift returned from tiltcorrector is that for image transform
+		untilted_array,image2by2matrix,imageshiftvector =self.stagetiltcorrector.getZeroTiltArray(imagedata)
+		affinematrix = numpy.matrix(numpy.identity(3, numpy.float))
+		affinematrix[:2,:2] = image2by2matrix
+		affinematrix[2,:2] = imageshiftvector
+		# matrix for target transform is inverse of that for image transform
+		return untilted_array,affinematrix.I
 
-	def registerimagedata(self,image1,image2):
+	def registerImageData(self,image1,image2):
+		# return target transform matrix
 		transformtypes = self.determinetransformtypes(image1,image2)
-		prepmatrix1 = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
-		prepmatrix2 = numpy.matrix('1.0,0.0,0.0;0.0,1.0,0.0;0.0,0.0,1.0')
+		prepmatrix1 = numpy.matrix(numpy.identity(3, numpy.float))
+		prepmatrix2 = numpy.matrix(numpy.identity(3, numpy.float))
 		array1 = image1['image']
 		array2 = image2['image']
 		for ttype in transformtypes:
 			if ttype == 'tilt':
-				array1, tiltmatrix1 = self.undo_tilt(image1)
-				array2, tiltmatrix2 = self.undo_tilt(image2)
-				prepmatrix1 *= tiltmatrix1 
-				prepmatrix2 *= tiltmatrix2 
-				self.node.logger.info('Prepare imagese by virtual untilting')
+				self.node.logger.info('Virtual untilt images before registering')
+				array1, untiltmatrix1 = self.undoTilt(image1)
+				array2, untiltmatrix2 = self.undoTilt(image2)
+				prepmatrix1 *= untiltmatrix1 
+				prepmatrix2 *= untiltmatrix2 
 		matrix = self.register(array1, array2)
 		finalmatrix = prepmatrix1 * matrix * prepmatrix2.I
 		return finalmatrix
@@ -167,9 +170,10 @@ class TargetTransformer(targethandler.TargetHandler):
 		regtype = self.settings['registration']
 		reg = self.registrations[regtype]
 		self.logger.info('Calculating main transform. Registration: %s' % (regtype,))
-		matrix = reg.registerimagedata(image1,image2)
-		print "-------"
+		matrix = reg.registerImageData(image1,image2)
+		print "---target transform matrix----"
 		print matrix
+		self.logger.info('Target transform matrix calculated')
 		matrixquery = leginondata.TransformMatrixData()
 		matrixquery['session'] = self.session
 		results = matrixquery.query()
