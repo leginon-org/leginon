@@ -139,7 +139,7 @@ if ($tomograms) {
 	$html = "<h4>Included Subvolume tomograms</h4>";
 	$html .= "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'tiltseries','full','particle alignment<br/>(xyshift) zshift<br/>rotation,mirror','volume<br/>xycenter,zoffset<br/>dimension','snapshot');
+	$display_keys = array ( 'tiltseries','full','particle alignment<br/>(xyshift) zshift<br/>rotation,mirror','volume<br/>xycenter,zoffset<br/>dimension','snapshot','z density<vr/>profile');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
