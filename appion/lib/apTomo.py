@@ -116,7 +116,6 @@ def getFeatureMatchTransform(ordered_imagelist, bin):
 		if i == 0:
 			array1 = imagedata['image']
 		array2 = imagedata['image']
-		print imagedata['filename'],minsize
 		resultmatrix = libCVwrapper.MatchImages(array2, array1, minsize=minsize, maxsize=0.9,  WoB=True, BoW=True)
 		if abs(resultmatrix[0,0]) < 0.9 :
 			resultmatrix[0,0]=1.0
@@ -139,7 +138,6 @@ def getFeatureMatchTransform(ordered_imagelist, bin):
 			matrix[0,0],matrix[0,1],
 			matrix[1,0],matrix[1,1],
 			matrix[2,0],matrix[2,1]))
-		print matrix
 		transformlist.append(matrix)
 		array1 = imagedata['image']
 		f.close()
@@ -478,9 +476,9 @@ def makeProjection(filename,xsize=512):
 	xsize = min(xsize,shape[2])
 	# default for full tomogram is XZY
 	if shape[0] > shape[1]:
-		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'}}
+		renders = {'a':{'axis':0,'axisname':'z'},'b':{'axis':1,'axisname':'y'},'c':{'axis':2,'axisname':'x'}}
 	else:
-		renders = {'a':{'axis':1,'axisname':'y'},'b':{'axis':0,'axisname':'z'}}
+		renders = {'a':{'axis':1,'axisname':'y'},'b':{'axis':0,'axisname':'z'},'c':{'axis':2,'axisname':'x'}}
 	keys = renders.keys()
 	keys.sort()
 	for key in keys:
