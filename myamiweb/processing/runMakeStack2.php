@@ -62,7 +62,8 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	$ctfdata=$particle->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
-	$stackruns = count($particle->getStackIds($sessionId, True));
+	$stackruninfos = $particle->getStackIds($sessionId, True);
+	$stackruns = ($stackruninfos) ? count($stackruninfos):0;
 
 	$javascript="<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
