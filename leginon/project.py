@@ -85,7 +85,7 @@ class ProjectData:
 
 	def getProcessingDB(self, projectId):
 		if not use_processingdb_table:
-			return 'ap'+projectId
+			return 'ap'+str(projectId)
 		processingdblist = self.projectprocessingdb.Index(['projectId'])
 		result = processingdblist[projectId].fetchone()
 		if result is None:
