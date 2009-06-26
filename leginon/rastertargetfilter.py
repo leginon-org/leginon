@@ -87,8 +87,7 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		
 		spacing = numpy.hypot(*p2)
 		angle = numpy.arctan2(*p2)
-		#coordinate on image is left-handed and angle in makeRaster is right-handed
-		angle = math.degrees((-1)*angle)
+		angle = math.degrees(angle)
 		return spacing,angle
 
 	def makeRaster(self):
