@@ -82,10 +82,10 @@ function createAce2Form($extra=false) {
 		$sessionname=$sessioninfo['Name'];
 	}
 	$ctf = new particledata();
-	$ctfruns = count($ctf->getCtfRunIds($sessionId));
-	while (file_exists($sessionpath.'acetwo'.($ctfruns+1)))
-		$ctfruns += 1;
-	$defrunname = 'acetwo'.($ctfruns+1);
+	$lastrunnumber = $ctf->getLastRunNumber($sessionId,'ApAceRunData','name','acetwo'); 
+	while (file_exists($sessionpath.'acetwo'.($lastrunnumber+1)))
+		$lastrunnumber += 1;
+  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'acetwo'.($lastrunnumber+1);
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>

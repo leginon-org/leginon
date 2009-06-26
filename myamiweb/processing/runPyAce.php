@@ -256,7 +256,10 @@ function createPyAceForm($extra=false) {
 	}
 	$ctf = new particledata();
 	$ctfruns = count($ctf->getCtfRunIds($sessionId));
-	$defrunname = 'acerun'.($ctfruns+1);
+	$lastrunnumber = $ctf->getLastRunNumber($sessionId,'ApAceRunData','name','acerun'); 
+	while (file_exists($sessionpath.'acerun'.($lastrunnumber+1)))
+		$lastrunnumber += 1;
+  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'acerun'.($lastrunnumber+1);
 	echo"
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
