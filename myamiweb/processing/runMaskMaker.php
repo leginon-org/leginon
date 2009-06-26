@@ -178,8 +178,8 @@ function createMMForm($extra=false, $title='MaskMaker Launcher', $heading='Autom
 	$particle=new particleData;
 	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
-	$maskruns=count($particle->getMaskMakerRunIds($sessionId));
-	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'maskrun'.($maskruns+1);
+	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApMaskMakerRunData','name','maskrun'); 
+  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'maskrun'.($lastrunnumber+1);
 
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';
 	$testdisabled = ($_POST['testimage']=='on') ? '' : 'DISABLED';
