@@ -57,8 +57,8 @@ class Registration(object):
 		untilted_array,image2by2matrix,imageshiftvector =self.stagetiltcorrector.getZeroTiltArray(imagedata)
 		affinematrix = numpy.matrix(numpy.identity(3, numpy.float))
 		affinematrix[:2,:2] = image2by2matrix
-		affinematrix[2,:2] = imageshiftvector
-		# matrix for target transform is inverse of that for image transform
+		# Matrix for target transform is the inverse of that for image transform 
+		# without shift because the target is defined relative to center of the image
 		return untilted_array,affinematrix.I
 
 	def registerImageData(self,image1,image2):
@@ -73,14 +73,16 @@ class Registration(object):
 				self.node.logger.info('Virtual untilt images before registering')
 				array1, untiltmatrix1 = self.undoTilt(image1)
 				array2, untiltmatrix2 = self.undoTilt(image2)
-				print "---untiltmatrix1"
-				print untiltmatrix1
-				print "---untiltmatrix2"
-				print untiltmatrix2
 				prepmatrix1 *= untiltmatrix1 
 				prepmatrix2 *= untiltmatrix2 
 		matrix = self.register(array1, array2)
-		finalmatrix = prepmatrix1 * matrix * prepmatrix2.I
+		print "---untiltmatrix1"
+		print prepmatrix1
+		print "---untiltmatrix2"
+		print prepmatrix2.I
+		print "---registermatrix"
+		print matrix
+		finalmatrix = matrix * prepmatrix1 * prepmatrix2.I
 		return finalmatrix
 			
 	def register(self, array1, array2):
