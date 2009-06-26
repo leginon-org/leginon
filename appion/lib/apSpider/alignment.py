@@ -197,10 +197,10 @@ def runCoranClass(params,cls):
 		#mySpider = spyder.SpiderSession(logo=False, nproc=1)
 		#mySpider.toSpiderQuiet("@%s\n" % coranbatch.split('.')[0])
 		spidercmd = ("cd %s\n" % clsdir)
-		spidercmd+= ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
 		
 		if params['hp'] is not None:
 			spidercmd+=("proc2d aligned.spi alignedhp.spi spiderswap apix=%s hp=%s\n" % (params['apix'],params['hp']))
+		spidercmd+= ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
 		## if multiprocessor, don't run spider yet
 		if params['proc'] == 1:
 			proc = subprocess.Popen(spidercmd, shell=True)
@@ -226,7 +226,6 @@ def readDocFile(docfile):
 		content.append(d)
 	return content
 	
->>>>>>> .r3547
 #===============================
 def readRefFreeDocFile(docfile, picklefile):
 	apDisplay.printMsg("processing alignment doc file")
@@ -1580,7 +1579,6 @@ def spiderAPMQ(projs,
 	return outang
 
 #===============================
->>>>>>> .r3547
 def makeSpiderCoranBatch(params,filename,clsdir):
 	nfacts=20
 	if params['nptcls'] < 21:
