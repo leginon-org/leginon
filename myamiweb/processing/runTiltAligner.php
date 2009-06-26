@@ -57,7 +57,8 @@ function createTiltAlignerForm($extra=false, $title='Tilt Aligner Launcher', $he
 	$particle=new particleData;
 	$prtlrunIds = $particle->getParticleRunIds($sessionId, True);
 	$prtlruns = count($prtlrunIds);
-	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'tiltrun'.($prtlruns+1);
+	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApSelectionRunData','name','tiltrun'); 
+  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'tiltrun'.($lastrunnumber+1);
 	$presetval = ($_POST['preset']) ? $_POST['preset'] : 'en';
 	$prtlrunval = ($_POST['pickrunid']) ? $_POST['pickrunid'] : '';
 	$testcheck = ($_POST['testimage']=='on') ? 'CHECKED' : '';

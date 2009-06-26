@@ -60,7 +60,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	$tiltseriesId = ($_POST['tiltseriesId']) ? $_POST['tiltseriesId'] : NULL;
 	$tiltseriesId2 = ($_POST['tiltseriesId2']) ? $_POST['tiltseriesId2'] : NULL;
 	$alignruns = $particle->countTomoAlignmentRuns($tiltseriesId);
-	$autorunname = 'full'.($alignruns+1);
+	$autorunname = ($alignruns) ? 'full'.($alignruns+1):'full1';
 	$runname = ($_POST['lasttiltseries']==$tiltseriesId) ? $_POST['runname']:$autorunname;
 	$description = $_POST['description'];
 
@@ -114,7 +114,7 @@ function createTomoMakerForm($extra=false, $title='tomomaker.py Launcher', $head
 	}
 	echo "</td></table>";
 	echo "<p>
-    <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='5'>\n";
+    <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='10'>\n";
 	echo docpop('tomorunname', 'Runname');
   echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
 	
