@@ -139,12 +139,12 @@ function createUploadTomogramForm($extra=false, $title='UploadTomogram.py Launch
 	}
 		echo "	  		
 		<p><br />
-      <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='5'>\n";
+      <INPUT TYPE='text' NAME='runname' VALUE='$runname' SIZE='10'>\n";
 		echo docpop('tomorunname', 'Runname');
    	echo "<FONT>(full tomogram reconstruction run name)</FONT>";     
 		echo "	  		
 		<p><br />
-      <INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='5'>\n";
+      <INPUT TYPE='text' NAME='volume' VALUE='$volume' SIZE='10'>\n";
 		echo docpop('volume', 'Volume');
    	echo "<FONT>(subvolume name)</FONT>     
 
