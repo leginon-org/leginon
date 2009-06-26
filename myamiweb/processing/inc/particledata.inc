@@ -442,9 +442,11 @@ class particledata {
 			."GROUP BY t.`DEF_id`";
 		$r = $this->mysql->getSQLResult($q);
 		$result = array();
-		foreach ($r as $full) {
-			$full['subtomo'] = $this->countSubtomograms($full['DEF_id']);
-			$result[] = $full;
+		if ($r && count($r)) {
+			foreach ($r as $full) {
+				$full['subtomo'] = $this->countSubtomograms($full['DEF_id']);
+				$result[] = $full;
+			}
 		}
 		return $result;
 	}
@@ -486,7 +488,7 @@ class particledata {
 			."FROM ApTomoAlignmentRunData "
 			."WHERE `REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId;
 		$r = $this->mysql->getSQLResult($q);
-		return count($r);
+		return ($r)? count($r) : 0;
 	}
 	
 	function countTomogramsByAlignment($tiltseriesId,$alignrunname){
@@ -499,7 +501,7 @@ class particledata {
 			."WHERE a.`REF|leginondata|TiltSeriesData|tiltseries`=".$tiltseriesId." "
 			."AND a.name LIKE '".$alignrunname."' ";
 		$r = $this->mysql->getSQLResult($q);
-		return count($r);
+		return ($r)? count($r) : 0;
 	}
 
 	// --- loads tomo z profile --- //
@@ -550,7 +552,6 @@ class particledata {
 		if (!$showHidden )
 			$q .= " AND ( a.`hidden` = 0 OR a.`hidden` IS NULL ) ";
 		$q .= "ORDER BY a.`DEF_id` DESC ";
-		//echo $q;
 		$r = $this->mysql->getSQLResult($q);
 		return $r;
 	}
@@ -1409,6 +1410,26 @@ class particledata {
 		return $r;
 	}
 
+	function getLastRunNumber ($sessionId,$table,$field='name',$runnameprefix='') {
+		$q = "SELECT r.`".$field."` "
+			."FROM `".$table."` AS r "
+		  ."WHERE r.`REF|leginondata|SessionData|session` = '$sessionId' "
+			."AND r.`".$field."` REGEXP('".$runnameprefix."') "
+			."ORDER BY r.`".$field."` DESC "
+			." ";
+		$r = $this->mysql->getSQLResult($q);
+		$lastnumber = 0;
+		if ($r && count($r) > 0) {
+			foreach ($r as $result) {
+				$parts = explode($runnameprefix,$result[$field]);
+				$numbercount = strspn($parts[1],"0123456789");
+				$number = 0 + substr($parts[1],0,$numbercount);
+				if ($number > $lastnumber) $lastnumber = $number;
+			}
+		}
+		return $lastnumber;
+	}
+			
 	function getParticleRunIds ($sessionId,$showHidden=False) {
 		$q = "SELECT r.*, p.path "
 		  ."FROM `ApSelectionRunData` AS r "

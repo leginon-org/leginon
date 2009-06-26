@@ -234,8 +234,8 @@ function createMMMForm($extra=false, $title='MaskMaker Launcher', $heading='Manu
 	<TABLE BORDER=0 CLASS=tableborder CELLPADDING=15>
 	<TR>
 		<TD VALIGN='TOP'>";
-	$maskruns=count($particle->getMaskMakerRunIds($sessionId));
-	$defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manualrun'.($maskruns+1);
+	$lastrunnumber = $particle->getLastRunNumber($sessionId,'ApMaskMakerRunData','name','manualrun'); 
+  $defrunname = ($_POST['runname']) ? $_POST['runname'] : 'manualrun'.($lastrunnumber+1);
 	createAppionLoopTable($sessiondata, $defrunname, "mask");
 	echo"
 		</TD>
