@@ -13,6 +13,7 @@ import node
 import targethandler
 import gui.wx.TargetRepeater
 import instrument
+import player
 
 class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetRepeater.Panel
@@ -30,6 +31,8 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 		self.addEventInput(event.ImageTargetListPublishEvent, self.handleTargetListPublish)
+		self.player = player.Player(callback=self.onPlayer)
+		self.panel.playerEvent(self.player.state())
 		# not yet...
 		#self.addEventInput(event.QueuePublishEvent, self.handleQueuePublish)
 
@@ -47,6 +50,7 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.setStatus('idle')
 			status = self.waitForTargetListDone(tid)
 		else:
+			self.player.pause()
 			self.repeatTargetList(targetlistdata)
 			status = 'ok'
 
@@ -54,11 +58,13 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 
 		e = event.TargetListDoneEvent(targetlistid=targetlistdata.dmid, status=status)
 		self.outputEvent(e)
+		self.logger.info('All targets and states done')
 
 	def makeStates(self):
 		pass
 
 	def onContinue(self):
+		self.player.play()
 		self.userpause.set()
 
 	def repeatTargetList(self, targetlistdata):
@@ -69,7 +75,9 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.setStatus('user input')
 			self.logger.info('Continue to next state? waiting for user...')
 			self.userpause.clear()
+			self.player.pause()
 			self.userpause.wait()
+			self.player.play()
 			self.setStatus('processing')
 
 			self.instrument.setData(scopedata)
@@ -84,8 +92,11 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			tid = self.makeTargetListEvent(newtargetlistdata)
 			self.publish(newtargetlistdata, pubevent=True)
 			status = self.waitForTargetListDone(tid)
+			state = self.player.wait()
+			if state in ('stop'):
+				self.logger.info('Aborting')
+				break
 		self.setStatus('idle')
-
 
 	def markAllTargetsDone(self, targetlistdata):
 			alltargets = self.researchTargets(list=targetlistdata)
@@ -119,3 +130,12 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			else:
 				return None
 
+	def onPlayer(self, state):
+		infostr = ''
+		if state == 'play':
+			infostr += ''
+		elif state == 'stop':
+			infostr += 'Aborting...'
+		if infostr:
+			self.logger.info(infostr)
+		self.panel.playerEvent(state)
