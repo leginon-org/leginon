@@ -132,6 +132,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'process target type': 'acquisition',
 		'save integer': False,
 		'background': False,
+		'use parent tilt': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,

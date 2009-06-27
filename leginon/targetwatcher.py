@@ -139,6 +139,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		#if ignored:
 		#	self.logger.info('%d target(s) will be ignored' % len(ignored))
 		if goodtargets:
+			#tilt the stage first
+			if self.settings['use parent tilt']:
+				state1 = leginondata.ScopeEMData()
+				parentimage = newdata.special_getitem('image', True, readimages=False)
+				state1['stage position'] = {'a':parentimage['scope']['stage position']['a']}
+				self.instrument.setData(state1)
 			# This is only for beamfixer now and it does not need preset_name
 			preset_name = None
 			if self.settings['wait for reference']:

@@ -87,6 +87,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['adjust for transform'] = Choice(self, -1, choices=['no', 'one', 'all'])
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
+		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -167,6 +168,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_misc.Add(self.widgets['background'], (6, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['display image'], (7, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(self.widgets['use parent tilt'], (8, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
