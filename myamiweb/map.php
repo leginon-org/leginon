@@ -22,7 +22,7 @@ $acepar = ($_GET['g']) ? '&g='.($_GET['g']) : '';
 $gradient= ($_GET['gr']) ? '&gr='.$_GET['gr'] : '';
 $autoscale = ($_GET['autoscale']) ? '&autoscale='.$_GET['autoscale'] : '';
 
-$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$colormap.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$autoscale.$psel.$acepar.$gradient.$autoscale.$nptcl;
 
 $nimgId = $leginondata->findImage($id, $preset);
 $imginfo = $leginondata->getImageInfo($nimgId['id']);
@@ -43,7 +43,7 @@ $mapbinning = ($imgwidth> 1024) ? (($imgwidth> 2048) ? 16 : 8 ) : 4;
 $ratio = $imgwidth/$imgbinning/$imgmapsize;
 
 // --- for colored images display area in black
-$areacolor = ($_GET['colormap']==1) ? "#000000" : "#00FF00";
+$areacolor = ($_GET['gr']=="spectrum") ? "#000000" : "#00FF00";
 
 // --- set scale
 $imgsize = ($imgbinning) ? $imgwidth/$imgbinning : $imgwidth;
@@ -370,7 +370,7 @@ function getDistance() {
 		style="z-index:2; position:absolute; left:0px; top:0px; background-color:rgb(0,0,0); border: 1px solid #000000;" > 
 	<div
 		id="divarea"
-		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent;background:url(img/un.gif)"
+		style="z-index:99;position:absolute;visibility:hidden;width:0px; height:0px;border:1px dashed <?=$areacolor?>;cursor:move;background-color:transparent)"
 		onmousedown	= "areamousedown(event)"
 		onmouseup		= "areamouseup(event)"
 		onmousemove = "areamousemove(event)"

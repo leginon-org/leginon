@@ -1,7 +1,7 @@
 <?php
 require "inc/leginon.inc";
 require "inc/image.inc";
-@require_once "inc/project.inc";
+require "inc/project.inc";
 require "inc/particledata.inc";
 require "inc/ace.inc";
 

@@ -33,7 +33,6 @@ $sessioninfo=$sessiondata['info'];
 $sessions=$sessiondata['sessions'];
 $currentproject=$sessiondata['currentproject'];
 
-
 $particle = new particledata();
 
 if ($expId) {
@@ -517,6 +516,7 @@ if ($expId) {
 		      );
 
 	// display reconstructions only if there is a stack
+	#echo "Stack: $stackruns;";
 	if ($stackruns > 0) {
 		// for every uploaded job, subtract a submitted job
 		// if all submitted jobs are uploaded, it should be 0

@@ -7,9 +7,11 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require_once "inc/dbemauth.php";
+if (ENABLE_LOGIN) {
+	require_once "inc/dbemauth.php";
+}
 
-$me=($_SERVER['REMOTE_ADDR']=="137.131.204.65") ? true : false;
+require_once "inc/session.inc";
 
 define('DEFAULT_PROJECT', 'all'); 
 define('PROJECT_DB_HOST', $PROJECT_DB_HOST);
@@ -17,10 +19,13 @@ define('PROJECT_DB_USER', $PROJECT_DB_USER);
 define('PROJECT_DB_PASS', $PROJECT_DB_PASS);
 define('PROJECT_DB', $PROJECT_DB);
 
-function setDatabase() {
-	global $me;
+setsession();
+
+function setDatabase($expId="") {
 	$leginondata=&new leginondata;
-	$expId= ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+	if (!$expId) {
+		$expId= ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
+	}
 	$projectId = ($_POST['projectId']) ? $_POST['projectId'] : $_GET['projectId'];
 	if ($projectId) {
 		$sessions = $leginondata->getSessions('description', $projectId);
@@ -39,14 +44,14 @@ function setDatabase() {
 	$p=new project();
 	$r=$p->getProjectfromSessionId($expId);
 	$projectId=$r['projectId'];
-	$db="ap".$projectId;
+	$db=$p->getProcessingDB($projectId);
 	$_SESSION['processingdb']=$db;
 	$_SESSION['expId']=$expId;
 	return $db;
 }
 
 if (!$PROCESSING_DB) {
-	$PROCESSING_DB=setDatabase();
+	$PROCESSING_DB=setDatabase($newexpId);
 }
 
 define(PARTICLE_DB, $PROCESSING_DB);
@@ -55,8 +60,8 @@ class project {
 
 	function project(){
 		$this->mysql = new mysql(	PROJECT_DB_HOST, PROJECT_DB_USER,
-						PROJECT_DB_PASS, PROJECT_DB);
-        }
+			PROJECT_DB_PASS, PROJECT_DB);
+	}
 
 	function checkDBConnection() {
 		return $this->mysql->checkDBConnection();
@@ -124,14 +129,18 @@ class project {
 
 	function getProjects($type=""){
 		global $dbemauth;
-		$login_check = $dbemauth->is_logged();
-		$projects = array();
-		if ($type=="all")  
-			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
 		$q='select projectId as id, name  from projects order by name';
 		$rprojects = $this->mysql->getSQLResult($q);
+		$projects = array();
+		if ($type=="all") {
+			$projects[] = array(	'id' => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
+		}
 		$projects = array_merge($projects, $rprojects);
+		if (!ENABLE_LOGIN) {
+			return $projects;
+		}
 
+		$login_check = $dbemauth->is_logged();
 		$projects=$this->restrict($projects, $login_check);
 
 		return $projects;
@@ -148,7 +157,7 @@ class project {
 			.'where projectId='.$projectId;
 		list($r)=$this->mysql->getSQLResult($q);
 
-		if ($this->isRestricted($projectId)) {
+		if (ENABLE_LOGIN && $this->isRestricted($projectId)) {
 			return array();
 		}
 		return $r;
@@ -190,6 +199,9 @@ class project {
 	}
 
 	function isRestricted($projectId) {
+		if (!ENABLE_LOGIN) {
+			return;
+		}
 		global $dbemauth;
 		$authentication = $dbemauth->is_logged();
 		if ($authentication[2]==2) {
@@ -244,6 +256,9 @@ class project {
 	}
 
 	function getSessions($sessions) {
+			if (!ENABLE_LOGIN) {
+				return $sessions;
+			}
 			$rsessions=$this->getRestrictedSessions();
 			$nsessions=array();
 			foreach ($sessions as $s) {
@@ -264,6 +279,16 @@ class project {
 			}
 		}
 		return $exists;
+	}
+
+	function getProcessingDB($projectId) {
+		$db="";
+		$q="select `db` from processingdb "
+			."where projectId=$projectId";
+		if ($r=$this->mysql->getSQLResult($q)) {
+			$db=$r[0]['db'];
+		}
+		return $db;
 	}
 
 }

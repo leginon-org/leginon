@@ -445,7 +445,6 @@ function newfile(view){
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning=""
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality=""
 	if (cgradient = eval("jsgradient"+view)) gradient="&gr="+cgradient; else gradient=""
-	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap=""
 	if (cautoscale= eval("jsautoscale"+view)) autoscale="&autoscale="+cautoscale; else autoscale=""
 	if (cloadjpg= eval("jsloadjpg"+view)) loadjpg="&lj="+cloadjpg; else loadjpg=""
 	if (cptclsel = eval("jsptclsel"+view)) ptclsel="&psel="+escape(cptclsel); else ptclsel=""
@@ -454,7 +453,7 @@ function newfile(view){
 		"&preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap+autoscale+displayfilename+loadjpg+pselp+nptcl+ag+ao+gradient
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+autoscale+displayfilename+loadjpg+pselp+nptcl+ag+ao+gradient
 
 	if (options == lastoptions[vid])
 		return
@@ -579,10 +578,9 @@ function isImageLoaded(view) {
 }
 
 function setImageStatus(viewname) {
-	if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap=""
 	if (cmin = eval("jsmin"+viewname)) np="&min="+cmin; else np=""
 	if (cmax = eval("jsmax"+viewname)) xp="&max="+cmax; else xp=""
-	options = np+xp+colormap
+	options = np+xp
 	if (img = document.images[eval("\"" +viewname+ "imgstatgrad\"")]) 
 		img.src = 'img/dfe/grad.php?h=10&w=100&dm=1'+options
 	filter = eval("jsfilter"+viewname)
@@ -600,14 +598,13 @@ function setImageHistogram(viewname) {
 			selpreset=list.options[list.selectedIndex].value
 		if (eval(viewname+"fft_bt_st")) fft="&fft=1"; else fft=""
 		if (cfilter = eval("jsfilter"+viewname)) flt="&flt="+cfilter; else flt=""
-		if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap=""
 		if (cmin = eval("jsmin"+viewname)) np="&np="+cmin; else np=""
 		if (cmax = eval("jsmax"+viewname)) xp="&xp="+cmax; else xp=""
 		if (cbinning = eval("jsbinning"+viewname)) binning="&binning="+cbinning; else binning=""
 
 		options = "preset="+selpreset+
 			"&id="+jsimgId+
-			"&s="+jssize+quality+np+xp+flt+binning+colormap+fft
+			"&s="+jssize+quality+np+xp+flt+binning+fft
 
 		if (!w.closed) {
 			w.getImageInfo()
@@ -669,13 +666,6 @@ function getminmax(viewname, min,max) {
 		max=x.value
 	}
 	return Array(min,max)
-}
-
-function setcolormap(viewname, colormap) {
-	eval("jscolormap"+viewname+"="+colormap)
-	if (cm = eval("document.viewerform."+viewname+"cm")) {
-		cm.value=colormap
-	}
 }
 
 function setquality(viewname, quality) {
@@ -750,7 +740,6 @@ function popUpAdjust(URL, view, param){
 	binning = eval("jsbinning"+view)
 	quality = eval("jsquality"+view)
 	gradient = eval("jsgradient"+view)
-	colormap = eval("jscolormap"+view)
 	autoscale = eval("jsautoscale"+view)
 	displayfilename = eval("jsdisplayfilename"+view)
 	loadjpg= eval("jsloadjpg"+view)
@@ -760,12 +749,11 @@ function popUpAdjust(URL, view, param){
 	binning = (binning) ? "&binning="+binning : ""
 	quality = (quality) ? "&t="+quality : ""
 	gradient = (gradient) ? "&gr="+gradient : ""
-	colormap= (colormap) ? "&colormap="+colormap : ""
 	autoscale= (autoscale) ? "&autoscale="+autoscale : ""
 	displayfilename= (displayfilename) ? "&df="+displayfilename : ""
 	loadjpg= (loadjpg) ? "&lj="+loadjpg : ""
 	param = (param) ? param : "left=0,top=0,height=370,width=370"
-	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+gradient+autoscale+displayfilename+loadjpg+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');")
 }
 
 function popUpPtcl(URL, view, param) {
@@ -824,7 +812,7 @@ function bsSliderChange2(sliderObj, val, newPos){
 }
 
 function updateGradient() {
-	document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?colormap='+jscolormap+'&min='+jsminpix+'&max='+jsmaxpix+'&gmin='+jsmingradpix+'&gmax='+jsmaxgradpix+')'; 
+	document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?min='+jsminpix+'&max='+jsmaxpix+'&gmin='+jsmingradpix+'&gmax='+jsmaxgradpix+')'; 
 }
 
 function cle(val) {

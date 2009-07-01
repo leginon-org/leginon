@@ -56,7 +56,7 @@ function getfft($filename="", $minpix="", $maxpix="", $binning=1, $autoscale=fal
 	return $img;
 }
 
-function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $type='default') {
+function getdefault($filename="", $minpix="", $maxpix="", $binning=1, $type='default') {
 	$densitymax = MAX_PIXEL_VAL;
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 	$maxpix = ($maxpix) ? $maxpix : $densitymax;
@@ -72,7 +72,7 @@ function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binn
 
 }
 
-function smooth1($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
+function smooth1($filename="", $minpix="", $maxpix="", $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 	if (!is_file($filename))
@@ -86,7 +86,7 @@ function smooth1($filename="", $minpix="", $maxpix="", $colormap=false, $binning
 	return $img;
 }
 
-function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
+function smooth2($filename="", $minpix="", $maxpix="", $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 	if (!is_file($filename))
@@ -103,7 +103,7 @@ function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning
 	return $img;
 }
 
-function smooth3($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
+function smooth3($filename="", $minpix="", $maxpix="", $binning=1 ) {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 	$maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 	if (!is_file($filename))

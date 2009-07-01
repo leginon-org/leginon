@@ -1,7 +1,11 @@
 <?php
-function addplugin($path) {
+function addplugin($path, $name='') {
+	$path=$_SERVER['DOCUMENT_ROOT'] . '/' . BASE_URL . $path;
 	addincludepath($path);
-	define(strtoupper($path)."_BASE_URL", BASE_URL.$path."/");
+	if (empty($name)) {
+		$name=strtoupper($path);
+	}
+	define($name."_BASE_URL", BASE_URL.$path."/");
 }
 
 function addincludepath($path) {

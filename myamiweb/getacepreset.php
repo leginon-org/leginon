@@ -20,10 +20,7 @@
 <?php
 require "inc/viewer.inc";
 require "inc/leginon.inc";
-require "inc/particledata.inc";
-if (!defined(PARTICLE_DB)) {
-	define(PARTICLE_DB, $_SESSION['processingdb']);
-}
+
 $imgId=$_GET['id'];
 $preset=$_GET['preset'];
 
@@ -32,6 +29,10 @@ $imgId = $newimage['id'];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo['sessionId'];
 
+$newexpId = $sessionId; // --- variable use by setdatabase() in inc/project.inc
+require "inc/project.inc";
+
+require "inc/particledata.inc";
 
 $ctf = new particledata();
 $runId = $ctf->getLastCtfRun($sessionId);

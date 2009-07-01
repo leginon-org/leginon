@@ -25,7 +25,6 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'maxpix' => 255,
 		'filter' => 'default',
 		'fft' => false,
-		'colormap' => false,
 		'gradient' => false,
 		'binning' => 'auto',
 		'scalebar' => true,
@@ -89,7 +88,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($p['autoscale']) {
 			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
 			
-			$densitymax = ($p['colormap']) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+			$densitymax = MAX_PIXEL_VAL;
 			if ($type=="c") {
 				$mrcimg = mrcread($pic);
 				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $arg1, $arg2);
@@ -135,10 +134,10 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		}
 
 		else if (function_exists($p['filter']))
-			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning);
+			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $binning);
 
 		else
-			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning);
+			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $binning);
 
 		}
 

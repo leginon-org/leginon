@@ -8,7 +8,35 @@
  *	
  */
 
-require_once('inc/mysql.inc');
+require_once 'inc/mysql.inc';
+
+function startcache($session) {
+	if (ENABLE_CACHE!=1) {
+		return;
+	}
+  $script=CACHE_SCRIPT;
+  if (isrunning($script, "session=$session")) {
+    return;
+  }
+  $outpath=CACHE_PATH.$session;
+  $log=CACHE_PATH.$session.".log";
+  $option="session='$session' s=512 outpath='$outpath'";
+  $cmd="/usr/bin/php -q $script $option > $log &";
+  exec($cmd);
+}
+
+function isrunning($cmd, $pattern) {
+  $isrunning=false;
+  $cmd="ps -ef | grep $cmd";
+  exec($cmd, $res);
+  foreach($res as $row) {
+    if (ereg($pattern, $row)) {
+      $isrunning=true;
+      break;
+    }
+  }
+  return $isrunning;
+}
 
 class cachedb {
 

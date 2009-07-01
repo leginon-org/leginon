@@ -7,14 +7,14 @@
  *
  *	Simple viewer to view a image using mrcmodule
  */
+$expId = $_GET['expId'];
 
 require "inc/particledata.inc";
 require "inc/leginon.inc";
-require "inc/project.inc";
-require "inc/processing.inc";
+require_once "inc/project.inc";
+require_once "inc/processing.inc";
 require "inc/summarytables.inc";
   
-$expId = $_GET['expId'];
 $projectId = (int) getProjectFromExpId($expId);
 //echo "Project ID: ".$projectId." <br/>\n";
 $formAction=$_SERVER['PHP_SELF']."?expId=$expId";

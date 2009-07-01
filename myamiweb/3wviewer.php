@@ -1,7 +1,8 @@
 <?php
 require "inc/leginon.inc";
-require "inc/project.inc";
 require "inc/viewer.inc";
+require "inc/project.inc";
+require "inc/cachedb.inc";
 $ptcl = (@require "inc/particledata.inc") ? true : false;
 
 $sessionId = ($_POST['sessionId']) ? $_POST['sessionId'] : $_GET['expId'];
@@ -12,6 +13,10 @@ $preset = $_POST[$_POST['controlpre']];
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
+
+$sessioninfo=$leginondata->getSessionInfo($sessionId);
+$session=$sessioninfo['Name'];
+startcache($session);
 
 $projectdata = new project();
 $projectdb = $projectdata->checkDBConnection();
@@ -28,11 +33,15 @@ if ($ptcl) {
 	$particle = new particledata();
 	$particleruns=$particle->getParticleRunIds($sessionId);
 }
+
 // --- update SessionId while a project is selected
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
-if (!$sessionId_exists)
-	$sessionId=$sessions[0][id];
+if (!$sessionId_exists) {
+	$sessionId=$sessions[0]['id'];
+}
+
 $filenames = $leginondata->getFilenames($sessionId, $preset);
+
 // --- Get data type list
 $datatypes = $leginondata->getAllDatatypes($sessionId);
 

@@ -11,9 +11,7 @@ $title = "Image Adjust";
 if ($displayname=$_GET['displayname'])
 	$title .=" - ".$displayname;
 
-if (!$cmap = $_GET['colormap'])
-	$cmap = 0;
-$defaultmax = ($cmap) ? 1274 : 255;
+$defaultmax = 255;
 if (!$min=$_GET['pmin'])
 	$min=0;
 if (!$max=$_GET['pmax'])
@@ -94,11 +92,9 @@ $binningtypes = $filterdata->getBinningTypes();
 <script type="text/javascript"><!--
 <?php
 echo"
-var jsmaxgradcolor = 1274
 var jsmaxgrad = 255
 var jsminpix = $min
 var jsmaxpix = $max
-var jscolormap = $cmap
 var jsmingradpix = 0
 var jsmaxgradpix = $defaultmax
 var jsbaseurl = '$baseurl/'
@@ -262,7 +258,6 @@ function update() {
 		if (jsfilter!="default")
 			eval("parentwindow.toggleButton('"+jsviewname+"filter_bt', 'filter_bt')");
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
-	parentwindow.setcolormap(jsviewname,jscolormap);
 	parentwindow.setautoscale(jsviewname,jsautoscale);
 	parentwindow.setloadfromjpg(jsviewname,jsloadfromjpg);
 	if (qualitylist = document.adjustform.quality)
@@ -282,16 +277,6 @@ function init(){
 	f(jsloadfromjpg)
   this.focus()
 } 
-
-function setcolor() {
-	if (c=document.adjustform.colormap) {
-	}
-	if (i=document.getElementById('imggrad')) {
-
-		i.src="img/dfe/grad.php?w=15&h=15&colormap="+jscolormap
-	}
-	jscolormap=(jscolormap==1) ? 0 : 1
-}
 
 function f(state) {
 	if (state==0) {

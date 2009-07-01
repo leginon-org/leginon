@@ -25,10 +25,10 @@ if ($t=='png') {
 	$ext = "jpg";
 }
 
-$colormap = ($_GET['colormap']==1) ? "1" : "0";
+
 $autoscale = ($_GET['autoscale']==1) ? true : false;
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
-$maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
+$maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
 $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
@@ -47,7 +47,6 @@ if ($g) {
 		'maxpix' => $maxpix,
 		'filter' => $filter,
 		'fft' => $fft,
-		'colormap' => $colormap,
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
@@ -79,7 +78,6 @@ function getImageFile($filename, $params = array()) {
 		'maxpix' => 255,
 		'filter' => 'default',
 		'fft' => false,
-		'colormap' => false,
 		'binning' => 'auto',
 		'scalebar' => true,
 		'loadtime' => false,
@@ -113,7 +111,7 @@ function getImageFile($filename, $params = array()) {
 		if ($p['autoscale']) {
 			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
 			
-			$densitymax = ($p['colormap']) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL;
+			$densitymax = MAX_PIXEL_VAL;
 			if ($type=="c") {
 				$mrcimg = mrcread($pic);
 				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $densitymax, $arg1, $arg2);
@@ -144,14 +142,14 @@ function getImageFile($filename, $params = array()) {
 			return $imgmrc;
 		}
 		if ($p['fft']) {
-			$img = getfft($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning, $p['autoscale']);
+			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
 		}
 
 		else if (function_exists($p['filter']))
-			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning);
+			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $binning);
 
 		else {
-			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $p['colormap'], $binning);
+			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $binning);
 		}
 
 

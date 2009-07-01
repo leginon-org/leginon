@@ -55,10 +55,9 @@ if ($cache) {
 if (!$displayparticle = $_GET['psel']) 
 	$displayparticle = false;
 
-$colormap = ($_GET['colormap']==1) ? "1" : "0";
 $autoscale = ($_GET['autoscale']==1) ? true : false;
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
-$maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
+$maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
 $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
@@ -78,7 +77,6 @@ if ($g) {
 		'maxpix' => $maxpix,
 		'filter' => $filter,
 		'fft' => $fft,
-		'colormap' => $colormap,
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
 		'displaytargets' => $displaytarget,
@@ -103,7 +101,6 @@ if ($g) {
 				'minpix' => $minpix,
 				'maxpix' => $maxpix,
 				'binning' => $binning,
-				'colormap' => $colormap,
 				'scalebar'=>false
 			);
 		

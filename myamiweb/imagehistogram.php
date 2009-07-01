@@ -23,9 +23,8 @@ if(!$imgId=$_GET['id']) {
 	exit;
 }
 $preset=$_GET['preset'];
-$colormap = ($_GET['colormap']==1) ? "1" : "0";
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
-$maxpix = ($_GET['xp']) ? $_GET['xp'] : (($colormap) ? 1274 : 255);
+$maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
 $size = $_GET['s'];
 $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
@@ -39,7 +38,6 @@ $params = array (
 	'maxpix' => $maxpix,
 	'filter' => $filter,
 	'fft' => $fft,
-	'colormap' => $colormap,
 	'binning' => $binning
 );
 

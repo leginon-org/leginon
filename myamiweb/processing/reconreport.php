@@ -20,6 +20,7 @@ if (!$reconId = $_GET['reconId'])
 	$reconId=false;
 $expId = $_GET['expId'];
 
+
 $formAction = $_SERVER['PHP_SELF']."?expId=$expId&reconId=$reconId";
 
 $refine_params_fields = array('refinerun', 'ang', 'mask', 'imask', 'pad', 'hard', 'classkeep', 'classiter', 'median', 'phasecls', 'refine','cckeep','minptls');

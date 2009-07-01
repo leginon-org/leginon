@@ -32,7 +32,6 @@ if ($t=='png') {
 }
 
 
-$colormap = ($_GET['colormap']==1) ? "1" : "0";
 $gradient= ($_GET['gr']) ? $_GET['gr']:false;
 $autoscale = ($_GET['autoscale']) ? $_GET['autoscale'] : false;
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
@@ -65,7 +64,6 @@ if ($g) {
 		'maxpix' => $maxpix,
 		'filter' => $filter,
 		'fft' => $fft,
-		'colormap' => $colormap,
 		'gradient' => $gradient,
 		'binning' => $binning,
 		'scalebar' => $displayscalebar,
@@ -94,7 +92,6 @@ if ($g) {
 				'minpix' => $minpix,
 				'maxpix' => $maxpix,
 				'binning' => $binning,
-				'colormap' => $colormap,
 				'autoscale' => $autoscale,
 				'scalebar'=>false
 			);

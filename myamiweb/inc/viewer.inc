@@ -11,9 +11,11 @@ require_once "config.php";
 require_once "inc/util.inc";
 require_once "inc/mysql.inc";
 require_once "inc/button.inc";
-require_once "inc/dbemauth.php";
 require_once "inc/pref.inc";
 require_once "inc/ace.inc";
+if (ENABLE_LOGIN) {
+	require_once "inc/dbemauth.php";
+}
 
 $VIEWNB=0;
 
@@ -577,7 +579,6 @@ class view {
 		$this->gradient = "";
 		$this->filter= "default";
 		$this->binning= "auto";
-		$this->colormap = "0";
 		$this->autoscale = "s;3";
 		$this->displayfilename = "0";
 		$this->loadjpg= "1";
@@ -598,7 +599,6 @@ class view {
 		$this->filtermemo = $this->name.'f';
 		$this->maxpixmemo = $this->name.'maxpix';
 		$this->minpixmemo = $this->name.'minpix';
-		$this->colormapmemo = $this->name.'cm';
 		$this->autoscalememo = $this->name.'autos';
 		$this->displayfilenamememo= $this->name.'df';
 		$this->loadjpgmemo= $this->name.'df';
@@ -621,8 +621,6 @@ class view {
 			$this->minpix = $minpix;
 		if ($maxpix=$_REQUEST[$this->maxpixmemo])
 			$this->maxpix = $maxpix;
-		if ($colormap=$_REQUEST[$this->colormapmemo])
-			$this->colormap= $colormap;
 		if ($autoscale=$_REQUEST[$this->autoscalememo])
 			$this->autoscale= $autoscale;
 		if ($displayfilename=$_REQUEST[$this->displayfilenamememo])
@@ -664,11 +662,6 @@ class view {
 	function setFFT($state) {
 		if ($state)
 			$this->btfftstate = "on";
-	}
-
-	function setColorMap($state) {
-		if ($state)
-			$this->colormap= "1";
 	}
 
 	function setAutoScale($state) {
@@ -837,7 +830,6 @@ class view {
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
 			.'var jsgradient'.$this->name.'="'.$this->gradient.'";'.$this->crlf
-			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
 			.'var jsautoscale'.$this->name.'="'.$this->autoscale.'";'.$this->crlf
 			.'var jsdisplayfilename'.$this->name.'="'.$this->displayfilename.'";'.$this->crlf
 			.'var jsloadjpg'.$this->name.'="'.$this->loadjpg.'";'.$this->crlf
@@ -987,7 +979,6 @@ class view {
 		<input type="hidden" name="'.$this->gradientmemo.'" value="'.$this->gradient.'"> 
 		<input type="hidden" name="'.$this->binningmemo.'" value="'.$this->binning.'"> 
 		<input type="hidden" name="'.$this->filtermemo.'" value="'.$this->filter.'">
-		<input type="hidden" name="'.$this->colormapmemo.'" value="'.$this->colormap.'">
 		<input type="hidden" name="'.$this->autoscalememo.'" value="'.$this->autoscale.'">
 		<input type="hidden" name="'.$this->displayfilenamememo.'" value="'.$this->displayfilename.'">
 		<input type="hidden" name="'.$this->loadjpgmemo.'" value="'.$this->loadjpg.'">
@@ -1208,8 +1199,7 @@ class view {
 //		$filter = ($this->filter=='default') ? "no filter": "filter:".$this->filter;
 		$minpix = ($this->minpix) ? "&min=".$this->minpix : "";
 		$maxpix = ($this->maxpix) ? "&max=".$this->maxpix : "";
-		$colormap = ($this->colormap) ? "&colormap=".$this->colormap : "";
-		$gradoptions = "h=12&w=100&dm=1".$minpix.$maxpix.$colormap;
+		$gradoptions = "h=12&w=100&dm=1".$minpix.$maxpix;
 		$gradient = "img/dfe/grad.php?".$gradoptions;
 		$imgstatus = "<img alt='gradient' name='".$this->name."imgstatgrad' border='0' src='".$gradient."'> ".$settings_icon;
 		$htmlframe .= $imgstatus;
@@ -1303,7 +1293,9 @@ function add_comment_box($name) {
 }
 
 function viewer_header($title="", $javascript="", $onload="") {
-	global $_SERVER, $dbemauth;
+	global $_SERVER;
+	if (ENABLE_LOGIN) {
+	global $dbemauth;
 	$redirect=$_SERVER['PHP_SELF'];
 	$authorized_files=array('login.php', 'index.php', 'lostpass.php', 'register.php', 'confirm.php');
 
@@ -1317,6 +1309,7 @@ function viewer_header($title="", $javascript="", $onload="") {
 	$login_check = $dbemauth->is_logged();
 	$username = $login_check[0];
 	$privilege = $login_check[2];
+	}
 	$url = "ln=".urlencode($_SERVER['REQUEST_URI']);
 	$path = getPathFromString($_SERVER['SCRIPT_NAME']);
 	$onload = (empty($onload)) ? '' : 'onload="'.$onload.'"';
@@ -1341,6 +1334,7 @@ function viewer_header($title="", $javascript="", $onload="") {
 	</head>
 	<body '.$onload.' >
 ';
+if (ENABLE_LOGIN) {
 	if ($username) {
 		echo '<a class="header" href="logout.php">[Logout '.$username.']</a>';
 		echo '<a class="header" href="prefs.php">['.$username.' Prefs]</a>';
@@ -1349,6 +1343,7 @@ function viewer_header($title="", $javascript="", $onload="") {
 			echo '<a class="header" href="login.php?'.$url.'">[Login]</a>';
 		echo '<a class="header" href="register.php?'.$url.'">[register]</a>';
 	}
+}
 }
 
 function viewer_footer() {
