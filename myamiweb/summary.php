@@ -52,10 +52,10 @@ function init() {
 <table border=0 cellpadding=10>
 <tr>
  <td>
-  <A class="header" HREF="index.php">&lt;index&gt;</A>
+  <a class="header" HREF="index.php">&lt;index&gt;</a>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?expId=<?php echo $expId; ?>">&lt;view <?php echo $title; ?>&gt;</A>
+  <a class="header" HREF="3wviewer.php?expId=<?php echo $expId; ?>">&lt;view <?php echo $title; ?>&gt;</a>
  </td>
 </tr>
 </table>

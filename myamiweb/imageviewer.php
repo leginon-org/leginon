@@ -83,9 +83,9 @@ $viewer->add($view1);
 $javascript .= $viewer->getJavascriptInit();
 viewer_header('image viewer', $javascript, 'initviewer()');
 ?>
-<a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId ?>">[summary]</A>
-<a class="header" target="processing" href="processing/index.php?expId=<?php echo $sessionId; ?>">[processing]</A>
-<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId=<?php echo $sessionId; ?>">[make jpgs]</A>
+<a class="header" target="summary" href="summary.php?expId=<?php echo $sessionId ?>">[summary]</a>
+<a class="header" target="processing" href="processing/index.php?expId=<?php echo $sessionId; ?>">[processing]</a>
+<a class="header" target="make jpgs" href="processing/runJpgMaker.php?expId=<?php echo $sessionId; ?>">[make jpgs]</a>
 <?php
 $viewer->display();
 viewer_footer();

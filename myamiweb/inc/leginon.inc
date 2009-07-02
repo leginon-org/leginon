@@ -1504,8 +1504,9 @@ class leginondata {
 	            $kname="UNIQUE|$kname";
 	         if(!isset($index[$kname]))
 	             $index[$kname] = array();
-	         $index[$kname][] = $this->addBackquotes($row['Column_name']);
-	         $index[$kname]['type'] = $row['Index_type'];
+						$subpart=($row['Sub_part']) ? '('.$row['Sub_part'].')' : '';
+						$index[$kname][] = $this->addBackquotes($row['Column_name']).$subpart;
+						$index[$kname]['type'] = $row['Index_type'];
 	    }
 
 	    while(list($x, $columns) = @each($index))
@@ -1608,17 +1609,26 @@ class leginondata {
 			.  '-' . $crlf
 			.  '- Tables: ' . $crlf;
 
+		$definition=$content='';
 		foreach($tables as $table) {
+			$value=false;
+			if (is_array($table)) {
+				$table=$table[0];
+				$value=$table[1];
+			}
 			if (!$this->mysql->SQLTableExists($table))
 				continue;
 			$definition .= $this->getSQLTableDefinitionXML($table);
+			if ($value) {
+				$this->getXMLData($table, $content);
+			}
 			$dump .=  '-	'.$table. $crlf;
 		}
 
 		$dump .=   '-' . $crlf
 			.  '-->' . $crlf . $crlf
 			.  '<defaulttables>' . $crlf;
-		$this->buildXML($definition, '', $dump);
+		$this->buildXML($definition, $content, $dump);
 		$dump .= "</defaulttables>" . $crlf;
 		return $dump;
 	}
@@ -1774,9 +1784,18 @@ class leginondata {
 	function importTables($filename) {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
+		$sqldata = $app->getSQLDataQueries();
 		$fieldtypes = $app->getFieldTypes();
-		if ($this->mysql->checkDBConnection())
+		if ($this->mysql->checkDBConnection()) {
 			$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
+			foreach ((array)$sqldata as $table=>$queries) {
+				foreach($queries as $query) {
+					eval("\$sqlinsert= \"".addslashes($query)."\";");
+						$this->mysql->SQLQuery($sqlinsert,true);
+				}
+			}
+		}
+			return true;
 	}
 
 	function importCalibrations($xmldata, $scopeId, $cameraId) {

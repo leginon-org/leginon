@@ -34,10 +34,10 @@ $timings = $leginondata->getTiming($sessionId, $preset);
 <table border="0" cellpadding=10>
 <tr>
  <td>
-  <A class="header" HREF="index.php">&lt;index&gt;</A>
+  <a class="header" HREF="index.php">&lt;index&gt;</a>
  </td>
  <td>
-  <A class="header" HREF="3wviewer.php?sessionId=<?=$sessionId; ?>">&lt;view <?=$title; ?>&gt;</A>
+  <a class="header" HREF="3wviewer.php?sessionId=<?=$sessionId; ?>">&lt;view <?=$title; ?>&gt;</a>
  </td>
 </tr>
 </table>
