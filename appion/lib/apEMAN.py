@@ -306,6 +306,7 @@ def getCC(ref,img):
 	cc=cc/math.sqrt(var1*var2)
 	return(cc)
 
+#=====================
 def getClassInfo(classes):
 	# read a classes.*.img file, get # of images
 	imgnum, imgtype = EMAN.fileCount(classes)
@@ -324,4 +325,14 @@ def getClassInfo(classes):
 		if i%2==0:
 			projeulers.append(eulers)
 	return projeulers
+
+#=====================
+def make3d(stack, out, sym="c1", mode=2, hard=None):
+	""" use eman make3d to create a density from a class averages stack"""
+	apDisplay.printMsg("creating 3d density: %s" % out)
+	emancmd="make3d %s out=%s sym=%s mode=%d" % (stack, out, sym, mode)
+	if hard is not None:
+		emancmd+=" hard=%d" % hard
+	executeEmanCmd(emancmd)
+	return
 

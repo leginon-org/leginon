@@ -20,6 +20,7 @@ import apDisplay
 import apStack
 import apEulerCalc
 import apEulerJump
+import apEMAN
 
 def getParticleInfo(reconid, iteration):
 	"""
@@ -100,35 +101,6 @@ def makeClassAverages(lst, outputstack, classdata, params):
 	avg.applyMask(params['mask'],0)
 	avg.writeImage(outputstack,-1)
 	
-def makeEvenOddClasses(lst,classdata,params):
-	f=open(lst,'r')
-	f.readline()
-	lines=f.readlines()
-	f.close()
-	even=open('even.lst','w')
-	odd=open('odd.lst','w')
-	even.write("#LST\n")
-	odd.write("#LST\n")
-	neven=0
-	nodd=0
-	for line in range(0,len(lines)):
-		if line%2:
-			nodd+=1
-			odd.write(lines[line])
-		else:
-			neven+=1
-			even.write(lines[line])
-	even.close()
-	odd.close()
-	evenstack=os.path.splitext(params['outputstack'])[0]+'.even.hed'
-	oddstack=os.path.splitext(params['outputstack'])[0]+'.odd.hed'
-	
-	if neven>0:
-		makeClassAverages('even.lst',evenstack,classdata,params)
-	if nodd>0:
-		makeClassAverages('odd.lst',oddstack,classdata,params)
-	os.remove('even.lst')
-	os.remove('odd.lst')
 
 def removePtclsByLst(rejectlst, params):
 	"""
@@ -152,6 +124,37 @@ def removePtclsByLst(rejectlst, params):
 class makeGoodAveragesScript(appionScript.AppionScript):
 
 	#=====================
+	def makeEvenOddClasses(self,lst,classdata):
+		f=open(lst,'r')
+		f.readline()
+		lines=f.readlines()
+		f.close()
+		even=open('even.lst','w')
+		odd=open('odd.lst','w')
+		even.write("#LST\n")
+		odd.write("#LST\n")
+		neven=0
+		nodd=0
+		for line in range(0,len(lines)):
+			if line%2:
+				nodd+=1
+				odd.write(lines[line])
+			else:
+				neven+=1
+				even.write(lines[line])
+		even.close()
+		odd.close()
+		self.params['evenstack']=os.path.splitext(self.params['outputstack'])[0]+'.even.hed'
+		self.params['oddstack']=os.path.splitext(self.params['outputstack'])[0]+'.odd.hed'
+		
+		if neven>0:
+			makeClassAverages('even.lst',self.params['evenstack'],classdata,self.params)
+		if nodd>0:
+			makeClassAverages('odd.lst',self.params['oddstack'],classdata,self.params)
+		os.remove('even.lst')
+		os.remove('odd.lst')
+
+	#=====================
 	def removePtclsByJumps(self, particles, rejectlst):
 		eulerjump = apEulerJump.ApEulerJump()
 		numparts = len(particles)
@@ -162,6 +165,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		if not re.match("^[cd][0-9]+$", symmetry.lower()) and not re.match("^icos", symmetry.lower()):
 			apDisplay.printError("Cannot calculate euler jumps for symmetry: "+symmetry)
 			return
+		self.params['sym']=symmetry.lower()
 
 		### prepare file
 		f = open('jumps.txt','w', 0666)
@@ -251,7 +255,13 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			action="store_true", help="make even and odd averages")
 		self.parser.add_option("--skip-avg", dest="skipavg", default=False,
 			action="store_true", help="skip class averaging step")
-
+		self.parser.add_option("--hard", dest="hard", type="int",
+			help="specifies how well the class averages must match the model to be included")
+		self.parser.add_option("--mode", dest="mode", type="int", default=2,
+			help="specifies the interpolation size")
+		self.parser.add_option("--make3d", dest="make3d", metavar="NAME",
+			help="name of output density file")
+	
 	#=====================
 	def checkConflicts(self):
 		if self.params['reconid'] is None:
@@ -304,11 +314,9 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			# file to hold particles of this class
 			clsfile=open('clstmp.lst','w')
 			clsfile.write('#LST\n')
-			apDisplay.printMsg(key)
 
 			classnum+=1
 			if classnum%10 == 1:
-				apDisplay.printMsg("\b\b\b\b\b\b\b\b\b\b\b\b\b\b")
 				apDisplay.printMsg(str(classnum)+" of "+(str(len(classkeys))))
 			images=EMAN.EMData()
 
@@ -342,13 +350,21 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			if self.params['skipavg'] is False:
 				makeClassAverages('clstmp.lst', self.params['outputstack'], classes[key], self.params)
 			
-			if self.params['eotest']:
-				makeEvenOddClasses('clstmp.lst',classes[key],self.params)
+			if self.params['eotest'] is True:
+				self.makeEvenOddClasses('clstmp.lst',classes[key])
 
 		apDisplay.printMsg("\n")
 		reject.close()
 		keepfile.close()
 		os.remove('clstmp.lst')
+
+		# make 3d density file if specified:
+		if self.params['make3d'] is not None:
+			apEMAN.make3d(self.params['stackname'], self.params['make3d'], sym=self.params['sym'], mode=self.params['mode'], hard=self.params['hard'])
+			if self.params['eotest'] is True:
+				apEMAN.make3d(self.params['oddstack'],"odd.mrc", sym=self.params['sym'],mode=self.params['mode'],hard=self.params['hard'])
+				apEMAN.make3d(self.params['evenstack'],"even.mrc", sym=self.params['sym'],mode=self.params['mode'],hard=self.params['hard'])
+				apEMAN.executeEmanCmd("proc3d odd.mrc even.mrc fsc=fsc.eotest")
 
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
