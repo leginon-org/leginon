@@ -22,16 +22,19 @@ if ($_POST['process']) {
 	$refId=$_GET['refId'];
 	$iter=$_GET['iter'];
 	$mask=$_POST['mask'];
+	$hard=$_POST['hard'];
 	$sigma=$_POST['sigma'];
 	$avgjump=$_POST['avgjump'];
 	$stackname=$_POST['avgname'];
+	$bpname=$_POST['bpname'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$rundir=$outdir."/".$runname;
-	$eotest=$_POST['eotest'];
 
 	if (!$stackname) createform('<B>ERROR:</B> Enter a name for new class average stack file');
+	if (!$bpname) createform('<B>ERROR:</B> Enter a name for new 3d density file');
 	if (!$mask) createform('<B>ERROR:</B> Enter a mask radius');
+	if (!$hard) createform('<B>ERROR:</B> Enter a hard value');
 	if ($avgjump=='') createform('<B>ERROR:</B> Enter a median euler jump');
 
 	$command = "makegoodaverages.py ";
@@ -39,12 +42,14 @@ if ($_POST['process']) {
 	$command.= "--reconid=$reconId ";
 	$command.= "--iter=$iter ";
 	$command.= "--mask=$mask ";
+	$command.= "--hard=$hard ";
 	$command.= "--stackname=$stackname ";
+	$command.= "--make3d=$bpname ";
 	$command.= "--runname=$runname ";
 	$command.= "--rundir=$rundir ";
 	if ($avgjump != '') $command.= "--avgjump=$avgjump ";
 	if ($sigma) $command.= "--sigma=$sigma ";
-	if ($eotest=='on') $command.="--eotest ";
+	$command.= "--eotest ";
 
 	// submit job to cluster
 	if ($_POST['process']=='Create new class averages'){
@@ -66,11 +71,11 @@ if ($_POST['process']) {
 	</td></tr>
 	<tr><td>file</td><td>$stackname</td></tr>
 	<tr><td>mask</td><td>$mask</td></tr>
+	<tr><td>hard</td><td>$hard</td></tr>
 	<tr><td>avgjump</td><td>$avgjump</td></tr>
 	<tr><td>iter</td><td>$iter</td></tr>
 	<tr><td>reconId</td><td>$reconId</td></tr>
 	<tr><td>sigma</td><td>$sigma</td></tr>
-	<tr><td>eotest</td><td>$eotest</td></tr>
 	</table>\n";
 	processing_footer();
 	exit;
@@ -95,17 +100,19 @@ function createform($extra=False) {
 	$refinfo = $particle->getRefinementRunInfo($reconId);
 	// get iteration parameters for specified iteration:
 	$paraminfo = $particle->getParamsFromRefinementDataId($refId);
+	print_r($paraminfo);
 	$runname = getTimestring();
 	$runname = "refine".$refId."_".$runname;
 
 	$iter=($_POST['iter']) ? $_POST['iter'] : $iter;
 	$mask=($_POST['mask']) ? $_POST['mask'] : $paraminfo['mask'];
+	$hard=($_POST['hard']) ? $_POST['hard'] : $paraminfo['EMAN_hard'];
 	$sigma=($_POST['sigma']) ? $_POST['sigma'] : '';
 	$avgjump=($_POST['avgjump']) ? $_POST['avgjump'] : '0';
 	$avgname=($_POST['avgname']) ? $_POST['avgname'] : 'goodavgs.hed';
+	$bpname=($_POST['bpname']) ? $_POST['bpname'] : 'threed.mrc';
 	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
-	$eocheck=($_POST['eotest']=='on' || !$_POST['run']) ? 'checked' : '';
 
 	echo "<FORM NAME='postproc' METHOD='POST' ACTION='$formAction'>\n";
 	echo "<TABLE cellpadding='5' BORDER=3 CLASS=tableborder>\n";
@@ -117,6 +124,9 @@ function createform($extra=False) {
 	echo "	<br />\n";
 	echo "	New classes stack file name:<br />\n";
 	echo "  <input type='text' name='avgname' size='25' value='$avgname'>\n";
+	echo "	<br />\n";
+	echo "	New 3d density file name:<br />\n";
+	echo "  <input type='text' name='bpname' size='25' value='$bpname'>\n";
 	echo "	<br />\n";
 	echo docpop('outdir','Output directory:');
 	echo "<br />\n";
@@ -137,8 +147,11 @@ function createform($extra=False) {
 	echo " 	<input type='text' name='mask' size='4' value='$mask'>\n";
 	echo docpop('mask','mask radius (in pixels)');
 	echo " 	<br />\n";
-	echo " 	<input type='checkbox' name='eotest' $eocheck>\n";
-	echo docpop('eotest',"create averages for eotest");
+	echo " 	<input type='text' name='hard' size='4' value='$hard'>\n";
+	echo docpop('hard','hard value for back projection');
+	echo " 	<br />\n";
+	echo " 	<input type='checkbox' name='make3d' $bpcheck>\n";
+	echo docpop('commit',"Commit results to database");
 	echo " 	</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
