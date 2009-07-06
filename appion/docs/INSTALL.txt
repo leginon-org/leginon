@@ -6,7 +6,7 @@ The Appion Team
 
 Jonathan Brownell, Bridget Carragher, Anchi Cheng, Denis Fellmann, Christopher Irving, Gabe Lander, Pick-wei Lau, Dmitry Lyumkis, Anke Mulder, Sunita Nayak, Clint S. Potter, Jim Pulokas, Joel Quispe, Scott Stagg, Neil R. Voss, and Craig Yoshioka
 
-Steps to install Appion on a CentOS 5.2 machine
+Steps to install Appion on a CentOS 5.3 machine
 
 = Introduction =
 
@@ -31,13 +31,13 @@ CentOS vs. RHEL
 + ISO files are available at
  - http://wiki.centos.org/Download
 + Click on i386 for 32bit machines or x86_64 for 64bit machines
-+ Pick a mirror and download 'CentOS-5.2-x86_64-bin-DVD.iso' file
++ Pick a mirror and download 'CentOS-5.3-x86_64-bin-DVD.iso' file
 +
 
 == Burn ISO file to DVD disk ==
 
 Use dvdrecord in Linux to burn disk
-``` $ dvdrecord -v -dao gracetime=10 dev=/dev/dvd speed=16 CentOS-5.2-i386-bin-DVD.iso
+``` $ dvdrecord -v -dao gracetime=10 dev=/dev/dvd speed=16 CentOS-5.3-i386-bin-DVD.iso
 
 == Install CentOS 5 with default packages ==
 
