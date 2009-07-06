@@ -100,7 +100,7 @@ function createform($extra=False) {
 	$refinfo = $particle->getRefinementRunInfo($reconId);
 	// get iteration parameters for specified iteration:
 	$paraminfo = $particle->getParamsFromRefinementDataId($refId);
-	print_r($paraminfo);
+	// print_r($paraminfo);
 	$runname = getTimestring();
 	$runname = "refine".$refId."_".$runname;
 
