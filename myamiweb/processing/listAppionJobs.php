@@ -54,7 +54,7 @@ function checkJobs($showjob=False,$showall=False,$extra=False) {
 				$extraKeys['particles per img']=$ppimg;
 				$perimg=$running/$numimg;
 				$perimg_m=floor($perimg/60);
-				$perimg_s=floor(($perimg-$perimg_m/60)/60);
+				$perimg_s=floor($perimg-$perimg_m*60);
 				$extraKeys['time per img'] = ($perimg_m>0) ? "$perimg_m min, ":'';
 				$extraKeys['time per img'].= ($perimg_s>0) ? "$perimg_s sec":'';
 				$extraKeys['min']=format_sci_number($pstats['min'],4);
