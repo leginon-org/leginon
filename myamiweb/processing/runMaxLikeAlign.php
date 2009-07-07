@@ -50,6 +50,8 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set max last ring radius
 	$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
+	$javascript .= "	if (bestbin < 1) {\n";
+	$javascript .= "	var bestbin = 1 ;}\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
 	$javascript .= "	estimatetime();\n";
 	// set particle & mask radius and lp
