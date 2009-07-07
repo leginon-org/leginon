@@ -1505,6 +1505,7 @@ class AcquisitionSettingsData(TargetWatcherSettingsData):
 			('save integer', bool),
 			('background', bool),
 			('use parent tilt', bool),
+			('reset tilt', bool),
 		)
 	typemap = classmethod(typemap)
 

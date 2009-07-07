@@ -133,6 +133,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'save integer': False,
 		'background': False,
 		'use parent tilt': False,
+		'reset tilt': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,

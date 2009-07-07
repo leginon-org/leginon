@@ -88,6 +88,7 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		self.widgets['drift between'] = wx.CheckBox(self, -1, 'Declare drift between targets')
 		self.widgets['background'] = wx.CheckBox(self, -1, 'Acquire in the background')
 		self.widgets['use parent tilt'] = wx.CheckBox(self, -1, 'Tilt the stage like its parent image')
+		self.widgets['reset tilt'] = wx.CheckBox(self, -1, 'Untilt stage when queue is done')
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -171,6 +172,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['use parent tilt'], (8, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(self.widgets['reset tilt'], (9, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
 		szright.Add(szmover, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
@@ -180,8 +183,8 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz.Add(szpausetime, (1, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sz_save, (2,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sbszsim, (3,0), (6,1), wx.ALIGN_BOTTOM)
-		sz.Add(sz_misc, (2,1), (7,1), wx.ALIGN_TOP)
-		sz.Add(szright, (0,2),(9,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sz_misc, (2,1), (8,1), wx.ALIGN_TOP)
+		sz.Add(szright, (0,2),(11,1), wx.ALIGN_CENTER_VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
 
 		return [sbsz]

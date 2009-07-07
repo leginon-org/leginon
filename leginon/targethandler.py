@@ -155,7 +155,7 @@ class TargetHandler(object):
 			if not self.queueupdate.isSet():
 				self.queueIdleFinish()
 				# close valves, stop doing everything or quit
-			
+		
 			self.setStatus('processing')
 			self.queueupdate.clear()
 			self.logger.info('received queue update')
@@ -178,6 +178,11 @@ class TargetHandler(object):
 				donetargetlist = leginondata.DequeuedImageTargetListData(session=self.session, list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 			self.player.play()
+			if self.settings['reset tilt']:
+				zerostage = {'a':0.0}
+				self.instrument.tem.setStagePosition(zerostage)
+				stageposition = self.instrument.tem.getStagePosition()
+				self.logger.info('return alhpa tilt to %.1f' % stageposition['a'])
 
 	def queueStatus(self, queuedata):
 		active = self.getListsInQueue(queuedata)
