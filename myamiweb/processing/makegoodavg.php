@@ -49,6 +49,7 @@ if ($_POST['process']) {
 	$command.= "--rundir=$rundir ";
 	if ($avgjump != '') $command.= "--avgjump=$avgjump ";
 	if ($sigma) $command.= "--sigma=$sigma ";
+	if ($_POST['commit']!='on') $command.= "--no-commit ";
 	$command.= "--eotest ";
 
 	// submit job to cluster
@@ -113,6 +114,7 @@ function createform($extra=False) {
 	$bpname=($_POST['bpname']) ? $_POST['bpname'] : 'threed.mrc';
 	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	echo "<FORM NAME='postproc' METHOD='POST' ACTION='$formAction'>\n";
 	echo "<TABLE cellpadding='5' BORDER=3 CLASS=tableborder>\n";
@@ -150,8 +152,8 @@ function createform($extra=False) {
 	echo " 	<input type='text' name='hard' size='4' value='$hard'>\n";
 	echo docpop('hard','hard value for back projection');
 	echo " 	<br />\n";
-	echo " 	<input type='checkbox' name='make3d' $bpcheck>\n";
-	echo docpop('commit',"Commit results to database");
+	echo " 	<input type='checkbox' name='commit' $commitcheck>\n";
+	echo docpop('commit',"Commit to Database");
 	echo " 	</td>\n";
 	echo "</tr>\n";
 	echo "<tr>\n";
