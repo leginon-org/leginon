@@ -525,7 +525,7 @@ class MainSizer(wx.StaticBoxSizer):
 
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
-			style = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
+			style = wx.ALIGN_CENTER
 			if isinstance(self.parameters[p], Entry):
 				style |= wx.FIXED_MINSIZE
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
