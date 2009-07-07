@@ -86,7 +86,7 @@ class SimTEM(tem.TEM):
 		return self.columnvalveposition
 
 	def setColumnValvePosition(self, state):
-		if state in self.getColumnValvePositions():
+		if state in ('open','closed'):
 			self.columnvalveposition = state
 		else:
 			raise RuntimeError('invalid column valve position %s' % (state,))
