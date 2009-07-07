@@ -393,7 +393,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			modq['hard']=self.params['hard']
 			modq['symmetry']=symdata
 			modq['iterid']=self.params['refineiter']
-			modq.insert()
+			if self.params['commit'] is True:
+				modq.insert()
 		else:
 			apDisplay.printError('no 3d volume was generated - check the class averages:')
 			apDisplay.printError(self.params['stackname'])
