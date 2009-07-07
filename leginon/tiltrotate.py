@@ -30,6 +30,7 @@ class TiltRotateRepeater(targetrepeater.TargetRepeater):
 			self.logger.warning("Please set to Bypass if you do not want to repeat")
 			return []
 		states = []
+		self.logger.info('tilt series =' + str(alphatilts))
 		for a in alphatilts:
 			rad = a * 3.14159 / 180.0
 			scope = leginondata.ScopeEMData()
