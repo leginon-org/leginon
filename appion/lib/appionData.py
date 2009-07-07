@@ -953,6 +953,9 @@ class Ap3dDensityData(Data):
 			('rctrun', ApRctRunData),
 			('otrrun', ApOtrRunData),
 			('session', leginondata.SessionData),
+			('hard', int),
+			('sigma', float),
+			('maxjump', float),
 		)
 	typemap = classmethod(typemap)
 leginondata.Ap3dDensityData=Ap3dDensityData

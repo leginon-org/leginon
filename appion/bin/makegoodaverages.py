@@ -21,6 +21,10 @@ import apStack
 import apEulerCalc
 import apEulerJump
 import apEMAN
+import apSymmetry
+import apVolume
+import apFile
+import apRecon
 
 def getParticleInfo(reconid, iteration):
 	"""
@@ -45,7 +49,7 @@ def getParticleInfo(reconid, iteration):
 	apDisplay.printMsg("querying particles on "+time.asctime())
 	refineparticledata = refinepartq.query()
 	apDisplay.printMsg("received "+str(len(refineparticledata))+" particles in "+apDisplay.timeString(time.time()-t0))
-	return (refineparticledata)
+	return (refineparticledata,refinedata[0])
 
 def determineClasses(particles):
 	"""Takes refineparticledata and returns a dictionary of classes"""
@@ -176,8 +180,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		f.write("\n")
 
 		### get stack particles
-		stackid = apStack.getStackIdFromRecon(self.params['reconid'], msg=True)
-		stackparts = apStack.getStackParticlesFromId(stackid)
+		stackparts = apStack.getStackParticlesFromId(self.params['stackid'])
 
 		### start loop
 		t0 = time.time()
@@ -188,7 +191,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			count += 1
 			partnum = stackpart['particleNumber']
 			f.write('%d\t' % partnum)
-			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=stackid, sym=symmetry)
+			jumpdata = eulerjump.getEulerJumpData(self.params['reconid'], stackpartid=stackpart.dbid, stackid=self.params['stackid'], sym=symmetry)
 			medians.append(jumpdata['median'])
 			if (jumpdata['median'] > self.params['avgjump']) and partnum not in rejectlst:
 				rejectlst.append(partnum)
@@ -271,6 +274,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 		if self.params['iter'] is None:
 			apDisplay.printError("enter an iteration for the final Eulers")
 		self.params['stackid'] = apStack.getStackIdFromRecon(self.params['reconid'])
+		self.params['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 
 	#=====================
 	def setRunDir(self):
@@ -283,7 +287,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		self.params['outputstack'] = os.path.join(self.params['rundir'], self.params['stackname'])
-		particles = getParticleInfo(self.params['reconid'], self.params['iter'])
+		particles,self.params['refineiter'] = getParticleInfo(self.params['reconid'], self.params['iter'])
 		stackdata = particles[0]['particle']['stack']
 		stack = os.path.join(stackdata['path']['path'], stackdata['name'])
 		classes,cstats = determineClasses(particles)
@@ -365,6 +369,35 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 				apEMAN.make3d(self.params['oddstack'],"odd.mrc", sym=self.params['sym'],mode=self.params['mode'],hard=self.params['hard'])
 				apEMAN.make3d(self.params['evenstack'],"even.mrc", sym=self.params['sym'],mode=self.params['mode'],hard=self.params['hard'])
 				apEMAN.executeEmanCmd("proc3d odd.mrc even.mrc fsc=fsc.eotest")
+
+		if os.path.exists(self.params['make3d']):
+			# run rmeasure
+			apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
+			box = apVolume.getModelDimensions(self.params['make3d'])
+			apDisplay.printMsg('inserting density into database')
+			symdata=apSymmetry.findSymmetry(self.params['sym'])
+			if not symdata:
+				apDisplay.printError('no symmetry associated with this model')
+			modq=appionData.Ap3dDensityData()
+			modq['session']=self.params['session']
+			modq['name']=os.path.basename(self.params['make3d'])
+			modq['path']=appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+			modq['boxsize']=box
+			modq['mask']=self.params['mask']
+			modq['pixelsize']=apix
+			modq['resolution']=apRecon.getResolutionFromFSCFile('fsc.eotest',box,apix,msg=True)
+			modq['rmeasure']=apRecon.runRMeasure(apix,self.params['make3d'])
+			modq['md5sum']=apFile.md5sumfile(self.params['make3d'])
+			modq['maxjump']=self.params['avgjump']
+			modq['sigma']=self.params['sigma']
+			modq['hard']=self.params['hard']
+			modq['symmetry']=symdata
+			modq['iterid']=self.params['refineiter']
+			modq.insert()
+		else:
+			apDisplay.printError('no 3d volume was generated - check the class averages:')
+			apDisplay.printError(self.params['stackname'])
+			apDisplay.printError('hard may be set too high, or avg euler jump set too low for the # of particles')
 
 		stackstr = str(stackdata.dbid)
 		reconstr = str(self.params['reconid'])
