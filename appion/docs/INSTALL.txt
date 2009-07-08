@@ -1,23 +1,55 @@
-Appion Install Manual: Steps to install Appion on a CentOS 5.3 machine
+Appion-CentOS Install Manual: 
+
 =====================
 The Appion Team
+
+Compiled on %%date(%B %d, %Y)
+
 
 = Authors =
 
 Jonathan Brownell, Bridget Carragher, Anchi Cheng, Denis Fellmann, Christopher Irving, Gabe Lander, Pick-wei Lau, Dmitry Lyumkis, Anke Mulder, Sunita Nayak, Clint S. Potter, Jim Pulokas, Joel Quispe, Scott Stagg, Neil R. Voss, and Craig Yoshioka
 
+
 = Introduction =
 
-As of July 2009, this document is still incomplete.
+These are the Steps to install Appion on a CentOS machine
+
+
+== THIS IS INCOMPLETE ==
+
+As of %%date(%B %Y), this document is still incomplete.
+
+
+== Architecture ==
+
+Appion is built upon Leginon architecture. If you have installed Leginon before, you will find the same three parts of Leginon system installation also applies to Appion systerm.
+
+The three parts are:
+
+- **Python-side** (//pyappion//) that are are either processing programs themselves or wrappers to processing packages used by 3DEM community.
+- **MySQL-side** (//appiondata//) that is the set up of database server.
+- **PHP-side** (//appionweb//) that includes php and java scripts at the Web server you need to set up to serve as the graphical user interface to the command scripts. 
+
+In addition, Appion also need:
+
+- processing packages not distributed by us, obviously. 
+
+Fortunately, all 3 servers can run on the same machine. If you have many users, it is recommended that you separate the system into 3 computers with one serves the python-side and processing packages and the one for the database, and one for the web. In such a case, you can divide the package requirement by the three server sides as well. 
+
+
+
+== What you need ==
 
 You will need 3 servers:
 
 - MySQL database
 - Web server
-- PBS processing machines
-
+- processing machines (preferrably a PBS system)
 
 Fortunately, all 3 servers can run on the same machine
+
+
 
 = Install CentOS operating system =
 
@@ -27,6 +59,7 @@ CentOS vs. RHEL
 
 The reason I mention CentOS is because I wanted to keep the guide really simple. Another student and I run appion on Fedora 10 and we've run appion on SuSe in the past. I know we gotten most bits working on MacOSX, but some of the python libraries contain ancient Fortran code that does not compile easily on a Mac. But CentOS is certainly not a requirement in general, it is just that the first iteration of the guide is written for CentOS.
 
+
 == Download the latest ISO disk of CentOS ==
 
 + ISO files are available at
@@ -35,10 +68,13 @@ The reason I mention CentOS is because I wanted to keep the guide really simple.
 + Pick a mirror and download 'CentOS-5.3-x86_64-bin-DVD.iso' file
 +
 
+
 == Burn ISO file to DVD disk ==
 
 Use dvdrecord in Linux to burn disk
+
 ``` $ dvdrecord -v -dao gracetime=10 dev=/dev/dvd speed=16 CentOS-5.3-i386-bin-DVD.iso
+
 
 == Install CentOS 5 with default packages ==
 
@@ -46,13 +82,16 @@ Use dvdrecord in Linux to burn disk
 - More information available at [CentOS Documentation http://wiki.centos.org/Documentation]
 
 
+
 == Add yourself to the sudoers file ==
 
-.Add this line below the root version:
+Add this line below the root version:
+
 ``` $ username ALL=(ALL)       ALL
 
 
 = Download additional software =
+
 
 == Install the additional package repositories ==
 
@@ -66,12 +105,15 @@ which can cause problems and conflicts (ATrpms is bad at this). So I recommend o
 EPEL and RPM Fusion. Read more here:
 [CentOS Additional Repositories http://wiki.centos.org/AdditionalResources/Repositories]
 
+
 === Extra Packages for Enterprise Linux (EPEL) ===
 - http://fedoraproject.org/wiki/EPEL
 - contains a wealth of packages required for appion
 
 .Download repository rpm and install
+
 ``` $ sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm
+
 
 
 === RPM Fusion ===
@@ -79,26 +121,33 @@ EPEL and RPM Fusion. Read more here:
 - good for mp3 and other patent limited software
 
 .Download repository rpms and install
+
 ```
 $ sudo rpm -Uhv http://download1.rpmfusion.org/free/el/updates/testing/5/`uname -i`/rpmfusion-free-release-5-0.1.noarch.rpm
 $ sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/el/updates/testing/5/`uname -i`/rpmfusion-nonfree-release-5-0.1.noarch.rpm
+
 ```
+
 
 
 == Update current packages ==
 
 .Update the updater to make life easier
+
 ``` $ sudo yum -y update yum
 .Update all packages
+
 ``` $ sudo yum -y update
 
 [NOTE]
 Download was over 264 MB. If you have a slow internet connection you can setup presto/deltarpms, [see this email http://www.linux-archive.org/centos-development/222706-presto-deltarpm.html]
 
 .If you have an Nvidia video card install the nvidia binary, will speed things up especially for chimera
+
 ``` $ sudo yum -y install nvidia-x11-drv
 
 .Install Complete list of additional packages:
+
 ```
 $ sudo yum -y install \
 python-tools python-devel \ # general applications
@@ -109,13 +158,18 @@ gcc-objc fftw3-devel gsl-devel \ #ACE2
 mysql mysql-server MySQL-python \ #Sinedon
 httpd php php-mysql phpMyAdmin \ #DBEM
 gcc-c++ openmpi-devel libtiff-devel \#Xmipp MPI
+
 ```
 .Clean up packages to save drive space
+
 ``` $ sudo yum clean all
 .Re-index the hard drive, this will come in handy later
+
 ``` $ sudo updatedb
 .Reboot the computer
+
 ``` $ sudo reboot
+
 
 == Download AMI software ==
 
@@ -135,7 +189,48 @@ and [Google Code http://code.google.com/p/appion/]
  - includes ACE1, ACE2, radermacher module, DoG Picker, TiltPicker, and FindEM
 
 
+=== from subversion ===
+Three packages need to be downloaded from Subversion:
+
+- Leginon, automated EM software
+
+``` $ svn co http://ami.scripps.edu/svn/leginon/branches/1.6/ leginon/
+
+- Pyami, common ami function
+
+``` $ svn co http://ami.scripps.edu/svn/pyami/trunk/ pyami/
+
+- Sinedon, mysql-python object-relational mapping
+
+``` $ svn co http://ami.scripps.edu/svn/sinedon/trunk/ sinedon/
+
+- Numextension python module
+
+``` $ svn co http://ami.scripps.edu/svn/numextension/trunk/ numextension/
+
+- Radermacher python module
+
+``` $ svn co http://ami.scripps.edu/svn/radermacher/trunk/ radermacher/
+
+- DBEM webpages
+
+``` $ svn co http://ami.scripps.edu/svn/dbem/trunk/ dbem/
+
+- pyAppion python scripts
+
+``` $ svn co http://ami.scripps.edu/svn/pyappion/trunk/ pyappion/
+
+=== online packages ===
+Other packages are located online at either http://ami.scripps.edu/software/ or http://appion.org/
+
+From AMI software, http://ami.scripps.edu/software/
+- dbemtools, http://ami.scripps.edu/software/dbemtools/
+
+From Google Code, http://appion.org/
+- pyappion, http://code.google.com/p/appion/downloads/list
+
 == Additional external software needed ==
+
 
 === Required ===
 
@@ -143,6 +238,7 @@ and [Google Code http://code.google.com/p/appion/]
 [download binary http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman]
  - **UCSF Chimera** v1.2509, newer versions have problems,
 [download binary http://www.cgl.ucsf.edu/chimera/olddownload.html]
+
 
 
 === Recommended ===
@@ -154,22 +250,27 @@ and [Google Code http://code.google.com/p/appion/]
 - **IMOD**, for tomography
 
 
+
 === Recommended, but costs money ===
 
 - **MATLAB**, for ACE1
 - **IMAGIC** v5, for alignment
 
 
-= Compile and setup programs =
+
+= Compile and setup python (pyappion) programs =
+
 
 == Compile FindEM ==
 
 - Goto pyappion/findem folder to make findem.exe
 
 - Compile the libraries and binary
+
 ``` $ make
 
 - Test findem.exe to see if it runs
+
 ``` $ make test
 
 [WARNING]
@@ -177,14 +278,17 @@ Only if the first part fails, you must add the path to libg2c.so library file.
 Otherwise skip to next section.
 
 - locate libg2c.so library file
+
 ``` $ ls /usr/lib/gcc/`uname -i`-redhat-linux/3.4.6/libg2c.so
 locate libg2c.so
 
 - Edit Makefile with location of libg2c.so
+
 ``` $ nano Makefile
 
 - Example: EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
 - Re-compile
+
 
 
 == Compile Ace2 ==
@@ -192,11 +296,14 @@ locate libg2c.so
 - Goto pyappion/ace2
 - compile the libraries and binary
 - test to see if program runs
+
 ```
 $ make
 $ ../bin/ace2.exe -h
 $ ../bin/ace2correct.exe -h
+
 ```
+
 
 
 == Compile Radermacher module ==
@@ -204,34 +311,48 @@ $ ../bin/ace2correct.exe -h
 - Goto pyappion/radermacher
 
 - compile the libraries and binary
+
 ``` $ python ./setup.py build
 
 - install module globally
+
 ``` $ sudo python ./setup.py install
 
 - test installed module
+
 ``` $ python
+
+
 ```
 >>> import radermacher
 >>> <Ctrl-D>
+
 ```
+
 
 
 == Compile Numextension module ==
 
 - Goto Leginon/numextension
 - compile the libraries and binary
+
 ``` $ python ./setup.py build
 
 - install module globally
+
 ``` $ sudo python ./setup.py install
 
 - test installed module
+
 ``` $ python
+
+
 ```
 >>> import numextension
 >>> <Ctrl-D>
+
 ```
+
 
 
 == Globally install python programs ==
@@ -240,45 +361,61 @@ $ ../bin/ace2correct.exe -h
 - Setup main python site-packages, depends on ARCH and VERSION
 
 .select the appropriate site-packages folder
+
 ```
 $ export SITEPKG=/usr/lib/python2.4/site-packages
 $ export SITEPKG=/usr/lib64/python2.4/site-packages
 $ export SITEPKG=/usr/lib64/python2.5/site-packages
+
 ```
 
 - Install software to main site-packages
+
+
 ``` $ sudo rsync -vaP pyami-r??/ $SITEPKG/pyami/
+
 ``` $ sudo rsync -vaP leginon-r????/ $SITEPKG/leginon/
+
 ``` $ sudo rsync -vaP sinedon-r??/ $SITEPKG/sinedon/
+
 
 
 == Setup leginon.cfg file in your home directory ==
 
 - Go into leginon directory (from Leginon.tgz)
 - Copy default.cfg to your home directory
+
 ``` $ cp config/default.cfg ~/leginon.cfg
 
 - Create a directory for images
+
 ``` $ mkdir -p ~/leginon/images/
 
 - Edit ~/leginon.cfg and add image path
+
 ``` $ nano ~/leginon.cfg
+
 ``` path: ~/leginon/images/
+
 
 
 == Test PyAppion ==
 
 - Go into pyappion directory
 - Add leginon to PYTHONPATH
+
 ``` $ export PYTHONPATH="$SITEPKG/leginon:$PYTHONPATH"
 
 - Add pyappion lib to PYTHONPATH
+
 ``` $ export PYTHONPATH="~/pyappion/lib:$PYTHONPATH"
 
 - Run the test script
+
 ``` $ ./check.sh
 
 - You can ignore EMAN, MATLAB, and chimera errors at this point
+
 
 
 == Install Xmipp ==
@@ -286,32 +423,50 @@ $ export SITEPKG=/usr/lib64/python2.5/site-packages
 - For more info, see http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware
 - Go into Xmipp source directory
 - Find openmpi directory
+
 ``` $ locate libmpi.so
+
 ``` /usr/lib/openmpi/1.2.5-gcc/lib/libmpi.so
 
 - Setup Xmipp to use openmpi by changing three lines in SConstruct
+
 ``` $ cp SConstruct SConstruct.orig
+
 ``` $ nano SConstruct
+
 ```
 opts.Add('MPI_INCLUDE', 'MPI headers dir ', '/usr/lib/openmpi/1.2.5-gcc/include/')
 opts.Add('MPI_LIBDIR', 'MPI libraries dir ', '/usr/lib/openmpi/1.2.5-gcc/lib/')
 opts.Add('MPI_LIB', 'MPI library', 'mpi')
+
 ```
 
 - Compile
+
 ``` $ sudo mpi-selector --yes --system --set `rpm --qf '%{NAME}-%{VERSION}-gcc-%{ARCH}\n' -q openmpi`
+
 ``` $ export PATH=$PATH:/usr/lib/openmpi/1.2.5-gcc/bin
+
 ``` $ ./scons.configure
+
 ``` $ ./scons.compile
 
 
-== Setup MySQL databases ==
+
+
+= Setup MySQL (appiondata) databases =
+
+
+== Setup MySQL users and databases ==
 
 - Set a MySQL root password, by default it is blank
+
 ``` $ mysqladmin -u root password NEWPASSWORD
 
 - Create a new user, database, and give user access to databases
+
 ``` $ mysql -u root -p
+
 ```
 mysql> CREATE USER 'appionuser';
 mysql> CREATE DATABASE leginondata;
@@ -323,55 +478,74 @@ mysql> GRANT ALL PRIVILEGES ON appiondata.* TO appionuser@"%";
 mysql> <Ctrl-D>
 ```
 
+
+== Setup Sinedon ==
+
 - Setup a sinedon.cfg in the home directory for all users
+
 ``` $ nano sinedon.cfg
 
 - add the following lines to //sinedon.cfg//
+
 ```
 [global]
 host:	'server ip address'
 
 [leginondata]
-db:	dbemdata
+db:	leginondata
 user:	appionuser
 
-[appionData]
-db:	dbappiondata
+[appiondata]
+db:	appiondata
 user:	appionuser
 
-[project]
-db:	project
+[projectdata]
+db:	projectdata
 user:	appionuser
 ```
 
+
+== Setup Database Tables using Sinedon ==
+
 - Go into sinedon directory
 - Fill databases with tables using maketables.py
+
 ``` $ ./maketables.py leginondata
 ``` $ ./maketables.py appionData
 ``` $ ./maketables.py project
 
 
-== Install a PBS system ==
+= Install webpages (appionweb) =
+
+
+
+
+
+= Install a PBS job submission system =
 
 You'll need to install a [Portable Batch System http://en.wikipedia.org/wiki/Portable_Batch_System] for job submission, such as [TORQUE http://en.wikipedia.org/wiki/TORQUE_Resource_Manager] or
 openPBS. I know Torque comes with Fedora 10, but not CentOS.
 
 - An RPM is available in the EPEL testing section
+
 ``` $ sudo yum -y --enablerepo=epel-testing install torque
 
 or another way to get packages
+
 
 ```
 $ wget http://centos.karan.org/el5/extras/testing/`uname -i`/RPMS/torque-2.1.9-1.el5.kb.`uname -i`.rpm
 $ #sudo yum -y localinstall torque-2.1.9-1.el5.kb.`uname -i`.rpm
 $ sudo rpm -Uhv torque-2.1.9-1.el5.kb.`uname -i`.rpm
+
 ```
 
 
-= Incomplete =
+
+= THIS IS INCOMPLETE =
 
 Sorry this document is NOT complete
 
-
+Compiled on %%date(%B %d, %Y)
 
 
