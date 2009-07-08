@@ -593,8 +593,10 @@ function createSyntheticDataset() {
 			<TR><td>model Id</TD><td>$modelId</TD></tr>
 			<TR><td>Pixelsize</TD><td>$pixelsize</TD></tr>
 			<TR><td>Boxsize</TD><td>$boxsize</TD></tr>
-			<TR><td># of Particles</TD><td>$projcount</TD></tr>
-			<TR><td>STD about projection axis</TD><td>$projstdev</TD></tr>
+			<TR><td># of Particles</TD><td>$projcount</TD></tr>";
+		if ($projection == "even") echo "<TR><td>Angular increment of projections</TD><td>$projinc</TD></tr>";
+		elseif ($projection == "preferred") echo "<TR><td>STD about projection axis</TD><td>$projstdev</TD></tr>";
+		echo"
 			<TR><td>Radius of random shift</TD><td>$shiftrad</TD></tr>
 			<TR><td>Angle of random rotation</TD><td>$rotang</TD></tr>";
 		if ($flip) echo "<TR><td>Randomly Flip</TD><td>YES</TD></tr>";
