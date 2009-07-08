@@ -264,6 +264,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			help="specifies the interpolation size")
 		self.parser.add_option("--make3d", dest="make3d", metavar="NAME",
 			help="name of output density file")
+		self.parser.add_option("--mass", dest="mass", type="float",
+			help="mass of the density in kDa, for chimera snapshot generation")
 	
 	#=====================
 	def checkConflicts(self):
@@ -385,7 +387,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			modq['boxsize']=box
 			modq['mask']=self.params['mask']
 			modq['pixelsize']=apix
-			modq['resolution']=apRecon.getResolutionFromFSCFile('fsc.eotest',box,apix,msg=True)
+			fscres=apRecon.getResolutionFromFSCFile('fsc.eotest',box,apix,msg=True)
+			modq['resolution']=res
 			modq['rmeasure']=apRecon.runRMeasure(apix,self.params['make3d'])
 			modq['md5sum']=apFile.md5sumfile(self.params['make3d'])
 			modq['maxjump']=self.params['avgjump']
@@ -395,6 +398,9 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			modq['iterid']=self.params['refineiter']
 			if self.params['commit'] is True:
 				modq.insert()
+
+			apChimera.filterAndChimera(self.params['make3d'], res=fscres, apix=apix, box=box,
+                                chimtype='snapshot', zoom=self.params['zoom'], sym=self.params['sym'], mass=self.params['mass'])
 		else:
 			apDisplay.printError('no 3d volume was generated - check the class averages:')
 			apDisplay.printError(self.params['stackname'])
