@@ -12,7 +12,8 @@ CVLIBS = -lfftw3 -lgsl -lgslcblas -lobjc -lm
 BINPATH=.
 CC = gcc 
 SVNDEF := -D'VERSION="svn revision $(shell svnversion -n .)"'
-CFLAGS := -O3 --static ${SVNDEF}
+CFLAGS := -O3 ${SVNDEF}
+#CFLAGS := -O3 --static ${SVNDEF}
 
 
 # --------------------- Code modules ----------------------------
