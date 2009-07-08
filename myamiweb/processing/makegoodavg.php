@@ -30,12 +30,16 @@ if ($_POST['process']) {
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$rundir=$outdir."/".$runname;
+	$zoom=$_POST['zoom'];
+	$mass=$_POST['mass'];
 
-	if (!$stackname) createform('<B>ERROR:</B> Enter a name for new class average stack file');
-	if (!$bpname) createform('<B>ERROR:</B> Enter a name for new 3d density file');
-	if (!$mask) createform('<B>ERROR:</B> Enter a mask radius');
-	if (!$hard) createform('<B>ERROR:</B> Enter a hard value');
-	if ($avgjump=='') createform('<B>ERROR:</B> Enter a median euler jump');
+	if (!$stackname) createform('<b>ERROR:</b> Enter a name for new class average stack file');
+	if (!$bpname) createform('<b>ERROR:</b> Enter a name for new 3d density file');
+	if (!$mask) createform('<b>ERROR:</b> Enter a mask radius');
+	if (!$hard) createform('<b>ERROR:</b> Enter a hard value');
+	if ($avgjump=='') createform('<B>ERROR:</b> Enter a median euler jump');
+	if (!$zoom) createform('<b>ERROR:</b> Enter a zoom value for snapshot');
+	if (!$mass) createform('<b>ERROR:</b> Enter the estimated mass for the density');
 
 	$command = "makegoodaverages.py ";
 	$command.= "--projectid=".$_SESSION['projectId']." ";
@@ -47,6 +51,8 @@ if ($_POST['process']) {
 	$command.= "--make3d=$bpname ";
 	$command.= "--runname=$runname ";
 	$command.= "--rundir=$rundir ";
+	$command.= "--zoom=$zoom ";
+	$command.= "--mass=$mass ";
 	if ($avgjump != '') $command.= "--avgjump=$avgjump ";
 	if ($sigma) $command.= "--sigma=$sigma ";
 	if ($_POST['commit']!='on') $command.= "--no-commit ";
@@ -63,7 +69,7 @@ if ($_POST['process']) {
 		exit;
 	}
 
-	processing_header("Create New Class Averages","Create New Class Averages");
+	processing_header("Remove Jumpers","Remove Jumpers");
 	echo"
 	<TABLE WIDTH='600' BORDER='1'>
 	<tr><td colspan='2'>
@@ -92,7 +98,7 @@ function createform($extra=False) {
 
 	$javascript=writeJavaPopupFunctions('appion');
 
-	processing_header("Create New Class Averages", "Create New Class Averages",$javascript);
+	processing_header("Remove Eulers Jumpers", "Remove Euler Jumpers",$javascript);
 
 	// write out errors, if any came up:
 	if ($extra) echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
@@ -105,7 +111,6 @@ function createform($extra=False) {
 	$runname = getTimestring();
 	$runname = "refine".$refId."_".$runname;
 
-	$iter=($_POST['iter']) ? $_POST['iter'] : $iter;
 	$mask=($_POST['mask']) ? $_POST['mask'] : $paraminfo['mask'];
 	$hard=($_POST['hard']) ? $_POST['hard'] : $paraminfo['EMAN_hard'];
 	$sigma=($_POST['sigma']) ? $_POST['sigma'] : '';
@@ -114,6 +119,8 @@ function createform($extra=False) {
 	$bpname=($_POST['bpname']) ? $_POST['bpname'] : 'threed.mrc';
 	$runname=($_POST['runname']) ? $_POST['runname'] : $runname;
 	$outdir=($_POST['outdir']) ? $_POST['outdir'] : $refinfo['path'].'/eulers';
+	$zoom=($_POST['zoom']) ? $_POST['zoom'] : '';
+	$mass=($_POST['mass']) ? $_POST['mass'] : '';
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	echo "<FORM NAME='postproc' METHOD='POST' ACTION='$formAction'>\n";
@@ -137,9 +144,6 @@ function createform($extra=False) {
 	echo "</tr>\n";
 	echo "<tr>\n";
 	echo "	<td class='tablebg'>\n";
-	echo docpop('eulers', 'Use final Eulers from iteration:');
-	echo "  <input type='text' name='iter' size='3' value='$iter'>\n";
-	echo "  <br />\n";
 	echo "  <input type='text' name='sigma' size='4' value='$sigma'>\n";
 	echo docpop('sigma',"keep sigma level");
 	echo " 	<br />\n";
@@ -151,7 +155,12 @@ function createform($extra=False) {
 	echo " 	<br />\n";
 	echo " 	<input type='text' name='hard' size='4' value='$hard'>\n";
 	echo docpop('hard','hard value for back projection');
-	echo " 	<br />\n";
+	echo " 	<br><br>\n";
+	echo "  For snapshot images:<br>\n";
+	echo "<input type='text' name='mass' value='$mass' size='4'> Mass (in kDa)<br>\n";
+	echo "<input type='text' name='zoom' value='$zoom' size='4'> ";
+	echo docpop('snapzoom','Zoom');
+	echo "  <br>\n";
 	echo " 	<input type='checkbox' name='commit' $commitcheck>\n";
 	echo docpop('commit',"Commit to Database");
 	echo " 	</td>\n";

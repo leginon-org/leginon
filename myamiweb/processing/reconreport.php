@@ -316,10 +316,10 @@ foreach ($iterations as $iteration){
   
 	// postproc/makegoodaverages
 	$html .= "<td bgcolor='$bg'>$iteration[volumeDensity]<br />\n";
-	$html .= "<A HREF='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'><FONT CLASS='sf'>[post processing]</FONT></a><br />\n";
-	$html .= "<A HREF='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'><FONT CLASS='sf'>[new averages]</FONT></a><br />\n";
+	$html .= "<input class='edit' type='button' onClick=\"parent.location='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'\" value='Post Processing'><br />\n";
+	$html .= "<input class='edit' type='button' onClick=\"parent.location='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'\" value='Remove Jumpers'><br />\n";
 	if ($refinementData['exemplar']) $html .= "<input class='edit' type='submit' name='notExemplar".$refinementData['DEF_id']."' value='not exemplar'>";
-	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='exemplar'>";
+	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='Make Exemplar'>";
 	$html .= "</td>\n";
 
 	// snapshot images
@@ -351,14 +351,18 @@ foreach ($iterations as $iteration){
 			if ($p['mask']) {
 			  	// convert to pixels
 			  	$boxang = $p['mask']*$apix;
-			  	$html .= "<tr><td><b>Mask: </b></td><td>$boxang Angstroms (".$p['mask']." pixels)</td></tr>\n";
+			  	$html .= "<tr><td><b>mask: </b></td><td>$boxang Angstroms (".$p['mask']." pixels)</td></tr>\n";
 			}
 			if ($p['imask']) {
 			  	// convert to pixels
 			  	$boxang = $p['imask']*$apix;
 				$boxang = sprintf("%.1f",$boxang);
-			  	$html .= "<tr><td><b>Inner Mask: </b></td><td>$boxang Angstroms (".$p['imask']." pixels)</td></tr>\n";
+			  	$html .= "<tr><td><b>inner mask: </b></td><td>$boxang Angstroms (".$p['imask']." pixels)</td></tr>\n";
 			}
+			if ($p['maxjump']) $html .= "<tr><td><b>jumper cutoff: </b></td><td>".$p['maxjump']."&deg;</td></tr>\n";
+			if ($p['sigma']) $html .= "<tr><td><b>sigma cutoff: </b></td><td>".$p['sigma']."</td></tr>\n";
+			if ($p['resolution']) $html .= "<tr><td><b>FSC 0.5: </b></td><td>".sprintf("%.2f",$p['resolution'])."</td></tr>\n";
+			if ($p['rmeasure']) $html .= "<tr><td><b>Rmeas 0.5: </b></td><td>".sprintf("%.2f",$p['rmeasure'])."</td></tr>\n";
 			$html .= "</table>\n";
 			$html .= "</td><td>\n";
 			foreach ($procimgs['pngfiles'] as $s) {
