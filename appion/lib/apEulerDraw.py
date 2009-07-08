@@ -360,6 +360,9 @@ def makePolarImage(eulerdict, imgname="temp.png",
 
 	### find min/max data
 	d = fillDataDict(radlist, anglelist, freqlist)
+	if d is None:
+		apDisplay.printWarning("No rejected particles found!")
+		return
 	#pprint.pprint(d)
 
 	img = Image.new("RGB", (imgdim, imgdim), color="#ffffff")
