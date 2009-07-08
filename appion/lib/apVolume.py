@@ -16,15 +16,61 @@ from numpy import ma
 #appion
 import apDisplay
 import appionData
+import apDatabase
 import apAlignment
 import apParam
 import apEMAN
 import spyder
+import apSymmetry
+import apFile
 #pyami
 from pyami import mrc
 from pyami import imagefun
 from pyami import convolver
 from random import choice
+
+#===========================
+def insert3dDensity(params):
+	apDisplay.printMsg("committing density to database")
+	symdata=apSymmetry.findSymmetry(params['sym'])
+	if not symdata:
+		apDisplay.printError("no symmetry associated with this id\n")		
+	params['syminfo'] = symdata
+	modq=appionData.Ap3dDensityData()
+	sessiondata = apDatabase.getSessionDataFromSessionName(params['session'])
+	modq['session'] = sessiondata
+	modq['path'] = appionData.ApPathData(path=os.path.abspath(params['rundir']))
+	modq['name'] = params['name']
+	modq['resolution'] = params['res']
+	modq['symmetry'] = symdata
+	modq['pixelsize'] = params['apix']
+	modq['boxsize'] = params['box']
+	modq['description'] = params['description']
+	modq['lowpass'] = params['lp']
+	modq['highpass'] = params['hp']
+	modq['mask'] = params['mask']
+	modq['imask'] = params['imask']
+	if params['reconid'] is not None:
+		iterdata = appionData.ApRefinementData.direct_query(params['reconid'])
+		if not iterdata:
+			apDisplay.printError("this iteration was not found in the database\n")
+		modq['iterid'] = iterdata
+	### if ampfile specified
+	if params['ampfile'] is not None:
+		(ampdir, ampname) = os.path.split(params['ampfile'])
+		modq['ampPath'] = appionData.ApPathData(path=os.path.abspath(ampdir))
+		modq['ampName'] = ampname
+		modq['maxfilt'] = params['maxfilt']
+	modq['handflip'] = params['yflip']
+	modq['norm'] = params['norm']
+	modq['invert'] = params['invert']
+	modq['hidden'] = False
+	filepath = os.path.join(params['rundir'], params['name'])
+	modq['md5sum'] = apFile.md5sumfile(filepath)
+	if params['commit'] is True:
+		modq.insert()
+	else:
+		apDisplay.printWarning("not commiting model to database")
 
 #================
 def rescaleVolume(modelId, outfile, outbox, outpix, spider=False):

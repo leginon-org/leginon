@@ -25,6 +25,7 @@ import apSymmetry
 import apVolume
 import apFile
 import apRecon
+import apChimera
 
 def getParticleInfo(reconid, iteration):
 	"""
@@ -266,6 +267,8 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			help="name of output density file")
 		self.parser.add_option("--mass", dest="mass", type="float",
 			help="mass of the density in kDa, for chimera snapshot generation")
+		self.parser.add_option("--zoom", dest="zoom", type="float",
+			help="zoom option for chimera snapshot generation")
 	
 	#=====================
 	def checkConflicts(self):
@@ -366,31 +369,34 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 
 		# make 3d density file if specified:
 		if self.params['make3d'] is not None:
-			apEMAN.make3d(self.params['stackname'], self.params['make3d'], sym=self.params['sym'], mode=self.params['mode'], hard=self.params['hard'])
+			self.params['make3d']=os.path.basename(self.params['make3d'])
+			outfile = os.path.join(self.params['rundir'],self.params['make3d'])
+			apEMAN.make3d(self.params['stackname'], outfile, sym=self.params['sym'], mode=self.params['mode'], hard=self.params['hard'])
+			apEMAN.executeEmanCmd("proc3d %s %s mask=%d norm" % (outfile,outfile,self.params['mask']))
 			if self.params['eotest'] is True:
 				apEMAN.make3d(self.params['oddstack'],"odd.mrc", sym=self.params['sym'],mode=self.params['mode'],hard=self.params['hard'])
 				apEMAN.make3d(self.params['evenstack'],"even.mrc", sym=self.params['sym'],mode=self.params['mode'],hard=self.params['hard'])
 				apEMAN.executeEmanCmd("proc3d odd.mrc even.mrc fsc=fsc.eotest")
 
-		if os.path.exists(self.params['make3d']):
+		if os.path.exists(outfile):
 			# run rmeasure
 			apix = apStack.getStackPixelSizeFromStackId(self.params['stackid'])
-			box = apVolume.getModelDimensions(self.params['make3d'])
+			box = apVolume.getModelDimensions(outfile)
 			apDisplay.printMsg('inserting density into database')
 			symdata=apSymmetry.findSymmetry(self.params['sym'])
 			if not symdata:
 				apDisplay.printError('no symmetry associated with this model')
 			modq=appionData.Ap3dDensityData()
 			modq['session']=self.params['session']
-			modq['name']=os.path.basename(self.params['make3d'])
+			modq['name']=self.params['make3d']
 			modq['path']=appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 			modq['boxsize']=box
 			modq['mask']=self.params['mask']
 			modq['pixelsize']=apix
 			fscres=apRecon.getResolutionFromFSCFile('fsc.eotest',box,apix,msg=True)
-			modq['resolution']=res
-			modq['rmeasure']=apRecon.runRMeasure(apix,self.params['make3d'])
-			modq['md5sum']=apFile.md5sumfile(self.params['make3d'])
+			modq['resolution']=fscres
+			modq['rmeasure']=apRecon.runRMeasure(apix,outfile)
+			modq['md5sum']=apFile.md5sumfile(outfile)
 			modq['maxjump']=self.params['avgjump']
 			modq['sigma']=self.params['sigma']
 			modq['hard']=self.params['hard']
@@ -399,7 +405,7 @@ class makeGoodAveragesScript(appionScript.AppionScript):
 			if self.params['commit'] is True:
 				modq.insert()
 
-			apChimera.filterAndChimera(self.params['make3d'], res=fscres, apix=apix, box=box,
+			apChimera.filterAndChimera(outfile, res=fscres, apix=apix, box=box,
                                 chimtype='snapshot', zoom=self.params['zoom'], sym=self.params['sym'], mass=self.params['mass'])
 		else:
 			apDisplay.printError('no 3d volume was generated - check the class averages:')
