@@ -163,6 +163,23 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 			}
 		}
 	}
+
+	function checkprojection() {
+		if (o=document.viewerform.projection) {
+			if ((o_r1=document.viewerform.projinc) && (o_r2=document.viewerform.projstdev)) {
+			projtype=o.options[o.selectedIndex].value
+				if (projtype=='even') {
+					o_r1.disabled=false
+					o_r1.value='5'
+					o_r2.disabled=true
+				} else {
+					o_r1.disabled=true
+					o_r2.disabled=false
+					o_r2.value='7'
+				}
+			}
+		}
+	}
 	
 	</script>\n";
 
@@ -201,6 +218,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	
 	// set other default params
 	$projcount = ($_POST['projcount']) ? $_POST['projcount'] : 4096;
+	$projinc = ($_POST['projinc']) ? $_POST['projinc'] : 5;
 	$projstdev = ($_POST['projstdev']) ? $_POST['projstdev'] : 7;
 	$shiftrad = ($_POST['shiftrad']) ? $_POST['shiftrad'] : 5;
 	$rotang = ($_POST['rotang']) ? $_POST['rotang'] : 360;
@@ -221,6 +239,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$randomdefdisable = ($_POST['randomdef']=='on') ? '' : 'DISABLED';
 	$correctiondisable = ($_POST['correction']) ? $_POST['correction'] : "DISABLED";
 	$randcordisable = ($_POST['randcor_std']) ? $_POST['randcor_std'] : "DISABLED";
+	$projstdevdisabled = ($_POST['projection']=='even' && !$extra) ? $_POST['projstdev'] : "DISABLED";
 
 	// get model data
 	
@@ -308,7 +327,18 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo "<font size=-2><i>(particles in stack)</i></font>\n";
 	echo "<br />\n";
 
-	echo "<input type='text' name='projstdev' value='$projstdev' size='4'>\n";
+	echo docpop('projtype','Projection Type: ');
+	echo "<select name='projection' onchange='checkprojection()'>";
+	echo "<option value='even'>Evenly distributed</option>";
+	echo "<option value='preferred'>Axial preferrence</option>";
+	echo "</select><br>";
+
+	echo "<input type='text' name='projinc' value='$projinc' size='4'>\n";
+	echo docpop('projinc',' Angular increment of projections');
+	echo " <font size=-2><i>(degrees)</i></font>\n";
+	echo "<br />\n";
+	
+	echo "<input type='text' name='projstdev' $projstdevdisabled value='$projstdev' size='4'>\n";
 	echo docpop('projstdev',' Standard deviation about projection axis');
 	echo " <font size=-2><i>(degrees)</i></font>\n";
 	echo "<br />\n";
@@ -372,7 +402,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	echo docpop('correctiontype','Correction Type: ');
 	echo "<select name='correction' onchange='checkcorrection()' $correctiondisable>";
 	echo "<option value='applied'>Applied CTF</option>";
-	echo "<option value='ace2estimate'>Use ACE2 Estimate</option>"; // disabled for now, need to get working in python
+	echo "<option value='ace2estimate'>Use ACE2 Estimate</option>"; 
 	echo "<option value='perturb'>Perturb Applied CTF</option>";
 	echo "</select><br>";
  
@@ -438,6 +468,7 @@ function createSyntheticDataset() {
 	$boxsize = $_POST['boxsize'];
 	$projcount = $_POST['projcount'];
 	$projstdev = $_POST['projstdev'];
+	$projinc = $_POST['projinc'];
 	$shiftrad = $_POST['shiftrad'];
 	$rotang = $_POST['rotang'];
 	$flip = $_POST['flip'];
@@ -455,6 +486,7 @@ function createSyntheticDataset() {
 	$defstd = $_POST['defstd'];
 	$ace2correct = ($_POST['ace2correct']=='on') ? 'ace2correct' : '';
 	$randcor_std = $_POST['randcor_std'];
+	$projection = $_POST['projection'];
 	$correction = $_POST['correction'];
 
 	//make sure default variables are selected
@@ -479,6 +511,12 @@ function createSyntheticDataset() {
 	if ($randcor_std > ($df1 / -2) || $randcor_std > ($df2 / -2)) {
 		syntheticDatasetForm("<B>ERROR:</B> STD of defocus perturbation too high. Don't use correction at all", $title, $heading, $modelId);
 	}
+	if ($projection == "even" && !$projinc) {
+		syntheticDatasetForm("<B>ERROR:</B> Please enter a projection angular increment", $title, $heading, $modelId);
+	}
+	if ($projection == "preferred" && !$projstdev) {
+		syntheticDatasetForm("<B>ERROR:</B> Please enter a projection standard deviation", $title, $heading, $modelId);
+	}
 	if ($correction == "perturb" && !$randcor_std) {
 		syntheticDatasetForm("<B>ERROR:</B> Please enter a standard deviation which will be used to perturb CTF correction values", $title, $heading, $modelId);
 	}
@@ -494,7 +532,8 @@ function createSyntheticDataset() {
 	if ($pixelsize) $command.="--apix=$pixelsize ";
 	if ($boxsize) $command.="--boxsize=$boxsize ";
 	$command.="--projcount=$projcount ";
-	if ($projstdev) $command.="--projstdev=$projstdev ";
+	if ($projection == "preferred") $command.="--preforient --projstdev=$projstdev ";
+	elseif ($projection == "even") $command.="--projinc=$projinc ";
 	if ($shiftrad) $command.="--shiftrad=$shiftrad ";
 	if ($rotang) $command.="--rotang=$rotang ";
 	if ($flip) $command.="--flip ";
