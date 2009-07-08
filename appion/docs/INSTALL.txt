@@ -1,4 +1,4 @@
-Appion Install Manual
+Appion Install Manual: Steps to install Appion on a CentOS 5.3 machine
 =====================
 The Appion Team
 
@@ -6,9 +6,9 @@ The Appion Team
 
 Jonathan Brownell, Bridget Carragher, Anchi Cheng, Denis Fellmann, Christopher Irving, Gabe Lander, Pick-wei Lau, Dmitry Lyumkis, Anke Mulder, Sunita Nayak, Clint S. Potter, Jim Pulokas, Joel Quispe, Scott Stagg, Neil R. Voss, and Craig Yoshioka
 
-Steps to install Appion on a CentOS 5.3 machine
-
 = Introduction =
+
+As of July 2009, this document is still incomplete.
 
 You will need 3 servers:
 
@@ -23,8 +23,9 @@ Fortunately, all 3 servers can run on the same machine
 
 [NOTE]
 CentOS vs. RHEL
-	//CentOS is the exact same as Red Hat Enterprise Linux (RHEL)//
-	//except that it is free and supported by the community//
+	//CentOS is the exact same as Red Hat Enterprise Linux (RHEL), except that it is free and supported by the community//
+
+The reason I mention CentOS is because I wanted to keep the guide really simple. Another student and I run appion on Fedora 10 and we've run appion on SuSe in the past. I know we gotten most bits working on MacOSX, but some of the python libraries contain ancient Fortran code that does not compile easily on a Mac. But CentOS is certainly not a requirement in general, it is just that the first iteration of the guide is written for CentOS.
 
 == Download the latest ISO disk of CentOS ==
 
