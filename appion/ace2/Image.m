@@ -172,7 +172,7 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	restoreFFTWisdom();
 	
-//	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE);
+//	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_ESTIMATE);
 	fftw_plan plan = fftw_plan_dft_r2c(ndim, dim, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
 	if ( plan == NULL ) {
 		xi = NEWV(f64,size);
@@ -236,7 +236,7 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	restoreFFTWisdom();
 	
-//	fftw_plan plan = fftw_plan_dft_c2r(ndim,dims,xi,xt,FFTW_MEASURE);
+//	fftw_plan plan = fftw_plan_dft_c2r(ndim,dims,xi,xt,FFTW_ESTIMATE);
 	fftw_plan plan = fftw_plan_dft_c2r(ndim, dims, xi, xt, FFTW_MEASURE|FFTW_WISDOM_ONLY);
 	if ( plan == NULL ) {
 		xi = NEWV(c64,size);
@@ -351,7 +351,7 @@ static char fftw_wisdom_path[256] = ".fftw_wisdom";
 	
 	restoreFFTWisdom();
 	
-//	fftw_plan plan = fftw_plan_dft(ndim,dims,xi,xi,FFTW_BACKWARD,FFTW_MEASURE);	
+//	fftw_plan plan = fftw_plan_dft(ndim,dims,xi,xi,FFTW_BACKWARD,FFTW_ESTIMATE);	
 	fftw_plan plan = fftw_plan_dft(ndim, dims, xi, xi, FFTW_BACKWARD, FFTW_MEASURE|FFTW_WISDOM_ONLY);
 	if ( plan == NULL ) {
 		xi = NEWV(c64,size);
