@@ -180,13 +180,13 @@ function convertToColors($j) {
 	foreach ($j as $i) {
 		//$i = removebackspace($i);
 		$i = trim($i);
-		$i = ereg_replace("\033\[31m","<font style='color:red'>", $i);
-		$i = ereg_replace("\033\[32m","<font style='color:green'>", $i);
-		$i = ereg_replace("\033\[33m","<font style='color:yellow'>", $i);
-		$i = ereg_replace("\033\[34m","<font style='color:blue'>", $i);
-		$i = ereg_replace("\033\[35m","<font style='color:magenta'>", $i);
-		$i = ereg_replace("\033\[36m","<font style='color:cyan'>", $i);
-		$i = ereg_replace("\033\[0m","</font>", $i);
+		$i = ereg_replace("\033\[(1;)?31m","<font style='color:red'>", $i);
+		$i = ereg_replace("\033\[(1;)?32m","<font style='color:green'>", $i);
+		$i = ereg_replace("\033\[(1;)?33m","<font style='color:yellow'>", $i);
+		$i = ereg_replace("\033\[(1;)?34m","<font style='color:blue'>", $i);
+		$i = ereg_replace("\033\[(1;)?35m","<font style='color:magenta'>", $i);
+		$i = ereg_replace("\033\[(1;)?36m","<font style='color:cyan'>", $i);
+		$i = ereg_replace("\033\[(1;)?0m","</font>", $i);
 		$line .= "$i ";
 		// make sure line doesn't get too long:
 		$linelen = $linelen + strlen($i) + 1;
