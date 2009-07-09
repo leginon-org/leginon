@@ -12,6 +12,7 @@ import numpy
 import subprocess
 import MySQLdb
 import apDisplay
+import apProject
 
 
 
@@ -19,6 +20,7 @@ import apDisplay
 def getTotalNumParticles(reconid, numiter):
 	dbconf = sinedon.getConfig('appionData')
 	db     = MySQLdb.connect(**dbconf)
+	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
 		+" FROM `ApParticleClassificationData` AS reconpart "
@@ -37,6 +39,7 @@ def getTotalNumParticles(reconid, numiter):
 def getParticlesForIter(reconid, iternum):
 	dbconf = sinedon.getConfig('appionData')
 	db     = MySQLdb.connect(**dbconf)
+	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT stackpart.`particleNumber` AS p "
 		+" FROM `ApParticleClassificationData` AS reconpart "
@@ -57,6 +60,7 @@ def getParticlesForIter(reconid, iternum):
 def getAllCoranRecons():
 	dbconf = sinedon.getConfig('appionData')
 	db     = MySQLdb.connect(**dbconf)
+	# create a cursor
 	cursor = db.cursor()
 	query = ( " SELECT DISTINCT refdat.`REF|ApRefinementRunData|refinementRun` AS reconid "
 		+" FROM `ApRefinementData` AS refdat "
@@ -448,8 +452,8 @@ xmgraceheader = """
 def makeCoranKeepPlot(reconid):
 	### prelim stuff
 	numiter = apRecon.getNumIterationsFromRefineRunID(reconid)
-	if numiter < 8:
-		apDisplay.printWarning("Cannot create coran keep plot, not enough iterations")
+	if numiter < 4:
+		apDisplay.printWarning("Cannot create coran keep plot, not enough iterations (%d)"%(numiter))
 		return None
 	else:
 		apDisplay.printMsg("found "+str(numiter)+" iterations")
@@ -512,6 +516,21 @@ def makeCoranKeepPlot(reconid):
 #==================
 #==================
 if __name__ == '__main__':
+	print "Usage: apCoranPlot.py <reconid> <projectid>"
+
+	### setup correct database after we have read the project id
+	if len(sys.argv) > 2:
+		projectid = int(sys.argv[2])
+	else:
+		projectid = None
+	if projectid is not None:
+		apDisplay.printWarning("Using split database")
+		# use a project database
+		newdbname = apProject.getAppionDBFromProjectId(projectid)
+		sinedon.setConfig('appionData', db=newdbname)
+		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
+
+	### run the program
 	if len(sys.argv) > 1:
 		reconid = int(sys.argv[1])
 		makeCoranKeepPlot(reconid)
