@@ -422,7 +422,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','fscls','refine','perturb','goodbad','tree','coran','eotest','copy');  
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','eotest','copy');  
 	echo"
   <br />
   <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
@@ -497,13 +497,13 @@ function jobForm($extra=false) {
 		$shrinkn="shrink".$i;
 		$euler2n="euler2".$i;
 		$xfilesn="xfiles".$i;
-		$perturbn="perturb".$i;
+		#$perturbn="perturb".$i;
 		$treen="tree".$i;
 		$mediann="median".$i;
 		$phaseclsn="phasecls".$i;
-		$fsclsn="fscls".$i;
+		#$fsclsn="fscls".$i;
 		$refinen="refine".$i;
-		$goodbadn="goodbad".$i;
+		#$goodbadn="goodbad".$i;
 		$eotestn="eotest".$i;
 		$corann="coran".$i;
 		$msgpn="msgp".$i;
@@ -596,11 +596,11 @@ function jobForm($extra=false) {
 					$xfiles=$iter['EMAN_xfiles'];
 					$median = ($iter['EMAN_median']) ? 'CHECKED' : '';
 					$phasecls = ($iter['EMAN_phasecls']) ? 'CHECKED' : '';
-					$fscls = ($iter['EMAN_fscls']) ? 'CHECKED' : '';
+					#$fscls = ($iter['EMAN_fscls']) ? 'CHECKED' : '';
 					$refine = ($iter['EMAN_refine']) ? 'CHECKED' : '';
-					$goodbad = ($iter['EMAN_goodbad']) ? 'CHECKED' : '';
+					#$goodbad = ($iter['EMAN_goodbad']) ? 'CHECKED' : '';
 					$coran = ($iter['SpiCoranGoodClassAvg']) ? 'CHECKED' : '';
-					$perturb = ($iter['EMAN_perturb']) ? 'CHECKED' : '';
+					#$perturb = ($iter['EMAN_perturb']) ? 'CHECKED' : '';
 					$eotest = ($iter['REF|ApResolutionData|resolution']) ? 'CHECKED' : '';
 					$symmetry = $particle->getSymInfo($iter['REF|ApSymmetryData|symmetry']);
 					if (!is_array($symmetry)) $sym=$modsym;
@@ -632,12 +632,12 @@ function jobForm($extra=false) {
 			if ($i>$j) {
 				$median=($_POST["median".($i-1)]=='on') ? 'CHECKED' : '';
 				$phasecls=($_POST["phasecls".($i-1)]=='on') ? 'CHECKED' : '';
-				$fscls=($_POST["fscls".($i-1)]=='on') ? 'CHECKED' : '';
+				#$fscls=($_POST["fscls".($i-1)]=='on') ? 'CHECKED' : '';
 				$refine=($_POST["refine".($i-1)]=='on') ? 'CHECKED' : '';
-				$goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
+				#$goodbad=($_POST["goodbad".($i-1)]=='on') ? 'CHECKED' : '';
 				$eotest=($_POST["eotest".($i-1)]=='on') ? 'CHECKED' : '';
 				$coran=($_POST["coran".($i-1)]=='on') ? 'CHECKED' : '';
-				$perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
+				#$perturb=($_POST["perturb".($i-1)]=='on') ? 'CHECKED' : '';
 				$msgp=($_POST["msgp".($i-1)]=='on') ? 'CHECKED' : '';
 				$treetwo=($_POST["tree".($i-1)]=='2') ? 'selected' : '';
 				$treethree=($_POST["tree".($i-1)]=='3') ? 'selected' : '';
@@ -645,12 +645,12 @@ function jobForm($extra=false) {
 			else {
 				$median=($_POST[$mediann]=='on') ? 'CHECKED' : '';
 				$phasecls=($_POST[$phaseclsn]=='on') ? 'CHECKED' : '';
-				$fscls=($_POST[$fsclsn]=='on') ? 'CHECKED' : '';
+				#$fscls=($_POST[$fsclsn]=='on') ? 'CHECKED' : '';
 				$refine=($_POST[$refinen]=='on') ? 'CHECKED' : '';
-				$goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
+				#$goodbad=($_POST[$goodbadn]=='on') ? 'CHECKED' : '';
 				$eotest=($_POST[$eotestn]=='on') ? 'CHECKED' : '';
 				$coran=($_POST[$corann]=='on') ? 'CHECKED' : '';
-				$perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
+				#$perturb=($_POST[$perturbn]=='on') ? 'CHECKED' : '';
 				$msgp=($_POST[$msgpn]=='on') ? 'CHECKED' : '';
 				$treetwo=($_POST[$treen]=='2') ? 'selected' : '';
 				$treethree=($_POST[$treen]=='3') ? 'selected' : '';
@@ -676,12 +676,12 @@ function jobForm($extra=false) {
         <td bgcolor='$rcol'><input type='text' NAME='$shrinkn' SIZE='2' VALUE='$shrink'></td>
         <td bgcolor='$rcol'><input type='text' size='2' name='$euler2n' value='$euler2'>
         <td bgcolor='$rcol'><input type='checkbox' NAME='$mediann' $median></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$phaseclsn' $phasecls></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$fsclsn' $fscls></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$refinen' $refine></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>
-        <td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$phaseclsn' $phasecls></td>\n";
+	#echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$fsclsn' $fscls></td>\n";
+	echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$refinen' $refine></td>\n";
+	#echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>\n";
+      	#echo"<td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>\n";
+	echo "<td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>
         <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>
         <td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>
         <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
@@ -823,13 +823,13 @@ function writeJobFile ($extra=False) {
 		$shrink=$_POST["shrink".$i];
 		$euler2=$_POST["euler2".$i];
 		$xfiles=$_POST["xfiles".$i];
-		$perturb=$_POST["perturb".$i];
+		#$perturb=$_POST["perturb".$i];
 		$tree=$_POST["tree".$i];
 		$median=$_POST["median".$i];
 		$phasecls=$_POST["phasecls".$i];
-		$fscls=$_POST["fscls".$i];
+		#$fscls=$_POST["fscls".$i];
 		$refine=$_POST["refine".$i];
-		$goodbad=$_POST["goodbad".$i];
+		#$goodbad=$_POST["goodbad".$i];
 		$eotest=$_POST["eotest".$i];
 		$coran=$_POST["coran".$i];
 		$msgp=$_POST["msgp".$i];
@@ -847,13 +847,13 @@ function writeJobFile ($extra=False) {
 		if ($shrink) $line.=" shrink=$shrink";
 		if ($xfiles) $line.=" xfiles=$apix,$xfiles,99";
 		if ($median=='on') $line.=" median";
-		if ($perturb=='on') $line.=" perturb";
+		#if ($perturb=='on') $line.=" perturb";
 		if ($tree=='2' || $tree=='3') $line.=" tree=$tree";
-		if ($fscls=='on') $line.=" fscls";
+		#if ($fscls=='on') $line.=" fscls";
 		if ($phasecls=='on') $line.=" phasecls";
 		if ($refine=='on') $line.=" refine";
 		if ($euler2) $line.=" euler2=$euler2";
-		if ($goodbad=='on') $line.=" goodbad";
+		#if ($goodbad=='on') $line.=" goodbad";
 		$line.=" > refine".$i.".txt\n";
 		$line.="mv -v classes.".$i.".hed classes_eman.".$i.".hed\n";
 		$line.="ln -s classes_eman.".$i.".hed classes.".$i.".hed\n";
@@ -953,10 +953,10 @@ function defaultReconValues ($box) {
       obj.xfiles1.value = '';
       obj.euler21.checked = '';
       obj.phasecls1.checked = true;
-      obj.fscls1.checked = false;
+      //obj.fscls1.checked = false;
       obj.refine1.checked = false;
-      obj.goodbad1.checked = false;
-      obj.perturb1.checked = false;
+      //obj.goodbad1.checked = false;
+      //obj.perturb1.checked = false;
       obj.eotest1.checked = true;
       obj.coran1.checked = false;
       obj.msgp1.checked = false;
