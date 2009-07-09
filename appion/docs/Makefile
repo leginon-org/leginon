@@ -19,21 +19,21 @@ clean:
 
 thtml: INSTALL.txt
 	echo "...creating appion install manual for LaTeX..."
-	txt2tags --infile=INSTALL.txt --target=html --outfile=INSTALL.html
+	txt2tags --toc --infile=INSTALL.txt --target=html --outfile=INSTALL.html
 
 asciidoc: INSTALL.txt
 	echo "...creating appion install manual for LaTeX..."
-	txt2tags --infile=INSTALL.txt --target=asciidoc --outfile=INSTALL.asciidoc
+	txt2tags --toc --infile=INSTALL.txt --target=asciidoc --outfile=INSTALL.asciidoc
 
 latex: INSTALL.txt
 	echo "...creating appion install manual for LaTeX..."
-	txt2tags --enum-title --infile=INSTALL.txt --target=tex --outfile=INSTALL.tex
+	txt2tags --toc --enum-title --infile=INSTALL.txt --target=tex --outfile=INSTALL.tex
 	pdflatex INSTALL.tex
 	rm -fv *.aux
 
 gwiki: INSTALL.txt
 	echo "...creating appion install manual for Google Wiki..."
-	txt2tags --enum-title --infile=INSTALL.txt --target=gwiki --outfile=INSTALL.gwiki
+	txt2tags --toc --enum-title --infile=INSTALL.txt --target=gwiki --outfile=INSTALL.gwiki
 
 # -----------------------------------------
 # AsciiDoc
