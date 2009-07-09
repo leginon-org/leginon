@@ -2,10 +2,12 @@ Appion-CentOS Install Manual:
 
 Compiled on %%date(%B %d, %Y)
 
+
 --------------------------------
 = Authors =
 
 Jonathan Brownell, Bridget Carragher, Anchi Cheng, Denis Fellmann, Christopher Irving, Gabe Lander, Pick-wei Lau, Dmitry Lyumkis, Anke Mulder, Sunita Nayak, Clint S. Potter, Jim Pulokas, Joel Quispe, Scott Stagg, Neil R. Voss, and Craig Yoshioka
+
 
 --------------------------------
 = Introduction =
@@ -33,7 +35,6 @@ In addition, Appion also need:
 - processing packages not distributed by us, obviously. 
 
 Fortunately, all 3 servers can run on the same machine. If you have many users, it is recommended that you separate the system into 3 computers with one serves the python-side and processing packages and the one for the database, and one for the web. In such a case, you can divide the package requirement by the three server sides as well. 
-
 
 
 == What you need ==
@@ -79,12 +80,12 @@ Use dvdrecord in Linux to burn disk
 - More information available at [CentOS Documentation http://wiki.centos.org/Documentation]
 
 
-
 == Add yourself to the sudoers file ==
 
 Add this line below the root version:
 
 ``` $ username ALL=(ALL)       ALL
+
 
 --------------------------------
 = Download additional software =
@@ -112,7 +113,6 @@ EPEL and RPM Fusion. Read more here:
 ``` $ sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/`uname -i`/epel-release-5-3.noarch.rpm
 
 
-
 === RPM Fusion ===
 - http://rpmfusion.org/
 - good for mp3 and other patent limited software
@@ -124,7 +124,6 @@ $ sudo rpm -Uhv http://download1.rpmfusion.org/free/el/updates/testing/5/`uname 
 $ sudo rpm -Uvh http://download1.rpmfusion.org/nonfree/el/updates/testing/5/`uname -i`/rpmfusion-nonfree-release-5-0.1.noarch.rpm
 
 ```
-
 
 
 == Update current packages ==
@@ -225,6 +224,7 @@ Three packages need to be downloaded from Subversion:
 
 ``` $ svn co http://ami.scripps.edu/svn/pyappion/trunk/ pyappion/
 
+
 === online packages ===
 Other packages are located online at either http://ami.scripps.edu/software/ or http://appion.org/
 
@@ -234,6 +234,7 @@ From AMI software, http://ami.scripps.edu/software/
 
 From Google Code, http://appion.org/
 - pyappion, http://code.google.com/p/appion/downloads/list
+
 
 == Additional external software needed ==
 
@@ -246,7 +247,6 @@ From Google Code, http://appion.org/
   - [download binary http://www.cgl.ucsf.edu/chimera/download.html]
 
 
-
 === Recommended ===
 
 - **SPIDER** v15 or older, newest version not supported,
@@ -254,7 +254,6 @@ From Google Code, http://appion.org/
 - **Xmipp** v2.2 or newer, for alignment, compile your own for openmpi support,
   - [download source http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware]
 - **IMOD**, for tomography
-
 
 
 === Recommended, but costs money ===
@@ -295,6 +294,7 @@ Otherwise skip to next section.
 - Example: EXLIBS=-L/usr/lib/gcc/i386-redhat-linux/3.4.6/ -lg2c
 - Re-compile
 
+
 == Compile Ace2 ==
 [WARNING]
 ace2 typically requires fftw 3.2 or greater, but you can remove the FFTW_WISDOM_ONLY flag in Image.m
@@ -312,7 +312,6 @@ $ ./ace2.exe -h
 $ ./ace2correct.exe -h
 $ mv -v ./ace2*.exe ../bin
 ```
-
 
 
 == Compile Radermacher module ==
@@ -339,7 +338,6 @@ $ mv -v ./ace2*.exe ../bin
 ```
 
 
-
 == Compile Numextension module ==
 
 - Goto Leginon/numextension
@@ -361,7 +359,6 @@ $ mv -v ./ace2*.exe ../bin
 >>> <Ctrl-D>
 
 ```
-
 
 
 == Globally install python programs ==
@@ -403,6 +400,7 @@ $ export SITEPKG=/usr/lib64/python2.5/site-packages
 
 ``` path: ~/leginon/images/
 
+
 == Test PyAppion ==
 
 - Go into pyappion directory
@@ -420,6 +418,7 @@ $ export SITEPKG=/usr/lib64/python2.5/site-packages
 
 [NOTE]
 You can ignore EMAN, MATLAB, and chimera errors at this point
+
 
 --------------------------------
 = Setup MySQL (appiondata) databases =
@@ -488,11 +487,19 @@ user:	appionuser
 [NOTE]
 the leginon and appion folders need to be in your PYTHONPATH for this to work
 
+
 --------------------------------
 = Install webpages (appionweb) =
 
+There is some older documentation on how to install dbemtools here:
+
+http://nramm/documentation/leginon/bk02ch04s07.php
+
 
 == Install MRC Tools ==
+
+
+=== Compile MRC tools ===
 
 - Go to your php devel directory and untar the archive
 
@@ -519,6 +526,9 @@ $ make
 $ sudo make install
 ``` 
 
+
+=== Configure PHP for MRC Tools ===
+
 - Edit your php configuration file php.ini to add "mrc.so" extension.
 - You might also increase the memory_limit field. It is set to 8M by default. The more the merrier!
 - 4kx4k float MRC image is about 64MB
@@ -532,13 +542,20 @@ $ sudo make install
 extension=mrc.so
 ```
 
-- increase the memory limit, EM images are big 64MB
+
+== Configure PHP ==
+
+- increase the memory limit, EM images are big 64MB:
 
 ``` memory_limit = 256M; Maximum amount of memory
 
-- Paths and Directories -- include_path should at least have "."
+- Paths and Directories -- include_path should at least have ".":
 
 ``` include_path = ".:/php/includes"
+
+- Turn error display on:
+
+``` display_errors = On
 
 - restart the webserver
 
@@ -586,7 +603,7 @@ $DB_USER	= "appionuser";
 $DB_PASS	= "";
 $DB		= "leginondata";
 
-define(BASE_URL, "/appionweb/");
+define(BASE_URL, "appionweb/");
 ```
 
 - if you use a project database, set the following
@@ -601,14 +618,17 @@ $PROJECT_DB = "projectdata";
 
 
 == Test ==
+Go to http://localhost/appionweb/info.php
 Go to http://localhost/appionweb/
 
 [NOTE]
 You may need to configure your firewall to allow incoming HTTP (port 80) and MySQL (port 3306) traffic:
 ``` $ system-config-securitylevel
 
+
 --------------------------------
 = Install external packages =
+
 
 == Install Xmipp ==
 
@@ -641,6 +661,7 @@ you should see the line:
 
 ``` $ ./scons.compile
 
+
 --------------------------------
 = Install a PBS job submission system =
 
@@ -661,18 +682,22 @@ $ #sudo rpm -Uhv torque-2.1.9-1.el5.kb.`uname -i`.rpm
 
 ```
 
+
 --------------------------------
 = Setting environmental variables =
+
 
 == System variables ==
 - PYTHONPATH
 - PATH
 - LD_LIBRARY_PATH
 
+
 == External package variables ==
 - EMAN
 - XMIPP
 - SPIDER
+
 
 --------------------------------
 = THIS IS INCOMPLETE =
