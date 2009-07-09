@@ -1,28 +1,2195 @@
 #
 # ChangeLog created on Jan 15, 2009 with command:
-# %  svn2cl --include-rev --group-by-day --authors=AUTHORS.xml
+# %  svn2cl --include-rev --group-by-day --authors=docs/AUTHORS.xml
 #
 # Number of days with commits by users by command:
 # %  egrep "^200" ChangeLog | sort | uniq | cut -d' ' -f3- | sort | uniq -c | sort -rn
 # ------------------
 #  days | username
 # ------------------
-    339 Neil Voss
-    120 Gabe Lander
-     92 Anchi Cheng
-     70 Scott Stagg
-     31 Pick-wei Lau
-     23 Dmitry Lyumkis
-     13 Jim Pulokas
+    442 Neil Voss
+    151 Gabe Lander
+    113 Anchi Cheng
+     72 Scott Stagg
+     66 Dmitry Lyumkis
+     40 Pick-wei Lau
+     24 Jim Pulokas
+     19 Craig Yoshioka
       9 Sunita Nayak
-      8 Craig Yoshioka
+      8 Edward Brignole
       6 Christopher Irving
+      4 Denis Fellmann
       3 Jonathan Brownell
-      3 Denis Fellmann
+      2 Bridget Carragher
       1 Anke Mulder
 
 ### Start changelog
 
+2009-07-09  Gabe Lander
+
+	* [r3565] bin/coran_for_cls.py, lib/apSpider/alignment.py: - added
+	  lp filter to coran step
+
+2009-07-09  Neil Voss
+
+	* [r3564] docs/Makefile: add TOC
+	* [r3563] docs/INSTALL.txt: more progress
+
+2009-07-08  Neil Voss
+
+	* [r3562] ace2/Makefile: disable static
+	* [r3561] ace2/Image.m: changed to estimate
+
+2009-07-08  Dmitry Lyumkis
+
+	* [r3560] bin/createSyntheticDataset.py: made compatible with EMAN
+	  prop command
+
+2009-07-08  Gabe Lander
+
+	* [r3559] bin/makegoodaverages.py, bin/postProc.py,
+	  lib/apVolume.py: - create chimera snapshots for euler jumper
+	  results
+
+2009-07-08  Neil Voss
+
+	* [r3558] docs/INSTALL.txt: additions
+
+2009-07-08  Gabe Lander
+
+	* [r3557] bin/makegoodaverages.py: - for chimera snapshots
+	* [r3556] lib/apEulerDraw.py: - in the case that there are no
+	  rejected particles
+
+2009-07-08  Neil Voss
+
+	* [r3555] docs/INSTALL.txt: add disclaimer
+
+2009-07-07  Gabe Lander
+
+	* [r3554] bin/makegoodaverages.py: - now commit option works
+	  --This line, and those below, will be ignored-
+	  
+	  M makegoodaverages.py
+	* [r3553] bin/makegoodaverages.py, lib/appionData.py: - upload
+	  resulting density from good classes
+
+2009-07-06  Neil Voss
+
+	* [r3552] docs/INSTALL.txt: 5.2 -> 5.3
+
+2009-07-03  Gabe Lander
+
+	* [r3551] bin/makegoodaverages.py, lib/apEMAN.py: - makes 3d model
+
+2009-06-26  Bridget Carragher
+
+	* [r3550] lib/apSpider/alignment.py: fixed typos & misorder
+
+2009-06-25  Anchi Cheng
+
+	* [r3549] lib/apTomo.py: also get projection in x
+
+2009-06-25  Bridget Carragher
+
+	* [r3548] bin/coran_for_cls.py, lib/apSpider/alignment.py: - hp
+	  filtering for classification
+
+2009-06-24  Gabe Lander
+
+	* [r3547] bin/makegoodaverages.py: - phi should always be 0
+
+2009-06-22  Scott Stagg
+
+	* [r3546] lib/apProTomo.py: bug fix
+	* [r3545] bin/protomoprep.py: added option to create tarball
+	* [r3544] bin/protomoprep.py, lib/apProTomo.py: first version of
+	  scripts to automate protomo reconstructions
+
+2009-06-22  Neil Voss
+
+	* [r3543] bin/fakeTwoStacks.py: more updates
+	* [r3542] bin/apChimSnapshot.py: make another image for d-sym
+	* [r3541] lib/apChimera.py: bugfix for mass in uploadRecon
+
+2009-06-19  Jim Pulokas
+
+	* [r3540] lib/appionScript.py: avoid counting duplicates when
+	  checking how many leginons or appions in pythonpath
+
+2009-06-19  Neil Voss
+
+	* [r3539] bin/kerdenSOM.py: numpart-1
+
+2009-06-18  Scott Stagg
+
+	* [r3538] lib/apProTomo.py: start of library for dealing with
+	  PROTOMO processing
+
+2009-06-18  Neil Voss
+
+	* [r3537] bin/uploadRecon.py, lib/apRecon.py: allow inputting mass
+	  instead of contour
+
+2009-06-18  Anchi Cheng
+
+	* [r3536] lib/apTomo.py: spider transformation with ndimage, not
+	  very good
+	* [r3535] bin/tomoaverage.py: save transformed volume for checking
+
+2009-06-17  Dmitry Lyumkis
+
+	* [r3534] bin/imagicMSA.py: changed copy stack function to symbolic
+	  link
+	* [r3533] bin/imagicMultiReferenceAlignment.py: added line for
+	  removing redundant stack
+
+2009-06-17  Neil Voss
+
+	* [r3532] bin/edCenterStack.py: notes
+	* [r3531] lib/apChimera.py: add check for mass
+	* [r3530] bin/otrVolume.py: change in image generation
+	* [r3529] bin/uploadModel.py: allow setting of mass instead of
+	  contour
+
+2009-06-16  Gabe Lander
+
+	* [r3528] bin/makegoodaverages.py: - fixed euler stuff
+
+2009-06-16  Anchi Cheng
+
+	* [r3527] bin/tomoaverage.py: output more results
+	* [r3526] bin/tomomaker.py: session path
+	* [r3525] bin/makestack2.py, bin/scalestack.py: include selection
+	  run in stackrundata
+	* [r3524] lib/appionData.py: selectionrun in stackrundata
+
+2009-06-15  Dmitry Lyumkis
+
+	* [r3523] bin/createSyntheticDataset.py: changed back
+	* [r3522] bin/createSyntheticDataset.py: changed euler angle phi to
+	  between 0 and 360
+
+2009-06-12  Neil Voss
+
+	* [r3521] bin/makeSnapshot.py: minor
+	* [r3520] bin/apChimAlign.py: script that will align structures
+	  hacked together, needs update
+
+2009-06-11  Anchi Cheng
+
+	* [r3519] bin/tomoaverage.py, lib/apTomo.py, lib/appionData.py:
+	  tomo averaging stuff
+
+2009-06-10  Gabe Lander
+
+	* [r3518] lib/apVolume.py: - execute eman if same size
+
+2009-06-10  Neil Voss
+
+	* [r3517] bin/makeSnapshot.py: friendly info on file
+
+2009-06-10  Gabe Lander
+
+	* [r3516] bin/apmqRefine.py, lib/apSpider/alignment.py: - added
+	  options for symmetry, although it's still not working
+
+2009-06-09  Dmitry Lyumkis
+
+	* [r3515] bin/createSyntheticDataset.py: god rid of multiple
+	  micrograph creation
+
+2009-06-09  Gabe Lander
+
+	* [r3514] bin/apmqRefine.py, lib/apSpider/alignment.py,
+	  lib/apVolume.py: spider apmq refinement
+
+2009-06-08  Dmitry Lyumkis
+
+	* [r3513] bin/imagic3dRefine.py: commented out a few lines in batch
+	  script creation, also made sure headers are deleted only for the
+	  first iteration, such that mra is iterative
+
+2009-06-08  Neil Voss
+
+	* [r3512] bin/apChimSnapshot.py: ribosome imaging change
+
+2009-06-05  Dmitry Lyumkis
+
+	* [r3511] bin/imagicMultiReferenceAlignment.py: added additional if
+	  statement to setting new apix size, it was setting to 0
+
+2009-06-04  Gabe Lander
+
+	* [r3510] bin/uploadParticles.py: - fixed for database
+	* [r3509] bin/uploadParticles.py: - trying to get this to work
+
+2009-06-04  Anchi Cheng
+
+	* [r3508] bin/tomoaverage.py, lib/apParticle.py: remove print
+	* [r3507] lib/apCoranPlot.py, lib/apEulerDraw.py,
+	  lib/apEulerJump.py, lib/apStackMeanPlot.py: revert appiondata to
+	  appionData
+	* [r3506] lib/apCoranPlot.py, lib/apEulerDraw.py,
+	  lib/apEulerJump.py, lib/apStackMeanPlot.py: sinedon module
+	  appionData changed to appiondata
+	* [r3505] bin/tomoaverage.py, lib/apParticle.py, lib/apStack.py,
+	  lib/appionData.py: tomography average stuff
+	* [r3504] bin/subtomomaker.py, bin/tomomaker.py, bin/uploadTomo.py,
+	  lib/apImod.py, lib/apTomo.py: fix fullbin vs subbin
+
+2009-06-02  Neil Voss
+
+	* [r3503] lib/appionScript.py: added commented lines
+	* [r3502] bin/fakeTwoStacks.py: set to all random
+	* [r3501] lib/spyder.py: new function getreg(), which is broken
+	* [r3500] lib/apEMAN.py: I think this line is printing out "None,
+	  None"
+	* [r3499] lib/apImagicFile.py: timing stats
+
+2009-06-02  Gabe Lander
+
+	* [r3498] bin/runfrealign.py, lib/apFrealign.py: - fixing Popen
+	  changes
+
+2009-06-01  Jim Pulokas
+
+	* [r3497] bin/apdbconfig.py: getcwd unused
+
+2009-05-28  Dmitry Lyumkis
+
+	* [r3496] lib/apVolume.py: changed norm between 0-1 to edgenorm in
+	  rescale / resize model
+	* [r3495] bin/createSyntheticDataset.py: changed sys to os.sys
+
+2009-05-27  Denis Fellmann
+
+	* [r3494] bin/updateAppionDB.py, lib/apProject.py: Query project db
+	  to get the appropriate processing db
+	  
+	  M lib/apProject.py
+	  M bin/updateAppionDB.py
+
+2009-05-27  Neil Voss
+
+	* [r3493] bin/uploadMaxlikeAlignment.py: use built-in stack merger
+	* [r3492] bin/edCenterStack.py: updates
+	* [r3491] lib/apImagicFile.py: new function mergeStacks()
+	* [r3490] lib/apDisplay.py: fix for bytes
+	* [r3489] bin/edCenterStack.py: first pass
+
+2009-05-27  Gabe Lander
+
+	* [r3488] lib/apSpider/alignment.py: - projection matching
+
+2009-05-27  Jim Pulokas
+
+	* [r3487] bin/stackFilter.py, lib/apStack.py: try to use already
+	  queried stack particles to avoid multiple queries inside of a
+	  long for loop
+
+2009-05-26  Neil Voss
+
+	* [r3486] bin/fakeTwoStacks.py: some modernization
+	* [r3485] lib/appionLoop.py, lib/particleLoop.py: these function
+	  are no longer used
+
+2009-05-26  Pick-wei Lau
+
+	* [r3484] lib/apSpider/backproject.py: added mirror correction to
+	  OTR particle alignment
+	* [r3483] bin/otrVolume.py: added mirror to aligning stack
+
+2009-05-23  Neil Voss
+
+	* [r3482] lib/apSpider/alignment.py: turn back on log files
+
+2009-05-22  Gabe Lander
+
+	* [r3481] bin/coran_for_cls.py: - don't need to make a copy of all
+	  the averages
+
+2009-05-22  Neil Voss
+
+	* [r3480] lib/appionLoop2.py: bugfix
+	* [r3479] lib/appionLoop2.py, lib/appionScript.py: better mem leak
+	  code
+
+2009-05-22  Gabe Lander
+
+	* [r3478] bin/coran_for_cls.py: - separate bat file for every class
+
+2009-05-21  Dmitry Lyumkis
+
+	* [r3477] bin/createSyntheticDataset.py: commented out selection
+	  run
+
+2009-05-21  Neil Voss
+
+	* [r3476] lib/apParam.py: fix for silhouettes in Xvfb and chimera
+	* [r3475] bin/apChimSnapshot.py, bin/makeSnapshot.py,
+	  lib/apChimera.py: better color model
+
+2009-05-21  Pick-wei Lau
+
+	* [r3474] bin/otrVolume.py: made changes to the xy shift extraction
+	  from APSH output
+
+2009-05-20  Pick-wei Lau
+
+	* [r3473] bin/otrVolume.py: included hack for tilt axis angle
+	* [r3472] lib/apFourier.py: neil made changes for pickwei
+
+2009-05-18  Dmitry Lyumkis
+
+	* [r3471] bin/createSyntheticDataset.py: changed from EMAN to
+	  import EMAN
+
+2009-05-14  Neil Voss
+
+	* [r3470] bin/apChimSnapshot.py: thicker lines
+
+2009-05-14  Gabe Lander
+
+	* [r3469] lib/appionData.py: - added hidden column to
+	  refinementdata table
+
+2009-05-13  Neil Voss
+
+	* [r3468] bin/fakeTwoStacks.py: work with OTR data
+
+2009-05-13  Gabe Lander
+
+	* [r3467] bin/clusterCoran.py, lib/apSpider/alignment.py: fixing
+	  bugs (most likely typos)
+
+2009-05-12  Pick-wei Lau
+
+	* [r3466] lib/apSpider/backproject.py: increase alignAPSH angular
+	  increment from 5 to 10
+
+2009-05-12  Neil Voss
+
+	* [r3465] lib/apRecon.py: use
+	  apStack.getStackPixelSizeFromStackId(stackid)
+	  not
+	  apDatabase.getApixFromStackData(stackdata)
+	* [r3464] lib/apDatabase.py: remove getApixFromStackData() it did
+	  not work
+
+2009-05-11  Neil Voss
+
+	* [r3463] lib/apRecon.py: if ==> elif
+	* [r3462] lib/apRecon.py: add ======= separators
+	* [r3461] lib/apRecon.py: remove old functions
+	* [r3460] bin/uploadRecon.py: fix for coran runs?
+	* [r3459] bin/makeSnapshot.py: more features
+	* [r3458] lib/spyder.py: time cubed
+	* [r3457] lib/apChimera.py: colors change less frequent
+	* [r3456] lib/apSpider/alignment.py: show average shift and
+	  rotation
+
+2009-05-09  Neil Voss
+
+	* [r3455] lib/apChimera.py: hide long command
+	* [r3454] lib/spyder.py: minor formatting
+	* [r3453] lib/apChimera.py: try again if failing
+	* [r3452] lib/apSpider/backproject.py: turn off more spider.log's
+
+2009-05-08  Neil Voss
+
+	* [r3451] bin/rctVolume.py: use mass and other changes
+	* [r3450] lib/apChimera.py: new function, setVolumeMass()
+	* [r3449] lib/spyder.py: ability to disable spider.log
+	* [r3448] bin/apChimSnapshot.py: larger step size in c1 animations
+	* [r3447] lib/apSpider/backproject.py: no more huge spider.log
+	  files
+	* [r3446] lib/apSpider/operations.py: standardization
+	* [r3445] lib/apSpider/alignment.py: standardization
+	* [r3444] lib/apEMAN.py: drop the log
+	* [r3443] lib/apChimera.py: updated color scheme
+	* [r3442] lib/apSpider/alignment.py: documentation
+	* [r3441] lib/apSpider/alignment.py: documentation
+	* [r3440] lib/apSpider/alignment.py: fixed composite alignment
+	* [r3439] lib/apSpider/operations.py: minor
+	* [r3438] lib/appionScript.py: better checking for multiple
+	  arguments
+	* [r3437] lib/apChimera.py: bigger image size
+	* [r3436] bin/apChimSnapshot.py: bigger image
+	* [r3435] lib/apSpider/alignment.py: major change to composite
+	  rotations
+
+2009-05-07  Neil Voss
+
+	* [r3434] bin/rctVolume.py: syntax fix
+
+2009-05-07  Dmitry Lyumkis
+
+	* [r3433] bin/imagicMultiReferenceAlignment.py: chaned
+	  apStack.removeStack to apFile.removeStack
+
+2009-05-07  Edward Brignole
+
+	* [r3432] lib/apSpider/alignment.py: fixed addition of alignment
+	  parameters in updateRefBasedDocFile module
+	  rotation needed to be negative
+
+2009-05-06  Dmitry Lyumkis
+
+	* [r3431] lib/apEMAN.py: added emanproc.communicate to avoid
+	  deadlocking problems in executeEmanCmd
+
+2009-05-06  Neil Voss
+
+	* [r3430] bin/jumperSubStack.py: bugfix
+	* [r3429] bin/jumperSubStack.py: bugfix
+	* [r3428] bin/jumperSubStack.py: new program to remove jumpers from
+	  a stack
+
+2009-05-06  Dmitry Lyumkis
+
+	* [r3427] bin/iterativeCommonLines.py: bugfixes
+	* [r3426] lib/appionData.py: added modifications for iterative
+	  common lines
+	* [r3425] bin/iterativeCommonLines.py: iterating through common
+	  lines choices
+
+2009-05-06  Neil Voss
+
+	* [r3424] bin/apChimSnapshot.py: fix for dynamic color
+	* [r3423] lib/apChimera.py: remove print statements
+	* [r3422] lib/apChimera.py: more color control
+
+2009-05-05  Neil Voss
+
+	* [r3421] bin/apChimSnapshot.py: hide dust for old chimeras
+	* [r3420] bin/postProc.py: check if maxfilt < pixsize*2
+	* [r3419] bin/tomomaker.py: added stuff for Hans Peter
+	  hopefully did not break anything
+	* [r3418] bin/uploadMaxlikeAlignment.py: fix for missing final doc
+	  file
+	* [r3417] lib/apChimera.py: more color
+	* [r3416] bin/rctVolume.py: allow minimum spreads and scores
+
+2009-05-02  Anchi Cheng
+
+	* [r3415] lib/apImod.py, lib/apTomo.py: tomoaverage stuff
+	* [r3414] bin/tomoaverage.py, bin/uploadTomo.py: clean up
+
+2009-05-02  Neil Voss
+
+	* [r3413] bin/apChimSnapshot.py, lib/apChimera.py: random Color
+
+2009-05-01  Neil Voss
+
+	* [r3412] lib/spyder.py: overwrite spider.log for each call
+
+2009-05-01  Pick-wei Lau
+
+	* [r3411] bin/otrVolume.py: check for error for correlation values
+
+2009-05-01  Neil Voss
+
+	* [r3410] lib/apEMAN.py, lib/apSpider/alignment.py: don't fail only
+	  warn on EMAN seg fault
+	  use subprocess for postscript conversion
+
+2009-05-01  Pick-wei Lau
+
+	* [r3409] bin/otrVolume.py:
+	* [r3408] lib/apSpider/backproject.py: made changes to enable
+	  script to be run on guppy
+
+2009-04-30  Pick-wei Lau
+
+	* [r3407] bin/otrVolume.py: updated version
+	* [r3406] lib/appionData.py:
+	* [r3405] lib/apSpider/backproject.py: otr stuff
+
+2009-04-30  Dmitry Lyumkis
+
+	* [r3404] bin/imagic3d0.py: another imagic order change
+
+2009-04-30  Neil Voss
+
+	* [r3403] bin/edIterAlign.py: clear up error message
+	* [r3402] lib/apStack.py: use
+	  appionData.ApPathData(path=os.path.abspath(mypath))
+	* [r3401] bin/edIterAlign.py, bin/otrVolume.py,
+	  bin/refBasedAlignment2.py, bin/spiderNoRefAlign.py,
+	  bin/uploadRecon.py, bin/uploadTemplateStack.py: use canonical:
+	  appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
+
+2009-04-30  Dmitry Lyumkis
+
+	* [r3400] bin/imagic3d0.py: workaround for automasking
+
+2009-04-30  Neil Voss
+
+	* [r3399] bin/refBasedAlignment2.py: universal boxsize
+	* [r3398] bin/uploadMaxlikeAlignment.py, lib/apSpider/alignment.py:
+	  crash if no particles are transformed
+	* [r3397] bin/maxlikeAlignment.py: max iter = 30
+
+2009-04-29  Neil Voss
+
+	* [r3396] lib/apSpider/volFun.py: minor changes
+	* [r3395] bin/modelFromPDB.py: expanded features
+	* [r3394] bin/uploadModel.py: rm extra line
+	* [r3393] lib/apImage.py: plane regression before highpass filter
+	* [r3392] lib/apChimera.py: more messages
+
+2009-04-29  Dmitry Lyumkis
+
+	* [r3391] bin/uploadTemplateStack.py: added numimages param
+	* [r3390] bin/imagicMSAcluster.py: bunch of bugfixes
+
+2009-04-29  Neil Voss
+
+	* [r3389] bin/hideSquare.py: shorten wait time
+
+2009-04-28  Dmitry Lyumkis
+
+	* [r3388] bin/imagicMultiReferenceAlignment.py: bugfix to set
+	  identical boxsizes
+
+2009-04-28  Edward Brignole
+
+	* [r3387] bin/edIterAlign.py: fixed DB insert
+	* [r3386] bin/edIterAlign.py: orientref is an integer not a list
+
+2009-04-28  Neil Voss
+
+	* [r3385] lib/spyder.py: add verbose flag
+
+2009-04-28  Edward Brignole
+
+	* [r3384] spiderbatch/refnm.spi: fixed report of particle and
+	  template size
+	* [r3383] bin/edIterAlign.py: binning fix
+
+2009-04-28  Neil Voss
+
+	* [r3382] bin/maxlikeAlignment.py: garibaldi stuff
+
+2009-04-28  Edward Brignole
+
+	* [r3381] bin/edIterAlign.py: merged with neil's changes
+
+2009-04-28  Neil Voss
+
+	* [r3380] lib/spyder.py: allow overriding the term setting
+	* [r3379] bin/edIterAlign.py: eds changes
+	* [r3378] bin/makeSnapshot.py: default zoom of 1
+
+2009-04-28  Edward Brignole
+
+	* [r3377] bin/edIterAlign.py: added rundir to paths for file
+	  conversions during insertion
+
+2009-04-28  Anchi Cheng
+
+	* [r3376] lib/apChimera.py: low pass filter only works if the
+	  boxsize has a prime factor of 2, I think
+	* [r3375] lib/apEMAN.py: segmentation fault detection
+	* [r3374] bin/uploadRecon.py, lib/apChimera.py, lib/apEMAN.py,
+	  lib/apRecon.py: safer snapshot rendering
+
+2009-04-28  Edward Brignole
+
+	* [r3373] bin/edIterAlign.py: Changed insert=True, ready to run and
+	  insert data to DB.
+	* [r3372] lib/apTemplate.py: always shrink box
+
+2009-04-28  Neil Voss
+
+	* [r3371] bin/apChimSnapshot.py: do not initially turn c1 structure
+	  by 180 degrees
+
+2009-04-27  Neil Voss
+
+	* [r3370] bin/uploadModel.py: fix for symmetry
+	* [r3369] bin/imagic3d0.py: subprocess fix
+	* [r3368] lib/apIMAGIC.py: subprocess fix
+
+2009-04-27  Gabe Lander
+
+	* [r3367] bin/clstoaligned.py, bin/coran_for_cls.py,
+	  lib/apSpider/alignment.py: - launch spider within each
+	  subdirectory, so that MPI doesn't try writing to the same
+	  results.bat.0 file
+
+2009-04-27  Neil Voss
+
+	* [r3366] lib/apImage.py, lib/apParam.py: fixing things I broke
+	* [r3365] bin/cleanRecon.py, bin/createSyntheticDataset.py,
+	  bin/imagic3dRefine.py, bin/imagicMSA.py, bin/imagicMSAcluster.py,
+	  bin/imagicMultiReferenceAlignment.py,
+	  bin/msgPassing_subClassification.py, bin/runfrealign.py,
+	  bin/scalestack.py, lib/apAlignment.py, lib/apFrealign.py,
+	  lib/apImod.py, lib/apSpider/alignment.py, lib/apTomo.py,
+	  lib/apViewIt.py, lib/spyder.py: add proc.wait() for subprocess
+	  jobs
+	* [r3364] bin/coran_for_cls.py: wait for process
+
+2009-04-27  Dmitry Lyumkis
+
+	* [r3363] bin/imagicMultiReferenceAlignment.py: added scaling based
+	  on apix
+
+2009-04-26  Edward Brignole
+
+	* [r3362] lib/spyder.py: sets SPPROC_DIR environment variable to
+	  use spiderbatch library
+	* [r3361] lib/appionData.py: added lines for inserting edIterAlign
+	  results to DB
+	* [r3360] bin/edIterAlign.py: fixed DB insertion
+
+2009-04-24  Neil Voss
+
+	* [r3359] lib/apChimera.py: delete images on failed animations
+	* [r3358] bin/tiltStackAlign.py: made faster
+	* [r3357] bin/cleanRecon.py, bin/coran_for_cls.py,
+	  bin/createSyntheticDataset.py, bin/imagic3d0.py,
+	  bin/imagic3dRefine.py, bin/imagicMSA.py, bin/imagicMSAcluster.py,
+	  bin/imagicMultiReferenceAlignment.py,
+	  bin/msgPassing_subClassification.py, bin/runfrealign.py,
+	  bin/scalestack.py, lib/apAlignment.py, lib/apFrealign.py,
+	  lib/apIMAGIC.py, lib/apImage.py, lib/apImod.py, lib/apParam.py,
+	  lib/apSpider/alignment.py, lib/apTomo.py, lib/apViewIt.py,
+	  lib/spyder.py: changed os.system to subprocess.Popen
+	* [r3356] bin/tiltStackAlign.py: quit using the slow proc2d and use
+	  apImagicFile.
+
+2009-04-24  Edward Brignole
+
+	* [r3355] spiderbatch/procs/ital.spi: changed output from images
+	  series to stack
+	  combined class apsh-alignment docs into a single alignment doc
+	* [r3354] bin/edIterAlign.py: added functions for database commit
+	  not sure if they're working right yet
+
+2009-04-23  Neil Voss
+
+	* [r3353] bin/maxlikeAlignment.py: die if Xmipp did not run
+	* [r3352] bin/makestack2.py: die if no images
+	* [r3351] bin/maxlikeAlignment.py, bin/maxlikeThreeDim.py,
+	  bin/refBasedAlignment2.py, bin/spiderNoRefAlign.py: force
+	  boxsizes to be even
+	* [r3350] bin/refBasedAlignment.py: refBasedAlignment.py is dead,
+	  long live refBasedAlignment.py
+
+2009-04-23  Edward Brignole
+
+	* [r3349] bin/edIterAlign.py: Got spider working, not inserting
+	  into database yet.
+
+2009-04-23  Anchi Cheng
+
+	* [r3348] bin/tomoaverage.py, lib/apAlignment.py, lib/apImod.py,
+	  lib/apStack.py, lib/apTomo.py, lib/appionData.py: stuff for
+	  tomogram averaging
+	* [r3347] bin/uploadTomo.py: default orientation once uploaded
+	* [r3346] bin/subtomomaker.py, bin/tomomaker.py: divide tomomaker
+	  functions to fulltomo and subtomo
+
+2009-04-22  Neil Voss
+
+	* [r3345] lib/apSpider/filters.py: make the code for modern spider
+	* [r3344] bin/imgRejector.py: no message for no ACE
+	* [r3343] lib/apFrealign.py: do not import apFrealign (itself)
+	* [r3342] lib/apSpider/alignment.py: set to one processor
+
+2009-04-22  Dmitry Lyumkis
+
+	* [r3341] bin/imagicMSAcluster.py: added normalization
+	* [r3340] bin/imagicMSA.py: bugfix, order of questions changed
+	* [r3339] bin/imagicMultiReferenceAlignment.py: bugfix
+
+2009-04-22  Neil Voss
+
+	* [r3338] bin/tiltAutoAligner.py: process images on the fly
+
+2009-04-21  Dmitry Lyumkis
+
+	* [r3337] bin/imagicMultiReferenceAlignment.py: added function for
+	  removing headers of references
+
+2009-04-21  Neil Voss
+
+	* [r3336] bin/refBasedAlignment2.py: no normalization
+	* [r3335] lib/appionLoop2.py: just a message
+	* [r3334] bin/maxlikeAlignment.py, bin/uploadMaxlikeAlignment.py:
+	  new model for max like alignments
+
+2009-04-20  Dmitry Lyumkis
+
+	* [r3333] bin/imagicMultiReferenceAlignment.py: addded
+	  normalization for stack viewing
+	* [r3332] bin/createSyntheticDataset.py: added stack mean plot
+	  creation
+
+2009-04-20  Neil Voss
+
+	* [r3331] bin/edIterAlign.py, spiderbatch/procs/ital.spi: ed's
+	  updates
+
+2009-04-20  Dmitry Lyumkis
+
+	* [r3330] bin/imagicMultiReferenceAlignment.py: added template
+	  scaling, also particle insertion
+	* [r3329] lib/appionData.py: added templateStackData reference to
+	  alignreferencedata
+	* [r3328] lib/appionData.py: added imagicfile to
+	  ApAlignReferenceData
+
+2009-04-19  Edward Brignole
+
+	* [r3327] spiderbatch/CtfCorrectTilt.spi,
+	  spiderbatch/ali3dapsh_y22.spi, spiderbatch/alnapsr.spi,
+	  spiderbatch/alnavg.spi, spiderbatch/alnavg2self.spi,
+	  spiderbatch/alnimg.spi, spiderbatch/apsr2sap.spi,
+	  spiderbatch/apsrcleanup.spi, spiderbatch/apsrgrps.spi,
+	  spiderbatch/apsrstat.spi, spiderbatch/apsrstatsym.spi,
+	  spiderbatch/avgmrg.spi, spiderbatch/avgvolmatch.spi,
+	  spiderbatch/axesvol.spi, spiderbatch/boxcut.spi,
+	  spiderbatch/bpcg.spi, spiderbatch/casm.spi,
+	  spiderbatch/casre.spi, spiderbatch/ccc.spi,
+	  spiderbatch/centerby2fold.spi, spiderbatch/centerbymirrors.spi,
+	  spiderbatch/checkpics.spi, spiderbatch/chiralvol.spi,
+	  spiderbatch/classavgs.spi, spiderbatch/classcheck.spi,
+	  spiderbatch/classify.spi, spiderbatch/classifyauto.spi,
+	  spiderbatch/classkmauto.spi, spiderbatch/classvsclass.spi,
+	  spiderbatch/classvsclass_split.spi,
+	  spiderbatch/cleanParticleList.spi, spiderbatch/cleanautopic.spi,
+	  spiderbatch/clhc_weight.spi, spiderbatch/clust_kmeans.spi,
+	  spiderbatch/clust_thresh.spi, spiderbatch/comnlines.spi,
+	  spiderbatch/coran.spi, spiderbatch/cordvalratio.spi,
+	  spiderbatch/cp2tif.spi, spiderbatch/crop.spi,
+	  spiderbatch/ctf_corr.spi, spiderbatch/ctfcorr_hrnapii.spi,
+	  spiderbatch/ctfcorr_micros.spi, spiderbatch/cxcords.spi,
+	  spiderbatch/datasetgrpcount.spi, spiderbatch/dcbfix.spi,
+	  spiderbatch/dcs.spi, spiderbatch/defocus.spi,
+	  spiderbatch/deletelist.spi, spiderbatch/difmap2d.spi,
+	  spiderbatch/dividelist.spi, spiderbatch/dochalf.spi,
+	  spiderbatch/eigenhist.py, spiderbatch/eigenhist.spi,
+	  spiderbatch/eigparse.spi, spiderbatch/face.spi,
+	  spiderbatch/filter.spi, spiderbatch/findmag.spi,
+	  spiderbatch/findradius.spi, spiderbatch/fraln.spi,
+	  spiderbatch/frccombine.spi, spiderbatch/frcmask.spi,
+	  spiderbatch/frcrescalc.spi, spiderbatch/frcsum.spi,
+	  spiderbatch/fsc.spi, spiderbatch/ft.spi,
+	  spiderbatch/grpalnmask.spi, spiderbatch/grpalnpcls.spi,
+	  spiderbatch/imagestat.spi, spiderbatch/interpol.spi,
+	  spiderbatch/jumpers.spi, spiderbatch/listfiles.spi,
+	  spiderbatch/makemask.spi, spiderbatch/maskcenter.spi,
+	  spiderbatch/maskclasspcls.spi, spiderbatch/maskshift.spi,
+	  spiderbatch/maxaln.spi, spiderbatch/mergeclasses.spi,
+	  spiderbatch/mergesubclasslists.spi, spiderbatch/modelvol.spi,
+	  spiderbatch/montage.spi, spiderbatch/montage2tif.spi,
+	  spiderbatch/noisewin.spi, spiderbatch/pclnorm.spi,
+	  spiderbatch/pdb2spi.spi, spiderbatch/pickparticles.spi,
+	  spiderbatch/powerspec.spi, spiderbatch/procs,
+	  spiderbatch/procs/alignclassify.spi,
+	  spiderbatch/procs/alignclassify_clstr.spi,
+	  spiderbatch/procs/check_cleanpics.spi,
+	  spiderbatch/procs/clauto.old, spiderbatch/procs/clauto_clfa.old,
+	  spiderbatch/procs/cleanandwindow.spi,
+	  spiderbatch/procs/cleanlist_iral2.spi,
+	  spiderbatch/procs/datasetcombine.spi,
+	  spiderbatch/procs/freealn.spi, spiderbatch/procs/ital.spi,
+	  spiderbatch/procs/ital_bp.spi,
+	  spiderbatch/procs/ital_bprefine.spi,
+	  spiderbatch/procs/ital_bprescalc.spi,
+	  spiderbatch/procs/makeclasses.spi,
+	  spiderbatch/procs/makedudes.spi, spiderbatch/procs/makefaces.spi,
+	  spiderbatch/procs/mergeclasses.spi,
+	  spiderbatch/procs/normfiltcenmask.spi,
+	  spiderbatch/procs/poweravg_defocus.spi,
+	  spiderbatch/procs/rali1_mask1.spi,
+	  spiderbatch/procs/raw2spi_defocus.spi,
+	  spiderbatch/procs/refnm_apsrtest.spi,
+	  spiderbatch/procs/testtiltdata.spi,
+	  spiderbatch/procs/winpairs_filt_mask.spi,
+	  spiderbatch/procs/winpairs_filtcenmask.spi,
+	  spiderbatch/rawmicro2mrc.spi, spiderbatch/rawmicro2spi.spi,
+	  spiderbatch/rct2apshdoc.spi, spiderbatch/rctami2spidocs.spi,
+	  spiderbatch/rctanglerefine.spi, spiderbatch/rctangles2p.spi,
+	  spiderbatch/rctanglesapsh.spi, spiderbatch/rctanglesmr.spi,
+	  spiderbatch/rctgrpangles.spi, spiderbatch/rctshiftrefine.spi,
+	  spiderbatch/refal.spi, spiderbatch/refgrp.spi,
+	  spiderbatch/refnm.spi, spiderbatch/refprjaln.spi,
+	  spiderbatch/reseqlist.spi, spiderbatch/resizeimg.spi,
+	  spiderbatch/rtshgrpav.spi, spiderbatch/rtsq.spi,
+	  spiderbatch/rtsq_ic.spi, spiderbatch/sap.spi,
+	  spiderbatch/sapclass.spi, spiderbatch/sapm.spi,
+	  spiderbatch/slicevol.spi, spiderbatch/softcircle.spi,
+	  spiderbatch/spiralvol.spi, spiderbatch/stack.spi,
+	  spiderbatch/subgrpseq.spi, spiderbatch/symdetect.spi,
+	  spiderbatch/unstack.spi, spiderbatch/vol2prj.spi,
+	  spiderbatch/volmatch.spi, spiderbatch/wheretiltwin.spi,
+	  spiderbatch/wherewin.spi, spiderbatch/winpcls.spi,
+	  spiderbatch/winpcls_ic.spi, spiderbatch/wintiltpair.spi: adding
+	  all of Ed's scripts to appion
+
+2009-04-17  Neil Voss
+
+	* [r3326] bin/maxlikeAlignment.py: create average image
+	* [r3325] bin/kerdenSOM.py, lib/appionData.py: calculate ssnr
+	  resolution
+	* [r3324] lib/apFourier.py: more clean up
+	* [r3323] lib/apFourier.py: clean up
+	* [r3322] lib/apFourier.py: clean up
+	* [r3321] lib/apFourier.py: advancements
+	* [r3320] bin/makestack2.py: check for odd boxsizes
+	* [r3319] lib/apPrimeFactor.py: even checking
+	* [r3318] bin/pyace2.py: minor changes
+	* [r3317] bin/makestack2.py: rm *corrected.mrc
+	* [r3316] bin/maxlikeAlignment.py: clip size is multiple of 2
+
+2009-04-16  Dmitry Lyumkis
+
+	* [r3315] lib/appionData.py: added ApSyntheticStackParamsData
+
+2009-04-16  Neil Voss
+
+	* [r3314] bin/maxlikeThreeDim.py: define psi (inplane increment)
+	  and phi (Euler increment) separately
+	* [r3313] lib/apSpider/filters.py: smooth out fermi filter
+
+2009-04-16  Anchi Cheng
+
+	* [r3312] bin/jpgmaker.py: comment correction
+	* [r3311] bin/jpgmaker.py: restore imgsize option
+
+2009-04-16  Neil Voss
+
+	* [r3310] bin/clusterCoran.py, lib/apSpider/alignment.py: fix for
+	  long factor lists
+
+2009-04-16  Jim Pulokas
+
+	* [r3309] bin/cleanRecon.py: script to finalize a recon that never
+	  finished. moves contens of recon subdir to parent dir. runs
+	  updateAppionDB.py to set status from R to D.
+
+2009-04-15  Jim Pulokas
+
+	* [r3308] bin/apdbconfig.py, bin/dbconfig.py: use sinedon if
+	  available
+
+2009-04-14  Dmitry Lyumkis
+
+	* [r3307] bin/createSyntheticDataset.py: finished all uploads to
+	  stacks
+
+2009-04-14  Neil Voss
+
+	* [r3306] bin/maxlikeThreeDim.py: perturb during initial model
+	  creation
+	* [r3305] bin/maxlikeThreeDim.py: major improvements
+	* [r3304] bin/uploadMaxlikeAlignment.py: remove any existing stack
+
+2009-04-14  Dmitry Lyumkis
+
+	* [r3303] lib/envelopeImage.mrc: envelope function to be used with
+	  synthetic dataset creation
+	* [r3302] bin/createSyntheticDataset.py: bugfix
+
+2009-04-13  Neil Voss
+
+	* [r3301] bin/uploadMaxlikeAlignment.py: bugfix
+	* [r3300] bin/uploadMaxlikeAlignment.py: bugfix
+	* [r3299] bin/uploadMaxlikeAlignment.py: bugfix
+	* [r3298] bin/uploadMaxlikeAlignment.py: bugfix
+	* [r3297] bin/uploadMaxlikeAlignment.py, lib/apImagicFile.py: fix
+	  for large stacks
+
+2009-04-11  Dmitry Lyumkis
+
+	* [r3296] bin/createSyntheticDataset.py: removed all spider stuff,
+	  now using python, added raw micrograph creation
+
+2009-04-11  Neil Voss
+
+	* [r3295] bin/apChimSnapshot.py: no capping for animation
+
+2009-04-10  Neil Voss
+
+	* [r3294] bin/createModel.py: use aligned stack
+	* [r3293] bin/createModel.py, lib/apFile.py: remove stack when
+	  finished
+	* [r3292] bin/createModel.py: startcsym, starticos, startoct use
+	  particles NOT class averages
+	* [r3291] lib/apFourier.py: IT WORKS
+
+2009-04-10  Anchi Cheng
+
+	* [r3290] lib/appionData.py: subtomogram run
+	* [r3289] lib/apDatabase.py: clean up print
+
+2009-04-09  Neil Voss
+
+	* [r3288] ace2/acetilt.py: upgrades
+	* [r3287] bin/pyacetilt.py: new pipeline tool
+	* [r3286] lib/apFourier.py: getting closer
+	* [r3285] lib/apFourier.py: testing new things
+
+2009-04-09  Anchi Cheng
+
+	* [r3284] lib/apDatabase.py: remove direct reference to dbemdata
+
+2009-04-08  Anchi Cheng
+
+	* [r3283] lib/apTilt/apTiltPair.py: pair between Zprojection and a
+	  tilted image
+	* [r3282] lib/apDatabase.py: change variable hidden to viewerstatus
+	  since True is exemplar not hidden
+
+2009-04-07  Neil Voss
+
+	* [r3281] bin/maxlikeThreeDim.py: still broken
+	* [r3280] bin/createModel.py: fixes
+
+2009-04-07  Dmitry Lyumkis
+
+	* [r3279] bin/createSyntheticDataSet.py: changed name
+	* [r3278] lib/appionData.py: added template stack to imagic3dRefine
+
+2009-04-07  Neil Voss
+
+	* [r3277] ace2/acetilt.py: major updates
+
+2009-04-06  Craig Yoshioka
+
+	* [r3276] ace2/Array.m, ace2/ace2.m: Fixed major bug in array
+	  memory, type-switching code
+
+2009-04-06  Neil Voss
+
+	* [r3275] bin/refBasedAlignment2.py: remove temporary aligned
+	  stacks
+	* [r3274] ace2/acetilt.py: updates
+	* [r3273] bin/rctVolume.py: rotation is negative independent of
+	  mirror
+
+2009-04-04  Dmitry Lyumkis
+
+	* [r3272] bin/imagicReclassifyClassums.py: deleted this script,
+	  copy saved
+	* [r3271] bin/createSyntheticDataset.py: renamed
+
+2009-04-03  Neil Voss
+
+	* [r3270] bin/apChimSnapshot.py, bin/createModel.py,
+	  lib/apChimera.py, lib/apVolume.py: general fixes
+	* [r3269] bin/createModel.py, lib/apVolume.py: final updates
+	* [r3268] bin/maxlikeAlignment.py: perform binning and lowpass in
+	  separate steps
+	* [r3267] bin/createModel.py: almost done
+	* [r3266] lib/apSymmetry.py: fix for ints
+	* [r3265] bin/createModel.py: major upgrades
+	* [r3264] lib/apStack.py: changes to function makeNewStack()
+	* [r3263] lib/apSymmetry.py: format change
+	* [r3262] bin/imagic3d0.py, bin/imagic3dRefine.py, bin/postProc.py,
+	  bin/uploadModel.py: apSymmetry update
+
+2009-04-02  Neil Voss
+
+	* [r3261] bin/createModel.py: major changes
+	* [r3260] lib/apSymmetry.py: die if no symm specified
+	* [r3259] bin/alignSubStack.py: comments
+	* [r3258] bin/createModel.py, bin/postProc.py, lib/apSymmetry.py:
+	  apSymmetry.py changes
+	* [r3257] bin/createModel.py, bin/imagic3d0.py,
+	  bin/imagic3dRefine.py, bin/imagicMSA.py, bin/imagicMSAcluster.py,
+	  bin/imagicMultiReferenceAlignment.py,
+	  bin/imagicReclassifyClassums.py, bin/modelFromEMDB.py,
+	  bin/modelFromPDB.py, bin/postProc.py, bin/tomomaker.py,
+	  bin/tomomoviemaker.py, bin/updateAppionDB.py, bin/uploadMisc.py,
+	  bin/uploadModel.py, bin/uploadParticles.py,
+	  bin/uploadTemplate.py, bin/uploadTemplateStack.py,
+	  bin/uploadTomo.py, lib/apRecon.py, lib/apSymmetry.py,
+	  lib/apUpload.py: apUpload is now apSymmetry
+	* [r3256] lib/apChimera.py: disable sihoulettes in animations
+	* [r3255] bin/spiderNoRefAlign.py: check for correct number of
+	  particles in output
+	* [r3254] lib/apSpider/alignment.py: add comment line
+
+2009-04-01  Dmitry Lyumkis
+
+	* [r3253] bin/imagicMSAcluster.py: added error check for imagic
+	  logfile
+	* [r3252] bin/imagic3d0.py: added error check for imagic logfile
+	* [r3251] bin/imagic3dRefine.py: added error check for imagic
+	  logfile
+	* [r3250] bin/imagicMultiReferenceAlignment.py: added error check
+	  for imagic logfile
+	* [r3249] bin/imagicMSA.py: added error check for imagic logfile
+	* [r3248] bin/imagic3dRefine.py: added chimera-only function
+	* [r3247] bin/imagic3d0.py: added chimera-only function
+
+2009-03-31  Neil Voss
+
+	* [r3246] ace2/acetilt.py: overhaulling
+	* [r3245] bin/maxlikeAlignment.py: set normalization
+	* [r3244] bin/maxlikeAlignment.py: set normalization
+	* [r3243] bin/maxlikeThreeDim.py: bugfix
+	* [r3242] bin/maxlikeThreeDim.py: bugfix
+	* [r3241] bin/maxlikeThreeDim.py: bugfix
+	* [r3240] lib/apVolume.py: bugfix
+	* [r3239] bin/maxlikeThreeDim.py: bugfix
+	* [r3238] bin/maxlikeThreeDim.py: bugfix
+	* [r3237] bin/maxlikeThreeDim.py: bugfix
+	* [r3236] lib/apVolume.py: added rescaleModelId()
+	* [r3235] bin/maxlikeThreeDim.py: use modelids
+
+2009-03-28  Dmitry Lyumkis
+
+	* [r3234] lib/apVolume.py: changed tempname in
+	  createAmpCorBatchFile, giving problems with special characters
+
+2009-03-27  Dmitry Lyumkis
+
+	* [r3233] bin/createSyntheticDataSet.py: added a bunch of features
+	  for ace2correction and filtering
+
+2009-03-27  Neil Voss
+
+	* [r3232] bin/maxlikeThreeDim.py: smaller Gauss sphere
+
+2009-03-27  Dmitry Lyumkis
+
+	* [r3231] bin/imagic3dRefine.py: added templateStackData
+	* [r3230] bin/imagic3d0.py: added templateStackData
+
+2009-03-26  Dmitry Lyumkis
+
+	* [r3229] bin/imagic3d0.py: added templateStackId
+	* [r3228] lib/appionData.py: added templateStackId to imagic3d0
+
+2009-03-26  Neil Voss
+
+	* [r3227] bin/makestack2.py: die if stdev of particle == 0
+	* [r3226] lib/apSpider/alignment.py: crash if no Eigen images
+	* [r3225] bin/maxlikeThreeDim.py: comment out self.readyUploadFlag
+
+2009-03-26  Dmitry Lyumkis
+
+	* [r3224] bin/uploadTemplateStack.py: added saving number of images
+	  to database
+	* [r3223] lib/appionData.py: added number of images to
+	  TemplateStackDAta
+
+2009-03-25  Anchi Cheng
+
+	* [r3222] bin/tomomaker.py: empty string not None
+
+2009-03-25  Dmitry Lyumkis
+
+	* [r3221] bin/uploadTemplateStack.py: changed path to
+	  rundir+runname
+	* [r3220] bin/uploadTemplateStack.py: modified to work with
+	  exclusions and inclusions
+
+2009-03-25  Neil Voss
+
+	* [r3219] bin/maxlikeThreeDim.py: angle increment
+	* [r3218] lib/appionScript.py: load check
+	* [r3217] bin/maxlikeThreeDim.py: symmetry
+	* [r3216] bin/maxlikeThreeDim.py: bugfix
+	* [r3215] bin/maxlikeThreeDim.py: bugfix
+	* [r3214] bin/maxlikeThreeDim.py: add -norm option
+	* [r3213] bin/maxlikeAlignment.py, bin/maxlikeThreeDim.py: add
+	  -norm option
+	* [r3212] bin/maxlikeThreeDim.py: changes
+	* [r3211] bin/maxlikeThreeDim.py: changes
+	* [r3210] docs/INSTALL.txt: add incomplete tag at end
+	* [r3209] bin/apChimSnapshot.py, lib/apChimera.py: all said and
+	  done
+
+2009-03-24  Neil Voss
+
+	* [r3208] bin/apChimSnapshot.py: more bugfixes
+	* [r3207] bin/apChimSnapshot.py: increase the smoothing iterations
+	* [r3206] lib/apChimera.py: check for file 1 not 0
+	* [r3205] bin/apChimSnapshot.py: zoom fix
+	* [r3204] lib/apChimera.py: add image size
+	* [r3203] lib/apChimera.py: fix for silhouette
+	* [r3202] lib/apChimera.py: remove print
+	* [r3201] lib/apChimera.py: minor bugfix
+	* [r3200] bin/apChimSnapshot.py, lib/apChimera.py: some
+	  improvements
+	* [r3199] bin/createModel.py, bin/imagic3d0.py,
+	  bin/imagic3dRefine.py, bin/makeSnapshot.py, bin/modelFromEMDB.py,
+	  bin/modelFromPDB.py, bin/otrVolume.py, bin/postProc.py,
+	  bin/rctVolume.py, bin/uploadModel.py, lib/apChimera.py,
+	  lib/apRecon.py: change to chimera functions
+	* [r3198] lib/apParam.py: minor change to Xvfb
+	* [r3197] bin/apChimAnimate.py, bin/apChimSnapshot.py,
+	  lib/apChimera.py: new methods for controling chimera
+
+2009-03-24  Dmitry Lyumkis
+
+	* [r3196] bin/imagic3dRefine.py: changed repalignemnts
+	* [r3195] bin/imagic3d0.py: bugfix
+	* [r3194] bin/imagic3d0.py: modified particle selection to avoid
+	  duplication
+
+2009-03-24  Neil Voss
+
+	* [r3193] lib/apStackMeanPlot.py: boxsize fix
+
+2009-03-24  Dmitry Lyumkis
+
+	* [r3192] lib/appionData.py: added numpart to imagic3d0
+
+2009-03-23  Neil Voss
+
+	* [r3191] lib/apChimera.py: color feature for renderAnimation
+	* [r3190] bin/ApTiltPicker.py: some background changes for the EAC
+	* [r3189] bin/apChimAnimate.py: some extra features
+	* [r3188] lib/apXmipp.py: fix for few particles
+
+2009-03-19  Pick-wei Lau
+
+	* [r3187] bin/otrVolume.py: minor changes
+	* [r3186] lib/apTilt/apTiltPair.py: added
+	  getParticleTiltRotationAnglesOTR function for OTR
+
+2009-03-18  Anchi Cheng
+
+	* [r3185] lib/apStack.py: particles from an image of a stack
+	* [r3184] bin/tomomaker.py: make subtomogram by particles in a
+	  stack
+
+2009-03-18  Craig Yoshioka
+
+	* [r3183] ace2/ace2.m, ace2/ace2correct.m: New binaries, againø
+	* [r3182] ace2/ace2correct.m, bin/ace2.exe, bin/ace2correct.exe:
+	  Better features in ACE2 binaries
+	* [r3181] ace2/Image.m, ace2/ace2correct.m: Updated ace2correct to
+	  take output path and to check fftw results for first-run
+	  conditions to prevent the destruction of the input image on plan
+	  creation
+
+2009-03-18  Dmitry Lyumkis
+
+	* [r3180] bin/createSyntheticDataSet.py: added padding before
+	  projections
+	* [r3179] bin/createSyntheticDataSet.py: added padding
+
+2009-03-18  Gabe Lander
+
+	* [r3178] bin/runfrealign.py, lib/apFrealign.py: - continue from
+	  previous run
+
+2009-03-17  Neil Voss
+
+	* [r3177] bin/createSyntheticDataSet.py: spaces to tabs
+	* [r3176] lib/apVolume.py: fix for long file names
+
+2009-03-17  Dmitry Lyumkis
+
+	* [r3175] bin/createSyntheticDataSet.py: added check
+
+2009-03-16  Neil Voss
+
+	* [r3174] bin/createSyntheticDataSet.py: convert Dmitry's spaces
+	  into tabs
+
+2009-03-16  Dmitry Lyumkis
+
+	* [r3173] bin/createSyntheticDataSet.py: changed ampcor file
+	  location
+
+2009-03-15  Dmitry Lyumkis
+
+	* [r3172] bin/createSyntheticDataSet.py: script for creating a
+	  synthetic dataset
+	* [r3171] lib/ampcor_power.spi: power spectrum for amplitude
+	  adjustment based on low-pass filtered power sum
+
+2009-03-14  Neil Voss
+
+	* [r3170] lib/apImage.py: allow to skip warning in binImg
+	* [r3169] lib/apImagicFile.py: check for stack of different
+	  boxsizes
+
+2009-03-14  Pick-wei Lau
+
+	* [r3168] lib/apSpider/backproject.py: added some functions for OTR
+	  processing
+	* [r3167] bin/otrVolume.py: updated version
+
+2009-03-13  Neil Voss
+
+	* [r3166] lib/apXmipp.py: added support for large stacks
+	* [r3165] bin/alignSubStack.py: add score and spread limits
+	* [r3164] lib/apDisplay.py: add bytes()
+	* [r3163] lib/apImagicFile.py: major upgrade to stack reading
+	* [r3162] lib/apImage.py: spacing
+	* [r3161] lib/apStackMeanPlot.py: no more EMAN == much faster
+	* [r3160] lib/apImagicFile.py: add readParticleListFromStack()
+
+2009-03-13  Gabe Lander
+
+	* [r3159] bin/runfrealign.py: - resize/ rescale initial model to
+	  fit stack
+
+2009-03-13  Neil Voss
+
+	* [r3158] lib/apParticle.py: fix for images without defocal pair
+	* [r3157] bin/pyace2.py: delete *.corrected.mrc when finished
+
+2009-03-13  Anchi Cheng
+
+	* [r3156] lib/apImod.py: default to not inverting density
+	* [r3155] lib/apParticle.py: quick query using group by
+	* [r3154] lib/particleLoop2.py: some times rundata need to be
+	  passed
+
+2009-03-12  Neil Voss
+
+	* [r3153] lib/apImagicFile.py: add readSingleParticleFromStack()
+	* [r3152] lib/apPrimeFactor.py: use global maxprime
+
+2009-03-11  Gabe Lander
+
+	* [r3151] bin/makegoodaverages.py, bin/satAverage.py,
+	  bin/satEuler.py, lib/apEulerDraw.py, lib/apEulerJump.py,
+	  lib/apFrealign.py, lib/apRecon.py, lib/appionData.py,
+	  useappion.csh: - got rid of ApEulerData
+
+2009-03-11  Neil Voss
+
+	* [r3150] lib/appionLoop2.py: make sure the project given is the
+	  same as the project associated with the session
+	* [r3149] lib/apPrimeFactor.py: comment out print statements
+
+2009-03-11  Gabe Lander
+
+	* [r3148] lib/apSpider/alignment.py: - removed comment
+	* [r3147] lib/apSpider/alignment.py: - typo
+	* [r3146] lib/apSpider/alignment.py: - fixing mpi if fewer than 4
+	  particles in class
+	* [r3145] bin/coran_for_cls.py: - coran uses mpiexec instead of
+	  pbsdsh
+
+2009-03-11  Neil Voss
+
+	* [r3144] bin/makestack2.py: friendly boxsize analyzer
+
+2009-03-10  Neil Voss
+
+	* [r3143] bin/tiltAutoAligner.py: check for previous picking runs
+	* [r3142] lib/apParticle.py: fix for no particles with defocal
+	  pairs
+
+2009-03-10  Jim Pulokas
+
+	* [r3141] bin/pyace2.py: what's guppy, ha ha ha
+
+2009-03-10  Neil Voss
+
+	* [r3140] bin/maxlikeAlignment.py: do not create garibaldi file,
+	  will need this in future...
+	* [r3139] bin/makestack2.py, lib/apParticle.py:
+	  getDefocPairParticles2() -> getDefocPairParticles()
+	* [r3138] bin/makestack.py: this function is dead, throw in the
+	  attic
+	* [r3137] lib/apParticle.py: forgot paren
+	* [r3136] lib/apParticle.py: fix for Defocal pairs???
+
+2009-03-09  Neil Voss
+
+	* [r3135] lib/apStackMeanPlot.py: use apDisplay.print()
+	* [r3134] bin/makeSnapshot.py: added type
+	* [r3133] bin/apChimAnimate.py: deal with csym
+	* [r3132] bin/rctVolume.py: rm rct classnum
+	* [r3131] lib/appionData.py: rm rct classnum
+	* [r3130] bin/rctVolume.py: make animations
+	* [r3129] lib/apChimera.py: add renderAnimation()
+	* [r3128] bin/apChimSnapshot.py: change for asymm particles
+	  add silhouetting
+	* [r3127] bin/apChimAnimate.py: working copy
+
+2009-03-09  Gabe Lander
+
+	* [r3126] lib/apFrealign.py: use mpiexec instead of pbsdsh
+
+2009-03-09  Neil Voss
+
+	* [r3125] lib/apRecon.py: import apChimera
+	* [r3124] bin/createModel.py, bin/imagic3d0.py,
+	  bin/imagic3dRefine.py, bin/makeSnapshot.py, bin/modelFromEMDB.py,
+	  bin/modelFromPDB.py, bin/otrVolume.py, bin/postProc.py,
+	  bin/rctVolume.py, bin/uploadModel.py, lib/apChimera.py,
+	  lib/apRecon.py: use apChimera not apRecon to render snapshots
+
+2009-03-09  Gabe Lander
+
+	* [r3123] bin/uploadRecon.py, lib/apRecon.py: - use stack box size,
+	  not initial model box size
+
+2009-03-09  Neil Voss
+
+	* [r3122] lib/apChimera.py: moved apRecon functions
+	* [r3121] bin/apChimAnimate.py: chimera tool for animation
+	* [r3120] bin/apChimSnapshot.py, bin/uploadModel.py,
+	  lib/apVolume.py: fixes for uploadModel
+	* [r3119] bin/tiltAutoAligner.py: double check for outfile
+	  existance
+	* [r3118] lib/appionData.py: add hidden field to RCT
+
+2009-03-08  Neil Voss
+
+	* [r3117] bin/rctVolume.py, lib/appionData.py: insert median info
+	* [r3116] bin/rctVolume.py: add median filter
+	* [r3115] bin/rctVolume.py: fix for failed rmeasure runs
+	* [r3114] bin/tiltAutoAligner.py: fix for failed image pairs
+	* [r3113] bin/tiltAutoAligner.py: minor change
+
+2009-03-08  Craig Yoshioka
+
+	* [r3112] bin/ace2.exe, bin/ace2correct.exe, bin/pyace2.py: New
+	  ace2 binaries, statically linked
+
+2009-03-07  Neil Voss
+
+	* [r3111] bin/tiltAutoAligner.py: add getExtension function
+	* [r3110] bin/rctVolume.py: fix rotations for Maxlike
+
+2009-03-07  Craig Yoshioka
+
+	* [r3109] ace2/Makefile, ace2/getopts.c: Made Ace2 statically
+	  compiled!! Now easier to move around!!
+
+2009-03-07  Neil Voss
+
+	* [r3108] bin/rctVolume.py: moved timing functions
+
+2009-03-07  Jim Pulokas
+
+	* [r3107] lib/apDefocalPairs.py: session -> sessionname
+
+2009-03-06  Neil Voss
+
+	* [r3106] bin/apChimSnapshot.py: add HideDust if it works
+	* [r3105] lib/appionScript.py: import apProject
+	* [r3104] lib/appionScript.py: use
+	  apProject.getAppionDBFromProjectID
+	* [r3103] lib/apProject.py: comment
+	* [r3102] lib/apProject.py: function getAppionDBFromProjectId()
+	* [r3101] lib/spyder.py: check load average
+	* [r3100] lib/apSpider/alignment.py: do less factor plots
+	* [r3099] bin/coranClassify.py: add binning
+	* [r3098] bin/clusterCoran.py: comment change
+	* [r3097] bin/norefAlignment.py, lib/apSpider/alignment.py: change
+	  makeDendrogram
+
+2009-03-06  Gabe Lander
+
+	* [r3096] lib/appionLoop2.py: - fixed bug in wait loop
+	* [r3095] bin/runfrealign.py, lib/apFrealign.py: use viper
+	  convention for icos
+
+2009-03-06  Neil Voss
+
+	* [r3094] docs/INSTALL.txt, docs/Makefile: updated
+
+2009-03-05  Neil Voss
+
+	* [r3093] AUTHORS.xml, ChangeLog.txt, FAQ.txt, INSTALL.txt,
+	  LICENSE.txt, docs/AUTHORS.xml, docs/ChangeLog.txt, docs/FAQ.txt,
+	  docs/INSTALL.txt, docs/LICENSE.txt: created new docs folder
+	* [r3092] docs: new folder
+	* [r3091] INSTALL.txt: more updates
+	* [r3090] bin/tiltAutoAligner.py, bin/tiltaligner.py: rm .dwn.mrc
+	  from name
+	* [r3089] bin/tiltAutoAligner.py: link to other file .spi
+	* [r3088] bin/tiltaligner.py: too much in condition
+	* [r3087] bin/tiltaligner.py: better pre-processing
+	* [r3086] bin/tiltaligner.py: preprocessing fix
+
+2009-03-04  Neil Voss
+
+	* [r3085] ace2/Image.m: .fftwisom location
+	* [r3084] bin/makestack2.py, lib/apPrimeFactor.py: better, faster
+	  prime checking
+	* [r3083] lib/apTilt/slowmacher.py: bugfix
+
+2009-03-03  Neil Voss
+
+	* [r3082] lib/apPrimeFactor.py: prime factor library
+	* [r3081] bin/kerdenSOM.py: increase dimension
+	* [r3080] bin/coranClassify.py: add numpart parameter
+	  allow up to 60 factors
+	* [r3079] INSTALL.txt: more updates
+
+2009-03-02  Gabe Lander
+
+	* [r3078] bin/makestack2.py: - bigbox fix
+	* [r3077] bin/runfrealign.py: - calculate fsc
+
+2009-03-02  Neil Voss
+
+	* [r3076] bin/maxlikeAlignment.py: check if lowpass or highpass is
+	  None
+
+2009-03-02  Gabe Lander
+
+	* [r3075] bin/runfrealign.py, lib/apFrealign.py: - deal with
+	  icosahedral symmetry
+
+2009-02-28  Anchi Cheng
+
+	* [r3074] bin/tomomaker.py: zprojimage pick subvolume
+
+2009-02-28  Neil Voss
+
+	* [r3073] INSTALL.txt: Made some progress
+
+2009-02-27  Neil Voss
+
+	* [r3072] findem/Makefile: binpath ../bin
+	* [r3071] radermacher, radermacher/main.c, radermacher/main.h,
+	  radermacher/setup.py, radermacher/test.py, radermacher/tiltang.c,
+	  radermacher/transform.c, radermacher/willsq.c: radermacher module
+	  should go here ???
+	* [r3070] findem/Makefile: adaptable compiling
+	* [r3069] findem/Makefile: comment out md5sums
+	* [r3068] findem/Makefile: CentOS version of lib
+	* [r3067] bin/makestack2.py: keep some timing stats
+	* [r3066] lib/appionLoop2.py: missed a newline
+	* [r3065] lib/appionLoop2.py: newline in print
+
+2009-02-27  Jim Pulokas
+
+	* [r3064] bin/spiderNoRefAlign.py: runparams -> self.params
+
+2009-02-27  Neil Voss
+
+	* [r3063] bin/apChimSnapshot.py: use different colors for
+	  color_surface_height()
+	* [r3062] lib/apFile.py: spacing
+	* [r3061] bin/rctVolume.py, lib/appionData.py: new resolution
+	  storage method
+	* [r3060] bin/makestack2.py: check boxsizes
+	* [r3059] lib/apTilt/apTiltPair.py: corrected double swapped tilt
+	  axis angles
+
+2009-02-26  Neil Voss
+
+	* [r3058] bin/spiderNoRefAlign.py: revert
+
+2009-02-26  Edward Brignole
+
+	* [r3057] bin/rctVolume.py: fixed mirror angles
+
+2009-02-26  Craig Yoshioka
+
+	* [r3056] ace2/ace2correct.m, ace2/getopts.c:
+	* [r3055] ace2/ace2correct.m: Fixed Dmitry's apply ctf
+
+2009-02-26  Neil Voss
+
+	* [r3054] bin/ace2correct.exe: update version for the pesky Dmitry
+
+2009-02-26  Craig Yoshioka
+
+	* [r3053] ace2/ace2correct.m: Added apply CTF to ace2correct
+
+2009-02-26  Neil Voss
+
+	* [r3052] lib/appionLoop2.py: message printing
+	* [r3051] lib/apPeaks.py, lib/apTilt/apTiltShift.py,
+	  lib/apTilt/autotilt.py, lib/apTilt/slowmacher.py: message
+	  printing
+
+2009-02-25  Neil Voss
+
+	* [r3050] lib/apImage.py: planeRegression clean up
+	* [r3049] lib/apSpider/alignment.py: bugfix
+	* [r3048] bin/templateCorrelator.py: rm whitespace
+	* [r3047] bin/templateCorrelator.py: mirrors bugfix
+	* [r3046] bin/templateCorrelator.py: bugfix
+	* [r3045] bin/templateCorrelator.py, lib/apTemplate.py,
+	  lib/appionData.py: add mirrors to template correlation
+	* [r3044] bin/rctVolume.py: calculate the resolution of the map
+	  with rmeasure and even-odd fsc
+	* [r3043] lib/apPeaks.py: move max threshold to after merging peaks
+	* [r3042] lib/apSpider/backproject.py: give all three boxsize
+	  values
+	* [r3041] lib/apSpider/alignment.py: double check for ppm file
+	* [r3040] lib/appionData.py: additional columns for RCT
+	* [r3039] lib/filterLoop.py: say that there is a wait time
+	* [r3038] lib/appionScript.py: compatibility checks
+	* [r3037] lib/apFile.py: update to getBoxsize for various file
+	  types
+	* [r3036] lib/apRecon.py: error checking
+	* [r3035] lib/apDisplay.py: deal with micro and milli seconds
+
+2009-02-24  Gabe Lander
+
+	* [r3034] bin/makestack2.py: - had to add --boxfiles option AGAIN
+
+2009-02-24  Dmitry Lyumkis
+
+	* [r3033] bin/uploadTemplateStack.py: bugfix
+
+2009-02-23  Neil Voss
+
+	* [r3032] lib/apRecon.py: more compatible icos command
+
+2009-02-23  Dmitry Lyumkis
+
+	* [r3031] bin/imagicMultiReferenceAlignment.py: uncommented out
+	  executions
+
+2009-02-23  Neil Voss
+
+	* [r3030] lib/apDatabase.py: bugfix
+
+2009-02-23  Gabe Lander
+
+	* [r3029] bin/runfrealign.py, lib/apFrealign.py, lib/apStack.py: -
+	  particles with no eulers are given default initial orientation
+	  - if over 10% have no orientation, show error & exit
+
+2009-02-23  Anchi Cheng
+
+	* [r3028] bin/tomomaker.py: datalist
+
+2009-02-23  Dmitry Lyumkis
+
+	* [r3027] bin/imagicMultiReferenceAlignment.py: added option to
+	  change number of particles to use
+	* [r3026] bin/imagicMultiReferenceAlignment.py: commented out line
+	  with average.mrc for now
+	* [r3025] bin/imagicMultiReferenceAlignment.py: preliminary
+	  version, some things are not yet tracked
+	* [r3024] lib/appionData.py: added ApMultiRefAlignRunData()
+	* [r3023] bin/uploadTemplateStack.py: added header information to
+	  file upload
+	* [r3022] lib/apIMAGIC.py: removed print values
+	* [r3021] lib/apIMAGIC.py: bugfix
+	* [r3020] lib/apIMAGIC.py: added function for converting filtering
+	  parameters
+
+2009-02-20  Anchi Cheng
+
+	* [r3019] lib/apTomo.py: pixelsize in meters
+	* [r3018] bin/uploadTomo.py: simple full tomogram check and zproj
+	  insertion
+	* [r3017] lib/apTomo.py, lib/apUpload.py: move insertTomo from
+	  apUpload to apTomo
+	* [r3016] lib/apDatabase.py: simple checking for full tomogram
+
+2009-02-20  Gabe Lander
+
+	* [r3015] lib/apFrealign.py: - finally worked out Eulers, although
+	  still does not work for icosahedral recons
+	* [r3014] lib/apFrealign.py: - check that ctf values exist
+
+2009-02-20  Neil Voss
+
+	* [r3013] lib/apTilt/apTiltPair.py: no commas in apDisplay.printMsg
+	* [r3012] lib/apDatabase.py: show error message if image not found
+	* [r3011] bin/rctVolume.py: add zoom contour to rctVolume
+
+2009-02-20  Anchi Cheng
+
+	* [r3010] bin/tomomaker.py: clean up
+	* [r3009] bin/tomomaker.py, lib/apImod.py, lib/apTomo.py: combine
+	  tiltseries and zprojection of full tomogram
+	* [r3008] lib/appionData.py: combine alignmentrun ids saved as
+	  sequence in apFullTomogramData
+	* [r3007] lib/apUpload.py: not save file string on full tomogram
+	  because it is too large
+
+2009-02-19  Gabe Lander
+
+	* [r3006] lib/apFrealign.py: - don't copy param file
+
+2009-02-19  Jim Pulokas
+
+	* [r3005] bin/updateAppionDB.py: check for splitdb
+
+2009-02-19  Dmitry Lyumkis
+
+	* [r3004] bin/imagic3dRefine.py: bugfix
+	* [r3003] lib/apIMAGIC.py: changed copyImage to copyFile
+
+2009-02-19  Neil Voss
+
+	* [r3002] lib/apParam.py, lib/apTilt/apTiltPair.py, lib/spyder.py:
+	  change print to apDisplay.printMsg()
+	* [r3001] bin/refBasedAlignment2.py: fix conflict check with
+	  boxsize and last ring
+
+2009-02-19  Gabe Lander
+
+	* [r3000] lib/apFrealign.py: - fixed math to keep eulers between 0
+	  & 360
+
+2009-02-19  Dmitry Lyumkis
+
+	* [r2999] lib/apIMAGIC.py: added option to delete headers (conflict
+	  with EMAN headers)
+	* [r2998] lib/appionData.py: changed origpath to origfile
+	* [r2997] bin/uploadTemplateStack.py: changed origpath to origfile
+	* [r2996] lib/appionData.py: added path to uploadTemplateStack
+	* [r2995] bin/uploadTemplateStack.py: added path to query
+
+2009-02-18  Neil Voss
+
+	* [r2994] lib/apTilt/apTiltPair.py: bugfix for tilt axis angle swap
+	* [r2993] lib/apTilt/apTiltTransform.py: flipped gamma and phi
+
+2009-02-18  Gabe Lander
+
+	* [r2992] bin/runfrealign.py: - bug fix in copying of densities
+	* [r2991] lib/apFrealign.py: - runs combine jobs after iteration
+
+2009-02-18  Neil Voss
+
+	* [r2990] lib/apImage.py: figured out proper xmipp transform
+	* [r2989] bin/maxlikeAlignment.py, bin/maxlikeCenterStack.py,
+	  bin/uploadMaxlikeAlignment.py: use xmipp transform
+
+2009-02-18  Gabe Lander
+
+	* [r2988] lib/apFrealign.py: - euler conversions now correct,
+	  - shift x works with mirror now
+	* [r2987] lib/apFrealign.py: - restarting eulers
+	* [r2986] lib/apFrealign.py: - still something wrong, but close
+
+2009-02-18  Neil Voss
+
+	* [r2985] lib/apTilt/apTiltPair.py: messaging
+	* [r2984] lib/appionLoop2.py: reduce false positives for memory
+	  leaks
+	* [r2983] lib/apSpider/backproject.py: bugfix
+	* [r2982] bin/rctVolume.py: memory messaging
+	* [r2981] lib/apSpider/backproject.py: bugfix
+	* [r2980] lib/apTilt/apTiltPair.py: parameter tweaking
+	* [r2979] lib/apSpider/backproject.py: new multiprocessing code
+	* [r2978] bin/rctVolume.py: score filtering
+	  mem testing
+	  numpart limit
+
+2009-02-18  Gabe Lander
+
+	* [r2977] lib/apFrealign.py: - fixing phi
+	* [r2976] lib/apFrealign.py: - psi angle
+
+2009-02-17  Gabe Lander
+
+	* [r2975] lib/apFrealign.py: - fixing psi for mirrors
+
+2009-02-17  Neil Voss
+
+	* [r2974] lib/apEMAN.py: stdout -> stderr
+
+2009-02-17  Gabe Lander
+
+	* [r2973] lib/apFrealign.py: - fixing phi eulers
+	* [r2972] bin/runfrealign.py, lib/apFrealign.py: - continuing to
+	  debug eulers
+
+2009-02-17  Neil Voss
+
+	* [r2971] lib/apSpider/alignment.py: major optimizations to
+	  alignment code
+	* [r2970] lib/apFile.py: function getBoxSize()
+	* [r2969] lib/spyder.py: add multiprocessor
+	* [r2968] lib/apDisplay.py: write everything to stderr
+	* [r2967] bin/webcaller.py: clean up
+
+2009-02-17  Dmitry Lyumkis
+
+	* [r2966] bin/imagic3dRefine.py: updated contour defaults for
+	  chimera
+	* [r2965] bin/imagic3d0.py: updated contour defaults for chimera
+
+2009-02-17  Neil Voss
+
+	* [r2964] lib/apImagicFile.py: msg option in read and write
+	* [r2963] bin/maxlikeCenterStack.py: minor fixes
+	* [r2962] bin/spiderNoRefAlign.py: commit score to db
+	* [r2961] bin/makestack2.py: no meanplot option
+	* [r2960] bin/makestack2.py: debugging info
+
+2009-02-17  Gabe Lander
+
+	* [r2959] lib/apFrealign.py: - debugged phi conversion
+	* [r2958] bin/runfrealign.py, lib/apFrealign.py: - debugging eulers
+
+2009-02-17  Dmitry Lyumkis
+
+	* [r2957] bin/imagic3dRefine.py: added option for thresholding
+	  volume
+	* [r2956] bin/imagic3d0.py: added volume cmd to normalize and
+	  threshold density
+	* [r2955] bin/imagic3d0.py: bugfix
+
+2009-02-16  Neil Voss
+
+	* [r2954] INSTALL.txt: more notes
+	* [r2953] bin/maxlikeAlignment.py: minor fixes
+	* [r2952] lib/apImage.py: fixed bug where all images are mirrored
+
+2009-02-16  Gabe Lander
+
+	* [r2951] bin/runfrealign.py, lib/apFrealign.py: - multiple
+	  processing for frealign
+
+2009-02-16  Dmitry Lyumkis
+
+	* [r2950] bin/imagic3dRefine.py: changed "symmetry" to "eman_name"
+	* [r2949] bin/imagic3d0.py: changes "symmetry" to "eman_name"
+
+2009-02-13  Dmitry Lyumkis
+
+	* [r2948] bin/imagicMSAcluster.py: bugfix to eliminate identical
+	  batch file creations
+	* [r2947] lib/appionData.py: added ApTemplateStackData
+	* [r2946] bin/uploadTemplateStack.py: script for uploading template
+	  stacks
+
+2009-02-13  Neil Voss
+
+	* [r2945] lib/apImagicFile.py: bugfix
+
+2009-02-13  Gabe Lander
+
+	* [r2944] bin/runfrealign.py: - frealign stuff
+	* [r2943] lib/apFrealign.py, lib/apStack.py: - frealign stuff
+
+2009-02-12  Pick-wei Lau
+
+	* [r2942] bin/alignSubStack.py: corrected checkconflict function
+
+2009-02-12  Dmitry Lyumkis
+
+	* [r2941] bin/imagic3dRefine.py: cleaned up file
+
+2009-02-12  Anchi Cheng
+
+	* [r2940] lib/appionData.py: tomo thickness
+	* [r2939] lib/apImage.py: print
+	* [r2938] bin/tomomaker.py, lib/apImod.py, lib/apTomo.py: full
+	  tomogram stuff
+
+2009-02-11  Neil Voss
+
+	* [r2937] lib/apEMAN.py: change for garibaldi
+	* [r2936] lib/apImagicFile.py: don't import apImage
+
+2009-02-10  Neil Voss
+
+	* [r2935] bin/uploadMaxlikeAlignment.py: remove files at end
+	* [r2934] lib/apFile.py: added comments
+	* [r2933] lib/apStack.py: better behaved center part code
+	* [r2932] bin/maxlikeAlignment.py: add comments
+	* [r2931] bin/centerParticleStack.py: shorten description
+	* [r2930] bin/maxlikeCenterStack.py: should work
+	  max stack size of 1.2 GB
+	* [r2929] bin/maxlikeCenterStack.py: use maxlike to center stack
+
+2009-02-10  Anchi Cheng
+
+	* [r2928] bin/tomomaker.py: better help and z thickness input
+	* [r2927] lib/apImod.py: thickness input in recon
+	* [r2926] lib/apTomo.py: movie making, and libCV matchImages trial
+
+2009-02-10  Neil Voss
+
+	* [r2925] bin/tiltaligner.py: no auto mode
+
+2009-02-10  Anchi Cheng
+
+	* [r2924] lib/apUpload.py: more info for subtomogram
+	* [r2923] bin/tomomaker.py: more subtomo info and movie/projection
+	  making
+	* [r2922] bin/uploadTomo.py: better naming and movie/projection
+	  making
+	* [r2921] bin/tomomoviemaker.py: make projection
+	* [r2920] bin/imageloader.py: move session creation and project
+	  link to check Conflict for lack of the special case
+
+2009-02-10  Dmitry Lyumkis
+
+	* [r2919] bin/imagic3d0.py: modified symmetry to work with database
+
+2009-02-10  Neil Voss
+
+	* [r2918] lib/appionScript.py: check load before starting
+	* [r2917] bin/kerdenSOM.py, lib/apXmipp.py, lib/appionData.py:
+	  update for kerden som
+	* [r2916] bin/clusterCoran.py: close file handle
+
+2009-02-09  Dmitry Lyumkis
+
+	* [r2915] bin/imagic3dRefine.py: modified to work with clusterIds
+	* [r2914] lib/appionData.py: added clusterclass to imagic3dRefine
+
+2009-02-09  Neil Voss
+
+	* [r2913] lib/apMatlab.py: fix for ace2 only sessions
+	* [r2912] bin/pyace.py: resamplefr is a float not an int
+
+2009-02-07  Gabe Lander
+
+	* [r2911] lib/apStack.py: renamed function, removed debug line
+	* [r2910] lib/apCtf.py: style
+
+2009-02-06  Neil Voss
+
+	* [r2909] bin/maxlikeAlignment.py: clipsize fix
+	* [r2908] bin/rctVolume.py: increase threshold for chimera
+	* [r2907] INSTALL.txt: minor addition
+
+2009-02-06  Gabe Lander
+
+	* [r2906] lib/apStack.py: - check stack for defocalpair
+
+2009-02-05  Neil Voss
+
+	* [r2905] lib/apEMAN.py: cleaner output
+	* [r2904] bin/maxlikeAlignment.py: added clip size parameter to
+	  shrink boxsize before beginning
+
+2009-02-05  Jim Pulokas
+
+	* [r2903] lib/apDatabase.py, lib/apStackMeanPlot.py,
+	  lib/appionScript.py: split db config
+	* [r2902] lib/apSpider/commonlines.py: missing ,
+
+2009-02-04  Neil Voss
+
+	* [r2901] bin/maxlikeThreeDim.py: SYM Doc file reference
+	* [r2900] lib/filterLoop.py: wait after finishing loop
+	* [r2899] lib/apTilt/apTiltPair.py: bug fix
+
+2009-02-03  Neil Voss
+
+	* [r2898] lib/apTilt/apTiltPair.py: error fix
+	* [r2897] bin/rctVolume.py: works with mirroring!!!
+	* [r2896] lib/apDatabase.py: extra tilt angle functions
+	* [r2895] lib/apTilt/apTiltPair.py: increment
+	* [r2894] lib/apTilt/apTiltPair.py: increment
+	* [r2893] lib/apTilt/apTiltPair.py: increment
+	* [r2892] lib/apTilt/apTiltPair.py: increment
+	* [r2891] lib/apTilt/apTiltPair.py: commit everything before
+	  deleting
+	* [r2890] bin/rctVolume.py: * new mirroring technique
+	  * inplane, mirror caching
+	* [r2889] bin/rctVolume.py: mirrors, mirrors, mirrors, oh my
+
+2009-02-02  Neil Voss
+
+	* [r2888] lib/apStack.py: clarify warning
+	* [r2887] lib/apParam.py: Xvfb support for other archs
+	* [r2886] bin/rctVolume.py: mirror handling
+	* [r2885] bin/rctVolume.py: mirror checking and a bug fix
+
+2009-02-01  Neil Voss
+
+	* [r2884] bin/rctVolume.py: minor tweaks to defaults
+
+2009-01-30  Neil Voss
+
+	* [r2883] bin/rctVolume.py: sleep 30 seconds before stopping
+	* [r2882] bin/updateAppionDB.py: use dbconfig not sinedon
+	* [r2881] bin/makestack2.py: check to make sure mean is reasonable
+
+2009-01-30  Anchi Cheng
+
+	* [r2880] lib/apTomo.py: movie making
+	* [r2879] bin/tomomoviemaker.py: new for movie making
+
+2009-01-30  Neil Voss
+
+	* [r2878] bin/kerdenSOM.py, lib/apSpider/operations.py,
+	  lib/apXmipp.py: mask radius fix
+
+2009-01-29  Neil Voss
+
+	* [r2877] lib/apFile.py: added function separators
+	* [r2876] bin/kerdenSOM.py: updates
+	* [r2875] bin/kerdenSOM.py: working version, still need upload
+	* [r2874] bin/kerdenSOM.py: manually set tile dimensions
+	* [r2873] bin/maxlikeAlignment.py: align references in reference
+	  stack
+	* [r2872] bin/uploadMaxlikeAlignment.py: iternum not required
+	* [r2871] bin/kerdenSOM.py: updated
+	* [r2870] bin/kerdenSOM.py: semi-working version
+	* [r2869] lib/apXmipp.py: additions
+	* [r2868] lib/apSpider/operations.py: createMask function
+	* [r2867] bin/rctVolume.py: fix for mirrored particles
+
+2009-01-28  Neil Voss
+
+	* [r2866] bin/makestack2.py: os.getlogin() fix
+	* [r2865] ace2/Makefile, ace2/util.h: Change SVN_REV to VERSION
+	* [r2864] ace2/Makefile: Commit to local
+	* [r2863] LICENSE.txt, ace2/LICENSE.txt: add license
+	* [r2862] ace2/ChangeLog.txt: Change log
+	* [r2861] bin/ace2.exe, bin/ace2correct.exe: bug fixes from Craig
+
+2009-01-28  Craig Yoshioka
+
+	* [r2860] ace2/ace2.m, ace2/getopts.c: Fixed stupid error in
+	  get_opts
+
+2009-01-27  Craig Yoshioka
+
+	* [r2859] ace2/getopts.c: c
+	* [r2858] ace2/getopts.c:
+	* [r2857] ace2/Ellipse.h, ace2/Ellipse.m, ace2/ace2.m, ace2/ctf.m,
+	  ace2/ctfparm.txt, ace2/getopts.c, ace2/testf.m: More
+	  improvements, mostly to code orginization and readability
+	* [r2856] ace2/Array.m, ace2/Ellipse.m, ace2/ace2.m, ace2/util.h:
+	  temp fix for stupid headers on amiboxes not having isfinite()
+	  function
+	* [r2855] ace2/Ellipse.h: more vug fixes...
+	* [r2854] ace2/Array.h, ace2/Array.m, ace2/Ellipse.h,
+	  ace2/Ellipse.m, ace2/Image.m, ace2/ace2.m, ace2/ace2correct.m,
+	  ace2/ctf.h, ace2/ctf.m, ace2/geometry.h, ace2/geometry.m,
+	  ace2/testf.m: Bug fixes...
+
+2009-01-27  Neil Voss
+
+	* [r2853] bin/makestack2.py, lib/appionData.py: store tilt angle in
+	  the database
+
+2009-01-26  Neil Voss
+
+	* [r2852] bin/makestack2.py, lib/appionData.py: insert flip type
+	  into db
+
+2009-01-26  Craig Yoshioka
+
+	* [r2851] ace2/Array.m, ace2/Ellipse.h, ace2/Ellipse.m,
+	  ace2/ace2.m, ace2/ace2correct.m: Added fix for RANSAC inifnite
+	  loop, added fix for NaN and Inf numbers.
+
+2009-01-26  Neil Voss
+
+	* [r2850] bin/makestack2.py: fix for FFTW_WISDOM
+	* [r2849] bin/ace2.exe, bin/ace2correct.exe: updated versions
+
+2009-01-25  Neil Voss
+
+	* [r2848] bin/pyace2.py: os.getlogin() fails sometimes
+
+2009-01-24  Craig Yoshioka
+
+	* [r2847] ace2/Image.m, ace2/ace2.m: aa
+
+2009-01-24  Neil Voss
+
+	* [r2846] bin/makestack2.py: path fix for ace2correct
+
+2009-01-24  Craig Yoshioka
+
+	* [r2845] ace2/Image.m, ace2/ace2.m, ace2/ctf.m: Changed ace2
+	  c2rfft to scale back the values correctly
+
+2009-01-24  Neil Voss
+
+	* [r2844] bin/makestack2.py: import socket
+	* [r2843] bin/webcaller.py: change this to hopefully get stdout and
+	  stderr in sync
+	* [r2842] bin/makestack2.py: ace2 fix
+	* [r2841] bin/refBasedAlignment2.py: tweaking missing template
+	  senario
+	* [r2840] lib/appionData.py: add missing fields
+	* [r2839] lib/apDisplay.py: new function clearColor()
+
+2009-01-23  Neil Voss
+
+	* [r2838] lib/appionData.py: fix Dmitry's spaces
+	* [r2837] bin/pyace2.py: LD_LIBRARY_PATH hacks
+	* [r2836] bin/pyace2.py: ldd on crash
+	* [r2835] bin/uploadTemplate.py: cluster stack fix
+	* [r2834] bin/refBasedAlignment2.py: an extra message
+	* [r2833] bin/uploadTemplate.py: use alignment averages not aligned
+	  particles
+	* [r2832] bin/uploadTemplate.py: fixes
+
+2009-01-22  Neil Voss
+
+	* [r2831] bin/uploadTemplate.py: add align and cluster links
+	* [r2830] lib/apTemplate.py: fix for multiple image numbers
+	  add align and cluster stacks
+	* [r2829] lib/appionData.py: template links to align and cluster
+	  stacks
+	* [r2828] bin/rctVolume.py, lib/appionData.py: rct fix
+	* [r2827] ace2/Makefile: exe
+	* [r2826] bin/pyace2.py: bugfix
+
+2009-01-22  Craig Yoshioka
+
+	* [r2825] bin/pyace2.py: Added new edge paramters for pyace2
+
+2009-01-22  Neil Voss
+
+	* [r2824] bin/rctVolume.py, lib/apTilt/apTiltPair.py: new rct
+	  volume for new pipeline
+	* [r2823] bin/ace2.exe, bin/ace2correct.exe: update ace2
+	  executables
+
+2009-01-22  Craig Yoshioka
+
+	* [r2822] ace2/ace2.m: Added parameters for edge detection from
+	  commandline
+	* [r2821] ace2/Array.h, ace2/Array.m, ace2/Ellipse.m, ace2/Image.h,
+	  ace2/Image.m, ace2/ace2.m, ace2/ctf.m, ace2/testf.m: Test changes
+	  to ACE2, do not use ACE2 in this version
+
+2009-01-22  Neil Voss
+
+	* [r2820] bin/tiltAutoAligner.py: no import of ApTiltPicker
+	* [r2819] bin/tiltStackAlign.py: positive gamma
+	* [r2818] bin/maxlikeAlignment.py: convergence option
+
+2009-01-21  Neil Voss
+
+	* [r2817] lib/apParticle.py, lib/apPeaks.py, lib/particleLoop2.py:
+	  better peak extraction handling
+	* [r2816] lib/appionLoop2.py: increment count when skipping
+	* [r2815] bin/pyace2.py: add --verbose option
+	* [r2814] lib/apPeaks.py: import style
+	* [r2813] lib/apPeaks.py: import style
+	* [r2812] bin/pyace2.py: always insert
+	* [r2811] lib/appionLoop2.py: load wait time
+	* [r2810] bin/makestack2.py: minor
+	* [r2809] bin/ace2.exe, bin/ace2correct.exe: updated versions
+	* [r2808] bin/tiltAutoAligner.py: set rmsd value
+	* [r2807] lib/apTilt/apTiltPair.py: minor
+	* [r2806] bin/tiltAutoAligner.py: get overlap
+	* [r2805] lib/apTilt/tiltfile.py: add scale
+	* [r2804] lib/apTilt/tiltfile.py: set shift values
+	* [r2803] bin/ApTiltPicker.py: change autotilt
+	* [r2802] bin/tiltAutoAligner.py: another broken thing
+	* [r2801] bin/tiltAutoAligner.py: add import tiltfile
+	* [r2800] bin/tiltAutoAligner.py: outfile dir fix
+
+2009-01-20  Neil Voss
+
+	* [r2799] bin/ApTiltPicker.py: no save if uneven targets
+	* [r2798] lib/apTilt/autotilt.py: numrounds 3 -> 4
+	* [r2797] lib/apTilt/tiltfile.py: revert
+	* [r2796] lib/apTilt/tiltfile.py: fix for even arrays
+
+2009-01-20  Edward Brignole
+
+	* [r2795] spiderbatch, spiderbatch/freealn.spi: new folder for
+	  spider
+
+2009-01-20  Neil Voss
+
+	* [r2794] lib/apDisplay.py: default color is None
+
+2009-01-20  Edward Brignole
+
+	* [r2793] bin/edIterAlign.py: Neil helped me break this script.
+	* [r2792] bin/edIterAlign.py: This is a new file
+
+2009-01-20  Neil Voss
+
+	* [r2791] ace2/Makefile, ace2/ace2.m, ace2/ace2correct.m,
+	  ace2/util.h: compile flags and info
+
+2009-01-20  Craig Yoshioka
+
+	* [r2790] bin/makestack2.py, bin/pyace2.py, lib/apCtf.py,
+	  lib/apDisplay.py, lib/appionLoop.py:
+	* [r2789] ace2/ace2.m, ace2/ace2correct.m, ace2/ctf.m: ACE2 is
+	  certainly better now at switching to circular averages when
+	  eliptical fails
+
+2009-01-20  Neil Voss
+
+	* [r2788] lib/apRecon.py: if boxsize > 250 bin by 2 before taking
+	  an image
+	* [r2787] bin/ApTiltPicker.py: moved message
+	* [r2786] lib/apTilt/apTiltShift.py: bin by 2
+	* [r2785] lib/apSpider/filters.py: removed circular import
+	* [r2784] bin/ApTiltAutoPicker.py: use -x not -a for tilt axis
+	* [r2783] lib/apTilt/apTiltShift.py: resize images if necessary
+	* [r2782] bin/ApTiltPicker.py, lib/apTilt/autotilt.py: bad picks
+	  algorithm
+	* [r2781] lib/apTilt/tiltfile.py: don't set angle if they are zero
+	* [r2780] bin/ApTiltPicker.py: changed min worst error
+	* [r2779] lib/apTilt/autotilt.py: new clear bad picks system
+	* [r2778] bin/ApTiltPicker.py: * new method for keeping track of
+	  bad picks
+	  * set initial tilt axis angle
+
+2009-01-19  Jim Pulokas
+
+	* [r2777] lib/apRecon.py: extract xfiles parameter to be compatible
+	  with emanJobGen.py
+
+2009-01-19  Neil Voss
+
+	* [r2776] bin/ApTiltAutoPicker.py, bin/ApTiltPicker.py: revert
+	* [r2775] lib/apEulerJump.py: allow icos symmetries
+	* [r2774] bin/makegoodaverages.py: allow icos symmetries
+	* [r2773] bin/clusterCoran.py, bin/maxlikeAlignment.py,
+	  bin/maxlikeThreeDim.py, bin/spiderNoRefAlign.py: rm apAlignment
+	* [r2772] bin/ApTiltAutoPicker.py, bin/ApTiltPicker.py: attach cwd
+	* [r2771] lib/apImage.py: read and write spider
+	* [r2770] bin/tiltAutoAligner.py, lib/apTilt/autotilt.py: do not
+	  import wx
+	* [r2769] bin/ace2correct.exe: ace2 correction binary
+	* [r2768] ace2/testf.m: newline at end of file
+	* [r2767] ace2/Array.m: newline at end of file
+	* [r2766] lib/appionData.py: Dmitry's changes
+	* [r2765] bin/tiltaligner.py: changed wait time
+	* [r2764] lib/apTilt/tiltfile.py: corrected order of filetypes
+	* [r2763] bin/tiltaligner.py: correct order of filetypes
+	  auto-optim on load
+	* [r2762] bin/ApTiltPicker.py: corrected order of filetypes
+	* [r2761] lib/apTilt/tiltfile.py: typo
+	* [r2760] lib/apTilt/tiltfile.py: set spider file as default
+
+2009-01-18  Neil Voss
+
+	* [r2759] lib/apTilt/autotilt.py: no import apTiltPair
+	* [r2758] lib/apTilt/apTiltShift.py: documentation
+	* [r2757] clean.sh: rm .emanlog
+	* [r2756] lib/filterLoop.py: do not delete .dwn.mrc files if limit
+	  is defined
+	* [r2755] bin/ApTiltPicker.py, bin/tiltaligner.py,
+	  lib/apTilt/apTiltShift.py, lib/apTilt/apTiltTransform.py,
+	  lib/apTilt/autotilt.py: tilt picker changes
+
+2009-01-17  Neil Voss
+
+	* [r2754] bin/ApTiltAutoPicker.py, bin/ApTiltPicker.py,
+	  bin/tiltAutoAligner.py, lib/apSpider/operations.py,
+	  lib/apTilt/apTiltShift.py, lib/apTilt/autotilt.py,
+	  lib/apTilt/tiltDialog.py, lib/apTilt/tiltfile.py: tilt picker
+	  updates
+
+2009-01-17  Dmitry Lyumkis
+
+	* [r2753] bin/imagicMSAcluster.py: added .hed to avg_imagicfile
+	* [r2752] lib/appionData.py: added ignore_images and ignore_members
+	  to ApClusteringStackData and removed ApImagicClusteringStackData
+
+2009-01-16  Neil Voss
+
+	* [r2751] lib/apTilt/autotilt.py: moving automation out of
+	  tiltAutoAligner.py
+	* [r2750] bin/imagic3d0.py, bin/imagicMSAcluster.py,
+	  lib/appionData.py: ImagicClusteringStack ClusteringStack
+	* [r2749] ChangeLog.txt: Denis fix
 
 2009-01-16  Denis Fellmann
 
