@@ -422,7 +422,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','eotest','copy');  
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','coranCC','coranmask','coranlp','coranhp','eotest','copy');  
 	echo"
   <br />
   <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
@@ -506,6 +506,10 @@ function jobForm($extra=false) {
 		#$goodbadn="goodbad".$i;
 		$eotestn="eotest".$i;
 		$corann="coran".$i;
+		$coranCCn="coranCC".$i;
+		$coranmaskn="coranmask".$i;
+		$coranlpn="coranlp".$i;
+		$coranhpn="coranhp".$i;
 		$msgpn="msgp".$i;
 		$msgp_corcutoffn="msgp_corcutoff".$i;
 		$msgp_minptclsn="msgp_minptcls".$i;
@@ -624,6 +628,10 @@ function jobForm($extra=false) {
 			$shrink=($i>$j) ? $_POST["shrink".($i-1)] : $_POST[$shrinkn];
 			$euler2=($i>$j) ? $_POST["euler2".($i-1)] : $_POST[$euler2n];
 			$xfiles=($i>$j) ? $_POST["xfiles".($i-1)] : $_POST[$xfilesn];
+			$coranCC=($i>$j) ? $_POST["coranCC".($i-1)] : $_POST[$coranCCn];
+			$coranmask=($i>$j) ? $_POST["coranmask".($i-1)] : $_POST[$coranmaskn];
+			$coranlp=($i>$j) ? $_POST["coranlp".($i-1)] : $_POST[$coranlpn];
+			$coranhp=($i>$j) ? $_POST["coranhp".($i-1)] : $_POST[$coranhpn];
 			$msgp_corcutoff=($i>$j) ? $_POST["msgp_corcutoff".($i-1)] : $_POST[$msgp_corcutoffn];
 			$msgp_minptcls=($i>$j) ? $_POST["msgp_minptcls".($i-1)] : $_POST[$msgp_minptclsn];
 			// use symmetry of model by default, but you can change it
@@ -682,10 +690,14 @@ function jobForm($extra=false) {
 	#echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$perturbn' $perturb></td>\n";
       	#echo"<td bgcolor='$rcol'><input type='checkbox' NAME='$goodbadn' $goodbad></td>\n";
 	echo "<td bgcolor='$rcol'><select name='$treen'><option>-</option><option $treetwo>2</option><option $treethree>3</option></select></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>
-        <td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>
-        <td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>
-      </tr>\n";
+        <td bgcolor='$rcol'><input type='checkbox' NAME='$corann' $coran></td>\n";
+        echo "<td bgcolor='$rcol'><input type='text' size='3' name='$coranCCn' value='$coranCC'></td>\n";
+        echo "<td bgcolor='$rcol'><input type='text' size='4' name='$coranmaskn' value='$coranmask'></td>\n";
+        echo "<td bgcolor='$rcol'><input type='text' size='3' name='$coranlpn' value='$coranlp'></td>\n";
+        echo "<td bgcolor='$rcol'><input type='text' size='3' name='$coranhpn' value='$coranhp'></td>\n";
+        echo "<td bgcolor='$rcol'><input type='checkbox' NAME='$eotestn' $eotest></td>\n";
+	echo "<td bgcolor='$rcol'><input type='radio' NAME='duplicate' VALUE='$i' onclick='emanjob.submit()'></td>\n";
+	echo "</tr>\n";
 
 
 ### commented out for now, since  not working properly
@@ -832,6 +844,10 @@ function writeJobFile ($extra=False) {
 		#$goodbad=$_POST["goodbad".$i];
 		$eotest=$_POST["eotest".$i];
 		$coran=$_POST["coran".$i];
+		$coranCC=$_POST["coranCC".$i];
+		$coranmask=$_POST["coranmask".$i];
+		$coranlp=$_POST["coranlp".$i];
+		$coranhp=$_POST["coranhp".$i];
 		$msgp=$_POST["msgp".$i];
 		$msgp_corcutoff=$_POST["msgp_corcutoff".$i];
 		$msgp_minptcls=$_POST["msgp_minptcls".$i];
@@ -865,6 +881,10 @@ function writeJobFile ($extra=False) {
 			$line .= C_APPION_BIN."coran_for_cls.py mask=$mask proc=$procs iter=$i";
 			if ($sym) $line .= " sym=$sym";
 			if ($hard) $line .= " hard=$hard";
+			if ($coranCC) $line .= " ccCutoff=$coranCC";
+			if ($coranmask) $line .= " coranmask=$coranmask";
+			if ($coranlp) $line .= " lp=$coranlp";
+			if ($coranhp) $line .= " hp=$coranhp";
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
 			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
