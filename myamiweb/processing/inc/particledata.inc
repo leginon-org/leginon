@@ -2320,15 +2320,20 @@ class particledata {
 	}
 
 	function getClusteringStacksForAlignStack ($alignstackId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*, clusterrun.*, cluster.* "
-			."FROM ApClusteringStackData AS cluster "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, clusterrun.*, cluster.* ";
+		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
+			$q .= ", spider.* ";
+		}
+		$q .=	"FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
 			."LEFT JOIN ApPathData as path ON "
-			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
-			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
-			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
-			."WHERE "
+			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) ";
+		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
+			$q .= "LEFT JOIN ApSpiderClusteringParamsData as spider ON "
+			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) ";
+		}
+		$q .= "WHERE "
 			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 ";
@@ -2354,12 +2359,17 @@ class particledata {
 	}
 
 	function getClusteringRunsForAlignStack ($alignstackId, $showHidden=false) {
-		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, spider.*,"
-			."  clusterrun.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
-			."FROM ApClusteringRunData AS clusterrun "
-			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
-			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
-			."LEFT JOIN ApAlignAnalysisRunData as analysis ON "
+		$q = "SELECT clusterrun.`DEF_id` AS clusterrunid, "
+			."  clusterrun.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` ";
+		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
+			$q .= ", spider.* ";
+		}
+		$q .= "FROM ApClusteringRunData AS clusterrun ";
+		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
+			$q .= "LEFT JOIN ApSpiderClusteringParamsData as spider ON "
+			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) ";
+		}
+		$q .= "LEFT JOIN ApAlignAnalysisRunData as analysis ON "
 			." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
 			."WHERE "
 			."  clusterrun.`REF|ApAlignStackData|alignstack` = $alignstackId "
@@ -2371,18 +2381,23 @@ class particledata {
 	}
 
 	function getClusteringStacksForClusteringRun ($clusterrunId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, spider.*, "
-			."  clusterrun.*, cluster.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` "
-			."FROM ApClusteringStackData AS cluster "
+		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, "
+			."  clusterrun.*, cluster.*, analysis.`REF|ApImagicAlignAnalysisData|imagicMSArun` ";
+		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
+			$q .= ", spider.* ";
+		}
+		$q .= "FROM ApClusteringStackData AS cluster "
 			."LEFT JOIN ApClusteringRunData as clusterrun ON "
 			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
 			."LEFT JOIN ApAlignAnalysisRunData as analysis ON "
 			." (clusterrun.`REF|ApAlignAnalysisRunData|analysisrun`=analysis.`DEF_id`) "
 			."LEFT JOIN ApPathData as path ON "
-			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
-			."LEFT JOIN ApSpiderClusteringParamsData as spider ON "
-			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) "
-			."WHERE "
+			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) ";
+		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
+			$q .= "LEFT JOIN ApSpiderClusteringParamsData as spider ON "
+			." (clusterrun.`REF|ApSpiderClusteringParamsData|spiderparams`=spider.`DEF_id`) ";
+		}
+		$q .=	"WHERE "
 			."  clusterrun.`DEF_id` = $clusterrunId ";
 		if (!$showHidden)
 			$q.= " AND cluster.`hidden` != 1 ";
