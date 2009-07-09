@@ -90,85 +90,85 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 	#=====================
 	def createImagicBatchFile(self):
-                # IMAGIC batch file creation    
-                append_log = False
+		# IMAGIC batch file creation    
+		append_log = False
 		filename = os.path.join(self.params['rundir'], "imagicMultivariateStatisticalAnalysis.batch")
-                f = open(filename, 'w')
-                f.write("#!/bin/csh -f\n")
-                f.write("setenv IMAGIC_BATCH 1\n")
-                if self.params['bin'] > 1:
-                        f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > imagicMultivariateStatisticalAnalysis.log\n")
-                        f.write("start\n")
-                        f.write("start_coarse\n")
-                        f.write(str(self.params['bin'])+"\n")
-                        f.write("EOF\n")
-                        f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
-                        f.write("start_coarse\n")
-                        f.write("start\n")
-                        f.write("EOF\n")
+		f = open(filename, 'w')
+		f.write("#!/bin/csh -f\n")
+		f.write("setenv IMAGIC_BATCH 1\n")
+		if self.params['bin'] > 1:
+			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("start\n")
+			f.write("start_coarse\n")
+			f.write(str(self.params['bin'])+"\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("start_coarse\n")
+			f.write("start\n")
+			f.write("EOF\n")
 			append_log = True
-                if self.params['hpfilt_imagic'] and self.params['lpfilt_imagic'] is not None:
-                        f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
+		if self.params['hpfilt_imagic'] and self.params['lpfilt_imagic'] is not None:
+			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
 			if append_log is True:
-			        f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
-                        else:
+				f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
+			else:
 				f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
-                        f.write("start\n")
-                        f.write("start_filt\n")
-                        f.write(str(self.params['hpfilt_imagic'])+"\n")
-                        f.write("0\n")
-                        f.write(str(self.params['lpfilt_imagic'])+"\n")
-                        f.write("NO\n")
-                        f.write("EOF\n")
-                        f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
-                        f.write("start_filt\n")
-                        f.write("start\n")
-                        f.write("EOF\n")
+			f.write("start\n")
+			f.write("start_filt\n")
+			f.write(str(self.params['hpfilt_imagic'])+"\n")
+			f.write("0\n")
+			f.write(str(self.params['lpfilt_imagic'])+"\n")
+			f.write("NO\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("start_filt\n")
+			f.write("start\n")
+			f.write("EOF\n")
 			append_log = True
-                if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
-                        f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
+		if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
+			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
 			if append_log is True:
-                                f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
-                        else:
-                                f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
-                        f.write("start\n")
-                        f.write("start_masked\n")
-                        f.write("SOFT\n")
-                        f.write(str(self.params['mask_radius'])+"\n")
-                        f.write(str(self.params['mask_dropoff'])+"\n")
-                        f.write("EOF\n")
-                        f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
-                        f.write("start_masked\n")
-                        f.write("start\n")
-                        f.write("EOF\n")
+				f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
+			else:
+				f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("start\n")
+			f.write("start_masked\n")
+			f.write("SOFT\n")
+			f.write(str(self.params['mask_radius'])+"\n")
+			f.write(str(self.params['mask_dropoff'])+"\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("start_masked\n")
+			f.write("start\n")
+			f.write("EOF\n")
 			append_log = True
-                f.write("/usr/local/IMAGIC/stand/testim.e <<EOF")
-                if append_log is True:
+		f.write("/usr/local/IMAGIC/stand/testim.e <<EOF")
+		if append_log is True:
 			f.write(" >> imagicMultivariateStatisticalAnalysis.log\n")
-                else:
-                        f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
-                f.write("msamask\n")
-                f.write(str(self.params['boxsize'])+","+str(self.params['boxsize'])+"\n")
-                f.write("REAL\n")
-                f.write("DISC\n")
-                f.write(str(self.params['mask_radius'])+"\n")
-                f.write("EOF\n")
-                f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+		else:
+			f.write(" > imagicMultivariateStatisticalAnalysis.log\n")
+		f.write("msamask\n")
+		f.write(str(self.params['boxsize'])+","+str(self.params['boxsize'])+"\n")
+		f.write("REAL\n")
+		f.write("DISC\n")
+		f.write(str(self.params['mask_radius'])+"\n")
+		f.write("EOF\n")
+		f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
 		f.write("NO\n")
 		f.write("FRESH_MSA\n")
-                f.write(str(self.params['MSAmethod'])+"\n")
-                f.write("start\n")
-                f.write("NO\n")
-                f.write("msamask\n")
-                f.write("eigenimages\n")
-                f.write("pixcoos\n")
-                f.write("eigenpixels\n")
-                f.write(str(self.params['numiters'])+"\n")
-                f.write("69\n")
-                f.write(str(self.params['overcorrection'])+"\n")
-                f.write("my_msa\n")
-                f.write("EOF\n")
-                f.close()
+		f.write(str(self.params['MSAmethod'])+"\n")
+		f.write("start\n")
+		f.write("NO\n")
+		f.write("msamask\n")
+		f.write("eigenimages\n")
+		f.write("pixcoos\n")
+		f.write("eigenpixels\n")
+		f.write(str(self.params['numiters'])+"\n")
+		f.write("69\n")
+		f.write(str(self.params['overcorrection'])+"\n")
+		f.write("my_msa\n")
+		f.write("EOF\n")
+		f.close()
 		
 		return filename	
 
@@ -178,9 +178,9 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		msaq = appionData.ApImagicAlignAnalysisData()
 		msaq['runname'] = self.params['runname']
 		msaq['run_seconds'] = runtime
-                msaq['bin'] = self.params['bin']
-                msaq['highpass'] = self.params['hpfilt']
-                msaq['lowpass'] = self.params['lpfilt']
+		msaq['bin'] = self.params['bin']
+		msaq['highpass'] = self.params['hpfilt']
+		msaq['lowpass'] = self.params['lpfilt']
 		msaq['mask_radius'] = self.params['mask_radius']
 		msaq['mask_dropoff'] = self.params['mask_dropoff']
 		msaq['numiters'] = self.params['numiters']
@@ -195,8 +195,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		analysisrunq['imagicMSArun'] = msaq
 		analysisrunq['alignstack'] = self.alignstackdata
 		analysisrunq['hidden'] = False
-                analysisrunq['description'] = self.params['description']
-                analysisrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['alignid'])
+		analysisrunq['description'] = self.params['description']
+		analysisrunq['project|projects|project'] = apProject.getProjectIdFromStackId(self.params['alignid'])
 
 		apDisplay.printMsg("inserting Align Analysis Run parameters into database")
 		if insert is True:
@@ -212,7 +212,7 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		
 		# get stack parameters
 		if self.params['alignid'] is not None:
-                        self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
+			self.alignstackdata = appionData.ApAlignStackData.direct_query(self.params['alignid'])
 			stackpixelsize = self.alignstackdata['pixelsize']
 			stack_box_size = self.alignstackdata['boxsize']
 			self.params['boxsize'] = stack_box_size / int(self.params['bin'])
@@ -225,13 +225,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			apDisplay.printError("stack not in the database")
 		
 		# link stack file to working directory	
-                if not os.path.isfile(linkingfile+".hed"):
-                        apDisplay.printError("stackfile does not exist: "+linkingfile+".img")
-                else:
+		if not os.path.isfile(linkingfile+".hed"):
+			apDisplay.printError("stackfile does not exist: "+linkingfile+".img")
+		else:
 			if not os.path.isfile(os.path.join(str(self.params['rundir']), "start.img")):
 				apDisplay.printMsg("copying aligned stack into working directory for operations with IMAGIC")
-#	                        shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
-#	                        shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
+#				shutil.copyfile(linkingfile+".img", str(self.params['rundir'])+"/start.img")
+#				shutil.copyfile(linkingfile+".hed", str(self.params['rundir'])+"/start.hed")
 				lnkcmd1 = "ln -s "+linkingfile+".img "+os.path.join(self.params['rundir'], "start.img")
 				lnkcmd2 = "ln -s "+linkingfile+".hed "+os.path.join(self.params['rundir'], "start.hed")
 				proc = subprocess.Popen(lnkcmd1, shell=True)
@@ -242,13 +242,13 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 				apDisplay.printColor("aligned stack already exists in working directory", "green")
 
 		### NEED TO CONVERT FILTERING PARAMETERS TO IMAGIC FORMAT BETWEEN 0-1
-                if self.params['lpfilt'] is not None:
+		if self.params['lpfilt'] is not None:
 			self.params['lpfilt_imagic'] = 2 * float(self.params['apix']) / int(self.params['lpfilt'])
 		else:
 			self.params['lpfilt_imagic'] = False
-                if float(self.params['lpfilt_imagic']) > 1:
-                        self.params['lpfilt_imagic'] = 1	# imagic cannot perform job when lowpass > 1
-                if self.params['hpfilt'] is not None:
+		if float(self.params['lpfilt_imagic']) > 1:
+			self.params['lpfilt_imagic'] = 1	# imagic cannot perform job when lowpass > 1
+		if self.params['hpfilt'] is not None:
 			self.params['hpfilt_imagic'] = 2 * float(self.params['apix']) / int(self.params['hpfilt'])
 		else:
 			self.params['hpfilt_imagic'] = False
@@ -275,19 +275,19 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 
 		### remove copied stack
 #		while os.path.isfile(os.path.join(self.params['rundir'], "start.img")):
-#			apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
+#		apFile.removeStack(os.path.join(self.params['rundir'], "start.img"))
 	
 		### upload alignment
 		imagicstack = os.path.join(self.params['rundir'], "start.hed")
-                inserttime = time.time()
-                if self.params['commit'] is True:
-                        self.insertAnalysis(imagicstack, runtime=aligntime, insert=True)
-                else:
-                        apDisplay.printWarning("not committing results to DB")
-                inserttime = time.time() - inserttime
+		inserttime = time.time()
+		if self.params['commit'] is True:
+			self.insertAnalysis(imagicstack, runtime=aligntime, insert=True)
+		else:
+			apDisplay.printWarning("not committing results to DB")
+		inserttime = time.time() - inserttime
 
-                apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
-                apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
+		apDisplay.printMsg("Alignment time: "+apDisplay.timeString(aligntime))
+		apDisplay.printMsg("Database Insertion time: "+apDisplay.timeString(inserttime))
 
 	
 	
