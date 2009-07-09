@@ -2082,10 +2082,12 @@ class particledata {
 	}
 
 	function getAnalysisRuns ($sessionId, $projectId, $showHidden=False) {
-		$q = "SELECT analysis.`DEF_id` AS analysisid, coran.*, analysis.* "
-			."FROM ApAlignAnalysisRunData AS analysis "
-			."LEFT JOIN ApCoranRunData as coran ON "
-			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) "
+		// This query left join ApCoranRun probably for historical reason
+		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.* ";
+		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+			$q .= ", coran.* ";
+		}
+		$q .=	"FROM ApAlignAnalysisRunData AS analysis "
 			."LEFT JOIN ApAlignStackData AS ast ON "
 			." (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApStackData AS st ON "
@@ -2093,8 +2095,12 @@ class particledata {
 			."LEFT JOIN ApRunsInStackData as runsin ON "
 			." (runsin.`REF|ApStackData|stack` = st.`DEF_id`) "
 			."LEFT JOIN ApStackRunData as strun ON "
-			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) "
-			."WHERE "
+			." (runsin.`REF|ApStackRunData|stackRun`=strun.`DEF_id`) ";
+		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+			$q .= "LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun` = coran.`DEF_id`) ";
+		}
+		$q .=	"WHERE "
 			." strun.`REF|leginondata|SessionData|session` = '$sessionId' "
 			." AND "
 			." runsin.`project|projects|project` = '$projectId' "
@@ -2110,11 +2116,16 @@ class particledata {
 	} 
 
 	function getAnalysisRunForAlignStack ($alignstackId, $projectId, $showHidden=False) {
-		$q = "SELECT analysis.`DEF_id` AS analysisid, coran.*, analysis.* "
-			."FROM ApAlignAnalysisRunData AS analysis "
-			."LEFT JOIN ApCoranRunData as coran ON "
-			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) "
-			."WHERE "
+		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.* ";
+		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+			$q .= ", coran.* ";
+		}
+		$q .=	"FROM ApAlignAnalysisRunData AS analysis ";
+		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+			$q .=	"LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) ";
+		}
+		$q .=	"WHERE "
 			."  analysis.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
 			$q.= " AND analysis.`hidden` != 1 ";
@@ -2128,15 +2139,20 @@ class particledata {
 	}
 
 	function getAnalysisParams ($analysisid) {
-		$q = "SELECT analysis.`DEF_id` AS analysisid, coran.*, analysis.*, path.path AS path "
-			."FROM ApAlignAnalysisRunData AS analysis "
-			."LEFT JOIN ApCoranRunData as coran ON "
-			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) "
+		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.*, path.path AS path ";
+		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+			$q .= ", coran.* ";
+		}
+		$q .=	"FROM ApAlignAnalysisRunData AS analysis "
 			."LEFT JOIN ApAlignStackData AS ast ON "
 			." (analysis.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
 			."LEFT JOIN ApPathData AS path ON "
-			." (analysis.`REF|ApPathData|path` = path.`DEF_id`) "
-			."WHERE "
+			." (analysis.`REF|ApPathData|path` = path.`DEF_id`) ";
+		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+			$q .=	"LEFT JOIN ApCoranRunData as coran ON "
+			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) ";
+		}
+		$q .=	"WHERE "
 			."  analysis.`DEF_id` = $analysisid "
 			."LIMIT 1 ";
 		//echo $q."<br/>\n";
@@ -2179,7 +2195,8 @@ class particledata {
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
-
+/*
+	#Not used anywhere and is incorrect since it select coran that is not in query
 	function getMaxLikeRuns ($sessionId, $projectId) {
 		$q = "SELECT coran.`DEF_id` AS coranid, coran.* "
 			."FROM ApMaxLikeJobData AS maxlike "
@@ -2207,7 +2224,7 @@ class particledata {
 		//echo print_r($r)."<br/><br/>\n";
 		return $r;
 	}
-
+*/
 	function getFinishedMaxLikeJobs ($projectId) {
 		$q = "SELECT maxjob.*, path.path "
 			."FROM ApMaxLikeJobData AS maxjob "
