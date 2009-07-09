@@ -161,6 +161,7 @@ def meanStdevToKey(mean, stdev, limits, gridpoints):
 #===============
 #===============
 if __name__ == "__main__":
+	print "Usage: apStackMeanPlot.py <stackid> <#points> <projectid>"
 	if len(sys.argv) > 1:
 		stackid = int(sys.argv[1])
 	else:
@@ -178,7 +179,7 @@ if __name__ == "__main__":
 	if projectid is not None:
 		apDisplay.printWarning("Using split database")
 		# use a project database
-		newdbname = getAppionDBFromProjectId(projectid)
+		newdbname = apProject.getAppionDBFromProjectId(projectid)
 		import sinedon
 		sinedon.setConfig('appionData', db=newdbname)
 		apDisplay.printColor("Connected to database: '"+newdbname+"'", "green")
