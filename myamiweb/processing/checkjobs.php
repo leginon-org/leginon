@@ -343,7 +343,7 @@ function checkJobStatus($host,$jobpath,$jobfile,$user,$pass) {
 	$allref = streamToArray($r);
 	if (empty($allref)) return;
 	foreach ($allref as $i){
-		if ($i[0]=='refine' && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
+		if (preg_match('/refine/',$i[0]) && preg_match('/\d+/',$i[1])) $stat['allref'][]=$i;
 	}
 	$cmd = "cat $jobpath/recon/refine.log";
 	$r = exec_over_ssh($host,$user,$pass,$cmd, True);
