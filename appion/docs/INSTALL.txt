@@ -1,5 +1,5 @@
 Appion-CentOS Install Manual: 
-
+by Neil Voss
 Compiled on %%date(%B %d, %Y)
 
 
@@ -140,17 +140,27 @@ Download was over 129 MB (in July 2009). If you have a slow internet connection 
 
 .Install Complete list of additional packages:
 
+- **python tools**: python-tools python-devel
+- **general applications**: subversion ImageMagick grace gnuplot
+- **TILT PICKER**: wxPython numpy scipy python-imaging
+- **FINDEM**: gcc-gfortran compat-gcc-34-g77
+- **ACE2**: gcc-objc fftw3-devel gsl-devel
+- **Sinedon**: mysql mysql-server MySQL-python
+- **DBEM**: httpd php php-mysql phpMyAdmin
+- **Xmipp MPI**: gcc-c++ openmpi-devel libtiff-devel
+- **MRC tools**: php-devel gd-devel re2c fftw2-devel php-gd
+
 ```
 $ sudo yum -y install \
-python-tools python-devel \ # general applications
-subversion ImageMagick grace gnuplot \ # general applications
-wxPython numpy scipy python-imaging \ #TILT PICKER
-gcc-gfortran compat-gcc-34-g77 \ #FINDEM
-gcc-objc fftw3-devel gsl-devel \ #ACE2
-mysql mysql-server MySQL-python \ #Sinedon
-httpd php php-mysql phpMyAdmin  \ #DBEM
-gcc-c++ openmpi-devel libtiff-devel \#Xmipp MPI
-php-devel gd-devel re2c fftw2-devel php-gd \#MRC tools
+python-tools python-devel \
+subversion ImageMagick grace gnuplot \
+wxPython numpy scipy python-imaging \
+gcc-gfortran compat-gcc-34-g77 \
+gcc-objc fftw3-devel gsl-devel \
+mysql mysql-server MySQL-python \
+httpd php php-mysql phpMyAdmin  \
+gcc-c++ openmpi-devel libtiff-devel \
+php-devel gd-devel re2c fftw2-devel php-gd
 ```
 
 If you have an nVidia video card and setup RPM fusion, install the nVidia binary, will speed things up especially for chimera
