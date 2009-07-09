@@ -1926,12 +1926,16 @@ class particledata {
 			."AND "
 			."  pc.`REF|InstrumentData|ccdcamera` = pd.`REF|InstrumentData|ccdcamera` "
 			."AND "
-			."  pc.`DEF_timestamp` < a.`DEF_timestamp` "
+			."  pc.`DEF_timestamp` <= a.`DEF_timestamp` "
 			."ORDER BY pc.`DEF_timestamp` DESC ";
 		//echo $q."<br/>\n";
 		list($r2)=$this->mysql->getSQLResult($q);
 		//echo print_r($r2)."<br/>\n";
-		$pixelsize = $r2['ccdpixelsize']*$r2['imgbin'];
+		if ($r2['imgbin']) {
+			$pixelsize = $r2['ccdpixelsize']*$r2['imgbin'];
+		} else {
+			$pixelsize = $r2['ccdpixelsize'];
+		}
 		return $pixelsize;
 	}
 
@@ -1994,7 +1998,7 @@ class particledata {
 		$q.= "ORDER BY alignstackid DESC";
 		//echo $q."<br/>\n";
 		$r = $this->mysql->getSQLResult($q);
-		//echo print_r($r)."<br/>\n";
+		//echo $r."<br/>\n";
 		return $r;
 	}
 
@@ -2208,18 +2212,22 @@ class particledata {
 		$q = "SELECT maxjob.*, path.path "
 			."FROM ApMaxLikeJobData AS maxjob "
 			."LEFT JOIN ApPathData as path ON "
-			."  maxjob.`REF|ApPathData|path` = path.`DEF_id` "
-			."LEFT JOIN ApMaxLikeRunData as maxrun ON "
-			."  maxrun.`REF|ApMaxLikeJobData|job` = maxjob.`DEF_id` "
-			."WHERE "
+			."  maxjob.`REF|ApPathData|path` = path.`DEF_id` ";
+		if ($this->mysql->SQLTableExists("ApMaxLikeRunData")) {
+			$q .= "LEFT JOIN ApMaxLikeRunData as maxrun ON "
+			."  maxrun.`REF|ApMaxLikeJobData|job` = maxjob.`DEF_id` ";
+		}
+		$q .=	"WHERE "
 			."  maxjob.`project|projects|project` = '$projectId' "
 			." AND "
 			."  maxjob.`finished` = '1' "
 			." AND "
-			."  maxjob.`hidden` != '1' "
-			." AND "
-			."  maxrun.`REF|ApMaxLikeJobData|job` IS NULL "
-			." ORDER BY maxjob.`DEF_id` DESC ";
+			."  maxjob.`hidden` != '1' ";
+		if ($this->mysql->SQLTableExists("ApMaxLikeRunData")) {
+			$q .= " AND "
+			."  maxrun.`REF|ApMaxLikeJobData|job` IS NULL ";
+		}
+			$q .=	" ORDER BY maxjob.`DEF_id` DESC ";
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
