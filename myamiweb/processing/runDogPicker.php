@@ -167,7 +167,6 @@ function runDogPicker() {
 		if ($kfactor < 1.00001 || $kfactor > 5.0) createDogPickerForm("<B>ERROR:</B> K-factor must between 1.00001 and 5.0");
 		$command .= " --kfactor=".$kfactor;
 	}
-
 	if ($_POST['testimage']=="on") {
 		if ($_POST['testfilename']) $testimage=$_POST['testfilename'];
 		$testimage = ereg_replace(" ","\ ",$testimage);
@@ -202,19 +201,36 @@ function runDogPicker() {
 		}
 		exit;
 	} else {
-		processing_header("Particle Selection Results","DogPicker Command");
+		// display test images even just show command
+		if ($testimage) {
+			if (substr($outdir,-1,1)!='/') $outdir.='/';
+			$results = "<table width='600' border='0'>\n";
+			$results.= "<tr><td>\n";
+			$results.= "<B>DogPicker Command:</B><br />$command";
+			$results.= "</td></tr></table>\n";
+			$results.= "<br />\n";
+			$testjpg=ereg_replace(".mrc","",$_POST['testfilename']);
+			$jpgimg=$outdir.$runname."/jpgs/".$testjpg.".prtl.jpg";
+			$ccclist=array();
+			$cccimg=$outdir.$runname."/maps/".$testjpg.".dogmap1.jpg";
+			$ccclist[]=$cccimg;
+			$results.=writeTestResults($jpgimg,$ccclist,$_POST['bin']);
+			createDogPickerForm(false,'Particle Selection Test Results','Particle Selection Test Results',$results);
+		} else {
+			processing_header("Particle Selection Results","DogPicker Command");
 
-		echo"
-			<TABLE WIDTH='600'>
-			<tr><td COLSPAN='2'>
-			<B>Dog Picker Command:</B><br />
-			$command<hr>
-			</td></tr>";
-		appionLoopSummaryTable();
-		particleLoopSummaryTable();
-		echo"</table>\n";
-		processing_footer(True, True);
-		exit;
+			echo"
+				<TABLE WIDTH='600'>
+				<tr><td COLSPAN='2'>
+				<B>Dog Picker Command:</B><br />
+				$command<hr>
+				</td></tr>";
+			appionLoopSummaryTable();
+			particleLoopSummaryTable();
+			echo"</table>\n";
+			processing_footer(True, True);
+			exit;
+		}
 	}
 }
 
