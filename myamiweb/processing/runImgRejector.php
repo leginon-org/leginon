@@ -42,10 +42,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	$particle = new particledata();
 	$ctfdata=$particle->hasCtfData($sessionId);
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
-	$massessrunIds = $particle->getMaskAssessRunIds($sessionId);
-	$stackruns = count($particle->getStackIds($sessionId));
 
-	
 	$javascript="<script src='../js/viewer.js'></script>
 	<script LANGUAGE='JavaScript'>
 	  function enableace(){
@@ -201,7 +198,7 @@ function createImgRejectorForm($extra=false, $title='imgRejector.py Launcher', $
 	<tr>
 		<td colspan='2' align='CENTER'>
 		<hr />";
-  echo getSubmitForm("Make Stack", false, true);
+  echo getSubmitForm("Run Image Rejector", false, false);
 	echo "
 	  </td>
 	</tr>
@@ -251,7 +248,7 @@ function runImgRejector() {
 	$command.="--no-wait ";
 
 	// submit job to cluster
-	if ($_POST['process']=="Make Stack") {
+	if ($_POST['process']=="Run Image Rejector") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
@@ -266,9 +263,6 @@ function runImgRejector() {
 
 	processing_header("ImgRejector Run","ImgRejector Params");
 
-	if ($massessname) {
-		echo"<font color='red'><b>Use a 32-bit machine to use the masks</b></font>\n";
-	}
 	echo"
 	<table width='600' border='1'>
 	<tr><td colspan='2'>
