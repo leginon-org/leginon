@@ -42,11 +42,11 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	// connect to particle database
 	$particle = new particledata();
 	$alignIds = $particle->getAlignStackIds($sessionId, true);
-	$alignruns=count($alignIds);
+	$alignruns = ($alignIds) ? count($alignIds) : 0;
 	$analysisIds = $particle->getAnalysisRuns($sessionId, $projectId, true);
 	//foreach ($analysisIds as $analysisId)
 	//	echo print_r($analysisId)."<br/><br/>\n";
-	$analysisruns=count($analysisIds);
+	$analysisruns = ($analysisIds) ? count($analysisIds) : 0;
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack

@@ -41,11 +41,11 @@ function createSpiderCoranClassifyForm($extra=false, $title='coranClassify.py La
 	// connect to particle database
 	$particle = new particledata();
 	$alignIds = $particle->getAlignStackIds($sessionId, true);
-	$alignruns=count($alignIds);
+	$alignruns = ($alignIds) ? count($alignIds) : 0;
 	$coranIds = $particle->getAnalysisRuns($sessionId, $projectId, true);
 	//foreach ($coranIds as $coranid)
 	//	echo print_r($coranid)."<br/><br/>\n";
-	$coranruns=count($coranIds);
+	$coranruns = ($coranIds) ? count($coranIds) : 0;
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack

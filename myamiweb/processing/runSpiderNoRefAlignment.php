@@ -38,8 +38,8 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	$particle = new particledata();
 	$prtlrunIds = $particle->getParticleRunIds($sessionId);
 	$stackIds = $particle->getStackIds($sessionId);
-	$alignIds = $particle->getAlignStackIds($sessionId);
-	$alignruns=count($alignIds);
+	$alignrunsarray = $particle->getAlignStackIds($sessionId);
+	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
 	// javascript to switch the defaults based on the stack

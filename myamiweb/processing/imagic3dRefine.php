@@ -82,7 +82,10 @@ function create3d0SummaryForm($extra=False) {
 	$norefdata= $particle->getImagic3d0NoRefModelsFromSessionId($expId);
 	$clusterdata = $particle->get3d0ClusterModelsFromSessionId($expId);
 	$tsdata = $particle->get3d0TemplateStackModelsFromSessionId($expId);
-	$models = array_merge($reclassifieddata, $norefdata, $clusterdata, $tsdata);
+	$models = array();
+	foreach (array($reclassifieddata, $norefdata, $clusterdata, $tsdata) as $a) {
+		if ($a) $models = array_merge($models,$a);
+	}
 	$nummodels = count($models);
 
 	$javafunc="<script src='../js/viewer.js'></script>\n";

@@ -48,10 +48,11 @@ function jobform($extra=false)	{
 	}
 
 	// connect to particle database
-        $particle = new particledata();
-        $alignIds = $particle->getAlignStackIds($expId, true);
-        $analysisIds = $particle->getAnalysisRuns($expId, $projectId, true);
-        $analysisruns=count($analysisIds);
+		$particle = new particledata();
+		$alignIds = $particle->getAlignStackIds($expId, true);
+		$analysisIds = $particle->getAnalysisRuns($expId, $projectId, true);
+		$analysisruns=count($analysisIds);
+		$analysisruns = ($analysisIds) ? count($analysisIds) : 0;
 
 	processing_header("IMAGIC Classification (MSA)","IMAGIC Classification (MSA)",$javafunc);
 
