@@ -198,8 +198,13 @@ def runCoranClass(params,cls):
 		#mySpider.toSpiderQuiet("@%s\n" % coranbatch.split('.')[0])
 		spidercmd = ("cd %s\n" % clsdir)
 		
-		if params['hp'] is not None:
-			spidercmd+=("proc2d aligned.spi alignedhp.spi spiderswap apix=%s hp=%s\n" % (params['apix'],params['hp']))
+		if params['hp'] is not None or params['lp'] is not None:
+			filtercmd=("proc2d aligned.spi alignedfilt.spi spiderswap apix=%s" % (params['apix']))
+			if params['hp'] is not None:
+				filtercmd+=(" hp=%s" % (params['hp']))
+			if params['lp'] is not None:
+				filtercmd+=(" lp=%s" % (params['lp']))
+			spidercmd+=("%s\n" % filtercmd)
 		spidercmd+= ("spider bat/spi @%s\n" % coranbatch.split('.')[0])
 		## if multiprocessor, don't run spider yet
 		if params['proc'] == 1:
@@ -1594,10 +1599,10 @@ def makeSpiderCoranBatch(params,filename,clsdir):
 	f.write('x92=20    ; additive constant for hierarchical clustering\n')
 	f.write('\n')
 	alignstack='aligned'
-	if params['hp'] is not None:
-		f.write('FR G ; aligned hp stack file\n')
-		f.write('[alignedhp]alignedhp\n')
-		alignstack='alignedhp'
+	if params['hp'] is not None or params['lp'] is not None:
+		f.write('FR G ; aligned filtered stack file\n')
+		f.write('[alignedfilt]alignedfilt\n')
+		alignstack='alignedfilt'
 	f.write('FR G ; aligned stack file\n')
 	f.write('[aligned]aligned\n')
 	f.write('\n')
