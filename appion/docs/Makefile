@@ -23,7 +23,7 @@ thtml: INSTALL.txt
 
 asciidoc: INSTALL.txt
 	echo "...creating appion install manual for LaTeX..."
-	txt2tags --toc --infile=INSTALL.txt --target=asciidoc --outfile=INSTALL.asciidoc
+	txt2tags --infile=INSTALL.txt --target=adoc --outfile=INSTALL.asciidoc
 
 latex: INSTALL.txt
 	echo "...creating appion install manual for LaTeX..."
