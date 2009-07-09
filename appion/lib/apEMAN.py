@@ -178,9 +178,10 @@ def executeEmanCmd(emancmd, verbose=False, showcmd=True, logfile=None, fail=Fals
 		else:
 			emanproc = subprocess.Popen(emancmd, shell=True)
 		if verbose is True:
-#			emanproc.wait()
+			#emanproc.wait()
 			out, err = emanproc.communicate()
-			print "EMAN error", out, err
+			if out is not None and err is not None:
+				print "EMAN error", out, err
 		else:
 			out, err = emanproc.communicate()
 			### continuous check
