@@ -255,6 +255,24 @@ class viewer {
 		$this->addcommentbox = true;
 	}
 
+	function addQueueCountBox($qcounts=array()) {
+		if ($qcounts && count($qcounts)) {
+			$display = '<table><tr>';
+			foreach($qcounts as $q) {
+				$display .= '<tr><td>';
+				$display .= '<b> '.$q[0].' </b><br/>'
+					.'unprocessed queue= '.$q[1].'<br/>'
+					.'avg time so far = '. (int)($q[2]) .' s<br/>'
+					.'estimated remaining time  = '. $q[3] .' min '.$q[4].' s<br/>';
+				$display .= '</td></tr>';
+			}
+			$display .= '</tr></table>';
+			$this->qcountbox = $display;
+		} else {
+			$this->qcountbox = '';
+		}
+	}
+
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
 		$selector = '#images :'.count($filenames).'<br />';
@@ -418,6 +436,13 @@ class viewer {
  </table>
 ';
 			$display .= '</div>';
+			$display .= '</td>';
+		}
+		if ($this->qcountbox) {
+			$display .= '<td>';
+			$display .='estimated queue processing time';
+			$display .='<div id="qcount" style="position:relative; width:250px; border: 1px #696969 solid" >';
+			$display .= '<div>'. ($this->qcountbox).'</div>';
 			$display .= '</td>';
 		}
 		if ($this->displaytargetstats) {

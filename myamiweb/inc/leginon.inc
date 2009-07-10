@@ -2767,6 +2767,53 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getQueueCountResults($sessionId) {
+		$qcounts = array();
+		$qtypes = $this->getQueueTypes($sessionId);
+		foreach ($qtypes as $t) {
+			$qtype = $t['label'];
+			$sqldata_time = $this->getQueueTimeData($sessionId,$qtype);
+			$sqldata_dq_list = $this->getDeQueuedTargetListIds($sessionId,$qtype);
+			$sqldata_t_list = $this->getTargetListIds($sessionId,$qtype);
+			$doneitls = array();
+			$allitls = array();
+			foreach ($sqldata_dq_list as $d) {
+				array_push($doneitls,$d['doneid']);
+			};
+			foreach ($sqldata_t_list as $d) {
+				array_push($allitls,$d['itlid']);
+			};
+			$activeitls = array_diff($allitls,$doneitls);
+			$total_active = $this->getCountsFromImageTargetLists($activeitls);
+			$total_new = $this->getCountsFromImageTargetLists($allitls);
+			$total_done = 0;
+			$total_time = 0;
+			$total_done_in_active = 0;
+			// Some targets in the active target list may have been processed
+			foreach ($activeitls as $d) {
+				$total_done_in_active += $this->getCountFromTargetListId($d,'done');
+				$total_done_in_active += $this->getCountFromTargetListId($d,'aborted');
+			}
+			$total_active -= $total_done_in_active;
+			// Total Done include only  non-aborted done targets
+			foreach ($sqldata_time as $d) {
+				$total_done = $total_done + $d['QueueCount'];
+				$total_time = $total_time + $d['QueueTime'];
+			}
+			if ($total_done > 0) {
+				$avgtime = ($total_time / $total_done);
+				$esttime= ($total_active) * $avgtime;
+			} else {
+				$avgtime = "unknown";
+			}
+			$estminute= (int)($esttime / 60);
+			$estsecond= (int)($esttime - $estminute * 60);
+			if ($total_active)
+				$qcounts[] = array($qtype,$total_active,(int)($avgtime),$estminute,$estsecond);
+		}
+		return $qcounts;
+	}
+
 	function getTemplates() {
 		$q='select `template-filename` name  from HoleFinderPrefsData where `template-filename` <> "" group by `template-filename` order by DEF_timestamp desc;';
 		return $this->mysql->getSQLResult($q);

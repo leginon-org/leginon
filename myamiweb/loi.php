@@ -16,7 +16,7 @@ $refreshtime = ($_POST['refreshtime']) ? $_POST['refreshtime'] : 10;
 $sessionId=$_POST[sessionId];
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
-
+$qcounts = $leginondata->getQueueCountResults($sessionId);
 // --- Get last imageId from the current session
 $imageId= $leginondata->getLastFilenameId($sessionId);
 
@@ -39,6 +39,7 @@ $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->addLoiControl($refreshtime);
 $viewer->addCommentBox();
+$viewer->addQueueCountBox($qcounts);
 
 $javascript = $viewer->getJavascript();
 
