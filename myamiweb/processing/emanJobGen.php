@@ -888,6 +888,11 @@ function writeJobFile ($extra=False) {
 			if ($eotest=='on') $line .= " eotest";
 			$line .= " > coran".$i.".txt\n";
 			$line.= C_APPION_BIN."getRes.pl >> resolution.txt $i $box $apix\n";
+			if ($amask1) {
+				$line .= "volume threed.".$i."a.mrc $apix set=$xfiles\n";
+				$line .= "mv threed.".$i."a.mrc threed.".$i."a.coran.mrc\n";
+				$line .= "proc3d threed.".$i."a.coran.mrc threed.".$i."a.mrc automask2=$amask1,$amask2,$amask3\n";
+			}
 		}
 		// if eotest specified with coran, don't do eotest here:
 		elseif ($eotest=='on') {
