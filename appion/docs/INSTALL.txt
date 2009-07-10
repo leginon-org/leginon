@@ -614,6 +614,7 @@ inc/dbemauth.php
 
 == Configuration ==
 
+
 === configure apache ===
 - allow REMOTE_HOST lookups in apache
 
@@ -626,6 +627,7 @@ inc/dbemauth.php
 - restart the webserver
 
 ``` $ sudo /sbin/service httpd restart
+
 
 === config.php ===
 
