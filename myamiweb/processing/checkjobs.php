@@ -256,10 +256,20 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$t = getlogdate($stat['refinelog'][$i]);
 							// set duration of previous run based on time stamp
 							$steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
-							$steps['coran']['reconstruction step'] = "performing SPIDER subclass";
+							
+							// get progress of coran
+							$cmd = "ls $reconpath/coran$current/cls*.lst | wc -l";
+							$tot = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+							$tot = trim($tot);
+							$cmd = "ls $reconpath/coran$current/cls*.dir/classes_avg.spi | wc -l";
+							$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+							$r = trim($r);
+							if ($r < $tot && $r > 0) $left = gettimeleft($r,$tot,$t['timestamp']);
+							$steps['coran']['reconstruction step'] = "performing SPIDER subclass ($r/$tot)";
 							$steps['coran']['started'] = "$t[date]";
 							$steps['coran']['duration'] = getduration($t['timestamp'],time());
 							$steps['coran']['status'] = "<font class='apcomment'>running</font>";
+							if ($left) $steps['coran']['status'] = "<font class='apcomment'><b>$left</b> remain</font>";
 						}
 
 						elseif ($stat['refinelog'][$i][1] == 'T-test') {
