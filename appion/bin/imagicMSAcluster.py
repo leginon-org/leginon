@@ -72,8 +72,8 @@ class imagicClusterScript(appionScript.AppionScript):
 		batchending = "_"+str(self.params['ignore_images'])+"_"+str(self.params['ignore_members'])
 		filename = os.path.join(self.params['rundir'], "imagicMSAcluster_classes_"+str(clusternumber)+batchending+".batch")
 		f = open(filename, 'w')
-                f.write("#!/bin/csh -f\n")
-                f.write("setenv IMAGIC_BATCH 1\n")
+		f.write("#!/bin/csh -f\n")
+		f.write("setenv IMAGIC_BATCH 1\n")
 		f.write("/usr/local/IMAGIC/msa/classify.e <<EOF > imagicMSAcluster_classes_"+str(clusternumber)+".log\n")
 		f.write("IMAGES/VOLUMES\n")
 		f.write("start\n")
@@ -95,9 +95,9 @@ class imagicClusterScript(appionScript.AppionScript):
 
 		return filename
 
-        def readClassesFile(self, clsfile, clusternumber):
-                if not os.path.isfile(clsfile):
-                	apDisplay.printError("could not read class file, "+clsfile)
+	def readClassesFile(self, clsfile, clusternumber):
+		if not os.path.isfile(clsfile):
+			apDisplay.printError("could not read class file, "+clsfile)
 	
 		### open file and convert all values into integeres / floats in a list	
 		f = open(clsfile, 'r')
@@ -126,11 +126,11 @@ class imagicClusterScript(appionScript.AppionScript):
 
 		return cls_particle_data, classqualities, particles_in_class
 
-        def getAlignParticleData(self, partnum):
-                alignpartq = appionData.ApAlignParticlesData()
-                alignpartq['alignstack'] = self.analysisdata['alignstack']
-                alignpartq['partnum'] = partnum
-                alignparts = alignpartq.query(results=1)
+	def getAlignParticleData(self, partnum):
+		alignpartq = appionData.ApAlignParticlesData()
+		alignpartq['alignstack'] = self.analysisdata['alignstack']
+		alignpartq['partnum'] = partnum
+		alignparts = alignpartq.query(results=1)
 		return alignparts[0]
 
 	def insertClusterRun(self, insert=False):               
@@ -145,10 +145,10 @@ class imagicClusterScript(appionScript.AppionScript):
 		clusterrunq['analysisrun'] = self.analysisdata
 		clusterrunq['project|projects|project'] = self.analysisdata['project|projects|project']
 
-                apDisplay.printMsg("inserting clustering parameters into database")
-                if insert is True:
-                        clusterrunq.insert()
-                self.clusterrun = clusterrunq
+		apDisplay.printMsg("inserting clustering parameters into database")
+		if insert is True:
+			clusterrunq.insert()
+		self.clusterrun = clusterrunq
 
 		return 
 
@@ -158,21 +158,21 @@ class imagicClusterScript(appionScript.AppionScript):
 		clusterstackq['avg_imagicfile'] = "classums_"+str(clusternumber)+"_imagesignored_"+\
 			str(self.params['ignore_images'])+"_membersignored_"+str(self.params['ignore_members'])+".hed"
 		clusterstackq['clusterrun'] = self.clusterrun
-                clusterstackq['ignore_images'] = self.params['ignore_images']
-                clusterstackq['ignore_members'] = self.params['ignore_members']
+		clusterstackq['ignore_images'] = self.params['ignore_images']
+		clusterstackq['ignore_members'] = self.params['ignore_members']
 		clusterstackq['path'] = appionData.ApPathData(path=os.path.abspath(self.params['rundir']))
 		clusterstackq['hidden'] = False
 
-                apDisplay.printMsg("inserting clustering stack into database")
-                if insert is True:
-                        clusterstackq.insert()
+		apDisplay.printMsg("inserting clustering stack into database")
+		if insert is True:
+			clusterstackq.insert()
 		
 		### inserting particles into database
-                apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
+		apDisplay.printColor("Inserting particle classification data, please wait", "cyan")
                 
 		### read .cls file that contains information regarding particle classification
-                clsfile = os.path.join(self.params['rundir'], "classes_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+".cls")
-                cls_particle_data, classqualities, particles_in_class = self.readClassesFile(clsfile, clusternumber)
+		clsfile = os.path.join(self.params['rundir'], "classes_"+str(clusternumber)+"_imagesignored_"+str(self.params['ignore_images'])+".cls")
+		cls_particle_data, classqualities, particles_in_class = self.readClassesFile(clsfile, clusternumber)
 			
 		for i in range(clusternumber):
 			### insert the particles
@@ -213,7 +213,7 @@ class imagicClusterScript(appionScript.AppionScript):
 		
 		### insert run into database
 		if self.params['commit'] is True:
-                        self.insertClusterRun(insert=True)
+			self.insertClusterRun(insert=True)
 		else:
 			 apDisplay.printWarning("not committing results to DB")
 
@@ -251,10 +251,10 @@ class imagicClusterScript(appionScript.AppionScript):
 			os.rename(classfile+".norm.img", classfile[:-4]+".img")
 
 			### insert cluster stack into database
-                        if self.params['commit'] is True:
-                                self.insertClusterStack(clusternumber, insert=True)
-                        else:
-                                apDisplay.printWarning("not committing results to DB")
+			if self.params['commit'] is True:
+				self.insertClusterStack(clusternumber, insert=True)
+			else:
+				apDisplay.printWarning("not committing results to DB")
 
 	
 	
