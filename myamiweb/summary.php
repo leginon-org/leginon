@@ -87,7 +87,7 @@ $timingstats2 = $leginondata->getPresetTiming($expId);
 $timingstats = $leginondata->getTimingStats($expId);
 //print_r($timingstats);
 $tot_time=0;
-foreach ($timingstats as $t) {
+foreach ((array)$timingstats as $t) {
 	$images_time[$t['name']]=$t['time'];
 	$images_mean[$t['name']]=$t['mean'];
 	$images_stdev[$t['name']]=$t['stdev'];
@@ -259,7 +259,7 @@ $defocusresults = $leginondata->getFocusResultData($expId, 'both','all','ok');
 	foreach ($presets as $preset) {
 		$presetinfo=$leginondata->getPresetFromSessionId($sessionId, $preset);
 		$displaystat=false;
-		foreach ($presetinfo as $row) {
+		foreach ((array)$presetinfo as $row) {
 			$displaystat=($row['defocus range min'] && $row['defocus range max']) ? true:false;
 			if ($displaystat)
 			break;
