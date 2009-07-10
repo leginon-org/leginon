@@ -122,7 +122,7 @@ if ($stackdatas) {
 							$clusterid = $clusterdata['clusterid'];
 							echo "<b>Type:</b> <i>Xmipp KerDen SOM</i><br/><br/>\n";
 							$montagefile = $clusterdata['path']."/"."montage.png";
-							echo "<a href='loadimg.php?filename=$montagefile'>\n"
+							echo "<a target='snapshot' href='loadimg.php?filename=$montagefile'>\n"
 								."<img src='loadimg.php?h=80&filename=$montagefile' height='80'><br/>View Montage</a>\n";
 							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 							echo "&nbsp;<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"

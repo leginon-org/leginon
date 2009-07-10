@@ -94,7 +94,7 @@ $stackfile=$stackparams['path']."/".$stackparams['name'];
 $res = $particle->getHighestResForRecon($refinerun['DEF_id']);
 $avgmedjump = $particle->getAverageMedianJump($refinerun['DEF_id']);
 if ($avgmedjump['count'] > 0) {
-	$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$refinerun[DEF_id]'>";
+	$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$refinerun[DEF_id]' starget='snapshot'>";
 	$avgmedjumpstr .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
 	$avgmedjumpstr .= "&nbsp;&nbsp;<font size=-2><A HREF='jumpSubStack.php?expId=$expId&reconId=$refinerun[DEF_id]'>[make substack]</a></font>";
 } else
@@ -119,7 +119,7 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 		echo "<table><TR><td>\n";
 		$particle->displayParameters($title,$reconinfo,array(),$expId);
 		echo "</TD><td>";
-		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='corankeepplotfile'>"
+		echo "<A HREF='loadimg.php?filename=$corankeepplotfile' target='snapshot'>"
 			."<img src='loadimg.php?filename=$corankeepplotfile&s=180' HEIGHT='180'><br>\nCoran Keep Plot</A>";
 		echo "</TD></tr></table>";
 	} else {

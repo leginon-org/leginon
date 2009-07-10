@@ -62,11 +62,11 @@ if ($stackdatas) {
 						echo "<b>Type:</b> <i>Xmipp KerDen SOM</i><br/><br/>\n";
 
 						$montagefile = $clusterdata['path']."/"."montage.png";
-						echo "<a href='loadimg.php?filename=$montagefile'>\n"
+						echo "<a href='loadimg.php?filename=$montagefile' target='snapshot'>\n"
 							."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>";
 
 						echo "<ul>\n";
-						echo "<li><a href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
+						echo "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
 						$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
 						echo "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 							."View montage as a stack for further processing</a><br/>\n";
@@ -78,14 +78,14 @@ if ($stackdatas) {
 						$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 						if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 							echo "<li><span>"
-								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+								."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 								.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
 								."</span></li>\n";
 						} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
 							echo "<li><span>"
-								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+								."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
 								.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
-								."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
+								."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
 								."[variance]</a>&nbsp;(ID $clusterid) "
 								."</span></li>\n";
 						}
