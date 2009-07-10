@@ -318,6 +318,7 @@ foreach ($iterations as $iteration){
 	$html .= "<td bgcolor='$bg'>$iteration[volumeDensity]<br />\n";
 	$html .= "<input class='edit' type='button' onClick=\"parent.location='postproc.php?expId=$expId&refinement=$refinementData[DEF_id]'\" value='Post Processing'><br />\n";
 	$html .= "<input class='edit' type='button' onClick=\"parent.location='makegoodavg.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'\" value='Remove Jumpers'><br />\n";
+	if ($refinerun['package']=='EMAN/SpiCoran') $html .= "<input class='edit' type='button' onClick=\"parent.location='coranSubStack.php?expId=$expId&refId=$refinementData[DEF_id]&reconId=$reconId&iter=$iteration[iteration]'\" value='Coran Substack'><br />\n";
 	if ($refinementData['exemplar']) $html .= "<input class='edit' type='submit' name='notExemplar".$refinementData['DEF_id']."' value='not exemplar'>";
 	else $html .= "<input class='edit' type='submit' name='exemplar".$refinementData['DEF_id']."' value='Make Exemplar'>";
 	$html .= "</td>\n";
