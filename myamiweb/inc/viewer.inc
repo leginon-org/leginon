@@ -130,8 +130,8 @@ class viewer {
 		.''.$this->crlf
 		.'function start(){'.$this->crlf
 		.'	if (cif=this.myif) {'.$this->crlf
-		.'		formatrefreshtime();'.$this->crlf
-		.'		cif.start(refreshtime);'.$this->crlf
+		.'		formatrefreshtime()'.$this->crlf
+		.'		cif.start(refreshtime)'.$this->crlf
 		.'	}'.$this->crlf
 		.'}'.$this->crlf
 		.''.$this->crlf
@@ -255,22 +255,8 @@ class viewer {
 		$this->addcommentbox = true;
 	}
 
-	function addQueueCountBox($qcounts=array()) {
-		if ($qcounts && count($qcounts)) {
-			$display = '<table><tr>';
-			foreach($qcounts as $q) {
-				$display .= '<tr><td>';
-				$display .= '<b> '.$q[0].' </b><br/>'
-					.'unprocessed queue= '.$q[1].'<br/>'
-					.'avg time so far = '. (int)($q[2]) .' s<br/>'
-					.'estimated remaining time  = '. $q[3] .' min '.$q[4].' s<br/>';
-				$display .= '</td></tr>';
-			}
-			$display .= '</tr></table>';
-			$this->qcountbox = $display;
-		} else {
-			$this->qcountbox = '';
-		}
+	function addQueueCountBox() {
+		$this->qcountbox = true;
 	}
 
 	function addFileSelector($filenames=array(), $size=40) {
@@ -350,6 +336,9 @@ class viewer {
 			$nv++;
 		}
 		$init .= 'function updateviews() { '.$this->crlf;
+		if ($this->qcountbox) {
+			$init .= 'setQueueTiming();'.$this->crlf;
+		}
 		$init .= 'setimgId();'.$this->crlf;
 		if ($this->displaytargetstats)
 			$init .= 'getTargetStats();'.$this->crlf;
@@ -440,9 +429,7 @@ class viewer {
 		}
 		if ($this->qcountbox) {
 			$display .= '<td>';
-			$display .='estimated queue processing time';
-			$display .='<div id="qcount" style="position:relative; width:250px; border: 1px #696969 solid" >';
-			$display .= '<div>'. ($this->qcountbox).'</div>';
+			$display .='<div id="qcount"></div>';
 			$display .= '</td>';
 		}
 		if ($this->displaytargetstats) {

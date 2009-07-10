@@ -300,6 +300,21 @@ function rplayback() {
 	}
 }
 
+function setQueueTiming() {
+	var qcount
+	if (qcount = document.getElementById("qcount")) {
+		var url = 'getqcount.php?id='+jsSessionId
+		var xmlhttp = getXMLHttpRequest()
+		xmlhttp.open('GET', url, true)
+		xmlhttp.onreadystatechange = function() {
+			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+								qcount.innerHTML = xmlhttp.responseText
+			}
+		}
+		xmlhttp.send(null)
+	}
+}
+
 function setprogressbar(view) {
 	loadingdiv = false
 	if (loadingdivstyle = document.getElementById("loadingdiv"+view).style) {
