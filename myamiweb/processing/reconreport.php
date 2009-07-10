@@ -171,7 +171,6 @@ $html .= "</tr>\n";
 
 # show info for each iteration
 //sort($iterations);
-
 foreach ($iterations as $iteration){
 	$ref=$particle->getRefinementData($refinerun['DEF_id'], $iteration['iteration']);
 	$refinementData=$ref[0];
@@ -265,8 +264,9 @@ foreach ($iterations as $iteration){
 	foreach ($refinetypes as $type) {
 		$infokey = ($type=='SpiCoran' || $type=='EMAN') ? '&k=1' : '';
 		if (array_key_exists($type,$clsavgs)) {
-			$clsavgfile = $refinerun['path'].'/'.$clsavgs[$type];
-			$html .= "<a target='stackview' href='viewstack.php?file=".$clsavgfile.$infokey."'>".$clsavgs[$type]."</a><br>";
+			$rtype = $type;
+			$clsavgfile = $refinerun['path'].'/'.$clsavgs[$rtype];
+			$html .= "<a target='stackview' href='viewstack.php?file=".$clsavgfile.$infokey."'>".$clsavgs[$rtype]."</a><br>";
 		}
 	}
 
@@ -380,7 +380,7 @@ foreach ($iterations as $iteration){
 $html .= "</form>\n";
 $html.="</table>\n";
 
-echo "<P><FORM NAME='compareparticles' METHOD='POST' ACTION='compare_eulers.php'>
+echo "<P><FORM NAME='compareparticles' METHOD='POST' ACTION='compare_eulers.php?expId=$expId'>
 Compare Iterations:
 <select name='comp_param'>\n";
 echo "<option>Eulers</option>\n";
@@ -403,13 +403,12 @@ echo "download: <input type='checkbox' name='dwd' >\n";
 echo "<input type='submit' name='compare' value='compare'>\n";
 echo "<input type='hidden' name='reconId' value='$reconId'>\n";
 echo "</FORM>\n";
-
 $comm_param = ($_POST[comm_param]) ? $_POST[comm_param] : 'bad';
 $iter1 = ($_POST[iter1]) ? $_POST[iter1] : $iterations[0][iteration];
 $iter2 = ($_POST[iter2]) ? $_POST[iter2] : $iterations[0][iteration];
-$formaction =  'viewstack.php?recon='.$reconId.'&substack='.$comm_param.'&itr1='.$iter1.'&itr2='.$iter2;
-echo "<P><FORM NAME='commonparticles' target='stackview' METHOD='POST' ACTION=$formaction>
-Show Common Particles Between Iterations:";
+$formaction =  'viewstack.php?expId='.$expId.'&recon='.$reconId.'&subtype='.$comm_param.'&refinetype='.$rtype;
+echo "<P><FORM NAME='showcommon' target='stackview' METHOD='POST' ACTION=$formaction>
+	Show Common Particles Between Iterations:";
 echo "
 	<select name='comm_param'>\n";
 $comm_params = array('bad'=>'Bad by EMAN refine',
