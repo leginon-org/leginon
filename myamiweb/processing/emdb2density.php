@@ -112,7 +112,7 @@ function runUploadModel() {
 	if (!$box) createForm("<B>ERROR:</B> Enter a box size");
 
 
-	if (!is_float($apix)) $apix = sprintf("%.1f", $apix);
+	if (!is_float($apix)) $apix = sprintf("%.2f", $apix);
 	if (!is_float($res)) $res = sprintf("%.1f", $res);
 	$filename = $emdbid.'-'.$apix.'-'.$res.'-'.$box;
 	// emdb id will be the runname
@@ -153,6 +153,7 @@ function runUploadModel() {
 	if (!file_exists($rundir.'/'.$filename.'.mrc')) {
 		echo "EM Density file to be created:<br />\n";
 		echo "$rundir/$filename.mrc</b><br />\n";
+		echo "<br/><h4>Refresh this page to go to the page that uploads this file once it is created</h4>";
 	}
 	else {
 		echo "EM Density file created:<br />\n";
