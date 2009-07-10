@@ -264,6 +264,8 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$cmd = "ls $reconpath/coran$current/cls*.dir/classes_avg.spi | wc -l";
 							$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$r = trim($r);
+							// determine how much time left to finish coran
+							$left='';
 							if ($r < $tot && $r > 0) $left = gettimeleft($r,$tot,$t['timestamp']);
 							$steps['coran']['reconstruction step'] = "performing SPIDER subclass ($r/$tot)";
 							$steps['coran']['started'] = "$t[date]";
