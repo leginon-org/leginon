@@ -26,8 +26,9 @@ $substack=$_GET['substack'];
 $refinement=$_GET['refinement'];
 $refinetype=$_GET['refinetype'];
 $subprtls=False;
-$iter1=$_GET['itr1'];
-$iter2=$_GET['itr2'];
+$substacktype = (array_key_exists('comm_param',$_POST)) ? $_POST['comm_param'] : $_GET['subtype'];
+$iter1= (array_key_exists('iter1',$_POST)) ? $_POST['iter1'] : $_GET['itr1'];
+$iter2= (array_key_exists('iter2',$_POST)) ? $_POST['iter2'] : $_GET['itr2'];
 $reconId=$_GET['recon'];
 $clusterIdForSubstack = $_GET['clusterIdForSubstack'];
 $alignIdForSubstack = $_GET['alignIdForSubstack'];
@@ -50,9 +51,9 @@ if ($reconId) {
 	for ($i=$iter1;$i<=$iter2;$i++) {
 		$ref = $particle->getRefinementData($reconId,$i);
 		$refine[$i] = $ref[0];
-		$refineId = $refine[$i][DEF_id];
+		$refineId = $refine[$i]['DEF_id'];
 		// get all bad particles in stack
-		$subprtlsarray[$i]=$particle->getSubsetParticlesInStack($refineId,$substack,$refinetype);
+		$subprtlsarray[$i]=$particle->getSubsetParticlesInStack($refineId,$substacktype,$refinetype);
 		foreach ($subprtlsarray[$i] as $s) $arrays[$i][]=$s['p'];
 		if ($i == $iter1) $arrayall = $arrays[$i];
 		$arrayall=array_intersect($arrayall,$arrays[$i]);
@@ -60,7 +61,6 @@ if ($reconId) {
 	foreach ($arrayall as $s) $subprtls[]=array('p' => $s);
 	$numbad = count($subprtls);
 }
-
 if ($norefClassId) {
 	$classnumber=$particle->getNoRefClassParticleNumber($norefClassId);
 } elseif ($alignId) {
@@ -119,7 +119,7 @@ $sessioninfo=$sessiondata['info'];
 $sessionname=$sessioninfo['Name'];
 
 $info=imagicinfo($file_hed);
-$n_images = ($substack || $subStackClassesString != "") ? $numbad : $info['count']+1;
+$n_images = ($substack || $substacktype || $subStackClassesString != "") ? $numbad : $info['count']+1;
 
 ?>
 <html>
