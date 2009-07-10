@@ -567,6 +567,9 @@ extension=mrc.so
 
 ``` display_errors = On
 
+``` error_reporting = E_ALL & ~E_NOTICE
+
+
 - restart the webserver
 
 ``` $ sudo /sbin/service httpd restart
@@ -593,15 +596,42 @@ $ sudo chmod 777 /php/includes
 $ sudo chown $USER /php/includes
 $ cd
 $ svn co http://ami.scripps.edu/svn/phpami/trunk/ phpami/
-$ cp -v phpami/inc/mysql.inc.php /php/includes/mysql.inc
-$ cp -v phpami/inc/session.inc.php /php/includes/session.inc
-$ cp -v phpami/inc/ssh.inc.php /php/includes/ssh.inc
+$ cp -v phpami/inc/mysql.inc.php /var/www/html/appionweb/mysql.inc
+$ cp -v phpami/inc/session.inc.php /var/www/html/appionweb/session.inc
+$ cp -v phpami/inc/ssh.inc.php /var/www/html/appionweb/ssh.inc
 ```
+
+add //auth.php// to appionweb/inc
+
+``` $ mv -v auth.php /var/www/html/appionweb/inc/auth.php
+
+
+In addition, you might have noticed, you need to change the server_url in
+inc/dbemauth.php
+
+``` $ nano /var/www/html/appionweb/inc/dbemauth.php
 
 
 == Configuration ==
+
+=== configure apache ===
+- allow REMOTE_HOST lookups in apache
+
+``` $ sudo nano /etc/httpd/conf/httpd.conf
+
+- turn //HostnameLookups// to On
+
+``` HostnameLookups On
+
+- restart the webserver
+
+``` $ sudo /sbin/service httpd restart
+
+=== config.php ===
+
 - edit the file **config.php**
 
+``` $ cd /var/www/html/appionweb/processing
 ``` $ cp config.php.template config.php
 ``` $ nano config.php
 
@@ -613,7 +643,7 @@ $DB_USER	= "appionuser";
 $DB_PASS	= "";
 $DB		= "leginondata";
 
-define(BASE_URL, "appionweb/");
+define("BASE_URL", "appionweb/");
 ```
 
 - if you use a project database, set the following
@@ -626,6 +656,26 @@ $PROJECT_DB_PASS = "";
 $PROJECT_DB = "projectdata";
 ```
 
+
+=== config_processing.php ===
+
+- edit the file **config_processing.php**
+
+``` 
+$ cd /var/www/html/appionweb/processing
+$ cp config_processing.php.template config_processing.php
+$ nano config.php
+```
+
+```
+define("PROCESSING_BASE_URL", "appionweb/processing/");
+$PROCESSING_DB_HOST = "localhost";
+$PROCESSING_DB_USER = "appionuser";
+$PROCESSING_DB_PASS = "";
+$PROCESSING_DB = "";
+$PROCESSING_HOSTS[]="localhost";
+$DEFAULTCS = "2.0"; # in mm
+```
 
 == Test ==
 Go to http://localhost/appionweb/info.php
