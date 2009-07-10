@@ -111,7 +111,7 @@ class project {
 			.'from `SessionData` '
 			.'where `DEF_id`='.$sessionid;
 		list($r)=$db->getSQLResult($q);
-		$sname=$r[sessionname];
+		$sname=$r['sessionname'];
  		$q='select p.projectId, p.name  '
  			.'from projectexperiments pe '
  			.'left join projects p '
