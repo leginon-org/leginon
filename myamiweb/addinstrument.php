@@ -59,8 +59,8 @@ switch ($_POST['bt_action']) {
 			$data['name'] = $f_name;
 			$data['hostname'] = $f_hostname;
 			$data['type'] = $f_type;
-			$data['description'] = $f_description;
-			
+			#$data['description'] = $f_description;
+			$data['description'] = '';
 			$id = $leginondata->mysql->SQLInsert($maintable, $data);
 			break;
 	case "remove":
