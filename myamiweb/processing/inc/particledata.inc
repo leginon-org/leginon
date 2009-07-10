@@ -570,7 +570,7 @@ class particledata {
 		//echo $q."<br/><br/>\n";
 		$r = $this->mysql->getSQLResult($q);
 		//echo print_r($r)."<br/><br/>\n";
-		return end($r);
+		if ($r) return end($r);
 	}
 
 	function getCtfInfoWithNominal($sessionId, $runId=false) {
