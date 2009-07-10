@@ -125,7 +125,7 @@ if ($stackdatas) {
 							echo "<a href='loadimg.php?filename=$montagefile'>\n"
 								."<img src='loadimg.php?h=80&filename=$montagefile' height='80'><br/>View Montage</a>\n";
 							$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-							echo "&nbsp;<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+							echo "&nbsp;<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 								." View as Stack</a><br/>\n";
 						}
 						foreach ($clusterdatas as $clusterdata) {
@@ -134,14 +134,14 @@ if ($stackdatas) {
 							$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 							if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 								echo "<li><span>"
-									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview>"
 									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
 									."</span></li>\n";
 							} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
 								echo "<li><span>"
-									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
-									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile' target='stackview'>"
 									."[variance]</a>&nbsp;(ID $clusterid) "
 									."</span></li>\n";
 							}

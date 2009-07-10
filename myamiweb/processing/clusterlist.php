@@ -68,7 +68,7 @@ if ($stackdatas) {
 						echo "<ul>\n";
 						echo "<li><a href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
 						$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-						echo "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
+						echo "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 							."View montage as a stack for further processing</a><br/>\n";
 						echo "</ul>\n";
 					}
