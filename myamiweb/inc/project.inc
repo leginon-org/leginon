@@ -54,7 +54,7 @@ if (!$PROCESSING_DB) {
 	$PROCESSING_DB=setDatabase($newexpId);
 }
 
-define(PARTICLE_DB, $PROCESSING_DB);
+define('PARTICLE_DB', $PROCESSING_DB);
 
 class project {
 
