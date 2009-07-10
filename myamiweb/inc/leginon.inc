@@ -1199,7 +1199,7 @@ class leginondata {
 			."a.`DEF_id` ='".$imgId."' "
 			."order by pi.`DEF_id` desc"; 
 		$Rimageinfo = $this->mysql->SQLQuery($q);
-		#$imageinfo = mysql_fetch_array($Rimageinfo,MYSQL_ASSOC);
+		$imageinfo = mysql_fetch_array($Rimageinfo,MYSQL_ASSOC);
 		return $imageinfo;
 	}
 
