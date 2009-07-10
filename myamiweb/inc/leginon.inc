@@ -2769,8 +2769,10 @@ class leginondata {
 
 	function getQueueCountResults($sessionId) {
 		$qcounts = array();
-		$qtypes = $this->getQueueTypes($sessionId);
-		foreach ($qtypes as $t) {
+		if (!$qtypes = $this->getQueueTypes($sessionId)) {
+			return array();
+		}
+		foreach ((array)$qtypes as $t) {
 			$qtype = $t['label'];
 			$sqldata_time = $this->getQueueTimeData($sessionId,$qtype);
 			$sqldata_dq_list = $this->getDeQueuedTargetListIds($sessionId,$qtype);

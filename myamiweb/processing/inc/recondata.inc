@@ -10,10 +10,10 @@
 require_once "config_processing.php";
 require_once "inc/mysql.inc";
 
-define(RECON_DB_HOST, $RECON_DB_HOST);
-define(RECON_DB_USER, $RECON_DB_USER);
-define(RECON_DB_PASS, $RECON_DB_PASS);
-define(RECON_DB, $RECON_DB);
+define('RECON_DB_HOST', $RECON_DB_HOST);
+define('RECON_DB_USER', $RECON_DB_USER);
+define('RECON_DB_PASS', $RECON_DB_PASS);
+define('RECON_DB', $RECON_DB);
 
 class recondata {
 

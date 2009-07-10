@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-define("USR_BROWSER_AGENT", trim(browser('b')));
-define("USR_PLATFORM_AGENT", trim(browser('p')));
+define('USR_BROWSER_AGENT', trim(browser('b')));
+define('USR_PLATFORM_AGENT', trim(browser('p')));
 //--- Detect Browser, Platform
 function browser($n) 
 /* {{{ */

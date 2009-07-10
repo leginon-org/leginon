@@ -14,13 +14,13 @@
 require_once "inc/ssh.inc";
 require_once "inc/session.inc";
 
-define(DONE_PIC,'img/green_circle.gif');
-define(NONE_PIC,'img/red_circle.gif');
-define(PROG_PIC,'img/blue_circle.gif');
+define('DONE_PIC','img/green_circle.gif');
+define('NONE_PIC','img/red_circle.gif');
+define('PROG_PIC','img/blue_circle.gif');
 
-define(NONE_COLOR,'#FFFFCC');
-define(PROG_COLOR,'#CCFFFF');
-define(DONE_COLOR,'#CCFFCC');
+define('NONE_COLOR','#FFFFCC');
+define('PROG_COLOR','#CCFFFF');
+define('DONE_COLOR','#CCFFCC');
 
 
 // start a php session

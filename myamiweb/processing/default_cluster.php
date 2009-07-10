@@ -10,21 +10,21 @@
  * Note: each cluster file must be register in config_processing.php
  **/
 	
-define(C_NAME, "default_cluster");
+define('C_NAME', "default_cluster");
 
-define(C_NODES_DEF, "2");
-define(C_NODES_MAX, "8");
+define('C_NODES_DEF', "2");
+define('C_NODES_MAX', "8");
 
-define(C_PPN_DEF, "8");
-define(C_PPN_MAX, "8");
-define(C_RPROCS_DEF, "8");
+define('C_PPN_DEF', "8");
+define('C_PPN_MAX', "8");
+define('C_RPROCS_DEF', "8");
 
-define(C_WALLTIME_DEF, "240");
-define(C_WALLTIME_MAX, "240");
-define(C_CPUTIME_DEF, "240");
-define(C_CPUTIME_MAX, "240");
+define('C_WALLTIME_DEF', "240");
+define('C_WALLTIME_MAX', "240");
+define('C_CPUTIME_DEF', "240");
+define('C_CPUTIME_MAX', "240");
 
-define(C_APPION_BIN, "");
+define('C_APPION_BIN', "");
 
 class Cluster {
 

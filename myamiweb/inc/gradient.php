@@ -1,6 +1,6 @@
 <?php
 $graddir=$_SERVER['DOCUMENT_ROOT']."/".BASE_URL."/gradient/";
-define(GRADIENT_DIR, $graddir);
+define('GRADIENT_DIR', $graddir);
 
 function getGradient($name) {
 	$gradfile=GRADIENT_DIR.$name.".txt";

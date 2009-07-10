@@ -10,9 +10,9 @@
 require_once "config_processing.php";
 require_once "inc/mysql.inc";
 
-define(PARTICLE_DB_HOST, $PROCESSING_DB_HOST);
-define(PARTICLE_DB_USER, $PROCESSING_DB_USER);
-define(PARTICLE_DB_PASS, $PROCESSING_DB_PASS);
+define('PARTICLE_DB_HOST', $PROCESSING_DB_HOST);
+define('PARTICLE_DB_USER', $PROCESSING_DB_USER);
+define('PARTICLE_DB_PASS', $PROCESSING_DB_PASS);
 
 class particledata {
 
