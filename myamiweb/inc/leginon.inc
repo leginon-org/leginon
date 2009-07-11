@@ -307,13 +307,13 @@ class leginondata {
 
 	function getCameras($hostname) {
 		$q="select `DEF_id` as id, name from `InstrumentData` "
-			." where type='CCDCamera' and hostname='$hostname'";
+			." where (type='CCDCamera' or name='SimCCDCamera') and hostname='$hostname'";
 		return $this->mysql->getSQLResult($q);
 	}
 
 	function getScopes($hostname) {
 		$q="select `DEF_id` as id, name from `InstrumentData` "
-			." where type='TEM' and hostname='$hostname'";
+			." where (type='TEM' or name='SimTEM') and hostname='$hostname'";
 		return $this->mysql->getSQLResult($q);
 	}
 
