@@ -35,6 +35,7 @@ def defineIteration():
 		'filt3d': None,
 		'fscls': None,
 		'goodbad': None,
+		'maxshift': None,
 		'hard': None,
 		'hpfilter': None,
 		'imask': None,
@@ -207,6 +208,8 @@ def parseLogFile(params):
 					iteration['pad']=int(float(elements[1]))
 				elif elements[0]=='sym':
 					iteration['sym'] = apSymmetry.findSymmetry(elements[1])
+				elif elements[0]=='maxshift':
+					iteration['maxshift']=int(float(elements[1]))
 				elif elements[0]=='hard':
 					iteration['hard']=int(float(elements[1]))
 				elif elements[0]=='classkeep':
@@ -432,6 +435,7 @@ def insertIteration(iteration, params):
 	refineparamsq['hpfilter']=iteration['hpfilter']
 	refineparamsq['pad']=iteration['pad']
 	refineparamsq['symmetry']=iteration['sym']
+	refineparamsq['EMAN_maxshift']=iteration['maxshift']
 	refineparamsq['EMAN_hard']=iteration['hard']
 	refineparamsq['EMAN_classkeep']=iteration['classkeep']
 	refineparamsq['EMAN_classiter']=iteration['classiter']
