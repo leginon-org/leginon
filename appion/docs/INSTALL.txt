@@ -149,6 +149,7 @@ Download was over 129 MB (in July 2009). If you have a slow internet connection 
 - **DBEM**: httpd php php-mysql phpMyAdmin
 - **Xmipp MPI**: gcc-c++ openmpi-devel libtiff-devel
 - **MRC tools**: php-devel gd-devel re2c fftw2-devel php-gd
+- **Chimera**: xorg-x11-server-Xvfb
 
 ```
 $ sudo yum -y install \
@@ -160,7 +161,8 @@ gcc-objc fftw3-devel gsl-devel \
 mysql mysql-server MySQL-python \
 httpd php php-mysql phpMyAdmin  \
 gcc-c++ openmpi-devel libtiff-devel \
-php-devel gd-devel re2c fftw2-devel php-gd
+php-devel gd-devel re2c fftw2-devel php-gd \
+xorg-x11-server-Xvfb
 ```
 
 If you have an nVidia video card and setup RPM fusion, install the nVidia binary, will speed things up especially for chimera
