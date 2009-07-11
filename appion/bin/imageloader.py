@@ -209,7 +209,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 		for line in lines:
 			texts = line.split('\n')
 			info = texts[0].split('\t')
-			batchinfo.append(info)
+			if len(info) > 1:
+				batchinfo.append(info)
 		return batchinfo
 
 	def preLoopFunctions(self):
