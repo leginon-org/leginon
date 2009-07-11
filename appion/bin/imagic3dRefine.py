@@ -302,6 +302,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		radius = float(self.params['radius']) / self.params['boxsize']
 		if radius > 1:
 			radius = 1
+		mraradius = radius * 0.8
 		f.write("/usr/local/IMAGIC/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
 		f.write("NO\n")
 		f.write("FRESH\n")
@@ -328,7 +329,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("-180,180\n")
 		f.write("INTERACTIVE\n")
 		f.write(str(self.params['samp_param'])+"\n") 		
-		f.write("0.0,"+str(radius)+"\n")			
+		f.write("0.0,"+str(mraradius)+"\n")			
 		f.write("5\n")			
 		f.write("NO\n")
 		f.write("EOF\n")
