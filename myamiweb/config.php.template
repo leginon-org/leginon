@@ -34,7 +34,7 @@ $PROJECT_DB = "";
 
 // --- Set Default table definition
 
-$DEF_TABLES_FILE = "defaulttables20060120.xml";
+$DEF_TABLES_FILE = "defaulttables20090710.xml";
 
 // --- Set External SQL server here (use for import/export application)
 // --- You can add as many as you want, just copy and paste the block
