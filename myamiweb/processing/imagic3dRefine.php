@@ -622,8 +622,6 @@ function imagic3dRefine() {
 		$command.= " --projectid=".$_SESSION['projectId'];
 		$command.= " --stackid=$stackidval";
 		$command.= " --imagic3d0id=$modelid";
-		if ($norefClassId) $command .= " --norefClassId=$norefClassId";
-		elseif ($clusterId) $command .= " --clusterId=$clusterId";
 		$command.= " --runname=$runid";
 		$command.= " --rundir=$outdir/$runid";
 		$command.= " --numiters=$numiters --itn=$i";
