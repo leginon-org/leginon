@@ -98,7 +98,7 @@ function jobform($extra=false)	{
 	echo "<b>Clustering Parameters</b>\n";
 	echo "<br>\n";
 	echo "<INPUT TYPE='text' NAME='num_classes' SIZE='8' VALUE='$num_classes'>\n";
-	echo docpop('num_classes','Number of Classes');
+	echo docpop('numclass','Number of Classes');
 	echo "<br>\n";
 
 	echo "<INPUT TYPE='text' NAME='ignore_images' SIZE='4' VALUE='$ignore_images'>\n";
