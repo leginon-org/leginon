@@ -422,7 +422,7 @@ function jobForm($extra=false) {
 	echo"</td></tr></table>"; //overall table
 
 	$bgcolor="#E8E8E8";
-	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','coranCC','coranmask','coranlp','coranhp','eotest','copy');  
+	$display_keys = array('copy','itn','ang','mask','imask','amask','sym','maxshift','hard','clskeep','clsiter','filt3d','xfiles','shrink','euler2','median','phscls','refine','tree','coran','coranCC','coranmask','coranlp','coranhp','eotest','copy');  
 	echo"
   <br />
   <H4 style='align=\'center\' >EMAN Reconstruction Parameters</H4>
@@ -490,6 +490,7 @@ function jobForm($extra=false) {
 		$amask2n="amask2".$i;
 		$amask3n="amask3".$i;
 		$symn="sym".$i;
+		$maxshiftn="maxshift".$i;
 		$hardn="hard".$i;
 		$classkeepn="classkeep".$i;
 		$classitern="classiter".$i;
@@ -591,6 +592,7 @@ function jobForm($extra=false) {
 					$amask1=$iter['EMAN_amask1'];
 					$amask2=$iter['EMAN_amask2'];
 					$amask3=$iter['EMAN_amask3'];
+					$maxhsift=$iter['EMAN_maxshift'];
 					$hard=$iter['EMAN_hard'];
 					$classiter=$iter['EMAN_classiter'];
 					$classkeep=$iter['EMAN_classkeep'];
@@ -621,6 +623,7 @@ function jobForm($extra=false) {
 			$amask2=($i>$j) ? $_POST["amask2".($i-1)] : $_POST[$amask2n];
 			$amask3=($i>$j) ? $_POST["amask3".($i-1)] : $_POST[$amask3n];
 			$sym=($i>$j) ? $_POST["sym".($i-1)] : $_POST[$symn];
+			$maxshift=($i>$j) ? $_POST['maxshift'.($i-1)] : $_POST[$maxshiftn];
 			$hard=($i>$j) ? $_POST["hard".($i-1)] : $_POST[$hardn];
 			$classkeep=($i>$j) ? $_POST["classkeep".($i-1)] : $_POST[$classkeepn];
 			$classiter=($i>$j) ? $_POST["classiter".($i-1)] : $_POST[$classitern];
@@ -676,6 +679,7 @@ function jobForm($extra=false) {
                             <input type='text' NAME='$amask2n' SIZE='2' VALUE='$amask2'>
                             <input type='text' NAME='$amask3n' SIZE='2' VALUE='$amask3'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$symn' SIZE='5' VALUE='$sym'></td>
+	<td bgcolor='$rcol'><input type='text' NAME='$maxshiftn' SIZE='3' VALUE='$maxshift'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$hardn' SIZE='3' VALUE='$hard'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$classkeepn' SIZE='4' VALUE='$classkeep'></td>
         <td bgcolor='$rcol'><input type='text' NAME='$classitern' SIZE='2' VALUE='$classiter'></td>
@@ -828,6 +832,7 @@ function writeJobFile ($extra=False) {
 		$amask2=$_POST["amask2".$i];
 		$amask3=$_POST["amask3".$i];
 		$sym=$_POST["sym".$i];
+		$maxshift=$_POST["maxshift".$i];
 		$hard=$_POST["hard".$i];
 		$classkeep=$_POST["classkeep".$i];
 		$classiter=$_POST["classiter".$i];
@@ -857,6 +862,7 @@ function writeJobFile ($extra=False) {
 		if ($amask1) $line.=" amask=$amask1,$amask2,$amask3";
 		if ($sym) $line.=" sym=$sym";
 		if ($hard) $line.=" hard=$hard";
+		if ($maxshift) $line.=" maxshift=$maxshift";
 		if ($classkeep) $line.=" classkeep=$classkeep";
 		if ($classiter) $line.=" classiter=$classiter";
 		if ($filt3d) $line.=" filt3d=$filt3d";
