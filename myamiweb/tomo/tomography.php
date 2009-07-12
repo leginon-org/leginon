@@ -74,7 +74,7 @@ class Tomography {
 
 	function getSessionSelector($sessions, $sessionId=NULL) {
 		$selector = '<select name="sessionId" onchange=submit()>';
-		foreach ($sessions as $session) {
+		foreach ( (array) $sessions as $session) {
 			$selector .= '<option class="fixed" value='.$session['id'];
 			if ($session['id'] == $sessionId)
 				$selector .= ' selected ';
