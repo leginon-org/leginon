@@ -505,7 +505,7 @@ the leginon and appion folders need to be in your PYTHONPATH for this to work
 
 There is some older documentation on how to install dbemtools here:
 
-http://nramm/documentation/leginon/bk02ch04s07.php
+http://nramm.scripps.edu/documentation/leginon/bk02ch04s07.php
 
 
 == Install MRC Tools ==
