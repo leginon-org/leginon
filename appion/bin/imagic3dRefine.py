@@ -240,7 +240,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("EOF\n\n")
 	
 		### make a mask for use in MSA	
-		radius = float(self.params['radius']) / self.params['boxsize']
+		radius = float(self.params['radius']) / (self.params['boxsize'] / 2)
 		if radius > 1:
 			radius = 1
 		f.write("/usr/local/IMAGIC/stand/testim.e <<EOF >> startFiles.log\n")
@@ -299,7 +299,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("EOF\n\n")
 		
 		### first do a multi reference alignment of entire stack, using forward projections as references
-		radius = float(self.params['radius']) / self.params['boxsize']
+		radius = float(self.params['radius']) / (self.params['boxsize'] / 2)
 		if radius > 1:
 			radius = 1
 		mraradius = radius * 0.8
