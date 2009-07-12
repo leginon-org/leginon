@@ -100,12 +100,21 @@ class ImageLoader(appionLoop2.AppionLoop):
 		#This really is not conflict checking but to set up new session.
 		# There is no place in Appion script for this special case
 		if self.params['sessionname'] is not None:
-			try:
-				directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
-			except AttributeError:
-				directory = ''
 			name = self.params['sessionname']
-			sessiondata = self.createSession(None,name,self.params['description'],directory)
+			q = leginondata.SessionData(name=name)
+			r = q.query()
+			if len(r) > 0:
+				sessiondata = r[0]
+			else:
+				try:
+					directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+				except AttributeError:
+					directory = ''
+				if 'userid' in self.params.keys() and self.params['userid']:
+					userdata = leginondata.UserData.direct_query(self.params['userid'])
+				else:
+					userdata = None
+				sessiondata = self.createSession(userdata,name,self.params['description'],directory)
 			self.linkSessionProject(sessiondata,self.params['projectid']) 
 			self.session = sessiondata
 		return
@@ -182,6 +191,8 @@ class ImageLoader(appionLoop2.AppionLoop):
 		experiments.insert([projectsession.dumpdict()])
 
 	def setupParserOptions(self):
+		self.parser.add_option("--userid", dest="userid", type="int",
+			help="Leginon User ID", metavar="INT")
 		self.parser.add_option("--batchparams", dest="batchscript", type="str",
 			help="File containing image parameters", metavar="FILEPATH")
 		self.parser.add_option("--scopeid", dest="scopeid", type="int",
