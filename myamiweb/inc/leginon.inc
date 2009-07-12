@@ -1096,7 +1096,8 @@ class leginondata {
 	}
 
 	function getImageInfo($imgId) {
-		if (!$this->mysql->isTable('PresetData')) {
+		//manual and uploaded images have no parent
+		if (!$this->mysql->isTable('PresetData') ||!$this->mysql->isTable('AcquisitionTargetData')) {
 			$q = ""
 			."select a.`DEF_id` as imageId, "
 			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
