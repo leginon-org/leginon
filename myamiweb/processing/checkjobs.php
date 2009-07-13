@@ -22,10 +22,13 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 	$javafunc.="  newwindow.document.write('<html><body>')\n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/model.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/results.tar.gz '+outdir+'/.<br />')\n";
+	$javafunc.="    newwindow.document.write('dmf get '+dmfdir+'/coran.tar.gz '+outdir+'/.<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/model.tar.gz -C '+outdir+'<br />')\n";
 	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/results.tar.gz -C '+outdir+'<br />')\n";
+	$javafunc.="    newwindow.document.write('tar -xvf '+outdir+'/coran.tar.gz -C '+outdir+'<br />')\n";
 	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/model.tar*<br />')\n";
 	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/results.tar*<br />')\n";  
+	$javafunc.="    newwindow.document.write('rm -vf '+outdir+'/coran.tar*<br />')\n";  
 	$javafunc.="    newwindow.document.write('echo done<br />')\n";  
 	$javafunc.="    newwindow.document.write('<p>&nbsp;<br /></body></html>')\n";
 	$javafunc.="    newwindow.document.close()\n";
@@ -215,7 +218,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$steps['clsbymra']['duration'] = getduration($lasttime,$t['timestamp']);
 
 							// get the number of classes
-							$cmd = "ls $reconpath/cls*.lst | wc -l";
+							$cmd = "cd $reconpath; ls cls*.lst | wc -l";
 							$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$cls = trim($cls);
 							// get the number of classes that have been aligned
@@ -227,7 +230,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 								$left = gettimeleft($r,$cls,$t['timestamp']);
 							}
 							$p = "iterative class averaging ($r/$cls)";
-							$steps['clsalign']['reconstruction step'] = $p;
+							$steps['clsalign']['reconstruction stsp'] = $p;
 							$steps['clsalign']['started'] = "$t[date]";
 							$steps['clsalign']['duration'] = getduration($t['timestamp'],time());
 							$steps['clsalign']['status'] = "<font class='apcomment'>running</font>";
@@ -258,15 +261,22 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$steps['make3d']['duration'] = getduration($lasttime,$t['timestamp']);
 							
 							// get progress of coran
-							$cmd = "ls $reconpath/coran$current/cls*.lst | wc -l";
+							$cmd = "cd $reconpath/coran$current; ls cls*.lst | wc -l";
 							$tot = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$tot = trim($tot);
-							$cmd = "ls $reconpath/coran$current/cls*.dir/classes_avg.spi | wc -l";
+							$cmd = "cd $reconpath/coran$current; ls cls*.dir/classes_avg.spi | wc -l";
 							$r = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 							$r = trim($r);
 							// determine how much time left to finish coran
 							$left='';
-							if ($r < $tot && $r > 0) $left = gettimeleft($r,$tot,$t['timestamp']);
+							if ($r > 0) $left = gettimeleft($r,$tot,$t['timestamp']);
+							if ($r == $tot) {
+								$cmd = "iminfo $reconpath/coran$current/goodavgs.hed | grep goodavgs.hed | awk '{print $3}'";
+								$avgs = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
+								$avgs = trim($avgs);
+								$left = $avgs;
+								if ($avgs > 0 && $avgs < $tot*2) $left = "test $avgs";
+							}
 							$steps['coran']['reconstruction step'] = "performing SPIDER subclass ($r/$tot)";
 							$steps['coran']['started'] = "$t[date]";
 							$steps['coran']['duration'] = getduration($t['timestamp'],time());
@@ -287,7 +297,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 							$r = trim($r);
 							if ($r < 2) {
 								// get the number of e/o classes
-								$cmd = "ls $reconpath/cls*.*.lst | wc -l";
+								$cmd = "cd $reconpath; ls cls*.lst | wc -l";
 								$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 								$cls = trim($cls);
 								// get the number of classes that have been aligned
@@ -306,7 +316,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 								$r = trim($r);
 								if ($r > 0) {
 									// get the number of classes
-									$cmd = "ls $reconpath/cls*.lst | grep 'cls[0-9]*.lst' | wc -l";
+									$cmd = "cd $reconpath; ls cls*.lst | grep 'cls[0-9]*.lst' | wc -l";
 									$cls = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 									$cls = trim($cls);
 									// find number of times cycled
