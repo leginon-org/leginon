@@ -18,81 +18,65 @@ function getSessionByImage($imageId) {
 	return $r;
 }
 
-function getTargetListInfo($list) {
-  global $leginondata;
-	$q = 'SELECT '
-		.'a . `filename` , count( * ) as count FROM `AcquisitionImageData` as a '
-		.' LEFT JOIN `ImageTargetListData` as l '
-		.' ON a . DEF_id = l . `REF|AcquisitionImageData|image` '
-		.' LEFT JOIN `AcquisitionImageTargetData` t '
-		.' ON l . `DEF_id` = t . `REF|ImageTargetListData|list` '
-		.' WHERE l . `DEF_id` = '.$list.' '
-		.' AND t.`status`= "new" '
-		.' GROUP BY a . `DEF_id`  ';
-	$r = $leginondata->mysql->getSQLResult($q);
-	return $r;
-}
-
 function getDeQueuedTargetListIdsByImage($imageId) {
 	global $leginondata;
 	$q="SELECT "
-	."dqlist.`REF|ImageTargetListData|list` as doneid "
-	."FROM "
-	."`DequeuedImageTargetListData` AS `dqlist` "
-	."LEFT JOIN `ImageTargetListData` AS `itlist` " 
-	."ON (`itlist`.`DEF_id`=`dqlist`.`REF|ImageTargetListData|list`) "
-	."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`dqlist`.`REF|QueueData|queue`) "
-	."where "
-	."`itlist`.`REF|AcquisitionImageData|image` = ".$imageId." "
-	."";
+		."dqlist.`REF|ImageTargetListData|list` as doneid "
+		."FROM "
+		."`DequeuedImageTargetListData` AS `dqlist` "
+		."LEFT JOIN `ImageTargetListData` AS `itlist` " 
+		."ON (`itlist`.`DEF_id`=`dqlist`.`REF|ImageTargetListData|list`) "
+		."LEFT JOIN `QueueData` AS `q` ON (`q`.`DEF_id`=`dqlist`.`REF|QueueData|queue`) "
+		."where "
+		."`itlist`.`REF|AcquisitionImageData|image` = ".$imageId." "
+		."";
 	return $leginondata->mysql->getSQLResult($q);
 }
 
 function getTargetListIdsByImage($imageId,$sublist='all') {
-  global $leginondata;
-      $q="SELECT "
-."itlist.`DEF_id` as itlid, "
-."itlist.`REF|QueueData|queue` as queue "
-."FROM "
-."`ImageTargetListData` AS `itlist` "
-."where "
-."`itlist`.`REF|AcquisitionImageData|image` = ".$imageId." "
-."";
-if ($sublist !='all') {
-$q = $q." AND `itlist`.`sublist`=".$sublist." ";
-}
-return $leginondata->mysql->getSQLResult($q);
+	global $leginondata;
+	$q="SELECT "
+		."itlist.`DEF_id` as itlid, "
+		."itlist.`REF|QueueData|queue` as queue "
+		."FROM "
+		."`ImageTargetListData` AS `itlist` "
+		."where "
+		."`itlist`.`REF|AcquisitionImageData|image` = ".$imageId." "
+		."";
+	if ($sublist !='all') {
+		$q = $q." AND `itlist`.`sublist`=".$sublist." ";
+	}
+	return $leginondata->mysql->getSQLResult($q);
 }
 
 function getChildren($imgId) {
-  	global $leginondata;
-		$q = " select "
-			."child.`DEF_id` as childId, "
-			."child.`MRC|image` as childimage, "
-			."pp.`name` as parentpreset, "
-			."target.`type` as childtype, "
-			."target.`number` as childnumber, "
-			."p.`name` as preset, "
-			."parent.`DEF_id` as imageId, "
-			."parent.`MRC|image` as image "
-			."from AcquisitionImageData parent "
-			."left join AcquisitionImageTargetData target "
-			."on (parent.`DEF_id`=target.`REF|AcquisitionImageData|image`) "
-			."left join AcquisitionImageData child "
-			."on (target.`DEF_id`=child.`REF|AcquisitionImageTargetData|target`) "
-			."left join PresetData pp "
-			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
-			."left join PresetData p "
-			."on (p.DEF_id=child.`REF|PresetData|preset`) "
-			."where " 
-			."parent.`DEF_id` ='".$imgId."' "; 
+  global $leginondata;
+	$q = " select "
+		."child.`DEF_id` as childId, "
+		."child.`MRC|image` as childimage, "
+		."pp.`name` as parentpreset, "
+		."target.`type` as childtype, "
+		."target.`number` as childnumber, "
+		."p.`name` as preset, "
+		."parent.`DEF_id` as imageId, "
+		."parent.`MRC|image` as image "
+		."from AcquisitionImageData parent "
+		."left join AcquisitionImageTargetData target "
+		."on (parent.`DEF_id`=target.`REF|AcquisitionImageData|image`) "
+		."left join AcquisitionImageData child "
+		."on (target.`DEF_id`=child.`REF|AcquisitionImageTargetData|target`) "
+		."left join PresetData pp "
+		."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
+		."left join PresetData p "
+		."on (p.DEF_id=child.`REF|PresetData|preset`) "
+		."where " 
+		."parent.`DEF_id` ='".$imgId."' "; 
 
-		if($Rchild = $leginondata->mysql->getSQLResult($q)) {
-			return $Rchild;
-		}
-		else {
-			return NULL;
-		}
+	if($Rchild = $leginondata->mysql->getSQLResult($q)) {
+		return $Rchild;
+	} else {
+		return NULL;
+	}
 }
 
 function getDriftedImage($imgId,$direction) {
@@ -103,18 +87,17 @@ function getDriftedImage($imgId,$direction) {
 		$from = 'old';
 		$to = 'new';
 	}
-  	global $leginondata;
-		$q = " select "
-			."`REF|AcquisitionImageData|".$from." image` as nextId "
-			."from AcquisitionImageDriftData "
-			."where "
-			." `REF|AcquisitionImageData|".$to." image`=$imgId "
-			." ";
-		if($newimg = $leginondata->mysql->getSQLResult($q)) {
-			return $newimg;
-		}
-		else
-			return NULL;
+ 	global $leginondata;
+	$q = " select "
+		."`REF|AcquisitionImageData|".$from." image` as nextId "
+		."from AcquisitionImageDriftData "
+		."where "
+		." `REF|AcquisitionImageData|".$to." image`=$imgId "
+		." ";
+	if($newimg = $leginondata->mysql->getSQLResult($q)) {
+		return $newimg;
+	}
+	else return NULL;
 }
 
 	
@@ -230,6 +213,7 @@ function test() {
 }
 
 function createForm() {
+  global $leginondata;
 	$results=createData();
 	$imagetls=$results[0];
 	$dqimagetls=$results[1];
@@ -295,7 +279,7 @@ function createForm() {
 	<?
 	if (count($aborting)>0) {
 		foreach ($aborting as $deq) {
-			$targetimage = getTargetListInfo($deq['REF|ImageTargetListData|list']);
+			$targetimage = $leginondata->getTargetListInfo($deq['REF|ImageTargetListData|list']);
 			if ($targetimage[0]['count']) {
 			echo $targetimage[0]['count'];
 			?></td><td> targets from 
