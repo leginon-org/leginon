@@ -199,6 +199,7 @@ function syntheticDatasetForm($extra=false, $title='Synthetic Dataset Creation',
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
+		$sessionpath=ereg_replace("data..","data00", $sessionpath);
 		$sessionpath=ereg_replace("leginon","appion",$sessionpath);
 		$sessionpath=ereg_replace("rawdata","syntheticData/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
