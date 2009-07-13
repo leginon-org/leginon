@@ -381,6 +381,20 @@ def bin2(a, factor):
 	#binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
 	return binned
 
+def bin3(a, factor):
+	'''
+	This is based on: http://scipy.org/Cookbook/Rebinning
+	It is simplified to the case of a 3D array with the same
+	binning factor in both dimensions.
+	'''
+	oldshape = a.shape
+	newshape = numpy.asarray(oldshape)/factor
+	tmpshape = (newshape[0], factor, newshape[1], factor, newshape[2], factor)
+	f = factor * factor * factor
+	binned = numpy.sum(numpy.sum(numpy.sum(numpy.reshape(a, tmpshape), 1), 2), 3) / f
+	#binned = stats.median(stats.median(numpy.reshape(a, tmpshape), 1), 2)
+	return binned
+
 def crop_at(im, center, shape, mode='wrap', cval=None):
 	'''
 	Crops an image such that the resulting image has im[center] at the center
