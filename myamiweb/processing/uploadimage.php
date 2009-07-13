@@ -13,6 +13,12 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+
+$projectId = trim($_GET['pId']);
+if (is_numeric($projectId)) {
+		$_SESSION['projectId']=$projectId;
+}
+
 if ($_POST) {
 	if ($_POST['projectId']) {
 		$_SESSION['projectId']=$_POST['projectId'];

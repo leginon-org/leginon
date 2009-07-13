@@ -13,8 +13,7 @@ require 'inc/config.inc';
 // --- define dbem web tools base --- //
 define('BASE_URL', "/dbem/");
 
-// --- define Flash player base url --- //
-define('FLASHPLAYER_URL', "/flashplayer/");
+// --- Leginon Viewer Configuration --- //
 
 // --- Set your leginon MySQL database server parameters
 
@@ -53,7 +52,7 @@ $SQL_HOSTS['name1']['db'] = 'dbemdata';
 */
 
 // --- add plugins --- //
-addplugin("processing");
+addplugin('processing');
 
 // --- Leginon Viewer login --- //
 define('ENABLE_LOGIN', false);
@@ -62,5 +61,8 @@ define('ENABLE_LOGIN', false);
 define('ENABLE_CACHE', false);
 define('CACHE_PATH', '/srv/www/cache/');
 define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
+
+// --- define Flash player base url --- //
+define('FLASHPLAYER_URL', "/flashplayer/");
 
 ?>
