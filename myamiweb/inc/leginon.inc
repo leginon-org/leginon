@@ -2677,6 +2677,20 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
+	function getTargetListInfo($list) {
+		$q = 'SELECT '
+			.'a . `filename` , count( * ) as count FROM `AcquisitionImageData` as a '
+			.' LEFT JOIN `ImageTargetListData` as l '
+			.' ON a . DEF_id = l . `REF|AcquisitionImageData|image` '
+			.' LEFT JOIN `AcquisitionImageTargetData` t '
+			.' ON l . `DEF_id` = t . `REF|ImageTargetListData|list` '
+			.' WHERE l . `DEF_id` = '.$list.' '
+			.' AND t.`status`= "new" '
+			.' GROUP BY a . `DEF_id`  ';
+		$r = $this->mysql->getSQLResult($q);
+		return $r;
+	}
+
 	function getTargetListIds($sessionId,$qtype) {
 		$q="SELECT "
 			."itlist.`DEF_id` as itlid "
@@ -2765,7 +2779,7 @@ class leginondata {
 
 	function getQueueTypes($sessionId) {
 		$q="SELECT "
-			."`label` FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
+			."`label`,`DEF_id` as id FROM QueueData where `REF|SessionData|session` = ".$sessionId."";
 		return $this->mysql->getSQLResult($q);
 	}
 
