@@ -18,6 +18,7 @@ import apFindEM
 import filterLoop
 
 #Leginon
+import leginondata
 import polygon
 try:
 	from gui.wx import ImagePanel, ImagePanelTools, TargetPanel, TargetPanelTools
@@ -258,7 +259,9 @@ class manualPicker(filterLoop.FilterLoop):
 
 	def checkConflicts(self):
 		if self.params['commit'] and self.params['continue']==False:
-			sessiondata = self.params['session']
+			q = leginondata.SessionData(name=self.params['sessionname'])
+			results = q.query(results=1)
+			sessiondata = results[0]
 			maskname = self.params['runname']
 			maskrundata,maskparamsdata = apMask.getMaskParamsByRunName(maskname,sessiondata)
 			if maskrundata:
