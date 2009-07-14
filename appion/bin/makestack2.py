@@ -27,6 +27,7 @@ import apPrimeFactor
 import apFile
 import apParam
 import apImagicFile
+import apMask
 
 
 class Makestack2Loop(appionLoop2.AppionLoop):
@@ -508,7 +509,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
 		if self.params['defocpair']:
 			imgdata = apDefocalPairs.getTransformedDefocPair(imgdata,2)
-		maskimg,maskbin = apMask.makeInspectedMask(sessiondata,self.params['checkmask'],imgdata)
+		maskimg,maskbin = apMask.makeInspectedMask(sessiondata,self.params['maskassess'],imgdata)
 		if maskimg is not None:
 			for prtl in particles:
 				binnedcoord = (int(prtl['ycoord']/maskbin),int(prtl['xcoord']/maskbin))
@@ -721,6 +722,8 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			help="high pass filter")
 		self.parser.add_option("--mag", dest="mag", type="int",
 			help="process only images of magification, mag")
+		self.parser.add_option("--maskassess", dest="maskassess",
+			help="Assessed mask run name")
 
 		### true/false
 		self.parser.add_option("--phaseflip", dest="phaseflipped", default=False,
@@ -782,6 +785,10 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.params['selectionid'] = apParticle.guessParticlesForSession(sessionname=self.params['sessionname'])
 		if self.params['selectionid'] is None:
 			apDisplay.printError("no selection id was provided")
+		if self.params['maskassess'] is None and self.params['checkmask']:
+			apDisplay.printError("particle mask assessment run need to be defined to check mask")
+		if self.params['maskassess'] is not None and not self.params['checkmask']:
+			self.params['checkmask'] = True
 
 
 	#=====================
