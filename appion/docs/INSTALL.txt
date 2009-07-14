@@ -666,6 +666,13 @@ inc/dbemauth.php
 ``` $ cp config.php.template config.php
 ``` $ nano config.php
 
+- set some default parameters:
+
+```
+define("ENABLE_LOGIN", false);
+define("ENABLE_CACHE", true);
+```
+
 - set your MySQL parameters:
 
 ```
@@ -677,7 +684,7 @@ $DB		= "leginondata";
 define("BASE_URL", "appionweb/");
 ```
 
-- if you use a project database, set the following
+- set the following for the project database
 
 ```
 $PROJECT_URL = "localhost";
@@ -709,7 +716,15 @@ $DEFAULTCS = "2.0"; # in mm
 ```
 
 
+=== Test appionweb ===
+Go to http://localhost/appionweb/info.php
+Go to http://localhost/appionweb/
+
+
 == Install project database interface ==
+
+
+=== Configure project database interface ===
 
 - Other install directions are available here:
 
@@ -745,10 +760,40 @@ $PROJECT_DB_PASS = "";
 $PROJECT_DB      = "projectdata";
 ```
 
+- Modify //utilpj.inc.php// for a bug
 
-== Test appionweb ==
-Go to http://localhost/appionweb/info.php
-Go to http://localhost/appionweb/
+``` $ nano /var/www/html/project/inc/utilpj.inc.php
+
+- comment out the from_POST line
+
+```
+/*
+function from_POST() {
+       	$r = array();
+        $keys=array_keys($_POST);
+        foreach(func_get_args() as $arg) {
+                if (in_array($arg,$keys))
+                        $r[]=trim($_POST[$arg]);
+        }
+        return $r;
+}
+*/
+```
+
+
+=== Create a project ===
+
+- Go to the project webpage
+
+http://localhost/project/project.php
+
+- Fill out form, only the **Name** is required, and click **add**
+
+
+== Upload images ==
+
+Before images can be uploaded a microscope and camera need to be created
+
 
 
 == Potential problems ==
