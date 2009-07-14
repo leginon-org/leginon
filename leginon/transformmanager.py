@@ -439,8 +439,8 @@ class TransformManager(node.Node, TargetTransformer):
 		pixeltype = str(imagedata['image'].dtype)
 		## Fix me: Not sure what image list should go in here nor naming of the file
 		imagedata = leginondata.AcquisitionImageData(initializer=imagedata, preset=currentpresetdata, label=self.name, target=targetdata, list=oldimage['list'], emtarget=emtarget, pixels=pixels, pixeltype=pixeltype)
-		version = oldimage['version']+1
-		imagedata['version'] = version
+		version = self.recentImageVersion(oldimage)
+		imagedata['version'] = version + 1
 		## set the 'filename' value
 		if imagedata['label'] == 'RCT':
 			rctacquisition.setImageFilename(imagedata)
@@ -453,6 +453,21 @@ class TransformManager(node.Node, TargetTransformer):
 		self.publish(imagedata, database=True)
 		self.setImage(imagedata['image'], 'Image')
 		return imagedata
+
+	def recentImageVersion(self, imagedata):
+		# find most recent version of this image
+		p = leginondata.PresetData(name=imagedata['preset']['name'])
+		q = leginondata.AcquisitionImageData()
+		q['session'] = imagedata['session']
+		q['target'] = imagedata['target']
+		q['list'] = imagedata['list']
+		q['preset'] = p
+		allimages = q.query()
+		version = 0
+		for im in allimages:
+			if im['version'] > version:
+				version = im['version']
+		return version
 
 	def handleTransformTargetEvent(self, ev):
 		self.setStatus('processing')
