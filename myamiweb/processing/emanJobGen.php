@@ -828,9 +828,9 @@ function writeJobFile ($extra=False) {
 		$ang=$_POST["ang".$i];
 		$mask=$_POST["mask".$i];
 		$imask=$_POST["imask".$i];
-		$amask1=$_POST["amask1".$i];
+		$amask1=ceil($_POST["amask1".$i]);
 		$amask2=$_POST["amask2".$i];
-		$amask3=$_POST["amask3".$i];
+		$amask3=ceil($_POST["amask3".$i]);
 		$sym=$_POST["sym".$i];
 		$maxshift=$_POST["maxshift".$i];
 		$hard=$_POST["hard".$i];
@@ -859,7 +859,7 @@ function writeJobFile ($extra=False) {
 		$line="\nrefine $i proc=$procs ang=$ang pad=$pad";
 		if ($mask) $line.=" mask=$mask";
 		if ($imask) $line.=" imask=$imask";
-		if ($amask1) $line.=" amask=$amask1,$amask2,$amask3";
+		if ($amask2) $line.=" amask=$amask1,$amask2,$amask3";
 		if ($sym) $line.=" sym=$sym";
 		if ($hard) $line.=" hard=$hard";
 		if ($maxshift) $line.=" maxshift=$maxshift";
