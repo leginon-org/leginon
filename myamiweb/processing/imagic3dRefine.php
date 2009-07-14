@@ -370,9 +370,11 @@ function jobform($modelid, $extra=false) {
 	// set commit on by default when first loading page, else set
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	// define default variables for directory and runid
-	$numRefinements = count($particle->getImagic3dRefinementRunsFrom3d0($modelid));
-	$newrefinerun = $numRefinements + 1;
+//	$numRefinements = count($particle->getImagic3dRefinementRunsFrom3d0($modelid));
 	$outdir = ($_POST[output_directory]) ? $_POST[output_directory] : $modeldata['path']."/".$modeldata['runname'];
+	$numRefinements = 0;
+	while (file_exists($outdir.'/refine'.($numRefinements+1))) $numRefinements += 1;
+	$newrefinerun = $numRefinements + 1;
 	$runid = ($_POST[runid]) ? $_POST[runid] : "refine".$newrefinerun;
 	
 	$doc_runname = docpop('runid', '<t><b>Run Name:</b>');
