@@ -560,7 +560,7 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("3.\n")
 		f.write(symmetry+"\n")		
 		f.write(".66\n")			
-		f.write(str(self.params['boxsize'])+"\n")			
+		f.write(str(self.params['apix'])+"\n")			
 		f.write("EOF\n")
 		
 		f.close()
