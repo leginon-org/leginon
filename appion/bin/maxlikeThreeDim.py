@@ -48,7 +48,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		### strings
 		self.parser.add_option("--sym", "--symmetry", dest="symmetry",
 			help="Symmetry", metavar="#")
-		self.parser.add_option("--model-ids", dest="modelstr",
+		self.parser.add_option("-m", "--model-ids", dest="modelstr",
 			help="Initial Model IDs", metavar="#")
 
 		### integers
@@ -60,8 +60,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			help="alignment stack id", metavar="ID")
 		self.parser.add_option("-N", "--num-part", dest="numpart", type="int",
 			help="Number of particles to use", metavar="#")
-		self.parser.add_option("-m", "--model", dest="modelid", type="int",
-			help="Initial model database id", metavar="ID#")
 		self.parser.add_option("--nproc", dest="nproc", type="int",
 			help="Number of processor to use", metavar="ID#")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
