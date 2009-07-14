@@ -27,7 +27,10 @@ $CLUSTER_CONFIGS= array (
 	'default_cluster'
 );
 
-// Better if Cs came out of DB, but for now...
+// --- Restrict file server if you want --- //
+// --- Add your allowed processing directory as string in the array
+$DATA_DIRS = array(
+);
 
 // Better if Cs came out of DB, but for now...
 $DEFAULTCS = "";

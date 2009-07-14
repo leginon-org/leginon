@@ -22,7 +22,6 @@ define('NONE_COLOR','#FFFFCC');
 define('PROG_COLOR','#CCFFFF');
 define('DONE_COLOR','#CCFFCC');
 
-
 // start a php session
 setsession();
 
@@ -859,6 +858,7 @@ function getNumberOfRequiredNodes($nproc, $ppn) {
 
 function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 		$testimg=False, $xvfb=False, $xtra=False, $nproc=1, $ppn=0, $nodes=0) {
+	global $DATA_DIRS;
 	$particle=new particleData();
 
 	if ($_POST['processinghost']) {
@@ -880,11 +880,16 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$procdir = $outdir.$runname;
 
-	// AMI SPECIFIC
-	// if not data00 or data16, write to data00
-	if (!ereg("/ami/data(00|16)",$procdir)) {
-		return "could not create directory '$procdir'<br/> try using data00 or data16";
-		$procdir = ereg_replace("/ami/data..","/ami/data00",$procdir);
+	if ($DATA_DIRS) {
+		$ingood = False;
+		foreach ( $DATA_DIRS as $gooddisk)
+			if (!$gooddisl) {
+				$ingood = True;
+			} else { 
+				$ingood = (ereg($gooddisk,$procdir))? True: $ingood;
+			}
+		if (!$ingood) 
+				return 'could not create directory '.$procdir.'<br/> try using '.implode(' or ',$DATA_DIRS);
 	}
 
 	// if more than one job running in the directory (like
@@ -982,7 +987,6 @@ function submitAppionJob($command, $outdir, $runname, $expId, $jobtype,
 
 		// submit job on cluster
 		$jobdata = exec_over_ssh($host, $user, $pass, $cmd, True);
-
 		ereg("([0-9]{1,})", $jobdata, $regs);
 		$jobnum = $regs[1];
 		if (!is_numeric($jobnum)) {
