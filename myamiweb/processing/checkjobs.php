@@ -275,7 +275,7 @@ function checkJobs($showjobs=False,$showall=False,$extra=False) {
 								$avgs = exec_over_ssh($jobinfo['cluster'],$user,$pass,$cmd, True);
 								$avgs = trim($avgs);
 								$left = $avgs;
-								if ($avgs > 0 && $avgs < $tot*2) $left = "test $avgs";
+								if ($avgs > 0 && $avgs < $tot*2) $left = gettimeleft($avgs,$tot,$t['timestamp']);
 							}
 							$steps['coran']['reconstruction step'] = "performing SPIDER subclass ($r/$tot)";
 							$steps['coran']['started'] = "$t[date]";
