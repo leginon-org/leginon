@@ -375,9 +375,15 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		while os.path.isfile(eulerfile):
 			apFile.removeFile(eulerfile)
 		f = open(eulerfile, "a")
+		n = 1
 		for i in range(iters):
 			for j in range(len(strip)):
-				f.write(str(strip[j])+"\n")
+				split = strip[j].split()
+				f.write(str(n)+"\t")
+				f.write(str(split[1])+"\t")
+				f.write(str(split[2])+"\t")
+				f.write(str(split[3])+"\t\n")
+				n += 1
 		f.close()
 		
 		### create actual projections
