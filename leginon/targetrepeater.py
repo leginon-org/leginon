@@ -13,6 +13,8 @@ import node
 import targethandler
 import gui.wx.TargetRepeater
 import instrument
+import acquisition
+import rctacquisition
 import player
 
 class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
@@ -81,7 +83,6 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.setStatus('processing')
 
 			self.instrument.setData(scopedata)
-
 			newtargetlistdata = self.copyTargetList(targetlistdata)
 			if newtargetlistdata is None:
 				break
@@ -107,28 +108,64 @@ class TargetRepeater(node.Node, targethandler.TargetWaitHandler):
 			self.markTargetsDone(donetargets)
 
 	def copyTargetList(self, targetlistdata):
+			#make and publish new targetlist
 			alltargets = self.researchTargets(list=targetlistdata)
-			print 'ORIGINAL', len(alltargets)
-			for t in alltargets:
-				print '  ', t['number'], t['status']
-
 			newtargetlistdata = self.newTargetList()
 			newtargetlistdata.update(targetlistdata)
 			self.publish(newtargetlistdata, database=True, dbforce=True)
-
+			#fill the list with targets
 			newtargets = []
+			newimages = {}
 			for target in alltargets:
 				if target['status'] not in ('done', 'aborted'):
-					newtarget = leginondata.AcquisitionImageTargetData(initializer=target)	
+					parentimage = target.special_getitem('image',readimages=False,dereference=True)
+					parentid = parentimage.dbid
+					if parentid not in newimages.keys():
+						newimagedata = self.copyImage(parentimage)
+						newimages[parentid] = newimagedata
+					else:
+						newimagedata = newimages[parentid]
+					newtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 					newtarget['fromtarget'] = target
 					newtarget['list'] = newtargetlistdata
+					newtarget['image'] = newimagedata
 					newtarget.insert(force=True)
 					newtargets.append(newtarget)
-			
 			if newtargets:
 				return newtargetlistdata
 			else:
 				return None
+
+	def copyImage(self, oldimage):
+		imagedata = leginondata.AcquisitionImageData()
+		imagedata.update(oldimage)
+		version = self.recentImageVersion(oldimage)
+		imagedata['version'] = version + 1
+		imagedata['filename'] = None
+		imagedata['image'] = oldimage['image']
+		## set the 'filename' value
+		if imagedata['label'] == 'RCT':
+			rctacquisition.setImageFilename(imagedata)
+		else:
+			acquisition.setImageFilename(imagedata)
+		self.logger.info('Publishing new copied image...')
+		self.publish(imagedata, database=True)
+		return imagedata
+
+	def recentImageVersion(self, imagedata):
+		# find most recent version of this image
+		p = leginondata.PresetData(name=imagedata['preset']['name'])
+		q = leginondata.AcquisitionImageData()
+		q['session'] = imagedata['session']
+		q['target'] = imagedata['target']
+		q['list'] = imagedata['list']
+		q['preset'] = p
+		allimages = q.query()
+		version = 0
+		for im in allimages:
+			if im['version'] > version:
+				version = im['version']
+		return version
 
 	def onPlayer(self, state):
 		infostr = ''
