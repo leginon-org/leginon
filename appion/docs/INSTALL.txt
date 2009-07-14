@@ -48,6 +48,63 @@ You will need 3 servers:
 Fortunately, all 3 servers can run on the same machine
 
 
+== Other documentation ==
+Leginon Installation documentation
+
+http://ami.scripps.edu/documentation/leginon/bk02.php
+
+
+
+== Required software ==
+
+
+=== from AMI ===
+
+[NOTE]
+AMI software is available from two separate sites [our local servers http://ami.scripps.edu/software/]
+and [Google Code http://code.google.com/p/appion/]
+
+- **dbemtools**: web page interface to leginon and appion
+ - **dbem**: web interface to pyAppion
+ - **project**: for keeping separate projects and web logins
+- **leginon**: only for image viewer and polygon tool
+ - **pyami** r107, generic image processing
+ - **numextension** r52: numpy extension library
+ - **sinedon** r50: for MySQL interaction
+ - **leginon** r5463: core gui libraries for manual pickers
+- **pyappion** r3072: python processing pipeline
+ - includes ACE1, ACE2, radermacher module, DoG Picker, TiltPicker, and FindEM
+
+
+=== Additional external software needed ===
+
+
+==== Required ====
+
+ - **EMAN** v1.9 cluster,
+  - [download binary http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman]
+ - **UCSF Chimera** v1.2509, newer versions have problems,
+  - [download binary http://www.cgl.ucsf.edu/chimera/download.html]
+
+
+==== Recommended ====
+
+- **SPIDER** v15 or older, newest version not supported,
+  - [download binary http://www.wadsworth.org/spider_doc/spider/docs/spi-register.html]
+- **Xmipp** v2.2 or newer, for alignment, compile your own for openmpi support,
+  - [download source http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware]
+- **IMOD**, for tomography
+- **Rmeasure**, for resolution estimation
+- **CtfTilt**, for tilted CTF estimation
+
+
+==== Recommended, but costs money ====
+
+- **MATLAB**, for ACE1, not needed anymore with ACE2
+- **IMAGIC** v5, for alignment
+
+
+
 --------------------------------
 = Install CentOS operating system =
 
@@ -189,90 +246,6 @@ You can further configure this with the GUI and turn off unnecessary items
 .Reboot the computer
 
 ``` $ sudo reboot
-
-
-== Download AMI software ==
-
-[NOTE]
-AMI software is available from two separate sites [our local servers http://ami.scripps.edu/software/]
-and [Google Code http://code.google.com/p/appion/]
-
-- **dbemtools**: web page interface to leginon and appion
- - **dbem**: web interface to pyAppion
- - **project**: for keeping separate projects and web logins
-- **leginon**: only for image viewer and polygon tool
- - **pyami** r107, generic image processing
- - **numextension** r52: numpy extension library
- - **sinedon** r50: for MySQL interaction
- - **leginon** r5463: core gui libraries for manual pickers
-- **pyappion** r3072: python processing pipeline
- - includes ACE1, ACE2, radermacher module, DoG Picker, TiltPicker, and FindEM
-
-
-=== from subversion ===
-Three packages need to be downloaded from Subversion:
-
-- Leginon, automated EM software
-
-``` $ svn co http://ami.scripps.edu/svn/leginon/branches/1.6/ leginon/
-
-- Pyami, common ami function
-
-``` $ svn co http://ami.scripps.edu/svn/pyami/trunk/ pyami/
-
-- Sinedon, mysql-python object-relational mapping
-
-``` $ svn co http://ami.scripps.edu/svn/sinedon/trunk/ sinedon/
-
-- Numextension python module
-
-``` $ svn co http://ami.scripps.edu/svn/numextension/trunk/ numextension/
-
-- DBEM webpages
-
-``` $ svn co http://ami.scripps.edu/svn/dbem/trunk/ dbem/
-
-- pyAppion python scripts
-
-``` $ svn co http://ami.scripps.edu/svn/pyappion/trunk/ pyappion/
-
-
-=== online packages ===
-Other packages are located online at either http://ami.scripps.edu/software/ or http://appion.org/
-
-From AMI software, http://ami.scripps.edu/software/
-- dbemtools, http://ami.scripps.edu/software/dbemtools/
-- mrctools, http://ami.scripps.edu/software/mrctools/
-
-From Google Code, http://appion.org/
-- pyappion, http://code.google.com/p/appion/downloads/list
-
-
-== Additional external software needed ==
-
-
-=== Required ===
-
- - **EMAN** v1.9 cluster,
-  - [download binary http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman]
- - **UCSF Chimera** v1.2509, newer versions have problems,
-  - [download binary http://www.cgl.ucsf.edu/chimera/download.html]
-
-
-=== Recommended ===
-
-- **SPIDER** v15 or older, newest version not supported,
-  - [download binary http://www.wadsworth.org/spider_doc/spider/docs/spi-register.html]
-- **Xmipp** v2.2 or newer, for alignment, compile your own for openmpi support,
-  - [download source http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware]
-- **IMOD**, for tomography
-
-
-=== Recommended, but costs money ===
-
-- **MATLAB**, for ACE1
-- **IMAGIC** v5, for alignment
-
 
 --------------------------------
 = Compile and setup python (pyappion) programs =
@@ -435,6 +408,9 @@ You can ignore EMAN, MATLAB, and chimera errors at this point
 --------------------------------
 = Setup MySQL (appiondata) databases =
 
+The old leginon documentation may be of help:
+http://ami.scripps.edu/documentation/leginon/bk02ch04s06.php
+
 
 == Setup MySQL users and databases ==
 
@@ -500,6 +476,58 @@ user:	appionuser
 the leginon and appion folders need to be in your PYTHONPATH for this to work
 
 
+== Configure MySQL ==
+
+Edit the configuration file:
+
+``` $ sudo nano /etc/my.cnf
+
+Add or edit the following lines:
+
+```
+query_cache_type = 1
+query_cache_size = 100M
+query_cache_limit= 100M
+```
+
+Restart MySQL
+
+``` $ sudo /sbin/service mysqld restart
+
+
+== Configure phpMyAdmin ==
+
+Edit the phpMyAdmin config file:
+
+``` $ sudo nano /etc/phpMyAdmin/config.inc.php 
+
+and change the following lines:
+
+```
+$cfg['Servers'][$i]['AllowRoot']     = FALSE;
+```
+
+Edit the phpMyAdmin apache config file:
+
+``` $ sudo nano /etc/httpd/conf.d/phpMyAdmin.conf
+
+and change the following lines:
+
+```
+<Directory /usr/share/phpMyAdmin/>
+   order deny,allow
+   deny from all
+   allow from 127.0.0.1
+   allow from YOUR_IP_ADDRESS
+</Directory>
+
+```
+
+Create tables in mysql
+
+``` mysql -u root -p < /usr/share/phpMyAdmin/scripts/create_tables_mysql_4_1_2+.sql
+
+
 --------------------------------
 = Install webpages (appionweb) =
 
@@ -542,8 +570,6 @@ $ sudo make install
 === Configure PHP for MRC Tools ===
 
 - Edit your php configuration file php.ini to add "mrc.so" extension.
-- You might also increase the memory_limit field. It is set to 8M by default. The more the merrier!
-- 4kx4k float MRC image is about 64MB
 
 ``` $ sudo nano /etc/php.d/mrc.ini
 
@@ -553,6 +579,9 @@ $ sudo make install
 ; Enable mrc extension module
 extension=mrc.so
 ```
+
+- To test MRC tools, go to this website:
+http://ami.scripps.edu/software/mrctools/mrc_so.php
 
 
 == Configure PHP ==
@@ -582,12 +611,10 @@ extension=mrc.so
 install appionweb
 
 ``` 
-$ cd /var/www/html/
-$ sudo mkdir appionweb
-$ sudo chmod 777 appionweb
-$ sudo chown $USER appionweb
-$ svn co http://ami.scripps.edu/svn/dbem/trunk/ appionweb/
-$ cd appionweb
+$ tar zxvf dbemtools_1_4.tgz
+$ sudo mv dbemtools_1_4 /var/www/html/appionweb
+$ svn co http://ami.scripps.edu/svn/dbem/trunk/ /var/www/html/appionweb/
+$ cd /var/www/html/appionweb
 ``` 
 
 install php include modules
@@ -608,7 +635,7 @@ add //auth.php// to appionweb/inc
 ``` $ mv -v auth.php /var/www/html/appionweb/inc/auth.php
 
 
-In addition, you might have noticed, you need to change the server_url in
+In addition, you need to change the server_url in
 inc/dbemauth.php
 
 ``` $ nano /var/www/html/appionweb/inc/dbemauth.php
@@ -681,20 +708,72 @@ $PROCESSING_HOSTS[]="localhost";
 $DEFAULTCS = "2.0"; # in mm
 ```
 
-== Test ==
+
+== Install project database interface ==
+
+- Other install directions are available here:
+
+http://ami.scripps.edu/documentation/leginon/bk02ch04s07.php
+
+- Download project database interface (project_1_1.tgz) from here:
+
+http://ami.scripps.edu/software/dbemtools
+
+- Extract the tar ball
+
+``` $ tar zxvf project_1_1.tgz
+
+- Move files to the web directory:
+
+``` $ sudo mv -v project_1_1 /var/www/html/project
+
+- Edit project config file:
+
+``` $ nano /var/www/html/project/config.php
+
+```
+$DBEM_PATH = "../appionweb";
+
+$DB_HOST  = "localhost";
+$DB_USER  = "appionuser";
+$DB_PASS  = "";
+$DB       = "leginondata";
+
+$PROJECT_DB_HOST = "localhost";
+$PROJECT_DB_USER = "appionuser";
+$PROJECT_DB_PASS = "";
+$PROJECT_DB      = "projectdata";
+```
+
+
+== Test appionweb ==
 Go to http://localhost/appionweb/info.php
 Go to http://localhost/appionweb/
 
-[NOTE]
+
+== Potential problems ==
+
+
+=== Firewall settings ===
+
 You may need to configure your firewall to allow incoming HTTP (port 80) and MySQL (port 3306) traffic:
 ``` $ system-config-securitylevel
+
+
+=== Security-enhanced linux ===
+
+[Security-enhanced linux (SELinux) http://en.wikipedia.org/wiki/Security-Enhanced_Linux] may be preventing your files from loading. To fix this run the following command:
+
+``` $ sudo /usr/bin/chcon -R -t httpd_sys_content_t /var/www/html/
+
+see [this website http://docs.fedoraproject.org/selinux-apache-fc3/sn-simple-setup.html] for more details on SELinux
 
 
 --------------------------------
 = Install external packages =
 
 
-== Install Xmipp ==
+== Compile Xmipp for OpenMPI ==
 
 - For more info, see http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware
 - Go into Xmipp source directory
@@ -752,15 +831,60 @@ $ #sudo rpm -Uhv torque-2.1.9-1.el5.kb.`uname -i`.rpm
 
 
 == System variables ==
+
+There are three main system environmental variables to pay attension to:
+
 - PYTHONPATH
 - PATH
-- LD_LIBRARY_PATH
+- LD_LIBRARY_PATH -- this is controlled by /etc/ld.so.conf.d/appion.conf
 
 
 == External package variables ==
 - EMAN
+
+```
+export EMANDIR=/usr/local/EMAN
+export PYTHONPATH=${PYTHONPATH}:${EMANDIR}/lib:${EMANDIR}/python
+export PATH=${PATH}:${EMANDIR}/bin
+```
+
 - XMIPP
+
+```
+export XMIPP=/usr/local/Xmipp
+export PATH=${PATH}:${XMIPP}/bin
+```
+
 - SPIDER
+
+```
+export SPIDER=/usr/local/spider
+export SPMAN_DIR=${SPIDER}/man/
+export SPRGB_DIR=${SPIDER}/rgb/
+export SPPROC_DIR=${SPIDER}/proc/ 
+```
+
+- CHIMERA
+``` $ sudo ln -s /usr/local/chimera/bin/chimera /usr/bin/
+
+```
+export CHIMERA=/usr/local/chimera
+export CHIMERAPATH=${CHIMERA}/share
+```
+
+
+== Library paths ==
+In CentOS, it is preferred to place libraries paths in the conf file in the /etc/ld.so.conf.d folder
+
+``` $ sudo nano /etc/ld.so.conf.d/appion.conf
+
+Add these lines:
+
+```
+/usr/local/EMAN/lib
+/usr/local/chimera/lib
+/usr/local/Xmipp/lib
+```
 
 
 --------------------------------
