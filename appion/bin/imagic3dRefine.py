@@ -297,7 +297,23 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			f.write("ZERO\n")
 			f.write(str(self.params['forw_ang_inc'])+"\n")		
 			f.write("EOF\n\n")
-		
+	
+		### if the first iteration, do a centering operation, i.e. reference-free translational alignment
+		if self.params['itn'] == 1:
+			f.write("/usr/local/IMAGIC/align/alimass.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write("NO\n")
+			f.write("start\n")
+			f.write("start_cent\n")
+			f.write("TOTSUM\n")
+			f.write("CCF\n")
+			f.write(str(self.params['max_shift_orig'])+"\n")
+			f.write("5\n")
+			f.write("EOF\n")
+			f.write("/usr/local/IMAGIC/stand/im_rename.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
+			f.write("start_cent\n")
+			f.write("start\n")
+			f.write("EOF\n")
+			
 		### first do a multi reference alignment of entire stack, using forward projections as references
 		radius = float(self.params['radius']) / (self.params['boxsize'] / 2)
 		if radius > 1:
