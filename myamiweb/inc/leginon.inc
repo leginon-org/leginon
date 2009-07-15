@@ -75,7 +75,7 @@ class leginondata {
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
 			."order by s.DEF_timestamp DESC limit 1";
 		list($lastId) = $this->mysql->getSQLResult($q);
-		$expId=$lastId[0];
+		$expId=$lastId['DEF_id'];
 		return $expId;
 	}
 
