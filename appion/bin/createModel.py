@@ -134,7 +134,7 @@ class createModelScript(appionScript.AppionScript):
 		#densq['lowpass'] = None
 		#densq['highpass'] = None
 		densq['mask'] = self.params['mask']
-		densq['description'] = self.params['description']+" from eman start-"+self.params['method']
+		densq['description'] = self.params['description']+"- From eman start-"+self.params['method']
 		#densq['resolution'] = None
 		densq['session'] = apStack.getSessionDataFromStackId(self.params['stackid'])
 		densq['md5sum'] = apFile.md5sumfile(volfile)
