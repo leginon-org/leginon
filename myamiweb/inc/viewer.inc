@@ -570,6 +570,9 @@ class view {
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->displayexportlink = true;
+		$this->displayhidebt = true;
+		$this->displaynextbt = true;
+		$this->displayexemplarbt = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgimg1" ';
 		$this->presetscript = 'getpreset.php';
