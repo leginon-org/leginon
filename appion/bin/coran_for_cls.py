@@ -210,7 +210,6 @@ if __name__== '__main__':
 			f.write(str(ccval)+'\n')
 			avg.setNImg(10)
 			avg.setRAlign(e)
-		#	avg.writeImage('allavgs.hed',-1)
 		f.close()
 
 		### order class averages in order of highest cc value
@@ -269,7 +268,7 @@ if __name__== '__main__':
 			# convert spider lst to EMAN lst
 			convertlst = apEMAN.convertSpiderToEMAN(classname,clslist[cls])
 
-		#create new flaged class list from good particle list
+		#create new flagged class list from good particle list
 		apEMAN.flagGoodParticleInClassLst(clslist[cls],convertlst)
     
 		if params['eotest'] is True:

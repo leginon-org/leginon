@@ -142,6 +142,7 @@ def flagGoodParticleInClassLst(clsfile, goodclsfile):
 	plines = lines[2:]
 	goodptcls = map((lambda x: int(x.split("\t")[0])),plines)
 
+	apDisplay.printMsg("class contains %d particles" % len(ptext))
 	for i, t in enumerate(ptext):
 		ptcl = int(t.split("\t")[0])
 		if ptcl in goodptcls:
