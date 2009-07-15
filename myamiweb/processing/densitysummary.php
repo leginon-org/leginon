@@ -37,7 +37,14 @@ echo "<form name='templateform' method='post' action='$formAction'>\n";
 $particle = new particledata();
 
 // --- Get 3d Density Data
-$densityRuns = $particle->get3dDensitysFromSession($sessionId, false);
+$allDensityRuns = $particle->get3dDensitysFromSession($sessionId, false);
+// --- Only show models
+if ($allDensityRuns) {
+	$densityRuns=array();
+	foreach ($allDensityRuns as $drun) {
+		if (!$drun['REF|ApRefinementData|iterid']) $densityRuns[]=$drun;
+	}
+}
 if ($densityRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
@@ -52,8 +59,8 @@ if ($densityRuns) {
 
 		// update description
 		if ($_POST['updateDesc'.$densityid]) {
-			updateDescription('Ap3dDensityData', $densityid, $_POST['newdescription'.$densityrun]);
-			$densityrun['description']=$_POST['newdescription'.$densityrun];
+			updateDescription('Ap3dDensityData', $densityid, $_POST['newdescription'.$densityid]);
+			$densityrun['description']=$_POST['newdescription'.$densityid];
 		}
 
 		if ($_POST['hideStack'.$densityid] == 'hide') {
