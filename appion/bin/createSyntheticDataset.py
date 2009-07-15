@@ -1215,7 +1215,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		while os.path.isfile(shiftstackname):
 			apFile.removeStack(shiftstackname)
 		emancmd = "proc2d "+filename+" "+shiftstackname+" randomize="+str(self.params['shiftrad'])+","+\
-			str(self.params['rotang'])+flip+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm norm"
+			str(self.params['rotang'])+flip+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
 		apEMAN.executeEmanCmd(emancmd)
 
 		### read MRC stats to figure out noise level addition
