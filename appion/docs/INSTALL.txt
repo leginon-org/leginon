@@ -199,14 +199,14 @@ Download was over 129 MB (in July 2009). If you have a slow internet connection 
 
 - **python tools**: python-tools python-devel
 - **general applications**: subversion ImageMagick grace gnuplot
-- **TILT PICKER**: wxPython numpy scipy python-imaging
-- **FINDEM**: gcc-gfortran compat-gcc-34-g77
-- **ACE2**: gcc-objc fftw3-devel gsl-devel
+- **Tilt Picker**: wxPython numpy scipy python-imaging
+- **FindEM**: gcc-gfortran compat-gcc-34-g77
+- **Ace 2**: gcc-objc fftw3-devel gsl-devel
 - **Sinedon**: mysql mysql-server MySQL-python
 - **DBEM**: httpd php php-mysql phpMyAdmin
 - **Xmipp MPI**: gcc-c++ openmpi-devel libtiff-devel
 - **MRC tools**: php-devel gd-devel re2c fftw2-devel php-gd
-- **Chimera**: xorg-x11-server-Xvfb
+- **UCSF Chimera imaging**: xorg-x11-server-Xvfb
 
 ```
 $ sudo yum -y install \
@@ -222,7 +222,7 @@ php-devel gd-devel re2c fftw2-devel php-gd \
 xorg-x11-server-Xvfb
 ```
 
-If you have an nVidia video card and setup RPM fusion, install the nVidia binary, will speed things up especially for chimera
+If you have an nVidia video card and setup RPM fusion, install the nVidia binary, will speed things up especially for UCSF Chimera
 
 ``` $ sudo yum -y install nvidia-x11-drv
 
@@ -402,7 +402,7 @@ $ export SITEPKG=/usr/lib64/python2.5/site-packages
 ``` $ ./check.sh
 
 [NOTE]
-You can ignore EMAN, MATLAB, and chimera errors at this point
+You can ignore EMAN, MATLAB, and UCSF Chimera errors at this point
 
 
 --------------------------------
@@ -893,7 +893,7 @@ export PYTHONPATH=${PYTHONPATH}:${EMANDIR}/lib:${EMANDIR}/python
 export PATH=${PATH}:${EMANDIR}/bin
 ```
 
-- XMIPP
+- Xmipp
 
 ```
 export XMIPP=/usr/local/Xmipp
@@ -909,7 +909,8 @@ export SPRGB_DIR=${SPIDER}/rgb/
 export SPPROC_DIR=${SPIDER}/proc/ 
 ```
 
-- CHIMERA
+- UCSF Chimera
+
 ``` $ sudo ln -s /usr/local/chimera/bin/chimera /usr/bin/
 
 ```
