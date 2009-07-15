@@ -22,6 +22,9 @@ $DB_USER	= "";
 $DB_PASS	= "";
 $DB		= "";
 
+// --- XML test dataset
+$XML_DATA = "test/viewerdata.xml";
+
 // --- Project database URL
 
 $PROJECT_URL = "";

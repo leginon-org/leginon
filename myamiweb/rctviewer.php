@@ -33,7 +33,7 @@ $datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $viewer = new viewer();
 if($projectdb) {
-	foreach($sessions as $s) {
+	foreach((array)$sessions as $s) {
 		if ($s['id']==$sessionId) {
 			$sessionname = $s['name_org'];
 			break;

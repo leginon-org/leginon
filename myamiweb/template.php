@@ -8,7 +8,7 @@ $templates=$leginondata->getTemplates();
 $datadrives= array('data00', 'data07', 'data09', 'data11', 'data13', 'data15',
 'data06', 'data08', 'data10', 'data12', 'data14', 'data16');
 $filenames=array();
-foreach ($templates as $f) {
+foreach ((array)$templates as $f) {
     $filename = $f['name'];
     if (!file_exists($filename)) {
       foreach ($datadrives as $drive) {

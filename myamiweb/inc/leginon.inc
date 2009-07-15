@@ -74,14 +74,14 @@ class leginondata {
 		$q = "select distinct(s.DEF_id) from AcquisitionImageData a "
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
 			."order by s.DEF_timestamp DESC limit 1";
-		$RlastId = $this->mysql->SQLQuery($q) or die ("No session found");
-		$lastId=mysql_fetch_array($RlastId);
+		list($lastId) = $this->mysql->getSQLResult($q);
 		$expId=$lastId[0];
 		return $expId;
 	}
 
 	function sessionIdExists($sessions, $sessionId) {
 		$sessionId_exists=false;
+		if ($sessions)
 		foreach ($sessions as $session)
 		if (in_array($sessionId, $session)) {
 			$sessionId_exists=true;
@@ -264,6 +264,7 @@ class leginondata {
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId'";
 		$Rdatatypes = $this->mysql->getSQLResult($q);
+		if ($Rdatatypes)
 		foreach ($Rdatatypes as $d) {
 			if ($d['name'])
 				$datatypes[]=$d['name'];
@@ -359,10 +360,7 @@ class leginondata {
 		    $q .=" order by a.`DEF_id` DESC ";
 		}
 
-		$filenames = array();
-		$Rfile=$this->mysql->SQLQuery($q);
-		while ($filename = mysql_fetch_array($Rfile, MYSQL_ASSOC))
-			$filenames[] = $filename;
+		$filenames = $this->mysql->getSQLResult($q);
 
 		return $filenames;
 	}

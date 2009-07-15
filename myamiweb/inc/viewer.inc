@@ -100,7 +100,7 @@ class viewer {
 
 	function addSessionSelector($sessions=array()) {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
-		foreach ($sessions as $session) {
+		foreach ((array)$sessions as $session) {
 			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
 			$maxlength=70;
 			if (strlen($session[name])>$maxlength) {
@@ -264,7 +264,7 @@ class viewer {
 		$selector = '#images :'.count($filenames).'<br />';
 		$selector .= '<select style="width: 250px" name="imageId" '.$htmlsize .' >'.$this->crlf;
 		$default = ($this->imageId) ? $this->imageId : $filenames[0][id];
-		foreach ($filenames as $filename) {
+		foreach ((array)$filenames as $filename) {
 			$filestr = ereg_replace('[[:alnum:]]+_(.*)', '\1', $filename[name]);
 			$filestr = ereg_replace('_0*', '_', $filestr);
 			if ($filename[id]==$default) $s='selected'; else $s='';
@@ -279,10 +279,10 @@ class viewer {
 	}
 
 	function getJavascript() {
-		$str = '<script src="js/viewer.js"></script>'.$this->crlf;
-		$str .= '<script src="js/button.js"></script>'.$this->crlf;
-		$str .= '<script src="js/dropdiv.js"></script>'.$this->crlf;
-		$str .= '<script>'.$this->crlf;
+		$str = '<script type="text/javascript" src="js/viewer.js"></script>'.$this->crlf;
+		$str .= '<script type="text/javascript" src="js/button.js"></script>'.$this->crlf;
+		$str .= '<script type="text/javascript" src="js/dropdiv.js"></script>'.$this->crlf;
+		$str .= '<script type="text/javascript">'.$this->crlf;
 		if ($params=$this->jsparams) {
 			$str .= $params;
 			$str .= $this->crlf;
@@ -724,6 +724,22 @@ class view {
 		$this->displaypreset= $state;
 	}
 
+	function displayHideBt($state) {
+		$this->displayhidebt = $state;
+	}
+
+	function displayNextBt($state) {
+		$this->displaynextbt = $state;
+	}
+
+	function displayExemplarBt($state) {
+		$this->displayexemplarbt = $state;
+	}
+
+	function displayExportBt($state) {
+		$this->displayexportbt = $state;
+	}
+
 	function displayComment($state) {
 		$this->displaycomment= $state;
 	}
@@ -1049,7 +1065,7 @@ class view {
 		';
 		if ($this->displayparticleicon)
 		$htmlframe .= '
-			<td width="15">'
+			<td width="15">ICI'
 			.$this->btparticle->display().$this->crlf
 			.'
 	</td>
@@ -1195,7 +1211,9 @@ class view {
 						</td>';
 		if ($this->displayexportlink) {
 			$export_icon = '<a href="javascript:void(0)" id="export'.$name.'" ><img alt="export" class="setting" src="img/export.png" ></a>';
-			$htmlframe .= "<td>$export_icon</td>";
+			if ($this->displayexportbt) {
+				$htmlframe .= "<td>$export_icon</td>";
+			}
 		}
 		$htmlframe .= '
 						<td valign="center">
@@ -1219,17 +1237,19 @@ class view {
 			</a></div></td>';
 		if ($this->ismaster) {
 			$htmlframe .= '<td><ul style="padding:0; margin:0">';
-			$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
-							.' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button>';
-// --- hide all option
-/*
-			$htmlframe .= ' all<input type="checkbox" id="chk_hide_all"></li>';
-*/
-			$htmlframe .= '</li> ';
-			$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb;" '
+			 if ($this->displayhidebt) {
+				$htmlframe .= '<li class="list1"><button id="bt_hide" type="button" style="border: 1px solid #bdcebb;" '
+								.' onclick=\'hide_image()\' ><u><b>h</b></u>ide</button>';
+				$htmlframe .= '</li> ';
+			}
+			if ($this->displaynextbt) {
+				$htmlframe .= '<li class="list1"><button type="button" style="border: 1px solid #bdcebb;" '
 							.' onclick=\'incIndex(); updateviews()\' ><u><b>n</b></u>ext</button></li>';
-			$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
+			}
+			if ($this->displayexemplarbt) {
+				$htmlframe .= '<li class="list1"> <button id="bt_ex" type="button" style="border: 1px solid #bdcebb;" '
 							.' onclick=\'image_is_exemplar();\' ><u><b>e</b></u>xemplar</button></li></ul></td>';
+			}
 		}
 
 		$htmlframe .= '

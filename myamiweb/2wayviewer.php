@@ -26,29 +26,19 @@ if(!$sessions)
 if ($ptcl) {
 	$particle = new particledata();
 	$particleruns=$particle->getParticleRunIds($sessionId);
-	$defaultrunId=$particleruns[0]['DEF_id'];
-	foreach ($particleruns as $p) {
-		$runId=$p['DEF_id'];
-		list($selectionparams)=$particle->getSelectionParams($runId);
-		$diam = $selectionparams['diam'];
-		$correlationstats=$particle->getStats($runId);
-		$correlationstats['diam']=$diam;
-		$particleruns[$k]['diam']=$diam;
-		$data[$runId]=$correlationstats;
-	}
 }
 
 // --- update SessionId while a project is selected
 $sessionId_exists = $leginondata->sessionIdExists($sessions, $sessionId);
 if (!$sessionId_exists)
-	$sessionId=$sessions[0][id];
+	$sessionId=$sessions[0]['id'];
 $filenames = $leginondata->getFilenames($sessionId, $preset);
 // --- Get data type list
 $datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $viewer = new viewer();
 if($projectdb) {
-	foreach($sessions as $k=>$s) {
+	foreach((array)$sessions as $k=>$s) {
 		$tag=$projectdata->getSample(array('Name'=>$s['name_org'], 'Purpose'=>$s['Purpose']));
 		$tag = ($tag)? " - $tag" : "";
 		$sessions[$k]['name'].=$tag;

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+-
+- http://ami.scripps.edu/
+-
+- XML test dataset
+-
+-->
+<session id="38">
+<info>
+	<name>08mar13e</name>
+	<purpose>Test dataset</purpose>
+	<imagepath>./test</imagepath>
+	<instrument>Tecnai - Tietz PXL</instrument>
+</info>
+<data>
+<imagedata
+ uid="1563"
+	filename = "08mar13e_00010gr_00004sq_v02_00005hl.mrc"
+	dimx = "512"
+	dimy = "512"
+	binning = "4"
+	timestamp = "2008-14-03 11:40:23"
+	pixelsize = "3.10351e-09"
+	delta_row = "-43"
+	delta_col = "-15"
+>
+<preset
+	name = ""
+	magnification = "4400"
+	defocus = "-0.00015"
+	high_tension = "120000"
+	exposure_time = "100"
+/>
+</imagedata>
+<imagedata
+ uid="1562"
+	filename = "08mar13e_00010gr_00004sq_v02.mrc"
+	dimx = "512"
+	dimy = "512"
+	binning = "4"
+	timestamp = "2008-14-03 11:40:11"
+	pixelsize = "2.43847e-08"
+	delta_row = "235"
+	delta_col = "29"
+>
+<preset
+	name = ""
+	magnification = "560"
+	defocus = "-0.002"
+	high_tension = "120000"
+	exposure_time = "200"
+/>
+</imagedata>
+</data>
+</session>

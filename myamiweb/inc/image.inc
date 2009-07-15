@@ -402,6 +402,126 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 }
 
+function getImageXML($xmlfile, $imageId, $preset, $params = array()) {
+
+	$p = array (
+		'size'=> '',
+		'minpix' => 0,
+		'maxpix' => 255,
+		'filter' => 'default',
+		'fft' => false,
+		'binning' => 'auto',
+		'scalebar' => true,
+		'displaytargets' => true,
+		'loadtime' => false,
+		'ptlc' => false,
+		'autoscale' => false,
+		'mrc' => false
+	);
+
+	if (is_array($params))
+		foreach ($params as $k=>$v)
+			$p[$k] = $v;
+
+	$size = $p['size'];
+	$binning = $p['binning'];
+
+	$xmldata = new xmldata($xmlfile);
+	// --- get image path
+	$path = $xmldata->getImagePath();
+
+	// --- get filename
+	if ($p['fft']) {
+		$p['displaytargets']=false;
+		$p['scalebar']=false;
+	}
+	$filename = $xmldata->getFilenameFromId($imageId);
+
+	$pic = $path.$filename;
+	if (@is_file($pic)) {
+		$imginfo = $xmldata->getImageInfo($imageId);
+		$dimx = $imginfo['dimx'];
+		if ($p['autoscale']) {
+			list($type,$arg1, $arg2)=explode(";", $p['autoscale']);
+			
+			$densitymax = MAX_PIXEL_VAL;
+			if ($type=="c") {
+				$mrcimg = mrcread($pic);
+				list($p['minpix'], $p['maxpix'])=mrccdfscale($mrcimg, $arg1, $arg2);
+				
+			} else {
+
+				$info = mrcinfo($pic);
+				$minval = $info['amin'];
+				$maxval = $info['amax'];
+				$meanval = $info['amean'];
+				$stdev = $info['rms'];
+				if ($meanval && $stdev) {
+					$p['minpix'] = (($meanval - 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
+					$p['maxpix'] = (($meanval + 3*$stdev)-$minval)*$densitymax/($maxval-$minval);
+				}
+
+			}
+		}
+				
+		if ($p['loadtime'])
+			$begin=getmicrotime();
+
+		if ($binning=='auto')
+			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+
+		if ($p['mrc']) {
+			$imgmrc = mrcread($pic);
+			mrcbinning($imgmrc, $binning);
+			return $imgmrc;
+		}
+		if ($p['fft']) {
+			$img = getfft($pic, $p['minpix'], $p['maxpix'], $binning, $p['autoscale']);
+		}
+
+		else if (function_exists($p['filter']))
+			$img = $p['filter']($pic, $p['minpix'], $p['maxpix'], $binning);
+
+		else
+			$img = getdefault($pic, $p['minpix'], $p['maxpix'], $binning);
+
+
+		$scalefactor=1;
+		if ($size) {
+			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
+			myimagescale($img, $scalefactor);
+		}
+
+		if ($p['loadtime'])
+			$end=getmicrotime();
+
+		$white = imagecolorallocate($img, 255, 255, 255);
+		$blue = imagecolorallocate($img, 0, 255, 255);
+		$yellow= imagecolorallocate($img, 255, 255, 0);
+
+		/* diplay loading time */
+		if ($p['loadtime'])
+			imagestringshadow($img, 4, 10, 10, "load time: ".($end-$begin), $blue);
+
+		/* display scale bar */
+		if ($p['scalebar']) {
+		    if ($imginfo) {
+			$size = ($size) ? $size : (($binning) ? $imginfo['dimx']/$binning : $imginfo['dimx']);
+			if (!$size)
+				$size=1;
+			$ratio = $imginfo['dimx']/$size ;
+			$value = $imginfo['pixelsize']*$imginfo['binning']*$ratio;
+			$scalebar = new ScaleBar($img, $size, $value);
+			$scalebar->display();
+		    }
+		}
+	} else {
+		$img = blankimage();
+	}
+	return $img;
+
+}
+
 
 function blankimage($w=256, $h="") {
 	if (!$h)
