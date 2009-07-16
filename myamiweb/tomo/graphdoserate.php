@@ -45,12 +45,12 @@ function graphDoseRate($times, $timestamps, $rates, $width, $height) {
     
     $graph->Add($plot);
     
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set('Dose Rate');
     $graph->title->SetMargin(12);
     
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Time");
     
     $graph->xaxis->SetPos("min");
@@ -58,8 +58,8 @@ function graphDoseRate($times, $timestamps, $rates, $width, $height) {
     $graph->xaxis->SetLabelAngle(45);
     $graph->xaxis->SetTitleMargin(50);
     
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("Dose Rate (e-/A^2/s)");
     $graph->yaxis->SetTitleMargin(50);
     

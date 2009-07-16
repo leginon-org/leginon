@@ -47,32 +47,32 @@ function graphXY($prediction, $position, $correlation, $tilts, $pixel_size, $tit
     $graph->Add($predictionplot);
     $graph->Add($positionplot);
 
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set($title);
     $graph->title->SetMargin(12);
 
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Tilt (degrees)");
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
 
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("um");
     $graph->yaxis->SetTitleMargin(50);
 
     $graph->y2axis->SetColor("darkgreen");
-    $graph->y2axis->SetFont(FF_COURIER, FS_NORMAL, 8);
+    $graph->y2axis->SetFont(FF_FONT1, FS_NORMAL, 8);
     $graph->y2axis->title->SetColor("darkgreen");
-    $graph->y2axis->title->SetFont(FF_ARIAL);
+    $graph->y2axis->title->SetFont(FF_FONT2);
     $graph->y2axis->title->Set("pixels");
     $graph->y2axis->SetTitleMargin(40);
 
     $graph->legend->SetFillColor('#FFFFFF@0.25');
-    $graph->legend->SetFont(FF_ARIAL);
+    $graph->legend->SetFont(FF_FONT2);
     $graph->legend->SetAbsPos(20, 20, 'right', 'top');
     $graph->legend->SetLayout(LEGEND_HOR);
 
@@ -108,25 +108,25 @@ function graphZ($prediction, $position, $tilts, $pixel_size, $title, $width, $he
     $graph->Add($predictionplot);
     $graph->Add($positionplot);
 
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set($title);
     $graph->title->SetMargin(12);
 
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Tilt (degrees)");
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
 
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("Prediction (microns)");
     $graph->yaxis->SetTitleMargin(50);
 
     $graph->legend->SetFillColor('#FFFFFF@0.25');
-    $graph->legend->SetFont(FF_ARIAL);
+    $graph->legend->SetFont(FF_FONT2);
     $graph->legend->SetAbsPos(20, 20, 'right', 'top');
     $graph->legend->SetLayout(LEGEND_HOR);
 
@@ -156,25 +156,25 @@ function graphDistance($prediction, $tilts, $pixel_size, $title, $width, $height
 
     $graph->Add($predictionplot);
 
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set($title);
     $graph->title->SetMargin(12);
 
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Tilt (degrees)");
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
 
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("Prediction (microns)");
     $graph->yaxis->SetTitleMargin(50);
 
     $graph->legend->SetFillColor('#FFFFFF@0.25');
-    $graph->legend->SetFont(FF_ARIAL);
+    $graph->legend->SetFont(FF_FONT2);
     $graph->legend->SetAbsPos(20, 20, 'right', 'top');
     $graph->legend->SetLayout(LEGEND_HOR);
 
@@ -197,20 +197,20 @@ function graphNT($prediction, $tilts, $title, $width, $height) {
 
     $graph->Add($predictionplot);
 
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set($title);
     $graph->title->SetMargin(12);
 
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Tilt (degrees)");
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
 
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("Prediction (pixels)");
     $graph->yaxis->SetTitleMargin(50);
 
@@ -235,20 +235,20 @@ function graphTheta($prediction, $tilts, $title, $width, $height) {
 
     $graph->Add($predictionplot);
 
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set($title);
     $graph->title->SetMargin(12);
 
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Tilt (degrees)");
 
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
 
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("Prediction (degrees)");
     $graph->yaxis->SetTitleMargin(50);
 

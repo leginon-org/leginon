@@ -35,20 +35,20 @@ function graphMeanValues($tilts, $means, $width, $height) {
     
     $graph->Add($plot);
     
-    $graph->title->SetFont(FF_ARIAL, FS_BOLD, 14);
+    $graph->title->SetFont(FF_FONT2, FS_BOLD, 14);
     $graph->title->Set('Image Mean');
     $graph->title->SetMargin(12);
     
-    $graph->xaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->xaxis->title->SetFont(FF_ARIAL);
+    $graph->xaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->xaxis->title->SetFont(FF_FONT2);
     $graph->xaxis->title->Set("Tilt (degrees)");
     
     $graph->xaxis->SetTickLabels($tilts);
     $graph->xaxis->SetTextTickInterval(10);
     $graph->xaxis->SetPos("min");
     
-    $graph->yaxis->SetFont(FF_COURIER, FS_NORMAL, 8);
-    $graph->yaxis->title->SetFont(FF_ARIAL);
+    $graph->yaxis->SetFont(FF_FONT1, FS_NORMAL, 8);
+    $graph->yaxis->title->SetFont(FF_FONT2);
     $graph->yaxis->title->Set("Mean (counts)");
     $graph->yaxis->SetTitleMargin(50);
     
