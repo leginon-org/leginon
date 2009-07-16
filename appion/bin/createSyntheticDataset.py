@@ -401,6 +401,39 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 		
 		return filename
 	
+	
+	#=====================	
+	def shiftAndRotate(self, filename):	
+		### random shifts and rotations to a stack
+		shiftstackname = filename[:-4]+"_rand.hed"
+		while os.path.isfile(shiftstackname):
+			apFile.removeStack(shiftstackname)
+		shiftfile = os.path.join(self.params['rundir'], "shift_rotate.lst")
+		if os.path.isfile(shiftfile):
+			apFile.removeFile(shiftfile)
+		f = open(shiftfile, "a")
+		apDisplay.printMsg("Now randomly shifting and rotating particles")
+		for i in range(self.params['projcount']):
+			randrot = random.uniform(-1*self.params['rotang'], self.params['rotang'])
+			randx = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
+			randy = random.uniform(-1*self.params['shiftrad'], self.params['shiftrad'])
+			if self.params['flip'] is not None:
+				flip = random.choice([0,1])
+			else:
+				flip = 0
+			emancmd = "proc2d "+filename+" "+shiftstackname+" first="+str(i)+" last="+str(i)+" rot="+str(randrot)+" trans="+str(randx)+","+str(randy)
+			if flip == 0:
+				emancmd = emancmd+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
+			else:
+				emancmd = emancmd+" flip clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
+			apEMAN.executeEmanCmd(emancmd, showcmd=False)
+			f.write("%.3f,"%(randrot))
+			f.write("%.3f,"%(randx))
+			f.write("%.3f,"%(randy))
+			f.write(str(flip)+"\n")
+		f.close()
+
+		return shiftstackname
 
 	#=====================
 	def readMRCStats(self, filename):
@@ -1207,16 +1240,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			filename = self.createProjectionsEmanProp()
 
 		### shift & rotate randomly
-		shiftstackname = filename[:-4]+"_rand.hed"
-		if self.params['flip'] is not None:
-			flip = ",flip"
-		else: 
-			flip = ""
-		while os.path.isfile(shiftstackname):
-			apFile.removeStack(shiftstackname)
-		emancmd = "proc2d "+filename+" "+shiftstackname+" randomize="+str(self.params['shiftrad'])+","+\
-			str(self.params['rotang'])+flip+" clip="+str(self.params['box'])+","+str(self.params['box'])+" edgenorm"
-		apEMAN.executeEmanCmd(emancmd)
+		shiftstackname = self.shiftAndRotate(filename)
 
 		### read MRC stats to figure out noise level addition
 		mean1, stdev1 = self.readMRCStats(shiftstackname)
