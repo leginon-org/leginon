@@ -669,8 +669,10 @@ inc/dbemauth.php
 - set some default parameters:
 
 ```
-define("ENABLE_LOGIN", false);
-define("ENABLE_CACHE", true);
+define('ENABLE_LOGIN', false);
+define('ENABLE_CACHE', true);
+define('CACHE_PATH', '/srv/www/cache/');
+define('CACHE_SCRIPT', $_SERVER['DOCUMENT_ROOT'].'/'.BASE_URL.'/makejpg.php');
 ```
 
 - set your MySQL parameters:
