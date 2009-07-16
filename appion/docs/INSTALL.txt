@@ -362,12 +362,13 @@ $ export SITEPKG=/usr/lib64/python2.5/site-packages
 
 - Install Leginon software to main site-packages
 
-``` $ sudo svn co http://ami.scripps.edu/svn/pyami/trunk/ $SITEPKG/pyami/
-
-``` $ sudo svn co http://ami.scripps.edu/svn/leginon/branches/1.6/ $SITEPKG/leginon/
-
-``` $ sudo svn co http://ami.scripps.edu/svn/sinedon/trunk/ $SITEPKG/sinedon/
-
+``` 
+$ sudo svn co http://ami.scripps.edu/svn/leginon/branches/1.6/ $SITEPKG/leginon/
+$ sudo svn co http://ami.scripps.edu/svn/pyami/trunk/ $SITEPKG/pyami/
+$ sudo svn co http://ami.scripps.edu/svn/sinedon/trunk/ $SITEPKG/sinedon/
+$ sudo svn co http://ami.scripps.edu/svn/pyScope/trunk/ $SITEPKG/pyScope/
+$ sudo svn co http://ami.scripps.edu/svn/ImageViewer/trunk/ $SITEPKG/ImageViewer/
+``` 
 
 == Setup leginon.cfg file in your home directory ==
 
@@ -590,9 +591,9 @@ http://ami.scripps.edu/software/mrctools/mrc_so.php
 
 ``` memory_limit = 256M; Maximum amount of memory
 
-- Paths and Directories -- include_path should at least have ".":
+- Paths and Directories -- include_path should contain "." and phpami:
 
-``` include_path = ".:/php/includes"
+``` include_path = ".:/usr/local/phpami"
 
 - Turn error display on:
 
@@ -620,20 +621,18 @@ $ cd /var/www/html/appionweb
 install php include modules
 
 ```
-$ sudo mkdir -p /php/includes
-$ sudo chmod 777 /php/includes
-$ sudo chown $USER /php/includes
-$ cd
-$ svn co http://ami.scripps.edu/svn/phpami/trunk/ phpami/
-$ cp -v phpami/inc/mysql.inc.php /var/www/html/appionweb/mysql.inc
-$ cp -v phpami/inc/session.inc.php /var/www/html/appionweb/session.inc
-$ cp -v phpami/inc/ssh.inc.php /var/www/html/appionweb/ssh.inc
+$ cd ~
+$ mkdir phpami
+$ sudo mv -v phpami /usr/share/
+$ svn co http://ami.scripps.edu/svn/phpami/trunk/ /usr/local/phpami/
+$ ln -s /usr/local/phpami/inc/mysql.inc.php /var/www/html/appionweb/inc/mysql.inc
+$ ln -s /usr/local/phpami/inc/session.inc.php /var/www/html/appionweb/inc/session.inc
+$ ln -s /usr/local/phpami/inc/ssh.inc.php /var/www/html/appionweb/inc/ssh.inc
 ```
 
 add //auth.php// to appionweb/inc
 
 ``` $ mv -v auth.php /var/www/html/appionweb/inc/auth.php
-
 
 In addition, you need to change the server_url in
 inc/dbemauth.php
@@ -813,6 +812,12 @@ You may need to configure your firewall to allow incoming HTTP (port 80) and MyS
 
 ``` $ sudo /usr/bin/chcon -R -t httpd_sys_content_t /var/www/html/
 
+or just disable SELinux entirely:
+
+``` sudo nano /etc/selinux/config
+
+``` SELINUX=disabled
+
 see [this website http://docs.fedoraproject.org/selinux-apache-fc3/sn-simple-setup.html] for more details on SELinux
 
 
@@ -933,6 +938,64 @@ Add these lines:
 /usr/local/chimera/lib
 /usr/local/Xmipp/lib
 ```
+
+
+--------------------------------
+= Leginon Administration Tools =
+
+Main documentation is available here: http://ami.scripps.edu/documentation/leginon/bk02ch05.php
+
+== Create a simulated instrument ==
+
+- To create a simulated you need to enter MySQL and connect to the Leginon database
+
+``` mysql -u appionuser leginondata
+
+```
+ALTER TABLE `InstrumentData` ADD `type` TEXT NULL ;
+INSERT INTO `InstrumentData` (name, hostname) VALUES ('SimTEM',  'HOSTNAME');
+INSERT INTO `InstrumentData` (name, hostname) VALUES ('SimCCDCamera', 'HOSTNAME');
+SELECT * FROM `InstrumentData`;
+```
+
+	where HOSTNAME is replaced with your hostname, //e.g.// ami.scripps.edu
+
+``` mysql -u appionuser projectdata
+
+```
+CREATE TABLE `projectdata`.`processingdb` (
+  `id` INT( 20 ) NOT NULL AUTO_INCREMENT ,
+  `projectId` INT( 20 ) NULL ,
+  `db` VARCHAR( 50 ) NULL ,
+  PRIMARY KEY ( `id` )
+) ENGINE = MYISAM
+
+INSERT INTO `processingdb` (projectId, db) VALUES (1, 'appiondata');
+```
+
+
+== Upload an image ===
+
+- Go to the web page:
+
+http://localhost/appionweb/processing/uploadimage.php
+
+
+== Start leginon ==
+- Start leginon
+
+```
+$ cd $SITEPKG/leginon
+$ ./start.py
+```
+
+- Keep hitting **next** until you reach the final page and then hit **finish**
+
+
+
+
+
+
 
 
 --------------------------------
