@@ -1281,7 +1281,7 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 					defocuslist2.append(params[2])
 				if astigmatismlist is None:
 					astigmatismlist.append(params[3])
-		if defocuslist1c is not True or defocuslist2c is not True or astigmatismlistc is not True:
+		if (defocuslist1c is not True or defocuslist2c is not True or astigmatismlistc is not True) and self.params['ace2correct'] is True:
 			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
 			f = open(recoveryfile, "r")
 			lines = f.readlines()
