@@ -42,6 +42,8 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			help="ID of 3d0 used to initiate refinement", metavar="int")
 
 		### basic params
+		self.parser.add_option("--nproc", dest="nproc", type="int",
+			help="number of processors to use", metavar="int")
 		self.parser.add_option("--numiters", dest="numiters", type="int",
 			help="total number of iterations", metavar="int")
 		self.parser.add_option("--itn", dest="itn", type="int",
@@ -301,7 +303,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		### if the first iteration, do a centering operation, i.e. reference-free translational alignment
 		if self.params['itn'] == 1:
 			f.write("/usr/local/IMAGIC/align/alimass.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-			f.write("NO\n")
+			if self.params['nproc'] > 1:
+				f.write("YES\n")
+				f.write(str(self.params['nproc'])+"\n")
+			else:
+				f.write("NO\n")
 			f.write("start\n")
 			f.write("start_cent\n")
 			f.write("TOTSUM\n")
@@ -320,7 +326,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 			radius = 1
 		mraradius = radius * 0.8
 		f.write("/usr/local/IMAGIC/align/mralign.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write("FRESH\n")
 		f.write("ALIGNMENT\n")
 		f.write("ALL\n")
@@ -352,10 +362,15 @@ class imagic3dRefineScript(appionScript.AppionScript):
 
 		### Perform multivariate statistical analysis on aligned stack
 		f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write("FRESH_MSA\n")
 		f.write("modulation\n")
 		f.write("mra"+str(self.params['itn'])+"\n")
+		f.write("NO\n")
 		f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenimages"+str(self.params['itn'])+"\n")
@@ -421,7 +436,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		f.write("YES\n")
 		f.write(str(self.params['euler_ang_inc'])+"\n")	
 		f.write("YES\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write("YES\n")
 		f.write("EOF\n")
 		
@@ -438,7 +457,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		### build a 3d model from the ordered, sorted class averages
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write(symmetry+"\n") 		
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"\n")
@@ -465,7 +488,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		### build another 3d, this time from the orderes, sorted, and aligned class averages
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write(symmetry+"\n") 		
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned\n")
@@ -524,7 +551,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		### build 3d from odd images
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write(symmetry+"\n") 		
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_odd\n")
@@ -539,7 +570,11 @@ class imagic3dRefineScript(appionScript.AppionScript):
 		
 		### build 3d from even images
 		f.write("/usr/local/IMAGIC/threed/true3d.e <<EOF >> imagic3dRefine_"+str(self.params['itn'])+".log\n")
-		f.write("NO\n")
+		if self.params['nproc'] > 1:
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("NO\n")
 		f.write(symmetry+"\n")		
 		f.write("YES\n")
 		f.write("ordered"+str(self.params['itn'])+"_repaligned_even\n")
