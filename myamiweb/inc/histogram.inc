@@ -18,7 +18,7 @@ class histogram {
 	}
 
 	function calculInterval() {
-		$this->interval = ($this->maxval - $this->minval) / ($this->nbbars-1);
+		$this->interval = ($this->maxval - $this->minval) / $this->nbbars;
 	}
 
 	function setInterval($n) {
@@ -37,7 +37,7 @@ class histogram {
 	}
 
 	function generateData() {
-		for($k=0; $k<$this->nbbars; $k++ ) {
+		for($k=0; $k<$this->nbbars+1; $k++ ) {
 			$classes[$k] = 0;
 			foreach($this->data as $data) {
 				$i1 = ($this->minval+($k-1)*$this->interval);
@@ -48,7 +48,7 @@ class histogram {
 		}
 		if ($classes)
 			foreach ($classes as $k=>$nb) {
-				$this->histogramdata['x'][] = $this->minval+$k*$this->interval;
+				$this->histogramdata['x'][] = $this->minval+($k+1)*$this->interval;
 				$this->histogramdata['y'][] = $nb;
 			}
 	}
