@@ -381,6 +381,7 @@ function jobform($modelid, $extra=false) {
 	$doc_outdir = docpop('outdir', '<b>Output Directory:</b>');
 	$doc_description = docpop('descr', '<b>Description of 3d Refinement:</b>');
 	$doc_mass = docpop('mass', '<b>Approximate mass in Kd</b>');
+//	$doc_nproc = docpop('proc', '<b> Number of Processors to use </b>');
 
 	$modelvalues = modelEntry($modeldata,$particle,False,True);
 	echo $modelvalues[0];
@@ -470,6 +471,8 @@ function jobform($modelid, $extra=false) {
 
 		// define default parameters for 1st iteration
 		if ($i==1)	{
+			$nproc = ($_POST[$nproc]) ? $_POST[$nproc] : "8";
+			$mass = ($_POST[$mass]) ? $_POST[$mass] : "";
 			$symmetry = ($_POST[$symmetryn]) ? $_POST[$symmetryn] : $symmetry;
 			$radius = ($_POST[$radiusn]) ? $_POST[$radiusn] : "";
 			$mrarefs_ang_inc = ($_POST[$mrarefs_ang_incn]) ? $_POST[$mrarefs_ang_incn] : "25";
@@ -551,10 +554,12 @@ function jobform($modelid, $extra=false) {
 	echo "</table>";
 
 	echo "<br></b><input type='text' name='mass' value='$mass' size='4'> $doc_mass <br>";
+//	echo "<br></b><input type='text' name='nproc' value='$nproc' size='4'> $doc_nproc <br>";
 
 	echo "<br><INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
 
+	echo "<input type='hidden' NAME='nproc' VALUE='$nproc'><P>";
   	echo "<input type='hidden' NAME='numiters' VALUE='$numiters'><P>";
 	echo "<input type='hidden' NAME='modelid' VALUE='$modelid'><P>";
 	echo "<input type='hidden' NAME='norefClassId' VALUE='$norefClassId'><P>";
@@ -585,6 +590,7 @@ function imagic3dRefine() {
 	$numiters = $_POST['numiters'];
 	$description = $_POST['description'];
 	$mass = $_POST['mass'];
+	$nproc = $_POST['nproc'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 	
 	// get the stack info (pixel size, box size)
@@ -647,7 +653,8 @@ function imagic3dRefine() {
 		$command.= " --amask_sharp=$amask_sharp";
 		$command.= " --amask_thresh=$amask_thresh";
 		$command.= " --description=\"$description\"";
-		$command.= " --mass=$mass";
+		if ($mass) $command.= " --mass=$mass";
+		$command.= " --nproc=$nproc";
 		if ($commit) $command.= " --commit";
 		else $command.=" --no-commit";
 		$command_array[] = $command;
@@ -670,7 +677,7 @@ function imagic3dRefine() {
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform($modelid, "<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command_array,$outdir,$runid,$expId,'imagic3dRefine');
+		$sub = submitAppionJob($command_array,$outdir,$runid,$expId,'imagic3dRefine',False,False,False,$nproc,8,1);
 		// if errors:
 		if ($sub) jobform($modelid, "<b>ERROR:</b> $sub");
 	}
