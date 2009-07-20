@@ -179,7 +179,7 @@ function runUploadImage() {
 	$has_session = $leginon->getSessions('',false,$sessionname);
 	$session_in_project = $leginon->getSessions('',$projectId,$sessionname);
 	if ($has_session && !$session_in_project) createUploadImageForm("<B>ERROR:</B> You have entered an existing session not belonging to this project");
-	if ($session_in_project) $warning = ("<B>Warning:</B>  Will append to an existing session");
+	if ($session_in_project) $warning = ("<B>Warning:</B>  Will append to an existing session with the original description");
 	//make sure a information batch file was provided
 	if (!$batch or !file_exists($batch)) createUploadImageForm("<B>ERROR:</B> Enter a batch file with path");
 	//make sure  the batch file contains 7 or 8 fields separated by tab at each line
@@ -198,7 +198,7 @@ function runUploadImage() {
 
 	//make sure a description was provided
 	$description=$_POST['description'];
-	if (!$description) createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
+	if (!$description && !$session_in_project) createUploadImageForm("<B>ERROR:</B> Enter a brief description of the session");
 
 
 	$command.="--session=$sessionname ";
