@@ -176,18 +176,18 @@ function createData() {
 	$descimages = $parentimage_all;
 	foreach ($parentimage_all as $p) {
 		$descendants = getDescendants($p);
-		foreach ($descendants as $d) {
+		foreach ((array)$descendants as $d) {
 			array_push($descimages,$d);
 		}
 	}
 	foreach ($descimages as $d3) {
 		$desctlist = getTargetListIdsByImage($d3,'0');
-		foreach ($desctlist as $d3tl) {
+		foreach ((array)$desctlist as $d3tl) {
 			array_push($imagetls,$d3tl['itlid']);
 			array_push($queues,$d3tl['queue']);
 		};
 		$descdqlist = getDeQueuedTargetListIdsByImage($d3);
-		foreach ($descdqlist as $d3tl) {
+		foreach ((aray)$descdqlist as $d3tl) {
 			array_push($dqimagetls,$d3tl['doneid']);
 		}
 	}
