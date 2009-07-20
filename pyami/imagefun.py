@@ -117,6 +117,17 @@ def filled_circle(shape, radius):
 		return c
 	return numpy.fromfunction(func, shape)
 
+def fromRadialFunction(funcrad, shape):
+	center_r = shape[0] / 2.0 - 0.5
+	center_c = shape[1] / 2.0 - 0.5
+	def funcrc(r,c):
+		rr = r - center_r
+		cc = c - center_c
+		rad = numpy.hypot(rr,cc)
+		return funcrad(rad)
+	result = numpy.fromfunction(funcrc, shape)
+	return result
+
 def center_mask(a, mask_radius):
 	shape = a.shape
 	center = shape[0]/2, shape[1]/2
