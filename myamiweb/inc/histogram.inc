@@ -18,7 +18,7 @@ class histogram {
 	}
 
 	function calculInterval() {
-		$this->interval = ($this->maxval - $this->minval) / $this->nbbars;
+		$this->interval = ($this->maxval - $this->minval) / ($this->nbbars-1);
 	}
 
 	function setInterval($n) {
