@@ -2319,6 +2319,22 @@ class particledata {
 		return $r;
 	}
 
+	function getAlignStackIdFromClusterId ($clusterId) {
+		$q = "SELECT DISTINCT ast.`DEF_id` AS alignstackid "
+		  ."FROM ApAlignStackData AS ast "
+		  ."LEFT JOIN ApClusteringRunData AS clusterrun ON "
+		  ."  (clusterrun.`REF|ApAlignStackData|alignstack` = ast.`DEF_id`) "
+		  ."LEFT JOIN ApClusteringStackData AS cluster ON "
+		  ."  (cluster.`REF|ApClusteringRunData|clusterrun` = clusterrun.`DEF_id`) "
+		  ."WHERE "
+		  ."  cluster.`DEF_id` = '$clusterId' "
+		  ."ORDER BY alignstackid DESC";
+		//echo $q."<br/><br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/><br/>\n";
+		return $r[0]['alignstackid'];
+	}
+
 	function getClusteringStacksForAlignStack ($alignstackId, $showHidden=false) {
 		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, clusterrun.*, cluster.* ";
 		if ($this->mysql->SQLTableExists("ApSpiderClusteringParamsData")) {
