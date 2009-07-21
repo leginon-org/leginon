@@ -154,6 +154,7 @@ class ImagePanel(wx.Panel):
 		self.panel.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeave)
 
 		# add tools
+		self.addTool(ImagePanelTools.RecordMotionTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.ValueTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.RulerTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.ZoomTool(self, self.toolsizer))
