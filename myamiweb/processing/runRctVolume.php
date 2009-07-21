@@ -50,6 +50,7 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 	$highpasspart = ($_POST['highpasspart']) ? $_POST['highpasspart'] : '800';
 	$median = ($_POST['median']) ? $_POST['median'] : '3';
 	$numiter = ($_POST['numiter']) ? $_POST['numiter'] : '3';
+	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '';
 	$minscore = ($_POST['minscore']) ? $_POST['minscore'] : '';
 	$zoom = ($_POST['zoom']) ? $_POST['zoom'] : '0.9';
 	$contour = ($_POST['contour']) ? $_POST['contour'] : '3.0';
@@ -202,13 +203,13 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 			$descript  = substr($stackparams['description'],0,40);
 			#print_r($stackparams);
 			$box  = $stackparams['boxSize'];
-			$numpart = commafy($particle->getNumStackParticles($stackid));
+			$numparts = commafy($particle->getNumStackParticles($stackid));
 			//handle multiple runs in stack
 			$stackname = $stackparams['shownstackname'];
 			//print_r($stackparams[0]);
 			echo "<OPTION value='$stackid'";
 			if ($stackid == $tiltstack) echo " SELECTED";
-			echo">$stackid: $stackname ($box boxsize, $numpart parts) $descript...</OPTION>\n";
+			echo">$stackid: $stackname ($box boxsize, $numparts parts) $descript...</OPTION>\n";
 		}
 	}
 	echo "</SELECT>\n";
@@ -250,6 +251,11 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 		echo "<FONT SIZE='-2'>(see graph)</FONT>\n";
 		echo "\n<br/>\n<br/>\n";
 	}
+
+	//Number of particles
+	echo docpop('numpart','Number of Particles:<br/>');
+	echo "<INPUT TYPE='text' NAME='numpart' SIZE='2' VALUE='$numpart'>\n";
+	echo "\n<br/>\n<br/>\n";
 
 	//Number of iterations
 	echo docpop('rctcenter','Number of Particle centering iterations:<br/>');
@@ -293,6 +299,7 @@ function runRctVolume() {
 	$highpasspart = $_POST['highpasspart'];
 	$median = $_POST['median'];
 	$numiter = $_POST['numiter'];
+	$numpart = $_POST['numpart'];
 	$classnum = $_POST['classnum'];
 	$description=$_POST['description'];
 	$stack=$_POST['stack'];
@@ -347,6 +354,8 @@ function runRctVolume() {
 	$command.="--tilt-stack=$tiltstack ";
 	$command.="--mask-rad=$maskrad ";
 	$command.="--num-iters=$numiter ";
+	if ($numpart)
+		$command.="--num-part=$numpart ";
 	$command.="--zoom=$zoom ";
 	if ($mass)
 		$command.="--mass=$mass ";
@@ -388,6 +397,7 @@ function runRctVolume() {
 		<tr><td>class nums</td><td>$classnum</td></tr>
 		<tr><td>tilt stack</td><td>$tiltstack</td></tr>
 		<tr><td>num iter</td><td>$numiter</td></tr>
+		<tr><td>num particles</td><td>$numpart</td></tr>
 		<tr><td>volume lowpass</td><td>$lowpassvol</td></tr>
 		<tr><td>volume median</td><td>$median</td></tr>
 		<tr><td>particle highpass</td><td>$highpasspart</td></tr>
