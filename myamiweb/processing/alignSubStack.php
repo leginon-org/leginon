@@ -63,6 +63,7 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	if (!$description) $description = $_POST['description'];
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
+	$maxshift = $_POST['maxshift'] ? $_POST['maxshift'] : '';
 
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 	if (!strlen($include)) $include = $_POST['include'];
@@ -151,6 +152,11 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	echo "Output directory:<i>$outdir</i><br/>\n";
 	echo "<br/>\n";
 
+	echo docpop('maxshift','<b>Maximum alignment shift:</b> ');
+	echo "<input type='text' name='maxshift' value='$maxshift'>\n";
+	echo "<br/>\n";
+	echo "<br/>\n";
+
 	// exclude and include
 	if (!$_GET['include']) {
 		echo docpop('test','<b>Excluded Classes:</b> ');
@@ -200,6 +206,7 @@ function runSubStack() {
 	$commit=$_POST['commit'];
 	$exclude=$_POST['exclude'];
 	$include=$_POST['include'];
+	$maxshift=$_POST['maxshift'];
 
 	$command.="alignSubStack.py ";
 
@@ -230,6 +237,8 @@ function runSubStack() {
 	} else {
 		createNorefSubStackForm("<b>ERROR:</b> You need either a cluster Id or align ID");
 	}
+	if ($maxshift)
+		$command.="--maxshift=$maxshift ";
 
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
