@@ -427,6 +427,36 @@ def msd(x,y,mask=None):
 # PIL to numpy conversions
 #########################################################
 
+#===============================
+def convertPostscriptToPng(psfile, pngfile, size=1024):
+
+	### better pstopnm pre-step
+	pstopnmcmd = "pstopnm -xsize=2000 -ysize=2000 -xborder=0 -yborder=0 -portrait "+psfile
+	proc = subprocess.Popen(pstopnmcmd, shell=True)
+	proc.wait()
+
+	### direct conversion
+	ppmfile = os.path.splitext(psfile)[0]+"001.ppm"
+	if os.path.isfile(ppmfile):
+		imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+			+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
+	else:
+		ppmfile = psfile+"001.ppm"
+		if os.path.isfile(ppmfile):
+			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+				+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
+		else:
+			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
+				+str(size)+"x"+str(size)+" "+psfile+" "+pngfile)
+	proc = subprocess.Popen(imagemagickcmd, shell=True)
+	proc.wait()
+
+	if os.path.isfile(ppmfile):
+		apFile.removeFile(ppmfile)
+
+	if not os.path.isfile(pngfile):
+		apDisplay.printWarning("Postscript image conversion failed")
+
 #=========================
 def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 	"""
