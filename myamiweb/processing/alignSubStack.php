@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
@@ -42,7 +43,7 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 		$defrunname = 'clustersub'.$clusterId;
 		$formAction .= "&clusterId=$clusterId";
 	} else
-		$defrunname = 'substack1';
+		$defrunname = 'alignsubstack1';
 
 	$classfile=$_GET['file'];
 
@@ -64,6 +65,7 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$runname = ($_POST['runname']) ? $_POST['runname'] : $defrunname;
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';		
 	$maxshift = $_POST['maxshift'] ? $_POST['maxshift'] : '';
+	$minscore = $_POST['minscore'] ? $_POST['minscore'] : '';
 
 	if (!strlen($exclude)) $exclude = $_POST['exclude'];
 	if (!strlen($include)) $include = $_POST['include'];
@@ -82,7 +84,7 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='red'>$extra</font>\n<hr />\n";
+		echo "<font color='#990000' size='+2'>$extra</font>\n<hr/><br/>\n";
 	}
   
 	echo"<form name='viewerform' method='post' action='$formAction'>\n";
@@ -98,10 +100,12 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 
 	$basename = basename($classfile);
 	if ($clusterId) {
+		$alignId = $particle->getAlignStackIdFromClusterId($clusterId);
 		$clusterlink = "viewstack.php?clusterId=$clusterId&expId=$expId&file=$classfile";
 		echo"<b>Clustering Run Information:</b> <ul>\n"
 			."<li>Stackfile: <a href='$clusterlink'>$basename</a>\n"
 			."<li>Cluster Stack ID: $clusterId\n"
+			."<li>Align Stack ID: $alignId\n"
 			."<input type='hidden' name='clusterId' value='$clusterId'>\n"
 			."</ul>\n";
 	} else if ($alignId) {
@@ -139,23 +143,42 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 				echo " $boxsz pixels)</OPTION>\n";
 			}
 			echo "</SELECT>\n";
-			echo "<br/><br/>\n";
+			echo "<br/>\n";
 		} else {
 			echo"
 			<FONT COLOR='RED'><B>No Aligned Stacks for this Session</B></FONT>\n";
 		}
 	}
-	echo docpop('runname','<b>Run Name:</b> ');
-	echo "<input type='text' name='runname' value='$runname' size='15'><br/><br/>\n";
 
+	echo "<hr/><br/>\n";
+
+	echo docpop('runname','<b>Run Name:</b> ');
+	echo "<input type='text' name='runname' value='$runname' size='15'>\n";
+
+	echo "<br/><br/>\n";
+
+	echo "Output directory:&nbsp;<i>$outdir</i>\n";
 	echo "<input type='hidden' name='outdir' value='$outdir'>\n";
-	echo "Output directory:<i>$outdir</i><br/>\n";
-	echo "<br/>\n";
+
+	echo "<br/><br/>\n";
 
 	echo docpop('maxshift','<b>Maximum alignment shift:</b> ');
 	echo "<input type='text' name='maxshift' value='$maxshift'>\n";
-	echo "<br/>\n";
-	echo "<br/>\n";
+
+	echo "<br/><br/>\n";
+
+	echo docpop('minscore','<b>Minimum alignment score or spread:</b> ');
+	echo "<input type='text' name='minscore' value='$minscore'>\n";
+
+	if ($alignId) {
+		echo openRoundBorder();
+		echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
+		echo alignstacksummarytable($alignId, $mini=true);
+		echo "</td></tr></table>\n";
+		echo closeRoundBorder();
+	}
+
+	echo "<br/><br/>\n";
 
 	// exclude and include
 	if (!$_GET['include']) {
@@ -207,6 +230,7 @@ function runSubStack() {
 	$exclude=$_POST['exclude'];
 	$include=$_POST['include'];
 	$maxshift=$_POST['maxshift'];
+	$minscore=$_POST['minscore'];
 
 	$command.="alignSubStack.py ";
 
@@ -237,6 +261,9 @@ function runSubStack() {
 	} else {
 		createNorefSubStackForm("<b>ERROR:</b> You need either a cluster Id or align ID");
 	}
+
+	if ($minscore)
+		$command.="--minscore=$minscore ";
 	if ($maxshift)
 		$command.="--maxshift=$maxshift ";
 
