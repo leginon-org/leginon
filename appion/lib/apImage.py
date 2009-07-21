@@ -250,7 +250,8 @@ def planeRegression(imgarray, msg=True):
 	"""
 	#print " ... calculate 2d linear regression"
 	if ( (imgarray.shape)[0] != (imgarray.shape)[1] ):
-		apDisplay.printError("Array is NOT square")
+		apDisplay.printWarning("Image is NOT square, skipping plane regression")
+		return imgarray
 	size = (imgarray.shape)[0]
 	count = float((imgarray.shape)[0]*(imgarray.shape)[1])
 	def retx(y,x):
