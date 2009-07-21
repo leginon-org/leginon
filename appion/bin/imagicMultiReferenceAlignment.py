@@ -77,6 +77,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 		self.parser.add_option("--numiter", dest="numiter", type="int", default="5",
 			help="number of alignment iterations to perform", metavar="int")
 
+		self.parser.add_option("--nproc", dest="nproc", type="int", default="8",
+			help="number of processors to use", metavar="int")
 
 		return 
 
@@ -164,12 +166,23 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		### multi-reference alignment		
 
-		f.write("/usr/local/IMAGIC/align/mralign.e <<EOF")
-		if append_log is True:
-			f.write(" >> multiReferenceAlignment.log\n")
+		if self.params['nproc'] > 1:
+			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF")
+			if append_log is True:
+				f.write(" >> multiReferenceAlignment.log\n")
+			else:
+				f.write(" > multiReferenceAlignment.log\n")
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write(" > multiReferenceAlignment.log\n")
-		f.write("NO\n")
+			f.write("/usr/local/IMAGIC/align/alimass.e <<EOF")
+			if append_log is True:
+				f.write(" >> multiReferenceAlignment.log\n")
+			else:
+				f.write(" > multiReferenceAlignment.log\n")
+			f.write("NO\n")
+			
 		f.write("FRESH\n")
 		f.write("ALIGNMENT\n")
 		f.write("ALL\n")
