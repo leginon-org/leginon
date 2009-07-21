@@ -114,6 +114,9 @@ class subStackScript(appionScript.AppionScript):
 		### write included particles to text file
 		includeParticle = []
 		excludeParticle = 0
+		badscore = 0
+		badshift = 0
+		badspread = 0
 		f = open("test.log", "w")
 		count = 0
 		for part in particles:
@@ -133,22 +136,28 @@ class subStackScript(appionScript.AppionScript):
 				if shift > self.params['maxshift']:
 					excludeParticle += 1
 					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					badshift += 1
+					continue
 
-			### check score
-			elif ( self.params['minscore'] is not None 
-			 and alignpart['score'] is not None 
-			 and alignpart['score'] < self.params['minscore'] ):
-				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
 
-			### check spread
-			elif ( self.params['minscore'] is not None 
-			 and alignpart['spread'] is not None 
-			 and alignpart['spread'] < self.params['minscore'] ):
-				excludeParticle += 1
-				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+			if self.params['minscore'] is not None: 
+				### check score
+				if ( alignpart['score'] is not None 
+				 and alignpart['score'] < self.params['minscore'] ):
+					excludeParticle += 1
+					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					badscore += 1
+					continue
 
-			elif includelist and classnum in includelist:
+				### check spread
+				if ( alignpart['spread'] is not None 
+				 and alignpart['spread'] < self.params['minscore'] ):
+					excludeParticle += 1
+					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+					badspread += 1
+					continue
+
+			if includelist and classnum in includelist:
 				includeParticle.append(emanstackpartnum)
 				f.write("%d\t%d\t%d\tinclude\n"%(count, emanstackpartnum, classnum))
 			elif excludelist and not classnum in excludelist:
@@ -160,6 +169,12 @@ class subStackScript(appionScript.AppionScript):
 
 		f.close()
 		includeParticle.sort()
+		if badshift > 0:
+			apDisplay.printMsg("%d paricles had a large shift"%(badshift))
+		if badscore > 0:
+			apDisplay.printMsg("%d paricles had a low score"%(badscore))
+		if badspread > 0:
+			apDisplay.printMsg("%d paricles had a low spread"%(badspread))
 		apDisplay.printMsg("Keeping "+str(len(includeParticle))+" and excluding "+str(excludeParticle)+" particles")
 
 		#print includeParticle
