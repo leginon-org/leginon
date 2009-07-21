@@ -10,17 +10,21 @@ import math
 import appionLoop2
 import apDatabase
 import apDisplay
+import apProject
 #leginon
-import pyami.jpg as jpg
 import gui.wx.SetupWizard
 import leginondata
 import project
 import leginonconfig
 #pyami
-from pyami import mrc
+from pyami import mrc, jpg
 
 class ImageLoader(appionLoop2.AppionLoop):
+	#=====================
 	def __init__(self):
+		"""
+		appionScript OVERRIDE
+		"""
 		try:
 			self.projectdata = project.ProjectData()
 		except:
@@ -28,8 +32,104 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.processcount = 0
 		appionLoop2.AppionLoop.__init__(self)
 
+	#=====================
+	def setupParserOptions(self):
+		"""
+		standard appionScript
+		"""
+		self.parser.add_option("--userid", dest="userid", type="int",
+			help="Leginon User database ID", metavar="INT")
+		self.parser.add_option("--batchparams", dest="batchscript", type="str",
+			help="File containing image parameters", metavar="FILEPATH")
+		self.parser.add_option("--scopeid", dest="scopeid", type="int",
+			help="Scope database ID", metavar="INT")
+		self.parser.add_option("--cameraid", dest="cameraid", type="int",
+			help="Camera database ID", metavar="INT")
+		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int", default=1,
+			help="Number of image per tilt series, default=1", metavar="INT")
+
+	#=====================
+	def checkConflicts(self):
+		"""
+		standard appionScript
+		"""
+		if self.params['batchscript'] is None:
+			apDisplay.printError("Please provide a Batch parameter file, e.g., --batchparams=/home/myfile.txt")
+		if not os.path.isfile(self.params["batchscript"]):
+			apDisplay.printError("Could not find Batch parameter file: %s"%(self.params["batchscript"]))
+		if self.params['scopeid'] is None:
+			apDisplay.printError("Please provide a Scope database ID, e.g., --scopeid=12")
+		if self.params['cameraid'] is None:
+			apDisplay.printError("Please provide a Camera database ID, e.g., --cameraid=12")
+		if self.params['sessionname'] is None:
+			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
+		if self.params['projectid'] is None:
+			apDisplay.printError("Please provide a Project database ID, e.g., --projectid=42")
+		if self.params['description'] is None:
+			apDisplay.printError("Please provide a Description, e.g., --description='awesome data'")
+
+		#This really is not conflict checking but to set up new session.
+		#There is no place in Appion script for this special case
+
+
+		sessionq = leginondata.SessionData(name=self.params['sessionname'])
+		sessiondatas = sessionq.query()
+		if len(sessiondatas) > 0:
+			### METHOD 1 : session already exists
+			apDisplay.printColor("Add images to an existing session", "cyan")
+			sessiondata = sessiondatas[0]
+			### what about linking an existing session with project id to a new project id
+			oldprojectid = apProject.getProjectIdFromSessionName(self.params['sessionname'])
+			if oldprojectid != self.params['projectid']:
+				apDisplay.printError("You cannot assign an existing session (PID %d) to a different project (PID %d)"%
+					(oldprojectid, self.params['projectid']))
+		else:
+			### METHOD 2 : create new session
+			apDisplay.printColor("Creating a new session", "cyan")
+			try:
+				directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+			except AttributeError:
+				apDisplay.printWarning("Could not set directory")
+				directory = ''
+			if self.params['userid'] is not None:
+				userdata = leginondata.UserData.direct_query(self.params['userid'])
+			else:
+				userdata = None
+			sessiondata = self.createSession(userdata, self.params['sessionname'], self.params['description'], directory)
+
+		self.linkSessionProject(sessiondata, self.params['projectid']) 
+		self.session = sessiondata
+		return
+
+	#=====================
+	def commitToDatabase(self,imagedata):
+		"""
+		standard appionScript
+		"""
+		return
+
+	#=====================
+	def setRunDir(self):
+		"""
+		standard appionScript
+		"""	
+		self.params['rundir'] = self.session['image path']
+
+	#=====================
+	#===================== Appion Loop Hacks
+	#=====================
+
+	#=====================
+	def preLoopFunctions(self):
+		"""
+		standard appionLoop
+		"""	
+		self.getInstruments()
+
+	#=====================
 	def run(self):
 		"""
+		appionLoop OVERRIDE
 		processes all images
 		"""
 		### get images from upload image parameters file
@@ -95,35 +195,17 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.close()
 
 	#=====================
-	
-	def checkConflicts(self):
-		#This really is not conflict checking but to set up new session.
-		# There is no place in Appion script for this special case
-		if self.params['sessionname'] is not None:
-			name = self.params['sessionname']
-			q = leginondata.SessionData(name=name)
-			r = q.query()
-			if len(r) > 0:
-				sessiondata = r[0]
-			else:
-				try:
-					directory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
-				except AttributeError:
-					directory = ''
-				if 'userid' in self.params.keys() and self.params['userid']:
-					userdata = leginondata.UserData.direct_query(self.params['userid'])
-				else:
-					userdata = None
-				sessiondata = self.createSession(userdata,name,self.params['description'],directory)
-			self.linkSessionProject(sessiondata,self.params['projectid']) 
-			self.session = sessiondata
-		return
+	def getAllImages(self):
+		"""
+		appionLoop OVERRIDE
+		"""
+		self.batchinfo = self.readBatchUploadInfo()
+		self.stats['imagecount'] = len(self.batchinfo)
 
-	def commitToDatabase(self,imagedata):
-		return
-
+	#=====================
 	def _startLoop(self, info):
 		"""
+		appionLoop OVERRIDE
 		initilizes several parameters for a new image
 		and checks if it is okay to start processing image
 		"""
@@ -161,10 +243,24 @@ class ImageLoader(appionLoop2.AppionLoop):
 		return True
 
 	#=====================
-	
-	def setRunDir(self):
-				self.params['rundir'] = self.session['image path']
+	def processImage(self, imginfo):
+		"""
+		standard appionLoop
+		"""	
+		self.updatePixelSizeCalibration(imginfo)
+		origimgfilepath = imginfo['original filepath']
+		imgdata = self.makeImageData(imginfo)
+		newimgfilepath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
+		apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
+		shutil.copyfile(origimgfilepath, newimgfilepath)
+		pixeldata = None
+		return imgdata, pixeldata
 
+	#=====================
+	#===================== custom functions
+	#=====================
+
+	#=====================
 	def publish(self,data):
 		results = data.query(readimages=False)
 		if not results:
@@ -172,6 +268,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			return data
 		return results[0]
 
+	#=====================
 	def createSession(self, user, name, description, directory):
 		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
@@ -183,6 +280,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		sessionq = leginondata.SessionData(initializer=initializer)
 		return self.publish(sessionq)
 
+	#=====================
 	def linkSessionProject(self, sessiondata, projectid):
 		if self.projectdata is None:
 			raise RuntimeError('Cannot link session, not connected to database.')
@@ -190,22 +288,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		experiments = self.projectdata.getProjectExperiments()
 		experiments.insert([projectsession.dumpdict()])
 
-	def setupParserOptions(self):
-		self.parser.add_option("--userid", dest="userid", type="int",
-			help="Leginon User ID", metavar="INT")
-		self.parser.add_option("--batchparams", dest="batchscript", type="str",
-			help="File containing image parameters", metavar="FILEPATH")
-		self.parser.add_option("--scopeid", dest="scopeid", type="int",
-			help="Scope ID", metavar="INT")
-		self.parser.add_option("--cameraid", dest="cameraid", type="int",
-			help="Camera ID", metavar="INT")
-		self.parser.add_option("--tiltgroup", dest="tiltgroup", type="int",
-			help="Number of image per tilt series", metavar="INT")
-
-	def getAllImages(self):
-		self.batchinfo = self.readBatchUploadInfo()
-		self.stats['imagecount'] = len(self.batchinfo)
-		
+	#=====================
 	def readBatchUploadInfo(self):
 		# in this example, the batch script file should be separated by tab
 		# see example in function readUploadInfo for format
@@ -217,16 +300,22 @@ class ImageLoader(appionLoop2.AppionLoop):
 		lines = batchfile.readlines()
 		batchfile.close()
 		batchinfo = []
+		count = 0
 		for line in lines:
-			texts = line.split('\n')
-			info = texts[0].split('\t')
-			if len(info) > 1:
-				batchinfo.append(info)
+			count += 1
+			#remove white space at ends
+			sline = line.strip()
+			if ' ' in sline:
+				apDisplay.printWarning("There is a space in the batch file on line %d"%(count))
+			#remove white space at ends
+			cols = sline.split('\t')
+			if len(cols) > 1:
+				batchinfo.append(cols)
+			else:
+				apDisplay.printWarning("Skipping line %d"%(count))
 		return batchinfo
 
-	def preLoopFunctions(self):
-		self.getInstruments()
-
+	#=====================
 	def readUploadInfo(self,info=None):
 		if info is None:
 			# example
@@ -260,6 +349,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		uploadedInfo['filename'] = self.setNewFilename(uploadedInfo['original filepath'])
 		return uploadedInfo
 
+	#=====================
 	def setNewFilename(self,original_filepath):
 		keep_old_name = True
 		if keep_old_name:
@@ -279,16 +369,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 			name =  self.params['sessionname']+'_%05dupload' % (imgcount+1)
 		return name
 
-	def processImage(self, imginfo):			
-		self.updatePixelSizeCalibration(imginfo)
-		origimgfilepath = imginfo['original filepath']
-		imgdata = self.makeImageData(imginfo)
-		newimgfilepath = os.path.join(self.params['rundir'],imgdata['filename']+".mrc")
-		apDisplay.printMsg("Copying original image to a new location: "+newimgfilepath)
-		shutil.copyfile(origimgfilepath, newimgfilepath)
-		pixeldata = None
-		return imgdata, pixeldata
-	
+	#=====================
 	def getTiltSeries(self):
 		if self.params['tiltgroup'] is None or self.params['tiltgroup']==1:
 			return None
@@ -308,10 +389,12 @@ class ImageLoader(appionLoop2.AppionLoop):
 				tiltq = leginondata.TiltSeriesData(session=self.session,number=series)
 				return self.publish(tiltq)
 
+	#=====================
 	def getInstruments(self):
 		self.temdata = leginondata.InstrumentData.direct_query(self.params['scopeid'])
 		self.camdata = leginondata.InstrumentData.direct_query(self.params['cameraid'])
 
+	#=====================
 	def makeImageData(self,info):
 		scopedata = leginondata.ScopeEMData(session=self.session,tem =self.temdata)
 		scopedata['defocus'] = info['defocus']
@@ -337,6 +420,7 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.publish(imgdata)
 		return imgdata
 
+	#=====================
 	def updatePixelSizeCalibration(self,info):
 		# This updates the pixel size for the magnification on the
 		# instruments before the image is published.  Later query will look up the
@@ -351,6 +435,9 @@ class ImageLoader(appionLoop2.AppionLoop):
 		self.publish(caldata)
 		time.sleep(1.0)
 
+#=====================
+#=====================
+#=====================
 if __name__ == '__main__':
 	imgLoop = ImageLoader()
 	imgLoop.run()
