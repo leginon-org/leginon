@@ -33,7 +33,6 @@ processing_header("Imagic 3d Refinement Summary","Imagic 3d Refinement Summary P
 // edit description form
 echo "<form name='templateform' method='post' action='$formAction'>\n";
 
-// --- Get Stack Data
 $particle = new particledata();
 
 // --- Get Reconstruction Data
@@ -42,7 +41,7 @@ if ($refineruns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'defid', 'run name', 'class averages', 'num cls avgs (original)', 'num iters', 'pixel size', 'box size', 'description');
+	$display_keys = array ( 'defid', 'run name', 'num particles', 'symmetry', 'num iters', 'pixel size', 'box size', 'description');
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
@@ -50,6 +49,10 @@ if ($refineruns) {
 	foreach ($refineruns as $refinerun) {
 		$refineid = $refinerun['DEF_id'];
 		$numiters = count($particle->getImagic3dRefinementParamsFromRefineId($refineid));
+		$stackid = $refinerun['REF|ApStackData|stackrun'];
+		$numpart = $particle->getNumStackParticles($stackid);
+		$refineparams = $particle->getImagic3dRefinementParamsFromRefineId($refineid);
+		$symmetry = $refineparams[0]['symmetry'];
 
 		// update description
 		if ($_POST['updateDesc'.$refineid]) {
@@ -58,7 +61,7 @@ if ($refineruns) {
 
 		}
 
-		// GET INFO
+/*		// GET INFO
 		if ($refinerun['REF|ApNoRefClassRunData|norefclass']) {
 			$norefClassId = $refinerun['REF|ApNoRefClassRunData|norefclass'];
 			$norefclassdata = $particle->getNoRefClassRunData($norefClassId);
@@ -80,26 +83,15 @@ if ($refineruns) {
 			$tspath = $tsdata['path'];
 			$clsavgfile = $tspath."/".$tsdata['templatename'];
 		}
+*/
+
 
 		// PRINT INFO
 		$html .= "<TR>\n";
 		$html .= "<td>$refineid</TD>\n";
 		$html .= "<td><A HREF='imagic3dRefineItnReport.php?expId=$expId&refineId=$refineid'>$refinerun[runname]</A></TD>\n";
-		if ($refinerun['REF|ApNoRefClassRunData|norefclass']) {
-			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&norefId=$norefId&norefClassId=
-			$norefClassId'>View Class Averages</A></TD>\n";
-			$html .= "<td>$norefclassdata[num_classes]</TD>\n";
-		}
-		elseif ($refinerun['REF|ApClusteringStackData|clusterclass']) {
-			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&clusterId=$clusterId'
-			>View Class Averages</A></TD>\n";
-			$html .= "<td>$clusterdata[num_classes]</TD>\n";
-		}
-		elseif ($refinerun['REF|ApTemplateStackData|templatestack']) {
-			$html .= "<td><A HREF='viewstack.php?file=$clsavgfile&expId=$sessionId&templateStackId=$tsId'
-			>View Class Averages</A></TD>\n";
-			$html .= "<td>$tsdata[numimages]</TD>\n";
-		}
+		$html .= "<td>$numpart</TD>\n";
+		$html .= "<td>$symmetry</TD>\n";
 		$html .= "<td>$numiters</TD>\n";
 		$html .= "<td>$refinerun[pixelsize]</TD>\n";
 		$html .= "<td>$refinerun[boxsize]</TD>\n";
