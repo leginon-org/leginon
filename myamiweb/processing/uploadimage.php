@@ -35,6 +35,7 @@ else {
 	createUploadImageForm();
 }
 
+
 function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $heading='Upload Images') {
 	$particle = new particledata();
 	// check if coming directly from a session
@@ -44,12 +45,13 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 	$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 
 	$javafunctions .= writeJavaPopupFunctions('appion');  
-  
+	$leginondata = new leginondata();
+
 	processing_header($title,$heading,$javafunctions);
 	#processing_header($title,$heading,False,True);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<FONT COLOR='RED'>$extra</FONT>\n<HR>\n";
+		echo "<font color='#990000' size='+2'>$extra</font>\n<hr/><br/>\n";
 	}
   
 	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
@@ -64,65 +66,92 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		$cam=$sessioninfo['CameraId'];
 		echo "<input type='hidden' name='outdir' value='$outdir'>\n";
 	}
+	// if no session name is set, set a default
+	if (!$sessionname) {
+		$prefix = strtolower(date('yMd'));
+		for ($i=65; $i<=90; $i++) {
+			$letter = strtolower(chr($i));
+			$sessionname = $prefix.$letter;
+			$testinfo = $leginondata->getSessionInfo($sessionname);
+			//echo "<font size='+3'>$i:</font>\n";
+			//print_r($testinfo);
+			//echo "<br/><br/>\n";
+			if (empty($testinfo))
+				break;
+		}
+	}
+
 	// Set any existing parameters in form
 	$temval = ($_POST['tem']) ? $_POST['tem'] : $tem;
 	$camval = ($_POST['cam']) ? $_POST['cam'] : $cam;
 	$sessionname = ($_POST['sessionname']) ? $_POST['sessionname'] : $sessionname;
 	$batch = ($_POST['batch']) ? $_POST['batch'] : $batch;
-	$tiltgroup = ($_POST['tiltgroup']) ? $_POST['tiltgroup'] : $tiltgroup;
+	$tiltgroup = ($_POST['tiltgroup']) ? $_POST['tiltgroup'] : 1;
 	$description = ($_POST['description']) ? $_POST['description']: $description;
-	echo"
-  <table border=3 class=tableborder>
-  <tr>
-    <td valign='TOP'>\n";
-	echo"<table >
-    <tr>
-      <td valign='TOP'>";
-	echo "
-    <br/>\n
-    <b>Project:</b><br/>
-    <select name='projectId'>";
+
+	// Start Tables
+	echo"<table class=tableborder>\n";
+	echo"<tr><td valign='top'>\n";
+	echo"<table border='0' cellpading='15' cellspacing='5'>\n";
+	echo"<tr><td valign='top'>\n";
+	echo "<br/>\n";
+
+	// Setup Project
+	echo "<b>Project:</b><br/>\n";
+	echo "<select name='projectId'>";
 	$projectdata=new project();
 	$projects=$projectdata->getProjects();
 	foreach ($projects as $project) {
 	$sel=($project['id']==$projectId) ? "selected" : "";
 	echo "<option value='".$project['id']."' $sel >".$project['name']."</option>\n";
 	}
+	echo "</select>\n";
 
-	echo "</select><br>";
+   echo "<br/><br/>\n";
+
+	// Setup Session Name
 	echo docpop('uploadsession', 'Session Name:');
-	echo "<br>
-    <input type='text' name='sessionname' value='$sessionname' size='65'><br />\n";
-	echo"
-      <p>
-      <b>Session Description:</b><br/>
-      <textarea name='description' rows='3' cols='65'>$description</textarea>
-      </td>
-    </tr>
-		<tr>
-			<td>";
-	$leginondata = new leginondata();
+	echo "<br/>\n";
+	echo "<input type='text' name='sessionname' value='$sessionname' size='15'>\n";
+
+   echo "<br/><br/>\n";
+
+	// Setup Session Name
+   echo "<b>Session Description:</b><br/>";
+   echo "<input type='text' name='description' size='55' value='$description'>";
+
+   echo "<br/><br/>\n";
+
+	echo"</td></tr>\n";
+	echo"<tr><td valign='top' class='tablebg'>\n";
+   echo "<br/>\n";
+
+	// Setup Instruments
 	$instrumenthosts = $leginondata->getInstrumentHosts();
+	sort($instrumenthosts);
 	$instrumenthostval = ($_POST[instrumenthost]) ? $_POST[instrumenthost] : $instrumenthosts[0];
 	echo docpop('host', 'Host:');
-	echo "<br>
-		<select name='instrumenthost' onchange=submit()>";
+	echo "<select name='instrumenthost' onchange=submit()>";
 	foreach($instrumenthosts as $host) {
 		$s = ($instrumenthostval==$host) ? 'selected' : 'not';
 		echo "<option value=".$host." ".$s.">".$host."</option>\n";
 	}
-	echo"
-		</select>";
+	echo"</select>";
+
+   echo "<br/><br/>\n";
+
+	// Setup Scopes
 	$scopes = $leginondata->getScopes($instrumenthostval);
 	$cameras = $leginondata->getCameras($instrumenthostval);
 	echo docpop('scope', 'Scope:');
-	echo "
-		<select name='tem' onchange=submit()>";
+	echo "<select name='tem' onchange=submit()>";
 	foreach($scopes as $sc) {
 		$s = ($temval==$sc['id']) ? 'selected' : '';
 		echo "<option value=".$sc['id']." ".$s." >".$sc['name']."</option>";
 	}
 	echo" </select>";
+
+	// Setup Camera
 	echo docpop('camera', 'Camera:');
 	echo "
 		<select name='cam' onchange=submit()>";
@@ -131,29 +160,35 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 		$s = ($camval==$c['id']) ? 'selected' : 'not';
 		echo "<option value=".$c['id']." ".$s." >".$c['name']."</option>";
 	}
-	echo"
-		</select>";
-	echo " <p>";
+	echo"</select>";
+
+   echo "<br/><br/>\n";
+
+	// Setup Images in Group
 	echo docpop('images_in_group', 'Number of images in each tilt series if any:');
-	echo "<br>
-      <input type='text' name='tiltgroup' value='$tiltgroup' size='5'><br />\n";
-	echo " <p>";
+	echo "<br/>\n<input type='text' name='tiltgroup' value='$tiltgroup' size='5'>\n";
+
+   echo "<br/><br/>\n";
+
+	// Setup batchfile
 	echo docpop('batchfile', 'Information File for the images:');
-	echo "<br>
-      <input type='text' name='batch' value='$batch' size='65'><br />\n";
-	echo "
-      </td>
-    </tr>
-  <tr>
-    <td align='CENTER'>
-      <hr>
-	";
+	echo "<br/>\n<input type='text' name='batch' value='$batch' size='54'>\n";
+
+   echo "<br/><br/>\n";
+
+	echo"</td></tr>\n";
+	echo"<tr><td align='center'>\n";
+
+	// Launcher
+	echo "<hr/><br/>\n";
 	echo getSubmitForm("Upload Image");
-	echo "
-        </td>
-	</tr>
-  </table>
-  </form>\n";
+
+	// End table
+	echo"</td></tr>\n";
+	echo"</table>\n";
+	echo"</td></tr>\n";
+	echo"</table>\n";
+	echo"</form>\n";
 
 	processing_footer();
 	exit;
