@@ -197,8 +197,9 @@ function createUploadImageForm($extra=false, $title='UploadImage.py Launcher', $
 function runUploadImage() {
 	$projectId = $_SESSION['projectId'];
 	$expId = $_POST['expId'];
-	$sessionname = $_POST['sessionname'];
-	$batch = $_POST['batch'];
+	// trim removes any white space from start and end of strings
+	$sessionname = trim($_POST['sessionname']);
+	$batch = trim($_POST['batch']);
 	$tiltgroup = $_POST['tiltgroup']+0;
 	$tem = $_POST['tem'];
 	$cam = $_POST['cam'];
