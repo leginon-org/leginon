@@ -108,6 +108,10 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
 	$mirror = ($_POST['mirror']=="on" || !$_POST['process']) ? 'checked' : '';
 
+	// number of processors defaulted to 8
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
+	echo "<INPUT TYPE='hidden' NAME='nproc' VALUE=$nproc";
+
   echo"
 	<TABLE BORDER=0 CLASS=tableborder>
 	<TR>
@@ -271,9 +275,10 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 //***************************************
 //***************************************
 function runAlignment() {
-	$expId   = $_GET['expId'];
-	$rundir  = $_POST['rundir'];
+	$expId = $_GET['expId'];
+	$rundir = $_POST['rundir'];
 	$runname = $_POST['runname'];
+	$nproc = $_POST['nproc'];
 
 	$stackval = $_POST['stackval'];
 	list($stackid,$apix_s,$boxsz_s,$totprtls_s) = split('\|--\|', $stackval);
@@ -355,6 +360,7 @@ function runAlignment() {
 	$command.="--num-part=$numpart ";
 
 	if ($inverttempl) $command.="--invert-templates ";
+	$command.="--nproc=$nproc ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
@@ -366,7 +372,7 @@ function runAlignment() {
 		if (!($user && $password))
 			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,"partalign");
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,"partalign",False,False,False,$nproc,8,1);
 		// if errors:
 		if ($sub)
 			createAlignmentForm("<b>ERROR:</b> $sub");
