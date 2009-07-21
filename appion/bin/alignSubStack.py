@@ -3,6 +3,7 @@
 #python
 import sys
 import os
+import math
 import shutil
 import numpy
 #appion
@@ -26,10 +27,11 @@ class subStackScript(appionScript.AppionScript):
 			help="alignment stack id", metavar="ID")
 
 		### Floats
-		self.parser.add_option("--min-score", dest="minscore", type="float",
-			help="Minimum cross-correlation score", metavar="#")
-		self.parser.add_option("--min-spread", dest="minspread", type="float",
-			help="Minimum maxlikelihood spread", metavar="#")
+		self.parser.add_option("--min-score", "--min-spread", dest="minscore", type="float",
+			help="Minimum cross-correlation score or maxlikelihood spread", metavar="#")
+
+		self.parser.add_option("--max-shift", dest="maxshift", type="float",
+			help="Maximum shift for aligned particles", metavar="#")
 
 		### Strings
 		self.parser.add_option("--class-list-keep", dest="keepclasslist",
@@ -39,6 +41,10 @@ class subStackScript(appionScript.AppionScript):
 
 	#=====================
 	def checkConflicts(self):
+		### check and make sure we got a practical shift
+		if self.params['maxshift'] is not None and self.params['maxshift'] < 1:
+			apDisplay.printError("Maximum shift must be greater than 1")
+
 		### check for missing and duplicate entries
 		if self.params['alignid'] is None and self.params['clusterid'] is None:
 			apDisplay.printError("Please provide either --cluster-id or --align-id")
@@ -121,17 +127,24 @@ class subStackScript(appionScript.AppionScript):
 				classnum = int(part['ref']['refnum'])-1
 			emanstackpartnum = alignpart['stackpart']['particleNumber']-1
 
+			### check shift
+			if self.params['maxshift'] is not None:
+				shift = math.hypot(alignpart['xshift'], alignpart['yshift'])
+				if shift > self.params['maxshift']:
+					excludeParticle += 1
+					f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
+
 			### check score
-			if ( self.params['minscore'] is not None 
+			elif ( self.params['minscore'] is not None 
 			 and alignpart['score'] is not None 
 			 and alignpart['score'] < self.params['minscore'] ):
 				excludeParticle += 1
 				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
 
 			### check spread
-			elif ( self.params['minspread'] is not None 
+			elif ( self.params['minscore'] is not None 
 			 and alignpart['spread'] is not None 
-			 and alignpart['spread'] < self.params['minspread'] ):
+			 and alignpart['spread'] < self.params['minscore'] ):
 				excludeParticle += 1
 				f.write("%d\t%d\t%d\texclude\n"%(count, emanstackpartnum, classnum))
 
