@@ -16,6 +16,7 @@ import spyder
 import EMAN
 ## appion
 import apEMAN
+import apImage
 import apParam
 import apDisplay
 import apFile
@@ -1103,7 +1104,7 @@ def createFactorMap(f1, f2, rundir, dataext):
 	time.sleep(2)
 	mySpider.close()
 	# hack to get postscript converted to png, require ImageMagick
-	convertPostscriptToPng(factorfile+".ps", factorfile+".png", size=200)
+	apImage.convertPostscriptToPng(factorfile+".ps", factorfile+".png", size=200)
 	apFile.removeFile(factorfile+".ps")
 
 	### 4. factor plot visualization
@@ -1165,37 +1166,12 @@ def makeDendrogram(numfactors=1, corandata="coran/corandata", dataext=".spi"):
 	)
 	mySpider.close()
 
-	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
+	apImage.convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
+
 
 #===============================
 def convertPostscriptToPng(psfile, pngfile, size=1024):
-
-	### better pstopnm pre-step
-	pstopnmcmd = "pstopnm -xsize=2000 -ysize=2000 -xborder=0 -yborder=0 -portrait "+psfile
-	proc = subprocess.Popen(pstopnmcmd, shell=True)
-	proc.wait()
-
-	### direct conversion
-	ppmfile = os.path.splitext(psfile)[0]+"001.ppm"
-	if os.path.isfile(ppmfile):
-		imagemagickcmd = ("convert -colorspace Gray -trim -resize "
-			+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
-	else:
-		ppmfile = psfile+"001.ppm"
-		if os.path.isfile(ppmfile):
-			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
-				+str(size)+"x"+str(size)+" "+ppmfile+" "+pngfile)
-		else:
-			imagemagickcmd = ("convert -colorspace Gray -trim -resize "
-				+str(size)+"x"+str(size)+" "+psfile+" "+pngfile)
-	proc = subprocess.Popen(imagemagickcmd, shell=True)
-	proc.wait()
-
-	if os.path.isfile(ppmfile):
-		apFile.removeFile(ppmfile)
-
-	if not os.path.isfile(pngfile):
-		apDisplay.printWarning("Postscript image conversion failed")
+	apImage.convertPostscriptToPng(psfile, pngfile, size)
 
 
 #===============================
@@ -1253,7 +1229,7 @@ def hierarchClusterProcess(numpart=None, factorlist=range(1,5),
 
 	if not os.path.isfile(dendrogramfile):
 		apDisplay.printError("dendrogram creation (CL HC) failed")
-	convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
+	apImage.convertPostscriptToPng("cluster/dendrogram.ps", "dendrogram.png")
 
 	return dendrogramfile
 
