@@ -83,6 +83,7 @@ class kerdenSOMScript(appionScript.AppionScript):
 		analysisq['alignstack'] = alignstackdata
 		analysisq['hidden'] = False
 		analysisq['project|projects|project'] = projectid
+		### linked through cluster not analysis
 		#analysisq['kerdenparams'] = kerdenq
 
 		### Clustering Run object
