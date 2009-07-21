@@ -263,9 +263,9 @@ function runSubStack() {
 	}
 
 	if ($minscore)
-		$command.="--minscore=$minscore ";
+		$command.="--min-score=$minscore ";
 	if ($maxshift)
-		$command.="--maxshift=$maxshift ";
+		$command.="--max-shift=$maxshift ";
 
 	$command.= ($commit=='on') ? "--commit " : "--no-commit ";
 
