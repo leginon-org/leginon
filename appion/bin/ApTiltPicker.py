@@ -497,11 +497,14 @@ class PickerApp(wx.App):
 			v1 = numpy.asarray(vert1, dtype=numpy.float32)
 			v2 = apTiltTransform.a1Toa2Data(v1, self.data)
 			self.panel2.setTargets('Polygon', v2)
-			vert2 = [ tuple((v[0],v[1])) for v in v2 ]
+			vert1b = [ tuple((v[1],v[0])) for v in vert1 ]
 			#elim particles
-			maskimg1 = polygon.filledPolygon(self.panel1.imagedata.shape, vert1)
+			maskimg1 = polygon.filledPolygon(self.panel1.imagedata.shape, vert1b)
+			#self.panel1.setImage(maskimg1)
+			#print maskimg1.shape
 			for i in range(targets1.shape[0]):
-				coord = tuple((targets1[i,0], targets1[i,1]))
+				coord = tuple((targets1[i,1], targets1[i,0]))
+				#print coord
 				if maskimg1[coord] != 0:
 					eliminated += 1
 				else:
@@ -513,11 +516,14 @@ class PickerApp(wx.App):
 			v2 = numpy.asarray(vert2, dtype=numpy.float32)
 			v1 = apTiltTransform.a2Toa1Data(v2, self.data)
 			self.panel1.setTargets('Polygon', v1)
-			vert1 = [ tuple((v[0],v[1])) for v in v1 ]
+			vert2b = [ tuple((v[1],v[0])) for v in vert2 ]
 			#elim particles
-			maskimg2 = polygon.filledPolygon(self.panel2.imagedata.shape, vert2)
+			maskimg2 = polygon.filledPolygon(self.panel2.imagedata.shape, vert2b)
+			#self.panel2.setImage(maskimg2)
+			#print maskimg2.shape
 			for i in range(targets2.shape[0]):
-				coord = tuple((targets2[i,0], targets2[i,1]))
+				coord = tuple((targets2[i,1], targets2[i,0]))
+				#print coord
 				if maskimg2[coord] != 0:
 					eliminated += 1
 				else:
