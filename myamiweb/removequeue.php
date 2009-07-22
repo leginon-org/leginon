@@ -187,7 +187,7 @@ function createData() {
 			array_push($queues,$d3tl['queue']);
 		};
 		$descdqlist = getDeQueuedTargetListIdsByImage($d3);
-		foreach ((aray)$descdqlist as $d3tl) {
+		foreach ((array)$descdqlist as $d3tl) {
 			array_push($dqimagetls,$d3tl['doneid']);
 		}
 	}
