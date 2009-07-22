@@ -122,8 +122,8 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		##### DELETE HEADERS!!!!!!!!!!
 		
-#		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
-#		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)		
+		apIMAGIC.copyFile(self.params['rundir'], "start.hed", headers=True)
+		apIMAGIC.copyFile(self.params['rundir'], "references.hed", headers=True)		
 
 		filename = os.path.join(self.params['rundir'], "imagicMRA.batch")
 		f = open(filename, 'w')
@@ -168,7 +168,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 
 		if self.params['nproc'] > 1:
 			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
-				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/alimass.e_mpi <<EOF")
+				" -x IMAGIC_BATCH  /usr/local/IMAGIC/align/mralign.e_mpi <<EOF")
 			if append_log is True:
 				f.write(" >> multiReferenceAlignment.log\n")
 			else:
@@ -176,7 +176,7 @@ class imagicAlignmentScript(appionScript.AppionScript):
 			f.write("YES\n")
 			f.write(str(self.params['nproc'])+"\n")
 		else:
-			f.write("/usr/local/IMAGIC/align/alimass.e <<EOF")
+			f.write("/usr/local/IMAGIC/align/mralign.e <<EOF")
 			if append_log is True:
 				f.write(" >> multiReferenceAlignment.log\n")
 			else:
