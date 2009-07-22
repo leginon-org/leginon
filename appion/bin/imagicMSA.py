@@ -35,18 +35,25 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		self.parser.set_usage( "Usage: %prog --file=<name> --apix=<pixel> --rundir=<dir> "
 			+"[options]")
 
+		### basic params
+		self.parser.add_option("--nproc", dest="nproc", type="int", default=8,
+			help="number of processors to use", metavar="int")
 		self.parser.add_option("--alignid", dest="alignid",
 			help="ID of particle stack", metavar="int")
+			
+		### filtering & binning params	
 		self.parser.add_option("--lpfilt", dest="lpfilt", type="int",
 			help="low-pass filter value (in angstroms)", metavar="INT")
 		self.parser.add_option("--hpfilt", dest="hpfilt", type="int", 
 			help="high-pass filter value (in angstroms)", metavar="INT")
-		self.parser.add_option("--mask_radius", dest="mask_radius", type="float", default=1.0,
-			help="radius of mask for MSA (in pixels or fraction of radius)", metavar="FLOAT")
-                self.parser.add_option("--mask_dropoff", dest="mask_dropoff", type="float", 
-                        help="dropoff (softness) of mask for MSA (in pixels or fraction of radius)", metavar="FLOAT")
 		self.parser.add_option("--bin", dest="bin", type="int", default=1,
 			help="binning of the image (power of 2)", metavar="INT")
+			
+		### masking & MSA params	
+		self.parser.add_option("--mask_radius", dest="mask_radius", type="float", default=1.0,
+			help="radius of mask for MSA (in pixels or fraction of radius)", metavar="FLOAT")
+		self.parser.add_option("--mask_dropoff", dest="mask_dropoff", type="float", 
+			help="dropoff (softness) of mask for MSA (in pixels or fraction of radius)", metavar="FLOAT")
 		self.parser.add_option("--numiters", dest="numiters", type="int", default=50,
 			help="number of iterations for MSA run", metavar="INT")
 		self.parser.add_option("--overcorrection", dest="overcorrection", type="float", default=0.8,
@@ -96,6 +103,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f = open(filename, 'w')
 		f.write("#!/bin/csh -f\n")
 		f.write("setenv IMAGIC_BATCH 1\n")
+		
+		### optional binning
 		if self.params['bin'] > 1:
 			f.write("/usr/local/IMAGIC/stand/coarse.e <<EOF > imagicMultivariateStatisticalAnalysis.log\n")
 			f.write("start\n")
@@ -107,6 +116,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write("start\n")
 			f.write("EOF\n")
 			append_log = True
+			
+		### optional filtering	
 		if self.params['hpfilt_imagic'] and self.params['lpfilt_imagic'] is not None:
 			f.write("/usr/local/IMAGIC/incore/incband.e OPT BAND-PASS <<EOF")
 			if append_log is True:
@@ -125,6 +136,8 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 			f.write("start\n")
 			f.write("EOF\n")
 			append_log = True
+			
+		### make a mask for MSA	
 		if self.params['mask_radius'] and self.params['mask_dropoff'] is not None:
 			f.write("/usr/local/IMAGIC/stand/arithm.e <<EOF")
 			if append_log is True:
@@ -153,11 +166,20 @@ class imagicMultivariateStatisticalAnalysisScript(appionScript.AppionScript):
 		f.write("DISC\n")
 		f.write(str(self.params['mask_radius'])+"\n")
 		f.write("EOF\n")
-		f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
-		f.write("NO\n")
+		
+		### run MSA
+		if self.params['nproc'] > 1:
+			f.write("/usr/local/IMAGIC/openmpi/bin/mpirun -np "+str(self.params['nproc'])+\
+				" -x IMAGIC_BATCH  /usr/local/IMAGIC/msa/msa.e_mpi <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("YES\n")
+			f.write(str(self.params['nproc'])+"\n")
+		else:
+			f.write("/usr/local/IMAGIC/msa/msa.e <<EOF >> imagicMultivariateStatisticalAnalysis.log\n")
+			f.write("NO\n")
 		f.write("FRESH_MSA\n")
 		f.write(str(self.params['MSAmethod'])+"\n")
 		f.write("start\n")
+		f.write("NO\n")
 		f.write("NO\n")
 		f.write("msamask\n")
 		f.write("eigenimages\n")
