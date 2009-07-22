@@ -45,7 +45,6 @@ class AppionLoop(appionScript.AppionScript):
 		### get images from database
 		self._getAllImages()
 		os.chdir(self.params['rundir'])
-		self.params['apix'] = apDatabase.getPixelSize(self.imgtree[0])
 		self.preLoopFunctions()
 		### start the loop
 		self.notdone=True
