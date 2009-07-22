@@ -60,7 +60,7 @@ def createIndices(shape):
 	indices = zip(ind[0].flat, ind[1].flat)
 	return indices
 
-def createIndices2(a,b,angle,offset=False):
+def createIndices2(a,b,angle,offset=False,odd=False):
 	'''
   indices enclosed by an ellipse
 	'''
@@ -70,7 +70,10 @@ def createIndices2(a,b,angle,offset=False):
 	shape = maxind,maxind
 	ind = numpy.indices(shape, numpy.float32)
 	if offset:
-		adds = numpy.ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
+		if odd:
+			adds = numpy.ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
+		else:
+			adds = numpy.ma.where(ind[0] % 2 != 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
 		ind = numpy.array((ind[0],ind[1]+adds.data))
 	center0 = shape[0] / 2.0 - 0.5
 	center1 = shape[1] / 2.0 - 0.5
@@ -129,5 +132,4 @@ def createRaster3(spacing, angle, limitindices):
 		rasterpoints.append(tuple(p))
 
 	return rasterpoints
-
 
