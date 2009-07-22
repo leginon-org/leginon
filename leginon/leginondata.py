@@ -1895,6 +1895,15 @@ class RasterTargetFilterSettingsData(TargetFilterSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TargetRasterPatternData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('target', AcquisitionImageTargetData),
+			('pattern', int),
+		)
+	typemap = classmethod(typemap)
+	
+
 class PolygonRasterSettingsData(TargetFilterSettingsData):
 	def typemap(cls):
 		return TargetFilterSettingsData.typemap() + (
