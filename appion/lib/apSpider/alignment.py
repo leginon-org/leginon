@@ -13,7 +13,10 @@ import numpy
 ## spider
 import spyder
 ## EMAN
-import EMAN
+try:
+	import EMAN
+except:
+	pass
 ## appion
 import apEMAN
 import apImage
@@ -1068,6 +1071,7 @@ def createClassAverages(stack,projs,apmq,numprojs,boxsz,outclass="classes",rotat
 		os.remove('classes.hed')
 	if os.path.exists('classes.img'):
 		os.remove('classes.img')
+	### I would prefer to use apImagicFile.readImagic, writeImagic
 	variances = EMAN.readImages(outvf+dataext,-1,-1,0)
 	averages = EMAN.readImages(outf+dataext,-1,-1,0)
 	projections=EMAN.readImages(projs,-1,-1,0)
