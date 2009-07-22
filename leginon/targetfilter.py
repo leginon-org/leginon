@@ -91,11 +91,15 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 					goodoldtargets.append(oldtarget)
 			self.goodoldtargets = goodoldtargets
 			self.logger.info('Filter input: %d' % (len(goodoldtargets),))
-			newtargets = self.filterTargets(goodoldtargets)
+			self.test = False
+			if len(goodoldtargets) > 0:
+				newtargets = self.filterTargets(goodoldtargets)
+			else:
+				newtargets = goodoldtargets
 			self.logger.info('Filter output: %d' % (len(newtargets),))
 			newtargets = self.appendOtherTargets(alltargets,newtargets)
 			self.displayTargets(newtargets,targetlistdata)
-			if self.settings['user check']:
+			if self.settings['user check'] and len(goodoldtargets) > 0:
 				self.setStatus('user input')
 				self.logger.info('Waiting for user to check targets...')
 				self.panel.enableSubmitTargets()
@@ -196,6 +200,7 @@ class TargetFilter(node.Node, targethandler.TargetWaitHandler):
 		raise NotImplementedError()
 
 	def onTest(self):
+		self.test = True
 		goodoldtargets = self.goodoldtargets
 		self.logger.info('Filter input: %d' % (len(goodoldtargets),))
 		newtargets = self.filterTargets(goodoldtargets)
