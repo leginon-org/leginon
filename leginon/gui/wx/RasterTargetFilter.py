@@ -16,15 +16,65 @@ import threading
 class Panel(gui.wx.TargetFilter.Panel):
 	icon = 'targetfilter'
 	def __init__(self, parent, name):
-		gui.wx.TargetFilter.Panel.__init__(self, parent, -1)
-		self.SettingsDialog = SettingsDialog
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+													'play',
+													shortHelpString='Submit')
+		self.Bind(gui.wx.Events.EVT_ENABLE_PLAY_BUTTON, self.onEnablePlayButton)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+													'stop',
+													shortHelpString='Stop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID, 'grid', shortHelpString='Default offset')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT, 'extractgrid', shortHelpString='Alternative offset')
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleDefaultOffset, id=gui.wx.ToolBar.ID_GRID)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onToggleAlternateOffset, id=gui.wx.ToolBar.ID_EXTRACT)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		self.toolbar.Realize()
+
+		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255))
+		self.imagepanel.selectiontool.setDisplayed('preview', True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, numbers=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
+		self.SetupScrolling()
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onToggleDefaultOffset(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, True)
+		self.node.setToggleOffset(False)
+
+	def onToggleAlternateOffset(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
+		self.node.setToggleOffset(True)
+
+	def setDefaultOffset(self):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, True)
+		
+	def setAlternateOffset(self):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

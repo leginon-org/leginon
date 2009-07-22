@@ -40,6 +40,9 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		}
 
 		self.targetdata = None
+		self.fromtarget = None
+		self.donetargetids = []
+		self.is_odd = True
 		if self.__class__ == RasterTargetFilter:
 			self.start()
 
@@ -108,9 +111,11 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		# use ellipse diameter to define raster limit
 		limita = self.settings['ellipse a'] / 2.0
 		limitb = self.settings['ellipse b'] / 2.0
-		self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['raster offset'])
 		# create raster
 		for target in targetlist:
+			self.researchPattern(target)
+			self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['raster offset'],self.is_odd)
+			self.savePattern(target)
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			self.targetdata = oldtarget
 			rasterpoints = self.makeRaster()
@@ -120,4 +125,68 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 				newtarget['delta column'] += rp[1]
 				newtarget['fromtarget'] = target
 				newlist.append(newtarget)
+			if not self.test or len(targetlist) % 2:
+				self.is_odd = not self.is_odd
+				self.setOffsetToolBar()
+			self.donetargetids.append(target.dbid)
 		return newlist
+
+	def getAlpha(targetdata):
+		imageref = target.special_getitem('image', dereference=False)
+		if imageref:
+			image = leginondata.AcquisitionImageData.direct_query(imageref.dbid, readimages=False)
+			alpha = image['scope']['stage position']['alpha']
+		else:
+			alpha = 0
+		return alpha
+
+	def researchFromtarget(self,targetdata):
+		fromtarget = None
+		target = targetdata
+		while not fromtarget:
+			imageref = target.special_getitem('image', dereference=False)
+			if imageref:
+				image = self.researchDBID(leginondata.AcquisitionImageData, imageref.dbid, readimages=False)
+				target = image['target']
+			else:
+				break
+			if target:
+				fromtarget = target['fromtarget']
+			else:
+				break
+		if fromtarget:
+			print "Ancestor From Target:", fromtarget.dbid
+		else:
+			print "No Ancestor From Target:"
+			fromtarget = targetdata
+		self.fromtarget = fromtarget
+		return fromtarget
+
+	def researchPattern(self,targetdata):
+		fromtarget = self.researchFromtarget(targetdata)
+		q = leginondata.TargetRasterPatternData(target=fromtarget)
+		result = q.query(results=1,readimages=False)
+		if result:
+			self.is_odd = bool(result[0]['pattern'])
+			self.setOffsetToolBar()
+
+	def savePattern(self,targetdata):
+		pattern = int(self.is_odd)
+		fromtarget = self.researchFromtarget(targetdata)
+		q = leginondata.TargetRasterPatternData(target=fromtarget)
+		result = q.query(results=1)
+		if not result or pattern != result[0]['pattern']:
+			patterndata = leginondata.TargetRasterPatternData()
+			patterndata['target'] = fromtarget
+			patterndata['pattern'] = pattern
+			self.publish(patterndata, database=True, dbforce=True) 	
+		
+	def setToggleOffset(self,value):
+		self.is_odd = value
+		self.savePattern(self.fromtarget)
+
+	def setOffsetToolBar(self):
+		if self.is_odd:
+			self.panel.setDefaultOffset()
+		else:
+			self.panel.setAlternateOffset()
