@@ -110,7 +110,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 
 	// number of processors defaulted to 8
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
-	echo "<INPUT TYPE='hidden' NAME='nproc' VALUE=$nproc";
+	echo "<INPUT TYPE='hidden' NAME='nproc' VALUE=$nproc>";
 
   echo"
 	<TABLE BORDER=0 CLASS=tableborder>
