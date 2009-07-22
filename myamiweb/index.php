@@ -14,7 +14,7 @@ $baseurl = BASE_URL;
 
 $link = new iconlink();
 $link->setImagePath('img/');
-$link->cols = 3;
+$link->cols = 4;
 $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
@@ -23,8 +23,8 @@ $link->addlink('admin.php','Administration','', 'admin');
 $link->addlink('2wayviewer.php','2 Way Viewer','', 'viewer');
 $link->addlink('tomo/','Tomography','', 'tomo_icon_3');
 $link->addlink('dualview.php','Dual Viewer','', 'dual_view');
+$link->addlink('template.php', 'Hole Template viewer','', 'template');
 $link->addlink('/phpMyAdmin/','phpMyAdmin','', 'phpMyAdmin');
-$link->addlink('template.php', 'Hole Template viewer','', '');
 
 
 $title = "Leginon II database Tools";
