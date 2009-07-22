@@ -175,6 +175,12 @@ function jobform($extra=false)	{
 	echo "<TD VALIGN='TOP'>\n";
 
 	echo "</TD></tr>\n";
+	
+	// number of processors defaulted to 8
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 8;
+	echo "<INPUT TYPE='hidden' NAME='nproc' VALUE=$nproc>";
+	
+	// rest of the params
 	echo "<TR>";
 	echo "    <TD VALIGN='TOP'>\n";
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
@@ -275,6 +281,7 @@ function runImagicMSA($extra=false)	{
 	$overcorrection=$_POST['overcorrection'];
 	$description=$_POST['description'];
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
+	$nproc = $_POST['nproc'];
 	$user = $_SESSION['username'];
 	$pass = $_SESSION['password'];
 	
@@ -292,13 +299,14 @@ function runImagicMSA($extra=false)	{
 	if ($bin) $command.= " --bin=$bin";
 	$command.= " --numiters=$numiters --MSAmethod=$MSAmethod --overcorrection=$overcorrection";
 	$command.= " --description=\"$description\"";
+	$command.=" --nproc=$nproc";
 	if ($commit) $command.= " --commit";
 	else $command.=" --no-commit";
 
 	if ($_POST['process']=="run imagic") {
 		if (!($user && $pass)) jobform("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignanalysis');
+		$sub = submitAppionJob($command,$outdir,$runid,$expId,'alignanalysis',False,False,False,$nproc,8,1);
 		// if errors:
 		if ($sub) jobform("<b>ERROR:</b> $sub");
 	}
