@@ -736,7 +736,8 @@ def getRMeasurePath():
 		exename = "rmeasure"
 		rmeasexe = subprocess.Popen("which "+exename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 	if not os.path.isfile(rmeasexe):
-		apDisplay.printError(exename+" was not found at: "+apParam.getAppionDirectory())
+		apDisplay.printWarning(exename+" was not found at: "+apParam.getAppionDirectory())
+		return None
 	return rmeasexe
 
 
@@ -747,6 +748,9 @@ def runRMeasure(apix, volpath, imask=0):
 
 	apDisplay.printMsg("R Measure, processing volume: "+volpath)
 	rmeasexe = getRMeasurePath()
+	if rmeasexe is None:
+		apDisplay.printWarning("R Measure failed: could not find rmeasure program")
+		return None
 	rmeasproc = subprocess.Popen(rmeasexe, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	fin = rmeasproc.stdin
 	fout = rmeasproc.stdout
@@ -762,7 +766,7 @@ def runRMeasure(apix, volpath, imask=0):
 	flog.close()
 
 	if output is None:
-		apDisplay.printWarning("R Measure, FAILED: no output found")
+		apDisplay.printWarning("R Measure failed: no output found")
 		return None
 
 	resolution = None
