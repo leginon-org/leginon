@@ -198,7 +198,7 @@ Download was over 129 MB (in July 2009). If you have a slow internet connection 
 .Install Complete list of additional packages:
 
 - **python tools**: python-tools python-devel
-- **general applications**: subversion ImageMagick grace gnuplot
+- **general applications**: subversion ImageMagick grace gnuplot python-matplotlib
 - **Tilt Picker**: wxPython numpy scipy python-imaging
 - **FindEM**: gcc-gfortran compat-gcc-34-g77
 - **Ace 2**: gcc-objc fftw3-devel gsl-devel
@@ -210,7 +210,7 @@ Download was over 129 MB (in July 2009). If you have a slow internet connection 
 
 ```
 $ sudo yum -y install \
-python-tools python-devel \
+python-tools python-devel python-matplotlib \
 subversion ImageMagick grace gnuplot \
 wxPython numpy scipy python-imaging \
 gcc-gfortran compat-gcc-34-g77 \
