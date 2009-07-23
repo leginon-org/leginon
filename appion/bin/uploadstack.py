@@ -53,11 +53,17 @@ class UploadStack(appionScript.AppionScript):
 		"""
 		standard appionScript
 		"""
+		### check for stack file
 		if self.params['stackfile'] is None:
 			apDisplay.printError("Please provide a stack file, e.g., --file=/home/myfile.hed")
 		if not os.path.isfile(self.params["stackfile"]):
 			apDisplay.printError("Could not find stack file: %s"%(self.params["stackfile"]))
+		if self.params["stackfile"][-4:] == ".hed" and not os.path.isfile(self.params["stackfile"][:-4]+".img"):
+			apDisplay.printError("Could not find stack file: %s"%(self.params["stackfile"][:-4]+".img"))
+		if self.params["stackfile"][-4:] == ".img" and not os.path.isfile(self.params["stackfile"][:-4]+".hed"):
+			apDisplay.printError("Could not find stack file: %s"%(self.params["stackfile"][:-4]+".hed"))
 
+		### check for parameters
 		if self.params['apix'] is None:
 			apDisplay.printError("Please provide a stack pixel size (in Angstroms), e.g., --apix=1.55")
 		if self.params['apix'] < 1e-3 or self.params['apix'] > 1e5:
@@ -145,6 +151,8 @@ class UploadStack(appionScript.AppionScript):
 		print "Num part: ",self.numpart
 		if not self.numpart or self.numpart <= 0:
 			apDisplay.printError("Could not determine number of particles")
+		if self.numpart <= 4:
+			apDisplay.printError("Not enough particles to upload")
 
 		apStack.averageStack(newstack)
 
