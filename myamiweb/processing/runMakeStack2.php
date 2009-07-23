@@ -360,6 +360,7 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 	if ($ctfdata) {
 		$fields = array('defocus1', 'defocus2');
 		$bestctf = $particle->getBestStats($fields, $sessionId);
+		// make sure defocus is always negative
 		$min=-1*abs($bestctf['defocus1'][0]['min']);
 		$max=-1*abs($bestctf['defocus1'][0]['max']);
 		//echo $min."<br/>\n";
@@ -367,15 +368,16 @@ function createMakestackForm($extra=false, $title='Makestack.py Launcher', $head
 		// check if user has changed values on submit
 		$minval = ($_POST['dfmin']!=$min && $_POST['dfmin']!='' && $_POST['dfmin']!='-') ? $_POST['dfmin'] : $min;
 		$maxval = ($_POST['dfmax']!=$max && $_POST['dfmax']!='' && $_POST['dfmax']!='-') ? $_POST['dfmax'] : $max;
-		$sessionpath=ereg_replace("E","e",$sessionpath);
 		$minval = ereg_replace("E","e",round($minval,8));
 		$maxval = ereg_replace("E","e",round($maxval,8));
+		$mindbval = ereg_replace("E","e",round($min,8));
+		$maxdbval = ereg_replace("E","e",round($max,8));
 		echo"<b>Defocus Limits</b><br />
-			<input type='text' name='dfmin' value='$minval' size='25'>
-			<input type='hidden' name='dbmin' value='$minval'>
-			Minimum<br />
-			<input type='text' name='dfmax' value='$maxval' size='25'>
-			<input type='hidden' name='dbmax' value='$maxval'>
+				<input type='text' name='dfmin' value='$minval' size='25'>
+				<input type='hidden' name='dbmin' value='$mindbval'>
+			Minimum<br/>
+				<input type='text' name='dfmax' value='$maxval' size='25'>
+				<input type='hidden' name='dbmax' value='$maxdbval'>
 			Maximum\n";
 		echo "<br/>\n";
 		echo "<br/>\n";
@@ -409,11 +411,13 @@ function runMakestack() {
 
 	$single=$_POST['single'];
 	//make sure a session was selected
-	$description=$_POST['description'];
-	if (!$description) createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
+	$description = $_POST['description'];
+	if (!$description)
+		createMakestackForm("<b>ERROR:</b> Enter a brief description of the stack");
 
 	//make sure a session was selected
-	if (!$outdir) createMakestackForm("<b>ERROR:</b> Select an experiment session");
+	if (!$outdir)
+		createMakestackForm("<b>ERROR:</b> Select an experiment session");
 
 	// get correlation runId
 	$prtlrunId=$_POST['prtlrunId'];
@@ -483,6 +487,8 @@ function runMakestack() {
 	}
 
 	// check defocus cutoffs
+	//echo "MIN :: $_POST[dfmin] :: $_POST[dbmin]<br/>\n";
+	//echo "MAX :: $_POST[dfmax] :: $_POST[dbmax]<br/>\n";
 	$dfmin = ($_POST['dfmin']==$_POST['dbmin'] || $_POST['dfmin']>$_POST['dbmin']) ? '' : $_POST['dfmin'];
 	$dfmax = ($_POST['dfmax']==$_POST['dbmax'] || $_POST['dfmax']<$_POST['dbmax']) ? '' : $_POST['dfmax'];
 
