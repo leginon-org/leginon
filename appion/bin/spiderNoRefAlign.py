@@ -149,7 +149,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		### create reference
 		refq = appionData.ApAlignReferenceData()
-		refq['refnum'] = 0
+		refq['refnum'] = 1
 		refq['iteration'] = 0
 		refq['mrcfile'] = "template.mrc"
 		#refpath = os.path.abspath(os.path.join(self.params['rundir'], "alignment"))
