@@ -116,6 +116,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			defocus = ctfvalue['defocus1']
 		defocus = -1.0*abs(defocus)
 
+		### assume defocus values are ALWAYS negative
 		### skip micrograph that have defocus above or below min & max defocus levels
 		if self.params['mindefocus'] and defocus > self.params['mindefocus']:
 			#apDisplay.printColor(shortname+" defocus ("+str(round(defocus*1e6,2))+\
