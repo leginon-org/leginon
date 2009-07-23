@@ -210,10 +210,14 @@ class rctVolumeScript(appionScript.AppionScript):
 		starttime = time.time()
 		apDisplay.printColor("Running spider stack conversion this can take a while", "cyan")
 		apEMAN.executeEmanCmd(emancmd, verbose=True)
+		time.sleep(1) # wait a sec, for things to finish
 		apDisplay.printColor("finished eman in "+apDisplay.timeString(time.time()-starttime), "cyan")
 
 		apFile.removeStack(tempstack, warn=False)
 		apFile.removeStack(emanstackfile, warn=False)
+		if not os.path.isfile(spiderstack):
+			apDisplay.printError("Failed to create a spider stack")
+
 		return spiderstack
 
 	#=====================
