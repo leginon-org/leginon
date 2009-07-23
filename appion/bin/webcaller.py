@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import subprocess
-import sys
 import os
+import sys
+import time
+import subprocess
 
 ## this is a wrapper for all appion scripts
 ## use this function to launch from the web so that
@@ -14,6 +15,13 @@ if __name__ == '__main__':
 	cmd = sys.argv[1]
 	outf = sys.argv[2]
 
+	## check if directory exists
+	time.sleep(0.5)
+	dirname = os.path.dirname(outf)
+	if not os.path.isdir(dirname):
+		os.mkdir(dirname)
+
+	## run command and write to log file
 	f = open(outf, "w")
 	proc = subprocess.Popen(cmd, shell=True, stdout=f, stderr=subprocess.STDOUT)
 	proc.wait()
