@@ -141,8 +141,8 @@ class FilterLoop(appionLoop2.AppionLoop):
 		"""
 		hack to override appionScript close
 		"""
-		apDisplay.printMsg("Waiting 60 seconds for threads to complete")
-		time.sleep(60)
+		apDisplay.printMsg("Waiting 20 seconds for threads to complete")
+		time.sleep(20)
 		if self.params['keepall'] is False and self.params['limit'] is None:
 			pattern = os.path.join(self.params['rundir'], self.params['sessionname']+'*.dwn.mrc')
 			apFile.removeFilePattern(pattern)
