@@ -2,19 +2,19 @@
 import numpy
 import scipy.linalg
 
-def ellipsePoints(center, major, minor, majorangle, angleinc):
+def ellipsePoints(angleinc, center, a, b, alpha):
 	'''
 	Generate a sequence of x,y points given the parameters of an
 	ellipse, and an angular increment.
 	'''
-	cosmajor = numpy.cos(majorangle)
-	sinmajor = numpy.sin(majorangle)
+	cosa = numpy.cos(alpha)
+	sina = numpy.sin(alpha)
 	points = []
 	for angle in numpy.arange(0, 2*numpy.pi, angleinc):
-		acosangle = major * numpy.cos(angle)
-		bsinangle = minor * numpy.sin(angle)
-		row = center[0] + acosangle * cosmajor - bsinangle * sinmajor
-		col = center[1] + acosangle * sinmajor - bsinangle * cosmajor
+		acosangle = a * numpy.cos(angle)
+		bsinangle = b * numpy.sin(angle)
+		row = center[0] + acosangle * cosa - bsinangle * sina
+		col = center[1] + acosangle * sina + bsinangle * cosa
 		points.append((row,col))
 	return points
 
@@ -24,7 +24,7 @@ def drawEllipse(shape, angleinc, center, a, b, alpha):
 	by setting pixels to 1.
 	'''
 	result = numpy.zeros(shape, numpy.int)
-	points = ellipsePoints(center, a, b, alpha, angleinc)
+	points = ellipsePoints(angleinc, center, a, b, alpha)
 	for point in points:
 		point = map(int, point)
 		result[int(point[0]), int(point[1])] = 1
