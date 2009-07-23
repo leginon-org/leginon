@@ -9,14 +9,13 @@ $binning = 16;
 $sigma = 3;
 $kernel = 3;
 $quality = 75;
-$densitymax = 255;
 
 $imageId = $_GET['imageId'];
 $path = $leginondata->getImagePathFromImageId($imageId);
 $filename = $leginondata->getFilenameFromId($imageId);
 
 $src_mrc = mrcread($path.$filename);
-list($pmin, $pmax) = mrcstdevscale($src_mrc, $densitymax);
+list($pmin, $pmax) = mrcstdevscale($src_mrc, 3);
 mrcgaussianfilter($src_mrc, $binning, $kernel, $sigma);
 $img = mrctoimage($src_mrc,$pmin,$pmax);
 
