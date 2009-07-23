@@ -68,11 +68,11 @@ and [Google Code http://code.google.com/p/appion/]
  - **dbem**: web interface to pyAppion
  - **project**: for keeping separate projects and web logins
 - **leginon**: only for image viewer and polygon tool
- - **pyami** r107, generic image processing
- - **numextension** r52: numpy extension library
- - **sinedon** r50: for MySQL interaction
- - **leginon** r5463: core gui libraries for manual pickers
-- **pyappion** r3072: python processing pipeline
+ - **pyami**, generic image processing
+ - **numextension**: numpy extension library
+ - **sinedon**: for MySQL interaction
+ - **leginon**: core gui libraries for manual pickers
+- **pyappion**: python processing pipeline
  - includes ACE1, ACE2, radermacher module, DoG Picker, TiltPicker, and FindEM
 
 
@@ -81,21 +81,28 @@ and [Google Code http://code.google.com/p/appion/]
 
 ==== Required ====
 
- - **EMAN** v1.9 cluster,
+ - **EMAN1** v1.9 cluster,
   - [download binary http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman]
- - **UCSF Chimera** v1.2509, newer versions have problems,
-  - [download binary http://www.cgl.ucsf.edu/chimera/download.html]
+ - **UCSF Chimera** v1.3 or other,
+  - [download v1.2509 binary http://www.cgl.ucsf.edu/chimera/olddownload.html]
+  - [download newest binary http://www.cgl.ucsf.edu/chimera/download.html]
+  - Note: we use version 1.2509 from May 2008, because version 1.3 creates weird artifacts for the volumes.
 
 
 ==== Recommended ====
 
-- **SPIDER** v15 or older, newest version not supported,
+- **SPIDER** v15 is recommended, other versions are untested,
   - [download binary http://www.wadsworth.org/spider_doc/spider/docs/spi-register.html]
 - **Xmipp** v2.2 or newer, for alignment, compile your own for openmpi support,
   - [download source http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/InstallingTheSoftware]
 - **IMOD**, for tomography
-- **Rmeasure**, for resolution estimation
-- **CtfTilt**, for tilted CTF estimation
+- **Grigorieff lab:**
+  - **ctftilt**, for tilted CTF estimation
+    - [download binary http://emlab.rose2.brandeis.edu/grigorieff/download_ctf.html]
+  - **frealign**, for reconstructions
+    - [download binary http://emlab.rose2.brandeis.edu/grigorieff/downloads.html]
+  - **rmeasure**, for resolution estimation
+    - [download binary http://emlab.rose2.brandeis.edu/grigorieff/download_r.html]
 
 
 ==== Recommended, but costs money ====
@@ -797,30 +804,6 @@ Before images can be uploaded a microscope and camera need to be created
 
 
 
-== Potential problems ==
-
-
-=== Firewall settings ===
-
-You may need to configure your firewall to allow incoming HTTP (port 80) and MySQL (port 3306) traffic:
-``` $ system-config-securitylevel
-
-
-=== Security-enhanced linux ===
-
-[Security-enhanced linux (SELinux) http://en.wikipedia.org/wiki/Security-Enhanced_Linux] may be preventing your files from loading. To fix this run the following command:
-
-``` $ sudo /usr/bin/chcon -R -t httpd_sys_content_t /var/www/html/
-
-or just disable SELinux entirely:
-
-``` sudo nano /etc/selinux/config
-
-``` SELINUX=disabled
-
-see [this website http://docs.fedoraproject.org/selinux-apache-fc3/sn-simple-setup.html] for more details on SELinux
-
-
 --------------------------------
 = Install external packages =
 
@@ -855,6 +838,42 @@ you should see the line:
 ``` * Checking for MPI ... yes
 
 ``` $ ./scons.compile
+
+
+== EMAN1 ==
+
+ - **EMAN1** v1.9 cluster,
+  - [download binary http://ncmi.bcm.tmc.edu/ncmi/software/software_details?selected_software=eman]
+
+
+== UCSF Chimera ==
+
+ - **UCSF Chimera** v1.2509 or other,
+  - [download v1.2509 binary http://www.cgl.ucsf.edu/chimera/olddownload.html]
+  - [download newest binary http://www.cgl.ucsf.edu/chimera/download.html]
+  - Note: we use version 1.2509 from May 2008, because version 1.3 creates weird artifacts for the volumes.
+
+
+== SPIDER ==
+
+- **SPIDER** v15 is recommended, other versions are untested,
+  - [download binary http://www.wadsworth.org/spider_doc/spider/docs/spi-register.html]
+
+
+== IMOD ==
+
+- **IMOD**, for tomography
+
+
+== Grigorieff programs ==
+
+- **Grigorieff lab:**
+  - **ctftilt**, for tilted CTF estimation
+    - [download binary http://emlab.rose2.brandeis.edu/grigorieff/download_ctf.html]
+  - **frealign**, for reconstructions
+    - [download binary http://emlab.rose2.brandeis.edu/grigorieff/downloads.html]
+  - **rmeasure**, for resolution estimation
+    - [download binary http://emlab.rose2.brandeis.edu/grigorieff/download_r.html]
 
 
 --------------------------------
@@ -993,9 +1012,69 @@ $ ./start.py
 
 
 
+= Potential problems =
+
+
+== Firewall settings ==
+
+You may need to configure your firewall to allow incoming HTTP (port 80) and MySQL (port 3306) traffic:
+``` $ system-config-securitylevel
 
 
 
+== Security-enhanced linux ==
+
+[Security-enhanced linux (SELinux) http://en.wikipedia.org/wiki/Security-Enhanced_Linux] may be preventing your files from loading. To fix this run the following command:
+
+For webpages PHP, HTML, etc.
+
+``` $ sudo /usr/bin/chcon -R -t httpd_sys_content_t /var/www/html/
+
+For program libraries: .SO files, etc.
+
+``` $ sudo /usr/bin/chcon -R -t texrel_shlib_t /usr/local/EMAN/lib/
+
+Or just disable SELinux entirely:
+
+``` $ sudo nano /etc/selinux/config
+
+``` SELINUX=disabled
+
+see [this website http://docs.fedoraproject.org/selinux-apache-fc3/sn-simple-setup.html] for more details on SELinux
+
+
+== Scipy crashes ==
+
+On some machines the scipy binary has problems. The best way to test this is to open a python shell:
+
+``` $ python
+
+And then run Scipy test suite
+
+``` 
+>>> import scipy
+>>> scipy.test()
+``` 
+
+Lots of output, but look at the last lines. On one machine I got:
+
+``` 
+Ran 3393 tests in 35.175s
+
+OK (KNOWNFAIL=3, SKIP=17)
+<nose.result.TextTestResult run=3393 errors=0 failures=0>
+```
+
+On another I got:
+
+```
+Ran 1728 tests in 6.057s
+
+FAILED (errors=5)
+<unittest._TextTestResult run=1728 errors=5 failures=0>
+```
+
+Should provide a good summary, if something is going wrong.
 
 
 --------------------------------
