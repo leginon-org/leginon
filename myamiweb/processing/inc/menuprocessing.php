@@ -420,7 +420,7 @@ if ($expId) {
 	}
 
 	// initial model creation tools
-	$action = "Initial Model Creation";
+	$action = "Volume Download";
 
 	$nruns=array();
 	$nruns[]=array(
@@ -430,6 +430,16 @@ if ($expId) {
 	$nruns[]=array(
 		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
 	);
+
+	$data[]=array(
+		      'action'=>array($action, $celloption),
+		      'result'=>array(),
+		      'newrun'=>array($nruns, $celloption),
+		      );
+
+	// ab initial reconstruction tools
+	$action = "Ab Initio Reconstruction";
+	$nruns=array();
 
 	/* RCT Volumes */
 	if ($maxangle > 5 && $aligndone >= 1 && $stackruns >= 2 ) {
@@ -512,11 +522,13 @@ if ($expId) {
 		);
 	}
 
-	$data[]=array(
+	if ( (array)$nruns ) {
+		$data[]=array(
 		      'action'=>array($action, $celloption),
 		      'result'=>array(),
 		      'newrun'=>array($nruns, $celloption),
 		      );
+	}
 
 	// display reconstructions only if there is a stack
 	#echo "Stack: $stackruns;";
@@ -525,7 +537,7 @@ if ($expId) {
 		// if all submitted jobs are uploaded, it should be 0
 		$jobincomp = $jobdone-$reconswithjob; //incomplete
 
-		$action = "Reconstructions";
+		$action = "Refine Reconstruction";
 
 		$reconresults = array();
 
@@ -546,11 +558,11 @@ if ($expId) {
 //		if ($_SESSION['loggedin']) {
 		if (TRUE) {
 			$nruns[] = array(
-					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Reconstruction</a>",
+					 'name'=>"<a href='emanJobGen.php?expId=$sessionId'>EMAN Refinement</a>",
 					 'result'=>$reconresults,
 					 );
-			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Reconstruction</a>" ;
-			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Reconstruction</a>";
+			$nruns[] = "<a href='frealignJobGen.php?expId=$sessionId'>Frealign Refinement</a>" ;
+			$nruns[] = "<a href='spiderJobGen.php?expId=$sessionId'>SPIDER Refinement</a>";
 		} else {
 			$nruns[] = "<font color='888888'><i>please login first</i></font>";
 		}
@@ -609,12 +621,20 @@ if ($expId) {
 	}
 
 	// upload model & template tools
-	$action = "Pipeline tools";
+	$action = "Import tools";
+
+	$nruns=array();
+	$nruns[]=array(
+		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
+	);
+
+	$nruns[]=array(
+		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
+	);
 
 	$result = ($templates==0) ? "" :
 	  "<a href='viewtemplates.php?expId=$sessionId'>$templates available</a>";
 
-	$nruns=array();
 	$nruns[]=array(
 		       'name'=>"<a href='uploadtemplate.php?expId=$sessionId'>Upload template</a>",
 		       'result'=>$result,
