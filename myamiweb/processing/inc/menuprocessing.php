@@ -624,13 +624,17 @@ if ($expId) {
 	  "<a href='viewmodels.php?expId=$sessionId'>$models available</a>";
 
 	$nruns[]=array(
-		       'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
-		       'result'=>$result,
-		       );
+		'name'=>"<a href='uploadmodel.php?expId=$sessionId'>Upload model</a>",
+		'result'=>$result,
+	);
 
 	$nruns[]=array(
-		       'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
-		       );
+		'name'=>"<a href='uploadimage.php?expId=$sessionId'>Upload more images</a>",
+	);
+
+	$nruns[]=array(
+		'name'=>"<a href='uploadstack.php?expId=$sessionId'>Upload stack</a>",
+	);
 
 	$data[]=array(
 		      'action'=>array($action, $celloption),
