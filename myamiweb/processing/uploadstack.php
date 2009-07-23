@@ -61,7 +61,7 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 
 	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
 	$ctfcorrectcheck = ($_POST['ctfcorrect']=='on') ? 'checked' : '';
-	$normalizecheck = ($_POST['normalize']=='on') ? 'checked' : '';
+	$normalizecheck = ($_POST['normalize']=='on' || !$_POST['process']) ? 'checked' : '';
 
 	$javascript = writeJavaPopupFunctions('appion');
 
@@ -113,17 +113,16 @@ function createUploadStackForm($extra=false, $title='Upload Stack Launcher', $he
 	echo "<br/>\n";
 
 	echo docpop('pdiam','<b>Particle diameter:</b>');
-	echo "&nbsp;<font size='-2'>(in &Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 	echo "<input type='text' name='diam' value='$diam' size='5'/>\n";
+	echo "&nbsp;<font size='-2'>(in &Aring;ngstroms)</font>\n";
 
 	echo "<br/><br/>\n";
 
 	echo docpop('apix','<b>Pixel size:</b>');
-	echo "&nbsp;<font size='-2'>(in &Aring;ngstroms)</font>\n";
 	echo "<br/>\n";
 	echo "<input type='text' name='apix' value='$apix' size='5'/>\n";
-
+	echo "&nbsp;<font size='-2'>(in &Aring;ngstroms)</font>\n";
 
 	echo "<br/><br/>\n";
 
