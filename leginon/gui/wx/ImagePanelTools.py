@@ -25,6 +25,8 @@ from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import icons
 import gui.wx.TargetPanelBitmaps
+import pyami.ellipse
+import time
 
 DisplayEventType = wx.NewEventType()
 EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
@@ -320,69 +322,72 @@ class ImageTool(object):
 
 class RecordMotionTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = getBitmap('value.png')
+		bitmap = getBitmap('ellipse.png')
 		tooltip = 'Toggle Show Value'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
 		self.button.SetToggle(False)
 		self.start = None
 		self.xypath = []
+		self.ellipse = []
 		self.lastx = 0
 		self.lasty = 0
 
-	def OnLeftClick(self, evt):
+	def OnLeftDown(self, evt):
 		if self.button.GetToggle():
+			self.xypath = []
+			self.ellipse = []
 			if self.start is not None:
 				x = evt.m_x #- self.imagepanel.offset[0]
 				y = evt.m_y #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				self.xypath.append((x,y))
 			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
-			print "start at LeftClick",self.start
 
-	def OnRightClick(self, evt):
+	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			self.start = None
-			print self.xypath
-			self.xypath = []
-			#self.imagepanel.UpdateDrawing()
-	
-	def DrawPolygon(self, dc, targets):
-		color = wx.RED
-		dc.SetPen(wx.Pen(color, 3))
-		dc.SetBrush(wx.Brush(color, 1))
-		scaledpoints = targets
-		if len(scaledpoints)>=1:
-			p1 = self.imagepanel.image2view(scaledpoints[0])
-			dc.DrawCircle(p1[0],p1[1],1)
-			
-		for i,p1 in enumerate(scaledpoints[:-1]):
-			p2 = scaledpoints[i+1]
-			p1 = self.imagepanel.image2view(p1)
-			p2 = self.imagepanel.image2view(p2)
-			dc.DrawCircle(p2[0],p2[1],1)
-			dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
-		# close it with final edge
-		p1 = scaledpoints[-1]
-		p2 = scaledpoints[0]
-		p1 = self.imagepanel.image2view(p1)
-		p2 = self.imagepanel.image2view(p2)
-		dc.DrawLine(p1[0], p1[1], p2[0], p2[1])
+			self.ellipse = self.ellipsePoints(self.xypath)
+			self.imagepanel.UpdateDrawing()
 
+	def ellipsePoints(self, points):
+		params = pyami.ellipse.solveEllipseB2AC(points)
+		#params = pyami.ellipse.solveEllipseGander(points)
+		print 'PARAMS', params
+		if params is None:
+			## ellipse not fit
+			return []
+		angleinc = 5 * 3.14159 / 180.0
+		ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **params)
+		return ellipsepoints
+	
 	#--------------------
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
 			x,y = self.imagepanel.view2image((evt.m_x, evt.m_y))
 			self.xypath.append((x,y))
-			self.DrawPolygon(dc,self.xypath)
 			return True
 		return False
 
 	#--------------------
 	def OnToggle(self, value):
-		print "Toggled"
 		if not value:
 			self.start = None
 			self.xypath = []
+			self.ellipse = []
+			self.imagepanel.UpdateDrawing()
+
+	def Draw(self, dc):
+		if self.xypath:
+			dc.SetPen(wx.Pen(wx.RED, 3))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			scaledpoints = map(self.imagepanel.image2view, self.xypath)
+			dc.DrawLines(scaledpoints)
+		if self.ellipse:
+			dc.SetPen(wx.Pen(wx.GREEN, 3))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			polypoints = map(self.imagepanel.image2view, self.ellipse)
+			dc.DrawPolygon(polypoints)
+
 ##################################
 ##
 ##################################

@@ -146,6 +146,7 @@ class ImagePanel(wx.Panel):
 		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
 		# bind panel events
+		self.panel.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
 		self.panel.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
 		self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -566,8 +567,19 @@ class ImagePanel(wx.Panel):
 		return []
 
 	#--------------------
+	def _onLeftDown(self, evt):
+		pass
+
+	#--------------------
 	def _onLeftClick(self, evt):
 		pass
+
+	#--------------------
+	def OnLeftDown(self, evt):
+		for tool in self.tools:
+			if hasattr(tool, 'OnLeftDown'):
+				tool.OnLeftDown(evt)
+		self._onLeftDown(evt)
 
 	#--------------------
 	def OnLeftClick(self, evt):
