@@ -2,16 +2,21 @@
 
 #pythonlib
 import os
+import re
 import sys
 import time
 import shutil
 #appion
 import appionScript
-import apDisplay
 import apFile
+import apEMAN
+import apStack
 import apProject
+import apDisplay
+import apDatabase
+import appionData
 #leginon
-import leginondata
+#import leginondata
 import project
 import leginonconfig
 
@@ -31,7 +36,7 @@ class UploadStack(appionScript.AppionScript):
 		self.parser.add_option("--diam", dest="diameter", type="float",
 			help="Estimated diameter of partice (in Angstroms)", metavar="FILE")
 		self.parser.add_option("--apix", dest="apix", type="float",
-			help="Stack pixel size (in Angstroms)", metavar="#")
+			help="Stack pixel size (in meters)", metavar="#")
 
 		### true / false
 		self.parser.add_option("--ctf-corrected", dest="ctfcorrect", default=False,
@@ -54,7 +59,9 @@ class UploadStack(appionScript.AppionScript):
 			apDisplay.printError("Could not find stack file: %s"%(self.params["stackfile"]))
 
 		if self.params['apix'] is None:
-			apDisplay.printError("Please provide a stack pixel size (in Angstroms), e.g., --apix=1.55")
+			apDisplay.printError("Please provide a stack pixel size (in Angstroms), e.g., --apix=1.55e-10")
+		if self.params['apix'] < 1e-15 or self.params['apix'] > 1e-5:
+			apDisplay.printError("Please provide a REASONABLE stack pixel size (in meter), e.g., --apix=1.55e-10")
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
@@ -70,12 +77,10 @@ class UploadStack(appionScript.AppionScript):
 		"""
 		standard appionScript
 		"""
-		sessionq = leginondata.SessionData(name=self.params['sessionname'])
-		sessiondatas = sessionq.query()
-		if len(sessiondatas) > 0:
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		if sessiondata:
 			### METHOD 1 : session already exists
 			apDisplay.printColor("Add images to an existing session", "cyan")
-			sessiondata = sessiondatas[0]
 			### what about linking an existing session with project id to a new project id
 			oldprojectid = apProject.getProjectIdFromSessionName(self.params['sessionname'])
 			if oldprojectid != self.params['projectid']:
@@ -91,10 +96,7 @@ class UploadStack(appionScript.AppionScript):
 			except AttributeError:
 				apDisplay.printWarning("Could not set directory")
 				directory = ''
-			if self.params['userid'] is not None:
-				userdata = leginondata.UserData.direct_query(self.params['userid'])
-			else:
-				userdata = None
+			userdata = None
 			sessiondata = self.createSession(userdata, self.params['sessionname'], self.params['description'], directory)
 			self.linkSessionProject(sessiondata, self.params['projectid'])
 
@@ -105,25 +107,48 @@ class UploadStack(appionScript.AppionScript):
 	def setRunDir(self):
 		"""
 		standard appionScript
-		"""	
-		self.params['rundir'] = ???
+		"""
+		#auto set the output directory
+		sessiondata = apDatabase.getSessionDataFromSessionName(self.params['sessionname'])
+		if not sessiondata:
+			apDisplay.printError("Could not find session "+self.params['sessionname'])
+		self.sessiondata = sessiondata
+		path = os.path.abspath(self.sessiondata['image path'])
+		path = re.sub("leginon","appion",path)
+		path = re.sub("/rawdata","",path)
+		path = os.path.join(path, self.processdirname, self.params['runname'])
+		self.params['rundir'] = path
+
+	#=====================
+	def setProcessingDirName(self):
+		self.processdirname = "stacks"
 
 	#=====================
 	def start(self):
-		info = self.readUploadInfo(self.batchinfo[imgnum])
-
 		### copy stack to rundir
 		newstack = os.path.join(self.params['rundir'], "start.hed")
+		if os.path.isfile(newstack):
+			apDisplay.printError("Stack already exists")
 		emancmd = "proc2d %s %s"%(self.params['stackfile'], newstack)
-		self.params['normalize'] is True:
+		if self.params['normalize'] is True:
 			emancmd += " edgenorm"
 		apEMAN.executeEmanCmd(emancmd)
 
 		### set final parameters
-		self.boxsize = apFile.getBoxSize(newstack)
+		boxsize = apFile.getBoxSize(newstack)
+		print "Boxsize: ",boxsize
+		if not boxsize or boxsize <= 0:
+			apDisplay.printError("Could not determine stack size")
+		else:
+			self.boxsize = boxsize[0]
 		self.numpart = apFile.numImagesInStack(newstack)
+		print "Num part: ",self.numpart
+		if not self.numpart or self.numpart <= 0:
+			apDisplay.printError("Could not determine number of particles")
 
-		self.params['commit'] = False
+		apStack.averageStack(newstack)
+
+		#self.params['commit'] = False
 		self.createStackData()
 
 	#=====================
@@ -153,6 +178,8 @@ class UploadStack(appionScript.AppionScript):
 
 	#=====================
 	def createStackData(self):
+		apDisplay.printColor("Starting upload of stack", "blue")
+
 		pathq = appionData.ApPathData()
 		pathq['path'] = self.params['rundir']
 
@@ -201,7 +228,10 @@ class UploadStack(appionScript.AppionScript):
 			runsinstackq.insert()
 
 		### for each particle
+		sys.stderr.write("Starting particle upload")
 		for i in range(self.numpart):
+			if i % 100 == 0:
+				sys.stderr.write(".")
 			partq = appionData.ApParticleData()
 			partq['image'] = None  #We have no image, see if this works???
 			partq['selectionrun'] = selectq
@@ -219,6 +249,9 @@ class UploadStack(appionScript.AppionScript):
 
 			if self.params['commit'] is True:
 				stackpartq.insert()
+
+		sys.stderr.write("\n")
+		return
 
 #=====================
 #=====================
