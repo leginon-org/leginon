@@ -298,7 +298,7 @@ function runNoRefAlign() {
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
-       	if ($numpart < 10) createNoRefAlignForm("<B>ERROR:</B> Must have more than 10 particles");
+	if ($numpart < 4) createNoRefAlignForm("<B>ERROR:</B> Must have more than 4 particles");
 	if ($numfactors < 2) createNoRefAlignForm("<B>ERROR:</B> Must have at least 2 factors");
 
 	$particle = new particledata();

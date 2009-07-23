@@ -263,7 +263,7 @@ function runSpiderNoRefAlign() {
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
 	// classification
-	if ($numpart < 10) createSpiderNoRefAlignForm("<B>ERROR:</B> Must have more than 10 particles");
+	if ($numpart < 4) createSpiderNoRefAlignForm("<B>ERROR:</B> Must have more than 4 particles");
 
 	$particle = new particledata();
 
