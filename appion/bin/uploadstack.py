@@ -36,7 +36,7 @@ class UploadStack(appionScript.AppionScript):
 		self.parser.add_option("--diam", dest="diameter", type="float",
 			help="Estimated diameter of partice (in Angstroms)", metavar="FILE")
 		self.parser.add_option("--apix", dest="apix", type="float",
-			help="Stack pixel size (in meters)", metavar="#")
+			help="Stack pixel size (in Angstroms)", metavar="#")
 
 		### true / false
 		self.parser.add_option("--ctf-corrected", dest="ctfcorrect", default=False,
@@ -59,9 +59,9 @@ class UploadStack(appionScript.AppionScript):
 			apDisplay.printError("Could not find stack file: %s"%(self.params["stackfile"]))
 
 		if self.params['apix'] is None:
-			apDisplay.printError("Please provide a stack pixel size (in Angstroms), e.g., --apix=1.55e-10")
-		if self.params['apix'] < 1e-15 or self.params['apix'] > 1e-5:
-			apDisplay.printError("Please provide a REASONABLE stack pixel size (in meter), e.g., --apix=1.55e-10")
+			apDisplay.printError("Please provide a stack pixel size (in Angstroms), e.g., --apix=1.55")
+		if self.params['apix'] < 1e-3 or self.params['apix'] > 1e5:
+			apDisplay.printError("Please provide a REASONABLE stack pixel size (in Angstroms), e.g., --apix=1.55")
 		if self.params['sessionname'] is None:
 			apDisplay.printError("Please provide a Session name, e.g., --session=09feb12b")
 		if self.params['projectid'] is None:
@@ -198,7 +198,7 @@ class UploadStack(appionScript.AppionScript):
 		stackq['path'] = pathq
 		stackq['description'] = self.params['description']
 		stackq['hidden'] = False
-		stackq['pixelsize'] = self.params['apix']
+		stackq['pixelsize'] = self.params['apix']*1e-10
 		stackq['centered'] = False
 		stackq['project|projects|project'] = self.params['projectid']
 
