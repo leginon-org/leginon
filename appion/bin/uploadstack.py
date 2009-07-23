@@ -2,22 +2,18 @@
 
 #pythonlib
 import os
-import shutil
+import sys
 import time
-import numpy
-import math
+import shutil
 #appion
 import appionScript
-import apDatabase
 import apDisplay
+import apFile
 import apProject
 #leginon
-import gui.wx.SetupWizard
 import leginondata
 import project
 import leginonconfig
-#pyami
-from pyami import mrc, jpg
 
 class UploadStack(appionScript.AppionScript):
 	#=====================
@@ -25,12 +21,27 @@ class UploadStack(appionScript.AppionScript):
 		"""
 		standard appionScript
 		"""
+		### strings
 		self.parser.add_option("--session", "--sessionname", dest="sessionname",
 			help="Session name", metavar="NAME")
-		self.parser.add_option("--apix", dest="apix", type="float",
-			help="Stack pixel size (in Angstroms)", metavar="#")
 		self.parser.add_option("--file", dest="stackfile",
 			help="Stack Imagic file (in Angstroms)", metavar="FILE")
+
+		### floats
+		self.parser.add_option("--diam", dest="diameter", type="float",
+			help="Estimated diameter of partice (in Angstroms)", metavar="FILE")
+		self.parser.add_option("--apix", dest="apix", type="float",
+			help="Stack pixel size (in Angstroms)", metavar="#")
+
+		### true / false
+		self.parser.add_option("--ctf-corrected", dest="ctfcorrect", default=False,
+			action="store_true", help="Particles are ctf corrected")
+		self.parser.add_option("--not-ctf-corrected", dest="ctfcorrect", default=False,
+			action="store_false", help="Particles are NOT ctf corrected")
+		self.parser.add_option("--normalize", dest="normalize", default=False,
+			action="store_true", help="Normalize particles")
+		self.parser.add_option("--no-normalize", dest="normalize", default=False,
+			action="store_false", help="Do NOT normalize particles")
 
 	#=====================
 	def checkConflicts(self):
@@ -95,24 +106,25 @@ class UploadStack(appionScript.AppionScript):
 		"""
 		standard appionScript
 		"""	
-		self.params['rundir'] = self.session['image path']
+		self.params['rundir'] = ???
 
 	#=====================
 	def start(self):
 		info = self.readUploadInfo(self.batchinfo[imgnum])
 
 		### copy stack to rundir
-		oldstackroot = os.path.basename(self.params['stackfile'])[:-4]
-		oldstackhed = oldstackroot+".hed"
-		oldstackimg = oldstackroot+".img"
-		newstackhed = os.path.join(self.params['rundir'], "start.hed")
-		newstackimg = os.path.join(self.params['rundir'], "start.img")
-		if not os.path.isfile(oldstackhed):
-			apDisplay.printError("Could not find file: "+oldstackhed)
-		shutil.copy(oldstackhed,newstackhed)
-		if not os.path.isfile(oldstackimg):
-			apDisplay.printError("Could not find file: "+oldstackimg)
-		shutil.copy(oldstackimg,newstackimg)
+		newstack = os.path.join(self.params['rundir'], "start.hed")
+		emancmd = "proc2d %s %s"%(self.params['stackfile'], newstack)
+		self.params['normalize'] is True:
+			emancmd += " edgenorm"
+		apEMAN.executeEmanCmd(emancmd)
+
+		### set final parameters
+		self.boxsize = apFile.getBoxSize(newstack)
+		self.numpart = apFile.numImagesInStack(newstack)
+
+		self.params['commit'] = False
+		self.createStackData()
 
 	#=====================
 	#===================== custom functions
@@ -120,6 +132,7 @@ class UploadStack(appionScript.AppionScript):
 
 	#=====================
 	def createSession(self, user, name, description, directory):
+		sys.exit(1)
 		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
 			'name': name,
@@ -140,11 +153,72 @@ class UploadStack(appionScript.AppionScript):
 
 	#=====================
 	def createStackData(self):
-		appionData.ApStackData()
-		appionData.ApStackRunData()
-		appionData.ApStackParamsData()
-		appionData.ApRunsInStackData()
+		pathq = appionData.ApPathData()
+		pathq['path'] = self.params['rundir']
 
+		manq = appionData.ApManualParamsData()
+		manq['diam'] = self.params['diameter']
+
+		selectq = appionData.ApSelectionRunData()
+		selectq['name'] = 'fakestack_'+self.params['runname']
+		selectq['hidden'] = True
+		selectq['path'] = pathq
+		selectq['session'] = self.sessiondata
+		selectq['manparams'] = manq
+
+		stackq = appionData.ApStackData()
+		stackq['name'] = "start.hed"
+		stackq['path'] = pathq
+		stackq['description'] = self.params['description']
+		stackq['hidden'] = False
+		stackq['pixelsize'] = self.params['apix']
+		stackq['centered'] = False
+		stackq['project|projects|project'] = self.params['projectid']
+
+		stackparamq = appionData.ApStackParamsData()
+		stackparamq['boxSize'] = self.boxsize
+		stackparamq['bin'] = 1
+		stackparamq['phaseFlipped'] = self.params['ctfcorrect']
+		if self.params['ctfcorrect'] is True:
+			stackparamq['fileType'] = "manual"
+		stackparamq['fileType'] = "imagic"
+		stackparamq['normalized'] = self.params['normalize']
+		stackparamq['lowpass'] = 0
+		stackparamq['highpass'] = 0
+
+		stackrunq = appionData.ApStackRunData()
+		stackrunq['stackRunName'] = self.params['runname']
+		stackrunq['stackParams'] = stackparamq
+		stackrunq['selectionrun'] = selectq
+		stackrunq['session'] = self.sessiondata
+
+		runsinstackq = appionData.ApRunsInStackData()
+		runsinstackq['stack'] = stackq
+		runsinstackq['stackRun'] = stackrunq
+		runsinstackq['project|projects|project'] = self.params['projectid']
+
+		if self.params['commit'] is True:
+			runsinstackq.insert()
+
+		### for each particle
+		for i in range(self.numpart):
+			partq = appionData.ApParticleData()
+			partq['image'] = None  #We have no image, see if this works???
+			partq['selectionrun'] = selectq
+			partq['xcoord'] = int(i%1000)
+			partq['ycoord'] = int(i/1000)
+			partq['diameter'] = self.params['diameter']
+
+			stackpartq = appionData.ApStackParticlesData()
+			stackpartq['particleNumber'] = i+1
+			stackpartq['stack'] = stackq
+			stackpartq['stackRun'] = stackrunq
+			stackpartq['particle'] = partq
+			stackpartq['mean'] = 0.0
+			stackpartq['stdev'] = 1.0
+
+			if self.params['commit'] is True:
+				stackpartq.insert()
 
 #=====================
 #=====================
