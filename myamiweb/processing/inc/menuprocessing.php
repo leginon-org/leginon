@@ -52,7 +52,10 @@ if ($expId) {
 	}
 
 	// --- Get Particle Selection Data
-	if ($prtlrunIds = $particle->getParticleRunIds($sessionId)) {
+	if ($prtlrunIds = $particle->getParticleRunIds($sessionId, True)) {
+		$totalprtlruns=count($prtlrunIds);
+	}
+	if ($prtlrunIds = $particle->getParticleRunIds($sessionId, False)) {
 		$prtlruns=count($prtlrunIds);
 	}
 
@@ -265,7 +268,7 @@ if ($expId) {
 	);
 
 	// display the stack menu only if have particles picked
-	if ($prtlruns > 0) {
+	if ($totalprtlruns > 0) {
 		$action = "Stacks";
 
 		// get ctf estimation stats:
