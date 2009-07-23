@@ -249,8 +249,8 @@ function runKerDenSOM() {
 	if (!$stackid)
 		createKerDenSOMForm("<B>ERROR:</B> No stack selected");
 
-	if ($numpart < 10)
-		createKerDenSOMForm("<B>ERROR:</B> Must have more than 10 particles");
+	if ($numpart < 4)
+		createKerDenSOMForm("<B>ERROR:</B> Must have more than 4 particles");
 
 	if ($xdim > 15 || $ydim > 15)
 		createKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
