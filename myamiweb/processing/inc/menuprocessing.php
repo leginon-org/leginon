@@ -419,24 +419,6 @@ if ($expId) {
 
 	}
 
-	// initial model creation tools
-	$action = "Volume Download";
-
-	$nruns=array();
-	$nruns[]=array(
-		'name'=>"<a href='pdb2density.php?expId=$sessionId'>PDB to Model</a>"
-	);
-
-	$nruns[]=array(
-		'name'=>"<a href='emdb2density.php?expId=$sessionId'>EMDB to Model</a>"
-	);
-
-	$data[]=array(
-		      'action'=>array($action, $celloption),
-		      'result'=>array(),
-		      'newrun'=>array($nruns, $celloption),
-		      );
-
 	// ab initial reconstruction tools
 	$action = "Ab Initio Reconstruction";
 	$nruns=array();
