@@ -134,7 +134,7 @@ if ($stackdatas) {
 							$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
 							if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 								echo "<li><span>"
-									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview>"
+									."<a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 									.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
 									."</span></li>\n";
 							} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
