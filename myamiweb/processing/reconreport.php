@@ -132,7 +132,9 @@ if ($refinerun['package']=='EMAN/SpiCoran') {
 // use summarytables.inc
 echo ministacksummarytable($stackId);
 
-$initmodelname = showModelInfo($initmodel, $expId, $particle);
+#$initmodelname = showModelInfo($initmodel, $expId, $particle);
+
+echo modelsummarytable($initmodel['DEF_id']);
 
 $misc = $particle->getMiscInfoFromReconId($reconId);
 if ($misc) echo "<A HREF='viewmisc.php?reconId=$reconId'>[Related Images, Movies, etc]</A><br>\n"; 
@@ -212,14 +214,14 @@ foreach ($iterations as $iteration){
 		}
 		if ($refinementData[$clsavgfield]) {
 			$clsavgs[$type] = $refinementData[$clsavgfield]; 
-			$badprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', $type, True);
-			$goodprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', $type, True);
+			//$badprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', $type, True);
+			//$goodprtls[$type]=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', $type, True);
 		}
 	}
 	# old data has no class average distinction, only eman bad particles
 	if ((count($badprtls)==0) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$badprtls)))) 
-		$badprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', 'EMAN', True);
-		$goodprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', 'EMAN', True);
+		//$badprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'bad', 'EMAN', True);
+		//$goodprtls['EMAN']=$particle->getSubsetParticlesInStack($refinementData['DEF_id'], 'good', 'EMAN', True);
 	# old data has no class average distinction, force association 
 	if ((count($clsavgs)==0 && ($refinerun['package'] == 'EMAN')) || ($refinerun['package']=='EMAN/MsgP' && (!array_key_exists('EMAN',$clsavgs)))) { 
 		$clsavgs['EMAN']= $refinementData['classAverage'];

@@ -14,6 +14,8 @@ require_once "inc/project.inc";
 require_once "inc/viewer.inc";
 require_once "inc/processing.inc";
 
+/****************************************
+****************************************/
 function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
@@ -177,12 +179,14 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 	return $stacktable;
 }
 
-
+/****************************************
+****************************************/
 function ministacksummarytable($stackid) {
 	return stacksummarytable($stackid, true);
 }
 
-
+/****************************************
+****************************************/
 function alignstacksummarytable($alignstackid, $mini=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
@@ -314,6 +318,8 @@ function alignstacksummarytable($alignstackid, $mini=false) {
 	return $stacktable;
 }
 
+/****************************************
+****************************************/
 function analysissummarytable($analysisid, $mini=false) {
 	$expId = $_GET['expId'];
 	$particle = new particledata();
@@ -436,6 +442,8 @@ function analysissummarytable($analysisid, $mini=false) {
 	return $analysistable;
 }
 
+/****************************************
+****************************************/
 function clustersummarytable($clusterrunid, $mini=false) {
 	$clustertable = "";
 	$expId = $_GET['expId'];
@@ -493,6 +501,41 @@ function clustersummarytable($clusterrunid, $mini=false) {
 		$clustertable .= "</ul>\n";
 	}
 	return $clustertable;
+}
+
+/****************************************
+****************************************/
+function modelsummarytable($modelid, $mini=false) {
+	// initialization
+	$modeltable = "";
+	$expId = $_GET['expId'];
+	$particle = new particledata();
+	$modeldata = $particle->getInitModelInfo($modelid);
+	$modelname = $modeldata['name'];
+	$symdata = $particle->getSymInfo($modeldata['REF|ApSymmetryData|symmetry']);
+
+	// start table
+	$modeltable .= apdivtitle("Initial model: <span class='aptitle'>$modelname</span> (ID: $modelid)\n");
+	$display_keys['id'] = "<b>".$modeldata['DEF_id']."</b> [<a href='viewmodels.php?expId=$expId'>show all</a>]";
+	$display_keys['description'] = $modeldata['description'];
+	$display_keys['path'] = $modeldata['path']."/".$modelname;
+	$display_keys['symmetry'] = "".$symdata['symmetry'].": <i>".$symdata['description']."</i>";
+	$display_keys['pixel size'] = format_angstrom_number($modeldata['pixelsize']/1e10)."/pix";
+	$display_keys['box size'] = $modeldata['boxsize']." pixels";
+
+	$modeltable .= "<table border='0'>\n";
+	// get first image
+	$modeltable .= "<tr><td rowspan='15'>";
+	$allpngs = glob($modeldata['path']."/*.png");
+	$firstimage = $allpngs[0];
+	$modeltable .= "<img src='loadimg.php?filename=$firstimage&s=120' height='120'>\n";
+	$modeltable .= "</td></tr>";
+	// show data
+	foreach($display_keys as $k=>$v) {
+		$modeltable .= formatHtmlRow($k,$v);
+	}
+	$modeltable .= "</table>\n";
+	return $modeltable;
 }
 
 ?>

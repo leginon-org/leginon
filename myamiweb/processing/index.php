@@ -55,10 +55,7 @@ foreach ($reconRuns as $recon) {
 	$presetinfo = $particle->getPresetFromStackId($stackid);
 	$j = "Exemplar Iteration ID: $reconid";
 	echo apdivtitle($j);
-	$initmodel=$particle->getInitModelInfo($recon['REF|ApInitialModelData|initialModel']);
-
 	$stackparams = $particle->getStackParams($stackid);
-	$symdata=$particle->getSymInfo($initmodel['REF|ApSymmetryData|symmetry']);
 	$avgmedjump = $particle->getAverageMedianJump($reconrunid);
 	if ($avgmedjump['count'] > 0) {
 		$avgmedjumpstr .= "<A HREF='eulergraph.php?expId=$expId&hg=1&recon=$reconrunid'>";
@@ -114,7 +111,7 @@ foreach ($reconRuns as $recon) {
 	$stackparticles = $particle->getNumStackParticles($stackid);
 	echo ministacksummarytable($stackid);
 	// initial model info
-	showModelInfo($initmodel, $expId, $particle);
+	echo modelsummarytable($recon['REF|ApInitialModelData|initialModel']);
 
 	// reconstruction info
 	$syminfo = $particle->getSymInfo($recon['REF|ApSymmetryData|symmetry']);
