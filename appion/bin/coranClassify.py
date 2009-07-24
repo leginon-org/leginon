@@ -148,10 +148,11 @@ class CoranClassifyScript(appionScript.AppionScript):
 		clippixdiam = boxpixdiam*self.params['bin']
 		apDisplay.printMsg("Pixel mask radius="+str(maskpixrad)) 
 
-		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['spiderfile'])
-		alignedstack = os.path.join(self.params['rundir'], self.alignstackdata['spiderfile'])
+		oldalignedstack = os.path.join(self.alignstackdata['path']['path'], self.alignstackdata['imagicfile'])
+		alignedstackname = re.sub("\.", "_", self.alignstackdata['imagicfile'])+".spi"
+		alignedstack = os.path.join(self.params['rundir'], alignedstackname)
 		apFile.removeFile(alignedstack)
-		emancmd = ("proc2d %s %s shrink=%d clip=%d,%d"
+		emancmd = ("proc2d %s %s spiderswap shrink=%d clip=%d,%d"
 			%(oldalignedstack,alignedstack,self.params['bin'],clippixdiam,clippixdiam))
 		if self.params['numpart'] is not None:
 			emancmd += " last=%d"%(self.params['numpart']-1)
