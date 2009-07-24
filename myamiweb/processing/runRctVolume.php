@@ -138,7 +138,9 @@ function createRctVolumeForm($extra=false, $title='rctVolume.py Launcher', $head
 		echo "</td></tr></table>\n";
 	} elseif ($_GET['clusterid']) {
 		//Case 2: Cluster Id Selected
-		//echo clusterstacksummarytable($_GET['clusterid']);
+		echo openRoundBorder();
+		echo clustersummarytable($_GET['clusterid']);
+		echo closeRoundBorder();
 		echo "<INPUT type='hidden' name='stack' value='clust".$_GET['clusterid']."'>\n";
 	} else {
 		//Case 3: Drop Down Menus
