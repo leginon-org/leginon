@@ -287,7 +287,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		### setup alignment stack
 		alignstackq = appionData.ApAlignStackData()
 		alignstackq['imagicfile'] = "alignstack.hed"
-		alignstackq['spiderfile'] = "alignstack.spi"
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['refstackfile'] = "part"+self.params['timestamp']+"_average.hed"
 		alignstackq['iteration'] = self.lastiter
@@ -297,9 +296,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
-		if not os.path.isfile(spiderfile):
-			apDisplay.printError("could not find stack file: "+spiderfile)
 		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
@@ -458,8 +454,6 @@ class UploadMaxLikeScript(appionScript.AppionScript):
 		### summarize
 		apDisplay.printMsg("rotated and shifted %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-t0)))
 
-		self.alignspiderfile = "alignstack.spi"
-		self.convertStackToSpider(self.alignimagicfile, self.alignspiderfile)
 		apStack.averageStack(self.alignimagicfile)
 
 	#=====================
