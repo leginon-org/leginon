@@ -580,7 +580,6 @@ class ApAlignStackData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('imagicfile', str),
-			('spiderfile', str),
 			('avgmrcfile', str),
 			('refstackfile', str),
 			('iteration', int),
@@ -708,6 +707,25 @@ class ApKerDenSOMParamsData(Data):
 			('y_dimension', int),
 			('convergence', str),
 			('run_seconds', int),
+		)
+	typemap = classmethod(typemap)
+leginondata.ApKerDenSOMParamsData=ApKerDenSOMParamsData
+
+class ApRotKerDenSOMParamsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('mask_diam', float),
+			('x_dimension', int),
+			('y_dimension', int),
+			('convergence', str),
+			('run_seconds', int),
+			('initregulfact', float),
+			('finalregulfact', float),
+			('incrementregulfact', int),
+			('spectrainnerradius', int),
+			('spectraouterradius', int),
+			('spectralowharmonic', int),
+			('spectrahighharmonic', int),
 		)
 	typemap = classmethod(typemap)
 leginondata.ApKerDenSOMParamsData=ApKerDenSOMParamsData
