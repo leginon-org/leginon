@@ -88,7 +88,7 @@ class NoRefAlignScript(appionScript.AppionScript):
 			apDisplay.printError("Run name '"+self.params['runname']+"' and path already exist in database")
 
 	#=====================
-	def insertNoRefRun(self, spiderstack, imagicstack, insert=False):
+	def insertNoRefRun(self, imagicstack, insert=False):
 		### setup alignment run
 		alignrunq = appionData.ApAlignRunData()
 		alignrunq['runname'] = self.params['runname']
@@ -121,7 +121,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		alignstackq = appionData.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = os.path.basename(imagicstack)
-		alignstackq['spiderfile'] = os.path.basename(spiderstack)
 		alignstackq['avgmrcfile'] = "average.mrc"
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['iteration'] = 0
@@ -130,9 +129,6 @@ class NoRefAlignScript(appionScript.AppionScript):
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
-		if not os.path.isfile(spiderfile):
-			apDisplay.printError("could not find stack file: "+spiderfile)
 		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average file: "+avgmrcfile)
@@ -395,11 +391,12 @@ class NoRefAlignScript(appionScript.AppionScript):
 
 		### convert stack to imagic
 		imagicstack = self.convertSpiderStack(alignedstack)
+		apFile.removeFile(alignedstack)
 
 		inserttime = time.time()
 		if self.params['commit'] is True:
 			self.runtime = aligntime
-			self.insertNoRefRun(alignedstack, imagicstack, insert=True)
+			self.insertNoRefRun(imagicstack, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 		inserttime = time.time() - inserttime
