@@ -2117,14 +2117,14 @@ class particledata {
 
 	function getAnalysisRunForAlignStack ($alignstackId, $projectId, $showHidden=False) {
 		$q = "SELECT analysis.`DEF_id` AS analysisid, analysis.* ";
-		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
-			$q .= ", coran.* ";
-		}
+#		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+#			$q .= ", coran.* ";
+#		}
 		$q .=	"FROM ApAlignAnalysisRunData AS analysis ";
-		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
-			$q .=	"LEFT JOIN ApCoranRunData as coran ON "
-			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) ";
-		}
+#		if ($this->mysql->SQLTableExists("ApCoranRunData")) {
+#			$q .=	"LEFT JOIN ApCoranRunData as coran ON "
+#			." (analysis.`REF|ApCoranRunData|coranrun`=coran.`DEF_id`) ";
+#		}
 		$q .=	"WHERE "
 			."  analysis.`REF|ApAlignStackData|alignstack` = $alignstackId ";
 		if (!$showHidden)
