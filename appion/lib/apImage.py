@@ -16,6 +16,7 @@ from numpy import linalg
 from numpy import ma
 ## appion
 import apDisplay
+import apFile
 from apSpider import filters
 ## pyami
 from pyami import mrc, imagefun, spider
