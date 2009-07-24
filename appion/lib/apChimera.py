@@ -179,7 +179,7 @@ def renderAnimation(density, contour=None, zoom=1.0, sym=None, color=None, silho
 		os.environ['CHIMCOLORS'] = colorstr
 	if zoom is not None:
 		os.environ['CHIMZOOM'] = str(zoom)
-	os.environ['CHIMIMGSIZE'] = "256"
+	os.environ['CHIMIMGSIZE'] = "200"
 	### unused
 	#'CHIMBACK',  'CHIMIMGSIZE', 'CHIMIMGFORMAT', 'CHIMFILEFORMAT',
 	chimsnappath = os.path.join(apParam.getAppionDirectory(), "bin", "apChimSnapshot.py")
