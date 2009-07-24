@@ -2360,6 +2360,16 @@ class particledata {
 		return $r;
 	}
 
+	function getClusteringRunParams ($clusterrunid) {
+		$q = "SELECT clustrun.* "
+			."FROM ApClusteringRunData AS clustrun "
+			."WHERE clustrun.`DEF_id` = '$clusterrunid'";
+		//echo $q."<br/>\n";
+		$r = $this->mysql->getSQLResult($q);
+		//echo print_r($r)."<br/>\n";
+		return $r[0];
+	}
+
 	function getClusteringStackParams ($clusterstackid) {
 		$q = "SELECT clustrun.*, cluststack.*, path.`path` AS path "
 			."FROM ApClusteringStackData AS cluststack "
@@ -2423,39 +2433,6 @@ class particledata {
 		//echo print_r($r)."<br/>\n";
 		return $r;
 	}
-/*
-	function getImagicClusteringStacksForClusteringRun ($clusterrunId, $projectId, $showHidden=false) {
-		$q = "SELECT cluster.`DEF_id` AS clusterid, path.path AS path, clusterrun.*, cluster.* "
-			."FROM ApImagicClusteringStackData AS cluster "
-			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
-			." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
-			."LEFT JOIN ApPathData as path ON "
-			." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
-			."WHERE "
-			." clusterrun.`DEF_id` = $clusterrunId "
-			."AND "
-                        ."  clusterrun.`project|projects|project` = '$projectId' "
-                        ."ORDER BY clusterid DESC ";
-                $r = $this->mysql->getSQLResult($q);
-                return $r;
-	}
-
-	function getImagicClusteringParamsForClusterStack ($imagicClusterId, $projectId, $showHidden=false) {
-		$q = "SELECT cluster.*, clusterrun.*, path.path AS path "
-			."FROM ApImagicClusteringStackData AS cluster "
-			."LEFT JOIN ApClusteringRunData AS clusterrun ON "
-                        ." (cluster.`REF|ApClusteringRunData|clusterrun`=clusterrun.`DEF_id`) "
-                        ."LEFT JOIN ApPathData as path ON "
-                        ." (cluster.`REF|ApPathData|path`=path.`DEF_id`) "
-			."WHERE "
-			." cluster.`DEF_id` = $imagicClusterId "
-			."AND "
-			." clusterrun.`project|projects|project` = '$projectId' ";	
-		$r = $this->mysql->getSQLResult($q);
-		return $r[0];
-	}
-NO MORE TABLE LIKE THIS (ApImagicClusteringStackData)
-*/
 
         	#--------- MAKE MASK FUNCTIONS---------------#
 

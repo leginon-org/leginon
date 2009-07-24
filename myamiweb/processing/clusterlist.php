@@ -39,62 +39,12 @@ if ($stackdatas) {
 		if ($clusterruns) {
 			foreach ($clusterruns as $clusterrun) {
 				$clusterrunid = $clusterrun['clusterrunid'];
-				$clusterrunname = $clusterrun['runname'];
-				$clusterdatas = $particle->getClusteringStacksForClusteringRun($clusterrunid, false);
-				if ($clusterdatas) {
-					echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
-					echo "<tr><td>\n";
-					echo apdivtitle("Clustering Info: <span class='aptitle'>$clusterrunname</span>"
-						." (ID: $clusterrunid) with ".count($clusterdatas)." clusters\n");
-					echo "<br/>";
-					if ($clusterrun['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-						echo "<b>Type:</b> <i>Imagic MSA</i><br/>\n";
-						echo "<ul>\n";
-					} elseif ($clusterrun['REF|ApSpiderClusteringParamsData|spiderparams']) {
-						echo "<b>Type:</b> <i>SPIDER Coran</i><br/>\n";
-						echo "<b>Method:</b> <i>".$clusterrun['method']."</i><br/>\n";
-						echo "<b>Factor list:</b> <i>".$clusterrun['factor_list']."</i>\n";
-						echo "<ul>\n";
-					} elseif ($clusterrun['REF|ApKerDenSOMParamsData|kerdenparams']) {
-						// KerDen only has one cluster data
-						$clusterdata = $clusterdatas[0];
-						$clusterid = $clusterdata['clusterid'];
-						echo "<b>Type:</b> <i>Xmipp KerDen SOM</i><br/><br/>\n";
-
-						$montagefile = $clusterdata['path']."/"."montage.png";
-						echo "<a href='loadimg.php?filename=$montagefile' target='snapshot'>\n"
-							."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>";
-
-						echo "<ul>\n";
-						echo "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
-						$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-						echo "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
-							."View montage as a stack for further processing</a><br/>\n";
-						echo "</ul>\n";
-					}
-					foreach ($clusterdatas as $clusterdata) {
-						$clusterid = $clusterdata['clusterid'];
-						$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
-						$clustervarfile = $clusterdata['path']."/".$clusterdata['var_imagicfile'];
-						if ($clusterdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
-							echo "<li><span>"
-								."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-								.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
-								."</span></li>\n";
-						} elseif ($clusterdata['REF|ApSpiderClusteringParamsData|spiderparams']) {
-							echo "<li><span>"
-								."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile'>"
-								.$clusterdata['num_classes']." Class Averages</a>&nbsp;"
-								."<a target='stackview' href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clustervarfile'>"
-								."[variance]</a>&nbsp;(ID $clusterid) "
-								."</span></li>\n";
-						}
-					}
-					echo "</ul>\n";
-					echo "</td></tr>\n";
-					echo "</table>\n";
-					echo "<br/>\n";
-				}
+				echo "<table cellspacing='8' cellpading='5' class='tablebubble' border='0'>\n";
+				echo "<tr><td>\n";
+				echo clustersummarytable($clusterrunid, true);
+				echo "</td></tr>\n";
+				echo "</table>\n";
+				echo "<br/>\n";
 			}
 		}
 	}
