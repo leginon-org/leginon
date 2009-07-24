@@ -141,7 +141,12 @@ class ClusterCoranScript(appionScript.AppionScript):
 	#=====================
 	def start(self):
 		### get original align stack
-		alignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], self.analysisdata['alignstack']['spiderfile'])
+		imagicalignedstack = os.path.join(self.analysisdata['alignstack']['path']['path'], 
+			self.analysisdata['alignstack']['imagicfile'])
+		alignedstack = re.sub("\.", "_", imagicalignedstack)+".spi"
+		emancmd = "proc2d %s %s spiderswap"%(imagicalignedstack, alignedstack)
+		apEMAN.executeEmanCmd(emancmd, showcmd=True, verbose=True)
+
 		### get database information
 		numpart = self.analysisdata['alignstack']['num_particles']
 		corandata = os.path.join(self.analysisdata['path']['path'],"coran/corandata")
