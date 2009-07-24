@@ -228,8 +228,8 @@ class ChimSnapShots(object):
 		self.hideDust(10)
 		for s in self.surfaces:
 			self.color_surface_radially(s)
-		stepsize = 3.0
-		numpause = 6
+		stepsize = 15.0
+		numpause = 3
 
 		### pause
 		imgnum = 0
@@ -317,7 +317,7 @@ class ChimSnapShots(object):
 		#self.runChimCommand("turn x 180")
 		tilt = 15
 		self.runChimCommand("turn x %d"%(-tilt))
-		increment = 6
+		increment = 20
 		nsteps = int(360/increment)
 		for i in range(nsteps):
 			filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
@@ -341,7 +341,7 @@ class ChimSnapShots(object):
 		self.runChimCommand('turn x 90')
 		tilt = 30
 		self.runChimCommand("turn x %d"%(tilt))
-		increment = 5
+		increment = 10
 		nsteps = int(360/increment)
 		for i in range(nsteps):
 			filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
@@ -360,7 +360,7 @@ class ChimSnapShots(object):
 		self.runChimCommand('turn x 90')
 		tilt = 30
 		self.runChimCommand("turn x %d"%(tilt))
-		increment = 15
+		increment = 30
 		nsteps = int(180/increment)
 		for i in range(nsteps):
 			filename = "%s.%03d.%s"%(self.volumepath, i, self.imgformat.lower())
