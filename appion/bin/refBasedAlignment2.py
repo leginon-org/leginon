@@ -106,7 +106,7 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		return
 
 	#=====================
-	def insertRefBasedRun(self, partlist, alignedstack, imagicstack, insert=False):
+	def insertRefBasedRun(self, partlist, imagicstack, insert=False):
 		apDisplay.printMsg("committing results to DB")
 
 		### setup alignment run
@@ -145,7 +145,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		alignstackq = appionData.ApAlignStackData()
 		alignstackq['alignrun'] = alignrunq
 		alignstackq['imagicfile'] = imagicstack
-		alignstackq['spiderfile'] = alignedstack
 		alignstackq['avgmrcfile'] = "average.mrc"
 		emancmd = "proc2d templatestack%02d.spi templatestack%02d.hed"%(self.params['numiter'],self.params['numiter'])
 		apEMAN.executeEmanCmd(emancmd)
@@ -157,9 +156,6 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		imagicfile = os.path.join(self.params['rundir'], alignstackq['imagicfile'])
 		if not os.path.isfile(imagicfile):
 			apDisplay.printError("could not find stack file: "+imagicfile)
-		spiderfile = os.path.join(self.params['rundir'], alignstackq['spiderfile'])
-		if not os.path.isfile(spiderfile):
-			apDisplay.printError("could not find stack file: "+spiderfile)
 		avgmrcfile = os.path.join(self.params['rundir'], alignstackq['avgmrcfile'])
 		if not os.path.isfile(avgmrcfile):
 			apDisplay.printError("could not find average mrc file: "+avgmrcfile)
@@ -445,11 +441,12 @@ class RefBasedAlignScript(appionScript.AppionScript):
 		if self.params['commit'] is True:
 			apDisplay.printMsg("committing results to DB")
 			self.params['runtime'] = aligntime
-			self.insertRefBasedRun(partlist, finalspistack, imagicstack, insert=True)
+			self.insertRefBasedRun(partlist, imagicstack, insert=True)
 		else:
 			apDisplay.printWarning("not committing results to DB")
 
 		apFile.removeFilePattern("alignments/alignedstack*.spi")
+		apFile.removeFile(finalspistack)
 
 
 #=====================
