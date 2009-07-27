@@ -11,6 +11,8 @@ import ccdcamera
 import numpy
 import sys
 import threading
+import enumproc
+import killproc
 
 try:
 	import mmapfile
@@ -22,16 +24,26 @@ try:
 		import tietzcom
 	except ImportError:
 		import pyScope.tietzcom as tietzcom
-	import enumproc
 except ImportError:
 	pass
 
-def CAMC_is_alive():
+def listCamcProcs():
 	procs = enumproc.EnumProcesses()
+	camcprocs = []
 	for proc in procs:
 		if proc[:4].lower() == 'camc':
-			return True
-	return False
+			camcprocs.append(proc)
+	return camcprocs
+
+def killCamc():
+	killproc.Kill_Process('camc4')
+
+def killCamcProcs():
+	camcprocs = listCamcProcs()
+	for camcproc in camcprocs:
+		# remove .exe extension because Kill_Process does not use it
+		procname = camcproc[:-4]
+		killproc.Kill_Process(procname)
 
 class CameraControl(object):
 	def __init__(self):
@@ -162,8 +174,7 @@ class Tietz(object):
 	}
 
 	def __init__(self):
-		if CAMC_is_alive():
-			raise RuntimeError('CAMC is already running')
+		killCamcProcs()
 		self.unsupported = []
 
 		if self.cameratype is None:
