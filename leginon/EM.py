@@ -90,13 +90,19 @@ class EM(node.Node):
 				def getHostname(self):
 					return self._hostname
 
-			try:
-				instance = ObjectClass()
-				self.instruments[name] = instance
-				self.objectservice._addObject(name, instance)
-				self.logger.info('Added interface for %s' % name)
-			except Exception, e:
-				self.logger.debug('Initialization of %s failed: %s' % (name, e))
+			tries = 3
+			instance = None
+			for i in range(1,tries+1):
+				try:
+					instance = ObjectClass()
+					self.instruments[name] = instance
+					self.objectservice._addObject(name, instance)
+					self.logger.info('Added interface for %s' % name)
+					break
+				except Exception, e:
+					self.logger.debug('Initialization of %s failed: %s' % (name, e))
+					continue
+			if instance is None:
 				continue
 
 			if self.hasMagnifications(name):
