@@ -10,15 +10,15 @@ from EMAN import *
 if __name__ == "__main__":
 
 	if len(sys.argv) < 2:
-	    print "usage: renumber.py [filename]"
-	    sys.exit()
+		print "usage: renumber.py [filename]"
+		sys.exit()
 
 	filename=sys.argv[1]
 
 	n=fileCount(filename)[0]
 	im=EMData()
 	for i in range(n):
-	    im.readImage(filename,i)
-	    im.setNImg(i)
-	    im.writeImage(filename,i)
-	    print i
+		im.readImage(filename,i)
+		im.setNImg(i)
+		im.writeImage(filename,i)
+		print i
