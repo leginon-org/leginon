@@ -61,10 +61,16 @@ for cls in tietzclasses:
 	time.sleep(3)
 	print ''
 
+print ''
 print '********** Test complete. **********'
-print 'These classes were successful:'
+print 'These classes were successful.  Use one in instruments.cfg:'
 for cls in successful:
 	print '   ', cls.__name__
 if not successful:
 	print '   None'
+else:
+	print 'Example for instruments.cfg:'
+	print '  [My Camera]'
+	print '  class: tietz.%s' % (successful[0].__name__,)
+	print ''
 raw_input('Hit enter to quit')
