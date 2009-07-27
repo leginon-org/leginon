@@ -742,6 +742,7 @@ class ApClusteringRunData(Data):
 			('analysisrun', ApAlignAnalysisRunData),
 			('spiderparams', ApSpiderClusteringParamsData),
 			('kerdenparams', ApKerDenSOMParamsData),
+			('rotkerdenparams', ApRotKerDenSOMParamsData),
 			('project|projects|project', int),
 		)
 	typemap = classmethod(typemap)
