@@ -128,7 +128,7 @@ if ($stackdatas) {
 
 				foreach ($analysisdatas as $analysisdata) {
 					echo "<tr><td>\n";
-					$analysisid = $analysisdata['DEF_id'];
+					$analysisid = $analysisdata['analysisid'];
 					echo analysissummarytable($analysisid);
 					if ($analysisdata['REF|ApImagicAlignAnalysisData|imagicMSArun']) {
 						echo "<a class='btp1' href='imagicMSAcluster.php?expId=$expId&analysisId=$analysisid&alignId=$alignstackid'>"
