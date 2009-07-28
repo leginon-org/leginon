@@ -188,11 +188,12 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
 	$firstring = ($_POST['firstring']) ? $_POST['firstring'] : '4';
 	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
-	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
 
+	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
+	$numtemplates = ($_POST['numtemplates']) ? $_POST['numtemplates']: 0;
 	if (!$templateList) {
 		$templateTable.="<table><TR>\n";
-		for ($i=1; $i<=$_POST['numtemplates']; $i++) {
+		for ($i=1; $i<=$numtemplates; $i++) {
 			$templateimg = "template".$i;
 			if ($_POST[$templateimg]){
 				$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
@@ -320,9 +321,11 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	echo"
 		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
 		Number of Particles to Use<br>";
-	echo"
-		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
-		Invert density of all templates before alignment<br>";
+
+	echo "<INPUT TYPE='checkbox' NAME='inverttempl' $invert>\n";
+	echo docpop('invert','Invert density of all templates');
+	echo "<br/>\n";
+
 	echo"
 		</TD>
 	</tr>
