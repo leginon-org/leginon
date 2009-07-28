@@ -146,7 +146,8 @@ echo " <p> similar to reference-free but you select templates first."
 	."&nbsp;<img src='img/external.png'>"
 	." program to perform alignments. "
 	."</p><p>\n"
-	."Still untested as to how much bias the reference gives you, but this may be useful in some cases "
+	."Still untested as to how much bias the reference gives you, but this may be useful in some cases. "
+	."Also, when no particles align to a particular template, it goes black and unused in further iterations. "
 	."</p>\n";
 //echo "  <img src='img/align-smr.png' width='250'><br/>\n";
 echo "</td></tr>\n";
