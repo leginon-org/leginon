@@ -131,6 +131,26 @@ echo " <p> this method uses the "
 //echo "  <img src='img/align-rsm.png' width='125'><br/>\n";
 echo "</td></tr>\n";
 
+
+/*
+** Xmipp Maximum Likelihood Reference Based Alignment
+*/
+
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runRefBasedMaxlikeAlign.php?expId=$expId'>Xmipp Reference Based Maximum Likelihood Alignment</a></h3>\n";
+echo " <p> similar to reference-free but you select templates first."
+	." It uses the "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/MLalign2D'>Xmipp ml_align2d</a>"
+	."&nbsp;<img src='img/external.png'>"
+	." program to perform alignments. "
+	."</p><p>\n"
+	."Still untested as to how much bias the reference gives you, but this may be useful in some cases "
+	."</p>\n";
+//echo "  <img src='img/align-smr.png' width='250'><br/>\n";
+echo "</td></tr>\n";
+
 echo "</table>\n";
 processing_footer();
 exit;
