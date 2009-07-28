@@ -20,7 +20,7 @@ class centerStackScript(appionScript.AppionScript):
 		self.parser.add_option("-x", "--maxshift", dest="maxshift", type="int",
 			help="Maximum shift")
 		self.parser.add_option("--new-stack-name", dest="runname",
-			help="Run name", metavar="STR")
+			help="New stack name", metavar="STR")
 
 	#=====================
 	def checkConflicts(self):
