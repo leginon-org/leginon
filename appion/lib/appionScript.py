@@ -55,6 +55,7 @@ class AppionScript(object):
 			self.setupGlobalParserOptions()
 		self.setupParserOptions()
 		self.params = apParam.convertParserToParams(self.parser)
+		self.uploadScriptData()
 		self.checkForDuplicateCommandLineInputs()
 		#if 'outdir' in self.params and self.params['outdir'] is not None:
 		#	self.params['rundir'] = self.params['outdir']
@@ -86,8 +87,32 @@ class AppionScript(object):
 		### write function log
 		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
 
+		### upload command line parameters to database
+		self.uploadScriptData()
+
 		### any custom init functions go here
 		self.onInit()
+
+	#=====================
+	def uploadScriptData(self):
+		prognameq = appionData.ScriptProgramName()
+		prognameq['name'] = self.functionname
+
+		progrunq = appionData.ScriptProgramRun()
+		progrunq['progname'] = prognameq
+
+		for paramname in self.params.keys():
+			paramnameq = appionData.ScriptParamName()
+			paramnameq['name'] = paramname
+			paramnameq['progname'] = prognameq
+
+			paramvalueq = appionData.ScriptParamValue()
+			print paramname, self.params[paramname]
+			paramvalueq['value'] = str(self.params[paramname])
+			paramvalueq['paramname'] = paramnameq
+			paramvalueq['progrun'] = progrunq
+			if self.params['commit'] is True:
+				paramvalueq.insert()
 
 	#=====================
 	def checkForDuplicateCommandLineInputs(self):

@@ -18,6 +18,42 @@ class ApPathData(Data):
 leginondata.ApPathData=ApPathData
 
 
+### Command line tracking tables ###
+class ScriptProgramRun(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('progname', ScriptProgramName),
+		)
+	typemap = classmethod(typemap)
+leginondata.ScriptProgramRun=ScriptProgramRun
+
+class ScriptProgramName(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ScriptProgramName=ScriptProgramName
+
+class ScriptParamName(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+			('progname', ScriptProgramName),
+		)
+	typemap = classmethod(typemap)
+leginondata.ScriptParamName=ScriptParamName
+
+class ScriptParamValue(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('value', str),
+			('paramname', ScriptParamName),
+			('progrun', ScriptProgramRun),
+		)
+	typemap = classmethod(typemap)
+leginondata.ScriptParamValue=ScriptParamValue
+
 ### Particle selection tables ###
 
 class ApParticleData(Data):
