@@ -61,9 +61,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		self.parser.add_option("--angle-interval", dest="psistep", type="int", default=5,
 			help="In-plane rotation sampling interval (degrees)", metavar="#")
 
-		#self.parser.add_option("--templates", dest="templateids",
-		#	help="Template Id for template init method", metavar="1,56,34")
-
 		### true/false
 		self.parser.add_option("-F", "--fast", dest="fast", default=True,
 			action="store_true", help="Use fast method")
