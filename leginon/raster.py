@@ -60,7 +60,7 @@ def createIndices(shape):
 	indices = zip(ind[0].flat, ind[1].flat)
 	return indices
 
-def createIndices2(a,b,angle,offset=False,odd=False):
+def createIndices2(a,b,angle,offset=False,odd=False,tiltoffset=(0,0)):
 	'''
   indices enclosed by an ellipse
 	'''
@@ -70,11 +70,12 @@ def createIndices2(a,b,angle,offset=False,odd=False):
 	shape = maxind,maxind
 	ind = numpy.indices(shape, numpy.float32)
 	if offset:
-		if odd:
-			adds = numpy.ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
-		else:
-			adds = numpy.ma.where(ind[0] % 2 != 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
+		adds = numpy.ma.where(ind[0] % 2 == 0, numpy.zeros(shape),numpy.ones(shape)*0.5)
 		ind = numpy.array((ind[0],ind[1]+adds.data))
+		if odd:
+			ind = ind + 0.25
+		ind[0] = ind[0] + tiltoffset[0]
+		ind[1] = ind[1] + tiltoffset[1]
 	center0 = shape[0] / 2.0 - 0.5
 	center1 = shape[1] / 2.0 - 0.5
 	ind[0] = ind[0] - center0

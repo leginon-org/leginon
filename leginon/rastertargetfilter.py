@@ -113,8 +113,8 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		limitb = self.settings['ellipse b'] / 2.0
 		# create raster
 		for target in targetlist:
-			self.researchPattern(target)
-			self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['raster offset'],self.is_odd)
+			tiltoffset = self.researchPattern(target)
+			self.goodindices = raster.createIndices2(limita,limitb,limitanglerad-anglerad,self.settings['raster offset'],self.is_odd,tiltoffset)
 			self.savePattern(target)
 			oldtarget = leginondata.AcquisitionImageTargetData(initializer=target)
 			self.targetdata = oldtarget
@@ -163,12 +163,28 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		return fromtarget
 
 	def researchPattern(self,targetdata):
+		# tilt pattern offset
+		imageref = targetdata.special_getitem('image', dereference=False)
+		if imageref:
+			image = self.researchDBID(leginondata.AcquisitionImageData, imageref.dbid, readimages=False)
+			tiltalpha = int(image['scope']['stage position']['a'] * 180.0 / 3.14159)
+			tpq = leginondata.TiltRasterPatternData(session=self.session,tilt=tiltalpha)
+			tpresult = tpq.query(results=1)
+			if tpresult:
+				tiltoffset = (tpresult[0]['offset']['row'],tpresult[0]['offset']['col'])
+			else:
+				tiltoffset = (0,0)
+		else:
+			tiltoffset = (0,0)
+		# section pattern
 		fromtarget = self.researchFromtarget(targetdata)
 		q = leginondata.TargetRasterPatternData(target=fromtarget)
 		result = q.query(results=1,readimages=False)
 		if result:
 			self.is_odd = bool(result[0]['pattern'])
 			self.setOffsetToolBar()
+		print "Pattern: section-",self.is_odd," tilt-",tiltoffset[0]==0.0
+		return tiltoffset
 
 	def savePattern(self,targetdata):
 		pattern = int(self.is_odd)
