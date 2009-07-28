@@ -87,7 +87,6 @@ class AppionScript(object):
 		self.logfile = apParam.writeFunctionLog(sys.argv, msg=(not self.quiet))
 
 		### upload command line parameters to database
-		print "upload time"
 		self.uploadScriptData()
 
 		### any custom init functions go here
