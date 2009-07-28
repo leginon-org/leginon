@@ -20,7 +20,7 @@ if ($models) {
 	// separate hidden from shown;
 	$shown = array();
 	$hidden = array();
-	foreach($models as $model) { 
+	foreach($models as $model) {
 		if (is_array($model)) {
 			$modelId=$model['DEF_id'];
 			// first update hide value
