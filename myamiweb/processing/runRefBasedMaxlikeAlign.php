@@ -428,6 +428,7 @@ function runMaxLikeAlign() {
 	$numpart=$_POST['numpart'];
 	$angle=$_POST['angle'];
 	$maxiter=$_POST['maxiter'];
+	$numtemplates=$_POST['numtemplates'];
 	$bin=$_POST['bin'];
 	$description=$_POST['description'];
 	//$fast = ($_POST['fast']=="on") ? true : false;
@@ -444,6 +445,9 @@ function runMaxLikeAlign() {
 
 	if (!$description)
 		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+
+	if (!$numtemplates || $numtemplates < 1)
+		createMaxLikeAlignForm("<B>ERROR:</B> No templates selected");
 
 	if ($nproc > 16)
 		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
