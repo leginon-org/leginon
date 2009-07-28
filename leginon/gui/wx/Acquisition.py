@@ -146,6 +146,21 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		sz_save.Add(self.widgets['save image'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz_save.Add(self.widgets['save integer'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+
+
+		self.widgets['evaluate stats'] = wx.CheckBox(self, -1, 'Prompt user if image stats fail:')
+		self.widgets['low mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['high mean'] = FloatEntry(self, -1, chars=6)
+		sz_evaluate = wx.BoxSizer(wx.VERTICAL)
+		sz_evaluate.Add(self.widgets['evaluate stats'])
+
+		sz_evaluate2 = wx.BoxSizer(wx.HORIZONTAL)
+		sz_evaluate2.Add(wx.StaticText(self, -1, 'Mean between'))
+		sz_evaluate2.Add(self.widgets['low mean'])
+		sz_evaluate2.Add(wx.StaticText(self, -1, 'and'))
+		sz_evaluate2.Add(self.widgets['high mean'])
+		sz_evaluate.Add(sz_evaluate2)
+
 		sz_transform = wx.GridBagSizer(0, 0)
 		label = wx.StaticText(self, -1, 'Adjust target using')
 		sz_transform.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -174,6 +189,9 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz_misc.Add(self.widgets['reset tilt'], (9, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz_misc.Add(sz_evaluate, (10, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
 		szright = wx.GridBagSizer(3, 3)
 		szright.Add(self.widgets['preset order'], (0, 0), (4, 1), wx.ALIGN_CENTER)
 		szright.Add(szmover, (4,0), (1,1), wx.ALIGN_CENTER_VERTICAL)

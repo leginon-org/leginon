@@ -26,13 +26,16 @@ import navigator
 import numpy
 from pyami import arraystats, imagefun, ordereddict
 
-class NoMoveCalibration(Exception):
+class NoMoveCalibration(targetwatcher.PauseRepeatException):
+	pass
+
+class InvalidPresetsSequence(targetwatcher.PauseRepeatException):
+	pass
+
+class BadImageStats(targetwatcher.PauseRepeatException):
 	pass
 
 class InvalidStagePosition(Exception):
-	pass
-
-class InvalidPresetsSequence(Exception):
 	pass
 
 def setImageFilename(imagedata):
@@ -134,6 +137,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'background': False,
 		'use parent tilt': False,
 		'reset tilt': False,
+		'evaluate stats': False,
+		'high mean': 2**16,
+		'low mean': 50,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftMonitorResultEvent,
@@ -279,20 +285,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
+
 		try:
 			self.validatePresets()
 		except InvalidPresetsSequence, e:
-			estr = str(e) + ' ,please correct it'
 			if targetdata is None or targetdata['type'] == 'simulated':
-				self.logger.error(estr + ' and try again')
+				## don't want to repeat in this case
+				self.logger.error(str(e))
 				return 'aborted'
 			else:
-				## if there was a targetdata, then 
-				## we assume we are in a target list loop
-				self.player.pause()
-				self.logger.error(estr + ' and press continue')
-				self.beep()
-				return 'repeat'
+				raise
 
 		presetnames = self.settings['preset order']
 		ret = 'ok'
@@ -313,11 +315,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				emtarget = self.targetToEMTargetData(targetdata)
 			except InvalidStagePosition:
 				return 'invalid'
-			except NoMoveCalibration:
-				self.player.pause()
-				self.logger.error('Calibrate this move type, then continue')
-				self.beep()
-				return 'repeat'
 
 			presetdata = self.presetsclient.getPresetByName(newpresetname)
 
@@ -417,9 +414,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				try:
 					newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 				except calibrationclient.NoMatrixCalibrationError, e:
-					m = 'No calibration for acquisition move to target: %s'
-					self.logger.error(m % (e,))
-					raise NoMoveCalibration(m)
+					raise NoMoveCalibration(e)
 
 				## if stage is tilted and moving by image shift,
 				## calculate z offset between center of image and target
@@ -427,10 +422,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 					calclient = self.calclients['stage position']
 					try:
 						tmpscope = calclient.transform(pixelshift, targetscope, targetcamera)
-					except calibrationclient.NoMatrixCalibrationError:
-						message = 'No stage calibration for z measurement'
-						self.logger.error(message)
-						raise NoMoveCalibration(message)
+					except calibrationclient.NoMatrixCalibrationError,e:
+						raise NoMoveCalibration(e)
 					ydiff = tmpscope['stage position']['y'] - targetscope['stage position']['y']
 					zdiff = ydiff * numpy.sin(targetscope['stage position']['a'])
 	
@@ -572,6 +565,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return 'fail'
 
+		if self.settings['evaluate stats']:
+			self.evaluateStats(imagedata['image'])
+
 		## convert float to uint16
 		if self.settings['save integer']:
 			imagedata['image'] = numpy.clip(imagedata['image'], 0, 2**16-1)
@@ -702,6 +698,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def publishStats(self, imagedata):
 		im = imagedata['image']
+		if im is None:
+			return
 		allstats = arraystats.all(im)
 		statsdata = leginondata.AcquisitionImageStatsData()
 		statsdata['session'] = self.session
@@ -711,6 +709,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		statsdata['stdev'] = allstats['std']
 		statsdata['image'] = imagedata
 		self.publish(statsdata, database=True)
+
+	def evaluateStats(self, imagearray):
+		mean = arraystats.mean(imagearray)
+		if mean > self.settings['high mean']:
+			raise BadImageStats('image mean too high')
+		if mean < self.settings['low mean']:
+			raise BadImageStats('image mean too low')
 
 	def publishImage(self, imdata):
 		self.publish(imdata, pubevent=True)
