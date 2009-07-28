@@ -362,7 +362,7 @@ class MatrixCalibrationClient(CalibrationClient):
 			caldata = caldatalist[0]
 			return caldata
 		else:
-			excstr = 'no query results for %s, %s, %s, %seV, %sx' % (tem['name'], ccdcamera['name'], caltype, ht, mag)
+			excstr = 'no matrix for %s, %s, %s, %seV, %sx' % (tem['name'], ccdcamera['name'], caltype, ht, mag)
 			raise NoMatrixCalibrationError(excstr, state=queryinstance)
 
 	def retrieveMatrix(self, tem, ccdcamera, caltype, ht, mag):
