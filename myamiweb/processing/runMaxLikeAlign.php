@@ -128,6 +128,7 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	$numref = ($_POST['numref']) ? $_POST['numref'] : '2';
 	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
 	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
+	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '30';
 	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
 	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
 
@@ -214,6 +215,10 @@ function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launch
 	echo docpop('angleinc','Angular Increment');
 	echo "<br/>\n";
 
+	echo "<INPUT TYPE='text' NAME='maxiter' VALUE='$maxiter' SIZE='4'>\n";
+	echo docpop('xmippmaxiter','Maximum number of iterations');
+	echo "<br/>\n";
+
 	echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='mirror' onChange='estimatetime()' $mirror>\n";
@@ -280,6 +285,7 @@ function runMaxLikeAlign() {
 	$numpart=$_POST['numpart'];
 	$numref=$_POST['numref'];
 	$angle=$_POST['angle'];
+	$maxiter=$_POST['maxiter'];
 	$bin=$_POST['bin'];
 	$description=$_POST['description'];
 	//$fast = ($_POST['fast']=="on") ? true : false;
@@ -346,6 +352,7 @@ function runMaxLikeAlign() {
 	$command.="--num-ref=$numref ";
 	$command.="--bin=$bin ";
 	$command.="--angle-interval=$angle ";
+	$command.="--max-iter=$maxiter ";
 	if ($nproc && $nproc>1)
 		$command.="--nproc=$nproc ";
 	if ($fast) {
@@ -399,6 +406,7 @@ function runMaxLikeAlign() {
 			<tr><td>num part</td><td>$numpart</td></tr>
 			<tr><td>num ref</td><td>$numref</td></tr>
 			<tr><td>angle increment</td><td>$angle</td></tr>
+			<tr><td>maximum iterations</td><td>$maxiter</td></tr>
 			<tr><td>binning</td><td>$bin</td></tr>
 			<tr><td>fast</td><td>$fast</td></tr>
 			<tr><td>fast mode</td><td>$fastmode</td></tr>
