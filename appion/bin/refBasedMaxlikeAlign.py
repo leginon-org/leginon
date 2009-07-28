@@ -363,10 +363,6 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		if self.params['norm'] is True:
 			xmippopts += " -norm "
 
-		### write garibaldi job file
-		if self.params['garibaldi'] is True:
-			self.writeGaribaldiJobFile()
-
 		### find number of processors
 		if self.params['nproc'] is None:
 			nproc = nproc = apParam.getNumProcessors()
