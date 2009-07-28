@@ -16,12 +16,12 @@ require "inc/processing.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST['process']) {
-  runAlignment();
+  runMaxLikeAlign();
 }
 
  // Create the form page
 elseif ($_POST['templates']) {
-  createAlignmentForm();
+  createMaxLikeAlignForm();
 }
 
 // Make the template selection form
@@ -111,8 +111,8 @@ function createTemplateForm() {
 //***************************************
 //***************************************
 //***************************************
-function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher', $heading='Perform a reference-based Alignment') {
-  // check if coming directly from a session
+function createMaxLikeAlignForm($extra=false, $title='maxlikeAlignment.py Launcher', $heading='Maximum Likelihood Alignment') {
+	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	if ($expId){
 		$sessionId=$expId;
@@ -120,23 +120,19 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		$formAction=$_SERVER['PHP_SELF']."?expId=$expId";
 	} else {
 		$sessionId=$_POST['sessionId'];
+		$projectId=getProjectFromExpId($sessionId);
 		$formAction=$_SERVER['PHP_SELF'];
 	}
-	$projectId=$_POST['projectId'];
 
-	// connect to particle info
+	// connect to particle database
 	$particle = new particledata();
-	$templateid = $_POST['templateid'];
-	$templateForm.="<INPUT TYPE='hidden' NAME='templateid' VALUE='$templateid'>\n";
-	$templateinfo = $particle->getTemplatesFromId($templateid);
 	$stackIds = $particle->getStackIds($sessionId);
-	$refbasedIds = $particle->getRefAliIds($sessionId);
+	$maxlikeIds = $particle->getMaxLikeIds($sessionId, True);
 	$alignrunsarray = $particle->getAlignStackIds($sessionId);
 	$alignruns = ($alignrunsarray) ? count($alignrunsarray) : 0;
-	$firststack = $particle->getStackParams($stackIds[0]['stackid']);
-	$initparts = $particle->getNumStackParticles($stackIds[0]['stackid']);
 
 	$javascript = "<script src='../js/viewer.js'></script>\n";
+	// javascript to switch the defaults based on the stack
 	$javascript .= "<script>\n";
 	$javascript .= "function switchDefaults(stackval) {\n";
 	$javascript .= "	var stackArray = stackval.split('|--|');\n";
@@ -144,21 +140,59 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$javascript .= "	stackArray[3] = stackArray[3].replace(/\,/g,'');\n";
 	$javascript .= "	document.viewerform.numpart.value = stackArray[3];\n";
 	// set max last ring radius
-	$javascript .= "	var bestbin = Math.floor(stackArray[2]/100);\n";
-	$javascript .= "	var lastring = Math.floor(stackArray[2]/3/bestbin);\n";
+	$javascript .= "	var bestbin = Math.floor(stackArray[2]/64);\n";
+	$javascript .= "	if (bestbin < 1) {\n";
+	$javascript .= "	var bestbin = 1 ;}\n";
 	$javascript .= "	document.viewerform.bin.value = bestbin;\n";
-	$javascript .= "	document.viewerform.lastring.value = lastring;\n";
+	$javascript .= "	estimatetime();\n";
 	// set particle & mask radius and lp
 	$javascript .= "}\n";
+	$javascript .= "
+		function enablefastmode() {
+			if (document.viewerform.fast.checked){
+				document.viewerform.fastmode.disabled=false;
+			} else {
+				document.viewerform.fastmode.disabled=true;
+			}
+
+		}
+		function estimatetime() {
+			var secperiter = 0.12037;
+			var stackval = document.viewerform.stackval.value;
+			var stackArray = stackval.split('|--|');
+			var numpart = document.viewerform.numpart.value;
+			var boxsize = stackArray[2];
+			var numpix = Math.pow(boxsize/document.viewerform.bin.value, 2);
+			var calctime = (numpart/1000.0) * document.viewerform.numtemplates.value * numpix * secperiter / document.viewerform.angle.value / (document.viewerform.nproc.value - 1);
+			if (document.viewerform.mirror.checked) {
+				calctime = calctime*2.0;
+			}
+			if (calctime < 70) {
+				var time = Math.round(calctime*100.0)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' seconds';
+			} else if (calctime < 3700) {
+				var time = Math.round(calctime*0.6)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' minutes';
+			} else if (calctime < 3700*24) {
+				var time = Math.round(calctime/36.0)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' hours';
+			} else {
+				var time = Math.round(calctime/36.0/24.0)/100.0
+				document.viewerform.timeestimate.value = time.toString()+' days';
+			}
+		}\n";
 	$javascript .= "</script>\n";
+
+	$javascript .= writeJavaPopupFunctions('appion');	
 
 	processing_header($title,$heading,$javascript);
 	// write out errors, if any came up:
 	if ($extra) {
-		echo "<font color='#993333' size='+2'>$extra</font>\n<hr>\n";
+		echo "<span style='font-size: larger; color:#bb3333;'>$extra</span><br />\n";
 	}
-	echo"<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
-	$sessiondata=getSessionList($projectId,$expId);
+  
+	echo "<FORM NAME='viewerform' method='POST' ACTION='$formAction'>\n";
+	$sessiondata=getSessionList($projectId,$sessionId);
 	$sessioninfo=$sessiondata['info'];
 	if (!empty($sessioninfo)) {
 		$sessionpath=$sessioninfo['Image path'];
@@ -166,50 +200,53 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		$sessionpath=ereg_replace("rawdata","align/",$sessionpath);
 		$sessionname=$sessioninfo['Name'];
 	}
-  
-  // Set any existing parameters in form
-	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
-	while (file_exists($sessionpathval.'refbased'.($alignruns+1)))
-		$alignruns += 1;
-	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'refbased'.($alignruns+1);
-	$rundescrval = $_POST['description'];
-	$stackinfo=explode('|--|',$_POST['stackval']);
-	$stackidval=$stackinfo[0];
-	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
-	// alignment params
-	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
-	$iters = ($_POST['iters']) ? $_POST['iters'] : 3;
-	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
-	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
-	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '5';
-	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
-	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];
-	$bestbin = floor($boxsz/100)+1;
-	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : floor($boxsz/3.0/$bestbin);
-	$firstring = ($_POST['firstring']) ? $_POST['firstring'] : '4';
-	$bin = ($_POST['bin']) ? $_POST['bin'] : $bestbin;
-	$templateList=($_POST['templateList']) ? $_POST['templateList']: '';
 
-	if (!$templateList) {
-		$templateTable.="<table><TR>\n";
-		for ($i=1; $i<=$_POST['numtemplates']; $i++) {
+	// set commit on by default when first loading page, else set
+	$commitcheck = ($_POST['commit']=='on' || !$_POST['process']) ? 'checked' : '';
+	// Set any existing parameters in form
+	$sessionpathval = ($_POST['outdir']) ? $_POST['outdir'] : $sessionpath;
+	while (file_exists($sessionpathval.'maxlike'.($alignruns+1)))
+		$alignruns += 1;
+	$runname = ($_POST['runname']) ? $_POST['runname'] : 'maxlike'.($alignruns+1);
+	$description = $_POST['description'];
+	$stackidstr = $_POST['stackval'];
+	list($stackidval) = split('\|--\|',$stackidstr);
+	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
+	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
+	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : '400';
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : '4';
+	$angle = ($_POST['angle']) ? $_POST['angle'] : '5';
+	$maxiter = ($_POST['maxiter']) ? $_POST['maxiter'] : '30';
+	$mirror = ($_POST['mirror']=='on' || !$_POST['mirror']) ? 'checked' : '';
+	$fast = ($_POST['fast']=='on' || !$_POST['fast']) ? 'checked' : '';
+
+	// deal with templates
+	$templateid = $_POST['templateid'];
+	$templateform .= "<input type='hidden' name='templateid' value='$templateid'>\n";
+	$templateinfo = $particle->getTemplatesFromId($templateid);
+	$templatelist= ($_POST['templatelist']) ? $_POST['templatelist']: '';
+	$numtemplates = ($_POST['numtemplates']) ? $_POST['numtemplates']: 0;
+	if (!$templatelist) {
+		$templatetable.="<table><TR>\n";
+		for ($i=1; $i<=$numtemplates; $i++) {
 			$templateimg = "template".$i;
 			if ($_POST[$templateimg]){
-				$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
+				$templatetable.="<td valign='top'><table class='tableborder'>\n";
 				$templateIdName="templateId".$i;
 				$templateId=$_POST[$templateIdName];
-				$templateList.=$i.":".$templateId.",";
+				$templatelist.=$i.":".$templateId.",";
 				$templateinfo=$particle->getTemplatesFromId($templateId);
 				$filename=$templateinfo[path]."/".$templateinfo['templatename'];
-				$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
-				$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
-				$templateForm.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
-				$templateForm.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
-				$templateTable.="</table></TD>\n";
+				$templatetable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
+				$templatetable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
+				$templateform.="<INPUT TYPE='hidden' NAME='$templateIdName' VALUE='$templateId'>\n";
+				$templateform.="<INPUT TYPE='hidden' NAME='$templateimg' VALUE='$templateId'>\n";
+				$templatetable.="</table></TD>\n";
 			}
 		}
-		$templateTable.="</tr></table>\n";
-		if ($templateList) { $templateList=substr($templateList,0,-1);}
+		$templatetable.="</tr></table>\n";
+		if ($templatelist) { $templatelist=substr($templatelist,0,-1);}
 		else {
 			echo "<br><B>no templates chosen, go back and choose templates</B>\n";
 			exit;
@@ -218,244 +255,309 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 		//get template info if coming from resubmitting input
 		$templateIds = templateIds();
 		$templatearray=split(",",$templateIds);
-		$templateTable.="<table><TR>\n";
+		$templatetable.="<table><TR>\n";
 		foreach ($templatearray as $templateId) {
-			$templateTable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
+			$templatetable.="<TD VALIGN='TOP'><TABLE CLASS='tableborder'>\n";
 			$templateinfo=$particle->getTemplatesFromId($templateId);
 			$filename=$templateinfo[path]."/".$templateinfo['templatename'];
-			$templateTable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
-			$templateTable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
-			$templateTable.="</table></TD>\n";
+			$templatetable.="<TR><TD VALIGN='TOP'><img src='loadimg.php?w=125&filename=$filename' WIDTH='125'></TD></tr>\n";
+			$templatetable.="<TR><TD VALIGN='TOP'>".$templateinfo['templatename']."</TD></tr>\n";
+			$templatetable.="</table></TD>\n";
 		}
-		$templateTable.="</tr></table>\n";
+		$templatetable.="</tr></table>\n";
 	}
-	echo "<INPUT TYPE='hidden' NAME='templateList' VALUE='$templateList'>\n";
-	echo "<INPUT TYPE='hidden' NAME='templates' VALUE='continue'>\n";
-	echo "<INPUT TYPE='hidden' NAME='numtemplates' VALUE='$numtemplates'>\n";
+	echo "<input type='hidden' name='templatelist' value='$templatelist'>\n";
+	echo "<input type='hidden' name='templates' value='continue'>\n";
+	echo "<input type='hidden' name='numtemplates' value='$numtemplates'>\n";
+	// end templates
 
-  echo"
-	<TABLE BORDER=0 CLASS=tableborder>
-	<TR>
-		<TD VALIGN='TOP'>
-		<TABLE CELLPADDING='10' BORDER='0'>
-		<TR>
-			<TD VALIGN='TOP'>
-			<B>Alignment Run Name:</B>
-			<INPUT TYPE='text' NAME='runname' VALUE='$runnameval'>
-			</TD>
+	echo "<table border='0' class='tableborder'>\n<tr><td valign='top'>\n";
+	echo "<table border='0' cellpadding='5'>\n";
+	echo "<tr><td>\n";
+	echo openRoundBorder();
+	echo docpop('runname','<b>MaxLike Run Name:</b>');
+	echo "<input type='text' name='runname' value='$runname'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('outdir','<b>Output Directory:</b>');
+	echo "<br />\n";
+	echo "<input type='text' name='outdir' value='$sessionpathval' size='38'>\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo docpop('descr','<b>Description of Max Like Alignment:</b>');
+	echo "<br />\n";
+	echo "<textarea name='description' rows='3' cols='50'>$description</textarea>\n";
+	echo closeRoundBorder();
+	echo "</td>
 		</tr>\n";
-		echo"<TR>
-			<TD VALIGN='TOP'>
-			<B>Alignment Description:</B><br>
-			<TEXTAREA NAME='description' ROWS='3' COLS='36'>$rundescrval</TEXTAREA>
-			</TD>
-		</tr>\n";
-		echo"<TR>
-			<TD VALIGN='TOP'>	 
-			<B>Output Directory:</B><br>
-			<INPUT TYPE='text' NAME='outdir' VALUE='$sessionpathval' SIZE='38'>
-			</TD>
-		</tr>
-		<TR>
+	echo "<tr>
 			<td>\n";
 
 	if (!$stackIds) {
-		echo"
-		<FONT COLOR='RED'><B>No Stacks for this Session</B></FONT>\n";
+		echo "<font color='red'><B>No Stacks for this Session</B></FONT>\n";
+	} else {
+		echo docpop('stack','<b>Select a stack of particles to use</b>');
+		echo "<br/>";
+		$apix = $particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
 	}
-	else {
-		echo "
-		Particles:<br/>";
-		$particle->getStackSelector($stackIds,$stackidval,'switchDefaults(this.value)');
-	}
-	echo"
-		</TD>
-	</tr>";
-	echo"
-	<TR>
-		<TD VALIGN='TOP'>
-		<INPUT TYPE='checkbox' NAME='commit' $commitcheck>
-		<B>Commit to Database</B><br>
-		</TD>
-	</tr>";
-	echo"
-	</table>
-	</TD>
-	<TD CLASS='tablebg'>
-	<TABLE CELLPADDING='5' BORDER='0'>
-	<TR>";
-	echo"
-		<TD VALIGN='TOP'>
-		<B>Particle Params:</B></A><br>";
-	echo"
-		<INPUT TYPE='text' NAME='lastring' SIZE='5' VALUE='$lastring'>
-		Last Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><br>";
-	echo"
-		<INPUT TYPE='text' NAME='firstring' SIZE='5' VALUE='$firstring'>
-		First Ring Radius <FONT SIZE='-1'>(in pixels)</FONT><br>";
-	echo"
-		<INPUT TYPE='text' NAME='lowpass' SIZE='5' VALUE='$lowpass'>
-		Low Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><br>";
-	echo"
-		<INPUT TYPE='text' NAME='highpass' SIZE='5' VALUE='$highpass'>
-		High Pass Filter <FONT SIZE='-1'>(in &Aring;ngstroms)</FONT><br>";
-	echo"
-		<INPUT TYPE='text' NAME='bin' SIZE='5' VALUE='$bin'>
-		Particle Binning<br>";
-	echo"
-		</TD>
-	</tr>
-	<TR>
-		<TD VALIGN='TOP'>
-		<B>Alignment Params:</B></A><br>";
-	echo"
-		<INPUT TYPE='text' NAME='iters' VALUE='$iters' SIZE='4'>
-		Iterations<br>";
-	echo"
-		<INPUT TYPE='text' NAME='xysearch' VALUE='$xysearch' SIZE='4'>
-		Search range from center <FONT SIZE='-1'>(in pixels)</FONT><br>";
-	echo"
-		<INPUT TYPE='text' NAME='xystep' VALUE='$xystep' SIZE='4'>
-		Step size for parsing search range <FONT SIZE='-1'>(in pixels)</FONT><br>";
-	echo"
-		<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4'>
-		Number of Particles to Use<br>";
-	echo"
-		<INPUT TYPE='checkbox' NAME='inverttempl' $inverttempl>
-		Invert density of all templates before alignment<br>";
-	echo"
-		</TD>
-	</tr>
-	</tr>
-	</table>
-	</TD>
-	</tr>
-	<TR>
-		<TD COLSPAN='2' ALIGN='CENTER'>
-		<HR>";
-	echo"<INPUT TYPE='hidden' NAME='refid' VALUE='$templateid'>";
-	echo getSubmitForm("Run Ref-Based Alignment");
-	echo "
-	  </TD>
-	</tr>
-	</table>
-	</FORM>
-	</CENTER>\n";
+	echo "</TD></tr><TR>\n";
+	echo "<TD VALIGN='TOP'>\n";
 
-	echo "$templateForm\n";
-	echo "$templateTable\n";
+	echo "</TD></tr>\n";
+	echo "<TR>\n";
+	echo "<TD VALIGN='TOP'>\n";
+	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
+	echo docpop('commit','<B>Commit to Database</B>');
+	echo "";
+	echo "<br>";
+
+	echo "<INPUT TYPE='text' NAME='nproc' SIZE='4' VALUE='$nproc' onChange='estimatetime()'>\n";
+	echo "Number of Processors";
+	echo "<br/>\n";
+
+	echo "</TD></tr>\n</table>\n";
+	echo "</TD>\n";
+	echo "<TD CLASS='tablebg'>\n";
+	echo "  <TABLE cellpading='5' BORDER='0'>\n";
+	echo "  <TR><TD VALIGN='TOP'>\n";
+	//echo "<B>Particle Params:</B></A><br>\n";
+
+	echo "<b>Particle-specific Radii (in &Aring;ngstroms)</b>\n";
+	echo "<br />\n";
+	if  (!$apix) {
+        	echo "<font color='#DD3333' size='-2'>WARNING: These values will not be checked!<br />\n";
+		echo "Make sure you are within the limitations of the box size</font><br />\n";
+	}
+	echo "<INPUT TYPE='text' NAME='lowpass' SIZE='4' VALUE='$lowpass' onChange='estimatetime()'>\n";
+	echo docpop('lpstackval','Low Pass Filter Radius');
+	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='highpass' SIZE='4' VALUE='$highpass' onChange='estimatetime()'>\n";
+	echo docpop('hpstackval','High Pass Filter Radius');
+	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='bin' VALUE='$bin' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('partbin','Particle binning');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('numpart','Number of Particles');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='angle' VALUE='$angle' SIZE='4' onChange='estimatetime()'>\n";
+	echo docpop('angleinc','Angular Increment');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='text' NAME='maxiter' VALUE='$maxiter' SIZE='4'>\n";
+	echo docpop('xmippmaxiter','Maximum number of iterations');
+	echo "<br/>\n";
+
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='inverttempl' $invert>\n";
+	echo docpop('invert','Invert density of all templates');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='mirror' onChange='estimatetime()' $mirror>\n";
+	echo docpop('mirror','Use Mirrors in Alignment');
+	echo "<br/>\n";
+
+	echo "<INPUT TYPE='checkbox' NAME='fast' onClick='estimatetime(this)' checked disabled>\n";
+	echo docpop('fastmode','Use Fast Mode');
+	echo "<br/>\n";
+
+	echo "Search space reduction criteria";
+	echo "<br/>\n";
+	echo "&nbsp;&nbsp;<select name='fastmode' ";
+	if (!$fast) echo " disabled";
+	echo ">\n";
+	echo " <option value='normal'>Normal search</option>\n";
+	echo " <option value='narrow'>Faster, narrower search</option>\n";
+	echo " <option value='wide'>Slower, wider search</option>\n";
+	echo "</select>\n";
+	echo "<br/>\n";
+
+	echo "Convergence stopping criteria";
+	echo "<br/>\n";
+	echo "&nbsp;&nbsp;<select name='converge'>\n";
+	echo " <option value='normal'>Normal search</option>\n";
+	echo " <option value='fast'>Faster, shorter search</option>\n";
+	echo " <option value='slow'>Slower, longer search</option>\n";
+	echo "</select>\n";
+	echo "<br/>\n";
+
+	echo "<br/>\n";
+
+	echo "  </td>\n";
+	echo "  </tr>\n";
+	echo "</table>\n";
+	echo "</TD>\n";
+	echo "</tr>\n";
+	echo "<TR>\n";
+	echo "	<TD COLSPAN='2' ALIGN='CENTER'>\n";
+	echo "	<hr />\n";
+	echo "Time estimate for first iteration: ";
+	echo "<INPUT TYPE='text' NAME='timeestimate' SIZE='16' onFocus='this.form.elements[0].focus()'>\n";
+	echo "<br/>\n";
+	echo getSubmitForm("Run Max Like Alignment");
+	echo "  </td>\n";
+	echo "</tr>\n";
+	echo "</table>\n";
+	echo "</form>\n";
+	// first time loading page, set defaults:
+	if (!$_POST['process']) {
+		echo "<script>switchDefaults(document.viewerform.stackval.options[0].value);</script>\n";
+	}
+
+	echo "$templateform\n";
+	echo "$templatetable\n";
 
 	processing_footer();
 	exit;
 }
 
-//***************************************
-//***************************************
-//***************************************
-//***************************************
-function runAlignment() {
-	$expId   = $_GET['expId'];
-	$outdir  = $_POST['outdir'];
-	$runname = $_POST['runname'];
-
+function runMaxLikeAlign() {
+	$expId=$_GET['expId'];
+	$runname=$_POST['runname'];
+	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackval'];
-	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
-	$lastring=$_POST['lastring'];
-	$firstring=$_POST['firstring'];
-	$bin=$_POST['bin'];
-	$lowpass=$_POST['lowpass'];
 	$highpass=$_POST['highpass'];
-	$xysearch=$_POST['xysearch'];
-	$xystep=$_POST['xystep'];
-	$refid=$_POST['refid'];
-	$iters=$_POST['iters'];
-	$commit = ($_POST['commit']=="on") ? 'commit' : '';
-	$inverttempl = ($_POST['inverttempl']=="on") ? 'inverttempl' : '';
+	$lowpass=$_POST['lowpass'];
+	$numpart=$_POST['numpart'];
+	$angle=$_POST['angle'];
+	$maxiter=$_POST['maxiter'];
+	$bin=$_POST['bin'];
+	$description=$_POST['description'];
+	//$fast = ($_POST['fast']=="on") ? true : false;
+	$fast = true;
+	$fastmode = $_POST['fastmode'];
+	$converge = $_POST['converge'];
+	$mirror = ($_POST['mirror']=="on") ? true : false;
+	$commit = ($_POST['commit']=="on") ? true : false;
+	$nproc = ($_POST['nproc']) ? $_POST['nproc'] : 1;
+
+	// get stack id, apix, & box size from input
+	list($stackid,$apix,$boxsz) = split('\|--\|',$stackval);
+	//make sure a session was selected
+
+	if (!$description)
+		createMaxLikeAlignForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+
+	if ($nproc > 16)
+		createMaxLikeAlignForm("<B>ERROR:</B> Let's be reasonable with the nubmer of processors, less than 16 please");
 
 	//make sure a stack was selected
-	if (!$stackid) createAlignmentForm("<B>ERROR:</B> No stack selected");
+	if (!$stackid)
+		createMaxLikeAlignForm("<B>ERROR:</B> No stack selected");
+
+	// classification
+	if ($numpart < 10)
+		createMaxLikeAlignForm("<B>ERROR:</B> Must have more than 10 particles");
+
+	// check num of particles
+	$particle = new particledata();
+	$totprtls=$particle->getNumStackParticles($stackid);
+	if ($numpart > $totprtls)
+		createMaxLikeAlignForm("<B>ERROR:</B> Number of particles to align ($numpart)"
+			." must be less than the number of particles in the stack ($totprtls)");
+
+	// determine calc time
+	$stackdata = $particle->getStackParams($stackid);
+	$boxsize = ($stackdata['bin']) ? $stackdata['boxSize']/$stackdata['bin'] : $stackdata['boxSize'];
+	$secperiter = 0.12037;
+	$calctime = ($numpart/1000.0)*$numtemplates*($boxsize/$bin)*($boxsize/$bin)/$angle*$secperiter/$nproc;
+	if ($mirror) $calctime *= 2.0;
+	// kill if longer than 10 hours
+	if ($calctime > 10.0*3600.0)
+		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 10 hours<br/>"
+			."<b>Estimated calc time:</b> ".round($calctime/3600.0,2)." hours\n");
+	elseif (!$fast && $calctime > 1800.0)
+		createMaxLikeAlignForm("<b>ERROR:</b> Run time per iteration greater than 30 minutes without fast mode<br/>"
+			."<b>Estimated calc time:</b> ".round($calctime/60.0,2)." minutes\n");
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
-	// alignment
-	$numpart=$_POST['numpart'];
-	if ($numpart < 1) 
-		createAlignmentForm("<B>ERROR:</B> Number of particles must be at least 1");
-	$particle = new particledata();
-	$totprtls=$particle->getNumStackParticles($stackid);
-	if ($numpart > $totprtls) 
-		createAlignmentForm("<B>ERROR:</B> Number of particles to aligned ($numpart) must be "
-			."less than the number of particles in the stack ($totprtls)");
-
-	$boxsize = (int) floor($boxsz/$bin);
-	$maxbox = (int) floor($boxsize/2-2);
-	if (($lastring+$xysearch) > $maxbox) {
-		createAlignmentForm("<B>ERROR:</B> last ring radius ($lastring pixels) plus xy-search ($xysearch pixels) "
-			."is too big for final boxsize ($boxsize pixels); must be less than $maxbox pixels");
-	}
-
-	//make sure a session was selected
-	$description=$_POST['description'];
-	if (!$description) createAlignmentForm("<B>ERROR:</B> Enter a brief description of the alignment run");
-
-	$command="refBasedAlignment2.py ";
+	// setup command
+	$command ="refBasedMaxlikeAlign.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
-	$command.="--template-list=".templateIds()." ";
-	$command.="--runname=$runname ";
-	$command.="--stack=$stackid ";
-
-	if ($lastring) $command.="--last-ring=$lastring ";
-	if ($firstring) $command.="--first-ring=$firstring ";
-	$command.="--rundir=".$rundir." ";
+	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
-	$command.="--lowpass=$lowpass ";
-	$command.="--highpass=$highpass ";
-	$command.="--xy-search=$xysearch ";
-	$command.="--xy-step=$xystep ";
-	$command.="--num-iter=$iters ";
+	$command.="--runname=$runname ";
+	$command.="--template-list=".templateIds()." ";
+	$command.="--stack=$stackid ";
+	if ($lowpass != '') $command.="--lowpass=$lowpass ";
+	if ($highpass != '') $command.="--highpass=$highpass ";
+	if ($inverttempl) $command.="--invert-templates ";
 	$command.="--num-part=$numpart ";
 	$command.="--bin=$bin ";
-	if ($inverttempl) $command.="--invert-templates ";
+	$command.="--angle-interval=$angle ";
+	$command.="--max-iter=$maxiter ";
+	if ($nproc && $nproc>1)
+		$command.="--nproc=$nproc ";
+	if ($fast) {
+		$command.="--fast ";
+		$command.="--fast-mode=$fastmode ";
+	} else
+		$command.="--no-fast ";
+	if ($mirror)
+		$command.="--mirror ";
+	else
+		$command.="--no-mirror ";
 	if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
-
+	$command.="--converge=$converge ";
 	// submit job to cluster
-	if ($_POST['process']=="Run Ref-Based Alignment") {
+	if ($_POST['process']=="Run Max Like Alignment") {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password))
-			createAlignmentForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createMaxLikeAlignForm("<B>ERROR:</B> Enter a user name and password");
 
-		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,8);
+		$sub = submitAppionJob($command,$outdir,$runname,$expId,'partalign',False,False,False,$nproc);
 		// if errors:
-		if ($sub)
-			createAlignmentForm("<b>ERROR:</b> $sub");
+		if ($sub) createMaxLikeAlignForm("<b>ERROR:</b> $sub");
 		exit;
-	} else {
-		processing_header("Alignment Run","Alignment Params");
-
-		echo"
-		<TABLE WIDTH='600' BORDER='1'>
-		<TR><TD COLSPAN='2'>
-		<B>Alignment Command:</B><br>
-		$command
-		</TD></tr>
-		<TR><td>runname</TD><td>$runname</TD></tr>
-		<TR><td>stackid</TD><td>$stackid</TD></tr>
-		<TR><td>refids</TD><td>".templateIds()."</TD></tr>
-		<TR><td>iter</TD><td>$iters</TD></tr>
-		<TR><td>numpart</TD><td>$numpart</TD></tr>
-		<TR><td>last ring</TD><td>$lastring</TD></tr>
-		<TR><td>first ring</TD><td>$firstring</TD></tr>
-		<TR><td>rundir</TD><td>$rundir</TD></tr>
-		<TR><td>xysearch</TD><td>$xysearch</TD></tr>
-		<TR><td>xystep</TD><td>$xystep</TD></tr>
-		<TR><td>low pass</TD><td>$lowpass</TD></tr>l
-		<TR><td>high pass</TD><td>$highpass</TD></tr>";
-		echo"	</table>\n";
+	}
+	else {
+		processing_header("Max Like Align Run Params","Max Like Align Params");
+		echo "<table width='600' class='tableborder' border='1'>";
+		echo "<tr><td colspan='2'><br/>\n";
+		if ($calctime < 60)
+			echo "<span style='font-size: larger; color:#999933;'>\n<b>Estimated calc time:</b> "
+				.round($calctime,2)." seconds\n";
+		elseif ($calctime < 3600)
+			echo "<span style='font-size: larger; color:#33bb33;'>\n<b>Estimated calc time:</b> "
+				.round($calctime/60.0,2)." minutes\n";
+		else
+			echo "<span style='font-size: larger; color:#bb3333;'>\n<b>Estimated calc time:</b> "
+				.round($calctime/3600.0,2)." hours\n";
+		echo "for the first iteration</span><br/>"
+			."<i>it gets much faster after the first iteration with the fast mode</i><br/><br/></td></tr>\n";
+		echo "
+			<tr><td colspan='2'>
+			<b>MaxLike Alignment Command:</b><br />
+			$command
+			</td></tr>
+			<tr><td>run id</td><td>$runname</td></tr>
+			<tr><td>stack id</td><td>$stackid</td></tr>
+			<tr><td>low pass</td><td>$lowpass</td></tr>
+			<tr><td>high pass</td><td>$highpass</td></tr>
+			<tr><td>num part</td><td>$numpart</td></tr>
+			<tr><td>angle increment</td><td>$angle</td></tr>
+			<tr><td>maximum iterations</td><td>$maxiter</td></tr>
+			<TR><td>refids</TD><td>".templateIds()."</TD></tr>
+			<tr><td>binning</td><td>$bin</td></tr>
+			<tr><td>fast</td><td>$fast</td></tr>
+			<tr><td>fast mode</td><td>$fastmode</td></tr>
+			<tr><td>converge</td><td>$converge</td></tr>
+			<tr><td>mirror</td><td>$mirror</td></tr>
+			<tr><td>run dir</td><td>$rundir</td></tr>
+			<tr><td>commit</td><td>$commit</td></tr>
+			</table>\n";
 		processing_footer();
 	}
 }
@@ -471,8 +573,8 @@ function runAlignment() {
 function templateIds () {
 	$command = "";
 	// get the list of templates
-	$templateList=$_POST['templateList'];
-	$templates=split(",", $templateList);
+	$templatelist=$_POST['templatelist'];
+	$templates=split(",", $templatelist);
 	foreach ($templates as $tmplt) {
 		list($tmpltNum,$tmpltId)=split(":",$tmplt);
 		$templateIds.="$tmpltId,";
