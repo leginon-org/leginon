@@ -281,7 +281,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		for mrcfile in filelist:
 			spifile = mrcfile[:-4]+".xmp"
 			emancmd  = ("proc2d templates/"+mrcfile+" templates/"+spifile
-				+" clip="+str(self.boxsize)+","+str(self.boxsize)
+				+" clip="+str(self.clipsize)+","+str(self.clipsize)
 				+" spiderswap ")
 			if self.params['inverttemplates'] is True:
 				emancmd += " invert "
