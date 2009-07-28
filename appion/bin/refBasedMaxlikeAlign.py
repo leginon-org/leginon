@@ -276,7 +276,7 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 		templateparams['pixlimit'] = None
 		filelist = apTemplate.getTemplates(templateparams)
 
-		templateselfile = "init_templates.sel"
+		templateselfile = os.path.join(self.params['rundir'], "templates.sel")
 		f = open(templateselfile, "w")
 		for mrcfile in filelist:
 			spifile = mrcfile[:-4]+".xmp"
@@ -288,7 +288,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 			apEMAN.executeEmanCmd(emancmd, showcmd=False)
 			if not os.path.isfile("templates/"+spifile):
 				apDisplay.printError("Template conversion failed")
-			f.write("templates/"+spifile+" 1\n")
+			temppath = os.path.join(self.params['rundir'], "templates/"+spifile)
+			f.write(temppath+" 1\n")
 		f.close()
 
 		templatetime = time.time() - templatetime
