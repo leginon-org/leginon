@@ -15,6 +15,11 @@ import targethandler
 import node
 import player
 
+class PauseRepeatException(Exception):
+	'''Raised within processTargetData method if the target should be
+	repeated after a user pause'''
+	pass
+
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
 	TargetWatcher will watch for TargetLists
@@ -220,6 +225,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.startTimer('processTargetData')
 				try:
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
+				except PauseRepeatException, e:
+					self.player.pause()
+					self.logger.error(str(e) + '... Fix it, then press play to repeat target')
+					self.beep()
+					process_status = 'repeat'
 				except node.PublishError, e:
 					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
