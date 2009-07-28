@@ -470,12 +470,15 @@ def imageToArray(im, convertType='uint8', dtype=None, msg=True):
 		a = numpy.reshape(a, (im.size[1], im.size[0]))
 		#a.shape = (im.size[1], im.size[0], 1)  # alternate way
 	elif (im.mode=='RGB'):
+		apDisplay.printMsg("reading RGB and converting to L")
 		grey = im.convert('L')
 		a = numpy.fromstring(grey.tostring(), numpy.uint8)
 		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	elif (im.mode=='RGBA'):
-		a = numpy.fromstring(im.tostring(), numpy.uint8)
-		a.shape = (im.size[1], im.size[0], 4)
+		apDisplay.printMsg("reading RGBA and converting to L")
+		grey = im.convert('L')
+		a = numpy.fromstring(grey.tostring(), numpy.uint8)
+		a = numpy.reshape(a, (grey.size[1], grey.size[0]))
 	else:
 		raise ValueError, im.mode+" mode not considered"
 
