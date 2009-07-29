@@ -1274,12 +1274,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			lines = lines[1:]   ### first line has names
 			f.close()
 			split = [line.split() for line in lines]
-			for params in split:
-				if defocuslist1 is None:
+			if defocuslist1 is None:
+				for params in split:
 					defocuslist1.append(params[1])
-				if defocuslist2 is None:
+			if defocuslist2 is None:
+				for params in split:
 					defocuslist2.append(params[2])
-				if astigmatismlist is None:
+			if astigmatismlist is None:
+				for params in split:
 					astigmatismlist.append(params[3])
 		if (defocuslist1c is not True or defocuslist2c is not True or astigmatismlistc is not True) and self.params['ace2correct'] is True:
 			recoveryfile = os.path.join(self.params['rundir'], "defocuslist_correction.lst")
@@ -1288,12 +1290,14 @@ class createSyntheticDatasetScript(appionScript.AppionScript):
 			lines = lines[1:]   ### first line has names
 			f.close()
 			split = [line.split() for line in lines]
-			for params in split:
-				if defocuslist1c is None:
+			if defocuslist1c is None:
+				for params in split:	
 					defocuslist1c.append(params[1])
-				if defocuslist2c is None:
+			if defocuslist2c is None:
+				for params in split:
 					defocuslist2c.append(params[2])
-				if astigmatismlistc is None:
+			if astigmatismlistc is None:
+				for params in split:
 					astigmatismlistc.append(params[3])
 		
 		### convert to single stack of corrected files			
