@@ -189,7 +189,7 @@ function createAlignmentForm($extra=false, $title='edIterAlign.py Launcher', $he
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 10;
 	$freealigns = ($_POST['freealigns']) ? $_POST['freealigns'] : 3;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
-	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 2000;
 	$orientref = $_POST['orientref'];
 
 	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];

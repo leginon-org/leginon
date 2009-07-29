@@ -93,7 +93,7 @@ function createSpiderNoRefAlignForm($extra=false, $title='spiderNoRefAlign.py La
 	$bin = ($_POST['bin']) ? $_POST['bin'] : '1';
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : '3000';
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : '10';
-	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : '400';
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : '2000';
 	$partrad = ($_POST['partrad']) ? $_POST['partrad'] : '150';
 	$firstring = ($_POST['numpart']) ? $_POST['firstring'] : '2';
 	$lastring = ($_POST['lastring']) ? $_POST['lastring'] : '150';

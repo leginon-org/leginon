@@ -180,7 +180,7 @@ function createAlignmentForm($extra=false, $title='refBasedAlignment.py Launcher
 	$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $initparts;
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 3;
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
-	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 2000;
 	$xysearch = ($_POST['xysearch']) ? $_POST['xysearch'] : '5';
 	$xystep = ($_POST['xystep']) ? $_POST['xystep'] : '1';
 	$boxsz = ($firststack['bin']) ? $firststack['boxSize']/$firststack['bin'] : $firststack['boxSize'];

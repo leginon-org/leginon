@@ -95,7 +95,7 @@ function createAlignmentForm($extra=false, $title='imagicMultiReferenceAlignment
 	$iters = ($_POST['iters']) ? $_POST['iters'] : 5;
 	if ($iters > 5) $iters = 5; // maximum number allowed by imagic
 	$lowpass = ($_POST['lowpass']) ? $_POST['lowpass'] : 10;
-	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 400;
+	$highpass = ($_POST['highpass']) ? $_POST['highpass'] : 2000;
 	$lprefs = ($_POST['lowpass_refs']) ? $_POST['lowpass_refs'] : 15;
 	$threshrefs = ($_POST['threshrefs']) ? $_POST['threshrefs'] : -999;
 	$maskrad_refs = ($_POST['maskrad_refs']) ? $_POST['maskrad_refs'] : 0.9;
