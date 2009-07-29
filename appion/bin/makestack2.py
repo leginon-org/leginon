@@ -824,7 +824,7 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 
 		if self.params['partlimit'] is not None and self.particleNumber > self.params['partlimit']:
 			apDisplay.printError("Number of particles in existing stack already exceeds limit!")
-		self.imglog = 1
+		self.logpeaks = 4
 
 	#=====================
 	def reprocessImage(self, imgdata):
@@ -875,10 +875,13 @@ class Makestack2Loop(appionLoop2.AppionLoop):
 			self.imgtree = []
 			self.notdone = False
 
-		imglog = math.log10(self.stats['count'])
-		if imglog > self.imglog:
-			stackpath = os.path.join(self.params['rundir'], "start.hed")
-			apStack.averageStack(stack=stackpath)
+		### create a stack average every so often
+		if self.stats['lastpeaks'] > 0:
+			logpeaks = math.log(self.stats['peaksum']+self.stats['lastpeaks'])
+			if logpeaks > self.logpeaks:
+				self.logpeaks = math.ceil(logpeaks)
+				stackpath = os.path.join(self.params['rundir'], "start.hed")
+				apStack.averageStack(stack=stackpath)
 
 	#=======================
 	def postLoopFunctions(self):
