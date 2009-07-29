@@ -16,8 +16,8 @@ function createAppionLoopTable ($sessiondata, $defrunname, $outdirname, $leginon
 	$reverse = ($_POST['reverse']=="on") ? "CHECKED" : "";
 	$limit = $_POST[limit];
 	$tiltangle = $_POST['tiltangle'];
-	$commit = ($_POST[commit]=="on") ? "CHECKED" : "";
-	$apcontinue = $_POST[apcontinue];
+	$commit = ($_POST['commit']=="off") ? "" : "CHECKED";
+	$apcontinue = $_POST['apcontinue'];
 	// continue is checkmarked by default
 	$apcontinuecheck = ($apcontinue || !$_POST['process']) ? "CHECKED" : "";
     $apreproccheck = (!$apcontinue && $_POST['process']) ? "CHECKED" : "";
@@ -226,7 +226,7 @@ function parseAppionLoopParams () {
 	$limit = $_POST['limit'];
 	$tiltangle = $_POST['tiltangle'];
 	$apcontinue = $_POST['apcontinue'];
-	$commit = ($_POST['commit']=="on") ? true : false;
+	$commit = ($_POST['commit']=='on') ? true : false;
 	$runname = $_POST['runname'];
 	$outdir = $_POST['outdir'];
 	
