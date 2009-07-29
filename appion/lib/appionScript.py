@@ -101,8 +101,16 @@ class AppionScript(object):
 		prognameq = appionData.ScriptProgramName()
 		prognameq['name'] = self.functionname
 
+		userq = appionData.ScriptUserName()
+		userq['name'] = apParam.getUsername()
+
+		hostq = appionData.ScriptHostName()
+		hostq['name'] = apParam.getHostname()
+
 		progrunq = appionData.ScriptProgramRun()
 		progrunq['progname'] = prognameq
+		progrunq['username'] = userq
+		progrunq['hostname'] = hostq
 
 		for paramname in self.params.keys():
 			paramnameq = appionData.ScriptParamName()
@@ -110,7 +118,6 @@ class AppionScript(object):
 			paramnameq['progname'] = prognameq
 
 			paramvalueq = appionData.ScriptParamValue()
-			print paramname, self.params[paramname]
 			paramvalueq['value'] = str(self.params[paramname])
 			paramvalueq['paramname'] = paramnameq
 			paramvalueq['progrun'] = progrunq

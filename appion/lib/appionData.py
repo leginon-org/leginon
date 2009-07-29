@@ -23,6 +23,8 @@ class ScriptProgramRun(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('progname', ScriptProgramName),
+			('username', ScriptUserName),
+			('hostname', ScriptHostName),
 		)
 	typemap = classmethod(typemap)
 leginondata.ScriptProgramRun=ScriptProgramRun
@@ -53,6 +55,23 @@ class ScriptParamValue(Data):
 		)
 	typemap = classmethod(typemap)
 leginondata.ScriptParamValue=ScriptParamValue
+
+class ScriptUserName(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ScriptUserName=ScriptUserName
+
+class ScriptHostName(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('name', str),
+		)
+	typemap = classmethod(typemap)
+leginondata.ScriptHostName=ScriptHostName
+
 
 ### Particle selection tables ###
 

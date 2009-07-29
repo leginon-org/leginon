@@ -59,16 +59,24 @@ def getFunctionName(arg=None):
 	functionname = os.path.splitext(functionname)[0]
 	return functionname
 
-def getLogHeader():
-	#WRITE INFO
+def getUsername():
 	try:
 		user = os.getlogin() #os.environ.get('USER')
 	except:
-		user = "user.unknown"
+		user = "unknown"
+	return user
+
+def getHostname():
 	try:
 		host = socket.gethostname()
 	except:
-		host = "host.unknown"
+		host = "unknown"
+	return host
+
+def getLogHeader():
+	#WRITE INFO
+	user = getUsername()
+	host = getHostname()
 	logheader = "[ "+user+"@"+host+": "+time.asctime()+" ]\n"
 	return logheader
 
