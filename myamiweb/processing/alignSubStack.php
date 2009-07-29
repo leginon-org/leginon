@@ -79,7 +79,6 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	$outdir=ereg_replace("leginon","appion",$outdir);
 	$outdir=ereg_replace("rawdata","stacks",$outdir);
 
-
 	$javafunctions .= writeJavaPopupFunctions('appion');
 	processing_header($title,$heading,$javafunctions);
 	// write out errors, if any came up:
@@ -151,6 +150,16 @@ function createNorefSubStackForm($extra=false, $title='subStack.py Launcher', $h
 	}
 
 	echo "<hr/><br/>\n";
+
+	if (file_exists($outdir.'/'.$runname)) {
+		for ($i=65; $i<=90; $i++) {
+			$letter = strtolower(chr($i));
+			$newrunname = $runname.$letter;
+			if (!file_exists($outdir.'/'.$newrunname))
+				break;
+		}
+		$runname = $newrunname;
+	}
 
 	echo docpop('runname','<b>Run Name:</b> ');
 	echo "<input type='text' name='runname' value='$runname' size='15'>\n";
