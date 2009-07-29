@@ -253,6 +253,7 @@ def writeImagic(array, filename, msg=True):
 	i = 0
 	headfile = open(headerfilename, 'wb')
 	datafile = open(datafilename, 'wb')
+	partnum = 0
 	while i < array.shape[0]:
 		partimg = array[i]
 		avg1,stdev1,min1,max1 = getImageInfo(partimg)
@@ -265,6 +266,8 @@ def writeImagic(array, filename, msg=True):
 		i += 1
 	headfile.close()
 	datafile.close()
+	if partnum < 1:
+		apDisplay.printWarning("did not write any particles to file")
 	if msg is True:
 		apDisplay.printMsg("wrote "+str(partnum)+" particles to header file")
 		apDisplay.printMsg("finished in "+apDisplay.timeString(time.time()-t0))	
