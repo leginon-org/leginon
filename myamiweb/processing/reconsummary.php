@@ -42,8 +42,10 @@ if ($reconRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'defid', 'name', 'num prtls', 'symmetry', 'pixel size', 'box size', 
-		'best: fsc / rMeas (iter)', 'avg median<br/>euler jump','description');
+	$display_keys = array ( 'recon name', 'description', '',
+		'stack info', 'num parts', 'box size', 'pixel size',  '',
+		'model info', 'model symm',  '',
+		'FSC&frac12; Rmeasure resolution', 'avg median<br/>euler jump',);
 	foreach($display_keys as $key) {
 		$html .= "<td><span class='datafield0'>".$key."</span> </TD> ";
 	}
@@ -59,36 +61,58 @@ if ($reconRuns) {
 		}
 
 		// GET INFO
-		$stackcount=$particle->getNumStackParticles($reconrun['REF|ApStackData|stack']);
-		$stackmpix = $particle->getStackPixelSizeFromStackId($reconrun['REF|ApStackData|stack']);
+		$reconid = $reconrun['DEF_id'];
+		$reconname = $reconrun['name'];
+
+		$stackid = $reconrun['REF|ApStackData|stack'];
+		$stackcount = commafy($particle->getNumStackParticles($stackid));
+		$stackmpix = $particle->getStackPixelSizeFromStackId($stackid);
+		$stackparams = $particle->getStackParams($stackid);
 		$stackapix = format_angstrom_number($stackmpix);
-		$stmodel = $particle->getInitModelInfo($reconrun['REF|ApInitialModelData|initialModel']);
-		$sym = $particle->getSymInfo($stmodel['REF|ApSymmetryData|symmetry']);
+		$stackbox = (int) $stackparams['boxSize']/$stackparams['bin'];
+		//print_r($stackparams);
+
+		$modelid = $reconrun['REF|ApInitialModelData|initialModel'];
+		$modelparams = $particle->getInitModelInfo($modelid);
+		$symdata = $particle->getSymInfo($modelparams['REF|ApSymmetryData|symmetry']);
 		$res = $particle->getHighestResForRecon($reconid);
 		$avgmedjump = $particle->getAverageMedianJump($reconid);
 
-		// PRINT INFO
+
+		// recon info
 		$html .= "<TR>\n";
-		$html .= "<td>$reconrun[DEF_id]</TD>\n";
-		$html .= "<td><A HREF='reconreport.php?expId=$expId&reconId=$reconrun[DEF_id]'>$reconrun[name]</A></TD>\n";
-		$html .= "<td>$stackcount</TD>\n";
-		$html .= "<td>";
-		$html .= "$sym[symmetry]</TD>\n";
-		$html .= "<td>".$stackapix."</TD>\n";
-		$html .= "<td>$stmodel[boxsize]</TD>\n";
-		$html .= sprintf("<td>% 2.2f / % 2.1f &Aring; (%d)</TD>\n", $res[half],$res[rmeas],$res[iter]);
+		$html .= "<td><font size='+1'><a href='reconreport.php?expId=$expId&reconId=$reconid'>$reconname</a></font>"
+			." <br/><i>(ID: $reconid)</i></td>\n";
+		$html .= "<td><font size=-2>$descDiv</font></td>\n";
+		$html .= "<td bgcolor='#dddddd'></td>\n";
+
+		// stack info
+		$html .= "<td><a href='stackreport.php?expId=$expId&sId=$stackid'>".$stackparams['shownstackname']."</a>"
+			." <br/><i>(ID: $stackid)</i></td>\n";
+		$html .= "<td>$stackcount</td>\n";
+		$html .= "<td>$stackbox</td>\n";
+		$html .= "<td>$stackapix</td>\n";
+		$html .= "<td bgcolor='#dddddd'></td>\n";
+
+		// model info
+		$html .= "<td><b>$modelid:</b> <font size=-2>".$modelparams['description']."</font></td>\n";
+		$html .= "<td>".$symdata['symmetry']."</td>";
+		$html .= "<td bgcolor='#dddddd'></td>\n";
+
+		// recon stats
+		$html .= sprintf("<td>% 2.1f &Aring; <font size=-2>(FSC&frac12;)</font><br/>% 2.1f &Aring; <font size=-2>(Rm)<br/><i>(iter #%d)</i></font></td>\n", $res['half'],$res['rmeas'],$res['iter']);
 		if ($avgmedjump['count'] > 0) {
 			$html .= "<td><A HREF='eulergraph.php?expId=$expId&hg=1&recon=$reconrun[DEF_id]'>";
-			$html .= sprintf("%2.2f &plusmn; %2.1f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
+			$html .= sprintf("%2.1f &plusmn; %2.0f </A>", $avgmedjump['average'], $avgmedjump['stdev']);
 			$html .= " <font size=-2><A HREF='jumpSubStack.php?expId=$expId&reconId=$reconrun[DEF_id]'>[sub]</a></font>";
 			$html .= "</td>\n";
 		} else
-			$html .= "<td></TD>\n";
+			$html .= "<td></td>\n";
 
 		# add edit button to description if logged in
 		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
 
-		$html .= "<td>$descDiv</td>\n";
+
 		$html .= "</tr>\n";
 	}
 
