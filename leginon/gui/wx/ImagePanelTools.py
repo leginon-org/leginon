@@ -350,8 +350,11 @@ class RecordMotionTool(ImageTool):
 			self.imagepanel.UpdateDrawing()
 
 	def ellipsePoints(self, points):
-		params = pyami.ellipse.solveEllipseB2AC(points)
+		try:
+			params = pyami.ellipse.solveEllipseB2AC(points)
 		#params = pyami.ellipse.solveEllipseGander(points)
+		except:
+			params = None
 		print 'PARAMS', params
 		if params is None:
 			## ellipse not fit
