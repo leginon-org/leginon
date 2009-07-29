@@ -381,7 +381,8 @@ class RecordMotionTool(ImageTool):
 			dc.SetPen(wx.Pen(wx.RED, 3))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			scaledpoints = map(self.imagepanel.image2view, self.xypath)
-			dc.DrawLines(scaledpoints)
+			if len(scaledpoints) > 1:
+				dc.DrawLines(scaledpoints)
 		if self.ellipse:
 			dc.SetPen(wx.Pen(wx.GREEN, 3))
 			dc.SetBrush(wx.TRANSPARENT_BRUSH)
