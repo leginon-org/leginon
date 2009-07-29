@@ -879,8 +879,7 @@ you should see the line:
 --------------------------------
 = Install a PBS job submission system =
 
-You'll need to install a [Portable Batch System http://en.wikipedia.org/wiki/Portable_Batch_System] for job submission, such as [TORQUE http://en.wikipedia.org/wiki/TORQUE_Resource_Manager] or
-openPBS. I know Torque comes with Fedora 10, but not CentOS.
+You'll need to install a [Portable Batch System http://en.wikipedia.org/wiki/Portable_Batch_System] for job submission, such as [TORQUE http://en.wikipedia.org/wiki/TORQUE_Resource_Manager]. I know Torque comes with Fedora 10, but not CentOS.
 
 - An RPM is available in the EPEL testing section
 
@@ -893,9 +892,9 @@ or another way to get packages
 $ wget http://centos.karan.org/el5/extras/testing/`uname -i`/RPMS/torque-2.1.9-1.el5.kb.`uname -i`.rpm
 $ sudo yum -y localinstall --nogpgcheck torque-2.1.9-1.el5.kb.`uname -i`.rpm
 $ #sudo rpm -Uhv torque-2.1.9-1.el5.kb.`uname -i`.rpm
-
 ```
 
+After installing torque it needs to be configured. Sorry, we have no documentation for copnfiguring torque at this time. 
 
 --------------------------------
 = Setting environmental variables =
