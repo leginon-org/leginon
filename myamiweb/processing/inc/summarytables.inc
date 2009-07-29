@@ -479,6 +479,22 @@ function clustersummarytable($clusterrunid, $mini=false) {
 			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
 				."View montage as a stack for further processing</a><br/>\n";
 			$clustertable .= "</ul>\n";
+		} elseif ($clusterrun['REF|ApRotKerDenSOMParamsData|rotkerdenparams']) {
+			// Rot KerDen only has one cluster data
+			$clusterdata = $clusterdatas[0];
+			$clusterid = $clusterdata['clusterid'];
+			$clustertable .= "<b>Type:</b> <i>Xmipp Rot KerDen SOM</i><br/><br/>\n";
+
+			$montagefile = $clusterdata['path']."/"."montage.png";
+			$clustertable .= "<a href='loadimg.php?filename=$montagefile' target='snapshot'>\n"
+				."<img src='loadimg.php?h=120&filename=$montagefile' height='120'></a><br/>";
+
+			$clustertable .= "<ul>\n";
+			$clustertable .= "<li><a target='snapshot' href='loadimg.php?filename=$montagefile'>View montage of self-organizing map</a>\n";
+			$clusteravgfile = $clusterdata['path']."/".$clusterdata['avg_imagicfile'];
+			$clustertable .= "<li><a href='viewstack.php?expId=$expId&clusterId=$clusterid&file=$clusteravgfile' target='stackview'>"
+				."View montage as a stack for further processing</a><br/>\n";
+			$clustertable .= "</ul>\n";
 		}
 		foreach ($clusterdatas as $clusterdata) {
 			$clusterid = $clusterdata['clusterid'];
