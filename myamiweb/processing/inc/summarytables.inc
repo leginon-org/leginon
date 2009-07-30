@@ -96,7 +96,10 @@ function stacksummarytable($stackid, $mini=false, $tiny=false) {
 		$stacktable.= "<td align='center' rowspan='30' align='center' valign='top'>";
 		$stacktable.= "<img src='loadimg.php?filename=$stackavg&s=80' height='80'><br/>\n";
 		$stacktable.= "<i>average</i>\n";
-		if ($junksorted) $stacktable.= "<br /><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a>\n";
+		if (!$junksorted)
+			$stacktable.= "<br/><font size='-2'><a href='sortJunk.php?expId=$expId&sId=$stackid&junksort=1'>[Sort Junk]</a></font>\n";
+		if ($junksorted)
+			$stacktable.= "<br/><font size='-2'><a href='viewstack.php?file=$stackfile&expId=$expId&stackId=$stackid&junksort=1'>[Apply Junk Cutoff]</a></font>\n";
 		$stacktable.= "</td></tr>\n\n";
 	} #endif
 
