@@ -15,9 +15,6 @@ require "inc/processing.inc";
 
 $filename=$_GET['file'];
 $expId =$_GET['expId'];
-$reclassId=$_GET['reclassId'];
-$norefId=$_GET['norefId'];
-$norefClassId=$_GET['norefClassId'];
 $clusterId=$_GET['clusterId'];
 $templateStackId=$_GET['templateStackId'];
 $alignId=$_GET['alignId'];
@@ -62,9 +59,7 @@ if ($reconId) {
 	foreach ($arrayall as $s) $subprtls[]=array('p' => $s);
 	$numbad = count($subprtls);
 }
-if ($norefClassId) {
-	$classnumber=$particle->getNoRefClassParticleNumber($norefClassId);
-} elseif ($alignId) {
+if ($alignId) {
 	$classnumber=$particle->getAlignParticleNumber($alignId);
 } elseif ($clusterId) {
 	$classnumber=$particle->getClusteringParticleNumber($clusterId);
@@ -136,16 +131,13 @@ echo stackViewer($file_hed, $file_img, $n_images, $stackoptions);
 var expId="<?=$expId?>"
 var sessionname="<?=$sessionname?>"
 var filename="<?=$filename?>"
-var norefId="<?=$norefId?>"
-var norefClassId="<?=$norefClassId?>"
 var stackId="<?=$stackId?>"
-var reclassId="<?=$reclassId?>"
 var clusterId="<?=$clusterId?>"
 var templateStackId="<?=$templateStackId?>"
 var alignId="<?=$alignId?>"
 
 <?php
-if ($norefClassId || $alignId || $clusterId) {
+if ($alignId || $clusterId) {
 	$c=array();
 	$numclass = count($classnumber);
 	$classindex = 0;
@@ -161,7 +153,7 @@ if ($norefClassId || $alignId || $clusterId) {
 	}
 echo 'var stackinfo=['.implode(',',$c).']'."\n";
 }
-if ($norefClassId || $reclassId || $clusterId || $templateStackId || $alignId) {
+if ($clusterId || $templateStackId || $alignId) {
 echo 'var addselectfn=selectextra'."\n";
 
 }
@@ -180,12 +172,6 @@ function selectextra() {
 
 function create3d0() {
 	var projections=$('selectedIndex').value
-	if (norefClassId!="") {
-		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&norefId="+norefId+"&norefClassId="+norefClassId,"width=400,height=200")
-	}
-	if (reclassId!="") {
-		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&reclassId="+reclassId,"width=400,height=200")
-	}
 	if (clusterId!="") {
 		window.open("imagic3d0.php?expId="+expId+"&projections="+projections+"&clusterId="+clusterId,"width=400,height=200")
 	}
@@ -369,7 +355,7 @@ if ($junksort) {
 if ($stackId || $clusterId || $alignId)
 	$includebuttons .= "<input id='uploadbutton' type='button' value='Create Templates' onclick='uploadTemplate();'>\n";
 // Imagic 3d0
-if ($norefClassId || $reclassId || $clusterId || $templateStackId)
+if ($clusterId || $templateStackId)
 	$includebuttons .= "<input id='3d0button' type='button' alt='Create 3D0' value='Run Imagic 3d0' onclick='create3d0();'>\n";
 if ($clusterId)
 	$includebuttons .= "<input type='button' value='Run Common Lines' onClick='runCommonLines()'>\n";
