@@ -59,6 +59,7 @@ class ImagePanel(wx.Panel):
 		self.mode = mode
 		self.drawlast = False
 		self.movecount = 0
+		self.parent = parent
 
 		# get size of image panel (image display dimensions)
 		if type(imagesize) != tuple:
@@ -151,11 +152,9 @@ class ImagePanel(wx.Panel):
 		self.panel.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
 		self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.panel.Bind(wx.EVT_SIZE, self.OnSize)
-		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.panel.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeave)
 
 		# add tools
-		self.addTool(ImagePanelTools.RecordMotionTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.ValueTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.RulerTool(self, self.toolsizer))
 		self.addTool(ImagePanelTools.ZoomTool(self, self.toolsizer))
@@ -171,7 +170,6 @@ class ImagePanel(wx.Panel):
 		return tool
 
 	# image set functions
-
 	#--------------------
 	def setBitmap(self):
 		'''

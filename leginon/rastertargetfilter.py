@@ -93,6 +93,18 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		angle = math.degrees(angle)
 		return spacing,angle
 
+	def autoRasterEllipse(self,params):
+		spacing = self.settings['raster spacing']
+		a2 = params['a'] * 2 / spacing
+		b2 = params['b'] * 2 / spacing
+		angledeg = int(round(params['alpha'] * 180 / 3.14159))
+		self.logger.info('a2 %.1f, b2 %.1f, angle %d' % (a2,b2,angledeg))
+		self.settings['ellipse a'] = a2
+		self.settings['ellipse b'] = b2
+		self.settings['ellipse angle'] = angledeg
+		self.setSettings(self.settings)
+		return a2, b2, angledeg
+
 	def makeRaster(self):
 		spacing = self.settings['raster spacing']
 		angledeg = self.settings['raster angle']

@@ -313,6 +313,17 @@ class ClickAndTargetImagePanel(TargetImagePanel):
 	def onImageClickDone(self, evt):
 		self.clicktool.onImageClickDone(evt)
 
+class EllipseTargetImagePanel(TargetImagePanel):
+	def __init__(self, parent, id, disable=False, mode="horizontal"):
+		TargetImagePanel.__init__(self, parent, id, mode)
+		self.addTool(gui.wx.ImagePanelTools.RecordMotionTool(self, self.toolsizer),0)
+		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
+		self.sizer.Layout()
+		self.Fit()
+
+	def setEllipseParams(self,params):
+		if params:
+			self.parent.setEllipseParams(params)
 ##################################
 ##
 ##################################
