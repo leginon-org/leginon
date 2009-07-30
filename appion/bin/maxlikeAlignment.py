@@ -375,7 +375,8 @@ class MaximumLikelihoodScript(appionScript.AppionScript):
 
 		### convert stack into single spider files
 		self.partlistdocfile = apXmipp.breakupStackIntoSingleFiles(self.params['localstack'])
-		apFile.removeStack(self.params['localstack'])
+		### stack is needed by uploadMaxlike.py
+		#apFile.removeStack(self.params['localstack'])
 
 		### setup Xmipp command
 		aligntime = time.time()
