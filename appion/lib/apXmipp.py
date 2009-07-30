@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import os
+import sys
 import time
 import math
 import subprocess
@@ -66,7 +67,9 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	apDisplay.printColor("Breaking up spider stack into single files, this can take a while", "cyan")
 
 	starttime = time.time()
-	filesperdir = 4096
+	boxsize = apFile.getBoxSize(stackfile)
+	filesperdir = 1e9/(boxsize[0]**2)/16.
+	#filesperdir = 4096
 	if numpart is None:
 		numpart = apFile.numImagesInStack(stackfile)
 	apParam.createDirectory(partdir)
@@ -95,9 +98,13 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	while i < numpart:
 		### read images
 		stackimages = apImagicFile.readImagic(stackfile, first=first, last=last, msg=False)
-		esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
-		apDisplay.printMsg("dirnum %d at partnum %d to %d of %d, %s remain"
-			%(subdir, first, last, numpart, apDisplay.timeString(esttime)))
+		if i > 10:
+			esttime = (time.time()-t0)/float(i+1)*float(numpart-i)
+			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d, %s remain"
+				%(subdir, first, last, numpart, apDisplay.timeString(esttime)))
+		else:
+			apDisplay.printMsg("dirnum %d at partnum %d to %d of %d"
+				%(subdir, first, last, numpart))
 
 		### write images
 		for partimg in stackimages['images']:
@@ -123,7 +130,7 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 	"""
 	takes a selfile and creates an EMAN stack
 	"""
-	apDisplay.printColor("Creating a stack, this can take a while", "cyan")
+	apDisplay.printColor("Merging files into a stack, this can take a while", "cyan")
 
 	starttime = time.time()
 
@@ -131,18 +138,71 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 		apDisplay.printError("selfile does not exist: "+selfile)
 
 	### Process selfile
-        fh=open(selfile,'r')
-        lines=fh.readlines()
-        for line in lines:
-            args=line.split()
-            if (len(args)>1):
-                filename=args[0]
-		emancmd = ( "proc2d "+filename+" "+stackfile )
-		apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
-        fh.close()
+	fh = open(selfile, 'r')
+	filelist = []
+	for line in fh:
+		sline = line.strip()
+		if sline:
+			args=sline.split()
+			if (len(args)>1):
+				filename = args[0].strip()
+				filelist.append(filename)
+	fh.close()
 
-        ### Finish
-	apDisplay.printColor("finished creating stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
+	### Set variables
+	boxsize = apFile.getBoxSize(filelist[0])
+	partperiter = 1e9/(boxsize[0]**2)/16.
+	numpart = len(filelist)
+	if numpart < partperiter:
+		partperiter = numpart
+
+	### Process images
+	imgnum = 0
+	stacklist = []
+	stackroot = stackfile[:-4]
+	while imgnum < len(filelist):
+		filename = filelist[0]
+		index = imgnum % partperiter
+		if imgnum % 100 == 0:
+			sys.stderr.write(".")
+		if index == 0:
+			### deal with large stacks, reset loop
+			if imgnum > 0:
+				sys.stderr.write("\n")
+				stackname = "%s-%d.hed"%(stackroot, imgnum)
+				apDisplay.printMsg("writing single particles to file "+stackname)
+				stacklist.append(stackname)
+				apFile.removeStack(stackname, warn=False)
+				apImagicFile.writeImagic(stackarray, stackname, msg=False)
+				perpart = (time.time()-starttime)/imgnum
+				apDisplay.printColor("particle %d of %d :: %s per part :: %s remain"%
+					(imgnum+1, numpart, apDisplay.timeString(perpart), 
+					apDisplay.timeString(perpart*(numpart-imgnum))), "blue")
+			stackarray = []
+		### merge particles
+		partimg = spider.read(filename)
+		stackarray.append(partimg)
+		imgnum += 1
+
+	### write remaining particles to file
+	sys.stderr.write("\n")
+	stackname = "%s-%d.hed"%(stackroot, imgnum)
+	apDisplay.printMsg("writing particles to file "+stackname)
+	stacklist.append(stackname)
+	apImagicFile.writeImagic(stackarray, stackname, msg=False)
+
+	### merge stacks
+	apFile.removeStack(stackfile, warn=False)
+	apImagicFile.mergeStacks(stacklist, stackfile)
+	filepart = apFile.numImagesInStack(stackfile)
+	if filepart != numpart:
+		apDisplay.printError("number merged particles (%d) not equal number expected particles (%d)"%
+			(filepart, numpart))
+	for stackname in stacklist:
+		apFile.removeStack(stackname, warn=False)
+
+	### summarize
+	apDisplay.printColor("merged %d particles in %s"%(imgnum, apDisplay.timeString(time.time()-starttime)), "cyan")
 
 #======================
 #======================
