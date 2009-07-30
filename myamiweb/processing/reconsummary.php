@@ -89,6 +89,9 @@ if ($reconRuns) {
 		else
 			$html .= "<td></td>\n";
 
+		# add edit button to description if logged in
+		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
+
 		// recon info		
 		$html .= "<td><font size='+1'><a href='reconreport.php?expId=$expId&reconId=$reconid'>$reconname</a></font>"
 			." <br/><i>(ID: $reconid)</i></td>\n";
@@ -118,8 +121,7 @@ if ($reconRuns) {
 		} else
 			$html .= "<td></td>\n";
 
-		# add edit button to description if logged in
-		$descDiv = ($_SESSION['username']) ? editButton($reconid,$reconrun['description']) : $reconrun['description'];
+
 
 
 		$html .= "</tr>\n";
