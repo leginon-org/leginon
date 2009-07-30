@@ -13,6 +13,7 @@ require "inc/leginon.inc";
 require "inc/project.inc";
 require "inc/viewer.inc";
 require "inc/processing.inc";
+require "inc/summarytables.inc";
 
 $expId = $_GET['expId'];
 $sessionId= $_GET['Id'];
@@ -31,40 +32,18 @@ $particle = new particledata();
 	$boxsize= $s[boxSize]/$s[bin];
 	$s['boxsize']=$boxsize;
 
-	echo apdivtitle("Stack: <FONT class='aptitle'>".$s['shownstackname']
-		."</FONT> (ID: <FONT class='aptitle'>".$stackId."</FONT>)");
+	echo openRoundBorder();
+	echo "<table border='0' cellspacing='8' cellpading='8'><tr><td>\n";
+	echo stacksummarytable($stackId);
+	echo "</td></tr></table>\n";
+	echo closeRoundBorder();
 
-	echo "<table cellspacing='1' cellpadding='2'><tr><td><span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
-
+	echo "<table cellspacing='1' cellpadding='2'><tr><td>";
+	echo "<span class='datafield0'>Total particles for $runparams[stackRunName]: </span></td><td>$nump</td></tr></table>\n";
 	$stackparts = $particle->getStackParticles($stackId);
 
-	echo "<table border='0'><tr>\n";
-	$stackavg = $s['path']."/average.mrc";
-	if (file_exists($stackavg)) {
-		echo "<td align='center'>\n";
-		echo "<img src='loadimg.php?filename=$stackavg&s=150' height='150'><br/>\n";
-		echo "<i>averaged stack image</i>\n";
-		echo "</td>\n";
-	}	
-	if (!is_null($stackparts[0]['mean'])) {
-		echo "<td align='center'>\n";
-		echo "<a href='stack_mean_stdev.php?sId=$stackId&expId=$expId'>\n";
-		echo "<img border='0' src='stack_mean_stdev.php?w=256&sId=$stackId'><br/>\n";
-		echo "<i><a href='subStack.php?expId=$expId&sId=$stackId&mean=1'>Filter Stack by Mean & Stdev</a></i>\n";
-		echo "</td>\n";
-	}
-	$montage = $s['path']."/montage$stackId.png";
-	if (file_exists($montage)) {
-		echo "<td align='center'>\n";
-		echo "<a href='loadimg.php?filename=$montage'>";
-		echo "<img border='0' src='loadimg.php?filename=$montage&s=150' height='150'></a><br/>\n";
-		echo "<i>Mean & Stdev Montage</i>\n";
-		echo "</td>\n";
-	}
-	echo"</tr></table>\n\n";
-
 	$stackfile=$s['path']."/".$s['name'];
-	echo "View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</A><br>\n";
+	echo "<font size='+2'>View Stack: <A TARGET='stackview' HREF='viewstack.php?stackId=$stackId&file=$stackfile'>$s[name]</a></font><br/>\n";
 
 //Report stack parameters
 	$exclude_fields = array('DEF_id','DEF_timestamp','count','REF|ApPathData|path','boxSize','selectionstacks');
@@ -107,4 +86,13 @@ $particle = new particledata();
 	}
 	echo "</td><tr></table>";
 
+
+
+
 processing_footer();
+
+
+
+
+
+
