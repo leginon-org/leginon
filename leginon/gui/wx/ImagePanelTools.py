@@ -40,6 +40,8 @@ EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
 ImageClickedEventType = wx.NewEventType()
 EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
 
+EllipseFoundEventType = wx.NewEventType()
+EVT_ELLIPSE_FOUND = wx.PyEventBinder(EllipseFoundEventType)
 ##################################
 ##
 ##################################
@@ -71,6 +73,13 @@ class ImageClickedEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, ImageClickedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.xy = xy
+
+#--------------------
+class EllipseFoundEvent(wx.PyCommandEvent):
+	def __init__(self, source, params):
+		wx.PyCommandEvent.__init__(self, EllipseFoundEventType, source.GetId())
+		self.SetEventObject(source)
+		self.params = params
 
 #--------------------
 def getColorMap():
@@ -355,12 +364,13 @@ class RecordMotionTool(ImageTool):
 		#params = pyami.ellipse.solveEllipseGander(points)
 		except:
 			params = None
-		self.imagepanel.setEllipseParams(params)
 		if params is None:
 			## ellipse not fit
 			return []
 		angleinc = 5 * 3.14159 / 180.0
 		ellipsepoints = pyami.ellipse.ellipsePoints(angleinc,  **params)
+		idcevt = EllipseFoundEvent(self.imagepanel, params)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 		return ellipsepoints
 	
 	#--------------------

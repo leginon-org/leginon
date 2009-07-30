@@ -38,8 +38,7 @@ class Panel(gui.wx.TargetFilter.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
 		self.toolbar.Realize()
 
-		#self.imagepanel = gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
-		self.imagepanel = gui.wx.TargetPanel.TargetImagePanel(self, -1)
+		self.imagepanel = gui.wx.TargetPanel.EllipseTargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('preview', wx.Color(255, 128, 255))
 		self.imagepanel.selectiontool.setDisplayed('preview', True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, numbers=True)
@@ -48,6 +47,7 @@ class Panel(gui.wx.TargetFilter.Panel):
 		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTypeTool('Image', display=True)
 		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.Bind(gui.wx.ImagePanelTools.EVT_ELLIPSE_FOUND, self.onEllipseFound, self.imagepanel)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
@@ -78,9 +78,8 @@ class Panel(gui.wx.TargetFilter.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 
-	def setEllipseParams(self,params):
-		if params:
-			self.node.autoRasterEllipse(params)
+	def onEllipseFound(self, evt):
+		threading.Thread(target=self.node.autoRasterEllipse, args=(evt.params,)).start()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
