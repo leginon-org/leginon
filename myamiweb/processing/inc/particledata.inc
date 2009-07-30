@@ -3036,12 +3036,14 @@ class particledata {
 	}
 
 	function getReconIdsFromSession ($sessionId, $showHidden=False) {
-		$q = "SELECT refrun.*  "
+		$q = "SELECT refrun.*, path.path AS path  "
 		  ." FROM `ApRefinementRunData` AS refrun "
 		  ."LEFT JOIN ApRunsInStackData AS runs "
 		  ." ON refrun.`REF|ApStackData|stack` = runs.`REF|ApStackData|stack` "
 		  ."LEFT JOIN ApStackRunData AS stackrun "
 		  ." ON runs.`REF|ApStackRunData|stackRun` = stackrun.`DEF_id` "
+		  ."LEFT JOIN ApPathData AS path "
+		  ." ON refrun.`REF|ApPathData|path` = path.`DEF_id` "
 		  ."WHERE stackrun.`REF|leginondata|SessionData|session` = '$sessionId' ";
 		if (!$showHidden) $q.= " AND (refrun.`hidden` IS NULL OR refrun.`hidden` = 0) ";
 		$q.= " ORDER BY refrun.`DEF_id` DESC";
