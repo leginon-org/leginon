@@ -69,7 +69,8 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 	starttime = time.time()
 	boxsize = apFile.getBoxSize(stackfile)
 	filesperdir = 1e9/(boxsize[0]**2)/16.
-	#filesperdir = 4096
+	if filesperdir > 4096:
+		filesperdir = 4096
 	if numpart is None:
 		numpart = apFile.numImagesInStack(stackfile)
 	apParam.createDirectory(partdir)
@@ -152,6 +153,8 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 	### Set variables
 	boxsize = apFile.getBoxSize(filelist[0])
 	partperiter = 1e9/(boxsize[0]**2)/16.
+	if partperiter > 4096:
+		partperiter = 4096
 	numpart = len(filelist)
 	if numpart < partperiter:
 		partperiter = numpart
@@ -161,7 +164,7 @@ def gatherSingleFilesIntoStack(selfile, stackfile):
 	stacklist = []
 	stackroot = stackfile[:-4]
 	while imgnum < len(filelist):
-		filename = filelist[0]
+		filename = filelist[imgnum]
 		index = imgnum % partperiter
 		if imgnum % 100 == 0:
 			sys.stderr.write(".")
