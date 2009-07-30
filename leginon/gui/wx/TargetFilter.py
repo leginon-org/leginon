@@ -108,5 +108,5 @@ class ScrolledSettings(gui.wx.Settings.ScrolledDialog):
 		return [sbsz]
 
 	def onTestButton(self, evt):
-		self.setNodeSettings()
+		self.dialog.setNodeSettings()
 		threading.Thread(target=self.node.onTest).start()
