@@ -42,7 +42,7 @@ if ($reconRuns) {
 
 	$html = "<table class='tableborder' border='1' cellspacing='1' cellpadding='5'>\n";
 	$html .= "<TR>\n";
-	$display_keys = array ( 'recon name', 'description', '',
+	$display_keys = array ( 'final image', 'recon name', 'description', '',
 		'stack info', 'num parts', 'box size', 'pixel size',  '',
 		'model info', 'model symm',  '',
 		'FSC&frac12; Rmeasure resolution', 'avg median<br/>euler jump',);
@@ -61,7 +61,6 @@ if ($reconRuns) {
 		}
 
 		// GET INFO
-		$reconid = $reconrun['DEF_id'];
 		$reconname = $reconrun['name'];
 
 		$stackid = $reconrun['REF|ApStackData|stack'];
@@ -78,9 +77,19 @@ if ($reconRuns) {
 		$res = $particle->getHighestResForRecon($reconid);
 		$avgmedjump = $particle->getAverageMedianJump($reconid);
 
+		//print_r($reconrun);
+		$bestimage = $reconrun['path'].'/threed.'.$res['iter'].'a.mrc.1.png';
 
 		// recon info
 		$html .= "<TR>\n";
+		// image
+		if (file_exists($bestimage)) 
+			$html .= "<td><a href='loadimg.php?filename=$bestimage' target='snapshot'>"
+				."<img src='loadimg.php?filename=$bestimage&h=64' height='64'></a></td>\n";
+		else
+			$html .= "<td></td>\n";
+
+		// recon info		
 		$html .= "<td><font size='+1'><a href='reconreport.php?expId=$expId&reconId=$reconid'>$reconname</a></font>"
 			." <br/><i>(ID: $reconid)</i></td>\n";
 		$html .= "<td><font size=-2>$descDiv</font></td>\n";
