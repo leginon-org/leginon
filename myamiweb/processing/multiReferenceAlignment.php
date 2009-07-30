@@ -339,9 +339,9 @@ function runAlignment() {
 	$command.="--rundir=".$rundir." ";
 	$command.="--description=\"$description\" ";
 
-	$command.="--lowpass=$lowpass ";
-	$command.="--highpass=$highpass ";
-	$command.="--bin=$bin ";
+	if ($lowpass) $command.="--lowpass=$lowpass ";
+	if ($highpass) $command.="--highpass=$highpass ";
+	if ($bin) $command.="--bin=$bin ";
 	
 	if ($thresh_refs && $maskrad_refs) {
 		$command.="--refs ";
