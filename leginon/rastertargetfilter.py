@@ -167,14 +167,21 @@ class RasterTargetFilter(targetfilter.TargetFilter):
 		imageref = targetdata.special_getitem('image', dereference=False)
 		if imageref:
 			image = self.researchDBID(leginondata.AcquisitionImageData, imageref.dbid, readimages=False)
-			tiltalpha = int(image['scope']['stage position']['a'] * 180.0 / 3.14159)
-			tpq = leginondata.TiltRasterPatternData(session=self.session,tilt=tiltalpha)
-			tpresult = tpq.query(results=1)
-			if tpresult:
-				tiltoffset = (tpresult[0]['offset']['row'],tpresult[0]['offset']['col'])
-			else:
+			tiltalpha = int(round(image['scope']['stage position']['a'] * 180.0 / 3.14159))
+			has_pattern = False
+			# accept pattern upto 2 deg error
+			for t in (0,-1,1,-2,2):
+				tpq = leginondata.TiltRasterPatternData(session=self.session,tilt=tiltalpha+t)
+				tpresult = tpq.query(results=1)
+				if tpresult:
+					tiltoffset = (tpresult[0]['offset']['row'],tpresult[0]['offset']['col'])
+					has_pattern = True
+					break
+			if not has_pattern:
 				tiltoffset = (0,0)
+				self.logger.warning('no offset pattern found for tilt at %d deg, default to (%.2f,%.2f)' % (tiltalpha,tiltoffset[0],tiltoffset[1]))
 		else:
+			self.logger.warning('no image associated with the target %d' %targetdata.dbid)
 			tiltoffset = (0,0)
 		# section pattern
 		fromtarget = self.researchFromtarget(targetdata)
