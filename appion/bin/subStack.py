@@ -32,11 +32,19 @@ class subStackScript(appionScript.AppionScript):
 	def checkConflicts(self):
 		if self.params['stackid'] is None:
 			apDisplay.printError("stackid was not defined")
+		numpart = apStack.getNumberStackParticlesFromId(self.params['stackid'])
 		if self.params['description'] is None:
 			apDisplay.printError("substack description was not defined")
 		if self.params['runname'] is None:
 			apDisplay.printError("new stack name was not defined")
-		if self.params['first'] is None and self.params['last'] is None and self.params['split'] == 1:
+
+		### have first but not last
+		if self.params['first'] is not None and self.params['last'] is None:
+			self.params['last'] = numpart
+		elif self.params['first'] is None and self.params['last'] is not None:
+			self.params['first'] = 0
+
+		if self.params['first'] is None and self.params['split'] == 1:
 			if self.params['keepfile'] is None and self.params['exclude'] is None and self.params['include'] is None:
 				apDisplay.printError("Please define either keepfile, exclude or include")
 			elif self.params['keepfile']:
