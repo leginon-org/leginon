@@ -15,18 +15,27 @@ class subStackScript(appionScript.AppionScript):
 		self.parser.set_usage("Usage: %prog --old-stack-id=ID --keep-file=FILE [options]")
 		self.parser.add_option("-s", "--old-stack-id", dest="stackid", type="int",
 			help="Stack database id", metavar="ID")
+
 		self.parser.add_option("-k", "--keep-file", dest="keepfile",
 			help="File listing which particles to keep, EMAN style 0,1,...", metavar="FILE")
+
 		self.parser.add_option("--first", dest="first", type="int",
 			help="First Particle to include")
 		self.parser.add_option("--last", dest="last", type="int",
 			help="Last Particle to include")
+
 		self.parser.add_option("--split", dest="split", type="int", default=1,
 			help="Number of files into which the stack will be split")
+
 		self.parser.add_option("--exclude", dest="exclude",
 			help="EMAN style classes to EXCLUDE in the new stack (0,5,8)", metavar="0,1,...")
 		self.parser.add_option("--include", dest="include",
 			help="EMAN style classes to INCLUDE in the new stack (0,2,7)", metavar="0,1,...")
+
+		self.parser.add_option("--no-meanplot", dest="meanplot", default=True,
+			action="store_false", help="Do not create a mean/stdev plot")
+		self.parser.add_option("--sorted", dest="sorted", default=False,
+			action="store_true", help="The original stack is sorted")
 
 	#=====================
 	def checkConflicts(self):
@@ -186,11 +195,12 @@ class subStackScript(appionScript.AppionScript):
 			apStack.makeNewStack(oldstack, newstack, self.params['keepfile'])
 			if not os.path.isfile(newstack):
 				apDisplay.printError("No stack was created")
-			apStack.commitSubStack(self.params, newname)
+			apStack.commitSubStack(self.params, newname, sorted=True)
 			apStack.averageStack(stack=newstack)
 			newstackid = apStack.getStackIdFromPath(newstack)
-			apDisplay.printMsg("creating Stack Mean Plot montage for stackid")
-			apStackMeanPlot.makeStackMeanPlot(newstackid)
+			if self.params['meanplot'] is True:
+				apDisplay.printMsg("creating Stack Mean Plot montage for stackid")
+				apStackMeanPlot.makeStackMeanPlot(newstackid)
 
 #=====================
 if __name__ == "__main__":

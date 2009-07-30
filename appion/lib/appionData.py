@@ -346,6 +346,7 @@ class ApStackData(Data):
 			('substackname', str),
 			('pixelsize', float),
 			('centered', bool),
+			('junksorted', bool),
 			('mask', int),
 			('maxshift', int),
 			('project|projects|project', int),

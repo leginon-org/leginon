@@ -6,6 +6,7 @@ import math
 import subprocess
 #appion
 import apDisplay
+import apEMAN
 import apFile
 import apParam
 import apImagicFile
@@ -118,6 +119,33 @@ def breakupStackIntoSingleFiles(stackfile, partdir="partfiles", numpart=None):
 
 #======================
 #======================
+def gatherSingleFilesIntoStack(selfile, stackfile):
+	"""
+	takes a selfile and creates an EMAN stack
+	"""
+	apDisplay.printColor("Creating a stack, this can take a while", "cyan")
+
+	starttime = time.time()
+
+	if not os.path.isfile(selfile):
+		apDisplay.printError("selfile does not exist: "+selfile)
+
+	### Process selfile
+        fh=open(selfile,'r')
+        lines=fh.readlines()
+        for line in lines:
+            args=line.split()
+            if (len(args)>1):
+                filename=args[0]
+		emancmd = ( "proc2d "+filename+" "+stackfile )
+		apEMAN.executeEmanCmd(emancmd, showcmd=False, verbose=False)
+        fh.close()
+
+        ### Finish
+	apDisplay.printColor("finished creating stack in "+apDisplay.timeString(time.time()-starttime), "cyan")
+
+#======================
+#======================
 def createSubFolders(partdir, numpart, filesperdir):
 	i = 0
 	dirnum = 0
@@ -126,10 +154,3 @@ def createSubFolders(partdir, numpart, filesperdir):
 		apParam.createDirectory(os.path.join(partdir, str(dirnum)))
 		i += filesperdir
 	return dirnum
-
-
-
-
-
-
-
