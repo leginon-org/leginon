@@ -667,4 +667,27 @@ function from_POST() {
   return $r;
 }
 
+function checkExtensions() {
+	$required_extensions=array('xml', 'mysql', 'gd', 'mrc');
+	$extensions=get_loaded_extensions();
+	$notloaded=false;
+	foreach ($required_extensions as $ext) {
+		if (!in_array($ext, $extensions)) {
+			$notloaded[]=$ext;
+		}
+	}
+	if ($notloaded) {
+			$err='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
+			$err.='<html><body><div style="border: 1px solid #FF0000; padding: 10px 10px">';
+			$err.="<p>Check your PHP extensions <b>".ini_get('extension_dir')."</b></p><p>cannot load:\n";
+			foreach($notloaded as $ext) {
+				$err.='<pre><b>'.$ext.'</b> '.$ext.'.so required</pre>';
+			}
+			$err.='</p>';
+			$err.='</div></body></html>';
+			echo $err;
+			exit;
+	}
+}
+
 ?>

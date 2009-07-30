@@ -10,8 +10,8 @@ $comment = $_GET['comment'];
 $dbc = $leginondata->mysql;
 
 if ($sessionId && $imageId && $name && $comment) {
-	$q = 'insert into `viewer_comment` (`sessionId`, `imageId`, `name`, `comment`) values '
-		.'('.$sessionId.', '.$imageId.', "'.$name.'", "'.$comment.'")';
+	$q = 'insert into `viewer_comment` (`sessionId`, `imageId`, `type`, `name`, `comment`) values '
+		.'('.$sessionId.', "'.$imageId.'", "rt", "'.$name.'", "'.$comment.'")';
 	if ($dbc->SQLQuery($q, true))
 		$text = "comment inserted succesfully";
 	else

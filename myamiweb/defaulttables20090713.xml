@@ -18,6 +18,7 @@
 -	viewer_del_image
 -	viewer_cache
 -	AcquisitionSettingsData
+-	AcquisitionImageTargetData
 -	FocuserSettingsData
 -	FocusSettingData
 -	FocusSequenceData
@@ -370,6 +371,7 @@
       type="int(11)" 
       default="DEFAULT '0'" 
       null="NOT NULL" 
+      extra="auto_increment" 
     />
     <field 
       name="timestamp" 
@@ -408,6 +410,7 @@
       type="int(11)" 
       default="DEFAULT '0'" 
       null="NOT NULL" 
+      extra="auto_increment" 
     />
     <field 
       name="timestamp" 
@@ -435,6 +438,7 @@
       type="int(11)" 
       default="DEFAULT '0'" 
       null="NOT NULL" 
+      extra="auto_increment" 
     />
     <field 
       name="username" 
@@ -457,6 +461,7 @@
       type="int(11)" 
       default="DEFAULT '0'" 
       null="NOT NULL" 
+      extra="auto_increment" 
     />
     <field 
       name="login" 
@@ -727,6 +732,93 @@
     <key>PRIMARY KEY (`DEF_id`)</key>
     <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
     <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+  </sqltable>
+  <sqltable name="AcquisitionImageTargetData" >
+    <field 
+      name="DEF_id" 
+      type="int(16)" 
+      null="NOT NULL" 
+      extra="auto_increment" 
+    />
+    <field 
+      name="DEF_timestamp" 
+      type="timestamp" 
+      default="DEFAULT 'CURRENT_TIMESTAMP'" 
+    />
+    <field 
+      name="REF|SessionData|session" 
+      type="int(20)" 
+    />
+    <field 
+      name="delta row" 
+      type="int(20)" 
+    />
+    <field 
+      name="delta column" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|ScopeEMData|scope" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|CameraEMData|camera" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|PresetData|preset" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|AcquisitionImageData|image" 
+      type="int(20)" 
+    />
+    <field 
+      name="type" 
+      type="text" 
+    />
+    <field 
+      name="version" 
+      type="int(20)" 
+    />
+    <field 
+      name="number" 
+      type="int(20)" 
+    />
+    <field 
+      name="status" 
+      type="text" 
+    />
+    <field 
+      name="pre_exposure" 
+      type="tinyint(1)" 
+    />
+    <field 
+      name="REF|GridData|grid" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|ImageTargetListData|list" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|AcquisitionImageTargetData|previous" 
+      type="int(20)" 
+    />
+    <field 
+      name="REF|AcquisitionImageTargetData|fromtarget" 
+      type="int(20)" 
+    />
+    <key>PRIMARY KEY (`DEF_id`)</key>
+    <key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+    <key>KEY `REF|SessionData|session` (`REF|SessionData|session`)</key>
+    <key>KEY `REF|ScopeEMData|scope` (`REF|ScopeEMData|scope`)</key>
+    <key>KEY `REF|CameraEMData|camera` (`REF|CameraEMData|camera`)</key>
+    <key>KEY `REF|PresetData|preset` (`REF|PresetData|preset`)</key>
+    <key>KEY `REF|AcquisitionImageData|image` (`REF|AcquisitionImageData|image`)</key>
+    <key>KEY `REF|GridData|grid` (`REF|GridData|grid`)</key>
+    <key>KEY `REF|ImageTargetListData|list` (`REF|ImageTargetListData|list`)</key>
+    <key>KEY `REF|AcquisitionImageTargetData|fromtarget` (`REF|AcquisitionImageTargetData|fromtarget`)</key>
   </sqltable>
   <sqltable name="FocuserSettingsData" >
     <field 

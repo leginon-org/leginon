@@ -14,7 +14,7 @@ Requirements:
 -------------
 - Web server Apache
 - MySQL (4.0 or higher)
-- PHP4 (4.0.4 or higher) with MySQL 
+- PHP (5.0.4 or higher) with MySQL, GD, Session, XML, MRC 
 - JavaScript-enabled browser
 - CSS-enabled browser
 
@@ -32,6 +32,8 @@ Configuration:
 --------------
 	$ cd dbem
 
+	$ cp config.php.template config.php
+
 	- edit the file config.php
 	- set your MySQL parameters:
 
@@ -40,24 +42,11 @@ Configuration:
 	$DB_PASSWORD	= "[SQL PASS]";
 	$DB		= "[database]";
 
-----------------------------
-Add mrc.so in php.ini:
-----------------------------
+	$ cd dbem/processing
 
-	$ vi /etc/php.ini and locate the extension directory and add
-				mrc.so under [Extension section]:
+	$ cp config_processing.php.template config_processing.php
 
-	; Directory in which the loadable extensions (modules) reside.
-	extension_dir = "./"
-	extension_dir = /usr/lib/php/extensions
-
-	[extension section]
-	extension=mrc.so
-
-	Copy the extension file, and restart the web server
-
-	$ cp ext/mrc.so /usr/lib/php/extensions/
-	$ /etc/init.d/apache[version] restart
+	- edit the file config_processing.php
 
 --------------
 run:
