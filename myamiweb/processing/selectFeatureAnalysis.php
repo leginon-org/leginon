@@ -88,6 +88,19 @@ echo "  IMAGIC multivariate statistical analysis "
         ."<br/><br/>";
 echo "</td></tr>";
 
+echo "<tr><td width='100' align='center'>\n";
+echo "  <img src='img/xmipp_logo.png' width='64'>\n";
+echo "</td><td>\n";
+echo "  <h3><a href='runRotKerDenSom.php?expId=$expId&alignId=$alignId'>Xmipp Rotational Kerden Self-Organizing Map</a></h3>";
+echo "  This function applies the Kerden SOM to rotational symmetric particles. "
+	."This is especially useful for classifying particles with difference cyclic symmetries."
+	."For more information, please see the following "
+	."<a href='http://xmipp.cnb.csic.es/twiki/bin/view/Xmipp/RotationalSpectraClassification'>Xmipp webpage"
+	."&nbsp;<img border='0' src='img/external.png'></a>. "
+	."<br/><br/>";
+echo "</td></tr>";
+
+
 echo "</table>";
 
 processing_footer();
