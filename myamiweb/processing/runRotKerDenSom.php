@@ -1,6 +1,6 @@
 <?php
 /**
- *      The Leginon software is Copyright 2003 
+ *      The Leginon software is Copyright 2003 xx
  *      The Scripps Research Institute, La Jolla, CA
  *      For terms of the license agreement
  *      see  http://ami.scripps.edu/software/leginon-license
@@ -17,13 +17,13 @@ require "inc/summarytables.inc";
 
 // IF VALUES SUBMITTED, EVALUATE DATA
 if ($_POST) {
-	runKerDenSOM();
+	runrotKerDenSOM();
 } else {
-	createKerDenSOMForm();
+	createrotKerDenSOMForm();
 }
 
-function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher', 
- $heading='Kernel Probability Density Estimator Self-Organizing Map') {
+function createrotKerDenSOMForm($extra=false, $title='rotKerdenSOM.py Launcher', 
+ $heading='Kernel Probability Density Estimator Self-Organizing Map Applied to Rotational Spectra') {
 	// check if coming directly from a session
 	$expId=$_GET['expId'];
 	$selectAlignId=$_GET['alignId'];
@@ -91,23 +91,31 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 		$analysisruns += 1;
 	$runnameval = ($_POST['runname']) ? $_POST['runname'] : 'kerden'.($analysisruns+1);
 	$rundescrval = $_POST['description'];
-	$xdim = ($_POST['xdim']) ? $_POST['xdim'] : '5';
-	$ydim = ($_POST['ydim']) ? $_POST['ydim'] : '4';
+	$xdim = ($_POST['xdim']) ? $_POST['xdim'] : '8';
+	$ydim = ($_POST['ydim']) ? $_POST['ydim'] : '8';
 	if ($selectAlignId)
 		$numpart = ($_POST['numpart']) ? $_POST['numpart'] : $particle->getNumAlignStackParticles($selectAlignId);
 	else
 		$numpart = ($_POST['numpart']) ? $_POST['numpart'] : 0;
 
-	$defaultmaskrad = 100;
+    $spectrainnerradius = ($_POST['spectrainnerradius']) ? $_POST['spectrainnerradius'] : '1';
+    $spectraouterradius =  $_POST['spectraouterradius'];
 
-	echo"
+    $initregulfact       = $_POST['initregulfact']       ? $_POST['initregulfact'] : '1000';;
+    $finalregulfact      = $_POST['finalregulfact']      ? $_POST['finalregulfact'] : '200';;
+    $incrementregulfact  = $_POST['incrementregulfact']  ? $_POST['incrementregulfact'] : '5';;
+
+    $spectralowharmonic  = $_POST['spectralowharmonic']  ? $_POST['spectralowharmonic'] : '1';;
+    $spectrahighharmonic = $_POST['spectrahighharmonic'] ? $_POST['spectrahighharmonic'] : '15';;
+
+    echo"
 	<table border='0' class='tableborder'>
 	<tr>
 		<td valign='top'>\n";
 	echo "<table border='0' cellpadding='5'>\n";
 	echo "<tr><td>\n";
 	echo openRoundBorder();
-	echo docpop('runid','<b>KerDen SOM Run Name:</b>');
+	echo docpop('runid','<b>RotKerDenSOM Run Name:</b>');
 	echo "<input type='text' name='runname' value='$runnameval'>\n";
 	echo "<br />\n";
 	echo "<br />\n";
@@ -140,7 +148,6 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 		echo "<input type='hidden' name='stackid' value='$stackval'>\n";
 		echo alignstacksummarytable($selectAlignId, true);
 		$alignstack = $particle->getAlignStackParams($selectAlignId);
-		$defaultmaskrad = (int) ($alignstack['boxsize']/3)*$alignstack['pixelsize'];
 	} elseif ($alignIds) {
 		echo "
 		Aligned Stack:<br>
@@ -179,14 +186,6 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	echo "  <TABLE CELLPADDING='5' BORDER='0'>\n";
 	echo "  <TR><TD VALIGN='TOP'>\n";
 
-	$maskrad = ($_POST['maskrad']) ? $_POST['maskrad'] : (int) $defaultmaskrad;
-	echo "<INPUT TYPE='text' NAME='maskrad' SIZE='4' VALUE='$maskrad'>\n";
-	echo docpop('maskrad','Mask Radius');
-	echo "<font size='-2'>(&Aring;ngstroms)</font>\n";
-	echo "<br/>\n";
-	echo "<br/>\n";
-
-
 	echo docpop('griddim','Grid Dimensions:');
 	echo "<br/>\n";
 	echo "<table border='0'><tr><td>\n";
@@ -198,10 +197,41 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	echo "</td></tr></table>\n";
 	echo "<br/>\n";
 
-	echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='5'>\n";
-	echo docpop('numpart','Number of particles to use');
+    echo docpop('roi','Region Of Interest:'); 
+	echo "<br/>\n";
+	echo "<INPUT TYPE='text' NAME='spectrainnerradius' VALUE='$spectrainnerradius' SIZE='3'>\n";
+	echo docpop('spectrainnerradius','inner radius (pixels)'); 
+	echo "<INPUT TYPE='text' NAME='spectraouterradius' VALUE='$spectraouterradius' SIZE='3'>\n";
+	echo docpop('spectraouterradius','outter radius (pixels)');
 	echo "<br/>\n";
 	echo "<br/>\n";
+
+    echo docpop('EO','Expert Options Below (defaults are usually OK):'); 
+    echo "<br/><br/>\n";
+
+    echo "<INPUT TYPE='text' NAME='numpart' VALUE='$numpart' SIZE='5'>\n";
+    echo docpop('numpart','Number of particles to use');
+    echo "<br/>\n";
+
+    echo docpop('symmetryrange','Symmetry Range'); 
+    echo "<br/>\n";
+    echo "<INPUT TYPE='text' NAME='spectralowharmonic' VALUE='$spectralowharmonic' SIZE='3'>\n";
+    echo docpop('spectralowharmonic','lower harmonic'); 
+    echo "<INPUT TYPE='text' NAME='spectrahighharmonic' VALUE='$spectrahighharmonic' SIZE='3'>\n";
+    echo docpop('spectrahighharmonic','higher harmonic');
+    echo "<br/>\n";
+
+    echo docpop('smoothnessfactor','Smoothness factor:'); 
+    echo "<br/>\n";
+
+    echo "<INPUT TYPE='text' NAME='initregulfact' VALUE='$initregulfact' SIZE='3'>\n";
+    echo docpop('initregulfact','initial value '); 
+    echo "<INPUT TYPE='text' NAME='finalregulfact' VALUE='$finalregulfact' SIZE='3'>\n";
+    echo docpop('finalregulfact','final value');
+    echo "<INPUT TYPE='text' NAME='incrementregulfact' VALUE='$incrementregulfact' SIZE='3'>\n";
+    echo docpop('incrementregulfact','increment');
+    echo "<br/>\n";
+    echo "<br/>\n";
 
 	echo "<INPUT TYPE='checkbox' NAME='commit' $commitcheck>\n";
 	echo docpop('commit','<B>Commit to Database</B>');
@@ -229,31 +259,46 @@ function createKerDenSOMForm($extra=false, $title='kerdenSOM.py Launcher',
 	exit;
 }
 
-function runKerDenSOM() {
+function runrotKerDenSOM() {
 	$expId=$_GET['expId'];
 	$runname=$_POST['runname'];
 	$outdir=$_POST['outdir'];
 	$stackval=$_POST['stackid'];
 	list($stackid,$apix,$boxsz,$totpart) = split('\|--\|',$stackval);
-	$maskrad=$_POST['maskrad'];
 	$xdim=$_POST['xdim'];
 	$ydim=$_POST['ydim'];
 	$numpart=$_POST['numpart'];
 
+    $spectrainnerradius=$_POST['spectrainnerradius'];
+    $spectraouterradius=$_POST['spectraouterradius'];
+
+    $initregulfact       = $_POST['initregulfact'];
+    $finalregulfact      = $_POST['finalregulfact'];
+    $incrementregulfact  = $_POST['incrementregulfact'];
+
+    $spectralowharmonic  = $_POST['spectralowharmonic'];
+    $spectrahighharmonic = $_POST['spectrahighharmonic'];
+
 	//make sure a session was selected
 	$description=$_POST['description'];
 	if (!$description)
-		createKerDenSOMForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
+		createrotKerDenSOMForm("<B>ERROR:</B> Enter a brief description of the particles to be aligned");
 
 	//make sure a stack was selected
 	if (!$stackid)
-		createKerDenSOMForm("<B>ERROR:</B> No stack selected");
+		createrotKerDenSOMForm("<B>ERROR:</B> No stack selected");
 
 	if ($numpart < 4)
-		createKerDenSOMForm("<B>ERROR:</B> Must have more than 4 particles");
-
+		createrotKerDenSOMForm("<B>ERROR:</B> Must have more than 4 particles");
+    if ($spectrainnerradius <1) 
+		createrotKerDenSOMForm("<B>ERROR:</B> inner radius must be a positive number");
+    if ($spectraouterradius <1) 
+        createrotKerDenSOMForm("<B>ERROR:</B> outter radius must be a positive number");
+    if ($spectraouterradius < $spectrainnerradius) 
+        createrotKerDenSOMForm("<B>ERROR:</B> outter radius must be greater than inner radius");
+    
 	if ($xdim > 15 || $ydim > 15)
-		createKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
+		createrotKerDenSOMForm("<B>ERROR:</B> Dimensions must be less than 16");
 
 	$commit = ($_POST['commit']=="on") ? '--commit' : '';
 
@@ -262,23 +307,42 @@ function runKerDenSOM() {
 	$stackparams=$particle->getAlignStackParams($stackid);
 	$boxrad = $stackparams['pixelsize'] * $stackparams['boxsize'];
 	if ($maskrad > $boxrad)
-		createKerDenSOMForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
+		createrotKerDenSOMForm("<b>ERROR:</b> Mask radius too large! $maskrad > $boxrad ".print_r($stackparams));
 
 	// make sure outdir ends with '/' and append run name
 	if (substr($outdir,-1,1)!='/') $outdir.='/';
 	$rundir = $outdir.$runname;
 
-	$command ="kerdenSOM.py ";
+    /*./rotKerdenSOM.py --projectid=237 --rundir=/ami/data00/appion/09jul20b/align/rotkerden2 
+    --description="ty" --runname=rotkerden1 --alignid=3 --xdim=5 
+    --ydim=5 --numpart=1000 --commit --spectrainnerradius  14 --spectraouterradius 18; 
+    */
+	$command ="rotKerdenSOM.py ";
 	$command.="--projectid=".$_SESSION['projectId']." ";
 	$command.="--rundir=$rundir ";
 	$command.="--description=\"$description\" ";
 	$command.="--runname=$runname ";
 	$command.="--alignid=$stackid ";
-	$command.="--maskrad=$maskrad ";
 	$command.="--xdim=$xdim ";
 	$command.="--ydim=$ydim ";
 	$command.="--numpart=$numpart ";
-	if ($commit) $command.="--commit ";
+
+    $command.="--spectrainnerradius    $spectrainnerradius   ";
+    $command.="--spectraouterradius    $spectraouterradius   ";
+    if ($initregulfact)
+        $command.="--initregulfact         $initregulfact        ";
+    if ($finalregulfact)
+        $command.="--finalregulfact        $finalregulfact       ";
+    if ($incrementregulfact)
+        $command.="--incrementregulfact    $incrementregulfact   ";
+
+    if ($spectralowharmonic)
+        $command.="--spectralowharmonic    $spectralowharmonic   ";
+    if ($spectrahighharmonic)
+        $command.="--spectrahighharmonic   $spectrahighharmonic  ";
+
+
+    if ($commit) $command.="--commit ";
 	else $command.="--no-commit ";
 
 	// submit job to cluster
@@ -286,11 +350,11 @@ function runKerDenSOM() {
 		$user = $_SESSION['username'];
 		$password = $_SESSION['password'];
 
-		if (!($user && $password)) createKerDenSOMForm("<B>ERROR:</B> Enter a user name and password");
+		if (!($user && $password)) createrotKerDenSOMForm("<B>ERROR:</B> Enter a user name and password");
 
 		$sub = submitAppionJob($command,$outdir,$runname,$expId,'alignanalysis');
 		// if errors:
-		if ($sub) createKerDenSOMForm("<b>ERROR:</b> $sub");
+		if ($sub) createrotKerDenSOMForm("<b>ERROR:</b> $sub");
 		exit;
 	}
 	else {
@@ -313,3 +377,4 @@ function runKerDenSOM() {
 	}
 }
 ?>
+
