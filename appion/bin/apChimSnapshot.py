@@ -175,7 +175,7 @@ class ChimSnapShots(object):
 		chimera.printer.saveImage(path, format=self.imgformat)
 
 	# -----------------------------------------------------------------------------
-	def hideDust(self, size=10):
+	def hideDust(self, size=100):
 		"""
 		Hide all dust particles less than 10 voxels in size
 		"""
@@ -310,7 +310,7 @@ class ChimSnapShots(object):
 
 	# -----------------------------------------------------------------------------
 	def animate_asymmetric(self):
-		self.hideDust(50)
+		self.hideDust(250)
 		for s in self.surfaces:
 			self.color_surface_height(s)
 		#self.writeMessageToLog("turn: get top view")
